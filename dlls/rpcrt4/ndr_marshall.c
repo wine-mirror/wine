@@ -2253,7 +2253,9 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       unsigned char *saved_buffer;
       int pointer_buffer_mark_set = 0;
       TRACE("pointer=%p <= %p\n", *(unsigned char**)pMemory, pMemory);
-      ALIGN_POINTER_CLEAR(pStubMsg->Buffer, 4);
+      TRACE("pStubMsg->Buffer before %p\n", pStubMsg->Buffer);
+      if (*pPointer != RPC_FC_RP)
+        ALIGN_POINTER_CLEAR(pStubMsg->Buffer, 4);
       saved_buffer = pStubMsg->Buffer;
       if (pStubMsg->PointerBufferMark)
       {
@@ -2261,21 +2263,18 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
         pStubMsg->PointerBufferMark = NULL;
         pointer_buffer_mark_set = 1;
       }
-      else
+      else if (*pPointer != RPC_FC_RP)
         safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       PointerMarshall(pStubMsg, saved_buffer, *(unsigned char**)pMemory, pPointer);
       if (pointer_buffer_mark_set)
       {
         STD_OVERFLOW_CHECK(pStubMsg);
         pStubMsg->PointerBufferMark = pStubMsg->Buffer;
-        if (saved_buffer + 4 > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
-        {
-            ERR("buffer overflow - saved_buffer = %p, BufferEnd = %p\n",
-                saved_buffer, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength);
-            RpcRaiseException(RPC_X_BAD_STUB_DATA);
-        }
-        pStubMsg->Buffer = saved_buffer + 4;
+        pStubMsg->Buffer = saved_buffer;
+        if (*pPointer != RPC_FC_RP)
+          safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       }
+      TRACE("pStubMsg->Buffer after %p\n", pStubMsg->Buffer);
       pPointer += 4;
       pMemory += 4;
       break;
@@ -2380,7 +2379,8 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       unsigned char *saved_buffer;
       int pointer_buffer_mark_set = 0;
       TRACE("pointer => %p\n", pMemory);
-      ALIGN_POINTER(pStubMsg->Buffer, 4);
+      if (*pPointer != RPC_FC_RP)
+        ALIGN_POINTER(pStubMsg->Buffer, 4);
       saved_buffer = pStubMsg->Buffer;
       if (pStubMsg->PointerBufferMark)
       {
@@ -2388,7 +2388,7 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
         pStubMsg->PointerBufferMark = NULL;
         pointer_buffer_mark_set = 1;
       }
-      else
+      else if (*pPointer != RPC_FC_RP)
         safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
 
       PointerUnmarshall(pStubMsg, saved_buffer, (unsigned char**)pMemory, *(unsigned char**)pMemory, pPointer, fMustAlloc);
@@ -2396,13 +2396,9 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       {
         STD_OVERFLOW_CHECK(pStubMsg);
         pStubMsg->PointerBufferMark = pStubMsg->Buffer;
-        if (saved_buffer + 4 > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
-        {
-            ERR("buffer overflow - saved_buffer = %p, BufferEnd = %p\n",
-                saved_buffer, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength);
-            RpcRaiseException(RPC_X_BAD_STUB_DATA);
-        }
-        pStubMsg->Buffer = saved_buffer + 4;
+        pStubMsg->Buffer = saved_buffer;
+        if (*pPointer != RPC_FC_RP)
+          safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       }
       pPointer += 4;
       pMemory += 4;
@@ -2507,7 +2503,11 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
         pStubMsg->PointerLength = pStubMsg->BufferLength;
         pStubMsg->BufferLength = saved_buffer_length;
       }
-      safe_buffer_length_increment(pStubMsg, 4);
+      if (*pPointer != RPC_FC_RP)
+      {
+        ALIGN_LENGTH(pStubMsg->BufferLength, 4);
+        safe_buffer_length_increment(pStubMsg, 4);
+      }
       pPointer += 4;
       pMemory += 4;
       break;
@@ -2680,7 +2680,8 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     {
       unsigned char *saved_buffer;
       int pointer_buffer_mark_set = 0;
-      ALIGN_POINTER(pStubMsg->Buffer, 4);
+      if (*pPointer != RPC_FC_RP)
+        ALIGN_POINTER(pStubMsg->Buffer, 4);
       saved_buffer = pStubMsg->Buffer;
       if (pStubMsg->PointerBufferMark)
       {
@@ -2688,7 +2689,7 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
         pStubMsg->PointerBufferMark = NULL;
         pointer_buffer_mark_set = 1;
       }
-      else
+      else if (*pPointer != RPC_FC_RP)
         safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
 
       if (!pStubMsg->IgnoreEmbeddedPointers)
@@ -2697,13 +2698,9 @@ static unsigned long ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
       {
         STD_OVERFLOW_CHECK(pStubMsg);
         pStubMsg->PointerBufferMark = pStubMsg->Buffer;
-        if (saved_buffer + 4 > (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength)
-        {
-            ERR("buffer overflow - saved_buffer = %p, BufferEnd = %p\n",
-                saved_buffer, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength);
-            RpcRaiseException(RPC_X_BAD_STUB_DATA);
-        }
-        pStubMsg->Buffer = saved_buffer + 4;
+        pStubMsg->Buffer = saved_buffer;
+        if (*pPointer != RPC_FC_RP)
+          safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       }
       pPointer += 4;
       size += 4;
