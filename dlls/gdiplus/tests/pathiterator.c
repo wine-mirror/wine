@@ -51,6 +51,45 @@ static void test_constructor_destructor(void)
     GdipDeletePath(path);
 }
 
+static void test_hascurve(void)
+{
+    GpPath *path;
+    GpPathIterator *iter;
+    GpStatus stat;
+    BOOL hasCurve;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathRectangle(path, 5.0, 5.0, 100.0, 50.0);
+
+    stat = GdipCreatePathIter(&iter, path);
+    expect(Ok, stat);
+
+    /* NULL args
+       BOOL out argument is local in wrapper class method,
+       so it always has not-NULL address */
+    stat = GdipPathIterHasCurve(NULL, &hasCurve);
+    expect(InvalidParameter, stat);
+
+    /* valid args */
+    stat = GdipPathIterHasCurve(iter, &hasCurve);
+    expect(Ok, stat);
+    expect(FALSE, hasCurve);
+
+    GdipDeletePathIter(iter);
+
+    GdipAddPathEllipse(path, 0.0, 0.0, 35.0, 70.0);
+
+    stat = GdipCreatePathIter(&iter, path);
+    expect(Ok, stat);
+
+    stat = GdipPathIterHasCurve(iter, &hasCurve);
+    expect(Ok, stat);
+    expect(TRUE, hasCurve);
+
+    GdipDeletePathIter(iter);
+    GdipDeletePath(path);
+}
+
 START_TEST(pathiterator)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -64,6 +103,7 @@ START_TEST(pathiterator)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor_destructor();
+    test_hascurve();
 
     GdiplusShutdown(gdiplusToken);
 }
