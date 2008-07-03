@@ -130,7 +130,7 @@ MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **wblk)
   return wblk;
 }
 
-typedef void (*_INITTERMFUN)(void);
+typedef void (CDECL *_INITTERMFUN)(void);
 
 /***********************************************************************
  *		__p___argc (MSVCRT.@)

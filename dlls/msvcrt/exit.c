@@ -38,7 +38,7 @@ static const char szMsgBoxTitle[] = "Wine C++ Runtime Library";
 extern int MSVCRT_app_type;
 extern char *MSVCRT__pgmptr;
 
-void (*_aexit_rtn)(int) = MSVCRT__exit;
+void (*CDECL _aexit_rtn)(int) = MSVCRT__exit;
 
 /* INTERNAL: call atexit functions */
 static void __MSVCRT__call_atexit(void)
