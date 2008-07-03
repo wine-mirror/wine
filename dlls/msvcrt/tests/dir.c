@@ -39,14 +39,12 @@ typedef struct
     const char* file;
     const char* ext;
     const char* expected;
-    BOOL todoA;
-    BOOL todoW;
 } makepath_case;
 
 #define USE_BUFF ((char*)~0ul)
 static const makepath_case makepath_cases[] =
 {
-    { NULL, NULL, NULL, NULL, NULL, "", TRUE }, /* 0 */
+    { NULL, NULL, NULL, NULL, NULL, "" }, /* 0 */
     { NULL, "c", NULL, NULL, NULL, "c:" },
     { NULL, "c:", NULL, NULL, NULL, "c:" },
     { NULL, "c:\\", NULL, NULL, NULL, "c:" },
@@ -56,15 +54,15 @@ static const makepath_case makepath_cases[] =
     { NULL, NULL, NULL, "file", NULL, "file" },
     { NULL, NULL, NULL, "\\file", NULL, "\\file" },
     { NULL, NULL, NULL, "file", NULL, "file" },
-    { NULL, NULL, NULL, NULL, "ext", ".ext", TRUE, TRUE }, /* 10 */
-    { NULL, NULL, NULL, NULL, ".ext", ".ext", TRUE, TRUE },
-    { "foo", NULL, NULL, NULL, NULL, "", TRUE },
-    { "foo", USE_BUFF, NULL, NULL, NULL, "f:", FALSE, TRUE },
-    { "foo", NULL, USE_BUFF, NULL, NULL, "foo\\", FALSE, TRUE },
-    { "foo", NULL, NULL, USE_BUFF, NULL, "foo", FALSE, TRUE },
-    { "foo", NULL, USE_BUFF, "file", NULL, "foo\\file", FALSE, TRUE },
-    { "foo", NULL, USE_BUFF, "file", "ext", "foo\\file.ext", FALSE, TRUE },
-    { "foo", NULL, NULL, USE_BUFF, "ext", "foo.ext", FALSE, TRUE },
+    { NULL, NULL, NULL, NULL, "ext", ".ext" }, /* 10 */
+    { NULL, NULL, NULL, NULL, ".ext", ".ext" },
+    { "foo", NULL, NULL, NULL, NULL, "" },
+    { "foo", USE_BUFF, NULL, NULL, NULL, "f:" },
+    { "foo", NULL, USE_BUFF, NULL, NULL, "foo\\" },
+    { "foo", NULL, NULL, USE_BUFF, NULL, "foo" },
+    { "foo", NULL, USE_BUFF, "file", NULL, "foo\\file" },
+    { "foo", NULL, USE_BUFF, "file", "ext", "foo\\file.ext" },
+    { "foo", NULL, NULL, USE_BUFF, "ext", "foo.ext" },
     /* remaining combinations of USE_BUFF crash native */
     { NULL, "c", "dir", "file", "ext", "c:dir\\file.ext" },
     { NULL, "c:", "dir", "file", "ext", "c:dir\\file.ext" }, /* 20 */
@@ -98,11 +96,7 @@ static void test_makepath(void)
                   p->ext == USE_BUFF ? buffer : p->ext);
 
         buffer[MAX_PATH - 1] = '\0';
-        if (p->todoA) todo_wine {
-            ok(!strcmp(p->expected, buffer), "got '%s' for case %d\n", buffer, i);
-        }
-        else
-            ok(!strcmp(p->expected, buffer), "got '%s' for case %d\n", buffer, i);
+        ok(!strcmp(p->expected, buffer), "got '%s' for case %d\n", buffer, i);
 
         /* Unicode */
         if (p->drive != USE_BUFF) MultiByteToWideChar(CP_ACP, 0, p->drive, -1, driveW, MAX_PATH);
@@ -123,11 +117,7 @@ static void test_makepath(void)
 
         bufferW[MAX_PATH - 1] = '\0';
         WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, MAX_PATH, NULL, NULL);
-        if (p->todoW) todo_wine {
-            ok(!strcmp(p->expected, buffer), "got '%s' for unicode case %d\n", buffer, i);
-        }
-        else
-            ok(!strcmp(p->expected, buffer), "got '%s' for unicode case %d\n", buffer, i);
+        ok(!strcmp(p->expected, buffer), "got '%s' for unicode case %d\n", buffer, i);
     }
 }
 

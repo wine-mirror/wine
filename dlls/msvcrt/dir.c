@@ -865,28 +865,29 @@ VOID CDECL _makepath(char * path, const char * drive,
     {
         *p++ = drive[0];
         *p++ = ':';
-        *p = 0;
     }
     if (directory && directory[0])
     {
-        strcpy(p, directory);
-        p += strlen(directory) - 1;
-        if (*p != '/' && *p != '\\') {
-            strcat(p, "\\");
-            p++;
-        }
-        p++;
+        unsigned int len = strlen(directory);
+        memmove(p, directory, len);
+        p += len;
+        if (p[-1] != '/' && p[-1] != '\\')
+            *p++ = '\\';
     }
     if (filename && filename[0])
     {
-        strcpy(p, filename);
-        if (extension && extension[0])
-        {
-            if ( extension[0] != '.' )
-                strcat(p,".");
-            strcat(p,extension);
-        }
+        unsigned int len = strlen(filename);
+        memmove(p, filename, len);
+        p += len;
     }
+    if (extension && extension[0])
+    {
+        if (extension[0] != '.')
+            *p++ = '.';
+        strcpy(p, extension);
+    }
+    else
+        *p = '\0';
     TRACE("returning %s\n",path);
 }
 
@@ -898,43 +899,41 @@ VOID CDECL _makepath(char * path, const char * drive,
 VOID CDECL _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const MSVCRT_wchar_t *directory,
                       const MSVCRT_wchar_t *filename, const MSVCRT_wchar_t *extension)
 {
-    MSVCRT_wchar_t ch;
+    MSVCRT_wchar_t *p = path;
+
     TRACE("%s %s %s %s\n", debugstr_w(drive), debugstr_w(directory),
           debugstr_w(filename), debugstr_w(extension));
 
     if ( !path )
         return;
 
-    path[0] = 0;
     if (drive && drive[0])
     {
-        path[0] = drive[0];
-        path[1] = ':';
-        path[2] = 0;
+        *p++ = drive[0];
+        *p++ = ':';
     }
     if (directory && directory[0])
     {
-        strcatW(path, directory);
-        ch = path[strlenW(path) - 1];
-        if (ch != '/' && ch != '\\')
-        {
-            static const MSVCRT_wchar_t backslashW[] = {'\\',0};
-            strcatW(path, backslashW);
-        }
+        unsigned int len = strlenW(directory);
+        memmove(p, directory, len * sizeof(MSVCRT_wchar_t));
+        p += len;
+        if (p[-1] != '/' && p[-1] != '\\')
+            *p++ = '\\';
     }
     if (filename && filename[0])
     {
-        strcatW(path, filename);
-        if (extension && extension[0])
-        {
-            if ( extension[0] != '.' )
-            {
-                static const MSVCRT_wchar_t dotW[] = {'.',0};
-                strcatW(path, dotW);
-            }
-            strcatW(path, extension);
-        }
+        unsigned int len = strlenW(filename);
+        memmove(p, filename, len * sizeof(MSVCRT_wchar_t));
+        p += len;
     }
+    if (extension && extension[0])
+    {
+        if (extension[0] != '.')
+            *p++ = '.';
+        strcpyW(p, extension);
+    }
+    else
+        *p = '\0';
 
     TRACE("returning %s\n", debugstr_w(path));
 }
