@@ -2913,7 +2913,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     int vs_selected_mode;
     int ps_selected_mode;
     struct shader_caps shader_caps;
+    struct fragment_caps fragment_caps;
     const shader_backend_t *shader_backend;
+    const struct fragment_pipeline *frag_pipeline = NULL;
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
@@ -3272,8 +3274,12 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     shader_backend = select_shader_backend(Adapter, DeviceType);
     shader_backend->shader_get_caps(DeviceType, &GLINFO_LOCATION, &shader_caps);
 
+    memset(&fragment_caps, 0, sizeof(fragment_caps));
+    frag_pipeline = select_fragment_implementation(Adapter, DeviceType);
+    frag_pipeline->get_caps(DeviceType, &GLINFO_LOCATION, &fragment_caps);
+
     /* Add shader misc caps. Only some of them belong to the shader parts of the pipeline */
-    pCaps->PrimitiveMiscCaps |= shader_caps.PrimitiveMiscCaps;
+    pCaps->PrimitiveMiscCaps |= fragment_caps.PrimitiveMiscCaps;
 
     /* This takes care for disabling vertex shader or pixel shader caps while leaving the other one enabled.
      * Ignore shader model capabilities if disabled in config
@@ -3296,9 +3302,10 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         pCaps->PixelShader1xMaxValue        = shader_caps.PixelShader1xMaxValue;
     }
 
-    pCaps->TextureOpCaps                    = shader_caps.TextureOpCaps;
-    pCaps->MaxTextureBlendStages            = shader_caps.MaxTextureBlendStages;
-    pCaps->MaxSimultaneousTextures          = shader_caps.MaxSimultaneousTextures;
+    pCaps->TextureOpCaps                    = fragment_caps.TextureOpCaps;
+    pCaps->MaxTextureBlendStages            = fragment_caps.MaxTextureBlendStages;
+    pCaps->MaxSimultaneousTextures          = fragment_caps.MaxSimultaneousTextures;
+
     pCaps->VS20Caps                         = shader_caps.VS20Caps;
     pCaps->MaxVShaderInstructionsExecuted   = shader_caps.MaxVShaderInstructionsExecuted;
     pCaps->MaxVertexShader30InstructionSlots= shader_caps.MaxVertexShader30InstructionSlots;

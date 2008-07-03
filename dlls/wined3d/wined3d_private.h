@@ -218,12 +218,6 @@ typedef struct SHADER_BUFFER {
 } SHADER_BUFFER;
 
 struct shader_caps {
-    DWORD               PrimitiveMiscCaps;
-
-    DWORD               TextureOpCaps;
-    DWORD               MaxTextureBlendStages;
-    DWORD               MaxSimultaneousTextures;
-
     DWORD               VertexShaderVersion;
     DWORD               MaxVertexShaderConst;
 
@@ -546,8 +540,17 @@ struct StateEntryTemplate
     struct StateEntry   content;
 };
 
+struct fragment_caps {
+    DWORD               PrimitiveMiscCaps;
+
+    DWORD               TextureOpCaps;
+    DWORD               MaxTextureBlendStages;
+    DWORD               MaxSimultaneousTextures;
+};
+
 struct fragment_pipeline {
     void (*enable_extension)(IWineD3DDevice *iface, BOOL enable);
+    void (*get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct fragment_caps *caps);
     const struct StateEntryTemplate *states;
 };
 

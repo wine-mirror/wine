@@ -3649,11 +3649,6 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
 }
 
 static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {
-    /* We don't have a GLSL fixed function pipeline yet, so let the none backend set its caps,
-     * then overwrite the shader specific ones
-     */
-    none_shader_backend.shader_get_caps(devtype, gl_info, pCaps);
-
     /* Nvidia Geforce6/7 or Ati R4xx/R5xx cards with GLSL support, support VS 3.0 but older Nvidia/Ati
      * models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support using
      * vs_nv_version which is based on NV_vertex_program.
