@@ -3864,7 +3864,7 @@ const struct StateEntry FFPStateTable[] =
     { /* 40, WINED3DRS_EDGEANTIALIAS                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                },
     { /* 41, WINED3DRS_COLORKEYENABLE               */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            NULL                },
     { /* 42, undefined                              */      0,                                                  state_undefined     },
-    { /* 43, WINED3DRS_BORDERCOLOR                  */      STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_bordercolor   },
+    { /* 43, WINED3DRS_BORDERCOLOR                  */      STATE_RENDER(WINED3DRS_BORDERCOLOR),                NULL                },
     { /* 44, WINED3DRS_TEXTUREADDRESSU              */      0, /* Handled in ddraw */                           state_undefined     },
     { /* 45, WINED3DRS_TEXTUREADDRESSV              */      0, /* Handled in ddraw */                           state_undefined     },
     { /* 46, WINED3DRS_MIPMAPLODBIAS                */      STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              state_mipmaplodbias },
@@ -5415,6 +5415,7 @@ const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(7, WINED3DTSS_RESULTARG),        { STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         }},
     { STATE_TEXTURESTAGE(7, WINED3DTSS_CONSTANT),         { 0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          }},
     { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  pixelshader         }},
+    { STATE_RENDER(WINED3DRS_BORDERCOLOR),                { STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_bordercolor   }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
