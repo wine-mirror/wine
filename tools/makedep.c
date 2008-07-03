@@ -693,10 +693,12 @@ static void parse_generated_idl( INCL_FILE *source )
     {
         add_include( source, "objbase.h", 0, 1 );
         add_include( source, "rpcproxy.h", 0, 1 );
+        add_include( source, "wine/exception.h", 0, 1 );
         add_include( source, header, 0, 0 );
     }
     else if (strendswith( source->name, "_s.c" ))
     {
+        add_include( source, "wine/exception.h", 0, 1 );
         add_include( source, header, 0, 0 );
     }
     else if (!strcmp( source->name, "dlldata.c" ))
