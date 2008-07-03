@@ -24,6 +24,33 @@
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
+static void test_constructor_destructor(void)
+{
+    GpPath *path;
+    GpPathIterator *iter;
+    GpStatus stat;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathRectangle(path, 5.0, 5.0, 100.0, 50.0);
+
+    /* NULL args */
+    stat = GdipCreatePathIter(NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipCreatePathIter(&iter, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipCreatePathIter(NULL, path);
+    expect(InvalidParameter, stat);
+    stat = GdipDeletePathIter(NULL);
+    expect(InvalidParameter, stat);
+
+    /* valid args */
+    stat = GdipCreatePathIter(&iter, path);
+    expect(Ok, stat);
+
+    GdipDeletePathIter(iter);
+    GdipDeletePath(path);
+}
+
 START_TEST(pathiterator)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -35,6 +62,8 @@ START_TEST(pathiterator)
     gdiplusStartupInput.SuppressExternalCodecs      = 0;
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    test_constructor_destructor();
 
     GdiplusShutdown(gdiplusToken);
 }
