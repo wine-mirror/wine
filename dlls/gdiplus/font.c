@@ -396,6 +396,28 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
 }
 
 /*******************************************************************************
+ * GdipCloneFontFamily [GDIPLUS.@]
+ *
+ * Creates a deep copy of a Font Family object
+ *
+ * PARAMS
+ *  FontFamily          [I] Font to clone
+ *  clonedFontFamily    [O] The resulting cloned font
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ */
+GpStatus WINGDIPAPI GdipCloneFontFamily(GpFontFamily* FontFamily, GpFontFamily** clonedFontFamily)
+{
+    if (!(FontFamily && clonedFontFamily)) return InvalidParameter;
+
+    FIXME("stub: %p (%s), %p\n", FontFamily,
+            debugstr_w(FontFamily->FamilyName), clonedFontFamily);
+
+    return NotImplemented;
+}
+
+/*******************************************************************************
  * GdipGetFamilyName [GDIPLUS.@]
  *
  * Returns the family name into name

@@ -375,6 +375,7 @@ GpStatus WINGDIPAPI GdipGetFontSize(GpFont*, REAL*);
 
 GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR*,
     GpFontCollection*, GpFontFamily**);
+GpStatus WINGDIPAPI GdipCloneFontFamily(GpFontFamily*, GpFontFamily**);
 GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily*);
 GpStatus WINGDIPAPI GdipGetFamilyName(GDIPCONST GpFontFamily*, WCHAR*, LANGID);
 

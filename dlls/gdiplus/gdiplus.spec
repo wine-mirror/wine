@@ -51,7 +51,7 @@
 @ stdcall GdipCloneBrush(ptr ptr)
 @ stdcall GdipCloneCustomLineCap(ptr ptr)
 @ stdcall GdipCloneFont(ptr ptr)
-@ stub GdipCloneFontFamily
+@ stdcall GdipCloneFontFamily(ptr ptr)
 @ stdcall GdipCloneImage(ptr ptr)
 @ stdcall GdipCloneImageAttributes(ptr ptr)
 @ stdcall GdipCloneMatrix(ptr ptr)
