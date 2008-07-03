@@ -1394,7 +1394,6 @@ static void HTTPREQ_Destroy(WININETHANDLEHEADER *hdr)
 static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
 {
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
-    LPWININETHTTPSESSIONW lpwhs = NULL;
 
     TRACE("%p\n",lpwhr);
 
@@ -1425,8 +1424,6 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
         HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo);
         lpwhr->pProxyAuthInfo = NULL;
     }
-
-    lpwhs = lpwhr->lpHttpSession;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
