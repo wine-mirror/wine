@@ -2344,6 +2344,38 @@ static void tex_bumpenvloffset(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     }
 }
 
+static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    BOOL texIsPow2 = FALSE;
+    DWORD sampler = state - STATE_SAMPLER(0);
+
+    if(!stateblock->textures[sampler]) return;
+    /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
+     * IWineD3DBaseTexture::ApplyStateChanges multiplies the set matrix with a fixup matrix. Before the
+     * scaling is reapplied or removed, the texture matrix has to be reapplied
+     *
+     * The mapped stage is alrady active because the sampler() function below, which is part of the
+     * misc pipeline
+     */
+    if(!GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) && sampler < MAX_TEXTURES) {
+        if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D ||
+           stateblock->textureDimensions[sampler] == GL_TEXTURE_RECTANGLE_ARB) {
+            if(((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0 ||
+               ((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[5] != 1.0 ) {
+                texIsPow2 = TRUE;
+            }
+        } else if(stateblock->textureDimensions[sampler] == GL_TEXTURE_CUBE_MAP_ARB) {
+            if(((IWineD3DCubeTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0) {
+                texIsPow2 = TRUE;
+            }
+        }
+
+        if(texIsPow2 || context->lastWasPow2Texture[sampler]) {
+            context->lastWasPow2Texture[sampler] = texIsPow2;
+            transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock, context);
+        }
+    }
+}
+
 static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD sampler = state - STATE_SAMPLER(0);
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[sampler];
@@ -2375,31 +2407,6 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     }
 
     if(stateblock->textures[sampler]) {
-        BOOL texIsPow2 = FALSE;
-
-        /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
-         * IWineD3DBaseTexture::ApplyStateChanges multiplies the set matrix with a fixup matrix. Before the
-         * scaling is reapplied or removed, the texture matrix has to be reapplied
-         */
-        if(!GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) && sampler < MAX_TEXTURES) {
-            if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D ||
-               stateblock->textureDimensions[sampler] == GL_TEXTURE_RECTANGLE_ARB) {
-                if(((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0 ||
-                   ((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[5] != 1.0 ) {
-                    texIsPow2 = TRUE;
-                }
-            } else if(stateblock->textureDimensions[sampler] == GL_TEXTURE_CUBE_MAP_ARB) {
-                if(((IWineD3DCubeTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0) {
-                    texIsPow2 = TRUE;
-                }
-            }
-
-            if(texIsPow2 || context->lastWasPow2Texture[sampler]) {
-                context->lastWasPow2Texture[sampler] = texIsPow2;
-                transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock, context);
-            }
-        }
-
         IWineD3DBaseTexture_PreLoad(stateblock->textures[sampler]);
         IWineD3DBaseTexture_ApplyStateChanges(stateblock->textures[sampler], stateblock->textureState[sampler], stateblock->samplerState[sampler]);
 
@@ -4300,6 +4307,15 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_RENDER(WINED3DRS_POINTSCALE_B),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }},
     { STATE_RENDER(WINED3DRS_POINTSCALE_C),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }},
     { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax      }},
+    /* Samplers for NP2 texture matrix adjustions */
+    { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texmatrix   }},
+    { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texmatrix   }},
+    { STATE_SAMPLER(2),                                   { STATE_SAMPLER(2),                                   sampler_texmatrix   }},
+    { STATE_SAMPLER(3),                                   { STATE_SAMPLER(3),                                   sampler_texmatrix   }},
+    { STATE_SAMPLER(4),                                   { STATE_SAMPLER(4),                                   sampler_texmatrix   }},
+    { STATE_SAMPLER(5),                                   { STATE_SAMPLER(5),                                   sampler_texmatrix   }},
+    { STATE_SAMPLER(6),                                   { STATE_SAMPLER(6),                                   sampler_texmatrix   }},
+    { STATE_SAMPLER(7),                                   { STATE_SAMPLER(7),                                   sampler_texmatrix   }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
