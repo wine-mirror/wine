@@ -2819,7 +2819,7 @@ unsigned char * WINAPI NdrComplexStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   ALIGN_POINTER_CLEAR(pStubMsg->Buffer, pFormat[1] + 1);
 
   pFormat += 4;
-  if (*(const WORD*)pFormat) conf_array = pFormat + *(const WORD*)pFormat;
+  if (*(const SHORT*)pFormat) conf_array = pFormat + *(const SHORT*)pFormat;
   pFormat += 2;
   if (*(const WORD*)pFormat) pointer_desc = pFormat + *(const WORD*)pFormat;
   pFormat += 2;
@@ -2887,7 +2887,7 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     *ppMemory = NdrAllocate(pStubMsg, size);
 
   pFormat += 4;
-  if (*(const WORD*)pFormat) conf_array = pFormat + *(const WORD*)pFormat;
+  if (*(const SHORT*)pFormat) conf_array = pFormat + *(const SHORT*)pFormat;
   pFormat += 2;
   if (*(const WORD*)pFormat) pointer_desc = pFormat + *(const WORD*)pFormat;
   pFormat += 2;
@@ -2943,7 +2943,7 @@ void WINAPI NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   }
 
   pFormat += 4;
-  if (*(const WORD*)pFormat) conf_array = pFormat + *(const WORD*)pFormat;
+  if (*(const SHORT*)pFormat) conf_array = pFormat + *(const SHORT*)pFormat;
   pFormat += 2;
   if (*(const WORD*)pFormat) pointer_desc = pFormat + *(const WORD*)pFormat;
   pFormat += 2;
@@ -2979,7 +2979,7 @@ ULONG WINAPI NdrComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   ALIGN_POINTER(pStubMsg->Buffer, pFormat[1] + 1);
 
   pFormat += 4;
-  if (*(const WORD*)pFormat) conf_array = pFormat + *(const WORD*)pFormat;
+  if (*(const SHORT*)pFormat) conf_array = pFormat + *(const SHORT*)pFormat;
   pFormat += 4;
 
   ComplexStructMemorySize(pStubMsg, pFormat);
@@ -3004,7 +3004,7 @@ void WINAPI NdrComplexStructFree(PMIDL_STUB_MESSAGE pStubMsg,
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
 
   pFormat += 4;
-  if (*(const WORD*)pFormat) conf_array = pFormat + *(const WORD*)pFormat;
+  if (*(const SHORT*)pFormat) conf_array = pFormat + *(const SHORT*)pFormat;
   pFormat += 2;
   if (*(const WORD*)pFormat) pointer_desc = pFormat + *(const WORD*)pFormat;
   pFormat += 2;
