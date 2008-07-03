@@ -1880,7 +1880,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 {
     WND *win;
     BOOL ret;
-    RECT visible_rect, old_visible_rect, old_window_rect;
+    RECT visible_rect, old_window_rect;
 
     visible_rect = *window_rect;
     USER_Driver->pWindowPosChanging( hwnd, insert_after, swp_flags,
@@ -1903,18 +1903,18 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         req->client.top    = client_rect->top;
         req->client.right  = client_rect->right;
         req->client.bottom = client_rect->bottom;
-        if (!IsRectEmpty( &valid_rects[0] ))
-            wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
+        if (memcmp( window_rect, &visible_rect, sizeof(RECT) ) || !IsRectEmpty( &valid_rects[0] ))
+        {
+            wine_server_add_data( req, &visible_rect, sizeof(visible_rect) );
+            if (!IsRectEmpty( &valid_rects[0] ))
+                wine_server_add_data( req, valid_rects, 2 * sizeof(*valid_rects) );
+        }
         if ((ret = !wine_server_call( req )))
         {
             win->dwStyle    = reply->new_style;
             win->dwExStyle  = reply->new_ex_style;
             win->rectWindow = *window_rect;
             win->rectClient = *client_rect;
-            old_visible_rect.left   = reply->visible.left;
-            old_visible_rect.top    = reply->visible.top;
-            old_visible_rect.right  = reply->visible.right;
-            old_visible_rect.bottom = reply->visible.bottom;
         }
     }
     SERVER_END_REQ;
@@ -1922,23 +1922,6 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     if (ret)
     {
-        if (memcmp( &visible_rect, &old_visible_rect, sizeof(RECT) ))
-        {
-            TRACE( "%p: need to update visible rect %s -> %s\n", hwnd,
-                   wine_dbgstr_rect(&visible_rect), wine_dbgstr_rect(&old_visible_rect) );
-            SERVER_START_REQ( set_window_visible_rect )
-            {
-                req->handle         = hwnd;
-                req->flags          = swp_flags;
-                req->visible.left   = visible_rect.left;
-                req->visible.top    = visible_rect.top;
-                req->visible.right  = visible_rect.right;
-                req->visible.bottom = visible_rect.bottom;
-                wine_server_call( req );
-            }
-            SERVER_END_REQ;
-        }
-
         if (((swp_flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) ||
             (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED)))
             invalidate_dce( hwnd, &old_window_rect );
