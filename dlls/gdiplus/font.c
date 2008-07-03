@@ -411,10 +411,25 @@ GpStatus WINGDIPAPI GdipCloneFontFamily(GpFontFamily* FontFamily, GpFontFamily**
 {
     if (!(FontFamily && clonedFontFamily)) return InvalidParameter;
 
-    FIXME("stub: %p (%s), %p\n", FontFamily,
+    TRACE("stub: %p (%s), %p\n", FontFamily,
             debugstr_w(FontFamily->FamilyName), clonedFontFamily);
 
-    return NotImplemented;
+    *clonedFontFamily = GdipAlloc(sizeof(GpFontFamily));
+    if (!*clonedFontFamily) return OutOfMemory;
+
+    **clonedFontFamily = *FontFamily;
+
+    (*clonedFontFamily)->FamilyName = GdipAlloc(sizeof(WCHAR) * LF_FACESIZE);
+    if (!(*clonedFontFamily)->FamilyName)
+    {
+        GdipFree (clonedFontFamily);
+        return OutOfMemory;
+    }
+
+    lstrcpynW((*clonedFontFamily)->FamilyName, FontFamily->FamilyName,
+            LF_FACESIZE);
+
+    return Ok;
 }
 
 /*******************************************************************************

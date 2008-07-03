@@ -150,7 +150,7 @@ static void test_logfont(void)
 
 static void test_fontfamily (void)
 {
-    GpFontFamily* family;
+    GpFontFamily *family, *clonedFontFamily;
     WCHAR itsName[LF_FACESIZE];
     GpStatus stat;
 
@@ -180,7 +180,16 @@ static void test_fontfamily (void)
         expect (Ok, stat);
     }
 
+    /* Make sure we don't read old data */
+    ZeroMemory (itsName, sizeof(itsName));
+    stat = GdipCloneFontFamily(family, &clonedFontFamily);
+    expect (Ok, stat);
     GdipDeleteFontFamily(family);
+    stat = GdipGetFamilyName(clonedFontFamily, itsName, LANG_NEUTRAL);
+    expect(Ok, stat);
+    expect(0, lstrcmpiW(itsName, arial));
+
+    GdipDeleteFontFamily(clonedFontFamily);
 }
 
 
