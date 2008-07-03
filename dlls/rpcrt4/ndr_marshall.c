@@ -2114,7 +2114,17 @@ void WINAPI NdrSimpleStructFree(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 
-static unsigned long EmbeddedComplexSize(const MIDL_STUB_MESSAGE *pStubMsg,
+#include "pshpack1.h"
+typedef struct
+{
+    unsigned char type;
+    unsigned char flags_type; /* flags in upper nibble, type in lower nibble */
+    ULONG low_value;
+    ULONG high_value;
+} NDR_RANGE;
+#include "poppack.h"
+
+static unsigned long EmbeddedComplexSize(MIDL_STUB_MESSAGE *pStubMsg,
                                          PFORMAT_STRING pFormat)
 {
   switch (*pFormat) {
@@ -2128,6 +2138,36 @@ static unsigned long EmbeddedComplexSize(const MIDL_STUB_MESSAGE *pStubMsg,
     return *(const WORD*)&pFormat[2];
   case RPC_FC_USER_MARSHAL:
     return *(const WORD*)&pFormat[4];
+  case RPC_FC_RANGE: {
+    switch (((const NDR_RANGE *)pFormat)->flags_type & 0xf) {
+    case RPC_FC_BYTE:
+    case RPC_FC_CHAR:
+    case RPC_FC_SMALL:
+    case RPC_FC_USMALL:
+        return sizeof(UCHAR);
+    case RPC_FC_WCHAR:
+    case RPC_FC_SHORT:
+    case RPC_FC_USHORT:
+        return sizeof(USHORT);
+    case RPC_FC_LONG:
+    case RPC_FC_ULONG:
+    case RPC_FC_ENUM32:
+        return sizeof(ULONG);
+    case RPC_FC_FLOAT:
+        return sizeof(float);
+    case RPC_FC_DOUBLE:
+        return sizeof(double);
+    case RPC_FC_HYPER:
+        return sizeof(ULONGLONG);
+    case RPC_FC_ERROR_STATUS_T:
+        return sizeof(error_status_t);
+    case RPC_FC_ENUM16:
+        return sizeof(UINT);
+    default:
+        ERR("unknown type 0x%x\n", ((const NDR_RANGE *)pFormat)->flags_type & 0xf);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
+  }
   case RPC_FC_NON_ENCAPSULATED_UNION:
     pFormat += 2;
     if (pStubMsg->fHasNewCorrDesc)
@@ -5709,16 +5749,6 @@ void WINAPI NdrXmitOrRepAsFree(PMIDL_STUB_MESSAGE pStubMsg,
 {
     FIXME("stub\n");
 }
-
-#include "pshpack1.h"
-typedef struct
-{
-    unsigned char type;
-    unsigned char flags_type; /* flags in upper nibble, type in lower nibble */
-    ULONG low_value;
-    ULONG high_value;
-} NDR_RANGE;
-#include "poppack.h"
 
 /***********************************************************************
  *           NdrRangeMarshall [internal]
