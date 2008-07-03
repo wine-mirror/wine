@@ -95,7 +95,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
 {
     WCHAR facename[LF_FACESIZE];
     LOGFONTW* lfw;
-    const TEXTMETRICW* tmw;
+    const NEWTEXTMETRICW* tmw;
     GpStatus stat;
 
     if (!fontFamily || !fontFamily->FamilyName || !font)
@@ -333,19 +333,31 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
     return NotImplemented;
 }
 
-/* Borrowed from GDI32 */
+/***********************************************************************
+ * Borrowed from GDI32:
+ *
+ * Elf is really an ENUMLOGFONTEXW, and ntm is a NEWTEXTMETRICEXW.
+ *     We have to use other types because of the FONTENUMPROCW definition.
+ */
 static INT CALLBACK is_font_installed_proc(const LOGFONTW *elf,
                             const TEXTMETRICW *ntm, DWORD type, LPARAM lParam)
 {
+    if (!ntm)
+    {
+        return 1;
+    }
+
+    *(NEWTEXTMETRICW*)lParam = *(const NEWTEXTMETRICW*)ntm;
+
     return 0;
 }
 
-static BOOL is_font_installed(const WCHAR *name)
+static BOOL find_installed_font(const WCHAR *name, NEWTEXTMETRICW *ntm)
 {
     HDC hdc = GetDC(0);
     BOOL ret = FALSE;
 
-    if(!EnumFontFamiliesW(hdc, name, is_font_installed_proc, 0))
+    if(!EnumFontFamiliesW(hdc, name, is_font_installed_proc, (LPARAM)ntm))
         ret = TRUE;
 
     ReleaseDC(0, hdc);
@@ -377,9 +389,7 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
                                         GpFontFamily **FontFamily)
 {
     GpFontFamily* ffamily;
-    HDC hdc;
-    HFONT hFont, hfont_old;
-    LOGFONTW lfw;
+    NEWTEXTMETRICW ntm;
 
     TRACE("%s, %p %p\n", debugstr_w(name), fontCollection, FontFamily);
 
@@ -387,35 +397,25 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
         return InvalidParameter;
     if (fontCollection)
         FIXME("No support for FontCollections yet!\n");
-    if (!is_font_installed(name))
+
+    if (!find_installed_font(name, &ntm))
         return FontFamilyNotFound;
 
     ffamily = GdipAlloc(sizeof (GpFontFamily));
     if (!ffamily) return OutOfMemory;
 
-    hdc = GetDC(0);
-    lstrcpynW(lfw.lfFaceName, name, sizeof(WCHAR) * LF_FACESIZE);
-    lfw.lfCharSet = DEFAULT_CHARSET;
-    lfw.lfEscapement = lfw.lfOrientation = 0;
-
-    hFont = CreateFontIndirectW (&lfw);
-    hfont_old = SelectObject(hdc, hFont);
-
-    GetTextMetricsW(hdc, &ffamily->tmw);
-    DeleteObject(SelectObject(hdc, hfont_old));
+    ffamily->tmw = ntm;
 
     ffamily->FamilyName = GdipAlloc(LF_FACESIZE * sizeof (WCHAR));
     if (!ffamily->FamilyName)
     {
         GdipFree(ffamily);
-        ReleaseDC(0, hdc);
         return OutOfMemory;
     }
 
     lstrcpynW(ffamily->FamilyName, name, sizeof(WCHAR) * LF_FACESIZE);
 
     *FontFamily = ffamily;
-    ReleaseDC(0, hdc);
 
     return Ok;
 }
