@@ -1267,6 +1267,9 @@ static LRESULT COMBOEX_Command (COMBOEX_INFO *infoPtr, WPARAM wParam, LPARAM lPa
 	InvalidateRect (infoPtr->hwndCombo, 0, 0);
 	return 0;
 
+    case CBN_SETFOCUS:
+        return SendMessageW (parent, WM_COMMAND, wParam, (LPARAM)infoPtr->hwndSelf);
+
     default:
 	/*
 	 * We have to change the handle since we are the control

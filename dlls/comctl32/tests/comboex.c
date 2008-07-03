@@ -221,7 +221,7 @@ static void test_WM_LBUTTONDOWN(void)
     result = SendMessage(hCombo, WM_LBUTTONDOWN, 0, MAKELPARAM(x, y));
     ok(result, "WM_LBUTTONDOWN was not processed. LastError=%d\n",
        GetLastError());
-    todo_wine ok(GetFocus() == hCombo,
+    ok(GetFocus() == hCombo,
        "Focus not on ComboBoxEx's ComboBox Control, instead on %p\n",
        GetFocus());
     ok(SendMessage(hComboEx, CB_GETDROPPEDSTATE, 0, 0),
@@ -232,7 +232,7 @@ static void test_WM_LBUTTONDOWN(void)
     result = SendMessage(hCombo, WM_LBUTTONUP, 0, MAKELPARAM(x, y));
     ok(result, "WM_LBUTTONUP was not processed. LastError=%d\n",
        GetLastError());
-    todo_wine ok(GetFocus() == hCombo,
+    ok(GetFocus() == hCombo,
        "Focus not on ComboBoxEx's ComboBox Control, instead on %p\n",
        GetFocus());
 
@@ -244,23 +244,23 @@ static void test_WM_LBUTTONDOWN(void)
     result = SendMessage(hList, WM_MOUSEMOVE, 0, MAKELPARAM(x, y));
     ok(!result, "WM_MOUSEMOVE was not processed. LastError=%d\n",
        GetLastError());
-    todo_wine ok(GetFocus() == hCombo,
+    ok(GetFocus() == hCombo,
        "Focus not on ComboBoxEx's ComboBox Control, instead on %p\n",
        GetFocus());
 
     result = SendMessage(hList, WM_LBUTTONDOWN, 0, MAKELPARAM(x, y));
     ok(!result, "WM_LBUTTONDOWN was not processed. LastError=%d\n",
        GetLastError());
-    todo_wine ok(GetFocus() == hCombo,
+    ok(GetFocus() == hCombo,
        "Focus not on ComboBoxEx's ComboBox Control, instead on %p\n",
        GetFocus());
-    todo_wine ok(SendMessage(hComboEx, CB_GETDROPPEDSTATE, 0, 0),
+    ok(SendMessage(hComboEx, CB_GETDROPPEDSTATE, 0, 0),
        "The dropdown list should still be visible.\n");
 
     result = SendMessage(hList, WM_LBUTTONUP, 0, MAKELPARAM(x, y));
     ok(!result, "WM_LBUTTONUP was not processed. LastError=%d\n",
        GetLastError());
-    ok(GetFocus() == hEdit,
+    todo_wine ok(GetFocus() == hEdit,
        "Focus not on ComboBoxEx's Edit Control, instead on %p\n",
        GetFocus());
     ok(!SendMessage(hCombo, CB_GETDROPPEDSTATE, 0, 0),
