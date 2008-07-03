@@ -370,6 +370,9 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
 
     hdc = GetDC(0);
     lstrcpynW(lfw.lfFaceName, name, sizeof(WCHAR) * LF_FACESIZE);
+    lfw.lfCharSet = DEFAULT_CHARSET;
+    lfw.lfEscapement = lfw.lfOrientation = 0;
+
     hFont = CreateFontIndirectW (&lfw);
     hfont_old = SelectObject(hdc, hFont);
 

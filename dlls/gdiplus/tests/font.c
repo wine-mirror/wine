@@ -76,6 +76,8 @@ static void test_createfont(void)
         expect (i, unit);
         GdipDeleteFont(font);
     }
+
+    GdipDeleteFontFamily(fontfamily);
 }
 
 static void test_logfont(void)
