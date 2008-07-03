@@ -192,6 +192,53 @@ static void test_fontfamily (void)
     GdipDeleteFontFamily(clonedFontFamily);
 }
 
+static void test_fontfamily_properties (void)
+{
+    GpFontFamily* FontFamily = NULL;
+    GpStatus stat;
+    UINT16 result = 0;
+
+    GdipCreateFontFamilyFromName(arial, NULL, &FontFamily);
+todo_wine
+{
+    stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok (result == 2355, "Expected 2355, got %d\n", result);
+    result = 0;
+    stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok(result == 2048, "Expected 2048, got %d\n", result);
+    result = 0;
+    stat = GdipGetCellAscent(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok(result == 1854, "Expected 1854, got %d\n", result);
+    result = 0;
+    stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
+    ok(result == 434, "Expected 434, got %d\n", result);
+}
+    GdipDeleteFontFamily(FontFamily);
+
+    GdipCreateFontFamilyFromName(TimesNewRoman, NULL, &FontFamily);
+    result = 0;
+todo_wine
+{
+    stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok(result == 2355, "Expected 2355, got %d\n", result);
+    result = 0;
+    stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok(result == 2048, "Expected 2048, got %d\n", result);
+    result = 0;
+    stat = GdipGetCellAscent(FontFamily, FontStyleRegular, &result);
+    expect(Ok, stat);
+    ok(result == 1825, "Expected 1825, got %d\n", result);
+    result = 0;
+    stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
+    ok(result == 443, "Expected 443 got %d\n", result);
+}
+    GdipDeleteFontFamily(FontFamily);
+}
 
 static void test_getgenerics (void)
 {
@@ -245,6 +292,7 @@ START_TEST(font)
     test_createfont();
     test_logfont();
     test_fontfamily();
+    test_fontfamily_properties();
     test_getgenerics();
 
     GdiplusShutdown(gdiplusToken);
