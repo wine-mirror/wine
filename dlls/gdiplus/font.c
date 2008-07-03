@@ -554,9 +554,12 @@ GpStatus WINGDIPAPI GdipGetEmHeight(GDIPCONST GpFontFamily *family, INT style, U
 {
     if (!(family && EmHeight)) return InvalidParameter;
 
-    FIXME("Stub!\n");
+    TRACE("%p (%s), %d, %p, stub!\n", family,
+            debugstr_w(family->FamilyName), style, EmHeight);
 
-    return NotImplemented;
+    *EmHeight = family->tmw.ntmSizeEM;
+
+    return Ok;
 }
 
 
