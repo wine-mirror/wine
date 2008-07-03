@@ -491,6 +491,30 @@ GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipGetLineSpacing [GDIPLUS.@]
+ *
+ * Returns the line spacing in design units
+ *
+ * PARAMS
+ *  family      [I] Family to retrieve from
+ *  style       [I] (Optional) font style
+ *  LineSpacing [O] Return value
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter (family or LineSpacing was NULL)
+ */
+GpStatus WINGDIPAPI GdipGetLineSpacing(GDIPCONST GpFontFamily *family,
+        INT style, UINT16* LineSpacing)
+{
+    if (!(family && LineSpacing)) return InvalidParameter;
+
+    FIXME("stub!\n");
+
+    return NotImplemented;
+}
+
 /*****************************************************************************
  * GdipGetGenericFontFamilyMonospace [GDIPLUS.@]
  *

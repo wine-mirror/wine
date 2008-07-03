@@ -308,7 +308,7 @@
 @ stub GdipGetLinePresetBlendCount
 @ stdcall GdipGetLineRect(ptr ptr)
 @ stdcall GdipGetLineRectI(ptr ptr)
-@ stub GdipGetLineSpacing
+@ stdcall GdipGetLineSpacing(ptr long ptr)
 @ stub GdipGetLineTransform
 @ stub GdipGetLineWrapMode
 @ stub GdipGetLogFontA
