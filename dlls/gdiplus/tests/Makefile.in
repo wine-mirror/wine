@@ -12,6 +12,7 @@ CTESTS = \
 	graphicspath.c \
 	image.c \
 	matrix.c \
+	pathiterator.c \
 	pen.c \
 	region.c \
 	stringformat.c
