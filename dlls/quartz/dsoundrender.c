@@ -243,11 +243,8 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
      * pause completion here, but for sound playing a single frame doesn't make sense
      */
 
-    if (This->state == State_Paused)
-        return S_FALSE;
-
     if (This->state == State_Stopped)
-        return S_FALSE;
+        return VFW_E_WRONG_STATE;
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
@@ -271,6 +268,9 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
         TRACE("Preroll!\n");
         return S_OK;
     }
+
+    if (This->state == State_Paused)
+        return S_OK;
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
     TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, cbSrcStream);
