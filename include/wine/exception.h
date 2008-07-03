@@ -23,7 +23,6 @@
 
 #include <setjmp.h>
 #include <windef.h>
-#include <winternl.h>
 #include <excpt.h>
 
 /* The following definitions allow using exceptions in Wine and Winelib code
@@ -187,8 +186,8 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_push_frame( EXCEPTION_REGIST
     return prev;
 #else
     NT_TIB *teb = (NT_TIB *)NtCurrentTeb();
-    frame->Prev = (void *)teb->ExceptionList;
-    teb->ExceptionList = (void *)frame;
+    frame->Prev = teb->ExceptionList;
+    teb->ExceptionList = frame;
     return frame->Prev;
 #endif
 }
@@ -202,7 +201,7 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_pop_frame( EXCEPTION_REGISTR
 
 #else
     NT_TIB *teb = (NT_TIB *)NtCurrentTeb();
-    teb->ExceptionList = (void *)frame->Prev;
+    teb->ExceptionList = frame->Prev;
     return frame->Prev;
 #endif
 }
@@ -230,6 +229,30 @@ extern void __wine_enter_vm86( CONTEXT *context );
 
 #ifndef USE_COMPILER_EXCEPTIONS
 
+extern void WINAPI RtlUnwind(PVOID,PVOID,PEXCEPTION_RECORD,PVOID);
+
+/* wrapper for RtlUnwind since it clobbers registers on Windows */
+static inline void __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record )
+{
+#if defined(__GNUC__) && defined(__i386__)
+    int dummy1, dummy2, dummy3;
+    __asm__ __volatile__("pushl %%ebp\n\t"
+                         "pushl %%ebx\n\t"
+                         "pushl $0\n\t"
+                         "pushl %2\n\t"
+                         "pushl $0\n\t"
+                         "pushl %1\n\t"
+                         "call *%0\n\t"
+                         "popl %%ebx\n\t"
+                         "popl %%ebp"
+                         : "=a" (dummy1), "=S" (dummy2), "=D" (dummy3)
+                         : "0" (RtlUnwind), "1" (frame), "2" (record)
+                         : "ecx", "edx", "memory" );
+#else
+    RtlUnwind( frame, 0, record, 0 );
+#endif
+}
+
 static inline void DECLSPEC_NORETURN __wine_unwind_frame( EXCEPTION_RECORD *record,
                                                           EXCEPTION_REGISTRATION_RECORD *frame )
 {
@@ -239,26 +262,7 @@ static inline void DECLSPEC_NORETURN __wine_unwind_frame( EXCEPTION_RECORD *reco
     wine_frame->ExceptionCode   = record->ExceptionCode;
     wine_frame->ExceptionRecord = wine_frame;
 
-#if defined(__GNUC__) && defined(__i386__)
-    {
-        /* RtlUnwind clobbers registers on Windows */
-        int dummy1, dummy2, dummy3;
-        __asm__ __volatile__("pushl %%ebp\n\t"
-                             "pushl %%ebx\n\t"
-                             "pushl $0\n\t"
-                             "pushl %2\n\t"
-                             "pushl $0\n\t"
-                             "pushl %1\n\t"
-                             "call *%0\n\t"
-                             "popl %%ebx\n\t"
-                             "popl %%ebp"
-                             : "=a" (dummy1), "=S" (dummy2), "=D" (dummy3)
-                             : "0" (RtlUnwind), "1" (frame), "2" (record)
-                             : "ecx", "edx", "memory" );
-    }
-#else
-    RtlUnwind( frame, 0, record, 0 );
-#endif
+    __wine_rtl_unwind( frame, record );
     __wine_pop_frame( frame );
     siglongjmp( wine_frame->jmp, 1 );
 }

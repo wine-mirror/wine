@@ -35,8 +35,8 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
-#include "wine/exception.h"
 #include "ntdll_misc.h"
+#include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
