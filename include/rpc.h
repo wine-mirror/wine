@@ -64,6 +64,19 @@ typedef void* I_RPC_HANDLE;
 #include <rpcasync.h>
 #endif
 
+#ifdef USE_COMPILER_EXCEPTIONS
+
+#define RpcTryExcept __try {
+#define RpcExcept(expr) } __except (expr) {
+#define RpcEndExcept }
+#define RpcTryFinally __try {
+#define RpcFinally } __finally {
+#define RpcEndFinally }
+#define RpcExceptionCode() GetExceptionCode()
+#define RpcAbnormalTermination() AbnormalTermination()
+
+#else /* USE_COMPILER_EXCEPTIONS */
+
 /* ignore exception handling for now */
 #define RpcTryExcept if (1) {
 #define RpcExcept(expr) } else {
@@ -73,5 +86,7 @@ typedef void* I_RPC_HANDLE;
 #define RpcEndFinally
 #define RpcExceptionCode() 0
 /* #define RpcAbnormalTermination() abort() */
+
+#endif /* USE_COMPILER_EXCEPTIONS */
 
 #endif /*__WINE_RPC_H */
