@@ -187,42 +187,38 @@ static void test_fontfamily (void)
 static void test_getgenerics (void)
 {
     GpStatus stat;
-    GpFontFamily** family;
+    GpFontFamily* family;
     WCHAR familyName[LF_FACESIZE];
     ZeroMemory(familyName, sizeof(familyName)/sizeof(WCHAR));
 
-    family = GdipAlloc (sizeof (GpFontFamily*));
-
-    stat = GdipGetGenericFontFamilySansSerif (family);
+    stat = GdipGetGenericFontFamilySansSerif (&family);
     expect (Ok, stat);
-    stat = GdipGetFamilyName (*family, familyName, LANG_NEUTRAL);
+    stat = GdipGetFamilyName (family, familyName, LANG_NEUTRAL);
     expect (Ok, stat);
     ok ((lstrcmpiW(familyName, MicrosoftSansSerif) == 0) ||
         (lstrcmpiW(familyName,MSSansSerif) == 0),
         "Expected Microsoft Sans Serif or MS Sans Serif, got %s\n",
         debugstr_w(familyName));
-    stat = GdipDeleteFontFamily (*family);
+    stat = GdipDeleteFontFamily (family);
     expect (Ok, stat);
 
-    stat = GdipGetGenericFontFamilySerif (family);
+    stat = GdipGetGenericFontFamilySerif (&family);
     expect (Ok, stat);
-    stat = GdipGetFamilyName (*family, familyName, LANG_NEUTRAL);
+    stat = GdipGetFamilyName (family, familyName, LANG_NEUTRAL);
     expect (Ok, stat);
     ok (lstrcmpiW(familyName, TimesNewRoman) == 0,
         "Expected Times New Roman, got %s\n", debugstr_w(familyName));
-    stat = GdipDeleteFontFamily (*family);
+    stat = GdipDeleteFontFamily (family);
     expect (Ok, stat);
 
-    stat = GdipGetGenericFontFamilyMonospace (family);
+    stat = GdipGetGenericFontFamilyMonospace (&family);
     expect (Ok, stat);
-    stat = GdipGetFamilyName (*family, familyName, LANG_NEUTRAL);
+    stat = GdipGetFamilyName (family, familyName, LANG_NEUTRAL);
     expect (Ok, stat);
     ok (lstrcmpiW(familyName, CourierNew) == 0,
         "Expected Courier New, got %s\n", debugstr_w(familyName));
-    stat = GdipDeleteFontFamily (*family);
+    stat = GdipDeleteFontFamily (family);
     expect (Ok, stat);
-
-    GdipFree (family);
 }
 
 START_TEST(font)
