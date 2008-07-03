@@ -516,13 +516,14 @@ GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily *family, INT style, UINT16 * CellAscent)
+GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily *family,
+        INT style, UINT16* CellAscent)
 {
     if (!(family && CellAscent)) return InvalidParameter;
 
-    FIXME("stub!\n");
+    *CellAscent = family->tmw.tmAscent;
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetCellDescent(GDIPCONST GpFontFamily *family, INT style, UINT16 * CellDescent)
