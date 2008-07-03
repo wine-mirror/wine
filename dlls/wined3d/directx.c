@@ -770,6 +770,9 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                 }
             }
         }
+
+        LEAVE_GL();
+
         /* Now work out what GL support this card really has */
 #define USE_GL_FUNC(type, pfn, ext, replace) { \
             DWORD ver = ver_for_ext(ext); \
@@ -784,6 +787,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         WGL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
+        ENTER_GL();
         /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
          * loading the functions, otherwise the code above will load the extension entry points instead of the
          * core functions, which may not work
