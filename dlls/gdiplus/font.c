@@ -491,6 +491,15 @@ GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily *family, INT style, UINT16 * CellAscent)
+{
+    if (!(family && CellAscent)) return InvalidParameter;
+
+    FIXME("stub!\n");
+
+    return NotImplemented;
+}
+
 /*******************************************************************************
  * GdipGetEmHeight [GDIPLUS.@]
  *

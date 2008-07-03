@@ -242,7 +242,7 @@
 @ stub GdipGetAdjustableArrowCapWidth
 @ stub GdipGetAllPropertyItems
 @ stdcall GdipGetBrushType(ptr ptr)
-@ stub GdipGetCellAscent
+@ stdcall GdipGetCellAscent(ptr long ptr)
 @ stub GdipGetCellDescent
 @ stdcall GdipGetClip(ptr ptr)
 @ stub GdipGetClipBounds
