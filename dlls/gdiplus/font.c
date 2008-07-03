@@ -500,6 +500,15 @@ GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily *family, INT style,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetCellDescent(GDIPCONST GpFontFamily *family, INT style, UINT16 * CellDescent)
+{
+    if (!(family && CellDescent)) return InvalidParameter;
+
+    FIXME("stub!\n");
+
+    return NotImplemented;
+}
+
 /*******************************************************************************
  * GdipGetEmHeight [GDIPLUS.@]
  *

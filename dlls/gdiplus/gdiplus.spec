@@ -243,7 +243,7 @@
 @ stub GdipGetAllPropertyItems
 @ stdcall GdipGetBrushType(ptr ptr)
 @ stdcall GdipGetCellAscent(ptr long ptr)
-@ stub GdipGetCellDescent
+@ stdcall GdipGetCellDescent(ptr long ptr)
 @ stdcall GdipGetClip(ptr ptr)
 @ stub GdipGetClipBounds
 @ stub GdipGetClipBoundsI
