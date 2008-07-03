@@ -492,6 +492,30 @@ GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
 }
 
 /*******************************************************************************
+ * GdipGetEmHeight [GDIPLUS.@]
+ *
+ * Gets the height of the specified family in EmHeights
+ *
+ * PARAMS
+ *  family      [I] Family to retrieve from
+ *  style       [I] (optional) style
+ *  EmHeight    [O] return value
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter
+ */
+GpStatus WINGDIPAPI GdipGetEmHeight(GDIPCONST GpFontFamily *family, INT style, UINT16* EmHeight)
+{
+    if (!(family && EmHeight)) return InvalidParameter;
+
+    FIXME("Stub!\n");
+
+    return NotImplemented;
+}
+
+
+/*******************************************************************************
  * GdipGetLineSpacing [GDIPLUS.@]
  *
  * Returns the line spacing in design units

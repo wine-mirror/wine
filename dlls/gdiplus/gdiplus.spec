@@ -260,7 +260,7 @@
 @ stdcall GdipGetDpiY(ptr ptr)
 @ stub GdipGetEffectParameterSize
 @ stub GdipGetEffectParameters
-@ stub GdipGetEmHeight
+@ stdcall GdipGetEmHeight(ptr long ptr)
 @ stub GdipGetEncoderParameterList
 @ stub GdipGetEncoderParameterListSize
 @ stub GdipGetFamily
