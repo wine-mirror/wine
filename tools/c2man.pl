@@ -513,7 +513,7 @@ sub process_comment_text($)
       # Preferred capitalisations
       s/ wine| WINE/ Wine/g;
       s/ API | api / Api /g;
-      s/DLL|Dll/dll /g;
+      s/ DLL | Dll / dll /g;
       s/ URL | url / Url /g;
       s/WIN16|win16/Win16/g;
       s/WIN32|win32/Win32/g;
