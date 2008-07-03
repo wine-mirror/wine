@@ -49,6 +49,14 @@ WINE_DECLARE_DEBUG_CHANNEL(toolhelp);
 
 #include "pshpack1.h"
 
+struct thunk
+{
+    BYTE      movw;
+    HANDLE16  instance;
+    BYTE      ljmp;
+    FARPROC16 func;
+};
+
 /* Segment containing MakeProcInstance() thunks */
 typedef struct
 {
@@ -56,7 +64,7 @@ typedef struct
     WORD  magic;      /* Thunks signature */
     WORD  unused;
     WORD  free;       /* Head of the free list */
-    WORD  thunks[4];  /* Each thunk is 4 words long */
+    struct thunk thunks[1];
 } THUNKS;
 
 #include "poppack.h"
@@ -163,20 +171,15 @@ static void TASK_UnlinkTask( HTASK16 hTask )
 static void TASK_CreateThunks( HGLOBAL16 handle, WORD offset, WORD count )
 {
     int i;
-    WORD free;
     THUNKS *pThunk;
 
     pThunk = (THUNKS *)((BYTE *)GlobalLock16( handle ) + offset);
     pThunk->next = 0;
     pThunk->magic = THUNK_MAGIC;
-    pThunk->free = (int)&pThunk->thunks - (int)pThunk;
-    free = pThunk->free;
+    pThunk->free = FIELD_OFFSET( THUNKS, thunks );
     for (i = 0; i < count-1; i++)
-    {
-        free += 8;  /* Offset of next thunk */
-        pThunk->thunks[4*i] = free;
-    }
-    pThunk->thunks[4*i] = 0;  /* Last thunk */
+        *(WORD *)&pThunk->thunks[i] = FIELD_OFFSET( THUNKS, thunks[i+1] );
+    *(WORD *)&pThunk->thunks[i] = 0;  /* Last thunk */
 }
 
 
@@ -845,7 +848,8 @@ HTASK16 WINAPI KERNEL_490( HTASK16 someTask )
  */
 FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 {
-    BYTE *thunk,*lfunc;
+    struct thunk *thunk;
+    BYTE *lfunc;
     SEGPTR thunkaddr;
     WORD hInstanceSelector;
 
@@ -891,11 +895,10 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     	WARN("This was the (in)famous \"thunk useless\" warning. We thought we have to overwrite with nop;nop;, but this isn't true.\n");
     }
 
-    *thunk++ = 0xb8;    /* movw instance, %ax */
-    *thunk++ = (BYTE)(hInstanceSelector & 0xff);
-    *thunk++ = (BYTE)(hInstanceSelector >> 8);
-    *thunk++ = 0xea;    /* ljmp func */
-    *(DWORD *)thunk = (DWORD)func;
+    thunk->movw     = 0xb8;    /* movw instance, %ax */
+    thunk->instance = hInstanceSelector;
+    thunk->ljmp     = 0xea;    /* ljmp func */
+    thunk->func     = func;
     return (FARPROC16)thunkaddr;
     /* CX reg indicates if thunkaddr != NULL, implement if needed */
 }
