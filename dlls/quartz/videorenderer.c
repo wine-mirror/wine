@@ -362,7 +362,7 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     HRESULT hr;
 
     if (This->state == State_Stopped)
-        return S_FALSE;
+        return VFW_E_WRONG_STATE;
 
     TRACE("%p %p\n", iface, pSample);
 
