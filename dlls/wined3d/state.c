@@ -3881,7 +3881,7 @@ const struct StateEntry FFPStateTable[] =
     { /* 57, WINED3DRS_STENCILREF                   */      STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                },
     { /* 58, WINED3DRS_STENCILMASK                  */      STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                },
     { /* 59, WINED3DRS_STENCILWRITEMASK             */      STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           NULL                },
-    { /* 60, WINED3DRS_TEXTUREFACTOR                */      STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor     },
+    { /* 60, WINED3DRS_TEXTUREFACTOR                */      STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              NULL                },
     { /* 61, Undefined                              */      0,                                                  state_undefined     },
     { /* 62, Undefined                              */      0,                                                  state_undefined     },
     { /* 63, Undefined                              */      0,                                                  state_undefined     },
@@ -5435,6 +5435,7 @@ const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(7, WINED3DTSS_CONSTANT),         { 0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          }},
     { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  pixelshader         }},
     { STATE_RENDER(WINED3DRS_BORDERCOLOR),                { STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_bordercolor   }},
+    { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor     }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
