@@ -424,7 +424,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     thread_data->debug_info = &debug_info;
 
     pthread_functions.init_current_teb( info );
-    SIGNAL_Init();
+    signal_init_thread();
     server_init_thread( info->pid, info->tid, func );
     pthread_functions.init_thread( info );
     virtual_alloc_thread_stack( info->stack_base, info->stack_size );

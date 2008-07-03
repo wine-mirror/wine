@@ -985,7 +985,7 @@ NTSTATUS server_init_process_done(void)
      * We do need the handlers in place by the time the request is over, so
      * we set them up here. If we segfault between here and the server call
      * something is very wrong... */
-    if (!SIGNAL_Init()) exit(1);
+    signal_init_process();
 
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )

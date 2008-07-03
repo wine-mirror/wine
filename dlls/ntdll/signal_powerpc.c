@@ -648,9 +648,16 @@ int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 
 
 /**********************************************************************
- *		SIGNAL_Init
+ *		signal_init_thread
  */
-BOOL SIGNAL_Init(void)
+void signal_init_thread(void)
+{
+}
+
+/**********************************************************************
+ *		signal_init_process
+ */
+void signal_init_process(void)
 {
     if (set_handler( SIGINT,  (void (*)())int_handler ) == -1) goto error;
     if (set_handler( SIGFPE,  (void (*)())fpe_handler ) == -1) goto error;
@@ -665,12 +672,12 @@ BOOL SIGNAL_Init(void)
 #ifdef SIGTRAP
     if (set_handler( SIGTRAP, (void (*)())trap_handler ) == -1) goto error;
 #endif
-
-    return TRUE;
+    signal_init_thread();
+    return;
 
  error:
     perror("sigaction");
-    return FALSE;
+    exit(1);
 }
 
 

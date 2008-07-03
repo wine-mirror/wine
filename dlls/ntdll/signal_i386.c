@@ -1533,12 +1533,10 @@ int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 
 
 /**********************************************************************
- *		SIGNAL_Init
+ *		signal_init_thread
  */
-BOOL SIGNAL_Init(void)
+void signal_init_thread(void)
 {
-    struct sigaction sig_act;
-
 #ifdef HAVE_SIGALTSTACK
     stack_t ss;
 
@@ -1553,12 +1551,16 @@ BOOL SIGNAL_Init(void)
     ss.ss_sp    = get_signal_stack();
     ss.ss_size  = signal_stack_size;
     ss.ss_flags = 0;
-    if (sigaltstack(&ss, NULL) == -1)
-    {
-        perror( "sigaltstack" );
-        return FALSE;
-    }
+    if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
 #endif  /* HAVE_SIGALTSTACK */
+}
+
+/**********************************************************************
+ *		signal_init_process
+ */
+void signal_init_process(void)
+{
+    struct sigaction sig_act;
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART;
@@ -1594,11 +1596,12 @@ BOOL SIGNAL_Init(void)
     if (sigaction( SIGUSR2, &sig_act, NULL ) == -1) goto error;
 #endif
 
-    return TRUE;
+    signal_init_thread();
+    return;
 
  error:
     perror("sigaction");
-    return FALSE;
+    exit(1);
 }
 
 

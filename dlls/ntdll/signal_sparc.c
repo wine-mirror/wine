@@ -457,9 +457,16 @@ int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 
 
 /**********************************************************************
- *		SIGNAL_Init
+ *		signal_init_thread
  */
-BOOL SIGNAL_Init(void)
+void signal_init_thread(void)
+{
+}
+
+/**********************************************************************
+ *		signal_init_process
+ */
+void signal_init_process(void)
 {
     if (set_handler( SIGINT,  (void (*)())int_handler  ) == -1) goto error;
     if (set_handler( SIGFPE,  (void (*)())fpe_handler  ) == -1) goto error;
@@ -476,11 +483,12 @@ BOOL SIGNAL_Init(void)
        this is correct, because that is what x86 does, or it is harmful 
        because it could obscure problems in user code */
     asm("ta 6"); /* 6 == ST_FIX_ALIGN defined in sys/trap.h */
-   return TRUE;
+    signal_init_thread();
+    return;
 
  error:
     perror("sigaction");
-    return FALSE;
+    exit(1);
 }
 
 
