@@ -2892,13 +2892,10 @@ static const struct fragment_pipeline *select_fragment_implementation(UINT Adapt
     int ps_selected_mode;
 
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
-    if (ps_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_ARB) {
-        return &ffp_fragment_pipeline;
-    } else if (ps_selected_mode != SHADER_NONE && !GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+    if(ps_selected_mode == SHADER_ATI) {
         return &atifs_fragment_pipeline;
-    } else {
-        return &ffp_fragment_pipeline;
     }
+    return &ffp_fragment_pipeline;
 }
 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
