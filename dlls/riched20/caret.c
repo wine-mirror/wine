@@ -1349,7 +1349,6 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
   BOOL success = FALSE;
   
   ME_CheckCharOffsets(editor);
-  editor->nUDArrowX = -1;
   switch(nVKey) {
     case VK_LEFT:
       editor->bCaretAtEnd = 0;

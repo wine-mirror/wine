@@ -1542,10 +1542,12 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
   {
     case VK_LEFT:
     case VK_RIGHT:
-    case VK_UP:
-    case VK_DOWN:
     case VK_HOME:
     case VK_END:
+        editor->nUDArrowX = -1;
+        /* fall through */
+    case VK_UP:
+    case VK_DOWN:
     case VK_PRIOR:
     case VK_NEXT:
       ME_CommitUndo(editor); /* End coalesced undos for typed characters */
@@ -1553,6 +1555,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       return TRUE;
     case VK_BACK:
     case VK_DELETE:
+      editor->nUDArrowX = -1;
       /* FIXME backspace and delete aren't the same, they act different wrt paragraph style of the merged paragraph */
       if (GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_READONLY)
         return FALSE;
@@ -1583,6 +1586,8 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       return TRUE;
 
     default:
+      if (nKey != VK_SHIFT && nKey != VK_CONTROL && nKey && nKey != VK_MENU)
+          editor->nUDArrowX = -1;
       if (ctrl_is_down)
       {
         if (nKey == 'W')
