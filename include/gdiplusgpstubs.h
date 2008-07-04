@@ -22,7 +22,6 @@
 #ifdef __cplusplus
 
 class GpGraphics {};
-class GpGraphics {};
 class GpBrush {};
 class GpSolidFill : public GpBrush {};
 class GpPath {};
