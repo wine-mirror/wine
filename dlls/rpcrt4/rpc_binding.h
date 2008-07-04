@@ -21,7 +21,6 @@
 #ifndef __WINE_RPC_BINDING_H
 #define __WINE_RPC_BINDING_H
 
-#include "wine/rpcss_shared.h"
 #include "rpcndr.h"
 #include "security.h"
 #include "wine/list.h"
