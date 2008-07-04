@@ -642,15 +642,29 @@ static HRESULT WINAPI HTMLWindow2_toString(IHTMLWindow2 *iface, BSTR *String)
 static HRESULT WINAPI HTMLWindow2_scrollBy(IHTMLWindow2 *iface, long x, long y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
+    nsresult nsres;
+
     TRACE("(%p)->(%ld %ld)\n", This, x, y);
-    return nsIDOMWindow_ScrollBy(This->nswindow, x, y);
+
+    nsres = nsIDOMWindow_ScrollBy(This->nswindow, x, y);
+    if(NS_FAILED(nsres))
+        ERR("ScrollBy failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_scrollTo(IHTMLWindow2 *iface, long x, long y)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
+    nsresult nsres;
+
     TRACE("(%p)->(%ld %ld)\n", This, x, y);
-    return nsIDOMWindow_ScrollTo(This->nswindow, x, y);
+
+    nsres = nsIDOMWindow_ScrollTo(This->nswindow, x, y);
+    if(NS_FAILED(nsres))
+        ERR("ScrollTo failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_moveTo(IHTMLWindow2 *iface, long x, long y)
