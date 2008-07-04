@@ -80,12 +80,26 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
     DWORD cbSrcStream;
     LPBYTE pbSrcStream;
     LONGLONG tStart, tStop;
+    InputPin *pin = (InputPin *)pTransformFilter->ppPins[0];
+
+    EnterCriticalSection(&This->tf.csFilter);
+    if (This->tf.state == State_Stopped)
+    {
+        LeaveCriticalSection(&This->tf.csFilter);
+        return VFW_E_WRONG_STATE;
+    }
+
+    if (pin->end_of_stream || pin->flushing)
+    {
+        LeaveCriticalSection(&This->tf.csFilter);
+        return S_FALSE;
+    }
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-        return hr;
+        goto error;
     }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
@@ -103,8 +117,8 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
 
     hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
-	ERR("Unable to get delivery buffer (%x)\n", hr);
-	goto error;
+        ERR("Unable to get delivery buffer (%x)\n", hr);
+        goto error;
     }
 
     hr = IMediaSample_SetActualDataLength(pOutSample, 0);
@@ -137,16 +151,18 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
     else
         IMediaSample_SetTime(pOutSample, NULL, NULL);
 
+    LeaveCriticalSection(&This->tf.csFilter);
     hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
-    if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
+    if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
-	goto error;
-    }
+    IMediaSample_Release(pOutSample);
+    return hr;
 
 error:
     if (pOutSample)
         IMediaSample_Release(pOutSample);
 
+    LeaveCriticalSection(&This->tf.csFilter);
     return hr;
 }
 

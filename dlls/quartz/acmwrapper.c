@@ -65,12 +65,27 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     MMRESULT res;
     HRESULT hr;
     LONGLONG tStart = -1, tStop = -1, tMed;
+    InputPin *pin = (InputPin *)pTransformFilter->ppPins[0];
+
+    EnterCriticalSection(&pTransformFilter->csFilter);
+    if (pTransformFilter->state == State_Stopped)
+    {
+        LeaveCriticalSection(&pTransformFilter->csFilter);
+        return VFW_E_WRONG_STATE;
+    }
+
+    if (pin->end_of_stream || pin->flushing)
+    {
+        LeaveCriticalSection(&pTransformFilter->csFilter);
+        return S_FALSE;
+    }
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-	return hr;
+        LeaveCriticalSection(&pTransformFilter->csFilter);
+        return hr;
     }
 
     preroll = (IMediaSample_IsPreroll(pSample) == S_OK);
@@ -94,9 +109,11 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     TRACE("Sample data ptr = %p, size = %ld\n", pbSrcStream, (long)cbSrcStream);
 
     hr = IPin_ConnectionMediaType(This->tf.ppPins[0], &amt);
-    if (FAILED(hr)) {
-	ERR("Unable to retrieve media type\n");
-	return hr;
+    if (FAILED(hr))
+    {
+        ERR("Unable to retrieve media type\n");
+        LeaveCriticalSection(&pTransformFilter->csFilter);
+        return hr;
     }
 
     ash.pbSrc = pbSrcStream;
@@ -104,12 +121,14 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 
     while(hr == S_OK && ash.cbSrcLength)
     {
-	hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
-	if (FAILED(hr)) {
-	    ERR("Unable to get delivery buffer (%x)\n", hr);
-	    return hr;
-	}
-	IMediaSample_SetPreroll(pOutSample, preroll);
+        hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
+        if (FAILED(hr))
+        {
+            ERR("Unable to get delivery buffer (%x)\n", hr);
+            LeaveCriticalSection(&pTransformFilter->csFilter);
+            return hr;
+        }
+        IMediaSample_SetPreroll(pOutSample, preroll);
 
 	hr = IMediaSample_SetActualDataLength(pOutSample, 0);
 	assert(hr == S_OK);
@@ -186,7 +205,9 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
         }
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
+        LeaveCriticalSection(&This->tf.csFilter);
         hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
+        EnterCriticalSection(&This->tf.csFilter);
 
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
             if (FAILED(hr))
@@ -210,6 +231,7 @@ error:
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
+    LeaveCriticalSection(&pTransformFilter->csFilter);
     return hr;
 }
 

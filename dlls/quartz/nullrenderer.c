@@ -82,29 +82,17 @@ static const IMemInputPinVtbl MemInputPin_Vtbl =
 
 static HRESULT NullRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 {
-    LPBYTE pbSrcStream = NULL;
-    long cbSrcStream = 0;
-    REFERENCE_TIME tStart, tStop;
-    HRESULT hr;
+    NullRendererImpl *This = (NullRendererImpl *)iface;
+    HRESULT hr = S_OK;
 
     TRACE("%p %p\n", iface, pSample);
 
-    hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
-    if (FAILED(hr))
-    {
-        ERR("Cannot get pointer to sample data (%x)\n", hr);
-        return hr;
-    }
+    EnterCriticalSection(&This->csFilter);
+    if (This->pInputPin->flushing || This->pInputPin->end_of_stream)
+        hr = S_FALSE;
+    LeaveCriticalSection(&This->csFilter);
 
-    hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
-    if (FAILED(hr))
-        ERR("Cannot get sample time (%x)\n", hr);
-
-    cbSrcStream = IMediaSample_GetActualDataLength(pSample);
-
-    TRACE("val %p %ld\n", pbSrcStream, cbSrcStream);
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT NullRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)

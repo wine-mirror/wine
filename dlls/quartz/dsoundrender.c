@@ -245,8 +245,19 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
      * pause completion here, but for sound playing a single frame doesn't make sense
      */
 
+    EnterCriticalSection(&This->csFilter);
+
+    if (This->pInputPin->end_of_stream || This->pInputPin->flushing)
+    {
+        LeaveCriticalSection(&This->csFilter);
+        return S_FALSE;
+    }
+
     if (This->state == State_Stopped)
+    {
+        LeaveCriticalSection(&This->csFilter);
         return VFW_E_WRONG_STATE;
+    }
 
     SetEvent(This->state_change);
 
@@ -279,11 +290,15 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
         WaitForSingleObject(This->blocked, INFINITE);
         EnterCriticalSection(&This->csFilter);
         if (This->state == State_Stopped)
+        {
+            LeaveCriticalSection(&This->csFilter);
             return VFW_E_WRONG_STATE;
+        }
 
         if (This->state == State_Paused)
         {
             /* Assuming we return because of flushing */
+            LeaveCriticalSection(&This->csFilter);
             return S_OK;
         }
     }
@@ -304,7 +319,9 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     }
 #endif
 
-    return DSoundRender_SendSampleData(This, pbSrcStream, cbSrcStream);
+    hr = DSoundRender_SendSampleData(This, pbSrcStream, cbSrcStream);
+    LeaveCriticalSection(&This->csFilter);
+    return hr;
 }
 
 static HRESULT DSoundRender_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)

@@ -362,9 +362,15 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
     HRESULT hr;
+    EnterCriticalSection(&This->csFilter);
+    if (This->pInputPin->flushing || This->pInputPin->end_of_stream)
+        hr = S_FALSE;
 
     if (This->state == State_Stopped)
+    {
+        LeaveCriticalSection(&This->csFilter);
         return VFW_E_WRONG_STATE;
+    }
 
     TRACE("%p %p\n", iface, pSample);
 
@@ -386,6 +392,7 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     if (IMediaSample_IsPreroll(pSample) == S_OK)
     {
         This->rtLastStop = tStop;
+        LeaveCriticalSection(&This->csFilter);
         return S_OK;
     }
 
@@ -393,6 +400,7 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
+        LeaveCriticalSection(&This->csFilter);
         return hr;
     }
 
@@ -422,10 +430,16 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
         EnterCriticalSection(&This->csFilter);
         This->sample_held = NULL;
         if (This->state == State_Paused)
+        {
             /* Flushing */
+            LeaveCriticalSection(&This->csFilter);
             return S_OK;
+        }
         if (This->state == State_Stopped)
+        {
+            LeaveCriticalSection(&This->csFilter);
             return VFW_E_WRONG_STATE;
+        }
     }
 
     if (This->pClock && This->state == State_Running)
@@ -456,6 +470,7 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
                   (DWORD)(time / 10000000), (DWORD)((time / 10000)%1000),
                   (DWORD)(trefstop / 10000000), (DWORD)((trefstop / 10000)%1000) );
             This->rtLastStop = tStop;
+            LeaveCriticalSection(&This->csFilter);
             return S_OK;
         }
     }
@@ -463,6 +478,7 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 
     VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
 
+    LeaveCriticalSection(&This->csFilter);
     return S_OK;
 }
 

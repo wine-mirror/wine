@@ -803,13 +803,7 @@ HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * pSample)
 
     /* this trace commented out for performance reasons */
     /*TRACE("(%p/%p)->(%p)\n", This, iface, pSample);*/
-
-    EnterCriticalSection(This->pin.pCritSec);
-    if (!This->end_of_stream && !This->flushing)
-        hr = This->fnSampleProc(This->pin.pUserData, pSample);
-    else
-        hr = S_FALSE;
-    LeaveCriticalSection(This->pin.pCritSec);
+    hr = This->fnSampleProc(This->pin.pUserData, pSample);
     return hr;
 }
 

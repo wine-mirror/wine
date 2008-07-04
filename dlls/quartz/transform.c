@@ -48,18 +48,6 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl;
 static const IMemInputPinVtbl MemInputPin_Vtbl; 
 static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 
-static HRESULT TransformFilter_Sample(LPVOID iface, IMediaSample * pSample)
-{
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
-
-    TRACE("%p %p\n", iface, pSample);
-
-    if (This->state == State_Stopped)
-        return S_FALSE;
-
-    return This->pFuncsTable->pfnProcessSampleData(This, pSample);
-}
-
 static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
     TransformFilterImpl* This = (TransformFilterImpl*)iface;
@@ -187,7 +175,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
     piOutput.pFilter = (IBaseFilter *)pTransformFilter;
     lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
 
-    hr = InputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, TransformFilter_Sample, pTransformFilter, TransformFilter_Input_QueryAccept, NULL, &pTransformFilter->csFilter, NULL, &pTransformFilter->ppPins[0]);
+    hr = InputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, (SAMPLEPROC_PUSH)pFuncsTable->pfnProcessSampleData, pTransformFilter, TransformFilter_Input_QueryAccept, NULL, &pTransformFilter->csFilter, NULL, &pTransformFilter->ppPins[0]);
 
     if (SUCCEEDED(hr))
     {
