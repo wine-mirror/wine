@@ -2894,8 +2894,13 @@ static const struct fragment_pipeline *select_fragment_implementation(UINT Adapt
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
     if(ps_selected_mode == SHADER_ATI) {
         return &atifs_fragment_pipeline;
+    } else if(GL_SUPPORT(NV_REGISTER_COMBINERS) && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+        return &nvts_fragment_pipeline;
+    } else if(GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        return &nvrc_fragment_pipeline;
+    } else {
+        return &ffp_fragment_pipeline;
     }
-    return &ffp_fragment_pipeline;
 }
 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true

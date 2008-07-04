@@ -4311,7 +4311,7 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
-static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
+const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         }},
     { STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG1),        { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         }},
     { STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG2),        { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         }},
@@ -4465,20 +4465,7 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
 #undef GLINFO_LOCATION
 
 #define GLINFO_LOCATION (*gl_info)
-static void nvts_enable(IWineD3DDevice *iface, BOOL enable) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-
-    if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-        if(enable) {
-            glEnable(GL_TEXTURE_SHADER_NV);
-            checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
-        } else {
-            glDisable(GL_TEXTURE_SHADER_NV);
-            checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
-        }
-    }
-}
+static void ffp_enable(IWineD3DDevice *iface, BOOL enable) { }
 
 static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct fragment_caps *pCaps) {
     pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD         |
@@ -4556,7 +4543,7 @@ static void ffp_fragment_free(IWineD3DDevice *iface) {}
 #undef GLINFO_LOCATION
 
 const struct fragment_pipeline ffp_fragment_pipeline = {
-    nvts_enable,
+    ffp_enable,
     ffp_fragment_get_caps,
     ffp_fragment_alloc,
     ffp_fragment_free,

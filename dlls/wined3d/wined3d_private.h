@@ -560,6 +560,10 @@ extern const struct StateEntryTemplate misc_state_template[];
 extern const struct StateEntryTemplate ffp_vertexstate_template[];
 extern const struct fragment_pipeline ffp_fragment_pipeline;
 extern const struct fragment_pipeline atifs_fragment_pipeline;
+extern const struct fragment_pipeline nvts_fragment_pipeline;
+extern const struct fragment_pipeline nvrc_fragment_pipeline;
+
+extern const struct StateEntryTemplate ffp_fragmentstate_template[]; /* temporary */
 
 /* "Base" state table */
 void compile_state_table(struct StateEntry *StateTable,
