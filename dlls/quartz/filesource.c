@@ -355,6 +355,7 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pAsyncRead->filterInfo.pGraph = NULL;
     pAsyncRead->pOutputPin = NULL;
     pAsyncRead->lastpinchange = GetTickCount();
+    pAsyncRead->state = State_Stopped;
 
     InitializeCriticalSection(&pAsyncRead->csFilter);
     pAsyncRead->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter");
