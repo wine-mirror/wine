@@ -3392,110 +3392,75 @@ void add_ffp_shader(struct list *shaders, struct ffp_desc *desc) {
  */
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL bumpmap = FALSE;
-
-    if(stage > 0 && (stateblock->textureState[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE ||
-                     stateblock->textureState[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP)) {
-        bumpmap = TRUE;
-        context->texShaderBumpMap |= (1 << stage);
-    } else {
-        context->texShaderBumpMap &= ~(1 << stage);
-    }
-
     if(stateblock->textures[stage]) {
         switch(stateblock->textureDimensions[stage]) {
             case GL_TEXTURE_2D:
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_2D);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");
-                } else {
-                    glDisable(GL_TEXTURE_3D);
-                    checkGLcall("glDisable(GL_TEXTURE_3D)");
-                    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-                    }
-                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-                    }
-                    glEnable(GL_TEXTURE_2D);
-                    checkGLcall("glEnable(GL_TEXTURE_2D)");
+                glDisable(GL_TEXTURE_3D);
+                checkGLcall("glDisable(GL_TEXTURE_3D)");
+                if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
+                if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                    glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+                }
+                glEnable(GL_TEXTURE_2D);
+                checkGLcall("glEnable(GL_TEXTURE_2D)");
                 break;
             case GL_TEXTURE_RECTANGLE_ARB:
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_RECTANGLE_ARB);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");
-                } else {
-                    glDisable(GL_TEXTURE_2D);
-                    checkGLcall("glDisable(GL_TEXTURE_2D)");
-                    glDisable(GL_TEXTURE_3D);
-                    checkGLcall("glDisable(GL_TEXTURE_3D)");
-                    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-                    }
-                    glEnable(GL_TEXTURE_RECTANGLE_ARB);
-                    checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
+                glDisable(GL_TEXTURE_2D);
+                checkGLcall("glDisable(GL_TEXTURE_2D)");
+                glDisable(GL_TEXTURE_3D);
+                checkGLcall("glDisable(GL_TEXTURE_3D)");
+                if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
+                glEnable(GL_TEXTURE_RECTANGLE_ARB);
+                checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
                 break;
             case GL_TEXTURE_3D:
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D)");
-                } else {
-                    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-                        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-                    }
-                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-                    }
-                    glDisable(GL_TEXTURE_2D);
-                    checkGLcall("glDisable(GL_TEXTURE_2D)");
-                    glEnable(GL_TEXTURE_3D);
-                    checkGLcall("glEnable(GL_TEXTURE_3D)");
+                if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
                 }
+                if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                    glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+                }
+                glDisable(GL_TEXTURE_2D);
+                checkGLcall("glDisable(GL_TEXTURE_2D)");
+                glEnable(GL_TEXTURE_3D);
+                checkGLcall("glEnable(GL_TEXTURE_3D)");
                 break;
             case GL_TEXTURE_CUBE_MAP_ARB:
-                if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-                    glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB)");
-                } else {
-                    glDisable(GL_TEXTURE_2D);
-                    checkGLcall("glDisable(GL_TEXTURE_2D)");
-                    glDisable(GL_TEXTURE_3D);
-                    checkGLcall("glDisable(GL_TEXTURE_3D)");
-                    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-                        glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-                    }
-                    glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-                    checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
+                glDisable(GL_TEXTURE_2D);
+                checkGLcall("glDisable(GL_TEXTURE_2D)");
+                glDisable(GL_TEXTURE_3D);
+                checkGLcall("glDisable(GL_TEXTURE_3D)");
+                if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                    glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
                 }
+                glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
               break;
         }
     } else {
-        if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-            glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
-            checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE)");
-        } else {
-            glEnable(GL_TEXTURE_2D);
-            checkGLcall("glEnable(GL_TEXTURE_2D)");
-            glDisable(GL_TEXTURE_3D);
-            checkGLcall("glDisable(GL_TEXTURE_3D)");
-            if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-            }
-            if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
-                glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-            }
-            /* Binding textures is done by samplers. A dummy texture will be bound */
+        glEnable(GL_TEXTURE_2D);
+        checkGLcall("glEnable(GL_TEXTURE_2D)");
+        glDisable(GL_TEXTURE_3D);
+        checkGLcall("glDisable(GL_TEXTURE_3D)");
+        if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+            checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
         }
+        if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+            glDisable(GL_TEXTURE_RECTANGLE_ARB);
+            checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+        }
+        /* Binding textures is done by samplers. A dummy texture will be bound */
     }
 }
 

@@ -29,6 +29,42 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
+void nvts_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    BOOL bumpmap = FALSE;
+
+    if(stage > 0 && (stateblock->textureState[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE ||
+                     stateblock->textureState[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP)) {
+        bumpmap = TRUE;
+        context->texShaderBumpMap |= (1 << stage);
+    } else {
+        context->texShaderBumpMap &= ~(1 << stage);
+    }
+
+    if(stateblock->textures[stage]) {
+        switch(stateblock->textureDimensions[stage]) {
+            case GL_TEXTURE_2D:
+                glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_2D);
+                checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");
+                break;
+            case GL_TEXTURE_RECTANGLE_ARB:
+                glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_RECTANGLE_ARB);
+                checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, ...)");
+                break;
+            case GL_TEXTURE_3D:
+                glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D);
+                checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_3D)");
+                break;
+            case GL_TEXTURE_CUBE_MAP_ARB:
+                glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB);
+                checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_CUBE_MAP_ARB)");
+                break;
+        }
+    } else {
+        glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
+        checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE)");
+    }
+}
+
 static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
@@ -92,7 +128,13 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
      * if the sampler for this stage is dirty
      */
     if(!isStateDirty(context, STATE_SAMPLER(stage))) {
-        if (tex_used) texture_activate_dimensions(stage, stateblock, context);
+        if (tex_used) {
+            if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+                nvts_activate_dimensions(stage, stateblock, context);
+            } else {
+                texture_activate_dimensions(stage, stateblock, context);
+            }
+        }
     }
 
     /* Set the texture combiners */
@@ -114,11 +156,27 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3
         if(usesBump != usedBump) {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage + 1));
             checkGLcall("glActiveTextureARB");
-            texture_activate_dimensions(stage + 1, stateblock, context);
+            nvts_activate_dimensions(stage + 1, stateblock, context);
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
             checkGLcall("glActiveTextureARB");
         }
     }
+}
+
+void nvts_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    DWORD sampler = state - STATE_SAMPLER(0);
+    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[sampler];
+
+    /* No need to enable / disable anything here for unused samplers. The tex_colorop
+    * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
+    * will take care of this business
+    */
+    if(mapped_stage == -1 || mapped_stage >= GL_LIMITS(textures)) return;
+    if(sampler >= stateblock->lowest_disabled_stage) return;
+    if(use_ps(stateblock->wineD3DDevice)) return;
+    if(isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
+
+    nvts_activate_dimensions(sampler, stateblock, context);
 }
 
 static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -155,7 +213,6 @@ static void nvrc_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &col[0]));
 }
-
 #undef GLINFO_LOCATION
 
 #define GLINFO_LOCATION (*gl_info)
@@ -341,14 +398,14 @@ const struct StateEntryTemplate nvts_fragmentstate_template[] = {
     { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  apply_pixelshader   }},
     { STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            { STATE_PIXELSHADER,                                  apply_pixelshader   }},
     { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              nvrc_texfactor      }},
-    { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texdim      }},
-    { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texdim      }},
-    { STATE_SAMPLER(2),                                   { STATE_SAMPLER(2),                                   sampler_texdim      }},
-    { STATE_SAMPLER(3),                                   { STATE_SAMPLER(3),                                   sampler_texdim      }},
-    { STATE_SAMPLER(4),                                   { STATE_SAMPLER(4),                                   sampler_texdim      }},
-    { STATE_SAMPLER(5),                                   { STATE_SAMPLER(5),                                   sampler_texdim      }},
-    { STATE_SAMPLER(6),                                   { STATE_SAMPLER(6),                                   sampler_texdim      }},
-    { STATE_SAMPLER(7),                                   { STATE_SAMPLER(7),                                   sampler_texdim      }},
+    { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   nvts_texdim         }},
+    { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   nvts_texdim         }},
+    { STATE_SAMPLER(2),                                   { STATE_SAMPLER(2),                                   nvts_texdim         }},
+    { STATE_SAMPLER(3),                                   { STATE_SAMPLER(3),                                   nvts_texdim         }},
+    { STATE_SAMPLER(4),                                   { STATE_SAMPLER(4),                                   nvts_texdim         }},
+    { STATE_SAMPLER(5),                                   { STATE_SAMPLER(5),                                   nvts_texdim         }},
+    { STATE_SAMPLER(6),                                   { STATE_SAMPLER(6),                                   nvts_texdim         }},
+    { STATE_SAMPLER(7),                                   { STATE_SAMPLER(7),                                   nvts_texdim         }},
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
