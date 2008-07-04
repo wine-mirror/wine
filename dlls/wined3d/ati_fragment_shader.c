@@ -893,6 +893,10 @@ static void init_state_table() {
     ATIFSStateTable[STATE_RENDER(WINED3DRS_TEXTUREFACTOR)].representative = STATE_RENDER(WINED3DRS_TEXTUREFACTOR);
 }
 
+const struct StateEntryTemplate atifs_fragmentstate_template[] = {
+    {0 /* Terminate */,                                   { 0,                                                  0                   }},
+};
+
 /* GL_ATI_fragment_shader backend.It borrows a lot from a the
  * ARB shader backend, currently the whole vertex processing
  * code. This code would also forward pixel shaders, but if

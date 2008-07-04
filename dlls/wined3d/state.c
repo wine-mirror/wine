@@ -5246,6 +5246,10 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
+const struct StateEntryTemplate ffp_fragmentstate_template[] = {
+    {0 /* Terminate */,                                   { 0,                                                  0                   }},
+};
+
 static int num_handlers(APPLYSTATEFUNC *funcs) {
     unsigned int i;
     for(i = 0; funcs[i]; i++);

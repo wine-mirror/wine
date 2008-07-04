@@ -595,6 +595,8 @@ struct StateEntryTemplate
 
 extern const struct StateEntryTemplate misc_state_template[];
 extern const struct StateEntryTemplate ffp_vertexstate_template[];
+extern const struct StateEntryTemplate ffp_fragmentstate_template[];
+extern const struct StateEntryTemplate atifs_fragmentstate_template[];
 
 /* "Base" state table */
 extern const struct StateEntry FFPStateTable[];
