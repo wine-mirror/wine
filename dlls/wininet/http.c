@@ -3181,6 +3181,12 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         static const WCHAR pragma_nocache[] = {'P','r','a','g','m','a',':',' ','n','o','-','c','a','c','h','e','\r','\n',0};
         HTTP_HttpAddRequestHeadersW(lpwhr, pragma_nocache, strlenW(pragma_nocache), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     }
+    if ((lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_CACHE_WRITE) && !strcmpW(lpwhr->lpszVerb, szPost))
+    {
+        static const WCHAR cache_control[] = {'C','a','c','h','e','-','C','o','n','t','r','o','l',':',
+                                              ' ','n','o','-','c','a','c','h','e','\r','\n',0};
+        HTTP_HttpAddRequestHeadersW(lpwhr, cache_control, strlenW(cache_control), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    }
 
     do
     {
