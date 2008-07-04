@@ -853,7 +853,7 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 }
 #undef GLINFO_LOCATION
 
-const struct StateEntryTemplate atifs_fragmentstate_template[] = {
+static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {STATE_RENDER(WINED3DRS_TEXTUREFACTOR),               { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor_atifs   }},
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),           { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          set_tex_op_atifs        }},
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG1),         { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          set_tex_op_atifs        }},
@@ -960,6 +960,21 @@ const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT00),     set_bumpmat             }},
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT00),     set_bumpmat             }},
     {0 /* Terminate */,                                   { 0,                                                  0                       }},
+};
+
+static void atifs_enable(IWineD3DDevice *iface, BOOL enable) {
+    if(enable) {
+        glEnable(GL_FRAGMENT_SHADER_ATI);
+        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+    } else {
+        glDisable(GL_FRAGMENT_SHADER_ATI);
+        checkGLcall("glDisable(GL_FRAGMENT_SHADER_ATI)");
+    }
+}
+
+const struct fragment_pipeline atifs_fragment_pipeline = {
+    atifs_enable,
+    atifs_fragmentstate_template
 };
 
 /* GL_ATI_fragment_shader backend.It borrows a lot from a the
@@ -1098,16 +1113,6 @@ static void shader_atifs_generate_vshader(IWineD3DVertexShader *iface, SHADER_BU
     arb_program_shader_backend.shader_generate_vshader(iface, buffer);
 }
 
-static void shader_atifs_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
-    if(enable) {
-        glEnable(GL_FRAGMENT_SHADER_ATI);
-        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
-    } else {
-        glDisable(GL_FRAGMENT_SHADER_ATI);
-        checkGLcall("glDisable(GL_FRAGMENT_SHADER_ATI)");
-    }
-}
-
 const shader_backend_t atifs_shader_backend = {
     shader_atifs_select,
     shader_atifs_select_depth_blt,
@@ -1122,5 +1127,4 @@ const shader_backend_t atifs_shader_backend = {
     shader_atifs_generate_pshader,
     shader_atifs_generate_vshader,
     shader_atifs_get_caps,
-    shader_atifs_fragment_enable,
 };

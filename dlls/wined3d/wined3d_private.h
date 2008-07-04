@@ -253,7 +253,6 @@ typedef struct {
     void (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
-    void (*shader_fragment_enable)(IWineD3DDevice *iface, BOOL enable);
 } shader_backend_t;
 
 extern const shader_backend_t atifs_shader_backend;
@@ -547,16 +546,21 @@ struct StateEntryTemplate
     struct StateEntry   content;
 };
 
+struct fragment_pipeline {
+    void (*enable_extension)(IWineD3DDevice *iface, BOOL enable);
+    const struct StateEntryTemplate *states;
+};
+
 extern const struct StateEntryTemplate misc_state_template[];
 extern const struct StateEntryTemplate ffp_vertexstate_template[];
-extern const struct StateEntryTemplate ffp_fragmentstate_template[];
-extern const struct StateEntryTemplate atifs_fragmentstate_template[];
+extern const struct fragment_pipeline ffp_fragment_pipeline;
+extern const struct fragment_pipeline atifs_fragment_pipeline;
 
 /* "Base" state table */
 void compile_state_table(struct StateEntry *StateTable,
                          APPLYSTATEFUNC **dev_multistate_funcs,
                          const struct StateEntryTemplate *vertex,
-                         const struct StateEntryTemplate *fragment,
+                         const struct fragment_pipeline *fragment,
                          const struct StateEntryTemplate *misc);
 
 /* The new context manager that should deal with onscreen and offscreen rendering */
@@ -784,6 +788,7 @@ struct IWineD3DDeviceImpl
     struct StateEntry StateTable[STATE_HIGHEST + 1];
     /* Array of functions for states which are handled by more than one pipeline part */
     APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
+    const struct fragment_pipeline *frag_pipe;
 
     /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */

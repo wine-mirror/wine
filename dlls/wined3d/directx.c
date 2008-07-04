@@ -2890,17 +2890,17 @@ static const shader_backend_t *select_shader_backend(UINT Adapter, WINED3DDEVTYP
     return ret;
 }
 
-static const struct StateEntryTemplate *select_fragment_implementation(UINT Adapter, WINED3DDEVTYPE DeviceType) {
+static const struct fragment_pipeline *select_fragment_implementation(UINT Adapter, WINED3DDEVTYPE DeviceType) {
     int vs_selected_mode;
     int ps_selected_mode;
 
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
     if (ps_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_ARB) {
-        return ffp_fragmentstate_template;
+        return &ffp_fragment_pipeline;
     } else if (ps_selected_mode != SHADER_NONE && !GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
-        return atifs_fragmentstate_template;
+        return &atifs_fragment_pipeline;
     } else {
-        return ffp_fragmentstate_template;
+        return &ffp_fragment_pipeline;
     }
 }
 
@@ -3407,7 +3407,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     IWineD3DDeviceImpl *object  = NULL;
     IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
     WINED3DDISPLAYMODE  mode;
-    const struct StateEntryTemplate *frag_pipeline = NULL;
+    const struct fragment_pipeline *frag_pipeline = NULL;
     int i;
 
     /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
@@ -3462,7 +3462,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->shader_backend = select_shader_backend(Adapter, DeviceType);
 
     frag_pipeline = select_fragment_implementation(Adapter, DeviceType);
-
+    object->frag_pipe = frag_pipeline;
     compile_state_table(object->StateTable, object->multistate_funcs,
                         ffp_vertexstate_template, frag_pipeline, misc_state_template);
 

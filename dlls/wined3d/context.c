@@ -448,7 +448,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     oldDrawable = pwglGetCurrentDC();
     if(oldCtx && oldDrawable) {
         /* See comment in ActivateContext context switching */
-        This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, FALSE);
+        This->frag_pipe->enable_extension((IWineD3DDevice *) This, FALSE);
     }
     if(pwglMakeCurrent(hdc, ctx) == FALSE) {
         ERR("Cannot activate context to set up defaults\n");
@@ -533,7 +533,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     if(oldDrawable && oldCtx) {
         pwglMakeCurrent(oldDrawable, oldCtx);
     }
-    This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, TRUE);
+    This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
 
 out:
     return ret;
@@ -792,7 +792,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
 
 
-    This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, FALSE);
+    This->frag_pipe->enable_extension((IWineD3DDevice *) This, FALSE);
 }
 
 /*****************************************************************************
@@ -1057,12 +1057,12 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         else {
             TRACE("Switching gl ctx to %p, hdc=%p ctx=%p\n", context, context->hdc, context->glCtx);
 
-            This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, FALSE);
+            This->frag_pipe->enable_extension((IWineD3DDevice *) This, FALSE);
             ret = pwglMakeCurrent(context->hdc, context->glCtx);
             if(ret == FALSE) {
                 ERR("Failed to activate the new context\n");
             } else if(!context->last_was_blit) {
-                This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, TRUE);
+                This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
             }
         }
         if(This->activeContext->vshader_const_dirty) {
@@ -1094,7 +1094,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
         case CTXUSAGE_CLEAR:
             if(context->last_was_blit) {
-                This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, TRUE);
+                This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
             }
 
             /* Blending and clearing should be orthogonal, but tests on the nvidia driver show that disabling
@@ -1113,7 +1113,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         case CTXUSAGE_DRAWPRIM:
             /* This needs all dirty states applied */
             if(context->last_was_blit) {
-                This->shader_backend->shader_fragment_enable((IWineD3DDevice *) This, TRUE);
+                This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
             }
 
             IWineD3DDeviceImpl_FindTexUnitMap(This);
