@@ -1257,7 +1257,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
             TRACE("SubType %s\n", debugstr_guid(&mt->subtype));
 
             /* Only enumerate once, this doesn't account for all previous ones, but this should be enough nonetheless */
-            if (IsEqualIID(&tab[0], &mt->majortype) && IsEqualIID(&tab[0], &mt->majortype))
+            if (IsEqualIID(&tab[0], &mt->majortype) && IsEqualIID(&tab[1], &mt->subtype))
             {
                 DeleteMediaType(mt);
                 continue;
