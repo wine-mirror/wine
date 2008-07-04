@@ -3498,4 +3498,20 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
         }
     }
 }
+
+void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    DWORD sampler = state - STATE_SAMPLER(0);
+    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[sampler];
+
+    /* No need to enable / disable anything here for unused samplers. The tex_colorop
+    * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
+    * will take care of this business
+    */
+    if(mapped_stage == -1 || mapped_stage >= GL_LIMITS(textures)) return;
+    if(sampler >= stateblock->lowest_disabled_stage) return;
+    if(use_ps(stateblock->wineD3DDevice)) return;
+    if(isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
+
+    texture_activate_dimensions(sampler, stateblock, context);
+}
 #undef GLINFO_LOCATION

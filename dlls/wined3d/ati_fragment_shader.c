@@ -958,6 +958,14 @@ static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT00),     set_bumpmat             }},
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT00),     set_bumpmat             }},
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT00),     set_bumpmat             }},
+    { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texdim          }},
+    { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texdim          }},
+    { STATE_SAMPLER(2),                                   { STATE_SAMPLER(2),                                   sampler_texdim          }},
+    { STATE_SAMPLER(3),                                   { STATE_SAMPLER(3),                                   sampler_texdim          }},
+    { STATE_SAMPLER(4),                                   { STATE_SAMPLER(4),                                   sampler_texdim          }},
+    { STATE_SAMPLER(5),                                   { STATE_SAMPLER(5),                                   sampler_texdim          }},
+    { STATE_SAMPLER(6),                                   { STATE_SAMPLER(6),                                   sampler_texdim          }},
+    { STATE_SAMPLER(7),                                   { STATE_SAMPLER(7),                                   sampler_texdim          }},
     {0 /* Terminate */,                                   { 0,                                                  0                       }},
 };
 
