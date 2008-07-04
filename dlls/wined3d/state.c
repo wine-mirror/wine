@@ -4473,42 +4473,12 @@ static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_in
     if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3))
         pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
 
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR |
-                WINED3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA;
-    }
-
     if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
         pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
-    } else if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-        /* Bump mapping is supported already in NV_TEXTURE_SHADER, but that extension does
-         * not support 3D textures. This asks for trouble if an app uses both bump mapping
-         * and 3D textures. It also allows us to keep the code simpler by having texture
-         * shaders constantly enabled.
-         */
-        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
-        /* TODO: Luminance bump map? */
     }
-
-#if 0
-    /* FIXME: Add
-            pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE
-            WINED3DTEXOPCAPS_PREMODULATE */
-#endif
 
     pCaps->MaxTextureBlendStages   = GL_LIMITS(texture_stages);
     pCaps->MaxSimultaneousTextures = GL_LIMITS(textures);
-
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_TSSARGTEMP;
-    }
-
-    /* The caps below can be supported but aren't handled yet in utils.c 'd3dta_to_combiner_input', disable them until support is fixed */
-#if 0
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS2))
-    pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_PERSTAGECONSTANT;
-#endif
-
 }
 
 static HRESULT ffp_fragment_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
