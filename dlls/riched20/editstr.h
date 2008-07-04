@@ -90,6 +90,8 @@ typedef enum {
   diUndoPotentialEndTransaction, /* 19 - allows grouping typed chars for undo */
 } ME_DIType;
 
+#define SELECTIONBAR_WIDTH 9
+
 /******************************** run flags *************************/
 #define MERF_STYLEFLAGS 0x0FFF
 /* run contains non-text content, which has its own rules for wrapping, sizing etc */

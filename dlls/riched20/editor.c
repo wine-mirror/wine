@@ -1697,7 +1697,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   
   ME_CheckCharOffsets(ed);
   if (GetWindowLongW(hWnd, GWL_STYLE) & ES_SELECTIONBAR)
-    ed->selofs = 16;
+    ed->selofs = SELECTIONBAR_WIDTH;
   else
     ed->selofs = 0;
   ed->linesel = 0;
@@ -2111,7 +2111,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (settings & ECO_AUTOWORDSELECTION)
       FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
     if (settings & ECO_SELECTIONBAR)
-        editor->selofs = 16;
+        editor->selofs = SELECTIONBAR_WIDTH;
     else
         editor->selofs = 0;
     ME_WrapMarkedParagraphs(editor);
