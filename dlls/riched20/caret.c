@@ -749,8 +749,6 @@ ME_SelectWord(ME_TextEditor *editor)
   ME_MoveCursorWords(editor, &editor->pCursors[1], +1);
   editor->pCursors[0] = editor->pCursors[1];
   ME_MoveCursorWords(editor, &editor->pCursors[0], -1);
-  ME_InvalidateSelection(editor);
-  ME_SendSelChange(editor);
 }
 
 
@@ -871,7 +869,7 @@ ME_CharFromPos(ME_TextEditor *editor, int x, int y)
 }
 
 
-void ME_LButtonDown(ME_TextEditor *editor, int x, int y)
+void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
 {
   ME_Cursor tmp_cursor;
   int is_selection = 0;
@@ -888,19 +886,15 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y)
     ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd);
     if (GetKeyState(VK_SHIFT)>=0)
     {
+      /* Shift key is not down */
       editor->pCursors[1] = editor->pCursors[0];
+      if (clickNum > 1)
+          ME_SelectWord(editor);
     }
     else if (!is_selection) {
       editor->pCursors[1] = tmp_cursor;
       is_selection = 1;
     }
-
-    ME_InvalidateSelection(editor);
-    HideCaret(editor->hWnd);
-    ME_MoveCaret(editor);
-    ShowCaret(editor->hWnd);
-    ME_ClearTempStyle(editor);
-    ME_SendSelChange(editor);
   }
   else
   {
@@ -934,13 +928,13 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y)
     }
     editor->pCursors[2] = editor->pCursors[0];
     editor->pCursors[3] = editor->pCursors[1];
-    ME_InvalidateSelection(editor);
-    HideCaret(editor->hWnd);
-    ME_MoveCaret(editor);
-    ShowCaret(editor->hWnd);
-    ME_ClearTempStyle(editor);
-    ME_SendSelChange(editor);
   }
+  ME_InvalidateSelection(editor);
+  HideCaret(editor->hWnd);
+  ME_MoveCaret(editor);
+  ShowCaret(editor->hWnd);
+  ME_ClearTempStyle(editor);
+  ME_SendSelChange(editor);
 }
 
 void ME_MouseMove(ME_TextEditor *editor, int x, int y)

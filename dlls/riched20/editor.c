@@ -2966,17 +2966,22 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_DestroyEditor(editor);
     SetWindowLongPtrW(hWnd, 0, 0);
     return 0;
+  case WM_LBUTTONDBLCLK:
   case WM_LBUTTONDOWN:
+  {
+    int clickNum = (msg == WM_LBUTTONDBLCLK) ? 2 : 1;
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
     SetFocus(hWnd);
-    ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
+    ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam),
+                   clickNum);
     SetCapture(hWnd);
     ME_LinkNotify(editor,msg,wParam,lParam);
     if (!ME_SetCursor(editor, LOWORD(lParam))) goto do_default;
     break;
+  }
   case WM_MOUSEMOVE:
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
@@ -3000,13 +3005,6 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       ME_LinkNotify(editor,msg,wParam,lParam);
       if (!ret) goto do_default;
     }
-    break;
-  case WM_LBUTTONDBLCLK:
-    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
-    ME_LinkNotify(editor,msg,wParam,lParam);
-    ME_SelectWord(editor);
     break;
   case WM_RBUTTONUP:
   case WM_RBUTTONDOWN:
