@@ -627,8 +627,8 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
 
         LoadString(Globals.hInstance, STID_CONTENTS, buffer, sizeof(buffer));
         MACRO_CreateButton("BTN_CONTENTS", buffer, "Contents()");
-        LoadString(Globals.hInstance, STID_SEARCH,buffer, sizeof(buffer));
-        MACRO_CreateButton("BTN_SEARCH", buffer, "Search()");
+        LoadString(Globals.hInstance, STID_INDEX, buffer, sizeof(buffer));
+        MACRO_CreateButton("BTN_INDEX", buffer, "Finder()");
         LoadString(Globals.hInstance, STID_BACK, buffer, sizeof(buffer));
         MACRO_CreateButton("BTN_BACK", buffer, "Back()");
         if (win->back.index <= 1) MACRO_DisableButton("BTN_BACK");
