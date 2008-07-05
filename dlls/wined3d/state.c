@@ -2864,8 +2864,6 @@ static inline void unloadVertexData(IWineD3DStateBlockImpl *stateblock) {
     }
     if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
         glDisableClientState(GL_WEIGHT_ARRAY_ARB);
-    } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
-        glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
     }
     unloadTexCoords(stateblock);
 }
@@ -3099,20 +3097,6 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                     showfixme = FALSE;
                 }
             }
-        } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
-            /* FIXME("TODO\n");*/
-#if 0
-
-            GL_EXTCALL(glVertexWeightPointerEXT)(
-                WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
-                WINED3D_ATR_GLTYPE(sd->u.s.blendWeights.dwType),
-                sd->u.s.blendWeights.dwStride,
-                sd->u.s.blendWeights.lpData + stateblock->loadBaseVertexIndex * sd->u.s.blendWeights.dwStride);
-            checkGLcall("glVertexWeightPointerEXT(numBlends, ...)");
-            glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
-            checkGLcall("glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
-#endif
-
         } else {
             /* TODO: support blends in drawStridedSlow
              * No need to write a FIXME here, this is done after the general vertex decl decoding

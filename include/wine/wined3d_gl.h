@@ -2450,23 +2450,6 @@ typedef void (WINE_GLAPI * PGLFNGETCOMPRESSEDTEXIMAGEPROC) (GLenum target, GLint
 #define GL_INCR_WRAP_EXT                  0x8507
 #define GL_DECR_WRAP_EXT                  0x8508
 #endif
-/* GL_EXT_vertex_weighting */
-#ifndef GL_EXT_vertex_weighting
-#define GL_EXT_vertex_weighting 1
-#define GL_MODELVIEW0_STACK_DEPTH_EXT     GL_MODELVIEW_STACK_DEPTH
-#define GL_MODELVIEW1_STACK_DEPTH_EXT     0x8502
-#define GL_MODELVIEW0_MATRIX_EXT          GL_MODELVIEW_MATRIX
-#define GL_MODELVIEW1_MATRIX_EXT          0x8506
-#define GL_VERTEX_WEIGHTING_EXT           0x8509
-#define GL_MODELVIEW0_EXT                 GL_MODELVIEW
-#define GL_MODELVIEW1_EXT                 0x850A
-#define GL_CURRENT_VERTEX_WEIGHT_EXT      0x850B
-#define GL_VERTEX_WEIGHT_ARRAY_EXT        0x850C
-#define GL_VERTEX_WEIGHT_ARRAY_SIZE_EXT   0x850D
-#define GL_VERTEX_WEIGHT_ARRAY_TYPE_EXT   0x850E
-#define GL_VERTEX_WEIGHT_ARRAY_STRIDE_EXT 0x850F
-#define GL_VERTEX_WEIGHT_ARRAY_POINTER_EXT 0x8510
-#endif
 
 /* GL_NV_half_float */
 #ifndef GL_NV_half_float
@@ -3346,7 +3329,6 @@ typedef enum _GL_SupportedExt {
   EXT_TEXTURE_ENV_COMBINE,
   EXT_TEXTURE_ENV_DOT3,
   EXT_TEXTURE_SRGB,
-  EXT_VERTEX_WEIGHTING,
   EXT_GPU_PROGRAM_PARAMETERS,
   /* NVIDIA */
   NV_HALF_FLOAT,
