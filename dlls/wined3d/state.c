@@ -1433,21 +1433,36 @@ static void state_psizemin_arb(DWORD state, IWineD3DStateBlockImpl *stateblock, 
     checkGLcall("glPointParameterfARB(...)");
 }
 
-static void state_psizemax(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void state_psizemax_arb(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     union {
         DWORD d;
         float f;
     } tmpvalue;
 
     tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MAX];
-    if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
-        GL_EXTCALL(glPointParameterfARB)(GL_POINT_SIZE_MAX_ARB, tmpvalue.f);
-        checkGLcall("glPointParameterfARB(...)");
-    }
-    else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-        GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
-        checkGLcall("glPointParameterfEXT(...)");
-    } else if(tmpvalue.f != 64.0) {
+    GL_EXTCALL(glPointParameterfARB)(GL_POINT_SIZE_MAX_ARB, tmpvalue.f);
+    checkGLcall("glPointParameterfARB(...)");
+}
+
+static void state_psizemax_ext(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MAX];
+    GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
+    checkGLcall("glPointParameterfEXT(...)");
+}
+
+static void state_psizemax_w(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MAX];
+    if(tmpvalue.f != 64.0) {
         FIXME("WINED3DRS_POINTSIZE_MAX not supported on this opengl, value is %f\n", tmpvalue.f);
     }
 }
@@ -4324,7 +4339,9 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_RENDER(WINED3DRS_POINTSCALE_A),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }, 0                               },
     { STATE_RENDER(WINED3DRS_POINTSCALE_B),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }, 0                               },
     { STATE_RENDER(WINED3DRS_POINTSCALE_C),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }, 0                               },
-    { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax      }, 0                               },
+    { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax_arb  }, ARB_POINT_PARAMETERS            },
+    { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax_ext  }, EXT_POINT_PARAMETERS            },
+    { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax_w    }, 0                               },
     /* Samplers for NP2 texture matrix adjustions */
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texmatrix   }, 0                               },
     { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texmatrix   }, 0                               },
