@@ -146,7 +146,8 @@ notify_with_scroll (const TRACKBAR_INFO *infoPtr, UINT code)
     
 static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
 {
-    int i, tic, nrTics;
+    int tic;
+    unsigned nrTics, i;
 
     if (infoPtr->uTicFreq && infoPtr->lRangeMax >= infoPtr->lRangeMin)
     	nrTics=(infoPtr->lRangeMax - infoPtr->lRangeMin)/infoPtr->uTicFreq;
