@@ -456,7 +456,7 @@
 @ stub GdipPathIterGetSubpathCount
 @ stdcall GdipPathIterHasCurve(ptr ptr)
 @ stub GdipPathIterIsValid
-@ stub GdipPathIterNextMarker
+@ stdcall GdipPathIterNextMarker(ptr ptr ptr ptr)
 @ stub GdipPathIterNextMarkerPath
 @ stub GdipPathIterNextPathType
 @ stdcall GdipPathIterNextSubpath(ptr ptr ptr ptr ptr)

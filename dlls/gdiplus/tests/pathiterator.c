@@ -90,6 +90,62 @@ static void test_hascurve(void)
     GdipDeletePath(path);
 }
 
+static void test_nextmarker(void)
+{
+    GpPath *path;
+    GpPathIterator *iter;
+    GpStatus stat;
+    INT start, end, result;
+
+    /* NULL args
+       BOOL out argument is local in wrapper class method,
+       so it always has not-NULL address */
+    stat = GdipPathIterNextMarker(NULL, &result, NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextMarker(NULL, &result, &start, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextMarker(NULL, &result, NULL, &end);
+    expect(InvalidParameter, stat);
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathRectangle(path, 5.0, 5.0, 100.0, 50.0);
+
+    /* no markers */
+    GdipCreatePathIter(&iter, path);
+    stat = GdipPathIterNextMarker(iter, &result, &start, &end);
+    expect(Ok, stat);
+    expect(0, result);
+    GdipDeletePathIter(iter);
+
+    /* one marker */
+    GdipSetPathMarker(path);
+    GdipCreatePathIter(&iter, path);
+    stat = GdipPathIterNextMarker(iter, &result, &start, &end);
+    expect(Ok, stat);
+    expect(TRUE, (start == 0) && (end == 3) && (result == 4));
+    stat = GdipPathIterNextMarker(iter, &result, &start, &end);
+    expect(Ok, stat);
+    expect(0, result);
+    GdipDeletePathIter(iter);
+
+    /* two markers */
+    GdipAddPathLine(path, 0.0, 0.0, 10.0, 30.0);
+    GdipSetPathMarker(path);
+    GdipCreatePathIter(&iter, path);
+    stat = GdipPathIterNextMarker(iter, &result, &start, &end);
+    expect(Ok, stat);
+    expect(TRUE, (start == 0) && (end == 3) && (result == 4));
+    stat = GdipPathIterNextMarker(iter, &result, &start, &end);
+    expect(Ok, stat);
+    expect(TRUE, (start == 4) && (end == 5) && (result == 2));
+    stat = GdipPathIterNextMarker(iter, &result, &start, &end);
+    expect(Ok, stat);
+    expect(0, result);
+    GdipDeletePathIter(iter);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(pathiterator)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -104,6 +160,7 @@ START_TEST(pathiterator)
 
     test_constructor_destructor();
     test_hascurve();
+    test_nextmarker();
 
     GdiplusShutdown(gdiplusToken);
 }

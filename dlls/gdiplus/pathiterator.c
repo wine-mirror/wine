@@ -105,6 +105,31 @@ GpStatus WINGDIPAPI GdipPathIterHasCurve(GpPathIterator* iterator, BOOL* hasCurv
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipPathIterNextMarker(GpPathIterator* iterator, INT *resultCount,
+    INT* startIndex, INT* endIndex)
+{
+    INT i;
+
+    if(!iterator || !startIndex || !endIndex)
+        return InvalidParameter;
+
+    *resultCount = 0;
+
+    /* first call could start with second point as all subsequent, cause
+       path couldn't contain only one */
+    for(i = iterator->marker_pos + 1; i < iterator->pathdata.Count; i++){
+        if(iterator->pathdata.Types[i] & PathPointTypePathMarker){
+            *startIndex = iterator->marker_pos;
+            if(iterator->marker_pos > 0) (*startIndex)++;
+            *endIndex   = iterator->marker_pos = i;
+            *resultCount= *endIndex - *startIndex + 1;
+            break;
+        }
+    }
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator* iterator,
     INT *resultCount, INT* startIndex, INT* endIndex, BOOL* isClosed)
 {
