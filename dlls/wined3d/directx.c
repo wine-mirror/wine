@@ -3469,7 +3469,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
 
     frag_pipeline = select_fragment_implementation(Adapter, DeviceType);
     object->frag_pipe = frag_pipeline;
-    compile_state_table(object->StateTable, object->multistate_funcs,
+    compile_state_table(object->StateTable, object->multistate_funcs, &GLINFO_LOCATION,
                         ffp_vertexstate_template, frag_pipeline, misc_state_template);
 
     /* Prefer the vtable with functions optimized for single dirtifyable objects if the shader
