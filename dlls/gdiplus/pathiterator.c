@@ -151,7 +151,7 @@ GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator* iterator,
 {
     INT i, count;
 
-    if(!iterator)
+    if(!iterator || !startIndex || !endIndex || !isClosed || !resultCount)
         return InvalidParameter;
 
     count = iterator->pathdata.Count;
