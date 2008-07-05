@@ -285,6 +285,7 @@ GpStatus WINGDIPAPI GdipPathIterNextMarker(GpPathIterator*,INT*,INT*,INT*);
 GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator*,INT*,INT*,INT*,BOOL*);
 GpStatus WINGDIPAPI GdipPathIterRewind(GpPathIterator*);
 GpStatus WINGDIPAPI GdipPathIterGetCount(GpPathIterator*,INT*);
+GpStatus WINGDIPAPI GdipPathIterGetSubpathCount(GpPathIterator*,INT*);
 GpStatus WINGDIPAPI GdipPathIterEnumerate(GpPathIterator*,INT*,GpPointF*,BYTE*,INT);
 GpStatus WINGDIPAPI GdipPathIterHasCurve(GpPathIterator*,BOOL*);
 
