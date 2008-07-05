@@ -3133,44 +3133,6 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     }
 #endif
 
-#if 0 /* tangents  ----------------------------------------------*/
-    if (sd->u.s.tangent.lpData || sd->u.s.tangent.VBO ||
-        sd->u.s.binormal.lpData || sd->u.s.binormal.VBO) {
-        /* TODO: tangents*/
-        if (GL_SUPPORT(EXT_COORDINATE_FRAME) {
-            if (sd->u.s.tangent.lpData || sd->u.s.tangent.VBO) {
-                glEnable(GL_TANGENT_ARRAY_EXT);
-                (GL_EXTCALL)(TangentPointerEXT)(
-                    WINED3D_ATR_GLTYPE(sd->u.s.tangent.dwType),
-                    sd->u.s.tangent.dwStride,
-                    sd->u.s.tangent.lpData + stateblock->loadBaseVertexIndex * sd->u.s.tangent.dwStride);
-            } else {
-                    glDisable(GL_TANGENT_ARRAY_EXT);
-            }
-            if (sd->u.s.binormal.lpData || sd->u.s.binormal.VBO) {
-                    glEnable(GL_BINORMAL_ARRAY_EXT);
-                    (GL_EXTCALL)(BinormalPointerEXT)(
-                        WINED3D_ATR_GLTYPE(sd->u.s.binormal.dwType),
-                        sd->u.s.binormal.dwStride,
-                        sd->u.s.binormal.lpData + stateblock->loadBaseVertexIndex * sd->u.s.binormal.dwStride);
-            } else{
-                    glDisable(GL_BINORMAL_ARRAY_EXT);
-            }
-
-        } else {
-            /* don't bother falling back to 'slow' as we don't support software tangents and binormals yet . */
-            /* FIXME: fixme once */
-            TRACE("Hardware support for tangents and binormals is not avaiable, tangents and binormals disabled.\n");
-        }
-    } else {
-        if (GL_SUPPORT(EXT_COORDINATE_FRAME) {
-             /* make sure fog is disabled */
-             glDisable(GL_TANGENT_ARRAY_EXT);
-             glDisable(GL_BINORMAL_ARRAY_EXT);
-        }
-    }
-#endif
-
     /* Point Size ----------------------------------------------*/
     if (sd->u.s.pSize.lpData || sd->u.s.pSize.VBO) {
 
@@ -3427,8 +3389,8 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     if (!useVertexShaderFunction && (BUFFER_OR_DATA(position2) || BUFFER_OR_DATA(normal2))) {
         FIXME("Tweening is only valid with vertex shaders\n");
     }
-    if (!useVertexShaderFunction && (BUFFER_OR_DATA(tangent) || BUFFER_OR_DATA(binormal))) {
-        FIXME("Tangent and binormal bump mapping is only valid with vertex shaders\n");
+    if (!useVertexShaderFunction && BUFFER_OR_DATA(binormal)) {
+        FIXME("Binormal bump mapping is only valid with vertex shaders\n");
     }
     if (!useVertexShaderFunction && (BUFFER_OR_DATA(tessFactor) || BUFFER_OR_DATA(fog) || BUFFER_OR_DATA(depth) || BUFFER_OR_DATA(sample))) {
         FIXME("Extended attributes are only valid with vertex shaders\n");
