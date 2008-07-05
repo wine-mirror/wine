@@ -749,24 +749,20 @@ static void state_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     float col[4];
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
 
-    if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        /* And now the default texture color as well */
-        for (i = 0; i < GL_LIMITS(texture_stages); i++) {
-            /* Note the WINED3DRS value applies to all textures, but GL has one
-             * per texture, so apply it now ready to be used!
-             */
-            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-                checkGLcall("glActiveTextureARB");
-            } else if (i>0) {
-                FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-            }
-
-            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
-            checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
+    /* And now the default texture color as well */
+    for (i = 0; i < GL_LIMITS(texture_stages); i++) {
+        /* Note the WINED3DRS value applies to all textures, but GL has one
+            * per texture, so apply it now ready to be used!
+            */
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+            checkGLcall("glActiveTextureARB");
+        } else if (i>0) {
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
         }
-    } else {
-        GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &col[0]));
+
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+        checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
     }
 }
 
@@ -1836,14 +1832,6 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         }
     }
 
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        if(stateblock->lowest_disabled_stage > 0) {
-            glEnable(GL_REGISTER_COMBINERS_NV);
-            GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, stateblock->lowest_disabled_stage));
-        } else {
-            glDisable(GL_REGISTER_COMBINERS_NV);
-        }
-    }
     if(stage >= stateblock->lowest_disabled_stage) {
         TRACE("Stage disabled\n");
         if (mapped_stage != -1) {
@@ -1860,9 +1848,6 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
                 glDisable(GL_TEXTURE_RECTANGLE_ARB);
                 checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
             }
-            if(GL_SUPPORT(NV_TEXTURE_SHADER2) && mapped_stage < GL_LIMITS(textures)) {
-                glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_NONE);
-            }
         }
         /* All done */
         return;
@@ -1875,41 +1860,14 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         if (tex_used) texture_activate_dimensions(stage, stateblock, context);
     }
 
-    /* Set the texture combiners */
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        set_tex_op_nvrc((IWineD3DDevice *)stateblock->wineD3DDevice, FALSE, stage,
-                         stateblock->textureState[stage][WINED3DTSS_COLOROP],
-                         stateblock->textureState[stage][WINED3DTSS_COLORARG1],
-                         stateblock->textureState[stage][WINED3DTSS_COLORARG2],
-                         stateblock->textureState[stage][WINED3DTSS_COLORARG0],
-                         mapped_stage,
-                         stateblock->textureState[stage][WINED3DTSS_RESULTARG]);
-
-        /* In register combiners bump mapping is done in the stage AFTER the one that has the bump map operation set,
-         * thus the texture shader may have to be updated
-         */
-        if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-            BOOL usesBump = (stateblock->textureState[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE ||
-                             stateblock->textureState[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP) ? TRUE : FALSE;
-            BOOL usedBump = (context->texShaderBumpMap & 1 << (stage + 1)) ? TRUE : FALSE;
-            if(usesBump != usedBump) {
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage + 1));
-                checkGLcall("glActiveTextureARB");
-                texture_activate_dimensions(stage + 1, stateblock, context);
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-                checkGLcall("glActiveTextureARB");
-            }
-        }
-    } else {
-        set_tex_op((IWineD3DDevice *)stateblock->wineD3DDevice, FALSE, stage,
-                    stateblock->textureState[stage][WINED3DTSS_COLOROP],
-                    stateblock->textureState[stage][WINED3DTSS_COLORARG1],
-                    stateblock->textureState[stage][WINED3DTSS_COLORARG2],
-                    stateblock->textureState[stage][WINED3DTSS_COLORARG0]);
-    }
+    set_tex_op((IWineD3DDevice *)stateblock->wineD3DDevice, FALSE, stage,
+                stateblock->textureState[stage][WINED3DTSS_COLOROP],
+                stateblock->textureState[stage][WINED3DTSS_COLORARG1],
+                stateblock->textureState[stage][WINED3DTSS_COLORARG2],
+                stateblock->textureState[stage][WINED3DTSS_COLORARG0]);
 }
 
-static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
     BOOL tex_used = stateblock->wineD3DDevice->fixed_function_usage_map[stage];
@@ -1985,6 +1943,9 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         }
     }
 
+    /* tex_alphaop is shared between the ffp and nvrc because the difference only comes down to
+     * this if block here, and the other code(color keying, texture unit selection) are the same
+     */
     TRACE("Setting alpha op for stage %d\n", stage);
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
         set_tex_op_nvrc((IWineD3DDevice *)stateblock->wineD3DDevice, TRUE, stage,
@@ -2452,7 +2413,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     }
 }
 
-static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL use_pshader = use_ps(device);
     BOOL use_vshader = use_vs(device);
@@ -2485,7 +2446,8 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
          */
         for(i=0; i < MAX_TEXTURES; i++) {
             if(!isStateDirty(context, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP))) {
-                tex_colorop(STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), stateblock, context);
+                device->StateTable[STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP)].apply
+                        (STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), stateblock, context);
             }
         }
         if(context->last_was_pshader)
@@ -2536,29 +2498,6 @@ static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
         mat[1][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT11]);
         GL_EXTCALL(glTexBumpParameterfvATI(GL_BUMP_ROT_MATRIX_ATI, (float *) mat));
         checkGLcall("glTexBumpParameterfvATI");
-    } else if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-        /* Direct3D sets the matrix in the stage reading the perturbation map. The result is used to
-         * offset the destination stage(always stage + 1 in d3d). In GL_NV_texture_shader, the bump
-         * map offsetting is done in the stage reading the bump mapped texture, and the perturbation
-         * map is read from a specified source stage(always stage - 1 for d3d). Thus set the matrix
-         * for stage + 1. Keep the nvrc tex unit mapping in mind too
-         */
-        DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage + 1];
-
-        if(mapped_stage < GL_LIMITS(textures)) {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
-            checkGLcall("GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage))");
-
-            /* We can't just pass a pointer to the stateblock to GL due to the different matrix
-             * format(column major vs row major)
-             */
-            mat[0][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]);
-            mat[1][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT01]);
-            mat[0][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT10]);
-            mat[1][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT11]);
-            glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, (float *) mat);
-            checkGLcall("glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, mat)");
-        }
     }
 }
 
@@ -4370,7 +4309,7 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                   }},
 };
 
-const struct StateEntryTemplate ffp_fragmentstate_template[] = {
+static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         }},
     { STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG1),        { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         }},
     { STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG2),        { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         }},
@@ -4483,8 +4422,8 @@ const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(7, WINED3DTSS_ALPHAARG0),        { STATE_TEXTURESTAGE(7, WINED3DTSS_ALPHAOP),          tex_alphaop         }},
     { STATE_TEXTURESTAGE(7, WINED3DTSS_RESULTARG),        { STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         }},
     { STATE_TEXTURESTAGE(7, WINED3DTSS_CONSTANT),         { 0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          }},
-    { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  pixelshader         }},
-    { STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            { STATE_PIXELSHADER,                                  pixelshader         }},
+    { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  apply_pixelshader   }},
+    { STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            { STATE_PIXELSHADER,                                  apply_pixelshader   }},
     { STATE_RENDER(WINED3DRS_BORDERCOLOR),                { STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_bordercolor   }},
     { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor     }},
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texdim      }},
