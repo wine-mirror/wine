@@ -481,9 +481,8 @@ void set_reg_key_dwordW(HKEY root, const WCHAR *path, const WCHAR *name, DWORD v
 WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
 {
     HKEY key;
-    DWORD res, i = 0;
+    DWORD res, i = 0, valueslen = 0;
     WCHAR **values = NULL;
-    int valueslen = 0;
     struct list *cursor;
 
     res = RegOpenKeyW(root, path, &key);
