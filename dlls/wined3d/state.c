@@ -1399,23 +1399,38 @@ static void state_normalize(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     }
 }
 
-static void state_psizemin(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void state_psizemin_w(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     union {
         DWORD d;
         float f;
     } tmpvalue;
 
     tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MIN];
-    if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
-        GL_EXTCALL(glPointParameterfARB)(GL_POINT_SIZE_MIN_ARB, tmpvalue.f);
-        checkGLcall("glPointParameterfARB(...)");
-    }
-    else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-        GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, tmpvalue.f);
-        checkGLcall("glPointParameterfEXT(...)");
-    } else if(tmpvalue.f != 1.0) {
+    if(tmpvalue.f != 1.0) {
         FIXME("WINED3DRS_POINTSIZE_MIN not supported on this opengl, value is %f\n", tmpvalue.f);
     }
+}
+
+static void state_psizemin_ext(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MIN];
+    GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, tmpvalue.f);
+    checkGLcall("glPointParameterfEXT(...)");
+}
+
+static void state_psizemin_arb(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MIN];
+    GL_EXTCALL(glPointParameterfARB)(GL_POINT_SIZE_MIN_ARB, tmpvalue.f);
+    checkGLcall("glPointParameterfARB(...)");
 }
 
 static void state_psizemax(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -4301,7 +4316,9 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_RENDER(WINED3DRS_EMISSIVEMATERIALSOURCE),     { STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      }, 0                               },
     { STATE_RENDER(WINED3DRS_VERTEXBLEND),                { STATE_RENDER(WINED3DRS_VERTEXBLEND),                state_vertexblend   }, 0                               },
     { STATE_RENDER(WINED3DRS_POINTSIZE),                  { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }, 0                               },
-    { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin      }, 0                               },
+    { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin_arb  }, ARB_POINT_PARAMETERS            },
+    { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin_ext  }, EXT_POINT_PARAMETERS            },
+    { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin_w    }, 0                               },
     { STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          { STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_pointsprite   }, 0                               },
     { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }, 0                               },
     { STATE_RENDER(WINED3DRS_POINTSCALE_A),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }, 0                               },
