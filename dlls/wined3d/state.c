@@ -1633,19 +1633,19 @@ static void state_wrap(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DC
     }
 }
 
-static void state_multisampleaa(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    if( GL_SUPPORT(ARB_MULTISAMPLE) ) {
-        if(stateblock->renderState[WINED3DRS_MULTISAMPLEANTIALIAS]) {
-            glEnable(GL_MULTISAMPLE_ARB);
-            checkGLcall("glEnable(GL_MULTISAMPLE_ARB)");
-        } else {
-            glDisable(GL_MULTISAMPLE_ARB);
-            checkGLcall("glDisable(GL_MULTISAMPLE_ARB)");
-        }
+static void state_msaa_w(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    if(stateblock->renderState[WINED3DRS_MULTISAMPLEANTIALIAS]) {
+        WARN("Multisample antialiasing not supported by gl\n");
+    }
+}
+
+static void state_msaa(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    if(stateblock->renderState[WINED3DRS_MULTISAMPLEANTIALIAS]) {
+        glEnable(GL_MULTISAMPLE_ARB);
+        checkGLcall("glEnable(GL_MULTISAMPLE_ARB)");
     } else {
-        if(stateblock->renderState[WINED3DRS_MULTISAMPLEANTIALIAS]) {
-            WARN("Multisample antialiasing not supported by gl\n");
-        }
+        glDisable(GL_MULTISAMPLE_ARB);
+        checkGLcall("glDisable(GL_MULTISAMPLE_ARB)");
     }
 }
 
@@ -3940,7 +3940,8 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_ADAPTIVETESS_Z),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_tessellation  }, 0                               },
     { STATE_RENDER(WINED3DRS_ADAPTIVETESS_W),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_tessellation  }, 0                               },
     { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_tessellation  }, 0                               },
-    { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_multisampleaa }, 0                               },
+    { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_msaa          }, ARB_MULTISAMPLE                 },
+    { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_msaa_w        }, 0                               },
     { STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            { STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            state_multisampmask }, 0                               },
     { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    }, 0                               },
     { STATE_RENDER(WINED3DRS_BLENDOP),                    { STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop       }, EXT_BLEND_MINMAX                },
