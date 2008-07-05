@@ -632,8 +632,6 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         LoadString(Globals.hInstance, STID_BACK, buffer, sizeof(buffer));
         MACRO_CreateButton("BTN_BACK", buffer, "Back()");
         if (win->back.index <= 1) MACRO_DisableButton("BTN_BACK");
-        LoadString(Globals.hInstance, STID_TOPICS, buffer, sizeof(buffer));
-        MACRO_CreateButton("BTN_TOPICS", buffer, "Finder()");
     }
 
     if (!bReUsed)
@@ -1623,12 +1621,41 @@ INT_PTR CALLBACK WINHELP_IndexDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 }
 
 /**************************************************************************
+ * WINHELP_SearchDlgProc
+ *
+ */
+INT_PTR CALLBACK WINHELP_SearchDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    static struct index_data* id;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        id = (struct index_data*)((PROPSHEETPAGE*)lParam)->lParam;
+        return TRUE;
+    case WM_NOTIFY:
+	switch (((NMHDR*)lParam)->code)
+	{
+	case PSN_APPLY:
+            SetWindowLongPtr(hWnd, DWLP_MSGRESULT, PSNRET_NOERROR);
+            return TRUE;
+        default:
+            return FALSE;
+        }
+        break;
+    default:
+        break;
+    }
+    return FALSE;
+}
+
+/**************************************************************************
  * WINHELP_CreateIndexWindow
  *
  * Displays a dialog with keywords of current help file.
  *
  */
-BOOL WINHELP_CreateIndexWindow(void)
+BOOL WINHELP_CreateIndexWindow(BOOL is_search)
 {
     HPROPSHEETPAGE      psPage[3];
     PROPSHEETPAGE       psp;
@@ -1660,6 +1687,11 @@ BOOL WINHELP_CreateIndexWindow(void)
     psp.pfnDlgProc = WINHELP_IndexDlgProc;
     psPage[0] = CreatePropertySheetPage(&psp);
 
+    psp.u.pszTemplate = MAKEINTRESOURCE(IDD_SEARCH);
+    psp.lParam = (LPARAM)&id;
+    psp.pfnDlgProc = WINHELP_SearchDlgProc;
+    psPage[1] = CreatePropertySheetPage(&psp);
+
     memset(&psHead, 0, sizeof(psHead));
     psHead.dwSize = sizeof(psHead);
 
@@ -1667,7 +1699,8 @@ BOOL WINHELP_CreateIndexWindow(void)
     strcat(buf, Globals.active_win->info->caption);
 
     psHead.pszCaption = buf;
-    psHead.nPages = 1;
+    psHead.nPages = 2;
+    psHead.u2.nStartPage = is_search ? 1 : 0;
     psHead.hwndParent = Globals.active_win->hMainWnd;
     psHead.u3.phpage = psPage;
     psHead.dwFlags = PSH_NOAPPLYNOW;
