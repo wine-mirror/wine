@@ -52,7 +52,6 @@ typedef HRESULT (* CLEANUPPROC) (LPVOID userdata);
  * If you implement it (it can be NULL for default behavior), you have to
  * call IMemAllocator_GetBuffer and IMemAllocator_RequestBuffer
  * This is useful if you want to request more than 1 buffer at simultaneously
- * If PullPin->flushed is set, it means that all buffers queued previously are gone
  *
  * This will also cause the Sample Proc to be called with empty buffers to indicate
  * failure in retrieving the sample.
@@ -141,6 +140,7 @@ typedef struct PullPin
 #define Req_Die    1
 #define Req_Run    2
 #define Req_Pause  3
+#define Req_Flush  4
 
 /*** Constructors ***/
 HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
@@ -184,6 +184,7 @@ HRESULT WINAPI OutputPin_EndFlush(IPin * iface);
 HRESULT WINAPI OutputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 HRESULT OutputPin_CommitAllocator(OutputPin * This);
+HRESULT OutputPin_DecommitAllocator(OutputPin * This);
 HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, REFERENCE_TIME * tStart, REFERENCE_TIME * tStop, DWORD dwFlags);
 HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample);
 HRESULT OutputPin_DeliverDisconnect(OutputPin * This);
