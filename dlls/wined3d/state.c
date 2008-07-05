@@ -2628,6 +2628,25 @@ static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     }
 }
 
+static void state_vertexblend_w(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    static BOOL once = FALSE;
+
+    switch(stateblock->renderState[WINED3DRS_VERTEXBLEND]) {
+        case WINED3DVBF_1WEIGHTS:
+        case WINED3DVBF_2WEIGHTS:
+        case WINED3DVBF_3WEIGHTS:
+            if(!once) {
+                once = TRUE;
+                /* TODO: Implement vertex blending in drawStridedSlow */
+                FIXME("Vertex blending enabled, but not supported by hardware\n");
+            }
+            break;
+
+        case WINED3DVBF_TWEENING:
+            WARN("Tweening not supported yet\n");
+    }
+}
+
 static void state_vertexblend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     WINED3DVERTEXBLENDFLAGS val = stateblock->renderState[WINED3DRS_VERTEXBLEND];
 
@@ -2635,42 +2654,29 @@ static void state_vertexblend(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         case WINED3DVBF_1WEIGHTS:
         case WINED3DVBF_2WEIGHTS:
         case WINED3DVBF_3WEIGHTS:
-            if(GL_SUPPORT(ARB_VERTEX_BLEND)) {
-                glEnable(GL_VERTEX_BLEND_ARB);
-                checkGLcall("glEnable(GL_VERTEX_BLEND_ARB)");
+            glEnable(GL_VERTEX_BLEND_ARB);
+            checkGLcall("glEnable(GL_VERTEX_BLEND_ARB)");
 
-                /* D3D adds one more matrix which has weight (1 - sum(weights)). This is enabled at context
-                 * creation with enabling GL_WEIGHT_SUM_UNITY_ARB.
-                 */
-                GL_EXTCALL(glVertexBlendARB(stateblock->renderState[WINED3DRS_VERTEXBLEND] + 1));
+            /* D3D adds one more matrix which has weight (1 - sum(weights)). This is enabled at context
+             * creation with enabling GL_WEIGHT_SUM_UNITY_ARB.
+             */
+            GL_EXTCALL(glVertexBlendARB(stateblock->renderState[WINED3DRS_VERTEXBLEND] + 1));
 
-                if(!stateblock->wineD3DDevice->vertexBlendUsed) {
-                    int i;
-                    for(i = 1; i < GL_LIMITS(blends); i++) {
-                        if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)))) {
-                            transform_worldex(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)), stateblock, context);
-                        }
+            if(!stateblock->wineD3DDevice->vertexBlendUsed) {
+                int i;
+                for(i = 1; i < GL_LIMITS(blends); i++) {
+                    if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)))) {
+                        transform_worldex(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)), stateblock, context);
                     }
-                    stateblock->wineD3DDevice->vertexBlendUsed = TRUE;
                 }
-            } else {
-                static BOOL once = FALSE;
-                if(!once) {
-                    once = TRUE;
-                    /* TODO: Implement vertex blending in drawStridedSlow */
-                    FIXME("Vertex blending enabled, but not supported by hardware\n");
-                }
+                stateblock->wineD3DDevice->vertexBlendUsed = TRUE;
             }
             break;
 
         case WINED3DVBF_DISABLE:
         case WINED3DVBF_0WEIGHTS: /* for Indexed vertex blending - not supported */
-            if(GL_SUPPORT(ARB_VERTEX_BLEND)) {
-                glDisable(GL_VERTEX_BLEND_ARB);
-                checkGLcall("glDisable(GL_VERTEX_BLEND_ARB)");
-            } else {
-                TRACE("Vertex blending disabled\n");
-            }
+            glDisable(GL_VERTEX_BLEND_ARB);
+            checkGLcall("glDisable(GL_VERTEX_BLEND_ARB)");
             break;
 
         case WINED3DVBF_TWEENING:
@@ -4330,7 +4336,8 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_RENDER(WINED3DRS_SPECULARMATERIALSOURCE),     { STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      }, 0                               },
     { STATE_RENDER(WINED3DRS_AMBIENTMATERIALSOURCE),      { STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      }, 0                               },
     { STATE_RENDER(WINED3DRS_EMISSIVEMATERIALSOURCE),     { STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      }, 0                               },
-    { STATE_RENDER(WINED3DRS_VERTEXBLEND),                { STATE_RENDER(WINED3DRS_VERTEXBLEND),                state_vertexblend   }, 0                               },
+    { STATE_RENDER(WINED3DRS_VERTEXBLEND),                { STATE_RENDER(WINED3DRS_VERTEXBLEND),                state_vertexblend   }, ARB_VERTEX_BLEND                },
+    { STATE_RENDER(WINED3DRS_VERTEXBLEND),                { STATE_RENDER(WINED3DRS_VERTEXBLEND),                state_vertexblend_w }, 0                               },
     { STATE_RENDER(WINED3DRS_POINTSIZE),                  { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }, 0                               },
     { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin_arb  }, ARB_POINT_PARAMETERS            },
     { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin_ext  }, EXT_POINT_PARAMETERS            },
