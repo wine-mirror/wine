@@ -451,13 +451,12 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     }
 }
 
+static void state_blendfactor_w(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    WARN("Unsupported in local OpenGL implementation: glBlendColorEXT\n");
+}
+
 static void state_blendfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     float col[4];
-
-    if(!GL_SUPPORT(EXT_BLEND_COLOR)) {
-        WARN("Unsupported in local OpenGL implementation: glBlendColorEXT\n");
-        return;
-    }
 
     TRACE("Setting BlendFactor to %d\n", stateblock->renderState[WINED3DRS_BLENDFACTOR]);
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_BLENDFACTOR], col);
@@ -594,14 +593,13 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     }
 }
 
+static void state_blendop_w(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
+}
+
 static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     int blendEquation = GL_FUNC_ADD;
     int blendEquationAlpha = GL_FUNC_ADD;
-
-    if(!GL_SUPPORT(EXT_BLEND_MINMAX)) {
-        WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
-        return;
-    }
 
     /* BLENDOPALPHA requires GL_EXT_blend_equation_separate, so make sure it is around */
     if(stateblock->renderState[WINED3DRS_BLENDOPALPHA] && !GL_SUPPORT(EXT_BLEND_EQUATION_SEPARATE)) {
@@ -868,6 +866,24 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *c
     }
 }
 
+static void state_stencilwrite2s(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    DWORD mask;
+
+    if(stateblock->wineD3DDevice->stencilBufferTarget) {
+        mask = stateblock->renderState[WINED3DRS_STENCILWRITEMASK];
+    } else {
+        mask = 0;
+    }
+
+    GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
+    checkGLcall("glActiveStencilFaceEXT(GL_BACK)");
+    glStencilMask(mask);
+    checkGLcall("glStencilMask");
+    GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
+    checkGLcall("glActiveStencilFaceEXT(GL_FRONT)");
+    glStencilMask(mask);
+}
+
 static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD mask;
 
@@ -877,17 +893,7 @@ static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, 
         mask = 0;
     }
 
-    if(GL_SUPPORT(EXT_STENCIL_TWO_SIDE)) {
-        GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
-        checkGLcall("glActiveStencilFaceEXT(GL_BACK)");
-        glStencilMask(mask);
-        checkGLcall("glStencilMask");
-        GL_EXTCALL(glActiveStencilFaceEXT(GL_FRONT));
-        checkGLcall("glActiveStencilFaceEXT(GL_FRONT)");
-        glStencilMask(mask);
-    } else {
-        glStencilMask(mask);
-    }
+    glStencilMask(mask);
     checkGLcall("glStencilMask");
 }
 
@@ -3867,6 +3873,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_STENCILFUNC),                { STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       }, 0                               },
     { STATE_RENDER(WINED3DRS_STENCILREF),                 { STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       }, 0                               },
     { STATE_RENDER(WINED3DRS_STENCILMASK),                { STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       }, 0                               },
+    { STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           { STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           state_stencilwrite2s}, EXT_STENCIL_TWO_SIDE            },
     { STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           { STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           state_stencilwrite  }, 0                               },
     { STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE),        { STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       }, 0                               },
     { STATE_RENDER(WINED3DRS_CCW_STENCILFAIL),            { STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       }, 0                               },
@@ -3905,13 +3912,15 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_multisampleaa }, 0                               },
     { STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            { STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            state_multisampmask }, 0                               },
     { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    }, 0                               },
-    { STATE_RENDER(WINED3DRS_BLENDOP),                    { STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop       }, 0                               },
+    { STATE_RENDER(WINED3DRS_BLENDOP),                    { STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop       }, EXT_BLEND_MINMAX                },
+    { STATE_RENDER(WINED3DRS_BLENDOP),                    { STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop_w     }, 0                               },
     { STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          { STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          state_scissor       }, 0                               },
     { STATE_RENDER(WINED3DRS_SLOPESCALEDEPTHBIAS),        { STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     }, 0                               },
     { STATE_RENDER(WINED3DRS_COLORWRITEENABLE1),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    }, 0                               },
     { STATE_RENDER(WINED3DRS_COLORWRITEENABLE2),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    }, 0                               },
     { STATE_RENDER(WINED3DRS_COLORWRITEENABLE3),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    }, 0                               },
-    { STATE_RENDER(WINED3DRS_BLENDFACTOR),                { STATE_RENDER(WINED3DRS_BLENDFACTOR),                state_blendfactor   }, 0                               },
+    { STATE_RENDER(WINED3DRS_BLENDFACTOR),                { STATE_RENDER(WINED3DRS_BLENDFACTOR),                state_blendfactor   }, EXT_BLEND_COLOR                 },
+    { STATE_RENDER(WINED3DRS_BLENDFACTOR),                { STATE_RENDER(WINED3DRS_BLENDFACTOR),                state_blendfactor_w }, 0                               },
     { STATE_RENDER(WINED3DRS_DEPTHBIAS),                  { STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     }, 0                               },
     /* Samplers */
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler             }, 0                               },
