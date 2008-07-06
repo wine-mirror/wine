@@ -150,7 +150,7 @@
 @ cdecl __p__winminor() msvcrt.__p__winminor
 @ cdecl __p__winver() msvcrt.__p__winver
 @ cdecl __p__wpgmptr() msvcrt.__p__wpgmptr
-@ stub __pctype_func
+@ cdecl __pctype_func() msvcrt.__p__pctype
 @ extern __pioinfo msvcrt.__pioinfo
 @ stub __pwctype_func
 @ cdecl __pxcptinfoptrs() msvcrt.__pxcptinfoptrs
