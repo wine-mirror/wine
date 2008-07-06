@@ -2412,7 +2412,7 @@ static HRESULT StorageImpl_Construct(
    */
   This->base.lpVtbl = &Storage32Impl_Vtbl;
   This->base.pssVtbl = &IPropertySetStorage_Vtbl;
-  This->base.v_destructor = &StorageImpl_Destroy;
+  This->base.v_destructor = StorageImpl_Destroy;
   This->base.openFlags = (openFlags & ~STGM_CREATE);
 
   /*
@@ -4236,7 +4236,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
      * Initialize the virtual function table.
      */
     newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
-    newStorage->base.v_destructor = &StorageInternalImpl_Destroy;
+    newStorage->base.v_destructor = StorageInternalImpl_Destroy;
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
 
     /*
