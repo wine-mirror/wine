@@ -284,7 +284,7 @@ typedef struct tagFMT_DATE_HEADER
 #define FMT_STR_COPY_SPACE  0x40 /* Copy len chars with space if no char */
 #define FMT_STR_COPY_SKIP   0x41 /* Copy len chars or skip if no char */
 /* Wine additions */
-#define FMT_WINE_HOURS_12   0x81 /* Hours using 12 hour clockhourCopy len chars or skip if no char */
+#define FMT_WINE_HOURS_12   0x81 /* Hours using 12 hour clock */
 
 /* Named Formats and their tokenised values */
 static const WCHAR szGeneralDate[] = { 'G','e','n','e','r','a','l',' ','D','a','t','e','\0' };
