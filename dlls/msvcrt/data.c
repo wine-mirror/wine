@@ -239,6 +239,22 @@ MSVCRT_wchar_t *msvcrt_wstrdupa(const char *str)
   return wstr;
 }
 
+/*********************************************************************
+ *		___unguarded_readlc_active_add_func (MSVCRT.@)
+ */
+unsigned int * CDECL MSVCRT____unguarded_readlc_active_add_func(void)
+{
+  return &MSVCRT___unguarded_readlc_active;
+}
+
+/*********************************************************************
+ *		___setlc_active_func (MSVCRT.@)
+ */
+unsigned int CDECL MSVCRT____setlc_active_func(void)
+{
+  return MSVCRT___setlc_active;
+}
+
 /* INTERNAL: Since we can't rely on Winelib startup code calling w/getmainargs,
  * we initialise data values during DLL loading. When called by a native
  * program we simply return the data we've already initialised. This also means

@@ -94,8 +94,8 @@
 @ stub ___lc_collate_cp_func
 @ stub ___lc_handle_func
 @ stub ___mb_cur_max_func
-@ stub ___setlc_active_func
-@ stub ___unguarded_readlc_active_add_func
+@ cdecl ___setlc_active_func() msvcrt.___setlc_active_func
+@ cdecl ___unguarded_readlc_active_add_func() msvcrt.___unguarded_readlc_active_add_func
 @ extern __argc msvcrt.__argc
 @ extern __argv msvcrt.__argv
 @ extern __badioinfo msvcrt.__badioinfo
