@@ -407,6 +407,7 @@ ALL_MAKEFILES = \
 	dlls/quartz/tests/Makefile \
 	dlls/query/Makefile \
 	dlls/rasapi32/Makefile \
+	dlls/rasapi32/tests/Makefile \
 	dlls/resutils/Makefile \
 	dlls/riched20/Makefile \
 	dlls/riched20/tests/Makefile \
@@ -835,6 +836,7 @@ dlls/quartz/Makefile: dlls/quartz/Makefile.in dlls/Makedll.rules
 dlls/quartz/tests/Makefile: dlls/quartz/tests/Makefile.in dlls/Maketest.rules
 dlls/query/Makefile: dlls/query/Makefile.in dlls/Makedll.rules
 dlls/rasapi32/Makefile: dlls/rasapi32/Makefile.in dlls/Makedll.rules
+dlls/rasapi32/tests/Makefile: dlls/rasapi32/tests/Makefile.in dlls/Maketest.rules
 dlls/resutils/Makefile: dlls/resutils/Makefile.in dlls/Makedll.rules
 dlls/riched20/Makefile: dlls/riched20/Makefile.in dlls/Makedll.rules
 dlls/riched20/tests/Makefile: dlls/riched20/tests/Makefile.in dlls/Maketest.rules

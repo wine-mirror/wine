@@ -342,6 +342,7 @@ TESTSUBDIRS = \
 	qedit/tests \
 	qmgr/tests \
 	quartz/tests \
+	rasapi32/tests \
 	riched20/tests \
 	riched32/tests \
 	rpcrt4/tests \

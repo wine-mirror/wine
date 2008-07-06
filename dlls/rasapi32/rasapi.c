@@ -245,6 +245,9 @@ DWORD WINAPI RasEnumAutodialAddressesW(LPWSTR *a, LPDWORD b, LPDWORD c)
  */
 DWORD WINAPI RasEnumDevicesA(LPRASDEVINFOA lpRasDevinfo, LPDWORD lpcb, LPDWORD lpcDevices)
 {
+	if (!lpcb || !lpcDevices)
+            return ERROR_INVALID_PARAMETER;
+
 	FIXME("(%p,%p,%p),stub!\n",lpRasDevinfo,lpcb,lpcDevices);
 	if (*lpcb < sizeof(RASDEVINFOA)) {
 		*lpcb = sizeof(RASDEVINFOA);

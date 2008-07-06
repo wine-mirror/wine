@@ -81,6 +81,7 @@ TESTBINS = \
 	qedit_test.exe \
 	qmgr_test.exe \
 	quartz_test.exe \
+	rasapi32_test.exe \
 	riched20_test.exe \
 	riched32_test.exe \
 	rpcrt4_test.exe \
@@ -220,6 +221,8 @@ qmgr_test.exe: $(DLLDIR)/qmgr/tests/qmgr_test.exe$(DLLEXT)
 	cp $(DLLDIR)/qmgr/tests/qmgr_test.exe$(DLLEXT) $@ && $(STRIP) $@
 quartz_test.exe: $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT)
 	cp $(DLLDIR)/quartz/tests/quartz_test.exe$(DLLEXT) $@ && $(STRIP) $@
+rasapi32_test.exe: $(DLLDIR)/rasapi32/tests/rasapi32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/rasapi32/tests/rasapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 riched20_test.exe: $(DLLDIR)/riched20/tests/riched20_test.exe$(DLLEXT)
 	cp $(DLLDIR)/riched20/tests/riched20_test.exe$(DLLEXT) $@ && $(STRIP) $@
 riched32_test.exe: $(DLLDIR)/riched32/tests/riched32_test.exe$(DLLEXT)

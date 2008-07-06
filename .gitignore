@@ -311,6 +311,7 @@ programs/winetest/psapi_test.exe
 programs/winetest/qedit_test.exe
 programs/winetest/qmgr_test.exe
 programs/winetest/quartz_test.exe
+programs/winetest/rasapi32_test.exe
 programs/winetest/riched20_test.exe
 programs/winetest/riched32_test.exe
 programs/winetest/rpcrt4_test.exe

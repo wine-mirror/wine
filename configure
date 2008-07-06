@@ -22183,6 +22183,8 @@ ac_config_files="$ac_config_files dlls/query/Makefile"
 
 ac_config_files="$ac_config_files dlls/rasapi32/Makefile"
 
+ac_config_files="$ac_config_files dlls/rasapi32/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/resutils/Makefile"
 
 ac_config_files="$ac_config_files dlls/riched20/Makefile"
@@ -23334,6 +23336,7 @@ do
     "dlls/quartz/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/quartz/tests/Makefile" ;;
     "dlls/query/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/query/Makefile" ;;
     "dlls/rasapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi32/Makefile" ;;
+    "dlls/rasapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi32/tests/Makefile" ;;
     "dlls/resutils/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/resutils/Makefile" ;;
     "dlls/riched20/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched20/Makefile" ;;
     "dlls/riched20/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/riched20/tests/Makefile" ;;
