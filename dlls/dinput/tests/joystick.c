@@ -18,6 +18,7 @@
 
 #define DIRECTINPUT_VERSION 0x0700
 
+#define COBJMACROS
 #include <windows.h>
 
 #include <math.h>
@@ -84,6 +85,12 @@ typedef struct tagJoystickInfo
     LONG  lMin, lMax;
     DWORD dZone;
 } JoystickInfo;
+
+static int get_refcount(IUnknown *object)
+{
+    IUnknown_AddRef( object );
+    return IUnknown_Release( object );
+}
 
 static BOOL CALLBACK EnumAxes(
     const DIDEVICEOBJECTINSTANCE* pdidoi,
@@ -329,6 +336,45 @@ static BOOL CALLBACK EnumJoysticks(
         hr = IDirectInputDevice_GetDeviceState(pJoystick, sizeof(DIJOYSTATE2), &js);
         ok(hr == DI_OK, "IDirectInputDevice_GetDeviceState() failed: %s\n", DXGetErrorString8(hr));
         ok(js.rgdwPOV[3] == -1, "Default for unassigned POV should be -1 not: %d\n", js.rgdwPOV[3]);
+    }
+
+    if (caps.dwFlags & DIDC_FORCEFEEDBACK)
+    {
+        DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
+        LONG  direction[2] = {0, 0};
+        DICONSTANTFORCE force = {0};
+        DIEFFECT eff;
+        LPDIRECTINPUTEFFECT effect = NULL;
+        LONG cnt1, cnt2;
+
+        trace("Testing force-feedback\n");
+        memset(&eff, 0, sizeof(eff));
+        eff.dwSize                = sizeof(eff);
+        eff.dwFlags               = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
+        eff.dwDuration            = INFINITE;
+        eff.dwGain                = DI_FFNOMINALMAX;
+        eff.dwTriggerButton       = DIEB_NOTRIGGER;
+        eff.cAxes                 = sizeof(axes) / sizeof(axes[0]);
+        eff.rgdwAxes              = axes;
+        eff.rglDirection          = direction;
+        eff.cbTypeSpecificParams  = sizeof(force);
+        eff.lpvTypeSpecificParams = &force;
+
+        cnt1 = get_refcount((IUnknown*)pJoystick);
+
+        hr = IDirectInputDevice2_CreateEffect((LPDIRECTINPUTDEVICE2)pJoystick, &GUID_ConstantForce,
+                                              &eff, &effect, NULL);
+        ok(hr == DI_OK, "IDirectInputDevice_CreateEffect() failed: %s\n", DXGetErrorString8(hr));
+        cnt2 = get_refcount((IUnknown*)pJoystick);
+        ok(cnt1 == cnt2, "Ref count is wrong %d != %d\n", cnt1, cnt2);
+
+        if (effect)
+        {
+            ref = IUnknown_Release(effect);
+            ok(ref == 0, "IDirectInputDevice_Release() reference count = %d\n", ref);
+        }
+        cnt1 = get_refcount((IUnknown*)pJoystick);
+        ok(cnt1 == cnt2, "Ref count is wrong %d != %d\n", cnt1, cnt2);
     }
 
     if (winetest_interactive) {

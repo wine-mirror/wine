@@ -53,11 +53,9 @@ struct LinuxInputEffectImpl
     LONG	ref;
     GUID	guid;
 
-    /* Effect data */
-    struct ff_effect effect;
-
-    /* Parent device */
-    int* 	fd;
+    struct ff_effect    effect; /* Effect data */
+    int*                fd;     /* Parent device */
+    struct list        *entry;  /* Entry into the parent's list of effects */
 };
 
 
@@ -766,6 +764,8 @@ static ULONG WINAPI LinuxInputEffectImpl_Release(LPDIRECTINPUTEFFECT iface)
     {
         LinuxInputEffectImpl_Stop(iface);
         LinuxInputEffectImpl_Unload(iface);
+        list_remove(This->entry);
+        HeapFree(GetProcessHeap(), 0, LIST_ENTRY(This->entry, effect_list_item, entry));
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -778,6 +778,7 @@ static ULONG WINAPI LinuxInputEffectImpl_Release(LPDIRECTINPUTEFFECT iface)
 HRESULT linuxinput_create_effect(
 	int* fd,
 	REFGUID rguid,
+        struct list *parent_list_entry,
 	LPDIRECTINPUTEFFECT* peff)
 {
     LinuxInputEffectImpl* newEffect = HeapAlloc(GetProcessHeap(), 
@@ -834,6 +835,8 @@ HRESULT linuxinput_create_effect(
 
     /* mark as non-uploaded */
     newEffect->effect.id = -1;
+
+    newEffect->entry = parent_list_entry;
 
     *peff = (LPDIRECTINPUTEFFECT)newEffect; 
 

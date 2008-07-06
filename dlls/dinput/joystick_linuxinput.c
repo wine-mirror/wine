@@ -141,7 +141,7 @@ struct wine_input_absinfo {
 };
 
 /* implemented in effect_linuxinput.c */
-HRESULT linuxinput_create_effect(int* fd, REFGUID rguid, LPDIRECTINPUTEFFECT* peff);
+HRESULT linuxinput_create_effect(int* fd, REFGUID rguid, struct list *parent_list_entry, LPDIRECTINPUTEFFECT* peff);
 HRESULT linuxinput_get_info_A(int fd, REFGUID rguid, LPDIEFFECTINFOA info);
 HRESULT linuxinput_get_info_W(int fd, REFGUID rguid, LPDIEFFECTINFOW info);
 
@@ -1053,7 +1053,7 @@ static HRESULT WINAPI JoystickAImpl_CreateEffect(LPDIRECTINPUTDEVICE8A iface,
     if (!(new_effect = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_effect))))
         return DIERR_OUTOFMEMORY;
 
-    retval = linuxinput_create_effect(&This->joyfd, rguid, &new_effect->ref);
+    retval = linuxinput_create_effect(&This->joyfd, rguid, &new_effect->entry, &new_effect->ref);
     if (retval != DI_OK)
     {
         HeapFree(GetProcessHeap(), 0, new_effect);
