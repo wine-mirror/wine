@@ -153,7 +153,7 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 		memcpy(&lpPRB->CDBByte[0],&lpSRB16->cmd.CDBByte[0],lpSRB16->cmd.SRB_CDBLen);
 
 		/* Set post proc to our post proc */
-		lpPRB->SRB_PostProc = &DOSASPI_PostProc;
+		lpPRB->SRB_PostProc = DOSASPI_PostProc;
 
 		/* Stick the DWORD after all the sense info */
 		memcpy(lpPRB->SenseArea + lpPRB->SRB_SenseLen,&ptrSRB,sizeof(DWORD));
