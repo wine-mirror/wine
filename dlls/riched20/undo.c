@@ -55,13 +55,7 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
     return NULL;
   else
   {
-    ME_DisplayItem *pItem;
-    if (editor->pUndoStack
-        && editor->pUndoStack->type == diUndoPotentialEndTransaction)
-    {
-        editor->pUndoStack->type = diUndoEndTransaction;
-    }
-    pItem = (ME_DisplayItem *)ALLOC_OBJ(ME_UndoItem);
+    ME_DisplayItem *pItem = (ME_DisplayItem *)ALLOC_OBJ(ME_UndoItem);
     ((ME_UndoItem *)pItem)->nCR = ((ME_UndoItem *)pItem)->nLF = -1;
     switch(type)
     {
@@ -109,6 +103,11 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
     pItem->prev = NULL;
     if (editor->nUndoMode == umAddToUndo || editor->nUndoMode == umAddBackToUndo)
     {
+      if (editor->pUndoStack
+          && editor->pUndoStack->type == diUndoPotentialEndTransaction)
+      {
+          editor->pUndoStack->type = diUndoEndTransaction;
+      }
       if (editor->nUndoMode == umAddToUndo)
         TRACE("Pushing id=%s to undo stack, deleting redo stack\n", ME_GetDITypeName(type));
       else
@@ -355,17 +354,18 @@ BOOL ME_Undo(ME_TextEditor *editor) {
   editor->nUndoMode = umAddToRedo;
   p = editor->pUndoStack->next;
   ME_DestroyDisplayItem(editor->pUndoStack);
-  do {
-    ME_DisplayItem *pp = p;
-    ME_PlayUndoItem(editor, p);
-    p = p->next;
-    ME_DestroyDisplayItem(pp);
-  } while(p && p->type != diUndoEndTransaction);
-  ME_AddUndoItem(editor, diUndoEndTransaction, NULL);
   editor->pUndoStack = p;
-  editor->nUndoStackSize--;
+  do {
+    p->prev = NULL;
+    ME_PlayUndoItem(editor, p);
+    editor->pUndoStack = p->next;
+    ME_DestroyDisplayItem(p);
+    p = editor->pUndoStack;
+  } while(p && p->type != diUndoEndTransaction);
   if (p)
     p->prev = NULL;
+  ME_AddUndoItem(editor, diUndoEndTransaction, NULL);
+  editor->nUndoStackSize--;
   editor->nUndoMode = nMode;
   ME_UpdateRepaint(editor);
   return TRUE;
@@ -389,16 +389,17 @@ BOOL ME_Redo(ME_TextEditor *editor) {
   editor->nUndoMode = umAddBackToUndo;
   p = editor->pRedoStack->next;
   ME_DestroyDisplayItem(editor->pRedoStack);
-  do {
-    ME_DisplayItem *pp = p;
-    ME_PlayUndoItem(editor, p);
-    p = p->next;
-    ME_DestroyDisplayItem(pp);
-  } while(p && p->type != diUndoEndTransaction);
-  ME_AddUndoItem(editor, diUndoEndTransaction, NULL);
   editor->pRedoStack = p;
+  do {
+    p->prev = NULL;
+    ME_PlayUndoItem(editor, p);
+    editor->pRedoStack = p->next;
+    ME_DestroyDisplayItem(p);
+    p = editor->pRedoStack;
+  } while(p && p->type != diUndoEndTransaction);
   if (p)
     p->prev = NULL;
+  ME_AddUndoItem(editor, diUndoEndTransaction, NULL);
   editor->nUndoMode = nMode;
   ME_UpdateRepaint(editor);
   return TRUE;
