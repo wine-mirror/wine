@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2008 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -219,6 +219,12 @@ STRINGTABLE
         IDS_RESTART_PROMPT      "Vil du simulere en omstart av Windows?"
         IDS_SHUTDOWN_TITLE      "Avslutt"
         IDS_SHUTDOWN_PROMPT     "Vil du avslutte Wine-økten?"
+
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Klarte ikke vise Kjør-vinduet (intern feil)"
+        IDS_RUNDLG_BROWSE_ERROR    "Klarte ikke vise Bla-vinduet (intern feil)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Bla"
+        IDS_RUNDLG_BROWSE_FILTER   "Programfiler\0*.exe\0Alle filer\0*.*\0\0"
 
         /* shell folder path default values */
 	IDS_PROGRAMS                "Start-meny\\Programmer"
