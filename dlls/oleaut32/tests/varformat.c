@@ -64,9 +64,11 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
   VariantInit(&v); V_VT(&v) = vt; val(&v) = 1; \
   hres = pVarFormatNumber(&v,2,0,0,0,0,&str); \
   ok(hres == S_OK, "VarFormatNumber (vt %d): returned %8x\n", vt, hres); \
-  if (hres == S_OK) \
+  if (hres == S_OK) { \
     ok(str && strcmpW(str,szResult1) == 0, \
-       "VarFormatNumber (vt %d): string different\n", vt)
+       "VarFormatNumber (vt %d): string different\n", vt); \
+    if (str) SysFreeString(str); \
+  }
 
 static void test_VarFormatNumber(void)
 {
@@ -126,7 +128,7 @@ static void test_VarFormatNumber(void)
 
 static const char *szVarFmtFail = "VT %d|0x%04x Format %s: expected 0x%08x, '%s', got 0x%08x, '%s'\n";
 #define VARFMT(vt,v,val,fmt,ret,str) do { \
-  if (out) SysFreeString(out); out = NULL; \
+  out = NULL; \
   V_VT(&in) = (vt); v(&in) = val; \
   if (fmt) MultiByteToWideChar(CP_ACP, 0, fmt, -1, buffW, sizeof(buffW)/sizeof(WCHAR)); \
   hres = pVarFormat(&in,fmt ? buffW : NULL,fd,fw,flags,&out); \
@@ -135,6 +137,7 @@ static const char *szVarFmtFail = "VT %d|0x%04x Format %s: expected 0x%08x, '%s'
   ok(hres == ret && (FAILED(ret) || !strcmp(buff, str)), \
      szVarFmtFail, \
      (vt)&VT_TYPEMASK,(vt)&~VT_TYPEMASK,fmt?fmt:"<null>",ret,str,hres,buff); \
+  if (out) SysFreeString(out); \
   } while(0)
 
 typedef struct tagFMTRES
