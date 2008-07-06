@@ -60,19 +60,19 @@ static const struct {
 	REFIID			riid;
 	LPFNCREATEINSTANCE	lpfnCI;
 } InterfaceTable[] = {
-	{&CLSID_ShellFSFolder,	&IFSFolder_Constructor},
-	{&CLSID_MyComputer,	&ISF_MyComputer_Constructor},
-	{&CLSID_NetworkPlaces,  &ISF_NetworkPlaces_Constructor},
-	{&CLSID_ShellDesktop,	&ISF_Desktop_Constructor},
-	{&CLSID_ShellLink,	&IShellLink_Constructor},
-	{&CLSID_DragDropHelper, &IDropTargetHelper_Constructor},
-	{&CLSID_ControlPanel,	&IControlPanel_Constructor},
-	{&CLSID_AutoComplete,   &IAutoComplete_Constructor},
-	{&CLSID_UnixFolder,     &UnixFolder_Constructor},
-	{&CLSID_UnixDosFolder,  &UnixDosFolder_Constructor},
-	{&CLSID_FolderShortcut, &FolderShortcut_Constructor},
-	{&CLSID_MyDocuments,    &MyDocuments_Constructor},
-	{&CLSID_RecycleBin,     &RecycleBin_Constructor},
+	{&CLSID_ShellFSFolder,	IFSFolder_Constructor},
+	{&CLSID_MyComputer,	ISF_MyComputer_Constructor},
+	{&CLSID_NetworkPlaces,  ISF_NetworkPlaces_Constructor},
+	{&CLSID_ShellDesktop,	ISF_Desktop_Constructor},
+	{&CLSID_ShellLink,	IShellLink_Constructor},
+	{&CLSID_DragDropHelper, IDropTargetHelper_Constructor},
+	{&CLSID_ControlPanel,	IControlPanel_Constructor},
+	{&CLSID_AutoComplete,   IAutoComplete_Constructor},
+	{&CLSID_UnixFolder,     UnixFolder_Constructor},
+	{&CLSID_UnixDosFolder,  UnixDosFolder_Constructor},
+	{&CLSID_FolderShortcut, FolderShortcut_Constructor},
+	{&CLSID_MyDocuments,    MyDocuments_Constructor},
+	{&CLSID_RecycleBin,     RecycleBin_Constructor},
 	{NULL,NULL}
 };
 
