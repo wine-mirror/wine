@@ -472,6 +472,10 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
         newDevice->props[idx].lSaturation = 0;
         newDevice->props[idx].lDeadZone = def_deadzone;
 
+        /* Linux supports force-feedback on X & Y axes only */
+        if (newDevice->joydev->has_ff && (i == 0 || i == 1))
+            df->rgodf[idx].dwFlags |= DIDOI_FFACTUATOR;
+
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numAxes++) | DIDFT_ABSAXIS;
     }
 
