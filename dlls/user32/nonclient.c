@@ -1254,7 +1254,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
         /* Check if the sysmenu item for minimize is there  */
         state = GetMenuState(hSysMenu, SC_MINIMIZE, MF_BYCOMMAND);
 
-        paintButton = &NC_DrawMinButton;
+        paintButton = NC_DrawMinButton;
     }
     else
     {
@@ -1265,7 +1265,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
         /* Check if the sysmenu item for maximize is there  */
         state = GetMenuState(hSysMenu, SC_MAXIMIZE, MF_BYCOMMAND);
 
-        paintButton = &NC_DrawMaxButton;
+        paintButton = NC_DrawMaxButton;
     }
 
     SetCapture( hwnd );
