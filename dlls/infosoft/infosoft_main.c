@@ -121,7 +121,7 @@ static const IClassFactoryVtbl infosoft_cfvt =
     infosoftcf_fnLockServer
 };
 
-static CFImpl wb_cf = { &infosoft_cfvt, &wb_Constructor };
+static CFImpl wb_cf = { &infosoft_cfvt, wb_Constructor };
 
 /***********************************************************************
  *             DllGetClassObject (INFOSOFT.@)
