@@ -134,7 +134,7 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, Win
         ret = 0;
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
             dirty_consts[lconst->idx] = 1; /* Dirtify so the non-immediate constant overwrites it next time */
-            ret = max(ret, lconst->idx);
+            ret = max(ret, lconst->idx + 1);
             GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, lconst->idx, (GLfloat*)lconst->value));
         }
         checkGLcall("glProgramEnvParameter4fvARB()");
