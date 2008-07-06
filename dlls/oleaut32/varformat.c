@@ -1463,7 +1463,8 @@ VARIANT_FormatNumber_Bool:
           while (count-- > 0)
             *pBuff++ = '0';
         }
-        if (*pToken == FMT_NUM_COPY_ZERO || have_int > 1 || *prgbDig > 0)
+        if (*pToken == FMT_NUM_COPY_ZERO || have_int > 1 ||
+            (have_int > 0 && *prgbDig > 0))
         {
           dwState |= NUM_WRITE_ON;
           count = min(count_max, have_int);
