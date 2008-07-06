@@ -39,7 +39,7 @@ BEGIN
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
     LTEXT           "Dette biblioteket er fri programvarer; det kan redistribueres i henhold til vilkårene i GNU Lesser General Public License utgitt av «the Free Software Foundation», enten versjon 2.1 av denne Lisensen, eller (hvis du ønsker det) en nyere versjon.",
                     IDC_STATIC,119,44,124,72
-    GROUPBOX        " Windows Påmelding Informasjon ", IDC_STATIC, 15, 110, 230, 55
+    GROUPBOX        " Brukerinformasjon ", IDC_STATIC, 15, 110, 230, 55
     LTEXT           "Eier:", IDC_STATIC, 22, 126, 40, 20
     LTEXT           "Organisasjon:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
@@ -85,7 +85,7 @@ BEGIN
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
+    LTEXT       "Forhåndsvisning av tekst med 10 punkters Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
