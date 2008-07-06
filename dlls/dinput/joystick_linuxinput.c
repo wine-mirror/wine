@@ -637,6 +637,8 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
         }
       }
     }
+    else
+        WARN("Failed to acquire: %x\n", res);
 
     return res;
 }

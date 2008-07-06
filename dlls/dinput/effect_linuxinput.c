@@ -191,7 +191,7 @@ static void _dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid)
     TRACE("  - dwTriggerRepeatInterval: %d\n", eff->dwTriggerRepeatInterval);
     TRACE("  - cAxes: %d\n", eff->cAxes);
     TRACE("  - rgdwAxes: %p\n", eff->rgdwAxes);
-    if (TRACE_ON(dinput)) {
+    if (TRACE_ON(dinput) && eff->rgdwAxes) {
 	TRACE("    ");	
 	for (i = 0; i < eff->cAxes; ++i)
 	    TRACE("%d ", eff->rgdwAxes[i]);
@@ -261,7 +261,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Download(
 	if (errno == ENOMEM) {
 	    return DIERR_DEVICEFULL;
 	} else {
-	    FIXME("Could not upload effect. Assuming a disconnected device.\n");
+            FIXME("Could not upload effect. Assuming a disconnected device %d \"%s\".\n", *This->fd, strerror(errno));
 	    return DIERR_INPUTLOST;
 	}
     }
@@ -824,7 +824,7 @@ HRESULT linuxinput_create_effect(
 	    HeapFree(GetProcessHeap(), 0, newEffect);
 	    return DIERR_INVALIDPARAM;
 	default:
-	    FIXME("Unknown force type.\n");
+            FIXME("Unknown force type 0x%x.\n", type);
             HeapFree(GetProcessHeap(), 0, newEffect);
 	    return DIERR_INVALIDPARAM;
     }

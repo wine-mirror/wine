@@ -179,7 +179,7 @@ const char *_dump_dinput_GUID(const GUID *guid) {
 	    return guids[i].name;
 	}
     }
-    return "Unknown GUID";
+    return debugstr_guid(guid);
 }
 
 void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) {
