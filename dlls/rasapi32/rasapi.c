@@ -249,7 +249,7 @@ DWORD WINAPI RasEnumDevicesA(LPRASDEVINFOA lpRasDevinfo, LPDWORD lpcb, LPDWORD l
             return ERROR_INVALID_PARAMETER;
 
 	FIXME("(%p,%p,%p),stub!\n",lpRasDevinfo,lpcb,lpcDevices);
-	if (*lpcb < sizeof(RASDEVINFOA)) {
+	if (!lpRasDevinfo || (*lpcb < sizeof(RASDEVINFOA))) {
 		*lpcb = sizeof(RASDEVINFOA);
 		return ERROR_BUFFER_TOO_SMALL;
 	}

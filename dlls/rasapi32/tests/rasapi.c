@@ -53,14 +53,78 @@ static void test_rasenum(void)
         return;
     }
 
+    /* test first parameter */
     result = pRasEnumDevicesA(NULL, &cb, &cDevices);
     trace("RasEnumDevicesA: buffersize %d\n", cb);
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
 
+    cb = sizeof(rasDevInfo);
+    result = pRasEnumDevicesA(NULL, &cb, &cDevices);
+    ok(result == ERROR_BUFFER_TOO_SMALL,
+    "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
+
+    rasDevInfo.dwSize = 0;
+    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    todo_wine
+    ok(result == ERROR_INVALID_SIZE,
+    "Expected ERROR_INVALID_SIZE, got %08d\n", result);
+
+    rasDevInfo.dwSize = sizeof(rasDevInfo) -1;
+    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    todo_wine
+    ok(result == ERROR_INVALID_SIZE,
+    "Expected ERROR_INVALID_SIZE, got %08d\n", result);
+
+    rasDevInfo.dwSize = sizeof(rasDevInfo) +1;
+    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    todo_wine
+    ok(result == ERROR_INVALID_SIZE,
+    "Expected ERROR_INVALID_SIZE, got %08d\n", result);
+
+    /* test second parameter */
+    rasDevInfo.dwSize = sizeof(rasDevInfo);
     result = pRasEnumDevicesA(&rasDevInfo, NULL, &cDevices);
     ok(result == ERROR_INVALID_PARAMETER,
     "Expected ERROR_INVALID_PARAMETER, got %08d\n", result);
+
+    cb = 0;
+    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    ok(result == ERROR_BUFFER_TOO_SMALL,
+    "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
+
+    cb = sizeof(rasDevInfo) -1;
+    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    ok(result == ERROR_BUFFER_TOO_SMALL,
+    "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
+
+    cb = sizeof(rasDevInfo) +1;
+    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    todo_wine
+    ok(result == ERROR_BUFFER_TOO_SMALL,
+    "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
+
+    /* test third parameter */
+    cb = sizeof(rasDevInfo);
+    result = pRasEnumDevicesA(&rasDevInfo, &cb, NULL);
+    ok(result == ERROR_INVALID_PARAMETER,
+    "Expected ERROR_INVALID_PARAMETER, got %08d\n", result);
+
+    /* test combinations of invalid parameters */
+    result = pRasEnumDevicesA(NULL, NULL, &cDevices);
+    ok(result == ERROR_INVALID_PARAMETER,
+    "Expected ERROR_INVALID_PARAMETER, got %08d\n", result);
+
+    result = pRasEnumDevicesA(NULL, &cb, NULL);
+    ok(result == ERROR_INVALID_PARAMETER,
+    "Expected ERROR_INVALID_PARAMETER, got %08d\n", result);
+
+    cb = 0;
+    rasDevInfo.dwSize = 0;
+    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    todo_wine
+    ok(result == ERROR_INVALID_SIZE,
+    "Expected ERROR_INVALID_SIZE, got %08d\n", result);
 }
 
 START_TEST(rasapi)
