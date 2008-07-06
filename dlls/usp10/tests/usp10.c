@@ -486,19 +486,17 @@ static void test_ScriptTextOut(HDC hdc)
                                     "got %08x\n", hr);
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
-            /* Set psc to NULL, to be able to check if a pointer is returned in psc
-             * hdc is required for this one rather than the usual optional          */
+            /* hdc is required for this one rather than the usual optional          */
             psc = NULL;
             hr = ScriptTextOut(NULL, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok( hr == E_INVALIDARG, "(NULL,&psc,), expected E_INVALIDARG, got %08x\n", hr);
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
-            /* Set that is gets a psc and that returns 0 status */
+            /* Set that it returns 0 status */
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
-            ok (psc == NULL, "psc should be null\n");
 
             /* Test Rect Rgn is acceptable */
             rect.top = 10;
@@ -508,7 +506,6 @@ static void test_ScriptTextOut(HDC hdc)
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
-            ok (psc == NULL, "psc should be null\n");
 
             iCP = 1;
             hr = ScriptCPtoX(iCP, fTrailing, cChars, pcGlyphs, (const WORD *) &pwLogClust,
