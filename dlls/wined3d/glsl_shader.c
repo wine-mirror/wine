@@ -3473,7 +3473,7 @@ static BOOL glsl_program_key_compare(void *keya, void *keyb) {
 static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     This->shader_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
-    This->glsl_program_lookup = hash_table_create(&glsl_program_key_hash, &glsl_program_key_compare);
+    This->glsl_program_lookup = hash_table_create(glsl_program_key_hash, glsl_program_key_compare);
     return WINED3D_OK;
 }
 
@@ -3693,20 +3693,20 @@ static void shader_glsl_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
 }
 
 const shader_backend_t glsl_shader_backend = {
-    &shader_glsl_select,
-    &shader_glsl_select_depth_blt,
-    &shader_glsl_destroy_depth_blt,
-    &shader_glsl_load_constants,
-    &shader_glsl_cleanup,
-    &shader_glsl_color_correction,
-    &shader_glsl_destroy,
-    &shader_glsl_alloc,
-    &shader_glsl_free,
-    &shader_glsl_dirty_const,
-    &shader_glsl_generate_pshader,
-    &shader_glsl_generate_vshader,
-    &shader_glsl_get_caps,
-    &shader_glsl_load_init,
-    &shader_glsl_fragment_enable,
+    shader_glsl_select,
+    shader_glsl_select_depth_blt,
+    shader_glsl_destroy_depth_blt,
+    shader_glsl_load_constants,
+    shader_glsl_cleanup,
+    shader_glsl_color_correction,
+    shader_glsl_destroy,
+    shader_glsl_alloc,
+    shader_glsl_free,
+    shader_glsl_dirty_const,
+    shader_glsl_generate_pshader,
+    shader_glsl_generate_vshader,
+    shader_glsl_get_caps,
+    shader_glsl_load_init,
+    shader_glsl_fragment_enable,
     FFPStateTable
 };

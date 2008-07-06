@@ -1201,21 +1201,21 @@ static void shader_none_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
 #undef GLINFO_LOCATION
 
 const shader_backend_t none_shader_backend = {
-    &shader_none_select,
-    &shader_none_select_depth_blt,
-    &shader_none_destroy_depth_blt,
-    &shader_none_load_constants,
-    &shader_none_cleanup,
-    &shader_none_color_correction,
-    &shader_none_destroy,
-    &shader_none_alloc,
-    &shader_none_free,
-    &shader_none_dirty_const,
-    &shader_none_generate_pshader,
-    &shader_none_generate_vshader,
-    &shader_none_get_caps,
-    &shader_none_load_init,
-    &shader_none_fragment_enable,
+    shader_none_select,
+    shader_none_select_depth_blt,
+    shader_none_destroy_depth_blt,
+    shader_none_load_constants,
+    shader_none_cleanup,
+    shader_none_color_correction,
+    shader_none_destroy,
+    shader_none_alloc,
+    shader_none_free,
+    shader_none_dirty_const,
+    shader_none_generate_pshader,
+    shader_none_generate_vshader,
+    shader_none_get_caps,
+    shader_none_load_init,
+    shader_none_fragment_enable,
     FFPStateTable
 };
 
