@@ -99,6 +99,12 @@ typedef struct
 extern DWORD joystick_map_pov(POINTL *p);
 extern LONG joystick_map_axis(ObjProps *props, int val);
 
+typedef struct
+{
+    struct list entry;
+    LPDIRECTINPUTEFFECT ref;
+} effect_list_item;
+
 /**
  * Callback Data used by specific callback 
  *  for EnumObject on 'W' interfaces

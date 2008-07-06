@@ -55,6 +55,7 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -139,13 +140,6 @@ struct wine_input_absinfo {
     LONG flat;
 };
 
-typedef struct EffectListItem EffectListItem;
-struct EffectListItem
-{
-        LPDIRECTINPUTEFFECT ref;
-	struct EffectListItem* next;
-};
-
 /* implemented in effect_linuxinput.c */
 HRESULT linuxinput_create_effect(int* fd, REFGUID rguid, LPDIRECTINPUTEFFECT* peff);
 HRESULT linuxinput_get_info_A(int fd, REFGUID rguid, LPDIEFFECTINFOA info);
@@ -197,7 +191,7 @@ struct JoystickImpl
 	DWORD                           numButtons;
 
 	/* Force feedback variables */
-	EffectListItem*			top_effect;
+        struct list                     ff_effects;
 	int				ff_state;
 };
 
@@ -438,6 +432,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     newDevice->base.dinput = dinput;
     newDevice->joyfd       = -1;
     newDevice->joydev      = &joydevs[index];
+    list_init(&newDevice->ff_effects);
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
     newDevice->ff_state    = FF_STATUS_STOPPED;
 #endif
@@ -1042,7 +1037,7 @@ static HRESULT WINAPI JoystickAImpl_CreateEffect(LPDIRECTINPUTDEVICE8A iface,
 						 LPUNKNOWN pUnkOuter)
 {
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
-    EffectListItem* new = NULL;
+    effect_list_item* new_effect = NULL;
     HRESULT retval = DI_OK;
 #endif
 
@@ -1055,20 +1050,29 @@ static HRESULT WINAPI JoystickAImpl_CreateEffect(LPDIRECTINPUTDEVICE8A iface,
     return DI_OK;
 #else
 
-    new = HeapAlloc(GetProcessHeap(), 0, sizeof(EffectListItem));
-    new->next = This->top_effect;
-    This->top_effect = new;
+    if (!(new_effect = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_effect))))
+        return DIERR_OUTOFMEMORY;
 
-    retval = linuxinput_create_effect(&(This->joyfd), rguid, &(new->ref));
+    retval = linuxinput_create_effect(&This->joyfd, rguid, &new_effect->ref);
     if (retval != DI_OK)
-	return retval;
+    {
+        HeapFree(GetProcessHeap(), 0, new_effect);
+        return retval;
+    }
 
     if (lpeff != NULL)
-	retval = IDirectInputEffect_SetParameters(new->ref, lpeff, 0);
-    if (retval != DI_OK && retval != DI_DOWNLOADSKIPPED)
-	return retval;
+    {
+        retval = IDirectInputEffect_SetParameters(new_effect->ref, lpeff, 0);
 
-    *ppdef = new->ref;
+        if (retval != DI_OK && retval != DI_DOWNLOADSKIPPED)
+        {
+            HeapFree(GetProcessHeap(), 0, new_effect);
+            return retval;
+        }
+    }
+
+    list_add_tail(&This->ff_effects, &new_effect->entry);
+    *ppdef = new_effect->ref;
 
     if (pUnkOuter != NULL)
 	FIXME("Interface aggregation not implemented.\n");
@@ -1301,30 +1305,39 @@ static HRESULT WINAPI JoystickAImpl_SendForceFeedbackCommand(
     TRACE("(this=%p,%d)\n", This, dwFlags);
 
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
-    if (dwFlags == DISFFC_STOPALL) {
+    switch (dwFlags)
+    {
+    case DISFFC_STOPALL:
+    {
 	/* Stop all effects */
-	EffectListItem* itr = This->top_effect;
-	while (itr) {
-	    IDirectInputEffect_Stop(itr->ref);
-	    itr = itr->next;
-	}
-    } else if (dwFlags == DISFFC_RESET) {
+        effect_list_item *itr;
+
+        LIST_FOR_EACH_ENTRY(itr, &This->ff_effects, effect_list_item, entry)
+            IDirectInputEffect_Stop(itr->ref);
+        break;
+    }
+
+    case DISFFC_RESET:
+    {
+        effect_list_item *itr, *ptr;
+
 	/* Stop, unload, release and free all effects */
 	/* This returns the device to its "bare" state */
-	while (This->top_effect) {
-	    EffectListItem* temp = This->top_effect;
-	    IDirectInputEffect_Stop(temp->ref);
-	    IDirectInputEffect_Unload(temp->ref);
-	    IDirectInputEffect_Release(temp->ref);
-	    This->top_effect = temp->next;
-	    HeapFree(GetProcessHeap(), 0, temp);
-	}
-    } else if (dwFlags == DISFFC_PAUSE || dwFlags == DISFFC_CONTINUE) {
+        LIST_FOR_EACH_ENTRY_SAFE(itr, ptr, &This->ff_effects, effect_list_item, entry)
+            IDirectInputEffect_Release(itr->ref);
+        break;
+    }
+    case DISFFC_PAUSE:
+    case DISFFC_CONTINUE:
 	FIXME("No support for Pause or Continue in linux\n");
-    } else if (dwFlags == DISFFC_SETACTUATORSOFF 
-		|| dwFlags == DISFFC_SETACTUATORSON) {
-	FIXME("No direct actuator control in linux\n");
-    } else {
+        break;
+
+    case DISFFC_SETACTUATORSOFF:
+    case DISFFC_SETACTUATORSON:
+        FIXME("No direct actuator control in linux\n");
+        break;
+
+    default:
 	FIXME("Unknown Force Feedback Command!\n");
 	return DIERR_INVALIDPARAM;
     }
@@ -1345,9 +1358,9 @@ static HRESULT WINAPI JoystickAImpl_EnumCreatedEffectObjects(
 	DWORD dwFlags)
 {
     /* this function is safe to call on non-ff-enabled builds */
-
     JoystickImpl* This = (JoystickImpl*)iface;
-    EffectListItem* itr = This->top_effect;
+    effect_list_item *itr, *ptr;
+
     TRACE("(this=%p,%p,%p,%d)\n", This, lpCallback, pvRef, dwFlags);
 
     if (!lpCallback)
@@ -1356,10 +1369,8 @@ static HRESULT WINAPI JoystickAImpl_EnumCreatedEffectObjects(
     if (dwFlags != 0)
 	FIXME("Flags specified, but no flags exist yet (DX9)!\n");
 
-    while (itr) {
-	(*lpCallback)(itr->ref, pvRef);
-	itr = itr->next;
-    }
+    LIST_FOR_EACH_ENTRY_SAFE(itr, ptr, &This->ff_effects, effect_list_item, entry)
+        (*lpCallback)(itr->ref, pvRef);
 
     return DI_OK;
 }
