@@ -724,17 +724,6 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
     return DI_OK;
 }   
 
-static ULONG WINAPI LinuxInputEffectImpl_Release(
-	LPDIRECTINPUTEFFECT iface)
-{
-    LinuxInputEffectImpl *This = (LinuxInputEffectImpl *)iface;
-    ULONG ref = InterlockedDecrement(&(This->ref));
-
-    if (ref == 0)
-        HeapFree(GetProcessHeap(), 0, This);
-    return ref;
-}
-
 static HRESULT WINAPI LinuxInputEffectImpl_Stop(
         LPDIRECTINPUTEFFECT iface)
 {
@@ -766,6 +755,20 @@ static HRESULT WINAPI LinuxInputEffectImpl_Unload(
     This->effect.id = -1;
 
     return DI_OK;
+}
+
+static ULONG WINAPI LinuxInputEffectImpl_Release(LPDIRECTINPUTEFFECT iface)
+{
+    LinuxInputEffectImpl *This = (LinuxInputEffectImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+
+    if (ref == 0)
+    {
+        LinuxInputEffectImpl_Stop(iface);
+        LinuxInputEffectImpl_Unload(iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
 }
 
 /******************************************************************************
