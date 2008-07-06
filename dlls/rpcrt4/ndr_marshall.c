@@ -2426,6 +2426,13 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       desc = pFormat + *(const SHORT*)pFormat;
       size = EmbeddedComplexSize(pStubMsg, desc);
       TRACE("embedded complex (size=%ld) => %p\n", size, pMemory);
+      if (fMustAlloc)
+        /* we can't pass fMustAlloc=TRUE into the marshaller for this type
+         * since the type is part of the memory block that is encompassed by
+         * the whole complex type. Memory is forced to allocate when pointers
+         * are set to NULL, so we emulate that part of fMustAlloc=TRUE by
+         * clearing the memory we pass in to the unmarshaller */
+        memset(pMemory, 0, size);
       m = NdrUnmarshaller[*desc & NDR_TABLE_MASK];
       if (m)
       {
