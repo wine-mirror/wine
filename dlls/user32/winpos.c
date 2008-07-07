@@ -2591,7 +2591,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         if (!((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) )
         {
             /* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
-            if(!DragFullWindows)
+            if(!DragFullWindows || iconic)
                 SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
                               sizingRect.right - sizingRect.left,
                               sizingRect.bottom - sizingRect.top,
