@@ -176,7 +176,7 @@ void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod);
 
 /* caret.c */
 int ME_SetSelection(ME_TextEditor *editor, int from, int to);
-void ME_SelectWord(ME_TextEditor *editor);
+void ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType);
 void ME_HideCaret(ME_TextEditor *ed);
 void ME_ShowCaret(ME_TextEditor *ed);
 void ME_MoveCaret(ME_TextEditor *ed);

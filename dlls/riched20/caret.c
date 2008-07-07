@@ -744,11 +744,54 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
 
 
 void
-ME_SelectWord(ME_TextEditor *editor)
+ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
 {
-  ME_MoveCursorWords(editor, &editor->pCursors[1], +1);
-  editor->pCursors[0] = editor->pCursors[1];
-  ME_MoveCursorWords(editor, &editor->pCursors[0], -1);
+  /* pCursor[0] will be the start of the selection
+   * pCursor[1] is the other end of the selection range
+   * pCursor[2] and [3] are the selection anchors that are backed up
+   * so they are kept when the selection changes for drag selection.
+   */
+
+  editor->nSelectionType = selectionType;
+  switch(selectionType)
+  {
+    case stPosition:
+      break;
+    case stWord:
+      ME_MoveCursorWords(editor, &editor->pCursors[1], +1);
+      editor->pCursors[0] = editor->pCursors[1];
+      ME_MoveCursorWords(editor, &editor->pCursors[0], -1);
+      break;
+    case stLine:
+    case stParagraph:
+    {
+      ME_DisplayItem *pItem;
+      ME_DIType fwdSearchType, backSearchType;
+      if (selectionType == stParagraph) {
+          backSearchType = diParagraph;
+          fwdSearchType = diParagraphOrEnd;
+      } else {
+          backSearchType = diStartRow;
+          fwdSearchType = diStartRowOrParagraphOrEnd;
+      }
+      pItem = ME_FindItemBack(editor->pCursors[0].pRun, backSearchType);
+      editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
+      editor->pCursors[0].nOffset = 0;
+
+      pItem = ME_FindItemFwd(editor->pCursors[0].pRun, fwdSearchType);
+      assert(pItem);
+      if (pItem->type == diTextEnd)
+          editor->pCursors[1].pRun = ME_FindItemBack(pItem, diRun);
+      else
+          editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
+      editor->pCursors[1].nOffset = 0;
+      break;
+    }
+    default: assert(0);
+  }
+  /* Store the anchor positions for extending the selection. */
+  editor->pCursors[2] = editor->pCursors[0];
+  editor->pCursors[3] = editor->pCursors[1];
 }
 
 
@@ -900,8 +943,9 @@ static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
       else
       {
           ME_DisplayItem *pItem;
-          pItem = ME_FindItemBack(editor->pCursors[0].pRun,
-                                  diStartRowOrParagraph);
+          ME_DIType searchType = ((editor->nSelectionType == stLine) ?
+                                  diStartRowOrParagraph:diParagraph);
+          pItem = ME_FindItemBack(editor->pCursors[0].pRun, searchType);
           editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
           editor->pCursors[0].nOffset = 0;
       }
@@ -915,8 +959,9 @@ static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
       else
       {
           ME_DisplayItem *pItem;
-          pItem = ME_FindItemFwd(editor->pCursors[1].pRun,
-                                 diStartRowOrParagraphOrEnd);
+          ME_DIType searchType = ((editor->nSelectionType == stLine) ?
+                                  diStartRowOrParagraphOrEnd:diParagraphOrEnd);
+          pItem = ME_FindItemFwd(editor->pCursors[1].pRun, searchType);
           if (pItem->type == diTextEnd)
               editor->pCursors[1].pRun = ME_FindItemBack(pItem, diRun);
           else
@@ -930,6 +975,7 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
 {
   ME_Cursor tmp_cursor;
   int is_selection = 0;
+  BOOL is_shift;
   
   editor->nUDArrowX = -1;
   
@@ -937,23 +983,22 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
 
   tmp_cursor = editor->pCursors[0];
   is_selection = ME_IsSelection(editor);
+  is_shift = GetKeyState(VK_SHIFT) < 0;
 
   ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd);
 
-  if (x >= editor->selofs || GetKeyState(VK_SHIFT) < 0)
+  if (x >= editor->selofs || is_shift)
   {
     if (clickNum > 1)
     {
-      editor->nSelectionType = stWord;
       editor->pCursors[1] = editor->pCursors[0];
-      ME_SelectWord(editor);
-      /* Store the anchor positions for extending the selection. */
-      editor->pCursors[2] = editor->pCursors[0];
-      editor->pCursors[3] = editor->pCursors[1];
+      if (x >= editor->selofs)
+          ME_SelectByType(editor, stWord);
+      else
+          ME_SelectByType(editor, stParagraph);
     }
-    else if (GetKeyState(VK_SHIFT)>=0)
+    else if (!is_shift)
     {
-      /* Shift is not down */
       editor->nSelectionType = stPosition;
       editor->pCursors[1] = editor->pCursors[0];
     }
@@ -969,25 +1014,11 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
   }
   else
   {
-    ME_DisplayItem *pItem;
-
-    editor->nSelectionType = stLine;
-    /* Set pCursors[0] to beginning of line */
-    /* Set pCursors[1] to end of line */
-    pItem = ME_FindItemFwd(editor->pCursors[0].pRun, diStartRowOrParagraphOrEnd);
-    assert(pItem);
-    if (pItem->type == diTextEnd)
-        editor->pCursors[1].pRun = ME_FindItemBack(pItem, diRun);
-    else
-        editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
-    editor->pCursors[1].nOffset = 0;
-    /* pCursor[0] is the position where the cursor will be drawn,
-     * pCursor[1] is the other end of the selection range
-     * pCursor[2] and [3] are the selection anchors that are backed up
-     * so they are kept when the selection changes for drag line selection.
-     */
-    editor->pCursors[2] = editor->pCursors[0];
-    editor->pCursors[3] = editor->pCursors[1];
+    if (clickNum < 2) {
+        ME_SelectByType(editor, stLine);
+    } else {
+        ME_SelectByType(editor, stParagraph);
+    }
   }
   ME_InvalidateSelection(editor);
   HideCaret(editor->hWnd);

@@ -247,7 +247,8 @@ typedef enum {
 typedef enum {
   stPosition = 0,
   stWord,
-  stLine
+  stLine,
+  stParagraph
 } ME_SelectionType;
 
 typedef struct tagME_FontTableItem {
