@@ -15,7 +15,7 @@
 @ stdcall WinHttpOpen(wstr long wstr wstr long)
 @ stdcall WinHttpOpenRequest(ptr wstr wstr wstr wstr ptr long)
 @ stub WinHttpQueryAuthSchemes
-@ stub WinHttpQueryDataAvailable
+@ stdcall WinHttpQueryDataAvailable(ptr ptr)
 @ stub WinHttpQueryHeaders
 @ stdcall WinHttpQueryOption(ptr long ptr ptr)
 @ stub WinHttpReadData

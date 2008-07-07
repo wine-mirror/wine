@@ -191,3 +191,14 @@ BOOL WINAPI WinHttpQueryOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBu
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpQueryDataAvailable (winhttp.@)
+ */
+BOOL WINAPI WinHttpQueryDataAvailable (HINTERNET hInternet, LPDWORD lpdwNumberOfBytesAvailable)
+{
+    FIXME("stub\n");
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
