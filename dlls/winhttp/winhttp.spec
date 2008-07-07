@@ -19,7 +19,7 @@
 @ stub WinHttpQueryHeaders
 @ stdcall WinHttpQueryOption(ptr long ptr ptr)
 @ stub WinHttpReadData
-@ stub WinHttpReceiveResponse
+@ stdcall WinHttpReceiveResponse(ptr ptr)
 @ stdcall WinHttpSendRequest(ptr wstr long ptr long long ptr)
 @ stub WinHttpSetCredentials
 @ stub WinHttpSetDefaultProxyConfiguration

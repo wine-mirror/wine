@@ -202,3 +202,14 @@ BOOL WINAPI WinHttpQueryDataAvailable (HINTERNET hInternet, LPDWORD lpdwNumberOf
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpReceiveResponse (winhttp.@)
+ */
+BOOL WINAPI WinHttpReceiveResponse (HINTERNET hRequest, LPVOID lpReserved)
+{
+    FIXME("stub\n");
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
