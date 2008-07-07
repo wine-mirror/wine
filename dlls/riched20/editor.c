@@ -2195,6 +2195,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_InvalidateSelection(editor);
     ME_SetSelection(editor, wParam, lParam);
     ME_InvalidateSelection(editor);
+    HideCaret(editor->hWnd);
+    ME_ShowCaret(editor);
     ME_SendSelChange(editor);
     return 0;
   }
@@ -2227,6 +2229,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_InvalidateSelection(editor);
     end = ME_SetSelection(editor, range.cpMin, range.cpMax);
     ME_InvalidateSelection(editor);
+    HideCaret(editor->hWnd);
+    ME_ShowCaret(editor);
     ME_SendSelChange(editor);
 
     return end;
@@ -3096,8 +3100,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return 0;
   case WM_KILLFOCUS:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
-    ME_HideCaret(editor);
     editor->bHaveFocus = FALSE;
+    ME_HideCaret(editor);
     ME_SendOldNotify(editor, EN_KILLFOCUS);
     return 0;
   case WM_ERASEBKGND:

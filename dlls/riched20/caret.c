@@ -234,7 +234,7 @@ ME_MoveCaret(ME_TextEditor *editor)
   if (ME_WrapMarkedParagraphs(editor))
     ME_UpdateScrollBar(editor);
   ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x, &y, &height);
-  if(editor->bHaveFocus)
+  if(editor->bHaveFocus && !ME_IsSelection(editor))
   {
     RECT rect;
 
@@ -242,6 +242,8 @@ ME_MoveCaret(ME_TextEditor *editor)
     x = min(x, rect.right-2);
     CreateCaret(editor->hWnd, NULL, 0, height);
     SetCaretPos(x, y);
+  } else {
+    DestroyCaret();
   }
 }
 
@@ -249,13 +251,13 @@ ME_MoveCaret(ME_TextEditor *editor)
 void ME_ShowCaret(ME_TextEditor *ed)
 {
   ME_MoveCaret(ed);
-  if(ed->bHaveFocus)
+  if(ed->bHaveFocus && !ME_IsSelection(ed))
     ShowCaret(ed->hWnd);
 }
 
 void ME_HideCaret(ME_TextEditor *ed)
 {
-  if(ed->bHaveFocus)
+  if(!ed->bHaveFocus || ME_IsSelection(ed))
   {
     HideCaret(ed->hWnd);
     DestroyCaret();
@@ -1038,8 +1040,7 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
   }
   ME_InvalidateSelection(editor);
   HideCaret(editor->hWnd);
-  ME_MoveCaret(editor);
-  ShowCaret(editor->hWnd);
+  ME_ShowCaret(editor);
   ME_ClearTempStyle(editor);
   ME_SendSelChange(editor);
 }
@@ -1076,10 +1077,9 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
       SendMessageW(editor->hWnd, EM_SCROLLCARET, 0, 0);
   }
 
-  HideCaret(editor->hWnd);
-  ME_MoveCaret(editor);
   ME_InvalidateSelection(editor);
-  ShowCaret(editor->hWnd);
+  HideCaret(editor->hWnd);
+  ME_ShowCaret(editor);
   ME_SendSelChange(editor);
 }
 
