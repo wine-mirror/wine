@@ -482,6 +482,16 @@ GpStatus WINGDIPAPI GdipGetLineGammaCorrection(GpLineGradient *line,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetLineWrapMode(GpLineGradient *brush, GpWrapMode *wrapmode)
+{
+    if(!brush || !wrapmode)
+        return InvalidParameter;
+
+    *wrapmode = brush->wrap;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient *grad,
     GpPointF *point)
 {
