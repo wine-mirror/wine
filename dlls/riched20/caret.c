@@ -787,6 +787,14 @@ ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
       editor->pCursors[1].nOffset = 0;
       break;
     }
+    case stDocument:
+      /* Select everything with cursor anchored from the start of the text */
+      editor->nSelectionType = stDocument;
+      editor->pCursors[1].pRun = ME_FindItemFwd(editor->pBuffer->pFirst, diRun);
+      editor->pCursors[1].nOffset = 0;
+      editor->pCursors[0].pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
+      editor->pCursors[0].nOffset = 0;
+      break;
     default: assert(0);
   }
   /* Store the anchor positions for extending the selection. */
@@ -925,7 +933,7 @@ static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
 {
   ME_Cursor tmp_cursor;
   int curOfs, anchorStartOfs, anchorEndOfs;
-  if (editor->nSelectionType == stPosition)
+  if (editor->nSelectionType == stPosition || editor->nSelectionType == stDocument)
       return;
   curOfs = ME_GetCursorOfs(editor, 0);
   anchorStartOfs = ME_GetCursorOfs(editor, 2);
@@ -992,10 +1000,16 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
     if (clickNum > 1)
     {
       editor->pCursors[1] = editor->pCursors[0];
-      if (x >= editor->selofs)
+      if (is_shift) {
+          if (x >= editor->selofs)
+              ME_SelectByType(editor, stWord);
+          else
+              ME_SelectByType(editor, stParagraph);
+      } else if (clickNum % 2 == 0) {
           ME_SelectByType(editor, stWord);
-      else
+      } else {
           ME_SelectByType(editor, stParagraph);
+      }
     }
     else if (!is_shift)
     {
@@ -1016,8 +1030,10 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
   {
     if (clickNum < 2) {
         ME_SelectByType(editor, stLine);
-    } else {
+    } else if (clickNum % 2 == 0 || is_shift) {
         ME_SelectByType(editor, stParagraph);
+    } else {
+        ME_SelectByType(editor, stDocument);
     }
   }
   ME_InvalidateSelection(editor);
@@ -1032,6 +1048,8 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
 {
   ME_Cursor tmp_cursor;
   
+  if (editor->nSelectionType == stDocument)
+      return;
   y += ME_GetYScrollPos(editor);
 
   tmp_cursor = editor->pCursors[0];

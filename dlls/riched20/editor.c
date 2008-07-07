@@ -1612,6 +1612,57 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
   return FALSE;
 }
 
+/* Process the message and calculate the new click count.
+ *
+ * returns: The click count if it is mouse down event, else returns 0. */
+static int ME_CalculateClickCount(HWND hWnd, UINT msg, WPARAM wParam,
+                                  LPARAM lParam)
+{
+    static int clickNum = 0;
+    if (msg < WM_MOUSEFIRST || msg > WM_MOUSELAST)
+        return 0;
+
+    if ((msg == WM_LBUTTONDBLCLK) ||
+        (msg == WM_RBUTTONDBLCLK) ||
+        (msg == WM_MBUTTONDBLCLK) ||
+        (msg == WM_XBUTTONDBLCLK))
+    {
+        msg -= (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
+    }
+
+    if ((msg == WM_LBUTTONDOWN) ||
+        (msg == WM_RBUTTONDOWN) ||
+        (msg == WM_MBUTTONDOWN) ||
+        (msg == WM_XBUTTONDOWN))
+    {
+        static MSG prevClickMsg;
+        MSG clickMsg;
+        clickMsg.hwnd = hWnd;
+        clickMsg.message = msg;
+        clickMsg.wParam = wParam;
+        clickMsg.lParam = lParam;
+        clickMsg.time = GetMessageTime();
+        clickMsg.pt.x = LOWORD(lParam);
+        clickMsg.pt.x = HIWORD(lParam);
+        if ((clickNum != 0) &&
+            (clickMsg.message == prevClickMsg.message) &&
+            (clickMsg.hwnd == prevClickMsg.hwnd) &&
+            (clickMsg.wParam == prevClickMsg.wParam) &&
+            (clickMsg.time - prevClickMsg.time < GetDoubleClickTime()) &&
+            (abs(clickMsg.pt.x - prevClickMsg.pt.x) < GetSystemMetrics(SM_CXDOUBLECLK)/2) &&
+            (abs(clickMsg.pt.y - prevClickMsg.pt.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
+        {
+            clickNum++;
+        } else {
+            clickNum = 1;
+        }
+        prevClickMsg = clickMsg;
+    } else {
+        return 0;
+    }
+    return clickNum;
+}
+
 static BOOL ME_SetCursor(ME_TextEditor *editor, int x)
 {
   if ((GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_SELECTIONBAR) &&
@@ -2979,14 +3030,13 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case WM_LBUTTONDBLCLK:
   case WM_LBUTTONDOWN:
   {
-    int clickNum = (msg == WM_LBUTTONDBLCLK) ? 2 : 1;
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
     SetFocus(hWnd);
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam),
-                   clickNum);
+                   ME_CalculateClickCount(hWnd, msg, wParam, lParam));
     SetCapture(hWnd);
     ME_LinkNotify(editor,msg,wParam,lParam);
     if (!ME_SetCursor(editor, LOWORD(lParam))) goto do_default;
@@ -3004,6 +3054,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case WM_LBUTTONUP:
     if (GetCapture() == hWnd)
       ReleaseCapture();
+    if (editor->nSelectionType == stDocument)
+      editor->nSelectionType = stPosition;
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
