@@ -793,7 +793,7 @@ static HRESULT WINAPI IAVIEditStream_fnSetInfo(IAVIEditStream*iface,
   if (asi->dwQuality <= ICQUALITY_HIGH)
     This->sInfo.dwQuality = ICQUALITY_HIGH;
   CopyRect(&This->sInfo.rcFrame, &asi->rcFrame);
-  memcpy(&This->sInfo.szName, &asi->szName, sizeof(asi->szName));
+  memcpy(This->sInfo.szName, asi->szName, sizeof(asi->szName));
   This->sInfo.dwEditCount++;
 
   return AVIERR_OK;
