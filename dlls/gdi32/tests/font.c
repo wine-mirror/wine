@@ -453,6 +453,25 @@ static void test_outline_font(void)
     ok(gm.gmCellIncY == 0, "incY %d != 0\n", gm.gmCellIncY);
     SelectObject(hdc, old_hfont);
 
+    SetMapMode(hdc, MM_ANISOTROPIC);
+    /* test restrictions of compatibility mode GM_COMPATIBLE */
+    /*  part 1: rescaling only X should not change font scaling on screen.
+                So compressing the X axis by 2 is not done, and this
+                appears as X scaling of 2 that no one requested. */
+    SetWindowExtEx(hdc, 100, 100, NULL);
+    SetViewportExtEx(hdc, 50, 100, NULL);
+    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 2, 1);
+
+    /*  part 2: rescaling only Y should change font scaling.
+                As also X is scaled by a factor of 2, but this is not
+                requested by the DC transformation, we get a scaling factor
+                of 2 in the X coordinate. */
+    SetViewportExtEx(hdc, 100, 200, NULL);
+    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 2, 1);
+
+    /* restore scaling */
+    SetMapMode(hdc, MM_TEXT);
+
     if (!SetGraphicsMode(hdc, GM_ADVANCED))
     {
         DeleteObject(hfont);

@@ -3064,7 +3064,7 @@ static void calc_hash(FONT_DESC *pfd)
     return;
 }
 
-static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const XFORM *pxf, BOOL can_use_bitmap)
+static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pmat, BOOL can_use_bitmap)
 {
     GdiFont *ret;
     FONT_DESC fd;
@@ -3072,7 +3072,7 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const XFORM *pxf
     struct list *font_elem_ptr, *hfontlist_elem_ptr;
 
     fd.lf = *plf;
-    memcpy(&fd.matrix, pxf, sizeof(FMAT2));
+    fd.matrix = *pmat;
     fd.can_use_bitmap = can_use_bitmap;
     calc_hash(&fd);
 
@@ -3240,6 +3240,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     LOGFONTW lf;
     CHARSETINFO csi;
     HFONTLIST *hflist;
+    FMAT2 dcmat;
     FontSubst *psub = NULL;
 
     EnterCriticalSection( &freetype_cs );
@@ -3269,13 +3270,21 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 	  lf.lfWeight, lf.lfPitchAndFamily, lf.lfCharSet, lf.lfOrientation,
 	  lf.lfEscapement);
 
-    TRACE("DC transform %f %f %f %f %f %f\n",
-          dc->xformWorld2Vport.eM11, dc->xformWorld2Vport.eM12,
-          dc->xformWorld2Vport.eM21, dc->xformWorld2Vport.eM22,
-          dc->xformWorld2Vport.eDx, dc->xformWorld2Vport.eDy);
+    if(dc->GraphicsMode == GM_ADVANCED)
+        memcpy(&dcmat, &dc->xformWorld2Vport, sizeof(FMAT2));
+    else
+    {
+        /* Windows 3.1 compatibility mode GM_COMPATIBLE has only limited
+           font scaling abilities. */
+        dcmat.eM11 = dcmat.eM22 = fabs(dc->xformWorld2Vport.eM22);
+        dcmat.eM21 = dcmat.eM12 = 0;
+    }
+
+    TRACE("DC transform %f %f %f %f\n", dcmat.eM11, dcmat.eM12,
+                                        dcmat.eM21, dcmat.eM22);
 
     /* check the cache first */
-    if((ret = find_in_cache(hfont, &lf, &dc->xformWorld2Vport, can_use_bitmap)) != NULL) {
+    if((ret = find_in_cache(hfont, &lf, &dcmat, can_use_bitmap)) != NULL) {
         TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
         LeaveCriticalSection( &freetype_cs );
         return ret;
@@ -3297,7 +3306,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     ret = alloc_font();
 
-    memcpy(&ret->font_desc.matrix, &dc->xformWorld2Vport, sizeof(FMAT2));
+    ret->font_desc.matrix = dcmat;
     ret->font_desc.lf = lf;
     ret->font_desc.can_use_bitmap = can_use_bitmap;
     calc_hash(&ret->font_desc);
