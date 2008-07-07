@@ -20,7 +20,6 @@
  *  - many flags unimplemented
  *    - implement new dialog style "make new folder" button
  *    - implement editbox
- *    - implement new dialog style resizing
  */
 
 #include <stdlib.h>
@@ -39,12 +38,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+/* original margins and control size */
+typedef struct tagLAYOUT_DATA
+{
+    LONG left, width, right;
+    LONG top, height, bottom;
+} LAYOUT_DATA;
+
 typedef struct tagbrowse_info
 {
     HWND          hWnd;
     HWND          hwndTreeView;
     LPBROWSEINFOW lpBrowseInfo;
     LPITEMIDLIST  pidlRet;
+    LAYOUT_DATA  *layout;  /* filled by LayoutInit, used by LayoutUpdate */
+    SIZE          szMin;
 } browse_info;
 
 typedef struct tagTV_ITEMDATA
@@ -54,6 +62,26 @@ typedef struct tagTV_ITEMDATA
    LPITEMIDLIST  lpifq;      /* Fully qualified PIDL */
    IEnumIDList*  pEnumIL;    /* Children iterator */ 
 } TV_ITEMDATA, *LPTV_ITEMDATA;
+
+typedef struct tagLAYOUT_INFO
+{
+    int iItemId;          /* control id */
+    DWORD dwAnchor;       /* BF_* flags specifying which margins should remain constant */
+} LAYOUT_INFO;
+
+static const LAYOUT_INFO g_layout_info[] =
+{
+    {IDD_TITLE,         BF_TOP|BF_LEFT|BF_RIGHT},
+    {IDD_STATUS,        BF_TOP|BF_LEFT|BF_RIGHT},
+    {IDD_FOLDER,        BF_TOP|BF_LEFT|BF_RIGHT},
+    {IDD_TREEVIEW,      BF_TOP|BF_BOTTOM|BF_LEFT|BF_RIGHT},
+    {IDD_FOLDERTEXT,    BF_BOTTOM|BF_LEFT|BF_RIGHT},
+    {IDD_MAKENEWFOLDER, BF_BOTTOM|BF_LEFT},
+    {IDOK,              BF_BOTTOM|BF_RIGHT},
+    {IDCANCEL,          BF_BOTTOM|BF_RIGHT}
+};
+
+#define LAYOUT_INFO_COUNT (sizeof(g_layout_info)/sizeof(g_layout_info[0]))
 
 #define SUPPORTEDFLAGS (BIF_STATUSTEXT | \
                         BIF_BROWSEFORCOMPUTER | \
@@ -86,6 +114,68 @@ static void browsefolder_callback( LPBROWSEINFOW lpBrowseInfo, HWND hWnd,
         return;
     lpBrowseInfo->lpfn( hWnd, msg, param, lpBrowseInfo->lParam );
 }
+
+static LAYOUT_DATA *LayoutInit(HWND hwnd, const LAYOUT_INFO *layout_info, int layout_count)
+{
+    LAYOUT_DATA *data;
+    RECT rcWnd;
+    int i;
+
+    GetClientRect(hwnd, &rcWnd);
+    data = SHAlloc(sizeof(LAYOUT_DATA)*layout_count);
+    for (i = 0; i < layout_count; i++)
+    {
+        RECT r;
+        HWND hItem = GetDlgItem(hwnd, layout_info[i].iItemId);
+
+        if (hItem == NULL)
+            ERR("Item %d not found\n", i);
+        GetWindowRect(hItem, &r);
+        MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&r, 2);
+
+        data[i].left = r.left;
+        data[i].right = rcWnd.right - r.right;
+        data[i].width = r.right - r.left;
+
+        data[i].top = r.top;
+        data[i].bottom = rcWnd.bottom - r.bottom;
+        data[i].height = r.bottom - r.top;
+    }
+    return data;
+}
+
+static void LayoutUpdate(HWND hwnd, LAYOUT_DATA *data, const LAYOUT_INFO *layout_info, int layout_count)
+{
+    RECT rcWnd;
+    int i;
+
+    GetClientRect(hwnd, &rcWnd);
+    for (i = 0; i < layout_count; i++)
+    {
+        RECT r;
+        HWND hItem = GetDlgItem(hwnd, layout_info[i].iItemId);
+
+        GetWindowRect(hItem, &r);
+        MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&r, 2);
+
+        if (layout_info[i].dwAnchor & BF_RIGHT)
+        {
+            r.right = rcWnd.right - data[i].right;
+            if (!(layout_info[i].dwAnchor & BF_LEFT))
+                r.left = r.right - data[i].width;
+        }
+
+        if (layout_info[i].dwAnchor & BF_BOTTOM)
+        {
+            r.bottom = rcWnd.bottom - data[i].bottom;
+            if (!(layout_info[i].dwAnchor & BF_TOP))
+                r.top = r.bottom - data[i].height;
+        }
+
+        SetWindowPos(hItem, NULL, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOZORDER);
+    }
+}
+
 
 /******************************************************************************
  * InitializeTreeView [Internal]
@@ -504,6 +594,18 @@ static BOOL BrsFolder_OnCreate( HWND hWnd, browse_info *info )
     if (lpBrowseInfo->ulFlags & ~SUPPORTEDFLAGS)
 	FIXME("flags %x not implemented\n", lpBrowseInfo->ulFlags & ~SUPPORTEDFLAGS);
 
+    if (lpBrowseInfo->ulFlags & BIF_NEWDIALOGSTYLE)
+    {
+        RECT rcWnd;
+
+        info->layout = LayoutInit(hWnd, g_layout_info, LAYOUT_INFO_COUNT);
+
+        /* TODO: Windows allows shrinking the windows a bit */
+        GetWindowRect(hWnd, &rcWnd);
+        info->szMin.cx = rcWnd.right - rcWnd.left;
+        info->szMin.cy = rcWnd.bottom - rcWnd.top;
+    }
+
     if (lpBrowseInfo->lpszTitle)
 	SetWindowTextW( GetDlgItem(hWnd, IDD_TITLE), lpBrowseInfo->lpszTitle );
     else
@@ -682,6 +784,18 @@ static BOOL BrsFolder_OnSetSelectionA(browse_info *info, LPVOID selection, BOOL 
     return result;
 }
 
+static BOOL BrsFolder_OnWindowPosChanging(browse_info *info, WINDOWPOS *pos)
+{
+    if ((info->lpBrowseInfo->ulFlags & BIF_NEWDIALOGSTYLE) && !(pos->flags & SWP_NOSIZE))
+    {
+        if (pos->cx < info->szMin.cx)
+            pos->cx = info->szMin.cx;
+        if (pos->cy < info->szMin.cy)
+            pos->cy = info->szMin.cy;
+    }
+    return 0;
+}
+
 /*************************************************************************
  *             BrsFolderDlgProc32  (not an exported API function)
  */
@@ -704,6 +818,14 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
     case WM_COMMAND:
         return BrsFolder_OnCommand( info, wParam );
+
+    case WM_WINDOWPOSCHANGING:
+        return BrsFolder_OnWindowPosChanging( info, (WINDOWPOS *)lParam);
+
+    case WM_SIZE:
+        if (info->layout)  /* new style dialogs */
+            LayoutUpdate(hWnd, info->layout, g_layout_info, LAYOUT_INFO_COUNT);
+        return 0;
 
     case BFFM_SETSTATUSTEXTA:
         TRACE("Set status %s\n", debugstr_a((LPSTR)lParam));
