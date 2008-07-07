@@ -480,7 +480,7 @@ BOOL ADVAPI_GetComputerSid(PSID sid)
         SID_IDENTIFIER_AUTHORITY identifierAuthority = {SECURITY_NT_AUTHORITY};
         DWORD id[3];
 
-        if (RtlGenRandom(&id, sizeof(id)))
+        if (RtlGenRandom(id, sizeof(id)))
         {
             if (AllocateAndInitializeSid(&identifierAuthority, 4, SECURITY_NT_NON_UNIQUE, id[0], id[1], id[2], 0, 0, 0, 0, &new_sid))
             {
