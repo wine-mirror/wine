@@ -98,7 +98,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     const NEWTEXTMETRICW* tmw;
     GpStatus stat;
 
-    if (!fontFamily || !fontFamily->FamilyName || !font)
+    if (!fontFamily || !font)
         return InvalidParameter;
 
     TRACE("%p (%s), %f, %d, %d, %p\n", fontFamily,
@@ -118,7 +118,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     lfw->lfStrikeOut = tmw->tmStruckOut;
     lfw->lfCharSet = tmw->tmCharSet;
     lfw->lfPitchAndFamily = tmw->tmPitchAndFamily;
-    lstrcpynW((lfw->lfFaceName), facename, sizeof(WCHAR) * LF_FACESIZE);
+    lstrcpynW(lfw->lfFaceName, facename, LF_FACESIZE);
 
     switch (unit)
     {
@@ -405,15 +405,7 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
     if (!ffamily) return OutOfMemory;
 
     ffamily->tmw = ntm;
-
-    ffamily->FamilyName = GdipAlloc(LF_FACESIZE * sizeof (WCHAR));
-    if (!ffamily->FamilyName)
-    {
-        GdipFree(ffamily);
-        return OutOfMemory;
-    }
-
-    lstrcpynW(ffamily->FamilyName, name, sizeof(WCHAR) * LF_FACESIZE);
+    lstrcpynW(ffamily->FamilyName, name, LF_FACESIZE);
 
     *FontFamily = ffamily;
 
@@ -442,17 +434,8 @@ GpStatus WINGDIPAPI GdipCloneFontFamily(GpFontFamily* FontFamily, GpFontFamily**
     *clonedFontFamily = GdipAlloc(sizeof(GpFontFamily));
     if (!*clonedFontFamily) return OutOfMemory;
 
-    **clonedFontFamily = *FontFamily;
-
-    (*clonedFontFamily)->FamilyName = GdipAlloc(sizeof(WCHAR) * LF_FACESIZE);
-    if (!(*clonedFontFamily)->FamilyName)
-    {
-        GdipFree (clonedFontFamily);
-        return OutOfMemory;
-    }
-
-    lstrcpynW((*clonedFontFamily)->FamilyName, FontFamily->FamilyName,
-            LF_FACESIZE);
+    (*clonedFontFamily)->tmw = FontFamily->tmw;
+    lstrcpyW((*clonedFontFamily)->FamilyName, FontFamily->FamilyName);
 
     return Ok;
 }
@@ -510,7 +493,6 @@ GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
         return InvalidParameter;
     TRACE("Deleting %p (%s)\n", FontFamily, debugstr_w(FontFamily->FamilyName));
 
-    GdipFree (FontFamily->FamilyName);
     GdipFree (FontFamily);
 
     return Ok;
