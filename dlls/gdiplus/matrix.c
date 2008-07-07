@@ -158,6 +158,20 @@ GpStatus WINGDIPAPI GdipGetMatrixElements(GDIPCONST GpMatrix *matrix,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipIsMatrixInvertible(GDIPCONST GpMatrix *matrix, BOOL *result)
+{
+    REAL det;
+
+    if(!matrix || !result)
+        return InvalidParameter;
+
+    det = matrix->matrix[0]*matrix->matrix[3] - matrix->matrix[1]*matrix->matrix[2];
+
+    *result = (fabs(det) >= 1e-5);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipMultiplyMatrix(GpMatrix *matrix, GpMatrix* matrix2,
     GpMatrixOrder order)
 {

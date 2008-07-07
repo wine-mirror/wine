@@ -264,6 +264,7 @@ GpStatus WINGDIPAPI GdipCreateMatrix3(GDIPCONST GpRectF *,GDIPCONST GpPointF*,Gp
 GpStatus WINGDIPAPI GdipCreateMatrix3I(GDIPCONST GpRect*,GDIPCONST GpPoint*,GpMatrix**);
 GpStatus WINGDIPAPI GdipIsMatrixEqual(GDIPCONST GpMatrix*, GDIPCONST GpMatrix*, BOOL*);
 GpStatus WINGDIPAPI GdipIsMatrixIdentity(GDIPCONST GpMatrix*, BOOL*);
+GpStatus WINGDIPAPI GdipIsMatrixInvertible(GDIPCONST GpMatrix*, BOOL*);
 
 GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix*);
 GpStatus WINGDIPAPI GdipGetMatrixElements(GDIPCONST GpMatrix*,REAL*);

@@ -420,7 +420,7 @@
 @ stdcall GdipIsInfiniteRegion(ptr ptr ptr)
 @ stdcall GdipIsMatrixEqual(ptr ptr ptr)
 @ stdcall GdipIsMatrixIdentity(ptr ptr)
-@ stub GdipIsMatrixInvertible
+@ stdcall GdipIsMatrixInvertible(ptr ptr)
 @ stub GdipIsOutlineVisiblePathPoint
 @ stdcall GdipIsOutlineVisiblePathPointI(ptr long long ptr ptr ptr)
 @ stub GdipIsStyleAvailable

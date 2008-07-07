@@ -89,6 +89,35 @@ static void test_transform(void)
     GdipDeleteMatrix(matrix);
 }
 
+static void test_isinvertible(void)
+{
+    GpStatus status;
+    GpMatrix *matrix = NULL;
+    BOOL result;
+
+    /* NULL arguments */
+    status = GdipIsMatrixInvertible(NULL, &result);
+    expect(InvalidParameter, status);
+    status = GdipIsMatrixInvertible((GpMatrix*)0xdeadbeef, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsMatrixInvertible(NULL, NULL);
+    expect(InvalidParameter, status);
+
+    /* invertible */
+    GdipCreateMatrix2(1.0, 1.2, 2.3, -1.0, 2.0, 3.0, &matrix);
+    status = GdipIsMatrixInvertible(matrix, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    GdipDeleteMatrix(matrix);
+
+    /* noninvertible */
+    GdipCreateMatrix2(2.0, -1.0, 6.0, -3.0, 2.2, 3.0, &matrix);
+    status = GdipIsMatrixInvertible(matrix, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    GdipDeleteMatrix(matrix);
+}
+
 START_TEST(matrix)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -103,6 +132,7 @@ START_TEST(matrix)
 
     test_constructor_destructor();
     test_transform();
+    test_isinvertible();
 
     GdiplusShutdown(gdiplusToken);
 }
