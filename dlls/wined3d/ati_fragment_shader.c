@@ -593,9 +593,9 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
                       debug_register(arg2), debug_argmod(argmod2),
                       debug_register(arg0), debug_argmod(argmod0));
                 GL_EXTCALL(glColorFragmentOp3ATI(GL_LERP_ATI, dstreg, GL_NONE, GL_NONE,
+                                                 arg0, GL_NONE, argmod0,
                                                  arg1, GL_NONE, argmod1,
-                                                 arg2, GL_NONE, argmod2,
-                                                 arg0, GL_NONE, argmod0));
+                                                 arg2, GL_NONE, argmod2));
                 break;
 
             case WINED3DTOP_BUMPENVMAP:
