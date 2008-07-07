@@ -868,6 +868,63 @@ ME_CharFromPos(ME_TextEditor *editor, int x, int y)
           + cursor.pRun->member.run.nCharOfs + cursor.nOffset);
 }
 
+/* Extends the selection with a word, line, or paragraph selection type.
+ *
+ * The selection is anchored by editor->pCursors[2-3] such that the text
+ * between the anchors will remain selected, and one end will be extended.
+ *
+ * editor->pCursors[0] should have the position to extend the selection to
+ * before this function is called.
+ *
+ * Nothing will be done if editor->nSelectionType equals stPosition.
+ */
+static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
+{
+  ME_Cursor tmp_cursor;
+  int curOfs, anchorStartOfs, anchorEndOfs;
+  if (editor->nSelectionType == stPosition)
+      return;
+  curOfs = ME_GetCursorOfs(editor, 0);
+  anchorStartOfs = ME_GetCursorOfs(editor, 2);
+  anchorEndOfs = ME_GetCursorOfs(editor, 3);
+
+  tmp_cursor = editor->pCursors[0];
+  editor->pCursors[0] = editor->pCursors[2];
+  editor->pCursors[1] = editor->pCursors[3];
+  if (curOfs < anchorStartOfs)
+  {
+      /* Extend the left side of selection */
+      editor->pCursors[0] = tmp_cursor;
+      if (editor->nSelectionType == stWord)
+          ME_MoveCursorWords(editor, &editor->pCursors[0], -1);
+      else
+      {
+          ME_DisplayItem *pItem;
+          pItem = ME_FindItemBack(editor->pCursors[0].pRun,
+                                  diStartRowOrParagraph);
+          editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
+          editor->pCursors[0].nOffset = 0;
+      }
+  }
+  else if (curOfs >= anchorEndOfs)
+  {
+      /* Extend the right side of selection */
+      editor->pCursors[1] = tmp_cursor;
+      if (editor->nSelectionType == stWord)
+          ME_MoveCursorWords(editor, &editor->pCursors[1], +1);
+      else
+      {
+          ME_DisplayItem *pItem;
+          pItem = ME_FindItemFwd(editor->pCursors[1].pRun,
+                                 diStartRowOrParagraphOrEnd);
+          if (pItem->type == diTextEnd)
+              editor->pCursors[1].pRun = ME_FindItemBack(pItem, diRun);
+          else
+              editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
+          editor->pCursors[1].nOffset = 0;
+      }
+  }
+}
 
 void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
 {
@@ -881,51 +938,54 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
   tmp_cursor = editor->pCursors[0];
   is_selection = ME_IsSelection(editor);
 
-  if (x >= editor->selofs)
+  ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd);
+
+  if (x >= editor->selofs || GetKeyState(VK_SHIFT) < 0)
   {
-    ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd);
-    if (GetKeyState(VK_SHIFT)>=0)
+    if (clickNum > 1)
     {
-      /* Shift key is not down */
+      editor->nSelectionType = stWord;
       editor->pCursors[1] = editor->pCursors[0];
-      if (clickNum > 1)
-          ME_SelectWord(editor);
+      ME_SelectWord(editor);
+      /* Store the anchor positions for extending the selection. */
+      editor->pCursors[2] = editor->pCursors[0];
+      editor->pCursors[3] = editor->pCursors[1];
     }
-    else if (!is_selection) {
+    else if (GetKeyState(VK_SHIFT)>=0)
+    {
+      /* Shift is not down */
+      editor->nSelectionType = stPosition;
+      editor->pCursors[1] = editor->pCursors[0];
+    }
+    else if (!is_selection)
+    {
+      editor->nSelectionType = stPosition;
       editor->pCursors[1] = tmp_cursor;
-      is_selection = 1;
+    }
+    else if (editor->nSelectionType != stPosition)
+    {
+      ME_ExtendAnchorSelection(editor);
     }
   }
   else
   {
-    ME_DisplayItem *pRow;
+    ME_DisplayItem *pItem;
 
-    editor->linesel = 1;
-    editor->sely = y;
+    editor->nSelectionType = stLine;
     /* Set pCursors[0] to beginning of line */
-    ME_FindPixelPos(editor, x, y, &editor->pCursors[1], &editor->bCaretAtEnd);
     /* Set pCursors[1] to end of line */
-    pRow = ME_FindItemFwd(editor->pCursors[1].pRun, diStartRowOrParagraphOrEnd);
-    assert(pRow);
+    pItem = ME_FindItemFwd(editor->pCursors[0].pRun, diStartRowOrParagraphOrEnd);
+    assert(pItem);
+    if (pItem->type == diTextEnd)
+        editor->pCursors[1].pRun = ME_FindItemBack(pItem, diRun);
+    else
+        editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
+    editor->pCursors[1].nOffset = 0;
     /* pCursor[0] is the position where the cursor will be drawn,
      * pCursor[1] is the other end of the selection range
-     * pCursor[2] and [3] are backups of [0] and [1] so I
-     * don't have to look them up again
+     * pCursor[2] and [3] are the selection anchors that are backed up
+     * so they are kept when the selection changes for drag line selection.
      */
-
-    if (pRow->type == diStartRow) {
-      /* FIXME WTF was I thinking about here ? */
-      ME_DisplayItem *pRun = ME_FindItemFwd(pRow, diRun);
-      assert(pRun);
-      editor->pCursors[0].pRun = pRun;
-      editor->pCursors[0].nOffset = 0;
-      editor->bCaretAtEnd = 1;
-    } else {
-      editor->pCursors[0].pRun = ME_FindItemBack(pRow, diRun);
-      assert(editor->pCursors[0].pRun && editor->pCursors[0].pRun->member.run.nFlags & MERF_ENDPARA);
-      editor->pCursors[0].nOffset = 0;
-      editor->bCaretAtEnd = 0;
-    }
     editor->pCursors[2] = editor->pCursors[0];
     editor->pCursors[3] = editor->pCursors[1];
   }
@@ -945,31 +1005,26 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
 
   tmp_cursor = editor->pCursors[0];
   /* FIXME: do something with the return value of ME_FindPixelPos */
-  if (!editor->linesel)
-    ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd);
-  else ME_FindPixelPos(editor, (y > editor->sely) * editor->rcFormat.right, y, &tmp_cursor, &editor->bCaretAtEnd);
-
-  if (!memcmp(&tmp_cursor, editor->pCursors, sizeof(tmp_cursor)))
-    return;
+  ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd);
 
   ME_InvalidateSelection(editor);
-  if (!editor->linesel)
-    editor->pCursors[0] = tmp_cursor;
-  else if (!memcmp(&tmp_cursor, editor->pCursors+2, sizeof(tmp_cursor)) ||
-           !memcmp(&tmp_cursor, editor->pCursors+3, sizeof(tmp_cursor)))
+  editor->pCursors[0] = tmp_cursor;
+  ME_ExtendAnchorSelection(editor);
+
+  if (editor->nSelectionType != stPosition &&
+      memcmp(&editor->pCursors[1], &editor->pCursors[3], sizeof(ME_Cursor)))
   {
-    editor->pCursors[0] = editor->pCursors[2];
-    editor->pCursors[1] = editor->pCursors[3];
-  }
-  else if (y < editor->sely)
-  {
-    editor->pCursors[0] = tmp_cursor;
-    editor->pCursors[1] = editor->pCursors[2];
-  }
-  else
-  {
-    editor->pCursors[0] = tmp_cursor;
-    editor->pCursors[1] = editor->pCursors[3];
+      /* The scroll the cursor towards the other end, since it was the one
+       * extended by ME_ExtendAnchorSelection
+       */
+      ME_Cursor tmpCursor = editor->pCursors[0];
+      editor->pCursors[0] = editor->pCursors[1];
+      editor->pCursors[1] = tmpCursor;
+      SendMessageW(editor->hWnd, EM_SCROLLCARET, 0, 0);
+      editor->pCursors[1] = editor->pCursors[0];
+      editor->pCursors[0] = tmpCursor;
+  } else {
+      SendMessageW(editor->hWnd, EM_SCROLLCARET, 0, 0);
   }
 
   HideCaret(editor->hWnd);
@@ -977,7 +1032,6 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
   ME_InvalidateSelection(editor);
   ShowCaret(editor->hWnd);
   ME_SendSelChange(editor);
-  SendMessageW(editor->hWnd, EM_SCROLLCARET, 0, 0);
 }
 
 static ME_DisplayItem *ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow, 

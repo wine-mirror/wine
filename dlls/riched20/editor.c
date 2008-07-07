@@ -1537,7 +1537,10 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
 {
   BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
   BOOL shift_is_down = GetKeyState(VK_SHIFT) & 0x8000;
-  
+
+  if (nKey != VK_SHIFT && nKey != VK_CONTROL && nKey != VK_MENU)
+      editor->nSelectionType = stPosition;
+
   switch (nKey)
   {
     case VK_LEFT:
@@ -1612,7 +1615,8 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
 static BOOL ME_SetCursor(ME_TextEditor *editor, int x)
 {
   if ((GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_SELECTIONBAR) &&
-      (x < editor->selofs || editor->linesel))
+      (x < editor->selofs ||
+       (editor->nSelectionType == stLine && GetCapture() == editor->hWnd)))
   {
       SetCursor(hLeft);
       return TRUE;
@@ -1654,6 +1658,12 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ME_MakeFirstParagraph(ed);
   ed->bCaretShown = FALSE;
+  /* The four cursors are for:
+   * 0 - The position where the caret is shown
+   * 1 - The anchored end of the selection (for normal selection)
+   * 2 & 3 - The anchored start and end respectively for word, line,
+   * or paragraph selection.
+   */
   ed->nCursors = 4;
   ed->pCursors = ALLOC_N_OBJ(ME_Cursor, ed->nCursors);
   ed->pCursors[0].pRun = ME_FindItemFwd(ed->pBuffer->pFirst, diRun);
@@ -1700,7 +1710,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
     ed->selofs = SELECTIONBAR_WIDTH;
   else
     ed->selofs = 0;
-  ed->linesel = 0;
+  ed->nSelectionType = stPosition;
 
   if (GetWindowLongW(hWnd, GWL_STYLE) & ES_PASSWORD)
     ed->cPasswordMask = '*';
@@ -3000,7 +3010,6 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     else
     {
       BOOL ret;
-      editor->linesel = 0;
       ret = ME_SetCursor(editor, LOWORD(lParam));
       ME_LinkNotify(editor,msg,wParam,lParam);
       if (!ret) goto do_default;

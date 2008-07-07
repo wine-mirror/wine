@@ -244,6 +244,12 @@ typedef enum {
   umAddBackToUndo
 } ME_UndoMode;
 
+typedef enum {
+  stPosition = 0,
+  stWord,
+  stLine
+} ME_SelectionType;
+
 typedef struct tagME_FontTableItem {
   BYTE bCharSet;
   WCHAR *szFaceName;
@@ -333,7 +339,8 @@ typedef struct tagME_TextEditor
   BOOL bHaveFocus;
   /*for IME */
   int imeStartIndex;
-  DWORD selofs, linesel, sely;
+  DWORD selofs; /* The size of the selection bar on the left side of control */
+  ME_SelectionType nSelectionType;
 
   /* Track previous notified selection */
   CHARRANGE notified_cr;
