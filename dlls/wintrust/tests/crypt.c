@@ -335,7 +335,9 @@ static void test_calchash(void)
     {
     ok(GetLastError() == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", GetLastError());
-    ok(!memcmp(hash, expectedhash, sizeof(expectedhash)), "Hashes didn't match\n");
+    ok(hashsize == sizeof(expectedhash) &&
+       !memcmp(hash, expectedhash, sizeof(expectedhash)),
+       "Hashes didn't match\n");
     }
     CloseHandle(file);
 
