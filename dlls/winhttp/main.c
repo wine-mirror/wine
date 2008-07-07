@@ -180,3 +180,14 @@ BOOL WINAPI WinHttpSendRequest (HINTERNET hRequest, LPCWSTR pwszHeaders, DWORD d
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpQueryOption (winhttp.@)
+ */
+BOOL WINAPI WinHttpQueryOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, LPDWORD lpdwBufferLength)
+{
+    FIXME("(%d): stub\n", dwOption);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
