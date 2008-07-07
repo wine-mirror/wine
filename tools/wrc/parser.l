@@ -84,7 +84,7 @@
 %x pp_code_page
 
 %option stack
-%option nounput noyy_top_state noyywrap
+%option noinput nounput noyy_top_state noyywrap
 %option 8bit never-interactive
 %option prefix="parser_"
 
