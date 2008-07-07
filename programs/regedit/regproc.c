@@ -39,6 +39,19 @@ static const CHAR *reg_class_names[] = {
                                      "HKEY_CURRENT_CONFIG", "HKEY_CURRENT_USER", "HKEY_DYN_DATA"
                                  };
 
+static const WCHAR hkey_local_machine[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',0};
+static const WCHAR hkey_users[] = {'H','K','E','Y','_','U','S','E','R','S',0};
+static const WCHAR hkey_classes_root[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0};
+static const WCHAR hkey_current_config[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','C','O','N','F','I','G',0};
+static const WCHAR hkey_current_user[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R',0};
+static const WCHAR hkey_dyn_data[] = {'H','K','E','Y','_','D','Y','N','_','D','A','T','A',0};
+
+static const WCHAR *reg_class_namesW[] = {hkey_local_machine, hkey_users,
+                                         hkey_classes_root, hkey_current_config,
+                                         hkey_current_user, hkey_dyn_data
+                                        };
+
+
 #define REG_CLASS_NUMBER (sizeof(reg_class_names) / sizeof(reg_class_names[0]))
 
 static HKEY reg_class_keys[REG_CLASS_NUMBER] = {
@@ -59,6 +72,20 @@ if (!(p)) \
     fprintf(stderr,"%s: file %s, line %d: Not enough memory\n", \
             getAppName(), __FILE__, __LINE__); \
     exit(NOT_ENOUGH_MEMORY); \
+}
+
+/******************************************************************************
+ * Allocates memory and convers input from wide chars to multibyte
+ * Returned string must be freed by the caller
+ */
+char* GetMultiByteString(WCHAR* strW, int len)
+{
+    char* strA = NULL;
+
+    strA = HeapAlloc(GetProcessHeap(), 0, len);
+    CHECK_ENOUGH_MEMORY(strA);
+    WideCharToMultiByte(CP_ACP, 0, strW, len, strA, len, NULL, NULL);
+    return strA;
 }
 
 /******************************************************************************
@@ -222,6 +249,52 @@ static BOOL parseKeyName(LPSTR lpKeyName, HKEY *hKey, LPSTR *lpKeyPath)
     }
     if (*hKey == NULL)
         return FALSE;
+
+    if (*lpSlash != '\0')
+        lpSlash++;
+    *lpKeyPath = lpSlash;
+    return TRUE;
+}
+
+static BOOL parseKeyNameW(LPWSTR lpKeyName, HKEY *hKey, LPWSTR *lpKeyPath)
+{
+    WCHAR* lpSlash = NULL;
+    unsigned int i, len;
+
+    if (lpKeyName == NULL)
+        return FALSE;
+
+    for(i = 0; *(lpKeyName+i) != 0; i++)
+    {
+        if(*(lpKeyName+i) == '\\')
+        {
+            lpSlash = lpKeyName+i;
+            break;
+        }
+    }
+
+    if (lpSlash)
+    {
+        len = lpSlash-lpKeyName;
+    }
+    else
+    {
+        len = lstrlenW(lpKeyName);
+        lpSlash = lpKeyName+len;
+    }
+    *hKey = NULL;
+
+    for (i = 0; i < REG_CLASS_NUMBER; i++) {
+        if (CompareStringW(LOCALE_USER_DEFAULT, 0, lpKeyName, len, reg_class_namesW[i], len) == CSTR_EQUAL &&
+            len == lstrlenW(reg_class_namesW[i])) {
+            *hKey = reg_class_keys[i];
+            break;
+        }
+    }
+
+    if (*hKey == NULL)
+        return FALSE;
+
 
     if (*lpSlash != '\0')
         lpSlash++;
@@ -455,10 +528,19 @@ static void processRegEntry(LPSTR stdInput)
 
         /* delete the key if we encounter '-' at the start of reg key */
         if ( stdInput[0] == '-')
-            delete_registry_key(stdInput+1);
-        else if ( openKey(stdInput) != ERROR_SUCCESS )
+        {
+            WCHAR* stdInputW = NULL;
+            int size = keyEnd - stdInput - 1;
+            stdInputW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size * sizeof(WCHAR));
+            CHECK_ENOUGH_MEMORY(stdInputW);
+            MultiByteToWideChar(CP_ACP, 0, stdInput + 1, size, stdInputW, size);
+            delete_registry_keyW(stdInputW);
+            HeapFree(GetProcessHeap(), 0, stdInputW);
+        } else if ( openKey(stdInput) != ERROR_SUCCESS )
+        {
             fprintf(stderr,"%s: setValue failed to open key %s\n",
                     getAppName(), stdInput);
+        }
     } else if( currentKeyHandle &&
                (( stdInput[0] == '@') || /* reading a default @=data pair */
                 ( stdInput[0] == '\"'))) /* reading a new value=data pair */
@@ -1000,4 +1082,30 @@ void delete_registry_key(CHAR *reg_key_name)
     }
 
     RegDeleteTreeA(key_class, key_name);
+}
+
+void delete_registry_keyW(WCHAR *reg_key_name)
+{
+    WCHAR *key_name = NULL;
+    HKEY key_class;
+
+    if (!reg_key_name || !reg_key_name[0])
+        return;
+
+    if (!parseKeyNameW(reg_key_name, &key_class, &key_name)) {
+        char* reg_key_nameA = GetMultiByteString(reg_key_name, lstrlenW(reg_key_name));
+        fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
+                getAppName(), reg_key_nameA);
+        HeapFree(GetProcessHeap(), 0, reg_key_nameA);
+        exit(1);
+    }
+    if (!*key_name) {
+        char* reg_key_nameA = GetMultiByteString(reg_key_name, lstrlenW(reg_key_name));
+        fprintf(stderr,"%s: Can't delete registry class '%s'\n",
+                getAppName(), reg_key_nameA);
+        HeapFree(GetProcessHeap(), 0, reg_key_nameA);
+        exit(1);
+    }
+
+    RegDeleteTreeW(key_class, key_name);
 }

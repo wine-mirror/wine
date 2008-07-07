@@ -24,4 +24,5 @@ const CHAR *getAppName(void);
 BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name);
 BOOL import_registry_file(LPTSTR filename);
 void delete_registry_key(CHAR *reg_key_name);
+void delete_registry_keyW(WCHAR *reg_key_name);
 void processRegLines(FILE *in);
