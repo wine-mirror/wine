@@ -369,13 +369,14 @@ void shader_glsl_load_constants(
     char useVertexShader) {
    
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)deviceImpl->shader_priv;
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
     WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
 
     GLhandleARB *constant_locations;
     struct list *constant_list;
     GLhandleARB programId;
-    struct glsl_shader_prog_link *prog = stateBlock->glsl_program;
+    struct glsl_shader_prog_link *prog = priv->glsl_program;
     unsigned int i;
 
     if (!prog) {
@@ -3145,6 +3146,7 @@ static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, WineD3D_GL_
  */
 static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use_vs) {
     IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
+    struct shader_glsl_priv *priv          = (struct shader_glsl_priv *)This->shader_priv;
     WineD3D_GL_Info *gl_info               = &This->adapter->gl_info;
     IWineD3DPixelShader  *pshader          = This->stateBlock->pixelShader;
     IWineD3DVertexShader *vshader          = This->stateBlock->vertexShader;
@@ -3158,7 +3160,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     GLhandleARB pshader_id = use_ps ? ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId : 0;
     entry = get_glsl_program_entry(This, vshader_id, pshader_id);
     if (entry) {
-        This->stateBlock->glsl_program = entry;
+        priv->glsl_program = entry;
         return;
     }
 
@@ -3175,7 +3177,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     add_glsl_program_entry(This, entry);
 
     /* Set the current program */
-    This->stateBlock->glsl_program = entry;
+    priv->glsl_program = entry;
 
     /* Attach GLSL vshader */
     if (vshader_id) {
@@ -3356,16 +3358,17 @@ static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
 
 static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)This->shader_priv;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     GLhandleARB program_id = 0;
     GLenum old_vertex_color_clamp, current_vertex_color_clamp;
 
-    old_vertex_color_clamp = This->stateBlock->glsl_program ? This->stateBlock->glsl_program->vertex_color_clamp : GL_FIXED_ONLY_ARB;
+    old_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vertex_color_clamp : GL_FIXED_ONLY_ARB;
 
     if (useVS || usePS) set_glsl_shader_program(iface, usePS, useVS);
-    else This->stateBlock->glsl_program = NULL;
+    else priv->glsl_program = NULL;
 
-    current_vertex_color_clamp = This->stateBlock->glsl_program ? This->stateBlock->glsl_program->vertex_color_clamp : GL_FIXED_ONLY_ARB;
+    current_vertex_color_clamp = priv->glsl_program ? priv->glsl_program->vertex_color_clamp : GL_FIXED_ONLY_ARB;
 
     if (old_vertex_color_clamp != current_vertex_color_clamp) {
         if (GL_SUPPORT(ARB_COLOR_BUFFER_FLOAT)) {
@@ -3376,7 +3379,7 @@ static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         }
     }
 
-    program_id = This->stateBlock->glsl_program ? This->stateBlock->glsl_program->programId : 0;
+    program_id = priv->glsl_program ? priv->glsl_program->programId : 0;
     if (program_id) TRACE("Using GLSL program %u\n", program_id);
     GL_EXTCALL(glUseProgramObjectARB(program_id));
     checkGLcall("glUseProgramObjectARB");

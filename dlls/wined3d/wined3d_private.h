@@ -312,6 +312,7 @@ extern const shader_backend_t none_shader_backend;
 
 /* GLSL shader private data */
 struct shader_glsl_priv {
+    struct glsl_shader_prog_link *glsl_program;
     GLhandleARB             depth_blt_glsl_program_id;
 };
 
@@ -1609,9 +1610,6 @@ struct IWineD3DStateBlockImpl
     DWORD                     lowest_disabled_stage;
     /* Sampler States */
     DWORD                     samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-
-    /* Current GLSL Shader Program */
-    struct glsl_shader_prog_link *glsl_program;
 
     /* Scissor test rectangle */
     RECT                      scissorRect;

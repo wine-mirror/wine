@@ -170,7 +170,6 @@ void stateblock_copy(
     Dest->viewport = This->viewport;
     Dest->material = This->material;
     Dest->pixelShader = This->pixelShader;
-    Dest->glsl_program = This->glsl_program;
     Dest->scissorRect = This->scissorRect;
 
     /* Lights */
@@ -1239,10 +1238,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->changed.textures[i] = TRUE;
         This->textures[i]         = NULL;
     }
-
-    /* Set default GLSL program to NULL.  We won't actually create one
-     * until the app sets a vertex or pixel shader */
-    This->glsl_program = NULL;
 
     TRACE("-----------------------> Device defaults now set up...\n");
     return WINED3D_OK;
