@@ -236,3 +236,14 @@ BOOL WINAPI WinHttpReadData (HINTERNET hInternet, LPVOID lpBuffer, DWORD dwNumbe
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpReadData (winhttp.@)
+ */
+BOOL WINAPI WinHttpCloseHandle (HINTERNET hInternet)
+{
+    FIXME("stub\n");
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}

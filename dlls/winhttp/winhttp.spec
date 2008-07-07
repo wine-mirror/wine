@@ -4,7 +4,7 @@
 @ stdcall -private DllUnregisterServer()
 @ stub WinHttpAddRequestHeaders
 @ stdcall WinHttpCheckPlatform()
-@ stub WinHttpCloseHandle
+@ stdcall WinHttpCloseHandle(ptr)
 @ stdcall WinHttpConnect(ptr wstr long long)
 @ stub WinHttpCrackUrl
 @ stub WinHttpCreateUrl
