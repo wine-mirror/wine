@@ -18,7 +18,7 @@
 @ stdcall WinHttpQueryDataAvailable(ptr ptr)
 @ stub WinHttpQueryHeaders
 @ stdcall WinHttpQueryOption(ptr long ptr ptr)
-@ stub WinHttpReadData
+@ stdcall WinHttpReadData(ptr ptr long ptr)
 @ stdcall WinHttpReceiveResponse(ptr ptr)
 @ stdcall WinHttpSendRequest(ptr wstr long ptr long long ptr)
 @ stub WinHttpSetCredentials

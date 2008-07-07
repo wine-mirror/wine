@@ -224,3 +224,15 @@ BOOL WINAPI WinHttpSetOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuff
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpReadData (winhttp.@)
+ */
+BOOL WINAPI WinHttpReadData (HINTERNET hInternet, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead,
+                             LPDWORD lpdwNumberOfBytesRead)
+{
+    FIXME("(%d): stub\n", dwNumberOfBytesToRead);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
