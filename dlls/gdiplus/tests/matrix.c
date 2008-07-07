@@ -21,6 +21,7 @@
 #include <math.h>
 
 #include "windows.h"
+#include <stdio.h>
 #include "gdiplus.h"
 #include "wine/test.h"
 
@@ -118,6 +119,36 @@ static void test_isinvertible(void)
     GdipDeleteMatrix(matrix);
 }
 
+static void test_invert(void)
+{
+    GpStatus status;
+    GpMatrix *matrix = NULL;
+    GpMatrix *inverted = NULL;
+    BOOL equal;
+
+    /* NULL */
+    status = GdipInvertMatrix(NULL);
+    expect(InvalidParameter, status);
+
+    /* noninvertible */
+    GdipCreateMatrix2(2.0, -1.0, 6.0, -3.0, 2.2, 3.0, &matrix);
+    status = GdipInvertMatrix(matrix);
+    expect(InvalidParameter, status);
+    GdipDeleteMatrix(matrix);
+
+    /* invertible */
+    GdipCreateMatrix2(1.0, 2.0, 4.0, -1.0, 6.0, 3.0, &matrix);
+    status = GdipInvertMatrix(matrix);
+    expect(Ok, status);
+
+    GdipCreateMatrix2(1.0/9.0, 2.0/9.0, 4.0/9.0, -1.0/9.0, -2.0, -1.0, &inverted);
+    GdipIsMatrixEqual(matrix, inverted, &equal);
+    expect(TRUE, equal);
+
+    GdipDeleteMatrix(inverted);
+    GdipDeleteMatrix(matrix);
+}
+
 START_TEST(matrix)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -133,6 +164,7 @@ START_TEST(matrix)
     test_constructor_destructor();
     test_transform();
     test_isinvertible();
+    test_invert();
 
     GdiplusShutdown(gdiplusToken);
 }

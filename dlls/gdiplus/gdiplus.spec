@@ -413,7 +413,7 @@
 @ stdcall GdipImageSelectActiveFrame(ptr ptr long)
 @ stub GdipImageSetAbort
 @ stub GdipInitializePalette
-@ stub GdipInvertMatrix
+@ stdcall GdipInvertMatrix(ptr)
 @ stub GdipIsClipEmpty
 @ stdcall GdipIsEmptyRegion(ptr ptr ptr)
 @ stdcall GdipIsEqualRegion(ptr ptr ptr ptr)

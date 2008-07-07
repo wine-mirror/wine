@@ -50,6 +50,11 @@ static void matrix_multiply(GDIPCONST REAL * left, GDIPCONST REAL * right, REAL 
     memcpy(out, temp, 6 * sizeof(REAL));
 }
 
+static REAL matrix_det(GDIPCONST GpMatrix *matrix)
+{
+    return matrix->matrix[0]*matrix->matrix[3] - matrix->matrix[1]*matrix->matrix[2];
+}
+
 GpStatus WINGDIPAPI GdipCreateMatrix2(REAL m11, REAL m12, REAL m21, REAL m22,
     REAL dx, REAL dy, GpMatrix **matrix)
 {
@@ -158,16 +163,39 @@ GpStatus WINGDIPAPI GdipGetMatrixElements(GDIPCONST GpMatrix *matrix,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipInvertMatrix(GpMatrix *matrix)
+{
+    GpMatrix copy;
+    REAL det;
+    BOOL invertible;
+
+    if(!matrix)
+        return InvalidParameter;
+
+    GdipIsMatrixInvertible(matrix, &invertible);
+    if(!invertible)
+        return InvalidParameter;
+
+    det = matrix_det(matrix);
+
+    copy = *matrix;
+    /* store result */
+    matrix->matrix[0] =   copy.matrix[3] / det;
+    matrix->matrix[1] =  -copy.matrix[1] / det;
+    matrix->matrix[2] =  -copy.matrix[2] / det;
+    matrix->matrix[3] =   copy.matrix[0] / det;
+    matrix->matrix[4] =  (copy.matrix[2]*copy.matrix[5]-copy.matrix[3]*copy.matrix[4]) / det;
+    matrix->matrix[5] = -(copy.matrix[0]*copy.matrix[5]-copy.matrix[1]*copy.matrix[4]) / det;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipIsMatrixInvertible(GDIPCONST GpMatrix *matrix, BOOL *result)
 {
-    REAL det;
-
     if(!matrix || !result)
         return InvalidParameter;
 
-    det = matrix->matrix[0]*matrix->matrix[3] - matrix->matrix[1]*matrix->matrix[2];
-
-    *result = (fabs(det) >= 1e-5);
+    *result = (fabs(matrix_det(matrix)) >= 1e-5);
 
     return Ok;
 }
