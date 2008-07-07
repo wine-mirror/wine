@@ -658,11 +658,11 @@ ImageList_Create (INT cx, INT cy, UINT flags,
         himl->hbmMask = 0;
 
     /* create blending brushes */
-    hbmTemp = CreateBitmap (8, 8, 1, 1, &aBitBlend25);
+    hbmTemp = CreateBitmap (8, 8, 1, 1, aBitBlend25);
     himl->hbrBlend25 = CreatePatternBrush (hbmTemp);
     DeleteObject (hbmTemp);
 
-    hbmTemp = CreateBitmap (8, 8, 1, 1, &aBitBlend50);
+    hbmTemp = CreateBitmap (8, 8, 1, 1, aBitBlend50);
     himl->hbrBlend50 = CreatePatternBrush (hbmTemp);
     DeleteObject (hbmTemp);
 

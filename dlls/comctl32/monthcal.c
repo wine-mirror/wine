@@ -1498,8 +1498,8 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
     MONTHCAL_CopyTime(&ht.st, &selArray[0]);
     MONTHCAL_CopyTime(&ht.st, &selArray[1]);
-    MONTHCAL_SetSelRange(infoPtr, (LPARAM)&selArray);
-    MONTHCAL_SetCurSel(infoPtr, (LPARAM)&selArray);
+    MONTHCAL_SetSelRange(infoPtr, (LPARAM)selArray);
+    MONTHCAL_SetCurSel(infoPtr, (LPARAM)selArray);
     TRACE("MCHT_CALENDARDATE\n");
     nmsc.nmhdr.hwndFrom = infoPtr->hwndSelf;
     nmsc.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
@@ -1647,7 +1647,7 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     SYSTEMTIME selArray[2];
     int i;
 
-    MONTHCAL_GetSelRange(infoPtr, (LPARAM)&selArray);
+    MONTHCAL_GetSelRange(infoPtr, (LPARAM)selArray);
     i = 0;
     if(infoPtr->firstSelDay==selArray[0].wDay) i=1;
     TRACE("oldRange:%d %d %d %d\n", infoPtr->firstSelDay, selArray[0].wDay, selArray[1].wDay, i);
@@ -1677,7 +1677,7 @@ MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         selArray[0].wDay = tempday;
       }
 
-      MONTHCAL_SetSelRange(infoPtr, (LPARAM)&selArray);
+      MONTHCAL_SetSelRange(infoPtr, (LPARAM)selArray);
     }
   }
 

@@ -368,7 +368,7 @@ static void TOOLTIPS_GetDispInfoA(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO
     ttnmdi.hdr.hwndFrom = hwnd;
     ttnmdi.hdr.idFrom = toolPtr->uId;
     ttnmdi.hdr.code = TTN_GETDISPINFOA; /* == TTN_NEEDTEXTA */
-    ttnmdi.lpszText = (LPSTR)&ttnmdi.szText;
+    ttnmdi.lpszText = (LPSTR)ttnmdi.szText;
     ttnmdi.uFlags = toolPtr->uFlags;
     ttnmdi.lParam = toolPtr->lParam;
 
@@ -424,7 +424,7 @@ static void TOOLTIPS_GetDispInfoW(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO
     ttnmdi.hdr.hwndFrom = hwnd;
     ttnmdi.hdr.idFrom = toolPtr->uId;
     ttnmdi.hdr.code = TTN_GETDISPINFOW; /* == TTN_NEEDTEXTW */
-    ttnmdi.lpszText = (LPWSTR)&ttnmdi.szText;
+    ttnmdi.lpszText = (LPWSTR)ttnmdi.szText;
     ttnmdi.uFlags = toolPtr->uFlags;
     ttnmdi.lParam = toolPtr->lParam;
 
