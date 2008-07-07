@@ -577,13 +577,13 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
             case WINED3DTOP_MULTIPLYADD:
                 TRACE("glColorFragmentOp3ATI(GL_MAD_ATI, %s, GL_NONE, GL_NONE, %s, GL_NONE, %s, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
                       debug_register(dstreg),
-                      debug_register(arg0), debug_argmod(argmod0),
+                      debug_register(arg1), debug_argmod(argmod1),
                       debug_register(arg2), debug_argmod(argmod2),
-                      debug_register(arg1), debug_argmod(argmod1));
+                      debug_register(arg0), debug_argmod(argmod0));
                 GL_EXTCALL(glColorFragmentOp3ATI(GL_MAD_ATI, dstreg, GL_NONE, GL_NONE,
-                                                 arg0, GL_NONE, argmod0,
+                                                 arg1, GL_NONE, argmod1,
                                                  arg2, GL_NONE, argmod2,
-                                                 arg1, GL_NONE, argmod1));
+                                                 arg0, GL_NONE, argmod0));
                 break;
 
             case WINED3DTOP_LERP:
@@ -735,13 +735,13 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
             case WINED3DTOP_MULTIPLYADD:
                 TRACE("glAlphaFragmentOp3ATI(GL_MAD_ATI, %s,          GL_NONE, %s, GL_NONE, %s, %s, GL_NONE, %s, %s, GL_NONE, %s)\n",
                       debug_register(dstreg),
-                      debug_register(arg0), debug_argmod(argmod0),
+                      debug_register(arg1), debug_argmod(argmod1),
                       debug_register(arg2), debug_argmod(argmod2),
-                      debug_register(arg1), debug_argmod(argmod1));
+                      debug_register(arg0), debug_argmod(argmod0));
                 GL_EXTCALL(glAlphaFragmentOp3ATI(GL_MAD_ATI, dstreg,          GL_NONE,
-                           arg0, GL_NONE, argmod0,
+                           arg1, GL_NONE, argmod1,
                            arg2, GL_NONE, argmod2,
-                           arg1, GL_NONE, argmod1));
+                           arg0, GL_NONE, argmod0));
                 break;
 
             case WINED3DTOP_LERP:
