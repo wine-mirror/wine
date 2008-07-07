@@ -141,11 +141,11 @@ $(TESTSUBDIRS:%=%/__crosstest__): tools include
 
 TAGS etags:
 	$(RM) TAGS
-	(test -d .git && git-ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs etags -a
+	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs etags -a
 
 tags ctags:
 	$(RM) tags
-	(test -d .git && git-ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs ctags -a
+	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs ctags -a
 
 manpages htmlpages sgmlpages: dummy
 	@cd documentation && $(MAKE) $@
