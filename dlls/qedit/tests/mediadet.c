@@ -22,6 +22,7 @@
 
 #define COBJMACROS
 
+#include "initguid.h"
 #include "ole2.h"
 #include "vfwmsgs.h"
 #include "uuids.h"

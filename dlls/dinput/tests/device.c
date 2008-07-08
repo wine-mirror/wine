@@ -23,6 +23,7 @@
 
 #include "wine/test.h"
 #include "windef.h"
+#include "initguid.h"
 #include "dinput.h"
 #include "dxerr8.h"
 

@@ -33,12 +33,13 @@
 #include "dxerr8.h"
 #include "dsconf.h"
 #include "mmreg.h"
-/* MinGW doesn't have ksguid, needed for make crosstest to work. */
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
 
 #include "dsound_test.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static HRESULT (WINAPI *pDirectSoundEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
 static HRESULT (WINAPI *pDirectSoundCreate)(LPCGUID,LPDIRECTSOUND*,

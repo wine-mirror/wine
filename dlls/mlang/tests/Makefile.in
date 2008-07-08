@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = mlang.dll
-IMPORTS   = uuid oleaut32 ole32 gdi32 kernel32
+IMPORTS   = oleaut32 ole32 gdi32 kernel32
 
 CTESTS = \
 	mlang.c

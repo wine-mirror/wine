@@ -23,7 +23,6 @@
 #define COBJMACROS
 
 #include "wine/test.h"
-#include "uuids.h"
 #include "dshow.h"
 #include "control.h"
 

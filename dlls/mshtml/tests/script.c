@@ -28,10 +28,13 @@
 #include "ole2.h"
 #include "dispex.h"
 #include "mshtml.h"
+#include "initguid.h"
 #include "activscp.h"
 #include "activdbg.h"
 #include "objsafe.h"
 #include "mshtmdid.h"
+
+DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE

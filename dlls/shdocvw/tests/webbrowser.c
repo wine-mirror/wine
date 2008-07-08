@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "initguid.h"
 #include "ole2.h"
 #include "exdisp.h"
 #include "htiframe.h"
@@ -32,8 +33,11 @@
 #include "idispids.h"
 #include "olectl.h"
 #include "mshtmdid.h"
+#include "shobjidl.h"
 #include "shlguid.h"
 #include "exdispid.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE

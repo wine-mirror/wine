@@ -24,7 +24,8 @@
 
 #define COBJMACROS
 
-#include <windows.h>
+#include "initguid.h"
+#include "windows.h"
 #include "shlguid.h"
 #include "shobjidl.h"
 #include "shlobj.h"

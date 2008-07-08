@@ -18,6 +18,7 @@
  */
 
 #define COBJMACROS
+#include <initguid.h>
 #include <d3d8.h>
 #include <dxerr8.h>
 #include "wine/test.h"

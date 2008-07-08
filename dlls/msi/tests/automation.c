@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 
+#include <initguid.h>
 #include <windows.h>
 #include <msiquery.h>
 #include <msidefs.h>
@@ -30,6 +31,8 @@
 #include <fci.h>
 
 #include "wine/test.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static const char *msifile = "winetest.msi";
 static const WCHAR szMsifile[] = {'w','i','n','e','t','e','s','t','.','m','s','i',0};

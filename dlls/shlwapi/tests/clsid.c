@@ -24,12 +24,12 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "winuser.h"
+#include "initguid.h"
 #include "shlguid.h"
 #include "shobjidl.h"
 #include "olectl.h"
 
-#define INITGUID
-#include "initguid.h"
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 /* This GUID has been removed from the PSDK */
 DEFINE_OLEGUID(WINE_IID_IDelayedRelease,     0x000214EDL, 0, 0);

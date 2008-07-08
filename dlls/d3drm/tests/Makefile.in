@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = d3drm.dll
-IMPORTS   = dxguid kernel32
+IMPORTS   = kernel32
 
 CTESTS = vector.c
 

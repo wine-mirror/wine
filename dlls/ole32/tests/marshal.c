@@ -27,11 +27,15 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "initguid.h"
 #include "objbase.h"
+#include "olectl.h"
 #include "shlguid.h"
 #include "shobjidl.h"
 
 #include "wine/test.h"
+
+DEFINE_GUID(CLSID_StdGlobalInterfaceTable,0x00000323,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
 /* functions that are not present on all versions of Windows */
 HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);

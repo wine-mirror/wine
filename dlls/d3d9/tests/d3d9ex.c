@@ -21,6 +21,7 @@
  */
 
 #define COBJMACROS
+#include <initguid.h>
 #include <d3d9.h>
 #include <dxerr9.h>
 #include "wine/test.h"

@@ -18,18 +18,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #define COBJMACROS
 
+#include "initguid.h"
 #include "windows.h"
 #include "ole2.h"
 #include "xmldom.h"
 #include "msxml2.h"
-#include <stdio.h>
 
 #include "wine/test.h"
-
-const CLSID CLSID_XMLSchemaCache      = {0x373984c9, 0xb845, 0x449b, {0x91, 0xe7, 0x45, 0xac, 0x83, 0x03, 0x6a, 0xde}};
-const IID IID_IXMLDOMSchemaCollection = {0x373984c8, 0xb845, 0x449b, {0x91, 0xe7, 0x45, 0xac, 0x83, 0x03, 0x6a, 0xde}};
 
 static const WCHAR schema_uri[] = {'x','-','s','c','h','e','m','a',':','t','e','s','t','.','x','m','l',0};
 

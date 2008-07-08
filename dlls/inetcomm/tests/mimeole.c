@@ -21,6 +21,7 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 
+#include "initguid.h"
 #include "windows.h"
 #include "ole2.h"
 #include "ocidl.h"

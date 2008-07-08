@@ -22,7 +22,10 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "initguid.h"
 #include "dshow.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 /* Helper function, checks if filter with given name was enumerated. */
 static BOOL enum_find_filter(const WCHAR *wszFilterName, IEnumMoniker *pEnum)

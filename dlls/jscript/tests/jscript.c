@@ -18,11 +18,14 @@
 
 #define COBJMACROS
 
+#include <initguid.h>
 #include <ole2.h>
 #include <activscp.h>
 #include <objsafe.h>
 
 #include "wine/test.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static const CLSID CLSID_JScript =
     {0xf414c260,0x6ac0,0x11cf,{0xb6,0xd1,0x00,0xaa,0x00,0xbb,0xbb,0x58}};

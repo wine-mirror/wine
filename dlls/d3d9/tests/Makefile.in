@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = d3d9.dll
-IMPORTS   = dxerr9 uuid dxguid user32 kernel32
+IMPORTS   = dxerr9 user32 kernel32
 
 CTESTS = \
 	d3d9ex.c \

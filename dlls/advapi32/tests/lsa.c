@@ -30,9 +30,10 @@
 #include "sddl.h"
 #include "winnls.h"
 #include "objbase.h"
-#define INITGUID
-#include "guiddef.h"
+#include "initguid.h"
 #include "wine/test.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static HMODULE hadvapi32;
 static NTSTATUS (WINAPI *pLsaClose)(LSA_HANDLE);

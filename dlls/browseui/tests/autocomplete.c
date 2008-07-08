@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
+#include <initguid.h>
 #include <windows.h>
 #include <shlobj.h>
 #include <shlwapi.h>

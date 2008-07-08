@@ -36,9 +36,12 @@
 #include <winnls.h>
 #include <winerror.h>
 #include <winnt.h>
+#include <initguid.h>
 #include <wtypes.h>
 #include <olectl.h>
 #include <ocidl.h>
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static WCHAR MSSansSerif_font[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f',0};
 static WCHAR system_font[] = { 'S','y','s','t','e','m',0 };

@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 
+#include <initguid.h>
 #include <hlink.h>
 #include <hlguids.h>
 

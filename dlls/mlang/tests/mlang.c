@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "initguid.h"
 #include "mlang.h"
 
 #include "wine/test.h"

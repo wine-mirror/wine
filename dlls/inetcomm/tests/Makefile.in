@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = inetcomm.dll
-IMPORTS   = uuid inetcomm ole32 kernel32
+IMPORTS   = inetcomm ole32 kernel32
 
 CTESTS = \
 	mimeole.c
