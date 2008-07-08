@@ -3263,6 +3263,54 @@ static void test_DocumentSaveToDocument(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_DocumentSaveToFile(void)
+{
+    IXMLDOMDocument *doc = NULL;
+    IXMLDOMElement *pRoot;
+    HANDLE file;
+    char buffer[100];
+    DWORD read = 0;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if(hr == S_OK)
+    {
+        hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)pRoot, NULL);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            VARIANT vFile;
+
+            V_VT(&vFile) = VT_BSTR;
+            V_BSTR(&vFile) = _bstr_("test.xml");
+
+            hr = IXMLDOMDocument_save(doc, vFile);
+            ok(hr == S_OK, "ret %08x\n", hr );
+        }
+    }
+
+    IXMLDOMElement_Release(pRoot);
+    IXMLDOMDocument_Release(doc);
+
+    file = CreateFile("test.xml", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(file != INVALID_HANDLE_VALUE, "Could not open file: %u\n", GetLastError());
+    if(file == INVALID_HANDLE_VALUE)
+        return;
+
+    ReadFile(file, buffer, sizeof(buffer), &read, NULL);
+    ok(read != 0, "could not read file\n");
+    todo_wine {
+    ok(buffer[0] != '<' || buffer[1] != '?', "File contains processing instruction\n");
+    }
+
+    DeleteFile("test.xml");
+}
+
 static void test_testTransforms(void)
 {
     IXMLDOMDocument *doc = NULL;
@@ -3389,6 +3437,7 @@ START_TEST(domdoc)
     test_xmlTypes();
     test_nodeTypeTests();
     test_DocumentSaveToDocument();
+    test_DocumentSaveToFile();
     test_testTransforms();
     test_Namespaces();
 
