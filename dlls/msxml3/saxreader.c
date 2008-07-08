@@ -563,8 +563,12 @@ static HRESULT WINAPI isaxxmlreader_getErrorHandler(
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
 
-    FIXME("(%p)->(%p) stub\n", This, pErrorHandler);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pErrorHandler);
+    if(This->errorHandler)
+        ISAXErrorHandler_AddRef(This->errorHandler);
+    *pErrorHandler = This->errorHandler;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxxmlreader_putErrorHandler(
