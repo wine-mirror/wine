@@ -39,6 +39,7 @@ C_SRCS = \
 	script.c \
 	select.c \
 	source.c \
+	storages.c \
 	streams.c \
 	string.c \
 	suminfo.c \
