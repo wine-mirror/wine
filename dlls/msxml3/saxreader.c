@@ -50,6 +50,7 @@ typedef struct _saxreader
     const struct ISAXXMLReaderVtbl *lpSAXXMLReaderVtbl;
     LONG ref;
     struct ISAXContentHandler *contentHandler;
+    struct ISAXErrorHandler *errorHandler;
     xmlSAXHandler sax;
 } saxreader;
 
@@ -114,6 +115,9 @@ static ULONG WINAPI saxxmlreader_Release(
     {
         if(This->contentHandler)
             ISAXContentHandler_Release(This->contentHandler);
+
+        if(This->errorHandler)
+            ISAXErrorHandler_Release(This->errorHandler);
 
         HeapFree( GetProcessHeap(), 0, This );
     }
@@ -569,8 +573,14 @@ static HRESULT WINAPI isaxxmlreader_putErrorHandler(
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
 
-    FIXME("(%p)->(%p) stub\n", This, errorHandler);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, errorHandler);
+    if(errorHandler)
+        ISAXErrorHandler_AddRef(errorHandler);
+    if(This->errorHandler)
+        ISAXErrorHandler_Release(This->errorHandler);
+    This->errorHandler = errorHandler;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxxmlreader_getBaseURL(
@@ -672,6 +682,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->lpSAXXMLReaderVtbl = &isaxreader_vtbl;
     reader->ref = 1;
     reader->contentHandler = NULL;
+    reader->errorHandler = NULL;
 
     *ppObj = &reader->lpVtbl;
 
