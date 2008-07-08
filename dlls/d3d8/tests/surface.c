@@ -96,7 +96,7 @@ static void test_image_surface_pool(IDirect3DDevice8 *device) {
     hr = IDirect3DSurface8_GetDesc(surface, &surf_desc);
     ok(SUCCEEDED(hr), "GetDesc failed (0x%08x)\n", hr);
 
-    todo_wine ok((surf_desc.Pool == D3DPOOL_SYSTEMMEM),
+    ok((surf_desc.Pool == D3DPOOL_SYSTEMMEM),
         "CreateImageSurface returns surface with unexpected pool type %u (should be SYSTEMMEM = 2)\n", surf_desc.Pool);
 
     IDirect3DSurface8_Release(surface);
