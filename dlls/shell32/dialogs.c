@@ -139,9 +139,12 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
             if (prfdp->uFlags & RFF_CALCDIRECTORY)
                 FIXME("RFF_CALCDIRECTORY not supported\n");
 
-            SetClassLongPtrW (hwnd, GCLP_HICON, (LPARAM)prfdp->hIcon) ;
-            SendMessageW (GetDlgItem (hwnd, IDC_RUNDLG_ICON), STM_SETICON,
-                          (WPARAM)LoadIconW (NULL, (LPCWSTR)IDI_WINLOGO), 0);
+            if (prfdp->hIcon == NULL)
+                prfdp->hIcon = LoadIconW(NULL, (LPCWSTR)IDI_WINLOGO);
+            SendMessageW(hwnd, WM_SETICON, ICON_BIG, (LPARAM)prfdp->hIcon);
+            SendMessageW(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)prfdp->hIcon);
+            SendMessageW(GetDlgItem(hwnd, IDC_RUNDLG_ICON), STM_SETICON, (WPARAM)prfdp->hIcon, 0);
+
             FillList (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH), NULL, (prfdp->uFlags & RFF_NODEFAULT) == 0) ;
             SetFocus (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH)) ;
             return TRUE ;
