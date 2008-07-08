@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "initguid.h"
 #include "dinput.h"
-#include "dxerr8.h"
 
 static const DIOBJECTDATAFORMAT obj_data_format[] = {
   { &GUID_YAxis, 16, DIDFT_OPTIONAL|DIDFT_AXIS  |DIDFT_MAKEINSTANCE(1), 0},
@@ -74,13 +73,13 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
     int cnt = 0, cnt1 = 0;
 
     hr = IDirectInputDevice_EnumObjects(device, enum_callback, &cnt, DIDFT_ALL);
-    ok(SUCCEEDED(hr), "EnumObjects() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
 
     hr = IDirectInputDevice_SetDataFormat(device, &data_format);
-    ok(SUCCEEDED(hr), "SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "SetDataFormat() failed: %08x\n", hr);
 
     hr = IDirectInputDevice_EnumObjects(device, enum_callback, &cnt1, DIDFT_ALL);
-    ok(SUCCEEDED(hr), "EnumObjects() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
     if (0) /* fails for joystick only */
     ok(cnt == cnt1, "Enum count changed from %d to %d\n", cnt, cnt1);
 
@@ -97,19 +96,19 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
         dp.diph.dwObj = 16;
         dp.dwData = DIPROPAXISMODE_ABS;
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
-        ok(hr == DIERR_UNSUPPORTED, "SetProperty() returned: %s\n", DXGetErrorString8(hr));
+        ok(hr == DIERR_UNSUPPORTED, "SetProperty() returned: %08x\n", hr);
         dp.diph.dwHow = DIPH_DEVICE;
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
-        ok(hr == DIERR_INVALIDPARAM, "SetProperty() returned: %s\n", DXGetErrorString8(hr));
+        ok(hr == DIERR_INVALIDPARAM, "SetProperty() returned: %08x\n", hr);
         dp.diph.dwObj = 0;
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
-        ok(hr == DI_OK, "SetProperty() failed: %s\n", DXGetErrorString8(hr));
+        ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
 
         /* Cannot change mode while acquired */
         hr = IDirectInputDevice_Acquire(device);
-        ok(hr == DI_OK, "Acquire() failed: %s\n", DXGetErrorString8(hr));
+        ok(hr == DI_OK, "Acquire() failed: %08x\n", hr);
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
-        ok(hr == DIERR_ACQUIRED, "SetProperty() returned: %s\n", DXGetErrorString8(hr));
+        ok(hr == DIERR_ACQUIRED, "SetProperty() returned: %08x\n", hr);
     }
 }
 
@@ -126,12 +125,12 @@ static BOOL CALLBACK enum_devices(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
     HRESULT hr;
 
     hr = IDirectInput_GetDeviceStatus(data->pDI, &lpddi->guidInstance);
-    ok(hr == DI_OK, "IDirectInput_GetDeviceStatus() failed: %s\n", DXGetErrorString8(hr));
+    ok(hr == DI_OK, "IDirectInput_GetDeviceStatus() failed: %08x\n", hr);
 
     if (hr == DI_OK)
     {
         hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, &device, NULL);
-        ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
+        ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
         trace("Testing device \"%s\"\n", lpddi->tszInstanceName);
         test_object_info(device, data->hwnd);
         IUnknown_Release(device);
@@ -153,7 +152,7 @@ static void device_tests(void)
         skip("Tests require a newer dinput version\n");
         return;
     }
-    ok(SUCCEEDED(hr), "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "DirectInputCreate() failed: %08x\n", hr);
     if (FAILED(hr)) return;
 
     hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
@@ -166,7 +165,7 @@ static void device_tests(void)
         data.pDI = pDI;
         data.hwnd = hwnd;
         hr = IDirectInput_EnumDevices(pDI, 0, enum_devices, &data, DIEDFL_ALLDEVICES);
-        ok(SUCCEEDED(hr), "IDirectInput_EnumDevices() failed: %s\n", DXGetErrorString8(hr));
+        ok(SUCCEEDED(hr), "IDirectInput_EnumDevices() failed: %08x\n", hr);
 
 
         /* If GetDeviceStatus returns DI_OK the device must exist */
@@ -176,7 +175,7 @@ static void device_tests(void)
             LPDIRECTINPUTDEVICE device = NULL;
 
             hr = IDirectInput_CreateDevice(pDI, &GUID_Joystick, &device, NULL);
-            ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
+            ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
             if (device) IUnknown_Release(device);
         }
 

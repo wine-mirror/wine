@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "dinput.h"
-#include "dxerr8.h"
 #include "dinput_test.h"
 
 static const HRESULT SetCoop_null_window[16] =  {
@@ -51,18 +50,18 @@ static void test_set_coop(LPDIRECTINPUT pDI, HWND hwnd)
     int i;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pMouse, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
     if (FAILED(hr)) return;
 
     for (i=0; i<16; i++)
     {
         hr = IDirectInputDevice_SetCooperativeLevel(pMouse, NULL, i);
-        ok(hr == SetCoop_null_window[i], "SetCooperativeLevel(NULL, %d): %s\n", i, DXGetErrorString8(hr));
+        ok(hr == SetCoop_null_window[i], "SetCooperativeLevel(NULL, %d): %08x\n", i, hr);
     }
     for (i=0; i<16; i++)
     {
         hr = IDirectInputDevice_SetCooperativeLevel(pMouse, hwnd, i);
-        ok(hr == SetCoop_real_window[i], "SetCooperativeLevel(hwnd, %d): %s\n", i, DXGetErrorString8(hr));
+        ok(hr == SetCoop_real_window[i], "SetCooperativeLevel(hwnd, %d): %08x\n", i, hr);
     }
 
     if (pMouse) IUnknown_Release(pMouse);
@@ -75,36 +74,36 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     DIMOUSESTATE m_state;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pMouse, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
     if (FAILED(hr)) return;
 
     hr = IDirectInputDevice_SetCooperativeLevel(pMouse, hwnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
-    ok(hr == S_OK, "SetCooperativeLevel: %s\n", DXGetErrorString8(hr));
+    ok(hr == S_OK, "SetCooperativeLevel: %08x\n", hr);
 
     hr = IDirectInputDevice_SetDataFormat(pMouse, &c_dfDIMouse);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
     hr = IDirectInputDevice_Unacquire(pMouse);
-    ok(hr == S_FALSE, "IDirectInputDevice_Unacquire() should have failed: %s\n", DXGetErrorString8(hr));
+    ok(hr == S_FALSE, "IDirectInputDevice_Unacquire() should have failed: %08x\n", hr);
     hr = IDirectInputDevice_Acquire(pMouse);
-    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
     hr = IDirectInputDevice_Acquire(pMouse);
-    ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have failed: %s\n", DXGetErrorString8(hr));
+    ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have failed: %08x\n", hr);
 
     /* Foreground coop level requires window to have focus */
     /* This should make dinput loose mouse input */
     SetActiveWindow( 0 );
 
     hr = IDirectInputDevice_GetDeviceState(pMouse, sizeof(m_state), &m_state);
-    ok(hr == DIERR_NOTACQUIRED, "GetDeviceState() should have failed: %s\n", DXGetErrorString8(hr));
+    ok(hr == DIERR_NOTACQUIRED, "GetDeviceState() should have failed: %08x\n", hr);
     /* Workaround so we can test other things. Remove when Wine is fixed */
     IDirectInputDevice_Unacquire(pMouse);
 
     hr = IDirectInputDevice_Acquire(pMouse);
-    ok(hr == DIERR_OTHERAPPHASPRIO, "Acquire() should have failed: %s\n", DXGetErrorString8(hr));
+    ok(hr == DIERR_OTHERAPPHASPRIO, "Acquire() should have failed: %08x\n", hr);
 
     SetActiveWindow( hwnd );
     hr = IDirectInputDevice_Acquire(pMouse);
-    ok(hr == S_OK, "Acquire() failed: %s\n", DXGetErrorString8(hr));
+    ok(hr == S_OK, "Acquire() failed: %08x\n", hr);
 
     if (pMouse) IUnknown_Release(pMouse);
 }
@@ -123,7 +122,7 @@ static void mouse_tests(void)
         skip("Tests require a newer dinput version\n");
         return;
     }
-    ok(SUCCEEDED(hr), "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
+    ok(SUCCEEDED(hr), "DirectInputCreate() failed: %08x\n", hr);
     if (FAILED(hr)) return;
 
     hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
