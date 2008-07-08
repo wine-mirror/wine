@@ -1708,7 +1708,6 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->pBuffer = ME_MakeText();
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ME_MakeFirstParagraph(ed);
-  ed->bCaretShown = FALSE;
   /* The four cursors are for:
    * 0 - The position where the caret is shown
    * 1 - The anchored end of the selection (for normal selection)
