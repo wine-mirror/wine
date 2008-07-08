@@ -151,8 +151,7 @@ ME_DisplayItem *ME_MakeDI(ME_DIType type) {
   item->prev = item->next = NULL;
   if (type == diParagraph || type == diUndoSplitParagraph) {
     item->member.para.pFmt = ALLOC_OBJ(PARAFORMAT2);
-    item->member.para.pFmt->cbSize = sizeof(PARAFORMAT2);
-    item->member.para.pFmt->dwMask = 0;
+    ME_SetDefaultParaFormat(item->member.para.pFmt);
     item->member.para.nFlags = MEPF_REWRAP;
   }
     

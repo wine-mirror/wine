@@ -231,6 +231,7 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt);
 void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last);
 void ME_MarkForPainting(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last);
 void ME_MarkAllForWrapping(ME_TextEditor *editor);
+void ME_SetDefaultParaFormat(PARAFORMAT2 *pFmt);
 
 /* paint.c */
 void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *rcUpdate);

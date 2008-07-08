@@ -28,7 +28,6 @@ static const WCHAR wszParagraphSign[] = {0xB6, 0};
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   ME_Context c;
-  PARAFORMAT2 fmt;
   CHARFORMAT2W cf;
   LOGFONTW lf;
   HFONT hf;
@@ -61,13 +60,6 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   if (lf.lfStrikeOut) cf.dwEffects |= CFE_STRIKEOUT;
   cf.bPitchAndFamily = lf.lfPitchAndFamily;
   cf.bCharSet = lf.lfCharSet;
-
-  ZeroMemory(&fmt, sizeof(fmt));
-  fmt.cbSize = sizeof(fmt);
-  fmt.dwMask = PFM_ALIGNMENT | PFM_OFFSET | PFM_STARTINDENT | PFM_RIGHTINDENT | PFM_TABSTOPS;
-  fmt.wAlignment = PFA_LEFT;
-
-  *para->member.para.pFmt = fmt;
 
   style = ME_MakeStyle(&cf);
   text->pDefaultStyle = style;
@@ -519,4 +511,14 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
       return;
     para = para->member.para.next_para;
   } while(1);
+}
+
+void ME_SetDefaultParaFormat(PARAFORMAT2 *pFmt)
+{
+    ZeroMemory(pFmt, sizeof(PARAFORMAT2));
+    pFmt->cbSize = sizeof(PARAFORMAT2);
+    pFmt->dwMask = PFM_ALL2;
+    pFmt->wAlignment = PFA_LEFT;
+    pFmt->sStyle = -1;
+    pFmt->bOutlineLevel = TRUE;
 }

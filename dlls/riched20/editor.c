@@ -1040,13 +1040,16 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     ME_InternalDeleteText(editor, from, to-from);
   }
   else {
+    ME_DisplayItem *para_item;
     style = editor->pBuffer->pDefaultStyle;
     ME_AddRefStyle(style);
     SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);    
     ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
     from = to = 0;
     ME_ClearTempStyle(editor);
-    /* FIXME restore default paragraph formatting ! */
+
+    para_item = ME_GetParagraph(editor->pCursors[0].pRun);
+    ME_SetDefaultParaFormat(para_item->member.para.pFmt);
   }
 
 
