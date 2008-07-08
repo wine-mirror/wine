@@ -979,10 +979,7 @@ static void test_QueryAssemblyInfo(void)
 
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC, asmpath, &size);
-    todo_wine
-    {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     lstrcatW(asmpath, msil);
     lstrcatW(asmpath, winedll);

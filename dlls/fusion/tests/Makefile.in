@@ -3,11 +3,12 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = fusion.dll
-IMPORTS   = kernel32
+IMPORTS   = user32 kernel32
 
 CTESTS = \
 	asmcache.c \
-	asmname.c
+	asmname.c \
+	fusion.c
 
 @MAKE_TEST_RULES@
 
