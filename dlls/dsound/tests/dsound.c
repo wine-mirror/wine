@@ -716,9 +716,10 @@ static HRESULT test_secondary(LPGUID lpGuid)
             if (gotdx8 || wfx.wBitsPerSample <= 16)
             {
                 if (wfx.wBitsPerSample > 16)
-                    ok(rc == DSERR_CONTROLUNAVAIL && !secondary, "IDirectSound_CreateSoundBuffer() "
-                        "should have returned DSERR_CONTROLUNAVAIL and NULL, returned: %08x %p\n",
-                        rc, secondary);
+                    ok((rc == DSERR_CONTROLUNAVAIL || rc == DSERR_INVALIDCALL) &&
+                        !secondary, "IDirectSound_CreateSoundBuffer() "
+                        "should have returned (DSERR_CONTROLUNAVAIL or DSERR_INVALIDCALL) "
+                        "and NULL, returned: %08x %p\n", rc, secondary);
                 else
                     ok(rc==DS_OK && secondary!=NULL,
                         "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %08x\n",rc);
@@ -767,7 +768,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
             wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx);
             wfxe.SubFormat = GUID_NULL;
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(rc==DSERR_INVALIDPARAM && !secondary,
+            ok((rc==DSERR_INVALIDPARAM || rc==DSERR_INVALIDCALL) && !secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
