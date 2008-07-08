@@ -701,8 +701,11 @@ static HRESULT WINAPI xmlnode_get_ownerDocument(
     IXMLDOMNode *iface,
     IXMLDOMDocument** DOMDocument)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+
+    TRACE("%p (%p)\n", This, DOMDocument);
+
+    return DOMDocument_create_from_xmldoc(This->node->doc, (IXMLDOMDocument2**)DOMDocument);
 }
 
 static HRESULT WINAPI xmlnode_cloneNode(

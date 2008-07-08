@@ -898,9 +898,7 @@ static void test_domnode( void )
     {
         owner = NULL;
         r = IXMLDOMNode_get_ownerDocument( element, &owner );
-        todo_wine {
         ok( r == S_OK, "get_ownerDocument return code\n");
-        }
         ok( owner != doc, "get_ownerDocument return\n");
 
         type = NODE_INVALID;
@@ -1260,7 +1258,7 @@ todo_wine
     if (element)
         IXMLDOMElement_Release( element );
     if (doc)
-        IXMLDOMDocument_Release( doc );
+        ok(IXMLDOMDocument_Release( doc ) == 0, "document is not destroyed\n");
 }
 
 static void test_refs(void)
@@ -1608,7 +1606,7 @@ static void test_get_text(void)
     r = IXMLDOMDocument_getElementsByTagName( doc, str, &node_list );
     ok( r == S_OK, "ret %08x\n", r );
     SysFreeString(str);
-    
+
     r = IXMLDOMNodeList_QueryInterface(node_list, &IID_IDispatch, NULL);
     ok( r == E_INVALIDARG, "ret %08x\n", r );
 
