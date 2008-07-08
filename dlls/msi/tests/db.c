@@ -5996,11 +5996,47 @@ static void test_where_viewmodify(void)
     MsiCloseHandle(hdb);
 }
 
+static BOOL create_storage(LPCSTR name)
+{
+    WCHAR nameW[MAX_PATH];
+    IStorage *stg;
+    IStream *stm;
+    HRESULT hr;
+    DWORD count;
+    BOOL res = FALSE;
+
+    MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, MAX_PATH);
+    hr = StgCreateDocfile(nameW, STGM_CREATE | STGM_READWRITE |
+                          STGM_DIRECT | STGM_SHARE_EXCLUSIVE, 0, &stg);
+    if (FAILED(hr))
+        return FALSE;
+
+    hr = IStorage_CreateStream(stg, nameW, STGM_WRITE | STGM_SHARE_EXCLUSIVE,
+                               0, 0, &stm);
+    if (FAILED(hr))
+        goto done;
+
+    hr = IStream_Write(stm, "stgdata", 8, &count);
+    if (SUCCEEDED(hr))
+        res = TRUE;
+
+done:
+    IStream_Release(stm);
+    IStorage_Release(stg);
+
+    return res;
+}
+
 static void test_storages_table(void)
 {
     MSIHANDLE hdb, hview, hrec;
+    IStorage *stg, *inner;
+    IStream *stm;
     char file[MAX_PATH];
     char buf[MAX_PATH];
+    WCHAR name[MAX_PATH];
+    LPCSTR query;
+    HRESULT hr;
     DWORD size;
     UINT r;
 
@@ -6037,19 +6073,18 @@ static void test_storages_table(void)
 
     MsiCloseHandle(hrec);
 
-    /* insert a file into the _Storages table */
-    create_file("test.txt");
+    create_storage("storage.bin");
 
     hrec = MsiCreateRecord(2);
-    MsiRecordSetString(hrec, 1, "data");
+    MsiRecordSetString(hrec, 1, "stgname");
 
-    r = MsiRecordSetStream(hrec, 2, "test.txt");
+    r = MsiRecordSetStream(hrec, 2, "storage.bin");
     ok(r == ERROR_SUCCESS, "Failed to add stream data to the hrecord: %d\n", r);
 
-    DeleteFile("test.txt");
+    DeleteFileA("storage.bin");
 
-    r = MsiDatabaseOpenView(hdb,
-            "INSERT INTO `_Storages` (`Name`, `Data`) VALUES (?, ?)", &hview);
+    query = "INSERT INTO `_Storages` (`Name`, `Data`) VALUES (?, ?)";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Failed to open database hview: %d\n", r);
@@ -6062,10 +6097,11 @@ static void test_storages_table(void)
     }
 
     MsiCloseHandle(hrec);
+    MsiViewClose(hview);
     MsiCloseHandle(hview);
 
-    r = MsiDatabaseOpenView(hdb,
-            "SELECT `Name`, `Data` FROM `_Storages`", &hview);
+    query = "SELECT `Name`, `Data` FROM `_Storages`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Failed to open database hview: %d\n", r);
@@ -6088,7 +6124,7 @@ static void test_storages_table(void)
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Failed to get string: %d\n", r);
-        ok(!lstrcmp(file, "data"), "Expected 'data', got %s\n", file);
+        ok(!lstrcmp(file, "stgname"), "Expected \"stgname\", got \"%s\"\n", file);
     }
 
     size = MAX_PATH;
@@ -6097,7 +6133,7 @@ static void test_storages_table(void)
     ok(!lstrcmp(buf, "apple"), "Expected buf to be unchanged, got %s\n", buf);
     todo_wine
     {
-        ok(r == ERROR_SUCCESS, "Failed to get stream: %d\n", r);
+        ok(r == ERROR_INVALID_DATA, "Expected ERROR_INVALID_DATA, got %d\n", r);
         ok(size == 0, "Expected 0, got %d\n", size);
     }
 
@@ -6109,9 +6145,46 @@ static void test_storages_table(void)
         ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
     }
 
+    MsiViewClose(hview);
     MsiCloseHandle(hview);
+
+    MsiDatabaseCommit(hdb);
     MsiCloseHandle(hdb);
-    DeleteFile(msifile);
+
+    MultiByteToWideChar(CP_ACP, 0, msifile, -1, name, MAX_PATH);
+    hr = StgOpenStorage(name, NULL, STGM_DIRECT | STGM_READ |
+                        STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(stg != NULL, "Expected non-NULL storage\n");
+
+    MultiByteToWideChar(CP_ACP, 0, "stgname", -1, name, MAX_PATH);
+    hr = IStorage_OpenStorage(stg, name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE,
+                              NULL, 0, &inner);
+    todo_wine
+    {
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(inner != NULL, "Expected non-NULL storage\n");
+    }
+
+    /* FIXME: remove when wine is fixed */
+    if (inner)
+    {
+        MultiByteToWideChar(CP_ACP, 0, "storage.bin", -1, name, MAX_PATH);
+        hr = IStorage_OpenStream(inner, name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok(stm != NULL, "Expected non-NULL stream\n");
+
+        hr = IStream_Read(stm, buf, MAX_PATH, &size);
+        ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+        ok(size == 8, "Expected 8, got %d\n", size);
+        ok(!lstrcmpA(buf, "stgdata"), "Expected \"stgdata\", got \"%s\"\n", buf);
+
+        IStream_Release(stm);
+        IStorage_Release(inner);
+    }
+
+    IStorage_Release(stg);
+    DeleteFileA(msifile);
 }
 
 START_TEST(db)
