@@ -1982,7 +1982,9 @@ static void test_display_formats()
             hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat, FALSE);
 
             if(r5g6b5_format_list[i].shouldPass)
-                ok(hr == D3D_OK, "format %d %d didn't pass with hr=%#08x\n", r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat, hr);
+                ok(hr == D3D_OK ||
+                   broken(hr == D3DERR_NOTAVAILABLE),
+                   "format %d %d didn't pass with hr=%#08x\n", r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat, hr);
             else
                 ok(hr != D3D_OK, "format %d %d didn't pass while it was expected to\n", r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat);
         }
