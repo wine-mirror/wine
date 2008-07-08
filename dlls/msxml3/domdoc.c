@@ -53,6 +53,8 @@ typedef struct {
     const struct IBindStatusCallbackVtbl *lpVtbl;
 
     LONG ref;
+
+    IBinding *binding;
 } bsc_t;
 
 static inline bsc_t *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
@@ -96,8 +98,11 @@ static ULONG WINAPI bsc_Release(
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->binding)
+            IBinding_Release(This->binding);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -107,6 +112,13 @@ static HRESULT WINAPI bsc_OnStartBinding(
         DWORD dwReserved,
         IBinding* pib)
 {
+    bsc_t *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(%x %p)\n", This, dwReserved, pib);
+
+    This->binding = pib;
+    IBindStatusCallback_AddRef(pib);
+
     return S_OK;
 }
 
@@ -139,6 +151,15 @@ static HRESULT WINAPI bsc_OnStopBinding(
         HRESULT hresult,
         LPCWSTR szError)
 {
+    bsc_t *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
+
+    if(This->binding) {
+        IBinding_Release(This->binding);
+        This->binding = NULL;
+    }
+
     return S_OK;
 }
 
@@ -191,6 +212,7 @@ static bsc_t *create_bsc(void)
 
     bsc->lpVtbl = &bsc_vtbl;
     bsc->ref = 1;
+    bsc->binding = NULL;
 
     return bsc;
 }
