@@ -166,6 +166,13 @@ static void test_fontfamily (void)
     ok ((lstrcmpiW(itsName, nonexistant) != 0),
         "Expected a non-zero value for nonexistant font!\n");
 
+    /* Bitmap fonts are not found */
+todo_wine
+{
+    stat = GdipCreateFontFamilyFromName (MSSansSerif, NULL, &family);
+    expect (FontFamilyNotFound, stat);
+}
+
     stat = GdipCreateFontFamilyFromName (arial, NULL, &family);
     expect (Ok, stat);
 
