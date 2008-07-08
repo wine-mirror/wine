@@ -42,6 +42,31 @@
 #endif
 #endif /* 0 */
 
+static BOOL (WINAPI *pGetCPInfoExA)(UINT, DWORD, LPCPINFOEXA);
+static HRESULT (WINAPI *pConvertINetMultiByteToUnicode)(LPDWORD, DWORD, LPCSTR,
+                                                        LPINT, LPWSTR, LPINT);
+static HRESULT (WINAPI *pConvertINetUnicodeToMultiByte)(LPDWORD, DWORD, LPCWSTR,
+                                                        LPINT, LPSTR, LPINT);
+
+static BOOL init_function_ptrs(void)
+{
+    HMODULE hMlang;
+
+    hMlang = LoadLibraryA("mlang.dll");
+    if (!hMlang)
+    {
+        skip("mlang not available\n");
+        return FALSE;
+    }
+
+    pConvertINetMultiByteToUnicode = (void *)GetProcAddress(hMlang, "ConvertINetMultiByteToUnicode");
+    pConvertINetUnicodeToMultiByte = (void *)GetProcAddress(hMlang, "ConvertINetUnicodeToMultiByte");
+
+    pGetCPInfoExA = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetCPInfoExA");
+
+    return TRUE;
+}
+
 #define TRACE_2 OutputDebugStringA
 
 static CHAR string1[MAX_PATH], string2[MAX_PATH];
@@ -55,8 +80,6 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH];
         ok(0, format, string1, string2); \
     }
 
-static BOOL (WINAPI *pGetCPInfoExA)(UINT,DWORD,LPCPINFOEXA);
-
 static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
 {
     /* these APIs are broken regarding constness of the input buffer */
@@ -66,17 +89,6 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     WCHAR bufW[256];
     UINT lenA, lenW, expected_len;
     HRESULT ret;
-    HMODULE hMlang;
-    FARPROC pConvertINetMultiByteToUnicode;
-    FARPROC pConvertINetUnicodeToMultiByte;
-
-    hMlang = LoadLibraryA("mlang.dll");
-    ok(hMlang != 0, "couldn't load mlang.dll\n");
-
-    pConvertINetMultiByteToUnicode = GetProcAddress(hMlang, "ConvertINetMultiByteToUnicode");
-    ok(pConvertINetMultiByteToUnicode != NULL, "couldn't resolve ConvertINetMultiByteToUnicode\n");
-    pConvertINetUnicodeToMultiByte = GetProcAddress(hMlang, "ConvertINetUnicodeToMultiByte");
-    ok(pConvertINetUnicodeToMultiByte != NULL, "couldn't resolve ConvertINetUnicodeToMultiByte\n");
 
     /* IMultiLanguage2_ConvertStringToUnicode tests */
 
@@ -138,7 +150,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     memset(bufW, 'x', sizeof(bufW));
     lenA = lstrlenA(stringA);
     lenW = sizeof(bufW)/sizeof(bufW[0]);
-    ret = pConvertINetMultiByteToUnicode(NULL, 1252, stringA, &lenA, NULL, &lenW);
+    ret = pConvertINetMultiByteToUnicode(NULL, 1252, stringA, (INT *)&lenA, NULL, (INT *)&lenW);
     ok(ret == S_OK, "ConvertINetMultiByteToUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     expected_len = MultiByteToWideChar(1252, 0, stringA, lenA, NULL, 0);
@@ -147,7 +159,7 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     memset(bufW, 'x', sizeof(bufW));
     lenA = lstrlenA(stringA);
     lenW = 0;
-    ret = pConvertINetMultiByteToUnicode(NULL, 1252, stringA, &lenA, NULL, &lenW);
+    ret = pConvertINetMultiByteToUnicode(NULL, 1252, stringA, (INT *)&lenA, NULL, (INT *)&lenW);
     ok(ret == S_OK, "ConvertINetMultiByteToUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     expected_len = MultiByteToWideChar(1252, 0, stringA, lenA, NULL, 0);
@@ -204,24 +216,6 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     lenA = 0;
     ret = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, stringW, &lenW, NULL, &lenA);
     ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08x\n", ret);
-    ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
-    expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
-    ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
-
-    memset(bufA, 'x', sizeof(bufA));
-    lenW = lstrlenW(stringW);
-    lenA = sizeof(bufA);
-    ret = pConvertINetUnicodeToMultiByte(NULL, 1252, stringW, &lenW, NULL, &lenA);
-    ok(ret == S_OK, "ConvertINetUnicodeToMultiByte failed: %08x\n", ret);
-    ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
-    expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
-    ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
-
-    memset(bufA, 'x', sizeof(bufA));
-    lenW = lstrlenW(stringW);
-    lenA = 0;
-    ret = pConvertINetUnicodeToMultiByte(NULL, 1252, stringW, &lenW, NULL, &lenA);
-    ok(ret == S_OK, "ConvertINetUnicodeToMultiByte failed: %08x\n", ret);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
     expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
     ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
@@ -800,13 +794,330 @@ static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
     SysFreeString(rfcstr);
 }
 
+static void test_IMultiLanguage2_ConvertStringFromUnicode(IMultiLanguage2 *iML2)
+{
+    CHAR dest[MAX_PATH];
+    CHAR invariate[MAX_PATH];
+    UINT srcsz, destsz;
+    HRESULT hr;
+
+    static WCHAR src[] = {'a','b','c',0};
+
+    memset(invariate, 'x', sizeof(invariate));
+
+    /* pSrcStr NULL */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = sizeof(dest);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, NULL,
+                                                  &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+    ok(destsz == 0, "Expected 0, got %u\n", destsz);
+
+    /* pcSrcSize NULL */
+    memset(dest, 'x', sizeof(dest));
+    destsz = sizeof(dest);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  NULL, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(!strncmp(dest, "abc", 3),
+       "Expected first three chars to be \"abc\"\n");
+    ok(!memcmp(&dest[3], invariate, sizeof(dest) - 3),
+       "Expected rest of dest to be unchanged, got %s\n", dest);
+    ok(destsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), destsz);
+
+    /* both pSrcStr and pcSrcSize NULL */
+    memset(dest, 'x', sizeof(dest));
+    destsz = sizeof(dest);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, NULL,
+                                                  NULL, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+    ok(destsz == 0, "Expected 0, got %u\n", destsz);
+
+    /* pDstStr NULL */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = sizeof(dest);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, NULL, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(destsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+
+    /* pcDstSize NULL */
+    memset(dest, 'x', sizeof(dest));
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, dest, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+
+    /* pcSrcSize is 0 */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = 0;
+    destsz = sizeof(dest);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == 0, "Expected 0, got %u\n", srcsz);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+    ok(destsz == 0, "Expected 0, got %u\n", destsz);
+
+    /* pcSrcSize does not include NULL terminator */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src);
+    destsz = sizeof(dest);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), srcsz);
+    ok(!strncmp(dest, "abc", 3), "Expected first three chars to be \"abc\"\n");
+    ok(!memcmp(&dest[3], invariate, sizeof(dest) - 3),
+       "Expected rest of dest to be unchanged, got %s\n", dest);
+    ok(destsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), destsz);
+
+    /* pcSrcSize includes NULL terminator */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = sizeof(dest);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1, "Expected 3, got %u\n", srcsz);
+    ok(!lstrcmpA(dest, "abc"), "Expected \"abc\", got \"%s\"\n", dest);
+    ok(destsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, destsz);
+
+    /* pcSrcSize is -1 */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = -1;
+    destsz = sizeof(dest);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), srcsz);
+    ok(!strncmp(dest, "abc", 3), "Expected first three chars to be \"abc\"\n");
+    ok(!memcmp(&dest[3], invariate, sizeof(dest) - 3),
+       "Expected rest of dest to be unchanged, got %s\n", dest);
+    ok(destsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), destsz);
+
+    /* pcDstSize is 0 */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = 0;
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+    ok(destsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, destsz);
+
+    /* pcDstSize is not large enough */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = lstrlenW(src);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, dest, &destsz);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %08x\n", hr);
+    ok(srcsz == 0, "Expected 0, got %u\n", srcsz);
+    ok(!strncmp(dest, "abc", 3), "Expected first three chars to be \"abc\"\n");
+    ok(!memcmp(&dest[3], invariate, sizeof(dest) - 3),
+       "Expected rest of dest to be unchanged, got %s\n", dest);
+    ok(destsz == 0, "Expected 0, got %u\n", srcsz);
+
+    /* pcDstSize (bytes) does not leave room for NULL terminator */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = lstrlenW(src) * sizeof(WCHAR);
+    hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, src,
+                                                  &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(!lstrcmpA(dest, "abc"), "Expected \"abc\", got \"%s\"\n", dest);
+    ok(destsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, destsz);
+}
+
+static void test_ConvertINetUnicodeToMultiByte(void)
+{
+    CHAR dest[MAX_PATH];
+    CHAR invariate[MAX_PATH];
+    INT srcsz, destsz;
+    HRESULT hr;
+
+    static WCHAR src[] = {'a','b','c',0};
+
+    memset(invariate, 'x', sizeof(invariate));
+
+    /* lpSrcStr NULL */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = sizeof(dest);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, NULL, &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+    ok(destsz == 0, "Expected 0, got %u\n", destsz);
+
+    /* lpnWideCharCount NULL */
+    memset(dest, 'x', sizeof(dest));
+    destsz = sizeof(dest);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, NULL, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(!strncmp(dest, "abc", 3),
+       "Expected first three chars to be \"abc\"\n");
+    ok(!memcmp(&dest[3], invariate, sizeof(dest) - 3),
+       "Expected rest of dest to be unchanged, got %s\n", dest);
+    ok(destsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), destsz);
+
+    /* both lpSrcStr and lpnWideCharCount NULL */
+    memset(dest, 'x', sizeof(dest));
+    destsz = sizeof(dest);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, NULL, NULL, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+    ok(destsz == 0, "Expected 0, got %u\n", destsz);
+
+    /* lpDstStr NULL */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = sizeof(dest);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, NULL, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(destsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+
+    /* lpnMultiCharCount NULL */
+    memset(dest, 'x', sizeof(dest));
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, dest, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+
+    /* lpnWideCharCount is 0 */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = 0;
+    destsz = sizeof(dest);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == 0, "Expected 0, got %u\n", srcsz);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+    ok(destsz == 0, "Expected 0, got %u\n", destsz);
+
+    /* lpnWideCharCount does not include NULL terminator */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src);
+    destsz = sizeof(dest);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), srcsz);
+    ok(!strncmp(dest, "abc", 3), "Expected first three chars to be \"abc\"\n");
+    ok(!memcmp(&dest[3], invariate, sizeof(dest) - 3),
+       "Expected rest of dest to be unchanged, got %s\n", dest);
+    ok(destsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), destsz);
+
+    /* lpnWideCharCount includes NULL terminator */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = sizeof(dest);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1, "Expected 3, got %u\n", srcsz);
+    ok(!lstrcmpA(dest, "abc"), "Expected \"abc\", got \"%s\"\n", dest);
+    ok(destsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, destsz);
+
+    /* lpnWideCharCount is -1 */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = -1;
+    destsz = sizeof(dest);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), srcsz);
+    ok(!strncmp(dest, "abc", 3), "Expected first three chars to be \"abc\"\n");
+    ok(!memcmp(&dest[3], invariate, sizeof(dest) - 3),
+       "Expected rest of dest to be unchanged, got %s\n", dest);
+    ok(destsz == lstrlenW(src),
+       "Expected %u, got %u\n", lstrlenW(src), destsz);
+
+    /* lpnMultiCharCount is 0 */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = 0;
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(!memcmp(dest, invariate, sizeof(dest)),
+       "Expected dest to be unchanged, got %s\n", dest);
+    ok(destsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, destsz);
+
+    /* lpnMultiCharCount is not large enough */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = lstrlenW(src);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, dest, &destsz);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %08x\n", hr);
+    ok(srcsz == 0, "Expected 0, got %u\n", srcsz);
+    ok(!strncmp(dest, "abc", 3), "Expected first three chars to be \"abc\"\n");
+    ok(!memcmp(&dest[3], invariate, sizeof(dest) - 3),
+       "Expected rest of dest to be unchanged, got %s\n", dest);
+    ok(destsz == 0, "Expected 0, got %u\n", srcsz);
+
+    /* lpnMultiCharCount (bytes) does not leave room for NULL terminator */
+    memset(dest, 'x', sizeof(dest));
+    srcsz = lstrlenW(src) + 1;
+    destsz = lstrlenW(src) * sizeof(WCHAR);
+    hr = pConvertINetUnicodeToMultiByte(NULL, 1252, src, &srcsz, dest, &destsz);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(srcsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(!lstrcmpA(dest, "abc"), "Expected \"abc\", got \"%s\"\n", dest);
+    ok(destsz == lstrlenW(src) + 1,
+       "Expected %u, got %u\n", lstrlenW(src) + 1, destsz);
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage2 *iML2 = NULL;
     IMLangFontLink  *iMLFL = NULL;
     HRESULT ret;
 
-    pGetCPInfoExA = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetCPInfoExA");
+    if (!init_function_ptrs())
+        return;
 
     CoInitialize(NULL);
     TRACE_2("Call CoCreateInstance\n");
@@ -840,8 +1151,11 @@ START_TEST(mlang)
     ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UNICODE -> CP_UTF8) = %08x\n", ret);
 
     test_multibyte_to_unicode_translations(iML2);
+    test_IMultiLanguage2_ConvertStringFromUnicode(iML2);
 
     IMultiLanguage2_Release(iML2);
+
+    test_ConvertINetUnicodeToMultiByte();
 
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMLangFontLink, (void **)&iMLFL);
@@ -851,6 +1165,6 @@ START_TEST(mlang)
 
     IMLangFontLink_Test(iMLFL);
     IMLangFontLink_Release(iMLFL);
-    
+
     CoUninitialize();
 }
