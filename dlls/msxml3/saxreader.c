@@ -509,8 +509,12 @@ static HRESULT WINAPI isaxxmlreader_getContentHandler(
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
 
-    FIXME("(%p)->(%p) stub\n", This, pContentHandler);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pContentHandler);
+    if(This->contentHandler)
+        ISAXContentHandler_AddRef(This->contentHandler);
+    *pContentHandler = This->contentHandler;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxxmlreader_putContentHandler(
