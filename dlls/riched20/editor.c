@@ -1642,8 +1642,8 @@ static int ME_CalculateClickCount(HWND hWnd, UINT msg, WPARAM wParam,
         clickMsg.wParam = wParam;
         clickMsg.lParam = lParam;
         clickMsg.time = GetMessageTime();
-        clickMsg.pt.x = LOWORD(lParam);
-        clickMsg.pt.x = HIWORD(lParam);
+        clickMsg.pt.x = (short)LOWORD(lParam);
+        clickMsg.pt.y = (short)HIWORD(lParam);
         if ((clickNum != 0) &&
             (clickMsg.message == prevClickMsg.message) &&
             (clickMsg.hwnd == prevClickMsg.hwnd) &&
