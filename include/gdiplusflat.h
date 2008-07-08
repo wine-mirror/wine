@@ -69,6 +69,11 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF*,ARGB,ARGB,
     LinearGradientMode,GpWrapMode,GpLineGradient**);
 GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect*,ARGB,ARGB,
     LinearGradientMode,GpWrapMode,GpLineGradient**);
+GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF*,
+    ARGB,ARGB,REAL,BOOL,GpWrapMode,GpLineGradient**);
+GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect*,
+    ARGB,ARGB,REAL,BOOL,GpWrapMode,GpLineGradient**);
+
 GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE,BOOL,GpMetafile**);
 GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE,BOOL,
     GDIPCONST WmfPlaceableFileHeader*,GpMetafile**);

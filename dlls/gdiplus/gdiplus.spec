@@ -101,8 +101,8 @@
 @ stdcall GdipCreateLineBrush(ptr ptr long long long ptr)
 @ stdcall GdipCreateLineBrushFromRect(ptr long long long long ptr)
 @ stdcall GdipCreateLineBrushFromRectI(ptr long long long long ptr)
-@ stub GdipCreateLineBrushFromRectWithAngle
-@ stub GdipCreateLineBrushFromRectWithAngleI
+@ stdcall GdipCreateLineBrushFromRectWithAngle(ptr long long long long long ptr)
+@ stdcall GdipCreateLineBrushFromRectWithAngleI(ptr long long long long long ptr)
 @ stdcall GdipCreateLineBrushI(ptr ptr long long long ptr)
 @ stdcall GdipCreateMatrix2(long long long long long long ptr)
 @ stdcall GdipCreateMatrix3(ptr ptr ptr)

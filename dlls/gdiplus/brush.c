@@ -180,6 +180,25 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,
     return GdipCreateLineBrushFromRect(&rectF, startcolor, endcolor, mode, wrap, line);
 }
 
+/* FIXME: angle value completely ignored. Don't know how to use it since native
+          always set Brush rectangle to rect (independetly of this angle).
+          Maybe it's used only on drawing.  */
+GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF* rect,
+    ARGB startcolor, ARGB endcolor, REAL angle, BOOL isAngleScalable, GpWrapMode wrap,
+    GpLineGradient **line)
+{
+    return GdipCreateLineBrushFromRect(rect, startcolor, endcolor, LinearGradientModeForwardDiagonal,
+                                       wrap, line);
+}
+
+GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect,
+    ARGB startcolor, ARGB endcolor, REAL angle, BOOL isAngleScalable, GpWrapMode wrap,
+    GpLineGradient **line)
+{
+    return GdipCreateLineBrushFromRectI(rect, startcolor, endcolor, LinearGradientModeForwardDiagonal,
+                                        wrap, line);
+}
+
 GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     INT count, GpWrapMode wrap, GpPathGradient **grad)
 {
