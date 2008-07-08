@@ -323,34 +323,10 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     }
     else
     {
-        /* source may be in a few different places ... check each of them */
         path = NULL;
 
-        /* try the long path directory */
         if (f->SourceLongPath)
-        {
             path = build_directory_name( 3, p, f->SourceLongPath, NULL );
-            if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
-            {
-                msi_free( path );
-                path = NULL;
-            }
-        }
-
-        /* try the short path directory */
-        if (!path && f->SourceShortPath)
-        {
-            path = build_directory_name( 3, p, f->SourceShortPath, NULL );
-            if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
-            {
-                msi_free( path );
-                path = NULL;
-            }
-        }
-
-        /* try the root of the install */
-        if (!path)
-            path = get_source_root( package );
 
         TRACE("source -> %s\n", debugstr_w(path));
         f->ResolvedSource = strdupW( path );

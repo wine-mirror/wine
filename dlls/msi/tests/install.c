@@ -4422,11 +4422,11 @@ static void test_sourcefolder(void)
     RemoveDirectoryA("msitest");
 
     r = MsiInstallProductA(msifile, NULL);
+    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     todo_wine
     {
         ok(r == ERROR_INSTALL_FAILURE,
            "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
-        ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
         ok(!delete_pf("msitest", FALSE), "File installed\n");
     }
 
