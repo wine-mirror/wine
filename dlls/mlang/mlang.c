@@ -546,50 +546,63 @@ HRESULT WINAPI ConvertINetUnicodeToMultiByte(
     LPSTR pDstStr,
     LPINT pcDstSize)
 {
-
+    INT destsz, size;
     INT src_len = -1;
 
     TRACE("%p %d %s %p %p %p\n", pdwMode, dwEncoding,
           debugstr_w(pSrcStr), pcSrcSize, pDstStr, pcDstSize);
 
     if (!pcDstSize)
-        return E_FAIL;
+        return S_OK;
 
     if (!pcSrcSize)
         pcSrcSize = &src_len;
 
-    if (!*pcSrcSize)
-    {
-        *pcDstSize = 0;
+    destsz = (pDstStr) ? *pcDstSize : 0;
+    *pcDstSize = 0;
+
+    if (!pSrcStr || !*pcSrcSize)
         return S_OK;
-    }
 
-    switch (dwEncoding)
+    if (*pcSrcSize == -1)
+        *pcSrcSize = lstrlenW(pSrcStr);
+
+    if (dwEncoding == CP_UNICODE)
     {
-    case CP_UNICODE:
-        if (*pcSrcSize == -1)
-            *pcSrcSize = lstrlenW(pSrcStr);
-        *pcDstSize = min(*pcSrcSize * sizeof(WCHAR), *pcDstSize);
-        if (pDstStr)
-            memmove(pDstStr, pSrcStr, *pcDstSize);
-        break;
-
-    default:
         if (*pcSrcSize == -1)
             *pcSrcSize = lstrlenW(pSrcStr);
 
+        size = min(*pcSrcSize, destsz) * sizeof(WCHAR);
         if (pDstStr)
-            *pcDstSize = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize, NULL, NULL);
-        else
-            *pcDstSize = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize, NULL, 0, NULL, NULL);
-        break;
+            memmove(pDstStr, pSrcStr, size);
+
+        if (size >= destsz)
+            goto fail;
+    }
+    else
+    {
+        size = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize,
+                                   NULL, 0, NULL, NULL);
+        if (!size)
+            goto fail;
+
+        if (pDstStr)
+        {
+            size = min(size, destsz);
+            size = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize,
+                                       pDstStr, destsz, NULL, NULL);
+            if (!size)
+                goto fail;
+        }
     }
 
-
-    if (!*pcDstSize)
-        return E_FAIL;
-
+    *pcDstSize = size;
     return S_OK;
+
+fail:
+    *pcSrcSize = 0;
+    *pcDstSize = 0;
+    return E_FAIL;
 }
 
 HRESULT WINAPI ConvertINetString(
