@@ -2200,13 +2200,10 @@ static const IObjectSafetyVtbl domdocObjectSafetyVtbl = {
     xmldoc_Safety_SetInterfaceSafetyOptions
 };
 
-HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2 **document)
 {
     domdoc *doc;
     HRESULT hr;
-    xmlDocPtr xmldoc;
-
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
     doc = HeapAlloc( GetProcessHeap(), 0, sizeof (*doc) );
     if( !doc )
@@ -2229,19 +2226,9 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->safeopt = 0;
     doc->bsc = NULL;
 
-    xmldoc = xmlNewDoc(NULL);
-    if(!xmldoc)
-    {
-        HeapFree(GetProcessHeap(), 0, doc);
-        return E_OUTOFMEMORY;
-    }
-
-    xmldoc->_private = 0;
-
     doc->node_unk = create_basic_node( (xmlNodePtr)xmldoc, (IUnknown*)&doc->lpVtbl );
     if(!doc->node_unk)
     {
-        xmlFreeDoc(xmldoc);
         HeapFree(GetProcessHeap(), 0, doc);
         return E_FAIL;
     }
@@ -2256,10 +2243,30 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     /* The ref on doc->node is actually looped back into this object, so release it */
     IXMLDOMNode_Release(doc->node);
 
-    *ppObj = &doc->lpVtbl;
+    *document = (IXMLDOMDocument2*)&doc->lpVtbl;
 
-    TRACE("returning iface %p\n", *ppObj);
+    TRACE("returning iface %p\n", *document);
     return S_OK;
+}
+
+HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
+    xmlDocPtr xmldoc;
+    HRESULT hr;
+
+    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+
+    xmldoc = xmlNewDoc(NULL);
+    if(!xmldoc)
+        return E_OUTOFMEMORY;
+
+    xmldoc->_private = 0;
+
+    hr = DOMDocument_create_from_xmldoc(xmldoc, (IXMLDOMDocument2**)ppObj);
+    if(FAILED(hr))
+        xmlFreeDoc(xmldoc);
+
+    return hr;
 }
 
 #else

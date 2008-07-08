@@ -91,6 +91,8 @@ extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj );
 
+extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2 **document);
+
 /* typelibs */
 enum tid_t {
     IXMLDOMAttribute_tid,
