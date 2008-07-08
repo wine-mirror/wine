@@ -66,6 +66,42 @@ static IDirect3DDevice8 *init_d3d8(HMODULE d3d8_handle)
     return device_ptr;
 }
 
+/* Test the behaviour of the IDirect3DDevice8::CreateImageSurface method.
+
+Expected behaviour (and also documented in the original DX8 docs) is that the
+call returns a surface with the SYSTEMMEM pool type. Games like Max Payne 1
+and 2 which use Direct3D8 calls depend on this behaviour.
+
+A short remark in the DX9 docs however states that the pool of the
+returned surface object is of type SCRATCH. This is misinformation and results
+in screenshots not appearing in the savegame loading menu of both games
+mentioned above (engine tries to display a texture from the scratch pool).
+
+This test verifies that the behaviour described in the original D3D8 docs is
+the correct one. For more information about this issue, see the MSDN:
+
+D3D9 docs: "Converting to Direct3D 9"
+D3D9 reference: "IDirect3DDevice9::CreateOffscreenPlainSurface"
+D3D8 reference: "IDirect3DDevice8::CreateImageSurface"
+*/
+
+static void test_image_surface_pool(IDirect3DDevice8 *device) {
+    IDirect3DSurface8 *surface = 0;
+    D3DSURFACE_DESC surf_desc;
+    HRESULT hr;
+
+    hr = IDirect3DDevice8_CreateImageSurface(device, 128, 128, D3DFMT_A8R8G8B8, &surface);
+    ok(SUCCEEDED(hr), "CreateImageSurface failed (0x%08x)\n", hr);
+
+    hr = IDirect3DSurface8_GetDesc(surface, &surf_desc);
+    ok(SUCCEEDED(hr), "GetDesc failed (0x%08x)\n", hr);
+
+    todo_wine ok((surf_desc.Pool == D3DPOOL_SYSTEMMEM),
+        "CreateImageSurface returns surface with unexpected pool type %u (should be SYSTEMMEM = 2)\n", surf_desc.Pool);
+
+    IDirect3DSurface8_Release(surface);
+}
+
 static void test_surface_get_container(IDirect3DDevice8 *device_ptr)
 {
     IDirect3DTexture8 *texture_ptr = 0;
@@ -296,6 +332,7 @@ START_TEST(surface)
     device_ptr = init_d3d8(d3d8_handle);
     if (!device_ptr) return;
 
+    test_image_surface_pool(device_ptr);
     test_surface_get_container(device_ptr);
     test_lockrect_invalid(device_ptr);
     test_private_data(device_ptr);
