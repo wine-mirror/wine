@@ -724,7 +724,7 @@ static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPVOID pData, DWORD cbD
         GlobalUnlock(hglobal);
     }
 
-    pXAct->hMem = GlobalAlloc(GHND | GMEM_DDESHARE, sizeof(DDEPOKE) + cbData);
+    pXAct->hMem = GlobalAlloc(GHND | GMEM_DDESHARE, FIELD_OFFSET(DDEPOKE, Value[cbData]));
     ddePoke = GlobalLock(pXAct->hMem);
     if (!ddePoke)
     {

@@ -1456,8 +1456,8 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
         {
             size = GlobalSize( (HGLOBAL)uiLo ) ;
             if ((info->msg == WM_DDE_ADVISE && size < sizeof(DDEADVISE)) ||
-                (info->msg == WM_DDE_DATA   && size < sizeof(DDEDATA))   ||
-                (info->msg == WM_DDE_POKE   && size < sizeof(DDEPOKE))
+                (info->msg == WM_DDE_DATA   && size < FIELD_OFFSET(DDEDATA, Value)) ||
+                (info->msg == WM_DDE_POKE   && size < FIELD_OFFSET(DDEPOKE, Value))
                 )
             return FALSE;
         }

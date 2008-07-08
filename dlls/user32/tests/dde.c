@@ -699,10 +699,7 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
 
         ptr = (LPSTR)DdeAccessData(hdata, &size);
         ok(!lstrcmpA(ptr, "poke data\r\n"), "Expected 'poke data\\r\\n', got %s\n", ptr);
-        todo_wine
-        {
-            ok(size == 14, "Expected 14, got %d\n", size);
-        }
+        ok(size == 12, "Expected 12, got %d\n", size);
         DdeUnaccessData(hdata);
 
         size = DdeQueryStringA(server_pid, hsz2, str, MAX_PATH, CP_WINANSI);
@@ -981,7 +978,7 @@ static HGLOBAL create_poke()
     DDEPOKE *poke;
     DWORD size;
 
-    size = sizeof(DDEPOKE) + lstrlenA("poke data\r\n") + 1;
+    size = FIELD_OFFSET(DDEPOKE, Value[sizeof("poke data\r\n")]);
     hglobal = GlobalAlloc(GMEM_DDESHARE, size);
     ok(hglobal != 0, "Expected non-NULL hglobal\n");
 

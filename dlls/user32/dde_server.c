@@ -844,7 +844,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandlePoke(WDML_CONV* pConv, WDML_XACT* pXAct
     if (!(pConv->instance->CBFflags & CBF_FAIL_POKES))
     {
 	hDdeData = DdeCreateDataHandle(pConv->instance->instanceID, pDdePoke->Value,
-				       GlobalSize(pXAct->hMem) - sizeof(DDEPOKE) + 1,
+				       GlobalSize(pXAct->hMem) - FIELD_OFFSET(DDEPOKE, Value),
 				       0, 0, pDdePoke->cfFormat, 0);
 	if (hDdeData)
 	{
