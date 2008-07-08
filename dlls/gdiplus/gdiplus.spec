@@ -159,8 +159,8 @@
 @ stdcall GdipDrawBeziers(ptr ptr ptr long)
 @ stdcall GdipDrawBeziersI(ptr ptr ptr long)
 @ stub GdipDrawCachedBitmap
-@ stub GdipDrawClosedCurve2
-@ stub GdipDrawClosedCurve2I
+@ stdcall GdipDrawClosedCurve2(ptr ptr ptr long long)
+@ stdcall GdipDrawClosedCurve2I(ptr ptr ptr long long)
 @ stub GdipDrawClosedCurve
 @ stub GdipDrawClosedCurveI
 @ stdcall GdipDrawCurve2(ptr ptr ptr long long)

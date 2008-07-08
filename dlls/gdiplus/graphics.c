@@ -1045,6 +1045,57 @@ GpStatus WINGDIPAPI GdipDrawBeziersI(GpGraphics *graphics, GpPen *pen,
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipDrawClosedCurve2(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPointF *points, INT count, REAL tension)
+{
+    GpPointF *ptf;
+    GpStatus stat;
+
+    if(!graphics || !pen || !points || count <= 0)
+        return InvalidParameter;
+
+    /* make a full points copy.. */
+    ptf = GdipAlloc(sizeof(GpPointF)*(count+1));
+    if(!ptf)
+        return OutOfMemory;
+    memcpy(ptf, points, sizeof(GpPointF)*count);
+
+    /* ..and add a first point as a last one */
+    ptf[count] = ptf[0];
+
+    stat = GdipDrawCurve2(graphics, pen, ptf, count + 1, tension);
+
+    GdipFree(ptf);
+
+    return stat;
+}
+
+GpStatus WINGDIPAPI GdipDrawClosedCurve2I(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPoint *points, INT count, REAL tension)
+{
+    GpPointF *ptf;
+    GpStatus stat;
+    INT i;
+
+    if(!points || count <= 0)
+        return InvalidParameter;
+
+    ptf = GdipAlloc(sizeof(GpPointF)*count);
+    if(!ptf)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        ptf[i].X = (REAL)points[i].X;
+        ptf[i].Y = (REAL)points[i].Y;
+    }
+
+    stat = GdipDrawClosedCurve2(graphics, pen, ptf, count, tension);
+
+    GdipFree(ptf);
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipDrawCurve(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF *points, INT count)
 {
