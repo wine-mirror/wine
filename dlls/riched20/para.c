@@ -367,7 +367,8 @@ void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFOR
                       PFM_TABLE)
   /* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
   if (pFmt->dwMask & EFFECTS_MASK) {
-    para->member.para.pFmt->dwMask &= ~(pFmt->dwMask & EFFECTS_MASK);
+    para->member.para.pFmt->dwMask |= pFmt->dwMask & EFFECTS_MASK;
+    para->member.para.pFmt->wEffects &= ~HIWORD(pFmt->dwMask);
     para->member.para.pFmt->wEffects |= pFmt->wEffects & HIWORD(pFmt->dwMask);
   }
 #undef EFFECTS_MASK
@@ -464,6 +465,7 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
   ME_GetParaFormat(editor, para, pFmt);
   if (para == para_end) return;
   
+  /* Invalidate values that change across the selected paragraphs. */
   do {
     ZeroMemory(&tmp, sizeof(tmp));
     tmp.cbSize = sizeof(tmp);
@@ -472,8 +474,8 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
 #define CHECK_FIELD(m, f) \
     if (pFmt->f != tmp.f) pFmt->dwMask &= ~(m);
 
+    pFmt->dwMask &= ~((pFmt->wEffects ^ tmp.wEffects) << 16);
     CHECK_FIELD(PFM_NUMBERING, wNumbering);
-    /* para->member.para.pFmt->wEffects = pFmt->wEffects; */
     assert(tmp.dwMask & PFM_ALIGNMENT);
     CHECK_FIELD(PFM_NUMBERING, wNumbering);
     assert(tmp.dwMask & PFM_STARTINDENT);
