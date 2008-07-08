@@ -75,6 +75,8 @@ typedef enum tagMSIMODIFY
 #define MSIDBOPEN_CREATEDIRECT (LPCWSTR)4
 #endif
 
+#define MSIDBOPEN_PATCHFILE 32 / sizeof(*MSIDBOPEN_READONLY)
+
 typedef enum tagMSIRUNMODE
 {
     MSIRUNMODE_ADMIN = 0,
