@@ -86,11 +86,26 @@ struct bsc_t {
 
     domdoc *doc;
     IBinding *binding;
+    IStream *memstream;
 };
 
 static inline bsc_t *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
 {
     return (bsc_t *)((char*)iface - FIELD_OFFSET(bsc_t, lpVtbl));
+}
+
+static xmlDocPtr doparse( char *ptr, int len )
+{
+#ifdef HAVE_XMLREADMEMORY
+    /*
+     * use xmlReadMemory if possible so we can suppress
+     * writing errors to stderr
+     */
+    return xmlReadMemory( ptr, len, NULL, NULL,
+                          XML_PARSE_NOERROR | XML_PARSE_NOWARNING | XML_PARSE_NOBLANKS );
+#else
+    return xmlParseMemory( ptr, len );
+#endif
 }
 
 static HRESULT WINAPI bsc_QueryInterface(
@@ -134,6 +149,8 @@ static ULONG WINAPI bsc_Release(
             IBinding_Release(This->binding);
         if(This->doc && This->doc->bsc == This)
             This->doc->bsc = NULL;
+        if(This->memstream)
+            IStream_Release(This->memstream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -146,11 +163,16 @@ static HRESULT WINAPI bsc_OnStartBinding(
         IBinding* pib)
 {
     bsc_t *This = impl_from_IBindStatusCallback(iface);
+    HRESULT hr;
 
     TRACE("(%p)->(%x %p)\n", This, dwReserved, pib);
 
     This->binding = pib;
     IBindStatusCallback_AddRef(pib);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &This->memstream);
+    if(FAILED(hr))
+        return hr;
 
     return S_OK;
 }
@@ -185,12 +207,32 @@ static HRESULT WINAPI bsc_OnStopBinding(
         LPCWSTR szError)
 {
     bsc_t *This = impl_from_IBindStatusCallback(iface);
+    HRESULT hr;
 
     TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
 
     if(This->binding) {
         IBinding_Release(This->binding);
         This->binding = NULL;
+    }
+
+    if(This->doc && SUCCEEDED(hresult)) {
+        HGLOBAL hglobal;
+        hr = GetHGlobalFromStream(This->memstream, &hglobal);
+        if(SUCCEEDED(hr))
+        {
+            DWORD len = GlobalSize(hglobal);
+            char *ptr = GlobalLock(hglobal);
+            xmlDocPtr xmldoc;
+            if(len != 0) {
+                xmldoc = doparse( ptr, len );
+                if(xmldoc) {
+                    xmldoc->_private = 0;
+                    attach_xmlnode(This->doc->node, (xmlNodePtr) xmldoc);
+                }
+            }
+            GlobalUnlock(hglobal);
+        }
     }
 
     return S_OK;
@@ -213,6 +255,22 @@ static HRESULT WINAPI bsc_OnDataAvailable(
         FORMATETC* pformatetc,
         STGMEDIUM* pstgmed)
 {
+    bsc_t *This = impl_from_IBindStatusCallback(iface);
+    BYTE buf[4096];
+    DWORD read, written;
+    HRESULT hr;
+
+    TRACE("(%p)->(%x %d %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+
+    do
+    {
+        hr = IStream_Read(pstgmed->pstm, buf, sizeof(buf), &read);
+        if(FAILED(hr))
+            break;
+
+        hr = IStream_Write(This->memstream, buf, read, &written);
+    } while(SUCCEEDED(hr) && written != 0 && read != 0);
+
     return S_OK;
 }
 
@@ -1335,29 +1393,11 @@ static HRESULT WINAPI domdoc_nodeFromID(
     return E_NOTIMPL;
 }
 
-static xmlDocPtr doparse( char *ptr, int len )
+static HRESULT doread( domdoc *This, LPWSTR filename )
 {
-#ifdef HAVE_XMLREADMEMORY
-    /*
-     * use xmlReadMemory if possible so we can suppress
-     * writing errors to stderr
-     */
-    return xmlReadMemory( ptr, len, NULL, NULL,
-                          XML_PARSE_NOERROR | XML_PARSE_NOWARNING | XML_PARSE_NOBLANKS );
-#else
-    return xmlParseMemory( ptr, len );
-#endif
-}
-
-static xmlDocPtr doread( domdoc *This, LPWSTR filename )
-{
-    xmlDocPtr xmldoc = NULL;
     HRESULT hr;
     IBindCtx *pbc;
-    IStream *stream, *memstream;
     WCHAR url[INTERNET_MAX_URL_LENGTH];
-    BYTE buf[4096];
-    DWORD read, written;
 
     TRACE("%s\n", debugstr_w( filename ));
 
@@ -1369,13 +1409,13 @@ static xmlDocPtr doread( domdoc *This, LPWSTR filename )
         if(!PathSearchAndQualifyW(filename, fullpath, sizeof(fullpath)/sizeof(WCHAR)))
         {
             WARN("can't find path\n");
-            return NULL;
+            return E_FAIL;
         }
 
         if(FAILED(UrlCreateFromPathW(fullpath, url, &needed, 0)))
         {
             ERR("can't create url from path\n");
-            return NULL;
+            return E_FAIL;
         }
         filename = url;
     }
@@ -1399,44 +1439,17 @@ static xmlDocPtr doread( domdoc *This, LPWSTR filename )
             hr = CreateURLMoniker(NULL, filename, &moniker);
             if(SUCCEEDED(hr))
             {
+                IStream *stream;
                 hr = IMoniker_BindToStorage(moniker, pbc, NULL, &IID_IStream, (LPVOID*)&stream);
                 IMoniker_Release(moniker);
+                if(stream)
+                    IStream_Release(stream);
             }
         }
         IBindCtx_Release(pbc);
     }
-    if(FAILED(hr))
-        return NULL;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &memstream);
-    if(FAILED(hr))
-    {
-        IStream_Release(stream);
-        return NULL;
-    }
-
-    do
-    {
-        IStream_Read(stream, buf, sizeof(buf), &read);
-        hr = IStream_Write(memstream, buf, read, &written);
-    } while(SUCCEEDED(hr) && written != 0 && read != 0);
-
-    if(SUCCEEDED(hr))
-    {
-        HGLOBAL hglobal;
-        hr = GetHGlobalFromStream(memstream, &hglobal);
-        if(SUCCEEDED(hr))
-        {
-            DWORD len = GlobalSize(hglobal);
-            char *ptr = GlobalLock(hglobal);
-            if(len != 0)
-                xmldoc = doparse( ptr, len );
-            GlobalUnlock(hglobal);
-        }
-    }
-    IStream_Release(memstream);
-    IStream_Release(stream);
-    return xmldoc;
+    return hr;
 }
 
 static HRESULT WINAPI domdoc_load(
@@ -1446,10 +1459,10 @@ static HRESULT WINAPI domdoc_load(
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
     LPWSTR filename = NULL;
-    xmlDocPtr xmldoc = NULL;
     HRESULT hr = S_FALSE;
     IXMLDOMDocument2 *pNewDoc = NULL;
     IStream *pStream = NULL;
+    xmlDocPtr xmldoc;
 
     TRACE("type %d\n", V_VT(&xmlSource) );
 
@@ -1519,9 +1532,9 @@ static HRESULT WINAPI domdoc_load(
 
     if ( filename )
     {
-        xmldoc = doread( This, filename );
+        hr = doread( This, filename );
     
-        if ( !xmldoc )
+        if ( FAILED(hr) )
             This->error = E_FAIL;
         else
         {
@@ -1530,11 +1543,12 @@ static HRESULT WINAPI domdoc_load(
         }
     }
 
-    if(!xmldoc)
+    if(!filename || FAILED(hr)) {
         xmldoc = xmlNewDoc(NULL);
-
-    xmldoc->_private = 0;
-    attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+        xmldoc->_private = 0;
+        attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+        hr = S_FALSE;
+    }
 
     TRACE("ret (%d)\n", hr);
 
