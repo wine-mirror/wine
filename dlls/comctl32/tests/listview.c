@@ -859,6 +859,10 @@ static void test_icon_spacing(void)
     r = SendMessage(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwndparent, (LPARAM)NF_REQUERY);
     expect(NFR_ANSI, r);
 
+    /* reset the icon spacing to defaults */
+    SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1, -1));
+
+    /* now we can request what the defaults are */
     r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1, -1));
     w = LOWORD(r);
     h = LOWORD(r);
