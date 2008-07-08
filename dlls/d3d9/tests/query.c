@@ -18,7 +18,6 @@
 
 #define COBJMACROS
 #include <d3d9.h>
-#include <dxerr9.h>
 #include "wine/test.h"
 
 static IDirect3D9 *(WINAPI *pDirect3DCreate9)(UINT);
@@ -96,7 +95,7 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr))
     {
         skip("Failed to create a d3d device\n");
@@ -107,7 +106,7 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
     {
         hr = IDirect3DDevice9_CreateQuery(pDevice, queries[i].type, NULL);
         ok(hr == D3D_OK || D3DERR_NOTAVAILABLE,
-           "IDirect3DDevice9_CreateQuery returned unexpected return value %s for query %s\n", DXGetErrorString9(hr), queryName(queries[i].type));
+           "IDirect3DDevice9_CreateQuery returned unexpected return value %08x for query %s\n", hr, queryName(queries[i].type));
 
         supported = (hr == D3D_OK ? TRUE : FALSE);
         trace("query %s is %s\n", queryName(queries[i].type), supported ? "supported" : "not supported");
@@ -121,7 +120,7 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
 
         hr = IDirect3DDevice9_CreateQuery(pDevice, queries[i].type, &pQuery);
         ok(hr == D3D_OK || D3DERR_NOTAVAILABLE,
-           "IDirect3DDevice9_CreateQuery returned unexpected return value %s for query %s\n", DXGetErrorString9(hr), queryName(queries[i].type));
+           "IDirect3DDevice9_CreateQuery returned unexpected return value %08x for query %s\n", hr, queryName(queries[i].type));
         ok(!(supported && !pQuery), "Query %s was claimed to be supported, but can't be created\n", queryName(queries[i].type));
         ok(!(!supported && pQuery), "Query %s was claimed not to be supported, but can be created\n", queryName(queries[i].type));
         if(pQuery)
@@ -156,7 +155,7 @@ static void test_occlusion_query_states(IDirect3D9 *pD3d, HWND hwnd)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr))
     {
         skip("Failed to create a d3d device\n");
@@ -165,7 +164,7 @@ static void test_occlusion_query_states(IDirect3D9 *pD3d, HWND hwnd)
 
     hr = IDirect3DDevice9_CreateQuery(pDevice, D3DQUERYTYPE_OCCLUSION, &pQuery);
     ok(hr == D3D_OK || D3DERR_NOTAVAILABLE,
-       "IDirect3DDevice9_CreateQuery returned unexpected return value %s\n", DXGetErrorString9(hr));
+       "IDirect3DDevice9_CreateQuery returned unexpected return value %08x\n", hr);
     if(!pQuery) {
         skip("Occlusion queries not supported\n");
         goto cleanup;
@@ -174,72 +173,58 @@ static void test_occlusion_query_states(IDirect3D9 *pD3d, HWND hwnd)
     data = HeapAlloc(GetProcessHeap(), 0, IDirect3DQuery9_GetDataSize(pQuery));
 
     hr = IDirect3DQuery9_GetData(pQuery, NULL, 0, D3DGETDATA_FLUSH);
-    ok(hr == S_OK, "IDirect3DQuery9_GetData(NULL) on a new query returned %s\n",
-        DXGetErrorString9(hr));
+    ok(hr == S_OK, "IDirect3DQuery9_GetData(NULL) on a new query returned %08x\n", hr);
     hr = IDirect3DQuery9_GetData(pQuery, data, IDirect3DQuery9_GetDataSize(pQuery), D3DGETDATA_FLUSH);
-    ok(hr == S_OK, "IDirect3DQuery9_GetData on a new query returned %s\n",
-        DXGetErrorString9(hr));
+    ok(hr == S_OK, "IDirect3DQuery9_GetData on a new query returned %08x\n", hr);
 
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_END);
-    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a new not yet started query returned %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a new not yet started query returned %08x\n", hr);
 
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_BEGIN);
-    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_BEGIN) on a new not yet started query returned %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_BEGIN) on a new not yet started query returned %08x\n", hr);
 
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_BEGIN);
-    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DQUERY_BEGIN) on a started query returned %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DQUERY_BEGIN) on a started query returned %08x\n", hr);
 
     hr = IDirect3DQuery9_GetData(pQuery, NULL, 0, D3DGETDATA_FLUSH);
-    ok(hr == S_FALSE, "IDirect3DQuery9_GetData(NULL) on a started query returned %s\n",
-        DXGetErrorString9(hr));
+    ok(hr == S_FALSE, "IDirect3DQuery9_GetData(NULL) on a started query returned %08x\n", hr);
     hr = IDirect3DQuery9_GetData(pQuery, data, IDirect3DQuery9_GetDataSize(pQuery), D3DGETDATA_FLUSH);
-    ok(hr == S_FALSE, "IDirect3DQuery9_GetData on a started query returned %s\n",
-        DXGetErrorString9(hr));
+    ok(hr == S_FALSE, "IDirect3DQuery9_GetData on a started query returned %08x\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(pDevice, D3DFVF_XYZ);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
     hr = IDirect3DDevice9_BeginScene(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
     if(SUCCEEDED(hr)) {
         hr = IDirect3DDevice9_DrawPrimitiveUP(pDevice, D3DPT_POINTLIST, 1, point, 3 * sizeof(float));
-        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP returned %s\n", DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP returned %08x\n", hr);
         hr = IDirect3DDevice9_EndScene(pDevice);
-        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
     }
 
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_END);
-    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a started query returned %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a started query returned %08x\n", hr);
 
     hr = S_FALSE;
     while(hr == S_FALSE && count < 500) {
         hr = IDirect3DQuery9_GetData(pQuery, NULL, 0, D3DGETDATA_FLUSH);
-        ok(hr == S_OK || hr == S_FALSE, "IDirect3DQuery9_GetData on a ended query returned %s\n",
-            DXGetErrorString9(hr));
+        ok(hr == S_OK || hr == S_FALSE, "IDirect3DQuery9_GetData on a ended query returned %08x\n", hr);
         count++;
         if(hr == S_FALSE) Sleep(10);
     }
     ok(hr == S_OK, "Occlusion query did not finish\n");
 
     hr = IDirect3DQuery9_GetData(pQuery, data, IDirect3DQuery9_GetDataSize(pQuery), D3DGETDATA_FLUSH);
-    ok(hr == S_OK, "IDirect3DQuery9_GetData on a ended query returned %s\n",
-        DXGetErrorString9(hr));
+    ok(hr == S_OK, "IDirect3DQuery9_GetData on a ended query returned %08x\n", hr);
     hr = IDirect3DQuery9_GetData(pQuery, data, IDirect3DQuery9_GetDataSize(pQuery), D3DGETDATA_FLUSH);
-    ok(hr == S_OK, "IDirect3DQuery9_GetData a 2nd time on a ended query returned %s\n",
-        DXGetErrorString9(hr));
+    ok(hr == S_OK, "IDirect3DQuery9_GetData a 2nd time on a ended query returned %08x\n", hr);
 
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_BEGIN);
-    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_BEGIN) on a new not yet started query returned %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_BEGIN) on a new not yet started query returned %08x\n", hr);
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_END);
-    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a started query returned %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a started query returned %08x\n", hr);
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_END);
-    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a ended query returned %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a ended query returned %08x\n", hr);
 
     cleanup:
     HeapFree(GetProcessHeap(), 0, data);

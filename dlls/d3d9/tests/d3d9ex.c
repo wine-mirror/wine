@@ -23,7 +23,6 @@
 #define COBJMACROS
 #include <initguid.h>
 #include <d3d9.h>
-#include <dxerr9.h>
 #include "wine/test.h"
 
 static HMODULE d3d9_handle = 0;
@@ -64,8 +63,8 @@ static void test_qi_base_to_ex(void)
 
     hr = IDirect3D9_QueryInterface(d3d9, &IID_IDirect3D9Ex, (void **) &d3d9ex);
     ok(hr == E_NOINTERFACE,
-       "IDirect3D9::QueryInterface for IID_IDirect3D9Ex returned %s, expected E_NOINTERFACE\n",
-       DXGetErrorString9(hr));
+       "IDirect3D9::QueryInterface for IID_IDirect3D9Ex returned %08x, expected E_NOINTERFACE\n",
+       hr);
     ok(d3d9ex == NULL, "QueryInterface returned interface %p, expected NULL\n", d3d9ex);
     if(d3d9ex) IDirect3D9Ex_Release(d3d9ex);
 
@@ -85,8 +84,8 @@ static void test_qi_base_to_ex(void)
 
     hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9Ex, (void **) &deviceEx);
     ok(hr == E_NOINTERFACE,
-       "IDirect3D9Device::QueryInterface for IID_IDirect3DDevice9Ex returned %s, expected E_NOINTERFACE\n",
-       DXGetErrorString9(hr));
+       "IDirect3D9Device::QueryInterface for IID_IDirect3DDevice9Ex returned %08x, expected E_NOINTERFACE\n",
+       hr);
     ok(deviceEx == NULL, "QueryInterface returned interface %p, expected NULL\n", deviceEx);
     if(deviceEx) IDirect3DDevice9Ex_Release(deviceEx);
 
@@ -109,7 +108,7 @@ static void test_qi_ex_to_base(void)
     unsigned long ref;
 
     hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Direct3DCreate9Ex returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Direct3DCreate9Ex returned %08x\n", hr);
     if(FAILED(hr)) {
         skip("Direct3D9Ex is not available\n");
         goto out;
@@ -117,8 +116,8 @@ static void test_qi_ex_to_base(void)
 
     hr = IDirect3D9Ex_QueryInterface(d3d9ex, &IID_IDirect3D9, (void **) &d3d9);
     ok(hr == D3D_OK,
-       "IDirect3D9Ex::QueryInterface for IID_IDirect3D9 returned %s, expected D3D_OK\n",
-       DXGetErrorString9(hr));
+       "IDirect3D9Ex::QueryInterface for IID_IDirect3D9 returned %08x, expected D3D_OK\n",
+       hr);
     ok(d3d9 != NULL && d3d9 != (void *) 0xdeadbeef,
        "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef\n", d3d9);
     ref = getref((IUnknown *) d3d9ex);
@@ -144,8 +143,8 @@ static void test_qi_ex_to_base(void)
 
     hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9Ex, (void **) &deviceEx);
     ok(hr == D3D_OK,
-       "IDirect3D9Device::QueryInterface for IID_IDirect3DDevice9Ex returned %s, expected D3D_OK\n",
-       DXGetErrorString9(hr));
+       "IDirect3D9Device::QueryInterface for IID_IDirect3DDevice9Ex returned %08x, expected D3D_OK\n",
+       hr);
     ok(deviceEx != NULL && deviceEx != (void *) 0xdeadbeef,
        "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef\n", deviceEx);
     ref = getref((IUnknown *) device);
@@ -164,8 +163,8 @@ static void test_qi_ex_to_base(void)
 
     hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9Ex, (void **) &deviceEx);
     ok(hr == D3D_OK,
-       "IDirect3D9Device::QueryInterface for IID_IDirect3DDevice9Ex returned %s, expected D3D_OK\n",
-       DXGetErrorString9(hr));
+       "IDirect3D9Device::QueryInterface for IID_IDirect3DDevice9Ex returned %08x, expected D3D_OK\n",
+       hr);
     ok(deviceEx != NULL && deviceEx != (void *) 0xdeadbeef,
        "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef\n", deviceEx);
     ref = getref((IUnknown *) device);

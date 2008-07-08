@@ -21,7 +21,6 @@
 
 #define COBJMACROS
 #include <d3d9.h>
-#include <dxerr9.h>
 #include "wine/test.h"
 
 static IDirect3D9 *(WINAPI *pDirect3DCreate9)(UINT);
@@ -38,7 +37,7 @@ static int get_refcount(IUnknown *object)
         int rc_new = rc; \
         ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     } else {\
-        trace("%s failed: %s\n", c, DXGetErrorString9(r)); \
+        trace("%s failed: %08x\n", c, r); \
     }
 
 #define CHECK_RELEASE(obj,d,rc) \
@@ -92,7 +91,7 @@ static void check_mipmap_levels(
         DWORD levels = IDirect3DBaseTexture9_GetLevelCount(texture);
         ok(levels == count, "Invalid level count. Expected %d got %u\n", count, levels);
     } else 
-        trace("CreateTexture failed: %s\n", DXGetErrorString9(hr));
+        trace("CreateTexture failed: %08x\n", hr);
 
     if (texture) IUnknown_Release( texture );
 }
@@ -122,7 +121,7 @@ static void test_mipmap_levels(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) goto cleanup;
 
     check_mipmap_levels(pDevice, 32, 32, 6);
@@ -167,7 +166,7 @@ static void test_swapchain(void)
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
-       "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+       "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) goto cleanup;
 
     /* Check if the back buffer count was modified */
@@ -175,57 +174,57 @@ static void test_swapchain(void)
 
     /* Get the implicit swapchain */
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &swapchain0);
-    ok(SUCCEEDED(hr), "Failed to get the impicit swapchain (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr), "Failed to get the impicit swapchain (%08x)\n", hr);
     if(swapchain0) IDirect3DSwapChain9_Release(swapchain0);
 
     /* Check if there is a back buffer */
     hr = IDirect3DSwapChain9_GetBackBuffer(swapchain0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%08x)\n", hr);
     ok(backbuffer != NULL, "The back buffer is NULL\n");
     if(backbuffer) IDirect3DSurface9_Release(backbuffer);
 
     /* Try to get a nonexistent swapchain */
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 1, &swapchainX);
-    ok(hr == D3DERR_INVALIDCALL, "GetSwapChain on an nonexistent swapchain returned (%s)\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "GetSwapChain on an nonexistent swapchain returned (%08x)\n", hr);
     ok(swapchainX == NULL, "Swapchain 1 is %p\n", swapchainX);
     if(swapchainX) IDirect3DSwapChain9_Release(swapchainX);
 
     /* Create a bunch of swapchains */
     d3dpp.BackBufferCount = 0;
     hr = IDirect3DDevice9_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain1);
-    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%08x)\n", hr);
     ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
 
     d3dpp.BackBufferCount  = 1;
     hr = IDirect3DDevice9_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain2);
-    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%08x)\n", hr);
 
     d3dpp.BackBufferCount  = 2;
     hr = IDirect3DDevice9_CreateAdditionalSwapChain(pDevice, &d3dpp, &swapchain3);
-    ok(SUCCEEDED(hr), "Failed to create a swapchain (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr), "Failed to create a swapchain (%08x)\n", hr);
     if(SUCCEEDED(hr)) {
         /* Swapchain 3, created with backbuffercount 2 */
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain9_GetBackBuffer(swapchain3, 0, 0, &backbuffer);
-        ok(SUCCEEDED(hr), "Failed to get the 1st back buffer (%s)\n", DXGetErrorString9(hr));
+        ok(SUCCEEDED(hr), "Failed to get the 1st back buffer (%08x)\n", hr);
         ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
         if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
 
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain9_GetBackBuffer(swapchain3, 1, 0, &backbuffer);
-        ok(SUCCEEDED(hr), "Failed to get the 2nd back buffer (%s)\n", DXGetErrorString9(hr));
+        ok(SUCCEEDED(hr), "Failed to get the 2nd back buffer (%08x)\n", hr);
         ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
         if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
 
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain9_GetBackBuffer(swapchain3, 2, 0, &backbuffer);
-        ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %s\n", DXGetErrorString9(hr));
+        ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %08x\n", hr);
         ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
         if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
 
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain9_GetBackBuffer(swapchain3, 3, 0, &backbuffer);
-        ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+        ok(FAILED(hr), "Failed to get the back buffer (%08x)\n", hr);
         ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
         if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
     }
@@ -233,32 +232,32 @@ static void test_swapchain(void)
     /* Check the back buffers of the swapchains */
     /* Swapchain 1, created with backbuffercount 0 */
     hr = IDirect3DSwapChain9_GetBackBuffer(swapchain1, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
-    ok(backbuffer != NULL, "The back buffer is NULL (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%08x)\n", hr);
+    ok(backbuffer != NULL, "The back buffer is NULL (%08x)\n", hr);
     if(backbuffer) IDirect3DSurface9_Release(backbuffer);
 
     backbuffer = (void *) 0xdeadbeef;
     hr = IDirect3DSwapChain9_GetBackBuffer(swapchain1, 1, 0, &backbuffer);
-    ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(FAILED(hr), "Failed to get the back buffer (%08x)\n", hr);
     ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
 
     /* Swapchain 2 - created with backbuffercount 1 */
     backbuffer = (void *) 0xdeadbeef;
     hr = IDirect3DSwapChain9_GetBackBuffer(swapchain2, 0, 0, &backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%08x)\n", hr);
     ok(backbuffer != NULL && backbuffer != (void *) 0xdeadbeef, "The back buffer is %p\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
 
     backbuffer = (void *) 0xdeadbeef;
     hr = IDirect3DSwapChain9_GetBackBuffer(swapchain2, 1, 0, &backbuffer);
-    ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "GetBackBuffer returned %08x\n", hr);
     ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
 
     backbuffer = (void *) 0xdeadbeef;
     hr = IDirect3DSwapChain9_GetBackBuffer(swapchain2, 2, 0, &backbuffer);
-    ok(FAILED(hr), "Failed to get the back buffer (%s)\n", DXGetErrorString9(hr));
+    ok(FAILED(hr), "Failed to get the back buffer (%08x)\n", hr);
     ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface9_Release(backbuffer);
 
@@ -267,7 +266,7 @@ static void test_swapchain(void)
      */
     swapchainX = (void *) 0xdeadbeef;
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 1, &swapchainX);
-    ok(hr == D3DERR_INVALIDCALL, "Failed to get the second swapchain (%s)\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "Failed to get the second swapchain (%08x)\n", hr);
     ok(swapchainX == NULL, "The swapchain pointer is %p\n", swapchainX);
     if(swapchainX && swapchainX != (void *) 0xdeadbeef ) IDirect3DSwapChain9_Release(swapchainX);
 
@@ -349,7 +348,7 @@ static void test_refcount(void)
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
-       "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+       "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) goto cleanup;
 
     refcount = get_refcount( (IUnknown *)pDevice );
@@ -660,7 +659,7 @@ static void test_cursor(void)
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
     ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
-       "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
+       "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) goto cleanup;
 
     IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 32, 32, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &cursor, 0);
@@ -783,7 +782,7 @@ static void test_reset(void)
     ok(height == 600, "Screen height is %d\n", height);
 
     hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
@@ -798,7 +797,7 @@ static void test_reset(void)
     vp.MinZ = 2;
     vp.MaxZ = 3;
     hr = IDirect3DDevice9_SetViewport(pDevice, &vp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %08x\n", hr);
 
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
@@ -807,13 +806,13 @@ static void test_reset(void)
     d3dpp.BackBufferHeight  = 480;
     d3dpp.BackBufferFormat = d3ddm.Format;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     ZeroMemory(&vp, sizeof(vp));
     hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
@@ -830,12 +829,12 @@ static void test_reset(void)
     ok(height == 480, "Screen height is %d\n", height);
 
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &pSwapchain);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
     if(SUCCEEDED(hr))
     {
         ZeroMemory(&d3dpp, sizeof(d3dpp));
         hr = IDirect3DSwapChain9_GetPresentParameters(pSwapchain, &d3dpp);
-        ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %s\n", DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %08x\n", hr);
         if(SUCCEEDED(hr))
         {
             ok(d3dpp.BackBufferWidth == 640, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
@@ -850,7 +849,7 @@ static void test_reset(void)
     d3dpp.BackBufferWidth  = 400;
     d3dpp.BackBufferHeight  = 300;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
@@ -861,7 +860,7 @@ static void test_reset(void)
 
     ZeroMemory(&vp, sizeof(vp));
     hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
@@ -873,12 +872,12 @@ static void test_reset(void)
     }
 
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &pSwapchain);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
     if(SUCCEEDED(hr))
     {
         ZeroMemory(&d3dpp, sizeof(d3dpp));
         hr = IDirect3DSwapChain9_GetPresentParameters(pSwapchain, &d3dpp);
-        ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %s\n", DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %08x\n", hr);
         if(SUCCEEDED(hr))
         {
             ok(d3dpp.BackBufferWidth == 400, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
@@ -895,84 +894,84 @@ static void test_reset(void)
 
     /* _Reset fails if there is a resource in the default pool */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &surface, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
     /* Reset again to get the device out of the lost state */
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     /* Scratch, sysmem and managed pools are fine */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
 
     /* Will a sysmem or scratch survive while locked */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
     hr = IDirect3DSurface9_LockRect(surface, &lockrect, NULL, D3DLOCK_DISCARD);
-    ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08x\n", hr);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_UnlockRect(surface);
     IDirect3DSurface9_Release(surface);
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
     hr = IDirect3DSurface9_LockRect(surface, &lockrect, NULL, D3DLOCK_DISCARD);
-    ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08x\n", hr);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_UnlockRect(surface);
     IDirect3DSurface9_Release(surface);
 
     hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 0, 0, D3DFMT_R5G6B5, D3DPOOL_MANAGED, &texture, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %08x\n", hr);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DTexture9_Release(texture);
 
     /* A reference held to an implicit surface causes failures as well */
     hr = IDirect3DDevice9_GetBackBuffer(pDevice, 0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer returned %08x\n", hr);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     /* Shaders are fine as well */
     hr = IDirect3DDevice9_CreateVertexShader(pDevice, simple_vs, &shader);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %08x\n", hr);
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     IDirect3DVertexShader9_Release(shader);
 
     /* Try setting invalid modes */
@@ -982,7 +981,7 @@ static void test_reset(void)
     d3dpp.BackBufferWidth  = 32;
     d3dpp.BackBufferHeight  = 32;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=32, h=32, windowed=FALSE failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=32, h=32, windowed=FALSE failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
 
@@ -992,7 +991,7 @@ static void test_reset(void)
     d3dpp.BackBufferWidth  = 801;
     d3dpp.BackBufferHeight  = 600;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=801, h=600, windowed=FALSE failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=801, h=600, windowed=FALSE failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
 
@@ -1013,7 +1012,7 @@ static void test_display_modes(void)
 
 #define TEST_FMT(x,r) do { \
     HRESULT res = IDirect3D9_EnumAdapterModes(pD3d, 0, (x), 0, &dmode); \
-    ok(res==(r), "EnumAdapterModes("#x") did not return "#r" (got %s)!\n", DXGetErrorString9(res)); \
+    ok(res==(r), "EnumAdapterModes("#x") did not return "#r" (got %08x)!\n", res); \
 } while(0)
 
     TEST_FMT(D3DFMT_R8G8B8, D3DERR_INVALIDCALL);
@@ -1122,7 +1121,7 @@ static void test_scene(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!pDevice)
     {
         skip("Failed to create a d3d device\n");
@@ -1132,66 +1131,66 @@ static void test_scene(void)
     /* Get the caps, they will be needed to tell if an operation is supposed to be valid */
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(pDevice, &caps);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetCaps failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetCaps failed with %08x\n", hr);
     if(FAILED(hr)) goto cleanup;
 
     /* Test an EndScene without beginscene. Should return an error */
     hr = IDirect3DDevice9_EndScene(pDevice);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %08x\n", hr);
 
     /* Test a normal BeginScene / EndScene pair, this should work */
     hr = IDirect3DDevice9_BeginScene(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IDirect3DDevice9_EndScene(pDevice);
-        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
     }
 
     /* Test another EndScene without having begun a new scene. Should return an error */
     hr = IDirect3DDevice9_EndScene(pDevice);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %08x\n", hr);
 
     /* Two nested BeginScene and EndScene calls */
     hr = IDirect3DDevice9_BeginScene(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
     hr = IDirect3DDevice9_BeginScene(pDevice);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
     hr = IDirect3DDevice9_EndScene(pDevice);
-    ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
     hr = IDirect3DDevice9_EndScene(pDevice);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %08x\n", hr);
 
     /* Create some surfaces to test stretchrect between the scenes */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 128, 128, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &pSurface1, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %08x\n", hr);
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 128, 128, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &pSurface2, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %08x\n", hr);
     hr = IDirect3DDevice9_CreateDepthStencilSurface(pDevice, 800, 600, D3DFMT_D16, D3DMULTISAMPLE_NONE, 0, FALSE, &pSurface3, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateDepthStencilSurface failed with %08x\n", hr);
     hr = IDirect3DDevice9_CreateRenderTarget(pDevice, 128, 128, d3ddm.Format, D3DMULTISAMPLE_NONE, 0, FALSE, &pRenderTarget, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateRenderTarget failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateRenderTarget failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_GetBackBuffer(pDevice, 0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer failed with %08x\n", hr);
     hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer failed with %08x\n", hr);
 
     /* First make sure a simple StretchRect call works */
     if(pSurface1 && pSurface2) {
         hr = IDirect3DDevice9_StretchRect(pDevice, pSurface1, NULL, pSurface2, NULL, 0);
-        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
     if(pBackBuffer && pRenderTarget) {
         hr = IDirect3DDevice9_StretchRect(pDevice, pBackBuffer, &rect, pRenderTarget, NULL, 0);
-        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
     if(pDepthStencil && pSurface3) {
         HRESULT expected;
         if(0) /* Disabled for now because it crashes in wine */ {
             expected = caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES ? D3D_OK : D3DERR_INVALIDCALL;
             hr = IDirect3DDevice9_StretchRect(pDevice, pDepthStencil, NULL, pSurface3, NULL, 0);
-            ok( hr == expected, "IDirect3DDevice9_StretchRect returned %s, expected %s\n", DXGetErrorString9(hr), DXGetErrorString9(expected));
+            ok( hr == expected, "IDirect3DDevice9_StretchRect returned %08x, expected %08x\n", hr, expected);
         }
     }
 
@@ -1199,40 +1198,40 @@ static void test_scene(void)
      * width normal surfaces, render targets and depth stencil surfaces.
      */
     hr = IDirect3DDevice9_BeginScene(pDevice);
-    ok( hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    ok( hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
 
     if(pSurface1 && pSurface2)
     {
         hr = IDirect3DDevice9_StretchRect(pDevice, pSurface1, NULL, pSurface2, NULL, 0);
-        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
     if(pBackBuffer && pRenderTarget)
     {
         hr = IDirect3DDevice9_StretchRect(pDevice, pBackBuffer, &rect, pRenderTarget, NULL, 0);
-        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %08x\n", hr);
     }
     if(pDepthStencil && pSurface3)
     {
         /* This is supposed to fail inside a BeginScene - EndScene pair. */
         hr = IDirect3DDevice9_StretchRect(pDevice, pDepthStencil, NULL, pSurface3, NULL, 0);
-        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect returned %s, expected D3DERR_INVALIDCALL\n", DXGetErrorString9(hr));
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect returned %08x, expected D3DERR_INVALIDCALL\n", hr);
     }
 
     hr = IDirect3DDevice9_EndScene(pDevice);
-    ok( hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    ok( hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
 
     /* Does a SetRenderTarget influence BeginScene / EndScene ?
      * Set a new render target, then see if it started a new scene. Flip the rt back and see if that maybe
      * ended the scene. Expected result is that the scene is not affected by SetRenderTarget
      */
     hr = IDirect3DDevice9_SetRenderTarget(pDevice, 0, pRenderTarget);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed with %08x\n", hr);
     hr = IDirect3DDevice9_BeginScene(pDevice);
-    ok( hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    ok( hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderTarget(pDevice, 0, pBackBuffer);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed with %08x\n", hr);
     hr = IDirect3DDevice9_EndScene(pDevice);
-    ok( hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    ok( hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
 
 cleanup:
     if(pRenderTarget) IDirect3DSurface9_Release(pRenderTarget);
@@ -1275,7 +1274,7 @@ static void test_limits(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!pDevice)
     {
         skip("Failed to create a d3d device\n");
@@ -1283,23 +1282,23 @@ static void test_limits(void)
     }
 
     hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed with %08x\n", hr);
     if(!pTexture) goto cleanup;
 
     /* There are 16 pixel samplers. We should be able to access all of them */
     for(i = 0; i < 16; i++) {
         hr = IDirect3DDevice9_SetTexture(pDevice, i, (IDirect3DBaseTexture9 *) pTexture);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture for sampler %d failed with %s\n", i, DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture for sampler %d failed with %08x\n", i, hr);
         hr = IDirect3DDevice9_SetTexture(pDevice, i, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture for sampler %d failed with %s\n", i, DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture for sampler %d failed with %08x\n", i, hr);
         hr = IDirect3DDevice9_SetSamplerState(pDevice, i, D3DSAMP_SRGBTEXTURE, TRUE);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState for sampler %d failed with %s\n", i, DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState for sampler %d failed with %08x\n", i, hr);
     }
 
     /* Now test all 8 textures stage states */
     for(i = 0; i < 8; i++) {
         hr = IDirect3DDevice9_SetTextureStageState(pDevice, i, D3DTSS_COLOROP, D3DTOP_ADD);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState for texture %d failed with %s\n", i, DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState for texture %d failed with %08x\n", i, hr);
     }
 
     /* Investigations show that accessing higher samplers / textures stage states does not return an error either. Writing
@@ -1343,7 +1342,7 @@ static void test_depthstenciltest(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!pDevice)
     {
         skip("Failed to create a d3d device\n");
@@ -1351,51 +1350,51 @@ static void test_depthstenciltest(void)
     }
 
     hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
-    ok(hr == D3D_OK && pDepthStencil != NULL, "IDirect3DDevice9_GetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK && pDepthStencil != NULL, "IDirect3DDevice9_GetDepthStencilSurface failed with %08x\n", hr);
 
     /* Try to clear */
     hr = IDirect3DDevice9_Clear(pDevice, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 1.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_SetDepthStencilSurface(pDevice, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetDepthStencilSurface failed with %08x\n", hr);
 
     /* Check if the set buffer is returned on a get. WineD3D had a bug with that once, prevent it from coming back */
     hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil2);
-    ok(hr == D3DERR_NOTFOUND && pDepthStencil2 == NULL, "IDirect3DDevice9_GetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_NOTFOUND && pDepthStencil2 == NULL, "IDirect3DDevice9_GetDepthStencilSurface failed with %08x\n", hr);
     if(pDepthStencil2) IDirect3DSurface9_Release(pDepthStencil2);
 
     /* This left the render states untouched! */
     hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == D3DZB_TRUE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
     hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZWRITEENABLE, &state);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == TRUE, "D3DRS_ZWRITEENABLE is %s\n", state ? "TRUE" : "FALSE");
     hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_STENCILENABLE, &state);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == FALSE, "D3DRS_STENCILENABLE is %s\n", state ? "TRUE" : "FALSE");
     hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_STENCILWRITEMASK, &state);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == 0xffffffff, "D3DRS_STENCILWRITEMASK is 0x%08x\n", state);
 
     /* This is supposed to fail now */
     hr = IDirect3DDevice9_Clear(pDevice, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 1.0, 0);
-    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(pDevice, D3DRS_ZENABLE, D3DZB_FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_SetDepthStencilSurface(pDevice, pDepthStencil);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetDepthStencilSurface failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == D3DZB_FALSE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
 
     /* Now it works again */
     hr = IDirect3DDevice9_Clear(pDevice, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 1.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     if(pDepthStencil) IDirect3DSurface9_Release(pDepthStencil);
     if(pDevice) IDirect3D9_Release(pDevice);
@@ -1412,7 +1411,7 @@ static void test_depthstenciltest(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!pDevice)
     {
         skip("Failed to create a d3d device\n");
@@ -1421,7 +1420,7 @@ static void test_depthstenciltest(void)
 
     pDepthStencil = NULL;
     hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
-    ok(hr == D3DERR_NOTFOUND && pDepthStencil == NULL, "IDirect3DDevice9_GetDepthStencilSurface returned %s, surface = %p\n", DXGetErrorString9(hr), pDepthStencil);
+    ok(hr == D3DERR_NOTFOUND && pDepthStencil == NULL, "IDirect3DDevice9_GetDepthStencilSurface returned %08x, surface = %p\n", hr, pDepthStencil);
     if(pDepthStencil) {
         IDirect3DSurface9_Release(pDepthStencil);
         pDepthStencil = NULL;
@@ -1429,7 +1428,7 @@ static void test_depthstenciltest(void)
 
     /* Check the depth test state */
     hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == D3DZB_FALSE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
 
     if(pDevice) IDirect3D9_Release(pDevice);
@@ -1446,7 +1445,7 @@ static void test_depthstenciltest(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!pDevice)
     {
         skip("Failed to create a d3d device\n");
@@ -1455,14 +1454,14 @@ static void test_depthstenciltest(void)
 
     pDepthStencil = NULL;
     hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
-    ok(hr == D3DERR_NOTFOUND && pDepthStencil == NULL, "IDirect3DDevice9_GetDepthStencilSurface returned %s, surface = %p\n", DXGetErrorString9(hr), pDepthStencil);
+    ok(hr == D3DERR_NOTFOUND && pDepthStencil == NULL, "IDirect3DDevice9_GetDepthStencilSurface returned %08x, surface = %p\n", hr, pDepthStencil);
     if(pDepthStencil) {
         IDirect3DSurface9_Release(pDepthStencil);
         pDepthStencil = NULL;
     }
 
     hr = IDirect3DDevice9_GetRenderState(pDevice, D3DRS_ZENABLE, &state);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     ok(state == D3DZB_FALSE, "D3DRS_ZENABLE is %s\n", state == D3DZB_FALSE ? "D3DZB_FALSE" : (state == D3DZB_TRUE ? "D3DZB_TRUE" : "D3DZB_USEW"));
 
 cleanup:
@@ -1631,7 +1630,7 @@ static void test_null_stream(void)
 
     hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!device)
     {
         skip("Failed to create a d3d device\n");
@@ -1723,7 +1722,7 @@ static void test_vertex_buffer_alignment(void)
 
     hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!device)
     {
         skip("Failed to create a d3d device\n");
@@ -1781,7 +1780,7 @@ static void test_lights(void)
     hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &present_parameters, &device );
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
-       "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+       "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!device)
     {
         skip("Failed to create a d3d device\n");
@@ -1790,28 +1789,28 @@ static void test_lights(void)
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed with %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed with %08x\n", hr);
 
     for(i = 1; i <= caps.MaxActiveLights; i++) {
         hr = IDirect3DDevice9_LightEnable(device, i, TRUE);
-        ok(hr == D3D_OK, "Enabling light %u failed with %s\n", i, DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "Enabling light %u failed with %08x\n", i, hr);
         hr = IDirect3DDevice9_GetLightEnable(device, i, &enabled);
-        ok(hr == D3D_OK, "GetLightEnable on light %u failed with %s\n", i, DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "GetLightEnable on light %u failed with %08x\n", i, hr);
         ok(enabled, "Light %d is %s\n", i, enabled ? "enabled" : "disabled");
     }
 
     /* TODO: Test the rendering results in this situation */
     hr = IDirect3DDevice9_LightEnable(device, i + 1, TRUE);
-    ok(hr == D3D_OK, "Enabling one light more than supported returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "Enabling one light more than supported returned %08x\n", hr);
     hr = IDirect3DDevice9_GetLightEnable(device, i + 1, &enabled);
-    ok(hr == D3D_OK, "GetLightEnable on light %u failed with %s\n", i + 1, DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "GetLightEnable on light %u failed with %08x\n", i + 1, hr);
     ok(enabled, "Light %d is %s\n", i + 1, enabled ? "enabled" : "disabled");
     hr = IDirect3DDevice9_LightEnable(device, i + 1, FALSE);
-    ok(hr == D3D_OK, "Disabling the additional returned %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "Disabling the additional returned %08x\n", hr);
 
     for(i = 1; i <= caps.MaxActiveLights; i++) {
         hr = IDirect3DDevice9_LightEnable(device, i, FALSE);
-        ok(hr == D3D_OK, "Disabling light %u failed with %s\n", i, DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "Disabling light %u failed with %08x\n", i, hr);
     }
 
     cleanup:
@@ -1842,12 +1841,12 @@ static void test_set_stream_source(void)
     hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device );
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
-       "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+       "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!device)
     {
         hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, hwnd,
                                       D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device );
-        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
         if(!device)
         {
             skip("Failed to create a d3d device\n");
@@ -1856,47 +1855,37 @@ static void test_set_stream_source(void)
     }
 
     hr = IDirect3DDevice9_CreateVertexBuffer( device, 512, 0, 0, D3DPOOL_DEFAULT, &pVertexBuffer, NULL );
-    ok(hr == D3D_OK, "Failed to create a vertex buffer, hr = %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "Failed to create a vertex buffer, hr = %08x\n", hr);
     if (SUCCEEDED(hr)) {
         /* Some cards(Geforce 7400 at least) accept non-aligned offsets, others(radeon 9000 verified) reject it,
          * so accept both results. Wine currently rejects this to be able to optimize the vbo conversion, but writes
          * a WARN
          */
         hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 0, 32);
-        ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %s\n",
-           DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %08x\n", hr);
         hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 1, 32);
-        ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 1, hr = %s\n",
-           DXGetErrorString9(hr));
+        ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 1, hr = %08x\n", hr);
         hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 2, 32);
-        ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 2, hr = %s\n",
-           DXGetErrorString9(hr));
+        ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 2, hr = %08x\n", hr);
         hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 3, 32);
-        ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 3, hr = %s\n",
-           DXGetErrorString9(hr));
+        ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 3, hr = %08x\n", hr);
         hr = IDirect3DDevice9_SetStreamSource(device, 0, pVertexBuffer, 4, 32);
-        ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n",
-          DXGetErrorString9(hr));
+        ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %08x\n", hr);
     }
     /* Try to set the NULL buffer with an offset and stride 0 */
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
-    ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "Failed to set the stream source, offset 0, hr = %08x\n", hr);
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 1, 0);
-    ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 1, hr = %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 1, hr = %08x\n", hr);
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 2, 0);
-    ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 2, hr = %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 2, hr = %08x\n", hr);
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 3, 0);
-    ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 3, hr = %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL || hr == D3D_OK, "Unexpected result when setting the stream source, offset 3, hr = %08x\n", hr);
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 4, 0);
-    ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n",
-       DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %08x\n", hr);
 
     hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
-    ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %s\n", DXGetErrorString9(hr));
+    ok(hr == D3D_OK, "Failed to set the stream source, offset 4, hr = %08x\n", hr);
 
     if(pVertexBuffer) IDirect3DDevice9_Release(pVertexBuffer);
 cleanup:
@@ -2055,7 +2044,7 @@ static void test_set_material(void)
     }
 
     hr = IDirect3DDevice9_SetMaterial(device, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %s\n",  DXGetErrorString9(hr));
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %08x\n",  hr);
 
  cleanup:
     if(device) IDirect3DDevice9_Release(device);

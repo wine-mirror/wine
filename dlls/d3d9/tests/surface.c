@@ -17,7 +17,6 @@
  */
 #define COBJMACROS
 #include <d3d9.h>
-#include <dxerr9.h>
 #include "wine/test.h"
 
 static HWND create_window(void)
@@ -150,7 +149,7 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
 
         hr = IDirect3DDevice9_CreateTexture(device_ptr, 64, 64, 0, 0, MAKEFOURCC('D', 'X', 'T', '1'+i),
                                             D3DPOOL_MANAGED, &pTexture, NULL);
-        ok(SUCCEEDED(hr) || hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_CreateTexture: %s\n", DXGetErrorString9(hr));
+        ok(SUCCEEDED(hr) || hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_CreateTexture: %08x\n", hr);
         if (FAILED(hr)) {
             skip("DXT%d surfaces are not supported\n", i + 1);
             continue;
@@ -163,7 +162,7 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
 
             IDirect3DTexture9_GetLevelDesc(pTexture, j, &descr);
             hr = IDirect3DTexture9_LockRect(pTexture, j, &rc, NULL, 0);
-            ok(SUCCEEDED(hr), "IDirect3DTexture9_LockRect: %s\n", DXGetErrorString9(hr));
+            ok(SUCCEEDED(hr), "IDirect3DTexture9_LockRect: %08x\n", hr);
             IDirect3DTexture9_UnlockRect(pTexture, j);
 
             pitch = ((descr.Width + 3) >> 2) << 3;
