@@ -310,6 +310,7 @@ extern const shader_backend_t none_shader_backend;
 
 /* GLSL shader private data */
 struct shader_glsl_priv {
+    hash_table_t *glsl_program_lookup;
     struct glsl_shader_prog_link *glsl_program;
     GLhandleARB             depth_blt_glsl_program_id;
 };
@@ -824,7 +825,6 @@ struct IWineD3DDeviceImpl
     int vs_selected_mode;
     int ps_selected_mode;
     const shader_backend_t *shader_backend;
-    hash_table_t *glsl_program_lookup;
     void *shader_priv;
     struct StateEntry StateTable[STATE_HIGHEST + 1];
     /* Array of functions for states which are handled by more than one pipeline part */
@@ -1990,8 +1990,6 @@ extern int shader_addline(
 extern const SHADER_OPCODE* shader_get_opcode(
     IWineD3DBaseShader *iface, 
     const DWORD code);
-
-void delete_glsl_program_entry(IWineD3DDevice *iface, struct glsl_shader_prog_link *entry);
 
 /* Vertex shader utility functions */
 extern BOOL vshader_get_input(

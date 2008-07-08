@@ -173,8 +173,6 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->dst_fbo));
         }
 
-        if (This->glsl_program_lookup) hash_table_destroy(This->glsl_program_lookup);
-
         /* TODO: Clean up all the surfaces and textures! */
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/

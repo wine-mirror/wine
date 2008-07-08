@@ -2782,35 +2782,33 @@ void pshader_glsl_input_pack(
  * Vertex Shader Specific Code begins here
  ********************************************/
 
-static void add_glsl_program_entry(IWineD3DDeviceImpl *device, struct glsl_shader_prog_link *entry) {
+static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_shader_prog_link *entry) {
     glsl_program_key_t *key;
 
     key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
     key->vshader = entry->vshader;
     key->pshader = entry->pshader;
 
-    hash_table_put(device->glsl_program_lookup, key, entry);
+    hash_table_put(priv->glsl_program_lookup, key, entry);
 }
 
-static struct glsl_shader_prog_link *get_glsl_program_entry(IWineD3DDeviceImpl *device,
+static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_priv *priv,
         GLhandleARB vshader, GLhandleARB pshader) {
     glsl_program_key_t key;
 
     key.vshader = vshader;
     key.pshader = pshader;
 
-    return (struct glsl_shader_prog_link *)hash_table_get(device->glsl_program_lookup, &key);
+    return (struct glsl_shader_prog_link *)hash_table_get(priv->glsl_program_lookup, &key);
 }
 
-void delete_glsl_program_entry(IWineD3DDevice *iface, struct glsl_shader_prog_link *entry) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+void delete_glsl_program_entry(struct shader_glsl_priv *priv, WineD3D_GL_Info *gl_info, struct glsl_shader_prog_link *entry) {
     glsl_program_key_t *key;
 
     key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
     key->vshader = entry->vshader;
     key->pshader = entry->pshader;
-    hash_table_remove(This->glsl_program_lookup, key);
+    hash_table_remove(priv->glsl_program_lookup, key);
 
     GL_EXTCALL(glDeleteObjectARB(entry->programId));
     if (entry->vshader) list_remove(&entry->vshader_entry);
@@ -3158,7 +3156,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
 
     GLhandleARB vshader_id = use_vs ? ((IWineD3DBaseShaderImpl*)vshader)->baseShader.prgId : 0;
     GLhandleARB pshader_id = use_ps ? ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId : 0;
-    entry = get_glsl_program_entry(This, vshader_id, pshader_id);
+    entry = get_glsl_program_entry(priv, vshader_id, pshader_id);
     if (entry) {
         priv->glsl_program = entry;
         return;
@@ -3174,7 +3172,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     entry->vshader = vshader_id;
     entry->pshader = pshader_id;
     /* Add the hash table entry */
-    add_glsl_program_entry(This, entry);
+    add_glsl_program_entry(priv, entry);
 
     /* Set the current program */
     priv->glsl_program = entry;
@@ -3420,7 +3418,9 @@ static void shader_glsl_cleanup(IWineD3DDevice *iface) {
 static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     struct list *linked_programs;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
-    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *) This->baseShader.device)->adapter->gl_info;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *)device->shader_priv;
+    WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
 
     /* Note: Do not use QueryInterface here to find out which shader type this is because this code
      * can be called from IWineD3DBaseShader::Release
@@ -3436,11 +3436,11 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
 
         if(pshader) {
             LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, pshader_entry) {
-                delete_glsl_program_entry(This->baseShader.device, entry);
+                delete_glsl_program_entry(priv, gl_info, entry);
             }
         } else {
             LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, vshader_entry) {
-                delete_glsl_program_entry(This->baseShader.device, entry);
+                delete_glsl_program_entry(priv, gl_info, entry);
             }
         }
     }
@@ -3475,8 +3475,9 @@ static BOOL glsl_program_key_compare(void *keya, void *keyb) {
 
 static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    This->shader_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
-    This->glsl_program_lookup = hash_table_create(glsl_program_key_hash, glsl_program_key_compare);
+    struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
+    priv->glsl_program_lookup = hash_table_create(glsl_program_key_hash, glsl_program_key_compare);
+    This->shader_priv = priv;
     return WINED3D_OK;
 }
 
