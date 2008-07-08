@@ -1848,7 +1848,9 @@ static void test_ndr_buffer(void)
     ok(ret == StubMsg.Buffer, "NdrGetBuffer should have returned the same value as StubMsg.Buffer instead of %p\n", ret);
     ok(RpcMessage.Handle != NULL, "RpcMessage.Handle should not have been NULL\n");
     ok(RpcMessage.Buffer != NULL, "RpcMessage.Buffer should not have been NULL\n");
-    ok(RpcMessage.BufferLength == 10, "RpcMessage.BufferLength should have been 10 instead of %d\n", RpcMessage.BufferLength);
+    ok(RpcMessage.BufferLength == 10 ||
+       broken(RpcMessage.BufferLength == 12), /* win2k */
+       "RpcMessage.BufferLength should have been 10 instead of %d\n", RpcMessage.BufferLength);
     ok(RpcMessage.RpcFlags == 0, "RpcMessage.RpcFlags should have been 0x0 instead of 0x%lx\n", RpcMessage.RpcFlags);
     ok(StubMsg.Buffer != NULL, "Buffer should not have been NULL\n");
     ok(!StubMsg.BufferStart, "BufferStart should have been NULL instead of %p\n", StubMsg.BufferStart);
