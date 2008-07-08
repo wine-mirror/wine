@@ -914,12 +914,26 @@ static HRESULT WINAPI domdoc_get_documentElement(
 }
 
 
-static HRESULT WINAPI domdoc_documentElement(
+static HRESULT WINAPI domdoc_put_documentElement(
     IXMLDOMDocument2 *iface,
     IXMLDOMElement* DOMElement )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    IXMLDOMNode *elementNode;
+    xmlnode *xmlNode;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, DOMElement);
+
+    hr = IXMLDOMElement_QueryInterface( DOMElement, &IID_IXMLDOMNode, (void**)&elementNode );
+    if(FAILED(hr))
+        return hr;
+
+    xmlNode = impl_from_IXMLDOMNode( elementNode );
+    xmlDocSetRootElement( get_doc(This), xmlNode->node);
+    IXMLDOMNode_Release( elementNode );
+
+    return S_OK;
 }
 
 
@@ -1931,7 +1945,7 @@ static const struct IXMLDOMDocument2Vtbl domdoc_vtbl =
     domdoc_get_doctype,
     domdoc_get_implementation,
     domdoc_get_documentElement,
-    domdoc_documentElement,
+    domdoc_put_documentElement,
     domdoc_createElement,
     domdoc_createDocumentFragment,
     domdoc_createTextNode,
