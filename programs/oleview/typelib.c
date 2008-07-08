@@ -677,7 +677,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
 		if (V_VT(param) == VT_BSTR)
 		{
 		    AddToTLDataStrW(tld, wszInvertedComa);
-		    AddToTLDataStrW(tld, V_BSTR(&var));
+		    AddToTLDataStrW(tld, V_BSTR(param));
 		    AddToTLDataStrW(tld, wszInvertedComa);
 		} else if (VariantChangeType(&var, param, 0, VT_BSTR) == S_OK)
 		    AddToTLDataStrW(tld, V_BSTR(&var));
