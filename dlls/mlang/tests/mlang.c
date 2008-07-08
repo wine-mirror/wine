@@ -269,7 +269,7 @@ static BOOL check_convertible(IMultiLanguage2 *iML2, UINT from, UINT to)
 
     static WCHAR strW[] = {'a','b','c',0};
 
-    srcsz = -1;
+    srcsz = lstrlenW(strW) + 1;
     destsz = MAX_PATH;
     hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, from, strW,
                                                   &srcsz, convert, &destsz);
