@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = d3d8.dll
-IMPORTS   = dxerr8 user32 kernel32
+IMPORTS   = user32 kernel32
 
 CTESTS = \
 	d3d8_main.c \

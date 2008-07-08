@@ -20,7 +20,6 @@
 #define COBJMACROS
 #include <initguid.h>
 #include <d3d8.h>
-#include <dxerr8.h>
 #include "wine/test.h"
 
 static IDirect3D8 *(WINAPI *pDirect3DCreate8)(UINT);
@@ -1176,7 +1175,7 @@ static void test_lights(void)
     hr = IDirect3D8_CreateDevice( d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &d3dpp, &device );
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
-       "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
+       "IDirect3D8_CreateDevice failed with %08x\n", hr);
     if(!device)
     {
         skip("Failed to create a d3d device\n");
@@ -1185,28 +1184,28 @@ static void test_lights(void)
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetDeviceCaps failed with %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetDeviceCaps failed with %08x\n", hr);
 
     for(i = 1; i <= caps.MaxActiveLights; i++) {
         hr = IDirect3DDevice8_LightEnable(device, i, TRUE);
-        ok(hr == D3D_OK, "Enabling light %u failed with %s\n", i, DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "Enabling light %u failed with %08x\n", i, hr);
         hr = IDirect3DDevice8_GetLightEnable(device, i, &enabled);
-        ok(hr == D3D_OK, "GetLightEnable on light %u failed with %s\n", i, DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "GetLightEnable on light %u failed with %08x\n", i, hr);
         ok(enabled, "Light %d is %s\n", i, enabled ? "enabled" : "disabled");
     }
 
     /* TODO: Test the rendering results in this situation */
     hr = IDirect3DDevice8_LightEnable(device, i + 1, TRUE);
-    ok(hr == D3D_OK, "Enabling one light more than supported returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Enabling one light more than supported returned %08x\n", hr);
     hr = IDirect3DDevice8_GetLightEnable(device, i + 1, &enabled);
-    ok(hr == D3D_OK, "GetLightEnable on light %u failed with %s\n", i + 1, DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "GetLightEnable on light %u failed with %08x\n", i + 1, hr);
     ok(enabled, "Light %d is %s\n", i + 1, enabled ? "enabled" : "disabled");
     hr = IDirect3DDevice8_LightEnable(device, i + 1, FALSE);
-    ok(hr == D3D_OK, "Disabling the additional returned %s\n", DXGetErrorString8(hr));
+    ok(hr == D3D_OK, "Disabling the additional returned %08x\n", hr);
 
     for(i = 1; i <= caps.MaxActiveLights; i++) {
         hr = IDirect3DDevice8_LightEnable(device, i, FALSE);
-        ok(hr == D3D_OK, "Disabling light %u failed with %s\n", i, DXGetErrorString8(hr));
+        ok(hr == D3D_OK, "Disabling light %u failed with %08x\n", i, hr);
     }
 
     cleanup:
@@ -1255,7 +1254,7 @@ static void test_render_zero_triangles(void)
     hr = IDirect3D8_CreateDevice( d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &d3dpp, &device );
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
-       "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
+       "IDirect3D8_CreateDevice failed with %08x\n", hr);
     if(!device)
     {
         skip("Failed to create a d3d device\n");
@@ -1306,7 +1305,7 @@ static void test_set_material(void)
     hr = IDirect3D8_CreateDevice( d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &present_parameters, &device );
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
-       "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
+       "IDirect3D8_CreateDevice failed with %08x\n", hr);
     if(!device)
     {
         skip("Failed to create a d3d device\n");
@@ -1314,7 +1313,7 @@ static void test_set_material(void)
     }
 
     hr = IDirect3DDevice8_SetMaterial(device, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %s\n",  DXGetErrorString8(hr));
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %08x\n",  hr);
 
  cleanup:
     if(device) IDirect3DDevice8_Release(device);
