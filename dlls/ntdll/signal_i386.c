@@ -582,10 +582,10 @@ typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
  *           init_handler
  *
  * Handler initialization when the full context is not needed.
+ * Return the stack pointer to use for pushing the exception data.
  */
 static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *gs )
 {
-    void *stack = (void *)(ESP_sig(sigcontext) & ~3);
     TEB *teb = get_current_teb();
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
 
@@ -602,8 +602,8 @@ static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
 #endif
 
     wine_set_fs( thread_data->fs );
+    wine_set_gs( thread_data->gs );
 
-    /* now restore a proper %gs for the fault handler */
     if (!wine_ldt_is_system(CS_sig(sigcontext)) ||
         !wine_ldt_is_system(SS_sig(sigcontext)))  /* 16-bit mode */
     {
@@ -614,24 +614,9 @@ static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
          * SS is still non-system segment. This is why both CS and SS
          * are checked.
          */
-        wine_set_gs( thread_data->gs );
-        stack = teb->WOW32Reserved;
+        return teb->WOW32Reserved;
     }
-#ifdef __HAVE_VM86
-    else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
-    {
-        unsigned int *int_stack = stack;
-        /* fetch the saved %gs from the stack */
-        wine_set_gs( int_stack[0] );
-    }
-#endif
-    else  /* 32-bit mode */
-    {
-#ifdef GS_sig
-        wine_set_gs( GS_sig(sigcontext) );
-#endif
-    }
-    return stack;
+    return (void *)(ESP_sig(sigcontext) & ~3);
 }
 
 
@@ -1553,6 +1538,8 @@ void signal_init_thread(void)
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
 #endif  /* HAVE_SIGALTSTACK */
+
+    ntdll_get_thread_data()->gs = wine_get_gs();
 }
 
 /**********************************************************************
