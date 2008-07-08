@@ -49,6 +49,7 @@ typedef struct _saxreader
     const struct IVBSAXXMLReaderVtbl *lpVtbl;
     const struct ISAXXMLReaderVtbl *lpSAXXMLReaderVtbl;
     LONG ref;
+    struct ISAXContentHandler *contentHandler;
     xmlSAXHandler sax;
 } saxreader;
 
@@ -111,6 +112,9 @@ static ULONG WINAPI saxxmlreader_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
+        if(This->contentHandler)
+            ISAXContentHandler_Release(This->contentHandler);
+
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -505,12 +509,8 @@ static HRESULT WINAPI isaxxmlreader_getContentHandler(
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
 
-    TRACE("(%p)->(%p)\n", This, pContentHandler);
-    if(This->contentHandler)
-        ISAXContentHandler_AddRef(This->contentHandler);
-    *pContentHandler = This->contentHandler;
-
-    return S_OK;
+    FIXME("(%p)->(%p) stub\n", This, pContentHandler);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI isaxxmlreader_putContentHandler(
@@ -519,8 +519,14 @@ static HRESULT WINAPI isaxxmlreader_putContentHandler(
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
 
-    FIXME("(%p)->(%p) stub\n", This, contentHandler);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, contentHandler);
+    if(contentHandler)
+        ISAXContentHandler_AddRef(contentHandler);
+    if(This->contentHandler)
+        ISAXContentHandler_Release(This->contentHandler);
+    This->contentHandler = contentHandler;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxxmlreader_getDTDHandler(
@@ -661,6 +667,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->lpVtbl = &saxreader_vtbl;
     reader->lpSAXXMLReaderVtbl = &isaxreader_vtbl;
     reader->ref = 1;
+    reader->contentHandler = NULL;
 
     *ppObj = &reader->lpVtbl;
 
