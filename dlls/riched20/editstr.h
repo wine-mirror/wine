@@ -169,8 +169,7 @@ typedef struct tagME_TableCell
 typedef struct tagME_Paragraph
 {
   PARAFORMAT2 *pFmt;
-  
-  BOOL bTable;                       /* this paragraph is a table row */
+
   struct tagME_TableCell *pCells;    /* list of cells and their properties */
   struct tagME_TableCell *pLastCell; /* points to the last cell in the list */
 

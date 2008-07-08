@@ -151,8 +151,6 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   new_para->member.para.nFlags = MEPF_REWRAP; /* FIXME copy flags (if applicable) */
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
   *new_para->member.para.pFmt = *run_para->member.para.pFmt;
-
-  new_para->member.para.bTable = run_para->member.para.bTable;
   
   /* Inherit previous cell definitions if any */
   new_para->member.para.pCells = NULL;
@@ -174,7 +172,9 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   }
     
   /* fix paragraph properties. FIXME only needed when called from RTF reader */
-  if (run_para->member.para.pCells && !run_para->member.para.bTable)
+  if (run_para->member.para.pCells &&
+      !(run_para->member.para.pFmt->wEffects & PFE_TABLE
+        && run_para->member.para.pFmt->dwMask & PFM_TABLE))
   {
     /* Paragraph does not have an \intbl keyword, so any table definition
      * stored is invalid */

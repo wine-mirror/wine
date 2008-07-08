@@ -310,7 +310,7 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, const ME_DisplayItem *para)
   if (!ME_StreamOutPrint(pStream, "\\pard"))
     return FALSE;
 
-  if (para->member.para.bTable)
+  if (fmt->dwMask & PFM_TABLE && fmt->wEffects & PFE_TABLE)
     strcat(props, "\\intbl");
   
   /* TODO: PFM_BORDER. M$ does not emit any keywords for these properties, and
@@ -376,8 +376,6 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, const ME_DisplayItem *para)
     strcat(props, "\\rtlpar");
   if (fmt->dwMask & PFM_SIDEBYSIDE && fmt->wEffects & PFE_SIDEBYSIDE)
     strcat(props, "\\sbys");
-  if (fmt->dwMask & PFM_TABLE && fmt->dwMask & PFE_TABLE)
-    strcat(props, "\\intbl");
   
   if (fmt->dwMask & PFM_OFFSET)
     sprintf(props + strlen(props), "\\li%d", fmt->dxOffset);
@@ -704,7 +702,9 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
             return FALSE;
           nChars--;
         } else if (p->member.run.nFlags & MERF_ENDPARA) {
-          if (pPara->member.para.bTable) {
+          if (pPara->member.para.pFmt->dwMask & PFM_TABLE
+              && pPara->member.para.pFmt->wEffects & PFE_TABLE)
+          {
             if (!ME_StreamOutPrint(pStream, "\\row \r\n"))
               return FALSE;
           } else {

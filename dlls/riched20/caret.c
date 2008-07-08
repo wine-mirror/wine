@@ -454,7 +454,9 @@ ME_InsertTableCellFromCursor(ME_TextEditor *editor, int nCursor)
     }
   }
   assert(run->type == diParagraph);
-  assert(run->member.para.bTable);
+  assert(run->member.para.pFmt);
+  assert(run->member.para.pFmt->dwMask & PFM_TABLE);
+  assert(run->member.para.pFmt->wEffects & PFE_TABLE);
   assert(run->member.para.pCells);
   p->member.run.pCell = run->member.para.pCells;
 }

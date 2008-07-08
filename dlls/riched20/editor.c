@@ -452,7 +452,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   {
   case rtfParDef: /* restores default paragraph attributes */
     fmt.dwMask = PFM_ALIGNMENT | PFM_BORDER | PFM_LINESPACING | PFM_TABSTOPS | PFM_OFFSET |
-        PFM_RIGHTINDENT | PFM_SPACEAFTER | PFM_SPACEBEFORE | PFM_STARTINDENT;
+        PFM_RIGHTINDENT | PFM_SPACEAFTER | PFM_SPACEBEFORE | PFM_STARTINDENT | PFM_TABLE;
     /* TODO: numbering, shading */
     fmt.wAlignment = PFA_LEFT;
     fmt.cTabCount = 0;
@@ -462,8 +462,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.bLineSpacingRule = 0;
     fmt.dySpaceBefore = fmt.dySpaceAfter = 0;
     fmt.dyLineSpacing = 0;
-    RTFFlushOutputBuffer(info);
-    ME_GetParagraph(info->editor->pCursors[0].pRun)->member.para.bTable = FALSE;
+    fmt.wEffects &= ~PFE_TABLE;
     break;
   case rtfInTable:
   {
@@ -472,8 +471,9 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     RTFFlushOutputBuffer(info);
     para = ME_GetParagraph(info->editor->pCursors[0].pRun);
     assert(para->member.para.pCells);
-    para->member.para.bTable = TRUE;
-    return;
+    fmt.dwMask |= PFM_TABLE;
+    fmt.wEffects |= PFE_TABLE;
+    break;
   }
   case rtfFirstIndent:
     ME_GetSelectionParaFormat(info->editor, &fmt);
