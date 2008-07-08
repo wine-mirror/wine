@@ -1146,8 +1146,6 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
     IMoniker* pMoniker;
     INT x;
 
-    BOOL final = FALSE;
-
     TRACE("(%p/%p)->(%p)\n", This, iface, ppinOut);
 
     if (TRACE_ON(quartz))
@@ -1239,14 +1237,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
             WARN("IEnumMediaTypes_Next (%x)\n", hr);
             break;
         }
-        if (!nbmt && !final)
-        {
-            final = TRUE;
-            tab[0] = tab[1] = GUID_NULL;
-            IEnumMediaTypes_Reset(penummt);
-            continue;
-        }
-        else if (!nbmt)
+        if (!nbmt)
         {
             hr = VFW_E_CANNOT_RENDER;
             break;
@@ -1266,7 +1257,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
             /* Try to find a suitable renderer with the same media type */
             tab[0] = mt->majortype;
             tab[1] = mt->subtype;
-            hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, !final, FALSE, 0, NULL, NULL, NULL);
+            hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
             if (FAILED(hr))
             {
                 WARN("Unable to enum filters (%x)\n", hr);
