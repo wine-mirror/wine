@@ -3755,7 +3755,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     This->glDescription.target           = GL_TEXTURE_2D;
 
     /* Non-power2 support */
-    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
+    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) || GL_SUPPORT(WINE_NORMALIZED_TEXRECT)) {
         pow2Width = This->currentDesc.Width;
         pow2Height = This->currentDesc.Height;
     } else {

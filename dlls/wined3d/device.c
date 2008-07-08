@@ -818,7 +818,16 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
        is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
        doesn't work in combination with ARB_TEXTURE_RECTANGLE.
     */
-    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE) &&
+    if(GL_SUPPORT(WINE_NORMALIZED_TEXRECT) && (Width != pow2Width || Height != pow2Height)) {
+        object->baseTexture.pow2Matrix[0] =  1.0;
+        object->baseTexture.pow2Matrix[5] =  1.0;
+        object->baseTexture.pow2Matrix[10] = 1.0;
+        object->baseTexture.pow2Matrix[15] = 1.0;
+        object->target = GL_TEXTURE_2D;
+        object->cond_np2 = TRUE;
+        pow2Width = Width;
+        pow2Height = Height;
+    } else if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE) &&
        (Width != pow2Width || Height != pow2Height) &&
        !((Format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE) && (wined3d_settings.rendertargetlock_mode == RTL_READTEX || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
     {
@@ -827,12 +836,14 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         object->baseTexture.pow2Matrix[10] = 1.0;
         object->baseTexture.pow2Matrix[15] = 1.0;
         object->target = GL_TEXTURE_RECTANGLE_ARB;
+        object->cond_np2 = TRUE;
     } else {
         object->baseTexture.pow2Matrix[0] =  (((float)Width)  / ((float)pow2Width));
         object->baseTexture.pow2Matrix[5] =  (((float)Height) / ((float)pow2Height));
         object->baseTexture.pow2Matrix[10] = 1.0;
         object->baseTexture.pow2Matrix[15] = 1.0;
         object->target = GL_TEXTURE_2D;
+        object->cond_np2 = FALSE;
     }
     TRACE(" xf(%f) yf(%f)\n", object->baseTexture.pow2Matrix[0], object->baseTexture.pow2Matrix[5]);
 
@@ -7043,7 +7054,8 @@ static void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAM
     }
     surface->currentDesc.Width = pPresentationParameters->BackBufferWidth;
     surface->currentDesc.Height = pPresentationParameters->BackBufferHeight;
-    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) || GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) || GL_SUPPORT(ARB_TEXTURE_RECTANGLE) ||
+        GL_SUPPORT(WINE_NORMALIZED_TEXRECT)) {
         surface->pow2Width = pPresentationParameters->BackBufferWidth;
         surface->pow2Height = pPresentationParameters->BackBufferHeight;
     } else {

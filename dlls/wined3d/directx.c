@@ -81,7 +81,7 @@ static const struct {
     {"GL_ARB_texture_env_dot3",             ARB_TEXTURE_ENV_DOT3,           0                           },
     {"GL_ARB_texture_float",                ARB_TEXTURE_FLOAT,              0                           },
     {"GL_ARB_texture_mirrored_repeat",      ARB_TEXTURE_MIRRORED_REPEAT,    0                           },
-    {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO,   0                           },
+    {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO,   MAKEDWORD_VERSION(2, 0)     },
     {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE,          0                           },
     {"GL_ARB_vertex_blend",                 ARB_VERTEX_BLEND,               0                           },
     {"GL_ARB_vertex_buffer_object",         ARB_VERTEX_BUFFER_OBJECT,       0                           },
@@ -3677,21 +3677,6 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
             gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
         }
 
-        /* MacOS advertises GL_ARB_texture_non_power_of_two on ATI r500 and earlier cards, although
-         * these cards only support GL_ARB_texture_rectangle(D3DPTEXTURECAPS_NONPOW2CONDITIONAL).
-         * If real NP2 textures are used, the driver falls back to software. So remove the supported
-         * flag for this extension
-         */
-        if(gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && gl_info->gl_vendor == VENDOR_ATI) {
-            if(gl_info->gl_card == CARD_ATI_RADEON_X700 || gl_info->gl_card == CARD_ATI_RADEON_X1600 ||
-               gl_info->gl_card == CARD_ATI_RADEON_9500 || gl_info->gl_card == CARD_ATI_RADEON_8500  ||
-               gl_info->gl_card == CARD_ATI_RADEON_7200 || gl_info->gl_card == CARD_ATI_RAGE_128PRO) {
-                TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing\n");
-                gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
-                gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
-            }
-        }
-
         /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
          * with fixed function fragment processing. Ideally this flag should be detected with a test shader
          * and OpenGL feedback mode, but some GL implementations (MacOS ATI at least, probably all MacOS ones)
@@ -3710,6 +3695,28 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
            (gl_info->gl_vendor == VENDOR_ATI && gl_info->gl_card != CARD_ATI_RADEON_X1600)) {
             TRACE("Enabling vertex texture coord fixes in vertex shaders\n");
             gl_info->set_texcoord_w = TRUE;
+        }
+    }
+
+    /* MacOS advertises GL_ARB_texture_non_power_of_two on ATI r500 and earlier cards, although
+     * these cards only support GL_ARB_texture_rectangle(D3DPTEXTURECAPS_NONPOW2CONDITIONAL).
+     * If real NP2 textures are used, the driver falls back to software. We could just remove the
+     * extension and use GL_ARB_texture_rectangle instead, but texture_rectangle is inconventient
+     * due to the non-normalized texture coordinates. Thus set an internal extension flag,
+     * GL_WINE_normalized_texrect, which signals the code that it can use non power of two textures
+     * as per GL_ARB_texture_non_power_of_two, but has to stick to the texture_rectangle limits.
+     *
+     * fglrx doesn't advertise GL_ARB_texture_non_power_of_two, but it advertises opengl 2.0 which
+     * has this extension promoted to core. The extension loading code sets this extension supported
+     * due to that, so this code works on fglrx as well.
+     */
+    if(gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && gl_info->gl_vendor == VENDOR_ATI) {
+        if(gl_info->gl_card == CARD_ATI_RADEON_X700 || gl_info->gl_card == CARD_ATI_RADEON_X1600 ||
+            gl_info->gl_card == CARD_ATI_RADEON_9500 || gl_info->gl_card == CARD_ATI_RADEON_8500  ||
+            gl_info->gl_card == CARD_ATI_RADEON_7200 || gl_info->gl_card == CARD_ATI_RAGE_128PRO) {
+            TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing\n");
+            gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+            gl_info->supported[WINE_NORMALIZED_TEXRECT] = TRUE;
         }
     }
 

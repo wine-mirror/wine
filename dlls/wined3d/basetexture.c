@@ -304,7 +304,9 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
             /* For a new texture we have to set the textures levels after binding the texture.
              * In theory this is all we should ever have to do, but because ATI's drivers are broken, we
              * also need to set the texture dimensions before the texture is set
-             * Beware that texture rectangles do not support mipmapping.
+             * Beware that texture rectangles do not support mipmapping, but set the maxmiplevel if we're
+             * relying on the partial GL_ARB_texture_non_power_of_two emulation with texture rectangles
+             * (ie, do not care for cond_np2 here, just look for GL_TEXTURE_RECTANGLE_ARB)
              */
             if(textureDimensions != GL_TEXTURE_RECTANGLE_ARB) {
                 TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
@@ -354,6 +356,12 @@ UINT WINAPI IWineD3DBaseTextureImpl_GetTextureDimensions(IWineD3DBaseTexture *if
     return WINED3D_OK;
 }
 
+BOOL WINAPI IWineD3DBaseTextureImpl_IsCondNP2(IWineD3DBaseTexture *iface){
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    FIXME("(%p) : This shouldn't be called\n", This);
+    return FALSE;
+}
+
 static inline GLenum warpLookupType(WINED3DSAMPLERSTATETYPE Type) {
     switch(Type) {
     case WINED3DSAMP_ADDRESSU:
@@ -368,7 +376,8 @@ static inline GLenum warpLookupType(WINED3DSAMPLERSTATETYPE Type) {
     }
 }
 
-static inline void apply_wrap(const GLint textureDimensions, const DWORD state, const GLint type) {
+static inline void apply_wrap(const GLint textureDimensions, const DWORD state, const GLint type,
+                              BOOL cond_np2) {
     GLint wrapParm;
 
     if (state < minLookup[WINELOOKUP_WARPPARAM] || state > maxLookup[WINELOOKUP_WARPPARAM]) {
@@ -377,7 +386,7 @@ static inline void apply_wrap(const GLint textureDimensions, const DWORD state, 
         if(textureDimensions==GL_TEXTURE_CUBE_MAP_ARB) {
             /* Cubemaps are always set to clamp, regardless of the sampler state. */
             wrapParm = GL_CLAMP_TO_EDGE;
-        } else if(textureDimensions==GL_TEXTURE_RECTANGLE_ARB) {
+        } else if(cond_np2) {
             if(state == WINED3DTADDRESS_WRAP) {
                 wrapParm = GL_CLAMP_TO_EDGE;
             } else {
@@ -398,24 +407,25 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     DWORD state;
     GLint textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
+    BOOL cond_np2 = IWineD3DBaseTexture_IsCondNP2(iface);
 
     IWineD3DBaseTexture_PreLoad(iface);
 
     if(samplerStates[WINED3DSAMP_ADDRESSU]      != This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]) {
         state = samplerStates[WINED3DSAMP_ADDRESSU];
-        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_S);
+        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_S, cond_np2);
         This->baseTexture.states[WINED3DTEXSTA_ADDRESSU] = state;
     }
 
     if(samplerStates[WINED3DSAMP_ADDRESSV]      != This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]) {
         state = samplerStates[WINED3DSAMP_ADDRESSV];
-        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_T);
+        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_T, cond_np2);
         This->baseTexture.states[WINED3DTEXSTA_ADDRESSV] = state;
     }
 
     if(samplerStates[WINED3DSAMP_ADDRESSW]      != This->baseTexture.states[WINED3DTEXSTA_ADDRESSW]) {
         state = samplerStates[WINED3DSAMP_ADDRESSW];
-        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_R);
+        apply_wrap(textureDimensions, state, GL_TEXTURE_WRAP_R, cond_np2);
         This->baseTexture.states[WINED3DTEXSTA_ADDRESSW] = state;
     }
 
@@ -441,22 +451,29 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
             glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
             /* We need to reset the Anisotropic filtering state when we change the mag filter to WINED3DTEXF_ANISOTROPIC (this seems a bit weird, check the documentation to see how it should be switched off. */
             if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && WINED3DTEXF_ANISOTROPIC == state &&
-                textureDimensions != GL_TEXTURE_RECTANGLE_ARB) {
+                !cond_np2) {
                 glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, samplerStates[WINED3DSAMP_MAXANISOTROPY]);
             }
             This->baseTexture.states[WINED3DTEXSTA_MAGFILTER] = state;
         }
     }
 
-    if(textureDimensions != GL_TEXTURE_RECTANGLE_ARB &&
-       (samplerStates[WINED3DSAMP_MINFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MINFILTER] ||
+    if((samplerStates[WINED3DSAMP_MINFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MINFILTER] ||
         samplerStates[WINED3DSAMP_MIPFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] ||
         samplerStates[WINED3DSAMP_MAXMIPLEVEL]   != This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL])) {
         GLint glValue;
+        DWORD mipfilter, minfilter;
 
         This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = samplerStates[WINED3DSAMP_MIPFILTER];
         This->baseTexture.states[WINED3DTEXSTA_MINFILTER] = samplerStates[WINED3DSAMP_MINFILTER];
         This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL] = samplerStates[WINED3DSAMP_MAXMIPLEVEL];
+        if(cond_np2) {
+            mipfilter = WINED3DTEXF_NONE;
+            minfilter = WINED3DTEXF_POINT;
+        } else {
+            mipfilter = samplerStates[WINED3DSAMP_MIPFILTER];
+            minfilter = samplerStates[WINED3DSAMP_MINFILTER];
+        }
 
         if (This->baseTexture.states[WINED3DTEXSTA_MINFILTER] > WINED3DTEXF_ANISOTROPIC ||
             This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] > WINED3DTEXF_LINEAR)
@@ -467,8 +484,8 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                   This->baseTexture.states[WINED3DTEXSTA_MIPFILTER]);
         }
         glValue = (*This->baseTexture.minMipLookup)
-                [min(max(samplerStates[WINED3DSAMP_MINFILTER],WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC)]
-                [min(max(samplerStates[WINED3DSAMP_MIPFILTER],WINED3DTEXF_NONE), WINED3DTEXF_LINEAR)];
+                [min(max(minfilter,WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC)]
+                [min(max(mipfilter,WINED3DTEXF_NONE), WINED3DTEXF_LINEAR)];
 
         TRACE("ValueMIN=%d, ValueMIP=%d, setting MINFILTER to %x\n",
               samplerStates[WINED3DSAMP_MINFILTER],
@@ -476,18 +493,20 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
         glTexParameteri(textureDimensions, GL_TEXTURE_MIN_FILTER, glValue);
         checkGLcall("glTexParameter GL_TEXTURE_MIN_FILTER, ...");
 
-        if(This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] == WINED3DTEXF_NONE) {
-            glValue = 0;
-        } else if(This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL] >= This->baseTexture.levels) {
-            glValue = This->baseTexture.levels - 1;
-        } else {
-            glValue = This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL];
+        if(!cond_np2) {
+            if(This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] == WINED3DTEXF_NONE) {
+                glValue = 0;
+            } else if(This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL] >= This->baseTexture.levels) {
+                glValue = This->baseTexture.levels - 1;
+            } else {
+                glValue = This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL];
+            }
+            glTexParameteri(textureDimensions, GL_TEXTURE_BASE_LEVEL, glValue);
         }
-        glTexParameteri(textureDimensions, GL_TEXTURE_BASE_LEVEL, glValue);
     }
 
     if(samplerStates[WINED3DSAMP_MAXANISOTROPY] != This->baseTexture.states[WINED3DTEXSTA_MAXANISOTROPY]) {
-        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && textureDimensions != GL_TEXTURE_RECTANGLE_ARB) {
+        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && !cond_np2) {
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, samplerStates[WINED3DSAMP_MAXANISOTROPY]);
             checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
         } else {
@@ -528,6 +547,7 @@ static const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
     IWineD3DBaseTextureImpl_BindTexture,
     IWineD3DBaseTextureImpl_UnBindTexture,
     IWineD3DBaseTextureImpl_GetTextureDimensions,
+    IWineD3DBaseTextureImpl_IsCondNP2,
     IWineD3DBaseTextureImpl_ApplyStateChanges
 
 };

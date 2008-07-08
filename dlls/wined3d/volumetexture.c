@@ -213,6 +213,13 @@ static UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolume
     return GL_TEXTURE_3D;
 }
 
+static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *iface) {
+    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    TRACE("(%p)\n", This);
+
+    return FALSE;
+}
+
 static void WINAPI IWineD3DVolumeTextureImpl_ApplyStateChanges(IWineD3DVolumeTexture *iface,
                                                         const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
                                                         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) {
@@ -330,6 +337,7 @@ const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_BindTexture,
     IWineD3DVolumeTextureImpl_UnBindTexture,
     IWineD3DVolumeTextureImpl_GetTextureDimensions,
+    IWineD3DVolumeTextureImpl_IsCondNP2,
     IWineD3DVolumeTextureImpl_ApplyStateChanges,
     /* volume texture */
     IWineD3DVolumeTextureImpl_Destroy,

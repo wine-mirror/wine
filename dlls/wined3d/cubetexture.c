@@ -267,6 +267,13 @@ static UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeText
     return GL_TEXTURE_CUBE_MAP_ARB;
 }
 
+static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface) {
+    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
+    TRACE("(%p)\n", This);
+
+    return FALSE;
+}
+
 static void WINAPI IWineD3DCubeTextureImpl_ApplyStateChanges(IWineD3DCubeTexture *iface, 
                                                         const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], 
                                                         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) {
@@ -404,6 +411,7 @@ const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_BindTexture,
     IWineD3DCubeTextureImpl_UnBindTexture,
     IWineD3DCubeTextureImpl_GetTextureDimensions,
+    IWineD3DCubeTextureImpl_IsCondNP2,
     IWineD3DCubeTextureImpl_ApplyStateChanges,
     /* IWineD3DCubeTexture */
     IWineD3DCubeTextureImpl_Destroy,

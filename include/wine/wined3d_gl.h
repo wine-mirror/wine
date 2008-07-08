@@ -3367,6 +3367,9 @@ typedef enum _GL_SupportedExt {
   SGI_VIDEO_SYNC,
   SGIS_GENERATE_MIPMAP,
 
+  /* Internally used */
+  WINE_NORMALIZED_TEXRECT,
+
   /* WGL extensions */
   WGL_ARB_PBUFFER,
   WGL_WINE_PIXEL_FORMAT_PASSTHROUGH,

@@ -813,6 +813,7 @@ DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
     STDMETHOD(BindTexture)(THIS) PURE;
     STDMETHOD(UnBindTexture)(THIS) PURE;
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
+    STDMETHOD_(BOOL, IsCondNP2)(THIS) PURE;
     STDMETHOD_(void, ApplyStateChanges)(THIS_ const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
 
 };
@@ -848,6 +849,7 @@ DECLARE_INTERFACE_(IWineD3DBaseTexture,IWineD3DResource)
 #define IWineD3DBaseTexture_BindTexture(p)             (p)->lpVtbl->BindTexture(p)
 #define IWineD3DBaseTexture_UnBindTexture(p)           (p)->lpVtbl->UnBindTexture(p)
 #define IWineD3DBaseTexture_GetTextureDimensions(p)    (p)->lpVtbl->GetTextureDimensions(p)
+#define IWineD3DBaseTexture_IsCondNP2(p)               (p)->lpVtbl->IsCondNP2(p)
 #define IWineD3DBaseTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 #endif
 
@@ -885,6 +887,7 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
     STDMETHOD(BindTexture)(THIS) PURE;
     STDMETHOD(UnBindTexture)(THIS) PURE;
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
+    STDMETHOD_(BOOL, IsCondNP2)(THIS) PURE;
     STDMETHOD_(void, ApplyStateChanges)(THIS_ const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DTexture methods ***/
     STDMETHOD_(void, Destroy)(THIS_ D3DCB_DESTROYSURFACEFN pFn) PURE;
@@ -925,6 +928,7 @@ DECLARE_INTERFACE_(IWineD3DTexture,IWineD3DBaseTexture)
 #define IWineD3DTexture_BindTexture(p)             (p)->lpVtbl->BindTexture(p)
 #define IWineD3DTexture_UnBindTexture(p)           (p)->lpVtbl->UnBindTexture(p)
 #define IWineD3DTexture_GetTextureDimensions(p)    (p)->lpVtbl->GetTextureDimensions(p)
+#define IWineD3DTexture_IsCondNP2(p)               (p)->lpVtbl->IsCondNP2(p)
 #define IWineD3DTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 /*** IWineD3DTexture methods ***/
 #define IWineD3DTexture_Destroy(p,a)               (p)->lpVtbl->Destroy(p,a)
@@ -969,6 +973,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     STDMETHOD(BindTexture)(THIS) PURE;
     STDMETHOD(UnBindTexture)(THIS) PURE;
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
+    STDMETHOD_(BOOL, IsCondNP2)(THIS) PURE;
     STDMETHOD_(void, ApplyStateChanges)(THIS_ DWORD const textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DCubeTexture methods ***/
     STDMETHOD_(void, Destroy)(THIS_ D3DCB_DESTROYSURFACEFN pFn) PURE;
@@ -1009,6 +1014,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
 #define IWineD3DCubeTexture_BindTexture(p)              (p)->lpVtbl->BindTexture(p)
 #define IWineD3DCubeTexture_UnBindTexture(p)            (p)->lpVtbl->UnBindTexture(p)
 #define IWineD3DCubeTexture_GetTextureDimensions(p)     (p)->lpVtbl->GetTextureDimensions(p)
+#define IWineD3DCubeTexture_IsCondNP2(p)               (p)->lpVtbl->IsCondNP2(p)
 #define IWineD3DCubeTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 /*** IWineD3DCubeTexture methods ***/
 #define IWineD3DCubeTexture_Destroy(p,a)               (p)->lpVtbl->Destroy(p,a)
@@ -1054,6 +1060,7 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
     STDMETHOD(BindTexture)(THIS) PURE;
     STDMETHOD(UnBindTexture)(THIS) PURE;
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
+    STDMETHOD_(BOOL, IsCondNP2)(THIS) PURE;
     STDMETHOD_(void, ApplyStateChanges)(THIS_ const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DVolumeTexture methods ***/
     STDMETHOD_(void, Destroy)(THIS_ D3DCB_DESTROYVOLUMEFN pFn) PURE;
@@ -1094,6 +1101,7 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
 #define IWineD3DVolumeTexture_BindTexture(p)              (p)->lpVtbl->BindTexture(p)
 #define IWineD3DVolumeTexture_UnBindTexture(p)            (p)->lpVtbl->UnBindTexture(p)
 #define IWineD3DVolumeTexture_GetTextureDimensions(p)     (p)->lpVtbl->GetTextureDimensions(p)
+#define IWineD3DVolumeTexture_IsCondNP2(p)               (p)->lpVtbl->IsCondNP2(p)
 #define IWineD3DVolumeTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 /*** IWineD3DVolumeTexture methods ***/
 #define IWineD3DVolumeTexture_Destroy(p,a)               (p)->lpVtbl->Destroy(p,a)
