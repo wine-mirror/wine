@@ -7,6 +7,7 @@ IMPORTS   = oleaut32 ole32 user32 kernel32
 
 CTESTS = \
 	domdoc.c \
+	saxreader.c \
 	schema.c \
 	xmldoc.c \
 	xmlelem.c
