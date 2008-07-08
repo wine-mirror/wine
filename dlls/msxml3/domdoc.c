@@ -49,13 +49,44 @@ static const WCHAR SZ_PROPERTY_SELECTION_LANGUAGE[] = {'S','e','l','e','c','t','
 static const WCHAR SZ_VALUE_XPATH[] = {'X','P','a','t','h',0};
 static const WCHAR SZ_VALUE_XSLPATTERN[] = {'X','S','L','P','a','t','t','e','r','n',0};
 
-typedef struct {
+typedef struct bsc_t bsc_t;
+
+typedef struct _domdoc
+{
+    const struct IXMLDOMDocument2Vtbl *lpVtbl;
+    const struct IPersistStreamVtbl   *lpvtblIPersistStream;
+    const struct IObjectWithSiteVtbl  *lpvtblIObjectWithSite;
+    const struct IObjectSafetyVtbl    *lpvtblIObjectSafety;
+    LONG ref;
+    VARIANT_BOOL async;
+    VARIANT_BOOL validating;
+    VARIANT_BOOL resolving;
+    VARIANT_BOOL preserving;
+    BOOL bUseXPath;
+    IUnknown *node_unk;
+    IXMLDOMNode *node;
+    IXMLDOMSchemaCollection *schema;
+    bsc_t *bsc;
+    HRESULT error;
+
+    /* IPersistStream */
+    IStream *stream;
+
+    /* IObjectWithSite*/
+    IUnknown *site;
+
+    /* IObjectSafety */
+    DWORD safeopt;
+} domdoc;
+
+struct bsc_t {
     const struct IBindStatusCallbackVtbl *lpVtbl;
 
     LONG ref;
 
+    domdoc *doc;
     IBinding *binding;
-} bsc_t;
+};
 
 static inline bsc_t *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
 {
@@ -101,6 +132,8 @@ static ULONG WINAPI bsc_Release(
     if(!ref) {
         if(This->binding)
             IBinding_Release(This->binding);
+        if(This->doc && This->doc->bsc == This)
+            This->doc->bsc = NULL;
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -206,44 +239,17 @@ static const struct IBindStatusCallbackVtbl bsc_vtbl =
     bsc_OnObjectAvailable
 };
 
-static bsc_t *create_bsc(void)
+static bsc_t *create_bsc(domdoc *doc)
 {
     bsc_t *bsc = HeapAlloc(GetProcessHeap(), 0, sizeof(bsc));
 
     bsc->lpVtbl = &bsc_vtbl;
     bsc->ref = 1;
+    bsc->doc = doc;
     bsc->binding = NULL;
 
     return bsc;
 }
-
-typedef struct _domdoc
-{
-    const struct IXMLDOMDocument2Vtbl *lpVtbl;
-    const struct IPersistStreamVtbl   *lpvtblIPersistStream;
-    const struct IObjectWithSiteVtbl  *lpvtblIObjectWithSite;
-    const struct IObjectSafetyVtbl    *lpvtblIObjectSafety;
-    LONG ref;
-    VARIANT_BOOL async;
-    VARIANT_BOOL validating;
-    VARIANT_BOOL resolving;
-    VARIANT_BOOL preserving;
-    BOOL bUseXPath;
-    IUnknown *node_unk;
-    IXMLDOMNode *node;
-    IXMLDOMSchemaCollection *schema;
-    HRESULT error;
-
-     /* IPersistStream */
-     IStream *stream;
-
-     /* IObjectWithSite*/
-     IUnknown *site;
-
-     /* IObjectSafety */
-     DWORD safeopt;
-
-} domdoc;
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
 {
@@ -481,6 +487,13 @@ static ULONG WINAPI domdoc_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
+        if(This->bsc) {
+            if(This->bsc->binding)
+                IBinding_Abort(This->bsc->binding);
+            This->bsc->doc = NULL;
+            IBindStatusCallback_Release((IBindStatusCallback*)&This->bsc->lpVtbl);
+        }
+
         if (This->site)
             IUnknown_Release( This->site );
         IUnknown_Release( This->node_unk );
@@ -1336,7 +1349,7 @@ static xmlDocPtr doparse( char *ptr, int len )
 #endif
 }
 
-static xmlDocPtr doread( LPWSTR filename )
+static xmlDocPtr doread( domdoc *This, LPWSTR filename )
 {
     xmlDocPtr xmldoc = NULL;
     HRESULT hr;
@@ -1345,7 +1358,6 @@ static xmlDocPtr doread( LPWSTR filename )
     WCHAR url[INTERNET_MAX_URL_LENGTH];
     BYTE buf[4096];
     DWORD read, written;
-    bsc_t *bsc;
 
     TRACE("%s\n", debugstr_w( filename ));
 
@@ -1368,12 +1380,19 @@ static xmlDocPtr doread( LPWSTR filename )
         filename = url;
     }
 
-    bsc = create_bsc();
-
     hr = CreateBindCtx(0, &pbc);
     if(SUCCEEDED(hr))
     {
-        hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)&bsc->lpVtbl, NULL, 0);
+        if(This->bsc) {
+            if(This->bsc->binding)
+                IBinding_Abort(This->bsc->binding);
+            This->bsc->doc = NULL;
+            IBindStatusCallback_Release((IBindStatusCallback*)&This->bsc->lpVtbl);
+        }
+
+        This->bsc = create_bsc(This);
+
+        hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)&This->bsc->lpVtbl, NULL, 0);
         if(SUCCEEDED(hr))
         {
             IMoniker *moniker;
@@ -1415,7 +1434,6 @@ static xmlDocPtr doread( LPWSTR filename )
             GlobalUnlock(hglobal);
         }
     }
-    IBindStatusCallback_Release((IBindStatusCallback*)&bsc->lpVtbl);
     IStream_Release(memstream);
     IStream_Release(stream);
     return xmldoc;
@@ -1501,7 +1519,7 @@ static HRESULT WINAPI domdoc_load(
 
     if ( filename )
     {
-        xmldoc = doread( filename );
+        xmldoc = doread( This, filename );
     
         if ( !xmldoc )
             This->error = E_FAIL;
@@ -2195,6 +2213,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->stream = NULL;
     doc->site = NULL;
     doc->safeopt = 0;
+    doc->bsc = NULL;
 
     xmldoc = xmlNewDoc(NULL);
     if(!xmldoc)
