@@ -157,20 +157,20 @@ static inline void* do_call_func2(void *func, void *_this, const void* arg)
 #else
 static void* do_call_func1(void *func, void *_this)
 {
-  void* ret;
-  __asm__ __volatile__ ("call *%1"
-                        : "=a" (ret)
-                        : "g" (func), "c" (_this)
-                        : "memory" );
+  void *ret, *dummy;
+  __asm__ __volatile__ ("call *%2"
+                        : "=a" (ret), "=c" (dummy)
+                        : "g" (func), "1" (_this)
+                        : "edx", "memory" );
   return ret;
 }
 static void* do_call_func2(void *func, void *_this, const void* arg)
 {
-  void* ret;
-  __asm__ __volatile__ ("pushl %2\n\tcall *%1"
-                        : "=a" (ret)
-                        : "r" (func), "g" (arg), "c" (_this)
-                        : "memory" );
+  void *ret, *dummy;
+  __asm__ __volatile__ ("pushl %3\n\tcall *%2"
+                        : "=a" (ret), "=c" (dummy)
+                        : "r" (func), "r" (arg), "1" (_this)
+                        : "edx", "memory" );
   return ret;
 }
 #endif
