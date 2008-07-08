@@ -140,7 +140,7 @@ static int CALLBACK disableowner_callback(HWND hwnd, UINT msg, LPARAM lparam)
     {
     case PSCB_INITIALIZED:
       {
-        todo_wine ok(IsWindowEnabled(parent) == 0, "parent window should be disabled\n");
+        ok(IsWindowEnabled(parent) == 0, "parent window should be disabled\n");
         PostQuitMessage(0);
         return FALSE;
       }

@@ -2784,17 +2784,21 @@ static INT do_loop(const PropSheetInfo *psInfo)
 static INT_PTR PROPSHEET_PropertySheet(PropSheetInfo* psInfo, BOOL unicode)
 {
   INT_PTR bRet = 0;
+  HWND parent = NULL;
   if (psInfo->active_page >= psInfo->nPages) psInfo->active_page = 0;
   TRACE("startpage: %d of %d pages\n", psInfo->active_page, psInfo->nPages);
 
   psInfo->unicode = unicode;
   psInfo->ended = FALSE;
 
+  if(!psInfo->isModeless)
+  {
+      parent = psInfo->ppshheader.hwndParent;
+      if (parent) EnableWindow(parent, FALSE);
+  }
   bRet = PROPSHEET_CreateDialog(psInfo);
   if(!psInfo->isModeless)
   {
-      HWND parent = GetParent(psInfo->hwnd);
-      if (parent) EnableWindow(parent, FALSE);
       bRet = do_loop(psInfo);
       if (parent) EnableWindow(parent, TRUE);
   }
