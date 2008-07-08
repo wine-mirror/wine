@@ -47,6 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _saxreader
 {
     const struct IVBSAXXMLReaderVtbl *lpVtbl;
+    const struct ISAXXMLReaderVtbl *lpSAXXMLReaderVtbl;
     LONG ref;
     xmlSAXHandler sax;
 } saxreader;
@@ -56,6 +57,12 @@ static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
     return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpVtbl));
 }
 
+static inline saxreader *impl_from_ISAXXMLReader( ISAXXMLReader *iface )
+{
+    return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpSAXXMLReaderVtbl));
+}
+
+/*** IVBSAXXMLReader interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI saxxmlreader_QueryInterface(IVBSAXXMLReader* iface, REFIID riid, void **ppvObject)
 {
@@ -70,6 +77,10 @@ static HRESULT WINAPI saxxmlreader_QueryInterface(IVBSAXXMLReader* iface, REFIID
          IsEqualGUID( riid, &IID_IVBSAXXMLReader ))
     {
         *ppvObject = iface;
+    }
+    else if( IsEqualGUID( riid, &IID_ISAXXMLReader ))
+    {
+        *ppvObject = (ISAXXMLReader*)&This->lpSAXXMLReaderVtbl;
     }
     else
     {
@@ -403,6 +414,236 @@ static const struct IVBSAXXMLReaderVtbl saxreader_vtbl =
     saxxmlreader_parseURL
 };
 
+/*** ISAXXMLReader interface ***/
+/*** IUnknown methods ***/
+static HRESULT WINAPI isaxxmlreader_QueryInterface(ISAXXMLReader* iface, REFIID riid, void **ppvObject)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+    return saxxmlreader_QueryInterface((IVBSAXXMLReader*)&This->lpVtbl, riid, ppvObject);
+}
+
+static ULONG WINAPI isaxxmlreader_AddRef(ISAXXMLReader* iface)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+    return saxxmlreader_AddRef((IVBSAXXMLReader*)&This->lpVtbl);
+}
+
+static ULONG WINAPI isaxxmlreader_Release(ISAXXMLReader* iface)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+    return saxxmlreader_Release((IVBSAXXMLReader*)&This->lpVtbl);
+}
+
+/*** ISAXXMLReader methods ***/
+static HRESULT WINAPI isaxxmlreader_getFeature(
+        ISAXXMLReader* iface,
+        const WCHAR *pFeature,
+        VARIANT_BOOL *pValue)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(pFeature), pValue);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_putFeature(
+        ISAXXMLReader* iface,
+        const WCHAR *pFeature,
+        VARIANT_BOOL vfValue)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(pFeature), vfValue);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_getProperty(
+        ISAXXMLReader* iface,
+        const WCHAR *pProp,
+        VARIANT *pValue)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(pProp), pValue);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_putProperty(
+        ISAXXMLReader* iface,
+        const WCHAR *pProp,
+        VARIANT value)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(pProp));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_getEntityResolver(
+        ISAXXMLReader* iface,
+        ISAXEntityResolver **ppEntityResolver)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, ppEntityResolver);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_putEntityResolver(
+        ISAXXMLReader* iface,
+        ISAXEntityResolver *pEntityResolver)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pEntityResolver);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_getContentHandler(
+        ISAXXMLReader* iface,
+        ISAXContentHandler **pContentHandler)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pContentHandler);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_putContentHandler(
+        ISAXXMLReader* iface,
+        ISAXContentHandler *contentHandler)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, contentHandler);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_getDTDHandler(
+        ISAXXMLReader* iface,
+        ISAXDTDHandler **pDTDHandler)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pDTDHandler);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_putDTDHandler(
+        ISAXXMLReader* iface,
+        ISAXDTDHandler *pDTDHandler)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pDTDHandler);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_getErrorHandler(
+        ISAXXMLReader* iface,
+        ISAXErrorHandler **pErrorHandler)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pErrorHandler);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_putErrorHandler(
+        ISAXXMLReader* iface,
+        ISAXErrorHandler *errorHandler)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, errorHandler);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_getBaseURL(
+        ISAXXMLReader* iface,
+        const WCHAR **pBaseUrl)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pBaseUrl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_putBaseURL(
+        ISAXXMLReader* iface,
+        const WCHAR *pBaseUrl)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(pBaseUrl));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_getSecureBaseURL(
+        ISAXXMLReader* iface,
+        const WCHAR **pSecureBaseUrl)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pSecureBaseUrl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_putSecureBaseURL(
+        ISAXXMLReader* iface,
+        const WCHAR *secureBaseUrl)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(secureBaseUrl));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_parse(
+        ISAXXMLReader* iface,
+        VARIANT varInput)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxxmlreader_parseURL(
+        ISAXXMLReader* iface,
+        const WCHAR *url)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+
+    FIXME("(%p)->(%s) stub\n", This, debugstr_w(url));
+    return E_NOTIMPL;
+}
+
+static const struct ISAXXMLReaderVtbl isaxreader_vtbl =
+{
+    isaxxmlreader_QueryInterface,
+    isaxxmlreader_AddRef,
+    isaxxmlreader_Release,
+    isaxxmlreader_getFeature,
+    isaxxmlreader_putFeature,
+    isaxxmlreader_getProperty,
+    isaxxmlreader_putProperty,
+    isaxxmlreader_getEntityResolver,
+    isaxxmlreader_putEntityResolver,
+    isaxxmlreader_getContentHandler,
+    isaxxmlreader_putContentHandler,
+    isaxxmlreader_getDTDHandler,
+    isaxxmlreader_putDTDHandler,
+    isaxxmlreader_getErrorHandler,
+    isaxxmlreader_putErrorHandler,
+    isaxxmlreader_getBaseURL,
+    isaxxmlreader_putBaseURL,
+    isaxxmlreader_getSecureBaseURL,
+    isaxxmlreader_putSecureBaseURL,
+    isaxxmlreader_parse,
+    isaxxmlreader_parseURL
+};
+
 HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     saxreader *reader;
@@ -414,6 +655,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
         return E_OUTOFMEMORY;
 
     reader->lpVtbl = &saxreader_vtbl;
+    reader->lpSAXXMLReaderVtbl = &isaxreader_vtbl;
     reader->ref = 1;
 
     *ppObj = &reader->lpVtbl;
