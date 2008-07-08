@@ -280,6 +280,30 @@ GpStatus WINGDIPAPI GdipSetMatrixElements(GpMatrix *matrix, REAL m11, REAL m12,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipShearMatrix(GpMatrix *matrix, REAL shearX, REAL shearY,
+    GpMatrixOrder order)
+{
+    REAL shear[6];
+
+    if(!matrix)
+        return InvalidParameter;
+
+    /* prepare transformation matrix */
+    shear[0] = 1.0;
+    shear[1] = shearY;
+    shear[2] = shearX;
+    shear[3] = 1.0;
+    shear[4] = 0.0;
+    shear[5] = 0.0;
+
+    if(order == MatrixOrderAppend)
+        matrix_multiply(matrix->matrix, shear, matrix->matrix);
+    else
+        matrix_multiply(shear, matrix->matrix, matrix->matrix);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipTransformMatrixPoints(GpMatrix *matrix, GpPointF *pts,
                                               INT count)
 {

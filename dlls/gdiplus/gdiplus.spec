@@ -598,7 +598,7 @@
 @ stdcall GdipSetTextureTransform(ptr ptr)
 @ stub GdipSetTextureWrapMode
 @ stdcall GdipSetWorldTransform(ptr ptr)
-@ stub GdipShearMatrix
+@ stdcall GdipShearMatrix(ptr long long long)
 @ stdcall GdipStartPathFigure(ptr)
 @ stub GdipStringFormatGetGenericDefault
 @ stub GdipStringFormatGetGenericTypographic
