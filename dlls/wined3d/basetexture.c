@@ -462,18 +462,10 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
         samplerStates[WINED3DSAMP_MIPFILTER]     != This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] ||
         samplerStates[WINED3DSAMP_MAXMIPLEVEL]   != This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL])) {
         GLint glValue;
-        DWORD mipfilter, minfilter;
 
         This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = samplerStates[WINED3DSAMP_MIPFILTER];
         This->baseTexture.states[WINED3DTEXSTA_MINFILTER] = samplerStates[WINED3DSAMP_MINFILTER];
         This->baseTexture.states[WINED3DTEXSTA_MAXMIPLEVEL] = samplerStates[WINED3DSAMP_MAXMIPLEVEL];
-        if(cond_np2) {
-            mipfilter = WINED3DTEXF_NONE;
-            minfilter = WINED3DTEXF_POINT;
-        } else {
-            mipfilter = samplerStates[WINED3DSAMP_MIPFILTER];
-            minfilter = samplerStates[WINED3DSAMP_MINFILTER];
-        }
 
         if (This->baseTexture.states[WINED3DTEXSTA_MINFILTER] > WINED3DTEXF_ANISOTROPIC ||
             This->baseTexture.states[WINED3DTEXSTA_MIPFILTER] > WINED3DTEXF_LINEAR)
@@ -484,8 +476,8 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
                   This->baseTexture.states[WINED3DTEXSTA_MIPFILTER]);
         }
         glValue = (*This->baseTexture.minMipLookup)
-                [min(max(minfilter,WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC)]
-                [min(max(mipfilter,WINED3DTEXF_NONE), WINED3DTEXF_LINEAR)];
+                [min(max(samplerStates[WINED3DSAMP_MINFILTER],WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC)]
+                [min(max(samplerStates[WINED3DSAMP_MIPFILTER],WINED3DTEXF_NONE), WINED3DTEXF_LINEAR)];
 
         TRACE("ValueMIN=%d, ValueMIP=%d, setting MINFILTER to %x\n",
               samplerStates[WINED3DSAMP_MINFILTER],
