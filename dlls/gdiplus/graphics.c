@@ -1045,6 +1045,18 @@ GpStatus WINGDIPAPI GdipDrawBeziersI(GpGraphics *graphics, GpPen *pen,
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipDrawClosedCurve(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPointF *points, INT count)
+{
+    return GdipDrawClosedCurve2(graphics, pen, points, count, 1.0);
+}
+
+GpStatus WINGDIPAPI GdipDrawClosedCurveI(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPoint *points, INT count)
+{
+    return GdipDrawClosedCurve2I(graphics, pen, points, count, 1.0);
+}
+
 GpStatus WINGDIPAPI GdipDrawClosedCurve2(GpGraphics *graphics, GpPen *pen,
     GDIPCONST GpPointF *points, INT count, REAL tension)
 {

@@ -161,8 +161,8 @@
 @ stub GdipDrawCachedBitmap
 @ stdcall GdipDrawClosedCurve2(ptr ptr ptr long long)
 @ stdcall GdipDrawClosedCurve2I(ptr ptr ptr long long)
-@ stub GdipDrawClosedCurve
-@ stub GdipDrawClosedCurveI
+@ stdcall GdipDrawClosedCurve(ptr ptr ptr long)
+@ stdcall GdipDrawClosedCurveI(ptr ptr ptr long)
 @ stdcall GdipDrawCurve2(ptr ptr ptr long long)
 @ stdcall GdipDrawCurve2I(ptr ptr ptr long long)
 @ stub GdipDrawCurve3
