@@ -51,7 +51,14 @@ static const WCHAR SZ_VALUE_XSLPATTERN[] = {'X','S','L','P','a','t','t','e','r',
 
 typedef struct {
     const struct IBindStatusCallbackVtbl *lpVtbl;
-} bsc;
+
+    LONG ref;
+} bsc_t;
+
+static inline bsc_t *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
+{
+    return (bsc_t *)((char*)iface - FIELD_OFFSET(bsc_t, lpVtbl));
+}
 
 static HRESULT WINAPI bsc_QueryInterface(
     IBindStatusCallback *iface,
@@ -73,13 +80,26 @@ static HRESULT WINAPI bsc_QueryInterface(
 static ULONG WINAPI bsc_AddRef(
     IBindStatusCallback *iface )
 {
-    return 2;
+    bsc_t *This = impl_from_IBindStatusCallback(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
 static ULONG WINAPI bsc_Release(
     IBindStatusCallback *iface )
 {
-    return 1;
+    bsc_t *This = impl_from_IBindStatusCallback(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
 }
 
 static HRESULT WINAPI bsc_OnStartBinding(
@@ -165,7 +185,15 @@ static const struct IBindStatusCallbackVtbl bsc_vtbl =
     bsc_OnObjectAvailable
 };
 
-static bsc domdoc_bsc = { &bsc_vtbl };
+static bsc_t *create_bsc(void)
+{
+    bsc_t *bsc = HeapAlloc(GetProcessHeap(), 0, sizeof(bsc));
+
+    bsc->lpVtbl = &bsc_vtbl;
+    bsc->ref = 1;
+
+    return bsc;
+}
 
 typedef struct _domdoc
 {
@@ -1295,6 +1323,7 @@ static xmlDocPtr doread( LPWSTR filename )
     WCHAR url[INTERNET_MAX_URL_LENGTH];
     BYTE buf[4096];
     DWORD read, written;
+    bsc_t *bsc;
 
     TRACE("%s\n", debugstr_w( filename ));
 
@@ -1317,10 +1346,12 @@ static xmlDocPtr doread( LPWSTR filename )
         filename = url;
     }
 
+    bsc = create_bsc();
+
     hr = CreateBindCtx(0, &pbc);
     if(SUCCEEDED(hr))
     {
-        hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)&domdoc_bsc.lpVtbl, NULL, 0);
+        hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)&bsc->lpVtbl, NULL, 0);
         if(SUCCEEDED(hr))
         {
             IMoniker *moniker;
@@ -1362,6 +1393,7 @@ static xmlDocPtr doread( LPWSTR filename )
             GlobalUnlock(hglobal);
         }
     }
+    IBindStatusCallback_Release((IBindStatusCallback*)&bsc->lpVtbl);
     IStream_Release(memstream);
     IStream_Release(stream);
     return xmldoc;
