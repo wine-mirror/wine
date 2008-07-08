@@ -2085,7 +2085,12 @@ static void test_VarSub(void)
                     leftvt == VT_RECORD || rightvt == VT_RECORD)
                 {
                     if (leftvt == VT_RECORD && rightvt == VT_I8)
-                        expectedhres = DISP_E_TYPEMISMATCH;
+                    {
+                        if (HAVE_OLEAUT32_I8)
+                            expectedhres = DISP_E_TYPEMISMATCH;
+                        else
+                            expectedhres = DISP_E_BADVARTYPE;
+                    }
                     else if (leftvt < VT_UI1 && rightvt == VT_RECORD)
                         expectedhres = DISP_E_TYPEMISMATCH;
                     else if (leftvt >= VT_UI1 && rightvt == VT_RECORD)
@@ -5412,7 +5417,8 @@ static void test_VarCat(void)
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     hres = VarCmp(&result,&expected,lcid,0);
-    ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08x\n", hres);
+    ok(hres == VARCMP_EQ ||
+       broken(hres == VARCMP_GT), "Expected VARCMP_EQ, got %08x\n", hres);
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5428,7 +5434,8 @@ static void test_VarCat(void)
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     hres = VarCmp(&result,&expected,lcid,0);
-    ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08x\n", hres);
+    ok(hres == VARCMP_EQ ||
+       broken(hres == VARCMP_GT), "Expected VARCMP_EQ, got %08x\n", hres);
 
     VariantClear(&left);
     VariantClear(&right);
