@@ -581,7 +581,7 @@ HRESULT WINAPI MediaSeekingImpl_SetPositions(IMediaSeeking * iface, LONGLONG * p
     llNewCurrent = Adjust(This->llCurrent, pCurrent, dwCurrentFlags);
     llNewStop = Adjust(This->llStop, pStop, dwStopFlags);
 
-    if (llNewCurrent != This->llCurrent)
+    if (pCurrent)
         bChangeCurrent = TRUE;
     if (llNewStop != This->llStop)
         bChangeStop = TRUE;
