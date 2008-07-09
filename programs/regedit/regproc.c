@@ -418,10 +418,10 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data)
  * A helper function for processRegEntry() that opens the current key.
  * That key must be closed by calling closeKey().
  */
-static LONG openKey(LPSTR stdInput)
+static LONG openKeyW(WCHAR* stdInput)
 {
     HKEY keyClass;
-    LPSTR keyPath;
+    WCHAR* keyPath;
     DWORD dwDisp;
     LONG res;
 
@@ -430,10 +430,10 @@ static LONG openKey(LPSTR stdInput)
         return ERROR_INVALID_PARAMETER;
 
     /* Get the registry class */
-    if (!parseKeyName(stdInput, &keyClass, &keyPath))
+    if (!parseKeyNameW(stdInput, &keyClass, &keyPath))
         return ERROR_INVALID_PARAMETER;
 
-    res = RegCreateKeyEx(
+    res = RegCreateKeyExW(
                keyClass,                 /* Class     */
                keyPath,                  /* Sub Key   */
                0,                        /* MUST BE 0 */
@@ -446,15 +446,9 @@ static LONG openKey(LPSTR stdInput)
                                                         REG_OPENED_EXISTING_KEY */
 
     if (res == ERROR_SUCCESS)
-    {
-        currentKeyName = HeapAlloc(GetProcessHeap(), 0, strlen(stdInput)+1);
-        CHECK_ENOUGH_MEMORY(currentKeyName);
-        strcpy(currentKeyName, stdInput);
-    }
+        currentKeyName = GetMultiByteString(stdInput);
     else
-    {
         currentKeyHandle = NULL;
-    }
 
     return res;
 
@@ -558,6 +552,7 @@ static void processRegEntry(LPSTR stdInput)
     if      ( stdInput[0] == '[')      /* We are reading a new key */
     {
         LPSTR keyEnd;
+        WCHAR* stdInputW;
         closeKey();                    /* Close the previous key */
 
         /* Get rid of the square brackets */
@@ -566,17 +561,18 @@ static void processRegEntry(LPSTR stdInput)
         if (keyEnd)
             *keyEnd='\0';
 
+        stdInputW = GetWideString(stdInput);
+
         /* delete the key if we encounter '-' at the start of reg key */
         if ( stdInput[0] == '-')
         {
-            WCHAR* stdInputW = GetWideString(stdInput + 1);
-            delete_registry_key(stdInputW);
-            HeapFree(GetProcessHeap(), 0, stdInputW);
-        } else if ( openKey(stdInput) != ERROR_SUCCESS )
+            delete_registry_key(stdInputW + 1);
+        } else if ( openKeyW(stdInputW) != ERROR_SUCCESS )
         {
             fprintf(stderr,"%s: setValue failed to open key %s\n",
                     getAppName(), stdInput);
         }
+        HeapFree(GetProcessHeap(), 0, stdInputW);
     } else if( currentKeyHandle &&
                (( stdInput[0] == '@') || /* reading a default @=data pair */
                 ( stdInput[0] == '\"'))) /* reading a new value=data pair */
@@ -1017,7 +1013,7 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
 
     if (reg_key_name && reg_key_name[0]) {
         HKEY reg_key_class;
-        CHAR *branch_name;
+        CHAR *branch_name = NULL;
         HKEY key;
 
         REGPROC_resize_char_buffer(&reg_key_name_buf, &reg_key_name_len,
