@@ -167,7 +167,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                         exit(1);
                     }
                 }
-                processRegLines(reg_file);
+                import_registry_file(reg_file);
                 if (realname)
                 {
                     HeapFree(GetProcessHeap(),0,realname);

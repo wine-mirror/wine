@@ -311,6 +311,16 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME *pofn)
     return TRUE;
 }
 
+static BOOL import_registry_filename(LPTSTR filename)
+{
+    FILE* reg_file = fopen(filename, "r");
+
+    if(!reg_file)
+        return FALSE;
+
+    return import_registry_file(reg_file);
+}
+
 static BOOL ImportRegistryFile(HWND hWnd)
 {
     OPENFILENAME ofn;
@@ -320,7 +330,7 @@ static BOOL ImportRegistryFile(HWND hWnd)
     LoadString(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
     if (GetOpenFileName(&ofn)) {
-        if (!import_registry_file(ofn.lpstrFile)) {
+        if (!import_registry_filename(ofn.lpstrFile)) {
             /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
             return FALSE;
         }

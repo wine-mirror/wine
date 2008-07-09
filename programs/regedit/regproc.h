@@ -22,7 +22,6 @@
 const CHAR *getAppName(void);
 
 BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name);
-BOOL import_registry_file(LPTSTR filename);
+BOOL import_registry_file(FILE *in);
 void delete_registry_key(WCHAR *reg_key_name);
 WCHAR* GetWideString(const char* strA);
-void processRegLines(FILE *in);

@@ -594,11 +594,10 @@ static void processRegEntry(WCHAR* stdInput)
  * Parameters:
  *   in - input stream to read from
  */
-void processRegLines(FILE *in)
+void processRegLinesA(FILE *in)
 {
     LPSTR line           = NULL;  /* line read from input stream */
     ULONG lineSize       = REG_VAL_BUF_SIZE;
-    BOOL  unicode_check  = TRUE;
 
     line = HeapAlloc(GetProcessHeap(), 0, lineSize);
     CHECK_ENOUGH_MEMORY(line);
@@ -636,31 +635,7 @@ void processRegLines(FILE *in)
              */
             size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
 
-            if (unicode_check)
-            {
-                if (fread( s, 2, 1, in) == 1)
-                {
-                    if ((BYTE)s[0] == 0xff && (BYTE)s[1] == 0xfe)
-                    {
-                        printf("Trying to import from a unicode file: this isn't supported yet.\n"
-                               "Please use export as Win 9x/NT4 files from native regedit\n");
-                        HeapFree(GetProcessHeap(), 0, line);
-                        return;
-                    }
-                    else
-                    {
-                        unicode_check = FALSE;
-                        check = fgets (&s[2], size_to_get-2, in);
-                    }
-                }
-                else
-                {
-                    unicode_check = FALSE;
-                    check = NULL;
-                }
-            }
-            else
-                check = fgets (s, size_to_get, in);
+            check = fgets (s, size_to_get, in);
 
             if (check == NULL) {
                 if (ferror(in)) {
@@ -723,6 +698,119 @@ void processRegLines(FILE *in)
     processRegEntry(NULL);
 
     HeapFree(GetProcessHeap(), 0, line);
+}
+
+void processRegLinesW(FILE *in)
+{
+    WCHAR* buf           = NULL;  /* line read from input stream */
+    ULONG lineSize       = REG_VAL_BUF_SIZE;
+    size_t check = -1;
+
+    WCHAR* s; /* The pointer into line for where the current fgets should read */
+    int i;
+
+    buf = HeapAlloc(GetProcessHeap(), 0, lineSize * sizeof(WCHAR));
+    CHECK_ENOUGH_MEMORY(buf);
+
+    s = buf;
+
+    while(!feof(in)) {
+        size_t size_remaining;
+        int size_to_get;
+        WCHAR *s_eol = NULL; /* various local uses */
+
+        /* Do we need to expand the buffer ? */
+        assert (s >= buf && s <= buf + lineSize);
+        size_remaining = lineSize - (s-buf);
+        if (size_remaining < 2) /* room for 1 character and the \0 */
+        {
+            WCHAR *new_buffer;
+            size_t new_size = lineSize + (REG_VAL_BUF_SIZE / sizeof(WCHAR));
+            if (new_size > lineSize) /* no arithmetic overflow */
+                new_buffer = HeapReAlloc (GetProcessHeap(), 0, buf, new_size * sizeof(WCHAR));
+            else
+                new_buffer = NULL;
+            CHECK_ENOUGH_MEMORY(new_buffer);
+            buf = new_buffer;
+            s = buf + lineSize - size_remaining;
+            lineSize = new_size;
+            size_remaining = lineSize - (s-buf);
+        }
+
+        /* Get as much as possible into the buffer, terminated either by
+        * eof, error, eol or getting the maximum amount.  Abort on error.
+        */
+        size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
+
+        check = fread(s, sizeof(WCHAR), size_to_get, in);
+
+        if (check == 0) {
+            if (ferror(in)) {
+                perror ("While reading input");
+                exit (IO_ERROR);
+            } else {
+                assert (feof(in));
+                *s = '\0';
+                /* It is not clear to me from the definition that the
+                * contents of the buffer are well defined on detecting
+                * an eof without managing to read anything.
+                */
+            }
+        }
+
+        /* If we didn't read the eol nor the eof go around for the rest */
+        while(1)
+        {
+            for(i = 0; s[i] != 0; i++)
+            {
+                if(s[i] == '\n')
+                {
+                    s_eol = &s[i];
+                    break;
+                }
+            }
+
+            /* If it is a comment line then discard it and go around again */
+            if (buf[0] == '#') {
+                s = buf;
+                continue;
+            }
+
+            /* Remove any line feed.  Leave s_eol on the \0 */
+            if (s_eol) {
+                *s_eol = '\0';
+                if (s_eol > buf && *(s_eol-1) == '\r')
+                    *(s_eol-1) = '\0';
+            }
+
+            /* If there is a concatenating \\ then go around again */
+            if (s_eol > buf && *(s_eol-1) == '\\') {
+                WCHAR c[2];
+                s = s_eol+1;
+                /* The following error protection could be made more self-
+                * correcting but I thought it not worth trying.
+                */
+                if(!fread(&c, sizeof(WCHAR), 2, in))
+                    break;
+                if (feof(in) || c[0] != ' ' || c[1] != ' ')
+                    fprintf(stderr,"%s: ERROR - invalid continuation.\n",
+                            getAppName());
+                continue;
+            }
+
+            if(!s_eol)
+                break;
+
+            processRegEntry(s);
+            s = s_eol + 1;
+            s_eol = 0;
+            continue; /* That is the full virtual line */
+        }
+    }
+
+    processRegEntry(NULL);
+
+    HeapFree(GetProcessHeap(), 0, buf);
 }
 
 /****************************************************************************
@@ -1080,12 +1168,24 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
 /******************************************************************************
  * Reads contents of the specified file into the registry.
  */
-BOOL import_registry_file(LPTSTR filename)
+BOOL import_registry_file(FILE* reg_file)
 {
-    FILE* reg_file = fopen(filename, "r");
-
-    if (reg_file) {
-        processRegLines(reg_file);
+    if (reg_file)
+    {
+        BYTE s[2];
+        if (fread( s, 2, 1, reg_file) == 1)
+        {
+            if (s[0] == 0xff && s[1] == 0xfe)
+            {
+                printf("Trying to open unicode file\n");
+                processRegLinesW(reg_file);
+            } else
+            {
+                printf("ansi file\n");
+                rewind(reg_file);
+                processRegLinesA(reg_file);
+            }
+        }
         return TRUE;
     }
     return FALSE;
