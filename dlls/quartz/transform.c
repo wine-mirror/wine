@@ -337,7 +337,7 @@ static HRESULT WINAPI TransformFilter_Pause(IBaseFilter * iface)
     EnterCriticalSection(&This->csFilter);
     {
         if (This->state == State_Stopped)
-            ((InputPin *)This->ppPins[0])->end_of_stream = 0;
+            IBaseFilter_Run(iface, -1);
 
         This->state = State_Paused;
     }
