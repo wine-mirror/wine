@@ -64,22 +64,26 @@ static void test_GetAcceptLanguagesA(void)
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( NULL, NULL);
-    ok(retval == E_FAIL,
+    ok(retval == E_FAIL ||
+       retval == E_INVALIDARG, /* w2k8 */
        "function result wrong: got %08x; expected E_FAIL\n", retval);
     ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     buffersize = sizeof(buffer);
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( NULL, &buffersize);
-    ok(retval == E_FAIL,
+    ok(retval == E_FAIL ||
+       retval == E_INVALIDARG, /* w2k8 */
        "function result wrong: got %08x; expected E_FAIL\n", retval);
-    ok(buffersize == sizeof(buffer),
-       "buffersize was changed (2nd parameter; not on Win2k)\n");
+    ok(buffersize == sizeof(buffer) ||
+       buffersize == 0, /* w2k8*/
+       "buffersize was changed and is not 0; size (%d))\n", buffersize);
     ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, NULL);
-    ok(retval == E_FAIL,
+    ok(retval == E_FAIL ||
+       retval == E_INVALIDARG, /* w2k8 */
        "function result wrong: got %08x; expected E_FAIL\n", retval);
     ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
@@ -87,7 +91,8 @@ static void test_GetAcceptLanguagesA(void)
     memset(buffer, 0, sizeof(buffer));
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
-    ok(retval == E_FAIL,
+    ok(retval == E_FAIL ||
+       retval == E_INVALIDARG, /* w2k8 */
        "function result wrong: got %08x; expected E_FAIL\n", retval);
     ok(buffersize == 0,
        "buffersize wrong(changed) got %08x; expected 0 (2nd parameter; not on Win2k)\n", buffersize);
@@ -362,6 +367,12 @@ static void test_GetShellSecurityDescriptor(void)
     SECURITY_DESCRIPTOR* (WINAPI*pGetShellSecurityDescriptor)(PSHELL_USER_PERMISSION*,int);
 
     pGetShellSecurityDescriptor=(void*)GetProcAddress(hShlwapi,(char*)475);
+
+    if(!pGetShellSecurityDescriptor)
+    {
+        skip("GetShellSecurityDescriptor not available\n");
+        return;
+    }
 
     psd = pGetShellSecurityDescriptor(NULL, 2);
     ok(psd==NULL, "GetShellSecurityDescriptor should fail\n");
