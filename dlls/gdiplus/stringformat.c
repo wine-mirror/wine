@@ -167,6 +167,17 @@ GpStatus WINGDIPAPI GdipSetStringFormatLineAlign(GpStringFormat *format,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetStringFormatMeasurableCharacterRanges(GpStringFormat*
+        format, INT rangeCount, GDIPCONST CharacterRange* ranges)
+{
+    if (!(format && rangeCount && ranges))
+        return InvalidParameter;
+
+    FIXME("stub: %p, %d, %p\n", format, rangeCount, ranges);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetStringFormatTrimming(GpStringFormat *format,
     StringTrimming trimming)
 {

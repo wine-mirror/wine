@@ -590,7 +590,7 @@
 @ stdcall GdipSetStringFormatFlags(ptr long)
 @ stdcall GdipSetStringFormatHotkeyPrefix(ptr long)
 @ stdcall GdipSetStringFormatLineAlign(ptr long)
-@ stub GdipSetStringFormatMeasurableCharacterRanges
+@ stdcall GdipSetStringFormatMeasurableCharacterRanges(ptr long ptr)
 @ stub GdipSetStringFormatTabStops
 @ stdcall GdipSetStringFormatTrimming(ptr long)
 @ stub GdipSetTextContrast
