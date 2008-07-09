@@ -814,11 +814,21 @@ int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor)
     + pCursor->pRun->member.run.nCharOfs + pCursor->nOffset;
 }
 
-static void ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *result, BOOL *is_eol)
+/* Finds the run and offset from the pixel position.
+ *
+ * x & y are pixel positions in virtual coordinates into the rich edit control,
+ * so client coordinates must first be adjusted by the scroll position.
+ *
+ * returns TRUE if the result was exactly under the cursor, otherwise returns
+ * FALSE, and result is set to the closest position to the coordinates.
+ */
+static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
+                            ME_Cursor *result, BOOL *is_eol)
 {
   ME_DisplayItem *p = editor->pBuffer->pFirst->member.para.next_para;
   ME_DisplayItem *last = NULL;
   int rx = 0;
+  BOOL isExact = TRUE;
 
   if (is_eol)
     *is_eol = 0;
@@ -857,6 +867,7 @@ static void ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *resu
     /* The position is below the last paragraph, so the last row will be used
      * rather than the end of the text, so the x position will be used to
      * determine the offset closest to the pixel position. */
+    isExact = FALSE;
     p = ME_FindItemBack(p, diStartRow);
     if (p != NULL){
       p = ME_FindItemFwd(p, diRun);
@@ -885,16 +896,18 @@ static void ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *resu
           result->pRun = ME_FindItemFwd(editor->pCursors[0].pRun, diRun);
           result->nOffset = 0;
         }
-        return;
+        return isExact;
       }
       break;
     case diStartRow:
+      isExact = FALSE;
       p = ME_FindItemFwd(p, diRun);
       if (is_eol) *is_eol = 1;
       rx = 0; /* FIXME not sure */
       goto found_here;
     case diParagraph:
     case diTextEnd:
+      isExact = FALSE;
       rx = 0; /* FIXME not sure */
       p = last;
       goto found_here;
@@ -905,23 +918,36 @@ static void ME_FindPixelPos(ME_TextEditor *editor, int x, int y, ME_Cursor *resu
   result->pRun = ME_FindItemBack(p, diRun);
   result->nOffset = 0;
   assert(result->pRun->member.run.nFlags & MERF_ENDPARA);
+  return FALSE;
 }
 
 
-int
-ME_CharFromPos(ME_TextEditor *editor, int x, int y)
+/* Returns the character offset closest to the pixel position
+ *
+ * x & y are pixel positions in client coordinates.
+ *
+ * isExact will be set to TRUE if the run is directly under the pixel
+ * position, FALSE if it not, unless isExact is set to NULL.
+ */
+int ME_CharFromPos(ME_TextEditor *editor, int x, int y, BOOL *isExact)
 {
   ME_Cursor cursor;
   RECT rc;
+  BOOL bResult;
 
   GetClientRect(editor->hWnd, &rc);
-  if (x < 0 || y < 0 || x >= rc.right || y >= rc.bottom)
+  if (x < 0 || y < 0 || x >= rc.right || y >= rc.bottom) {
+    if (isExact) *isExact = FALSE;
     return -1;
+  }
   y += ME_GetYScrollPos(editor);
-  ME_FindPixelPos(editor, x, y, &cursor, NULL);
+  bResult = ME_FindPixelPos(editor, x, y, &cursor, NULL);
+  if (isExact) *isExact = bResult;
   return (ME_GetParagraph(cursor.pRun)->member.para.nCharOfs
           + cursor.pRun->member.run.nCharOfs + cursor.nOffset);
 }
+
+
 
 /* Extends the selection with a word, line, or paragraph selection type.
  *

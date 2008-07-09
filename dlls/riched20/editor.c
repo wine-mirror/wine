@@ -1669,6 +1669,8 @@ static int ME_CalculateClickCount(HWND hWnd, UINT msg, WPARAM wParam,
 static BOOL ME_SetCursor(ME_TextEditor *editor)
 {
   POINT pt;
+  BOOL isExact;
+  int offset;
   DWORD messagePos = GetMessagePos();
   pt.x = (short)LOWORD(messagePos);
   pt.y = (short)HIWORD(messagePos);
@@ -1680,7 +1682,35 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
       SetCursor(hLeft);
       return TRUE;
   }
-  return FALSE;
+  offset = ME_CharFromPos(editor, pt.x, pt.y, &isExact);
+  if (isExact)
+  {
+      if (editor->AutoURLDetect_bEnable)
+      {
+          ME_Cursor cursor;
+          ME_Run *run;
+          ME_CursorFromCharOfs(editor, offset, &cursor);
+          run = &cursor.pRun->member.run;
+          if (editor->AutoURLDetect_bEnable &&
+              run->style->fmt.dwMask & CFM_LINK &&
+              run->style->fmt.dwEffects & CFE_LINK)
+          {
+              SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_HAND));
+              return TRUE;
+          }
+      }
+      if (ME_IsSelection(editor))
+      {
+          int selStart, selEnd;
+          ME_GetSelection(editor, &selStart, &selEnd);
+          if (selStart <= offset && selEnd >= offset) {
+              SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_ARROW));
+              return TRUE;
+          }
+      }
+  }
+  SetCursor(LoadCursorW(NULL, (WCHAR*)IDC_IBEAM));
+  return TRUE;
 }
 
 static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
@@ -2986,7 +3016,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   case EM_SETZOOM:
     return ME_SetZoom(editor, wParam, lParam);
   case EM_CHARFROMPOS:
-    return ME_CharFromPos(editor, ((POINTL *)lParam)->x, ((POINTL *)lParam)->y);
+    return ME_CharFromPos(editor, ((POINTL *)lParam)->x, ((POINTL *)lParam)->y, NULL);
   case EM_POSFROMCHAR:
   {
     ME_DisplayItem *pRun;
@@ -3040,8 +3070,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return 0;
   case WM_SETCURSOR:
   {
-    if (!ME_SetCursor(editor)) goto do_default;
-    return TRUE;
+    return ME_SetCursor(editor);
   }
   case WM_LBUTTONDBLCLK:
   case WM_LBUTTONDOWN:
@@ -3055,6 +3084,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
                    ME_CalculateClickCount(hWnd, msg, wParam, lParam));
     SetCapture(hWnd);
     ME_LinkNotify(editor,msg,wParam,lParam);
+    if (!ME_SetCursor(editor)) goto do_default;
     break;
   }
   case WM_MOUSEMOVE:
@@ -3064,6 +3094,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (GetCapture() == hWnd)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     ME_LinkNotify(editor,msg,wParam,lParam);
+    /* Set cursor if mouse is captured, since WM_SETCURSOR won't be received. */
+    if (GetCapture() == hWnd)
+        ME_SetCursor(editor);
     break;
   case WM_LBUTTONUP:
     if (GetCapture() == hWnd)
@@ -3075,10 +3108,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       return 0;
     else
     {
-      BOOL ret;
-      ret = ME_SetCursor(editor);
+      ME_SetCursor(editor);
       ME_LinkNotify(editor,msg,wParam,lParam);
-      if (!ret) goto do_default;
     }
     break;
   case WM_RBUTTONUP:
@@ -3202,6 +3233,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
           ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
         ME_ReleaseStyle(style);
         ME_CommitCoalescingUndo(editor);
+        SetCursor(NULL);
       }
 
       if (editor->AutoURLDetect_bEnable) ME_UpdateSelectionLinkAttribute(editor);
@@ -3504,6 +3536,7 @@ void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam
 {
   int x,y;
   ME_Cursor tmpCursor;
+  BOOL isExact;
   int nCharOfs; /* The start of the clicked text. Absolute character offset */
 
   ME_Run *tmpRun;
@@ -3511,8 +3544,8 @@ void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam
   ENLINK info;
   x = (short)LOWORD(lParam);
   y = (short)HIWORD(lParam);
-  nCharOfs = ME_CharFromPos(editor, x, y);
-  if (nCharOfs < 0) return;
+  nCharOfs = ME_CharFromPos(editor, x, y, &isExact);
+  if (!isExact) return;
 
   ME_CursorFromCharOfs(editor, nCharOfs, &tmpCursor);
   tmpRun = &tmpCursor.pRun->member.run;
