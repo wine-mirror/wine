@@ -528,7 +528,18 @@ sub update_dlls(@)
         next unless defined $static_implibs{$mod};
         $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.\$(STATIC_IMPLIBEXT)";
     }
+    $text .= "\n\nCROSS_IMPLIBS =";
+    foreach my $mod (sort @lib_symlinks)
+    {
+        $text .= sprintf " \\\n\tlib%s.a", $importlibs{$mod};
+    }
+    foreach my $mod (sort keys %importlibs)
+    {
+        next if defined $static_implibs{$mod};
+        $text .= " \\\n\t$directories{$mod}/lib$importlibs{$mod}.a";
+    }
     $text .= "\n\n";
+    $text .= "\$(TESTSUBDIRS:%=%/__crosstest__): \$(CROSS_IMPLIBS)\n\n";
     $text .= "implib: \$(IMPORT_LIBS)\n\n";
     $text .= ".PHONY: implib\n\n";
 
@@ -547,16 +558,19 @@ sub update_dlls(@)
         }
         else
         {
-            $text .= sprintf "%s/lib%s.\$(IMPLIBEXT): %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
-            $text .= sprintf "\t\@cd %s && \$(MAKE) lib%s.\$(IMPLIBEXT)\n\n", $dir, $lib;
+            $text .= sprintf "%s/lib%s.def %s/lib%s.a: %s/%s.spec \$(WINEBUILD)\n",
+                             $dir, $lib, $dir, $lib, $dir, $spec;
+            $text .= sprintf "\t\@cd %s && \$(MAKE) `basename \$\@`\n\n", $dir;
         }
     }
     foreach my $mod (sort @lib_symlinks)
     {
         my $dir = $directories{$mod};
-        my $lib = "lib" . $importlibs{$mod} . ".\$(IMPLIBEXT)";
-        $text .= sprintf "%s: %s/%s\n", $lib, $dir, $lib;
-        $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s \$@\n\n", $dir, $lib;
+        my $lib = "lib" . $importlibs{$mod};
+        $text .= sprintf "%s.a: %s/%s.a\n", $lib, $dir, $lib;
+        $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.a \$@\n\n", $dir, $lib;
+        $text .= sprintf "%s.def: %s/%s.def\n", $lib, $dir, $lib;
+        $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.def \$@\n\n", $dir, $lib;
     }
 
     $text .= "\$(BUILDSUBDIRS): \$(IMPORT_LIBS)\n";

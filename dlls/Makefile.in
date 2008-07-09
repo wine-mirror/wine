@@ -676,99 +676,237 @@ IMPORT_LIBS = \
 	wsock32/libwsock32.$(IMPLIBEXT) \
 	wtsapi32/libwtsapi32.$(IMPLIBEXT)
 
+CROSS_IMPLIBS = \
+	libd3dx9.a \
+	libwinspool.a \
+	activeds/libactiveds.a \
+	advapi32/libadvapi32.a \
+	advpack/libadvpack.a \
+	atl/libatl.a \
+	avicap32/libavicap32.a \
+	avifil32/libavifil32.a \
+	cabinet/libcabinet.a \
+	capi2032/libcapi2032.a \
+	cards/libcards.a \
+	cfgmgr32/libcfgmgr32.a \
+	clusapi/libclusapi.a \
+	comctl32/libcomctl32.a \
+	comdlg32/libcomdlg32.a \
+	compstui/libcompstui.a \
+	credui/libcredui.a \
+	crtdll/libcrtdll.a \
+	crypt32/libcrypt32.a \
+	cryptdll/libcryptdll.a \
+	cryptnet/libcryptnet.a \
+	ctl3d32/libctl3d32.a \
+	d3d8/libd3d8.a \
+	d3d9/libd3d9.a \
+	d3dim/libd3dim.a \
+	d3drm/libd3drm.a \
+	d3dx8/libd3dx8.a \
+	d3dx9_36/libd3dx9.a \
+	d3dxof/libd3dxof.a \
+	dbghelp/libdbghelp.a \
+	dciman32/libdciman32.a \
+	ddraw/libddraw.a \
+	dinput8/libdinput8.a \
+	dmusic32/libdmusic32.a \
+	dnsapi/libdnsapi.a \
+	dplay/libdplay.a \
+	dplayx/libdplayx.a \
+	dpnet/libdpnet.a \
+	dsound/libdsound.a \
+	dwmapi/libdwmapi.a \
+	gdi32/libgdi32.a \
+	gdiplus/libgdiplus.a \
+	glu32/libglu32.a \
+	hid/libhid.a \
+	hlink/libhlink.a \
+	icmp/libicmp.a \
+	imagehlp/libimagehlp.a \
+	imm32/libimm32.a \
+	inetcomm/libinetcomm.a \
+	iphlpapi/libiphlpapi.a \
+	kernel32/libkernel32.a \
+	lz32/liblz32.a \
+	mapi32/libmapi32.a \
+	mlang/libmlang.a \
+	mpr/libmpr.a \
+	mprapi/libmprapi.a \
+	msacm32/libmsacm32.a \
+	mscms/libmscms.a \
+	msdmo/libmsdmo.a \
+	mshtml/libmshtml.a \
+	msi/libmsi.a \
+	msimg32/libmsimg32.a \
+	msvcr71/libmsvcr71.a \
+	msvcrt/libmsvcrt.a \
+	msvcrt20/libmsvcrt20.a \
+	msvcrt40/libmsvcrt40.a \
+	msvcrtd/libmsvcrtd.a \
+	msvfw32/libmsvfw32.a \
+	mswsock/libmswsock.a \
+	nddeapi/libnddeapi.a \
+	netapi32/libnetapi32.a \
+	newdev/libnewdev.a \
+	ntdll/libntdll.a \
+	ntdsapi/libntdsapi.a \
+	ntoskrnl.exe/libntoskrnl.exe.a \
+	odbc32/libodbc32.a \
+	odbccp32/libodbccp32.a \
+	ole32/libole32.a \
+	oleacc/liboleacc.a \
+	oleaut32/liboleaut32.a \
+	olecli32/libolecli32.a \
+	oledlg/liboledlg.a \
+	olepro32/libolepro32.a \
+	olesvr32/libolesvr32.a \
+	opengl32/libopengl32.a \
+	pdh/libpdh.a \
+	powrprof/libpowrprof.a \
+	psapi/libpsapi.a \
+	quartz/libquartz.a \
+	rasapi32/librasapi32.a \
+	resutils/libresutils.a \
+	riched20/libriched20.a \
+	rpcrt4/librpcrt4.a \
+	rsaenh/librsaenh.a \
+	secur32/libsecur32.a \
+	sensapi/libsensapi.a \
+	serialui/libserialui.a \
+	setupapi/libsetupapi.a \
+	sfc/libsfc.a \
+	sfc_os/libsfc_os.a \
+	shdocvw/libshdocvw.a \
+	shell32/libshell32.a \
+	shfolder/libshfolder.a \
+	shlwapi/libshlwapi.a \
+	slc/libslc.a \
+	snmpapi/libsnmpapi.a \
+	spoolss/libspoolss.a \
+	sti/libsti.a \
+	tapi32/libtapi32.a \
+	unicows/libunicows.a \
+	url/liburl.a \
+	urlmon/liburlmon.a \
+	user32/libuser32.a \
+	userenv/libuserenv.a \
+	usp10/libusp10.a \
+	uxtheme/libuxtheme.a \
+	vdmdbg/libvdmdbg.a \
+	version/libversion.a \
+	wined3d/libwined3d.a \
+	winedos/libwinedos.a \
+	winhttp/libwinhttp.a \
+	wininet/libwininet.a \
+	winmm/libwinmm.a \
+	winnls32/libwinnls32.a \
+	winscard/libwinscard.a \
+	winspool.drv/libwinspool.a \
+	wintab32/libwintab32.a \
+	wintrust/libwintrust.a \
+	wldap32/libwldap32.a \
+	wnaspi32/libwnaspi32.a \
+	wow32/libwow32.a \
+	ws2_32/libws2_32.a \
+	wsock32/libwsock32.a \
+	wtsapi32/libwtsapi32.a
+
+$(TESTSUBDIRS:%=%/__crosstest__): $(CROSS_IMPLIBS)
+
 implib: $(IMPORT_LIBS)
 
 .PHONY: implib
 
-activeds/libactiveds.$(IMPLIBEXT): activeds/activeds.spec $(WINEBUILD)
-	@cd activeds && $(MAKE) libactiveds.$(IMPLIBEXT)
+activeds/libactiveds.def activeds/libactiveds.a: activeds/activeds.spec $(WINEBUILD)
+	@cd activeds && $(MAKE) `basename $@`
 
-advapi32/libadvapi32.$(IMPLIBEXT): advapi32/advapi32.spec $(WINEBUILD)
-	@cd advapi32 && $(MAKE) libadvapi32.$(IMPLIBEXT)
+advapi32/libadvapi32.def advapi32/libadvapi32.a: advapi32/advapi32.spec $(WINEBUILD)
+	@cd advapi32 && $(MAKE) `basename $@`
 
-advpack/libadvpack.$(IMPLIBEXT): advpack/advpack.spec $(WINEBUILD)
-	@cd advpack && $(MAKE) libadvpack.$(IMPLIBEXT)
+advpack/libadvpack.def advpack/libadvpack.a: advpack/advpack.spec $(WINEBUILD)
+	@cd advpack && $(MAKE) `basename $@`
 
-atl/libatl.$(IMPLIBEXT): atl/atl.spec $(WINEBUILD)
-	@cd atl && $(MAKE) libatl.$(IMPLIBEXT)
+atl/libatl.def atl/libatl.a: atl/atl.spec $(WINEBUILD)
+	@cd atl && $(MAKE) `basename $@`
 
-avicap32/libavicap32.$(IMPLIBEXT): avicap32/avicap32.spec $(WINEBUILD)
-	@cd avicap32 && $(MAKE) libavicap32.$(IMPLIBEXT)
+avicap32/libavicap32.def avicap32/libavicap32.a: avicap32/avicap32.spec $(WINEBUILD)
+	@cd avicap32 && $(MAKE) `basename $@`
 
-avifil32/libavifil32.$(IMPLIBEXT): avifil32/avifil32.spec $(WINEBUILD)
-	@cd avifil32 && $(MAKE) libavifil32.$(IMPLIBEXT)
+avifil32/libavifil32.def avifil32/libavifil32.a: avifil32/avifil32.spec $(WINEBUILD)
+	@cd avifil32 && $(MAKE) `basename $@`
 
-cabinet/libcabinet.$(IMPLIBEXT): cabinet/cabinet.spec $(WINEBUILD)
-	@cd cabinet && $(MAKE) libcabinet.$(IMPLIBEXT)
+cabinet/libcabinet.def cabinet/libcabinet.a: cabinet/cabinet.spec $(WINEBUILD)
+	@cd cabinet && $(MAKE) `basename $@`
 
-capi2032/libcapi2032.$(IMPLIBEXT): capi2032/capi2032.spec $(WINEBUILD)
-	@cd capi2032 && $(MAKE) libcapi2032.$(IMPLIBEXT)
+capi2032/libcapi2032.def capi2032/libcapi2032.a: capi2032/capi2032.spec $(WINEBUILD)
+	@cd capi2032 && $(MAKE) `basename $@`
 
-cards/libcards.$(IMPLIBEXT): cards/cards.spec $(WINEBUILD)
-	@cd cards && $(MAKE) libcards.$(IMPLIBEXT)
+cards/libcards.def cards/libcards.a: cards/cards.spec $(WINEBUILD)
+	@cd cards && $(MAKE) `basename $@`
 
-cfgmgr32/libcfgmgr32.$(IMPLIBEXT): cfgmgr32/cfgmgr32.spec $(WINEBUILD)
-	@cd cfgmgr32 && $(MAKE) libcfgmgr32.$(IMPLIBEXT)
+cfgmgr32/libcfgmgr32.def cfgmgr32/libcfgmgr32.a: cfgmgr32/cfgmgr32.spec $(WINEBUILD)
+	@cd cfgmgr32 && $(MAKE) `basename $@`
 
-clusapi/libclusapi.$(IMPLIBEXT): clusapi/clusapi.spec $(WINEBUILD)
-	@cd clusapi && $(MAKE) libclusapi.$(IMPLIBEXT)
+clusapi/libclusapi.def clusapi/libclusapi.a: clusapi/clusapi.spec $(WINEBUILD)
+	@cd clusapi && $(MAKE) `basename $@`
 
-comctl32/libcomctl32.$(IMPLIBEXT): comctl32/comctl32.spec $(WINEBUILD)
-	@cd comctl32 && $(MAKE) libcomctl32.$(IMPLIBEXT)
+comctl32/libcomctl32.def comctl32/libcomctl32.a: comctl32/comctl32.spec $(WINEBUILD)
+	@cd comctl32 && $(MAKE) `basename $@`
 
-comdlg32/libcomdlg32.$(IMPLIBEXT): comdlg32/comdlg32.spec $(WINEBUILD)
-	@cd comdlg32 && $(MAKE) libcomdlg32.$(IMPLIBEXT)
+comdlg32/libcomdlg32.def comdlg32/libcomdlg32.a: comdlg32/comdlg32.spec $(WINEBUILD)
+	@cd comdlg32 && $(MAKE) `basename $@`
 
-compstui/libcompstui.$(IMPLIBEXT): compstui/compstui.spec $(WINEBUILD)
-	@cd compstui && $(MAKE) libcompstui.$(IMPLIBEXT)
+compstui/libcompstui.def compstui/libcompstui.a: compstui/compstui.spec $(WINEBUILD)
+	@cd compstui && $(MAKE) `basename $@`
 
-credui/libcredui.$(IMPLIBEXT): credui/credui.spec $(WINEBUILD)
-	@cd credui && $(MAKE) libcredui.$(IMPLIBEXT)
+credui/libcredui.def credui/libcredui.a: credui/credui.spec $(WINEBUILD)
+	@cd credui && $(MAKE) `basename $@`
 
-crtdll/libcrtdll.$(IMPLIBEXT): crtdll/crtdll.spec $(WINEBUILD)
-	@cd crtdll && $(MAKE) libcrtdll.$(IMPLIBEXT)
+crtdll/libcrtdll.def crtdll/libcrtdll.a: crtdll/crtdll.spec $(WINEBUILD)
+	@cd crtdll && $(MAKE) `basename $@`
 
-crypt32/libcrypt32.$(IMPLIBEXT): crypt32/crypt32.spec $(WINEBUILD)
-	@cd crypt32 && $(MAKE) libcrypt32.$(IMPLIBEXT)
+crypt32/libcrypt32.def crypt32/libcrypt32.a: crypt32/crypt32.spec $(WINEBUILD)
+	@cd crypt32 && $(MAKE) `basename $@`
 
-cryptdll/libcryptdll.$(IMPLIBEXT): cryptdll/cryptdll.spec $(WINEBUILD)
-	@cd cryptdll && $(MAKE) libcryptdll.$(IMPLIBEXT)
+cryptdll/libcryptdll.def cryptdll/libcryptdll.a: cryptdll/cryptdll.spec $(WINEBUILD)
+	@cd cryptdll && $(MAKE) `basename $@`
 
-cryptnet/libcryptnet.$(IMPLIBEXT): cryptnet/cryptnet.spec $(WINEBUILD)
-	@cd cryptnet && $(MAKE) libcryptnet.$(IMPLIBEXT)
+cryptnet/libcryptnet.def cryptnet/libcryptnet.a: cryptnet/cryptnet.spec $(WINEBUILD)
+	@cd cryptnet && $(MAKE) `basename $@`
 
-ctl3d32/libctl3d32.$(IMPLIBEXT): ctl3d32/ctl3d32.spec $(WINEBUILD)
-	@cd ctl3d32 && $(MAKE) libctl3d32.$(IMPLIBEXT)
+ctl3d32/libctl3d32.def ctl3d32/libctl3d32.a: ctl3d32/ctl3d32.spec $(WINEBUILD)
+	@cd ctl3d32 && $(MAKE) `basename $@`
 
-d3d8/libd3d8.$(IMPLIBEXT): d3d8/d3d8.spec $(WINEBUILD)
-	@cd d3d8 && $(MAKE) libd3d8.$(IMPLIBEXT)
+d3d8/libd3d8.def d3d8/libd3d8.a: d3d8/d3d8.spec $(WINEBUILD)
+	@cd d3d8 && $(MAKE) `basename $@`
 
-d3d9/libd3d9.$(IMPLIBEXT): d3d9/d3d9.spec $(WINEBUILD)
-	@cd d3d9 && $(MAKE) libd3d9.$(IMPLIBEXT)
+d3d9/libd3d9.def d3d9/libd3d9.a: d3d9/d3d9.spec $(WINEBUILD)
+	@cd d3d9 && $(MAKE) `basename $@`
 
-d3dim/libd3dim.$(IMPLIBEXT): d3dim/d3dim.spec $(WINEBUILD)
-	@cd d3dim && $(MAKE) libd3dim.$(IMPLIBEXT)
+d3dim/libd3dim.def d3dim/libd3dim.a: d3dim/d3dim.spec $(WINEBUILD)
+	@cd d3dim && $(MAKE) `basename $@`
 
-d3drm/libd3drm.$(IMPLIBEXT): d3drm/d3drm.spec $(WINEBUILD)
-	@cd d3drm && $(MAKE) libd3drm.$(IMPLIBEXT)
+d3drm/libd3drm.def d3drm/libd3drm.a: d3drm/d3drm.spec $(WINEBUILD)
+	@cd d3drm && $(MAKE) `basename $@`
 
-d3dx8/libd3dx8.$(IMPLIBEXT): d3dx8/d3dx8.spec $(WINEBUILD)
-	@cd d3dx8 && $(MAKE) libd3dx8.$(IMPLIBEXT)
+d3dx8/libd3dx8.def d3dx8/libd3dx8.a: d3dx8/d3dx8.spec $(WINEBUILD)
+	@cd d3dx8 && $(MAKE) `basename $@`
 
-d3dx9_36/libd3dx9.$(IMPLIBEXT): d3dx9_36/d3dx9_36.spec $(WINEBUILD)
-	@cd d3dx9_36 && $(MAKE) libd3dx9.$(IMPLIBEXT)
+d3dx9_36/libd3dx9.def d3dx9_36/libd3dx9.a: d3dx9_36/d3dx9_36.spec $(WINEBUILD)
+	@cd d3dx9_36 && $(MAKE) `basename $@`
 
-d3dxof/libd3dxof.$(IMPLIBEXT): d3dxof/d3dxof.spec $(WINEBUILD)
-	@cd d3dxof && $(MAKE) libd3dxof.$(IMPLIBEXT)
+d3dxof/libd3dxof.def d3dxof/libd3dxof.a: d3dxof/d3dxof.spec $(WINEBUILD)
+	@cd d3dxof && $(MAKE) `basename $@`
 
-dbghelp/libdbghelp.$(IMPLIBEXT): dbghelp/dbghelp.spec $(WINEBUILD)
-	@cd dbghelp && $(MAKE) libdbghelp.$(IMPLIBEXT)
+dbghelp/libdbghelp.def dbghelp/libdbghelp.a: dbghelp/dbghelp.spec $(WINEBUILD)
+	@cd dbghelp && $(MAKE) `basename $@`
 
-dciman32/libdciman32.$(IMPLIBEXT): dciman32/dciman32.spec $(WINEBUILD)
-	@cd dciman32 && $(MAKE) libdciman32.$(IMPLIBEXT)
+dciman32/libdciman32.def dciman32/libdciman32.a: dciman32/dciman32.spec $(WINEBUILD)
+	@cd dciman32 && $(MAKE) `basename $@`
 
-ddraw/libddraw.$(IMPLIBEXT): ddraw/ddraw.spec $(WINEBUILD)
-	@cd ddraw && $(MAKE) libddraw.$(IMPLIBEXT)
+ddraw/libddraw.def ddraw/libddraw.a: ddraw/ddraw.spec $(WINEBUILD)
+	@cd ddraw && $(MAKE) `basename $@`
 
 dinput/libdinput.def: dinput/dinput.spec $(WINEBUILD)
 	@cd dinput && $(MAKE) libdinput.def
@@ -776,317 +914,323 @@ dinput/libdinput.def: dinput/dinput.spec $(WINEBUILD)
 dinput/libdinput.$(STATIC_IMPLIBEXT): dummy
 	@cd dinput && $(MAKE) libdinput.$(STATIC_IMPLIBEXT)
 
-dinput8/libdinput8.$(IMPLIBEXT): dinput8/dinput8.spec $(WINEBUILD)
-	@cd dinput8 && $(MAKE) libdinput8.$(IMPLIBEXT)
+dinput8/libdinput8.def dinput8/libdinput8.a: dinput8/dinput8.spec $(WINEBUILD)
+	@cd dinput8 && $(MAKE) `basename $@`
 
-dmusic32/libdmusic32.$(IMPLIBEXT): dmusic32/dmusic32.spec $(WINEBUILD)
-	@cd dmusic32 && $(MAKE) libdmusic32.$(IMPLIBEXT)
+dmusic32/libdmusic32.def dmusic32/libdmusic32.a: dmusic32/dmusic32.spec $(WINEBUILD)
+	@cd dmusic32 && $(MAKE) `basename $@`
 
-dnsapi/libdnsapi.$(IMPLIBEXT): dnsapi/dnsapi.spec $(WINEBUILD)
-	@cd dnsapi && $(MAKE) libdnsapi.$(IMPLIBEXT)
+dnsapi/libdnsapi.def dnsapi/libdnsapi.a: dnsapi/dnsapi.spec $(WINEBUILD)
+	@cd dnsapi && $(MAKE) `basename $@`
 
-dplay/libdplay.$(IMPLIBEXT): dplay/dplay.spec $(WINEBUILD)
-	@cd dplay && $(MAKE) libdplay.$(IMPLIBEXT)
+dplay/libdplay.def dplay/libdplay.a: dplay/dplay.spec $(WINEBUILD)
+	@cd dplay && $(MAKE) `basename $@`
 
-dplayx/libdplayx.$(IMPLIBEXT): dplayx/dplayx.spec $(WINEBUILD)
-	@cd dplayx && $(MAKE) libdplayx.$(IMPLIBEXT)
+dplayx/libdplayx.def dplayx/libdplayx.a: dplayx/dplayx.spec $(WINEBUILD)
+	@cd dplayx && $(MAKE) `basename $@`
 
-dpnet/libdpnet.$(IMPLIBEXT): dpnet/dpnet.spec $(WINEBUILD)
-	@cd dpnet && $(MAKE) libdpnet.$(IMPLIBEXT)
+dpnet/libdpnet.def dpnet/libdpnet.a: dpnet/dpnet.spec $(WINEBUILD)
+	@cd dpnet && $(MAKE) `basename $@`
 
-dsound/libdsound.$(IMPLIBEXT): dsound/dsound.spec $(WINEBUILD)
-	@cd dsound && $(MAKE) libdsound.$(IMPLIBEXT)
+dsound/libdsound.def dsound/libdsound.a: dsound/dsound.spec $(WINEBUILD)
+	@cd dsound && $(MAKE) `basename $@`
 
-dwmapi/libdwmapi.$(IMPLIBEXT): dwmapi/dwmapi.spec $(WINEBUILD)
-	@cd dwmapi && $(MAKE) libdwmapi.$(IMPLIBEXT)
+dwmapi/libdwmapi.def dwmapi/libdwmapi.a: dwmapi/dwmapi.spec $(WINEBUILD)
+	@cd dwmapi && $(MAKE) `basename $@`
 
-gdi32/libgdi32.$(IMPLIBEXT): gdi32/gdi32.spec $(WINEBUILD)
-	@cd gdi32 && $(MAKE) libgdi32.$(IMPLIBEXT)
+gdi32/libgdi32.def gdi32/libgdi32.a: gdi32/gdi32.spec $(WINEBUILD)
+	@cd gdi32 && $(MAKE) `basename $@`
 
-gdiplus/libgdiplus.$(IMPLIBEXT): gdiplus/gdiplus.spec $(WINEBUILD)
-	@cd gdiplus && $(MAKE) libgdiplus.$(IMPLIBEXT)
+gdiplus/libgdiplus.def gdiplus/libgdiplus.a: gdiplus/gdiplus.spec $(WINEBUILD)
+	@cd gdiplus && $(MAKE) `basename $@`
 
-glu32/libglu32.$(IMPLIBEXT): glu32/glu32.spec $(WINEBUILD)
-	@cd glu32 && $(MAKE) libglu32.$(IMPLIBEXT)
+glu32/libglu32.def glu32/libglu32.a: glu32/glu32.spec $(WINEBUILD)
+	@cd glu32 && $(MAKE) `basename $@`
 
-hid/libhid.$(IMPLIBEXT): hid/hid.spec $(WINEBUILD)
-	@cd hid && $(MAKE) libhid.$(IMPLIBEXT)
+hid/libhid.def hid/libhid.a: hid/hid.spec $(WINEBUILD)
+	@cd hid && $(MAKE) `basename $@`
 
-hlink/libhlink.$(IMPLIBEXT): hlink/hlink.spec $(WINEBUILD)
-	@cd hlink && $(MAKE) libhlink.$(IMPLIBEXT)
+hlink/libhlink.def hlink/libhlink.a: hlink/hlink.spec $(WINEBUILD)
+	@cd hlink && $(MAKE) `basename $@`
 
-icmp/libicmp.$(IMPLIBEXT): icmp/icmp.spec $(WINEBUILD)
-	@cd icmp && $(MAKE) libicmp.$(IMPLIBEXT)
+icmp/libicmp.def icmp/libicmp.a: icmp/icmp.spec $(WINEBUILD)
+	@cd icmp && $(MAKE) `basename $@`
 
-imagehlp/libimagehlp.$(IMPLIBEXT): imagehlp/imagehlp.spec $(WINEBUILD)
-	@cd imagehlp && $(MAKE) libimagehlp.$(IMPLIBEXT)
+imagehlp/libimagehlp.def imagehlp/libimagehlp.a: imagehlp/imagehlp.spec $(WINEBUILD)
+	@cd imagehlp && $(MAKE) `basename $@`
 
-imm32/libimm32.$(IMPLIBEXT): imm32/imm32.spec $(WINEBUILD)
-	@cd imm32 && $(MAKE) libimm32.$(IMPLIBEXT)
+imm32/libimm32.def imm32/libimm32.a: imm32/imm32.spec $(WINEBUILD)
+	@cd imm32 && $(MAKE) `basename $@`
 
-inetcomm/libinetcomm.$(IMPLIBEXT): inetcomm/inetcomm.spec $(WINEBUILD)
-	@cd inetcomm && $(MAKE) libinetcomm.$(IMPLIBEXT)
+inetcomm/libinetcomm.def inetcomm/libinetcomm.a: inetcomm/inetcomm.spec $(WINEBUILD)
+	@cd inetcomm && $(MAKE) `basename $@`
 
-iphlpapi/libiphlpapi.$(IMPLIBEXT): iphlpapi/iphlpapi.spec $(WINEBUILD)
-	@cd iphlpapi && $(MAKE) libiphlpapi.$(IMPLIBEXT)
+iphlpapi/libiphlpapi.def iphlpapi/libiphlpapi.a: iphlpapi/iphlpapi.spec $(WINEBUILD)
+	@cd iphlpapi && $(MAKE) `basename $@`
 
-kernel32/libkernel32.$(IMPLIBEXT): kernel32/kernel32.spec $(WINEBUILD)
-	@cd kernel32 && $(MAKE) libkernel32.$(IMPLIBEXT)
+kernel32/libkernel32.def kernel32/libkernel32.a: kernel32/kernel32.spec $(WINEBUILD)
+	@cd kernel32 && $(MAKE) `basename $@`
 
-lz32/liblz32.$(IMPLIBEXT): lz32/lz32.spec $(WINEBUILD)
-	@cd lz32 && $(MAKE) liblz32.$(IMPLIBEXT)
+lz32/liblz32.def lz32/liblz32.a: lz32/lz32.spec $(WINEBUILD)
+	@cd lz32 && $(MAKE) `basename $@`
 
-mapi32/libmapi32.$(IMPLIBEXT): mapi32/mapi32.spec $(WINEBUILD)
-	@cd mapi32 && $(MAKE) libmapi32.$(IMPLIBEXT)
+mapi32/libmapi32.def mapi32/libmapi32.a: mapi32/mapi32.spec $(WINEBUILD)
+	@cd mapi32 && $(MAKE) `basename $@`
 
-mlang/libmlang.$(IMPLIBEXT): mlang/mlang.spec $(WINEBUILD)
-	@cd mlang && $(MAKE) libmlang.$(IMPLIBEXT)
+mlang/libmlang.def mlang/libmlang.a: mlang/mlang.spec $(WINEBUILD)
+	@cd mlang && $(MAKE) `basename $@`
 
-mpr/libmpr.$(IMPLIBEXT): mpr/mpr.spec $(WINEBUILD)
-	@cd mpr && $(MAKE) libmpr.$(IMPLIBEXT)
+mpr/libmpr.def mpr/libmpr.a: mpr/mpr.spec $(WINEBUILD)
+	@cd mpr && $(MAKE) `basename $@`
 
-mprapi/libmprapi.$(IMPLIBEXT): mprapi/mprapi.spec $(WINEBUILD)
-	@cd mprapi && $(MAKE) libmprapi.$(IMPLIBEXT)
+mprapi/libmprapi.def mprapi/libmprapi.a: mprapi/mprapi.spec $(WINEBUILD)
+	@cd mprapi && $(MAKE) `basename $@`
 
-msacm32/libmsacm32.$(IMPLIBEXT): msacm32/msacm32.spec $(WINEBUILD)
-	@cd msacm32 && $(MAKE) libmsacm32.$(IMPLIBEXT)
+msacm32/libmsacm32.def msacm32/libmsacm32.a: msacm32/msacm32.spec $(WINEBUILD)
+	@cd msacm32 && $(MAKE) `basename $@`
 
-mscms/libmscms.$(IMPLIBEXT): mscms/mscms.spec $(WINEBUILD)
-	@cd mscms && $(MAKE) libmscms.$(IMPLIBEXT)
+mscms/libmscms.def mscms/libmscms.a: mscms/mscms.spec $(WINEBUILD)
+	@cd mscms && $(MAKE) `basename $@`
 
-msdmo/libmsdmo.$(IMPLIBEXT): msdmo/msdmo.spec $(WINEBUILD)
-	@cd msdmo && $(MAKE) libmsdmo.$(IMPLIBEXT)
+msdmo/libmsdmo.def msdmo/libmsdmo.a: msdmo/msdmo.spec $(WINEBUILD)
+	@cd msdmo && $(MAKE) `basename $@`
 
-mshtml/libmshtml.$(IMPLIBEXT): mshtml/mshtml.spec $(WINEBUILD)
-	@cd mshtml && $(MAKE) libmshtml.$(IMPLIBEXT)
+mshtml/libmshtml.def mshtml/libmshtml.a: mshtml/mshtml.spec $(WINEBUILD)
+	@cd mshtml && $(MAKE) `basename $@`
 
-msi/libmsi.$(IMPLIBEXT): msi/msi.spec $(WINEBUILD)
-	@cd msi && $(MAKE) libmsi.$(IMPLIBEXT)
+msi/libmsi.def msi/libmsi.a: msi/msi.spec $(WINEBUILD)
+	@cd msi && $(MAKE) `basename $@`
 
-msimg32/libmsimg32.$(IMPLIBEXT): msimg32/msimg32.spec $(WINEBUILD)
-	@cd msimg32 && $(MAKE) libmsimg32.$(IMPLIBEXT)
+msimg32/libmsimg32.def msimg32/libmsimg32.a: msimg32/msimg32.spec $(WINEBUILD)
+	@cd msimg32 && $(MAKE) `basename $@`
 
-msvcr71/libmsvcr71.$(IMPLIBEXT): msvcr71/msvcr71.spec $(WINEBUILD)
-	@cd msvcr71 && $(MAKE) libmsvcr71.$(IMPLIBEXT)
+msvcr71/libmsvcr71.def msvcr71/libmsvcr71.a: msvcr71/msvcr71.spec $(WINEBUILD)
+	@cd msvcr71 && $(MAKE) `basename $@`
 
-msvcrt/libmsvcrt.$(IMPLIBEXT): msvcrt/msvcrt.spec $(WINEBUILD)
-	@cd msvcrt && $(MAKE) libmsvcrt.$(IMPLIBEXT)
+msvcrt/libmsvcrt.def msvcrt/libmsvcrt.a: msvcrt/msvcrt.spec $(WINEBUILD)
+	@cd msvcrt && $(MAKE) `basename $@`
 
-msvcrt20/libmsvcrt20.$(IMPLIBEXT): msvcrt20/msvcrt20.spec $(WINEBUILD)
-	@cd msvcrt20 && $(MAKE) libmsvcrt20.$(IMPLIBEXT)
+msvcrt20/libmsvcrt20.def msvcrt20/libmsvcrt20.a: msvcrt20/msvcrt20.spec $(WINEBUILD)
+	@cd msvcrt20 && $(MAKE) `basename $@`
 
-msvcrt40/libmsvcrt40.$(IMPLIBEXT): msvcrt40/msvcrt40.spec $(WINEBUILD)
-	@cd msvcrt40 && $(MAKE) libmsvcrt40.$(IMPLIBEXT)
+msvcrt40/libmsvcrt40.def msvcrt40/libmsvcrt40.a: msvcrt40/msvcrt40.spec $(WINEBUILD)
+	@cd msvcrt40 && $(MAKE) `basename $@`
 
-msvcrtd/libmsvcrtd.$(IMPLIBEXT): msvcrtd/msvcrtd.spec $(WINEBUILD)
-	@cd msvcrtd && $(MAKE) libmsvcrtd.$(IMPLIBEXT)
+msvcrtd/libmsvcrtd.def msvcrtd/libmsvcrtd.a: msvcrtd/msvcrtd.spec $(WINEBUILD)
+	@cd msvcrtd && $(MAKE) `basename $@`
 
-msvfw32/libmsvfw32.$(IMPLIBEXT): msvfw32/msvfw32.spec $(WINEBUILD)
-	@cd msvfw32 && $(MAKE) libmsvfw32.$(IMPLIBEXT)
+msvfw32/libmsvfw32.def msvfw32/libmsvfw32.a: msvfw32/msvfw32.spec $(WINEBUILD)
+	@cd msvfw32 && $(MAKE) `basename $@`
 
-mswsock/libmswsock.$(IMPLIBEXT): mswsock/mswsock.spec $(WINEBUILD)
-	@cd mswsock && $(MAKE) libmswsock.$(IMPLIBEXT)
+mswsock/libmswsock.def mswsock/libmswsock.a: mswsock/mswsock.spec $(WINEBUILD)
+	@cd mswsock && $(MAKE) `basename $@`
 
-nddeapi/libnddeapi.$(IMPLIBEXT): nddeapi/nddeapi.spec $(WINEBUILD)
-	@cd nddeapi && $(MAKE) libnddeapi.$(IMPLIBEXT)
+nddeapi/libnddeapi.def nddeapi/libnddeapi.a: nddeapi/nddeapi.spec $(WINEBUILD)
+	@cd nddeapi && $(MAKE) `basename $@`
 
-netapi32/libnetapi32.$(IMPLIBEXT): netapi32/netapi32.spec $(WINEBUILD)
-	@cd netapi32 && $(MAKE) libnetapi32.$(IMPLIBEXT)
+netapi32/libnetapi32.def netapi32/libnetapi32.a: netapi32/netapi32.spec $(WINEBUILD)
+	@cd netapi32 && $(MAKE) `basename $@`
 
-newdev/libnewdev.$(IMPLIBEXT): newdev/newdev.spec $(WINEBUILD)
-	@cd newdev && $(MAKE) libnewdev.$(IMPLIBEXT)
+newdev/libnewdev.def newdev/libnewdev.a: newdev/newdev.spec $(WINEBUILD)
+	@cd newdev && $(MAKE) `basename $@`
 
-ntdll/libntdll.$(IMPLIBEXT): ntdll/ntdll.spec $(WINEBUILD)
-	@cd ntdll && $(MAKE) libntdll.$(IMPLIBEXT)
+ntdll/libntdll.def ntdll/libntdll.a: ntdll/ntdll.spec $(WINEBUILD)
+	@cd ntdll && $(MAKE) `basename $@`
 
-ntdsapi/libntdsapi.$(IMPLIBEXT): ntdsapi/ntdsapi.spec $(WINEBUILD)
-	@cd ntdsapi && $(MAKE) libntdsapi.$(IMPLIBEXT)
+ntdsapi/libntdsapi.def ntdsapi/libntdsapi.a: ntdsapi/ntdsapi.spec $(WINEBUILD)
+	@cd ntdsapi && $(MAKE) `basename $@`
 
-ntoskrnl.exe/libntoskrnl.exe.$(IMPLIBEXT): ntoskrnl.exe/ntoskrnl.exe.spec $(WINEBUILD)
-	@cd ntoskrnl.exe && $(MAKE) libntoskrnl.exe.$(IMPLIBEXT)
+ntoskrnl.exe/libntoskrnl.exe.def ntoskrnl.exe/libntoskrnl.exe.a: ntoskrnl.exe/ntoskrnl.exe.spec $(WINEBUILD)
+	@cd ntoskrnl.exe && $(MAKE) `basename $@`
 
-odbc32/libodbc32.$(IMPLIBEXT): odbc32/odbc32.spec $(WINEBUILD)
-	@cd odbc32 && $(MAKE) libodbc32.$(IMPLIBEXT)
+odbc32/libodbc32.def odbc32/libodbc32.a: odbc32/odbc32.spec $(WINEBUILD)
+	@cd odbc32 && $(MAKE) `basename $@`
 
-odbccp32/libodbccp32.$(IMPLIBEXT): odbccp32/odbccp32.spec $(WINEBUILD)
-	@cd odbccp32 && $(MAKE) libodbccp32.$(IMPLIBEXT)
+odbccp32/libodbccp32.def odbccp32/libodbccp32.a: odbccp32/odbccp32.spec $(WINEBUILD)
+	@cd odbccp32 && $(MAKE) `basename $@`
 
-ole32/libole32.$(IMPLIBEXT): ole32/ole32.spec $(WINEBUILD)
-	@cd ole32 && $(MAKE) libole32.$(IMPLIBEXT)
+ole32/libole32.def ole32/libole32.a: ole32/ole32.spec $(WINEBUILD)
+	@cd ole32 && $(MAKE) `basename $@`
 
-oleacc/liboleacc.$(IMPLIBEXT): oleacc/oleacc.spec $(WINEBUILD)
-	@cd oleacc && $(MAKE) liboleacc.$(IMPLIBEXT)
+oleacc/liboleacc.def oleacc/liboleacc.a: oleacc/oleacc.spec $(WINEBUILD)
+	@cd oleacc && $(MAKE) `basename $@`
 
-oleaut32/liboleaut32.$(IMPLIBEXT): oleaut32/oleaut32.spec $(WINEBUILD)
-	@cd oleaut32 && $(MAKE) liboleaut32.$(IMPLIBEXT)
+oleaut32/liboleaut32.def oleaut32/liboleaut32.a: oleaut32/oleaut32.spec $(WINEBUILD)
+	@cd oleaut32 && $(MAKE) `basename $@`
 
-olecli32/libolecli32.$(IMPLIBEXT): olecli32/olecli32.spec $(WINEBUILD)
-	@cd olecli32 && $(MAKE) libolecli32.$(IMPLIBEXT)
+olecli32/libolecli32.def olecli32/libolecli32.a: olecli32/olecli32.spec $(WINEBUILD)
+	@cd olecli32 && $(MAKE) `basename $@`
 
-oledlg/liboledlg.$(IMPLIBEXT): oledlg/oledlg.spec $(WINEBUILD)
-	@cd oledlg && $(MAKE) liboledlg.$(IMPLIBEXT)
+oledlg/liboledlg.def oledlg/liboledlg.a: oledlg/oledlg.spec $(WINEBUILD)
+	@cd oledlg && $(MAKE) `basename $@`
 
-olepro32/libolepro32.$(IMPLIBEXT): olepro32/olepro32.spec $(WINEBUILD)
-	@cd olepro32 && $(MAKE) libolepro32.$(IMPLIBEXT)
+olepro32/libolepro32.def olepro32/libolepro32.a: olepro32/olepro32.spec $(WINEBUILD)
+	@cd olepro32 && $(MAKE) `basename $@`
 
-olesvr32/libolesvr32.$(IMPLIBEXT): olesvr32/olesvr32.spec $(WINEBUILD)
-	@cd olesvr32 && $(MAKE) libolesvr32.$(IMPLIBEXT)
+olesvr32/libolesvr32.def olesvr32/libolesvr32.a: olesvr32/olesvr32.spec $(WINEBUILD)
+	@cd olesvr32 && $(MAKE) `basename $@`
 
-opengl32/libopengl32.$(IMPLIBEXT): opengl32/opengl32.spec $(WINEBUILD)
-	@cd opengl32 && $(MAKE) libopengl32.$(IMPLIBEXT)
+opengl32/libopengl32.def opengl32/libopengl32.a: opengl32/opengl32.spec $(WINEBUILD)
+	@cd opengl32 && $(MAKE) `basename $@`
 
-pdh/libpdh.$(IMPLIBEXT): pdh/pdh.spec $(WINEBUILD)
-	@cd pdh && $(MAKE) libpdh.$(IMPLIBEXT)
+pdh/libpdh.def pdh/libpdh.a: pdh/pdh.spec $(WINEBUILD)
+	@cd pdh && $(MAKE) `basename $@`
 
-powrprof/libpowrprof.$(IMPLIBEXT): powrprof/powrprof.spec $(WINEBUILD)
-	@cd powrprof && $(MAKE) libpowrprof.$(IMPLIBEXT)
+powrprof/libpowrprof.def powrprof/libpowrprof.a: powrprof/powrprof.spec $(WINEBUILD)
+	@cd powrprof && $(MAKE) `basename $@`
 
-psapi/libpsapi.$(IMPLIBEXT): psapi/psapi.spec $(WINEBUILD)
-	@cd psapi && $(MAKE) libpsapi.$(IMPLIBEXT)
+psapi/libpsapi.def psapi/libpsapi.a: psapi/psapi.spec $(WINEBUILD)
+	@cd psapi && $(MAKE) `basename $@`
 
-quartz/libquartz.$(IMPLIBEXT): quartz/quartz.spec $(WINEBUILD)
-	@cd quartz && $(MAKE) libquartz.$(IMPLIBEXT)
+quartz/libquartz.def quartz/libquartz.a: quartz/quartz.spec $(WINEBUILD)
+	@cd quartz && $(MAKE) `basename $@`
 
-rasapi32/librasapi32.$(IMPLIBEXT): rasapi32/rasapi32.spec $(WINEBUILD)
-	@cd rasapi32 && $(MAKE) librasapi32.$(IMPLIBEXT)
+rasapi32/librasapi32.def rasapi32/librasapi32.a: rasapi32/rasapi32.spec $(WINEBUILD)
+	@cd rasapi32 && $(MAKE) `basename $@`
 
-resutils/libresutils.$(IMPLIBEXT): resutils/resutils.spec $(WINEBUILD)
-	@cd resutils && $(MAKE) libresutils.$(IMPLIBEXT)
+resutils/libresutils.def resutils/libresutils.a: resutils/resutils.spec $(WINEBUILD)
+	@cd resutils && $(MAKE) `basename $@`
 
-riched20/libriched20.$(IMPLIBEXT): riched20/riched20.spec $(WINEBUILD)
-	@cd riched20 && $(MAKE) libriched20.$(IMPLIBEXT)
+riched20/libriched20.def riched20/libriched20.a: riched20/riched20.spec $(WINEBUILD)
+	@cd riched20 && $(MAKE) `basename $@`
 
-rpcrt4/librpcrt4.$(IMPLIBEXT): rpcrt4/rpcrt4.spec $(WINEBUILD)
-	@cd rpcrt4 && $(MAKE) librpcrt4.$(IMPLIBEXT)
+rpcrt4/librpcrt4.def rpcrt4/librpcrt4.a: rpcrt4/rpcrt4.spec $(WINEBUILD)
+	@cd rpcrt4 && $(MAKE) `basename $@`
 
-rsaenh/librsaenh.$(IMPLIBEXT): rsaenh/rsaenh.spec $(WINEBUILD)
-	@cd rsaenh && $(MAKE) librsaenh.$(IMPLIBEXT)
+rsaenh/librsaenh.def rsaenh/librsaenh.a: rsaenh/rsaenh.spec $(WINEBUILD)
+	@cd rsaenh && $(MAKE) `basename $@`
 
-secur32/libsecur32.$(IMPLIBEXT): secur32/secur32.spec $(WINEBUILD)
-	@cd secur32 && $(MAKE) libsecur32.$(IMPLIBEXT)
+secur32/libsecur32.def secur32/libsecur32.a: secur32/secur32.spec $(WINEBUILD)
+	@cd secur32 && $(MAKE) `basename $@`
 
-sensapi/libsensapi.$(IMPLIBEXT): sensapi/sensapi.spec $(WINEBUILD)
-	@cd sensapi && $(MAKE) libsensapi.$(IMPLIBEXT)
+sensapi/libsensapi.def sensapi/libsensapi.a: sensapi/sensapi.spec $(WINEBUILD)
+	@cd sensapi && $(MAKE) `basename $@`
 
-serialui/libserialui.$(IMPLIBEXT): serialui/serialui.spec $(WINEBUILD)
-	@cd serialui && $(MAKE) libserialui.$(IMPLIBEXT)
+serialui/libserialui.def serialui/libserialui.a: serialui/serialui.spec $(WINEBUILD)
+	@cd serialui && $(MAKE) `basename $@`
 
-setupapi/libsetupapi.$(IMPLIBEXT): setupapi/setupapi.spec $(WINEBUILD)
-	@cd setupapi && $(MAKE) libsetupapi.$(IMPLIBEXT)
+setupapi/libsetupapi.def setupapi/libsetupapi.a: setupapi/setupapi.spec $(WINEBUILD)
+	@cd setupapi && $(MAKE) `basename $@`
 
-sfc/libsfc.$(IMPLIBEXT): sfc/sfc.spec $(WINEBUILD)
-	@cd sfc && $(MAKE) libsfc.$(IMPLIBEXT)
+sfc/libsfc.def sfc/libsfc.a: sfc/sfc.spec $(WINEBUILD)
+	@cd sfc && $(MAKE) `basename $@`
 
-sfc_os/libsfc_os.$(IMPLIBEXT): sfc_os/sfc_os.spec $(WINEBUILD)
-	@cd sfc_os && $(MAKE) libsfc_os.$(IMPLIBEXT)
+sfc_os/libsfc_os.def sfc_os/libsfc_os.a: sfc_os/sfc_os.spec $(WINEBUILD)
+	@cd sfc_os && $(MAKE) `basename $@`
 
-shdocvw/libshdocvw.$(IMPLIBEXT): shdocvw/shdocvw.spec $(WINEBUILD)
-	@cd shdocvw && $(MAKE) libshdocvw.$(IMPLIBEXT)
+shdocvw/libshdocvw.def shdocvw/libshdocvw.a: shdocvw/shdocvw.spec $(WINEBUILD)
+	@cd shdocvw && $(MAKE) `basename $@`
 
-shell32/libshell32.$(IMPLIBEXT): shell32/shell32.spec $(WINEBUILD)
-	@cd shell32 && $(MAKE) libshell32.$(IMPLIBEXT)
+shell32/libshell32.def shell32/libshell32.a: shell32/shell32.spec $(WINEBUILD)
+	@cd shell32 && $(MAKE) `basename $@`
 
-shfolder/libshfolder.$(IMPLIBEXT): shfolder/shfolder.spec $(WINEBUILD)
-	@cd shfolder && $(MAKE) libshfolder.$(IMPLIBEXT)
+shfolder/libshfolder.def shfolder/libshfolder.a: shfolder/shfolder.spec $(WINEBUILD)
+	@cd shfolder && $(MAKE) `basename $@`
 
-shlwapi/libshlwapi.$(IMPLIBEXT): shlwapi/shlwapi.spec $(WINEBUILD)
-	@cd shlwapi && $(MAKE) libshlwapi.$(IMPLIBEXT)
+shlwapi/libshlwapi.def shlwapi/libshlwapi.a: shlwapi/shlwapi.spec $(WINEBUILD)
+	@cd shlwapi && $(MAKE) `basename $@`
 
-slc/libslc.$(IMPLIBEXT): slc/slc.spec $(WINEBUILD)
-	@cd slc && $(MAKE) libslc.$(IMPLIBEXT)
+slc/libslc.def slc/libslc.a: slc/slc.spec $(WINEBUILD)
+	@cd slc && $(MAKE) `basename $@`
 
-snmpapi/libsnmpapi.$(IMPLIBEXT): snmpapi/snmpapi.spec $(WINEBUILD)
-	@cd snmpapi && $(MAKE) libsnmpapi.$(IMPLIBEXT)
+snmpapi/libsnmpapi.def snmpapi/libsnmpapi.a: snmpapi/snmpapi.spec $(WINEBUILD)
+	@cd snmpapi && $(MAKE) `basename $@`
 
-spoolss/libspoolss.$(IMPLIBEXT): spoolss/spoolss.spec $(WINEBUILD)
-	@cd spoolss && $(MAKE) libspoolss.$(IMPLIBEXT)
+spoolss/libspoolss.def spoolss/libspoolss.a: spoolss/spoolss.spec $(WINEBUILD)
+	@cd spoolss && $(MAKE) `basename $@`
 
-sti/libsti.$(IMPLIBEXT): sti/sti.spec $(WINEBUILD)
-	@cd sti && $(MAKE) libsti.$(IMPLIBEXT)
+sti/libsti.def sti/libsti.a: sti/sti.spec $(WINEBUILD)
+	@cd sti && $(MAKE) `basename $@`
 
-tapi32/libtapi32.$(IMPLIBEXT): tapi32/tapi32.spec $(WINEBUILD)
-	@cd tapi32 && $(MAKE) libtapi32.$(IMPLIBEXT)
+tapi32/libtapi32.def tapi32/libtapi32.a: tapi32/tapi32.spec $(WINEBUILD)
+	@cd tapi32 && $(MAKE) `basename $@`
 
-unicows/libunicows.$(IMPLIBEXT): unicows/unicows.spec $(WINEBUILD)
-	@cd unicows && $(MAKE) libunicows.$(IMPLIBEXT)
+unicows/libunicows.def unicows/libunicows.a: unicows/unicows.spec $(WINEBUILD)
+	@cd unicows && $(MAKE) `basename $@`
 
-url/liburl.$(IMPLIBEXT): url/url.spec $(WINEBUILD)
-	@cd url && $(MAKE) liburl.$(IMPLIBEXT)
+url/liburl.def url/liburl.a: url/url.spec $(WINEBUILD)
+	@cd url && $(MAKE) `basename $@`
 
-urlmon/liburlmon.$(IMPLIBEXT): urlmon/urlmon.spec $(WINEBUILD)
-	@cd urlmon && $(MAKE) liburlmon.$(IMPLIBEXT)
+urlmon/liburlmon.def urlmon/liburlmon.a: urlmon/urlmon.spec $(WINEBUILD)
+	@cd urlmon && $(MAKE) `basename $@`
 
-user32/libuser32.$(IMPLIBEXT): user32/user32.spec $(WINEBUILD)
-	@cd user32 && $(MAKE) libuser32.$(IMPLIBEXT)
+user32/libuser32.def user32/libuser32.a: user32/user32.spec $(WINEBUILD)
+	@cd user32 && $(MAKE) `basename $@`
 
-userenv/libuserenv.$(IMPLIBEXT): userenv/userenv.spec $(WINEBUILD)
-	@cd userenv && $(MAKE) libuserenv.$(IMPLIBEXT)
+userenv/libuserenv.def userenv/libuserenv.a: userenv/userenv.spec $(WINEBUILD)
+	@cd userenv && $(MAKE) `basename $@`
 
-usp10/libusp10.$(IMPLIBEXT): usp10/usp10.spec $(WINEBUILD)
-	@cd usp10 && $(MAKE) libusp10.$(IMPLIBEXT)
+usp10/libusp10.def usp10/libusp10.a: usp10/usp10.spec $(WINEBUILD)
+	@cd usp10 && $(MAKE) `basename $@`
 
-uxtheme/libuxtheme.$(IMPLIBEXT): uxtheme/uxtheme.spec $(WINEBUILD)
-	@cd uxtheme && $(MAKE) libuxtheme.$(IMPLIBEXT)
+uxtheme/libuxtheme.def uxtheme/libuxtheme.a: uxtheme/uxtheme.spec $(WINEBUILD)
+	@cd uxtheme && $(MAKE) `basename $@`
 
-vdmdbg/libvdmdbg.$(IMPLIBEXT): vdmdbg/vdmdbg.spec $(WINEBUILD)
-	@cd vdmdbg && $(MAKE) libvdmdbg.$(IMPLIBEXT)
+vdmdbg/libvdmdbg.def vdmdbg/libvdmdbg.a: vdmdbg/vdmdbg.spec $(WINEBUILD)
+	@cd vdmdbg && $(MAKE) `basename $@`
 
-version/libversion.$(IMPLIBEXT): version/version.spec $(WINEBUILD)
-	@cd version && $(MAKE) libversion.$(IMPLIBEXT)
+version/libversion.def version/libversion.a: version/version.spec $(WINEBUILD)
+	@cd version && $(MAKE) `basename $@`
 
-wined3d/libwined3d.$(IMPLIBEXT): wined3d/wined3d.spec $(WINEBUILD)
-	@cd wined3d && $(MAKE) libwined3d.$(IMPLIBEXT)
+wined3d/libwined3d.def wined3d/libwined3d.a: wined3d/wined3d.spec $(WINEBUILD)
+	@cd wined3d && $(MAKE) `basename $@`
 
-winedos/libwinedos.$(IMPLIBEXT): winedos/winedos.spec $(WINEBUILD)
-	@cd winedos && $(MAKE) libwinedos.$(IMPLIBEXT)
+winedos/libwinedos.def winedos/libwinedos.a: winedos/winedos.spec $(WINEBUILD)
+	@cd winedos && $(MAKE) `basename $@`
 
-winhttp/libwinhttp.$(IMPLIBEXT): winhttp/winhttp.spec $(WINEBUILD)
-	@cd winhttp && $(MAKE) libwinhttp.$(IMPLIBEXT)
+winhttp/libwinhttp.def winhttp/libwinhttp.a: winhttp/winhttp.spec $(WINEBUILD)
+	@cd winhttp && $(MAKE) `basename $@`
 
-wininet/libwininet.$(IMPLIBEXT): wininet/wininet.spec $(WINEBUILD)
-	@cd wininet && $(MAKE) libwininet.$(IMPLIBEXT)
+wininet/libwininet.def wininet/libwininet.a: wininet/wininet.spec $(WINEBUILD)
+	@cd wininet && $(MAKE) `basename $@`
 
-winmm/libwinmm.$(IMPLIBEXT): winmm/winmm.spec $(WINEBUILD)
-	@cd winmm && $(MAKE) libwinmm.$(IMPLIBEXT)
+winmm/libwinmm.def winmm/libwinmm.a: winmm/winmm.spec $(WINEBUILD)
+	@cd winmm && $(MAKE) `basename $@`
 
-winnls32/libwinnls32.$(IMPLIBEXT): winnls32/winnls32.spec $(WINEBUILD)
-	@cd winnls32 && $(MAKE) libwinnls32.$(IMPLIBEXT)
+winnls32/libwinnls32.def winnls32/libwinnls32.a: winnls32/winnls32.spec $(WINEBUILD)
+	@cd winnls32 && $(MAKE) `basename $@`
 
-winscard/libwinscard.$(IMPLIBEXT): winscard/winscard.spec $(WINEBUILD)
-	@cd winscard && $(MAKE) libwinscard.$(IMPLIBEXT)
+winscard/libwinscard.def winscard/libwinscard.a: winscard/winscard.spec $(WINEBUILD)
+	@cd winscard && $(MAKE) `basename $@`
 
-winspool.drv/libwinspool.$(IMPLIBEXT): winspool.drv/winspool.drv.spec $(WINEBUILD)
-	@cd winspool.drv && $(MAKE) libwinspool.$(IMPLIBEXT)
+winspool.drv/libwinspool.def winspool.drv/libwinspool.a: winspool.drv/winspool.drv.spec $(WINEBUILD)
+	@cd winspool.drv && $(MAKE) `basename $@`
 
-wintab32/libwintab32.$(IMPLIBEXT): wintab32/wintab32.spec $(WINEBUILD)
-	@cd wintab32 && $(MAKE) libwintab32.$(IMPLIBEXT)
+wintab32/libwintab32.def wintab32/libwintab32.a: wintab32/wintab32.spec $(WINEBUILD)
+	@cd wintab32 && $(MAKE) `basename $@`
 
-wintrust/libwintrust.$(IMPLIBEXT): wintrust/wintrust.spec $(WINEBUILD)
-	@cd wintrust && $(MAKE) libwintrust.$(IMPLIBEXT)
+wintrust/libwintrust.def wintrust/libwintrust.a: wintrust/wintrust.spec $(WINEBUILD)
+	@cd wintrust && $(MAKE) `basename $@`
 
-wldap32/libwldap32.$(IMPLIBEXT): wldap32/wldap32.spec $(WINEBUILD)
-	@cd wldap32 && $(MAKE) libwldap32.$(IMPLIBEXT)
+wldap32/libwldap32.def wldap32/libwldap32.a: wldap32/wldap32.spec $(WINEBUILD)
+	@cd wldap32 && $(MAKE) `basename $@`
 
-wnaspi32/libwnaspi32.$(IMPLIBEXT): wnaspi32/wnaspi32.spec $(WINEBUILD)
-	@cd wnaspi32 && $(MAKE) libwnaspi32.$(IMPLIBEXT)
+wnaspi32/libwnaspi32.def wnaspi32/libwnaspi32.a: wnaspi32/wnaspi32.spec $(WINEBUILD)
+	@cd wnaspi32 && $(MAKE) `basename $@`
 
-wow32/libwow32.$(IMPLIBEXT): wow32/wow32.spec $(WINEBUILD)
-	@cd wow32 && $(MAKE) libwow32.$(IMPLIBEXT)
+wow32/libwow32.def wow32/libwow32.a: wow32/wow32.spec $(WINEBUILD)
+	@cd wow32 && $(MAKE) `basename $@`
 
-ws2_32/libws2_32.$(IMPLIBEXT): ws2_32/ws2_32.spec $(WINEBUILD)
-	@cd ws2_32 && $(MAKE) libws2_32.$(IMPLIBEXT)
+ws2_32/libws2_32.def ws2_32/libws2_32.a: ws2_32/ws2_32.spec $(WINEBUILD)
+	@cd ws2_32 && $(MAKE) `basename $@`
 
-wsock32/libwsock32.$(IMPLIBEXT): wsock32/wsock32.spec $(WINEBUILD)
-	@cd wsock32 && $(MAKE) libwsock32.$(IMPLIBEXT)
+wsock32/libwsock32.def wsock32/libwsock32.a: wsock32/wsock32.spec $(WINEBUILD)
+	@cd wsock32 && $(MAKE) `basename $@`
 
-wtsapi32/libwtsapi32.$(IMPLIBEXT): wtsapi32/wtsapi32.spec $(WINEBUILD)
-	@cd wtsapi32 && $(MAKE) libwtsapi32.$(IMPLIBEXT)
+wtsapi32/libwtsapi32.def wtsapi32/libwtsapi32.a: wtsapi32/wtsapi32.spec $(WINEBUILD)
+	@cd wtsapi32 && $(MAKE) `basename $@`
 
-libd3dx9.$(IMPLIBEXT): d3dx9_36/libd3dx9.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.$(IMPLIBEXT) $@
+libd3dx9.a: d3dx9_36/libd3dx9.a
+	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.a $@
 
-libwinspool.$(IMPLIBEXT): winspool.drv/libwinspool.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.$(IMPLIBEXT) $@
+libd3dx9.def: d3dx9_36/libd3dx9.def
+	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.def $@
+
+libwinspool.a: winspool.drv/libwinspool.a
+	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.a $@
+
+libwinspool.def: winspool.drv/libwinspool.def
+	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.def $@
 
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
 $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPORT_LIBS)
