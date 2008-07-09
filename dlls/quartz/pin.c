@@ -120,6 +120,11 @@ static HRESULT SendFurther( IPin *from, SendPinFunc fnMiddle, LPVOID arg, SendPi
             }
             IPin_Release( pin );
         }
+        else
+        {
+            hr = S_OK;
+            break;
+        }
     }
 
     if (!foundend)
@@ -622,12 +627,21 @@ static HRESULT deliver_endofstream(IPin* pin, LPVOID unused)
 
 HRESULT WINAPI InputPin_EndOfStream(IPin * iface)
 {
+    HRESULT hr = S_OK;
     InputPin *This = (InputPin *)iface;
+
     TRACE("(%p)\n", This);
 
-    This->end_of_stream = 1;
+    EnterCriticalSection(This->pin.pCritSec);
+    if (This->flushing)
+        hr = S_FALSE;
+    else
+        This->end_of_stream = 1;
+    LeaveCriticalSection(This->pin.pCritSec);
 
-    return SendFurther( iface, deliver_endofstream, NULL, NULL );
+    if (hr == S_OK)
+        hr = SendFurther( iface, deliver_endofstream, NULL, NULL );
+    return hr;
 }
 
 static HRESULT deliver_beginflush(IPin* pin, LPVOID unused)
@@ -665,7 +679,7 @@ HRESULT WINAPI InputPin_EndFlush(IPin * iface)
     TRACE("(%p)\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
-    This->flushing = 0;
+    This->flushing = This->end_of_stream = 0;
 
     hr = SendFurther( iface, deliver_endflush, NULL, NULL );
     LeaveCriticalSection(This->pin.pCritSec);
@@ -1774,7 +1788,7 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
         FILTER_STATE state;
         IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
 
-        if (This->stop_playback && state != State_Stopped)
+        if (state != State_Stopped)
             PullPin_StartProcessing(This);
 
         PullPin_WaitForStateChange(This, INFINITE);
