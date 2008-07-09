@@ -384,7 +384,6 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
             if (*wk1++ == ':') state = 2;
             break;
         case 2:
-            if (*wk1 != '/') {state = 3; break;}
             *wk2++ = *wk1++;
             if (*wk1 != '/') {state = 6; break;}
             *wk2++ = *wk1++;
