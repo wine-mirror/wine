@@ -68,6 +68,7 @@ my %special_dlls =
 # Default patterns for top-level .gitignore
 my @ignores = (
     "*.[oa]",
+    "*.ok",
     "*.res",
     "*.so",
     "/autom4te.cache",
@@ -78,6 +79,9 @@ my @ignores = (
     "/tags",
     "Makefile",
     "dlldata.c",
+    "dlls/*/*.def",
+    "dlls/*/tests/*crosstest.exe",
+    "dlls/*/tests/testlist.c",
     "include/config.h",
     "include/stamp-h"
 );
@@ -377,9 +381,6 @@ sub update_dlls(@)
         {
             $testdirs{$1} = "$1/tests";
             (my $crosstest = $makefile{"TESTDLL"}) =~ s/\.dll$//;
-            push @ignores, $makefile{"=dir"} . $crosstest . "_crosstest.exe";
-            push @ignores, $makefile{"=dir"} . "testlist.c";
-            push @ignores, $makefile{"=dir"} . "*.ok";
             next;
         }
 
@@ -586,10 +587,6 @@ sub update_dlls(@)
     {
         next unless defined $altnames{$mod};
         push @ignores, map { "dlls/" . $_ . "16"; } @{$altnames{$mod}};
-    }
-    foreach my $mod (sort keys %importlibs)
-    {
-        push @ignores, "dlls/$directories{$mod}/lib$importlibs{$mod}.def";
     }
 
     return @ignores;
