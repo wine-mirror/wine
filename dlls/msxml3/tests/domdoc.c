@@ -3306,6 +3306,7 @@ static void test_DocumentSaveToFile(void)
     ok(read != 0, "could not read file\n");
     ok(buffer[0] != '<' || buffer[1] != '?', "File contains processing instruction\n");
 
+    CloseHandle(file);
     DeleteFile("test.xml");
 }
 
