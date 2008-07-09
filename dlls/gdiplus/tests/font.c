@@ -25,7 +25,7 @@
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
 static const WCHAR arial[] = {'A','r','i','a','l','\0'};
-static const WCHAR nonexistant[] = {'T','h','i','s','F','o','n','t','s','h','o','u','l','d','N','o','t','E','x','i','s','t','\0'};
+static const WCHAR nonexistent[] = {'T','h','i','s','F','o','n','t','s','h','o','u','l','d','N','o','t','E','x','i','s','t','\0'};
 static const WCHAR MSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
 static const WCHAR MicrosoftSansSerif[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
 static const WCHAR TimesNewRoman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
@@ -48,7 +48,7 @@ static void test_createfont(void)
     UINT i;
     REAL size;
 
-    stat = GdipCreateFontFamilyFromName(nonexistant, NULL, &fontfamily);
+    stat = GdipCreateFontFamilyFromName(nonexistent, NULL, &fontfamily);
     expect (FontFamilyNotFound, stat);
     stat = GdipDeleteFont(font);
     expect (InvalidParameter, stat);
@@ -161,10 +161,10 @@ static void test_fontfamily (void)
     /* FontFamily must be able to actually find the family.
      * If it can't, any subsequent calls should fail.
      */
-    stat = GdipCreateFontFamilyFromName (nonexistant, NULL, &family);
+    stat = GdipCreateFontFamilyFromName (nonexistent, NULL, &family);
     expect (FontFamilyNotFound, stat);
-    ok ((lstrcmpiW(itsName, nonexistant) != 0),
-        "Expected a non-zero value for nonexistant font!\n");
+    ok ((lstrcmpiW(itsName, nonexistent) != 0),
+        "Expected a non-zero value for nonexistent font!\n");
 
     /* Bitmap fonts are not found */
 todo_wine
