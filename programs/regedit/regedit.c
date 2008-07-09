@@ -186,8 +186,12 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                         getAppName());
                 fprintf(stderr,usage);
                 exit(1);
+            } else
+            {
+                WCHAR* reg_key_nameW = GetWideString(reg_key_name, lstrlenA(reg_key_name)+1);
+                delete_registry_key(reg_key_nameW);
+                HeapFree(GetProcessHeap(), 0, reg_key_nameW);
             }
-            delete_registry_key(reg_key_name);
             break;
         }
     case ACTION_EXPORT: {

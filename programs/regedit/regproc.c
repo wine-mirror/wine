@@ -75,6 +75,20 @@ if (!(p)) \
 }
 
 /******************************************************************************
+ * Allocates memory and convers input from multibyte to wide chars
+ * Returned string must be freed by the caller
+ */
+WCHAR* GetWideString(char* strA, int len)
+{
+    WCHAR* strW = NULL;
+
+    strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    CHECK_ENOUGH_MEMORY(strW);
+    MultiByteToWideChar(CP_ACP, 0, strA, len, strW, len);
+    return strW;
+}
+
+/******************************************************************************
  * Allocates memory and convers input from wide chars to multibyte
  * Returned string must be freed by the caller
  */
@@ -529,12 +543,8 @@ static void processRegEntry(LPSTR stdInput)
         /* delete the key if we encounter '-' at the start of reg key */
         if ( stdInput[0] == '-')
         {
-            WCHAR* stdInputW = NULL;
-            int size = keyEnd - stdInput - 1;
-            stdInputW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size * sizeof(WCHAR));
-            CHECK_ENOUGH_MEMORY(stdInputW);
-            MultiByteToWideChar(CP_ACP, 0, stdInput + 1, size, stdInputW, size);
-            delete_registry_keyW(stdInputW);
+            WCHAR* stdInputW = GetWideString(stdInput + 1, keyEnd - stdInput);
+            delete_registry_key(stdInputW);
             HeapFree(GetProcessHeap(), 0, stdInputW);
         } else if ( openKey(stdInput) != ERROR_SUCCESS )
         {
@@ -1062,29 +1072,7 @@ BOOL import_registry_file(LPTSTR filename)
  * reg_key_name - full name of registry branch to delete. Ignored if is NULL,
  *      empty, points to register key class, does not exist.
  */
-void delete_registry_key(CHAR *reg_key_name)
-{
-    CHAR *key_name;
-    HKEY key_class;
-
-    if (!reg_key_name || !reg_key_name[0])
-        return;
-
-    if (!parseKeyName(reg_key_name, &key_class, &key_name)) {
-        fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
-                getAppName(), reg_key_name);
-        exit(1);
-    }
-    if (!*key_name) {
-        fprintf(stderr,"%s: Can't delete registry class '%s'\n",
-                getAppName(), reg_key_name);
-        exit(1);
-    }
-
-    RegDeleteTreeA(key_class, key_name);
-}
-
-void delete_registry_keyW(WCHAR *reg_key_name)
+void delete_registry_key(WCHAR *reg_key_name)
 {
     WCHAR *key_name = NULL;
     HKEY key_class;
