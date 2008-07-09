@@ -32,8 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 /**********************************************************
  *
- * Data returned by GdipGetRegionData (for rectangle based regions)
- * looks something like this:
+ * Data returned by GdipGetRegionData looks something like this:
  *
  * struct region_data_header
  * {
@@ -43,7 +42,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
  *   DWORD num_ops;  number of combining ops * 2
  * };
  *
- * Then follows a sequence of combining ops and RECTFs.
+ * Then follows a sequence of combining ops and region elements.
+ *
+ * A region element is either a RECTF or some path data.
  *
  * Combining ops are just stored as their CombineMode value.
  *
@@ -51,19 +52,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
  * stored as 0x10000002 (with no following RECTF) and an infinite rect
  * is stored as 0x10000003 (again with no following RECTF).
  *
- * The combining ops are stored in the reverse order to the RECTFs and in the
- * reverse order to which the region was constructed.
+ * Path data is preceded by the DWORD 0x10000001.  Then follows a
+ * DWORD size and then size bytes of data.
  *
- * When two or more complex regions (ie those with more than one rect)
- * are combined, the combining op for the two regions comes first,
- * then the combining ops for the rects in region 1, followed by the
- * rects for region 1, then follows the combining ops for region 2 and
- * finally region 2's rects.  Presumably you're supposed to use the
- * 0x10000000 rect header to find the end of the op list (the count of
- * the rects in each region is not stored).
+ * The combining ops are stored in the reverse order to the region
+ * elements and in the reverse order to which the region was
+ * constructed.
  *
- * When a simple region (1 rect) is combined, it's treated as if a single rect
- * is being combined.
+ * When two or more complex regions (ie those with more than one
+ * element) are combined, the combining op for the two regions comes
+ * first, then the combining ops for the region elements in region 1,
+ * followed by the region elements for region 1, then follows the
+ * combining ops for region 2 and finally region 2's region elements.
+ * Presumably you're supposed to use the 0x1000000x header to find the
+ * end of the op list (the count of the elements in each region is not
+ * stored).
+ *
+ * When a simple region (1 element) is combined, it's treated as if a
+ * single rect/path is being combined.
  *
  */
 
