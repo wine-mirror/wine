@@ -128,7 +128,7 @@ LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
   {
     /* Set the area used */
     lpMemArea[ uBlockUsed ].used = 1;
-    lpvArea = &(lpMemArea[ uBlockUsed ].data);
+    lpvArea = lpMemArea[ uBlockUsed ].data;
   }
   else
   {
