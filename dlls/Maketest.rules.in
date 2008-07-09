@@ -58,7 +58,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
 .SUFFIXES: .cross.o .res.cross.o
 
 .c.cross.o:
-	$(CROSSCC) -c $(ALLCFLAGS) -o $@ $<
+	$(CROSSCC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 .res.res.cross.o:
 	$(CROSSWINDRES) -i $< -o $@
@@ -66,7 +66,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
 crosstest:: @CROSSTEST@
 
 $(CROSSTEST): $(CROSSOBJS) Makefile.in
-	$(CROSSCC) $(CROSSOBJS) -o $@ $(ALL_LIBS)
+	$(CROSSCC) $(CROSSOBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-L$(DLLDIR)/%) $(ALL_LIBS)
 
 $(CROSSOBJS): $(IDL_GEN_HEADERS)
 
