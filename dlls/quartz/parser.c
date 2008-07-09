@@ -277,7 +277,8 @@ HRESULT WINAPI Parser_Pause(IBaseFilter * iface)
         EnterCriticalSection(&This->csFilter);
     }
 
-    This->state = State_Paused;
+    if (SUCCEEDED(hr))
+        This->state = State_Paused;
 
     LeaveCriticalSection(&This->csFilter);
     LeaveCriticalSection(&pin->thread_lock);
@@ -298,6 +299,8 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     EnterCriticalSection(&pin->thread_lock);
     EnterCriticalSection(&This->csFilter);
     {
+        HRESULT hr_any = VFW_E_NOT_CONNECTED;
+
         if (This->state == State_Running || This->state == State_Paused)
         {
             This->state = State_Running;
@@ -311,10 +314,11 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
         for (i = 1; i < (This->cStreams + 1); i++)
         {
             hr = OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
-            if (FAILED(hr))
-                break;
+            if (SUCCEEDED(hr))
+                hr_any = hr;
         }
 
+        hr_any = hr;
         if (SUCCEEDED(hr))
         {
             LeaveCriticalSection(&This->csFilter);
