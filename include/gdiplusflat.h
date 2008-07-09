@@ -408,6 +408,8 @@ GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat*,StringAlignment*);
 GpStatus WINGDIPAPI GdipGetStringFormatFlags(GDIPCONST GpStringFormat*, INT*);
 GpStatus WINGDIPAPI GdipGetStringFormatHotkeyPrefix(GDIPCONST GpStringFormat*,INT*);
 GpStatus WINGDIPAPI GdipGetStringFormatLineAlign(GpStringFormat*,StringAlignment*);
+GpStatus WINGDIPAPI GdipGetStringFormatMeasurableCharacterRangeCount(
+        GDIPCONST GpStringFormat*, INT*);
 GpStatus WINGDIPAPI GdipGetStringFormatTrimming(GpStringFormat*,StringTrimming*);
 GpStatus WINGDIPAPI GdipSetStringFormatAlign(GpStringFormat*,StringAlignment);
 GpStatus WINGDIPAPI GdipSetStringFormatHotkeyPrefix(GpStringFormat*,INT);
