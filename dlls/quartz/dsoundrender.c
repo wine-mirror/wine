@@ -265,6 +265,7 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
+        LeaveCriticalSection(&This->csFilter);
         return hr;
     }
 
@@ -281,6 +282,7 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     if (IMediaSample_IsPreroll(pSample) == S_OK)
     {
         TRACE("Preroll!\n");
+        LeaveCriticalSection(&This->csFilter);
         return S_OK;
     }
 
@@ -298,6 +300,7 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
         if (This->state == State_Paused)
         {
             /* Assuming we return because of flushing */
+            TRACE("Flushing\n");
             LeaveCriticalSection(&This->csFilter);
             return S_OK;
         }
@@ -887,7 +890,12 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
     EnterCriticalSection(This->pin.pCritSec);
 
     TRACE("(%p/%p)->()\n", This, iface);
-    InputPin_EndOfStream(iface);
+    hr = InputPin_EndOfStream(iface);
+    if (hr != S_OK)
+    {
+        ERR("%08x\n", hr);
+        return hr;
+    }
 
     hr = IFilterGraph_QueryInterface(me->filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
     if (SUCCEEDED(hr))
