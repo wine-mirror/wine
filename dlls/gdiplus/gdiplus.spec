@@ -439,7 +439,7 @@
 @ stdcall GdipLoadImageFromFileICM(wstr ptr)
 @ stdcall GdipLoadImageFromStream(ptr ptr)
 @ stdcall GdipLoadImageFromStreamICM(ptr ptr)
-@ stub GdipMeasureCharacterRanges
+@ stdcall GdipMeasureCharacterRanges(ptr wstr long ptr ptr ptr long ptr)
 @ stub GdipMeasureDriverString
 @ stdcall GdipMeasureString(ptr wstr long ptr ptr ptr ptr ptr ptr)
 @ stub GdipMultiplyLineTransform

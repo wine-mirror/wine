@@ -2215,6 +2215,20 @@ GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
+        GDIPCONST WCHAR* string, INT length, GDIPCONST GpFont* font,
+        GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,
+        INT regionCount, GpRegion** regions)
+{
+    if (!(graphics && string && font && layoutRect && stringFormat && regions))
+        return InvalidParameter;
+
+    FIXME("stub: %p %s %d %p %p %p %d %p\n", graphics, debugstr_w(string),
+            length, font, layoutRect, stringFormat, regionCount, regions);
+
+    return NotImplemented;
+}
+
 /* Find the smallest rectangle that bounds the text when it is printed in rect
  * according to the format options listed in format. If rect has 0 width and
  * height, then just find the smallest rectangle that bounds the text when it's
