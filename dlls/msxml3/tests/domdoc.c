@@ -1170,17 +1170,17 @@ todo_wine
         ok( r == E_INVALIDARG, "ret %08x\n", r );
 
         r = IXMLDOMNodeList_get_item(list, 0, NULL);
-        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x", r);
+        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x\n", r);
 
         r = IXMLDOMNodeList_get_length(list, NULL);
-        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x", r);
+        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x\n", r);
 
         r = IXMLDOMNodeList_get_length( list, &count );
         ok( r == S_OK, "get_length returns %08x\n", r );
         ok( count == 4, "get_length got %ld\n", count );
 
         r = IXMLDOMNodeList_nextNode(list, NULL);
-        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x", r);
+        ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x\n", r);
 
         r = IXMLDOMNodeList_nextNode( list, &node );
         ok( r == S_OK, "nextNode returned wrong code\n");
