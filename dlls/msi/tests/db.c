@@ -190,6 +190,27 @@ static UINT create_component_table( MSIHANDLE hdb )
             "PRIMARY KEY `Component`)" );
 }
 
+static UINT create_custom_action_table( MSIHANDLE hdb )
+{
+    return run_query( hdb, 0,
+            "CREATE TABLE `CustomAction` ( "
+            "`Action` CHAR(72) NOT NULL, "
+            "`Type` SHORT NOT NULL, "
+            "`Source` CHAR(72), "
+            "`Target` CHAR(255) "
+            "PRIMARY KEY `Action`)" );
+}
+
+static UINT create_directory_table( MSIHANDLE hdb )
+{
+    return run_query( hdb, 0,
+            "CREATE TABLE `Directory` ( "
+            "`Directory` CHAR(255) NOT NULL, "
+            "`Directory_Parent` CHAR(255), "
+            "`DefaultDir` CHAR(255) NOT NULL "
+            "PRIMARY KEY `Directory`)" );
+}
+
 static UINT create_feature_components_table( MSIHANDLE hdb )
 {
     return run_query( hdb, 0,
@@ -221,6 +242,22 @@ static UINT add_component_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Component`  "
             "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, 0, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_custom_action_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `CustomAction`  "
+            "(`Action`, `Type`, `Source`, `Target`) "
             "VALUES( %s )";
     char *query;
     UINT sz, r;
@@ -2331,12 +2368,7 @@ static MSIHANDLE create_package_db(LPCSTR filename)
 
     res = set_summary_info(hdb);
 
-    res = run_query( hdb, 0,
-            "CREATE TABLE `Directory` ( "
-            "`Directory` CHAR(255) NOT NULL, "
-            "`Directory_Parent` CHAR(255), "
-            "`DefaultDir` CHAR(255) NOT NULL "
-            "PRIMARY KEY `Directory`)" );
+    res = create_directory_table(hdb);
     ok( res == ERROR_SUCCESS , "Failed to create directory table\n" );
 
     return hdb;
@@ -6153,6 +6185,134 @@ static void test_storages_table(void)
     DeleteFileA(msifile);
 }
 
+static void test_dbtopackage(void)
+{
+    MSIHANDLE hdb, hpkg;
+    CHAR package[10];
+    CHAR buf[MAX_PATH];
+    DWORD size;
+    UINT r;
+
+    /* create an empty database, transact mode */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Failed to create database\n");
+
+    set_summary_info(hdb);
+
+    r = create_directory_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_custom_action_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_custom_action_entry(hdb, "'SetProp', 51, 'MYPROP', 'grape'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    sprintf(package, "#%li", hdb);
+    r = MsiOpenPackage(package, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* property is not set yet */
+    size = MAX_PATH;
+    lstrcpyA(buf, "kiwi");
+    r = MsiGetProperty(hpkg, "MYPROP", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    /* run the custom action to set the property */
+    r = MsiDoAction(hpkg, "SetProp");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* property is now set */
+    size = MAX_PATH;
+    lstrcpyA(buf, "kiwi");
+    r = MsiGetProperty(hpkg, "MYPROP", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "grape"), "Expected \"grape\", got \"%s\"\n", buf);
+    ok(size == 5, "Expected 5, got %d\n", size);
+
+    MsiCloseHandle(hpkg);
+
+    /* reset the package */
+    r = MsiOpenPackage(package, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* property is not set anymore */
+    size = MAX_PATH;
+    lstrcpyA(buf, "kiwi");
+    r = MsiGetProperty(hpkg, "MYPROP", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+        ok(size == 0, "Expected 0, got %d\n", size);
+    }
+
+    MsiCloseHandle(hdb);
+    MsiCloseHandle(hpkg);
+
+    /* create an empty database, direct mode */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATEDIRECT, &hdb);
+    ok(r == ERROR_SUCCESS, "Failed to create database\n");
+
+    set_summary_info(hdb);
+
+    r = create_directory_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_custom_action_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_custom_action_entry(hdb, "'SetProp', 51, 'MYPROP', 'grape'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    sprintf(package, "#%li", hdb);
+    r = MsiOpenPackage(package, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* property is not set yet */
+    size = MAX_PATH;
+    lstrcpyA(buf, "kiwi");
+    r = MsiGetProperty(hpkg, "MYPROP", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    /* run the custom action to set the property */
+    r = MsiDoAction(hpkg, "SetProp");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* property is now set */
+    size = MAX_PATH;
+    lstrcpyA(buf, "kiwi");
+    r = MsiGetProperty(hpkg, "MYPROP", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "grape"), "Expected \"grape\", got \"%s\"\n", buf);
+    ok(size == 5, "Expected 5, got %d\n", size);
+
+    MsiCloseHandle(hpkg);
+
+    /* reset the package */
+    r = MsiOpenPackage(package, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* property is not set anymore */
+    size = MAX_PATH;
+    lstrcpyA(buf, "kiwi");
+    r = MsiGetProperty(hpkg, "MYPROP", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+        ok(size == 0, "Expected 0, got %d\n", size);
+    }
+
+    MsiCloseHandle(hdb);
+    MsiCloseHandle(hpkg);
+    DeleteFileA(msifile);
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -6191,4 +6351,5 @@ START_TEST(db)
     test_viewmodify_refresh();
     test_where_viewmodify();
     test_storages_table();
+    test_dbtopackage();
 }
