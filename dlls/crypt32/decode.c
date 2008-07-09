@@ -3147,7 +3147,7 @@ static BOOL CRYPT_AsnDecodeIntInternal(const BYTE *pbEncoded, DWORD cbEncoded,
     DWORD size = sizeof(buf);
 
     blob->pbData = buf + sizeof(CRYPT_INTEGER_BLOB);
-    ret = CRYPT_AsnDecodeIntegerInternal(pbEncoded, cbEncoded, 0, &buf,
+    ret = CRYPT_AsnDecodeIntegerInternal(pbEncoded, cbEncoded, 0, buf,
      &size, pcbDecoded);
     if (ret)
     {
