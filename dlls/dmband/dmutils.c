@@ -180,13 +180,13 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* p
   case DMUS_FOURCC_NAME_CHUNK: {
     TRACE_(dmfile)(": name chunk\n");
     pDesc->dwValidData |= DMUS_OBJ_NAME;
-    IStream_Read (pStm, &pDesc->wszName, pChunk->dwSize, NULL);
+    IStream_Read (pStm, pDesc->wszName, pChunk->dwSize, NULL);
     break;
   }
   case DMUS_FOURCC_FILE_CHUNK: {
     TRACE_(dmfile)(": file name chunk\n");
     pDesc->dwValidData |= DMUS_OBJ_FILENAME;
-    IStream_Read (pStm, &pDesc->wszFileName, pChunk->dwSize, NULL);
+    IStream_Read (pStm, pDesc->wszFileName, pChunk->dwSize, NULL);
     break;
   }
   case DMUS_FOURCC_VERSION_CHUNK: {
