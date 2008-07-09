@@ -86,7 +86,7 @@ static struct registered_ept_entry *find_ept_entry(
 
 void __RPC_USER ept_lookup_handle_t_rundown(ept_lookup_handle_t entry_handle)
 {
-    WINE_FIXME("%p", entry_handle);
+    WINE_FIXME("%p\n", entry_handle);
 }
 
 void ept_insert(handle_t h,
