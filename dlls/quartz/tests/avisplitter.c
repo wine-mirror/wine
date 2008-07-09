@@ -203,7 +203,7 @@ static void test_threads()
 
     file = CreateFileW(wfile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
         NULL, OPEN_EXISTING, 0, NULL);
-    if (!file)
+    if (file == INVALID_HANDLE_VALUE)
     {
         skip("Could not read test file \"%s\", skipping test\n", afile);
         return;
