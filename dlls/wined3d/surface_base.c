@@ -34,6 +34,57 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
+/* See also float_16_to_32() in wined3d_private.h */
+static inline unsigned short float_32_to_16(const float *in)
+{
+    int exp = 0;
+    float tmp = fabs(*in);
+    unsigned int mantissa;
+    unsigned short ret;
+
+    /* Deal with special numbers */
+    if(*in == 0.0) return 0x0000;
+    if(isnan(*in)) return 0x7C01;
+    if(isinf(*in)) return (*in < 0.0 ? 0xFC00 : 0x7c00);
+
+    if(tmp < pow(2, 10)) {
+        do
+        {
+            tmp = tmp * 2.0;
+            exp--;
+        }while(tmp < pow(2, 10));
+    } else if(tmp >= pow(2, 11)) {
+        do
+        {
+            tmp /= 2.0;
+            exp++;
+        }while(tmp >= pow(2, 11));
+    }
+
+    mantissa = (unsigned int) tmp;
+    if(tmp - mantissa >= 0.5) mantissa++; /* round to nearest, away from zero */
+
+    exp += 10;  /* Normalize the mantissa */
+    exp += 15;  /* Exponent is encoded with excess 15 */
+
+    if(exp > 30) { /* too big */
+        ret = 0x7c00; /* INF */
+    } else if(exp <= 0) {
+        /* exp == 0: Non-normalized mantissa. Returns 0x0000 (=0.0) for too small numbers */
+        while(exp <= 0) {
+            mantissa = mantissa >> 1;
+            exp++;
+        }
+        ret = mantissa & 0x3ff;
+    } else {
+        ret = (exp << 10) | (mantissa & 0x3ff);
+    }
+
+    ret |= ((*in < 0.0 ? 1 : 0) << 15); /* Add the sign */
+    return ret;
+}
+
+
 /* Do NOT define GLINFO_LOCATION in this file. THIS CODE MUST NOT USE IT */
 
 /* *******************************************
