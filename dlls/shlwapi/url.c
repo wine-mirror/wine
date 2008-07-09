@@ -659,29 +659,29 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
                 base.pszSuffix += delta;
                 base.cchSuffix -= delta;
             }
+        }else {
+            /* get size of location field (if it exists) */
+            work = (LPWSTR)base.pszSuffix;
+            sizeloc = 0;
+            if (*work++ == '/') {
+                if (*work++ == '/') {
+                    /* At this point have start of location and
+                     * it ends at next '/' or end of string.
+                     */
+                    while(*work && (*work != '/')) work++;
+                    sizeloc = (DWORD)(work - base.pszSuffix);
+                }
+            }
         }
 
-	/* get size of location field (if it exists) */
-	work = (LPWSTR)base.pszSuffix;
-	sizeloc = 0;
-        if (*work++ == '/') {
-            if (*work++ == '/') {
-		/* At this point have start of location and
-		 * it ends at next '/' or end of string.
-		 */
-                while(*work && (*work != '/')) work++;
-		sizeloc = (DWORD)(work - base.pszSuffix);
-	    }
-	}
-
-	/* Change .sizep2 to not have the last leaf in it,
-	 * Note: we need to start after the location (if it exists)
-	 */
+        /* Change .sizep2 to not have the last leaf in it,
+         * Note: we need to start after the location (if it exists)
+         */
         work = strrchrW((base.pszSuffix+sizeloc), '/');
-	if (work) {
-	    len = (DWORD)(work - base.pszSuffix + 1);
-	    base.cchSuffix = len;
-	}
+        if (work) {
+            len = (DWORD)(work - base.pszSuffix + 1);
+            base.cchSuffix = len;
+        }
 
 	/*
 	 * At this point:
@@ -723,7 +723,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 		process_case = 4;
 		break;
 	    }
-            process_case = (*base.pszSuffix == '/') ? 5 : 3;
+            process_case = (*base.pszSuffix == '/' || base.nScheme == URL_SCHEME_MK) ? 5 : 3;
 	    break;
 	}
 

@@ -234,6 +234,8 @@ static const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"foo:today", "bar:calendar", 0, S_OK, "bar:calendar"},
     {"foo:/today", "foo:calendar", 0, S_OK, "foo:/calendar"},
     {"foo:/today/", "foo:calendar", 0, S_OK, "foo:/today/calendar"},
+    {"mk:@MSITStore:dir/test.chm::dir/index.html", "image.jpg", 0, S_OK, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
+    {"mk:@MSITStore:dir/test.chm::dir/dir2/index.html", "../image.jpg", 0, S_OK, "mk:@MSITStore:dir/test.chm::dir/image.jpg"}
 };
 
 /* ################ */
