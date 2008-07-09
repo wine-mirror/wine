@@ -301,7 +301,7 @@ static INT           button_state[10];
  * Now say someone has 2 multimode tablets with 2 erasers each
  * now we would need Cursor #2, #5, #8, #11
  * So to support that we need CURSORMAX of 12 (0 to 11)
- * FIXME: we dont support more than 4 regular tablets or 2 multimode tablets */
+ * FIXME: we don't support more than 4 regular tablets or 2 multimode tablets */
 #define             CURSORMAX 12
 
 static LOGCONTEXTW      gSysContext;

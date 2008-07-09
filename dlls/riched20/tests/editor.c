@@ -3687,7 +3687,7 @@ static void test_EM_STREAMIN(void)
   struct StringWithLength cookieForStream4;
   const char * streamText4 =
       "This text just needs to be long enough to cause run to be split onto "\
-      "two seperate lines and make sure the null terminating character is "\
+      "two separate lines and make sure the null terminating character is "\
       "handled properly.\0";
   int length4 = strlen(streamText4) + 1;
   cookieForStream4.buffer = (char *)streamText4;

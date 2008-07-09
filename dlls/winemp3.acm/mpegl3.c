@@ -168,7 +168,7 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
     if (ret != MP3_OK)
     {
         if (ret == MP3_ERR)
-            FIXME("Error occured during decoding!\n");
+            FIXME("Error occurred during decoding!\n");
         *ndst = *nsrc = 0;
         return;
     }

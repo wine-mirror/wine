@@ -634,7 +634,7 @@ SecurePackage *SECUR32_findPackageW(PCWSTR packageName)
                     fnTableA = pInitSecurityInterfaceA();
                 if (pInitSecurityInterfaceW)
                     fnTableW = pInitSecurityInterfaceW();
-                /* dont't update built-in SecurityFunctionTable */
+                /* don't update built-in SecurityFunctionTable */
                 if (fnTableA != &securityFunctionTableA)
                     _makeFnTableA(&ret->provider->fnTableA, fnTableA, fnTableW);
                 if (fnTableW != &securityFunctionTableW)

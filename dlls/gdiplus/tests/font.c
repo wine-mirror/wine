@@ -154,7 +154,7 @@ static void test_fontfamily (void)
     WCHAR itsName[LF_FACESIZE];
     GpStatus stat;
 
-    /* FontFamily can not be NULL */
+    /* FontFamily cannot be NULL */
     stat = GdipCreateFontFamilyFromName (arial , NULL, NULL);
     expect (InvalidParameter, stat);
 

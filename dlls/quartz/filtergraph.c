@@ -1192,7 +1192,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
                 hr = IPin_Connect(ppinOut, pin, NULL);
                 if (SUCCEEDED(hr))
                 {
-                    TRACE("Connected succesfully %p/%p, %08x look if we should render more!\n", ppinOut, pin, hr);
+                    TRACE("Connected successfully %p/%p, %08x look if we should render more!\n", ppinOut, pin, hr);
                     IPin_Release(pin);
 
                     hr = FilterGraph2_RenderRecurse(This, pin);
