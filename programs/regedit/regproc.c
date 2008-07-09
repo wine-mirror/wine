@@ -26,6 +26,7 @@
 #include <winnt.h>
 #include <winreg.h>
 #include <assert.h>
+#include <wine/unicode.h>
 #include "regproc.h"
 
 #define REG_VAL_BUF_SIZE        4096
@@ -107,10 +108,13 @@ char* GetMultiByteString(const WCHAR* strW)
 /******************************************************************************
  * Converts a hex representation of a DWORD into a DWORD.
  */
-static BOOL convertHexToDWord(char* str, DWORD *dw)
+static BOOL convertHexToDWord(WCHAR* str, DWORD *dw)
 {
+    char buf[9];
     char dummy;
-    if (strlen(str) > 8 || sscanf(str, "%x%c", dw, &dummy) != 1) {
+
+    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, 9, NULL, NULL);
+    if (lstrlenW(str) > 8 || sscanf(buf, "%x%c", dw, &dummy) != 1) {
         fprintf(stderr,"%s: ERROR, invalid hex value\n", getAppName());
         return FALSE;
     }
@@ -120,17 +124,18 @@ static BOOL convertHexToDWord(char* str, DWORD *dw)
 /******************************************************************************
  * Converts a hex comma separated values list into a binary string.
  */
-static BYTE* convertHexCSVToHex(char *str, DWORD *size)
+static BYTE* convertHexCSVToHex(WCHAR *strW, DWORD *size)
 {
     char *s;
     BYTE *d, *data;
+    char* strA = GetMultiByteString(strW);
 
     /* The worst case is 1 digit + 1 comma per byte */
-    *size=(strlen(str)+1)/2;
+    *size=(strlen(strA)+1)/2;
     data=HeapAlloc(GetProcessHeap(), 0, *size);
     CHECK_ENOUGH_MEMORY(data);
 
-    s = str;
+    s = strA;
     d = data;
     *size=0;
     while (*s != '\0') {
@@ -142,6 +147,7 @@ static BYTE* convertHexCSVToHex(char *str, DWORD *size)
             fprintf(stderr,"%s: ERROR converting CSV hex stream. Invalid value at '%s'\n",
                     getAppName(), s);
             HeapFree(GetProcessHeap(), 0, data);
+            HeapFree(GetProcessHeap(), 0, strA);
             return NULL;
         }
         *d++ =(BYTE)wc;
@@ -149,6 +155,8 @@ static BYTE* convertHexCSVToHex(char *str, DWORD *size)
         if (*end) end++;
         s = end;
     }
+
+    HeapFree(GetProcessHeap(), 0, strA);
 
     return data;
 }
@@ -160,17 +168,24 @@ static BYTE* convertHexCSVToHex(char *str, DWORD *size)
  *
  * Note: Updated based on the algorithm used in 'server/registry.c'
  */
-static DWORD getDataType(LPSTR *lpValue, DWORD* parse_type)
+static DWORD getDataType(LPWSTR *lpValue, DWORD* parse_type)
 {
-    struct data_type { const char *tag; int len; int type; int parse_type; };
+    struct data_type { const WCHAR *tag; int len; int type; int parse_type; };
+
+    static const WCHAR quote[] = {'"'};
+    static const WCHAR str[] = {'s','t','r',':','"'};
+    static const WCHAR str2[] = {'s','t','r','(','2',')',':','"'};
+    static const WCHAR hex[] = {'h','e','x',':'};
+    static const WCHAR dword[] = {'d','w','o','r','d',':'};
+    static const WCHAR hexp[] = {'h','e','x','('};
 
     static const struct data_type data_types[] = {                   /* actual type */  /* type to assume for parsing */
-                { "\"",        1,   REG_SZ,              REG_SZ },
-                { "str:\"",    5,   REG_SZ,              REG_SZ },
-                { "str(2):\"", 8,   REG_EXPAND_SZ,       REG_SZ },
-                { "hex:",      4,   REG_BINARY,          REG_BINARY },
-                { "dword:",    6,   REG_DWORD,           REG_DWORD },
-                { "hex(",      4,   -1,                  REG_BINARY },
+                { quote,       1,   REG_SZ,              REG_SZ },
+                { str,         5,   REG_SZ,              REG_SZ },
+                { str2,        8,   REG_EXPAND_SZ,       REG_SZ },
+                { hex,         4,   REG_BINARY,          REG_BINARY },
+                { dword,       6,   REG_DWORD,           REG_DWORD },
+                { hexp,        4,   -1,                  REG_BINARY },
                 { NULL,        0,    0,                  0 }
             };
 
@@ -178,7 +193,7 @@ static DWORD getDataType(LPSTR *lpValue, DWORD* parse_type)
     int type;
 
     for (ptr = data_types; ptr->tag; ptr++) {
-        if (memcmp( ptr->tag, *lpValue, ptr->len ))
+        if (strncmpW( ptr->tag, *lpValue, ptr->len ))
             continue;
 
         /* Found! */
@@ -186,13 +201,14 @@ static DWORD getDataType(LPSTR *lpValue, DWORD* parse_type)
         type=ptr->type;
         *lpValue+=ptr->len;
         if (type == -1) {
-            char* end;
+            WCHAR* end;
+
             /* "hex(xx):" is special */
-            type = (int)strtoul( *lpValue , &end, 16 );
+            type = (int)strtoulW( *lpValue , &end, 16 );
             if (**lpValue=='\0' || *end!=')' || *(end+1)!=':') {
                 type=REG_NONE;
             } else {
-                *lpValue=end+2;
+                *lpValue = end + 2;
             }
         }
         return type;
@@ -330,17 +346,18 @@ static HKEY  currentKeyHandle = NULL;
  * val_name - name of the registry value
  * val_data - registry value data
  */
-static LONG setValue(WCHAR* val_name, LPSTR val_data)
+static LONG setValue(WCHAR* val_name, WCHAR* val_data)
 {
     LONG res;
     DWORD  dwDataType, dwParseType;
     LPBYTE lpbData;
     DWORD  dwData, dwLen;
+    WCHAR del[] = {'-',0};
 
     if ( (val_name == NULL) || (val_data == NULL) )
         return ERROR_INVALID_PARAMETER;
 
-    if (strcmp(val_data, "-") == 0)
+    if (lstrcmpW(val_data, del) == 0)
     {
         res=RegDeleteValueW(currentKeyHandle,val_name);
         return (res == ERROR_FILE_NOT_FOUND ? ERROR_SUCCESS : res);
@@ -351,19 +368,18 @@ static LONG setValue(WCHAR* val_name, LPSTR val_data)
 
     if (dwParseType == REG_SZ)          /* no conversion for string */
     {
-        WCHAR* val_dataW = GetWideString(val_data);
-        REGPROC_unescape_string(val_dataW);
+        REGPROC_unescape_string(val_data);
         /* Compute dwLen after REGPROC_unescape_string because it may
          * have changed the string length and we don't want to store
          * the extra garbage in the registry.
          */
-        dwLen = lstrlenW(val_dataW);
-        if (dwLen>0 && val_dataW[dwLen-1]=='"')
+        dwLen = lstrlenW(val_data);
+        if (dwLen>0 && val_data[dwLen-1]=='"')
         {
             dwLen--;
-            val_dataW[dwLen]='\0';
+            val_data[dwLen]='\0';
         }
-        lpbData = (BYTE*) val_dataW;
+        lpbData = (BYTE*) val_data;
         dwLen++;  /* include terminating null */
         dwLen = dwLen * sizeof(WCHAR); /* size is in bytes */
     }
@@ -393,7 +409,7 @@ static LONG setValue(WCHAR* val_name, LPSTR val_data)
                dwDataType,
                lpbData,
                dwLen);
-    if (dwParseType == REG_BINARY || dwParseType == REG_SZ)
+    if (dwParseType == REG_BINARY)
         HeapFree(GetProcessHeap(), 0, lpbData);
     return res;
 }
@@ -470,6 +486,7 @@ static void processSetValue(LPSTR line)
     LPSTR val_name;                   /* registry value name   */
     LPSTR val_data;                   /* registry value data   */
     WCHAR* val_nameW;
+    WCHAR* val_dataW;
 
     int line_idx = 0;                 /* current character under analysis */
     LONG res;
@@ -510,9 +527,11 @@ static void processSetValue(LPSTR line)
     val_data = line + line_idx;
 
     val_nameW = GetWideString(val_name);
+    val_dataW = GetWideString(val_data);
     REGPROC_unescape_string(val_nameW);
-    res = setValue(val_nameW, val_data);
+    res = setValue(val_nameW, val_dataW);
     HeapFree(GetProcessHeap(), 0, val_nameW);
+    HeapFree(GetProcessHeap(), 0, val_dataW);
     if ( res != ERROR_SUCCESS )
         fprintf(stderr,"%s: ERROR Key %s not created. Value: %s, Data: %s\n",
                 getAppName(),
