@@ -605,6 +605,10 @@ static BOOL BrsFolder_OnCreate( HWND hWnd, browse_info *info )
         info->szMin.cx = rcWnd.right - rcWnd.left;
         info->szMin.cy = rcWnd.bottom - rcWnd.top;
     }
+    else
+    {
+        info->layout = NULL;
+    }
 
     if (lpBrowseInfo->lpszTitle)
 	SetWindowTextW( GetDlgItem(hWnd, IDD_TITLE), lpBrowseInfo->lpszTitle );
