@@ -23,6 +23,13 @@
 #include "wingdi.h"
 #include "wine/test.h"
 
+#define RGNDATA_RECT            0x10000000
+#define RGNDATA_PATH            0x10000001
+#define RGNDATA_EMPTY_RECT      0x10000002
+#define RGNDATA_INFINITE_RECT   0x10000003
+
+#define RGNDATA_MAGIC           0xdbc01001
+
 static inline void expect_dword(DWORD *value, DWORD expected)
 {
     ok(*value == expected, "expected %08x got %08x\n", expected, *value);
@@ -57,9 +64,9 @@ todo_wine
     ok(needed == 20, "got %d\n", needed);
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_dword(buf + 2, 0xdbc01001);
+    expect_dword(buf + 2, RGNDATA_MAGIC);
     expect_dword(buf + 3, 0);
-    expect_dword(buf + 4, 0x10000003);
+    expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
 
     status = GdipSetEmpty(region);
     ok(status == Ok, "status %08x\n", status);
@@ -71,9 +78,9 @@ todo_wine
     ok(needed == 20, "got %d\n", needed);
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_dword(buf + 2, 0xdbc01001);
+    expect_dword(buf + 2, RGNDATA_MAGIC);
     expect_dword(buf + 3, 0);
-    expect_dword(buf + 4, 0x10000002);
+    expect_dword(buf + 4, RGNDATA_EMPTY_RECT);
 
     status = GdipSetInfinite(region);
     ok(status == Ok, "status %08x\n", status);
@@ -85,9 +92,9 @@ todo_wine
     ok(needed == 20, "got %d\n", needed);
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_dword(buf + 2, 0xdbc01001);
+    expect_dword(buf + 2, RGNDATA_MAGIC);
     expect_dword(buf + 3, 0);
-    expect_dword(buf + 4, 0x10000003);
+    expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
 
     status = GdipDeleteRegion(region);
     ok(status == Ok, "status %08x\n", status);
@@ -106,9 +113,9 @@ todo_wine
     ok(needed == 36, "got %d\n", needed);
     expect_dword(buf, 28);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_dword(buf + 2, 0xdbc01001);
+    expect_dword(buf + 2, RGNDATA_MAGIC);
     expect_dword(buf + 3, 0);
-    expect_dword(buf + 4, 0x10000000);
+    expect_dword(buf + 4, RGNDATA_RECT);
     expect_float(buf + 5, 10.0);
     expect_float(buf + 6, 20.0);
     expect_float(buf + 7, 100.0);
@@ -158,39 +165,39 @@ todo_wine
     ok(needed == 156, "got %d\n", needed);
     expect_dword(buf, 148);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_dword(buf + 2, 0xdbc01001);
+    expect_dword(buf + 2, RGNDATA_MAGIC);
     expect_dword(buf + 3, 10);
     expect_dword(buf + 4, CombineModeExclude);
     expect_dword(buf + 5, CombineModeComplement);
     expect_dword(buf + 6, CombineModeXor);
     expect_dword(buf + 7, CombineModeIntersect);
-    expect_dword(buf + 8, 0x10000000);
+    expect_dword(buf + 8, RGNDATA_RECT);
     expect_float(buf + 9, 10.0);
     expect_float(buf + 10, 20.0);
     expect_float(buf + 11, 100.0);
     expect_float(buf + 12, 200.0);
-    expect_dword(buf + 13, 0x10000000);
+    expect_dword(buf + 13, RGNDATA_RECT);
     expect_float(buf + 14, 50.0);
     expect_float(buf + 15, 30.0);
     expect_float(buf + 16, 10.0);
     expect_float(buf + 17, 20.0);
-    expect_dword(buf + 18, 0x10000000);
+    expect_dword(buf + 18, RGNDATA_RECT);
     expect_float(buf + 19, 100.0);
     expect_float(buf + 20, 300.0);
     expect_float(buf + 21, 30.0);
     expect_float(buf + 22, 50.0);
     expect_dword(buf + 23, CombineModeUnion);
-    expect_dword(buf + 24, 0x10000000);
+    expect_dword(buf + 24, RGNDATA_RECT);
     expect_float(buf + 25, 200.0);
     expect_float(buf + 26, 100.0);
     expect_float(buf + 27, 133.0);
     expect_float(buf + 28, 266.0);
-    expect_dword(buf + 29, 0x10000000);
+    expect_dword(buf + 29, RGNDATA_RECT);
     expect_float(buf + 30, 20.0);
     expect_float(buf + 31, 10.0);
     expect_float(buf + 32, 40.0);
     expect_float(buf + 33, 66.0);
-    expect_dword(buf + 34, 0x10000000);
+    expect_dword(buf + 34, RGNDATA_RECT);
     expect_float(buf + 35, 400.0);
     expect_float(buf + 36, 500.0);
     expect_float(buf + 37, 22.0);
@@ -218,11 +225,11 @@ todo_wine
     ok(needed == 72, "got %d\n", needed);
     expect_dword(buf, 64);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_dword(buf + 2, 0xdbc01001);
+    expect_dword(buf + 2, RGNDATA_MAGIC);
     expect_dword(buf + 3, 0);
-    expect_dword(buf + 4, 0x10000001);
+    expect_dword(buf + 4, RGNDATA_PATH);
     expect_dword(buf + 5, 0x00000030);
-    expect_dword(buf + 6, 0xdbc01001);
+    expect_dword(buf + 6, RGNDATA_MAGIC);
     expect_dword(buf + 7, 0x00000004);
     expect_dword(buf + 8, 0x00000000);
     expect_float(buf + 9, 12.5);
@@ -250,12 +257,12 @@ todo_wine
     ok(needed == 96, "got %d\n", needed);
     expect_dword(buf, 88);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_dword(buf + 2, 0xdbc01001);
+    expect_dword(buf + 2, RGNDATA_MAGIC);
     expect_dword(buf + 3, 2);
     expect_dword(buf + 4, CombineModeIntersect);
-    expect_dword(buf + 5, 0x10000001);
+    expect_dword(buf + 5, RGNDATA_PATH);
     expect_dword(buf + 6, 0x00000030);
-    expect_dword(buf + 7, 0xdbc01001);
+    expect_dword(buf + 7, RGNDATA_MAGIC);
     expect_dword(buf + 8, 0x00000004);
     expect_dword(buf + 9, 0x00000000);
     expect_float(buf + 10, 12.5);
@@ -267,7 +274,7 @@ todo_wine
     expect_float(buf + 16, 12.5);
     expect_float(buf + 17, 28.0);
     expect_dword(buf + 18, 0x81010100);
-    expect_dword(buf + 19, 0x10000000);
+    expect_dword(buf + 19, RGNDATA_RECT);
     expect_float(buf + 20, 50.0);
     expect_float(buf + 21, 30.0);
     expect_float(buf + 22, 10.0);
