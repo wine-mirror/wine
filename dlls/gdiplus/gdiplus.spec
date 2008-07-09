@@ -600,7 +600,7 @@
 @ stdcall GdipSetWorldTransform(ptr ptr)
 @ stdcall GdipShearMatrix(ptr long long long)
 @ stdcall GdipStartPathFigure(ptr)
-@ stub GdipStringFormatGetGenericDefault
+@ stdcall GdipStringFormatGetGenericDefault(ptr)
 @ stub GdipStringFormatGetGenericTypographic
 @ stub GdipTestControl
 @ stdcall GdipTransformMatrixPoints(ptr ptr long)

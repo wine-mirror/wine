@@ -403,6 +403,7 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily**);
 
 GpStatus WINGDIPAPI GdipCreateStringFormat(INT,LANGID,GpStringFormat**);
 GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat*);
+GpStatus WINGDIPAPI GdipStringFormatGetGenericDefault(GpStringFormat **);
 GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat*,StringAlignment*);
 GpStatus WINGDIPAPI GdipGetStringFormatHotkeyPrefix(GDIPCONST GpStringFormat*,INT*);
 GpStatus WINGDIPAPI GdipGetStringFormatLineAlign(GpStringFormat*,StringAlignment*);
