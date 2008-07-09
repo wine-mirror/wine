@@ -49,6 +49,28 @@ static void test_constructor(void)
     expect(Ok, stat);
 }
 
+static void test_characterrange(void)
+{
+    CharacterRange ranges[3];
+    INT count;
+    GpStringFormat* format;
+    GpStatus stat;
+
+    stat = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
+    expect(Ok, stat);
+todo_wine
+{
+    stat = GdipSetStringFormatMeasurableCharacterRanges(format, 3, ranges);
+    expect(Ok, stat);
+    stat = GdipGetStringFormatMeasurableCharacterRangeCount(format, &count);
+    expect(Ok, stat);
+    expect(3, count);
+}
+    stat= GdipDeleteStringFormat(format);
+    expect(Ok, stat);
+}
+
+
 START_TEST(stringformat)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -62,6 +84,7 @@ START_TEST(stringformat)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor();
+    test_characterrange();
 
     GdiplusShutdown(gdiplusToken);
 }
