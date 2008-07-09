@@ -1666,10 +1666,15 @@ static int ME_CalculateClickCount(HWND hWnd, UINT msg, WPARAM wParam,
     return clickNum;
 }
 
-static BOOL ME_SetCursor(ME_TextEditor *editor, int x)
+static BOOL ME_SetCursor(ME_TextEditor *editor)
 {
+  POINT pt;
+  DWORD messagePos = GetMessagePos();
+  pt.x = (short)LOWORD(messagePos);
+  pt.y = (short)HIWORD(messagePos);
+  ScreenToClient(editor->hWnd, &pt);
   if ((GetWindowLongW(editor->hWnd, GWL_STYLE) & ES_SELECTIONBAR) &&
-      (x < editor->selofs ||
+      (pt.x < editor->selofs ||
        (editor->nSelectionType == stLine && GetCapture() == editor->hWnd)))
   {
       SetCursor(hLeft);
@@ -3033,6 +3038,11 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_DestroyEditor(editor);
     SetWindowLongPtrW(hWnd, 0, 0);
     return 0;
+  case WM_SETCURSOR:
+  {
+    if (!ME_SetCursor(editor)) goto do_default;
+    return TRUE;
+  }
   case WM_LBUTTONDBLCLK:
   case WM_LBUTTONDOWN:
   {
@@ -3045,7 +3055,6 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
                    ME_CalculateClickCount(hWnd, msg, wParam, lParam));
     SetCapture(hWnd);
     ME_LinkNotify(editor,msg,wParam,lParam);
-    if (!ME_SetCursor(editor, LOWORD(lParam))) goto do_default;
     break;
   }
   case WM_MOUSEMOVE:
@@ -3055,7 +3064,6 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (GetCapture() == hWnd)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     ME_LinkNotify(editor,msg,wParam,lParam);
-    if (!ME_SetCursor(editor, LOWORD(lParam))) goto do_default;
     break;
   case WM_LBUTTONUP:
     if (GetCapture() == hWnd)
@@ -3068,7 +3076,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     else
     {
       BOOL ret;
-      ret = ME_SetCursor(editor, LOWORD(lParam));
+      ret = ME_SetCursor(editor);
       ME_LinkNotify(editor,msg,wParam,lParam);
       if (!ret) goto do_default;
     }
