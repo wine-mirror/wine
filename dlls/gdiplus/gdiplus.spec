@@ -230,7 +230,7 @@
 @ stdcall GdipFillRectangleI(ptr ptr long long long long)
 @ stdcall GdipFillRectangles(ptr ptr ptr long)
 @ stdcall GdipFillRectanglesI(ptr ptr ptr long)
-@ stub GdipFillRegion
+@ stdcall GdipFillRegion(ptr ptr ptr)
 @ stdcall GdipFindFirstImageItem(ptr ptr)
 @ stub GdipFindNextImageItem
 @ stub GdipFlattenPath
