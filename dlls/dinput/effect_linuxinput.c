@@ -875,7 +875,7 @@ HRESULT linuxinput_get_info_A(
     info->dwDynamicParams = info->dwStaticParams;
 
     /* yes, this is windows behavior (print the GUID_Name for name) */
-    strcpy((char*)&(info->tszName), _dump_dinput_GUID(rguid));
+    strcpy((char*)info->tszName, _dump_dinput_GUID(rguid));
 
     return DI_OK;
 }
@@ -910,7 +910,7 @@ HRESULT linuxinput_get_info_W(
 
     /* yes, this is windows behavior (print the GUID_Name for name) */
     MultiByteToWideChar(CP_ACP, 0, _dump_dinput_GUID(rguid), -1, 
-		        (WCHAR*)&(info->tszName), MAX_PATH);
+		        (WCHAR*)info->tszName, MAX_PATH);
 
     return DI_OK;
 }
