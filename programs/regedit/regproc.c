@@ -202,11 +202,11 @@ static DWORD getDataType(LPSTR *lpValue, DWORD* parse_type)
 /******************************************************************************
  * Replaces escape sequences with the characters.
  */
-static void REGPROC_unescape_string(LPSTR str)
+static void REGPROC_unescape_string(WCHAR* str)
 {
     int str_idx = 0;            /* current character under analysis */
     int val_idx = 0;            /* the last character of the unescaped string */
-    int len = strlen(str);
+    int len = lstrlenW(str);
     for (str_idx = 0; str_idx < len; str_idx++, val_idx++) {
         if (str[str_idx] == '\\') {
             str_idx++;
@@ -328,7 +328,7 @@ static HKEY  currentKeyHandle = NULL;
  * val_name - name of the registry value
  * val_data - registry value data
  */
-static LONG setValue(LPSTR val_name, LPSTR val_data)
+static LONG setValue(WCHAR* val_name, LPSTR val_data)
 {
     LONG res;
     DWORD  dwDataType, dwParseType;
@@ -340,7 +340,7 @@ static LONG setValue(LPSTR val_name, LPSTR val_data)
 
     if (strcmp(val_data, "-") == 0)
     {
-        res=RegDeleteValue(currentKeyHandle,val_name);
+        res=RegDeleteValueW(currentKeyHandle,val_name);
         return (res == ERROR_FILE_NOT_FOUND ? ERROR_SUCCESS : res);
     }
 
@@ -349,19 +349,21 @@ static LONG setValue(LPSTR val_name, LPSTR val_data)
 
     if (dwParseType == REG_SZ)          /* no conversion for string */
     {
-        REGPROC_unescape_string(val_data);
+        WCHAR* val_dataW = GetWideString(val_data, lstrlenA(val_data)+1);
+        REGPROC_unescape_string(val_dataW);
         /* Compute dwLen after REGPROC_unescape_string because it may
          * have changed the string length and we don't want to store
          * the extra garbage in the registry.
          */
-        dwLen = strlen(val_data);
-        if (dwLen>0 && val_data[dwLen-1]=='"')
+        dwLen = lstrlenW(val_dataW);
+        if (dwLen>0 && val_dataW[dwLen-1]=='"')
         {
             dwLen--;
-            val_data[dwLen]='\0';
+            val_dataW[dwLen]='\0';
         }
-        lpbData = (BYTE*) val_data;
+        lpbData = (BYTE*) val_dataW;
         dwLen++;  /* include terminating null */
+        dwLen = dwLen * sizeof(WCHAR); /* size is in bytes */
     }
     else if (dwParseType == REG_DWORD)  /* Convert the dword types */
     {
@@ -382,14 +384,14 @@ static LONG setValue(LPSTR val_name, LPSTR val_data)
         return ERROR_INVALID_DATA;
     }
 
-    res = RegSetValueEx(
+    res = RegSetValueExW(
                currentKeyHandle,
                val_name,
                0,                  /* Reserved */
                dwDataType,
                lpbData,
                dwLen);
-    if (dwParseType == REG_BINARY)
+    if (dwParseType == REG_BINARY || dwParseType == REG_SZ)
         HeapFree(GetProcessHeap(), 0, lpbData);
     return res;
 }
@@ -465,6 +467,7 @@ static void processSetValue(LPSTR line)
 {
     LPSTR val_name;                   /* registry value name   */
     LPSTR val_data;                   /* registry value data   */
+    WCHAR* val_nameW;
 
     int line_idx = 0;                 /* current character under analysis */
     LONG res;
@@ -504,8 +507,10 @@ static void processSetValue(LPSTR line)
     line_idx++;                   /* skip the '=' character */
     val_data = line + line_idx;
 
-    REGPROC_unescape_string(val_name);
-    res = setValue(val_name, val_data);
+    val_nameW = GetWideString(val_name, lstrlenA(val_name)+1);
+    REGPROC_unescape_string(val_nameW);
+    res = setValue(val_nameW, val_data);
+    HeapFree(GetProcessHeap(), 0, val_nameW);
     if ( res != ERROR_SUCCESS )
         fprintf(stderr,"%s: ERROR Key %s not created. Value: %s, Data: %s\n",
                 getAppName(),
