@@ -388,7 +388,7 @@
 @ stdcall GdipGetSolidFillColor(ptr ptr)
 @ stdcall GdipGetStringFormatAlign(ptr ptr)
 @ stub GdipGetStringFormatDigitSubstitution
-@ stub GdipGetStringFormatFlags
+@ stdcall GdipGetStringFormatFlags(ptr ptr)
 @ stdcall GdipGetStringFormatHotkeyPrefix(ptr ptr)
 @ stdcall GdipGetStringFormatLineAlign(ptr ptr)
 @ stub GdipGetStringFormatMeasurableCharacterRangeCount

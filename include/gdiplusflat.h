@@ -405,6 +405,7 @@ GpStatus WINGDIPAPI GdipCreateStringFormat(INT,LANGID,GpStringFormat**);
 GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat*);
 GpStatus WINGDIPAPI GdipStringFormatGetGenericDefault(GpStringFormat **);
 GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat*,StringAlignment*);
+GpStatus WINGDIPAPI GdipGetStringFormatFlags(GDIPCONST GpStringFormat*, INT*);
 GpStatus WINGDIPAPI GdipGetStringFormatHotkeyPrefix(GDIPCONST GpStringFormat*,INT*);
 GpStatus WINGDIPAPI GdipGetStringFormatLineAlign(GpStringFormat*,StringAlignment*);
 GpStatus WINGDIPAPI GdipGetStringFormatTrimming(GpStringFormat*,StringTrimming*);

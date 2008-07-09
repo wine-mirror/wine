@@ -79,6 +79,17 @@ GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat *format,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetStringFormatFlags(GDIPCONST GpStringFormat* format,
+        INT* flags)
+{
+    if (!(format && flags))
+        return InvalidParameter;
+
+    *flags = format->attr;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetStringFormatHotkeyPrefix(GDIPCONST GpStringFormat
     *format, INT *hkpx)
 {
