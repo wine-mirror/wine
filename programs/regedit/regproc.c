@@ -475,13 +475,10 @@ static void closeKey(void)
  * line - registry file unwrapped line. Should have the registry value name and
  *      complete registry value data.
  */
-static void processSetValue(LPSTR line)
+static void processSetValue(WCHAR* line)
 {
-    LPSTR val_name;                   /* registry value name   */
-    LPSTR val_data;                   /* registry value data   */
-    WCHAR* val_nameW;
-    WCHAR* val_dataW;
-
+    WCHAR* val_name;                   /* registry value name   */
+    WCHAR* val_data;                   /* registry value data   */
     int line_idx = 0;                 /* current character under analysis */
     LONG res;
 
@@ -508,37 +505,44 @@ static void processSetValue(LPSTR line)
             }
         }
         if (line[line_idx] != '=') {
+            char* lineA;
             line[line_idx] = '\"';
-            fprintf(stderr,"Warning! unrecognized line:\n%s\n", line);
+            lineA = GetMultiByteString(line);
+            fprintf(stderr,"Warning! unrecognized line:\n%s\n", lineA);
+            HeapFree(GetProcessHeap(), 0, lineA);
             return;
         }
 
     } else {
-        fprintf(stderr,"Warning! unrecognized line:\n%s\n", line);
+        char* lineA = GetMultiByteString(line);
+        fprintf(stderr,"Warning! unrecognized line:\n%s\n", lineA);
+        HeapFree(GetProcessHeap(), 0, lineA);
         return;
     }
     line_idx++;                   /* skip the '=' character */
     val_data = line + line_idx;
 
-    val_nameW = GetWideString(val_name);
-    val_dataW = GetWideString(val_data);
-    REGPROC_unescape_string(val_nameW);
-    res = setValue(val_nameW, val_dataW);
-    HeapFree(GetProcessHeap(), 0, val_nameW);
-    HeapFree(GetProcessHeap(), 0, val_dataW);
+    REGPROC_unescape_string(val_name);
+    res = setValue(val_name, val_data);
     if ( res != ERROR_SUCCESS )
+    {
+        char* val_nameA = GetMultiByteString(val_name);
+        char* val_dataA = GetMultiByteString(val_data);
         fprintf(stderr,"%s: ERROR Key %s not created. Value: %s, Data: %s\n",
                 getAppName(),
                 currentKeyName,
-                val_name,
-                val_data);
+                val_nameA,
+                val_dataA);
+        HeapFree(GetProcessHeap(), 0, val_nameA);
+        HeapFree(GetProcessHeap(), 0, val_dataA);
+    }
 }
 
 /******************************************************************************
  * This function receives the currently read entry and performs the
  * corresponding action.
  */
-static void processRegEntry(LPSTR stdInput)
+static void processRegEntry(WCHAR* stdInput)
 {
     /*
      * We encountered the end of the file, make sure we
@@ -551,28 +555,24 @@ static void processRegEntry(LPSTR stdInput)
 
     if      ( stdInput[0] == '[')      /* We are reading a new key */
     {
-        LPSTR keyEnd;
-        WCHAR* stdInputW;
+        WCHAR* keyEnd;
         closeKey();                    /* Close the previous key */
 
         /* Get rid of the square brackets */
         stdInput++;
-        keyEnd = strrchr(stdInput, ']');
+        keyEnd = strrchrW(stdInput, ']');
         if (keyEnd)
             *keyEnd='\0';
-
-        stdInputW = GetWideString(stdInput);
 
         /* delete the key if we encounter '-' at the start of reg key */
         if ( stdInput[0] == '-')
         {
-            delete_registry_key(stdInputW + 1);
-        } else if ( openKeyW(stdInputW) != ERROR_SUCCESS )
+            delete_registry_key(stdInput + 1);
+        } else if ( openKeyW(stdInput) != ERROR_SUCCESS )
         {
             fprintf(stderr,"%s: setValue failed to open key %s\n",
                     getAppName(), stdInput);
         }
-        HeapFree(GetProcessHeap(), 0, stdInputW);
     } else if( currentKeyHandle &&
                (( stdInput[0] == '@') || /* reading a default @=data pair */
                 ( stdInput[0] == '\"'))) /* reading a new value=data pair */
@@ -606,6 +606,7 @@ void processRegLines(FILE *in)
     while (!feof(in)) {
         LPSTR s; /* The pointer into line for where the current fgets should read */
         LPSTR check;
+        WCHAR* lineW;
         s = line;
         for (;;) {
             size_t size_remaining;
@@ -711,10 +712,13 @@ void processRegLines(FILE *in)
                 continue;
             }
 
+            lineW = GetWideString(line);
+
             break; /* That is the full virtual line */
         }
 
-        processRegEntry(line);
+        processRegEntry(lineW);
+        HeapFree(GetProcessHeap(), 0, lineW);
     }
     processRegEntry(NULL);
 
