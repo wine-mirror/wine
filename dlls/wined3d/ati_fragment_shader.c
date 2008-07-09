@@ -976,10 +976,6 @@ static void shader_atifs_select_depth_blt(IWineD3DDevice *iface) {
     arb_program_shader_backend.shader_select_depth_blt(iface);
 }
 
-static void shader_atifs_destroy_depth_blt(IWineD3DDevice *iface) {
-    arb_program_shader_backend.shader_destroy_depth_blt(iface);
-}
-
 static void shader_atifs_load_constants(IWineD3DDevice *iface, char usePS, char useVS) {
     arb_program_shader_backend.shader_load_constants(iface, usePS, useVS);
 }
@@ -1111,7 +1107,6 @@ static void shader_atifs_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
 const shader_backend_t atifs_shader_backend = {
     shader_atifs_select,
     shader_atifs_select_depth_blt,
-    shader_atifs_destroy_depth_blt,
     shader_atifs_load_constants,
     shader_atifs_cleanup,
     shader_atifs_color_correction,

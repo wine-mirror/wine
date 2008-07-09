@@ -1819,21 +1819,6 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface) {
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
-static void shader_arb_destroy_depth_blt(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
-    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-
-    if(priv->depth_blt_vprogram_id) {
-        GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
-        priv->depth_blt_vprogram_id = 0;
-    }
-    if(priv->depth_blt_fprogram_id) {
-        GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id));
-        priv->depth_blt_fprogram_id = 0;
-    }
-}
-
 static void shader_arb_cleanup(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
@@ -1861,6 +1846,16 @@ static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
 
 static void shader_arb_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
+
+    if(priv->depth_blt_vprogram_id) {
+        GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
+    }
+    if(priv->depth_blt_fprogram_id) {
+        GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id));
+    }
+
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
 }
 
@@ -2097,7 +2092,6 @@ static void shader_arb_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
 const shader_backend_t arb_program_shader_backend = {
     shader_arb_select,
     shader_arb_select_depth_blt,
-    shader_arb_destroy_depth_blt,
     shader_arb_load_constants,
     shader_arb_cleanup,
     shader_arb_color_correction,

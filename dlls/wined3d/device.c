@@ -2283,7 +2283,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
         This->depth_blt_rb_w = 0;
         This->depth_blt_rb_h = 0;
     }
-    This->shader_backend->shader_destroy_depth_blt(iface);
     This->shader_backend->shader_free_private(iface);
 
     /* Release the update stateblock */
@@ -7218,7 +7217,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         This->depth_blt_rb_w = 0;
         This->depth_blt_rb_h = 0;
     }
-    This->shader_backend->shader_destroy_depth_blt(iface);
     This->shader_backend->shader_free_private(iface);
 
     for (i = 0; i < GL_LIMITS(textures); i++) {
