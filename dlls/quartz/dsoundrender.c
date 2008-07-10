@@ -894,6 +894,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
     if (hr != S_OK)
     {
         ERR("%08x\n", hr);
+        LeaveCriticalSection(This->pin.pCritSec);
         return hr;
     }
 
