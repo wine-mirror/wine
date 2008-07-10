@@ -137,7 +137,8 @@ my %private_idl_headers = (
     "dbprop.idl" => 1,
     "dbs.idl" => 1,
     "devenum.idl" => 1,
-    "dyngraph.idl" => 1
+    "dyngraph.idl" => 1,
+    "vmrender.idl" => 1,
 );
 
 my (@makefiles, %makefiles);

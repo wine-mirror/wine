@@ -30,6 +30,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winerror.h"
 #include "objbase.h"
 #include "uuids.h"
