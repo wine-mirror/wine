@@ -768,6 +768,7 @@ typedef struct FileAsyncReader
     /* Why would you need more? Every sample has its own handle */
     LONG queued_number;
     LONG samples;
+    LONG oldest_sample;
     CRITICAL_SECTION csList; /* critical section to prevent concurrency issues */
     DATAREQUEST *sample_list;
 
@@ -1018,9 +1019,10 @@ done:
         }
 
         This->samples = pProps->cBuffers;
+        This->oldest_sample = 0;
         TRACE("Samples: %u\n", This->samples);
         This->sample_list = CoTaskMemAlloc(sizeof(This->sample_list[0]) * pProps->cBuffers);
-        This->handle_list = CoTaskMemAlloc(sizeof(HANDLE) * (pProps->cBuffers + 1));
+        This->handle_list = CoTaskMemAlloc(sizeof(HANDLE) * pProps->cBuffers * 2);
 
         if (This->sample_list && This->handle_list)
         {
@@ -1029,6 +1031,8 @@ done:
             for (x = 0; x < This->samples; ++x)
             {
                 This->sample_list[x].ovl.hEvent = This->handle_list[x] = CreateEventW(NULL, 0, 0, NULL);
+                if (x + 1 < This->samples)
+                    This->handle_list[This->samples + 1 + x] = This->handle_list[x];
             }
             This->handle_list[This->samples] = CreateEventW(NULL, 1, 0, NULL);
             This->pin.allocProps = *pProps;
@@ -1064,7 +1068,6 @@ static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader * iface, IMediaSample
     REFERENCE_TIME Stop;
     FileAsyncReader *This = impl_from_IAsyncReader(iface);
     LPBYTE pBuffer = NULL;
-    DWORD wait;
 
     TRACE("(%p, %lx)\n", pSample, dwUser);
 
@@ -1085,12 +1088,6 @@ static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader * iface, IMediaSample
         return VFW_E_WRONG_STATE;
     }
 
-    wait = WaitForMultipleObjectsEx(This->samples, This->handle_list, FALSE, 0, FALSE);
-    if (wait < This->samples - 1)
-        SetEvent(This->handle_list[wait]);
-    else
-        wait = This->samples;
-
     if (SUCCEEDED(hr))
     {
         DWORD dwLength = (DWORD) BYTES_FROM_MEDIATIME(Stop - Start);
@@ -1098,21 +1095,22 @@ static HRESULT WINAPI FileAsyncReader_Request(IAsyncReader * iface, IMediaSample
         int x;
 
         /* Try to insert above the waiting sample if possible */
-        for (x = wait + 1; x < This->samples; ++x)
+        for (x = This->oldest_sample; x < This->samples; ++x)
         {
             if (!This->sample_list[x].pSample)
                 break;
         }
 
         if (x >= This->samples)
-            for (x = 0; x < This->samples; ++x)
+            for (x = 0; x < This->oldest_sample; ++x)
             {
                 if (!This->sample_list[x].pSample)
                     break;
             }
 
+        /* There must be a sample we have found */
         assert(x < This->samples);
-        InterlockedIncrement(&This->queued_number);
+        ++This->queued_number;
 
         pDataRq = This->sample_list + x;
 
@@ -1154,16 +1152,32 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
     *ppSample = NULL;
     *pdwUser = 0;
 
+    EnterCriticalSection(&This->csList);
     if (!This->bFlushing)
     {
+        LONG oldest = This->oldest_sample;
+
         if (!This->queued_number)
         {
             /* It could be that nothing is queued right now, but that can be fixed */
             WARN("Called without samples in queue and not flushing!!\n");
         }
+        LeaveCriticalSection(&This->csList);
 
         /* wait for an object to read, or time out */
-        buffer = WaitForMultipleObjectsEx(This->samples+1, This->handle_list, FALSE, dwTimeout, TRUE);
+        buffer = WaitForMultipleObjectsEx(This->samples+1, This->handle_list + oldest, FALSE, dwTimeout, TRUE);
+
+        EnterCriticalSection(&This->csList);
+        if (buffer <= This->samples)
+        {
+            /* Re-scale the buffer back to normal */
+            buffer += oldest;
+
+            /* Uh oh, we overshot the flusher handle, renormalize it back to 0..Samples-1 */
+            if (buffer > This->samples)
+                buffer -= This->samples + 1;
+            assert(buffer <= This->samples);
+        }
 
         if (buffer >= This->samples)
         {
@@ -1172,11 +1186,10 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
             hr = VFW_E_TIMEOUT;
             buffer = ~0;
         }
-        else if (buffer < This->samples)
-            InterlockedDecrement(&This->queued_number);
+        else
+            --This->queued_number;
     }
 
-    EnterCriticalSection(&This->csList);
     if (This->bFlushing && buffer == ~0)
     {
         for (buffer = 0; buffer < This->samples; ++buffer)
@@ -1194,7 +1207,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         }
         else
         {
-            InterlockedDecrement(&This->queued_number);
+            --This->queued_number;
             hr = S_OK;
         }
     }
@@ -1239,6 +1252,23 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
             assert(rtStop == rtStart);
 
         This->sample_list[buffer].pSample = NULL;
+        assert(This->oldest_sample < This->samples);
+
+        if (buffer == This->oldest_sample)
+        {
+            LONG x;
+            for (x = This->oldest_sample + 1; x < This->samples; ++x)
+                if (This->sample_list[x].pSample)
+                    break;
+            if (x >= This->samples)
+                for (x = 0; x < This->oldest_sample; ++x)
+                    if (This->sample_list[x].pSample)
+                        break;
+            if (This->oldest_sample == x)
+                /* No samples found, reset to 0 */
+                x = 0;
+            This->oldest_sample = x;
+        }
     }
     LeaveCriticalSection(&This->csList);
 
