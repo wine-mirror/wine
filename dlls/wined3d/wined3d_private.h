@@ -242,6 +242,7 @@ struct shader_caps {
 typedef struct {
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(IWineD3DDevice *iface);
+    void (*shader_deselect_depth_blt)(IWineD3DDevice *iface);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
     void (*shader_cleanup)(IWineD3DDevice *iface);
     void (*shader_color_correction)(struct SHADER_OPCODE_ARG *arg);
@@ -269,6 +270,8 @@ struct shader_glsl_priv {
 
 /* ARB_program_shader private data */
 struct shader_arb_priv {
+    GLuint                  current_vprogram_id;
+    GLuint                  current_fprogram_id;
     GLuint                  depth_blt_vprogram_id;
     GLuint                  depth_blt_fprogram_id;
 };

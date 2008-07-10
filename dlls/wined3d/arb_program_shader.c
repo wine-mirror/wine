@@ -1766,22 +1766,24 @@ static GLuint create_arb_blt_fragment_program(WineD3D_GL_Info *gl_info) {
 
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
     if (useVS) {
         TRACE("Using vertex shader\n");
 
+        priv->current_vprogram_id = ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId;
+
         /* Bind the vertex program */
-        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB,
-            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId));
+        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
         checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
 
         /* Enable OpenGL vertex programs */
         glEnable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n",
-            This, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId);
+        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
     } else if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+        priv->current_vprogram_id = 0;
         glDisable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
     }
@@ -1789,17 +1791,18 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     if (usePS) {
         TRACE("Using pixel shader\n");
 
+        priv->current_fprogram_id = ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId;
+
         /* Bind the fragment program */
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
-            ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId));
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
 
         /* Enable OpenGL fragment programs */
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
-            This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId);
+        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
     } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        priv->current_fprogram_id = 0;
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }
@@ -1817,6 +1820,38 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface) {
     if (!priv->depth_blt_fprogram_id) priv->depth_blt_fprogram_id = create_arb_blt_fragment_program(gl_info);
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->depth_blt_fprogram_id));
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
+}
+
+static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
+    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+
+    if (priv->current_vprogram_id) {
+        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
+        checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
+
+        glEnable(GL_VERTEX_PROGRAM_ARB);
+        checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
+
+        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
+    } else {
+        glDisable(GL_VERTEX_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
+    }
+
+    if (priv->current_fprogram_id) {
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
+        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
+
+        glEnable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
+
+        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
+    } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+    }
 }
 
 static void shader_arb_cleanup(IWineD3DDevice *iface) {
@@ -2092,6 +2127,7 @@ static void shader_arb_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
 const shader_backend_t arb_program_shader_backend = {
     shader_arb_select,
     shader_arb_select_depth_blt,
+    shader_arb_deselect_depth_blt,
     shader_arb_load_constants,
     shader_arb_cleanup,
     shader_arb_color_correction,

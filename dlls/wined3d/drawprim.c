@@ -753,11 +753,7 @@ void depth_blt(IWineD3DDevice *iface, GLuint texture) {
 
     glPopAttrib();
 
-    /* Reselect the old shaders. There doesn't seem to be any glPushAttrib bit for arb shaders,
-     * and this seems easier and more efficient than providing the shader backend with a private
-     * storage to read and restore the old shader settings
-     */
-    This->shader_backend->shader_select(iface, use_ps(This), use_vs(This));
+    This->shader_backend->shader_deselect_depth_blt(iface);
 }
 
 static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, UINT numberOfVertices,

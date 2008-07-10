@@ -3398,6 +3398,19 @@ static void shader_glsl_select_depth_blt(IWineD3DDevice *iface) {
     GL_EXTCALL(glUniform1iARB(loc, 0));
 }
 
+static void shader_glsl_deselect_depth_blt(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    struct shader_glsl_priv *priv = (struct shader_glsl_priv *) This->shader_priv;
+    GLhandleARB program_id;
+
+    program_id = priv->glsl_program ? priv->glsl_program->programId : 0;
+    if (program_id) TRACE("Using GLSL program %u\n", program_id);
+
+    GL_EXTCALL(glUseProgramObjectARB(program_id));
+    checkGLcall("glUseProgramObjectARB");
+}
+
 static void shader_glsl_cleanup(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
@@ -3695,6 +3708,7 @@ static void shader_glsl_fragment_enable(IWineD3DDevice *iface, BOOL enable) {
 const shader_backend_t glsl_shader_backend = {
     shader_glsl_select,
     shader_glsl_select_depth_blt,
+    shader_glsl_deselect_depth_blt,
     shader_glsl_load_constants,
     shader_glsl_cleanup,
     shader_glsl_color_correction,
