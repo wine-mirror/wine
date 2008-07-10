@@ -160,6 +160,41 @@ int ME_twips2pointsY(ME_Context *c, int y)
     return y * c->dpi.cy * c->editor->nZoomNumerator / 1440 / c->editor->nZoomDenominator;
 }
 
+static void ME_HighlightSpace(ME_Context *c, int x, int y, LPCWSTR szText,
+                              int nChars, ME_Style *s, int width,
+                              int nSelFrom, int nSelTo, int ymin, int cy)
+{
+  HDC hDC = c->hDC;
+  HGDIOBJ hOldFont = NULL;
+  SIZE sz;
+  int selWidth;
+  /* Only highlight if there is a selection in the run and when
+   * EM_HIDESELECTION is not being used to hide the selection. */
+  if (nSelFrom >= nChars || nSelTo < 0 || nSelFrom >= nSelTo
+      || c->editor->bHideSelection)
+    return;
+  hOldFont = ME_SelectStyleFont(c, s);
+  if (width <= 0)
+  {
+    GetTextExtentPoint32W(hDC, szText, nChars, &sz);
+    width = sz.cx;
+  }
+  if (nSelFrom < 0) nSelFrom = 0;
+  if (nSelTo > nChars) nSelTo = nChars;
+  GetTextExtentPoint32W(hDC, szText, nSelFrom, &sz);
+  x += sz.cx;
+  if (nSelTo != nChars)
+  {
+    GetTextExtentPoint32W(hDC, szText+nSelFrom, nSelTo-nSelFrom, &sz);
+    selWidth = sz.cx;
+  } else {
+    selWidth = width - sz.cx;
+  }
+  ME_UnselectStyleFont(c, s, hOldFont);
+
+  PatBlt(hDC, x, ymin, selWidth, cy, DSTINVERT);
+}
+
 static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText,
                                  int nChars, ME_Style *s, int width,
                                  int nSelFrom, int nSelTo, int ymin, int cy)
@@ -287,14 +322,17 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
   ME_GetSelection(c->editor, &nSelFrom, &nSelTo);
 
   /* Draw selected end-of-paragraph mark */
-  if (run->nFlags & MERF_ENDPARA && runofs >= nSelFrom && runofs < nSelTo)
-    ME_DrawTextWithStyle(c, x, y, wszSpace, 1, run->style, 0, 0, 1,
-                         c->pt.y + start->member.row.nYPos,
-                         start->member.row.nHeight);
-
   /* you can always comment it out if you need visible paragraph marks */
   if (run->nFlags & MERF_ENDPARA)
+  {
+    if (runofs >= nSelFrom && runofs < nSelTo)
+    {
+      ME_HighlightSpace(c, x, y, wszSpace, 1, run->style, 0, 0, 1,
+                        c->pt.y + start->member.row.nYPos,
+                        start->member.row.nHeight);
+    }
     return;
+  }
 
   if (run->nFlags & (MERF_TAB | MERF_CELL))
   {
