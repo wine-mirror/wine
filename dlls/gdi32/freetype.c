@@ -3049,7 +3049,7 @@ static void calc_hash(FONT_DESC *pfd)
         hash ^= *ptr;
     for(i = 0, ptr = (DWORD*)&pfd->lf; i < 7; i++, ptr++)
         hash ^= *ptr;
-    for(i = 0, ptr = (DWORD*)&pfd->lf.lfFaceName; i < LF_FACESIZE/2; i++, ptr++) {
+    for(i = 0, ptr = (DWORD*)pfd->lf.lfFaceName; i < LF_FACESIZE/2; i++, ptr++) {
         two_chars = *ptr;
         pwc = (WCHAR *)&two_chars;
         if(!*pwc) break;
