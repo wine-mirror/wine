@@ -212,6 +212,9 @@ static void test_saxreader(void)
         return;
     }
 
+    hr = ISAXXMLReader_getContentHandler(reader, NULL);
+    ok(hr == E_POINTER, "Expected E_POINTER, got %08x\n", hr);
+
     hr = ISAXXMLReader_getContentHandler(reader, &lpContentHandler);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(lpContentHandler == NULL, "Expected %p, got %p\n", NULL, lpContentHandler);
