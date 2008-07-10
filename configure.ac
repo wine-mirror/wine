@@ -977,30 +977,6 @@ fi
 WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"],
                  [liblcms development files not found, Color Management won't be supported.])
 
-dnl **** Check for OpenLDAP ***
-AC_SUBST(LDAPLIBS,"")
-if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
-then
-    AC_CHECK_LIB(ldap_r, ldap_initialize,
-        [AC_CHECK_LIB(lber, ber_init,
-            [AC_DEFINE(HAVE_LDAP, 1, [Define if you have the OpenLDAP development environment])
-             LDAPLIBS="-lldap_r -llber"],,
-             [$LIBPTHREAD])],,
-             [$LIBPTHREAD])
-    WINE_CHECK_LIB_FUNCS(\
-	ldap_count_references \
-	ldap_first_reference \
-	ldap_next_reference \
-	ldap_parse_reference \
-	ldap_parse_sort_control \
-	ldap_parse_sortresponse_control \
-	ldap_parse_vlv_control \
-	ldap_parse_vlvresponse_control,
-        [$LDAPLIBS $LIBPTHREAD])
-fi
-WINE_NOTICE_WITH(ldap,[test "x$LDAPLIBS" = "x"],
-                 [libldap (OpenLDAP) development files not found, LDAP won't be supported.])
-
 dnl **** Check for FreeType 2 ****
 AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],false)
 if test "$ft_devel" != "false" -a "x$with_freetype" != "xno"
@@ -1460,6 +1436,32 @@ AC_CHECK_FUNCS(\
 	inet_network \
 	sendmsg \
 )
+
+dnl **** Check for OpenLDAP ***
+AC_SUBST(LDAPLIBS,"")
+if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
+then
+    AC_CHECK_TYPE(LDAPSortKey,
+        [AC_CHECK_LIB(ldap_r, ldap_initialize,
+            [AC_CHECK_LIB(lber, ber_init,
+                [AC_DEFINE(HAVE_LDAP, 1, [Define if you have the OpenLDAP development environment])
+                 LDAPLIBS="-lldap_r -llber"],,
+                 [$LIBPTHREAD])],,
+                 [$LIBPTHREAD])],,
+        [#include <ldap.h>])
+    WINE_CHECK_LIB_FUNCS(\
+	ldap_count_references \
+	ldap_first_reference \
+	ldap_next_reference \
+	ldap_parse_reference \
+	ldap_parse_sort_control \
+	ldap_parse_sortresponse_control \
+	ldap_parse_vlv_control \
+	ldap_parse_vlvresponse_control,
+        [$LDAPLIBS $LIBPTHREAD])
+fi
+WINE_NOTICE_WITH(ldap,[test "x$LDAPLIBS" = "x"],
+                 [libldap (OpenLDAP) development files not found, LDAP won't be supported.])
 
 dnl **** Check for types ****
 
