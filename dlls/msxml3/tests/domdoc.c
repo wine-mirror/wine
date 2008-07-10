@@ -1769,6 +1769,18 @@ static void test_removeChild(void)
 
     IXMLDOMNode_Release( node2 );
     IXMLDOMNode_Release( node4 );
+
+    r = IXMLDOMNodeList_get_item( node_list, 0, &node4 );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMElement_removeChild( element, node4, NULL );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNode_get_parentNode( node4, &node3 );
+    ok( r == S_FALSE, "ret %08x\n", r);
+    ok( node3 == NULL, "%p\n", node3 );
+
+    IXMLDOMNode_Release( node4 );
     IXMLDOMNodeList_Release( node_list2 );
     IXMLDOMNode_Release( node );
     IXMLDOMNodeList_Release( node_list );

@@ -625,7 +625,8 @@ static HRESULT WINAPI xmlnode_removeChild(
 
     TRACE("%p->(%p, %p)\n", This, childNode, oldChild);
 
-    *oldChild = NULL;
+    if(oldChild)
+        *oldChild = NULL;
 
     if(!childNode) return E_INVALIDARG;
 
@@ -651,7 +652,9 @@ static HRESULT WINAPI xmlnode_removeChild(
 
     IXMLDOMNode_Release(child);
     IXMLDOMNode_AddRef(childNode);
-    *oldChild = childNode;
+
+    if(oldChild)
+        *oldChild = childNode;
     return S_OK;
 }
 
