@@ -64,7 +64,7 @@ todo_wine
     expect(Ok, stat);
     stat = GdipGetStringFormatMeasurableCharacterRangeCount(format, &count);
     expect(Ok, stat);
-    expect(3, count);
+    if (stat == Ok) expect(3, count);
 }
     stat= GdipDeleteStringFormat(format);
     expect(Ok, stat);
