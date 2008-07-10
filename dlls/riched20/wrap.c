@@ -358,8 +358,19 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     pp = ME_SplitByBacktracking(wc, p, loc);
     if (pp == wc->pRowStart)
     {
-      /* we have a row that starts with spaces, or a single large character
-       * which we cannot split. */
+      if (run->nFlags & MERF_STARTWHITE)
+      {
+          /* we had only spaces so far, so we must be on the first line of the
+           * paragraph, since no other lines of the paragraph start with spaces. */
+          assert(!wc->nRow);
+          /* The lines will only contain spaces, and the rest of the run will
+           * overflow onto the next line. */
+          wc->bOverflown = TRUE;
+          return p;
+      }
+      /* Couldn't split the first run, possible because we have a large font
+       * with a single character that caused an overflow.
+       */
       wc->pt.x += run->nWidth;
       return p->next;
     }
