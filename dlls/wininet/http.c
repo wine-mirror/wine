@@ -4048,7 +4048,9 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
 BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
 {
     WCHAR szVersion[10];
+    WCHAR szConnectionResponse[20];
     DWORD dwBufferSize = sizeof(szVersion);
+    BOOL keepalive = FALSE;
 
     TRACE("\n");
 
@@ -4058,15 +4060,19 @@ BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
                              &dwBufferSize, NULL) ||
         strcmpiW(szVersion, g_szHttp1_1))
     {
-        WCHAR szConnectionResponse[20];
-        dwBufferSize = sizeof(szConnectionResponse);
-        if ((!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) ||
-             strcmpiW(szConnectionResponse, szKeepAlive)) &&
-            (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) ||
-             strcmpiW(szConnectionResponse, szKeepAlive)))
-        {
-            HTTPREQ_CloseConnection(&lpwhr->hdr);
-        }
+        keepalive = TRUE;
+    }
+
+    dwBufferSize = sizeof(szConnectionResponse);
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) ||
+        HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL))
+    {
+        keepalive = !strcmpiW(szConnectionResponse, szKeepAlive);
+    }
+
+    if (!keepalive)
+    {
+        HTTPREQ_CloseConnection(&lpwhr->hdr);
     }
 
     /* FIXME: store data in the URL cache here */
