@@ -169,7 +169,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     *font = GdipAlloc(sizeof(GpFont));
     if(!*font)  return OutOfMemory;
 
-    memcpy(&(*font)->lfw.lfFaceName, logfont->lfFaceName, LF_FACESIZE *
+    memcpy((*font)->lfw.lfFaceName, logfont->lfFaceName, LF_FACESIZE *
            sizeof(WCHAR));
     (*font)->lfw.lfHeight = logfont->lfHeight;
     (*font)->lfw.lfItalic = logfont->lfItalic;
