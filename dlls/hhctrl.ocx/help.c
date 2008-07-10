@@ -587,7 +587,7 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
         heap_free(szBuf);
     }
 
-    SendMessageW(hToolbar, TB_ADDBUTTONSW, dwNumButtons, (LPARAM)&buttons);
+    SendMessageW(hToolbar, TB_ADDBUTTONSW, dwNumButtons, (LPARAM)buttons);
     SendMessageW(hToolbar, TB_AUTOSIZE, 0, 0);
     ShowWindow(hToolbar, SW_SHOW);
 
