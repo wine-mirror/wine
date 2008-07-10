@@ -459,11 +459,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
         object->changed.pixelShader = TRUE;
 
         /* Pixel Shader Constants */
-        for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
+        for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
             object->contained_ps_consts_f[i] = i;
             object->changed.pixelShaderConstantsF[i] = TRUE;
         }
-        object->num_contained_ps_consts_f = GL_LIMITS(vshader_constantsF);
+        object->num_contained_ps_consts_f = GL_LIMITS(pshader_constantsF);
         for (i = 0; i < MAX_CONST_B; ++i) {
             object->contained_ps_consts_b[i] = i;
             object->changed.pixelShaderConstantsB[i] = TRUE;
