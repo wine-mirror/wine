@@ -524,7 +524,6 @@ static BOOL CUPS_LoadPrinters(void)
             TRACE("Printer already exists\n");
             RegDeleteValueW(hkeyPrinter, May_Delete_Value);
             RegCloseKey(hkeyPrinter);
-            add_printer_driver(dests[i].name);
         } else {
             static CHAR data_type[] = "RAW",
                     print_proc[]    = "WinPrint",
@@ -662,7 +661,6 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
         TRACE("Printer already exists\n");
         RegDeleteValueW(hkeyPrinter, May_Delete_Value);
         RegCloseKey(hkeyPrinter);
-        add_printer_driver(devname);
     } else {
         static CHAR data_type[]   = "RAW",
                     print_proc[]  = "WinPrint",
@@ -7246,13 +7244,7 @@ BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors,
 
     if ((backend == NULL)  && !load_backend()) return FALSE;
 
-    /* Level is not checked in win9x */
-    if (!Level || (Level > 2)) {
-        WARN("level (%d) is ignored in win9x\n", Level);
-        SetLastError(ERROR_INVALID_LEVEL);
-        return FALSE;
-    }
-    if (!pcbNeeded) {
+    if (!pcbNeeded || !pcReturned || (!pMonitors && (cbBuf > 0))) {
         SetLastError(RPC_X_NULL_REF_POINTER);
         return FALSE;
     }

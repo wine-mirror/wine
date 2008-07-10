@@ -736,6 +736,12 @@ BOOL WINAPI fpEnumMonitors(LPWSTR pName, DWORD Level, LPBYTE pMonitors, DWORD cb
         goto em_cleanup;
     }
 
+    if (!Level || (Level > 2)) {
+        WARN("level (%d) is ignored in win9x\n", Level);
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
     /* Scan all Monitor-Keys */
     numentries = 0;
     needed = get_local_monitors(Level, NULL, 0, &numentries);
@@ -743,10 +749,6 @@ BOOL WINAPI fpEnumMonitors(LPWSTR pName, DWORD Level, LPBYTE pMonitors, DWORD cb
     /* we calculated the needed buffersize. now do more error-checks */
     if (cbBuf < needed) {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        goto em_cleanup;
-    }
-    else if (!pMonitors || !pcReturned) {
-        SetLastError(RPC_X_NULL_REF_POINTER);
         goto em_cleanup;
     }
 
