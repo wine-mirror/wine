@@ -730,10 +730,33 @@ GpStatus WINGDIPAPI GdipGetPointCount(GpPath *path, INT *count)
 GpStatus WINGDIPAPI GdipIsOutlineVisiblePathPointI(GpPath* path, INT x, INT y,
     GpPen *pen, GpGraphics *graphics, BOOL *result)
 {
+    return GdipIsOutlineVisiblePathPoint(path, x, y, pen, graphics, result);
+}
+
+GpStatus WINGDIPAPI GdipIsOutlineVisiblePathPoint(GpPath* path, REAL x, REAL y,
+    GpPen *pen, GpGraphics *graphics, BOOL *result)
+{
     static int calls;
 
     if(!path || !pen)
         return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipIsVisiblePathPointI(GpPath* path, INT x, INT y, GpGraphics *graphics, BOOL *result)
+{
+    return GdipIsVisiblePathPoint(path, x, y, graphics, result);
+}
+
+GpStatus WINGDIPAPI GdipIsVisiblePathPoint(GpPath* path, REAL x, REAL y, GpGraphics *graphics, BOOL *result)
+{
+    static int calls;
+
+    if(!path) return InvalidParameter;
 
     if(!(calls++))
         FIXME("not implemented\n");

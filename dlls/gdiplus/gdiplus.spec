@@ -421,12 +421,12 @@
 @ stdcall GdipIsMatrixEqual(ptr ptr ptr)
 @ stdcall GdipIsMatrixIdentity(ptr ptr)
 @ stdcall GdipIsMatrixInvertible(ptr ptr)
-@ stub GdipIsOutlineVisiblePathPoint
+@ stdcall GdipIsOutlineVisiblePathPoint(ptr long long ptr ptr ptr)
 @ stdcall GdipIsOutlineVisiblePathPointI(ptr long long ptr ptr ptr)
 @ stub GdipIsStyleAvailable
 @ stub GdipIsVisibleClipEmpty
-@ stub GdipIsVisiblePathPoint
-@ stub GdipIsVisiblePathPointI
+@ stdcall GdipIsVisiblePathPoint(ptr long long ptr ptr)
+@ stdcall GdipIsVisiblePathPointI(ptr long long ptr ptr)
 @ stub GdipIsVisiblePoint
 @ stub GdipIsVisiblePointI
 @ stub GdipIsVisibleRect
