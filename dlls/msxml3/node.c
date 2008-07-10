@@ -651,10 +651,13 @@ static HRESULT WINAPI xmlnode_removeChild(
     xmlUnlinkNode(child_node_ptr);
 
     IXMLDOMNode_Release(child);
-    IXMLDOMNode_AddRef(childNode);
 
     if(oldChild)
+    {
+        IXMLDOMNode_AddRef(childNode);
         *oldChild = childNode;
+    }
+
     return S_OK;
 }
 
