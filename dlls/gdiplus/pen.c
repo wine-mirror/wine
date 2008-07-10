@@ -357,6 +357,16 @@ GpStatus WINGDIPAPI GdipSetPenDashArray(GpPen *pen, GDIPCONST REAL *dash,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetPenDashCap197819(GpPen *pen, GpDashCap dashCap)
+{
+    if(!pen)
+        return InvalidParameter;
+
+    pen->dashcap = dashCap;
+
+    return Ok;
+}
+
 /* FIXME: dash offset not used */
 GpStatus WINGDIPAPI GdipSetPenDashOffset(GpPen *pen, REAL offset)
 {
