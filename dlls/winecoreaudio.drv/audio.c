@@ -349,6 +349,9 @@ static void wodSendNotifyCompletionsMessage(WINE_WAVEOUT* wwo)
     CFDataRef data;
     UInt32 buffer;
 
+    if (!Port_SendToMessageThread)
+        return;
+
     buffer = (UInt32) wwo->woID;
 
     data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)&buffer, sizeof(buffer));
@@ -367,6 +370,9 @@ static void wodSendNotifyInputCompletionsMessage(WINE_WAVEIN* wwi)
 {
     CFDataRef data;
     UInt32 buffer;
+
+    if (!Port_SendToMessageThread)
+        return;
 
     buffer = (UInt32) wwi->wiID;
 
@@ -693,6 +699,9 @@ void CoreAudio_WaveRelease(void)
 {
     /* Stop CFRunLoop in messageThread */
     TRACE("()\n");
+
+    if (!Port_SendToMessageThread)
+        return;
 
     CFMessagePortSendRequest(Port_SendToMessageThread, kStopLoopMessage, NULL, 0.0, 0.0, NULL, NULL);
     CFRelease(Port_SendToMessageThread);
