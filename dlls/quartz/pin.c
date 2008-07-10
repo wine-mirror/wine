@@ -1783,6 +1783,11 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
 
     TRACE("(%p)->()\n", iface);
 
+    /* Send further first: Else a race condition might terminate processing early */
+    EnterCriticalSection(This->pin.pCritSec);
+    SendFurther( iface, deliver_endflush, NULL, NULL );
+    LeaveCriticalSection(This->pin.pCritSec);
+
     EnterCriticalSection(&This->thread_lock);
     {
         FILTER_STATE state;
@@ -1794,10 +1799,6 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
         PullPin_WaitForStateChange(This, INFINITE);
     }
     LeaveCriticalSection(&This->thread_lock);
-
-    EnterCriticalSection(This->pin.pCritSec);
-    SendFurther( iface, deliver_endflush, NULL, NULL );
-    LeaveCriticalSection(This->pin.pCritSec);
 
     return S_OK;
 }
