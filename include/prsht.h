@@ -44,7 +44,10 @@ static const WCHAR WC_PROPSHEETW[] = { 'S','y','s',
 struct _PROPSHEETPAGEA;  /** need to forward declare those structs **/
 struct _PROPSHEETPAGEW;
 struct _PSP;
+#ifndef _HPROPSHEETPAGE_DEFINED
+#define _HPROPSHEETPAGE_DEFINED
 typedef struct _PSP *HPROPSHEETPAGE;
+#endif /* _HPROPSHEETPAGE_DEFINED */
 
 
 typedef UINT (CALLBACK *LPFNPSPCALLBACKA)(HWND, UINT, struct _PROPSHEETPAGEA*);

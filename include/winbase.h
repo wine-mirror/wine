@@ -502,6 +502,8 @@ typedef struct tagMEMORYSTATUSEX {
 #include <poppack.h>
 
 
+#ifndef _SYSTEMTIME_
+#define _SYSTEMTIME_
 typedef struct _SYSTEMTIME{
         WORD wYear;
         WORD wMonth;
@@ -512,6 +514,7 @@ typedef struct _SYSTEMTIME{
         WORD wSecond;
         WORD wMilliseconds;
 } SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
+#endif /* _SYSTEMTIME_ */
 
 /* The 'overlapped' data structure used by async I/O functions.
  */
