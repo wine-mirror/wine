@@ -75,6 +75,11 @@ static const struct pd_flags psd_flags[] = {
 static WNDPROC lpfnStaticWndProc;
 /* the text of the fake document to render for the Page Setup dialog */
 static WCHAR wszFakeDocumentText[1024];
+static const WCHAR pd32_collateW[] = { 'P', 'D', '3', '2', '_', 'C', 'O', 'L', 'L', 'A', 'T', 'E', 0 };
+static const WCHAR pd32_nocollateW[] = { 'P', 'D', '3', '2', '_', 'N', 'O', 'C', 'O', 'L', 'L', 'A', 'T', 'E', 0 };
+static const WCHAR pd32_portraitW[] = { 'P', 'D', '3', '2', '_', 'P', 'O', 'R', 'T', 'R', 'A', 'I', 'T', 0 };
+static const WCHAR pd32_landscapeW[] = { 'P', 'D', '3', '2', '_', 'L', 'A', 'N', 'D', 'S', 'C', 'A', 'P', 'E', 0 };
+static const WCHAR propW[] = {'_','_','W','I','N','E','_','P','R','I','N','T','D','L','G','D','A','T','A',0};
 
 /***********************************************************************
  *    PRINTDLG_OpenDefaultPrinter
@@ -1378,10 +1383,6 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
 static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg, WPARAM wParam,
 				     PRINT_PTRW* PrintStructures)
 {
-    static const WCHAR PD32_COLLATE[] = { 'P', 'D', '3', '2', '_', 'C', 'O', 'L', 'L', 'A', 'T', 'E', 0 };
-    static const WCHAR PD32_NOCOLLATE[] = { 'P', 'D', '3', '2', '_', 'N', 'O', 'C', 'O', 'L', 'L', 'A', 'T', 'E', 0 };
-    static const WCHAR PD32_PORTRAIT[] = { 'P', 'D', '3', '2', '_', 'P', 'O', 'R', 'T', 'R', 'A', 'I', 'T', 0 };
-    static const WCHAR PD32_LANDSCAPE[] = { 'P', 'D', '3', '2', '_', 'L', 'A', 'N', 'D', 'S', 'C', 'A', 'P', 'E', 0 };
     LPPRINTDLGW lppd = PrintStructures->lpPrintDlg;
     DEVNAMES *pdn;
     DEVMODEW *pdm;
@@ -1392,15 +1393,15 @@ static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg, WPARAM wParam,
     /* We load these with LoadImage because they are not a standard
        size and we don't want them rescaled */
     PrintStructures->hCollateIcon =
-      LoadImageW(COMDLG32_hInstance, PD32_COLLATE, IMAGE_ICON, 0, 0, 0);
+      LoadImageW(COMDLG32_hInstance, pd32_collateW, IMAGE_ICON, 0, 0, 0);
     PrintStructures->hNoCollateIcon =
-      LoadImageW(COMDLG32_hInstance, PD32_NOCOLLATE, IMAGE_ICON, 0, 0, 0);
+      LoadImageW(COMDLG32_hInstance, pd32_nocollateW, IMAGE_ICON, 0, 0, 0);
 
     /* These can be done with LoadIcon */
     PrintStructures->hPortraitIcon =
-      LoadIconW(COMDLG32_hInstance, PD32_PORTRAIT);
+      LoadIconW(COMDLG32_hInstance, pd32_portraitW);
     PrintStructures->hLandscapeIcon =
-      LoadIconW(COMDLG32_hInstance, PD32_LANDSCAPE);
+      LoadIconW(COMDLG32_hInstance, pd32_landscapeW);
 
     /* display the collate/no_collate icon */
     SendDlgItemMessageW(hDlg, ico3, STM_SETIMAGE, (WPARAM) IMAGE_ICON,
@@ -1882,7 +1883,6 @@ static INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 static INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
                                       LPARAM lParam)
 {
-    static const WCHAR propW[] = {'_','_','W','I','N','E','_','P','R','I','N','T','D','L','G','D','A','T','A',0};
     PRINT_PTRW* PrintStructures;
     INT_PTR res = FALSE;
 
