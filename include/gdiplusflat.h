@@ -77,6 +77,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect*,
 GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE,BOOL,GpMetafile**);
 GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE,BOOL,
     GDIPCONST WmfPlaceableFileHeader*,GpMetafile**);
+GpStatus WINGDIPAPI GdipCreateMetafileFromWmfFile(GDIPCONST WCHAR*, GDIPCONST WmfPlaceableFileHeader*,GpMetafile**);
 GpStatus WINGDIPAPI GdipCreateStreamOnFile(GDIPCONST WCHAR*,UINT,IStream**);
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *);
 GpStatus WINGDIPAPI GdipDrawArc(GpGraphics*,GpPen*,REAL,REAL,REAL,REAL,REAL,REAL);

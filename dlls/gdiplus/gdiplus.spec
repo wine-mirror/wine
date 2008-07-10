@@ -112,7 +112,7 @@
 @ stub GdipCreateMetafileFromFile
 @ stub GdipCreateMetafileFromStream
 @ stdcall GdipCreateMetafileFromWmf(ptr long ptr ptr)
-@ stub GdipCreateMetafileFromWmfFile
+@ stdcall GdipCreateMetafileFromWmfFile(wstr ptr ptr)
 @ stdcall GdipCreatePath2(ptr ptr long long ptr)
 @ stdcall GdipCreatePath2I(ptr ptr long long ptr)
 @ stdcall GdipCreatePath(long ptr)

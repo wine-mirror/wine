@@ -881,6 +881,18 @@ err:
     return retval;
 }
 
+GpStatus WINGDIPAPI GdipCreateMetafileFromWmfFile(GDIPCONST WCHAR *file,
+    GDIPCONST WmfPlaceableFileHeader * placeable, GpMetafile **metafile)
+{
+    HMETAFILE hmf = GetMetaFileW(file);
+
+    TRACE("(%s, %p, %p)\n", debugstr_w(file), placeable, metafile);
+
+    if(!hmf) return InvalidParameter;
+
+    return GdipCreateMetafileFromWmf(hmf, TRUE, placeable, metafile);
+}
+
 GpStatus WINGDIPAPI GdipCreateStreamOnFile(GDIPCONST WCHAR * filename,
     UINT access, IStream **stream)
 {
