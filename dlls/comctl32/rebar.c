@@ -1647,7 +1647,7 @@ static UINT
 REBAR_CommonSetupBand(HWND hwnd, const REBARBANDINFOW *lprbbi, REBAR_BAND *lpBand)
      /* Function:  This routine copies the supplied values from   */
      /*  user input (lprbbi) to the internal band structure.      */
-     /*  It returns true if something changed and false if not.   */
+     /*  It returns the mask of what changed.   */
 {
     UINT uChanged = 0x0;
 
@@ -1699,7 +1699,7 @@ REBAR_CommonSetupBand(HWND hwnd, const REBARBANDINFOW *lprbbi, REBAR_BAND *lpBan
     if( (lprbbi->fMask & RBBIM_CHILDSIZE) &&
         ( (lpBand->cxMinChild != lprbbi->cxMinChild) ||
           (lpBand->cyMinChild != lprbbi->cyMinChild ) ||
-          ( (lprbbi->cbSize >= sizeof (REBARBANDINFOA)) &&
+          ( (lprbbi->cbSize >= sizeof (REBARBANDINFOA) && (lpBand->fStyle & RBBS_VARIABLEHEIGHT)) &&
             ( (lpBand->cyChild    != lprbbi->cyChild ) ||
               (lpBand->cyMaxChild != lprbbi->cyMaxChild ) ||
               (lpBand->cyIntegral != lprbbi->cyIntegral ) ) ) ||
@@ -2422,6 +2422,14 @@ REBAR_InsertBandT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnico
     lpBand->iImage = -1;
 
     REBAR_CommonSetupBand(infoPtr->hwndSelf, lprbbi, lpBand);
+
+    /* Make sure the defaults for these are correct */
+    if (lprbbi->cbSize < sizeof (REBARBANDINFOA) || !(lpBand->fStyle & RBBS_VARIABLEHEIGHT)) {
+        lpBand->cyChild    = lpBand->cyMinChild;
+        lpBand->cyMaxChild = 0x7fffffff;
+        lpBand->cyIntegral = 0;
+    }
+
     if ((lprbbi->fMask & RBBIM_TEXT) && (lprbbi->lpText)) {
         if (bUnicode)
             Str_SetPtrW(&lpBand->lpText, lprbbi->lpText);
