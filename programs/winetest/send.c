@@ -105,10 +105,11 @@ int
 send_file (const char *name)
 {
     SOCKET s;
-    FILE *f;
+    HANDLE file;
 #define BUFLEN 8192
     char buffer[BUFLEN+1];
-    size_t bytes_read, total, filesize;
+    DWORD bytes_read, filesize;
+    size_t total;
     char *str;
     int ret;
 
@@ -130,20 +131,21 @@ send_file (const char *name)
     s = open_http ("test.winehq.org");
     if (s == INVALID_SOCKET) return 1;
 
-    f = fopen (name, "rb");
-    if (!f) {
-        report (R_WARNING, "Can't open file '%s': %d", name, errno);
+    file = CreateFileA( name, GENERIC_READ,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        NULL, OPEN_EXISTING, 0, NULL );
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        report (R_WARNING, "Can't open file '%s': %u", name, GetLastError());
         goto abort1;
     }
-    fseek (f, 0, SEEK_END);
-    filesize = ftell (f);
+    filesize = GetFileSize( file, NULL );
     if (filesize > 1.5*1024*1024) {
         report (R_WARNING,
                 "File too big (%.1f MB > 1.5 MB); submitting partial report.",
                 filesize/1024.0/1024);
         filesize = 1.5*1024*1024;
     }
-    fseek (f, 0, SEEK_SET);
 
     report (R_STATUS, "Sending header");
     str = strmake (&total, body1, name);
@@ -159,11 +161,8 @@ send_file (const char *name)
     report (R_STATUS, "Sending %u bytes of data", filesize);
     report (R_PROGRESS, 2, filesize);
     total = 0;
-    while (total < filesize && (bytes_read = fread (buffer, 1, BUFLEN/2, f))) {
-        if ((signed)bytes_read == -1) {
-            report (R_WARNING, "Error reading log file: %d", errno);
-            goto abort2;
-        }
+    while (total < filesize && ReadFile( file, buffer, BUFLEN/2, &bytes_read, NULL )) {
+        if (!bytes_read) break;
         total += bytes_read;
         if (total > filesize) bytes_read -= total - filesize;
         if (send_buf (s, buffer, bytes_read)) {
@@ -173,7 +172,7 @@ send_file (const char *name)
         }
         report (R_DELTA, bytes_read, "Network transfer: In progress");
     }
-    fclose (f);
+    CloseHandle( file );
 
     if (send_buf (s, body2, sizeof body2 - 1)) {
         report (R_WARNING, "Error sending trailer: %d, %d",
@@ -216,7 +215,7 @@ send_file (const char *name)
     return ret;
 
  abort2:
-    fclose (f);
+    CloseHandle( file );
  abort1:
     close_http (s);
     return 1;

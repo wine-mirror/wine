@@ -19,10 +19,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <unistd.h>
-#include <errno.h>
+#include <stdarg.h>
+#include <windef.h>
+#include <winbase.h>
 
 #include "winetest.h"
+
+HANDLE logfile = 0;
 
 void *xmalloc (size_t len)
 {
@@ -95,16 +98,16 @@ void xprintf (const char *fmt, ...)
 {
     va_list ap;
     size_t size;
-    ssize_t written;
+    DWORD written;
     char *buffer, *head;
 
     va_start (ap, fmt);
     buffer = vstrfmtmake (&size, fmt, ap);
     head = buffer;
     va_end (ap);
-    while ((written = write (1, head, size)) != size) {
-        if (written == -1)
-            report (R_FATAL, "Can't write logs: %d", errno);
+    while (size) {
+        if (!WriteFile( logfile, head, size, &written, NULL ))
+            report (R_FATAL, "Can't write logs: %u", GetLastError());
         head += written;
         size -= written;
     }

@@ -39,6 +39,8 @@ const char *findbadtagchar (const char *tag);
 
 int send_file (const char *name);
 
+extern HANDLE logfile;
+
 /* GUI definitions */
 
 #include <windows.h>

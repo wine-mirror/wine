@@ -29,12 +29,7 @@
 #include "wine/port.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
-#include <errno.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <windows.h>
 
 #include "winetest.h"
@@ -266,27 +261,17 @@ extract_test (struct wine_test *test, const char *dir, LPTSTR res_name)
    value of WaitForSingleObject.
  */
 static int
-run_ex (char *cmd, const char *out, const char *tempdir, DWORD ms)
+run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms)
 {
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
-    int fd, oldstdout = -1;
     DWORD wait, status;
 
     GetStartupInfo (&si);
-    si.dwFlags = 0;
-
-    if (out) {
-        fd = open (out, O_WRONLY | O_CREAT, 0666);
-        if (-1 == fd)
-            report (R_FATAL, "Can't open '%s': %d", out, errno);
-        oldstdout = dup (1);
-        if (-1 == oldstdout)
-            report (R_FATAL, "Can't save stdout: %d", errno);
-        if (-1 == dup2 (fd, 1))
-            report (R_FATAL, "Can't redirect stdout: %d", errno);
-        close (fd);
-    }
+    si.dwFlags    = STARTF_USESTDHANDLES;
+    si.hStdInput  = GetStdHandle( STD_INPUT_HANDLE );
+    si.hStdOutput = out_file ? out_file : GetStdHandle( STD_OUTPUT_HANDLE );
+    si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
 
     if (!CreateProcessA (NULL, cmd, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
                          NULL, tempdir, &si, &pi)) {
@@ -332,43 +317,49 @@ run_ex (char *cmd, const char *out, const char *tempdir, DWORD ms)
         CloseHandle (pi.hProcess);
     }
 
-    if (out) {
-        close (1);
-        if (-1 == dup2 (oldstdout, 1))
-            report (R_FATAL, "Can't recover stdout: %d", errno);
-        close (oldstdout);
-    }
     return status;
 }
 
 static void
 get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
 {
-    char *subname, *cmd;
-    FILE *subfile;
-    size_t total;
+    char *cmd;
+    HANDLE subfile;
+    DWORD total;
     char buffer[8192], *index;
     static const char header[] = "Valid test names:";
     int allocated;
+    char tmpdir[MAX_PATH], subname[MAX_PATH];
+    SECURITY_ATTRIBUTES sa;
 
     test->subtest_count = 0;
 
-    subname = tempnam (0, "sub");
-    if (!subname) report (R_FATAL, "Can't name subtests file.");
+    if (!GetTempPathA( MAX_PATH, tmpdir ) ||
+        !GetTempFileNameA( tmpdir, "sub", 0, subname ))
+        report (R_FATAL, "Can't name subtests file.");
+
+    /* make handle inheritable */
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
+
+    subfile = CreateFileA( subname, GENERIC_READ|GENERIC_WRITE,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           &sa, CREATE_ALWAYS, 0, NULL );
+    if (subfile == INVALID_HANDLE_VALUE) {
+        report (R_ERROR, "Can't open subtests output of %s: %u",
+                test->name, GetLastError());
+        goto quit;
+    }
 
     extract_test (test, tempdir, res_name);
     cmd = strmake (NULL, "%s --list", test->exename);
-    run_ex (cmd, subname, tempdir, 5000);
+    run_ex (cmd, subfile, tempdir, 5000);
     free (cmd);
 
-    subfile = fopen (subname, "r");
-    if (!subfile) {
-        report (R_ERROR, "Can't open subtests output of %s: %d",
-                test->name, errno);
-        goto quit;
-    }
-    total = fread (buffer, 1, sizeof buffer, subfile);
-    fclose (subfile);
+    SetFilePointer( subfile, 0, NULL, FILE_BEGIN );
+    ReadFile( subfile, buffer, sizeof(buffer), &total, NULL );
+    CloseHandle( subfile );
     if (sizeof buffer == total) {
         report (R_ERROR, "Subtest list of %s too big.",
                 test->name, sizeof buffer);
@@ -400,21 +391,19 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
                                test->subtest_count * sizeof(char*));
 
  quit:
-    if (remove (subname))
-        report (R_WARNING, "Can't delete file '%s': %d",
-                subname, errno);
-    free (subname);
+    if (!DeleteFileA (subname))
+        report (R_WARNING, "Can't delete file '%s': %u", subname, GetLastError());
 }
 
 static void
-run_test (struct wine_test* test, const char* subtest, const char *tempdir)
+run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const char *tempdir)
 {
     int status;
     const char* file = get_test_source_file(test->name, subtest);
     char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
 
     xprintf ("%s:%s start %s -\n", test->name, subtest, file);
-    status = run_ex (cmd, NULL, tempdir, 120000);
+    status = run_ex (cmd, out_file, tempdir, 120000);
     free (cmd);
     xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
 }
@@ -459,43 +448,49 @@ static char *
 run_tests (char *logname)
 {
     int i;
-    char *tempdir, *shorttempdir;
-    int logfile;
     char *strres, *eol, *nextline;
     DWORD strsize;
+    SECURITY_ATTRIBUTES sa;
+    char tmppath[MAX_PATH], tempdir[MAX_PATH+4];
 
     SetErrorMode (SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
+    if (!GetTempPathA( MAX_PATH, tmppath ))
+        report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
+
     if (!logname) {
-        logname = tempnam (0, "res");
-        if (!logname) report (R_FATAL, "Can't name logfile.");
+        static char tmpname[MAX_PATH];
+        if (!GetTempFileNameA( tmppath, "res", 0, tmpname ))
+            report (R_FATAL, "Can't name logfile.");
+        logname = tmpname;
     }
     report (R_OUT, logname);
 
-    logfile = open (logname, O_WRONLY | O_CREAT | O_EXCL | O_APPEND,
-                    0666);
-    if (-1 == logfile) {
-        if (EEXIST == errno)
-            report (R_FATAL, "File %s already exists.", logname);
-        else report (R_FATAL, "Could not open logfile: %d", errno);
-    }
-    if (-1 == dup2 (logfile, 1))
-        report (R_FATAL, "Can't redirect stdout: %d", errno);
-    close (logfile);
+    /* make handle inheritable */
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
 
-    tempdir = tempnam (0, "wct");
-    if (!tempdir)
+    logfile = CreateFileA( logname, GENERIC_READ|GENERIC_WRITE,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           &sa, CREATE_ALWAYS, 0, NULL );
+    if (logfile == INVALID_HANDLE_VALUE)
+        report (R_FATAL, "Could not open logfile: %u", GetLastError());
+
+    if (!GetTempPathA( MAX_PATH, tmppath ))
         report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
-    shorttempdir = strdup (tempdir);
-    if (shorttempdir) {         /* try stable path for ZoneAlarm */
-        strstr (shorttempdir, "wct")[3] = 0;
-        if (CreateDirectoryA (shorttempdir, NULL)) {
-            free (tempdir);
-            tempdir = shorttempdir;
-        } else free (shorttempdir);
+
+    /* try stable path for ZoneAlarm */
+    strcpy( tempdir, tmppath );
+    strcat( tempdir, "wct" );
+    if (!CreateDirectoryA( tempdir, NULL ))
+    {
+        if (!GetTempFileNameA( tmppath, "wct", 0, tempdir ))
+            report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
+        DeleteFileA( tempdir );
+        if (!CreateDirectoryA( tempdir, NULL ))
+            report (R_FATAL, "Could not create directory: %s", tempdir);
     }
-    if (tempdir != shorttempdir && !CreateDirectoryA (tempdir, NULL))
-        report (R_FATAL, "Could not create directory: %s", tempdir);
     report (R_DIR, tempdir);
 
     xprintf ("Version 4\n");
@@ -553,15 +548,15 @@ run_tests (char *logname)
 	for (j = 0; j < test->subtest_count; j++) {
             report (R_STEP, "Running: %s:%s", test->name,
                     test->subtests[j]);
-	    run_test (test, test->subtests[j], tempdir);
+	    run_test (test, test->subtests[j], logfile, tempdir);
         }
     }
     report (R_DELTA, 0, "Running: Done");
 
     report (R_STATUS, "Cleaning up");
-    close (1);
+    CloseHandle( logfile );
+    logfile = 0;
     remove_dir (tempdir);
-    free (tempdir);
     free (wine_tests);
 
     return logname;
@@ -666,7 +661,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                           putenv (debug_yes)        ||
                           putenv (interactive_no)   ||
                           putenv (report_success_no)))
-            report (R_FATAL, "Could not reset environment: %d", errno);
+            report (R_FATAL, "Could not reset environment");
 
         if (!tag) {
             if (!interactive)
@@ -684,9 +679,8 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             logname = run_tests (NULL);
             if (build_id[0] &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
-                if (!send_file (logname) && remove (logname))
-                    report (R_WARNING, "Can't remove logfile: %d.", errno);
-            free (logname);
+                if (!send_file (logname) && !DeleteFileA(logname))
+                    report (R_WARNING, "Can't remove logfile: %u", GetLastError());
         } else run_tests (logname);
         report (R_STATUS, "Finished");
     }
