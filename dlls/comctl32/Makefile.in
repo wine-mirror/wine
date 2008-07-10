@@ -34,6 +34,7 @@ C_SRCS = \
 	string.c \
 	syslink.c \
 	tab.c \
+	theme_button.c \
 	theme_combo.c \
 	theme_dialog.c \
 	theme_edit.c \
