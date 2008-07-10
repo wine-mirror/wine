@@ -514,6 +514,8 @@ static HRESULT WINAPI isaxxmlreader_getContentHandler(
     saxreader *This = impl_from_ISAXXMLReader( iface );
 
     TRACE("(%p)->(%p)\n", This, pContentHandler);
+    if(pContentHandler == NULL)
+        return E_POINTER;
     if(This->contentHandler)
         ISAXContentHandler_AddRef(This->contentHandler);
     *pContentHandler = This->contentHandler;
@@ -564,6 +566,8 @@ static HRESULT WINAPI isaxxmlreader_getErrorHandler(
     saxreader *This = impl_from_ISAXXMLReader( iface );
 
     TRACE("(%p)->(%p)\n", This, pErrorHandler);
+    if(pErrorHandler == NULL)
+        return E_POINTER;
     if(This->errorHandler)
         ISAXErrorHandler_AddRef(This->errorHandler);
     *pErrorHandler = This->errorHandler;
