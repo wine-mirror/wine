@@ -296,7 +296,7 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
 
     if (run->nFlags & MERF_WHITESPACE) {
       p->member.run.nFlags |= MERF_SKIPPED;
-      /* wc->pt.x += run->nWidth; */
+      wc->pt.x += run->nWidth;
       /* skip runs consisting of only whitespaces */
       return p->next;
     }
@@ -358,8 +358,9 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     pp = ME_SplitByBacktracking(wc, p, loc);
     if (pp == wc->pRowStart)
     {
-      /* we had only spaces so far, entire content can be omitted */
-      wc->pt.x = 0;
+      /* we have a row that starts with spaces, or a single large character
+       * which we cannot split. */
+      wc->pt.x += run->nWidth;
       return p->next;
     }
     if (p != pp) /* found a suitable split point */
