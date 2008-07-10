@@ -162,17 +162,6 @@ GpStatus WINGDIPAPI GdipDeleteRegion(GpRegion *region)
     return NotImplemented;
 }
 
-GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
-        GpRegion* region)
-{
-    if (!(graphics && brush && region))
-        return InvalidParameter;
-
-    FIXME("(%p, %p, %p): stub\n", graphics, brush, region);
-
-    return NotImplemented;
-}
-
 GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, GpRectF *rect)
 {
     FIXME("(%p, %p, %p): stub\n", region, graphics, rect);

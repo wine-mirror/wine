@@ -2114,6 +2114,17 @@ GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GD
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
+        GpRegion* region)
+{
+    if (!(graphics && brush && region))
+        return InvalidParameter;
+
+    FIXME("(%p, %p, %p): stub\n", graphics, brush, region);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
 {
     static int calls;
