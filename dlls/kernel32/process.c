@@ -1232,10 +1232,10 @@ static char **build_envp( const WCHAR *envW )
  *
  * Fork and exec a new Unix binary, checking for errors.
  */
-static int fork_and_exec( const char *filename, const WCHAR *cmdline,
-                          const WCHAR *env, const char *newdir, DWORD flags )
+static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHAR *env,
+                          const char *newdir, DWORD flags, STARTUPINFOW *startup )
 {
-    int fd[2];
+    int fd[2], stdin_fd = -1, stdout_fd = -1;
     int pid, err;
 
     if (!env) env = GetEnvironmentStringsW();
@@ -1246,6 +1246,28 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
         return -1;
     }
     fcntl( fd[1], F_SETFD, 1 );  /* set close on exec */
+
+    if (!(flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)))
+    {
+        HANDLE hstdin, hstdout;
+
+        if (startup->dwFlags & STARTF_USESTDHANDLES)
+        {
+            hstdin = startup->hStdInput;
+            hstdout = startup->hStdOutput;
+        }
+        else
+        {
+            hstdin = GetStdHandle(STD_INPUT_HANDLE);
+            hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
+        }
+
+        if (is_console_handle( hstdin ))  hstdin  = console_handle_unmap( hstdin );
+        if (is_console_handle( hstdout )) hstdout = console_handle_unmap( hstdout );
+        wine_server_handle_to_fd( hstdin, FILE_READ_DATA, &stdin_fd, NULL );
+        wine_server_handle_to_fd( hstdout, FILE_WRITE_DATA, &stdout_fd, NULL );
+    }
+
     if (!(pid = fork()))  /* child */
     {
         char **argv = build_argv( cmdline, 0 );
@@ -1269,6 +1291,19 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
             }
             else if (pid != -1) _exit(0);  /* parent */
         }
+        else
+        {
+            if (stdin_fd != -1)
+            {
+                dup2( stdin_fd, 0 );
+                close( stdin_fd );
+            }
+            if (stdout_fd != -1)
+            {
+                dup2( stdout_fd, 1 );
+                close( stdout_fd );
+            }
+        }
 
         /* Reset signals that we previously set to SIG_IGN */
         signal( SIGPIPE, SIG_DFL );
@@ -1281,6 +1316,8 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
         write( fd[1], &err, sizeof(err) );
         _exit(1);
     }
+    if (stdin_fd != -1) close( stdin_fd );
+    if (stdout_fd != -1) close( stdout_fd );
     close( fd[1] );
     if ((pid != -1) && (read( fd[0], &err, sizeof(err) ) > 0))  /* exec failed */
     {
@@ -1388,11 +1425,11 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
                             void *res_start, void *res_end, int exec_only )
 {
     BOOL ret, success = FALSE;
-    HANDLE process_info;
+    HANDLE process_info, hstdin, hstdout;
     WCHAR *env_end;
     char *winedebug = NULL;
     RTL_USER_PROCESS_PARAMETERS *params;
-    int socketfd[2];
+    int socketfd[2], stdin_fd = -1, stdout_fd = -1;
     pid_t pid;
     int err;
 
@@ -1452,12 +1489,15 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
             if (is_console_handle(req->hstdin))  req->hstdin  = INVALID_HANDLE_VALUE;
             if (is_console_handle(req->hstdout)) req->hstdout = INVALID_HANDLE_VALUE;
             if (is_console_handle(req->hstderr)) req->hstderr = INVALID_HANDLE_VALUE;
+            hstdin = hstdout = 0;
         }
         else
         {
             if (is_console_handle(req->hstdin))  req->hstdin  = console_handle_unmap(req->hstdin);
             if (is_console_handle(req->hstdout)) req->hstdout = console_handle_unmap(req->hstdout);
             if (is_console_handle(req->hstderr)) req->hstderr = console_handle_unmap(req->hstderr);
+            hstdin  = req->hstdin;
+            hstdout = req->hstdout;
         }
 
         wine_server_add_data( req, params, params->Size );
@@ -1482,6 +1522,9 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         return FALSE;
     }
 
+    if (hstdin) wine_server_handle_to_fd( hstdin, FILE_READ_DATA, &stdin_fd, NULL );
+    if (hstdout) wine_server_handle_to_fd( hstdout, FILE_WRITE_DATA, &stdout_fd, NULL );
+
     /* create the child process */
 
     if (exec_only || !(pid = fork()))  /* child */
@@ -1505,6 +1548,14 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
             }
             else if (pid != -1) _exit(0);  /* parent */
         }
+        else
+        {
+            if (stdin_fd != -1) dup2( stdin_fd, 0 );
+            if (stdout_fd != -1) dup2( stdout_fd, 1 );
+        }
+
+        if (stdin_fd != -1) close( stdin_fd );
+        if (stdout_fd != -1) close( stdout_fd );
 
         /* Reset signals that we previously set to SIG_IGN */
         signal( SIGPIPE, SIG_DFL );
@@ -1525,6 +1576,8 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     /* this is the parent */
 
+    if (stdin_fd != -1) close( stdin_fd );
+    if (stdout_fd != -1) close( stdout_fd );
     close( socketfd[0] );
     HeapFree( GetProcessHeap(), 0, winedebug );
     if (pid == -1)
@@ -1878,7 +1931,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
 
             if ((unix_name = wine_get_unix_file_name( name )))
             {
-                retv = (fork_and_exec( unix_name, tidy_cmdline, envW, unixdir, flags ) != -1);
+                retv = (fork_and_exec( unix_name, tidy_cmdline, envW, unixdir, flags, startup_info ) != -1);
                 HeapFree( GetProcessHeap(), 0, unix_name );
             }
         }
