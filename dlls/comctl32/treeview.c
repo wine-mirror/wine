@@ -1585,7 +1585,7 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem)
 
 /* Get/Set Messages *********************************************************/
 static LRESULT
-TREEVIEW_SetRedraw(TREEVIEW_INFO* infoPtr, WPARAM wParam, LPARAM lParam)
+TREEVIEW_SetRedraw(TREEVIEW_INFO* infoPtr, WPARAM wParam)
 {
   if(wParam)
     infoPtr->bRedraw = TRUE;
@@ -2910,7 +2910,7 @@ TREEVIEW_SortOnName(TREEVIEW_ITEM *first, TREEVIEW_ITEM *second,
 
 /* Returns the number of physical children belonging to item. */
 static INT
-TREEVIEW_CountChildren(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
+TREEVIEW_CountChildren(const TREEVIEW_ITEM *item)
 {
     INT cChildren = 0;
     HTREEITEM hti;
@@ -2924,7 +2924,7 @@ TREEVIEW_CountChildren(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
 /* Returns a DPA containing a pointer to each physical child of item in
  * sibling order. If item has no children, an empty DPA is returned. */
 static HDPA
-TREEVIEW_BuildChildDPA(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
+TREEVIEW_BuildChildDPA(const TREEVIEW_ITEM *item)
 {
     HTREEITEM child = item->firstChild;
 
@@ -2955,7 +2955,7 @@ TREEVIEW_BuildChildDPA(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
  */
 
 static LRESULT
-TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, BOOL fRecurse, HTREEITEM parent,
+TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, HTREEITEM parent,
 	      LPTVSORTCB pSort)
 {
     INT cChildren;
@@ -2984,7 +2984,7 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, BOOL fRecurse, HTREEITEM parent,
 	lpCompare = (LPARAM)infoPtr;
     }
 
-    cChildren = TREEVIEW_CountChildren(infoPtr, parent);
+    cChildren = TREEVIEW_CountChildren(parent);
 
     /* Make sure there is something to sort */
     if (cChildren > 1)
@@ -2995,7 +2995,7 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, BOOL fRecurse, HTREEITEM parent,
 	HTREEITEM nextItem = 0;
 	HTREEITEM prevItem = 0;
 
-	HDPA sortList = TREEVIEW_BuildChildDPA(infoPtr, parent);
+	HDPA sortList = TREEVIEW_BuildChildDPA(parent);
 
 	if (sortList == NULL)
 	    return FALSE;
@@ -3076,9 +3076,9 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, BOOL fRecurse, HTREEITEM parent,
  * and sort the children of the TV item specified in lParam
  */
 static LRESULT
-TREEVIEW_SortChildrenCB(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPTVSORTCB pSort)
+TREEVIEW_SortChildrenCB(TREEVIEW_INFO *infoPtr, LPTVSORTCB pSort)
 {
-    return TREEVIEW_Sort(infoPtr, wParam, pSort->hParent, pSort);
+    return TREEVIEW_Sort(infoPtr, pSort->hParent, pSort);
 }
 
 
@@ -3086,9 +3086,9 @@ TREEVIEW_SortChildrenCB(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPTVSORTCB pSort)
  * Sort the children of the TV item specified in lParam.
  */
 static LRESULT
-TREEVIEW_SortChildren(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+TREEVIEW_SortChildren(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 {
-    return TREEVIEW_Sort(infoPtr, (BOOL)wParam, (HTREEITEM)lParam, NULL);
+    return TREEVIEW_Sort(infoPtr, (HTREEITEM)lParam, NULL);
 }
 
 
@@ -4160,7 +4160,7 @@ TREEVIEW_RButtonUp(const TREEVIEW_INFO *infoPtr, const POINT *pPt)
 
 
 static LRESULT
-TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 {
     TREEVIEW_ITEM *dragItem = (HTREEITEM)lParam;
     INT cx, cy;
@@ -5188,7 +5188,7 @@ TREEVIEW_MouseLeave (TREEVIEW_INFO * infoPtr)
 }
 
 static LRESULT
-TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, WPARAM wParam, LPARAM lParam)
+TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
 {
     POINT pt;
     TRACKMOUSEEVENT trackinfo;
@@ -5453,7 +5453,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch (uMsg)
     {
     case TVM_CREATEDRAGIMAGE:
-	return TREEVIEW_CreateDragImage(infoPtr, wParam, lParam);
+	return TREEVIEW_CreateDragImage(infoPtr, lParam);
 
     case TVM_DELETEITEM:
 	return TREEVIEW_DeleteItem(infoPtr, (HTREEITEM)lParam);
@@ -5587,10 +5587,10 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return TREEVIEW_SetUnicodeFormat(infoPtr, (BOOL)wParam);
 
     case TVM_SORTCHILDREN:
-	return TREEVIEW_SortChildren(infoPtr, wParam, lParam);
+	return TREEVIEW_SortChildren(infoPtr, lParam);
 
     case TVM_SORTCHILDRENCB:
-	return TREEVIEW_SortChildrenCB(infoPtr, wParam, (LPTVSORTCB)lParam);
+	return TREEVIEW_SortChildrenCB(infoPtr, (LPTVSORTCB)lParam);
 
     case WM_CHAR:
         return TREEVIEW_ProcessLetterKeys( hwnd, wParam, lParam );
@@ -5634,7 +5634,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOUSEMOVE:
         if (infoPtr->dwStyle & TVS_TRACKSELECT)
-            return TREEVIEW_MouseMove(infoPtr, wParam, lParam);
+            return TREEVIEW_MouseMove(infoPtr, lParam);
         else
             return 0;
 
@@ -5671,7 +5671,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_SetFont(infoPtr, (HFONT)wParam, (BOOL)lParam);
 
     case WM_SETREDRAW:
-        return TREEVIEW_SetRedraw(infoPtr, wParam, lParam);
+        return TREEVIEW_SetRedraw(infoPtr, wParam);
 
     case WM_SIZE:
 	return TREEVIEW_Size(infoPtr, wParam, lParam);
