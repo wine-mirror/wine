@@ -413,7 +413,7 @@ done:
     return result;
 }
 
-BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
+BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName, BOOL showMessageBox)
 {
     BOOL result = FALSE;
     LONG lRet;
@@ -423,8 +423,9 @@ BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) return FALSE;
 
-    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, visibleValueName) != IDYES)
-	goto done;
+    if (showMessageBox)
+        if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, visibleValueName) != IDYES)
+	        goto done;
 
     lRet = RegDeleteValue(hKey, valueName ? valueName : "");
     if (lRet != ERROR_SUCCESS && valueName) {

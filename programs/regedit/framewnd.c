@@ -629,9 +629,10 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     LPCTSTR valueName;
     TCHAR newKey[MAX_NEW_KEY_LEN];
     DWORD valueType;
+    int curIndex;
+    BOOL firstItem = TRUE;
 
     keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
-    valueName = GetValueName(g_pChildWnd->hListWnd);
 
     if (LOWORD(wParam) >= ID_FAVORITE_FIRST && LOWORD(wParam) <= ID_FAVORITE_LAST) {
         HKEY hKey;
@@ -674,11 +675,29 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		DeleteNode(g_pChildWnd->hTreeWnd, 0);
             }
 	} else if (GetFocus() == g_pChildWnd->hListWnd) {
-	    if (DeleteValue(hWnd, hKeyRoot, keyPath, valueName))
+        curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, -1, LVNI_SELECTED);
+        while(curIndex != -1) {
+            valueName = GetItemText(g_pChildWnd->hListWnd, curIndex);
+            curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, curIndex, LVNI_SELECTED);
+            if(curIndex != -1 && firstItem) {
+                TCHAR title[256];
+                TCHAR text[1024];
+                if(!LoadString(hInst, IDS_DELETE_BOX_TITLE, title, COUNT_OF(title)))
+                    lstrcpy(title, "Error");
+                if(!LoadString(hInst, IDS_DELETE_BOX_TEXT_MULTIPLE, text, COUNT_OF(text)))
+                    lstrcpy(text, "Unknown error string!");
+                if (MessageBox(hWnd, text, title, MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
+                    break;
+            }
+            if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueName, curIndex==-1 && firstItem))
+                break;
+            firstItem = FALSE;
+        }
 		RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
 	}
         break;
     case ID_EDIT_MODIFY:
+        valueName = GetValueName(g_pChildWnd->hListWnd);
         if (ModifyValue(hWnd, hKeyRoot, keyPath, valueName))
             RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, valueName);
         break;

@@ -299,6 +299,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Der Wert ist zu groß (%ld)"
     IDS_DELETE_BOX_TITLE    "Bitte bestätigen"
     IDS_DELETE_BOX_TEXT     "Wollen Sie '%s' wirklich löschen?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Wollen Sie diese Werte wirklich löschen?"
     IDS_NEWKEY              "Neuer Schlüssel #%d"
     IDS_NEWVALUE            "Neuer Wert #%d"
     IDS_NOTFOUND            "Suchfolge '%s' wurde nicht gefunden."

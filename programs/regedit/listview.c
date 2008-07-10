@@ -54,7 +54,7 @@ static TCHAR g_szValueNotSet[64];
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
 static int column_alignment[MAX_LIST_COLUMNS] = { LVCFMT_LEFT, LVCFMT_LEFT, LVCFMT_LEFT };
 
-static LPTSTR get_item_text(HWND hwndLV, int item)
+LPTSTR GetItemText(HWND hwndLV, UINT item)
 {
     LPTSTR newStr, curStr;
     unsigned int maxLen = 128;
@@ -88,7 +88,7 @@ LPCTSTR GetValueName(HWND hwndLV)
     item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED);
     if (item == -1) return NULL;
 
-    g_valueName = get_item_text(hwndLV, item);
+    g_valueName = GetItemText(hwndLV, item);
 
     return g_valueName;
 }
@@ -391,7 +391,7 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
             break;
 	case LVN_ENDLABELEDIT: {
 	        LPNMLVDISPINFO dispInfo = (LPNMLVDISPINFO)lParam;
-		LPTSTR valueName = get_item_text(hWnd, dispInfo->item.iItem);
+		LPTSTR valueName = GetItemText(hWnd, dispInfo->item.iItem);
                 LONG ret;
                 if (!valueName) return -1; /* cannot rename a default value */
 	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, valueName, dispInfo->item.pszText);
