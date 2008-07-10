@@ -46,8 +46,22 @@ static int open_proc_as( struct process *process, int flags )
     char buffer[32];
     int fd;
 
+    if (process->unix_pid == -1)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return -1;
+    }
+
     sprintf( buffer, "/proc/%u/as", process->unix_pid );
-    if ((fd = open( buffer, flags )) == -1) file_set_error();
+    if ((fd = open( buffer, flags )) == -1)
+    {
+        if (errno == ENOENT)  /* probably got killed */
+        {
+            process->unix_pid = -1;
+            set_error( STATUS_ACCESS_DENIED );
+        }
+        else file_set_error();
+    }
     return fd;
 }
 
@@ -56,8 +70,16 @@ static int open_proc_lwpctl( struct thread *thread )
     char buffer[48];
     int fd;
 
+    if (thread->unix_pid == -1) return -1;
+
     sprintf( buffer, "/proc/%u/lwp/%u/lwpctl", thread->unix_pid, thread->unix_tid );
-    if ((fd = open( buffer, O_WRONLY )) == -1) file_set_error();
+    if ((fd = open( buffer, O_WRONLY )) == -1)
+    {
+        if (errno == ENOENT)  /* probably got killed */
+            thread->unix_pid = thread->unix_tid = -1;
+        else
+            file_set_error();
+    }
     return fd;
 }
 
