@@ -2197,7 +2197,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     return WINED3D_OK;
 
 err_out:
-    This->shader_backend->shader_free_private(iface);
     HeapFree(GetProcessHeap(), 0, This->render_targets);
     HeapFree(GetProcessHeap(), 0, This->fbo_color_attachments);
     HeapFree(GetProcessHeap(), 0, This->draw_buffers);
@@ -2216,6 +2215,7 @@ err_out:
         IWineD3DStateBlock_Release((IWineD3DStateBlock *) This->stateBlock);
         This->stateBlock = NULL;
     }
+    This->shader_backend->shader_free_private(iface);
     return hr;
 }
 
@@ -2283,7 +2283,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
         This->depth_blt_rb_w = 0;
         This->depth_blt_rb_h = 0;
     }
-    This->shader_backend->shader_free_private(iface);
 
     /* Release the update stateblock */
     if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
@@ -2303,6 +2302,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
             FIXME("(%p) Something's still holding the Update stateblock\n",This);
         }
     }
+
+    /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
+    This->shader_backend->shader_free_private(iface);
 
     /* Release the buffers (with sanity checks)*/
     TRACE("Releasing the depth stencil buffer at %p\n", This->stencilBufferTarget);
