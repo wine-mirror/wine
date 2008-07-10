@@ -320,12 +320,6 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     ME_InsertRowStart(wc, p);
     return p;
   }
-  /* we're not at the end of the row */
-  if (run->nFlags & MERF_TAB) {
-    /* force recomputation of tabs' size as it depends on position */
-    ME_CalcRunExtent(wc->context, &ME_GetParagraph(p)->member.para,
-                     wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
-  }
 
   /* will current run fit? */
   if (wc->pt.x + run->nWidth > wc->nAvailWidth)
@@ -422,12 +416,6 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
     if (tp->member.para.pFmt->wBorders & 4)
       wc.pt.y += border;
   }
-
-  if (c->editor->bWordWrap)
-    wc.nAvailWidth = c->rcView.right - c->rcView.left - wc.nFirstMargin - wc.nRightMargin;
-  else
-    wc.nAvailWidth = ~0u >> 1;
-  wc.pRowStart = NULL;
 
   linespace = ME_GetParaLineSpace(c, &tp->member.para);
 
