@@ -881,7 +881,7 @@ static void HttpSendRequestEx_test(void)
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     if (!hRequest && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
-        trace( "Network unreachable, skipping test\n" );
+        skip( "Network unreachable, skipping test\n" );
         goto done;
     }
     ok( hRequest != NULL, "Failed to open request handle err %u\n", GetLastError());
@@ -948,7 +948,7 @@ static void InternetOpenRequest_test(void)
     request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, types, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     if (!request && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
-        trace( "Network unreachable, skipping test\n" );
+        skip( "Network unreachable, skipping test\n" );
         goto done;
     }
     ok(request != NULL, "Failed to open request handle err %u\n", GetLastError());
@@ -990,7 +990,7 @@ static void test_http_cache(void)
     request = HttpOpenRequestA(connect, NULL, "/site/about", NULL, NULL, types, INTERNET_FLAG_NEED_FILE, 0);
     if (!request && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
-        trace( "Network unreachable, skipping test\n" );
+        skip( "Network unreachable, skipping test\n" );
 
         ok(InternetCloseHandle(connect), "Close connect handle failed\n");
         ok(InternetCloseHandle(session), "Close session handle failed\n");
@@ -1086,7 +1086,7 @@ static void HttpHeaders_test(void)
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     if (!hRequest && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
-        trace( "Network unreachable, skipping test\n" );
+        skip( "Network unreachable, skipping test\n" );
         goto done;
     }
     ok( hRequest != NULL, "Failed to open request handle\n");
