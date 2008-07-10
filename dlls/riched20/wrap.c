@@ -290,7 +290,11 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
 
   if (wc->bOverflown) /* just skipping final whitespaces */
   {
-    if (run->nFlags & (MERF_WHITESPACE|MERF_TAB)) {
+    /* End paragraph run can't overflow to the next line by itself. */
+    if (run->nFlags & MERF_ENDPARA)
+      return p->next;
+
+    if (run->nFlags & MERF_WHITESPACE) {
       p->member.run.nFlags |= MERF_SKIPPED;
       /* wc->pt.x += run->nWidth; */
       /* skip runs consisting of only whitespaces */
