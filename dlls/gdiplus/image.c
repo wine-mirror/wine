@@ -244,7 +244,7 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
 {
     if (!(image && cloneImage)) return InvalidParameter;
 
-    FIXME("stub: %p, %p", image, cloneImage);
+    FIXME("stub: %p, %p\n", image, cloneImage);
 
     return NotImplemented;
 }

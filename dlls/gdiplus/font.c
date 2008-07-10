@@ -327,7 +327,7 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
 {
     if (!(font && height)) return InvalidParameter;
 
-    FIXME("%p (%s), %f, %p\n)", font,
+    FIXME("%p (%s), %f, %p\n", font,
             debugstr_w(font->lfw.lfFaceName), dpi, height);
 
     return NotImplemented;
