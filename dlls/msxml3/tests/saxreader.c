@@ -29,6 +29,14 @@
 
 #include "wine/test.h"
 
+static const WCHAR szSimpleXML[] = {
+'<','?','x','m','l',' ','v','e','r','s','i','o','n','=','\"','1','.','0','\"',' ','?','>','\n',
+'<','B','a','n','k','A','c','c','o','u','n','t','>','\n',
+' ',' ',' ','<','N','u','m','b','e','r','>','1','2','3','4','<','/','N','u','m','b','e','r','>','\n',
+' ',' ',' ','<','N','a','m','e','>','C','a','p','t','a','i','n',' ','A','h','a','b','<','/','N','a','m','e','>','\n',
+'<','/','B','a','n','k','A','c','c','o','u','n','t','>','\n','\0'
+};
+
 typedef struct _contenthandler
 {
     const struct ISAXContentHandlerVtbl *lpContentHandlerVtbl;
@@ -61,32 +69,32 @@ static HRESULT WINAPI contentHandler_QueryInterface(
 static ULONG WINAPI contentHandler_AddRef(
         ISAXContentHandler* iface)
 {
-        return 2;
+    return 2;
 }
 
 static ULONG WINAPI contentHandler_Release(
         ISAXContentHandler* iface)
 {
-        return 1;
+    return 1;
 }
 
 static HRESULT WINAPI contentHandler_putDocumentLocator(
         ISAXContentHandler* iface,
         ISAXLocator *pLocator)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_startDocument(
         ISAXContentHandler* iface)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_endDocument(
         ISAXContentHandler* iface)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_startPrefixMapping(
@@ -96,7 +104,7 @@ static HRESULT WINAPI contentHandler_startPrefixMapping(
         const WCHAR *pUri,
         int nUri)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_endPrefixMapping(
@@ -104,7 +112,7 @@ static HRESULT WINAPI contentHandler_endPrefixMapping(
         const WCHAR *pPrefix,
         int nPrefix)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_startElement(
@@ -117,7 +125,7 @@ static HRESULT WINAPI contentHandler_startElement(
         int nQName,
         ISAXAttributes *pAttr)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_endElement(
@@ -129,7 +137,7 @@ static HRESULT WINAPI contentHandler_endElement(
         const WCHAR *pQName,
         int nQName)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_characters(
@@ -137,7 +145,7 @@ static HRESULT WINAPI contentHandler_characters(
         const WCHAR *pChars,
         int nChars)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_ignorableWhitespace(
@@ -145,7 +153,7 @@ static HRESULT WINAPI contentHandler_ignorableWhitespace(
         const WCHAR *pChars,
         int nChars)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_processingInstruction(
@@ -155,7 +163,7 @@ static HRESULT WINAPI contentHandler_processingInstruction(
         const WCHAR *pData,
         int nData)
 {
-        return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_skippedEntity(
@@ -163,7 +171,7 @@ static HRESULT WINAPI contentHandler_skippedEntity(
         const WCHAR *pName,
         int nName)
 {
-        return S_OK;
+    return S_OK;
 }
 
 
@@ -192,6 +200,8 @@ static void test_saxreader(void)
 {
     HRESULT hr;
     ISAXXMLReader *reader = NULL;
+    VARIANT var;
+    ISAXContentHandler *lpContentHandler;
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISAXXMLReader, (LPVOID*)&reader);
@@ -202,8 +212,27 @@ static void test_saxreader(void)
         return;
     }
 
+    hr = ISAXXMLReader_getContentHandler(reader, &lpContentHandler);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(lpContentHandler == NULL, "Expected %p, got %p\n", NULL, lpContentHandler);
+
+    hr = ISAXXMLReader_putContentHandler(reader, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
     hr = ISAXXMLReader_putContentHandler(reader, &contentHandler);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = ISAXXMLReader_getContentHandler(reader, &lpContentHandler);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(lpContentHandler == &contentHandler, "Expected %p, got %p\n", &contentHandler, lpContentHandler);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(szSimpleXML);
+
+    hr = ISAXXMLReader_parse(reader, var);
+    todo_wine {
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    }
 
     ISAXXMLReader_Release(reader);
 }
