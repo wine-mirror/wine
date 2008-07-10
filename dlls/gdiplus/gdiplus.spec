@@ -356,7 +356,7 @@
 @ stub GdipGetPenCustomStartCap
 @ stdcall GdipGetPenDashArray(ptr ptr long)
 @ stdcall GdipGetPenDashCap197819(ptr ptr)
-@ stub GdipGetPenDashCount
+@ stdcall GdipGetPenDashCount(ptr ptr)
 @ stdcall GdipGetPenDashOffset(ptr ptr)
 @ stdcall GdipGetPenDashStyle(ptr ptr)
 @ stdcall GdipGetPenEndCap(ptr ptr)

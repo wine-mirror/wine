@@ -34,6 +34,7 @@ GpStatus WINGDIPAPI GdipDeletePen(GpPen*);
 GpStatus WINGDIPAPI GdipGetPenBrushFill(GpPen*,GpBrush**);
 GpStatus WINGDIPAPI GdipGetPenColor(GpPen*,ARGB*);
 GpStatus WINGDIPAPI GdipGetPenDashArray(GpPen*,REAL*,INT);
+GpStatus WINGDIPAPI GdipGetPenDashCount(GpPen*,INT*);
 GpStatus WINGDIPAPI GdipGetPenDashOffset(GpPen*,REAL*);
 GpStatus WINGDIPAPI GdipGetPenDashStyle(GpPen*,GpDashStyle*);
 GpStatus WINGDIPAPI GdipSetPenBrushFill(GpPen*,GpBrush*);
