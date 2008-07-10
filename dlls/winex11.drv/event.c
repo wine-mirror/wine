@@ -334,7 +334,36 @@ static int process_events( Display *display, Bool (*filter)(), ULONG_PTR arg )
     while (XCheckIfEvent( display, &event, filter, (char *)arg ))
     {
         count++;
-        if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
+        if (XFilterEvent( &event, None ))
+        {
+            /*
+             * SCIM on linux filters key events strangely. It does not filter the
+             * KeyPress events for these keys however it does filter the
+             * KeyRelease events. This causes wine to become very confused as
+             * to the keyboard state.
+             *
+             * We need to let those KeyRelease events be processed so that the
+             * keyboard state is correct.
+             */
+            if (event.type == KeyRelease)
+            {
+                KeySym keysym = 0;
+                XKeyEvent *keyevent = &event.xkey;
+
+                XLookupString(keyevent, NULL, 0, &keysym, NULL);
+                if (!(keysym == XK_Shift_L ||
+                    keysym == XK_Shift_R ||
+                    keysym == XK_Control_L ||
+                    keysym == XK_Control_R ||
+                    keysym == XK_Alt_R ||
+                    keysym == XK_Alt_L ||
+                    keysym == XK_Meta_R ||
+                    keysym == XK_Meta_L))
+                        continue; /* not a key we care about, ignore it */
+            }
+            else
+                continue;  /* filtered, ignore it */
+        }
         if (prev_event.type) action = merge_events( &prev_event, &event );
         switch( action )
         {
@@ -522,6 +551,8 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
         TRACE( "got take focus msg for %p, enabled=%d, visible=%d (style %08x), focus=%p, active=%p, fg=%p, last=%p\n",
                hwnd, IsWindowEnabled(hwnd), IsWindowVisible(hwnd), GetWindowLongW(hwnd, GWL_STYLE),
                GetFocus(), GetActiveWindow(), GetForegroundWindow(), last_focus );
+
+        if (hwnd == GetForegroundWindow()) return;
 
         if (can_activate_window(hwnd))
         {
