@@ -696,6 +696,65 @@ static BOOL WINAPI fpAddPrinterDriverEx(LPWSTR pName, DWORD level, LPBYTE pDrive
 
     return myAddPrinterDriverEx(level, pDriverInfo, dwFileCopyFlags, TRUE);
 }
+/******************************************************************
+ * fpDeleteMonitor [exported through PRINTPROVIDOR]
+ *
+ * Delete a specific Printmonitor from a Printing-Environment
+ *
+ * PARAMS
+ *  pName        [I] Servername or NULL (local Computer)
+ *  pEnvironment [I] Printing-Environment of the Monitor or NULL (Default)
+ *  pMonitorName [I] Name of the Monitor, that should be deleted
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  pEnvironment is ignored in Windows for the local Computer.
+ *
+ */
+
+BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
+{
+    HKEY    hroot = NULL;
+    LONG    lres;
+
+    TRACE("(%s, %s, %s)\n",debugstr_w(pName),debugstr_w(pEnvironment),
+           debugstr_w(pMonitorName));
+
+    lres = copy_servername_from_name(pName, NULL);
+    if (lres) {
+        FIXME("server %s not supported\n", debugstr_w(pName));
+        SetLastError(ERROR_INVALID_NAME);
+        return FALSE;
+    }
+
+    /*  pEnvironment is ignored in Windows for the local Computer */
+    if (!pMonitorName || !pMonitorName[0]) {
+        TRACE("pMonitorName %s is invalid\n", debugstr_w(pMonitorName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, monitorsW, &hroot) != ERROR_SUCCESS) {
+        ERR("unable to create key %s\n", debugstr_w(monitorsW));
+        return FALSE;
+    }
+
+    if(RegDeleteTreeW(hroot, pMonitorName) == ERROR_SUCCESS) {
+        TRACE("%s deleted\n", debugstr_w(pMonitorName));
+        RegCloseKey(hroot);
+        return TRUE;
+    }
+
+    TRACE("%s does not exist\n", debugstr_w(pMonitorName));
+    RegCloseKey(hroot);
+
+    /* NT: ERROR_UNKNOWN_PRINT_MONITOR (3000), 9x: ERROR_INVALID_PARAMETER (87) */
+    SetLastError(ERROR_UNKNOWN_PRINT_MONITOR);
+    return FALSE;
+}
 
 /*****************************************************************************
  * fpEnumMonitors [exported through PRINTPROVIDOR]
@@ -821,7 +880,7 @@ static const PRINTPROVIDOR * get_backend(void)
         NULL,   /* fpDeletePrinterConnection */
         NULL,   /* fpPrinterMessageBox */
         NULL,   /* fpAddMonitor */
-        NULL,   /* fpDeleteMonitor */
+        fpDeleteMonitor,
         NULL,   /* fpResetPrinter */
         NULL,   /* fpGetPrinterDriverEx */
         NULL,   /* fpFindFirstPrinterChangeNotification */

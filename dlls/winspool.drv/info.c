@@ -2441,46 +2441,17 @@ BOOL WINAPI DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
  *  pEnvironment is ignored in Windows for the local Computer.
  *
  */
-
-BOOL WINAPI DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
+BOOL WINAPI DeleteMonitorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
 {
-    HKEY    hroot = NULL;
 
     TRACE("(%s, %s, %s)\n",debugstr_w(pName),debugstr_w(pEnvironment),
            debugstr_w(pMonitorName));
 
-    if (pName && (pName[0])) {
-        FIXME("for server %s not implemented\n", debugstr_w(pName));
-        SetLastError(ERROR_ACCESS_DENIED);
-        return FALSE;
-    }
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
-    /*  pEnvironment is ignored in Windows for the local Computer */
-
-    if (!pMonitorName || !pMonitorName[0]) {
-        WARN("pMonitorName %s is invalid\n", debugstr_w(pMonitorName));
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hroot) != ERROR_SUCCESS) {
-        ERR("unable to create key %s\n", debugstr_w(MonitorsW));
-        return FALSE;
-    }
-
-    if(RegDeleteTreeW(hroot, pMonitorName) == ERROR_SUCCESS) {
-        TRACE("monitor %s deleted\n", debugstr_w(pMonitorName));
-        RegCloseKey(hroot);
-        return TRUE;
-    }
-
-    WARN("monitor %s does not exist\n", debugstr_w(pMonitorName));
-    RegCloseKey(hroot);
-
-    /* NT: ERROR_UNKNOWN_PRINT_MONITOR (3000), 9x: ERROR_INVALID_PARAMETER (87) */
-    SetLastError(ERROR_UNKNOWN_PRINT_MONITOR);
-    return (FALSE);
+    return backend->fpDeleteMonitor(pName, pEnvironment, pMonitorName);
 }
+
 
 /******************************************************************
  *              DeletePortA        [WINSPOOL.@]
