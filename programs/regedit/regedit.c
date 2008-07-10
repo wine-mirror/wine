@@ -188,7 +188,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                 exit(1);
             } else
             {
-                WCHAR* reg_key_nameW = GetWideString(reg_key_name, lstrlenA(reg_key_name)+1);
+                WCHAR* reg_key_nameW = GetWideString(reg_key_name);
                 delete_registry_key(reg_key_nameW);
                 HeapFree(GetProcessHeap(), 0, reg_key_nameW);
             }

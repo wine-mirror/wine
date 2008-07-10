@@ -78,13 +78,14 @@ if (!(p)) \
  * Allocates memory and convers input from multibyte to wide chars
  * Returned string must be freed by the caller
  */
-WCHAR* GetWideString(char* strA, int len)
+WCHAR* GetWideString(const char* strA)
 {
     WCHAR* strW = NULL;
+    int len = MultiByteToWideChar(CP_ACP, 0, strA, -1, NULL, 0);
 
     strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     CHECK_ENOUGH_MEMORY(strW);
-    MultiByteToWideChar(CP_ACP, 0, strA, len, strW, len);
+    MultiByteToWideChar(CP_ACP, 0, strA, -1, strW, len);
     return strW;
 }
 
@@ -92,13 +93,14 @@ WCHAR* GetWideString(char* strA, int len)
  * Allocates memory and convers input from wide chars to multibyte
  * Returned string must be freed by the caller
  */
-char* GetMultiByteString(WCHAR* strW, int len)
+char* GetMultiByteString(const WCHAR* strW)
 {
     char* strA = NULL;
+    int len = WideCharToMultiByte(CP_ACP, 0, strW, -1, NULL, 0, NULL, NULL);
 
     strA = HeapAlloc(GetProcessHeap(), 0, len);
     CHECK_ENOUGH_MEMORY(strA);
-    WideCharToMultiByte(CP_ACP, 0, strW, len, strA, len, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, strW, -1, strA, len, NULL, NULL);
     return strA;
 }
 
@@ -349,7 +351,7 @@ static LONG setValue(WCHAR* val_name, LPSTR val_data)
 
     if (dwParseType == REG_SZ)          /* no conversion for string */
     {
-        WCHAR* val_dataW = GetWideString(val_data, lstrlenA(val_data)+1);
+        WCHAR* val_dataW = GetWideString(val_data);
         REGPROC_unescape_string(val_dataW);
         /* Compute dwLen after REGPROC_unescape_string because it may
          * have changed the string length and we don't want to store
@@ -507,7 +509,7 @@ static void processSetValue(LPSTR line)
     line_idx++;                   /* skip the '=' character */
     val_data = line + line_idx;
 
-    val_nameW = GetWideString(val_name, lstrlenA(val_name)+1);
+    val_nameW = GetWideString(val_name);
     REGPROC_unescape_string(val_nameW);
     res = setValue(val_nameW, val_data);
     HeapFree(GetProcessHeap(), 0, val_nameW);
@@ -548,7 +550,7 @@ static void processRegEntry(LPSTR stdInput)
         /* delete the key if we encounter '-' at the start of reg key */
         if ( stdInput[0] == '-')
         {
-            WCHAR* stdInputW = GetWideString(stdInput + 1, keyEnd - stdInput);
+            WCHAR* stdInputW = GetWideString(stdInput + 1);
             delete_registry_key(stdInputW);
             HeapFree(GetProcessHeap(), 0, stdInputW);
         } else if ( openKey(stdInput) != ERROR_SUCCESS )
@@ -1086,14 +1088,14 @@ void delete_registry_key(WCHAR *reg_key_name)
         return;
 
     if (!parseKeyNameW(reg_key_name, &key_class, &key_name)) {
-        char* reg_key_nameA = GetMultiByteString(reg_key_name, lstrlenW(reg_key_name));
+        char* reg_key_nameA = GetMultiByteString(reg_key_name);
         fprintf(stderr,"%s: Incorrect registry class specification in '%s'\n",
                 getAppName(), reg_key_nameA);
         HeapFree(GetProcessHeap(), 0, reg_key_nameA);
         exit(1);
     }
     if (!*key_name) {
-        char* reg_key_nameA = GetMultiByteString(reg_key_name, lstrlenW(reg_key_name));
+        char* reg_key_nameA = GetMultiByteString(reg_key_name);
         fprintf(stderr,"%s: Can't delete registry class '%s'\n",
                 getAppName(), reg_key_nameA);
         HeapFree(GetProcessHeap(), 0, reg_key_nameA);
