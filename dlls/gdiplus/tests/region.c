@@ -361,6 +361,44 @@ todo_wine
     expect(Ok, status);
     status = GdipDeleteRegion(region);
     expect(Ok, status);
+
+    /* Test a floating-point triangle */
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.6, 6.2, 7.2, 8.9);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 7.2, 8.9, 8.1, 1.6);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 8.1, 1.6, 5.6, 6.2);
+    expect(Ok, status);
+    status = GdipCreateRegionPath(path, &region);
+    expect(Ok, status);
+    status = GdipGetRegionDataSize(region, &needed);
+    expect(Ok, status);
+    ok(needed == 72, "Expected 72, got %d\n", needed);
+    status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
+    expect(Ok, status);
+    expect_dword(buf, 64);
+    trace("buf[1] = %08x\n", buf[1]);
+    expect_dword(buf + 2, RGNDATA_MAGIC);
+    expect_dword(buf + 3, 0);
+    expect_dword(buf + 4, RGNDATA_PATH);
+
+    expect_dword(buf + 5, 48);
+    expect_dword(buf + 6, RGNDATA_MAGIC);
+    expect_dword(buf + 7, 4);
+    expect_dword(buf + 8, 0);
+    expect_float(buf + 9, 5.6);
+    expect_float(buf + 10, 6.2);
+    expect_float(buf + 11, 7.2);
+    expect_float(buf + 12, 8.9);
+    expect_float(buf + 13, 8.1);
+    expect_float(buf + 14, 1.6);
+    expect_float(buf + 15, 5.6);
+    expect_float(buf + 16, 6.2);
+
+    status = GdipDeleteRegion(region);
+    expect(Ok, status);
 }
 
 START_TEST(region)
