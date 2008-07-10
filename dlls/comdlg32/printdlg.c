@@ -3749,19 +3749,93 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
  * driver-specific property pages.
  *
  * BUGS
- *   Only a Stub
+ *   Not fully implemented
  *
  */
 HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
 {
+    DWORD     ret = E_FAIL;
+    LPVOID    ptr;
 
-    FIXME("(%p) stub\n", lppd);
+    FIXME("(%p) not fully implemented\n", lppd);
+
     if ((lppd == NULL) || (lppd->lStructSize != sizeof(PRINTDLGEXW))) {
         return E_INVALIDARG;
     }
 
     if (!IsWindow(lppd->hwndOwner)) {
         return E_HANDLE;
+    }
+
+    if (lppd->Flags & PD_RETURNDEFAULT) {
+        PRINTER_INFO_2W *pbuf;
+        DRIVER_INFO_2W  *dbuf;
+        HANDLE hprn;
+        DWORD needed = 1024;
+        BOOL bRet;
+
+        if (lppd->hDevMode || lppd->hDevNames) {
+            WARN("hDevMode or hDevNames non-zero for PD_RETURNDEFAULT\n");
+            COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
+            return E_INVALIDARG;
+        }
+        if (!PRINTDLG_OpenDefaultPrinter(&hprn)) {
+            WARN("Can't find default printer\n");
+            COMDLG32_SetCommDlgExtendedError(PDERR_NODEFAULTPRN);
+            return E_FAIL;
+        }
+
+        pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
+        bRet = GetPrinterW(hprn, 2, (LPBYTE)pbuf, needed, &needed);
+        if (!bRet && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+            HeapFree(GetProcessHeap(), 0, pbuf);
+            pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
+            bRet = GetPrinterW(hprn, 2, (LPBYTE)pbuf, needed, &needed);
+        }
+        if (!bRet) {
+            HeapFree(GetProcessHeap(), 0, pbuf);
+            ClosePrinter(hprn);
+            return E_FAIL;
+        }
+
+        needed = 1024;
+        dbuf = HeapAlloc(GetProcessHeap(), 0, needed);
+        bRet = GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed);
+        if (!bRet && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+            HeapFree(GetProcessHeap(), 0, dbuf);
+            dbuf = HeapAlloc(GetProcessHeap(), 0, needed);
+            bRet = GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed);
+        }
+        if (!bRet) {
+            ERR("GetPrinterDriverW failed, last error %d, fix your config for printer %s!\n",
+                GetLastError(), debugstr_w(pbuf->pPrinterName));
+            HeapFree(GetProcessHeap(), 0, dbuf);
+            HeapFree(GetProcessHeap(), 0, pbuf);
+            COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE);
+            ClosePrinter(hprn);
+            return E_FAIL;
+        }
+        ClosePrinter(hprn);
+
+        PRINTDLG_CreateDevNamesW(&(lppd->hDevNames),
+                      dbuf->pDriverPath,
+                      pbuf->pPrinterName,
+                      pbuf->pPortName);
+        lppd->hDevMode = GlobalAlloc(GMEM_MOVEABLE, pbuf->pDevMode->dmSize +
+                         pbuf->pDevMode->dmDriverExtra);
+        if (lppd->hDevMode) {
+            ptr = GlobalLock(lppd->hDevMode);
+            if (ptr) {
+                memcpy(ptr, pbuf->pDevMode, pbuf->pDevMode->dmSize +
+                    pbuf->pDevMode->dmDriverExtra);
+                GlobalUnlock(lppd->hDevMode);
+                ret = S_OK;
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, pbuf);
+        HeapFree(GetProcessHeap(), 0, dbuf);
+
+        return ret;
     }
 
     return E_NOTIMPL;
