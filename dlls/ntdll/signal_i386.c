@@ -575,6 +575,58 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
 #endif /* __HAVE_VM86 */
 
 
+#ifdef __sun
+
+/* We have to workaround two Solaris breakages:
+ * - Solaris doesn't restore %ds and %es before calling the signal handler so exceptions in 16-bit
+ *   code crash badly.
+ * - Solaris inserts a libc trampoline to call our handler, but the trampoline expects that registers
+ *   are setup correctly. So we need to insert our own trampoline below the libc trampoline to set %gs.
+ */
+
+extern int sigaction_syscall( int sig, const struct sigaction *new, struct sigaction *old );
+__ASM_GLOBAL_FUNC( sigaction_syscall,
+                  "call 1f\n"
+                  "1:\tpopl %edx\n\t"
+                  "movl $0x62,%eax\n\t"
+                  "add $[2f-1b],%edx\n\t"
+                  "movl %esp,%ecx\n\t"
+                  "sysenter\n"
+                  "2:\tret" )
+
+/* assume the same libc handler is used for all signals */
+static void (*libc_sigacthandler)( int signal, siginfo_t *siginfo, void *context );
+
+static void wine_sigacthandler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    struct ntdll_thread_data *thread_data;
+
+    __asm__ __volatile__("mov %ss,%ax; mov %ax,%ds; mov %ax,%es");
+
+    thread_data = (struct ntdll_thread_data *)get_current_teb()->SystemReserved2;
+    wine_set_fs( thread_data->fs );
+    wine_set_gs( thread_data->gs );
+
+    libc_sigacthandler( signal, siginfo, sigcontext );
+}
+
+static int solaris_sigaction( int sig, const struct sigaction *new, struct sigaction *old )
+{
+    struct sigaction real_act;
+
+    if (sigaction( sig, new, old ) == -1) return -1;
+
+    /* retrieve the real handler and flags with a direct syscall */
+    sigaction_syscall( sig, NULL, &real_act );
+    libc_sigacthandler = real_act.sa_sigaction;
+    real_act.sa_sigaction = wine_sigacthandler;
+    sigaction_syscall( sig, &real_act, NULL );
+    return 0;
+}
+#define sigaction(sig,new,old) solaris_sigaction(sig,new,old)
+
+#endif
+
 typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 
@@ -601,8 +653,10 @@ static inline void *init_handler( const SIGCONTEXT *sigcontext, WORD *fs, WORD *
     *gs = wine_get_gs();
 #endif
 
+#ifndef __sun  /* see above for Solaris handling */
     wine_set_fs( thread_data->fs );
     wine_set_gs( thread_data->gs );
+#endif
 
     if (!wine_ldt_is_system(CS_sig(sigcontext)) ||
         !wine_ldt_is_system(SS_sig(sigcontext)))  /* 16-bit mode */
