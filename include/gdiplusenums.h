@@ -314,6 +314,13 @@ enum FlushIntention
     FlushIntentionSync  = 1
 };
 
+enum CoordinateSpace
+{
+    CoordinateSpaceWorld,
+    CoordinateSpacePage,
+    CoordinateSpaceDevice
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -347,6 +354,7 @@ typedef enum PenAlignment GpPenAlignment;
 typedef enum ImageCodecFlags ImageCodecFlags;
 typedef enum CombineMode CombineMode;
 typedef enum FlushIntention FlushIntention;
+typedef enum CoordinateSpace CoordinateSpace;
 
 #endif /* end of c typedefs */
 

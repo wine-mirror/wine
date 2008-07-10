@@ -2621,3 +2621,19 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
 
    return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
+                                        GpCoordinateSpace src_space, GpPointF *points, INT count)
+{
+    FIXME("(%p, %d, %d, %p, %d): stub\n", graphics, dst_space, src_space, points, count);
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics *graphics, GpCoordinateSpace dst_space,
+                                         GpCoordinateSpace src_space, GpPoint *points, INT count)
+{
+    FIXME("(%p, %d, %d, %p, %d): stub\n", graphics, dst_space, src_space, points, count);
+
+    return NotImplemented;
+}
