@@ -45,6 +45,7 @@ struct TransformFilterImpl
     struct MediaSeekingImpl mediaSeeking;
 
     IPin ** ppPins;
+    AM_MEDIA_TYPE pmt;
 
     const TransformFuncsTable * pFuncsTable;
 };

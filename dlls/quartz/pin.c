@@ -928,7 +928,7 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
             /* negotiate media type */
 
             IEnumMediaTypes * pEnumCandidates;
-            AM_MEDIA_TYPE * pmtCandidate; /* Candidate media type */
+            AM_MEDIA_TYPE * pmtCandidate = NULL; /* Candidate media type */
 
             if (SUCCEEDED(hr = IPin_EnumMediaTypes(iface, &pEnumCandidates)))
             {
@@ -937,6 +937,9 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
                 /* try this filter's media types first */
                 while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
                 {
+                    assert(pmtCandidate);
+                    if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype))
+                        assert(pmtCandidate->pbFormat);
                     if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) && 
                         (This->pConnectSpecific(iface, pReceivePin, pmtCandidate) == S_OK))
                     {
@@ -944,7 +947,8 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
                         CoTaskMemFree(pmtCandidate);
                         break;
                     }
-                    CoTaskMemFree(pmtCandidate);
+                    DeleteMediaType(pmtCandidate);
+                    pmtCandidate = NULL;
                 }
                 IEnumMediaTypes_Release(pEnumCandidates);
             }
@@ -956,6 +960,9 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
 
                 while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
                 {
+                    assert(pmtCandidate);
+                    if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype))
+                        assert(pmtCandidate->pbFormat);
                     if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) && 
                         (This->pConnectSpecific(iface, pReceivePin, pmtCandidate) == S_OK))
                     {
@@ -963,7 +970,8 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
                         CoTaskMemFree(pmtCandidate);
                         break;
                     }
-                    CoTaskMemFree(pmtCandidate);
+                    DeleteMediaType(pmtCandidate);
+                    pmtCandidate = NULL;
                 } /* while */
                 IEnumMediaTypes_Release(pEnumCandidates);
             } /* if not found */

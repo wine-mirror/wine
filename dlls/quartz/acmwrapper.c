@@ -248,7 +248,9 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
         (IsEqualIID(&pmt->formattype, &FORMAT_WaveFormatEx)))
     {
         HACMSTREAM drv;
-        AM_MEDIA_TYPE* outpmt = &((OutputPin*)This->tf.ppPins[1])->pin.mtCurrent;
+        AM_MEDIA_TYPE* outpmt = &This->tf.pmt;
+        FreeMediaType(outpmt);
+
         This->pWfIn = (LPWAVEFORMATEX)pmt->pbFormat;
 
 	/* HACK */
