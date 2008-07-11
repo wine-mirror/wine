@@ -530,7 +530,7 @@ static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
     if (!port) return FALSE;
 
     port->type = type;
-    memcpy(&port->nameW, pName, len);
+    memcpy(port->nameW, pName, len);
     *phPort = (HANDLE) port;
 
     EnterCriticalSection(&port_handles_cs);
@@ -743,7 +743,7 @@ static BOOL WINAPI localmon_XcvOpenPort(LPCWSTR pName, ACCESS_MASK GrantedAccess
     xcv = heap_alloc( sizeof(xcv_t) + len);
     if (xcv) {
         xcv->GrantedAccess = GrantedAccess;
-        memcpy(&xcv->nameW, pName, len);
+        memcpy(xcv->nameW, pName, len);
         *phXcv = (HANDLE) xcv;
         EnterCriticalSection(&xcv_handles_cs);
         list_add_tail(&xcv_handles, &xcv->entry);
