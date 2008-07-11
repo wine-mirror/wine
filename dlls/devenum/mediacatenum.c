@@ -399,7 +399,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(
 
     MediaCatMoniker *This = (MediaCatMoniker *)iface;
 
-    VariantClear(&var);
+    VariantInit(&var);
 
     TRACE("(%p)->(%p, %p, %s, %p)\n", This, pbc, pmkToLeft, debugstr_guid(riidResult), ppvResult);
 
