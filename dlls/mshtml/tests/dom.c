@@ -841,7 +841,7 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLElementCollection, (void**)&col);
-    ok(hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLElementCollection: %08x\n", hres);
 
     test_disp((IUnknown*)col, &DIID_DispHTMLElementCollection);
 
@@ -881,6 +881,34 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
     ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
 
     IHTMLElementCollection_Release(col);
+}
+
+#define test_elem_getelembytag(u,t,l) _test_elem_getelembytag(__LINE__,u,t,l)
+static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t type, long exlen)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    IHTMLElementCollection *col = NULL;
+    elem_type_t *types = NULL;
+    BSTR tmp;
+    int i;
+    HRESULT hres;
+
+    tmp = a2bstr(elem_type_infos[type].tag);
+    hres = IHTMLElement2_getElementsByTagName(elem, tmp, &col);
+    SysFreeString(tmp);
+    IHTMLElement2_Release(elem);
+    ok_(__FILE__,line) (hres == S_OK, "getElementByTagName failed: %08x\n", hres);
+    ok_(__FILE__,line) (col != NULL, "col == NULL\n");
+
+    if(exlen) {
+        types = HeapAlloc(GetProcessHeap(), 0, exlen*sizeof(elem_type_t));
+        for(i=0; i<exlen; i++)
+            types[i] = type;
+    }
+
+    _test_elem_collection(line, (IUnknown*)col, types, exlen);
+
+    HeapFree(GetProcessHeap(), 0, types);
 }
 
 #define get_first_child(n) _get_first_child(__LINE__,n)
@@ -2145,6 +2173,10 @@ static void test_elems(IHTMLDocument2 *doc)
         node2 = test_node_get_parent((IUnknown*)node);
         IHTMLDOMNode_Release(node);
         ok(node2 == NULL, "node != NULL\n");
+
+        test_elem_getelembytag((IUnknown*)elem, ET_OPTION, 2);
+        test_elem_getelembytag((IUnknown*)elem, ET_SELECT, 0);
+        test_elem_getelembytag((IUnknown*)elem, ET_HTML, 0);
 
         IHTMLElement_Release(elem);
     }
