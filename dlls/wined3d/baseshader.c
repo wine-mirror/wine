@@ -289,7 +289,7 @@ HRESULT shader_get_registers_used(
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
             lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
-            memcpy(&lconst->value, pToken + 1, 4 * sizeof(DWORD));
+            memcpy(lconst->value, pToken + 1, 4 * sizeof(DWORD));
 
             /* In pixel shader 1.X shaders, the constants are clamped between [-1;1] */
             if(WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && pshader) {
@@ -312,7 +312,7 @@ HRESULT shader_get_registers_used(
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
             lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
-            memcpy(&lconst->value, pToken + 1, 4 * sizeof(DWORD));
+            memcpy(lconst->value, pToken + 1, 4 * sizeof(DWORD));
             list_add_head(&This->baseShader.constantsI, &lconst->entry);
             pToken += curOpcode->num_params;
 
@@ -321,7 +321,7 @@ HRESULT shader_get_registers_used(
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
             lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
-            memcpy(&lconst->value, pToken + 1, 1 * sizeof(DWORD));
+            memcpy(lconst->value, pToken + 1, 1 * sizeof(DWORD));
             list_add_head(&This->baseShader.constantsB, &lconst->entry);
             pToken += curOpcode->num_params;
 

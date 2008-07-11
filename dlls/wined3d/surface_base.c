@@ -544,7 +544,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     b_info->bmiHeader.biClrImportant = 0;
 
     /* Get the bit masks */
-    masks = (DWORD *) &(b_info->bmiColors);
+    masks = (DWORD *)b_info->bmiColors;
     switch (This->resource.format) {
         case WINED3DFMT_R8G8B8:
             usage = DIB_RGB_COLORS;

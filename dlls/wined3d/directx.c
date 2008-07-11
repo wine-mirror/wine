@@ -697,7 +697,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
      * Initialize openGL extension related variables
      *  with Default values
      */
-    memset(&gl_info->supported, 0, sizeof(gl_info->supported));
+    memset(gl_info->supported, 0, sizeof(gl_info->supported));
     gl_info->max_buffers        = 1;
     gl_info->max_textures       = 1;
     gl_info->max_texture_stages = 1;
