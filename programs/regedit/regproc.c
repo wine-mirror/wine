@@ -737,11 +737,12 @@ void processRegLinesW(FILE *in)
         }
 
         /* Get as much as possible into the buffer, terminated either by
-        * eof, error, eol or getting the maximum amount.  Abort on error.
+        * eof, error or getting the maximum amount.  Abort on error.
         */
         size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
 
-        check = fread(s, sizeof(WCHAR), size_to_get, in);
+        check = fread(s, sizeof(WCHAR), size_to_get - 1, in);
+        s[check] = 0;
 
         if (check == 0) {
             if (ferror(in)) {
@@ -761,6 +762,9 @@ void processRegLinesW(FILE *in)
         while(1)
         {
             s_eol = strchrW(s, '\n');
+
+            if(!s_eol)
+                break;
 
             /* If it is a comment line then discard it and go around again */
             if (*s == '#') {
