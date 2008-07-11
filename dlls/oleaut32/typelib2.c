@@ -728,7 +728,7 @@ static int ctl2_alloc_importfile(
     importfile->guid = guidoffset;
     importfile->lcid = This->typelib_header.lcid2;
     importfile->version = major_version | (minor_version << 16);
-    memcpy(&importfile->filename, encoded_string, length);
+    memcpy(importfile->filename, encoded_string, length);
 
     return offset;
 }
@@ -3336,7 +3336,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     if (This->typelib_header.varflags & HELPDLLFLAG)
         if (!ctl2_write_chunk(hFile, &This->helpStringDll, sizeof(This->helpStringDll))) return retval;
     if (!ctl2_write_chunk(hFile, This->typelib_typeinfo_offsets, This->typelib_header.nrtypeinfos * 4)) return retval;
-    if (!ctl2_write_chunk(hFile, &This->typelib_segdir, sizeof(This->typelib_segdir))) return retval;
+    if (!ctl2_write_chunk(hFile, This->typelib_segdir, sizeof(This->typelib_segdir))) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_TYPEINFO    )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUIDHASH    )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUID        )) return retval;

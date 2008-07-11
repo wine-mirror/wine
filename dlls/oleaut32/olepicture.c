@@ -1845,7 +1845,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       TRACE("Reading all data from stream.\n");
       xbuf = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, origsize);
       if (headerisdata)
-          memcpy (xbuf, &header, 8);
+          memcpy (xbuf, header, 8);
       while (1) {
           while (xread < origsize) {
               hr = IStream_Read(pStm,xbuf+xread,origsize-xread,&nread);
@@ -1871,7 +1871,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       xbuf = This->data = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, This->datalen);
 
       if (headerisdata)
-          memcpy (xbuf, &header, 8);
+          memcpy (xbuf, header, 8);
 
       while (xread < This->datalen) {
           ULONG nread;
@@ -1927,7 +1927,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     FIXME("Unknown magic %04x, %d read bytes:\n",magic,xread);
     hr=E_FAIL;
     for (i=0;i<xread+8;i++) {
-	if (i<8) MESSAGE("%02x ",((unsigned char*)&header)[i]);
+	if (i<8) MESSAGE("%02x ",((unsigned char*)header)[i]);
 	else MESSAGE("%02x ",xbuf[i-8]);
         if (i % 10 == 9) MESSAGE("\n");
     }
