@@ -707,7 +707,6 @@ void processRegLinesW(FILE *in)
     size_t check = -1;
 
     WCHAR* s; /* The pointer into line for where the current fgets should read */
-    int i;
 
     buf = HeapAlloc(GetProcessHeap(), 0, lineSize * sizeof(WCHAR));
     CHECK_ENOUGH_MEMORY(buf);
@@ -761,14 +760,7 @@ void processRegLinesW(FILE *in)
         /* If we didn't read the eol nor the eof go around for the rest */
         while(1)
         {
-            for(i = 0; s[i] != 0; i++)
-            {
-                if(s[i] == '\n')
-                {
-                    s_eol = &s[i];
-                    break;
-                }
-            }
+            s_eol = strchrW(s, '\n');
 
             /* If it is a comment line then discard it and go around again */
             if (buf[0] == '#') {
