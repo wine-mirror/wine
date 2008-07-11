@@ -277,7 +277,7 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPS
     /* Retrieve entry point call structure */
     p = MapSL( MAKESEGPTR( frame->module_cs, frame->callfrom_ip ) );
     /* p now points to lret, get the start of CALLFROM16 structure */
-    return (CALLFROM16 *)(p - (BYTE *)&((CALLFROM16 *)0)->ret);
+    return (CALLFROM16 *)(p - FIELD_OFFSET( CALLFROM16, ret ));
 }
 
 

@@ -709,7 +709,7 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
                     idt[1].LimitLow = 0x100; /* FIXME */
                     idt[2].LimitLow = 0x11E; /* FIXME */
                     idt[3].LimitLow = 0x500; /* FIXME */
-                    store_reg( context, instr[1], (BYTE *)&idt + offset, long_op );
+                    store_reg( context, instr[1], (BYTE *)idt + offset, long_op );
                     context->Eip += prefixlen + len + 1;
                     return ExceptionContinueExecution;
                 }

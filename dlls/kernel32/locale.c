@@ -3255,7 +3255,7 @@ BOOL WINAPI IsValidLanguageGroup(LGRPID lgrpid, DWORD dwFlags)
 
         sprintfW( szValueName, szFormat, lgrpid );
 
-        if (NLS_RegGetDword( hKey, szValueName, (LPDWORD)&szValue ))
+        if (NLS_RegGetDword( hKey, szValueName, (LPDWORD)szValue ))
         {
             bSupported = TRUE;
 

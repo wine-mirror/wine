@@ -196,7 +196,7 @@ static SEGPTR TASK_AllocThunk(void)
 
     if (!(pTask = TASK_GetCurrent())) return 0;
     sel = pTask->hCSAlias;
-    pThunk = (THUNKS *)&pTask->thunks;
+    pThunk = (THUNKS *)pTask->thunks;
     base = (char *)pThunk - (char *)pTask;
     while (!pThunk->free)
     {
@@ -231,7 +231,7 @@ static BOOL TASK_FreeThunk( SEGPTR thunk )
 
     if (!(pTask = TASK_GetCurrent())) return 0;
     sel = pTask->hCSAlias;
-    pThunk = (THUNKS *)&pTask->thunks;
+    pThunk = (THUNKS *)pTask->thunks;
     base = (char *)pThunk - (char *)pTask;
     while (sel && (sel != HIWORD(thunk)))
     {
@@ -286,7 +286,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
 
       /* Create the thunks block */
 
-    TASK_CreateThunks( hTask, (char *)&pTask->thunks - (char *)pTask, 7 );
+    TASK_CreateThunks( hTask, (char *)pTask->thunks - (char *)pTask, 7 );
 
       /* Copy the module name */
 
@@ -315,7 +315,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
     pTask->pdb.savedint23 = 0;
     pTask->pdb.savedint24 = 0;
     pTask->pdb.fileHandlesPtr =
-        MAKESEGPTR( GlobalHandleToSel16(pTask->hPDB), (int)&((PDB16 *)0)->fileHandles );
+        MAKESEGPTR( GlobalHandleToSel16(pTask->hPDB), FIELD_OFFSET( PDB16, fileHandles ));
     pTask->pdb.hFileHandles = 0;
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
     /* FIXME: should we make a copy of the environment? */
@@ -348,7 +348,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
 
       /* Default DTA overwrites command line */
 
-    pTask->dta = MAKESEGPTR( pTask->hPDB, (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
+    pTask->dta = MAKESEGPTR( pTask->hPDB, FIELD_OFFSET( PDB16, cmdLine ));
 
     /* Create scheduler event for 16-bit tasks */
 
