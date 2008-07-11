@@ -753,6 +753,22 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     update_font_list();
 }
 
+static void ShowWriteError(DWORD Code)
+{
+    LPWSTR Message;
+
+    switch(Code)
+    {
+        case ERROR_ACCESS_DENIED:
+            Message = MAKEINTRESOURCEW(STRING_WRITE_ACCESS_DENIED);
+            break;
+
+        default:
+            Message = MAKEINTRESOURCEW(STRING_WRITE_FAILED);
+    }
+    MessageBoxW(hMainWnd, Message, wszAppTitle, MB_ICONEXCLAMATION | MB_OK);
+}
+
 static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
 {
     HANDLE hFile;
@@ -763,7 +779,10 @@ static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
         FILE_ATTRIBUTE_NORMAL, NULL);
 
     if(hFile == INVALID_HANDLE_VALUE)
+    {
+        ShowWriteError(GetLastError());
         return;
+    }
 
     if(format == (SF_TEXT | SF_UNICODE))
     {
