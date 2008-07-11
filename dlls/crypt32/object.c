@@ -413,10 +413,10 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (file != INVALID_HANDLE_VALUE)
     {
-        DWORD len;
+        DWORD len = 0;
 
         ret = ImageGetCertificateData(file, 0, NULL, &len);
-        if (ret)
+        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         {
             WIN_CERTIFICATE *winCert = HeapAlloc(GetProcessHeap(), 0, len);
 
