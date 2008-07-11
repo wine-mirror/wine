@@ -140,7 +140,6 @@ typedef struct PullPin
 #define Req_Die    1
 #define Req_Run    2
 #define Req_Pause  3
-#define Req_Flush  4
 
 /*** Constructors ***/
 HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
