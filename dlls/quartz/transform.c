@@ -184,7 +184,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
         props.cbAlign = 1;
         props.cbPrefix = 0;
         props.cbBuffer = 0; /* Will be updated at connection time */
-        props.cBuffers = 2;
+        props.cBuffers = 1;
 
         hr = OutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(OutputPin), &piOutput, &props, pTransformFilter, TransformFilter_Output_QueryAccept, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
 
