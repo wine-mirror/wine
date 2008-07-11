@@ -1129,7 +1129,7 @@ WINE_NOTICE_WITH(cups,[test "x$ac_cv_lib_soname_cups" = "x"],
 dnl **** Check for jack ****
 if test "$ac_cv_header_jack_jack_h" = "yes"
 then
-    WINE_CHECK_SONAME(jack,jack_client_new)
+    WINE_CHECK_SONAME(jack,jack_client_new,,,,[[libjack-*[[0-9.]]*]])
 fi
 
 dnl **** Check for fontconfig ****

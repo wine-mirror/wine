@@ -15154,8 +15154,8 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
        $as_test_x conftest$ac_exeext; then
   case "$LIBEXT" in
     dll) ;;
-    dylib) ac_cv_lib_soname_jack=`otool -L conftest$ac_exeext | grep "libjack\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libjack\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep "libjack\\.$LIBEXT" | sed -e "s/^.*\(libjack\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_jack=`otool -L conftest$ac_exeext | grep "libjack-*[0-9.]*\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libjack-*[0-9.]*\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep "libjack-*[0-9.]*\\.$LIBEXT" | sed -e "s/^.*\(libjack-*[0-9.]*\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
   esac
 else
   echo "$as_me: failed program was:" >&5
