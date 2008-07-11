@@ -318,6 +318,26 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromFileICM(GDIPCONST WCHAR* filename,
     return GdipCreateBitmapFromFile(filename, bitmap);
 }
 
+GpStatus WINGDIPAPI GdipCreateBitmapFromResource(HINSTANCE hInstance,
+    GDIPCONST WCHAR* lpBitmapName, GpBitmap** bitmap)
+{
+    HBITMAP hbm;
+    GpStatus stat = InvalidParameter;
+
+    if(!lpBitmapName || !bitmap)
+        return InvalidParameter;
+
+    /* load DIB */
+    hbm = (HBITMAP)LoadImageW(hInstance,lpBitmapName,IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION);
+
+    if(hbm){
+        stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, bitmap);
+        DeleteObject(hbm);
+    }
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     HBITMAP* hbmReturn, ARGB background)
 {
