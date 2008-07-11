@@ -548,7 +548,7 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
     mib->MaxPixelClock = 0; /* FIXME */
 
     /* 66 - BYTE[190]: reserved, set to zero */
-    memset( &mib->Reserved4, 0, 190 );
+    memset( mib->Reserved4, 0, 190 );
 
     return TRUE;
 }
