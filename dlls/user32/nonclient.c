@@ -1648,7 +1648,7 @@ BOOL WINAPI GetTitleBarInfo(HWND hwnd, PTITLEBARINFO tbi) {
         tbi->rcTitleBar.left += GetSystemMetrics(SM_CXSIZE);
     }
 
-    ZeroMemory(&tbi->rgstate, sizeof(tbi->rgstate));
+    ZeroMemory(tbi->rgstate, sizeof(tbi->rgstate));
     /* Does the title bar always have STATE_SYSTEM_FOCUSABLE?
      * Under XP it seems to
      */

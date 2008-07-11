@@ -776,7 +776,7 @@ UINT WINAPI PrivateExtractIconExW (
 	  cxsmicon = GetSystemMetrics(SM_CXSMICON);
 	  cysmicon = GetSystemMetrics(SM_CYSMICON);
 
-	  ret = ICO_ExtractIconExW(lpwstrFile, (HICON*) &hIcon, nIndex, 2, cxicon | (cxsmicon<<16),
+	  ret = ICO_ExtractIconExW(lpwstrFile, (HICON*)hIcon, nIndex, 2, cxicon | (cxsmicon<<16),
 	                           cyicon | (cysmicon<<16), NULL, LR_DEFAULTCOLOR);
 	  *phIconLarge = hIcon[0];
 	  *phIconSmall = hIcon[1];
