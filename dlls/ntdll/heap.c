@@ -1106,7 +1106,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
         processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
         list_init( &processHeap->entry );
         /* make sure structure alignment is correct */
-        assert( (ULONG_PTR)&processHeap->freeList % ALIGNMENT == 0 );
+        assert( (ULONG_PTR)processHeap->freeList % ALIGNMENT == 0 );
     }
 
     return (HANDLE)subheap->heap;

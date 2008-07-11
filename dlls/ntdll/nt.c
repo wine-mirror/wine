@@ -170,11 +170,11 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
         req->get_modified_state = (PreviousState != NULL);
         if (!DisableAllPrivileges)
         {
-            wine_server_add_data( req, &NewState->Privileges,
+            wine_server_add_data( req, NewState->Privileges,
                                   NewState->PrivilegeCount * sizeof(NewState->Privileges[0]) );
         }
         if (PreviousState && BufferLength >= FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ))
-            wine_server_set_reply( req, &PreviousState->Privileges,
+            wine_server_set_reply( req, PreviousState->Privileges,
                                    BufferLength - FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) );
         ret = wine_server_call( req );
         if (PreviousState)
@@ -347,7 +347,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
             TOKEN_PRIVILEGES *tpriv = tokeninfo;
             req->handle = token;
             if (tpriv && tokeninfolength > FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ))
-                wine_server_set_reply( req, &tpriv->Privileges, tokeninfolength - FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) );
+                wine_server_set_reply( req, tpriv->Privileges, tokeninfolength - FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) );
             status = wine_server_call( req );
             if (retlen) *retlen = FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges ) + reply->len;
             if (tpriv) tpriv->PrivilegeCount = reply->len / sizeof(LUID_AND_ATTRIBUTES);
@@ -471,9 +471,9 @@ NTSTATUS WINAPI NtPrivilegeCheck(
     {
         req->handle = ClientToken;
         req->all_required = ((RequiredPrivileges->Control & PRIVILEGE_SET_ALL_NECESSARY) ? TRUE : FALSE);
-        wine_server_add_data( req, &RequiredPrivileges->Privilege,
+        wine_server_add_data( req, RequiredPrivileges->Privilege,
             RequiredPrivileges->PrivilegeCount * sizeof(RequiredPrivileges->Privilege[0]) );
-        wine_server_set_reply( req, &RequiredPrivileges->Privilege,
+        wine_server_set_reply( req, RequiredPrivileges->Privilege,
             RequiredPrivileges->PrivilegeCount * sizeof(RequiredPrivileges->Privilege[0]) );
 
         status = wine_server_call( req );

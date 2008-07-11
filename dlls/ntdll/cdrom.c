@@ -567,7 +567,7 @@ static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* devi
     {
 #ifdef SCSI_IOCTL_GET_IDLUN
         UINT32 idlun[2];
-        if (ioctl(fd, SCSI_IOCTL_GET_IDLUN, &idlun) != -1)
+        if (ioctl(fd, SCSI_IOCTL_GET_IDLUN, idlun) != -1)
         {
             *port = (idlun[0] >> 24) & 0xff;
             *iface = ((idlun[0] >> 16) & 0xff) + 2;

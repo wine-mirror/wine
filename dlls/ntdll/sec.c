@@ -1577,7 +1577,7 @@ NtAccessCheck(
         wine_server_add_data( req, sacl, sd.sacl_len );
         wine_server_add_data( req, dacl, sd.dacl_len );
 
-        wine_server_set_reply( req, &PrivilegeSet->Privilege, *ReturnLength - FIELD_OFFSET( PRIVILEGE_SET, Privilege ) );
+        wine_server_set_reply( req, PrivilegeSet->Privilege, *ReturnLength - FIELD_OFFSET( PRIVILEGE_SET, Privilege ) );
 
         status = wine_server_call( req );
 
