@@ -73,7 +73,7 @@ DWORD MSCMS_get_tag_count( const icProfile *iccprofile )
 
 void MSCMS_get_tag_by_index( icProfile *iccprofile, DWORD index, icTag *tag )
 {
-    icTag *tmp = (icTag *)((char *)&iccprofile->data + index * sizeof(icTag));
+    icTag *tmp = (icTag *)((char *)iccprofile->data + index * sizeof(icTag));
 
     tag->sig = tmp->sig;
     tag->offset = tmp->offset;
