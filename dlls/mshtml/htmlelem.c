@@ -1896,6 +1896,31 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node)
     return HTMLElementCollection_Create((IUnknown*)HTMLDOMNODE(node), buf.buf, buf.len);
 }
 
+IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument *doc, IUnknown *unk, nsIDOMNodeList *nslist)
+{
+    PRUint32 length = 0, i;
+    elem_vector buf;
+
+    nsIDOMNodeList_GetLength(nslist, &length);
+
+    buf.len = buf.size = length;
+    if(buf.len) {
+        nsIDOMNode *nsnode;
+
+        buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
+
+        for(i=0; i<length; i++) {
+            nsIDOMNodeList_Item(nslist, i, &nsnode);
+            buf.buf[i] = HTMLELEM_NODE_THIS(get_node(doc, nsnode, TRUE));
+            nsIDOMNode_Release(nsnode);
+        }
+    }else {
+        buf.buf = NULL;
+    }
+
+    return HTMLElementCollection_Create(unk, buf.buf, buf.len);
+}
+
 static IHTMLElementCollection *HTMLElementCollection_Create(IUnknown *ref_unk,
             HTMLElement **elems, DWORD len)
 {

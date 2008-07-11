@@ -917,12 +917,27 @@ static HRESULT WINAPI HTMLElement2_get_readyStateValue(IHTMLElement2 *iface, lon
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLElement2_getElementByTagName(IHTMLElement2 *iface, BSTR v,
+static HRESULT WINAPI HTMLElement2_getElementsByTagName(IHTMLElement2 *iface, BSTR v,
                                                        IHTMLElementCollection **pelColl)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
-    return E_NOTIMPL;
+    nsIDOMNodeList *nslist;
+    nsAString tag_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pelColl);
+
+    nsAString_Init(&tag_str, v);
+    nsres = nsIDOMHTMLElement_GetElementsByTagName(This->nselem, &tag_str, &nslist);
+    nsAString_Finish(&tag_str);
+    if(NS_FAILED(nsres)) {
+        ERR("GetElementByTagName failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *pelColl = create_collection_from_nodelist(This->node.doc, (IUnknown*)HTMLELEM(This), nslist);
+    nsIDOMNodeList_Release(nslist);
+    return S_OK;
 }
 
 #undef HTMLELEM2_THIS
@@ -1032,7 +1047,7 @@ static const IHTMLElement2Vtbl HTMLElement2Vtbl = {
     HTMLElement2_put_onbeforeeditfocus,
     HTMLElement2_get_onbeforeeditfocus,
     HTMLElement2_get_readyStateValue,
-    HTMLElement2_getElementByTagName,
+    HTMLElement2_getElementsByTagName,
 };
 
 void HTMLElement2_Init(HTMLElement *This)
