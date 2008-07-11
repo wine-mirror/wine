@@ -763,8 +763,8 @@ void processRegLinesW(FILE *in)
             s_eol = strchrW(s, '\n');
 
             /* If it is a comment line then discard it and go around again */
-            if (buf[0] == '#') {
-                s = buf;
+            if (*s == '#') {
+                s = s_eol + 1;
                 continue;
             }
 
