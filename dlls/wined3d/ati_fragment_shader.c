@@ -50,7 +50,6 @@ struct atifs_ffp_desc
 
 struct atifs_private_data
 {
-    struct shader_arb_priv parent;
     struct list fragment_shaders; /* A linked list to track fragment pipeline replacement shaders */
 
 };
@@ -782,7 +781,7 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
     IWineD3DDeviceImpl          *This = stateblock->wineD3DDevice;
     struct atifs_ffp_desc       *desc;
     struct texture_stage_op     op[MAX_TEXTURES];
-    struct atifs_private_data   *priv = (struct atifs_private_data *) This->shader_priv;
+    struct atifs_private_data   *priv = (struct atifs_private_data *) This->fragment_priv;
     DWORD mapped_stage;
     unsigned int i;
 
@@ -1019,64 +1018,24 @@ static void atifs_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, str
     caps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_TSSARGTEMP;
 }
 
-const struct fragment_pipeline atifs_fragment_pipeline = {
-    atifs_enable,
-    atifs_get_caps,
-    atifs_fragmentstate_template
-};
-
-/* GL_ATI_fragment_shader backend.It borrows a lot from a the
- * ARB shader backend, currently the whole vertex processing
- * code. This code would also forward pixel shaders, but if
- * GL_ARB_fragment_program is supported, the atifs shader backend
- * is not used.
- */
-static void shader_atifs_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
-    arb_program_shader_backend.shader_select(iface, usePS, useVS);
-}
-
-static void shader_atifs_select_depth_blt(IWineD3DDevice *iface) {
-    arb_program_shader_backend.shader_select_depth_blt(iface);
-}
-
-static void shader_atifs_deselect_depth_blt(IWineD3DDevice *iface) {
-    arb_program_shader_backend.shader_deselect_depth_blt(iface);
-}
-
-static void shader_atifs_load_constants(IWineD3DDevice *iface, char usePS, char useVS) {
-    arb_program_shader_backend.shader_load_constants(iface, usePS, useVS);
-}
-
-static void shader_atifs_cleanup(IWineD3DDevice *iface) {
-    arb_program_shader_backend.shader_cleanup(iface);
-}
-
-static void shader_atifs_color_correction(SHADER_OPCODE_ARG* arg) {
-    arb_program_shader_backend.shader_color_correction(arg);
-}
-
-static void shader_atifs_destroy(IWineD3DBaseShader *iface) {
-    arb_program_shader_backend.shader_destroy(iface);
-}
-
-static HRESULT shader_atifs_alloc(IWineD3DDevice *iface) {
+static HRESULT atifs_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    HRESULT hr;
     struct atifs_private_data *priv;
-    hr = arb_program_shader_backend.shader_alloc_private(iface);
-    if(FAILED(hr)) return hr;
 
-    This->shader_priv = HeapReAlloc(GetProcessHeap(), 0, This->shader_priv,
-                                    sizeof(struct atifs_private_data));
-    priv = (struct atifs_private_data *) This->shader_priv;
+    This->fragment_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct atifs_private_data));
+    if(!This->fragment_priv) {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+    priv = (struct atifs_private_data *) This->fragment_priv;
     list_init(&priv->fragment_shaders);
     return WINED3D_OK;
 }
 
 #define GLINFO_LOCATION This->adapter->gl_info
-static void shader_atifs_free(IWineD3DDevice *iface) {
+static void atifs_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    struct atifs_private_data *priv = (struct atifs_private_data *) This->shader_priv;
+    struct atifs_private_data *priv = (struct atifs_private_data *) This->fragment_priv;
     struct ffp_desc *entry, *entry2;
     struct atifs_ffp_desc *entry_ati;
 
@@ -1089,42 +1048,15 @@ static void shader_atifs_free(IWineD3DDevice *iface) {
         HeapFree(GetProcessHeap(), 0, entry);
     }
     LEAVE_GL();
-
-    /* Not actually needed, but revert what we've done before */
-    This->shader_priv = HeapReAlloc(GetProcessHeap(), 0, This->shader_priv,
-                                    sizeof(struct shader_arb_priv));
-    arb_program_shader_backend.shader_free_private(iface);
+    HeapFree(GetProcessHeap(), 0, priv);
+    This->fragment_priv = NULL;
 }
 #undef GLINFO_LOCATION
 
-static BOOL shader_atifs_dirty_const(IWineD3DDevice *iface) {
-    return arb_program_shader_backend.shader_dirtifyable_constants(iface);
-}
-
-static void shader_atifs_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps) {
-    arb_program_shader_backend.shader_get_caps(devtype, gl_info, caps);
-}
-
-static void shader_atifs_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
-    ERR("Should not get here\n");
-}
-
-static void shader_atifs_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
-    arb_program_shader_backend.shader_generate_vshader(iface, buffer);
-}
-
-const shader_backend_t atifs_shader_backend = {
-    shader_atifs_select,
-    shader_atifs_select_depth_blt,
-    shader_atifs_deselect_depth_blt,
-    shader_atifs_load_constants,
-    shader_atifs_cleanup,
-    shader_atifs_color_correction,
-    shader_atifs_destroy,
-    shader_atifs_alloc,
-    shader_atifs_free,
-    shader_atifs_dirty_const,
-    shader_atifs_generate_pshader,
-    shader_atifs_generate_vshader,
-    shader_atifs_get_caps,
+const struct fragment_pipeline atifs_fragment_pipeline = {
+    atifs_enable,
+    atifs_get_caps,
+    atifs_alloc,
+    atifs_free,
+    atifs_fragmentstate_template
 };

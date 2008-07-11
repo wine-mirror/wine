@@ -2131,6 +2131,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
         TRACE("Shader private data couldn't be allocated\n");
         goto err_out;
     }
+    hr = This->frag_pipe->alloc_private(iface);
+    if(FAILED(hr)) {
+        TRACE("Fragment pipeline private data couldn't be allocated\n");
+        goto err_out;
+    }
 
     /* Set up some starting GL setup */
 
@@ -2216,6 +2221,7 @@ err_out:
         This->stateBlock = NULL;
     }
     This->shader_backend->shader_free_private(iface);
+    This->frag_pipe->free_private(iface);
     return hr;
 }
 
@@ -2305,6 +2311,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
 
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
     This->shader_backend->shader_free_private(iface);
+    This->frag_pipe->free_private(iface);
 
     /* Release the buffers (with sanity checks)*/
     TRACE("Releasing the depth stencil buffer at %p\n", This->stencilBufferTarget);
@@ -7220,6 +7227,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         This->depth_blt_rb_h = 0;
     }
     This->shader_backend->shader_free_private(iface);
+    This->frag_pipe->free_private(iface);
 
     for (i = 0; i < GL_LIMITS(textures); i++) {
         /* Textures are recreated below */
@@ -7326,6 +7334,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     hr = This->shader_backend->shader_alloc_private(iface);
     if(FAILED(hr)) {
         ERR("Failed to recreate shader private data\n");
+        return hr;
+    }
+    hr = This->frag_pipe->alloc_private(iface);
+    if(FAILED(hr)) {
+        TRACE("Fragment pipeline private data couldn't be allocated\n");
         return hr;
     }
 

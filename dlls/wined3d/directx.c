@@ -2879,9 +2879,6 @@ static const shader_backend_t *select_shader_backend(UINT Adapter, WINED3DDEVTYP
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
     if (vs_selected_mode == SHADER_GLSL || ps_selected_mode == SHADER_GLSL) {
         ret = &glsl_shader_backend;
-    } else if (vs_selected_mode == SHADER_ARB && ps_selected_mode != SHADER_NONE &&
-              !GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
-        ret = &atifs_shader_backend;
     } else if (vs_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_ARB) {
         ret = &arb_program_shader_backend;
     } else {

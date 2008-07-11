@@ -4534,11 +4534,16 @@ static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_in
 
 }
 
+static HRESULT ffp_fragment_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
+static void ffp_fragment_free(IWineD3DDevice *iface) {}
+
 #undef GLINFO_LOCATION
 
 const struct fragment_pipeline ffp_fragment_pipeline = {
     nvts_enable,
     ffp_fragment_get_caps,
+    ffp_fragment_alloc,
+    ffp_fragment_free,
     ffp_fragmentstate_template
 };
 

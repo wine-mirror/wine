@@ -551,6 +551,8 @@ struct fragment_caps {
 struct fragment_pipeline {
     void (*enable_extension)(IWineD3DDevice *iface, BOOL enable);
     void (*get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct fragment_caps *caps);
+    HRESULT (*alloc_private)(IWineD3DDevice *iface);
+    void (*free_private)(IWineD3DDevice *iface);
     const struct StateEntryTemplate *states;
 };
 
@@ -788,6 +790,7 @@ struct IWineD3DDeviceImpl
     int ps_selected_mode;
     const shader_backend_t *shader_backend;
     void *shader_priv;
+    void *fragment_priv;
     struct StateEntry StateTable[STATE_HIGHEST + 1];
     /* Array of functions for states which are handled by more than one pipeline part */
     APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
