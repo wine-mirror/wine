@@ -4492,25 +4492,25 @@ static void test_word_movement(void)
     /* one |two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
-    ok(sel_start == 4, "Cursur is at %d instead of %d\n", sel_start, 4);
+    ok(sel_start == 4, "Cursor is at %d instead of %d\n", sel_start, 4);
 
     SEND_CTRL_RIGHT(hwnd);
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
-    ok(sel_start == 9, "Cursur is at %d instead of %d\n", sel_start, 9);
+    ok(sel_start == 9, "Cursor is at %d instead of %d\n", sel_start, 9);
 
     SEND_CTRL_LEFT(hwnd);
     /* one |two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
-    ok(sel_start == 4, "Cursur is at %d instead of %d\n", sel_start, 4);
+    ok(sel_start == 4, "Cursor is at %d instead of %d\n", sel_start, 4);
 
     SEND_CTRL_LEFT(hwnd);
     /* |one two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
-    ok(sel_start == 0, "Cursur is at %d instead of %d\n", sel_start, 0);
+    ok(sel_start == 0, "Cursor is at %d instead of %d\n", sel_start, 0);
 
     SendMessage(hwnd, EM_SETSEL, 8, 8);
     /* one two | three */
@@ -4518,7 +4518,7 @@ static void test_word_movement(void)
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
-    ok(sel_start == 9, "Cursur is at %d instead of %d\n", sel_start, 9);
+    ok(sel_start == 9, "Cursor is at %d instead of %d\n", sel_start, 9);
 
     SendMessage(hwnd, EM_SETSEL, 11, 11);
     /* one two  th|ree */
@@ -4526,7 +4526,7 @@ static void test_word_movement(void)
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
-    ok(sel_start == 9, "Cursur is at %d instead of %d\n", sel_start, 9);
+    ok(sel_start == 9, "Cursor is at %d instead of %d\n", sel_start, 9);
 
     DestroyWindow(hwnd);
 }
