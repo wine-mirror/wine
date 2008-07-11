@@ -201,6 +201,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             if (stream->index_next >= stream->entries)
             {
                 ERR("END OF STREAM ON %u\n", streamnumber);
+                IMediaSample_Release(sample);
                 hr = AVISplitter_SendEndOfFile(This, streamnumber);
                 return S_FALSE;
             }
@@ -240,6 +241,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             /* End of file */
             if (stream->pos_next * sizeof(This->oldindex->aIndex[0]) >= This->oldindex->cb)
             {
+                IMediaSample_Release(sample);
                 stream->pos_next = 0;
                 ++stream->index_next;
                 ERR("END OF STREAM ON %u\n", streamnumber);
@@ -377,6 +379,8 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PT
     return hr;
 }
 
+static HRESULT AVISplitter_done_process(LPVOID iface);
+
 /* On the first request we have to be sure that (cStreams-1) samples have
  * already been processed, because otherwise some pins might not ever finish
  * a Pause state change
@@ -420,26 +424,21 @@ static HRESULT AVISplitter_first_request(LPVOID iface)
             assert(hr == S_OK);
             assert(sample);
 
-            /* This should not happen! (Maybe the threads didn't terminate?) */
-            if (dwUser != x - 1)
-            {
-                ERR("dwUser: %lu, x-1: %u\n", dwUser, x-1);
-                assert(dwUser == x - 1);
-            }
             AVISplitter_Sample(iface, sample, dwUser);
             IMediaSample_Release(sample);
         }
 
         hr = AVISplitter_next_request(This, x);
         TRACE("-->%08x\n", hr);
-        /* assert(SUCCEEDED(hr)); * With quick transitions this might not be the case (eg stop->running->stop) */
 
         /* Could be an EOF instead */
         have_sample = (hr == S_OK);
+        if (FAILED(hr))
+            break;
     }
 
     /* FIXME: Don't do this for each pin that sent an EOF */
-    for (x = 0; x < This->Parser.cStreams; ++x)
+    for (x = 0; x < This->Parser.cStreams && SUCCEEDED(hr); ++x)
     {
         struct thread_args *args;
         DWORD tid;
@@ -1092,7 +1091,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin,
     props->cbAlign = 1;
     props->cbPrefix = 0;
     /* Comrades, prevent shortage of buffers, or you will feel the consequences! DA! */
-    props->cBuffers = 3 * pAviSplit->Parser.cStreams;
+    props->cBuffers = 2 * pAviSplit->Parser.cStreams;
 
     /* Now peek into the idx1 index, if available */
     if (hr == S_OK && (total - pos) > sizeof(RIFFCHUNK))
