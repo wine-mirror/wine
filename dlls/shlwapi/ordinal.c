@@ -4399,7 +4399,7 @@ PSECURITY_DESCRIPTOR WINAPI GetShellSecurityDescriptor(PSHELL_USER_PERMISSION *a
                 {
                     ret = GetTokenInformation(Token, TokenUser, (void*)tuUser, bufsize, &bufsize );
                     if (ret)
-                        cur_user = ((PTOKEN_USER)&tuUser)->User.Sid;
+                        cur_user = ((PTOKEN_USER)tuUser)->User.Sid;
                     CloseHandle(Token);
                 }
             }
