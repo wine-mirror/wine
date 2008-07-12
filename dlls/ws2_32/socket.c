@@ -1036,7 +1036,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* ws
         win->sin_family = WS_AF_INET;
         win->sin_port   = uin->sin_port;
         memcpy(&win->sin_addr,&uin->sin_addr,4); /* 4 bytes = 32 address bits */
-        memset(&win->sin_zero, 0, 8); /* Make sure the null padding is null */
+        memset(win->sin_zero, 0, 8); /* Make sure the null padding is null */
         *wsaddrlen = sizeof(struct WS_sockaddr_in);
         return 0;
     }
@@ -1434,7 +1434,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
                 if (name->sa_family == WS_AF_INET)
                 {
                     struct sockaddr_in *in4 = (struct sockaddr_in*) &uaddr;
-                    if (memcmp(&in4->sin_addr, &magic_loopback_addr, 4) == 0)
+                    if (memcmp(&in4->sin_addr, magic_loopback_addr, 4) == 0)
                     {
                         /* Trying to bind to the default host interface, using
                          * INADDR_ANY instead*/
@@ -1505,7 +1505,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
             if (name->sa_family == WS_AF_INET)
             {
                 struct sockaddr_in *in4 = (struct sockaddr_in*) &uaddr;
-                if (memcmp(&in4->sin_addr, &magic_loopback_addr, 4) == 0)
+                if (memcmp(&in4->sin_addr, magic_loopback_addr, 4) == 0)
                 {
                     /* Trying to connect to magic replace-loopback address,
                      * assuming we really want to connect to localhost */
@@ -1883,8 +1883,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             WS_getsockname(s, (struct WS_sockaddr*)&addr, &namelen);
 
             data = (IPX_ADDRESS_DATA*)optval;
-                    memcpy(data->nodenum,&addr.sa_nodenum,sizeof(data->nodenum));
-                    memcpy(data->netnum,&addr.sa_netnum,sizeof(data->netnum));
+                    memcpy(data->nodenum,addr.sa_nodenum,sizeof(data->nodenum));
+                    memcpy(data->netnum,addr.sa_netnum,sizeof(data->netnum));
             data->adapternum = 0;
             data->wan = FALSE; /* We are not on a wan for now .. */
             data->status = FALSE; /* Since we are not on a wan, the wan link isn't up */
