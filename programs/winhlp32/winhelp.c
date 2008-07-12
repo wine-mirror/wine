@@ -1593,6 +1593,15 @@ INT_PTR CALLBACK WINHELP_IndexDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
         id->jump = FALSE;
         id->offset = 1;
         return TRUE;
+    case WM_COMMAND:
+        switch (HIWORD(wParam))
+        {
+        case LBN_DBLCLK:
+            if (LOWORD(wParam) == IDC_INDEXLIST)
+                SendMessage(GetParent(hWnd), PSM_PRESSBUTTON, PSBTN_OK, 0);
+            break;
+        }
+        break;
     case WM_NOTIFY:
 	switch (((NMHDR*)lParam)->code)
 	{
