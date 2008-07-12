@@ -187,7 +187,7 @@ BOOL WINAPI WVTAsn1SpcLinkEncode(DWORD dwCertEncodingType,
         {
             DWORD classIdLenBytes, dataLenBytes, dataLen;
             CRYPT_DATA_BLOB classId = { sizeof(link->u.Moniker.ClassId),
-             (BYTE *)&link->u.Moniker.ClassId };
+             (BYTE *)link->u.Moniker.ClassId };
 
             CRYPT_EncodeLen(classId.cbData, NULL, &classIdLenBytes);
             CRYPT_EncodeLen(link->u.Moniker.SerializedData.cbData, NULL,
@@ -954,7 +954,7 @@ static BOOL WINAPI CRYPT_AsnDecodeSPCLinkInternal(DWORD dwCertEncodingType,
                              */
                             link->u.Moniker.SerializedData.pbData =
                              (BYTE *)link->u.pwszFile;
-                            memcpy(&link->u.Moniker.ClassId, classId.pbData,
+                            memcpy(link->u.Moniker.ClassId, classId.pbData,
                              classId.cbData);
                             memcpy(link->u.Moniker.SerializedData.pbData,
                              data.pbData, data.cbData);
