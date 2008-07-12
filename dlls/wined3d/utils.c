@@ -1545,24 +1545,12 @@ static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* op
 /* Set texture operations up - The following avoids lots of ifdefs in this routine!*/
 #if defined (GL_VERSION_1_3)
 # define useext(A) A
-# define combine_ext 1
 #elif defined (GL_EXT_texture_env_combine)
 # define useext(A) A##_EXT
-# define combine_ext 1
 #elif defined (GL_ARB_texture_env_combine)
 # define useext(A) A##_ARB
-# define combine_ext 1
-#else
-# undef combine_ext
 #endif
 
-#if !defined(combine_ext)
-void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
-{
-        FIXME("Requires opengl combine extensions to work\n");
-        return;
-}
-#else
 /* Setup the texture operations texture stage states */
 void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
 {
@@ -2623,7 +2611,6 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
         FIXME("Unhandled texture operation %s\n", debug_d3dtop(op));
 #undef GLINFO_LOCATION
 }
-#endif
 
 /* Setup this textures matrix according to the texture flags*/
 void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed, DWORD coordtype)
