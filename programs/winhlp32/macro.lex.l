@@ -3,7 +3,7 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
- * Copyright 2002 Eric Pouech
+ * Copyright 2002,2008 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,16 +36,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhelp);
 
-static LPCSTR  macroptr;
-static LPSTR   strptr;
-static int     quote_stack[32];
-static unsigned int quote_stk_idx = 0;
-static LPSTR   cache_string[32];
-static int     cache_used;
+struct lex_data {
+    LPCSTR   macroptr;
+    LPSTR    strptr;
+    int      quote_stack[32];
+    unsigned quote_stk_idx;
+    LPSTR    cache_string[32];
+    int      cache_used;
+};
+static struct lex_data* lex_data = NULL;
+
 struct lexret  yylval;
 
 #define YY_INPUT(buf,result,max_size)\
-  if ((result = *macroptr ? 1 : 0)) buf[0] = *macroptr++;
+  if ((result = *lex_data->macroptr ? 1 : 0)) buf[0] = *lex_data->macroptr++;
 
 %}
 %%
@@ -61,39 +65,39 @@ struct lexret  yylval;
 <quote>\`   |
 <quote>\"   |
 <quote>\'   {
-    if (quote_stk_idx == 0 ||
-        (yytext[0] == '\"' && quote_stack[quote_stk_idx - 1] != '\"') ||
+    if (lex_data->quote_stk_idx == 0 ||
+        (yytext[0] == '\"' && lex_data->quote_stack[lex_data->quote_stk_idx - 1] != '\"') ||
         (yytext[0] == '`'))
     {
         /* opening a new one */
-        if (quote_stk_idx == 0)
+        if (lex_data->quote_stk_idx == 0)
         {
-            assert(cache_used < sizeof(cache_string) / sizeof(cache_string[0]));
-            strptr = cache_string[cache_used] = HeapAlloc(GetProcessHeap(), 0, strlen(macroptr) + 1);
-            yylval.string = strptr;
-            cache_used++;
+            assert(lex_data->cache_used < sizeof(lex_data->cache_string) / sizeof(lex_data->cache_string[0]));
+            lex_data->strptr = lex_data->cache_string[lex_data->cache_used] = HeapAlloc(GetProcessHeap(), 0, strlen(lex_data->macroptr) + 1);
+            yylval.string = lex_data->strptr;
+            lex_data->cache_used++;
             BEGIN(quote);
         }
-        else *strptr++ = yytext[0];
-        quote_stack[quote_stk_idx++] = yytext[0];
-        assert(quote_stk_idx < sizeof(quote_stack) / sizeof(quote_stack[0]));
+        else *lex_data->strptr++ = yytext[0];
+        lex_data->quote_stack[lex_data->quote_stk_idx++] = yytext[0];
+        assert(lex_data->quote_stk_idx < sizeof(lex_data->quote_stack) / sizeof(lex_data->quote_stack[0]));
     }
     else
     {
         if (yytext[0] == '`') assert(0);
         /* close the current quote */
-        if (--quote_stk_idx == 0)
+        if (--lex_data->quote_stk_idx == 0)
         {
             BEGIN INITIAL;
-            *strptr++ = '\0';
+            *lex_data->strptr++ = '\0';
             return STRING;
         }
-        else *strptr++ = yytext[0];
+        else *lex_data->strptr++ = yytext[0];
     }
 }
 
-<quote>.                *strptr++ = yytext[0];
-<quote>\\.	        *strptr++ = yytext[1];
+<quote>.                *lex_data->strptr++ = yytext[0];
+<quote>\\.	        *lex_data->strptr++ = yytext[1];
 <quote><<EOF>>	        return 0;
 
 " "
@@ -264,12 +268,17 @@ static int MACRO_CallVoidFunc(FARPROC fn, const char* args)
 
 BOOL MACRO_ExecuteMacro(LPCSTR macro)
 {
+    struct lex_data     curr_lex_data, *prev_lex_data;
     BOOL ret = TRUE;
     int t;
 
     WINE_TRACE("%s\n", wine_dbgstr_a(macro));
 
-    macroptr = macro;
+    prev_lex_data = lex_data;
+    lex_data = &curr_lex_data;
+
+    memset(lex_data, 0, sizeof(*lex_data));
+    lex_data->macroptr = macro;
 
     while ((t = yylex()) != EMPTY)
     {
@@ -295,11 +304,9 @@ BOOL MACRO_ExecuteMacro(LPCSTR macro)
     }
 
 done:
-    strptr = NULL;
-    quote_stk_idx = 0;
-    for (t = 0; t < cache_used; t++)
-        HeapFree(GetProcessHeap(), 0, cache_string[t]);
-    cache_used = 0;
+    for (t = 0; t < lex_data->cache_used; t++)
+        HeapFree(GetProcessHeap(), 0, lex_data->cache_string[t]);
+    lex_data = prev_lex_data;
 
     return ret;
 }
