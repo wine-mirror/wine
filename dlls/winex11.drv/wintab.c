@@ -1129,7 +1129,7 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                             sizeof(LOGCONTEXTW));
                     break;
                 case CTX_NAME:
-                    rc = CopyTabletData(lpOutput, &gSysContext.lcName,
+                    rc = CopyTabletData(lpOutput, gSysContext.lcName,
                          (strlenW(gSysContext.lcName)+1) * sizeof(WCHAR));
                     break;
                 case CTX_OPTIONS:
@@ -1293,7 +1293,7 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                 switch (nIndex)
                 {
                     case CSR_NAME:
-                        rc = CopyTabletData(lpOutput, &tgtcursor->NAME,
+                        rc = CopyTabletData(lpOutput, tgtcursor->NAME,
                                             (strlenW(tgtcursor->NAME)+1) * sizeof(WCHAR));
                         break;
                     case CSR_ACTIVE:
@@ -1318,15 +1318,15 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                                             tgtcursor->cchBTNNAMES*sizeof(WCHAR));
                         break;
                     case CSR_BUTTONMAP:
-                        rc = CopyTabletData(lpOutput,&tgtcursor->BUTTONMAP,
+                        rc = CopyTabletData(lpOutput,tgtcursor->BUTTONMAP,
                                             sizeof(BYTE)*32);
                         break;
                     case CSR_SYSBTNMAP:
-                        rc = CopyTabletData(lpOutput,&tgtcursor->SYSBTNMAP,
+                        rc = CopyTabletData(lpOutput,tgtcursor->SYSBTNMAP,
                                             sizeof(BYTE)*32);
                         break;
                     case CSR_NPBTNMARKS:
-                        rc = CopyTabletData(lpOutput,&tgtcursor->NPBTNMARKS,
+                        rc = CopyTabletData(lpOutput,tgtcursor->NPBTNMARKS,
                                             sizeof(UINT)*2);
                         break;
                     case CSR_NPBUTTON:
@@ -1342,7 +1342,7 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                                             sizeof(BYTE));
                         break;
                     case CSR_TPBTNMARKS:
-                        rc = CopyTabletData(lpOutput,&tgtcursor->TPBTNMARKS,
+                        rc = CopyTabletData(lpOutput,tgtcursor->TPBTNMARKS,
                                             sizeof(UINT)*2);
                         break;
                     case CSR_TPRESPONSE:
@@ -1458,7 +1458,7 @@ UINT X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                     */
                     break;
                 case DVC_ORIENTATION:
-                    rc = CopyTabletData(lpOutput,&gSysDevice.ORIENTATION,
+                    rc = CopyTabletData(lpOutput,gSysDevice.ORIENTATION,
                                         sizeof(AXIS)*3);
                     break;
                 case DVC_ROTATION:

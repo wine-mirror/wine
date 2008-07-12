@@ -502,7 +502,7 @@ static void lfsz_calc_hash(LFANDSIZE *plfsz)
   hash ^= plfsz->devsize.cy;
   for(i = 0, ptr = (DWORD*)&plfsz->lf; i < 7; i++, ptr++)
     hash ^= *ptr;
-  for(i = 0, ptr = (DWORD*)&plfsz->lf.lfFaceName; i < LF_FACESIZE/2; i++, ptr++) {
+  for(i = 0, ptr = (DWORD*)plfsz->lf.lfFaceName; i < LF_FACESIZE/2; i++, ptr++) {
     WCHAR *pwc = (WCHAR *)ptr;
     if(!*pwc) break;
     hash ^= *ptr;
