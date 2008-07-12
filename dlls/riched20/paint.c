@@ -656,6 +656,8 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         y += bounds.top;
         break;
       case diStartRow:
+        /* we should have seen a diParagraph before */
+        assert(para);
         y += height;
         rcPara.top = y;
         rcPara.bottom = y+p->member.row.nHeight;
