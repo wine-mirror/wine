@@ -3253,8 +3253,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     pCaps->MaxStreamStride     = 1024;
 
     /* d3d9.dll sets D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES here because StretchRects is implemented in d3d9 */
-    pCaps->DevCaps2                          = WINED3DDEVCAPS2_STREAMOFFSET;
-    /* TODO: VS3.0 needs at least D3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET */
+    pCaps->DevCaps2                          = WINED3DDEVCAPS2_STREAMOFFSET |
+                                               WINED3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET;
     pCaps->MaxNpatchTessellationLevel        = 0;
     pCaps->MasterAdapterOrdinal              = 0;
     pCaps->AdapterOrdinalInGroup             = 0;
