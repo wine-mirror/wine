@@ -67,7 +67,7 @@ static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned, unsigned);
 static BOOL  HLPFILE_SkipParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
 static void  HLPFILE_Uncompress2(HLPFILE*, const BYTE*, const BYTE*, BYTE*, const BYTE*);
 static BOOL  HLPFILE_Uncompress3(HLPFILE*, char*, const char*, const BYTE*, const BYTE*);
-static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
+static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE* dst, unsigned dstsz);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
 
 /***********************************************************************
@@ -557,7 +557,6 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
 {
     BYTE*       dst;
     BYTE*       tmp;
-    BYTE*       tmp2;
     unsigned    sz77;
 
     WINE_TRACE("Unpacking (%d) from %u bytes to %u bytes\n", packing, csz, sz);
@@ -570,11 +569,9 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
         dst = src;
         break;
     case 1: /* RunLen */
-        tmp = dst = HeapAlloc(GetProcessHeap(), 0, sz);
+        dst = HeapAlloc(GetProcessHeap(), 0, sz);
         if (!dst) return NULL;
-        HLPFILE_UncompressRLE(src, src + csz, &tmp, sz);
-        if (tmp - dst != sz)
-            WINE_WARN("Bogus gfx sizes (RunLen): %lu/%u\n", (SIZE_T)(tmp - dst), sz);
+        HLPFILE_UncompressRLE(src, src + csz, dst, sz);
         break;
     case 2: /* LZ77 */
         sz77 = HLPFILE_UncompressedLZ77_Size(src, src + csz);
@@ -589,15 +586,13 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
         tmp = HeapAlloc(GetProcessHeap(), 0, sz77);
         if (!tmp) return FALSE;
         HLPFILE_UncompressLZ77(src, src + csz, tmp);
-        dst = tmp2 = HeapAlloc(GetProcessHeap(), 0, sz);
+        dst = HeapAlloc(GetProcessHeap(), 0, sz);
         if (!dst)
         {
             HeapFree(GetProcessHeap(), 0, tmp);
             return FALSE;
         }
-        HLPFILE_UncompressRLE(tmp, tmp + sz77, &tmp2, sz);
-        if (tmp2 - dst != sz)
-            WINE_WARN("Bogus gfx sizes (LZ77+RunLen): %lu / %u\n", (SIZE_T)(tmp2 - dst), sz);
+        HLPFILE_UncompressRLE(tmp, tmp + sz77, dst, sz);
         HeapFree(GetProcessHeap(), 0, tmp);
         break;
     default:
@@ -2349,10 +2344,10 @@ static BOOL HLPFILE_Uncompress3(HLPFILE* hlpfile, char* dst, const char* dst_end
  *
  *
  */
-static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz)
+static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE* dst, unsigned dstsz)
 {
     BYTE        ch;
-    BYTE*       sdst = *dst + dstsz;
+    BYTE*       sdst = dst + dstsz;
 
     while (src < end)
     {
@@ -2360,21 +2355,21 @@ static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, 
         if (ch & 0x80)
         {
             ch &= 0x7F;
-            if ((*dst) + ch <= sdst)
-                memcpy(*dst, src, ch);
+            if (dst + ch <= sdst)
+                memcpy(dst, src, ch);
             src += ch;
         }
         else
         {
-            if ((*dst) + ch <= sdst)
-                memset(*dst, (char)*src, ch);
+            if (dst + ch <= sdst)
+                memset(dst, (char)*src, ch);
             src++;
         }
-        *dst += ch;
+        dst += ch;
     }
-    if (*dst != sdst)
+    if (dst != sdst)
         WINE_WARN("Buffer X-flow: d(%lu) instead of d(%u)\n",
-                  (SIZE_T)(*dst - (sdst - dstsz)), dstsz);
+                  (SIZE_T)(dst - (sdst - dstsz)), dstsz);
 }
 
 /**************************************************************************
