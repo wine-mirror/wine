@@ -728,18 +728,29 @@ struct texture_stage_op
     DWORD                   carg1, carg2, carg0;
     DWORD                   aarg1, aarg2, aarg0;
     WINED3DFORMAT           color_correction;
+    DWORD                   tex_type;
     DWORD                   dst;
     enum projection_types   projected;
 };
 
+struct ffp_settings {
+    struct texture_stage_op     op[MAX_TEXTURES];
+    enum {
+        FOG_OFF,
+        FOG_LINEAR,
+        FOG_EXP,
+        FOG_EXP2
+    } fog;
+};
+
 struct ffp_desc
 {
-    struct texture_stage_op     op[MAX_TEXTURES];
+    struct ffp_settings         settings;
     struct list                 entry;
 };
 
-void gen_ffp_op(IWineD3DStateBlockImpl *stateblock,struct texture_stage_op op[MAX_TEXTURES]);
-struct ffp_desc *find_ffp_shader(struct list *shaders, struct texture_stage_op op[MAX_TEXTURES]);
+void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *settings, BOOL ignore_textype);
+struct ffp_desc *find_ffp_shader(struct list *shaders, struct ffp_settings *settings);
 void add_ffp_shader(struct list *shaders, struct ffp_desc *desc);
 
 /*****************************************************************************

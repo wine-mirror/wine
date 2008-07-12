@@ -780,13 +780,13 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
 static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl          *This = stateblock->wineD3DDevice;
     struct atifs_ffp_desc       *desc;
-    struct texture_stage_op     op[MAX_TEXTURES];
+    struct ffp_settings settings;
     struct atifs_private_data   *priv = (struct atifs_private_data *) This->fragment_priv;
     DWORD mapped_stage;
     unsigned int i;
 
-    gen_ffp_op(stateblock, op);
-    desc = (struct atifs_ffp_desc *) find_ffp_shader(&priv->fragment_shaders, op);
+    gen_ffp_op(stateblock, &settings, TRUE);
+    desc = (struct atifs_ffp_desc *) find_ffp_shader(&priv->fragment_shaders, &settings);
     if(!desc) {
         desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*desc));
         if(!desc) {
@@ -795,12 +795,12 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
         }
         desc->num_textures_used = 0;
         for(i = 0; i < GL_LIMITS(texture_stages); i++) {
-            if(op[i].cop == WINED3DTOP_DISABLE) break;
+            if(settings.op[i].cop == WINED3DTOP_DISABLE) break;
             desc->num_textures_used = i;
         }
 
-        memcpy(desc->parent.op, op, sizeof(op));
-        desc->shader = gen_ati_shader(op, &GLINFO_LOCATION);
+        memcpy(&desc->parent.settings, &settings, sizeof(settings));
+        desc->shader = gen_ati_shader(settings.op, &GLINFO_LOCATION);
         add_ffp_shader(&priv->fragment_shaders, &desc->parent);
         TRACE("Allocated fixed function replacement shader descriptor %p\n", desc);
     }
