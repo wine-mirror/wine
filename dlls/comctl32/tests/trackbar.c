@@ -331,10 +331,10 @@ static const struct message parent_thumb_length_test_seq[] = {
 static const struct message tic_placement_test_seq[] = {
     { TBM_GETPTICS, sent},
     { TBM_GETTIC, sent|wparam, 0},
+    { TBM_GETTIC, sent|wparam, 2},
     { TBM_GETTIC, sent|wparam, 4},
-    { TBM_GETTIC, sent|wparam, 11},
     { TBM_GETTICPOS, sent|wparam, 0},
-    { TBM_GETTICPOS, sent|wparam, 4},
+    { TBM_GETTICPOS, sent|wparam, 2},
     {0}
 };
 
@@ -799,34 +799,37 @@ static void test_tic_settings(HWND hWndTrackbar){
 static void test_tic_placement(HWND hWndTrackbar){
     int r;
     DWORD *rPTics;
+    DWORD numtics;
+
+    SendMessage(hWndTrackbar, TBM_SETRANGE, TRUE, MAKELONG(1, 6));
+    SendMessage(hWndTrackbar, TBM_SETTICFREQ, 1, 0);
+
+    numtics = SendMessage(hWndTrackbar, TBM_GETNUMTICS, 0, 0);
+    ok(numtics == 6, "Expected 6, got %d\n", numtics);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
     /* test TBM_GETPTICS */
     rPTics = (DWORD *) SendMessage(hWndTrackbar, TBM_GETPTICS, 0,0);
-    todo_wine{
-        expect(1, rPTics[0]);
-        expect(2, rPTics[1]);
-        expect(3, rPTics[2]);
-        expect(4, rPTics[3]);
-    }
+    expect(2, rPTics[0]);
+    expect(3, rPTics[1]);
+    expect(4, rPTics[2]);
+    expect(5, rPTics[3]);
 
     /* test TBM_GETTIC */
     r = SendMessage(hWndTrackbar, TBM_GETTIC, 0,0);
+    expect(2, r);
+    r = SendMessage(hWndTrackbar, TBM_GETTIC, 2,0);
+    expect(4, r);
+    r = SendMessage(hWndTrackbar, TBM_GETTIC, 4,0);
     todo_wine{
-        expect(1, r);
-        r = SendMessage(hWndTrackbar, TBM_GETTIC, 4,0);
-        expect(5, r);
+        expect(-1, r);
     }
-    r = SendMessage(hWndTrackbar, TBM_GETTIC, 11,0);
-    expect(-1, r);
 
     /* test TBM_GETTICPIC */
     r = SendMessage(hWndTrackbar, TBM_GETTICPOS, 0, 0);
-    todo_wine{
-        ok(r > 0, "Expected r > 0, got %d\n", r);
-        r = SendMessage(hWndTrackbar, TBM_GETTICPOS, 4, 0);
-        ok(r > 0, "Expected r > 0, got %d\n", r);
-    }
+    ok(r > 0, "Expected r > 0, got %d\n", r);
+    r = SendMessage(hWndTrackbar, TBM_GETTICPOS, 2, 0);
+    ok(r > 0, "Expected r > 0, got %d\n", r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, tic_placement_test_seq, "get tic placement test sequence", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent get tic placement test sequence", FALSE);
