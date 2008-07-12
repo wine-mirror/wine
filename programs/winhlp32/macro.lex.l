@@ -40,6 +40,8 @@ static LPCSTR  macroptr;
 static LPSTR   strptr;
 static int     quote_stack[32];
 static unsigned int quote_stk_idx = 0;
+static LPSTR   cache_string[32];
+static int     cache_used;
 struct lexret  yylval;
 
 #define YY_INPUT(buf,result,max_size)\
@@ -66,8 +68,10 @@ struct lexret  yylval;
         /* opening a new one */
         if (quote_stk_idx == 0)
         {
-            strptr = HeapAlloc(GetProcessHeap(), 0, strlen(macroptr) + 1);
+            assert(cache_used < sizeof(cache_string) / sizeof(cache_string[0]));
+            strptr = cache_string[cache_used] = HeapAlloc(GetProcessHeap(), 0, strlen(macroptr) + 1);
             yylval.string = strptr;
+            cache_used++;
             BEGIN(quote);
         }
         else *strptr++ = yytext[0];
@@ -260,6 +264,7 @@ static int MACRO_CallVoidFunc(FARPROC fn, const char* args)
 
 BOOL MACRO_ExecuteMacro(LPCSTR macro)
 {
+    BOOL ret = TRUE;
     int t;
 
     WINE_TRACE("%s\n", wine_dbgstr_a(macro));
@@ -283,17 +288,20 @@ BOOL MACRO_ExecuteMacro(LPCSTR macro)
         }
         switch (t = yylex())
         {
-        case EMPTY:     return 1;
+        case EMPTY:     goto done;
         case ';':       break;
-        default:        return 0;
+        default:        ret = FALSE; goto done;
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, strptr);
+done:
     strptr = NULL;
     quote_stk_idx = 0;
+    for (t = 0; t < cache_used; t++)
+        HeapFree(GetProcessHeap(), 0, cache_string[t]);
+    cache_used = 0;
 
-    return 1;
+    return ret;
 }
 
 #ifndef yywrap
