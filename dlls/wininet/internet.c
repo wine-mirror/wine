@@ -2715,7 +2715,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
      URL_COMPONENTSW components;
 
      ZeroMemory(&components,sizeof(URL_COMPONENTSW));
-     components.lpszHostName = (LPWSTR)&hostW;
+     components.lpszHostName = (LPWSTR)hostW;
      components.dwHostNameLength = 1024;
 
      if (!InternetCrackUrlW(lpszUrl,0,0,&components))
@@ -3427,7 +3427,7 @@ static LPCWSTR INTERNET_GetSchemeString(INTERNET_SCHEME scheme)
     index = scheme - INTERNET_SCHEME_FIRST;
     if (index >= sizeof(url_schemes)/sizeof(url_schemes[0]))
         return NULL;
-    return (LPCWSTR)&url_schemes[index];
+    return (LPCWSTR)url_schemes[index];
 }
 
 /* we can calculate using ansi strings because we're just
