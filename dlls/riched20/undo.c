@@ -84,7 +84,6 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
       else pItem->member.run.ole_obj = NULL;
       break;
     case diUndoSetCharFormat:
-    case diUndoSetDefaultCharFormat:
       break;
     case diUndoDeleteRun:
     case diUndoJoinParagraphs:
@@ -290,11 +289,6 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
   case diUndoSetCharFormat:
   {
     ME_SetCharFormat(editor, pUItem->nStart, pUItem->nLen, &pItem->member.ustyle->fmt);
-    break;
-  }
-  case diUndoSetDefaultCharFormat:
-  {
-    ME_SetDefaultCharFormat(editor, &pItem->member.ustyle->fmt);
     break;
   }
   case diUndoInsertRun:

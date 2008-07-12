@@ -119,7 +119,7 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item) {
     ME_ReleaseStyle(item->member.run.style);
     ME_DestroyString(item->member.run.strText);
   }
-  if (item->type==diUndoSetCharFormat || item->type==diUndoSetDefaultCharFormat) {
+  if (item->type==diUndoSetCharFormat) {
     ME_ReleaseStyle(item->member.ustyle);
   }
   if (item->type==diUndoSplitParagraph)
@@ -175,7 +175,6 @@ const char *ME_GetDITypeName(ME_DIType type)
     case diUndoDeleteRun: return "diUndoDeleteRun";
     case diUndoJoinParagraphs: return "diJoinParagraphs";
     case diUndoSplitParagraph: return "diSplitParagraph";
-    case diUndoSetDefaultCharFormat: return "diUndoSetDefaultCharFormat";
     default: return "?";
   }
 }

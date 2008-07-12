@@ -832,17 +832,8 @@ void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W 
 void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod)
 {
   ME_Style *style;
-  ME_UndoItem *undo;
 
-  /* FIXME: Should this be removed? It breaks a test. */
   assert(mod->cbSize == sizeof(CHARFORMAT2W));
-  undo = ME_AddUndoItem(editor, diUndoSetDefaultCharFormat, NULL);
-  if (undo) {
-    undo->nStart = -1;
-    undo->nLen = -1;
-    undo->di.member.ustyle = editor->pBuffer->pDefaultStyle;
-    ME_AddRefStyle(undo->di.member.ustyle);
-  }
   style = ME_ApplyStyle(editor->pBuffer->pDefaultStyle, mod);
   editor->pBuffer->pDefaultStyle->fmt = style->fmt;
   editor->pBuffer->pDefaultStyle->tm = style->tm;

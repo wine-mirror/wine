@@ -2532,7 +2532,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     set_caption(NULL);
     set_bar_states();
     set_fileformat(SF_RTF);
-    SendMessageW(hEditorWnd, EM_EMPTYUNDOBUFFER, 0, 0);
     hPopupMenu = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDM_POPUP));
     get_default_printer_opts();
     target_device(hMainWnd, wordWrap[reg_formatindex(fileFormat)]);
