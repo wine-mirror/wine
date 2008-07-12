@@ -904,9 +904,11 @@ void CALLBACK MACRO_SetHelpOnFile(LPCSTR str)
         strcpy(Globals.active_win->page->file->help_on_file, str);
 }
 
-void CALLBACK MACRO_SetPopupColor(LONG u1, LONG u2, LONG u3)
+void CALLBACK MACRO_SetPopupColor(LONG r, LONG g, LONG b)
 {
-    WINE_FIXME("(%u, %u, %u)\n", u1, u2, u3);
+    WINE_TRACE("(%x, %x, %x)\n", r, g, b);
+    Globals.active_win->page->file->has_popup_color = TRUE;
+    Globals.active_win->page->file->popup_color = RGB(r, g, b);
 }
 
 void CALLBACK MACRO_ShellExecute(LPCSTR str1, LPCSTR str2, LONG u1, LONG u2, LPCSTR str3, LPCSTR str4)

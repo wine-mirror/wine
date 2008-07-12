@@ -133,6 +133,9 @@ typedef struct tagHlpFileFile
     HLPFILE_WINDOWINFO*         windows;
     HICON                       hIcon;
 
+    BOOL                        has_popup_color;
+    COLORREF                    popup_color;
+
     LPSTR                       help_on_file;
 } HLPFILE;
 

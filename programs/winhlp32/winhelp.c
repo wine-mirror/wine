@@ -228,7 +228,10 @@ static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile,
 
     wi.style = SW_SHOW;
     wi.win_style = WS_POPUP | WS_BORDER;
-    wi.sr_color = parent->info->sr_color;
+    if (parent->page->file->has_popup_color)
+        wi.sr_color = parent->page->file->popup_color;
+    else
+        wi.sr_color = parent->info->sr_color;
     wi.nsr_color = 0xFFFFFF;
 
     return &wi;
