@@ -2516,7 +2516,7 @@ static void shader_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         if(!isStateDirty(context, STATE_PIXELSHADERCONSTANT) &&
             !isStateDirty(context, STATE_PIXELSHADER)) {
             shaderconstant(STATE_PIXELSHADERCONSTANT, stateblock, context);
-            }
+        }
     }
 }
 
