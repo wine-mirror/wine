@@ -2,7 +2,7 @@
  * Help Viewer
  *
  * Copyright 1996 Ulrich Schmid
- * Copyright 2002 Eric Pouech
+ * Copyright 2002, 2008 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -555,8 +555,14 @@ void CALLBACK MACRO_GotoMark(LPCSTR str)
 
 void CALLBACK MACRO_HelpOn(void)
 {
+    LPCSTR      file;
+
     WINE_TRACE("()\n");
-    MACRO_JumpContents((Globals.wVersion > 4) ? "winhelp32.hlp" : "winhelp.hlp", NULL);
+    file = Globals.active_win->page->file->help_on_file;
+    if (!file)
+        file = (Globals.wVersion > 4) ? "winhlp32.hlp" : "winhelp.hlp";
+
+    MACRO_JumpContents(file, NULL);
 }
 
 void CALLBACK MACRO_HelpOnTop(void)
@@ -890,7 +896,12 @@ void CALLBACK MACRO_SetContents(LPCSTR str, LONG u)
 
 void CALLBACK MACRO_SetHelpOnFile(LPCSTR str)
 {
-    WINE_FIXME("(\"%s\")\n", str);
+    WINE_TRACE("(\"%s\")\n", str);
+
+    HeapFree(GetProcessHeap(), 0, Globals.active_win->page->file->help_on_file);
+    Globals.active_win->page->file->help_on_file = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
+    if (Globals.active_win->page->file->help_on_file)
+        strcpy(Globals.active_win->page->file->help_on_file, str);
 }
 
 void CALLBACK MACRO_SetPopupColor(LONG u1, LONG u2, LONG u3)

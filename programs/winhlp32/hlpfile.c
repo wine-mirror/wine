@@ -2641,5 +2641,6 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
     HeapFree(GetProcessHeap(), 0, hlpfile->phrases_offsets);
     HeapFree(GetProcessHeap(), 0, hlpfile->phrases_buffer);
     HeapFree(GetProcessHeap(), 0, hlpfile->topic_map);
+    HeapFree(GetProcessHeap(), 0, hlpfile->help_on_file);
     HeapFree(GetProcessHeap(), 0, hlpfile);
 }
