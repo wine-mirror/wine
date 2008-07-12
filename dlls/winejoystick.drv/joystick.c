@@ -207,7 +207,7 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
     ioctl(dev, JSIOCGAXES, &nrOfAxes);
     ioctl(dev, JSIOCGBUTTONS, &nrOfButtons);
     ioctl(dev, JSIOCGVERSION, &driverVersion);
-    ioctl(dev, JSIOCGNAME(sizeof(identString)), &identString);
+    ioctl(dev, JSIOCGNAME(sizeof(identString)), identString);
     TRACE("Driver: 0x%06x, Name: %s, #Axes: %d, #Buttons: %d\n",
 	  driverVersion, identString, nrOfAxes, nrOfButtons);
     lpCaps->wMid = MM_MICROSOFT;
