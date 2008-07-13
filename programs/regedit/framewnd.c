@@ -313,12 +313,18 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME *pofn)
 
 static BOOL import_registry_filename(LPTSTR filename)
 {
+    BOOL Success;
     FILE* reg_file = fopen(filename, "r");
 
     if(!reg_file)
         return FALSE;
 
-    return import_registry_file(reg_file);
+    Success = import_registry_file(reg_file);
+
+    if(fclose(reg_file) != 0)
+        Success = FALSE;
+
+    return Success;
 }
 
 static BOOL ImportRegistryFile(HWND hWnd)
