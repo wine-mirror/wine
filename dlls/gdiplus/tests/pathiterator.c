@@ -95,7 +95,8 @@ static void test_nextmarker(void)
     GpPath *path;
     GpPathIterator *iter;
     GpStatus stat;
-    INT start, end, result;
+    INT start, end;
+    INT result;
 
     /* NULL args
        BOOL out argument is local in wrapper class method,
@@ -112,19 +113,34 @@ static void test_nextmarker(void)
 
     /* no markers */
     GdipCreatePathIter(&iter, path);
+    start = end = result = (INT)0xdeadbeef;
     stat = GdipPathIterNextMarker(iter, &result, &start, &end);
     expect(Ok, stat);
+    expect(0, start);
+    expect(3, end);
+    expect(4, result);
+    start = end = result = (INT)0xdeadbeef;
+    stat = GdipPathIterNextMarker(iter, &result, &start, &end);
+    /* start/end remain unchanged */
+    expect((INT)0xdeadbeef, start);
+    expect((INT)0xdeadbeef, end);
     expect(0, result);
     GdipDeletePathIter(iter);
 
     /* one marker */
     GdipSetPathMarker(path);
     GdipCreatePathIter(&iter, path);
+    start = end = result = (INT)0xdeadbeef;
     stat = GdipPathIterNextMarker(iter, &result, &start, &end);
     expect(Ok, stat);
-    expect(TRUE, (start == 0) && (end == 3) && (result == 4));
+    expect(0, start);
+    expect(3, end);
+    expect(4, result);
+    start = end = result = (INT)0xdeadbeef;
     stat = GdipPathIterNextMarker(iter, &result, &start, &end);
     expect(Ok, stat);
+    expect((INT)0xdeadbeef, start);
+    expect((INT)0xdeadbeef, end);
     expect(0, result);
     GdipDeletePathIter(iter);
 
@@ -132,14 +148,23 @@ static void test_nextmarker(void)
     GdipAddPathLine(path, 0.0, 0.0, 10.0, 30.0);
     GdipSetPathMarker(path);
     GdipCreatePathIter(&iter, path);
+    start = end = result = (INT)0xdeadbeef;
     stat = GdipPathIterNextMarker(iter, &result, &start, &end);
     expect(Ok, stat);
-    expect(TRUE, (start == 0) && (end == 3) && (result == 4));
+    expect(0, start);
+    expect(3, end);
+    expect(4, result);
+    start = end = result = (INT)0xdeadbeef;
     stat = GdipPathIterNextMarker(iter, &result, &start, &end);
     expect(Ok, stat);
-    expect(TRUE, (start == 4) && (end == 5) && (result == 2));
+    expect(4, start);
+    expect(5, end);
+    expect(2, result);
+    start = end = result = (INT)0xdeadbeef;
     stat = GdipPathIterNextMarker(iter, &result, &start, &end);
     expect(Ok, stat);
+    expect((INT)0xdeadbeef, start);
+    expect((INT)0xdeadbeef, end);
     expect(0, result);
     GdipDeletePathIter(iter);
 

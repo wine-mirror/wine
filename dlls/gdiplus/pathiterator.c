@@ -140,7 +140,8 @@ GpStatus WINGDIPAPI GdipPathIterNextMarker(GpPathIterator* iterator, INT *result
     /* first call could start with second point as all subsequent, cause
        path couldn't contain only one */
     for(i = iterator->marker_pos + 1; i < iterator->pathdata.Count; i++){
-        if(iterator->pathdata.Types[i] & PathPointTypePathMarker){
+        if((iterator->pathdata.Types[i] & PathPointTypePathMarker) ||
+           (i == iterator->pathdata.Count - 1)){
             *startIndex = iterator->marker_pos;
             if(iterator->marker_pos > 0) (*startIndex)++;
             *endIndex   = iterator->marker_pos = i;
