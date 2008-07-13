@@ -124,7 +124,7 @@ static void test_invert(void)
     GpStatus status;
     GpMatrix *matrix = NULL;
     GpMatrix *inverted = NULL;
-    BOOL equal;
+    BOOL equal = FALSE;
 
     /* NULL */
     status = GdipInvertMatrix(NULL);
@@ -137,11 +137,10 @@ static void test_invert(void)
     GdipDeleteMatrix(matrix);
 
     /* invertible */
-    GdipCreateMatrix2(1.0, 2.0, 4.0, -1.0, 6.0, 3.0, &matrix);
+    GdipCreateMatrix2(3.0, -2.0, 5.0, 2.0, 6.0, 3.0, &matrix);
     status = GdipInvertMatrix(matrix);
     expect(Ok, status);
-
-    GdipCreateMatrix2(1.0/9.0, 2.0/9.0, 4.0/9.0, -1.0/9.0, -2.0, -1.0, &inverted);
+    GdipCreateMatrix2(2.0/16.0, 2.0/16.0, -5.0/16.0, 3.0/16.0, 3.0/16.0, -21.0/16.0, &inverted);
     GdipIsMatrixEqual(matrix, inverted, &equal);
     expect(TRUE, equal);
 
