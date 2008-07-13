@@ -481,6 +481,45 @@ static void pf_integer_conv( char *buf, int buf_len, pf_flags *flags,
     return;
 }
 
+/* pf_fixup_exponent: convert a string containing a 2 digit exponent
+   to 3 digits, accounting for padding, in place. Needed to match
+   the native printf's which always use 3 digits. */
+static void pf_fixup_exponent( char *buf )
+{
+    char* tmp = buf;
+
+    while (tmp[0] && toupper(tmp[0]) != 'E')
+        tmp++;
+
+    if (tmp[0] && (tmp[1] == '+' || tmp[1] == '-') &&
+        isdigit(tmp[2]) && isdigit(tmp[3]))
+    {
+        char final;
+
+        if (isdigit(tmp[4]))
+            return; /* Exponent already 3 digits */
+
+        /* We have a 2 digit exponent. Prepend '0' to make it 3 */
+        tmp += 2;
+        final = tmp[2];
+        tmp[2] = tmp[1];
+        tmp[1] = tmp[0];
+        tmp[0] = '0';
+        if (final == '\0')
+        {
+            /* We didn't expand into trailing space, so this string isn't left
+             * justified. Terminate the string and strip a ' ' at the start of
+             * the string if there is one (as there may be if the string is
+             * right justified).
+             */
+            tmp[3] = '\0';
+            if (buf[0] == ' ')
+                memmove(buf, buf + 1, (tmp - buf) + 3);
+        }
+        /* Otherwise, we expanded into trailing space -> nothing to do */
+    }
+}
+
 /*********************************************************************
  *  pf_vsnprintf  (INTERNAL)
  *
@@ -693,7 +732,11 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
             pf_rebuild_format_string( fmt, &flags );
 
             if( pf_is_double_format( flags.Format ) )
+            {
                 sprintf( x, fmt, va_arg(valist, double) );
+                if (toupper(flags.Format) == 'E' || toupper(flags.Format) == 'G')
+                    pf_fixup_exponent( x );
+            }
             else
                 sprintf( x, fmt, va_arg(valist, int) );
 
