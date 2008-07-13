@@ -249,13 +249,8 @@ void DoOpenFile(LPCWSTR szFileName)
     CloseHandle(hFile);
     pTemp[dwNumRead] = 0;
 
-    if (IsTextUnicode(pTemp, dwNumRead, NULL))
-    {
-	LPWSTR p = (LPWSTR)pTemp;
-	/* We need to strip BOM Unicode character, SetWindowTextW won't do it for us. */
-	if (*p == 0xFEFF || *p == 0xFFFE) p++;
-	SetWindowTextW(Globals.hEdit, p);
-    }
+    if((size -1) >= 2 && (BYTE)pTemp[0] == 0xff && (BYTE)pTemp[1] == 0xfe)
+	SetWindowTextW(Globals.hEdit, (LPWSTR)pTemp + 1);
     else
 	SetWindowTextA(Globals.hEdit, pTemp);
 
