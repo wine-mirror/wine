@@ -253,7 +253,7 @@ typedef struct
 
 #define REBAR_GetInfoPtr(wndPtr) ((REBAR_INFO *)GetWindowLongPtrW (hwnd, 0))
 
-static LRESULT REBAR_NotifyFormat(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
+static LRESULT REBAR_NotifyFormat(REBAR_INFO *infoPtr, LPARAM lParam);
 static void REBAR_AutoSize(REBAR_INFO *infoPtr, BOOL needsLayout);
 
 /* "constant values" retrieved when DLL was initialized    */
@@ -1775,7 +1775,7 @@ REBAR_CommonSetupBand(HWND hwnd, const REBARBANDINFOW *lprbbi, REBAR_BAND *lpBan
 }
 
 static LRESULT
-REBAR_InternalEraseBkGnd (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, const RECT *clip)
+REBAR_InternalEraseBkGnd (const REBAR_INFO *infoPtr, WPARAM wParam, const RECT *clip)
      /* Function:  This erases the background rectangle by drawing  */
      /*  each band with its background color (or the default) and   */
      /*  draws each bands right separator if necessary. The row     */
@@ -2035,7 +2035,7 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
 
 
 static LRESULT
-REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam)
 {
     UINT uBand = (UINT)wParam;
     REBAR_BAND *lpBand;
@@ -2202,7 +2202,7 @@ REBAR_GetBandInfoT(const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL
 
 
 static LRESULT
-REBAR_GetBarHeight (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_GetBarHeight (const REBAR_INFO *infoPtr)
 {
     INT nHeight;
 
@@ -2215,7 +2215,7 @@ REBAR_GetBarHeight (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_GetBarInfo (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_GetBarInfo (const REBAR_INFO *infoPtr, LPARAM lParam)
 {
     LPREBARINFO lpInfo = (LPREBARINFO)lParam;
 
@@ -2295,7 +2295,7 @@ REBAR_GetRowCount (const REBAR_INFO *infoPtr)
 
 
 static LRESULT
-REBAR_GetRowHeight (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_GetRowHeight (const REBAR_INFO *infoPtr, WPARAM wParam)
 {
     INT iRow = (INT)wParam;
     int j = 0, ret = 0;
@@ -2351,7 +2351,7 @@ REBAR_GetVersion (const REBAR_INFO *infoPtr)
 
 
 static LRESULT
-REBAR_HitTest (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_HitTest (const REBAR_INFO *infoPtr, LPARAM lParam)
 {
     LPRBHITTESTINFO lprbht = (LPRBHITTESTINFO)lParam;
 
@@ -2365,7 +2365,7 @@ REBAR_HitTest (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_IdToIndex (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_IdToIndex (const REBAR_INFO *infoPtr, WPARAM wParam)
 {
     UINT i;
 
@@ -2499,7 +2499,7 @@ REBAR_MaximizeBand (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_MinimizeBand (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_MinimizeBand (const REBAR_INFO *infoPtr, WPARAM wParam)
 {
     REBAR_BAND *lpBand;
     UINT uBand = (UINT) wParam;
@@ -2681,7 +2681,7 @@ REBAR_SetBandInfoT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnic
 
 
 static LRESULT
-REBAR_SetBarInfo (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SetBarInfo (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     LPREBARINFO lpInfo = (LPREBARINFO)lParam;
     REBAR_BAND *lpBand;
@@ -2722,7 +2722,7 @@ REBAR_SetBarInfo (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_SetBkColor (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SetBkColor (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     COLORREF clrTemp;
 
@@ -2740,7 +2740,7 @@ REBAR_SetBkColor (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_SetParent (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SetParent (REBAR_INFO *infoPtr, WPARAM wParam)
 {
     HWND hwndTemp = infoPtr->hwndNotify;
 
@@ -2751,7 +2751,7 @@ REBAR_SetParent (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_SetTextColor (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SetTextColor (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     COLORREF clrTemp;
 
@@ -2829,7 +2829,7 @@ REBAR_ShowBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_SizeToRect (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SizeToRect (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     LPRECT lpRect = (LPRECT)lParam;
 
@@ -2844,7 +2844,7 @@ REBAR_SizeToRect (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_Create (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_Create (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     LPCREATESTRUCTW cs = (LPCREATESTRUCTW) lParam;
     RECT wnrc1, clrc1;
@@ -2870,7 +2870,7 @@ REBAR_Create (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_Destroy (REBAR_INFO *infoPtr)
 {
     REBAR_BAND *lpBand;
     UINT i;
@@ -2911,18 +2911,18 @@ REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_EraseBkGnd (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_EraseBkGnd (const REBAR_INFO *infoPtr, WPARAM wParam)
 {
     RECT cliprect;
 
     if (GetClipBox ( (HDC)wParam, &cliprect))
-        return REBAR_InternalEraseBkGnd (infoPtr, wParam, lParam, &cliprect);
+        return REBAR_InternalEraseBkGnd (infoPtr, wParam, &cliprect);
     return 0;
 }
 
 
 static LRESULT
-REBAR_GetFont (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_GetFont (const REBAR_INFO *infoPtr)
 {
     return (LRESULT)infoPtr->hFont;
 }
@@ -2960,7 +2960,7 @@ REBAR_PushChevron(const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-REBAR_LButtonDown (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_LButtonDown (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     REBAR_BAND *lpBand;
     UINT htFlags;
@@ -2996,7 +2996,7 @@ REBAR_LButtonDown (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-REBAR_LButtonUp (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_LButtonUp (REBAR_INFO *infoPtr)
 {
     if (infoPtr->iGrabbedBand >= 0)
     {
@@ -3025,7 +3025,7 @@ REBAR_LButtonUp (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-REBAR_MouseLeave (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_MouseLeave (REBAR_INFO *infoPtr)
 {
     if (infoPtr->ichevronhotBand >= 0)
     {
@@ -3043,7 +3043,7 @@ REBAR_MouseLeave (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-REBAR_MouseMove (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_MouseMove (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     REBAR_BAND *lpChevronBand;
     POINT ptMove;
@@ -3133,7 +3133,7 @@ REBAR_MouseMove (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static inline LRESULT
-REBAR_NCCalcSize (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_NCCalcSize (const REBAR_INFO *infoPtr, LPARAM lParam)
 {
     HTHEME theme;
     RECT *rect = (RECT *)lParam;
@@ -3155,7 +3155,7 @@ REBAR_NCCalcSize (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
+REBAR_NCCreate (HWND hwnd, LPARAM lParam)
 {
     LPCREATESTRUCTW cs = (LPCREATESTRUCTW) lParam;
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
@@ -3198,7 +3198,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hFont = GetStockObject (SYSTEM_FONT);
 
     /* issue WM_NOTIFYFORMAT to get unicode status of parent */
-    REBAR_NotifyFormat(infoPtr, 0, NF_REQUERY);
+    REBAR_NotifyFormat(infoPtr, NF_REQUERY);
 
     /* Stow away the original style */
     infoPtr->orgStyle = cs->style;
@@ -3248,7 +3248,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_NCHitTest (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_NCHitTest (const REBAR_INFO *infoPtr, LPARAM lParam)
 {
     NMMOUSE nmmouse;
     POINT clpt;
@@ -3283,7 +3283,7 @@ REBAR_NCHitTest (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_NCPaint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_NCPaint (const REBAR_INFO *infoPtr)
 {
     RECT rcWindow;
     HDC hdc;
@@ -3320,7 +3320,7 @@ REBAR_NCPaint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_NotifyFormat (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_NotifyFormat (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     INT i;
 
@@ -3339,7 +3339,7 @@ REBAR_NotifyFormat (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_Paint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_Paint (const REBAR_INFO *infoPtr, WPARAM wParam)
 {
     HDC hdc = (HDC)wParam;
 
@@ -3352,7 +3352,7 @@ REBAR_Paint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         TRACE("painting (%s)\n", wine_dbgstr_rect(&ps.rcPaint));
         if (ps.fErase) {
             /* Erase area of paint if requested */
-            REBAR_InternalEraseBkGnd (infoPtr, wParam, lParam, &ps.rcPaint);
+            REBAR_InternalEraseBkGnd (infoPtr, wParam, &ps.rcPaint);
         }
         REBAR_Refresh (infoPtr, hdc);
 	EndPaint (infoPtr->hwndSelf, &ps);
@@ -3363,7 +3363,7 @@ REBAR_Paint (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_SetCursor (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SetCursor (const REBAR_INFO *infoPtr, LPARAM lParam)
 {
     POINT pt;
     UINT  flags;
@@ -3390,7 +3390,7 @@ REBAR_SetCursor (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam)
 {
     REBAR_BAND *lpBand;
     UINT i;
@@ -3409,7 +3409,7 @@ REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static inline LRESULT
-REBAR_SetRedraw (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SetRedraw (REBAR_INFO *infoPtr, WPARAM wParam)
      /*****************************************************
       *
       * Function;
@@ -3462,7 +3462,7 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-REBAR_StyleChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_StyleChanged (REBAR_INFO *infoPtr, LPARAM lParam)
 {
     STYLESTRUCT *ss = (STYLESTRUCT *)lParam;
 
@@ -3519,7 +3519,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*	case RB_BEGINDRAG: */
 
 	case RB_DELETEBAND:
-	    return REBAR_DeleteBand (infoPtr, wParam, lParam);
+	    return REBAR_DeleteBand (infoPtr, wParam);
 
 /*	case RB_DRAGMOVE: */
 /*	case RB_ENDDRAG: */
@@ -3538,10 +3538,10 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_GetBandInfoT(infoPtr, wParam, lParam, TRUE);
 
 	case RB_GETBARHEIGHT:
-	    return REBAR_GetBarHeight (infoPtr, wParam, lParam);
+	    return REBAR_GetBarHeight (infoPtr);
 
 	case RB_GETBARINFO:
-	    return REBAR_GetBarInfo (infoPtr, wParam, lParam);
+	    return REBAR_GetBarInfo (infoPtr, lParam);
 
 	case RB_GETBKCOLOR:
 	    return REBAR_GetBkColor (infoPtr);
@@ -3559,7 +3559,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_GetRowCount (infoPtr);
 
 	case RB_GETROWHEIGHT:
-	    return REBAR_GetRowHeight (infoPtr, wParam, lParam);
+	    return REBAR_GetRowHeight (infoPtr, wParam);
 
 	case RB_GETTEXTCOLOR:
 	    return REBAR_GetTextColor (infoPtr);
@@ -3574,10 +3574,10 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_GetVersion (infoPtr);
 
 	case RB_HITTEST:
-	    return REBAR_HitTest (infoPtr, wParam, lParam);
+	    return REBAR_HitTest (infoPtr, lParam);
 
 	case RB_IDTOINDEX:
-	    return REBAR_IdToIndex (infoPtr, wParam, lParam);
+	    return REBAR_IdToIndex (infoPtr, wParam);
 
 	case RB_INSERTBANDA:
 	    return REBAR_InsertBandT(infoPtr, wParam, lParam, FALSE);
@@ -3589,7 +3589,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_MaximizeBand (infoPtr, wParam, lParam);
 
 	case RB_MINIMIZEBAND:
-	    return REBAR_MinimizeBand (infoPtr, wParam, lParam);
+	    return REBAR_MinimizeBand (infoPtr, wParam);
 
 	case RB_MOVEBAND:
 	    return REBAR_MoveBand (infoPtr, wParam, lParam);
@@ -3604,20 +3604,20 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_SetBandInfoT(infoPtr, wParam, lParam, TRUE);
 
 	case RB_SETBARINFO:
-	    return REBAR_SetBarInfo (infoPtr, wParam, lParam);
+	    return REBAR_SetBarInfo (infoPtr, lParam);
 
 	case RB_SETBKCOLOR:
-	    return REBAR_SetBkColor (infoPtr, wParam, lParam);
+	    return REBAR_SetBkColor (infoPtr, lParam);
 
 /*	case RB_SETCOLORSCHEME: */
 /*	case RB_SETPALETTE: */
 /*	    return REBAR_GetPalette (infoPtr, wParam, lParam); */
 
 	case RB_SETPARENT:
-	    return REBAR_SetParent (infoPtr, wParam, lParam);
+	    return REBAR_SetParent (infoPtr, wParam);
 
 	case RB_SETTEXTCOLOR:
-	    return REBAR_SetTextColor (infoPtr, wParam, lParam);
+	    return REBAR_SetTextColor (infoPtr, lParam);
 
 /*	case RB_SETTOOLTIPS: */
 
@@ -3631,7 +3631,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_ShowBand (infoPtr, wParam, lParam);
 
 	case RB_SIZETORECT:
-	    return REBAR_SizeToRect (infoPtr, wParam, lParam);
+	    return REBAR_SizeToRect (infoPtr, lParam);
 
 
 /*    Messages passed to parent */
@@ -3644,51 +3644,51 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*      case WM_CHARTOITEM:     supported according to ControlSpy */
 
 	case WM_CREATE:
-	    return REBAR_Create (infoPtr, wParam, lParam);
+	    return REBAR_Create (infoPtr, lParam);
 
 	case WM_DESTROY:
-	    return REBAR_Destroy (infoPtr, wParam, lParam);
+	    return REBAR_Destroy (infoPtr);
 
         case WM_ERASEBKGND:
-	    return REBAR_EraseBkGnd (infoPtr, wParam, lParam);
+	    return REBAR_EraseBkGnd (infoPtr, wParam);
 
 	case WM_GETFONT:
-	    return REBAR_GetFont (infoPtr, wParam, lParam);
+	    return REBAR_GetFont (infoPtr);
 
 /*      case WM_LBUTTONDBLCLK:  supported according to ControlSpy */
 
 	case WM_LBUTTONDOWN:
-	    return REBAR_LButtonDown (infoPtr, wParam, lParam);
+	    return REBAR_LButtonDown (infoPtr, lParam);
 
 	case WM_LBUTTONUP:
-	    return REBAR_LButtonUp (infoPtr, wParam, lParam);
+	    return REBAR_LButtonUp (infoPtr);
 
 /*      case WM_MEASUREITEM:    supported according to ControlSpy */
 
 	case WM_MOUSEMOVE:
-	    return REBAR_MouseMove (infoPtr, wParam, lParam);
+	    return REBAR_MouseMove (infoPtr, lParam);
 
 	case WM_MOUSELEAVE:
-	    return REBAR_MouseLeave (infoPtr, wParam, lParam);
+	    return REBAR_MouseLeave (infoPtr);
 
 	case WM_NCCALCSIZE:
-	    return REBAR_NCCalcSize (infoPtr, wParam, lParam);
+	    return REBAR_NCCalcSize (infoPtr, lParam);
 
         case WM_NCCREATE:
-	    return REBAR_NCCreate (hwnd, wParam, lParam);
+	    return REBAR_NCCreate (hwnd, lParam);
 
         case WM_NCHITTEST:
-	    return REBAR_NCHitTest (infoPtr, wParam, lParam);
+	    return REBAR_NCHitTest (infoPtr, lParam);
 
 	case WM_NCPAINT:
-	    return REBAR_NCPaint (infoPtr, wParam, lParam);
+	    return REBAR_NCPaint (infoPtr);
 
         case WM_NOTIFYFORMAT:
-	    return REBAR_NotifyFormat (infoPtr, wParam, lParam);
+	    return REBAR_NotifyFormat (infoPtr, lParam);
 
 	case WM_PRINTCLIENT:
 	case WM_PAINT:
-	    return REBAR_Paint (infoPtr, wParam, lParam);
+	    return REBAR_Paint (infoPtr, wParam);
 
 /*      case WM_PALETTECHANGED: supported according to ControlSpy */
 /*      case WM_QUERYNEWPALETTE:supported according to ControlSpy */
@@ -3696,19 +3696,19 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*      case WM_RBUTTONUP:      supported according to ControlSpy */
 
 	case WM_SETCURSOR:
-	    return REBAR_SetCursor (infoPtr, wParam, lParam);
+	    return REBAR_SetCursor (infoPtr, lParam);
 
 	case WM_SETFONT:
-	    return REBAR_SetFont (infoPtr, wParam, lParam);
+	    return REBAR_SetFont (infoPtr, wParam);
 
         case WM_SETREDRAW:
-	    return REBAR_SetRedraw (infoPtr, wParam, lParam);
+	    return REBAR_SetRedraw (infoPtr, wParam);
 
 	case WM_SIZE:
 	    return REBAR_Size (infoPtr, wParam, lParam);
 
         case WM_STYLECHANGED:
-	    return REBAR_StyleChanged (infoPtr, wParam, lParam);
+	    return REBAR_StyleChanged (infoPtr, lParam);
 
         case WM_THEMECHANGED:
             return theme_changed (infoPtr);
