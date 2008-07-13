@@ -704,7 +704,7 @@ void processRegLinesW(FILE *in)
 {
     WCHAR* buf           = NULL;  /* line read from input stream */
     ULONG lineSize       = REG_VAL_BUF_SIZE;
-    size_t check = -1;
+    size_t CharsInBuf = -1;
 
     WCHAR* s; /* The pointer into line for where the current fgets should read */
 
@@ -741,10 +741,10 @@ void processRegLinesW(FILE *in)
         */
         size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
 
-        check = fread(s, sizeof(WCHAR), size_to_get - 1, in);
-        s[check] = 0;
+        CharsInBuf = fread(s, sizeof(WCHAR), size_to_get - 1, in);
+        s[CharsInBuf] = 0;
 
-        if (check == 0) {
+        if (CharsInBuf == 0) {
             if (ferror(in)) {
                 perror ("While reading input");
                 exit (IO_ERROR);
@@ -772,26 +772,30 @@ void processRegLinesW(FILE *in)
                 continue;
             }
 
+            /* If there is a concatenating \\ then go around again */
+            if ((*(s_eol-1) == '\\') ||
+                (*(s_eol-1) == '\r' && *(s_eol-2) == '\\')) {
+                WCHAR* NextLine = s_eol;
+
+                while(*(NextLine+1) == ' ' || *(NextLine+1) == '\t')
+                    NextLine++;
+
+                NextLine++;
+
+                if(*(s_eol-1) == '\r')
+                    s_eol--;
+
+                MoveMemory(s_eol - 1, NextLine, (CharsInBuf - (NextLine - buf) + 1)*sizeof(WCHAR));
+                CharsInBuf -= NextLine - s_eol + 1;
+                s_eol = 0;
+                continue;
+            }
+
             /* Remove any line feed.  Leave s_eol on the \0 */
             if (s_eol) {
                 *s_eol = '\0';
                 if (s_eol > buf && *(s_eol-1) == '\r')
                     *(s_eol-1) = '\0';
-            }
-
-            /* If there is a concatenating \\ then go around again */
-            if (s_eol > buf && *(s_eol-1) == '\\') {
-                WCHAR c[2];
-                s = s_eol+1;
-                /* The following error protection could be made more self-
-                * correcting but I thought it not worth trying.
-                */
-                if(!fread(&c, sizeof(WCHAR), 2, in))
-                    break;
-                if (feof(in) || c[0] != ' ' || c[1] != ' ')
-                    fprintf(stderr,"%s: ERROR - invalid continuation.\n",
-                            getAppName());
-                continue;
             }
 
             if(!s_eol)
