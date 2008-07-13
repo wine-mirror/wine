@@ -57,7 +57,7 @@ static BOOL InitFunctionPtrs(void)
 
 static void test_query_basic(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     SYSTEM_BASIC_INFORMATION sbi;
 
@@ -118,7 +118,7 @@ static void test_query_cpu(void)
 
 static void test_query_performance(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     SYSTEM_PERFORMANCE_INFORMATION spi;
 
@@ -138,7 +138,7 @@ static void test_query_performance(void)
 
 static void test_query_timeofday(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
 
     /* Copy of our winternl.h structure turned into a private one */
@@ -215,7 +215,7 @@ static void test_query_timeofday(void)
 
 static void test_query_process(void)
 {
-    DWORD status;
+    NTSTATUS status;
     DWORD last_pid;
     ULONG ReturnLength;
     int i = 0, k = 0;
@@ -325,7 +325,7 @@ static void test_query_process(void)
 
 static void test_query_procperf(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     ULONG NeededLength;
     SYSTEM_BASIC_INFORMATION sbi;
@@ -363,7 +363,7 @@ static void test_query_procperf(void)
 
 static void test_query_module(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     ULONG ModuleCount, i;
 
@@ -398,7 +398,7 @@ static void test_query_module(void)
 
 static void test_query_handle(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     ULONG SystemInformationLength = sizeof(SYSTEM_HANDLE_INFORMATION);
     SYSTEM_HANDLE_INFORMATION* shi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
@@ -431,7 +431,7 @@ static void test_query_handle(void)
 
 static void test_query_cache(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     SYSTEM_CACHE_INFORMATION sci;
 
@@ -449,7 +449,7 @@ static void test_query_cache(void)
 
 static void test_query_interrupt(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     ULONG NeededLength;
     SYSTEM_BASIC_INFORMATION sbi;
@@ -477,7 +477,7 @@ static void test_query_interrupt(void)
 
 static void test_query_kerndebug(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
 
@@ -495,7 +495,7 @@ static void test_query_kerndebug(void)
 
 static void test_query_regquota(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     SYSTEM_REGISTRY_QUOTA_INFORMATION srqi;
 
@@ -513,7 +513,7 @@ static void test_query_regquota(void)
 
 static void test_query_process_basic(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
 
     typedef struct _PROCESS_BASIC_INFORMATION_PRIVATE {
@@ -581,7 +581,7 @@ static void test_query_process_basic(void)
 
 static void test_query_process_vm(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     VM_COUNTERS pvi;
 
@@ -619,7 +619,7 @@ static void test_query_process_vm(void)
 
 static void test_query_process_io(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     IO_COUNTERS pii;
 
@@ -659,7 +659,7 @@ static void test_query_process_io(void)
 
 static void test_query_process_times(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     HANDLE process;
     SYSTEMTIME UTC, Local;
@@ -713,7 +713,7 @@ static void test_query_process_times(void)
 
 static void test_query_process_handlecount(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     DWORD handlecount;
     HANDLE process;
@@ -757,7 +757,7 @@ static void test_query_process_handlecount(void)
 
 static void test_query_process_image_file_name(void)
 {
-    DWORD status;
+    NTSTATUS status;
     ULONG ReturnLength;
     UNICODE_STRING image_file_name;
     void *buffer;
@@ -795,7 +795,7 @@ static void test_query_process_image_file_name(void)
 static void test_readvirtualmemory(void)
 {
     HANDLE process;
-    DWORD status;
+    NTSTATUS status;
     SIZE_T readcount;
     static const char teststring[] = "test string";
     char buffer[12];
