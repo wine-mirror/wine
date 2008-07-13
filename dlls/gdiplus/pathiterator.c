@@ -31,24 +31,30 @@ GpStatus WINGDIPAPI GdipCreatePathIter(GpPathIterator **iterator, GpPath* path)
 {
     INT size;
 
-    if(!iterator || !path)
+    if(!iterator)
         return InvalidParameter;
-
-    size = path->pathdata.Count;
 
     *iterator = GdipAlloc(sizeof(GpPathIterator));
     if(!*iterator)  return OutOfMemory;
 
-    (*iterator)->pathdata.Types = GdipAlloc(size);
-    (*iterator)->pathdata.Points = GdipAlloc(size * sizeof(PointF));
+    if(path){
+        size = path->pathdata.Count;
 
-    memcpy((*iterator)->pathdata.Types, path->pathdata.Types, size);
-    memcpy((*iterator)->pathdata.Points, path->pathdata.Points,
-           size * sizeof(PointF));
-    (*iterator)->pathdata.Count = size;
+        (*iterator)->pathdata.Types  = GdipAlloc(size);
+        (*iterator)->pathdata.Points = GdipAlloc(size * sizeof(PointF));
 
-    (*iterator)->subpath_pos = 0;
-    (*iterator)->marker_pos = 0;
+        memcpy((*iterator)->pathdata.Types, path->pathdata.Types, size);
+        memcpy((*iterator)->pathdata.Points, path->pathdata.Points,size * sizeof(PointF));
+        (*iterator)->pathdata.Count = size;
+    }
+    else{
+        (*iterator)->pathdata.Types  = NULL;
+        (*iterator)->pathdata.Points = NULL;
+        (*iterator)->pathdata.Count  = 0;
+    }
+
+    (*iterator)->subpath_pos  = 0;
+    (*iterator)->marker_pos   = 0;
     (*iterator)->pathtype_pos = 0;
 
     return Ok;
@@ -155,6 +161,10 @@ GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator* iterator,
         return InvalidParameter;
 
     count = iterator->pathdata.Count;
+
+    /* iterator created with NULL path */
+    if(count == 0)
+        return Ok;
 
     if(iterator->subpath_pos == count){
         *startIndex = *endIndex = *resultCount = 0;

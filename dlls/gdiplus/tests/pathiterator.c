@@ -37,7 +37,7 @@ static void test_constructor_destructor(void)
     stat = GdipCreatePathIter(NULL, NULL);
     expect(InvalidParameter, stat);
     stat = GdipCreatePathIter(&iter, NULL);
-    expect(InvalidParameter, stat);
+    expect(Ok, stat);
     stat = GdipCreatePathIter(NULL, path);
     expect(InvalidParameter, stat);
     stat = GdipDeletePathIter(NULL);
