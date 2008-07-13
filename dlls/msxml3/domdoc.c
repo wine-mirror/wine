@@ -299,12 +299,13 @@ static const struct IBindStatusCallbackVtbl bsc_vtbl =
 
 static bsc_t *create_bsc(domdoc *doc)
 {
-    bsc_t *bsc = HeapAlloc(GetProcessHeap(), 0, sizeof(bsc));
+    bsc_t *bsc = HeapAlloc(GetProcessHeap(), 0, sizeof(bsc_t));
 
     bsc->lpVtbl = &bsc_vtbl;
     bsc->ref = 1;
     bsc->doc = doc;
     bsc->binding = NULL;
+    bsc->memstream = NULL;
 
     return bsc;
 }
