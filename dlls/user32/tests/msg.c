@@ -1777,6 +1777,8 @@ static void ok_sequence_(const struct message *expected, const char *context, in
     flush_sequence();
 }
 
+#define expect(EXPECTED,GOT) ok((GOT)==(EXPECTED), "Expected %d, got %d\n", (EXPECTED), (GOT))
+
 /******************************** MDI test **********************************/
 
 /* CreateWindow for MDI frame window, initially visible */
@@ -4081,6 +4083,23 @@ static const struct message WmInitEndSession_5[] = {
     { 0 }
 };
 
+static const struct message WmZOrder[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0, 0 },
+    { WM_GETMINMAXINFO, sent|defwinproc|wparam, 0, 0 },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 3, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOREDRAW|SWP_NOMOVE|SWP_NOSIZE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE, 0 },
+    { WM_ACTIVATEAPP, sent|wparam, 1, 0 },
+    { WM_NCACTIVATE, sent|wparam|lparam, 1, 0 },
+    { WM_ACTIVATE, sent|wparam|lparam, 1, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { 0 }
+};
+
 static void test_MsgWaitForMultipleObjects(HWND hwnd)
 {
     DWORD ret;
@@ -4542,6 +4561,42 @@ static void test_messages(void)
 
     DestroyWindow(hwnd);
     flush_sequence();
+}
+
+static void test_setwindowpos(void)
+{
+    HWND hwnd;
+    RECT rc;
+    LRESULT res;
+    const INT winX = 100;
+    const INT winY = 100;
+    const INT sysX = GetSystemMetrics(SM_CXMINTRACK);
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", NULL, 0,
+                           0, 0, winX, winY, 0,
+                           NULL, NULL, 0);
+
+    GetWindowRect(hwnd, &rc);
+    todo_wine expect(sysX, rc.right);
+    expect(winY, rc.bottom);
+    GetClientRect(hwnd, &rc);
+    todo_wine expect(sysX - 6, rc.right);
+    expect(winY - 25, rc.bottom);
+
+    flush_events();
+    flush_sequence();
+    res = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, winX, winY, 0);
+    ok_sequence(WmZOrder, "Z-Order", TRUE);
+    ok(res == TRUE, "SetWindowPos expected TRUE, got %ld\n", res);
+
+    GetWindowRect(hwnd, &rc);
+    expect(sysX, rc.right);
+    expect(winY, rc.bottom);
+    GetClientRect(hwnd, &rc);
+    expect(sysX - 6, rc.right);
+    expect(winY - 25, rc.bottom);
+
+    DestroyWindow(hwnd);
 }
 
 static void invisible_parent_tests(void)
@@ -10962,6 +11017,7 @@ START_TEST(msg)
     test_PeekMessage2();
     test_scrollwindowex();
     test_messages();
+    test_setwindowpos();
     test_showwindow();
     invisible_parent_tests();
     test_mdi_messages();
