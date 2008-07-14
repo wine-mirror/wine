@@ -241,7 +241,7 @@ static LPITEMIDLIST _ILCreateCPanelApplet(LPCSTR name, LPCSTR displayName,
     PIDLCPanelStruct *p;
     LPITEMIDLIST pidl;
     PIDLDATA tmp;
-    int size0 = (char*)&tmp.u.cpanel.szName-(char*)&tmp.u.cpanel;
+    int size0 = (char*)tmp.u.cpanel.szName-(char*)&tmp.u.cpanel;
     int size = size0;
     int l;
 
@@ -356,7 +356,7 @@ static int SHELL_RegisterRegistryCPanelApps(IEnumIDList* list, HKEY hkey_root, L
             DWORD nameLen = MAX_PATH;
             DWORD valueLen = MAX_PATH;
 
-            if (RegEnumValueA(hkey, idx, name, &nameLen, NULL, NULL, (LPBYTE)&value, &valueLen) != ERROR_SUCCESS)
+            if (RegEnumValueA(hkey, idx, name, &nameLen, NULL, NULL, (LPBYTE)value, &valueLen) != ERROR_SUCCESS)
                 break;
 
             if (SHELL_RegisterCPanelApp(list, value))

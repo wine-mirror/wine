@@ -335,7 +335,7 @@ static void Control_RegisterRegistryApplets(HWND hWnd, CPanel *panel, HKEY hkey_
             DWORD nameLen = MAX_PATH;
             DWORD valueLen = MAX_PATH;
 
-            if (RegEnumValueW(hkey, idx, name, &nameLen, NULL, NULL, (LPBYTE)&value, &valueLen) != ERROR_SUCCESS)
+            if (RegEnumValueW(hkey, idx, name, &nameLen, NULL, NULL, (LPBYTE)value, &valueLen) != ERROR_SUCCESS)
                 break;
 
             Control_LoadApplet(hWnd, value, panel);

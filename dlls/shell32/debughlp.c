@@ -60,7 +60,7 @@ static
 LPPIDLDATA _dbg_ILGetDataPointer(LPCITEMIDLIST pidl)
 {
 	if(pidl && pidl->mkid.cb != 0x00)
-	  return (LPPIDLDATA) &(pidl->mkid.abID);
+	  return (LPPIDLDATA)pidl->mkid.abID;
 	return NULL;
 }
 
@@ -82,21 +82,21 @@ LPSTR _dbg_ILGetTextPointer(LPCITEMIDLIST pidl)
 	    case PT_DRIVE1:
 	    case PT_DRIVE2:
 	    case PT_DRIVE3:
-	      return (LPSTR)&(pdata->u.drive.szDriveName);
+	      return (LPSTR)pdata->u.drive.szDriveName;
 
 	    case PT_FOLDER:
 	    case PT_FOLDER1:
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
 	    case PT_IESPECIAL2:
-	      return (LPSTR)&(pdata->u.file.szNames);
+	      return (LPSTR)pdata->u.file.szNames;
 
 	    case PT_WORKGRP:
 	    case PT_COMP:
 	    case PT_NETWORK:
 	    case PT_NETPROVIDER:
 	    case PT_SHARE:
-	      return (LPSTR)&(pdata->u.network.szNames);
+	      return (LPSTR)pdata->u.network.szNames;
 	  }
 	}
 	return NULL;
@@ -140,7 +140,7 @@ LPWSTR _dbg_ILGetTextPointerW(LPCITEMIDLIST pidl)
 	      return NULL;
 
 	    case PT_VALUEW:
-	      return (LPWSTR)&(pdata->u.file.szNames);
+	      return (LPWSTR)pdata->u.file.szNames;
 	  }
 	}
 	return NULL;

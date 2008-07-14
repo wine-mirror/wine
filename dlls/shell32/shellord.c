@@ -718,7 +718,7 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
     /* See if we need to do anything.
      */
     datalen = 64;
-    ret=SHADD_get_policy( "NoRecentDocsHistory", &type, &data, &datalen);
+    ret=SHADD_get_policy( "NoRecentDocsHistory", &type, data, &datalen);
     if ((ret > 0) && (ret != ERROR_FILE_NOT_FOUND)) {
 	ERR("Error %d getting policy \"NoRecentDocsHistory\"\n", ret);
 	return;
