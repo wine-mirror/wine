@@ -1917,6 +1917,12 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
         }
     }
 
+    if (!(pDDSD->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY)) &&
+        !((pDDSD->ddsCaps.dwCaps & DDSCAPS_TEXTURE) && (pDDSD->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)) )
+    {
+        /* Tests show surfaces without memory flags get these flags added right after creation. */
+        pDDSD->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+    }
     /* Get the correct wined3d usage */
     if (pDDSD->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE |
                                  DDSCAPS_BACKBUFFER     |
@@ -1924,8 +1930,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     {
         Usage |= WINED3DUSAGE_RENDERTARGET;
 
-        pDDSD->ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY |
-                                 DDSCAPS_VISIBLE;
+        pDDSD->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
     }
     if (pDDSD->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
     {
@@ -2344,11 +2349,6 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     {
         /* DVIDEO.DLL does forget the DDSD_CAPS flag ... *sigh* */
         DDSD->dwFlags |= DDSD_CAPS;
-    }
-    if (DDSD->ddsCaps.dwCaps == 0)
-    {
-        /* This has been checked on real Windows */
-        DDSD->ddsCaps.dwCaps = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
     }
 
     if (DDSD->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD)

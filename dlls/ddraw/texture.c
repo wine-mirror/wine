@@ -324,12 +324,6 @@ IDirect3DTextureImpl_Load(IDirect3DTexture2 *iface,
 
         TRACE(" copying surface %p to surface %p (mipmap level %d)\n", src_ptr, This, src_ptr->mipmap_level);
 
-        if ( This->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD )
-            /* If the surface is not allocated and its location is not yet specified,
-              force it to video memory */ 
-            if ( !(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_SYSTEMMEMORY|DDSCAPS_VIDEOMEMORY)) )
-                This->surface_desc.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
-
         /* Suppress the ALLOCONLOAD flag */
         This->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
 
