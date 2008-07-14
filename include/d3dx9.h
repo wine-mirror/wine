@@ -24,6 +24,7 @@
 #include "d3d9.h"
 #include "d3dx9math.h"
 #include "d3dx9core.h"
+#include "d3dx9shader.h"
 #include "d3dx9tex.h"
 
 #define _FACDD 0x876

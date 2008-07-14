@@ -133,6 +133,7 @@ SRCDIR_INCLUDES = \
 	d3dx9core.h \
 	d3dx9math.h \
 	d3dx9math.inl \
+	d3dx9shader.h \
 	d3dx9tex.h \
 	dbghelp.h \
 	dbinit.idl \
