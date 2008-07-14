@@ -188,8 +188,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 #endif
 #ifdef HAVE_LIBXML2
         xmlCleanupParser();
-        process_detach();
 #endif
+        process_detach();
         break;
     }
     return TRUE;
