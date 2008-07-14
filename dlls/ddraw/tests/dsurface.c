@@ -5,6 +5,7 @@
  * Copyright (C) 2005 Christian Costa
  * Copyright 2005 Ivan Leo Puoti
  * Copyright (C) 2007 Stefan Dösinger
+ * Copyright (C) 2008 Alexander Dorofeyev
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2609,6 +2610,138 @@ static void StructSizeTest(void)
     IDirectDrawSurface_Release(surface1);
 }
 
+static void SurfaceCapsTest(void)
+{
+    DDSURFACEDESC create;
+    DDSURFACEDESC desc;
+    HRESULT hr;
+    IDirectDrawSurface *surface1 = NULL;
+    DDSURFACEDESC2 create2, desc2;
+    IDirectDrawSurface7 *surface7 = NULL;
+    IDirectDraw7 *dd7 = NULL;
+    DWORD create_caps[] = {
+        DDSCAPS_OFFSCREENPLAIN,
+        DDSCAPS_TEXTURE,
+        DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
+        0,
+        DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD | DDSCAPS_SYSTEMMEMORY,
+        DDSCAPS_PRIMARYSURFACE,
+        DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY
+    };
+    DWORD expected_caps[] = {
+        DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+        DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+        DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM | DDSCAPS_ALLOCONLOAD,
+        DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM,
+        DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD | DDSCAPS_SYSTEMMEMORY,
+        DDSCAPS_PRIMARYSURFACE | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM | DDSCAPS_VISIBLE,
+        DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_VISIBLE
+    };
+    UINT i;
+    DDCAPS ddcaps;
+
+    /* Tests various surface flags, what changes do they undergo during surface creation. Forsaken
+     * engine expects texture surfaces without memory flag to get a video memory flag right after
+     * creation. Currently, Wine adds DDSCAPS_FRONTBUFFER to primary surface, but native doesn't do this
+     * for single buffered primaries. Because of this primary surface creation tests are todo_wine. No real
+     * app is known so far to care about this. */
+    ddcaps.dwSize = sizeof(DDCAPS);
+    hr = IDirectDraw_GetCaps(lpDD, &ddcaps, NULL);
+    ok(hr == DD_OK, "IDirectDraw_GetCaps failed with %08x\n", hr);
+
+    if (!(ddcaps.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
+    {
+        skip("DDraw reported no VIDEOMEMORY cap. Broken video driver? Skipping surface caps tests.\n");
+        return ;
+    }
+
+    for (i = 0; i < sizeof(create_caps) / sizeof(DWORD); i++)
+    {
+        memset(&create, 0, sizeof(create));
+        create.dwSize = sizeof(create);
+        create.ddsCaps.dwCaps = create_caps[i];
+        create.dwFlags = DDSD_CAPS;
+
+        if (!(create.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
+        {
+            create.dwFlags |= DDSD_HEIGHT | DDSD_WIDTH;
+            create.dwHeight = 128;
+            create.dwWidth = 128;
+        }
+
+        hr = IDirectDraw_CreateSurface(lpDD, &create, &surface1, NULL);
+        ok(hr == DD_OK, "IDirectDraw_CreateSurface failed with %08x\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = sizeof(DDSURFACEDESC);
+            hr = IDirectDrawSurface_GetSurfaceDesc(surface1, &desc);
+            ok(hr == DD_OK, "IDirectDrawSurface_GetSurfaceDesc failed with %08x\n", hr);
+
+            if (!(create_caps[i] & DDSCAPS_PRIMARYSURFACE))
+                ok(desc.ddsCaps.dwCaps == expected_caps[i],
+                    "GetSurfaceDesc returned caps %x, expected %x\n", desc.ddsCaps.dwCaps,
+                    expected_caps[i]);
+            else
+                todo_wine ok(desc.ddsCaps.dwCaps == expected_caps[i],
+                                "GetSurfaceDesc returned caps %x, expected %x\n", desc.ddsCaps.dwCaps,
+                                expected_caps[i]);
+
+            IDirectDrawSurface_Release(surface1);
+        }
+    }
+
+    /* Test for differences in ddraw 7 */
+    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
+    ok(hr == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Failed to get IDirectDraw7 interface, skipping tests\n");
+    }
+    else
+    {
+        for (i = 0; i < sizeof(create_caps) / sizeof(DWORD); i++)
+        {
+            memset(&create2, 0, sizeof(create2));
+            create2.dwSize = sizeof(create2);
+            create2.ddsCaps.dwCaps = create_caps[i];
+            create2.dwFlags = DDSD_CAPS;
+
+            if (!(create2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
+            {
+                create2.dwFlags |= DDSD_HEIGHT | DDSD_WIDTH;
+                create2.dwHeight = 128;
+                create2.dwWidth = 128;
+            }
+
+            hr = IDirectDraw7_CreateSurface(dd7, &create2, &surface7, NULL);
+            ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+
+            if (SUCCEEDED(hr))
+            {
+                memset(&desc2, 0, sizeof(desc2));
+                desc2.dwSize = sizeof(DDSURFACEDESC2);
+                hr = IDirectDrawSurface7_GetSurfaceDesc(surface7, &desc2);
+                ok(hr == DD_OK, "IDirectDrawSurface_GetSurfaceDesc failed with %08x\n", hr);
+
+                if (!(create_caps[i] & DDSCAPS_PRIMARYSURFACE))
+                    ok(desc2.ddsCaps.dwCaps == expected_caps[i],
+                        "GetSurfaceDesc returned caps %x, expected %x\n", desc2.ddsCaps.dwCaps,
+                        expected_caps[i]);
+                else
+                    todo_wine ok(desc2.ddsCaps.dwCaps == expected_caps[i],
+                                    "GetSurfaceDesc returned caps %x, expected %x\n", desc2.ddsCaps.dwCaps,
+                                    expected_caps[i]);
+
+                IDirectDrawSurface7_Release(surface7);
+            }
+        }
+
+        IDirectDraw7_Release(dd7);
+    }
+}
+
 START_TEST(dsurface)
 {
     if (!CreateDirectDraw())
@@ -2631,5 +2764,6 @@ START_TEST(dsurface)
     BltParamTest();
     StructSizeTest();
     PaletteTest();
+    SurfaceCapsTest();
     ReleaseDirectDraw();
 }
