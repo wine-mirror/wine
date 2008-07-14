@@ -1114,6 +1114,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
         WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
         if (maxTrack.x < cx) cx = maxTrack.x;
         if (maxTrack.y < cy) cy = maxTrack.y;
+        if (minTrack.x > cx) cx = minTrack.x;
+        if (minTrack.y > cy) cy = minTrack.y;
     }
 
     if (cx < 0) cx = 0;
