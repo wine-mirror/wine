@@ -724,6 +724,15 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                 if (pvi->bmiHeader.biCompression)
                     amt.subtype.Data1 = pvi->bmiHeader.biCompression;
             }
+            else if (IsEqualIID(&amt.formattype, &FORMAT_WaveFormatEx))
+            {
+                amt.cbFormat = pChunk->cb;
+                if (amt.cbFormat < sizeof(WAVEFORMATEX))
+                    amt.cbFormat = sizeof(WAVEFORMATEX);
+                amt.pbFormat = CoTaskMemAlloc(amt.cbFormat);
+                ZeroMemory(amt.pbFormat, amt.cbFormat);
+                CopyMemory(amt.pbFormat, (const BYTE *)(pChunk + 1), pChunk->cb);
+            }
             else
             {
                 amt.cbFormat = pChunk->cb;
