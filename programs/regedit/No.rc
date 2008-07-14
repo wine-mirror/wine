@@ -1,7 +1,7 @@
 /*
  * Regedit Norwegian Bokmål resources
  *
- * Copyright 2005-2007 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2008 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -292,6 +292,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Verdien er for stor (%ld)"
     IDS_DELETE_BOX_TITLE    "Bekreft sletting av verdi"
     IDS_DELETE_BOX_TEXT     "Virkelig slette verdien '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Virkelig slette disse verdiene?"
     IDS_NEWKEY              "Ny nøkkel #%d"
     IDS_NEWVALUE            "Ny verdi #%d"
     IDS_NOTFOUND            "Fant ikke søkestrengen «%s»"
