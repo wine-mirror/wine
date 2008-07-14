@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "config.h"
 
@@ -264,7 +265,7 @@ static HRESULT WINAPI bsc_OnDataAvailable(
 
     do
     {
-        hr = IStream_Read(pstgmed->pstm, buf, sizeof(buf), &read);
+        hr = IStream_Read(pstgmed->u.pstm, buf, sizeof(buf), &read);
         if(FAILED(hr))
             break;
 
