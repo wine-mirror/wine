@@ -968,19 +968,9 @@ NDR_SCONTEXT RPCRT4_PopThreadContextHandle(void)
     return context_handle;
 }
 
-/******************************************************************************
- * RpcCancelThread   (rpcrt4.@)
- */
-RPC_STATUS RPC_ENTRY RpcCancelThread(void* ThreadHandle)
+static RPC_STATUS rpc_cancel_thread(DWORD target_tid)
 {
-    DWORD target_tid;
     struct threaddata *tdata;
-
-    TRACE("(%p)\n", ThreadHandle);
-
-    target_tid = GetThreadId(ThreadHandle);
-    if (!target_tid)
-        return RPC_S_INVALID_ARG;
 
     EnterCriticalSection(&threaddata_cs);
     LIST_FOR_EACH_ENTRY(tdata, &threaddata_list, struct threaddata, entry)
@@ -997,10 +987,32 @@ RPC_STATUS RPC_ENTRY RpcCancelThread(void* ThreadHandle)
 }
 
 /******************************************************************************
+ * RpcCancelThread   (rpcrt4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcCancelThread(void* ThreadHandle)
+{
+    TRACE("(%p)\n", ThreadHandle);
+    return RpcCancelThreadEx(ThreadHandle, 0);
+}
+
+/******************************************************************************
  * RpcCancelThreadEx   (rpcrt4.@)
  */
 RPC_STATUS RPC_ENTRY RpcCancelThreadEx(void* ThreadHandle, LONG Timeout)
 {
+    DWORD target_tid;
+
     FIXME("(%p, %d)\n", ThreadHandle, Timeout);
-    return RPC_S_OK;
+
+    target_tid = GetThreadId(ThreadHandle);
+    if (!target_tid)
+        return RPC_S_INVALID_ARG;
+
+    if (Timeout)
+    {
+        FIXME("(%p, %d)\n", ThreadHandle, Timeout);
+        return RPC_S_OK;
+    }
+    else
+        return rpc_cancel_thread(target_tid);
 }
