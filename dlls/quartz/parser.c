@@ -317,7 +317,7 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
                 hr_any = hr;
         }
 
-        hr_any = hr;
+        hr = hr_any;
         if (SUCCEEDED(hr))
         {
             LeaveCriticalSection(&This->csFilter);
