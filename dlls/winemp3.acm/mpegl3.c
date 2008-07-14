@@ -116,7 +116,7 @@ static	DWORD	MPEG3_GetFormatIndex(LPWAVEFORMATEX wfx)
     {
 	if (wfx->nChannels == fmts[i].nChannels &&
 	    wfx->nSamplesPerSec == fmts[i].rate &&
-	    wfx->wBitsPerSample == fmts[i].nBits)
+	    (wfx->wBitsPerSample == fmts[i].nBits || !fmts[i].nBits))
 	    return i;
     }
 
