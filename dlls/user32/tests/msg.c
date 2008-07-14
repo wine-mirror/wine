@@ -3374,7 +3374,7 @@ static void test_mdi_messages(void)
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandleA(0), NULL);
     assert(mdi_child2);
-    ok_sequence(WmCreateMDIchildInvisibleMaxSeq4, "Create maximized invisible MDI child window", TRUE);
+    ok_sequence(WmCreateMDIchildInvisibleMaxSeq4, "Create maximized invisible MDI child window", FALSE);
     ok(IsZoomed(mdi_child2), "MDI child should be maximized\n");
     ok(!(GetWindowLongA(mdi_child2, GWL_STYLE) & WS_VISIBLE), "MDI child should be not visible\n");
     ok(!IsWindowVisible(mdi_child2), "MDI child should be not visible\n");
@@ -4577,10 +4577,10 @@ static void test_setwindowpos(void)
                            NULL, NULL, 0);
 
     GetWindowRect(hwnd, &rc);
-    todo_wine expect(sysX, rc.right);
+    expect(sysX, rc.right);
     expect(winY, rc.bottom);
     GetClientRect(hwnd, &rc);
-    todo_wine expect(sysX - 6, rc.right);
+    expect(sysX - 6, rc.right);
     expect(winY - 25, rc.bottom);
 
     flush_events();
