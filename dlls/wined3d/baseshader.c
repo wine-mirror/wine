@@ -154,8 +154,8 @@ int shader_skip_unrecognized(
         tokens_read += shader_get_param(iface, pToken, &param, &addr_token);
         pToken += tokens_read;
 
-        FIXME("Unrecognized opcode param: token=%08x "
-            "addr_token=%08x name=", param, addr_token);
+        FIXME("Unrecognized opcode param: token=0x%08x "
+            "addr_token=0x%08x name=", param, addr_token);
         shader_dump_param(iface, param, addr_token, i);
         FIXME("\n");
         ++i;
@@ -511,7 +511,7 @@ static void shader_dump_decl_usage(
             case WINED3DSTT_2D: TRACE("_2d"); break;
             case WINED3DSTT_CUBE: TRACE("_cube"); break;
             case WINED3DSTT_VOLUME: TRACE("_volume"); break;
-            default: TRACE("_unknown_ttype(%08x)", ttype); 
+            default: TRACE("_unknown_ttype(0x%08x)", ttype);
        }
 
     } else { 
@@ -574,7 +574,7 @@ static void shader_dump_decl_usage(
             TRACE("sample");
             break;
         default:
-            FIXME("unknown_semantics(%08x)", usage);
+            FIXME("unknown_semantics(0x%08x)", usage);
         }
     }
 }
@@ -835,7 +835,7 @@ void shader_generate_main(
 
             /* Unknown opcode and its parameters */
             if (NULL == curOpcode) {
-                FIXME("Unrecognized opcode: token=%08x\n", hw_arg.opcode_token);
+                FIXME("Unrecognized opcode: token=0x%08x\n", hw_arg.opcode_token);
                 pToken += shader_skip_unrecognized(iface, pToken); 
 
             /* Nothing to do */
@@ -963,7 +963,7 @@ void shader_trace_init(
 
             if (NULL == curOpcode) {
                 int tokens_read;
-                FIXME("Unrecognized opcode: token=%08x\n", opcode_token);
+                FIXME("Unrecognized opcode: token=0x%08x\n", opcode_token);
                 tokens_read = shader_skip_unrecognized(iface, pToken);
                 pToken += tokens_read;
                 len += tokens_read;
