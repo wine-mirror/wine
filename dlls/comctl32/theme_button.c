@@ -36,6 +36,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(themingbutton);
 
 #define BUTTON_TYPE 0x0f /* bit mask for the available button types */
 
+typedef void (*pfThemedPaint)(HTHEME theme, HWND hwnd, HDC hdc);
+
 static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC)
 {
     RECT bgRect, textRect;
@@ -71,21 +73,42 @@ static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC)
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
 
+static const pfThemedPaint btnThemedPaintFunc[BUTTON_TYPE + 1] =
+{
+    NULL, /* BS_PUSHBUTTON */
+    NULL, /* BS_DEFPUSHBUTTON */
+    NULL, /* BS_CHECKBOX */
+    NULL, /* BS_AUTOCHECKBOX */
+    NULL, /* BS_RADIOBUTTON */
+    NULL, /* BS_3STATE */
+    NULL, /* BS_AUTO3STATE */
+    GB_draw, /* BS_GROUPBOX */
+    NULL, /* BS_USERBUTTON */
+    NULL, /* BS_AUTORADIOBUTTON */
+    NULL, /* Not defined */
+    NULL, /* BS_OWNERDRAW */
+    NULL, /* Not defined */
+    NULL, /* Not defined */
+    NULL, /* Not defined */
+    NULL, /* Not defined */
+};
+
 static BOOL BUTTON_Paint(HTHEME theme, HWND hwnd, HDC hParamDC)
 {
     PAINTSTRUCT ps;
     HDC hDC;
     DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
+    pfThemedPaint paint = btnThemedPaintFunc[ dwStyle & BUTTON_TYPE ];
 
-    if ((dwStyle & BUTTON_TYPE) == BS_GROUPBOX)
+    if (paint)
     {
         hDC = hParamDC ? hParamDC : BeginPaint(hwnd, &ps);
-        GB_draw(theme, hwnd, hDC);
+        paint(theme, hwnd, hDC);
         if (!hParamDC) EndPaint(hwnd, &ps);
+        return TRUE;
     }
-    else return FALSE; /* Delegate drawing to the non-themed code. */
 
-    return TRUE;
+    return FALSE; /* Delegate drawing to the non-themed code. */
 }
 
 /**********************************************************************
