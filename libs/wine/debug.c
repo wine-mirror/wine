@@ -339,7 +339,7 @@ static const char *default_dbgstr_wn( const WCHAR *str, int n )
     }
     if (n < 0) n = 0;
     size = 12 + min( 300, n * 5 );
-    dst = res = funcs.get_temp_buffer( n * 5 + 7 );
+    dst = res = funcs.get_temp_buffer( size );
     *dst++ = 'L';
     *dst++ = '"';
     while (n-- > 0 && dst <= res + size - 10)
