@@ -293,6 +293,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Waarde te groot (%ld)"
     IDS_DELETE_BOX_TITLE    "Waarde verwijderen bevestigen"
     IDS_DELETE_BOX_TEXT     "Weet u zeker dat u de waarde '%s' wilt verwijderen?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Weet u zeker dat u deze waarden wilt verwijderen?"
     IDS_NEWKEY              "Nieuwe sleutel #%d"
     IDS_NEWVALUE            "Nieuwe waarde #%d"
     IDS_NOTFOUND            "Tekenreeks '%s' niet gevonden"
