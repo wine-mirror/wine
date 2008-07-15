@@ -229,6 +229,17 @@ static void testInitialize(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
     }
 }
 
+static void getNotepadPath(WCHAR *notepadPathW, DWORD size)
+{
+    static const CHAR notepad[] = "\\notepad.exe";
+    CHAR notepadPath[MAX_PATH];
+
+    /* Workaround missing W-functions for win9x */
+    GetWindowsDirectoryA(notepadPath, MAX_PATH);
+    lstrcatA(notepadPath, notepad);
+    MultiByteToWideChar(0, 0, notepadPath, -1, notepadPathW, size);
+}
+
 static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
 {
     HRESULT ret;
@@ -251,8 +262,6 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
      funcs->pfnAlloc(TRUSTERROR_MAX_STEPS * sizeof(DWORD));
     if (data.padwTrustStepErrors)
     {
-        static const CHAR notepad[] = "\\notepad.exe";
-        CHAR notepadPath[MAX_PATH];
         WCHAR notepadPathW[MAX_PATH];
         PROVDATA_SIP provDataSIP = { 0 };
         static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
@@ -286,10 +295,7 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         /* Crashes
         ret = funcs->pfnObjectTrust(&data);
          */
-        /* Workaround missing W-functions for win9x */
-        GetWindowsDirectoryA(notepadPath, MAX_PATH);
-        lstrcatA(notepadPath, notepad);
-        MultiByteToWideChar(0, 0, notepadPath, -1, notepadPathW, MAX_PATH);
+        getNotepadPath(notepadPathW, MAX_PATH);
         fileInfo.pcwszFilePath = notepadPathW;
         /* pfnObjectTrust now crashes unless both pPDSip and psPfns are set */
         U(data).pPDSip = &provDataSIP;
@@ -417,7 +423,37 @@ static void test_provider_funcs(void)
     }
 }
 
+static void test_wintrust(void)
+{
+    static GUID generic_action_v2 = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    WINTRUST_DATA wtd;
+    WINTRUST_FILE_INFO file;
+    LONG r;
+    HRESULT hr;
+    WCHAR notepadPathW[MAX_PATH];
+
+    memset(&wtd, 0, sizeof(wtd));
+    wtd.cbStruct = sizeof(wtd);
+    wtd.dwUIChoice = WTD_UI_NONE;
+    wtd.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
+    wtd.dwUnionChoice = WTD_CHOICE_FILE;
+    wtd.pFile = &file;
+    wtd.dwStateAction = WTD_STATEACTION_VERIFY;
+    memset(&file, 0, sizeof(file));
+    file.cbStruct = sizeof(file);
+    getNotepadPath(notepadPathW, MAX_PATH);
+    file.pcwszFilePath = notepadPathW;
+    r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    todo_wine
+    ok(r == TRUST_E_NOSIGNATURE, "expected TRUST_E_NOSIGNATURE, got %08x\n", r);
+    hr = WinVerifyTrustEx(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    todo_wine
+    ok(hr == TRUST_E_NOSIGNATURE, "expected TRUST_E_NOSIGNATURE, got %08x\n",
+     hr);
+}
+
 START_TEST(softpub)
 {
     test_provider_funcs();
+    test_wintrust();
 }
