@@ -2423,8 +2423,25 @@ static HRESULT WINAPI fnIMultiLanguage2_GetCodePageDescription(
     LPWSTR lpWideCharStr,
     int cchWideChar)
 {
-    FIXME("%u, %04x, %p, %d\n", uiCodePage, lcid, lpWideCharStr, cchWideChar);
-    return E_NOTIMPL;
+    /* Find first instance */
+    unsigned int i,n;
+
+    TRACE ("%u, %04x, %p, %d\n", uiCodePage, lcid, lpWideCharStr, cchWideChar);
+    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
+    {
+        for (n = 0; n < mlang_data[i].number_of_cp; n++)
+        {
+            if (mlang_data[i].mime_cp_info[n].cp == uiCodePage)
+            {
+                MultiByteToWideChar(CP_ACP, 0,
+                                    mlang_data[i].mime_cp_info[n].description,
+                                    -1, lpWideCharStr, cchWideChar);
+                return S_OK;
+            }
+        }
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_IsCodePageInstallable(
