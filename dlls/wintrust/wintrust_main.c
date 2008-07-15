@@ -66,12 +66,35 @@ BOOL WINAPI TrustIsCertificateSelfSigned( PCCERT_CONTEXT cert )
     return ret;
 }
 
+typedef HRESULT (WINAPI *wintrust_step_func)(CRYPT_PROVIDER_DATA *data);
+
+struct wintrust_step
+{
+    wintrust_step_func func;
+    DWORD              error_index;
+};
+
+static DWORD WINTRUST_ExecuteSteps(const struct wintrust_step *steps,
+ DWORD numSteps, CRYPT_PROVIDER_DATA *provData)
+{
+    DWORD i, err = ERROR_SUCCESS;
+
+    for (i = 0; !err && i < numSteps; i++)
+    {
+        err = steps[i].func(provData);
+        if (err)
+            err = provData->padwTrustStepErrors[steps[i].error_index];
+    }
+    return err;
+}
+
 static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
  WINTRUST_DATA *data)
 {
-    DWORD err = ERROR_SUCCESS;
+    DWORD err = ERROR_SUCCESS, numSteps = 0;
     CRYPT_PROVIDER_DATA *provData;
     BOOL ret;
+    struct wintrust_step verifySteps[5];
 
     TRACE("(%p, %s, %p)\n", hwnd, debugstr_guid(actionID), data);
 
@@ -113,30 +136,30 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
 
     if (provData->psPfns->pfnInitialize)
     {
-        err = provData->psPfns->pfnInitialize(provData);
-        if (err)
-            goto done;
+        verifySteps[numSteps].func = provData->psPfns->pfnInitialize;
+        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_WVTINIT;
     }
     if (provData->psPfns->pfnObjectTrust)
     {
-        err = provData->psPfns->pfnObjectTrust(provData);
-        if (err)
-            goto done;
+        verifySteps[numSteps].func = provData->psPfns->pfnObjectTrust;
+        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_OBJPROV;
     }
     if (provData->psPfns->pfnSignatureTrust)
     {
-        err = provData->psPfns->pfnSignatureTrust(provData);
-        if (err)
-            goto done;
+        verifySteps[numSteps].func = provData->psPfns->pfnSignatureTrust;
+        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_SIGPROV;
     }
     if (provData->psPfns->pfnCertificateTrust)
     {
-        err = provData->psPfns->pfnCertificateTrust(provData);
-        if (err)
-            goto done;
+        verifySteps[numSteps].func = provData->psPfns->pfnCertificateTrust;
+        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_CERTPROV;
     }
     if (provData->psPfns->pfnFinalPolicy)
-        err = provData->psPfns->pfnFinalPolicy(provData);
+    {
+        verifySteps[numSteps].func = provData->psPfns->pfnFinalPolicy;
+        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_POLICYPROV;
+    }
+    err = WINTRUST_ExecuteSteps(verifySteps, numSteps, provData);
     goto done;
 
 oom:

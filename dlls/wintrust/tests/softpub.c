@@ -444,10 +444,8 @@ static void test_wintrust(void)
     getNotepadPath(notepadPathW, MAX_PATH);
     file.pcwszFilePath = notepadPathW;
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
-    todo_wine
     ok(r == TRUST_E_NOSIGNATURE, "expected TRUST_E_NOSIGNATURE, got %08x\n", r);
     hr = WinVerifyTrustEx(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
-    todo_wine
     ok(hr == TRUST_E_NOSIGNATURE, "expected TRUST_E_NOSIGNATURE, got %08x\n",
      hr);
 }
