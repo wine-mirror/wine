@@ -222,6 +222,12 @@ STRINGTABLE
         IDS_SHUTDOWN_TITLE      "Afsluiten"
         IDS_SHUTDOWN_PROMPT     "Wilt u uw Wine sessie afsluiten?"
 
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Fout tijdens tonen Uitvoeren Bestand venster (interne fout)"
+        IDS_RUNDLG_BROWSE_ERROR    "Fout tijdens tonen Bladeren venster (interne fout)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Bladeren"
+        IDS_RUNDLG_BROWSE_FILTER   "Uitvoerbare bestanden\0*.exe\0Alle bestanden\0*.*\0\0"
+
         /* shell folder path default values */
 	IDS_PROGRAMS                "Start Menu\\Programmas"
 	IDS_PERSONAL                "Mijn Documenten"
