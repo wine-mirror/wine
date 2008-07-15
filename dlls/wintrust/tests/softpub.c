@@ -398,7 +398,7 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
     }
 }
 
-START_TEST(softpub)
+static void test_provider_funcs(void)
 {
     static GUID generic_verify_v2 = WINTRUST_ACTION_GENERIC_VERIFY_V2;
     SAFE_PROVIDER_FUNCTIONS funcs = { sizeof(SAFE_PROVIDER_FUNCTIONS), 0 };
@@ -415,4 +415,9 @@ START_TEST(softpub)
         testObjTrust(&funcs, &generic_verify_v2);
         testCertTrust(&funcs, &generic_verify_v2);
     }
+}
+
+START_TEST(softpub)
+{
+    test_provider_funcs();
 }
