@@ -349,6 +349,7 @@ ALL_MAKEFILES = \
 	dlls/msnet32/Makefile \
 	dlls/msrle32/Makefile \
 	dlls/mssip32/Makefile \
+	dlls/mstask/Makefile \
 	dlls/msvcirt/Makefile \
 	dlls/msvcr71/Makefile \
 	dlls/msvcrt/Makefile \
@@ -778,6 +779,7 @@ dlls/msisys.ocx/Makefile: dlls/msisys.ocx/Makefile.in dlls/Makedll.rules
 dlls/msnet32/Makefile: dlls/msnet32/Makefile.in dlls/Makedll.rules
 dlls/msrle32/Makefile: dlls/msrle32/Makefile.in dlls/Makedll.rules
 dlls/mssip32/Makefile: dlls/mssip32/Makefile.in dlls/Makedll.rules
+dlls/mstask/Makefile: dlls/mstask/Makefile.in dlls/Makedll.rules
 dlls/msvcirt/Makefile: dlls/msvcirt/Makefile.in dlls/Makedll.rules
 dlls/msvcr71/Makefile: dlls/msvcr71/Makefile.in dlls/Makedll.rules
 dlls/msvcrt/Makefile: dlls/msvcrt/Makefile.in dlls/Makedll.rules

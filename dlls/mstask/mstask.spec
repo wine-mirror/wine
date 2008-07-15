@@ -1,0 +1,13 @@
+@ stub ConvertAtJobsToTasks
+@ stub DllCanUnloadNow
+@ stub DllGetClassObject
+@ stub GetNetScheduleAccountInformation
+@ stub NetrJobAdd
+@ stub NetrJobDel
+@ stub NetrJobEnum
+@ stub NetrJobGetInfo
+@ stub SAGetAccountInformation
+@ stub SAGetNSAccountInformation
+@ stub SASetAccountInformation
+@ stub SASetNSAccountInformation
+@ stub SetNetScheduleAccountInformation

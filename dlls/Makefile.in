@@ -156,6 +156,7 @@ BASEDIRS = \
 	msnet32 \
 	msrle32 \
 	mssip32 \
+	mstask \
 	msvcirt \
 	msvcr71 \
 	msvcrt \
