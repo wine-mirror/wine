@@ -496,7 +496,7 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
     else
         ret = TRUE;
     if (!ret)
-        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] =
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_SIGPROV] =
          GetLastError();
     return ret ? S_OK : S_FALSE;
 }
