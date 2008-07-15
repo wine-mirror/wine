@@ -242,8 +242,6 @@ ME_MoveCaret(ME_TextEditor *editor)
     x = min(x, rect.right-2);
     CreateCaret(editor->hWnd, NULL, 0, height);
     SetCaretPos(x, y);
-  } else {
-    DestroyCaret();
   }
 }
 
