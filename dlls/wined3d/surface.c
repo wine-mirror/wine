@@ -40,7 +40,7 @@ static inline void clear_unused_channels(IWineD3DSurfaceImpl *This);
 static void surface_remove_pbo(IWineD3DSurfaceImpl *This);
 
 static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
-    GLint active_texture;
+    int active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
      * Read the unit back instead of switching to 0, this avoids messing around with the state manager's
@@ -49,14 +49,18 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
      * TODO: Track the current active texture per GL context instead of using glGet
      */
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        GLint active_texture;
         ENTER_GL();
         glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
         LEAVE_GL();
-        active_texture -= GL_TEXTURE0_ARB;
+        active_sampler = This->resource.wineD3DDevice->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
     } else {
-        active_texture = 0;
+        active_sampler = 0;
     }
-    IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(active_texture));
+
+    if (active_sampler != -1) {
+        IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(active_sampler));
+    }
     IWineD3DSurface_BindTexture((IWineD3DSurface *)This);
 }
 

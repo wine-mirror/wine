@@ -5752,6 +5752,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     glDescriptor *glDescription = NULL;
     GLenum dummy;
+    int sampler;
     int bpp;
     CONVERT_TYPES convert = NO_CONVERSION;
 
@@ -5922,7 +5923,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     LEAVE_GL();
 
     IWineD3DSurface_ModifyLocation(pDestinationSurface, SFLAG_INTEXTURE, TRUE);
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(0));
+    sampler = This->rev_tex_unit_map[0];
+    if (sampler != -1) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(sampler));
+    }
 
     return WINED3D_OK;
 }
@@ -6854,7 +6858,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                 INT height = This->cursorHeight;
                 INT width = This->cursorWidth;
                 INT bpp = tableEntry->bpp;
-                INT i;
+                INT i, sampler;
 
                 /* Reformat the texture memory (pitch and width can be
                  * different) */
@@ -6874,7 +6878,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
                     checkGLcall("glActiveTextureARB");
                 }
-                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(0));
+                sampler = This->rev_tex_unit_map[0];
+                if (sampler != -1) {
+                    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(sampler));
+                }
                 /* Create a new cursor texture */
                 glGenTextures(1, &This->cursorTexture);
                 checkGLcall("glGenTextures");

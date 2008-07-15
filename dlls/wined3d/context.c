@@ -640,7 +640,7 @@ static inline void set_blit_dimension(UINT width, UINT height) {
  *
  *****************************************************************************/
 static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *context, UINT width, UINT height) {
-    int i;
+    int i, sampler;
     const struct StateEntry *StateTable = This->StateTable;
 
     TRACE("Setting up context %p for blitting\n", context);
@@ -677,6 +677,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
          * function texture unit. No need to care for higher samplers
          */
         for(i = GL_LIMITS(textures) - 1; i > 0 ; i--) {
+            sampler = This->rev_tex_unit_map[i];
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
             checkGLcall("glActiveTextureARB");
 
@@ -692,12 +693,19 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
             checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);");
 
-            Context_MarkStateDirty(context, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), StateTable);
-            Context_MarkStateDirty(context, STATE_SAMPLER(i), StateTable);
+            if (sampler != -1) {
+                if (sampler < MAX_TEXTURES) {
+                    Context_MarkStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
+                }
+                Context_MarkStateDirty(context, STATE_SAMPLER(sampler), StateTable);
+            }
         }
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
         checkGLcall("glActiveTextureARB");
     }
+
+    sampler = This->rev_tex_unit_map[0];
+
     if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
         glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         checkGLcall("glDisable GL_TEXTURE_CUBE_MAP_ARB");
@@ -713,7 +721,6 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     checkGLcall("glMatrixMode(GL_TEXTURE)");
     glLoadIdentity();
     checkGLcall("glLoadIdentity()");
-    Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0), StateTable);
 
     if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
         glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
@@ -721,8 +728,14 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
                   0.0);
         checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
     }
-    Context_MarkStateDirty(context, STATE_SAMPLER(0), StateTable);
-    Context_MarkStateDirty(context, STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP), StateTable);
+
+    if (sampler != -1) {
+        if (sampler < MAX_TEXTURES) {
+            Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + sampler), StateTable);
+            Context_MarkStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
+        }
+        Context_MarkStateDirty(context, STATE_SAMPLER(sampler), StateTable);
+    }
 
     /* Other misc states */
     glDisable(GL_ALPHA_TEST);
