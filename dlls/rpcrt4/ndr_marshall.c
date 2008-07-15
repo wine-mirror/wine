@@ -2858,7 +2858,7 @@ unsigned char * WINAPI NdrComplexStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   pStubMsg->Memory = pMemory;
 
-  ComplexMarshall(pStubMsg, pMemory, pFormat, pointer_desc);
+  pMemory = ComplexMarshall(pStubMsg, pMemory, pFormat, pointer_desc);
 
   if (conf_array)
     NdrConformantArrayMarshall(pStubMsg, pMemory, conf_array);
