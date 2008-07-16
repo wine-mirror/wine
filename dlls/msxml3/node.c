@@ -1446,6 +1446,9 @@ IXMLDOMNode *create_node( xmlNodePtr node )
     case XML_TEXT_NODE:
         pUnk = create_text( node );
         break;
+    case XML_CDATA_SECTION_NODE:
+        pUnk = create_cdata( node );
+        break;
     case XML_COMMENT_NODE:
         pUnk = create_comment( node );
         break;
