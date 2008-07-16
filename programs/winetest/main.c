@@ -346,6 +346,14 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
     subfile = CreateFileA( subname, GENERIC_READ|GENERIC_WRITE,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            &sa, CREATE_ALWAYS, 0, NULL );
+
+    if ((subfile == INVALID_HANDLE_VALUE) &&
+        (GetLastError() == ERROR_INVALID_PARAMETER)) {
+        /* FILE_SHARE_DELETE not supported on win9x */
+        subfile = CreateFileA( subname, GENERIC_READ|GENERIC_WRITE,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE,
+                           &sa, CREATE_ALWAYS, 0, NULL );
+    }
     if (subfile == INVALID_HANDLE_VALUE) {
         report (R_ERROR, "Can't open subtests output of %s: %u",
                 test->name, GetLastError());
@@ -474,6 +482,14 @@ run_tests (char *logname)
     logfile = CreateFileA( logname, GENERIC_READ|GENERIC_WRITE,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            &sa, CREATE_ALWAYS, 0, NULL );
+
+    if ((logfile == INVALID_HANDLE_VALUE) &&
+        (GetLastError() == ERROR_INVALID_PARAMETER)) {
+        /* FILE_SHARE_DELETE not supported on win9x */
+        logfile = CreateFileA( logname, GENERIC_READ|GENERIC_WRITE,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE,
+                           &sa, CREATE_ALWAYS, 0, NULL );
+    }
     if (logfile == INVALID_HANDLE_VALUE)
         report (R_FATAL, "Could not open logfile: %u", GetLastError());
 

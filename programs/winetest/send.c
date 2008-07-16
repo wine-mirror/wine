@@ -134,6 +134,14 @@ send_file (const char *name)
     file = CreateFileA( name, GENERIC_READ,
                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                         NULL, OPEN_EXISTING, 0, NULL );
+
+    if ((file == INVALID_HANDLE_VALUE) &&
+        (GetLastError() == ERROR_INVALID_PARAMETER)) {
+        /* FILE_SHARE_DELETE not supported on win9x */
+        file = CreateFileA( name, GENERIC_READ,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            NULL, OPEN_EXISTING, 0, NULL );
+    }
     if (file == INVALID_HANDLE_VALUE)
     {
         report (R_WARNING, "Can't open file '%s': %u", name, GetLastError());
