@@ -934,14 +934,12 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
 
     STATUSBAR_NotifyFormat(infoPtr, infoPtr->Notify, NF_REQUERY);
 
-    GetClientRect (hwnd, &rect);
-    InvalidateRect (hwnd, &rect, 0);
-    UpdateWindow(hwnd);
-
     ZeroMemory (&nclm, sizeof(nclm));
     nclm.cbSize = sizeof(nclm);
     SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, nclm.cbSize, &nclm, 0);
     infoPtr->hDefaultFont = CreateFontIndirectW (&nclm.lfStatusFont);
+
+    GetClientRect (hwnd, &rect);
 
     /* initialize simple case */
     infoPtr->part0.bound = rect;
