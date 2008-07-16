@@ -248,7 +248,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
             size += (tables > MAX_TABLES_3BIT_ENCODE) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x0B: /* FIXME */
+        case 0x0B000000: /* FIXME */
         {
             size = sizeof(CONSTANTTABLE) + (assembly->blobsz - sizeof(WORD));
 
@@ -289,7 +289,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
             size += (tables > MAX_TABLES_3BIT_ENCODE) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x0D: /* FIXME */
+        case 0x0D000000: /* FIXME */
         {
             size = sizeof(FIELDMARSHALTABLE) + (assembly->blobsz - sizeof(WORD));
 
@@ -310,14 +310,14 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
             size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x0F: /* FIXME */
+        case 0x0F000000: /* FIXME */
         {
             size = sizeof(CLASSLAYOUTTABLE);
             size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
                      MAX_TABLES_WORD) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x10: /* FIXME */
+        case 0x10000000: /* FIXME */
         {
             size = sizeof(FIELDLAYOUTTABLE);
             size += (assembly->tables[TableFromToken(mdtFieldDef)].rows >
@@ -329,7 +329,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
             size = sizeof(STANDALONESIGTABLE) + (assembly->blobsz - sizeof(WORD));
             break;
         }
-        case 0x12: /* FIXME */
+        case 0x12000000: /* FIXME */
         {
             size = sizeof(EVENTMAPTABLE);
             size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
@@ -349,7 +349,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
             size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x15:/* FIXME */
+        case 0x15000000:/* FIXME */
         {
             size = sizeof(PROPERTYMAPTABLE);
             size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
@@ -364,7 +364,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
                    (assembly->blobsz - sizeof(WORD));
             break;
         }
-        case 0x18: /* FIXME */
+        case 0x18000000: /* FIXME */
         {
             size = sizeof(METHODSEMANTICSTABLE);
 
@@ -377,7 +377,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
                      MAX_TABLES_WORD) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x19: /* FIXME */
+        case 0x19000000: /* FIXME */
         {
             size = sizeof(METHODIMPLTABLE);
 
@@ -400,7 +400,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
             size = sizeof(TYPESPECTABLE) + (assembly->blobsz - sizeof(WORD));
             break;
         }
-        case 0x1C: /* FIXME */
+        case 0x1C000000: /* FIXME */
         {
             size = sizeof(IMPLMAPTABLE) + (assembly->stringsz - sizeof(WORD));
 
@@ -413,7 +413,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
                      MAX_TABLES_WORD) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x1D: /* FIXME */
+        case 0x1D000000: /* FIXME */
         {
             size = sizeof(FIELDRVATABLE);
             size += (assembly->tables[TableFromToken(mdtFieldDef)].rows >
@@ -426,12 +426,12 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
                    (assembly->blobsz - sizeof(WORD));
             break;
         }
-        case 0x21: /* FIXME */
+        case 0x20000001: /* FIXME */
         {
             size = sizeof(ASSEMBLYPROCESSORTABLE);
             break;
         }
-        case 0x22: /* FIXME */
+        case 0x22000000: /* FIXME */
         {
             size = sizeof(ASSEMBLYOSTABLE);
             break;
@@ -442,14 +442,14 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
                    2 * (assembly->blobsz - sizeof(WORD));
             break;
         }
-        case 0x24: /* FIXME */
+        case 0x24000000: /* FIXME */
         {
             size = sizeof(ASSEMBLYREFPROCESSORTABLE);
             size += (assembly->tables[TableFromToken(mdtAssemblyRef)].rows >
                      MAX_TABLES_WORD) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x25: /* FIXME */
+        case 0x25000000: /* FIXME */
         {
             size = sizeof(ASSEMBLYREFOSTABLE);
             size += (assembly->tables[TableFromToken(mdtAssemblyRef)].rows >
@@ -482,7 +482,7 @@ static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
             size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
             break;
         }
-        case 0x29: /* FIXME */
+        case 0x29000000: /* FIXME */
         {
             size = sizeof(NESTEDCLASSTABLE);
             size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
