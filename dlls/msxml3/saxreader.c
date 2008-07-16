@@ -165,6 +165,43 @@ static void libxmlStartElementNS(
     }
 }
 
+static void libxmlEndElementNS(
+        void *ctx,
+        const xmlChar *localname,
+        const xmlChar *prefix,
+        const xmlChar *URI)
+{
+    BSTR NamespaceUri, LocalName, QName;
+    saxlocator *This = ctx;
+    HRESULT hr;
+
+    This->lastColumn = xmlSAX2GetColumnNumber(This->pParserCtxt);
+    This->lastLine = xmlSAX2GetLineNumber(This->pParserCtxt);
+
+    if(This->saxreader->contentHandler)
+    {
+        NamespaceUri = bstr_from_xmlChar(URI);
+        LocalName = bstr_from_xmlChar(localname);
+        QName = bstr_from_xmlChar(localname);
+
+        hr = ISAXContentHandler_endElement(
+                This->saxreader->contentHandler,
+                NamespaceUri, SysStringLen(NamespaceUri),
+                LocalName, SysStringLen(LocalName),
+                QName, SysStringLen(QName));
+
+        SysFreeString(NamespaceUri);
+        SysFreeString(LocalName);
+        SysFreeString(QName);
+
+        if(FAILED(hr))
+        {
+            xmlStopParser(This->pParserCtxt);
+            This->ret = hr;
+        }
+    }
+}
+
 /*** ISAXLocator interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI isaxlocator_QueryInterface(ISAXLocator* iface, REFIID riid, void **ppvObject)
@@ -966,6 +1003,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->sax.startDocument = libxmlStartDocument;
     reader->sax.endDocument = libxmlEndDocument;
     reader->sax.startElementNs = libxmlStartElementNS;
+    reader->sax.endElementNs = libxmlEndElementNS;
 
     *ppObj = &reader->lpVtbl;
 
