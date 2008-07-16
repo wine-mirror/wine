@@ -1561,6 +1561,17 @@ void COMCTL32_EnsureBitmapSize(HBITMAP *pBitmap, int cxMinWidth, int cyMinHeight
     return;
 }
 
+void COMCTL32_GetFontMetrics(HFONT hFont, TEXTMETRICW *ptm)
+{
+    HDC hdc = GetDC(NULL);
+    HFONT hOldFont;
+
+    hOldFont = SelectObject(hdc, hFont);
+    GetTextMetricsW(hdc, ptm);
+    SelectObject(hdc, hOldFont);
+    ReleaseDC(NULL, hdc);
+}
+
 /***********************************************************************
  * MirrorIcon [COMCTL32.414]
  *

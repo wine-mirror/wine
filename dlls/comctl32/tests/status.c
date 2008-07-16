@@ -24,6 +24,8 @@
 
 #include "wine/test.h"
 
+#define SUBCLASS_NAME "MyStatusBar"
+
 #define expect(expected,got) ok (expected == got,"Expected %d, got %d\n",expected,got)
 #define expect_rect(_left,_top,_right,_bottom,got) do { RECT _rcExp = {_left, _top, _right, _bottom}; \
         ok(memcmp(&_rcExp, &(got), sizeof(RECT)) == 0, "Expected rect {%d,%d, %d,%d}, got {%d,%d, %d,%d}\n", \
@@ -34,6 +36,7 @@ static HINSTANCE hinst;
 static WNDPROC g_status_wndproc;
 static RECT g_rcCreated;
 static HWND g_hMainWnd;
+static int g_wmsize_count = 0;
 
 static HWND create_status_control(DWORD style, DWORD exstyle)
 {
@@ -51,34 +54,46 @@ static HWND create_status_control(DWORD style, DWORD exstyle)
 
 static LRESULT WINAPI create_test_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    LRESULT ret;
+
     if (msg == WM_CREATE)
     {
         CREATESTRUCT *cs = (CREATESTRUCT *)lParam;
-        LRESULT ret = CallWindowProc(g_status_wndproc, hwnd, msg, wParam, lParam);
+        ret = CallWindowProc(g_status_wndproc, hwnd, msg, wParam, lParam);
         GetWindowRect(hwnd, &g_rcCreated);
         MapWindowPoints(HWND_DESKTOP, g_hMainWnd, (LPPOINT)&g_rcCreated, 2);
         ok(cs->x == g_rcCreated.left, "CREATESTRUCT.x modified\n");
         ok(cs->y == g_rcCreated.top, "CREATESTRUCT.y modified\n");
-        return ret;
+    } else if (msg == WM_SIZE)
+    {
+        g_wmsize_count++;
+        ret = CallWindowProc(g_status_wndproc, hwnd, msg, wParam, lParam);
     }
-    return CallWindowProc(g_status_wndproc, hwnd, msg, wParam, lParam);
+    else
+        ret = CallWindowProc(g_status_wndproc, hwnd, msg, wParam, lParam);
+
+    return ret;
 }
 
-static void test_create()
+static void register_subclass()
 {
     WNDCLASSEX cls;
-    RECT rc;
-    HWND hwnd;
 
     cls.cbSize = sizeof(WNDCLASSEX);
     GetClassInfoEx(NULL, STATUSCLASSNAME, &cls);
     g_status_wndproc = cls.lpfnWndProc;
     cls.lpfnWndProc = create_test_wndproc;
-    cls.lpszClassName = "MyStatusBar";
+    cls.lpszClassName = SUBCLASS_NAME;
     cls.hInstance = NULL;
     ok(RegisterClassEx(&cls), "RegisterClassEx failed\n");
+}
 
-    ok((hwnd = CreateWindowA("MyStatusBar", "", WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP, 0, 0, 100, 100,
+static void test_create()
+{
+    RECT rc;
+    HWND hwnd;
+
+    ok((hwnd = CreateWindowA(SUBCLASS_NAME, "", WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP, 0, 0, 100, 100,
         g_hMainWnd, NULL, NULL, 0)) != NULL, "CreateWindowA failed\n");
     MapWindowPoints(HWND_DESKTOP, g_hMainWnd, (LPPOINT)&rc, 2);
     GetWindowRect(hwnd, &rc);
@@ -89,6 +104,35 @@ static void test_create()
     expect(226, rc.bottom);
     /* we don't check rc.top as this may depend on user font settings */
     DestroyWindow(hwnd);
+}
+
+static void test_setfont()
+{
+    HFONT hFont;
+    RECT rc1, rc2;
+    HWND hwndStatus = CreateWindow(SUBCLASS_NAME, NULL, WS_CHILD|WS_VISIBLE,
+        0, 0, 300, 20, g_hMainWnd, NULL, NULL, NULL);
+
+    GetClientRect(hwndStatus, &rc1);
+    hFont = CreateFont(32, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE, "Tahoma");
+
+    g_wmsize_count = 0;
+    SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFont, TRUE);
+    ok(g_wmsize_count > 0, "WM_SETFONT should issue WM_SIZE\n");
+
+    GetClientRect(hwndStatus, &rc2);
+    todo_wine expect_rect(0, 0, 672, 42, rc2);
+
+    g_wmsize_count = 0;
+    SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFont, TRUE);
+    ok(g_wmsize_count > 0, "WM_SETFONT should issue WM_SIZE\n");
+
+    GetClientRect(hwndStatus, &rc2);
+    todo_wine expect_rect(0, 0, 672, 42, rc2);
+
+    DestroyWindow(hwndStatus);
+    DeleteObject(hFont);
 }
 
 static void test_status_control(void)
@@ -246,6 +290,9 @@ START_TEST(status)
 
     InitCommonControls();
 
+    register_subclass();
+
     test_status_control();
     test_create();
+    test_setfont();
 }

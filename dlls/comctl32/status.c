@@ -108,6 +108,35 @@ static inline LPCSTR debugstr_t(LPCWSTR text, BOOL isW)
   return isW ? debugstr_w(text) : debugstr_a((LPCSTR)text);
 }
 
+static UINT
+STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
+{
+    HTHEME theme;
+    UINT height;
+    TEXTMETRICW tm;
+
+    COMCTL32_GetFontMetrics(infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont, &tm);
+    height = tm.tmHeight + 4 + infoPtr->verticalBorder;
+
+    if ((theme = GetWindowTheme(infoPtr->Self)))
+    {
+        /* Determine bar height from theme such that the content area is
+         * textHeight pixels large */
+        HDC hdc = GetDC(infoPtr->Self);
+        RECT r;
+        memset (&r, 0, sizeof (r));
+        r.bottom = tm.tmHeight;
+        if (SUCCEEDED(GetThemeBackgroundExtent(theme, hdc, SP_PANE, 0, &r, &r)))
+        {
+            height = r.bottom - r.top;
+        }
+        ReleaseDC(infoPtr->Self, hdc);
+    }
+
+    TRACE("    textHeight=%d+%d, final height=%d\n", tm.tmHeight, tm.tmInternalLeading, height);
+    return height;
+}
+
 static void
 STATUSBAR_DrawSizeGrip (HTHEME theme, HDC hdc, LPRECT lpRect)
 {
@@ -913,8 +942,7 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     NONCLIENTMETRICSW nclm;
     DWORD dwStyle;
     RECT rect;
-    int	len, textHeight = 0;
-    HDC	hdc;
+    int	len;
 
     TRACE("\n");
     infoPtr = (STATUS_INFO*)Alloc (sizeof(STATUS_INFO));
@@ -971,17 +999,7 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     dwStyle &= ~WS_BORDER;
     SetWindowLongW (hwnd, GWL_STYLE, dwStyle);
 
-    if ((hdc = GetDC (hwnd))) {
-	TEXTMETRICW tm;
-	HFONT hOldFont;
-
-	hOldFont = SelectObject (hdc, infoPtr->hDefaultFont);
-	GetTextMetricsW (hdc, &tm);
-	textHeight = tm.tmHeight;
-	SelectObject (hdc, hOldFont);
-	ReleaseDC (hwnd, hdc);
-    }
-    TRACE("    textHeight=%d\n", textHeight);
+    infoPtr->height = STATUSBAR_ComputeHeight(infoPtr);
 
     if (dwStyle & SBT_TOOLTIPS) {
 	infoPtr->hwndToolTip =
@@ -1000,28 +1018,6 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
 
 	    SendMessageW (lpCreate->hwndParent, WM_NOTIFY, nmttc.hdr.idFrom, (LPARAM)&nmttc);
 	}
-    }
-
-    if (!(dwStyle & CCS_NORESIZE)) { /* don't resize wnd if it doesn't want it ! */
-        HTHEME theme;
-        infoPtr->height = textHeight + 4 + infoPtr->verticalBorder;
-        
-        if ((theme = GetWindowTheme (hwnd)))
-        {
-            /* Determine bar height from theme such that the content area is
-             * textHeight pixels large */
-            HDC hdc = GetDC (hwnd);
-            RECT r;
-            memset (&r, 0, sizeof (r));
-            r.bottom = textHeight;
-            if (SUCCEEDED(GetThemeBackgroundExtent (theme, hdc, SP_PANE, 0, &r, &r)))
-            {
-                infoPtr->height = r.bottom - r.top;
-            }
-            ReleaseDC (hwnd, hdc);
-        }
-    
-        STATUSBAR_SetPartBounds (infoPtr);
     }
 
     return 0;
@@ -1099,6 +1095,9 @@ STATUSBAR_WMSetFont (STATUS_INFO *infoPtr, HFONT font, BOOL redraw)
 {
     infoPtr->hFont = font;
     TRACE("%p\n", infoPtr->hFont);
+
+    infoPtr->height = STATUSBAR_ComputeHeight(infoPtr);
+    SendMessageW(infoPtr->Self, WM_SIZE, 0, 0);  /* update size */
     if (redraw)
         InvalidateRect(infoPtr->Self, NULL, FALSE);
 
