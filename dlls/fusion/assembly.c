@@ -299,7 +299,7 @@ static HRESULT parse_clr_metadata(ASSEMBLY *assembly)
         }
         else if (!lstrcmpA(stream, "#Strings") || !lstrcmpA(stream, "Strings"))
             assembly->strings = (BYTE *)assembly_data_offset(assembly, ofs);
-        else if (!lstrcmpA(stream, "#Blob"))
+        else if (!lstrcmpA(stream, "#Blob") || !lstrcmpA(stream, "Blob"))
             assembly->blobs = (BYTE *)assembly_data_offset(assembly, ofs);
 
         ptr += lstrlenA(stream);
