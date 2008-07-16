@@ -2,6 +2,7 @@
  *    SAX Reader implementation
  *
  * Copyright 2008 Alistair Leslie-Hughes
+ * Copyright 2008 Piotr Caban
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,6 +55,13 @@ typedef struct _saxreader
     xmlSAXHandler sax;
 } saxreader;
 
+typedef struct _saxlocator
+{
+    const struct ISAXLocatorVtbl *lpSAXLocatorVtbl;
+    LONG ref;
+    saxreader *saxreader;
+} saxlocator;
+
 static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
 {
     return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpVtbl));
@@ -62,6 +70,135 @@ static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
 static inline saxreader *impl_from_ISAXXMLReader( ISAXXMLReader *iface )
 {
     return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpSAXXMLReaderVtbl));
+}
+
+static inline saxlocator *impl_from_ISAXLocator( ISAXLocator *iface )
+{
+    return (saxlocator *)((char*)iface - FIELD_OFFSET(saxlocator, lpSAXLocatorVtbl));
+}
+
+/*** ISAXLocator interface ***/
+/*** IUnknown methods ***/
+static HRESULT WINAPI isaxlocator_QueryInterface(ISAXLocator* iface, REFIID riid, void **ppvObject)
+{
+    saxlocator *This = impl_from_ISAXLocator( iface );
+
+    TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppvObject );
+
+    *ppvObject = NULL;
+
+    if ( IsEqualGUID( riid, &IID_IUnknown ) ||
+            IsEqualGUID( riid, &IID_ISAXLocator ))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    ISAXLocator_AddRef( iface );
+
+    return S_OK;
+}
+
+static ULONG WINAPI isaxlocator_AddRef(ISAXLocator* iface)
+{
+    saxlocator *This = impl_from_ISAXLocator( iface );
+    TRACE("%p\n", This );
+    return InterlockedIncrement( &This->ref );
+}
+
+static ULONG WINAPI isaxlocator_Release(
+        ISAXLocator* iface)
+{
+    saxlocator *This = impl_from_ISAXLocator( iface );
+    LONG ref;
+
+    TRACE("%p\n", This );
+
+    ref = InterlockedDecrement( &This->ref );
+    if ( ref == 0 )
+    {
+        ISAXXMLReader_Release((ISAXXMLReader*)&This->saxreader->lpSAXXMLReaderVtbl);
+        HeapFree( GetProcessHeap(), 0, This );
+    }
+
+    return ref;
+}
+
+/*** ISAXLocator methods ***/
+static HRESULT WINAPI isaxlocator_getColumnNumber(
+        ISAXLocator* iface,
+        int *pnColumn)
+{
+    saxlocator *This = impl_from_ISAXLocator( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pnColumn);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxlocator_getLineNumber(
+        ISAXLocator* iface,
+        int *pnLine)
+{
+    saxlocator *This = impl_from_ISAXLocator( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, pnLine);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxlocator_getPublicId(
+        ISAXLocator* iface,
+        const WCHAR ** ppwchPublicId)
+{
+    saxlocator *This = impl_from_ISAXLocator( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, ppwchPublicId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxlocator_getSystemId(
+        ISAXLocator* iface,
+        const WCHAR ** ppwchSystemId)
+{
+    saxlocator *This = impl_from_ISAXLocator( iface );
+
+    FIXME("(%p)->(%p) stub\n", This, ppwchSystemId);
+    return E_NOTIMPL;
+}
+
+static const struct ISAXLocatorVtbl isaxlocator_vtbl =
+{
+    isaxlocator_QueryInterface,
+    isaxlocator_AddRef,
+    isaxlocator_Release,
+    isaxlocator_getColumnNumber,
+    isaxlocator_getLineNumber,
+    isaxlocator_getPublicId,
+    isaxlocator_getSystemId
+};
+
+static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator)
+{
+    saxlocator *locator;
+
+    locator = HeapAlloc( GetProcessHeap(), 0, sizeof (*locator) );
+    if( !locator )
+        return E_OUTOFMEMORY;
+
+    locator->lpSAXLocatorVtbl = &isaxlocator_vtbl;
+    locator->ref = 1;
+
+    locator->saxreader = reader;
+    ISAXXMLReader_AddRef((ISAXXMLReader*)&reader->lpSAXXMLReaderVtbl);
+
+    *ppsaxlocator = locator;
+
+    TRACE("returning %p\n", *ppsaxlocator);
+
+    return S_OK;
 }
 
 /*** IVBSAXXMLReader interface ***/
