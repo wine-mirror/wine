@@ -77,7 +77,7 @@ typedef struct
     HFONT             hFont;
     HFONT             hDefaultFont;
     COLORREF          clrBk;		/* background color */
-    BOOL              NtfUnicode;	/* notify format */
+    BOOL              bUnicode;         /* notify format. TRUE if notifies in Unicode */
     STATUSWINDOWPART  part0;		/* simple window */
     STATUSWINDOWPART* parts;
     INT               horizontalBorder;
@@ -100,6 +100,8 @@ static const WCHAR themeClass[] = { 'S','t','a','t','u','s',0 };
 /* prototype */
 static void
 STATUSBAR_SetPartBounds (STATUS_INFO *infoPtr);
+static LRESULT
+STATUSBAR_NotifyFormat (STATUS_INFO *infoPtr, HWND from, INT cmd);
 
 static inline LPCSTR debugstr_t(LPCWSTR text, BOOL isW)
 {
@@ -844,10 +846,10 @@ STATUSBAR_SetTipTextW (const STATUS_INFO *infoPtr, INT id, LPWSTR text)
 static inline LRESULT
 STATUSBAR_SetUnicodeFormat (STATUS_INFO *infoPtr, BOOL bUnicode)
 {
-    BOOL bOld = infoPtr->NtfUnicode;
+    BOOL bOld = infoPtr->bUnicode;
 
     TRACE("(0x%x)\n", bUnicode);
-    infoPtr->NtfUnicode = bUnicode;
+    infoPtr->bUnicode = bUnicode;
 
     return bOld;
 }
@@ -911,7 +913,7 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     NONCLIENTMETRICSW nclm;
     DWORD dwStyle;
     RECT rect;
-    int	i, width, len, textHeight = 0;
+    int	width, len, textHeight = 0;
     HDC	hdc;
 
     TRACE("\n");
@@ -930,8 +932,7 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     infoPtr->verticalBorder = VERT_BORDER;
     infoPtr->horizontalGap = HORZ_GAP;
 
-    i = SendMessageW(infoPtr->Notify, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
-    infoPtr->NtfUnicode = (i == NFR_UNICODE);
+    STATUSBAR_NotifyFormat(infoPtr, infoPtr->Notify, NF_REQUERY);
 
     GetClientRect (hwnd, &rect);
     InvalidateRect (hwnd, &rect, 0);
@@ -1182,9 +1183,9 @@ STATUSBAR_NotifyFormat (STATUS_INFO *infoPtr, HWND from, INT cmd)
 {
     if (cmd == NF_REQUERY) {
 	INT i = SendMessageW(from, WM_NOTIFYFORMAT, (WPARAM)infoPtr->Self, NF_QUERY);
-	infoPtr->NtfUnicode = (i == NFR_UNICODE);
+	infoPtr->bUnicode = (i == NFR_UNICODE);
     }
-    return infoPtr->NtfUnicode ? NFR_UNICODE : NFR_ANSI;
+    return infoPtr->bUnicode ? NFR_UNICODE : NFR_ANSI;
 }
 
 
@@ -1249,7 +1250,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return STATUSBAR_GetTipTextW (infoPtr,  LOWORD(wParam), (LPWSTR)lParam,  HIWORD(wParam));
 
 	case SB_GETUNICODEFORMAT:
-	    return infoPtr->NtfUnicode;
+	    return infoPtr->bUnicode;
 
 	case SB_ISSIMPLE:
 	    return infoPtr->simple;
