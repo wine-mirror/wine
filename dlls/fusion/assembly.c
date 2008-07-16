@@ -241,9 +241,17 @@ static HRESULT parse_clr_tables(ASSEMBLY *assembly, ULONG offset)
     memset(assembly->tables, -1, MAX_CLR_TABLES * sizeof(CLRTABLE));
 
     if (assembly->tableshdr->MaskValid.u.LowPart & 1)
-    {
         assembly->tables[0].offset = currofs;
-        assembly->tables[0].rows = assembly->numrows[0];
+
+    offidx = 0;
+    for (i = 0; i < MAX_CLR_TABLES; i++)
+    {
+        if ((i < 32 && (assembly->tableshdr->MaskValid.u.LowPart >> i) & 1) ||
+            (i >= 32 && (assembly->tableshdr->MaskValid.u.HighPart >> i) & 1))
+        {
+            assembly->tables[i].rows = assembly->numrows[offidx];
+            offidx++;
+        }
     }
 
     previ = 0;
@@ -255,7 +263,6 @@ static HRESULT parse_clr_tables(ASSEMBLY *assembly, ULONG offset)
         {
             currofs += COR_TABLE_SIZES[previ] * assembly->numrows[offidx - 1];
             assembly->tables[i].offset = currofs;
-            assembly->tables[i].rows = assembly->numrows[offidx];
             offidx++;
             previ = i;
         }
