@@ -418,21 +418,15 @@ static void test_GetPrivateProfileString(void)
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("", "name1", "default  ",
                                    buf, MAX_PATH, filename);
-    todo_wine
-    {
-        ok(ret == 7, "Expected 7, got %d\n", ret);
-        ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
-    }
+    ok(ret == 7, "Expected 7, got %d\n", ret);
+    ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     /* lpAppName is empty, many blank characters in lpDefault */
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("", "name1", "one two  ",
                                    buf, MAX_PATH, filename);
-    todo_wine
-    {
-        ok(ret == 7, "Expected 7, got %d\n", ret);
-        ok(!lstrcmpA(buf, "one two"), "Expected \"one two\", got \"%s\"\n", buf);
-    }
+    ok(ret == 7, "Expected 7, got %d\n", ret);
+    ok(!lstrcmpA(buf, "one two"), "Expected \"one two\", got \"%s\"\n", buf);
 
     /* lpAppName is empty, blank character but not trailing in lpDefault */
     lstrcpyA(buf, "kumquat");

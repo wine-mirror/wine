@@ -1084,17 +1084,14 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
     /* strip any trailing ' ' of def_val. */
     if (def_val)
     {
-        LPCWSTR p = &def_val[strlenW(def_val)]; /* even "" works ! */
+        LPCWSTR p = &def_val[strlenW(def_val) - 1];
 
-	while (p > def_val)
-	{
-	    p--;
-	    if ((*p) != ' ')
-		break;
-	}
-	if (*p == ' ') /* ouch, contained trailing ' ' */
-	{
-	    int len = (int)(p - def_val);
+        while (p > def_val && *p == ' ')
+            p--;
+
+        if (p >= def_val)
+        {
+            int len = (int)(p - def_val) + 1;
 
             defval_tmp = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
             memcpy(defval_tmp, def_val, len * sizeof(WCHAR));
