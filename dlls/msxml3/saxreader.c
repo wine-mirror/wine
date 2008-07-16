@@ -202,6 +202,50 @@ static void libxmlEndElementNS(
     }
 }
 
+static void libxmlCharacters(
+        void *ctx,
+        const xmlChar *ch,
+        int len)
+{
+    BSTR Chars;
+    saxlocator *This = ctx;
+    const xmlChar *cur;
+    int pos;
+    HRESULT hr;
+
+    This->lastColumn = 1;
+    This->lastLine = xmlSAX2GetLineNumber(This->pParserCtxt);
+
+    cur = This->pParserCtxt->input->cur;
+    if(*cur != '<')
+    {
+        for(pos=0; pos<len; pos++)
+            if(*(cur+pos) == '\n') This->lastLine--;
+        cur--;
+    }
+    else
+    {
+        for(pos=0; pos<len; pos++)
+            if(*(cur-pos-1) == '\n') This->lastLine--;
+        cur = cur-len-1;
+    }
+    for(; *cur!='\n' && cur!=This->pParserCtxt->input->base; cur--)
+        This->lastColumn++;
+
+    if(This->saxreader->contentHandler)
+    {
+        Chars = bstr_from_xmlChar(ch);
+        hr = ISAXContentHandler_characters(This->saxreader->contentHandler, Chars, len);
+        SysFreeString(Chars);
+
+        if(FAILED(hr))
+        {
+            xmlStopParser(This->pParserCtxt);
+            This->ret = hr;
+        }
+    }
+}
+
 /*** ISAXLocator interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI isaxlocator_QueryInterface(ISAXLocator* iface, REFIID riid, void **ppvObject)
@@ -1004,6 +1048,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->sax.endDocument = libxmlEndDocument;
     reader->sax.startElementNs = libxmlStartElementNS;
     reader->sax.endElementNs = libxmlEndElementNS;
+    reader->sax.characters = libxmlCharacters;
 
     *ppObj = &reader->lpVtbl;
 
