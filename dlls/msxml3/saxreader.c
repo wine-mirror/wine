@@ -101,6 +101,25 @@ static void libxmlStartDocument(void *ctx)
     This->lastLine = xmlSAX2GetLineNumber(This->pParserCtxt);
 }
 
+static void libxmlEndDocument(void *ctx)
+{
+    saxlocator *This = ctx;
+    HRESULT hr;
+
+    This->lastColumn = 0;
+    This->lastLine = 0;
+
+    if(This->saxreader->contentHandler)
+    {
+        hr = ISAXContentHandler_endDocument(This->saxreader->contentHandler);
+        if(FAILED(hr))
+        {
+            xmlStopParser(This->pParserCtxt);
+            This->ret = hr;
+        }
+    }
+}
+
 /*** ISAXLocator interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI isaxlocator_QueryInterface(ISAXLocator* iface, REFIID riid, void **ppvObject)
@@ -900,6 +919,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     memset(&reader->sax, 0, sizeof(xmlSAXHandler));
     reader->sax.initialized = XML_SAX2_MAGIC;
     reader->sax.startDocument = libxmlStartDocument;
+    reader->sax.endDocument = libxmlEndDocument;
 
     *ppObj = &reader->lpVtbl;
 
