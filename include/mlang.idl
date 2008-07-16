@@ -176,6 +176,53 @@ interface IEnumScript : IUnknown
 
 [
   object,
+  uuid(dccfc162-2b38-11d2-b7ec-00c04f8f5d9a),
+  pointer_default(unique)
+]
+interface IMLangFontLink2 : IMLangCodePages
+{
+    typedef struct tagUNICODERANGE
+    {
+        WCHAR wcFrom;
+        WCHAR wcTo;
+    } UNICODERANGE;
+
+    typedef [unique] IMLangFontLink2 *PMLANGFONTLINK2;
+
+    HRESULT GetFontCodePages(
+        [in] HDC hDC,
+        [in] HFONT hFont,
+        [out] DWORD *pdwCodePages );
+
+    HRESULT ReleaseFont(
+        [in] HFONT hFont);
+
+    HRESULT ResetFontMapping();
+
+    HRESULT MapFont(
+        [in] HDC hDC,
+        [in] DWORD dwCodePages,
+        [in] WCHAR chSrc,
+        [out] HFONT *pFont);
+
+    HRESULT GetFontUnicodeRanges(
+        [in] HDC hDC,
+        [in,out] UINT *puiRanges,
+        [out] UNICODERANGE* pUranges);
+
+    HRESULT GetScriptFontInfo(
+        [in] SCRIPT_ID sid,
+        [in] DWORD dwFlags,
+        [in,out] UINT *puiFonts,
+        [out] SCRIPTFONTINFO* pScriptFont);
+
+    HRESULT CodePageToScriptID(
+        [in] UINT uiCodePage,
+        [out] SCRIPT_ID *pSid);
+}
+
+[
+  object,
   uuid(275c23e3-3747-11d0-9fea-00aa003f8646),
   pointer_default(unique)
 ]
@@ -595,6 +642,7 @@ coclass CMultiLanguage
     interface IMLangCodePages;
     interface IMLangFontLink;
     /* interface IMLangLineBreakConsole; */
+    interface IMLangFontLink2;
 }
 
 cpp_quote("STDAPI LcidToRfc1766A(LCID, LPSTR, INT);")

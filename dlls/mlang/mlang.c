@@ -961,6 +961,7 @@ typedef struct tagMLang_impl
     const IMLangFontLinkVtbl *vtbl_IMLangFontLink;
     const IMultiLanguageVtbl *vtbl_IMultiLanguage;
     const IMultiLanguage3Vtbl *vtbl_IMultiLanguage3;
+    const IMLangFontLink2Vtbl *vtbl_IMLangFontLink2;
     LONG ref;
     DWORD total_cp, total_scripts;
 } MLang_impl;
@@ -999,6 +1000,14 @@ static HRESULT WINAPI MLang_QueryInterface(
 	MLang_AddRef(This);
         TRACE("Returning IID_IMLangFontLink %p ref = %d\n", This, This->ref);
 	*ppvObject = &(This->vtbl_IMLangFontLink);
+	return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_IMLangFontLink2))
+    {
+	MLang_AddRef(This);
+        TRACE("Returning IID_IMLangFontLink2 %p ref = %d\n", This, This->ref);
+	*ppvObject = &(This->vtbl_IMLangFontLink2);
 	return S_OK;
     }
 
@@ -2568,6 +2577,126 @@ static const IMultiLanguage3Vtbl IMultiLanguage3_vtbl =
     fnIMultiLanguage3_DetectOutboundCodePageInIStream
 };
 
+/******************************************************************************/
+static HRESULT WINAPI fnIMLangFontLink2_QueryInterface(
+    IMLangFontLink2 * iface,
+    REFIID riid,
+    void** ppvObject)
+{
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink2, iface);
+    return MLang_QueryInterface( This, riid, ppvObject );
+}
+
+static ULONG WINAPI fnIMLangFontLink2_AddRef( IMLangFontLink2* iface )
+{
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink2, iface);
+    return MLang_AddRef( This );
+}
+
+static ULONG WINAPI fnIMLangFontLink2_Release( IMLangFontLink2* iface )
+{
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangFontLink2, iface);
+    return MLang_Release( This );
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_GetCharCodePages( IMLangFontLink2* This,
+        WCHAR chSrc, DWORD *pdwCodePages)
+{
+    FIXME("(%p)->%s %p\n",This, debugstr_wn(&chSrc,1),pdwCodePages);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_GetStrCodePages( IMLangFontLink2* This,
+        const WCHAR *pszSrc, long cchSrc, DWORD dwPriorityCodePages,
+        DWORD *pdwCodePages, long *pcchCodePages)
+{
+    FIXME("(%p)->%s %li %x %p %p\n",This, debugstr_wn(pszSrc,cchSrc),cchSrc,dwPriorityCodePages,pdwCodePages,pcchCodePages);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_CodePageToCodePages(IMLangFontLink2* This,
+        UINT uCodePage,
+        DWORD *pdwCodePages)
+{
+    FIXME("(%p)->%i %p\n",This, uCodePage, pdwCodePages);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_CodePagesToCodePage(IMLangFontLink2* This,
+        DWORD dwCodePages, UINT uDefaultCodePage, UINT *puCodePage)
+{
+    FIXME("(%p)->%i %i %p\n",This, dwCodePages, uDefaultCodePage, puCodePage);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_GetFontCodePages(IMLangFontLink2* This,
+        HDC hDC, HFONT hFont, DWORD *pdwCodePages)
+{
+    FIXME("(%p)->%p %p %p\n",This, hDC, hFont, pdwCodePages);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_ReleaseFont(IMLangFontLink2* This,
+        HFONT hFont)
+{
+    FIXME("(%p)->%p\n",This, hFont);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_ResetFontMapping(IMLangFontLink2* This)
+{
+    FIXME("(%p)->\n",This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_MapFont(IMLangFontLink2* This,
+        HDC hDC, DWORD dwCodePages, WCHAR chSrc, HFONT *pFont)
+{
+    FIXME("(%p)->%p %i %s %p\n",This, hDC, dwCodePages, debugstr_wn(&chSrc,1), pFont);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_GetFontUnicodeRanges(IMLangFontLink2* This,
+        HDC hDC, UINT *puiRanges, UNICODERANGE *pUranges)
+{
+    FIXME("(%p)->%p %p %p\n",This, hDC, puiRanges, pUranges);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_GetScriptFontInfo(IMLangFontLink2* This,
+        SCRIPT_ID sid, DWORD dwFlags, UINT *puiFonts,
+        SCRIPTFONTINFO *pScriptFont)
+{
+    FIXME("(%p)->%i %i %p %p\n",This, sid, dwFlags, puiFonts, pScriptFont);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangFontLink2_CodePageToScriptID(IMLangFontLink2* This,
+        UINT uiCodePage, SCRIPT_ID *pSid)
+{
+    FIXME("(%p)->%i %p\n",This, uiCodePage, pSid);
+    return E_NOTIMPL;
+}
+
+static const IMLangFontLink2Vtbl IMLangFontLink2_vtbl =
+{
+    fnIMLangFontLink2_QueryInterface,
+    fnIMLangFontLink2_AddRef,
+    fnIMLangFontLink2_Release,
+    fnIMLangFontLink2_GetCharCodePages,
+    fnIMLangFontLink2_GetStrCodePages,
+    fnIMLangFontLink2_CodePageToCodePages,
+    fnIMLangFontLink2_CodePagesToCodePage,
+    fnIMLangFontLink2_GetFontCodePages,
+    fnIMLangFontLink2_ReleaseFont,
+    fnIMLangFontLink2_ResetFontMapping,
+    fnIMLangFontLink2_MapFont,
+    fnIMLangFontLink2_GetFontUnicodeRanges,
+    fnIMLangFontLink2_GetScriptFontInfo,
+    fnIMLangFontLink2_CodePageToScriptID
+};
+
+
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     MLang_impl *mlang;
@@ -2582,6 +2711,7 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     mlang->vtbl_IMLangFontLink = &IMLangFontLink_vtbl;
     mlang->vtbl_IMultiLanguage = &IMultiLanguage_vtbl;
     mlang->vtbl_IMultiLanguage3 = &IMultiLanguage3_vtbl;
+    mlang->vtbl_IMLangFontLink2 = &IMLangFontLink2_vtbl;
 
     mlang->total_cp = 0;
     for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
