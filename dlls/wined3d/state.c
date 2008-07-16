@@ -2308,8 +2308,9 @@ static void tex_bumpenvloffset(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     BOOL texIsPow2 = FALSE;
     DWORD sampler = state - STATE_SAMPLER(0);
+    IWineD3DBaseTexture *texture = stateblock->textures[sampler];
 
-    if(!stateblock->textures[sampler]) return;
+    if(!texture) return;
     /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
      * IWineD3DBaseTexture::ApplyStateChanges multiplies the set matrix with a fixup matrix. Before the
      * scaling is reapplied or removed, the texture matrix has to be reapplied
@@ -2320,12 +2321,12 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     if(!GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) && sampler < MAX_TEXTURES) {
         if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D ||
            stateblock->textureDimensions[sampler] == GL_TEXTURE_RECTANGLE_ARB) {
-            if(((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0 ||
-               ((IWineD3DTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[5] != 1.0 ) {
+            if(((IWineD3DTextureImpl *)texture)->baseTexture.pow2Matrix[0] != 1.0 ||
+               ((IWineD3DTextureImpl *)texture)->baseTexture.pow2Matrix[5] != 1.0 ) {
                 texIsPow2 = TRUE;
             }
         } else if(stateblock->textureDimensions[sampler] == GL_TEXTURE_CUBE_MAP_ARB) {
-            if(((IWineD3DCubeTextureImpl *) stateblock->textures[sampler])->baseTexture.pow2Matrix[0] != 1.0) {
+            if(((IWineD3DCubeTextureImpl *)texture)->baseTexture.pow2Matrix[0] != 1.0) {
                 texIsPow2 = TRUE;
             }
         }
