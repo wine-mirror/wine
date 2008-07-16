@@ -63,6 +63,7 @@ typedef struct _saxlocator
     HRESULT ret;
     xmlParserCtxtPtr pParserCtxt;
     WCHAR *publicId;
+    WCHAR *systemId;
     int lastLine;
     int lastColumn;
 } saxlocator;
@@ -310,6 +311,8 @@ static ULONG WINAPI isaxlocator_Release(
     {
         if(This->publicId)
             SysFreeString(This->publicId);
+        if(This->systemId)
+            SysFreeString(This->systemId);
 
         ISAXXMLReader_Release((ISAXXMLReader*)&This->saxreader->lpSAXXMLReaderVtbl);
         HeapFree( GetProcessHeap(), 0, This );
@@ -365,10 +368,22 @@ static HRESULT WINAPI isaxlocator_getSystemId(
         ISAXLocator* iface,
         const WCHAR ** ppwchSystemId)
 {
+    BSTR systemId;
     saxlocator *This = impl_from_ISAXLocator( iface );
 
-    FIXME("(%p)->(%p) stub\n", This, ppwchSystemId);
-    return E_NOTIMPL;
+    if(This->systemId) SysFreeString(This->systemId);
+
+    systemId = bstr_from_xmlChar(xmlSAX2GetSystemId(This->pParserCtxt));
+    if(SysStringLen(systemId))
+        This->systemId = (WCHAR*)&systemId;
+    else
+    {
+        SysFreeString(systemId);
+        This->systemId = NULL;
+    }
+
+    *ppwchSystemId = This->systemId;
+    return S_OK;
 }
 
 static const struct ISAXLocatorVtbl isaxlocator_vtbl =
@@ -398,6 +413,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator)
 
     locator->pParserCtxt = NULL;
     locator->publicId = NULL;
+    locator->systemId = NULL;
     locator->lastLine = 0;
     locator->lastColumn = 0;
     locator->ret = S_OK;
