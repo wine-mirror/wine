@@ -29,6 +29,21 @@
 
 #include "wine/test.h"
 
+typedef enum _CH {
+    CH_ENDTEST,
+    CH_PUTDOCUMENTLOCATOR,
+    CH_STARTDOCUMENT,
+    CH_ENDDOCUMENT,
+    CH_STARTPREFIXMAPPING,
+    CH_ENDPREFIXMAPPING,
+    CH_STARTELEMENT,
+    CH_ENDELEMENT,
+    CH_CHARACTERS,
+    CH_IGNORABLEWHITESPACE,
+    CH_PROCESSINGINSTRUCTION,
+    CH_SKIPPEDENTITY
+} CH;
+
 static const WCHAR szSimpleXML[] = {
 '<','?','x','m','l',' ','v','e','r','s','i','o','n','=','\"','1','.','0','\"',' ','?','>','\n',
 '<','B','a','n','k','A','c','c','o','u','n','t','>','\n',
@@ -37,14 +52,80 @@ static const WCHAR szSimpleXML[] = {
 '<','/','B','a','n','k','A','c','c','o','u','n','t','>','\n','\0'
 };
 
-typedef struct _contenthandler
-{
-    const struct ISAXContentHandlerVtbl *lpContentHandlerVtbl;
-} contenthandler;
+typedef struct _contenthandlercheck {
+    CH id;
+    int line;
+    int column;
+    const char *arg1;
+    const char *arg2;
+    const char *arg3;
+} content_handler_test;
 
-static inline contenthandler *impl_from_ISAXContentHandler(ISAXContentHandler *iface)
+static content_handler_test contentHandlerTest1[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0 },
+    { CH_STARTDOCUMENT, 0, 0 },
+    { CH_STARTELEMENT, 2, 14, "", "BankAccount", "BankAccount" },
+    { CH_CHARACTERS, 2, 14, "\n   " },
+    { CH_STARTELEMENT, 3, 12, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 12, "1234" },
+    { CH_ENDELEMENT, 3, 18, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 25, "\n   " },
+    { CH_STARTELEMENT, 4, 10, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 10, "Captain Ahab" },
+    { CH_ENDELEMENT, 4, 24, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 29, "\n" },
+    { CH_ENDELEMENT, 5, 3, "", "BankAccount", "BankAccount" },
+    { CH_ENDDOCUMENT, 0, 0 },
+    { CH_ENDTEST }
+};
+
+static content_handler_test *expectCall;
+static ISAXLocator *locator;
+
+static const char *debugstr_wn(const WCHAR *szStr, int len)
 {
-    return (contenthandler *)((char*)iface - FIELD_OFFSET(contenthandler, lpContentHandlerVtbl));
+    static char buf[1024];
+    WideCharToMultiByte(CP_ACP, 0, szStr, len, buf, sizeof(buf), NULL, NULL);
+    return buf;
+}
+
+static void test_saxstr(unsigned line, const WCHAR *szStr, int nStr, const char *szTest)
+{
+    WCHAR buf[1024];
+    int len;
+
+    if(!szTest) {
+        ok_(__FILE__,line) (szStr == NULL, "szStr != NULL\n");
+        ok_(__FILE__,line) (nStr == 0, "nStr = %d, expected 0\n", nStr);
+        return;
+    }
+
+    len = strlen(szTest);
+    ok_(__FILE__,line) (len == nStr, "nStr = %d, expected %d (%s)\n", nStr, len, szTest);
+    if(len != nStr)
+        return;
+
+    MultiByteToWideChar(CP_ACP, 0, szTest, -1, buf, sizeof(buf));
+    ok_(__FILE__,line) (!memcmp(szStr, buf, len*sizeof(WCHAR)), "unexpected szStr %s, expected %s\n",
+                        debugstr_wn(szStr, nStr), szTest);
+}
+
+static BOOL test_expect_call(CH id)
+{
+    ok(expectCall->id == id, "unexpected call %d, expected %d\n", id, expectCall->id);
+    return expectCall->id == id;
+}
+
+static void test_locator(unsigned line, int loc_line, int loc_column)
+{
+    int rcolumn, rline;
+    ISAXLocator_getLineNumber(locator, &rline);
+    ISAXLocator_getColumnNumber(locator, &rcolumn);
+
+    ok_(__FILE__,line) (rline == loc_line,
+            "unexpected line %d, expected %d\n", rline, loc_line);
+    ok_(__FILE__,line) (rcolumn == loc_column,
+            "unexpected columnt %d, expected %d\n", rcolumn, loc_column);
 }
 
 static HRESULT WINAPI contentHandler_QueryInterface(
@@ -82,18 +163,37 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         ISAXContentHandler* iface,
         ISAXLocator *pLocator)
 {
+    if(!test_expect_call(CH_PUTDOCUMENTLOCATOR))
+        return E_FAIL;
+
+    locator = pLocator;
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_startDocument(
         ISAXContentHandler* iface)
 {
+    if(!test_expect_call(CH_STARTDOCUMENT))
+        return E_FAIL;
+
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
 static HRESULT WINAPI contentHandler_endDocument(
         ISAXContentHandler* iface)
 {
+    if(!test_expect_call(CH_ENDDOCUMENT))
+        return E_FAIL;
+
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -104,6 +204,14 @@ static HRESULT WINAPI contentHandler_startPrefixMapping(
         const WCHAR *pUri,
         int nUri)
 {
+    if(!test_expect_call(CH_ENDDOCUMENT))
+        return E_FAIL;
+
+    test_saxstr(__LINE__, pPrefix, nPrefix, expectCall->arg1);
+    test_saxstr(__LINE__, pUri, nUri, expectCall->arg2);
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -112,6 +220,13 @@ static HRESULT WINAPI contentHandler_endPrefixMapping(
         const WCHAR *pPrefix,
         int nPrefix)
 {
+    if(!test_expect_call(CH_ENDPREFIXMAPPING))
+        return E_FAIL;
+
+    test_saxstr(__LINE__, pPrefix, nPrefix, expectCall->arg1);
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -125,6 +240,15 @@ static HRESULT WINAPI contentHandler_startElement(
         int nQName,
         ISAXAttributes *pAttr)
 {
+    if(!test_expect_call(CH_STARTELEMENT))
+        return E_FAIL;
+
+    test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, expectCall->arg1);
+    test_saxstr(__LINE__, pLocalName, nLocalName, expectCall->arg2);
+    test_saxstr(__LINE__, pQName, nQName, expectCall->arg3);
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -137,6 +261,15 @@ static HRESULT WINAPI contentHandler_endElement(
         const WCHAR *pQName,
         int nQName)
 {
+    if(!test_expect_call(CH_ENDELEMENT))
+        return E_FAIL;
+
+    test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, expectCall->arg1);
+    test_saxstr(__LINE__, pLocalName, nLocalName, expectCall->arg2);
+    test_saxstr(__LINE__, pQName, nQName, expectCall->arg3);
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -145,6 +278,13 @@ static HRESULT WINAPI contentHandler_characters(
         const WCHAR *pChars,
         int nChars)
 {
+    if(!test_expect_call(CH_CHARACTERS))
+        return E_FAIL;
+
+    test_saxstr(__LINE__, pChars, nChars, expectCall->arg1);
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -153,6 +293,13 @@ static HRESULT WINAPI contentHandler_ignorableWhitespace(
         const WCHAR *pChars,
         int nChars)
 {
+    if(!test_expect_call(CH_IGNORABLEWHITESPACE))
+        return E_FAIL;
+
+    test_saxstr(__LINE__, pChars, nChars, expectCall->arg1);
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -163,6 +310,14 @@ static HRESULT WINAPI contentHandler_processingInstruction(
         const WCHAR *pData,
         int nData)
 {
+    if(!test_expect_call(CH_PROCESSINGINSTRUCTION))
+        return E_FAIL;
+
+    test_saxstr(__LINE__, pTarget, nTarget, expectCall->arg1);
+    test_saxstr(__LINE__, pData, nData, expectCall->arg2);
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -171,6 +326,13 @@ static HRESULT WINAPI contentHandler_skippedEntity(
         const WCHAR *pName,
         int nName)
 {
+    if(!test_expect_call(CH_SKIPPEDENTITY))
+        return E_FAIL;
+
+    test_saxstr(__LINE__, pName, nName, expectCall->arg1);
+    test_locator(__LINE__, expectCall->line, expectCall->column);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -232,10 +394,10 @@ static void test_saxreader(void)
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(szSimpleXML);
 
+    expectCall = contentHandlerTest1;
     hr = ISAXXMLReader_parse(reader, var);
-    todo_wine {
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    }
+    test_expect_call(CH_ENDTEST);
 
     ISAXXMLReader_Release(reader);
 }
