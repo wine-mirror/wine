@@ -1075,6 +1075,27 @@ static HRESULT Session_EvaluateCondition(IDispatch *pSession, LPCWSTR szConditio
     return hr;
 }
 
+static HRESULT Session_Message(IDispatch *pSession, long kind, IDispatch *record, int *ret)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&varresult);
+    V_VT(vararg) = VT_DISPATCH;
+    V_DISPATCH(vararg) = record;
+    V_VT(vararg+1) = VT_I4;
+    V_I4(vararg+1) = kind;
+
+    hr = invoke(pSession, "Message", DISPATCH_METHOD, &dispparams, &varresult, VT_I4);
+
+    ok(V_VT(&varresult) == VT_I4, "V_VT(varresult) = %d\n", V_VT(&varresult));
+    *ret = V_I4(&varresult);
+
+    return hr;
+}
+
 static HRESULT Session_SetInstallLevel(IDispatch *pSession, long iInstallLevel)
 {
     VARIANT varresult;
@@ -1649,7 +1670,7 @@ static void test_Session(IDispatch *pSession)
     UINT len;
     BOOL bool;
     int myint;
-    IDispatch *pDatabase = NULL, *pInst = NULL;
+    IDispatch *pDatabase = NULL, *pInst = NULL, *record = NULL;
     HRESULT hr;
 
     /* Session::Installer */
@@ -1745,6 +1766,13 @@ static void test_Session(IDispatch *pSession)
     hr = Session_FeatureCurrentState(pSession, szOne, &myint);
     ok(hr == S_OK, "Session_FeatureCurrentState failed, hresult 0x%08x\n", hr);
     ok(myint == INSTALLSTATE_UNKNOWN, "Feature current state was %d but expected %d\n", myint, INSTALLSTATE_UNKNOWN);
+
+    /* Session::Message */
+    hr = Installer_CreateRecord(0, &record);
+    ok(hr == S_OK, "Installer_CreateRecord failed: %08x\n", hr);
+    hr = Session_Message(pSession, INSTALLMESSAGE_INFO, record, &myint);
+    ok(hr == S_OK, "Session_Message failed: %08x\n", hr);
+    ok(myint == 0, "Session_Message returned %x\n", myint);
 
     /* Session::EvaluateCondition */
     hr = Session_EvaluateCondition(pSession, szOneStateFalse, &myint);
