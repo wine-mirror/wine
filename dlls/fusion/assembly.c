@@ -36,12 +36,17 @@
 #include "wine/unicode.h"
 
 #define TableFromToken(tk) (TypeFromToken(tk) >> 24)
+#define TokenFromTable(idx) (idx << 24)
 
 #define MAX_CLR_TABLES  64
 
+#define MD_STRINGS_BIT 0x1
+#define MD_GUIDS_BIT   0x2
+#define MD_BLOBS_BIT   0x4
+
 typedef struct tagCLRTABLE
 {
-    DWORD rows;
+    INT rows;
     DWORD offset;
 } CLRTABLE;
 
@@ -63,76 +68,12 @@ struct tagASSEMBLY
     DWORD *numrows;
     CLRTABLE tables[MAX_CLR_TABLES];
 
+    DWORD stringsz;
+    DWORD guidsz;
+    DWORD blobsz;
+
     BYTE *strings;
     BYTE *blobs;
-};
-
-const DWORD COR_TABLE_SIZES[64] =
-{
-    sizeof(MODULETABLE),
-    sizeof(TYPEREFTABLE),
-    sizeof(TYPEDEFTABLE),
-    0,
-    sizeof(FIELDTABLE),
-    0,
-    sizeof(METHODDEFTABLE),
-    0,
-    sizeof(PARAMTABLE),
-    sizeof(INTERFACEIMPLTABLE),
-    sizeof(MEMBERREFTABLE),
-    sizeof(CONSTANTTABLE),
-    sizeof(CUSTOMATTRIBUTETABLE),
-    sizeof(FIELDMARSHALTABLE),
-    sizeof(DECLSECURITYTABLE),
-    sizeof(CLASSLAYOUTTABLE),
-    sizeof(FIELDLAYOUTTABLE),
-    sizeof(STANDALONESIGTABLE),
-    sizeof(EVENTMAPTABLE),
-    0,
-    sizeof(EVENTTABLE),
-    sizeof(PROPERTYMAPTABLE),
-    0,
-    sizeof(PROPERTYTABLE),
-    sizeof(METHODSEMANTICSTABLE),
-    sizeof(METHODIMPLTABLE),
-    sizeof(MODULEREFTABLE),
-    sizeof(TYPESPECTABLE),
-    sizeof(IMPLMAPTABLE),
-    sizeof(FIELDRVATABLE),
-    0,
-    0,
-    sizeof(ASSEMBLYTABLE),
-    sizeof(ASSEMBLYPROCESSORTABLE),
-    sizeof(ASSEMBLYOSTABLE),
-    sizeof(ASSEMBLYREFTABLE),
-    sizeof(ASSEMBLYREFPROCESSORTABLE),
-    sizeof(ASSEMBLYREFOSTABLE),
-    sizeof(FILETABLE),
-    sizeof(EXPORTEDTYPETABLE),
-    sizeof(MANIFESTRESTABLE),
-    sizeof(NESTEDCLASSTABLE),
-    sizeof(GENERICPARAMTABLE),
-    sizeof(METHODSPECTABLE),
-    sizeof(GENERICPARAMCONSTRAINTTABLE),
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
 };
 
 static LPSTR strdupWtoA(LPCWSTR str)
@@ -215,6 +156,346 @@ static VOID *assembly_data_offset(ASSEMBLY *assembly, ULONG offset)
     return (VOID *)&assembly->data[offset];
 }
 
+#define MAX_TABLES_WORD 0xFFFF
+#define MAX_TABLES_1BIT_ENCODE 32767
+#define MAX_TABLES_2BIT_ENCODE 16383
+#define MAX_TABLES_3BIT_ENCODE 8191
+#define MAX_TABLES_5BIT_ENCODE 2047
+
+static inline ULONG get_table_size(ASSEMBLY *assembly, DWORD index)
+{
+    DWORD size;
+    INT tables;
+
+    switch (TokenFromTable(index))
+    {
+        case mdtModule:
+        {
+            size = sizeof(MODULETABLE) + (assembly->stringsz - sizeof(WORD)) +
+                   2 * (assembly->guidsz - sizeof(WORD));
+            break;
+        }
+        case mdtTypeRef:
+        {
+            size = sizeof(TYPEREFTABLE) + 2 * (assembly->stringsz - sizeof(WORD));
+
+            /* ResolutionScope:ResolutionScope */
+            tables = max(assembly->tables[TableFromToken(mdtModule)].rows,
+                         assembly->tables[TableFromToken(mdtModuleRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtAssemblyRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeRef)].rows);
+            size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtTypeDef:
+        {
+            size = sizeof(TYPEDEFTABLE) + 2 * (assembly->stringsz - sizeof(WORD));
+
+            /* Extends:TypeDefOrRef */
+            tables = max(assembly->tables[TableFromToken(mdtTypeDef)].rows,
+                         assembly->tables[TableFromToken(mdtTypeRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeSpec)].rows);
+            size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
+
+            size += (assembly->tables[TableFromToken(mdtFieldDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            size += (assembly->tables[TableFromToken(mdtMethodDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtFieldDef:
+        {
+            size = sizeof(FIELDTABLE) + (assembly->stringsz - sizeof(WORD)) +
+                   (assembly->blobsz - sizeof(WORD));
+            break;
+        }
+        case mdtMethodDef:
+        {
+            size = sizeof(METHODDEFTABLE) + (assembly->stringsz - sizeof(WORD)) +
+                   (assembly->blobsz - sizeof(WORD));
+
+            size += (assembly->tables[TableFromToken(mdtParamDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtParamDef:
+        {
+            size = sizeof(PARAMTABLE) + (assembly->stringsz - sizeof(WORD));
+            break;
+        }
+        case mdtInterfaceImpl:
+        {
+            size = sizeof(INTERFACEIMPLTABLE);
+
+            /* Interface:TypeDefOrRef */
+            tables = max(assembly->tables[TableFromToken(mdtTypeDef)].rows,
+                         assembly->tables[TableFromToken(mdtTypeRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeSpec)].rows);
+            size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtMemberRef:
+        {
+            size = sizeof(MEMBERREFTABLE) + (assembly->stringsz - sizeof(WORD)) +
+                   (assembly->blobsz - sizeof(WORD));
+
+            /* Class:MemberRefParent */
+            tables = max(assembly->tables[TableFromToken(mdtTypeRef)].rows,
+                         assembly->tables[TableFromToken(mdtModuleRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtMethodDef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeSpec)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeDef)].rows);
+            size += (tables > MAX_TABLES_3BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x0B: /* FIXME */
+        {
+            size = sizeof(CONSTANTTABLE) + (assembly->blobsz - sizeof(WORD));
+
+            /* Parent:HasConstant */
+            tables = max(assembly->tables[TableFromToken(mdtParamDef)].rows,
+                         assembly->tables[TableFromToken(mdtFieldDef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtProperty)].rows);
+            size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtCustomAttribute:
+        {
+            size = sizeof(CUSTOMATTRIBUTETABLE) + (assembly->blobsz - sizeof(WORD));
+
+            /* Parent:HasCustomAttribute */
+            tables = max(assembly->tables[TableFromToken(mdtMethodDef)].rows,
+                         assembly->tables[TableFromToken(mdtFieldDef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeDef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtParamDef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtInterfaceImpl)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtMemberRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtPermission)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtProperty)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtEvent)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtSignature)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtModuleRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeSpec)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtAssembly)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtFile)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtExportedType)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtManifestResource)].rows);
+            size += (tables > MAX_TABLES_5BIT_ENCODE) ? sizeof(WORD) : 0;
+
+            /* Type:CustomAttributeType */
+            tables = max(assembly->tables[TableFromToken(mdtMethodDef)].rows,
+                         assembly->tables[TableFromToken(mdtMemberRef)].rows);
+            size += (tables > MAX_TABLES_3BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x0D: /* FIXME */
+        {
+            size = sizeof(FIELDMARSHALTABLE) + (assembly->blobsz - sizeof(WORD));
+
+            /* Parent:HasFieldMarshal */
+            tables = max(assembly->tables[TableFromToken(mdtFieldDef)].rows,
+                         assembly->tables[TableFromToken(mdtParamDef)].rows);
+            size += (tables > MAX_TABLES_1BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtPermission:
+        {
+            size = sizeof(DECLSECURITYTABLE) + (assembly->blobsz - sizeof(WORD));
+
+            /* Parent:HasDeclSecurity */
+            tables = max(assembly->tables[TableFromToken(mdtTypeDef)].rows,
+                         assembly->tables[TableFromToken(mdtMethodDef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtAssembly)].rows);
+            size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x0F: /* FIXME */
+        {
+            size = sizeof(CLASSLAYOUTTABLE);
+            size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x10: /* FIXME */
+        {
+            size = sizeof(FIELDLAYOUTTABLE);
+            size += (assembly->tables[TableFromToken(mdtFieldDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtSignature:
+        {
+            size = sizeof(STANDALONESIGTABLE) + (assembly->blobsz - sizeof(WORD));
+            break;
+        }
+        case 0x12: /* FIXME */
+        {
+            size = sizeof(EVENTMAPTABLE);
+            size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            size += (assembly->tables[TableFromToken(mdtEvent)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtEvent:
+        {
+            size = sizeof(EVENTTABLE) + (assembly->stringsz - sizeof(WORD));
+
+            /* EventType:TypeDefOrRef */
+            tables = max(assembly->tables[TableFromToken(mdtTypeDef)].rows,
+                         assembly->tables[TableFromToken(mdtTypeRef)].rows);
+            tables = max(tables, assembly->tables[TableFromToken(mdtTypeSpec)].rows);
+            size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x15:/* FIXME */
+        {
+            size = sizeof(PROPERTYMAPTABLE);
+            size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            size += (assembly->tables[TableFromToken(mdtProperty)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtProperty:
+        {
+            size = sizeof(PROPERTYTABLE) + (assembly->stringsz - sizeof(WORD)) +
+                   (assembly->blobsz - sizeof(WORD));
+            break;
+        }
+        case 0x18: /* FIXME */
+        {
+            size = sizeof(METHODSEMANTICSTABLE);
+
+            /* Association:HasSemantics */
+            tables = max(assembly->tables[TableFromToken(mdtEvent)].rows,
+                         assembly->tables[TableFromToken(mdtProperty)].rows);
+            size += (tables > MAX_TABLES_1BIT_ENCODE) ? sizeof(WORD) : 0;
+
+            size += (assembly->tables[TableFromToken(mdtMethodDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x19: /* FIXME */
+        {
+            size = sizeof(METHODIMPLTABLE);
+
+            /* MethodBody:MethodDefOrRef, MethodDeclaration:MethodDefOrRef */
+            tables = max(assembly->tables[TableFromToken(mdtMethodDef)].rows,
+                         assembly->tables[TableFromToken(mdtMemberRef)].rows);
+            size += (tables > MAX_TABLES_1BIT_ENCODE) ? 2 * sizeof(WORD) : 0;
+
+            size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtModuleRef:
+        {
+            size = sizeof(MODULEREFTABLE) + (assembly->stringsz - sizeof(WORD));
+            break;
+        }
+        case mdtTypeSpec:
+        {
+            size = sizeof(TYPESPECTABLE) + (assembly->blobsz - sizeof(WORD));
+            break;
+        }
+        case 0x1C: /* FIXME */
+        {
+            size = sizeof(IMPLMAPTABLE) + (assembly->stringsz - sizeof(WORD));
+
+            /* MemberForwarded:MemberForwarded */
+            tables = max(assembly->tables[TableFromToken(mdtFieldDef)].rows,
+                         assembly->tables[TableFromToken(mdtMethodDef)].rows);
+            size += (tables > MAX_TABLES_1BIT_ENCODE) ? sizeof(WORD) : 0;
+
+            size += (assembly->tables[TableFromToken(mdtModuleRef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x1D: /* FIXME */
+        {
+            size = sizeof(FIELDRVATABLE);
+            size += (assembly->tables[TableFromToken(mdtFieldDef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtAssembly:
+        {
+            size = sizeof(ASSEMBLYTABLE) + 2 * (assembly->stringsz - sizeof(WORD)) +
+                   (assembly->blobsz - sizeof(WORD));
+            break;
+        }
+        case 0x21: /* FIXME */
+        {
+            size = sizeof(ASSEMBLYPROCESSORTABLE);
+            break;
+        }
+        case 0x22: /* FIXME */
+        {
+            size = sizeof(ASSEMBLYOSTABLE);
+            break;
+        }
+        case mdtAssemblyRef:
+        {
+            size = sizeof(ASSEMBLYREFTABLE) + 2 * (assembly->stringsz - sizeof(WORD)) +
+                   2 * (assembly->blobsz - sizeof(WORD));
+            break;
+        }
+        case 0x24: /* FIXME */
+        {
+            size = sizeof(ASSEMBLYREFPROCESSORTABLE);
+            size += (assembly->tables[TableFromToken(mdtAssemblyRef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x25: /* FIXME */
+        {
+            size = sizeof(ASSEMBLYREFOSTABLE);
+            size += (assembly->tables[TableFromToken(mdtAssemblyRef)].rows >
+                     MAX_TABLES_WORD) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtFile:
+        {
+            size = sizeof(FILETABLE) + (assembly->stringsz - sizeof(WORD)) +
+                   (assembly->blobsz - sizeof(WORD));
+            break;
+        }
+        case mdtExportedType:
+        {
+            size = sizeof(EXPORTEDTYPETABLE) + 2 * (assembly->stringsz - sizeof(WORD));
+
+            /* Implementation:Implementation */
+            tables = max(assembly->tables[TableFromToken(mdtFile)].rows,
+                         assembly->tables[TableFromToken(mdtMethodDef)].rows);
+            size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case mdtManifestResource:
+        {
+            size = sizeof(MANIFESTRESTABLE) + (assembly->stringsz - sizeof(WORD));
+
+            /* Implementation:Implementation */
+            tables = max(assembly->tables[TableFromToken(mdtFile)].rows,
+                         assembly->tables[TableFromToken(mdtAssemblyRef)].rows);
+            size += (tables > MAX_TABLES_2BIT_ENCODE) ? sizeof(WORD) : 0;
+            break;
+        }
+        case 0x29: /* FIXME */
+        {
+            size = sizeof(NESTEDCLASSTABLE);
+            size += (assembly->tables[TableFromToken(mdtTypeDef)].rows >
+                     MAX_TABLES_WORD) ? 2 * sizeof(WORD) : 0;
+            break;
+        }
+        default:
+            return 0;
+    }
+
+    return size;
+}
+
 static HRESULT parse_clr_tables(ASSEMBLY *assembly, ULONG offset)
 {
     DWORD i, previ, offidx;
@@ -224,6 +505,13 @@ static HRESULT parse_clr_tables(ASSEMBLY *assembly, ULONG offset)
     assembly->tableshdr = (METADATATABLESHDR *)assembly_data_offset(assembly, currofs);
     if (!assembly->tableshdr)
         return E_FAIL;
+
+    assembly->stringsz = (assembly->tableshdr->HeapOffsetSizes & MD_STRINGS_BIT) ?
+                         sizeof(DWORD) : sizeof(WORD);
+    assembly->guidsz = (assembly->tableshdr->HeapOffsetSizes & MD_GUIDS_BIT) ?
+                       sizeof(DWORD) : sizeof(WORD);
+    assembly->blobsz = (assembly->tableshdr->HeapOffsetSizes & MD_BLOBS_BIT) ?
+                       sizeof(DWORD) : sizeof(WORD);
 
     currofs += sizeof(METADATATABLESHDR);
     assembly->numrows = (DWORD *)assembly_data_offset(assembly, currofs);
@@ -264,7 +552,7 @@ static HRESULT parse_clr_tables(ASSEMBLY *assembly, ULONG offset)
         if ((i < 32 && (assembly->tableshdr->MaskValid.u.LowPart >> i) & 1) ||
             (i >= 32 && (assembly->tableshdr->MaskValid.u.HighPart >> i) & 1))
         {
-            currofs += COR_TABLE_SIZES[previ] * assembly->numrows[offidx - 1];
+            currofs += get_table_size(assembly, previ) * assembly->numrows[offidx - 1];
             assembly->tables[i].offset = currofs;
             offidx++;
             previ = i;
