@@ -5473,19 +5473,13 @@ static void vshader_version_varying_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
     color = getPixelColor(device, 160, 120);
-    ok((color & 0x00ff0000) >= 0x00190000 && (color & 0x00ff0000) <= 0x00210000 &&
-       (color & 0x0000ff00) >= 0x00003300 && (color & 0x0000ff00) <= 0x00003500 &&
-       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00000068,
-       "vs_3_0 returned color 0x%08x, expected 0x00203366\n", color);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x1a, 0x34, 0x67), 1),
+       "vs_3_0 returned color 0x%08x, expected 0x00193366\n", color);
     color = getPixelColor(device, 160, 360);
-    ok((color & 0x00ff0000) >= 0x003c0000 && (color & 0x00ff0000) <= 0x004e0000 &&
-       (color & 0x0000ff00) >= 0x00000000 && (color & 0x0000ff00) <= 0x00000000 &&
-       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00000068,
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x4d, 0x00, 0x67), 1),
        "vs_1_1 returned color 0x%08x, expected 0x004c0066\n", color);
     color = getPixelColor(device, 480, 360);
-    ok((color & 0x00ff0000) >= 0x003c0000 && (color & 0x00ff0000) <= 0x004e0000 &&
-       (color & 0x0000ff00) >= 0x00000000 && (color & 0x0000ff00) <= 0x00000000 &&
-       (color & 0x000000ff) >= 0x00000066 && (color & 0x000000ff) <= 0x00000068,
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x4d, 0x00, 0x67), 1),
        "vs_2_0 returned color 0x%08x, expected 0x004c0066\n", color);
 
     /* cleanup */
