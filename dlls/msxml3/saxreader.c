@@ -60,6 +60,8 @@ typedef struct _saxlocator
     const struct ISAXLocatorVtbl *lpSAXLocatorVtbl;
     LONG ref;
     saxreader *saxreader;
+    HRESULT ret;
+    xmlParserCtxtPtr pParserCtxt;
 } saxlocator;
 
 static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
@@ -193,6 +195,9 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator)
 
     locator->saxreader = reader;
     ISAXXMLReader_AddRef((ISAXXMLReader*)&reader->lpSAXXMLReaderVtbl);
+
+    locator->pParserCtxt = NULL;
+    locator->ret = S_OK;
 
     *ppsaxlocator = locator;
 
@@ -773,9 +778,48 @@ static HRESULT WINAPI isaxxmlreader_parse(
         VARIANT varInput)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
+    saxlocator *locator;
+    xmlChar *data = NULL;
+    HRESULT hr;
 
-    FIXME("(%p) stub\n", This);
-    return E_NOTIMPL;
+    FIXME("(%p) semi-stub\n", This);
+
+    hr = SAXLocator_create(This, &locator);
+    if(FAILED(hr))
+        return E_FAIL;
+
+    hr = S_OK;
+    switch(V_VT(&varInput))
+    {
+        case VT_BSTR:
+            locator->pParserCtxt = xmlNewParserCtxt();
+            if(!locator->pParserCtxt)
+            {
+                hr = E_FAIL;
+                break;
+            }
+            data = xmlChar_from_wchar(V_BSTR(&varInput));
+            xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
+
+            locator->pParserCtxt->sax = &locator->saxreader->sax;
+            locator->pParserCtxt->userData = locator;
+
+            if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
+            else hr = locator->ret;
+            break;
+        default:
+            hr = E_NOTIMPL;
+    }
+
+    if(locator->pParserCtxt)
+    {
+        locator->pParserCtxt->sax = NULL;
+        xmlFreeParserCtxt(locator->pParserCtxt);
+        locator->pParserCtxt = NULL;
+    }
+    if(data) HeapFree(GetProcessHeap(), 0, data);
+    ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
+    return hr;
 }
 
 static HRESULT WINAPI isaxxmlreader_parseURL(
@@ -828,6 +872,9 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->ref = 1;
     reader->contentHandler = NULL;
     reader->errorHandler = NULL;
+
+    memset(&reader->sax, 0, sizeof(xmlSAXHandler));
+    reader->sax.initialized = XML_SAX2_MAGIC;
 
     *ppObj = &reader->lpVtbl;
 
