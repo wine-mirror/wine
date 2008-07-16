@@ -246,6 +246,23 @@ static void libxmlCharacters(
     }
 }
 
+static void libxmlSetDocumentLocator(
+        void *ctx,
+        xmlSAXLocatorPtr loc)
+{
+    saxlocator *This = ctx;
+    HRESULT hr;
+
+    hr = ISAXContentHandler_putDocumentLocator(This->saxreader->contentHandler,
+            (ISAXLocator*)&This->lpSAXLocatorVtbl);
+
+    if(FAILED(hr))
+    {
+        xmlStopParser(This->pParserCtxt);
+        This->ret = hr;
+    }
+}
+
 /*** ISAXLocator interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI isaxlocator_QueryInterface(ISAXLocator* iface, REFIID riid, void **ppvObject)
@@ -1049,6 +1066,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->sax.startElementNs = libxmlStartElementNS;
     reader->sax.endElementNs = libxmlEndElementNS;
     reader->sax.characters = libxmlCharacters;
+    reader->sax.setDocumentLocator = libxmlSetDocumentLocator;
 
     *ppObj = &reader->lpVtbl;
 
