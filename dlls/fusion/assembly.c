@@ -735,7 +735,7 @@ HRESULT assembly_release(ASSEMBLY *assembly)
     return S_OK;
 }
 
-static LPSTR assembly_dup_str(ASSEMBLY *assembly, WORD index)
+static LPSTR assembly_dup_str(ASSEMBLY *assembly, DWORD index)
 {
     LPSTR str = (LPSTR)&assembly->strings[index];
     LPSTR cpy = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
@@ -746,18 +746,25 @@ static LPSTR assembly_dup_str(ASSEMBLY *assembly, WORD index)
 
 HRESULT assembly_get_name(ASSEMBLY *assembly, LPSTR *name)
 {
-    ASSEMBLYTABLE *asmtbl;
+    BYTE *ptr;
     ULONG offset;
+    DWORD stridx;
 
     offset = assembly->tables[TableFromToken(mdtAssembly)].offset;
     if (offset == -1)
         return E_FAIL;
 
-    asmtbl = (ASSEMBLYTABLE *)assembly_data_offset(assembly, offset);
-    if (!asmtbl)
+    ptr = assembly_data_offset(assembly, offset);
+    if (!ptr)
         return E_FAIL;
 
-    *name = assembly_dup_str(assembly, asmtbl->Name);
+    ptr += FIELD_OFFSET(ASSEMBLYTABLE, PublicKey) + assembly->blobsz;
+    if (assembly->stringsz == sizeof(DWORD))
+        stridx = *((DWORD *)ptr);
+    else
+        stridx = *((WORD *)ptr);
+
+    *name = assembly_dup_str(assembly, stridx);
     if (!*name)
         return E_OUTOFMEMORY;
 
