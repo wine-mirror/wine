@@ -913,7 +913,7 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     NONCLIENTMETRICSW nclm;
     DWORD dwStyle;
     RECT rect;
-    int	width, len, textHeight = 0;
+    int	len, textHeight = 0;
     HDC	hdc;
 
     TRACE("\n");
@@ -1006,8 +1006,6 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
 
     if (!(dwStyle & CCS_NORESIZE)) { /* don't resize wnd if it doesn't want it ! */
         HTHEME theme;
-        GetClientRect (infoPtr->Notify, &rect);
-        width = rect.right - rect.left;
         infoPtr->height = textHeight + 4 + infoPtr->verticalBorder;
         
         if ((theme = GetWindowTheme (hwnd)))
@@ -1025,8 +1023,6 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
             ReleaseDC (hwnd, hdc);
         }
     
-        SetWindowPos(hwnd, 0, lpCreate->x, lpCreate->y - 1,
-			width, infoPtr->height, SWP_NOZORDER);
         STATUSBAR_SetPartBounds (infoPtr);
     }
 

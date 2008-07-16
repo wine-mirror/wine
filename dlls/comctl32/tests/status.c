@@ -24,9 +24,16 @@
 
 #include "wine/test.h"
 
-#define expect(expected,got) ok (expected == got,"Expected %d, got %d\n",expected,got);
+#define expect(expected,got) ok (expected == got,"Expected %d, got %d\n",expected,got)
+#define expect_rect(_left,_top,_right,_bottom,got) do { RECT _rcExp = {_left, _top, _right, _bottom}; \
+        ok(memcmp(&_rcExp, &(got), sizeof(RECT)) == 0, "Expected rect {%d,%d, %d,%d}, got {%d,%d, %d,%d}\n", \
+        _rcExp.left, _rcExp.top, _rcExp.right, _rcExp.bottom, \
+        (got).left, (got).top, (got).right, (got).bottom); } while (0)
 
 static HINSTANCE hinst;
+static WNDPROC g_status_wndproc;
+static RECT g_rcCreated;
+static HWND g_hMainWnd;
 
 static HWND create_status_control(DWORD style, DWORD exstyle)
 {
@@ -40,6 +47,48 @@ static HWND create_status_control(DWORD style, DWORD exstyle)
         NULL, NULL, hinst, NULL);
     assert (hWndStatus);
     return hWndStatus;
+}
+
+static LRESULT WINAPI create_test_wndproc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == WM_CREATE)
+    {
+        CREATESTRUCT *cs = (CREATESTRUCT *)lParam;
+        LRESULT ret = CallWindowProc(g_status_wndproc, hwnd, msg, wParam, lParam);
+        GetWindowRect(hwnd, &g_rcCreated);
+        MapWindowPoints(HWND_DESKTOP, g_hMainWnd, (LPPOINT)&g_rcCreated, 2);
+        ok(cs->x == g_rcCreated.left, "CREATESTRUCT.x modified\n");
+        ok(cs->y == g_rcCreated.top, "CREATESTRUCT.y modified\n");
+        return ret;
+    }
+    return CallWindowProc(g_status_wndproc, hwnd, msg, wParam, lParam);
+}
+
+static void test_create()
+{
+    WNDCLASSEX cls;
+    RECT rc;
+    HWND hwnd;
+
+    cls.cbSize = sizeof(WNDCLASSEX);
+    GetClassInfoEx(NULL, STATUSCLASSNAME, &cls);
+    g_status_wndproc = cls.lpfnWndProc;
+    cls.lpfnWndProc = create_test_wndproc;
+    cls.lpszClassName = "MyStatusBar";
+    cls.hInstance = NULL;
+    ok(RegisterClassEx(&cls), "RegisterClassEx failed\n");
+
+    ok((hwnd = CreateWindowA("MyStatusBar", "", WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP, 0, 0, 100, 100,
+        g_hMainWnd, NULL, NULL, 0)) != NULL, "CreateWindowA failed\n");
+    MapWindowPoints(HWND_DESKTOP, g_hMainWnd, (LPPOINT)&rc, 2);
+    GetWindowRect(hwnd, &rc);
+    MapWindowPoints(HWND_DESKTOP, g_hMainWnd, (LPPOINT)&rc, 2);
+    expect_rect(0, 0, 100, 100, g_rcCreated);
+    expect(0, rc.left);
+    expect(672, rc.right);
+    expect(226, rc.bottom);
+    /* we don't check rc.top as this may depend on user font settings */
+    DestroyWindow(hwnd);
 }
 
 static void test_status_control(void)
@@ -56,7 +105,7 @@ static void test_status_control(void)
     hWndStatus = create_status_control(WS_VISIBLE, 0);
 
     /* Divide into parts and set text */
-    r = SendMessage(hWndStatus, SB_SETPARTS, 3, (long)nParts);
+    r = SendMessage(hWndStatus, SB_SETPARTS, 3, (LPARAM)nParts);
     expect(TRUE,r);
     r = SendMessage(hWndStatus, SB_SETTEXT, 0, (LPARAM)"First");
     expect(TRUE,r);
@@ -87,12 +136,12 @@ static void test_status_control(void)
     expect(0,HIWORD(r));
 
     /* Get parts and borders */
-    r = SendMessage(hWndStatus, SB_GETPARTS, 3, (long)checkParts);
+    r = SendMessage(hWndStatus, SB_GETPARTS, 3, (LPARAM)checkParts);
     ok(r == 3, "Expected 3, got %d\n", r);
     expect(50,checkParts[0]);
     expect(150,checkParts[1]);
     expect(-1,checkParts[2]);
-    r = SendMessage(hWndStatus, SB_GETBORDERS, 0, (long)borders);
+    r = SendMessage(hWndStatus, SB_GETBORDERS, 0, (LPARAM)borders);
     ok(r == TRUE, "Expected TRUE, got %d\n", r);
     expect(0,borders[0]);
     expect(2,borders[1]);
@@ -151,7 +200,7 @@ static void test_status_control(void)
     expect(TRUE,r);
 
     /* Reset number of parts */
-    r = SendMessage(hWndStatus, SB_SETPARTS, 2, (long)nParts);
+    r = SendMessage(hWndStatus, SB_SETPARTS, 2, (LPARAM)nParts);
     expect(TRUE,r);
 
     /* Set the minimum height and get rectangle information again */
@@ -190,7 +239,13 @@ START_TEST(status)
 {
     hinst = GetModuleHandleA(NULL);
 
+    g_hMainWnd = CreateWindowExA(0, "static", "", WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT, CW_USEDEFAULT, 672+2*GetSystemMetrics(SM_CXSIZEFRAME),
+      226+GetSystemMetrics(SM_CYCAPTION)+2*GetSystemMetrics(SM_CYSIZEFRAME),
+      NULL, NULL, GetModuleHandleA(NULL), 0);
+
     InitCommonControls();
 
     test_status_control();
+    test_create();
 }
