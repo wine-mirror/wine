@@ -271,22 +271,54 @@ static HRESULT parse_clr_tables(ASSEMBLY *assembly, ULONG offset)
     return S_OK;
 }
 
+static HRESULT parse_metadata_header(ASSEMBLY *assembly, DWORD *hdrsz)
+{
+    METADATAHDR *metadatahdr;
+    BYTE *ptr, *dest;
+    DWORD size, ofs;
+    ULONG rva;
+
+    rva = assembly->corhdr->MetaData.VirtualAddress;
+    ptr = ImageRvaToVa(assembly->nthdr, assembly->data, rva, NULL);
+    if (!ptr)
+        return E_FAIL;
+
+    metadatahdr = (METADATAHDR *)ptr;
+
+    assembly->metadatahdr = HeapAlloc(GetProcessHeap(), 0, sizeof(METADATAHDR));
+    if (!assembly->metadatahdr)
+        return E_OUTOFMEMORY;
+
+    size = FIELD_OFFSET(METADATAHDR, Version);
+    memcpy(assembly->metadatahdr, metadatahdr, size);
+
+    /* we don't care about the version string */
+
+    ofs = FIELD_OFFSET(METADATAHDR, Flags);
+    ptr += FIELD_OFFSET(METADATAHDR, Version) + metadatahdr->VersionLength + 1;
+    dest = (BYTE *)assembly->metadatahdr + ofs;
+    memcpy(dest, ptr, sizeof(METADATAHDR) - ofs);
+
+    *hdrsz = sizeof(METADATAHDR) - sizeof(LPSTR) + metadatahdr->VersionLength + 1;
+
+    return S_OK;
+}
+
 static HRESULT parse_clr_metadata(ASSEMBLY *assembly)
 {
     METADATASTREAMHDR *streamhdr;
     ULONG rva, i, ofs;
     LPSTR stream;
     HRESULT hr;
+    DWORD hdrsz;
     BYTE *ptr;
 
-    rva = assembly->corhdr->MetaData.VirtualAddress;
-    assembly->metadatahdr = ImageRvaToVa(assembly->nthdr, assembly->data,
-                                         rva, NULL);
-    if (!assembly->metadatahdr)
-        return E_FAIL;
+    hr = parse_metadata_header(assembly, &hdrsz);
+    if (FAILED(hr))
+        return hr;
 
-    ptr = ImageRvaToVa(assembly->nthdr, assembly->data,
-                       rva + sizeof(METADATAHDR), NULL);
+    rva = assembly->corhdr->MetaData.VirtualAddress;
+    ptr = ImageRvaToVa(assembly->nthdr, assembly->data, rva + hdrsz, NULL);
     if (!ptr)
         return E_FAIL;
 
@@ -393,7 +425,7 @@ HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file)
     return S_OK;
 
 failed:
-    assembly_release( assembly );
+    assembly_release(assembly);
     return hr;
 }
 
@@ -402,6 +434,7 @@ HRESULT assembly_release(ASSEMBLY *assembly)
     if (!assembly)
         return S_OK;
 
+    HeapFree(GetProcessHeap(), 0, assembly->metadatahdr);
     HeapFree(GetProcessHeap(), 0, assembly->path);
     UnmapViewOfFile(assembly->data);
     CloseHandle(assembly->hmap);

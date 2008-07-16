@@ -27,6 +27,8 @@
 #include "winbase.h"
 #include "winuser.h"
 
+#include <pshpack1.h>
+
 typedef struct
 {
     ULONG Signature;
@@ -34,12 +36,10 @@ typedef struct
     USHORT MinorVersion;
     ULONG Reserved;
     ULONG VersionLength;
-    BYTE Version[12];
+    LPSTR Version;
     BYTE Flags;
     WORD Streams;
 } METADATAHDR;
-
-#include <pshpack1.h>
 
 typedef struct
 {
