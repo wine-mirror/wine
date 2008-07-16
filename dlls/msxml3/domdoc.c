@@ -2287,6 +2287,20 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     return hr;
 }
 
+IUnknown* create_domdoc( xmlNodePtr document )
+{
+    HRESULT hr;
+    LPVOID pObj = NULL;
+
+    TRACE("(%p)\n", document);
+
+    hr = DOMDocument_create_from_xmldoc((xmlDocPtr)document, (IXMLDOMDocument2**)&pObj);
+    if (FAILED(hr))
+        return NULL;
+
+    return (IUnknown*)pObj;
+}
+
 #else
 
 HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)

@@ -32,7 +32,7 @@
 #endif
 
 /* constructors */
-extern IUnknown         *create_domdoc( void );
+extern IUnknown         *create_domdoc( xmlNodePtr document );
 extern IUnknown         *create_xmldoc( void );
 extern IXMLDOMNode      *create_node( xmlNodePtr node );
 extern IUnknown         *create_basic_node( xmlNodePtr node, IUnknown *pUnkOuter );

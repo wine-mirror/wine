@@ -1450,8 +1450,8 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         pUnk = create_comment( node );
         break;
     case XML_DOCUMENT_NODE:
-        ERR("shouldn't be here!\n");
-        return NULL;
+        pUnk = create_domdoc( node );
+        break;
     default:
         FIXME("only creating basic node for type %d\n", node->type);
         pUnk = create_basic_node( node, NULL );
