@@ -676,20 +676,36 @@ static void add_ms_root_certs(HCERTSTORE to)
             WARN("adding root cert %d failed: %08x\n", i, GetLastError());
 }
 
-/* Reads certificates from the list of known locations.  Stops when any
- * location contains any certificates, to prevent spending unnecessary time
+/* Reads certificates from the list of known locations into store.  Stops when
+ * any location contains any certificates, to prevent spending unnecessary time
  * adding redundant certificates, e.g. when both a certificate bundle and
  * individual certificates exist in the same directory.
  */
-static PWINECRYPT_CERTSTORE CRYPT_RootOpenStoreFromKnownLocations(void)
+static void read_trusted_roots_from_known_locations(HCERTSTORE store)
 {
-    HCERTSTORE root = NULL;
     HCERTSTORE from = CertOpenStore(CERT_STORE_PROV_MEMORY,
      X509_ASN_ENCODING, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
-    HCERTSTORE to = CertOpenStore(CERT_STORE_PROV_MEMORY,
+
+    if (from)
+    {
+        DWORD i;
+        BOOL ret = FALSE;
+
+        for (i = 0; !ret &&
+         i < sizeof(CRYPT_knownLocations) / sizeof(CRYPT_knownLocations[0]);
+         i++)
+            ret = import_certs_from_path(CRYPT_knownLocations[i], from, TRUE);
+        check_and_store_certs(from, store);
+    }
+}
+
+static HCERTSTORE create_root_store(void)
+{
+    HCERTSTORE root = NULL;
+    HCERTSTORE memStore = CertOpenStore(CERT_STORE_PROV_MEMORY,
      X509_ASN_ENCODING, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
 
-    if (from && to)
+    if (memStore)
     {
         CERT_STORE_PROV_INFO provInfo = {
          sizeof(CERT_STORE_PROV_INFO),
@@ -699,18 +715,11 @@ static PWINECRYPT_CERTSTORE CRYPT_RootOpenStoreFromKnownLocations(void)
          0,
          NULL
         };
-        DWORD i;
-        BOOL ret = FALSE;
 
-        for (i = 0; !ret &&
-         i < sizeof(CRYPT_knownLocations) / sizeof(CRYPT_knownLocations[0]);
-         i++)
-            ret = import_certs_from_path(CRYPT_knownLocations[i], from, TRUE);
-        check_and_store_certs(from, to);
-        add_ms_root_certs(to);
-        root = CRYPT_ProvCreateStore(0, to, &provInfo);
+        read_trusted_roots_from_known_locations(memStore);
+        add_ms_root_certs(memStore);
+        root = CRYPT_ProvCreateStore(0, memStore, &provInfo);
     }
-    CertCloseStore(from, 0);
     TRACE("returning %p\n", root);
     return root;
 }
@@ -740,7 +749,7 @@ PWINECRYPT_CERTSTORE CRYPT_RootOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags)
     }
     if (!CRYPT_rootStore)
     {
-        HCERTSTORE root = CRYPT_RootOpenStoreFromKnownLocations();
+        HCERTSTORE root = create_root_store();
 
         InterlockedCompareExchangePointer((PVOID *)&CRYPT_rootStore, root,
          NULL);
