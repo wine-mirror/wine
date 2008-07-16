@@ -62,6 +62,8 @@ typedef struct _saxlocator
     saxreader *saxreader;
     HRESULT ret;
     xmlParserCtxtPtr pParserCtxt;
+    int lastLine;
+    int lastColumn;
 } saxlocator;
 
 static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
@@ -94,6 +96,9 @@ static void libxmlStartDocument(void *ctx)
             This->ret = hr;
         }
     }
+
+    This->lastColumn = xmlSAX2GetColumnNumber(This->pParserCtxt);
+    This->lastLine = xmlSAX2GetLineNumber(This->pParserCtxt);
 }
 
 /*** ISAXLocator interface ***/
@@ -154,8 +159,8 @@ static HRESULT WINAPI isaxlocator_getColumnNumber(
 {
     saxlocator *This = impl_from_ISAXLocator( iface );
 
-    FIXME("(%p)->(%p) stub\n", This, pnColumn);
-    return E_NOTIMPL;
+    *pnColumn = This->lastColumn;
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxlocator_getLineNumber(
@@ -164,8 +169,8 @@ static HRESULT WINAPI isaxlocator_getLineNumber(
 {
     saxlocator *This = impl_from_ISAXLocator( iface );
 
-    FIXME("(%p)->(%p) stub\n", This, pnLine);
-    return E_NOTIMPL;
+    *pnLine = This->lastLine;
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxlocator_getPublicId(
@@ -214,6 +219,8 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator)
     ISAXXMLReader_AddRef((ISAXXMLReader*)&reader->lpSAXXMLReaderVtbl);
 
     locator->pParserCtxt = NULL;
+    locator->lastLine = 0;
+    locator->lastColumn = 0;
     locator->ret = S_OK;
 
     *ppsaxlocator = locator;
