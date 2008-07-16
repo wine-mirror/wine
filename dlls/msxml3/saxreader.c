@@ -79,6 +79,23 @@ static inline saxlocator *impl_from_ISAXLocator( ISAXLocator *iface )
     return (saxlocator *)((char*)iface - FIELD_OFFSET(saxlocator, lpSAXLocatorVtbl));
 }
 
+/*** LibXML callbacks ***/
+static void libxmlStartDocument(void *ctx)
+{
+    saxlocator *This = ctx;
+    HRESULT hr;
+
+    if(This->saxreader->contentHandler)
+    {
+        hr = ISAXContentHandler_startDocument(This->saxreader->contentHandler);
+        if(FAILED(hr))
+        {
+            xmlStopParser(This->pParserCtxt);
+            This->ret = hr;
+        }
+    }
+}
+
 /*** ISAXLocator interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI isaxlocator_QueryInterface(ISAXLocator* iface, REFIID riid, void **ppvObject)
@@ -875,6 +892,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     memset(&reader->sax, 0, sizeof(xmlSAXHandler));
     reader->sax.initialized = XML_SAX2_MAGIC;
+    reader->sax.startDocument = libxmlStartDocument;
 
     *ppObj = &reader->lpVtbl;
 
