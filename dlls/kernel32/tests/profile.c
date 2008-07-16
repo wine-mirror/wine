@@ -447,11 +447,8 @@ static void test_GetPrivateProfileString(void)
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "", "default",
                                    buf, MAX_PATH, filename);
-    todo_wine
-    {
-        ok(ret == 7, "Expected 7, got %d\n", ret);
-        ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
-    }
+    ok(ret == 7, "Expected 7, got %d\n", ret);
+    ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     /* lpKeyName is missing */
     lstrcpyA(buf, "kumquat");
@@ -465,30 +462,21 @@ static void test_GetPrivateProfileString(void)
     ret = GetPrivateProfileStringA("section1", "", NULL,
                                    buf, MAX_PATH, filename);
     ok(ret == 0, "Expected 0, got %d\n", ret);
-    todo_wine
-    {
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-    }
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
 
     /* lpKeyName is empty, lpDefault is empty */
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "", "",
                                    buf, MAX_PATH, filename);
     ok(ret == 0, "Expected 0, got %d\n", ret);
-    todo_wine
-    {
-        ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
-    }
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
 
     /* lpKeyName is empty, lpDefault has trailing blank characters */
     lstrcpyA(buf, "kumquat");
     ret = GetPrivateProfileStringA("section1", "", "default  ",
                                    buf, MAX_PATH, filename);
-    todo_wine
-    {
-        ok(ret == 7, "Expected 7, got %d\n", ret);
-        ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
-    }
+    ok(ret == 7, "Expected 7, got %d\n", ret);
+    ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     if (0) /* crashes */
     {
