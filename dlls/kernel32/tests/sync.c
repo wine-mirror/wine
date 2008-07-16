@@ -432,7 +432,7 @@ static void CALLBACK iocp_callback(DWORD dwErrorCode, DWORD dwNumberOfBytesTrans
     ReleaseSemaphore(sem, 1, NULL);
 }
 
-static BOOL WINAPI (*p_BindIoCompletionCallback)( HANDLE FileHandle, LPOVERLAPPED_COMPLETION_ROUTINE Function, ULONG Flags) = NULL;
+static BOOL (WINAPI *p_BindIoCompletionCallback)( HANDLE FileHandle, LPOVERLAPPED_COMPLETION_ROUTINE Function, ULONG Flags) = NULL;
 
 static void test_iocp_callback(void)
 {
