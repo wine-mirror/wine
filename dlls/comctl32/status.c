@@ -77,7 +77,6 @@ typedef struct
     HFONT             hFont;
     HFONT             hDefaultFont;
     COLORREF          clrBk;		/* background color */
-    BOOL              bUnicode;		/* unicode flag */
     BOOL              NtfUnicode;	/* notify format */
     STATUSWINDOWPART  part0;		/* simple window */
     STATUSWINDOWPART* parts;
@@ -845,10 +844,10 @@ STATUSBAR_SetTipTextW (const STATUS_INFO *infoPtr, INT id, LPWSTR text)
 static inline LRESULT
 STATUSBAR_SetUnicodeFormat (STATUS_INFO *infoPtr, BOOL bUnicode)
 {
-    BOOL bOld = infoPtr->bUnicode;
+    BOOL bOld = infoPtr->NtfUnicode;
 
     TRACE("(0x%x)\n", bUnicode);
-    infoPtr->bUnicode = bUnicode;
+    infoPtr->NtfUnicode = bUnicode;
 
     return bOld;
 }
@@ -961,24 +960,11 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     
     OpenThemeData (hwnd, themeClass);
 
-    if (IsWindowUnicode (hwnd)) {
-	infoPtr->bUnicode = TRUE;
-	if (lpCreate->lpszName &&
-	    (len = strlenW ((LPCWSTR)lpCreate->lpszName))) {
-	    infoPtr->parts[0].text = Alloc ((len + 1)*sizeof(WCHAR));
-	    if (!infoPtr->parts[0].text) goto create_fail;
-	    strcpyW (infoPtr->parts[0].text, (LPCWSTR)lpCreate->lpszName);
-	}
-    }
-    else {
-	if (lpCreate->lpszName &&
-	    (len = strlen((LPCSTR)lpCreate->lpszName))) {
-            DWORD lenW = MultiByteToWideChar( CP_ACP, 0, (LPCSTR)lpCreate->lpszName, -1, NULL, 0 );
-	    infoPtr->parts[0].text = Alloc (lenW*sizeof(WCHAR));
-	    if (!infoPtr->parts[0].text) goto create_fail;
-            MultiByteToWideChar( CP_ACP, 0, (LPCSTR)lpCreate->lpszName, -1,
-                                 infoPtr->parts[0].text, lenW );
-	}
+    if (lpCreate->lpszName && (len = strlenW ((LPCWSTR)lpCreate->lpszName)))
+    {
+        infoPtr->parts[0].text = Alloc ((len + 1)*sizeof(WCHAR));
+        if (!infoPtr->parts[0].text) goto create_fail;
+        strcpyW (infoPtr->parts[0].text, (LPCWSTR)lpCreate->lpszName);
     }
 
     dwStyle = GetWindowLongW (hwnd, GWL_STYLE);
@@ -1062,17 +1048,11 @@ STATUSBAR_WMGetText (const STATUS_INFO *infoPtr, INT size, LPWSTR buf)
     TRACE("\n");
     if (!(infoPtr->parts[0].text))
         return 0;
-    if (infoPtr->bUnicode)
-        len = strlenW (infoPtr->parts[0].text);
-    else
-        len = WideCharToMultiByte( CP_ACP, 0, infoPtr->parts[0].text, -1, NULL, 0, NULL, NULL )-1;
+
+    len = strlenW (infoPtr->parts[0].text);
 
     if (size > len) {
-	if (infoPtr->bUnicode)
-	    strcpyW (buf, infoPtr->parts[0].text);
-	else
-            WideCharToMultiByte( CP_ACP, 0, infoPtr->parts[0].text, -1,
-                                 (LPSTR)buf, len+1, NULL, NULL );
+        strcpyW (buf, infoPtr->parts[0].text);
 	return len;
     }
 
@@ -1145,20 +1125,11 @@ STATUSBAR_WMSetText (const STATUS_INFO *infoPtr, LPCSTR text)
     /* duplicate string */
     Free (part->text);
     part->text = 0;
-    if (infoPtr->bUnicode) {
-	if (text && (len = strlenW((LPCWSTR)text))) {
-	    part->text = Alloc ((len+1)*sizeof(WCHAR));
-	    if (!part->text) return FALSE;
-	    strcpyW (part->text, (LPCWSTR)text);
-	}
-    }
-    else {
-	if (text && (len = lstrlenA(text))) {
-            DWORD lenW = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 );
-            part->text = Alloc (lenW*sizeof(WCHAR));
-	    if (!part->text) return FALSE;
-            MultiByteToWideChar( CP_ACP, 0, text, -1, part->text, lenW );
-	}
+
+    if (text && (len = strlenW((LPCWSTR)text))) {
+        part->text = Alloc ((len+1)*sizeof(WCHAR));
+        if (!part->text) return FALSE;
+        strcpyW (part->text, (LPCWSTR)text);
     }
 
     InvalidateRect(infoPtr->Self, &part->bound, FALSE);
@@ -1278,7 +1249,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return STATUSBAR_GetTipTextW (infoPtr,  LOWORD(wParam), (LPWSTR)lParam,  HIWORD(wParam));
 
 	case SB_GETUNICODEFORMAT:
-	    return infoPtr->bUnicode;
+	    return infoPtr->NtfUnicode;
 
 	case SB_ISSIMPLE:
 	    return infoPtr->simple;
