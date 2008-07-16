@@ -29,10 +29,13 @@
 #include "dbghelp.h"
 #include "ole2.h"
 #include "fusion.h"
+#include "corhdr.h"
 
 #include "fusionpriv.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+
+#define TableFromToken(tk) (TypeFromToken(tk) >> 24)
 
 #define MAX_CLR_TABLES  64
 
@@ -458,7 +461,7 @@ HRESULT assembly_get_name(ASSEMBLY *assembly, LPSTR *name)
     ASSEMBLYTABLE *asmtbl;
     ULONG offset;
 
-    offset = assembly->tables[0x20].offset; /* FIXME: add constants */
+    offset = assembly->tables[TableFromToken(mdtAssembly)].offset;
     if (offset == -1)
         return E_FAIL;
 
@@ -572,7 +575,7 @@ HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPSTR *token)
 
     *token = NULL;
 
-    offset = assembly->tables[0x20].offset; /* FIXME: add constants */
+    offset = assembly->tables[TableFromToken(mdtAssembly)].offset;
     if (offset == -1)
         return E_FAIL;
 
