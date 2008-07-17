@@ -32,19 +32,20 @@
     ok(ppv == NULL, "Pointer is %p\n", ppv);
 
 #define ADDREF_EXPECT(iface, num) if (iface) { \
-    hr = IUnknown_AddRef(iface); \
-    ok(hr == num, "IUnknown_AddRef should return %d, got %d\n", num, hr); \
+    refCount = IUnknown_AddRef(iface); \
+    ok(refCount == num, "IUnknown_AddRef should return %d, got %d\n", num, refCount); \
 }
 
 #define RELEASE_EXPECT(iface, num) if (iface) { \
-    hr = IUnknown_Release(iface); \
-    ok(hr == num, "IUnknown_Release should return %d, got %d\n", num, hr); \
+    refCount = IUnknown_Release(iface); \
+    ok(refCount == num, "IUnknown_Release should return %d, got %d\n", num, refCount); \
 }
 
 static void test_aggregation(const CLSID clsidOuter, const CLSID clsidInner,
                              const IID iidOuter, const IID iidInner)
 {
     HRESULT hr;
+    ULONG refCount;
     IUnknown *pUnkOuter = NULL;
     IUnknown *pUnkInner = NULL;
     IUnknown *pUnkInnerFail = NULL;
@@ -134,6 +135,16 @@ static void test_aggregation(const CLSID clsidOuter, const CLSID clsidInner,
     RELEASE_EXPECT(pUnkInnerTest, 2);
     RELEASE_EXPECT(pUnkOuter, 7);
     RELEASE_EXPECT(pUnkInner, 1);
+
+    do
+    {
+        refCount = IUnknown_Release(pUnkInner);
+    } while (refCount);
+
+    do
+    {
+        refCount = IUnknown_Release(pUnkOuter);
+    } while (refCount);
 }
 
 static void test_video_renderer_aggregations(void)
