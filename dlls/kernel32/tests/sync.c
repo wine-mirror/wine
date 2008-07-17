@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <windef.h>
+#define _WIN32_WINNT 0x500
 #include <winbase.h>
 
 #include "wine/test.h"
@@ -534,6 +535,109 @@ static void test_iocp_callback(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Last error is %d\n", GetLastError());
 }
 
+static void CALLBACK timer_queue_cb1(PVOID p, BOOLEAN timedOut)
+{
+    int *pn = (int *) p;
+    ok(timedOut, "Timer callbacks should always time out\n");
+    ++*pn;
+}
+
+static void test_timer_queue(void)
+{
+    HANDLE q, t1, t2, t3, t4, t5;
+    int n1, n2, n3, n4, n5;
+    HANDLE e;
+    BOOL ret;
+
+    /* Test asyncronous deletion of the queue.  */
+    q = CreateTimerQueue();
+    todo_wine
+    ok(q != NULL, "CreateTimerQueue\n");
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteTimerQueueEx(q, NULL);
+    ok(!ret, "DeleteTimerQueueEx\n");
+    todo_wine
+    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
+
+    /* Test syncronous deletion of the queue and running timers.  */
+    q = CreateTimerQueue();
+    todo_wine
+    ok(q != NULL, "CreateTimerQueue\n");
+
+    /* Called once.  */
+    t1 = NULL;
+    n1 = 0;
+    ret = CreateTimerQueueTimer(&t1, q, timer_queue_cb1, &n1, 0,
+                                0, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+
+    /* A slow one.  */
+    t2 = NULL;
+    n2 = 0;
+    ret = CreateTimerQueueTimer(&t2, q, timer_queue_cb1, &n2, 0,
+                                100, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+
+    /* A fast one.  */
+    t3 = NULL;
+    n3 = 0;
+    ret = CreateTimerQueueTimer(&t3, q, timer_queue_cb1, &n3, 0,
+                                10, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+
+    /* Start really late (it won't start).  */
+    t4 = NULL;
+    n4 = 0;
+    ret = CreateTimerQueueTimer(&t4, q, timer_queue_cb1, &n4, 10000,
+                                10, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+
+    /* Start soon, but delay so long it won't run again.  */
+    t5 = NULL;
+    n5 = 0;
+    ret = CreateTimerQueueTimer(&t5, q, timer_queue_cb1, &n5, 0,
+                                10000, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+
+    /* Give them a chance to do some work.  */
+    Sleep(500);
+
+    ret = DeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
+    todo_wine
+    {
+    ok(ret, "DeleteTimerQueueEx\n");
+    ok(n1 == 1, "Timer callback 1\n");
+    ok(n2 < n3, "Timer callback 2 should be much slower than 3\n");
+    }
+    ok(n4 == 0, "Timer callback 4\n");
+    todo_wine
+    ok(n5 == 1, "Timer callback 5\n");
+
+    /* Test syncronous deletion of the queue with event trigger.  */
+    e = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (!e)
+    {
+        skip("Failed to create timer queue descruction event\n");
+        return;
+    }
+
+    q = CreateTimerQueue();
+    todo_wine
+    ok(q != NULL, "CreateTimerQueue\n");
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteTimerQueueEx(q, e);
+    ok(!ret, "DeleteTimerQueueEx\n");
+    todo_wine
+    {
+    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
+    ok(WaitForSingleObject(e, 250) == WAIT_OBJECT_0,
+       "Timer destruction event not triggered\n");
+    }
+    CloseHandle(e);
+}
+
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandle("kernel32");
@@ -547,4 +651,5 @@ START_TEST(sync)
     test_semaphore();
     test_waitable_timer();
     test_iocp_callback();
+    test_timer_queue();
 }
