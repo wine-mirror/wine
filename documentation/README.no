@@ -1,25 +1,25 @@
 1. INTRODUKSJON
 
-Wine er et program som muliggjør kjøring av Windows-programmer
+Wine er et program som gjør det mulig å kjøre Windows-programmer
 (inkludert DOS, Windows 3.x og Win32) i Unix. Det består av en
-programlaster som laster og kjører en Windows-programfil, og et
-bibliotek kalt 'Winelib', en implementering av kall til Windows'
-API ved bruk av liknende Unix- eller X11-varianter. Biblioteket
-kan også brukes til å putte Win32-kode i innfødte Unix-programmer.
+programstarter som starter og kjører en Windows-programfil, og et
+bibliotek kalt «Winelib», en uavhengig utgave av Windows' API som
+bruker Unix- eller X11. Biblioteket kan også brukes til å putte
+Win32-kode i vanlige Unix-programmer.
 
 Wine er fri programvare, utgitt under vilkårene i GNU LGPL; se
-filen 'LICENSE' for detaljer.
+filen «LICENSE» for detaljer.
 
-2. KOMME IGANG
+2. KOM I GANG
 
-Det anbefales å bruke Wine-installereren til å bygge og installere
-Wine når det bygges fra kildekode. Kjør følgende i rotkatalogen til
-Wine-kildekoden
+Det anbefales å bruke Wines installasjonsprogram for å bygge og
+installere Wine når det bygges fra kildekode. Kjør følgende i
+rotkatalogen til Wine-kildekoden
 
 ./tools/wineinstall
 
-Kjør programmer som "wine [valg] program". Se resten av denne filen,
-Wines manualside og http://www.winehq.org/ for mer informasjon og
+Kjør programmer som «wine [valg] program». Se resten av denne filen,
+Wines man-side og http://www.winehq.org/ for mer informasjon og
 problemløsing.
 
 3. SYSTEMKRAV
@@ -27,14 +27,14 @@ problemløsing.
 Følgende kreves for å bygge og kjøre Wine
 
   Linux versjon 2.0.36 eller nyere
-  FreeBSD 5.3 eller nyere
-  Solaris x86 2.5 eller nyere
+  FreeBSD 7.0 eller nyere
+  Solaris x86 9 eller nyere
   NetBSD-current
+  Mac OS X 10.4 eller nyere
 
 Wine krever støtte for tråder på kjernenivå, og derfor er det bare
-operativsystemene ovenfor som støttes.
-Andre operativsystemer som støtter kjernetråder støttes kanskje i
-framtiden.
+operativsystemene ovenfor som støttes. Andre operativsystemer som
+støtter kjernetråder støttes kanskje i framtiden.
 
 Informasjon for Linux
   Selv om Linux 2.2.x antakelig virker, og Linux 2.0x kanskje virker
@@ -42,47 +42,45 @@ Informasjon for Linux
   best å ha en ny kjerne som 2.4.x.
 
 Informasjon for FreeBSD
-  Wine kan bygges på FreeBSD 4.x og FreeBSD 5.x, men versjoner før
-  FreeBSD 5.3 har som regel problemer.
-
-  Finn mer informasjon om FreeBSD-versjonene på 
-  <ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/>.
+  Wine vil som regel ikke virke på FreeBSD-versjoner eldre enn 7.0.
+  FreeBSD 6.3 kan oppdateres for å støtte Wine; se
+  <http://wiki.freebsd.org/Wine> for mer informasjon.
 
 Informsjon for Solaris
   Wine må antakelig bygges med GNU-verktøyene (gcc, gas etc.).
   Advarsel: selv om gas installeres er det ikke sikkert det brukes av
   gcc. Det sies at gcc må bygges på nytt, eller at symbolske
-  koblinger for 'cc', 'as' og 'ld' må lages til GNU-verktøyene.
+  koblinger for «cc», «as» og «ld» må legges til GNU-verktøyene.
 
 Informasjon for NetBSD
   USER_LDT, SYSVSHM, SYSVSEM og SYSVMSG må være aktivert i kjernen.
 
+Informasjon for Mac OS X:
+  Du må ha Xcode 2.4 eller nyere for å bygge Wine ordentlig.
 
 
 Støttede filsystemer
   Wine kan kjøre på de fleste filsystemer, men starter ikke hvis '/tmp'-
   katalogen bruker 'umsdos'. Det har også vært rapportert om problemer
   med filtilgang gjennom Samba. Vi anbefaler ikke bruk av NTFS, siden
-  det kun kan brukes sikkert uten skriving, og Windows-programmer må ha
-  skrivetilgang nesten overalt. Kopier heller programmene du vil kjøre
-  over til en partisjon med skrivetilgang.
+  dette ikke støtter funksjoner som noen program trenger. Det anbefales
+  å bruke et Linux-filsystem som ext3.
 
 Basiskrav
-  Inkluderingsfilene for X11 må være installert (kalt 'xlib6g-dev' i
-  Debian og 'XFree86-devel' i RedHat).
+  Inkluderingsfilene for X11 må være installert (kalt «xlib6g-dev» i
+  Debian og «XFree86-devel» i RedHat).
 
-Byggeverktøy
-  x86-systemer krever gcc versjon 2.7.2 eller høyere.
-  Tidligere versjoner får kanskje problemer med optimaliering av enkelte
-  filer, ofte på grunn av behandling av hodefiler. pgcc virker for
-  øyeblikket ikke med Wine, årsaken til dette er ukjent.
+  Du må selvfølgelig også ha «make», sannsynligvis «GNU make».
 
-  flex versjon 2.5 eller nyere og bison er også nødvendig. Installer
-  pakkene 'flex' og 'bison' hvis du bruker RedHat eller Debian.
+  flex 2.5 eller nyere og bison er også nødvendig.
 
-Valgfrie støttebiblioteker
-  Hvis du vil ha støtte for utskrift med CUPS må du installere pakkene
-  'cups' og 'cups-devel'.
+Valgfrie støttebiblioteker:
+  configure-skriptet viser meldinger når valgfrie biblioteker ikke blir
+  funnet. Se http://wiki.winehq.org/Recommended_Packages for info om
+  hvilke pakker du bør installere.
+
+  På 64 bit-systemer trenger du 32 bit-versjoner av disse bibliotekene;
+  se http://wiki.winehq.org/WineOn64bit for flere detaljer.
 
 4. BYGGING
 
@@ -92,36 +90,35 @@ Kjør følgende kommandoer for å bygge Wine hvis du ikke bruker wineinstall
 make depend
 make
 
-Dette bygger programmet 'wine' og diverse støttebiblioteker/programfiler.
+Dette bygger programmet «wine» og diverse støttebiblioteker/programfiler.
 Programfilen 'wine laster og kjører Windows-programmer.
-Biblioteket 'libwine' ('Winelib') kan brukes itl å bygge og koble
+Biblioteket «libwine» («Winelib») kan brukes til å bygge og koble
 Windows-kildekode i Unix.
 
 Kjør './configue --help' for å se valg for bygging.
 
-Gjør følgende for å oppgradere til en ny utgave ved hjelp av en lappefil:
-Gå inn i utgivelsens rotkatalog og kjør kommandoen 'make clean'.
-Deretter lapper du utgivelsen med
+Gjør følgende for å oppgradere til en ny utgave ved hjelp av en
+oppdateringsfil:
+Gå inn i utgivelsens rotkatalog og kjør kommandoen «make clean».
+Deretter oppdaterer du utgivelsen med
 
-    gunzip -c lappefil | patch -p1
+    bunzip -c oppdateringsfil | patch -p1
 
-hvor 'lappefil' er navnet på lappefilen (noe som Wine-ååmmdd.diff.gz).
-Deretter kan du kjøre './configure' og 'make depend && make'.
+der «oppdateringsfil» er navnet på oppdateringsfilen (noe som
+Wine-ååmmdd.diff.gz). Deretter kan du kjøre «./configure» og
+«make depend && make».
 
 5. INSTALLASJON
 
-Når Wine er bygget kan du kjøre 'make install' for å installere det;
-dette installerer også manualsiden og noen andre nødvendigheter.
+Når Wine er bygget kan du kjøre «make install» for å installere det;
+dette installerer også man-siden og noen andre nødvendigheter.
 
 Ikke glem å avinstallere tidligere Wine-versjoner først. Prøv enten
-'dpkg -r wine', 'rpm -e wine' eller 'make uninstall' før installsjonen.
+«dpkg -r wine», «rpm -e wine» eller «make uninstall» før installsjonen.
 
-Se støtteområdet på http://www.winehq.org/ for hint til konfigurering.
+Når Wine er installert kan du bruke oppsettsverktøyet «winecf?».
+Se støtteområdet på http://www.winehq.org/ for hint om oppsett.
 
-I tilfelle problemer med lasting av biblioteker
-(f.eks. 'Error while loading shared libraries: libntdll.so') må
-bibliotekstien legges til i '/etc/ld.so.conf' og 'ldconfig' kjøres som
-superbruker.
 
 6. KJØRING AV PROGRAMMER
 
@@ -130,65 +127,54 @@ et filnavn.
 
 For å kjøre Kabal
 
-	wine sol		   (ved å bruke søkestien oppgitt i
-	wine sol.exe		    konfigurasjonsfilen for å finne filen)
+        wine sol                   (ved å bruke søkestien oppgitt i
+        wine sol.exe                Wine-registeret for å finne filen)
 
-	wine c:\\windows\\sol.exe  (bruk av DOS-filnavnsyntaks)
+        wine c:\\windows\\sol.exe  (bruk av DOS-filnavnsyntaks)
 
-	wine /usr/windows/sol.exe  (bruk av Unix-filnavnsyntaks)
+        wine ~/.wine/drive_c/windows/notepad.exe  (bruk av Unix-filbaner)
 
         wine sol.exe /parameter1 -parameter2 parameter3
-				   (kjøre programmer med parametere)
+                                   (kjøre programmer med parametere)
 
-Merk: stien til filen legge sogså til stien når et fullt navn oppgis
-      på kommandolinjen.
+
 
 Wine er ikke helt ferdig ennå, så det er mulig mange programmer klikker.
-Hvis du setter opp winedbg riktig ifølge 'documentation/debugger.sgml'
-startes Wines feilsøker, hvor du kan undersøke og fikse problemet. Les
-filen 'documentation/debugging.sgml' for mer informsjon om hvordan dette
-gjøres.
+Da Wines feilsøker, der du kan undersøke og fikse problemet. Les
+delen om feilsøking i Wines utviklermanual for mer informsjon om hvordan
+dette gjøres.
 
-Du bør ta sikkerhetskopi av alle viktige filer du gir Wine tilgang til,
-eller bruke en spesiell Wine-versjon av dem, siden noen brukere har
-rapportert om korrupte filer. IKKE kjør Explorer ('Utforsker', 'Min
-datamaskin' etc) med mindre du har en ordentlig sikkerhetskopi, siden det
-noen ganger gir nytt navn til eller skader flere kataloger. Ikke
-engang andre Microsoft-programmer er sikre, som f.eks. MSN Messenger,
-siden de av og til kjører Explorer. Den spesielle skaden '!$!$!$!$.pfr'
-kan delvis ordnes ved å bruke
-http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 
-7. FÅ MER INFORMASJON
+7. MER INFORMASJON
 
 Internett: En god del informasjon om Wine finnes hos WineHQ på
-	   http://www.winehq.org/: diverse veiledere, enprogramdatabase,
+           http://www.winehq.org/: diverse veiledere, en programdatabase,
            og feilsporing. Dette er antakelig det beste stedet å begynnne. 
 
-Svar:	   Wines spørsmål og svar finnes på http://www.winehq.org/FAQ
+Svar:      Wines spørsmål og svar finnes på http://www.winehq.org/FAQ
 
-Usenet:	   Du kan diskutere problemer med Wine og få hjelp på
-	   comp.emulators.ms-windows.wine.
+Usenet:    Du kan diskutere problemer med Wine og få hjelp på
+           comp.emulators.ms-windows.wine.
 
-Feil:	   Rapporter feil til Wines Bugzilla på at http://bugs.winehq.org
-	   Søk i Bugzilla-databasen og se om probelmet allerede er funnet
+Feil:      Rapporter feil til Wines Bugzilla på http://bugs.winehq.org
+           Søk i Bugzilla-databasen og se om probelmet allerede er funnet
            før du sender en feilrapport. Du kan også rapportere feil til
            comp.emulators.ms-windows.wine.
-	   Les filen 'documentation/bugs.sgml' for å se hvilken informsjon
-           som er nødvendig.
 
-IRC:	   Direkte hjelp er tilgjengelig på kanalen #WineHQ på
+IRC:       Direkte hjelp er tilgjengelig på kanalen #WineHQ på
            irc.freenode.net.
 
-CVS:	   Wines oppdaterte utviklertre er tilgjengelig via CVS.
-	   Gå til http://www.winehq.org/cvs for mer informasjon.
+GIT:       Wines oppdaterte utvikler-versjon er tilgjengelig gjennom GIT.
+           Gå til http://www.winehq.org/git for mer informasjon.
 
 E-postlister
-	Det finnes flere e-postlister for Wine-utviklere; se
-	http://www.winehq.org/forums for mer informasjon.
+        Det finnes flere e-postlister for Wine-utviklere; se
+        http://www.winehq.org/forums for mer informasjon.
+
+Wiki:   Wines Wiki finnes på http://wiki.winehq.org
 
 Hvis du legger til noe eller fikser en feil, er det fint som du sender
-en lappefil (i 'diff -u'-format) til listen wine-patches@winehq.org for
+en lappefil (i «diff -u»-format) til listen wine-patches@winehq.org for
 inkludering i den neste utgivelsen.
 
 --
