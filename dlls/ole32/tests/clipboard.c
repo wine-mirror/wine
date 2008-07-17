@@ -472,7 +472,7 @@ static void test_set_clipboard(void)
     hr = OleIsCurrentClipboard(data2);
     ok(hr == S_FALSE, "did not expect current clipboard to be data2, hr = 0x%08x\n", hr);
     hr = OleIsCurrentClipboard(NULL);
-    todo_wine ok(hr == S_FALSE, "expect S_FALSE, hr = 0x%08x\n", hr);
+    ok(hr == S_FALSE, "expect S_FALSE, hr = 0x%08x\n", hr);
 
     ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
 
