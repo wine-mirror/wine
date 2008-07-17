@@ -286,12 +286,12 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR		    "Feil"
-    IDS_BAD_KEY		    "Kunne ikke spørre nøkkelen '%s'"
-    IDS_BAD_VALUE           "Kunne ikke spøøre verdien '%s'"
-    IDS_UNSUPPORTED_TYPE    "Kunne ikke redigere nøkler av typen '%ld'"
+    IDS_BAD_KEY		    "Klarte ikke lese nøkkelen «%s»"
+    IDS_BAD_VALUE           "Klarte ikke lese verdien «%s»"
+    IDS_UNSUPPORTED_TYPE    "Kan ikke redigere nøkler av typen «%ld»"
     IDS_TOO_BIG_VALUE       "Verdien er for stor (%ld)"
     IDS_DELETE_BOX_TITLE    "Bekreft sletting av verdi"
-    IDS_DELETE_BOX_TEXT     "Virkelig slette verdien '%s'?"
+    IDS_DELETE_BOX_TEXT     "Virkelig slette verdien «%s»?"
     IDS_DELETE_BOX_TEXT_MULTIPLE "Virkelig slette disse verdiene?"
     IDS_NEWKEY              "Ny nøkkel #%d"
     IDS_NEWVALUE            "Ny verdi #%d"
