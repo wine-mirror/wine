@@ -68,6 +68,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winternl.h"
 #include "ipexport.h"
 #include "icmpapi.h"
 #include "wine/debug.h"
@@ -474,6 +475,41 @@ DWORD WINAPI IcmpSendEcho(
         SetLastError(IP_REQ_TIMED_OUT);
     TRACE("received %d replies\n",res);
     return res;
+}
+
+/***********************************************************************
+ *		IcmpSendEcho2 (IPHLPAPI.@)
+ */
+DWORD WINAPI IcmpSendEcho2(
+    HANDLE                   IcmpHandle,
+    HANDLE                   Event,
+    PIO_APC_ROUTINE          ApcRoutine,
+    PVOID                    ApcContext,
+    IPAddr                   DestinationAddress,
+    LPVOID                   RequestData,
+    WORD                     RequestSize,
+    PIP_OPTION_INFORMATION   RequestOptions,
+    LPVOID                   ReplyBuffer,
+    DWORD                    ReplySize,
+    DWORD                    Timeout
+    )
+{
+    TRACE("(%p, %p, %p, %p, %08lx, %p, %d, %p, %p, %d, %d): stub\n", IcmpHandle,
+            Event, ApcRoutine, ApcContext, DestinationAddress, RequestData,
+            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
+
+    if (Event)
+    {
+        FIXME("unsupported for events\n");
+        return 0;
+    }
+    if (ApcRoutine)
+    {
+        FIXME("unsupported for APCs\n");
+        return 0;
+    }
+    return IcmpSendEcho(IcmpHandle, DestinationAddress, RequestData,
+            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
 }
 
 /*

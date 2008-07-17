@@ -57,7 +57,7 @@
 @ stdcall IcmpCloseHandle(ptr)
 @ stdcall IcmpCreateFile()
 @ stub IcmpParseReplies
-@ stub IcmpSendEcho2
+@ stdcall IcmpSendEcho2(ptr ptr ptr ptr long ptr long ptr ptr long long)
 @ stdcall IcmpSendEcho(ptr long ptr long ptr ptr long long)
 @ stub InternalCreateIpForwardEntry
 @ stub InternalCreateIpNetEntry
