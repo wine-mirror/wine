@@ -178,8 +178,10 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         ok(poke->cfFormat == CF_TEXT, "Expected CF_TEXT, got %d\n", poke->cfFormat);
 
         if (msg_index == 5)
-            ok(lstrcmpA((LPSTR)poke->Value, "poke data\r\n"),
-               "Expected 'poke data\\r\\n', got %s\n", poke->Value);
+        {
+            size = GlobalSize((HGLOBAL)lo);
+            ok(size == 4, "got %d\n", size);
+        }
         else
             ok(!lstrcmpA((LPSTR)poke->Value, "poke data\r\n"),
                "Expected 'poke data\\r\\n', got %s\n", poke->Value);
