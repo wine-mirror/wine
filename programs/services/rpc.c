@@ -897,6 +897,7 @@ DWORD svcctl_LockServiceDatabase(
     SC_RPC_LOCK *phLock)
 {
     struct sc_manager_handle *manager;
+    struct sc_lock *lock;
     DWORD err;
 
     WINE_TRACE("(%p, %p)\n", hSCManager, phLock);
@@ -908,12 +909,15 @@ DWORD svcctl_LockServiceDatabase(
     if (err != ERROR_SUCCESS)
         return err;
 
-    *phLock = HeapAlloc(GetProcessHeap(), 0, sizeof(struct sc_lock));
-    if (!*phLock)
+    lock = HeapAlloc(GetProcessHeap(), 0, sizeof(struct sc_lock));
+    if (!lock)
     {
         scmdatabase_unlock_startup(manager->db);
         return ERROR_NOT_ENOUGH_SERVER_MEMORY;
     }
+
+    lock->db = manager->db;
+    *phLock = lock;
 
     return ERROR_SUCCESS;
 }
