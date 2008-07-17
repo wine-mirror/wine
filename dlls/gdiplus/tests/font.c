@@ -53,6 +53,11 @@ static void test_createfont(void)
     stat = GdipDeleteFont(font);
     expect (InvalidParameter, stat);
     stat = GdipCreateFontFamilyFromName(arial, NULL, &fontfamily);
+    if(stat == FontFamilyNotFound)
+    {
+        skip("Arial not installed\n");
+        return;
+    }
     expect (Ok, stat);
     stat = GdipCreateFont(fontfamily, 12, FontStyleRegular, UnitPoint, &font);
     expect (Ok, stat);
@@ -174,6 +179,11 @@ todo_wine
 }
 
     stat = GdipCreateFontFamilyFromName (arial, NULL, &family);
+    if(stat == FontFamilyNotFound)
+    {
+        skip("Arial not installed\n");
+        return;
+    }
     expect (Ok, stat);
 
     stat = GdipGetFamilyName (family, itsName, LANG_NEUTRAL);
@@ -205,46 +215,56 @@ static void test_fontfamily_properties (void)
     GpStatus stat;
     UINT16 result = 0;
 
-    GdipCreateFontFamilyFromName(arial, NULL, &FontFamily);
+    stat = GdipCreateFontFamilyFromName(arial, NULL, &FontFamily);
+    if(stat == FontFamilyNotFound)
+        skip("Arial not installed\n");
+    else
+    {
 todo_wine
 {
-    stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
-    expect(Ok, stat);
-    ok (result == 2355, "Expected 2355, got %d\n", result);
+        stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
+        expect(Ok, stat);
+        ok (result == 2355, "Expected 2355, got %d\n", result);
 }
-    result = 0;
-    stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
-    expect(Ok, stat);
-    ok(result == 2048, "Expected 2048, got %d\n", result);
-    result = 0;
-    stat = GdipGetCellAscent(FontFamily, FontStyleRegular, &result);
-    expect(Ok, stat);
-    ok(result == 1854, "Expected 1854, got %d\n", result);
-    result = 0;
-    stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
-    ok(result == 434, "Expected 434, got %d\n", result);
-    GdipDeleteFontFamily(FontFamily);
+        result = 0;
+        stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
+        expect(Ok, stat);
+        ok(result == 2048, "Expected 2048, got %d\n", result);
+        result = 0;
+        stat = GdipGetCellAscent(FontFamily, FontStyleRegular, &result);
+        expect(Ok, stat);
+        ok(result == 1854, "Expected 1854, got %d\n", result);
+        result = 0;
+        stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
+        ok(result == 434, "Expected 434, got %d\n", result);
+        GdipDeleteFontFamily(FontFamily);
+    }
 
-    GdipCreateFontFamilyFromName(TimesNewRoman, NULL, &FontFamily);
-    result = 0;
+    stat = GdipCreateFontFamilyFromName(TimesNewRoman, NULL, &FontFamily);
+    if(stat == FontFamilyNotFound)
+        skip("Times New Roman not installed\n");
+    else
+    {
+        result = 0;
 todo_wine
 {
-    stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
-    expect(Ok, stat);
-    ok(result == 2355, "Expected 2355, got %d\n", result);
+        stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
+        expect(Ok, stat);
+        ok(result == 2355, "Expected 2355, got %d\n", result);
 }
-    result = 0;
-    stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
-    expect(Ok, stat);
-    ok(result == 2048, "Expected 2048, got %d\n", result);
-    result = 0;
-    stat = GdipGetCellAscent(FontFamily, FontStyleRegular, &result);
-    expect(Ok, stat);
-    ok(result == 1825, "Expected 1825, got %d\n", result);
-    result = 0;
-    stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
-    ok(result == 443, "Expected 443 got %d\n", result);
-    GdipDeleteFontFamily(FontFamily);
+        result = 0;
+        stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
+        expect(Ok, stat);
+        ok(result == 2048, "Expected 2048, got %d\n", result);
+        result = 0;
+        stat = GdipGetCellAscent(FontFamily, FontStyleRegular, &result);
+        expect(Ok, stat);
+        ok(result == 1825, "Expected 1825, got %d\n", result);
+        result = 0;
+        stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
+        ok(result == 443, "Expected 443 got %d\n", result);
+        GdipDeleteFontFamily(FontFamily);
+    }
 }
 
 static void test_getgenerics (void)
