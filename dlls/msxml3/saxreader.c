@@ -1036,7 +1036,7 @@ static HRESULT WINAPI isaxxmlreader_parse(
         xmlFreeParserCtxt(locator->pParserCtxt);
         locator->pParserCtxt = NULL;
     }
-    if(data) HeapFree(GetProcessHeap(), 0, data);
+    HeapFree(GetProcessHeap(), 0, data);
     ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
     return hr;
 }
