@@ -994,6 +994,8 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
             goto error;
         }
 
+        VariantClear(&var);
+
         hr = IBaseFilter_EnumPins(pfilter, &penumpins);
         if (FAILED(hr)) {
             WARN("Enumpins (%x)\n", hr);
@@ -1070,6 +1072,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         }
 
 error:
+        VariantClear(&var);
         if (ppinfilter) IPin_Release(ppinfilter);
         if (pfilter) {
             IFilterGraph2_RemoveFilter(iface, pfilter);
@@ -1347,6 +1350,9 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
                 goto error;
             }
             TRACE("Connected, recursing %s\n",  debugstr_w(V_UNION(&var, bstrVal)));
+
+            VariantClear(&var);
+
             hr = FilterGraph2_RenderRecurse(This, ppinfilter);
             if (FAILED(hr)) {
                 WARN("Unable to connect recursively (%x)\n", hr);
@@ -1356,6 +1362,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
             break;
 
 error:
+            VariantClear(&var);
             if (pfilter) {
                 IFilterGraph2_RemoveFilter(iface, pfilter);
                 IBaseFilter_Release(pfilter);
