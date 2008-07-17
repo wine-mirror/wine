@@ -698,6 +698,22 @@ static void set_fileformat(WPARAM format)
     target_device(hMainWnd, wordWrap[reg_formatindex(fileFormat)]);
 }
 
+static void ShowOpenError(DWORD Code)
+{
+    LPWSTR Message;
+
+    switch(Code)
+    {
+        case ERROR_ACCESS_DENIED:
+            Message = MAKEINTRESOURCEW(STRING_OPEN_ACCESS_DENIED);
+            break;
+
+        default:
+            Message = MAKEINTRESOURCEW(STRING_OPEN_FAILED);
+    }
+    MessageBoxW(hMainWnd, Message, wszAppTitle, MB_ICONEXCLAMATION | MB_OK);
+}
+
 static void DoOpenFile(LPCWSTR szOpenFileName)
 {
     HANDLE hFile;
@@ -709,7 +725,10 @@ static void DoOpenFile(LPCWSTR szOpenFileName)
     hFile = CreateFileW(szOpenFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
+    {
+        ShowOpenError(GetLastError());
         return;
+    }
 
     ReadFile(hFile, fileStart, 5, &readOut, NULL);
     SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
