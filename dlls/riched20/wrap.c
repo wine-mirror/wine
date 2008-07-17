@@ -338,7 +338,12 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     /* TAB: we can split before */
     if (run->nFlags & MERF_TAB) {
       wc->bOverflown = TRUE;
-      return p;
+      if (wc->pRowStart == p)
+        /* Don't split before the start of the run, or we will get an
+         * endless loop. */
+        return p->next;
+      else
+        return p;
     }
     /* graphics: we can split before, if run's width is smaller than row's width */
     if ((run->nFlags & MERF_GRAPHICS) && run->nWidth <= wc->nAvailWidth) {
