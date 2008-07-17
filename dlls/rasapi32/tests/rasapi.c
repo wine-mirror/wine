@@ -44,69 +44,82 @@ static void test_rasenum(void)
 {
     DWORD result;
     DWORD cDevices = 0;
-    DWORD cb = 0;
-    RASDEVINFOA rasDevInfo;
-    rasDevInfo.dwSize = sizeof(rasDevInfo);
+    DWORD bufsize = 0, cb = 0;
+    LPRASDEVINFOA rasDevInfo;
 
     if(!pRasEnumDevicesA) {
         win_skip("Skipping RasEnumDevicesA tests, function not present\n");
         return;
     }
 
-    /* test first parameter */
-    result = pRasEnumDevicesA(NULL, &cb, &cDevices);
+    /* create the return buffer */
+    result = pRasEnumDevicesA(NULL, &bufsize, &cDevices);
     trace("RasEnumDevicesA: buffersize %d\n", cb);
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
 
-    cb = sizeof(rasDevInfo);
+    rasDevInfo = (LPRASDEVINFO) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                          max(bufsize,sizeof(RASDEVINFOA)));
+    if(!rasDevInfo) {
+        win_skip("failed to allocate buffer for RasEnumDevicesA tests\n");
+        return;
+    }
+
+    /* test first parameter */
+    cb = bufsize;
     result = pRasEnumDevicesA(NULL, &cb, &cDevices);
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
 
-    rasDevInfo.dwSize = 0;
-    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    rasDevInfo[0].dwSize = 0;
+    cb = bufsize;
+    result = pRasEnumDevicesA(rasDevInfo, &cb, &cDevices);
     todo_wine
     ok(result == ERROR_INVALID_SIZE,
     "Expected ERROR_INVALID_SIZE, got %08d\n", result);
 
-    rasDevInfo.dwSize = sizeof(rasDevInfo) -1;
-    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    rasDevInfo[0].dwSize = sizeof(RASDEVINFOA) -1;
+    cb = bufsize;
+    result = pRasEnumDevicesA(rasDevInfo, &cb, &cDevices);
     todo_wine
     ok(result == ERROR_INVALID_SIZE,
     "Expected ERROR_INVALID_SIZE, got %08d\n", result);
 
-    rasDevInfo.dwSize = sizeof(rasDevInfo) +1;
-    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    rasDevInfo[0].dwSize = sizeof(RASDEVINFOA) +1;
+    cb = bufsize;
+    result = pRasEnumDevicesA(rasDevInfo, &cb, &cDevices);
     todo_wine
     ok(result == ERROR_INVALID_SIZE,
     "Expected ERROR_INVALID_SIZE, got %08d\n", result);
 
     /* test second parameter */
-    rasDevInfo.dwSize = sizeof(rasDevInfo);
-    result = pRasEnumDevicesA(&rasDevInfo, NULL, &cDevices);
+    rasDevInfo[0].dwSize = sizeof(RASDEVINFOA);
+    result = pRasEnumDevicesA(rasDevInfo, NULL, &cDevices);
     ok(result == ERROR_INVALID_PARAMETER,
     "Expected ERROR_INVALID_PARAMETER, got %08d\n", result);
 
+    rasDevInfo[0].dwSize = sizeof(RASDEVINFOA);
     cb = 0;
-    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    result = pRasEnumDevicesA(rasDevInfo, &cb, &cDevices);
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
 
-    cb = sizeof(rasDevInfo) -1;
-    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    rasDevInfo[0].dwSize = sizeof(RASDEVINFOA);
+    cb = bufsize -1;
+    result = pRasEnumDevicesA(rasDevInfo, &cb, &cDevices);
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
 
-    cb = sizeof(rasDevInfo) +1;
-    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
-    todo_wine
-    ok(result == ERROR_BUFFER_TOO_SMALL,
-    "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
+    rasDevInfo[0].dwSize = sizeof(RASDEVINFOA);
+    cb = bufsize +1;
+    result = pRasEnumDevicesA(rasDevInfo, &cb, &cDevices);
+    ok(result == ERROR_SUCCESS,
+    "Expected ERROR_SUCCESS, got %08d\n", result);
 
     /* test third parameter */
-    cb = sizeof(rasDevInfo);
-    result = pRasEnumDevicesA(&rasDevInfo, &cb, NULL);
+    rasDevInfo[0].dwSize = sizeof(RASDEVINFOA);
+    cb = bufsize;
+    result = pRasEnumDevicesA(rasDevInfo, &cb, NULL);
     ok(result == ERROR_INVALID_PARAMETER,
     "Expected ERROR_INVALID_PARAMETER, got %08d\n", result);
 
@@ -120,11 +133,13 @@ static void test_rasenum(void)
     "Expected ERROR_INVALID_PARAMETER, got %08d\n", result);
 
     cb = 0;
-    rasDevInfo.dwSize = 0;
-    result = pRasEnumDevicesA(&rasDevInfo, &cb, &cDevices);
+    rasDevInfo[0].dwSize = 0;
+    result = pRasEnumDevicesA(rasDevInfo, &cb, &cDevices);
     todo_wine
     ok(result == ERROR_INVALID_SIZE,
     "Expected ERROR_INVALID_SIZE, got %08d\n", result);
+
+    HeapFree(GetProcessHeap(), 0, rasDevInfo);
 }
 
 START_TEST(rasapi)
