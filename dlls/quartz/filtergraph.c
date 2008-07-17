@@ -515,6 +515,8 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
                     }
                     h = IPin_Disconnect(ppin);
                     TRACE("Disconnect 2: %08x\n", h);
+
+                    IPin_Release(ppin);
                 }
                 IEnumPins_Release(penumpins);
             }
