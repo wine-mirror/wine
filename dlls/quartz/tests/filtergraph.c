@@ -196,6 +196,12 @@ static void test_graph_builder(void)
     ok(pF2 != NULL, "IGraphBuilder_FindFilterByName returned NULL\n");
     hr = IGraphBuilder_FindFilterByName(pgraph, testFilterW, NULL);
     ok(hr == E_POINTER, "IGraphBuilder_FindFilterByName returned %x\n", hr);
+
+    if (pIn) IPin_Release(pIn);
+    if (pEnum) IEnumPins_Release(pEnum);
+    if (pF) IBaseFilter_Release(pF);
+    if (pF2) IBaseFilter_Release(pF2);
+
     releasefiltergraph();
 }
 
