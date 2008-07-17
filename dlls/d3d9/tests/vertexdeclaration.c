@@ -786,6 +786,60 @@ static void test_vertex_declaration_alignment(
     }
 }
 
+static void test_unused_type(
+    IDirect3DDevice9* device) {
+
+    HRESULT hr;
+    IDirect3DVertexDeclaration9* result_decl = NULL;
+    int i;
+
+    static const D3DVERTEXELEMENT9 test_elements[][3] =
+    {
+        {
+            { 0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_COLOR   , 0 },
+            D3DDECL_END()
+        },
+        {
+            { 0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_TEXCOORD, 0 },
+            D3DDECL_END()
+        },
+        {
+            { 0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_TEXCOORD, 1 },
+            D3DDECL_END()
+        },
+        {
+            { 0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_TEXCOORD, 12},
+            D3DDECL_END()
+        },
+        {
+            { 0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            { 1, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_TEXCOORD, 12},
+            D3DDECL_END()
+        },
+        {
+            { 0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_NORMAL,   0 },
+            D3DDECL_END()
+        },
+        {
+            { 0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            { 1, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_NORMAL,   0 },
+            D3DDECL_END()
+        },
+    };
+
+    for(i = 0; i < sizeof(test_elements) / sizeof(test_elements[0]); i++) {
+        result_decl = NULL;
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, test_elements[i], &result_decl);
+        ok(hr == E_FAIL, "CreateVertexDeclaration for declaration %d returned %#x, expected E_FAIL(%#x)\n",
+                              i, hr, E_FAIL);
+        if(result_decl) IDirect3DVertexDeclaration9_Release(result_decl);
+    }
+}
 START_TEST(vertexdeclaration)
 {
     static D3DVERTEXELEMENT9 simple_decl[] = {
@@ -821,4 +875,5 @@ START_TEST(vertexdeclaration)
     test_fvf_decl_conversion(device_ptr);
     test_fvf_decl_management(device_ptr);
     test_vertex_declaration_alignment(device_ptr);
+    test_unused_type(device_ptr);
 }

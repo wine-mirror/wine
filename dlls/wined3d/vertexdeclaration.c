@@ -159,6 +159,12 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
          */
         if(This->pDeclarationWine[i].Stream >= MAX_STREAMS) continue;
 
+        if(This->pDeclarationWine[i].Type == WINED3DDECLTYPE_UNUSED) {
+            WARN("The application tries to use WINED3DDECLTYPE_UNUSED, returning E_FAIL\n");
+            /* The caller will release the vdecl, which will free This->pDeclarationWine */
+            return E_FAIL;
+        }
+
         if(This->pDeclarationWine[i].Offset & 0x3) {
             WARN("Declaration element %d is not 4 byte aligned(%d), returning E_FAIL\n", i, This->pDeclarationWine[i].Offset);
             HeapFree(GetProcessHeap(), 0, This->pDeclarationWine);
