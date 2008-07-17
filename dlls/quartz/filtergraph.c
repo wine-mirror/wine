@@ -773,7 +773,6 @@ static HRESULT GetFilterInfo(IMoniker* pMoniker, GUID* pclsid, VARIANT* pvar)
     HRESULT hr;
 
     VariantInit(pvar);
-    V_VT(pvar) = VT_BSTR;
 
     hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
 
@@ -782,6 +781,8 @@ static HRESULT GetFilterInfo(IMoniker* pMoniker, GUID* pclsid, VARIANT* pvar)
 
     if (SUCCEEDED(hr))
         hr = CLSIDFromString(V_UNION(pvar, bstrVal), pclsid);
+
+    VariantClear(pvar);
 
     if (SUCCEEDED(hr))
         hr = IPropertyBag_Read(pPropBagCat, wszFriendlyName, pvar, NULL);
