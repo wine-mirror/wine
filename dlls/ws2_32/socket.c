@@ -2756,6 +2756,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         }
         else NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)ws2_async_apc,
                                (ULONG_PTR)wsa, (ULONG_PTR)iosb, 0 );
+        WSASetLastError(0);
         return 0;
     }
 
@@ -2820,6 +2821,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     TRACE(" -> %i bytes\n", *lpNumberOfBytesSent);
 
     release_sock_fd( s, fd );
+    WSASetLastError(0);
     return 0;
 
 error:
