@@ -167,12 +167,27 @@ static void test_filter_graph_aggregations(void)
     }
 }
 
+static void test_filter_mapper_aggregations(void)
+{
+    const IID * iids[] = {
+        &IID_IFilterMapper2, &IID_IFilterMapper
+    };
+    int i;
+
+    for (i = 0; i < sizeof(iids) / sizeof(iids[0]); i++)
+    {
+        test_aggregation(CLSID_SystemClock, CLSID_FilterMapper2,
+                         IID_IReferenceClock, *iids[i]);
+    }
+}
+
 START_TEST(misc)
 {
     CoInitialize(NULL);
 
     test_video_renderer_aggregations();
     test_filter_graph_aggregations();
+    test_filter_mapper_aggregations();
 
     CoUninitialize();
 }
