@@ -957,7 +957,7 @@ static INT PROFILE_GetString( LPCWSTR section, LPCWSTR key_name,
     PROFILEKEY *key = NULL;
     static const WCHAR empty_strW[] = { 0 };
 
-    if(!buffer) return 0;
+    if(!buffer || !len) return 0;
 
     if (!def_val) def_val = empty_strW;
     if (key_name)
