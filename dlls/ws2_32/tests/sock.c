@@ -2180,6 +2180,34 @@ end:
         closesocket(v6);
 }
 
+static void test_WSASendTo(void)
+{
+    SOCKET s;
+    struct sockaddr_in addr;
+    char buf[12] = "hello world";
+    WSABUF data_buf;
+    DWORD bytesSent;
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(139);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    data_buf.len = sizeof(buf);
+    data_buf.buf = buf;
+
+    if( (s = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
+        ok(0, "socket() failed error: %d\n", WSAGetLastError());
+        return;
+    }
+
+    WSASetLastError(12345);
+    if(WSASendTo(s, &data_buf, 1, &bytesSent, 0, (struct sockaddr*)&addr, sizeof(addr), NULL, NULL)) {
+        ok(0, "WSASendTo() failed error: %d\n", WSAGetLastError());
+        return;
+    }
+    ok(!WSAGetLastError(), "WSAGetLastError() should return zero after "
+            "a successful call to WSASendTo()\n");
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -2218,6 +2246,8 @@ START_TEST( sock )
 
     test_send();
     test_write_events();
+
+    test_WSASendTo();
 
     test_ipv6only();
 
