@@ -16,25 +16,24 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "mstask_private.h"
-#include "wine/debug.h"
+#ifndef __MSTASK_PRIVATE_H__
+#define __MSTASK_PRIVATE_H__
 
-WINE_DEFAULT_DEBUG_CHANNEL(mstask);
+#include <stdarg.h>
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "ole2.h"
+#include "mstask.h"
+
+typedef struct
 {
-    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    const ITaskSchedulerVtbl *lpVtbl;
+    LONG ref;
+} TaskSchedulerImpl;
+extern HRESULT TaskSchedulerConstructor(LPVOID *ppObj);
 
-    switch (fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-        case DLL_PROCESS_DETACH:
-            break;
-    }
-
-    return TRUE;
-}
+#endif /* __MSTASK_PRIVATE_H__ */
