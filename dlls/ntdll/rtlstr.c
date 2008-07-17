@@ -1593,7 +1593,7 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
 BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
 {
     static const WCHAR std_control_chars[] = {'\r','\n','\t',' ',0x3000,0};
-    static const WCHAR byterev_control_chars[] = {0x0d00,0x0a00,0x0900,0x2000,0x0030,0};
+    static const WCHAR byterev_control_chars[] = {0x0d00,0x0a00,0x0900,0x2000,0};
     const WCHAR *s = buf;
     int i;
     unsigned int flags = ~0U, out_flags = 0;
