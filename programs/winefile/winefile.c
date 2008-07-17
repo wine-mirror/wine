@@ -2708,7 +2708,7 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 	SendMessage(pane->hwnd, LB_SETHORIZONTALEXTENT, x, 0);
 
 	/* no change? */
-	if (!memcmp(orgWidths, pane->widths, sizeof(orgWidths)))
+	if (!anyway && !memcmp(orgWidths, pane->widths, sizeof(orgWidths)))
 		return FALSE;
 
 	/* don't move, if only collapsing an entry */
