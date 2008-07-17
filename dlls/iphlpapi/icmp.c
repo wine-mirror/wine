@@ -146,7 +146,7 @@ static int in_cksum(u_short *addr, int len)
  */
 
 /***********************************************************************
- *		IcmpCreateFile (ICMP.@)
+ *		IcmpCreateFile (IPHLPAPI.@)
  */
 HANDLE WINAPI IcmpCreateFile(VOID)
 {
@@ -171,7 +171,7 @@ HANDLE WINAPI IcmpCreateFile(VOID)
 
 
 /***********************************************************************
- *		IcmpCloseHandle (ICMP.@)
+ *		IcmpCloseHandle (IPHLPAPI.@)
  */
 BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
 {
@@ -189,7 +189,7 @@ BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
 
 
 /***********************************************************************
- *		IcmpSendEcho (ICMP.@)
+ *		IcmpSendEcho (IPHLPAPI.@)
  */
 DWORD WINAPI IcmpSendEcho(
     HANDLE                   IcmpHandle,
@@ -364,7 +364,7 @@ DWORD WINAPI IcmpSendEcho(
                     case ICMP_UNREACH_ISOLATED:
 #endif
 #ifdef ICMP_UNREACH_HOST_PROHIB
-              	    case ICMP_UNREACH_HOST_PROHIB:
+		    case ICMP_UNREACH_HOST_PROHIB:
 #endif
 #ifdef ICMP_UNREACH_TOSHOST
                     case ICMP_UNREACH_TOSHOST:

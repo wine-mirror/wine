@@ -54,6 +54,11 @@
 @ stdcall GetUdpTable( ptr ptr long )
 @ stub GetUdpTableFromStack
 @ stdcall GetUniDirectionalAdapterInfo( ptr ptr )
+@ stdcall IcmpCloseHandle(ptr)
+@ stdcall IcmpCreateFile()
+@ stub IcmpParseReplies
+@ stub IcmpSendEcho2
+@ stdcall IcmpSendEcho(ptr long ptr long ptr ptr long long)
 @ stub InternalCreateIpForwardEntry
 @ stub InternalCreateIpNetEntry
 @ stub InternalDeleteIpForwardEntry
