@@ -6373,26 +6373,6 @@ out:
     IDirect3D9_Release(d3d);
 }
 
-/* Return true if color is near the expected value */
-static int color_near(DWORD color, DWORD expected)
-{
-    const BYTE slop = 2;
-
-    BYTE r, g, b;
-    BYTE rx, gx, bx;
-    r = (color & 0x00ff0000) >> 16;
-    g = (color & 0x0000ff00) >>  8;
-    b = (color & 0x000000ff);
-    rx = (expected & 0x00ff0000) >> 16;
-    gx = (expected & 0x0000ff00) >>  8;
-    bx = (expected & 0x000000ff);
-
-    return
-      ((r >= (rx - slop)) && (r <= (rx + slop))) &&
-      ((g >= (gx - slop)) && (g <= (gx + slop))) &&
-      ((b >= (bx - slop)) && (b <= (bx + slop)));
-}
-
 static void shademode_test(IDirect3DDevice9 *device)
 {
     /* Render a quad and try all of the different fixed function shading models. */
@@ -6494,9 +6474,9 @@ static void shademode_test(IDirect3DDevice9 *device)
                 case D3DSHADE_GOURAUD:
                     /* Should be an interpolated blend */
 
-                    ok(color_near(color0, 0x000dca28),
+                    ok(color_match(color0, D3DCOLOR_ARGB(0x00, 0x0d, 0xca, 0x28), 2),
                        "GOURAUD shading has color0 %08x, expected 0x00dca28\n", color0);
-                    ok(color_near(color1, 0x000d45c7),
+                    ok(color_match(color1, D3DCOLOR_ARGB(0x00, 0x0d, 0x45, 0xc7), 2),
                        "GOURAUD shading has color1 %08x, expected 0x000d45c7\n", color1);
 
                     color0_gouraud = color0;
@@ -6506,9 +6486,9 @@ static void shademode_test(IDirect3DDevice9 *device)
                     break;
                 case D3DSHADE_PHONG:
                     /* Should be the same as GOURAUD, since no hardware implements this */
-                    ok(color_near(color0, 0x000dca28),
+                    ok(color_match(color0, D3DCOLOR_ARGB(0x00, 0x0d, 0xca, 0x28), 2),
                        "PHONG shading has color0 %08x, expected 0x000dca28\n", color0);
-                    ok(color_near(color1, 0x000d45c7),
+                    ok(color_match(color1, D3DCOLOR_ARGB(0x00, 0x0d, 0x45, 0xc7), 2),
                        "PHONG shading has color1 %08x, expected 0x000d45c7\n", color1);
 
                     ok(color0 == color0_gouraud, "difference between GOURAUD and PHONG shading detected: %08x %08x\n",
