@@ -3998,7 +3998,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
       TRACE("syncing compatible set bits to app bits\n");
       if ((tmpheight < 0) ^ (bitmap.bmHeight < 0))
       {
-          dbits = (LPBYTE)bits + (dstwidthb * (lines-1));
+          dbits += dstwidthb * (lines-1);
           dstwidthb = -dstwidthb;
       }
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
