@@ -94,6 +94,7 @@ typedef struct
 #define HORZ_BORDER 0
 #define VERT_BORDER 2
 #define HORZ_GAP    2
+#define MIN_PANE_HEIGHT 18
 
 static const WCHAR themeClass[] = { 'S','t','a','t','u','s',0 };
 
@@ -114,9 +115,11 @@ STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
     HTHEME theme;
     UINT height;
     TEXTMETRICW tm;
+    int margin;
 
     COMCTL32_GetFontMetrics(infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont, &tm);
-    height = tm.tmHeight + 4 + infoPtr->verticalBorder;
+    margin = (tm.tmInternalLeading ? tm.tmInternalLeading : 2);
+    height = max(tm.tmHeight + margin + 2*GetSystemMetrics(SM_CYBORDER), MIN_PANE_HEIGHT) + infoPtr->verticalBorder;
 
     if ((theme = GetWindowTheme(infoPtr->Self)))
     {

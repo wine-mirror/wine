@@ -106,12 +106,56 @@ static void test_create()
     DestroyWindow(hwnd);
 }
 
-static void test_setfont()
+static int CALLBACK check_height_font_enumproc(ENUMLOGFONTEX *enumlf, NEWTEXTMETRICEX *ntm, DWORD type, LPARAM lParam)
 {
+    HWND hwndStatus = (HWND)lParam;
+    HDC hdc = GetDC(NULL);
+    static const int sizes[] = {8, 9, 10, 12, 16, 22, 28, 36, 48, 72};
+    int i;
+
+    trace("Font %s\n", enumlf->elfFullName);
+    for (i = 0; i < sizeof(sizes)/sizeof(sizes[0]); i++)
+    {
+        HFONT hFont;
+        TEXTMETRIC tm;
+        HFONT hCtrlFont;
+        HFONT hOldFont;
+        RECT rcCtrl;
+
+        enumlf->elfLogFont.lfHeight = sizes[i];
+        hFont = CreateFontIndirect(&enumlf->elfLogFont);
+        hCtrlFont = (HFONT)SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFont, TRUE);
+        hOldFont = SelectObject(hdc, hFont);
+
+        GetClientRect(hwndStatus, &rcCtrl);
+        GetTextMetrics(hdc, &tm);
+        expect(max(tm.tmHeight + (tm.tmInternalLeading ? tm.tmInternalLeading : 2) + 4, 20), rcCtrl.bottom);
+
+        SelectObject(hdc, hOldFont);
+        SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hCtrlFont, TRUE);
+        DeleteObject(hFont);
+    }
+    ReleaseDC(NULL, hdc);
+    return 1;
+}
+
+static int CALLBACK check_height_family_enumproc(ENUMLOGFONTEX *enumlf, NEWTEXTMETRICEX *ntm, DWORD type, LPARAM lParam)
+{
+    HDC hdc = GetDC(NULL);
+    enumlf->elfLogFont.lfHeight = 0;
+    EnumFontFamiliesEx(hdc, &enumlf->elfLogFont, (FONTENUMPROC)check_height_font_enumproc, lParam, 0);
+    ReleaseDC(NULL, hdc);
+    return 1;
+}
+
+static void test_height(void)
+{
+    LOGFONT lf;
     HFONT hFont;
     RECT rc1, rc2;
     HWND hwndStatus = CreateWindow(SUBCLASS_NAME, NULL, WS_CHILD|WS_VISIBLE,
         0, 0, 300, 20, g_hMainWnd, NULL, NULL, NULL);
+    HDC hdc;
 
     GetClientRect(hwndStatus, &rc1);
     hFont = CreateFont(32, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
@@ -122,7 +166,7 @@ static void test_setfont()
     ok(g_wmsize_count > 0, "WM_SETFONT should issue WM_SIZE\n");
 
     GetClientRect(hwndStatus, &rc2);
-    todo_wine expect_rect(0, 0, 672, 42, rc2);
+    todo_wine expect_rect(0, 0, 672, 42, rc2); /* GetTextMetrics returns invalid tmInternalLeading for this font */
 
     g_wmsize_count = 0;
     SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFont, TRUE);
@@ -130,6 +174,14 @@ static void test_setfont()
 
     GetClientRect(hwndStatus, &rc2);
     todo_wine expect_rect(0, 0, 672, 42, rc2);
+
+    /* test the height formula */
+    ZeroMemory(&lf, sizeof(lf));
+    SendMessage(hwndStatus, SB_SETMINHEIGHT, 0, 0);
+    hdc = GetDC(NULL);
+    trace("dpi=%d\n", GetDeviceCaps(hdc, LOGPIXELSY));
+    EnumFontFamiliesEx(hdc, &lf, (FONTENUMPROC)check_height_family_enumproc, (LPARAM)hwndStatus, 0);
+    ReleaseDC(NULL, hdc);
 
     DestroyWindow(hwndStatus);
     DeleteObject(hFont);
@@ -294,5 +346,5 @@ START_TEST(status)
 
     test_status_control();
     test_create();
-    test_setfont();
+    test_height();
 }
