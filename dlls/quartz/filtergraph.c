@@ -1370,6 +1370,7 @@ error:
             if (!FAILED(hr)) DebugBreak();
         }
 
+        IEnumMoniker_Release(pEnumMoniker);
         if (nbmt)
             DeleteMediaType(mt);
         if (SUCCEEDED(hr))
