@@ -1118,7 +1118,14 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 
     if (handle)
     {
-        if (init == CBM_INIT) SetDIBits( hdc, handle, 0, height, bits, data, coloruse );
+        if (init == CBM_INIT)
+        {
+            if (SetDIBits( hdc, handle, 0, height, bits, data, coloruse ) == 0)
+            {
+                DeleteObject( handle );
+                handle = 0;
+            }
+        }
 
         else if (hdc && ((dc = get_dc_ptr( hdc )) != NULL) )
         {
