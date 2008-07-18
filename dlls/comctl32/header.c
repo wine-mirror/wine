@@ -1073,7 +1073,7 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr(hwnd);
     INT iItem = (INT)wParam;
     INT iOrder;
-    INT i;
+    UINT i;
 
     TRACE("[iItem=%d]\n", iItem);
 
