@@ -652,27 +652,29 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliA,
 
     ret = mixerGetLineInfoW(hmix, &mliW, fdwInfo);
 
-    lpmliA->dwDestination = mliW.dwDestination;
-    lpmliA->dwSource = mliW.dwSource;
-    lpmliA->dwLineID = mliW.dwLineID;
-    lpmliA->fdwLine = mliW.fdwLine;
-    lpmliA->dwUser = mliW.dwUser;
-    lpmliA->dwComponentType = mliW.dwComponentType;
-    lpmliA->cChannels = mliW.cChannels;
-    lpmliA->cConnections = mliW.cConnections;
-    lpmliA->cControls = mliW.cControls;
-    WideCharToMultiByte( CP_ACP, 0, mliW.szShortName, -1, lpmliA->szShortName,
-                         sizeof(lpmliA->szShortName), NULL, NULL);
-    WideCharToMultiByte( CP_ACP, 0, mliW.szName, -1, lpmliA->szName,
-                         sizeof(lpmliA->szName), NULL, NULL );
-    lpmliA->Target.dwType = mliW.Target.dwType;
-    lpmliA->Target.dwDeviceID = mliW.Target.dwDeviceID;
-    lpmliA->Target.wMid = mliW.Target.wMid;
-    lpmliA->Target.wPid = mliW.Target.wPid;
-    lpmliA->Target.vDriverVersion = mliW.Target.vDriverVersion;
-    WideCharToMultiByte( CP_ACP, 0, mliW.Target.szPname, -1, lpmliA->Target.szPname,
-                         sizeof(lpmliA->Target.szPname), NULL, NULL );
-
+    if(ret == MMSYSERR_NOERROR)
+    {
+        lpmliA->dwDestination = mliW.dwDestination;
+        lpmliA->dwSource = mliW.dwSource;
+        lpmliA->dwLineID = mliW.dwLineID;
+        lpmliA->fdwLine = mliW.fdwLine;
+        lpmliA->dwUser = mliW.dwUser;
+        lpmliA->dwComponentType = mliW.dwComponentType;
+        lpmliA->cChannels = mliW.cChannels;
+        lpmliA->cConnections = mliW.cConnections;
+        lpmliA->cControls = mliW.cControls;
+        WideCharToMultiByte( CP_ACP, 0, mliW.szShortName, -1, lpmliA->szShortName,
+                             sizeof(lpmliA->szShortName), NULL, NULL);
+        WideCharToMultiByte( CP_ACP, 0, mliW.szName, -1, lpmliA->szName,
+                             sizeof(lpmliA->szName), NULL, NULL );
+        lpmliA->Target.dwType = mliW.Target.dwType;
+        lpmliA->Target.dwDeviceID = mliW.Target.dwDeviceID;
+        lpmliA->Target.wMid = mliW.Target.wMid;
+        lpmliA->Target.wPid = mliW.Target.wPid;
+        lpmliA->Target.vDriverVersion = mliW.Target.vDriverVersion;
+        WideCharToMultiByte( CP_ACP, 0, mliW.Target.szPname, -1, lpmliA->Target.szPname,
+                             sizeof(lpmliA->Target.szPname), NULL, NULL );
+    }
     return ret;
 }
 
