@@ -101,6 +101,7 @@ TESTBINS = \
 	usp10_test.exe \
 	uxtheme_test.exe \
 	version_test.exe \
+	winhttp_test.exe \
 	wininet_test.exe \
 	winmm_test.exe \
 	winspool.drv_test.exe \
@@ -261,6 +262,8 @@ uxtheme_test.exe: $(DLLDIR)/uxtheme/tests/uxtheme_test.exe$(DLLEXT)
 	cp $(DLLDIR)/uxtheme/tests/uxtheme_test.exe$(DLLEXT) $@ && $(STRIP) $@
 version_test.exe: $(DLLDIR)/version/tests/version_test.exe$(DLLEXT)
 	cp $(DLLDIR)/version/tests/version_test.exe$(DLLEXT) $@ && $(STRIP) $@
+winhttp_test.exe: $(DLLDIR)/winhttp/tests/winhttp_test.exe$(DLLEXT)
+	cp $(DLLDIR)/winhttp/tests/winhttp_test.exe$(DLLEXT) $@ && $(STRIP) $@
 wininet_test.exe: $(DLLDIR)/wininet/tests/wininet_test.exe$(DLLEXT)
 	cp $(DLLDIR)/wininet/tests/wininet_test.exe$(DLLEXT) $@ && $(STRIP) $@
 winmm_test.exe: $(DLLDIR)/winmm/tests/winmm_test.exe$(DLLEXT)

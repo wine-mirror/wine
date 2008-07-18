@@ -363,6 +363,7 @@ TESTSUBDIRS = \
 	usp10/tests \
 	uxtheme/tests \
 	version/tests \
+	winhttp/tests \
 	wininet/tests \
 	winmm/tests \
 	winspool.drv/tests \

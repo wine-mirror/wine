@@ -333,6 +333,7 @@ programs/winetest/usp10_test.exe
 programs/winetest/uxtheme_test.exe
 programs/winetest/version_test.exe
 programs/winetest/winetest
+programs/winetest/winhttp_test.exe
 programs/winetest/wininet_test.exe
 programs/winetest/winmm_test.exe
 programs/winetest/winspool.drv_test.exe
