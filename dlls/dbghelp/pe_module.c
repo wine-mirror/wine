@@ -448,17 +448,14 @@ PVOID WINAPI ImageDirectoryEntryToDataEx( PVOID base, BOOLEAN image, USHORT dir,
     DWORD addr;
 
     *size = 0;
+    if (section) *section = NULL;
 
     if (!(nt = RtlImageNtHeader( base ))) return NULL;
     if (dir >= nt->OptionalHeader.NumberOfRvaAndSizes) return NULL;
     if (!(addr = nt->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
 
     *size = nt->OptionalHeader.DataDirectory[dir].Size;
-    if (image || addr < nt->OptionalHeader.SizeOfHeaders)
-    {
-        if (section) *section = NULL;
-        return (char *)base + addr;
-    }
+    if (image || addr < nt->OptionalHeader.SizeOfHeaders) return (char *)base + addr;
 
     return RtlImageRvaToVa( nt, (HMODULE)base, addr, section );
 }
