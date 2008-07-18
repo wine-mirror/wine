@@ -3525,7 +3525,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
             ERR("Out of memory!\n");
             XDestroyImage( bmpImage );
             wine_tsx11_unlock();
-            return lines;
+            return 0;
         }
     }
     wine_tsx11_unlock();
@@ -3654,7 +3654,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
             ERR("Out of memory!\n");
             XDestroyImage( bmpImage );
             wine_tsx11_unlock();
-            return lines;
+            return 0;
         }
     }
 
