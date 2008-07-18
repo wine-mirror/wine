@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = icmp.dll
-IMPORTLIB = icmp
 IMPORTS   = kernel32
 
 @MAKE_DLL_RULES@

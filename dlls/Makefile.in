@@ -588,7 +588,6 @@ IMPORT_LIBS = \
 	glu32/libglu32.$(IMPLIBEXT) \
 	hid/libhid.$(IMPLIBEXT) \
 	hlink/libhlink.$(IMPLIBEXT) \
-	icmp/libicmp.$(IMPLIBEXT) \
 	imagehlp/libimagehlp.$(IMPLIBEXT) \
 	imm32/libimm32.$(IMPLIBEXT) \
 	inetcomm/libinetcomm.$(IMPLIBEXT) \
@@ -724,7 +723,6 @@ CROSS_IMPLIBS = \
 	glu32/libglu32.a \
 	hid/libhid.a \
 	hlink/libhlink.a \
-	icmp/libicmp.a \
 	imagehlp/libimagehlp.a \
 	imm32/libimm32.a \
 	inetcomm/libinetcomm.a \
@@ -954,9 +952,6 @@ hid/libhid.def hid/libhid.a: hid/hid.spec $(WINEBUILD)
 
 hlink/libhlink.def hlink/libhlink.a: hlink/hlink.spec $(WINEBUILD)
 	@cd hlink && $(MAKE) `basename $@`
-
-icmp/libicmp.def icmp/libicmp.a: icmp/icmp.spec $(WINEBUILD)
-	@cd icmp && $(MAKE) `basename $@`
 
 imagehlp/libimagehlp.def imagehlp/libimagehlp.a: imagehlp/imagehlp.spec $(WINEBUILD)
 	@cd imagehlp && $(MAKE) `basename $@`
