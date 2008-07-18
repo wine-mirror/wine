@@ -147,7 +147,6 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
     PullPin *pin = This->Parser.pInputPin;
     IMediaSample *sample = NULL;
     HRESULT hr;
-    BOOL endofstream = FALSE;
 
     TRACE("(%p, %u)->()\n", This, streamnumber);
 
@@ -198,7 +197,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             TRACE("offset(%u) size(%u)\n", (DWORD)BYTES_FROM_MEDIATIME(rtSampleStart), (DWORD)BYTES_FROM_MEDIATIME(rtSampleStop - rtSampleStart));
 
             /* End of file */
-            if (stream->index_next >= stream->entries)
+            if (stream->index >= stream->entries)
             {
                 ERR("END OF STREAM ON %u\n", streamnumber);
                 IMediaSample_Release(sample);
@@ -239,14 +238,14 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
                      && StreamFromFOURCC(This->oldindex->aIndex[stream->pos_next].dwChunkId) != streamnumber);
 
             /* End of file */
-            if (stream->pos_next * sizeof(This->oldindex->aIndex[0]) >= This->oldindex->cb)
+            if (stream->index)
             {
                 IMediaSample_Release(sample);
                 stream->pos_next = 0;
                 ++stream->index_next;
                 ERR("END OF STREAM ON %u\n", streamnumber);
                 hr = AVISplitter_SendEndOfFile(This, streamnumber);
-                endofstream = TRUE;
+                return S_FALSE;
             }
         }
         else /* TODO: Generate an index automagically */
@@ -255,12 +254,21 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             assert(0);
         }
 
-        hr = IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
+        if (rtSampleStart != rtSampleStop)
+        {
+            hr = IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
 
-        hr = IAsyncReader_Request(pin->pReader, sample, streamnumber);
+            hr = IAsyncReader_Request(pin->pReader, sample, streamnumber);
 
-        if (FAILED(hr))
-            assert(IMediaSample_Release(sample) == 0);
+            if (FAILED(hr))
+                assert(IMediaSample_Release(sample) == 0);
+        }
+        else
+        {
+            stream->sample = sample;
+            IMediaSample_SetActualDataLength(sample, 0);
+            SetEvent(stream->packet_queued);
+        }
     }
     else
     {
@@ -271,9 +279,6 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
         }
     }
     TRACE("--> %08x\n", hr);
-
-    if (endofstream && hr == S_OK)
-        return S_FALSE;
 
     return hr;
 }
@@ -360,7 +365,10 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PT
     HRESULT hr = S_OK;
 
     if (!IMediaSample_GetActualDataLength(pSample))
+    {
+        ERR("Received empty sample\n");
         return S_OK;
+    }
 
     /* Send the sample to whatever thread is appropiate
      * That thread should also not have a sample queued at the moment
