@@ -73,6 +73,20 @@ static void test_Scan0(void)
     stat = GdipCreateBitmapFromScan0(10, 10, 0, PixelFormat24bppRGB, buff, &bm);
     expect(InvalidParameter, stat);
     expect(0xdeadbeef, bm);
+
+    bm = NULL;
+    stat = GdipCreateBitmapFromScan0(10, 10, -8, PixelFormat24bppRGB, buff, &bm);
+    todo_wine{
+        expect(Ok, stat);
+        ok(NULL != bm, "Expected bitmap to be initialized\n");
+    }
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)bm);
+
+    bm = (GpBitmap*)0xdeadbeef;
+    stat = GdipCreateBitmapFromScan0(10, 10, -10, PixelFormat24bppRGB, buff, &bm);
+    expect(InvalidParameter, stat);
+    expect(NULL, bm);
 }
 
 static void test_GetImageDimension(void)
