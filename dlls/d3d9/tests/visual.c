@@ -8723,7 +8723,7 @@ static void stream_test(IDirect3DDevice9 *device)
     BYTE *data;
     DWORD color;
     DWORD ind;
-    int i;
+    unsigned i;
 
     const DWORD shader_code[] =
     {
@@ -9065,7 +9065,7 @@ static void texop_test(IDirect3DDevice9 *device)
     D3DCOLOR color;
     D3DCAPS9 caps;
     HRESULT hr;
-    int i;
+    unsigned i;
 
     static const struct {
         float x, y, z;
