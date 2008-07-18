@@ -192,18 +192,14 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
             hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pMemAlloc);
 
             if (hr == VFW_E_NO_ALLOCATOR)
-            {
                 /* Input pin provides no allocator, use standard memory allocator */
                 hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)&pMemAlloc);
 
-                if (SUCCEEDED(hr))
-                {
-                    hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, pMemAlloc, This->readonly);
-                }
-            }
-
             if (SUCCEEDED(hr))
                 hr = IMemAllocator_SetProperties(pMemAlloc, &This->allocProps, &actual);
+
+            if (SUCCEEDED(hr))
+                hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, pMemAlloc, This->readonly);
 
             if (pMemAlloc)
                 IMemAllocator_Release(pMemAlloc);
@@ -940,7 +936,9 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
                 while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
                 {
                     assert(pmtCandidate);
-                    if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype))
+                    dump_AM_MEDIA_TYPE(pmtCandidate);
+                    if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype)
+                        && !IsEqualGUID(&GUID_NULL, &pmtCandidate->formattype))
                         assert(pmtCandidate->pbFormat);
                     if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) && 
                         (This->pConnectSpecific(iface, pReceivePin, pmtCandidate) == S_OK))
@@ -963,7 +961,9 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
                 while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
                 {
                     assert(pmtCandidate);
-                    if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype))
+                    dump_AM_MEDIA_TYPE(pmtCandidate);
+                    if (!IsEqualGUID(&FORMAT_None, &pmtCandidate->formattype)
+                        && !IsEqualGUID(&GUID_NULL, &pmtCandidate->formattype))
                         assert(pmtCandidate->pbFormat);
                     if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) && 
                         (This->pConnectSpecific(iface, pReceivePin, pmtCandidate) == S_OK))
