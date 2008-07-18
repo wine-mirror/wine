@@ -1365,6 +1365,8 @@ static HRESULT OLEPictureImpl_LoadDIB(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
        DIB_RGB_COLORS
     );
     DeleteDC(hdcref);
+    if (This->desc.u.bmp.hbitmap == 0)
+        return E_FAIL;
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
     return S_OK;
@@ -1869,6 +1871,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   } else {
       This->datalen = toread+(headerisdata?8:0);
       xbuf = This->data = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, This->datalen);
+      if (!xbuf)
+          return E_OUTOFMEMORY;
 
       if (headerisdata)
           memcpy (xbuf, header, 8);
@@ -2644,8 +2648,15 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
       *ppvObj = NULL;
       return hr;
   }
-  IPersistStream_Load(ps,lpstream);
+  hr = IPersistStream_Load(ps,lpstream);
   IPersistStream_Release(ps);
+  if (FAILED(hr))
+  {
+      ERR("IPersistStream_Load failed\n");
+      IPicture_Release(newpic);
+      *ppvObj = NULL;
+      return hr;
+  }
   hr = IPicture_QueryInterface(newpic,riid,ppvObj);
   if (hr)
       FIXME("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
