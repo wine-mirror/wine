@@ -2139,7 +2139,7 @@ static void _SHCreateSymbolicLinks(void)
     const char *pszHome;
     HRESULT hr;
     const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
-    char ** xdg_results = NULL;
+    char ** xdg_results;
     char * xdg_desktop_dir;
 
     /* Create all necessary profile sub-dirs up to 'My Documents' and get the unix path. */
@@ -2149,7 +2149,8 @@ static void _SHCreateSymbolicLinks(void)
     pszPersonal = wine_get_unix_file_name(wszTempPath);
     if (!pszPersonal) return;
 
-    XDG_UserDirLookup(xdg_dirs, num, &xdg_results);
+    hr = XDG_UserDirLookup(xdg_dirs, num, &xdg_results);
+    if (FAILED(hr)) xdg_results = NULL;
 
     pszHome = getenv("HOME");
     if (pszHome && !stat(pszHome, &statFolder) && S_ISDIR(statFolder.st_mode)) {
