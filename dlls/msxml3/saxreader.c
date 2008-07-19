@@ -111,6 +111,8 @@ static void libxmlEndDocument(void *ctx)
     This->lastColumn = 0;
     This->lastLine = 0;
 
+    if(This->ret != S_OK) return;
+
     if(This->saxreader->contentHandler)
     {
         hr = ISAXContentHandler_endDocument(This->saxreader->contentHandler);
