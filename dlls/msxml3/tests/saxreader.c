@@ -125,7 +125,7 @@ static void test_locator(unsigned line, int loc_line, int loc_column)
     ok_(__FILE__,line) (rline == loc_line,
             "unexpected line %d, expected %d\n", rline, loc_line);
     ok_(__FILE__,line) (rcolumn == loc_column,
-            "unexpected columnt %d, expected %d\n", rcolumn, loc_column);
+            "unexpected column %d, expected %d\n", rcolumn, loc_column);
 }
 
 static HRESULT WINAPI contentHandler_QueryInterface(
@@ -357,6 +357,75 @@ static const ISAXContentHandlerVtbl contentHandlerVtbl =
 
 static ISAXContentHandler contentHandler = { &contentHandlerVtbl };
 
+static HRESULT WINAPI isaxerrorHandler_QueryInterface(
+        ISAXErrorHandler* iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    *ppvObject = NULL;
+
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ISAXErrorHandler))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        return E_NOINTERFACE;
+    }
+
+    return S_OK;
+}
+
+static ULONG WINAPI isaxerrorHandler_AddRef(
+        ISAXErrorHandler* iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI isaxerrorHandler_Release(
+        ISAXErrorHandler* iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI isaxerrorHandler_error(
+        ISAXErrorHandler* iface,
+        ISAXLocator *pLocator,
+        const WCHAR *pErrorMessage,
+        HRESULT hrErrorCode)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI isaxerrorHandler_fatalError(
+        ISAXErrorHandler* iface,
+        ISAXLocator *pLocator,
+        const WCHAR *pErrorMessage,
+        HRESULT hrErrorCode)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI isaxerrorHanddler_ignorableWarning(
+        ISAXErrorHandler* iface,
+        ISAXLocator *pLocator,
+        const WCHAR *pErrorMessage,
+        HRESULT hrErrorCode)
+{
+    return S_OK;
+}
+
+static const ISAXErrorHandlerVtbl errorHandlerVtbl =
+{
+    isaxerrorHandler_QueryInterface,
+    isaxerrorHandler_AddRef,
+    isaxerrorHandler_Release,
+    isaxerrorHandler_error,
+    isaxerrorHandler_fatalError,
+    isaxerrorHanddler_ignorableWarning
+};
+
+static ISAXErrorHandler errorHandler = { &errorHandlerVtbl };
 
 static void test_saxreader(void)
 {
@@ -364,6 +433,7 @@ static void test_saxreader(void)
     ISAXXMLReader *reader = NULL;
     VARIANT var;
     ISAXContentHandler *lpContentHandler;
+    ISAXErrorHandler *lpErrorHandler;
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISAXXMLReader, (LPVOID*)&reader);
@@ -377,14 +447,24 @@ static void test_saxreader(void)
     hr = ISAXXMLReader_getContentHandler(reader, NULL);
     ok(hr == E_POINTER, "Expected E_POINTER, got %08x\n", hr);
 
+    hr = ISAXXMLReader_getErrorHandler(reader, NULL);
+    ok(hr == E_POINTER, "Expected E_POINTER, got %08x\n", hr);
+
     hr = ISAXXMLReader_getContentHandler(reader, &lpContentHandler);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(lpContentHandler == NULL, "Expected %p, got %p\n", NULL, lpContentHandler);
+
+    hr = ISAXXMLReader_getErrorHandler(reader, &lpErrorHandler);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(lpErrorHandler == NULL, "Expected %p, got %p\n", NULL, lpErrorHandler);
 
     hr = ISAXXMLReader_putContentHandler(reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     hr = ISAXXMLReader_putContentHandler(reader, &contentHandler);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = ISAXXMLReader_putErrorHandler(reader, &errorHandler);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     hr = ISAXXMLReader_getContentHandler(reader, &lpContentHandler);
