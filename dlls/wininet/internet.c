@@ -2066,137 +2066,90 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 
         return APPINFO_QueryOption(&ai.hdr, INTERNET_OPTION_PROXY, buffer, size, unicode); /* FIXME */
     }
+
+    case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
+        TRACE("INTERNET_OPTION_MAX_CONNS_PER_SERVER\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = 2;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
+            TRACE("INTERNET_OPTION_MAX_CONNS_1_0_SERVER\n");
+
+            if (*size < sizeof(ULONG))
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            *(ULONG*)size = 4;
+            *size = sizeof(ULONG);
+
+            return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_SECURITY_FLAGS:
+        FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_VERSION: {
+        static const INTERNET_VERSION_INFO info = { 1, 2 };
+
+        TRACE("INTERNET_OPTION_VERSION\n");
+
+        if (*size < sizeof(INTERNET_VERSION_INFO))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        memcpy(buffer, &info, sizeof(info));
+        *size = sizeof(info);
+
+        return ERROR_SUCCESS;
+    }
+
+    case INTERNET_OPTION_PER_CONNECTION_OPTION: {
+        INTERNET_PER_CONN_OPTION_LISTW *con = buffer;
+        DWORD res = ERROR_SUCCESS, i;
+
+        FIXME("INTERNET_OPTION_PER_CONNECTION_OPTION stub\n");
+
+        if (*size < sizeof(INTERNET_PER_CONN_OPTION_LISTW))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        for (i = 0; i < con->dwOptionCount; i++) {
+            INTERNET_PER_CONN_OPTIONW *option = con->pOptions + i;
+
+            switch (option->dwOption) {
+            case INTERNET_PER_CONN_FLAGS:
+                option->Value.dwValue = PROXY_TYPE_DIRECT;
+                break;
+
+            case INTERNET_PER_CONN_PROXY_SERVER:
+            case INTERNET_PER_CONN_PROXY_BYPASS:
+            case INTERNET_PER_CONN_AUTOCONFIG_URL:
+            case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
+            case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
+            case INTERNET_PER_CONN_AUTOCONFIG_RELOAD_DELAY_MINS:
+            case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
+            case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
+                FIXME("Unhandled dwOption %d\n", option->dwOption);
+                option->Value.dwValue = 0;
+                res = ERROR_INVALID_PARAMETER;
+                break;
+
+            default:
+                FIXME("Unknown dwOption %d\n", option->dwOption);
+                res = ERROR_INVALID_PARAMETER;
+                break;
+            }
+        }
+
+        return res;
+    }
     }
 
     FIXME("Stub for %d\n", option);
     return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
-}
-
-/***********************************************************************
- *           INET_QueryOptionHelper (internal)
- */
-static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD dwOption,
-                                   LPVOID lpBuffer, LPDWORD lpdwBufferLength)
-{
-    LPWININETHANDLEHEADER lpwhh;
-    BOOL bSuccess = FALSE;
-
-    TRACE("(%p, 0x%08x, %p, %p)\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
-
-    lpwhh = WININET_GetObject( hInternet );
-
-    switch (dwOption)
-    {
-        case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
-        {
-            ULONG conn = 2;
-            TRACE("INTERNET_OPTION_MAX_CONNS_PER_SERVER: %d\n", conn);
-            if (*lpdwBufferLength < sizeof(ULONG))
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            else
-            {
-                memcpy(lpBuffer, &conn, sizeof(ULONG));
-                bSuccess = TRUE;
-            }
-            *lpdwBufferLength = sizeof(ULONG);
-            break;
-        }
-        case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
-        {
-            ULONG conn = 4;
-            TRACE("INTERNET_OPTION_MAX_CONNS_1_0_SERVER: %d\n", conn);
-            if (*lpdwBufferLength < sizeof(ULONG))
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            else
-            {
-                memcpy(lpBuffer, &conn, sizeof(ULONG));
-                bSuccess = TRUE;
-            }
-            *lpdwBufferLength = sizeof(ULONG);
-            break;
-        }
-        case INTERNET_OPTION_SECURITY_FLAGS:
-            FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
-            bSuccess = TRUE;
-            break;
-
-        case INTERNET_OPTION_VERSION:
-        {
-            TRACE("INTERNET_OPTION_VERSION\n");
-            if (*lpdwBufferLength < sizeof(INTERNET_VERSION_INFO))
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            else
-            {
-                static const INTERNET_VERSION_INFO info = { 1, 2 };
-                memcpy(lpBuffer, &info, sizeof(info));
-                *lpdwBufferLength = sizeof(info);
-                bSuccess = TRUE;
-            }
-            break;
-        }
-        case INTERNET_OPTION_PER_CONNECTION_OPTION:
-            FIXME("INTERNET_OPTION_PER_CONNECTION_OPTION stub\n");
-            if (*lpdwBufferLength < sizeof(INTERNET_PER_CONN_OPTION_LISTW))
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            else
-            {
-                INTERNET_PER_CONN_OPTION_LISTW *con = lpBuffer;
-                int x;
-                bSuccess = TRUE;
-                for (x = 0; x < con->dwOptionCount; ++x)
-                {
-                    INTERNET_PER_CONN_OPTIONW *option = con->pOptions + x;
-                    switch (option->dwOption)
-                    {
-                    case INTERNET_PER_CONN_FLAGS:
-                        option->Value.dwValue = PROXY_TYPE_DIRECT;
-                        break;
-
-                    case INTERNET_PER_CONN_PROXY_SERVER:
-                    case INTERNET_PER_CONN_PROXY_BYPASS:
-                    case INTERNET_PER_CONN_AUTOCONFIG_URL:
-                    case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
-                    case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
-                    case INTERNET_PER_CONN_AUTOCONFIG_RELOAD_DELAY_MINS:
-                    case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
-                    case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
-                        FIXME("Unhandled dwOption %d\n", option->dwOption);
-                        option->Value.dwValue = 0;
-                        bSuccess = FALSE;
-                        break;
-
-                    default:
-                        FIXME("Unknown dwOption %d\n", option->dwOption);
-                        bSuccess = FALSE;
-                        break;
-                    }
-                }
-                if (!bSuccess)
-                    INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-            }
-            break;
-    case 66:
-        FIXME("66\n");
-        bSuccess = TRUE;
-        break;
-        default: {
-            DWORD res;
-
-            if(lpwhh)
-                res = lpwhh->vtbl->QueryOption(lpwhh, dwOption, lpBuffer, lpdwBufferLength, bIsUnicode);
-            else
-                res = INET_QueryOption(dwOption, lpBuffer, lpdwBufferLength, bIsUnicode);
-
-            if(res == ERROR_SUCCESS)
-                bSuccess = TRUE;
-            else
-                SetLastError(res);
-        }
-    }
-    if (lpwhh)
-        WININET_Release( lpwhh );
-
-    return bSuccess;
 }
 
 /***********************************************************************
@@ -2212,7 +2165,24 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
 BOOL WINAPI InternetQueryOptionW(HINTERNET hInternet, DWORD dwOption,
                                  LPVOID lpBuffer, LPDWORD lpdwBufferLength)
 {
-    return INET_QueryOptionHelper(TRUE, hInternet, dwOption, lpBuffer, lpdwBufferLength);
+    LPWININETHANDLEHEADER hdr;
+    DWORD res = ERROR_INVALID_HANDLE;
+
+    TRACE("%p %d %p %p\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
+
+    if(hInternet) {
+        hdr = WININET_GetObject(hInternet);
+        if (hdr) {
+            res = hdr->vtbl->QueryOption(hdr, dwOption, lpBuffer, lpdwBufferLength, TRUE);
+            WININET_Release(hdr);
+        }
+    }else {
+        res = INET_QueryOption(dwOption, lpBuffer, lpdwBufferLength, TRUE);
+    }
+
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -2228,7 +2198,24 @@ BOOL WINAPI InternetQueryOptionW(HINTERNET hInternet, DWORD dwOption,
 BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
                                  LPVOID lpBuffer, LPDWORD lpdwBufferLength)
 {
-    return INET_QueryOptionHelper(FALSE, hInternet, dwOption, lpBuffer, lpdwBufferLength);
+    LPWININETHANDLEHEADER hdr;
+    DWORD res = ERROR_INVALID_HANDLE;
+
+    TRACE("%p %d %p %p\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
+
+    if(hInternet) {
+        hdr = WININET_GetObject(hInternet);
+        if (hdr) {
+            res = hdr->vtbl->QueryOption(hdr, dwOption, lpBuffer, lpdwBufferLength, FALSE);
+            WININET_Release(hdr);
+        }
+    }else {
+        res = INET_QueryOption(dwOption, lpBuffer, lpdwBufferLength, FALSE);
+    }
+
+    if(res != ERROR_SUCCESS)
+        SetLastError(res);
+    return res == ERROR_SUCCESS;
 }
 
 
