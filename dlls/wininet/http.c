@@ -3833,7 +3833,10 @@ lend:
     if (bSuccess)
         return rc;
     else
+    {
+        HeapFree(GetProcessHeap(), 0, lpszRawHeaders);
         return 0;
+    }
 }
 
 
