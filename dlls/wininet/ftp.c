@@ -1552,6 +1552,7 @@ static BOOL FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, 
             &iar, sizeof(INTERNET_ASYNC_RESULT));
     }
 
+    if (!bSuccess) DeleteFileW(lpszNewFile);
     return bSuccess;
 }
 

@@ -259,7 +259,6 @@ static void test_getfile(HINTERNET hFtp, HINTERNET hConnect)
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
     /* Currently Wine always creates the local file (even on failure) which is not correct, hence the test */
-    todo_wine
     ok (GetFileAttributesA("should_also_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
         "Local file should not have been created\n");
 
@@ -280,7 +279,6 @@ static void test_getfile(HINTERNET hFtp, HINTERNET hConnect)
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
     /* Currently Wine always creates the local file (even on failure) which is not correct, hence the test */
-    todo_wine
     ok (GetFileAttributesA("should_also_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
         "Local file should not have been created\n");
 
