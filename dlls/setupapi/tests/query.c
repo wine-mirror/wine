@@ -266,6 +266,8 @@ static void test_SetupGetInfInformation(void)
     ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
     ok(check_info_filename(info, inf_two), "Expected returned filename to be equal\n");
 
+    HeapFree(GetProcessHeap(), 0, info);
+
     DeleteFileA(inf_filename);
     DeleteFileA(inf_one);
     DeleteFileA(inf_two);

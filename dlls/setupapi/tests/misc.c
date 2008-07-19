@@ -400,6 +400,7 @@ static void test_SetupGetFileCompressionInfo(void)
     ok(target_size == sizeof(uncompressed), "got %d\n", target_size);
     ok(type == FILE_COMPRESSION_NONE, "got %d, expected FILE_COMPRESSION_NONE\n", type);
 
+    MyFree(name);
     DeleteFileA(source);
 }
 
