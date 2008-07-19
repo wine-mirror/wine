@@ -1888,15 +1888,10 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 {
     LPWININETAPPINFOW hIC = NULL;
     LPWININETHTTPREQW lpwhr;
-    LPWSTR lpszCookies;
-    LPWSTR lpszUrl = NULL;
     LPWSTR lpszHostName = NULL;
-    DWORD nCookieSize;
     HINTERNET handle = NULL;
-    static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     static const WCHAR szHostForm[] = {'%','s',':','%','u',0};
     DWORD len;
-    LPHTTPHEADERW Host;
 
     TRACE("-->\n");
 
@@ -2007,32 +2002,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 
     if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
         HTTP_DealWithProxy( hIC, lpwhs, lpwhr );
-
-    Host = HTTP_GetHeader(lpwhr,szHost);
-
-    len = lstrlenW(Host->lpszValue) + strlenW(szUrlForm);
-    lpszUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    sprintfW( lpszUrl, szUrlForm, Host->lpszValue );
-
-    if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) &&
-        InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
-    {
-        int cnt = 0;
-        static const WCHAR szCookie[] = {'C','o','o','k','i','e',':',' ',0};
-        static const WCHAR szcrlf[] = {'\r','\n',0};
-
-        lpszCookies = HeapAlloc(GetProcessHeap(), 0, (nCookieSize + 1 + 8)*sizeof(WCHAR));
-
-        cnt += sprintfW(lpszCookies, szCookie);
-        InternetGetCookieW(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
-        strcatW(lpszCookies, szcrlf);
-
-        HTTP_HttpAddRequestHeadersW(lpwhr, lpszCookies, strlenW(lpszCookies),
-                               HTTP_ADDREQ_FLAG_ADD);
-        HeapFree(GetProcessHeap(), 0, lpszCookies);
-    }
-    HeapFree(GetProcessHeap(), 0, lpszUrl);
-
 
     INTERNET_SendCallback(&lpwhs->hdr, dwContext,
                           INTERNET_STATUS_HANDLE_CREATED, &handle,
@@ -3151,6 +3120,36 @@ static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
     return TRUE;
 }
 
+static void HTTP_InsertCookies(LPWININETHTTPREQW lpwhr)
+{
+    static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
+    LPWSTR lpszCookies, lpszUrl = NULL;
+    DWORD nCookieSize, len;
+    LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr,szHost);
+
+    len = lstrlenW(Host->lpszValue) + strlenW(szUrlForm);
+    lpszUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    sprintfW( lpszUrl, szUrlForm, Host->lpszValue );
+
+    if (InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
+    {
+        int cnt = 0;
+        static const WCHAR szCookie[] = {'C','o','o','k','i','e',':',' ',0};
+        static const WCHAR szcrlf[] = {'\r','\n',0};
+
+        lpszCookies = HeapAlloc(GetProcessHeap(), 0, (nCookieSize + 1 + 8)*sizeof(WCHAR));
+
+        cnt += sprintfW(lpszCookies, szCookie);
+        InternetGetCookieW(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
+        strcatW(lpszCookies, szcrlf);
+
+        HTTP_HttpAddRequestHeadersW(lpwhr, lpszCookies, strlenW(lpszCookies),
+                               HTTP_ADDREQ_FLAG_ADD);
+        HeapFree(GetProcessHeap(), 0, lpszCookies);
+    }
+    HeapFree(GetProcessHeap(), 0, lpszUrl);
+}
+
 /***********************************************************************
  *           HTTP_HttpSendRequestW (internal)
  *
@@ -3239,6 +3238,9 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         }
         HTTP_InsertAuthorization(lpwhr, lpwhr->pAuthInfo, szAuthorization);
         HTTP_InsertAuthorization(lpwhr, lpwhr->pProxyAuthInfo, szProxy_Authorization);
+
+        if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES))
+            HTTP_InsertCookies(lpwhr);
 
         /* add the headers the caller supplied */
         if( lpszHeaders && dwHeaderLength )

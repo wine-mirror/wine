@@ -1489,6 +1489,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
             recvfrom(c, buffer, sizeof buffer, 0, NULL, NULL);
             send(c, okmsg, sizeof okmsg-1, 0);
         }
+        if (strstr(buffer, "/testC"))
+        {
+            if (strstr(buffer, "Cookie: cookie=biscuit"))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
         if (strstr(buffer, "GET /quit"))
         {
             send(c, okmsg, sizeof okmsg-1, 0);
@@ -1815,6 +1822,52 @@ static void test_http1_1(int port)
     InternetCloseHandle(ses);
 }
 
+static void test_cookie_header(int port)
+{
+    HINTERNET ses, con, req;
+    DWORD size, status, error;
+    BOOL ret;
+    char buffer[64];
+
+    ses = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnect(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    InternetSetCookie("http://localhost", "cookie", "biscuit");
+
+    req = HttpOpenRequest(con, NULL, "/testC", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = HttpQueryInfo(req, HTTP_QUERY_COOKIE | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    error = GetLastError();
+    ok(!ret, "HttpQueryInfo succeeded\n");
+    ok(error == ERROR_HTTP_HEADER_NOT_FOUND, "got %u expected ERROR_HTTP_HEADER_NOT_FOUND\n", error);
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfo(req, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL);
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(status == 200, "request failed with status %u\n", status);
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfo(req, HTTP_QUERY_COOKIE | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    ok(ret, "HttpQueryInfo failed: %u\n", GetLastError());
+    ok(!strcmp(buffer, "cookie=biscuit"), "got '%s' expected \'cookie=biscuit\'\n", buffer);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -1840,6 +1893,7 @@ static void test_http_connection(void)
     test_basic_request(si.port, "GET", "/test6");
     test_connection_header(si.port);
     test_http1_1(si.port);
+    test_cookie_header(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
