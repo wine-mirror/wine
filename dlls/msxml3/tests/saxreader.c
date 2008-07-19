@@ -52,6 +52,13 @@ static const WCHAR szSimpleXML[] = {
 '<','/','B','a','n','k','A','c','c','o','u','n','t','>','\n','\0'
 };
 
+static CHAR szTestXML[] =
+"<?xml version=\"1.0\" ?>\n"
+"<BankAccount>\n"
+"   <Number>1234</Number>\n"
+"   <Name>Captain Ahab</Name>\n"
+"</BankAccount>\n";
+
 typedef struct _contenthandlercheck {
     CH id;
     int line;
@@ -434,6 +441,9 @@ static void test_saxreader(void)
     VARIANT var;
     ISAXContentHandler *lpContentHandler;
     ISAXErrorHandler *lpErrorHandler;
+    SAFEARRAY *pSA;
+    SAFEARRAYBOUND SADim[1];
+    char *pSAData = NULL;
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISAXXMLReader, (LPVOID*)&reader);
@@ -478,6 +488,22 @@ static void test_saxreader(void)
     hr = ISAXXMLReader_parse(reader, var);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     test_expect_call(CH_ENDTEST);
+
+    SADim[0].lLbound= 0;
+    SADim[0].cElements= sizeof(szTestXML)-1;
+    pSA = SafeArrayCreate(VT_UI1, 1, SADim);
+    SafeArrayAccessData(pSA, (void**)&pSAData);
+    memcpy(pSAData, szTestXML, sizeof(szTestXML)-1);
+    SafeArrayUnaccessData(pSA);
+    V_VT(&var) = VT_ARRAY|VT_UI1;
+    V_ARRAY(&var) = pSA;
+
+    expectCall = contentHandlerTest1;
+    hr = ISAXXMLReader_parse(reader, var);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    test_expect_call(CH_ENDTEST);
+
+    SafeArrayDestroy(pSA);
 
     ISAXXMLReader_Release(reader);
 }
