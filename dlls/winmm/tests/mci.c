@@ -28,7 +28,9 @@ START_TEST(mci)
     const char command_open[] = "open new type waveaudio alias mysound";
     const char command_close_my[] = "close mysound notify";
     const char command_close_all[] = "close all notify";
+    const char command_sysinfo[] = "sysinfo waveaudio quantity open";
     MSG msg;
+    char buf[1024];
 
     err = mciSendString(command_open, NULL, 0, NULL);
     ok(!err,"mciSendString(%s, NULL, 0 , NULL) returned error: %d\n", command_open, err);
@@ -43,6 +45,16 @@ START_TEST(mci)
 
     err = mciSendString(command_close_all, NULL, 0, NULL);
     todo_wine ok(!err,"mciSendString(%s, NULL, 0 , NULL) returned error: %d\n", command_close_all, err);
+
+    memset(buf, 0, sizeof(buf));
+    err = mciSendString(command_close_all, buf, sizeof(buf), NULL);
+    todo_wine ok(!err,"mciSendString(%s, buf, sizeof(buf) , NULL) returned error: %d\n", command_close_all, err);
+    todo_wine ok(buf[0] == 0, "mciSendString(%s, buf, sizeof(buf) , NULL) changed output buffer: %s\n", command_close_all, buf);
+
+    memset(buf, 0, sizeof(buf));
+    err = mciSendString(command_sysinfo, buf, sizeof(buf), NULL);
+    ok(!err,"mciSendString(%s, buf, sizeof(buf) , NULL) returned error: %d\n", command_sysinfo, err);
+    todo_wine ok(buf[0] == '0' && buf[1] == 0, "mciSendString(%s, buf, sizeof(buf) , NULL), expected output buffer '0', got: '%s'\n", command_sysinfo, buf);
 
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0);
     todo_wine ok(err == MCIERR_INVALID_DEVICE_ID,
