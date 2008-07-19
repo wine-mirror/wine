@@ -3124,11 +3124,11 @@ static void HTTP_InsertCookies(LPWININETHTTPREQW lpwhr)
 {
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     LPWSTR lpszCookies, lpszUrl = NULL;
-    DWORD nCookieSize, len;
+    DWORD nCookieSize, size;
     LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr,szHost);
 
-    len = lstrlenW(Host->lpszValue) + strlenW(szUrlForm);
-    lpszUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    size = (strlenW(Host->lpszValue) + strlenW(szUrlForm)) * sizeof(WCHAR);
+    if (!(lpszUrl = HeapAlloc(GetProcessHeap(), 0, size))) return;
     sprintfW( lpszUrl, szUrlForm, Host->lpszValue );
 
     if (InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
@@ -3137,15 +3137,16 @@ static void HTTP_InsertCookies(LPWININETHTTPREQW lpwhr)
         static const WCHAR szCookie[] = {'C','o','o','k','i','e',':',' ',0};
         static const WCHAR szcrlf[] = {'\r','\n',0};
 
-        lpszCookies = HeapAlloc(GetProcessHeap(), 0, (nCookieSize + 1 + 8)*sizeof(WCHAR));
+        size = sizeof(szCookie) + nCookieSize * sizeof(WCHAR) + sizeof(szcrlf);
+        if ((lpszCookies = HeapAlloc(GetProcessHeap(), 0, size)))
+        {
+            cnt += sprintfW(lpszCookies, szCookie);
+            InternetGetCookieW(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
+            strcatW(lpszCookies, szcrlf);
 
-        cnt += sprintfW(lpszCookies, szCookie);
-        InternetGetCookieW(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
-        strcatW(lpszCookies, szcrlf);
-
-        HTTP_HttpAddRequestHeadersW(lpwhr, lpszCookies, strlenW(lpszCookies),
-                               HTTP_ADDREQ_FLAG_ADD);
-        HeapFree(GetProcessHeap(), 0, lpszCookies);
+            HTTP_HttpAddRequestHeadersW(lpwhr, lpszCookies, strlenW(lpszCookies), HTTP_ADDREQ_FLAG_ADD);
+            HeapFree(GetProcessHeap(), 0, lpszCookies);
+        }
     }
     HeapFree(GetProcessHeap(), 0, lpszUrl);
 }
