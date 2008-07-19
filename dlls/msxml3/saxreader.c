@@ -1064,6 +1064,25 @@ static HRESULT WINAPI isaxxmlreader_parse(
             if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
             else hr = locator->ret;
             break;
+        case VT_ARRAY|VT_UI1:
+            locator->pParserCtxt = xmlNewParserCtxt();
+            if(!locator->pParserCtxt)
+            {
+                hr = E_FAIL;
+                break;
+            }
+
+            hr = SafeArrayAccessData(V_ARRAY(&varInput), (void**)&data);
+            if(hr != S_OK) break;
+            xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
+            SafeArrayUnaccessData(V_ARRAY(&varInput));
+
+            locator->pParserCtxt->sax = &locator->saxreader->sax;
+            locator->pParserCtxt->userData = locator;
+
+            if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
+            else hr = locator->ret;
+            break;
         default:
             hr = E_NOTIMPL;
     }
