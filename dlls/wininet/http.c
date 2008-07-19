@@ -1579,8 +1579,7 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
     }
     }
 
-    FIXME("Not implemented option %d\n", option);
-    return ERROR_INTERNET_INVALID_OPTION;
+    return INET_QueryOption(option, buffer, size, unicode);
 }
 
 static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD size)
@@ -3472,8 +3471,7 @@ static DWORD HTTPSESSION_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, voi
         return ERROR_SUCCESS;
     }
 
-    FIXME("Not implemented option %d\n", option);
-    return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+    return INET_QueryOption(option, buffer, size, unicode);
 }
 
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {

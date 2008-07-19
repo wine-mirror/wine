@@ -533,8 +533,7 @@ static DWORD APPINFO_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
     }
     }
 
-    FIXME("Not implemented option %d\n", option);
-    return ERROR_INTERNET_INVALID_OPTION;
+    return INET_QueryOption(option, buffer, size, unicode);
 }
 
 static const HANDLEHEADERVtbl APPINFOVtbl = {
@@ -1955,6 +1954,49 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
   return FALSE;
 }
 
+DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
+{
+    switch(option) {
+    case INTERNET_OPTION_REQUEST_FLAGS:
+        TRACE("INTERNET_OPTION_REQUEST_FLAGS\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = 4;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_HTTP_VERSION:
+        if (*size < sizeof(HTTP_VERSION_INFO))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        /*
+         * Presently hardcoded to 1.1
+         */
+        ((HTTP_VERSION_INFO*)buffer)->dwMajorVersion = 1;
+        ((HTTP_VERSION_INFO*)buffer)->dwMinorVersion = 1;
+        *size = sizeof(HTTP_VERSION_INFO);
+
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_CONNECTED_STATE:
+        FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = INTERNET_STATE_CONNECTED;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
+    }
+
+    FIXME("Stub for %d\n", option);
+    return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+}
+
 /***********************************************************************
  *           INET_QueryOptionHelper (internal)
  */
@@ -1970,52 +2012,6 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
 
     switch (dwOption)
     {
-        case INTERNET_OPTION_REQUEST_FLAGS:
-        {
-            ULONG flags = 4;
-            TRACE("INTERNET_OPTION_REQUEST_FLAGS: %d\n", flags);
-            if (*lpdwBufferLength < sizeof(ULONG))
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            else
-            {
-                memcpy(lpBuffer, &flags, sizeof(ULONG));
-                bSuccess = TRUE;
-            }
-            *lpdwBufferLength = sizeof(ULONG);
-            break;
-        }
-
-        case INTERNET_OPTION_HTTP_VERSION:
-        {
-            if (*lpdwBufferLength < sizeof(HTTP_VERSION_INFO))
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            else
-            {
-                /*
-                 * Presently hardcoded to 1.1
-                 */
-                ((HTTP_VERSION_INFO*)lpBuffer)->dwMajorVersion = 1;
-                ((HTTP_VERSION_INFO*)lpBuffer)->dwMinorVersion = 1;
-                bSuccess = TRUE;
-            }
-            *lpdwBufferLength = sizeof(HTTP_VERSION_INFO);
-            break;
-        }
-       case INTERNET_OPTION_CONNECTED_STATE:
-       {
-            DWORD *pdwConnectedState = (DWORD *)lpBuffer;
-            FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
-
-            if (*lpdwBufferLength < sizeof(*pdwConnectedState))
-                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            else
-            {
-                *pdwConnectedState = INTERNET_STATE_CONNECTED;
-                bSuccess = TRUE;
-            }
-            *lpdwBufferLength = sizeof(*pdwConnectedState);
-            break;
-        }
         case INTERNET_OPTION_PROXY:
         {
             LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW)lpwhh;
@@ -2209,19 +2205,17 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
         bSuccess = TRUE;
         break;
         default: {
-            if(lpwhh) {
-                DWORD res;
+            DWORD res;
 
+            if(lpwhh)
                 res = lpwhh->vtbl->QueryOption(lpwhh, dwOption, lpBuffer, lpdwBufferLength, bIsUnicode);
-                if(res == ERROR_SUCCESS)
-                    bSuccess = TRUE;
-                else
-                    SetLastError(res);
-            }else {
-                FIXME("Stub! %d\n", dwOption);
-                SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-                break;
-            }
+            else
+                res = INET_QueryOption(dwOption, lpBuffer, lpdwBufferLength, bIsUnicode);
+
+            if(res == ERROR_SUCCESS)
+                bSuccess = TRUE;
+            else
+                SetLastError(res);
         }
     }
     if (lpwhh)
