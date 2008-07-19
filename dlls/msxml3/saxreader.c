@@ -83,6 +83,26 @@ static inline saxlocator *impl_from_ISAXLocator( ISAXLocator *iface )
     return (saxlocator *)((char*)iface - FIELD_OFFSET(saxlocator, lpSAXLocatorVtbl));
 }
 
+static void format_error_message_from_id(saxlocator *This, HRESULT hr)
+{
+    xmlStopParser(This->pParserCtxt);
+    This->ret = hr;
+
+    if(This->saxreader->errorHandler)
+    {
+        WCHAR msg[1024];
+        if(!FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM,
+                    NULL, hr, 0, msg, sizeof(msg), NULL))
+        {
+            FIXME("MSXML errors not yet supported.\n");
+            msg[0] = '\0';
+        }
+
+        ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
+                (ISAXLocator*)&This->lpSAXLocatorVtbl, msg, hr);
+    }
+}
+
 /*** LibXML callbacks ***/
 static void libxmlStartDocument(void *ctx)
 {
@@ -92,11 +112,8 @@ static void libxmlStartDocument(void *ctx)
     if(This->saxreader->contentHandler)
     {
         hr = ISAXContentHandler_startDocument(This->saxreader->contentHandler);
-        if(FAILED(hr))
-        {
-            xmlStopParser(This->pParserCtxt);
-            This->ret = hr;
-        }
+        if(hr != S_OK)
+            format_error_message_from_id(This, hr);
     }
 
     This->lastColumn = xmlSAX2GetColumnNumber(This->pParserCtxt);
@@ -116,11 +133,8 @@ static void libxmlEndDocument(void *ctx)
     if(This->saxreader->contentHandler)
     {
         hr = ISAXContentHandler_endDocument(This->saxreader->contentHandler);
-        if(FAILED(hr))
-        {
-            xmlStopParser(This->pParserCtxt);
-            This->ret = hr;
-        }
+        if(hr != S_OK)
+            format_error_message_from_id(This, hr);
     }
 }
 
@@ -161,11 +175,8 @@ static void libxmlStartElementNS(
         SysFreeString(LocalName);
         SysFreeString(QName);
 
-        if(FAILED(hr))
-        {
-            xmlStopParser(This->pParserCtxt);
-            This->ret = hr;
-        }
+        if(hr != S_OK)
+            format_error_message_from_id(This, hr);
     }
 }
 
@@ -198,11 +209,8 @@ static void libxmlEndElementNS(
         SysFreeString(LocalName);
         SysFreeString(QName);
 
-        if(FAILED(hr))
-        {
-            xmlStopParser(This->pParserCtxt);
-            This->ret = hr;
-        }
+        if(hr != S_OK)
+            format_error_message_from_id(This, hr);
     }
 }
 
@@ -242,11 +250,8 @@ static void libxmlCharacters(
         hr = ISAXContentHandler_characters(This->saxreader->contentHandler, Chars, len);
         SysFreeString(Chars);
 
-        if(FAILED(hr))
-        {
-            xmlStopParser(This->pParserCtxt);
-            This->ret = hr;
-        }
+        if(hr != S_OK)
+            format_error_message_from_id(This, hr);
     }
 }
 
@@ -261,10 +266,41 @@ static void libxmlSetDocumentLocator(
             (ISAXLocator*)&This->lpSAXLocatorVtbl);
 
     if(FAILED(hr))
+        format_error_message_from_id(This, hr);
+}
+
+void libxmlFatalError(void *ctx, const char *msg, ...)
+{
+    saxlocator *This = ctx;
+    char message[1024];
+    WCHAR *wszError;
+    DWORD len;
+    va_list args;
+
+    if(!This->saxreader->errorHandler)
     {
         xmlStopParser(This->pParserCtxt);
-        This->ret = hr;
+        This->ret = E_FAIL;
+        return;
     }
+
+    FIXME("Error handling is not compatible.\n");
+
+    va_start(args, msg);
+    vsprintf(message, msg, args);
+    va_end(args);
+
+    len = MultiByteToWideChar(CP_ACP, 0, message, -1, NULL, 0);
+    wszError = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
+    MultiByteToWideChar(CP_ACP, 0, message, -1, (LPWSTR)wszError, len);
+
+    ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
+            (ISAXLocator*)&This->lpSAXLocatorVtbl, wszError, E_FAIL);
+
+    HeapFree(GetProcessHeap(), 0, wszError);
+
+    xmlStopParser(This->pParserCtxt);
+    This->ret = E_FAIL;
 }
 
 /*** ISAXLocator interface ***/
@@ -1102,6 +1138,8 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->sax.endElementNs = libxmlEndElementNS;
     reader->sax.characters = libxmlCharacters;
     reader->sax.setDocumentLocator = libxmlSetDocumentLocator;
+    reader->sax.error = libxmlFatalError;
+    reader->sax.fatalError = libxmlFatalError;
 
     *ppObj = &reader->lpVtbl;
 
