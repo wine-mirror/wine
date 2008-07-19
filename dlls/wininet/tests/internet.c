@@ -161,7 +161,7 @@ static void test_InternetQueryOptionA(void)
   err=GetLastError();
   ok(len == strlen(useragent)+1,"Got wrong user agent length %d instead of %d\n",len,lstrlenA(useragent));
   ok(retval == 0,"Got wrong return value %d\n",retval);
-  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
+  ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code %d\n",err);
 
   SetLastError(0xdeadbeef);
   len=strlen(useragent)+1;
@@ -221,7 +221,7 @@ static void test_InternetQueryOptionA(void)
   err=GetLastError();
   todo_wine ok(len == 1,"Got wrong user agent length %d instead of %d\n",len,1);
   ok(retval == 0,"Got wrong return value %d\n",retval);
-  todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
+  ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code%d\n",err);
 
   InternetCloseHandle(hinet);
 }

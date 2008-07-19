@@ -495,6 +495,8 @@ static VOID APPINFO_Destroy(WININETHANDLEHEADER *hdr)
 
 static DWORD APPINFO_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
+    LPWININETAPPINFOW ai = (LPWININETAPPINFOW)hdr;
+
     switch(option) {
     case INTERNET_OPTION_HANDLE_TYPE:
         TRACE("INTERNET_OPTION_HANDLE_TYPE\n");
@@ -505,6 +507,30 @@ static DWORD APPINFO_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
         *size = sizeof(DWORD);
         *(DWORD*)buffer = INTERNET_HANDLE_TYPE_INTERNET;
         return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_USER_AGENT: {
+        DWORD bufsize;
+
+        TRACE("INTERNET_OPTION_USER_AGENT\n");
+
+        bufsize = *size;
+
+        if (unicode) {
+            *size = (strlenW(ai->lpszAgent) + 1) * sizeof(WCHAR);
+            if(!buffer || bufsize < *size)
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            strcpyW(buffer, ai->lpszAgent);
+        }else {
+            *size = WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, NULL, 0, NULL, NULL);
+            if(!buffer || bufsize < *size)
+                return ERROR_INSUFFICIENT_BUFFER;
+
+            WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, buffer, *size, NULL, NULL);
+        }
+
+        return ERROR_SUCCESS;
+    }
     }
 
     FIXME("Not implemented option %d\n", option);
@@ -1959,43 +1985,6 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             break;
         }
 
-        case INTERNET_OPTION_USER_AGENT:
-        {
-            DWORD required;
-            LPWININETAPPINFOW ai = (LPWININETAPPINFOW)lpwhh;
-
-            TRACE("INTERNET_OPTION_USER_AGENT\n");
-
-            if (!lpwhh || lpwhh->htype != INTERNET_HANDLE_TYPE_INTERNET)
-            {
-                INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-                return FALSE;
-            }
-            if (bIsUnicode)
-            {
-                required = (strlenW(ai->lpszAgent) + 1) * sizeof(WCHAR);
-                if (*lpdwBufferLength < required)
-                    INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                else if (lpBuffer)
-                {
-                    strcpyW(lpBuffer, ai->lpszAgent);
-                    bSuccess = TRUE;
-                }
-            }
-            else
-            {
-                required = WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, NULL, 0, NULL, NULL);
-                if (*lpdwBufferLength < required)
-                    INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                else if (lpBuffer)
-                {
-                    WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, lpBuffer, required, NULL, NULL);
-                    bSuccess = TRUE;
-                }
-            }
-            *lpdwBufferLength = required;
-            break;
-        }
         case INTERNET_OPTION_HTTP_VERSION:
         {
             if (*lpdwBufferLength < sizeof(HTTP_VERSION_INFO))
@@ -2230,6 +2219,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                     SetLastError(res);
             }else {
                 FIXME("Stub! %d\n", dwOption);
+                SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
                 break;
             }
         }

@@ -3473,7 +3473,7 @@ static DWORD HTTPSESSION_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, voi
     }
 
     FIXME("Not implemented option %d\n", option);
-    return ERROR_INTERNET_INVALID_OPTION;
+    return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 }
 
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
