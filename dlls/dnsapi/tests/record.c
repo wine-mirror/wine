@@ -89,9 +89,11 @@ static void test_DnsRecordSetCompare( void )
 
     ok( DnsRecordSetCompare( rr1.pFirstRR, NULL, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
     ok( diff1 != NULL && diff2 == NULL, "unexpected result: %p, %p\n", diff1, diff2 );
+    DnsRecordListFree( diff1, DnsFreeRecordList );
 
     ok( DnsRecordSetCompare( NULL, rr2.pFirstRR, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
     ok( diff1 == NULL && diff2 != NULL, "unexpected result: %p, %p\n", diff1, diff2 );
+    DnsRecordListFree( diff2, DnsFreeRecordList );
 
     ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, NULL, &diff2 ) == TRUE, "failed unexpectedly\n" );
     ok( diff2 == NULL, "unexpected result: %p\n", diff2 );
@@ -105,8 +107,14 @@ static void test_DnsRecordSetCompare( void )
     r2.Data.A.IpAddress = 0;
 
     ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, NULL, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
+    DnsRecordListFree( diff2, DnsFreeRecordList );
+
     ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, NULL ) == FALSE, "succeeded unexpectedly\n" );
+    DnsRecordListFree( diff1, DnsFreeRecordList );
+
     ok( DnsRecordSetCompare( rr1.pFirstRR, rr2.pFirstRR, &diff1, &diff2 ) == FALSE, "succeeded unexpectedly\n" );
+    DnsRecordListFree( diff1, DnsFreeRecordList );
+    DnsRecordListFree( diff2, DnsFreeRecordList );
 }
 
 static void test_DnsRecordSetDetach( void )

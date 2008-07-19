@@ -680,7 +680,7 @@ BOOL WINAPI DnsRecordSetCompare( PDNS_RECORD set1, PDNS_RECORD set2,
                 DNS_RRSET_ADD( rr1, u );
                 ret = FALSE;
             }
-            else heap_free( u );
+            else DnsRecordListFree( u, DnsFreeRecordList );
         }
     }
 
@@ -696,7 +696,7 @@ BOOL WINAPI DnsRecordSetCompare( PDNS_RECORD set1, PDNS_RECORD set2,
                 DNS_RRSET_ADD( rr2, u );
                 ret = FALSE;
             }
-            else heap_free( u );
+            else DnsRecordListFree( u, DnsFreeRecordList );
         }
     }
 
@@ -704,7 +704,10 @@ BOOL WINAPI DnsRecordSetCompare( PDNS_RECORD set1, PDNS_RECORD set2,
     DNS_RRSET_TERMINATE( rr2 );
     
     if (diff1) *diff1 = rr1.pFirstRR;
+    else DnsRecordListFree( rr1.pFirstRR, DnsFreeRecordList );
+
     if (diff2) *diff2 = rr2.pFirstRR;
+    else DnsRecordListFree( rr2.pFirstRR, DnsFreeRecordList );
 
     return ret;
 
