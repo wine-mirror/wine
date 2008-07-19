@@ -220,6 +220,7 @@ static void test_SnmpUtilOidCpyFree(void)
     ok(ret, "SnmpUtilOidCpy failed\n");
     ok(src.idLength == dst.idLength, "SnmpUtilOidCpy failed\n");
     ok(!memcmp(src.ids, dst.ids, dst.idLength * sizeof(UINT)), "SnmpUtilOidCpy failed\n");
+    SnmpUtilOidFree(&dst);
 
     /* These crashes under win98 */
     if(0)
