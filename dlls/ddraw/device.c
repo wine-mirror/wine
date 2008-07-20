@@ -6244,6 +6244,39 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
     IDirectDrawPalette *pal = NULL, *pal_src = NULL;
     DWORD ckeyflag;
     DDCOLORKEY ddckey;
+    BOOL palette_missing = FALSE;
+
+    /* Copy palette, if possible. */
+    IDirectDrawSurface7_GetPalette(ICOM_INTERFACE(src, IDirectDrawSurface7), &pal_src);
+    IDirectDrawSurface7_GetPalette(ICOM_INTERFACE(dest, IDirectDrawSurface7), &pal);
+
+    if (pal_src != NULL && pal != NULL)
+    {
+        PALETTEENTRY palent[256];
+
+        IDirectDrawPalette_GetEntries(pal_src, 0, 0, 256, palent);
+        IDirectDrawPalette_SetEntries(pal, 0, 0, 256, palent);
+    }
+
+    if (dest->surface_desc.u4.ddpfPixelFormat.dwFlags & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2 |
+            DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXEDTO8) && !pal)
+    {
+        palette_missing = TRUE;
+    }
+
+    if (pal) IDirectDrawPalette_Release(pal);
+    if (pal_src) IDirectDrawPalette_Release(pal_src);
+
+    /* Copy colorkeys, if present. */
+    for (ckeyflag = DDCKEY_DESTBLT; ckeyflag <= DDCKEY_SRCOVERLAY; ckeyflag <<= 1)
+    {
+        hr = IDirectDrawSurface7_GetColorKey(ICOM_INTERFACE(src, IDirectDrawSurface7), ckeyflag, &ddckey);
+
+        if (SUCCEEDED(hr))
+        {
+            IDirectDrawSurface7_SetColorKey(ICOM_INTERFACE(dest, IDirectDrawSurface7), ckeyflag, &ddckey);
+        }
+    }
 
     src_level = src;
     dest_level = dest;
@@ -6256,10 +6289,14 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
         if (src_level->surface_desc.dwWidth == dest_level->surface_desc.dwWidth &&
             src_level->surface_desc.dwHeight == dest_level->surface_desc.dwHeight)
         {
-            /* Try UpdateSurface that may perform a more direct opengl loading. */
-            hr = IWineD3DDevice_UpdateSurface(device->wineD3DDevice, src_level->WineD3DSurface, &rect, dest_level->WineD3DSurface,
+            /* Try UpdateSurface that may perform a more direct opengl loading. But skip this is destination is paletted texture and has no palette.
+             * Some games like Sacrifice set palette after Load, and it is a waste of effort to try to load texture without palette and generates
+             * warnings in wined3d. */
+	    if (!palette_missing)
+                hr = IWineD3DDevice_UpdateSurface(device->wineD3DDevice, src_level->WineD3DSurface, &rect, dest_level->WineD3DSurface,
                                 &point);
-            if (FAILED(hr))
+
+            if (palette_missing || FAILED(hr))
             {
                 /* UpdateSurface may fail e.g. if dest is in system memory. Fall back to BltFast that is less strict. */
                 IWineD3DSurface_BltFast(dest_level->WineD3DSurface,
@@ -6295,32 +6332,6 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
 
     if (src_level && src_level != src) IDirectDrawSurface7_Release(ICOM_INTERFACE(src_level, IDirectDrawSurface7));
     if (dest_level && dest_level != dest) IDirectDrawSurface7_Release(ICOM_INTERFACE(dest_level, IDirectDrawSurface7));
-
-    /* Copy palette, if possible. */
-    IDirectDrawSurface7_GetPalette(ICOM_INTERFACE(src, IDirectDrawSurface7), &pal_src);
-    IDirectDrawSurface7_GetPalette(ICOM_INTERFACE(dest, IDirectDrawSurface7), &pal);
-
-    if (pal_src != NULL && pal != NULL)
-    {
-        PALETTEENTRY palent[256];
-
-        IDirectDrawPalette_GetEntries(pal_src, 0, 0, 256, palent);
-        IDirectDrawPalette_SetEntries(pal, 0, 0, 256, palent);
-    }
-
-    if (pal) IDirectDrawPalette_Release(pal);
-    if (pal_src) IDirectDrawPalette_Release(pal_src);
-
-    /* Copy colorkeys, if present. */
-    for (ckeyflag = DDCKEY_DESTBLT; ckeyflag <= DDCKEY_SRCOVERLAY; ckeyflag <<= 1)
-    {
-        hr = IDirectDrawSurface7_GetColorKey(ICOM_INTERFACE(src, IDirectDrawSurface7), ckeyflag, &ddckey);
-
-        if (SUCCEEDED(hr))
-        {
-            IDirectDrawSurface7_SetColorKey(ICOM_INTERFACE(dest, IDirectDrawSurface7), ckeyflag, &ddckey);
-        }
-    }
 }
 
 /*****************************************************************************
