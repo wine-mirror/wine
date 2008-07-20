@@ -13031,6 +13031,7 @@ fi
 if test "$sane_devel" != "no" -a "x$with_sane" != "xno"
 then
     ac_sane_incl="`$sane_devel --cflags`"
+    ac_sane_libs="`$sane_devel --ldflags`"
     ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $ac_sane_incl"
     if test "${ac_cv_header_sane_sane_h+set}" = set; then
@@ -13170,7 +13171,7 @@ if test "${ac_cv_lib_soname_sane+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lsane  $LIBS"
+LIBS="-lsane $ac_sane_libs $LIBS"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF

@@ -920,10 +920,11 @@ AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
 if test "$sane_devel" != "no" -a "x$with_sane" != "xno"
 then
     ac_sane_incl="`$sane_devel --cflags`"
+    ac_sane_libs="`$sane_devel --ldflags`"
     ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $ac_sane_incl"
     AC_CHECK_HEADER(sane/sane.h,
-        [WINE_CHECK_SONAME(sane,sane_init,[AC_SUBST(SANEINCL,"$ac_sane_incl")])])
+        [WINE_CHECK_SONAME(sane,sane_init,[AC_SUBST(SANEINCL,"$ac_sane_incl")],,[$ac_sane_libs])])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],
