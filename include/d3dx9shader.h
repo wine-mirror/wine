@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 UINT WINAPI D3DXGetShaderSize(const DWORD *byte_code);
+DWORD WINAPI D3DXGetShaderVersion(const DWORD *byte_code);
 
 #ifdef __cplusplus
 }

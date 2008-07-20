@@ -163,7 +163,7 @@
 @ stub D3DXGetShaderOutputSemantics
 @ stub D3DXGetShaderSamplers
 @ stdcall D3DXGetShaderSize(ptr)
-@ stub D3DXGetShaderVersion
+@ stdcall D3DXGetShaderVersion(ptr)
 @ stub D3DXGetVertexShaderProfile
 @ stdcall D3DXIntersect(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXIntersect
 @ stdcall D3DXIntersectSubset(ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXIntersectSubset

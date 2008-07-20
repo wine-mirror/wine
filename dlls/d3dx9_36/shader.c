@@ -47,3 +47,10 @@ UINT WINAPI D3DXGetShaderSize(const DWORD *byte_code)
     /* Return the shader size in bytes */
     return (ptr - byte_code) * sizeof(*ptr);
 }
+
+DWORD WINAPI D3DXGetShaderVersion(const DWORD *byte_code)
+{
+    TRACE("byte_code %p\n", byte_code);
+
+    return byte_code ? *byte_code : 0;
+}
