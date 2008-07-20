@@ -226,19 +226,19 @@ static void test_get_set(void)
     ok(!lstrcmp(buffer, "C:\\nonexistent\\file"), "case doesn't match\n");
 
     r = IShellLinkA_SetPath(sl, "\"c:\\foo");
-    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK || r == E_INVALIDARG /* Vista */, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo");
-    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK || r == E_INVALIDARG /* Vista */, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "c:\\foo\"");
-    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK || r == E_INVALIDARG /* Vista */, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo\"");
-    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK || r == E_INVALIDARG /* Vista */, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_SetPath(sl, "\"\"c:\\foo\"\"");
-    ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
+    ok(r==S_FALSE || r == S_OK || r == E_INVALIDARG /* Vista */, "SetPath failed (0x%08x)\n", r);
 
     /* Test Getting / Setting the arguments */
     strcpy(buffer,"garbage");
