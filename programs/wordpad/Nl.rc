@@ -237,4 +237,6 @@ BEGIN
     STRING_OLE_STORAGE_NOT_SUPPORTED, "OLE storage documenten zijn niet ondersteund"
     STRING_WRITE_FAILED,         "Bestand kon niet opgeslagen worden."
     STRING_WRITE_ACCESS_DENIED,  "Onvoldoende rechten om het bestand op te slaan."
+    STRING_OPEN_FAILED,          "Bestand kon niet geopend worden."
+    STRING_OPEN_ACCESS_DENIED,   "Onvoldoende rechten om het bestand te openen."
 END
