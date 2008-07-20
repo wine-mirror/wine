@@ -549,7 +549,7 @@ static void test_timer_queue(void)
     HANDLE e;
     BOOL ret;
 
-    /* Test asyncronous deletion of the queue.  */
+    /* Test asynchronous deletion of the queue. */
     q = CreateTimerQueue();
     todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
@@ -560,7 +560,7 @@ static void test_timer_queue(void)
     todo_wine
     ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
 
-    /* Test syncronous deletion of the queue and running timers.  */
+    /* Test synchronous deletion of the queue and running timers. */
     q = CreateTimerQueue();
     todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
@@ -614,7 +614,7 @@ static void test_timer_queue(void)
     todo_wine
     ok(n5 == 1, "Timer callback 5\n");
 
-    /* Test syncronous deletion of the queue with event trigger.  */
+    /* Test synchronous deletion of the queue with event trigger. */
     e = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (!e)
     {

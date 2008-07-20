@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 /* FIXME:
- * - Reference leaks, if they are still existant
+ * - Reference leaks, if they still exist
  * - Files without an index are not handled correctly yet.
  * - When stopping/starting, a sample is lost. This should be compensated by
  *   keeping track of previous index/position.
@@ -410,7 +410,7 @@ static HRESULT AVISplitter_first_request(LPVOID iface)
         stream->pos_next = stream->pos;
         stream->index_next = stream->index;
 
-        /* There should be a a packet queued from AVISplitter_next_request last time
+        /* There should be a packet queued from AVISplitter_next_request last time
          * It needs to be done now because this is the only way to ensure that every
          * stream will have at least 1 packet processed
          * If this is done after the threads start it could go all awkward and we

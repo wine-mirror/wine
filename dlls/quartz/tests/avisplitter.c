@@ -177,7 +177,7 @@ static const char afile[] = "test.avi";
 /* This test doesn't use the quartz filtergraph because it makes it impossible
  * to be certain that a thread is really one owned by the avi splitter
  * A lot of the decoder filters will also have their own thread, and windows'
- * filtergraph has a seperate thread for start/stop/seeking requests.
+ * filtergraph has a separate thread for start/stop/seeking requests.
  * By avoiding the filtergraph all together and connecting streams directly to
  * the null renderer I am sure that this is not the case here.
  */
