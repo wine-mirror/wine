@@ -2229,11 +2229,45 @@ static void test_EM_SCROLL(void)
   DestroyWindow(hwndRichEdit);
 }
 
+unsigned int recursionLevel = 0;
+unsigned int WM_SIZE_recursionLevel = 0;
+BOOL bailedOutOfRecursion = FALSE;
+LRESULT WINAPI (*richeditProc)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+static LRESULT WINAPI RicheditStupidOverrideProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT r;
+
+    if (bailedOutOfRecursion) return 0;
+    if (recursionLevel >= 32) {
+        bailedOutOfRecursion = TRUE;
+        return 0;
+    }
+
+    recursionLevel++;
+    switch (message) {
+    case WM_SIZE:
+        WM_SIZE_recursionLevel++;
+        r = richeditProc(hwnd, message, wParam, lParam);
+        /* Because, uhhhh... I never heard of ES_DISABLENOSCROLL */
+        ShowScrollBar(hwnd, SB_VERT, TRUE);
+        WM_SIZE_recursionLevel--;
+        break;
+    default:
+        r = richeditProc(hwnd, message, wParam, lParam);
+        break;
+    }
+    recursionLevel--;
+    return r;
+}
+
 static void test_scrollbar_visibility(void)
 {
   HWND hwndRichEdit;
   const char * text="a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n";
   SCROLLINFO si;
+  WNDCLASSA cls;
+  BOOL r;
 
   /* These tests show that richedit should temporarily refrain from automatically
      hiding or showing its scrollbars (vertical at least) when an explicit request
@@ -2929,6 +2963,43 @@ static void test_scrollbar_visibility(void)
         si.nPage, si.nMin, si.nMax);
 
   DestroyWindow(hwndRichEdit);
+
+  /* This window proc models what is going on with Corman Lisp 3.0.
+     At WM_SIZE, this proc unconditionally calls ShowScrollBar() to
+     force the scrollbar into visibility. Recursion should NOT happen
+     as a result of this action.
+   */
+  r = GetClassInfoA(NULL, RICHEDIT_CLASS, &cls);
+  if (r) {
+    richeditProc = cls.lpfnWndProc;
+    cls.lpfnWndProc = RicheditStupidOverrideProcA;
+    cls.lpszClassName = "RicheditStupidOverride";
+    if(!RegisterClassA(&cls)) assert(0);
+
+    recursionLevel = 0;
+    WM_SIZE_recursionLevel = 0;
+    bailedOutOfRecursion = FALSE;
+    hwndRichEdit = new_window(cls.lpszClassName, ES_MULTILINE, NULL);
+    todo_wine {
+    ok(!bailedOutOfRecursion,
+        "WM_SIZE/scrollbar mutual recursion detected, expected none!\n");
+    }
+
+    recursionLevel = 0;
+    WM_SIZE_recursionLevel = 0;
+    bailedOutOfRecursion = FALSE;
+    MoveWindow(hwndRichEdit, 0, 0, 250, 100, TRUE);
+    todo_wine {
+    ok(!bailedOutOfRecursion,
+        "WM_SIZE/scrollbar mutual recursion detected, expected none!\n");
+    }
+
+    /* Unblock window in order to process WM_DESTROY */
+    recursionLevel = 0;
+    bailedOutOfRecursion = FALSE;
+    WM_SIZE_recursionLevel = 0;
+    DestroyWindow(hwndRichEdit);
+  }
 }
 
 static void test_EM_SETUNDOLIMIT(void)
