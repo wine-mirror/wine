@@ -5202,7 +5202,8 @@ static void test_SysReAllocString(void)
 
     changed = SysReAllocString(&str, szSmaller);
     ok (changed == 1, "Expected 1, got %d\n", changed);
-    ok (str == oldstr, "Created new string\n");
+    /* Vista creates a new string, but older versions reuse the existing string. */
+    /*ok (str == oldstr, "Created new string\n");*/
     bstr = Get(str);
     ok (bstr->dwLen == 2, "Expected 2, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szSmaller), "String different\n");
@@ -5241,7 +5242,8 @@ static void test_SysReAllocStringLen(void)
 
     changed = SysReAllocStringLen(&str, szSmaller, 1);
     ok (changed == 1, "Expected 1, got %d\n", changed);
-    ok (str == oldstr, "Created new string\n");
+    /* Vista creates a new string, but older versions reuse the existing string. */
+    /*ok (str == oldstr, "Created new string\n");*/
     bstr = Get(str);
     ok (bstr->dwLen == 2, "Expected 2, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szSmaller), "String different\n");
