@@ -382,7 +382,7 @@ static void test_GetCurrentThemeName(void)
     hRes = pGetCurrentThemeName(currentTheme, 2, NULL, 0, NULL, 0);
     if (bThemeActive)
         todo_wine
-            ok( LOWORD(hRes) == ERROR_INSUFFICIENT_BUFFER, "Expected 0x8007007A, got 0x%08x\n", hRes);
+            ok(hRes == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
     ok( GetLastError() == 0xdeadbeef,
@@ -396,7 +396,7 @@ static void test_GetCurrentThemeName(void)
                                 currentSize,  sizeof(currentSize)  / sizeof(WCHAR));
     if (bThemeActive)
         todo_wine
-            ok( LOWORD(hRes) == ERROR_INSUFFICIENT_BUFFER, "Expected 0x8007007A, got 0x%08x\n", hRes);
+            ok(hRes == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
     ok( GetLastError() == 0xdeadbeef,
