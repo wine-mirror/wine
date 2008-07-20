@@ -205,7 +205,7 @@ static void test_WM_LBUTTONDOWN(void)
     hEdit = (HWND)SendMessage(hComboEx, CBEM_GETEDITCONTROL, 0, 0);
 
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
-    result = SendMessage(hCombo, CB_GETCOMBOBOXINFO, 0, (LPARAM)&cbInfo);
+    result = GetComboBoxInfo(hCombo, &cbInfo);
     ok(result, "Failed to get combobox info structure. LastError=%d\n",
        GetLastError());
     hList = cbInfo.hwndList;
