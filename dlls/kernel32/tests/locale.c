@@ -840,7 +840,7 @@ static void test_CompareStringA(void)
 
     /* test for CompareStringA flags */
     SetLastError(0xdeadbeef);
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0x10, "NULL", -1, "NULL", -1);
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0x8, "NULL", -1, "NULL", -1);
     ok(GetLastError() == ERROR_INVALID_FLAGS,
         "unexpected error code %d\n", GetLastError());
     ok(!ret, "CompareStringA must fail with invalid flag\n");
