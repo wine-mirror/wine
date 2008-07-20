@@ -1383,6 +1383,9 @@ static HWND new_static_wnd(HWND parent) {
 
 static void test_EM_AUTOURLDETECT(void)
 {
+  /* DO NOT change the properties of the first two elements. To shorten the
+     tests, all tests after WM_SETTEXT test just the first two elements -
+     one non-URL and one URL */
   struct urls_s {
     const char *text;
     int is_url;
@@ -1647,10 +1650,12 @@ static void test_EM_AUTOURLDETECT(void)
   }
 
   /* Test detection of URLs within normal text - WM_CHAR case. */
-  for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
+  /* Test only the first two URL examples for brevity */
+  for (i = 0; i < 2; i++) {
     hwndRichEdit = new_richedit(parent);
 
-    for (j = 0; j < sizeof(templates_delim) / sizeof(const char *); j++) {
+    /* Also for brevity, test only the first three delimiters */
+    for (j = 0; j < 3; j++) {
       char * at_pos;
       int at_offset;
       int end_offset;
@@ -1674,7 +1679,6 @@ static void test_EM_AUTOURLDETECT(void)
         }
       }
       SendMessage(hwndRichEdit, WM_GETTEXT, sizeof(buffer), (LPARAM)buffer);
-      trace("Using template: %s\n", templates_delim[j]);
 
       /* This assumes no templates start with the URL itself, and that they
          have at least two characters before the URL text */
@@ -1784,7 +1788,8 @@ static void test_EM_AUTOURLDETECT(void)
   }
 
   /* Test detection of URLs within normal text - EM_SETTEXTEX case. */
-  for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
+  /* Test just the first two URL examples for brevity */
+  for (i = 0; i < 2; i++) {
     SETTEXTEX st;
 
     hwndRichEdit = new_richedit(parent);
@@ -1971,7 +1976,8 @@ static void test_EM_AUTOURLDETECT(void)
   }
 
   /* Test detection of URLs within normal text - EM_REPLACESEL case. */
-  for (i = 0; i < sizeof(urls)/sizeof(struct urls_s); i++) {
+  /* Test just the first two URL examples for brevity */
+  for (i = 0; i < 2; i++) {
     hwndRichEdit = new_richedit(parent);
 
     /* Set selection with X to the URL */
