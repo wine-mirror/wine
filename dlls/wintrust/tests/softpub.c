@@ -437,7 +437,7 @@ static void test_wintrust(void)
     wtd.dwUIChoice = WTD_UI_NONE;
     wtd.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
     wtd.dwUnionChoice = WTD_CHOICE_FILE;
-    wtd.pFile = &file;
+    U(wtd).pFile = &file;
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
     memset(&file, 0, sizeof(file));
     file.cbStruct = sizeof(file);
