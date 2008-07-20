@@ -49,7 +49,6 @@ static const GUID _IID_IShellLinkDataList = {
     { 0xb9, 0x2f, 0x00, 0xa0, 0xc9, 0x03, 0x12, 0xe1 }
 };
 
-static const WCHAR lnkfile[]= { 'C',':','\\','t','e','s','t','.','l','n','k',0 };
 static const WCHAR notafile[]= { 'C',':','\\','n','o','n','e','x','i','s','t','e','n','t','\\','f','i','l','e',0 };
 
 
@@ -494,6 +493,12 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
 
 static void test_load_save(void)
 {
+    WCHAR lnkfile[MAX_PATH];
+    static const WCHAR lnkfile_name[] = { '\\', 't', 'e', 's', 't', '.', 'l', 'n', 'k', '\0' };
+
+    char lnkfileA[MAX_PATH];
+    static const char lnkfileA_name[] = "\\test.lnk";
+
     lnk_desc_t desc;
     char mypath[MAX_PATH];
     char mydir[MAX_PATH];
@@ -507,6 +512,12 @@ static void test_load_save(void)
         skip("GetLongPathNameA is not available\n");
         return;
     }
+
+    /* Don't used a fixed path for the test.lnk file */
+    GetTempPathW(MAX_PATH, lnkfile);
+    lstrcatW(lnkfile, lnkfile_name);
+    GetTempPathA(MAX_PATH, lnkfileA);
+    lstrcatA(lnkfileA, lnkfileA_name);
 
     /* Save an empty .lnk file */
     memset(&desc, 0, sizeof(desc));
@@ -608,8 +619,8 @@ static void test_load_save(void)
      */
 
     /* DeleteFileW is not implemented on Win9x */
-    r=DeleteFileA("c:\\test.lnk");
-    ok(r, "failed to delete link (%d)\n", GetLastError());
+    r=DeleteFileA(lnkfileA);
+    ok(r, "failed to delete link '%s' (%d)\n", lnkfileA, GetLastError());
 }
 
 static void test_datalink(void)
