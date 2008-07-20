@@ -672,11 +672,13 @@ static void test_inheritance(void)
     HREFTYPE href;
     FUNCDESC *pFD;
     WCHAR path[MAX_PATH];
+    CHAR pathA[MAX_PATH];
     static const WCHAR tl_path[] = {'.','\\','m','i','d','l','_','t','m','a','r','s','h','a','l','.','t','l','b',0};
 
     BOOL use_midl_tlb = 0;
 
-    GetModuleFileNameW(NULL, path, MAX_PATH);
+    GetModuleFileNameA(NULL, pathA, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
 
     if(use_midl_tlb)
         memcpy(path, tl_path, sizeof(tl_path));
