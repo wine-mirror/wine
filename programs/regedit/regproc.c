@@ -1177,11 +1177,9 @@ BOOL import_registry_file(FILE* reg_file)
         {
             if (s[0] == 0xff && s[1] == 0xfe)
             {
-                printf("Trying to open unicode file\n");
                 processRegLinesW(reg_file);
             } else
             {
-                printf("ansi file\n");
                 rewind(reg_file);
                 processRegLinesA(reg_file);
             }
