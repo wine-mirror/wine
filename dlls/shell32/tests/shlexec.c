@@ -38,6 +38,7 @@
 /* Needed to get SEE_MASK_NOZONECHECKS with the PSDK */
 #define NTDDI_WINXPSP1 0x05010100
 #define NTDDI_VERSION NTDDI_WINXPSP1
+#define _WIN32_WINNT 0x0501
 
 #include "wtypes.h"
 #include "winbase.h"

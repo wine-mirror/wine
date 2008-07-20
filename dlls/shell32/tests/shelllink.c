@@ -33,6 +33,9 @@
 
 #include "shell32_test.h"
 
+#ifndef SLDF_HAS_LOGO3ID
+#  define SLDF_HAS_LOGO3ID 0x00000800 /* not available in the Vista SDK */
+#endif
 
 typedef void (WINAPI *fnILFree)(LPITEMIDLIST);
 typedef BOOL (WINAPI *fnILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
