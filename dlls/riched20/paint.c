@@ -784,6 +784,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
     ME_Repaint(editor);
   }
   
+  editor->vert_si.nMax = 0;
   ME_UpdateScrollBar(editor);
 }
 
@@ -806,6 +807,14 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   bScrollBarWasVisible = ME_GetYScrollVisible(editor);
   bScrollBarWillBeVisible = editor->nHeight > editor->sizeWindow.cy;
   
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
+    si.fMask |= SIF_DISABLENOSCROLL;
+  if ((si.fMask & SIF_DISABLENOSCROLL))
+  {
+    bScrollBarWillBeVisible = TRUE;
+  }
+
   if (bScrollBarWasVisible != bScrollBarWillBeVisible)
   {
     ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
@@ -813,17 +822,27 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
     ME_WrapMarkedParagraphs(editor);
   }
   
-  si.fMask = SIF_PAGE | SIF_RANGE;
-  if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
-    si.fMask |= SIF_DISABLENOSCROLL;
-  
   si.nMin = 0;  
   si.nMax = editor->nTotalLength;
 
   si.nPage = editor->sizeWindow.cy;
      
-  TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
-  SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+  if (!(si.nMin == editor->vert_si.nMin && si.nMax == editor->vert_si.nMax && si.nPage == editor->vert_si.nPage))
+  {
+    TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
+    editor->vert_si.nMin = si.nMin;
+    editor->vert_si.nMax = si.nMax;
+    editor->vert_si.nPage = si.nPage;
+    if (bScrollBarWillBeVisible)
+    {
+      SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+    }
+    else
+    {
+      if (bScrollBarWasVisible && !(si.fMask & SIF_DISABLENOSCROLL))
+        ShowScrollBar(hWnd, SB_VERT, FALSE);
+    }
+  }
 }
 
 int ME_GetYScrollPos(ME_TextEditor *editor)
@@ -836,10 +855,7 @@ int ME_GetYScrollPos(ME_TextEditor *editor)
 
 BOOL ME_GetYScrollVisible(ME_TextEditor *editor)
 { /* Returns true if the scrollbar is visible */
-  SCROLLBARINFO sbi;
-  sbi.cbSize = sizeof(sbi);
-  GetScrollBarInfo(editor->hWnd, OBJID_VSCROLL, &sbi);
-  return ((sbi.rgstate[0] & STATE_SYSTEM_INVISIBLE) == 0);
+  return (editor->vert_si.nMax - editor->vert_si.nMin >= max(editor->vert_si.nPage - 1, 0));
 }
 
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)

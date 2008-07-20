@@ -343,6 +343,9 @@ typedef struct tagME_TextEditor
 
   /* Track previous notified selection */
   CHARRANGE notified_cr;
+
+  /* Cache previously set vertical scrollbar info */
+  SCROLLINFO vert_si;
 } ME_TextEditor;
 
 typedef struct tagME_Context

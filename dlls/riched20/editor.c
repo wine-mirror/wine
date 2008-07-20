@@ -1807,6 +1807,13 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   
   ed->notified_cr.cpMin = ed->notified_cr.cpMax = 0;
 
+  /* Default vertical scrollbar information */
+  ed->vert_si.cbSize = sizeof(SCROLLINFO);
+  ed->vert_si.nMin = 0;
+  ed->vert_si.nMax = 0;
+  ed->vert_si.nPage = 0;
+  ed->vert_si.nPos = 0;
+
   return ed;
 }
 
@@ -3055,15 +3062,29 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return (wParam >= 0x40000) ? 0 : MAKELONG( pt.x, pt.y );
   }
   case WM_CREATE:
+  {
+    SCROLLINFO si;
+
     GetClientRect(hWnd, &editor->rcFormat);
     if (GetWindowLongW(hWnd, GWL_STYLE) & WS_HSCROLL)
     { /* Squelch the default horizontal scrollbar it would make */
       ShowScrollBar(editor->hWnd, SB_HORZ, FALSE);
     }
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_PAGE | SIF_RANGE;
+    if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
+      si.fMask |= SIF_DISABLENOSCROLL;
+    si.nMax = (si.fMask & SIF_DISABLENOSCROLL) ? 1 : 0;
+    si.nMin = 0;
+    si.nPage = 0;
+    SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
     ME_MoveCaret(editor);
     return 0;
+  }
   case WM_DESTROY:
     ME_DestroyEditor(editor);
     SetWindowLongPtrW(hWnd, 0, 0);
