@@ -2697,6 +2697,238 @@ static void test_scrollbar_visibility(void)
         si.nPage, si.nMin, si.nMax);
 
   DestroyWindow(hwndRichEdit);
+
+
+  /* Test behavior with explicit visibility request, using SetWindowLong()() */
+  hwndRichEdit = new_richedit(NULL);
+
+#define ENABLE_WS_VSCROLL(hwnd) \
+    SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) | WS_VSCROLL)
+#define DISABLE_WS_VSCROLL(hwnd) \
+    SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) & ~WS_VSCROLL)
+
+  /* Previously failed because builtin incorrectly re-hides scrollbar forced visible */
+  ENABLE_WS_VSCROLL(hwndRichEdit);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  todo_wine {
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  /* Ditto, see above */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  todo_wine {
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  /* Ditto, see above */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a");
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  todo_wine {
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  /* Ditto, see above */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a\na");
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  todo_wine {
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  /* Ditto, see above */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  todo_wine {
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d) expected nMax/nPage nonzero\n",
+        si.nPage, si.nMin, si.nMax);
+
+  DestroyWindow(hwndRichEdit);
+
+  hwndRichEdit = new_richedit(NULL);
+
+  DISABLE_WS_VSCROLL(hwndRichEdit);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  todo_wine {
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  todo_wine {
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a");
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  todo_wine {
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  todo_wine {
+  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
+        "reported page/range is %d (%d..%d) expected all 0\n",
+        si.nPage, si.nMin, si.nMax);
+  }
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d)\n",
+        si.nPage, si.nMin, si.nMax);
+
+  /* Previously, builtin incorrectly re-shows explicitly hidden scrollbar */
+  DISABLE_WS_VSCROLL(hwndRichEdit);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d)\n",
+        si.nPage, si.nMin, si.nMax);
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d) expected nMax/nPage nonzero\n",
+        si.nPage, si.nMin, si.nMax);
+
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d)\n",
+        si.nPage, si.nMin, si.nMax);
+
+  DISABLE_WS_VSCROLL(hwndRichEdit);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d)\n",
+        si.nPage, si.nMin, si.nMax);
+
+  /* Testing effect of EM_SCROLL on scrollbar visibility. It seems that
+     EM_SCROLL will make visible any forcefully invisible scrollbar */
+  SendMessage(hwndRichEdit, EM_SCROLL, SB_LINEDOWN, 0);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d)\n",
+        si.nPage, si.nMin, si.nMax);
+
+  DISABLE_WS_VSCROLL(hwndRichEdit);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
+    "Vertical scrollbar is visible, should be invisible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d)\n",
+        si.nPage, si.nMin, si.nMax);
+
+  /* Again, EM_SCROLL, with SB_LINEUP */
+  SendMessage(hwndRichEdit, EM_SCROLL, SB_LINEUP, 0);
+  memset(&si, 0, sizeof(si));
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_PAGE | SIF_RANGE;
+  GetScrollInfo(hwndRichEdit, SB_VERT, &si);
+  ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
+    "Vertical scrollbar is invisible, should be visible.\n");
+  ok(si.nPage != 0 && si.nMin == 0 && si.nMax != 0,
+        "reported page/range is %d (%d..%d)\n",
+        si.nPage, si.nMin, si.nMax);
+
+  DestroyWindow(hwndRichEdit);
 }
 
 static void test_EM_SETUNDOLIMIT(void)
