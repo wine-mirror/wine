@@ -54,7 +54,24 @@ static void test_get_shader_size(void)
     ok(shader_size == 0, "Got shader size %u, expected 0\n", shader_size);
 }
 
+static void test_get_shader_version(void)
+{
+    DWORD shader_version;
+
+    shader_version = D3DXGetShaderVersion(simple_vs);
+    ok(shader_version == D3DVS_VERSION(1, 1), "Got shader version 0x%08x, expected 0x%08x\n",
+            shader_version, D3DVS_VERSION(1, 1));
+
+    shader_version = D3DXGetShaderVersion(simple_ps);
+    ok(shader_version == D3DPS_VERSION(1, 1), "Got shader version 0x%08x, expected 0x%08x\n",
+            shader_version, D3DPS_VERSION(1, 1));
+
+    shader_version = D3DXGetShaderVersion(NULL);
+    ok(shader_version == 0, "Got shader version 0x%08x, expected 0\n", shader_version);
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
+    test_get_shader_version();
 }
