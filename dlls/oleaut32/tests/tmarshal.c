@@ -701,10 +701,12 @@ typedef struct KindaEnum
 static HRESULT register_current_module_typelib(void)
 {
     WCHAR path[MAX_PATH];
+    CHAR pathA[MAX_PATH];
     HRESULT hr;
     ITypeLib *typelib;
 
-    GetModuleFileNameW(NULL, path, MAX_PATH);
+    GetModuleFileNameA(NULL, pathA, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
 
     hr = LoadTypeLib(path, &typelib);
     if (SUCCEEDED(hr))
