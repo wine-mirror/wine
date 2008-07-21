@@ -68,6 +68,76 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
     return TRUE;
 }
 
+/* Definition of column headers for AddListViewColumns function */
+typedef struct AppWizColumn {
+   int width;
+   int fmt;
+   int title;
+} AppWizColumn;
+
+AppWizColumn columns[] = {
+    {200, LVCFMT_LEFT, IDS_COLUMN_NAME},
+    {150, LVCFMT_LEFT, IDS_COLUMN_PUBLISHER},
+    {100, LVCFMT_LEFT, IDS_COLUMN_VERSION},
+};
+
+/******************************************************************************
+ * Name       : AddListViewColumns
+ * Description: Adds column headers to the list view control.
+ * Parameters : hWnd    - Handle of the list view control.
+ * Returns    : TRUE if completed successfully, FALSE otherwise.
+ */
+static BOOL AddListViewColumns(HWND hWnd)
+{
+    WCHAR buf[MAX_STRING_LEN];
+    LVCOLUMNW lvc;
+    int i;
+
+    lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH;
+
+    /* Add the columns */
+    for (i = 0; i < sizeof(columns) / sizeof(columns[0]); i++)
+    {
+        lvc.iSubItem = i;
+        lvc.pszText = buf;
+
+        /* set width and format */
+        lvc.cx = columns[i].width;
+        lvc.fmt = columns[i].fmt;
+
+        LoadStringW(hInst, columns[i].title, buf, sizeof(buf) / sizeof(buf[0]));
+
+        if (ListView_InsertColumnW(hWnd, i, &lvc) == -1)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/******************************************************************************
+ * Name       : ResetApplicationList
+ * Description: Empties the app list, if need be, and recreates it.
+ * Parameters : bFirstRun  - TRUE if this is the first time this is run, FALSE otherwise
+ *              hWnd       - handle of the dialog box
+ *              hImageList - handle of the image list
+ * Returns    : New handle of the image list.
+ */
+static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hImageList)
+{
+    HWND hWndListView;
+
+    hWndListView = GetDlgItem(hWnd, IDL_PROGRAMS);
+
+    /* if first run, create the image list and add the listview columns */
+    if (bFirstRun)
+    {
+        if (!AddListViewColumns(hWndListView))
+            return NULL;
+    }
+
+    return(hImageList);
+}
+
 /******************************************************************************
  * Name       : MainDlgProc
  * Description: Callback procedure for main tab
@@ -79,6 +149,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
  */
 static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    static HIMAGELIST hImageList;
+
+    switch(msg)
+    {
+        case WM_INITDIALOG:
+            hImageList = ResetApplicationList(TRUE, hWnd, hImageList);
+
+            return TRUE;
+    }
+
     return FALSE;
 }
 

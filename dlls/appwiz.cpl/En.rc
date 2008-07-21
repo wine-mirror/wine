@@ -26,6 +26,10 @@ STRINGTABLE
    IDS_CPL_TITLE, "Add/Remove Programs"
    IDS_CPL_DESC, "Allows you to install new software, or remove existing software from your computer."
    IDS_TAB1_TITLE, "Applications"
+
+   IDS_COLUMN_NAME, "Name"
+   IDS_COLUMN_PUBLISHER, "Publisher"
+   IDS_COLUMN_VERSION, "Version"
 }
 
 /* TODO: it's best to use the constant WC_LISTVIEW instead of SysListView32 directly, but the Wine resource compiler doesn't seem to like that... */

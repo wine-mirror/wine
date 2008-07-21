@@ -38,3 +38,6 @@
 #define IDS_CPL_TITLE          1
 #define IDS_CPL_DESC           2
 #define IDS_TAB1_TITLE         3
+#define IDS_COLUMN_NAME        6
+#define IDS_COLUMN_PUBLISHER   7
+#define IDS_COLUMN_VERSION     8
