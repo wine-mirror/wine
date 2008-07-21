@@ -491,6 +491,16 @@ static struct regsvr_coclass const coclass_list[] = {
 	"DirectPlay8.LobbiedApplication",
         NULL
     },
+    {
+    &CLSID_DirectPlay8ThreadPool,
+    "DirectPlay8 Thread Pool Object",
+    NULL,
+    "dpnet.dll",
+    "Both",
+    "DirectPlay8.ThreadPool.1",
+    "DirectPlay8.ThreadPool",
+    NULL
+    },
     { NULL }			/* list terminator */
 };
 
