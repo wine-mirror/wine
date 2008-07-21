@@ -56,7 +56,7 @@ static inline BOOL cmp_symbol(const SYMBOL_INFO* si1, const SYMBOL_INFO* si2)
 
 int display_add(struct expr *exp, int count, char format)
 {
-    int         i;
+    unsigned i;
     BOOL local_binding = FALSE;
 
     for (i = 0; i < ndisplays; i++)
@@ -98,7 +98,7 @@ int display_add(struct expr *exp, int count, char format)
 
 int display_info(void)
 {
-    int                 i;
+    unsigned            i;
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        func;
     const char*         info;
@@ -163,7 +163,7 @@ static void print_one_display(int i)
 
 int display_print(void)
 {
-    int                 i;
+    unsigned            i;
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        func;
 
@@ -187,8 +187,6 @@ int display_print(void)
 
 int display_delete(int displaynum)
 {
-    int i;
-
     if (displaynum > ndisplays || displaynum == 0 || displaynum < -1 ||
         displaypoints[displaynum - 1].exp == NULL)
     {
@@ -198,6 +196,8 @@ int display_delete(int displaynum)
 
     if (displaynum == -1)
     {
+        unsigned i;
+
         for (i = 0; i < ndisplays; i++)
         {
             if (displaypoints[i].exp != NULL) 
