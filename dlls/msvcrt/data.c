@@ -29,34 +29,34 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-int MSVCRT___argc;
-unsigned int MSVCRT_basemajor;/* FIXME: */
-unsigned int MSVCRT_baseminor;/* FIXME: */
-unsigned int MSVCRT_baseversion; /* FIXME: */
-unsigned int MSVCRT__commode;
-unsigned int MSVCRT__fmode;
-unsigned int MSVCRT_osmajor;/* FIXME: */
-unsigned int MSVCRT_osminor;/* FIXME: */
-unsigned int MSVCRT_osmode;/* FIXME: */
-unsigned int MSVCRT__osver;
-unsigned int MSVCRT_osversion; /* FIXME: */
-unsigned int MSVCRT__winmajor;
-unsigned int MSVCRT__winminor;
-unsigned int MSVCRT__winver;
-unsigned int MSVCRT___setlc_active;
-unsigned int MSVCRT___unguarded_readlc_active;
-double MSVCRT__HUGE;
-char **MSVCRT___argv;
-MSVCRT_wchar_t **MSVCRT___wargv;
-char *MSVCRT__acmdln;
-MSVCRT_wchar_t *MSVCRT__wcmdln;
-char **MSVCRT__environ = 0;
-MSVCRT_wchar_t **_wenviron = 0;
-char **MSVCRT___initenv = 0;
-MSVCRT_wchar_t **MSVCRT___winitenv = 0;
-int MSVCRT_app_type;
-char* MSVCRT__pgmptr = 0;
-WCHAR* MSVCRT__wpgmptr = 0;
+int MSVCRT___argc = 0;
+unsigned int MSVCRT_basemajor = 0;/* FIXME: */
+unsigned int MSVCRT_baseminor = 0;/* FIXME: */
+unsigned int MSVCRT_baseversion = 0; /* FIXME: */
+unsigned int MSVCRT__commode = 0;
+unsigned int MSVCRT__fmode = 0;
+unsigned int MSVCRT_osmajor = 0;/* FIXME: */
+unsigned int MSVCRT_osminor = 0;/* FIXME: */
+unsigned int MSVCRT_osmode = 0;/* FIXME: */
+unsigned int MSVCRT__osver = 0;
+unsigned int MSVCRT_osversion = 0; /* FIXME: */
+unsigned int MSVCRT__winmajor = 0;
+unsigned int MSVCRT__winminor = 0;
+unsigned int MSVCRT__winver = 0;
+unsigned int MSVCRT___setlc_active = 0;
+unsigned int MSVCRT___unguarded_readlc_active = 0;
+double MSVCRT__HUGE = 0;
+char **MSVCRT___argv = NULL;
+MSVCRT_wchar_t **MSVCRT___wargv = NULL;
+char *MSVCRT__acmdln = NULL;
+MSVCRT_wchar_t *MSVCRT__wcmdln = NULL;
+char **MSVCRT__environ = NULL;
+MSVCRT_wchar_t **_wenviron = NULL;
+char **MSVCRT___initenv = NULL;
+MSVCRT_wchar_t **MSVCRT___winitenv = NULL;
+int MSVCRT_app_type = 0;
+char* MSVCRT__pgmptr = NULL;
+WCHAR* MSVCRT__wpgmptr = NULL;
 
 /* Get a snapshot of the current environment
  * and construct the __p__environ array

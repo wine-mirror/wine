@@ -75,7 +75,7 @@ typedef struct {
 
 static ioinfo MSVCRT_fdesc[MSVCRT_MAX_FILES];
 
-MSVCRT_FILE MSVCRT__iob[3];
+MSVCRT_FILE MSVCRT__iob[3] = { { 0 } };
 
 static int MSVCRT_fdstart = 3; /* first unallocated fd */
 static int MSVCRT_fdend = 3; /* highest allocated fd */

@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-unsigned char MSVCRT_mbctype[257];
+unsigned char MSVCRT_mbctype[257] = { 0 };
 static int g_mbcp_is_multibyte = 0;
 
 int MSVCRT___mb_cur_max = 1;
