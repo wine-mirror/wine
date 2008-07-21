@@ -217,7 +217,7 @@ static HRESULT AVIFILE_LoadIndex(const IAVIFileImpl *This, DWORD size, DWORD off
 static HRESULT AVIFILE_ParseIndex(const IAVIFileImpl *This, AVIINDEXENTRY *lp,
 				  LONG count, DWORD pos, BOOL *bAbsolute);
 static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD start,
-				 LPVOID buffer, LONG size);
+				 LPVOID buffer, DWORD size);
 static void    AVIFILE_SamplesToBlock(const IAVIStreamImpl *This, LPLONG pos,
 				      LPLONG offset);
 static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This);
@@ -2008,7 +2008,7 @@ static HRESULT AVIFILE_ParseIndex(const IAVIFileImpl *This, AVIINDEXENTRY *lp,
 }
 
 static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
-				 LPVOID buffer, LONG size)
+				 LPVOID buffer, DWORD size)
 {
   /* pre-conditions */
   assert(This != NULL);
