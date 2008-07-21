@@ -759,8 +759,8 @@ FREETYPELIBS
 FREETYPEINCL
 FONTSSUBDIRS
 ESDCONFIG
-ESDLIBS
 ESDINCL
+ESDLIBS
 ALSALIBS
 AUDIOIOLIBS
 FONTCONFIGINCL
@@ -14633,23 +14633,23 @@ fi
 
 if test "x$with_esd" != xno -a "x$ESDCONFIG" != x -a "x$ESDCONFIG" != x'"$ESDCONFIG"';
 then
-    ESD_CFLAGS=""
+    ac_esd_incl=""
     for i in `$ESDCONFIG --cflags`
     do
       case "$i" in
-        -I*) ESD_CFLAGS="$ESD_CFLAGS $i";;
+        -I*) ac_esd_incl="$ac_esd_incl $i";;
       esac
     done
-    ESD_LIBS=`$ESDCONFIG --libs`
+    ac_esd_libs=`$ESDCONFIG --libs`
     save_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS $ESD_CFLAGS"
+    CFLAGS="$CFLAGS $ac_esd_incl"
     { echo "$as_me:$LINENO: checking for esd_open_sound in -lesd" >&5
 echo $ECHO_N "checking for esd_open_sound in -lesd... $ECHO_C" >&6; }
 if test "${ac_cv_lib_esd_esd_open_sound+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lesd  $LIBS"
+LIBS="-lesd $ac_esd_libs $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -14705,9 +14705,9 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_esd_esd_open_sound" >&5
 echo "${ECHO_T}$ac_cv_lib_esd_esd_open_sound" >&6; }
 if test $ac_cv_lib_esd_esd_open_sound = yes; then
-  ESDLIBS=$ESD_LIBS
+  ESDINCL="$ac_esd_incl"
 
-         ESDINCL=$ESD_CFLAGS
+         ESDLIBS="$ac_esd_libs"
 
 
 cat >>confdefs.h <<\_ACEOF
@@ -23841,8 +23841,8 @@ FREETYPELIBS!$FREETYPELIBS$ac_delim
 FREETYPEINCL!$FREETYPEINCL$ac_delim
 FONTSSUBDIRS!$FONTSSUBDIRS$ac_delim
 ESDCONFIG!$ESDCONFIG$ac_delim
-ESDLIBS!$ESDLIBS$ac_delim
 ESDINCL!$ESDINCL$ac_delim
+ESDLIBS!$ESDLIBS$ac_delim
 ALSALIBS!$ALSALIBS$ac_delim
 AUDIOIOLIBS!$AUDIOIOLIBS$ac_delim
 FONTCONFIGINCL!$FONTCONFIGINCL$ac_delim

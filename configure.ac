@@ -1070,20 +1070,21 @@ dnl **** Check for EsounD ****
 AC_PATH_PROG(ESDCONFIG, esd-config)
 if test "x$with_esd" != xno -a "x$ESDCONFIG" != x -a "x$ESDCONFIG" != x'"$ESDCONFIG"';
 then
-    ESD_CFLAGS=""
+    ac_esd_incl=""
     for i in `$ESDCONFIG --cflags`
     do
       case "$i" in
-        -I*) ESD_CFLAGS="$ESD_CFLAGS $i";;
+        -I*) ac_esd_incl="$ac_esd_incl $i";;
       esac
     done
-    ESD_LIBS=`$ESDCONFIG --libs`
+    ac_esd_libs=`$ESDCONFIG --libs`
     save_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS $ESD_CFLAGS"
+    CFLAGS="$CFLAGS $ac_esd_incl"
     AC_CHECK_LIB(esd,esd_open_sound,
-        [AC_SUBST(ESDLIBS, $ESD_LIBS)
-         AC_SUBST(ESDINCL, $ESD_CFLAGS)
-         AC_DEFINE(HAVE_ESD, 1, [Define if you have EsounD sound server])])
+        [AC_SUBST(ESDINCL, "$ac_esd_incl")
+         AC_SUBST(ESDLIBS, "$ac_esd_libs")
+         AC_DEFINE(HAVE_ESD, 1, [Define if you have EsounD sound server])],,
+        [$ac_esd_libs])
     CFLAGS="$save_CFLAGS"
 fi
 
