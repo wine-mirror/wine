@@ -48,7 +48,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 /* define a maximum length for various buffers we use */
 #define MAX_STRING_LEN    1024
 
+typedef struct APPINFO {
+    int id;
+
+    LPWSTR title;
+    LPWSTR path;
+
+    LPWSTR icon;
+    int iconIdx;
+
+    LPWSTR publisher;
+    LPWSTR version;
+
+    HKEY regroot;
+    WCHAR regkey[MAX_STRING_LEN];
+
+    struct APPINFO *next;
+} APPINFO;
+
+static struct APPINFO *AppInfo = NULL;
 static HINSTANCE hInst;
+
+/* names of registry keys */
+static const WCHAR BackSlashW[] = { '\\', 0 };
+static const WCHAR DisplayNameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
+static const WCHAR DisplayIconW[] = {'D','i','s','p','l','a','y','I','c','o','n',0};
+static const WCHAR DisplayVersionW[] = {'D','i','s','p','l','a','y','V','e','r',
+    's','i','o','n',0};
+static const WCHAR PublisherW[] = {'P','u','b','l','i','s','h','e','r',0};
+static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l',
+    'S','t','r','i','n','g',0};
+
+static const WCHAR PathUninstallW[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'U','n','i','n','s','t','a','l','l',0 };
 
 /******************************************************************************
  * Name       : DllMain
@@ -66,6 +102,205 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
             break;
     }
     return TRUE;
+}
+
+/******************************************************************************
+ * Name       : FreeAppInfo
+ * Description: Frees memory used by an AppInfo structure, and any children.
+ */
+static void FreeAppInfo(APPINFO *info)
+{
+    APPINFO *iter = info;
+
+    while (iter)
+    {
+        if (iter->title)
+            HeapFree(GetProcessHeap(), 0, iter->title);
+
+        if (iter->path)
+            HeapFree(GetProcessHeap(), 0, iter->path);
+
+        if (iter->icon)
+            HeapFree(GetProcessHeap(), 0, iter->icon);
+
+        if (iter->publisher)
+            HeapFree(GetProcessHeap(), 0, iter->publisher);
+
+        if (iter->version)
+            HeapFree(GetProcessHeap(), 0, iter->version);
+
+        iter = iter->next;
+        HeapFree(GetProcessHeap(), 0, iter);
+    }
+}
+
+/******************************************************************************
+ * Name       : ReadApplicationsFromRegistry
+ * Description: Creates a linked list of uninstallable applications from the
+ *              registry.
+ * Parameters : root    - Which registry root to read from (HKCU/HKLM)
+ * Returns    : TRUE if successful, FALSE otherwise
+ */
+static BOOL ReadApplicationsFromRegistry(HKEY root)
+{
+    HKEY hkeyUninst, hkeyApp;
+    int i, id = 0;
+    DWORD sizeOfSubKeyName, displen, uninstlen;
+    WCHAR subKeyName[256];
+    WCHAR key_app[MAX_STRING_LEN];
+    WCHAR *p;
+    APPINFO *iter = AppInfo;
+    LPWSTR iconPtr;
+    BOOL ret = FALSE;
+
+    if (RegOpenKeyExW(root, PathUninstallW, 0, KEY_READ, &hkeyUninst) !=
+      ERROR_SUCCESS)
+        return FALSE;
+
+    lstrcpyW(key_app, PathUninstallW);
+    lstrcatW(key_app, BackSlashW);
+    p = key_app+lstrlenW(PathUninstallW)+1;
+
+    sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
+
+    if (iter)
+    {
+        /* find the end of the list */
+        for (iter = AppInfo; iter->next; iter = iter->next);
+    }
+
+    for (i = 0; RegEnumKeyExW(hkeyUninst, i, subKeyName, &sizeOfSubKeyName, NULL,
+        NULL, NULL, NULL) != ERROR_NO_MORE_ITEMS; ++i)
+    {
+        lstrcpyW(p, subKeyName);
+        RegOpenKeyExW(root, key_app, 0, KEY_READ, &hkeyApp);
+
+        displen = 0;
+        uninstlen = 0;
+
+        if ((RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, NULL, &displen) ==
+            ERROR_SUCCESS) && (RegQueryValueExW(hkeyApp, UninstallCommandlineW,
+            0, 0, NULL, &uninstlen) == ERROR_SUCCESS))
+        {
+            /* if we already have iter, allocate the next entry */
+            if (iter)
+            {
+                iter->next = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    sizeof(struct APPINFO));
+
+                if (!iter->next)
+                    goto err;
+
+                iter = iter->next;
+            }
+            else
+            {
+                /* if not, start the list */
+                iter = AppInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    sizeof(struct APPINFO));
+
+                if (!iter)
+                    goto err;
+            }
+
+            iter->title = HeapAlloc(GetProcessHeap(), 0, displen);
+
+            if (!iter->title)
+                goto err;
+
+            RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, (LPBYTE)iter->title,
+                &displen);
+
+            /* now get DisplayIcon */
+            displen = 0;
+            RegQueryValueExW(hkeyApp, DisplayIconW, 0, 0, NULL, &displen);
+
+            if (displen == 0)
+                iter->icon = 0;
+            else
+            {
+                iter->icon = HeapAlloc(GetProcessHeap(), 0, displen);
+
+                if (!iter->icon)
+                    goto err;
+
+                RegQueryValueExW(hkeyApp, DisplayIconW, 0, 0, (LPBYTE)iter->icon,
+                    &displen);
+
+                /* separate the index from the icon name, if supplied */
+                iconPtr = strchrW(iter->icon, ',');
+
+                if (iconPtr)
+                {
+                    *iconPtr++ = 0;
+                    iter->iconIdx = atoiW(iconPtr);
+                }
+            }
+
+            iter->path = HeapAlloc(GetProcessHeap(), 0, uninstlen);
+
+            if (!iter->path)
+                goto err;
+
+            RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0,
+                (LPBYTE)iter->path, &uninstlen);
+
+            /* publisher, version */
+            if (RegQueryValueExW(hkeyApp, PublisherW, 0, 0, NULL, &displen) ==
+                ERROR_SUCCESS)
+            {
+                iter->publisher = HeapAlloc(GetProcessHeap(), 0, displen);
+
+                if (!iter->publisher)
+                    goto err;
+
+                RegQueryValueExW(hkeyApp, PublisherW, 0, 0, (LPBYTE)iter->publisher,
+                    &displen);
+            }
+
+            if (RegQueryValueExW(hkeyApp, DisplayVersionW, 0, 0, NULL, &displen) ==
+                ERROR_SUCCESS)
+            {
+                iter->version = HeapAlloc(GetProcessHeap(), 0, displen);
+
+                if (!iter->version)
+                    goto err;
+
+                RegQueryValueExW(hkeyApp, DisplayVersionW, 0, 0, (LPBYTE)iter->version,
+                    &displen);
+            }
+
+            /* registry key */
+            iter->regroot = root;
+            lstrcpyW(iter->regkey, subKeyName);
+
+            iter->id = id++;
+        }
+
+        RegCloseKey(hkeyApp);
+        sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
+    }
+
+    ret = TRUE;
+    goto end;
+
+err:
+    RegCloseKey(hkeyApp);
+    FreeAppInfo(iter);
+
+end:
+    RegCloseKey(hkeyUninst);
+    return ret;
+}
+
+/******************************************************************************
+ * Name       : EmptyList
+ * Description: Frees memory used by the application linked list.
+ */
+static inline void EmptyList(void)
+{
+    FreeAppInfo(AppInfo);
+    AppInfo = NULL;
 }
 
 /******************************************************************************
@@ -175,10 +410,17 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
     else /* we need to remove the existing things first */
     {
         ImageList_Destroy(hImageList);
+
+        /* reset the list, since it's probably changed if the uninstallation was
+           successful */
+        EmptyList();
     }
 
     /* now create the image list and add the applications to the listview */
     hImageList = AddListViewImageList(hWndListView);
+
+    ReadApplicationsFromRegistry(HKEY_LOCAL_MACHINE);
+    ReadApplicationsFromRegistry(HKEY_CURRENT_USER);
 
     UpdateButtons(hWnd);
 
@@ -210,6 +452,8 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
 
         case WM_DESTROY:
             ImageList_Destroy(hImageList);
+
+            EmptyList();
 
             return 0;
     }
