@@ -514,7 +514,7 @@ static void test_outline_font(void)
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
     ok(gm.gmCellIncX == pt.x/2, "incX %d != %d\n", gm.gmCellIncX, pt.x/2);
-    ok(gm.gmCellIncX == 10 * width_orig, "incX %d != %d\n", gm.gmCellIncX, 10 * width_orig);
+    ok(near_match(gm.gmCellIncX, 10 * width_orig), "incX %d != %d\n", gm.gmCellIncX, 10 * width_orig);
     ok(gm.gmCellIncY == 0, "incY %d != 0\n", gm.gmCellIncY);
     SelectObject(hdc, old_hfont);
 
