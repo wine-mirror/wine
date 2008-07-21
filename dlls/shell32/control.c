@@ -308,12 +308,6 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 		    hWnd, NULL, hInst, panel);
     if (!panel->hWnd) return;
 
-    if (!panel->first) {
-	/* FIXME appName & message should be localized  */
-	MessageBoxA(panel->hWnd, "Cannot load any applets", appName, MB_OK);
-	return;
-    }
-
     while (GetMessageA(&msg, panel->hWnd, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
