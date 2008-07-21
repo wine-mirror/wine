@@ -75,6 +75,24 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             memcpy(dest->pathdata.Points, src->pathdata.Points, count * sizeof(PointF));
             memcpy(dest->pathdata.Types, src->pathdata.Types, count);
 
+            /* blending */
+            count = src->blendcount;
+            dest->blendcount = count;
+            dest->blendfac = GdipAlloc(count * sizeof(REAL));
+            dest->blendpos = GdipAlloc(count * sizeof(REAL));
+
+            if(!dest->blendfac || !dest->blendpos){
+                GdipFree(dest->pathdata.Points);
+                GdipFree(dest->pathdata.Types);
+                GdipFree(dest->blendfac);
+                GdipFree(dest->blendpos);
+                GdipFree(dest);
+                return OutOfMemory;
+            }
+
+            memcpy(dest->blendfac, src->blendfac, count * sizeof(REAL));
+            memcpy(dest->blendpos, src->blendpos, count * sizeof(REAL));
+
             break;
         }
         case BrushTypeLinearGradient:
@@ -213,6 +231,15 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     *grad = GdipAlloc(sizeof(GpPathGradient));
     if (!*grad) return OutOfMemory;
 
+    (*grad)->blendfac = GdipAlloc(sizeof(REAL));
+    if(!(*grad)->blendfac){
+        GdipFree(*grad);
+        return OutOfMemory;
+    }
+    (*grad)->blendfac[0] = 1.0;
+    (*grad)->blendpos    = NULL;
+    (*grad)->blendcount  = 1;
+
     (*grad)->pathdata.Count = count;
     (*grad)->pathdata.Points = GdipAlloc(count * sizeof(PointF));
     (*grad)->pathdata.Types = GdipAlloc(count);
@@ -283,6 +310,15 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
 
     *grad = GdipAlloc(sizeof(GpPathGradient));
     if (!*grad) return OutOfMemory;
+
+    (*grad)->blendfac = GdipAlloc(sizeof(REAL));
+    if(!(*grad)->blendfac){
+        GdipFree(*grad);
+        return OutOfMemory;
+    }
+    (*grad)->blendfac[0] = 1.0;
+    (*grad)->blendpos    = NULL;
+    (*grad)->blendcount  = 1;
 
     (*grad)->pathdata.Count = path->pathdata.Count;
     (*grad)->pathdata.Points = GdipAlloc(path->pathdata.Count * sizeof(PointF));
@@ -476,6 +512,8 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
         case BrushTypePathGradient:
             GdipFree(((GpPathGradient*) brush)->pathdata.Points);
             GdipFree(((GpPathGradient*) brush)->pathdata.Types);
+            GdipFree(((GpPathGradient*) brush)->blendfac);
+            GdipFree(((GpPathGradient*) brush)->blendpos);
             break;
         case BrushTypeSolidColor:
         case BrushTypeLinearGradient:
@@ -507,6 +545,16 @@ GpStatus WINGDIPAPI GdipGetLineWrapMode(GpLineGradient *brush, GpWrapMode *wrapm
         return InvalidParameter;
 
     *wrapmode = brush->wrap;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPathGradientBlendCount(GpPathGradient *brush, INT *count)
+{
+    if(!brush || !count)
+        return InvalidParameter;
+
+    *count = brush->blendcount;
 
     return Ok;
 }

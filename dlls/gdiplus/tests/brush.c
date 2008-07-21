@@ -54,6 +54,30 @@ static void test_type(void)
 
     GdipDeleteBrush((GpBrush*) brush);
 }
+static GpPointF blendcount_ptf[] = {{0.0, 0.0},
+                                    {50.0, 50.0}};
+static void test_gradientblendcount(void)
+{
+    GpStatus status;
+    GpPathGradient *brush;
+    INT count;
+
+    status = GdipCreatePathGradient(blendcount_ptf, 2, WrapModeClamp, &brush);
+    expect(Ok, status);
+
+    status = GdipGetPathGradientBlendCount(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetPathGradientBlendCount(NULL, &count);
+    expect(InvalidParameter, status);
+    status = GdipGetPathGradientBlendCount(brush, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipGetPathGradientBlendCount(brush, &count);
+    expect(Ok, status);
+    expect(1, count);
+
+    GdipDeleteBrush((GpBrush*) brush);
+}
 
 START_TEST(brush)
 {
@@ -69,6 +93,7 @@ START_TEST(brush)
 
     test_constructor_destructor();
     test_type();
+    test_gradientblendcount();
 
     GdiplusShutdown(gdiplusToken);
 }

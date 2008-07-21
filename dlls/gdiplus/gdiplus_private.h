@@ -105,6 +105,9 @@ struct GpPathGradient{
     BOOL gamma;
     GpPointF center;
     GpPointF focus;
+    REAL* blendfac;  /* blend factors */
+    REAL* blendpos;  /* blend positions */
+    INT blendcount;
 };
 
 struct GpLineGradient{
