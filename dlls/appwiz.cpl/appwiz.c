@@ -115,6 +115,30 @@ static BOOL AddListViewColumns(HWND hWnd)
 }
 
 /******************************************************************************
+ * Name       : AddListViewImageList
+ * Description: Creates an ImageList for the list view control.
+ * Parameters : hWnd    - Handle of the list view control.
+ * Returns    : Handle of the image list.
+ */
+static HIMAGELIST AddListViewImageList(HWND hWnd)
+{
+    HIMAGELIST hSmall;
+    HICON hDefaultIcon;
+
+    hSmall = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+        ILC_MASK, 1, 1);
+
+    /* Add default icon to image list */
+    hDefaultIcon = LoadIconW(hInst, MAKEINTRESOURCEW(ICO_MAIN));
+    ImageList_AddIcon(hSmall, hDefaultIcon);
+    DestroyIcon(hDefaultIcon);
+
+    (void) ListView_SetImageList(hWnd, hSmall, LVSIL_SMALL);
+
+    return hSmall;
+}
+
+/******************************************************************************
  * Name       : ResetApplicationList
  * Description: Empties the app list, if need be, and recreates it.
  * Parameters : bFirstRun  - TRUE if this is the first time this is run, FALSE otherwise
@@ -134,6 +158,13 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
         if (!AddListViewColumns(hWndListView))
             return NULL;
     }
+    else /* we need to remove the existing things first */
+    {
+        ImageList_Destroy(hImageList);
+    }
+
+    /* now create the image list and add the applications to the listview */
+    hImageList = AddListViewImageList(hWndListView);
 
     return(hImageList);
 }
@@ -156,7 +187,15 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
         case WM_INITDIALOG:
             hImageList = ResetApplicationList(TRUE, hWnd, hImageList);
 
+            if (!hImageList)
+                return FALSE;
+
             return TRUE;
+
+        case WM_DESTROY:
+            ImageList_Destroy(hImageList);
+
+            return 0;
     }
 
     return FALSE;
