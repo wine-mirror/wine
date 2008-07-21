@@ -109,7 +109,7 @@ send_file (const char *name)
 #define BUFLEN 8192
     char buffer[BUFLEN+1];
     DWORD bytes_read, filesize;
-    size_t total;
+    size_t total, count;
     char *str;
     int ret;
 
@@ -208,9 +208,9 @@ send_file (const char *name)
         return 1;
     }
 
-    str = strmake (&bytes_read, "Received %s (%d bytes).\n",
+    str = strmake (&count, "Received %s (%d bytes).\n",
                    name, filesize);
-    ret = memcmp (str, buffer + total - bytes_read, bytes_read);
+    ret = memcmp (str, buffer + total - count, count);
     free (str);
     if (ret) {
         buffer[total] = 0;
