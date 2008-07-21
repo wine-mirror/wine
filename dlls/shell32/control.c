@@ -159,11 +159,11 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
     return NULL;
 }
 
-static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTA* cs)
+static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
 {
    CPanel*	panel = (CPanel*)cs->lpCreateParams;
 
-   SetWindowLongPtrA(hWnd, 0, (LONG_PTR)panel);
+   SetWindowLongPtrW(hWnd, 0, (LONG_PTR)panel);
    panel->status = 0;
    panel->hWnd = hWnd;
 }
@@ -254,12 +254,12 @@ static LRESULT Control_WndProc_LButton(CPanel* panel, LPARAM lParam, BOOL up)
 static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 					WPARAM lParam1, LPARAM lParam2)
 {
-   CPanel*	panel = (CPanel*)GetWindowLongPtrA(hWnd, 0);
+   CPanel*	panel = (CPanel*)GetWindowLongPtrW(hWnd, 0);
 
    if (panel || wMsg == WM_CREATE) {
       switch (wMsg) {
       case WM_CREATE:
-	 Control_WndProc_Create(hWnd, (CREATESTRUCTA*)lParam2);
+	 Control_WndProc_Create(hWnd, (CREATESTRUCTW*)lParam2);
 	 return 0;
       case WM_DESTROY:
          {
@@ -280,14 +280,18 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
       }
    }
 
-   return DefWindowProcA(hWnd, wMsg, lParam1, lParam2);
+   return DefWindowProcW(hWnd, wMsg, lParam1, lParam2);
 }
 
 static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 {
-    WNDCLASSA	wc;
+    WNDCLASSW	wc;
     MSG		msg;
-    const CHAR* appName = "Wine Control Panel";
+    const WCHAR appName[] = {'W','i','n','e',' ','C','o','n','t','r','o','l',
+        ' ','P','a','n','e','l',0};
+    const WCHAR className[] = {'S','h','e','l','l','_','C','o','n','t','r','o',
+        'l','_','W','n','d','C','l','a','s','s',0};
+
     wc.style = CS_HREDRAW|CS_VREDRAW;
     wc.lpfnWndProc = Control_WndProc;
     wc.cbClsExtra = 0;
@@ -297,20 +301,20 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     wc.hCursor = 0;
     wc.hbrBackground = GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = "Shell_Control_WndClass";
+    wc.lpszClassName = className;
 
-    if (!RegisterClassA(&wc)) return;
+    if (!RegisterClassW(&wc)) return;
 
-    CreateWindowExA(0, wc.lpszClassName, appName,
+    CreateWindowExW(0, wc.lpszClassName, appName,
 		    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		    CW_USEDEFAULT, CW_USEDEFAULT,
 		    CW_USEDEFAULT, CW_USEDEFAULT,
 		    hWnd, NULL, hInst, panel);
     if (!panel->hWnd) return;
 
-    while (GetMessageA(&msg, panel->hWnd, 0, 0)) {
+    while (GetMessageW(&msg, panel->hWnd, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessageA(&msg);
+        DispatchMessageW(&msg);
     }
 }
 
