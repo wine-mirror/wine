@@ -113,9 +113,27 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_hand
 /* This function takes care of WineD3D pixel format selection. */
 static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DFORMAT ColorFormat, WINED3DFORMAT DepthStencilFormat, BOOL auxBuffers, int numSamples, BOOL pbuffer, BOOL findCompatible)
 {
-    int iPixelFormat=0;
+    int iPixelFormat=0, matchtry;
     short redBits, greenBits, blueBits, alphaBits, colorBits;
     short depthBits=0, stencilBits=0;
+
+    struct match_type {
+        BOOL require_aux;
+        BOOL exact_alpha;
+        BOOL exact_color;
+    } matches[] = {
+        /* First, try without aux buffers - this is the most common cause
+         * for not finding a pixel format. Also some drivers(the open source ones)
+         * only offer 32 bit ARB pixel formats. First try without an exact alpha
+         * match, then try without an exact alpha and color match.
+         */
+        { TRUE,  TRUE,  TRUE  },
+        { FALSE, TRUE,  TRUE  },
+        { TRUE,  FALSE, TRUE  },
+        { TRUE,  FALSE, FALSE },
+        { FALSE, FALSE, TRUE  },
+        { FALSE, FALSE, FALSE },
+    };
 
     int i = 0;
     int nCfgs = This->adapter->nCfgs;
@@ -149,70 +167,85 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         getDepthStencilBits(DepthStencilFormat, &depthBits, &stencilBits);
     }
 
-    /* Find a pixel format which EXACTLY matches our requirements (except for depth) */
-    for(i=0; i<nCfgs; i++) {
-        BOOL exactDepthMatch = TRUE;
-        cfgs = &This->adapter->cfgs[i];
+    for(matchtry = 0; matchtry < (sizeof(matches) / sizeof(matches[0])); matchtry++) {
+        for(i=0; i<nCfgs; i++) {
+            BOOL exactDepthMatch = TRUE;
+            cfgs = &This->adapter->cfgs[i];
 
-        /* For now only accept RGBA formats. Perhaps some day we will
-         * allow floating point formats for pbuffers. */
-        if(cfgs->iPixelType != WGL_TYPE_RGBA_ARB)
-            continue;
+            /* For now only accept RGBA formats. Perhaps some day we will
+             * allow floating point formats for pbuffers. */
+            if(cfgs->iPixelType != WGL_TYPE_RGBA_ARB)
+                continue;
 
-        /* In window mode (!pbuffer) we need a window drawable format and double buffering. */
-        if(!pbuffer && !(cfgs->windowDrawable && cfgs->doubleBuffer))
-            continue;
+            /* In window mode (!pbuffer) we need a window drawable format and double buffering. */
+            if(!pbuffer && !(cfgs->windowDrawable && cfgs->doubleBuffer))
+                continue;
 
-        /* We like to have aux buffers in backbuffer mode */
-        if(auxBuffers && !cfgs->auxBuffers)
-            continue;
+            /* We like to have aux buffers in backbuffer mode */
+            if(auxBuffers && !cfgs->auxBuffers && matches[matchtry].require_aux)
+                continue;
 
-        /* In pbuffer-mode we need a pbuffer-capable format but we don't want double buffering */
-        if(pbuffer && (!cfgs->pbufferDrawable || cfgs->doubleBuffer))
-            continue;
+            /* In pbuffer-mode we need a pbuffer-capable format but we don't want double buffering */
+            if(pbuffer && (!cfgs->pbufferDrawable || cfgs->doubleBuffer))
+                continue;
 
-        if(cfgs->redSize != redBits)
-            continue;
-        if(cfgs->greenSize != greenBits)
-            continue;
-        if(cfgs->blueSize != blueBits)
-            continue;
-        if(cfgs->alphaSize != alphaBits)
-            continue;
+            if(matches[matchtry].exact_color) {
+                if(cfgs->redSize != redBits)
+                    continue;
+                if(cfgs->greenSize != greenBits)
+                    continue;
+                if(cfgs->blueSize != blueBits)
+                    continue;
+            } else {
+                if(cfgs->redSize < redBits)
+                    continue;
+                if(cfgs->greenSize < greenBits)
+                    continue;
+                if(cfgs->blueSize < blueBits)
+                    continue;
+            }
+            if(matches[matchtry].exact_alpha) {
+                if(cfgs->alphaSize != alphaBits)
+                    continue;
+            } else {
+                if(cfgs->alphaSize < alphaBits)
+                    continue;
+            }
 
-        /* We try to locate a format which matches our requirements exactly. In case of
-         * depth it is no problem to emulate 16-bit using e.g. 24-bit, so accept that. */
-        if(cfgs->depthSize < depthBits)
-            continue;
-        else if(cfgs->depthSize > depthBits)
-            exactDepthMatch = FALSE;
+            /* We try to locate a format which matches our requirements exactly. In case of
+             * depth it is no problem to emulate 16-bit using e.g. 24-bit, so accept that. */
+            if(cfgs->depthSize < depthBits)
+                continue;
+            else if(cfgs->depthSize > depthBits)
+                exactDepthMatch = FALSE;
 
-        /* In all cases make sure the number of stencil bits matches our requirements
-         * even when we don't need stencil because it could affect performance EXCEPT
-         * on cards which don't offer depth formats without stencil like the i915 drivers
-         * on Linux. */
-        if(stencilBits != cfgs->stencilSize && !(This->adapter->brokenStencil && stencilBits <= cfgs->stencilSize))
-            continue;
+            /* In all cases make sure the number of stencil bits matches our requirements
+             * even when we don't need stencil because it could affect performance EXCEPT
+             * on cards which don't offer depth formats without stencil like the i915 drivers
+             * on Linux. */
+            if(stencilBits != cfgs->stencilSize && !(This->adapter->brokenStencil && stencilBits <= cfgs->stencilSize))
+                continue;
 
-        /* Check multisampling support */
-        if(cfgs->numSamples != numSamples)
-            continue;
+            /* Check multisampling support */
+            if(cfgs->numSamples != numSamples)
+                continue;
 
-        /* When we have passed all the checks then we have found a format which matches our
-         * requirements. Note that we only check for a limit number of capabilities right now,
-         * so there can easily be a dozen of pixel formats which appear to be the 'same' but
-         * can still differ in things like multisampling, stereo, SRGB and other flags.
-         */
+            /* When we have passed all the checks then we have found a format which matches our
+             * requirements. Note that we only check for a limit number of capabilities right now,
+             * so there can easily be a dozen of pixel formats which appear to be the 'same' but
+             * can still differ in things like multisampling, stereo, SRGB and other flags.
+             */
 
-        /* Exit the loop as we have found a format :) */
-        if(exactDepthMatch) {
-            iPixelFormat = cfgs->iPixelFormat;
-            break;
-        } else if(!iPixelFormat) {
-            /* In the end we might end up with a format which doesn't exactly match our depth
-             * requirements. Accept the first format we found because formats with higher iPixelFormat
-             * values tend to have more extended capabilities (e.g. multisampling) which we don't need. */
-            iPixelFormat = cfgs->iPixelFormat;
+            /* Exit the loop as we have found a format :) */
+            if(exactDepthMatch) {
+                iPixelFormat = cfgs->iPixelFormat;
+                break;
+            } else if(!iPixelFormat) {
+                /* In the end we might end up with a format which doesn't exactly match our depth
+                 * requirements. Accept the first format we found because formats with higher iPixelFormat
+                 * values tend to have more extended capabilities (e.g. multisampling) which we don't need. */
+                iPixelFormat = cfgs->iPixelFormat;
+            }
         }
     }
 
