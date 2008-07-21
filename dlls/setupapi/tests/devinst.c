@@ -824,7 +824,7 @@ static void testGetDeviceInterfaceDetail(void)
             LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, size);
             SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail =
                 (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)buf;
-            DWORD expectedsize = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath) + sizeof(WCHAR)*(1 + strlen(path));
+            DWORD expectedsize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_W, DevicePath) + sizeof(WCHAR)*(1 + strlen(path));
 
             detail->cbSize = 0;
             SetLastError(0xdeadbeef);
@@ -1101,7 +1101,7 @@ static void testRegisterAndGetDetail(void)
         detail = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)HeapAlloc(GetProcessHeap(), 0, dwSize);
         if (detail)
         {
-            detail->cbSize = offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char);
+            detail->cbSize = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath) + sizeof(char);
             SetLastError(0xdeadbeef);
             ret = pSetupDiGetDeviceInterfaceDetailA(set, &interfaceData,
              detail, dwSize, &dwSize, NULL);
