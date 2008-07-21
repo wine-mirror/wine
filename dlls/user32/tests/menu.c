@@ -1691,7 +1691,7 @@ static struct menu_mouse_tests_s {
 static void send_key(WORD wVk)
 {
     TEST_INPUT i[2];
-    memset(&i, 0, 2*sizeof(INPUT));
+    memset(i, 0, sizeof(i));
     i[0].type = i[1].type = INPUT_KEYBOARD;
     i[0].u.ki.wVk = i[1].u.ki.wVk = wVk;
     i[1].u.ki.dwFlags = KEYEVENTF_KEYUP;
@@ -1706,10 +1706,10 @@ static void click_menu(HANDLE hWnd, struct menu_item_pair_s *mi)
     RECT r;
     int screen_w = GetSystemMetrics(SM_CXSCREEN);
     int screen_h = GetSystemMetrics(SM_CYSCREEN);
+    BOOL ret = GetMenuItemRect(mi->uMenu > 2 ? NULL : hWnd, hMenu, mi->uItem, &r);
+    if(!ret) return;
 
-    GetMenuItemRect(mi->uMenu > 2 ? NULL : hWnd, hMenu, mi->uItem, &r);
-
-    memset(&i, 0, 3*sizeof(INPUT));
+    memset(i, 0, sizeof(i));
     i[0].type = i[1].type = i[2].type = INPUT_MOUSE;
     i[0].u.mi.dx = i[1].u.mi.dx = i[2].u.mi.dx
             = ((r.left + 5) * 65535) / screen_w;
