@@ -68,6 +68,20 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
     return TRUE;
 }
 
+/******************************************************************************
+ * Name       : UpdateButtons
+ * Description: Enables/disables the Add/Remove button depending on current
+ *              selection in list box.
+ * Parameters : hWnd    - Handle of the dialog box
+ */
+static void UpdateButtons(HWND hWnd)
+{
+    BOOL sel = ListView_GetSelectedCount(GetDlgItem(hWnd, IDL_PROGRAMS)) != 0;
+
+    EnableWindow(GetDlgItem(hWnd, IDC_ADDREMOVE), sel);
+    EnableWindow(GetDlgItem(hWnd, IDC_SUPPORT_INFO), sel);
+}
+
 /* Definition of column headers for AddListViewColumns function */
 typedef struct AppWizColumn {
    int width;
@@ -165,6 +179,8 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
 
     /* now create the image list and add the applications to the listview */
     hImageList = AddListViewImageList(hWndListView);
+
+    UpdateButtons(hWnd);
 
     return(hImageList);
 }
