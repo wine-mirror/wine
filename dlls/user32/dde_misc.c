@@ -1658,9 +1658,10 @@ void WDML_RemoveServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic)
 		pConvNext = pConv->next;
 		if (DdeCmpStringHandles(pConv->hszService, hszService) == 0)
 		{
+                    HWND client = pConv->hwndClient, server = pConv->hwndServer;
 		    WDML_RemoveConv(pConv, WDML_SERVER_SIDE);
 		    /* don't care about return code (whether client window is present or not) */
-		    PostMessageW(pConv->hwndClient, WM_DDE_TERMINATE, (WPARAM)pConv->hwndServer, 0);
+		    PostMessageW(client, WM_DDE_TERMINATE, (WPARAM)server, 0);
 		}
 	    }
 	    if (pServer == pInstance->servers)
