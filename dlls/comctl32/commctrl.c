@@ -1572,6 +1572,50 @@ void COMCTL32_GetFontMetrics(HFONT hFont, TEXTMETRICW *ptm)
     ReleaseDC(NULL, hdc);
 }
 
+#ifndef OCM__BASE      /* avoid including olectl.h */
+#define OCM__BASE (WM_USER+0x1c00)
+#endif
+
+/***********************************************************************
+ * COMCTL32_IsReflectedMessage [internal]
+ *
+ * Some parents reflect notify messages - for some messages sent by the child,
+ * they send it back with the message code increased by OCM__BASE (0x2000).
+ * This allows better subclassing of controls. We don't need to handle such
+ * messages but we don't want to print ERRs for them, so this helper function
+ * identifies them.
+ *
+ * Some of the codes are in the CCM_FIRST..CCM_LAST range, but there is no
+ * colision with defined CCM_ codes.
+ */
+BOOL COMCTL32_IsReflectedMessage(UINT uMsg)
+{
+    switch (uMsg)
+    {
+        case OCM__BASE + WM_COMMAND:
+        case OCM__BASE + WM_CTLCOLORBTN:
+        case OCM__BASE + WM_CTLCOLOREDIT:
+        case OCM__BASE + WM_CTLCOLORDLG:
+        case OCM__BASE + WM_CTLCOLORLISTBOX:
+        case OCM__BASE + WM_CTLCOLORMSGBOX:
+        case OCM__BASE + WM_CTLCOLORSCROLLBAR:
+        case OCM__BASE + WM_CTLCOLORSTATIC:
+        case OCM__BASE + WM_DRAWITEM:
+        case OCM__BASE + WM_MEASUREITEM:
+        case OCM__BASE + WM_DELETEITEM:
+        case OCM__BASE + WM_VKEYTOITEM:
+        case OCM__BASE + WM_CHARTOITEM:
+        case OCM__BASE + WM_COMPAREITEM:
+        case OCM__BASE + WM_HSCROLL:
+        case OCM__BASE + WM_VSCROLL:
+        case OCM__BASE + WM_PARENTNOTIFY:
+        case OCM__BASE + WM_NOTIFY:
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
 /***********************************************************************
  * MirrorIcon [COMCTL32.414]
  *

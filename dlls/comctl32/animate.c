@@ -962,7 +962,7 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 
     default:
-	if ((uMsg >= WM_USER) && (uMsg < WM_APP))
+	if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
 	    ERR("unknown msg %04x wp=%08lx lp=%08lx\n", uMsg, wParam, lParam);
 
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);

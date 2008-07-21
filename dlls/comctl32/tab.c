@@ -3269,7 +3269,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_NCCalcSize(hwnd, wParam, lParam);
 
     default:
-      if (uMsg >= WM_USER && uMsg < WM_APP)
+      if (uMsg >= WM_USER && uMsg < WM_APP && !COMCTL32_IsReflectedMessage(uMsg))
 	WARN("unknown msg %04x wp=%08lx lp=%08lx\n",
 	     uMsg, wParam, lParam);
       break;

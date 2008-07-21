@@ -1082,7 +1082,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    return temp;
 
 	default:
-	    if ((message >= WM_USER) && (message < WM_APP))
+	    if ((message >= WM_USER) && (message < WM_APP) && !COMCTL32_IsReflectedMessage(message))
 		ERR("unknown msg %04x wp=%04lx lp=%08lx\n", message, wParam, lParam);
 	    return DefWindowProcW (hwnd, message, wParam, lParam);
     }

@@ -2125,7 +2125,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return HEADER_SetRedraw(hwnd, wParam, lParam);
 
         default:
-            if ((msg >= WM_USER) && (msg < WM_APP))
+            if ((msg >= WM_USER) && (msg < WM_APP) && !COMCTL32_IsReflectedMessage(msg))
 		ERR("unknown msg %04x wp=%04lx lp=%08lx\n",
 		     msg, wParam, lParam );
 	    return DefWindowProcW(hwnd, msg, wParam, lParam);

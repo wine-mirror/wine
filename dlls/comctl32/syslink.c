@@ -1750,7 +1750,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
     default:
 HandleDefaultMessage:
-        if ((message >= WM_USER) && (message < WM_APP))
+        if ((message >= WM_USER) && (message < WM_APP) && !COMCTL32_IsReflectedMessage(message))
         {
             ERR("unknown msg %04x wp=%04lx lp=%08lx\n", message, wParam, lParam );
         }

@@ -2072,7 +2072,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return MONTHCAL_Destroy(infoPtr);
 
   default:
-    if ((uMsg >= WM_USER) && (uMsg < WM_APP))
+    if ((uMsg >= WM_USER) && (uMsg < WM_APP) && !COMCTL32_IsReflectedMessage(uMsg))
       ERR( "unknown msg %04x wp=%08lx lp=%08lx\n", uMsg, wParam, lParam);
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
   }
