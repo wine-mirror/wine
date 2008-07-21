@@ -13488,7 +13488,7 @@ if test "${ac_cv_lib_gphoto2_gp_camera_new+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgphoto2 $GPHOTO2LIBS $LIBS"
+LIBS="-lgphoto2 $ac_gphoto2_libs $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF

@@ -951,7 +951,7 @@ then
                                   [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have libgphoto2 development environment])
                                    AC_SUBST(GPHOTO2LIBS,"$ac_gphoto2_libs")
                                    AC_SUBST(GPHOTO2INCL,"$ac_gphoto2_incl")],,
-                                  [$GPHOTO2LIBS])])
+                                  [$ac_gphoto2_libs])])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(gphoto,[test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"],
