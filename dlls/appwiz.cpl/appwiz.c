@@ -371,6 +371,61 @@ static void UpdateButtons(HWND hWnd)
     EnableWindow(GetDlgItem(hWnd, IDC_SUPPORT_INFO), sel);
 }
 
+/******************************************************************************
+ * Name       : UninstallProgram
+ * Description: Executes the specified program's installer.
+ * Parameters : id      - the internal ID of the installer to remove
+ */
+static void UninstallProgram(int id)
+{
+    APPINFO *iter;
+    STARTUPINFOW si;
+    PROCESS_INFORMATION info;
+    WCHAR errormsg[MAX_STRING_LEN];
+    WCHAR sUninstallFailed[MAX_STRING_LEN];
+    HKEY hkey;
+    BOOL res;
+
+    LoadStringW(hInst, IDS_UNINSTALL_FAILED, sUninstallFailed,
+        sizeof(sUninstallFailed) / sizeof(sUninstallFailed[0]));
+
+    for (iter = AppInfo; iter; iter = iter->next)
+    {
+        if (iter->id == id)
+        {
+            TRACE("Uninstalling %s (%s)\n", wine_dbgstr_w(iter->title),
+                wine_dbgstr_w(iter->path));
+
+            memset(&si, 0, sizeof(STARTUPINFOW));
+            si.cb = sizeof(STARTUPINFOW);
+            si.wShowWindow = SW_NORMAL;
+            res = CreateProcessW(NULL, iter->path, NULL, NULL, FALSE, 0, NULL,
+                NULL, &si, &info);
+
+            if (res)
+            {
+                /* wait for the process to exit */
+                WaitForSingleObject(info.hProcess, INFINITE);
+            }
+            else
+            {
+                wsprintfW(errormsg, sUninstallFailed, iter->path);
+
+                if (MessageBoxW(0, errormsg, iter->title, MB_YESNO |
+                    MB_ICONQUESTION) == IDYES)
+                {
+                    /* delete the application's uninstall entry */
+                    RegOpenKeyExW(iter->regroot, PathUninstallW, 0, KEY_READ, &hkey);
+                    RegDeleteKeyW(hkey, iter->regkey);
+                    RegCloseKey(hkey);
+                }
+            }
+
+            break;
+        }
+    }
+}
+
 /* Definition of column headers for AddListViewColumns function */
 typedef struct AppWizColumn {
    int width;
@@ -494,8 +549,10 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
  */
 static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    int selitem;
     static HIMAGELIST hImageList;
     LPNMHDR nmh;
+    LVITEMW lvItem;
 
     switch(msg)
     {
@@ -527,6 +584,30 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
                             UpdateButtons(hWnd);
                             break;
                     }
+                    break;
+            }
+
+            return TRUE;
+
+        case WM_COMMAND:
+            switch (LOWORD(wParam))
+            {
+                case IDC_ADDREMOVE:
+                    selitem = SendDlgItemMessageW(hWnd, IDL_PROGRAMS,
+                        LVM_GETNEXTITEM, -1, LVNI_FOCUSED|LVNI_SELECTED);
+
+                    if (selitem != -1)
+                    {
+                        lvItem.iItem = selitem;
+                        lvItem.mask = LVIF_PARAM;
+
+                        if (SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_GETITEMW,
+                          0, (LPARAM) &lvItem))
+                            UninstallProgram(lvItem.lParam);
+                    }
+
+                    hImageList = ResetApplicationList(FALSE, hWnd, hImageList);
+
                     break;
             }
 
