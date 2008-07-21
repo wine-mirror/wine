@@ -549,6 +549,23 @@ GpStatus WINGDIPAPI GdipGetLineWrapMode(GpLineGradient *brush, GpWrapMode *wrapm
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathGradientBlend(GpPathGradient *brush, REAL *blend,
+    REAL *positions, INT count)
+{
+    if(!brush || !blend || !positions || count <= 0)
+        return InvalidParameter;
+
+    if(count < brush->blendcount)
+        return InsufficientBuffer;
+
+    memcpy(blend, brush->blendfac, count*sizeof(REAL));
+    if(brush->blendcount > 1){
+        memcpy(positions, brush->blendpos, count*sizeof(REAL));
+    }
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPathGradientBlendCount(GpPathGradient *brush, INT *count)
 {
     if(!brush || !count)

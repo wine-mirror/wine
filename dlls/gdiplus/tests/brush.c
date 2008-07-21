@@ -21,8 +21,10 @@
 #include "windows.h"
 #include "gdiplus.h"
 #include "wine/test.h"
+#include <math.h>
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+#define expectf(expected, got) ok(fabs(expected - got) < 0.0001, "Expected %.2f, got %.2f\n", expected, got)
 
 static void test_constructor_destructor(void)
 {
@@ -79,6 +81,40 @@ static void test_gradientblendcount(void)
     GdipDeleteBrush((GpBrush*) brush);
 }
 
+static GpPointF getblend_ptf[] = {{0.0, 0.0},
+                                  {50.0, 50.0}};
+static void test_getblend(void)
+{
+    GpStatus status;
+    GpPathGradient *brush;
+    REAL blends[4];
+    REAL pos[4];
+
+    status = GdipCreatePathGradient(getblend_ptf, 2, WrapModeClamp, &brush);
+    expect(Ok, status);
+
+    /* check some invalid parameters combinations */
+    status = GdipGetPathGradientBlend(NULL, NULL,  NULL, -1);
+    expect(InvalidParameter, status);
+    status = GdipGetPathGradientBlend(brush,NULL,  NULL, -1);
+    expect(InvalidParameter, status);
+    status = GdipGetPathGradientBlend(NULL, blends,NULL, -1);
+    expect(InvalidParameter, status);
+    status = GdipGetPathGradientBlend(NULL, NULL,  pos,  -1);
+    expect(InvalidParameter, status);
+    status = GdipGetPathGradientBlend(NULL, NULL,  NULL,  1);
+    expect(InvalidParameter, status);
+
+    blends[0] = (REAL)0xdeadbeef;
+    pos[0]    = (REAL)0xdeadbeef;
+    status = GdipGetPathGradientBlend(brush, blends, pos, 1);
+    expect(Ok, status);
+    expectf(1.0, blends[0]);
+    expectf((REAL)0xdeadbeef, pos[0]);
+
+    GdipDeleteBrush((GpBrush*) brush);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -94,6 +130,7 @@ START_TEST(brush)
     test_constructor_destructor();
     test_type();
     test_gradientblendcount();
+    test_getblend();
 
     GdiplusShutdown(gdiplusToken);
 }

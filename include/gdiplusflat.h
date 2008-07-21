@@ -199,6 +199,7 @@ GpStatus WINGDIPAPI GdipGetLineWrapMode(GpLineGradient*,GpWrapMode*);
 GpStatus WINGDIPAPI GdipGetLineRect(GpLineGradient*,GpRectF*);
 GpStatus WINGDIPAPI GdipGetLineRectI(GpLineGradient*,GpRect*);
 GpStatus WINGDIPAPI GdipGetLineColors(GpLineGradient*,ARGB*);
+GpStatus WINGDIPAPI GdipGetPathGradientBlend(GpPathGradient*,REAL*,REAL*,INT);
 GpStatus WINGDIPAPI GdipGetPathGradientBlendCount(GpPathGradient*,INT*);
 GpStatus WINGDIPAPI GdipGetPathGradientCenterColor(GpPathGradient*,ARGB*);
 GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient*,GpPointF*);
