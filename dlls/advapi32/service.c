@@ -1599,9 +1599,6 @@ QueryServiceConfigW( SC_HANDLE hService,
     move_string_to_buffer(&bufpos, &lpServiceConfig->lpServiceStartName);
     move_string_to_buffer(&bufpos, &lpServiceConfig->lpDisplayName);
 
-    if (bufpos - (LPBYTE)lpServiceConfig > cbBufSize)
-        ERR("Buffer overflow!\n");
-
     TRACE("Image path           = %s\n", debugstr_w(lpServiceConfig->lpBinaryPathName) );
     TRACE("Group                = %s\n", debugstr_w(lpServiceConfig->lpLoadOrderGroup) );
     TRACE("Dependencies         = %s\n", debugstr_w(lpServiceConfig->lpDependencies) );

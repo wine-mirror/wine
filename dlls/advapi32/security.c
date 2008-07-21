@@ -2119,28 +2119,31 @@ LookupAccountSidW(
     }
 
     if (dm) {
+        DWORD ac_len = lstrlenW(ac);
+        DWORD dm_len = lstrlenW(dm);
         BOOL status = TRUE;
-        if (*accountSize > lstrlenW(ac)) {
+
+        if (*accountSize > ac_len) {
             if (account)
                 lstrcpyW(account, ac);
         }
-        if (*domainSize > lstrlenW(dm)) {
+        if (*domainSize > dm_len) {
             if (domain)
                 lstrcpyW(domain, dm);
         }
-        if (((*accountSize != 0) && (*accountSize < strlenW(ac))) ||
-            ((*domainSize != 0) && (*domainSize < strlenW(dm)))) {
+        if (((*accountSize != 0) && (*accountSize < ac_len)) ||
+            ((*domainSize != 0) && (*domainSize < dm_len))) {
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
             status = FALSE;
         }
         if (*domainSize)
-            *domainSize = strlenW(dm);
+            *domainSize = dm_len;
         else
-            *domainSize = strlenW(dm) + 1;
+            *domainSize = dm_len + 1;
         if (*accountSize)
-            *accountSize = strlenW(ac);
+            *accountSize = ac_len;
         else
-            *accountSize = strlenW(ac) + 1;
+            *accountSize = ac_len + 1;
         *name_use = use;
         HeapFree(GetProcessHeap(), 0, computer_name);
         return status;
@@ -4050,7 +4053,7 @@ static BOOL DumpSidNumeric(PSID psid, WCHAR **pwptr, ULONG *plen)
 
 static BOOL DumpSid(PSID psid, WCHAR **pwptr, ULONG *plen)
 {
-    int i;
+    size_t i;
     for (i = 0; i < sizeof(WellKnownSids) / sizeof(WellKnownSids[0]); i++)
     {
         if (WellKnownSids[i].wstr[0] && EqualSid(psid, (PSID)&(WellKnownSids[i].Sid.Revision)))
@@ -4102,7 +4105,7 @@ static void DumpRights(DWORD mask, WCHAR **pwptr, ULONG *plen)
 {
     static const WCHAR fmtW[] = {'0','x','%','x',0};
     WCHAR buf[15];
-    int i;
+    size_t i;
 
     if (mask == 0)
         return;
