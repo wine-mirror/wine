@@ -43,11 +43,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
  */
 #define MAX_ELEM_LEN 64 /* Max length of country/language/CP string */
 #define MAX_LOCALE_LENGTH 256
-char MSVCRT_current_lc_all[MAX_LOCALE_LENGTH];
-LCID MSVCRT_current_lc_all_lcid;
-int MSVCRT___lc_codepage;
-int MSVCRT___lc_collate_cp;
-HANDLE MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1];
+char MSVCRT_current_lc_all[MAX_LOCALE_LENGTH] = { 0 };
+LCID MSVCRT_current_lc_all_lcid = 0;
+int MSVCRT___lc_codepage = 0;
+int MSVCRT___lc_collate_cp = 0;
+HANDLE MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
 
 /* MT */
 #define LOCK_LOCALE   _mlock(_SETLOCALE_LOCK);

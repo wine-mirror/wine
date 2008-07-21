@@ -37,14 +37,14 @@ extern void CDECL __getmainargs( int *argc, char ***argv, char ***envp,
                                  int expand_wildcards, int *new_mode );
 
 /* The following data items are not exported from msvcrt */
-unsigned int CRTDLL__basemajor_dll;
-unsigned int CRTDLL__baseminor_dll;
-unsigned int CRTDLL__baseversion_dll;
-unsigned int CRTDLL__cpumode_dll;
-unsigned int CRTDLL__osmajor_dll;
-unsigned int CRTDLL__osminor_dll;
-unsigned int CRTDLL__osmode_dll;
-unsigned int CRTDLL__osversion_dll;
+unsigned int CRTDLL__basemajor_dll = 0;
+unsigned int CRTDLL__baseminor_dll = 0;
+unsigned int CRTDLL__baseversion_dll = 0;
+unsigned int CRTDLL__cpumode_dll = 0;
+unsigned int CRTDLL__osmajor_dll = 0;
+unsigned int CRTDLL__osminor_dll = 0;
+unsigned int CRTDLL__osmode_dll = 0;
+unsigned int CRTDLL__osversion_dll = 0;
 
 /* dev_t is a short in crtdll but an unsigned int in msvcrt */
 typedef short crtdll_dev_t;
