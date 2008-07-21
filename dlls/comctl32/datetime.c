@@ -707,7 +707,7 @@ DATETIME_HitTest (const DATETIME_INFO *infoPtr, POINT pt)
 
 
 static LRESULT
-DATETIME_LButtonDown (DATETIME_INFO *infoPtr, WORD wKey, INT x, INT y)
+DATETIME_LButtonDown (DATETIME_INFO *infoPtr, INT x, INT y)
 {
     POINT pt;
     int old, new;
@@ -769,7 +769,7 @@ DATETIME_LButtonDown (DATETIME_INFO *infoPtr, WORD wKey, INT x, INT y)
 
 
 static LRESULT
-DATETIME_LButtonUp (DATETIME_INFO *infoPtr, WORD wKey)
+DATETIME_LButtonUp (DATETIME_INFO *infoPtr)
 {
     if(infoPtr->bCalDepressed) {
         infoPtr->bCalDepressed = FALSE;
@@ -865,7 +865,7 @@ DATETIME_EraseBackground (const DATETIME_INFO *infoPtr, HDC hdc)
 
 
 static LRESULT
-DATETIME_Notify (DATETIME_INFO *infoPtr, int idCtrl, LPNMHDR lpnmh)
+DATETIME_Notify (DATETIME_INFO *infoPtr, LPNMHDR lpnmh)
 {
     TRACE ("Got notification %x from %p\n", lpnmh->code, lpnmh->hwndFrom);
     TRACE ("info: %p %p %p\n", infoPtr->hwndSelf, infoPtr->hMonthCal, infoPtr->hUpdown);
@@ -890,7 +890,7 @@ DATETIME_Notify (DATETIME_INFO *infoPtr, int idCtrl, LPNMHDR lpnmh)
 
 
 static LRESULT
-DATETIME_KeyDown (DATETIME_INFO *infoPtr, DWORD vkCode, LPARAM flags)
+DATETIME_KeyDown (DATETIME_INFO *infoPtr, DWORD vkCode)
 {
     int fieldNum = infoPtr->select & DTHT_DATEFIELD;
     int wrap = 0;
@@ -1138,7 +1138,7 @@ DATETIME_SendSimpleNotify (const DATETIME_INFO *infoPtr, UINT code)
 }
 
 static LRESULT
-DATETIME_Size (DATETIME_INFO *infoPtr, WORD flags, INT width, INT height)
+DATETIME_Size (DATETIME_INFO *infoPtr, INT width, INT height)
 {
     /* set size */
     infoPtr->rcClient.bottom = height;
@@ -1323,7 +1323,7 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return SendMessageW (infoPtr->hMonthCal, WM_GETFONT, wParam, lParam);
 
     case WM_NOTIFY:
-	return DATETIME_Notify (infoPtr, (int)wParam, (LPNMHDR)lParam);
+	return DATETIME_Notify (infoPtr, (LPNMHDR)lParam);
 
     case WM_ENABLE:
         return DATETIME_Enable (infoPtr, (BOOL)wParam);
@@ -1339,7 +1339,7 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DATETIME_Paint (infoPtr, (HDC)wParam);
 
     case WM_KEYDOWN:
-        return DATETIME_KeyDown (infoPtr, wParam, lParam);
+        return DATETIME_KeyDown (infoPtr, wParam);
 
     case WM_KILLFOCUS:
         return DATETIME_KillFocus (infoPtr, (HWND)wParam);
@@ -1351,13 +1351,13 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DATETIME_SetFocus (infoPtr, (HWND)wParam);
 
     case WM_SIZE:
-        return DATETIME_Size (infoPtr, wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
+        return DATETIME_Size (infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
     case WM_LBUTTONDOWN:
-        return DATETIME_LButtonDown (infoPtr, (WORD)wParam, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
+        return DATETIME_LButtonDown (infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
     case WM_LBUTTONUP:
-        return DATETIME_LButtonUp (infoPtr, (WORD)wParam);
+        return DATETIME_LButtonUp (infoPtr);
 
     case WM_VSCROLL:
         return DATETIME_VScroll (infoPtr, (WORD)wParam);
