@@ -293,6 +293,60 @@ end:
     return ret;
 }
 
+
+/******************************************************************************
+ * Name       : AddApplicationsToList
+ * Description: Populates the list box with applications.
+ * Parameters : hWnd    - Handle of the dialog box
+ */
+static void AddApplicationsToList(HWND hWnd, HIMAGELIST hList)
+{
+    APPINFO *iter = AppInfo;
+    LVITEMW lvItem;
+    HICON hIcon;
+    int index;
+
+    while (iter)
+    {
+        /* get the icon */
+        index = 0;
+
+        if (iter->icon)
+        {
+            if (ExtractIconExW(iter->icon, iter->iconIdx, NULL, &hIcon, 1) == 1)
+            {
+                index = ImageList_AddIcon(hList, hIcon);
+                DestroyIcon(hIcon);
+            }
+        }
+
+        lvItem.mask = LVIF_IMAGE | LVIF_TEXT | LVIF_PARAM;
+        lvItem.iItem = iter->id;
+        lvItem.iSubItem = 0;
+        lvItem.pszText = iter->title;
+        lvItem.iImage = index;
+        lvItem.lParam = iter->id;
+
+        index = ListView_InsertItemW(hWnd, &lvItem);
+
+        /* now add the subitems (columns) */
+        ListView_SetItemTextW(hWnd, index, 1, iter->publisher);
+        ListView_SetItemTextW(hWnd, index, 2, iter->version);
+
+        iter = iter->next;
+    }
+}
+
+/******************************************************************************
+ * Name       : RemoveItemsFromList
+ * Description: Clears the application list box.
+ * Parameters : hWnd    - Handle of the dialog box
+ */
+static void RemoveItemsFromList(HWND hWnd)
+{
+    SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_DELETEALLITEMS, 0, 0);
+}
+
 /******************************************************************************
  * Name       : EmptyList
  * Description: Frees memory used by the application linked list.
@@ -409,6 +463,7 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
     }
     else /* we need to remove the existing things first */
     {
+        RemoveItemsFromList(hWnd);
         ImageList_Destroy(hImageList);
 
         /* reset the list, since it's probably changed if the uninstallation was
@@ -422,6 +477,7 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
     ReadApplicationsFromRegistry(HKEY_LOCAL_MACHINE);
     ReadApplicationsFromRegistry(HKEY_CURRENT_USER);
 
+    AddApplicationsToList(hWndListView, hImageList);
     UpdateButtons(hWnd);
 
     return(hImageList);
@@ -439,6 +495,7 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
 static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     static HIMAGELIST hImageList;
+    LPNMHDR nmh;
 
     switch(msg)
     {
@@ -451,11 +508,29 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
             return TRUE;
 
         case WM_DESTROY:
+            RemoveItemsFromList(hWnd);
             ImageList_Destroy(hImageList);
 
             EmptyList();
 
             return 0;
+
+        case WM_NOTIFY:
+            nmh = (LPNMHDR) lParam;
+
+            switch (nmh->idFrom)
+            {
+                case IDL_PROGRAMS:
+                    switch (nmh->code)
+                    {
+                        case LVN_ITEMCHANGED:
+                            UpdateButtons(hWnd);
+                            break;
+                    }
+                    break;
+            }
+
+            return TRUE;
     }
 
     return FALSE;
