@@ -27,3 +27,21 @@ STRINGTABLE
    IDS_CPL_DESC, "Allows you to install new software, or remove existing software from your computer."
    IDS_TAB1_TITLE, "Applications"
 }
+
+/* TODO: it's best to use the constant WC_LISTVIEW instead of SysListView32 directly, but the Wine resource compiler doesn't seem to like that... */
+
+IDD_MAIN DIALOG 0, 0, 320, 220
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Install/Uninstall"
+FONT 8, "MS Sans Serif"
+{
+ CONTROL "To install a new program from a floppy disk, CD-ROM drive, or your hard drive, click Install.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "&Install...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+ CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
+ CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
+ CONTROL "The following software can be automatically removed. To remove a program or to modify its installed components, select it from the list and click Add/Remove.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 36
+ CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
+ CONTROL "Add/&Remove...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
+ CONTROL "&Support Info...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
+ CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
+}

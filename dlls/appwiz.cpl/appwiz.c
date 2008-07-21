@@ -38,11 +38,15 @@
 #include <wingdi.h>
 #include <winreg.h>
 #include <shellapi.h>
+#include <commctrl.h>
 #include <cpl.h>
 
 #include "res.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
+
+/* define a maximum length for various buffers we use */
+#define MAX_STRING_LEN    1024
 
 static HINSTANCE hInst;
 
@@ -65,6 +69,61 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 }
 
 /******************************************************************************
+ * Name       : MainDlgProc
+ * Description: Callback procedure for main tab
+ * Parameters : hWnd    - hWnd of the window
+ *              msg     - reason for calling function
+ *              wParam  - additional parameter
+ *              lParam  - additional parameter
+ * Returns    : Dependant on message
+ */
+static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    return FALSE;
+}
+
+/******************************************************************************
+ * Name       : StartApplet
+ * Description: Main routine for applet
+ * Parameters : hWnd    - hWnd of the Control Panel
+ */
+static void StartApplet(HWND hWnd)
+{
+    PROPSHEETPAGEW psp;
+    PROPSHEETHEADERW psh;
+    WCHAR tab_title[MAX_STRING_LEN], app_title[MAX_STRING_LEN];
+
+    /* Load the strings we will use */
+    LoadStringW(hInst, IDS_TAB1_TITLE, tab_title, sizeof(tab_title) / sizeof(tab_title[0]));
+    LoadStringW(hInst, IDS_CPL_TITLE, app_title, sizeof(app_title) / sizeof(app_title[0]));
+
+    /* Fill out the PROPSHEETPAGE */
+    psp.dwSize = sizeof (PROPSHEETPAGEW);
+    psp.dwFlags = PSP_USETITLE;
+    psp.hInstance = hInst;
+    psp.pszTemplate = MAKEINTRESOURCEW (IDD_MAIN);
+    psp.pszIcon = NULL;
+    psp.pfnDlgProc = (DLGPROC) MainDlgProc;
+    psp.pszTitle = tab_title;
+    psp.lParam = 0;
+
+    /* Fill out the PROPSHEETHEADER */
+    psh.dwSize = sizeof (PROPSHEETHEADERW);
+    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID;
+    psh.hwndParent = hWnd;
+    psh.hInstance = hInst;
+    psh.pszIcon = NULL;
+    psh.pszCaption = app_title;
+    psh.nPages = 1;
+    psh.ppsp = &psp;
+    psh.pfnCallback = NULL;
+    psh.nStartPage = 0;
+
+    /* Display the property sheet */
+    PropertySheetW (&psh);
+}
+
+/******************************************************************************
  * Name       : CPlApplet
  * Description: Entry point for Control Panel applets
  * Parameters : hwndCPL - hWnd of the Control Panel
@@ -75,9 +134,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
  */
 LONG CALLBACK CPlApplet(HWND hwndCPL, UINT message, LPARAM lParam1, LPARAM lParam2)
 {
+    INITCOMMONCONTROLSEX iccEx;
+
     switch (message)
     {
         case CPL_INIT:
+            iccEx.dwSize = sizeof(iccEx);
+            iccEx.dwICC = ICC_LISTVIEW_CLASSES | ICC_TAB_CLASSES;
+
+            InitCommonControlsEx(&iccEx);
+
             return TRUE;
 
         case CPL_GETCOUNT:
@@ -94,6 +160,10 @@ LONG CALLBACK CPlApplet(HWND hwndCPL, UINT message, LPARAM lParam1, LPARAM lPara
 
             break;
         }
+
+        case CPL_DBLCLK:
+            StartApplet(hwndCPL);
+            break;
     }
 
     return FALSE;

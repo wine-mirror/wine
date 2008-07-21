@@ -19,6 +19,17 @@
 *
 */
 
+/* Dialogs */
+
+#define IDD_MAIN               1
+#define IDD_INFO               2
+
+/* Dialog controls */
+#define IDC_INSTALL         1010
+#define IDL_PROGRAMS        1011
+#define IDC_ADDREMOVE       1012
+#define IDC_SUPPORT_INFO    1013
+
 /* Icons */
 
 #define ICO_MAIN               1
