@@ -23,7 +23,8 @@
 #include <stdio.h>
 
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0500 /* For SPI_GETMOUSEHOVERWIDTH and more */
+#define _WIN32_WINNT 0x0600 /* For SPI_GETMOUSEHOVERWIDTH and more */
+#define _WIN32_IE 0x0700
 
 #include "wine/test.h"
 #include "windef.h"
