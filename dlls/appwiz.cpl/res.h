@@ -30,6 +30,16 @@
 #define IDC_ADDREMOVE       1012
 #define IDC_SUPPORT_INFO    1013
 
+#define IDC_INFO_PUBLISHER  1100
+#define IDC_INFO_VERSION    1101
+#define IDC_INFO_CONTACT    1102
+#define IDC_INFO_SUPPORT    1103
+#define IDC_INFO_PHONE      1104
+#define IDC_INFO_README     1105
+#define IDC_INFO_UPDATES    1106
+#define IDC_INFO_COMMENTS   1107
+#define IDC_INFO_LABEL      1108
+
 /* Icons */
 
 #define ICO_MAIN               1

@@ -426,6 +426,72 @@ static void UninstallProgram(int id)
     }
 }
 
+/******************************************************************************
+ * Name       : SupportInfoDlgProc
+ * Description: Callback procedure for support info dialog
+ * Parameters : hWnd    - hWnd of the window
+ *              msg     - reason for calling function
+ *              wParam  - additional parameter
+ *              lParam  - additional parameter
+ * Returns    : Dependant on message
+ */
+static BOOL CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    APPINFO *iter;
+    WCHAR oldtitle[MAX_STRING_LEN];
+    WCHAR buf[MAX_STRING_LEN];
+
+    switch(msg)
+    {
+        case WM_INITDIALOG:
+            for (iter = AppInfo; iter; iter = iter->next)
+            {
+                if (iter->id == (int) lParam)
+                {
+                    /* Update the main label with the app name */
+                    if (GetWindowTextW(GetDlgItem(hWnd, IDC_INFO_LABEL), oldtitle,
+                        MAX_STRING_LEN) != 0)
+                    {
+                        wsprintfW(buf, oldtitle, iter->title);
+                        SetWindowTextW(GetDlgItem(hWnd, IDC_INFO_LABEL), buf);
+                    }
+
+                    break;
+                }
+            }
+
+            return TRUE;
+
+        case WM_DESTROY:
+            return 0;
+
+        case WM_COMMAND:
+            switch (LOWORD(wParam))
+            {
+                case IDOK:
+                    EndDialog(hWnd, TRUE);
+                    break;
+
+            }
+
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+/******************************************************************************
+ * Name       : SupportInfo
+ * Description: Displays the Support Information dialog
+ * Parameters : hWnd    - Handle of the main dialog
+ *              id      - ID of the application to display information for
+ */
+static void SupportInfo(HWND hWnd, int id)
+{
+    DialogBoxParamW(hInst, MAKEINTRESOURCEW(IDD_INFO), hWnd, (DLGPROC)
+        SupportInfoDlgProc, (LPARAM) id);
+}
+
 /* Definition of column headers for AddListViewColumns function */
 typedef struct AppWizColumn {
    int width;
@@ -607,6 +673,22 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
                     }
 
                     hImageList = ResetApplicationList(FALSE, hWnd, hImageList);
+
+                    break;
+
+                case IDC_SUPPORT_INFO:
+                    selitem = SendDlgItemMessageW(hWnd, IDL_PROGRAMS,
+                        LVM_GETNEXTITEM, -1, LVNI_FOCUSED | LVNI_SELECTED);
+
+                    if (selitem != -1)
+                    {
+                        lvItem.iItem = selitem;
+                        lvItem.mask = LVIF_PARAM;
+
+                        if (SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_GETITEMW,
+                          0, (LPARAM) &lvItem))
+                            SupportInfo(hWnd, lvItem.lParam);
+                    }
 
                     break;
             }
