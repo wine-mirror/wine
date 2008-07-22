@@ -893,6 +893,31 @@ static void test_wtoi(void)
     } /* for */
 }
 
+static void test_atoi(void)
+{
+    int test_num;
+    int result;
+
+    for (test_num = 0; test_num < NB_STR2LONG; test_num++) {
+        result = patoi(str2long[test_num].str);
+        ok(result == str2long[test_num].value,
+           "(test %d): call failed: _atoi(\"%s\") has result %d, expected: %d\n",
+           test_num, str2long[test_num].str, result, str2long[test_num].value);
+    }
+}
+
+static void test_atol(void)
+{
+    int test_num;
+    int result;
+
+    for (test_num = 0; test_num < NB_STR2LONG; test_num++) {
+        result = patol(str2long[test_num].str);
+        ok(result == str2long[test_num].value,
+           "(test %d): call failed: _atol(\"%s\") has result %d, expected: %d\n",
+           test_num, str2long[test_num].str, result, str2long[test_num].value);
+    }
+}
 
 static void test_wtol(void)
 {
@@ -1095,4 +1120,8 @@ START_TEST(string)
         test_wtoi64();
     if (p_wcschr && p_wcsrchr)
         test_wcsfuncs();
+    if (patoi)
+        test_atoi();
+    if (patol)
+        test_atol();
 }

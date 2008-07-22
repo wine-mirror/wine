@@ -465,24 +465,6 @@ ULONG __cdecl NTDLL_strtoul( const char *nptr, char **endptr, int base )
 
 
 /*********************************************************************
- *                  atoi   (NTDLL.@)
- */
-int __cdecl NTDLL_atoi( const char *nptr )
-{
-    return atoi( nptr );
-}
-
-
-/*********************************************************************
- *                  atol   (NTDLL.@)
- */
-LONG __cdecl NTDLL_atol( const char *nptr )
-{
-    return atol( nptr );
-}
-
-
-/*********************************************************************
  *      _ultoa   (NTDLL.@)
  *
  * Convert an unsigned long integer to a string.
@@ -727,7 +709,7 @@ char * __cdecl _i64toa(
  *  - No check is made for value overflow, only the lower 64 bits are assigned.
  *  - If str is NULL it crashes, as the native function does.
  */
-LONGLONG __cdecl _atoi64( char *str )
+LONGLONG __cdecl _atoi64( const char *str )
 {
     ULONGLONG RunningTotal = 0;
     char bMinus = 0;
@@ -749,6 +731,24 @@ LONGLONG __cdecl _atoi64( char *str )
     } /* while */
 
     return bMinus ? -RunningTotal : RunningTotal;
+}
+
+
+/*********************************************************************
+ *                  atoi   (NTDLL.@)
+ */
+int __cdecl NTDLL_atoi( const char *nptr )
+{
+    return _atoi64( nptr );
+}
+
+
+/*********************************************************************
+ *                  atol   (NTDLL.@)
+ */
+LONG __cdecl NTDLL_atol( const char *nptr )
+{
+    return _atoi64( nptr );
 }
 
 
