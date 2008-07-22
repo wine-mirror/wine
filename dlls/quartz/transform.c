@@ -65,7 +65,7 @@ static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TY
 static HRESULT TransformFilter_Output_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
     TransformFilterImpl* pTransformFilter = (TransformFilterImpl*)iface;
-    AM_MEDIA_TYPE* outpmt = &((OutputPin*)pTransformFilter->ppPins[1])->pin.mtCurrent;
+    AM_MEDIA_TYPE* outpmt = &pTransformFilter->pmt;
     TRACE("%p\n", iface);
 
     if (IsEqualIID(&pmt->majortype, &outpmt->majortype) && IsEqualIID(&pmt->subtype, &outpmt->subtype))
