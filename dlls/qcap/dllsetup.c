@@ -99,106 +99,6 @@ err_out:
 }
 
 /*
- * SetupRegisterFilter through IFilterMapper2
- */
-static HRESULT SetupRegisterFilter2(const AMOVIESETUP_FILTER * const pSetup,
-                                    IFilterMapper2 * pIFM2, BOOL bRegister)
-{
-    HRESULT hr;
-
-    if (NULL == pSetup)
-        return S_FALSE;
-
-    /* unregister filter */
-    hr = IFilterMapper2_UnregisterFilter(pIFM2, 0, 0, pSetup->clsID);
-
-    if (bRegister)
-    {
-        REGFILTER2 rf2;
-        rf2.dwVersion = 1;
-        rf2.dwMerit = pSetup->dwMerit;
-        rf2.u.s.cPins = pSetup->nPins;
-        rf2.u.s.rgPins = pSetup->lpPin;
-    
-        /* register filter */
-        hr = IFilterMapper2_RegisterFilter(pIFM2, pSetup->clsID,
-                                           pSetup->strName, 0, 0, NULL, &rf2);
-    }
-    else
-    {
-        /* filter not found is ignored here,
-           but there is no #define for 0x80070002  */
-        if (HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr)
-            hr = NOERROR;
-    }
-    return hr;
-}
-
-/*
- * SetupRegisterFilter through IFilterMapper
- */
-static HRESULT SetupRegisterFilter(const AMOVIESETUP_FILTER * const pSetup,
-                                   IFilterMapper * pIFM, BOOL bRegister)
-{
-    HRESULT hr;
-
-    if (NULL == pSetup)
-        return S_FALSE;
-
-    /* unregister filter */
-    hr = IFilterMapper_UnregisterFilter(pIFM, *pSetup->clsID);
-
-    if (bRegister)
-    {
-        /* register filter */
-        hr = IFilterMapper_RegisterFilter(pIFM, *pSetup->clsID,
-                                          pSetup->strName, pSetup->dwMerit);
-        if (SUCCEEDED(hr))
-        {
-            const AMOVIESETUP_PIN *lpPin = pSetup->lpPin;
-            const AMOVIESETUP_MEDIATYPE *lpType;
-            UINT i, j;
-
-            for (i = 0; i < pSetup->nPins; i++, lpPin++)
-            {
-                hr = IFilterMapper_RegisterPin(pIFM, *(pSetup->clsID),
-                                               lpPin->strName,
-                                               lpPin->bRendered,
-                                               lpPin->bOutput,
-                                               lpPin->bZero,
-                                               lpPin->bMany,
-                                               *(lpPin->clsConnectsToFilter),
-                                               lpPin->strConnectsToPin);
-
-                if (SUCCEEDED(hr))
-                {
-                    lpType = lpPin->lpMediaType;
-
-                    /* and each pin's media types */
-                    for (j = 0; j < lpPin->nMediaTypes; j++, lpType++)
-                    {
-                        hr = IFilterMapper_RegisterPinType(pIFM, *(pSetup->clsID),
-                                                           lpPin->strName,
-                                                           *(lpType->clsMajorType),
-                                                           *(lpType->clsMinorType));
-                        if (FAILED(hr)) break;
-                    }
-                    if (FAILED(hr)) break;
-                }
-                if (FAILED(hr)) break;
-            }
-        }
-    }
-    else
-    {
-        /* filter not registered is ignored here, there is no definition for 0x80070002  */
-        if (HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr)
-           hr = NOERROR;
-    }
-    return hr;
-}
-
-/*
  * RegisterAllClasses()
  */
 static HRESULT SetupRegisterAllClasses(const CFactoryTemplate * pList, int num,
@@ -246,7 +146,6 @@ HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
     static const WCHAR szFileName[] = {'q','c','a','p','.','d','l','l',0};
     HRESULT hr = NOERROR;
     IFilterMapper2 *pIFM2 = NULL;
-    IFilterMapper *pIFM = NULL;
 
     /* first register all server classes, just to make sure */
     if (bRegister)
@@ -260,13 +159,6 @@ HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
         TRACE("Getting IFilterMapper2\r\n");
         hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
                               &IID_IFilterMapper2, (void **)&pIFM2);
-        if (FAILED(hr))
-        {
-            TRACE("- trying IFilterMapper instead\r\n");
-
-            hr = CoCreateInstance(&CLSID_FilterMapper, NULL, CLSCTX_INPROC_SERVER,
-                                  &IID_IFilterMapper, (void **)&pIFM);
-        }
 
         if (SUCCEEDED(hr))
         {
@@ -275,14 +167,9 @@ HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
             /* scan through array of CFactoryTemplates registering all filters */
             for (i = 0; i < num; i++, pList++)
             {
-                if (NULL != pList->m_pAMovieSetup_Filter)
+                if (pList->m_pAMovieSetup_Filter.dwVersion)
                 {
-                    if (pIFM2)
-                        hr = SetupRegisterFilter2(pList->m_pAMovieSetup_Filter,
-                                                  pIFM2, bRegister);
-                    else
-                        hr = SetupRegisterFilter(pList->m_pAMovieSetup_Filter,
-                                                 pIFM, bRegister);
+                    hr = IFilterMapper2_RegisterFilter(pIFM2, pList->m_ClsID, pList->m_Name, NULL, &CLSID_LegacyAmFilterCategory, NULL, &pList->m_pAMovieSetup_Filter);
                 }
 
                 /* check final error for this pass and break loop if we failed */
@@ -291,10 +178,7 @@ HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
             }
 
             /* release interface */
-            if (pIFM2)
-                IFilterMapper2_Release(pIFM2);
-            else
-                IFilterMapper_Release(pIFM);
+            IFilterMapper2_Release(pIFM2);
         }
 
         /* and clear up */

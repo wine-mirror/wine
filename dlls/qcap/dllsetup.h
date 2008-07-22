@@ -35,15 +35,6 @@ typedef REGFILTERPINS AMOVIESETUP_PIN,
     * PAMOVIESETUP_PIN, 
     * LPAMOVIESETUP_PIN;
 
-typedef struct _AMOVIESETUP_FILTER
-{
-    const CLSID           *clsID;
-    const WCHAR           *strName;
-    DWORD                 dwMerit;
-    UINT                  nPins;
-    const AMOVIESETUP_PIN *lpPin;
-} AMOVIESETUP_FILTER, * PAMOVIESETUP_FILTER, * LPAMOVIESETUP_FILTER;
-
 /* This needs to go into Combase.h */
 typedef IUnknown *(CALLBACK *LPFNNewCOMObject)(LPUNKNOWN pUnkOuter, HRESULT *phr);
 typedef void (CALLBACK *LPFNInitRoutine)(BOOL bLoading, const CLSID *rclsid);
@@ -53,7 +44,7 @@ typedef struct tagCFactoryTemplate {
     const CLSID *m_ClsID;
     LPFNNewCOMObject m_lpfnNew;
     LPFNInitRoutine m_lpfnInit;
-    const AMOVIESETUP_FILTER *m_pAMovieSetup_Filter;
+    const REGFILTER2 m_pAMovieSetup_Filter;
 } CFactoryTemplate;
 
 /****************************************************************************
