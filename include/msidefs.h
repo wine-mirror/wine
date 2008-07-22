@@ -207,6 +207,14 @@ enum msidbAssemblyAttributes
     msidbAssemblyAttributesWin32 = 0x00000001,
 };
 
+enum msidbSumInfoSourceType
+{
+    msidbSumInfoSourceTypeSFN = 0x00000001,
+    msidbSumInfoSourceTypeCompressed = 0x00000002,
+    msidbSumInfoSourceTypeAdminImage = 0x00000004,
+    msidbSumInfoSourceTypeLUAPackage = 0x00000008,
+};
+
 /*
  * Windows SDK braindamage alert
  *
