@@ -38,6 +38,10 @@
 #include "shlwapi.h"
 
 #include "cpanel.h"
+#include "shresdef.h"
+#include "shell32_main.h"
+
+#define MAX_STRING_LEN      1024
 
 WINE_DEFAULT_DEBUG_CHANNEL(shlctrl);
 
@@ -287,10 +291,11 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 {
     WNDCLASSW	wc;
     MSG		msg;
-    const WCHAR appName[] = {'W','i','n','e',' ','C','o','n','t','r','o','l',
-        ' ','P','a','n','e','l',0};
+    WCHAR appName[MAX_STRING_LEN];
     const WCHAR className[] = {'S','h','e','l','l','_','C','o','n','t','r','o',
         'l','_','W','n','d','C','l','a','s','s',0};
+
+    LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName, sizeof(appName) / sizeof(appName[0]));
 
     wc.style = CS_HREDRAW|CS_VREDRAW;
     wc.lpfnWndProc = Control_WndProc;

@@ -251,6 +251,8 @@ STRINGTABLE
 	IDS_CDBURN_AREA             "Lokalne nastavitve\\Podatki programov\\Microsoft\\Zapisovanje CD-jev"
 
 	IDS_NEWFOLDER		"Nova mapa"
+
+	IDS_CPANEL_TITLE            "Wine Control Panel"
 }
 
 STRINGTABLE

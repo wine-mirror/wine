@@ -209,6 +209,8 @@ STRINGTABLE
         IDS_PROGRAMS            "Meniu Start\\Programe"
         IDS_PERSONAL            "Documentele mele"
         IDS_FAVORITES           "Favorite"
+
+        IDS_CPANEL_TITLE        "Wine Control Panel"
 }
 
 STRINGTABLE

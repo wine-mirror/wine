@@ -236,4 +236,6 @@ STRINGTABLE
 	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
 	IDS_NEWFOLDER		"New Folder"
+
+	IDS_CPANEL_TITLE            "Wine Control Panel"
 }

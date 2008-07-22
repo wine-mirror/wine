@@ -218,4 +218,6 @@ STRINGTABLE
 	IDS_CDBURN_AREA             "Paikalliset asetukset\\Ohjelmien tiedot\\Microsoft\\CD Burning"
 
 	IDS_NEWFOLDER		"New Folder"
+
+	IDS_CPANEL_TITLE            "Wine Control Panel"
 }

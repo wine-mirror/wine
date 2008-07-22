@@ -189,4 +189,6 @@ STRINGTABLE
 	IDS_SHV_COLUMN_DELDATE	"Date deleted"
 
 	IDS_NEWFOLDER		"New Folder"
+
+	IDS_CPANEL_TITLE	"Wine Control Panel"
 }

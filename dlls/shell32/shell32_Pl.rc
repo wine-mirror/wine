@@ -257,6 +257,8 @@ STRINGTABLE
 	IDS_CDBURN_AREA             "Ustawienia lokalne\\Dane aplikacji\\Microsoft\\Nagrywanie dysków CD"
 
 	IDS_NEWFOLDER		"Nowy Folder"
+
+	IDS_CPANEL_TITLE            "Wine Control Panel"
 }
 
 STRINGTABLE

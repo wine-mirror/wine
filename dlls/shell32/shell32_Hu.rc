@@ -68,3 +68,8 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Mégse", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "&Tallózás...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
+
+STRINGTABLE
+{
+    IDS_CPANEL_TITLE            "Wine Control Panel"
+}

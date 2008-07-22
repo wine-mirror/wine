@@ -260,6 +260,8 @@ IDS_COMMON_VIDEO            "문서\\내 비디오"
 IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
 IDS_NEWFOLDER		"새 폴더"
+
+IDS_CPANEL_TITLE            "Wine Control Panel"
 }
 
 STRINGTABLE

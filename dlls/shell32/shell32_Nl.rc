@@ -258,6 +258,8 @@ STRINGTABLE
 	IDS_CDBURN_AREA             "Lokale Instellingen\\Applicatie Data\\Microsoft\\CD Branden"
 
 	IDS_NEWFOLDER		"Nieuwe Map"
+
+	IDS_CPANEL_TITLE            "Wine Control Panel"
 }
 
 STRINGTABLE

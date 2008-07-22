@@ -312,6 +312,8 @@ STRINGTABLE
 	IDS_CDBURN_AREA             "Configurações locais\\Dados de aplicativos\\Microsoft\\CD Burning"
 
 	IDS_NEWFOLDER               "Nova Pasta"
+
+	IDS_CPANEL_TITLE            "Wine Control Panel"
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -399,4 +401,6 @@ STRINGTABLE
 	IDS_CDBURN_AREA             "Definições locais\\Application Data\\Microsoft\\CD Burning"
 
 	IDS_NEWFOLDER               "Nova Pasta"
+
+	IDS_CPANEL_TITLE            "Wine Control Panel"
 }
