@@ -360,6 +360,17 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
                  SendMessageW(hWnd, WM_CLOSE, 0, 0);
                  return 0;
 
+             case IDM_CPANEL_ABOUT:
+                 {
+                     WCHAR appName[MAX_STRING_LEN];
+
+                     LoadStringW(shell32_hInstance, IDS_CPANEL_TITLE, appName,
+                         sizeof(appName) / sizeof(appName[0]));
+                     ShellAboutW(hWnd, appName, NULL, NULL);
+
+                     return 0;
+                 }
+
              case FCIDM_SHVIEW_BIGICON:
              case FCIDM_SHVIEW_SMALLICON:
              case FCIDM_SHVIEW_LISTVIEW:
