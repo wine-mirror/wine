@@ -1193,6 +1193,32 @@ BOOL WINAPI MoveFileA( LPCSTR source, LPCSTR dest )
 }
 
 
+/*************************************************************************
+ *           CreateHardLinkW   (KERNEL32.@)
+ */
+BOOL WINAPI CreateHardLinkW(LPCWSTR lpFileName, LPCWSTR lpExistingFileName,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+    FIXME("(%s, %s, %p): stub\n", debugstr_w(lpFileName),
+        debugstr_w(lpExistingFileName), lpSecurityAttributes);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/*************************************************************************
+ *           CreateHardLinkA   (KERNEL32.@)
+ */
+BOOL WINAPI CreateHardLinkA(LPCSTR lpFileName, LPCSTR lpExistingFileName,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+    FIXME("(%s, %s, %p): stub\n", debugstr_a(lpFileName),
+        debugstr_a(lpExistingFileName), lpSecurityAttributes);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
 /***********************************************************************
  *           CreateDirectoryW   (KERNEL32.@)
  * RETURNS:

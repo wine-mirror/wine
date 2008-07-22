@@ -224,8 +224,8 @@
 @ stdcall CreateFileMappingA(long ptr long long long str)
 @ stdcall CreateFileMappingW(long ptr long long long wstr)
 @ stdcall CreateFileW(wstr long long ptr long long long)
-# @ stub CreateHardLinkA
-# @ stub CreateHardLinkW
+@ stdcall CreateHardLinkA(str str ptr)
+@ stdcall CreateHardLinkW(wstr wstr ptr)
 @ stdcall CreateIoCompletionPort(long long long long)
 @ stdcall CreateJobObjectA(ptr str)
 @ stdcall CreateJobObjectW(ptr wstr)
