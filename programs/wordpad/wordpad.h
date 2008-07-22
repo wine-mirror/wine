@@ -204,7 +204,7 @@ void dialog_printsetup(HWND);
 void dialog_print(HWND, LPWSTR);
 void target_device(HWND, DWORD);
 void print_quick(LPWSTR);
-LRESULT preview_command(HWND, WPARAM, LPARAM);
+LRESULT preview_command(HWND, WPARAM);
 void init_preview(HWND, LPWSTR);
 void close_preview(HWND);
 BOOL preview_isactive(void);

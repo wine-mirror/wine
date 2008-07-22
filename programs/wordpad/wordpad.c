@@ -2467,7 +2467,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_COMMAND:
         if(preview_isactive())
         {
-            return preview_command( hWnd, wParam, lParam );
+            return preview_command( hWnd, wParam );
         }
 
         return OnCommand( hWnd, wParam, lParam );
