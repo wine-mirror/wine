@@ -528,3 +528,75 @@ NTSTATUS WINAPI RtlDeregisterWait(HANDLE WaitHandle)
 {
     return RtlDeregisterWaitEx(WaitHandle, NULL);
 }
+
+
+/************************** Timer Queue Impl **************************/
+
+struct queue_timer
+{
+    struct list entry;
+};
+
+struct timer_queue
+{
+    RTL_CRITICAL_SECTION cs;
+    struct list timers;
+};
+
+/***********************************************************************
+ *              RtlCreateTimerQueue   (NTDLL.@)
+ *
+ * Creates a timer queue object and returns a handle to it.
+ *
+ * PARAMS
+ *  NewTimerQueue [O] The newly created queue.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: Any NTSTATUS code.
+ */
+NTSTATUS WINAPI RtlCreateTimerQueue(PHANDLE NewTimerQueue)
+{
+    struct timer_queue *q = RtlAllocateHeap(GetProcessHeap(), 0, sizeof *q);
+    if (!q)
+        return STATUS_NO_MEMORY;
+
+    RtlInitializeCriticalSection(&q->cs);
+    list_init(&q->timers);
+
+    *NewTimerQueue = q;
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *              RtlDeleteTimerQueueEx   (NTDLL.@)
+ *
+ * Deletes a timer queue object.
+ *
+ * PARAMS
+ *  TimerQueue      [I] The timer queue to destroy.
+ *  CompletionEvent [I] If NULL, return immediately.  If INVALID_HANDLE_VALUE,
+ *                      wait until all timers are finished firing before
+ *                      returning.  Otherwise, return immediately and set the
+ *                      event when all timers are done.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS if synchronous, STATUS_PENDING if not.
+ *  Failure: Any NTSTATUS code.
+ */
+NTSTATUS WINAPI RtlDeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
+{
+    struct timer_queue *q = TimerQueue;
+
+    RtlDeleteCriticalSection(&q->cs);
+    RtlFreeHeap(GetProcessHeap(), 0, q);
+
+    if (CompletionEvent == INVALID_HANDLE_VALUE)
+        return STATUS_SUCCESS;
+    else
+    {
+        if (CompletionEvent)
+            NtSetEvent(CompletionEvent, NULL);
+        return STATUS_PENDING;
+    }
+}

@@ -1047,9 +1047,16 @@ BOOL WINAPI CancelWaitableTimer( HANDLE handle )
  */
 HANDLE WINAPI CreateTimerQueue(void)
 {
-    FIXME("stub\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return NULL;
+    HANDLE q;
+    NTSTATUS status = RtlCreateTimerQueue(&q);
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
+
+    return q;
 }
 
 
@@ -1058,9 +1065,15 @@ HANDLE WINAPI CreateTimerQueue(void)
  */
 BOOL WINAPI DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 {
-    FIXME("(%p, %p): stub\n", TimerQueue, CompletionEvent);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    NTSTATUS status = RtlDeleteTimerQueueEx(TimerQueue, CompletionEvent);
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************

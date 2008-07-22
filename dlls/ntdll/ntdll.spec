@@ -489,7 +489,7 @@
 # @ stub RtlCreateSystemVolumeInformationFolder
 @ stub RtlCreateTagHeap
 # @ stub RtlCreateTimer
-# @ stub RtlCreateTimerQueue
+@ stdcall RtlCreateTimerQueue(ptr)
 @ stdcall RtlCreateUnicodeString(ptr wstr)
 @ stdcall RtlCreateUnicodeStringFromAsciiz(ptr str)
 @ stub RtlCreateUserProcess
@@ -520,7 +520,7 @@
 @ stdcall RtlDeleteSecurityObject(ptr)
 # @ stub RtlDeleteTimer
 # @ stub RtlDeleteTimerQueue
-# @ stub RtlDeleteTimerQueueEx
+@ stdcall RtlDeleteTimerQueueEx(ptr ptr)
 @ stdcall RtlDeregisterWait(ptr)
 @ stdcall RtlDeregisterWaitEx(ptr ptr)
 @ stdcall RtlDestroyAtomTable(ptr)

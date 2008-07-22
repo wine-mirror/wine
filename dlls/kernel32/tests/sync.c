@@ -605,18 +605,15 @@ static void test_timer_queue(void)
 
     /* Test asynchronous deletion of the queue. */
     q = pCreateTimerQueue();
-    todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, NULL);
     ok(!ret, "DeleteTimerQueueEx\n");
-    todo_wine
     ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
 
     /* Test synchronous deletion of the queue and running timers. */
     q = pCreateTimerQueue();
-    todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
 
     /* Called once.  */
@@ -668,9 +665,9 @@ static void test_timer_queue(void)
     Sleep(500);
 
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
+    ok(ret, "DeleteTimerQueueEx\n");
     todo_wine
     {
-    ok(ret, "DeleteTimerQueueEx\n");
     ok(n1 == 1, "Timer callback 1\n");
     ok(n2 < n3, "Timer callback 2 should be much slower than 3\n");
     }
@@ -687,23 +684,18 @@ static void test_timer_queue(void)
     }
 
     q = pCreateTimerQueue();
-    todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, e);
     ok(!ret, "DeleteTimerQueueEx\n");
-    todo_wine
-    {
     ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
     ok(WaitForSingleObject(e, 250) == WAIT_OBJECT_0,
        "Timer destruction event not triggered\n");
-    }
     CloseHandle(e);
 
     /* Test deleting/changing a timer in execution.  */
     q = pCreateTimerQueue();
-    todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
 
     d2.t = t2 = NULL;
@@ -731,9 +723,9 @@ static void test_timer_queue(void)
     Sleep(200);
 
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
+    ok(ret, "DeleteTimerQueueEx\n");
     todo_wine
     {
-    ok(ret, "DeleteTimerQueueEx\n");
     ok(d2.num_calls == d2.max_calls, "DeleteTimerQueueTimer\n");
     ok(d3.num_calls == d3.max_calls, "ChangeTimerQueueTimer\n");
     }
