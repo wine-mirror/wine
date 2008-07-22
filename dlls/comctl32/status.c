@@ -252,14 +252,14 @@ static void
 STATUSBAR_RefreshPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART *part, int itemID)
 {
     HBRUSH hbrBk;
-    HFONT  hOldFont;
     HTHEME theme;
 
     TRACE("item %d\n", itemID);
-    if (!IsWindowVisible (infoPtr->Self))
-        return;
 
     if (part->bound.right < part->bound.left) return;
+
+    if (!RectVisible(hdc, &part->bound))
+        return;
 
     if ((theme = GetWindowTheme (infoPtr->Self)))
     {
@@ -278,18 +278,7 @@ STATUSBAR_RefreshPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPA
                 DeleteObject (hbrBk);
     }
 
-    hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont);
-
-	STATUSBAR_DrawPart (infoPtr, hdc, part, itemID);
-
-    SelectObject (hdc, hOldFont);
-
-    if (GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP) {
-        RECT rect;
-
-	GetClientRect (infoPtr->Self, &rect);
-	STATUSBAR_DrawSizeGrip (theme, hdc, &rect);
-    }
+    STATUSBAR_DrawPart (infoPtr, hdc, part, itemID);
 }
 
 
