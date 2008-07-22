@@ -327,6 +327,8 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
 
         if (package->WordCount & msidbSumInfoSourceTypeCompressed)
             path = get_source_root( package );
+        else if (package->WordCount & msidbSumInfoSourceTypeSFN)
+            path = build_directory_name( 3, p, f->SourceShortPath, NULL );
         else
             path = build_directory_name( 3, p, f->SourceLongPath, NULL );
 

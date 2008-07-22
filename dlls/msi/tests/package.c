@@ -5918,11 +5918,8 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
-        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
-    }
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     CreateDirectoryA("short", NULL);
 
@@ -5931,11 +5928,8 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
-        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
-    }
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     CreateDirectoryA("long", NULL);
 
@@ -5944,11 +5938,8 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
-        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
-    }
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     lstrcpyA(subsrc, cwd);
     lstrcatA(subsrc, "one");
@@ -5959,7 +5950,7 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     lstrcpyA(subsrc, cwd);
@@ -5971,11 +5962,8 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir3", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
-        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
-    }
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     lstrcpyA(subsrc, cwd);
     lstrcatA(subsrc, "five");
@@ -5986,11 +5974,8 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir4", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
-        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
-    }
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     lstrcpyA(subsrc, cwd);
     lstrcatA(subsrc, "seven");
@@ -6001,7 +5986,7 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir5", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     lstrcpyA(subsrc, cwd);
@@ -6013,11 +5998,8 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir6", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
-        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
-    }
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     lstrcpyA(subsrc, cwd);
     lstrcatA(subsrc, "eleven");
@@ -6028,7 +6010,7 @@ static void test_shortlongsource(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir7", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     MsiCloseHandle(hpkg);
