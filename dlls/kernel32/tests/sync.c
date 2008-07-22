@@ -27,7 +27,11 @@
 
 #include "wine/test.h"
 
+static HANDLE (WINAPI *pCreateTimerQueue)(void);
+static BOOL   (WINAPI *pCreateTimerQueueTimer)(PHANDLE, HANDLE, WAITORTIMERCALLBACK,
+                                               PVOID, DWORD, DWORD, ULONG);
 static HANDLE (WINAPI *pCreateWaitableTimerA)(SECURITY_ATTRIBUTES*,BOOL,LPCSTR);
+static BOOL   (WINAPI *pDeleteTimerQueueEx)(HANDLE, HANDLE);
 static HANDLE (WINAPI *pOpenWaitableTimerA)(DWORD,BOOL,LPCSTR);
 
 static void test_signalandwait(void)
@@ -549,61 +553,66 @@ static void test_timer_queue(void)
     HANDLE e;
     BOOL ret;
 
+    if (!pCreateTimerQueue || !pCreateTimerQueueTimer || !pDeleteTimerQueueEx) {
+        skip("TimerQueue API not present\n");
+        return;
+    }
+
     /* Test asynchronous deletion of the queue. */
-    q = CreateTimerQueue();
+    q = pCreateTimerQueue();
     todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
 
     SetLastError(0xdeadbeef);
-    ret = DeleteTimerQueueEx(q, NULL);
+    ret = pDeleteTimerQueueEx(q, NULL);
     ok(!ret, "DeleteTimerQueueEx\n");
     todo_wine
     ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
 
     /* Test synchronous deletion of the queue and running timers. */
-    q = CreateTimerQueue();
+    q = pCreateTimerQueue();
     todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
 
     /* Called once.  */
     t1 = NULL;
     n1 = 0;
-    ret = CreateTimerQueueTimer(&t1, q, timer_queue_cb1, &n1, 0,
-                                0, 0);
+    ret = pCreateTimerQueueTimer(&t1, q, timer_queue_cb1, &n1, 0,
+                                 0, 0);
     ok(ret, "CreateTimerQueueTimer\n");
 
     /* A slow one.  */
     t2 = NULL;
     n2 = 0;
-    ret = CreateTimerQueueTimer(&t2, q, timer_queue_cb1, &n2, 0,
-                                100, 0);
+    ret = pCreateTimerQueueTimer(&t2, q, timer_queue_cb1, &n2, 0,
+                                 100, 0);
     ok(ret, "CreateTimerQueueTimer\n");
 
     /* A fast one.  */
     t3 = NULL;
     n3 = 0;
-    ret = CreateTimerQueueTimer(&t3, q, timer_queue_cb1, &n3, 0,
-                                10, 0);
+    ret = pCreateTimerQueueTimer(&t3, q, timer_queue_cb1, &n3, 0,
+                                 10, 0);
     ok(ret, "CreateTimerQueueTimer\n");
 
     /* Start really late (it won't start).  */
     t4 = NULL;
     n4 = 0;
-    ret = CreateTimerQueueTimer(&t4, q, timer_queue_cb1, &n4, 10000,
-                                10, 0);
+    ret = pCreateTimerQueueTimer(&t4, q, timer_queue_cb1, &n4, 10000,
+                                 10, 0);
     ok(ret, "CreateTimerQueueTimer\n");
 
     /* Start soon, but delay so long it won't run again.  */
     t5 = NULL;
     n5 = 0;
-    ret = CreateTimerQueueTimer(&t5, q, timer_queue_cb1, &n5, 0,
-                                10000, 0);
+    ret = pCreateTimerQueueTimer(&t5, q, timer_queue_cb1, &n5, 0,
+                                 10000, 0);
     ok(ret, "CreateTimerQueueTimer\n");
 
     /* Give them a chance to do some work.  */
     Sleep(500);
 
-    ret = DeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
+    ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
     todo_wine
     {
     ok(ret, "DeleteTimerQueueEx\n");
@@ -622,12 +631,12 @@ static void test_timer_queue(void)
         return;
     }
 
-    q = CreateTimerQueue();
+    q = pCreateTimerQueue();
     todo_wine
     ok(q != NULL, "CreateTimerQueue\n");
 
     SetLastError(0xdeadbeef);
-    ret = DeleteTimerQueueEx(q, e);
+    ret = pDeleteTimerQueueEx(q, e);
     ok(!ret, "DeleteTimerQueueEx\n");
     todo_wine
     {
@@ -641,7 +650,10 @@ static void test_timer_queue(void)
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandle("kernel32");
+    pCreateTimerQueue = (void*)GetProcAddress(hdll, "CreateTimerQueue");
+    pCreateTimerQueueTimer = (void*)GetProcAddress(hdll, "CreateTimerQueueTimer");
     pCreateWaitableTimerA = (void*)GetProcAddress(hdll, "CreateWaitableTimerA");
+    pDeleteTimerQueueEx = (void*)GetProcAddress(hdll, "DeleteTimerQueueEx");
     pOpenWaitableTimerA = (void*)GetProcAddress(hdll, "OpenWaitableTimerA");
 
     test_signalandwait();
