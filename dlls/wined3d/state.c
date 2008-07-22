@@ -3108,6 +3108,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     DWORD texUnit = state - STATE_TRANSFORM(WINED3DTS_TEXTURE0);
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[texUnit];
     BOOL generated;
+    int coordIdx;
 
     /* Ignore this when a vertex shader is used, or if the streams aren't sorted out yet */
     if(use_vs(stateblock->wineD3DDevice) ||
@@ -3130,13 +3131,14 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         return;
     }
     generated = (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU;
+    coordIdx = min(stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX & 0x0000FFFF], MAX_TEXTURES - 1);
 
     set_texture_matrix(&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
                         stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS],
                         generated,
                         context->last_was_rhw,
-                        stateblock->wineD3DDevice->strided_streams.u.s.texCoords[texUnit].dwStride ?
-                            stateblock->wineD3DDevice->strided_streams.u.s.texCoords[texUnit].dwType:
+                        stateblock->wineD3DDevice->strided_streams.u.s.texCoords[coordIdx].dwStride ?
+                            stateblock->wineD3DDevice->strided_streams.u.s.texCoords[coordIdx].dwType:
                             WINED3DDECLTYPE_UNUSED);
 
     /* The sampler applying function calls us if this changes */
