@@ -25,6 +25,7 @@ static void TaskSchedulerDestructor(TaskSchedulerImpl *This)
 {
     TRACE("%p\n", This);
     HeapFree(GetProcessHeap(), 0, This);
+    InterlockedDecrement(&dll_ref);
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_QueryInterface(
@@ -170,5 +171,6 @@ HRESULT TaskSchedulerConstructor(LPVOID *ppObj)
     This->ref = 1;
 
     *ppObj = &This->lpVtbl;
+    InterlockedIncrement(&dll_ref);
     return S_OK;
 }

@@ -1,6 +1,6 @@
 @ stub ConvertAtJobsToTasks
-@ stub DllCanUnloadNow
-@ stub DllGetClassObject
+@ stdcall -private DllCanUnloadNow()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub GetNetScheduleAccountInformation
 @ stub NetrJobAdd
 @ stub NetrJobDel

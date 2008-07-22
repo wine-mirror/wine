@@ -29,6 +29,15 @@
 #include "ole2.h"
 #include "mstask.h"
 
+extern LONG dll_ref;
+
+typedef struct
+{
+    const IClassFactoryVtbl *lpVtbl;
+    LONG ref;
+} ClassFactoryImpl;
+extern ClassFactoryImpl MSTASK_ClassFactory;
+
 typedef struct
 {
     const ITaskSchedulerVtbl *lpVtbl;

@@ -21,6 +21,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mstask);
 
+LONG dll_ref = 0;
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
@@ -37,4 +39,21 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+{
+    TRACE("(%s %s %p)\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
+
+    if (IsEqualGUID(rclsid, &CLSID_CTaskScheduler)) {
+        return IClassFactory_QueryInterface((LPCLASSFACTORY)&MSTASK_ClassFactory, iid, ppv);
+    }
+
+    FIXME("Not supported class: %s\n", debugstr_guid(rclsid));
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+HRESULT WINAPI DllCanUnloadNow(void)
+{
+    return dll_ref != 0 ? S_FALSE : S_OK;
 }
