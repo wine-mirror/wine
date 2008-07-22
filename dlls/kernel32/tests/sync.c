@@ -27,11 +27,13 @@
 
 #include "wine/test.h"
 
+static BOOL   (WINAPI *pChangeTimerQueueTimer)(HANDLE, HANDLE, ULONG, ULONG);
 static HANDLE (WINAPI *pCreateTimerQueue)(void);
 static BOOL   (WINAPI *pCreateTimerQueueTimer)(PHANDLE, HANDLE, WAITORTIMERCALLBACK,
                                                PVOID, DWORD, DWORD, ULONG);
 static HANDLE (WINAPI *pCreateWaitableTimerA)(SECURITY_ATTRIBUTES*,BOOL,LPCSTR);
 static BOOL   (WINAPI *pDeleteTimerQueueEx)(HANDLE, HANDLE);
+static BOOL   (WINAPI *pDeleteTimerQueueTimer)(HANDLE, HANDLE, HANDLE);
 static HANDLE (WINAPI *pOpenWaitableTimerA)(DWORD,BOOL,LPCSTR);
 
 static void test_signalandwait(void)
@@ -546,14 +548,57 @@ static void CALLBACK timer_queue_cb1(PVOID p, BOOLEAN timedOut)
     ++*pn;
 }
 
+struct timer_queue_data1
+{
+    int num_calls;
+    int max_calls;
+    HANDLE q, t;
+};
+
+static void CALLBACK timer_queue_cb2(PVOID p, BOOLEAN timedOut)
+{
+    struct timer_queue_data1 *d = p;
+    ok(timedOut, "Timer callbacks should always time out\n");
+    if (d->t && ++d->num_calls == d->max_calls)
+    {
+        BOOL ret;
+        SetLastError(0xdeadbeef);
+        /* Note, XP SP2 does *not* do any deadlock checking, so passing
+           INVALID_HANDLE_VALUE here will just hang.  */
+        ret = pDeleteTimerQueueTimer(d->q, d->t, NULL);
+        todo_wine
+        {
+        ok(!ret, "DeleteTimerQueueTimer\n");
+        ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
+        }
+    }
+}
+
+static void CALLBACK timer_queue_cb3(PVOID p, BOOLEAN timedOut)
+{
+    struct timer_queue_data1 *d = p;
+    ok(timedOut, "Timer callbacks should always time out\n");
+    if (d->t && ++d->num_calls == d->max_calls)
+    {
+        /* Basically kill the timer since it won't have time to run
+           again.  */
+        BOOL ret = pChangeTimerQueueTimer(d->q, d->t, 10000, 0);
+        todo_wine
+        ok(ret, "ChangeTimerQueueTimer\n");
+    }
+}
+
 static void test_timer_queue(void)
 {
     HANDLE q, t1, t2, t3, t4, t5;
     int n1, n2, n3, n4, n5;
+    struct timer_queue_data1 d2, d3;
     HANDLE e;
     BOOL ret;
 
-    if (!pCreateTimerQueue || !pCreateTimerQueueTimer || !pDeleteTimerQueueEx) {
+    if (!pChangeTimerQueueTimer || !pCreateTimerQueue || !pCreateTimerQueueTimer
+        || !pDeleteTimerQueueEx || !pDeleteTimerQueueTimer)
+    {
         skip("TimerQueue API not present\n");
         return;
     }
@@ -645,15 +690,50 @@ static void test_timer_queue(void)
        "Timer destruction event not triggered\n");
     }
     CloseHandle(e);
+
+    /* Test deleting/changing a timer in execution.  */
+    q = pCreateTimerQueue();
+    todo_wine
+    ok(q != NULL, "CreateTimerQueue\n");
+
+    d2.t = t2 = NULL;
+    d2.num_calls = 0;
+    d2.max_calls = 3;
+    d2.q = q;
+    ret = pCreateTimerQueueTimer(&t2, q, timer_queue_cb2, &d2, 10,
+                                 10, 0);
+    d2.t = t2;
+    ok(ret, "CreateTimerQueueTimer\n");
+
+    d3.t = t3 = NULL;
+    d3.num_calls = 0;
+    d3.max_calls = 4;
+    d3.q = q;
+    ret = pCreateTimerQueueTimer(&t3, q, timer_queue_cb3, &d3, 10,
+                                 10, 0);
+    d3.t = t3;
+    ok(ret, "CreateTimerQueueTimer\n");
+
+    Sleep(200);
+
+    ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
+    todo_wine
+    {
+    ok(ret, "DeleteTimerQueueEx\n");
+    ok(d2.num_calls == d2.max_calls, "DeleteTimerQueueTimer\n");
+    ok(d3.num_calls == d3.max_calls, "ChangeTimerQueueTimer\n");
+    }
 }
 
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandle("kernel32");
+    pChangeTimerQueueTimer = (void*)GetProcAddress(hdll, "ChangeTimerQueueTimer");
     pCreateTimerQueue = (void*)GetProcAddress(hdll, "CreateTimerQueue");
     pCreateTimerQueueTimer = (void*)GetProcAddress(hdll, "CreateTimerQueueTimer");
     pCreateWaitableTimerA = (void*)GetProcAddress(hdll, "CreateWaitableTimerA");
     pDeleteTimerQueueEx = (void*)GetProcAddress(hdll, "DeleteTimerQueueEx");
+    pDeleteTimerQueueTimer = (void*)GetProcAddress(hdll, "DeleteTimerQueueTimer");
     pOpenWaitableTimerA = (void*)GetProcAddress(hdll, "OpenWaitableTimerA");
 
     test_signalandwait();
