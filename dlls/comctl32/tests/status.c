@@ -151,7 +151,7 @@ static int CALLBACK check_height_family_enumproc(ENUMLOGFONTEX *enumlf, NEWTEXTM
 static void test_height(void)
 {
     LOGFONT lf;
-    HFONT hFont;
+    HFONT hFont, hFontSm;
     RECT rc1, rc2;
     HWND hwndStatus = CreateWindow(SUBCLASS_NAME, NULL, WS_CHILD|WS_VISIBLE,
         0, 0, 300, 20, g_hMainWnd, NULL, NULL, NULL);
@@ -175,6 +175,32 @@ static void test_height(void)
     GetClientRect(hwndStatus, &rc2);
     todo_wine expect_rect(0, 0, 672, 42, rc2);
 
+    /* minheight < fontsize - no effects*/
+    SendMessage(hwndStatus, SB_SETMINHEIGHT, 12, 0);
+    SendMessage(hwndStatus, WM_SIZE, 0, 0);
+    GetClientRect(hwndStatus, &rc2);
+    todo_wine expect_rect(0, 0, 672, 42, rc2);
+
+    /* minheight > fontsize - has an effect after WM_SIZE */
+    SendMessage(hwndStatus, SB_SETMINHEIGHT, 60, 0);
+    GetClientRect(hwndStatus, &rc2);
+    todo_wine expect_rect(0, 0, 672, 42, rc2);
+    SendMessage(hwndStatus, WM_SIZE, 0, 0);
+    GetClientRect(hwndStatus, &rc2);
+    expect_rect(0, 0, 672, 62, rc2);
+
+    /* font changed to smaller than minheight - has an effect */
+    SendMessage(hwndStatus, SB_SETMINHEIGHT, 30, 0);
+    expect_rect(0, 0, 672, 62, rc2);
+    SendMessage(hwndStatus, WM_SIZE, 0, 0);
+    GetClientRect(hwndStatus, &rc2);
+    todo_wine expect_rect(0, 0, 672, 42, rc2);
+    hFontSm = CreateFont(9, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE, "Tahoma");
+    SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFontSm, TRUE);
+    GetClientRect(hwndStatus, &rc2);
+    expect_rect(0, 0, 672, 32, rc2);
+
     /* test the height formula */
     ZeroMemory(&lf, sizeof(lf));
     SendMessage(hwndStatus, SB_SETMINHEIGHT, 0, 0);
@@ -185,6 +211,7 @@ static void test_height(void)
 
     DestroyWindow(hwndStatus);
     DeleteObject(hFont);
+    DeleteObject(hFontSm);
 }
 
 static void test_status_control(void)

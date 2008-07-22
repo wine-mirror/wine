@@ -72,6 +72,7 @@ typedef struct
     HWND              Notify;
     WORD              numParts;
     UINT              height;
+    UINT              minHeight;        /* at least MIN_PANE_HEIGHT, can be increased by SB_SETMINHEIGHT */
     BOOL              simple;
     HWND              hwndToolTip;
     HFONT             hFont;
@@ -119,7 +120,7 @@ STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
 
     COMCTL32_GetFontMetrics(infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont, &tm);
     margin = (tm.tmInternalLeading ? tm.tmInternalLeading : 2);
-    height = max(tm.tmHeight + margin + 2*GetSystemMetrics(SM_CYBORDER), MIN_PANE_HEIGHT) + infoPtr->verticalBorder;
+    height = max(tm.tmHeight + margin + 2*GetSystemMetrics(SM_CYBORDER), infoPtr->minHeight) + infoPtr->verticalBorder;
 
     if ((theme = GetWindowTheme(infoPtr->Self)))
     {
@@ -128,7 +129,7 @@ STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
         HDC hdc = GetDC(infoPtr->Self);
         RECT r;
         memset (&r, 0, sizeof (r));
-        r.bottom = tm.tmHeight;
+        r.bottom = max(infoPtr->minHeight, tm.tmHeight);
         if (SUCCEEDED(GetThemeBackgroundExtent(theme, hdc, SP_PANE, 0, &r, &r)))
         {
             height = r.bottom - r.top;
@@ -659,40 +660,9 @@ STATUSBAR_SetIcon (STATUS_INFO *infoPtr, INT nPart, HICON hIcon)
 static BOOL
 STATUSBAR_SetMinHeight (STATUS_INFO *infoPtr, INT height)
 {
-
-    TRACE("(height=%d)\n", height);
-    if (IsWindowVisible (infoPtr->Self)) {
-	INT  width, x, y;
-	RECT parent_rect;
-        HTHEME theme;
-
-	infoPtr->height = height + infoPtr->verticalBorder;
-        
-        if ((theme = GetWindowTheme (infoPtr->Self)))
-        {
-            /* Determine bar height from theme such that the content area is
-             * 'height' pixels large */
-            HDC hdc = GetDC (infoPtr->Self);
-            RECT r;
-            memset (&r, 0, sizeof (r));
-            r.bottom = height;
-            if (SUCCEEDED(GetThemeBackgroundExtent (theme, hdc, SP_PANE, 0, &r, &r)))
-            {
-                infoPtr->height = r.bottom - r.top;
-            }
-            ReleaseDC (infoPtr->Self, hdc);
-        }
-        
-        if (GetClientRect (infoPtr->Notify, &parent_rect))
-        {
-            width = parent_rect.right - parent_rect.left;
-            x = parent_rect.left;
-            y = parent_rect.bottom - infoPtr->height;
-            MoveWindow (infoPtr->Self, x, y, width, infoPtr->height, TRUE);
-            STATUSBAR_SetPartBounds (infoPtr);
-        }
-    }
-
+    infoPtr->minHeight = max(height, MIN_PANE_HEIGHT);
+    infoPtr->height = STATUSBAR_ComputeHeight(infoPtr);
+    /* like native, don't resize the control */
     return TRUE;
 }
 
@@ -962,6 +932,7 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     infoPtr->horizontalBorder = HORZ_BORDER;
     infoPtr->verticalBorder = VERT_BORDER;
     infoPtr->horizontalGap = HORZ_GAP;
+    infoPtr->minHeight = MIN_PANE_HEIGHT;
 
     STATUSBAR_NotifyFormat(infoPtr, infoPtr->Notify, NF_REQUERY);
 
