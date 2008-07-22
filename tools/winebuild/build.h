@@ -116,7 +116,7 @@ enum target_cpu
 
 enum target_platform
 {
-    PLATFORM_UNSPECIFIED, PLATFORM_APPLE, PLATFORM_WINDOWS
+    PLATFORM_UNSPECIFIED, PLATFORM_APPLE, PLATFORM_SOLARIS, PLATFORM_WINDOWS
 };
 
 extern enum target_cpu target_cpu;
