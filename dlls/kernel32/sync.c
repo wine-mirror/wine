@@ -1086,6 +1086,25 @@ BOOL WINAPI CreateTimerQueueTimer( PHANDLE phNewTimer, HANDLE TimerQueue,
 }
 
 /***********************************************************************
+ *           ChangeTimerQueueTimer  (KERNEL32.@)
+ *
+ * Changes the times at which the timer expires.
+ *
+ * RETURNS
+ *   nonzero on success or zero on failure
+ *
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI ChangeTimerQueueTimer( HANDLE TimerQueue, HANDLE Timer,
+                                   ULONG DueTime, ULONG Period )
+{
+    FIXME("stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           DeleteTimerQueueTimer  (KERNEL32.@)
  *
  * Cancels a timer-queue timer.

@@ -179,7 +179,7 @@
 @ stdcall CancelIo(long)
 # @ stub CancelTimerQueueTimer
 @ stdcall CancelWaitableTimer(long)
-@ stub ChangeTimerQueueTimer
+@ stdcall ChangeTimerQueueTimer(ptr ptr long long)
 # @ stub CheckNameLegalDOS8Dot3A
 # @ stub CheckNameLegalDOS8Dot3W
 @ stdcall CheckRemoteDebuggerPresent(long ptr)
