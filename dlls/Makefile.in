@@ -90,6 +90,7 @@ BASEDIRS = \
 	dpnet \
 	dpnhpast \
 	dpnlobby \
+	dpwsockx \
 	dsound \
 	dssenh \
 	dswave \
