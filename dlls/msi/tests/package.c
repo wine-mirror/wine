@@ -5676,22 +5676,16 @@ static void test_MsiGetSourcePath(void)
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
-        ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
-    }
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     /* try SubDir2 after CostFinalize */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
-        ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
-    }
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     MsiCloseHandle(hpkg);
     DeleteFile(msifile);
