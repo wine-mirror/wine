@@ -23,7 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "dplaysp.h"
+#include "wine/dplaysp.h"
 #include "lobbysp.h"
 #include "dplayx_queue.h"
 

@@ -33,7 +33,7 @@
 
 #include "dplayx_global.h"
 #include "name_server.h"
-#include "dplaysp.h"
+#include "wine/dplaysp.h"
 #include "dplayx_messages.h"
 #include "dplayx_queue.h"
 

@@ -38,7 +38,7 @@
 #include "dplayx_global.h"
 #include "name_server.h"
 #include "dplayx_queue.h"
-#include "dplaysp.h"
+#include "wine/dplaysp.h"
 #include "dplay_global.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);

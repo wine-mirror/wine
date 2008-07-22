@@ -24,7 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "dplay.h"
-#include "dplaysp.h"
+#include "wine/dplaysp.h"
 #include "dplayx_messages.h"
 #include "dplay_global.h"
 

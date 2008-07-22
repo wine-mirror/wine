@@ -23,7 +23,7 @@
 #include "wine/debug.h"
 
 #include "dpinit.h"
-#include "dplaysp.h"
+#include "wine/dplaysp.h"
 #include "dplay_global.h"
 #include "name_server.h"
 #include "dplayx_messages.h"
