@@ -750,11 +750,6 @@ static UINT copy_install_file(MSIFILE *file)
         gle = copy_file(file);
         TRACE("Overwriting existing file: %d\n", gle);
     }
-    else if (!(file->Attributes & msidbFileAttributesVital))
-    {
-        TRACE("Ignoring error for nonvital\n");
-        gle = ERROR_SUCCESS;
-    }
 
     return gle;
 }
