@@ -180,6 +180,14 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             AVISTDINDEX_ENTRY *entry = &index->aIndex[stream->pos];
             BOOL keyframe;
 
+            /* End of file */
+            if (stream->index >= stream->entries)
+            {
+                ERR("END OF STREAM ON %u\n", streamnumber);
+                IMediaSample_Release(sample);
+                return S_FALSE;
+            }
+
             rtSampleStart = index->qwBaseOffset;
             keyframe = !(entry->dwSize >> 31);
             rtSampleStart += entry->dwOffset;
@@ -195,21 +203,21 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(entry->dwSize & ~(1 << 31));
 
             TRACE("offset(%u) size(%u)\n", (DWORD)BYTES_FROM_MEDIATIME(rtSampleStart), (DWORD)BYTES_FROM_MEDIATIME(rtSampleStop - rtSampleStart));
-
-            /* End of file */
-            if (stream->index >= stream->entries)
-            {
-                ERR("END OF STREAM ON %u\n", streamnumber);
-                IMediaSample_Release(sample);
-                hr = AVISplitter_SendEndOfFile(This, streamnumber);
-                return S_FALSE;
-            }
         }
         else if (This->oldindex)
         {
             DWORD flags = This->oldindex->aIndex[stream->pos].dwFlags;
             DWORD size = This->oldindex->aIndex[stream->pos].dwSize;
             BOOL keyframe;
+
+            /* End of file */
+            if (stream->index)
+            {
+                IMediaSample_Release(sample);
+                ERR("END OF STREAM ON %u\n", streamnumber);
+                return S_FALSE;
+            }
+
             keyframe = !!(flags & AVIIF_KEYFRAME);
 
             rtSampleStart = MEDIATIME_FROM_BYTES(This->offset);
@@ -237,15 +245,11 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             } while (stream->pos_next * sizeof(This->oldindex->aIndex[0]) < This->oldindex->cb
                      && StreamFromFOURCC(This->oldindex->aIndex[stream->pos_next].dwChunkId) != streamnumber);
 
-            /* End of file */
-            if (stream->index)
+            /* End of file soon */
+            if (stream->pos_next * sizeof(This->oldindex->aIndex[0]) >= This->oldindex->cb)
             {
-                IMediaSample_Release(sample);
                 stream->pos_next = 0;
                 ++stream->index_next;
-                ERR("END OF STREAM ON %u\n", streamnumber);
-                hr = AVISplitter_SendEndOfFile(This, streamnumber);
-                return S_FALSE;
             }
         }
         else /* TODO: Generate an index automagically */
@@ -351,6 +355,8 @@ static DWORD WINAPI AVISplitter_thread_reader(LPVOID data)
         IMediaSample_Release(sample);
         if (hr == S_OK)
             hr = nexthr;
+        if (nexthr == S_FALSE)
+            AVISplitter_SendEndOfFile(This, streamnumber);
     } while (hr == S_OK);
 
     FIXME("Thread %u terminated with hr %08x!\n", streamnumber, hr);
