@@ -316,6 +316,7 @@ static HRESULT WINAPI TransformFilter_GetClassID(IBaseFilter * iface, CLSID * pC
 static HRESULT WINAPI TransformFilter_Stop(IBaseFilter * iface)
 {
     TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    HRESULT hr = S_OK;
 
     TRACE("(%p/%p)\n", This, iface);
 
@@ -323,29 +324,33 @@ static HRESULT WINAPI TransformFilter_Stop(IBaseFilter * iface)
     {
         This->state = State_Stopped;
         if (This->pFuncsTable->pfnProcessEnd)
-            This->pFuncsTable->pfnProcessEnd(This);
+            hr = This->pFuncsTable->pfnProcessEnd(This);
     }
     LeaveCriticalSection(&This->csFilter);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI TransformFilter_Pause(IBaseFilter * iface)
 {
     TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    HRESULT hr;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
     EnterCriticalSection(&This->csFilter);
     {
         if (This->state == State_Stopped)
-            IBaseFilter_Run(iface, -1);
+            hr = IBaseFilter_Run(iface, -1);
+        else
+            hr = S_OK;
 
-        This->state = State_Paused;
+        if (SUCCEEDED(hr))
+            This->state = State_Paused;
     }
     LeaveCriticalSection(&This->csFilter);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
@@ -361,12 +366,16 @@ static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tS
         {
             ((InputPin *)This->ppPins[0])->end_of_stream = 0;
             if (This->pFuncsTable->pfnProcessBegin)
-                This->pFuncsTable->pfnProcessBegin(This);
-            OutputPin_CommitAllocator((OutputPin *)This->ppPins[1]);
+                hr = This->pFuncsTable->pfnProcessBegin(This);
+            if (SUCCEEDED(hr))
+                hr = OutputPin_CommitAllocator((OutputPin *)This->ppPins[1]);
         }
 
-        This->rtStreamStart = tStart;
-        This->state = State_Running;
+        if (SUCCEEDED(hr))
+        {
+            This->rtStreamStart = tStart;
+            This->state = State_Running;
+        }
     }
     LeaveCriticalSection(&This->csFilter);
 
