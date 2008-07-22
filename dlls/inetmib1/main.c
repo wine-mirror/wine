@@ -107,9 +107,12 @@ static void mib2IfNumberInit(void)
 
     if (ret == ERROR_INSUFFICIENT_BUFFER)
     {
-        ifTable = HeapAlloc(GetProcessHeap(), 0, size);
-        if (ifTable)
-            GetIfTable(ifTable, &size, FALSE);
+        MIB_IFTABLE *table = HeapAlloc(GetProcessHeap(), 0, size);
+        if (table)
+        {
+            if (!GetIfTable(table, &size, FALSE)) ifTable = table;
+            else HeapFree(GetProcessHeap(), 0, table );
+        }
     }
 }
 
@@ -633,9 +636,12 @@ static void mib2IpAddrInit(void)
 
     if (ret == ERROR_INSUFFICIENT_BUFFER)
     {
-        ipAddrTable = HeapAlloc(GetProcessHeap(), 0, size);
-        if (ipAddrTable)
-            GetIpAddrTable(ipAddrTable, &size, TRUE);
+        MIB_IPADDRTABLE *table = HeapAlloc(GetProcessHeap(), 0, size);
+        if (table)
+        {
+            if (!GetIpAddrTable(table, &size, TRUE)) ipAddrTable = table;
+            else HeapFree(GetProcessHeap(), 0, table );
+        }
     }
 }
 
@@ -721,9 +727,12 @@ static void mib2IpRouteInit(void)
 
     if (ret == ERROR_INSUFFICIENT_BUFFER)
     {
-        ipRouteTable = HeapAlloc(GetProcessHeap(), 0, size);
-        if (ipRouteTable)
-            GetIpForwardTable(ipRouteTable, &size, TRUE);
+        MIB_IPFORWARDTABLE *table = HeapAlloc(GetProcessHeap(), 0, size);
+        if (table)
+        {
+            if (!GetIpForwardTable(ipRouteTable, &size, TRUE)) ipRouteTable = table;
+            else HeapFree(GetProcessHeap(), 0, table );
+        }
     }
 }
 
@@ -801,9 +810,12 @@ static void mib2IpNetInit(void)
 
     if (ret == ERROR_INSUFFICIENT_BUFFER)
     {
-        ipNetTable = HeapAlloc(GetProcessHeap(), 0, size);
-        if (ipNetTable)
-            GetIpNetTable(ipNetTable, &size, FALSE);
+        MIB_IPNETTABLE *table = HeapAlloc(GetProcessHeap(), 0, size);
+        if (table)
+        {
+            if (!GetIpNetTable(ipNetTable, &size, FALSE)) ipNetTable = table;
+            else HeapFree(GetProcessHeap(), 0, table );
+        }
     }
 }
 
@@ -1047,9 +1059,12 @@ static void mib2UdpEntryInit(void)
 
     if (ret == ERROR_INSUFFICIENT_BUFFER)
     {
-        udpTable = HeapAlloc(GetProcessHeap(), 0, size);
-        if (udpTable)
-            GetUdpTable(udpTable, &size, TRUE);
+        MIB_UDPTABLE *table = HeapAlloc(GetProcessHeap(), 0, size);
+        if (table)
+        {
+            if (!GetUdpTable(table, &size, TRUE)) udpTable = table;
+            else HeapFree(GetProcessHeap(), 0, table);
+        }
     }
 }
 
