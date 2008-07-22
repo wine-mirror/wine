@@ -35,6 +35,7 @@
 typedef struct IDirectPlay8ClientImpl IDirectPlay8ClientImpl;
 typedef struct IDirectPlay8AddressImpl IDirectPlay8AddressImpl;
 typedef struct IDirectPlay8LobbiedApplicationImpl IDirectPlay8LobbiedApplicationImpl;
+typedef struct IDirectPlay8ThreadPoolImpl IDirectPlay8ThreadPoolImpl;
 
 /* ------------------ */
 /* IDirectPlay8Client */
@@ -79,6 +80,16 @@ struct IDirectPlay8LobbiedApplicationImpl
   /* IDirectPlay8LobbiedApplication fields */
 };
 
+/*****************************************************************************
+ * IDirectPlay8ThreadPool implementation structure
+ */
+struct IDirectPlay8ThreadPoolImpl
+{
+  /* IUnknown fields */
+  const IDirectPlay8ThreadPoolVtbl *lpVtbl;
+  LONG          ref;
+};
+
 /**
  * factories
  */
@@ -87,6 +98,7 @@ extern HRESULT DPNET_CreateDirectPlay8Server(LPCLASSFACTORY iface, LPUNKNOWN pun
 extern HRESULT DPNET_CreateDirectPlay8Peer(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 extern HRESULT DPNET_CreateDirectPlay8Address(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 extern HRESULT DPNET_CreateDirectPlay8LobbiedApp(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
+extern HRESULT DPNET_CreateDirectPlay8ThreadPool(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 
 /**
  * debug

@@ -13,7 +13,8 @@ C_SRCS = \
 	lobbiedapp.c \
 	peer.c \
 	regsvr.c \
-	server.c
+	server.c \
+	threadpool.c
 
 RC_SRCS = version.rc
 
