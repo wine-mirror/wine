@@ -625,6 +625,8 @@ static void test_timer_queue(void)
     ret = pCreateTimerQueueTimer(&t1, q, timer_queue_cb1, &n1, 0,
                                  0, 0);
     ok(ret, "CreateTimerQueueTimer\n");
+    todo_wine
+    ok(t1 != NULL, "CreateTimerQueueTimer\n");
 
     /* A slow one.  */
     t2 = NULL;
@@ -632,6 +634,8 @@ static void test_timer_queue(void)
     ret = pCreateTimerQueueTimer(&t2, q, timer_queue_cb1, &n2, 0,
                                  100, 0);
     ok(ret, "CreateTimerQueueTimer\n");
+    todo_wine
+    ok(t2 != NULL, "CreateTimerQueueTimer\n");
 
     /* A fast one.  */
     t3 = NULL;
@@ -639,6 +643,8 @@ static void test_timer_queue(void)
     ret = pCreateTimerQueueTimer(&t3, q, timer_queue_cb1, &n3, 0,
                                  10, 0);
     ok(ret, "CreateTimerQueueTimer\n");
+    todo_wine
+    ok(t3 != NULL, "CreateTimerQueueTimer\n");
 
     /* Start really late (it won't start).  */
     t4 = NULL;
@@ -646,6 +652,8 @@ static void test_timer_queue(void)
     ret = pCreateTimerQueueTimer(&t4, q, timer_queue_cb1, &n4, 10000,
                                  10, 0);
     ok(ret, "CreateTimerQueueTimer\n");
+    todo_wine
+    ok(t4 != NULL, "CreateTimerQueueTimer\n");
 
     /* Start soon, but delay so long it won't run again.  */
     t5 = NULL;
@@ -653,6 +661,8 @@ static void test_timer_queue(void)
     ret = pCreateTimerQueueTimer(&t5, q, timer_queue_cb1, &n5, 0,
                                  10000, 0);
     ok(ret, "CreateTimerQueueTimer\n");
+    todo_wine
+    ok(t5 != NULL, "CreateTimerQueueTimer\n");
 
     /* Give them a chance to do some work.  */
     Sleep(500);
@@ -704,6 +714,8 @@ static void test_timer_queue(void)
                                  10, 0);
     d2.t = t2;
     ok(ret, "CreateTimerQueueTimer\n");
+    todo_wine
+    ok(t2 != NULL, "CreateTimerQueueTimer\n");
 
     d3.t = t3 = NULL;
     d3.num_calls = 0;
@@ -713,6 +725,8 @@ static void test_timer_queue(void)
                                  10, 0);
     d3.t = t3;
     ok(ret, "CreateTimerQueueTimer\n");
+    todo_wine
+    ok(t3 != NULL, "CreateTimerQueueTimer\n");
 
     Sleep(200);
 
