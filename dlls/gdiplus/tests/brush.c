@@ -115,6 +115,36 @@ static void test_getblend(void)
     GdipDeleteBrush((GpBrush*) brush);
 }
 
+static GpPointF getbounds_ptf[] = {{0.0, 20.0},
+                                   {50.0, 50.0},
+                                   {21.0, 25.0},
+                                   {25.0, 46.0}};
+static void test_getbounds(void)
+{
+    GpStatus status;
+    GpPathGradient *brush;
+    GpRectF bounds;
+
+    status = GdipCreatePathGradient(getbounds_ptf, 4, WrapModeClamp, &brush);
+    expect(Ok, status);
+
+    status = GdipGetPathGradientRect(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetPathGradientRect(brush, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetPathGradientRect(NULL, &bounds);
+    expect(InvalidParameter, status);
+
+    status = GdipGetPathGradientRect(brush, &bounds);
+    expect(Ok, status);
+    expectf(0.0, bounds.X);
+    expectf(20.0, bounds.Y);
+    expectf(50.0, bounds.Width);
+    expectf(30.0, bounds.Height);
+
+    GdipDeleteBrush((GpBrush*) brush);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -131,6 +161,7 @@ START_TEST(brush)
     test_type();
     test_gradientblendcount();
     test_getblend();
+    test_getbounds();
 
     GdiplusShutdown(gdiplusToken);
 }

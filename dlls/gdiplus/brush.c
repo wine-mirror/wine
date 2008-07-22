@@ -641,6 +641,51 @@ GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient *grad,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPathGradientRect(GpPathGradient *brush, GpRectF *rect)
+{
+    GpRectF r;
+    GpPath* path;
+    GpStatus stat;
+
+    if(!brush || !rect)
+        return InvalidParameter;
+
+    stat = GdipCreatePath2(brush->pathdata.Points, brush->pathdata.Types,
+                           brush->pathdata.Count, FillModeAlternate, &path);
+    if(stat != Ok)  return stat;
+
+    stat = GdipGetPathWorldBounds(path, &r, NULL, NULL);
+    if(stat != Ok){
+        GdipDeletePath(path);
+        return stat;
+    }
+
+    memcpy(rect, &r, sizeof(GpRectF));
+
+    GdipDeletePath(path);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetPathGradientRectI(GpPathGradient *brush, GpRect *rect)
+{
+    GpRectF rectf;
+    GpStatus stat;
+
+    if(!brush || !rect)
+        return InvalidParameter;
+
+    stat = GdipGetPathGradientRect(brush, &rectf);
+    if(stat != Ok)  return stat;
+
+    rect->X = roundr(rectf.X);
+    rect->Y = roundr(rectf.Y);
+    rect->Width  = roundr(rectf.Width);
+    rect->Height = roundr(rectf.Height);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient
     *grad, ARGB *argb, INT *count)
 {
