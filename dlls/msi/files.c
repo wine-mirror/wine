@@ -743,12 +743,6 @@ static UINT copy_install_file(MSIFILE *file)
         TRACE("overwriting existing file\n");
         gle = ERROR_SUCCESS;
     }
-    else if (gle == ERROR_FILE_NOT_FOUND)
-    {
-        /* FIXME: this needs to be tested, I'm pretty sure it fails */
-        TRACE("Source file not found\n");
-        gle = ERROR_SUCCESS;
-    }
     else if (gle == ERROR_ACCESS_DENIED)
     {
         SetFileAttributesW(file->TargetPath, FILE_ATTRIBUTE_NORMAL);
