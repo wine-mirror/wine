@@ -962,6 +962,7 @@ typedef struct tagMLang_impl
     const IMultiLanguageVtbl *vtbl_IMultiLanguage;
     const IMultiLanguage3Vtbl *vtbl_IMultiLanguage3;
     const IMLangFontLink2Vtbl *vtbl_IMLangFontLink2;
+    const IMLangLineBreakConsoleVtbl *vtbl_IMLangLineBreakConsole;
     LONG ref;
     DWORD total_cp, total_scripts;
 } MLang_impl;
@@ -1034,6 +1035,15 @@ static HRESULT WINAPI MLang_QueryInterface(
         TRACE("Returning IID_IMultiLanguage3 %p ref = %d\n", This, This->ref);
 	return S_OK;
     }
+
+    if (IsEqualGUID(riid, &IID_IMLangLineBreakConsole))
+    {
+	MLang_AddRef(This);
+        TRACE("Returning IID_IMLangLineBreakConsole %p ref = %d\n", This, This->ref);
+	*ppvObject = &(This->vtbl_IMLangLineBreakConsole);
+	return S_OK;
+    }
+
 
     WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
     return E_NOINTERFACE;
@@ -2696,6 +2706,87 @@ static const IMLangFontLink2Vtbl IMLangFontLink2_vtbl =
     fnIMLangFontLink2_CodePageToScriptID
 };
 
+/******************************************************************************/
+
+static HRESULT WINAPI fnIMLangLineBreakConsole_QueryInterface(
+    IMLangLineBreakConsole* iface,
+    REFIID riid,
+    void** ppvObject)
+{
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangLineBreakConsole, iface);
+    return MLang_QueryInterface( This, riid, ppvObject );
+}
+
+static ULONG WINAPI fnIMLangLineBreakConsole_AddRef(
+    IMLangLineBreakConsole* iface )
+{
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangLineBreakConsole, iface);
+    return MLang_AddRef( This );
+}
+
+static ULONG WINAPI fnIMLangLineBreakConsole_Release(
+    IMLangLineBreakConsole* iface )
+{
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMLangLineBreakConsole, iface);
+    return MLang_Release( This );
+}
+
+static HRESULT WINAPI fnIMLangLineBreakConsole_BreakLineML(
+    IMLangLineBreakConsole* iface,
+    IMLangString* pSrcMLStr,
+    long lSrcPos,
+    long lSrcLen,
+    long cMinColumns,
+    long cMaxColumns,
+    long* plLineLen,
+    long* plSkipLen)
+{
+    FIXME("(%p)->%p %li %li %li %li %p %p\n", iface, pSrcMLStr, lSrcPos, lSrcLen, cMinColumns, cMaxColumns, plLineLen, plSkipLen);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fnIMLangLineBreakConsole_BreakLineW(
+    IMLangLineBreakConsole* iface,
+    LCID locale,
+    const WCHAR* pszSrc,
+    long cchSrc,
+    long cMaxColumns,
+    long* pcchLine,
+    long* pcchSkip )
+{
+    FIXME("(%p)->%i %s %li %li %p %p\n", iface, locale, debugstr_wn(pszSrc,cchSrc), cchSrc, cMaxColumns, pcchLine, pcchSkip);
+
+    *pcchLine = cchSrc;
+    *pcchSkip = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI fnIMLangLineBreakConsole_BreakLineA(
+    IMLangLineBreakConsole* iface,
+    LCID locale,
+    UINT uCodePage,
+    const CHAR* pszSrc,
+    long cchSrc,
+    long cMaxColumns,
+    long* pcchLine,
+    long* pcchSkip)
+{
+    FIXME("(%p)->%i %i %s %li %li %p %p\n", iface, locale, uCodePage, debugstr_an(pszSrc,cchSrc), cchSrc, cMaxColumns, pcchLine, pcchSkip);
+
+    *pcchLine = cchSrc;
+    *pcchSkip = 0;
+    return S_OK;
+}
+
+static const IMLangLineBreakConsoleVtbl IMLangLineBreakConsole_vtbl =
+{
+    fnIMLangLineBreakConsole_QueryInterface,
+    fnIMLangLineBreakConsole_AddRef,
+    fnIMLangLineBreakConsole_Release,
+    fnIMLangLineBreakConsole_BreakLineML,
+    fnIMLangLineBreakConsole_BreakLineW,
+    fnIMLangLineBreakConsole_BreakLineA
+};
 
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
@@ -2712,6 +2803,7 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     mlang->vtbl_IMultiLanguage = &IMultiLanguage_vtbl;
     mlang->vtbl_IMultiLanguage3 = &IMultiLanguage3_vtbl;
     mlang->vtbl_IMLangFontLink2 = &IMLangFontLink2_vtbl;
+    mlang->vtbl_IMLangLineBreakConsole = &IMLangLineBreakConsole_vtbl;
 
     mlang->total_cp = 0;
     for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)

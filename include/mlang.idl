@@ -222,6 +222,94 @@ interface IMLangFontLink2 : IMLangCodePages
 }
 
 [
+ object,
+ uuid(c04d65ce-b70d-11d0-b188-00aa0038c969),
+ pointer_default(unique)
+]
+interface IMLangString : IUnknown
+{
+#ifdef NEWMLSTR
+    HRESULT LockMLStr(
+        [in] long lPos,
+        [in] DWORD dwFlags,
+        [out] DWORD* pdwCookie,
+        [out] long* plActualPos,
+        [out] long* plActualLen);
+
+    HRESULT UnlockMLStr(
+        [in] DWORD dwCookie);
+#else
+    HRESULT Sync(
+        [in] BOOL fNoAccess);
+#endif
+    HRESULT GetLength(
+        [out, retval] long* plLen);
+    HRESULT SetMLStr(
+        [in] long lDestPos,
+        [in] long lDestLen,
+        [in] IUnknown *pSrcMLStr,
+        [in] long lSrcPos,
+        [in] long lSrcLen);
+#ifdef NEWMLSTR
+    HRESULT RegisterAttr(
+        [in] IUnknown *pUnk,
+        [out] DWORD* pdwCookie);
+    HRESULT UnregisterAttr(
+        [in] DWORD dwCookie);
+    HRESULT EnumAttr(
+        [out] IEnumUnknown **ppEnumUnk);
+    HRESULT FindAttr(
+        [in] REFIID riid,
+        [in] LPARAM lParam,
+        [out] IUnknown **ppUnk);
+#else
+    HRESULT GetMLStr(
+        [in] long lSrcPos,
+        [in] long lSrcLen,
+        [in] IUnknown *pUnkOuter,
+        [in] DWORD dwClsContext,
+        [in] const IID* piid,
+        [out] IUnknown** ppDestMLStr,
+        [out] long* plDestPos,
+        [out] long* plDestLen);
+#endif
+}
+
+[
+ object,
+ uuid(f5be2ee1-bfd7-11d0-b188-00aa0038c969),
+ pointer_default(unique)
+]
+interface IMLangLineBreakConsole : IUnknown
+{
+    HRESULT BreakLineML(
+        [in] IMLangString* pSrcMLStr,
+        [in] long lSrcPos,
+        [in] long lSrcLen,
+        [in] long cMinColumns,
+        [in] long cMaxColumns,
+        [out] long* plLineLen,
+        [out] long* plSkipLen);
+
+    HRESULT BreakLineW(
+        [in] LCID locale,
+        [in, size_is(cchSrc)] const WCHAR* pszSrc,
+        [in] long cchSrc,
+        [in] long cMaxColumns,
+        [out] long* pcchLine,
+        [out] long* pcchSkip );
+
+    HRESULT BreakLineA(
+        [in] LCID locale,
+        [in] UINT uCodePage,
+        [in, size_is(cchSrc)] const CHAR* pszSrc,
+        [in] long cchSrc,
+        [in] long cMaxColumns,
+        [out] long* pcchLine,
+        [out] long* pcchSkip);
+}
+
+[
   object,
   uuid(275c23e3-3747-11d0-9fea-00aa003f8646),
   pointer_default(unique)
