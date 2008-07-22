@@ -353,6 +353,59 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
          Control_FreeCPlItems(hWnd, panel);
          PostQuitMessage(0);
 	 break;
+      case WM_COMMAND:
+         switch (LOWORD(lParam1))
+         {
+             case IDM_CPANEL_EXIT:
+                 SendMessageW(hWnd, WM_CLOSE, 0, 0);
+                 return 0;
+
+             case FCIDM_SHVIEW_BIGICON:
+             case FCIDM_SHVIEW_SMALLICON:
+             case FCIDM_SHVIEW_LISTVIEW:
+             case FCIDM_SHVIEW_REPORTVIEW:
+                 return 0;
+
+             default:
+                 /* check if this is an applet */
+                 if ((LOWORD(lParam1) >= IDM_CPANEL_APPLET_BASE) &&
+                     (LOWORD(lParam1) <= IDM_CPANEL_APPLET_BASE + panel->total_subprogs))
+                 {
+                     CPlItem *item;
+                     HMENU hMenu, hSubMenu;
+                     MENUITEMINFOW mii;
+
+                     /* retrieve the CPlItem structure from the menu item data */
+                     hMenu = GetMenu(hWnd);
+
+                     if (!hMenu)
+                         break;
+
+                     hSubMenu = GetSubMenu(hMenu, 0);
+
+                     if (!hSubMenu)
+                         break;
+
+                     mii.cbSize = sizeof(MENUITEMINFOW);
+                     mii.fMask = MIIM_DATA;
+
+                     if (!GetMenuItemInfoW(hSubMenu, LOWORD(lParam1), FALSE, &mii))
+                         break;
+
+                     item = (CPlItem *) mii.dwItemData;
+
+                     /* execute the applet if item is valid */
+                     if (item)
+                         item->applet->proc(item->applet->hWnd, CPL_DBLCLK, item->id,
+                             item->applet->info[item->id].lData);
+
+                     return 0;
+                 }
+
+                 break;
+         }
+
+         break;
       case WM_PAINT:
 	 return Control_WndProc_Paint(panel, lParam1);
       case WM_LBUTTONUP:
