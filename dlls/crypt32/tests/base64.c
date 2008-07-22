@@ -280,7 +280,7 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
             ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
         else
             ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-             "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
+             "Expected !ret and last error ERROR_INVALID_DATA, got ret=%d, error=%d\n", ret, GetLastError());
         if (ret)
         {
             buf = HeapAlloc(GetProcessHeap(), 0, bufLen);
@@ -291,8 +291,8 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
                 ret = pCryptStringToBinaryA(str, 0, useFormat, buf, &bufLen,
                  &skipped, &usedFormat);
                 ok(skipped == strlen(garbage),
-                 "Expected %d characters skipped, got %d\n", lstrlenA(garbage),
-                 skipped);
+                 "Expected %d characters of \"%s\" skipped when trying format %08x, got %d (used format is %08x)\n",
+                 lstrlenA(garbage), str, useFormat, skipped, usedFormat);
                 HeapFree(GetProcessHeap(), 0, buf);
             }
         }
