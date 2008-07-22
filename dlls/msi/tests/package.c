@@ -5713,8 +5713,12 @@ static void test_shortlongsource(void)
     lstrcatA(subsrc, "long");
     lstrcatA(subsrc, "\\");
 
+    /* long file names */
+
     hdb = create_package_db();
     ok( hdb, "failed to create database\n");
+
+    set_suminfo_prop(hdb, PID_WORDCOUNT, 0);
 
     r = add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
     ok(r == S_OK, "failed\n");
@@ -5745,6 +5749,8 @@ static void test_shortlongsource(void)
     /* CostFinalize:long */
     r = add_directory_entry(hdb, "'SubDir7', 'TARGETDIR', 'eleven|twelve'");
     ok(r == S_OK, "failed\n");
+
+    MsiDatabaseCommit(hdb);
 
     hpkg = package_from_db(hdb);
     ok(hpkg, "failed to create package\n");
@@ -5867,6 +5873,168 @@ static void test_shortlongsource(void)
     r = MsiGetSourcePath(hpkg, "SubDir7", path, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+
+    MsiCloseHandle(hpkg);
+    RemoveDirectoryA("short");
+    RemoveDirectoryA("long");
+    RemoveDirectoryA("one");
+    RemoveDirectoryA("four");
+    RemoveDirectoryA("five");
+    RemoveDirectoryA("eight");
+    RemoveDirectoryA("nine");
+    RemoveDirectoryA("twelve");
+
+    /* short file names */
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_DIRECT, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    set_suminfo_prop(hdb, PID_WORDCOUNT, msidbSumInfoSourceTypeSFN);
+
+    hpkg = package_from_db(hdb);
+    ok(hpkg, "failed to create package\n");
+
+    MsiCloseHandle(hdb);
+
+    CreateDirectoryA("one", NULL);
+    CreateDirectoryA("four", NULL);
+
+    r = MsiDoAction(hpkg, "CostInitialize");
+    ok(r == ERROR_SUCCESS, "file cost failed\n");
+
+    CreateDirectory("five", NULL);
+    CreateDirectory("eight", NULL);
+
+    r = MsiDoAction(hpkg, "FileCost");
+    ok(r == ERROR_SUCCESS, "file cost failed\n");
+
+    CreateDirectory("nine", NULL);
+    CreateDirectory("twelve", NULL);
+
+    r = MsiDoAction(hpkg, "CostFinalize");
+    ok(r == ERROR_SUCCESS, "file cost failed\n");
+
+    lstrcpyA(subsrc, cwd);
+    lstrcatA(subsrc, "short");
+    lstrcatA(subsrc, "\\");
+
+    /* neither short nor long source directories exist */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+    }
+
+    CreateDirectoryA("short", NULL);
+
+    /* short source directory exists */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+    }
+
+    CreateDirectoryA("long", NULL);
+
+    /* both short and long source directories exist */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+    }
+
+    lstrcpyA(subsrc, cwd);
+    lstrcatA(subsrc, "one");
+    lstrcatA(subsrc, "\\");
+
+    /* short dir exists before CostInitialize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+
+    lstrcpyA(subsrc, cwd);
+    lstrcatA(subsrc, "three");
+    lstrcatA(subsrc, "\\");
+
+    /* long dir exists before CostInitialize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir3", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+    }
+
+    lstrcpyA(subsrc, cwd);
+    lstrcatA(subsrc, "five");
+    lstrcatA(subsrc, "\\");
+
+    /* short dir exists before FileCost */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir4", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+    }
+
+    lstrcpyA(subsrc, cwd);
+    lstrcatA(subsrc, "seven");
+    lstrcatA(subsrc, "\\");
+
+    /* long dir exists before FileCost */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir5", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+    ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+
+    lstrcpyA(subsrc, cwd);
+    lstrcatA(subsrc, "nine");
+    lstrcatA(subsrc, "\\");
+
+    /* short dir exists before CostFinalize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir6", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
+        ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
+    }
+
+    lstrcpyA(subsrc, cwd);
+    lstrcatA(subsrc, "eleven");
+    lstrcatA(subsrc, "\\");
+
+    /* long dir exists before CostFinalize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir7", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmpA(path, subsrc), "Expected \"%s\", got \"%s\"\n", subsrc, path);
     ok(size == lstrlenA(subsrc), "Expected %d, got %d\n", lstrlenA(subsrc), size);
 
     MsiCloseHandle(hpkg);
