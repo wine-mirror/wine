@@ -450,6 +450,7 @@ static VOID test_CreateThread_suspended(void)
 {
   HANDLE thread;
   DWORD threadId;
+  DWORD suspend_count;
   int error;
 
   thread = CreateThread(NULL,0,threadFunc2,NULL,
@@ -471,6 +472,13 @@ static VOID test_CreateThread_suspended(void)
   if(error!=WAIT_OBJECT_0) {
     TerminateThread(thread,1);
   }
+
+  suspend_count = SuspendThread(thread);
+  ok(suspend_count == -1, "SuspendThread returned %d, expected -1\n", suspend_count);
+
+  suspend_count = ResumeThread(thread);
+  ok(suspend_count == 0, "ResumeThread returned %d, expected 0\n", suspend_count);
+
   ok(CloseHandle(thread)!=0,"CloseHandle failed\n");
 }
 

@@ -1160,8 +1160,7 @@ DECL_HANDLER(resume_thread)
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
-        if (thread->state == TERMINATED) set_error( STATUS_ACCESS_DENIED );
-        else reply->count = resume_thread( thread );
+        reply->count = resume_thread( thread );
         release_object( thread );
     }
 }
