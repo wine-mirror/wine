@@ -504,7 +504,7 @@ static void test_CreateIcon(void)
     static const BYTE bmp_bits[1024];
     HICON hIcon;
     HBITMAP hbmMask, hbmColor;
-    BITMAPINFO bmpinfo;
+    BITMAPINFO *bmpinfo;
     ICONINFO info;
     HDC hdc;
     void *bits;
@@ -585,22 +585,22 @@ static void test_CreateIcon(void)
 
     /* test creating an icon from a DIB section */
 
-    memset( &bmpinfo, 0, sizeof(bmpinfo) );
-    bmpinfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmpinfo.bmiHeader.biWidth = 32;
-    bmpinfo.bmiHeader.biHeight = 32;
-    bmpinfo.bmiHeader.biPlanes = 1;
-    bmpinfo.bmiHeader.biBitCount = 8;
-    bmpinfo.bmiHeader.biCompression = BI_RGB;
-    hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    bmpinfo = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(BITMAPINFO,bmiColors[256]));
+    bmpinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmpinfo->bmiHeader.biWidth = 32;
+    bmpinfo->bmiHeader.biHeight = 32;
+    bmpinfo->bmiHeader.biPlanes = 1;
+    bmpinfo->bmiHeader.biBitCount = 8;
+    bmpinfo->bmiHeader.biCompression = BI_RGB;
+    hbmColor = CreateDIBSection( hdc, bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok(hbmColor != NULL, "Expected a handle to the DIB\n");
     if (bits)
-        memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
-    bmpinfo.bmiHeader.biBitCount = 1;
-    hbmMask = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+        memset( bits, 0x55, 32 * 32 * bmpinfo->bmiHeader.biBitCount / 8 );
+    bmpinfo->bmiHeader.biBitCount = 1;
+    hbmMask = CreateDIBSection( hdc, bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok(hbmMask != NULL, "Expected a handle to the DIB\n");
     if (bits)
-        memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+        memset( bits, 0x55, 32 * 32 * bmpinfo->bmiHeader.biBitCount / 8 );
 
     info.fIcon = TRUE;
     info.xHotspot = 8;
@@ -614,11 +614,11 @@ static void test_CreateIcon(void)
     DestroyIcon(hIcon);
     DeleteObject(hbmColor);
 
-    bmpinfo.bmiHeader.biBitCount = 16;
-    hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    bmpinfo->bmiHeader.biBitCount = 16;
+    hbmColor = CreateDIBSection( hdc, bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok(hbmColor != NULL, "Expected a handle to the DIB\n");
     if (bits)
-        memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+        memset( bits, 0x55, 32 * 32 * bmpinfo->bmiHeader.biBitCount / 8 );
 
     info.fIcon = TRUE;
     info.xHotspot = 8;
@@ -632,11 +632,11 @@ static void test_CreateIcon(void)
     DestroyIcon(hIcon);
     DeleteObject(hbmColor);
 
-    bmpinfo.bmiHeader.biBitCount = 32;
-    hbmColor = CreateDIBSection( hdc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    bmpinfo->bmiHeader.biBitCount = 32;
+    hbmColor = CreateDIBSection( hdc, bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok(hbmColor != NULL, "Expected a handle to the DIB\n");
     if (bits)
-        memset( bits, 0x55, 32 * 32 * bmpinfo.bmiHeader.biBitCount / 8 );
+        memset( bits, 0x55, 32 * 32 * bmpinfo->bmiHeader.biBitCount / 8 );
 
     info.fIcon = TRUE;
     info.xHotspot = 8;
@@ -651,6 +651,7 @@ static void test_CreateIcon(void)
 
     DeleteObject(hbmMask);
     DeleteObject(hbmColor);
+    HeapFree( GetProcessHeap(), 0, bmpinfo );
 
     ReleaseDC(0, hdc);
 }
