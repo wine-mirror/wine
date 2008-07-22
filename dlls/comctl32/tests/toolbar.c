@@ -203,6 +203,13 @@ static void rebuild_toolbar_with_buttons(HWND *hToolbar)
     ok(SendMessage(*hToolbar, TB_AUTOSIZE, 0, 0) == 0, "TB_AUTOSIZE failed\n");
 }
 
+static void add_128x15_bitmap(HWND hToolbar, int nCmds)
+{
+    TBADDBITMAP bmp128;
+    bmp128.hInst = GetModuleHandle(NULL);
+    bmp128.nID = IDB_BITMAP_128x15;
+    ok(SendMessageA(hToolbar, TB_ADDBITMAP, nCmds, (LPARAM)&bmp128) == 0, "TB_ADDBITMAP - unexpected return\n");
+}
 
 #define CHECK_IMAGELIST(count, dx, dy) { \
     int cx, cy; \
@@ -854,6 +861,18 @@ static void test_sizes(void)
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(23, 22), "Unexpected button size\n");
     SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16, 15));
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(23, 21), "Unexpected button size\n");
+    /* -1 in TB_SETBITMAPSIZE is a special code meaning that the coordinate shouldn't be changed */
+    add_128x15_bitmap(hToolbar, 16);
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14, -1)), "TB_SETBITMAPSIZE failed\n");
+    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 21), "%x");
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(-1, 12)), "TB_SETBITMAPSIZE failed\n");
+    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 18), "%x");
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(-1, -1)), "TB_SETBITMAPSIZE failed\n");
+    compare((int)SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0), MAKELONG(21, 18), "%x");
+    /* check the imagelist */
+    InvalidateRect(hToolbar, NULL, TRUE);
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST(16, 14, 12);
 
     rebuild_toolbar(&hToolbar);
     SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"A\0MMMMMMMMMMMMM\0");

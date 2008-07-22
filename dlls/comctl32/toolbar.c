@@ -4374,26 +4374,38 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     HIMAGELIST himlDef = GETDEFIMAGELIST(infoPtr, 0);
+    short width = (short)LOWORD(lParam);
+    short height = (short)HIWORD(lParam);
 
     TRACE("hwnd=%p, wParam=%ld, lParam=%ld\n", hwnd, wParam, lParam);
 
     if (wParam != 0)
         FIXME("wParam is %ld. Perhaps image list index?\n", wParam);
 
-    if (LOWORD(lParam) == 0)
-        lParam = MAKELPARAM(1, HIWORD(lParam));
-
-    if (HIWORD(lParam)==0)
-        lParam = MAKELPARAM(LOWORD(lParam), 1);
+    /* 0 width or height is changed to 1 */
+    if (width == 0)
+        width = 1;
+    if (height == 0)
+        height = 1;
 
     if (infoPtr->nNumButtons > 0)
-        WARN("%d buttons, undoc increase to bitmap size : %d-%d -> %d-%d\n",
-             infoPtr->nNumButtons,
-             infoPtr->nBitmapWidth, infoPtr->nBitmapHeight,
-             LOWORD(lParam), HIWORD(lParam));
+        TRACE("%d buttons, undoc change to bitmap size : %d-%d -> %d-%d\n",
+              infoPtr->nNumButtons,
+              infoPtr->nBitmapWidth, infoPtr->nBitmapHeight, width, height);
 
-    infoPtr->nBitmapWidth = (INT)LOWORD(lParam);
-    infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
+    if (width < -1 || height < -1)
+    {
+        /* Windows destroys the imagelist and seems to actually use negative
+         * values to compute button sizes */
+        FIXME("Negative bitmap sizes not supported (%d, %d)\n", width, height);
+        return FALSE;
+    }
+
+    /* width or height of -1 means no change */
+    if (width != -1)
+        infoPtr->nBitmapWidth = width;
+    if (height != -1)
+        infoPtr->nBitmapHeight = height;
 
     if ((himlDef == infoPtr->himlInt) &&
         (ImageList_GetImageCount(infoPtr->himlInt) == 0))
