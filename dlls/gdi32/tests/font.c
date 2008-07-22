@@ -2395,6 +2395,35 @@ static void test_GetTextFace(void)
     ReleaseDC(NULL, dc);
 }
 
+static void test_orientation(void)
+{
+    static const char test_str[11] = "Test String";
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hfont, old_hfont;
+    SIZE size;
+
+    if (!is_truetype_font_installed("Arial"))
+    {
+        skip("Arial is not installed\n");
+        return;
+    }
+
+    hdc = CreateCompatibleDC(0);
+    memset(&lf, 0, sizeof(lf));
+    lstrcpyA(lf.lfFaceName, "Arial");
+    lf.lfHeight = 72;
+    lf.lfOrientation = lf.lfEscapement = 900;
+    hfont = create_font("orientation", &lf);
+    old_hfont = SelectObject(hdc, hfont);
+    ok(GetTextExtentExPointA(hdc, test_str, sizeof(test_str), 32767, NULL, NULL, &size), "GetTextExtentExPointA failed\n");
+    todo_wine ok(near_match(311, size.cx), "cx should be about 311, got %d\n", size.cx);
+    ok(near_match(75, size.cy), "cy should be about 75, got %d\n", size.cy);
+    SelectObject(hdc, old_hfont);
+    DeleteObject(hfont);
+    DeleteDC(hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -2413,6 +2442,7 @@ START_TEST(font)
     test_font_charset();
     test_GetFontUnicodeRanges();
     test_nonexistent_font();
+    test_orientation();
 
     /* On Windows Arial has a lot of default charset aliases such as Arial Cyr,
      * I'd like to avoid them in this test.
