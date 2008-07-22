@@ -201,7 +201,7 @@ static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
  *
  ***/
 
-static void create_test_association(const char* extension)
+static BOOL create_test_association(const char* extension)
 {
     HKEY hkey, hkey_shell;
     char class[MAX_PATH];
@@ -210,19 +210,25 @@ static void create_test_association(const char* extension)
     sprintf(class, "shlexec%s", extension);
     rc=RegCreateKeyEx(HKEY_CLASSES_ROOT, extension, 0, NULL, 0, KEY_SET_VALUE,
                       NULL, &hkey, NULL);
-    assert(rc==ERROR_SUCCESS);
+    if (rc != ERROR_SUCCESS)
+        return FALSE;
+
     rc=RegSetValueEx(hkey, NULL, 0, REG_SZ, (LPBYTE) class, strlen(class)+1);
-    assert(rc==ERROR_SUCCESS);
+    ok(rc==ERROR_SUCCESS, "RegSetValueEx '%s' failed, expected ERROR_SUCCESS, got %d\n", class, rc);
     CloseHandle(hkey);
 
     rc=RegCreateKeyEx(HKEY_CLASSES_ROOT, class, 0, NULL, 0,
                       KEY_CREATE_SUB_KEY | KEY_ENUMERATE_SUB_KEYS, NULL, &hkey, NULL);
-    assert(rc==ERROR_SUCCESS);
+    ok(rc==ERROR_SUCCESS, "RegCreateKeyEx '%s' failed, expected ERROR_SUCCESS, got %d\n", class, rc);
+
     rc=RegCreateKeyEx(hkey, "shell", 0, NULL, 0,
                       KEY_CREATE_SUB_KEY, NULL, &hkey_shell, NULL);
-    assert(rc==ERROR_SUCCESS);
+    ok(rc==ERROR_SUCCESS, "RegCreateKeyEx 'shell' failed, expected ERROR_SUCCESS, got %d\n", rc);
+
     CloseHandle(hkey);
     CloseHandle(hkey_shell);
+
+    return TRUE;
 }
 
 /* Based on RegDeleteTreeW from dlls/advapi32/registry.c */
@@ -831,7 +837,11 @@ static void test_find_executable(void)
     const filename_tests_t* test;
     int rc;
 
-    create_test_association(".sfe");
+    if (!create_test_association(".sfe"))
+    {
+        skip("Unable to create association for '.sfe'\n");
+        return;
+    }
     create_test_verb(".sfe", "Open", 1, "%1");
 
     /* Don't test FindExecutable(..., NULL), it always crashes */
@@ -859,7 +869,11 @@ static void test_find_executable(void)
 
     delete_test_association(".sfe");
 
-    create_test_association(".shl");
+    if (!create_test_association(".shl"))
+    {
+        skip("Unable to create association for '.shl'\n");
+        return;
+    }
     create_test_verb(".shl", "Open", 0, "Open");
 
     sprintf(filename, "%s\\test file.shl", tmpdir);
@@ -1234,7 +1248,11 @@ static void test_dde(void)
     test = dde_tests;
     while (test->command)
     {
-        create_test_association(".sde");
+        if (!create_test_association(".sde"))
+        {
+            skip("Unable to create association for '.sfe'\n");
+            return;
+        }
         create_test_verb_dde(".sde", "Open", 0, test->command, test->ddeexec,
                              test->application, test->topic, test->ifexec);
         hszApplication = DdeCreateStringHandleA(ddeInst, test->application ?
@@ -1384,7 +1402,11 @@ static void test_dde_default_app(void)
     test = dde_default_app_tests;
     while (test->command)
     {
-        create_test_association(".sde");
+        if (!create_test_association(".sde"))
+        {
+            skip("Unable to create association for '.sde'\n");
+            return;
+        }
         sprintf(params, test->command, tmpdir);
         create_test_verb_dde(".sde", "Open", 1, params, "[test]", NULL,
                              "shlexec", NULL);
@@ -1544,7 +1566,11 @@ static void init_test(void)
     create_lnk(lnkfile, &desc, 0);
 
     /* Create a basic association suitable for most tests */
-    create_test_association(".shlexec");
+    if (!create_test_association(".shlexec"))
+    {
+        skip("Unable to create association for '.shlexec'\n");
+        return;
+    }
     create_test_verb(".shlexec", "Open", 0, "Open \"%1\"");
     create_test_verb(".shlexec", "NoQuotes", 0, "NoQuotes %1");
     create_test_verb(".shlexec", "LowerL", 0, "LowerL %l");
