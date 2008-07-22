@@ -36,9 +36,6 @@ typedef struct CPlApplet {
 typedef struct CPanel {
     CPlApplet*		first;		/* linked list */
     HWND		hWnd;
-    unsigned            status;
-    CPlApplet*		clkApplet;
-    unsigned            clkSP;
     unsigned total_subprogs;
 } CPanel;
 

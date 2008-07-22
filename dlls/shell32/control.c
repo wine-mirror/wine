@@ -174,7 +174,6 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
    CPlItem *item;
 
    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)panel);
-   panel->status = 0;
    panel->hWnd = hWnd;
 
    hMenu = LoadMenuW(shell32_hInstance, MAKEINTRESOURCEW(MENU_CPANEL));
@@ -219,89 +218,6 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
       FCIDM_SHVIEW_BIGICON, MF_BYCOMMAND);
 
    SetMenu(hWnd, hMenu);
-}
-
-#define	XICON	32
-#define XSTEP	128
-#define	YICON	32
-#define YSTEP	64
-
-static BOOL	Control_Localize(const CPanel* panel, int cx, int cy,
-				 CPlApplet** papplet, unsigned* psp)
-{
-    unsigned	i, x = (XSTEP-XICON)/2, y = 0;
-    CPlApplet*	applet;
-    RECT	rc;
-
-    GetClientRect(panel->hWnd, &rc);
-    for (applet = panel->first; applet; applet = applet->next) {
-        for (i = 0; i < applet->count; i++) {
-	    if (!applet->info[i].dwSize) continue;
-	    if (x + XSTEP >= rc.right - rc.left) {
-	        x = (XSTEP-XICON)/2;
-		y += YSTEP;
-	    }
-	    if (cx >= x && cx < x + XICON && cy >= y && cy < y + YSTEP) {
-	        *papplet = applet;
-	        *psp = i;
-		return TRUE;
-	    }
-	    x += XSTEP;
-	}
-    }
-    return FALSE;
-}
-
-static LRESULT Control_WndProc_Paint(const CPanel* panel, WPARAM wParam)
-{
-    HDC		hdc;
-    PAINTSTRUCT	ps;
-    RECT	rc, txtRect;
-    unsigned	i, x = 0, y = 0;
-    CPlApplet*	applet;
-    HGDIOBJ	hOldFont;
-
-    hdc = (wParam) ? (HDC)wParam : BeginPaint(panel->hWnd, &ps);
-    hOldFont = SelectObject(hdc, GetStockObject(ANSI_VAR_FONT));
-    GetClientRect(panel->hWnd, &rc);
-    for (applet = panel->first; applet; applet = applet->next) {
-        for (i = 0; i < applet->count; i++) {
-	    if (x + XSTEP >= rc.right - rc.left) {
-	        x = 0;
-		y += YSTEP;
-	    }
-	    if (!applet->info[i].dwSize) continue;
-	    DrawIcon(hdc, x + (XSTEP-XICON)/2, y, applet->info[i].hIcon);
-	    txtRect.left = x;
-	    txtRect.right = x + XSTEP;
-	    txtRect.top = y + YICON;
-	    txtRect.bottom = y + YSTEP;
-	    DrawTextW(hdc, applet->info[i].szName, -1, &txtRect,
-		      DT_CENTER | DT_VCENTER);
-	    x += XSTEP;
-	}
-    }
-    SelectObject(hdc, hOldFont);
-    if (!wParam) EndPaint(panel->hWnd, &ps);
-    return 0;
-}
-
-static LRESULT Control_WndProc_LButton(CPanel* panel, LPARAM lParam, BOOL up)
-{
-    unsigned	i;
-    CPlApplet*	applet;
-
-    if (Control_Localize(panel, (short)LOWORD(lParam), (short)HIWORD(lParam), &applet, &i)) {
-       if (up) {
-	   if (panel->clkApplet == applet && panel->clkSP == i) {
-	       applet->proc(applet->hWnd, CPL_DBLCLK, i, applet->info[i].lData);
-	   }
-       } else {
-	   panel->clkApplet = applet;
-	   panel->clkSP = i;
-       }
-    }
-    return 0;
 }
 
 static void Control_FreeCPlItems(HWND hWnd, CPanel *panel)
@@ -417,14 +333,6 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
          }
 
          break;
-      case WM_PAINT:
-	 return Control_WndProc_Paint(panel, lParam1);
-      case WM_LBUTTONUP:
-	 return Control_WndProc_LButton(panel, lParam2, TRUE);
-      case WM_LBUTTONDOWN:
-	 return Control_WndProc_LButton(panel, lParam2, FALSE);
-/* EPP       case WM_COMMAND: */
-/* EPP 	 return Control_WndProc_Command(mwi, lParam1, lParam2); */
       }
    }
 
