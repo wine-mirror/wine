@@ -52,9 +52,9 @@ typedef struct ACMWrapperImpl
     LONGLONG lasttime_sent;
 } ACMWrapperImpl;
 
-static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilter, IMediaSample *pSample)
+static HRESULT ACMWrapper_ProcessSampleData(InputPin *pin, IMediaSample *pSample)
 {
-    ACMWrapperImpl* This = (ACMWrapperImpl*)pTransformFilter;
+    ACMWrapperImpl* This = (ACMWrapperImpl*)pin->pin.pinInfo.pFilter;
     AM_MEDIA_TYPE amt;
     IMediaSample* pOutSample = NULL;
     DWORD cbDstStream, cbSrcStream;
@@ -65,18 +65,17 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     MMRESULT res;
     HRESULT hr;
     LONGLONG tStart = -1, tStop = -1, tMed;
-    InputPin *pin = (InputPin *)pTransformFilter->ppPins[0];
 
-    EnterCriticalSection(&pTransformFilter->csFilter);
-    if (pTransformFilter->state == State_Stopped)
+    EnterCriticalSection(&This->tf.csFilter);
+    if (This->tf.state == State_Stopped)
     {
-        LeaveCriticalSection(&pTransformFilter->csFilter);
+        LeaveCriticalSection(&This->tf.csFilter);
         return VFW_E_WRONG_STATE;
     }
 
     if (pin->end_of_stream || pin->flushing)
     {
-        LeaveCriticalSection(&pTransformFilter->csFilter);
+        LeaveCriticalSection(&This->tf.csFilter);
         return S_FALSE;
     }
 
@@ -84,7 +83,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-        LeaveCriticalSection(&pTransformFilter->csFilter);
+        LeaveCriticalSection(&This->tf.csFilter);
         return hr;
     }
 
@@ -112,7 +111,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
     if (FAILED(hr))
     {
         ERR("Unable to retrieve media type\n");
-        LeaveCriticalSection(&pTransformFilter->csFilter);
+        LeaveCriticalSection(&This->tf.csFilter);
         return hr;
     }
 
@@ -125,7 +124,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
         if (FAILED(hr))
         {
             ERR("Unable to get delivery buffer (%x)\n", hr);
-            LeaveCriticalSection(&pTransformFilter->csFilter);
+            LeaveCriticalSection(&This->tf.csFilter);
             return hr;
         }
         IMediaSample_SetPreroll(pOutSample, preroll);
@@ -231,13 +230,13 @@ error:
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
-    LeaveCriticalSection(&pTransformFilter->csFilter);
+    LeaveCriticalSection(&This->tf.csFilter);
     return hr;
 }
 
-static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, const AM_MEDIA_TYPE * pmt)
+static HRESULT ACMWrapper_ConnectInput(InputPin *pin, const AM_MEDIA_TYPE * pmt)
 {
-    ACMWrapperImpl* This = (ACMWrapperImpl*)pTransformFilter;
+    ACMWrapperImpl* This = (ACMWrapperImpl *)pin->pin.pinInfo.pFilter;
     MMRESULT res;
 
     TRACE("(%p)->(%p)\n", This, pmt);
@@ -287,14 +286,14 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
     return VFW_E_TYPE_NOT_ACCEPTED;
 }
 
-static HRESULT ACMWrapper_Cleanup(TransformFilterImpl* pTransformFilter)
+static HRESULT ACMWrapper_Cleanup(InputPin *pin)
 {
-    ACMWrapperImpl* This = (ACMWrapperImpl*)pTransformFilter;
+    ACMWrapperImpl *This = (ACMWrapperImpl *)pin->pin.pinInfo.pFilter;
 
     TRACE("(%p)->()\n", This);
-    
+
     if (This->has)
-	acmStreamClose(This->has, 0);
+        acmStreamClose(This->has, 0);
 
     This->has = 0;
     This->lasttime_real = This->lasttime_sent = -1;

@@ -42,8 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static HRESULT AVIDec_Cleanup(TransformFilterImpl* pTransformFilter);
-
 typedef struct AVIDecImpl
 {
     TransformFilterImpl tf;
@@ -68,9 +66,9 @@ static HRESULT AVIDec_ProcessBegin(TransformFilterImpl* pTransformFilter)
     return S_OK;
 }
 
-static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, IMediaSample *pSample)
+static HRESULT AVIDec_ProcessSampleData(InputPin *pin, IMediaSample *pSample)
 {
-    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
+    AVIDecImpl* This = (AVIDecImpl *)pin->pin.pinInfo.pFilter;
     AM_MEDIA_TYPE amt;
     HRESULT hr;
     DWORD res;
@@ -80,7 +78,6 @@ static HRESULT AVIDec_ProcessSampleData(TransformFilterImpl* pTransformFilter, I
     DWORD cbSrcStream;
     LPBYTE pbSrcStream;
     LONGLONG tStart, tStop;
-    InputPin *pin = (InputPin *)pTransformFilter->ppPins[0];
 
     EnterCriticalSection(&This->tf.csFilter);
     if (This->tf.state == State_Stopped)
@@ -185,14 +182,12 @@ static HRESULT AVIDec_ProcessEnd(TransformFilterImpl* pTransformFilter)
     return S_OK;
 }
 
-static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const AM_MEDIA_TYPE * pmt)
+static HRESULT AVIDec_ConnectInput(InputPin *pin, const AM_MEDIA_TYPE * pmt)
 {
-    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
+    AVIDecImpl* This = (AVIDecImpl*)pin->pin.pinInfo.pFilter;
     HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
 
     TRACE("(%p)->(%p)\n", This, pmt);
-
-    AVIDec_Cleanup(pTransformFilter);
 
     /* Check root (GUID w/o FOURCC) */
     if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Video)) &&
@@ -283,15 +278,14 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const 
     }
 
 failed:
-    AVIDec_Cleanup(pTransformFilter);
 
     TRACE("Connection refused\n");
     return hr;
 }
 
-static HRESULT AVIDec_Cleanup(TransformFilterImpl* pTransformFilter)
+static HRESULT AVIDec_Cleanup(InputPin *pin)
 {
-    AVIDecImpl* This = (AVIDecImpl*)pTransformFilter;
+    AVIDecImpl *This = (AVIDecImpl *)pin->pin.pinInfo.pFilter;
 
     TRACE("(%p)->()\n", This);
     

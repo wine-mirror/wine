@@ -50,7 +50,7 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 
 static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
-    TransformFilterImpl* This = (TransformFilterImpl*)iface;
+    TransformFilterImpl* This = (TransformFilterImpl *)((IPinImpl *)iface)->pinInfo.pFilter;
     TRACE("%p\n", iface);
     dump_AM_MEDIA_TYPE(pmt);
 
@@ -68,7 +68,8 @@ static HRESULT TransformFilter_Output_QueryAccept(LPVOID iface, const AM_MEDIA_T
     AM_MEDIA_TYPE* outpmt = &pTransformFilter->pmt;
     TRACE("%p\n", iface);
 
-    if (IsEqualIID(&pmt->majortype, &outpmt->majortype) && IsEqualIID(&pmt->subtype, &outpmt->subtype))
+    if (IsEqualIID(&pmt->majortype, &outpmt->majortype)
+        && (IsEqualIID(&pmt->subtype, &outpmt->subtype) || IsEqualIID(&outpmt->subtype, &GUID_NULL)))
         return S_OK;
     return S_FALSE;
 }
@@ -165,6 +166,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
     pTransformFilter->pClock = NULL;
     ZeroMemory(&pTransformFilter->filterInfo, sizeof(FILTER_INFO));
     ZeroMemory(&pTransformFilter->pmt, sizeof(pTransformFilter->pmt));
+    pTransformFilter->npins = 2;
 
     pTransformFilter->ppPins = CoTaskMemAlloc(2 * sizeof(IPin *));
 
@@ -176,7 +178,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
     piOutput.pFilter = (IBaseFilter *)pTransformFilter;
     lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
 
-    hr = InputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, (SAMPLEPROC_PUSH)pFuncsTable->pfnProcessSampleData, pTransformFilter, TransformFilter_Input_QueryAccept, NULL, &pTransformFilter->csFilter, NULL, &pTransformFilter->ppPins[0]);
+    hr = InputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, (SAMPLEPROC_PUSH)pFuncsTable->pfnProcessSampleData, NULL, TransformFilter_Input_QueryAccept, NULL, &pTransformFilter->csFilter, NULL, &pTransformFilter->ppPins[0]);
 
     if (SUCCEEDED(hr))
     {
@@ -185,6 +187,8 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
         props.cbPrefix = 0;
         props.cbBuffer = 0; /* Will be updated at connection time */
         props.cBuffers = 1;
+
+       ((InputPin *)pTransformFilter->ppPins[0])->pin.pUserData = pTransformFilter->ppPins[0];
 
         hr = OutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(OutputPin), &piOutput, &props, pTransformFilter, TransformFilter_Output_QueryAccept, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
 
@@ -268,7 +272,7 @@ static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
         if (This->pClock)
             IReferenceClock_Release(This->pClock);
 
-        for (i = 0; i < 2; i++)
+        for (i = 0; i < This->npins; i++)
         {
             IPin *pConnectedTo;
 
@@ -442,7 +446,7 @@ static HRESULT TransformFilter_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin,
     /* Our pins are static, not changing so setting static tick count is ok */
     *lastsynctick = 0;
 
-    if (pos >= 2)
+    if (pos >= This->npins)
         return S_FALSE;
 
     *pin = This->ppPins[pos];
@@ -565,12 +569,12 @@ static HRESULT WINAPI TransformFilter_InputPin_ReceiveConnection(IPin * iface, I
 
     pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
 
-    hr = pTransform->pFuncsTable->pfnConnectInput(pTransform, pmt);
+    hr = pTransform->pFuncsTable->pfnConnectInput(This, pmt);
     if (SUCCEEDED(hr))
     {
         hr = InputPin_ReceiveConnection(iface, pReceivePin, pmt);
         if (FAILED(hr))
-            pTransform->pFuncsTable->pfnCleanup(pTransform);
+            pTransform->pFuncsTable->pfnCleanup(This);
     }
 
     return hr;
@@ -584,7 +588,7 @@ static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
     TRACE("(%p)->()\n", iface);
 
     pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
-    pTransform->pFuncsTable->pfnCleanup(pTransform);
+    pTransform->pFuncsTable->pfnCleanup(This);
 
     return IPinImpl_Disconnect(iface);
 }
