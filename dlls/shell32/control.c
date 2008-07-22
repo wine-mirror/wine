@@ -1,6 +1,7 @@
 /* Control Panel management
  *
  * Copyright 2001 Eric Pouech
+ * Copyright 2008 Owen Rudge
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -166,10 +167,58 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
 {
    CPanel*	panel = (CPanel*)cs->lpCreateParams;
+   HMENU hMenu, hSubMenu;
+   CPlApplet*	applet;
+   MENUITEMINFOW mii;
+   int menucount, i;
+   CPlItem *item;
 
    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)panel);
    panel->status = 0;
    panel->hWnd = hWnd;
+
+   hMenu = LoadMenuW(shell32_hInstance, MAKEINTRESOURCEW(MENU_CPANEL));
+
+   /* insert menu items for applets */
+   hSubMenu = GetSubMenu(hMenu, 0);
+   menucount = 0;
+
+   for (applet = panel->first; applet; applet = applet->next) {
+      for (i = 0; i < applet->count; i++) {
+         if (!applet->info[i].dwSize)
+            continue;
+
+         /* set up a CPlItem for this particular subprogram */
+         item = HeapAlloc(GetProcessHeap(), 0, sizeof(CPlItem));
+
+         if (!item)
+            continue;
+
+         item->applet = (CPlApplet *) applet;
+         item->id = i;
+
+         mii.cbSize = sizeof(MENUITEMINFOW);
+         mii.fMask = MIIM_ID | MIIM_STRING | MIIM_DATA;
+         mii.dwTypeData = applet->info[i].szName;
+         mii.cch = sizeof(applet->info[i].szName) / sizeof(applet->info[i].szName[0]);
+         mii.wID = IDM_CPANEL_APPLET_BASE + menucount;
+         mii.dwItemData = (DWORD) item;
+
+         if (InsertMenuItemW(hSubMenu, menucount, TRUE, &mii)) {
+             DrawMenuBar(hWnd);
+             menucount++;
+         }
+      }
+   }
+
+   panel->total_subprogs = menucount;
+
+   /* check the "large items" icon in the View menu */
+   hSubMenu = GetSubMenu(hMenu, 1);
+   CheckMenuRadioItem(hSubMenu, FCIDM_SHVIEW_BIGICON, FCIDM_SHVIEW_REPORTVIEW,
+      FCIDM_SHVIEW_BIGICON, MF_BYCOMMAND);
+
+   SetMenu(hWnd, hMenu);
 }
 
 #define	XICON	32
@@ -255,6 +304,36 @@ static LRESULT Control_WndProc_LButton(CPanel* panel, LPARAM lParam, BOOL up)
     return 0;
 }
 
+static void Control_FreeCPlItems(HWND hWnd, CPanel *panel)
+{
+    HMENU hMenu, hSubMenu;
+    MENUITEMINFOW mii;
+    int i;
+
+    /* get the File menu */
+    hMenu = GetMenu(hWnd);
+
+    if (!hMenu)
+        return;
+
+    hSubMenu = GetSubMenu(hMenu, 0);
+
+    if (!hSubMenu)
+        return;
+
+    /* loop and free the item data */
+    for (i = IDM_CPANEL_APPLET_BASE; i <= IDM_CPANEL_APPLET_BASE + panel->total_subprogs; i++)
+    {
+        mii.cbSize = sizeof(MENUITEMINFOW);
+        mii.fMask = MIIM_DATA;
+
+        if (!GetMenuItemInfoW(hSubMenu, i, FALSE, &mii))
+            continue;
+
+        HeapFree(GetProcessHeap(), 0, (LPVOID) mii.dwItemData);
+    }
+}
+
 static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 					WPARAM lParam1, LPARAM lParam2)
 {
@@ -271,6 +350,7 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 	    while (applet)
 	       applet = Control_UnloadApplet(applet);
          }
+         Control_FreeCPlItems(hWnd, panel);
          PostQuitMessage(0);
 	 break;
       case WM_PAINT:

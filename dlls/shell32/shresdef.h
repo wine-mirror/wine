@@ -109,6 +109,11 @@
 
 #define MENU_SHV_FILE 144
 
+#define MENU_CPANEL                 200
+#define IDM_CPANEL_EXIT             201
+#define IDM_CPANEL_ABOUT            202
+#define IDM_CPANEL_APPLET_BASE      210
+
 /* Note: this string is referenced from the registry*/
 #define IDS_RECYCLEBIN_FOLDER_NAME   8964
 
