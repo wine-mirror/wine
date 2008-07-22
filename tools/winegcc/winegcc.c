@@ -160,6 +160,7 @@ struct options
     const char* wine_objdir;
     const char* output_name;
     const char* image_base;
+    const char* section_align;
     strarray* prefix;
     strarray* lib_dirs;
     strarray* linker_args;
@@ -640,6 +641,17 @@ static void build(struct options* opts)
     }
 #endif
 
+#ifdef __sun
+    {
+        char *mapfile = get_temp_file( output_name, ".map" );
+        const char *align = opts->section_align ? opts->section_align : "0x1000";
+
+        create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", align, align );
+        strarray_add(link_args, strmake("-Wl,-M,%s", mapfile));
+        strarray_add(tmp_files, mapfile);
+    }
+#endif
+
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
 
@@ -969,6 +981,11 @@ int main(int argc, char **argv)
                             if (!strcmp(Wl->base[j], "--image-base") && j < Wl->size - 1)
                             {
                                 opts.image_base = strdup( Wl->base[++j] );
+                                continue;
+                            }
+                            if (!strcmp(Wl->base[j], "--section-alignment") && j < Wl->size - 1)
+                            {
+                                opts.section_align = strdup( Wl->base[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl->base[j], "-static")) linking = -1;
