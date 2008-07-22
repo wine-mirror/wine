@@ -4300,6 +4300,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     FT_Int load_flags = FT_LOAD_DEFAULT | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
     double widthRatio = 1.0;
     FT_Matrix transMat = identityMat;
+    FT_Matrix transMatUnrotated;
     BOOL needsTransform = FALSE;
     BOOL tategaki = (font->GSUB_Table != NULL);
     UINT original_index;
@@ -4404,6 +4405,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     }
 
     /* Rotation transform */
+    transMatUnrotated = transMat;
     if(font->orientation && !tategaki) {
         FT_Matrix rotationMat;
         FT_Vector vecAngle;
@@ -4427,6 +4429,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         worldMat.yx = FT_FixedFromFloat(font->font_desc.matrix.eM12);
         worldMat.yy = FT_FixedFromFloat(font->font_desc.matrix.eM22);
         pFT_Matrix_Multiply(&worldMat, &transMat);
+        pFT_Matrix_Multiply(&worldMat, &transMatUnrotated);
         needsTransform = TRUE;
     }
 
@@ -4439,6 +4442,7 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         extraMat.yx = FT_FixedFromFIXED(lpmat->eM12);
         extraMat.yy = FT_FixedFromFIXED(lpmat->eM22);
         pFT_Matrix_Multiply(&extraMat, &transMat);
+        pFT_Matrix_Multiply(&extraMat, &transMatUnrotated);
         needsTransform = TRUE;
     }
 
@@ -4479,8 +4483,13 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 	vec.x = ft_face->glyph->metrics.horiAdvance;
 	vec.y = 0;
 	pFT_Vector_Transform(&vec, &transMat);
-	adv = lpgm->gmCellIncX = (vec.x+63) >> 6;
+	lpgm->gmCellIncX = (vec.x+63) >> 6;
 	lpgm->gmCellIncY = -((vec.y+63) >> 6);
+
+        vec.x = ft_face->glyph->metrics.horiAdvance;
+        vec.y = 0;
+        pFT_Vector_Transform(&vec, &transMatUnrotated);
+        adv = (vec.x+63) >> 6;
     }
     lpgm->gmBlackBoxX = (right - left) >> 6;
     lpgm->gmBlackBoxY = (top - bottom) >> 6;

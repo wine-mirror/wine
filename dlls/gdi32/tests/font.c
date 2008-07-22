@@ -2417,7 +2417,7 @@ static void test_orientation(void)
     hfont = create_font("orientation", &lf);
     old_hfont = SelectObject(hdc, hfont);
     ok(GetTextExtentExPointA(hdc, test_str, sizeof(test_str), 32767, NULL, NULL, &size), "GetTextExtentExPointA failed\n");
-    todo_wine ok(near_match(311, size.cx), "cx should be about 311, got %d\n", size.cx);
+    ok(near_match(311, size.cx), "cx should be about 311, got %d\n", size.cx);
     ok(near_match(75, size.cy), "cy should be about 75, got %d\n", size.cy);
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
