@@ -449,6 +449,8 @@ static HRESULT AVISplitter_first_request(LPVOID iface)
         have_sample = (hr == S_OK);
         if (FAILED(hr))
             break;
+        if (hr == S_FALSE)
+            AVISplitter_SendEndOfFile(This, x);
     }
 
     /* FIXME: Don't do this for each pin that sent an EOF */
@@ -976,8 +978,9 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
 
         frames /= stream->streamheader.dwRate;
 
-        TRACE("Duration: %d days, %d hours, %d minutes and %d seconds\n", (DWORD)(frames / 86400),
-        (DWORD)((frames % 86400) / 3600), (DWORD)((frames % 3600) / 60), (DWORD)(frames % 60));
+        TRACE("Duration: %d days, %d hours, %d minutes and %d.%03u seconds\n", (DWORD)(frames / 86400),
+        (DWORD)((frames % 86400) / 3600), (DWORD)((frames % 3600) / 60), (DWORD)(frames % 60),
+        (DWORD)(This->Parser.mediaSeeking.llDuration/10000) % 1000);
     }
 
     return S_OK;
