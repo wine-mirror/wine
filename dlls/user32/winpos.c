@@ -434,8 +434,11 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
             }
             if (wndPtr == WND_DESKTOP) break;
             if (wndPtr == WND_OTHER_PROCESS) goto other_process;
-            offset->x += wndPtr->rectClient.left;
-            offset->y += wndPtr->rectClient.top;
+            if (wndPtr->parent)
+            {
+                offset->x += wndPtr->rectClient.left;
+                offset->y += wndPtr->rectClient.top;
+            }
             hwnd = wndPtr->parent;
             WIN_ReleasePtr( wndPtr );
         }
@@ -455,8 +458,11 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
             }
             if (wndPtr == WND_DESKTOP) break;
             if (wndPtr == WND_OTHER_PROCESS) goto other_process;
-            offset->x -= wndPtr->rectClient.left;
-            offset->y -= wndPtr->rectClient.top;
+            if (wndPtr->parent)
+            {
+                offset->x -= wndPtr->rectClient.left;
+                offset->y -= wndPtr->rectClient.top;
+            }
             hwnd = wndPtr->parent;
             WIN_ReleasePtr( wndPtr );
         }

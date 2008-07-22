@@ -623,6 +623,8 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 
     if (child) hwnd = *child;
 
+    if (hwnd == GetDesktopWindow()) return whole_rgn;
+
     if (whole_rgn)
     {
         RECT client, update;
