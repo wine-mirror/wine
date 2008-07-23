@@ -860,6 +860,24 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 	}
 
+        case WM_UNICHAR:
+                if (unicode)
+                {
+                    if (wParam == UNICODE_NOCHAR) return TRUE;
+                    if (wParam <= 0x000fffff)
+                    {
+                        if(wParam > 0xffff) /* convert to surrogates */
+                        {
+                            wParam -= 0x10000;
+                            EDIT_WM_Char(es, (wParam >> 10) + 0xd800);
+                            EDIT_WM_Char(es, (wParam & 0x03ff) + 0xdc00);
+                        }
+                        else EDIT_WM_Char(es, wParam);
+                    }
+                    return 0;
+                }
+                break;
+
 	case WM_CLEAR:
 		EDIT_WM_Clear(es);
 		break;
