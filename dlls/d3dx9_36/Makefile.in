@@ -10,7 +10,8 @@ C_SRCS = \
 	d3dx9_36_main.c \
 	font.c \
 	math.c \
-	shader.c
+	shader.c \
+	sprite.c
 
 RC_SRCS = version.rc
 

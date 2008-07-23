@@ -88,7 +88,7 @@
 @ stub D3DXCreateSkinInfoFromBlendedMesh
 @ stub D3DXCreateSkinInfoFVF
 @ stub D3DXCreateSphere
-@ stub D3DXCreateSprite
+@ stdcall D3DXCreateSprite(ptr ptr)
 @ stub D3DXCreateTeapot
 @ stub D3DXCreateTextA
 @ stub D3DXCreateTextW

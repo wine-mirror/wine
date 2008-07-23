@@ -29,12 +29,21 @@
 
 typedef struct ID3DXFontImpl
 {
-  /* IUnknown fields */
-  const ID3DXFontVtbl *lpVtbl;
-  LONG ref;
+    /* IUnknown fields */
+    const ID3DXFontVtbl *lpVtbl;
+    LONG ref;
 
-  /* ID3DXFont fields */
+    /* ID3DXFont fields */
 } ID3DXFontImpl;
+
+typedef struct ID3DXSpriteImpl
+{
+    /* IUnknown fields */
+    const ID3DXSpriteVtbl *lpVtbl;
+    LONG ref;
+
+    /* ID3DXSprite fields */
+} ID3DXSpriteImpl;
 
 
 #endif /* __WINE_D3DX9_36_PRIVATE_H */
