@@ -1,5 +1,5 @@
 /*
- * Copyright 2005, 2007 Henri Verbeet
+ * Copyright 2005, 2007-2008 Henri Verbeet
  * Copyright (C) 2007-2008 Stefan Dösinger(for CodeWeavers)
  * Copyright (C) 2008 Jason Green(for TransGaming)
  *
@@ -5919,7 +5919,7 @@ void test_vshader_input(IDirect3DDevice9 *device)
     };
     IDirect3DVertexShader9 *swapped_shader, *texcoord_color_shader, *color_color_shader;
     HRESULT hr;
-    DWORD color, r, g, b;
+    DWORD color;
     float quad1[] =  {
         -1.0,   -1.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
          0.0,   -1.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
@@ -6094,7 +6094,7 @@ void test_vshader_input(IDirect3DDevice9 *device)
 
         if(i == 3 || i == 2) {
             color = getPixelColor(device, 160, 360);
-            ok(color == 0x00FFFF80 || color == 0x00FFFF7f || color == 0x00FFFF81,
+            ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x80), 1),
                "Input test: Quad 1(2crd) returned color 0x%08x, expected 0x00FFFF80\n", color);
 
             /* The last value of the read but undefined stream is used, it is 0x00. The defined input is vec4(1, 0, 0, 0) */
@@ -6103,20 +6103,20 @@ void test_vshader_input(IDirect3DDevice9 *device)
                "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00FFFF00\n", color);
             color = getPixelColor(device, 160, 120);
             /* Same as above, accept both the last used value and 0.0 for the undefined streams */
-            ok(color == 0x00FF0080 || color == 0x00FF007f || color == 0x00FF0081 || color == 0x00FF0000,
+            ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x80), 1) || color == D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00),
                "Input test: Quad 3(2crd-wrongidx) returned color 0x%08x, expected 0x00FF0080\n", color);
 
             color = getPixelColor(device, 480, 160);
             ok(color == 0x00000000, "Input test: Quad 4(2crd-rightorder) returned color 0x%08x, expected 0x00000000\n", color);
         } else if(i == 1) {
             color = getPixelColor(device, 160, 360);
-            ok(color == 0x00FFFF80 || color == 0x00FFFF7f || color == 0x00FFFF81,
+            ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x80), 1),
                "Input test: Quad 1(2crd) returned color 0x%08x, expected 0x00FFFF80\n", color);
             color = getPixelColor(device, 480, 360);
             /* Accept the clear color as well in this case, since SW VP returns an error */
             ok(color == 0x00FFFF00 || color == 0x00FF0000, "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00FFFF00\n", color);
             color = getPixelColor(device, 160, 120);
-            ok(color == 0x00FF0080 || color == 0x00FF0000 || color == 0x00FF007f || color == 0x00FF0081,
+            ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x80), 1) || color == D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00),
                "Input test: Quad 3(2crd-wrongidx) returned color 0x%08x, expected 0x00FF0080\n", color);
             color = getPixelColor(device, 480, 160);
             ok(color == 0x00000000, "Input test: Quad 4(2crd-rightorder) returned color 0x%08x, expected 0x00000000\n", color);
@@ -6252,28 +6252,16 @@ void test_vshader_input(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
         color = getPixelColor(device, 160, 360);
-        r = (color & 0x00ff0000) >> 16;
-        g = (color & 0x0000ff00) >>  8;
-        b = (color & 0x000000ff) >>  0;
-        ok(r >= 0xfe && r <= 0xff && g >= 0x7f && g <= 0x81 && b >= 0x3f && b <= 0x41,
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x80, 0x40), 1),
            "Input test: Quad 1(color-texcoord) returned color 0x%08x, expected 0x00ff8040\n", color);
         color = getPixelColor(device, 480, 360);
-        r = (color & 0x00ff0000) >> 16;
-        g = (color & 0x0000ff00) >>  8;
-        b = (color & 0x000000ff) >>  0;
-        ok(r >= 0x3f && r <= 0x41 && g >= 0x7f && g <= 0x81 && b >= 0xfe && b <= 0xff,
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x40, 0x80, 0xff), 1),
            "Input test: Quad 2(color-ubyte) returned color 0x%08x, expected 0x004080ff\n", color);
         color = getPixelColor(device, 160, 120);
-        r = (color & 0x00ff0000) >> 16;
-        g = (color & 0x0000ff00) >>  8;
-        b = (color & 0x000000ff) >>  0;
-        ok(r >= 0xfe && r <= 0xff && g >= 0x7f && g <= 0x81 && b >= 0x3f && b <= 0x41,
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x80, 0x40), 1),
            "Input test: Quad 3(color-color) returned color 0x%08x, expected 0x00ff8040\n", color);
         color = getPixelColor(device, 480, 160);
-        r = (color & 0x00ff0000) >> 16;
-        g = (color & 0x0000ff00) >>  8;
-        b = (color & 0x000000ff) >>  0;
-        ok(r >= 0xfe && r <= 0xff && g >= 0xfe && g <= 0xff && b <= 0x01,
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00), 1),
            "Input test: Quad 4(color-float) returned color 0x%08x, expected 0x00FFFF00\n", color);
 
         IDirect3DVertexShader9_Release(texcoord_color_shader);
