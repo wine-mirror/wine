@@ -147,7 +147,7 @@
 @ stdcall GdipDeletePath(ptr)
 @ stdcall GdipDeletePathIter(ptr)
 @ stdcall GdipDeletePen(ptr)
-@ stub GdipDeletePrivateFontCollection
+@ stdcall GdipDeletePrivateFontCollection(ptr)
 @ stdcall GdipDeleteRegion(ptr)
 @ stdcall GdipDeleteStringFormat(ptr)
 @ stdcall GdipDisposeImage(ptr)

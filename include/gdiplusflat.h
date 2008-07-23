@@ -421,6 +421,7 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily**);
 GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily**);
 
 GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection**);
+GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection**);
 
 GpStatus WINGDIPAPI GdipCreateStringFormat(INT,LANGID,GpStringFormat**);
 GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat*);

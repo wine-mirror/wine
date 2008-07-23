@@ -643,3 +643,13 @@ GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection** fontCollecti
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection **fontCollection)
+{
+    FIXME("stub %p\n", fontCollection);
+
+    if (!fontCollection)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
