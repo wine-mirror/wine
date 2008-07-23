@@ -104,30 +104,13 @@ my @ignore_srcs = (
     [ 'IDL_S_SRCS',   '\.idl', '_s.c' ],
 );
 
-my %private_headers = (
-    "wine/irot.idl" => 1,
-    "wine/list.h" => 1,
-    "wine/mmsystem16.h" => 1,
-    "wine/mscvpdb.h" => 1,
-    "wine/port.h" => 1,
-    "wine/pthread.h" => 1,
-    "wine/rpcfc.h" => 1,
-    "wine/server.h" => 1,
-    "wine/server_protocol.h" => 1,
-    "wine/test.h" => 1,
-    "wine/wgl.h" => 1,
-    "wine/winaspi.h" => 1,
-    "wine/winbase16.h" => 1,
-    "wine/windef16.h" => 1,
-    "wine/wined3d_caps.h" => 1,
-    "wine/wined3d_gl.h" => 1,
-    "wine/wined3d_interface.h" => 1,
-    "wine/wined3d_types.h" => 1,
-    "wine/wingdi16.h" => 1,
-    "wine/winnet16.h" => 1,
-    "wine/winsock16.h" => 1,
-    "wine/winuser16.h" => 1,
-    "wine/wpp.h" => 1
+my %exported_wine_headers = (
+    "wine/debug.h" => 1,
+    "wine/exception.h" => 1,
+    "wine/library.h" => 1,
+    "wine/unicode.h" => 1,
+    "wine/itss.idl" => 1,
+    "wine/svcctl.idl" => 1,
 );
 
 my %private_idl_headers = (
@@ -654,7 +637,7 @@ sub update_includes()
     foreach my $incl (@includes)
     {
         if ($incl =~ /(.*)\//) { $subdirs{$1} = 1; }
-        next if ($private_headers{$incl});
+        next if ($incl =~ /^wine\// && !$exported_wine_headers{$incl});
         if ($incl =~ /stdole2\.idl$/) { push @tlb_srcs, $incl; }
         elsif ($private_idl_headers{$incl}) { push @h_srcs, $incl; }
         elsif ($incl =~ /\.h$/) { push @h_srcs, $incl; }

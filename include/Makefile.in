@@ -69,8 +69,6 @@ IDL_H_SRCS = \
 	urlhist.idl \
 	urlmon.idl \
 	vmr9.idl \
-	wine/dcetypes.idl \
-	wine/epm.idl \
 	wine/itss.idl \
 	wine/svcctl.idl \
 	wtypes.idl \

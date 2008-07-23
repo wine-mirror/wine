@@ -183,8 +183,6 @@ include/unknwn.h
 include/urlhist.h
 include/urlmon.h
 include/vmr9.h
-include/wine/dcetypes.h
-include/wine/epm.h
 include/wine/itss.h
 include/wine/svcctl.h
 include/wtypes.h
