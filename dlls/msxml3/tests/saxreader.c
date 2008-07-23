@@ -444,6 +444,10 @@ static void test_saxreader(void)
     SAFEARRAY *pSA;
     SAFEARRAYBOUND SADim[1];
     char *pSAData = NULL;
+    IStream *iStream;
+    ULARGE_INTEGER liSize;
+    LARGE_INTEGER liPos;
+    ULONG bytesWritten;
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISAXXMLReader, (LPVOID*)&reader);
@@ -504,6 +508,22 @@ static void test_saxreader(void)
     test_expect_call(CH_ENDTEST);
 
     SafeArrayDestroy(pSA);
+
+    CreateStreamOnHGlobal(NULL, TRUE, &iStream);
+    liSize.QuadPart = strlen(szTestXML);
+    IStream_SetSize(iStream, liSize);
+    IStream_Write(iStream, (void const*)szTestXML, strlen(szTestXML), &bytesWritten);
+    liPos.QuadPart = 0;
+    IStream_Seek(iStream, liPos, STREAM_SEEK_SET, NULL);
+    V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+    V_UNKNOWN(&var) = (IUnknown*)iStream;
+
+    expectCall = contentHandlerTest1;
+    hr = ISAXXMLReader_parse(reader, var);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    test_expect_call(CH_ENDTEST);
+
+    IStream_Release(iStream);
 
     ISAXXMLReader_Release(reader);
 }
