@@ -633,3 +633,13 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamil
 
     return GdipCreateFontFamilyFromName(MSSansSerif, NULL, nativeFamily);
 }
+
+GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection** fontCollection)
+{
+    FIXME("stub %p\n", fontCollection);
+
+    if (!fontCollection)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
