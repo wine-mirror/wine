@@ -303,6 +303,8 @@ typedef enum _WINED3DFORMAT {
     
     WINED3DFMT_CxV8U8               = 117,
 
+    /* Vendor specific formats */
+    WINED3DFMT_ATI2N                =  WINEMAKEFOURCC('A', 'T', 'I', '2'),
 
     WINED3DFMT_FORCE_DWORD          = 0xFFFFFFFF
 } WINED3DFORMAT;

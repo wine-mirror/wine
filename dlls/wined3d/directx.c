@@ -59,6 +59,7 @@ static const struct {
     {"GL_ATI_texture_mirror_once",          ATI_TEXTURE_MIRROR_ONCE,        0                           },
     {"GL_ATI_envmap_bumpmap",               ATI_ENVMAP_BUMPMAP,             0                           },
     {"GL_ATI_fragment_shader",              ATI_FRAGMENT_SHADER,            0                           },
+    {"GL_ATI_texture_compression_3dc",      ATI_TEXTURE_COMPRESSION_3DC,    0                           },
 
     /* ARB */
     {"GL_ARB_color_buffer_float",           ARB_COLOR_BUFFER_FLOAT,         0                           },
@@ -2368,6 +2369,15 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
         case WINED3DFMT_R8G8_B8G8:
         case WINED3DFMT_G8R8_G8B8:
         case WINED3DFMT_MULTI2_ARGB8:
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        /* Vendor specific formats */
+        case WINED3DFMT_ATI2N:
+            if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            }
             TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
 

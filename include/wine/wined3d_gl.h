@@ -2991,6 +2991,11 @@ typedef void (WINE_GLAPI *PGLFNSETFRAGMENTSHADERCONSTANTATI) (GLuint dst, const 
 #define GL_NEGATE_BIT_ATI                   0x00000004
 #define GL_BIAS_BIT_ATI                     0x00000008
 #endif
+/* GL_ATI_texture_compression_3dc */
+#ifndef GL_ATI_texture_compression_3dc
+#define GL_ATI_texture_compression_3dc
+#define GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI 0x8837
+#endif
 
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
@@ -3357,6 +3362,7 @@ typedef enum _GL_SupportedExt {
   EXT_VERTEX_SHADER,
   ATI_ENVMAP_BUMPMAP,
   ATI_FRAGMENT_SHADER,
+  ATI_TEXTURE_COMPRESSION_3DC,
   /* APPLE */
   APPLE_FENCE,
   APPLE_CLIENT_STORAGE,

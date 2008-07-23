@@ -816,6 +816,23 @@ static void shader_arb_color_correction(SHADER_OPCODE_ARG* arg) {
             }
             break;
 
+        case WINED3DFMT_ATI2N:
+            /* GL_ATI_texture_compression_3dc returns the two channels as luminance-alpha,
+             * which means the first one is replicated accross .rgb, and the 2nd one is in
+             * .a. We need the 2nd in .g
+             */
+            if(strlen(writemask) == 5) {
+                /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
+                shader_addline(arg->buffer, "MOV %s.%c, %s.%c;\n",
+                               reg, writemask[2], reg, writemask[4]);
+            } else if(strlen(writemask) == 2) {
+                /* Nothing to do */
+            } else {
+                /* This is bad: We have VL, but we need VU */
+                FIXME("2 or 3 components sampled from a converted ATI2N texture\n");
+            }
+            break;
+
             /* stupid compiler */
         default:
             break;

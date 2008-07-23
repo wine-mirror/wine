@@ -641,7 +641,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
        Size = ((max(Width,4) * tableEntry->bpp) * max(Height,4)) >> 1;
 
     } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
-               Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
+               Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5 ||
+               Format == WINED3DFMT_ATI2N) {
        Size = ((max(Width,4) * tableEntry->bpp) * max(Height,4));
     } else {
        /* The pitch is a multiple of 4 bytes */

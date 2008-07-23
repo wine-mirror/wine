@@ -112,6 +112,8 @@ static const StaticPixelFormatDesc formats[] = {
     {WINED3DFMT_INDEX16     ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,FALSE },
     {WINED3DFMT_INDEX32     ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,0      ,0          ,FALSE },
     {WINED3DFMT_Q16W16V16U16,0x0        ,0x0        ,0x0        ,0x0        ,8      ,0      ,0          ,FALSE },
+    /* Vendor-specific formats */
+    {WINED3DFMT_ATI2N       ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
 };
 
 typedef struct {
@@ -260,6 +262,9 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_INDEX32        ,0                                ,0                                      , 0,           0                         ,0
         ,0 },
     {WINED3DFMT_Q16W16V16U16   ,GL_COLOR_INDEX                   ,GL_COLOR_INDEX                         , 0,           GL_COLOR_INDEX            ,GL_UNSIGNED_SHORT
+        ,0 },
+    /* Vendor-specific formats */
+    {WINED3DFMT_ATI2N          ,0                                ,0                                      , 0,           GL_LUMINANCE_ALPHA        ,GL_UNSIGNED_BYTE
         ,0 }
 };
 
@@ -388,6 +393,13 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
          * the shader, thus they are compatible with all WINED3DFMT_UNKNOWN group formats.
          * WINED3DFMT_Q8W8V8U8 doesn't even need load-time conversion
          */
+    }
+
+    if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC)) {
+        dst = getFmtIdx(WINED3DFMT_ATI2N);
+        gl_info->gl_formats[dst].glInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
+        gl_info->gl_formats[dst].glGammaInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
+        gl_info->gl_formats[dst].conversion_group= WINED3DFMT_ATI2N;
     }
 
     return TRUE;
@@ -519,6 +531,7 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_G32R32F);
     FMT_TO_STR(WINED3DFMT_A32B32G32R32F);
     FMT_TO_STR(WINED3DFMT_CxV8U8);
+    FMT_TO_STR(WINED3DFMT_ATI2N);
 #undef FMT_TO_STR
   default:
     {
