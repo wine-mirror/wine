@@ -1799,6 +1799,7 @@ static void test_navigator(IHTMLDocument2 *doc)
     IHTMLWindow2 *window;
     IOmNavigator *navigator, *navigator2;
     ULONG ref;
+    BSTR bstr;
     HRESULT hres;
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
@@ -1815,6 +1816,12 @@ static void test_navigator(IHTMLDocument2 *doc)
 
     IHTMLWindow2_Release(window);
     IOmNavigator_Release(navigator2);
+
+    hres = IOmNavigator_get_appCodeName(navigator, &bstr);
+    ok(hres == S_OK, "get_appCodeName failed: %08x\n", hres);
+    ok(!strcmp_wa(bstr, "Mozilla"), "Unexpected appCodeName %s\n", dbgstr_w(bstr));
+    SysFreeString(bstr);
+
     ref = IOmNavigator_Release(navigator);
     ok(!ref, "navigator should be destroyed here\n");
 }
