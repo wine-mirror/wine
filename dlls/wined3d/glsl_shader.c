@@ -1348,19 +1348,34 @@ static void shader_glsl_color_correction(SHADER_OPCODE_ARG* arg) {
             /* GL_ATI_texture_compression_3dc returns the two channels as luminance-alpha,
              * which means the first one is replicated accross .rgb, and the 2nd one is in
              * .a. We need the 2nd in .g
+             *
+             * GL_EXT_texture_compression_rgtc returns the values in .rg, however, they
+             * are swapped compared to d3d. So swap red and green.
              */
             mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &dst_param);
             mask_size = shader_glsl_get_write_mask_size(mask);
-            if(mask_size == 4) {
-                /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
-                shader_addline(arg->buffer, "%s.%c = %s.%c;\n",
-                               dst_param.reg_name, dst_param.mask_str[2],
-                               dst_param.reg_name, dst_param.mask_str[4]);
-            } else if(mask_size == 1) {
-                /* Nothing to do */
+            if(GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
+                if(mask_size >= 2) {
+                    shader_addline(arg->buffer, "%s.%c%c = %s.%c%c;\n",
+                                dst_param.reg_name, dst_param.mask_str[1],
+                                                    dst_param.mask_str[2],
+                                dst_param.reg_name, dst_param.mask_str[2],
+                                                    dst_param.mask_str[1]);
+                } else {
+                    FIXME("%u components sampled from a converted ATI2N texture\n", mask_size);
+                }
             } else {
-                FIXME("%u components sampled from a converted ATI2N texture\n", mask_size);
-                /* This is bad: We have .r[gb], but we need .ra */
+                if(mask_size == 4) {
+                    /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
+                    shader_addline(arg->buffer, "%s.%c = %s.%c;\n",
+                                dst_param.reg_name, dst_param.mask_str[2],
+                                dst_param.reg_name, dst_param.mask_str[4]);
+                } else if(mask_size == 1) {
+                    /* Nothing to do */
+                } else {
+                    FIXME("%u components sampled from a converted ATI2N texture\n", mask_size);
+                    /* This is bad: We have .r[gb], but we need .ra */
+                }
             }
             break;
 

@@ -105,6 +105,7 @@ static const struct {
     {"GL_EXT_stencil_wrap",                 EXT_STENCIL_WRAP,               0                           },
     {"GL_EXT_texture3D",                    EXT_TEXTURE3D,                  MAKEDWORD_VERSION(1, 2)     },
     {"GL_EXT_texture_compression_s3tc",     EXT_TEXTURE_COMPRESSION_S3TC,   0                           },
+    {"GL_EXT_texture_compression_rgtc",     EXT_TEXTURE_COMPRESSION_RGTC,   0                           },
     {"GL_EXT_texture_env_add",              EXT_TEXTURE_ENV_ADD,            0                           },
     {"GL_EXT_texture_env_combine",          EXT_TEXTURE_ENV_COMBINE,        0                           },
     {"GL_EXT_texture_env_dot3",             EXT_TEXTURE_ENV_DOT3,           0                           },
@@ -2374,7 +2375,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 
         /* Vendor specific formats */
         case WINED3DFMT_ATI2N:
-            if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC)) {
+            if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC) || GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
             }

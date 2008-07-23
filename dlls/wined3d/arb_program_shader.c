@@ -820,16 +820,23 @@ static void shader_arb_color_correction(SHADER_OPCODE_ARG* arg) {
             /* GL_ATI_texture_compression_3dc returns the two channels as luminance-alpha,
              * which means the first one is replicated accross .rgb, and the 2nd one is in
              * .a. We need the 2nd in .g
+             *
+             * GL_EXT_texture_compression_rgtc returns the values in .rg, however, they
+             * are swapped compared to d3d. So swap red and green.
              */
-            if(strlen(writemask) == 5) {
-                /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
-                shader_addline(arg->buffer, "MOV %s.%c, %s.%c;\n",
-                               reg, writemask[2], reg, writemask[4]);
-            } else if(strlen(writemask) == 2) {
-                /* Nothing to do */
+            if(GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
+                shader_addline(arg->buffer, "SWZ %s, %s, %c, %c, 1, 0;\n",
+                               reg, reg, writemask[2], writemask[1]);
             } else {
-                /* This is bad: We have VL, but we need VU */
-                FIXME("2 or 3 components sampled from a converted ATI2N texture\n");
+                if(strlen(writemask) == 5) {
+                    shader_addline(arg->buffer, "MOV %s.%c, %s.%c;\n",
+                                reg, writemask[2], reg, writemask[4]);
+                } else if(strlen(writemask) == 2) {
+                    /* Nothing to do */
+                } else {
+                    /* This is bad: We have VL, but we need VU */
+                    FIXME("2 or 3 components sampled from a converted ATI2N texture\n");
+                }
             }
             break;
 

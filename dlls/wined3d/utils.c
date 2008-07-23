@@ -395,7 +395,12 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
          */
     }
 
-    if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC)) {
+    if(GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
+        dst = getFmtIdx(WINED3DFMT_ATI2N);
+        gl_info->gl_formats[dst].glInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+        gl_info->gl_formats[dst].glGammaInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+        gl_info->gl_formats[dst].conversion_group= WINED3DFMT_ATI2N;
+    } else if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC)) {
         dst = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->gl_formats[dst].glInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
         gl_info->gl_formats[dst].glGammaInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;

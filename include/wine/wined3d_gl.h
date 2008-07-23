@@ -2996,6 +2996,14 @@ typedef void (WINE_GLAPI *PGLFNSETFRAGMENTSHADERCONSTANTATI) (GLuint dst, const 
 #define GL_ATI_texture_compression_3dc
 #define GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI 0x8837
 #endif
+/* GL_EXT_texture_compression_rgtc */
+#ifndef GL_EXT_texture_compression_rgtc
+#define GL_EXT_texture_compression_rgtc
+#define GL_COMPRESSED_RED_RGTC1_EXT                       0x8DBB
+#define GL_COMPRESSED_SIGNED_RED_RGTC1_EXT                0x8DBC
+#define GL_COMPRESSED_RED_GREEN_RGTC2_EXT                 0x8DBD
+#define GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT          0x8DBE
+#endif
 
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
@@ -3327,6 +3335,7 @@ typedef enum _GL_SupportedExt {
   EXT_STENCIL_WRAP,
   EXT_TEXTURE3D,
   EXT_TEXTURE_COMPRESSION_S3TC,
+  EXT_TEXTURE_COMPRESSION_RGTC,
   EXT_TEXTURE_FILTER_ANISOTROPIC,
   EXT_TEXTURE_LOD,
   EXT_TEXTURE_LOD_BIAS,
