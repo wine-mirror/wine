@@ -52,7 +52,15 @@ static const WCHAR szSimpleXML[] = {
 '<','/','B','a','n','k','A','c','c','o','u','n','t','>','\n','\0'
 };
 
-static CHAR szTestXML[] =
+static const WCHAR szCarriageRetTest[] = {
+'<','?','x','m','l',' ','v','e','r','s','i','o','n','=','"','1','.','0','"','?','>','\r','\n',
+'<','B','a','n','k','A','c','c','o','u','n','t','>','\r','\n',
+'\t','<','N','u','m','b','e','r','>','1','2','3','4','<','/','N','u','m','b','e','r','>','\r','\n',
+'\t','<','N','a','m','e','>','C','a','p','t','a','i','n',' ','A','h','a','b','<','/','N','a','m','e','>','\r','\n',
+'<','/','B','a','n','k','A','c','c','o','u','n','t','>','\0'
+};
+
+static const CHAR szTestXML[] =
 "<?xml version=\"1.0\" ?>\n"
 "<BankAccount>\n"
 "   <Number>1234</Number>\n"
@@ -81,6 +89,26 @@ static content_handler_test contentHandlerTest1[] = {
     { CH_CHARACTERS, 4, 10, "Captain Ahab" },
     { CH_ENDELEMENT, 4, 24, "", "Name", "Name" },
     { CH_CHARACTERS, 4, 29, "\n" },
+    { CH_ENDELEMENT, 5, 3, "", "BankAccount", "BankAccount" },
+    { CH_ENDDOCUMENT, 0, 0 },
+    { CH_ENDTEST }
+};
+
+static content_handler_test contentHandlerTest2[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0 },
+    { CH_STARTDOCUMENT, 0, 0 },
+    { CH_STARTELEMENT, 2, 14, "", "BankAccount", "BankAccount" },
+    { CH_CHARACTERS, 2, 14, "\n" },
+    { CH_CHARACTERS, 2, 16, "\t" },
+    { CH_STARTELEMENT, 3, 10, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 10, "1234" },
+    { CH_ENDELEMENT, 3, 16, "", "Number", "Number" },
+    { CH_CHARACTERS, 3, 23, "\n" },
+    { CH_CHARACTERS, 3, 25, "\t" },
+    { CH_STARTELEMENT, 4, 8, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 8, "Captain Ahab" },
+    { CH_ENDELEMENT, 4, 22, "", "Name", "Name" },
+    { CH_CHARACTERS, 4, 27, "\n" },
     { CH_ENDELEMENT, 5, 3, "", "BankAccount", "BankAccount" },
     { CH_ENDDOCUMENT, 0, 0 },
     { CH_ENDTEST }
@@ -524,6 +552,14 @@ static void test_saxreader(void)
     test_expect_call(CH_ENDTEST);
 
     IStream_Release(iStream);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(szCarriageRetTest);
+
+    expectCall = contentHandlerTest2;
+    hr = ISAXXMLReader_parse(reader, var);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    test_expect_call(CH_ENDTEST);
 
     ISAXXMLReader_Release(reader);
 }
