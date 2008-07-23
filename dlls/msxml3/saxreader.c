@@ -1130,12 +1130,26 @@ static HRESULT WINAPI isaxxmlreader_parse(
             data = xmlChar_from_wchar(V_BSTR(&varInput));
             xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
             break;
-        case VT_ARRAY|VT_UI1:
-            hr = SafeArrayAccessData(V_ARRAY(&varInput), (void**)&data);
+        case VT_ARRAY|VT_UI1: {
+            void *pSAData;
+            LONG lBound, uBound;
+            ULONG dataRead;
+
+            hr = SafeArrayGetLBound(V_ARRAY(&varInput), 1, &lBound);
             if(hr != S_OK) break;
+            hr = SafeArrayGetUBound(V_ARRAY(&varInput), 1, &uBound);
+            if(hr != S_OK) break;
+            dataRead = (uBound-lBound)*SafeArrayGetElemsize(V_ARRAY(&varInput));
+            data = HeapAlloc(GetProcessHeap(), 0, dataRead+1);
+            if(!data) break;
+            hr = SafeArrayAccessData(V_ARRAY(&varInput), (void**)&pSAData);
+            if(hr != S_OK) break;
+            memcpy(data, pSAData, dataRead);
+            data[dataRead] = '\0';
             xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
             SafeArrayUnaccessData(V_ARRAY(&varInput));
             break;
+        }
         case VT_UNKNOWN:
         case VT_DISPATCH: {
             IPersistStream *persistStream;
