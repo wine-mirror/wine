@@ -355,7 +355,7 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     wc.cbWndExtra = sizeof(CPlApplet*);
     wc.hInstance = hInst;
     wc.hIcon = 0;
-    wc.hCursor = 0;
+    wc.hCursor = LoadCursorW( 0, (LPWSTR)IDC_ARROW );
     wc.hbrBackground = GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = className;
