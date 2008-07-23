@@ -1039,52 +1039,72 @@ static HRESULT WINAPI isaxxmlreader_parse(
     xmlChar *data = NULL;
     HRESULT hr;
 
-    FIXME("(%p) semi-stub\n", This);
+    TRACE("(%p)\n", This);
 
     hr = SAXLocator_create(This, &locator);
     if(FAILED(hr))
         return E_FAIL;
 
+    locator->pParserCtxt = xmlNewParserCtxt();
+    if(!locator->pParserCtxt)
+    {
+        ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
+        return E_FAIL;
+    }
+
+    locator->pParserCtxt->sax = &locator->saxreader->sax;
+    locator->pParserCtxt->userData = locator;
+
     hr = S_OK;
     switch(V_VT(&varInput))
     {
         case VT_BSTR:
-            locator->pParserCtxt = xmlNewParserCtxt();
-            if(!locator->pParserCtxt)
-            {
-                hr = E_FAIL;
-                break;
-            }
             data = xmlChar_from_wchar(V_BSTR(&varInput));
             xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
-
-            locator->pParserCtxt->sax = &locator->saxreader->sax;
-            locator->pParserCtxt->userData = locator;
-
-            if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
-            else hr = locator->ret;
             break;
         case VT_ARRAY|VT_UI1:
-            locator->pParserCtxt = xmlNewParserCtxt();
-            if(!locator->pParserCtxt)
-            {
-                hr = E_FAIL;
-                break;
-            }
-
             hr = SafeArrayAccessData(V_ARRAY(&varInput), (void**)&data);
             if(hr != S_OK) break;
             xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
             SafeArrayUnaccessData(V_ARRAY(&varInput));
-
-            locator->pParserCtxt->sax = &locator->saxreader->sax;
-            locator->pParserCtxt->userData = locator;
-
-            if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
-            else hr = locator->ret;
             break;
+        case VT_UNKNOWN:
+        case VT_DISPATCH: {
+            IPersistStream *persistStream;
+            IStream *stream;
+            IXMLDOMDocument *xmlDoc;
+
+            if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
+                        &IID_IPersistStream, (void**)&persistStream) == S_OK)
+            {
+                IPersistStream_Release(persistStream);
+                hr = E_NOTIMPL;
+                break;
+            }
+            if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
+                                       &IID_IStream, (void**)&stream) == S_OK)
+            {
+                IStream_Release(stream);
+                hr = E_NOTIMPL;
+                break;
+            }
+            if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
+                                       &IID_IXMLDOMDocument, (void**)&xmlDoc) == S_OK)
+            {
+                IXMLDOMDocument_Release(xmlDoc);
+                hr = E_NOTIMPL;
+                break;
+            }
+        }
         default:
-            hr = E_NOTIMPL;
+            WARN("vt %d not implemented\n", V_VT(&varInput));
+            hr = E_INVALIDARG;
+    }
+
+    if(hr == S_OK)
+    {
+        if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
+        else hr = locator->ret;
     }
 
     if(locator->pParserCtxt)
