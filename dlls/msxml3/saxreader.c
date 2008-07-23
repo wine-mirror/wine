@@ -254,24 +254,72 @@ static void libxmlCharacters(
     saxlocator *This = ctx;
     HRESULT hr;
     xmlChar *end;
+    xmlChar *lastCurCopy;
+    xmlChar *chEnd;
+    int columnCopy;
+    int lineCopy;
+
+    if(*(This->lastCur-1) != '>' && *(This->lastCur-1) != '/') return;
 
     if(*(This->lastCur-1) != '>')
     {
         end = (xmlChar*)This->pParserCtxt->input->cur-len;
+        while(*(end-1) != '>') end--;
         update_position(This, end);
     }
 
+    chEnd = This->lastCur+len;
+    while(*chEnd != '<') chEnd++;
+
+    Chars = bstr_from_xmlChar(ch);
+
+    lastCurCopy = This->lastCur;
+    columnCopy = This->column;
+    lineCopy = This->line;
+    end = This->lastCur;
+
     if(This->saxreader->contentHandler)
     {
-        Chars = bstr_from_xmlChar(ch);
-        hr = ISAXContentHandler_characters(This->saxreader->contentHandler, Chars, len);
-        SysFreeString(Chars);
+        while(This->lastCur < chEnd)
+        {
+            end = This->lastCur;
+            while(end < chEnd-1)
+            {
+                if(*end == '\r') break;
+                end++;
+            }
 
-        if(hr != S_OK)
-            format_error_message_from_id(This, hr);
+            Chars = bstr_from_xmlChar(This->lastCur);
+
+            if(*end == '\r' && *(end+1) == '\n')
+            {
+                memmove((WCHAR*)Chars+(end-This->lastCur),
+                        (WCHAR*)Chars+(end-This->lastCur)+1,
+                        (SysStringLen(Chars)-(end-This->lastCur))*sizeof(WCHAR));
+                SysReAllocStringLen(&Chars, Chars, SysStringLen(Chars)-1);
+            }
+            else if(*end == '\r') Chars[end-This->lastCur] = '\n';
+
+            hr = ISAXContentHandler_characters(This->saxreader->contentHandler, Chars, end-This->lastCur+1);
+            SysFreeString(Chars);
+            if(hr != S_OK)
+            {
+                format_error_message_from_id(This, hr);
+                return;
+            }
+
+            if(*(end+1) == '\n') end++;
+            if(end < chEnd) end++;
+
+            This->column += end-This->lastCur;
+            This->lastCur = end;
+        }
+
+        This->lastCur = lastCurCopy;
+        This->column = columnCopy;
+        This->line = lineCopy;
+        update_position(This, chEnd);
     }
-
-    update_position(This, NULL);
 }
 
 static void libxmlSetDocumentLocator(
