@@ -1071,26 +1071,50 @@ static HRESULT WINAPI isaxxmlreader_parse(
         case VT_UNKNOWN:
         case VT_DISPATCH: {
             IPersistStream *persistStream;
-            IStream *stream;
+            IStream *stream = NULL;
             IXMLDOMDocument *xmlDoc;
 
             if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                         &IID_IPersistStream, (void**)&persistStream) == S_OK)
             {
+                hr = IPersistStream_Save(persistStream, stream, TRUE);
                 IPersistStream_Release(persistStream);
-                hr = E_NOTIMPL;
-                break;
+                if(hr != S_OK) break;
             }
-            if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
-                                       &IID_IStream, (void**)&stream) == S_OK)
+            if(stream || IUnknown_QueryInterface(V_UNKNOWN(&varInput),
+                        &IID_IStream, (void**)&stream) == S_OK)
             {
+                STATSTG dataInfo;
+                ULONG dataRead;
+
+                while(1)
+                {
+                    hr = IStream_Stat(stream, &dataInfo, STATFLAG_NONAME);
+                    if(hr == E_PENDING) continue;
+                    break;
+                }
+                data = HeapAlloc(GetProcessHeap(), 0,
+                        dataInfo.cbSize.QuadPart+1);
+                while(1)
+                {
+                    hr = IStream_Read(stream, data,
+                            dataInfo.cbSize.QuadPart, &dataRead);
+                    if(hr == E_PENDING) continue;
+                    break;
+                }
+                data[dataInfo.cbSize.QuadPart] = '\0';
+                xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
                 IStream_Release(stream);
-                hr = E_NOTIMPL;
                 break;
             }
             if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                                        &IID_IXMLDOMDocument, (void**)&xmlDoc) == S_OK)
             {
+                BSTR bstrData;
+
+                IXMLDOMDocument_get_xml(xmlDoc, &bstrData);
+                data = xmlChar_from_wchar(bstrData);
+                xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
                 IXMLDOMDocument_Release(xmlDoc);
                 hr = E_NOTIMPL;
                 break;
