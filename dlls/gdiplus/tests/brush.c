@@ -51,8 +51,8 @@ static void test_type(void)
     GdipCreateSolidFill((ARGB)0xdeadbeef, &brush);
 
     status = GdipGetBrushType((GpBrush*)brush, &bt);
-    expect(status, Ok);
-    expect(bt, BrushTypeSolidColor);
+    expect(Ok, status);
+    expect(BrushTypeSolidColor, bt);
 
     GdipDeleteBrush((GpBrush*) brush);
 }
