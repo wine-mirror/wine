@@ -3457,8 +3457,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     /* Fill the ddraw caps structure */
     pCaps->DirectDrawCaps.Caps =        WINEDDCAPS_GDI                      |
                                         WINEDDCAPS_PALETTE                  |
-                                        blit_caps                           |
-                                        WINEDDCAPS_3D; /* TODO: Make conditional */
+                                        blit_caps;
     pCaps->DirectDrawCaps.Caps2 =       WINEDDCAPS2_CERTIFIED                |
                                         WINEDDCAPS2_NOPAGELOCKREQUIRED       |
                                         WINEDDCAPS2_PRIMARYGAMMA             |
@@ -3483,12 +3482,18 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                         WINEDDSCAPS_PRIMARYSURFACE          |
                                         WINEDDSCAPS_SYSTEMMEMORY            |
                                         WINEDDSCAPS_VIDEOMEMORY             |
-                                        WINEDDSCAPS_VISIBLE                 |
-                                        WINEDDSCAPS_3DDEVICE                | /* TODO: Make conditional */
-                                        WINEDDSCAPS_MIPMAP                  | /* TODO: Make conditional */
-                                        WINEDDSCAPS_TEXTURE                 | /* TODO: Make conditional */
-                                        WINEDDSCAPS_ZBUFFER;                  /* TODO: Make conditional */
+                                        WINEDDSCAPS_VISIBLE;
     pCaps->DirectDrawCaps.StrideAlign = 0; /* TODO: SURFACE_ALIGNMENT */
+
+    /* Set D3D caps if OpenGL is available. */
+    if(Adapters[Adapter].opengl) {
+        pCaps->DirectDrawCaps.ddsCaps |=WINEDDSCAPS_3DDEVICE                |
+                                        WINEDDSCAPS_MIPMAP                  |
+                                        WINEDDSCAPS_TEXTURE                 |
+                                        WINEDDSCAPS_ZBUFFER;
+        pCaps->DirectDrawCaps.Caps |=   WINEDDCAPS_3D;
+    }
+
     return WINED3D_OK;
 }
 
