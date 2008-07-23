@@ -543,6 +543,12 @@ struct timer_queue
     struct list timers;
 };
 
+static void queue_remove_timer(struct queue_timer *t)
+{
+    list_remove(&t->entry);
+    RtlFreeHeap(GetProcessHeap(), 0, t);
+}
+
 /***********************************************************************
  *              RtlCreateTimerQueue   (NTDLL.@)
  *
@@ -587,6 +593,12 @@ NTSTATUS WINAPI RtlCreateTimerQueue(PHANDLE NewTimerQueue)
 NTSTATUS WINAPI RtlDeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 {
     struct timer_queue *q = TimerQueue;
+    struct queue_timer *t, *temp;
+
+    RtlEnterCriticalSection(&q->cs);
+    LIST_FOR_EACH_ENTRY_SAFE(t, temp, &q->timers, struct queue_timer, entry)
+        queue_remove_timer(t);
+    RtlLeaveCriticalSection(&q->cs);
 
     RtlDeleteCriticalSection(&q->cs);
     RtlFreeHeap(GetProcessHeap(), 0, q);
@@ -599,4 +611,49 @@ NTSTATUS WINAPI RtlDeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
             NtSetEvent(CompletionEvent, NULL);
         return STATUS_PENDING;
     }
+}
+
+/***********************************************************************
+ *              RtlCreateTimer   (NTDLL.@)
+ *
+ * Creates a new timer associated with the given queue.
+ *
+ * PARAMS
+ *  NewTimer   [O] The newly created timer.
+ *  TimerQueue [I] The queue to hold the timer.
+ *  Callback   [I] The callback to fire.
+ *  Parameter  [I] The argument for the callback.
+ *  DueTime    [I] The delay, in milliseconds, before first firing the
+ *                 timer.
+ *  Period     [I] The period, in milliseconds, at which to fire the timer
+ *                 after the first callback.  If zero, the timer will only
+ *                 fire once.  It still needs to be deleted with
+ *                 RtlDeleteTimer.
+ * Flags       [I] Flags controling the execution of the callback.  In
+ *                 addition to the WT_* thread pool flags (see
+ *                 RtlQueueWorkItem), WT_EXECUTEINTIMERTHREAD and
+ *                 WT_EXECUTEONLYONCE are supported.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: Any NTSTATUS code.
+ */
+NTSTATUS WINAPI RtlCreateTimer(PHANDLE NewTimer, HANDLE TimerQueue,
+                               RTL_WAITORTIMERCALLBACKFUNC Callback,
+                               PVOID Parameter, DWORD DueTime, DWORD Period,
+                               ULONG Flags)
+{
+    struct timer_queue *q = TimerQueue;
+    struct queue_timer *t = RtlAllocateHeap(GetProcessHeap(), 0, sizeof *t);
+    if (!t)
+        return STATUS_NO_MEMORY;
+
+    FIXME("timer expiration unimplemented\n");
+
+    RtlEnterCriticalSection(&q->cs);
+    list_add_tail(&q->timers, &t->entry);
+    RtlLeaveCriticalSection(&q->cs);
+
+    *NewTimer = t;
+    return STATUS_SUCCESS;
 }

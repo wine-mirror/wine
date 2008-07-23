@@ -1085,16 +1085,20 @@ BOOL WINAPI DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
  *
  * RETURNS
  *   nonzero on success or zero on failure
- *
- * BUGS
- *   Unimplemented
  */
 BOOL WINAPI CreateTimerQueueTimer( PHANDLE phNewTimer, HANDLE TimerQueue,
                                    WAITORTIMERCALLBACK Callback, PVOID Parameter,
                                    DWORD DueTime, DWORD Period, ULONG Flags )
 {
-    FIXME("stub\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    NTSTATUS status = RtlCreateTimer(phNewTimer, TimerQueue, Callback,
+                                     Parameter, DueTime, Period, Flags);
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
     return TRUE;
 }
 
