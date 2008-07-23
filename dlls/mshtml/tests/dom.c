@@ -1361,6 +1361,30 @@ static void _test_node_remove_child(unsigned line, IUnknown *unk, IHTMLDOMNode *
     IHTMLDOMNode_Release(new_node);
 }
 
+#define test_doc_title(d,t) _test_doc_title(__LINE__,d,t)
+static void _test_doc_title(unsigned line, IHTMLDocument2 *doc, const char *extitle)
+{
+    BSTR title = NULL;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_title(doc, &title);
+    ok_(__FILE__,line) (hres == S_OK, "get_title failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa(title, extitle), "unexpected title %s\n", dbgstr_w(title));
+    SysFreeString(title);
+}
+
+#define test_doc_set_title(d,t) _test_doc_set_title(__LINE__,d,t)
+static void _test_doc_set_title(unsigned line, IHTMLDocument2 *doc, const char *title)
+{
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(title);
+    hres = IHTMLDocument2_put_title(doc, tmp);
+    ok_(__FILE__,line) (hres == S_OK, "get_title failed: %08x\n", hres);
+    SysFreeString(tmp);
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, LPCWSTR n,
         const elem_type_t *elem_types, long len)
 {
@@ -1978,6 +2002,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLStyleSheetsCollection_Release(stylesheetcol);
 
     test_default_selection(doc);
+    test_doc_title(doc, "");
 }
 
 static void test_stylesheet(IDispatch *disp)
@@ -2332,6 +2357,10 @@ static void test_elems(IHTMLDocument2 *doc)
 
     test_stylesheets(doc);
     test_create_option_elem(doc);
+
+    test_doc_title(doc, "test");
+    test_doc_set_title(doc, "test title");
+    test_doc_title(doc, "test title");
 }
 
 static void test_create_elems(IHTMLDocument2 *doc)
