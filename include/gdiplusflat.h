@@ -423,6 +423,7 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily**);
 GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection**);
 GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection**);
 GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection*, GDIPCONST WCHAR*);
+GpStatus WINGDIPAPI GdipGetFontCollectionFamilyCount(GpFontCollection*, INT*);
 
 GpStatus WINGDIPAPI GdipCreateStringFormat(INT,LANGID,GpStringFormat**);
 GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat*);

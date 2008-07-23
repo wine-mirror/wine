@@ -664,3 +664,14 @@ GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection* fontCollection,
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipGetFontCollectionFamilyCount(
+        GpFontCollection* fontCollection, INT* numFound)
+{
+    FIXME("stub: %p, %p\n", fontCollection, numFound);
+
+    if (!(fontCollection && numFound))
+        return InvalidParameter;
+
+    return NotImplemented;
+}
