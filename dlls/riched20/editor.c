@@ -140,10 +140,10 @@
   + WM_SETTEXT (resets undo stack !) (proper style?) ANSI&Unicode
   - WM_STYLECHANGING
   - WM_STYLECHANGED (things like read-only flag)
-  - WM_UNICHAR
-  
+  + WM_UNICHAR
+
   Notifications
-  
+
   * EN_CHANGE (sent from the wrong place)
   - EN_CORRECTTEXT
   - EN_DROPFILES
@@ -2101,10 +2101,9 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(WM_STYLECHANGING)
   UNSUPPORTED_MSG(WM_STYLECHANGED)
-/*  UNSUPPORTED_MSG(WM_UNICHAR) FIXME missing in Wine headers */
-    
+
 /* Messages specific to Richedit controls */
-  
+
   case EM_STREAMIN:
    return ME_StreamIn(editor, wParam, (EDITSTREAM*)lParam, TRUE);
   case EM_STREAMOUT:
@@ -3263,6 +3262,23 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     return 0;
   }
+  case WM_UNICHAR:
+    if (unicode)
+    {
+        if(wParam == UNICODE_NOCHAR) return TRUE;
+        if(wParam <= 0x000fffff)
+        {
+            if(wParam > 0xffff) /* convert to surrogates */
+            {
+                wParam -= 0x10000;
+                SendMessageW(editor->hWnd, WM_CHAR, (wParam >> 10) + 0xd800, 0);
+                SendMessageW(editor->hWnd, WM_CHAR, (wParam & 0x03ff) + 0xdc00, 0);
+            }
+            else SendMessageW(editor->hWnd, WM_CHAR, wParam, 0);
+        }
+        return 0;
+    }
+    break;
   case EM_STOPGROUPTYPING:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     return 0;
