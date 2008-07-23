@@ -675,3 +675,16 @@ GpStatus WINGDIPAPI GdipGetFontCollectionFamilyCount(
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipGetFontCollectionFamilyList(
+        GpFontCollection* fontCollection, INT numSought,
+        GpFontFamily* gpfamilies[], INT* numFound)
+{
+    FIXME("stub: %p, %d, %p, %p\n", fontCollection, numSought, gpfamilies,
+            numFound);
+
+    if (!(fontCollection && gpfamilies && numFound))
+        return InvalidParameter;
+
+    return NotImplemented;
+}
