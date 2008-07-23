@@ -464,7 +464,7 @@
 @ stdcall GdipPathIterRewind(ptr)
 @ stub GdipPlayMetafileRecord
 @ stub GdipPlayTSClientRecord
-@ stub GdipPrivateAddFontFile
+@ stdcall GdipPrivateAddFontFile(ptr wstr)
 @ stub GdipPrivateAddMemoryFont
 @ stub GdipRecordMetafile
 @ stub GdipRecordMetafileFileName
