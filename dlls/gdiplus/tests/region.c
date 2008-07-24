@@ -97,10 +97,13 @@ todo_wine
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_EMPTY_RECT);
+}
 
     status = GdipSetInfinite(region);
     ok(status == Ok, "status %08x\n", status);
     status = GdipGetRegionDataSize(region, &needed);
+todo_wine
+{
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);

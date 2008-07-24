@@ -319,12 +319,17 @@ GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *region)
 
 GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *region)
 {
-    static int calls;
+    GpStatus stat;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!region)
+        return InvalidParameter;
 
-    return NotImplemented;
+    TRACE("%p", region);
+
+    delete_element(&region->node);
+    stat = init_region(region, RegionDataInfiniteRect);
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipTransformRegion(GpRegion *region, GpMatrix *matrix)
