@@ -193,10 +193,36 @@ static inline void notify_alloc( void *ptr, SIZE_T size, BOOL init )
 }
 
 /* notify that a block of memory has been freed for debugging purposes */
-static inline void notify_free( void *ptr )
+static inline void notify_free( void const *ptr )
 {
 #ifdef VALGRIND_FREELIKE_BLOCK
     VALGRIND_FREELIKE_BLOCK( ptr, 0 );
+#endif
+}
+
+static void subheap_notify_free_all(SUBHEAP const *subheap)
+{
+#ifdef VALGRIND_FREELIKE_BLOCK
+    char const *ptr = (char const *)subheap->base + subheap->headerSize;
+
+    if (!RUNNING_ON_VALGRIND) return;
+
+    while (ptr < (char const *)subheap->base + subheap->size)
+    {
+        if (*(const DWORD *)ptr & ARENA_FLAG_FREE)
+        {
+            ARENA_FREE const *pArena = (ARENA_FREE const *)ptr;
+            if (pArena->magic!=ARENA_FREE_MAGIC) ERR("bad free_magic @%p\n", pArena);
+            ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
+        }
+        else
+        {
+            ARENA_INUSE const *pArena = (ARENA_INUSE const *)ptr;
+            if (pArena->magic!=ARENA_INUSE_MAGIC) ERR("bad inuse_magic @%p\n", pArena);
+            notify_free(pArena + 1);
+            ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
+        }
+    }
 #endif
 }
 
@@ -1148,11 +1174,13 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     LIST_FOR_EACH_ENTRY_SAFE( subheap, next, &heapPtr->subheap_list, SUBHEAP, entry )
     {
         if (subheap == &heapPtr->subheap) continue;  /* do this one last */
+        subheap_notify_free_all(subheap);
         list_remove( &subheap->entry );
         size = 0;
         addr = subheap->base;
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
+    subheap_notify_free_all(&heapPtr->subheap);
     size = 0;
     addr = heapPtr->subheap.base;
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
