@@ -2,6 +2,7 @@
  * Subject Interface Package tests
  *
  * Copyright 2006 Paul Vriens
+ * Copyright 2008 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -129,6 +130,14 @@ static void test_AddRemoveProvider(void)
     ok ( ret, "CryptSIPRemoveProvider should have succeeded\n");
 }
 
+static const BYTE cabFileData[] = {
+0x4d,0x53,0x43,0x46,0x00,0x00,0x00,0x00,0x50,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0x2c,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x01,0x01,0x00,0x01,0x00,0x00,0x00,
+0xef,0xbe,0xff,0xff,0x42,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x06,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0xf7,0x38,0x4b,0xac,0x00,0x00,0x61,0x2e,0x74,0x78,
+0x74,0x00,0x6d,0x5a,0x72,0x78,0x06,0x00,0x06,0x00,0x61,0x2e,0x74,0x78,0x74,0x0a,
+};
+
 static void test_SIPRetrieveSubjectGUID(void)
 {
     BOOL ret;
@@ -140,6 +149,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     static const WCHAR deadbeef[]  = { 'c',':','\\','d','e','a','d','b','e','e','f','.','d','b','f',0 };
     /* Couldn't find a name for this GUID, it's the one used for 95% of the files */
     static const GUID unknownGUID = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static const GUID cabGUID = { 0xc689aaba, 0x8e78, 0x11d0, {0x8c,0x47,0x00,0xc0,0x4f,0xc2,0x95,0xee }};
     static CHAR  regeditPath[MAX_PATH];
     static WCHAR regeditPathW[MAX_PATH];
     static CHAR path[MAX_PATH];
@@ -255,6 +265,23 @@ static void test_SIPRetrieveSubjectGUID(void)
 
     /* Clean up */
     DeleteFileA(tempfile);
+
+    /* Create a .cab file */
+    file = CreateFileW(tempfileW, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+    WriteFile(file, cabFileData, sizeof(cabFileData), &written, NULL);
+    CloseHandle(file);
+
+    SetLastError(0xdeadbeef);
+    memset(&subject, 1, sizeof(GUID));
+    ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
+    todo_wine
+    ok( ret, "CryptSIPRetrieveSubjectGuid failed: %d (0x%08x)\n",
+            GetLastError(), GetLastError() );
+    todo_wine
+    ok ( !memcmp(&subject, &cabGUID, sizeof(GUID)),
+        "Expected GUID %s for cabinet file, not %s\n", show_guid(&cabGUID, guid1), show_guid(&subject, guid2));
+    /* Clean up */
+    DeleteFileW(tempfileW);
 }
 
 static void test_SIPLoad(void)
