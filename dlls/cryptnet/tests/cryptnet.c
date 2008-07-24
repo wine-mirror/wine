@@ -263,10 +263,11 @@ static void test_retrieveObjectByUrl(void)
     FILETIME ft = { 0 };
 
     SetLastError(0xdeadbeef);
-    ret = CryptRetrieveObjectByUrlA(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL,
-     NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-     "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    ret = CryptRetrieveObjectByUrlA(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL);
+    ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
+                GetLastError() == E_INVALIDARG),
+       "got 0x%x/%u (expected ERROR_INVALID_PARAMETER or E_INVALIDARG)\n",
+       GetLastError(), GetLastError());
 
     make_tmp_file(tmpfile);
     ptr = strchr(tmpfile, ':');
@@ -305,9 +306,21 @@ static void test_retrieveObjectByUrl(void)
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CRL, 0, 0, (void **)&crl,
      NULL, NULL, NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NO_MATCH,
-     "Expected CRYPT_E_NO_MATCH, got %08x\n", GetLastError());
-    ok(crl == NULL, "Expected CRL to be NULL\n");
+    /* vista: ERROR_NOT_SUPPORTED, w2k3,XP, newer w2k: CRYPT_E_NO_MATCH,
+       95: OSS_DATA_ERROR */
+    ok(!ret && (GetLastError() == ERROR_NOT_SUPPORTED ||
+                GetLastError() == CRYPT_E_NO_MATCH ||
+                GetLastError() == CRYPT_E_ASN1_BADTAG ||
+                GetLastError() == OSS_DATA_ERROR),
+       "got 0x%x/%u (expected CRYPT_E_NO_MATCH or CRYPT_E_ASN1_BADTAG or "
+       "OSS_DATA_ERROR)\n", GetLastError(), GetLastError());
+
+    /* only newer versions of cryptnet do the cleanup */
+    if(!ret && GetLastError() != CRYPT_E_ASN1_BADTAG &&
+               GetLastError() != OSS_DATA_ERROR) {
+        ok(crl == NULL, "Expected CRL to be NULL\n");
+    }
+
     if (crl && crl != (PCCRL_CONTEXT)0xdeadbeef)
         CertFreeCRLContext(crl);
     store = (HCERTSTORE)0xdeadbeef;
@@ -328,20 +341,38 @@ static void test_retrieveObjectByUrl(void)
         CertCloseStore(store, 0);
     }
     /* Are file URLs cached? */
+    cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE,
      CRYPT_CACHE_ONLY_RETRIEVAL, 0, (void **)&cert, NULL, NULL, NULL, NULL);
     ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
+
+    cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
-    ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
+    /* w2k: success, 9x: fail with E_INVALIDARG */
+    ok(ret || (GetLastError() == E_INVALIDARG),
+       "got %u with 0x%x/%u (expected '!=0' or '0' with E_INVALIDARG)\n",
+       ret, GetLastError(), GetLastError());
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
+
+    cert = (PCCERT_CONTEXT)0xdeadbeef;
     aux.cbSize = sizeof(aux);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
-    ok(ret, "CryptRetrieveObjectByUrlA failed: %08x\n", GetLastError());
+    /* w2k: success, 9x: fail with E_INVALIDARG */
+    ok(ret || (GetLastError() == E_INVALIDARG),
+       "got %u with 0x%x/%u (expected '!=0' or '0' with E_INVALIDARG)\n",
+       ret, GetLastError(), GetLastError());
+    if (!ret) {
+        /* no more tests useful */
+        DeleteFileA(tmpfile);
+        skip("no usable CertificateContext\n");
+        return;
+    }
+
     aux.pLastSyncTime = &ft;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
