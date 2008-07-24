@@ -538,9 +538,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         checkGLcall("glEnable(GL_WEIGHT_SUM_UNITY_ARB)");
     }
     if(GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-        glEnable(GL_TEXTURE_SHADER_NV);
-        checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
-
         /* Set up the previous texture input for all shader units. This applies to bump mapping, and in d3d
          * the previous texture where to source the offset from is always unit - 1.
          */
