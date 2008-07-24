@@ -7210,6 +7210,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7320,7 +7321,8 @@ for ac_header in \
 	termios.h \
 	unistd.h \
 	utime.h \
-	valgrind/memcheck.h
+	valgrind/memcheck.h \
+	valgrind/valgrind.h
 
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`

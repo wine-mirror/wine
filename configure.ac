@@ -335,7 +335,8 @@ AC_CHECK_HEADERS(\
 	termios.h \
 	unistd.h \
 	utime.h \
-	valgrind/memcheck.h
+	valgrind/memcheck.h \
+	valgrind/valgrind.h
 )
 AC_HEADER_STAT()
 

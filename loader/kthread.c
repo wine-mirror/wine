@@ -52,8 +52,8 @@ struct _pthread_cleanup_buffer;
 #ifdef HAVE_RESOLV_H
 # include <resolv.h>
 #endif
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-#include <valgrind/memcheck.h>
+#ifdef HAVE_VALGRIND_VALGRIND_H
+#include <valgrind/valgrind.h>
 #endif
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
