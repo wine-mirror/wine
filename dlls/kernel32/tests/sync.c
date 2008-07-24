@@ -588,11 +588,29 @@ static void CALLBACK timer_queue_cb3(PVOID p, BOOLEAN timedOut)
     }
 }
 
+static void CALLBACK timer_queue_cb4(PVOID p, BOOLEAN timedOut)
+{
+    struct timer_queue_data1 *d = p;
+    ok(timedOut, "Timer callbacks should always time out\n");
+    if (d->t)
+    {
+        /* This tests whether a timer gets flagged for deletion before
+           or after the callback runs.  If we start this timer with a
+           period of zero (run once), then ChangeTimerQueueTimer will
+           fail if the timer is already flagged.  Hence we really run
+           only once.  Otherwise we will run multiple times.  */
+        BOOL ret = pChangeTimerQueueTimer(d->q, d->t, 50, 50);
+        todo_wine
+        ok(ret, "ChangeTimerQueueTimer\n");
+        ++d->num_calls;
+    }
+}
+
 static void test_timer_queue(void)
 {
     HANDLE q, t1, t2, t3, t4, t5;
     int n1, n2, n3, n4, n5;
-    struct timer_queue_data1 d2, d3;
+    struct timer_queue_data1 d2, d3, d4;
     HANDLE e;
     BOOL ret;
 
@@ -661,13 +679,9 @@ static void test_timer_queue(void)
 
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
     ok(ret, "DeleteTimerQueueEx\n");
-    todo_wine
-    {
     ok(n1 == 1, "Timer callback 1\n");
     ok(n2 < n3, "Timer callback 2 should be much slower than 3\n");
-    }
     ok(n4 == 0, "Timer callback 4\n");
-    todo_wine
     ok(n5 == 1, "Timer callback 5\n");
 
     /* Test synchronous deletion of the queue with event trigger. */
@@ -713,6 +727,15 @@ static void test_timer_queue(void)
     ok(ret, "CreateTimerQueueTimer\n");
     ok(t3 != NULL, "CreateTimerQueueTimer\n");
 
+    d4.t = t4 = NULL;
+    d4.num_calls = 0;
+    d4.q = q;
+    ret = pCreateTimerQueueTimer(&t4, q, timer_queue_cb4, &d4, 10,
+                                 0, 0);
+    d4.t = t4;
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t4 != NULL, "CreateTimerQueueTimer\n");
+
     Sleep(200);
 
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
@@ -722,6 +745,7 @@ static void test_timer_queue(void)
     ok(d2.num_calls == d2.max_calls, "DeleteTimerQueueTimer\n");
     ok(d3.num_calls == d3.max_calls, "ChangeTimerQueueTimer\n");
     }
+    ok(d4.num_calls == 1, "Timer flagged for deletion incorrectly\n");
 }
 
 START_TEST(sync)
