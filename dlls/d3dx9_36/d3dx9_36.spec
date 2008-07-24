@@ -235,7 +235,7 @@
 @ stdcall D3DXPlaneIntersectLine(ptr ptr ptr ptr) d3dx8.D3DXPlaneIntersectLine
 @ stdcall D3DXPlaneNormalize(ptr ptr) d3dx8.D3DXPlaneNormalize
 @ stdcall D3DXPlaneTransform(ptr ptr ptr) d3dx8.D3DXPlaneTransform
-@ stub D3DXPlaneTransformArray
+@ stdcall D3DXPlaneTransformArray(ptr long ptr long ptr long)
 @ stub D3DXPreprocessShader
 @ stub D3DXPreprocessShaderFromFileA
 @ stub D3DXPreprocessShaderFromFileW

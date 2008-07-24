@@ -27,6 +27,24 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 /*************************************************************************
+ * D3DXPlaneTransformArray
+ */
+D3DXPLANE* WINAPI D3DXPlaneTransformArray(
+    D3DXPLANE* out, UINT outstride, CONST D3DXPLANE* in, UINT instride,
+    CONST D3DXMATRIX* matrix, UINT elements)
+{
+    UINT i;
+    TRACE("\n");
+    for (i = 0; i < elements; ++i) {
+        D3DXPlaneTransform(
+            (D3DXPLANE*)((char*)out + outstride * i),
+            (CONST D3DXPLANE*)((const char*)in + instride * i),
+            matrix);
+    }
+    return out;
+}
+
+/*************************************************************************
  * D3DXVec2TransformArray
  *
  * Transform an array of vectors by a matrix.

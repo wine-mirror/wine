@@ -34,6 +34,17 @@
             exp[i].x, exp[i].y, exp[i].z, exp[i].w, \
             i); \
     }
+#define compare_planes(exp, out) \
+    for (i = 0; i < ARRAY_SIZE + 2; ++i) { \
+        ok(relative_error(exp[i].a, out[i].a) < admitted_error && \
+           relative_error(exp[i].b, out[i].b) < admitted_error && \
+           relative_error(exp[i].c, out[i].c) < admitted_error && \
+           relative_error(exp[i].d, out[i].d) < admitted_error, \
+            "Got (%f, %f, %f, %f), expected (%f, %f, %f, %f) for index %d.\n", \
+            out[i].a, out[i].b, out[i].c, out[i].d, \
+            exp[i].a, exp[i].b, exp[i].c, exp[i].d, \
+            i); \
+    }
 
 /* The mathematical properties are checked in the d3dx8 testsuite.
  *
@@ -56,6 +67,9 @@ static void test_D3DXVec_Array(void)
     D3DXVECTOR4 inp_vec[ARRAY_SIZE];
     D3DXVECTOR4 out_vec[ARRAY_SIZE + 2];
     D3DXVECTOR4 exp_vec[ARRAY_SIZE + 2];
+    D3DXPLANE inp_plane[ARRAY_SIZE];
+    D3DXPLANE out_plane[ARRAY_SIZE + 2];
+    D3DXPLANE exp_plane[ARRAY_SIZE + 2];
 
     viewport.Width = 800; viewport.MinZ = 0.2f; viewport.X = 10;
     viewport.Height = 680; viewport.MaxZ = 0.9f; viewport.Y = 5;
@@ -63,11 +77,13 @@ static void test_D3DXVec_Array(void)
     for (i = 0; i < ARRAY_SIZE + 2; ++i) {
         out_vec[i].x = out_vec[i].y = out_vec[i].z = out_vec[i].w = 0.0f;
         exp_vec[i].x = exp_vec[i].y = exp_vec[i].z = exp_vec[i].w = 0.0f;
+        out_plane[i].a = out_plane[i].b = out_plane[i].c = out_plane[i].d = 0.0f;
+        exp_plane[i].a = exp_plane[i].b = exp_plane[i].c = exp_plane[i].d = 0.0f;
     }
 
     for (i = 0; i < ARRAY_SIZE; ++i) {
-        inp_vec[i].x = inp_vec[i].z = i;
-        inp_vec[i].y = inp_vec[i].w = ARRAY_SIZE - i;
+        inp_plane[i].a = inp_plane[i].c = inp_vec[i].x = inp_vec[i].z = i;
+        inp_plane[i].b = inp_plane[i].d = inp_vec[i].y = inp_vec[i].w = ARRAY_SIZE - i;
     }
 
     U(mat).m[0][0] = 1.0f; U(mat).m[0][1] = 2.0f; U(mat).m[0][2] = 3.0f; U(mat).m[0][3] = 4.0f;
@@ -169,6 +185,15 @@ static void test_D3DXVec_Array(void)
     exp_vec[5].x = 58.0f; exp_vec[5].y = 68.0f;  exp_vec[5].z = 78.0f;  exp_vec[5].w = 88.0f;
     D3DXVec4TransformArray(out_vec + 1, sizeof(D3DXVECTOR4), inp_vec, sizeof(D3DXVECTOR4), &mat, ARRAY_SIZE);
     compare_vectors(exp_vec, out_vec);
+
+    /* D3DXPlaneTransformArray */
+    exp_plane[1].a = 90.0f; exp_plane[1].b = 100.0f; exp_plane[1].c = 110.0f; exp_plane[1].d = 120.0f;
+    exp_plane[2].a = 82.0f; exp_plane[2].b = 92.0f;  exp_plane[2].c = 102.0f; exp_plane[2].d = 112.0f;
+    exp_plane[3].a = 74.0f; exp_plane[3].b = 84.0f;  exp_plane[3].c = 94.0f;  exp_plane[3].d = 104.0f;
+    exp_plane[4].a = 66.0f; exp_plane[4].b = 76.0f;  exp_plane[4].c = 86.0f;  exp_plane[4].d = 96.0f;
+    exp_plane[5].a = 58.0f; exp_plane[5].b = 68.0f;  exp_plane[5].c = 78.0f;  exp_plane[5].d = 88.0f;
+    D3DXPlaneTransformArray(out_plane + 1, sizeof(D3DXPLANE), inp_plane, sizeof(D3DXPLANE), &mat, ARRAY_SIZE);
+    compare_planes(exp_plane, out_plane);
 }
 
 START_TEST(math)
