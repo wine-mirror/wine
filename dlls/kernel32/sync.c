@@ -1109,16 +1109,19 @@ BOOL WINAPI CreateTimerQueueTimer( PHANDLE phNewTimer, HANDLE TimerQueue,
  *
  * RETURNS
  *   nonzero on success or zero on failure
- *
- * BUGS
- *   Unimplemented
  */
 BOOL WINAPI ChangeTimerQueueTimer( HANDLE TimerQueue, HANDLE Timer,
                                    ULONG DueTime, ULONG Period )
 {
-    FIXME("stub\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    NTSTATUS status = RtlUpdateTimer(TimerQueue, Timer, DueTime, Period);
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************

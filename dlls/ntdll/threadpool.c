@@ -907,3 +907,39 @@ NTSTATUS WINAPI RtlCreateTimer(PHANDLE NewTimer, HANDLE TimerQueue,
 
     return status;
 }
+
+/***********************************************************************
+ *              RtlUpdateTimer   (NTDLL.@)
+ *
+ * Changes the time at which a timer expires.
+ *
+ * PARAMS
+ *  TimerQueue [I] The queue that holds the timer.
+ *  Timer      [I] The timer to update.
+ *  DueTime    [I] The delay, in milliseconds, before next firing the timer.
+ *  Period     [I] The period, in milliseconds, at which to fire the timer
+ *                 after the first callback.  If zero, the timer will not
+ *                 refire once.  It still needs to be deleted with
+ *                 RtlDeleteTimer.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: Any NTSTATUS code.
+ */
+NTSTATUS WINAPI RtlUpdateTimer(HANDLE TimerQueue, HANDLE Timer,
+                               DWORD DueTime, DWORD Period)
+{
+    struct timer_queue *q = TimerQueue;
+    struct queue_timer *t = Timer;
+
+    RtlEnterCriticalSection(&q->cs);
+    /* Can't change a timer if it was once-only or destroyed.  */
+    if (t->expire != EXPIRE_NEVER)
+    {
+        t->period = Period;
+        queue_move_timer(t, queue_current_time() + DueTime, TRUE);
+    }
+    RtlLeaveCriticalSection(&q->cs);
+
+    return STATUS_SUCCESS;
+}

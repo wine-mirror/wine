@@ -583,7 +583,6 @@ static void CALLBACK timer_queue_cb3(PVOID p, BOOLEAN timedOut)
         /* Basically kill the timer since it won't have time to run
            again.  */
         BOOL ret = pChangeTimerQueueTimer(d->q, d->t, 10000, 0);
-        todo_wine
         ok(ret, "ChangeTimerQueueTimer\n");
     }
 }
@@ -600,7 +599,6 @@ static void CALLBACK timer_queue_cb4(PVOID p, BOOLEAN timedOut)
            fail if the timer is already flagged.  Hence we really run
            only once.  Otherwise we will run multiple times.  */
         BOOL ret = pChangeTimerQueueTimer(d->q, d->t, 50, 50);
-        todo_wine
         ok(ret, "ChangeTimerQueueTimer\n");
         ++d->num_calls;
     }
@@ -707,6 +705,16 @@ static void test_timer_queue(void)
     q = pCreateTimerQueue();
     ok(q != NULL, "CreateTimerQueue\n");
 
+    /* Test changing a once-only timer before it fires (this is allowed,
+       whereas after it fires you cannot).  */
+    n1 = 0;
+    ret = pCreateTimerQueueTimer(&t1, q, timer_queue_cb1, &n1, 10000,
+                                 0, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t1 != NULL, "CreateTimerQueueTimer\n");
+    ret = pChangeTimerQueueTimer(q, t1, 0, 0);
+    ok(ret, "ChangeTimerQueueTimer\n");
+
     d2.t = t2 = NULL;
     d2.num_calls = 0;
     d2.max_calls = 3;
@@ -740,11 +748,12 @@ static void test_timer_queue(void)
 
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
     ok(ret, "DeleteTimerQueueEx\n");
+    ok(n1 == 1, "ChangeTimerQueueTimer\n");
     todo_wine
     {
     ok(d2.num_calls == d2.max_calls, "DeleteTimerQueueTimer\n");
-    ok(d3.num_calls == d3.max_calls, "ChangeTimerQueueTimer\n");
     }
+    ok(d3.num_calls == d3.max_calls, "ChangeTimerQueueTimer\n");
     ok(d4.num_calls == 1, "Timer flagged for deletion incorrectly\n");
 }
 

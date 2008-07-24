@@ -895,7 +895,7 @@
 @ stub RtlUpcaseUnicodeToCustomCPN
 @ stdcall RtlUpcaseUnicodeToMultiByteN(ptr long ptr ptr long)
 @ stdcall RtlUpcaseUnicodeToOemN(ptr long ptr ptr long)
-# @ stub RtlUpdateTimer
+@ stdcall RtlUpdateTimer(ptr ptr long long)
 @ stdcall RtlUpperChar(long)
 @ stdcall RtlUpperString(ptr ptr)
 @ stub RtlUsageHeap
