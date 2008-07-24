@@ -34,9 +34,13 @@ typedef struct CPlApplet {
 } CPlApplet;
 
 typedef struct CPanel {
-    CPlApplet*		first;		/* linked list */
-    HWND		hWnd;
-    unsigned total_subprogs;
+    CPlApplet*  first;
+    HWND        hWnd;
+    HINSTANCE   hInst;
+    unsigned    total_subprogs;
+    HWND        hWndListView;
+    HIMAGELIST  hImageListLarge;
+    HIMAGELIST  hImageListSmall;
 } CPanel;
 
 /* structure to reference an individual control panel item */

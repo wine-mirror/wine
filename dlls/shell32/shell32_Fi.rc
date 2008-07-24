@@ -242,4 +242,6 @@ STRINGTABLE
 	IDS_NEWFOLDER		"New Folder"
 
 	IDS_CPANEL_TITLE            "Wine Control Panel"
+	IDS_CPANEL_NAME             "Name"
+	IDS_CPANEL_DESCRIPTION      "Description"
 }

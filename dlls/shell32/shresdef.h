@@ -98,6 +98,8 @@
 #define IDS_NEWFOLDER 142
 
 #define IDS_CPANEL_TITLE            143
+#define IDS_CPANEL_NAME             144
+#define IDS_CPANEL_DESCRIPTION      145
 
 #define IDS_RUNDLG_ERROR            160
 #define IDS_RUNDLG_BROWSE_ERROR     161

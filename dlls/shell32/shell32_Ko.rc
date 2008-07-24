@@ -285,6 +285,8 @@ IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Bur
 IDS_NEWFOLDER		"»õ Æú´õ"
 
 IDS_CPANEL_TITLE            "Wine Control Panel"
+IDS_CPANEL_NAME             "Name"
+IDS_CPANEL_DESCRIPTION      "Description"
 }
 
 STRINGTABLE

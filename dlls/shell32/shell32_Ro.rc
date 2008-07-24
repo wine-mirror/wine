@@ -233,6 +233,8 @@ STRINGTABLE
         IDS_FAVORITES           "Favorite"
 
         IDS_CPANEL_TITLE        "Wine Control Panel"
+        IDS_CPANEL_NAME         "Name"
+        IDS_CPANEL_DESCRIPTION  "Description"
 }
 
 STRINGTABLE

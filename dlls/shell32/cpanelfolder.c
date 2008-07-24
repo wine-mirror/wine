@@ -40,6 +40,7 @@
 #include "ole2.h"
 #include "shlguid.h"
 
+#include "commctrl.h"
 #include "cpanel.h"
 #include "enumidlist.h"
 #include "pidl.h"

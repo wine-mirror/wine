@@ -105,4 +105,6 @@ BEGIN
 	IDS_SHV_COLUMN9		"Comments" /*FIXME*/
 
 	IDS_CPANEL_TITLE	"Wine Control Panel"
+	IDS_CPANEL_NAME		"Name"
+	IDS_CPANEL_DESCRIPTION	"Description"
 END
