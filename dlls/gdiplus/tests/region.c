@@ -67,14 +67,17 @@ static void test_getregiondata(void)
     status = GdipCreateRegion(&region);
     ok(status == Ok, "status %08x\n", status);
 
-todo_wine
-{
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
+todo_wine
+{
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
+}
     expect(20, needed);
+todo_wine
+{
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic((DWORD*)(buf + 2));
@@ -87,11 +90,15 @@ todo_wine
 todo_wine
 {
     status = GdipGetRegionDataSize(region, &needed);
+}
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
+todo_wine
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
+todo_wine
+{
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic((DWORD*)(buf + 2));
@@ -102,13 +109,14 @@ todo_wine
     status = GdipSetInfinite(region);
     ok(status == Ok, "status %08x\n", status);
     status = GdipGetRegionDataSize(region, &needed);
-todo_wine
-{
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
+todo_wine
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
+todo_wine
+{
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic((DWORD*)(buf + 2));

@@ -267,9 +267,15 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
 
 GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
 {
-    FIXME("(%p, %p): stub\n", region, needed);
+    if (!(region && needed))
+        return InvalidParameter;
 
-    return NotImplemented;
+    TRACE("%p, %p\n", region, needed);
+
+    /* header.size doesn't count header.size and header.checksum */
+    *needed = region->header.size + sizeof(DWORD) * 2;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *region, GpGraphics *graphics, HRGN *hrgn)
