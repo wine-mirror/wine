@@ -53,7 +53,7 @@ D3DXVECTOR4* WINAPI D3DXVec2TransformArray(
     D3DXVECTOR4* out, UINT outstride, CONST D3DXVECTOR2* in, UINT instride,
     CONST D3DXMATRIX* matrix, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec2Transform(
@@ -71,7 +71,7 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformCoordArray(
     D3DXVECTOR2* out, UINT outstride, CONST D3DXVECTOR2* in, UINT instride,
     CONST D3DXMATRIX* matrix, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec2TransformCoord(
@@ -89,7 +89,7 @@ D3DXVECTOR2* WINAPI D3DXVec2TransformNormalArray(
     D3DXVECTOR2* out, UINT outstride, CONST D3DXVECTOR2 *in, UINT instride,
     CONST D3DXMATRIX *matrix, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec2TransformNormal(
@@ -110,7 +110,7 @@ D3DXVECTOR3* WINAPI D3DXVec3ProjectArray(
     CONST D3DVIEWPORT9* viewport, CONST D3DXMATRIX* projection,
     CONST D3DXMATRIX* view, CONST D3DXMATRIX* world, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec3Project(
@@ -128,7 +128,7 @@ D3DXVECTOR4* WINAPI D3DXVec3TransformArray(
     D3DXVECTOR4* out, UINT outstride, CONST D3DXVECTOR3* in, UINT instride,
     CONST D3DXMATRIX* matrix, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec3Transform(
@@ -146,7 +146,7 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformCoordArray(
     D3DXVECTOR3* out, UINT outstride, CONST D3DXVECTOR3* in, UINT instride,
     CONST D3DXMATRIX* matrix, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec3TransformCoord(
@@ -164,7 +164,7 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformNormalArray(
     D3DXVECTOR3* out, UINT outstride, CONST D3DXVECTOR3* in, UINT instride,
     CONST D3DXMATRIX* matrix, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec3TransformNormal(
@@ -183,7 +183,7 @@ D3DXVECTOR3* WINAPI D3DXVec3UnprojectArray(
     CONST D3DVIEWPORT9* viewport, CONST D3DXMATRIX* projection,
     CONST D3DXMATRIX* view, CONST D3DXMATRIX* world, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec3Unproject(
@@ -201,7 +201,7 @@ D3DXVECTOR4* WINAPI D3DXVec4TransformArray(
     D3DXVECTOR4* out, UINT outstride, CONST D3DXVECTOR4* in, UINT instride,
     CONST D3DXMATRIX* matrix, UINT elements)
 {
-    unsigned int i;
+    UINT i;
     TRACE("\n");
     for (i = 0; i < elements; ++i) {
         D3DXVec4Transform(
