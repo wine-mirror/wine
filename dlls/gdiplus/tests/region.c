@@ -82,7 +82,10 @@ todo_wine
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
 
     status = GdipSetEmpty(region);
+}
     ok(status == Ok, "status %08x\n", status);
+todo_wine
+{
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);

@@ -304,12 +304,17 @@ GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *region, GpGraphics *graphics,
 
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *region)
 {
-    static int calls;
+    GpStatus stat;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    TRACE("%p\n", region);
 
-    return NotImplemented;
+    if (!region)
+        return InvalidParameter;
+
+    delete_element(&region->node);
+    stat = init_region(region, RegionDataEmptyRect);
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *region)
