@@ -949,6 +949,17 @@ static void test_reg_open_key(void)
        ok(ret == ERROR_BAD_PATHNAME || /* NT/2k/XP */
            ret == ERROR_FILE_NOT_FOUND /* Win9x,ME */
            , "expected ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %d\n", ret);
+
+    /* WOW64 flags */
+    hkResult = NULL;
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, KEY_READ|KEY_WOW64_32KEY, &hkResult);
+    ok(ret == ERROR_SUCCESS && hkResult != NULL, "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
+    RegCloseKey(hkResult);
+
+    hkResult = NULL;
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, KEY_READ|KEY_WOW64_64KEY, &hkResult);
+    ok(ret == ERROR_SUCCESS && hkResult != NULL, "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
+    RegCloseKey(hkResult);
 }
 
 static void test_reg_create_key(void)
@@ -974,6 +985,17 @@ static void test_reg_create_key(void)
         ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
         RegDeleteKey(hkey1, NULL);
     }
+
+    /* WOW64 flags - open an existing key */
+    hkey1 = NULL;
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0, KEY_READ|KEY_WOW64_32KEY, NULL, &hkey1, NULL);
+    ok(ret == ERROR_SUCCESS && hkey1 != NULL, "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
+    RegCloseKey(hkey1);
+
+    hkey1 = NULL;
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0, KEY_READ|KEY_WOW64_32KEY, NULL, &hkey1, NULL);
+    ok(ret == ERROR_SUCCESS && hkey1 != NULL, "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
+    RegCloseKey(hkey1);
 }
 
 static void test_reg_close_key(void)
