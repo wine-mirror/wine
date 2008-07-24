@@ -108,6 +108,7 @@ todo_wine
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
+}
 
     status = GdipDeleteRegion(region);
     ok(status == Ok, "status %08x\n", status);
@@ -116,6 +117,8 @@ todo_wine
     rect.Y = 20;
     rect.Width = 100;
     rect.Height = 200;
+todo_wine
+{
     status = GdipCreateRegionRectI(&rect, &region);
     ok(status == Ok, "status %08x\n", status);
     status = GdipGetRegionDataSize(region, &needed);
@@ -215,7 +218,6 @@ todo_wine
     expect_float(buf + 36, 500.0);
     expect_float(buf + 37, 22.0);
     expect_float(buf + 38, 55.0);
-
 
     status = GdipDeleteRegion(region2);
     ok(status == Ok, "status %08x\n", status);

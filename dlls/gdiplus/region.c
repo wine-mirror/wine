@@ -121,6 +121,27 @@ static inline GpStatus init_region(GpRegion* region, const RegionType type)
     return Ok;
 }
 
+static inline void delete_element(region_element* element)
+{
+    switch(element->type)
+    {
+        case RegionDataRect:
+            break;
+        case RegionDataPath:
+            GdipDeletePath(element->elementdata.pathdata.path);
+            break;
+        case RegionDataEmptyRect:
+        case RegionDataInfiniteRect:
+            break;
+        default:
+            delete_element(element->elementdata.combine.left);
+            delete_element(element->elementdata.combine.right);
+            GdipFree(element->elementdata.combine.left);
+            GdipFree(element->elementdata.combine.right);
+            break;
+    }
+}
+
 GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *region, GpRegion **clone)
 {
     FIXME("(%p %p): stub\n", region, clone);
@@ -212,8 +233,15 @@ GpStatus WINGDIPAPI GdipCreateRegionHrgn(HRGN hrgn, GpRegion **region)
 
 GpStatus WINGDIPAPI GdipDeleteRegion(GpRegion *region)
 {
-    FIXME("(%p): stub\n", region);
-    return NotImplemented;
+    TRACE("%p\n", region);
+
+    if (!region)
+        return InvalidParameter;
+
+    delete_element(&region->node);
+    GdipFree(region);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, GpRectF *rect)
