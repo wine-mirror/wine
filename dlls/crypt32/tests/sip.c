@@ -35,17 +35,15 @@ static BOOL (WINAPI * funcCryptSIPCreateIndirectData)(SIP_SUBJECTINFO *,DWORD *,
 static BOOL (WINAPI * funcCryptSIPVerifyIndirectData)(SIP_SUBJECTINFO *,SIP_INDIRECT_DATA *);
 static BOOL (WINAPI * funcCryptSIPRemoveSignedDataMsg)(SIP_SUBJECTINFO *,DWORD);
 
-static char *show_guid(const GUID *guid)
+static char *show_guid(const GUID *guid, char *buf)
 {
-    static char guidstring[39];
-
-    sprintf(guidstring,
+    sprintf(buf,
         "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
         guid->Data1, guid->Data2, guid->Data3,
         guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
         guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
 
-    return guidstring;
+    return buf;
 }
 
 static void test_AddRemoveProvider(void)
@@ -147,6 +145,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     static CHAR path[MAX_PATH];
     static CHAR tempfile[MAX_PATH];
     static WCHAR tempfileW[MAX_PATH];
+    static char guid1[39], guid2[39];
     DWORD written;
 
     /* NULL check */
@@ -165,7 +164,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     ok (GetLastError() == ERROR_FILE_NOT_FOUND,
         "Expected ERROR_FILE_NOT_FOUND, got %d.\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
-        "Expected a NULL GUID for c:\\deadbeef.dbf, not %s\n", show_guid(&subject));
+        "Expected a NULL GUID for c:\\deadbeef.dbf, not %s\n", show_guid(&subject, guid1));
 
     /* Now with an executable that should exist
      *
@@ -184,7 +183,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     ret = CryptSIPRetrieveSubjectGuid(regeditPathW, NULL, &subject);
     ok ( ret, "Expected CryptSIPRetrieveSubjectGuid to succeed\n");
     ok ( !memcmp(&subject, &unknownGUID, sizeof(GUID)),
-        "Expected (%s), got (%s).\n", show_guid(&unknownGUID), show_guid(&subject));
+        "Expected (%s), got (%s).\n", show_guid(&unknownGUID, guid1), show_guid(&subject, guid2));
 
     /* The same thing but now with a handle instead of a filename */
     file = CreateFileA(regeditPath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -193,7 +192,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     ret = CryptSIPRetrieveSubjectGuid(NULL, file, &subject);
     ok ( ret, "Expected CryptSIPRetrieveSubjectGuid to succeed\n");
     ok ( !memcmp(&subject, &unknownGUID, sizeof(GUID)),
-        "Expected (%s), got (%s).\n", show_guid(&unknownGUID), show_guid(&subject));
+        "Expected (%s), got (%s).\n", show_guid(&unknownGUID, guid1), show_guid(&subject, guid2));
     CloseHandle(file);
 
     /* And both */
@@ -203,7 +202,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     ret = CryptSIPRetrieveSubjectGuid(regeditPathW, file, &subject);
     ok ( ret, "Expected CryptSIPRetrieveSubjectGuid to succeed\n");
     ok ( !memcmp(&subject, &unknownGUID, sizeof(GUID)),
-        "Expected (%s), got (%s).\n", show_guid(&unknownGUID), show_guid(&subject));
+        "Expected (%s), got (%s).\n", show_guid(&unknownGUID, guid1), show_guid(&subject, guid2));
     CloseHandle(file);
 
     /* Now with an empty file */
@@ -222,7 +221,7 @@ static void test_SIPRetrieveSubjectGUID(void)
          GetLastError() == ERROR_SUCCESS /* Win98 */,
         "Expected ERROR_FILE_INVALID, ERROR_INVALID_PARAMETER or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
-        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject));
+        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject, guid1));
 
     /* Use a file with a size of 3 (at least < 4) */
     file = CreateFileA(tempfile, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -237,7 +236,7 @@ static void test_SIPRetrieveSubjectGUID(void)
          GetLastError() == ERROR_SUCCESS /* Win98 */,
         "Expected ERROR_INVALID_PARAMETER or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
-        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject));
+        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject, guid1));
 
     /* And now >= 4 */
     file = CreateFileA(tempfile, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -252,7 +251,7 @@ static void test_SIPRetrieveSubjectGUID(void)
          GetLastError() == ERROR_SUCCESS /* Win98 */,
         "Expected TRUST_E_SUBJECT_FORM_UNKNOWN or ERROR_SUCCESS, got 0x%08x\n", GetLastError());
     ok ( !memcmp(&subject, &nullSubject, sizeof(GUID)),
-        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject));
+        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, show_guid(&subject, guid1));
 
     /* Clean up */
     DeleteFileA(tempfile);
