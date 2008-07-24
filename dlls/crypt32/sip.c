@@ -283,6 +283,8 @@ BOOL WINAPI CryptSIPRetrieveSubjectGuid
     IMAGE_DOS_HEADER *dos;
     /* FIXME, find out if there is a name for this GUID */
     static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+    static const GUID cabGUID = { 0xc689aaba, 0x8e78, 0x11d0, {0x8c,0x47,0x00,0xc0,0x4f,0xc2,0x95,0xee }};
+    static const BYTE cabHdr[] = { 'M','S','C','F' };
 
     TRACE("(%s %p %p)\n", wine_dbgstr_w(FileName), hFileIn, pgSubject);
 
@@ -330,10 +332,17 @@ BOOL WINAPI CryptSIPRetrieveSubjectGuid
         bRet = TRUE;
         goto cleanup1;
     }
+    /* Quick-n-dirty check for a cab file.  FIXME: use FDIIsCabinet instead? */
+    if (!memcmp(pMapped, cabHdr, sizeof(cabHdr)))
+    {
+        *pgSubject = cabGUID;
+        SetLastError(S_OK);
+        bRet = TRUE;
+        goto cleanup1;
+    }
 
     /* FIXME
      * There is a lot more to be checked:
-     * - Check for MSFC in the header
      * - Check for the keys CryptSIPDllIsMyFileType and CryptSIPDllIsMyFileType2
      *   under HKLM\Software\Microsoft\Cryptography\OID\EncodingType 0. Here are 
      *   functions listed that need check if a SIP Provider can deal with the 

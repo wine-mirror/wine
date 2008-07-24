@@ -274,10 +274,8 @@ static void test_SIPRetrieveSubjectGUID(void)
     SetLastError(0xdeadbeef);
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
-    todo_wine
     ok( ret, "CryptSIPRetrieveSubjectGuid failed: %d (0x%08x)\n",
             GetLastError(), GetLastError() );
-    todo_wine
     ok ( !memcmp(&subject, &cabGUID, sizeof(GUID)),
         "Expected GUID %s for cabinet file, not %s\n", show_guid(&cabGUID, guid1), show_guid(&subject, guid2));
     /* Clean up */
