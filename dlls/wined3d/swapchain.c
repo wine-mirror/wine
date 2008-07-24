@@ -309,10 +309,29 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         IWineD3DSurfaceImpl *back = (IWineD3DSurfaceImpl *) This->backBuffer[0];
 
         if(front->resource.size == back->resource.size) {
+            DWORD fbflags;
             flip_surface(front, back);
+
+            /* Tell the front buffer surface that is has been modified. However,
+             * the other locations were preserved during that, so keep the flags.
+             * This serves to update the emulated overlay, if any
+             */
+            fbflags = front->Flags;
+            IWineD3DSurface_ModifyLocation(This->frontBuffer, SFLAG_INDRAWABLE, TRUE);
+            front->Flags = fbflags;
         } else {
             IWineD3DSurface_ModifyLocation((IWineD3DSurface *) front, SFLAG_INDRAWABLE, TRUE);
             IWineD3DSurface_ModifyLocation((IWineD3DSurface *) back, SFLAG_INDRAWABLE, TRUE);
+        }
+    } else {
+        IWineD3DSurface_ModifyLocation(This->frontBuffer, SFLAG_INDRAWABLE, TRUE);
+        /* If the swapeffect is DISCARD, the back buffer is undefined. That means the SYSMEM
+         * and INTEXTURE copies can keep their old content if they have any defined content.
+         * If the swapeffect is COPY, the content remains the same. If it is FLIP however,
+         * the texture / sysmem copy needs to be reloaded from the drawable
+         */
+        if(This->presentParms.SwapEffect == WINED3DSWAPEFFECT_FLIP) {
+            IWineD3DSurface_ModifyLocation(This->backBuffer[0], SFLAG_INDRAWABLE, TRUE);
         }
     }
 
