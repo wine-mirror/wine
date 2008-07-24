@@ -41,8 +41,8 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-# include <valgrind/memcheck.h>
+#ifdef HAVE_VALGRIND_VALGRIND_H
+# include <valgrind/valgrind.h>
 #endif
 
 #define NONAMELESSUNION
@@ -898,6 +898,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     struct stat st;
     struct file_view *view = NULL;
     char *ptr, *header_end;
+    int delta = 0;
 
     /* zero-map the whole range */
 
@@ -1088,7 +1089,6 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
           !NtCurrentTeb()->Peb->ImageBaseAddress) )
     {
-        int delta = ptr - base;
         IMAGE_BASE_RELOCATION *rel, *end;
         const IMAGE_DATA_DIRECTORY *relocs;
 
@@ -1106,6 +1106,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
         rel = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress);
         end = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress + relocs->Size);
+        delta = ptr - base;
 
         while (rel <= end - 1 && rel->SizeOfBlock)
         {
@@ -1154,6 +1155,9 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
     *addr_ptr = ptr;
+#ifdef VALGRIND_LOAD_PDB_DEBUGINFO
+    VALGRIND_LOAD_PDB_DEBUGINFO(fd, ptr, total_size, delta);
+#endif
     return STATUS_SUCCESS;
 
  error:
