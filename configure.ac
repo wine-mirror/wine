@@ -27,8 +27,7 @@ AC_ARG_WITH(cms,       AS_HELP_STRING([--without-cms],[do not use CMS (color man
             [if test "x$withval" = "xno"; then ac_cv_header_lcms_h=no; ac_cv_header_lcms_lcms_h=no; fi])
 AC_ARG_WITH(coreaudio, AS_HELP_STRING([--without-coreaudio],[do not use the CoreAudio sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_CoreAudio_CoreAudio_h=no; fi])
-AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]),
-            [if test "x$withval" = "xno"; then ac_cv_header_cups_cups_h=no; fi])
+AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
 AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses]),
             [if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi])
 AC_ARG_WITH(esd,       AS_HELP_STRING([--without-esd],[do not use the EsounD sound support]))
@@ -238,7 +237,6 @@ AC_CHECK_HEADERS(\
 	arpa/nameser.h \
 	asm/types.h \
 	capi20.h \
-	cups/cups.h \
 	curses.h \
 	direct.h \
 	dlfcn.h \
@@ -1121,9 +1119,18 @@ WINE_NOTICE_WITH(capi,[test "x$ac_cv_lib_soname_capi20" = "x"],
                  [libcapi20 development files not found, ISDN won't be supported.])
 
 dnl **** Check for cups ****
-if test "$ac_cv_header_cups_cups_h" = "yes"
+AC_SUBST(CUPSINCL,"")
+if test "x$with_cups" != "xno"
 then
-    WINE_CHECK_SONAME(cups,cupsGetDefault)
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_cups_cflags=`cups-config --cflags 2>/dev/null`
+    ac_cups_libs="`cups-config --ldflags 2>/dev/null` `cups-config --libs 2>/dev/null`"
+    CPPFLAGS="$CPPFLAGS $ac_cups_cflags"
+    AC_CHECK_HEADERS(cups/cups.h,
+            [WINE_CHECK_SONAME(cups,cupsGetDefault,
+                       [CUPSINCL="$ac_cups_cflags"],,
+                       [$ac_cups_libs])])
+    CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(cups,[test "x$ac_cv_lib_soname_cups" = "x"],
                  [libcups development files not found, CUPS won't be supported.])

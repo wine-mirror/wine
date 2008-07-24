@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineps.drv
 IMPORTS   = user32 gdi32 winspool advapi32 kernel32
-EXTRAINCL = @FREETYPEINCL@
+EXTRAINCL = @FREETYPEINCL@ @CUPSINCL@
 
 SPEC_SRCS16 = wineps16.drv.spec
 
