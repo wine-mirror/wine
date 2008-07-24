@@ -73,6 +73,54 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
  *
  */
 
+typedef enum RegionType
+{
+    RegionDataRect          = 0x10000000,
+    RegionDataPath          = 0x10000001,
+    RegionDataEmptyRect     = 0x10000002,
+    RegionDataInfiniteRect  = 0x10000003,
+} RegionType;
+
+/* Header size as far as header->size is concerned. This doesn't include
+ * header->size or header->checksum
+ */
+static const INT sizeheader_size = sizeof(DWORD) * 2;
+
+static inline INT get_element_size(const region_element* element)
+{
+    INT needed = sizeof(DWORD); /* DWORD for the type */
+    switch(element->type)
+    {
+        case RegionDataRect:
+            return needed + sizeof(GpRect);
+        case RegionDataPath:
+             needed += element->elementdata.pathdata.pathheader.size;
+             needed += sizeof(DWORD); /* Extra DWORD for pathheader.size */
+             return needed;
+        case RegionDataEmptyRect:
+        case RegionDataInfiniteRect:
+            return needed;
+        default:
+            needed += get_element_size(element->elementdata.combine.left);
+            needed += get_element_size(element->elementdata.combine.right);
+            return needed;
+    }
+
+    return 0;
+}
+
+/* Does not check parameters, caller must do that */
+static inline GpStatus init_region(GpRegion* region, const RegionType type)
+{
+    region->node.type       = type;
+    region->header.checksum = 0xdeadbeef;
+    region->header.magic    = VERSION_MAGIC;
+    region->header.num_children  = 0;
+    region->header.size     = sizeheader_size + get_element_size(&region->node);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *region, GpRegion **clone)
 {
     FIXME("(%p %p): stub\n", region, clone);
@@ -110,10 +158,16 @@ GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1, GpRegion *region2
 
 GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **region)
 {
-    FIXME("(%p): stub\n", region);
+    if(!region)
+        return InvalidParameter;
 
-    *region = NULL;
-    return NotImplemented;
+    TRACE("%p\n", region);
+
+    *region = GdipAlloc(sizeof(GpRegion));
+    if(!*region)
+        return OutOfMemory;
+
+    return init_region(*region, RegionDataInfiniteRect);
 }
 
 GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)

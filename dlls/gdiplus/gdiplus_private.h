@@ -37,6 +37,8 @@
 #define MAX_DASHLEN (16) /* this is a limitation of gdi */
 #define INCH_HIMETRIC (2540)
 
+#define VERSION_MAGIC 0xdbc01001
+
 COLORREF ARGB2COLORREF(ARGB color);
 extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
     REAL startAngle, REAL sweepAngle);
@@ -197,6 +199,42 @@ struct GpFontCollection{
 struct GpFontFamily{
     NEWTEXTMETRICW tmw;
     WCHAR FamilyName[LF_FACESIZE];
+};
+
+typedef struct region_element
+{
+    DWORD type; /* Rectangle, Path, SpecialRectangle, or CombineMode */
+    union
+    {
+        GpRectF rect;
+        struct
+        {
+            GpPath* path;
+            struct
+            {
+                DWORD size;
+                DWORD magic;
+                DWORD count;
+                DWORD flags;
+            } pathheader;
+        } pathdata;
+        struct
+        {
+            struct region_element *left;  /* the original region */
+            struct region_element *right; /* what *left was combined with */
+        } combine;
+    } elementdata;
+} region_element;
+
+struct GpRegion{
+    struct
+    {
+        DWORD size;
+        DWORD checksum;
+        DWORD magic;
+        DWORD num_children;
+    } header;
+    region_element node;
 };
 
 #endif
