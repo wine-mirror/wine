@@ -166,6 +166,7 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 }
 
 #define IDC_LISTVIEW        1000
+#define IDC_STATUSBAR       1001
 
 #define NUM_COLUMNS            2
 #define LISTVIEW_DEFSTYLE   (WS_CHILD | WS_VISIBLE | WS_TABSTOP |\
@@ -173,18 +174,20 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 
 static BOOL Control_CreateListView (CPanel *panel)
 {
-    RECT ws;
+    RECT ws, sb;
     WCHAR empty_string[] = {0};
     WCHAR buf[MAX_STRING_LEN];
     LVCOLUMNW lvc;
 
     /* Create list view */
+    GetClientRect(panel->hWndStatusBar, &sb);
     GetClientRect(panel->hWnd, &ws);
 
     panel->hWndListView = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW,
                           empty_string, LISTVIEW_DEFSTYLE | LVS_ICON,
-                          0, 0, ws.right - ws.left, ws.bottom - ws.top,
-                          panel->hWnd, (HMENU) IDC_LISTVIEW, panel->hInst, NULL);
+                          0, 0, ws.right - ws.left, ws.bottom - ws.top -
+                          (sb.bottom - sb.top), panel->hWnd,
+                          (HMENU) IDC_LISTVIEW, panel->hInst, NULL);
 
     if (!panel->hWndListView)
         return FALSE;
@@ -233,14 +236,22 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
    CPlItem *item;
    LVITEMW lvItem;
    INITCOMMONCONTROLSEX icex;
+   INT sb_parts;
 
    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)panel);
    panel->hWnd = hWnd;
 
    /* Initialise common control DLL */
    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-   icex.dwICC = ICC_LISTVIEW_CLASSES;
+   icex.dwICC = ICC_LISTVIEW_CLASSES | ICC_BAR_CLASSES;
    InitCommonControlsEx(&icex);
+
+   /* create the status bar */
+   if (!(panel->hWndStatusBar = CreateStatusWindowW(WS_CHILD | WS_VISIBLE | CCS_BOTTOM | SBARS_SIZEGRIP, NULL, hWnd, IDC_STATUSBAR)))
+       return;
+
+   sb_parts = -1;
+   SendMessageW(panel->hWndStatusBar, SB_SETPARTS, 1, (LPARAM) &sb_parts);
 
    /* create the list view */
    if (!Control_CreateListView(panel))
@@ -491,6 +502,17 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 
                           return 0;
                       }
+                      case LVN_ITEMCHANGED:
+                      {
+                          CPlItem *item = Control_GetCPlItem_From_ListView(panel);
+
+                          /* update the status bar if item is valid */
+                          if (item)
+                              SetWindowTextW(panel->hWndStatusBar,
+                                  item->applet->info[item->id].szInfo);
+
+                          return 0;
+                      }
                   }
 
                   break;
@@ -499,12 +521,46 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
           break;
       }
 
+      case WM_MENUSELECT:
+          /* check if this is an applet */
+          if ((LOWORD(lParam1) >= IDM_CPANEL_APPLET_BASE) &&
+              (LOWORD(lParam1) <= IDM_CPANEL_APPLET_BASE + panel->total_subprogs))
+          {
+              CPlItem *item = Control_GetCPlItem_From_MenuID(hWnd, LOWORD(lParam1));
+
+              /* update the status bar if item is valid */
+              if (item)
+                  SetWindowTextW(panel->hWndStatusBar, item->applet->info[item->id].szInfo);
+          }
+          else
+              SetWindowTextW(panel->hWndStatusBar, NULL);
+
+          return 0;
+
       case WM_SIZE:
       {
-          RECT rect;
+          HDWP hdwp;
+          RECT sb;
 
-          GetClientRect(hWnd, &rect);
-          MoveWindow(panel->hWndListView, 0, 0, rect.right, rect.bottom, TRUE);
+          hdwp = BeginDeferWindowPos(2);
+
+          if (hdwp == NULL)
+              break;
+
+          GetClientRect(panel->hWndStatusBar, &sb);
+
+          hdwp = DeferWindowPos(hdwp, panel->hWndListView, NULL, 0, 0,
+              LOWORD(lParam2), HIWORD(lParam2) - (sb.bottom - sb.top),
+              SWP_NOZORDER | SWP_NOMOVE);
+
+          if (hdwp == NULL)
+              break;
+
+          hdwp = DeferWindowPos(hdwp, panel->hWndStatusBar, NULL, 0, 0,
+              LOWORD(lParam2), LOWORD(lParam1), SWP_NOZORDER | SWP_NOMOVE);
+
+          if (hdwp != NULL)
+              EndDeferWindowPos(hdwp);
 
           return 0;
       }

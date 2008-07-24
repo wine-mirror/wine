@@ -41,6 +41,7 @@ typedef struct CPanel {
     HWND        hWndListView;
     HIMAGELIST  hImageListLarge;
     HIMAGELIST  hImageListSmall;
+    HWND        hWndStatusBar;
 } CPanel;
 
 /* structure to reference an individual control panel item */
