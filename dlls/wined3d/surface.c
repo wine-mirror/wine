@@ -2622,14 +2622,99 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     return WINED3D_OK;
 }
 
+void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
+
+    /* Flip the surface contents */
+    /* Flip the DC */
+    {
+        HDC tmp;
+        tmp = front->hDC;
+        front->hDC = back->hDC;
+        back->hDC = tmp;
+    }
+
+    /* Flip the DIBsection */
+    {
+        HBITMAP tmp;
+        BOOL hasDib = front->Flags & SFLAG_DIBSECTION;
+        tmp = front->dib.DIBsection;
+        front->dib.DIBsection = back->dib.DIBsection;
+        back->dib.DIBsection = tmp;
+
+        if(back->Flags & SFLAG_DIBSECTION) front->Flags |= SFLAG_DIBSECTION;
+        else front->Flags &= ~SFLAG_DIBSECTION;
+        if(hasDib) back->Flags |= SFLAG_DIBSECTION;
+        else back->Flags &= ~SFLAG_DIBSECTION;
+    }
+
+    /* Flip the surface data */
+    {
+        void* tmp;
+
+        tmp = front->dib.bitmap_data;
+        front->dib.bitmap_data = back->dib.bitmap_data;
+        back->dib.bitmap_data = tmp;
+
+        tmp = front->resource.allocatedMemory;
+        front->resource.allocatedMemory = back->resource.allocatedMemory;
+        back->resource.allocatedMemory = tmp;
+
+        tmp = front->resource.heapMemory;
+        front->resource.heapMemory = back->resource.heapMemory;
+        back->resource.heapMemory = tmp;
+    }
+
+    /* Flip the PBO */
+    {
+        GLuint tmp_pbo = front->pbo;
+        front->pbo = back->pbo;
+        back->pbo = tmp_pbo;
+    }
+
+    /* client_memory should not be different, but just in case */
+    {
+        BOOL tmp;
+        tmp = front->dib.client_memory;
+        front->dib.client_memory = back->dib.client_memory;
+        back->dib.client_memory = tmp;
+    }
+
+    /* Flip the opengl texture */
+    {
+        glDescriptor tmp_desc = back->glDescription;
+        back->glDescription = front->glDescription;
+        front->glDescription = tmp_desc;
+    }
+
+    {
+        DWORD tmp_flags = back->Flags;
+        back->Flags = front->Flags;
+        front->Flags = tmp_flags;
+    }
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSwapChainImpl *swapchain = NULL;
     HRESULT hr;
     TRACE("(%p)->(%p,%x)\n", This, override, Flags);
 
-    /* Flipping is only supported on RenderTargets */
-    if( !(This->resource.usage & WINED3DUSAGE_RENDERTARGET) ) return WINEDDERR_NOTFLIPPABLE;
+    /* Flipping is only supported on RenderTargets and overlays*/
+    if( !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_OVERLAY)) ) {
+        WARN("Tried to flip a non-render target, non-overlay surface\n");
+        return WINEDDERR_NOTFLIPPABLE;
+    }
+
+    if(This->resource.usage & WINED3DUSAGE_OVERLAY) {
+        flip_surface(This, (IWineD3DSurfaceImpl *) override);
+
+        /* Update the overlay if it is visible */
+        if(This->overlay_dest) {
+            return IWineD3DSurface_DrawOverlay((IWineD3DSurface *) This);
+        } else {
+            return WINED3D_OK;
+        }
+    }
 
     if(override) {
         /* DDraw sets this for the X11 surfaces, so don't confuse the user 

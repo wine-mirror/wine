@@ -710,7 +710,7 @@ IDirectDrawSurfaceImpl_Flip(IDirectDrawSurface7 *iface,
     /* Flip has to be called from a front buffer
      * What about overlay surfaces, AFAIK they can flip too?
      */
-    if( !(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER) )
+    if( !(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_OVERLAY)) )
         return DDERR_INVALIDOBJECT; /* Unchecked */
 
     EnterCriticalSection(&ddraw_cs);

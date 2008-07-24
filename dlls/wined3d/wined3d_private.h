@@ -1379,6 +1379,8 @@ void get_drawable_size_backbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *
 void get_drawable_size_pbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
 void get_drawable_size_fbo(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
 
+void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back);
+
 /* Surface flags: */
 #define SFLAG_OVERSIZE      0x00000001 /* Surface is bigger than gl size, blts only */
 #define SFLAG_CONVERTED     0x00000002 /* Converted for color keying or Palettized */
