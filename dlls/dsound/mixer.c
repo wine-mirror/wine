@@ -240,6 +240,8 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
 			i, offset, event->hEventNotify);
 		/* DSBPN_OFFSETSTOP has to be the last element. So this is */
 		/* OK. [Inside DirectX, p274] */
+		/* Windows does not seem to enforce this, and some apps rely */
+		/* on that, so we can't stop there. */
 		/*  */
 		/* This also means we can't sort the entries by offset, */
 		/* because DSBPN_OFFSETSTOP == -1 */
@@ -247,9 +249,8 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
 			if (dsb->state == STATE_STOPPED) {
 				SetEvent(event->hEventNotify);
 				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
-				return;
-			} else
-				return;
+			}
+                        continue;
 		}
 		if ((playpos + len) >= dsb->buflen) {
 			if ((offset < ((playpos + len) % dsb->buflen)) ||
