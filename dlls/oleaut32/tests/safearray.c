@@ -490,12 +490,8 @@ static void test_safearray(void)
         {
             hres = pSafeArrayGetVartype(a, &vt);
             ok(hres == S_OK, "SAGVT of arra y with vt %d failed with %x\n", vttypes[i].vt, hres);
-            if (vttypes[i].vt == VT_DISPATCH) {
-        		/* Special case. Checked against Windows. */
-		        ok(vt == VT_UNKNOWN, "SAGVT of array with VT_DISPATCH returned not VT_UNKNOWN, but %d\n", vt);
-            } else {
-		        ok(vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d\n", vttypes[i].vt, vt);
-            }
+            /* Windows prior to Vista returns VT_UNKNOWN instead of VT_DISPATCH */
+            ok(broken(vt == VT_UNKNOWN) || vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d\n", vttypes[i].vt, vt);
         }
 
 		hres = SafeArrayCopy(a, &c);
@@ -509,12 +505,8 @@ static void test_safearray(void)
         if (pSafeArrayGetVartype) {
             hres = pSafeArrayGetVartype(c, &vt);
             ok(hres == S_OK, "SAGVT of array with vt %d failed with %x\n", vttypes[i].vt, hres);
-            if (vttypes[i].vt == VT_DISPATCH) {
-                /* Special case. Checked against Windows. */
-                ok(vt == VT_UNKNOWN, "SAGVT of array with VT_DISPATCH returned not VT_UNKNOWN, but %d\n", vt);
-            } else {
-                ok(vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d\n", vttypes[i].vt, vt);
-            }
+            /* Windows prior to Vista returns VT_UNKNOWN instead of VT_DISPATCH */
+            ok(broken(vt == VT_UNKNOWN) || vt == vttypes[i].vt, "SAGVT of array with vt %d returned %d\n", vttypes[i].vt, vt);
         }
 
         if (pSafeArrayCopyData) {
