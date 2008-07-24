@@ -953,12 +953,14 @@ static void test_reg_open_key(void)
     /* WOW64 flags */
     hkResult = NULL;
     ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, KEY_READ|KEY_WOW64_32KEY, &hkResult);
-    ok(ret == ERROR_SUCCESS && hkResult != NULL, "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
+    ok((ret == ERROR_SUCCESS && hkResult != NULL) || broken(ret == ERROR_ACCESS_DENIED /* NT4, win2k */),
+        "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
     RegCloseKey(hkResult);
 
     hkResult = NULL;
     ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, KEY_READ|KEY_WOW64_64KEY, &hkResult);
-    ok(ret == ERROR_SUCCESS && hkResult != NULL, "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
+    ok((ret == ERROR_SUCCESS && hkResult != NULL) || broken(ret == ERROR_ACCESS_DENIED /* NT4, win2k */),
+        "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
     RegCloseKey(hkResult);
 }
 
@@ -989,12 +991,14 @@ static void test_reg_create_key(void)
     /* WOW64 flags - open an existing key */
     hkey1 = NULL;
     ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0, KEY_READ|KEY_WOW64_32KEY, NULL, &hkey1, NULL);
-    ok(ret == ERROR_SUCCESS && hkey1 != NULL, "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
+    ok((ret == ERROR_SUCCESS && hkey1 != NULL) || broken(ret == ERROR_ACCESS_DENIED /* NT4, win2k */),
+        "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
     RegCloseKey(hkey1);
 
     hkey1 = NULL;
-    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0, KEY_READ|KEY_WOW64_32KEY, NULL, &hkey1, NULL);
-    ok(ret == ERROR_SUCCESS && hkey1 != NULL, "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0, KEY_READ|KEY_WOW64_64KEY, NULL, &hkey1, NULL);
+    ok((ret == ERROR_SUCCESS && hkey1 != NULL) || broken(ret == ERROR_ACCESS_DENIED /* NT4, win2k */),
+        "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
     RegCloseKey(hkey1);
 }
 
