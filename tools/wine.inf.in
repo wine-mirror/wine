@@ -2243,6 +2243,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,actxprxy.dll
 11,,advapi32.dll
 11,,advpack.dll
+11,,appwiz.cpl
 11,,cabinet.dll
 11,,cmd.exe
 11,,comctl32.dll

@@ -21927,6 +21927,8 @@ ac_config_files="$ac_config_files dlls/advpack/tests/Makefile"
 
 ac_config_files="$ac_config_files dlls/amstream/Makefile"
 
+ac_config_files="$ac_config_files dlls/appwiz.cpl/Makefile"
+
 ac_config_files="$ac_config_files dlls/atl/Makefile"
 
 ac_config_files="$ac_config_files dlls/avicap32/Makefile"
@@ -23319,6 +23321,7 @@ do
     "dlls/advpack/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advpack/Makefile" ;;
     "dlls/advpack/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advpack/tests/Makefile" ;;
     "dlls/amstream/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/amstream/Makefile" ;;
+    "dlls/appwiz.cpl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/appwiz.cpl/Makefile" ;;
     "dlls/atl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/atl/Makefile" ;;
     "dlls/avicap32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avicap32/Makefile" ;;
     "dlls/avifil32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifil32/Makefile" ;;

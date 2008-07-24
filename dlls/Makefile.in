@@ -24,6 +24,7 @@ BASEDIRS = \
 	advapi32 \
 	advpack \
 	amstream \
+	appwiz.cpl \
 	atl \
 	avicap32 \
 	avifil32 \

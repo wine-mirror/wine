@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = appwiz.cpl
+IMPORTS   = kernel32 comctl32 advapi32 shell32 user32
+
+C_SRCS = \
+	appwiz.c
+
+RC_SRCS = appwiz.rc
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

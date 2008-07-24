@@ -174,6 +174,7 @@ ALL_MAKEFILES = \
 	dlls/advpack/Makefile \
 	dlls/advpack/tests/Makefile \
 	dlls/amstream/Makefile \
+	dlls/appwiz.cpl/Makefile \
 	dlls/atl/Makefile \
 	dlls/avicap32/Makefile \
 	dlls/avifil32/Makefile \
@@ -606,6 +607,7 @@ dlls/advapi32/tests/Makefile: dlls/advapi32/tests/Makefile.in dlls/Maketest.rule
 dlls/advpack/Makefile: dlls/advpack/Makefile.in dlls/Makedll.rules
 dlls/advpack/tests/Makefile: dlls/advpack/tests/Makefile.in dlls/Maketest.rules
 dlls/amstream/Makefile: dlls/amstream/Makefile.in dlls/Makedll.rules
+dlls/appwiz.cpl/Makefile: dlls/appwiz.cpl/Makefile.in dlls/Makedll.rules
 dlls/atl/Makefile: dlls/atl/Makefile.in dlls/Makedll.rules
 dlls/avicap32/Makefile: dlls/avicap32/Makefile.in dlls/Makedll.rules
 dlls/avifil32/Makefile: dlls/avifil32/Makefile.in dlls/Makedll.rules
