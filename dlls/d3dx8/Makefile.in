@@ -9,7 +9,8 @@ IMPORTS   = dxguid uuid kernel32
 C_SRCS = \
 	d3dx8_main.c \
 	d3dxbuffer.c \
-	math.c
+	math.c \
+	mesh.c
 
 @MAKE_DLL_RULES@
 

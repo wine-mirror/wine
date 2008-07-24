@@ -108,7 +108,7 @@
 @ stub D3DXFVFFromDeclarator
 @ stub D3DXWeldVertices
 @ stub D3DXIntersect
-@ stub D3DXSphereBoundProbe
+@ stdcall D3DXSphereBoundProbe(ptr long ptr ptr)
 @ stub D3DXBoxBoundProbe
 @ stub D3DXCreatePolygon
 @ stub D3DXCreateBox

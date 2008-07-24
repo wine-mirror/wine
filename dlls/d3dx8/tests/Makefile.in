@@ -5,7 +5,9 @@ VPATH     = @srcdir@
 TESTDLL   = d3dx8.dll
 IMPORTS   = d3dx8 kernel32
 
-CTESTS = math.c
+CTESTS = \
+	math.c \
+	mesh.c
 
 @MAKE_TEST_RULES@
 
