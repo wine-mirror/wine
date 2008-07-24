@@ -183,7 +183,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             /* End of file */
             if (stream->index >= stream->entries)
             {
-                ERR("END OF STREAM ON %u\n", streamnumber);
+                TRACE("END OF STREAM ON %u\n", streamnumber);
                 IMediaSample_Release(sample);
                 return S_FALSE;
             }
@@ -213,8 +213,8 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             /* End of file */
             if (stream->index)
             {
+                TRACE("END OF STREAM ON %u\n", streamnumber);
                 IMediaSample_Release(sample);
-                ERR("END OF STREAM ON %u\n", streamnumber);
                 return S_FALSE;
             }
 
@@ -502,6 +502,7 @@ static HRESULT AVISplitter_done_process(LPVOID iface)
 
         ResetEvent(stream->packet_queued);
     }
+    FIXME("All threads are now terminated\n");
 
     return S_OK;
 }
@@ -516,8 +517,7 @@ static HRESULT AVISplitter_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **index, LONGLONG qwOffset, DWORD cb)
 {
     AVISTDINDEX *pIndex;
-    int x;
-    long rest;
+    int x, rest;
 
     *index = NULL;
     if (cb < sizeof(AVISTDINDEX))
@@ -531,12 +531,7 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **ind
         return E_OUTOFMEMORY;
 
     IAsyncReader_SyncRead(((PullPin *)This->Parser.ppPins[0])->pReader, qwOffset, cb, (BYTE *)pIndex);
-    pIndex = CoTaskMemRealloc(pIndex, pIndex->cb);
-    if (!pIndex)
-        return E_OUTOFMEMORY;
-
-    IAsyncReader_SyncRead(((PullPin *)This->Parser.ppPins[0])->pReader, qwOffset, pIndex->cb, (BYTE *)pIndex);
-    rest = pIndex->cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex[0]) * ANYSIZE_ARRAY;
+    rest = cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex);
 
     TRACE("FOURCC: %s\n", debugstr_an((char *)&pIndex->fcc, 4));
     TRACE("wLongsPerEntry: %hd\n", pIndex->wLongsPerEntry);
@@ -552,7 +547,11 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **ind
         || rest < (pIndex->nEntriesInUse * sizeof(DWORD) * pIndex->wLongsPerEntry)
         || (pIndex->bIndexSubType != AVI_INDEX_SUB_DEFAULT))
     {
-        FIXME("Invalid index chunk encountered\n");
+        FIXME("Invalid index chunk encountered: %u/%u, %u/%u, %u/%u, %u/%u\n",
+              pIndex->bIndexType, AVI_INDEX_OF_CHUNKS, pIndex->wLongsPerEntry, 2,
+              rest, (pIndex->nEntriesInUse * sizeof(DWORD) * pIndex->wLongsPerEntry),
+              pIndex->bIndexSubType, AVI_INDEX_SUB_DEFAULT);
+        *index = NULL;
         return E_INVALIDARG;
     }
 
@@ -814,7 +813,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
                 TRACE("dwSize: %u\n", pIndex->aIndex[x].dwSize);
                 TRACE("dwDuration: %u (unreliable)\n", pIndex->aIndex[x].dwDuration);
 
-                AVISplitter_ProcessIndex(This, &stream->stdindex[nstdindex-1], pIndex->aIndex[x].qwOffset, pIndex->aIndex[x].dwSize);
+                AVISplitter_ProcessIndex(This, &stream->stdindex[x], pIndex->aIndex[x].qwOffset, pIndex->aIndex[x].dwSize);
             }
             break;
         }
