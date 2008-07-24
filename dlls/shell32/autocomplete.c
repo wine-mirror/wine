@@ -574,7 +574,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	    IEnumString_Reset(This->enumstr);
 	    filled = FALSE;
 	    for(cpt = 0;;) {
-		hr = IEnumString_Next(This->enumstr, 1, &strs, NULL);
+	        ULONG fetched;
+		hr = IEnumString_Next(This->enumstr, 1, &strs, &fetched);
 		if (hr != S_OK)
 		    break;
 
