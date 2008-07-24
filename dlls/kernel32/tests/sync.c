@@ -566,11 +566,8 @@ static void CALLBACK timer_queue_cb2(PVOID p, BOOLEAN timedOut)
         /* Note, XP SP2 does *not* do any deadlock checking, so passing
            INVALID_HANDLE_VALUE here will just hang.  */
         ret = pDeleteTimerQueueTimer(d->q, d->t, NULL);
-        todo_wine
-        {
         ok(!ret, "DeleteTimerQueueTimer\n");
         ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
-        }
     }
 }
 
@@ -604,12 +601,20 @@ static void CALLBACK timer_queue_cb4(PVOID p, BOOLEAN timedOut)
     }
 }
 
+static void CALLBACK timer_queue_cb5(PVOID p, BOOLEAN timedOut)
+{
+    DWORD delay = (DWORD) p;
+    ok(timedOut, "Timer callbacks should always time out\n");
+    if (delay)
+        Sleep(delay);
+}
+
 static void test_timer_queue(void)
 {
     HANDLE q, t1, t2, t3, t4, t5;
     int n1, n2, n3, n4, n5;
     struct timer_queue_data1 d2, d3, d4;
-    HANDLE e;
+    HANDLE e, et1, et2;
     BOOL ret;
 
     if (!pChangeTimerQueueTimer || !pCreateTimerQueue || !pCreateTimerQueueTimer
@@ -675,6 +680,14 @@ static void test_timer_queue(void)
     /* Give them a chance to do some work.  */
     Sleep(500);
 
+    /* Test deleting a once-only timer.  */
+    ret = pDeleteTimerQueueTimer(q, t1, INVALID_HANDLE_VALUE);
+    ok(ret, "DeleteTimerQueueTimer\n");
+
+    /* A periodic timer.  */
+    ret = pDeleteTimerQueueTimer(q, t2, INVALID_HANDLE_VALUE);
+    ok(ret, "DeleteTimerQueueTimer\n");
+
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
     ok(ret, "DeleteTimerQueueEx\n");
     ok(n1 == 1, "Timer callback 1\n");
@@ -682,9 +695,11 @@ static void test_timer_queue(void)
     ok(n4 == 0, "Timer callback 4\n");
     ok(n5 == 1, "Timer callback 5\n");
 
-    /* Test synchronous deletion of the queue with event trigger. */
+    /* Test synchronous deletion of the timer/queue with event trigger. */
     e = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if (!e)
+    et1 = CreateEvent(NULL, TRUE, FALSE, NULL);
+    et2 = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (!e || !et1 || !et2)
     {
         skip("Failed to create timer queue descruction event\n");
         return;
@@ -693,12 +708,69 @@ static void test_timer_queue(void)
     q = pCreateTimerQueue();
     ok(q != NULL, "CreateTimerQueue\n");
 
+    /* Run once and finish quickly (should be done when we delete it).  */
+    t1 = NULL;
+    ret = pCreateTimerQueueTimer(&t1, q, timer_queue_cb5, (PVOID) 0, 0,
+                                 0, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t1 != NULL, "CreateTimerQueueTimer\n");
+
+    /* Run once and finish slowly (shouldn't be done when we delete it).  */
+    t2 = NULL;
+    ret = pCreateTimerQueueTimer(&t2, q, timer_queue_cb5, (PVOID) 1000, 0,
+                                 0, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t2 != NULL, "CreateTimerQueueTimer\n");
+
+    /* Run once and finish quickly (should be done when we delete it).  */
+    t3 = NULL;
+    ret = pCreateTimerQueueTimer(&t3, q, timer_queue_cb5, (PVOID) 0, 0,
+                                 0, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t3 != NULL, "CreateTimerQueueTimer\n");
+
+    /* Run once and finish slowly (shouldn't be done when we delete it).  */
+    t4 = NULL;
+    ret = pCreateTimerQueueTimer(&t4, q, timer_queue_cb5, (PVOID) 1000, 0,
+                                 0, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t4 != NULL, "CreateTimerQueueTimer\n");
+
+    /* Give them a chance to start.  */
+    Sleep(400);
+
+    /* DeleteTimerQueueTimer always returns PENDING with a NULL event,
+       even if the timer is finished.  */
+    SetLastError(0xdeadbeef);
+    ret = pDeleteTimerQueueTimer(q, t1, NULL);
+    ok(!ret, "DeleteTimerQueueTimer\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pDeleteTimerQueueTimer(q, t2, NULL);
+    ok(!ret, "DeleteTimerQueueTimer\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pDeleteTimerQueueTimer(q, t3, et1);
+    ok(ret, "DeleteTimerQueueTimer\n");
+    ok(GetLastError() == 0xdeadbeef, "DeleteTimerQueueTimer\n");
+    ok(WaitForSingleObject(et1, 250) == WAIT_OBJECT_0,
+       "Timer destruction event not triggered\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pDeleteTimerQueueTimer(q, t4, et2);
+    ok(!ret, "DeleteTimerQueueTimer\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
+    ok(WaitForSingleObject(et2, 1000) == WAIT_OBJECT_0,
+       "Timer destruction event not triggered\n");
+
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, e);
     ok(!ret, "DeleteTimerQueueEx\n");
     ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
     ok(WaitForSingleObject(e, 250) == WAIT_OBJECT_0,
-       "Timer destruction event not triggered\n");
+       "Queue destruction event not triggered\n");
     CloseHandle(e);
 
     /* Test deleting/changing a timer in execution.  */
@@ -749,10 +821,7 @@ static void test_timer_queue(void)
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
     ok(ret, "DeleteTimerQueueEx\n");
     ok(n1 == 1, "ChangeTimerQueueTimer\n");
-    todo_wine
-    {
     ok(d2.num_calls == d2.max_calls, "DeleteTimerQueueTimer\n");
-    }
     ok(d3.num_calls == d3.max_calls, "ChangeTimerQueueTimer\n");
     ok(d4.num_calls == 1, "Timer flagged for deletion incorrectly\n");
 }

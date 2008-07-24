@@ -545,6 +545,7 @@ struct queue_timer
     ULONG flags;
     ULONGLONG expire;
     BOOL destroy;      /* timer should be deleted; once set, never unset */
+    HANDLE event;      /* removal event */
 };
 
 struct timer_queue
@@ -569,6 +570,8 @@ static void queue_remove_timer(struct queue_timer *t)
     assert(t->destroy);
 
     list_remove(&t->entry);
+    if (t->event)
+        NtSetEvent(t->event, NULL);
     RtlFreeHeap(GetProcessHeap(), 0, t);
 
     if (q->quit && list_count(&q->timers) == 0)
@@ -891,6 +894,7 @@ NTSTATUS WINAPI RtlCreateTimer(PHANDLE NewTimer, HANDLE TimerQueue,
     t->period = Period;
     t->flags = Flags;
     t->destroy = FALSE;
+    t->event = NULL;
 
     status = STATUS_SUCCESS;
     RtlEnterCriticalSection(&q->cs);
@@ -942,4 +946,52 @@ NTSTATUS WINAPI RtlUpdateTimer(HANDLE TimerQueue, HANDLE Timer,
     RtlLeaveCriticalSection(&q->cs);
 
     return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *              RtlDeleteTimer   (NTDLL.@)
+ *
+ * Cancels a timer-queue timer.
+ *
+ * PARAMS
+ *  TimerQueue      [I] The queue that holds the timer.
+ *  Timer           [I] The timer to update.
+ *  CompletionEvent [I] If NULL, return immediately.  If INVALID_HANDLE_VALUE,
+ *                      wait until the timer is finished firing all pending
+ *                      callbacks before returning.  Otherwise, return
+ *                      immediately and set the timer is done.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS if the timer is done, STATUS_PENDING if not,
+             or if the completion event is NULL.
+ *  Failure: Any NTSTATUS code.
+ */
+NTSTATUS WINAPI RtlDeleteTimer(HANDLE TimerQueue, HANDLE Timer,
+                               HANDLE CompletionEvent)
+{
+    struct timer_queue *q = TimerQueue;
+    struct queue_timer *t = Timer;
+    NTSTATUS status = STATUS_PENDING;
+    HANDLE event = NULL;
+
+    if (CompletionEvent == INVALID_HANDLE_VALUE)
+        status = NtCreateEvent(&event, EVENT_ALL_ACCESS, NULL, FALSE, FALSE);
+    else if (CompletionEvent)
+        event = CompletionEvent;
+
+    RtlEnterCriticalSection(&q->cs);
+    t->event = event;
+    if (t->runcount == 0 && event)
+        status = STATUS_SUCCESS;
+    queue_destroy_timer(t);
+    RtlLeaveCriticalSection(&q->cs);
+
+    if (CompletionEvent == INVALID_HANDLE_VALUE && event)
+    {
+        if (status == STATUS_PENDING)
+            NtWaitForSingleObject(event, FALSE, NULL);
+        NtClose(event);
+    }
+
+    return status;
 }

@@ -518,7 +518,7 @@
 @ stdcall RtlDeleteRegistryValue(long ptr ptr)
 @ stdcall RtlDeleteResource(ptr)
 @ stdcall RtlDeleteSecurityObject(ptr)
-# @ stub RtlDeleteTimer
+@ stdcall RtlDeleteTimer(ptr ptr ptr)
 # @ stub RtlDeleteTimerQueue
 @ stdcall RtlDeleteTimerQueueEx(ptr ptr)
 @ stdcall RtlDeregisterWait(ptr)

@@ -1131,15 +1131,16 @@ BOOL WINAPI ChangeTimerQueueTimer( HANDLE TimerQueue, HANDLE Timer,
  *
  * RETURNS
  *   nonzero on success or zero on failure
- *
- * BUGS
- *   Unimplemented
  */
 BOOL WINAPI DeleteTimerQueueTimer( HANDLE TimerQueue, HANDLE Timer,
                                    HANDLE CompletionEvent )
 {
-    FIXME("stub\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    NTSTATUS status = RtlDeleteTimer(TimerQueue, Timer, CompletionEvent);
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
     return TRUE;
 }
 
