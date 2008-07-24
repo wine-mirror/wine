@@ -202,11 +202,9 @@ BOOL WINAPI CryptSIPCreateIndirectData(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pcb
     return FALSE;
 }
 
-/***********************************************************************
- *      CryptSIPGetSignedDataMsg  (WINTRUST.@)
- */
-BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEncodingType,
-                                       DWORD dwIndex, DWORD* pcbSignedDataMsg, BYTE* pbSignedDataMsg)
+static BOOL WINTRUST_GetSignedMsgFromPEFile(SIP_SUBJECTINFO *pSubjectInfo,
+ DWORD *pdwEncodingType, DWORD dwIndex, DWORD *pcbSignedDataMsg,
+ BYTE *pbSignedDataMsg)
 {
     BOOL ret;
     WIN_CERTIFICATE *pCert = NULL;
@@ -264,9 +262,34 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
             }
         }
     }
-
 error:
     HeapFree(GetProcessHeap(), 0, pCert);
+    return ret;
+}
+
+/***********************************************************************
+ *      CryptSIPGetSignedDataMsg  (WINTRUST.@)
+ */
+BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEncodingType,
+                                       DWORD dwIndex, DWORD* pcbSignedDataMsg, BYTE* pbSignedDataMsg)
+{
+    static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
+     0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
+    BOOL ret;
+
+    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+          pcbSignedDataMsg, pbSignedDataMsg);
+
+    if (!memcmp(pSubjectInfo->pgSubjectType, &unknown, sizeof(unknown)))
+        ret = WINTRUST_GetSignedMsgFromPEFile(pSubjectInfo, pdwEncodingType,
+         dwIndex, pcbSignedDataMsg, pbSignedDataMsg);
+    else
+    {
+        FIXME("unimplemented for subject type %s\n",
+         debugstr_guid(pSubjectInfo->pgSubjectType));
+        ret = FALSE;
+    }
+
     TRACE("returning %d\n", ret);
     return ret;
 }
