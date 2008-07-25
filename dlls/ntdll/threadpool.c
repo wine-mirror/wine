@@ -643,7 +643,7 @@ static inline void queue_move_timer(struct queue_timer *t, ULONGLONG time,
 
 static void queue_timer_expire(struct timer_queue *q)
 {
-    struct queue_timer *t;
+    struct queue_timer *t = NULL;
 
     RtlEnterCriticalSection(&q->cs);
     if (list_head(&q->timers))
@@ -656,9 +656,9 @@ static void queue_timer_expire(struct timer_queue *q)
                 t, t->period ? queue_current_time() + t->period : EXPIRE_NEVER,
                 FALSE);
         }
+        else
+            t = NULL;
     }
-    else
-        t = NULL;
     RtlLeaveCriticalSection(&q->cs);
 
     if (t)

@@ -609,11 +609,45 @@ static void CALLBACK timer_queue_cb5(PVOID p, BOOLEAN timedOut)
         Sleep(delay);
 }
 
+static void CALLBACK timer_queue_cb6(PVOID p, BOOLEAN timedOut)
+{
+    struct timer_queue_data1 *d = p;
+    ok(timedOut, "Timer callbacks should always time out\n");
+    /* This tests an original implementation bug where a deleted timer may get
+       to run, but it is tricky to set up.  */
+    if (d->q && d->num_calls++ == 0)
+    {
+        /* First run: delete ourselves, then insert and remove a timer
+           that goes in front of us in the sorted timeout list.  Once
+           removed, we will still timeout at the faster timer's due time,
+           but this should be a no-op if we are bug-free.  There should
+           not be a second run.  We can test the value of num_calls later.  */
+        BOOL ret;
+        HANDLE t;
+
+        /* The delete will pend while we are in this callback.  */
+        SetLastError(0xdeadbeef);
+        ret = pDeleteTimerQueueTimer(d->q, d->t, NULL);
+        ok(!ret, "DeleteTimerQueueTimer\n");
+        ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
+
+        ret = pCreateTimerQueueTimer(&t, d->q, timer_queue_cb1, NULL, 100, 0, 0);
+        ok(ret, "CreateTimerQueueTimer\n");
+        ok(t != NULL, "CreateTimerQueueTimer\n");
+
+        ret = pDeleteTimerQueueTimer(d->q, t, INVALID_HANDLE_VALUE);
+        ok(ret, "DeleteTimerQueueTimer\n");
+
+        /* Now we stay alive by hanging around in the callback.  */
+        Sleep(500);
+    }
+}
+
 static void test_timer_queue(void)
 {
     HANDLE q, t1, t2, t3, t4, t5;
     int n1, n2, n3, n4, n5;
-    struct timer_queue_data1 d2, d3, d4;
+    struct timer_queue_data1 d1, d2, d3, d4;
     HANDLE e, et1, et2;
     BOOL ret;
 
@@ -824,6 +858,28 @@ static void test_timer_queue(void)
     ok(d2.num_calls == d2.max_calls, "DeleteTimerQueueTimer\n");
     ok(d3.num_calls == d3.max_calls, "ChangeTimerQueueTimer\n");
     ok(d4.num_calls == 1, "Timer flagged for deletion incorrectly\n");
+
+    /* Test an obscure bug that was in the original implementation.  */
+    q = pCreateTimerQueue();
+    ok(q != NULL, "CreateTimerQueue\n");
+
+    /* All the work is done in the callback.  */
+    d1.t = t1 = NULL;
+    d1.num_calls = 0;
+    d1.q = q;
+    ret = pCreateTimerQueueTimer(&t1, q, timer_queue_cb6, &d1, 100,
+                                 100, WT_EXECUTELONGFUNCTION);
+    d1.t = t1;
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t1 != NULL, "CreateTimerQueueTimer\n");
+
+    Sleep(750);
+
+    SetLastError(0xdeadbeef);
+    ret = pDeleteTimerQueueEx(q, NULL);
+    ok(!ret, "DeleteTimerQueueEx\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
+    ok(d1.num_calls == 1, "DeleteTimerQueueTimer\n");
 }
 
 START_TEST(sync)
