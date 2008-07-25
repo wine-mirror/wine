@@ -885,6 +885,26 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       FIXME("DIPROP_AUTOCENTER(%d)\n", pd->dwData);
       break;
     }
+    case (DWORD)DIPROP_SATURATION: {
+      LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
+
+      if (ph->dwHow == DIPH_DEVICE) {
+        int i;
+
+        TRACE("saturation(%d) all\n", pd->dwData);
+        for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
+          This->props[i].lSaturation = pd->dwData;
+      } else {
+          int obj = find_property(&This->base.data_format, ph);
+
+          if (obj < 0) return DIERR_OBJECTNOTFOUND;
+
+          TRACE("saturation(%d) obj=%d\n", pd->dwData, obj);
+          This->props[obj].lSaturation = pd->dwData;
+      }
+      fake_current_js_state(This);
+      break;
+    }
     default:
       return IDirectInputDevice2AImpl_SetProperty(iface, rguid, ph);
     }
@@ -975,6 +995,17 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 
         pd->dwData = This->props[obj].lDeadZone;
         TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
+        break;
+    }
+    case (DWORD) DIPROP_SATURATION:
+    {
+        LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+        int obj = find_property(&This->base.data_format, pdiph);
+
+        if (obj < 0) return DIERR_OBJECTNOTFOUND;
+
+        pd->dwData = This->props[obj].lSaturation;
+        TRACE("saturation(%d) obj=%d\n", pd->dwData, obj);
         break;
     }
 
