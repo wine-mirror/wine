@@ -110,27 +110,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
  */
 static void FreeAppInfo(APPINFO *info)
 {
-    APPINFO *iter = info;
-
-    while (iter)
+    while (info)
     {
-        if (iter->title)
-            HeapFree(GetProcessHeap(), 0, iter->title);
+        APPINFO *next_info = info->next;
 
-        if (iter->path)
-            HeapFree(GetProcessHeap(), 0, iter->path);
-
-        if (iter->icon)
-            HeapFree(GetProcessHeap(), 0, iter->icon);
-
-        if (iter->publisher)
-            HeapFree(GetProcessHeap(), 0, iter->publisher);
-
-        if (iter->version)
-            HeapFree(GetProcessHeap(), 0, iter->version);
-
-        iter = iter->next;
-        HeapFree(GetProcessHeap(), 0, iter);
+        HeapFree(GetProcessHeap(), 0, info->title);
+        HeapFree(GetProcessHeap(), 0, info->path);
+        HeapFree(GetProcessHeap(), 0, info->icon);
+        HeapFree(GetProcessHeap(), 0, info->publisher);
+        HeapFree(GetProcessHeap(), 0, info->version);
+        HeapFree(GetProcessHeap(), 0, info);
+        info = next_info;
     }
 }
 
