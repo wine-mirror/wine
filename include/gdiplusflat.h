@@ -415,6 +415,7 @@ GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily*, INT, UINT16*);
 GpStatus WINGDIPAPI GdipGetCellDescent(GDIPCONST GpFontFamily*, INT, UINT16*);
 GpStatus WINGDIPAPI GdipGetEmHeight(GDIPCONST GpFontFamily*, INT, UINT16*);
 GpStatus WINGDIPAPI GdipGetLineSpacing(GDIPCONST GpFontFamily*, INT, UINT16*);
+GpStatus WINGDIPAPI GdipIsStyleAvailable(GDIPCONST GpFontFamily *, INT, BOOL*);
 
 GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily**);
 GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily**);

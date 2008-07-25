@@ -423,7 +423,7 @@
 @ stdcall GdipIsMatrixInvertible(ptr ptr)
 @ stdcall GdipIsOutlineVisiblePathPoint(ptr long long ptr ptr ptr)
 @ stdcall GdipIsOutlineVisiblePathPointI(ptr long long ptr ptr ptr)
-@ stub GdipIsStyleAvailable
+@ stdcall GdipIsStyleAvailable(ptr long ptr)
 @ stub GdipIsVisibleClipEmpty
 @ stdcall GdipIsVisiblePathPoint(ptr long long ptr ptr)
 @ stdcall GdipIsVisiblePathPointI(ptr long long ptr ptr)

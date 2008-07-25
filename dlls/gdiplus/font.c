@@ -569,6 +569,17 @@ GpStatus WINGDIPAPI GdipGetLineSpacing(GDIPCONST GpFontFamily *family,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipIsStyleAvailable(GDIPCONST GpFontFamily* family,
+        INT style, BOOL* IsStyleAvailable)
+{
+    FIXME("%p %d %p stub!\n", family, style, IsStyleAvailable);
+
+    if (!(family && IsStyleAvailable))
+        return InvalidParameter;
+
+    return NotImplemented;
+}
+
 /*****************************************************************************
  * GdipGetGenericFontFamilyMonospace [GDIPLUS.@]
  *
