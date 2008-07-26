@@ -252,7 +252,7 @@
 @ stdcall GdipGetCustomLineCapBaseCap(ptr ptr)
 @ stdcall GdipGetCustomLineCapBaseInset(ptr ptr)
 @ stub GdipGetCustomLineCapStrokeCaps
-@ stub GdipGetCustomLineCapStrokeJoin
+@ stdcall GdipGetCustomLineCapStrokeJoin(ptr ptr)
 @ stub GdipGetCustomLineCapType
 @ stub GdipGetCustomLineCapWidthScale
 @ stdcall GdipGetDC(ptr ptr)

@@ -65,6 +65,38 @@ static void test_constructor_destructor(void)
     GdipDeletePath(path);
 }
 
+static void test_linejoin(void)
+{
+    GpCustomLineCap *custom;
+    GpPath *path;
+    GpLineJoin join;
+    GpStatus stat;
+
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, stat);
+    stat = GdipAddPathRectangle(path, 5.0, 5.0, 10.0, 10.0);
+    expect(Ok, stat);
+
+    stat = GdipCreateCustomLineCap(NULL, path, LineCapFlat, 0.0, &custom);
+    expect(Ok, stat);
+
+    /* NULL args */
+    stat = GdipGetCustomLineCapStrokeJoin(NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipGetCustomLineCapStrokeJoin(custom, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipGetCustomLineCapStrokeJoin(NULL, &join);
+    expect(InvalidParameter, stat);
+
+    /* LineJoinMiter is default */
+    stat = GdipGetCustomLineCapStrokeJoin(custom, &join);
+    expect(Ok, stat);
+    expect(LineJoinMiter, join);
+
+    GdipDeleteCustomLineCap(custom);
+    GdipDeletePath(path);
+}
+
 START_TEST(customlinecap)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -78,6 +110,7 @@ START_TEST(customlinecap)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor_destructor();
+    test_linejoin();
 
     GdiplusShutdown(gdiplusToken);
 }

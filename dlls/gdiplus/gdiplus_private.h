@@ -149,6 +149,7 @@ struct GpCustomLineCap{
     BOOL fill;      /* TRUE for fill, FALSE for stroke */
     GpLineCap cap;  /* as far as I can tell, this value is ignored */
     REAL inset;     /* how much to adjust the end of the line */
+    GpLineJoin join;
 };
 
 struct GpImage{

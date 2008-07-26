@@ -100,6 +100,7 @@ GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath
 
     (*customCap)->inset = baseInset;
     (*customCap)->cap = baseCap;
+    (*customCap)->join = LineJoinMiter;
 
     return Ok;
 }
@@ -112,6 +113,17 @@ GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap *customCap)
     GdipFree(customCap->pathdata.Points);
     GdipFree(customCap->pathdata.Types);
     GdipFree(customCap);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetCustomLineCapStrokeJoin(GpCustomLineCap* customCap,
+    GpLineJoin* lineJoin)
+{
+    if(!customCap || !lineJoin)
+        return InvalidParameter;
+
+    *lineJoin = customCap->join;
 
     return Ok;
 }
