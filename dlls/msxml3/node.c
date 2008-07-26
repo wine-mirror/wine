@@ -1039,6 +1039,59 @@ static HRESULT WINAPI xmlnode_put_dataType(
     return hr;
 }
 
+static BSTR EnsureCorrectEOL(BSTR sInput)
+{
+    static const WCHAR SZ_RETURN[] = {'\n',0};
+    static const WCHAR SZ_LINEFEED[] = {'\r',0};
+    int nNum = 0;
+    BSTR sNew;
+    int nLen;
+    int i;
+
+    nLen = lstrlenW(sInput);
+    /* Count line endings */
+    for(i=0; i < nLen; i++)
+    {
+        if(sInput[i] == SZ_RETURN[0])
+            nNum++;
+    }
+
+    TRACE("len=%d, num=%d\n", nLen, nNum);
+
+    /* Add linefeed as needed */
+    if(nNum > 0)
+    {
+        int nPlace = 0;
+        sNew = SysAllocStringLen(NULL, nLen + nNum+1);
+        for(i=0; i < nLen; i++)
+        {
+            if(sInput[i] == SZ_RETURN[0])
+            {
+                sNew[i+nPlace] = SZ_LINEFEED[0];
+                nPlace++;
+            }
+            sNew[i+nPlace] = sInput[i];
+        }
+
+        SysFreeString(sInput);
+    }
+    else
+    {
+        sNew = sInput;
+    }
+
+    TRACE("len %d\n", lstrlenW(sNew));
+
+    return sNew;
+}
+
+/*
+ * We are trying to replicate the same behaviour as msxml by converting
+ * line endings to \r\n and using idents as \t. The problem is that msxml
+ * only formats nodes that have a line ending. Using libxml we cannot
+ * reproduce behaviour exactly.
+ *
+ */
 static HRESULT WINAPI xmlnode_get_xml(
     IXMLDOMNode *iface,
     BSTR* xmlString)
@@ -1047,7 +1100,7 @@ static HRESULT WINAPI xmlnode_get_xml(
     xmlBufferPtr pXmlBuf;
     int nSize;
 
-    TRACE("iface %p\n", iface);
+    TRACE("iface %p %d\n", iface, This->node->type);
 
     if(!xmlString)
         return E_INVALIDARG;
@@ -1057,21 +1110,23 @@ static HRESULT WINAPI xmlnode_get_xml(
     pXmlBuf = xmlBufferCreate();
     if(pXmlBuf)
     {
-        nSize = xmlNodeDump(pXmlBuf, This->node->doc, This->node, 0, 0);
+        nSize = xmlNodeDump(pXmlBuf, This->node->doc, This->node, 0, 1);
         if(nSize > 0)
         {
             const xmlChar *pContent;
+            BSTR bstrContent;
 
             /* Attribute Nodes return a space in front of their name */
             pContent = xmlBufferContent(pXmlBuf);
             if( ((char*)pContent)[0] == ' ')
-                *xmlString = bstr_from_xmlChar(pContent+1);
+                bstrContent = bstr_from_xmlChar(pContent+1);
             else
-                *xmlString = bstr_from_xmlChar(pContent);
+                bstrContent = bstr_from_xmlChar(pContent);
 
-
-            xmlBufferFree(pXmlBuf);
+            *xmlString = This->node->type == XML_ELEMENT_NODE ? EnsureCorrectEOL(bstrContent) : bstrContent;
         }
+
+        xmlBufferFree(pXmlBuf);
     }
 
     /* Always returns a string. */

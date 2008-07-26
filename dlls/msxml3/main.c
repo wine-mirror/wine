@@ -175,9 +175,17 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     case DLL_PROCESS_ATTACH:
 #ifdef HAVE_LIBXML2
         xmlInitParser();
+
+        /* Set the default indent character to a single tab. */
+        xmlThrDefTreeIndentString("\t");
 #endif
 #ifdef HAVE_XSLTINIT
         xsltInit();
+#endif
+
+#ifdef HAVE_LIBXML2
+        /* Set the current ident to the default */
+        xmlTreeIndentString = "\t";
 #endif
         hInstance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);

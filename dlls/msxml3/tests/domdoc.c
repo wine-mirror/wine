@@ -3419,6 +3419,44 @@ static void test_Namespaces(void)
     free_bstrs();
 }
 
+static void test_FormattingXML(void)
+{
+    IXMLDOMDocument2 *doc = NULL;
+    IXMLDOMElement *pElement;
+    VARIANT_BOOL bSucc;
+    HRESULT hr;
+    BSTR str;
+    static const CHAR szLinefeedXML[] = "<?xml version=\"1.0\"?>\n<Root>\n\t<Sub val=\"A\" />\n</Root>";
+    static const CHAR szLinefeedRootXML[] = "<Root>\r\n\t<Sub val=\"A\"/>\r\n</Root>";
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szLinefeedXML), &bSucc);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
+
+    if(bSucc == VARIANT_TRUE)
+    {
+        hr = IXMLDOMDocument2_get_documentElement(doc, &pElement);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMElement_get_xml(pElement, &str);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok( !lstrcmpW( str, _bstr_(szLinefeedRootXML) ), "incorrect element xml\n");
+            SysFreeString(str);
+
+            IXMLDOMElement_Release(pElement);
+        }
+    }
+
+    IXMLDOMDocument2_Release(doc);
+
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -3444,6 +3482,7 @@ START_TEST(domdoc)
     test_DocumentSaveToFile();
     test_testTransforms();
     test_Namespaces();
+    test_FormattingXML();
 
     CoUninitialize();
 }
