@@ -156,12 +156,12 @@ GpStatus WINGDIPAPI GdipSetCustomLineCapBaseCap(GpCustomLineCap* custom,
 GpStatus WINGDIPAPI GdipGetCustomLineCapBaseInset(GpCustomLineCap* custom,
     REAL* inset)
 {
-    static int calls;
+    if(!custom || !inset)
+        return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    *inset = custom->inset;
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetCustomLineCapBaseInset(GpCustomLineCap* custom,

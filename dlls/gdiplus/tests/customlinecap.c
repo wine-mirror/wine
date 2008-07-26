@@ -23,6 +23,7 @@
 #include "wine/test.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+#define expectf(expected, got) ok(got == expected, "Expected %.2f, got %.2f\n", expected, got)
 
 static void test_constructor_destructor(void)
 {
@@ -116,6 +117,38 @@ static void test_linejoin(void)
     GdipDeletePath(path);
 }
 
+static void test_inset(void)
+{
+    GpCustomLineCap *custom;
+    GpPath *path;
+    REAL inset;
+    GpStatus stat;
+
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, stat);
+    stat = GdipAddPathRectangle(path, 5.0, 5.0, 10.0, 10.0);
+    expect(Ok, stat);
+
+    stat = GdipCreateCustomLineCap(NULL, path, LineCapFlat, 0.0, &custom);
+    expect(Ok, stat);
+
+    /* NULL args */
+    stat = GdipGetCustomLineCapBaseInset(NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipGetCustomLineCapBaseInset(NULL, &inset);
+    expect(InvalidParameter, stat);
+    stat = GdipGetCustomLineCapBaseInset(custom, NULL);
+    expect(InvalidParameter, stat);
+    /* valid args */
+    inset = (REAL)0xdeadbeef;
+    stat = GdipGetCustomLineCapBaseInset(custom, &inset);
+    expect(Ok, stat);
+    expectf(0.0, inset);
+
+    GdipDeleteCustomLineCap(custom);
+    GdipDeletePath(path);
+}
+
 START_TEST(customlinecap)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -130,6 +163,7 @@ START_TEST(customlinecap)
 
     test_constructor_destructor();
     test_linejoin();
+    test_inset();
 
     GdiplusShutdown(gdiplusToken);
 }
