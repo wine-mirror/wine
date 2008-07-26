@@ -149,6 +149,38 @@ static void test_inset(void)
     GdipDeletePath(path);
 }
 
+static void test_scale(void)
+{
+    GpCustomLineCap *custom;
+    GpPath *path;
+    REAL scale;
+    GpStatus stat;
+
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, stat);
+    stat = GdipAddPathRectangle(path, 5.0, 5.0, 10.0, 10.0);
+    expect(Ok, stat);
+
+    stat = GdipCreateCustomLineCap(NULL, path, LineCapFlat, 0.0, &custom);
+    expect(Ok, stat);
+
+    /* NULL args */
+    stat = GdipGetCustomLineCapWidthScale(NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipGetCustomLineCapWidthScale(NULL, &scale);
+    expect(InvalidParameter, stat);
+    stat = GdipGetCustomLineCapWidthScale(custom, NULL);
+    expect(InvalidParameter, stat);
+    /* valid args */
+    scale = (REAL)0xdeadbeef;
+    stat = GdipGetCustomLineCapWidthScale(custom, &scale);
+    expect(Ok, stat);
+    expectf(1.0, scale);
+
+    GdipDeleteCustomLineCap(custom);
+    GdipDeletePath(path);
+}
+
 START_TEST(customlinecap)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -164,6 +196,7 @@ START_TEST(customlinecap)
     test_constructor_destructor();
     test_linejoin();
     test_inset();
+    test_scale();
 
     GdiplusShutdown(gdiplusToken);
 }

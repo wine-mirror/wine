@@ -254,7 +254,7 @@
 @ stub GdipGetCustomLineCapStrokeCaps
 @ stdcall GdipGetCustomLineCapStrokeJoin(ptr ptr)
 @ stub GdipGetCustomLineCapType
-@ stub GdipGetCustomLineCapWidthScale
+@ stdcall GdipGetCustomLineCapWidthScale(ptr ptr)
 @ stdcall GdipGetDC(ptr ptr)
 @ stdcall GdipGetDpiX(ptr ptr)
 @ stdcall GdipGetDpiY(ptr ptr)
