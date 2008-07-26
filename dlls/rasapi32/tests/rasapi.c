@@ -24,6 +24,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include "ras.h"
+#include "raserror.h"
 
 static HMODULE hmodule;
 static DWORD (WINAPI *pRasEnumDevicesA)(LPRASDEVINFOA, LPDWORD, LPDWORD);

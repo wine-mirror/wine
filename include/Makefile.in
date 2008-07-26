@@ -350,6 +350,7 @@ SRCDIR_INCLUDES = \
 	pshpack4.h \
 	pshpack8.h \
 	ras.h \
+	raserror.h \
 	reason.h \
 	regstr.h \
 	richedit.h \
