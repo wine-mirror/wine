@@ -175,15 +175,16 @@ GpStatus WINGDIPAPI GdipSetCustomLineCapBaseInset(GpCustomLineCap* custom,
     return NotImplemented;
 }
 
+/*FIXME: LineJoin completely ignored now */
 GpStatus WINGDIPAPI GdipSetCustomLineCapStrokeJoin(GpCustomLineCap* custom,
     GpLineJoin join)
 {
-    static int calls;
+    if(!custom)
+        return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    custom->join = join;
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetCustomLineCapWidthScale(GpCustomLineCap* custom,

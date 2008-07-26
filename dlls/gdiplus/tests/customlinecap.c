@@ -87,11 +87,30 @@ static void test_linejoin(void)
     expect(InvalidParameter, stat);
     stat = GdipGetCustomLineCapStrokeJoin(NULL, &join);
     expect(InvalidParameter, stat);
+    stat = GdipSetCustomLineCapStrokeJoin(NULL, LineJoinBevel);
+    expect(InvalidParameter, stat);
 
     /* LineJoinMiter is default */
     stat = GdipGetCustomLineCapStrokeJoin(custom, &join);
     expect(Ok, stat);
     expect(LineJoinMiter, join);
+
+    /* set/get */
+    stat = GdipSetCustomLineCapStrokeJoin(custom, LineJoinBevel);
+    expect(Ok, stat);
+    stat = GdipGetCustomLineCapStrokeJoin(custom, &join);
+    expect(Ok, stat);
+    expect(LineJoinBevel, join);
+    stat = GdipSetCustomLineCapStrokeJoin(custom, LineJoinRound);
+    expect(Ok, stat);
+    stat = GdipGetCustomLineCapStrokeJoin(custom, &join);
+    expect(Ok, stat);
+    expect(LineJoinRound, join);
+    stat = GdipSetCustomLineCapStrokeJoin(custom, LineJoinMiterClipped);
+    expect(Ok, stat);
+    stat = GdipGetCustomLineCapStrokeJoin(custom, &join);
+    expect(Ok, stat);
+    expect(LineJoinMiterClipped, join);
 
     GdipDeleteCustomLineCap(custom);
     GdipDeletePath(path);
