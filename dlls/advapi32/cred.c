@@ -49,7 +49,6 @@ static const WCHAR wszEncryptionKeyValue[] = {'E','n','c','r','y','p','t','i','o
 
 static const WCHAR wszFlagsValue[] = {'F','l','a','g','s',0};
 static const WCHAR wszTypeValue[] = {'T','y','p','e',0};
-static const WCHAR wszTargetNameValue[] = {'T','a','r','g','e','t','N','a','m','e',0};
 static const WCHAR wszCommentValue[] = {'C','o','m','m','e','n','t',0};
 static const WCHAR wszLastWrittenValue[] = {'L','a','s','t','W','r','i','t','t','e','n',0};
 static const WCHAR wszPersistValue[] = {'P','e','r','s','i','s','t',0};
