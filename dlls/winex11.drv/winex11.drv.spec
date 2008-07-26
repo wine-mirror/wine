@@ -111,7 +111,7 @@
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long) X11DRV_SetWindowStyle
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
-@ cdecl SysCommand(long long) X11DRV_SysCommand
+@ cdecl SysCommand(long long long) X11DRV_SysCommand
 @ cdecl WindowMessage(long long long long) X11DRV_WindowMessage
 @ cdecl WindowPosChanging(long long long ptr ptr ptr) X11DRV_WindowPosChanging
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr) X11DRV_WindowPosChanged
@@ -163,5 +163,5 @@
 @ stdcall ImeSetCompositionString(long long ptr long ptr long)
 @ stdcall ImeConversionList(long wstr ptr long long)
 @ stdcall ImeProcessKey(long long long ptr)
-@ stdcall ImeGetRegisterWordStyle(wstr long wstr)
+@ stdcall ImeGetRegisterWordStyle(long ptr)
 @ stdcall ImeGetImeMenuItems(long long long ptr ptr long)
