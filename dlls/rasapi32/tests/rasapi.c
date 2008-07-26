@@ -55,7 +55,11 @@ static void test_rasenum(void)
 
     /* create the return buffer */
     result = pRasEnumDevicesA(NULL, &bufsize, &cDevices);
-    trace("RasEnumDevicesA: buffersize %d\n", cb);
+    if(ERROR_RASMAN_CANNOT_INITIALIZE == result) {
+        win_skip("RAS configuration problem\n");
+        return;
+    }
+    trace("RasEnumDevicesA: returned %d buffersize %d\n", result, cb);
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
 
