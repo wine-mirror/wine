@@ -330,7 +330,7 @@ GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *region)
     if (!region)
         return InvalidParameter;
 
-    TRACE("%p", region);
+    TRACE("%p\n", region);
 
     delete_element(&region->node);
     stat = init_region(region, RegionDataInfiniteRect);
