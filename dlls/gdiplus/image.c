@@ -1003,6 +1003,9 @@ static encode_image_func *const encode_image_funcs[NUM_ENCODERS_SUPPORTED] = {
     encode_image_BMP,
 };
 
+/*****************************************************************************
+ * GdipSaveImageToStream [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
@@ -1085,6 +1088,9 @@ GpStatus WINGDIPAPI GdipSaveImageToStream(GpImage *image, IStream* stream,
     return stat;
 }
 
+/*****************************************************************************
+ * GdipSetImagePalette [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipSetImagePalette(GpImage *image,
     GDIPCONST ColorPalette *palette)
 {
@@ -1131,6 +1137,9 @@ static const ImageCodecInfo codecs[NUM_ENCODERS_SUPPORTED] =
         },
     };
 
+/*****************************************************************************
+ * GdipGetImageEncodersSize [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetImageEncodersSize(UINT *numEncoders, UINT *size)
 {
     if (!numEncoders || !size)
@@ -1142,6 +1151,9 @@ GpStatus WINGDIPAPI GdipGetImageEncodersSize(UINT *numEncoders, UINT *size)
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipGetImageEncoders [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetImageEncoders(UINT numEncoders, UINT size, ImageCodecInfo *encoders)
 {
     if (!encoders ||
@@ -1153,6 +1165,10 @@ GpStatus WINGDIPAPI GdipGetImageEncoders(UINT numEncoders, UINT size, ImageCodec
 
     return Ok;
 }
+
+/*****************************************************************************
+ * GdipCreateBitmapFromHBITMAP [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBitmap** bitmap)
 {
     BITMAP bm;
@@ -1199,6 +1215,9 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
     return retval;
 }
 
+/*****************************************************************************
+ * GdipSetEffectParameters [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipSetEffectParameters(CGpEffect *effect,
     const VOID *params, const UINT size)
 {
@@ -1210,6 +1229,9 @@ GpStatus WINGDIPAPI GdipSetEffectParameters(CGpEffect *effect,
     return NotImplemented;
 }
 
+/*****************************************************************************
+ * GdipGetImageFlags [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetImageFlags(GpImage *image, UINT *flags)
 {
     if(!image || !flags)

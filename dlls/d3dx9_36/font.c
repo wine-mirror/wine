@@ -231,6 +231,9 @@ HRESULT WINAPI D3DXCreateFontW(LPDIRECT3DDEVICE9 device, INT height, UINT width,
     return D3DXCreateFontIndirectW(device, &desc, font);
 }
 
+/***********************************************************************
+ *           D3DXCreateFontIndirectA    (D3DX9_36.@)
+ */
 HRESULT WINAPI D3DXCreateFontIndirectA(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_DESCA *desc, LPD3DXFONT *font)
 {
     D3DXFONT_DESCW widedesc;
@@ -246,6 +249,9 @@ HRESULT WINAPI D3DXCreateFontIndirectA(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_
     return D3DXCreateFontIndirectW(device, &widedesc, font);
 }
 
+/***********************************************************************
+ *           D3DXCreateFontIndirectW    (D3DX9_36.@)
+ */
 HRESULT WINAPI D3DXCreateFontIndirectW(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_DESCW *desc, LPD3DXFONT *font)
 {
     ID3DXFontImpl *object;

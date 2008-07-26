@@ -447,6 +447,9 @@ RPC_STATUS WINAPI RpcEpResolveBinding( RPC_BINDING_HANDLE Binding, RPC_IF_HANDLE
   return EPT_S_NOT_REGISTERED;
 }
 
+/*****************************************************************************
+ * TowerExplode (RPCRT4.@)
+ */
 RPC_STATUS WINAPI TowerExplode(
     const twr_t *tower, PRPC_SYNTAX_IDENTIFIER object, PRPC_SYNTAX_IDENTIFIER syntax,
     char **protseq, char **endpoint, char **address)

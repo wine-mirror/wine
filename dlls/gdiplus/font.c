@@ -157,6 +157,9 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipCreateFontFromLogfontW [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     GDIPCONST LOGFONTW *logfont, GpFont **font)
 {
@@ -192,6 +195,9 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipCreateFontFromLogfontA [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC hdc,
     GDIPCONST LOGFONTA *lfa, GpFont **font)
 {
@@ -210,6 +216,9 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC hdc,
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipDeleteFont [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipDeleteFont(GpFont* font)
 {
     if(!font)
@@ -220,6 +229,9 @@ GpStatus WINGDIPAPI GdipDeleteFont(GpFont* font)
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipCreateFontFromDC [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateFontFromDC(HDC hdc, GpFont **font)
 {
     HFONT hfont;
@@ -283,10 +295,13 @@ GpStatus WINGDIPAPI GdipGetFontUnit(GpFont *font, Unit *unit)
     return Ok;
 }
 
-/* FIXME: use graphics */
+/*******************************************************************************
+ * GdipGetLogFontW [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
     LOGFONTW *lfw)
 {
+    /* FIXME: use graphics */
     if(!font || !graphics || !lfw)
         return InvalidParameter;
 
@@ -295,6 +310,9 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipCloneFont [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCloneFont(GpFont *font, GpFont **cloneFont)
 {
     if(!font || !cloneFont)
@@ -645,6 +663,9 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamil
     return GdipCreateFontFamilyFromName(MSSansSerif, NULL, nativeFamily);
 }
 
+/*****************************************************************************
+ * GdipGetGenericFontFamilySansSerif [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection** fontCollection)
 {
     FIXME("stub %p\n", fontCollection);
@@ -655,6 +676,9 @@ GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection** fontCollecti
     return NotImplemented;
 }
 
+/*****************************************************************************
+ * GdipDeletePrivateFontCollection [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection **fontCollection)
 {
     FIXME("stub %p\n", fontCollection);
@@ -665,6 +689,9 @@ GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection **fontColle
     return NotImplemented;
 }
 
+/*****************************************************************************
+ * GdipPrivateAddFontFile [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection* fontCollection,
         GDIPCONST WCHAR* filename)
 {
@@ -676,6 +703,9 @@ GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection* fontCollection,
     return NotImplemented;
 }
 
+/*****************************************************************************
+ * GdipGetFontCollectionFamilyCount [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetFontCollectionFamilyCount(
         GpFontCollection* fontCollection, INT* numFound)
 {
@@ -687,6 +717,9 @@ GpStatus WINGDIPAPI GdipGetFontCollectionFamilyCount(
     return NotImplemented;
 }
 
+/*****************************************************************************
+ * GdipGetFontCollectionFamilyList [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetFontCollectionFamilyList(
         GpFontCollection* fontCollection, INT numSought,
         GpFontFamily* gpfamilies[], INT* numFound)

@@ -3254,11 +3254,6 @@ BOOL WINAPI FontIsLinked(HDC hdc)
     return ret;
 }
 
-/*************************************************************
- *           GdiRealizationInfo    (GDI32.@)
- *
- * Returns a structure that contains some font information.
- */
 typedef struct
 {
     DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
@@ -3267,6 +3262,11 @@ typedef struct
                           in which the face was first rendered. */
 } realization_info_t;
 
+/*************************************************************
+ *           GdiRealizationInfo    (GDI32.@)
+ *
+ * Returns a structure that contains some font information.
+ */
 BOOL WINAPI GdiRealizationInfo(HDC hdc, realization_info_t *info)
 {
     UINT otm_size;

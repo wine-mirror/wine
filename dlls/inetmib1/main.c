@@ -1169,6 +1169,9 @@ static struct mibImplementation supportedIDs[] = {
 };
 static UINT minSupportedIDLength;
 
+/*****************************************************************************
+ * SnmpExtensionInit [INETMIB1.@]
+ */
 BOOL WINAPI SnmpExtensionInit(DWORD dwUptimeReference,
     HANDLE *phSubagentTrapEvent, AsnObjectIdentifier *pFirstSupportedRegion)
 {
@@ -1228,6 +1231,9 @@ static struct mibImplementation *findSupportedQuery(UINT *ids, UINT idLength,
     return impl;
 }
 
+/*****************************************************************************
+ * SnmpExtensionQuery [INETMIB1.@]
+ */
 BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
     AsnInteger32 *pErrorStatus, AsnInteger32 *pErrorIndex)
 {
@@ -1297,6 +1303,9 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
     return TRUE;
 }
 
+/*****************************************************************************
+ * DllMain [INETMIB1.@]
+ */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);

@@ -142,6 +142,9 @@ static inline void delete_element(region_element* element)
     }
 }
 
+/*****************************************************************************
+ * GdipCloneRegion [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *region, GpRegion **clone)
 {
     FIXME("(%p %p): stub\n", region, clone);
@@ -278,6 +281,9 @@ GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipGetRegionHRgn [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *region, GpGraphics *graphics, HRGN *hrgn)
 {
     FIXME("(%p, %p, %p): stub\n", region, graphics, hrgn);

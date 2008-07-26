@@ -661,9 +661,6 @@ BOOL WINAPI PathQualifyAW(LPCVOID pszPath)
 	return PathQualifyA(pszPath);
 }
 
-/*************************************************************************
- * PathResolveA [SHELL32.51]
- */
 BOOL WINAPI PathResolveA(
 	LPSTR lpszPath,
 	LPCSTR *alpszPaths,
@@ -674,9 +671,6 @@ BOOL WINAPI PathResolveA(
 	return 0;
 }
 
-/*************************************************************************
- * PathResolveW [SHELL32]
- */
 BOOL WINAPI PathResolveW(
 	LPWSTR lpszPath,
 	LPCWSTR *alpszPaths,
@@ -1729,6 +1723,9 @@ cleanup:
     return hr;
 }
 
+/*************************************************************************
+ * SHGetFolderPathAndSubDirW		[SHELL32.@]
+ */
 HRESULT WINAPI SHGetFolderPathAndSubDirW(
 	HWND hwndOwner,    /* [I] owner window */
 	int nFolder,       /* [I] CSIDL identifying the folder */

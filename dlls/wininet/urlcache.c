@@ -3107,6 +3107,9 @@ BOOL WINAPI FindNextUrlCacheEntryA(
     return FALSE;
 }
 
+/***********************************************************************
+ *           FindNextUrlCacheEntryW (WININET.@)
+ */
 BOOL WINAPI FindNextUrlCacheEntryW(
   HANDLE hEnumHandle,
   LPINTERNET_CACHE_ENTRY_INFOW lpNextCacheEntryInfo,
