@@ -507,7 +507,7 @@ static BOOL AddListViewColumns(HWND hWnd)
 {
     WCHAR buf[MAX_STRING_LEN];
     LVCOLUMNW lvc;
-    int i;
+    UINT i;
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH;
 
