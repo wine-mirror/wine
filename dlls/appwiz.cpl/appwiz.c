@@ -23,6 +23,8 @@
  *
  */
 
+#define NONAMELESSUNION
+
 #include "config.h"
 #include "wine/port.h"
 #include "wine/unicode.h"
@@ -708,8 +710,8 @@ static void StartApplet(HWND hWnd)
     psp.dwSize = sizeof (PROPSHEETPAGEW);
     psp.dwFlags = PSP_USETITLE;
     psp.hInstance = hInst;
-    psp.pszTemplate = MAKEINTRESOURCEW (IDD_MAIN);
-    psp.pszIcon = NULL;
+    psp.u.pszTemplate = MAKEINTRESOURCEW (IDD_MAIN);
+    psp.u2.pszIcon = NULL;
     psp.pfnDlgProc = (DLGPROC) MainDlgProc;
     psp.pszTitle = tab_title;
     psp.lParam = 0;
@@ -719,12 +721,12 @@ static void StartApplet(HWND hWnd)
     psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID;
     psh.hwndParent = hWnd;
     psh.hInstance = hInst;
-    psh.pszIcon = NULL;
+    psh.u.pszIcon = NULL;
     psh.pszCaption = app_title;
     psh.nPages = 1;
-    psh.ppsp = &psp;
+    psh.u3.ppsp = &psp;
     psh.pfnCallback = NULL;
-    psh.nStartPage = 0;
+    psh.u2.nStartPage = 0;
 
     /* Display the property sheet */
     PropertySheetW (&psh);
