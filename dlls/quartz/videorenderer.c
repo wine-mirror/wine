@@ -37,7 +37,7 @@
 #include "ddraw.h"
 #include "dvdmedia.h"
 
-#include "assert.h"
+#include <assert.h>
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
