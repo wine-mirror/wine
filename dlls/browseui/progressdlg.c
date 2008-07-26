@@ -78,7 +78,7 @@ static void set_buffer(LPWSTR *buffer, LPCWSTR string)
 {
     static const WCHAR empty_string[] = {0};
     IMalloc *malloc;
-    int cb;
+    ULONG cb;
 
     if (string == NULL)
         string = empty_string;
