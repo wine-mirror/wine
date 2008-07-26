@@ -1,1 +1,1 @@
-1 stdcall CPlApplet()
+1 stdcall CPlApplet(long long long long)
