@@ -476,6 +476,9 @@ static void test_saxreader(void)
     ULARGE_INTEGER liSize;
     LARGE_INTEGER liPos;
     ULONG bytesWritten;
+    HANDLE file;
+
+    static const WCHAR testXmlW[] = {'t','e','s','t','.','x','m','l',0};
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISAXXMLReader, (LPVOID*)&reader);
@@ -560,6 +563,18 @@ static void test_saxreader(void)
     hr = ISAXXMLReader_parse(reader, var);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     test_expect_call(CH_ENDTEST);
+
+    file = CreateFileW(testXmlW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
+    WriteFile(file, szTestXML, sizeof(szTestXML)-1, &bytesWritten, NULL);
+    CloseHandle(file);
+
+    expectCall = contentHandlerTest1;
+    hr = ISAXXMLReader_parseURL(reader, testXmlW);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    test_expect_call(CH_ENDTEST);
+
+    DeleteFileW(testXmlW);
 
     ISAXXMLReader_Release(reader);
 }
