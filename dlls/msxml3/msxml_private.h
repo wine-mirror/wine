@@ -93,6 +93,11 @@ extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj );
 
+typedef struct bsc_t bsc_t;
+
+HRESULT bind_url(LPCWSTR, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**);
+void detach_bsc(bsc_t*);
+
 /* typelibs */
 enum tid_t {
     IXMLDOMAttribute_tid,

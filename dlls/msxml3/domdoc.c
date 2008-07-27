@@ -32,7 +32,6 @@
 #include "ole2.h"
 #include "msxml2.h"
 #include "wininet.h"
-#include "urlmon.h"
 #include "winreg.h"
 #include "shlwapi.h"
 #include "ocidl.h"
@@ -49,8 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 static const WCHAR SZ_PROPERTY_SELECTION_LANGUAGE[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
 static const WCHAR SZ_VALUE_XPATH[] = {'X','P','a','t','h',0};
 static const WCHAR SZ_VALUE_XSLPATTERN[] = {'X','S','L','P','a','t','t','e','r','n',0};
-
-typedef struct bsc_t bsc_t;
 
 typedef struct _domdoc
 {
@@ -80,21 +77,6 @@ typedef struct _domdoc
     DWORD safeopt;
 } domdoc;
 
-struct bsc_t {
-    const struct IBindStatusCallbackVtbl *lpVtbl;
-
-    LONG ref;
-
-    domdoc *doc;
-    IBinding *binding;
-    IStream *memstream;
-};
-
-static inline bsc_t *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
-{
-    return (bsc_t *)((char*)iface - FIELD_OFFSET(bsc_t, lpVtbl));
-}
-
 static xmlDocPtr doparse( char *ptr, int len )
 {
 #ifdef HAVE_XMLREADMEMORY
@@ -107,208 +89,6 @@ static xmlDocPtr doparse( char *ptr, int len )
 #else
     return xmlParseMemory( ptr, len );
 #endif
-}
-
-static HRESULT WINAPI bsc_QueryInterface(
-    IBindStatusCallback *iface,
-    REFIID riid,
-    LPVOID *ppobj )
-{
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IBindStatusCallback))
-    {
-        IBindStatusCallback_AddRef( iface );
-        *ppobj = iface;
-        return S_OK;
-    }
-
-    FIXME("interface %s not implemented\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI bsc_AddRef(
-    IBindStatusCallback *iface )
-{
-    bsc_t *This = impl_from_IBindStatusCallback(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI bsc_Release(
-    IBindStatusCallback *iface )
-{
-    bsc_t *This = impl_from_IBindStatusCallback(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
-    if(!ref) {
-        if(This->binding)
-            IBinding_Release(This->binding);
-        if(This->doc && This->doc->bsc == This)
-            This->doc->bsc = NULL;
-        if(This->memstream)
-            IStream_Release(This->memstream);
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-
-    return ref;
-}
-
-static HRESULT WINAPI bsc_OnStartBinding(
-        IBindStatusCallback* iface,
-        DWORD dwReserved,
-        IBinding* pib)
-{
-    bsc_t *This = impl_from_IBindStatusCallback(iface);
-    HRESULT hr;
-
-    TRACE("(%p)->(%x %p)\n", This, dwReserved, pib);
-
-    This->binding = pib;
-    IBindStatusCallback_AddRef(pib);
-
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &This->memstream);
-    if(FAILED(hr))
-        return hr;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI bsc_GetPriority(
-        IBindStatusCallback* iface,
-        LONG* pnPriority)
-{
-    return S_OK;
-}
-
-static HRESULT WINAPI bsc_OnLowResource(
-        IBindStatusCallback* iface,
-        DWORD reserved)
-{
-    return S_OK;
-}
-
-static HRESULT WINAPI bsc_OnProgress(
-        IBindStatusCallback* iface,
-        ULONG ulProgress,
-        ULONG ulProgressMax,
-        ULONG ulStatusCode,
-        LPCWSTR szStatusText)
-{
-    return S_OK;
-}
-
-static HRESULT WINAPI bsc_OnStopBinding(
-        IBindStatusCallback* iface,
-        HRESULT hresult,
-        LPCWSTR szError)
-{
-    bsc_t *This = impl_from_IBindStatusCallback(iface);
-    HRESULT hr;
-
-    TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
-
-    if(This->binding) {
-        IBinding_Release(This->binding);
-        This->binding = NULL;
-    }
-
-    if(This->doc && SUCCEEDED(hresult)) {
-        HGLOBAL hglobal;
-        hr = GetHGlobalFromStream(This->memstream, &hglobal);
-        if(SUCCEEDED(hr))
-        {
-            DWORD len = GlobalSize(hglobal);
-            char *ptr = GlobalLock(hglobal);
-            xmlDocPtr xmldoc;
-            if(len != 0) {
-                xmldoc = doparse( ptr, len );
-                if(xmldoc) {
-                    xmldoc->_private = 0;
-                    attach_xmlnode(This->doc->node, (xmlNodePtr) xmldoc);
-                }
-            }
-            GlobalUnlock(hglobal);
-        }
-    }
-
-    return S_OK;
-}
-
-static HRESULT WINAPI bsc_GetBindInfo(
-        IBindStatusCallback* iface,
-        DWORD* grfBINDF,
-        BINDINFO* pbindinfo)
-{
-    *grfBINDF = BINDF_GETNEWESTVERSION|BINDF_PULLDATA|BINDF_RESYNCHRONIZE|BINDF_PRAGMA_NO_CACHE;
-    
-    return S_OK;
-}
-
-static HRESULT WINAPI bsc_OnDataAvailable(
-        IBindStatusCallback* iface,
-        DWORD grfBSCF,
-        DWORD dwSize,
-        FORMATETC* pformatetc,
-        STGMEDIUM* pstgmed)
-{
-    bsc_t *This = impl_from_IBindStatusCallback(iface);
-    BYTE buf[4096];
-    DWORD read, written;
-    HRESULT hr;
-
-    TRACE("(%p)->(%x %d %p %p)\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
-
-    do
-    {
-        hr = IStream_Read(pstgmed->u.pstm, buf, sizeof(buf), &read);
-        if(FAILED(hr))
-            break;
-
-        hr = IStream_Write(This->memstream, buf, read, &written);
-    } while(SUCCEEDED(hr) && written != 0 && read != 0);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI bsc_OnObjectAvailable(
-        IBindStatusCallback* iface,
-        REFIID riid,
-        IUnknown* punk)
-{
-    return S_OK;
-}
-
-static const struct IBindStatusCallbackVtbl bsc_vtbl =
-{
-    bsc_QueryInterface,
-    bsc_AddRef,
-    bsc_Release,
-    bsc_OnStartBinding,
-    bsc_GetPriority,
-    bsc_OnLowResource,
-    bsc_OnProgress,
-    bsc_OnStopBinding,
-    bsc_GetBindInfo,
-    bsc_OnDataAvailable,
-    bsc_OnObjectAvailable
-};
-
-static bsc_t *create_bsc(domdoc *doc)
-{
-    bsc_t *bsc = HeapAlloc(GetProcessHeap(), 0, sizeof(bsc_t));
-
-    bsc->lpVtbl = &bsc_vtbl;
-    bsc->ref = 1;
-    bsc->doc = doc;
-    bsc->binding = NULL;
-    bsc->memstream = NULL;
-
-    return bsc;
 }
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
@@ -547,12 +327,8 @@ static ULONG WINAPI domdoc_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        if(This->bsc) {
-            if(This->bsc->binding)
-                IBinding_Abort(This->bsc->binding);
-            This->bsc->doc = NULL;
-            IBindStatusCallback_Release((IBindStatusCallback*)&This->bsc->lpVtbl);
-        }
+        if(This->bsc)
+            detach_bsc(This->bsc);
 
         if (This->site)
             IUnknown_Release( This->site );
@@ -1395,63 +1171,34 @@ static HRESULT WINAPI domdoc_nodeFromID(
     return E_NOTIMPL;
 }
 
+static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
+{
+    domdoc *This = obj;
+    xmlDocPtr xmldoc;
+
+    xmldoc = doparse( ptr, len );
+    if(xmldoc) {
+        xmldoc->_private = 0;
+        attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
+    }
+
+    return S_OK;
+}
+
 static HRESULT doread( domdoc *This, LPWSTR filename )
 {
+    bsc_t *bsc;
     HRESULT hr;
-    IBindCtx *pbc;
-    WCHAR url[INTERNET_MAX_URL_LENGTH];
 
-    TRACE("%s\n", debugstr_w( filename ));
+    hr = bind_url(filename, domdoc_onDataAvailable, This, &bsc);
+    if(FAILED(hr))
+        return hr;
 
-    if(!PathIsURLW(filename))
-    {
-        WCHAR fullpath[MAX_PATH];
-        DWORD needed = sizeof(url)/sizeof(WCHAR);
+    if(This->bsc)
+        detach_bsc(This->bsc);
 
-        if(!PathSearchAndQualifyW(filename, fullpath, sizeof(fullpath)/sizeof(WCHAR)))
-        {
-            WARN("can't find path\n");
-            return E_FAIL;
-        }
-
-        if(FAILED(UrlCreateFromPathW(fullpath, url, &needed, 0)))
-        {
-            ERR("can't create url from path\n");
-            return E_FAIL;
-        }
-        filename = url;
-    }
-
-    hr = CreateBindCtx(0, &pbc);
-    if(SUCCEEDED(hr))
-    {
-        if(This->bsc) {
-            if(This->bsc->binding)
-                IBinding_Abort(This->bsc->binding);
-            This->bsc->doc = NULL;
-            IBindStatusCallback_Release((IBindStatusCallback*)&This->bsc->lpVtbl);
-        }
-
-        This->bsc = create_bsc(This);
-
-        hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)&This->bsc->lpVtbl, NULL, 0);
-        if(SUCCEEDED(hr))
-        {
-            IMoniker *moniker;
-            hr = CreateURLMoniker(NULL, filename, &moniker);
-            if(SUCCEEDED(hr))
-            {
-                IStream *stream;
-                hr = IMoniker_BindToStorage(moniker, pbc, NULL, &IID_IStream, (LPVOID*)&stream);
-                IMoniker_Release(moniker);
-                if(stream)
-                    IStream_Release(stream);
-            }
-        }
-        IBindCtx_Release(pbc);
-    }
-
-    return hr;
+    This->bsc = bsc;
+    return S_OK;
 }
 
 static HRESULT WINAPI domdoc_load(
