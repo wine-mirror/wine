@@ -799,7 +799,7 @@ static void test_PathAppendA(void)
 
 static void test_PathCanonicalizeA(void)
 {
-    char dest[MAX_PATH];
+    char dest[LONG_LEN + MAX_PATH];
     char too_long[LONG_LEN];
     BOOL res;
 
