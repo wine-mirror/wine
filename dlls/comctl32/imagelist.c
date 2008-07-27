@@ -1899,7 +1899,7 @@ static int DIB_GetDIBImageBytes( int width, int height, int depth )
 
 
 /* helper for ImageList_Read, see comments below */
-static BOOL _read_bitmap(HIMAGELIST himl, HDC hdcIml, LPSTREAM pstm)
+static BOOL _read_bitmap(HDC hdcIml, LPSTREAM pstm)
 {
     BITMAPFILEHEADER	bmfh;
     int bitsperpixel, palspace;
@@ -2006,14 +2006,14 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
     if (!himl)
 	return NULL;
 
-    if (!_read_bitmap(himl, himl->hdcImage, pstm))
+    if (!_read_bitmap(himl->hdcImage, pstm))
     {
 	WARN("failed to read bitmap from stream\n");
 	return NULL;
     }
     if (ilHead.flags & ILC_MASK)
     {
-        if (!_read_bitmap(himl, himl->hdcMask, pstm))
+        if (!_read_bitmap(himl->hdcMask, pstm))
         {
             WARN("failed to read mask bitmap from stream\n");
 	    return NULL;
