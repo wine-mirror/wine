@@ -267,7 +267,9 @@ static void test_SIPRetrieveSubjectGUID(void)
     DeleteFileA(tempfile);
 
     /* Create a .cab file */
-    file = CreateFileW(tempfileW, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(tempfile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed with %u\n", GetLastError());
     WriteFile(file, cabFileData, sizeof(cabFileData), &written, NULL);
     CloseHandle(file);
 
@@ -278,8 +280,9 @@ static void test_SIPRetrieveSubjectGUID(void)
             GetLastError(), GetLastError() );
     ok ( !memcmp(&subject, &cabGUID, sizeof(GUID)),
         "Expected GUID %s for cabinet file, not %s\n", show_guid(&cabGUID, guid1), show_guid(&subject, guid2));
+
     /* Clean up */
-    DeleteFileW(tempfileW);
+    DeleteFileA(tempfile);
 }
 
 static void test_SIPLoad(void)
