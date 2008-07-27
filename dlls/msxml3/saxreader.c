@@ -1098,16 +1098,10 @@ static HRESULT WINAPI isaxxmlreader_putSecureBaseURL(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI isaxxmlreader_parse(
-        ISAXXMLReader* iface,
-        VARIANT varInput)
+static HRESULT parse_buffer(saxreader *This, xmlChar *buffer)
 {
-    saxreader *This = impl_from_ISAXXMLReader( iface );
     saxlocator *locator;
-    xmlChar *data = NULL;
     HRESULT hr;
-
-    TRACE("(%p)\n", This);
 
     hr = SAXLocator_create(This, &locator);
     if(FAILED(hr))
@@ -1123,12 +1117,38 @@ static HRESULT WINAPI isaxxmlreader_parse(
     locator->pParserCtxt->sax = &locator->saxreader->sax;
     locator->pParserCtxt->userData = locator;
 
+    xmlSetupParserForBuffer(locator->pParserCtxt, buffer, NULL);
+
+    if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
+    else hr = locator->ret;
+
+    if(locator->pParserCtxt)
+    {
+        locator->pParserCtxt->sax = NULL;
+        xmlFreeParserCtxt(locator->pParserCtxt);
+        locator->pParserCtxt = NULL;
+    }
+
+    ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
+    return S_OK;
+}
+
+static HRESULT WINAPI isaxxmlreader_parse(
+        ISAXXMLReader* iface,
+        VARIANT varInput)
+{
+    saxreader *This = impl_from_ISAXXMLReader( iface );
+    xmlChar *data = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
     hr = S_OK;
     switch(V_VT(&varInput))
     {
         case VT_BSTR:
             data = xmlChar_from_wchar(V_BSTR(&varInput));
-            xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
+            hr = parse_buffer(This, data);
             break;
         case VT_ARRAY|VT_UI1: {
             void *pSAData;
@@ -1146,7 +1166,7 @@ static HRESULT WINAPI isaxxmlreader_parse(
             if(hr != S_OK) break;
             memcpy(data, pSAData, dataRead);
             data[dataRead] = '\0';
-            xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
+            hr = parse_buffer(This, data);
             SafeArrayUnaccessData(V_ARRAY(&varInput));
             break;
         }
@@ -1185,7 +1205,7 @@ static HRESULT WINAPI isaxxmlreader_parse(
                     break;
                 }
                 data[dataInfo.cbSize.QuadPart] = '\0';
-                xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
+                hr = parse_buffer(This, data);
                 IStream_Release(stream);
                 break;
             }
@@ -1196,7 +1216,7 @@ static HRESULT WINAPI isaxxmlreader_parse(
 
                 IXMLDOMDocument_get_xml(xmlDoc, &bstrData);
                 data = xmlChar_from_wchar(bstrData);
-                xmlSetupParserForBuffer(locator->pParserCtxt, data, NULL);
+                hr = parse_buffer(This, data);
                 IXMLDOMDocument_Release(xmlDoc);
                 hr = E_NOTIMPL;
                 break;
@@ -1207,20 +1227,23 @@ static HRESULT WINAPI isaxxmlreader_parse(
             hr = E_INVALIDARG;
     }
 
-    if(hr == S_OK)
-    {
-        if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
-        else hr = locator->ret;
-    }
-
-    if(locator->pParserCtxt)
-    {
-        locator->pParserCtxt->sax = NULL;
-        xmlFreeParserCtxt(locator->pParserCtxt);
-        locator->pParserCtxt = NULL;
-    }
     HeapFree(GetProcessHeap(), 0, data);
-    ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
+    return hr;
+}
+
+static HRESULT saxreader_onDataAvailable(void *obj, char *ptr, DWORD len)
+{
+    saxreader *This = obj;
+    xmlChar *data;
+    HRESULT hr;
+
+    data = HeapAlloc(GetProcessHeap(), 0, len+1);
+    memcpy(data, ptr, len);
+    data[len] = 0;
+
+    hr = parse_buffer(This, data);
+
+    HeapFree(GetProcessHeap(), 0, data);
     return hr;
 }
 
@@ -1229,9 +1252,18 @@ static HRESULT WINAPI isaxxmlreader_parseURL(
         const WCHAR *url)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
+    bsc_t *bsc;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s) stub\n", This, debugstr_w(url));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s) stub\n", This, debugstr_w(url));
+
+    hr = bind_url(url, saxreader_onDataAvailable, This, &bsc);
+    if(FAILED(hr))
+        return hr;
+
+    detach_bsc(bsc);
+
+    return S_OK;
 }
 
 static const struct ISAXXMLReaderVtbl isaxreader_vtbl =
