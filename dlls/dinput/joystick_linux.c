@@ -767,7 +767,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
     joy_polldev(This);
 
     /* convert and copy data to user supplied buffer */
-    fill_DataFormat(ptr, &This->js, &This->base.data_format);
+    fill_DataFormat(ptr, len, &This->js, &This->base.data_format);
 
     return DI_OK;
 }

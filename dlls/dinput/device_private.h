@@ -76,7 +76,7 @@ extern BOOL get_app_key(HKEY*, HKEY*);
 extern DWORD get_config_key(HKEY, HKEY, const char*, char*, DWORD);
 
 /* Routines to do DataFormat / WineFormat conversions */
-extern void fill_DataFormat(void *out, const void *in, const DataFormat *df) ;
+extern void fill_DataFormat(void *out, DWORD size, const void *in, const DataFormat *df) ;
 extern HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format);
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);

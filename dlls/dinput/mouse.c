@@ -490,7 +490,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 
     EnterCriticalSection(&This->base.crit);
     /* Copy the current mouse state */
-    fill_DataFormat(ptr, &(This->m_state), &This->base.data_format);
+    fill_DataFormat(ptr, len, &This->m_state, &This->base.data_format);
 
     /* Initialize the buffer when in relative mode */
     if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))

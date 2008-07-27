@@ -70,20 +70,21 @@ static void acquire_tests(LPDIRECTINPUT pDI, HWND hwnd)
     HRESULT hr;
     LPDIRECTINPUTDEVICE pKeyboard;
     BYTE kbd_state[256];
-    BYTE custom_state[4];
+    LONG custom_state[6];
+    int i;
     DIOBJECTDATAFORMAT dodf[] =
         {
-            { &GUID_Key, 0, DIDFT_MAKEINSTANCE(DIK_Q)|DIDFT_BUTTON, 0 },
-            { &GUID_Key, 1, DIDFT_MAKEINSTANCE(DIK_W)|DIDFT_BUTTON, 0 },
-            { &GUID_Key, 2, DIDFT_MAKEINSTANCE(DIK_E)|DIDFT_BUTTON, 0 },
-            { &GUID_Key, 3, DIDFT_MAKEINSTANCE(DIK_R)|DIDFT_BUTTON, 0 },
+            { &GUID_Key, sizeof(LONG) * 0, DIDFT_MAKEINSTANCE(DIK_Q)|DIDFT_BUTTON, 0 },
+            { &GUID_Key, sizeof(LONG) * 1, DIDFT_MAKEINSTANCE(DIK_W)|DIDFT_BUTTON, 0 },
+            { &GUID_Key, sizeof(LONG) * 2, DIDFT_MAKEINSTANCE(DIK_E)|DIDFT_BUTTON, 0 },
+            { &GUID_Key, sizeof(LONG) * 4, DIDFT_MAKEINSTANCE(DIK_R)|DIDFT_BUTTON, 0 },
         };
 
     DIDATAFORMAT df;
     df.dwSize = sizeof( df );
     df.dwObjSize = sizeof( DIOBJECTDATAFORMAT );
     df.dwFlags = DIDF_RELAXIS;
-    df.dwDataSize = sizeof( dodf )/sizeof( dodf[0] );
+    df.dwDataSize = sizeof( custom_state );
     df.dwNumObjs = sizeof( dodf )/sizeof( dodf[0] );
     df.rgodf = dodf;
 
@@ -119,6 +120,11 @@ static void acquire_tests(LPDIRECTINPUT pDI, HWND hwnd)
     ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState(4,) failed: %08x\n", hr);
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
     ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(256,) should have failed: %08x\n", hr);
+
+    memset(custom_state, 0x56, sizeof(custom_state));
+    IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
+    for (i = 0; i < sizeof(custom_state) / sizeof(custom_state[0]); i++)
+        ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
 
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }

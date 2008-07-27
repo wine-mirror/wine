@@ -283,7 +283,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	}
     }
 
-    fill_DataFormat(ptr, This->DInputKeyState, &This->base.data_format);
+    fill_DataFormat(ptr, len, This->DInputKeyState, &This->base.data_format);
     LeaveCriticalSection(&This->base.crit);
 
     return DI_OK;

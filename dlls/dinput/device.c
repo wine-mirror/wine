@@ -265,11 +265,13 @@ DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
 }
 
 /* Conversion between internal data buffer and external data buffer */
-void fill_DataFormat(void *out, const void *in, const DataFormat *df) {
+void fill_DataFormat(void *out, DWORD size, const void *in, const DataFormat *df)
+{
     int i;
     const char *in_c = in;
     char *out_c = (char *) out;
 
+    memset(out, 0, size);
     if (df->dt == NULL) {
 	/* This means that the app uses Wine's internal data format */
 	memcpy(out, in, df->internal_format_size);
