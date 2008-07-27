@@ -69,6 +69,12 @@ typedef struct _saxlocator
     int column;
 } saxlocator;
 
+typedef struct _saxattributes
+{
+    const struct ISAXAttributesVtbl *lpSAXAttributesVtbl;
+    LONG ref;
+} saxattributes;
+
 static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
 {
     return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpVtbl));
@@ -82,6 +88,11 @@ static inline saxreader *impl_from_ISAXXMLReader( ISAXXMLReader *iface )
 static inline saxlocator *impl_from_ISAXLocator( ISAXLocator *iface )
 {
     return (saxlocator *)((char*)iface - FIELD_OFFSET(saxlocator, lpSAXLocatorVtbl));
+}
+
+static inline saxattributes *impl_from_ISAXAttributes( ISAXAttributes *iface )
+{
+    return (saxattributes *)((char*)iface - FIELD_OFFSET(saxattributes, lpSAXAttributesVtbl));
 }
 
 
@@ -134,6 +145,268 @@ static void update_position(saxlocator *This, xmlChar *end)
     }
 }
 
+/*** ISAXAttributes interface ***/
+/*** IUnknown methods ***/
+static HRESULT WINAPI isaxattributes_QueryInterface(
+        ISAXAttributes* iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    saxattributes *This = impl_from_ISAXAttributes(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+            IsEqualGUID(riid, &IID_ISAXAttributes))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    ISAXAttributes_AddRef(iface);
+
+    return S_OK;
+}
+
+static ULONG WINAPI isaxattributes_AddRef(ISAXAttributes* iface)
+{
+    saxattributes *This = impl_from_ISAXAttributes(iface);
+    TRACE("%p\n", This);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI isaxattributes_Release(ISAXAttributes* iface)
+{
+    saxattributes *This = impl_from_ISAXAttributes(iface);
+    LONG ref;
+
+    TRACE("%p\n", This);
+
+    ref = InterlockedDecrement(&This->ref);
+    if (ref==0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+/*** ISAXAttributes methods ***/
+static HRESULT WINAPI isaxattributes_getLength(
+        ISAXAttributes* iface,
+        int *length)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getURI(
+        ISAXAttributes* iface,
+        int nIndex,
+        const WCHAR **pUrl,
+        int *pUriSize)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%d) stub\n", This, nIndex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getLocalName(
+        ISAXAttributes* iface,
+        int nIndex,
+        const WCHAR **pLocalName,
+        int *pLocalNameLength)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%d) stub\n", This, nIndex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getQName(
+        ISAXAttributes* iface,
+        int nIndex,
+        const WCHAR **pQName,
+        int *pQNameLength)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%d) stub\n", This, nIndex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getName(
+        ISAXAttributes* iface,
+        int nIndex,
+        const WCHAR **pUri,
+        int *pUriLength,
+        const WCHAR **pLocalName,
+        int *pLocalNameSize,
+        const WCHAR **pQName,
+        int *pQNameLength)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%d) stub\n", This, nIndex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getIndexFromName(
+        ISAXAttributes* iface,
+        const WCHAR *pUri,
+        int cUriLength,
+        const WCHAR *pLocalName,
+        int cocalNameLength,
+        int *index)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%s, %d, %s, %d) stub\n", This, debugstr_w(pUri), cUriLength,
+            debugstr_w(pLocalName), cocalNameLength);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getIndexFromQName(
+        ISAXAttributes* iface,
+        const WCHAR *pQName,
+        int nQNameLength,
+        int *index)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%s, %d) stub\n", This, debugstr_w(pQName), nQNameLength);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getType(
+        ISAXAttributes* iface,
+        int nIndex,
+        const WCHAR **pType,
+        int *pTypeLength)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%d) stub\n", This, nIndex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getTypeFromName(
+        ISAXAttributes* iface,
+        const WCHAR *pUri,
+        int nUri,
+        const WCHAR *pLocalName,
+        int nLocalName,
+        const WCHAR **pType,
+        int *nType)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%s, %d, %s, %d) stub\n", This, debugstr_w(pUri), nUri,
+            debugstr_w(pLocalName), nLocalName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getTypeFromQName(
+        ISAXAttributes* iface,
+        const WCHAR *pQName,
+        int nQName,
+        const WCHAR **pType,
+        int *nType)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%s, %d) stub\n", This, debugstr_w(pQName), nQName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getValue(
+        ISAXAttributes* iface,
+        int nIndex,
+        const WCHAR **pValue,
+        int *nValue)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%d) stub\n", This, nIndex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getValueFromName(
+        ISAXAttributes* iface,
+        const WCHAR *pUri,
+        int nUri,
+        const WCHAR *pLocalName,
+        int nLocalName,
+        const WCHAR **pValue,
+        int *nValue)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%s, %d, %s, %d) stub\n", This, debugstr_w(pUri), nUri,
+            debugstr_w(pLocalName), nLocalName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getValueFromQName(
+        ISAXAttributes* iface,
+        const WCHAR *pQName,
+        int nQName,
+        const WCHAR **pValue,
+        int *nValue)
+{
+    saxattributes *This = impl_from_ISAXAttributes( iface );
+
+    FIXME("(%p)->(%s, %d) stub\n", This, debugstr_w(pQName), nQName);
+    return E_NOTIMPL;
+}
+
+static const struct ISAXAttributesVtbl isaxattributes_vtbl =
+{
+    isaxattributes_QueryInterface,
+    isaxattributes_AddRef,
+    isaxattributes_Release,
+    isaxattributes_getLength,
+    isaxattributes_getURI,
+    isaxattributes_getLocalName,
+    isaxattributes_getQName,
+    isaxattributes_getName,
+    isaxattributes_getIndexFromName,
+    isaxattributes_getIndexFromQName,
+    isaxattributes_getType,
+    isaxattributes_getTypeFromName,
+    isaxattributes_getTypeFromQName,
+    isaxattributes_getValue,
+    isaxattributes_getValueFromName,
+    isaxattributes_getValueFromQName
+};
+
+static HRESULT SAXAttributes_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
+    saxattributes *attributes;
+
+    attributes = HeapAlloc(GetProcessHeap(), 0, sizeof(*attributes));
+    if(!attributes)
+        return E_OUTOFMEMORY;
+
+    attributes->lpSAXAttributesVtbl = &isaxattributes_vtbl;
+    attributes->ref = 1;
+
+    *ppObj = attributes;
+
+    TRACE("returning %p\n", *ppObj);
+
+    return S_OK;
+}
+
 /*** LibXML callbacks ***/
 static void libxmlStartDocument(void *ctx)
 {
@@ -182,6 +455,7 @@ static void libxmlStartElementNS(
     BSTR NamespaceUri, LocalName, QName;
     saxlocator *This = ctx;
     HRESULT hr;
+    ISAXAttributes *attr;
 
     FIXME("Arguments processing not yet implemented.\n");
 
@@ -193,16 +467,20 @@ static void libxmlStartElementNS(
         LocalName = bstr_from_xmlChar(localname);
         QName = bstr_from_xmlChar(localname);
 
+        SAXAttributes_create(NULL, (void*)&attr);
+
         hr = ISAXContentHandler_startElement(
                 This->saxreader->contentHandler,
                 NamespaceUri, SysStringLen(NamespaceUri),
                 LocalName, SysStringLen(LocalName),
                 QName, SysStringLen(QName),
-                NULL);
+                attr);
 
         SysFreeString(NamespaceUri);
         SysFreeString(LocalName);
         SysFreeString(QName);
+
+        ISAXAttributes_Release(attr);
 
         if(hr != S_OK)
             format_error_message_from_id(This, hr);
