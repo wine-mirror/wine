@@ -363,6 +363,7 @@ static void test_GetPrivateProfileString(void)
 {
     DWORD ret;
     CHAR buf[MAX_PATH];
+    CHAR def_val[MAX_PATH];
     CHAR path[MAX_PATH];
     CHAR windir[MAX_PATH];
     LPSTR tempfile;
@@ -416,14 +417,18 @@ static void test_GetPrivateProfileString(void)
 
     /* lpAppName is empty, lpDefault has trailing blank characters */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("", "name1", "default  ",
+    /* lpDefault must be writeable (trailing blanks are removed inplace in win9x) */
+    lstrcpyA(def_val, "default  ");
+    ret = GetPrivateProfileStringA("", "name1", def_val,
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
 
     /* lpAppName is empty, many blank characters in lpDefault */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("", "name1", "one two  ",
+    /* lpDefault must be writeable (trailing blanks are removed inplace in win9x) */
+    lstrcpyA(def_val, "one two  ");
+    ret = GetPrivateProfileStringA("", "name1", def_val,
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "one two"), "Expected \"one two\", got \"%s\"\n", buf);
@@ -473,7 +478,9 @@ static void test_GetPrivateProfileString(void)
 
     /* lpKeyName is empty, lpDefault has trailing blank characters */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("section1", "", "default  ",
+    /* lpDefault must be writeable (trailing blanks are removed inplace in win9x) */
+    lstrcpyA(def_val, "default  ");
+    ret = GetPrivateProfileStringA("section1", "", def_val,
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
