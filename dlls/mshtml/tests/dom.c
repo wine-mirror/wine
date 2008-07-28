@@ -1845,6 +1845,12 @@ static void test_navigator(IHTMLDocument2 *doc)
     ok(!strcmp_wa(bstr, "Mozilla"), "Unexpected appCodeName %s\n", dbgstr_w(bstr));
     SysFreeString(bstr);
 
+    bstr = NULL;
+    hres = IOmNavigator_get_platform(navigator, &bstr);
+    ok(hres == S_OK, "get_appMinorVersion failed: %08x\n", hres);
+    ok(!strcmp_wa(bstr, "Win32"), "unexpected platform %s\n", dbgstr_w(bstr));
+    SysFreeString(bstr);
+
     ref = IOmNavigator_Release(navigator);
     ok(!ref, "navigator should be destroyed here\n");
 }
