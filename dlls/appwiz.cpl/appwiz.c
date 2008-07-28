@@ -78,6 +78,14 @@ static const WCHAR DisplayIconW[] = {'D','i','s','p','l','a','y','I','c','o','n'
 static const WCHAR DisplayVersionW[] = {'D','i','s','p','l','a','y','V','e','r',
     's','i','o','n',0};
 static const WCHAR PublisherW[] = {'P','u','b','l','i','s','h','e','r',0};
+static const WCHAR ContactW[] = {'C','o','n','t','a','c','t',0};
+static const WCHAR HelpLinkW[] = {'H','e','l','p','L','i','n','k',0};
+static const WCHAR HelpTelephoneW[] = {'H','e','l','p','T','e','l','e','p','h',
+    'o','n','e',0};
+static const WCHAR ReadmeW[] = {'R','e','a','d','m','e',0};
+static const WCHAR URLUpdateInfoW[] = {'U','R','L','U','p','d','a','t','e','I',
+    'n','f','o',0};
+static const WCHAR CommentsW[] = {'C','o','m','m','e','n','t','s',0};
 static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l',
     'S','t','r','i','n','g',0};
 
@@ -418,6 +426,46 @@ static void UninstallProgram(int id)
     }
 }
 
+/**********************************************************************************
+ * Name       : SetInfoDialogText
+ * Description: Sets the text of a label in a window, based upon a registry entry
+ *              or string passed to the function.
+ * Parameters : hKey         - registry entry to read from, NULL if not reading
+ *                             from registry
+ *              lpKeyName    - key to read from, or string to check if hKey is NULL
+ *              lpAltMessage - alternative message if entry not found
+ *              hWnd         - handle of dialog box
+ *              iDlgItem     - ID of label in dialog box
+ */
+static void SetInfoDialogText(HKEY hKey, LPWSTR lpKeyName, LPWSTR lpAltMessage,
+  HWND hWnd, int iDlgItem)
+{
+    WCHAR buf[MAX_STRING_LEN];
+    DWORD buflen;
+    HWND hWndDlgItem;
+
+    hWndDlgItem = GetDlgItem(hWnd, iDlgItem);
+
+    /* if hKey is null, lpKeyName contains the string we want to check */
+    if (hKey == NULL)
+    {
+        if ((lpKeyName) && (lstrlenW(lpKeyName) > 0))
+            SetWindowTextW(hWndDlgItem, lpKeyName);
+        else
+            SetWindowTextW(hWndDlgItem, lpAltMessage);
+    }
+    else
+    {
+        buflen = MAX_STRING_LEN;
+
+        if ((RegQueryValueExW(hKey, lpKeyName, 0, 0, (LPBYTE) buf, &buflen) ==
+           ERROR_SUCCESS) && (lstrlenW(buf) > 0))
+            SetWindowTextW(hWndDlgItem, buf);
+        else
+            SetWindowTextW(hWndDlgItem, lpAltMessage);
+    }
+}
+
 /******************************************************************************
  * Name       : SupportInfoDlgProc
  * Description: Callback procedure for support info dialog
@@ -430,8 +478,11 @@ static void UninstallProgram(int id)
 static BOOL CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     APPINFO *iter;
+    HKEY hkey;
     WCHAR oldtitle[MAX_STRING_LEN];
     WCHAR buf[MAX_STRING_LEN];
+    WCHAR key[MAX_STRING_LEN];
+    WCHAR notfound[MAX_STRING_LEN];
 
     switch(msg)
     {
@@ -440,6 +491,37 @@ static BOOL CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             {
                 if (iter->id == (int) lParam)
                 {
+                    lstrcpyW(key, PathUninstallW);
+                    lstrcatW(key, BackSlashW);
+                    lstrcatW(key, iter->regkey);
+
+                    /* check the application's registry entries */
+                    RegOpenKeyExW(iter->regroot, key, 0, KEY_READ, &hkey);
+
+                    /* Load our "not specified" string */
+                    LoadStringW(hInst, IDS_NOT_SPECIFIED, notfound,
+                        sizeof(notfound) / sizeof(notfound[0]));
+
+                    /* Update the data for items already read into the structure */
+                    SetInfoDialogText(NULL, iter->publisher, notfound, hWnd,
+                        IDC_INFO_PUBLISHER);
+                    SetInfoDialogText(NULL, iter->version, notfound, hWnd,
+                        IDC_INFO_VERSION);
+
+                    /* And now update the data for those items in the registry */
+                    SetInfoDialogText(hkey, (LPWSTR) ContactW, notfound, hWnd,
+                        IDC_INFO_CONTACT);
+                    SetInfoDialogText(hkey, (LPWSTR) HelpLinkW, notfound, hWnd,
+                        IDC_INFO_SUPPORT);
+                    SetInfoDialogText(hkey, (LPWSTR) HelpTelephoneW, notfound, hWnd,
+                        IDC_INFO_PHONE);
+                    SetInfoDialogText(hkey, (LPWSTR) ReadmeW, notfound, hWnd,
+                        IDC_INFO_README);
+                    SetInfoDialogText(hkey, (LPWSTR) URLUpdateInfoW, notfound, hWnd,
+                        IDC_INFO_UPDATES);
+                    SetInfoDialogText(hkey, (LPWSTR) CommentsW, notfound, hWnd,
+                        IDC_INFO_COMMENTS);
+
                     /* Update the main label with the app name */
                     if (GetWindowTextW(GetDlgItem(hWnd, IDC_INFO_LABEL), oldtitle,
                         MAX_STRING_LEN) != 0)
@@ -447,6 +529,8 @@ static BOOL CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                         wsprintfW(buf, oldtitle, iter->title);
                         SetWindowTextW(GetDlgItem(hWnd, IDC_INFO_LABEL), buf);
                     }
+
+                    RegCloseKey(hkey);
 
                     break;
                 }

@@ -28,6 +28,7 @@ STRINGTABLE
    IDS_TAB1_TITLE, "Applications"
 
    IDS_UNINSTALL_FAILED, "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall entry for this program from the registry?"
+   IDS_NOT_SPECIFIED, "Not specified"
 
    IDS_COLUMN_NAME, "Name"
    IDS_COLUMN_PUBLISHER, "Publisher"
