@@ -486,7 +486,7 @@ static HRESULT WINAPI StdMediaSample2_GetPointer(IMediaSample2 * iface, BYTE ** 
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%p)\n", ppBuffer);
+    TRACE("(%p)->(%p)\n", iface, ppBuffer);
 
     *ppBuffer = This->props.pbBuffer;
 
@@ -513,7 +513,7 @@ static HRESULT WINAPI StdMediaSample2_GetTime(IMediaSample2 * iface, REFERENCE_T
     HRESULT hr;
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%p, %p)\n", pStart, pEnd);
+    TRACE("(%p)->(%p, %p)\n", iface, pStart, pEnd);
 
     if (!(This->props.dwSampleFlags & AM_SAMPLE_TIMEVALID))
         hr = VFW_E_SAMPLE_TIME_NOT_SET;
@@ -539,7 +539,7 @@ static HRESULT WINAPI StdMediaSample2_SetTime(IMediaSample2 * iface, REFERENCE_T
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%p, %p)\n", pStart, pEnd);
+    TRACE("(%p)->(%p, %p)\n", iface, pStart, pEnd);
 
     if (pStart)
     {
@@ -564,7 +564,7 @@ static HRESULT WINAPI StdMediaSample2_IsSyncPoint(IMediaSample2 * iface)
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     return (This->props.dwSampleFlags & AM_SAMPLE_SPLICEPOINT) ? S_OK : S_FALSE;
 }
@@ -573,7 +573,7 @@ static HRESULT WINAPI StdMediaSample2_SetSyncPoint(IMediaSample2 * iface, BOOL b
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%s)\n", bIsSyncPoint ? "TRUE" : "FALSE");
+    TRACE("(%p)->(%s)\n", iface, bIsSyncPoint ? "TRUE" : "FALSE");
 
     if (bIsSyncPoint)
         This->props.dwSampleFlags |= AM_SAMPLE_SPLICEPOINT;
@@ -587,7 +587,7 @@ static HRESULT WINAPI StdMediaSample2_IsPreroll(IMediaSample2 * iface)
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     return (This->props.dwSampleFlags & AM_SAMPLE_PREROLL) ? S_OK : S_FALSE;
 }
@@ -596,7 +596,7 @@ static HRESULT WINAPI StdMediaSample2_SetPreroll(IMediaSample2 * iface, BOOL bIs
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%s)\n", bIsPreroll ? "TRUE" : "FALSE");
+    TRACE("(%p)->(%s)\n", iface, bIsPreroll ? "TRUE" : "FALSE");
 
     if (bIsPreroll)
         This->props.dwSampleFlags |= AM_SAMPLE_PREROLL;
@@ -610,7 +610,7 @@ static LONG WINAPI StdMediaSample2_GetActualDataLength(IMediaSample2 * iface)
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     return This->props.lActual;
 }
@@ -619,7 +619,7 @@ static HRESULT WINAPI StdMediaSample2_SetActualDataLength(IMediaSample2 * iface,
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%d)\n", len);
+    TRACE("(%p)->(%d)\n", iface, len);
 
     if ((len > This->props.cbBuffer) || (len < 0))
     {
@@ -637,7 +637,7 @@ static HRESULT WINAPI StdMediaSample2_GetMediaType(IMediaSample2 * iface, AM_MED
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%p)\n", ppMediaType);
+    TRACE("(%p)->(%p)\n", iface, ppMediaType);
 
     if (!This->props.pMediaType) {
         /* Make sure we return a NULL pointer (required by native Quartz dll) */
@@ -656,7 +656,7 @@ static HRESULT WINAPI StdMediaSample2_SetMediaType(IMediaSample2 * iface, AM_MED
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%p)\n", pMediaType);
+    TRACE("(%p)->(%p)\n", iface, pMediaType);
 
     if (This->props.pMediaType)
         FreeMediaType(This->props.pMediaType);
@@ -670,7 +670,7 @@ static HRESULT WINAPI StdMediaSample2_IsDiscontinuity(IMediaSample2 * iface)
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     return (This->props.dwSampleFlags & AM_SAMPLE_DATADISCONTINUITY) ? S_OK : S_FALSE;
 }
@@ -679,7 +679,7 @@ static HRESULT WINAPI StdMediaSample2_SetDiscontinuity(IMediaSample2 * iface, BO
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%s)\n", bIsDiscontinuity ? "TRUE" : "FALSE");
+    TRACE("(%p)->(%s)\n", iface, bIsDiscontinuity ? "TRUE" : "FALSE");
 
     if (bIsDiscontinuity)
         This->props.dwSampleFlags |= AM_SAMPLE_DATADISCONTINUITY;
@@ -693,7 +693,7 @@ static HRESULT WINAPI StdMediaSample2_GetMediaTime(IMediaSample2 * iface, LONGLO
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%p, %p)\n", pStart, pEnd);
+    TRACE("(%p)->(%p, %p)\n", iface, pStart, pEnd);
 
     if (This->tMediaStart == INVALID_MEDIA_TIME)
         return VFW_E_MEDIA_TIME_NOT_SET;
@@ -708,7 +708,7 @@ static HRESULT WINAPI StdMediaSample2_SetMediaTime(IMediaSample2 * iface, LONGLO
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%p, %p)\n", pStart, pEnd);
+    TRACE("(%p)->(%p, %p)\n", iface, pStart, pEnd);
 
     if (pStart)
         This->tMediaStart = *pStart;
@@ -727,7 +727,7 @@ static HRESULT WINAPI StdMediaSample2_GetProperties(IMediaSample2 * iface, DWORD
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%d, %p)\n", cbProperties, pbProperties);
+    TRACE("(%p)->(%d, %p)\n", iface, cbProperties, pbProperties);
 
     memcpy(pbProperties, &This->props, min(cbProperties, sizeof(This->props)));
 
@@ -738,7 +738,7 @@ static HRESULT WINAPI StdMediaSample2_SetProperties(IMediaSample2 * iface, DWORD
 {
     StdMediaSample2 *This = (StdMediaSample2 *)iface;
 
-    TRACE("(%d, %p)\n", cbProperties, pbProperties);
+    TRACE("(%p)->(%d, %p)\n", iface, cbProperties, pbProperties);
 
     /* NOTE: pbBuffer and cbBuffer are read-only */
     memcpy(&This->props, pbProperties, min(cbProperties, AM_SAMPLE2_PROP_SIZE_WRITABLE));
