@@ -237,6 +237,7 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
    LVITEMW lvItem;
    INITCOMMONCONTROLSEX icex;
    INT sb_parts;
+   int itemidx;
 
    SetWindowLongPtrW(hWnd, 0, (LONG_PTR)panel);
    panel->hWnd = hWnd;
@@ -296,10 +297,10 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
             lvItem.iImage = index;
             lvItem.lParam = (LPARAM) item;
 
-            ListView_InsertItemW(panel->hWndListView, &lvItem);
+            itemidx = ListView_InsertItemW(panel->hWndListView, &lvItem);
 
             /* add the description */
-            ListView_SetItemTextW(panel->hWndListView, menucount, 1,
+            ListView_SetItemTextW(panel->hWndListView, itemidx, 1,
                 applet->info[i].szInfo);
 
             /* update menu bar, increment count */
