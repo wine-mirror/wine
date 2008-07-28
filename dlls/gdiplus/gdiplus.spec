@@ -601,7 +601,7 @@
 @ stdcall GdipShearMatrix(ptr long long long)
 @ stdcall GdipStartPathFigure(ptr)
 @ stdcall GdipStringFormatGetGenericDefault(ptr)
-@ stub GdipStringFormatGetGenericTypographic
+@ stdcall GdipStringFormatGetGenericTypographic(ptr)
 @ stub GdipTestControl
 @ stdcall GdipTransformMatrixPoints(ptr ptr long)
 @ stdcall GdipTransformMatrixPointsI(ptr ptr long)

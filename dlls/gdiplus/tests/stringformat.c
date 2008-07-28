@@ -130,6 +130,44 @@ static void test_digitsubstitution(void)
     expect(Ok, stat);
 }
 
+static void test_getgenerictypographic(void)
+{
+    GpStringFormat *format;
+    GpStatus stat;
+    INT flags;
+    INT n;
+    StringAlignment align, valign;
+    StringTrimming trimming;
+    StringDigitSubstitute digitsub;
+    LANGID digitlang;
+
+    /* NULL arg */
+    stat = GdipStringFormatGetGenericTypographic(NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipStringFormatGetGenericTypographic(&format);
+    expect(Ok, stat);
+
+    GdipGetStringFormatFlags(format, &flags);
+    GdipGetStringFormatAlign(format, &align);
+    GdipGetStringFormatLineAlign(format, &valign);
+    GdipGetStringFormatHotkeyPrefix(format, &n);
+    GdipGetStringFormatTrimming(format, &trimming);
+    GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
+
+    expect((StringFormatFlagsNoFitBlackBox |StringFormatFlagsLineLimit | StringFormatFlagsNoClip),
+            flags);
+    expect(HotkeyPrefixNone, n);
+    expect(StringAlignmentNear, align);
+    expect(StringAlignmentNear, align);
+    expect(StringTrimmingNone, trimming);
+    expect(StringDigitSubstituteUser, digitsub);
+    expect(LANG_NEUTRAL, digitlang);
+
+    stat = GdipDeleteStringFormat(format);
+    expect(Ok, stat);
+}
+
 START_TEST(stringformat)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -145,6 +183,7 @@ START_TEST(stringformat)
     test_constructor();
     test_characterrange();
     test_digitsubstitution();
+    test_getgenerictypographic();
 
     GdiplusShutdown(gdiplusToken);
 }

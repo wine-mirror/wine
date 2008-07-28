@@ -237,3 +237,27 @@ GpStatus WINGDIPAPI GdipCloneStringFormat(GDIPCONST GpStringFormat *format, GpSt
 
     return Ok;
 }
+
+/*FIXME: add zero tab stops number */
+GpStatus WINGDIPAPI GdipStringFormatGetGenericTypographic(GpStringFormat **format)
+{
+    GpStatus stat;
+
+    if(!format)
+        return InvalidParameter;
+
+    stat = GdipCreateStringFormat(StringFormatFlagsNoFitBlackBox |
+                                  StringFormatFlagsLineLimit |
+                                  StringFormatFlagsNoClip, LANG_NEUTRAL, format);
+    if(stat != Ok)
+        return stat;
+
+    (*format)->digitlang = LANG_NEUTRAL;
+    (*format)->digitsub  = StringDigitSubstituteUser;
+    (*format)->trimming  = StringTrimmingNone;
+    (*format)->hkprefix  = HotkeyPrefixNone;
+    (*format)->align     = StringAlignmentNear;
+    (*format)->vertalign = StringAlignmentNear;
+
+    return Ok;
+}

@@ -435,6 +435,7 @@ GpStatus WINGDIPAPI GdipGetFontCollectionFamilyList(GpFontCollection*, INT,
 GpStatus WINGDIPAPI GdipCreateStringFormat(INT,LANGID,GpStringFormat**);
 GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat*);
 GpStatus WINGDIPAPI GdipStringFormatGetGenericDefault(GpStringFormat **);
+GpStatus WINGDIPAPI GdipStringFormatGetGenericTypographic(GpStringFormat **);
 GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat*,StringAlignment*);
 GpStatus WINGDIPAPI GdipGetStringFormatDigitSubstitution(GDIPCONST GpStringFormat*,LANGID*,
         StringDigitSubstitute*);
