@@ -212,3 +212,15 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
     TRACE("returning %d\n", ret);
     return ret;
 }
+
+BOOL WINAPI CryptHashMessage(PCRYPT_HASH_MESSAGE_PARA pHashPara,
+ BOOL fDetachedHash, DWORD cToBeHashed, const BYTE *rgpbToBeHashed[],
+ DWORD rgcbToBeHashed[], BYTE *pbHashedBlob, DWORD *pcbHashedBlob,
+ BYTE *pbComputedHash, DWORD *pcbComputedHash)
+{
+    FIXME("(%p, %d, %d, %p, %p, %p, %p, %p, %p): stub\n", pHashPara,
+     fDetachedHash, cToBeHashed, rgpbToBeHashed, rgcbToBeHashed, pbHashedBlob,
+     pcbHashedBlob, pbComputedHash, pcbComputedHash);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
