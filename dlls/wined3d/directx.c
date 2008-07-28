@@ -1963,6 +1963,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 /* Check if we support bumpmapping for a format */
 static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
+    /* TODO: Check this in the fixed function pipeline backend */
     if(GL_SUPPORT(NV_REGISTER_COMBINERS) && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
         switch (CheckFormat) {
             case WINED3DFMT_V8U8:
@@ -1977,6 +1978,20 @@ static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
     if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP) || GL_SUPPORT(ATI_FRAGMENT_SHADER)) {
         switch (CheckFormat) {
             case WINED3DFMT_V8U8:
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            default:
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return FALSE;
+        }
+    }
+    if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        switch (CheckFormat) {
+            case WINED3DFMT_V8U8:
+            case WINED3DFMT_V16U16:
+            case WINED3DFMT_L6V5U5:
+            case WINED3DFMT_X8L8V8U8:
+            case WINED3DFMT_Q8W8V8U8:
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
             default:
@@ -2902,7 +2917,9 @@ static const struct fragment_pipeline *select_fragment_implementation(UINT Adapt
     int ps_selected_mode;
 
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
-    if(ps_selected_mode == SHADER_ATI) {
+    if((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        return &arbfp_fragment_pipeline;
+    } else if(ps_selected_mode == SHADER_ATI) {
         return &atifs_fragment_pipeline;
     } else if(GL_SUPPORT(NV_REGISTER_COMBINERS) && GL_SUPPORT(NV_TEXTURE_SHADER2)) {
         return &nvts_fragment_pipeline;

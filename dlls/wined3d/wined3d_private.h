@@ -267,6 +267,8 @@ struct shader_arb_priv {
     GLuint                  current_fprogram_id;
     GLuint                  depth_blt_vprogram_id;
     GLuint                  depth_blt_fprogram_id;
+    BOOL                    use_arbfp_fixed_func;
+    hash_table_t            *fragment_shaders;
 };
 
 /* X11 locking */
@@ -561,6 +563,7 @@ extern const struct StateEntryTemplate misc_state_template[];
 extern const struct StateEntryTemplate ffp_vertexstate_template[];
 extern const struct fragment_pipeline ffp_fragment_pipeline;
 extern const struct fragment_pipeline atifs_fragment_pipeline;
+extern const struct fragment_pipeline arbfp_fragment_pipeline;
 extern const struct fragment_pipeline nvts_fragment_pipeline;
 extern const struct fragment_pipeline nvrc_fragment_pipeline;
 
