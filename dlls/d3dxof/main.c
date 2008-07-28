@@ -184,9 +184,9 @@ HRESULT WINAPI DirectXFileCreate(LPDIRECTXFILE* lplpDirectXFile)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    int i;
+    unsigned int i;
     IClassFactoryImpl *factory;
-    
+
     TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     
     if ( !IsEqualGUID( &IID_IClassFactory, riid )
