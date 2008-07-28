@@ -10,6 +10,8 @@ C_SRCS = \
 	mstask_main.c \
 	task_scheduler.c
 
+RC_SRCS = rsrc.rc
+
 IDL_I_SRCS = mstask_local.idl
 
 @MAKE_DLL_RULES@
