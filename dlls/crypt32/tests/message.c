@@ -1,7 +1,7 @@
 /*
  * Unit test suite for crypt32.dll's Crypt*Message functions
  *
- * Copyright 2007 Juan Lang
+ * Copyright 2007-2008 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -237,8 +237,184 @@ static void test_verify_message_signature(void)
     ok(!ret, "Expected failure\n");
 }
 
+static const BYTE detachedHashBlob[] = {
+0x30,0x3f,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x05,0xa0,0x32,
+0x30,0x30,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x0b,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x07,0x01,0x04,0x10,0x2d,0x1b,0xbc,0x1f,0xc7,0xab,0x36,0x8d,0xdb,0x95,0xe6,
+0x24,0xb9,0x66,0x7c,0x21 };
+static const BYTE hashBlob[] = {
+0x30,0x47,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x05,0xa0,0x3a,
+0x30,0x38,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x13,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x07,0x01,0xa0,0x06,0x04,0x04,0xde,0xad,0xbe,0xef,0x04,0x10,0x2f,0x24,0x92,
+0x30,0xa8,0xe7,0xc2,0xbf,0x60,0x05,0xcc,0xd2,0x67,0x92,0x59,0xec };
+static const BYTE hashVal[] = {
+0x2d,0x1b,0xbc,0x1f,0xc7,0xab,0x36,0x8d,0xdb,0x95,0xe6,0x24,0xb9,0x66,0x7c,
+0x21 };
+
+static void test_hash_message(void)
+{
+    BOOL ret;
+    CRYPT_HASH_MESSAGE_PARA para;
+    static const BYTE blob1[] = { 0xde, 0xad, 0xbe, 0xef };
+    static const BYTE blob2[] = { 0xba, 0xad, 0xf0, 0x0d };
+    const BYTE *toHash[] = { blob1, blob2 };
+    DWORD hashSize[] = { sizeof(blob1), sizeof(blob2) };
+    DWORD hashedBlobSize, computedHashSize;
+    static char oid_rsa_md5[] = szOID_RSA_MD5;
+    LPBYTE hashedBlob, computedHash;
+
+    /* Crash
+    ret = CryptHashMessage(NULL, FALSE, 0, NULL, 0, NULL, NULL, NULL, NULL);
+     */
+    memset(&para, 0, sizeof(para));
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got 0x%08x\n", GetLastError());
+    para.cbSize = sizeof(para);
+    /* Not quite sure what "success" means in this case, but it does succeed */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    /* With a bogus encoding type it "succeeds" */
+    para.dwMsgEncodingType = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    /* According to MSDN, the third parameter (cToBeHashed) must be 1 if the
+     * second parameter (fDetached) is FALSE, but again it "succeeds."
+     */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    /* Even passing parameters to hash results in "success." */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL, NULL, NULL,
+     NULL);
+    /* Try again with a valid encoding type */
+    para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    /* And with valid data to hash */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL, NULL, NULL,
+     NULL);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    /* But requesting the size of the hashed blob and indicating there's data
+     * to hash results in a crash
+     */
+    if (0)
+    {
+        ret = CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL,
+         &hashedBlobSize, NULL, NULL);
+    }
+    /* Passing a valid pointer for the data to hash fails, as the hash
+     * algorithm is finally checked.
+     */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL,
+     &hashedBlobSize, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_UNKNOWN_ALGO,
+     "expected CRYPT_E_UNKNOWN_ALGO, got 0x%08x (%d)\n", GetLastError(),
+     GetLastError());
+    para.HashAlgorithm.pszObjId = oid_rsa_md5;
+    /* With a valid hash algorithm, this succeeds, even though fDetached is
+     * FALSE.
+     */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL,
+     &hashedBlobSize, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    if (ret)
+    {
+        /* Actually attempting to get the hashed data fails, perhaps because
+         * detached is FALSE.
+         */
+        hashedBlob = HeapAlloc(GetProcessHeap(), 0, hashedBlobSize);
+        SetLastError(0xdeadbeef);
+        ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, hashedBlob,
+         &hashedBlobSize, NULL, NULL);
+        ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
+         "expected CRYPT_E_MSG_ERROR, got 0x%08x (%d)\n", GetLastError(),
+         GetLastError());
+        HeapFree(GetProcessHeap(), 0, hashedBlob);
+    }
+    /* Repeating tests with fDetached = TRUE results in success */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
+     &hashedBlobSize, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    if (ret)
+    {
+        hashedBlob = HeapAlloc(GetProcessHeap(), 0, hashedBlobSize);
+        SetLastError(0xdeadbeef);
+        ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, hashedBlob,
+         &hashedBlobSize, NULL, NULL);
+        ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+        ok(hashedBlobSize == sizeof(detachedHashBlob),
+         "unexpected size of detached blob %d\n", hashedBlobSize);
+        ok(!memcmp(hashedBlob, detachedHashBlob, hashedBlobSize),
+         "unexpected detached blob value\n");
+        HeapFree(GetProcessHeap(), 0, hashedBlob);
+    }
+    /* Hashing a single item with fDetached = FALSE also succeeds */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashMessage(&para, FALSE, 1, toHash, hashSize, NULL,
+     &hashedBlobSize, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    if (ret)
+    {
+        hashedBlob = HeapAlloc(GetProcessHeap(), 0, hashedBlobSize);
+        ret = CryptHashMessage(&para, FALSE, 1, toHash, hashSize, hashedBlob,
+         &hashedBlobSize, NULL, NULL);
+        ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+        ok(hashedBlobSize == sizeof(hashBlob),
+         "unexpected size of detached blob %d\n", hashedBlobSize);
+        ok(!memcmp(hashedBlob, hashBlob, hashedBlobSize),
+         "unexpected detached blob value\n");
+        HeapFree(GetProcessHeap(), 0, hashedBlob);
+    }
+    /* Check the computed hash value too.  You don't need to get the encoded
+     * blob to get it.
+     */
+    computedHashSize = 0xdeadbeef;
+    ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
+     &hashedBlobSize, NULL, &computedHashSize);
+    todo_wine
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
+    todo_wine
+    ok(computedHashSize == 16, "expected hash size of 16, got %d\n",
+     computedHashSize);
+    if (ret)
+    {
+        computedHash = HeapAlloc(GetProcessHeap(), 0, computedHashSize);
+        SetLastError(0xdeadbeef);
+        ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
+         &hashedBlobSize, computedHash, &computedHashSize);
+        ok(computedHashSize == sizeof(hashVal),
+         "unexpected size of hash value %d\n", computedHashSize);
+        ok(!memcmp(computedHash, hashVal, computedHashSize),
+         "unexpected value\n");
+        HeapFree(GetProcessHeap(), 0, computedHash);
+    }
+}
+
 START_TEST(message)
 {
     test_msg_get_signer_count();
     test_verify_message_signature();
+    test_hash_message();
 }
