@@ -247,3 +247,15 @@ BOOL WINAPI WinHttpCloseHandle (HINTERNET hInternet)
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpWriteData (winhttp.@)
+ */
+BOOL WINAPI WinHttpWriteData (HINTERNET hRequest, LPCVOID lpBuffer,
+                              DWORD dwNumberOfBytesToWrite, LPDWORD lpdwNumberOfBytesWritten)
+{
+    FIXME("(%p, %d, %p): stub\n", lpBuffer, dwNumberOfBytesToWrite, lpdwNumberOfBytesWritten);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}

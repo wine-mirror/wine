@@ -28,4 +28,4 @@
 @ stub WinHttpSetTimeouts
 @ stub WinHttpTimeFromSystemTime
 @ stub WinHttpTimeToSystemTime
-@ stub WinHttpWriteData
+@ stdcall WinHttpWriteData(ptr ptr long ptr)
