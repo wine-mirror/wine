@@ -45,6 +45,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 static const WCHAR installerW[] = {'\\','I','n','s','t','a','l','l','e','r',0};
 
+/* FIXME: user-managed installs not located */
+static UINT msi_locate_product(LPCWSTR szProduct, MSIINSTALLCONTEXT *context)
+{
+    HKEY hkey = NULL;
+    UINT r;
+
+    *context = MSIINSTALLCONTEXT_NONE;
+
+    r = MSIREG_OpenLocalClassesProductKey(szProduct, &hkey, FALSE);
+    if (r == ERROR_SUCCESS)
+        *context = MSIINSTALLCONTEXT_MACHINE;
+    else
+    {
+        r = MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE);
+        if (r == ERROR_SUCCESS)
+            *context = MSIINSTALLCONTEXT_USERUNMANAGED;
+    }
+
+    RegCloseKey(hkey);
+    return ERROR_SUCCESS;
+}
+
 UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
 {
     UINT r;
@@ -346,6 +368,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
                         INSTALLSTATE eInstallState, LPCWSTR szCommandLine)
 {
     MSIPACKAGE* package = NULL;
+    MSIINSTALLCONTEXT context;
     UINT r;
     DWORD sz;
     WCHAR sourcepath[MAX_PATH];
@@ -367,25 +390,23 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         return ERROR_CALL_NOT_IMPLEMENTED;
     }
 
+    r = msi_locate_product(szProduct, &context);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    if (context == MSIINSTALLCONTEXT_NONE)
+        return ERROR_UNKNOWN_PRODUCT;
+
     sz = sizeof(sourcepath);
-    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-            MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath,
-            &sz);
+    MsiSourceListGetInfoW(szProduct, NULL, context, MSICODE_PRODUCT,
+                          INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz);
 
     sz = sizeof(filename);
-    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-            MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
+    MsiSourceListGetInfoW(szProduct, NULL, context, MSICODE_PRODUCT,
+                          INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
 
-    lstrcatW(sourcepath,filename);
-
-    /*
-     * ok 1, we need to find the msi file for this product.
-     *    2, find the source dir for the files
-     *    3, do the configure/install.
-     *    4, cleanupany runonce entry.
-     */
-
-    r = MSI_OpenProductW( szProduct, &package );
+    lstrcatW(sourcepath, filename);
+    r = MSI_OpenPackageW(sourcepath, &package);
     if (r != ERROR_SUCCESS)
         return r;
 
@@ -395,7 +416,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         sz += lstrlenW(szCommandLine);
 
     commandline = msi_alloc(sz * sizeof(WCHAR));
-    if (!commandline )
+    if (!commandline)
     {
         r = ERROR_OUTOFMEMORY;
         goto end;
