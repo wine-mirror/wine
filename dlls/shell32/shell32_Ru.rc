@@ -93,13 +93,13 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Файл"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "В&ыход", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "&Вид"
     BEGIN
         MENUITEM "&Большие значки", FCIDM_SHVIEW_BIGICON
         MENUITEM "&Мелкие значки", FCIDM_SHVIEW_SMALLICON
@@ -107,9 +107,9 @@ BEGIN
         MENUITEM "&Подробно", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Справка"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&О Панели Управления...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -209,7 +209,7 @@ STRINGTABLE
     IDS_DESKTOP			"Рабочий стол"
     IDS_MYCOMPUTER		"Мой компьютер"
     IDS_RECYCLEBIN_FOLDER_NAME  "Корзина"
-    IDS_CONTROLPANEL		"Control Panel"
+    IDS_CONTROLPANEL		"Панель Управления"
 
     /* context menus */
     IDS_VIEW_LARGE		"&Большие значки"
@@ -272,9 +272,9 @@ STRINGTABLE
     IDS_COMMON_VIDEO            "Общие документы\\Мои фильмы"
     IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
-    IDS_NEWFOLDER		"New Folder"
+    IDS_NEWFOLDER		"Новая папка"
 
-    IDS_CPANEL_TITLE            "Wine Control Panel"
-    IDS_CPANEL_NAME             "Name"
-    IDS_CPANEL_DESCRIPTION      "Description"
+    IDS_CPANEL_TITLE            "Панель Управления Wine"
+    IDS_CPANEL_NAME             "Имя"
+    IDS_CPANEL_DESCRIPTION      "Описание"
 }
