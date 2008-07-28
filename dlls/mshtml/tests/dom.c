@@ -1014,6 +1014,20 @@ static long _elem_get_scroll_width(unsigned line, IUnknown *unk)
     return l;
 }
 
+#define elem_get_scroll_top(u) _elem_get_scroll_top(__LINE__,u)
+static long _elem_get_scroll_top(unsigned line, IUnknown *unk)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    long l = -1;
+    HRESULT hres;
+
+    hres = IHTMLElement2_get_scrollTop(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_scrollTop failed: %08x\n", hres);
+    IHTMLElement2_Release(elem);
+
+    return l;
+}
+
 #define test_img_set_src(u,s) _test_img_set_src(__LINE__,u,s)
 static void _test_img_set_src(unsigned line, IUnknown *unk, const char *src)
 {
@@ -1992,6 +2006,8 @@ static void test_default_body(IHTMLBodyElement *body)
     ok(l != -1, "scrollHeight == -1\n");
     l = elem_get_scroll_width((IUnknown*)body);
     ok(l != -1, "scrollWidth == -1\n");
+    l = elem_get_scroll_top((IUnknown*)body);
+    ok(!l, "scrollWidth = %ld\n", l);
 }
 
 static void test_window(IHTMLDocument2 *doc)

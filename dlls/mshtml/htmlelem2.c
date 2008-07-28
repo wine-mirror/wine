@@ -787,8 +787,26 @@ static HRESULT WINAPI HTMLElement2_put_scrollTop(IHTMLElement2 *iface, long v)
 static HRESULT WINAPI HTMLElement2_get_scrollTop(IHTMLElement2 *iface, long *p)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    PRInt32 top = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIDOMNSHTMLElement_GetScrollTop(nselem, &top);
+        nsIDOMNSHTMLElement_Release(nselem);
+        if(NS_FAILED(nsres))
+            ERR("GetScrollTop failed: %08x\n", nsres);
+    }else {
+        ERR("Could not get nsIDOMNSHTMLElement interface: %08x\n", nsres);
+    }
+
+    *p = top;
+    TRACE("*p = %ld\n", *p);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_put_scrollLeft(IHTMLElement2 *iface, long v)
