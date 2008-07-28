@@ -4229,10 +4229,19 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
         goto done;
 
     MSIREG_DeleteProductKey(package->ProductCode);
-    MSIREG_DeleteUserProductKey(package->ProductCode);
     MSIREG_DeleteUserDataProductKey(package->ProductCode);
-    MSIREG_DeleteUserFeaturesKey(package->ProductCode);
     MSIREG_DeleteUninstallKey(package->ProductCode);
+
+    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        MSIREG_DeleteLocalClassesProductKey(package->ProductCode);
+        MSIREG_DeleteLocalClassesFeaturesKey(package->ProductCode);
+    }
+    else
+    {
+        MSIREG_DeleteUserProductKey(package->ProductCode);
+        MSIREG_DeleteUserFeaturesKey(package->ProductCode);
+    }
 
     upgrade = msi_dup_property(package, szUpgradeCode);
     if (upgrade)
