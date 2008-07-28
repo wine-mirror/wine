@@ -12,6 +12,7 @@ CTESTS = \
 	crl.c \
 	encode.c \
 	main.c \
+	message.c \
 	msg.c \
 	oid.c \
 	protectdata.c \
