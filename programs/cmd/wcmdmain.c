@@ -601,10 +601,21 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
 
     /* Move copy of the command onto the heap so it can be expanded */
     new_cmd = HeapAlloc( GetProcessHeap(), 0, MAXSTRING * sizeof(WCHAR));
+    if (!new_cmd)
+    {
+        WINE_ERR("Could not allocate memory for new_cmd\n");
+        return;
+    }
     strcpyW(new_cmd, command);
 
     /* Move copy of the redirects onto the heap so it can be expanded */
     new_redir = HeapAlloc( GetProcessHeap(), 0, MAXSTRING * sizeof(WCHAR));
+    if (!new_redir)
+    {
+        WINE_ERR("Could not allocate memory for new_redir\n");
+        HeapFree( GetProcessHeap(), 0, new_cmd );
+        return;
+    }
 
     /* If piped output, send stdout to the pipe by appending >filename to redirects */
     if (piped) {
@@ -2086,6 +2097,11 @@ WCHAR *WCMD_ReadAndParseLine(WCHAR *optionalcmd, CMD_LIST **output, HANDLE readF
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
       extraSpace = HeapAlloc(GetProcessHeap(), 0, (MAXSTRING+1) * sizeof(WCHAR));
+    if (!extraSpace)
+    {
+        WINE_ERR("Could not allocate memory for extraSpace\n");
+        return NULL;
+    }
 
     /* If initial command read in, use that, otherwise get input from handle */
     if (optionalcmd != NULL) {
