@@ -705,6 +705,27 @@ static const CHAR sp_directory_dat[] = "Directory\tDirectory_Parent\tDefaultDir\
                                        "ONEDIR\tMSITESTDIR\t.:shortone|longone\n"
                                        "TWODIR\tONEDIR\t.:shorttwo|longtwo";
 
+static const CHAR mcp_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "hydrogen\t{C844BD1E-1907-4C00-8BC9-150BD70DF0A1}\tMSITESTDIR\t2\t\thydrogen\n"
+                                        "helium\t{5AD3C142-CEF8-490D-B569-784D80670685}\tMSITESTDIR\t2\t\thelium\n"
+                                        "lithium\t{4AF28FFC-71C7-4307-BDE4-B77C5338F56F}\tMSITESTDIR\t2\tPROPVAR=42\tlithium\n";
+
+static const CHAR mcp_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                      "Feature\tFeature\n"
+                                      "hydroxyl\t\thydroxyl\thydroxyl\t2\t1\tTARGETDIR\t0\n"
+                                      "heliox\t\theliox\theliox\t2\t5\tTARGETDIR\t0\n"
+                                      "lithia\t\tlithia\tlithia\t2\t10\tTARGETDIR\t0";
+
+static const CHAR mcp_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "hydroxyl\thydrogen\n"
+                                           "heliox\thelium\n"
+                                           "lithia\tlithium";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1063,6 +1084,18 @@ static const msi_table sp_tables[] =
     ADD_TABLE(ci2_feature_comp),
     ADD_TABLE(ci2_file),
     ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table mcp_tables[] =
+{
+    ADD_TABLE(mcp_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(mcp_feature),
+    ADD_TABLE(mcp_feature_comp),
+    ADD_TABLE(rem_file),
+    ADD_TABLE(rem_install_exec_seq),
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
 };
@@ -4951,6 +4984,128 @@ static void test_sourcepath(void)
     DeleteFileA(msifile);
 }
 
+static void test_MsiConfigureProductEx(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\hydrogen", 500);
+    create_file("msitest\\helium", 500);
+    create_file("msitest\\lithium", 500);
+
+    create_database(msifile, mcp_tables, sizeof(mcp_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    /* NULL szProduct */
+    r = MsiConfigureProductExA(NULL, INSTALLLEVEL_DEFAULT,
+                               INSTALLSTATE_DEFAULT, "PROPVAR=42");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* empty szProduct */
+    r = MsiConfigureProductExA("", INSTALLLEVEL_DEFAULT,
+                               INSTALLSTATE_DEFAULT, "PROPVAR=42");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* garbage szProduct */
+    r = MsiConfigureProductExA("garbage", INSTALLLEVEL_DEFAULT,
+                               INSTALLSTATE_DEFAULT, "PROPVAR=42");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* guid without brackets */
+    r = MsiConfigureProductExA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D",
+                               INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT,
+                               "PROPVAR=42");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* guid with brackets */
+    r = MsiConfigureProductExA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}",
+                               INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT,
+                               "PROPVAR=42");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* same length as guid, but random */
+    r = MsiConfigureProductExA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93",
+                               INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT,
+                               "PROPVAR=42");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* product not installed yet */
+    r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
+                               INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT,
+                               "PROPVAR=42");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+
+    /* install the product, per-user unmanaged */
+    r = MsiInstallProductA(msifile, "INSTALLLEVEL=10 PROPVAR=42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
+    ok(pf_exists("msitest\\helium"), "File not installed\n");
+    ok(pf_exists("msitest\\lithium"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    /* product is installed per-user managed, remove it */
+    r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
+                               INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT,
+                               "PROPVAR=42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest", FALSE), "File not removed\n");
+    }
+
+    /* product has been removed */
+    r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
+                               INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT,
+                               "PROPVAR=42");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %u\n", r);
+
+    /* install the product, machine */
+    r = MsiInstallProductA(msifile, "ALLUSERS=1 INSTALLLEVEL=10 PROPVAR=42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
+    ok(pf_exists("msitest\\helium"), "File not installed\n");
+    ok(pf_exists("msitest\\lithium"), "File not installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    /* product is installed machine, remove it */
+    r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
+                               INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT,
+                               "PROPVAR=42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest", FALSE), "File not removed\n");
+    }
+
+    /* product has been removed */
+    r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
+                               INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT,
+                               "PROPVAR=42");
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %u\n", r);
+
+    DeleteFileA(msifile);
+    DeleteFileA("msitest\\hydrogen");
+    DeleteFileA("msitest\\helium");
+    DeleteFileA("msitest\\lithium");
+    RemoveDirectoryA("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -5003,6 +5158,7 @@ START_TEST(install)
     test_customaction51();
     test_installstate();
     test_sourcepath();
+    test_MsiConfigureProductEx();
 
     SetCurrentDirectoryA(prev_path);
 }
