@@ -511,6 +511,8 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
                           if (item)
                               SetWindowTextW(panel->hWndStatusBar,
                                   item->applet->info[item->id].szInfo);
+                          else
+                              SetWindowTextW(panel->hWndStatusBar, NULL);
 
                           return 0;
                       }
@@ -532,6 +534,18 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
               /* update the status bar if item is valid */
               if (item)
                   SetWindowTextW(panel->hWndStatusBar, item->applet->info[item->id].szInfo);
+          }
+          else if ((HIWORD(lParam1) == 0xFFFF) && (lParam2 == 0))
+          {
+              /* reset status bar description to that of the selected icon */
+              CPlItem *item = Control_GetCPlItem_From_ListView(panel);
+
+              if (item)
+                  SetWindowTextW(panel->hWndStatusBar, item->applet->info[item->id].szInfo);
+              else
+                  SetWindowTextW(panel->hWndStatusBar, NULL);
+
+              return 0;
           }
           else
               SetWindowTextW(panel->hWndStatusBar, NULL);
