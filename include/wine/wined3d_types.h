@@ -1373,7 +1373,6 @@ typedef enum _WINED3DSURFTYPE {
     SURFACE_UNKNOWN    = 0,   /* Default / Unknown surface type */
     SURFACE_OPENGL,           /* OpenGL surface: Renders using libGL, needed for 3D */
     SURFACE_GDI,              /* User surface. No 3D, DirectDraw rendering with GDI */
-    SURFACE_XRENDER           /* Future dreams: Use XRENDER / EXA / whatever stuff */
 } WINED3DSURFTYPE;
 
 #define WINED3DCAPS2_NO2DDURING3DSCENE                 0x00000002L
