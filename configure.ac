@@ -1125,7 +1125,7 @@ if test "x$with_cups" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
     ac_cups_cflags=`cups-config --cflags 2>/dev/null`
-    ac_cups_libs="`cups-config --ldflags 2>/dev/null` `cups-config --libs 2>/dev/null`"
+    ac_cups_libs=`cups-config --ldflags 2>/dev/null`
     CPPFLAGS="$CPPFLAGS $ac_cups_cflags"
     AC_CHECK_HEADERS(cups/cups.h,
             [WINE_CHECK_SONAME(cups,cupsGetDefault,
