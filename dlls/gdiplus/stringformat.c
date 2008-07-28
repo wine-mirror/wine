@@ -159,6 +159,19 @@ GpStatus WINGDIPAPI GdipSetStringFormatAlign(GpStringFormat *format,
     return Ok;
 }
 
+/*FIXME: digit substitution actually not implemented, get/set only */
+GpStatus WINGDIPAPI GdipSetStringFormatDigitSubstitution(GpStringFormat *format,
+    LANGID language, StringDigitSubstitute substitute)
+{
+    if(!format)
+        return InvalidParameter;
+
+    format->digitlang = language;
+    format->digitsub  = substitute;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetStringFormatHotkeyPrefix(GpStringFormat *format,
     INT hkpx)
 {

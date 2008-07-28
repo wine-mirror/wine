@@ -586,7 +586,7 @@
 @ stdcall GdipSetSmoothingMode(ptr long)
 @ stdcall GdipSetSolidFillColor(ptr ptr)
 @ stdcall GdipSetStringFormatAlign(ptr long)
-@ stub GdipSetStringFormatDigitSubstitution
+@ stdcall GdipSetStringFormatDigitSubstitution(ptr long long)
 @ stdcall GdipSetStringFormatFlags(ptr long)
 @ stdcall GdipSetStringFormatHotkeyPrefix(ptr long)
 @ stdcall GdipSetStringFormatLineAlign(ptr long)

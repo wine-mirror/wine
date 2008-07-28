@@ -445,6 +445,7 @@ GpStatus WINGDIPAPI GdipGetStringFormatMeasurableCharacterRangeCount(
         GDIPCONST GpStringFormat*, INT*);
 GpStatus WINGDIPAPI GdipGetStringFormatTrimming(GpStringFormat*,StringTrimming*);
 GpStatus WINGDIPAPI GdipSetStringFormatAlign(GpStringFormat*,StringAlignment);
+GpStatus WINGDIPAPI GdipSetStringFormatDigitSubstitution(GpStringFormat*,LANGID,StringDigitSubstitute);
 GpStatus WINGDIPAPI GdipSetStringFormatHotkeyPrefix(GpStringFormat*,INT);
 GpStatus WINGDIPAPI GdipSetStringFormatLineAlign(GpStringFormat*,StringAlignment);
 GpStatus WINGDIPAPI GdipSetStringFormatMeasurableCharacterRanges(

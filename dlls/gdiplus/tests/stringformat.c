@@ -96,6 +96,8 @@ static void test_digitsubstitution(void)
     expect(InvalidParameter, stat);
     stat = GdipGetStringFormatDigitSubstitution(NULL, &digitlang, &digitsub);
     expect(InvalidParameter, stat);
+    stat = GdipSetStringFormatDigitSubstitution(NULL, LANG_NEUTRAL, StringDigitSubstituteNone);
+    expect(InvalidParameter, stat);
 
     /* try to get both and one by one */
     stat = GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
@@ -112,6 +114,17 @@ static void test_digitsubstitution(void)
     stat = GdipGetStringFormatDigitSubstitution(format, &digitlang, NULL);
     expect(Ok, stat);
     expect(LANG_NEUTRAL, digitlang);
+
+    /* set/get */
+    stat = GdipSetStringFormatDigitSubstitution(format, MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL),
+                                                        StringDigitSubstituteUser);
+    expect(Ok, stat);
+    digitsub  = StringDigitSubstituteNone;
+    digitlang = LANG_RUSSIAN;
+    stat = GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
+    expect(Ok, stat);
+    expect(StringDigitSubstituteUser, digitsub);
+    expect(MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL), digitlang);
 
     stat = GdipDeleteStringFormat(format);
     expect(Ok, stat);
