@@ -43,7 +43,9 @@ GpStatus WINGDIPAPI GdipCreateStringFormat(INT attr, LANGID lang,
 
     (*format)->attr = attr;
     (*format)->lang = lang;
+    (*format)->digitlang = LANG_NEUTRAL;
     (*format)->trimming = StringTrimmingCharacter;
+    (*format)->digitsub = StringDigitSubstituteUser;
 
     return Ok;
 }
@@ -75,6 +77,18 @@ GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat *format,
         return InvalidParameter;
 
     *align = format->align;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetStringFormatDigitSubstitution(GDIPCONST GpStringFormat *format,
+    LANGID *language, StringDigitSubstitute *substitute)
+{
+    if(!format)
+        return InvalidParameter;
+
+    if(language)    *language   = format->digitlang;
+    if(substitute)  *substitute = format->digitsub;
 
     return Ok;
 }

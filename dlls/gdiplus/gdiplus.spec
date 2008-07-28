@@ -387,7 +387,7 @@
 @ stdcall GdipGetSmoothingMode(ptr ptr)
 @ stdcall GdipGetSolidFillColor(ptr ptr)
 @ stdcall GdipGetStringFormatAlign(ptr ptr)
-@ stub GdipGetStringFormatDigitSubstitution
+@ stdcall GdipGetStringFormatDigitSubstitution(ptr ptr ptr)
 @ stdcall GdipGetStringFormatFlags(ptr ptr)
 @ stdcall GdipGetStringFormatHotkeyPrefix(ptr ptr)
 @ stdcall GdipGetStringFormatLineAlign(ptr ptr)

@@ -188,10 +188,12 @@ struct GpFont{
 struct GpStringFormat{
     INT attr;
     LANGID lang;
+    LANGID digitlang;
     StringAlignment align;
     StringTrimming trimming;
     HotkeyPrefix hkprefix;
     StringAlignment vertalign;
+    StringDigitSubstitute digitsub;
 };
 
 struct GpFontCollection{

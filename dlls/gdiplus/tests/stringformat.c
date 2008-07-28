@@ -31,6 +31,8 @@ static void test_constructor(void)
     INT n;
     StringAlignment align, valign;
     StringTrimming trimming;
+    StringDigitSubstitute digitsub;
+    LANGID digitlang;
 
     stat = GdipCreateStringFormat(0, 0, &format);
     expect(Ok, stat);
@@ -39,11 +41,14 @@ static void test_constructor(void)
     GdipGetStringFormatLineAlign(format, &valign);
     GdipGetStringFormatHotkeyPrefix(format, &n);
     GdipGetStringFormatTrimming(format, &trimming);
+    GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
 
     expect(HotkeyPrefixNone, n);
     expect(StringAlignmentNear, align);
     expect(StringAlignmentNear, align);
     expect(StringTrimmingCharacter, trimming);
+    expect(StringDigitSubstituteUser, digitsub);
+    expect(LANG_NEUTRAL, digitlang);
 
     stat = GdipDeleteStringFormat(format);
     expect(Ok, stat);
@@ -70,6 +75,47 @@ todo_wine
     expect(Ok, stat);
 }
 
+static void test_digitsubstitution(void)
+{
+    GpStringFormat *format;
+    GpStatus stat;
+    StringDigitSubstitute digitsub;
+    LANGID digitlang;
+
+    stat = GdipCreateStringFormat(0, LANG_RUSSIAN, &format);
+    expect(Ok, stat);
+
+    /* NULL arguments */
+    stat = GdipGetStringFormatDigitSubstitution(NULL, NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipGetStringFormatDigitSubstitution(format, NULL, NULL);
+    expect(Ok, stat);
+    stat = GdipGetStringFormatDigitSubstitution(NULL, &digitlang, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipGetStringFormatDigitSubstitution(NULL, NULL, &digitsub);
+    expect(InvalidParameter, stat);
+    stat = GdipGetStringFormatDigitSubstitution(NULL, &digitlang, &digitsub);
+    expect(InvalidParameter, stat);
+
+    /* try to get both and one by one */
+    stat = GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
+    expect(Ok, stat);
+    expect(StringDigitSubstituteUser, digitsub);
+    expect(LANG_NEUTRAL, digitlang);
+
+    digitsub  = StringDigitSubstituteNone;
+    stat = GdipGetStringFormatDigitSubstitution(format, NULL, &digitsub);
+    expect(Ok, stat);
+    expect(StringDigitSubstituteUser, digitsub);
+
+    digitlang = LANG_RUSSIAN;
+    stat = GdipGetStringFormatDigitSubstitution(format, &digitlang, NULL);
+    expect(Ok, stat);
+    expect(LANG_NEUTRAL, digitlang);
+
+    stat = GdipDeleteStringFormat(format);
+    expect(Ok, stat);
+}
 
 START_TEST(stringformat)
 {
@@ -85,6 +131,7 @@ START_TEST(stringformat)
 
     test_constructor();
     test_characterrange();
+    test_digitsubstitution();
 
     GdiplusShutdown(gdiplusToken);
 }
