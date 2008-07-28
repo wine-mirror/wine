@@ -25,3 +25,4 @@
 @ stub _SASetNSAccountInformation@12
 @ stub _SetNetScheduleAccountInformation@12
 @ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()

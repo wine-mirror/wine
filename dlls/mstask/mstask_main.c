@@ -155,3 +155,8 @@ HRESULT WINAPI DllRegisterServer(void)
 {
     return register_mstask(TRUE);
 }
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return register_mstask(FALSE);
+}
