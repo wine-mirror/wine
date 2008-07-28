@@ -968,6 +968,29 @@ static long _get_node_type(unsigned line, IUnknown *unk)
     return type;
 }
 
+#define elem_get_scroll_height(u) _elem_get_scroll_height(__LINE__,u)
+static long _elem_get_scroll_height(unsigned line, IUnknown *unk)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    IHTMLTextContainer *txtcont;
+    long l = -1, l2 = -1;
+    HRESULT hres;
+
+    hres = IHTMLElement2_get_scrollHeight(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_scrollHeight failed: %08x\n", hres);
+    IHTMLElement2_Release(elem);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLTextContainer, (void**)&txtcont);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLTextContainer: %08x\n", hres);
+
+    hres = IHTMLTextContainer_get_scrollHeight(txtcont, &l2);
+    IHTMLTextContainer_Release(txtcont);
+    ok_(__FILE__,line) (hres == S_OK, "IHTMLTextContainer::get_scrollHeight failed: %ld\n", l2);
+    ok_(__FILE__,line) (l == l2, "unexpected height %ld, expected %ld\n", l2, l);
+
+    return l;
+}
+
 #define test_img_set_src(u,s) _test_img_set_src(__LINE__,u,s)
 static void _test_img_set_src(unsigned line, IUnknown *unk, const char *src)
 {
@@ -1927,6 +1950,7 @@ static void test_default_selection(IHTMLDocument2 *doc)
 
 static void test_default_body(IHTMLBodyElement *body)
 {
+    long l;
     BSTR bstr;
     HRESULT hres;
 
@@ -1934,6 +1958,9 @@ static void test_default_body(IHTMLBodyElement *body)
     hres = IHTMLBodyElement_get_background(body, &bstr);
     ok(hres == S_OK, "get_background failed: %08x\n", hres);
     ok(bstr == NULL, "bstr != NULL\n");
+
+    l = elem_get_scroll_height((IUnknown*)body);
+    ok(l != -1, "scrollHeight == -1\n");
 }
 
 static void test_window(IHTMLDocument2 *doc)
