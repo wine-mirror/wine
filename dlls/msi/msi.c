@@ -357,6 +357,9 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     TRACE("%s %d %d %s\n",debugstr_w(szProduct), iInstallLevel, eInstallState,
           debugstr_w(szCommandLine));
 
+    if (!szProduct || lstrlenW(szProduct) != GUID_SIZE - 1)
+        return ERROR_INVALID_PARAMETER;
+
     if (eInstallState != INSTALLSTATE_LOCAL &&
         eInstallState != INSTALLSTATE_DEFAULT)
     {
