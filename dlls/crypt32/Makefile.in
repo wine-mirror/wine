@@ -19,6 +19,7 @@ C_SRCS = \
 	encode.c \
 	filestore.c \
 	main.c \
+	message.c \
 	msg.c \
 	object.c \
 	oid.c \
