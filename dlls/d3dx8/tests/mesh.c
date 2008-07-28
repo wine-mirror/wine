@@ -36,6 +36,10 @@ static void D3DXBoundProbeTest(void)
     result = D3DXSphereBoundProbe(&center, radius, &rayposition, &raydirection);
     ok(result == TRUE, "expected TRUE, received FALSE\n");
 
+    rayposition.x = 45.0f; rayposition.y = -75.0f; rayposition.z = 49.0f;
+    result = D3DXSphereBoundProbe(&center, radius, &rayposition, &raydirection);
+    ok(result == FALSE, "expected FALSE, received TRUE\n");
+
     rayposition.x = 5.0f; rayposition.y = 7.0f; rayposition.z = 9.0f;
     result = D3DXSphereBoundProbe(&center, radius, &rayposition, &raydirection);
     ok(result == FALSE, "expected FALSE, received TRUE\n");

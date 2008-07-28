@@ -27,13 +27,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 BOOL WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *pcenter, FLOAT radius, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
 {
     D3DXVECTOR3 difference;
-    FLOAT a, b, c;
+    FLOAT a, b, c, d;
 
     a = D3DXVec3LengthSq(praydirection);
     if (!D3DXVec3Subtract(&difference, prayposition, pcenter)) return FALSE;
     b = D3DXVec3Dot(&difference, praydirection);
     c = D3DXVec3LengthSq(&difference) - radius * radius;
+    d = b * b - a * c;
 
-    if ( b * b - a * c <= 0.0f ) return FALSE;
+    if ( ( d <= 0.0f ) || ( sqrt(d) <= b ) ) return FALSE;
     return TRUE;
 }
