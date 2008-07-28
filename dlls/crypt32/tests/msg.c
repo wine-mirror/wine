@@ -383,9 +383,10 @@ static void test_data_msg_update(void)
     /* Can't update a message with no data */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    /* NT: E_INVALIDARG, 9x: unchanged */
-    ok(!ret && (GetLastError() == E_INVALIDARG || GetLastError() == 0xdeadbeef),
-       "Expected E_INVALIDARG or 0xdeadbeef, got 0x%x\n", GetLastError());
+    /* This test returns FALSE on XP and earlier but TRUE on Vista, so can't be tested.
+     * GetLastError is either E_INVALIDARG (NT) or unset (9x/Vista), so it doesn't
+     * make sense to test this.
+     */
 
     /* Curiously, a valid update will now fail as well, presumably because of
      * the last (invalid, but final) update.
@@ -809,10 +810,11 @@ static void test_hash_msg_get_param(void)
     /* By getting the hash, further updates are not allowed */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    /* NT: NTE_BAD_HASH_STATE, 9x: NTE_BAD_ALGID */
     ok(!ret &&
-       (GetLastError() == NTE_BAD_HASH_STATE || GetLastError() == NTE_BAD_ALGID),
-       "Expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID, got 0x%x\n", GetLastError());
+       (GetLastError() == NTE_BAD_HASH_STATE /* NT */ ||
+        GetLastError() == NTE_BAD_ALGID /* 9x */ ||
+        GetLastError() == CRYPT_E_MSG_ERROR /* Vista */),
+       "Expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID or CRYPT_E_MSG_ERROR, got 0x%x\n", GetLastError());
 
     /* Even after a final update, the hash data aren't available */
     SetLastError(0xdeadbeef);
@@ -857,10 +859,11 @@ static void test_hash_msg_get_param(void)
      */
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    /* NT: NTE_BAD_HASH_STATE, 9x: NTE_BAD_ALGID */
     ok(!ret &&
-       (GetLastError() == NTE_BAD_HASH_STATE || GetLastError() == NTE_BAD_ALGID),
-       "Expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID, got 0x%x\n", GetLastError());
+       (GetLastError() == NTE_BAD_HASH_STATE /* NT */ ||
+        GetLastError() == NTE_BAD_ALGID /* 9x */ ||
+        GetLastError() == CRYPT_E_MSG_ERROR /* Vista */),
+       "Expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID or CRYPT_E_MSG_ERROR, got 0x%x\n", GetLastError());
 
     CryptMsgClose(msg);
 }
@@ -2462,24 +2465,30 @@ static void test_msg_control(void)
     /* Again, cert info needs to have a public key set */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_EOD ||
+      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+     "Expected CRYPT_E_ASN1_EOD or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
     /* The public key is supposed to be in encoded form.. */
     certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = oid_rsa_rsa;
     certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(aKey);
     certInfo.SubjectPublicKeyInfo.PublicKey.pbData = aKey;
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+     "Expected CRYPT_E_ASN1_BADTAG or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
     /* but not as a X509_PUBLIC_KEY_INFO.. */
     certInfo.SubjectPublicKeyInfo.Algorithm.pszObjId = NULL;
     certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(encodedPubKey);
     certInfo.SubjectPublicKeyInfo.PublicKey.pbData = encodedPubKey;
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+     "Expected CRYPT_E_ASN1_BADTAG or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
     /* This decodes successfully, but it doesn't match any key in the message */
     certInfo.SubjectPublicKeyInfo.PublicKey.cbData = sizeof(mod_encoded);
     certInfo.SubjectPublicKeyInfo.PublicKey.pbData = mod_encoded;
@@ -2490,8 +2499,10 @@ static void test_msg_control(void)
      * now.
      */
     todo_wine
-    ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
-     "Expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
+    ok(!ret &&
+     (GetLastError() == NTE_BAD_SIGNATURE ||
+      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+     "Expected NTE_BAD_SIGNATURE or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
     CryptMsgClose(msg);
     /* A message with no data doesn't have a valid signature */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
@@ -2502,8 +2513,10 @@ static void test_msg_control(void)
     certInfo.SubjectPublicKeyInfo.PublicKey.pbData = pubKey;
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
-    ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
-     "Expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
+    ok(!ret &&
+     (GetLastError() == NTE_BAD_SIGNATURE ||
+      GetLastError() == TRUST_E_NOSIGNATURE /* Vista */),
+     "Expected NTE_BAD_SIGNATURE or TRUST_E_NOSIGNATURE, got %08x\n", GetLastError());
     CryptMsgClose(msg);
     /* Finally, this succeeds */
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
