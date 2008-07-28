@@ -93,13 +93,13 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "파일(&F)"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "나기기(&X)", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "보기(&V)"
     BEGIN
         MENUITEM "큰 아이콘(&G)", FCIDM_SHVIEW_BIGICON
         MENUITEM "작은 아이콘(&M)", FCIDM_SHVIEW_SMALLICON
@@ -107,9 +107,9 @@ BEGIN
         MENUITEM "자세히(&D)", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "도움말(&H)"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "제어판 정보(&A)...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -284,9 +284,9 @@ IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Bur
 
 IDS_NEWFOLDER		"새 폴더"
 
-IDS_CPANEL_TITLE            "Wine Control Panel"
-IDS_CPANEL_NAME             "Name"
-IDS_CPANEL_DESCRIPTION      "Description"
+IDS_CPANEL_TITLE            "Wine 제어판"
+IDS_CPANEL_NAME             "이름"
+IDS_CPANEL_DESCRIPTION      "설명"
 }
 
 STRINGTABLE
