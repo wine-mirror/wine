@@ -373,9 +373,12 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     DWORD sz;
     WCHAR sourcepath[MAX_PATH];
     WCHAR filename[MAX_PATH];
+    LPWSTR commandline;
+
     static const WCHAR szInstalled[] = {
         ' ','I','n','s','t','a','l','l','e','d','=','1',0};
-    LPWSTR commandline;
+    static const WCHAR szRemoveAll[] = {
+        ' ','R','E','M','O','V','E','=','A','L','L',0};
 
     TRACE("%s %d %d %s\n",debugstr_w(szProduct), iInstallLevel, eInstallState,
           debugstr_w(szCommandLine));
@@ -383,10 +386,10 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     if (!szProduct || lstrlenW(szProduct) != GUID_SIZE - 1)
         return ERROR_INVALID_PARAMETER;
 
-    if (eInstallState != INSTALLSTATE_LOCAL &&
-        eInstallState != INSTALLSTATE_DEFAULT)
+    if (eInstallState == INSTALLSTATE_ADVERTISED ||
+        eInstallState == INSTALLSTATE_SOURCE)
     {
-        FIXME("Not implemented for anything other than local installs\n");
+        FIXME("State %d not implemented\n", eInstallState);
         return ERROR_CALL_NOT_IMPLEMENTED;
     }
 
@@ -415,6 +418,9 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     if (szCommandLine)
         sz += lstrlenW(szCommandLine);
 
+    if (eInstallState == INSTALLSTATE_ABSENT)
+        sz += lstrlenW(szRemoveAll);
+
     commandline = msi_alloc(sz * sizeof(WCHAR));
     if (!commandline)
     {
@@ -428,6 +434,9 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
 
     if (MsiQueryProductStateW(szProduct) != INSTALLSTATE_UNKNOWN)
         lstrcatW(commandline,szInstalled);
+
+    if (eInstallState == INSTALLSTATE_ABSENT)
+        lstrcatW(commandline, szRemoveAll);
 
     r = MSI_InstallPackage( package, sourcepath, commandline );
 
