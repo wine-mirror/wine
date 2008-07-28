@@ -332,7 +332,7 @@ BOOL WINAPI CryptSIPRetrieveSubjectGuid
         bRet = TRUE;
         goto cleanup1;
     }
-    /* Quick-n-dirty check for a cab file.  FIXME: use FDIIsCabinet instead? */
+    /* Quick-n-dirty check for a cab file. */
     if (!memcmp(pMapped, cabHdr, sizeof(cabHdr)))
     {
         *pgSubject = cabGUID;

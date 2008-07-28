@@ -266,6 +266,24 @@ static void test_SIPRetrieveSubjectGUID(void)
     /* Clean up */
     DeleteFileA(tempfile);
 
+    /* Create a file with just the .cab header 'MSCF' */
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(tempfile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "failed with %u\n", GetLastError());
+    WriteFile(file, cabFileData, 4, &written, NULL);
+    CloseHandle(file);
+
+    SetLastError(0xdeadbeef);
+    memset(&subject, 1, sizeof(GUID));
+    ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
+    ok( ret, "CryptSIPRetrieveSubjectGuid failed: %d (0x%08x)\n",
+            GetLastError(), GetLastError() );
+    ok ( !memcmp(&subject, &cabGUID, sizeof(GUID)),
+        "Expected GUID %s for cabinet file, not %s\n", show_guid(&cabGUID, guid1), show_guid(&subject, guid2));
+
+    /* Clean up */
+    DeleteFileA(tempfile);
+
     /* Create a .cab file */
     SetLastError(0xdeadbeef);
     file = CreateFileA(tempfile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
