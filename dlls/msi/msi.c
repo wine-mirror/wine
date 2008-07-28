@@ -379,6 +379,8 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         ' ','I','n','s','t','a','l','l','e','d','=','1',0};
     static const WCHAR szRemoveAll[] = {
         ' ','R','E','M','O','V','E','=','A','L','L',0};
+    static const WCHAR szMachine[] = {
+        ' ','A','L','L','U','S','E','R','S','=','1',0};
 
     TRACE("%s %d %d %s\n",debugstr_w(szProduct), iInstallLevel, eInstallState,
           debugstr_w(szCommandLine));
@@ -421,6 +423,9 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     if (eInstallState == INSTALLSTATE_ABSENT)
         sz += lstrlenW(szRemoveAll);
 
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+        sz += lstrlenW(szMachine);
+
     commandline = msi_alloc(sz * sizeof(WCHAR));
     if (!commandline)
     {
@@ -437,6 +442,9 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
 
     if (eInstallState == INSTALLSTATE_ABSENT)
         lstrcatW(commandline, szRemoveAll);
+
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+        lstrcatW(commandline, szMachine);
 
     r = MSI_InstallPackage( package, sourcepath, commandline );
 
