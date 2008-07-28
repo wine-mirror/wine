@@ -218,9 +218,53 @@ BOOL WINAPI CryptHashMessage(PCRYPT_HASH_MESSAGE_PARA pHashPara,
  DWORD rgcbToBeHashed[], BYTE *pbHashedBlob, DWORD *pcbHashedBlob,
  BYTE *pbComputedHash, DWORD *pcbComputedHash)
 {
-    FIXME("(%p, %d, %d, %p, %p, %p, %p, %p, %p): stub\n", pHashPara,
-     fDetachedHash, cToBeHashed, rgpbToBeHashed, rgcbToBeHashed, pbHashedBlob,
-     pcbHashedBlob, pbComputedHash, pcbComputedHash);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    DWORD i, flags;
+    BOOL ret = FALSE;
+    HCRYPTMSG msg;
+    CMSG_HASHED_ENCODE_INFO info;
+
+    TRACE("(%p, %d, %d, %p, %p, %p, %p, %p, %p)\n", pHashPara, fDetachedHash,
+     cToBeHashed, rgpbToBeHashed, rgcbToBeHashed, pbHashedBlob, pcbHashedBlob,
+     pbComputedHash, pcbComputedHash);
+
+    if (pHashPara->cbSize != sizeof(CRYPT_HASH_MESSAGE_PARA))
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    /* Native seems to ignore any encoding type other than the expected
+     * PKCS_7_ASN_ENCODING
+     */
+    if (GET_CMSG_ENCODING_TYPE(pHashPara->dwMsgEncodingType) !=
+     PKCS_7_ASN_ENCODING)
+        return TRUE;
+    /* Native also seems to do nothing if the output parameter isn't given */
+    if (!pcbHashedBlob)
+        return TRUE;
+
+    flags = fDetachedHash ? CMSG_DETACHED_FLAG : 0;
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    info.hCryptProv = pHashPara->hCryptProv;
+    memcpy(&info.HashAlgorithm, &pHashPara->HashAlgorithm,
+     sizeof(info.HashAlgorithm));
+    info.pvHashAuxInfo = pHashPara->pvHashAuxInfo;
+    msg = CryptMsgOpenToEncode(pHashPara->dwMsgEncodingType, flags, CMSG_HASHED,
+     &info, NULL, NULL);
+    if (msg)
+    {
+        for (i = 0, ret = TRUE; ret && i < cToBeHashed; i++)
+            ret = CryptMsgUpdate(msg, rgpbToBeHashed[i], rgcbToBeHashed[i],
+             i == cToBeHashed - 1 ? TRUE : FALSE);
+        if (ret)
+        {
+            ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, pbHashedBlob,
+             pcbHashedBlob);
+            if (ret && pcbComputedHash)
+                ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0,
+                 pbComputedHash, pcbComputedHash);
+        }
+        CryptMsgClose(msg);
+    }
+    return ret;
 }

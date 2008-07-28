@@ -271,27 +271,23 @@ static void test_hash_message(void)
     memset(&para, 0, sizeof(para));
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got 0x%08x\n", GetLastError());
     para.cbSize = sizeof(para);
     /* Not quite sure what "success" means in this case, but it does succeed */
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
     /* With a bogus encoding type it "succeeds" */
     para.dwMsgEncodingType = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
     /* According to MSDN, the third parameter (cToBeHashed) must be 1 if the
      * second parameter (fDetached) is FALSE, but again it "succeeds."
      */
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
     /* Even passing parameters to hash results in "success." */
     SetLastError(0xdeadbeef);
@@ -301,13 +297,11 @@ static void test_hash_message(void)
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
     /* And with valid data to hash */
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL, NULL, NULL,
      NULL);
-    todo_wine
     ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
     /* But requesting the size of the hashed blob and indicating there's data
      * to hash results in a crash
@@ -323,7 +317,6 @@ static void test_hash_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_UNKNOWN_ALGO,
      "expected CRYPT_E_UNKNOWN_ALGO, got 0x%08x (%d)\n", GetLastError(),
      GetLastError());
@@ -354,7 +347,6 @@ static void test_hash_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, NULL);
-    todo_wine
     ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
     if (ret)
     {
@@ -373,7 +365,6 @@ static void test_hash_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 1, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, NULL);
-    todo_wine
     ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
     if (ret)
     {
@@ -393,9 +384,7 @@ static void test_hash_message(void)
     computedHashSize = 0xdeadbeef;
     ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, &computedHashSize);
-    todo_wine
     ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
-    todo_wine
     ok(computedHashSize == 16, "expected hash size of 16, got %d\n",
      computedHashSize);
     if (ret)
