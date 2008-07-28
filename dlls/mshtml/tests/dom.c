@@ -1018,12 +1018,21 @@ static long _elem_get_scroll_width(unsigned line, IUnknown *unk)
 static long _elem_get_scroll_top(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
-    long l = -1;
+    IHTMLTextContainer *txtcont;
+    long l = -1, l2 = -1;
     HRESULT hres;
 
     hres = IHTMLElement2_get_scrollTop(elem, &l);
     ok_(__FILE__,line) (hres == S_OK, "get_scrollTop failed: %08x\n", hres);
     IHTMLElement2_Release(elem);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLTextContainer, (void**)&txtcont);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLTextContainer: %08x\n", hres);
+
+    hres = IHTMLTextContainer_get_scrollTop(txtcont, &l2);
+    IHTMLTextContainer_Release(txtcont);
+    ok_(__FILE__,line) (hres == S_OK, "IHTMLTextContainer::get_scrollTop failed: %ld\n", l2);
+    ok_(__FILE__,line) (l == l2, "unexpected top %ld, expected %ld\n", l2, l);
 
     return l;
 }

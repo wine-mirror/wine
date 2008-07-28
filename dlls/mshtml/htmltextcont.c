@@ -128,8 +128,10 @@ static HRESULT WINAPI HTMLTextContainer_put_scrollTop(IHTMLTextContainer *iface,
 static HRESULT WINAPI HTMLTextContainer_get_scrollTop(IHTMLTextContainer *iface, long *p)
 {
     HTMLTextContainer *This = HTMLTEXTCONT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLElement2_get_scrollTop(HTMLELEM2(&This->element), p);
 }
 
 static HRESULT WINAPI HTMLTextContainer_put_scrollLeft(IHTMLTextContainer *iface, long v)
