@@ -923,7 +923,6 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSwapChain            *swapchain;
-    IWineD3DBaseTexture          *texture = NULL;
     IWineD3DSurfaceImpl          *target;
     int i;
 
@@ -933,12 +932,9 @@ void drawPrimitive(IWineD3DDevice *iface,
     for(i = 0; i < GL_LIMITS(buffers); i++) {
         target = (IWineD3DSurfaceImpl *) This->render_targets[i];
 
-        /* TODO: Only do all that if we're going to change anything
-         * Texture container dirtification does not work quite right yet
-         */
+        /* TODO: Only do all that if we're going to change anything */
         if(target /*&& target->Flags & (SFLAG_INTEXTURE | SFLAG_INSYSMEM)*/) {
             swapchain = NULL;
-            texture = NULL;
 
             if(i == 0) {
                 IWineD3DSurface_GetContainer((IWineD3DSurface *) target, &IID_IWineD3DSwapChain, (void **)&swapchain);
@@ -951,16 +947,7 @@ void drawPrimitive(IWineD3DDevice *iface,
                 if(swapchain) {
                     /* Onscreen target. Invalidate system memory copy and texture copy */
                     IWineD3DSwapChain_Release(swapchain);
-                } else if(wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
-                    /* Non-FBO target: Invalidate system copy, texture copy and dirtify the container */
-                    /* TODO: Move container dirtification to ModifyLocation */
-                    IWineD3DSurface_GetContainer((IWineD3DSurface *) target, &IID_IWineD3DBaseTexture, (void **)&texture);
-
-                    if(texture) {
-                        IWineD3DBaseTexture_SetDirty(texture, TRUE);
-                        IWineD3DTexture_Release(texture);
-                    }
-                } else {
+                } else if(wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
                     /* FBO offscreen target. Texture == Drawable */
                     target->Flags |= SFLAG_INTEXTURE;
                 }
