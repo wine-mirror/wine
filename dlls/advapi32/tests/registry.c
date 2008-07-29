@@ -159,9 +159,8 @@ static const char *wine_debugstr_wn( const WCHAR *str, int n )
 
 
 #define ADVAPI32_GET_PROC(func) \
-    p ## func = (void*)GetProcAddress(hadvapi32, #func); \
-    if(!p ## func) \
-      trace("GetProcAddress(%s) failed\n", #func);
+    p ## func = (void*)GetProcAddress(hadvapi32, #func);
+
 
 static void InitFunctionPtrs(void)
 {
@@ -332,13 +331,21 @@ static void test_set_value(void)
     test_hkey_main_Value_A(NULL, substring2A, sizeof(substring2A));
     test_hkey_main_Value_W(NULL, substring2W, sizeof(substring2W));
 
-    /* only REG_SZ is supported */
+    /* only REG_SZ is supported on NT*/
     ret = RegSetValueA(hkey_main, NULL, REG_BINARY, string2A, sizeof(string2A));
-    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    /* NT: ERROR_INVALID_PARAMETER, 9x: ERROR_SUCCESS */
+    ok(ret == ERROR_INVALID_PARAMETER || broken(ret == ERROR_SUCCESS),
+        "got %d (expected ERROR_INVALID_PARAMETER or ERROR_SUCCESS)\n", ret);
+
     ret = RegSetValueA(hkey_main, NULL, REG_EXPAND_SZ, string2A, sizeof(string2A));
-    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    /* NT: ERROR_INVALID_PARAMETER, 9x: ERROR_SUCCESS */
+    ok(ret == ERROR_INVALID_PARAMETER || broken(ret == ERROR_SUCCESS),
+        "got %d (expected ERROR_INVALID_PARAMETER or ERROR_SUCCESS)\n", ret);
+
     ret = RegSetValueA(hkey_main, NULL, REG_MULTI_SZ, string2A, sizeof(string2A));
-    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have returned ERROR_INVALID_PARAMETER instead of %d\n", ret);
+    /* NT: ERROR_INVALID_PARAMETER, 9x: ERROR_SUCCESS */
+    ok(ret == ERROR_INVALID_PARAMETER || broken(ret == ERROR_SUCCESS),
+        "got %d (expected ERROR_INVALID_PARAMETER or ERROR_SUCCESS)\n", ret);
 
     /* Test RegSetValueExA with a 'zero-byte' string (as Office 2003 does).
      * Surprisingly enough we're supposed to get zero bytes out of it.
