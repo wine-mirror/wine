@@ -586,13 +586,9 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
 
 extern int sigaction_syscall( int sig, const struct sigaction *new, struct sigaction *old );
 __ASM_GLOBAL_FUNC( sigaction_syscall,
-                  "call 1f\n"
-                  "1:\tpopl %edx\n\t"
                   "movl $0x62,%eax\n\t"
-                  "add $[2f-1b],%edx\n\t"
-                  "movl %esp,%ecx\n\t"
-                  "sysenter\n"
-                  "2:\tret" )
+                  "int $0x91\n\t"
+                  "ret" )
 
 /* assume the same libc handler is used for all signals */
 static void (*libc_sigacthandler)( int signal, siginfo_t *siginfo, void *context );
