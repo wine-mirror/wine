@@ -7239,15 +7239,92 @@ static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, WINED3DPRESENT_P
     return FALSE;
 }
 
+void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) swapchain_iface;
+    UINT i;
+    IWineD3DBaseShaderImpl *shader;
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        reset_fbo_state((IWineD3DDevice *) This);
+    }
+
+    IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
+    LIST_FOR_EACH_ENTRY(shader, &This->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry) {
+        This->shader_backend->shader_destroy((IWineD3DBaseShader *) shader);
+    }
+
+    ENTER_GL();
+    if(This->depth_blt_texture) {
+        glDeleteTextures(1, &This->depth_blt_texture);
+        This->depth_blt_texture = 0;
+    }
+    if (This->depth_blt_rb) {
+        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &This->depth_blt_rb));
+        This->depth_blt_rb = 0;
+        This->depth_blt_rb_w = 0;
+        This->depth_blt_rb_h = 0;
+    }
+    This->frag_pipe->free_private(iface);
+    This->shader_backend->shader_free_private(iface);
+
+    for (i = 0; i < GL_LIMITS(textures); i++) {
+        /* Textures are recreated below */
+        glDeleteTextures(1, &This->dummyTextureName[i]);
+        checkGLcall("glDeleteTextures(1, &This->dummyTextureName[i])");
+        This->dummyTextureName[i] = 0;
+    }
+    LEAVE_GL();
+
+    while(This->numContexts) {
+        DestroyContext(This, This->contexts[0]);
+    }
+    This->activeContext = NULL;
+    HeapFree(GetProcessHeap(), 0, swapchain->context);
+    swapchain->context = NULL;
+    swapchain->num_contexts = 0;
+}
+
+HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) swapchain_iface;
+    HRESULT hr;
+    IWineD3DSurfaceImpl *target;
+
+    /* Recreate the primary swapchain's context */
+    swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
+    if(swapchain->backBuffer) {
+        target = (IWineD3DSurfaceImpl *) swapchain->backBuffer[0];
+    } else {
+        target = (IWineD3DSurfaceImpl *) swapchain->frontBuffer;
+    }
+    swapchain->context[0] = CreateContext(This, target, swapchain->win_handle, FALSE,
+                                          &swapchain->presentParms);
+    swapchain->num_contexts = 1;
+    This->activeContext = swapchain->context[0];
+
+    create_dummy_textures(This);
+
+    hr = This->shader_backend->shader_alloc_private(iface);
+    if(FAILED(hr)) {
+        ERR("Failed to recreate shader private data\n");
+        return hr;
+    }
+    hr = This->frag_pipe->alloc_private(iface);
+    if(FAILED(hr)) {
+        TRACE("Fragment pipeline private data couldn't be allocated\n");
+        return hr;
+    }
+
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain;
     HRESULT hr;
     BOOL DisplayModeChanged = FALSE;
     WINED3DDISPLAYMODE mode;
-    IWineD3DBaseShaderImpl *shader;
-    IWineD3DSurfaceImpl *target;
-    UINT i;
     TRACE("(%p)\n", This);
 
     hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &swapchain);
@@ -7308,46 +7385,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         ERR("What do do about a changed auto depth stencil parameter?\n");
     }
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        reset_fbo_state((IWineD3DDevice *) This);
-    }
+    delete_opengl_contexts(iface, (IWineD3DSwapChain *) swapchain);
 
-    IWineD3DDevice_EnumResources(iface, reset_unload_resources, NULL);
-    LIST_FOR_EACH_ENTRY(shader, &This->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry) {
-        This->shader_backend->shader_destroy((IWineD3DBaseShader *) shader);
-    }
-
-    ENTER_GL();
-    if(This->depth_blt_texture) {
-        glDeleteTextures(1, &This->depth_blt_texture);
-        This->depth_blt_texture = 0;
-    }
-    if (This->depth_blt_rb) {
-        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &This->depth_blt_rb));
-        This->depth_blt_rb = 0;
-        This->depth_blt_rb_w = 0;
-        This->depth_blt_rb_h = 0;
-    }
-    This->frag_pipe->free_private(iface);
-    This->shader_backend->shader_free_private(iface);
-
-    for (i = 0; i < GL_LIMITS(textures); i++) {
-        /* Textures are recreated below */
-        glDeleteTextures(1, &This->dummyTextureName[i]);
-        checkGLcall("glDeleteTextures(1, &This->dummyTextureName[i])");
-        This->dummyTextureName[i] = 0;
-    }
-    LEAVE_GL();
-
-    while(This->numContexts) {
-        DestroyContext(This, This->contexts[0]);
-    }
-    This->activeContext = NULL;
-    HeapFree(GetProcessHeap(), 0, swapchain->context);
-    swapchain->context = NULL;
-    swapchain->num_contexts = 0;
-
-     if(pPresentationParameters->Windowed) {
+    if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
         mode.Height = swapchain->orig_height;
         mode.RefreshRate = 0;
@@ -7413,41 +7453,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         This->exStyle = exStyle;
     }
 
-    /* Recreate the primary swapchain's context */
-    swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
-    if(swapchain->backBuffer) {
-        target = (IWineD3DSurfaceImpl *) swapchain->backBuffer[0];
-    } else {
-        target = (IWineD3DSurfaceImpl *) swapchain->frontBuffer;
-    }
-    swapchain->context[0] = CreateContext(This, target, swapchain->win_handle, FALSE,
-                                          &swapchain->presentParms);
-    swapchain->num_contexts = 1;
-    This->activeContext = swapchain->context[0];
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-
     hr = IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *) This->stateBlock);
     if(FAILED(hr)) {
         ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
     }
-    create_dummy_textures(This);
 
-
-    hr = This->shader_backend->shader_alloc_private(iface);
-    if(FAILED(hr)) {
-        ERR("Failed to recreate shader private data\n");
-        return hr;
-    }
-    hr = This->frag_pipe->alloc_private(iface);
-    if(FAILED(hr)) {
-        TRACE("Fragment pipeline private data couldn't be allocated\n");
-        return hr;
-    }
+    hr = create_primary_opengl_context(iface, (IWineD3DSwapChain *) swapchain);
+    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
      * first use
      */
-    return WINED3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetDialogBoxMode(IWineD3DDevice *iface, BOOL bEnableDialogs) {

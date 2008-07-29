@@ -149,11 +149,13 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
         TRACE("Performing dest override of swapchain %p from window %p to %p\n", This, This->win_handle, hDestWindowOverride);
         if(This->context[0] == This->wineD3DDevice->contexts[0]) {
-            /* The primary context 'owns' all the opengl resources. Destroying and recreating that context would require downloading
+            /* The primary context 'owns' all the opengl resources. Destroying and recreating that context requires downloading
              * all opengl resources, deleting the gl resources, destroying all other contexts, then recreating all other contexts
              * and reload the resources
              */
-            ERR("Cannot change the destination window of the owner of the primary context\n");
+            delete_opengl_contexts((IWineD3DDevice *) This->wineD3DDevice, iface);
+            This->win_handle             = hDestWindowOverride;
+            create_primary_opengl_context((IWineD3DDevice *) This->wineD3DDevice, iface);
         } else {
             This->win_handle             = hDestWindowOverride;
 
