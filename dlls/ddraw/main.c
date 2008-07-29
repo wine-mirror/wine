@@ -281,59 +281,6 @@ DDRAW_Create(const GUID *guid,
     /* Get the amount of video memory */
     This->total_vidmem = IWineD3DDevice_GetAvailableTextureMem(This->wineD3DDevice);
 
-    /* Initialize the caps */
-    This->caps.dwSize = sizeof(This->caps);
-/* do not report DDCAPS_OVERLAY and friends since we don't support overlays */
-#define BLIT_CAPS (DDCAPS_BLT | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL \
-          | DDCAPS_BLTSTRETCH | DDCAPS_CANBLTSYSMEM | DDCAPS_CANCLIP	  \
-          | DDCAPS_CANCLIPSTRETCHED | DDCAPS_COLORKEY			  \
-          | DDCAPS_COLORKEYHWASSIST | DDCAPS_ALIGNBOUNDARYSRC )
-#define CKEY_CAPS (DDCKEYCAPS_DESTBLT | DDCKEYCAPS_SRCBLT)
-#define FX_CAPS (DDFXCAPS_BLTALPHA | DDFXCAPS_BLTMIRRORLEFTRIGHT	\
-                | DDFXCAPS_BLTMIRRORUPDOWN | DDFXCAPS_BLTROTATION90	\
-                | DDFXCAPS_BLTSHRINKX | DDFXCAPS_BLTSHRINKXN		\
-                | DDFXCAPS_BLTSHRINKY | DDFXCAPS_BLTSHRINKXN		\
-                | DDFXCAPS_BLTSTRETCHX | DDFXCAPS_BLTSTRETCHXN		\
-                | DDFXCAPS_BLTSTRETCHY | DDFXCAPS_BLTSTRETCHYN)
-    This->caps.dwCaps |= DDCAPS_GDI | DDCAPS_PALETTE | BLIT_CAPS;
-
-    This->caps.dwCaps2 |= DDCAPS2_CERTIFIED | DDCAPS2_NOPAGELOCKREQUIRED |
-                          DDCAPS2_PRIMARYGAMMA | DDCAPS2_WIDESURFACES |
-                          DDCAPS2_CANRENDERWINDOWED;
-    This->caps.dwCKeyCaps |= CKEY_CAPS;
-    This->caps.dwFXCaps |= FX_CAPS;
-    This->caps.dwPalCaps |= DDPCAPS_8BIT | DDPCAPS_PRIMARYSURFACE;
-    This->caps.dwVidMemTotal = This->total_vidmem;
-    This->caps.dwVidMemFree = This->total_vidmem;
-    This->caps.dwSVBCaps |= BLIT_CAPS;
-    This->caps.dwSVBCKeyCaps |= CKEY_CAPS;
-    This->caps.dwSVBFXCaps |= FX_CAPS;
-    This->caps.dwVSBCaps |= BLIT_CAPS;
-    This->caps.dwVSBCKeyCaps |= CKEY_CAPS;
-    This->caps.dwVSBFXCaps |= FX_CAPS;
-    This->caps.dwSSBCaps |= BLIT_CAPS;
-    This->caps.dwSSBCKeyCaps |= CKEY_CAPS;
-    This->caps.dwSSBFXCaps |= FX_CAPS;
-    This->caps.ddsCaps.dwCaps |= DDSCAPS_ALPHA | DDSCAPS_BACKBUFFER |
-                                 DDSCAPS_FLIP | DDSCAPS_FRONTBUFFER |
-                                 DDSCAPS_OFFSCREENPLAIN | DDSCAPS_PALETTE |
-                                 DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
-                                 DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE;
-    /* Hacks for D3D code */
-    /* TODO: Check if WineD3D has 3D enabled
-       Need opengl surfaces or auto for 3D
-     */
-    if(This->ImplType == 0 || This->ImplType == SURFACE_OPENGL)
-    {
-        This->caps.dwCaps |= DDCAPS_3D;
-        This->caps.ddsCaps.dwCaps |= DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER;
-    }
-    This->caps.ddsOldCaps.dwCaps = This->caps.ddsCaps.dwCaps;
-
-#undef BLIT_CAPS
-#undef CKEY_CAPS
-#undef FX_CAPS
-
     list_init(&This->surface_list);
     list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
 

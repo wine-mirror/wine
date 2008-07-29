@@ -700,6 +700,10 @@ IDirectDrawImpl_GetCaps(IDirectDraw7 *iface,
                         DDCAPS *HELCaps)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
+    DDCAPS caps;
+    WINED3DCAPS winecaps;
+    HRESULT hr;
+    DDSCAPS2 ddscaps = {0, 0, 0, 0};
     TRACE("(%p)->(%p,%p)\n", This, DriverCaps, HELCaps);
 
     /* One structure must be != NULL */
@@ -709,9 +713,55 @@ IDirectDrawImpl_GetCaps(IDirectDraw7 *iface,
         return DDERR_INVALIDPARAMS;
     }
 
+    memset(&caps, 0, sizeof(caps));
+    memset(&winecaps, 0, sizeof(winecaps));
+    caps.dwSize = sizeof(caps);
+    EnterCriticalSection(&ddraw_cs);
+    hr = IWineD3DDevice_GetDeviceCaps(This->wineD3DDevice, &winecaps);
+    if(FAILED(hr)) {
+        WARN("IWineD3DDevice::GetDeviceCaps failed\n");
+        LeaveCriticalSection(&ddraw_cs);
+        return hr;
+    }
+
+    hr = IDirectDraw7_GetAvailableVidMem(iface, &ddscaps, &caps.dwVidMemTotal, &caps.dwVidMemFree);
+    LeaveCriticalSection(&ddraw_cs);
+    if(FAILED(hr)) {
+        WARN("IDirectDraw7::GetAvailableVidMem failed\n");
+        return hr;
+    }
+
+    caps.dwCaps = winecaps.DirectDrawCaps.Caps;
+    caps.dwCaps2 = winecaps.DirectDrawCaps.Caps2;
+    caps.dwCKeyCaps = winecaps.DirectDrawCaps.CKeyCaps;
+    caps.dwFXCaps = winecaps.DirectDrawCaps.FXCaps;
+    caps.dwPalCaps = winecaps.DirectDrawCaps.PalCaps;
+    caps.ddsCaps.dwCaps = winecaps.DirectDrawCaps.ddsCaps;
+    caps.dwSVBCaps = winecaps.DirectDrawCaps.SVBCaps;
+    caps.dwSVBCKeyCaps = winecaps.DirectDrawCaps.SVBCKeyCaps;
+    caps.dwSVBFXCaps = winecaps.DirectDrawCaps.SVBFXCaps;
+    caps.dwVSBCaps = winecaps.DirectDrawCaps.VSBCaps;
+    caps.dwVSBCKeyCaps = winecaps.DirectDrawCaps.VSBCKeyCaps;
+    caps.dwVSBFXCaps = winecaps.DirectDrawCaps.VSBFXCaps;
+    caps.dwSSBCaps = winecaps.DirectDrawCaps.SSBCaps;
+    caps.dwSSBCKeyCaps = winecaps.DirectDrawCaps.SSBCKeyCaps;
+    caps.dwSSBFXCaps = winecaps.DirectDrawCaps.SSBFXCaps;
+
+    /* Even if WineD3D supports 3D rendering, remove the cap if ddraw is configured
+     * not to use it
+     */
+    if(DefaultSurfaceType == SURFACE_GDI) {
+        caps.dwCaps &= ~DDCAPS_3D;
+        caps.ddsCaps.dwCaps &= ~(DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER);
+    }
+    if(winecaps.DirectDrawCaps.StrideAlign != 0) {
+        caps.dwCaps |= DDCAPS_ALIGNSTRIDE;
+        caps.dwAlignStrideAlign = winecaps.DirectDrawCaps.StrideAlign;
+    }
+
     if(DriverCaps)
     {
-        DD_STRUCT_COPY_BYSIZE(DriverCaps, &This->caps);
+        DD_STRUCT_COPY_BYSIZE(DriverCaps, &caps);
         if (TRACE_ON(ddraw))
         {
             TRACE("Driver Caps :\n");
@@ -721,7 +771,7 @@ IDirectDrawImpl_GetCaps(IDirectDraw7 *iface,
     }
     if(HELCaps)
     {
-        DD_STRUCT_COPY_BYSIZE(HELCaps, &This->caps);
+        DD_STRUCT_COPY_BYSIZE(HELCaps, &caps);
         if (TRACE_ON(ddraw))
         {
             TRACE("HEL Caps :\n");

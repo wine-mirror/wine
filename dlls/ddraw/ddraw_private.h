@@ -128,8 +128,6 @@ struct IDirectDrawImpl
     DWORD                   orig_width, orig_height;
     DWORD                   orig_bpp;
 
-    DDCAPS                  caps;
-
     /* D3D things */
     IDirectDrawSurfaceImpl  *d3d_target;
     HWND                    d3d_window;

@@ -29,7 +29,6 @@
 #define DEBUG_SINGLE_MODE 0
 #endif
 
-
 #include "config.h"
 #include <assert.h>
 #include "wined3d_private.h"
@@ -2942,6 +2941,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     struct fragment_caps fragment_caps;
     const shader_backend_t *shader_backend;
     const struct fragment_pipeline *frag_pipeline = NULL;
+    DWORD ckey_caps, blit_caps, fx_caps;
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
@@ -3428,6 +3428,67 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     } else
         pCaps->DeclTypes                         = 0;
 
+    /* Set DirectDraw helper Caps */
+    ckey_caps =                         WINEDDCKEYCAPS_DESTBLT              |
+                                        WINEDDCKEYCAPS_SRCBLT;
+    fx_caps =                           WINEDDFXCAPS_BLTALPHA               |
+                                        WINEDDFXCAPS_BLTMIRRORLEFTRIGHT     |
+                                        WINEDDFXCAPS_BLTMIRRORUPDOWN        |
+                                        WINEDDFXCAPS_BLTROTATION90          |
+                                        WINEDDFXCAPS_BLTSHRINKX             |
+                                        WINEDDFXCAPS_BLTSHRINKXN            |
+                                        WINEDDFXCAPS_BLTSHRINKY             |
+                                        WINEDDFXCAPS_BLTSHRINKXN            |
+                                        WINEDDFXCAPS_BLTSTRETCHX            |
+                                        WINEDDFXCAPS_BLTSTRETCHXN           |
+                                        WINEDDFXCAPS_BLTSTRETCHY            |
+                                        WINEDDFXCAPS_BLTSTRETCHYN;
+    blit_caps =                         WINEDDCAPS_BLT                      |
+                                        WINEDDCAPS_BLTCOLORFILL             |
+                                        WINEDDCAPS_BLTDEPTHFILL             |
+                                        WINEDDCAPS_BLTSTRETCH               |
+                                        WINEDDCAPS_CANBLTSYSMEM             |
+                                        WINEDDCAPS_CANCLIP                  |
+                                        WINEDDCAPS_CANCLIPSTRETCHED         |
+                                        WINEDDCAPS_COLORKEY                 |
+                                        WINEDDCAPS_COLORKEYHWASSIST         |
+                                        WINEDDCAPS_ALIGNBOUNDARYSRC;
+
+    /* Fill the ddraw caps structure */
+    pCaps->DirectDrawCaps.Caps =        WINEDDCAPS_GDI                      |
+                                        WINEDDCAPS_PALETTE                  |
+                                        blit_caps                           |
+                                        WINEDDCAPS_3D; /* TODO: Make conditional */
+    pCaps->DirectDrawCaps.Caps2 =       WINEDDCAPS2_CERTIFIED                |
+                                        WINEDDCAPS2_NOPAGELOCKREQUIRED       |
+                                        WINEDDCAPS2_PRIMARYGAMMA             |
+                                        WINEDDCAPS2_WIDESURFACES             |
+                                        WINEDDCAPS2_CANRENDERWINDOWED;
+    pCaps->DirectDrawCaps.SVBCaps =     blit_caps;
+    pCaps->DirectDrawCaps.SVBCKeyCaps = ckey_caps;
+    pCaps->DirectDrawCaps.SVBFXCaps =   fx_caps;
+    pCaps->DirectDrawCaps.VSBCaps =     blit_caps;
+    pCaps->DirectDrawCaps.VSBCKeyCaps = ckey_caps;
+    pCaps->DirectDrawCaps.VSBFXCaps =   fx_caps;
+    pCaps->DirectDrawCaps.SSBCaps =     blit_caps;
+    pCaps->DirectDrawCaps.SSBCKeyCaps = ckey_caps;
+    pCaps->DirectDrawCaps.SSBFXCaps =   fx_caps;
+
+    pCaps->DirectDrawCaps.ddsCaps =     WINEDDSCAPS_ALPHA                   |
+                                        WINEDDSCAPS_BACKBUFFER              |
+                                        WINEDDSCAPS_FLIP                    |
+                                        WINEDDSCAPS_FRONTBUFFER             |
+                                        WINEDDSCAPS_OFFSCREENPLAIN          |
+                                        WINEDDSCAPS_PALETTE                 |
+                                        WINEDDSCAPS_PRIMARYSURFACE          |
+                                        WINEDDSCAPS_SYSTEMMEMORY            |
+                                        WINEDDSCAPS_VIDEOMEMORY             |
+                                        WINEDDSCAPS_VISIBLE                 |
+                                        WINEDDSCAPS_3DDEVICE                | /* TODO: Make conditional */
+                                        WINEDDSCAPS_MIPMAP                  | /* TODO: Make conditional */
+                                        WINEDDSCAPS_TEXTURE                 | /* TODO: Make conditional */
+                                        WINEDDSCAPS_ZBUFFER;                  /* TODO: Make conditional */
+    pCaps->DirectDrawCaps.StrideAlign = 0; /* TODO: SURFACE_ALIGNMENT */
     return WINED3D_OK;
 }
 

@@ -1112,6 +1112,27 @@ typedef struct _WINED3DPSHADERCAPS2_0 {
   INT    NumInstructionSlots;
 } WINED3DPSHADERCAPS2_0;
 
+typedef struct _WINEDDCAPS {
+    DWORD Caps;
+    DWORD Caps2;
+    DWORD CKeyCaps;
+    DWORD FXCaps;
+    DWORD FXAlphaCaps;
+    DWORD PalCaps;
+    DWORD SVCaps;
+    DWORD SVBCaps;
+    DWORD SVBCKeyCaps;
+    DWORD SVBFXCaps;
+    DWORD VSBCaps;
+    DWORD VSBCKeyCaps;
+    DWORD VSBFXCaps;
+    DWORD SSBCaps;
+    DWORD SSBCKeyCaps;
+    DWORD SSBFXCaps;
+    DWORD ddsCaps;
+    DWORD StrideAlign;
+} WINEDDCAPS;
+
 typedef struct _WINED3DCAPS {
   WINED3DDEVTYPE      DeviceType;
   UINT                AdapterOrdinal;
@@ -1204,6 +1225,7 @@ typedef struct _WINED3DCAPS {
   DWORD               Reserved2;/* Not in the microsoft headers but documented */
   DWORD               Reserved3;
 
+  WINEDDCAPS          DirectDrawCaps;
 } WINED3DCAPS;
 
 typedef enum _WINED3DSTATEBLOCKTYPE {
