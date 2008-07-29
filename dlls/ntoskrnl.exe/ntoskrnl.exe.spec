@@ -355,7 +355,7 @@
 @ stub IoDeleteController
 @ stdcall IoDeleteDevice(ptr)
 @ stdcall IoDeleteDriver(ptr)
-@ stub IoDeleteSymbolicLink
+@ stdcall IoDeleteSymbolicLink(ptr)
 @ stub IoDetachDevice
 @ stub IoDeviceHandlerObjectSize
 @ stub IoDeviceHandlerObjectType

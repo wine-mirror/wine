@@ -441,6 +441,16 @@ NTSTATUS WINAPI IoCreateSymbolicLink( UNICODE_STRING *name, UNICODE_STRING *targ
 
 
 /***********************************************************************
+ *           IoDeleteSymbolicLink   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoDeleteSymbolicLink( UNICODE_STRING *name )
+{
+    FIXME( "%s\n", debugstr_us(name) );
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
  *           IofCompleteRequest   (NTOSKRNL.EXE.@)
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
