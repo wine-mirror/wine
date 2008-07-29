@@ -880,6 +880,20 @@ static void test_timer_queue(void)
     ok(!ret, "DeleteTimerQueueEx\n");
     ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
     ok(d1.num_calls == 1, "DeleteTimerQueueTimer\n");
+
+    /* Test functions on the default timer queue.  */
+    t1 = NULL;
+    n1 = 0;
+    ret = pCreateTimerQueueTimer(&t1, NULL, timer_queue_cb1, &n1, 1000,
+                                 1000, 0);
+    ok(ret, "CreateTimerQueueTimer, default queue\n");
+    ok(t1 != NULL, "CreateTimerQueueTimer, default queue\n");
+
+    ret = pChangeTimerQueueTimer(NULL, t1, 2000, 2000);
+    ok(ret, "ChangeTimerQueueTimer, default queue\n");
+
+    ret = pDeleteTimerQueueTimer(NULL, t1, INVALID_HANDLE_VALUE);
+    ok(ret, "DeleteTimerQueueTimer, default queue\n");
 }
 
 START_TEST(sync)
