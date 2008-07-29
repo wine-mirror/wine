@@ -3527,7 +3527,7 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
         GL_EXTCALL(glDeleteObjectARB(priv->depth_blt_glsl_program_id));
     }
 
-    hash_table_destroy(priv->glsl_program_lookup);
+    hash_table_destroy(priv->glsl_program_lookup, NULL, NULL);
 
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
     This->shader_priv = NULL;

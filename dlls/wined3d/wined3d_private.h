@@ -68,7 +68,7 @@ typedef struct {
 } hash_table_t;
 
 hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function);
-void hash_table_destroy(hash_table_t *table);
+void hash_table_destroy(hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb);
 void *hash_table_get(hash_table_t *table, void *key);
 void hash_table_put(hash_table_t *table, void *key, void *value);
 void hash_table_remove(hash_table_t *table, void *key);
@@ -761,12 +761,13 @@ struct ffp_settings {
 struct ffp_desc
 {
     struct ffp_settings         settings;
-    struct list                 entry;
 };
 
 void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *settings, BOOL ignore_textype);
-struct ffp_desc *find_ffp_shader(struct list *shaders, struct ffp_settings *settings);
-void add_ffp_shader(struct list *shaders, struct ffp_desc *desc);
+struct ffp_desc *find_ffp_shader(hash_table_t *fragment_shaders, struct ffp_settings *settings);
+void add_ffp_shader(hash_table_t *shaders, struct ffp_desc *desc);
+BOOL ffp_program_key_compare(void *keya, void *keyb);
+unsigned int ffp_program_key_hash(void *key);
 
 /*****************************************************************************
  * IWineD3D implementation structure

@@ -1576,12 +1576,15 @@ hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function
     return table;
 }
 
-void hash_table_destroy(hash_table_t *table)
+void hash_table_destroy(hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb)
 {
     unsigned int i = 0;
 
     for (i = 0; i < table->entry_count; ++i)
     {
+        if(free_value) {
+            free_value(table->entries[i].value, cb);
+        }
         HeapFree(GetProcessHeap(), 0, table->entries[i].key);
     }
 
@@ -1953,26 +1956,18 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
 }
 #undef GLINFO_LOCATION
 
-struct ffp_desc *find_ffp_shader(struct list *shaders, struct ffp_settings *settings)
+struct ffp_desc *find_ffp_shader(hash_table_t *fragment_shaders, struct ffp_settings *settings)
 {
-    struct ffp_desc *entry;
+    return (struct ffp_desc *)hash_table_get(fragment_shaders, settings);}
 
-    /* TODO: Optimize this. Finding the shader can be optimized by e.g. sorting the list,
-     * or maybe consider using hashtables
+void add_ffp_shader(hash_table_t *shaders, struct ffp_desc *desc) {
+    struct ffp_settings *key = HeapAlloc(GetProcessHeap(), 0, sizeof(*key));
+    /* Note that the key is the implementation independent part of the ffp_desc structure,
+     * whereas desc points to an extended structure with implementation specific parts.
+     * Make a copy of the key because hash_table_put takes ownership of it
      */
-    LIST_FOR_EACH_ENTRY(entry, shaders, struct ffp_desc, entry) {
-        if(memcmp(settings, &entry->settings, sizeof(*settings)) == 0) {
-            TRACE("Found shader entry %p\n", entry);
-            return entry;
-        }
-    }
-
-    TRACE("Shader not found\n");
-    return NULL;
-}
-
-void add_ffp_shader(struct list *shaders, struct ffp_desc *desc) {
-    list_add_head(shaders, &desc->entry);
+    *key = desc->settings;
+    hash_table_put(shaders, key, desc);
 }
 
 /* Activates the texture dimension according to the bound D3D texture.
@@ -2069,3 +2064,36 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     texture_activate_dimensions(sampler, stateblock, context);
 }
 #undef GLINFO_LOCATION
+
+unsigned int ffp_program_key_hash(void *key) {
+    struct ffp_settings *k = (struct ffp_settings *)key;
+    unsigned int hash = 0, i;
+    DWORD *blob;
+
+    /* This takes the texture op settings of stage 0 and 1 into account.
+     * how exactly depends on the memory laybout of the compiler, but it
+     * should not matter too much. Stages > 1 are used rarely, so there's
+     * no need to process them. Even if they're used it is likely that
+     * the ffp setup has distinct stage 0 and 1 settings.
+     */
+    for(i = 0; i < 2; i++) {
+        blob = (DWORD *) &k->op[i];
+        hash ^= blob[0] ^ blob[1];
+    }
+
+    hash += ~(hash << 15);
+    hash ^=  (hash >> 10);
+    hash +=  (hash << 3);
+    hash ^=  (hash >> 6);
+    hash += ~(hash << 11);
+    hash ^=  (hash >> 16);
+
+    return hash;
+}
+
+BOOL ffp_program_key_compare(void *keya, void *keyb) {
+    struct ffp_settings *ka = (struct ffp_settings *)keya;
+    struct ffp_settings *kb = (struct ffp_settings *)keyb;
+
+    return memcmp(ka, kb, sizeof(*ka)) == 0;
+}

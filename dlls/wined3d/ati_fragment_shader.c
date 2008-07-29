@@ -50,7 +50,7 @@ struct atifs_ffp_desc
 
 struct atifs_private_data
 {
-    struct list fragment_shaders; /* A linked list to track fragment pipeline replacement shaders */
+    hash_table_t *fragment_shaders; /* A hashtable to track fragment pipeline replacement shaders */
 
 };
 
@@ -786,7 +786,7 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
     unsigned int i;
 
     gen_ffp_op(stateblock, &settings, TRUE);
-    desc = (struct atifs_ffp_desc *) find_ffp_shader(&priv->fragment_shaders, &settings);
+    desc = (struct atifs_ffp_desc *) find_ffp_shader(priv->fragment_shaders, &settings);
     if(!desc) {
         desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*desc));
         if(!desc) {
@@ -801,7 +801,7 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
 
         memcpy(&desc->parent.settings, &settings, sizeof(settings));
         desc->shader = gen_ati_shader(settings.op, &GLINFO_LOCATION);
-        add_ffp_shader(&priv->fragment_shaders, &desc->parent);
+        add_ffp_shader(priv->fragment_shaders, &desc->parent);
         TRACE("Allocated fixed function replacement shader descriptor %p\n", desc);
     }
 
@@ -1036,26 +1036,28 @@ static HRESULT atifs_alloc(IWineD3DDevice *iface) {
         return E_OUTOFMEMORY;
     }
     priv = (struct atifs_private_data *) This->fragment_priv;
-    list_init(&priv->fragment_shaders);
+    priv->fragment_shaders = hash_table_create(ffp_program_key_hash, ffp_program_key_compare);
     return WINED3D_OK;
 }
 
 #define GLINFO_LOCATION This->adapter->gl_info
+static void atifs_free_ffpshader(void *value, void *device) {
+    IWineD3DDeviceImpl *This = device;
+    struct atifs_ffp_desc *entry_ati = value;
+
+    ENTER_GL();
+    GL_EXTCALL(glDeleteFragmentShaderATI(entry_ati->shader));
+    checkGLcall("glDeleteFragmentShaderATI(entry->shader)");
+    HeapFree(GetProcessHeap(), 0, entry_ati);
+    LEAVE_GL();
+}
+
 static void atifs_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct atifs_private_data *priv = (struct atifs_private_data *) This->fragment_priv;
-    struct ffp_desc *entry, *entry2;
-    struct atifs_ffp_desc *entry_ati;
 
-    ENTER_GL();
-    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &priv->fragment_shaders, struct ffp_desc, entry) {
-        entry_ati = (struct atifs_ffp_desc *) entry;
-        GL_EXTCALL(glDeleteFragmentShaderATI(entry_ati->shader));
-        checkGLcall("glDeleteFragmentShaderATI(entry->shader)");
-        list_remove(&entry->entry);
-        HeapFree(GetProcessHeap(), 0, entry);
-    }
-    LEAVE_GL();
+    hash_table_destroy(priv->fragment_shaders, atifs_free_ffpshader, This);
+
     HeapFree(GetProcessHeap(), 0, priv);
     This->fragment_priv = NULL;
 }
