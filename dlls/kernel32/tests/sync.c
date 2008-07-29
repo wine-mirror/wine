@@ -894,6 +894,47 @@ static void test_timer_queue(void)
 
     ret = pDeleteTimerQueueTimer(NULL, t1, INVALID_HANDLE_VALUE);
     ok(ret, "DeleteTimerQueueTimer, default queue\n");
+
+    /* Try mixing default and non-default queues.  Apparently this works.  */
+    q = pCreateTimerQueue();
+    ok(q != NULL, "CreateTimerQueue\n");
+
+    t1 = NULL;
+    n1 = 0;
+    ret = pCreateTimerQueueTimer(&t1, q, timer_queue_cb1, &n1, 1000,
+                                 1000, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t1 != NULL, "CreateTimerQueueTimer\n");
+
+    t2 = NULL;
+    n2 = 0;
+    ret = pCreateTimerQueueTimer(&t2, NULL, timer_queue_cb1, &n2, 1000,
+                                 1000, 0);
+    ok(ret, "CreateTimerQueueTimer\n");
+    ok(t2 != NULL, "CreateTimerQueueTimer\n");
+
+    ret = pChangeTimerQueueTimer(NULL, t1, 2000, 2000);
+    ok(ret, "ChangeTimerQueueTimer\n");
+
+    ret = pChangeTimerQueueTimer(q, t2, 2000, 2000);
+    ok(ret, "ChangeTimerQueueTimer\n");
+
+    ret = pDeleteTimerQueueTimer(NULL, t1, INVALID_HANDLE_VALUE);
+    ok(ret, "DeleteTimerQueueTimer\n");
+
+    ret = pDeleteTimerQueueTimer(q, t2, INVALID_HANDLE_VALUE);
+    ok(ret, "DeleteTimerQueueTimer\n");
+
+    /* Try to delete the default queue?  In any case: not allowed.  */
+    SetLastError(0xdeadbeef);
+    ret = pDeleteTimerQueueEx(NULL, NULL);
+    ok(!ret, "DeleteTimerQueueEx\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "DeleteTimerQueueEx\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pDeleteTimerQueueEx(q, NULL);
+    ok(!ret, "DeleteTimerQueueEx\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
 }
 
 START_TEST(sync)
