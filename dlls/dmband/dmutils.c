@@ -63,7 +63,8 @@ BOOL IS_VALID_DMFORM (FOURCC chunkID) {
 /* generic flag-dumping function */
 static const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_names){
 	static char buffer[128] = "", *ptr = &buffer[0];
-	unsigned int i, size = sizeof(buffer);
+	unsigned int i;
+	int size = sizeof(buffer);
 
 	for (i=0; i < num_names; i++) {
 		if ((flags & names[i].val)) {
