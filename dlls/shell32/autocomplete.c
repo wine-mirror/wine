@@ -61,8 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct
 {
-    const IAutoCompleteVtbl  *lpVtbl;
-    const IAutoComplete2Vtbl *lpvtblAutoComplete2;
+    const IAutoComplete2Vtbl  *lpVtbl;
     LONG ref;
     BOOL  enabled;
     HWND hwndEdit;
@@ -75,20 +74,14 @@ typedef struct
     AUTOCOMPLETEOPTIONS options;
 } IAutoCompleteImpl;
 
-static const IAutoCompleteVtbl acvt;
-static const IAutoComplete2Vtbl ac2vt;
-
-static inline IAutoCompleteImpl *impl_from_IAutoComplete2( IAutoComplete2 *iface )
-{
-    return (IAutoCompleteImpl *)((char*)iface - FIELD_OFFSET(IAutoCompleteImpl, lpvtblAutoComplete2));
-}
+static const IAutoComplete2Vtbl acvt;
 
 
 /*
   converts This to an interface pointer
 */
 #define _IUnknown_(This) (IUnknown*)&(This->lpVtbl)
-#define _IAutoComplete2_(This)  (IAutoComplete2*)&(This->lpvtblAutoComplete2) 
+#define _IAutoComplete2_(This)  (IAutoComplete2*)&(This->lpvtbl)
 
 static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -109,7 +102,6 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
 
     lpac->ref = 1;
     lpac->lpVtbl = &acvt;
-    lpac->lpvtblAutoComplete2 = &ac2vt;
     lpac->enabled = TRUE;
     lpac->enumstr = NULL;
     lpac->options = ACO_AUTOAPPEND;
@@ -131,8 +123,8 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
 /**************************************************************************
  *  AutoComplete_QueryInterface
  */
-static HRESULT WINAPI IAutoComplete_fnQueryInterface(
-    IAutoComplete * iface,
+static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
+    IAutoComplete2 * iface,
     REFIID riid,
     LPVOID *ppvObj)
 {
@@ -141,22 +133,16 @@ static HRESULT WINAPI IAutoComplete_fnQueryInterface(
     TRACE("(%p)->(\n\tIID:\t%s,%p)\n", This, shdebugstr_guid(riid), ppvObj);
     *ppvObj = NULL;
 
-    if(IsEqualIID(riid, &IID_IUnknown)) 
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAutoComplete) ||
+        IsEqualIID(riid, &IID_IAutoComplete2))
     {
-	*ppvObj = This;
-    } 
-    else if(IsEqualIID(riid, &IID_IAutoComplete))
-    {
-	*ppvObj = (IAutoComplete*)This;
-    }
-    else if(IsEqualIID(riid, &IID_IAutoComplete2))
-    {
-	*ppvObj = _IAutoComplete2_ (This);
+	*ppvObj = (IAutoComplete2*)This;
     }
 
     if (*ppvObj)
     {
-	IAutoComplete_AddRef((IAutoComplete*)*ppvObj);
+	IUnknown_AddRef((IUnknown*)*ppvObj);
 	TRACE("-- Interface: (%p)->(%p)\n", ppvObj, *ppvObj);
 	return S_OK;
     }
@@ -165,10 +151,10 @@ static HRESULT WINAPI IAutoComplete_fnQueryInterface(
 }
 
 /******************************************************************************
- * IAutoComplete_fnAddRef
+ * IAutoComplete2_fnAddRef
  */
-static ULONG WINAPI IAutoComplete_fnAddRef(
-	IAutoComplete * iface)
+static ULONG WINAPI IAutoComplete2_fnAddRef(
+	IAutoComplete2 * iface)
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
@@ -179,10 +165,10 @@ static ULONG WINAPI IAutoComplete_fnAddRef(
 }
 
 /******************************************************************************
- * IAutoComplete_fnRelease
+ * IAutoComplete2_fnRelease
  */
-static ULONG WINAPI IAutoComplete_fnRelease(
-	IAutoComplete * iface)
+static ULONG WINAPI IAutoComplete2_fnRelease(
+	IAutoComplete2 * iface)
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
@@ -203,10 +189,10 @@ static ULONG WINAPI IAutoComplete_fnRelease(
 }
 
 /******************************************************************************
- * IAutoComplete_fnEnable
+ * IAutoComplete2_fnEnable
  */
-static HRESULT WINAPI IAutoComplete_fnEnable(
-    IAutoComplete * iface,
+static HRESULT WINAPI IAutoComplete2_fnEnable(
+    IAutoComplete2 * iface,
     BOOL fEnable)
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
@@ -221,10 +207,10 @@ static HRESULT WINAPI IAutoComplete_fnEnable(
 }
 
 /******************************************************************************
- * IAutoComplete_fnInit
+ * IAutoComplete2_fnInit
  */
-static HRESULT WINAPI IAutoComplete_fnInit(
-    IAutoComplete * iface,
+static HRESULT WINAPI IAutoComplete2_fnInit(
+    IAutoComplete2 * iface,
     HWND hwndEdit,
     IUnknown *punkACL,
     LPCOLESTR pwzsRegKeyPath,
@@ -312,91 +298,7 @@ static HRESULT WINAPI IAutoComplete_fnInit(
 }
 
 /**************************************************************************
- *  IAutoComplete_fnVTable
- */
-static const IAutoCompleteVtbl acvt =
-{
-    IAutoComplete_fnQueryInterface,
-    IAutoComplete_fnAddRef,
-    IAutoComplete_fnRelease,
-    IAutoComplete_fnInit,
-    IAutoComplete_fnEnable,
-};
-
-/**************************************************************************
- *  AutoComplete2_QueryInterface
- */
-static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
-    IAutoComplete2 * iface,
-    REFIID riid,
-    LPVOID *ppvObj)
-{
-    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-
-    TRACE ("(%p)->(%s,%p)\n", This, shdebugstr_guid (riid), ppvObj);
-
-    return IAutoComplete_QueryInterface((IAutoComplete*)This, riid, ppvObj);
-}
-
-/******************************************************************************
- * IAutoComplete2_fnAddRef
- */
-static ULONG WINAPI IAutoComplete2_fnAddRef(
-	IAutoComplete2 * iface)
-{
-    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-
-    TRACE ("(%p)->(count=%u)\n", This, This->ref);
-
-    return IAutoComplete2_AddRef((IAutoComplete*)This);
-}
-
-/******************************************************************************
- * IAutoComplete2_fnRelease
- */
-static ULONG WINAPI IAutoComplete2_fnRelease(
-	IAutoComplete2 * iface)
-{
-    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-
-    TRACE ("(%p)->(count=%u)\n", This, This->ref);
-
-    return IAutoComplete_Release((IAutoComplete*)This);
-}
-
-/******************************************************************************
- * IAutoComplete2_fnEnable
- */
-static HRESULT WINAPI IAutoComplete2_fnEnable(
-    IAutoComplete2 * iface,
-    BOOL fEnable)
-{
-    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-
-    TRACE ("(%p)->(%s)\n", This, (fEnable)?"true":"false");
-
-    return IAutoComplete_Enable((IAutoComplete*)This, fEnable);
-}
-
-/******************************************************************************
- * IAutoComplete2_fnInit
- */
-static HRESULT WINAPI IAutoComplete2_fnInit(
-    IAutoComplete2 * iface,
-    HWND hwndEdit,
-    IUnknown *punkACL,
-    LPCOLESTR pwzsRegKeyPath,
-    LPCOLESTR pwszQuickComplete)
-{
-    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
-
-    TRACE("(%p)\n", This);
-
-    return IAutoComplete_Init((IAutoComplete*)This, hwndEdit, punkACL, pwzsRegKeyPath, pwszQuickComplete);
-}
-
-/**************************************************************************
- *  IAutoComplete_fnGetOptions
+ *  IAutoComplete2_fnGetOptions
  */
 static HRESULT WINAPI IAutoComplete2_fnGetOptions(
     IAutoComplete2 * iface,
@@ -404,7 +306,7 @@ static HRESULT WINAPI IAutoComplete2_fnGetOptions(
 {
     HRESULT hr = S_OK;
 
-    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
 
     TRACE("(%p) -> (%p)\n", This, pdwFlag);
 
@@ -414,7 +316,7 @@ static HRESULT WINAPI IAutoComplete2_fnGetOptions(
 }
 
 /**************************************************************************
- *  IAutoComplete_fnSetOptions
+ *  IAutoComplete2_fnSetOptions
  */
 static HRESULT WINAPI IAutoComplete2_fnSetOptions(
     IAutoComplete2 * iface,
@@ -422,7 +324,7 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
 {
     HRESULT hr = S_OK;
 
-    IAutoCompleteImpl *This = impl_from_IAutoComplete2(iface);
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
 
     TRACE("(%p) -> (0x%x)\n", This, dwFlag);
 
@@ -434,7 +336,7 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
 /**************************************************************************
  *  IAutoComplete2_fnVTable
  */
-static const IAutoComplete2Vtbl ac2vt =
+static const IAutoComplete2Vtbl acvt =
 {
     IAutoComplete2_fnQueryInterface,
     IAutoComplete2_fnAddRef,
