@@ -247,6 +247,35 @@ NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
     }
 }
 
+
+/***********************************************************************
+ *           IoInitializeIrp  (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
+{
+    FIXME( "%p, %u, %d\n", irp, size, stack_size );
+}
+
+
+/***********************************************************************
+ *           IoAllocateIrp  (NTOSKRNL.EXE.@)
+ */
+PIRP WINAPI IoAllocateIrp( CCHAR stack_size, BOOLEAN charge_quota )
+{
+    FIXME( "%d, %d\n", stack_size, charge_quota );
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           IoFreeIrp  (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoFreeIrp( IRP *irp )
+{
+    FIXME( "%p\n", irp );
+}
+
+
 /***********************************************************************
  *           IoAllocateMdl  (NTOSKRNL.EXE.@)
  */
