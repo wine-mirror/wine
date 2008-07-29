@@ -2994,7 +2994,10 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
     MSICOMPONENT *comp;
     MSIFILE *file;
     typelib_struct tl_struct;
+    ITypeLib *tlib;
     HMODULE module;
+    HRESULT hr;
+
     static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
 
     component = MSI_RecordGetString(row,3);
@@ -3063,7 +3066,16 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
         msi_free(tl_struct.source);
     }
     else
-        ERR("Could not load file! %s\n", debugstr_w(file->TargetPath));
+    {
+        hr = LoadTypeLibEx(file->TargetPath, REGKIND_REGISTER, &tlib);
+        if (FAILED(hr))
+        {
+            ERR("Failed to load type library: %08x\n", hr);
+            return ERROR_FUNCTION_FAILED;
+        }
+
+        ITypeLib_Release(tlib);
+    }
 
     return ERROR_SUCCESS;
 }
