@@ -749,6 +749,8 @@ static void test_rc2(void)
     if (!result) {
         ok(GetLastError()==NTE_BAD_ALGID, "%08x\n", GetLastError());
     } else {
+        CRYPT_INTEGER_BLOB salt;
+
         result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
         ok(result, "%08x\n", GetLastError());
 
@@ -811,6 +813,19 @@ static void test_rc2(void)
 
         result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen);
         ok(result, "%08x\n", GetLastError());
+
+        /* What sizes salt can I set? */
+        salt.pbData = pbData;
+        for (i=0; i<24; i++)
+        {
+            salt.cbData = i;
+            result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
+            ok(result, "setting salt failed for size %d: %08x\n", i, GetLastError());
+        }
+        salt.cbData = 25;
+        SetLastError(0xdeadbeef);
+        result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
+        ok(!result && GetLastError() == NTE_BAD_DATA, "%08x\n", GetLastError());
 
         result = CryptDestroyKey(hKey);
         ok(result, "%08x\n", GetLastError());
@@ -901,6 +916,8 @@ static void test_rc4(void)
         /* rsaenh compiled without OpenSSL */
         ok(GetLastError() == NTE_BAD_ALGID, "%08x\n", GetLastError());
     } else {
+        CRYPT_INTEGER_BLOB salt;
+
         result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
            ok(result, "%08x\n", GetLastError());
 
@@ -948,6 +965,19 @@ static void test_rc4(void)
 
         result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen);
         ok(result, "%08x\n", GetLastError());
+
+        /* What sizes salt can I set? */
+        salt.pbData = pbData;
+        for (i=0; i<24; i++)
+        {
+            salt.cbData = i;
+            result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
+            ok(result, "setting salt failed for size %d: %08x\n", i, GetLastError());
+        }
+        salt.cbData = 25;
+        SetLastError(0xdeadbeef);
+        result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
+        ok(!result && GetLastError() == NTE_BAD_DATA, "%08x\n", GetLastError());
 
         result = CryptDestroyKey(hKey);
         ok(result, "%08x\n", GetLastError());

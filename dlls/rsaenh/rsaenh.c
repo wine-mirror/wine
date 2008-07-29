@@ -2826,10 +2826,10 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
         {
             CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)pbData;
 
-            /* salt length can't be greater than 128 bits = 16 bytes */
-            if (blob->cbData > 16)
+            /* salt length can't be greater than 184 bits = 24 bytes */
+            if (blob->cbData > 24)
             {
-                SetLastError(ERROR_INVALID_PARAMETER);
+                SetLastError(NTE_BAD_DATA);
                 return FALSE;
             }
             memcpy(pCryptKey->abKeyValue + pCryptKey->dwKeyLen, blob->pbData,
