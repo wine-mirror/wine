@@ -922,7 +922,6 @@ void drawPrimitive(IWineD3DDevice *iface,
                    int   minIndex) {
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSwapChain            *swapchain;
     IWineD3DSurfaceImpl          *target;
     int i;
 
@@ -934,27 +933,13 @@ void drawPrimitive(IWineD3DDevice *iface,
 
         /* TODO: Only do all that if we're going to change anything */
         if(target /*&& target->Flags & (SFLAG_INTEXTURE | SFLAG_INSYSMEM)*/) {
-            swapchain = NULL;
-
             if(i == 0) {
-                IWineD3DSurface_GetContainer((IWineD3DSurface *) target, &IID_IWineD3DSwapChain, (void **)&swapchain);
-
                 /* Need the surface in the drawable! */
                 IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
-
-                /* TODO: Move fbo logic to ModifyLocation */
                 IWineD3DSurface_ModifyLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, TRUE);
-                if(swapchain) {
-                    /* Onscreen target. Invalidate system memory copy and texture copy */
-                    IWineD3DSwapChain_Release(swapchain);
-                } else if(wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-                    /* FBO offscreen target. Texture == Drawable */
-                    target->Flags |= SFLAG_INTEXTURE;
-                }
             } else {
                 /* Must be an fbo render target */
                 IWineD3DSurface_ModifyLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, TRUE);
-                target->Flags |=  SFLAG_INTEXTURE;
             }
         }
     }
