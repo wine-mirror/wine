@@ -144,38 +144,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     /* Don't call checkGLcall, as glGetError is not applicable here */
     if (hDestWindowOverride && This->win_handle != hDestWindowOverride) {
-        WINED3DLOCKED_RECT r;
-        BYTE *mem;
-
-        TRACE("Performing dest override of swapchain %p from window %p to %p\n", This, This->win_handle, hDestWindowOverride);
-        if(This->context[0] == This->wineD3DDevice->contexts[0]) {
-            /* The primary context 'owns' all the opengl resources. Destroying and recreating that context requires downloading
-             * all opengl resources, deleting the gl resources, destroying all other contexts, then recreating all other contexts
-             * and reload the resources
-             */
-            delete_opengl_contexts((IWineD3DDevice *) This->wineD3DDevice, iface);
-            This->win_handle             = hDestWindowOverride;
-            create_primary_opengl_context((IWineD3DDevice *) This->wineD3DDevice, iface);
-        } else {
-            This->win_handle             = hDestWindowOverride;
-
-            /* The old back buffer has to be copied over to the new back buffer. A lockrect - switchcontext - unlockrect
-             * would suffice in theory, but it is rather nasty and may cause troubles with future changes of the locking code
-             * So lock read only, copy the surface out, then lock with the discard flag and write back
-             */
-            IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_READONLY);
-            mem = HeapAlloc(GetProcessHeap(), 0, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
-            memcpy(mem, r.pBits, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
-            IWineD3DSurface_UnlockRect(This->backBuffer[0]);
-
-            DestroyContext(This->wineD3DDevice, This->context[0]);
-            This->context[0] = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer, This->win_handle, FALSE /* pbuffer */, &This->presentParms);
-
-            IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_DISCARD);
-            memcpy(r.pBits, mem, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
-            HeapFree(GetProcessHeap(), 0, mem);
-            IWineD3DSurface_UnlockRect(This->backBuffer[0]);
-        }
+        IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
     }
 
     SwapBuffers(This->context[0]->hdc); /* TODO: cycle through the swapchain buffers */
@@ -335,6 +304,45 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window) {
+    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
+    WINED3DLOCKED_RECT r;
+    BYTE *mem;
+
+    if(window == This->win_handle) return WINED3D_OK;
+
+    TRACE("Performing dest override of swapchain %p from window %p to %p\n", This, This->win_handle, window);
+    if(This->context[0] == This->wineD3DDevice->contexts[0]) {
+        /* The primary context 'owns' all the opengl resources. Destroying and recreating that context requires downloading
+         * all opengl resources, deleting the gl resources, destroying all other contexts, then recreating all other contexts
+         * and reload the resources
+         */
+        delete_opengl_contexts((IWineD3DDevice *) This->wineD3DDevice, iface);
+        This->win_handle             = window;
+        create_primary_opengl_context((IWineD3DDevice *) This->wineD3DDevice, iface);
+    } else {
+        This->win_handle             = window;
+
+        /* The old back buffer has to be copied over to the new back buffer. A lockrect - switchcontext - unlockrect
+         * would suffice in theory, but it is rather nasty and may cause troubles with future changes of the locking code
+         * So lock read only, copy the surface out, then lock with the discard flag and write back
+         */
+        IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_READONLY);
+        mem = HeapAlloc(GetProcessHeap(), 0, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
+        memcpy(mem, r.pBits, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
+        IWineD3DSurface_UnlockRect(This->backBuffer[0]);
+
+        DestroyContext(This->wineD3DDevice, This->context[0]);
+        This->context[0] = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer, This->win_handle, FALSE /* pbuffer */, &This->presentParms);
+
+        IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_DISCARD);
+        memcpy(r.pBits, mem, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
+        HeapFree(GetProcessHeap(), 0, mem);
+        IWineD3DSurface_UnlockRect(This->backBuffer[0]);
+    }
+    return WINED3D_OK;
+}
+
 const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
 {
     /* IUnknown */
@@ -346,6 +354,7 @@ const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DSwapChainImpl_Destroy,
     IWineD3DBaseSwapChainImpl_GetDevice,
     IWineD3DSwapChainImpl_Present,
+    IWineD3DSwapChainImpl_SetDestWindowOverride,
     IWineD3DBaseSwapChainImpl_GetFrontBufferData,
     IWineD3DBaseSwapChainImpl_GetBackBuffer,
     IWineD3DBaseSwapChainImpl_GetRasterStatus,

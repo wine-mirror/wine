@@ -156,6 +156,13 @@ void x11_copy_to_screen(IWineD3DSwapChainImpl *This, LPRECT rc) {
     }
 }
 
+static HRESULT WINAPI IWineGDISwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window) {
+    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
+
+    This->win_handle = window;
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *) iface;
     IWineD3DSurfaceImpl *front, *back;
@@ -254,6 +261,7 @@ const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl =
     IWineGDISwapChainImpl_Destroy,
     IWineD3DBaseSwapChainImpl_GetDevice,
     IWineGDISwapChainImpl_Present,
+    IWineGDISwapChainImpl_SetDestWindowOverride,
     IWineD3DBaseSwapChainImpl_GetFrontBufferData,
     IWineD3DBaseSwapChainImpl_GetBackBuffer,
     IWineD3DBaseSwapChainImpl_GetRasterStatus,
