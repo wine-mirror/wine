@@ -171,20 +171,6 @@ END
  Dialog
 */
 
-IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 259, 210
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Om Opgavebehandler"
-FONT 8, "MS Shell Dlg"
-BEGIN
-    CONTROL         "Opgavebehandler 1.0\nOphavsret 1999 - 2001 tilhører\nBrian Palmer (brianp@reactos.org)\nOversat af\nJens Albretsen (jens@albretsen.dk)",
-                    IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,53,20,
-                    200,50
-    DEFPUSHBUTTON   "OK",IDOK,183,189,44,14,WS_GROUP
-    ICON            IDI_TASKMANAGER,IDC_STATIC,19,30,20,20
-    EDITTEXT        IDC_LICENSE_EDIT,53,63,174,107,ES_MULTILINE |
-                    ES_READONLY | WS_VSCROLL
-END
-
 IDD_TASKMGR_DIALOG DIALOG DISCARDABLE  0, 0, 264, 246
 STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
     WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
@@ -497,5 +483,4 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "Sætter processen til under normal prioritet"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Sætter processen til lav prioritet"
-    IDS_LICENSE             "Dette program er fri programvare; du kan redistribuere det i henhold til vilkårene i 'GNU Lesser General Public License', udgivet af 'the Free Software Foundation'; enten version 2.1 af licensen, eller (hvis du ønsker) en nyere version.\r\n\r\nDette program distribueres med et håb om at det er nyttigt, men UDEN ENHVER FORM FOR GARANTI; ikke engang garanti for HANDELSDYGTIGHED eller EGNETHED FOR ET SPECIELT FORMÅL. Se 'GNU Lesser General Public License' for detaljer.\r\n\r\nDu skal have fået en kopi af 'GNU Lesser General Public License' sammen med programmet; hvis ikke, skriv til 'the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA'."
 END

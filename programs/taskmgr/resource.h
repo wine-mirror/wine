@@ -9,7 +9,6 @@
 #define IDS_RUNDLG_CAPTION              110
 
 #define IDD_TASKMGR_DIALOG              102
-#define IDD_ABOUTBOX                    103
 #define IDM_ABOUT                       104
 #define IDM_EXIT                        105
 #define IDD_APPLICATION_PAGE            106
@@ -67,7 +66,6 @@
 #define IDC_CPU10                       1029
 #define IDC_PAGEFAULTS                  1029
 #define IDC_COMMIT_CHARGE_LIMIT         1029
-#define IDC_LICENSE_EDIT                1029
 #define IDC_CPU11                       1030
 #define IDC_USEROBJECTS                 1030
 #define IDC_COMMIT_CHARGE_PEAK          1030
@@ -184,7 +182,6 @@
 #define ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL 32813
 #define ID_PROCESS_PAGE_SETPRIORITY_LOW 32814
 #define ID_PROCESS_PAGE_DEBUGCHANNELS   32815
-#define IDS_LICENSE                     32816
 #define IDC_STATIC                      -1
 
 /*
