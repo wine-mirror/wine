@@ -1072,7 +1072,7 @@ static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
                         LF_FACESIZE, lpcfa->lpLogFont->lfFaceName, LF_FACESIZE, 0, 0);
 
     if((lpcfw->Flags & CF_USESTYLE) && lpcfw->lpszStyle) {
-        len = WideCharToMultiByte(CP_ACP, 0, lpcfw->lpszStyle, -1, NULL, -1, 0, 0);
+        len = WideCharToMultiByte(CP_ACP, 0, lpcfw->lpszStyle, -1, NULL, 0, 0, 0);
         WideCharToMultiByte(CP_ACP, 0, lpcfw->lpszStyle, -1, lpcfa->lpszStyle, len, 0, 0);
         HeapFree(GetProcessHeap(), 0, lpcfw->lpszStyle);
     }

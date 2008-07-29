@@ -554,7 +554,7 @@ static void set_color_from_theme(WCHAR *keyName, COLORREF color)
 
     keyNameSize = WideCharToMultiByte(CP_ACP, 0, keyName, -1, keyNameA, 0, NULL, NULL);
     keyNameA = HeapAlloc(GetProcessHeap(), 0, keyNameSize);
-    WideCharToMultiByte(CP_ACP, 0, keyName, -1, keyNameA, -1, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, keyName, -1, keyNameA, keyNameSize, NULL, NULL);
 
     for (i=0; i<sizeof(metrics)/sizeof(metrics[0]); i++)
     {
@@ -593,7 +593,7 @@ static void do_parse_theme(WCHAR *file)
         keyNameValueSize = WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1,
                                                keyNameValueA, 0, NULL, NULL);
         keyNameValueA = HeapAlloc(GetProcessHeap(), 0, keyNameValueSize);
-        WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1, keyNameValueA, -1, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1, keyNameValueA, keyNameValueSize, NULL, NULL);
 
         WINE_TRACE("parsing key: %s with value: %s\n",
                    wine_dbgstr_w(keyNamePtr), wine_dbgstr_w(keyNameValue));
