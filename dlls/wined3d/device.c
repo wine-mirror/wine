@@ -6182,12 +6182,17 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONS
 
         TRACE("Surface %p is onscreen\n", surface);
 
+        ActivateContext(This, surface, CTXUSAGE_CLEAR);
+        ENTER_GL();
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         buffer = surface_get_gl_buffer(surface, swapchain);
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer()");
     } else {
         TRACE("Surface %p is offscreen\n", surface);
+
+        ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_CLEAR);
+        ENTER_GL();
         bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->dst_fbo);
         attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, surface);
         GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
@@ -6206,7 +6211,6 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONS
     } else {
         glDisable(GL_SCISSOR_TEST);
     }
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
@@ -6227,6 +6231,8 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONS
         glDrawBuffer(GL_BACK);
         checkGLcall("glDrawBuffer()");
     }
+
+    LEAVE_GL();
 }
 
 static inline DWORD argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) {
@@ -6348,9 +6354,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        ENTER_GL();
         color_fill_fbo(iface, pSurface, pRect, color);
-        LEAVE_GL();
         return WINED3D_OK;
     } else {
         /* Just forward this to the DirectDraw blitting engine */
