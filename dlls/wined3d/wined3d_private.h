@@ -1331,6 +1331,8 @@ struct IWineD3DSurfaceImpl
     RECT                      overlay_srcrect;
     RECT                      overlay_destrect;
     IWineD3DSurfaceImpl       *overlay_dest;
+    struct list               overlays;
+    struct list               overlay_entry;
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;

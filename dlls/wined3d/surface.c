@@ -474,6 +474,10 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         if(iface == device->ddraw_primary)
             device->ddraw_primary = NULL;
 
+        if(This->overlay_dest) {
+            list_remove(&This->overlay_entry);
+        }
+
         TRACE("(%p) Released\n", This);
         HeapFree(GetProcessHeap(), 0, This);
 

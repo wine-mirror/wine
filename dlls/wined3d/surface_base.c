@@ -450,9 +450,15 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, REC
         This->overlay_destrect.bottom = Dst ? Dst->currentDesc.Height : 0;
     }
 
-    if(Flags & WINEDDOVER_SHOW) {
-        This->overlay_dest = Dst;
+    if(This->overlay_dest && (This->overlay_dest != Dst || Flags & WINEDDOVER_HIDE)) {
+        list_remove(&This->overlay_entry);
+    }
 
+    if(Flags & WINEDDOVER_SHOW) {
+        if(This->overlay_dest != Dst) {
+            This->overlay_dest = Dst;
+            list_add_tail(&Dst->overlays, &This->overlay_entry);
+        }
     } else if(Flags & WINEDDOVER_HIDE) {
         /* tests show that the rectangles are erased on hide */
         This->overlay_srcrect.left   = 0; This->overlay_srcrect.top     = 0;
