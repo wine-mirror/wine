@@ -382,9 +382,14 @@ static HRESULT WINAPI isaxattributes_getValue(
         int *nValue)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
+    TRACE("(%p)->(%d)\n", This, nIndex);
 
-    FIXME("(%p)->(%d) stub\n", This, nIndex);
-    return E_NOTIMPL;
+    if(nIndex >= This->nb_attributes) return E_INVALIDARG;
+
+    *nValue = SysStringLen(This->szValue[nIndex]);
+    *pValue = This->szValue[nIndex];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxattributes_getValueFromName(
@@ -543,8 +548,6 @@ static void libxmlStartElementNS(
     saxlocator *This = ctx;
     HRESULT hr;
     saxattributes *attr;
-
-    FIXME("Arguments processing not yet implemented.\n");
 
     update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
 
