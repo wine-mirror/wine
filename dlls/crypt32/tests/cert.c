@@ -157,19 +157,23 @@ static void testAddCert(void)
         return;
 
     /* Weird--bad add disposition leads to an access violation in Windows.
+     * Both tests crash on some win9x boxes.
      */
-    ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
-     sizeof(bigCert), 0, NULL);
-    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
-     GetLastError() == E_INVALIDARG),
-     "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n",
-     GetLastError());
-    ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-     bigCert, sizeof(bigCert), 0, NULL);
-    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
-     GetLastError() == E_INVALIDARG),
-     "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n",
-     GetLastError());
+    if (0)
+    {
+        ret = CertAddEncodedCertificateToStore(0, X509_ASN_ENCODING, bigCert,
+         sizeof(bigCert), 0, NULL);
+        ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+         GetLastError() == E_INVALIDARG),
+         "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n",
+         GetLastError());
+        ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+         bigCert, sizeof(bigCert), 0, NULL);
+        ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+         GetLastError() == E_INVALIDARG),
+         "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n",
+         GetLastError());
+    }
 
     /* Weird--can add a cert to the NULL store (does this have special
      * meaning?)
@@ -1746,10 +1750,14 @@ static void testSignAndEncodeCert(void)
      &algID, NULL, NULL, &size);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
-    ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
-     X509_CERT_TO_BE_SIGNED, NULL, &algID, NULL, NULL, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    /* Crashes on some win9x boxes */
+    if (0)
+    {
+        ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
+         X509_CERT_TO_BE_SIGNED, NULL, &algID, NULL, NULL, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* Crashes
     ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
      X509_CERT_TO_BE_SIGNED, &info, NULL, NULL, NULL, &size);
@@ -2522,9 +2530,13 @@ static void testHashPublicKeyInfo(void)
     ret = CryptHashPublicKeyInfo(0, 0, 0, 0, NULL, NULL, &len);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
-    ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, NULL, NULL, &len);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    /* Crashes on some win9x boxes */
+    if (0)
+    {
+        ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, NULL, NULL, &len);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, &info, NULL, &len);
     ok(ret, "CryptHashPublicKeyInfo failed: %08x\n", GetLastError());
     ok(len == 16, "Expected hash size 16, got %d\n", len);
