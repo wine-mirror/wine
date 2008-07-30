@@ -245,7 +245,7 @@ static void testAcquireSecurityContext(void)
     pFreeCredentialsHandle(&cred);
     /* but fails for inbound. */
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND,
-     NULL, &schanCred, NULL, NULL, NULL, NULL);
+     NULL, &schanCred, NULL, NULL, &cred, NULL);
     ok(st == SEC_E_NO_CREDENTIALS, "Expected SEC_E_NO_CREDENTIALS, got %08x\n",
      st);
 
