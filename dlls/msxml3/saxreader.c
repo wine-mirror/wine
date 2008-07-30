@@ -245,8 +245,9 @@ static HRESULT WINAPI isaxattributes_getLength(
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
 
-    FIXME("(%p) stub\n", This);
-    return E_NOTIMPL;
+    *length = This->nb_attributes;
+    TRACE("Length set to %d\n", *length);
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxattributes_getURI(
