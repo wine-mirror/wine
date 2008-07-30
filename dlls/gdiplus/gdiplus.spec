@@ -392,7 +392,7 @@
 @ stdcall GdipGetStringFormatHotkeyPrefix(ptr ptr)
 @ stdcall GdipGetStringFormatLineAlign(ptr ptr)
 @ stdcall GdipGetStringFormatMeasurableCharacterRangeCount(ptr ptr)
-@ stub GdipGetStringFormatTabStopCount
+@ stdcall GdipGetStringFormatTabStopCount(ptr ptr)
 @ stub GdipGetStringFormatTabStops
 @ stdcall GdipGetStringFormatTrimming(ptr ptr)
 @ stub GdipGetTextContrast

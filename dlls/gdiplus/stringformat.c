@@ -46,6 +46,10 @@ GpStatus WINGDIPAPI GdipCreateStringFormat(INT attr, LANGID lang,
     (*format)->digitlang = LANG_NEUTRAL;
     (*format)->trimming = StringTrimmingCharacter;
     (*format)->digitsub = StringDigitSubstituteUser;
+    /* tabstops */
+    (*format)->tabcount = 0;
+    (*format)->firsttab = 0.0;
+    (*format)->tabs = NULL;
 
     return Ok;
 }
@@ -55,6 +59,7 @@ GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat *format)
     if(!format)
         return InvalidParameter;
 
+    GdipFree(format->tabs);
     GdipFree(format);
 
     return Ok;
@@ -135,6 +140,17 @@ GpStatus WINGDIPAPI GdipGetStringFormatMeasurableCharacterRangeCount(
     FIXME("stub: %p %p\n", format, count);
 
     return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipGetStringFormatTabStopCount(GDIPCONST GpStringFormat *format,
+    INT *count)
+{
+    if(!format || !count)
+        return InvalidParameter;
+
+    *count = format->tabcount;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetStringFormatTrimming(GpStringFormat *format,
@@ -233,12 +249,22 @@ GpStatus WINGDIPAPI GdipCloneStringFormat(GDIPCONST GpStringFormat *format, GpSt
 
     **newFormat = *format;
 
+    if(format->tabcount > 0){
+        (*newFormat)->tabs = GdipAlloc(sizeof(REAL) * format->tabcount);
+        if(!(*newFormat)->tabs){
+            GdipFree(*newFormat);
+            return OutOfMemory;
+        }
+        memcpy((*newFormat)->tabs, format->tabs, sizeof(REAL) * format->tabcount);
+    }
+    else
+        (*newFormat)->tabs = NULL;
+
     TRACE("%p %p\n",format,newFormat);
 
     return Ok;
 }
 
-/*FIXME: add zero tab stops number */
 GpStatus WINGDIPAPI GdipStringFormatGetGenericTypographic(GpStringFormat **format)
 {
     GpStatus stat;

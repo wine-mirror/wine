@@ -194,6 +194,9 @@ struct GpStringFormat{
     HotkeyPrefix hkprefix;
     StringAlignment vertalign;
     StringDigitSubstitute digitsub;
+    INT tabcount;
+    REAL firsttab;
+    REAL *tabs;
 };
 
 struct GpFontCollection{

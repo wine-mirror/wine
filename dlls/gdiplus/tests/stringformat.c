@@ -140,6 +140,7 @@ static void test_getgenerictypographic(void)
     StringTrimming trimming;
     StringDigitSubstitute digitsub;
     LANGID digitlang;
+    INT tabcount;
 
     /* NULL arg */
     stat = GdipStringFormatGetGenericTypographic(NULL);
@@ -154,6 +155,7 @@ static void test_getgenerictypographic(void)
     GdipGetStringFormatHotkeyPrefix(format, &n);
     GdipGetStringFormatTrimming(format, &trimming);
     GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
+    GdipGetStringFormatTabStopCount(format, &tabcount);
 
     expect((StringFormatFlagsNoFitBlackBox |StringFormatFlagsLineLimit | StringFormatFlagsNoClip),
             flags);
@@ -163,6 +165,33 @@ static void test_getgenerictypographic(void)
     expect(StringTrimmingNone, trimming);
     expect(StringDigitSubstituteUser, digitsub);
     expect(LANG_NEUTRAL, digitlang);
+    expect(0, tabcount);
+
+    stat = GdipDeleteStringFormat(format);
+    expect(Ok, stat);
+}
+
+static void test_tabstops(void)
+{
+    GpStringFormat *format;
+    GpStatus stat;
+    INT count;
+
+    stat = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
+    expect(Ok, stat);
+
+    /* NULL */
+    stat = GdipGetStringFormatTabStopCount(NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipGetStringFormatTabStopCount(NULL, &count);
+    expect(InvalidParameter, stat);
+    stat = GdipGetStringFormatTabStopCount(format, NULL);
+    expect(InvalidParameter, stat);
+
+    /* not NULL */
+    stat = GdipGetStringFormatTabStopCount(format, &count);
+    expect(Ok, stat);
+    expect(0, count);
 
     stat = GdipDeleteStringFormat(format);
     expect(Ok, stat);
@@ -184,6 +213,7 @@ START_TEST(stringformat)
     test_characterrange();
     test_digitsubstitution();
     test_getgenerictypographic();
+    test_tabstops();
 
     GdiplusShutdown(gdiplusToken);
 }
