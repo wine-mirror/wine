@@ -269,9 +269,14 @@ static HRESULT WINAPI isaxattributes_getLocalName(
         int *pLocalNameLength)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
+    TRACE("(%p)->(%d)\n", This, nIndex);
 
-    FIXME("(%p)->(%d) stub\n", This, nIndex);
-    return E_NOTIMPL;
+    if(nIndex >= This->nb_attributes) return E_INVALIDARG;
+
+    *pLocalNameLength = SysStringLen(This->szLocalname[nIndex]);
+    *pLocalName = This->szLocalname[nIndex];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxattributes_getQName(
