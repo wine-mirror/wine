@@ -35,7 +35,7 @@ static void test_constructor(void)
     StringDigitSubstitute digitsub;
     LANGID digitlang;
 
-    stat = GdipCreateStringFormat(0, 0, &format);
+    stat = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
     expect(Ok, stat);
 
     GdipGetStringFormatAlign(format, &align);
