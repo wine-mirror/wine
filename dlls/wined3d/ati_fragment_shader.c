@@ -226,7 +226,7 @@ static GLuint find_tmpreg(struct texture_stage_op op[MAX_TEXTURES]) {
             lowest_read = i;
         }
 
-        if(lowest_write == -1 && op[i].dst == WINED3DTA_TEMP) {
+        if(lowest_write == -1 && op[i].dst == tempreg) {
             lowest_write = i;
         }
 
@@ -418,7 +418,7 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
             break;
         }
 
-        if(op[stage].dst == WINED3DTA_TEMP) {
+        if(op[stage].dst == tempreg) {
             /* If we're writing to D3DTA_TEMP, but never reading from it we don't have to write there in the first place.
              * skip the entire stage, this saves some GPU time
              */

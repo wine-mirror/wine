@@ -1785,16 +1785,18 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
     };
     unsigned int i;
     DWORD ttff;
+    DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
 
     for(i = 0; i < GL_LIMITS(texture_stages); i++) {
         IWineD3DBaseTextureImpl *texture;
         if(stateblock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
             settings->op[i].cop = WINED3DTOP_DISABLE;
             settings->op[i].aop = WINED3DTOP_DISABLE;
-            settings->op[i].carg0 = settings->op[i].carg1 = settings->op[i].carg2 = 0xffffffff;
-            settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = 0xffffffff;
+            /* 0x3F: set all 6 bits of the args to 1 */
+            settings->op[i].carg0 = settings->op[i].carg1 = settings->op[i].carg2 = 0x3F;
+            settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = 0x3F;
             settings->op[i].color_correction = WINED3DFMT_UNKNOWN;
-            settings->op[i].dst = 0xffffffff;
+            settings->op[i].dst = resultreg;
             i++;
             break;
         }
@@ -1803,41 +1805,51 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
         if(texture) {
             settings->op[i].color_correction = texture->baseTexture.shader_conversion_group;
             if(ignore_textype) {
-                settings->op[i].tex_type = 0;
+                settings->op[i].tex_type = tex_1d;
             } else {
-                settings->op[i].tex_type = stateblock->textureDimensions[i];
+                switch(stateblock->textureDimensions[i]) {
+                    case GL_TEXTURE_1D:
+                        settings->op[i].tex_type = tex_1d;
+                        break;
+                    case GL_TEXTURE_2D:
+                        settings->op[i].tex_type = tex_2d;
+                        break;
+                    case GL_TEXTURE_3D:
+                        settings->op[i].tex_type = tex_3d;
+                        break;
+                    case GL_TEXTURE_CUBE_MAP_ARB:
+                        settings->op[i].tex_type = tex_cube;
+                        break;
+                    case GL_TEXTURE_RECTANGLE_ARB:
+                        settings->op[i].tex_type = tex_rect;
+                        break;
+                }
             }
         } else {
             settings->op[i].color_correction = WINED3DFMT_UNKNOWN;
-            settings->op[i].tex_type = 0;
+            settings->op[i].tex_type = tex_1d;
         }
 
-        settings->op[i].cop = stateblock->textureState[i][WINED3DTSS_COLOROP];
-        settings->op[i].aop = stateblock->textureState[i][WINED3DTSS_ALPHAOP];
+        cop = stateblock->textureState[i][WINED3DTSS_COLOROP];
+        aop = stateblock->textureState[i][WINED3DTSS_ALPHAOP];
 
-        settings->op[i].carg1 = (args[settings->op[i].cop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_COLORARG1] : 0xffffffff;
-        settings->op[i].carg2 = (args[settings->op[i].cop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_COLORARG2] : 0xffffffff;
-        settings->op[i].carg0 = (args[settings->op[i].cop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_COLORARG0] : 0xffffffff;
+        carg1 = (args[cop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_COLORARG1] : 0xffffffff;
+        carg2 = (args[cop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_COLORARG2] : 0xffffffff;
+        carg0 = (args[cop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_COLORARG0] : 0xffffffff;
 
-        if(is_invalid_op(stateblock->wineD3DDevice, i,settings->op[i].cop,
-                         settings->op[i].carg1, settings->op[i].carg2, settings->op[i].carg0)) {
-            settings->op[i].carg0 = 0xffffffff;
-            settings->op[i].carg2 = 0xffffffff;
-            settings->op[i].carg1 = WINED3DTA_CURRENT;
-            settings->op[i].cop = WINED3DTOP_SELECTARG1;
+        if(is_invalid_op(stateblock->wineD3DDevice, i, cop,
+                         carg1, carg2, carg0)) {
+            carg0 = 0xffffffff;
+            carg2 = 0xffffffff;
+            carg1 = WINED3DTA_CURRENT;
+            cop = WINED3DTOP_SELECTARG1;
         }
 
-        settings->op[i].aarg1 = (args[settings->op[i].aop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG1] : 0xffffffff;
-        settings->op[i].aarg2 = (args[settings->op[i].aop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG2] : 0xffffffff;
-        settings->op[i].aarg0 = (args[settings->op[i].aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : 0xffffffff;
+        aarg1 = (args[aop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG1] : 0xffffffff;
+        aarg2 = (args[aop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG2] : 0xffffffff;
+        aarg0 = (args[aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : 0xffffffff;
 
-        if(is_invalid_op(stateblock->wineD3DDevice, i, settings->op[i].aop,
-                         settings->op[i].aarg1, settings->op[i].aarg2, settings->op[i].aarg0)) {
-            settings->op[i].aarg0 = 0xffffffff;
-            settings->op[i].aarg2 = 0xffffffff;
-            settings->op[i].aarg1 = WINED3DTA_CURRENT;
-            settings->op[i].aop = WINED3DTOP_SELECTARG1;
-        } else if(i == 0 && stateblock->textures[0] &&
+        if(i == 0 && stateblock->textures[0] &&
                   stateblock->renderState[WINED3DRS_COLORKEYENABLE] &&
                  (stateblock->textureDimensions[0] == GL_TEXTURE_2D ||
                   stateblock->textureDimensions[0] == GL_TEXTURE_RECTANGLE_ARB)) {
@@ -1846,29 +1858,37 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
             if(surf->CKeyFlags & WINEDDSD_CKSRCBLT &&
                getFormatDescEntry(surf->resource.format, NULL, NULL)->alphaMask == 0x00000000) {
 
-                if(settings->op[0].aop == WINED3DTOP_DISABLE) {
-                   settings->op[0].aarg1 = WINED3DTA_TEXTURE;
-                   settings->op[0].aop = WINED3DTOP_SELECTARG1;
+                if(aop == WINED3DTOP_DISABLE) {
+                   aarg1 = WINED3DTA_TEXTURE;
+                   aop = WINED3DTOP_SELECTARG1;
                 }
-                else if(settings->op[0].aop == WINED3DTOP_SELECTARG1 && settings->op[0].aarg1 != WINED3DTA_TEXTURE) {
+                else if(aop == WINED3DTOP_SELECTARG1 && aarg1 != WINED3DTA_TEXTURE) {
                     if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
-                        settings->op[0].aarg2 = WINED3DTA_TEXTURE;
-                        settings->op[0].aop = WINED3DTOP_MODULATE;
+                        aarg2 = WINED3DTA_TEXTURE;
+                        aop = WINED3DTOP_MODULATE;
                     }
-                    else settings->op[0].aarg1 = WINED3DTA_TEXTURE;
+                    else aarg1 = WINED3DTA_TEXTURE;
                 }
-                else if(settings->op[0].aop == WINED3DTOP_SELECTARG2 && settings->op[0].aarg2 != WINED3DTA_TEXTURE) {
+                else if(aop == WINED3DTOP_SELECTARG2 && aarg2 != WINED3DTA_TEXTURE) {
                     if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
-                        settings->op[0].aarg1 = WINED3DTA_TEXTURE;
-                        settings->op[0].aop = WINED3DTOP_MODULATE;
+                        aarg1 = WINED3DTA_TEXTURE;
+                        aop = WINED3DTOP_MODULATE;
                     }
-                    else settings->op[0].aarg2 = WINED3DTA_TEXTURE;
+                    else aarg2 = WINED3DTA_TEXTURE;
                 }
             }
         }
 
-        if(settings->op[i].carg1 == WINED3DTA_TEXTURE || settings->op[i].carg2 == WINED3DTA_TEXTURE || settings->op[i].carg0 == WINED3DTA_TEXTURE ||
-           settings->op[i].aarg1 == WINED3DTA_TEXTURE || settings->op[i].aarg2 == WINED3DTA_TEXTURE || settings->op[i].aarg0 == WINED3DTA_TEXTURE) {
+        if(is_invalid_op(stateblock->wineD3DDevice, i, aop,
+           aarg1, aarg2, aarg0)) {
+               aarg0 = 0xffffffff;
+               aarg2 = 0xffffffff;
+               aarg1 = WINED3DTA_CURRENT;
+               aop = WINED3DTOP_SELECTARG1;
+        }
+
+        if(carg1 == WINED3DTA_TEXTURE || carg2 == WINED3DTA_TEXTURE || carg0 == WINED3DTA_TEXTURE ||
+           aarg1 == WINED3DTA_TEXTURE || aarg2 == WINED3DTA_TEXTURE || aarg0 == WINED3DTA_TEXTURE) {
             ttff = stateblock->textureState[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
             if(ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT3)) {
                 settings->op[i].projected = proj_count3;
@@ -1881,7 +1901,20 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
             settings->op[i].projected = proj_none;
         }
 
-        settings->op[i].dst = stateblock->textureState[i][WINED3DTSS_RESULTARG];
+        settings->op[i].cop = cop;
+        settings->op[i].aop = aop;
+        settings->op[i].carg0 = carg0;
+        settings->op[i].carg1 = carg1;
+        settings->op[i].carg2 = carg2;
+        settings->op[i].aarg0 = aarg0;
+        settings->op[i].aarg1 = aarg1;
+        settings->op[i].aarg2 = aarg2;
+
+        if(stateblock->textureState[i][WINED3DTSS_RESULTARG] == WINED3DTA_TEMP) {
+            settings->op[i].dst = tempreg;
+        } else {
+            settings->op[i].dst = resultreg;
+        }
     }
 
     /* Clear unsupported stages */

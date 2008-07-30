@@ -714,9 +714,24 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This, struct WineD3DRectPatch *p
 
 enum projection_types
 {
-    proj_none,
-    proj_count3,
-    proj_count4
+    proj_none    = 0,
+    proj_count3  = 1,
+    proj_count4  = 2
+};
+
+enum tex_types
+{
+    tex_1d       = 0,
+    tex_2d       = 1,
+    tex_3d       = 2,
+    tex_cube     = 3,
+    tex_rect     = 4
+};
+
+enum dst_arg
+{
+    resultreg    = 0,
+    tempreg      = 1
 };
 
 /*****************************************************************************
@@ -724,13 +739,13 @@ enum projection_types
  */
 struct texture_stage_op
 {
-    WINED3DTEXTUREOP        cop, aop;
-    DWORD                   carg1, carg2, carg0;
-    DWORD                   aarg1, aarg2, aarg0;
+    unsigned                cop : 5, aop : 5;
+    unsigned                carg1 : 6, carg2 : 6, carg0 : 6;
+    unsigned                tex_type : 3;
+    unsigned                dst : 1;
+    unsigned                aarg1 : 6, aarg2 : 6, aarg0 : 6;
+    unsigned                projected : 2;
     WINED3DFORMAT           color_correction;
-    DWORD                   tex_type;
-    DWORD                   dst;
-    enum projection_types   projected;
 };
 
 struct ffp_settings {
