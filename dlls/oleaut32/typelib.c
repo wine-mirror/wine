@@ -3161,9 +3161,15 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
             case VT_BSTR:
             {
               WORD len = *(WORD *)(pBlk + pItem->byte_offs);
-              INT alloc_len = MultiByteToWideChar(CP_ACP, 0, pBlk + pItem->byte_offs + 2, len, NULL, 0);
-              BSTR str = SysAllocStringLen(NULL, alloc_len);
-              MultiByteToWideChar(CP_ACP, 0, pBlk + pItem->byte_offs + 2, len, str, alloc_len);
+              BSTR str;
+              TRACE_(typelib)("len = %u\n", len);
+              if (len == 0xffff) {
+                str = NULL;
+              } else {
+                INT alloc_len = MultiByteToWideChar(CP_ACP, 0, pBlk + pItem->byte_offs + 2, len, NULL, 0);
+                str = SysAllocStringLen(NULL, alloc_len);
+                MultiByteToWideChar(CP_ACP, 0, pBlk + pItem->byte_offs + 2, len, str, alloc_len);
+              }
               V_VT((*ppVarDesc)->vardesc.u.lpvarValue) = VT_BSTR;
               V_BSTR((*ppVarDesc)->vardesc.u.lpvarValue) = str;
               break;
