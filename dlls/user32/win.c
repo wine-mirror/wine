@@ -1249,7 +1249,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
         swFlag = WINPOS_MinMaximize( hwnd, swFlag, &newPos );
         swFlag |= SWP_FRAMECHANGED; /* Frame always gets changed */
         if (!(style & WS_VISIBLE) || (style & WS_CHILD) || GetActiveWindow()) swFlag |= SWP_NOACTIVATE;
-        SetWindowPos( hwnd, 0, newPos.left, newPos.top, newPos.right, newPos.bottom, swFlag );
+        SetWindowPos( hwnd, 0, newPos.left, newPos.top, newPos.right - newPos.left,
+                      newPos.bottom - newPos.top, swFlag );
     }
 
     /* Notify the parent window only */

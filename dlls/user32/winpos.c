@@ -905,7 +905,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
         if (!(old_style & WS_MINIMIZE)) swpFlags |= SWP_STATECHANGED;
         SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
-                 GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON) );
+                 wpl.ptMinPosition.x + GetSystemMetrics(SM_CXICON),
+                 wpl.ptMinPosition.y + GetSystemMetrics(SM_CYICON) );
         swpFlags |= SWP_NOCOPYBITS;
         break;
 
@@ -919,7 +920,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         if (old_style & WS_MINIMIZE) WINPOS_ShowIconTitle( hwnd, FALSE );
 
         if (!(old_style & WS_MAXIMIZE)) swpFlags |= SWP_STATECHANGED;
-        SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
+        SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y,
+                 wpl.ptMaxPosition.x +  size.x, wpl.ptMaxPosition.y + size.y );
         break;
 
     case SW_SHOWNOACTIVATE:
@@ -941,7 +943,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
                 WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
                 WIN_SetStyle( hwnd, WS_MAXIMIZE, 0 );
                 swpFlags |= SWP_STATECHANGED;
-                SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
+                SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y,
+                         wpl.ptMaxPosition.x + size.x, wpl.ptMaxPosition.y + size.y );
                 break;
             }
         }
@@ -952,9 +955,6 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         /* Restore to normal position */
 
         *rect = wpl.rcNormalPosition;
-        rect->right -= rect->left;
-        rect->bottom -= rect->top;
-
         break;
     }
 
@@ -1055,7 +1055,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
     }
     else
         SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
-                      newPos.right, newPos.bottom, LOWORD(swp) );
+                      newPos.right - newPos.left, newPos.bottom - newPos.top, swp );
 
     if (cmd == SW_HIDE)
     {
