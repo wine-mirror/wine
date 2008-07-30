@@ -977,7 +977,8 @@ const char *debugstr_dmreturn (DWORD code) {
 /* generic flag-dumping function */
 const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_names){
 	char buffer[128] = "", *ptr = &buffer[0];
-	unsigned int i, size = sizeof(buffer);
+	unsigned int i;
+	int size = sizeof(buffer);
 	
 	for (i=0; i < num_names; i++)
 	{
