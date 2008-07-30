@@ -73,6 +73,11 @@ typedef struct _saxattributes
 {
     const struct ISAXAttributesVtbl *lpSAXAttributesVtbl;
     LONG ref;
+    int nb_attributes;
+    BSTR *szLocalname;
+    BSTR *szPrefix;
+    BSTR *szURI;
+    BSTR *szValue;
 } saxattributes;
 
 static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
@@ -95,6 +100,28 @@ static inline saxattributes *impl_from_ISAXAttributes( ISAXAttributes *iface )
     return (saxattributes *)((char*)iface - FIELD_OFFSET(saxattributes, lpSAXAttributesVtbl));
 }
 
+
+BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
+{
+    DWORD dLen;
+    LPWSTR str;
+    BSTR bstr;
+
+    if (!buf)
+        return NULL;
+
+    dLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, NULL, 0);
+    if(len != -1) dLen++;
+    str = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, dLen * sizeof (WCHAR));
+    if (!str)
+        return NULL;
+    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, str, dLen);
+    if(len != -1) str[dLen-1] = '\0';
+    bstr = SysAllocString(str);
+    HeapFree(GetProcessHeap(), 0, str);
+
+    return bstr;
+}
 
 static void format_error_message_from_id(saxlocator *This, HRESULT hr)
 {
@@ -191,6 +218,20 @@ static ULONG WINAPI isaxattributes_Release(ISAXAttributes* iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref==0)
     {
+        int index;
+        for(index=0; index<This->nb_attributes; index++)
+        {
+            SysFreeString(This->szLocalname[index]);
+            SysFreeString(This->szPrefix[index]);
+            SysFreeString(This->szURI[index]);
+            SysFreeString(This->szValue[index]);
+        }
+
+        HeapFree(GetProcessHeap(), 0, This->szLocalname);
+        HeapFree(GetProcessHeap(), 0, This->szPrefix);
+        HeapFree(GetProcessHeap(), 0, This->szURI);
+        HeapFree(GetProcessHeap(), 0, This->szValue);
+
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -389,9 +430,11 @@ static const struct ISAXAttributesVtbl isaxattributes_vtbl =
     isaxattributes_getValueFromQName
 };
 
-static HRESULT SAXAttributes_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+static HRESULT SAXAttributes_create(saxattributes **attr,
+        int nb_attributes, const xmlChar **xmlAttributes)
 {
     saxattributes *attributes;
+    int index;
 
     attributes = HeapAlloc(GetProcessHeap(), 0, sizeof(*attributes));
     if(!attributes)
@@ -400,9 +443,47 @@ static HRESULT SAXAttributes_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     attributes->lpSAXAttributesVtbl = &isaxattributes_vtbl;
     attributes->ref = 1;
 
-    *ppObj = attributes;
+    attributes->nb_attributes = nb_attributes;
 
-    TRACE("returning %p\n", *ppObj);
+    attributes->szLocalname =
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+    attributes->szPrefix =
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+    attributes->szURI =
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+    attributes->szValue =
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+
+    if(!attributes->szLocalname || !attributes->szPrefix
+            || !attributes->szURI || !attributes->szValue)
+    {
+        if(attributes->szLocalname)
+            HeapFree(GetProcessHeap(), 0, attributes->szLocalname);
+        if(attributes->szPrefix)
+            HeapFree(GetProcessHeap(), 0, attributes->szPrefix);
+        if(attributes->szURI)
+            HeapFree(GetProcessHeap(), 0, attributes->szURI);
+        if(attributes->szValue)
+            HeapFree(GetProcessHeap(), 0, attributes->szValue);
+        return E_FAIL;
+    }
+
+    for(index=0; index<nb_attributes; index++)
+    {
+        attributes->szLocalname[index] =
+            bstr_from_xmlChar(xmlAttributes[index*5]);
+        attributes->szPrefix[index] =
+            bstr_from_xmlChar(xmlAttributes[index*5+1]);
+        attributes->szURI[index] =
+            bstr_from_xmlChar(xmlAttributes[index*5+2]);
+        attributes->szValue[index] =
+            bstr_from_xmlCharN(xmlAttributes[index*5+3],
+                    xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
+    }
+
+    *attr = attributes;
+
+    TRACE("returning %p\n", *attr);
 
     return S_OK;
 }
@@ -455,7 +536,7 @@ static void libxmlStartElementNS(
     BSTR NamespaceUri, LocalName, QName;
     saxlocator *This = ctx;
     HRESULT hr;
-    ISAXAttributes *attr;
+    saxattributes *attr;
 
     FIXME("Arguments processing not yet implemented.\n");
 
@@ -467,20 +548,22 @@ static void libxmlStartElementNS(
         LocalName = bstr_from_xmlChar(localname);
         QName = bstr_from_xmlChar(localname);
 
-        SAXAttributes_create(NULL, (void*)&attr);
+        hr = SAXAttributes_create(&attr, nb_attributes, attributes);
+        if(hr == S_OK)
+        {
+            hr = ISAXContentHandler_startElement(
+                    This->saxreader->contentHandler,
+                    NamespaceUri, SysStringLen(NamespaceUri),
+                    LocalName, SysStringLen(LocalName),
+                    QName, SysStringLen(QName),
+                    (ISAXAttributes*)&attr->lpSAXAttributesVtbl);
 
-        hr = ISAXContentHandler_startElement(
-                This->saxreader->contentHandler,
-                NamespaceUri, SysStringLen(NamespaceUri),
-                LocalName, SysStringLen(LocalName),
-                QName, SysStringLen(QName),
-                attr);
+            ISAXAttributes_Release((ISAXAttributes*)&attr->lpSAXAttributesVtbl);
+        }
 
         SysFreeString(NamespaceUri);
         SysFreeString(LocalName);
         SysFreeString(QName);
-
-        ISAXAttributes_Release(attr);
 
         if(hr != S_OK)
             format_error_message_from_id(This, hr);
