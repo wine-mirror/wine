@@ -217,7 +217,7 @@
 @ stub NetWkstaTransportAdd
 @ stub NetWkstaTransportDel
 @ stdcall NetWkstaTransportEnum (wstr long ptr long ptr ptr ptr)
-@ stub NetWkstaUserEnum
+@ stdcall NetWkstaUserEnum(wstr long ptr long ptr ptr ptr)
 @ stdcall NetWkstaUserGetInfo(wstr long ptr)
 @ stub NetWkstaUserSetInfo
 @ stdcall NetapipBufferAllocate(long ptr) NetApiBufferAllocate
