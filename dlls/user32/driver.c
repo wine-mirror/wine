@@ -119,6 +119,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SetWindowIcon);
         GET_USER_FUNC(SetWindowStyle);
         GET_USER_FUNC(SetWindowText);
+        GET_USER_FUNC(ShowWindow);
         GET_USER_FUNC(SysCommand);
         GET_USER_FUNC(WindowMessage);
         GET_USER_FUNC(WindowPosChanging);
@@ -395,6 +396,11 @@ static void nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
 {
 }
 
+static UINT nulldrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
+{
+    return swp;
+}
+
 static LRESULT nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     return -1;
@@ -472,6 +478,7 @@ static USER_DRIVER null_driver =
     nulldrv_SetWindowIcon,
     nulldrv_SetWindowStyle,
     nulldrv_SetWindowText,
+    nulldrv_ShowWindow,
     nulldrv_SysCommand,
     nulldrv_WindowMessage,
     nulldrv_WindowPosChanging,
@@ -726,6 +733,11 @@ static void loaderdrv_SetWindowText( HWND hwnd, LPCWSTR text )
     load_driver()->pSetWindowText( hwnd, text );
 }
 
+static UINT loaderdrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
+{
+    return load_driver()->pShowWindow( hwnd, cmd, rect, swp );
+}
+
 static LRESULT loaderdrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     return load_driver()->pSysCommand( hwnd, wparam, lparam );
@@ -807,6 +819,7 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_SetWindowIcon,
     loaderdrv_SetWindowStyle,
     loaderdrv_SetWindowText,
+    loaderdrv_ShowWindow,
     loaderdrv_SysCommand,
     loaderdrv_WindowMessage,
     loaderdrv_WindowPosChanging,

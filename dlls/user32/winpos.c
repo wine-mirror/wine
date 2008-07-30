@@ -1046,6 +1046,8 @@ static BOOL show_window( HWND hwnd, INT cmd )
         if (!IsWindow( hwnd )) return wasVisible;
     }
 
+    swp = USER_Driver->pShowWindow( hwnd, cmd, &newPos, swp );
+
     parent = GetAncestor( hwnd, GA_PARENT );
     if (parent && !IsWindowVisible( parent ) && !(swp & SWP_STATECHANGED))
     {
