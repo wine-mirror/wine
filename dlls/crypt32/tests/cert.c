@@ -37,8 +37,8 @@ static BOOL (WINAPI *pCryptEncodeObjectEx)(DWORD,LPCSTR,const void*,DWORD,PCRYPT
 static BOOL (WINAPI * pCryptVerifyCertificateSignatureEx)
                         (HCRYPTPROV, DWORD, DWORD, void *, DWORD, void *, DWORD, void *);
 
-static BOOL (WINAPI * pCryptAcquireContextW)
-                        (HCRYPTPROV *, LPCWSTR, LPCWSTR, DWORD, DWORD);
+static BOOL (WINAPI * pCryptAcquireContextA)
+                        (HCRYPTPROV *, LPCSTR, LPCSTR, DWORD, DWORD);
 
 static void init_function_pointers(void)
 {
@@ -57,7 +57,7 @@ static void init_function_pointers(void)
     GET_PROC(hCrypt32, CryptEncodeObjectEx)
     GET_PROC(hCrypt32, CryptVerifyCertificateSignatureEx)
 
-    GET_PROC(hAdvapi32, CryptAcquireContextW)
+    GET_PROC(hAdvapi32, CryptAcquireContextA)
 
 #undef GET_PROC
 }
@@ -346,6 +346,7 @@ static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
      dwSizeWithNull,size);
 }
 
+static CHAR cspNameA[] = "WineCryptTemp";
 static WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e','m','p',0 };
 static const BYTE v1CertWithPubKey[] = {
 0x30,0x81,0x95,0x02,0x01,0x01,0x30,0x02,0x06,0x00,0x30,0x15,0x31,0x13,0x30,
@@ -1693,9 +1694,9 @@ static void testCertSigs(void)
     DWORD sigSize = sizeof(sig);
 
     /* Just in case a previous run failed, delete this thing */
-    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
-    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
 
@@ -1704,7 +1705,7 @@ static void testCertSigs(void)
 
     CryptDestroyKey(key);
     CryptReleaseContext(csp, 0);
-    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 }
 
@@ -1830,9 +1831,9 @@ static void testCreateSelfSignCert(void)
      */
 
     /* Acquire a CSP */
-    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
-    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
 
@@ -1887,7 +1888,7 @@ static void testCreateSelfSignCert(void)
     }
 
     CryptReleaseContext(csp, 0);
-    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 
     /* do the same test with AT_KEYEXCHANGE  and key info*/
@@ -1935,7 +1936,7 @@ static void testCreateSelfSignCert(void)
         CertFreeCertificateContext(context);
     }
 
-    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
         CRYPT_DELETEKEYSET);
 }
 
@@ -2767,7 +2768,7 @@ static void testAcquireCertPrivateKey(void)
     keyProvInfo.rgProvParam = NULL;
     keyProvInfo.dwKeySpec = AT_SIGNATURE;
 
-    pCryptAcquireContextW(NULL, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextA(NULL, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert,
@@ -2800,7 +2801,7 @@ static void testAcquireCertPrivateKey(void)
     ok(!ret && GetLastError() == CRYPT_E_NO_KEY_PROPERTY,
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
 
-    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ret = CryptImportKey(csp, privKey, sizeof(privKey), 0, 0, &key);
     ok(ret, "CryptImportKey failed: %08x\n", GetLastError());
@@ -2922,7 +2923,7 @@ static void testAcquireCertPrivateKey(void)
     }
 
     CryptReleaseContext(csp, 0);
-    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
 
     CertFreeCertificateContext(cert);
