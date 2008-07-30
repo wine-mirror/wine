@@ -890,8 +890,6 @@ void (WINE_GLAPI *glEvalMesh2) (GLenum mode, GLint i1, GLint i2, GLint j1, GLint
 void (WINE_GLAPI *glEvalPoint1) (GLint i);
 void (WINE_GLAPI *glEvalPoint2) (GLint i, GLint j);
 void (WINE_GLAPI *glFeedbackBuffer) (GLsizei size, GLenum type, GLfloat* buffer);
-void (WINE_GLAPI *glFinish) ();
-void (WINE_GLAPI *glFlush) ();
 void (WINE_GLAPI *glFogf) (GLenum pname, GLfloat param);
 void (WINE_GLAPI *glFogfv) (GLenum pname, const GLfloat* params);
 void (WINE_GLAPI *glFogi) (GLenum pname, GLint param);
@@ -1139,6 +1137,12 @@ void (WINE_GLAPI *glVertexPointer) (GLint size, GLenum type, GLsizei stride, con
 void (WINE_GLAPI *glViewport) (GLint x, GLint y, GLsizei width, GLsizei height);
 void (WINE_GLAPI *glPointParameterfv) (GLenum pname, const GLfloat *params);
 
+/* glFinish and glFlush are always loaded from opengl32.dll, thus they always have
+ * __stdcall calling convention
+ */
+void (__stdcall  *glFinish) ();
+void (__stdcall  *glFlush) ();
+
 /* WGL functions */
 HGLRC   (WINAPI *pwglCreateContext)(HDC);
 BOOL    (WINAPI *pwglDeleteContext)(HGLRC);
@@ -1238,8 +1242,6 @@ BOOL    (WINAPI *pwglShareLists)(HGLRC,HGLRC);
     USE_GL_FUNC(glEvalPoint1) \
     USE_GL_FUNC(glEvalPoint2) \
     USE_GL_FUNC(glFeedbackBuffer) \
-    USE_GL_FUNC(glFinish) \
-    USE_GL_FUNC(glFlush) \
     USE_GL_FUNC(glFogf) \
     USE_GL_FUNC(glFogfv) \
     USE_GL_FUNC(glFogi) \
