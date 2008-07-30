@@ -319,14 +319,17 @@ static void test_delete(void)
     ok(file_exists("test1.txt"), "test1.txt should not have been removed\n");
 
     /* try to delete an invalid filename */
-    init_shfo_tests();
-    shfo.pFrom = "\0";
-    shfo.fFlags &= ~FOF_FILESONLY;
-    shfo.fAnyOperationsAborted = FALSE;
-    ret = SHFileOperation(&shfo);
-    ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
-    ok(!shfo.fAnyOperationsAborted, "Expected no aborted operations\n");
-    ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+    if (0) {
+        /* this crashes on win9x */
+        init_shfo_tests();
+        shfo.pFrom = "\0";
+        shfo.fFlags &= ~FOF_FILESONLY;
+        shfo.fAnyOperationsAborted = FALSE;
+        ret = SHFileOperation(&shfo);
+        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
+        ok(!shfo.fAnyOperationsAborted, "Expected no aborted operations\n");
+        ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+    }
 
     /* try an invalid function */
     init_shfo_tests();
@@ -337,18 +340,22 @@ static void test_delete(void)
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* try an invalid list, only one null terminator */
-    init_shfo_tests();
-    shfo.pFrom = "";
-    shfo.wFunc = FO_DELETE;
-    ret = SHFileOperation(&shfo);
-    ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
-    ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+    if (0) {
+        /* this crashes on win9x */
+        init_shfo_tests();
+        shfo.pFrom = "";
+        shfo.wFunc = FO_DELETE;
+        ret = SHFileOperation(&shfo);
+        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
+        ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+    }
 
     /* delete a dir, and then a file inside the dir, same as
     * deleting a nonexistent file
     */
     init_shfo_tests();
     shfo.pFrom = "testdir2\0testdir2\\one.txt\0";
+    shfo.wFunc = FO_DELETE;
     ret = SHFileOperation(&shfo);
     ok(ret == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", ret);
     ok(!file_exists("testdir2"), "Expected testdir2 to not exist\n");
@@ -595,6 +602,8 @@ static void test_copy(void)
     init_shfo_tests();
     shfo.pFrom = from;
     shfo.pTo = to;
+    /* suppress the error-dialog in win9x here */
+    shfo.fFlags |= FOF_NOERRORUI;
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
     set_curr_dir_path(to, "test3.txt\0");
     retval = SHFileOperation(&shfo);
@@ -604,6 +613,7 @@ static void test_copy(void)
 
     /* try to copy many files to nonexistent directory */
     DeleteFile(to);
+    shfo.fFlags &= ~FOF_NOERRORUI;
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperation(&shfo);
         ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
@@ -956,32 +966,37 @@ static void test_copy(void)
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
     ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
 
-    createTestFile("one.txt");
-    createTestFile("two.txt");
+    if (0) {
+        /* this crashes on win9x */
+        createTestFile("one.txt");
+        createTestFile("two.txt");
 
-    /* pTo contains bogus 2nd name longer than MAX_PATH,
-     * multiple source files, FOF_MULTIDESTFILES
-     * dest dir does not exist
-     */
-    memset(to, 'a', 2 * MAX_PATH);
-    memset(to+MAX_PATH*2, 0, 2);
-    lstrcpyA(to, "threedir");
-    shfo.pFrom = "one.txt\0two.txt\0";
-    shfo.pTo = to;
-    shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
-                  FOF_SILENT | FOF_NOERRORUI;
-    retval = SHFileOperation(&shfo);
-    ok(retval == ERROR_CANCELLED ||
-       retval == ERROR_SUCCESS, /* win2k3 */
-       "Expected ERROR_CANCELLED or ERROR_SUCCESS, got %d\n", retval);
-    ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
-    ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
-    ok(DeleteFileA("one.txt"), "Expected file to exist\n");
-    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
-    ok(!RemoveDirectoryA("threedir"), "Expected dir to not exist\n");
+        /* pTo contains bogus 2nd name longer than MAX_PATH,
+         * multiple source files, FOF_MULTIDESTFILES
+         * dest dir does not exist
+         */
 
-    /* file exists in win2k */
-    DeleteFileA("threedir");
+        memset(to, 'a', 2 * MAX_PATH);
+        memset(to+MAX_PATH*2, 0, 2);
+        lstrcpyA(to, "threedir");
+        shfo.pFrom = "one.txt\0two.txt\0";
+        shfo.pTo = to;
+        shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
+                      FOF_SILENT | FOF_NOERRORUI;
+        retval = SHFileOperation(&shfo);
+        ok(retval == ERROR_CANCELLED ||
+           retval == ERROR_SUCCESS, /* win2k3 */
+           "Expected ERROR_CANCELLED or ERROR_SUCCESS, got %d\n", retval);
+        ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
+        ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
+        ok(DeleteFileA("one.txt"), "Expected file to exist\n");
+        ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+        ok(!RemoveDirectoryA("threedir"), "Expected dir to not exist\n");
+
+        /* file exists in win2k */
+        DeleteFileA("threedir");
+    }
+
 
     createTestFile("one.txt");
     createTestFile("two.txt");
