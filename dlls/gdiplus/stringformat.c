@@ -153,6 +153,21 @@ GpStatus WINGDIPAPI GdipGetStringFormatTabStopCount(GDIPCONST GpStringFormat *fo
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetStringFormatTabStops(GDIPCONST GpStringFormat *format, INT count,
+    REAL *firsttab, REAL *tabs)
+{
+    if(!format || !firsttab || !tabs)
+        return InvalidParameter;
+
+    /* native simply crashes on count < 0 */
+    if(count != 0)
+        memcpy(tabs, format->tabs, sizeof(REAL)*count);
+
+    *firsttab = format->firsttab;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetStringFormatTrimming(GpStringFormat *format,
     StringTrimming *trimming)
 {
@@ -219,6 +234,36 @@ GpStatus WINGDIPAPI GdipSetStringFormatMeasurableCharacterRanges(GpStringFormat*
     FIXME("stub: %p, %d, %p\n", format, rangeCount, ranges);
 
     return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipSetStringFormatTabStops(GpStringFormat *format, REAL firsttab,
+    INT count, GDIPCONST REAL *tabs)
+{
+    if(!format || !tabs)
+        return InvalidParameter;
+
+    if(count > 0){
+        if(firsttab < 0.0)  return NotImplemented;
+        /* first time allocation */
+        if(format->tabcount == 0){
+            format->tabs = GdipAlloc(sizeof(REAL)*count);
+            if(!format->tabs)
+                return OutOfMemory;
+        }
+        /* reallocation */
+        if((format->tabcount < count) && (format->tabcount > 0)){
+            REAL *ptr;
+            ptr = HeapReAlloc(GetProcessHeap(), 0, format->tabs, sizeof(REAL)*count);
+            if(!ptr)
+                return OutOfMemory;
+            format->tabs = ptr;
+        }
+        format->firsttab = firsttab;
+        format->tabcount = count;
+        memcpy(format->tabs, tabs, sizeof(REAL)*count);
+    }
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetStringFormatTrimming(GpStringFormat *format,
