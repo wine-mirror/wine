@@ -3308,6 +3308,9 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI,
 	    if(paramName) {
 	        (*ppFuncDesc)->pParamDesc[param].Name =
 		  TLB_MultiByteToBSTR(paramName);
+	    } else {
+	        (*ppFuncDesc)->pParamDesc[param].Name =
+                  SysAllocString((*ppFuncDesc)->Name);
 	    }
 	}
 
