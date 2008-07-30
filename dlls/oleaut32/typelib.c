@@ -2882,7 +2882,7 @@ static HRESULT sltg_get_typelib_ref(const sltg_ref_lookup_t *table, DWORD typein
         return S_OK;
     }
 
-    ERR("Unable to find reference\n");
+    ERR_(typelib)("Unable to find reference\n");
     *typelib_ref = -1;
     return E_FAIL;
 }
@@ -3007,7 +3007,7 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 
 	name += SLTG_ReadStringA(name, &refname);
 	if(sscanf(refname, "*\\R%x*#%x", &lib_offs, &type_num) != 2)
-	    FIXME("Can't sscanf ref\n");
+	    FIXME_(typelib)("Can't sscanf ref\n");
 	if(lib_offs != 0xffff) {
 	    TLBImpLib **import = &pTL->pImpLibs;
 
@@ -3029,7 +3029,7 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 			  &(*import)->wVersionMajor,
 			  &(*import)->wVersionMinor,
 			  &(*import)->lcid, fname) != 4) {
-		  FIXME("can't sscanf ref %s\n",
+		  FIXME_(typelib)("can't sscanf ref %s\n",
 			pNameTable + lib_offs + 40);
 		}
 		len = strlen(fname);
@@ -3057,7 +3057,7 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
         typelib_ref += 4;
     }
     if((BYTE)*name != SLTG_REF_MAGIC)
-      FIXME("End of ref block magic = %x\n", *name);
+      FIXME_(typelib)("End of ref block magic = %x\n", *name);
     dump_TLBRefType(pTL);
     return table;
 }
@@ -3086,7 +3086,7 @@ static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
         if(info->next == 0xffff)
 	    break;
 	if(OneOnly)
-	    FIXME("Interface inheriting more than one interface\n");
+	    FIXME_(typelib)("Interface inheriting more than one interface\n");
 	info = (SLTG_ImplInfo*)(pBlk + info->next);
     }
     info++; /* see comment at top of function */
@@ -3170,7 +3170,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
                 *(INT*)(pBlk + pItem->byte_offs);
               break;
             default:
-              FIXME("VAR_CONST unimplemented for type %d\n", (*ppVarDesc)->vardesc.elemdescVar.tdesc.vt);
+              FIXME_(typelib)("VAR_CONST unimplemented for type %d\n", (*ppVarDesc)->vardesc.elemdescVar.tdesc.vt);
           }
         }
       }
@@ -3491,7 +3491,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     TRACE_(typelib)("\tmagic=0x%08x, file blocks = %d\n", pHeader->SLTG_magic,
 	  pHeader->nrOfFileBlks );
     if (pHeader->SLTG_magic != SLTG_SIGNATURE) {
-	FIXME("Header type magic 0x%08x not supported.\n",
+	FIXME_(typelib)("Header type magic 0x%08x not supported.\n",
 	      pHeader->SLTG_magic);
 	return NULL;
     }
@@ -3508,12 +3508,12 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     /* Let's see if we're still in sync */
     if(memcmp(pMagic->CompObj_magic, SLTG_COMPOBJ_MAGIC,
 	      sizeof(SLTG_COMPOBJ_MAGIC))) {
-        FIXME("CompObj magic = %s\n", pMagic->CompObj_magic);
+        FIXME_(typelib)("CompObj magic = %s\n", pMagic->CompObj_magic);
 	return NULL;
     }
     if(memcmp(pMagic->dir_magic, SLTG_DIR_MAGIC,
 	      sizeof(SLTG_DIR_MAGIC))) {
-        FIXME("dir magic = %s\n", pMagic->dir_magic);
+        FIXME_(typelib)("dir magic = %s\n", pMagic->dir_magic);
 	return NULL;
     }
 
@@ -3607,7 +3607,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
        pNameTable += 0x20;
        break;
    default:
-       FIXME("pNameTable jump = %x\n", *(WORD*)pNameTable);
+       FIXME_(typelib)("pNameTable jump = %x\n", *(WORD*)pNameTable);
        break;
    }
 
@@ -3615,7 +3615,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     pNameTable += 2;
 
-    TRACE("Library name is %s\n", pNameTable + pLibBlk->name);
+    TRACE_(typelib)("Library name is %s\n", pNameTable + pLibBlk->name);
 
     pTypeLibImpl->Name = TLB_MultiByteToBSTR(pNameTable + pLibBlk->name);
 
@@ -3637,16 +3637,17 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
       if(strcmp(pBlkEntry[order].index_string + (char*)pMagic,
 		pOtherTypeInfoBlks[i].index_name)) {
-	FIXME("Index strings don't match\n");
+	FIXME_(typelib)("Index strings don't match\n");
 	return NULL;
       }
 
       pTIHeader = pBlk;
       if(pTIHeader->magic != SLTG_TIHEADER_MAGIC) {
-	FIXME("TypeInfoHeader magic = %04x\n", pTIHeader->magic);
+	FIXME_(typelib)("TypeInfoHeader magic = %04x\n", pTIHeader->magic);
 	return NULL;
       }
-      TRACE("pTIHeader->res06 = %x, pTIHeader->res0e = %x, pTIHeader->res16 = %x, pTIHeader->res1e = %x\n",
+      TRACE_(typelib)("pTIHeader->res06 = %x, pTIHeader->res0e = %x, "
+        "pTIHeader->res16 = %x, pTIHeader->res1e = %x\n",
         pTIHeader->res06, pTIHeader->res0e, pTIHeader->res16, pTIHeader->res1e);
 
       *ppTypeInfoImpl = (ITypeInfoImpl*)ITypeInfo_Constructor();
@@ -3664,11 +3665,11 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	(pTIHeader->typeflags1 >> 3) | (pTIHeader->typeflags2 << 5);
 
       if((pTIHeader->typeflags1 & 7) != 2)
-	FIXME("typeflags1 = %02x\n", pTIHeader->typeflags1);
+	FIXME_(typelib)("typeflags1 = %02x\n", pTIHeader->typeflags1);
       if(pTIHeader->typeflags3 != 2)
-	FIXME("typeflags3 = %02x\n", pTIHeader->typeflags3);
+	FIXME_(typelib)("typeflags3 = %02x\n", pTIHeader->typeflags3);
 
-      TRACE("TypeInfo %s of kind %s guid %s typeflags %04x\n",
+      TRACE_(typelib)("TypeInfo %s of kind %s guid %s typeflags %04x\n",
 	    debugstr_w((*ppTypeInfoImpl)->Name),
 	    typekind_desc[pTIHeader->typekind],
 	    debugstr_guid(&(*ppTypeInfoImpl)->TypeAttr.guid),
