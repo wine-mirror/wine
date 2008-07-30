@@ -879,9 +879,40 @@ IDirectDrawImpl_GetFourCCCodes(IDirectDraw7 *iface,
                                DWORD *NumCodes, DWORD *Codes)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    FIXME("(%p)->(%p, %p): Stub!\n", This, NumCodes, Codes);
+    WINED3DFORMAT formats[] = {
+        WINED3DFMT_YUY2, WINED3DFMT_UYVY,
+        WINED3DFMT_DXT1, WINED3DFMT_DXT2, WINED3DFMT_DXT3, WINED3DFMT_DXT4, WINED3DFMT_DXT5,
+    };
+    DWORD count = 0, i, outsize;
+    HRESULT hr;
+    WINED3DDISPLAYMODE d3ddm;
+    TRACE("(%p)->(%p, %p)\n", This, NumCodes, Codes);
 
-    if(NumCodes) *NumCodes = 0;
+    IWineD3DDevice_GetDisplayMode(This->wineD3DDevice,
+                                  0 /* swapchain 0 */,
+                                  &d3ddm);
+
+    outsize = NumCodes && Codes ? *NumCodes : 0;
+
+    for(i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
+        hr = IWineD3D_CheckDeviceFormat(This->wineD3D,
+                                        WINED3DADAPTER_DEFAULT,
+                                        WINED3DDEVTYPE_HAL,
+                                        d3ddm.Format /* AdapterFormat */,
+                                        0 /* usage */,
+                                        WINED3DRTYPE_SURFACE,
+                                        formats[i]);
+        if(SUCCEEDED(hr)) {
+            if(count < outsize) {
+                Codes[count] = formats[i];
+            }
+            count++;
+        }
+    }
+    if(NumCodes) {
+        TRACE("Returning %u FourCC codes\n", count);
+        *NumCodes = count;
+    }
 
     return DD_OK;
 }
