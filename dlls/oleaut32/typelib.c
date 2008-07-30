@@ -3439,6 +3439,8 @@ static void SLTG_ProcessModule(char *pBlk, ITypeInfoImpl *pTI,
   if (pTITail->funcs_off != 0xffff)
     SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable, ref_lookup);
   HeapFree(GetProcessHeap(), 0, ref_lookup);
+  if (TRACE_ON(typelib))
+    dump_TypeInfo(pTI);
 }
 
 /* Because SLTG_OtherTypeInfo is such a painful struct, we make a more
