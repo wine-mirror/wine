@@ -847,9 +847,12 @@ static void test_find_executable(void)
     /* Don't test FindExecutable(..., NULL), it always crashes */
 
     strcpy(command, "your word");
+    if (0) /* Can crash on Vista! */
+    {
     rc=(int)FindExecutableA(NULL, NULL, command);
     ok(rc == SE_ERR_FNF || rc > 32 /* nt4 */, "FindExecutable(NULL) returned %d\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
+    }
 
     strcpy(command, "your word");
     rc=(int)FindExecutableA(tmpdir, NULL, command);
