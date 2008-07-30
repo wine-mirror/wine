@@ -40,7 +40,13 @@ static void test_LoadStringW(void)
 
     /* Check that the string which is returned by LoadStringW matches
        the string at the pointer returned by LoadStringW when called with buflen = 0 */
+    SetLastError(0xdeadbeef);
     length1 = LoadStringW(hInst, 2, (WCHAR *) &resourcepointer, 0); /* get pointer to resource. */
+    if (!length1 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip( "LoadStringW not implemented\n" );
+        return;
+    }
     length2 = LoadStringW(hInst, 2, returnedstringw, sizeof(returnedstringw) /sizeof(WCHAR)); /* get resource string */
     ok(length2 > 0, "LoadStringW failed to load resource 2, ret %d, err %d\n", length2, GetLastError());
     ok(length1 == length2, "LoadStringW returned different values dependent on buflen. ret1 %d, ret2 %d\n",
@@ -114,7 +120,8 @@ static void test_LoadStringA (void)
         "LoadString failed: ret %d err %d\n", ret, GetLastError());
 
     ret = LoadStringA(hInst, 0, buf, 0);
-    ok( ret == -1, "LoadStringA did not return -1 when called with buflen = 0, got %d, err %d\n",
+    ok( ret == -1 || broken(ret == 0),
+        "LoadStringA did not return -1 when called with buflen = 0, got %d, err %d\n",
         ret, GetLastError());
 }
 
