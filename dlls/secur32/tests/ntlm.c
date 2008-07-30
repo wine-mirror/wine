@@ -927,6 +927,8 @@ static void testSignSeal(void)
                             workgroup[] = "WORKGROUP",
                             test_pass[] = "testpass";
 
+    complex_data[1].pvBuffer = complex_data[3].pvBuffer = NULL;
+
     /****************************************************************
      * This is basically the same as in testAuth with a fake server,
      * as we need a valid, authenticated context.
