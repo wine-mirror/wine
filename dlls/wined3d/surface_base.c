@@ -891,45 +891,7 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
           (SrcRect->left >= (int) Src->currentDesc.Width))  ))
     {
         TRACE("Nothing to be done !\n");
-        return WINED3D_OK;
-    }
-
-    if (Src == This)
-    {
-        IWineD3DSurface_LockRect(iface, &dlock, NULL, 0);
-        dfmt = This->resource.format;
-        slock = dlock;
-        sfmt = dfmt;
-        sEntry = getFormatDescEntry(sfmt, NULL, NULL);
-        dEntry = sEntry;
-    }
-    else
-    {
-        dfmt = This->resource.format;
-        dEntry = getFormatDescEntry(dfmt, NULL, NULL);
-        if (Src)
-        {
-            if(This->resource.format != Src->resource.format) {
-                Src = surface_convert_format(Src, dfmt);
-                if(!Src) {
-                    /* The conv function writes a FIXME */
-                    WARN("Cannot convert source surface format to dest format\n");
-                    goto release;
-                }
-            }
-            IWineD3DSurface_LockRect((IWineD3DSurface *) Src, &slock, NULL, WINED3DLOCK_READONLY);
-            sfmt = Src->resource.format;
-        }
-        sEntry = getFormatDescEntry(sfmt, NULL, NULL);
-        IWineD3DSurface_LockRect(iface, &dlock,NULL,0);
-    }
-
-    if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~WINEDDBLT_DDFX;
-
-    if (sEntry->isFourcc && dEntry->isFourcc)
-    {
-        memcpy(dlock.pBits, slock.pBits, This->resource.size);
-        goto release;
+        return  WINED3D_OK;
     }
 
     if (DestRect)
@@ -963,9 +925,8 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
         }
     }
 
-
     /* The easy case : the source-less blits.... */
-    if (Src == NULL)
+    if (Src == NULL && DestRect)
     {
         RECT full_rect;
         RECT temp_rect; /* No idea if intersect rect can be the same as one of the source rect */
@@ -974,44 +935,44 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
         full_rect.top    = 0;
         full_rect.right  = This->currentDesc.Width;
         full_rect.bottom = This->currentDesc.Height;
-        IntersectRect(&temp_rect, &full_rect, &xdst);
+        IntersectRect(&temp_rect, &full_rect, DestRect);
         xdst = temp_rect;
     }
-    else
+    else if (DestRect)
     {
         /* Only handle clipping on the destination rectangle */
-        int clip_horiz = (xdst.left < 0) || (xdst.right  > (int) This->currentDesc.Width );
-        int clip_vert  = (xdst.top  < 0) || (xdst.bottom > (int) This->currentDesc.Height);
+        int clip_horiz = (DestRect->left < 0) || (DestRect->right  > (int) This->currentDesc.Width );
+        int clip_vert  = (DestRect->top  < 0) || (DestRect->bottom > (int) This->currentDesc.Height);
         if (clip_vert || clip_horiz)
         {
             /* Now check if this is a special case or not... */
-            if ((((xdst.bottom - xdst.top ) != (xsrc.bottom - xsrc.top )) && clip_vert ) ||
-                   (((xdst.right  - xdst.left) != (xsrc.right  - xsrc.left)) && clip_horiz) ||
+            if ((((DestRect->bottom - DestRect->top ) != (xsrc.bottom - xsrc.top )) && clip_vert ) ||
+                   (((DestRect->right  - DestRect->left) != (xsrc.right  - xsrc.left)) && clip_horiz) ||
                    (Flags & WINEDDBLT_DDFX))
             {
                 WARN("Out of screen rectangle in special case. Not handled right now.\n");
-                goto release;
+                return  WINED3D_OK;
             }
 
             if (clip_horiz)
             {
-                if (xdst.left < 0) { xsrc.left -= xdst.left; xdst.left = 0; }
-                if (xdst.right > This->currentDesc.Width)
+                if (DestRect->left < 0) { xsrc.left -= DestRect->left; xdst.left = 0; }
+                if (DestRect->right > This->currentDesc.Width)
                 {
-                    xsrc.right -= (xdst.right - (int) This->currentDesc.Width);
+                    xsrc.right -= (DestRect->right - (int) This->currentDesc.Width);
                     xdst.right = (int) This->currentDesc.Width;
                 }
             }
             if (clip_vert)
             {
-                if (xdst.top < 0)
+                if (DestRect->top < 0)
                 {
-                    xsrc.top -= xdst.top;
+                    xsrc.top -= DestRect->top;
                     xdst.top = 0;
                 }
-                if (xdst.bottom > This->currentDesc.Height)
+                if (DestRect->bottom > This->currentDesc.Height)
                 {
-                    xsrc.bottom -= (xdst.bottom - (int) This->currentDesc.Height);
+                    xsrc.bottom -= (DestRect->bottom - (int) This->currentDesc.Height);
                     xdst.bottom = (int) This->currentDesc.Height;
                 }
             }
@@ -1024,8 +985,52 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
                  (xsrc.left >= (int) Src->currentDesc.Width))
             {
                 TRACE("Nothing to be done after clipping !\n");
-                goto release;
+                return  WINED3D_OK;
             }
+        }
+    }
+
+    if (Src == This)
+    {
+        IWineD3DSurface_LockRect(iface, &dlock, NULL, 0);
+        dfmt = This->resource.format;
+        slock = dlock;
+        sfmt = dfmt;
+        sEntry = getFormatDescEntry(sfmt, NULL, NULL);
+        dEntry = sEntry;
+    }
+    else
+    {
+        dfmt = This->resource.format;
+        dEntry = getFormatDescEntry(dfmt, NULL, NULL);
+        if (Src)
+        {
+            if(This->resource.format != Src->resource.format) {
+                Src = surface_convert_format(Src, dfmt);
+                if(!Src) {
+                    /* The conv function writes a FIXME */
+                    WARN("Cannot convert source surface format to dest format\n");
+                    goto release;
+                }
+            }
+            IWineD3DSurface_LockRect((IWineD3DSurface *) Src, &slock, NULL, WINED3DLOCK_READONLY);
+            sfmt = Src->resource.format;
+        }
+        sEntry = getFormatDescEntry(sfmt, NULL, NULL);
+        if (DestRect)
+            IWineD3DSurface_LockRect(iface, &dlock, &xdst, 0);
+        else
+            IWineD3DSurface_LockRect(iface, &dlock, NULL, 0);
+    }
+
+    if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~WINEDDBLT_DDFX;
+
+    if (sEntry->isFourcc && dEntry->isFourcc)
+    {
+        if (!DestRect || Src == This)
+        {
+            memcpy(dlock.pBits, slock.pBits, This->resource.size);
+            goto release;
         }
     }
 
@@ -1038,7 +1043,10 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
 
     assert(width <= dlock.Pitch);
 
-    dbuf = (BYTE*)dlock.pBits+(xdst.top*dlock.Pitch)+(xdst.left*bpp);
+    if (DestRect && Src != This)
+        dbuf = (BYTE*)dlock.pBits;
+    else
+        dbuf = (BYTE*)dlock.pBits+(xdst.top*dlock.Pitch)+(xdst.left*bpp);
 
     if (Flags & WINEDDBLT_WAIT)
     {
