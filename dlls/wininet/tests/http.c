@@ -1072,7 +1072,9 @@ static void HttpHeaders_test(void)
     HINTERNET hConnect;
     HINTERNET hRequest;
     CHAR      buffer[256];
+    WCHAR     wbuffer[256];
     DWORD     len = 256;
+    DWORD     oldlen;
     DWORD     index = 0;
 
     hSession = InternetOpen("Wine Regression Test",
@@ -1150,19 +1152,47 @@ static void HttpHeaders_test(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected last error: %d\n", GetLastError());
     ok(len > 40, "Invalid length (exp. more than 40, got %d)\n", len);
     ok(index == 0, "Index was incremented\n");
+    oldlen = len;   /* bytes; at least long enough to hold buffer & nul */
 
 
     /* a working query */
     index = 0;
     len = sizeof(buffer);
+    memset(buffer, 'x', sizeof(buffer));
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
                 buffer,&len,&index),"Unable to query header\n");
+    ok(len + sizeof(CHAR) <= oldlen, "Result longer than advertised\n");
+    ok((len < sizeof(buffer)-sizeof(CHAR)) && (buffer[len/sizeof(CHAR)] == 0),"No NUL at end\n");
+    ok(len == strlen(buffer) * sizeof(CHAR), "Length wrong\n");
     /* what's in the middle differs between Wine and Windows so currently we check only the beginning and the end */
     ok(strncmp(buffer, "POST /posttest.php HTTP/1", 25)==0, "Invalid beginning of headers string\n");
     ok(strcmp(buffer + strlen(buffer) - 4, "\r\n\r\n")==0, "Invalid end of headers string\n");
     ok(index == 0, "Index was incremented\n");
 
+    /* Like above two tests, but for W version */
 
+    index = 0;
+    len = 0;
+    SetLastError(0xdeadbeef);
+    ok(HttpQueryInfoW(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                NULL,&len,&index) == FALSE,"Query worked\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected last error: %d\n", GetLastError());
+    ok(len > 80, "Invalid length (exp. more than 80, got %d)\n", len);
+    ok(index == 0, "Index was incremented\n");
+    oldlen = len;   /* bytes; at least long enough to hold buffer & nul */
+
+    /* a working query */
+    index = 0;
+    len = sizeof(wbuffer);
+    memset(wbuffer, 'x', sizeof(wbuffer));
+    ok(HttpQueryInfoW(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                wbuffer,&len,&index),"Unable to query header\n");
+    ok(len + sizeof(WCHAR) <= oldlen, "Result longer than advertised\n");
+    ok(len == lstrlenW(wbuffer) * sizeof(WCHAR), "Length wrong\n");
+    ok((len < sizeof(wbuffer)-sizeof(WCHAR)) && (wbuffer[len/sizeof(WCHAR)] == 0),"No NUL at end\n");
+    ok(index == 0, "Index was incremented\n");
+
+    /* end of W version tests */
 
     ok(HttpAddRequestHeaders(hRequest,"Warning:test2",-1,HTTP_ADDREQ_FLAG_ADD),
             "Failed to add duplicate header using HTTP_ADDREQ_FLAG_ADD\n");

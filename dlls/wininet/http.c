@@ -2195,15 +2195,16 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
             else
                 headers = lpwhr->lpszRawHeaders;
 
-            len = (strlenW(headers) + 1) * sizeof(WCHAR);
-            if (len > *lpdwBufferLength)
+            len = strlenW(headers) * sizeof(WCHAR);
+            if (len + sizeof(WCHAR) > *lpdwBufferLength)
             {
+                len += sizeof(WCHAR);
                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 ret = FALSE;
             }
             else if (lpBuffer)
             {
-                memcpy(lpBuffer, headers, len);
+                memcpy(lpBuffer, headers, len + sizeof(WCHAR));
                 TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len / sizeof(WCHAR)));
                 ret = TRUE;
             }
