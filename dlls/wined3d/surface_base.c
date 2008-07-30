@@ -850,6 +850,50 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
         FIXME("Filters not supported in software blit\n");
     }
 
+    /* First check for the validity of source / destination rectangles. This was
+     * verified using a test application + by MSDN.
+     */
+    if ((Src != NULL) && (SrcRect != NULL) &&
+         ((SrcRect->bottom > Src->currentDesc.Height)||(SrcRect->bottom < 0) ||
+         (SrcRect->top     > Src->currentDesc.Height)||(SrcRect->top    < 0) ||
+         (SrcRect->left    > Src->currentDesc.Width) ||(SrcRect->left   < 0) ||
+         (SrcRect->right   > Src->currentDesc.Width) ||(SrcRect->right  < 0) ||
+         (SrcRect->right   < SrcRect->left)          ||(SrcRect->bottom < SrcRect->top)))
+    {
+        WARN("Application gave us bad source rectangle for Blt.\n");
+        return WINEDDERR_INVALIDRECT;
+    }
+    /* For the Destination rect, it can be out of bounds on the condition that a clipper
+     * is set for the given surface.
+     */
+    if ((/*This->clipper == NULL*/ TRUE) && (DestRect) &&
+         ((DestRect->bottom > This->currentDesc.Height)||(DestRect->bottom < 0) ||
+         (DestRect->top     > This->currentDesc.Height)||(DestRect->top    < 0) ||
+         (DestRect->left    > This->currentDesc.Width) ||(DestRect->left   < 0) ||
+         (DestRect->right   > This->currentDesc.Width) ||(DestRect->right  < 0) ||
+         (DestRect->right   < DestRect->left)          ||(DestRect->bottom < DestRect->top)))
+    {
+        WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
+        return WINEDDERR_INVALIDRECT;
+    }
+
+    /* Now handle negative values in the rectangles. Warning: only supported for now
+    in the 'simple' cases (ie not in any stretching / rotation cases).
+
+    First, the case where nothing is to be done.
+    */
+    if ((DestRect && ((DestRect->bottom <= 0) || (DestRect->right <= 0)  ||
+          (DestRect->top    >= (int) This->currentDesc.Height) ||
+          (DestRect->left   >= (int) This->currentDesc.Width))) ||
+          ((Src != NULL) && (SrcRect != NULL) &&
+          ((SrcRect->bottom <= 0) || (SrcRect->right <= 0)     ||
+          (SrcRect->top >= (int) Src->currentDesc.Height) ||
+          (SrcRect->left >= (int) Src->currentDesc.Width))  ))
+    {
+        TRACE("Nothing to be done !\n");
+        return WINED3D_OK;
+    }
+
     if (Src == This)
     {
         IWineD3DSurface_LockRect(iface, &dlock, NULL, 0);
@@ -919,51 +963,6 @@ IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
         }
     }
 
-    /* First check for the validity of source / destination rectangles. This was
-     * verified using a test application + by MSDN.
-     */
-    if ((Src != NULL) &&
-         ((xsrc.bottom > Src->currentDesc.Height) || (xsrc.bottom < 0) ||
-         (xsrc.top     > Src->currentDesc.Height) || (xsrc.top    < 0) ||
-         (xsrc.left    > Src->currentDesc.Width)  || (xsrc.left   < 0) ||
-         (xsrc.right   > Src->currentDesc.Width)  || (xsrc.right  < 0) ||
-         (xsrc.right   < xsrc.left)               || (xsrc.bottom < xsrc.top)))
-    {
-        WARN("Application gave us bad source rectangle for Blt.\n");
-        ret = WINEDDERR_INVALIDRECT;
-        goto release;
-    }
-    /* For the Destination rect, it can be out of bounds on the condition that a clipper
-     * is set for the given surface.
-     */
-    if ((/*This->clipper == NULL*/ TRUE) &&
-         ((xdst.bottom  > This->currentDesc.Height) || (xdst.bottom < 0) ||
-         (xdst.top      > This->currentDesc.Height) || (xdst.top    < 0) ||
-         (xdst.left     > This->currentDesc.Width)  || (xdst.left   < 0) ||
-         (xdst.right    > This->currentDesc.Width)  || (xdst.right  < 0) ||
-         (xdst.right    < xdst.left)                || (xdst.bottom < xdst.top)))
-    {
-        WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
-        ret = WINEDDERR_INVALIDRECT;
-        goto release;
-    }
-
-    /* Now handle negative values in the rectangles. Warning: only supported for now
-    in the 'simple' cases (ie not in any stretching / rotation cases).
-
-    First, the case where nothing is to be done.
-    */
-    if (((xdst.bottom <= 0) || (xdst.right <= 0)         ||
-          (xdst.top    >= (int) This->currentDesc.Height) ||
-          (xdst.left   >= (int) This->currentDesc.Width)) ||
-          ((Src != NULL) &&
-          ((xsrc.bottom <= 0) || (xsrc.right <= 0)     ||
-          (xsrc.top >= (int) Src->currentDesc.Height) ||
-          (xsrc.left >= (int) Src->currentDesc.Width))  ))
-    {
-        TRACE("Nothing to be done !\n");
-        goto release;
-    }
 
     /* The easy case : the source-less blits.... */
     if (Src == NULL)
