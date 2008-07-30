@@ -67,12 +67,19 @@ GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat *format)
 
 GpStatus WINGDIPAPI GdipStringFormatGetGenericDefault(GpStringFormat **format)
 {
+    GpStatus stat;
+
     if (!format)
         return InvalidParameter;
 
-    FIXME("stub: %p\n", format);
+    stat = GdipCreateStringFormat(0, LANG_NEUTRAL, format);
+    if(stat != Ok)
+        return stat;
 
-    return NotImplemented;
+    (*format)->align     = StringAlignmentNear;
+    (*format)->vertalign = StringAlignmentNear;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetStringFormatAlign(GpStringFormat *format,

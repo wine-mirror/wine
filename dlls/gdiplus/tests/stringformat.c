@@ -277,6 +277,47 @@ static void test_tabstops(void)
     expect(Ok, stat);
 }
 
+static void test_getgenericdefault(void)
+{
+    GpStringFormat *format;
+    GpStatus stat;
+
+    INT flags;
+    INT n;
+    StringAlignment align, valign;
+    StringTrimming trimming;
+    StringDigitSubstitute digitsub;
+    LANGID digitlang;
+    INT tabcount;
+
+    /* NULL arg */
+    stat = GdipStringFormatGetGenericDefault(NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipStringFormatGetGenericDefault(&format);
+    expect(Ok, stat);
+
+    GdipGetStringFormatFlags(format, &flags);
+    GdipGetStringFormatAlign(format, &align);
+    GdipGetStringFormatLineAlign(format, &valign);
+    GdipGetStringFormatHotkeyPrefix(format, &n);
+    GdipGetStringFormatTrimming(format, &trimming);
+    GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
+    GdipGetStringFormatTabStopCount(format, &tabcount);
+
+    expect(0, flags);
+    expect(HotkeyPrefixNone, n);
+    expect(StringAlignmentNear, align);
+    expect(StringAlignmentNear, align);
+    expect(StringTrimmingCharacter, trimming);
+    expect(StringDigitSubstituteUser, digitsub);
+    expect(LANG_NEUTRAL, digitlang);
+    expect(0, tabcount);
+
+    stat = GdipDeleteStringFormat(format);
+    expect(Ok, stat);
+}
+
 START_TEST(stringformat)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -294,6 +335,7 @@ START_TEST(stringformat)
     test_digitsubstitution();
     test_getgenerictypographic();
     test_tabstops();
+    test_getgenericdefault();
 
     GdiplusShutdown(gdiplusToken);
 }
