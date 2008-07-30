@@ -3135,6 +3135,12 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
       SLTG_DoElem(pType, pBlk,
 		  &(*ppVarDesc)->vardesc.elemdescVar, ref_lookup);
 
+      if (TRACE_ON(typelib)) {
+          char buf[300];
+          dump_TypeDesc(&(*ppVarDesc)->vardesc.elemdescVar.tdesc, buf);
+          TRACE_(typelib)("elemdescVar: %s\n", buf);
+      }
+
       if (pItem->flags & 0x40) {
         TRACE_(typelib)("VAR_DISPATCH\n");
         (*ppVarDesc)->vardesc.varkind = VAR_DISPATCH;
@@ -3185,12 +3191,6 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
 
       if (pItem->flags & 0x80)
         (*ppVarDesc)->vardesc.wVarFlags |= VARFLAG_FREADONLY;
-
-      if (TRACE_ON(typelib)) {
-          char buf[300];
-          dump_TypeDesc(&(*ppVarDesc)->vardesc.elemdescVar.tdesc, buf);
-          TRACE_(typelib)("elemdescVar: %s\n", buf);
-      }
 
       bstrPrevName = (*ppVarDesc)->Name;
       ppVarDesc = &((*ppVarDesc)->next);
