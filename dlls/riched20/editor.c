@@ -1814,6 +1814,8 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->vert_si.nPage = 0;
   ed->vert_si.nPos = 0;
 
+  OleInitialize(NULL);
+
   return ed;
 }
 
@@ -1882,6 +1884,7 @@ void ME_DestroyEditor(ME_TextEditor *editor)
     DeleteObject(editor->hbrBackground);
   if(editor->lpOleCallback)
     IUnknown_Release(editor->lpOleCallback);
+  OleUninitialize();
 
   FREE_OBJ(editor->pBuffer);
   FREE_OBJ(editor->pCursors);
