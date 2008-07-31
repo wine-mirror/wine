@@ -1666,7 +1666,7 @@ static void test_DdeCreateStringHandle(void)
     ret = DdeInitializeW(&dde_inst, client_ddeml_callback, APPCMD_CLIENTONLY, 0);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        trace("Skipping the DDE test on a Win9x platform\n");
+        skip("DdeInitialize is unimplemented\n");
         return;
     }
 
