@@ -885,13 +885,13 @@ static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent
     {
         TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
         data->iconic = FALSE;
-        ShowWindow( data->hwnd, SW_RESTORE );
+        SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
     }
     else if (!data->iconic && data->wm_state == IconicState)
     {
         TRACE( "minimizing win %p/%lx\n", data->hwnd, data->whole_window );
         data->iconic = TRUE;
-        ShowWindow( data->hwnd, SW_MINIMIZE );
+        SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0 );
     }
 }
 
