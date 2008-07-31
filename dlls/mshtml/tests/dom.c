@@ -496,6 +496,9 @@ static void _test_elem_offset(unsigned line, IUnknown *unk)
     hres = IHTMLElement_get_offsetTop(elem, &l);
     ok_(__FILE__,line) (hres == S_OK, "get_offsetTop failed: %08x\n", hres);
 
+    hres = IHTMLElement_get_offsetHeight(elem, &l);
+    ok_(__FILE__,line) (hres == S_OK, "get_offsetHeight failed: %08x\n", hres);
+
     IHTMLElement_Release(elem);
 }
 
