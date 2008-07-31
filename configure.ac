@@ -1192,7 +1192,7 @@ dnl **** Check for libodbc ****
 WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.$LIBEXT"])])
 
 dnl **** Check for any sound system ****
-if test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESD_LIBS$ac_cv_lib_soname_jack" = "x" -a \
+if test "x$ALSALIBS$AUDIOIOLIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
         "$ac_cv_header_sys_soundcard_h" != "yes" -a \
         "$ac_cv_header_machine_soundcard_h" != "yes" -a \
         "$ac_cv_header_soundcard_h" != "yes" -a \
