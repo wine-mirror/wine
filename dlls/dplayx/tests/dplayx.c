@@ -529,6 +529,56 @@ static LPCSTR dwFlags2str(DWORD dwFlags, DWORD flagType)
     return flags;
 }
 
+static void init_TCPIP_provider( LPDIRECTPLAY4 pDP,
+                                 LPCSTR strIPAddressString,
+                                 WORD port )
+{
+
+    DPCOMPOUNDADDRESSELEMENT addressElements[3];
+    LPVOID pAddress = NULL;
+    DWORD dwAddressSize = 0;
+    LPDIRECTPLAYLOBBY3 pDPL;
+    HRESULT hr;
+
+    CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+
+    /* Service provider */
+    addressElements[0].guidDataType = DPAID_ServiceProvider;
+    addressElements[0].dwDataSize   = sizeof(GUID);
+    addressElements[0].lpData       = (LPVOID) &DPSPGUID_TCPIP;
+
+    /* IP address string */
+    addressElements[1].guidDataType = DPAID_INet;
+    addressElements[1].dwDataSize   = lstrlen(strIPAddressString) + 1;
+    addressElements[1].lpData       = (LPVOID) strIPAddressString;
+
+    /* Optional Port number */
+    if( port > 0 )
+    {
+        addressElements[2].guidDataType = DPAID_INetPort;
+        addressElements[2].dwDataSize   = sizeof(WORD);
+        addressElements[2].lpData       = &port;
+    }
+
+
+    hr = IDirectPlayLobby_CreateCompoundAddress( pDPL, addressElements, 2,
+                                                 NULL, &dwAddressSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+
+    if( hr == DPERR_BUFFERTOOSMALL )
+    {
+        pAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwAddressSize );
+        hr = IDirectPlayLobby_CreateCompoundAddress( pDPL, addressElements, 2,
+                                                     pAddress, &dwAddressSize );
+        checkHR( DP_OK, hr );
+    }
+
+    hr = IDirectPlayX_InitializeConnection( pDP, pAddress, 0 );
+    todo_wine checkHR( DP_OK, hr );
+
+}
+
 
 /* DirectPlayCreate */
 
@@ -753,6 +803,74 @@ static void test_InitializeConnection(void)
     IDirectPlayX_Release( pDP );
 }
 
+/* GetCaps */
+
+static void test_GetCaps(void)
+{
+
+    LPDIRECTPLAY4 pDP;
+    DPCAPS dpcaps;
+    DWORD dwFlags;
+    HRESULT hr;
+
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ZeroMemory( &dpcaps, sizeof(DPCAPS) );
+
+    /* Service provider not ininitialized */
+    hr = IDirectPlayX_GetCaps( pDP, &dpcaps, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+    init_TCPIP_provider( pDP, "127.0.0.1", 0 );
+
+    /* dpcaps not ininitialized */
+    hr = IDirectPlayX_GetCaps( pDP, &dpcaps, 0 );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    dpcaps.dwSize = sizeof(DPCAPS);
+
+    for (dwFlags=0;
+         dwFlags<=DPGETCAPS_GUARANTEED;
+         dwFlags+=DPGETCAPS_GUARANTEED)
+    {
+
+        hr = IDirectPlayX_GetCaps( pDP, &dpcaps, dwFlags );
+        todo_wine checkHR( DP_OK, hr );
+
+
+        if ( hr == DP_OK )
+        {
+            check( sizeof(DPCAPS), dpcaps.dwSize );
+            check( DPCAPS_ASYNCSUPPORTED |
+                   DPCAPS_GUARANTEEDOPTIMIZED |
+                   DPCAPS_GUARANTEEDSUPPORTED,
+                   dpcaps.dwFlags );
+            check( 0,     dpcaps.dwMaxQueueSize );
+            check( 0,     dpcaps.dwHundredBaud );
+            check( 500,   dpcaps.dwLatency );
+            check( 65536, dpcaps.dwMaxLocalPlayers );
+            check( 20,    dpcaps.dwHeaderLength );
+            check( 5000,  dpcaps.dwTimeout );
+
+            switch (dwFlags)
+            {
+            case 0:
+                check( 65479,   dpcaps.dwMaxBufferSize );
+                check( 65536,   dpcaps.dwMaxPlayers );
+                break;
+            case DPGETCAPS_GUARANTEED:
+                check( 1048547, dpcaps.dwMaxBufferSize );
+                check( 64,      dpcaps.dwMaxPlayers );
+                break;
+            default: break;
+            }
+        }
+    }
+
+    IDirectPlayX_Release( pDP );
+}
+
 
 START_TEST(dplayx)
 {
@@ -761,6 +879,8 @@ START_TEST(dplayx)
     test_DirectPlayCreate();
     test_EnumConnections();
     test_InitializeConnection();
+
+    test_GetCaps();
 
     CoUninitialize();
 }

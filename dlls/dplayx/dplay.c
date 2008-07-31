@@ -2380,6 +2380,11 @@ static HRESULT WINAPI DP_IF_GetPlayerCaps
 
   TRACE("(%p)->(0x%08x,%p,0x%08x)\n", This, idPlayer, lpDPCaps, dwFlags);
 
+  if ( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
   /* Query the service provider */
   data.idPlayer = idPlayer;
   data.dwFlags  = dwFlags;
