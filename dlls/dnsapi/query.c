@@ -561,7 +561,7 @@ exit:
  */
 static DNS_STATUS dns_set_serverlist( const IP4_ARRAY *addrs )
 {
-    unsigned int i;
+    int i;
 
     if (addrs->AddrCount > MAXNS) 
     {
@@ -579,7 +579,8 @@ static DNS_STATUS dns_set_serverlist( const IP4_ARRAY *addrs )
 
 static DNS_STATUS dns_get_serverlist( PIP4_ARRAY addrs, PDWORD len )
 {
-    unsigned int i, size;
+    unsigned int size;
+    int i;
 
     size = sizeof(IP4_ARRAY) + sizeof(IP4_ADDRESS) * (_res.nscount - 1);
     if (!addrs || *len < size)
