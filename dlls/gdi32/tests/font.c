@@ -533,7 +533,7 @@ static void test_outline_font(void)
     trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
-    ok(gm.gmCellIncX == pt.x, "incX %d != %d\n", gm.gmCellIncX, pt.x);
+    ok(near_match(gm.gmCellIncX, pt.x), "incX %d != %d\n", gm.gmCellIncX, pt.x);
     ok(gm.gmCellIncY == 0, "incY %d != 0\n", gm.gmCellIncY);
     /* with a custom matrix */
     memset(&gm, 0, sizeof(gm));
@@ -543,7 +543,7 @@ static void test_outline_font(void)
     trace("gm.gmCellIncX %d, width_orig %d\n", gm.gmCellIncX, width_orig);
     pt.x = width_orig; pt.y = 0;
     LPtoDP(hdc, &pt, 1);
-    ok(gm.gmCellIncX == (pt.x + 1)/2, "incX %d != %d\n", gm.gmCellIncX, (pt.x + 1)/2);
+    ok(near_match(gm.gmCellIncX, (pt.x + 1)/2), "incX %d != %d\n", gm.gmCellIncX, (pt.x + 1)/2);
     ok(gm.gmCellIncY == 0, "incY %d != 0\n", gm.gmCellIncY);
     SelectObject(hdc, old_hfont);
 
