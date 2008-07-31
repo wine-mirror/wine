@@ -1130,6 +1130,186 @@ void libxmlFatalError(void *ctx, const char *msg, ...)
     This->ret = E_FAIL;
 }
 
+/*** IVBSAXLocator interface ***/
+/*** IUnknown methods ***/
+static HRESULT WINAPI ivbsaxlocator_QueryInterface(IVBSAXLocator* iface, REFIID riid, void **ppvObject)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+
+    TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppvObject);
+
+    *ppvObject = NULL;
+
+    if ( IsEqualGUID( riid, &IID_IUnknown ) ||
+            IsEqualGUID( riid, &IID_IDispatch) ||
+            IsEqualGUID( riid, &IID_IVBSAXLocator ))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IVBSAXLocator_AddRef( iface );
+
+    return S_OK;
+}
+
+static ULONG WINAPI ivbsaxlocator_AddRef(IVBSAXLocator* iface)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    TRACE("%p\n", This );
+    return InterlockedIncrement( &This->ref );
+}
+
+static ULONG WINAPI ivbsaxlocator_Release(
+        IVBSAXLocator* iface)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    return ISAXLocator_Release((ISAXLocator*)&This->lpVBSAXLocatorVtbl);
+}
+
+/*** IDispatch methods ***/
+static HRESULT WINAPI ivbsaxlocator_GetTypeInfoCount( IVBSAXLocator *iface, UINT* pctinfo )
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ivbsaxlocator_GetTypeInfo(
+    IVBSAXLocator *iface,
+    UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo )
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    HRESULT hr;
+
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(IVBSAXLocator_tid, ppTInfo);
+
+    return hr;
+}
+
+static HRESULT WINAPI ivbsaxlocator_GetIDsOfNames(
+    IVBSAXLocator *iface,
+    REFIID riid,
+    LPOLESTR* rgszNames,
+    UINT cNames,
+    LCID lcid,
+    DISPID* rgDispId)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+
+    if(!rgszNames || cNames == 0 || !rgDispId)
+        return E_INVALIDARG;
+
+    hr = get_typeinfo(IVBSAXLocator_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI ivbsaxlocator_Invoke(
+    IVBSAXLocator *iface,
+    DISPID dispIdMember,
+    REFIID riid,
+    LCID lcid,
+    WORD wFlags,
+    DISPPARAMS* pDispParams,
+    VARIANT* pVarResult,
+    EXCEPINFO* pExcepInfo,
+    UINT* puArgErr)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IVBSAXLocator_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVBSAXLocatorVtbl), dispIdMember, wFlags, pDispParams,
+                pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+/*** IVBSAXLocator methods ***/
+static HRESULT WINAPI ivbsaxlocator_get_columnNumber(
+        IVBSAXLocator* iface,
+        int *pnColumn)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    return ISAXLocator_getColumnNumber(
+            (ISAXLocator*)&This->lpVBSAXLocatorVtbl,
+            pnColumn);
+}
+
+static HRESULT WINAPI ivbsaxlocator_get_lineNumber(
+        IVBSAXLocator* iface,
+        int *pnLine)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    return ISAXLocator_getLineNumber(
+            (ISAXLocator*)&This->lpVBSAXLocatorVtbl,
+            pnLine);
+}
+
+static HRESULT WINAPI ivbsaxlocator_get_publicId(
+        IVBSAXLocator* iface,
+        BSTR* publicId)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    return ISAXLocator_getPublicId(
+            (ISAXLocator*)&This->lpVBSAXLocatorVtbl,
+            (const WCHAR**)publicId);
+}
+
+static HRESULT WINAPI ivbsaxlocator_get_systemId(
+        IVBSAXLocator* iface,
+        BSTR* systemId)
+{
+    saxlocator *This = impl_from_IVBSAXLocator( iface );
+    return ISAXLocator_getSystemId(
+            (ISAXLocator*)&This->lpVBSAXLocatorVtbl,
+            (const WCHAR**)systemId);
+}
+
+static const struct IVBSAXLocatorVtbl ivbsaxlocator_vtbl =
+{
+    ivbsaxlocator_QueryInterface,
+    ivbsaxlocator_AddRef,
+    ivbsaxlocator_Release,
+    ivbsaxlocator_GetTypeInfoCount,
+    ivbsaxlocator_GetTypeInfo,
+    ivbsaxlocator_GetIDsOfNames,
+    ivbsaxlocator_Invoke,
+    ivbsaxlocator_get_columnNumber,
+    ivbsaxlocator_get_lineNumber,
+    ivbsaxlocator_get_publicId,
+    ivbsaxlocator_get_systemId
+};
+
 /*** ISAXLocator interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI isaxlocator_QueryInterface(ISAXLocator* iface, REFIID riid, void **ppvObject)
@@ -1270,6 +1450,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     if( !locator )
         return E_OUTOFMEMORY;
 
+    locator->lpVBSAXLocatorVtbl = &ivbsaxlocator_vtbl;
     locator->lpSAXLocatorVtbl = &isaxlocator_vtbl;
     locator->ref = 1;
     locator->vbInterface = vbInterface;
