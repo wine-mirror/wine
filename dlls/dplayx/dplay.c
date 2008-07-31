@@ -4227,9 +4227,19 @@ static HRESULT WINAPI DP_IF_InitializeConnection
 
   TRACE("(%p)->(%p,0x%08x,%u)\n", This, lpConnection, dwFlags, bAnsi );
 
+  if ( lpConnection == NULL )
+  {
+    return DPERR_INVALIDPARAMS;
+  }
+
   if( dwFlags != 0 )
   {
     return DPERR_INVALIDFLAGS;
+  }
+
+  if( This->dp2->connectionInitialized != NO_PROVIDER )
+  {
+    return DPERR_ALREADYINITIALIZED;
   }
 
   /* Find out what the requested SP is and how large this buffer is */

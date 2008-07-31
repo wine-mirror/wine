@@ -707,6 +707,52 @@ static void test_EnumConnections(void)
     IDirectPlayX_Release( pDP );
 }
 
+/* InitializeConnection */
+
+static BOOL CALLBACK EnumConnections_cb2( LPCGUID lpguidSP,
+                                          LPVOID lpConnection,
+                                          DWORD dwConnectionSize,
+                                          LPCDPNAME lpName,
+                                          DWORD dwFlags,
+                                          LPVOID lpContext )
+{
+    LPDIRECTPLAY4 pDP = (LPDIRECTPLAY4) lpContext;
+    HRESULT hr;
+
+    /* Incorrect parameters */
+    hr = IDirectPlayX_InitializeConnection( pDP, NULL, 1 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_InitializeConnection( pDP, lpConnection, 1 );
+    checkHR( DPERR_INVALIDFLAGS, hr );
+
+    /* Normal operation.
+       We're only interested in ensuring that the TCP/IP provider works */
+
+    if( IsEqualGUID(lpguidSP, &DPSPGUID_TCPIP) )
+    {
+        hr = IDirectPlayX_InitializeConnection( pDP, lpConnection, 0 );
+        todo_wine checkHR( DP_OK, hr );
+        hr = IDirectPlayX_InitializeConnection( pDP, lpConnection, 0 );
+        todo_wine checkHR( DPERR_ALREADYINITIALIZED, hr );
+    }
+
+    return TRUE;
+}
+
+static void test_InitializeConnection(void)
+{
+
+    LPDIRECTPLAY4 pDP;
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+
+    IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb2,
+                                  (LPVOID) pDP, 0 );
+
+    IDirectPlayX_Release( pDP );
+}
+
 
 START_TEST(dplayx)
 {
@@ -714,6 +760,7 @@ START_TEST(dplayx)
 
     test_DirectPlayCreate();
     test_EnumConnections();
+    test_InitializeConnection();
 
     CoUninitialize();
 }
