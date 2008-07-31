@@ -763,6 +763,36 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
 
 
 /***********************************************************************
+ *     is_net_wm_state_maximized
+ */
+static BOOL is_net_wm_state_maximized( Display *display, struct x11drv_win_data *data )
+{
+    Atom type, *state;
+    int format, ret = 0;
+    unsigned long i, count, remaining;
+
+    wine_tsx11_lock();
+    if (!XGetWindowProperty( display, data->whole_window, x11drv_atom(_NET_WM_STATE), 0,
+                             65536/sizeof(CARD32), False, XA_ATOM, &type, &format, &count,
+                             &remaining, (unsigned char **)&state ))
+    {
+        if (type == XA_ATOM && format == 32)
+        {
+            for (i = 0; i < count; i++)
+            {
+                if (state[i] == x11drv_atom(_NET_WM_STATE_MAXIMIZED_VERT) ||
+                    state[i] == x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ))
+                    ret++;
+            }
+        }
+        XFree( state );
+    }
+    wine_tsx11_unlock();
+    return (ret == 2);
+}
+
+
+/***********************************************************************
  *		X11DRV_ConfigureNotify
  */
 void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
@@ -792,8 +822,8 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     rect.right  = x + event->width;
     rect.bottom = y + event->height;
     OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
-    TRACE( "win %p new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
-           hwnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
+    TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
+           hwnd, data->whole_window, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
     X11DRV_X_to_window_rect( data, &rect );
 
@@ -802,6 +832,25 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     cx    = rect.right - rect.left;
     cy    = rect.bottom - rect.top;
     flags = SWP_NOACTIVATE | SWP_NOZORDER;
+
+    if (is_net_wm_state_maximized( event->display, data ))
+    {
+        if (!IsZoomed( data->hwnd ))
+        {
+            TRACE( "win %p/%lx is maximized\n", data->hwnd, data->whole_window );
+            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
+            return;
+        }
+    }
+    else
+    {
+        if (IsZoomed( data->hwnd ))
+        {
+            TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
+            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
+            return;
+        }
+    }
 
     /* Compare what has changed */
 
