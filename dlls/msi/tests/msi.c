@@ -24,9 +24,12 @@
 #include <windows.h>
 #include <msi.h>
 #include <msiquery.h>
+#include <msidefs.h>
 #include <sddl.h>
 
 #include "wine/test.h"
+
+static const char msifile[] = "winetest.msi";
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 
@@ -66,6 +69,112 @@ static void init_functionpointers(void)
     GET_PROC(hadvapi32, ConvertSidToStringSidA)
 
 #undef GET_PROC
+}
+
+static UINT run_query(MSIHANDLE hdb, const char *query)
+{
+    MSIHANDLE hview = 0;
+    UINT r;
+
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MsiViewExecute(hview, 0);
+    if (r == ERROR_SUCCESS)
+        r = MsiViewClose(hview);
+    MsiCloseHandle(hview);
+    return r;
+}
+
+static UINT set_summary_info(MSIHANDLE hdb, LPSTR prodcode)
+{
+    UINT res;
+    MSIHANDLE suminfo;
+
+    /* build summary info */
+    res = MsiGetSummaryInformation(hdb, NULL, 7, &suminfo);
+    ok(res == ERROR_SUCCESS, "Failed to open summaryinfo\n");
+
+    res = MsiSummaryInfoSetProperty(suminfo, 2, VT_LPSTR, 0, NULL,
+                                    "Installation Database");
+    ok(res == ERROR_SUCCESS, "Failed to set summary info\n");
+
+    res = MsiSummaryInfoSetProperty(suminfo, 3, VT_LPSTR, 0, NULL,
+                                    "Installation Database");
+    ok(res == ERROR_SUCCESS, "Failed to set summary info\n");
+
+    res = MsiSummaryInfoSetProperty(suminfo, 4, VT_LPSTR, 0, NULL,
+                                    "Wine Hackers");
+    ok(res == ERROR_SUCCESS, "Failed to set summary info\n");
+
+    res = MsiSummaryInfoSetProperty(suminfo, 7, VT_LPSTR, 0, NULL,
+                                    ";1033");
+    ok(res == ERROR_SUCCESS, "Failed to set summary info\n");
+
+    res = MsiSummaryInfoSetProperty(suminfo, PID_REVNUMBER, VT_LPSTR, 0, NULL,
+                                    "{A2078D65-94D6-4205-8DEE-F68D6FD622AA}");
+    ok(res == ERROR_SUCCESS, "Failed to set summary info\n");
+
+    res = MsiSummaryInfoSetProperty(suminfo, 14, VT_I4, 100, NULL, NULL);
+    ok(res == ERROR_SUCCESS, "Failed to set summary info\n");
+
+    res = MsiSummaryInfoSetProperty(suminfo, 15, VT_I4, 0, NULL, NULL);
+    ok(res == ERROR_SUCCESS, "Failed to set summary info\n");
+
+    res = MsiSummaryInfoPersist(suminfo);
+    ok(res == ERROR_SUCCESS, "Failed to make summary info persist\n");
+
+    res = MsiCloseHandle(suminfo);
+    ok(res == ERROR_SUCCESS, "Failed to close suminfo\n");
+
+    return res;
+}
+
+static MSIHANDLE create_package_db(LPSTR prodcode)
+{
+    MSIHANDLE hdb = 0;
+    CHAR query[MAX_PATH];
+    UINT res;
+
+    DeleteFile(msifile);
+
+    /* create an empty database */
+    res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok( res == ERROR_SUCCESS , "Failed to create database\n" );
+    if (res != ERROR_SUCCESS)
+        return hdb;
+
+    res = MsiDatabaseCommit(hdb);
+    ok(res == ERROR_SUCCESS, "Failed to commit database\n");
+
+    set_summary_info(hdb, prodcode);
+
+    res = run_query(hdb,
+            "CREATE TABLE `Directory` ( "
+            "`Directory` CHAR(255) NOT NULL, "
+            "`Directory_Parent` CHAR(255), "
+            "`DefaultDir` CHAR(255) NOT NULL "
+            "PRIMARY KEY `Directory`)");
+    ok(res == ERROR_SUCCESS , "Failed to create directory table\n");
+
+    res = run_query(hdb,
+            "CREATE TABLE `Property` ( "
+            "`Property` CHAR(72) NOT NULL, "
+            "`Value` CHAR(255) "
+            "PRIMARY KEY `Property`)");
+    ok(res == ERROR_SUCCESS , "Failed to create directory table\n");
+
+    sprintf(query, "INSERT INTO `Property` "
+            "(`Property`, `Value`) "
+            "VALUES( 'ProductCode', '%s' )", prodcode);
+    res = run_query(hdb, query);
+    ok(res == ERROR_SUCCESS , "Failed\n");
+
+    res = MsiDatabaseCommit(hdb);
+    ok(res == ERROR_SUCCESS, "Failed to commit database\n");
+
+    return hdb;
 }
 
 static void test_usefeature(void)
@@ -6901,6 +7010,315 @@ static void test_MsiGetUserInfo(void)
     RegCloseKey(prodkey);
 }
 
+static void test_MsiOpenProduct(void)
+{
+    MSIHANDLE hprod, hdb;
+    CHAR val[MAX_PATH];
+    CHAR path[MAX_PATH];
+    CHAR keypath[MAX_PATH*2];
+    CHAR prodcode[MAX_PATH];
+    CHAR prod_squashed[MAX_PATH];
+    HKEY prodkey, userkey, props;
+    LPSTR usersid;
+    DWORD size;
+    LONG res;
+    UINT r;
+
+    GetCurrentDirectoryA(MAX_PATH, path);
+    lstrcatA(path, "\\");
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    hdb = create_package_db(prodcode);
+    MsiCloseHandle(hdb);
+
+    /* NULL szProduct */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(NULL, &hprod);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    /* empty szProduct */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA("", &hprod);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    /* garbage szProduct */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA("garbage", &hprod);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    /* guid without brackets */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D", &hprod);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    /* guid with brackets */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA("{6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D}", &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    /* same length as guid, but random */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA("A938G02JF-2NF3N93-VN3-2NNF-3KGKALDNF93", &hprod);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    /* hProduct is NULL */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, NULL);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    /* MSIINSTALLCONTEXT_USERMANAGED */
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\Managed\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* managed product key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    res = RegCreateKeyA(userkey, "InstallProperties", &props);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    lstrcpyA(val, path);
+    lstrcatA(val, "\\winetest.msi");
+    res = RegSetValueExA(props, "ManagedLocalPackage", 0, REG_SZ,
+                         (const BYTE *)val, lstrlenA(val) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* ManagedLocalPackage value exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(hprod != 0 && hprod != 0xdeadbeef, "Expected a valid product handle\n");
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hprod, "ProductCode", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, prodcode), "Expected \"%s\", got \"%s\"\n", prodcode, val);
+    ok(size == lstrlenA(prodcode), "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    MsiCloseHandle(hprod);
+
+    RegDeleteValueA(props, "ManagedLocalPackage");
+    RegDeleteKeyA(props, "");
+    RegCloseKey(props);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* unmanaged product key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    res = RegCreateKeyA(userkey, "InstallProperties", &props);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    lstrcpyA(val, path);
+    lstrcatA(val, "\\winetest.msi");
+    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
+                         (const BYTE *)val, lstrlenA(val) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(hprod != 0 && hprod != 0xdeadbeef, "Expected a valid product handle\n");
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hprod, "ProductCode", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, prodcode), "Expected \"%s\", got \"%s\"\n", prodcode, val);
+    ok(size == lstrlenA(prodcode), "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    MsiCloseHandle(hprod);
+
+    RegDeleteValueA(props, "LocalPackage");
+    RegDeleteKeyA(props, "");
+    RegCloseKey(props);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    /* MSIINSTALLCONTEXT_MACHINE */
+
+    lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* managed product key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
+    lstrcatA(keypath, prod_squashed);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* user product key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    res = RegCreateKeyA(userkey, "InstallProperties", &props);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* InstallProperties key exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    lstrcpyA(val, path);
+    lstrcatA(val, "\\winetest.msi");
+    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
+                         (const BYTE *)val, lstrlenA(val) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage value exists */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(hprod != 0 && hprod != 0xdeadbeef, "Expected a valid product handle\n");
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hprod, "ProductCode", val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, prodcode), "Expected \"%s\", got \"%s\"\n", prodcode, val);
+    ok(size == lstrlenA(prodcode), "Expected %d, got %d\n", lstrlenA(prodcode), size);
+
+    MsiCloseHandle(hprod);
+
+    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
+                         (const BYTE *)"winetest.msi", 13);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* LocalPackage has just the package name */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_INSTALL_PACKAGE_OPEN_FAILED,
+       "Expected ERROR_INSTALL_PACKAGE_OPEN_FAILED, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    lstrcpyA(val, path);
+    lstrcatA(val, "\\winetest.msi");
+    res = RegSetValueExA(props, "LocalPackage", 0, REG_SZ,
+                         (const BYTE *)val, lstrlenA(val) + 1);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    DeleteFileA(msifile);
+
+    /* local package does not exist */
+    hprod = 0xdeadbeef;
+    r = MsiOpenProductA(prodcode, &hprod);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(hprod == 0xdeadbeef, "Expected hprod to be unchanged\n");
+
+    RegDeleteValueA(props, "LocalPackage");
+    RegDeleteKeyA(props, "");
+    RegCloseKey(props);
+    RegDeleteKeyA(userkey, "");
+    RegCloseKey(userkey);
+    RegDeleteKeyA(prodkey, "");
+    RegCloseKey(prodkey);
+
+    DeleteFileA(msifile);
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -6924,6 +7342,7 @@ START_TEST(msi)
         test_MsiGetProductInfo();
         test_MsiGetProductInfoEx();
         test_MsiGetUserInfo();
+        test_MsiOpenProduct();
     }
 
     test_MsiGetFileVersion();
