@@ -52,7 +52,9 @@ typedef struct _saxreader
     const struct ISAXXMLReaderVtbl *lpSAXXMLReaderVtbl;
     LONG ref;
     struct ISAXContentHandler *contentHandler;
+    struct IVBSAXContentHandler *vbcontentHandler;
     struct ISAXErrorHandler *errorHandler;
+    struct IVBSAXErrorHandler *vberrorHandler;
     xmlSAXHandler sax;
 } saxreader;
 
@@ -69,6 +71,7 @@ typedef struct _saxlocator
     xmlChar *lastCur;
     int line;
     int column;
+    BOOL vbInterface;
 } saxlocator;
 
 typedef struct _saxattributes
@@ -152,8 +155,15 @@ static void format_error_message_from_id(saxlocator *This, HRESULT hr)
             msg[0] = '\0';
         }
 
-        ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
-                (ISAXLocator*)&This->lpSAXLocatorVtbl, msg, hr);
+        if(This->vbInterface)
+        {
+            BSTR bstrMsg = SysAllocString(msg);
+            IVBSAXErrorHandler_fatalError(This->saxreader->vberrorHandler,
+                    (IVBSAXLocator*)&This->lpVBSAXLocatorVtbl, &bstrMsg, hr);
+        }
+        else
+            ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
+                    (ISAXLocator*)&This->lpSAXLocatorVtbl, msg, hr);
     }
 }
 
@@ -848,7 +858,11 @@ static void libxmlStartDocument(void *ctx)
 
     if(This->saxreader->contentHandler)
     {
-        hr = ISAXContentHandler_startDocument(This->saxreader->contentHandler);
+        if(This->vbInterface)
+            hr = IVBSAXContentHandler_startDocument(This->saxreader->vbcontentHandler);
+        else
+            hr = ISAXContentHandler_startDocument(This->saxreader->contentHandler);
+
         if(hr != S_OK)
             format_error_message_from_id(This, hr);
     }
@@ -868,7 +882,11 @@ static void libxmlEndDocument(void *ctx)
 
     if(This->saxreader->contentHandler)
     {
-        hr = ISAXContentHandler_endDocument(This->saxreader->contentHandler);
+        if(This->vbInterface)
+            hr = IVBSAXContentHandler_endDocument(This->saxreader->vbcontentHandler);
+        else
+            hr = ISAXContentHandler_endDocument(This->saxreader->contentHandler);
+
         if(hr != S_OK)
             format_error_message_from_id(This, hr);
     }
@@ -901,12 +919,18 @@ static void libxmlStartElementNS(
         hr = SAXAttributes_create(&attr, nb_attributes, attributes);
         if(hr == S_OK)
         {
-            hr = ISAXContentHandler_startElement(
-                    This->saxreader->contentHandler,
-                    NamespaceUri, SysStringLen(NamespaceUri),
-                    LocalName, SysStringLen(LocalName),
-                    QName, SysStringLen(QName),
-                    (ISAXAttributes*)&attr->lpSAXAttributesVtbl);
+            if(This->vbInterface)
+                hr = IVBSAXContentHandler_startElement(
+                        This->saxreader->vbcontentHandler,
+                        &NamespaceUri, &LocalName, &QName,
+                        (IVBSAXAttributes*)&attr->lpVBSAXAttributesVtbl);
+            else
+                hr = ISAXContentHandler_startElement(
+                        This->saxreader->contentHandler,
+                        NamespaceUri, SysStringLen(NamespaceUri),
+                        LocalName, SysStringLen(LocalName),
+                        QName, SysStringLen(QName),
+                        (ISAXAttributes*)&attr->lpSAXAttributesVtbl);
 
             ISAXAttributes_Release((ISAXAttributes*)&attr->lpSAXAttributesVtbl);
         }
@@ -941,11 +965,16 @@ static void libxmlEndElementNS(
         LocalName = bstr_from_xmlChar(localname);
         QName = bstr_from_xmlChar(localname);
 
-        hr = ISAXContentHandler_endElement(
-                This->saxreader->contentHandler,
-                NamespaceUri, SysStringLen(NamespaceUri),
-                LocalName, SysStringLen(LocalName),
-                QName, SysStringLen(QName));
+        if(This->vbInterface)
+            hr = IVBSAXContentHandler_endElement(
+                    This->saxreader->vbcontentHandler,
+                    &NamespaceUri, &LocalName, &QName);
+        else
+            hr = ISAXContentHandler_endElement(
+                    This->saxreader->contentHandler,
+                    NamespaceUri, SysStringLen(NamespaceUri),
+                    LocalName, SysStringLen(LocalName),
+                    QName, SysStringLen(QName));
 
         SysFreeString(NamespaceUri);
         SysFreeString(LocalName);
@@ -1011,7 +1040,14 @@ static void libxmlCharacters(
             }
             else if(*end == '\r') Chars[end-This->lastCur] = '\n';
 
-            hr = ISAXContentHandler_characters(This->saxreader->contentHandler, Chars, end-This->lastCur+1);
+            if(This->vbInterface)
+                hr = IVBSAXContentHandler_characters(
+                        This->saxreader->vbcontentHandler, &Chars);
+            else
+                hr = ISAXContentHandler_characters(
+                        This->saxreader->contentHandler,
+                        Chars, end-This->lastCur+1);
+
             SysFreeString(Chars);
             if(hr != S_OK)
             {
@@ -1040,8 +1076,14 @@ static void libxmlSetDocumentLocator(
     saxlocator *This = ctx;
     HRESULT hr;
 
-    hr = ISAXContentHandler_putDocumentLocator(This->saxreader->contentHandler,
-            (ISAXLocator*)&This->lpSAXLocatorVtbl);
+    if(This->vbInterface)
+        hr = IVBSAXContentHandler_putref_documentLocator(
+                This->saxreader->vbcontentHandler,
+                (IVBSAXLocator*)&This->lpVBSAXLocatorVtbl);
+    else
+        hr = ISAXContentHandler_putDocumentLocator(
+                This->saxreader->contentHandler,
+                (ISAXLocator*)&This->lpSAXLocatorVtbl);
 
     if(FAILED(hr))
         format_error_message_from_id(This, hr);
@@ -1072,8 +1114,15 @@ void libxmlFatalError(void *ctx, const char *msg, ...)
     wszError = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
     MultiByteToWideChar(CP_ACP, 0, message, -1, (LPWSTR)wszError, len);
 
-    ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
-            (ISAXLocator*)&This->lpSAXLocatorVtbl, wszError, E_FAIL);
+    if(This->vbInterface)
+    {
+        BSTR bstrError = SysAllocString(wszError);
+        IVBSAXErrorHandler_fatalError(This->saxreader->vberrorHandler,
+                (IVBSAXLocator*)&This->lpVBSAXLocatorVtbl, &bstrError, E_FAIL);
+    }
+    else
+        ISAXErrorHandler_fatalError(This->saxreader->errorHandler,
+                (ISAXLocator*)&This->lpSAXLocatorVtbl, wszError, E_FAIL);
 
     HeapFree(GetProcessHeap(), 0, wszError);
 
@@ -1213,7 +1262,7 @@ static const struct ISAXLocatorVtbl isaxlocator_vtbl =
     isaxlocator_getSystemId
 };
 
-static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator)
+static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, BOOL vbInterface)
 {
     saxlocator *locator;
 
@@ -1223,6 +1272,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator)
 
     locator->lpSAXLocatorVtbl = &isaxlocator_vtbl;
     locator->ref = 1;
+    locator->vbInterface = vbInterface;
 
     locator->saxreader = reader;
     ISAXXMLReader_AddRef((ISAXXMLReader*)&reader->lpSAXXMLReaderVtbl);
@@ -1814,7 +1864,7 @@ static HRESULT parse_buffer(saxreader *This, const char *buffer, int size)
     saxlocator *locator;
     HRESULT hr;
 
-    hr = SAXLocator_create(This, &locator);
+    hr = SAXLocator_create(This, &locator, FALSE);
     if(FAILED(hr))
         return E_FAIL;
 
