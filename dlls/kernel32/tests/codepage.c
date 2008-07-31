@@ -285,8 +285,8 @@ static void test_string_conversion(LPBOOL bUsedDefaultChar)
     ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
 
     /* Double-byte tests */
-    ret = WideCharToMultiByte(1252, 0, dbwcs, 5, mbs, sizeof(mbs), NULL, bUsedDefaultChar);
-    ok(ret == 5, "ret is %d\n", ret);
+    ret = WideCharToMultiByte(1252, 0, dbwcs, 3, mbs, sizeof(mbs), NULL, bUsedDefaultChar);
+    ok(ret == 3, "ret is %d\n", ret);
     ok(!strcmp(mbs, "??"), "mbs is %s\n", mbs);
     if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
 
