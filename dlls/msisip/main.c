@@ -20,6 +20,8 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wincrypt.h"
+#include "mssip.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msisip);
@@ -42,4 +44,52 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+static GUID mySubject = { 0x000c10f1, 0x0000, 0x0000,
+ { 0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46 }};
+
+/***********************************************************************
+ *              DllRegisterServer (MSISIP.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    static WCHAR msisip[] = { 'M','S','I','S','I','P','.','D','L','L',0 };
+    static WCHAR getSignedDataMsg[] = { 'M','s','i','S','I','P','G','e','t',
+     'S','i','g','n','e','d','D','a','t','a','M','s','g',0 };
+    static WCHAR putSignedDataMsg[] = { 'M','s','i','S','I','P','P','u','t',
+     'S','i','g','n','e','d','D','a','t','a','M','s','g',0 };
+    static WCHAR createIndirectData[] = { 'M','s','i','S','I','P',
+     'C','r','e','a','t','e','I','n','d','i','r','e','c','t','D','a','t','a',
+     0 };
+    static WCHAR verifyIndirectData[] = { 'M','s','i','S','I','P',
+     'V','e','r','i','f','y','I','n','d','i','r','e','c','t','D','a','t','a',
+     0 };
+    static WCHAR removeSignedDataMsg[] = { 'M','s','i','S','I','P','R','e','m',
+     'o','v','e','S','i','g','n','e','d','D','a','t','a','M','s','g', 0 };
+    static WCHAR isMyTypeOfFile[] = { 'M','s','i','S','I','P',
+     'I','s','M','y','T','y','p','e','O','f','F','i','l','e',0 };
+
+    SIP_ADD_NEWPROVIDER prov;
+
+    memset(&prov, 0, sizeof(prov));
+    prov.cbStruct = sizeof(prov);
+    prov.pwszDLLFileName = msisip;
+    prov.pgSubject = &mySubject;
+    prov.pwszGetFuncName = getSignedDataMsg;
+    prov.pwszPutFuncName = putSignedDataMsg;
+    prov.pwszCreateFuncName = createIndirectData;
+    prov.pwszVerifyFuncName = verifyIndirectData;
+    prov.pwszRemoveFuncName = removeSignedDataMsg;
+    prov.pwszIsFunctionNameFmt2 = isMyTypeOfFile;
+    return CryptSIPAddProvider(&prov) ? S_OK : S_FALSE;
+}
+
+/***********************************************************************
+ *              DllUnregisterServer (MSISIP.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    CryptSIPRemoveProvider(&mySubject);
+    return S_OK;
 }
