@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #ifdef HAVE_LIBXML2
 
 #include <libxml/SAX2.h>
+#include <libxml/parserInternals.h>
 
 typedef struct _saxreader
 {
@@ -146,6 +147,12 @@ static void format_error_message_from_id(saxlocator *This, HRESULT hr)
 static void update_position(saxlocator *This, xmlChar *end)
 {
     if(This->lastCur == NULL)
+    {
+        This->lastCur = (xmlChar*)This->pParserCtxt->input->base;
+        This->line = 1;
+        This->column = 1;
+    }
+    else if(This->lastCur < This->pParserCtxt->input->base)
     {
         This->lastCur = (xmlChar*)This->pParserCtxt->input->base;
         This->line = 1;
@@ -1468,7 +1475,7 @@ static HRESULT WINAPI isaxxmlreader_putSecureBaseURL(
     return E_NOTIMPL;
 }
 
-static HRESULT parse_buffer(saxreader *This, xmlChar *buffer)
+static HRESULT parse_buffer(saxreader *This, const char *buffer, int size)
 {
     saxlocator *locator;
     HRESULT hr;
@@ -1477,7 +1484,7 @@ static HRESULT parse_buffer(saxreader *This, xmlChar *buffer)
     if(FAILED(hr))
         return E_FAIL;
 
-    locator->pParserCtxt = xmlNewParserCtxt();
+    locator->pParserCtxt = xmlCreateMemoryParserCtxt(buffer, size);
     if(!locator->pParserCtxt)
     {
         ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
@@ -1486,8 +1493,6 @@ static HRESULT parse_buffer(saxreader *This, xmlChar *buffer)
 
     locator->pParserCtxt->sax = &locator->saxreader->sax;
     locator->pParserCtxt->userData = locator;
-
-    xmlSetupParserForBuffer(locator->pParserCtxt, buffer, NULL);
 
     if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
     else hr = locator->ret;
@@ -1508,7 +1513,6 @@ static HRESULT WINAPI isaxxmlreader_parse(
         VARIANT varInput)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    xmlChar *data = NULL;
     HRESULT hr;
 
     TRACE("(%p)\n", This);
@@ -1517,8 +1521,8 @@ static HRESULT WINAPI isaxxmlreader_parse(
     switch(V_VT(&varInput))
     {
         case VT_BSTR:
-            data = xmlChar_from_wchar(V_BSTR(&varInput));
-            hr = parse_buffer(This, data);
+            hr = parse_buffer(This, (const char*)V_BSTR(&varInput),
+                    SysStringByteLen(V_BSTR(&varInput)));
             break;
         case VT_ARRAY|VT_UI1: {
             void *pSAData;
@@ -1530,13 +1534,9 @@ static HRESULT WINAPI isaxxmlreader_parse(
             hr = SafeArrayGetUBound(V_ARRAY(&varInput), 1, &uBound);
             if(hr != S_OK) break;
             dataRead = (uBound-lBound)*SafeArrayGetElemsize(V_ARRAY(&varInput));
-            data = HeapAlloc(GetProcessHeap(), 0, dataRead+1);
-            if(!data) break;
             hr = SafeArrayAccessData(V_ARRAY(&varInput), (void**)&pSAData);
             if(hr != S_OK) break;
-            memcpy(data, pSAData, dataRead);
-            data[dataRead] = '\0';
-            hr = parse_buffer(This, data);
+            hr = parse_buffer(This, pSAData, dataRead);
             SafeArrayUnaccessData(V_ARRAY(&varInput));
             break;
         }
@@ -1558,6 +1558,7 @@ static HRESULT WINAPI isaxxmlreader_parse(
             {
                 STATSTG dataInfo;
                 ULONG dataRead;
+                char *data;
 
                 while(1)
                 {
@@ -1566,7 +1567,7 @@ static HRESULT WINAPI isaxxmlreader_parse(
                     break;
                 }
                 data = HeapAlloc(GetProcessHeap(), 0,
-                        dataInfo.cbSize.QuadPart+1);
+                        dataInfo.cbSize.QuadPart);
                 while(1)
                 {
                     hr = IStream_Read(stream, data,
@@ -1574,8 +1575,8 @@ static HRESULT WINAPI isaxxmlreader_parse(
                     if(hr == E_PENDING) continue;
                     break;
                 }
-                data[dataInfo.cbSize.QuadPart] = '\0';
-                hr = parse_buffer(This, data);
+                hr = parse_buffer(This, data, dataInfo.cbSize.QuadPart);
+                HeapFree(GetProcessHeap(), 0, data);
                 IStream_Release(stream);
                 break;
             }
@@ -1585,8 +1586,7 @@ static HRESULT WINAPI isaxxmlreader_parse(
                 BSTR bstrData;
 
                 IXMLDOMDocument_get_xml(xmlDoc, &bstrData);
-                data = xmlChar_from_wchar(bstrData);
-                hr = parse_buffer(This, data);
+                hr = parse_buffer(This, (const char*)bstrData, SysStringByteLen(bstrData));
                 IXMLDOMDocument_Release(xmlDoc);
                 hr = E_NOTIMPL;
                 break;
@@ -1597,23 +1597,16 @@ static HRESULT WINAPI isaxxmlreader_parse(
             hr = E_INVALIDARG;
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
     return hr;
 }
 
 static HRESULT saxreader_onDataAvailable(void *obj, char *ptr, DWORD len)
 {
     saxreader *This = obj;
-    xmlChar *data;
     HRESULT hr;
 
-    data = HeapAlloc(GetProcessHeap(), 0, len+1);
-    memcpy(data, ptr, len);
-    data[len] = 0;
+    hr = parse_buffer(This, ptr, len);
 
-    hr = parse_buffer(This, data);
-
-    HeapFree(GetProcessHeap(), 0, data);
     return hr;
 }
 
