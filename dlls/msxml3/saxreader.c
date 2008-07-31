@@ -79,6 +79,7 @@ typedef struct _saxattributes
     BSTR *szPrefix;
     BSTR *szURI;
     BSTR *szValue;
+    BSTR *szQName;
 } saxattributes;
 
 static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
@@ -293,9 +294,14 @@ static HRESULT WINAPI isaxattributes_getQName(
         int *pQNameLength)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
+    TRACE("(%p)->(%d)\n", This, nIndex);
 
-    FIXME("(%p)->(%d) stub\n", This, nIndex);
-    return E_NOTIMPL;
+    if(nIndex >= This->nb_attributes) return E_INVALIDARG;
+
+    *pQNameLength = SysStringLen(This->szQName[nIndex]);
+    *pQName = This->szQName[nIndex];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxattributes_getName(
@@ -471,9 +477,12 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
         HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
     attributes->szValue =
         HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+    attributes->szQName =
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
 
     if(!attributes->szLocalname || !attributes->szPrefix
-            || !attributes->szURI || !attributes->szValue)
+            || !attributes->szURI || !attributes->szValue
+            || !attributes->szQName)
     {
         if(attributes->szLocalname)
             HeapFree(GetProcessHeap(), 0, attributes->szLocalname);
@@ -483,11 +492,15 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
             HeapFree(GetProcessHeap(), 0, attributes->szURI);
         if(attributes->szValue)
             HeapFree(GetProcessHeap(), 0, attributes->szValue);
+        if(attributes->szQName)
+            HeapFree(GetProcessHeap(), 0, attributes->szQName);
         return E_FAIL;
     }
 
     for(index=0; index<nb_attributes; index++)
     {
+        int len1, len2;
+
         attributes->szLocalname[index] =
             bstr_from_xmlChar(xmlAttributes[index*5]);
         attributes->szPrefix[index] =
@@ -497,6 +510,15 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
         attributes->szValue[index] =
             bstr_from_xmlCharN(xmlAttributes[index*5+3],
                     xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
+
+        len1 = SysStringLen(attributes->szPrefix[index]);
+        len2 = SysStringLen(attributes->szLocalname[index]);
+        attributes->szQName[index] = SysAllocStringLen(NULL, len1+len2);
+        memcpy(attributes->szQName[index], attributes->szPrefix[index],
+                len1*sizeof(WCHAR));
+        memcpy(attributes->szQName[index]+len1,
+                attributes->szLocalname[index], len2*sizeof(WCHAR));
+        attributes->szQName[index][len1+len2] = '\0';
     }
 
     *attr = attributes;
