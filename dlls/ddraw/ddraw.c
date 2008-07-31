@@ -2022,7 +2022,6 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     }
     /* Get the correct wined3d usage */
     if (pDDSD->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE |
-                                 DDSCAPS_BACKBUFFER     |
                                  DDSCAPS_3DDEVICE       ) )
     {
         Usage |= WINED3DUSAGE_RENDERTARGET;
