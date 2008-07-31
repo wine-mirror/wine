@@ -32,7 +32,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dplayx);
+WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
 /*
  * Near the bottom of this file are the exported DllRegisterServer and
