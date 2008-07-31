@@ -3254,14 +3254,6 @@ BOOL WINAPI FontIsLinked(HDC hdc)
     return ret;
 }
 
-typedef struct
-{
-    DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
-    DWORD unknown1;    /* keeps incrementing - num of fonts that have been created or selected into a dc ?? */
-    DWORD unknown2;    /* fixed for a given font - looks like it could be the order of the face in the font list or the order
-                          in which the face was first rendered. */
-} realization_info_t;
-
 /*************************************************************
  *           GdiRealizationInfo    (GDI32.@)
  *
@@ -3269,14 +3261,12 @@ typedef struct
  */
 BOOL WINAPI GdiRealizationInfo(HDC hdc, realization_info_t *info)
 {
-    UINT otm_size;
-    FIXME("(%p, %p): stub!\n", hdc, info);
+    DC *dc = get_dc_ptr(hdc);
+    BOOL ret = FALSE;
 
-    info->flags = 1;
-    otm_size = GetOutlineTextMetricsW(hdc, 0, NULL);
-    if(otm_size) info->flags |= 2;  /* scalable */
+    if (!dc) return FALSE;
+    if (dc->gdiFont) ret = WineEngRealizationInfo(dc->gdiFont, info);
+    release_dc_ptr(dc);
 
-    info->unknown1 = -1;
-    info->unknown2 = -1;
-    return TRUE;
+    return ret;
 }

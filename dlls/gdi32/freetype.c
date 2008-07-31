@@ -335,6 +335,7 @@ struct tagGdiFont {
     FONTSIGNATURE fs;
     GdiFont *base_font;
     VOID *GSUB_Table;
+    DWORD cache_num;
 };
 
 typedef struct {
@@ -3113,7 +3114,14 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pma
     return NULL;
 }
 
-    
+static void add_to_cache(GdiFont *font)
+{
+    static DWORD cache_num = 1;
+
+    font->cache_num = cache_num++;
+    list_add_head(&gdi_font_list, &font->entry);
+}
+
 /*************************************************************
  * create_child_font_list
  */
@@ -3604,7 +3612,7 @@ found:
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
-    list_add_head(&gdi_font_list, &ret->entry);
+    add_to_cache(ret);
     LeaveCriticalSection( &freetype_cs );
     return ret;
 }
@@ -5745,6 +5753,22 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
     lprs->nSize = sizeof(RASTERIZER_STATUS);
     lprs->wFlags = TT_AVAILABLE | TT_ENABLED | (hinting ? WINE_TT_HINTER_ENABLED : 0);
     lprs->nLanguageID = 0;
+    return TRUE;
+}
+
+/*************************************************************
+ *     WineEngRealizationInfo
+ */
+BOOL WineEngRealizationInfo(GdiFont *font, realization_info_t *info)
+{
+    FIXME("(%p, %p): stub!\n", font, info);
+
+    info->flags = 1;
+    if(FT_IS_SCALABLE(font->ft_face))
+        info->flags |= 2;
+
+    info->cache_num = font->cache_num;
+    info->unknown2 = -1;
     return TRUE;
 }
 
