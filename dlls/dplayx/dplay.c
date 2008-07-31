@@ -5393,7 +5393,7 @@ static BOOL CALLBACK cbDPCreateEnumConnections(
  *
  */
 HRESULT WINAPI DirectPlayCreate
-( LPGUID lpGUID, LPDIRECTPLAY2 *lplpDP, IUnknown *pUnk)
+( LPGUID lpGUID, LPDIRECTPLAY *lplpDP, IUnknown *pUnk )
 {
   HRESULT hr;
   LPDIRECTPLAY3A lpDP3A;
