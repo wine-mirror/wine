@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct _saxreader
 {
-    const struct IVBSAXXMLReaderVtbl *lpVtbl;
+    const struct IVBSAXXMLReaderVtbl *lpVBSAXXMLReaderVtbl;
     const struct ISAXXMLReaderVtbl *lpSAXXMLReaderVtbl;
     LONG ref;
     struct ISAXContentHandler *contentHandler;
@@ -58,6 +58,7 @@ typedef struct _saxreader
 
 typedef struct _saxlocator
 {
+    const struct IVBSAXLocatorVtbl *lpVBSAXLocatorVtbl;
     const struct ISAXLocatorVtbl *lpSAXLocatorVtbl;
     LONG ref;
     saxreader *saxreader;
@@ -72,6 +73,7 @@ typedef struct _saxlocator
 
 typedef struct _saxattributes
 {
+    const struct IVBSAXAttributesVtbl *lpVBSAXAttributesVtbl;
     const struct ISAXAttributesVtbl *lpSAXAttributesVtbl;
     LONG ref;
     int nb_attributes;
@@ -84,7 +86,7 @@ typedef struct _saxattributes
 
 static inline saxreader *impl_from_IVBSAXXMLReader( IVBSAXXMLReader *iface )
 {
-    return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpVtbl));
+    return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpVBSAXXMLReaderVtbl));
 }
 
 static inline saxreader *impl_from_ISAXXMLReader( ISAXXMLReader *iface )
@@ -92,9 +94,19 @@ static inline saxreader *impl_from_ISAXXMLReader( ISAXXMLReader *iface )
     return (saxreader *)((char*)iface - FIELD_OFFSET(saxreader, lpSAXXMLReaderVtbl));
 }
 
+static inline saxlocator *impl_from_IVBSAXLocator( IVBSAXLocator *iface )
+{
+    return (saxlocator *)((char*)iface - FIELD_OFFSET(saxlocator, lpVBSAXLocatorVtbl));
+}
+
 static inline saxlocator *impl_from_ISAXLocator( ISAXLocator *iface )
 {
     return (saxlocator *)((char*)iface - FIELD_OFFSET(saxlocator, lpSAXLocatorVtbl));
+}
+
+static inline saxattributes *impl_from_IVBSAXAttributes( IVBSAXAttributes *iface )
+{
+    return (saxattributes *)((char*)iface - FIELD_OFFSET(saxattributes, lpVBSAXAttributesVtbl));
 }
 
 static inline saxattributes *impl_from_ISAXAttributes( ISAXAttributes *iface )
@@ -1065,7 +1077,7 @@ static HRESULT WINAPI saxxmlreader_Invoke(
     hr = get_typeinfo(IVBSAXXMLReader_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
+        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVBSAXXMLReaderVtbl), dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
@@ -1293,19 +1305,19 @@ static const struct IVBSAXXMLReaderVtbl saxreader_vtbl =
 static HRESULT WINAPI isaxxmlreader_QueryInterface(ISAXXMLReader* iface, REFIID riid, void **ppvObject)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return saxxmlreader_QueryInterface((IVBSAXXMLReader*)&This->lpVtbl, riid, ppvObject);
+    return saxxmlreader_QueryInterface((IVBSAXXMLReader*)&This->lpVBSAXXMLReaderVtbl, riid, ppvObject);
 }
 
 static ULONG WINAPI isaxxmlreader_AddRef(ISAXXMLReader* iface)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return saxxmlreader_AddRef((IVBSAXXMLReader*)&This->lpVtbl);
+    return saxxmlreader_AddRef((IVBSAXXMLReader*)&This->lpVBSAXXMLReaderVtbl);
 }
 
 static ULONG WINAPI isaxxmlreader_Release(ISAXXMLReader* iface)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return saxxmlreader_Release((IVBSAXXMLReader*)&This->lpVtbl);
+    return saxxmlreader_Release((IVBSAXXMLReader*)&This->lpVBSAXXMLReaderVtbl);
 }
 
 /*** ISAXXMLReader methods ***/
@@ -1686,7 +1698,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     if( !reader )
         return E_OUTOFMEMORY;
 
-    reader->lpVtbl = &saxreader_vtbl;
+    reader->lpVBSAXXMLReaderVtbl = &saxreader_vtbl;
     reader->lpSAXXMLReaderVtbl = &isaxreader_vtbl;
     reader->ref = 1;
     reader->contentHandler = NULL;
@@ -1703,7 +1715,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->sax.error = libxmlFatalError;
     reader->sax.fatalError = libxmlFatalError;
 
-    *ppObj = &reader->lpVtbl;
+    *ppObj = &reader->lpVBSAXXMLReaderVtbl;
 
     TRACE("returning iface %p\n", *ppObj);
 
