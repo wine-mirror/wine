@@ -883,34 +883,9 @@ static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent
 
     if (data->iconic && data->wm_state == NormalState)  /* restore window */
     {
-        int x, y;
-        unsigned int width, height, border, depth;
-        Window root, top;
-        WINDOWPLACEMENT wp;
-        RECT rect;
-
-        /* FIXME: hack */
-        wine_tsx11_lock();
-        XGetGeometry( event->display, data->whole_window, &root, &x, &y, &width, &height,
-                        &border, &depth );
-        XTranslateCoordinates( event->display, data->whole_window, root, 0, 0, &x, &y, &top );
-        wine_tsx11_unlock();
-        rect.left   = x;
-        rect.top    = y;
-        rect.right  = x + width;
-        rect.bottom = y + height;
-        OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
-        X11DRV_X_to_window_rect( data, &rect );
-
-        wp.length = sizeof(wp);
-        GetWindowPlacement( data->hwnd, &wp );
-        wp.flags = 0;
-        wp.showCmd = SW_RESTORE;
-        wp.rcNormalPosition = rect;
-
         TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
         data->iconic = FALSE;
-        SetWindowPlacement( data->hwnd, &wp );
+        ShowWindow( data->hwnd, SW_RESTORE );
     }
     else if (!data->iconic && data->wm_state == IconicState)
     {
