@@ -5591,6 +5591,10 @@ static void pshader_version_varying_test(IDirect3DDevice9 *device) {
 
     hr = IDirect3DDevice9_CreateTexture(device, 512,  512, 1, 0, D3DFMT_A16B16G16R16, D3DPOOL_MANAGED, &texture, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %08x\n", hr);
+    if(FAILED(hr)) {
+        skip("D3DFMT_A16B16G16R16 textures not supported\n");
+        return;
+    }
     hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
     ok(hr == D3D_OK, "IDirect3DTexture9_LockRect returned %08x\n", hr);
     for(y = 0; y < 512; y++) {
