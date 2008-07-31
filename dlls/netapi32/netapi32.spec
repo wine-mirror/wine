@@ -98,7 +98,7 @@
 @ stub NetGroupAddUser
 @ stub NetGroupDel
 @ stub NetGroupDelUser
-@ stub NetGroupEnum
+@ stdcall NetGroupEnum(wstr long ptr long ptr ptr ptr)
 @ stub NetGroupGetInfo
 @ stub NetGroupGetUsers
 @ stub NetGroupSetInfo

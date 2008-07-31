@@ -689,6 +689,18 @@ NetGetDCName(LPCWSTR servername, LPCWSTR domainname, LPBYTE *bufptr)
   return NERR_DCNotFound; /* say we can't find a domain controller */  
 }
 
+/************************************************************
+ *                NetGroupEnum  (NETAPI32.@)
+ *
+ */
+NET_API_STATUS WINAPI
+NetGroupEnum(LPCWSTR servername, DWORD level, LPBYTE *bufptr, DWORD prefmaxlen,
+             LPDWORD entriesread, LPDWORD totalentries, LPDWORD resume_handle)
+{
+    FIXME("(%s, %d, %p, %d, %p, %p, %p) stub!\n", debugstr_w(servername),
+          level, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
+    return ERROR_ACCESS_DENIED;
+}
 
 /******************************************************************************
  * NetUserModalsGet  (NETAPI32.@)
