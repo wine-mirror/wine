@@ -5406,6 +5406,12 @@ HRESULT WINAPI DirectPlayCreate
     return CLASS_E_NOAGGREGATION;
   }
 
+  if( (lplpDP == NULL) || (lpGUID == NULL) )
+  {
+    return DPERR_INVALIDPARAMS;
+  }
+
+
   /* Create an IDirectPlay object. We don't support that so we'll cheat and
      give them an IDirectPlay2A object and hope that doesn't cause problems */
   if( DP_CreateInterface( &IID_IDirectPlay2A, (LPVOID*)lplpDP ) != DP_OK )
