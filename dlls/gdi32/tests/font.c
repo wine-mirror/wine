@@ -2363,7 +2363,13 @@ static void test_GetTextFace(void)
 
     /* 'W' case.  */
     memcpy(fW.lfFaceName, faceW, sizeof faceW);
+    SetLastError(0xdeadbeef);
     f = CreateFontIndirectW(&fW);
+    if (!f && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("CreateFontIndirectW is not implemented\n");
+        return;
+    }
     ok(f != NULL, "CreateFontIndirectW failed\n");
 
     dc = GetDC(NULL);
