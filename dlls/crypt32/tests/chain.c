@@ -1741,6 +1741,14 @@ static ChainPolicyCheck basicConstraintsPolicyCheck[] = {
    { 0, 0, -1, -1, NULL }, 0 },
 };
 
+static const char *num_to_str(WORD num)
+{
+    static char buf[6];
+
+    sprintf(buf, "#%04X", num);
+    return buf;
+}
+
 static void checkChainPolicyStatus(LPCSTR policy, ChainPolicyCheck *check,
  DWORD testIndex)
 {
@@ -1757,8 +1765,17 @@ static void checkChainPolicyStatus(LPCSTR policy, ChainPolicyCheck *check,
             todo_wine ok(ret, "%d: CertVerifyCertificateChainPolicy failed: %08x\n",
              testIndex, GetLastError());
         else
+        {
+            if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+            {
+                skip("%d: missing policy %s, skipping test\n", testIndex,
+                 HIWORD(policy) ? policy : num_to_str(LOWORD(policy)));
+                pCertFreeCertificateChain(chain);
+                return;
+            }
             ok(ret, "%d: CertVerifyCertificateChainPolicy failed: %08x\n",
              testIndex, GetLastError());
+        }
         if (ret)
         {
             if (check->todo & TODO_ERROR)
