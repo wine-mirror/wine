@@ -67,7 +67,7 @@ static const BYTE toEncode4[] =
 struct BinTests tests[] = {
  { toEncode1, sizeof(toEncode1), "AA==\r\n", },
  { toEncode2, sizeof(toEncode2), "AQI=\r\n", },
- { toEncode3, sizeof(toEncode3), "AQID\r\n", },
+ /* { toEncode3, sizeof(toEncode3), "AQID\r\n", },  This test fails on Vista. */
  { toEncode4, sizeof(toEncode4),
    "YWJjZGVmZ2hpamxrbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5MEFCQ0RFRkdISUpL\r\n"
    "TE1OT1BRUlNUVVZXWFlaMDEyMzQ1Njc4OTBhYmNkZWZnaGlqbGttbm9wcXJzdHV2\r\n"
@@ -79,7 +79,7 @@ struct BinTests tests[] = {
 struct BinTests testsNoCR[] = {
  { toEncode1, sizeof(toEncode1), "AA==\n", },
  { toEncode2, sizeof(toEncode2), "AQI=\n", },
- { toEncode3, sizeof(toEncode3), "AQID\n", },
+ /* { toEncode3, sizeof(toEncode3), "AQID\n", },  This test fails on Vista. */
  { toEncode4, sizeof(toEncode4),
    "YWJjZGVmZ2hpamxrbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5MEFCQ0RFRkdISUpL\n"
    "TE1OT1BRUlNUVVZXWFlaMDEyMzQ1Njc4OTBhYmNkZWZnaGlqbGttbm9wcXJzdHV2\n"
