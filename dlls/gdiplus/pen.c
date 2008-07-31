@@ -237,6 +237,16 @@ GpStatus WINGDIPAPI GdipGetPenLineJoin(GpPen *pen, GpLineJoin *lineJoin)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetPenMode(GpPen *pen, GpPenAlignment *mode)
+{
+    if(!pen || !mode)
+        return InvalidParameter;
+
+    *mode = pen->align;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetPenMiterLimit(GpPen *pen, REAL *miterLimit)
 {
     if(!pen || !miterLimit)
@@ -481,12 +491,11 @@ GpStatus WINGDIPAPI GdipSetPenWidth(GpPen *pen, REAL width)
     return Ok;
 }
 
-
-GpStatus WINGDIPAPI GdipSetPenMode(GpPen *pen, GpPenAlignment penAlignment)
+GpStatus WINGDIPAPI GdipSetPenMode(GpPen *pen, GpPenAlignment mode)
 {
     if(!pen)    return InvalidParameter;
 
-    FIXME("stub (%d)\n", penAlignment);
+    pen->align = mode;
 
     return Ok;
 }

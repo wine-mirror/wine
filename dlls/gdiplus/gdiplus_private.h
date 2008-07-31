@@ -72,6 +72,7 @@ struct GpPen{
     INT numdashes;
     REAL offset;    /* dash offset */
     GpBrush *brush;
+    GpPenAlignment align;
 };
 
 struct GpGraphics{
