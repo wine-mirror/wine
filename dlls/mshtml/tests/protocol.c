@@ -266,9 +266,13 @@ static void res_sec_url_cmp(LPCWSTR url, DWORD size, LPCWSTR file)
         return;
     }
 
+    SetLastError(0xdeadbeef);
     len = SearchPathW(NULL, file, NULL, sizeof(buf)/sizeof(WCHAR), buf, NULL);
     if(!len) {
-        ok(0, "SearchPath failed: %u\n", GetLastError());
+        if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+            win_skip("SearchPathW is not implemented\n");
+        else
+            ok(0, "SearchPath failed: %u\n", GetLastError());
         return;
     }
 
