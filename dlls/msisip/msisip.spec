@@ -1,4 +1,4 @@
-5 stub MsiSIPIsMyTypeOfFile
+5 stdcall MsiSIPIsMyTypeOfFile(wstr ptr)
 6 stub MsiSIPGetSignedDataMsg
 7 stub MsiSIPPutSignedDataMsg
 8 stub MsiSIPRemoveSignedDataMsg

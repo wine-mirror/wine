@@ -22,6 +22,8 @@
 #include "winbase.h"
 #include "wincrypt.h"
 #include "mssip.h"
+#define COBJMACROS
+#include "objbase.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msisip);
@@ -92,4 +94,36 @@ HRESULT WINAPI DllUnregisterServer(void)
 {
     CryptSIPRemoveProvider(&mySubject);
     return S_OK;
+}
+
+/***********************************************************************
+ *              MsiSIPIsMyTypeOfFile (MSISIP.@)
+ */
+BOOL WINAPI MsiSIPIsMyTypeOfFile(WCHAR *name, GUID *subject)
+{
+    static const WCHAR msi[] = { '.','m','s','i',0 };
+    static const WCHAR msp[] = { '.','m','s','p',0 };
+    BOOL ret = FALSE;
+
+    TRACE("(%s, %p)\n", debugstr_w(name), subject);
+
+    if (lstrlenW(name) < lstrlenW(msi))
+        return FALSE;
+    else if (lstrcmpiW(name + lstrlenW(name) - lstrlenW(msi), msi) &&
+     lstrcmpiW(name + lstrlenW(name) - lstrlenW(msp), msp))
+        return FALSE;
+    else
+    {
+        IStorage *stg = NULL;
+        HRESULT r = StgOpenStorage(name, NULL,
+         STGM_DIRECT|STGM_READ|STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+
+        if (SUCCEEDED(r))
+        {
+            IStorage_Release(stg);
+            *subject = mySubject;
+            ret = TRUE;
+        }
+    }
+    return ret;
 }
