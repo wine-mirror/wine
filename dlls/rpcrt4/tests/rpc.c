@@ -611,9 +611,7 @@ static void test_RpcStringBindingParseA(void)
 
     /* test with invalid uuid */
     status = RpcStringBindingParseA(invalid_uuid_binding, NULL, &protseq, NULL, NULL, NULL);
-    todo_wine
     ok(status == RPC_S_INVALID_STRING_UUID, "RpcStringBindingParseA should have returned RPC_S_INVALID_STRING_UUID instead of %ld\n", status);
-    todo_wine
     ok(protseq == NULL, "protseq was %p instead of NULL\n", protseq);
 
     /* test with invalid endpoint */

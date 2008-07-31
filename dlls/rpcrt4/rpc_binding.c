@@ -481,7 +481,18 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
 
   next = strchr(data, '@');
   if (next) {
-    if (ObjUuid) *ObjUuid = (unsigned char*)RPCRT4_strndupA(data, next - data);
+    UUID uuid;
+    RPC_STATUS status;
+    RPC_CSTR str_uuid = (unsigned char*)RPCRT4_strndupA(data, next - data);
+    status = UuidFromStringA(str_uuid, &uuid);
+    if (status != RPC_S_OK) {
+      HeapFree(GetProcessHeap(), 0, str_uuid);
+      return status;
+    }
+    if (ObjUuid)
+      *ObjUuid = str_uuid;
+    else
+      HeapFree(GetProcessHeap(), 0, str_uuid);
     data = next+1;
   }
 
@@ -579,7 +590,18 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
 
   next = strchrW(data, '@');
   if (next) {
-    if (ObjUuid) *ObjUuid = RPCRT4_strndupW(data, next - data);
+    UUID uuid;
+    RPC_STATUS status;
+    RPC_WSTR str_uuid = RPCRT4_strndupW(data, next - data);
+    status = UuidFromStringW(str_uuid, &uuid);
+    if (status != RPC_S_OK) {
+      HeapFree(GetProcessHeap(), 0, str_uuid);
+      return status;
+    }
+    if (ObjUuid)
+      *ObjUuid = str_uuid;
+    else
+      HeapFree(GetProcessHeap(), 0, str_uuid);
     data = next+1;
   }
 
