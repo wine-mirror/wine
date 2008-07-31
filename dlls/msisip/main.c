@@ -97,6 +97,127 @@ HRESULT WINAPI DllUnregisterServer(void)
 }
 
 /***********************************************************************
+ *              MsiSIPGetSignedDataMsg  (MSISIP.@)
+ */
+BOOL WINAPI MsiSIPGetSignedDataMsg(SIP_SUBJECTINFO *pSubjectInfo,
+ DWORD *pdwEncodingType, DWORD dwIndex, DWORD *pcbSignedDataMsg,
+ BYTE *pbSignedDataMsg)
+{
+    static const WCHAR digitalSig[] = { 5,'D','i','g','i','t','a','l',
+     'S','i','g','n','a','t','u','r','e',0 };
+    BOOL ret = FALSE;
+    IStorage *stg = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    BYTE hdr[2], len[sizeof(DWORD)];
+    DWORD count, lenBytes, dataBytes;
+
+    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+          pcbSignedDataMsg, pbSignedDataMsg);
+
+    r = StgOpenStorage(pSubjectInfo->pwsFileName, NULL,
+     STGM_DIRECT|STGM_READ|STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    if (FAILED(r))
+    {
+        TRACE("couldn't open %s\n", debugstr_w(pSubjectInfo->pwsFileName));
+        goto end;
+    }
+
+    r = IStorage_OpenStream(stg, digitalSig, 0,
+     STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stm);
+    if (FAILED(r))
+    {
+        TRACE("couldn't find digital signature stream\n");
+        goto freestorage;
+    }
+
+    r = IStream_Read(stm, hdr, sizeof(hdr), &count);
+    if (FAILED(r) || count != sizeof(hdr))
+        goto freestream;
+    if (hdr[0] != 0x30)
+    {
+        WARN("unexpected data in digital sig: 0x%02x%02x\n", hdr[0], hdr[1]);
+        goto freestream;
+    }
+
+    /* Read the asn.1 length from the stream.  Only supports definite-length
+     * values, which DER-encoded signatures should be.
+     */
+    if (hdr[1] == 0x80)
+    {
+        WARN("indefinite-length encoding not supported!\n");
+        goto freestream;
+    }
+    else if (hdr[1] & 0x80)
+    {
+        DWORD temp;
+        LPBYTE ptr;
+
+        lenBytes = hdr[1] & 0x7f;
+        if (lenBytes > sizeof(DWORD))
+        {
+            WARN("asn.1 length too long (%d)\n", lenBytes);
+            goto freestream;
+        }
+        r = IStream_Read(stm, len, lenBytes, &count);
+        if (FAILED(r) || count != lenBytes)
+            goto freestream;
+        dataBytes = 0;
+        temp = lenBytes;
+        ptr = len;
+        while (temp--)
+        {
+            dataBytes <<= 8;
+            dataBytes |= *ptr++;
+        }
+    }
+    else
+    {
+        lenBytes = 0;
+        dataBytes = hdr[1];
+    }
+
+    if (!pbSignedDataMsg)
+    {
+        *pcbSignedDataMsg = 2 + lenBytes + dataBytes;
+        ret = TRUE;
+    }
+    else if (*pcbSignedDataMsg < 2 + lenBytes + dataBytes)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        *pcbSignedDataMsg = 2 + lenBytes + dataBytes;
+    }
+    else
+    {
+        LPBYTE ptr = pbSignedDataMsg;
+
+        memcpy(ptr, hdr, sizeof(hdr));
+        ptr += sizeof(hdr);
+        if (lenBytes)
+        {
+            memcpy(ptr, len, lenBytes);
+            ptr += lenBytes;
+        }
+        r = IStream_Read(stm, ptr, dataBytes, &count);
+        if (SUCCEEDED(r) && count == dataBytes)
+        {
+            *pdwEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+            *pcbSignedDataMsg = 2 + lenBytes + dataBytes;
+            ret = TRUE;
+        }
+    }
+
+freestream:
+    IStream_Release(stm);
+freestorage:
+    IStorage_Release(stg);
+end:
+
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+/***********************************************************************
  *              MsiSIPIsMyTypeOfFile (MSISIP.@)
  */
 BOOL WINAPI MsiSIPIsMyTypeOfFile(WCHAR *name, GUID *subject)
