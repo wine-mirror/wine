@@ -1572,12 +1572,6 @@ struct index_data
 /**************************************************************************
  * WINHELP_IndexDlgProc
  *
- * Index dialog callback function.
- *
- * nResult passed to EndDialog:
- *   1: CANCEL button
- *  >1: valid offset value +2.
- *  EndDialog itself can return 0 (error).
  */
 INT_PTR CALLBACK WINHELP_IndexDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
