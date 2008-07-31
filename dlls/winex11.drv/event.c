@@ -932,9 +932,17 @@ static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent
 
     if (data->iconic && data->wm_state == NormalState)  /* restore window */
     {
-        TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
         data->iconic = FALSE;
-        SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
+        if (is_net_wm_state_maximized( event->display, data ))
+        {
+            TRACE( "restoring to max %p/%lx\n", data->hwnd, data->whole_window );
+            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
+        }
+        else
+        {
+            TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
+            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
+        }
     }
     else if (!data->iconic && data->wm_state == IconicState)
     {
