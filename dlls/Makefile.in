@@ -154,6 +154,7 @@ BASEDIRS = \
 	msi \
 	msimg32 \
 	msimtf \
+	msisip \
 	msisys.ocx \
 	msnet32 \
 	msrle32 \

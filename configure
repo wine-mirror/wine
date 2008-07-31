@@ -22273,6 +22273,8 @@ ac_config_files="$ac_config_files dlls/msimg32/Makefile"
 
 ac_config_files="$ac_config_files dlls/msimtf/Makefile"
 
+ac_config_files="$ac_config_files dlls/msisip/Makefile"
+
 ac_config_files="$ac_config_files dlls/msisys.ocx/Makefile"
 
 ac_config_files="$ac_config_files dlls/msnet32/Makefile"
@@ -23494,6 +23496,7 @@ do
     "dlls/msi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msi/tests/Makefile" ;;
     "dlls/msimg32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msimg32/Makefile" ;;
     "dlls/msimtf/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msimtf/Makefile" ;;
+    "dlls/msisip/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msisip/Makefile" ;;
     "dlls/msisys.ocx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msisys.ocx/Makefile" ;;
     "dlls/msnet32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msnet32/Makefile" ;;
     "dlls/msrle32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msrle32/Makefile" ;;
