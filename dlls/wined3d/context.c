@@ -29,6 +29,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION This->adapter->gl_info
 
+/* The last used device.
+ *
+ * If the application creates multiple devices and switches between them, ActivateContext has to
+ * change the opengl context. This flag allows to keep track which device is active
+ */
+static IWineD3DDeviceImpl *last_device;
+
 /*****************************************************************************
  * Context_MarkStateDirty
  *
@@ -562,6 +569,8 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
      */
     if(oldDrawable && oldCtx) {
         pwglMakeCurrent(oldDrawable, oldCtx);
+    } else {
+        last_device = This;
     }
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
 
@@ -627,6 +636,8 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     TRACE("Destroying ctx %p\n", context);
     if(pwglGetCurrentContext() == context->glCtx){
         pwglMakeCurrent(NULL, NULL);
+    } else {
+        last_device = NULL;
     }
 
     if(context->isPBuffer) {
@@ -1125,7 +1136,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     }
 
     /* Activate the opengl context */
-    if(context != This->activeContext) {
+    if(last_device != This || context != This->activeContext) {
         BOOL ret;
 
         /* Prevent an unneeded context switch as those are expensive */
@@ -1152,6 +1163,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                    sizeof(*This->activeContext->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
         }
         This->activeContext = context;
+        last_device = This;
     }
 
     /* We only need ENTER_GL for the gl calls made below and for the helper functions which make GL calls */
