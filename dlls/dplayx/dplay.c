@@ -3760,7 +3760,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
 
       /* The enumeration will return FALSE if we are not to continue */
       if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize,
-                           &dpName, DPCONNECTION_DIRECTPLAY, lpContext ) )
+                           &dpName, dwFlags, lpContext ) )
       {
          return DP_OK;
       }
@@ -3868,7 +3868,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
 
       /* The enumeration will return FALSE if we are not to continue */
       if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize,
-                           &dpName, DPCONNECTION_DIRECTPLAYLOBBY, lpContext ) )
+                           &dpName, dwFlags, lpContext ) )
       {
          HeapFree( GetProcessHeap(), 0, lpAddressBuffer );
          return DP_OK;
