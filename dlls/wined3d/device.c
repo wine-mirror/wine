@@ -2170,6 +2170,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
         TRACE("Fragment pipeline private data couldn't be allocated\n");
         goto err_out;
     }
+    hr = This->blitter->alloc_private(iface);
+    if(FAILED(hr)) {
+        TRACE("Blitter private data couldn't be allocated\n");
+        goto err_out;
+    }
 
     /* Set up some starting GL setup */
 
@@ -2254,6 +2259,7 @@ err_out:
         IWineD3DStateBlock_Release((IWineD3DStateBlock *) This->stateBlock);
         This->stateBlock = NULL;
     }
+    This->blitter->free_private(iface);
     This->frag_pipe->free_private(iface);
     This->shader_backend->shader_free_private(iface);
     return hr;
@@ -2371,6 +2377,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     }
 
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
+    This->blitter->free_private(iface);
     This->frag_pipe->free_private(iface);
     This->shader_backend->shader_free_private(iface);
 
@@ -7220,6 +7227,7 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
         This->depth_blt_rb_w = 0;
         This->depth_blt_rb_h = 0;
     }
+    This->blitter->free_private(iface);
     This->frag_pipe->free_private(iface);
     This->shader_backend->shader_free_private(iface);
 
@@ -7263,15 +7271,26 @@ HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *
     hr = This->shader_backend->shader_alloc_private(iface);
     if(FAILED(hr)) {
         ERR("Failed to recreate shader private data\n");
-        return hr;
+        goto err_out;
     }
     hr = This->frag_pipe->alloc_private(iface);
     if(FAILED(hr)) {
         TRACE("Fragment pipeline private data couldn't be allocated\n");
-        return hr;
+        goto err_out;
+    }
+    hr = This->blitter->alloc_private(iface);
+    if(FAILED(hr)) {
+        TRACE("Blitter private data couldn't be allocated\n");
+        goto err_out;
     }
 
     return WINED3D_OK;
+
+err_out:
+    This->blitter->free_private(iface);
+    This->frag_pipe->free_private(iface);
+    This->shader_backend->shader_free_private(iface);
+    return hr;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {

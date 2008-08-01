@@ -3467,8 +3467,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer");
 
-        glEnable(Src->glDescription.target);
-        checkGLcall("glEnable(Src->glDescription.target)");
+        myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format,
+                                       Src->glDescription.target, Src->pow2Width, Src->pow2Height);
 
         /* Bind the texture */
         glBindTexture(Src->glDescription.target, Src->glDescription.textureName);
@@ -3537,8 +3537,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         glBindTexture(Src->glDescription.target, 0);
         checkGLcall("glBindTexture(Src->glDescription.target, 0)");
         /* Leave the opengl state valid for blitting */
-        glDisable(Src->glDescription.target);
-        checkGLcall("glDisable(Src->glDescription.target)");
+        myDevice->blitter->unset_shader((IWineD3DDevice *) myDevice);
 
         /* The draw buffer should only need to be restored if we were drawing to the front buffer, and there is a back buffer.
          * otherwise the context manager should choose between GL_BACK / offscreenDrawBuffer
@@ -4622,4 +4621,36 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_LoadLocation,
     IWineD3DSurfaceImpl_GetImplType,
     IWineD3DSurfaceImpl_DrawOverlay
+};
+#undef GLINFO_LOCATION
+
+#define GLINFO_LOCATION device->adapter->gl_info
+static HRESULT ffp_blit_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
+static void ffp_blit_free(IWineD3DDevice *iface) { }
+
+static HRESULT ffp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum textype, UINT width, UINT height) {
+    glEnable(textype);
+    checkGLcall("glEnable(textype)");
+    return WINED3D_OK;
+}
+
+static void ffp_blit_unset(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    glDisable(GL_TEXTURE_2D);
+    checkGLcall("glDisable(GL_TEXTURE_2D)");
+    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+    }
+    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+        glDisable(GL_TEXTURE_RECTANGLE_ARB);
+        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+    }
+}
+
+const struct blit_shader ffp_blit =  {
+    ffp_blit_alloc,
+    ffp_blit_free,
+    ffp_blit_set,
+    ffp_blit_unset
 };

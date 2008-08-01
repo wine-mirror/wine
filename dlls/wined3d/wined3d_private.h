@@ -575,6 +575,16 @@ void compile_state_table(struct StateEntry *StateTable,
                          const struct fragment_pipeline *fragment,
                          const struct StateEntryTemplate *misc);
 
+/* Shaders for color conversions in blits */
+struct blit_shader {
+    HRESULT (*alloc_private)(IWineD3DDevice *iface);
+    void (*free_private)(IWineD3DDevice *iface);
+    HRESULT (*set_shader)(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum textype, UINT width, UINT height);
+    void (*unset_shader)(IWineD3DDevice *iface);
+};
+
+extern const struct blit_shader ffp_blit;
+
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext {
     /* State dirtification
@@ -829,10 +839,12 @@ struct IWineD3DDeviceImpl
     const shader_backend_t *shader_backend;
     void *shader_priv;
     void *fragment_priv;
+    void *blit_priv;
     struct StateEntry StateTable[STATE_HIGHEST + 1];
     /* Array of functions for states which are handled by more than one pipeline part */
     APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
     const struct fragment_pipeline *frag_pipe;
+    const struct blit_shader *blitter;
 
     /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */

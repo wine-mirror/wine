@@ -2933,6 +2933,15 @@ static const struct fragment_pipeline *select_fragment_implementation(UINT Adapt
     }
 }
 
+static const struct blit_shader *select_blit_implementation(UINT Adapter, WINED3DDEVTYPE DeviceType) {
+    int vs_selected_mode;
+    int ps_selected_mode;
+
+    select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
+    return &ffp_blit;
+
+}
+
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
       subset of a D3DCAPS9 structure. However, it has to come via a void *
       as the d3d8 interface cannot import the d3d9 header                  */
@@ -3568,6 +3577,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->frag_pipe = frag_pipeline;
     compile_state_table(object->StateTable, object->multistate_funcs, &GLINFO_LOCATION,
                         ffp_vertexstate_template, frag_pipeline, misc_state_template);
+    object->blitter = select_blit_implementation(Adapter, DeviceType);
 
     /* Prefer the vtable with functions optimized for single dirtifyable objects if the shader
      * model can deal with that. It is essentially the same, just with adjusted
