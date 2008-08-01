@@ -745,9 +745,10 @@ struct texture_stage_op
     unsigned                cop : 5, aop : 5;
     unsigned                carg1 : 6, carg2 : 6, carg0 : 6;
     unsigned                tex_type : 3;
-    unsigned                dst : 1;
+    unsigned                dst : 1;                        /* Total of 32 bits */
     unsigned                aarg1 : 6, aarg2 : 6, aarg0 : 6;
     unsigned                projected : 2;
+    unsigned                padding : 12;                   /* Total of 64 bits */
     WINED3DFORMAT           color_correction;
 };
 

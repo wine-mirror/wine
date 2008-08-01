@@ -1792,6 +1792,7 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
 
     for(i = 0; i < GL_LIMITS(texture_stages); i++) {
         IWineD3DBaseTextureImpl *texture;
+        settings->op[i].padding = 0;
         if(stateblock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
             settings->op[i].cop = WINED3DTOP_DISABLE;
             settings->op[i].aop = WINED3DTOP_DISABLE;
@@ -1800,6 +1801,8 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
             settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = 0x3F;
             settings->op[i].color_correction = WINED3DFMT_UNKNOWN;
             settings->op[i].dst = resultreg;
+            settings->op[i].tex_type = tex_1d;
+            settings->op[i].projected = proj_none;
             i++;
             break;
         }
