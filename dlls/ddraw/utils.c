@@ -249,6 +249,11 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
 
         case WINED3DFMT_UYVY:
         case WINED3DFMT_YUY2:
+            DDPixelFormat->u1.dwYUVBitCount = 16;
+            DDPixelFormat->dwFlags = DDPF_FOURCC;
+            DDPixelFormat->dwFourCC = WineD3DFormat;
+            break;
+
         case WINED3DFMT_YV12:
         case WINED3DFMT_DXT1:
         case WINED3DFMT_DXT2:
