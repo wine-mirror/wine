@@ -25,6 +25,54 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+LPCSTR WINAPI D3DXGetPixelShaderProfile(LPDIRECT3DDEVICE9 device)
+{
+    D3DCAPS9 caps;
+
+    TRACE("(void): relay\n");
+
+    if (!device) return NULL;
+
+    IDirect3DDevice9_GetDeviceCaps(device,&caps);
+
+    switch (caps.PixelShaderVersion)
+    {
+    case D3DPS_VERSION(1, 1):
+        return "ps_1_1";
+
+    case D3DPS_VERSION(1, 2):
+        return "ps_1_2";
+
+    case D3DPS_VERSION(1, 3):
+        return "ps_1_3";
+
+    case D3DPS_VERSION(1, 4):
+        return "ps_1_4";
+
+    case D3DPS_VERSION(2, 0):
+        if ((caps.PS20Caps.NumTemps>=22)                          &&
+            (caps.PS20Caps.Caps&D3DPS20CAPS_ARBITRARYSWIZZLE)     &&
+            (caps.PS20Caps.Caps&D3DPS20CAPS_GRADIENTINSTRUCTIONS) &&
+            (caps.PS20Caps.Caps&D3DPS20CAPS_PREDICATION)          &&
+            (caps.PS20Caps.Caps&D3DPS20CAPS_NODEPENDENTREADLIMIT) &&
+            (caps.PS20Caps.Caps&D3DPS20CAPS_NOTEXINSTRUCTIONLIMIT))
+        {
+            return "ps_2_a";
+        }
+        if ((caps.PS20Caps.NumTemps>=32)                          &&
+            (caps.PS20Caps.Caps&D3DPS20CAPS_NOTEXINSTRUCTIONLIMIT))
+        {
+            return "ps_2_b";
+        }
+        return "ps_2_0";
+
+    case D3DPS_VERSION(3, 0):
+        return "ps_3_0";
+    }
+
+    return NULL;
+}
+
 UINT WINAPI D3DXGetShaderSize(const DWORD *byte_code)
 {
     const DWORD *ptr = byte_code;

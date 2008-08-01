@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+LPCSTR WINAPI D3DXGetPixelShaderProfile(LPDIRECT3DDEVICE9 device);
 UINT WINAPI D3DXGetShaderSize(const DWORD *byte_code);
 DWORD WINAPI D3DXGetShaderVersion(const DWORD *byte_code);
 
