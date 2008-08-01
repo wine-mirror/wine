@@ -254,6 +254,39 @@ end_function:
     return TRUE;
 }
 
+static void *CRYPT_LoadSIPFuncFromKey(HKEY key, HMODULE *pLib)
+{
+    LONG r;
+    DWORD size;
+    WCHAR dllName[MAX_PATH];
+    char functionName[MAX_PATH];
+    HMODULE lib;
+    void *func = NULL;
+
+    /* Read the DLL entry */
+    size = sizeof(dllName);
+    r = RegQueryValueExW(key, szDllName, NULL, NULL, (LPBYTE)dllName, &size);
+    if (r) goto end;
+
+    /* Read the Function entry */
+    size = sizeof(functionName);
+    r = RegQueryValueExA(key, "FuncName", NULL, NULL, (LPBYTE)functionName,
+     &size);
+    if (r) goto end;
+
+    lib = LoadLibraryW(dllName);
+    if (!lib)
+        goto end;
+    func = GetProcAddress(lib, functionName);
+    if (func)
+        *pLib = lib;
+    else
+        FreeLibrary(lib);
+
+end:
+    return func;
+}
+
 /***********************************************************************
  *             CryptSIPRetrieveSubjectGuid (CRYPT32.@)
  *
@@ -378,40 +411,17 @@ static void *CRYPT_LoadSIPFunc(const GUID *pgSubject, LPCWSTR function,
  HMODULE *pLib)
 {
     LONG r;
-    HKEY key = NULL;
-    DWORD size;
-    WCHAR dllName[MAX_PATH];
-    char functionName[MAX_PATH];
-    HMODULE lib;
+    HKEY key;
     void *func = NULL;
 
     TRACE("(%s, %s)\n", debugstr_guid(pgSubject), debugstr_w(function));
 
     r = CRYPT_OpenSIPFunctionKey(pgSubject, function, &key);
-    if (r) goto error;
-
-    /* Read the DLL entry */
-    size = sizeof(dllName);
-    r = RegQueryValueExW(key, szDllName, NULL, NULL, (LPBYTE)dllName, &size);
-    if (r) goto error;
-
-    /* Read the Function entry */
-    size = sizeof(functionName);
-    r = RegQueryValueExA(key, "FuncName", NULL, NULL, (LPBYTE)functionName,
-     &size);
-    if (r) goto error;
-
-    lib = LoadLibraryW(dllName);
-    if (!lib)
-        goto error;
-    func = GetProcAddress(lib, functionName);
-    if (func)
-        *pLib = lib;
-    else
-        FreeLibrary(lib);
-
-error:
-    RegCloseKey(key);
+    if (!r)
+    {
+        func = CRYPT_LoadSIPFuncFromKey(key, pLib);
+        RegCloseKey(key);
+    }
     TRACE("returning %p\n", func);
     return func;
 }
