@@ -26,13 +26,13 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
-#include <tchar.h>
 #include <stdio.h>
 #include <winnt.h>
-    
+#include <shellapi.h>
+
+#include "wine/unicode.h"
 #include "taskmgr.h"
 #include "perfdata.h"
-#include "shellapi.h"
 
 HICON TrayIcon_GetProcessorUsageIcon(void)
 {
@@ -140,23 +140,24 @@ done:
 
 BOOL TrayIcon_ShellAddTrayIcon(void)
 {
-    NOTIFYICONDATA    nid;
+    NOTIFYICONDATAW    nid;
     HICON            hIcon = NULL;
     BOOL            bRetVal;
+    WCHAR           wszCPU_Usage[] = {'C','P','U',' ','U','s','a','g','e',':',' ','%','d','%','%',0};
 
-    memset(&nid, 0, sizeof(NOTIFYICONDATA));
+    memset(&nid, 0, sizeof(NOTIFYICONDATAW));
 
     hIcon = TrayIcon_GetProcessorUsageIcon();
 
-    nid.cbSize = sizeof(NOTIFYICONDATA);
+    nid.cbSize = sizeof(NOTIFYICONDATAW);
     nid.hWnd = hMainWnd;
     nid.uID = 0;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_ONTRAYICON;
     nid.hIcon = hIcon;
-    wsprintf(nid.szTip, _T("CPU Usage: %d%%"), PerfDataGetProcessorUsage());
+    wsprintfW(nid.szTip, wszCPU_Usage, PerfDataGetProcessorUsage());
 
-    bRetVal = Shell_NotifyIcon(NIM_ADD, &nid);
+    bRetVal = Shell_NotifyIconW(NIM_ADD, &nid);
 
     if (hIcon)
         DestroyIcon(hIcon);
@@ -166,41 +167,42 @@ BOOL TrayIcon_ShellAddTrayIcon(void)
 
 BOOL TrayIcon_ShellRemoveTrayIcon(void)
 {
-    NOTIFYICONDATA    nid;
+    NOTIFYICONDATAW    nid;
     BOOL            bRetVal;
     
-    memset(&nid, 0, sizeof(NOTIFYICONDATA));
+    memset(&nid, 0, sizeof(NOTIFYICONDATAW));
     
-    nid.cbSize = sizeof(NOTIFYICONDATA);
+    nid.cbSize = sizeof(NOTIFYICONDATAW);
     nid.hWnd = hMainWnd;
     nid.uID = 0;
     nid.uFlags = 0;
     nid.uCallbackMessage = WM_ONTRAYICON;
     
-    bRetVal = Shell_NotifyIcon(NIM_DELETE, &nid);
+    bRetVal = Shell_NotifyIconW(NIM_DELETE, &nid);
     
     return bRetVal;
 }
 
 BOOL TrayIcon_ShellUpdateTrayIcon(void)
 {
-    NOTIFYICONDATA    nid;
+    NOTIFYICONDATAW    nid;
     HICON            hIcon = NULL;
     BOOL            bRetVal;
+    WCHAR           wszCPU_Usage[] = {'C','P','U',' ','U','s','a','g','e',':',' ','%','d','%','%',0};
     
-    memset(&nid, 0, sizeof(NOTIFYICONDATA));
+    memset(&nid, 0, sizeof(NOTIFYICONDATAW));
     
     hIcon = TrayIcon_GetProcessorUsageIcon();
     
-    nid.cbSize = sizeof(NOTIFYICONDATA);
+    nid.cbSize = sizeof(NOTIFYICONDATAW);
     nid.hWnd = hMainWnd;
     nid.uID = 0;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_ONTRAYICON;
     nid.hIcon = hIcon;
-    wsprintf(nid.szTip, _T("CPU Usage: %d%%"), PerfDataGetProcessorUsage());
+    wsprintfW(nid.szTip, wszCPU_Usage, PerfDataGetProcessorUsage());
     
-    bRetVal = Shell_NotifyIcon(NIM_MODIFY, &nid);
+    bRetVal = Shell_NotifyIconW(NIM_MODIFY, &nid);
     
     if (hIcon)
         DestroyIcon(hIcon);
