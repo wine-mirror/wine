@@ -1378,6 +1378,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     unlock_end:
     This->Flags &= ~SFLAG_LOCKED;
     memset(&This->lockedRect, 0, sizeof(RECT));
+
+    /* Overlays have to be redrawn manually after changes with the GL implementation */
+    if(This->overlay_dest) {
+        IWineD3DSurface_DrawOverlay(iface);
+    }
     return WINED3D_OK;
 }
 
@@ -3338,6 +3343,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
 
         /* Activate the destination context, set it up for blitting */
+        myDevice->activeContext->last_was_blit = FALSE;
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
 
         if(!dstSwapchain) {
@@ -4452,6 +4458,20 @@ static WINED3DSURFTYPE WINAPI IWineD3DSurfaceImpl_GetImplType(IWineD3DSurface *i
     return SURFACE_OPENGL;
 }
 
+static HRESULT WINAPI IWineD3DSurfaceImpl_DrawOverlay(IWineD3DSurface *iface) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    HRESULT hr;
+
+    /* If there's no destination surface there is nothing to do */
+    if(!This->overlay_dest) return WINED3D_OK;
+
+    hr = IWineD3DSurfaceImpl_Blt((IWineD3DSurface *) This->overlay_dest, &This->overlay_destrect,
+                                 iface, &This->overlay_srcrect, WINEDDBLT_WAIT,
+                                 NULL, WINED3DTEXF_LINEAR);
+
+    return hr;
+}
+
 const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
@@ -4508,5 +4528,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_PrivateSetup,
     IWineD3DSurfaceImpl_ModifyLocation,
     IWineD3DSurfaceImpl_LoadLocation,
-    IWineD3DSurfaceImpl_GetImplType
+    IWineD3DSurfaceImpl_GetImplType,
+    IWineD3DSurfaceImpl_DrawOverlay
 };

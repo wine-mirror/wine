@@ -374,6 +374,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface
     This->overlay_destrect.right = X + w;
     This->overlay_destrect.bottom = Y + h;
 
+    IWineD3DSurface_DrawOverlay(iface);
+
     return WINED3D_OK;
 }
 
@@ -419,7 +421,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *ifac
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *SrcRect, IWineD3DSurface *DstSurface, RECT *DstRect, DWORD Flags, WINEDDOVERLAYFX *FX) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *Dst = (IWineD3DSurfaceImpl *) DstSurface;
-    FIXME("(%p)->(%p, %p, %p, %08x, %p)\n", This, SrcRect, Dst, DstRect, Flags, FX);
+    TRACE("(%p)->(%p, %p, %p, %08x, %p)\n", This, SrcRect, Dst, DstRect, Flags, FX);
 
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
@@ -459,6 +461,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, REC
         This->overlay_destrect.right = 0; This->overlay_destrect.bottom = 0;
         This->overlay_dest = NULL;
     }
+
+    IWineD3DSurface_DrawOverlay(iface);
 
     return WINED3D_OK;
 }

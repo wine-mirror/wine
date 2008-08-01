@@ -1175,6 +1175,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD_(void,ModifyLocation)(THIS_ DWORD flag, BOOL persistent);
     STDMETHOD(LoadLocation)(THIS_ DWORD flag, const RECT *rect);
     STDMETHOD_(WINED3DSURFTYPE,GetImplType)(THIS);
+    STDMETHOD(DrawOverlay)(THIS);
 };
 #undef INTERFACE
 
@@ -1235,6 +1236,7 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_ModifyLocation(p,a,b)        (p)->lpVtbl->ModifyLocation(p,a,b)
 #define IWineD3DSurface_LoadLocation(p,a,b)          (p)->lpVtbl->LoadLocation(p,a,b)
 #define IWineD3DSurface_GetImplType(p)               (p)->lpVtbl->GetImplType(p)
+#define IWineD3DSurface_DrawOverlay(p)               (p)->lpVtbl->DrawOverlay(p)
 #endif
 
 /*****************************************************************************

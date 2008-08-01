@@ -801,6 +801,11 @@ static WINED3DSURFTYPE WINAPI IWineGDISurfaceImpl_GetImplType(IWineD3DSurface *i
     return SURFACE_GDI;
 }
 
+static HRESULT WINAPI IWineGDISurfaceImpl_DrawOverlay(IWineD3DSurface *iface) {
+    FIXME("GDI surfaces can't draw overlays yet\n");
+    return E_FAIL;
+}
+
 /* FIXME: This vtable should not use any IWineD3DSurface* implementation functions,
  * only IWineD3DBaseSurface and IWineGDISurface ones.
  */
@@ -860,5 +865,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_PrivateSetup,
     IWineGDISurfaceImpl_ModifyLocation,
     IWineGDISurfaceImpl_LoadLocation,
-    IWineGDISurfaceImpl_GetImplType
+    IWineGDISurfaceImpl_GetImplType,
+    IWineGDISurfaceImpl_DrawOverlay
 };
