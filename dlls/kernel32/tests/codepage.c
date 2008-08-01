@@ -290,6 +290,26 @@ static void test_string_conversion(LPBOOL bUsedDefaultChar)
     ok(!strcmp(mbs, "??"), "mbs is %s\n", mbs);
     if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
 
+    /* Length-only tests */
+    SetLastError(0xdeadbeef);
+    ret = WideCharToMultiByte(1252, 0, &wc2, 1, NULL, 0, NULL, bUsedDefaultChar);
+    ok(ret == 1, "ret is %d\n", ret);
+    if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WideCharToMultiByte(1252, 0, wcs, -1, NULL, 0, NULL, bUsedDefaultChar);
+    ok(ret == 5, "ret is %d\n", ret);
+    if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
+
+    if (!IsValidCodePage(950))
+    {
+        skip("Codepage 950 not available\n");
+        return;
+    }
+
+    /* Double-byte tests */
     SetLastError(0xdeadbeef);
     ret = WideCharToMultiByte(950, 0, dbwcs, -1, mbs, sizeof(mbs), NULL, bUsedDefaultChar);
     ok(ret == 5, "ret is %d\n", ret);
@@ -312,18 +332,6 @@ static void test_string_conversion(LPBOOL bUsedDefaultChar)
     ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
 
     /* Length-only tests */
-    SetLastError(0xdeadbeef);
-    ret = WideCharToMultiByte(1252, 0, &wc2, 1, NULL, 0, NULL, bUsedDefaultChar);
-    ok(ret == 1, "ret is %d\n", ret);
-    if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
-    ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    ret = WideCharToMultiByte(1252, 0, wcs, -1, NULL, 0, NULL, bUsedDefaultChar);
-    ok(ret == 5, "ret is %d\n", ret);
-    if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
-    ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
-
     SetLastError(0xdeadbeef);
     ret = WideCharToMultiByte(950, 0, dbwcs, 1, NULL, 0, NULL, bUsedDefaultChar);
     ok(ret == 2, "ret is %d\n", ret);
