@@ -352,8 +352,8 @@
 @ stdcall GdipGetPenColor(ptr ptr)
 @ stub GdipGetPenCompoundArray
 @ stub GdipGetPenCompoundCount
-@ stub GdipGetPenCustomEndCap
-@ stub GdipGetPenCustomStartCap
+@ stdcall GdipGetPenCustomEndCap(ptr ptr)
+@ stdcall GdipGetPenCustomStartCap(ptr ptr)
 @ stdcall GdipGetPenDashArray(ptr ptr long)
 @ stdcall GdipGetPenDashCap197819(ptr ptr)
 @ stdcall GdipGetPenDashCount(ptr ptr)

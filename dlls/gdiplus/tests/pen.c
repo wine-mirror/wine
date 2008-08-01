@@ -226,6 +226,55 @@ static void test_dasharray(void)
     GdipDeletePen(pen);
 }
 
+static void test_customcap(void)
+{
+    GpPen *pen;
+    GpStatus status;
+    GpCustomLineCap *custom;
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+
+    /* NULL args */
+    status = GdipGetPenCustomStartCap(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetPenCustomStartCap(pen, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetPenCustomStartCap(NULL, &custom);
+    expect(InvalidParameter, status);
+
+    status = GdipGetPenCustomEndCap(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetPenCustomEndCap(pen, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetPenCustomEndCap(NULL, &custom);
+    expect(InvalidParameter, status);
+
+    /* native crashes on pen == NULL, custom != NULL */
+    status = GdipSetPenCustomStartCap(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipSetPenCustomStartCap(pen, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipSetPenCustomEndCap(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipSetPenCustomEndCap(pen, NULL);
+    expect(InvalidParameter, status);
+
+    /* get without setting previously */
+    custom = (GpCustomLineCap*)0xdeadbeef;
+    status = GdipGetPenCustomEndCap(pen, &custom);
+    expect(Ok, status);
+    ok(custom == NULL,"Expect CustomCap == NULL\n");
+
+    custom = (GpCustomLineCap*)0xdeadbeef;
+    status = GdipGetPenCustomStartCap(pen, &custom);
+    expect(Ok, status);
+    ok(custom == NULL,"Expect CustomCap == NULL\n");
+
+    GdipDeletePen(pen);
+}
+
 START_TEST(pen)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -244,6 +293,7 @@ START_TEST(pen)
     test_constructor_destructor2();
     test_brushfill();
     test_dasharray();
+    test_customcap();
 
     GdiplusShutdown(gdiplusToken);
 }
