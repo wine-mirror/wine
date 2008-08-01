@@ -659,25 +659,18 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
         cmdLine = strtok (NULL, whitespace);
     }
     if (!submit) {
-        static CHAR platform_windows[]  = "WINETEST_PLATFORM=windows",
-                    platform_wine[]     = "WINETEST_PLATFORM=wine",
-                    debug_yes[]         = "WINETEST_DEBUG=1",
-                    interactive_no[]    = "WINETEST_INTERACTIVE=0",
-                    report_success_no[] = "WINETEST_REPORT_SUCCESS=0";
-        CHAR *platform;
-
         report (R_STATUS, "Starting up");
 
         if (!running_on_visible_desktop ())
             report (R_FATAL, "Tests must be run on a visible desktop");
 
-        platform = running_under_wine () ? platform_wine : platform_windows;
-
-        if (reset_env && (putenv (platform) ||
-                          putenv (debug_yes)        ||
-                          putenv (interactive_no)   ||
-                          putenv (report_success_no)))
-            report (R_FATAL, "Could not reset environment");
+        if (reset_env)
+        {
+            SetEnvironmentVariableA( "WINETEST_PLATFORM", running_under_wine () ? "wine" : "windows" );
+            SetEnvironmentVariableA( "WINETEST_DEBUG", "1" );
+            SetEnvironmentVariableA( "WINETEST_INTERACTIVE", "0" );
+            SetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", "0" );
+        }
 
         if (!tag) {
             if (!interactive)
