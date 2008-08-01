@@ -102,3 +102,32 @@ DWORD WINAPI D3DXGetShaderVersion(const DWORD *byte_code)
 
     return byte_code ? *byte_code : 0;
 }
+
+LPCSTR WINAPI D3DXGetVertexShaderProfile(LPDIRECT3DDEVICE9 device)
+{
+    D3DCAPS9 caps;
+
+    TRACE("(void): relay\n");
+
+    if (!device) return NULL;
+
+    IDirect3DDevice9_GetDeviceCaps(device,&caps);
+
+    switch (caps.VertexShaderVersion)
+    {
+    case D3DVS_VERSION(1, 1):
+        return "vs_1_1";
+    case D3DVS_VERSION(2, 0):
+        if ((caps.VS20Caps.NumTemps>=13) &&
+            (caps.VS20Caps.DynamicFlowControlDepth=24) &&
+            (caps.VS20Caps.Caps&D3DPS20CAPS_PREDICATION))
+        {
+            return "vs_2_a";
+        }
+        return "vs_2_0";
+    case D3DVS_VERSION(3, 0):
+        return "vs_3_0";
+    }
+
+    return NULL;
+}
