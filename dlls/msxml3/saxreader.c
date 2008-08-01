@@ -806,16 +806,12 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
             || !attributes->szURI || !attributes->szValue
             || !attributes->szQName)
     {
-        if(attributes->szLocalname)
-            HeapFree(GetProcessHeap(), 0, attributes->szLocalname);
-        if(attributes->szPrefix)
-            HeapFree(GetProcessHeap(), 0, attributes->szPrefix);
-        if(attributes->szURI)
-            HeapFree(GetProcessHeap(), 0, attributes->szURI);
-        if(attributes->szValue)
-            HeapFree(GetProcessHeap(), 0, attributes->szValue);
-        if(attributes->szQName)
-            HeapFree(GetProcessHeap(), 0, attributes->szQName);
+        HeapFree(GetProcessHeap(), 0, attributes->szLocalname);
+        HeapFree(GetProcessHeap(), 0, attributes->szPrefix);
+        HeapFree(GetProcessHeap(), 0, attributes->szURI);
+        HeapFree(GetProcessHeap(), 0, attributes->szValue);
+        HeapFree(GetProcessHeap(), 0, attributes->szQName);
+        HeapFree(GetProcessHeap(), 0, attributes);
         return E_FAIL;
     }
 
