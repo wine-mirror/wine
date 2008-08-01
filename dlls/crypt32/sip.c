@@ -318,6 +318,9 @@ BOOL WINAPI CryptSIPRetrieveSubjectGuid
     static const WORD dosHdr = IMAGE_DOS_SIGNATURE;
     static const BYTE cabHdr[] = { 'M','S','C','F' };
     BYTE hdr[SIP_MAX_MAGIC_NUMBER];
+    WCHAR szFullKey[ 0x100 ];
+    LONG r = ERROR_SUCCESS;
+    HKEY key;
 
     TRACE("(%s %p %p)\n", wine_dbgstr_w(FileName), hFileIn, pgSubject);
 
@@ -369,16 +372,84 @@ BOOL WINAPI CryptSIPRetrieveSubjectGuid
         goto cleanup;
     }
 
-    /* FIXME
-     * There is a lot more to be checked:
-     * - Check for the keys CryptSIPDllIsMyFileType and CryptSIPDllIsMyFileType2
-     *   under HKLM\Software\Microsoft\Cryptography\OID\EncodingType 0. Here are 
-     *   functions listed that need check if a SIP Provider can deal with the 
-     *   given file.
-     */
+    /* Check for supported functions using CryptSIPDllIsMyFileType */
+    /* max length of szFullKey depends on our code only, so we won't overrun */
+    lstrcpyW(szFullKey, szOID);
+    lstrcatW(szFullKey, szIsMyFile);
+    r = RegOpenKeyExW(HKEY_LOCAL_MACHINE, szFullKey, 0, KEY_READ, &key);
+    if (r == ERROR_SUCCESS)
+    {
+        DWORD index = 0, size;
+        WCHAR subKeyName[MAX_PATH];
 
-    /* Let's set the most common error for now */
-    SetLastError(TRUST_E_SUBJECT_FORM_UNKNOWN);
+        do {
+            size = sizeof(subKeyName) / sizeof(subKeyName[0]);
+            r = RegEnumKeyExW(key, index++, subKeyName, &size, NULL, NULL,
+             NULL, NULL);
+            if (r == ERROR_SUCCESS)
+            {
+                HKEY subKey;
+
+                r = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
+                if (r == ERROR_SUCCESS)
+                {
+                    HMODULE lib;
+                    pfnIsFileSupported isMy = CRYPT_LoadSIPFuncFromKey(subKey,
+                     &lib);
+
+                    if (isMy)
+                    {
+                        bRet = isMy(hFile, pgSubject);
+                        FreeLibrary(lib);
+                    }
+                    RegCloseKey(subKey);
+                }
+            }
+        } while (!bRet && r == ERROR_SUCCESS);
+        RegCloseKey(key);
+    }
+
+    /* Check for supported functions using CryptSIPDllIsMyFileType2 */
+    if (!bRet)
+    {
+        lstrcpyW(szFullKey, szOID);
+        lstrcatW(szFullKey, szIsMyFile2);
+        r = RegOpenKeyExW(HKEY_LOCAL_MACHINE, szFullKey, 0, KEY_READ, &key);
+        if (r == ERROR_SUCCESS)
+        {
+            DWORD index = 0, size;
+            WCHAR subKeyName[MAX_PATH];
+
+            do {
+                size = sizeof(subKeyName) / sizeof(subKeyName[0]);
+                r = RegEnumKeyExW(key, index++, subKeyName, &size, NULL, NULL,
+                 NULL, NULL);
+                if (r == ERROR_SUCCESS)
+                {
+                    HKEY subKey;
+
+                    r = RegOpenKeyExW(key, subKeyName, 0, KEY_READ, &subKey);
+                    if (r == ERROR_SUCCESS)
+                    {
+                        HMODULE lib;
+                        pfnIsFileSupportedName isMy2 =
+                         CRYPT_LoadSIPFuncFromKey(subKey, &lib);
+
+                        if (isMy2)
+                        {
+                            bRet = isMy2((LPWSTR)FileName, pgSubject);
+                            FreeLibrary(lib);
+                        }
+                        RegCloseKey(subKey);
+                    }
+                }
+            } while (!bRet && r == ERROR_SUCCESS);
+            RegCloseKey(key);
+        }
+    }
+
+    if (!bRet)
+        SetLastError(TRUST_E_SUBJECT_FORM_UNKNOWN);
 
 cleanup:
     /* If we didn't open this one we shouldn't close it (hFile is a copy),
