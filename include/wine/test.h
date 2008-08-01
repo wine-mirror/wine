@@ -476,17 +476,18 @@ static void usage( const char *argv0 )
 /* main function */
 int main( int argc, char **argv )
 {
-    char *p;
+    char p[128];
 
     setvbuf (stdout, NULL, _IONBF, 0);
 
     winetest_argc = argc;
     winetest_argv = argv;
 
-    if ((p = getenv( "WINETEST_PLATFORM" ))) winetest_platform = strdup(p);
-    if ((p = getenv( "WINETEST_DEBUG" ))) winetest_debug = atoi(p);
-    if ((p = getenv( "WINETEST_INTERACTIVE" ))) winetest_interactive = atoi(p);
-    if ((p = getenv( "WINETEST_REPORT_SUCCESS"))) report_success = atoi(p);
+    if (GetEnvironmentVariableA( "WINETEST_PLATFORM", p, sizeof(p) )) winetest_platform = strdup(p);
+    if (GetEnvironmentVariableA( "WINETEST_DEBUG", p, sizeof(p) )) winetest_debug = atoi(p);
+    if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
+    if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) report_success = atoi(p);
+
     if (!argv[1])
     {
         if (winetest_testlist[0].name && !winetest_testlist[1].name)  /* only one test */
