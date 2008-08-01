@@ -1182,7 +1182,13 @@ static void test_JapaneseConversion(void)
         destsz = 30;
         outlen = jis_jp[i][0];
         srcsz = unc_jp[i][0];
+        SetLastError(0xdeadbeef);
         hr = pConvertINetUnicodeToMultiByte(NULL, 50220, &unc_jp[i][1], &srcsz, output, &destsz);
+        if (hr == S_FALSE && GetLastError() == ERROR_INVALID_NAME)
+        {
+            skip("Code page identifier 50220 is not supported\n");
+            break;
+        }
         ok(hr == S_OK,"(%i) Expected S_OK, got %08x\n", i, hr);
         ok(destsz == outlen, "(%i) Expected %i, got %i\n",i,outlen,destsz);
         ok(srcsz == unc_jp[i][0],"(%i) Expected %i, got %i\n",i,unc_jp[i][0],srcsz);
@@ -1215,7 +1221,13 @@ static void test_JapaneseConversion(void)
         outlen = sjis_jp[i][0];
         srcsz = unc_jp[i][0];
 
+        SetLastError(0xdeadbeef);
         hr = pConvertINetUnicodeToMultiByte(NULL, 932, &unc_jp[i][1], &srcsz, output, &destsz);
+        if (hr == S_FALSE && GetLastError() == ERROR_INVALID_NAME)
+        {
+            skip("Code page identifier 932 is not supported\n");
+            break;
+        }
         ok(hr == S_OK,"(%i) Expected S_OK, got %08x\n",i,hr);
         ok(destsz == outlen,"(%i) Expected %i, got %i\n",i,outlen,destsz);
         ok(srcsz == unc_jp[i][0],"(%i) Expected %i, got %i\n",i,unc_jp[i][0],srcsz);
@@ -1238,7 +1250,13 @@ static void test_JapaneseConversion(void)
         outlen = euc_jp[i][0];
         srcsz = unc_jp[i][0];
 
+        SetLastError(0xdeadbeef);
         hr = pConvertINetUnicodeToMultiByte(NULL, 51932, &unc_jp[i][1], &srcsz, output, &destsz);
+        if (hr == S_FALSE && GetLastError() == ERROR_INVALID_NAME)
+        {
+            skip("Code page identifier 51932 is not supported\n");
+            break;
+        }
         ok(hr == S_OK, "(%i) Expected S_OK, got %08x\n",i,hr);
         ok(destsz == outlen, "(%i) Expected %i, got %i\n",i,outlen,destsz);
         ok(srcsz == unc_jp[i][0],"(%i) Expected %i, got %i\n",i,unc_jp[i][0],destsz);
@@ -1258,7 +1276,13 @@ static void test_JapaneseConversion(void)
     i = 0;
     destsz = 30;
     srcsz = jis_jp[i][0];
+    SetLastError(0xdeadbeef);
     hr = pConvertINetMultiByteToUnicode(NULL, 50932, &jis_jp[i][1], &srcsz, outputW, &destsz);
+    if (hr == S_FALSE && GetLastError() == ERROR_INVALID_NAME)
+    {
+        skip("Code page identifier 50932 is not supported\n");
+        return;
+    }
     ok(hr == S_OK,"(%i) Expected S_OK, got %08x\n",i,hr);
     ok(destsz == unc_jp[i][0],"(%i) Expected %i, got %i\n",i,unc_jp[i][0],destsz);
     ok(srcsz == jis_jp[i][0],"(%i) Expected %i, got %i\n",i,jis_jp[i][0],srcsz);
@@ -1276,7 +1300,8 @@ static void test_JapaneseConversion(void)
     i = 2;
     destsz = 30;
     srcsz = euc_jp[i][0];
-    hr = pConvertINetMultiByteToUnicode(NULL, 50932, &euc_jp[i][1], &srcsz, outputW, &destsz); ok(hr == S_OK,"(%i) Expected S_OK, got %08x\n",i,hr);
+    hr = pConvertINetMultiByteToUnicode(NULL, 50932, &euc_jp[i][1], &srcsz, outputW, &destsz);
+    ok(hr == S_OK,"(%i) Expected S_OK, got %08x\n",i,hr);
     ok(destsz == unc_jp[i][0],"(%i) Expected %i, got %i\n",i,unc_jp[i][0],destsz);
     ok(srcsz == euc_jp[i][0],"(%i) Expected %i, got %i\n",i,euc_jp[i][0],srcsz);
     ok(memcmp(outputW,&unc_jp[i][1],destsz)==0,"(%i) Strings do not match\n",i);
