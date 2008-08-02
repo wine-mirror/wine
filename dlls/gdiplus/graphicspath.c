@@ -196,6 +196,18 @@ GpStatus WINGDIPAPI GdipAddPathBeziersI(GpPath *path, GDIPCONST GpPoint *points,
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipAddPathClosedCurve(GpPath *path, GDIPCONST GpPointF *points,
+    INT count)
+{
+    return GdipAddPathClosedCurve2(path, points, count, 1.0);
+}
+
+GpStatus WINGDIPAPI GdipAddPathClosedCurveI(GpPath *path, GDIPCONST GpPoint *points,
+    INT count)
+{
+    return GdipAddPathClosedCurve2I(path, points, count, 1.0);
+}
+
 GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *points,
     INT count, REAL tension)
 {
