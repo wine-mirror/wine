@@ -1926,6 +1926,166 @@ static void test_CreatePlayer(void)
 
 }
 
+/* GetPlayerCaps */
+
+static void test_GetPlayerCaps(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[2];
+    HRESULT hr;
+    UINT i;
+
+    DPCAPS playerCaps;
+    DWORD dwFlags;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+
+    ZeroMemory( &playerCaps, sizeof(DPCAPS) );
+
+
+    /* Uninitialized service provider */
+    playerCaps.dwSize = 0;
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 0, &playerCaps, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+    playerCaps.dwSize = sizeof(DPCAPS);
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 0, &playerCaps, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    /* No session */
+    playerCaps.dwSize = 0;
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 0, &playerCaps, 0 );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "GetPlayerCaps not implemented\n" );
+        return;
+    }
+
+    playerCaps.dwSize = sizeof(DPCAPS);
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 0, &playerCaps, 0 );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 2, &playerCaps, 0 );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+
+    hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                                    (LPVOID) pDP[1], 0 );
+    checkHR( DP_OK, hr );
+
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_CreatePlayer( pDP[i], &dpid[i],
+                                        NULL, NULL, NULL, 0, 0 );
+        checkHR( DP_OK, hr );
+    }
+
+
+    /* Uninitialized playerCaps */
+    playerCaps.dwSize = 0;
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 0, &playerCaps, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 2, &playerCaps, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], dpid[0], &playerCaps, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+
+    /* Invalid player */
+    playerCaps.dwSize = sizeof(DPCAPS);
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 0, &playerCaps, 0 );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], 2, &playerCaps, 0 );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], dpid[0], &playerCaps, 0 );
+    checkHR( DP_OK, hr );
+
+
+    /* Regular parameters */
+    for (i=0; i<2; i++)
+    {
+        for (dwFlags=0;
+             dwFlags<=DPGETCAPS_GUARANTEED;
+             dwFlags+=DPGETCAPS_GUARANTEED)
+        {
+
+            hr = IDirectPlayX_GetPlayerCaps( pDP[0], dpid[i],
+                                             &playerCaps, dwFlags );
+            checkHR( DP_OK, hr );
+
+
+            check( sizeof(DPCAPS), playerCaps.dwSize );
+            check( 40,    playerCaps.dwSize );
+            check( 0,     playerCaps.dwMaxQueueSize );
+            check( 0,     playerCaps.dwHundredBaud );
+            check( 0,     playerCaps.dwLatency );
+            check( 65536, playerCaps.dwMaxLocalPlayers );
+            check( 20,    playerCaps.dwHeaderLength );
+
+            if ( i == 0 )
+            {
+                checkFlags( DPCAPS_ISHOST |
+                            DPCAPS_GUARANTEEDOPTIMIZED |
+                            DPCAPS_GUARANTEEDSUPPORTED |
+                            DPCAPS_ASYNCSUPPORTED |
+                            DPPLAYERCAPS_LOCAL,
+                            playerCaps.dwFlags, FLAGS_DPCAPS );
+            }
+            else
+                checkFlags( DPCAPS_ISHOST |
+                            DPCAPS_GUARANTEEDOPTIMIZED |
+                            DPCAPS_GUARANTEEDSUPPORTED |
+                            DPCAPS_ASYNCSUPPORTED,
+                            playerCaps.dwFlags, FLAGS_DPCAPS );
+
+            if ( dwFlags == DPGETCAPS_GUARANTEED )
+            {
+                check( 1048547, playerCaps.dwMaxBufferSize );
+                check( 64,      playerCaps.dwMaxPlayers );
+            }
+            else
+            {
+                check( 65479, playerCaps.dwMaxBufferSize );
+                check( 65536, playerCaps.dwMaxPlayers );
+            }
+
+        }
+    }
+
+
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -1941,6 +2101,7 @@ START_TEST(dplayx)
     test_SessionDesc();
 
     test_CreatePlayer();
+    test_GetPlayerCaps();
 
     CoUninitialize();
 }
