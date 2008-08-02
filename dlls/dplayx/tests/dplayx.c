@@ -2778,6 +2778,183 @@ static void test_GetPlayerAccount(void)
 
 }
 
+/* GetPlayerAddress */
+
+static BOOL FAR PASCAL EnumAddress_cb( REFGUID guidDataType,
+                                       DWORD dwDataSize,
+                                       LPCVOID lpData,
+                                       LPVOID lpContext )
+{
+    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    static REFGUID types[] = { &DPAID_TotalSize,
+                               &DPAID_ServiceProvider,
+                               &DPAID_INet,
+                               &DPAID_INetW };
+    static DWORD sizes[] = { 4, 16, 12, 24, 4, 16, 10, 20 };
+
+
+    checkGuid( types[callbackData->dwCounter1%4], guidDataType );
+    check( sizes[callbackData->dwCounter1], dwDataSize );
+
+    switch(callbackData->dwCounter1)
+    {
+    case 0:
+        check( 136, *(LPDWORD) lpData );
+        break;
+    case 4:
+        check( 130, *(LPDWORD) lpData );
+        break;
+    case 1:
+    case 5:
+        checkGuid( &DPSPGUID_TCPIP, (LPGUID) lpData );
+        break;
+    case 6:
+        checkStr( "127.0.0.1", (LPSTR) lpData );
+        break;
+    default: break;
+    }
+
+
+    callbackData->dwCounter1++;
+
+    return TRUE;
+}
+
+static void test_GetPlayerAddress(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    LPDIRECTPLAYLOBBY3 pDPL;
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[2];
+    CallbackData callbackData;
+    HRESULT hr;
+    UINT i;
+
+    DWORD dwDataSize = 1024;
+    LPVOID lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwDataSize );
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+
+
+    /* Uninitialized service provider */
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], 0, lpData, &dwDataSize );
+    todo_wine checkHR( DPERR_UNINITIALIZED, hr );
+
+    if ( hr == DP_OK )
+    {
+        skip( "GetPlayerAddress not implemented\n" );
+        return;
+    }
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    /* No session */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], 0, lpData, &dwDataSize );
+    checkHR( DPERR_UNSUPPORTED, hr );
+    check( 1024, dwDataSize );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], 1, lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 1024, dwDataSize );
+
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                               (LPVOID) pDP[1], 0 );
+
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_CreatePlayer( pDP[i], &dpid[i], NULL, NULL, NULL,
+                                        0, 0 );
+        checkHR( DP_OK, hr );
+    }
+
+    /* Invalid player */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], 0,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_UNSUPPORTED, hr );
+    check( 1024, dwDataSize );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], 1,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 1024, dwDataSize );
+
+    /* Small buffer */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], dpid[0],
+                                        NULL, &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( 136, dwDataSize );
+
+    dwDataSize = 0;
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], dpid[0],
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( 136, dwDataSize );
+
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], dpid[0],
+                                        lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    check( 136, dwDataSize );
+
+
+    /* Regular parameters */
+    callbackData.dwCounter1 = 0;
+
+    /* - Local */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], dpid[0],
+                                        lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    check( 136, dwDataSize );
+
+    hr = IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb,
+                                       (LPCVOID) lpData, dwDataSize,
+                                       (LPVOID) &callbackData );
+    checkHR( DP_OK, hr );
+
+    check( 4, callbackData.dwCounter1 );
+
+    /* - Remote */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAddress( pDP[0], dpid[1],
+                                        lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    check( 130, dwDataSize );
+
+    hr = IDirectPlayLobby_EnumAddress( pDPL, EnumAddress_cb,
+                                       (LPCVOID) lpData, dwDataSize,
+                                       (LPVOID) &callbackData );
+    checkHR( DP_OK, hr );
+
+    check( 8, callbackData.dwCounter1 );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -2797,6 +2974,7 @@ START_TEST(dplayx)
     test_PlayerData();
     test_PlayerName();
     test_GetPlayerAccount();
+    test_GetPlayerAddress();
 
     CoUninitialize();
 }
