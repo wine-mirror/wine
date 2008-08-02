@@ -747,7 +747,7 @@ static LPSTR assembly_dup_str(ASSEMBLY *assembly, DWORD index)
 HRESULT assembly_get_name(ASSEMBLY *assembly, LPSTR *name)
 {
     BYTE *ptr;
-    ULONG offset;
+    LONG offset;
     DWORD stridx;
 
     offset = assembly->tables[TableFromToken(mdtAssembly)].offset;
@@ -839,7 +839,7 @@ static BYTE *assembly_get_blob(ASSEMBLY *assembly, WORD index, ULONG *size)
 
 static void bytes_to_str(BYTE *bytes, DWORD len, LPSTR str)
 {
-    int i;
+    DWORD i;
 
     static const char hexval[16] = {
         '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'
@@ -859,7 +859,8 @@ static void bytes_to_str(BYTE *bytes, DWORD len, LPSTR str)
 HRESULT assembly_get_pubkey_token(ASSEMBLY *assembly, LPSTR *token)
 {
     ASSEMBLYTABLE *asmtbl;
-    ULONG i, offset, size;
+    ULONG i, size;
+    LONG offset;
     BYTE *hashdata;
     HCRYPTPROV crypt;
     HCRYPTHASH hash;
