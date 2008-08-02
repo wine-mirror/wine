@@ -2462,16 +2462,16 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
             shader_addline(buffer, "SUB arg2, %s, const.w;\n", arg2);
             arg2 = "arg2";
         case WINED3DTOP_ADD:
-            shader_addline(buffer, "ADD %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
+            shader_addline(buffer, "ADD_SAT %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
             break;
 
         case WINED3DTOP_SUBTRACT:
-            shader_addline(buffer, "SUB %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
+            shader_addline(buffer, "SUB_SAT %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
             break;
 
         case WINED3DTOP_ADDSMOOTH:
             shader_addline(buffer, "SUB arg1, const.x, %s;\n", arg1);
-            shader_addline(buffer, "MAD %s%s, arg1, %s, %s;\n", dstreg, dstmask, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, arg1, %s, %s;\n", dstreg, dstmask, arg2, arg1);
             break;
 
         case WINED3DTOP_BLENDCURRENTALPHA:
@@ -2493,24 +2493,24 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
 
         case WINED3DTOP_BLENDTEXTUREALPHAPM:
             shader_addline(buffer, "SUB arg0.a, const.x, %s;\n", arg1);
-            shader_addline(buffer, "MAD %s%s, %s, arg0.a, %s;\n", dstreg, dstmask, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, %s, arg0.a, %s;\n", dstreg, dstmask, arg2, arg1);
             break;
 
         /* D3DTOP_PREMODULATE ???? */
 
         case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
             shader_addline(buffer, "SUB arg0.a, const.x, %s;\n", arg1);
-            shader_addline(buffer, "MAD %s%s, arg0.a, %s, %s;\n", dstreg, dstmask, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, arg0.a, %s, %s;\n", dstreg, dstmask, arg2, arg1);
             break;
         case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
-            shader_addline(buffer, "MAD %s%s, %s.a, %s, %s;\n", dstreg, dstmask, arg1, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, %s.a, %s, %s;\n", dstreg, dstmask, arg1, arg2, arg1);
             break;
         case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
             shader_addline(buffer, "SUB arg0, const.x, %s;\n", arg1);
-            shader_addline(buffer, "MAD %s%s, arg0, %s, %s.a;\n", dstreg, dstmask, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, arg0, %s, %s.a;\n", dstreg, dstmask, arg2, arg1);
             break;
         case WINED3DTOP_MODULATECOLOR_ADDALPHA:
-            shader_addline(buffer, "MAD %s%s, %s, %s, %s.a;\n", dstreg, dstmask, arg1, arg2, arg1);
+            shader_addline(buffer, "MAD_SAT %s%s, %s, %s, %s.a;\n", dstreg, dstmask, arg1, arg2, arg1);
             break;
 
         case WINED3DTOP_DOTPRODUCT3:
@@ -2521,11 +2521,11 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
             }
             shader_addline(buffer, "SUB arg1, %s, const.w;\n", arg1);
             shader_addline(buffer, "SUB arg2, %s, const.w;\n", arg2);
-            shader_addline(buffer, "DP3 %s%s, arg1, arg2;\n", dstreg, dstmask);
+            shader_addline(buffer, "DP3_SAT %s%s, arg1, arg2;\n", dstreg, dstmask);
             break;
 
         case WINED3DTOP_MULTIPLYADD:
-            shader_addline(buffer, "MAD %s%s, %s, %s, %s;\n", dstreg, dstmask, arg1, arg2, arg0);
+            shader_addline(buffer, "MAD_SAT %s%s, %s, %s, %s;\n", dstreg, dstmask, arg1, arg2, arg0);
             break;
 
         case WINED3DTOP_LERP:
@@ -2556,7 +2556,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     BOOL tex_read[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
     BOOL bump_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
     const char *textype;
-    const char *instr;
+    const char *instr, *sat;
     char colorcor_dst[8];
     GLuint ret;
     DWORD arg0, arg1, arg2;
@@ -2653,6 +2653,13 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
             default: textype = "unexpected_textype";   break;
         }
 
+        if(settings->op[stage].cop == WINED3DTOP_BUMPENVMAP ||
+           settings->op[stage].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
+            sat = "";
+        } else {
+            sat = "_SAT";
+        }
+
         if(settings->op[stage].projected == proj_none) {
             instr = "TEX";
         } else if(settings->op[stage].projected == proj_count4) {
@@ -2670,11 +2677,11 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
             shader_addline(&buffer, "SWZ arg1, bumpmat%u, y, w, 0, 0;\n", stage - 1);
             shader_addline(&buffer, "DP3 ret.g, arg1, tex%u;\n", stage - 1);
             shader_addline(&buffer, "ADD ret, ret, fragment.texcoord[%u];\n", stage);
-            shader_addline(&buffer, "%s tex%u, ret, texture[%u], %s;\n",
-                            instr, stage, stage, textype);
+            shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
+                            instr, sat, stage, stage, textype);
         } else {
-            shader_addline(&buffer, "%s tex%u, fragment.texcoord[%u], texture[%u], %s;\n",
-                            instr, stage, stage, stage, textype);
+            shader_addline(&buffer, "%s%s tex%u, fragment.texcoord[%u], texture[%u], %s;\n",
+                            instr, sat, stage, stage, stage, textype);
         }
 
         sprintf(colorcor_dst, "tex%u", stage);
