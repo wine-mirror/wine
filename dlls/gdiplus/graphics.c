@@ -42,7 +42,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 /* looks-right constants */
-#define TENSION_CONST (0.3)
 #define ANCHOR_WIDTH (2.0)
 #define MAX_ITERS (50)
 
@@ -192,34 +191,6 @@ static void draw_pie(GpGraphics *graphics, REAL x, REAL y, REAL width,
 
     Pie(graphics->hdc, pti[0].x, pti[0].y, pti[1].x, pti[1].y, pti[2].x,
         pti[2].y, pti[3].x, pti[3].y);
-}
-
-/* GdipDrawCurve helper function.
- * Calculates Bezier points from cardinal spline points. */
-static void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
-    REAL *y1, REAL *x2, REAL *y2)
-{
-    REAL xdiff, ydiff;
-
-    /* calculate tangent */
-    xdiff = pts[2].X - pts[0].X;
-    ydiff = pts[2].Y - pts[0].Y;
-
-    /* apply tangent to get control points */
-    *x1 = pts[1].X - tension * xdiff;
-    *y1 = pts[1].Y - tension * ydiff;
-    *x2 = pts[1].X + tension * xdiff;
-    *y2 = pts[1].Y + tension * ydiff;
-}
-
-/* GdipDrawCurve helper function.
- * Calculates Bezier points from cardinal spline endpoints. */
-static void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
-    REAL tension, REAL *x, REAL *y)
-{
-    /* tangent at endpoints is the line from the endpoint to the adjacent point */
-    *x = roundr(tension * (xadj - xend) + xend);
-    *y = roundr(tension * (yadj - yend) + yend);
 }
 
 /* Draws the linecap the specified color and size on the hdc.  The linecap is in

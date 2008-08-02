@@ -38,6 +38,7 @@
 #define INCH_HIMETRIC (2540)
 
 #define VERSION_MAGIC 0xdbc01001
+#define TENSION_CONST (0.3)
 
 COLORREF ARGB2COLORREF(ARGB color);
 extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
@@ -45,6 +46,11 @@ extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
 extern REAL gdiplus_atan2(REAL dy, REAL dx);
 extern GpStatus hresult_to_status(HRESULT res);
 extern REAL convert_unit(HDC hdc, GpUnit unit);
+
+extern void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
+    REAL *y1, REAL *x2, REAL *y2);
+extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
+    REAL tension, REAL *x, REAL *y);
 
 static inline INT roundr(REAL x)
 {
