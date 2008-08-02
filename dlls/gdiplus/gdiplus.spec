@@ -12,8 +12,8 @@
 @ stdcall GdipAddPathCurve2I(ptr ptr long long)
 @ stub GdipAddPathCurve3
 @ stub GdipAddPathCurve3I
-@ stub GdipAddPathCurve
-@ stub GdipAddPathCurveI
+@ stdcall GdipAddPathCurve(ptr ptr long)
+@ stdcall GdipAddPathCurveI(ptr ptr long)
 @ stdcall GdipAddPathEllipse(ptr long long long long)
 @ stdcall GdipAddPathEllipseI(ptr long long long long)
 @ stdcall GdipAddPathLine2(ptr ptr long)
