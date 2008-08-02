@@ -3814,6 +3814,29 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
         }
     }
 
+    /*  The nVidia GeForceFX series reports OpenGL 2.0 capabilities with the latest drivers versions, but
+     *  doesn't explicitly advertise the ARB_tex_npot extension in the GL extension string.
+     *  This usually means that ARB_tex_npot is supported in hardware as long as the application is staying
+     *  within the limits enforced by the ARB_texture_rectangle extension. This however is not true for the
+     *  FX series, which instantly falls back to a slower software path as soon as ARB_tex_npot is used.
+     *  We therefore completly remove ARB_tex_npot from the list of supported extensions.
+     *
+     *  Note that wine_normalized_texrect can't be used in this case because internally it uses ARB_tex_npot,
+     *  triggering the software fallback. There is not much we can do here apart from disabling the
+     *  software-emulated extension and reenable ARB_tex_rect (which was previously disabled
+     *  in IWineD3DImpl_FillGLCaps).
+     *  This fixup removes performance problems on both the FX 5900 and FX 5700 (e.g. for framebuffer
+     *  post-processing effects in the game "Max Payne 2").
+     *  The behaviour can be verified through a simple test app attached in bugreport #14724.
+     */
+    if(gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && gl_info->gl_vendor == VENDOR_NVIDIA) {
+        if(gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5800 || gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5600) {
+            TRACE("GL_ARB_texture_non_power_of_two advertised through OpenGL 2.0 on NV FX card, removing\n");
+            gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+            gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
+        }
+    }
+
     /* Find out if PBOs work as they are supposed to */
     test_pbo_functionality(gl_info);
 
