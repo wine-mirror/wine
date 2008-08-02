@@ -3483,7 +3483,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                         WINEDDSCAPS_SYSTEMMEMORY            |
                                         WINEDDSCAPS_VIDEOMEMORY             |
                                         WINEDDSCAPS_VISIBLE;
-    pCaps->DirectDrawCaps.StrideAlign = 0; /* TODO: SURFACE_ALIGNMENT */
+    pCaps->DirectDrawCaps.StrideAlign = DDRAW_PITCH_ALIGNMENT;
 
     /* Set D3D caps if OpenGL is available. */
     if(Adapters[Adapter].opengl) {
@@ -3535,9 +3535,9 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     list_init(&object->shaders);
 
     if(This->dxVersion == 7) {
-        object->surface_alignment = 8;
+        object->surface_alignment = DDRAW_PITCH_ALIGNMENT;
     } else {
-        object->surface_alignment = 4;
+        object->surface_alignment = D3D8_PITCH_ALIGNMENT;
     }
     object->posFixup[0] = 1.0; /* This is needed to get the x coord unmodified through a MAD */
 

@@ -835,6 +835,8 @@ struct IWineD3DDeviceImpl
     BOOL                    view_ident;        /* true iff view matrix is identity                */
     BOOL                    untransformed;
     BOOL                    vertexBlendUsed;   /* To avoid needless setting of the blend matrices */
+#define DDRAW_PITCH_ALIGNMENT 8
+#define D3D8_PITCH_ALIGNMENT 4
     unsigned char           surface_alignment; /* Line Alignment of surfaces                      */
 
     /* State block related */
