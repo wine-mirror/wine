@@ -36,6 +36,10 @@
     ok( (expected) == (result),                         \
         "expected=%s got=%s\n",                         \
         dpResult2str(expected), dpResult2str(result) );
+#define checkStr(expected, result)                              \
+    ok( (result != NULL) && (!strcmp(expected, result)),        \
+        "expected=%s got=%s\n",                                 \
+        expected, result );
 #define checkFlags(expected, result, flags)     \
     ok( (expected) == (result),                 \
         "expected=0x%08x(%s) got=0x%08x(%s)\n", \
@@ -534,6 +538,85 @@ static LPCSTR dwFlags2str(DWORD dwFlags, DWORD flagType)
     return flags;
 }
 
+static char dpid2char(DPID* dpid, DWORD dpidSize, DPID idPlayer)
+{
+    UINT i;
+    if ( idPlayer == DPID_SYSMSG )
+        return 'S';
+    for (i=0; i<dpidSize; i++)
+    {
+        if ( idPlayer == dpid[i] )
+            return (char)(i+48);
+    }
+    return '?';
+}
+
+static void check_messages( LPDIRECTPLAY4 pDP,
+                            DPID *dpid,
+                            DWORD dpidSize,
+                            lpCallbackData callbackData )
+{
+    /* Retrieves all messages from the queue of pDP, performing tests
+     * to check if we are receiving what we expect.
+     *
+     * Information about the messages is stores in callbackData:
+     *
+     * callbackData->dwCounter1: Number of messages received.
+     * callbackData->szTrace1: Traces for sender and receiver.
+     *     We store the position a dpid holds in the dpid array.
+     *     Example:
+     *
+     *       trace string: "01,02,03,14"
+     *           expanded: [ '01', '02', '03', '14' ]
+     *                         \     \     \     \
+     *                          \     \     \     ) message 3: from 1 to 4
+     *                           \     \     ) message 2: from 0 to 3
+     *                            \     ) message 1: from 0 to 2
+     *                             ) message 0: from 0 to 1
+     *
+     *     In general terms:
+     *       sender of message i   = character in place 3*i of the array
+     *       receiver of message i = character in place 3*i+1 of the array
+     *
+     *     A sender value of 'S' means DPID_SYSMSG, this is, a system message.
+     *
+     * callbackData->szTrace2: Traces for message sizes.
+     */
+
+    DPID idFrom, idTo;
+    UINT i;
+    DWORD dwDataSize = 1024;
+    LPVOID lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwDataSize );
+    HRESULT hr;
+    char temp[5];
+
+    callbackData->szTrace2[0] = '\0';
+
+    i = 0;
+    while ( DP_OK == (hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                                                 lpData, &dwDataSize )) )
+    {
+
+        callbackData->szTrace1[ 3*i   ] = dpid2char( dpid, dpidSize, idFrom );
+        callbackData->szTrace1[ 3*i+1 ] = dpid2char( dpid, dpidSize, idTo );
+        callbackData->szTrace1[ 3*i+2 ] = ',';
+
+        sprintf( temp, "%d,", dwDataSize );
+        strcat( callbackData->szTrace2, temp );
+
+        dwDataSize = 1024;
+        ++i;
+    }
+
+    checkHR( DPERR_NOMESSAGES, hr );
+
+    callbackData->szTrace1[ 3*i ] = '\0';
+    callbackData->dwCounter1 = i;
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+}
+
 static void init_TCPIP_provider( LPDIRECTPLAY4 pDP,
                                  LPCSTR strIPAddressString,
                                  WORD port )
@@ -582,6 +665,31 @@ static void init_TCPIP_provider( LPDIRECTPLAY4 pDP,
     hr = IDirectPlayX_InitializeConnection( pDP, pAddress, 0 );
     todo_wine checkHR( DP_OK, hr );
 
+}
+
+static BOOL FAR PASCAL EnumSessions_cb_join( LPCDPSESSIONDESC2 lpThisSD,
+                                             LPDWORD lpdwTimeOut,
+                                             DWORD dwFlags,
+                                             LPVOID lpContext )
+{
+    LPDIRECTPLAY4 pDP = (LPDIRECTPLAY4) lpContext;
+    DPSESSIONDESC2 dpsd;
+    HRESULT hr;
+
+    if (dwFlags & DPESC_TIMEDOUT)
+    {
+        return FALSE;
+    }
+
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.guidInstance = lpThisSD->guidInstance;
+
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+    checkHR( DP_OK, hr );
+
+    return TRUE;
 }
 
 
@@ -1475,6 +1583,182 @@ static void test_EnumSessions(void)
 
 }
 
+/* SetSessionDesc
+   GetSessionDesc */
+
+static void test_SessionDesc(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    LPDPSESSIONDESC2 lpData[2];
+    LPVOID lpDataMsg;
+    DPID dpid[2];
+    DWORD dwDataSize;
+    HRESULT hr;
+    UINT i;
+    CallbackData callbackData;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+
+    /* Service provider not initialized */
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], NULL, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], NULL, NULL );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    /* No sessions open */
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], NULL, 0 );
+    todo_wine checkHR( DPERR_NOSESSIONS, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip("Get/SetSessionDesc not implemented\n");
+        return;
+    }
+
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], NULL, NULL );
+    checkHR( DPERR_NOSESSIONS, hr );
+
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+
+
+    /* Host */
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    /* Peer */
+    IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                               (LPVOID)pDP[1], 0 );
+
+    for (i=0; i<2; i++)
+    {
+        /* Players, only to receive messages */
+        IDirectPlayX_CreatePlayer( pDP[i], &dpid[i], NULL, NULL, NULL, 0, 0 );
+
+        lpData[i] = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 1024 );
+    }
+    lpDataMsg = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 1024 );
+
+
+    /* Incorrect parameters */
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], NULL, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], NULL, NULL );
+    checkHR( DPERR_INVALIDPARAM, hr );
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], lpData[0], NULL );
+    checkHR( DPERR_INVALIDPARAM, hr );
+    dwDataSize=-1;
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], lpData[0], &dwDataSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    check( -1, dwDataSize );
+
+    /* Get: Insufficient buffer size */
+    dwDataSize=0;
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], lpData[0], &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( dpsd.dwSize, dwDataSize );
+    dwDataSize=4;
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], lpData[0], &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( dpsd.dwSize, dwDataSize );
+    dwDataSize=1024;
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], NULL, &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( dpsd.dwSize, dwDataSize );
+
+    /* Get: Regular operation
+     *  i=0: Local session
+     *  i=1: Remote session */
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_GetSessionDesc( pDP[i], lpData[i], &dwDataSize );
+        checkHR( DP_OK, hr );
+        check( sizeof(DPSESSIONDESC2), dwDataSize );
+        check( sizeof(DPSESSIONDESC2), lpData[i]->dwSize );
+        checkGuid( &appGuid, &lpData[i]->guidApplication );
+        check( dpsd.dwMaxPlayers, lpData[i]->dwMaxPlayers );
+    }
+
+    checkGuid( &lpData[0]->guidInstance, &lpData[1]->guidInstance );
+
+    /* Set: Regular operation */
+    dpsd.lpszSessionNameA = (LPSTR) "Wahaa";
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
+    checkHR( DP_OK, hr );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetSessionDesc( pDP[1], lpData[1], &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkStr( dpsd.lpszSessionNameA, lpData[1]->lpszSessionNameA );
+
+
+    /* Set: Failing to modify a remote session */
+    hr = IDirectPlayX_SetSessionDesc( pDP[1], &dpsd, 0 );
+    checkHR( DPERR_ACCESSDENIED, hr );
+
+    /* Trying to change inmutable properties */
+    /*  Flags */
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
+    checkHR( DP_OK, hr );
+    dpsd.dwFlags = DPSESSION_SECURESERVER;
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    dpsd.dwFlags = 0;
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
+    checkHR( DP_OK, hr );
+    /*  Size */
+    dpsd.dwSize = 2048;
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
+    checkHR( DP_OK, hr );
+
+    /* Changing the GUIDs and size is ignored */
+    dpsd.guidApplication = appGuid2;
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
+    checkHR( DP_OK, hr );
+    dpsd.guidInstance = appGuid2;
+    hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_GetSessionDesc( pDP[0], lpData[0], &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkGuid( &appGuid, &lpData[0]->guidApplication );
+    checkGuid( &lpData[1]->guidInstance, &lpData[0]->guidInstance );
+    check( sizeof(DPSESSIONDESC2), lpData[0]->dwSize );
+
+
+    /* Checking system messages */
+    check_messages( pDP[0], dpid, 2, &callbackData );
+    checkStr( "S0,S0,S0,S0,S0,S0,S0,", callbackData.szTrace1 );
+    checkStr( "48,90,90,90,90,90,90,", callbackData.szTrace2 );
+    check_messages( pDP[1], dpid, 2, &callbackData );
+    checkStr( "S1,S1,S1,S1,S1,S1,", callbackData.szTrace1 );
+    checkStr( "90,90,90,90,90,90,", callbackData.szTrace2 );
+
+    for (i=0; i<2; i++)
+    {
+        HeapFree( GetProcessHeap(), 0, lpData[i] );
+        IDirectPlayX_Release( pDP[i] );
+    }
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -1487,6 +1771,7 @@ START_TEST(dplayx)
     test_GetCaps();
     test_Open();
     test_EnumSessions();
+    test_SessionDesc();
 
     CoUninitialize();
 }
