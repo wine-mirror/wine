@@ -265,6 +265,32 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *po
     return stat;
 }
 
+GpStatus WINGDIPAPI GdipAddPathClosedCurve2I(GpPath *path, GDIPCONST GpPoint *points,
+    INT count, REAL tension)
+{
+    GpPointF *ptf;
+    INT i;
+    GpStatus stat;
+
+    if(!path || !points || count <= 1)
+        return InvalidParameter;
+
+    ptf = GdipAlloc(sizeof(GpPointF)*count);
+    if(!ptf)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        ptf[i].X = (REAL)points[i].X;
+        ptf[i].Y = (REAL)points[i].Y;
+    }
+
+    stat = GdipAddPathClosedCurve2(path, ptf, count, tension);
+
+    GdipFree(ptf);
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipAddPathCurve(GpPath *path, GDIPCONST GpPointF *points, INT count)
 {
     if(!path || !points || count <= 1)
