@@ -2363,6 +2363,245 @@ static void test_PlayerData(void)
     IDirectPlayX_Release( pDP );
 }
 
+/* GetPlayerName
+   SetPlayerName */
+
+static void test_PlayerName(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[2];
+    HRESULT hr;
+    UINT i;
+
+    DPNAME playerName;
+    DWORD dwDataSize = 1024;
+    LPVOID lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwDataSize );
+    CallbackData callbackData;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    ZeroMemory( &playerName, sizeof(DPNAME) );
+
+
+    /* Service provider not initialized */
+    hr = IDirectPlayX_SetPlayerName( pDP[0], 0, &playerName, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], 0, lpData, &dwDataSize );
+    checkHR( DPERR_UNINITIALIZED, hr );
+    check( 1024, dwDataSize );
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    /* Session not initialized */
+    hr = IDirectPlayX_SetPlayerName( pDP[0], 0, &playerName, 0 );
+    todo_wine checkHR( DPERR_INVALIDPLAYER, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "Get/SetPlayerName not implemented\n" );
+        return;
+    }
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], 0, lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 1024, dwDataSize );
+
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                               (LPVOID) pDP[1], 0 );
+
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[1], &dpid[1], NULL, NULL, NULL, 0, 0 );
+
+
+    /* Name not initialized */
+    playerName.dwSize = -1;
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName, 0 );
+    checkHR( DP_OK, hr );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], 0, lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 1024, dwDataSize );
+
+
+    playerName.dwSize = sizeof(DPNAME);
+    playerName.lpszShortNameA = (LPSTR) "player_name";
+    playerName.lpszLongNameA = (LPSTR) "player_long_name";
+
+
+    /* Invalid parameters */
+    hr = IDirectPlayX_SetPlayerName( pDP[0], -1, &playerName, 0 );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    hr = IDirectPlayX_SetPlayerName( pDP[0], 0, &playerName, 0 );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName, -1 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], 0, lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 1024, dwDataSize );
+
+    dwDataSize = -1;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    check( -1, dwDataSize );
+
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, NULL );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    /* Trying to modify remote player */
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[1], &playerName, 0 );
+    checkHR( DPERR_ACCESSDENIED, hr );
+
+
+    /* Regular operation */
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName, 0 );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    check( 45, dwDataSize );
+    checkStr( playerName.lpszShortNameA, ((LPDPNAME)lpData)->lpszShortNameA );
+    checkStr( playerName.lpszLongNameA,  ((LPDPNAME)lpData)->lpszLongNameA );
+    check( 0,                            ((LPDPNAME)lpData)->dwFlags );
+
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], NULL, 0 );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    check( 16, dwDataSize );
+    checkLP( NULL, ((LPDPNAME)lpData)->lpszShortNameA );
+    checkLP( NULL, ((LPDPNAME)lpData)->lpszLongNameA );
+    check( 0,      ((LPDPNAME)lpData)->dwFlags );
+
+
+    /* Small buffer in get operation */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], NULL, &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( 16, dwDataSize );
+
+    dwDataSize = 0;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( 16, dwDataSize );
+
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    check( 16, dwDataSize );
+    checkLP( NULL, ((LPDPNAME)lpData)->lpszShortNameA );
+    checkLP( NULL, ((LPDPNAME)lpData)->lpszLongNameA );
+    check( 0, ((LPDPNAME)lpData)->dwFlags );
+
+
+    /* Flags */
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
+                                     DPSET_GUARANTEED );
+    checkHR( DP_OK, hr );
+
+    /* - Local (no propagation) */
+    playerName.lpszShortNameA = (LPSTR) "no_propagation";
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
+                                     DPSET_LOCAL );
+    checkHR( DP_OK, hr );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0],
+                                     lpData, &dwDataSize ); /* Local fetch */
+    checkHR( DP_OK, hr );
+    check( 48, dwDataSize );
+    checkStr( "no_propagation", ((LPDPNAME)lpData)->lpszShortNameA );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[1], dpid[0],
+                                     lpData, &dwDataSize ); /* Remote fetch */
+    checkHR( DP_OK, hr );
+    check( 45, dwDataSize );
+    checkStr( "player_name", ((LPDPNAME)lpData)->lpszShortNameA );
+
+    /* -- 2 */
+
+    playerName.lpszShortNameA = (LPSTR) "no_propagation_2";
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
+                                     DPSET_LOCAL | DPSET_REMOTE );
+    checkHR( DP_OK, hr );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0],
+                                     lpData, &dwDataSize ); /* Local fetch */
+    checkHR( DP_OK, hr );
+    check( 50, dwDataSize );
+    checkStr( "no_propagation_2", ((LPDPNAME)lpData)->lpszShortNameA );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[1], dpid[0],
+                                     lpData, &dwDataSize ); /* Remote fetch */
+    checkHR( DP_OK, hr );
+    check( 45, dwDataSize );
+    checkStr( "player_name", ((LPDPNAME)lpData)->lpszShortNameA );
+
+    /* - Remote (propagation, default) */
+    playerName.lpszShortNameA = (LPSTR) "propagation";
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
+                                     DPSET_REMOTE );
+    checkHR( DP_OK, hr );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[1], dpid[0],
+                                     lpData, &dwDataSize ); /* Remote fetch */
+    checkHR( DP_OK, hr );
+    check( 45, dwDataSize );
+    checkStr( "propagation", ((LPDPNAME)lpData)->lpszShortNameA );
+
+    /* -- 2 */
+    playerName.lpszShortNameA = (LPSTR) "propagation_2";
+    hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
+                                     0 );
+    checkHR( DP_OK, hr );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerName( pDP[1], dpid[0],
+                                     lpData, &dwDataSize ); /* Remote fetch */
+    checkHR( DP_OK, hr );
+    check( 47, dwDataSize );
+    checkStr( "propagation_2", ((LPDPNAME)lpData)->lpszShortNameA );
+
+
+    /* Checking system messages */
+    check_messages( pDP[0], dpid, 2, &callbackData );
+    checkStr( "S0,S0,S0,S0,S0,S0,S0,", callbackData.szTrace1 );
+    checkStr( "48,28,57,28,57,57,59,", callbackData.szTrace2 );
+    check_messages( pDP[1], dpid, 2, &callbackData );
+    checkStr( "S1,S1,S1,S1,S1,S1,", callbackData.szTrace1 );
+    checkStr( "28,57,28,57,57,59,", callbackData.szTrace2 );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -2380,6 +2619,7 @@ START_TEST(dplayx)
     test_CreatePlayer();
     test_GetPlayerCaps();
     test_PlayerData();
+    test_PlayerName();
 
     CoUninitialize();
 }

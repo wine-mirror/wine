@@ -2702,6 +2702,11 @@ static HRESULT WINAPI DP_IF_GetPlayerName
   FIXME( "(%p)->(0x%08x,%p,%p,%u): ANSI\n",
          This, idPlayer, lpData, lpdwDataSize, bAnsi );
 
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
   if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
   {
     return DPERR_INVALIDPLAYER;
@@ -3226,6 +3231,11 @@ static HRESULT WINAPI DP_IF_SetPlayerName
 
   TRACE( "(%p)->(0x%08x,%p,0x%08x,%u)\n",
          This, idPlayer, lpPlayerName, dwFlags, bAnsi );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
   {
