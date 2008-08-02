@@ -410,8 +410,11 @@ static BOOL INTERNET_ConfigureProxy( LPWININETAPPINFOW lpwai )
         TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwai->lpszProxy));
         enabled = 1;
     }
-    if (!enabled) TRACE("Proxy is not enabled.\n");
-
+    if (!enabled)
+    {
+        TRACE("Proxy is not enabled.\n");
+        lpwai->dwAccessType = INTERNET_OPEN_TYPE_DIRECT;
+    }
     RegCloseKey( key );
     return (enabled > 0);
 }
