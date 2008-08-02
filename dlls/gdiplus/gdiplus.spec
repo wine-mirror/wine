@@ -8,7 +8,7 @@
 @ stub GdipAddPathClosedCurve2I
 @ stub GdipAddPathClosedCurve
 @ stub GdipAddPathClosedCurveI
-@ stub GdipAddPathCurve2
+@ stdcall GdipAddPathCurve2(ptr ptr long long)
 @ stub GdipAddPathCurve2I
 @ stub GdipAddPathCurve3
 @ stub GdipAddPathCurve3I

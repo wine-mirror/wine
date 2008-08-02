@@ -696,6 +696,74 @@ static void test_lastpoint(void)
     GdipDeletePath(path);
 }
 
+static path_test_t addcurve_path[] = {
+    {0.0, 0.0,   PathPointTypeStart,  0, 0}, /*0*/
+    {3.3, 3.3,   PathPointTypeBezier, 0, 0}, /*1*/
+    {6.7, 3.3,   PathPointTypeBezier, 0, 0}, /*2*/
+    {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*3*/
+    {13.3, 16.7, PathPointTypeBezier, 0, 0}, /*4*/
+    {3.3,  20.0, PathPointTypeBezier, 0, 0}, /*5*/
+    {10.0, 20.0, PathPointTypeBezier, 0, 0}, /*6*/
+    {16.7, 20.0, PathPointTypeBezier, 0, 0}, /*7*/
+    {23.3, 13.3, PathPointTypeBezier, 0, 0}, /*8*/
+    {30.0, 10.0, PathPointTypeBezier, 0, 0}  /*9*/
+    };
+static path_test_t addcurve_path2[] = {
+    {100.0,120.0,PathPointTypeStart,  0, 0}, /*0*/
+    {123.0,10.0, PathPointTypeLine,   0, 0}, /*1*/
+    {0.0, 0.0,   PathPointTypeLine,   0, 0}, /*2*/
+    {3.3, 3.3,   PathPointTypeBezier, 0, 0}, /*3*/
+    {6.7, 3.3,   PathPointTypeBezier, 0, 0}, /*4*/
+    {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*5*/
+    {13.3, 16.7, PathPointTypeBezier, 0, 0}, /*6*/
+    {3.3,  20.0, PathPointTypeBezier, 0, 0}, /*7*/
+    {10.0, 20.0, PathPointTypeBezier, 0, 0}, /*8*/
+    {16.7, 20.0, PathPointTypeBezier, 0, 0}, /*9*/
+    {23.3, 13.3, PathPointTypeBezier, 0, 0}, /*10*/
+    {30.0, 10.0, PathPointTypeBezier, 0, 0}  /*11*/
+    };
+static void test_addcurve(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPointF points[4];
+
+    points[0].X = 0.0;
+    points[0].Y = 0.0;
+    points[1].X = 10.0;
+    points[1].Y = 10.0;
+    points[2].X = 10.0;
+    points[2].Y = 20.0;
+    points[3].X = 30.0;
+    points[3].Y = 10.0;
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    /* NULL args */
+    status = GdipAddPathCurve2(NULL, NULL, 0, 0.0);
+    expect(InvalidParameter, status);
+    status = GdipAddPathCurve2(path, NULL, 0, 0.0);
+    expect(InvalidParameter, status);
+    status = GdipAddPathCurve2(path, points, -1, 0.0);
+    expect(InvalidParameter, status);
+    status = GdipAddPathCurve2(path, points, 1, 1.0);
+    expect(InvalidParameter, status);
+
+    /* add to empty path */
+    status = GdipAddPathCurve2(path, points, 4, 1.0);
+    expect(Ok, status);
+    ok_path(path, addcurve_path, sizeof(addcurve_path)/sizeof(path_test_t), FALSE);
+    GdipDeletePath(path);
+
+    /* add to notempty path and opened figure */
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathLine(path, 100.0, 120.0, 123.0, 10.0);
+    status = GdipAddPathCurve2(path, points, 4, 1.0);
+    expect(Ok, status);
+    ok_path(path, addcurve_path2, sizeof(addcurve_path2)/sizeof(path_test_t), FALSE);
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -719,6 +787,7 @@ START_TEST(graphicspath)
     test_rect();
     test_polygon();
     test_lastpoint();
+    test_addcurve();
 
     GdiplusShutdown(gdiplusToken);
 }

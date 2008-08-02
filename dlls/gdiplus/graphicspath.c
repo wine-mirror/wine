@@ -196,6 +196,57 @@ GpStatus WINGDIPAPI GdipAddPathBeziersI(GpPath *path, GDIPCONST GpPoint *points,
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipAddPathCurve2(GpPath *path, GDIPCONST GpPointF *points, INT count,
+    REAL tension)
+{
+    INT i, len_pt = count*3-2;
+    GpPointF *pt;
+    REAL x1, x2, y1, y2;
+    GpStatus stat;
+
+    if(!path || !points || count <= 1)
+        return InvalidParameter;
+
+    pt = GdipAlloc(len_pt * sizeof(GpPointF));
+    if(!pt)
+        return OutOfMemory;
+
+    tension = tension * TENSION_CONST;
+
+    calc_curve_bezier_endp(points[0].X, points[0].Y, points[1].X, points[1].Y,
+        tension, &x1, &y1);
+
+    pt[0].X = points[0].X;
+    pt[0].Y = points[0].Y;
+    pt[1].X = x1;
+    pt[1].Y = y1;
+
+    for(i = 0; i < count-2; i++){
+        calc_curve_bezier(&(points[i]), tension, &x1, &y1, &x2, &y2);
+
+        pt[3*i+2].X = x1;
+        pt[3*i+2].Y = y1;
+        pt[3*i+3].X = points[i+1].X;
+        pt[3*i+3].Y = points[i+1].Y;
+        pt[3*i+4].X = x2;
+        pt[3*i+4].Y = y2;
+    }
+
+    calc_curve_bezier_endp(points[count-1].X, points[count-1].Y,
+        points[count-2].X, points[count-2].Y, tension, &x1, &y1);
+
+    pt[len_pt-2].X = x1;
+    pt[len_pt-2].Y = y1;
+    pt[len_pt-1].X = points[count-1].X;
+    pt[len_pt-1].Y = points[count-1].Y;
+
+    stat = GdipAddPathBeziers(path, pt, len_pt);
+
+    GdipFree(pt);
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipAddPathEllipse(GpPath *path, REAL x, REAL y, REAL width,
     REAL height)
 {
