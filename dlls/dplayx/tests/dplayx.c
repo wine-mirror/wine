@@ -2602,6 +2602,182 @@ static void test_PlayerName(void)
 
 }
 
+/* GetPlayerAccount */
+
+static BOOL FAR PASCAL EnumSessions_cb_join_secure( LPCDPSESSIONDESC2 lpThisSD,
+                                                    LPDWORD lpdwTimeOut,
+                                                    DWORD dwFlags,
+                                                    LPVOID lpContext )
+{
+    LPDIRECTPLAY4 pDP = (LPDIRECTPLAY4) lpContext;
+    DPSESSIONDESC2 dpsd;
+    DPCREDENTIALS dpCredentials;
+    HRESULT hr;
+
+    if (dwFlags & DPESC_TIMEDOUT)
+    {
+        return FALSE;
+    }
+
+    checkFlags( DPSESSION_SECURESERVER, lpThisSD->dwFlags, FLAGS_DPSESSION );
+
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.guidInstance = lpThisSD->guidInstance;
+
+    ZeroMemory( &dpCredentials, sizeof(DPCREDENTIALS) );
+    dpCredentials.dwSize = sizeof(DPCREDENTIALS);
+    dpCredentials.lpszUsernameA = (LPSTR) "user";
+    dpCredentials.lpszPasswordA = (LPSTR) "pass";
+    hr = IDirectPlayX_SecureOpen( pDP, &dpsd, DPOPEN_JOIN,
+                                  NULL, &dpCredentials );
+    checkHR( DPERR_LOGONDENIED, hr ); /* TODO: Make this work */
+
+    return TRUE;
+}
+
+static void test_GetPlayerAccount(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[2];
+    HRESULT hr;
+    UINT i;
+
+    DWORD dwDataSize = 1024;
+    LPVOID lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwDataSize );
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+
+    /* Uninitialized service provider */
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], 0, 0, lpData, &dwDataSize );
+    todo_wine checkHR( DPERR_UNINITIALIZED, hr );
+
+    if ( hr == DP_OK )
+    {
+        skip( "GetPlayerAccount not implemented\n" );
+        return;
+    }
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    /* No session */
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], 0, 0, lpData, &dwDataSize );
+    checkHR( DPERR_NOSESSIONS, hr );
+
+
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                               (LPVOID) pDP[1], 0 );
+
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_CreatePlayer( pDP[i], &dpid[i], NULL, NULL, NULL,
+                                        0, 0 );
+        checkHR( DP_OK, hr );
+    }
+
+
+    /* Session is not secure */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], dpid[0], 0,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_UNSUPPORTED, hr );
+    check( 1024, dwDataSize );
+
+
+    /* Open a secure session */
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_Close( pDP[i] );
+        checkHR( DP_OK, hr );
+    }
+
+    dpsd.dwFlags = DPSESSION_SECURESERVER;
+    hr = IDirectPlayX_SecureOpen( pDP[0], &dpsd, DPOPEN_CREATE, NULL, NULL );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid[0],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0,
+                                    EnumSessions_cb_join_secure,
+                                    (LPVOID) pDP[1], 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[1], &dpid[1],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    /* TODO: Player creation so that this works */
+
+    /* Invalid player */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], 0, 0,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 1024, dwDataSize );
+
+    /* Invalid flags */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], dpid[0], -1,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDFLAGS, hr );
+    check( 1024, dwDataSize );
+
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], dpid[0], 1,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDFLAGS, hr );
+    check( 1024, dwDataSize );
+
+    /* Small buffer */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], dpid[0], 0,
+                                        NULL, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 0, dwDataSize );
+
+    dwDataSize = 0;
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], dpid[0], 0,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 0, dwDataSize );
+
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], dpid[0], 0,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 0, dwDataSize );
+
+    /* Normal operation */
+    dwDataSize = 1024;
+    hr = IDirectPlayX_GetPlayerAccount( pDP[0], dpid[0], 0,
+                                        lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( 1024, dwDataSize );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -2620,6 +2796,7 @@ START_TEST(dplayx)
     test_GetPlayerCaps();
     test_PlayerData();
     test_PlayerName();
+    test_GetPlayerAccount();
 
     CoUninitialize();
 }
