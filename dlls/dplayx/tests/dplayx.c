@@ -28,6 +28,10 @@
     ok( (expected) == (result),                 \
         "expected=%d got=%d\n",                 \
         expected, result );
+#define checkLP(expected, result)               \
+    ok( (expected) == (result),                 \
+        "expected=%p got=%p\n",                 \
+        expected, result );
 #define checkHR(expected, result)                       \
     ok( (expected) == (result),                         \
         "expected=%s got=%s\n",                         \
@@ -44,6 +48,7 @@
 
 
 DEFINE_GUID(appGuid, 0xbdcfe03e, 0xf0ec, 0x415b, 0x82, 0x11, 0x6f, 0x86, 0xd8, 0x19, 0x7f, 0xe1);
+DEFINE_GUID(appGuid2, 0x93417d3f, 0x7d26, 0x46ba, 0xb5, 0x76, 0xfe, 0x4b, 0x20, 0xbb, 0xad, 0x70);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 
@@ -1038,6 +1043,438 @@ static void test_Open(void)
 
 }
 
+/* EnumSessions */
+
+static BOOL FAR PASCAL EnumSessions_cb( LPCDPSESSIONDESC2 lpThisSD,
+                                        LPDWORD lpdwTimeOut,
+                                        DWORD dwFlags,
+                                        LPVOID lpContext )
+{
+    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    callbackData->dwCounter1++;
+
+    if ( dwFlags & DPESC_TIMEDOUT )
+    {
+        check( TRUE, lpThisSD == NULL );
+        return FALSE;
+    }
+    check( FALSE, lpThisSD == NULL );
+
+
+    if ( lpThisSD->lpszPasswordA != NULL )
+    {
+        check( TRUE, (lpThisSD->dwFlags & DPSESSION_PASSWORDREQUIRED) != 0 );
+    }
+
+    if ( lpThisSD->dwFlags & DPSESSION_NEWPLAYERSDISABLED )
+    {
+        check( 0, lpThisSD->dwCurrentPlayers );
+    }
+
+    check( sizeof(*lpThisSD), lpThisSD->dwSize );
+    checkLP( NULL, lpThisSD->lpszPasswordA );
+
+    return TRUE;
+}
+
+static LPDIRECTPLAY4 create_session(DPSESSIONDESC2 *lpdpsd)
+{
+
+    LPDIRECTPLAY4 pDP;
+    DPNAME name;
+    DPID dpid;
+    HRESULT hr;
+
+    CoInitialize(NULL);
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+
+    init_TCPIP_provider( pDP, "127.0.0.1", 0 );
+
+    hr = IDirectPlayX_Open( pDP, lpdpsd, DPOPEN_CREATE );
+    todo_wine checkHR( DP_OK, hr );
+
+    if ( ! (lpdpsd->dwFlags & DPSESSION_NEWPLAYERSDISABLED) )
+    {
+        ZeroMemory( &name, sizeof(DPNAME) );
+        name.dwSize = sizeof(DPNAME);
+        name.lpszShortNameA = (LPSTR) "bofh";
+
+        hr = IDirectPlayX_CreatePlayer( pDP, &dpid, &name, NULL, NULL,
+                                        0, DPPLAYER_SERVERPLAYER );
+        todo_wine checkHR( DP_OK, hr );
+    }
+
+    return pDP;
+
+}
+
+static void test_EnumSessions(void)
+{
+
+#define N_SESSIONS 6
+
+    LPDIRECTPLAY4 pDP, pDPserver[N_SESSIONS];
+    DPSESSIONDESC2 dpsd, dpsd_server[N_SESSIONS];
+    CallbackData callbackData;
+    HRESULT hr;
+    UINT i;
+
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    callbackData.dwCounter1 = -1; /* So that after a call to EnumSessions
+                                     we get the exact number of sessions */
+    callbackData.dwFlags = 0;
+
+
+    /* Service provider not initialized */
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+
+    init_TCPIP_provider( pDP, "127.0.0.1", 0 );
+
+
+    /* Session with no size */
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData, 0 );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "EnumSessions not implemented\n" );
+        return;
+    }
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+
+
+    /* No sessions */
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 0, callbackData.dwCounter1 );
+
+
+    dpsd.guidApplication = appGuid;
+
+    /* Set up sessions */
+    for (i=0; i<N_SESSIONS; i++)
+    {
+        memcpy( &dpsd_server[i], &dpsd, sizeof(DPSESSIONDESC2) );
+    }
+
+    dpsd_server[0].lpszSessionNameA = (LPSTR) "normal";
+    dpsd_server[0].dwFlags = ( DPSESSION_CLIENTSERVER |
+                               DPSESSION_DIRECTPLAYPROTOCOL );
+    dpsd_server[0].dwMaxPlayers = 10;
+
+    dpsd_server[1].lpszSessionNameA = (LPSTR) "full";
+    dpsd_server[1].dwFlags = ( DPSESSION_CLIENTSERVER |
+                               DPSESSION_DIRECTPLAYPROTOCOL );
+    dpsd_server[1].dwMaxPlayers = 1;
+
+    dpsd_server[2].lpszSessionNameA = (LPSTR) "no new";
+    dpsd_server[2].dwFlags = ( DPSESSION_CLIENTSERVER |
+                               DPSESSION_DIRECTPLAYPROTOCOL |
+                               DPSESSION_NEWPLAYERSDISABLED );
+    dpsd_server[2].dwMaxPlayers = 10;
+
+    dpsd_server[3].lpszSessionNameA = (LPSTR) "no join";
+    dpsd_server[3].dwFlags = ( DPSESSION_CLIENTSERVER |
+                               DPSESSION_DIRECTPLAYPROTOCOL |
+                               DPSESSION_JOINDISABLED );
+    dpsd_server[3].dwMaxPlayers = 10;
+
+    dpsd_server[4].lpszSessionNameA = (LPSTR) "private";
+    dpsd_server[4].dwFlags = ( DPSESSION_CLIENTSERVER |
+                               DPSESSION_DIRECTPLAYPROTOCOL |
+                               DPSESSION_PRIVATE );
+    dpsd_server[4].dwMaxPlayers = 10;
+    dpsd_server[4].lpszPasswordA = (LPSTR) "password";
+
+    dpsd_server[5].lpszSessionNameA = (LPSTR) "protected";
+    dpsd_server[5].dwFlags = ( DPSESSION_CLIENTSERVER |
+                               DPSESSION_DIRECTPLAYPROTOCOL |
+                               DPSESSION_PASSWORDREQUIRED );
+    dpsd_server[5].dwMaxPlayers = 10;
+    dpsd_server[5].lpszPasswordA = (LPSTR) "password";
+
+
+    for (i=0; i<N_SESSIONS; i++)
+    {
+        pDPserver[i] = create_session( &dpsd_server[i] );
+    }
+
+
+    /* Invalid params */
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData, -1 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    hr = IDirectPlayX_EnumSessions( pDP, NULL, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    check( -1, callbackData.dwCounter1 );
+
+
+    /* Flag tests */
+    callbackData.dwFlags = DPENUMSESSIONS_ALL; /* Doesn't list private,
+                                                  protected */
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( N_SESSIONS-2, callbackData.dwCounter1 );
+
+    /* Doesn't list private */
+    callbackData.dwFlags = ( DPENUMSESSIONS_ALL |
+                             DPENUMSESSIONS_PASSWORDREQUIRED );
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( N_SESSIONS-1, callbackData.dwCounter1 );
+
+    /* Doesn't list full, no new, no join, private, protected */
+    callbackData.dwFlags = DPENUMSESSIONS_AVAILABLE;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( N_SESSIONS-5, callbackData.dwCounter1 );
+
+    /* Like with DPENUMSESSIONS_AVAILABLE */
+    callbackData.dwFlags = 0;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( N_SESSIONS-5, callbackData.dwCounter1 );
+
+    /* Doesn't list full, no new, no join, private */
+    callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( N_SESSIONS-4, callbackData.dwCounter1 );
+
+
+    /* Async enumeration */
+    callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( N_SESSIONS-4, callbackData.dwCounter1 ); /* Read cache of last
+                                                       sync enumeration */
+
+    callbackData.dwFlags = DPENUMSESSIONS_STOPASYNC;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 0, callbackData.dwCounter1 ); /* Stop enumeration */
+
+    callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 0, callbackData.dwCounter1 ); /* Start enumeration */
+
+    Sleep(500); /* Give time to fill the cache */
+
+    callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( N_SESSIONS-5, callbackData.dwCounter1 ); /* Retrieve results */
+
+    callbackData.dwFlags = DPENUMSESSIONS_STOPASYNC;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 0, callbackData.dwCounter1 ); /* Stop enumeration */
+
+
+    /* Specific tests for passworded sessions */
+
+    for (i=0; i<N_SESSIONS; i++)
+    {
+        IDirectPlayX_Release( pDPserver[i] );
+    }
+
+    /* - Only session password set */
+    for (i=4;i<=5;i++)
+    {
+        dpsd_server[i].lpszPasswordA = (LPSTR) "password";
+        dpsd_server[i].dwFlags = 0;
+        pDPserver[i] = create_session( &dpsd_server[i] );
+    }
+
+    callbackData.dwFlags = 0;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 2, callbackData.dwCounter1 ); /* Both sessions automatically
+                                            set DPSESSION_PASSWORDREQUIRED */
+
+    /* - Only session flag set */
+    for (i=4; i<=5; i++)
+    {
+        IDirectPlayX_Release( pDPserver[i] );
+        dpsd_server[i].lpszPasswordA = NULL;
+    }
+    dpsd_server[4].dwFlags = DPSESSION_PRIVATE;
+    dpsd_server[5].dwFlags = DPSESSION_PASSWORDREQUIRED;
+    for (i=4; i<=5; i++)
+    {
+        pDPserver[i] = create_session( &dpsd_server[i] );
+    }
+
+    callbackData.dwFlags = 0;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 2, callbackData.dwCounter1 ); /* Without password,
+                                            the flag is ignored */
+
+    /* - Both session flag and password set */
+    for (i=4; i<=5; i++)
+    {
+        IDirectPlayX_Release( pDPserver[i] );
+        dpsd_server[i].lpszPasswordA = (LPSTR) "password";
+    }
+    dpsd_server[4].dwFlags = DPSESSION_PRIVATE;
+    dpsd_server[5].dwFlags = DPSESSION_PASSWORDREQUIRED;
+    for (i=4; i<=5; i++)
+    {
+        pDPserver[i] = create_session( &dpsd_server[i] );
+    }
+
+    /* - Listing without password */
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 1, callbackData.dwCounter1 );
+
+    /* - Listing with incorrect password */
+    dpsd.lpszPasswordA = (LPSTR) "bad_password";
+    callbackData.dwFlags = 0;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 1, callbackData.dwCounter1 );
+
+    /* - Listing with  correct password */
+    dpsd.lpszPasswordA = (LPSTR) "password";
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 2, callbackData.dwCounter1 );
+
+
+    dpsd.lpszPasswordA = NULL;
+    callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 2, callbackData.dwCounter1 ); /* Read cache of last sync enumeration,
+                                            even private sessions */
+
+
+    /* GUID tests */
+
+    /* - Creating two servers with different application GUIDs */
+    for (i=4; i<=5; i++)
+    {
+        IDirectPlayX_Release( pDPserver[i] );
+        dpsd_server[i].dwFlags = ( DPSESSION_CLIENTSERVER |
+                                   DPSESSION_DIRECTPLAYPROTOCOL );
+        dpsd_server[i].lpszPasswordA = NULL;
+        dpsd_server[i].dwMaxPlayers = 10;
+    }
+    dpsd_server[4].lpszSessionNameA = (LPSTR) "normal1";
+    dpsd_server[4].guidApplication = appGuid;
+    dpsd_server[5].lpszSessionNameA = (LPSTR) "normal2";
+    dpsd_server[5].guidApplication = appGuid2;
+    for (i=4; i<=5; i++)
+    {
+        pDPserver[i] = create_session( &dpsd_server[i] );
+    }
+
+    callbackData.dwFlags = 0;
+
+    dpsd.guidApplication = appGuid2;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 1, callbackData.dwCounter1 ); /* Only one of the sessions */
+
+    dpsd.guidApplication = appGuid;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 1, callbackData.dwCounter1 ); /* The other session */
+    /* FIXME:
+       For some reason, if we enum 1st with appGuid and 2nd with appGuid2,
+       in the second enum we get the 2 sessions. Dplay fault? Elves? */
+
+    dpsd.guidApplication = GUID_NULL;
+    callbackData.dwCounter1 = -1;
+    hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
+                                    (LPVOID) &callbackData,
+                                    callbackData.dwFlags );
+    check( 2, callbackData.dwCounter1 ); /* Both sessions */
+
+    for (i=4; i<=5; i++)
+    {
+        IDirectPlayX_Release( pDPserver[i] );
+    }
+    IDirectPlayX_Release( pDP );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -1049,6 +1486,7 @@ START_TEST(dplayx)
 
     test_GetCaps();
     test_Open();
+    test_EnumSessions();
 
     CoUninitialize();
 }
