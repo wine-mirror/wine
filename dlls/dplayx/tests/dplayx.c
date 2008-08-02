@@ -871,6 +871,173 @@ static void test_GetCaps(void)
     IDirectPlayX_Release( pDP );
 }
 
+/* Open */
+
+static BOOL FAR PASCAL EnumSessions_cb2( LPCDPSESSIONDESC2 lpThisSD,
+                                         LPDWORD lpdwTimeOut,
+                                         DWORD dwFlags,
+                                         LPVOID lpContext )
+{
+    LPDIRECTPLAY4 pDP = (LPDIRECTPLAY4) lpContext;
+    DPSESSIONDESC2 dpsd;
+    HRESULT hr;
+
+    if (dwFlags & DPESC_TIMEDOUT)
+        return FALSE;
+
+
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.guidInstance = lpThisSD->guidInstance;
+
+    if ( lpThisSD->dwFlags & DPSESSION_PASSWORDREQUIRED )
+    {
+        /* Incorrect password */
+        dpsd.lpszPasswordA = (LPSTR) "sonic boom";
+        hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+        checkHR( DPERR_INVALIDPASSWORD, hr );
+
+        /* Correct password */
+        dpsd.lpszPasswordA = (LPSTR) "hadouken";
+        hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+        checkHR( DP_OK, hr );
+    }
+    else
+    {
+        hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+        checkHR( DP_OK, hr );
+    }
+
+    hr = IDirectPlayX_Close( pDP );
+    checkHR( DP_OK, hr );
+
+    return TRUE;
+}
+
+static void test_Open(void)
+{
+
+    LPDIRECTPLAY4 pDP, pDP_server;
+    DPSESSIONDESC2 dpsd, dpsd_server;
+    HRESULT hr;
+
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP_server );
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ZeroMemory( &dpsd_server, sizeof(DPSESSIONDESC2) );
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+
+    /* Service provider not initialized */
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    init_TCPIP_provider( pDP_server, "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP, "127.0.0.1", 0 );
+
+    /* Uninitialized  dpsd */
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+
+    dpsd_server.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd_server.guidApplication = appGuid;
+    dpsd_server.dwMaxPlayers = 10;
+
+
+    /* Regular operation */
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DP_OK, hr );
+
+    /* Opening twice */
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_ALREADYINITIALIZED, hr );
+
+    /* Session flags */
+    IDirectPlayX_Close( pDP_server );
+
+    dpsd_server.dwFlags = DPSESSION_CLIENTSERVER | DPSESSION_MIGRATEHOST;
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_INVALIDFLAGS, hr );
+
+    dpsd_server.dwFlags = DPSESSION_MULTICASTSERVER | DPSESSION_MIGRATEHOST;
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_INVALIDFLAGS, hr );
+
+    dpsd_server.dwFlags = DPSESSION_SECURESERVER | DPSESSION_MIGRATEHOST;
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_INVALIDFLAGS, hr );
+
+
+    /* Joining sessions */
+    /* - Checking how strict dplay is with sizes */
+    dpsd.dwSize = 0;
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2)-1;
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2)+1;
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+    todo_wine checkHR( DPERR_NOSESSIONS, hr ); /* Only checks for size, not guids */
+
+
+    dpsd.guidApplication = appGuid;
+    dpsd.guidInstance = appGuid;
+
+
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
+    todo_wine checkHR( DPERR_NOSESSIONS, hr );
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN | DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_NOSESSIONS, hr ); /* Second flag is ignored */
+
+    dpsd_server.dwFlags = 0;
+
+
+    /* Join to normal session */
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DP_OK, hr );
+
+    IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb2, pDP, 0 );
+
+
+    /* Already initialized session */
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_ALREADYINITIALIZED, hr );
+
+
+    /* Checking which is the error checking order */
+    dpsd_server.dwSize = 0;
+
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    dpsd_server.dwSize = sizeof(DPSESSIONDESC2);
+
+
+    /* Join to protected session */
+    IDirectPlayX_Close( pDP_server );
+    dpsd_server.lpszPasswordA = (LPSTR) "hadouken";
+    hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
+    todo_wine checkHR( DP_OK, hr );
+
+    IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb2,
+                               pDP, DPENUMSESSIONS_PASSWORDREQUIRED );
+
+
+    IDirectPlayX_Release( pDP );
+    IDirectPlayX_Release( pDP_server );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -881,6 +1048,7 @@ START_TEST(dplayx)
     test_InitializeConnection();
 
     test_GetCaps();
+    test_Open();
 
     CoUninitialize();
 }

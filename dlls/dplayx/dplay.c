@@ -2202,6 +2202,10 @@ static HRESULT WINAPI DP_IF_EnumSessions
   TRACE( "(%p)->(%p,0x%08x,%p,%p,0x%08x,%u)\n",
          This, lpsd, dwTimeout, lpEnumSessionsCallback2, lpContext, dwFlags,
          bAnsi );
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   /* Can't enumerate if the interface is already open */
   if( This->dp2->bConnectionOpen )
@@ -2827,6 +2831,17 @@ static HRESULT WINAPI DP_SecureOpen
 
   FIXME( "(%p)->(%p,0x%08x,%p,%p): partial stub\n",
          This, lpsd, dwFlags, lpSecurity, lpCredentials );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
+  if( lpsd->dwSize != sizeof(DPSESSIONDESC2) )
+  {
+    TRACE( ": rejecting invalid dpsd size (%d).\n", lpsd->dwSize );
+    return DPERR_INVALIDPARAMS;
+  }
 
   if( This->dp2->bConnectionOpen )
   {
