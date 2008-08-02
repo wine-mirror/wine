@@ -4,7 +4,7 @@
 @ stdcall GdipAddPathBezierI(ptr long long long long long long long long)
 @ stdcall GdipAddPathBeziers(ptr ptr long)
 @ stdcall GdipAddPathBeziersI(ptr ptr long)
-@ stub GdipAddPathClosedCurve2
+@ stdcall GdipAddPathClosedCurve2(ptr ptr long long)
 @ stub GdipAddPathClosedCurve2I
 @ stub GdipAddPathClosedCurve
 @ stub GdipAddPathClosedCurveI

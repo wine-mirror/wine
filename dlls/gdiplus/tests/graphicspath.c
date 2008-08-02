@@ -764,6 +764,55 @@ static void test_addcurve(void)
     GdipDeletePath(path);
 }
 
+static path_test_t addclosedcurve_path[] = {
+    {0.0, 0.0,   PathPointTypeStart,  0, 0}, /*0*/
+    {-6.7, 0.0,  PathPointTypeBezier, 0, 0}, /*1*/
+    {6.7, 3.3,   PathPointTypeBezier, 0, 0}, /*2*/
+    {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*3*/
+    {13.3, 16.7, PathPointTypeBezier, 0, 0}, /*4*/
+    {3.3,  20.0, PathPointTypeBezier, 0, 0}, /*5*/
+    {10.0, 20.0, PathPointTypeBezier, 0, 0}, /*6*/
+    {16.7, 20.0, PathPointTypeBezier, 0, 0}, /*7*/
+    {33.3, 16.7, PathPointTypeBezier, 0, 0}, /*8*/
+    {30.0, 10.0, PathPointTypeBezier, 0, 0}, /*9*/
+    {26.7, 3.3,  PathPointTypeBezier, 0, 0}, /*10*/
+    {6.7,  0.0,  PathPointTypeBezier, 0, 0}, /*11*/
+    {0.0,  0.0,  PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 0}  /*12*/
+    };
+static void test_addclosedcurve(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPointF points[4];
+
+    points[0].X = 0.0;
+    points[0].Y = 0.0;
+    points[1].X = 10.0;
+    points[1].Y = 10.0;
+    points[2].X = 10.0;
+    points[2].Y = 20.0;
+    points[3].X = 30.0;
+    points[3].Y = 10.0;
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    /* NULL args */
+    status = GdipAddPathClosedCurve2(NULL, NULL, 0, 0.0);
+    expect(InvalidParameter, status);
+    status = GdipAddPathClosedCurve2(path, NULL, 0, 0.0);
+    expect(InvalidParameter, status);
+    status = GdipAddPathClosedCurve2(path, points, -1, 0.0);
+    expect(InvalidParameter, status);
+    status = GdipAddPathClosedCurve2(path, points, 1, 1.0);
+    expect(InvalidParameter, status);
+
+    /* add to empty path */
+    status = GdipAddPathClosedCurve2(path, points, 4, 1.0);
+    expect(Ok, status);
+    ok_path(path, addclosedcurve_path, sizeof(addclosedcurve_path)/sizeof(path_test_t), FALSE);
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -788,6 +837,7 @@ START_TEST(graphicspath)
     test_polygon();
     test_lastpoint();
     test_addcurve();
+    test_addclosedcurve();
 
     GdiplusShutdown(gdiplusToken);
 }
