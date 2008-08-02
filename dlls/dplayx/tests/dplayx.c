@@ -2955,6 +2955,111 @@ static void test_GetPlayerAddress(void)
 
 }
 
+/* GetPlayerFlags */
+
+static void test_GetPlayerFlags(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[4];
+    HRESULT hr;
+    UINT i;
+
+    DWORD dwFlags = 0;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+
+    /* Uninitialized service provider */
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], 0, &dwFlags );
+    todo_wine checkHR( DPERR_UNINITIALIZED, hr );
+
+    if ( hr == DP_OK )
+    {
+        skip( "GetPlayerFlags not implemented\n" );
+        return;
+    }
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    /* No session */
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], 0, &dwFlags );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], 1, &dwFlags );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                               (LPVOID) pDP[1], 0 );
+
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_CreatePlayer( pDP[i], &dpid[i],
+                                        NULL, NULL, NULL, 0, 0 );
+        checkHR( DP_OK, hr );
+    }
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid[2],
+                                    NULL, NULL, NULL,
+                                    0, DPPLAYER_SPECTATOR );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid[3],
+                                    NULL, NULL, NULL,
+                                    0, DPPLAYER_SERVERPLAYER );
+    checkHR( DP_OK, hr );
+
+
+    /* Invalid player */
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], 0, &dwFlags );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], 2, &dwFlags );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+    /* Invalid parameters */
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], dpid[0], NULL );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+
+    /* Regular parameters */
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], dpid[0], &dwFlags );
+    checkHR( DP_OK, hr );
+    checkFlags( dwFlags, DPPLAYER_LOCAL, FLAGS_DPPLAYER );
+
+    hr = IDirectPlayX_GetPlayerFlags( pDP[1], dpid[1], &dwFlags );
+    checkHR( DP_OK, hr );
+    checkFlags( dwFlags, DPPLAYER_LOCAL, FLAGS_DPPLAYER );
+
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], dpid[1], &dwFlags );
+    checkHR( DP_OK, hr );
+    checkFlags( dwFlags, 0, FLAGS_DPPLAYER );
+
+    hr = IDirectPlayX_GetPlayerFlags( pDP[0], dpid[2], &dwFlags );
+    checkHR( DP_OK, hr );
+    checkFlags( dwFlags, DPPLAYER_SPECTATOR | DPPLAYER_LOCAL, FLAGS_DPPLAYER );
+
+    hr = IDirectPlayX_GetPlayerFlags( pDP[1], dpid[3], &dwFlags );
+    checkHR( DP_OK, hr );
+    checkFlags( dwFlags, DPPLAYER_SERVERPLAYER, FLAGS_DPPLAYER );
+
+
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -2975,6 +3080,7 @@ START_TEST(dplayx)
     test_PlayerName();
     test_GetPlayerAccount();
     test_GetPlayerAddress();
+    test_GetPlayerFlags();
 
     CoUninitialize();
 }
