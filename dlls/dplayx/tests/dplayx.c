@@ -2086,6 +2086,283 @@ static void test_GetPlayerCaps(void)
 
 }
 
+/* SetPlayerData
+   GetPlayerData */
+
+static void test_PlayerData(void)
+{
+    LPDIRECTPLAY4 pDP;
+    DPSESSIONDESC2 dpsd;
+    DPID dpid;
+    HRESULT hr;
+
+    /* lpDataFake has to be bigger than the rest, limits lpDataGet size */
+    LPCSTR lpDataFake     = "big_fake_data_chunk";
+    DWORD dwDataSizeFake  = strlen(lpDataFake)+1;
+
+    LPCSTR lpData         = "remote_data";
+    DWORD dwDataSize      = strlen(lpData)+1;
+
+    LPCSTR lpDataLocal    = "local_data";
+    DWORD dwDataSizeLocal = strlen(lpDataLocal)+1;
+
+    LPSTR lpDataGet       = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                       dwDataSizeFake );
+    DWORD dwDataSizeGet   = dwDataSizeFake;
+
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+
+    /* No service provider */
+    hr = IDirectPlayX_SetPlayerData( pDP, 0, (LPVOID) lpData,
+                                     dwDataSize, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+    hr = IDirectPlayX_GetPlayerData( pDP, 0, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+
+    init_TCPIP_provider( pDP, "127.0.0.1", 0 );
+
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    IDirectPlayX_Open( pDP, &dpsd, DPOPEN_CREATE );
+
+
+    /* Invalid player */
+    hr = IDirectPlayX_SetPlayerData( pDP, 0, (LPVOID) lpData,
+                                     dwDataSize, 0 );
+    todo_wine checkHR( DPERR_INVALIDPLAYER, hr );
+
+    hr = IDirectPlayX_GetPlayerData( pDP, 0, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    todo_wine checkHR( DPERR_INVALIDPLAYER, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "Get/SetPlayerData not implemented\n" );
+        return;
+    }
+
+    /* Create the player */
+    /* By default, the data is remote */
+    hr = IDirectPlayX_CreatePlayer( pDP, &dpid, NULL, NULL, (LPVOID) lpData,
+                                    dwDataSize, 0 );
+    checkHR( DP_OK, hr );
+
+    /* Invalid parameters */
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, NULL,
+                                     dwDataSize, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     -1, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     NULL, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+
+    /*
+     * Remote data (default)
+     */
+
+
+    /* Buffer redimension */
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, NULL,
+                                     &dwDataSizeGet, 0 );
+    check( DPERR_BUFFERTOOSMALL, hr );
+    check( dwDataSize, dwDataSizeGet );
+    checkStr( lpDataFake, lpDataGet );
+
+    dwDataSizeGet = 2;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    check( DPERR_BUFFERTOOSMALL, hr );
+    check( dwDataSize, dwDataSizeGet );
+
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    checkHR( DP_OK, hr );
+    check( dwDataSize, dwDataSizeGet );
+    checkStr( lpData, lpDataGet );
+
+    /* Normal operation */
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    checkHR( DP_OK, hr );
+    check( dwDataSize, dwDataSizeGet );
+    checkStr( lpData, lpDataGet );
+
+    /* Flag tests */
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    checkHR( DP_OK, hr );
+    check( dwDataSize, dwDataSizeGet ); /* Remote: works as expected */
+    checkStr( lpData, lpDataGet );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, DPGET_REMOTE );
+    checkHR( DP_OK, hr );
+    check( dwDataSize, dwDataSizeGet ); /* Same behaviour as in previous test */
+    checkStr( lpData, lpDataGet );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, DPGET_LOCAL );
+    checkHR( DP_OK, hr );
+    check( 0, dwDataSizeGet ); /* Sets size to 0 (as local data doesn't exist) */
+    checkStr( lpDataFake, lpDataGet );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet,
+                                     DPGET_LOCAL | DPGET_REMOTE );
+    checkHR( DP_OK, hr );
+    check( 0, dwDataSizeGet ); /* Same behaviour as in previous test */
+    checkStr( lpDataFake, lpDataGet );
+
+    /* Getting local data (which doesn't exist), buffer size is ignored */
+    dwDataSizeGet = 0;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, DPGET_LOCAL );
+    checkHR( DP_OK, hr );
+    check( 0, dwDataSizeGet ); /* Sets size to 0 */
+    checkStr( lpDataFake, lpDataGet );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, NULL,
+                                     &dwDataSizeGet, DPGET_LOCAL );
+    checkHR( DP_OK, hr );
+    check( 0, dwDataSizeGet ); /* Sets size to 0 */
+    checkStr( lpDataFake, lpDataGet );
+
+
+    /*
+     * Local data
+     */
+
+
+    /* Invalid flags */
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, (LPVOID) lpDataLocal,
+                                     dwDataSizeLocal,
+                                     DPSET_LOCAL | DPSET_GUARANTEED );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    /* Correct parameters */
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, (LPVOID) lpDataLocal,
+                                     dwDataSizeLocal, DPSET_LOCAL );
+    checkHR( DP_OK, hr );
+
+    /* Flag tests (again) */
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    checkHR( DP_OK, hr );
+    check( dwDataSize, dwDataSizeGet ); /* Remote: works as expected */
+    checkStr( lpData, lpDataGet );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, DPGET_REMOTE );
+    checkHR( DP_OK, hr );
+    check( dwDataSize, dwDataSizeGet ); /* Like in previous test */
+    checkStr( lpData, lpDataGet );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, DPGET_LOCAL );
+    checkHR( DP_OK, hr );
+    check( dwDataSizeLocal, dwDataSizeGet ); /* Local: works as expected */
+    checkStr( lpDataLocal, lpDataGet );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet,
+                                     DPGET_LOCAL | DPGET_REMOTE );
+    checkHR( DP_OK, hr );
+    check( dwDataSizeLocal, dwDataSizeGet ); /* Like in previous test */
+    checkStr( lpDataLocal, lpDataGet );
+
+    /* Small buffer works as expected again */
+    dwDataSizeGet = 0;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, DPGET_LOCAL );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( dwDataSizeLocal, dwDataSizeGet );
+    checkStr( lpDataFake, lpDataGet );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, NULL,
+                                     &dwDataSizeGet, DPGET_LOCAL );
+    check( DPERR_BUFFERTOOSMALL, hr );
+    check( dwDataSizeLocal, dwDataSizeGet );
+    checkStr( lpDataFake, lpDataGet );
+
+
+    /*
+     * Changing remote data
+     */
+
+
+    /* Remote data := local data */
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, (LPVOID) lpDataLocal,
+                                     dwDataSizeLocal,
+                                     DPSET_GUARANTEED | DPSET_REMOTE );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, (LPVOID) lpDataLocal,
+                                     dwDataSizeLocal, 0 );
+    checkHR( DP_OK, hr );
+
+    dwDataSizeGet = dwDataSizeFake;
+    strcpy(lpDataGet, lpDataFake);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    checkHR( DP_OK, hr );
+    check( dwDataSizeLocal, dwDataSizeGet );
+    checkStr( lpDataLocal, lpDataGet );
+
+    /* Remote data := fake data */
+    hr = IDirectPlayX_SetPlayerData( pDP, dpid, (LPVOID) lpDataFake,
+                                     dwDataSizeFake, DPSET_REMOTE );
+    checkHR( DP_OK, hr );
+
+    dwDataSizeGet = dwDataSizeFake + 1;
+    strcpy(lpDataGet, lpData);
+    hr = IDirectPlayX_GetPlayerData( pDP, dpid, (LPVOID) lpDataGet,
+                                     &dwDataSizeGet, 0 );
+    checkHR( DP_OK, hr );
+    check( dwDataSizeFake, dwDataSizeGet );
+    checkStr( lpDataFake, lpDataGet );
+
+
+    HeapFree( GetProcessHeap(), 0, lpDataGet );
+    IDirectPlayX_Release( pDP );
+}
+
 
 START_TEST(dplayx)
 {
@@ -2102,6 +2379,7 @@ START_TEST(dplayx)
 
     test_CreatePlayer();
     test_GetPlayerCaps();
+    test_PlayerData();
 
     CoUninitialize();
 }

@@ -3163,6 +3163,11 @@ static HRESULT WINAPI DP_IF_SetPlayerData
   TRACE( "(%p)->(0x%08x,%p,0x%08x,0x%08x,%u)\n",
          This, idPlayer, lpData, dwDataSize, dwFlags, bAnsi );
 
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
   /* Parameter check */
   if( ( lpData == NULL ) &&
       ( dwDataSize != 0 )
