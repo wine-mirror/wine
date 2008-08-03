@@ -811,10 +811,12 @@ static const struct ISAXAttributesVtbl isaxattributes_vtbl =
 };
 
 static HRESULT SAXAttributes_create(saxattributes **attr,
+        int nb_namespaces, const xmlChar **xmlNamespaces,
         int nb_attributes, const xmlChar **xmlAttributes)
 {
     saxattributes *attributes;
     int index;
+    static const xmlChar xmlns[] = "xmlns";
 
     attributes = HeapAlloc(GetProcessHeap(), 0, sizeof(*attributes));
     if(!attributes)
@@ -824,16 +826,16 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
     attributes->lpSAXAttributesVtbl = &isaxattributes_vtbl;
     attributes->ref = 1;
 
-    attributes->nb_attributes = nb_attributes;
+    attributes->nb_attributes = nb_namespaces+nb_attributes;
 
     attributes->szLocalname =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*attributes->nb_attributes);
     attributes->szURI =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*attributes->nb_attributes);
     attributes->szValue =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*attributes->nb_attributes);
     attributes->szQName =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
+        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*attributes->nb_attributes);
 
     if(!attributes->szLocalname || !attributes->szURI
             || !attributes->szValue || !attributes->szQName)
@@ -846,16 +848,24 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
         return E_FAIL;
     }
 
+    for(index=0; index<nb_namespaces; index++)
+    {
+        attributes->szLocalname[index] = SysAllocStringLen(NULL, 0);
+        attributes->szURI[index] = SysAllocStringLen(NULL, 0);
+        attributes->szValue[index] = bstr_from_xmlChar(xmlNamespaces[2*index+1]);
+        attributes->szQName[index] = QName_from_xmlChar(xmlns, xmlNamespaces[2*index]);
+    }
+
     for(index=0; index<nb_attributes; index++)
     {
-        attributes->szLocalname[index] =
+        attributes->szLocalname[nb_namespaces+index] =
             bstr_from_xmlChar(xmlAttributes[index*5]);
-        attributes->szURI[index] =
+        attributes->szURI[nb_namespaces+index] =
             bstr_from_xmlChar(xmlAttributes[index*5+2]);
-        attributes->szValue[index] =
+        attributes->szValue[nb_namespaces+index] =
             bstr_from_xmlCharN(xmlAttributes[index*5+3],
                     xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
-        attributes->szQName[index] =
+        attributes->szQName[nb_namespaces+index] =
             QName_from_xmlChar(xmlAttributes[index*5+1], xmlAttributes[index*5]);
     }
 
@@ -958,7 +968,7 @@ static void libxmlStartElementNS(
         LocalName = bstr_from_xmlChar(localname);
         QName = QName_from_xmlChar(prefix, localname);
 
-        hr = SAXAttributes_create(&attr, nb_attributes, attributes);
+        hr = SAXAttributes_create(&attr, nb_namespaces, namespaces, nb_attributes, attributes);
         if(hr == S_OK)
         {
             if(This->vbInterface)
