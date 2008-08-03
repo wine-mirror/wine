@@ -497,8 +497,6 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
 static void test_load_save(void)
 {
     WCHAR lnkfile[MAX_PATH];
-    static const WCHAR lnkfile_name[] = { '\\', 't', 'e', 's', 't', '.', 'l', 'n', 'k', '\0' };
-
     char lnkfileA[MAX_PATH];
     static const char lnkfileA_name[] = "\\test.lnk";
 
@@ -517,10 +515,9 @@ static void test_load_save(void)
     }
 
     /* Don't used a fixed path for the test.lnk file */
-    GetTempPathW(MAX_PATH, lnkfile);
-    lstrcatW(lnkfile, lnkfile_name);
     GetTempPathA(MAX_PATH, lnkfileA);
     lstrcatA(lnkfileA, lnkfileA_name);
+    MultiByteToWideChar(CP_ACP, 0, lnkfileA, -1, lnkfile, MAX_PATH);
 
     /* Save an empty .lnk file */
     memset(&desc, 0, sizeof(desc));
