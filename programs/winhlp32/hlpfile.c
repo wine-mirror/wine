@@ -1886,6 +1886,17 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
     hlpfile->flags = flags;
     hlpfile->charset = DEFAULT_CHARSET;
 
+    if (hlpfile->version <= 16)
+    {
+        char *str = (char*)buf + 0x15;
+
+        hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
+        if (!hlpfile->lpszTitle) return FALSE;
+        lstrcpy(hlpfile->lpszTitle, str);
+        WINE_TRACE("Title: %s\n", hlpfile->lpszTitle);
+        /* Nothing more to parse */
+        return TRUE;
+    }
     for (ptr = buf + 0x15; ptr + 4 <= end; ptr += GET_USHORT(ptr, 2) + 4)
     {
         char *str = (char*) ptr + 4;
