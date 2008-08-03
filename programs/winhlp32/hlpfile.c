@@ -1639,7 +1639,7 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd,
         case 0x20:
         case 0x23:
             if (!HLPFILE_BrowseParagraph(page, rd, buf, end, &parlen)) return FALSE;
-            if (relative >= index * 0x8000 + offs)
+            if (relative > index * 0x8000 + offs)
                 rd->char_pos_rel = rd->char_pos;
             offs += parlen;
             break;
