@@ -919,15 +919,41 @@ static void libxmlStartElementNS(
         int nb_defaulted,
         const xmlChar **attributes)
 {
-    BSTR NamespaceUri, LocalName, QName;
+    BSTR NamespaceUri, LocalName, QName, Prefix, Uri;
     saxlocator *This = ctx;
     HRESULT hr;
     saxattributes *attr;
+    int index;
 
     update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
 
     if(This->saxreader->contentHandler)
     {
+        for(index=0; index<nb_namespaces; index++)
+        {
+            Prefix = bstr_from_xmlChar(namespaces[2*index]);
+            Uri = bstr_from_xmlChar(namespaces[2*index+1]);
+
+            if(This->vbInterface)
+                hr = IVBSAXContentHandler_startPrefixMapping(
+                        This->saxreader->vbcontentHandler,
+                        &Prefix, &Uri);
+            else
+                hr = ISAXContentHandler_startPrefixMapping(
+                        This->saxreader->contentHandler,
+                        Prefix, SysStringLen(Prefix),
+                        Uri, SysStringLen(Uri));
+
+            SysFreeString(Prefix);
+            SysFreeString(Uri);
+
+            if(hr != S_OK)
+            {
+                format_error_message_from_id(This, hr);
+                return;
+            }
+        }
+
         NamespaceUri = bstr_from_xmlChar(URI);
         LocalName = bstr_from_xmlChar(localname);
         QName = QName_from_xmlChar(prefix, localname);
