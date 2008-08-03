@@ -305,7 +305,6 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 
     TRACE_2("Call IMultiLanguage2_EnumCodePages\n");
     ret = IMultiLanguage2_EnumCodePages(iML2, flags, LANG_NEUTRAL, &iEnumCP);
-    trace("IMultiLanguage2_EnumCodePages = %08x, iEnumCP = %p\n", ret, iEnumCP);
     ok(ret == S_OK && iEnumCP, "IMultiLanguage2_EnumCodePages: expected S_OK/!NULL, got %08x/%p\n", ret, iEnumCP);
 
     TRACE_2("Call IEnumCodePage_Reset\n");
@@ -324,7 +323,6 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     n = total * 2;
     TRACE_2("Call IEnumCodePage_Next\n");
     ret = IEnumCodePage_Next(iEnumCP, 0, cpinfo, &n);
-    trace("IEnumCodePage_Next = %08x, n = %u\n", ret, n);
     ok(ret == S_FALSE && n == 0, "IEnumCodePage_Next: expected S_FALSE/0, got %08x/%u\n", ret, n);
 
     n = total * 2;
@@ -382,8 +380,9 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	else
 	    trace("TranslateCharsetInfo failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
 
+#ifdef DUMP_CP_INFO
         trace("%u: codepage %u family %u\n", i, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
-
+#endif
         /* Win95 does not support UTF-7 */
         if (cpinfo[i].uiCodePage == CP_UTF7) continue;
 
@@ -551,7 +550,6 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 
     TRACE_2("Call IMultiLanguage2_EnumScripts\n");
     ret = IMultiLanguage2_EnumScripts(iML2, flags, LANG_NEUTRAL, &iEnumScript);
-    trace("IMultiLanguage2_EnumScripts = %08x, iEnumScript = %p\n", ret, iEnumScript);
     ok(ret == S_OK && iEnumScript, "IMultiLanguage2_EnumScripts: expected S_OK/!NULL, got %08x/%p\n", ret, iEnumScript);
 
     TRACE_2("Call IEnumScript_Reset\n");
@@ -602,8 +600,8 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 	      wine_dbgstr_w(sinfo[i].wszDescription),
 	      wine_dbgstr_w(sinfo[i].wszFixedWidthFont),
 	      wine_dbgstr_w(sinfo[i].wszProportionalFont));
-#endif
         trace("%u codepage %u\n", i, sinfo[i].uiCodePage);
+#endif
     }
 
     /* now IEnumScript_Next should fail, since pointer is at the end */
@@ -1328,8 +1326,6 @@ START_TEST(mlang)
     TRACE_2("Call CoCreateInstance\n");
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMultiLanguage2, (void **)&iML2);
-
-    trace("ret = %08x, MultiLanguage2 iML2 = %p\n", ret, iML2);
     if (ret != S_OK || !iML2) return;
 
     test_rfc1766(iML2);
@@ -1366,8 +1362,6 @@ START_TEST(mlang)
 
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMLangFontLink, (void **)&iMLFL);
-
-    trace("ret = %08x, IMLangFontLink iMLFL = %p\n", ret, iMLFL);
     if (ret != S_OK || !iML2) return;
 
     IMLangFontLink_Test(iMLFL);
