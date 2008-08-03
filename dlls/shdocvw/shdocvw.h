@@ -224,6 +224,8 @@ void InternetExplorer_WebBrowser_Init(InternetExplorer*);
 
 HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**);
 
+HRESULT InternetShortcut_Create(IUnknown*,REFIID,void**);
+
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
 /**********************************************************************
@@ -270,6 +272,36 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
         memcpy(ret, str, size);
     }
 
+    return ret;
+}
+
+static inline LPWSTR co_strdupW(LPCWSTR str)
+{
+    WCHAR *ret = CoTaskMemAlloc((strlenW(str) + 1)*sizeof(WCHAR));
+    if (ret)
+        lstrcpyW(ret, str);
+    return ret;
+}
+
+static inline LPWSTR co_strdupAtoW(LPCSTR str)
+{
+    INT len;
+    WCHAR *ret;
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = CoTaskMemAlloc(len*sizeof(WCHAR));
+    if (ret)
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+static inline LPSTR co_strdupWtoA(LPCWSTR str)
+{
+    INT len;
+    CHAR *ret;
+    len = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, 0, 0);
+    ret = CoTaskMemAlloc(len);
+    if (ret)
+        WideCharToMultiByte(CP_ACP, 0, str, -1, ret, len, 0, 0);
     return ret;
 }
 

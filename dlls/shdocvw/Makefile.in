@@ -17,6 +17,7 @@ C_SRCS = \
 	frame.c \
 	ie.c \
 	iexplore.c \
+	intshcut.c \
 	navigate.c \
 	oleobject.c \
 	persist.c \
