@@ -1883,7 +1883,6 @@ static HRESULT WINAPI fnIMLangFontLink_CodePageToCodePages(
     BOOL rc; 
 
     TRACE("(%p) Seeking %u\n",This, uCodePage);
-    memset(&cs, 0, sizeof(cs));
 
     rc = TranslateCharsetInfo((DWORD*)uCodePage, &cs, TCI_SRCCODEPAGE);
 
@@ -1891,11 +1890,12 @@ static HRESULT WINAPI fnIMLangFontLink_CodePageToCodePages(
     {
         *pdwCodePages = cs.fs.fsCsb[0];
         TRACE("resulting CodePages 0x%x\n",*pdwCodePages);
+        return S_OK;
     }
-    else
-        TRACE("CodePage Not Found\n");
 
-    return S_OK;
+    TRACE("CodePage Not Found\n");
+    *pdwCodePages = 0;
+    return E_FAIL;
 }
 
 static HRESULT WINAPI fnIMLangFontLink_CodePagesToCodePage(

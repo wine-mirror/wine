@@ -640,36 +640,44 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 
 static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
 {
-    DWORD   dwCodePages = 0;
-    DWORD   dwManyCodePages = 0;
-    UINT    CodePage = 0;
+    DWORD dwCodePages, dwManyCodePages;
+    UINT CodePage;
+    HRESULT ret;
 
-    ok(IMLangFontLink_CodePageToCodePages(iMLFL, 932, &dwCodePages)==S_OK,
-            "IMLangFontLink_CodePageToCodePages failed\n");
-    ok (dwCodePages != 0, "No CodePages returned\n");
-    ok(IMLangFontLink_CodePagesToCodePage(iMLFL, dwCodePages, 1035,
-                &CodePage)==S_OK, 
-            "IMLangFontLink_CodePagesToCodePage failed\n");
+    dwCodePages = ~0u;
+    ret = IMLangFontLink_CodePageToCodePages(iMLFL, -1, &dwCodePages);
+    ok(ret == E_FAIL, "IMLangFontLink_CodePageToCodePages should fail: %x\n", ret);
+    ok(dwCodePages == 0, "expected 0, got %u\n", dwCodePages);
+
+    dwCodePages = 0;
+    ret = IMLangFontLink_CodePageToCodePages(iMLFL, 932, &dwCodePages);
+    ok(ret == S_OK, "IMLangFontLink_CodePageToCodePages error %x\n", ret);
+    ok(dwCodePages == FS_JISJAPAN, "expected FS_JISJAPAN, got %08x\n", dwCodePages);
+    CodePage = 0;
+    ret = IMLangFontLink_CodePagesToCodePage(iMLFL, dwCodePages, 1035, &CodePage);
+    ok(ret == S_OK, "IMLangFontLink_CodePagesToCodePage error %x\n", ret);
     ok(CodePage == 932, "Incorrect CodePage Returned (%i)\n",CodePage);
 
-    ok(IMLangFontLink_CodePageToCodePages(iMLFL, 1252, &dwCodePages)==S_OK,
-            "IMLangFontLink_CodePageToCodePages failed\n");
-    dwManyCodePages = dwManyCodePages | dwCodePages;
-    ok(IMLangFontLink_CodePageToCodePages(iMLFL, 1256, &dwCodePages)==S_OK,
-            "IMLangFontLink_CodePageToCodePages failed\n");
-    dwManyCodePages = dwManyCodePages | dwCodePages;
-    ok(IMLangFontLink_CodePageToCodePages(iMLFL, 874, &dwCodePages)==S_OK,
-            "IMLangFontLink_CodePageToCodePages failed\n");
-    dwManyCodePages = dwManyCodePages | dwCodePages;
+    dwManyCodePages = 0;
+    ret = IMLangFontLink_CodePageToCodePages(iMLFL, 1252, &dwManyCodePages);
+    ok(ret == S_OK, "IMLangFontLink_CodePageToCodePages error %x\n", ret);
+    ok(dwManyCodePages == FS_LATIN1, "expected FS_LATIN1, got %08x\n", dwManyCodePages);
+    dwCodePages = 0;
+    ret = IMLangFontLink_CodePageToCodePages(iMLFL, 1256, &dwCodePages);
+    ok(ret == S_OK, "IMLangFontLink_CodePageToCodePages error %x\n", ret);
+    ok(dwCodePages == FS_ARABIC, "expected FS_ARABIC, got %08x\n", dwCodePages);
+    dwManyCodePages |= dwCodePages;
+    ret = IMLangFontLink_CodePageToCodePages(iMLFL, 874, &dwCodePages);
+    ok(ret == S_OK, "IMLangFontLink_CodePageToCodePages error %x\n", ret);
+    ok(dwCodePages == FS_THAI, "expected FS_THAI, got %08x\n", dwCodePages);
+    dwManyCodePages |= dwCodePages;
 
-    ok(IMLangFontLink_CodePagesToCodePage(iMLFL, dwManyCodePages, 1256,
-                &CodePage)==S_OK, 
-            "IMLangFontLink_CodePagesToCodePage failed\n");
+    ret = IMLangFontLink_CodePagesToCodePage(iMLFL, dwManyCodePages, 1256, &CodePage);
+    ok(ret == S_OK, "IMLangFontLink_CodePagesToCodePage error %x\n", ret);
     ok(CodePage == 1256, "Incorrect CodePage Returned (%i)\n",CodePage);
 
-    ok(IMLangFontLink_CodePagesToCodePage(iMLFL, dwManyCodePages, 936,
-                &CodePage)==S_OK, 
-            "IMLangFontLink_CodePagesToCodePage failed\n");
+    ret = IMLangFontLink_CodePagesToCodePage(iMLFL, dwManyCodePages, 936, &CodePage);
+    ok(ret == S_OK, "IMLangFontLink_CodePagesToCodePage error %x\n", ret);
     ok(CodePage == 1252, "Incorrect CodePage Returned (%i)\n",CodePage);
 }
 
