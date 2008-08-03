@@ -1759,6 +1759,173 @@ static void test_SessionDesc(void)
 
 }
 
+/* CreatePlayer */
+
+static void test_CreatePlayer(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPNAME name;
+    DPID dpid;
+    HRESULT hr;
+
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP[0] );
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP[1] );
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    ZeroMemory( &name, sizeof(DPNAME) );
+
+
+    /* Connection not initialized */
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL, 0, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    /* Session not open */
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL, 0, 0 );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "CreatePlayer not implemented\n" );
+        return;
+    }
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+
+
+    /* Player name */
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    name.dwSize = -1;
+
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, &name, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    name.dwSize = sizeof(DPNAME);
+    name.lpszShortNameA = (LPSTR) "test";
+    name.lpszLongNameA = NULL;
+
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, &name, NULL, NULL,
+                                    0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    /* Null dpid */
+    hr = IDirectPlayX_CreatePlayer( pDP[0], NULL, NULL, NULL, NULL,
+                                    0, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+
+    /* There can only be one server player */
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SERVERPLAYER );
+    checkHR( DP_OK, hr );
+    check( DPID_SERVERPLAYER, dpid );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SERVERPLAYER );
+    checkHR( DPERR_CANTCREATEPLAYER, hr );
+
+    IDirectPlayX_DestroyPlayer( pDP[0], dpid );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SERVERPLAYER );
+    checkHR( DP_OK, hr );
+    check( DPID_SERVERPLAYER, dpid );
+    IDirectPlayX_DestroyPlayer( pDP[0], dpid );
+
+
+    /* Flags */
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SERVERPLAYER );
+    checkHR( DP_OK, hr );
+    check( DPID_SERVERPLAYER, dpid );
+    IDirectPlayX_DestroyPlayer( pDP[0], dpid );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SPECTATOR );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, ( DPPLAYER_SERVERPLAYER |
+                                         DPPLAYER_SPECTATOR ) );
+    checkHR( DP_OK, hr );
+    check( DPID_SERVERPLAYER, dpid );
+    IDirectPlayX_DestroyPlayer( pDP[0], dpid );
+
+
+    /* Session with DPSESSION_NEWPLAYERSDISABLED */
+    IDirectPlayX_Close( pDP[0] );
+    dpsd.dwFlags = DPSESSION_NEWPLAYERSDISABLED;
+    hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, 0 );
+    checkHR( DPERR_CANTCREATEPLAYER, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SERVERPLAYER );
+    checkHR( DPERR_CANTCREATEPLAYER, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SPECTATOR );
+    checkHR( DPERR_CANTCREATEPLAYER, hr );
+
+
+    /* Creating players in a Client/Server session */
+    IDirectPlayX_Close( pDP[0] );
+    dpsd.dwFlags = DPSESSION_CLIENTSERVER;
+    hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                                    (LPVOID) pDP[1], 0 );
+    checkHR( DP_OK, hr );
+
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, 0 );
+    checkHR( DPERR_ACCESSDENIED, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SERVERPLAYER );
+    checkHR( DP_OK, hr );
+    check( DPID_SERVERPLAYER, dpid );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[1], &dpid, NULL, NULL, NULL,
+                                    0, DPPLAYER_SERVERPLAYER );
+    checkHR( DPERR_INVALIDFLAGS, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[1], &dpid, NULL, NULL, NULL,
+                                    0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -1772,6 +1939,8 @@ START_TEST(dplayx)
     test_Open();
     test_EnumSessions();
     test_SessionDesc();
+
+    test_CreatePlayer();
 
     CoUninitialize();
 }

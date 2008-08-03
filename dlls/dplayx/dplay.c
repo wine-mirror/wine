@@ -1611,6 +1611,11 @@ static HRESULT WINAPI DirectPlay2AImpl_CreatePlayer
 {
   IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
 
+  if( lpidPlayer == NULL )
+  {
+    return DPERR_INVALIDPARAMS;
+  }
+
   if( dwFlags & DPPLAYER_SERVERPLAYER )
   {
     *lpidPlayer = DPID_SERVERPLAYER;
@@ -1629,6 +1634,11 @@ static HRESULT WINAPI DirectPlay2WImpl_CreatePlayer
             HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
 {
   IDirectPlay2Impl *This = (IDirectPlay2Impl *)iface;
+
+  if( lpidPlayer == NULL )
+  {
+    return DPERR_INVALIDPARAMS;
+  }
 
   if( dwFlags & DPPLAYER_SERVERPLAYER )
   {
