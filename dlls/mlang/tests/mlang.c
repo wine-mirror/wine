@@ -70,15 +70,14 @@ static BOOL init_function_ptrs(void)
 
 #define TRACE_2 OutputDebugStringA
 
-static CHAR string1[MAX_PATH], string2[MAX_PATH];
-
 #define ok_w2(format, szString1, szString2) \
 \
-    if (lstrcmpW(szString1, szString2) != 0) \
+    if (lstrcmpW((szString1), (szString2)) != 0) \
     { \
-        WideCharToMultiByte(CP_ACP, 0, szString1, -1, string1, MAX_PATH, NULL, NULL); \
-        WideCharToMultiByte(CP_ACP, 0, szString2, -1, string2, MAX_PATH, NULL, NULL); \
-        ok(0, format, string1, string2); \
+        CHAR string1[256], string2[256]; \
+        WideCharToMultiByte(CP_ACP, 0, (szString1), -1, string1, 256, NULL, NULL); \
+        WideCharToMultiByte(CP_ACP, 0, (szString2), -1, string2, 256, NULL, NULL); \
+        ok(0, (format), string1, string2); \
     }
 
 static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
