@@ -612,9 +612,15 @@ static HRESULT WINAPI isaxattributes_getURI(
         int *pUriSize)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
+    TRACE("(%p)->(%d)\n", This, nIndex);
 
-    FIXME("(%p)->(%d) stub\n", This, nIndex);
-    return E_NOTIMPL;
+    if(nIndex>=This->nb_attributes || nIndex<0) return E_INVALIDARG;
+    if(!pUrl || !pUriSize) return E_POINTER;
+
+    *pUriSize = SysStringLen(This->szURI[nIndex]);
+    *pUrl = This->szURI[nIndex];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI isaxattributes_getLocalName(
