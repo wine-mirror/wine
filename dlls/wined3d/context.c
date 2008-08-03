@@ -871,7 +871,7 @@ static WineD3DContext *findThreadContextForSwapChain(IWineD3DSwapChain *swapchai
  * Returns: The needed context
  *
  *****************************************************************************/
-static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid, GLint *buffer) {
+static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid) {
     IWineD3DSwapChain *swapchain = NULL;
     HRESULT hr;
     BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
@@ -907,11 +907,6 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
          * rendering. No context change is needed in that case
          */
 
-        if(((IWineD3DSwapChainImpl *) swapchain)->frontBuffer == target) {
-            *buffer = GL_FRONT;
-        } else {
-            *buffer = GL_BACK;
-        }
         if(wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER) {
             if(This->pbufferContext && tid == This->pbufferContext->tid) {
                 This->pbufferContext->tid = 0;
@@ -930,7 +925,6 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     } else {
         TRACE("Rendering offscreen\n");
         This->render_offscreen = TRUE;
-        *buffer = This->offscreenBuffer;
 
         switch(wined3d_settings.offscreen_rendering_mode) {
             case ORM_FBO:
@@ -1057,6 +1051,25 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     return context;
 }
 
+static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target)
+{
+    HRESULT hr;
+    IWineD3DSwapChain *swapchain;
+
+    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    if (SUCCEEDED(hr))
+    {
+        IWineD3DSwapChain_Release((IUnknown *)swapchain);
+        glDrawBuffer(surface_get_gl_buffer(target, swapchain));
+        checkGLcall("glDrawBuffers()");
+    }
+    else
+    {
+        glDrawBuffer(This->offscreenBuffer);
+        checkGLcall("glDrawBuffer()");
+    }
+}
+
 /*****************************************************************************
  * ActivateContext
  *
@@ -1076,12 +1089,12 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     DWORD                         dirtyState, idx;
     BYTE                          shift;
     WineD3DContext                *context;
-    GLint                         drawBuffer=0;
     const struct StateEntry       *StateTable = This->StateTable;
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
     if(This->lastActiveRenderTarget != target || tid != This->lastThread) {
-        context = FindContext(This, target, tid, &drawBuffer);
+        context = FindContext(This, target, tid);
+        context->draw_buffer_dirty = TRUE;
         This->lastActiveRenderTarget = target;
         This->lastThread = tid;
     } else {
@@ -1121,13 +1134,10 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
     /* We only need ENTER_GL for the gl calls made below and for the helper functions which make GL calls */
     ENTER_GL();
-    /* Select the right draw buffer. It is selected in FindContext. */
-    if(drawBuffer && context->last_draw_buffer != drawBuffer) {
-        TRACE("Drawing to buffer: %#x\n", drawBuffer);
-        context->last_draw_buffer = drawBuffer;
 
-        glDrawBuffer(drawBuffer);
-        checkGLcall("glDrawBuffer");
+    if (context->draw_buffer_dirty) {
+        apply_draw_buffer(This, target);
+        context->draw_buffer_dirty = FALSE;
     }
 
     switch(usage) {
