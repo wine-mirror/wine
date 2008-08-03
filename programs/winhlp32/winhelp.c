@@ -5,6 +5,7 @@
  *              2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *              2002, 2008 Eric Pouech <eric.pouech@wanadoo.fr>
  *              2004 Ken Belleau <jamez@ivic.qc.ca>
+ *              2008 Kirill K. Smirnov <lich@math.spbu.ru>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1101,6 +1102,8 @@ static DWORD CALLBACK WINHELP_RtfStreamIn(DWORD_PTR cookie, BYTE* buff,
 
 static void WINHELP_SetupText(HWND hTextWnd, WINHELP_WINDOW* win, ULONG relative)
 {
+    /* At first clear area - needed by EM_POSFROMCHAR/EM_SETSCROLLPOS */
+    SendMessage(hTextWnd, WM_SETTEXT, 0, (LPARAM)"");
     SendMessage(hTextWnd, WM_SETREDRAW, FALSE, 0);
     SendMessage(hTextWnd, EM_SETBKGNDCOLOR, 0, (LPARAM)win->info->sr_color);
     /* set word-wrap to window size (undocumented) */
@@ -1129,10 +1132,6 @@ static void WINHELP_SetupText(HWND hTextWnd, WINHELP_WINDOW* win, ULONG relative
         SendMessage(hTextWnd, EM_POSFROMCHAR, (WPARAM)&ptl, cp ? cp - 1 : 0);
         pt.x = 0; pt.y = ptl.y;
         SendMessage(hTextWnd, EM_SETSCROLLPOS, 0, (LPARAM)&pt);
-    }
-    else
-    {
-        SendMessage(hTextWnd, WM_SETTEXT, 0, (LPARAM)"");
     }
     SendMessage(hTextWnd, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(hTextWnd, NULL, TRUE);
