@@ -2004,6 +2004,18 @@ end:
     return retval;
 }
 
+GpStatus WINGDIPAPI GdipFillPolygon2(GpGraphics *graphics, GpBrush *brush,
+    GDIPCONST GpPointF *points, INT count)
+{
+    return GdipFillPolygon(graphics, brush, points, count, FillModeAlternate);
+}
+
+GpStatus WINGDIPAPI GdipFillPolygon2I(GpGraphics *graphics, GpBrush *brush,
+    GDIPCONST GpPoint *points, INT count)
+{
+    return GdipFillPolygonI(graphics, brush, points, count, FillModeAlternate);
+}
+
 GpStatus WINGDIPAPI GdipFillRectangle(GpGraphics *graphics, GpBrush *brush,
     REAL x, REAL y, REAL width, REAL height)
 {
