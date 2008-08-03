@@ -81,7 +81,6 @@ typedef struct _saxattributes
     LONG ref;
     int nb_attributes;
     BSTR *szLocalname;
-    BSTR *szPrefix;
     BSTR *szURI;
     BSTR *szValue;
     BSTR *szQName;
@@ -118,7 +117,7 @@ static inline saxattributes *impl_from_ISAXAttributes( ISAXAttributes *iface )
 }
 
 
-BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
+static BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
 {
     DWORD dLen;
     LPWSTR str;
@@ -135,6 +134,33 @@ BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
     MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, str, dLen);
     if(len != -1) str[dLen-1] = '\0';
     bstr = SysAllocString(str);
+    HeapFree(GetProcessHeap(), 0, str);
+
+    return bstr;
+}
+
+static BSTR QName_from_xmlChar(const xmlChar *prefix, const xmlChar *name)
+{
+    DWORD dLen, dLast;
+    LPWSTR str;
+    BSTR bstr;
+
+    if(!name) return NULL;
+
+    if(!prefix || *prefix=='\0')
+        return bstr_from_xmlChar(name);
+
+    dLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)prefix, -1, NULL, 0)
+        + MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, NULL, 0);
+    str = HeapAlloc(GetProcessHeap(), 0, dLen * sizeof(WCHAR));
+    if(!str)
+        return NULL;
+
+    dLast = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)prefix, -1, str, dLen);
+    str[dLast-1] = ':';
+    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, &str[dLast], dLen-dLast);
+    bstr = SysAllocString(str);
+
     HeapFree(GetProcessHeap(), 0, str);
 
     return bstr;
@@ -551,15 +577,15 @@ static ULONG WINAPI isaxattributes_Release(ISAXAttributes* iface)
         for(index=0; index<This->nb_attributes; index++)
         {
             SysFreeString(This->szLocalname[index]);
-            SysFreeString(This->szPrefix[index]);
             SysFreeString(This->szURI[index]);
             SysFreeString(This->szValue[index]);
+            SysFreeString(This->szQName[index]);
         }
 
         HeapFree(GetProcessHeap(), 0, This->szLocalname);
-        HeapFree(GetProcessHeap(), 0, This->szPrefix);
         HeapFree(GetProcessHeap(), 0, This->szURI);
         HeapFree(GetProcessHeap(), 0, This->szValue);
+        HeapFree(GetProcessHeap(), 0, This->szQName);
 
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -793,8 +819,6 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
 
     attributes->szLocalname =
         HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
-    attributes->szPrefix =
-        HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
     attributes->szURI =
         HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
     attributes->szValue =
@@ -802,12 +826,10 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
     attributes->szQName =
         HeapAlloc(GetProcessHeap(), 0, sizeof(BSTR)*nb_attributes);
 
-    if(!attributes->szLocalname || !attributes->szPrefix
-            || !attributes->szURI || !attributes->szValue
-            || !attributes->szQName)
+    if(!attributes->szLocalname || !attributes->szURI
+            || !attributes->szValue || !attributes->szQName)
     {
         HeapFree(GetProcessHeap(), 0, attributes->szLocalname);
-        HeapFree(GetProcessHeap(), 0, attributes->szPrefix);
         HeapFree(GetProcessHeap(), 0, attributes->szURI);
         HeapFree(GetProcessHeap(), 0, attributes->szValue);
         HeapFree(GetProcessHeap(), 0, attributes->szQName);
@@ -817,26 +839,15 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
 
     for(index=0; index<nb_attributes; index++)
     {
-        int len1, len2;
-
         attributes->szLocalname[index] =
             bstr_from_xmlChar(xmlAttributes[index*5]);
-        attributes->szPrefix[index] =
-            bstr_from_xmlChar(xmlAttributes[index*5+1]);
         attributes->szURI[index] =
             bstr_from_xmlChar(xmlAttributes[index*5+2]);
         attributes->szValue[index] =
             bstr_from_xmlCharN(xmlAttributes[index*5+3],
                     xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
-
-        len1 = SysStringLen(attributes->szPrefix[index]);
-        len2 = SysStringLen(attributes->szLocalname[index]);
-        attributes->szQName[index] = SysAllocStringLen(NULL, len1+len2);
-        memcpy(attributes->szQName[index], attributes->szPrefix[index],
-                len1*sizeof(WCHAR));
-        memcpy(attributes->szQName[index]+len1,
-                attributes->szLocalname[index], len2*sizeof(WCHAR));
-        attributes->szQName[index][len1+len2] = '\0';
+        attributes->szQName[index] =
+            QName_from_xmlChar(xmlAttributes[index*5+1], xmlAttributes[index*5]);
     }
 
     *attr = attributes;
@@ -910,7 +921,7 @@ static void libxmlStartElementNS(
     {
         NamespaceUri = bstr_from_xmlChar(URI);
         LocalName = bstr_from_xmlChar(localname);
-        QName = bstr_from_xmlChar(localname);
+        QName = QName_from_xmlChar(prefix, localname);
 
         hr = SAXAttributes_create(&attr, nb_attributes, attributes);
         if(hr == S_OK)
@@ -959,7 +970,7 @@ static void libxmlEndElementNS(
     {
         NamespaceUri = bstr_from_xmlChar(URI);
         LocalName = bstr_from_xmlChar(localname);
-        QName = bstr_from_xmlChar(localname);
+        QName = QName_from_xmlChar(prefix, localname);
 
         if(This->vbInterface)
             hr = IVBSAXContentHandler_endElement(
