@@ -6606,6 +6606,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     GLbitfield mask = GL_COLOR_BUFFER_BIT; /* TODO: Support blitting depth/stencil surfaces */
     IWineD3DSwapChain *src_swapchain, *dst_swapchain;
     GLenum gl_filter;
+    POINT offset = {0, 0};
 
     TRACE("(%p) : src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %s (0x%08x), flip %u\n",
             This, src_surface, src_rect, dst_surface, dst_rect, debug_d3dtexturefiltertype(filter), filter, flip);
@@ -6628,7 +6629,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     /* Attach src surface to src fbo */
     src_swapchain = get_swapchain(src_surface);
     if (src_swapchain) {
-        GLenum buffer;
+        GLenum buffer = surface_get_gl_buffer(src_surface, src_swapchain);
 
         TRACE("Source surface %p is onscreen\n", src_surface);
         ActivateContext(This, src_surface, CTXUSAGE_RESOURCELOAD);
@@ -6636,14 +6637,24 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
          * attach_surface_fbo() implicitly takes care of this. */
         IWineD3DSurface_LoadLocation(src_surface, SFLAG_INDRAWABLE, NULL);
 
+        if(buffer == GL_FRONT) {
+            RECT windowsize;
+            UINT h;
+            ClientToScreen(This->ddraw_window, &offset);
+            GetClientRect(This->ddraw_window, &windowsize);
+            h = windowsize.bottom - windowsize.top;
+            src_rect->x1 -= offset.x; src_rect->x2 -=offset.x;
+            src_rect->y1 =  offset.y + h - src_rect->y1;
+            src_rect->y2 =  offset.y + h - src_rect->y2;
+        } else {
+            src_rect->y1 = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect->y1;
+            src_rect->y2 = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect->y2;
+        }
+
         ENTER_GL();
         GL_EXTCALL(glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0));
-        buffer = surface_get_gl_buffer(src_surface, src_swapchain);
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer()");
-
-        src_rect->y1 = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect->y1;
-        src_rect->y2 = ((IWineD3DSurfaceImpl *)src_surface)->currentDesc.Height - src_rect->y2;
     } else {
         TRACE("Source surface %p is offscreen\n", src_surface);
         ENTER_GL();
@@ -6659,7 +6670,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     /* Attach dst surface to dst fbo */
     dst_swapchain = get_swapchain(dst_surface);
     if (dst_swapchain) {
-        GLenum buffer;
+        GLenum buffer = surface_get_gl_buffer(dst_surface, dst_swapchain);
 
         TRACE("Destination surface %p is onscreen\n", dst_surface);
         ActivateContext(This, dst_surface, CTXUSAGE_RESOURCELOAD);
@@ -6667,14 +6678,25 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
          * attach_surface_fbo() implicitly takes care of this. */
         IWineD3DSurface_LoadLocation(dst_surface, SFLAG_INDRAWABLE, NULL);
 
+        if(buffer == GL_FRONT) {
+            RECT windowsize;
+            UINT h;
+            ClientToScreen(This->ddraw_window, &offset);
+            GetClientRect(This->ddraw_window, &windowsize);
+            h = windowsize.bottom - windowsize.top;
+            dst_rect->x1 -= offset.x; dst_rect->x2 -=offset.x;
+            dst_rect->y1 =  offset.y + h - dst_rect->y1;
+            dst_rect->y2 =  offset.y + h - dst_rect->y2;
+        } else {
+            /* Screen coords = window coords, surface height = window height */
+            dst_rect->y1 = ((IWineD3DSurfaceImpl *)dst_surface)->currentDesc.Height - dst_rect->y1;
+            dst_rect->y2 = ((IWineD3DSurfaceImpl *)dst_surface)->currentDesc.Height - dst_rect->y2;
+        }
+
         ENTER_GL();
         GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
-        buffer = surface_get_gl_buffer(dst_surface, dst_swapchain);
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer()");
-
-        dst_rect->y1 = ((IWineD3DSurfaceImpl *)dst_surface)->currentDesc.Height - dst_rect->y1;
-        dst_rect->y2 = ((IWineD3DSurfaceImpl *)dst_surface)->currentDesc.Height - dst_rect->y2;
     } else {
         TRACE("Destination surface %p is offscreen\n", dst_surface);
 

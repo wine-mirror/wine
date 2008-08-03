@@ -3268,6 +3268,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         WINEDDCOLORKEY oldBltCKey = Src->SrcBltCKey;
         RECT SourceRectangle;
         BOOL paletteOverride = FALSE;
+        GLenum buffer;
 
         TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
 
@@ -3340,21 +3341,38 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
         /* Activate the destination context, set it up for blitting */
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
-        ENTER_GL();
-
-        glEnable(Src->glDescription.target);
-        checkGLcall("glEnable(Src->glDescription.target)");
 
         if(!dstSwapchain) {
             TRACE("Drawing to offscreen buffer\n");
-            glDrawBuffer(myDevice->offscreenBuffer);
-            checkGLcall("glDrawBuffer");
+            buffer = myDevice->offscreenBuffer;
         } else {
-            GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *)This, (IWineD3DSwapChain *)dstSwapchain);
+            buffer = surface_get_gl_buffer((IWineD3DSurface *)This, (IWineD3DSwapChain *)dstSwapchain);
+
+            /* Front buffer coordinates are screen coordinates, while OpenGL coordinates are
+             * window relative. Also beware of the origin difference(top left vs bottom left).
+             * Also beware that the front buffer's surface size is screen width x screen height,
+             * whereas the real gl drawable size is the size of the window.
+             */
+            if(buffer == GL_FRONT) {
+                RECT windowsize;
+                POINT offset = {0,0};
+                UINT h;
+                ClientToScreen(myDevice->ddraw_window, &offset);
+                GetClientRect(myDevice->ddraw_window, &windowsize);
+                h = windowsize.bottom - windowsize.top;
+                rect.x1 -= offset.x; rect.x2 -=offset.x;
+                rect.y1 -= offset.y; rect.y2 -=offset.y;
+                rect.y1 += This->currentDesc.Height - h; rect.y2 += This->currentDesc.Height - h;
+            }
             TRACE("Drawing to %#x buffer\n", buffer);
-            glDrawBuffer(buffer);
-            checkGLcall("glDrawBuffer");
         }
+
+        ENTER_GL();
+        glDrawBuffer(buffer);
+        checkGLcall("glDrawBuffer");
+
+        glEnable(Src->glDescription.target);
+        checkGLcall("glEnable(Src->glDescription.target)");
 
         /* Bind the texture */
         glBindTexture(Src->glDescription.target, Src->glDescription.textureName);
