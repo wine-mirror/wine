@@ -267,6 +267,7 @@ void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs,
 {
   ME_Cursor c;
   int shift = 0;
+  int totalChars = nChars;
   
   while(nChars > 0)
   {
@@ -275,12 +276,15 @@ void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs,
     run = &c.pRun->member.run;
     if (run->nFlags & MERF_ENDPARA) {
       int eollen = run->nCR + run->nLF;
+      BOOL keepFirstParaFormat;
 
       if (!ME_FindItemFwd(c.pRun, diParagraph))
       {
         return;
       }
-      ME_JoinParagraphs(editor, ME_GetParagraph(c.pRun));
+      keepFirstParaFormat = (totalChars == nChars && nChars <= eollen &&
+                             run->nCharOfs);
+      ME_JoinParagraphs(editor, ME_GetParagraph(c.pRun), keepFirstParaFormat);
       /* ME_SkipAndPropagateCharOffset(p->pRun, shift); */
       ME_CheckCharOffsets(editor);
       nChars -= (eollen < nChars) ? eollen : nChars;

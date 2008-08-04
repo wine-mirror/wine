@@ -89,10 +89,9 @@ ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_Disp
     case diUndoJoinParagraphs:
       break;
     case diUndoSplitParagraph:
+      assert(pdi->member.para.pFmt->cbSize == sizeof(PARAFORMAT2));
       pItem->member.para.pFmt = ALLOC_OBJ(PARAFORMAT2);
-      pItem->member.para.pFmt->cbSize = sizeof(PARAFORMAT2);
-      pItem->member.para.pFmt->dwMask = 0;
- 
+      *pItem->member.para.pFmt = *pdi->member.para.pFmt;
       break;
     default:
       assert(0 == "AddUndoItem, unsupported item type");
@@ -282,8 +281,11 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
   case diUndoSetParagraphFormat:
   {
     ME_Cursor tmp;
+    ME_DisplayItem *para;
     ME_CursorFromCharOfs(editor, pItem->member.para.nCharOfs, &tmp);
-    ME_SetParaFormat(editor, ME_FindItemBack(tmp.pRun, diParagraph), pItem->member.para.pFmt);
+    para = ME_FindItemBack(tmp.pRun, diParagraph);
+    ME_AddUndoItem(editor, diUndoSetParagraphFormat, para);
+    *para->member.para.pFmt = *pItem->member.para.pFmt;
     break;
   }
   case diUndoSetCharFormat:
@@ -306,7 +308,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
     ME_Cursor tmp;
     ME_CursorFromCharOfs(editor, pUItem->nStart, &tmp);
     /* the only thing that's needed is paragraph offset, so no need to split runs */
-    ME_JoinParagraphs(editor, ME_GetParagraph(tmp.pRun));
+    ME_JoinParagraphs(editor, ME_GetParagraph(tmp.pRun), TRUE);
     break;
   }
   case diUndoSplitParagraph:

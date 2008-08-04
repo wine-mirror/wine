@@ -167,7 +167,8 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
 
 /* join tp with tp->member.para.next_para, keeping tp's style; this
  * is consistent with the original */
-ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp)
+ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
+                                  BOOL keepFirstParaFormat)
 {
   ME_DisplayItem *pNext, *pFirstRunInNext, *pRun, *pTmp;
   int i, shift;
@@ -195,14 +196,17 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp)
     ME_InitCharFormat2W(&fmt);
     ME_SetCharFormat(editor, pNext->member.para.nCharOfs - end_len, end_len, &fmt);
   }
-  undo = ME_AddUndoItem(editor, diUndoSplitParagraph, NULL);
+  undo = ME_AddUndoItem(editor, diUndoSplitParagraph, pNext);
   if (undo)
   {
     undo->nStart = pNext->member.para.nCharOfs - end_len;
     undo->nCR = pRun->member.run.nCR;
     undo->nLF = pRun->member.run.nLF;
-    assert(pNext->member.para.pFmt->cbSize == sizeof(PARAFORMAT2));
-    *undo->di.member.para.pFmt = *pNext->member.para.pFmt;
+  }
+  if (!keepFirstParaFormat)
+  {
+    ME_AddUndoItem(editor, diUndoSetParagraphFormat, tp);
+    *tp->member.para.pFmt = *pNext->member.para.pFmt;
   }
   
   shift = pNext->member.para.nCharOfs - tp->member.para.nCharOfs - end_len;
