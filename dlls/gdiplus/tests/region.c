@@ -70,7 +70,6 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
-todo_wine
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);

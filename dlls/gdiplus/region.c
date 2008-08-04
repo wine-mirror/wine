@@ -252,8 +252,38 @@ GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *region, GpRegion **clone)
 
 GpStatus WINGDIPAPI GdipCombineRegionPath(GpRegion *region, GpPath *path, CombineMode mode)
 {
-    FIXME("(%p %p %d): stub\n", region, path, mode);
-    return NotImplemented;
+    GpRegion *path_region;
+    region_element *left, *right = NULL;
+    GpStatus stat;
+
+    TRACE("%p %p %d\n", region, path, mode);
+
+    if (!(region && path))
+        return InvalidParameter;
+
+    stat = GdipCreateRegionPath(path, &path_region);
+    if (stat != Ok)
+        return stat;
+
+    left = GdipAlloc(sizeof(region_element));
+    if (!left)
+        goto out;
+    *left = region->node;
+
+    stat = clone_element(&path_region->node, &right);
+    if (stat != Ok)
+        goto out;
+
+    fuse_region(region, left, right, mode);
+
+    GdipDeleteRegion(path_region);
+    return Ok;
+
+out:
+    GdipFree(left);
+    delete_element(right);
+    GdipDeleteRegion(path_region);
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipCombineRegionRect(GpRegion *region,
