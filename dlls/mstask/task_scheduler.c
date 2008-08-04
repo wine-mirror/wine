@@ -119,9 +119,18 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_NewWorkItem(
         REFIID riid,
         IUnknown **ppunk)
 {
-    FIXME("%p, %s, %s, %s, %p: stub\n", iface, debugstr_w(pwszTaskName),
+    HRESULT hr;
+    TRACE("(%p, %s, %s, %s, %p)\n", iface, debugstr_w(pwszTaskName),
             debugstr_guid(rclsid) ,debugstr_guid(riid),  ppunk);
-    return E_NOTIMPL;
+
+    if (!IsEqualGUID(rclsid, &CLSID_CTask))
+        return CLASS_E_CLASSNOTAVAILABLE;
+
+    if (!IsEqualGUID(riid, &IID_ITask))
+        return E_NOINTERFACE;
+
+    hr = TaskConstructor(pwszTaskName, (LPVOID *)ppunk);
+    return hr;
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_AddWorkItem(

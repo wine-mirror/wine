@@ -49,25 +49,25 @@ static void test_NewWorkItem(void)
     /* Test basic task creation */
     hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
             &CLSID_CTask, &IID_ITask, (IUnknown**)&task);
-    todo_wine ok(hres == S_OK, "NewNetworkItem failed: %08x\n", hres);
+    ok(hres == S_OK, "NewNetworkItem failed: %08x\n", hres);
     if (hres == S_OK)
         ITask_Release(task);
 
     /* Task creation attempt using invalid work item class ID */
     hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
             &GUID_BAD, &IID_ITask, (IUnknown**)&task);
-    todo_wine ok(hres == CLASS_E_CLASSNOTAVAILABLE,
+    ok(hres == CLASS_E_CLASSNOTAVAILABLE,
             "Expected CLASS_E_CLASSNOTAVAILABLE: %08x\n", hres);
 
     /* Task creation attempt using invalid interface ID */
     hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
             &CLSID_CTask, &GUID_BAD, (IUnknown**)&task);
-    todo_wine ok(hres == E_NOINTERFACE, "Expected E_NOINTERFACE: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Expected E_NOINTERFACE: %08x\n", hres);
 
     /* Task creation attempt using invalid work item class and interface ID */
     hres = ITaskScheduler_NewWorkItem(test_task_scheduler, task_name,
             &GUID_BAD, &GUID_BAD, (IUnknown**)&task);
-    todo_wine ok(hres == CLASS_E_CLASSNOTAVAILABLE,
+    ok(hres == CLASS_E_CLASSNOTAVAILABLE,
             "Expected CLASS_E_CLASSNOTAVAILABLE: %08x\n", hres);
 
     ITaskScheduler_Release(test_task_scheduler);
