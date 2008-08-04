@@ -205,6 +205,20 @@ clone_out:
     return stat;
 }
 
+/* Common code for CombineRegion*
+ * All the caller has to do is get its format into an element
+ */
+static inline void fuse_region(GpRegion* region, region_element* left,
+        region_element* right, const CombineMode mode)
+{
+    region->node.type = mode;
+    region->node.elementdata.combine.left = left;
+    region->node.elementdata.combine.right = right;
+
+    region->header.size = sizeheader_size + get_element_size(&region->node);
+    region->header.num_children += 2;
+}
+
 /*****************************************************************************
  * GdipCloneRegion [GDIPLUS.@]
  *
@@ -242,11 +256,41 @@ GpStatus WINGDIPAPI GdipCombineRegionPath(GpRegion *region, GpPath *path, Combin
     return NotImplemented;
 }
 
-GpStatus WINGDIPAPI GdipCombineRegionRect(GpRegion *region, GDIPCONST GpRectF *rect,
-                                          CombineMode mode)
+GpStatus WINGDIPAPI GdipCombineRegionRect(GpRegion *region,
+        GDIPCONST GpRectF *rect, CombineMode mode)
 {
-    FIXME("(%p %p %d): stub\n", region, rect, mode);
-    return NotImplemented;
+    GpRegion *rect_region;
+    region_element *left, *right = NULL;
+    GpStatus stat;
+
+    TRACE("%p %p %d\n", region, rect, mode);
+
+    if (!(region && rect))
+        return InvalidParameter;
+
+    stat = GdipCreateRegionRect(rect, &rect_region);
+    if (stat != Ok)
+        return stat;
+
+    left = GdipAlloc(sizeof(region_element));
+    if (!left)
+        goto out;
+    memcpy(left, &region->node, sizeof(region_element));
+
+    stat = clone_element(&rect_region->node, &right);
+    if (stat != Ok)
+        goto out;
+
+    fuse_region(region, left, right, mode);
+
+    GdipDeleteRegion(rect_region);
+    return Ok;
+
+out:
+    GdipFree(left);
+    delete_element(right);
+    GdipDeleteRegion(rect_region);
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipCombineRegionRectI(GpRegion *region, GDIPCONST GpRect *rect,
