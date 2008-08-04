@@ -293,11 +293,22 @@ out:
     return stat;
 }
 
-GpStatus WINGDIPAPI GdipCombineRegionRectI(GpRegion *region, GDIPCONST GpRect *rect,
-                                           CombineMode mode)
+GpStatus WINGDIPAPI GdipCombineRegionRectI(GpRegion *region,
+        GDIPCONST GpRect *rect, CombineMode mode)
 {
-    FIXME("(%p %p %d): stub\n", region, rect, mode);
-    return NotImplemented;
+    GpRectF rectf;
+
+    TRACE("%p %p %d\n", region, rect, mode);
+
+    if (!rect)
+        return InvalidParameter;
+
+    rectf.X = (REAL)rect->X;
+    rectf.Y = (REAL)rect->Y;
+    rectf.Height = (REAL)rect->Height;
+    rectf.Width = (REAL)rect->Width;
+
+    return GdipCombineRegionRect(region, &rectf, mode);
 }
 
 GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1, GpRegion *region2,
