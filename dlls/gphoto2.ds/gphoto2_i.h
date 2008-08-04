@@ -244,7 +244,7 @@ TW_UINT16 GPHOTO2_RGBResponseSet
 
 /* UI function */
 BOOL DoCameraUI(void);
-HWND TransferringDialogBox(HWND dialog, DWORD progress);
+HWND TransferringDialogBox(HWND dialog, LONG progress);
 
 #ifdef HAVE_GPHOTO2
 /* Helper function for GUI */
