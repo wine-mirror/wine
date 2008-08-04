@@ -856,6 +856,32 @@ static void test_reverse(void)
     GdipDeletePath(path);
 }
 
+static path_test_t addpie_path[] = {
+    {50.0, 25.0, PathPointTypeStart, 0, 0}, /*0*/
+    {97.2, 33.3, PathPointTypeLine,  0, 0}, /*1*/
+    {91.8, 40.9, PathPointTypeBezier,0, 0}, /*2*/
+    {79.4, 46.8, PathPointTypeBezier,0, 0}, /*3*/
+    {63.9, 49.0, PathPointTypeBezier | PathPointTypeCloseSubpath,  0, 0} /*4*/
+    };
+
+static void test_addpie(void)
+{
+    GpStatus status;
+    GpPath *path;
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    /* NULL argument */
+    status = GdipAddPathPie(NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    expect(InvalidParameter, status);
+
+    status = GdipAddPathPie(path, 0.0, 0.0, 100.0, 50.0, 10.0, 50.0);
+    expect(Ok, status);
+    ok_path(path, addpie_path, sizeof(addpie_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -882,6 +908,7 @@ START_TEST(graphicspath)
     test_addcurve();
     test_addclosedcurve();
     test_reverse();
+    test_addpie();
 
     GdiplusShutdown(gdiplusToken);
 }
