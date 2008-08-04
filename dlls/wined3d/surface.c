@@ -1188,8 +1188,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
     }
 
-    glFlush();
-    vcheckGLcall("glFlush");
     glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
     vcheckGLcall("glIntegerv");
     glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
