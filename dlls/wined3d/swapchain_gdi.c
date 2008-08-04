@@ -101,9 +101,9 @@ void x11_copy_to_screen(IWineD3DSwapChainImpl *This, LPRECT rc) {
         }
 
         /* Front buffer coordinates are screen coordinates. Map them to the destination
-        * window if not fullscreened
-        */
-        if(!front->resource.wineD3DDevice->ddraw_fullscreen) {
+         * window if not fullscreened
+         */
+        if(This->presentParms.Windowed) {
             ClientToScreen(hDisplayWnd, &offset);
         }
 #if 0

@@ -445,9 +445,6 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         {
             This->dest_window = hwnd;
         }
-
-        IWineD3DDevice_SetFullscreen(This->wineD3DDevice,
-                                     FALSE);
     }
     else if(cooplevel & DDSCL_FULLSCREEN)
     {
@@ -467,8 +464,6 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         */
 
         This->cooperative_level &= ~DDSCL_NORMAL;
-        IWineD3DDevice_SetFullscreen(This->wineD3DDevice,
-                                     TRUE);
 
         /* Don't override focus windows or private device windows */
         if( hwnd &&

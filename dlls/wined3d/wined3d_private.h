@@ -923,7 +923,6 @@ struct IWineD3DDeviceImpl
     HWND ddraw_window;
     DWORD ddraw_width, ddraw_height;
     WINED3DFORMAT ddraw_format;
-    BOOL ddraw_fullscreen;
 
     /* Final position fixup constant */
     float                       posFixup[4];

@@ -377,7 +377,6 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(InitGDI)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain);
     STDMETHOD(Uninit3D)(THIS, D3DCB_DESTROYSURFACEFN pFn, D3DCB_DESTROYSWAPCHAINFN pFn2);
     STDMETHOD(UninitGDI)(THIS, D3DCB_DESTROYSWAPCHAINFN pFn2);
-    STDMETHOD_(void, SetFullscreen)(THIS_ BOOL fullscreen);
     STDMETHOD_(void, SetMultithreaded)(THIS);
     STDMETHOD(EvictManagedResources)(THIS) PURE;
     STDMETHOD_(UINT, GetAvailableTextureMem)(THIS) PURE;
@@ -518,7 +517,6 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_InitGDI(p, a, b)                         (p)->lpVtbl->InitGDI(p, a, b)
 #define IWineD3DDevice_Uninit3D(p, a, b)                        (p)->lpVtbl->Uninit3D(p, a, b)
 #define IWineD3DDevice_UninitGDI(p, a)                          (p)->lpVtbl->UninitGDI(p, a)
-#define IWineD3DDevice_SetFullscreen(p, a)                      (p)->lpVtbl->SetFullscreen(p, a)
 #define IWineD3DDevice_SetMultithreaded(p)                      (p)->lpVtbl->SetMultithreaded(p)
 #define IWineD3DDevice_EvictManagedResources(p)                 (p)->lpVtbl->EvictManagedResources(p)
 #define IWineD3DDevice_GetAvailableTextureMem(p)                (p)->lpVtbl->GetAvailableTextureMem(p)

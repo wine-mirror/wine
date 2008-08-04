@@ -1299,7 +1299,7 @@ static LONG fullscreen_exStyle(LONG orig_exStyle) {
     return exStyle;
 }
 
-static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *iface, HWND window) {
+static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *iface, HWND window, UINT w, UINT h) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     LONG style, exStyle;
@@ -1329,7 +1329,7 @@ static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *ifac
 
     /* Inform the window about the update. */
     SetWindowPos(window, HWND_TOP, 0, 0,
-            This->ddraw_width, This->ddraw_height, SWP_FRAMECHANGED);
+                 w, h, SWP_FRAMECHANGED);
     ShowWindow(window, SW_NORMAL);
 }
 
@@ -1433,8 +1433,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         object->win_handle = This->createParms.hFocusWindow;
     }
     if(!This->ddraw_window) {
-        if(This->ddraw_fullscreen && object->win_handle) {
-            IWineD3DDeviceImpl_SetupFullscreenWindow(iface, object->win_handle);
+        if(!pPresentationParameters->Windowed && object->win_handle) {
+            IWineD3DDeviceImpl_SetupFullscreenWindow(iface, object->win_handle,
+                                                     pPresentationParameters->BackBufferWidth,
+                                                     pPresentationParameters->BackBufferHeight);
         }
         This->ddraw_window = object->win_handle;
     }
@@ -1528,7 +1530,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
         displaymode_set = TRUE;
-        IWineD3DDevice_SetFullscreen(iface, TRUE);
     }
 
         /**
@@ -2442,25 +2443,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UninitGDI(IWineD3DDevice *iface, D3DCB_
     return WINED3D_OK;
 }
 
-static void WINAPI IWineD3DDeviceImpl_SetFullscreen(IWineD3DDevice *iface, BOOL fullscreen) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    TRACE("(%p) Setting DDraw fullscreen mode to %s\n", This, fullscreen ? "true" : "false");
-
-    /* Setup the window for fullscreen mode */
-    if(fullscreen && !This->ddraw_fullscreen) {
-        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, This->ddraw_window);
-    } else if(!fullscreen && This->ddraw_fullscreen) {
-        IWineD3DDeviceImpl_RestoreWindow(iface, This->ddraw_window);
-    }
-
-    /* DirectDraw apps can change between fullscreen and windowed mode after device creation with
-     * IDirectDraw7::SetCooperativeLevel. The GDI surface implementation needs to know this.
-     * DDraw doesn't necessarily have a swapchain, so we have to store the fullscreen flag
-     * separately.
-     */
-    This->ddraw_fullscreen = fullscreen;
-}
-
 /* Enables thread safety in the wined3d device and its resources. Called by DirectDraw
  * from SetCooperativeLevel if DDSCL_MULTITHREADED is specified, and by d3d8/9 from
  * CreateDevice if D3DCREATE_MULTITHREADED is passed.
@@ -2528,10 +2510,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     This->ddraw_width = pMode->Width;
     This->ddraw_height = pMode->Height;
     This->ddraw_format = pMode->Format;
-
-    /* Only do this with a window of course, and only if we're fullscreened */
-    if(This->ddraw_window && This->ddraw_fullscreen)
-      MoveWindow(This->ddraw_window, 0, 0, pMode->Width, pMode->Height, TRUE);
 
     /* And finally clip mouse to our screen */
     SetRect(&clip_rc, 0, 0, pMode->Width, pMode->Height);
@@ -7417,9 +7395,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
        (swapchain->presentParms.Windowed && !pPresentationParameters->Windowed) ||
         DisplayModeChanged) {
 
-        IWineD3DDevice_SetFullscreen(iface, !pPresentationParameters->Windowed);
-        swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
+
+        if(This->ddraw_window && !pPresentationParameters->Windowed) {
+            if(swapchain->presentParms.Windowed) {
+                /* switch from windowed to fs */
+                IWineD3DDeviceImpl_SetupFullscreenWindow(iface, This->ddraw_window,
+                                                         pPresentationParameters->BackBufferWidth,
+                                                         pPresentationParameters->BackBufferHeight);
+            } else {
+                /* Fullscreen -> fullscreen mode change */
+                MoveWindow(This->ddraw_window, 0, 0,
+                        pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight,
+                        TRUE);
+            }
+        } else if(This->ddraw_window && !swapchain->presentParms.Windowed) {
+            /* Fullscreen -> windowed switch */
+            IWineD3DDeviceImpl_RestoreWindow(iface, This->ddraw_window);
+        }
+        swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
     } else if(!pPresentationParameters->Windowed) {
         DWORD style = This->style, exStyle = This->exStyle;
         /* If we're in fullscreen, and the mode wasn't changed, we have to get the window back into
@@ -7428,7 +7422,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
          */
         This->style = 0;
         This->exStyle = 0;
-        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, This->ddraw_window);
+        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, This->ddraw_window,
+                                                 pPresentationParameters->BackBufferWidth,
+                                                 pPresentationParameters->BackBufferHeight);
         This->style = style;
         This->exStyle = exStyle;
     }
@@ -7704,7 +7700,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_InitGDI,
     IWineD3DDeviceImpl_Uninit3D,
     IWineD3DDeviceImpl_UninitGDI,
-    IWineD3DDeviceImpl_SetFullscreen,
     IWineD3DDeviceImpl_SetMultithreaded,
     IWineD3DDeviceImpl_EvictManagedResources,
     IWineD3DDeviceImpl_GetAvailableTextureMem,
@@ -7850,7 +7845,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_DirtyConst_Vtbl =
     IWineD3DDeviceImpl_InitGDI,
     IWineD3DDeviceImpl_Uninit3D,
     IWineD3DDeviceImpl_UninitGDI,
-    IWineD3DDeviceImpl_SetFullscreen,
     IWineD3DDeviceImpl_SetMultithreaded,
     IWineD3DDeviceImpl_EvictManagedResources,
     IWineD3DDeviceImpl_GetAvailableTextureMem,
