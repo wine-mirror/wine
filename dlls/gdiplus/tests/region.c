@@ -160,7 +160,6 @@ todo_wine
     ok(status == Ok, "status %08x\n", status);
 
     status = GdipCombineRegionRegion(region, region2, CombineModeComplement);
-todo_wine
     ok(status == Ok, "status %08x\n", status);
 
     rect.X = 400;
@@ -172,22 +171,15 @@ todo_wine
 
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
-todo_wine
     expect(156, needed);
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
-todo_wine
-{
     expect(156, needed);
     expect_dword(buf, 148);
-}
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic((DWORD*)(buf + 2));
-todo_wine
     expect_dword(buf + 3, 10);
     expect_dword(buf + 4, CombineModeExclude);
-todo_wine
-{
     expect_dword(buf + 5, CombineModeComplement);
     expect_dword(buf + 6, CombineModeXor);
     expect_dword(buf + 7, CombineModeIntersect);
@@ -222,7 +214,6 @@ todo_wine
     expect_float(buf + 36, 500.0);
     expect_float(buf + 37, 22.0);
     expect_float(buf + 38, 55.0);
-}
 
     status = GdipDeleteRegion(region2);
     ok(status == Ok, "status %08x\n", status);

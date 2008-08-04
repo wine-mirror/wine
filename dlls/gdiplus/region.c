@@ -311,11 +311,34 @@ GpStatus WINGDIPAPI GdipCombineRegionRectI(GpRegion *region,
     return GdipCombineRegionRect(region, &rectf, mode);
 }
 
-GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1, GpRegion *region2,
-                                            CombineMode mode)
+GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1,
+        GpRegion *region2, CombineMode mode)
 {
-    FIXME("(%p %p %d): stub\n", region1, region2, mode);
-    return NotImplemented;
+    region_element *left, *right;
+    GpStatus stat;
+
+    TRACE("%p %p %d\n", region1, region2, mode);
+
+    if(!(region1 && region2))
+        return InvalidParameter;
+
+    left  = GdipAlloc(sizeof(region_element));
+    if (!left)
+        return OutOfMemory;
+
+    *left = region1->node;
+    stat = clone_element(&region2->node, &right);
+    if (stat != Ok)
+    {
+        GdipFree(left);
+        delete_element(right);
+        return OutOfMemory;
+    }
+
+    fuse_region(region1, left, right, mode);
+    region1->header.num_children += region2->header.num_children;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **region)
