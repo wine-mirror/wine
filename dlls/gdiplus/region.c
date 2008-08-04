@@ -332,12 +332,30 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipCreateRegionRect(GDIPCONST GpRectF *rect, GpRegion **region)
+GpStatus WINGDIPAPI GdipCreateRegionRect(GDIPCONST GpRectF *rect,
+        GpRegion **region)
 {
-    FIXME("(%p, %p): stub\n", rect, region);
+    GpStatus stat;
 
-    *region = NULL;
-    return NotImplemented;
+    TRACE("%p, %p\n", rect, region);
+
+    if (!(rect && region))
+        return InvalidParameter;
+
+    *region = GdipAlloc(sizeof(GpRegion));
+    stat = init_region(*region, RegionDataRect);
+    if(stat != Ok)
+    {
+        GdipDeleteRegion(*region);
+        return stat;
+    }
+
+    (*region)->node.elementdata.rect.X = rect->X;
+    (*region)->node.elementdata.rect.Y = rect->Y;
+    (*region)->node.elementdata.rect.Width = rect->Width;
+    (*region)->node.elementdata.rect.Height = rect->Height;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipCreateRegionRectI(GDIPCONST GpRect *rect, GpRegion **region)
