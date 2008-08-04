@@ -108,14 +108,14 @@ static void test_parameters(PBROADCAST broadcast, const char *functionname)
         skip("%s is not implemented\n", functionname);
         return;
     }
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error: %08x\n", GetLastError());
-    ok(!ret, "Returned: %d\n", ret);
+    ok(!ret || broken(ret), "Returned: %d\n", ret);
+    if (!ret) ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error: %08x\n", GetLastError());
 
     SetLastError(0xcafebabe);
     recips = BSM_APPLICATIONS;
     ret = broadcast( 0x80000000, &recips, WM_NULL, 0, 0 );
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error: %08x\n", GetLastError());
-    ok(!ret, "Returned: %d\n", ret);
+    ok(!ret || broken(ret), "Returned: %d\n", ret);
+    if (!ret) ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error: %08x\n", GetLastError());
 
 #if 0 /* TODO: Check the hang flags */
     SetLastError(0xcafebabe);
@@ -285,21 +285,18 @@ static void test_noprivileges(void)
     recips = BSM_ALLDESKTOPS;
     ResetEvent(hevent);
     ret = pBroadcastExW( BSF_QUERY, &recips, WM_NULL, 100, 0, NULL );
-    todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "Last error: %08x\n", GetLastError());
-    ok(ret==1, "Returned: %d\n", ret);
+    ok(ret==1, "Returned: %d error %u\n", ret, GetLastError());
     ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
     ok(recips == BSM_ALLDESKTOPS ||
        recips == BSM_ALL_RECIPS, /* win2k3 */
        "Received by: %08x\n", recips);
     PulseEvent(hevent);
 
-    /* Wine sets last error to 0, so just use that one as token here so it doesn't fail */
-    SetLastError(0);
+    SetLastError(0xcafebabe);
     recips = BSM_ALLCOMPONENTS;
     ResetEvent(hevent);
     ret = pBroadcastExW( BSF_QUERY, &recips, WM_NULL, 100, 0, NULL );
-    ok(!GetLastError(), "Last error: %08x\n", GetLastError());
-    ok(ret==1, "Returned: %d\n", ret);
+    ok(ret==1, "Returned: %d error %u\n", ret, GetLastError());
     ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
     ok(recips == BSM_ALLCOMPONENTS ||
        recips == BSM_ALL_RECIPS, /* win2k3 */
@@ -310,8 +307,7 @@ static void test_noprivileges(void)
     recips = BSM_ALLDESKTOPS|BSM_APPLICATIONS;
     ResetEvent(hevent);
     ret = pBroadcastExW( BSF_QUERY, &recips, WM_NULL, 100, 0, NULL );
-    todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "Last error: %08x\n", GetLastError());
-    ok(ret==1, "Returned: %d\n", ret);
+    ok(ret==1, "Returned: %d error %u\n", ret, GetLastError());
     ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
     ok(recips == (BSM_ALLDESKTOPS|BSM_APPLICATIONS) ||
        recips == BSM_APPLICATIONS, /* win2k3 */
@@ -322,7 +318,6 @@ static void test_noprivileges(void)
     recips = BSM_ALLDESKTOPS|BSM_APPLICATIONS;
     ResetEvent(hevent);
     ret = pBroadcastExW( BSF_QUERY, &recips, WM_NULL, 100, BROADCAST_QUERY_DENY, NULL );
-    todo_wine ok(GetLastError() == ERROR_PRIVILEGE_NOT_HELD, "Last error: %08x\n", GetLastError());
     ok(!ret, "Returned: %d\n", ret);
     ok(WaitForSingleObject(hevent, 0) != WAIT_TIMEOUT, "Asynchronous message sent instead\n");
     ok(recips == (BSM_ALLDESKTOPS|BSM_APPLICATIONS) ||
