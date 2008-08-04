@@ -3562,11 +3562,26 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     }
 }
 
+void apply_pshader_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+
+    if (use_ps(device)) {
+        if(!context->last_was_pshader) {
+            state_fog(state, stateblock, context);
+        }
+        context->last_was_pshader = TRUE;
+    } else {
+        if(context->last_was_pshader) {
+            state_fog(state, stateblock, context);
+        }
+        context->last_was_pshader = FALSE;
+    }
+}
+
 void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL use_pshader = use_ps(device);
     BOOL use_vshader = use_vs(device);
-    BOOL update_fog = FALSE;
     int i;
 
     if (use_pshader) {
@@ -3580,7 +3595,6 @@ void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DC
                     sampler(STATE_SAMPLER(i), stateblock, context);
                 }
             }
-            update_fog = TRUE;
         } else {
            /* Otherwise all samplers were activated by the code above in earlier draws, or by sampler()
             * if a different texture was bound. I don't have to do anything.
@@ -3599,8 +3613,6 @@ void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DC
                         (STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), stateblock, context);
             }
         }
-        if(context->last_was_pshader)
-            update_fog = TRUE;
     }
 
     if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
@@ -3610,11 +3622,6 @@ void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DC
             shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
         }
     }
-
-    if(update_fog)
-        state_fog(state, stateblock, context);
-
-    context->last_was_pshader = use_pshader;
 }
 
 static void shader_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -5406,6 +5413,8 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax_arb  }, ARB_POINT_PARAMETERS            },
     { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax_ext  }, EXT_POINT_PARAMETERS            },
     { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax_w    }, 0                               },
+    /* pixel shaders need a different fog input */
+    { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  apply_pshader_fog   }, 0                               },
     /* Samplers for NP2 texture matrix adjustions. They are not needed if GL_ARB_texture_non_power_of_two is supported,
      * so register a NULL state handler in that case to get the vertex part of sampler() skipped(VTF is handled in the misc states.
      * otherwise, register sampler_texmatrix, which takes care of updating the texture matrix

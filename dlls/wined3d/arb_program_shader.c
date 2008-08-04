@@ -2816,7 +2816,6 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
             device->StateTable[STATE_VERTEXSHADERCONSTANT].apply(STATE_VERTEXSHADERCONSTANT, stateblock, context);
         }
     }
-    context->last_was_pshader = use_pshader;
     if(use_pshader) {
         device->StateTable[STATE_PIXELSHADERCONSTANT].apply(STATE_PIXELSHADERCONSTANT, stateblock, context);
     }
