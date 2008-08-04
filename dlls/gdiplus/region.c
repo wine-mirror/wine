@@ -358,12 +358,19 @@ GpStatus WINGDIPAPI GdipCreateRegionRect(GDIPCONST GpRectF *rect,
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipCreateRegionRectI(GDIPCONST GpRect *rect, GpRegion **region)
+GpStatus WINGDIPAPI GdipCreateRegionRectI(GDIPCONST GpRect *rect,
+        GpRegion **region)
 {
-    FIXME("(%p, %p): stub\n", rect, region);
+    GpRectF rectf;
 
-    *region = NULL;
-    return NotImplemented;
+    TRACE("%p, %p\n", rect, region);
+
+    rectf.X = (REAL)rect->X;
+    rectf.Y = (REAL)rect->Y;
+    rectf.Width = (REAL)rect->Width;
+    rectf.Height = (REAL)rect->Height;
+
+    return GdipCreateRegionRect(&rectf, region);
 }
 
 GpStatus WINGDIPAPI GdipCreateRegionRgnData(GDIPCONST BYTE *data, INT size, GpRegion **region)
