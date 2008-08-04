@@ -758,7 +758,7 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, const c
 
         case WINED3DFMT_ATI2N:
             /* GL_ATI_texture_compression_3dc returns the two channels as luminance-alpha,
-             * which means the first one is replicated accross .rgb, and the 2nd one is in
+             * which means the first one is replicated across .rgb, and the 2nd one is in
              * .a. We need the 2nd in .g
              *
              * GL_EXT_texture_compression_rgtc returns the values in .rg, however, they
@@ -2222,7 +2222,7 @@ static HRESULT arbfp_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct shader_arb_priv *priv;
     /* Share private data between the shader backend and the pipeline replacement, if both
-     * are the arb implementation. This is needed to figure out wether ARBfp should be disabled
+     * are the arb implementation. This is needed to figure out whether ARBfp should be disabled
      * if no pixel shader is bound or not
      */
     if(This->shader_backend == &arb_program_shader_backend) {

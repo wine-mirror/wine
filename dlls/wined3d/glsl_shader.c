@@ -1346,7 +1346,7 @@ static void shader_glsl_color_correction(SHADER_OPCODE_ARG* arg) {
 
         case WINED3DFMT_ATI2N:
             /* GL_ATI_texture_compression_3dc returns the two channels as luminance-alpha,
-             * which means the first one is replicated accross .rgb, and the 2nd one is in
+             * which means the first one is replicated across .rgb, and the 2nd one is in
              * .a. We need the 2nd in .g
              *
              * GL_EXT_texture_compression_rgtc returns the values in .rg, however, they

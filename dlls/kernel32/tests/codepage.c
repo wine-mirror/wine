@@ -355,7 +355,7 @@ START_TEST(codepage)
     test_negative_dest_length();
     test_overlapped_buffers();
 
-    /* WideCharToMultiByte has two code pathes, test both here */
+    /* WideCharToMultiByte has two code paths, test both here */
     test_string_conversion(NULL);
     test_string_conversion(&bUsedDefaultChar);
 }

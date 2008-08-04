@@ -417,7 +417,7 @@ static void test_GetPrivateProfileString(void)
 
     /* lpAppName is empty, lpDefault has trailing blank characters */
     lstrcpyA(buf, "kumquat");
-    /* lpDefault must be writeable (trailing blanks are removed inplace in win9x) */
+    /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "default  ");
     ret = GetPrivateProfileStringA("", "name1", def_val,
                                    buf, MAX_PATH, filename);
@@ -426,7 +426,7 @@ static void test_GetPrivateProfileString(void)
 
     /* lpAppName is empty, many blank characters in lpDefault */
     lstrcpyA(buf, "kumquat");
-    /* lpDefault must be writeable (trailing blanks are removed inplace in win9x) */
+    /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "one two  ");
     ret = GetPrivateProfileStringA("", "name1", def_val,
                                    buf, MAX_PATH, filename);
@@ -478,7 +478,7 @@ static void test_GetPrivateProfileString(void)
 
     /* lpKeyName is empty, lpDefault has trailing blank characters */
     lstrcpyA(buf, "kumquat");
-    /* lpDefault must be writeable (trailing blanks are removed inplace in win9x) */
+    /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "default  ");
     ret = GetPrivateProfileStringA("section1", "", def_val,
                                    buf, MAX_PATH, filename);
