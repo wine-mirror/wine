@@ -2265,6 +2265,7 @@ static void test_SetActiveWindow(HWND hwnd)
 {
     HWND hwnd2;
 
+    flush_events( TRUE );
     ShowWindow(hwnd, SW_HIDE);
     SetFocus(0);
     SetActiveWindow(0);
@@ -2320,6 +2321,7 @@ static void test_SetForegroundWindow(HWND hwnd)
     BOOL ret;
     HWND hwnd2;
 
+    flush_events( TRUE );
     ShowWindow(hwnd, SW_HIDE);
     SetFocus(0);
     SetActiveWindow(0);
@@ -2551,6 +2553,7 @@ static void test_keyboard_input(HWND hwnd)
     MSG msg;
     BOOL ret;
 
+    flush_events( TRUE );
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
     flush_events( TRUE );
