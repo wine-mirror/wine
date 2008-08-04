@@ -161,17 +161,22 @@ static void testAddCRL(void)
     ok(!ret && (GLE == CRYPT_E_ASN1_EOD || GLE == OSS_MORE_INPUT),
      "Expected CRYPT_E_ASN1_EOD or OSS_MORE_INPUT, got %08x\n", GLE);
 
-    /* Weird--bad add disposition leads to an access violation in Windows. */
-    ret = CertAddEncodedCRLToStore(0, X509_ASN_ENCODING, signedCRL,
-     sizeof(signedCRL), 0, NULL);
-    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
-                GetLastError() == E_INVALIDARG /* Vista */),
-     "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n", GetLastError());
-    ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
-     sizeof(signedCRL), 0, NULL);
-    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
-                GetLastError() == E_INVALIDARG /* Vista */),
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    /* Weird--bad add disposition leads to an access violation in Windows.
+     * Both tests crash on some win9x boxes.
+     */
+    if (0)
+    {
+        ret = CertAddEncodedCRLToStore(0, X509_ASN_ENCODING, signedCRL,
+         sizeof(signedCRL), 0, NULL);
+        ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+                    GetLastError() == E_INVALIDARG /* Vista */),
+         "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n", GetLastError());
+        ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
+         sizeof(signedCRL), 0, NULL);
+        ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+                    GetLastError() == E_INVALIDARG /* Vista */),
+         "Expected STATUS_ACCESS_VIOLATION or E_INVALIDARG, got %08x\n", GetLastError());
+    }
 
     /* Weird--can add a CRL to the NULL store (does this have special meaning?)
      */
