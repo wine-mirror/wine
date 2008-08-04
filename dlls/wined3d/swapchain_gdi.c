@@ -93,7 +93,7 @@ void x11_copy_to_screen(IWineD3DSwapChainImpl *This, LPRECT rc) {
 
         hSurfaceDC = front->hDC;
 
-        hDisplayWnd = front->resource.wineD3DDevice->ddraw_window;
+        hDisplayWnd = This->win_handle;
         hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS|DCX_CACHE);
         if(rc) {
             TRACE(" copying rect (%d,%d)->(%d,%d), offset (%d,%d)\n",

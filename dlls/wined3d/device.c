@@ -1432,13 +1432,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     if (!object->win_handle) {
         object->win_handle = This->createParms.hFocusWindow;
     }
-    if(!This->ddraw_window) {
-        if(!pPresentationParameters->Windowed && object->win_handle) {
-            IWineD3DDeviceImpl_SetupFullscreenWindow(iface, object->win_handle,
-                                                     pPresentationParameters->BackBufferWidth,
-                                                     pPresentationParameters->BackBufferHeight);
-        }
-        This->ddraw_window = object->win_handle;
+    if(!pPresentationParameters->Windowed && object->win_handle) {
+        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, object->win_handle,
+                                                 pPresentationParameters->BackBufferWidth,
+                                                 pPresentationParameters->BackBufferHeight);
     }
 
     hDc                = GetDC(object->win_handle);
@@ -6652,8 +6649,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         if(buffer == GL_FRONT) {
             RECT windowsize;
             UINT h;
-            ClientToScreen(This->ddraw_window, &offset);
-            GetClientRect(This->ddraw_window, &windowsize);
+            ClientToScreen(((IWineD3DSwapChainImpl *)src_swapchain)->win_handle, &offset);
+            GetClientRect(((IWineD3DSwapChainImpl *)src_swapchain)->win_handle, &windowsize);
             h = windowsize.bottom - windowsize.top;
             src_rect->x1 -= offset.x; src_rect->x2 -=offset.x;
             src_rect->y1 =  offset.y + h - src_rect->y1;
@@ -6693,8 +6690,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         if(buffer == GL_FRONT) {
             RECT windowsize;
             UINT h;
-            ClientToScreen(This->ddraw_window, &offset);
-            GetClientRect(This->ddraw_window, &windowsize);
+            ClientToScreen(((IWineD3DSwapChainImpl *)dst_swapchain)->win_handle, &offset);
+            GetClientRect(((IWineD3DSwapChainImpl *)dst_swapchain)->win_handle, &windowsize);
             h = windowsize.bottom - windowsize.top;
             dst_rect->x1 -= offset.x; dst_rect->x2 -=offset.x;
             dst_rect->y1 =  offset.y + h - dst_rect->y1;
@@ -7397,21 +7394,21 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
 
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
 
-        if(This->ddraw_window && !pPresentationParameters->Windowed) {
+        if(swapchain->win_handle && !pPresentationParameters->Windowed) {
             if(swapchain->presentParms.Windowed) {
                 /* switch from windowed to fs */
-                IWineD3DDeviceImpl_SetupFullscreenWindow(iface, This->ddraw_window,
+                IWineD3DDeviceImpl_SetupFullscreenWindow(iface, swapchain->win_handle,
                                                          pPresentationParameters->BackBufferWidth,
                                                          pPresentationParameters->BackBufferHeight);
             } else {
                 /* Fullscreen -> fullscreen mode change */
-                MoveWindow(This->ddraw_window, 0, 0,
-                        pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight,
-                        TRUE);
+                MoveWindow(swapchain->win_handle, 0, 0,
+                           pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight,
+                           TRUE);
             }
-        } else if(This->ddraw_window && !swapchain->presentParms.Windowed) {
+        } else if(swapchain->win_handle && !swapchain->presentParms.Windowed) {
             /* Fullscreen -> windowed switch */
-            IWineD3DDeviceImpl_RestoreWindow(iface, This->ddraw_window);
+            IWineD3DDeviceImpl_RestoreWindow(iface, swapchain->win_handle);
         }
         swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
     } else if(!pPresentationParameters->Windowed) {
@@ -7422,7 +7419,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
          */
         This->style = 0;
         This->exStyle = 0;
-        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, This->ddraw_window,
+        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, swapchain->win_handle,
                                                  pPresentationParameters->BackBufferWidth,
                                                  pPresentationParameters->BackBufferHeight);
         This->style = style;

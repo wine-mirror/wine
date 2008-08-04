@@ -3451,8 +3451,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 RECT windowsize;
                 POINT offset = {0,0};
                 UINT h;
-                ClientToScreen(myDevice->ddraw_window, &offset);
-                GetClientRect(myDevice->ddraw_window, &windowsize);
+                ClientToScreen(dstSwapchain->win_handle, &offset);
+                GetClientRect(dstSwapchain->win_handle, &windowsize);
                 h = windowsize.bottom - windowsize.top;
                 rect.x1 -= offset.x; rect.x2 -=offset.x;
                 rect.y1 -= offset.y; rect.y2 -=offset.y;

@@ -920,7 +920,6 @@ struct IWineD3DDeviceImpl
     BOOL softwareVertexProcessing;
 
     /* DirectDraw stuff */
-    HWND ddraw_window;
     DWORD ddraw_width, ddraw_height;
     WINED3DFORMAT ddraw_format;
 
