@@ -6208,6 +6208,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONS
                     rect->x2 - rect->x1, rect->y2 - rect->y1);
         }
         checkGLcall("glScissor");
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
     } else {
         glDisable(GL_SCISSOR_TEST);
     }
