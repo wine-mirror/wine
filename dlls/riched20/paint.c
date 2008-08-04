@@ -400,7 +400,7 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     return;
   }
 
-  if (run->nFlags & (MERF_TAB | MERF_CELL))
+  if (run->nFlags & MERF_TAB)
   {
     /* wszSpace is used instead of the tab character because otherwise
      * an unwanted symbol can be inserted instead. */

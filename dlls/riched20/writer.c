@@ -283,6 +283,26 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
   return TRUE;
 }
 
+static BOOL
+ME_StreamOutRTFTableProps(ME_OutStream *pStream, const ME_DisplayItem *para)
+{
+  PARAFORMAT2 *pFmt;
+  char props[STREAMOUT_BUFFER_SIZE] = "";
+  int i;
+
+  if (!ME_StreamOutPrint(pStream, "\\trowd"))
+    return FALSE;
+  pFmt = para->member.para.pFmt;
+
+  for (i = 0; i < pFmt->cTabCount; i++)
+  {
+    sprintf(props, "\\cellx%d", pFmt->rgxTabs[i] & 0x00FFFFFF);
+    if (!ME_StreamOutPrint(pStream, props))
+      return FALSE;
+  }
+  props[0] = '\0';
+  return TRUE;
+}
 
 static BOOL
 ME_StreamOutRTFParaProps(ME_OutStream *pStream, const ME_DisplayItem *para)
@@ -290,21 +310,6 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, const ME_DisplayItem *para)
   PARAFORMAT2 *fmt = para->member.para.pFmt;
   char props[STREAMOUT_BUFFER_SIZE] = "";
   int i;
-
-  if (para->member.para.pCells)
-  {
-    ME_TableCell *cell = para->member.para.pCells;
-    
-    if (!ME_StreamOutPrint(pStream, "\\trowd"))
-      return FALSE;
-    do {
-      sprintf(props, "\\cellx%d", cell->nRightBoundary);
-      if (!ME_StreamOutPrint(pStream, props))
-        return FALSE;
-      cell = cell->next;
-    } while (cell);
-    props[0] = '\0';
-  }
   
   /* TODO: Don't emit anything if the last PARAFORMAT2 is inherited */
   if (!ME_StreamOutPrint(pStream, "\\pard"))
@@ -686,6 +691,12 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
     switch(p->type)
     {
       case diParagraph:
+        if (p->member.para.pFmt->dwMask & PFM_TABLE &&
+            p->member.para.pFmt->wEffects & PFE_TABLE)
+        {
+          if (!ME_StreamOutRTFTableProps(pStream, p))
+            return FALSE;
+        }
         if (!ME_StreamOutRTFParaProps(pStream, p))
           return FALSE;
         pPara = p;
@@ -695,12 +706,18 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
           break;
         TRACE("flags %xh\n", p->member.run.nFlags);
         /* TODO: emit embedded objects */
-        if (p->member.run.nFlags & MERF_GRAPHICS)
+        if (p->member.run.nFlags & MERF_GRAPHICS) {
           FIXME("embedded objects are not handled\n");
-        if (p->member.run.nFlags & MERF_CELL) {
-          if (!ME_StreamOutPrint(pStream, "\\cell "))
-            return FALSE;
-          nChars--;
+        } else if (p->member.run.nFlags & MERF_TAB) {
+          if (pPara->member.para.pFmt->dwMask & PFM_TABLE &&
+              pPara->member.para.pFmt->wEffects & PFE_TABLE)
+          {
+            if (!ME_StreamOutPrint(pStream, "\\cell "))
+              return FALSE;
+          } else {
+            if (!ME_StreamOutPrint(pStream, "\\tab "))
+              return FALSE;
+          }
         } else if (p->member.run.nFlags & MERF_ENDPARA) {
           if (pPara->member.para.pFmt->dwMask & PFM_TABLE
               && pPara->member.para.pFmt->wEffects & PFE_TABLE)

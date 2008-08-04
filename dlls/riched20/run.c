@@ -483,7 +483,7 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
   if (!run->strText->nLen)
     return 0;
 
-  if (run->nFlags & (MERF_TAB | MERF_CELL))
+  if (run->nFlags & MERF_TAB)
   {
     if (cx < run->nWidth/2) 
       return 0;
@@ -540,7 +540,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
   if (!run->strText->nLen)
     return 0;
 
-  if (run->nFlags & (MERF_TAB | MERF_CELL))
+  if (run->nFlags & MERF_TAB)
   {
     if (cx < run->nWidth/2)
       return 0;
@@ -695,11 +695,6 @@ static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run 
     if (size.cy > *pAscent)
       *pAscent = size.cy;
     /* descent is unchanged */
-    return size;
-  }
-  if (run->nFlags & MERF_CELL)
-  {
-    size.cx = ME_twips2pointsX(c, run->pCell->nRightBoundary) - run->pt.x;
     return size;
   }
   return size;

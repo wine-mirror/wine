@@ -432,33 +432,6 @@ void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor)
   ME_SendSelChange(editor);
 }
 
-void
-ME_InsertTableCellFromCursor(ME_TextEditor *editor, int nCursor)
-{
-  WCHAR tab = '\t';
-  ME_DisplayItem *p, *run;
-  ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
-  
-  p = ME_InternalInsertTextFromCursor(editor, nCursor, &tab, 1, pStyle,
-                                      MERF_CELL);
-  run = p;
-  while ((run = ME_FindItemBack(run, diRunOrParagraph))->type == diRun)
-  {
-    if (run->member.run.nFlags & MERF_CELL)
-    {
-      assert(run->member.run.pCell->next);
-      p->member.run.pCell = run->member.run.pCell->next;
-      return;
-    }
-  }
-  assert(run->type == diParagraph);
-  assert(run->member.para.pFmt);
-  assert(run->member.para.pFmt->dwMask & PFM_TABLE);
-  assert(run->member.para.pFmt->wEffects & PFE_TABLE);
-  assert(run->member.para.pCells);
-  p->member.run.pCell = run->member.para.pCells;
-}
-
 
 void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor, 
   const WCHAR *str, int len, ME_Style *style)

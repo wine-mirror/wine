@@ -97,10 +97,8 @@ typedef enum {
 #define MERF_GRAPHICS   0x001
 /* run is a tab (or, in future, any kind of content whose size is dependent on run position) */
 #define MERF_TAB        0x002
-/* run is a cell boundary */
-#define MERF_CELL       0x004
 
-#define MERF_NONTEXT (MERF_GRAPHICS | MERF_TAB | MERF_CELL)
+#define MERF_NONTEXT (MERF_GRAPHICS | MERF_TAB)
 
 /* run is splittable (contains white spaces in the middle or end) */
 #define MERF_SPLITTABLE 0x001000
@@ -148,7 +146,6 @@ typedef struct tagME_Run
   int nFlags;
   int nAscent, nDescent; /* pixels above/below baseline */
   POINT pt; /* relative to para's position */
-  struct tagME_TableCell *pCell; /* for MERF_CELL: points to respective cell in ME_Paragraph */
   REOBJECT *ole_obj; /* FIXME: should be a union with strText (at least) */
   int nCR; int nLF;  /* for MERF_ENDPARA: number of \r and \n characters encoded by run */
 } ME_Run;
@@ -159,18 +156,9 @@ typedef struct tagME_Document {
   int last_wrapped_line;
 } ME_Document;
 
-typedef struct tagME_TableCell
-{
-  int nRightBoundary;
-  struct tagME_TableCell *next;
-} ME_TableCell;
-
 typedef struct tagME_Paragraph
 {
   PARAFORMAT2 *pFmt;
-
-  struct tagME_TableCell *pCells;    /* list of cells and their properties */
-  struct tagME_TableCell *pLastCell; /* points to the last cell in the list */
 
   int nCharOfs;
   int nFlags;

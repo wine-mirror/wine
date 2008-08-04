@@ -144,35 +144,6 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
   *new_para->member.para.pFmt = *run_para->member.para.pFmt;
   
-  /* Inherit previous cell definitions if any */
-  new_para->member.para.pCells = NULL;
-  if (run_para->member.para.pCells)
-  {
-    ME_TableCell *pCell, *pNewCell;
-
-    for (pCell = run_para->member.para.pCells; pCell; pCell = pCell->next)
-    {
-      pNewCell = ALLOC_OBJ(ME_TableCell);
-      pNewCell->nRightBoundary = pCell->nRightBoundary;
-      pNewCell->next = NULL;
-      if (new_para->member.para.pCells)
-        new_para->member.para.pLastCell->next = pNewCell;
-      else
-        new_para->member.para.pCells = pNewCell;
-      new_para->member.para.pLastCell = pNewCell;
-    }
-  }
-    
-  /* fix paragraph properties. FIXME only needed when called from RTF reader */
-  if (run_para->member.para.pCells &&
-      !(run_para->member.para.pFmt->wEffects & PFE_TABLE
-        && run_para->member.para.pFmt->dwMask & PFM_TABLE))
-  {
-    /* Paragraph does not have an \intbl keyword, so any table definition
-     * stored is invalid */
-    ME_DestroyTableCellList(run_para);
-  }
-  
   /* insert paragraph into paragraph double linked list */
   new_para->member.para.prev_para = run_para;
   new_para->member.para.next_para = next_para;

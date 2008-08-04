@@ -945,7 +945,8 @@ typedef struct RTFFont		RTFFont;
 typedef struct RTFColor		RTFColor;
 typedef struct RTFStyle		RTFStyle;
 typedef struct RTFStyleElt	RTFStyleElt;
-
+typedef struct RTFCell		RTFCell;
+typedef struct RTFTable		RTFTable;
 
 struct RTFFont
 {
@@ -1000,6 +1001,19 @@ struct RTFStyleElt
 	RTFStyleElt	*rtfNextSE;	/* next element in style */
 };
 
+
+struct RTFCell
+{
+	int rightBoundary;
+};
+
+
+struct RTFTable
+{
+	RTFCell cells[MAX_TABLE_CELLS];
+	int numCellsDefined;
+	int numCellsInserted;
+};
 
 /*
  * Return pointer to new element of type t, or NULL
@@ -1105,6 +1119,8 @@ struct _RTF_Info {
     int              stackTop;
     BOOL             styleChanged;
     LPRICHEDITOLE       lpRichEditOle;
+
+    RTFTable *tableDef;
 };
 
 

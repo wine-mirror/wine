@@ -169,6 +169,11 @@ RTFDestroy(RTF_Info *info)
 	}
 	RTFDestroyAttrs(info);
 	heap_free(info->cpOutputBuffer);
+        if (info->tableDef)
+        {
+                heap_free(info->tableDef);
+                info->tableDef = NULL;
+        }
 }
 
 
@@ -235,6 +240,10 @@ void RTFInit(RTF_Info *info)
 		info->dwMaxCPOutputCount = 0x1000;
 		info->cpOutputBuffer = heap_alloc(info->dwMaxCPOutputCount);
 	}
+
+        if (info->tableDef)
+            ZeroMemory(info->tableDef, sizeof(info->tableDef));
+        info->tableDef = NULL;
 }
 
 /*
@@ -2605,7 +2614,6 @@ static void SpecialChar (RTF_Info *info)
             break;
 	case rtfPage:
 	case rtfSect:
-	case rtfRow:
 	case rtfPar:
 		RTFPutUnicodeChar (info, '\r');
 		if (info->editor->bEmulateVersion10) RTFPutUnicodeChar (info, '\n');

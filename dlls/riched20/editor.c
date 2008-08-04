@@ -466,11 +466,6 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     break;
   case rtfInTable:
   {
-    ME_DisplayItem *para;
-    
-    RTFFlushOutputBuffer(info);
-    para = ME_GetParagraph(info->editor->pCursors[0].pRun);
-    assert(para->member.para.pCells);
     fmt.dwMask |= PFM_TABLE;
     fmt.wEffects |= PFE_TABLE;
     break;
@@ -512,7 +507,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
       fmt.dwMask |= PFM_TABSTOPS;
       fmt.cTabCount = 0;
     }
-    if (fmt.cTabCount < MAX_TAB_STOPS)
+    if (fmt.cTabCount < MAX_TAB_STOPS && info->rtfParam < 0x1000000)
       fmt.rgxTabs[fmt.cTabCount++] = info->rtfParam;
     break;
   case rtfKeep:
@@ -666,35 +661,83 @@ static void ME_RTFParAttrHook(RTF_Info *info)
 
 static void ME_RTFTblAttrHook(RTF_Info *info)
 {
-  ME_DisplayItem *para;
-  
   switch (info->rtfMinor)
   {
     case rtfRowDef:
-      RTFFlushOutputBuffer(info);
-      para = ME_GetParagraph(info->editor->pCursors[0].pRun);
-      
-      /* Release possibly inherited cell definitions */
-      ME_DestroyTableCellList(para);
-      
-      para->member.para.pCells = ALLOC_OBJ(ME_TableCell);
-      para->member.para.pCells->nRightBoundary = 0;
-      para->member.para.pCells->next = NULL;
-      para->member.para.pLastCell = para->member.para.pCells;
+      if (!info->tableDef)
+        info->tableDef = ALLOC_OBJ(RTFTable);
+      ZeroMemory(info->tableDef, sizeof(RTFTable));
       break;
     case rtfCellPos:
-      RTFFlushOutputBuffer(info);
-      para = ME_GetParagraph(info->editor->pCursors[0].pRun);
-      
-      if (para->member.para.pLastCell->nRightBoundary)
+      if (!info->tableDef)
       {
-        ME_TableCell *pCell = ALLOC_OBJ(ME_TableCell);
-        
-        pCell->next = NULL;
-        para->member.para.pLastCell->next = pCell;
-        para->member.para.pLastCell = pCell;
+        info->tableDef = ALLOC_OBJ(RTFTable);
+        ZeroMemory(info->tableDef, sizeof(RTFTable));
       }
-      para->member.para.pLastCell->nRightBoundary = info->rtfParam;
+      if (info->tableDef->numCellsDefined >= MAX_TABLE_CELLS)
+        break;
+      info->tableDef->cells[info->tableDef->numCellsDefined].rightBoundary = info->rtfParam;
+      {
+        /* Tab stops store the cell positions. */
+        ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
+        PARAFORMAT2 *pFmt = para->member.para.pFmt;
+        int cellNum = info->tableDef->numCellsDefined;
+        pFmt->rgxTabs[cellNum] &= ~0x00FFFFFF;
+        pFmt->rgxTabs[cellNum] = 0x00FFFFFF & info->rtfParam;
+      }
+      info->tableDef->numCellsDefined++;
+      break;
+  }
+}
+
+static void ME_RTFSpecialCharHook(RTF_Info *info)
+{
+  RTFTable *tableDef = info->tableDef;
+  switch (info->rtfMinor)
+  {
+    case rtfCell:
+      if (!tableDef)
+        break;
+      RTFFlushOutputBuffer(info);
+      {
+        ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
+        PARAFORMAT2 *pFmt = para->member.para.pFmt;
+        if (pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE &&
+            tableDef->numCellsInserted < tableDef->numCellsDefined)
+        {
+          WCHAR tab = '\t';
+          ME_InsertTextFromCursor(info->editor, 0, &tab, 1, info->style);
+          tableDef->numCellsInserted++;
+        }
+      }
+      break;
+    case rtfRow:
+    {
+      if (!tableDef)
+        break;
+      RTFFlushOutputBuffer(info);
+
+      {
+        WCHAR endl = '\r';
+        ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
+        PARAFORMAT2 *pFmt = para->member.para.pFmt;
+        while (tableDef->numCellsInserted < tableDef->numCellsDefined)
+        {
+          WCHAR tab = '\t';
+          ME_InsertTextFromCursor(info->editor, 0, &tab, 1, info->style);
+          tableDef->numCellsInserted++;
+        }
+        pFmt->cTabCount = tableDef->numCellsDefined;
+        if (!tableDef->numCellsDefined)
+          pFmt->wEffects &= ~PFE_TABLE;
+        ME_InsertTextFromCursor(info->editor, 0, &endl, 1, info->style);
+        tableDef->numCellsInserted = 0;
+      }
+      break;
+    }
+    case rtfPar:
+      if (tableDef)
+        tableDef->numCellsInserted = 0;
       break;
   }
 }
@@ -1001,11 +1044,8 @@ static void ME_RTFReadHook(RTF_Info *info) {
           ME_RTFTblAttrHook(info);
           break;
         case rtfSpecialChar:
-          if (info->rtfMinor == rtfCell)
-          {
-            RTFFlushOutputBuffer(info);
-            ME_InsertTableCellFromCursor(info->editor, 0);
-          }
+          ME_RTFSpecialCharHook(info);
+          break;
       }
       break;
   }
