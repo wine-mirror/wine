@@ -35,6 +35,11 @@
     ok(ret == val, "Unexpected value of '" #expr "': " #fmt " instead of " #val "\n", ret); \
 } while (0);
 
+#define expect_eq2(expr, val1, val2, type, fmt) do { \
+    type ret = expr; \
+    ok(ret == val1 || ret == val2, "Unexpected value of '" #expr "': " #fmt " instead of " #val1 " or " #val2 "\n", ret); \
+} while (0);
+
 static BOOL    (WINAPI *pIntlStrEqWorkerA)(BOOL,LPCSTR,LPCSTR,int);
 static BOOL    (WINAPI *pIntlStrEqWorkerW)(BOOL,LPCWSTR,LPCWSTR,int);
 static DWORD   (WINAPI *pSHAnsiToAnsi)(LPCSTR,LPSTR,int);
@@ -850,7 +855,7 @@ static void test_StrXXX_overflows(void)
         memset(wbuf, 0xbf, sizeof(wbuf));
         strret.uType = STRRET_WSTR;
         U(strret).pOleStr = StrDupW(wstr1);
-        expect_eq(pStrRetToBufW(&strret, NULL, wbuf, 10), S_OK, HRESULT, "%x");
+        expect_eq2(pStrRetToBufW(&strret, NULL, wbuf, 10), S_OK, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) /* Vista */, HRESULT, "%x");
         expect_eq(wbuf[9], 0, WCHAR, "%x");
         expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
     }
@@ -862,7 +867,7 @@ static void test_StrXXX_overflows(void)
         memset(buf, 0xbf, sizeof(buf));
         strret.uType = STRRET_CSTR;
         StrCpyN(U(strret).cStr, str1, MAX_PATH);
-        expect_eq(pStrRetToBufA(&strret, NULL, buf, 10), S_OK, HRESULT, "%x");
+        expect_eq2(pStrRetToBufA(&strret, NULL, buf, 10), S_OK, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) /* Vista */, HRESULT, "%x");
         expect_eq(buf[9], 0, CHAR, "%x");
         expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
     }
@@ -873,7 +878,7 @@ static void test_StrXXX_overflows(void)
     {
         memset(buf, 0xbf, sizeof(buf));
         ret = pwnsprintfA(buf, 10, "%s", str1);
-        todo_wine ok(ret == 9, "Unexpected wsnprintfA return %d, expected 9\n", ret);
+        ok(broken(ret == 9) || ret == -1 /* Vista */, "Unexpected wsnprintfA return %d, expected 9 or -1\n", ret);
         expect_eq(buf[9], 0, CHAR, "%x");
         expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
     }
@@ -884,7 +889,7 @@ static void test_StrXXX_overflows(void)
     {
         memset(wbuf, 0xbf, sizeof(wbuf));
         ret = pwnsprintfW(wbuf, 10, fmt, wstr1);
-        todo_wine ok(ret == 9, "Unexpected wsnprintfW return %d, expected 9\n", ret);
+        ok(broken(ret == 9) || ret == -1 /* Vista */, "Unexpected wsnprintfW return %d, expected 9 or -1\n", ret);
         expect_eq(wbuf[9], 0, WCHAR, "%x");
         expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
     }
