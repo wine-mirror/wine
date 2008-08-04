@@ -214,12 +214,122 @@ GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **region)
     return init_region(*region, RegionDataInfiniteRect);
 }
 
+/*****************************************************************************
+ * GdipCreateRegionPath [GDIPLUS.@]
+ *
+ * Creates a GpRegion from a GpPath
+ *
+ * PARAMS
+ *  path    [I] path to base the region on
+ *  region  [O] pointer to the newly allocated region
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter
+ *
+ * NOTES
+ *  If a path has no floating point points, its points will be stored as shorts
+ *  (INTPATH)
+ *
+ *  If a path is empty, it is considered to be an INTPATH
+ */
 GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
 {
-    FIXME("(%p, %p): stub\n", path, region);
+    region_element* element;
+    GpPoint  *pointsi;
+    GpPointF *pointsf;
 
-    *region = NULL;
-    return NotImplemented;
+    GpStatus stat;
+    DWORD flags = FLAGS_INTPATH;
+    INT count, i;
+
+    TRACE("%p, %p\n", path, region);
+
+    if (!(path && region))
+        return InvalidParameter;
+
+    *region = GdipAlloc(sizeof(GpRegion));
+    if(!*region)
+        return OutOfMemory;
+    stat = init_region(*region, RegionDataPath);
+    if (stat != Ok)
+    {
+        GdipDeleteRegion(*region);
+        return stat;
+    }
+    element = &(*region)->node;
+    count = path->pathdata.Count;
+
+    /* Test to see if the path is an Integer path */
+    if (count)
+    {
+        pointsi = GdipAlloc(sizeof(GpPoint) * count);
+        pointsf = GdipAlloc(sizeof(GpPointF) * count);
+        if (!(pointsi && pointsf))
+        {
+            GdipFree(pointsi);
+            GdipFree(pointsf);
+            GdipDeleteRegion(*region);
+            return OutOfMemory;
+        }
+
+        stat = GdipGetPathPointsI(path, pointsi, count);
+        if (stat != Ok)
+        {
+            GdipDeleteRegion(*region);
+            return stat;
+        }
+        stat = GdipGetPathPoints(path, pointsf, count);
+        if (stat != Ok)
+        {
+            GdipDeleteRegion(*region);
+            return stat;
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            if (!(pointsi[i].X == pointsf[i].X &&
+                  pointsi[i].Y == pointsf[i].Y ))
+            {
+                flags = FLAGS_NOFLAGS;
+                break;
+            }
+        }
+        GdipFree(pointsi);
+        GdipFree(pointsf);
+    }
+
+    stat = GdipClonePath(path, &element->elementdata.pathdata.path);
+    if (stat != Ok)
+    {
+        GdipDeleteRegion(*region);
+        return stat;
+    }
+
+    /* 3 for headers, once again size doesn't count itself */
+    element->elementdata.pathdata.pathheader.size = ((sizeof(DWORD) * 3));
+    switch(flags)
+    {
+        /* Floats, sent out as floats */
+        case FLAGS_NOFLAGS:
+            element->elementdata.pathdata.pathheader.size +=
+                (sizeof(DWORD) * count * 2);
+            break;
+        /* INTs, sent out as packed shorts */
+        case FLAGS_INTPATH:
+            element->elementdata.pathdata.pathheader.size +=
+                (sizeof(DWORD) * count);
+            break;
+        default:
+            FIXME("Unhandled flags (%08x). Expect wrong results.\n", flags);
+    }
+    element->elementdata.pathdata.pathheader.size += get_pathtypes_size(path);
+    element->elementdata.pathdata.pathheader.magic = VERSION_MAGIC;
+    element->elementdata.pathdata.pathheader.count = count;
+    element->elementdata.pathdata.pathheader.flags = flags;
+    (*region)->header.size = sizeheader_size + get_element_size(element);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipCreateRegionRect(GDIPCONST GpRectF *rect, GpRegion **region)
