@@ -291,6 +291,7 @@ GpStatus WINGDIPAPI GdipIsOutlineVisiblePathPointI(GpPath*,INT,INT,GpPen*,
 GpStatus WINGDIPAPI GdipIsVisiblePathPoint(GpPath*,REAL,REAL,GpGraphics*,BOOL*);
 GpStatus WINGDIPAPI GdipIsVisiblePathPointI(GpPath*,INT,INT,GpGraphics*,BOOL*);
 GpStatus WINGDIPAPI GdipResetPath(GpPath*);
+GpStatus WINGDIPAPI GdipReversePath(GpPath*);
 GpStatus WINGDIPAPI GdipSetPathFillMode(GpPath*,GpFillMode);
 GpStatus WINGDIPAPI GdipStartPathFigure(GpPath*);
 GpStatus WINGDIPAPI GdipTransformPath(GpPath*,GpMatrix*);

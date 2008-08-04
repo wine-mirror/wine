@@ -813,6 +813,49 @@ static void test_addclosedcurve(void)
     GdipDeletePath(path);
 }
 
+static path_test_t reverse_path[] = {
+    {0.0,  20.0, PathPointTypeStart, 0, 0}, /*0*/
+    {25.0, 25.0, PathPointTypeLine,  0, 0}, /*1*/
+    {0.0,  30.0, PathPointTypeLine,  0, 0}, /*2*/
+    {15.0, 35.0, PathPointTypeStart, 0, 0}, /*3*/
+    {0.0,  40.0, PathPointTypeLine,  0, 0}, /*4*/
+    {5.0,  45.0, PathPointTypeLine,  0, 0}, /*5*/
+    {0.0,  50.0, PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}  /*6*/
+    };
+
+static void test_reverse(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPointF pts[7];
+    INT i;
+
+    for(i = 0; i < 7; i++){
+        pts[i].X = i * 5.0 * (REAL)(i % 2);
+        pts[i].Y = 50.0 - i * 5.0;
+    }
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    /* NULL argument */
+    status = GdipReversePath(NULL);
+    expect(InvalidParameter, status);
+
+    /* empty path */
+    status = GdipReversePath(path);
+    expect(Ok, status);
+
+    GdipAddPathLine2(path, pts, 4);
+    GdipClosePathFigure(path);
+    GdipAddPathLine2(path, &(pts[4]), 3);
+
+    status = GdipReversePath(path);
+    expect(Ok, status);
+    ok_path(path, reverse_path, sizeof(reverse_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -838,6 +881,7 @@ START_TEST(graphicspath)
     test_lastpoint();
     test_addcurve();
     test_addclosedcurve();
+    test_reverse();
 
     GdiplusShutdown(gdiplusToken);
 }

@@ -484,7 +484,7 @@
 @ stub GdipResetTextureTransform
 @ stub GdipResetWorldTransform
 @ stdcall GdipRestoreGraphics(ptr long)
-@ stub GdipReversePath
+@ stdcall GdipReversePath(ptr)
 @ stub GdipRotateLineTransform
 @ stdcall GdipRotateMatrix(ptr long long)
 @ stub GdipRotatePathGradientTransform

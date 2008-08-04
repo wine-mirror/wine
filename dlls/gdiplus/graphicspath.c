@@ -927,6 +927,60 @@ GpStatus WINGDIPAPI GdipGetPointCount(GpPath *path, INT *count)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipReversePath(GpPath* path)
+{
+    INT i, count;
+    INT start = 0; /* position in reversed path */
+    GpPathData revpath;
+
+    if(!path)
+        return InvalidParameter;
+
+    count = path->pathdata.Count;
+
+    if(count == 0) return Ok;
+
+    revpath.Points = GdipAlloc(sizeof(GpPointF)*count);
+    revpath.Types  = GdipAlloc(sizeof(BYTE)*count);
+    revpath.Count  = count;
+    if(!revpath.Points || !revpath.Types){
+        GdipFree(revpath.Points);
+        GdipFree(revpath.Types);
+        return OutOfMemory;
+    }
+
+    for(i = 0; i < count; i++){
+
+        /* find next start point */
+        if(path->pathdata.Types[count-i-1] == PathPointTypeStart){
+            INT j;
+            for(j = start; j <= i; j++){
+                revpath.Points[j] = path->pathdata.Points[count-j-1];
+                revpath.Types[j] = path->pathdata.Types[count-j-1];
+            }
+            /* mark start point */
+            revpath.Types[start] = PathPointTypeStart;
+            /* set 'figure' endpoint type */
+            if(i-start > 1){
+                revpath.Types[i] = path->pathdata.Types[count-start-1] & ~PathPointTypePathTypeMask;
+                revpath.Types[i] |= revpath.Types[i-1];
+            }
+            else
+                revpath.Types[i] = path->pathdata.Types[start];
+
+            start = i+1;
+        }
+    }
+
+    memcpy(path->pathdata.Points, revpath.Points, sizeof(GpPointF)*count);
+    memcpy(path->pathdata.Types,  revpath.Types,  sizeof(BYTE)*count);
+
+    GdipFree(revpath.Points);
+    GdipFree(revpath.Types);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipIsOutlineVisiblePathPointI(GpPath* path, INT x, INT y,
     GpPen *pen, GpGraphics *graphics, BOOL *result)
 {
