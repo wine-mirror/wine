@@ -186,8 +186,10 @@ static void testGetIfEntry(DWORD index)
 
     memset(&row, 0, sizeof(row));
     apiReturn = gGetIfEntry(NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetIfEntry is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetIfEntry(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -211,8 +213,10 @@ static void testGetIpAddrTable(void)
     ULONG dwSize = 0;
 
     apiReturn = gGetIpAddrTable(NULL, NULL, FALSE);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetIpAddrTable is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetIpAddrTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -241,8 +245,10 @@ static void testGetIfTable(void)
     ULONG dwSize = 0;
 
     apiReturn = gGetIfTable(NULL, NULL, FALSE);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetIfTable is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetIfTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -269,8 +275,10 @@ static void testGetIpForwardTable(void)
     ULONG dwSize = 0;
 
     apiReturn = gGetIpForwardTable(NULL, NULL, FALSE);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetIpForwardTable is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetIpForwardTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -297,8 +305,10 @@ static void testGetIpNetTable(void)
     ULONG dwSize = 0;
 
     apiReturn = gGetIpNetTable(NULL, NULL, FALSE);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetIpNetTable is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetIpNetTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -354,8 +364,10 @@ static void testGetIpStatistics(void)
     MIB_IPSTATS stats;
 
     apiReturn = gGetIpStatistics(NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetIpStatistics is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetIpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -372,8 +384,10 @@ static void testGetTcpStatistics(void)
     MIB_TCPSTATS stats;
 
     apiReturn = gGetTcpStatistics(NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetTcpStatistics is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetTcpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -390,8 +404,10 @@ static void testGetUdpStatistics(void)
     MIB_UDPSTATS stats;
 
     apiReturn = gGetUdpStatistics(NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetUdpStatistics is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetUdpStatistics(NULL) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -408,8 +424,10 @@ static void testGetTcpTable(void)
     ULONG dwSize = 0;
 
     apiReturn = gGetTcpTable(NULL, NULL, FALSE);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetTcpTable is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetTcpTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -436,8 +454,10 @@ static void testGetUdpTable(void)
     ULONG dwSize = 0;
 
     apiReturn = gGetUdpTable(NULL, NULL, FALSE);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetUdpTable is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetUdpTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -494,8 +514,10 @@ static void testGetInterfaceInfo(void)
     ULONG len = 0;
 
     apiReturn = gGetInterfaceInfo(NULL, NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetInterfaceInfo is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetInterfaceInfo returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -522,8 +544,10 @@ static void testGetAdaptersInfo(void)
     ULONG len = 0;
 
     apiReturn = gGetAdaptersInfo(NULL, NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetAdaptersInfo is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetAdaptersInfo returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -552,8 +576,10 @@ static void testGetNetworkParams(void)
     ULONG len = 0;
 
     apiReturn = gGetNetworkParams(NULL, NULL);
-    if (apiReturn == ERROR_NOT_SUPPORTED)
+    if (apiReturn == ERROR_NOT_SUPPORTED) {
+      skip("GetNetworkParams is not supported\n");
       return;
+    }
     ok(apiReturn == ERROR_INVALID_PARAMETER,
      "GetNetworkParams returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
@@ -594,6 +620,10 @@ static void testGetPerAdapterInfo(void)
 
     if (!gGetPerAdapterInfo) return;
     ret = gGetPerAdapterInfo(1, NULL, NULL);
+    if (ret == ERROR_NOT_SUPPORTED) {
+      skip("GetPerAdapterInfo is not supported\n");
+      return;
+    }
     ok( ret == ERROR_INVALID_PARAMETER, "got %u instead of ERROR_INVALID_PARAMETER\n", ret );
     needed = 0xdeadbeef;
     ret = gGetPerAdapterInfo(1, NULL, &needed);
