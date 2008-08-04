@@ -3438,10 +3438,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             checkGLcall("glDisable(GL_ALPHA_TEST)");
         }
 
-        /* Flush in case the drawable is used by multiple GL contexts */
-        if(dstSwapchain && (This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer || dstSwapchain->num_contexts >= 2))
-            glFlush();
-
         glBindTexture(Src->glDescription.target, 0);
         checkGLcall("glBindTexture(Src->glDescription.target, 0)");
         /* Leave the opengl state valid for blitting */
@@ -3464,6 +3460,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             Src->palette = NULL;
 
         LEAVE_GL();
+
+        /* Flush in case the drawable is used by multiple GL contexts */
+        if(dstSwapchain && (This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer || dstSwapchain->num_contexts >= 2))
+            glFlush();
 
         /* TODO: If the surface is locked often, perform the Blt in software on the memory instead */
         /* The surface is now in the drawable. On onscreen surfaces or without fbos the texture
@@ -3729,9 +3729,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
 
             /* Without this some palette updates are missed. This at least happens on Nvidia drivers but
              * it works fine using Mesa. */
-            ENTER_GL();
             glFlush();
-            LEAVE_GL();
         } else {
             if(!(This->Flags & SFLAG_INSYSMEM)) {
                 TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
@@ -4183,6 +4181,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         glDisable(GL_TEXTURE_2D);
         checkGLcall("glDisable(GL_TEXTURE_2D)");
     }
+    LEAVE_GL();
 
     hr = IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain);
     if(hr == WINED3D_OK && swapchain) {
@@ -4204,7 +4203,6 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
             IWineD3DBaseTexture_Release(texture);
         }
     }
-    LEAVE_GL();
 }
 
 /*****************************************************************************

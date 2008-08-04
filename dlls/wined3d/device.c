@@ -4945,10 +4945,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
 
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
-    ENTER_GL();
     glFlush();
-    checkGLcall("glFlush");
-    LEAVE_GL();
+    /* No checkGLcall here to avoid locking the lock just for checking a call that hardly ever
+     * fails
+     */
 
     This->inScene = FALSE;
     return WINED3D_OK;
