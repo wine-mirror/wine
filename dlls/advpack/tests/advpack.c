@@ -325,6 +325,13 @@ static void translateinfstringex_test(void)
     char buffer[MAX_PATH];
     DWORD size = MAX_PATH;
 
+    hr = pOpenINFEngine(inf_file, NULL, 0, &hinf, NULL);
+    if (hr == E_UNEXPECTED)
+    {
+        skip("Skipping tests on win9x because of brokenness\n");
+        return;
+    }
+
     create_inf_file();
     
     /* need to see if there are any flags */
