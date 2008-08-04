@@ -42,9 +42,12 @@ static void test_LoadStringW(void)
        the string at the pointer returned by LoadStringW when called with buflen = 0 */
     SetLastError(0xdeadbeef);
     length1 = LoadStringW(hInst, 2, (WCHAR *) &resourcepointer, 0); /* get pointer to resource. */
-    if (!length1 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    if (!length1)
     {
-        win_skip( "LoadStringW not implemented\n" );
+        if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+            win_skip( "LoadStringW not implemented\n" );
+        else
+            win_skip( "LoadStringW does not return a pointer to the resource\n" );
         return;
     }
     length2 = LoadStringW(hInst, 2, returnedstringw, sizeof(returnedstringw) /sizeof(WCHAR)); /* get resource string */

@@ -110,21 +110,21 @@ static void test_DrawTextCalcRect(void)
     SetRect( &rect, 10,10, 100, 100);
     textheight = DrawTextExA(hdc, text, 0, &rect, DT_CALCRECT, NULL );
     ok( !(rect.left == rect.right && rect.bottom == rect.top),
-            "rectangle should NOT be empty.\n");
+        "rectangle should NOT be empty got %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
     SetRect( &rect, 10,10, 100, 100);
     SetLastError( 0);
     textheight = DrawTextExA(hdc, emptystring, -1, &rect, DT_CALCRECT, NULL );
     ok( (rect.left == rect.right && rect.bottom == rect.top),
-            "rectangle should be empty.\n");
+        "rectangle should be empty got %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
     SetRect( &rect, 10,10, 100, 100);
     SetLastError( 0);
     textheight = DrawTextExA(hdc, NULL, -1, &rect, DT_CALCRECT, NULL );
     ok( (rect.left == rect.right && rect.bottom == rect.top),
-            "rectangle should be empty.\n");
+        "rectangle should be empty got %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
     SetRect( &rect, 10,10, 100, 100);
     textheight = DrawTextExA(hdc, NULL, 0, &rect, DT_CALCRECT, NULL );
     ok( !(rect.left == rect.right && rect.bottom == rect.top),
-            "rectangle should NOT be empty.\n");
+        "rectangle should NOT be empty got %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
 
     /* Wide char versions */
     SetRect( &rect, 10,10, 100, 100);
@@ -132,19 +132,23 @@ static void test_DrawTextCalcRect(void)
     textheight = DrawTextExW(hdc, textW, 0, &rect, DT_CALCRECT, NULL );
     if( GetLastError() != ERROR_CALL_NOT_IMPLEMENTED) {
         ok( !(rect.left == rect.right && rect.bottom == rect.top),
-                "rectangle should NOT be empty.\n");
+            "rectangle should NOT be empty got %d,%d-%d,%d\n",
+            rect.left, rect.top, rect.right, rect.bottom );
         SetRect( &rect, 10,10, 100, 100);
         textheight = DrawTextExW(hdc, emptystringW, -1, &rect, DT_CALCRECT, NULL );
         ok( (rect.left == rect.right && rect.bottom == rect.top),
-                "rectangle should be empty.\n");
+            "rectangle should be empty got %d,%d-%d,%d\n",
+            rect.left, rect.top, rect.right, rect.bottom );
         SetRect( &rect, 10,10, 100, 100);
         textheight = DrawTextExW(hdc, NULL, -1, &rect, DT_CALCRECT, NULL );
         ok( !(rect.left == rect.right && rect.bottom == rect.top),
-                "rectangle should NOT be empty.\n");
+            "rectangle should NOT be empty got %d,%d-%d,%d\n",
+            rect.left, rect.top, rect.right, rect.bottom );
         SetRect( &rect, 10,10, 100, 100);
         textheight = DrawTextExW(hdc, NULL, 0, &rect, DT_CALCRECT, NULL );
         ok( !(rect.left == rect.right && rect.bottom == rect.top),
-                "rectangle should NOT be empty.\n");
+            "rectangle should NOT be empty got %d,%d-%d,%d\n",
+            rect.left, rect.top, rect.right, rect.bottom );
     }
 
     /* More test cases from bug 12226 */
@@ -158,11 +162,18 @@ static void test_DrawTextCalcRect(void)
 
     SetRect(&rect, 0, 0, 0, 0);
     textheight = DrawTextW(hdc, emptystringW, -1, &rect, DT_CALCRECT | DT_LEFT | DT_SINGLELINE);
-    todo_wine ok(textheight, "DrawTextW error %u\n", GetLastError());
-    ok(0 == rect.left, "expected 0, got %d\n", rect.left);
-    ok(0 == rect.right, "expected 0, got %d\n", rect.right);
-    ok(0 == rect.top, "expected 0, got %d\n", rect.top);
-    todo_wine ok(rect.bottom, "rect.bottom should not be 0\n");
+    if (!textheight && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip( "DrawTextW not implemented\n" );
+    }
+    else
+    {
+        todo_wine ok(textheight, "DrawTextW error %u\n", GetLastError());
+        ok(0 == rect.left, "expected 0, got %d\n", rect.left);
+        ok(0 == rect.right, "expected 0, got %d\n", rect.right);
+        ok(0 == rect.top, "expected 0, got %d\n", rect.top);
+        todo_wine ok(rect.bottom, "rect.bottom should not be 0\n");
+    }
 
     SelectObject(hdc, hOldFont);
     ret = DeleteObject(hFont);
