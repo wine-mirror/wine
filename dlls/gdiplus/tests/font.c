@@ -108,6 +108,11 @@ todo_wine {
     memcpy(&lfw.lfFaceName, arial, 6 * sizeof(WCHAR));
 
     stat = GdipCreateFontFromLogfontW(hdc, &lfw, &font);
+    if (stat == FileNotFound)
+    {
+        skip("Arial not installed.\n");
+        return;
+    }
     expect(Ok, stat);
     stat = GdipGetLogFontW(font, graphics, &lfw2);
     expect(Ok, stat);
@@ -282,6 +287,11 @@ static void test_getgenerics (void)
     ZeroMemory(familyName, sizeof(familyName)/sizeof(WCHAR));
 
     stat = GdipGetGenericFontFamilySansSerif (&family);
+    if (stat == FontFamilyNotFound)
+    {
+        skip("Microsoft Sans Serif not installed\n");
+        goto serif;
+    }
     expect (Ok, stat);
     stat = GdipGetFamilyName (family, familyName, LANG_NEUTRAL);
     expect (Ok, stat);
@@ -292,7 +302,13 @@ static void test_getgenerics (void)
     stat = GdipDeleteFontFamily (family);
     expect (Ok, stat);
 
+serif:
     stat = GdipGetGenericFontFamilySerif (&family);
+    if (stat == FontFamilyNotFound)
+    {
+        skip("Times New Roman not installed\n");
+        goto monospace;
+    }
     expect (Ok, stat);
     stat = GdipGetFamilyName (family, familyName, LANG_NEUTRAL);
     expect (Ok, stat);
@@ -301,7 +317,13 @@ static void test_getgenerics (void)
     stat = GdipDeleteFontFamily (family);
     expect (Ok, stat);
 
+monospace:
     stat = GdipGetGenericFontFamilyMonospace (&family);
+    if (stat == FontFamilyNotFound)
+    {
+        skip("Courier New not installed\n");
+        return;
+    }
     expect (Ok, stat);
     stat = GdipGetFamilyName (family, familyName, LANG_NEUTRAL);
     expect (Ok, stat);
