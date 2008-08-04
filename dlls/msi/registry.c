@@ -1734,6 +1734,36 @@ UINT WINAPI MsiEnumRelatedProductsA(LPCSTR szUpgradeCode, DWORD dwReserved,
 }
 
 /***********************************************************************
+ * MsiEnumPatchesExA            [MSI.@]
+ */
+UINT WINAPI MsiEnumPatchesExA(LPCSTR szProductCode, LPCSTR szUserSid,
+        DWORD dwContext, DWORD dwFilter, DWORD dwIndex, LPSTR szPatchCode,
+        LPSTR szTargetProductCode, MSIINSTALLCONTEXT *pdwTargetProductContext,
+        LPSTR szTargetUserSid, LPSTR pcchTargetUserSid)
+{
+    FIXME("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p) stub!\n",
+          debugstr_a(szProductCode), debugstr_a(szUserSid), dwContext, dwFilter,
+          dwIndex, szPatchCode, szTargetProductCode, pdwTargetProductContext,
+          szTargetUserSid, pcchTargetUserSid);
+    return ERROR_NO_MORE_ITEMS;
+}
+
+/***********************************************************************
+ * MsiEnumPatchesW            [MSI.@]
+ */
+UINT WINAPI MsiEnumPatchesExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
+        DWORD dwContext, DWORD dwFilter, DWORD dwIndex, LPWSTR szPatchCode,
+        LPWSTR szTargetProductCode, MSIINSTALLCONTEXT *pdwTargetProductContext,
+        LPWSTR szTargetUserSid, LPWSTR pcchTargetUserSid)
+{
+    FIXME("(%s, %s, %d, %d, %d, %p, %p, %p, %p, %p) stub!\n",
+          debugstr_w(szProductCode), debugstr_w(szUserSid), dwContext, dwFilter,
+          dwIndex, szPatchCode, szTargetProductCode, pdwTargetProductContext,
+          szTargetUserSid, pcchTargetUserSid);
+    return ERROR_NO_MORE_ITEMS;
+}
+
+/***********************************************************************
  * MsiEnumPatchesA            [MSI.@]
  */
 UINT WINAPI MsiEnumPatchesA( LPCSTR szProduct, DWORD iPatchIndex,
