@@ -1065,16 +1065,22 @@ static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target,
     }
     else
     {
-        if (!blit && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
-            if (GL_SUPPORT(ARB_DRAW_BUFFERS))
+            if (!blit)
             {
-                GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), This->draw_buffers));
-                checkGLcall("glDrawBuffers()");
-            }
-            else
-            {
-                glDrawBuffer(This->draw_buffers[0]);
+                if (GL_SUPPORT(ARB_DRAW_BUFFERS))
+                {
+                    GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), This->draw_buffers));
+                    checkGLcall("glDrawBuffers()");
+                }
+                else
+                {
+                    glDrawBuffer(This->draw_buffers[0]);
+                    checkGLcall("glDrawBuffer()");
+                }
+            } else {
+                glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
                 checkGLcall("glDrawBuffer()");
             }
         }
@@ -1165,7 +1171,16 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
         case CTXUSAGE_BLIT:
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+                if (This->render_offscreen) {
+                    FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
+                    bind_fbo((IWineD3DDevice *)This, GL_FRAMEBUFFER_EXT, &This->dst_fbo);
+                    attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, target);
+                    GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
+                    checkGLcall("glFramebufferRenderbufferEXT");
+                } else {
+                    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+                    checkGLcall("glFramebufferRenderbufferEXT");
+                }
                 context->draw_buffer_dirty = TRUE;
             }
             if (context->draw_buffer_dirty) {

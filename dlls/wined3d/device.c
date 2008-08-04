@@ -6127,7 +6127,7 @@ void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWine
     }
 }
 
-static void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) {
+void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface) {
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
     IWineD3DBaseTextureImpl *texture_impl;
     GLenum texttarget, target;
