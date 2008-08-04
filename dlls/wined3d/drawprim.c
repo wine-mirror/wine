@@ -941,12 +941,6 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        ENTER_GL();
-        apply_fbo_state(iface);
-        LEAVE_GL();
-    }
-
     ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
     ENTER_GL();
 

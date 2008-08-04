@@ -5026,10 +5026,6 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     ActivateContext(This, (IWineD3DSurface *) target, CTXUSAGE_CLEAR);
     ENTER_GL();
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        apply_fbo_state((IWineD3DDevice *) This);
-    }
-
     /* Only set the values up once, as they are not changing */
     if (Flags & WINED3DCLEAR_STENCIL) {
         glClearStencil(Stencil);
@@ -6589,14 +6585,6 @@ void apply_fbo_state(IWineD3DDevice *iface) {
             }
             set_depth_stencil_fbo(iface, This->stencilBufferTarget);
             This->fbo_depth_attachment = This->stencilBufferTarget;
-        }
-
-        if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
-            GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), This->draw_buffers));
-            checkGLcall("glDrawBuffers()");
-        } else {
-            glDrawBuffer(This->draw_buffers[0]);
-            checkGLcall("glDrawBuffer()");
         }
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));

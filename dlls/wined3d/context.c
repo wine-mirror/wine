@@ -1051,7 +1051,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     return context;
 }
 
-static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target)
+static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target, BOOL blit)
 {
     HRESULT hr;
     IWineD3DSwapChain *swapchain;
@@ -1065,8 +1065,24 @@ static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target)
     }
     else
     {
-        glDrawBuffer(This->offscreenBuffer);
-        checkGLcall("glDrawBuffer()");
+        if (!blit && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+        {
+            if (GL_SUPPORT(ARB_DRAW_BUFFERS))
+            {
+                GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), This->draw_buffers));
+                checkGLcall("glDrawBuffers()");
+            }
+            else
+            {
+                glDrawBuffer(This->draw_buffers[0]);
+                checkGLcall("glDrawBuffer()");
+            }
+        }
+        else
+        {
+            glDrawBuffer(This->offscreenBuffer);
+            checkGLcall("glDrawBuffer()");
+        }
     }
 }
 
@@ -1135,9 +1151,33 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     /* We only need ENTER_GL for the gl calls made below and for the helper functions which make GL calls */
     ENTER_GL();
 
-    if (context->draw_buffer_dirty) {
-        apply_draw_buffer(This, target);
-        context->draw_buffer_dirty = FALSE;
+    switch (usage) {
+        case CTXUSAGE_CLEAR:
+        case CTXUSAGE_DRAWPRIM:
+            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+                apply_fbo_state((IWineD3DDevice *)This);
+            }
+            if (context->draw_buffer_dirty) {
+                apply_draw_buffer(This, target, FALSE);
+                context->draw_buffer_dirty = FALSE;
+            }
+            break;
+
+        case CTXUSAGE_BLIT:
+            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+                context->draw_buffer_dirty = TRUE;
+            }
+            if (context->draw_buffer_dirty) {
+                apply_draw_buffer(This, target, TRUE);
+                if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
+                    context->draw_buffer_dirty = FALSE;
+                }
+            }
+            break;
+
+        default:
+            break;
     }
 
     switch(usage) {
