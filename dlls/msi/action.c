@@ -5743,7 +5743,7 @@ static UINT ITERATE_PublishAssembly( MSIRECORD *rec, LPVOID param )
     if (!comp || !comp->Enabled ||
         !(comp->Action & (INSTALLSTATE_LOCAL | INSTALLSTATE_SOURCE)))
     {
-        ERR("Component not set for install, not publishing assembly\n");
+        TRACE("Component not set for install, not publishing assembly\n");
         return ERROR_SUCCESS;
     }
 
