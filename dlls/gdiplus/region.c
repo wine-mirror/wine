@@ -162,15 +162,78 @@ static inline void delete_element(region_element* element)
     }
 }
 
+static inline GpStatus clone_element(const region_element* element,
+        region_element** element2)
+{
+    GpStatus stat;
+
+    *element2 = GdipAlloc(sizeof(region_element));
+    if (!*element2)
+        return OutOfMemory;
+
+    (*element2)->type = element->type;
+
+    switch (element->type)
+    {
+        case RegionDataRect:
+            (*element2)->elementdata.rect = element->elementdata.rect;
+            break;
+        case RegionDataEmptyRect:
+        case RegionDataInfiniteRect:
+            break;
+        case RegionDataPath:
+            (*element2)->elementdata.pathdata.pathheader = element->elementdata.pathdata.pathheader;
+            stat = GdipClonePath(element->elementdata.pathdata.path,
+                    &(*element2)->elementdata.pathdata.path);
+            if (stat != Ok) goto clone_out;
+            break;
+        default:
+            stat = clone_element(element->elementdata.combine.left,
+                    &(*element2)->elementdata.combine.left);
+            if (stat != Ok) goto clone_out;
+            stat = clone_element(element->elementdata.combine.right,
+                    &(*element2)->elementdata.combine.right);
+            if (stat != Ok) goto clone_out;
+            break;
+    }
+
+    return Ok;
+
+clone_out:
+    delete_element(*element2);
+    *element2 = NULL;
+    return stat;
+}
+
 /*****************************************************************************
  * GdipCloneRegion [GDIPLUS.@]
+ *
+ * Creates a deep copy of the region
+ *
+ * PARAMS
+ *  region  [I] source region
+ *  clone   [O] resulting clone
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter or OutOfMemory
  */
 GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *region, GpRegion **clone)
 {
-    FIXME("(%p %p): stub\n", region, clone);
+    region_element *element;
 
-    *clone = NULL;
-    return NotImplemented;
+    TRACE("%p %p\n", region, clone);
+
+    if (!(region && clone))
+        return InvalidParameter;
+
+    *clone = GdipAlloc(sizeof(GpRegion));
+    if (!*clone)
+        return OutOfMemory;
+    element = &(*clone)->node;
+
+    (*clone)->header = region->header;
+    return clone_element(&region->node, &element);
 }
 
 GpStatus WINGDIPAPI GdipCombineRegionPath(GpRegion *region, GpPath *path, CombineMode mode)
