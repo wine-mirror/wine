@@ -154,19 +154,45 @@ static void clean_after_shfo_tests(void)
 static void test_get_file_info(void)
 {
     DWORD rc, rc2;
-    SHFILEINFO shfi, shfi2;
+    SHFILEINFOA shfi, shfi2;
+    SHFILEINFOW shfiw;
     char notepad[MAX_PATH];
+
+    /* Test whether fields of SHFILEINFOA are always cleared */
+    memset(&shfi, 0xcf, sizeof(shfi));
+    rc=SHGetFileInfoA("", 0, &shfi, sizeof(shfi), 0);
+    ok(rc, "SHGetFileInfoA('' | 0) should not fail\n");
+    todo_wine ok(shfi.hIcon == 0, "SHGetFileInfoA('' | 0) did not clear hIcon\n");
+    todo_wine ok(shfi.szDisplayName[0] == 0, "SHGetFileInfoA('' | 0) did not clear szDisplayName[0]\n");
+    todo_wine ok(shfi.szTypeName[0] == 0, "SHGetFileInfoA('' | 0) did not clear szTypeName[0]\n");
+    ok(shfi.iIcon == 0xcfcfcfcf, "SHGetFileInfoA('' | 0) should not clear iIcon\n");
+    ok(shfi.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoA('' | 0) should not clear dwAttributes\n");
+
+    /* Test whether fields of SHFILEINFOW are always cleared */
+    memset(&shfiw, 0xcf, sizeof(shfiw));
+    rc=SHGetFileInfoW(NULL, 0, &shfiw, sizeof(shfiw), 0);
+    todo_wine ok(!rc, "SHGetFileInfoW(NULL | 0) should fail\n");
+    ok(shfiw.hIcon == (HANDLE) 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear hIcon\n");
+    todo_wine ok(shfiw.szDisplayName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szDisplayName[0]\n");
+    todo_wine ok(shfiw.szTypeName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szTypeName[0]\n");
+    todo_wine ok(shfiw.iIcon == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear iIcon\n");
+    ok(shfiw.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear dwAttributes\n");
+
 
     /* Test some flag combinations that MSDN claims are not allowed,
      * but which work anyway
      */
-    shfi.dwAttributes=0xdeadbeef;
+    memset(&shfi, 0xcf, sizeof(shfi));
     rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
                       &shfi, sizeof(shfi),
                       SHGFI_ATTRIBUTES | SHGFI_USEFILEATTRIBUTES);
     todo_wine ok(rc, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) failed\n");
     if (rc)
-        ok(shfi.dwAttributes != 0xdeadbeef, "dwFileAttributes is not set\n");
+        ok(shfi.dwAttributes != 0xcfcfcfcf, "dwFileAttributes is not set\n");
+    todo_wine ok(shfi.hIcon == 0, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) did not clear hIcon\n");
+    todo_wine ok(shfi.szDisplayName[0] == 0, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) did not clear szDisplayName[0]\n");
+    todo_wine ok(shfi.szTypeName[0] == 0, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) did not clear szTypeName[0]\n");
+    ok(shfi.iIcon == 0xcfcfcfcf, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) should not clear iIcon\n");
 
     rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
                       &shfi, sizeof(shfi),
@@ -228,6 +254,48 @@ static void test_get_file_info(void)
         ok(lstrcmpi(shfi2.szDisplayName, shfi.szDisplayName) == 0, "wrong display name %s != %s\n", shfi.szDisplayName, shfi2.szDisplayName);
         ok(shfi2.iIcon == shfi.iIcon, "wrong icon index %d != %d\n", shfi.iIcon, shfi2.iIcon);
     }
+}
+
+static void test_get_file_info_iconlist(void)
+{
+    /* Test retrieving a handle to the system image list, and
+     * what that returns for hIcon
+     */
+    HRESULT hr;
+    HIMAGELIST hSysImageList;
+    LPITEMIDLIST pidList;
+    SHFILEINFOA shInfoa;
+    SHFILEINFOW shInfow;
+
+    hr = SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidList);
+    if (!SUCCEEDED(hr)) {
+         skip("can't get desktop pidl\n");
+         return;
+    }
+
+    memset(&shInfoa, 0xcf, sizeof(shInfoa));
+    hSysImageList = (HIMAGELIST) SHGetFileInfoA((const char *)pidList, 0,
+            &shInfoa, sizeof(shInfoa),
+	    SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_PIDL);
+    ok(hSysImageList != INVALID_HANDLE_VALUE, "Can't get handle for CSIDL_DESKTOP imagelist\n");
+    todo_wine ok(shInfoa.hIcon == 0, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear hIcon\n");
+    todo_wine ok(shInfoa.szTypeName[0] == 0, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear szTypeName[0]\n");
+    ok(shInfoa.iIcon != 0xcfcfcfcf, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should set iIcon\n");
+    ok(shInfoa.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should not change dwAttributes\n");
+    CloseHandle(hSysImageList);
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hSysImageList = (HIMAGELIST) SHGetFileInfoW((const WCHAR *)pidList, 0,
+            &shInfow, sizeof(shInfow),
+	    SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_PIDL);
+    ok(hSysImageList != INVALID_HANDLE_VALUE, "Can't get handle for CSIDL_DESKTOP imagelist\n");
+    todo_wine ok(shInfow.hIcon == 0, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear hIcon\n");
+    ok(shInfow.szTypeName[0] == 0, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) did not clear szTypeName[0]\n");
+    ok(shInfow.iIcon != 0xcfcfcfcf, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should set iIcon\n");
+    ok(shInfow.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should not change dwAttributes\n");
+    CloseHandle(hSysImageList);
+
+    ILFree(pidList);
 }
 
 
@@ -1447,6 +1515,7 @@ START_TEST(shlfileop)
 
     init_shfo_tests();
     test_get_file_info();
+    test_get_file_info_iconlist();
     clean_after_shfo_tests();
 
     init_shfo_tests();
