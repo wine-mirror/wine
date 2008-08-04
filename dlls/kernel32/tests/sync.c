@@ -54,7 +54,7 @@ static void test_signalandwait(void)
     r = pSignalObjectAndWait(NULL, NULL, 0, 0);
     if (r == ERROR_INVALID_FUNCTION)
     {
-        trace("SignalObjectAndWait not implemented, skipping tests\n");
+        skip("SignalObjectAndWait is not implemented\n");
         return; /* Win98/ME */
     }
     ok( r == WAIT_FAILED, "should fail\n");
@@ -427,7 +427,9 @@ static void test_waitable_timer(void)
     SetLastError(0xdeadbeef);
     handle2 = pOpenWaitableTimerA( TIMER_ALL_ACCESS, FALSE, __FILE__ ": TEST WAITABLETIMER");
     ok( !handle2, "OpenWaitableTimer succeeded\n");
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND ||
+        GetLastError() == ERROR_INVALID_NAME, /* win98 */
+        "wrong error %u\n", GetLastError());
 
     CloseHandle( handle );
 }
