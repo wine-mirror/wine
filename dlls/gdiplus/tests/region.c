@@ -71,13 +71,9 @@ static void test_getregiondata(void)
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
 todo_wine
-{
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
-}
     expect(20, needed);
-todo_wine
-{
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic((DWORD*)(buf + 2));
@@ -85,26 +81,18 @@ todo_wine
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
 
     status = GdipSetEmpty(region);
-}
     ok(status == Ok, "status %08x\n", status);
-todo_wine
-{
     status = GdipGetRegionDataSize(region, &needed);
-}
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
-todo_wine
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
-todo_wine
-{
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_EMPTY_RECT);
-}
 
     status = GdipSetInfinite(region);
     ok(status == Ok, "status %08x\n", status);
@@ -112,17 +100,13 @@ todo_wine
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
-todo_wine
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
-todo_wine
-{
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
-}
 
     status = GdipDeleteRegion(region);
     ok(status == Ok, "status %08x\n", status);
@@ -143,8 +127,11 @@ todo_wine
     expect(36, needed);
     expect_dword(buf, 28);
     trace("buf[1] = %08x\n", buf[1]);
+}
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3, 0);
+todo_wine
+{
     expect_dword(buf + 4, RGNDATA_RECT);
     expect_float(buf + 5, 10.0);
     expect_float(buf + 6, 20.0);
@@ -195,7 +182,10 @@ todo_wine
     expect(156, needed);
     expect_dword(buf, 148);
     trace("buf[1] = %08x\n", buf[1]);
+}
     expect_magic((DWORD*)(buf + 2));
+todo_wine
+{
     expect_dword(buf + 3, 10);
     expect_dword(buf + 4, CombineModeExclude);
     expect_dword(buf + 5, CombineModeComplement);
@@ -257,8 +247,11 @@ todo_wine
     expect(72, needed);
     expect_dword(buf, 64);
     trace("buf[1] = %08x\n", buf[1]);
+}
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3, 0);
+todo_wine
+{
     expect_dword(buf + 4, RGNDATA_PATH);
     expect_dword(buf + 5, 0x00000030);
     expect_magic((DWORD*)(buf + 6));
@@ -289,7 +282,10 @@ todo_wine
     expect(96, needed);
     expect_dword(buf, 88);
     trace("buf[1] = %08x\n", buf[1]);
+}
     expect_magic((DWORD*)(buf + 2));
+todo_wine
+{
     expect_dword(buf + 3, 2);
     expect_dword(buf + 4, CombineModeIntersect);
     expect_dword(buf + 5, RGNDATA_PATH);
@@ -333,8 +329,11 @@ todo_wine
     expect(36, needed);
     expect_dword(buf, 28);
     trace("buf[1] = %08x\n", buf[1]);
+}
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3, 0);
+todo_wine
+{
     expect_dword(buf + 4, RGNDATA_PATH);
 
     /* Second signature for pathdata */
@@ -365,9 +364,12 @@ todo_wine
     expect(Ok, status);
     expect(56, needed);
     expect_dword(buf, 48);
+}
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3 , 0);
+todo_wine
+{
     expect_dword(buf + 4 , RGNDATA_PATH);
 
     expect_dword(buf + 5, 32);
@@ -399,9 +401,9 @@ todo_wine
     expect(Ok, status);
     status = GdipAddPathLine(path, 8.1, 1.6, 5.6, 6.2);
     expect(Ok, status);
+    status = GdipCreateRegionPath(path, &region);
 todo_wine
 {
-    status = GdipCreateRegionPath(path, &region);
     expect(Ok, status);
     status = GdipGetRegionDataSize(region, &needed);
     expect(Ok, status);
@@ -411,8 +413,11 @@ todo_wine
     expect(72, needed);
     expect_dword(buf, 64);
     trace("buf[1] = %08x\n", buf[1]);
+}
     expect_magic((DWORD*)(buf + 2));
     expect_dword(buf + 3, 0);
+todo_wine
+{
     expect_dword(buf + 4, RGNDATA_PATH);
 
     expect_dword(buf + 5, 48);

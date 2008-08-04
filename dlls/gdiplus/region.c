@@ -81,10 +81,30 @@ typedef enum RegionType
     RegionDataInfiniteRect  = 0x10000003,
 } RegionType;
 
+#define FLAGS_NOFLAGS   0x0
+#define FLAGS_INTPATH   0x4000
+
 /* Header size as far as header->size is concerned. This doesn't include
  * header->size or header->checksum
  */
 static const INT sizeheader_size = sizeof(DWORD) * 2;
+
+typedef struct packed_point
+{
+    short X;
+    short Y;
+} packed_point;
+
+/* Everything is measured in DWORDS; round up if there's a remainder */
+static inline INT get_pathtypes_size(const GpPath* path)
+{
+    INT needed = path->pathdata.Count / sizeof(DWORD);
+
+    if (path->pathdata.Count % sizeof(DWORD) > 0)
+        needed++;
+
+    return needed * sizeof(DWORD);
+}
 
 static inline INT get_element_size(const region_element* element)
 {
@@ -261,11 +281,148 @@ GpStatus WINGDIPAPI GdipGetRegionBoundsI(GpRegion *region, GpGraphics *graphics,
     return NotImplemented;
 }
 
-GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size, UINT *needed)
+static inline void write_dword(DWORD* location, INT* offset, const DWORD write)
 {
-    FIXME("(%p, %p, %d, %p): stub\n", region, buffer, size, needed);
+    location[*offset] = write;
+    (*offset)++;
+}
 
-    return NotImplemented;
+static inline void write_float(DWORD* location, INT* offset, const FLOAT write)
+{
+    ((FLOAT*)location)[*offset] = write;
+    (*offset)++;
+}
+
+static inline void write_packed_point(DWORD* location, INT* offset,
+        const GpPointF* write)
+{
+    packed_point point;
+
+    point.X = write->X;
+    point.Y = write->Y;
+    memcpy(location + *offset, &point, sizeof(packed_point));
+    (*offset)++;
+}
+
+static inline void write_path_types(DWORD* location, INT* offset,
+        const GpPath* path)
+{
+    memcpy(location + *offset, path->pathdata.Types, path->pathdata.Count);
+
+    /* The unwritten parts of the DWORD (if any) must be cleared */
+    if (path->pathdata.Count % sizeof(DWORD))
+        ZeroMemory(((BYTE*)location) + (*offset * sizeof(DWORD)) +
+                path->pathdata.Count,
+                sizeof(DWORD) - path->pathdata.Count % sizeof(DWORD));
+    *offset += (get_pathtypes_size(path) / sizeof(DWORD));
+}
+
+static void write_element(const region_element* element, DWORD *buffer,
+        INT* filled)
+{
+    write_dword(buffer, filled, element->type);
+    switch (element->type)
+    {
+        case CombineModeReplace:
+        case CombineModeIntersect:
+        case CombineModeUnion:
+        case CombineModeXor:
+        case CombineModeExclude:
+        case CombineModeComplement:
+            write_element(element->elementdata.combine.left, buffer, filled);
+            write_element(element->elementdata.combine.right, buffer, filled);
+            break;
+        case RegionDataRect:
+            write_float(buffer, filled, element->elementdata.rect.X);
+            write_float(buffer, filled, element->elementdata.rect.Y);
+            write_float(buffer, filled, element->elementdata.rect.Width);
+            write_float(buffer, filled, element->elementdata.rect.Height);
+            break;
+        case RegionDataPath:
+        {
+            INT i;
+            const GpPath* path = element->elementdata.pathdata.path;
+
+            memcpy(buffer + *filled, &element->elementdata.pathdata.pathheader,
+                    sizeof(element->elementdata.pathdata.pathheader));
+            *filled += sizeof(element->elementdata.pathdata.pathheader) / sizeof(DWORD);
+            switch (element->elementdata.pathdata.pathheader.flags)
+            {
+                case FLAGS_NOFLAGS:
+                    for (i = 0; i < path->pathdata.Count; i++)
+                    {
+                        write_float(buffer, filled, path->pathdata.Points[i].X);
+                        write_float(buffer, filled, path->pathdata.Points[i].Y);
+                    }
+                    break;
+                case FLAGS_INTPATH:
+                    for (i = 0; i < path->pathdata.Count; i++)
+                    {
+                        write_packed_point(buffer, filled,
+                                &path->pathdata.Points[i]);
+                    }
+            }
+            write_path_types(buffer, filled, path);
+            break;
+        }
+        case RegionDataEmptyRect:
+        case RegionDataInfiniteRect:
+            break;
+    }
+}
+
+/*****************************************************************************
+ * GdipGetRegionData [GDIPLUS.@]
+ *
+ * Returns the header, followed by combining ops and region elements.
+ *
+ * PARAMS
+ *  region  [I] region to retrieve from
+ *  buffer  [O] buffer to hold the resulting data
+ *  size    [I] size of the buffer
+ *  needed  [O] (optional) how much data was written
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParamter
+ *
+ * NOTES
+ *  The header contains the size, a checksum, a version string, and the number
+ *  of children. The size does not count itself or the checksum.
+ *  Version is always something like 0xdbc01001 or 0xdbc01002
+ *
+ *  An element is a RECT, or PATH; Combining ops are stored as their
+ *  CombineMode value. Special regions (infinite, empty) emit just their
+ *  op-code; GpRectFs emit their code followed by their points; GpPaths emit
+ *  their code followed by a second header for the path followed by the actual
+ *  path data. Followed by the flags for each point. The pathheader contains
+ *  the size of the data to follow, a version number again, followed by a count
+ *  of how many points, and any special flags which may apply. 0x4000 means its
+ *  a path of shorts instead of FLOAT.
+ *
+ *  Combining Ops are stored in reverse order from when they were constructed;
+ *  the output is a tree where the left side combining area is always taken
+ *  first.
+ */
+GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
+        UINT *needed)
+{
+    INT filled = 0;
+
+    if (!(region && buffer && size))
+        return InvalidParameter;
+
+    TRACE("%p, %p, %d, %p\n", region, buffer, size, needed);
+    memcpy(buffer, &region->header, sizeof(region->header));
+    filled += sizeof(region->header) / sizeof(DWORD);
+    /* With few exceptions, everything written is DWORD aligned,
+     * so use that as our base */
+    write_element(&region->node, (DWORD*)buffer, &filled);
+
+    if (needed)
+        *needed = filled * sizeof(DWORD);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
