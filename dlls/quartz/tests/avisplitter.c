@@ -25,6 +25,10 @@
 #include "dshow.h"
 #include "tlhelp32.h"
 
+static HANDLE (WINAPI *pCreateToolhelp32Snapshot)(DWORD, DWORD);
+static BOOL (WINAPI *pThread32First)(HANDLE, LPTHREADENTRY32);
+static BOOL (WINAPI *pThread32Next)(HANDLE, LPTHREADENTRY32);
+
 static IUnknown *pAviSplitter = NULL;
 
 static int count_threads(void)
@@ -33,19 +37,19 @@ static int count_threads(void)
     int threads;
     HANDLE h;
 
-    h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    h = pCreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     te.dwSize = sizeof(te);
 
     if (h == INVALID_HANDLE_VALUE)
         return -1;
 
-    Thread32First(h, &te);
+    pThread32First(h, &te);
     if (te.th32OwnerProcessID == GetCurrentProcessId())
         threads = 1;
     else
         threads = 0;
 
-    while (Thread32Next(h, &te))
+    while (pThread32Next(h, &te))
         if (te.th32OwnerProcessID == GetCurrentProcessId())
             ++threads;
 
@@ -194,6 +198,13 @@ static void test_threads()
     char buffer[13];
     DWORD readbytes;
     FILTER_STATE state;
+
+    /* We need another way of counting threads on NT4. Skip these tests (for now) */
+    if (!pCreateToolhelp32Snapshot || !pThread32First || !pThread32Next)
+    {
+        win_skip("Needed thread functions are not available (NT4)\n");
+        return;
+    }
 
     /* Before doing anything */
     baselevel = count_threads();
@@ -447,6 +458,12 @@ fail:
 
 START_TEST(avisplitter)
 {
+    HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
+
+    pCreateToolhelp32Snapshot = (void*)GetProcAddress(kernel32, "CreateToolhelp32Snapshot");
+    pThread32First = (void*)GetProcAddress(kernel32, "Thread32First");
+    pThread32Next = (void*)GetProcAddress(kernel32, "Thread32Next");
+
     CoInitialize(NULL);
 
     if (!create_avisplitter())
