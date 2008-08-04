@@ -6,6 +6,7 @@ MODULE    = mstask.dll
 IMPORTS   = uuid kernel32
 
 C_SRCS = \
+	task.c \
 	factory.c \
 	mstask_main.c \
 	task_scheduler.c

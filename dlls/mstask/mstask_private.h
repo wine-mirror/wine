@@ -45,4 +45,13 @@ typedef struct
 } TaskSchedulerImpl;
 extern HRESULT TaskSchedulerConstructor(LPVOID *ppObj);
 
+typedef struct
+{
+    const ITaskVtbl *lpVtbl;
+    const IPersistFileVtbl *persistVtbl;
+    LONG ref;
+    LPWSTR taskName;
+} TaskImpl;
+extern HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj);
+
 #endif /* __MSTASK_PRIVATE_H__ */
