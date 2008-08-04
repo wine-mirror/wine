@@ -1569,7 +1569,12 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 
     if (!devSrc->bitmap || GetObjectW( devSrc->bitmap->hbitmap, sizeof(dib), &dib ) != sizeof(dib))
     {
-        FIXME("not a dibsection\n");
+        static BOOL out = FALSE;
+        if (!out)
+        {
+            FIXME("not a dibsection\n");
+            out = TRUE;
+        }
         return FALSE;
     }
 
