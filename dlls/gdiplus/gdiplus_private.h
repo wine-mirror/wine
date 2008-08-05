@@ -52,6 +52,8 @@ extern void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
 extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
     REAL tension, REAL *x, REAL *y);
 
+extern BOOL lengthen_path(GpPath *path, INT len);
+
 static inline INT roundr(REAL x)
 {
     return (INT) floorf(x + 0.5);

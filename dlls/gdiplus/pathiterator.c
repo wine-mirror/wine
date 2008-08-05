@@ -164,8 +164,10 @@ GpStatus WINGDIPAPI GdipPathIterNextSubpath(GpPathIterator* iterator,
     count = iterator->pathdata.Count;
 
     /* iterator created with NULL path */
-    if(count == 0)
+    if(count == 0){
+        *resultCount = 0;
         return Ok;
+    }
 
     if(iterator->subpath_pos == count){
         *startIndex = *endIndex = *resultCount = 0;
@@ -232,6 +234,30 @@ GpStatus WINGDIPAPI GdipPathIterIsValid(GpPathIterator* iterator, BOOL* valid)
         return InvalidParameter;
 
     *valid = TRUE;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipPathIterNextSubpathPath(GpPathIterator* iter, INT* result,
+    GpPath* path, BOOL* closed)
+{
+    INT start, end;
+
+    if(!iter || !result || !closed)
+        return InvalidParameter;
+
+    GdipPathIterNextSubpath(iter, result, &start, &end, closed);
+    /* return path */
+    if(((*result) > 0) && path){
+        GdipResetPath(path);
+
+        if(!lengthen_path(path, *result))
+            return OutOfMemory;
+
+        memcpy(path->pathdata.Points, &(iter->pathdata.Points[start]), sizeof(GpPointF)*(*result));
+        memcpy(path->pathdata.Types,  &(iter->pathdata.Types[start]),  sizeof(BYTE)*(*result));
+        path->pathdata.Count = *result;
+    }
 
     return Ok;
 }

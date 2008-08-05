@@ -33,39 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
-/* make sure path has enough space for len more points */
-static BOOL lengthen_path(GpPath *path, INT len)
-{
-    /* initial allocation */
-    if(path->datalen == 0){
-        path->datalen = len * 2;
-
-        path->pathdata.Points = GdipAlloc(path->datalen * sizeof(PointF));
-        if(!path->pathdata.Points)   return FALSE;
-
-        path->pathdata.Types = GdipAlloc(path->datalen);
-        if(!path->pathdata.Types){
-            GdipFree(path->pathdata.Points);
-            return FALSE;
-        }
-    }
-    /* reallocation, double size of arrays */
-    else if(path->datalen - path->pathdata.Count < len){
-        while(path->datalen - path->pathdata.Count < len)
-            path->datalen *= 2;
-
-        path->pathdata.Points = HeapReAlloc(GetProcessHeap(), 0,
-            path->pathdata.Points, path->datalen * sizeof(PointF));
-        if(!path->pathdata.Points)  return FALSE;
-
-        path->pathdata.Types = HeapReAlloc(GetProcessHeap(), 0,
-            path->pathdata.Types, path->datalen);
-        if(!path->pathdata.Types)   return FALSE;
-    }
-
-    return TRUE;
-}
-
 GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     REAL y2, REAL startAngle, REAL sweepAngle)
 {
