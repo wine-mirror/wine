@@ -5681,6 +5681,313 @@ static void test_GetMessageCount(void)
 
 }
 
+/* GetMessageQueue */
+
+static void test_GetMessageQueue(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[4];
+    CallbackData callbackData;
+    HRESULT hr;
+    UINT i;
+    DWORD dwNumMsgs, dwNumBytes;
+
+    DWORD dwDataSize = 1024;
+    LPVOID lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwDataSize );
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, 0, 0,
+                                       &dwNumMsgs, &dwNumBytes );
+    todo_wine checkHR( DPERR_UNINITIALIZED, hr );
+    check( -1, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    if ( hr == DP_OK )
+    {
+        skip( "GetMessageQueue not implemented\n" );
+        return;
+    }
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, 0, 0,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                               (LPVOID) pDP[1], 0 );
+
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[1], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[1], &dpid[3], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[2], NULL, NULL, NULL, 0, 0 );
+
+
+
+    /* Incorrect parameters */
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], -1, dpid[1],
+                                       0,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( -1, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], -1,
+                                       0,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( -1, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[0],
+                                       -1,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DPERR_INVALIDFLAGS, hr );
+    check( -1, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[1],
+                                       ( DPMESSAGEQUEUE_SEND |
+                                         DPMESSAGEQUEUE_RECEIVE ),
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DPERR_INVALIDFLAGS, hr );
+    check( -1, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    /* - Remote players */
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, dpid[3],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DPERR_INVALIDPLAYER, hr ); /* Player 3 is remote */
+    check( -1, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[3], 0,
+                                       DPMESSAGEQUEUE_SEND,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DPERR_INVALIDPLAYER, hr ); /* Player 3 is remote */
+    check( -1, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    /* - Remote players, this time in the right place */
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, dpid[3],
+                                       DPMESSAGEQUEUE_SEND,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[3], 0,
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+
+    /* Correct parameters */
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, dpid[1],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 2, dwNumMsgs );
+    check( 96, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], 0,
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, 0,
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 5, dwNumMsgs );
+    check( 240, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[1],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       NULL, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( -1, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[1],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, NULL );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[1],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       NULL, NULL );
+    checkHR( DP_OK, hr );
+    check( -1, dwNumMsgs );
+    check( -1, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[1],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+
+    /* Purge messages */
+    check_messages( pDP[0], dpid, 6, &callbackData );
+    checkStr( "S0,S1,S0,S1,S0,", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 6, &callbackData );
+    checkStr( "S3,", callbackData.szTrace1 );
+
+    /* Check queues are empty */
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, 0,
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+
+    /* Sending 4 data messages from 0 to 1 */
+    /*         3               from 0 to 3 */
+    /*         2               from 1 to 3 */
+    for (i=0; i<4; i++)
+        IDirectPlayX_Send( pDP[0], dpid[0], dpid[1], 0, lpData, dwDataSize );
+    for (i=0; i<3; i++)
+        IDirectPlayX_Send( pDP[0], dpid[0], dpid[3], 0, lpData, dwDataSize );
+    for (i=0; i<2; i++)
+        IDirectPlayX_Send( pDP[0], dpid[1], dpid[3], 0, lpData, dwDataSize );
+
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[1],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 4, dwNumMsgs );
+    check( 4*dwDataSize, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[1], dpid[0], dpid[3],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 3, dwNumMsgs );
+    check( 3*dwDataSize, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[1], dpid[1], dpid[3],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 2, dwNumMsgs );
+    check( 2*dwDataSize, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], 0,
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 4, dwNumMsgs );
+    check( 4*dwDataSize, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[1], dpid[0], 0,
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 3, dwNumMsgs );
+    check( 3*dwDataSize, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[1], 0, dpid[3],
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 5, dwNumMsgs );
+    check( 5*dwDataSize, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, 0,
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 4, dwNumMsgs );
+    check( 4*dwDataSize, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[1], 0, 0,
+                                       DPMESSAGEQUEUE_RECEIVE,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 5, dwNumMsgs );
+    check( 5*dwDataSize, dwNumBytes );
+
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[1],
+                                       DPMESSAGEQUEUE_SEND,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+    dwNumMsgs = dwNumBytes = -1;
+    hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[0], dpid[1],
+                                       0,
+                                       &dwNumMsgs, &dwNumBytes );
+    checkHR( DP_OK, hr );
+    check( 0, dwNumMsgs );
+    check( 0, dwNumBytes );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -5716,6 +6023,7 @@ START_TEST(dplayx)
     test_Send();
     test_Receive();
     test_GetMessageCount();
+    test_GetMessageQueue();
 
     CoUninitialize();
 }
