@@ -228,6 +228,7 @@ struct IDirectDrawSurfaceImpl
     IDirectDrawImpl         *ddraw;
     IWineD3DSurface         *WineD3DSurface;
     IWineD3DBaseTexture     *wineD3DTexture;
+    IWineD3DSwapChain       *wineD3DSwapChain;
 
     /* This implementation handles attaching surfaces to other surfaces */
     IDirectDrawSurfaceImpl  *next_attached;

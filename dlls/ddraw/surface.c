@@ -307,40 +307,46 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
             IWineD3DBaseTexture_Release(This->wineD3DTexture);
         }
         /* If it's the RenderTarget, destroy the d3ddevice */
-        else if( (ddraw->d3d_initialized) && (This == ddraw->d3d_target))
+        else if(This->wineD3DSwapChain)
         {
-            TRACE("(%p) Destroying the render target, uninitializing D3D\n", This);
+            if((ddraw->d3d_initialized) && (This == ddraw->d3d_target)) {
+                TRACE("(%p) Destroying the render target, uninitializing D3D\n", This);
 
-            /* Unset any index buffer, just to be sure */
-            IWineD3DDevice_SetIndices(ddraw->wineD3DDevice, NULL);
-            IWineD3DDevice_SetDepthStencilSurface(ddraw->wineD3DDevice, NULL);
-            IWineD3DDevice_SetVertexDeclaration(ddraw->wineD3DDevice, NULL);
-            for(i = 0; i < ddraw->numConvertedDecls; i++)
-            {
-                IWineD3DVertexDeclaration_Release(ddraw->decls[i].decl);
-            }
-            HeapFree(GetProcessHeap(), 0, ddraw->decls);
-            ddraw->numConvertedDecls = 0;
-
-            if(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface, D3D7CB_DestroySwapChain) != D3D_OK)
-            {
-                /* Not good */
-                ERR("(%p) Failed to uninit 3D\n", This);
-            }
-            else
-            {
-                /* Free the d3d window if one was created */
-                if(ddraw->d3d_window != 0)
+                /* Unset any index buffer, just to be sure */
+                IWineD3DDevice_SetIndices(ddraw->wineD3DDevice, NULL);
+                IWineD3DDevice_SetDepthStencilSurface(ddraw->wineD3DDevice, NULL);
+                IWineD3DDevice_SetVertexDeclaration(ddraw->wineD3DDevice, NULL);
+                for(i = 0; i < ddraw->numConvertedDecls; i++)
                 {
-                    TRACE(" (%p) Destroying the hidden render window %p\n", This, ddraw->d3d_window);
-                    DestroyWindow(ddraw->d3d_window);
-                    ddraw->d3d_window = 0;
+                    IWineD3DVertexDeclaration_Release(ddraw->decls[i].decl);
                 }
-                /* Unset the pointers */
-            }
+                HeapFree(GetProcessHeap(), 0, ddraw->decls);
+                ddraw->numConvertedDecls = 0;
 
-            ddraw->d3d_initialized = FALSE;
-            ddraw->d3d_target = NULL;
+                if(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface, D3D7CB_DestroySwapChain) != D3D_OK)
+                {
+                    /* Not good */
+                    ERR("(%p) Failed to uninit 3D\n", This);
+                }
+                else
+                {
+                    /* Free the d3d window if one was created */
+                    if(ddraw->d3d_window != 0)
+                    {
+                        TRACE(" (%p) Destroying the hidden render window %p\n", This, ddraw->d3d_window);
+                        DestroyWindow(ddraw->d3d_window);
+                        ddraw->d3d_window = 0;
+                    }
+                    /* Unset the pointers */
+                }
+
+                This->wineD3DSwapChain = NULL; /* Uninit3D releases the swapchain */
+                ddraw->d3d_initialized = FALSE;
+                ddraw->d3d_target = NULL;
+            } else {
+                IWineD3DDevice_UninitGDI(ddraw->wineD3DDevice, D3D7CB_DestroySwapChain);
+                This->wineD3DSwapChain = NULL;
+            }
 
             /* Reset to the default surface implementation type. This is needed if apps use
              * non render target surfaces and expect blits to work after destroying the render

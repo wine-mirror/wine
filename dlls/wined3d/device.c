@@ -718,10 +718,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
            This, Width, Height, Format, debug_d3dformat(Format),
            (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->resource.allocatedMemory, object->resource.size);
 
-    /* Store the DirectDraw primary surface. This is the first rendertarget surface created */
-    if( (Usage & WINED3DUSAGE_RENDERTARGET) && (!This->ddraw_primary) )
-        This->ddraw_primary = (IWineD3DSurface *) object;
-
     /* Look at the implementation and set the correct Vtable */
     switch(Impl) {
         case SURFACE_OPENGL:
@@ -1387,7 +1383,8 @@ static void WINAPI IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS*  pPresentationParameters,                                                                   IWineD3DSwapChain** ppSwapChain,
                                                             IUnknown* parent,
                                                             D3DCB_CREATERENDERTARGETFN D3DCB_CreateRenderTarget,
-                                                            D3DCB_CREATEDEPTHSTENCILSURFACEFN D3DCB_CreateDepthStencil) {
+                                                            D3DCB_CREATEDEPTHSTENCILSURFACEFN D3DCB_CreateDepthStencil,
+                                                            WINED3DSURFTYPE surface_type) {
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
 
     HDC                     hDc;
@@ -1414,6 +1411,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     }
 
     D3DCREATEOBJECTINSTANCE(object, SwapChain)
+    switch(surface_type) {
+        case SURFACE_GDI:
+            object->lpVtbl = &IWineGDISwapChain_Vtbl;
+            break;
+        case SURFACE_OPENGL:
+            object->lpVtbl = &IWineD3DSwapChain_Vtbl;
+            break;
+        case SURFACE_UNKNOWN:
+            FIXME("Caller tried to create a SURFACE_UNKNOWN swapchain\n");
+            return WINED3DERR_INVALIDCALL;
+    }
 
     /*********************
     * Lookup the window Handle and the relating X window handle
@@ -1485,7 +1493,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
                              NULL /* pShared (always null)*/);
     if (object->frontBuffer != NULL) {
         IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
-        IWineD3DSurface_ModifyLocation(object->frontBuffer, SFLAG_INDRAWABLE, TRUE);
+        if(surface_type == SURFACE_OPENGL) {
+            IWineD3DSurface_ModifyLocation(object->frontBuffer, SFLAG_INDRAWABLE, TRUE);
+        }
     } else {
         ERR("Failed to create the front buffer\n");
         goto error;
@@ -1530,14 +1540,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         return E_OUTOFMEMORY;
     object->num_contexts = 1;
 
-    object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, object->win_handle, FALSE /* pbuffer */, pPresentationParameters);
-    if (!object->context[0]) {
-        ERR("Failed to create a new context\n");
-        hr = WINED3DERR_NOTAVAILABLE;
-        goto error;
-    } else {
-        TRACE("Context created (HWND=%p, glContext=%p)\n",
-              object->win_handle, object->context[0]->glCtx);
+    if(surface_type == SURFACE_OPENGL) {
+        object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, object->win_handle, FALSE /* pbuffer */, pPresentationParameters);
+        if (!object->context[0]) {
+            ERR("Failed to create a new context\n");
+            hr = WINED3DERR_NOTAVAILABLE;
+            goto error;
+        } else {
+            TRACE("Context created (HWND=%p, glContext=%p)\n",
+                object->win_handle, object->context[0]->glCtx);
+        }
     }
 
    /*********************
@@ -1571,23 +1583,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
                 ERR("Cannot create new back buffer\n");
                 goto error;
             }
-            ENTER_GL();
-            glDrawBuffer(GL_BACK);
-            checkGLcall("glDrawBuffer(GL_BACK)");
-            LEAVE_GL();
+            if(surface_type == SURFACE_OPENGL) {
+                ENTER_GL();
+                glDrawBuffer(GL_BACK);
+                checkGLcall("glDrawBuffer(GL_BACK)");
+                LEAVE_GL();
+            }
         }
     } else {
         object->backBuffer = NULL;
 
         /* Single buffering - draw to front buffer */
-        ENTER_GL();
-        glDrawBuffer(GL_FRONT);
-        checkGLcall("glDrawBuffer(GL_FRONT)");
-        LEAVE_GL();
+        if(surface_type == SURFACE_OPENGL) {
+            ENTER_GL();
+            glDrawBuffer(GL_FRONT);
+            checkGLcall("glDrawBuffer(GL_FRONT)");
+            LEAVE_GL();
+        }
     }
 
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
-    if (pPresentationParameters->EnableAutoDepthStencil && hr == WINED3D_OK) {
+    if (pPresentationParameters->EnableAutoDepthStencil && hr == WINED3D_OK && surface_type == SURFACE_OPENGL) {
         TRACE("Creating depth stencil buffer\n");
         if (This->auto_depth_stencil_buffer == NULL ) {
             hr = D3DCB_CreateDepthStencil(This->parent,
@@ -2240,6 +2256,33 @@ err_out:
     return hr;
 }
 
+static HRESULT WINAPI IWineD3DDeviceImpl_InitGDI(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DSwapChainImpl *swapchain = NULL;
+    HRESULT hr;
+
+    /* Setup the implicit swapchain */
+    TRACE("Creating implicit swapchain\n");
+    hr=D3DCB_CreateAdditionalSwapChain(This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
+    if (FAILED(hr) || !swapchain) {
+        WARN("Failed to create implicit swapchain\n");
+        goto err_out;
+    }
+
+    This->NumberOfSwapChains = 1;
+    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(IWineD3DSwapChain *));
+    if(!This->swapchains) {
+        ERR("Out of memory!\n");
+        goto err_out;
+    }
+    This->swapchains[0] = (IWineD3DSwapChain *) swapchain;
+    return WINED3D_OK;
+
+err_out:
+    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+    return hr;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyDepthStencilSurface, D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     int sampler;
@@ -2374,6 +2417,23 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     This->draw_buffers = NULL;
 
     This->d3d_initialized = FALSE;
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DDeviceImpl_UninitGDI(IWineD3DDevice *iface, D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    unsigned int i;
+
+    for(i=0; i < This->NumberOfSwapChains; i++) {
+        TRACE("Releasing the implicit swapchain %d\n", i);
+        if (D3DCB_DestroySwapChain(This->swapchains[i])  > 0) {
+            FIXME("(%p) Something's still holding the implicit swapchain\n", This);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, This->swapchains);
+    This->swapchains = NULL;
+    This->NumberOfSwapChains = 0;
     return WINED3D_OK;
 }
 
@@ -7644,7 +7704,9 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_CreatePalette,
     /*** Odd functions **/
     IWineD3DDeviceImpl_Init3D,
+    IWineD3DDeviceImpl_InitGDI,
     IWineD3DDeviceImpl_Uninit3D,
+    IWineD3DDeviceImpl_UninitGDI,
     IWineD3DDeviceImpl_SetFullscreen,
     IWineD3DDeviceImpl_SetMultithreaded,
     IWineD3DDeviceImpl_EvictManagedResources,
@@ -7790,7 +7852,9 @@ const IWineD3DDeviceVtbl IWineD3DDevice_DirtyConst_Vtbl =
     IWineD3DDeviceImpl_CreatePalette,
     /*** Odd functions **/
     IWineD3DDeviceImpl_Init3D,
+    IWineD3DDeviceImpl_InitGDI,
     IWineD3DDeviceImpl_Uninit3D,
+    IWineD3DDeviceImpl_UninitGDI,
     IWineD3DDeviceImpl_SetFullscreen,
     IWineD3DDeviceImpl_SetMultithreaded,
     IWineD3DDeviceImpl_EvictManagedResources,

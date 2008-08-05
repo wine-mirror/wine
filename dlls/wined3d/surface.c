@@ -471,8 +471,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         HeapFree(GetProcessHeap(), 0, This->palette9);
 
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
-        if(iface == device->ddraw_primary)
-            device->ddraw_primary = NULL;
 
         if(This->overlay_dest) {
             list_remove(&This->overlay_entry);
@@ -1460,7 +1458,10 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         if(This->palette) {
             pal = This->palette->palents;
         } else {
-            IWineD3DSurfaceImpl *dds_primary = (IWineD3DSurfaceImpl *)This->resource.wineD3DDevice->ddraw_primary;
+            IWineD3DSurfaceImpl *dds_primary;
+            IWineD3DSwapChainImpl *swapchain;
+            swapchain = (IWineD3DSwapChainImpl *)This->resource.wineD3DDevice->swapchains[0];
+            dds_primary = (IWineD3DSurfaceImpl *)swapchain->frontBuffer;
             if (dds_primary && dds_primary->palette)
                 pal = dds_primary->palette->palents;
         }

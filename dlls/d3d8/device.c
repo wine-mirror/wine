@@ -307,7 +307,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DD
     localParameters.PresentationInterval                        = pPresentationParameters->FullScreen_PresentationInterval;
 
     EnterCriticalSection(&d3d8_cs);
-    hrc = IWineD3DDevice_CreateAdditionalSwapChain(This->WineD3DDevice, &localParameters, &object->wineD3DSwapChain, (IUnknown*)object, D3D8CB_CreateRenderTarget, D3D8CB_CreateDepthStencilSurface);
+    hrc = IWineD3DDevice_CreateAdditionalSwapChain(This->WineD3DDevice, &localParameters, &object->wineD3DSwapChain, (IUnknown*)object, D3D8CB_CreateRenderTarget, D3D8CB_CreateDepthStencilSurface, SURFACE_OPENGL);
     LeaveCriticalSection(&d3d8_cs);
 
     pPresentationParameters->BackBufferWidth                    = localParameters.BackBufferWidth;

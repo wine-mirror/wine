@@ -30,6 +30,7 @@ C_SRCS = \
 	surface.c \
 	surface_gdi.c \
 	swapchain.c \
+	swapchain_gdi.c \
 	swapchain_base.c \
 	texture.c \
 	utils.c \

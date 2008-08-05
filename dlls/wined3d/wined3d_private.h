@@ -918,7 +918,6 @@ struct IWineD3DDeviceImpl
 
     /* DirectDraw stuff */
     HWND ddraw_window;
-    IWineD3DSurface *ddraw_primary;
     DWORD ddraw_width, ddraw_height;
     WINED3DFORMAT ddraw_format;
     BOOL ddraw_fullscreen;
@@ -1745,6 +1744,8 @@ typedef struct IWineD3DSwapChainImpl
 } IWineD3DSwapChainImpl;
 
 extern const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
+const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl;
+void x11_copy_to_screen(IWineD3DSwapChainImpl *This, LPRECT rc);
 
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, LPVOID *ppobj);
 ULONG WINAPI IWineD3DBaseSwapChainImpl_AddRef(IWineD3DSwapChain *iface);
