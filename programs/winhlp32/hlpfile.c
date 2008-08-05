@@ -1290,12 +1290,14 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
 
                     WINE_TRACE("Changing font to %d\n", font);
                     format += 3;
+                    /* Font size in hlpfile is given in the same units as
+                       rtf control word \fs uses (half-points). */
                     switch (rd->font_scale)
                     {
-                    case 0: fs = (4 * page->file->fonts[font].LogFont.lfHeight - 13) / 5; break;
+                    case 0: fs = page->file->fonts[font].LogFont.lfHeight - 4; break;
                     default:
-                    case 1: fs = (4 * page->file->fonts[font].LogFont.lfHeight - 3) / 5; break;
-                    case 2: fs = (4 * page->file->fonts[font].LogFont.lfHeight + 17) / 5; break;
+                    case 1: fs = page->file->fonts[font].LogFont.lfHeight; break;
+                    case 2: fs = page->file->fonts[font].LogFont.lfHeight + 4; break;
                     }
                     /* FIXME: missing at least colors, also bold attribute looses information */
 
