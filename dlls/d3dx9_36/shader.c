@@ -119,7 +119,7 @@ LPCSTR WINAPI D3DXGetVertexShaderProfile(LPDIRECT3DDEVICE9 device)
         return "vs_1_1";
     case D3DVS_VERSION(2, 0):
         if ((caps.VS20Caps.NumTemps>=13) &&
-            (caps.VS20Caps.DynamicFlowControlDepth=24) &&
+            (caps.VS20Caps.DynamicFlowControlDepth==24) &&
             (caps.VS20Caps.Caps&D3DPS20CAPS_PREDICATION))
         {
             return "vs_2_a";
