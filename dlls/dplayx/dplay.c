@@ -1016,6 +1016,11 @@ static HRESULT WINAPI DP_IF_CreateGroup
          This, lpMsgHdr, lpidGroup, lpGroupName, lpData, dwDataSize,
          dwFlags, bAnsi );
 
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
   /* If the name is not specified, we must provide one */
   if( DPID_UNKNOWN == *lpidGroup )
   {
@@ -3505,6 +3510,11 @@ static HRESULT WINAPI DP_IF_CreateGroupInGroup
   TRACE( "(%p)->(0x%08x,%p,%p,%p,0x%08x,0x%08x,%u)\n",
          This, idParentGroup, lpidGroup, lpGroupName, lpData,
          dwDataSize, dwFlags, bAnsi );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   /* Verify that the specified parent is valid */
   if( ( lpGParentData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This,

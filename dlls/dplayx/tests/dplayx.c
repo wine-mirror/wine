@@ -49,6 +49,11 @@
     ok( IsEqualGUID(expected, result),          \
         "expected=%s got=%s\n",                 \
         Guid2str(expected), Guid2str(result) );
+#define checkConv(expected, result, function)   \
+    ok( (expected) == (result),                 \
+        "expected=0x%08x(%s) got=0x%08x(%s)\n", \
+        expected, function(expected),           \
+        result, function(result) );
 
 
 DEFINE_GUID(appGuid, 0xbdcfe03e, 0xf0ec, 0x415b, 0x82, 0x11, 0x6f, 0x86, 0xd8, 0x19, 0x7f, 0xe1);
@@ -206,6 +211,31 @@ static LPCSTR dpResult2str(HRESULT hr)
         sprintf( buffer, "%d", HRESULT_CODE(hr) );
         return buffer;
     }
+    }
+}
+
+static LPCSTR dpMsgType2str(DWORD dwType)
+{
+    switch(dwType)
+    {
+    case DPSYS_CREATEPLAYERORGROUP:      return "DPSYS_CREATEPLAYERORGROUP";
+    case DPSYS_DESTROYPLAYERORGROUP:     return "DPSYS_DESTROYPLAYERORGROUP";
+    case DPSYS_ADDPLAYERTOGROUP:         return "DPSYS_ADDPLAYERTOGROUP";
+    case DPSYS_DELETEPLAYERFROMGROUP:    return "DPSYS_DELETEPLAYERFROMGROUP";
+    case DPSYS_SESSIONLOST:              return "DPSYS_SESSIONLOST";
+    case DPSYS_HOST:                     return "DPSYS_HOST";
+    case DPSYS_SETPLAYERORGROUPDATA:     return "DPSYS_SETPLAYERORGROUPDATA";
+    case DPSYS_SETPLAYERORGROUPNAME:     return "DPSYS_SETPLAYERORGROUPNAME";
+    case DPSYS_SETSESSIONDESC:           return "DPSYS_SETSESSIONDESC";
+    case DPSYS_ADDGROUPTOGROUP:          return "DPSYS_ADDGROUPTOGROUP";
+    case DPSYS_DELETEGROUPFROMGROUP:     return "DPSYS_DELETEGROUPFROMGROUP";
+    case DPSYS_SECUREMESSAGE:            return "DPSYS_SECUREMESSAGE";
+    case DPSYS_STARTSESSION:             return "DPSYS_STARTSESSION";
+    case DPSYS_CHAT:                     return "DPSYS_DPSYS_CHAT";
+    case DPSYS_SETGROUPOWNER:            return "DPSYS_SETGROUPOWNER";
+    case DPSYS_SENDCOMPLETE:             return "DPSYS_SENDCOMPLETE";
+
+    default:                             return "UNKNOWN";
     }
 }
 
@@ -3060,6 +3090,314 @@ static void test_GetPlayerFlags(void)
 
 }
 
+/* CreateGroup
+   CreateGroupInGroup */
+
+static void test_CreateGroup(void)
+{
+
+    LPDIRECTPLAY4 pDP;
+    DPSESSIONDESC2 dpsd;
+    DPID idFrom, idTo, dpid, idGroup, idGroupParent;
+    DPNAME groupName;
+    HRESULT hr;
+    UINT i;
+
+    LPCSTR lpData = "data";
+    DWORD dwDataSize = strlen(lpData)+1;
+    LPDPMSG_CREATEPLAYERORGROUP lpDataGet = HeapAlloc( GetProcessHeap(),
+                                                       HEAP_ZERO_MEMORY,
+                                                       1024 );
+    DWORD dwDataSizeGet = 1024;
+    CallbackData callbackData;
+
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+    ZeroMemory( &groupName, sizeof(DPNAME) );
+
+
+    /* No service provider */
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup, NULL, NULL, 0, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, 0, &idGroup, NULL, NULL, 0, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+
+
+    init_TCPIP_provider( pDP, "127.0.0.1", 0 );
+
+
+    /* No session */
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, NULL, 0, 0 );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "CreateGroup not implemented\n" );
+        return;
+    }
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, 0, &idGroup,
+                                          NULL, NULL, 0, 0 );
+    checkHR( DPERR_INVALIDGROUP, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, 2, &idGroup,
+                                          NULL, NULL, 0, 0 );
+    checkHR( DPERR_INVALIDGROUP, hr );
+
+
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+    IDirectPlayX_CreatePlayer( pDP, &dpid,
+                               NULL, NULL, NULL, 0, 0 );
+
+
+
+    /* With name */
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroup, &idGroup,
+                                          NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   &groupName, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroup, &idGroup,
+                                          &groupName, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    groupName.dwSize = sizeof(DPNAME);
+    groupName.lpszShortNameA = (LPSTR) lpData;
+
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   &groupName, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroup, &idGroup,
+                                          &groupName, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    /* Message checking */
+    for (i=0; i<6; i++)
+    {
+        dwDataSizeGet = 1024;
+        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                                   (LPVOID) lpDataGet, &dwDataSizeGet );
+        checkHR( DP_OK, hr );
+        if ( NULL == lpDataGet->dpnName.lpszShortNameA )
+        {
+            check( 48, dwDataSizeGet );
+        }
+        else
+        {
+            check( 48 + dwDataSize, dwDataSizeGet );
+            checkStr( lpData, lpDataGet->dpnName.lpszShortNameA );
+        }
+        check( DPID_SYSMSG, idFrom );
+        checkConv( DPSYS_CREATEPLAYERORGROUP, lpDataGet->dwType, dpMsgType2str );
+        check( DPPLAYERTYPE_GROUP,            lpDataGet->dwPlayerType );
+        checkFlags( DPGROUP_LOCAL,            lpDataGet->dwFlags, FLAGS_DPGROUP );
+    }
+    check_messages( pDP, &dpid, 1, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    /* With data */
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, (LPVOID) lpData, -1, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, (LPVOID) lpData, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, NULL, dwDataSize, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, (LPVOID) lpData, dwDataSize, 0 );
+    checkHR( DP_OK, hr );
+
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroup, &idGroup,
+                                          NULL, (LPVOID) lpData, -1, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroup, &idGroup,
+                                          NULL, (LPVOID) lpData, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroup, &idGroup,
+                                          NULL, NULL, dwDataSize, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroup, &idGroup,
+                                          NULL, (LPVOID)lpData, dwDataSize, 0 );
+    checkHR( DP_OK, hr );
+
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroupParent,
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    /* Message checking */
+    for (i=0; i<5; i++)
+    {
+        dwDataSizeGet = 1024;
+        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                                   (LPVOID) lpDataGet, &dwDataSizeGet );
+        checkHR( DP_OK, hr );
+        check( 48 + lpDataGet->dwDataSize, dwDataSizeGet );
+        check( DPID_SYSMSG, idFrom );
+        checkConv( DPSYS_CREATEPLAYERORGROUP, lpDataGet->dwType, dpMsgType2str );
+        check( DPPLAYERTYPE_GROUP,            lpDataGet->dwPlayerType );
+        checkFlags( DPGROUP_LOCAL,            lpDataGet->dwFlags, FLAGS_DPGROUP );
+    }
+    check_messages( pDP, &dpid, 1, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    /* Flags and idGroupParent */
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, NULL, 0, DPGROUP_HIDDEN );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, NULL, 0, DPGROUP_STAGINGAREA );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, NULL, 0,
+                                   DPGROUP_HIDDEN | DPGROUP_STAGINGAREA );
+    checkHR( DP_OK, hr );
+
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroupParent, &idGroup,
+                                          NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroupParent, &idGroup,
+                                          NULL, NULL, 0, DPGROUP_HIDDEN );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroupParent, &idGroup,
+                                          NULL, NULL, 0, DPGROUP_STAGINGAREA );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroupInGroup( pDP, idGroupParent, &idGroup,
+                                          NULL, NULL, 0,
+                                          DPGROUP_HIDDEN |
+                                          DPGROUP_STAGINGAREA );
+    checkHR( DP_OK, hr );
+
+
+    /* Message checking */
+    for (i=0; i<8; i++)
+    {
+        dwDataSizeGet = 1024;
+        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                                   (LPVOID) lpDataGet, &dwDataSizeGet );
+        checkHR( DP_OK, hr );
+        check( 48, dwDataSizeGet );
+        check( DPID_SYSMSG, idFrom );
+        checkConv( DPSYS_CREATEPLAYERORGROUP, lpDataGet->dwType, dpMsgType2str );
+        check( DPPLAYERTYPE_GROUP,            lpDataGet->dwPlayerType );
+
+        if ( lpDataGet->dpIdParent != 0 )
+        {
+            check( idGroupParent, lpDataGet->dpIdParent );
+        }
+
+        switch (i%4)
+        {
+        case 0:
+            checkFlags( DPGROUP_LOCAL,
+                        lpDataGet->dwFlags, FLAGS_DPGROUP );
+            break;
+        case 1:
+            checkFlags( DPGROUP_LOCAL | DPGROUP_HIDDEN,
+                        lpDataGet->dwFlags, FLAGS_DPGROUP );
+            break;
+        case 2:
+            checkFlags( DPGROUP_STAGINGAREA | DPGROUP_LOCAL,
+                        lpDataGet->dwFlags, FLAGS_DPGROUP );
+            break;
+        case 3:
+            checkFlags( DPGROUP_STAGINGAREA | DPGROUP_LOCAL | DPGROUP_HIDDEN,
+                        lpDataGet->dwFlags, FLAGS_DPGROUP );
+            break;
+        default: break;
+        }
+    }
+    check_messages( pDP, &dpid, 1, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    /* If a group is created in C/S mode, no messages are sent */
+
+    /* - Peer 2 peer */
+    IDirectPlayX_Close( pDP );
+
+    dpsd.dwFlags = 0;
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreatePlayer( pDP, &dpid, NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    /* Messages are received */
+    check_messages( pDP, &dpid, 1, &callbackData );
+    checkStr( "S0,", callbackData.szTrace1 );
+
+
+    /* - Client/Server */
+    IDirectPlayX_Close( pDP );
+
+    dpsd.dwFlags = DPSESSION_CLIENTSERVER;
+    hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreatePlayer( pDP, &dpid,
+                                    NULL, NULL, NULL, 0,
+                                    DPPLAYER_SERVERPLAYER );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    /* No messages */
+    check_messages( pDP, &dpid, 1, &callbackData );
+    checkStr( "S0,", callbackData.szTrace1 ); /* Or at least there
+                                                 shouldn't be messages... */
+
+
+    HeapFree( GetProcessHeap(), 0, lpDataGet );
+    IDirectPlayX_Release( pDP );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -3081,6 +3419,8 @@ START_TEST(dplayx)
     test_GetPlayerAccount();
     test_GetPlayerAddress();
     test_GetPlayerFlags();
+
+    test_CreateGroup();
 
     CoUninitialize();
 }
