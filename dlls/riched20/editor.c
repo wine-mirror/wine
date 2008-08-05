@@ -1082,14 +1082,14 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   if ((format & SFF_SELECTION) && (editor->mode & TM_RICHTEXT)) {
     style = ME_GetSelectionInsertStyle(editor);
 
-    ME_InternalDeleteText(editor, from, to-from);
+    ME_InternalDeleteText(editor, from, to-from, FALSE);
   }
   else {
     ME_DisplayItem *para_item;
     style = editor->pBuffer->pDefaultStyle;
     ME_AddRefStyle(style);
     SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);    
-    ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
+    ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
     from = to = 0;
     ME_ClearTempStyle(editor);
 
@@ -1165,7 +1165,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
 
           ME_GetTextW(editor, lastchar, newto - linebreakSize, linebreakSize, 0);
           if (lastchar[0] == '\r' && (lastchar[1] == '\n' || lastchar[1] == '\0')) {
-            ME_InternalDeleteText(editor, newto - linebreakSize, linebreakSize);
+            ME_InternalDeleteText(editor, newto - linebreakSize, linebreakSize, FALSE);
           }
         }
       }
@@ -2353,7 +2353,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (pStruct->flags & ST_SELECTION) {
       ME_GetSelection(editor, &from, &to);
       style = ME_GetSelectionInsertStyle(editor);
-      ME_InternalDeleteText(editor, from, to - from);
+      ME_InternalDeleteText(editor, from, to - from, FALSE);
       if (pStruct->codepage != 1200 && lParam && !strncmp((char *)lParam, "{\\rtf", 5))
           ME_StreamInRTFString(editor, 1, (char *)lParam);
       else ME_InsertTextFromCursor(editor, 0, wszText, len, style);
@@ -2362,7 +2362,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       if (editor->AutoURLDetect_bEnable) ME_UpdateSelectionLinkAttribute(editor);
     }
     else {
-      ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
+      ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
       if (pStruct->codepage != 1200 && lParam && !strncmp((char *)lParam, "{\\rtf", 5))
           ME_StreamInRTFString(editor, 0, (char *)lParam);
       else ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
@@ -2530,7 +2530,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   {
     int from, to;
     ME_GetSelection(editor, &from, &to);
-    ME_InternalDeleteText(editor, from, to-from);
+    ME_InternalDeleteText(editor, from, to-from, FALSE);
     ME_CommitUndo(editor);
     ME_UpdateRepaint(editor);
     return 0;
@@ -2545,7 +2545,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
 
     ME_GetSelection(editor, &from, &to);
     style = ME_GetSelectionInsertStyle(editor);
-    ME_InternalDeleteText(editor, from, to-from);
+    ME_InternalDeleteText(editor, from, to-from, FALSE);
     ME_InsertTextFromCursor(editor, 0, wszText, len, style);
     ME_ReleaseStyle(style);
     /* drop temporary style if line end */
@@ -2604,7 +2604,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
   }
   case WM_SETTEXT:
   {
-    ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
+    ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
     if (lParam)
     {
       TRACE("WM_SETTEXT lParam==%lx\n",lParam);
@@ -2704,7 +2704,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     }
     if (SUCCEEDED(hr) && msg == WM_CUT)
     {
-      ME_InternalDeleteText(editor, range.cpMin, range.cpMax-range.cpMin);
+      ME_InternalDeleteText(editor, range.cpMin, range.cpMax-range.cpMin, FALSE);
       ME_CommitUndo(editor);
       ME_UpdateRepaint(editor);
     }

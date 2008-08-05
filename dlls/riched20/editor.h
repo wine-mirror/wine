@@ -182,7 +182,7 @@ void ME_MoveCaret(ME_TextEditor *ed);
 int ME_CharFromPos(ME_TextEditor *editor, int x, int y, BOOL *isExact);
 void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum);
 void ME_MouseMove(ME_TextEditor *editor, int x, int y);
-void ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars);
+BOOL ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars);
 void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor, 
                              const WCHAR *str, int len, ME_Style *style);
 void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor);
@@ -198,7 +198,7 @@ BOOL ME_IsSelection(ME_TextEditor *editor);
 void ME_DeleteSelection(ME_TextEditor *editor);
 void ME_SendSelChange(ME_TextEditor *editor);
 void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCursor);
-void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars);
+BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars, BOOL bForce);
 int ME_GetTextLength(ME_TextEditor *editor);
 int ME_GetTextLengthEx(ME_TextEditor *editor, const GETTEXTLENGTHEX *how);
 ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor);
@@ -287,6 +287,7 @@ void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor);
 
 /* table.c */
 BOOL ME_IsInTable(ME_DisplayItem *pItem);
+void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, int nOfs,int *nChars);
 void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow);
 
 /* undo.c */
