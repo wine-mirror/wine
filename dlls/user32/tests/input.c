@@ -1166,6 +1166,44 @@ static void test_key_map(void)
     }
 }
 
+static void test_ToUnicode(void)
+{
+    WCHAR wStr[2];
+    BYTE state[256];
+    const BYTE SC_RETURN = 0x1c, SC_TAB = 0x0f;
+    const BYTE HIGHEST_BIT = 0x80;
+    int i, ret;
+    for(i=0; i<256; i++)
+        state[i]=0;
+
+    SetLastError(0xdeadbeef);
+    ret = ToUnicode(VK_RETURN, SC_RETURN, state, wStr, 2, 0);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("ToUnicode is not implemented\n");
+        return;
+    }
+
+    ok(ret == 1, "ToUnicode for Return key didn't return 1 (was %i)\n", ret);
+    if(ret == 1)
+        ok(wStr[0]=='\r', "ToUnicode for CTRL + Return was %i (expected 13)\n", wStr[0]);
+    state[VK_CONTROL] |= HIGHEST_BIT;
+    state[VK_LCONTROL] |= HIGHEST_BIT;
+
+    ret = ToUnicode(VK_TAB, SC_TAB, state, wStr, 2, 0);
+    todo_wine ok(ret == 0, "ToUnicode for CTRL + Tab didn't return 0 (was %i)\n", ret);
+
+    ret = ToUnicode(VK_RETURN, SC_RETURN, state, wStr, 2, 0);
+    ok(ret == 1, "ToUnicode for CTRL + Return didn't return 1 (was %i)", ret);
+    if(ret == 1)
+        ok(wStr[0]=='\n', "ToUnicode for CTRL + Return was %i (expected 10)\n", wStr[0]);
+
+    state[VK_SHIFT] |= HIGHEST_BIT;
+    state[VK_LSHIFT] |= HIGHEST_BIT;
+    ret = ToUnicode(VK_RETURN, SC_RETURN, state, wStr, 2, 0);
+    todo_wine ok(ret == 0, "ToUnicode for CTRL + SHIFT + Return didn't return 0 (was %i)\n", ret);
+}
+
 START_TEST(input)
 {
     init_function_pointers();
@@ -1179,6 +1217,7 @@ START_TEST(input)
     test_keynames();
     test_mouse_ll_hook();
     test_key_map();
+    test_ToUnicode();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
