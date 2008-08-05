@@ -1817,9 +1817,8 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
         if(stateblock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
             settings->op[i].cop = WINED3DTOP_DISABLE;
             settings->op[i].aop = WINED3DTOP_DISABLE;
-            /* 0x3F: set all 6 bits of the args to 1 */
-            settings->op[i].carg0 = settings->op[i].carg1 = settings->op[i].carg2 = 0x3F;
-            settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = 0x3F;
+            settings->op[i].carg0 = settings->op[i].carg1 = settings->op[i].carg2 = ARG_UNUSED;
+            settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = ARG_UNUSED;
             settings->op[i].color_correction = WINED3DFMT_UNKNOWN;
             settings->op[i].dst = resultreg;
             settings->op[i].tex_type = tex_1d;

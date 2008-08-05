@@ -760,6 +760,7 @@ enum dst_arg
 struct texture_stage_op
 {
     unsigned                cop : 5, aop : 5;
+#define ARG_UNUSED          0x3f
     unsigned                carg1 : 6, carg2 : 6, carg0 : 6;
     unsigned                tex_type : 3;
     unsigned                dst : 1;                        /* Total of 32 bits */

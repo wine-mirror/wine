@@ -2369,7 +2369,7 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 static const char *get_argreg(SHADER_BUFFER *buffer, DWORD argnum, unsigned int stage, DWORD arg) {
     const char *ret;
 
-    if(arg > WINED3DTOP_LERP) return "unused"; /* This is the marker for unused registers */
+    if(arg == ARG_UNUSED) return "unused"; /* This is the marker for unused registers */
 
     switch(arg & WINED3DTA_SELECTMASK) {
         case WINED3DTA_DIFFUSE:
