@@ -5988,6 +5988,232 @@ static void test_GetMessageQueue(void)
 
 }
 
+/* Remote data replication */
+
+static void test_remote_data_replication(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[2], idFrom, idTo;
+    CallbackData callbackData;
+    HRESULT hr;
+    UINT i, j;
+    DWORD dwFlags, dwDataSize = 1024;
+    DWORD dwCount;
+
+    LPDPMSG_SETPLAYERORGROUPDATA lpData = HeapAlloc( GetProcessHeap(),
+                                                     HEAP_ZERO_MEMORY,
+                                                     dwDataSize );
+
+    LPCSTR lpDataLocal[] = { "local_0", "local_1" };
+    LPCSTR lpDataRemote[] = { "remote_0", "remote_1" };
+    LPCSTR lpDataFake = "ugly_fake_data";
+    LPSTR lpDataGet = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 32 );
+    DWORD dwDataSizeLocal = strlen(lpDataLocal[0])+1,
+        dwDataSizeRemote = strlen(lpDataRemote[0])+1,
+        dwDataSizeFake = strlen(lpDataFake)+1,
+        dwDataSizeGet;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        init_TCPIP_provider( pDP[i], "127.0.0.1", 0 );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+
+    /* Host */
+    hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    todo_wine checkHR( DP_OK, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "dplay not implemented enough for this test yet\n" );
+        return;
+    }
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid[0],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    /* Peer */
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                                    (LPVOID) pDP[1], 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[1], &dpid[1],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    /* Check players */
+    for (i=0; i<2; i++)
+    {
+        /* Local (0,0) (1,1) */
+        IDirectPlayX_GetPlayerFlags( pDP[i], dpid[i], &dwFlags );
+        checkFlags( DPPLAYER_LOCAL, dwFlags, FLAGS_DPPLAYER );
+        /* Remote (0,1) (1,0) */
+        IDirectPlayX_GetPlayerFlags( pDP[i], dpid[!i], &dwFlags );
+        checkFlags( 0, dwFlags, FLAGS_DPPLAYER );
+    }
+
+    /* Set data for a local player */
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_SetPlayerData( pDP[i], dpid[i],
+                                         (LPVOID) lpDataLocal[i],
+                                         dwDataSizeLocal,
+                                         DPSET_LOCAL );
+        checkHR( DP_OK, hr );
+        hr = IDirectPlayX_SetPlayerData( pDP[i], dpid[i],
+                                         (LPVOID) lpDataRemote[i],
+                                         dwDataSizeRemote,
+                                         DPSET_REMOTE );
+        checkHR( DP_OK, hr );
+    }
+
+    /* Retrieve data locally (0->0, 1->1) */
+    for (i=0; i<2; i++)
+    {
+        dwDataSizeGet = dwDataSizeFake;
+        strcpy( lpDataGet, lpDataFake );
+        hr = IDirectPlayX_GetPlayerData( pDP[i], dpid[i],
+                                         lpDataGet, &dwDataSizeGet,
+                                         DPGET_LOCAL );
+        checkHR( DP_OK, hr );
+        check( dwDataSizeLocal, dwDataSizeGet );
+        checkStr( lpDataLocal[i], lpDataGet );
+
+        dwDataSizeGet = dwDataSizeFake;
+        strcpy( lpDataGet, lpDataFake );
+        hr = IDirectPlayX_GetPlayerData( pDP[i], dpid[i],
+                                         lpDataGet, &dwDataSizeGet,
+                                         DPGET_REMOTE );
+        checkHR( DP_OK, hr );
+        check( dwDataSizeRemote, dwDataSizeGet );
+        checkStr( lpDataRemote[i], lpDataGet );
+    }
+
+
+    /* Set data for a remote player */
+    /* This should fail with DPERR_ACCESSDENIED,
+       but for some reason it doesn't */
+    for (i=0; i<2; i++)
+    {
+        IDirectPlayX_SetPlayerData( pDP[i], dpid[!i],
+                                    (LPVOID) lpDataLocal[!i],
+                                    dwDataSizeLocal,
+                                    DPSET_LOCAL );
+        checkHR( DP_OK, hr );
+        IDirectPlayX_SetPlayerData( pDP[i], dpid[!i],
+                                    (LPVOID) lpDataRemote[!i],
+                                    dwDataSizeRemote,
+                                    DPSET_REMOTE );
+        checkHR( DP_OK, hr );
+    }
+
+    /* Retrieve crossed data (0->1, 1->0) */
+    for (i=0; i<2; i++)
+    {
+        dwDataSizeGet = dwDataSizeFake;
+        strcpy( lpDataGet, lpDataFake );
+        hr = IDirectPlayX_GetPlayerData( pDP[i], dpid[!i],
+                                         lpDataGet, &dwDataSizeGet,
+                                         DPGET_LOCAL );
+        checkHR( DP_OK, hr );
+        check( dwDataSizeLocal, dwDataSizeGet );
+        checkStr( lpDataLocal[!i], lpDataGet );
+
+        dwDataSizeGet = dwDataSizeFake;
+        strcpy( lpDataGet, lpDataFake );
+        hr = IDirectPlayX_GetPlayerData( pDP[i], dpid[!i],
+                                         lpDataGet, &dwDataSizeGet,
+                                         DPGET_REMOTE );
+        checkHR( DP_OK, hr );
+        check( dwDataSizeRemote, dwDataSizeGet );
+        checkStr( lpDataRemote[!i], lpDataGet );
+    }
+
+
+    /* Purge "new player" messages from queue */
+    hr = IDirectPlayX_Receive( pDP[0], &idFrom, &idTo, 0,
+                               (LPVOID) lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkConv( DPSYS_CREATEPLAYERORGROUP, lpData->dwType, dpMsgType2str );
+
+    /* Check number of messages in queue */
+    for (i=0; i<2; i++)
+    {
+        IDirectPlayX_GetMessageCount( pDP[i], dpid[i], &dwCount );
+        check( 2, dwCount );
+        IDirectPlayX_GetMessageCount( pDP[i], dpid[!i], &dwCount );
+        check( 0, dwCount );
+    }
+
+    /* Checking system messages */
+    for (i=0; i<2; i++)
+    {
+        for (j=0; j<2; j++)
+        {
+            hr = IDirectPlayX_Receive( pDP[i], &idFrom, &idTo, 0,
+                                       (LPVOID) lpData, &dwDataSize );
+            checkHR( DP_OK, hr );
+            check( 29, dwDataSize );
+            check( DPID_SYSMSG, idFrom );
+            check( dpid[i], idTo );
+            checkConv( DPSYS_SETPLAYERORGROUPDATA, lpData->dwType,
+                       dpMsgType2str );
+            check( DPPLAYERTYPE_PLAYER,            lpData->dwPlayerType );
+            check( dpid[j],                        lpData->dpId );
+            checkStr( lpDataRemote[j],     (LPSTR) lpData->lpData );
+            check( dwDataSizeRemote,               lpData->dwDataSize );
+            dwDataSize = 1024;
+        }
+        hr = IDirectPlayX_Receive( pDP[i], &idFrom, &idTo, 0,
+                                   lpData, &dwDataSize );
+        checkHR( DPERR_NOMESSAGES, hr );
+    }
+
+
+    /* Changing remote data */
+    hr = IDirectPlayX_SetPlayerData( pDP[0], dpid[0],
+                                     (LPVOID) lpDataRemote[0], dwDataSizeRemote,
+                                     DPSET_REMOTE );
+    checkHR( DP_OK, hr );
+
+    /* Checking system messages (j=0) */
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_Receive( pDP[i], &idFrom, &idTo, 0,
+                                   lpData, &dwDataSize );
+        checkHR( DP_OK, hr );
+        check( 29, dwDataSize );
+        check( DPID_SYSMSG, idFrom );
+        check( dpid[i], idTo );
+        checkConv( DPSYS_SETPLAYERORGROUPDATA, lpData->dwType, dpMsgType2str );
+        check( DPPLAYERTYPE_PLAYER,            lpData->dwPlayerType );
+        check( dpid[0],                        lpData->dpId );
+        checkStr( lpDataRemote[0],     (LPSTR) lpData->lpData );
+        check( dwDataSizeRemote,               lpData->dwDataSize );
+        dwDataSize = 1024;
+    }
+
+    /* Queue is empty */
+    check_messages( pDP[0], dpid, 2, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 2, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -6024,6 +6250,8 @@ START_TEST(dplayx)
     test_Receive();
     test_GetMessageCount();
     test_GetMessageQueue();
+
+    test_remote_data_replication();
 
     CoUninitialize();
 }
