@@ -3398,6 +3398,82 @@ static void test_CreateGroup(void)
 
 }
 
+/* GroupOwner */
+
+static void test_GroupOwner(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[2], idGroup, idOwner;
+    HRESULT hr;
+    UINT i;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+    idGroup = 0;
+    idOwner = 0;
+
+    /* Service provider not initialized */
+    hr = IDirectPlayX_GetGroupOwner( pDP[0], idGroup, &idOwner );
+    todo_wine checkHR( DPERR_UNINITIALIZED, hr );
+    check( 0, idOwner );
+
+    if ( hr == DP_OK )
+    {
+        skip( "GetGroupOwner not implemented\n" );
+        return;
+    }
+
+
+    for (i=0; i<2; i++)
+        init_TCPIP_provider( pDP[i], "127.0.0.1", 0 );
+
+    hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                                    (LPVOID) pDP[1], 0 );
+    checkHR( DP_OK, hr );
+
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_CreatePlayer( pDP[i], &dpid[i],
+                                        NULL, NULL, NULL, 0, 0 );
+        checkHR( DP_OK, hr );
+    }
+
+    /* Invalid group */
+    hr = IDirectPlayX_GetGroupOwner( pDP[0], idGroup, &idOwner );
+    checkHR( DPERR_INVALIDGROUP, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP[0], &idGroup, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    /* Fails, because we need a lobby session */
+    hr = IDirectPlayX_GetGroupOwner( pDP[0], idGroup, &idOwner );
+    checkHR( DPERR_UNSUPPORTED, hr );
+
+
+    /* TODO:
+     * - Make this work
+     * - Check migration of the ownership of a group
+     *   when the owner leaves
+     */
+
+
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -3421,6 +3497,7 @@ START_TEST(dplayx)
     test_GetPlayerFlags();
 
     test_CreateGroup();
+    test_GroupOwner();
 
     CoUninitialize();
 }
