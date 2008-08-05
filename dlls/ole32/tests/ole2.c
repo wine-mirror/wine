@@ -844,9 +844,8 @@ static void test_OleLoad(IStorage *pStorage)
     trace("OleLoad:\n");
     hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);
     ok(hr == S_OK ||
-       broken(hr == E_INVALIDARG), /* win2k */
+       broken(hr == E_INVALIDARG), /* win98 and win2k */
        "OleLoad failed with error 0x%08x\n", hr);
-    ok_ole_success(hr, "OleLoad");
     if (pObject)
     {
         IOleObject_Release(pObject);
