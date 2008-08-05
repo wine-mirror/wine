@@ -3815,6 +3815,328 @@ static void test_EnumPlayers(void)
 
 }
 
+/* EnumGroups */
+
+static BOOL CALLBACK EnumGroups_cb( DPID dpId,
+                                    DWORD dwPlayerType,
+                                    LPCDPNAME lpName,
+                                    DWORD dwFlags,
+                                    LPVOID lpContext )
+{
+    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    char playerIndex = dpid2char( callbackData->dpid,
+                                  callbackData->dpidSize,
+                                  dpId );
+
+
+    /* Trace to study player ids */
+    callbackData->szTrace1[ callbackData->dwCounter1 ] = playerIndex;
+    callbackData->dwCounter1++;
+    callbackData->szTrace1[ callbackData->dwCounter1 ] = '\0';
+
+    /* Trace to study flags received */
+    strcat( callbackData->szTrace2,
+            ( dwFlags2str(dwFlags, FLAGS_DPENUMGROUPS) +
+              strlen("DPENUMGROUPS_") ) );
+    strcat( callbackData->szTrace2, ":" );
+
+
+    check( DPPLAYERTYPE_GROUP, dwPlayerType );
+
+    return TRUE;
+}
+
+static BOOL CALLBACK EnumSessions_cb_EnumGroups( LPCDPSESSIONDESC2 lpThisSD,
+                                                 LPDWORD lpdwTimeOut,
+                                                 DWORD dwFlags,
+                                                 LPVOID lpContext )
+{
+    lpCallbackData callbackData = (lpCallbackData) lpContext;
+    HRESULT hr;
+
+    if (dwFlags & DPESC_TIMEDOUT)
+    {
+        return FALSE;
+    }
+
+    /* guid = NULL */
+    callbackData->dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( callbackData->pDP, NULL,
+                                  EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_NOSESSIONS, hr );
+    check( 0, callbackData->dwCounter1 );
+
+    /* guid = appGuid */
+    callbackData->dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( callbackData->pDP, (LPGUID) &appGuid,
+                                  EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_NOSESSIONS, hr );
+    check( 0, callbackData->dwCounter1 );
+
+    callbackData->dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( callbackData->pDP, (LPGUID) &appGuid,
+                                  EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_SESSION );
+    checkHR( DPERR_NOSESSIONS, hr );
+    check( 0, callbackData->dwCounter1 );
+
+    /* guid = guidInstance */
+    callbackData->dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( callbackData->pDP,
+                                  (LPGUID) &lpThisSD->guidInstance,
+                                  EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_NOSESSIONS, hr );
+    check( 0, callbackData->dwCounter1 );
+
+    callbackData->dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( callbackData->pDP,
+                                  (LPGUID) &lpThisSD->guidInstance,
+                                  EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_SESSION );
+    checkHR( DPERR_GENERIC, hr ); /* Why? */
+    check( 0, callbackData->dwCounter1 );
+
+    return TRUE;
+
+}
+
+static void test_EnumGroups(void)
+{
+    LPDIRECTPLAY4 pDP[3];
+    DPSESSIONDESC2 dpsd[3];
+    DPID dpid[5];
+    CallbackData callbackData;
+    HRESULT hr;
+    UINT i;
+
+
+    for (i=0; i<3; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+
+        ZeroMemory( &dpsd[i], sizeof(DPSESSIONDESC2) );
+        dpsd[i].dwSize = sizeof(DPSESSIONDESC2);
+    }
+
+    dpsd[0].guidApplication = appGuid;
+    dpsd[1].guidApplication = appGuid2;
+    dpsd[2].guidApplication = GUID_NULL;
+
+    callbackData.dpid = dpid;
+    callbackData.dpidSize = 5;
+
+
+    /* Uninitialized service provider */
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+    check( 0, callbackData.dwCounter1 );
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[2], "127.0.0.1", 0 );
+
+
+    /* No session */
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    todo_wine checkHR( DPERR_NOSESSIONS, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "EnumGroups not implemented\n" );
+        return;
+    }
+
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], (LPGUID) &appGuid, EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_NOSESSIONS, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], (LPGUID) &appGuid, EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_SESSION );
+    checkHR( DPERR_NOSESSIONS, hr );
+    check( 0, callbackData.dwCounter1 );
+
+
+    hr = IDirectPlayX_Open( pDP[0], &dpsd[0], DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_Open( pDP[1], &dpsd[1], DPOPEN_CREATE );
+    checkHR( DP_OK, hr );
+
+
+    /* No groups */
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 0, callbackData.dwCounter1 );
+
+
+    /* Create groups */
+    hr = IDirectPlayX_CreateGroup( pDP[0], &dpid[0],
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroupInGroup( pDP[0], dpid[0], &dpid[3],
+                                          NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr ); /* Not a superior level group,
+                             won't appear in the enumerations */
+    hr = IDirectPlayX_CreateGroup( pDP[1], &dpid[1],
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroup( pDP[0], &dpid[2],
+                                   NULL, NULL, 0, DPGROUP_HIDDEN );
+    checkHR( DP_OK, hr );
+
+
+    /* Invalid parameters */
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], (LPGUID) &appGuid, NULL,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_SESSION );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    check( 0, callbackData.dwCounter1 );
+
+
+    /* Regular operation */
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 2, callbackData.dwCounter1 );
+    checkStr( "02", callbackData.szTrace1 );
+    checkStr( "ALL:HIDDEN:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[1], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 1, callbackData.dwCounter1 );
+    checkStr( "1", callbackData.szTrace1 );
+    checkStr( "ALL:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[0], (LPGUID) &appGuid, EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 2, callbackData.dwCounter1 ); /* Guid is ignored */
+    checkStr( "02", callbackData.szTrace1 );
+    checkStr( "ALL:HIDDEN:", callbackData.szTrace2 );
+
+
+    /* Enumerating from a remote session */
+    /* - Session not open */
+    callbackData.pDP = pDP[2];
+    hr = IDirectPlayX_EnumSessions( pDP[2], &dpsd[2], 0,
+                                    EnumSessions_cb_EnumGroups,
+                                    (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+
+    /* - Open session */
+    callbackData.pDP = pDP[2];
+    hr = IDirectPlayX_EnumSessions( pDP[2], &dpsd[0], 0, EnumSessions_cb_join,
+                                    (LPVOID) pDP[2], 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP[2], &dpid[3],
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroup( pDP[2], &dpid[4],
+                                   NULL, NULL, 0, DPGROUP_STAGINGAREA );
+    checkHR( DP_OK, hr );
+
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 4, callbackData.dwCounter1 );
+    checkStr( "0234", callbackData.szTrace1 );
+    checkStr( "ALL:HIDDEN:ALL:STAGINGAREA:", callbackData.szTrace2 );
+
+    /* Flag tests */
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_ALL );
+    checkHR( DP_OK, hr );
+    check( 4, callbackData.dwCounter1 );
+    checkStr( "0234", callbackData.szTrace1 );
+    checkStr( "ALL:HIDDEN:ALL:STAGINGAREA:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_HIDDEN );
+    checkHR( DP_OK, hr );
+    check( 1, callbackData.dwCounter1 );
+    checkStr( "2", callbackData.szTrace1 );
+    checkStr( "HIDDEN:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_LOCAL );
+    checkHR( DP_OK, hr );
+    check( 2, callbackData.dwCounter1 );
+    checkStr( "34", callbackData.szTrace1 );
+    checkStr( "LOCAL:"
+              "LOCAL,DPENUMGROUPS_STAGINGAREA:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_REMOTE );
+    checkHR( DP_OK, hr );
+    check( 2, callbackData.dwCounter1 );
+    checkStr( "02", callbackData.szTrace1 );
+    checkStr( "REMOTE:"
+              "REMOTE,DPENUMGROUPS_HIDDEN:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroups( pDP[2], NULL, EnumGroups_cb,
+                                  (LPVOID) &callbackData,
+                                  DPENUMGROUPS_STAGINGAREA );
+    checkHR( DP_OK, hr );
+    check( 1, callbackData.dwCounter1 );
+    checkStr( "4", callbackData.szTrace1 );
+    checkStr( "STAGINGAREA:", callbackData.szTrace2 );
+
+
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+    IDirectPlayX_Release( pDP[2] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -3841,6 +4163,7 @@ START_TEST(dplayx)
     test_GroupOwner();
 
     test_EnumPlayers();
+    test_EnumGroups();
 
     CoUninitialize();
 }
