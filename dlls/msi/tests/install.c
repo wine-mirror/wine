@@ -5118,9 +5118,9 @@ static void test_MsiConfigureProductEx(void)
     r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
                                INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT,
                                "PROPVAR=42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     todo_wine
     {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
         ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
         ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
         ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
@@ -5154,11 +5154,8 @@ static void test_MsiConfigureProductEx(void)
     r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
                                INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT,
                                "PROPVAR=42");
-    todo_wine
-    {
-        ok(r == ERROR_INSTALL_SOURCE_ABSENT,
-           "Expected ERROR_INSTALL_SOURCE_ABSENT, got %d\n", r);
-    }
+    ok(r == ERROR_INSTALL_SOURCE_ABSENT,
+       "Expected ERROR_INSTALL_SOURCE_ABSENT, got %d\n", r);
     ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
     ok(pf_exists("msitest\\helium"), "File not installed\n");
     ok(pf_exists("msitest\\lithium"), "File not installed\n");
@@ -5219,11 +5216,8 @@ static void test_MsiConfigureProductEx(void)
     r = MsiConfigureProductExA("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}",
                                INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT,
                                "PROPVAR=42");
-    todo_wine
-    {
-        ok(r == ERROR_INSTALL_SOURCE_ABSENT,
-           "Expected ERROR_INSTALL_SOURCE_ABSENT, got %d\n", r);
-    }
+    ok(r == ERROR_INSTALL_SOURCE_ABSENT,
+       "Expected ERROR_INSTALL_SOURCE_ABSENT, got %d\n", r);
     ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
     ok(pf_exists("msitest\\helium"), "File not installed\n");
     ok(pf_exists("msitest\\lithium"), "File not installed\n");

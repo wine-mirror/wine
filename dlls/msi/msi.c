@@ -372,6 +372,53 @@ done:
     return r;
 }
 
+static UINT msi_open_package(LPCWSTR product, MSIINSTALLCONTEXT context,
+                             MSIPACKAGE **package)
+{
+    UINT r;
+    DWORD sz;
+    HKEY props;
+    LPWSTR localpack;
+    WCHAR sourcepath[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+
+    static const WCHAR szLocalPackage[] = {
+        'L','o','c','a','l','P','a','c','k','a','g','e',0};
+
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+        r = MSIREG_OpenLocalSystemInstallProps(product, &props, FALSE);
+    else
+        r = MSIREG_OpenCurrentUserInstallProps(product, &props, FALSE);
+
+    if (r != ERROR_SUCCESS)
+        return ERROR_BAD_CONFIGURATION;
+
+    localpack = msi_reg_get_val_str(props, szLocalPackage);
+    if (localpack)
+    {
+        lstrcpyW(sourcepath, localpack);
+        msi_free(localpack);
+    }
+
+    if (!localpack || GetFileAttributesW(sourcepath) == INVALID_FILE_ATTRIBUTES)
+    {
+        sz = sizeof(sourcepath);
+        MsiSourceListGetInfoW(product, NULL, context, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz);
+
+        sz = sizeof(filename);
+        MsiSourceListGetInfoW(product, NULL, context, MSICODE_PRODUCT,
+                              INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
+
+        lstrcatW(sourcepath, filename);
+    }
+
+    if (GetFileAttributesW(sourcepath) == INVALID_FILE_ATTRIBUTES)
+        return ERROR_INSTALL_SOURCE_ABSENT;
+
+    return MSI_OpenPackageW(sourcepath, package);
+}
+
 UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
                         INSTALLSTATE eInstallState, LPCWSTR szCommandLine)
 {
@@ -380,7 +427,6 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     UINT r;
     DWORD sz;
     WCHAR sourcepath[MAX_PATH];
-    WCHAR filename[MAX_PATH];
     LPWSTR commandline;
 
     static const WCHAR szInstalled[] = {
@@ -407,16 +453,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     if (r != ERROR_SUCCESS)
         return r;
 
-    sz = sizeof(sourcepath);
-    MsiSourceListGetInfoW(szProduct, NULL, context, MSICODE_PRODUCT,
-                          INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz);
-
-    sz = sizeof(filename);
-    MsiSourceListGetInfoW(szProduct, NULL, context, MSICODE_PRODUCT,
-                          INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
-
-    lstrcatW(sourcepath, filename);
-    r = MSI_OpenPackageW(sourcepath, &package);
+    r = msi_open_package(szProduct, context, &package);
     if (r != ERROR_SUCCESS)
         return r;
 
