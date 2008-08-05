@@ -4379,6 +4379,239 @@ static void test_EnumGroupsInGroup(void)
 
 }
 
+static void test_groups_p2p(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID idPlayer[6], idGroup[3];
+    HRESULT hr;
+    UINT i;
+
+    DWORD dwDataSize = 1024;
+    LPVOID lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 1024 );
+    CallbackData callbackData;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+    hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    todo_wine checkHR( DP_OK, hr );
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                                    (LPVOID) pDP[1], 0 );
+    todo_wine checkHR( DP_OK, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "dplay not implemented enough for this test yet\n" );
+        return;
+    }
+
+
+    /* Create players */
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &idPlayer[0],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &idPlayer[1],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &idPlayer[2],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreatePlayer( pDP[1], &idPlayer[3],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreatePlayer( pDP[1], &idPlayer[4],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreatePlayer( pDP[1], &idPlayer[5],
+                                    NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreateGroup( pDP[0], &idGroup[0],
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroup( pDP[1], &idGroup[2],
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroupInGroup( pDP[1], idGroup[2], &idGroup[1],
+                                          NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    /* Purge queues */
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "S0," "S1,S0,"
+              "S2,S1,S0," "S2,S1,S0,"
+              "S2,S1,S0," "S2,S1,S0,"
+              "S2,S1,S0," "S2,S1,S0,", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "S3," "S4,S3,"
+              "S5,S4,S3," "S5,S4,S3,"
+              "S5,S4,S3,", callbackData.szTrace1 );
+
+
+    /*
+     * Player 0   |                  |
+     * Player 1   | Group 0          | pDP 0
+     * Player 2   |                  |
+     * Player 3  | Group 1 )          |
+     * Player 4  |         | Group 2  | pDP 1
+     * Player 5            |          |
+     */
+
+    /* Build groups */
+    hr = IDirectPlayX_AddPlayerToGroup( pDP[0], idGroup[0], idPlayer[0] );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_AddPlayerToGroup( pDP[0], idGroup[0], idPlayer[1] );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_AddPlayerToGroup( pDP[0], idGroup[0], idPlayer[2] );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_AddPlayerToGroup( pDP[1], idGroup[1], idPlayer[3] );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_AddPlayerToGroup( pDP[1], idGroup[1], idPlayer[4] );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_AddPlayerToGroup( pDP[1], idGroup[2], idPlayer[4] );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_AddPlayerToGroup( pDP[1], idGroup[2], idPlayer[5] );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_AddGroupToGroup( pDP[1], idGroup[2], idGroup[1] );
+    checkHR( DP_OK, hr );
+
+    /* Purge queues */
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "S2,S1,S0," "S2,S1,S0," "S2,S1,S0,"
+              "S2,S1,S0," "S2,S1,S0," "S2,S1,S0,"
+              "S2,S1,S0,", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "S5,S4,S3," "S5,S4,S3," "S5,S4,S3,"
+              "S5,S4,S3," "S5,S4,S3," "S5,S4,S3,"
+              "S5,S4,S3,", callbackData.szTrace1 );
+
+
+    /* Sending broadcast messages, and checking who receives them */
+
+    dwDataSize = 4;
+    /* 0 -> * */
+    hr = IDirectPlayX_Send( pDP[0], idPlayer[0], DPID_ALLPLAYERS, 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "02,01,", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "05,04,03,", callbackData.szTrace1 );
+
+    /* 0 -> g0 */
+    hr = IDirectPlayX_Send( pDP[0], idPlayer[0], idGroup[0], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "02,01,", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    /* 0 -> g1 */
+    hr = IDirectPlayX_Send( pDP[0], idPlayer[0], idGroup[1], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "04,03,", callbackData.szTrace1 );
+    /* 0 -> g2 */
+    hr = IDirectPlayX_Send( pDP[0], idPlayer[0], idGroup[2], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "05,04,", callbackData.szTrace1 );
+
+    /* 3 -> * */
+    hr = IDirectPlayX_Send( pDP[1], idPlayer[3], DPID_ALLPLAYERS, 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "32,31,30,", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "35,34,", callbackData.szTrace1 );
+    /* 3 -> g0 */
+    hr = IDirectPlayX_Send( pDP[1], idPlayer[3], idGroup[0], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "32,31,30,", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    /* 3 -> g1 */
+    hr = IDirectPlayX_Send( pDP[1], idPlayer[3], idGroup[1], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "34,", callbackData.szTrace1 );
+    /* 3 -> g2 */
+    hr = IDirectPlayX_Send( pDP[1], idPlayer[3], idGroup[2], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "35,34,", callbackData.szTrace1 );
+
+    /* 5 -> * */
+    hr = IDirectPlayX_Send( pDP[1], idPlayer[5], DPID_ALLPLAYERS, 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "52,51,50,", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "54,53,", callbackData.szTrace1 );
+    /* 5 -> g0 */
+    hr = IDirectPlayX_Send( pDP[1], idPlayer[5], idGroup[0], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "52,51,50,", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    /* 5 -> g1 */
+    hr = IDirectPlayX_Send( pDP[1], idPlayer[5], idGroup[1], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "54,53,", callbackData.szTrace1 );
+    /* 5 -> g2 */
+    hr = IDirectPlayX_Send( pDP[1], idPlayer[5], idGroup[2], 0,
+                            lpData, dwDataSize );
+    checkHR( DP_OK, hr );
+    check_messages( pDP[0], idPlayer, 6, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], idPlayer, 6, &callbackData );
+    checkStr( "54,", callbackData.szTrace1 );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -4407,6 +4640,8 @@ START_TEST(dplayx)
     test_EnumPlayers();
     test_EnumGroups();
     test_EnumGroupsInGroup();
+
+    test_groups_p2p();
 
     CoUninitialize();
 }

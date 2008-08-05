@@ -793,6 +793,11 @@ static HRESULT WINAPI DP_IF_AddPlayerToGroup
   TRACE( "(%p)->(%p,0x%08x,0x%08x,%u)\n",
          This, lpMsgHdr, idGroup, idPlayer, bAnsi );
 
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
   /* Find the group */
   if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
   {
@@ -4570,6 +4575,11 @@ static HRESULT WINAPI DP_SendEx
          ": stub\n",
          This, idFrom, idTo, dwFlags, lpData, dwDataSize, dwPriority,
          dwTimeout, lpContext, lpdwMsgID, bAnsi );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   /* FIXME: Add parameter checking */
   /* FIXME: First call to this needs to acquire a message id which will be
