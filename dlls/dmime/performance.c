@@ -620,13 +620,13 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_GetGlobalParam (LPDIRECTMUSIC
 	TRACE("(%p, %s, %p, %d): stub\n", This, debugstr_dmguid(rguidType), pParam, dwSize);
 	
 	if (IsEqualGUID (rguidType, &GUID_PerfAutoDownload))
-		memcpy(pParam, &This->fAutoDownload, sizeof(&This->fAutoDownload));
+		memcpy(pParam, &This->fAutoDownload, sizeof(This->fAutoDownload));
 	if (IsEqualGUID (rguidType, &GUID_PerfMasterGrooveLevel))
-		memcpy(pParam, &This->cMasterGrooveLevel, sizeof(&This->cMasterGrooveLevel));
+		memcpy(pParam, &This->cMasterGrooveLevel, sizeof(This->cMasterGrooveLevel));
 	if (IsEqualGUID (rguidType, &GUID_PerfMasterTempo))
-		memcpy(pParam, &This->fMasterTempo, sizeof(&This->fMasterTempo));
+		memcpy(pParam, &This->fMasterTempo, sizeof(This->fMasterTempo));
 	if (IsEqualGUID (rguidType, &GUID_PerfMasterVolume))
-		memcpy(pParam, &This->lMasterVolume, sizeof(&This->lMasterVolume));
+		memcpy(pParam, &This->lMasterVolume, sizeof(This->lMasterVolume));
 
 	return S_OK;
 }
