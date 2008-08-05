@@ -2446,12 +2446,118 @@ BOOL WINAPI CryptMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
     return msg->control(hCryptMsg, dwFlags, dwCtrlType, pvCtrlPara);
 }
 
+static CERT_INFO *CRYPT_GetSignerCertInfoFromMsg(HCRYPTMSG msg,
+ DWORD dwSignerIndex)
+{
+    CERT_INFO *certInfo = NULL;
+    DWORD size;
+
+    if (CryptMsgGetParam(msg, CMSG_SIGNER_CERT_INFO_PARAM, dwSignerIndex, NULL,
+     &size))
+    {
+        certInfo = CryptMemAlloc(size);
+        if (certInfo)
+        {
+            if (!CryptMsgGetParam(msg, CMSG_SIGNER_CERT_INFO_PARAM,
+             dwSignerIndex, certInfo, &size))
+            {
+                CryptMemFree(certInfo);
+                certInfo = NULL;
+            }
+        }
+    }
+    return certInfo;
+}
+
 BOOL WINAPI CryptMsgGetAndVerifySigner(HCRYPTMSG hCryptMsg, DWORD cSignerStore,
  HCERTSTORE *rghSignerStore, DWORD dwFlags, PCCERT_CONTEXT *ppSigner,
  DWORD *pdwSignerIndex)
 {
-    FIXME("(%p, %d, %p, %08x, %p, %p): stub\n", hCryptMsg, cSignerStore,
+    HCERTSTORE store;
+    DWORD i, signerIndex;
+    PCCERT_CONTEXT signerCert = NULL;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %p, %08x, %p, %p)\n", hCryptMsg, cSignerStore,
      rghSignerStore, dwFlags, ppSigner, pdwSignerIndex);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    /* Clear output parameters */
+    if (ppSigner)
+        *ppSigner = NULL;
+    if (pdwSignerIndex && !(dwFlags & CMSG_USE_SIGNER_INDEX_FLAG))
+        *pdwSignerIndex = 0;
+
+    /* Create store to search for signer certificates */
+    store = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL);
+    if (!(dwFlags & CMSG_TRUSTED_SIGNER_FLAG))
+    {
+        HCERTSTORE msgStore = CertOpenStore(CERT_STORE_PROV_MSG, 0, 0, 0,
+         hCryptMsg);
+
+        CertAddStoreToCollection(store, msgStore, 0, 0);
+        CertCloseStore(msgStore, 0);
+    }
+    for (i = 0; i < cSignerStore; i++)
+        CertAddStoreToCollection(store, rghSignerStore[i], 0, 0);
+
+    /* Find signer cert */
+    if (dwFlags & CMSG_USE_SIGNER_INDEX_FLAG)
+    {
+        CERT_INFO *signer = CRYPT_GetSignerCertInfoFromMsg(hCryptMsg,
+         *pdwSignerIndex);
+
+        if (signer)
+        {
+            signerIndex = *pdwSignerIndex;
+            signerCert = CertFindCertificateInStore(store, X509_ASN_ENCODING,
+             0, CERT_FIND_SUBJECT_CERT, signer, NULL);
+            CryptMemFree(signer);
+        }
+    }
+    else
+    {
+        DWORD count, size = sizeof(count);
+
+        if (CryptMsgGetParam(hCryptMsg, CMSG_SIGNER_COUNT_PARAM, 0, &count,
+         &size))
+        {
+            for (i = 0; !signerCert && i < count; i++)
+            {
+                CERT_INFO *signer = CRYPT_GetSignerCertInfoFromMsg(hCryptMsg,
+                 i);
+
+                if (signer)
+                {
+                    signerCert = CertFindCertificateInStore(store,
+                     X509_ASN_ENCODING, 0, CERT_FIND_SUBJECT_CERT, signer,
+                     NULL);
+                    if (signerCert)
+                        signerIndex = i;
+                    CryptMemFree(signer);
+                }
+            }
+        }
+        if (!signerCert)
+            SetLastError(CRYPT_E_NO_TRUSTED_SIGNER);
+    }
+    if (signerCert)
+    {
+        if (!(dwFlags & CMSG_SIGNER_ONLY_FLAG))
+            ret = CryptMsgControl(hCryptMsg, 0, CMSG_CTRL_VERIFY_SIGNATURE,
+             signerCert->pCertInfo);
+        else
+            ret = TRUE;
+        if (ret)
+        {
+            if (ppSigner)
+                *ppSigner = CertDuplicateCertificateContext(signerCert);
+            if (pdwSignerIndex)
+                *pdwSignerIndex = signerIndex;
+        }
+        CertFreeCertificateContext(signerCert);
+    }
+
+    CertCloseStore(store, 0);
+    return ret;
 }

@@ -2580,26 +2580,21 @@ static void test_msg_get_and_verify_signer(void)
     /* An empty message has no signer */
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
     /* The signer is cleared on error */
     signer = (PCCERT_CONTEXT)0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, &signer, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
-    todo_wine
     ok(!signer, "expected signer to be NULL\n");
     /* The signer index is also cleared on error */
     signerIndex = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, &signerIndex);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
-    todo_wine
     ok(!signerIndex, "expected 0, got %d\n", signerIndex);
     /* An unsigned message (msgData isn't a signed message at all)
      * likewise has no signer.
@@ -2607,7 +2602,6 @@ static void test_msg_get_and_verify_signer(void)
     CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
     CryptMsgClose(msg);
@@ -2617,7 +2611,6 @@ static void test_msg_get_and_verify_signer(void)
     CryptMsgUpdate(msg, signedEmptyContent, sizeof(signedEmptyContent), TRUE);
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
     CryptMsgClose(msg);
@@ -2627,21 +2620,16 @@ static void test_msg_get_and_verify_signer(void)
     CryptMsgUpdate(msg, signedWithCertWithValidPubKeyContent,
      sizeof(signedWithCertWithValidPubKeyContent), TRUE);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, NULL);
-    todo_wine
     ok(ret, "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
     /* the signer index can be retrieved, .. */
     signerIndex = 0xdeadbeef;
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, NULL, &signerIndex);
-    todo_wine
     ok(ret, "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
-    todo_wine
     ok(signerIndex == 0, "expected 0, got %d\n", signerIndex);
     /* as can the signer cert. */
     signer = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, 0, &signer, NULL);
-    todo_wine
     ok(ret, "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
-    todo_wine
     ok(signer != NULL && signer != (PCCERT_CONTEXT)0xdeadbeef,
      "expected a valid signer\n");
     if (signer && signer != (PCCERT_CONTEXT)0xdeadbeef)
@@ -2652,7 +2640,6 @@ static void test_msg_get_and_verify_signer(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, CMSG_USE_SIGNER_INDEX_FLAG,
      NULL, &signerIndex);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_INVALID_INDEX,
      "expected CRYPT_E_INVALID_INDEX, got 0x%08x\n", GetLastError());
     /* Specifying CMSG_TRUSTED_SIGNER_FLAG and no cert stores causes the
@@ -2661,7 +2648,6 @@ static void test_msg_get_and_verify_signer(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 0, NULL, CMSG_TRUSTED_SIGNER_FLAG,
      NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
     /* Specifying CMSG_TRUSTED_SIGNER_FLAG and an empty cert store also causes
@@ -2672,7 +2658,6 @@ static void test_msg_get_and_verify_signer(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 1, &store, CMSG_TRUSTED_SIGNER_FLAG,
      NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NO_TRUSTED_SIGNER,
      "expected CRYPT_E_NO_TRUSTED_SIGNER, got 0x%08x\n", GetLastError());
     ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
@@ -2686,7 +2671,6 @@ static void test_msg_get_and_verify_signer(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgGetAndVerifySigner(msg, 1, &store, CMSG_TRUSTED_SIGNER_FLAG,
      NULL, NULL);
-    todo_wine
     ok(ret, "CryptMsgGetAndVerifySigner failed: 0x%08x\n", GetLastError());
     CertCloseStore(store, 0);
     CryptMsgClose(msg);
