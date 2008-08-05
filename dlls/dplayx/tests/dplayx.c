@@ -4845,6 +4845,339 @@ static void test_groups_cs(void)
 
 }
 
+/* Send */
+
+static void test_Send(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[4], idFrom, idTo;
+    CallbackData callbackData;
+    HRESULT hr;
+    LPCSTR message = "message";
+    DWORD messageSize = strlen(message) + 1;
+    DWORD dwDataSize = 1024;
+    LPDPMSG_GENERIC lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwDataSize );
+    LPDPMSG_SECUREMESSAGE lpDataSecure;
+    UINT i;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+
+
+    /* Uninitialized service provider */
+    hr = IDirectPlayX_Send( pDP[0], 0, 0, 0,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_UNINITIALIZED, hr );
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                               (LPVOID) pDP[1], 0 );
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+
+
+    /* Incorrect players */
+    hr = IDirectPlayX_Send( pDP[0], 0, 1, 2,
+                            (LPVOID) message, messageSize );
+    todo_wine checkHR( DPERR_INVALIDPLAYER, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "Send not implemented\n" );
+        return;
+    }
+
+
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[1], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[2], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[1], &dpid[3], NULL, NULL, NULL, 0, 0 );
+
+    /* Purge player creation messages */
+    check_messages( pDP[0], dpid, 4, &callbackData );
+    checkStr( "S0," "S1,S0," "S2,S1,S0,", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    /* Message to self: no error, but no message is sent */
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[0], 0,
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+
+    /* Send a message from a remote player */
+    hr = IDirectPlayX_Send( pDP[1], dpid[0], dpid[1], 0,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_ACCESSDENIED, hr );
+    hr = IDirectPlayX_Send( pDP[1], dpid[0], dpid[3], 0,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_ACCESSDENIED, hr );
+
+    /* Null message */
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1], 0,
+                            NULL, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1], 0,
+                            (LPVOID) message, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+
+    /* Checking no message was sent */
+    check_messages( pDP[0], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    /* Regular parameters */
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            0,
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_Receive( pDP[0], &dpid[0], &dpid[1],
+                               DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
+                               (LPVOID) lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkStr( message, (LPSTR) lpData );
+    check( strlen(message)+1, dwDataSize );
+
+    check_messages( pDP[0], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    /* Message to a remote player */
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[3], 0,
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_Receive( pDP[0], &dpid[0], &dpid[3],
+                               DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
+                               (LPVOID) lpData, &dwDataSize );
+    checkHR( DPERR_NOMESSAGES, hr );
+    hr = IDirectPlayX_Receive( pDP[1], &dpid[0], &dpid[3],
+                               DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
+                               (LPVOID) lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkStr( message, (LPSTR) lpData );
+    check( strlen(message)+1, dwDataSize );
+
+    check_messages( pDP[0], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    /* Broadcast */
+
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], DPID_ALLPLAYERS, 0,
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+
+    for (i=1; i<3; i++)
+    {
+        hr = IDirectPlayX_Receive( pDP[0], &dpid[0], &dpid[i],
+                                   DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
+                                   (LPVOID) lpData, &dwDataSize );
+        checkHR( DP_OK, hr );
+        checkStr( message, (LPSTR) lpData );
+    }
+    hr = IDirectPlayX_Receive( pDP[1], &dpid[0], &dpid[3],
+                               DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
+                               (LPVOID) lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkStr( message, (LPSTR) lpData );
+
+    check_messages( pDP[0], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    hr = IDirectPlayX_Send( pDP[0], DPID_ALLPLAYERS, dpid[1],
+                            0,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    hr = IDirectPlayX_Send( pDP[0], DPID_ALLPLAYERS, DPID_ALLPLAYERS,
+                            0,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+
+
+    /* Flags */
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_GUARANTEED,
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_Receive( pDP[0], &dpid[0], &dpid[1],
+                               DPRECEIVE_FROMPLAYER | DPRECEIVE_TOPLAYER,
+                               lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkStr( message, (LPSTR)lpData );
+
+    /* - Inorrect flags */
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_ENCRYPTED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_SIGNED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_ENCRYPTED | DPSEND_SIGNED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    /* - Correct flags, but session is not secure */
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_ENCRYPTED | DPSEND_GUARANTEED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_SIGNED | DPSEND_GUARANTEED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            ( DPSEND_ENCRYPTED |
+                              DPSEND_SIGNED |
+                              DPSEND_GUARANTEED ),
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    /* - Corerct flags, secure session incorrectly opened (without flags) */
+    hr = IDirectPlayX_Close( pDP[0] );
+    checkHR( DP_OK, hr );
+
+    dpsd.dwFlags = 0;
+    hr = IDirectPlayX_SecureOpen( pDP[0], &dpsd, DPOPEN_CREATE, NULL, NULL );
+    checkHR( DP_OK, hr );
+    for (i=0; i<2; i++)
+        IDirectPlayX_CreatePlayer( pDP[0], &dpid[i], NULL, NULL, NULL, 0, 0 );
+
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_ENCRYPTED | DPSEND_GUARANTEED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_SIGNED | DPSEND_GUARANTEED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            ( DPSEND_ENCRYPTED |
+                              DPSEND_SIGNED |
+                              DPSEND_GUARANTEED ),
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    /* - Correct flags, secure session */
+    hr = IDirectPlayX_Close( pDP[0] );
+    checkHR( DP_OK, hr );
+
+    dpsd.dwFlags = DPSESSION_SECURESERVER;
+    hr = IDirectPlayX_SecureOpen( pDP[0], &dpsd, DPOPEN_CREATE, NULL, NULL );
+    checkHR( DP_OK, hr );
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[1], NULL, NULL, NULL, 0, 0 );
+
+    /* Purge */
+    check_messages( pDP[0], dpid, 6, &callbackData );
+    checkStr( "S0,", callbackData.szTrace1 );
+
+
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_ENCRYPTED | DPSEND_GUARANTEED,
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_SIGNED | DPSEND_GUARANTEED,
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            ( DPSEND_ENCRYPTED |
+                              DPSEND_SIGNED |
+                              DPSEND_GUARANTEED ),
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+
+
+    for (i=0; i<3; i++)
+    {
+        dwDataSize = 1024;
+        hr = IDirectPlayX_Receive( pDP[0], &idFrom, &idTo, 0,
+                                   (LPVOID) lpData, &dwDataSize );
+
+        lpDataSecure = (LPDPMSG_SECUREMESSAGE) lpData;
+
+        checkHR( DP_OK, hr );
+        checkConv( DPSYS_SECUREMESSAGE,   lpData->dwType, dpMsgType2str );
+        check( DPID_SYSMSG,               idFrom );
+        check( dpid[1],                   idTo );
+        check( dpid[0],                   lpDataSecure->dpIdFrom );
+        checkStr( message,        (LPSTR) lpDataSecure->lpData );
+        check( strlen(message)+1,         lpDataSecure->dwDataSize );
+
+        switch(i)
+        {
+        case 0:
+            checkFlags( DPSEND_ENCRYPTED,
+                        lpDataSecure->dwFlags,
+                        FLAGS_DPSEND );
+            break;
+        case 1:
+            checkFlags( DPSEND_SIGNED,
+                        lpDataSecure->dwFlags,
+                        FLAGS_DPSEND );
+            break;
+        case 2:
+            checkFlags( DPSEND_SIGNED | DPSEND_ENCRYPTED,
+                        lpDataSecure->dwFlags,
+                        FLAGS_DPSEND );
+            break;
+        default: break;
+        }
+    }
+    check_messages( pDP[0], dpid, 4, &callbackData );
+    checkStr( "", callbackData.szTrace1 );
+
+
+    /* - Even in a secure session, incorrect flags still not working */
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_ENCRYPTED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_SIGNED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Send( pDP[0], dpid[0], dpid[1],
+                            DPSEND_ENCRYPTED | DPSEND_SIGNED,
+                            (LPVOID) message, messageSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -4876,6 +5209,8 @@ START_TEST(dplayx)
 
     test_groups_p2p();
     test_groups_cs();
+
+    test_Send();
 
     CoUninitialize();
 }
