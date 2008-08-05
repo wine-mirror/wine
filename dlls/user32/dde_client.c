@@ -191,6 +191,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     {
 	WARN("Done with INITIATE, but no Server window available\n");
 	pConv = NULL;
+	pInstance->lastError = DMLERR_NO_CONV_ESTABLISHED;
 	goto theEnd;
     }
     TRACE("Connected to Server window (%p)\n", pConv->hwndServer);
