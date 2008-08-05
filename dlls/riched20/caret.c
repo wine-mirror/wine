@@ -725,8 +725,8 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
 void
 ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
 {
-  /* pCursor[0] will be the start of the selection
-   * pCursor[1] is the other end of the selection range
+  /* pCursor[0] is the end of the selection
+   * pCursor[1] is the start of the selection (or the position selection anchor)
    * pCursor[2] and [3] are the selection anchors that are backed up
    * so they are kept when the selection changes for drag selection.
    */
@@ -737,9 +737,9 @@ ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
     case stPosition:
       break;
     case stWord:
-      ME_MoveCursorWords(editor, &editor->pCursors[1], +1);
-      editor->pCursors[0] = editor->pCursors[1];
-      ME_MoveCursorWords(editor, &editor->pCursors[0], -1);
+      ME_MoveCursorWords(editor, &editor->pCursors[0], +1);
+      editor->pCursors[1] = editor->pCursors[0];
+      ME_MoveCursorWords(editor, &editor->pCursors[1], -1);
       break;
     case stLine:
     case stParagraph:
@@ -753,16 +753,16 @@ ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
           backSearchType = diStartRow;
           fwdSearchType = diStartRowOrParagraphOrEnd;
       }
-      pItem = ME_FindItemBack(editor->pCursors[0].pRun, backSearchType);
-      editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
-      editor->pCursors[0].nOffset = 0;
-
       pItem = ME_FindItemFwd(editor->pCursors[0].pRun, fwdSearchType);
       assert(pItem);
       if (pItem->type == diTextEnd)
-          editor->pCursors[1].pRun = ME_FindItemBack(pItem, diRun);
+          editor->pCursors[0].pRun = ME_FindItemBack(pItem, diRun);
       else
-          editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
+          editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
+      editor->pCursors[0].nOffset = 0;
+
+      pItem = ME_FindItemBack(pItem, backSearchType);
+      editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
       editor->pCursors[1].nOffset = 0;
       break;
     }
@@ -941,8 +941,8 @@ static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
   if (editor->nSelectionType == stPosition || editor->nSelectionType == stDocument)
       return;
   curOfs = ME_GetCursorOfs(editor, 0);
-  anchorStartOfs = ME_GetCursorOfs(editor, 2);
-  anchorEndOfs = ME_GetCursorOfs(editor, 3);
+  anchorStartOfs = ME_GetCursorOfs(editor, 3);
+  anchorEndOfs = ME_GetCursorOfs(editor, 2);
 
   tmp_cursor = editor->pCursors[0];
   editor->pCursors[0] = editor->pCursors[2];
@@ -950,36 +950,36 @@ static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
   if (curOfs < anchorStartOfs)
   {
       /* Extend the left side of selection */
-      editor->pCursors[0] = tmp_cursor;
+      editor->pCursors[1] = tmp_cursor;
       if (editor->nSelectionType == stWord)
-          ME_MoveCursorWords(editor, &editor->pCursors[0], -1);
+          ME_MoveCursorWords(editor, &editor->pCursors[1], -1);
       else
       {
           ME_DisplayItem *pItem;
           ME_DIType searchType = ((editor->nSelectionType == stLine) ?
                                   diStartRowOrParagraph:diParagraph);
-          pItem = ME_FindItemBack(editor->pCursors[0].pRun, searchType);
-          editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
-          editor->pCursors[0].nOffset = 0;
+          pItem = ME_FindItemBack(editor->pCursors[1].pRun, searchType);
+          editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
+          editor->pCursors[1].nOffset = 0;
       }
   }
   else if (curOfs >= anchorEndOfs)
   {
       /* Extend the right side of selection */
-      editor->pCursors[1] = tmp_cursor;
+      editor->pCursors[0] = tmp_cursor;
       if (editor->nSelectionType == stWord)
-          ME_MoveCursorWords(editor, &editor->pCursors[1], +1);
+          ME_MoveCursorWords(editor, &editor->pCursors[0], +1);
       else
       {
           ME_DisplayItem *pItem;
           ME_DIType searchType = ((editor->nSelectionType == stLine) ?
                                   diStartRowOrParagraphOrEnd:diParagraphOrEnd);
-          pItem = ME_FindItemFwd(editor->pCursors[1].pRun, searchType);
+          pItem = ME_FindItemFwd(editor->pCursors[0].pRun, searchType);
           if (pItem->type == diTextEnd)
-              editor->pCursors[1].pRun = ME_FindItemBack(pItem, diRun);
+              editor->pCursors[0].pRun = ME_FindItemBack(pItem, diRun);
           else
-              editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
-          editor->pCursors[1].nOffset = 0;
+              editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
+          editor->pCursors[0].nOffset = 0;
       }
   }
 }
