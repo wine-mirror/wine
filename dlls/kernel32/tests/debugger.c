@@ -339,6 +339,7 @@ static void test_ExitCode(void)
         {
             debugger_val=HeapAlloc(GetProcessHeap(), 0, debugger_size);
             RegQueryValueExA(hkey, "debugger", NULL, &debugger_type, debugger_val, &debugger_size);
+            trace("HKLM\\%s\\debugger is set to '%s'\n", AeDebug, debugger_val);
         }
     }
     else if (ret == ERROR_ACCESS_DENIED)
