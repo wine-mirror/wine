@@ -357,7 +357,6 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
     HWND window;
-    HRESULT hr;
 
     TRACE("(%p)->(%p,%08x)\n",This,hwnd,cooplevel);
     DDRAW_dump_cooperativelevel(cooplevel);
@@ -365,13 +364,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
     EnterCriticalSection(&ddraw_cs);
 
     /* Get the old window */
-    hr = IWineD3DDevice_GetHWND(This->wineD3DDevice, &window);
-    if(hr != D3D_OK)
-    {
-        ERR("IWineD3DDevice::GetHWND failed, hr = %08x\n", hr);
-        LeaveCriticalSection(&ddraw_cs);
-        return hr;
-    }
+    window = This->dest_window;
 
     /* Tests suggest that we need one of them: */
     if(!(cooplevel & (DDSCL_SETFOCUSWINDOW |
@@ -413,7 +406,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         hwnd = NULL;
 
         /* Use the focus window for drawing too */
-        IWineD3DDevice_SetHWND(This->wineD3DDevice, This->focuswindow);
+        This->dest_window = This->focuswindow;
 
         /* Destroy the device window, if we have one */
         if(This->devicewindow)
@@ -450,7 +443,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             !(This->devicewindow) &&
             (hwnd != window) )
         {
-            IWineD3DDevice_SetHWND(This->wineD3DDevice, hwnd);
+            This->dest_window = hwnd;
         }
 
         IWineD3DDevice_SetFullscreen(This->wineD3DDevice,
@@ -483,7 +476,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             !(This->devicewindow) &&
             (hwnd != window) )
         {
-            IWineD3DDevice_SetHWND(This->wineD3DDevice, hwnd);
+            This->dest_window = hwnd;
         }
     }
     else if(cooplevel & DDSCL_EXCLUSIVE)
@@ -507,8 +500,8 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             ShowWindow(devicewindow, SW_SHOW);   /* Just to be sure */
             TRACE("(%p) Created a DDraw device window. HWND=%p\n", This, devicewindow);
 
-            IWineD3DDevice_SetHWND(This->wineD3DDevice, devicewindow);
             This->devicewindow = devicewindow;
+            This->dest_window = devicewindow;
         }
     }
 
@@ -3195,11 +3188,7 @@ static HRESULT WINAPI IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This,
     WINED3DPRESENT_PARAMETERS presentation_parameters;
     HWND window;
 
-    hr = IWineD3DDevice_GetHWND(This->wineD3DDevice,
-                                &window);
-    if(FAILED(hr)) {
-        return hr;
-    }
+    window = This->dest_window;
 
     memset(&presentation_parameters, 0, sizeof(presentation_parameters));
 
@@ -3253,20 +3242,11 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
                                 IDirectDrawSurfaceImpl *primary)
 {
     HRESULT hr;
-    HWND                  window;
+    HWND                  window = This->dest_window;
 
     WINED3DPRESENT_PARAMETERS localParameters;
 
     TRACE("(%p)->(%p)\n", This, primary);
-
-    /* Get the window */
-    hr = IWineD3DDevice_GetHWND(This->wineD3DDevice,
-                                &window);
-    if(hr != D3D_OK)
-    {
-        ERR("IWineD3DDevice::GetHWND failed\n");
-        return hr;
-    }
 
     /* If there's no window, create a hidden window. WineD3D needs it */
     if(window == 0)

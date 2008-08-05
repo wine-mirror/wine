@@ -137,6 +137,7 @@ struct IDirectDrawImpl
     /* Various HWNDs */
     HWND                    focuswindow;
     HWND                    devicewindow;
+    HWND                    dest_window;
 
     /* The surface type to request */
     WINED3DSURFTYPE         ImplType;

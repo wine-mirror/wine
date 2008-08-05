@@ -1432,7 +1432,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     if (!object->win_handle) {
         object->win_handle = This->createParms.hFocusWindow;
     }
-    if(!This->ddraw_window) IWineD3DDevice_SetHWND(iface, object->win_handle);
+    if(!This->ddraw_window) {
+        if(This->ddraw_fullscreen && object->win_handle) {
+            IWineD3DDeviceImpl_SetupFullscreenWindow(iface, object->win_handle);
+        }
+        This->ddraw_window = object->win_handle;
+    }
 
     hDc                = GetDC(object->win_handle);
     TRACE("Using hDc %p\n", hDc);
@@ -4827,31 +4832,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, U
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetHWND(IWineD3DDevice *iface, HWND hWnd) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p)->(%p)\n", This, hWnd);
-
-    if(This->ddraw_fullscreen) {
-        if(This->ddraw_window && This->ddraw_window != hWnd) {
-            IWineD3DDeviceImpl_RestoreWindow(iface, This->ddraw_window);
-        }
-        if(hWnd && This->ddraw_window != hWnd) {
-            IWineD3DDeviceImpl_SetupFullscreenWindow(iface, hWnd);
-        }
-    }
-
-    This->ddraw_window = hWnd;
-    return WINED3D_OK;
-}
-
-static HRESULT WINAPI IWineD3DDeviceImpl_GetHWND(IWineD3DDevice *iface, HWND *hWnd) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p)->(%p)\n", This, hWnd);
-
-    *hWnd = This->ddraw_window;
-    return WINED3D_OK;
-}
-
 /*****
  * Stateblock related functions
  *****/
@@ -7734,8 +7714,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetDirect3D,
     IWineD3DDeviceImpl_GetDisplayMode,
     IWineD3DDeviceImpl_SetDisplayMode,
-    IWineD3DDeviceImpl_GetHWND,
-    IWineD3DDeviceImpl_SetHWND,
     IWineD3DDeviceImpl_GetNumberOfSwapChains,
     IWineD3DDeviceImpl_GetRasterStatus,
     IWineD3DDeviceImpl_GetSwapChain,
@@ -7882,8 +7860,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_DirtyConst_Vtbl =
     IWineD3DDeviceImpl_GetDirect3D,
     IWineD3DDeviceImpl_GetDisplayMode,
     IWineD3DDeviceImpl_SetDisplayMode,
-    IWineD3DDeviceImpl_GetHWND,
-    IWineD3DDeviceImpl_SetHWND,
     IWineD3DDeviceImpl_GetNumberOfSwapChains,
     IWineD3DDeviceImpl_GetRasterStatus,
     IWineD3DDeviceImpl_GetSwapChain,
