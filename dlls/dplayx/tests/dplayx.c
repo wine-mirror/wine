@@ -4137,6 +4137,248 @@ static void test_EnumGroups(void)
 
 }
 
+static void test_EnumGroupsInGroup(void)
+{
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd[2];
+    DPID dpid[6];
+    CallbackData callbackData;
+    HRESULT hr;
+    UINT i;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+
+        ZeroMemory( &dpsd[i], sizeof(DPSESSIONDESC2) );
+        dpsd[i].dwSize = sizeof(DPSESSIONDESC2);
+    }
+
+    dpsd[0].guidApplication = appGuid;
+    dpsd[1].guidApplication = GUID_NULL;
+
+    callbackData.dpid = dpid;
+    callbackData.dpidSize = 6;
+
+
+    /* Uninitialized service provider */
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], 0, NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_UNINITIALIZED, hr );
+    check( 0, callbackData.dwCounter1 );
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+    hr = IDirectPlayX_Open( pDP[0], &dpsd[0], DPOPEN_CREATE );
+    todo_wine checkHR( DP_OK, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "EnumGroupsInGroup not implemented\n" );
+        return;
+    }
+
+    /* Create groups */
+    /*
+     * 0
+     *   / 2
+     * 1 | 3
+     *   | 4
+     *   \ 5 (shortcut)
+     */
+    hr = IDirectPlayX_CreateGroup( pDP[0], &dpid[0],
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroup( pDP[0], &dpid[1],
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroupInGroup( pDP[0], dpid[1], &dpid[2],
+                                          NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroupInGroup( pDP[0], dpid[1], &dpid[3],
+                                          NULL, NULL, 0,
+                                          DPGROUP_HIDDEN );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroupInGroup( pDP[0], dpid[1], &dpid[4],
+                                          NULL, NULL, 0,
+                                          DPGROUP_STAGINGAREA );
+    checkHR( DP_OK, hr );
+    hr = IDirectPlayX_CreateGroup( pDP[0], &dpid[5],
+                                   NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_AddGroupToGroup( pDP[0], dpid[1], dpid[5] );
+    checkHR( DP_OK, hr );
+
+
+    /* Invalid parameters */
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], 0, NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_INVALIDGROUP, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], 10, NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_INVALIDGROUP, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], (LPGUID) &appGuid,
+                                         NULL, (LPVOID) &callbackData, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_SESSION );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    check( 0, callbackData.dwCounter1 );
+
+
+    /* Regular operation */
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[0], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 4, callbackData.dwCounter1 );
+    checkStr( "5432", callbackData.szTrace1 );
+    checkStr( "SHORTCUT:STAGINGAREA:HIDDEN:ALL:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], (LPGUID) &appGuid,
+                                         EnumGroups_cb,
+                                         (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 4, callbackData.dwCounter1 ); /* Guid is ignored */
+    checkStr( "5432", callbackData.szTrace1 );
+    checkStr( "SHORTCUT:STAGINGAREA:HIDDEN:ALL:", callbackData.szTrace2 );
+
+
+    /* Enumerating from a remote session */
+    /* - Session not open */
+    callbackData.pDP = pDP[1];
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd[1], 0,
+                                    EnumSessions_cb_EnumGroups,
+                                    (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+
+    /* - Open session */
+    callbackData.pDP = pDP[1];
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd[0], 0, EnumSessions_cb_join,
+                                    (LPVOID) pDP[2], 0 );
+    checkHR( DP_OK, hr );
+
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[1], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData, 0 );
+    checkHR( DP_OK, hr );
+    check( 4, callbackData.dwCounter1 );
+    checkStr( "5432", callbackData.szTrace1 );
+    checkStr( "SHORTCUT:STAGINGAREA:HIDDEN:ALL:", callbackData.szTrace2 );
+
+    /* Flag tests */
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_ALL );
+    checkHR( DP_OK, hr );
+    check( 4, callbackData.dwCounter1 );
+    checkStr( "5432", callbackData.szTrace1 );
+    checkStr( "SHORTCUT:STAGINGAREA:HIDDEN:ALL:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_HIDDEN );
+    checkHR( DP_OK, hr );
+    check( 1, callbackData.dwCounter1 );
+    checkStr( "3", callbackData.szTrace1 );
+    checkStr( "HIDDEN:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_LOCAL );
+    checkHR( DP_OK, hr );
+    check( 4, callbackData.dwCounter1 );
+    checkStr( "5432", callbackData.szTrace1 );
+    checkStr( "LOCAL,DPENUMGROUPS_SHORTCUT:"
+              "LOCAL,DPENUMGROUPS_STAGINGAREA:"
+              "LOCAL,DPENUMGROUPS_HIDDEN:LOCAL:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_REMOTE );
+    checkHR( DP_OK, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwCounter1 = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[1], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_LOCAL );
+    checkHR( DP_OK, hr );
+    check( 0, callbackData.dwCounter1 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[1], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_REMOTE );
+    checkHR( DP_OK, hr );
+    check( 4, callbackData.dwCounter1 );
+    checkStr( "5432", callbackData.szTrace1 );
+    checkStr( "REMOTE,DPENUMGROUPS_SHORTCUT:"
+              "REMOTE,DPENUMGROUPS_STAGINGAREA:"
+              "REMOTE,DPENUMGROUPS_HIDDEN:REMOTE:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_SHORTCUT );
+    checkHR( DP_OK, hr );
+    check( 1, callbackData.dwCounter1 );
+    checkStr( "5", callbackData.szTrace1 );
+    checkStr( "SHORTCUT:", callbackData.szTrace2 );
+
+    callbackData.dwCounter1 = 0;
+    callbackData.szTrace2[0] = 0;
+    hr = IDirectPlayX_EnumGroupsInGroup( pDP[0], dpid[1], NULL, EnumGroups_cb,
+                                         (LPVOID) &callbackData,
+                                         DPENUMGROUPS_STAGINGAREA );
+    checkHR( DP_OK, hr );
+    check( 1, callbackData.dwCounter1 );
+    checkStr( "4", callbackData.szTrace1 );
+    checkStr( "STAGINGAREA:", callbackData.szTrace2 );
+
+
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -4164,6 +4406,7 @@ START_TEST(dplayx)
 
     test_EnumPlayers();
     test_EnumGroups();
+    test_EnumGroupsInGroup();
 
     CoUninitialize();
 }

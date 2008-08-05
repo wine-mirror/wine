@@ -3454,6 +3454,11 @@ static HRESULT WINAPI DP_IF_AddGroupToGroup
 
   TRACE( "(%p)->(0x%08x,0x%08x)\n", This, idParentGroup, idGroup );
 
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
   if( DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idParentGroup ) == NULL )
   {
     return DPERR_INVALIDGROUP;
@@ -3958,6 +3963,11 @@ static HRESULT WINAPI DP_IF_EnumGroupsInGroup
   FIXME( "(%p)->(0x%08x,%p,%p,%p,0x%08x,%u): semi stub\n",
          This, idGroup, lpguidInstance, lpEnumPlayersCallback2,
          lpContext, dwFlags, bAnsi );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   if( ( lpGData = DP_FindAnyGroup( (IDirectPlay2AImpl*)This, idGroup ) ) == NULL )
   {
