@@ -1154,6 +1154,11 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
     {
     case XTYP_EXECUTE:
         /* Windows simply ignores hszItem and wFmt in this case */
+	if (pData == NULL)
+	{
+	    pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
+	    return 0;
+	}
 	pXAct = WDML_ClientQueueExecute(pConv, pData, cbData);
 	break;
     case XTYP_POKE:
