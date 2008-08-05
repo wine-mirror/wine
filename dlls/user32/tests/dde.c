@@ -654,7 +654,6 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
 
         if (msg_index == 5)
         {
-            todo_wine
             {
                 ok(!lstrcmpA(str, ""), "Expected empty string, got %s\n", str);
                 ok(size == 1, "Expected 1, got %d\n", size);
@@ -696,7 +695,6 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
         size = DdeQueryStringA(server_pid, hsz2, str, MAX_PATH, CP_WINANSI);
         if (msg_index == 7)
         {
-            todo_wine
             {
                 ok(!lstrcmpA(str, ""), "Expected empty string, got %s\n", str);
                 ok(size == 1, "Expected 1, got %d\n", size);

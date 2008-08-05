@@ -348,8 +348,8 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
     UINT			ret;
     WNDCLASSEXW			wndclass;
 
-    TRACE("(%p,%p,0x%x,%d)\n",
-	  pidInst, pfnCallback, afCmd, ulRes);
+    TRACE("(%p,%p,0x%x,%d,0x%x)\n",
+	  pidInst, pfnCallback, afCmd, ulRes, bUnicode);
 
     if (ulRes)
     {
@@ -997,6 +997,14 @@ static int	WDML_QueryString(WDML_INSTANCE* pInstance, HSZ hsz, LPVOID ptr, DWORD
     {
 	ptr = pString;
 	cchMax = MAX_BUFFER_LEN;
+    }
+
+    /* if there is no input windows returns a NULL string */
+    if (hsz == NULL)
+    {
+	CHAR *t_ptr = ptr;
+	*t_ptr = '\0';
+	return 1;
     }
 
     switch (codepage)
