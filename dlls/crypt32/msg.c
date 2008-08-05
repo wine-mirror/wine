@@ -2445,3 +2445,13 @@ BOOL WINAPI CryptMsgControl(HCRYPTMSG hCryptMsg, DWORD dwFlags,
      pvCtrlPara);
     return msg->control(hCryptMsg, dwFlags, dwCtrlType, pvCtrlPara);
 }
+
+BOOL WINAPI CryptMsgGetAndVerifySigner(HCRYPTMSG hCryptMsg, DWORD cSignerStore,
+ HCERTSTORE *rghSignerStore, DWORD dwFlags, PCCERT_CONTEXT *ppSigner,
+ DWORD *pdwSignerIndex)
+{
+    FIXME("(%p, %d, %p, %08x, %p, %p): stub\n", hCryptMsg, cSignerStore,
+     rghSignerStore, dwFlags, ppSigner, pdwSignerIndex);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
