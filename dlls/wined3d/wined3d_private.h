@@ -1326,6 +1326,11 @@ struct IWineD3DSurfaceImpl
 
     /* DirectDraw clippers */
     IWineD3DClipper           *clipper;
+
+    /* DirectDraw Overlay handling */
+    RECT                      overlay_srcrect;
+    RECT                      overlay_destrect;
+    IWineD3DSurfaceImpl       *overlay_dest;
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;

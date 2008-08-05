@@ -80,6 +80,7 @@ struct IWineD3DSurface;
 #define WINEDDERR_SURFACEBUSY                       MAKE_WINED3DHRESULT(430)
 #define WINEDDERR_INVALIDRECT                       MAKE_WINED3DHRESULT(150)
 #define WINEDDERR_NOCLIPLIST                        MAKE_WINED3DHRESULT(205)
+#define WINEDDERR_OVERLAYNOTVISIBLE                 MAKE_WINED3DHRESULT(577)
 #define WINED3DOK_NOAUTOGEN                         MAKE_WINED3DSTATUS(2159)
 
  /*****************************************************************************

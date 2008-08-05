@@ -1841,7 +1841,13 @@ IDirectDrawSurfaceImpl_UpdateOverlay(IDirectDrawSurface7 *iface,
                                        Flags,
                                        (WINEDDOVERLAYFX *) FX);
     LeaveCriticalSection(&ddraw_cs);
-    return hr;
+    switch(hr) {
+        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
+        case WINEDDERR_NOTAOVERLAYSURFACE:  return DDERR_NOTAOVERLAYSURFACE;
+        case WINEDDERR_OVERLAYNOTVISIBLE:   return DDERR_OVERLAYNOTVISIBLE;
+        default:
+            return hr;
+    }
 }
 
 /*****************************************************************************

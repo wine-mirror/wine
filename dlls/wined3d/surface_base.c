@@ -357,30 +357,48 @@ DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LONG X, LONG Y) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    LONG w, h;
 
-    FIXME("(%p)->(%d,%d) Stub!\n", This, X, Y);
+    TRACE("(%p)->(%d,%d) Stub!\n", This, X, Y);
 
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
         TRACE("(%p): Not an overlay surface\n", This);
         return WINEDDERR_NOTAOVERLAYSURFACE;
     }
+
+    w = This->overlay_destrect.right - This->overlay_destrect.left;
+    h = This->overlay_destrect.bottom - This->overlay_destrect.top;
+    This->overlay_destrect.left = X;
+    This->overlay_destrect.top = Y;
+    This->overlay_destrect.right = X + w;
+    This->overlay_destrect.bottom = Y + h;
 
     return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LONG *X, LONG *Y) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p,%p) Stub!\n", This, X, Y);
+    TRACE("(%p)->(%p,%p)\n", This, X, Y);
 
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
         TRACE("(%p): Not an overlay surface\n", This);
         return WINEDDERR_NOTAOVERLAYSURFACE;
     }
+    if(This->overlay_dest == NULL) {
+        *X = 0; *Y = 0;
+        hr = WINEDDERR_OVERLAYNOTVISIBLE;
+    } else {
+        *X = This->overlay_destrect.left;
+        *Y = This->overlay_destrect.top;
+        hr = WINED3D_OK;
+    }
 
-    return WINED3D_OK;
+    TRACE("Returning 0x%08x, position %d, %d\n", hr, *X, *Y);
+    return hr;
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface, DWORD Flags, IWineD3DSurface *Ref) {
@@ -405,8 +423,41 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, REC
 
     if(!(This->resource.usage & WINED3DUSAGE_OVERLAY))
     {
-        TRACE("(%p): Not an overlay surface\n", This);
+        WARN("(%p): Not an overlay surface\n", This);
         return WINEDDERR_NOTAOVERLAYSURFACE;
+    } else if(!DstSurface) {
+        WARN("(%p): Dest surface is NULL\n", This);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if(SrcRect) {
+        This->overlay_srcrect = *SrcRect;
+    } else {
+        This->overlay_srcrect.left = 0;
+        This->overlay_srcrect.top = 0;
+        This->overlay_srcrect.right = This->currentDesc.Width;
+        This->overlay_srcrect.bottom = This->currentDesc.Height;
+    }
+
+    if(DstRect) {
+        This->overlay_destrect = *DstRect;
+    } else {
+        This->overlay_destrect.left = 0;
+        This->overlay_destrect.top = 0;
+        This->overlay_destrect.right = Dst ? Dst->currentDesc.Width : 0;
+        This->overlay_destrect.bottom = Dst ? Dst->currentDesc.Height : 0;
+    }
+
+    if(Flags & WINEDDOVER_SHOW) {
+        This->overlay_dest = Dst;
+
+    } else if(Flags & WINEDDOVER_HIDE) {
+        /* tests show that the rectangles are erased on hide */
+        This->overlay_srcrect.left   = 0; This->overlay_srcrect.top     = 0;
+        This->overlay_srcrect.right  = 0; This->overlay_srcrect.bottom  = 0;
+        This->overlay_destrect.left  = 0; This->overlay_destrect.top    = 0;
+        This->overlay_destrect.right = 0; This->overlay_destrect.bottom = 0;
+        This->overlay_dest = NULL;
     }
 
     return WINED3D_OK;
