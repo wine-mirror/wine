@@ -214,6 +214,47 @@ static void test_getsubpathcount(void)
     GdipDeletePath(path);
 }
 
+static void test_isvalid(void)
+{
+    GpPath *path;
+    GpPathIterator *iter;
+    GpStatus stat;
+    BOOL isvalid;
+    INT start, end, result;
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    /* NULL args */
+    GdipCreatePathIter(&iter, path);
+    stat = GdipPathIterIsValid(NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterIsValid(iter, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterIsValid(NULL, &isvalid);
+    expect(InvalidParameter, stat);
+    GdipDeletePathIter(iter);
+
+    /* on empty path */
+    GdipCreatePathIter(&iter, path);
+    isvalid = FALSE;
+    stat = GdipPathIterIsValid(iter, &isvalid);
+    expect(Ok, stat);
+    expect(TRUE, isvalid);
+    GdipDeletePathIter(iter);
+
+    /* no markers */
+    GdipAddPathLine(path, 50.0, 50.0, 110.0, 40.0);
+    GdipCreatePathIter(&iter, path);
+    GdipPathIterNextMarker(iter, &result, &start, &end);
+    isvalid = FALSE;
+    stat = GdipPathIterIsValid(iter, &isvalid);
+    expect(Ok, stat);
+    expect(TRUE, isvalid);
+    GdipDeletePathIter(iter);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(pathiterator)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -230,6 +271,7 @@ START_TEST(pathiterator)
     test_hascurve();
     test_nextmarker();
     test_getsubpathcount();
+    test_isvalid();
 
     GdiplusShutdown(gdiplusToken);
 }

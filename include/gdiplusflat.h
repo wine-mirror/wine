@@ -333,6 +333,7 @@ GpStatus WINGDIPAPI GdipPathIterGetCount(GpPathIterator*,INT*);
 GpStatus WINGDIPAPI GdipPathIterGetSubpathCount(GpPathIterator*,INT*);
 GpStatus WINGDIPAPI GdipPathIterEnumerate(GpPathIterator*,INT*,GpPointF*,BYTE*,INT);
 GpStatus WINGDIPAPI GdipPathIterHasCurve(GpPathIterator*,BOOL*);
+GpStatus WINGDIPAPI GdipPathIterIsValid(GpPathIterator*,BOOL*);
 
 GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap*,GpCustomLineCap**);
 GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath*,GpPath*,GpLineCap,REAL,

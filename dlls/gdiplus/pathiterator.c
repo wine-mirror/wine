@@ -225,3 +225,13 @@ GpStatus WINGDIPAPI GdipPathIterEnumerate(GpPathIterator* iterator, INT* resultC
 
     return GdipPathIterCopyData(iterator, resultCount, points, types, 0, count-1);
 }
+
+GpStatus WINGDIPAPI GdipPathIterIsValid(GpPathIterator* iterator, BOOL* valid)
+{
+    if(!iterator || !valid)
+        return InvalidParameter;
+
+    *valid = TRUE;
+
+    return Ok;
+}
