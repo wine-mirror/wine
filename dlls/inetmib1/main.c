@@ -730,7 +730,7 @@ static void mib2IpRouteInit(void)
         MIB_IPFORWARDTABLE *table = HeapAlloc(GetProcessHeap(), 0, size);
         if (table)
         {
-            if (!GetIpForwardTable(ipRouteTable, &size, TRUE)) ipRouteTable = table;
+            if (!GetIpForwardTable(table, &size, TRUE)) ipRouteTable = table;
             else HeapFree(GetProcessHeap(), 0, table );
         }
     }
@@ -813,7 +813,7 @@ static void mib2IpNetInit(void)
         MIB_IPNETTABLE *table = HeapAlloc(GetProcessHeap(), 0, size);
         if (table)
         {
-            if (!GetIpNetTable(ipNetTable, &size, FALSE)) ipNetTable = table;
+            if (!GetIpNetTable(table, &size, FALSE)) ipNetTable = table;
             else HeapFree(GetProcessHeap(), 0, table );
         }
     }
