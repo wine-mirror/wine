@@ -5178,6 +5178,288 @@ static void test_Send(void)
 
 }
 
+/* Receive */
+
+static void test_Receive(void)
+{
+
+    LPDIRECTPLAY4 pDP;
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[4], idFrom, idTo;
+    HRESULT hr;
+    LPCSTR message = "message";
+    DWORD messageSize = strlen(message) + 1;
+    DWORD dwDataSize = 1024;
+    LPDPMSG_GENERIC lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        dwDataSize );
+    LPDPMSG_CREATEPLAYERORGROUP lpDataCreate;
+    LPDPMSG_DESTROYPLAYERORGROUP lpDataDestroy;
+
+    DWORD dwCount;
+    UINT i;
+
+
+    CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                      &IID_IDirectPlay4A, (LPVOID*) &pDP );
+
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+
+    init_TCPIP_provider( pDP, "127.0.0.1", 0 );
+
+    IDirectPlayX_Open( pDP, &dpsd, DPOPEN_CREATE );
+
+
+    /* Invalid parameters */
+    hr = IDirectPlayX_Receive( pDP, NULL, &idTo, 0,
+                               lpData, &dwDataSize );
+    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+
+    if ( hr == DPERR_UNINITIALIZED )
+    {
+        skip( "Receive not implemented\n" );
+        return;
+    }
+
+    hr = IDirectPlayX_Receive( pDP, &idFrom, NULL, 0,
+                               lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                               lpData, NULL );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    dwDataSize = -1;
+    hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                               lpData, &dwDataSize );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+
+    /* No messages yet */
+    hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                               NULL, &dwDataSize );
+    checkHR( DPERR_NOMESSAGES, hr );
+    dwDataSize = 0;
+    hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                               lpData, &dwDataSize );
+    checkHR( DPERR_NOMESSAGES, hr );
+
+
+    IDirectPlayX_CreatePlayer( pDP, &dpid[0], NULL, 0, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP, &dpid[1], NULL, 0, NULL, 0,
+                               DPPLAYER_SPECTATOR );
+    IDirectPlayX_CreatePlayer( pDP, &dpid[2], NULL, 0, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP, &dpid[3], NULL, 0, NULL, 0, 0 );
+
+
+    /* 0, 1, 2, 3 */
+    /* 3, 2, 1, 0 */
+    for (i=0; i<4; i++)
+    {
+        IDirectPlayX_GetMessageCount( pDP, dpid[i], &dwCount );
+        check( 3-i, dwCount );
+    }
+
+
+    IDirectPlayX_DestroyPlayer( pDP, dpid[3] );
+    IDirectPlayX_DestroyPlayer( pDP, dpid[1] );
+
+
+    /* 0, 1, 2, 3 */
+    /* 5, 5, 3, 3 */
+    IDirectPlayX_GetMessageCount( pDP, dpid[0], &dwCount );
+    check( 5, dwCount );
+    IDirectPlayX_GetMessageCount( pDP, dpid[1], &dwCount );
+    check( 5, dwCount );
+    IDirectPlayX_GetMessageCount( pDP, dpid[2], &dwCount );
+    check( 3, dwCount );
+    IDirectPlayX_GetMessageCount( pDP, dpid[3], &dwCount );
+    check( 3, dwCount );
+
+
+    /* Buffer too small */
+    hr = IDirectPlayX_Receive( pDP, &idFrom, &idFrom, 0,
+                               NULL, &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( 48, dwDataSize );
+    dwDataSize = 0;
+    hr = IDirectPlayX_Receive( pDP, &idTo, &idFrom, 0,
+                               lpData, &dwDataSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+    check( 48, dwDataSize );
+
+
+    /* Checking the order or reception */
+    for (i=0; i<11; i++)
+    {
+        dwDataSize = 1024;
+        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
+                                   lpData, &dwDataSize );
+
+        checkHR( DP_OK, hr );
+        check( DPID_SYSMSG, idFrom );
+
+        if (i<6)  /* Player creation */
+        {
+            checkConv( DPSYS_CREATEPLAYERORGROUP, lpData->dwType, dpMsgType2str );
+            check( 48, dwDataSize );
+            lpDataCreate = (LPDPMSG_CREATEPLAYERORGROUP) lpData;
+            check( DPPLAYERTYPE_PLAYER,   lpDataCreate->dwPlayerType );
+            checkLP( NULL,                lpDataCreate->lpData );
+            check( 0,                     lpDataCreate->dwDataSize );
+            checkLP( NULL,                lpDataCreate->dpnName.lpszShortNameA );
+            check( 0,                     lpDataCreate->dpIdParent );
+        }
+        else  /* Player destruction */
+        {
+            checkConv( DPSYS_DESTROYPLAYERORGROUP, lpData->dwType,
+                       dpMsgType2str );
+            check( 52, dwDataSize );
+            lpDataDestroy = (LPDPMSG_DESTROYPLAYERORGROUP) lpData;
+            check( DPPLAYERTYPE_PLAYER,   lpDataDestroy->dwPlayerType );
+            checkLP( NULL,                lpDataDestroy->lpLocalData );
+            check( 0,                     lpDataDestroy->dwLocalDataSize );
+            checkLP( NULL,                lpDataDestroy->lpRemoteData );
+            check( 0,                     lpDataDestroy->dwRemoteDataSize );
+            checkLP( NULL,                lpDataDestroy->dpnName.lpszShortNameA );
+            check( 0,                     lpDataDestroy->dpIdParent );
+        }
+
+        switch(i)
+        {
+            /* 1 -> 0 */
+        case 0:
+            lpDataCreate = (LPDPMSG_CREATEPLAYERORGROUP) lpData;
+            check( dpid[0], idTo );
+            check( dpid[1],              lpDataCreate->dpId );
+            check( 1,                    lpDataCreate->dwCurrentPlayers );
+            checkFlags( DPPLAYER_LOCAL|DPPLAYER_SPECTATOR, lpDataCreate->dwFlags,
+                        FLAGS_DPPLAYER|FLAGS_DPGROUP );
+            break;
+
+            /* 2 -> 1,0 */
+        case 1:
+            check( dpid[1], idTo );
+            lpDataCreate = (LPDPMSG_CREATEPLAYERORGROUP) lpData;
+            check( dpid[2],              lpDataCreate->dpId );
+            check( 2,                    lpDataCreate->dwCurrentPlayers );
+            checkFlags( DPPLAYER_LOCAL,  lpDataCreate->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+        case 2:
+            check( dpid[0], idTo );
+            lpDataCreate = (LPDPMSG_CREATEPLAYERORGROUP) lpData;
+            check( dpid[2],              lpDataCreate->dpId );
+            check( 2,                    lpDataCreate->dwCurrentPlayers );
+            checkFlags( DPPLAYER_LOCAL,  lpDataCreate->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+
+            /* 3 -> 2,1,0 */
+        case 3:
+            check( dpid[2], idTo );
+            lpDataCreate = (LPDPMSG_CREATEPLAYERORGROUP) lpData;
+            check( dpid[3],              lpDataCreate->dpId );
+            check( 3,                    lpDataCreate->dwCurrentPlayers );
+            checkFlags( DPPLAYER_LOCAL,  lpDataCreate->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+        case 4:
+            check( dpid[1], idTo );
+            lpDataCreate = (LPDPMSG_CREATEPLAYERORGROUP) lpData;
+            check( dpid[3],              lpDataCreate->dpId );
+            check( 3,                    lpDataCreate->dwCurrentPlayers );
+            checkFlags( DPPLAYER_LOCAL,  lpDataCreate->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+        case 5:
+            check( dpid[0], idTo );
+            lpDataCreate = (LPDPMSG_CREATEPLAYERORGROUP) lpData;
+            check( dpid[3],              lpDataCreate->dpId );
+            check( 3,                    lpDataCreate->dwCurrentPlayers );
+            checkFlags( DPPLAYER_LOCAL,  lpDataCreate->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+
+            /* 3 -> 2,1,0 */
+        case 6:
+            check( dpid[2], idTo );
+            lpDataDestroy = (LPDPMSG_DESTROYPLAYERORGROUP) lpData;
+            check( dpid[3],              lpDataDestroy->dpId );
+            checkFlags( DPPLAYER_LOCAL,  lpDataDestroy->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+        case 7:
+            check( dpid[1], idTo );
+            lpDataDestroy = (LPDPMSG_DESTROYPLAYERORGROUP) lpData;
+            check( dpid[3],              lpDataDestroy->dpId );
+            checkFlags( DPPLAYER_LOCAL,  lpDataDestroy->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+        case 8:
+            check( dpid[0], idTo );
+            lpDataDestroy = (LPDPMSG_DESTROYPLAYERORGROUP) lpData;
+            check( dpid[3],              lpDataDestroy->dpId );
+            checkFlags( DPPLAYER_LOCAL,  lpDataDestroy->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+
+            /* 1 -> 2,0 */
+        case 9:
+            check( dpid[2], idTo );
+            lpDataDestroy = (LPDPMSG_DESTROYPLAYERORGROUP) lpData;
+            check( dpid[1],                 lpDataDestroy->dpId );
+            checkFlags( DPPLAYER_LOCAL |
+                        DPPLAYER_SPECTATOR, lpDataDestroy->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+        case 10:
+            check( dpid[0], idTo );
+            lpDataDestroy = (LPDPMSG_DESTROYPLAYERORGROUP) lpData;
+            check( dpid[1],                 lpDataDestroy->dpId );
+            checkFlags( DPPLAYER_LOCAL |
+                        DPPLAYER_SPECTATOR, lpDataDestroy->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+
+        default:
+            trace( "%s\n", dpMsgType2str(lpData->dwType) );
+            break;
+        }
+    }
+
+    hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0, lpData, &dwDataSize );
+    checkHR( DPERR_NOMESSAGES, hr );
+
+
+    /* New data message */
+    hr = IDirectPlayX_Send( pDP, dpid[0], dpid[2], 0,
+                            (LPVOID) message, messageSize );
+    checkHR( DP_OK, hr );
+
+
+    /* Ensuring DPRECEIVE_PEEK doesn't remove the messages from the queue */
+    for (i=0; i<10; i++)
+    {
+        hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, DPRECEIVE_PEEK,
+                                   lpData, &dwDataSize );
+        checkStr( message, (LPSTR) lpData );
+    }
+
+    /* Removing the message from the queue */
+    hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0, lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    check( idFrom, dpid[0] );
+    check( idTo, dpid[2] );
+    checkStr( message, (LPSTR) lpData );
+
+    hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0, lpData, &dwDataSize );
+    checkHR( DPERR_NOMESSAGES, hr );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -5211,6 +5493,7 @@ START_TEST(dplayx)
     test_groups_cs();
 
     test_Send();
+    test_Receive();
 
     CoUninitialize();
 }
