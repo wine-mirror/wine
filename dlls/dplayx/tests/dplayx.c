@@ -5460,6 +5460,227 @@ static void test_Receive(void)
 
 }
 
+/* GetMessageCount */
+
+static void test_GetMessageCount(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[4];
+    HRESULT hr;
+    UINT i;
+    DWORD dwCount;
+
+    DWORD dwDataSize = 1024;
+    LPVOID lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwDataSize );
+    CallbackData callbackData;
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], 0,  &dwCount );
+    todo_wine checkHR( DPERR_UNINITIALIZED, hr );
+    check( -1, dwCount );
+
+    if ( hr == DP_OK )
+    {
+        skip( "GetMessageCount not implemented\n" );
+        return;
+    }
+
+
+    init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
+    init_TCPIP_provider( pDP[1], "127.0.0.1", 0 );
+
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+    IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                               (LPVOID) pDP[1], 0 );
+
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[1], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[1], &dpid[3], NULL, NULL, NULL, 0, 0 );
+    IDirectPlayX_CreatePlayer( pDP[0], &dpid[2], NULL, NULL, NULL, 0, 0 );
+
+
+    /* Incorrect parameters */
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[0], NULL );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    check( -1, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], 0, NULL );
+    checkHR( DPERR_INVALIDPARAMS, hr );
+    check( -1, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], -1, &dwCount );
+    checkHR( DPERR_INVALIDPLAYER, hr );
+    check( -1, dwCount );
+
+
+    /* Correct parameters */
+    /* Player creation messages */
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 5, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[1], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 1, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[0], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 3, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[1], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 2, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[3], &dwCount );
+    checkHR( DP_OK, hr );
+    /* Remote player: doesn't throw error but result is 0 and not 1 */
+    check( 0, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[1], dpid[3], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 1, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[1], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 2, dwCount );
+
+
+    /* Purge queues */
+    check_messages( pDP[0], dpid, 6, &callbackData );
+    checkStr( "S0,S1,S0,S1,S0,", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 6, &callbackData );
+    checkStr( "S3,", callbackData.szTrace1 );
+
+
+    /* Ensure queues is purged */
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[1], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+
+    /* Send data messages */
+    for (i=0; i<5; i++)
+        IDirectPlayX_Send( pDP[0], dpid[0], dpid[1], 0, lpData, dwDataSize );
+    for (i=0; i<6; i++)
+        IDirectPlayX_Send( pDP[0], dpid[1], dpid[2], 0, lpData, dwDataSize );
+    for (i=0; i<7; i++)
+        IDirectPlayX_Send( pDP[0], dpid[2], dpid[3], 0, lpData, dwDataSize );
+
+
+    /* Check all messages are in the queues */
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 11, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[1], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 7, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[0], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[1], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 5, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[2], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 6, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[1], dpid[3], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 7, dwCount );
+
+
+    /* Purge queues again */
+    check_messages( pDP[0], dpid, 6, &callbackData );
+    checkStr( "01,01,01,01,01,"
+              "12,12,12,12,12,12,", callbackData.szTrace1 );
+    check_messages( pDP[1], dpid, 6, &callbackData );
+    checkStr( "23,23,23,23,23,23,23,", callbackData.szTrace1 );
+
+
+    /* Check queues are purged */
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[1], 0, &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[0], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[1], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[0], dpid[2], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+    dwCount = -1;
+    hr = IDirectPlayX_GetMessageCount( pDP[1], dpid[3], &dwCount );
+    checkHR( DP_OK, hr );
+    check( 0, dwCount );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -5494,6 +5715,7 @@ START_TEST(dplayx)
 
     test_Send();
     test_Receive();
+    test_GetMessageCount();
 
     CoUninitialize();
 }
