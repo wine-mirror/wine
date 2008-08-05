@@ -3286,10 +3286,30 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (((unsigned)wstr)>=' '
         || (wstr=='\r' && (GetWindowLongW(hWnd, GWL_STYLE) & ES_MULTILINE))
         || wstr=='\t') {
-      /* FIXME maybe it would make sense to call EM_REPLACESEL instead ? */
-      /* WM_CHAR is restricted to nTextLimit */
       int from, to;
       ME_GetSelection(editor, &from, &to);
+      if (wstr=='\t') {
+        ME_Cursor cursor = editor->pCursors[0];
+        ME_DisplayItem *para;
+        BOOL bSelectedRow = FALSE;
+
+        para = ME_GetParagraph(cursor.pRun);
+        if (ME_IsSelection(editor) &&
+            cursor.pRun->member.run.nCharOfs + cursor.nOffset == 0 &&
+            para->member.para.prev_para->type == diParagraph)
+        {
+          para = para->member.para.prev_para;
+          bSelectedRow = TRUE;
+        }
+        if (ME_IsInTable(para))
+        {
+          ME_TabPressedInTable(editor, bSelectedRow);
+          ME_CommitUndo(editor);
+          return 0;
+        }
+      }
+      /* FIXME maybe it would make sense to call EM_REPLACESEL instead ? */
+      /* WM_CHAR is restricted to nTextLimit */
       if(editor->nTextLimit > ME_GetTextLength(editor) - (to-from))
       {
         ME_Style *style = ME_GetInsertStyle(editor, 0);

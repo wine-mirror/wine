@@ -781,7 +781,6 @@ ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
   editor->pCursors[3] = editor->pCursors[1];
 }
 
-
 int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor)
 {
   ME_Cursor *pCursor = &editor->pCursors[nCursor];

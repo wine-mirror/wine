@@ -285,6 +285,10 @@ extern BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
 BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max);
 void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor);
 
+/* table.c */
+BOOL ME_IsInTable(ME_DisplayItem *pItem);
+void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow);
+
 /* undo.c */
 ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_DisplayItem *pdi);
 void ME_CommitUndo(ME_TextEditor *editor);
