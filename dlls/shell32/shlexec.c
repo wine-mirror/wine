@@ -1755,6 +1755,34 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
                                           sei, execfunc );
         HeapFree( GetProcessHeap(), 0, env );
     }
+    else if (PathIsDirectoryW(lpFile))
+    {
+        static const WCHAR wExplorer[] = {'e','x','p','l','o','r','e','r',0};
+        static const WCHAR wQuote[] = {'"',0};
+        WCHAR wExec[MAX_PATH];
+        WCHAR * lpQuotedFile = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * (strlenW(lpFile) + 3) );
+
+        if (lpQuotedFile)
+        {
+            retval = SHELL_FindExecutable( sei_tmp.lpDirectory, wExplorer,
+                                           wszOpen, wExec, MAX_PATH,
+                                           NULL, &env, NULL, NULL );
+            if (retval > 32)
+            {
+                strcpyW(lpQuotedFile, wQuote);
+                strcatW(lpQuotedFile, lpFile);
+                strcatW(lpQuotedFile, wQuote);
+                retval = SHELL_quote_and_execute( wExec, lpQuotedFile,
+                                                  lpstrProtocol,
+                                                  wszApplicationName, env,
+                                                  &sei_tmp, sei, execfunc );
+                HeapFree( GetProcessHeap(), 0, env );
+            }
+            HeapFree( GetProcessHeap(), 0, lpQuotedFile );
+        }
+        else
+            retval = 0; /* Out of memory */
+    }
     else if (PathIsURLW(lpFile))    /* File not found, check for URL */
     {
         retval = SHELL_execute_url( lpFile, wFile, wcmd, &sei_tmp, sei, execfunc );
