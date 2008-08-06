@@ -283,7 +283,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     OFSTRUCT    ofs;
     BYTE*       buf;
     DWORD       ref = 0x0C;
-    unsigned    index, old_index, offset, len, offs;
+    unsigned    index, old_index, offset, len, offs, topicoffset;
 
     hFile = OpenFile(lpszPath, &ofs, OF_READ);
     if (hFile == HFILE_ERROR) return FALSE;
@@ -339,7 +339,11 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
         switch (buf[0x14])
 	{
 	case 0x02:
-            if (!HLPFILE_AddPage(hlpfile, buf, end, ref, index * 0x8000L + offs)) return FALSE;
+            if (hlpfile->version <= 16)
+                topicoffset = ref + index * 12;
+            else
+                topicoffset = index * 0x8000 + offs;
+            if (!HLPFILE_AddPage(hlpfile, buf, end, ref, topicoffset)) return FALSE;
             break;
 
 	case 0x01:
