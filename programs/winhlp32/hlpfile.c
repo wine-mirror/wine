@@ -63,6 +63,7 @@ static BOOL  HLPFILE_Uncompress_Topic(HLPFILE*);
 static BOOL  HLPFILE_GetContext(HLPFILE*);
 static BOOL  HLPFILE_GetKeywords(HLPFILE*);
 static BOOL  HLPFILE_GetMap(HLPFILE*);
+static BOOL  HLPFILE_GetTOMap(HLPFILE*);
 static BOOL  HLPFILE_AddPage(HLPFILE*, const BYTE*, const BYTE*, unsigned, unsigned);
 static BOOL  HLPFILE_SkipParagraph(HLPFILE*, const BYTE*, const BYTE*, unsigned*);
 static void  HLPFILE_Uncompress2(HLPFILE*, const BYTE*, const BYTE*, BYTE*, const BYTE*);
@@ -292,6 +293,8 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     if (!ret) return FALSE;
 
     if (!HLPFILE_SystemCommands(hlpfile)) return FALSE;
+
+    if (hlpfile->version <= 16 && !HLPFILE_GetTOMap(hlpfile)) return FALSE;
 
     /* load phrases support */
     if (!HLPFILE_UncompressLZ77_Phrases(hlpfile))
@@ -2572,6 +2575,26 @@ static BOOL HLPFILE_GetMap(HLPFILE *hlpfile)
         hlpfile->Map[i].lMap = GET_UINT(cbuf+11,i*8);
         hlpfile->Map[i].offset = GET_UINT(cbuf+11,i*8+4);
     }
+    return TRUE;
+}
+
+/***********************************************************************
+ *
+ *           HLPFILE_GetTOMap
+ */
+static BOOL HLPFILE_GetTOMap(HLPFILE *hlpfile)
+{
+    BYTE                *cbuf, *cend;
+    unsigned            clen;
+
+    if (!HLPFILE_FindSubFile(hlpfile, "|TOMAP",  &cbuf, &cend))
+    {WINE_WARN("no tomap section\n"); return FALSE;}
+
+    clen = cend - cbuf - 9;
+    hlpfile->TOMap = HeapAlloc(GetProcessHeap(), 0, clen);
+    if (!hlpfile->TOMap) return FALSE;
+    memcpy(hlpfile->TOMap, cbuf+9, clen);
+    hlpfile->wTOMapLen = clen/4;
     return TRUE;
 }
 
