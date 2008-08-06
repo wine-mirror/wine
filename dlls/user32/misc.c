@@ -564,8 +564,9 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hnd, LPVOID notifyfilter, D
  */
 HDEVNOTIFY WINAPI RegisterDeviceNotificationW(HANDLE hRecepient, LPVOID pNotificationFilter, DWORD dwFlags)
 {
-    FIXME("(hwnd=%p, filter=%p,flags=0x%08x), STUB!\n", hRecepient,pNotificationFilter,dwFlags );
-    return 0;
+    FIXME("(hwnd=%p, filter=%p,flags=0x%08x),\n"
+          "\treturns a fake device notification handle!\n", hRecepient,pNotificationFilter,dwFlags );
+    return (HDEVNOTIFY) 0xcafeaffe;
 }
 
 /***********************************************************************
