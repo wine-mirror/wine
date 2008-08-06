@@ -651,16 +651,16 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
     switch (CalType & ~(CAL_NOUSEROVERRIDE|CAL_RETURN_NUMBER|CAL_USE_CP_ACP)) {
 	case CAL_ICALINTVALUE:
             FIXME("Unimplemented caltype %d\n", CalType & 0xffff);
-	    return E_FAIL;
+	    return 0;
 	case CAL_SCALNAME:
             FIXME("Unimplemented caltype %d\n", CalType & 0xffff);
-	    return E_FAIL;
+	    return 0;
 	case CAL_IYEAROFFSETRANGE:
             FIXME("Unimplemented caltype %d\n", CalType & 0xffff);
-	    return E_FAIL;
+	    return 0;
 	case CAL_SERASTRING:
             FIXME("Unimplemented caltype %d\n", CalType & 0xffff);
-	    return E_FAIL;
+	    return 0;
 	case CAL_SSHORTDATE:
 	    return GetLocaleInfoW(Locale, LOCALE_SSHORTDATE, lpCalData, cchData);
 	case CAL_SLONGDATE:
@@ -750,8 +750,10 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 	case CAL_ITWODIGITYEARMAX:
 	    if (lpValue) *lpValue = CALINFO_MAX_YEAR;
 	    break;
-	default: MESSAGE("Unknown caltype %d\n",CalType & 0xffff);
-		 return E_FAIL;
+	default:
+            FIXME("Unknown caltype %d\n",CalType & 0xffff);
+            SetLastError(ERROR_INVALID_FLAGS);
+            return 0;
     }
     return 0;
 }
