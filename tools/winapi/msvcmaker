@@ -135,7 +135,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    chomp $line;
 	    if($lookahead) {
 		$lookahead = 0;
-		$_ .= "\n" . $line;
+		$_ .= " " . $line;
 	    } else {
 		$_ = $line;
 	    }
