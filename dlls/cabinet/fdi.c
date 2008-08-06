@@ -2277,6 +2277,39 @@ static void free_decompression_temps(HFDI hfdi, struct fdi_folder *fol,
   }
 }
 
+static void free_decompression_mem(HFDI hfdi, struct fdi_folder *fol,
+  fdi_decomp_state *decomp_state, fdi_decomp_state *sentinel_decomp_state,
+  struct fdi_file *file)
+{
+  while (decomp_state) {
+    fdi_decomp_state *prev_fds;
+
+    PFDI_CLOSE(hfdi, CAB(cabhf));
+
+    /* free the storage remembered by mii */
+    if (CAB(mii).nextname) PFDI_FREE(hfdi, CAB(mii).nextname);
+    if (CAB(mii).nextinfo) PFDI_FREE(hfdi, CAB(mii).nextinfo);
+    if (CAB(mii).prevname) PFDI_FREE(hfdi, CAB(mii).prevname);
+    if (CAB(mii).previnfo) PFDI_FREE(hfdi, CAB(mii).previnfo);
+
+    while (CAB(firstfol)) {
+      fol = CAB(firstfol);
+      CAB(firstfol) = CAB(firstfol)->next;
+      PFDI_FREE(hfdi, fol);
+    }
+    while (CAB(firstfile)) {
+      file = CAB(firstfile);
+      if (file->filename) PFDI_FREE(hfdi, (void *)file->filename);
+      CAB(firstfile) = CAB(firstfile)->next;
+      PFDI_FREE(hfdi, file);
+    }
+    prev_fds = decomp_state;
+    decomp_state = CAB(next);
+    if (prev_fds != sentinel_decomp_state)
+      PFDI_FREE(hfdi, prev_fds);
+  }
+}
+
 /***********************************************************************
  *		FDICopy (CABINET.22)
  *
@@ -2859,34 +2892,7 @@ BOOL __cdecl FDICopy(
   }
 
   free_decompression_temps(hfdi, fol, decomp_state);
-
-  while (decomp_state) {
-    fdi_decomp_state *prev_fds;
-
-    PFDI_CLOSE(hfdi, CAB(cabhf));
-
-    /* free the storage remembered by mii */
-    if (CAB(mii).nextname) PFDI_FREE(hfdi, CAB(mii).nextname);
-    if (CAB(mii).nextinfo) PFDI_FREE(hfdi, CAB(mii).nextinfo);
-    if (CAB(mii).prevname) PFDI_FREE(hfdi, CAB(mii).prevname);
-    if (CAB(mii).previnfo) PFDI_FREE(hfdi, CAB(mii).previnfo);
-
-    while (CAB(firstfol)) {
-      fol = CAB(firstfol);
-      CAB(firstfol) = CAB(firstfol)->next;
-      PFDI_FREE(hfdi, fol);
-    }
-    while (CAB(firstfile)) {
-      file = CAB(firstfile);
-      if (file->filename) PFDI_FREE(hfdi, (void *)file->filename);
-      CAB(firstfile) = CAB(firstfile)->next;
-      PFDI_FREE(hfdi, file);
-    }
-    prev_fds = decomp_state;
-    decomp_state = CAB(next);
-    if (prev_fds != &_decomp_state)
-      PFDI_FREE(hfdi, prev_fds);
-  }
+  free_decompression_mem(hfdi, fol, decomp_state, &_decomp_state, file);
  
   return TRUE;
 
@@ -2896,33 +2902,7 @@ BOOL __cdecl FDICopy(
 
   if (filehf) PFDI_CLOSE(hfdi, filehf);
 
-  while (decomp_state) {
-    fdi_decomp_state *prev_fds;
-
-    PFDI_CLOSE(hfdi, CAB(cabhf));
-
-    /* free the storage remembered by mii */
-    if (CAB(mii).nextname) PFDI_FREE(hfdi, CAB(mii).nextname);
-    if (CAB(mii).nextinfo) PFDI_FREE(hfdi, CAB(mii).nextinfo);
-    if (CAB(mii).prevname) PFDI_FREE(hfdi, CAB(mii).prevname);
-    if (CAB(mii).previnfo) PFDI_FREE(hfdi, CAB(mii).previnfo);
-
-    while (CAB(firstfol)) {
-      fol = CAB(firstfol);
-      CAB(firstfol) = CAB(firstfol)->next;
-      PFDI_FREE(hfdi, fol);
-    }
-    while (CAB(firstfile)) {
-      file = CAB(firstfile);
-      if (file->filename) PFDI_FREE(hfdi, (void *)file->filename);
-      CAB(firstfile) = CAB(firstfile)->next;
-      PFDI_FREE(hfdi, file);
-    }
-    prev_fds = decomp_state;
-    decomp_state = CAB(next);
-    if (prev_fds != &_decomp_state)
-      PFDI_FREE(hfdi, prev_fds);
-  }
+  free_decompression_mem(hfdi, fol, decomp_state, &_decomp_state, file);
 
   return FALSE;
 }
