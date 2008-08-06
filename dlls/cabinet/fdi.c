@@ -2258,6 +2258,25 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
   return DECR_OK;
 }
 
+static void free_decompression_temps(HFDI hfdi, struct fdi_folder *fol,
+  fdi_decomp_state *decomp_state)
+{
+  switch (fol->comp_type & cffoldCOMPTYPE_MASK) {
+  case cffoldCOMPTYPE_LZX:
+    if (LZX(window)) {
+      PFDI_FREE(hfdi, LZX(window));
+      LZX(window) = NULL;
+    }
+    break;
+  case cffoldCOMPTYPE_QUANTUM:
+    if (QTM(window)) {
+      PFDI_FREE(hfdi, QTM(window));
+      QTM(window) = NULL;
+    }
+    break;
+  }
+}
+
 /***********************************************************************
  *		FDICopy (CABINET.22)
  *
@@ -2839,21 +2858,7 @@ BOOL __cdecl FDICopy(
     }
   }
 
-  /* free decompression temps */
-  switch (fol->comp_type & cffoldCOMPTYPE_MASK) {
-  case cffoldCOMPTYPE_LZX:
-    if (LZX(window)) {
-      PFDI_FREE(hfdi, LZX(window));
-      LZX(window) = NULL;
-    }
-    break;
-  case cffoldCOMPTYPE_QUANTUM:
-    if (QTM(window)) {
-      PFDI_FREE(hfdi, QTM(window));
-      QTM(window) = NULL;
-    }
-    break;
-  }
+  free_decompression_temps(hfdi, fol, decomp_state);
 
   while (decomp_state) {
     fdi_decomp_state *prev_fds;
@@ -2887,21 +2892,7 @@ BOOL __cdecl FDICopy(
 
   bail_and_fail: /* here we free ram before error returns */
 
-  /* free decompression temps */
-  switch (fol->comp_type & cffoldCOMPTYPE_MASK) {
-  case cffoldCOMPTYPE_LZX:
-    if (LZX(window)) {
-      PFDI_FREE(hfdi, LZX(window));
-      LZX(window) = NULL;
-    }
-    break;
-  case cffoldCOMPTYPE_QUANTUM:
-    if (QTM(window)) {
-      PFDI_FREE(hfdi, QTM(window));
-      QTM(window) = NULL;
-    }
-    break;
-  }
+  free_decompression_temps(hfdi, fol, decomp_state);
 
   if (filehf) PFDI_CLOSE(hfdi, filehf);
 
