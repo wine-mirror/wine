@@ -472,14 +472,14 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   }
   case rtfFirstIndent:
     ME_GetSelectionParaFormat(info->editor, &fmt);
-    fmt.dwMask |= PFM_STARTINDENT | PFM_OFFSET;
+    fmt.dwMask = PFM_STARTINDENT | PFM_OFFSET;
     fmt.dxStartIndent += info->rtfParam;
     fmt.dxOffset = -info->rtfParam;
     break;
   case rtfLeftIndent:
     /* we assume rtfLeftIndent is always specified before rtfFirstIndent */
     ME_GetSelectionParaFormat(info->editor, &fmt);
-    fmt.dwMask |= PFM_STARTINDENT;
+    fmt.dwMask = PFM_STARTINDENT;
     fmt.dxStartIndent = info->rtfParam;
     fmt.dxOffset = 0;
     break;
@@ -504,11 +504,11 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_TABSTOPS))
     {
-      fmt.dwMask |= PFM_TABSTOPS;
       fmt.cTabCount = 0;
     }
     if (fmt.cTabCount < MAX_TAB_STOPS && info->rtfParam < 0x1000000)
       fmt.rgxTabs[fmt.cTabCount++] = info->rtfParam;
+    fmt.dwMask = PFM_TABSTOPS;
     break;
   case rtfKeep:
     fmt.dwMask = PFM_KEEP;
@@ -571,85 +571,92 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_BORDER))
     {
-      fmt.dwMask |= PFM_BORDER;
       fmt.wBorderSpace = 0;
       fmt.wBorderWidth = 1;
       fmt.wBorders = 0;
     }
     fmt.wBorders |= 1;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderRight:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_BORDER))
     {
-      fmt.dwMask |= PFM_BORDER;
       fmt.wBorderSpace = 0;
       fmt.wBorderWidth = 1;
       fmt.wBorders = 0;
     }
     fmt.wBorders |= 2;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderTop:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_BORDER))
     {
-      fmt.dwMask |= PFM_BORDER;
       fmt.wBorderSpace = 0;
       fmt.wBorderWidth = 1;
       fmt.wBorders = 0;
     }
     fmt.wBorders |= 4;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderBottom:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_BORDER))
     {
-      fmt.dwMask |= PFM_BORDER;
       fmt.wBorderSpace = 0;
       fmt.wBorderWidth = 1;
       fmt.wBorders = 0;
     }
     fmt.wBorders |= 8;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderSingle:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
     fmt.wBorders &= ~0x700;
     fmt.wBorders |= 1 << 8;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderThick:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
     fmt.wBorders &= ~0x700;
     fmt.wBorders |= 2 << 8;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderShadow:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
     fmt.wBorders &= ~0x700;
     fmt.wBorders |= 10 << 8;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderDouble:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
     fmt.wBorders &= ~0x700;
     fmt.wBorders |= 7 << 8;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderDot:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
     fmt.wBorders &= ~0x700;
     fmt.wBorders |= 11 << 8;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderWidth:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
     fmt.wBorderWidth |= ((info->rtfParam / 15) & 7) << 8;
+    fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderSpace:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
     fmt.wBorderSpace = info->rtfParam;
+    fmt.dwMask = PFM_BORDER;
     break;
   }  
   if (fmt.dwMask) {
