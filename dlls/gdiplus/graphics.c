@@ -2343,6 +2343,21 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipResetWorldTransform(GpGraphics *graphics)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    graphics->worldtrans->matrix[0] = 1.0;
+    graphics->worldtrans->matrix[1] = 0.0;
+    graphics->worldtrans->matrix[2] = 0.0;
+    graphics->worldtrans->matrix[3] = 1.0;
+    graphics->worldtrans->matrix[4] = 0.0;
+    graphics->worldtrans->matrix[5] = 0.0;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState state)
 {
     static int calls;

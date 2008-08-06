@@ -166,6 +166,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics*, GDIPCONST WCHAR*,
     GpRegion**);
 
 GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics*,HDC);
+GpStatus WINGDIPAPI GdipResetWorldTransform(GpGraphics*);
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics*,GraphicsState);
 GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics*,REAL,GpMatrixOrder);
 GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics*,GraphicsState*);
