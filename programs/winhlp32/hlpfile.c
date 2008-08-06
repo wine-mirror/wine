@@ -71,23 +71,6 @@ static BOOL  HLPFILE_Uncompress3(HLPFILE*, char*, const char*, const BYTE*, cons
 static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE* dst, unsigned dstsz);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
 
-/***********************************************************************
- *
- *           HLPFILE_PageByNumber
- */
-static HLPFILE_PAGE *HLPFILE_PageByNumber(HLPFILE* hlpfile, UINT wNum)
-{
-    HLPFILE_PAGE *page;
-    UINT          temp = wNum;
-
-    WINE_TRACE("<%s>[%u]\n", hlpfile->lpszPath, wNum);
-
-    for (page = hlpfile->first_page; page && temp; page = page->next) temp--;
-    if (!page)
-        WINE_ERR("Page of number %u not found in file %s\n", wNum, hlpfile->lpszPath);
-    return page;
-}
-
 /******************************************************************
  *		HLPFILE_PageByOffset
  *
@@ -154,8 +137,8 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative)
     /* For win 3.0 files hash values are really page numbers */
     if (hlpfile->version <= 16)
     {
-        *relative = 0;
-        return HLPFILE_PageByNumber(hlpfile, lHash);
+        if (lHash >= hlpfile->wTOMapLen) return NULL;
+        return HLPFILE_PageByOffset(hlpfile, hlpfile->TOMap[lHash], relative);
     }
 
     ptr = HLPFILE_BPTreeSearch(hlpfile->Context, LongToPtr(lHash), comp_PageByHash);
@@ -437,6 +420,19 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, const BYTE *buf, const BYTE *end, 
 
     page->browse_bwd = GET_UINT(buf, 0x19);
     page->browse_fwd = GET_UINT(buf, 0x1D);
+
+    if (hlpfile->version <= 16)
+    {
+        if (page->browse_bwd == 0xFFFF || page->browse_bwd == 0xFFFFFFFF)
+            page->browse_bwd = 0xFFFFFFFF;
+        else
+            page->browse_bwd = hlpfile->TOMap[page->browse_bwd];
+
+        if (page->browse_fwd == 0xFFFF || page->browse_fwd == 0xFFFFFFFF)
+            page->browse_fwd = 0xFFFFFFFF;
+        else
+            page->browse_fwd = hlpfile->TOMap[page->browse_fwd];
+    }
 
     WINE_TRACE("Added page[%d]: title='%s' %08x << %08x >> %08x\n",
                page->wNumber, page->lpszTitle, 
@@ -1439,7 +1435,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             case 0xE1:
                 WINE_WARN("jump topic 1 => %u\n", GET_UINT(format, 1));
                 HLPFILE_AllocLink(rd, (*format & 1) ? hlp_link_link : hlp_link_popup,
-                                  page->file->lpszPath, -1, GET_UINT(format, 1)-16, 1, -1);
+                                  page->file->lpszPath, -1, GET_UINT(format, 1), 1, -1);
 
 
                 format += 5;
