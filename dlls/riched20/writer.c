@@ -334,6 +334,8 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
   if (!editor->bEmulateVersion10) { /* v4.1 */
     if (pStream->nNestingLevel > 0)
       strcat(props, "\\intbl");
+    if (pStream->nNestingLevel > 1)
+      sprintf(props + strlen(props), "\\itap%d", pStream->nNestingLevel);
   } else { /* v1.0 - 3.0 */
     if (fmt->dwMask & PFM_TABLE && fmt->wEffects & PFE_TABLE)
       strcat(props, "\\intbl");
@@ -715,12 +717,23 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
         if (!editor->bEmulateVersion10) { /* v4.1 */
           if (p->member.para.nFlags & MEPF_ROWSTART) {
             pStream->nNestingLevel++;
-            if (!ME_StreamOutRTFTableProps(editor, pStream, p))
-              return FALSE;
+            if (pStream->nNestingLevel == 1) {
+              if (!ME_StreamOutRTFTableProps(editor, pStream, p))
+                return FALSE;
+            }
           } else if (p->member.para.nFlags & MEPF_ROWEND) {
             pStream->nNestingLevel--;
-            if (!ME_StreamOutPrint(pStream, "\\row \r\n"))
-              return FALSE;
+            if (pStream->nNestingLevel > 1) {
+              if (!ME_StreamOutPrint(pStream, "{\\*\\nesttableprops"))
+                return FALSE;
+              if (!ME_StreamOutRTFTableProps(editor, pStream, p))
+                return FALSE;
+              if (!ME_StreamOutPrint(pStream, "\\nestrow}{\\nonesttables\\par}\r\n"))
+                return FALSE;
+            } else {
+              if (!ME_StreamOutPrint(pStream, "\\row \r\n"))
+                return FALSE;
+            }
           } else if (!ME_StreamOutRTFParaProps(editor, pStream, p)) {
             return FALSE;
           }
@@ -757,8 +770,13 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
               return FALSE;
           }
         } else if (p->member.run.nFlags & MERF_ENDCELL) {
-          if (!ME_StreamOutPrint(pStream, "\\cell "))
-            return FALSE;
+          if (pStream->nNestingLevel > 1) {
+            if (!ME_StreamOutPrint(pStream, "\\nestcell "))
+              return FALSE;
+          } else {
+            if (!ME_StreamOutPrint(pStream, "\\cell "))
+              return FALSE;
+          }
           nChars--;
         } else if (p->member.run.nFlags & MERF_ENDPARA) {
           if (pPara->member.para.pFmt->dwMask & PFM_TABLE &&

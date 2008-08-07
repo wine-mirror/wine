@@ -482,6 +482,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
            * table anymore.
            */
           info->tableDef->tableRowStart = NULL;
+          info->canInheritInTbl = FALSE;
         }
       }
     } else { /* v1.0 - v3.0 */
@@ -489,13 +490,42 @@ static void ME_RTFParAttrHook(RTF_Info *info)
       fmt.wEffects &= ~PFE_TABLE;
     }
     break;
-  case rtfInTable:
-  {
-    ME_Cursor cursor;
+  case rtfNestLevel:
     if (!info->editor->bEmulateVersion10) /* v4.1 */
     {
-      if (!info->tableDef || !info->tableDef->tableRowStart ||
-          info->tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
+      while (info->rtfParam > info->nestingLevel) {
+        RTFTable *tableDef = ALLOC_OBJ(RTFTable);
+        ZeroMemory(tableDef, sizeof(RTFTable));
+        tableDef->parent = info->tableDef;
+        info->tableDef = tableDef;
+
+        RTFFlushOutputBuffer(info);
+        if (tableDef->tableRowStart &&
+            tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
+        {
+          ME_DisplayItem *para = tableDef->tableRowStart;
+          para = para->member.para.next_para;
+          para = ME_InsertTableRowStartAtParagraph(info->editor, para);
+          tableDef->tableRowStart = para;
+        } else {
+          ME_Cursor cursor;
+          WCHAR endl = '\r';
+          cursor = info->editor->pCursors[0];
+          if (cursor.nOffset || cursor.pRun->member.run.nCharOfs)
+            ME_InsertTextFromCursor(info->editor, 0, &endl, 1, info->style);
+          tableDef->tableRowStart = ME_InsertTableRowStartFromCursor(info->editor);
+        }
+
+        info->nestingLevel++;
+      }
+      info->canInheritInTbl = FALSE;
+    }
+    break;
+  case rtfInTable:
+  {
+    if (!info->editor->bEmulateVersion10) /* v4.1 */
+    {
+      if (info->nestingLevel < 1)
       {
         RTFTable *tableDef;
         if (!info->tableDef)
@@ -505,19 +535,23 @@ static void ME_RTFParAttrHook(RTF_Info *info)
         }
         tableDef = info->tableDef;
         RTFFlushOutputBuffer(info);
-        if (!tableDef->tableRowStart)
+        if (tableDef->tableRowStart &&
+            tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
         {
+          ME_DisplayItem *para = tableDef->tableRowStart;
+          para = para->member.para.next_para;
+          para = ME_InsertTableRowStartAtParagraph(info->editor, para);
+          tableDef->tableRowStart = para;
+        } else {
+          ME_Cursor cursor;
           WCHAR endl = '\r';
           cursor = info->editor->pCursors[0];
           if (cursor.nOffset || cursor.pRun->member.run.nCharOfs)
             ME_InsertTextFromCursor(info->editor, 0, &endl, 1, info->style);
+          tableDef->tableRowStart = ME_InsertTableRowStartFromCursor(info->editor);
         }
-
-        /* FIXME: Remove the following condition once nested tables are supported */
-        if (ME_GetParagraph(info->editor->pCursors[0].pRun)->member.para.pCell)
-          break;
-
-        tableDef->tableRowStart = ME_InsertTableRowStartFromCursor(info->editor);
+        info->nestingLevel = 1;
+        info->canInheritInTbl = TRUE;
       }
       return;
     } else { /* v1.0 - v3.0 */
@@ -763,6 +797,10 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
   RTFTable *tableDef = info->tableDef;
   switch (info->rtfMinor)
   {
+    case rtfNestCell:
+      if (info->editor->bEmulateVersion10) /* v1.0 - v3.0 */
+        break;
+      /* else fall through since v4.1 treats rtfNestCell and rtfCell the same */
     case rtfCell:
       if (!tableDef)
         break;
@@ -770,12 +808,14 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
       if (!info->editor->bEmulateVersion10) { /* v4.1 */
         if (tableDef->tableRowStart)
         {
-          if (tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
+          if (!info->nestingLevel &&
+              tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
           {
             ME_DisplayItem *para = tableDef->tableRowStart;
             para = para->member.para.next_para;
             para = ME_InsertTableRowStartAtParagraph(info->editor, para);
             tableDef->tableRowStart = para;
+            info->nestingLevel = 1;
           }
           ME_InsertTableCellFromCursor(info->editor);
         }
@@ -791,6 +831,10 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
         }
       }
       break;
+    case rtfNestRow:
+      if (info->editor->bEmulateVersion10) /* v1.0 - v3.0 */
+        break;
+      /* else fall through since v4.1 treats rtfNestRow and rtfRow the same */
     case rtfRow:
     {
       ME_DisplayItem *para, *cell, *run;
@@ -802,12 +846,14 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
       if (!info->editor->bEmulateVersion10) { /* v4.1 */
         if (!tableDef->tableRowStart)
           break;
-        if (tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
+        if (!info->nestingLevel &&
+            tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
         {
           para = tableDef->tableRowStart;
           para = para->member.para.next_para;
           para = ME_InsertTableRowStartAtParagraph(info->editor, para);
           tableDef->tableRowStart = para;
+          info->nestingLevel++;
         }
         para = tableDef->tableRowStart;
         cell = ME_FindItemFwd(para, diCell);
@@ -855,7 +901,23 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
           ME_InternalDeleteText(info->editor, nOfs, nChars, TRUE);
         }
 
-        tableDef->tableRowStart = ME_InsertTableRowEndFromCursor(info->editor);
+        para = ME_InsertTableRowEndFromCursor(info->editor);
+        info->nestingLevel--;
+        if (!info->nestingLevel)
+        {
+          if (info->canInheritInTbl) {
+            tableDef->tableRowStart = para;
+          } else {
+            while (info->tableDef) {
+              tableDef = info->tableDef;
+              info->tableDef = tableDef->parent;
+              heap_free(tableDef);
+            }
+          }
+        } else {
+          info->tableDef = tableDef->parent;
+          heap_free(tableDef);
+        }
       } else { /* v1.0 - v3.0 */
         WCHAR endl = '\r';
         ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
@@ -1276,6 +1338,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       RTFSetReadHook(&parser, ME_RTFReadHook);
       RTFSetDestinationCallback(&parser, rtfPict, ME_RTFReadPictGroup);
       RTFSetDestinationCallback(&parser, rtfObject, ME_RTFReadObjectGroup);
+      if (!parser.editor->bEmulateVersion10) /* v4.1 */
+        RTFSetDestinationCallback(&parser, rtfNoNestTables, RTFSkipGroup);
       BeginFile(&parser);
 
       /* do the parsing */
@@ -1295,8 +1359,15 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
            * By doing it this way we will have the current paragraph format set
            * properly to reflect that is not in the complete table, and undo items
            * will be added for this change to the current paragraph format. */
-          ME_RTFSpecialCharHook(&parser);
-          if (para->member.para.nFlags & MEPF_ROWEND)
+          if (parser.nestingLevel > 0)
+          {
+            while (parser.nestingLevel--)
+              ME_RTFSpecialCharHook(&parser);
+          } else if (parser.canInheritInTbl) {
+            ME_RTFSpecialCharHook(&parser);
+          }
+          if (parser.tableDef && parser.tableDef->tableRowStart &&
+              para->member.para.nFlags & MEPF_ROWEND)
           {
             para = para->member.para.next_para;
           }

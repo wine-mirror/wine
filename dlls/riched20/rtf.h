@@ -182,7 +182,9 @@
 # define		rtfTOC			72
 # define		rtfNeXTGraphic		73
 # define		rtfGenerator		74
-# define		rtfMaxDestination	75	/* highest dest + 1 */
+# define		rtfNestTableProps	75
+# define		rtfNoNestTables		76
+# define		rtfMaxDestination	77	/* highest dest + 1 */
 
 # define	rtfFontFamily	4
 # define		rtfFFNil		0
@@ -261,6 +263,8 @@
 # define		rtfCurHeadPict		57	/* valid? */
 /*# define		rtfCurAnnot		58*/	/* apparently not used */
 # define		rtfUnicode		58	/* no better category*/
+# define		rtfNestCell		59
+# define		rtfNestRow		60
 
 # define	rtfStyleAttr	7
 # define		rtfAdditive		0	/* new in 1.10 */
@@ -551,6 +555,7 @@
 # define		rtfDarkDiagHatchBgPat	101
 # define		rtfBgPatLineColor	102
 # define		rtfBgPatColor		103
+# define		rtfNestLevel		104
 
 # define	rtfCharAttr	12
 # define		rtfPlain		0
@@ -1020,7 +1025,10 @@ struct RTFTable
 	/* tableRowStart may be the start row paragraph of the table row,
 	 * or it may store the end of the previous row if it may still be
 	 * continued, otherwise NULL is stored. */
-        ME_DisplayItem *tableRowStart;
+	ME_DisplayItem *tableRowStart;
+
+	/* Table definitions are stored as a stack to support nested tables. */
+	RTFTable *parent;
 };
 
 /*
@@ -1129,6 +1137,8 @@ struct _RTF_Info {
     LPRICHEDITOLE       lpRichEditOle;
 
     RTFTable *tableDef;
+    int nestingLevel;
+    BOOL canInheritInTbl;
 };
 
 
