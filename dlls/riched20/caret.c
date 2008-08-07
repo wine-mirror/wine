@@ -268,6 +268,19 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
   ME_Cursor c;
   int shift = 0;
   int totalChars = nChars;
+  ME_DisplayItem *start_para;
+
+  {
+    /* Prevent deletion past last end of paragraph run. */
+    ME_DisplayItem *pTextEnd = editor->pBuffer->pLast;
+    int nMaxChars = pTextEnd->member.para.prev_para->member.para.nCharOfs;
+    nMaxChars += ME_FindItemBack(pTextEnd, diRun)->member.run.nCharOfs;
+    nMaxChars -= nOfs;
+    nChars = min(nChars, nMaxChars);
+  }
+
+  ME_CursorFromCharOfs(editor, nOfs, &c);
+  start_para = ME_GetParagraph(c.pRun);
 
   if (!bForce)
   {
@@ -279,7 +292,19 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
   while(nChars > 0)
   {
     ME_Run *run;
-    ME_CursorFromCharOfs(editor, nOfs, &c);
+    ME_CursorFromCharOfs(editor, nOfs+nChars, &c);
+    if (!c.nOffset &&
+        nOfs+nChars == (c.pRun->member.run.nCharOfs
+                        + ME_GetParagraph(c.pRun)->member.para.nCharOfs))
+    {
+      /* We aren't deleting anything in this run, so we will go back to the
+       * last run we are deleting text in. */
+      c.pRun = ME_FindItemBack(c.pRun, diRun);
+      if (c.pRun->member.run.nFlags & MERF_ENDPARA)
+        c.nOffset = c.pRun->member.run.nCR + c.pRun->member.run.nLF;
+      else
+        c.nOffset = c.pRun->member.run.strText->nLen;
+    }
     run = &c.pRun->member.run;
     if (run->nFlags & MERF_ENDPARA) {
       int eollen = run->nCR + run->nLF;
@@ -300,22 +325,21 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
     else
     {
       ME_Cursor cursor;
-      int nIntendedChars = nChars;
-      int nCharsToDelete = nChars;
+      int nCharsToDelete = min(nChars, c.nOffset);
       int i;
-      int loc = c.nOffset;
-      
+
+      c.nOffset -= nCharsToDelete;
+
       ME_FindItemBack(c.pRun, diParagraph)->member.para.nFlags |= MEPF_REWRAP;
-      
+
       cursor = c;
-      ME_StrRelPos(run->strText, loc, &nChars);
       /* nChars is the number of characters that should be deleted from the
-         FOLLOWING runs (these AFTER cursor.pRun)
+         PRECEDING runs (these BEFORE cursor.pRun)
          nCharsToDelete is a number of chars to delete from THIS run */
-      nCharsToDelete -= nChars;
+      nChars -= nCharsToDelete;
       shift -= nCharsToDelete;
-      TRACE("Deleting %d (intended %d-remaning %d) chars at %d in '%s' (%d)\n", 
-        nCharsToDelete, nIntendedChars, nChars, c.nOffset, 
+      TRACE("Deleting %d (remaning %d) chars at %d in '%s' (%d)\n",
+        nCharsToDelete, nChars, c.nOffset,
         debugstr_w(run->strText->szData), run->strText->nLen);
 
       if (!c.nOffset && ME_StrVLen(run->strText) == nCharsToDelete)
@@ -325,7 +349,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
            to the current (deleted) run */
         ME_UndoItem *pUndo = ME_AddUndoItem(editor, diUndoInsertRun, c.pRun);
         if (pUndo)
-          pUndo->di.member.run.nCharOfs = nOfs;
+          pUndo->di.member.run.nCharOfs = nOfs+nChars;
       }
       else
       {
@@ -333,7 +357,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
         ME_UndoItem *pUndo = ME_AddUndoItem(editor, diUndoInsertRun, c.pRun);
         if (pUndo) {
           ME_DestroyString(pUndo->di.member.run.strText);
-          pUndo->di.member.run.nCharOfs = nOfs;
+          pUndo->di.member.run.nCharOfs = nOfs+nChars;
           pUndo->di.member.run.strText = ME_MakeStringN(run->strText->szData+c.nOffset, nCharsToDelete);
         }
       }
