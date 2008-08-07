@@ -673,6 +673,11 @@ static void nvrc_fragment_free(IWineD3DDevice *iface) {}
  * register combiners extension(Pre-GF3).
  */
 
+static BOOL nvts_conv_supported(WINED3DFORMAT fmt) {
+    TRACE("Checking shader format support for format %s: [FAILED]", debug_d3dformat(fmt));
+    return FALSE;
+}
+
 const struct StateEntryTemplate nvrc_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          nvrc_colorop        }, 0                               },
     { STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG1),        { STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          nvrc_colorop        }, 0                               },
@@ -805,6 +810,7 @@ const struct fragment_pipeline nvts_fragment_pipeline = {
     nvrc_fragment_get_caps,
     nvrc_fragment_alloc,
     nvrc_fragment_free,
+    nvts_conv_supported,
     nvrc_fragmentstate_template
 };
 
@@ -813,5 +819,6 @@ const struct fragment_pipeline nvrc_fragment_pipeline = {
     nvrc_fragment_get_caps,
     nvrc_fragment_alloc,
     nvrc_fragment_free,
+    nvts_conv_supported,
     nvrc_fragmentstate_template
 };

@@ -4648,9 +4648,15 @@ static void ffp_blit_unset(IWineD3DDevice *iface) {
     }
 }
 
+static BOOL ffp_blit_conv_supported(WINED3DFORMAT fmt) {
+    TRACE("Checking blit format support for format %s: [FAILED]\n", debug_d3dformat(fmt));
+    return FALSE;
+}
+
 const struct blit_shader ffp_blit =  {
     ffp_blit_alloc,
     ffp_blit_free,
     ffp_blit_set,
-    ffp_blit_unset
+    ffp_blit_unset,
+    ffp_blit_conv_supported
 };

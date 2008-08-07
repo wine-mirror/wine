@@ -413,6 +413,21 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         gl_info->gl_formats[dst].conversion_group= WINED3DFMT_ATI2N;
     }
 
+    if(!GL_SUPPORT(APPLE_YCBCR_422)) {
+        dst = getFmtIdx(WINED3DFMT_YUY2);
+        gl_info->gl_formats[dst].glInternal = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[dst].glGammaInternal = GL_LUMINANCE_ALPHA; /* not srgb */
+        gl_info->gl_formats[dst].glFormat = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[dst].glType = GL_UNSIGNED_BYTE;
+        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_YUY2;
+
+        dst = getFmtIdx(WINED3DFMT_UYVY);
+        gl_info->gl_formats[dst].glInternal = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[dst].glGammaInternal = GL_LUMINANCE_ALPHA; /* not srgb */
+        gl_info->gl_formats[dst].glFormat = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[dst].glType = GL_UNSIGNED_BYTE;
+        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_UYVY;
+    }
     return TRUE;
 }
 

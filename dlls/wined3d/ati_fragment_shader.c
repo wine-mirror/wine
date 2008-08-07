@@ -1063,10 +1063,24 @@ static void atifs_free(IWineD3DDevice *iface) {
 }
 #undef GLINFO_LOCATION
 
+static BOOL atifs_conv_supported(WINED3DFORMAT fmt) {
+    TRACE("Checking shader format support for format %s:", debug_d3dformat(fmt));
+    switch(fmt) {
+        case WINED3DFMT_V8U8:
+        case WINED3DFMT_V16U16:
+            TRACE("[OK]\n");
+            return TRUE;
+        default:
+            TRACE("[FAILED\n");
+            return FALSE;
+    }
+}
+
 const struct fragment_pipeline atifs_fragment_pipeline = {
     atifs_enable,
     atifs_get_caps,
     atifs_alloc,
     atifs_free,
+    atifs_conv_supported,
     atifs_fragmentstate_template
 };

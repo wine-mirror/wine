@@ -3731,6 +3731,23 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_inf
     TRACE_(d3d_caps)("Hardware pixel shader version %d.%d enabled (GLSL)\n", (pCaps->PixelShaderVersion >> 8) & 0xff, pCaps->PixelShaderVersion & 0xff);
 }
 
+static BOOL shader_glsl_conv_supported(WINED3DFORMAT fmt) {
+    TRACE("Checking shader format support for format %s:", debug_d3dformat(fmt));
+    switch(fmt) {
+        case WINED3DFMT_V8U8:
+        case WINED3DFMT_V16U16:
+        case WINED3DFMT_X8L8V8U8:
+        case WINED3DFMT_L6V5U5:
+        case WINED3DFMT_Q8W8V8U8:
+        case WINED3DFMT_ATI2N:
+            TRACE("[OK]\n");
+            return TRUE;
+        default:
+            TRACE("[FAILED\n");
+            return FALSE;
+    }
+}
+
 const shader_backend_t glsl_shader_backend = {
     shader_glsl_select,
     shader_glsl_select_depth_blt,
@@ -3745,4 +3762,5 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_generate_pshader,
     shader_glsl_generate_vshader,
     shader_glsl_get_caps,
+    shader_glsl_conv_supported,
 };

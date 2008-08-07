@@ -247,6 +247,7 @@ typedef struct {
     void (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
+    BOOL (*shader_conv_supported)(WINED3DFORMAT conv);
 } shader_backend_t;
 
 extern const shader_backend_t atifs_shader_backend;
@@ -556,6 +557,7 @@ struct fragment_pipeline {
     void (*get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct fragment_caps *caps);
     HRESULT (*alloc_private)(IWineD3DDevice *iface);
     void (*free_private)(IWineD3DDevice *iface);
+    BOOL (*conv_supported)(WINED3DFORMAT conv);
     const struct StateEntryTemplate *states;
 };
 
@@ -581,6 +583,7 @@ struct blit_shader {
     void (*free_private)(IWineD3DDevice *iface);
     HRESULT (*set_shader)(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum textype, UINT width, UINT height);
     void (*unset_shader)(IWineD3DDevice *iface);
+    BOOL (*conv_supported)(WINED3DFORMAT conv);
 };
 
 extern const struct blit_shader ffp_blit;

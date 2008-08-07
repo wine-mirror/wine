@@ -1113,8 +1113,23 @@ static void shader_none_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_inf
     pCaps->PixelShaderVersion    = 0;
     pCaps->PixelShader1xMaxValue = 0.0;
 }
-
 #undef GLINFO_LOCATION
+static BOOL shader_none_conv_supported(WINED3DFORMAT fmt) {
+    TRACE("Checking shader format support for format %s", debug_d3dformat(fmt));
+    switch(fmt) {
+        /* Faked to make some apps happy. */
+        case WINED3DFMT_V8U8:
+        case WINED3DFMT_V16U16:
+        case WINED3DFMT_L6V5U5:
+        case WINED3DFMT_X8L8V8U8:
+        case WINED3DFMT_Q8W8V8U8:
+            TRACE("[OK]\n");
+            return TRUE;
+        default:
+            TRACE("[FAILED]\n");
+            return FALSE;
+    }
+}
 
 const shader_backend_t none_shader_backend = {
     shader_none_select,
@@ -1130,6 +1145,7 @@ const shader_backend_t none_shader_backend = {
     shader_none_generate_pshader,
     shader_none_generate_vshader,
     shader_none_get_caps,
+    shader_none_conv_supported
 };
 
 /* *******************************************
