@@ -2410,6 +2410,17 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
     return FALSE;
 }
 
+static BOOL CheckSurfaceCapability(UINT Adapter, WINED3DFORMAT AdapterFormat, WINED3DFORMAT CheckFormat) {
+    /* All format that are supported for textures are supported for surfaces as well */
+    if(CheckTextureCapability(Adapter, CheckFormat)) return TRUE;
+    /* All depth stencil formats are supported on surfaces */
+    if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) return TRUE;
+
+    /* Reject other formats */
+    TRACE_(d3d_caps)("[FAILED]\n");
+    return FALSE;
+}
+
 static BOOL CheckVertexTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
 {
     if (!GL_LIMITS(vertex_samplers)) {
@@ -2565,33 +2576,39 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                - D3DUSAGE_RENDERTARGET
          */
 
-        if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
-            if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
-                UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
-            } else {
-                TRACE_(d3d_caps)("[FAILED] - No depthstencil support\n");
-                return WINED3DERR_NOTAVAILABLE;
+        if(CheckSurfaceCapability(Adapter, AdapterFormat, CheckFormat)) {
+            if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
+                if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No depthstencil support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
             }
+
+            if(Usage & WINED3DUSAGE_RENDERTARGET) {
+                if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_RENDERTARGET;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+
+            /* Check QUERY_POSTPIXELSHADER_BLENDING support */
+            if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
+                if(CheckPostPixelShaderBlendingCapability(Adapter, CheckFormat)) {
+                    UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+                } else {
+                    TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
+            }
+        } else {
+            TRACE_(d3d_caps)("[FAILED] - Not supported for plain surfaces\n");
+            return WINED3DERR_NOTAVAILABLE;
         }
 
-        if(Usage & WINED3DUSAGE_RENDERTARGET) {
-            if(CheckRenderTargetCapability(AdapterFormat, CheckFormat)) {
-                UsageCaps |= WINED3DUSAGE_RENDERTARGET;
-            } else {
-                TRACE_(d3d_caps)("[FAILED] - No rendertarget support\n");
-                 return WINED3DERR_NOTAVAILABLE;
-            }
-        }
-
-        /* Check QUERY_POSTPIXELSHADER_BLENDING support */
-        if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-            if(CheckPostPixelShaderBlendingCapability(Adapter, CheckFormat)) {
-                UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
-            } else {
-                TRACE_(d3d_caps)("[FAILED] - No query post pixelshader blending support\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-        }
     } else if(RType == WINED3DRTYPE_TEXTURE) {
         /* Texture allows:
          *                - D3DUSAGE_AUTOGENMIPMAP
