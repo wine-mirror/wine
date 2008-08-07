@@ -586,8 +586,9 @@ static void test_lookupPrivilegeName(void)
     luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
     cchName = sizeof(buf);
     ret = pLookupPrivilegeNameA("b0gu5.Nam3", &luid, buf, &cchName);
-    ok( !ret && GetLastError() == RPC_S_SERVER_UNAVAILABLE,
-     "LookupPrivilegeNameA didn't fail with RPC_S_SERVER_UNAVAILABLE: %d\n",
+    ok( !ret && (GetLastError() == RPC_S_SERVER_UNAVAILABLE ||
+                 GetLastError() == RPC_S_INVALID_NET_ADDR) /* w2k8 */,
+     "LookupPrivilegeNameA didn't fail with RPC_S_SERVER_UNAVAILABLE or RPC_S_INVALID_NET_ADDR: %d\n",
      GetLastError());
 }
 
@@ -644,8 +645,9 @@ static void test_lookupPrivilegeValue(void)
 
     /* check a bogus system name */
     ret = pLookupPrivilegeValueA("b0gu5.Nam3", "SeCreateTokenPrivilege", &luid);
-    ok( !ret && GetLastError() == RPC_S_SERVER_UNAVAILABLE,
-     "LookupPrivilegeValueA didn't fail with RPC_S_SERVER_UNAVAILABLE: %d\n",
+    ok( !ret && (GetLastError() == RPC_S_SERVER_UNAVAILABLE ||
+                GetLastError() == RPC_S_INVALID_NET_ADDR) /* w2k8 */,
+     "LookupPrivilegeValueA didn't fail with RPC_S_SERVER_UNAVAILABLE or RPC_S_INVALID_NET_ADDR: %d\n",
      GetLastError());
     /* check a NULL string */
     ret = pLookupPrivilegeValueA(NULL, 0, &luid);
