@@ -2483,6 +2483,37 @@ static void test_acls(void)
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "InitializeAcl(-1) failed with error %d\n", GetLastError());
 }
 
+static void test_GetSecurityInfo(void)
+{
+    HANDLE obj;
+    PSECURITY_DESCRIPTOR sd;
+    PSID owner, group;
+    PACL dacl;
+    DWORD ret;
+
+    /* Create something.  Files have lots of associated security info.  */
+    obj = CreateFile(myARGV[0], GENERIC_READ, FILE_SHARE_READ, NULL,
+                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (!obj)
+    {
+        skip("Couldn't create an object for GetSecurityInfo test\n");
+        return;
+    }
+
+    ret = GetSecurityInfo(obj, SE_FILE_OBJECT,
+                          OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                          &owner, &group, &dacl, NULL, &sd);
+    ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
+    ok(sd != NULL, "GetSecurityInfo\n");
+    ok(owner != NULL, "GetSecurityInfo\n");
+    ok(group != NULL, "GetSecurityInfo\n");
+    ok(dacl != NULL, "GetSecurityInfo\n");
+    ok(IsValidAcl(dacl), "GetSecurityInfo\n");
+
+    LocalFree(sd);
+    CloseHandle(obj);
+}
+
 START_TEST(security)
 {
     init();
@@ -2511,4 +2542,5 @@ START_TEST(security)
     test_ConvertSecurityDescriptorToString();
     test_PrivateObjectSecurity();
     test_acls();
+    test_GetSecurityInfo();
 }

@@ -2710,6 +2710,22 @@ BOOL WINAPI PrivilegedServiceAuditAlarmW( LPCWSTR SubsystemName, LPCWSTR Service
 
 /******************************************************************************
  * GetSecurityInfo [ADVAPI32.@]
+ *
+ * Retrieves a copy of the security descriptor associated with an object.
+ *
+ * PARAMS
+ *  hObject              [I] A handle for the object.
+ *  ObjectType           [I] The type of object.
+ *  SecurityInfo         [I] A bitmask indicating what info to retrieve.
+ *  ppsidOwner           [O] If non-null, receives a pointer to the owner SID.
+ *  ppsidGroup           [O] If non-null, receives a pointer to the group SID.
+ *  ppDacl               [O] If non-null, receives a pointer to the DACL.
+ *  ppSacl               [O] If non-null, receives a pointer to the SACL.
+ *  ppSecurityDescriptor [O] Receives a pointer to the security descriptor,
+ *                           which must be freed with LocalFree.
+ *
+ * RETURNS
+ *  ERROR_SUCCESS if all's well, and a WIN32 error code otherwise.
  */
 DWORD WINAPI GetSecurityInfo(
     HANDLE hObject, SE_OBJECT_TYPE ObjectType,
@@ -2718,8 +2734,50 @@ DWORD WINAPI GetSecurityInfo(
     PSECURITY_DESCRIPTOR *ppSecurityDescriptor
 )
 {
-  FIXME("stub!\n");
-  return ERROR_BAD_PROVIDER;
+    PSECURITY_DESCRIPTOR sd;
+    NTSTATUS status;
+    ULONG n1, n2;
+    BOOL present, defaulted;
+
+    status = NtQuerySecurityObject(hObject, SecurityInfo, NULL, 0, &n1);
+    if (status != STATUS_BUFFER_TOO_SMALL && status != STATUS_SUCCESS)
+        return RtlNtStatusToDosError(status);
+
+    sd = LocalAlloc(0, n1);
+    if (!sd)
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    status = NtQuerySecurityObject(hObject, SecurityInfo, sd, n1, &n2);
+    if (status != STATUS_SUCCESS)
+    {
+        LocalFree(sd);
+        return RtlNtStatusToDosError(status);
+    }
+
+    if (ppsidOwner)
+    {
+        *ppsidOwner = NULL;
+        GetSecurityDescriptorOwner(sd, ppsidOwner, &defaulted);
+    }
+    if (ppsidGroup)
+    {
+        *ppsidGroup = NULL;
+        GetSecurityDescriptorGroup(sd, ppsidGroup, &defaulted);
+    }
+    if (ppDacl)
+    {
+        *ppDacl = NULL;
+        GetSecurityDescriptorDacl(sd, &present, ppDacl, &defaulted);
+    }
+    if (ppSacl)
+    {
+        *ppSacl = NULL;
+        GetSecurityDescriptorSacl(sd, &present, ppSacl, &defaulted);
+    }
+    if (ppSecurityDescriptor)
+        *ppSecurityDescriptor = sd;
+
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
