@@ -66,7 +66,8 @@ static void test_open_scm(void)
     scm_handle = OpenSCManagerA("DOESNOTEXIST", SERVICES_ACTIVE_DATABASEA, SC_MANAGER_CONNECT);
     ok(!scm_handle, "Expected failure\n");
     todo_wine
-    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE, "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
+    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE || GetLastError() == RPC_S_INVALID_NET_ADDR /* w2k8 */,
+       "Expected RPC_S_SERVER_UNAVAILABLE or RPC_S_INVALID_NET_ADDR, got %d\n", GetLastError());
     CloseServiceHandle(scm_handle); /* Just in case */
 
     /* Proper call with an empty hostname */
