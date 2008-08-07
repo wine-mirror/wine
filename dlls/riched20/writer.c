@@ -41,6 +41,7 @@ ME_StreamOutInit(ME_TextEditor *editor, EDITSTREAM *stream)
   pStream->written = 0;
   pStream->nFontTblLen = 0;
   pStream->nColorTblLen = 1;
+  pStream->nNestingLevel = 0;
   return pStream;
 }
 
@@ -284,28 +285,43 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
 }
 
 static BOOL
-ME_StreamOutRTFTableProps(ME_OutStream *pStream, const ME_DisplayItem *para)
+ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
+                          const ME_DisplayItem *para)
 {
-  PARAFORMAT2 *pFmt;
+  ME_DisplayItem *cell;
   char props[STREAMOUT_BUFFER_SIZE] = "";
-  int i;
 
   if (!ME_StreamOutPrint(pStream, "\\trowd"))
     return FALSE;
-  pFmt = para->member.para.pFmt;
+  if (!editor->bEmulateVersion10) { /* v4.1 */
+    assert(para->member.para.nFlags & MEPF_ROWSTART);
+    cell = para->member.para.next_para->member.para.pCell;
+    assert(cell);
+    do {
+      sprintf(props, "\\cellx%d", cell->member.cell.nRightBoundary);
+      if (!ME_StreamOutPrint(pStream, props))
+        return FALSE;
+      cell = cell->member.cell.next_cell;
+    } while (cell->member.cell.next_cell);
+  } else { /* v1.0 - 3.0 */
+    PARAFORMAT2 *pFmt = para->member.para.pFmt;
+    int i;
 
-  for (i = 0; i < pFmt->cTabCount; i++)
-  {
-    sprintf(props, "\\cellx%d", pFmt->rgxTabs[i] & 0x00FFFFFF);
-    if (!ME_StreamOutPrint(pStream, props))
-      return FALSE;
+    assert(!(para->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)));
+    for (i = 0; i < pFmt->cTabCount; i++)
+    {
+      sprintf(props, "\\cellx%d", pFmt->rgxTabs[i] & 0x00FFFFFF);
+      if (!ME_StreamOutPrint(pStream, props))
+        return FALSE;
+    }
   }
   props[0] = '\0';
   return TRUE;
 }
 
 static BOOL
-ME_StreamOutRTFParaProps(ME_OutStream *pStream, const ME_DisplayItem *para)
+ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
+                         const ME_DisplayItem *para)
 {
   PARAFORMAT2 *fmt = para->member.para.pFmt;
   char props[STREAMOUT_BUFFER_SIZE] = "";
@@ -315,8 +331,13 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, const ME_DisplayItem *para)
   if (!ME_StreamOutPrint(pStream, "\\pard"))
     return FALSE;
 
-  if (fmt->dwMask & PFM_TABLE && fmt->wEffects & PFE_TABLE)
-    strcat(props, "\\intbl");
+  if (!editor->bEmulateVersion10) { /* v4.1 */
+    if (pStream->nNestingLevel > 0)
+      strcat(props, "\\intbl");
+  } else { /* v1.0 - 3.0 */
+    if (fmt->dwMask & PFM_TABLE && fmt->wEffects & PFE_TABLE)
+      strcat(props, "\\intbl");
+  }
   
   /* TODO: PFM_BORDER. M$ does not emit any keywords for these properties, and
    * when streaming border keywords in, PFM_BORDER is set, but wBorder field is
@@ -683,7 +704,7 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
 
   /* TODO: section formatting properties */
 
-  if (!ME_StreamOutRTFParaProps(pStream, ME_GetParagraph(p)))
+  if (!ME_StreamOutRTFParaProps(editor, pStream, ME_GetParagraph(p)))
     return FALSE;
 
   while(1)
@@ -691,14 +712,28 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
     switch(p->type)
     {
       case diParagraph:
-        if (p->member.para.pFmt->dwMask & PFM_TABLE &&
-            p->member.para.pFmt->wEffects & PFE_TABLE)
-        {
-          if (!ME_StreamOutRTFTableProps(pStream, p))
+        if (!editor->bEmulateVersion10) { /* v4.1 */
+          if (p->member.para.nFlags & MEPF_ROWSTART) {
+            pStream->nNestingLevel++;
+            if (!ME_StreamOutRTFTableProps(editor, pStream, p))
+              return FALSE;
+          } else if (p->member.para.nFlags & MEPF_ROWEND) {
+            pStream->nNestingLevel--;
+            if (!ME_StreamOutPrint(pStream, "\\row \r\n"))
+              return FALSE;
+          } else if (!ME_StreamOutRTFParaProps(editor, pStream, p)) {
+            return FALSE;
+          }
+        } else { /* v1.0 - 3.0 */
+          if (p->member.para.pFmt->dwMask & PFM_TABLE &&
+              p->member.para.pFmt->wEffects & PFE_TABLE)
+          {
+            if (!ME_StreamOutRTFTableProps(editor, pStream, p))
+              return FALSE;
+          }
+          if (!ME_StreamOutRTFParaProps(editor, pStream, p))
             return FALSE;
         }
-        if (!ME_StreamOutRTFParaProps(pStream, p))
-          return FALSE;
         pPara = p;
         break;
       case diRun:
@@ -706,10 +741,13 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
           break;
         TRACE("flags %xh\n", p->member.run.nFlags);
         /* TODO: emit embedded objects */
+        if (pPara->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND))
+          break;
         if (p->member.run.nFlags & MERF_GRAPHICS) {
           FIXME("embedded objects are not handled\n");
         } else if (p->member.run.nFlags & MERF_TAB) {
-          if (pPara->member.para.pFmt->dwMask & PFM_TABLE &&
+          if (editor->bEmulateVersion10 && /* v1.0 - 3.0 */
+              pPara->member.para.pFmt->dwMask & PFM_TABLE &&
               pPara->member.para.pFmt->wEffects & PFE_TABLE)
           {
             if (!ME_StreamOutPrint(pStream, "\\cell "))
@@ -718,9 +756,14 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
             if (!ME_StreamOutPrint(pStream, "\\tab "))
               return FALSE;
           }
+        } else if (p->member.run.nFlags & MERF_ENDCELL) {
+          if (!ME_StreamOutPrint(pStream, "\\cell "))
+            return FALSE;
+          nChars--;
         } else if (p->member.run.nFlags & MERF_ENDPARA) {
-          if (pPara->member.para.pFmt->dwMask & PFM_TABLE
-              && pPara->member.para.pFmt->wEffects & PFE_TABLE)
+          if (pPara->member.para.pFmt->dwMask & PFM_TABLE &&
+              pPara->member.para.pFmt->wEffects & PFE_TABLE &&
+              !(pPara->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)))
           {
             if (!ME_StreamOutPrint(pStream, "\\row \r\n"))
               return FALSE;

@@ -1012,7 +1012,15 @@ struct RTFTable
 {
 	RTFCell cells[MAX_TABLE_CELLS];
 	int numCellsDefined;
+
+	/* Used in v1.0 - v3.0 */
 	int numCellsInserted;
+
+	/* v4.1 */
+	/* tableRowStart may be the start row paragraph of the table row,
+	 * or it may store the end of the previous row if it may still be
+	 * continued, otherwise NULL is stored. */
+        ME_DisplayItem *tableRowStart;
 };
 
 /*

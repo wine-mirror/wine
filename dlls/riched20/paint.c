@@ -32,13 +32,21 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
   yoffset = ME_GetYScrollPos(editor);
   ME_InitContext(&c, editor, hDC);
   SetBkMode(hDC, TRANSPARENT);
-  ME_MoveCaret(editor);
+  ME_MoveCaret(editor); /* Calls ME_WrapMarkedParagraphs */
   item = editor->pBuffer->pFirst->next;
   c.pt.y -= yoffset;
   while(item != editor->pBuffer->pLast) {
     int ye;
     assert(item->type == diParagraph);
-    ye = c.pt.y + item->member.para.nHeight;
+    if (item->member.para.pCell
+        != item->member.para.next_para->member.para.pCell)
+    {
+      ME_Cell *cell = NULL;
+      cell = &ME_FindItemBack(item->member.para.next_para, diCell)->member.cell;
+      ye = cell->pt.y + cell->nHeight - yoffset;
+    } else {
+      ye = c.pt.y + item->member.para.nHeight;
+    }
     if (!bOnlyNew || (item->member.para.nFlags & MEPF_REPAINT))
     {
       BOOL bPaint = (rcUpdate == NULL);
@@ -51,7 +59,31 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *
           item->member.para.nFlags &= ~MEPF_REPAINT;
       }
     }
-    c.pt.y = ye;
+    if (item->member.para.pCell)
+    {
+      ME_Cell *cell = &item->member.para.pCell->member.cell;
+      c.pt.x = cell->pt.x + cell->nWidth;
+      if (item->member.para.pCell == item->member.para.next_para->member.para.pCell)
+      {
+        c.pt.y = ye;
+      } else {
+        if (item->member.para.next_para->member.para.nFlags & MEPF_ROWSTART)
+        {
+          cell = &ME_FindItemFwd(item->member.para.next_para, diCell)->member.cell;
+        }
+        else if (item->member.para.next_para->member.para.nFlags & MEPF_ROWEND)
+        {
+          cell = &cell->next_cell->member.cell;
+        }
+        else
+        {
+          cell = &item->member.para.next_para->member.para.pCell->member.cell;
+        }
+        c.pt.y = cell->pt.y - yoffset;
+      }
+    } else if (!(item->member.para.nFlags & MEPF_ROWSTART)) {
+      c.pt.y = ye;
+    }
     item = item->member.para.next_para;
   }
   if (c.pt.y<c.rcView.bottom) {
@@ -394,19 +426,19 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     if (runofs >= nSelFrom && runofs < nSelTo)
     {
       ME_HighlightSpace(c, x, y, wszSpace, 1, run->style, 0, 0, 1,
-                        c->pt.y + start->member.row.nYPos,
+                        c->pt.y + start->member.row.pt.y,
                         start->member.row.nHeight);
     }
     return;
   }
 
-  if (run->nFlags & MERF_TAB)
+  if (run->nFlags & (MERF_TAB | MERF_ENDCELL))
   {
     /* wszSpace is used instead of the tab character because otherwise
      * an unwanted symbol can be inserted instead. */
     ME_DrawTextWithStyle(c, x, y, wszSpace, 1, run->style, run->nWidth,
                          nSelFrom-runofs,nSelTo-runofs,
-                         c->pt.y + start->member.row.nYPos,
+                         c->pt.y + start->member.row.pt.y,
                          start->member.row.nHeight);
     return;
   }
@@ -420,13 +452,13 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
       ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask,ME_StrVLen(run->strText));
       ME_DrawTextWithStyle(c, x, y,
         szMasked->szData, ME_StrVLen(szMasked), run->style, run->nWidth,
-        nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.nYPos, start->member.row.nHeight);
+        nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.pt.y, start->member.row.nHeight);
       ME_DestroyString(szMasked);
     }
     else
       ME_DrawTextWithStyle(c, x, y,
         run->strText->szData, ME_StrVLen(run->strText), run->style, run->nWidth,
-        nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.nYPos, start->member.row.nHeight);
+        nSelFrom-runofs,nSelTo-runofs, c->pt.y+start->member.row.pt.y, start->member.row.nHeight);
   }
 }
 
@@ -635,23 +667,38 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   ME_DisplayItem *p;
   ME_Run *run;
   ME_Paragraph *para = NULL;
-  RECT rc, rcPara, bounds;
+  RECT rc, rcText, bounds;
   int y = c->pt.y;
   int height = 0, baseline = 0, no=0, pno = 0;
-  int xs = 0, xe = 0;
   BOOL visible = FALSE;
 
   c->pt.x = c->rcView.left;
-  rcPara.left = c->rcView.left;
-  rcPara.right = c->rcView.right;
+  rc.left = c->rcView.left;
+  rc.right = c->rcView.right;
   for (p = paragraph; p!=paragraph->member.para.next_para; p = p->next) {
     switch(p->type) {
       case diParagraph:
         para = &p->member.para;
         assert(para);
         pno = 0;
-        xs = c->rcView.left + ME_twips2pointsX(c, para->pFmt->dxStartIndent);
-        xe = c->rcView.right - ME_twips2pointsX(c, para->pFmt->dxRightIndent);
+        if (para->pCell)
+        {
+          ME_Cell *cell = &para->pCell->member.cell;
+          rc.left = cell->pt.x;
+          rc.right = rc.left + cell->nWidth;
+          rcText.left = cell->pt.x + ME_twips2pointsX(c, para->pFmt->dxStartIndent);
+          rcText.right = cell->pt.x + cell->nWidth
+               - ME_twips2pointsX(c, para->pFmt->dxRightIndent);
+        }
+        if (para->nFlags & MEPF_ROWSTART) {
+          ME_Cell *cell = &para->next_para->member.para.pCell->member.cell;
+          rc.right = cell->pt.x;
+        } else if (para->nFlags & MEPF_ROWEND) {
+          ME_Cell *cell = &para->prev_para->member.para.pCell->member.cell;
+          rc.left = cell->pt.x + cell->nWidth;
+        }
+        rcText.left = rc.left + ME_twips2pointsX(c, para->pFmt->dxStartIndent);
+        rcText.right = rc.right - ME_twips2pointsX(c, para->pFmt->dxRightIndent);
         ME_DrawParaDecoration(c, para, y, &bounds);
         y += bounds.top;
         break;
@@ -659,22 +706,18 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         /* we should have seen a diParagraph before */
         assert(para);
         y += height;
-        rcPara.top = y;
-        rcPara.bottom = y+p->member.row.nHeight;
-        visible = RectVisible(c->hDC, &rcPara);
-        if (visible) {
-          /* left margin */
-          rc.left = c->rcView.left + bounds.left;
-          rc.right = xs;
-          rc.top = y;
+        rc.top = y;
+        if (para->nFlags & MEPF_ROWSTART) {
+          ME_Cell *cell = &para->next_para->member.para.pCell->member.cell;
+          rc.bottom = y + cell->nHeight;
+        } else if (para->nFlags & MEPF_ROWEND) {
+          ME_Cell *cell = &para->prev_para->member.para.pCell->member.cell;
+          rc.bottom = y + cell->nHeight;
+        } else {
           rc.bottom = y+p->member.row.nHeight;
-          FillRect(c->hDC, &rc, c->editor->hbrBackground);
-          /* right margin */
-          rc.left = xe;
-          rc.right = c->rcView.right - bounds.right;
-          FillRect(c->hDC, &rc, c->editor->hbrBackground);
-          rc.left = xs;
-          rc.right = xe;
+        }
+        visible = RectVisible(c->hDC, &rc);
+        if (visible) {
           FillRect(c->hDC, &rc, c->editor->hbrBackground);
         }
         if (me_debug)
@@ -690,7 +733,7 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         height = p->member.row.nHeight;
         baseline = p->member.row.nBaseline;
         if (!pno++)
-          xe += ME_twips2pointsX(c, para->pFmt->dxOffset);
+          rcText.right += ME_twips2pointsX(c, para->pFmt->dxOffset);
         break;
       case diRun:
         assert(para);
@@ -721,6 +764,18 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         }
         /* c->pt.x += p->member.run.nWidth; */
         break;
+      case diCell:
+        /* Clear any space at the bottom of the cell after the text. */
+        if (para->nFlags & MEPF_ROWSTART)
+          break;
+        y += height;
+        rc.top = y;
+        rc.bottom = p->member.cell.pt.y + p->member.cell.nHeight
+                    - ME_GetYScrollPos(c->editor);
+        if (RectVisible(c->hDC, &rc))
+        {
+          FillRect(c->hDC, &rc, c->editor->hbrBackground);
+        }
       default:
         break;
     }
@@ -867,7 +922,7 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
   assert(pRow);
   assert(pPara);
   
-  y = pPara->member.para.nYPos+pRow->member.row.nYPos;
+  y = pPara->member.para.pt.y+pRow->member.row.pt.y;
   yheight = pRow->member.row.nHeight;
   yold = ME_GetYScrollPos(editor);
   yrel = y - yold;

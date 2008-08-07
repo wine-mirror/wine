@@ -217,7 +217,7 @@ void ME_SendRequestResize(ME_TextEditor *editor, BOOL force);
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run); 
 void ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end);
 void ME_MakeFirstParagraph(ME_TextEditor *editor);
-ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *rp, ME_Style *style, int numCR, int numLF);
+ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *rp, ME_Style *style, int numCR, int numLF, int paraFlags);
 ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
                                   BOOL keepFirstParaFormat);
 void ME_DumpParaStyle(ME_Paragraph *s);
@@ -287,6 +287,14 @@ void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor);
 
 /* table.c */
 BOOL ME_IsInTable(ME_DisplayItem *pItem);
+ME_DisplayItem *ME_InsertTableRowStartFromCursor(ME_TextEditor *editor);
+ME_DisplayItem *ME_InsertTableRowStartAtParagraph(ME_TextEditor *editor,
+                                                  ME_DisplayItem *para);
+ME_DisplayItem *ME_InsertTableCellFromCursor(ME_TextEditor *editor);
+ME_DisplayItem *ME_InsertTableRowEndFromCursor(ME_TextEditor *editor);
+ME_DisplayItem *ME_GetTableRowEnd(ME_DisplayItem *para);
+ME_DisplayItem *ME_GetTableRowStart(ME_DisplayItem *para);
+void ME_CheckTablesForCorruption(ME_TextEditor *editor);
 void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, int nOfs,int *nChars);
 void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow);
 

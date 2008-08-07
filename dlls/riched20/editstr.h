@@ -67,26 +67,27 @@ typedef enum {
   diInvalid,
   diTextStart, /* start of the text buffer */
   diParagraph, /* paragraph start */
+  diCell, /* cell start */
   diRun, /* run (sequence of chars with the same character format) */
   diStartRow, /* start of the row (line of text on the screen) */
   diTextEnd, /* end of the text buffer */
   
   /********************* these below are meant for finding only *********************/
-  diStartRowOrParagraph, /* 5 */
+  diStartRowOrParagraph, /* 7 */
   diStartRowOrParagraphOrEnd,
   diRunOrParagraph,
   diRunOrStartRow,
   diParagraphOrEnd,
-  diRunOrParagraphOrEnd, /* 10 */
+  diRunOrParagraphOrEnd, /* 12 */
   
-  diUndoInsertRun, /* 11 */
-  diUndoDeleteRun, /* 12 */
-  diUndoJoinParagraphs, /* 13 */
-  diUndoSplitParagraph, /* 14 */
-  diUndoSetParagraphFormat, /* 15 */
-  diUndoSetCharFormat, /* 16 */
-  diUndoEndTransaction, /* 17 - marks the end of a group of changes for undo */
-  diUndoPotentialEndTransaction, /* 18 - allows grouping typed chars for undo */
+  diUndoInsertRun, /* 13 */
+  diUndoDeleteRun, /* 14 */
+  diUndoJoinParagraphs, /* 15 */
+  diUndoSplitParagraph, /* 16 */
+  diUndoSetParagraphFormat, /* 17 */
+  diUndoSetCharFormat, /* 18 */
+  diUndoEndTransaction, /* 19 - marks the end of a group of changes for undo */
+  diUndoPotentialEndTransaction, /* 20 - allows grouping typed chars for undo */
 } ME_DIType;
 
 #define SELECTIONBAR_WIDTH 9
@@ -97,8 +98,10 @@ typedef enum {
 #define MERF_GRAPHICS   0x001
 /* run is a tab (or, in future, any kind of content whose size is dependent on run position) */
 #define MERF_TAB        0x002
+/* run is a cell boundary */
+#define MERF_ENDCELL    0x004 /* v4.1 */
 
-#define MERF_NONTEXT (MERF_GRAPHICS | MERF_TAB)
+#define MERF_NONTEXT (MERF_GRAPHICS | MERF_TAB | MERF_ENDCELL)
 
 /* run is splittable (contains white spaces in the middle or end) */
 #define MERF_SPLITTABLE 0x001000
@@ -118,6 +121,8 @@ typedef enum {
 #define MERF_ENDROW     0x200000
 /* run is hidden */
 #define MERF_HIDDEN     0x400000
+/* start of a table row has an empty paragraph that should be skipped over. */
+#define MERF_TABLESTART 0x800000 /* v4.1 */
 
 /* runs with any of these flags set cannot be joined */
 #define MERF_NOJOIN (MERF_GRAPHICS|MERF_TAB|MERF_ENDPARA|MERF_ENDROW)
@@ -130,8 +135,12 @@ typedef enum {
 /******************************** para flags *************************/
 
 /* this paragraph was already wrapped and hasn't changed, every change resets that flag */
-#define MEPF_REWRAP 1
-#define MEPF_REPAINT 2
+#define MEPF_REWRAP   0x01
+#define MEPF_REPAINT  0x02
+/* v4.1 */
+#define MEPF_CELL     0x04 /* The paragraph is nested in a cell */
+#define MEPF_ROWSTART 0x08 /* Hidden empty paragraph at the start of the row */
+#define MEPF_ROWEND   0x10 /* Visible empty paragraph at the end of the row */
 
 /******************************** structures *************************/
 
@@ -160,13 +169,25 @@ typedef struct tagME_Paragraph
 {
   PARAFORMAT2 *pFmt;
 
+  struct tagME_DisplayItem *pCell; /* v4.1 */
+
   int nCharOfs;
   int nFlags;
-  int nYPos, nHeight;
+  POINT pt;
+  int nHeight;
   int nLastPaintYPos, nLastPaintHeight;
   int nRows;
   struct tagME_DisplayItem *prev_para, *next_para, *document;
 } ME_Paragraph;
+
+typedef struct tagME_Cell /* v4.1 */
+{
+  int nNestingLevel; /* 0 for normal cells, and greater for nested cells */
+  int nRightBoundary;
+  POINT pt;
+  int nHeight, nWidth;
+  struct tagME_DisplayItem *prev_cell, *next_cell, *parent_cell;
+} ME_Cell;
 
 typedef struct tagME_Row
 {
@@ -175,7 +196,7 @@ typedef struct tagME_Row
   int nWidth;
   int nLMargin;
   int nRMargin;
-  int nYPos;
+  POINT pt;
 } ME_Row;
 
 /* the display item list layout is like this:
@@ -197,6 +218,7 @@ typedef struct tagME_DisplayItem
   union {
     ME_Run run;
     ME_Row row;
+    ME_Cell cell;
     ME_Paragraph para;
     ME_Document doc; /* not used */
     ME_Style *ustyle; /* used by diUndoSetCharFormat */
@@ -270,6 +292,9 @@ typedef struct tagME_OutStream {
   COLORREF colortbl[STREAMOUT_COLORTBL_SIZE];
   UINT nDefaultFont;
   UINT nDefaultCodePage;
+  /* nNestingLevel = 0 means we aren't in a cell, 1 means we are in a cell,
+   * an greater numbers mean we are in a cell nested within a cell. */
+  UINT nNestingLevel;
 } ME_OutStream;
 
 typedef struct tagME_FontCacheItem

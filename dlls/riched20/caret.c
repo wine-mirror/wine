@@ -215,7 +215,7 @@ ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
 
       *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
       *x = run->member.run.pt.x + sz.cx;
-      *y = para->member.para.nYPos + row->member.row.nBaseline + run->member.run.pt.y - pSizeRun->member.run.nAscent - ME_GetYScrollPos(editor);
+      *y = para->member.para.pt.y + row->member.row.nBaseline + run->member.run.pt.y - pSizeRun->member.run.nAscent - ME_GetYScrollPos(editor);
       ME_DestroyContext(&c, editor->hWnd);
       return;
     }
@@ -316,6 +316,28 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
       }
       keepFirstParaFormat = (totalChars == nChars && nChars <= eollen &&
                              run->nCharOfs);
+      if (!editor->bEmulateVersion10) /* v4.1 */
+      {
+        ME_DisplayItem *next_para = ME_FindItemFwd(c.pRun, diParagraphOrEnd);
+        ME_DisplayItem *this_para = next_para->member.para.prev_para;
+
+        /* The end of paragraph before a table row is only deleted if there
+         * is nothing else on the line before it. */
+        if (this_para == start_para &&
+            next_para->member.para.nFlags & MEPF_ROWSTART)
+        {
+          /* If the paragraph will be empty, then it should be deleted, however
+           * it still might have text right now which would inherit the
+           * MEPF_STARTROW property if we joined it right now.
+           * Instead we will delete it after the preceding text is deleted. */
+          if (nOfs > this_para->member.para.nCharOfs) {
+            /* Skip this end of line. */
+            nChars -= (eollen < nChars) ? eollen : nChars;
+            continue;
+          }
+          keepFirstParaFormat = TRUE;
+        }
+      }
       ME_JoinParagraphs(editor, ME_GetParagraph(c.pRun), keepFirstParaFormat);
       /* ME_SkipAndPropagateCharOffset(p->pRun, shift); */
       ME_CheckCharOffsets(editor);
@@ -583,7 +605,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
           pos++;
         numCR = 1; numLF = 0;
       }
-      tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, numCR, numLF);
+      tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, numCR, numLF, 0);
       p->pRun = ME_FindItemFwd(tp, diRun);
       end_run = ME_FindItemBack(tp, diRun);
       ME_ReleaseStyle(end_run->member.run.style);
@@ -630,7 +652,8 @@ ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
             assert(pRun->type != diRun && pRun->type != diParagraph);
             return FALSE;
         }
-      } while (RUN_IS_HIDDEN(&pRun->member.run));
+      } while (RUN_IS_HIDDEN(&pRun->member.run) ||
+               pRun->member.run.nFlags & MERF_HIDDEN);
       pCursor->pRun = pRun;
       if (pRun->member.run.nFlags & MERF_ENDPARA)
         pCursor->nOffset = 0;
@@ -656,7 +679,8 @@ ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
     }
     do {
       pRun = ME_FindItemFwd(pRun, diRun);
-    } while (pRun && RUN_IS_HIDDEN(&pRun->member.run));
+    } while (pRun && (RUN_IS_HIDDEN(&pRun->member.run) ||
+                      pRun->member.run.nFlags & MERF_HIDDEN));
     if (pRun)
     {
       pCursor->pRun = pRun;
@@ -701,9 +725,13 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       {
         if (cursor->pRun == pRun && cursor->nOffset == 0)
         {
+          /* Skip empty start of table row paragraph */
+          if (pOtherRun->member.para.prev_para->member.para.nFlags & MEPF_ROWSTART)
+            pOtherRun = pOtherRun->member.para.prev_para;
           /* Paragraph breaks are treated as separate words */
           if (pOtherRun->member.para.prev_para->type == diTextStart)
             return FALSE;
+
           pRun = ME_FindItemBack(pOtherRun, diRunOrParagraph);
         }
         break;
@@ -734,6 +762,8 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       }
       else if (pOtherRun->type == diParagraph)
       {
+        if (pOtherRun->member.para.nFlags & MEPF_ROWSTART)
+            pOtherRun = pOtherRun->member.para.next_para;
         if (cursor->pRun == pRun)
           pRun = ME_FindItemFwd(pOtherRun, diRun);
         nOffset = 0;
@@ -820,6 +850,45 @@ int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor)
     + pCursor->pRun->member.run.nCharOfs + pCursor->nOffset;
 }
 
+/* Helper function for ME_FindPixelPos to find paragraph within tables */
+static ME_DisplayItem* ME_FindPixelPosInTableRow(int x, int y,
+                                                 ME_DisplayItem *para)
+{
+  ME_DisplayItem *cell, *next_cell;
+  assert(para->member.para.nFlags & MEPF_ROWSTART);
+  cell = para->member.para.next_para->member.para.pCell;
+  assert(cell);
+
+  /* find the cell we are in */
+  while ((next_cell = cell->member.cell.next_cell) != NULL) {
+    if (x < next_cell->member.cell.pt.x)
+    {
+      para = ME_FindItemFwd(cell, diParagraph);
+      /* Found the cell, but there might be multiple paragraphs in
+       * the cell, so need to search down the cell for the paragraph. */
+      while (cell == para->member.para.pCell) {
+        if (y < para->member.para.pt.y + para->member.para.nHeight)
+        {
+          if (para->member.para.nFlags & MEPF_ROWSTART)
+            return ME_FindPixelPosInTableRow(x, y, para);
+          else
+            return para;
+        }
+        para = para->member.para.next_para;
+      }
+      /* Past the end of the cell, so go back to the last cell paragraph */
+      return para->member.para.prev_para;
+    }
+    cell = next_cell;
+  }
+  /* Return table row delimiter */
+  para = ME_FindItemFwd(cell, diParagraph);
+  assert(para->member.para.nFlags & MEPF_ROWEND);
+  assert(para->member.para.pFmt->dwMask & PFM_TABLEROWDELIMITER);
+  assert(para->member.para.pFmt->wEffects & PFE_TABLEROWDELIMITER);
+  return para;
+}
+
 /* Finds the run and offset from the pixel position.
  *
  * x & y are pixel positions in virtual coordinates into the rich edit control,
@@ -843,11 +912,15 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
   for (; p != editor->pBuffer->pLast; p = p->member.para.next_para)
   {
     assert(p->type == diParagraph);
-    if (y < p->member.para.nYPos + p->member.para.nHeight)
+    if (y < p->member.para.pt.y + p->member.para.nHeight)
     {
-      y -= p->member.para.nYPos;
+      if (p->member.para.nFlags & MEPF_ROWSTART)
+        p = ME_FindPixelPosInTableRow(x, y, p);
+      y -= p->member.para.pt.y;
       p = ME_FindItemFwd(p, diStartRow);
       break;
+    } else if (p->member.para.nFlags & MEPF_ROWSTART) {
+      p = ME_GetTableRowEnd(p);
     }
   }
   /* find row */
@@ -855,7 +928,7 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
   {
     ME_DisplayItem *pp;
     assert(p->type == diStartRow);
-    if (y < p->member.row.nYPos + p->member.row.nHeight)
+    if (y < p->member.row.pt.y + p->member.row.nHeight)
     {
         p = ME_FindItemFwd(p, diRun);
         break;
@@ -911,6 +984,7 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
       if (is_eol) *is_eol = 1;
       rx = 0; /* FIXME not sure */
       goto found_here;
+    case diCell:
     case diParagraph:
     case diTextEnd:
       isExact = FALSE;
@@ -1185,13 +1259,14 @@ static void
 ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
 {
   ME_DisplayItem *pRun = pCursor->pRun;
-  ME_DisplayItem *pItem;
+  ME_DisplayItem *pItem, *pOldPara, *pNewPara;
   int x = ME_GetXForArrow(editor, pCursor);
 
   if (editor->bCaretAtEnd && !pCursor->nOffset)
     pRun = ME_FindItemBack(pRun, diRun);
   if (!pRun)
     return;
+  pOldPara = ME_GetParagraph(pRun);
   if (nRelOfs == -1)
   {
     /* start of this row */
@@ -1199,13 +1274,57 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
     assert(pItem);
     /* start of the previous row */
     pItem = ME_FindItemBack(pItem, diStartRow);
+    if (!pItem)
+      return; /* row not found - ignore */
+    pNewPara = ME_GetParagraph(pItem);
+    if (pOldPara->member.para.nFlags & MEPF_ROWEND ||
+        (pOldPara->member.para.pCell &&
+         pOldPara->member.para.pCell != pNewPara->member.para.pCell))
+    {
+      /* Brought out of a cell */
+      pNewPara = ME_GetTableRowStart(pOldPara)->member.para.prev_para;
+      if (pNewPara->type == diTextStart)
+        return; /* At the top, so don't go anywhere. */
+      pItem = ME_FindItemFwd(pNewPara, diStartRow);
+    }
+    if (pNewPara->member.para.nFlags & MEPF_ROWEND)
+    {
+      /* Brought into a table row */
+      ME_Cell *cell = &ME_FindItemBack(pNewPara, diCell)->member.cell;
+      while (x < cell->pt.x && cell->prev_cell)
+        cell = &cell->prev_cell->member.cell;
+      if (cell->next_cell) /* else - we are still at the end of the row */
+        pItem = ME_FindItemBack(cell->next_cell, diStartRow);
+    }
   }
   else
   {
     /* start of the next row */
     pItem = ME_FindItemFwd(pRun, diStartRow);
+    if (!pItem)
+      return; /* row not found - ignore */
     /* FIXME If diParagraph is before diStartRow, wrap the next paragraph?
     */
+    pNewPara = ME_GetParagraph(pItem);
+    if (pOldPara->member.para.nFlags & MEPF_ROWSTART ||
+        (pOldPara->member.para.pCell &&
+         pOldPara->member.para.pCell != pNewPara->member.para.pCell))
+    {
+      /* Brought out of a cell */
+      pNewPara = ME_GetTableRowEnd(pOldPara)->member.para.next_para;
+      if (pNewPara->type == diTextEnd)
+        return; /* At the bottom, so don't go anywhere. */
+      pItem = ME_FindItemFwd(pNewPara, diStartRow);
+    }
+    if (pNewPara->member.para.nFlags & MEPF_ROWSTART)
+    {
+      /* Brought into a table row */
+      ME_DisplayItem *cell = ME_FindItemFwd(pNewPara, diCell);
+      while (cell->member.cell.next_cell &&
+             x >= cell->member.cell.next_cell->member.cell.pt.x)
+        cell = cell->member.cell.next_cell;
+      pItem = ME_FindItemFwd(cell, diStartRow);
+    }
   }
   if (!pItem)
   {
@@ -1231,8 +1350,8 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
   
   p = ME_FindItemBack(pRun, diStartRowOrParagraph);
   assert(p->type == diStartRow);
-  yp = ME_FindItemBack(p, diParagraph)->member.para.nYPos;
-  yprev = ys = y = yp + p->member.row.nYPos;
+  yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
+  yprev = ys = y = yp + p->member.row.pt.y;
   yd = y - editor->sizeWindow.cy;
   pLast = p;
   
@@ -1243,10 +1362,10 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
     if (p->type == diParagraph) { /* crossing paragraphs */
       if (p->member.para.prev_para == NULL)
         break;
-      yp = p->member.para.prev_para->member.para.nYPos;
+      yp = p->member.para.prev_para->member.para.pt.y;
       continue;
     }
-    y = yp + p->member.row.nYPos;
+    y = yp + p->member.row.pt.y;
     if (y < yd)
       break;
     pLast = p;
@@ -1286,8 +1405,8 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
   
   p = ME_FindItemBack(pRun, diStartRowOrParagraph);
   assert(p->type == diStartRow);
-  yp = ME_FindItemBack(p, diParagraph)->member.para.nYPos;
-  yprev = ys = y = yp + p->member.row.nYPos;
+  yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
+  yprev = ys = y = yp + p->member.row.pt.y;
   yd = y + editor->sizeWindow.cy;
   pLast = p;
   
@@ -1296,10 +1415,10 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
     if (!p)
       break;
     if (p->type == diParagraph) {
-      yp = p->member.para.nYPos;
+      yp = p->member.para.pt.y;
       continue;
     }
-    y = yp + p->member.row.nYPos;
+    y = yp + p->member.row.pt.y;
     if (y >= yd)
       break;
     pLast = p;

@@ -42,17 +42,37 @@ static ME_DisplayItem *ME_MakeRow(int height, int baseline, int width)
   return item;
 }
 
-static void ME_BeginRow(ME_WrapContext *wc)
+static void ME_BeginRow(ME_WrapContext *wc, ME_DisplayItem *para)
 {
+  assert(para && para->type == diParagraph);
   wc->pRowStart = NULL;
   wc->bOverflown = FALSE;
   wc->pLastSplittableRun = NULL;
-  if (wc->context->editor->bWordWrap)
-    wc->nAvailWidth = wc->context->rcView.right - wc->context->rcView.left -
-        (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin;
-  else
+  if (para->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND)) {
+    wc->nAvailWidth = 0;
+    if (para->member.para.nFlags & MEPF_ROWEND)
+    {
+      ME_Cell *cell = &ME_FindItemBack(para, diCell)->member.cell;
+      cell->nWidth = 0;
+    }
+  } else if (para->member.para.pCell) {
+    ME_Cell *cell = &para->member.para.pCell->member.cell;
+    int width;
+
+    width = cell->nRightBoundary;
+    if (cell->prev_cell)
+      width -= cell->prev_cell->member.cell.nRightBoundary;
+    cell->nWidth = max(ME_twips2pointsX(wc->context, width), 0);
+
+    wc->nAvailWidth = cell->nWidth
+        - (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin;
+  } else if (wc->context->editor->bWordWrap) {
+    wc->nAvailWidth = wc->context->rcView.right - wc->context->rcView.left
+        - (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin;
+  } else {
     wc->nAvailWidth = ~0u >> 1;
-  wc->pt.x = 0;
+  }
+  wc->pt.x = wc->context->pt.x;
 }
 
 static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
@@ -100,7 +120,7 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
   }
 
   row = ME_MakeRow(ascent+descent, ascent, width);
-  row->member.row.nYPos = wc->pt.y;
+  row->member.row.pt = wc->pt;
   row->member.row.nLMargin = (!wc->nRow ? wc->nFirstMargin : wc->nLeftMargin);
   row->member.row.nRMargin = wc->nRightMargin;
   assert(para->member.para.pFmt->dwMask & PFM_ALIGNMENT);
@@ -118,7 +138,7 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
   ME_InsertBefore(wc->pRowStart, row);
   wc->nRow++;
   wc->pt.y += ascent+descent;
-  ME_BeginRow(wc);
+  ME_BeginRow(wc, para);
 }
 
 static void ME_WrapEndParagraph(ME_WrapContext *wc, ME_DisplayItem *p)
@@ -326,9 +346,9 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
   }
 
   /* will current run fit? */
-  if (wc->pt.x + run->nWidth > wc->nAvailWidth)
+  if (wc->pt.x + run->nWidth > wc->context->pt.x + wc->nAvailWidth)
   {
-    int loc = wc->nAvailWidth - wc->pt.x;
+    int loc = wc->context->pt.x + wc->nAvailWidth - wc->pt.x;
     /* total white run ? */
     if (run->nFlags & MERF_WHITESPACE) {
       /* let the overflow logic handle it */
@@ -421,7 +441,6 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   wc.nLeftMargin = wc.nFirstMargin + ME_twips2pointsX(c, tp->member.para.pFmt->dxOffset);
   wc.nRightMargin = ME_twips2pointsX(c, tp->member.para.pFmt->dxRightIndent);
   wc.nRow = 0;
-  wc.pt.x = 0;
   wc.pt.y = 0;
   if (tp->member.para.pFmt->dwMask & PFM_SPACEBEFORE)
     wc.pt.y += ME_twips2pointsY(c, tp->member.para.pFmt->dySpaceBefore);
@@ -440,7 +459,7 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
 
   linespace = ME_GetParaLineSpace(c, &tp->member.para);
 
-  ME_BeginRow(&wc);
+  ME_BeginRow(&wc, tp);
   for (p = tp->next; p!=tp->member.para.next_para; ) {
     assert(p->type != diStartRow);
     if (p->type == diRun) {
@@ -515,11 +534,11 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
     BOOL bRedraw = FALSE;
 
     assert(item->type == diParagraph);
-    editor->nHeight = max(editor->nHeight, item->member.para.nYPos);
+    editor->nHeight = max(editor->nHeight, item->member.para.pt.y);
     if ((item->member.para.nFlags & MEPF_REWRAP)
-     || (item->member.para.nYPos != c.pt.y))
+     || (item->member.para.pt.y != c.pt.y))
       bRedraw = TRUE;
-    item->member.para.nYPos = c.pt.y;
+    item->member.para.pt = c.pt;
 
     ME_WrapTextParagraph(&c, item, editor->selofs);
 
@@ -532,24 +551,90 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
 
     bModified = bModified | bRedraw;
 
-    yLastPos = c.pt.y;
-    c.pt.y += item->member.para.nHeight;
+    yLastPos = max(yLastPos, c.pt.y);
+
+    if (item->member.para.nFlags & MEPF_ROWSTART)
+    {
+      ME_DisplayItem *cell = ME_FindItemFwd(item, diCell);
+      cell->member.cell.pt = c.pt;
+    }
+    else if (item->member.para.nFlags & MEPF_ROWEND)
+    {
+      /* Set all the cells to the height of the largest cell */
+      ME_DisplayItem *startRowPara;
+      int prevHeight, nHeight;
+      ME_DisplayItem *cell = ME_FindItemBack(item, diCell);
+      prevHeight = cell->member.cell.nHeight;
+      nHeight = cell->member.cell.prev_cell->member.cell.nHeight;
+      cell->member.cell.nHeight = nHeight;
+      item->member.para.nHeight = nHeight;
+      cell = cell->member.cell.prev_cell;
+      while (cell->member.cell.prev_cell)
+      {
+        cell = cell->member.cell.prev_cell;
+        cell->member.cell.nHeight = nHeight;
+      }
+      /* Also set the height of the start row paragraph */
+      startRowPara = ME_FindItemBack(cell, diParagraph);
+      startRowPara->member.para.nHeight = nHeight;
+      c.pt.x = startRowPara->member.para.pt.x;
+      c.pt.y = cell->member.cell.pt.y + nHeight;
+      if (prevHeight < nHeight)
+      {
+        /* The height of the cells has grown, so invalidate the bottom of
+         * the cells. */
+        item->member.para.nFlags |= MEPF_REPAINT;
+        cell = ME_FindItemBack(item, diCell);
+        while (cell) {
+          ME_FindItemBack(cell, diParagraph)->member.para.nFlags |= MEPF_REPAINT;
+          cell = cell->member.cell.prev_cell;
+        }
+      }
+    }
+    else if (item->member.para.pCell &&
+             item->member.para.pCell != item->member.para.next_para->member.para.pCell)
+    {
+      /* The next paragraph is in the next cell in the table row. */
+      ME_Cell *cell = &item->member.para.pCell->member.cell;
+      cell->nHeight = c.pt.y + item->member.para.nHeight - cell->pt.y;
+
+      /* Propagate the largest height to the end so that it can be easily
+       * sent back to all the cells at the end of the row. */
+      if (cell->prev_cell)
+        cell->nHeight = max(cell->nHeight, cell->prev_cell->member.cell.nHeight);
+
+      c.pt.x = cell->pt.x + cell->nWidth;
+      c.pt.y = cell->pt.y;
+      cell->next_cell->member.cell.pt = c.pt;
+    }
+    else
+    {
+      if (item->member.para.pCell) {
+        /* Next paragraph in the same cell. */
+        c.pt.x = item->member.para.pCell->member.cell.pt.x;
+      } else {
+        /* Normal paragraph */
+        c.pt.x = 0;
+      }
+      c.pt.y += item->member.para.nHeight;
+    }
     item = item->member.para.next_para;
   }
   editor->sizeWindow.cx = c.rcView.right-c.rcView.left;
   editor->sizeWindow.cy = c.rcView.bottom-c.rcView.top;
   
   editor->nTotalLength = c.pt.y;
-  editor->pBuffer->pLast->member.para.nYPos = yLastPos;
+  editor->pBuffer->pLast->member.para.pt.x = 0;
+  editor->pBuffer->pLast->member.para.pt.y = yLastPos;
 
   ME_DestroyContext(&c, editor->hWnd);
 
   /* Each paragraph may contain multiple rows, which should be scrollable, even
-     if the containing paragraph has nYPos == 0 */
+     if the containing paragraph has pt.y == 0 */
   item = editor->pBuffer->pFirst;
   while ((item = ME_FindItemFwd(item, diStartRow)) != NULL) {
     assert(item->type == diStartRow);
-    editor->nHeight = max(editor->nHeight, item->member.row.nYPos);
+    editor->nHeight = max(editor->nHeight, item->member.row.pt.y);
   }
 
   if (bModified || editor->nTotalLength < editor->nLastTotalLength)
@@ -569,8 +654,8 @@ void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor) {
     ME_DisplayItem *item = editor->pBuffer->pFirst;
     while(item != editor->pBuffer->pLast) {
       if (item->member.para.nFlags & MEPF_REPAINT) { 
-        rc.top = item->member.para.nYPos - ofs;
-        rc.bottom = item->member.para.nYPos + item->member.para.nHeight - ofs;
+        rc.top = item->member.para.pt.y - ofs;
+        rc.bottom = item->member.para.pt.y + item->member.para.nHeight - ofs;
         InvalidateRect(editor->hWnd, &rc, TRUE);
       }
       item = item->member.para.next_para;

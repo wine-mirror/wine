@@ -451,8 +451,9 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   switch(info->rtfMinor)
   {
   case rtfParDef: /* restores default paragraph attributes */
-    fmt.dwMask = PFM_ALIGNMENT | PFM_BORDER | PFM_LINESPACING | PFM_TABSTOPS | PFM_OFFSET |
-        PFM_RIGHTINDENT | PFM_SPACEAFTER | PFM_SPACEBEFORE | PFM_STARTINDENT | PFM_TABLE;
+    fmt.dwMask = PFM_ALIGNMENT | PFM_BORDER | PFM_LINESPACING | PFM_TABSTOPS |
+        PFM_OFFSET | PFM_RIGHTINDENT | PFM_SPACEAFTER | PFM_SPACEBEFORE |
+        PFM_STARTINDENT;
     /* TODO: numbering, shading */
     fmt.wAlignment = PFA_LEFT;
     fmt.cTabCount = 0;
@@ -462,12 +463,67 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.bLineSpacingRule = 0;
     fmt.dySpaceBefore = fmt.dySpaceAfter = 0;
     fmt.dyLineSpacing = 0;
-    fmt.wEffects &= ~PFE_TABLE;
+    if (!info->editor->bEmulateVersion10) /* v4.1 */
+    {
+      if (info->tableDef && info->tableDef->tableRowStart &&
+          info->tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
+      {
+        ME_Cursor cursor;
+        ME_DisplayItem *para;
+        /* We are just after a table row. */
+        RTFFlushOutputBuffer(info);
+        cursor = info->editor->pCursors[0];
+        para = ME_GetParagraph(cursor.pRun);
+        if (para  == info->tableDef->tableRowStart->member.para.next_para
+            && !cursor.nOffset && !cursor.pRun->member.run.nCharOfs)
+        {
+          /* Since the table row end, no text has been inserted, and the \intbl
+           * control word has not be used.  We can confirm that we are not in a
+           * table anymore.
+           */
+          info->tableDef->tableRowStart = NULL;
+        }
+      }
+    } else { /* v1.0 - v3.0 */
+      fmt.dwMask |= PFM_TABLE;
+      fmt.wEffects &= ~PFE_TABLE;
+    }
     break;
   case rtfInTable:
   {
-    fmt.dwMask |= PFM_TABLE;
-    fmt.wEffects |= PFE_TABLE;
+    ME_Cursor cursor;
+    if (!info->editor->bEmulateVersion10) /* v4.1 */
+    {
+      if (!info->tableDef || !info->tableDef->tableRowStart ||
+          info->tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
+      {
+        RTFTable *tableDef;
+        if (!info->tableDef)
+        {
+            info->tableDef = ALLOC_OBJ(RTFTable);
+            ZeroMemory(info->tableDef, sizeof(RTFTable));
+        }
+        tableDef = info->tableDef;
+        RTFFlushOutputBuffer(info);
+        if (!tableDef->tableRowStart)
+        {
+          WCHAR endl = '\r';
+          cursor = info->editor->pCursors[0];
+          if (cursor.nOffset || cursor.pRun->member.run.nCharOfs)
+            ME_InsertTextFromCursor(info->editor, 0, &endl, 1, info->style);
+        }
+
+        /* FIXME: Remove the following condition once nested tables are supported */
+        if (ME_GetParagraph(info->editor->pCursors[0].pRun)->member.para.pCell)
+          break;
+
+        tableDef->tableRowStart = ME_InsertTableRowStartFromCursor(info->editor);
+      }
+      return;
+    } else { /* v1.0 - v3.0 */
+      fmt.dwMask |= PFM_TABLE;
+      fmt.wEffects |= PFE_TABLE;
+    }
     break;
   }
   case rtfFirstIndent:
@@ -669,10 +725,16 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
   switch (info->rtfMinor)
   {
     case rtfRowDef:
-      if (!info->tableDef)
+    {
+      if (!info->tableDef) {
         info->tableDef = ALLOC_OBJ(RTFTable);
-      ZeroMemory(info->tableDef, sizeof(RTFTable));
+        ZeroMemory(info->tableDef, sizeof(RTFTable));
+      } else {
+        ZeroMemory(info->tableDef->cells, sizeof(info->tableDef->cells));
+        info->tableDef->numCellsDefined = 0;
+      }
       break;
+    }
     case rtfCellPos:
       if (!info->tableDef)
       {
@@ -683,7 +745,8 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
         break;
       info->tableDef->cells[info->tableDef->numCellsDefined].rightBoundary = info->rtfParam;
       {
-        /* Tab stops store the cell positions. */
+        /* Tab stops were used to store cell positions before v4.1 but v4.1
+         * still seems to set the tabstops without using them. */
         ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
         PARAFORMAT2 *pFmt = para->member.para.pFmt;
         int cellNum = info->tableDef->numCellsDefined;
@@ -704,7 +767,19 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
       if (!tableDef)
         break;
       RTFFlushOutputBuffer(info);
-      {
+      if (!info->editor->bEmulateVersion10) { /* v4.1 */
+        if (tableDef->tableRowStart)
+        {
+          if (tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
+          {
+            ME_DisplayItem *para = tableDef->tableRowStart;
+            para = para->member.para.next_para;
+            para = ME_InsertTableRowStartAtParagraph(info->editor, para);
+            tableDef->tableRowStart = para;
+          }
+          ME_InsertTableCellFromCursor(info->editor);
+        }
+      } else { /* v1.0 - v3.0 */
         ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
         PARAFORMAT2 *pFmt = para->member.para.pFmt;
         if (pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE &&
@@ -718,11 +793,70 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
       break;
     case rtfRow:
     {
+      ME_DisplayItem *para, *cell, *run;
+      int i;
+
       if (!tableDef)
         break;
       RTFFlushOutputBuffer(info);
+      if (!info->editor->bEmulateVersion10) { /* v4.1 */
+        if (!tableDef->tableRowStart)
+          break;
+        if (tableDef->tableRowStart->member.para.nFlags & MEPF_ROWEND)
+        {
+          para = tableDef->tableRowStart;
+          para = para->member.para.next_para;
+          para = ME_InsertTableRowStartAtParagraph(info->editor, para);
+          tableDef->tableRowStart = para;
+        }
+        para = tableDef->tableRowStart;
+        cell = ME_FindItemFwd(para, diCell);
+        assert(cell && !cell->member.cell.prev_cell);
+        if (tableDef->numCellsDefined < 1)
+        {
+          /* 2000 twips appears to be the cell size that native richedit uses
+           * when no cell sizes are specified. */
+          const int defaultCellSize = 2000;
+          int nRightBoundary = defaultCellSize;
+          cell->member.cell.nRightBoundary = nRightBoundary;
+          while (cell->member.cell.next_cell) {
+            cell = cell->member.cell.next_cell;
+            nRightBoundary += defaultCellSize;
+            cell->member.cell.nRightBoundary = nRightBoundary;
+          }
+          para = ME_InsertTableCellFromCursor(info->editor);
+          cell = para->member.para.pCell;
+          cell->member.cell.nRightBoundary = nRightBoundary;
+        } else {
+          for (i = 0; i < tableDef->numCellsDefined; i++)
+          {
+            cell->member.cell.nRightBoundary = tableDef->cells[i].rightBoundary;
+            cell = cell->member.cell.next_cell;
+            if (!cell)
+            {
+              para = ME_InsertTableCellFromCursor(info->editor);
+              cell = para->member.para.pCell;
+            }
+          }
+          /* Cell for table row delimiter is empty */
+          cell->member.cell.nRightBoundary = tableDef->cells[i-1].rightBoundary;
+        }
 
-      {
+        run = ME_FindItemFwd(cell, diRun);
+        if (info->editor->pCursors[0].pRun != run ||
+            info->editor->pCursors[0].nOffset)
+        {
+          int nOfs, nChars;
+          /* Delete inserted cells that aren't defined. */
+          info->editor->pCursors[1].pRun = run;
+          info->editor->pCursors[1].nOffset = 0;
+          nOfs = ME_GetCursorOfs(info->editor, 1);
+          nChars = ME_GetCursorOfs(info->editor, 0) - nOfs;
+          ME_InternalDeleteText(info->editor, nOfs, nChars, TRUE);
+        }
+
+        tableDef->tableRowStart = ME_InsertTableRowEndFromCursor(info->editor);
+      } else { /* v1.0 - v3.0 */
         WCHAR endl = '\r';
         ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
         PARAFORMAT2 *pFmt = para->member.para.pFmt;
@@ -1128,6 +1262,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   if (!invalidRTF && !inStream.editstream->dwError)
   {
     if (format & SF_RTF) {
+      ME_DisplayItem *para;
+
       /* setup the RTF parser */
       memset(&parser, 0, sizeof parser);
       RTFSetEditStream(&parser, &inStream);
@@ -1145,6 +1281,36 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       /* do the parsing */
       RTFRead(&parser);
       RTFFlushOutputBuffer(&parser);
+      if (!editor->bEmulateVersion10) { /* v4.1 */
+        if (parser.tableDef && parser.tableDef->tableRowStart)
+        {
+          /* Delete any incomplete table row at the end of the rich text. */
+          int nOfs, nChars;
+          ME_DisplayItem *pCell;
+
+          para = parser.tableDef->tableRowStart;
+
+          parser.rtfMinor = rtfRow;
+          /* Complete the table row before deleting it.
+           * By doing it this way we will have the current paragraph format set
+           * properly to reflect that is not in the complete table, and undo items
+           * will be added for this change to the current paragraph format. */
+          ME_RTFSpecialCharHook(&parser);
+          if (para->member.para.nFlags & MEPF_ROWEND)
+          {
+            para = para->member.para.next_para;
+          }
+          pCell = para->member.para.pCell;
+
+          editor->pCursors[1].pRun = ME_FindItemFwd(para, diRun);
+          editor->pCursors[1].nOffset = 0;
+          nOfs = ME_GetCursorOfs(editor, 1);
+          nChars = ME_GetCursorOfs(editor, 0) - nOfs;
+          ME_InternalDeleteText(editor, nOfs, nChars, TRUE);
+          parser.tableDef->tableRowStart = NULL;
+        }
+      }
+      ME_CheckTablesForCorruption(editor);
       RTFDestroy(&parser);
       if (parser.lpRichEditOle)
         IRichEditOle_Release(parser.lpRichEditOle);
@@ -1624,10 +1790,17 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       }
       else if (ME_ArrowKey(editor, VK_LEFT, FALSE, FALSE))
       {
-          /* Backspace can be grouped for a single undo */
-          ME_ContinueCoalescingTransaction(editor);
-          ME_DeleteTextAtCursor(editor, 1, 1);
-          ME_CommitCoalescingUndo(editor);
+        BOOL bDeletionSucceeded;
+        /* Backspace can be grouped for a single undo */
+        ME_ContinueCoalescingTransaction(editor);
+        bDeletionSucceeded = ME_DeleteTextAtCursor(editor, 1, 1);
+        if (!bDeletionSucceeded && !editor->bEmulateVersion10) { /* v4.1 */
+          /* Deletion was prevented so the cursor is moved back to where it was.
+           * (e.g. this happens when trying to delete cell boundaries)
+           */
+          ME_ArrowKey(editor, VK_RIGHT, FALSE, FALSE);
+        }
+        ME_CommitCoalescingUndo(editor);
       }
       else
         return TRUE;
@@ -2503,10 +2676,10 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       if (p->type == diTextEnd)
         break;
       if (p->type == diParagraph) {
-        ypara = p->member.para.nYPos;
+        ypara = p->member.para.pt.y;
         continue;
       }
-      ystart = ypara + p->member.row.nYPos;
+      ystart = ypara + p->member.row.pt.y;
       yend = ystart + p->member.row.nHeight;
       if (y < yend) {
         break;
@@ -2572,7 +2745,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     nPos = ME_GetYScrollPos(editor);
     row = ME_RowStart(editor->pCursors[0].pRun);
     para = ME_GetParagraph(row);
-    top = para->member.para.nYPos + row->member.row.nYPos;
+    top = para->member.para.pt.y + row->member.row.pt.y;
     bottom = top + row->member.row.nHeight;
     
     if (top < nPos) /* caret above window */
@@ -3089,10 +3262,10 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         assert(pRun->type == diRun);
         pt.y = pRun->member.run.pt.y;
         pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset);
-        pt.y += ME_GetParagraph(pRun)->member.para.nYPos;
+        pt.y += ME_GetParagraph(pRun)->member.para.pt.y;
     } else {
         pt.x = 0;
-        pt.y = editor->pBuffer->pLast->member.para.nYPos;
+        pt.y = editor->pBuffer->pLast->member.para.pt.y;
     }
     pt.x += editor->selofs;
 
@@ -3287,8 +3460,13 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         || (wstr=='\r' && (GetWindowLongW(hWnd, GWL_STYLE) & ES_MULTILINE))
         || wstr=='\t') {
       int from, to;
+      BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
       ME_GetSelection(editor, &from, &to);
-      if (wstr=='\t') {
+      if (wstr=='\t'
+          /* v4.1 allows tabs to be inserted with ctrl key down */
+          && !(ctrl_is_down && !editor->bEmulateVersion10)
+          )
+      {
         ME_Cursor cursor = editor->pCursors[0];
         ME_DisplayItem *para;
         BOOL bSelectedRow = FALSE;
@@ -3726,7 +3904,12 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
     if (nLen > nChars)
       nLen = nChars;
 
-    if (item->member.run.nFlags & MERF_ENDPARA)
+    if (item->member.run.nFlags & MERF_ENDCELL &&
+        item->member.run.nFlags & MERF_ENDPARA)
+    {
+      *buffer = '\t';
+    }
+    else if (item->member.run.nFlags & MERF_ENDPARA)
     {
       if (!ME_FindItemFwd(item, diRun))
         /* No '\r' is appended to the last paragraph. */
@@ -3738,10 +3921,16 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
         if (bCRLF)
         {
           /* richedit 2.0 case - actual line-break is \r but should report \r\n */
-          assert(nLen == 1);
+          if (ME_GetParagraph(item)->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND))
+            assert(nLen == 2);
+          else
+            assert(nLen == 1);
           *buffer++ = '\r';
           *buffer = '\n'; /* Later updated by nLen==1 at the end of the loop */
-          nWritten++;
+          if (nLen == 1)
+            nWritten++;
+          else
+            buffer--;
         }
         else
         {

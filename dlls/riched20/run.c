@@ -134,6 +134,9 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
         else
           ofs += ME_StrLen(p->member.run.strText);
         break;
+      case diCell:
+        TRACE_(richedit_check)("cell\n");
+        break;
       default:
         assert(0);
     }
@@ -436,7 +439,7 @@ void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run)
 {
   assert(run->nCharOfs != -1);
 
-  if (RUN_IS_HIDDEN(run))
+  if (RUN_IS_HIDDEN(run) || run->nFlags & MERF_TABLESTART)
     run->nFlags |= MERF_HIDDEN;
   else
     run->nFlags &= ~MERF_HIDDEN;
@@ -483,7 +486,8 @@ int ME_CharFromPoint(ME_Context *c, int cx, ME_Run *run)
   if (!run->strText->nLen)
     return 0;
 
-  if (run->nFlags & MERF_TAB)
+  if (run->nFlags & MERF_TAB ||
+      (run->nFlags & (MERF_ENDCELL|MERF_ENDPARA)) == MERF_ENDCELL)
   {
     if (cx < run->nWidth/2) 
       return 0;
@@ -540,7 +544,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
   if (!run->strText->nLen)
     return 0;
 
-  if (run->nFlags & MERF_TAB)
+  if (run->nFlags & (MERF_TAB | MERF_ENDCELL))
   {
     if (cx < run->nWidth/2)
       return 0;

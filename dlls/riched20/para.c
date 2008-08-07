@@ -104,17 +104,51 @@ void ME_MarkForPainting(ME_TextEditor *editor, ME_DisplayItem *first, const ME_D
   }
 }
 
+static void ME_UpdateTableFlags(ME_DisplayItem *para)
+{
+  para->member.para.pFmt->dwMask |= PFM_TABLE|PFM_TABLEROWDELIMITER;
+  if (para->member.para.pCell) {
+    para->member.para.nFlags |= MEPF_CELL;
+  } else {
+    para->member.para.nFlags &= ~MEPF_CELL;
+  }
+  if (para->member.para.nFlags & MEPF_ROWEND) {
+    para->member.para.pFmt->wEffects |= PFE_TABLEROWDELIMITER;
+  } else {
+    para->member.para.pFmt->wEffects &= ~PFE_TABLEROWDELIMITER;
+  }
+  if (para->member.para.nFlags & (MEPF_ROWSTART|MEPF_CELL|MEPF_ROWEND))
+    para->member.para.pFmt->wEffects |= PFE_TABLE;
+  else
+    para->member.para.pFmt->wEffects &= ~PFE_TABLE;
+}
+
 /* split paragraph at the beginning of the run */
-ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME_Style *style, int numCR, int numLF)
+ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
+                                  ME_Style *style, int numCR, int numLF,
+                                  int paraFlags)
 {
   ME_DisplayItem *next_para = NULL;
   ME_DisplayItem *run_para = NULL;
   ME_DisplayItem *new_para = ME_MakeDI(diParagraph);
-  ME_DisplayItem *end_run = ME_MakeRun(style,ME_MakeString(wszParagraphSign), MERF_ENDPARA);
+  ME_DisplayItem *end_run;
   ME_UndoItem *undo = NULL;
   int ofs;
   ME_DisplayItem *pp;
   int end_len = numCR + numLF;
+  int run_flags = MERF_ENDPARA;
+  if (!editor->bEmulateVersion10) { /* v4.1 */
+    /* At most 1 of MEPF_CELL, MEPF_ROWSTART, or MEPF_ROWEND should be set. */
+    assert(!(paraFlags & ~(MEPF_CELL|MEPF_ROWSTART|MEPF_ROWEND)));
+    assert(!(paraFlags & (paraFlags-1)));
+    if (paraFlags == MEPF_CELL)
+      run_flags |= MERF_ENDCELL;
+    else if (paraFlags == MEPF_ROWSTART)
+      run_flags |= MERF_TABLESTART|MERF_HIDDEN;
+  } else { /* v1.0 - v3.0 */
+    assert(!(paraFlags & (MEPF_CELL|MEPF_ROWSTART|MEPF_ROWEND)));
+  }
+  end_run = ME_MakeRun(style,ME_MakeString(wszParagraphSign), run_flags);
   
   assert(run->type == diRun);  
 
@@ -139,11 +173,11 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   }
   new_para->member.para.nCharOfs = ME_GetParagraph(run)->member.para.nCharOfs+ofs;
   new_para->member.para.nCharOfs += end_len;
-  
-  new_para->member.para.nFlags = MEPF_REWRAP; /* FIXME copy flags (if applicable) */
+  new_para->member.para.nFlags = MEPF_REWRAP;
+
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
   *new_para->member.para.pFmt = *run_para->member.para.pFmt;
-  
+
   /* insert paragraph into paragraph double linked list */
   new_para->member.para.prev_para = run_para;
   new_para->member.para.next_para = next_para;
@@ -153,6 +187,44 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run, ME
   /* insert end run of the old paragraph, and new paragraph, into DI double linked list */
   ME_InsertBefore(run, new_para);
   ME_InsertBefore(new_para, end_run);
+
+  if (!editor->bEmulateVersion10) { /* v4.1 */
+    if (paraFlags & (MEPF_ROWSTART|MEPF_CELL))
+    {
+      ME_DisplayItem *cell = ME_MakeDI(diCell);
+      ME_InsertBefore(new_para, cell);
+      new_para->member.para.pCell = cell;
+      cell->member.cell.next_cell = NULL;
+      if (paraFlags & MEPF_ROWSTART)
+      {
+        run_para->member.para.nFlags |= MEPF_ROWSTART;
+        cell->member.cell.prev_cell = NULL;
+        cell->member.cell.parent_cell = run_para->member.para.pCell;
+        if (run_para->member.para.pCell)
+          cell->member.cell.nNestingLevel = run_para->member.para.pCell->member.cell.nNestingLevel + 1;
+        else
+          cell->member.cell.nNestingLevel = 1;
+      } else {
+        cell->member.cell.prev_cell = run_para->member.para.pCell;
+        assert(cell->member.cell.prev_cell);
+        cell->member.cell.prev_cell->member.cell.next_cell = cell;
+        assert(run_para->member.para.nFlags & MEPF_CELL);
+        assert(!(run_para->member.para.nFlags & MEPF_ROWSTART));
+        cell->member.cell.nNestingLevel = cell->member.cell.prev_cell->member.cell.nNestingLevel;
+        cell->member.cell.parent_cell = cell->member.cell.prev_cell->member.cell.parent_cell;
+      }
+    } else if (paraFlags & MEPF_ROWEND) {
+      run_para->member.para.nFlags |= MEPF_ROWEND;
+      run_para->member.para.pCell = run_para->member.para.pCell->member.cell.parent_cell;
+      new_para->member.para.pCell = run_para->member.para.pCell;
+      assert(run_para->member.para.prev_para->member.para.nFlags & MEPF_CELL);
+      assert(!(run_para->member.para.prev_para->member.para.nFlags & MEPF_ROWSTART));
+    } else {
+      new_para->member.para.pCell = run_para->member.para.pCell;
+    }
+    ME_UpdateTableFlags(run_para);
+    ME_UpdateTableFlags(new_para);
+  }
 
   /* force rewrap of the */
   run_para->member.para.prev_para->member.para.nFlags |= MEPF_REWRAP;
@@ -207,6 +279,42 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   {
     ME_AddUndoItem(editor, diUndoSetParagraphFormat, tp);
     *tp->member.para.pFmt = *pNext->member.para.pFmt;
+  }
+
+  if (!editor->bEmulateVersion10) { /* v4.1 */
+    /* Table cell/row properties are always moved over from the removed para. */
+    tp->member.para.nFlags = pNext->member.para.nFlags;
+    tp->member.para.pCell = pNext->member.para.pCell;
+
+    /* Remove cell boundary if it is between the end paragraph run and the next
+     * paragraph display item. */
+    pTmp = pRun->next;
+    while (pTmp != pNext) {
+      if (pTmp->type == diCell)
+      {
+        ME_Cell *pCell = &pTmp->member.cell;
+        if (undo)
+        {
+          assert(!(undo->di.member.para.nFlags & MEPF_ROWEND));
+          if (!(undo->di.member.para.nFlags & MEPF_ROWSTART))
+            undo->di.member.para.nFlags |= MEPF_CELL;
+          undo->di.member.para.pCell = ALLOC_OBJ(ME_DisplayItem);
+          *undo->di.member.para.pCell = *pTmp;
+          undo->di.member.para.pCell->next = NULL;
+          undo->di.member.para.pCell->prev = NULL;
+          undo->di.member.para.pCell->member.cell.next_cell = NULL;
+          undo->di.member.para.pCell->member.cell.prev_cell = NULL;
+        }
+        ME_Remove(pTmp);
+        if (pCell->prev_cell)
+          pCell->prev_cell->member.cell.next_cell = pCell->next_cell;
+        if (pCell->next_cell)
+          pCell->next_cell->member.cell.prev_cell = pCell->prev_cell;
+        ME_DestroyDisplayItem(pTmp);
+        break;
+      }
+      pTmp = pTmp->next;
+    }
   }
   
   shift = pNext->member.para.nCharOfs - tp->member.para.nCharOfs - end_len;

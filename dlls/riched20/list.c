@@ -121,8 +121,11 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item) {
   if (item->type==diUndoSetCharFormat) {
     ME_ReleaseStyle(item->member.ustyle);
   }
-  if (item->type==diUndoSplitParagraph)
+  if (item->type==diUndoSplitParagraph) {
      FREE_OBJ(item->member.para.pFmt);
+     if (item->member.para.pCell)
+       FREE_OBJ(item->member.para.pCell);
+  }
   FREE_OBJ(item);
 }
 
@@ -146,6 +149,7 @@ const char *ME_GetDITypeName(ME_DIType type)
   {
     case diParagraph: return "diParagraph";
     case diRun: return "diRun";
+    case diCell: return "diCell";
     case diTextStart: return "diTextStart";
     case diTextEnd: return "diTextEnd";
     case diStartRow: return "diStartRow";
@@ -172,8 +176,17 @@ void ME_DumpDocument(ME_TextBuffer *buffer)
       case diTextStart:
         TRACE("Start\n");
         break;
+      case diCell:
+        TRACE("Cell(level=%d%s)\n", pItem->member.cell.nNestingLevel,
+              !pItem->member.cell.next_cell ? ", END" :
+                (!pItem->member.cell.prev_cell ? ", START" :""));
+        break;
       case diParagraph:
         TRACE("Paragraph(ofs=%d)\n", pItem->member.para.nCharOfs);
+        if (pItem->member.para.nFlags & MEPF_ROWSTART)
+          TRACE(" - (Table Row Start)\n");
+        if (pItem->member.para.nFlags & MEPF_ROWEND)
+          TRACE(" - (Table Row End)\n");
         break;
       case diStartRow:
         TRACE(" - StartRow\n");
