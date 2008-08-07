@@ -2511,6 +2511,18 @@ static void test_GetSecurityInfo(void)
     ok(IsValidAcl(dacl), "GetSecurityInfo\n");
 
     LocalFree(sd);
+
+    /* If we don't ask for the security descriptor, Windows will still give us
+       the other stuff, leaving us no way to free it.  */
+    ret = GetSecurityInfo(obj, SE_FILE_OBJECT,
+                          OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                          &owner, &group, &dacl, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
+    ok(owner != NULL, "GetSecurityInfo\n");
+    ok(group != NULL, "GetSecurityInfo\n");
+    ok(dacl != NULL, "GetSecurityInfo\n");
+    ok(IsValidAcl(dacl), "GetSecurityInfo\n");
+
     CloseHandle(obj);
 }
 
