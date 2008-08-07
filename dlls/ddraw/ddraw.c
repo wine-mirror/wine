@@ -3254,12 +3254,12 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
 
         ShowWindow(window, SW_HIDE);   /* Just to be sure */
         WARN("(%p) No window for the Direct3DDevice, created a hidden window. HWND=%p\n", This, window);
-        This->d3d_window = window;
     }
     else
     {
         TRACE("(%p) Using existing window %p for Direct3D rendering\n", This, window);
     }
+    This->d3d_window = window;
 
     /* Store the future Render Target surface */
     This->d3d_target = primary;

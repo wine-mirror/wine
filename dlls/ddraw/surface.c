@@ -2210,6 +2210,7 @@ IDirectDrawSurfaceImpl_SetClipper(IDirectDrawSurface7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
     IDirectDrawClipperImpl *oldClipper = This->clipper;
+    HWND clipWindow;
     HRESULT hr;
     TRACE("(%p)->(%p)\n",This,Clipper);
 
@@ -2228,6 +2229,22 @@ IDirectDrawSurfaceImpl_SetClipper(IDirectDrawSurface7 *iface,
         IDirectDrawClipper_Release(ICOM_INTERFACE(oldClipper, IDirectDrawClipper));
 
     hr = IWineD3DSurface_SetClipper(This->WineD3DSurface, This->clipper ? This->clipper->wineD3DClipper : NULL);
+
+    if(This->wineD3DSwapChain) {
+        clipWindow = NULL;
+        if(Clipper) {
+            IDirectDrawClipper_GetHWnd(Clipper, &clipWindow);
+        }
+
+        if(clipWindow) {
+            IWineD3DSwapChain_SetDestWindowOverride(This->wineD3DSwapChain,
+                                                    clipWindow);
+        } else {
+            IWineD3DSwapChain_SetDestWindowOverride(This->wineD3DSwapChain,
+                                                    This->ddraw->d3d_window);
+        }
+    }
+
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
