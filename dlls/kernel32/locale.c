@@ -2867,12 +2867,15 @@ void LOCALE_Init(void)
     CFArrayRef preferred_locales, all_locales;
     CFStringRef user_language_string_ref = NULL;
     char user_locale[50];
+    char* p;
 
     CFLocaleRef user_locale_ref = CFLocaleCopyCurrent();
     CFStringRef user_locale_string_ref = CFLocaleGetIdentifier( user_locale_ref );
 
     CFStringGetCString( user_locale_string_ref, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
     CFRelease( user_locale_ref );
+    /* Strip modifiers because setlocale() can't parse them. */
+    if (p = strchr( user_locale, '@' )) *p = 0;
     if (!strchr( user_locale, '.' )) strcat( user_locale, ".UTF-8" );
     unix_cp = CP_UTF8;  /* default to utf-8 even if we don't get a valid locale */
     setenv( "LANG", user_locale, 0 );
