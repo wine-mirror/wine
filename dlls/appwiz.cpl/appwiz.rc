@@ -26,6 +26,7 @@
 #include "res.h"
 
 #include "En.rc"
+#include "Nl.rc"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 

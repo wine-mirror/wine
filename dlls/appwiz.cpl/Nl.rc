@@ -1,0 +1,79 @@
+/*
+* Add/Remove Programs Dutch resources
+*
+* Copyright 2008 Frans Kool
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+*
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+*
+*/
+
+LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+   IDS_CPL_TITLE, "Software"
+   IDS_CPL_DESC, "Hiermee installeert u nieuwe software, of verwijderd u bestaande software van uw computer."
+   IDS_TAB1_TITLE, "Programma's"
+
+   IDS_UNINSTALL_FAILED, "Het programma '%s' kan niet verwijderd worden van het systeem. Wilt u het verwijderen uit het register?"
+   IDS_NOT_SPECIFIED, "Niet gespecificeerd"
+
+   IDS_COLUMN_NAME, "Naam"
+   IDS_COLUMN_PUBLISHER, "Uitgever"
+   IDS_COLUMN_VERSION, "Versie"
+}
+
+/* TODO: it's best to use the constant WC_LISTVIEW instead of SysListView32 directly, but the Wine resource compiler doesn't seem to like that... */
+
+IDD_MAIN DIALOG 0, 0, 320, 220
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Installeren/Verwijderen"
+FONT 8, "MS Sans Serif"
+{
+ CONTROL "Om een programma te installeren vanaf een floppy disk, CD-ROM drive, of uw hard disk, click op Installeren.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "&Installeren...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+ CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
+ CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
+ CONTROL "De volgende software kan automatisch verwijderd worden. Om het programma te verwijderen of de geinstalleerde onderdelen te wijzigen, selecteer het in de lijst en druk op Toevoegen/Verwijderen.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
+ CONTROL "Toevoegen/&Verwijderen...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
+ CONTROL "&Support Informatie...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
+ CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
+}
+
+IDD_INFO DIALOG 0, 0, 256, 138
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Support Informatie"
+FONT 8, "MS Sans Serif"
+{
+ CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
+ CONTROL "De volgende informatie kan gebruikt worden om technische ondersteuning te krijgen voor %s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "Uitgever:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
+ CONTROL "Versie:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
+ CONTROL "Contact:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
+ CONTROL "Support Informatie:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
+ CONTROL "Support Telefoon:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
+ CONTROL "Lees me:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
+ CONTROL "Produkt Updates:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "Commentaar:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
+ CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
+ CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
+ CONTROL "", IDC_INFO_CONTACT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 50, 136, 8
+ CONTROL "", IDC_INFO_SUPPORT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 60, 136, 8
+ CONTROL "", IDC_INFO_PHONE, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 70, 136, 8
+ CONTROL "", IDC_INFO_README, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 80, 136, 8
+ CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
+ CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
+}
