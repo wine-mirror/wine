@@ -239,8 +239,15 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
              pvData, pcbData);
             break;
         case CERT_SIGNATURE_HASH_PROP_ID:
-            FIXME("CERT_SIGNATURE_HASH_PROP_ID unimplemented\n");
-            SetLastError(CRYPT_E_NOT_FOUND);
+            ret = CryptHashToBeSigned(0, pCertContext->dwCertEncodingType,
+             pCertContext->pbCertEncoded, pCertContext->cbCertEncoded, pvData,
+             pcbData);
+            if (ret && pvData)
+            {
+                CRYPT_DATA_BLOB blob = { *pcbData, pvData };
+
+                ret = CertContext_SetProperty(context, dwPropId, 0, &blob);
+            }
             break;
         case CERT_KEY_IDENTIFIER_PROP_ID:
         {
