@@ -291,11 +291,8 @@ static void test_ddeml_client(void)
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %08x\n", res);
-    }
+    ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
+    ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %08x\n", res);
     if (hdata == NULL)
         ok(FALSE, "hdata is NULL\n");
     else
@@ -313,11 +310,9 @@ static void test_ddeml_client(void)
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    todo_wine
-    {
-        ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
-        ok(ret == DMLERR_MEMORY_ERROR, "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
-    }
+    ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
+todo_wine
+    ok(ret == DMLERR_MEMORY_ERROR, "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
     if (hdata == NULL)
         ok(FALSE, "hdata is NULL\n");
     else
@@ -336,10 +331,7 @@ static void test_ddeml_client(void)
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
-    todo_wine
-    {
-        ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
-    }
+    ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
     if (hdata == NULL)
         ok(FALSE, "hdata is NULL\n");
     else
@@ -457,10 +449,7 @@ static void test_ddeml_client(void)
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
-    todo_wine
-    {
-        ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
-    }
+    ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
     if (hdata == NULL)
         ok(FALSE, "hdata is NULL\n");
     else

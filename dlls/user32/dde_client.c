@@ -921,6 +921,7 @@ static WDML_QUEUE_STATE WDML_HandleReply(WDML_CONV* pConv, MSG* msg, HDDEDATA* h
 
     if (pConv->transactions)
     {
+	if (ack) *ack = DDE_FNOTPROCESSED;
 	/* first check message against a pending transaction, if any */
 	switch (pXAct->ddeMsg)
 	{
