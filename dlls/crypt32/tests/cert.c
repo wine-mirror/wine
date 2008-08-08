@@ -2575,33 +2575,28 @@ static void testHashToBeSigned(void)
      "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, NULL, 0, NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     /* Can't sign anything:  has to be asn.1 encoded, at least */
     SetLastError(0xdeadbeef);
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, int1, sizeof(int1),
      NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
      "expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     /* Can't be empty, either */
     SetLastError(0xdeadbeef);
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, emptyCert,
      sizeof(emptyCert), NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
      "expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
     /* Signing a cert works */
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, md5SignedEmptyCert,
      sizeof(md5SignedEmptyCert), NULL, &size);
-    todo_wine {
     ok(ret, "CryptHashToBeSigned failed: %08x\n", GetLastError());
     ok(size == sizeof(md5SignedEmptyCertHash), "unexpected size %d\n", size);
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, md5SignedEmptyCert,
      sizeof(md5SignedEmptyCert), hash, &size);
     ok(!memcmp(hash, md5SignedEmptyCertHash, size), "unexpected value\n");
-    }
 }
 
 static void testCompareCert(void)

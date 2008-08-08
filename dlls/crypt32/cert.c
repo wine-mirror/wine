@@ -1534,9 +1534,45 @@ BOOL WINAPI CryptHashToBeSigned(HCRYPTPROV_LEGACY hCryptProv,
  DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,
  BYTE *pbComputedHash, DWORD *pcbComputedHash)
 {
-    FIXME("(%08lx, %08x, %p, %d, %p, %d): stub\n", hCryptProv, dwCertEncodingType,
+    BOOL ret;
+    CERT_SIGNED_CONTENT_INFO *info;
+    DWORD size;
+
+    TRACE("(%08lx, %08x, %p, %d, %p, %d)\n", hCryptProv, dwCertEncodingType,
      pbEncoded, cbEncoded, pbComputedHash, *pcbComputedHash);
-    return FALSE;
+
+    ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, (void *)&info, &size);
+    if (ret)
+    {
+        PCCRYPT_OID_INFO oidInfo;
+        HCRYPTHASH hHash;
+
+        if (!hCryptProv)
+            hCryptProv = CRYPT_GetDefaultProvider();
+        oidInfo = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+         info->SignatureAlgorithm.pszObjId, 0);
+        if (!oidInfo)
+        {
+            SetLastError(NTE_BAD_ALGID);
+            ret = FALSE;
+        }
+        else
+        {
+            ret = CryptCreateHash(hCryptProv, oidInfo->u.Algid, 0, 0, &hHash);
+            if (ret)
+            {
+                ret = CryptHashData(hHash, info->ToBeSigned.pbData,
+                 info->ToBeSigned.cbData, 0);
+                if (ret)
+                    ret = CryptGetHashParam(hHash, HP_HASHVAL, pbComputedHash,
+                     pcbComputedHash, 0);
+                CryptDestroyHash(hHash);
+            }
+        }
+        LocalFree(info);
+    }
+    return ret;
 }
 
 BOOL WINAPI CryptSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
