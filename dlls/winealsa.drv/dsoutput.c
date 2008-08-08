@@ -548,7 +548,13 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     }
     if (state == SND_PCM_STATE_RUNNING)
     {
-        snd_pcm_uframes_t used = This->mmap_buflen_frames - snd_pcm_avail_update(This->pcm);
+        snd_pcm_sframes_t used = This->mmap_buflen_frames - snd_pcm_avail_update(This->pcm);
+
+        if (used < 0)
+        {
+            snd_pcm_forward(This->pcm, -used);
+            used = 0;
+        }
 
         if (This->mmap_pos > used)
             hw_pptr = This->mmap_pos - used;
