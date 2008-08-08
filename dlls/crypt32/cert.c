@@ -1143,6 +1143,32 @@ static BOOL compare_existing_cert(PCCERT_CONTEXT pCertContext, DWORD dwType,
      pCertContext->pCertInfo, toCompare->pCertInfo);
 }
 
+static BOOL compare_cert_by_signature_hash(PCCERT_CONTEXT pCertContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    const CRYPT_HASH_BLOB *hash = (const CRYPT_HASH_BLOB *)pvPara;
+    DWORD size = 0;
+    BOOL ret;
+
+    ret = CertGetCertificateContextProperty(pCertContext,
+     CERT_SIGNATURE_HASH_PROP_ID, NULL, &size);
+    if (ret && size == hash->cbData)
+    {
+        LPBYTE buf = CryptMemAlloc(size);
+
+        if (buf)
+        {
+            CertGetCertificateContextProperty(pCertContext,
+             CERT_SIGNATURE_HASH_PROP_ID, buf, &size);
+            ret = !memcmp(buf, hash->pbData, size);
+            CryptMemFree(buf);
+        }
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFlags, DWORD dwType, const void *pvPara,
  PCCERT_CONTEXT pPrevCertContext)
@@ -1178,6 +1204,9 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
         break;
     case CERT_COMPARE_EXISTING:
         compare = compare_existing_cert;
+        break;
+    case CERT_COMPARE_SIGNATURE_HASH:
+        compare = compare_cert_by_signature_hash;
         break;
     default:
         FIXME("find type %08x unimplemented\n", dwType);
