@@ -155,6 +155,7 @@
 @ stub CryptMsgSignCTL
 @ stdcall CryptMsgUpdate(ptr ptr long long)
 @ stub CryptMsgVerifyCountersignatureEncoded
+@ stdcall CryptMsgVerifyCountersignatureEncodedEx(ptr long ptr long ptr long long ptr long ptr)
 @ stdcall CryptProtectData(ptr wstr ptr ptr ptr long ptr)
 @ stdcall CryptQueryObject(long ptr long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall CryptRegisterDefaultOIDFunction(long str long wstr)

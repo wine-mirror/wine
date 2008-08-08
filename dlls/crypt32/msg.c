@@ -2561,3 +2561,14 @@ BOOL WINAPI CryptMsgGetAndVerifySigner(HCRYPTMSG hCryptMsg, DWORD cSignerStore,
     CertCloseStore(store, 0);
     return ret;
 }
+
+BOOL WINAPI CryptMsgVerifyCountersignatureEncodedEx(HCRYPTPROV_LEGACY hCryptProv,
+ DWORD dwEncodingType, PBYTE pbSignerInfo, DWORD cbSignerInfo,
+ PBYTE pbSignerInfoCountersignature, DWORD cbSignerInfoCountersignature,
+ DWORD dwSignerType, void *pvSigner, DWORD dwFlags, void *pvReserved)
+{
+    FIXME("(%08lx, %08x, %p, %d, %p, %d, %d, %p, %08x, %p): stub\n", hCryptProv,
+     dwEncodingType, pbSignerInfo, cbSignerInfo, pbSignerInfoCountersignature,
+     cbSignerInfoCountersignature, dwSignerType, pvSigner, dwFlags, pvReserved);
+    return FALSE;
+}
