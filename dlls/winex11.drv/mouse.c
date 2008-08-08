@@ -408,8 +408,8 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
  */
 static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
 {
-    int x, xmax;
-    int y, ymax;
+    int x;
+    int y;
     int and_size;
     unsigned char *and_bits, *and_ptr, *xor_bits, *xor_ptr;
     int and_width_bytes, xor_width_bytes;
@@ -417,10 +417,7 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
     XcursorImage *image;
     BOOL alpha_zero = TRUE;
 
-    ymax = (ptr->nHeight > 32) ? 32 : ptr->nHeight;
-    xmax = (ptr->nWidth > 32) ? 32 : ptr->nWidth;
-
-    and_width_bytes = xmax / 8;
+    and_width_bytes = ptr->nWidth / 8;
     xor_width_bytes = and_width_bytes * ptr->bBitsPerPixel;
 
     and_size = ptr->nWidth * ptr->nHeight / 8;
@@ -428,7 +425,7 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
 
     xor_ptr = xor_bits = and_ptr + and_size;
 
-    image = pXcursorImageCreate( xmax, ymax );
+    image = pXcursorImageCreate( ptr->nWidth, ptr->nHeight );
     pixel_ptr = image->pixels;
 
     /* Generally 32 bit bitmaps have an alpha channel which is used in favor
@@ -447,10 +444,10 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
      */
     if(ptr->bBitsPerPixel == 32)
     {
-        for (y = 0; alpha_zero && y < ymax; ++y)
+        for (y = 0; alpha_zero && y < ptr->nHeight; ++y)
         {
             xor_ptr = xor_bits + (y * xor_width_bytes);
-            for (x = 0; x < xmax; ++x)
+            for (x = 0; x < ptr->nWidth; ++x)
             {
                 if (xor_ptr[3] != 0x00)
                 {
@@ -476,12 +473,12 @@ static XcursorImage *create_cursor_image( CURSORICONINFO *ptr )
      * the "xor" data to the alpha channel, and xor the color with either
      * black or white.
      */
-    for (y = 0; y < ymax; ++y)
+    for (y = 0; y < ptr->nHeight; ++y)
     {
         and_ptr = and_bits + (y * and_width_bytes);
         xor_ptr = xor_bits + (y * xor_width_bytes);
 
-        for (x = 0; x < xmax; ++x)
+        for (x = 0; x < ptr->nWidth; ++x)
         {
             /* Xcursor pixel data is in ARGB format, with A in the high byte */
             switch (ptr->bBitsPerPixel)
