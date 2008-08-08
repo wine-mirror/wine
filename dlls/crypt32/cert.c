@@ -1530,6 +1530,15 @@ BOOL WINAPI CryptHashPublicKeyInfo(HCRYPTPROV_LEGACY hCryptProv, ALG_ID Algid,
     return ret;
 }
 
+BOOL WINAPI CryptHashToBeSigned(HCRYPTPROV_LEGACY hCryptProv,
+ DWORD dwCertEncodingType, const BYTE *pbEncoded, DWORD cbEncoded,
+ BYTE *pbComputedHash, DWORD *pcbComputedHash)
+{
+    FIXME("(%08lx, %08x, %p, %d, %p, %d): stub\n", hCryptProv, dwCertEncodingType,
+     pbEncoded, cbEncoded, pbComputedHash, *pcbComputedHash);
+    return FALSE;
+}
+
 BOOL WINAPI CryptSignCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCryptProv,
  DWORD dwKeySpec, DWORD dwCertEncodingType, const BYTE *pbEncodedToBeSigned,
  DWORD cbEncodedToBeSigned, PCRYPT_ALGORITHM_IDENTIFIER pSignatureAlgorithm,
