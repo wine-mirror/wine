@@ -2554,6 +2554,56 @@ static void testHashPublicKeyInfo(void)
     }
 }
 
+static const BYTE md5SignedEmptyCertHash[] = { 0xfb,0x0f,0x66,0x82,0x66,0xd9,
+ 0xe5,0xf8,0xd8,0xa2,0x55,0x2b,0xe1,0xa5,0xd9,0x04 };
+
+static void testHashToBeSigned(void)
+{
+    BOOL ret;
+    DWORD size;
+    BYTE hash[16];
+
+    /* Crash */
+    if (0)
+    {
+        ret = CryptHashToBeSigned(0, 0, NULL, 0, NULL, NULL);
+    }
+    SetLastError(0xdeadbeef);
+    ret = CryptHashToBeSigned(0, 0, NULL, 0, NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, NULL, 0, NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+     "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    /* Can't sign anything:  has to be asn.1 encoded, at least */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, int1, sizeof(int1),
+     NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    /* Can't be empty, either */
+    SetLastError(0xdeadbeef);
+    ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, emptyCert,
+     sizeof(emptyCert), NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+     "expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
+    /* Signing a cert works */
+    ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, md5SignedEmptyCert,
+     sizeof(md5SignedEmptyCert), NULL, &size);
+    todo_wine {
+    ok(ret, "CryptHashToBeSigned failed: %08x\n", GetLastError());
+    ok(size == sizeof(md5SignedEmptyCertHash), "unexpected size %d\n", size);
+    ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, md5SignedEmptyCert,
+     sizeof(md5SignedEmptyCert), hash, &size);
+    ok(!memcmp(hash, md5SignedEmptyCertHash, size), "unexpected value\n");
+    }
+}
+
 static void testCompareCert(void)
 {
     CERT_INFO info1 = { 0 }, info2 = { 0 };
@@ -3031,6 +3081,7 @@ START_TEST(cert)
     testCompareIntegerBlob();
     testComparePublicKeyInfo();
     testHashPublicKeyInfo();
+    testHashToBeSigned();
     testCompareCert();
     testVerifySubjectCert();
     testVerifyRevocation();
