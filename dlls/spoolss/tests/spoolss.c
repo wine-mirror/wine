@@ -41,6 +41,7 @@ static DWORD  (WINAPI * pSplInitializeWinSpoolDrv)(LPVOID *);
 static LPVOID fn_spl[WINSPOOL_TABLESIZE];
 static LPVOID fn_w2k[WINSPOOL_TABLESIZE];
 static LPVOID fn_xp[WINSPOOL_TABLESIZE];
+static LPVOID fn_v[WINSPOOL_TABLESIZE];
 
 /* ########################### */
 
@@ -89,6 +90,18 @@ static LPCSTR load_functions(void)
     fn_xp[7] = (void *) GetProcAddress(hwinspool, (LPSTR) 214);  /* RefCntUnloadDriver */
     fn_xp[8] = (void *) GetProcAddress(hwinspool, (LPSTR) 215);  /* ForceUnloadDriver */
 
+    memset(fn_v,  0xff, sizeof(fn_v));
+    fn_v[0] = (void *) GetProcAddress(hwinspool, "OpenPrinterW");
+    fn_v[1] = (void *) GetProcAddress(hwinspool, "ClosePrinter");
+    fn_v[2] = (void *) GetProcAddress(hwinspool, "SpoolerDevQueryPrintW");
+    fn_v[3] = (void *) GetProcAddress(hwinspool, "SpoolerPrinterEvent");
+    fn_v[4] = (void *) GetProcAddress(hwinspool, "DocumentPropertiesW");
+    fn_v[5] = (void *) GetProcAddress(hwinspool, (LPSTR) 212);  /* LoadPrinterDriver */
+    fn_v[6] = (void *) GetProcAddress(hwinspool, (LPSTR) 213);  /* RefCntLoadDriver */
+    fn_v[7] = (void *) GetProcAddress(hwinspool, (LPSTR) 214);  /* RefCntUnloadDriver */
+    fn_v[8] = (void *) GetProcAddress(hwinspool, (LPSTR) 215);  /* ForceUnloadDriver */
+    fn_v[9] = (void *) GetProcAddress(hwinspool, (LPSTR) 251);  /* 0xfb */
+
     return NULL;
 
 }
@@ -124,21 +137,28 @@ static void test_BuildOtherNamesFromMachineName(void)
 
 static void test_SplInitializeWinSpoolDrv(VOID)
 {
+    LPVOID *fn_ref = fn_xp;
     DWORD   res;
     LONG    id;
-    BOOL    is_xp;
 
     memset(fn_spl, 0xff, sizeof(fn_spl));
     SetLastError(0xdeadbeef);
     res = pSplInitializeWinSpoolDrv(fn_spl);
     ok(res, "got %u with %u (expected '!= 0')\n", res, GetLastError());
 
-    /* functions 0 to 5 are the same with "spoolss.dll" from w2k and xp */
-    is_xp = (fn_spl[6] == fn_xp[6]);
+    /* functions 0 to 5 are the same in "spoolss.dll" from w2k and above */
+    if (fn_spl[6] == fn_w2k[6]) {
+        fn_ref = fn_w2k;
+    }
+    if (fn_spl[9] == fn_v[9]) {
+        fn_ref = fn_v;
+    }
+
     id = 0;
     while (id < WINSPOOL_TABLESIZE) {
-        ok( fn_spl[id] == (is_xp ? fn_xp[id] : fn_w2k[id]),
-            "(#%02u) spoolss: %p,  xp: %p,  w2k: %p\n", id, fn_spl[id], fn_xp[id], fn_w2k[id]);
+        ok( fn_spl[id] == fn_ref[id],
+            "(#%02u) spoolss: %p (vista: %p,  xp: %p,  w2k: %p)\n",
+            id, fn_spl[id], fn_v[id], fn_xp[id], fn_w2k[id]);
         id++;
     }
 }
