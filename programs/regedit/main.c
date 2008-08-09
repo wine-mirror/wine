@@ -30,6 +30,7 @@
 #include "main.h"
 
 TCHAR g_pszDefaultValueName[64];
+WCHAR g_pszDefaultValueNameW[64];
 
 BOOL ProcessCmdLine(LPSTR lpCmdLine);
 
@@ -171,6 +172,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     /* Initialize global strings */
     LoadString(hInstance, IDS_APP_TITLE, szTitle, COUNT_OF(szTitle));
     LoadString(hInstance, IDS_REGISTRY_DEFAULT_VALUE, g_pszDefaultValueName, COUNT_OF(g_pszDefaultValueName));
+    LoadStringW(hInstance, IDS_REGISTRY_DEFAULT_VALUE, g_pszDefaultValueNameW, COUNT_OF(g_pszDefaultValueNameW));
 
     /* Store instance handle in our global variable */
     hInst = hInstance;

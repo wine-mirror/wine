@@ -91,6 +91,7 @@ extern TCHAR szTitle[];
 extern const TCHAR szFrameClass[];
 extern const TCHAR szChildClass[];
 extern TCHAR g_pszDefaultValueName[];
+extern WCHAR g_pszDefaultValueNameW[];
 
 /* about.c */
 extern void ShowAboutBox(HWND hWnd);
@@ -129,8 +130,8 @@ extern HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mod
 extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR newKeyName);
 extern BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType, LPTSTR valueName);
 extern BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
-extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
-extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName, BOOL showMessageBox);
+extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath);
+extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR oldName, LPCTSTR newName);
 extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName);
 extern void error(HWND hwnd, INT resId, ...);

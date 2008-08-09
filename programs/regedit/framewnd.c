@@ -675,29 +675,38 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case ID_EDIT_DELETE:
 	if (GetFocus() == g_pChildWnd->hTreeWnd) {
+	    WCHAR* keyPathW = GetWideString(keyPath);
 	    if (keyPath == 0 || *keyPath == 0) {
 	        MessageBeep(MB_ICONHAND); 
-            } else if (DeleteKey(hWnd, hKeyRoot, keyPath)) {
+            } else if (DeleteKey(hWnd, hKeyRoot, keyPathW)) {
 		DeleteNode(g_pChildWnd->hTreeWnd, 0);
             }
+            HeapFree(GetProcessHeap(), 0, keyPathW);
 	} else if (GetFocus() == g_pChildWnd->hListWnd) {
         curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, -1, LVNI_SELECTED);
         while(curIndex != -1) {
+            WCHAR* valueNameW;
+            WCHAR* keyPathW;
+
             valueName = GetItemText(g_pChildWnd->hListWnd, curIndex);
             curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, curIndex, LVNI_SELECTED);
             if(curIndex != -1 && firstItem) {
-                TCHAR title[256];
-                TCHAR text[1024];
-                if(!LoadString(hInst, IDS_DELETE_BOX_TITLE, title, COUNT_OF(title)))
-                    lstrcpy(title, "Error");
-                if(!LoadString(hInst, IDS_DELETE_BOX_TEXT_MULTIPLE, text, COUNT_OF(text)))
-                    lstrcpy(text, "Unknown error string!");
-                if (MessageBox(hWnd, text, title, MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
+                if (MessageBoxW(hWnd, MAKEINTRESOURCEW(IDS_DELETE_BOX_TEXT_MULTIPLE),
+                                MAKEINTRESOURCEW(IDS_DELETE_BOX_TITLE),
+                                MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
                     break;
             }
-            if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueName, curIndex==-1 && firstItem))
+            valueNameW = GetWideString(valueName);
+            keyPathW = GetWideString(keyPath);
+            if (!DeleteValue(hWnd, hKeyRoot, keyPathW, valueNameW, curIndex==-1 && firstItem))
+            {
+                HeapFree(GetProcessHeap(), 0, valueNameW);
+                HeapFree(GetProcessHeap(), 0, keyPathW);
                 break;
+            }
             firstItem = FALSE;
+            HeapFree(GetProcessHeap(), 0, valueNameW);
+            HeapFree(GetProcessHeap(), 0, keyPathW);
         }
 		RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
 	}
