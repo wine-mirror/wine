@@ -504,7 +504,8 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
 
     if ((smb_floor->count_lhs != sizeof(smb_floor->protid)) ||
         (smb_floor->protid != EPM_PROTOCOL_SMB) ||
-        (smb_floor->count_rhs > tower_size))
+        (smb_floor->count_rhs > tower_size) ||
+        (tower_data[smb_floor->count_rhs - 1] != '\0'))
         return EPT_S_NOT_REGISTERED;
 
     if (endpoint)
@@ -527,7 +528,8 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
 
     if ((nb_floor->count_lhs != sizeof(nb_floor->protid)) ||
         (nb_floor->protid != EPM_PROTOCOL_NETBIOS) ||
-        (nb_floor->count_rhs > tower_size))
+        (nb_floor->count_rhs > tower_size) ||
+        (tower_data[nb_floor->count_rhs - 1] != '\0'))
         return EPT_S_NOT_REGISTERED;
 
     if (networkaddr)
@@ -714,7 +716,8 @@ static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_d
 
     if ((pipe_floor->count_lhs != sizeof(pipe_floor->protid)) ||
         (pipe_floor->protid != EPM_PROTOCOL_PIPE) ||
-        (pipe_floor->count_rhs > tower_size))
+        (pipe_floor->count_rhs > tower_size) ||
+        (tower_data[pipe_floor->count_rhs - 1] != '\0'))
         return EPT_S_NOT_REGISTERED;
 
     if (networkaddr)
