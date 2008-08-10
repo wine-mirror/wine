@@ -71,7 +71,7 @@ static const struct epm_endpoints
     { "ncacn_np", "\\pipe\\epmapper" },
     { "ncacn_ip_tcp", "135" },
     { "ncacn_ip_udp", "135" },
-    { "ncalprc", "epmapper" },
+    { "ncalrpc", "epmapper" },
     { "ncacn_http", "593" },
 };
 
