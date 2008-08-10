@@ -1807,6 +1807,105 @@ static void test_nonconformant_string(void)
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
 }
 
+static void test_conf_complex_struct(void)
+{
+    RPC_MESSAGE RpcMessage;
+    MIDL_STUB_MESSAGE StubMsg;
+    MIDL_STUB_DESC StubDesc;
+    void *ptr;
+    unsigned int i;
+    struct conf_complex
+    {
+      unsigned int size;
+      unsigned int *array[1];
+    };
+    struct conf_complex *memsrc;
+    struct conf_complex *mem;
+
+    static const unsigned char fmtstr_complex_struct[] =
+    {
+/* 0 */
+			0x1b,		/* FC_CARRAY */
+			0x3,		/* 3 */
+/* 2 */	NdrFcShort( 0x4 ),	/* 4 */
+/* 4 */	0x8,		/* Corr desc: FC_LONG */
+			0x0,		/*  */
+/* 6 */	NdrFcShort( 0xfffc ),	/* -4 */
+/* 8 */
+			0x4b,		/* FC_PP */
+			0x5c,		/* FC_PAD */
+/* 10 */
+			0x48,		/* FC_VARIABLE_REPEAT */
+			0x49,		/* FC_FIXED_OFFSET */
+/* 12 */	NdrFcShort( 0x4 ),	/* 4 */
+/* 14 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 16 */	NdrFcShort( 0x1 ),	/* 1 */
+/* 18 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 20 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 22 */	0x12, 0x8,	/* FC_UP [simple_pointer] */
+/* 24 */	0x8,		/* FC_LONG */
+			0x5c,		/* FC_PAD */
+/* 26 */
+			0x5b,		/* FC_END */
+
+			0x8,		/* FC_LONG */
+/* 28 */	0x5c,		/* FC_PAD */
+			0x5b,		/* FC_END */
+/* 30 */
+			0x1a,		/* FC_BOGUS_STRUCT */
+			0x3,		/* 3 */
+/* 32 */	NdrFcShort( 0x4 ),	/* 4 */
+/* 34 */	NdrFcShort( 0xffffffde ),	/* Offset= -34 (0) */
+/* 36 */	NdrFcShort( 0x0 ),	/* Offset= 0 (36) */
+/* 38 */	0x8,		/* FC_LONG */
+			0x5b,		/* FC_END */
+    };
+
+    memsrc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                       FIELD_OFFSET(struct conf_complex, array[20]));
+    memsrc->size = 20;
+
+    StubDesc = Object_StubDesc;
+    StubDesc.pFormatTypes = fmtstr_complex_struct;
+
+    NdrClientInitializeNew(
+                           &RpcMessage,
+                           &StubMsg,
+                           &StubDesc,
+                           0);
+
+    StubMsg.BufferLength = 0;
+    NdrComplexStructBufferSize( &StubMsg,
+                                (unsigned char *)memsrc,
+                                &fmtstr_complex_struct[30] );
+    ok(StubMsg.BufferLength >= 28, "length %d\n", StubMsg.BufferLength);
+
+    /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
+    StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
+
+    ptr = NdrComplexStructMarshall( &StubMsg, (unsigned char *)memsrc,
+                                    &fmtstr_complex_struct[30] );
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(*(unsigned int *)StubMsg.BufferStart == 20, "Conformance should have been 20 instead of %d\n", (unsigned int)StubMsg.BufferStart);
+    ok(*(unsigned int *)(StubMsg.BufferStart + 4) == 20, "conf_complex.size should have been 20 instead of %d\n", (unsigned int)(StubMsg.BufferStart + 4));
+    for (i = 0; i < 20; i++)
+      ok(*(unsigned int *)(StubMsg.BufferStart + 8 + i * 4) == 0, "pointer id for conf_complex.array[%d] should have been 0 instead of 0x%x\n", i, *(unsigned int *)(StubMsg.BufferStart + 8 + i * 4));
+
+    /* Server */
+    my_alloc_called = 0;
+    StubMsg.IsClient = 0;
+    mem = NULL;
+    StubMsg.Buffer = StubMsg.BufferStart;
+    ptr = NdrComplexStructUnmarshall( &StubMsg, (unsigned char **)&mem, &fmtstr_complex_struct[30], 0);
+    ok(ptr == NULL, "ret %p\n", ptr);
+    ok(mem->size == 20, "mem->size wasn't unmarshalled correctly (%d)\n", mem->size);
+    ok(mem->array[0] == NULL, "mem->array[0] wasn't unmarshalled correctly (%p)\n", mem->array[0]);
+    StubMsg.pfnFree(mem);
+
+    HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
+}
+
 static void test_ndr_buffer(void)
 {
     static unsigned char ncalrpc[] = "ncalrpc";
@@ -1943,6 +2042,7 @@ START_TEST( ndr_marshall )
     test_conformant_array();
     test_conformant_string();
     test_nonconformant_string();
+    test_conf_complex_struct();
     test_ndr_buffer();
     test_NdrMapCommAndFaultStatus();
 }
