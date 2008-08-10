@@ -375,10 +375,10 @@ static BOOL ExportRegistryFile(HWND hWnd, BOOL export_branch)
     return TRUE;
 }
 
-static BOOL PrintRegistryHive(HWND hWnd, LPCTSTR path)
+static BOOL PrintRegistryHive(HWND hWnd, LPCWSTR path)
 {
 #if 1
-    PRINTDLG pd;
+    PRINTDLGW pd;
 
     ZeroMemory(&pd, sizeof(PRINTDLG));
     pd.lStructSize = sizeof(PRINTDLG);
@@ -391,15 +391,15 @@ static BOOL PrintRegistryHive(HWND hWnd, LPCTSTR path)
     pd.nToPage     = 0xFFFF;
     pd.nMinPage    = 1;
     pd.nMaxPage    = 0xFFFF;
-    if (PrintDlg(&pd)) {
+    if (PrintDlgW(&pd)) {
         /* GDI calls to render output. */
         DeleteDC(pd.hDC); /* Delete DC when done.*/
     }
 #else
     HRESULT hResult;
-    PRINTDLGEX pd;
+    PRINTDLGEXW pd;
 
-    hResult = PrintDlgEx(&pd);
+    hResult = PrintDlgExW(&pd);
     if (hResult == S_OK) {
         switch (pd.dwResultAction) {
         case PD_RESULT_APPLY:
@@ -671,8 +671,11 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_REGISTRY_DISCONNECTNETWORKREGISTRY:
         break;
     case ID_REGISTRY_PRINT:
-        PrintRegistryHive(hWnd, _T(""));
+    {
+        const WCHAR empty = 0;
+        PrintRegistryHive(hWnd, empty);
         break;
+    }
     case ID_EDIT_DELETE:
 	if (GetFocus() == g_pChildWnd->hTreeWnd) {
 	    WCHAR* keyPathW = GetWideString(keyPath);
@@ -842,8 +845,11 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         toggle_child(hWnd, LOWORD(wParam), hStatusBar);
         break;
     case ID_HELP_HELPTOPICS:
-        WinHelp(hWnd, _T("regedit"), HELP_FINDER, 0);
+    {
+        const WCHAR help_regedit[] = {'r','e','g','e','d','i','t',0};
+        WinHelpW(hWnd, help_regedit, HELP_FINDER, 0);
         break;
+    }
     case ID_HELP_ABOUT:
         ShowAboutBox(hWnd);
         break;
@@ -914,8 +920,11 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         OnMenuSelect(hWnd, LOWORD(wParam), HIWORD(wParam), (HMENU)lParam);
         break;
     case WM_DESTROY:
-        WinHelp(hWnd, _T("regedit"), HELP_QUIT, 0);
+    {
+        const WCHAR help_regedit[] = {'r','e','g','e','d','i','t',0};
+        WinHelpW(hWnd, help_regedit, HELP_QUIT, 0);
         PostQuitMessage(0);
+    }
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
