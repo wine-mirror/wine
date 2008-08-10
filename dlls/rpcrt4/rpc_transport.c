@@ -688,7 +688,7 @@ static size_t rpcrt4_ncalrpc_get_top_of_tower(unsigned char *tower_data,
     tower_data += sizeof(*pipe_floor);
 
     pipe_floor->count_lhs = sizeof(pipe_floor->protid);
-    pipe_floor->protid = EPM_PROTOCOL_SMB;
+    pipe_floor->protid = EPM_PROTOCOL_PIPE;
     pipe_floor->count_rhs = endpoint_size;
 
     memcpy(tower_data, endpoint, endpoint_size);
@@ -713,7 +713,7 @@ static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_d
     tower_size -= sizeof(*pipe_floor);
 
     if ((pipe_floor->count_lhs != sizeof(pipe_floor->protid)) ||
-        (pipe_floor->protid != EPM_PROTOCOL_SMB) ||
+        (pipe_floor->protid != EPM_PROTOCOL_PIPE) ||
         (pipe_floor->count_rhs > tower_size))
         return EPT_S_NOT_REGISTERED;
 
