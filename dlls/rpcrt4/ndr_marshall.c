@@ -1780,7 +1780,7 @@ static inline void array_compute_and_size_conformance(
 
 static inline void array_buffer_size(
     unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory,
-    PFORMAT_STRING pFormat)
+    PFORMAT_STRING pFormat, unsigned char fHasPointers)
 {
   DWORD size;
   DWORD esize;
@@ -1800,7 +1800,8 @@ static inline void array_buffer_size(
     /* conformance value plus array */
     safe_buffer_length_increment(pStubMsg, size);
 
-    EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
+    if (fHasPointers)
+      EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
     break;
   case RPC_FC_CVARRAY:
     esize = *(const WORD*)(pFormat+2);
@@ -1816,7 +1817,8 @@ static inline void array_buffer_size(
     size = safe_multiply(esize, pStubMsg->ActualCount);
     safe_buffer_length_increment(pStubMsg, size);
 
-    EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
+    if (fHasPointers)
+      EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
     break;
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
@@ -1878,7 +1880,7 @@ static inline void array_compute_and_write_conformance(
 
 static inline void array_write_variance_and_marshall(
     unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory,
-    PFORMAT_STRING pFormat)
+    PFORMAT_STRING pFormat, unsigned char fHasPointers)
 {
   DWORD size;
   DWORD esize;
@@ -1895,10 +1897,12 @@ static inline void array_write_variance_and_marshall(
     ALIGN_POINTER_CLEAR(pStubMsg->Buffer, alignment);
 
     size = safe_multiply(esize, pStubMsg->MaxCount);
-    pStubMsg->BufferMark = pStubMsg->Buffer;
+    if (fHasPointers)
+      pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_copy_to_buffer(pStubMsg, pMemory, size);
 
-    EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
+    if (fHasPointers)
+      EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
     break;
   case RPC_FC_CVARRAY:
     esize = *(const WORD*)(pFormat+2);
@@ -1915,10 +1919,12 @@ static inline void array_write_variance_and_marshall(
 
     size = safe_multiply(esize, pStubMsg->ActualCount);
 
-    pStubMsg->BufferMark = pStubMsg->Buffer;
+    if (fHasPointers)
+      pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_copy_to_buffer(pStubMsg, pMemory + pStubMsg->Offset, size);
 
-    EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
+    if (fHasPointers)
+      EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
     break;
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
@@ -1971,10 +1977,10 @@ static inline ULONG array_read_conformance(
   }
 }
 
-static inline void array_read_variance_and_unmarshall(
+static inline ULONG array_read_variance_and_unmarshall(
     unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg, unsigned char **ppMemory,
     PFORMAT_STRING pFormat, unsigned char fMustAlloc,
-    unsigned char fUseBufferMemoryServer)
+    unsigned char fUseBufferMemoryServer, unsigned char fUnmarshall)
 {
   ULONG bufsize, memsize;
   WORD esize;
@@ -1994,23 +2000,28 @@ static inline void array_read_variance_and_unmarshall(
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
 
-    if (fMustAlloc)
-      *ppMemory = NdrAllocate(pStubMsg, memsize);
-    else
+    if (fUnmarshall)
     {
-      if (fUseBufferMemoryServer && !pStubMsg->IsClient && !*ppMemory)
-        /* for servers, we just point straight into the RPC buffer */
-        *ppMemory = pStubMsg->Buffer;
+      if (fMustAlloc)
+        *ppMemory = NdrAllocate(pStubMsg, memsize);
+      else
+      {
+        if (fUseBufferMemoryServer && !pStubMsg->IsClient && !*ppMemory)
+          /* for servers, we just point straight into the RPC buffer */
+          *ppMemory = pStubMsg->Buffer;
+      }
+
+      saved_buffer = pStubMsg->Buffer;
+      safe_buffer_increment(pStubMsg, bufsize);
+
+      pStubMsg->BufferMark = saved_buffer;
+      EmbeddedPointerUnmarshall(pStubMsg, saved_buffer, *ppMemory, pFormat, fMustAlloc);
+
+      TRACE("copying %p to %p\n", saved_buffer, *ppMemory);
+      if (*ppMemory != saved_buffer)
+        memcpy(*ppMemory, saved_buffer, bufsize);
     }
-
-    saved_buffer = pStubMsg->BufferMark = pStubMsg->Buffer;
-    safe_buffer_increment(pStubMsg, bufsize);
-    EmbeddedPointerUnmarshall(pStubMsg, saved_buffer, *ppMemory, pFormat, fMustAlloc);
-
-    TRACE("copying %p to %p\n", saved_buffer, *ppMemory);
-    if (*ppMemory != saved_buffer)
-      memcpy(*ppMemory, saved_buffer, bufsize);
-    break;
+    return bufsize;
   case RPC_FC_CVARRAY:
     esize = *(const WORD*)(pFormat+2);
     alignment = pFormat[1] + 1;
@@ -2023,19 +2034,25 @@ static inline void array_read_variance_and_unmarshall(
 
     bufsize = safe_multiply(esize, pStubMsg->ActualCount);
     memsize = safe_multiply(esize, pStubMsg->MaxCount);
-    offset = pStubMsg->Offset;
 
-    if (!fMustAlloc && !*ppMemory)
-      fMustAlloc = TRUE;
-    if (fMustAlloc)
-      *ppMemory = NdrAllocate(pStubMsg, memsize);
-    saved_buffer = pStubMsg->BufferMark = pStubMsg->Buffer;
-    safe_buffer_increment(pStubMsg, bufsize);
+    if (fUnmarshall)
+    {
+      offset = pStubMsg->Offset;
 
-    EmbeddedPointerUnmarshall(pStubMsg, saved_buffer, *ppMemory, pFormat, fMustAlloc);
+      if (!fMustAlloc && !*ppMemory)
+        fMustAlloc = TRUE;
+      if (fMustAlloc)
+        *ppMemory = NdrAllocate(pStubMsg, memsize);
+      saved_buffer = pStubMsg->Buffer;
+      safe_buffer_increment(pStubMsg, bufsize);
 
-    memcpy(*ppMemory + offset, saved_buffer, bufsize);
-    break;
+      pStubMsg->BufferMark = saved_buffer;
+      EmbeddedPointerUnmarshall(pStubMsg, saved_buffer, *ppMemory, pFormat,
+                                fMustAlloc);
+
+      memcpy(*ppMemory + offset, saved_buffer, bufsize);
+    }
+    return bufsize;
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
     if (fc == RPC_FC_C_CSTRING)
@@ -2062,29 +2079,32 @@ static inline void array_read_variance_and_unmarshall(
 
     validate_string_data(pStubMsg, bufsize, esize);
 
-    if (fMustAlloc)
-      *ppMemory = NdrAllocate(pStubMsg, memsize);
-    else
+    if (fUnmarshall)
     {
-      if (fUseBufferMemoryServer && !pStubMsg->IsClient &&
-          !*ppMemory && (pStubMsg->MaxCount == pStubMsg->ActualCount))
-        /* if the data in the RPC buffer is big enough, we just point straight
-         * into it */
-        *ppMemory = pStubMsg->Buffer;
-      else if (!*ppMemory)
+      if (fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, memsize);
+      else
+      {
+        if (fUseBufferMemoryServer && !pStubMsg->IsClient &&
+            !*ppMemory && (pStubMsg->MaxCount == pStubMsg->ActualCount))
+          /* if the data in the RPC buffer is big enough, we just point
+           * straight into it */
+          *ppMemory = pStubMsg->Buffer;
+        else if (!*ppMemory)
+          *ppMemory = NdrAllocate(pStubMsg, memsize);
+      }
+
+      if (*ppMemory == pStubMsg->Buffer)
+        safe_buffer_increment(pStubMsg, bufsize);
+      else
+        safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
+
+      if (*pFormat == RPC_FC_C_CSTRING)
+        TRACE("string=%s\n", debugstr_a((char*)*ppMemory));
+      else
+        TRACE("string=%s\n", debugstr_w((LPWSTR)*ppMemory));
     }
-
-    if (*ppMemory == pStubMsg->Buffer)
-      safe_buffer_increment(pStubMsg, bufsize);
-    else
-      safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
-
-    if (*pFormat == RPC_FC_C_CSTRING)
-      TRACE("string=%s\n", debugstr_a((char*)*ppMemory));
-    else
-      TRACE("string=%s\n", debugstr_w((LPWSTR)*ppMemory));
-    break;
+    return bufsize;
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2092,7 +2112,8 @@ static inline void array_read_variance_and_unmarshall(
 }
 
 static inline void array_memory_size(
-    unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
+    unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
+    unsigned char fHasPointers)
 {
   ULONG bufsize, memsize;
   DWORD esize;
@@ -2110,10 +2131,12 @@ static inline void array_memory_size(
     pStubMsg->MemorySize += memsize;
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
-    pStubMsg->BufferMark = pStubMsg->Buffer;
+    if (fHasPointers)
+      pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_buffer_increment(pStubMsg, bufsize);
 
-    EmbeddedPointerMemorySize(pStubMsg, pFormat);
+    if (fHasPointers)
+      EmbeddedPointerMemorySize(pStubMsg, pFormat);
     break;
   case RPC_FC_CVARRAY:
     esize = *(const WORD*)(pFormat+2);
@@ -2128,10 +2151,12 @@ static inline void array_memory_size(
     pStubMsg->MemorySize += memsize;
 
     ALIGN_POINTER(pStubMsg->Buffer, alignment);
-    pStubMsg->BufferMark = pStubMsg->Buffer;
+    if (fHasPointers)
+      pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_buffer_increment(pStubMsg, bufsize);
 
-    EmbeddedPointerMemorySize(pStubMsg, pFormat);
+    if (fHasPointers)
+      EmbeddedPointerMemorySize(pStubMsg, pFormat);
     break;
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
@@ -2170,18 +2195,20 @@ static inline void array_memory_size(
 
 static inline void array_free(
     unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg,
-    unsigned char *pMemory, PFORMAT_STRING pFormat)
+    unsigned char *pMemory, PFORMAT_STRING pFormat, unsigned char fHasPointers)
 {
   switch (fc)
   {
   case RPC_FC_CARRAY:
     pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
-    EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
+    if (fHasPointers)
+      EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
     break;
   case RPC_FC_CVARRAY:
     pFormat = ComputeConformance(pStubMsg, pMemory, pFormat+4, 0);
     pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
-    EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
+    if (fHasPointers)
+      EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
     break;
   case RPC_FC_C_CSTRING:
   case RPC_FC_C_WSTRING:
@@ -2226,11 +2253,15 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
   /* allow compiler to optimise inline function by passing constant into
    * these functions */
   if (pFormat[0] == RPC_FC_C_CSTRING) {
-    array_compute_and_write_conformance(RPC_FC_C_CSTRING, pStubMsg, pszMessage, pFormat);
-    array_write_variance_and_marshall(RPC_FC_C_CSTRING, pStubMsg, pszMessage, pFormat);
+    array_compute_and_write_conformance(RPC_FC_C_CSTRING, pStubMsg, pszMessage,
+                                        pFormat);
+    array_write_variance_and_marshall(RPC_FC_C_CSTRING, pStubMsg, pszMessage,
+                                      pFormat, TRUE /* fHasPointers */);
   } else {
-    array_compute_and_write_conformance(RPC_FC_C_CSTRING, pStubMsg, pszMessage, pFormat);
-    array_write_variance_and_marshall(RPC_FC_C_CSTRING, pStubMsg, pszMessage, pFormat);
+    array_compute_and_write_conformance(RPC_FC_C_WSTRING, pStubMsg, pszMessage,
+                                        pFormat);
+    array_write_variance_and_marshall(RPC_FC_C_WSTRING, pStubMsg, pszMessage,
+                                      pFormat, TRUE /* fHasPointers */);
   }
 
   return NULL;
@@ -2252,11 +2283,15 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   /* allow compiler to optimise inline function by passing constant into
    * these functions */
   if (pFormat[0] == RPC_FC_C_CSTRING) {
-    array_compute_and_size_conformance(RPC_FC_C_CSTRING, pStubMsg, pMemory, pFormat);
-    array_buffer_size(RPC_FC_C_CSTRING, pStubMsg, pMemory, pFormat);
+    array_compute_and_size_conformance(RPC_FC_C_CSTRING, pStubMsg, pMemory,
+                                       pFormat);
+    array_buffer_size(RPC_FC_C_CSTRING, pStubMsg, pMemory, pFormat,
+                      TRUE /* fHasPointers */);
   } else {
-    array_compute_and_size_conformance(RPC_FC_C_WSTRING, pStubMsg, pMemory, pFormat);
-    array_buffer_size(RPC_FC_C_WSTRING, pStubMsg, pMemory, pFormat);
+    array_compute_and_size_conformance(RPC_FC_C_WSTRING, pStubMsg, pMemory,
+                                       pFormat);
+    array_buffer_size(RPC_FC_C_WSTRING, pStubMsg, pMemory, pFormat,
+                      TRUE /* fHasPointers */);
   }
 }
 
@@ -2277,10 +2312,12 @@ ULONG WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
    * these functions */
   if (pFormat[0] == RPC_FC_C_CSTRING) {
     array_read_conformance(RPC_FC_C_CSTRING, pStubMsg, pFormat);
-    array_memory_size(RPC_FC_C_CSTRING, pStubMsg, pFormat);
+    array_memory_size(RPC_FC_C_CSTRING, pStubMsg, pFormat,
+                      TRUE /* fHasPointers */);
   } else {
     array_read_conformance(RPC_FC_C_WSTRING, pStubMsg, pFormat);
-    array_memory_size(RPC_FC_C_WSTRING, pStubMsg, pFormat);
+    array_memory_size(RPC_FC_C_WSTRING, pStubMsg, pFormat,
+                      TRUE /* fHasPointers */);
   }
 
   return pStubMsg->MemorySize;
@@ -2306,12 +2343,14 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
     array_read_conformance(RPC_FC_C_CSTRING, pStubMsg, pFormat);
     array_read_variance_and_unmarshall(RPC_FC_C_CSTRING, pStubMsg, ppMemory,
                                        pFormat, fMustAlloc,
-                                       TRUE /* fUseBufferMemoryServer */);
+                                       TRUE /* fUseBufferMemoryServer */,
+                                       TRUE /* fUnmarshall */);
   } else {
     array_read_conformance(RPC_FC_C_WSTRING, pStubMsg, pFormat);
     array_read_variance_and_unmarshall(RPC_FC_C_WSTRING, pStubMsg, ppMemory,
                                        pFormat, fMustAlloc,
-                                       TRUE /* fUseBufferMemoryServer */);
+                                       TRUE /* fUseBufferMemoryServer */,
+                                       TRUE /* fUnmarshall */);
   }
 
   return NULL;
@@ -3266,7 +3305,7 @@ unsigned char * WINAPI NdrComplexStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
     pStubMsg->ActualCount = count;
     pStubMsg->Offset = offset;
     array_write_variance_and_marshall(conf_array[0], pStubMsg, pMemory,
-                                      conf_array);
+                                      conf_array, TRUE /* fHasPointers */);
   }
 
   pStubMsg->Memory = OldMemory;
@@ -3356,7 +3395,8 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       memset(pMemory, 0, array_size);
     array_read_variance_and_unmarshall(conf_array[0], pStubMsg, &pMemory,
                                        conf_array, FALSE,
-                                       FALSE /* fUseBufferMemoryServer */);
+                                       FALSE /* fUseBufferMemoryServer */,
+                                       TRUE /* fUnmarshall */);
   }
 
   if (pointer_buffer_mark_set)
@@ -3434,7 +3474,8 @@ void WINAPI NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
     pStubMsg->MaxCount = max_count;
     pStubMsg->ActualCount = count;
     pStubMsg->Offset = offset;
-    array_buffer_size(conf_array[0], pStubMsg, pMemory, conf_array);
+    array_buffer_size(conf_array[0], pStubMsg, pMemory, conf_array,
+                      TRUE /* fHasPointers */);
   }
 
   pStubMsg->Memory = OldMemory;
@@ -3488,7 +3529,8 @@ ULONG WINAPI NdrComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
     pStubMsg->MaxCount = max_count;
     pStubMsg->ActualCount = count;
     pStubMsg->Offset = offset;
-    array_memory_size(conf_array[0], pStubMsg, conf_array);
+    array_memory_size(conf_array[0], pStubMsg, conf_array,
+                      TRUE /* fHasPointers */);
   }
 
   return size;
@@ -3518,7 +3560,8 @@ void WINAPI NdrComplexStructFree(PMIDL_STUB_MESSAGE pStubMsg,
   pMemory = ComplexFree(pStubMsg, pMemory, pFormat, pointer_desc);
 
   if (conf_array)
-    array_free(conf_array[0], pStubMsg, pMemory, conf_array);
+    array_free(conf_array[0], pStubMsg, pMemory, conf_array,
+               TRUE /* fHasPointers */);
 
   pStubMsg->Memory = OldMemory;
 }
@@ -3539,7 +3582,8 @@ unsigned char * WINAPI NdrConformantArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
   array_compute_and_write_conformance(RPC_FC_CARRAY, pStubMsg, pMemory,
                                       pFormat);
-  array_write_variance_and_marshall(RPC_FC_CARRAY, pStubMsg, pMemory, pFormat);
+  array_write_variance_and_marshall(RPC_FC_CARRAY, pStubMsg, pMemory, pFormat,
+                                    TRUE /* fHasPointers */);
 
   return NULL;
 }
@@ -3562,7 +3606,8 @@ unsigned char * WINAPI NdrConformantArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   array_read_conformance(RPC_FC_CARRAY, pStubMsg, pFormat);
   array_read_variance_and_unmarshall(RPC_FC_CARRAY, pStubMsg, ppMemory, pFormat,
                                      fMustAlloc,
-                                     TRUE /* fUseBufferMemoryServer */);
+                                     TRUE /* fUseBufferMemoryServer */,
+                                     TRUE /* fUnmarshall */);
 
   return NULL;
 }
@@ -3582,7 +3627,8 @@ void WINAPI NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   }
 
   array_compute_and_size_conformance(RPC_FC_CARRAY, pStubMsg, pMemory, pFormat);
-  array_buffer_size(RPC_FC_CARRAY, pStubMsg, pMemory, pFormat);
+  array_buffer_size(RPC_FC_CARRAY, pStubMsg, pMemory, pFormat,
+                    TRUE /* fHasPointers */);
 }
 
 /***********************************************************************
@@ -3599,7 +3645,7 @@ ULONG WINAPI NdrConformantArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
   }
 
   array_read_conformance(RPC_FC_CARRAY, pStubMsg, pFormat);
-  array_memory_size(RPC_FC_CARRAY, pStubMsg, pFormat);
+  array_memory_size(RPC_FC_CARRAY, pStubMsg, pFormat, TRUE /* fHasPointers */);
 
   return pStubMsg->MemorySize;
 }
@@ -3618,7 +3664,8 @@ void WINAPI NdrConformantArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
   }
 
-  array_free(RPC_FC_CARRAY, pStubMsg, pMemory, pFormat);
+  array_free(RPC_FC_CARRAY, pStubMsg, pMemory, pFormat,
+             TRUE /* fHasPointers */);
 }
 
 
@@ -3641,7 +3688,7 @@ unsigned char* WINAPI NdrConformantVaryingArrayMarshall( PMIDL_STUB_MESSAGE pStu
     array_compute_and_write_conformance(RPC_FC_CVARRAY, pStubMsg, pMemory,
                                         pFormat);
     array_write_variance_and_marshall(RPC_FC_CVARRAY, pStubMsg, pMemory,
-                                      pFormat);
+                                      pFormat, TRUE /* fHasPointers */);
 
     return NULL;
 }
@@ -3667,7 +3714,8 @@ unsigned char* WINAPI NdrConformantVaryingArrayUnmarshall( PMIDL_STUB_MESSAGE pS
     array_read_conformance(RPC_FC_CVARRAY, pStubMsg, pFormat);
     array_read_variance_and_unmarshall(RPC_FC_CVARRAY, pStubMsg, ppMemory,
                                        pFormat, fMustAlloc,
-                                       TRUE /* fUseBufferMemoryServer */);
+                                       TRUE /* fUseBufferMemoryServer */,
+                                       TRUE /* fUnmarshall */);
 
     return NULL;
 }
@@ -3689,7 +3737,8 @@ void WINAPI NdrConformantVaryingArrayFree( PMIDL_STUB_MESSAGE pStubMsg,
         return;
     }
 
-    array_free(RPC_FC_CVARRAY, pStubMsg, pMemory, pFormat);
+    array_free(RPC_FC_CVARRAY, pStubMsg, pMemory, pFormat,
+               TRUE /* fHasPointers */);
 }
 
 
@@ -3710,7 +3759,8 @@ void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
 
     array_compute_and_size_conformance(RPC_FC_CVARRAY, pStubMsg, pMemory,
                                        pFormat);
-    array_buffer_size(RPC_FC_CVARRAY, pStubMsg, pMemory, pFormat);
+    array_buffer_size(RPC_FC_CVARRAY, pStubMsg, pMemory, pFormat,
+                      TRUE /* fHasPointers */);
 }
 
 
@@ -3730,7 +3780,8 @@ ULONG WINAPI NdrConformantVaryingArrayMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
     }
 
     array_read_conformance(RPC_FC_CVARRAY, pStubMsg, pFormat);
-    array_memory_size(RPC_FC_CVARRAY, pStubMsg, pFormat);
+    array_memory_size(RPC_FC_CVARRAY, pStubMsg, pFormat,
+                      TRUE /* fHasPointers */);
 
     return pStubMsg->MemorySize;
 }
@@ -4541,7 +4592,6 @@ unsigned char *  WINAPI NdrConformantVaryingStructMarshall(PMIDL_STUB_MESSAGE pS
 {
     const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
-    ULONG esize, bufsize;
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
 
@@ -4555,43 +4605,10 @@ unsigned char *  WINAPI NdrConformantVaryingStructMarshall(PMIDL_STUB_MESSAGE pS
 
     pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
-    switch (*pCVArrayFormat)
-    {
-    case RPC_FC_CVARRAY:
-        esize = *(const WORD*)(pCVArrayFormat+2);
 
-        pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                            pCVArrayFormat + 4, 0);
-        pCVArrayFormat = ComputeVariance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                         pCVArrayFormat, 0);
-        break;
-    case RPC_FC_C_CSTRING:
-        TRACE("string=%s\n", debugstr_a((char*)pMemory + pCVStructFormat->memory_size));
-        pStubMsg->ActualCount = strlen((char*)pMemory + pCVStructFormat->memory_size)+1;
-        esize = sizeof(char);
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                                pCVArrayFormat + 2, 0);
-        else
-            pStubMsg->MaxCount = pStubMsg->ActualCount;
-        break;
-    case RPC_FC_C_WSTRING:
-        TRACE("string=%s\n", debugstr_w((LPWSTR)pMemory + pCVStructFormat->memory_size));
-        pStubMsg->ActualCount = strlenW((LPWSTR)pMemory + pCVStructFormat->memory_size)+1;
-        esize = sizeof(WCHAR);
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                                pCVArrayFormat + 2, 0);
-        else
-            pStubMsg->MaxCount = pStubMsg->ActualCount;
-        break;
-    default:
-        ERR("invalid array format type %x\n", *pCVArrayFormat);
-        RpcRaiseException(RPC_S_INTERNAL_ERROR);
-        return NULL;
-    }
-
-    WriteConformance(pStubMsg);
+    array_compute_and_write_conformance(*pCVArrayFormat, pStubMsg,
+                                        pMemory + pCVStructFormat->memory_size,
+                                        pCVArrayFormat);
 
     ALIGN_POINTER_CLEAR(pStubMsg->Buffer, pCVStructFormat->alignment + 1);
 
@@ -4601,12 +4618,9 @@ unsigned char *  WINAPI NdrConformantVaryingStructMarshall(PMIDL_STUB_MESSAGE pS
     pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_copy_to_buffer(pStubMsg, pMemory, pCVStructFormat->memory_size);
 
-    WriteVariance(pStubMsg);
-
-    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
-
-    /* write array part */
-    safe_copy_to_buffer(pStubMsg, pMemory + pCVStructFormat->memory_size, bufsize);
+    array_write_variance_and_marshall(*pCVArrayFormat, pStubMsg,
+                                      pMemory + pCVStructFormat->memory_size,
+                                      pCVArrayFormat, FALSE /* fHasPointers */);
 
     EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
 
@@ -4623,9 +4637,10 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
 {
     const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
-    ULONG esize, bufsize;
-    unsigned char cvarray_type;
+    ULONG memsize, bufsize;
     unsigned char *saved_buffer, *saved_array_buffer;
+    ULONG offset;
+    unsigned char *array_memory;
 
     TRACE("(%p, %p, %p, %d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
 
@@ -4639,32 +4654,9 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
 
     pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
-    cvarray_type = *pCVArrayFormat;
-    switch (cvarray_type)
-    {
-    case RPC_FC_CVARRAY:
-        esize = *(const WORD*)(pCVArrayFormat+2);
-        pCVArrayFormat = ReadConformance(pStubMsg, pCVArrayFormat + 4);
-        break;
-    case RPC_FC_C_CSTRING:
-        esize = sizeof(char);
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ReadConformance(pStubMsg, pCVArrayFormat + 2);
-        else
-            pCVArrayFormat = ReadConformance(pStubMsg, NULL);
-        break;
-    case RPC_FC_C_WSTRING:
-        esize = sizeof(WCHAR);
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ReadConformance(pStubMsg, pCVArrayFormat + 2);
-        else
-            pCVArrayFormat = ReadConformance(pStubMsg, NULL);
-        break;
-    default:
-        ERR("invalid array format type %x\n", *pCVArrayFormat);
-        RpcRaiseException(RPC_S_INTERNAL_ERROR);
-        return NULL;
-    }
+
+    memsize = array_read_conformance(*pCVArrayFormat, pStubMsg,
+                                     pCVArrayFormat);
 
     ALIGN_POINTER(pStubMsg->Buffer, pCVStructFormat->alignment + 1);
 
@@ -4673,7 +4665,7 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     /* work out how much memory to allocate if we need to do so */
     if (!*ppMemory || fMustAlloc)
     {
-        SIZE_T size = pCVStructFormat->memory_size + safe_multiply(esize, pStubMsg->MaxCount);
+        SIZE_T size = pCVStructFormat->memory_size + memsize;
         *ppMemory = NdrAllocate(pStubMsg, size);
     }
 
@@ -4681,13 +4673,15 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     saved_buffer = pStubMsg->BufferMark = pStubMsg->Buffer;
     safe_buffer_increment(pStubMsg, pCVStructFormat->memory_size);
 
-    pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat, pStubMsg->MaxCount);
+    array_memory = *ppMemory + pCVStructFormat->memory_size;
+    bufsize = array_read_variance_and_unmarshall(*pCVArrayFormat, pStubMsg,
+                                                 &array_memory, pCVArrayFormat,
+                                                 FALSE /* fMustAlloc */,
+                                                 FALSE /* fUseServerBufferMemory */,
+                                                 FALSE /* fUnmarshall */);
 
-    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
-
-    if ((cvarray_type == RPC_FC_C_CSTRING) ||
-        (cvarray_type == RPC_FC_C_WSTRING))
-        validate_string_data(pStubMsg, bufsize, esize);
+    /* save offset in case unmarshalling pointers changes it */
+    offset = pStubMsg->Offset;
 
     /* mark the start of the array data */
     saved_array_buffer = pStubMsg->Buffer;
@@ -4699,11 +4693,12 @@ unsigned char *  WINAPI NdrConformantVaryingStructUnmarshall(PMIDL_STUB_MESSAGE 
     memcpy(*ppMemory, saved_buffer, pCVStructFormat->memory_size);
     /* copy the array data */
     TRACE("copying %p to %p\n", saved_array_buffer, *ppMemory + pCVStructFormat->memory_size);
-    memcpy(*ppMemory + pCVStructFormat->memory_size, saved_array_buffer, bufsize);
+    memcpy(*ppMemory + pCVStructFormat->memory_size + offset,
+           saved_array_buffer, bufsize);
 
-    if (cvarray_type == RPC_FC_C_CSTRING)
+    if (*pCVArrayFormat == RPC_FC_C_CSTRING)
         TRACE("string=%s\n", debugstr_a((char *)(*ppMemory + pCVStructFormat->memory_size)));
-    else if (cvarray_type == RPC_FC_C_WSTRING)
+    else if (*pCVArrayFormat == RPC_FC_C_WSTRING)
         TRACE("string=%s\n", debugstr_w((WCHAR *)(*ppMemory + pCVStructFormat->memory_size)));
 
     return NULL;
@@ -4718,7 +4713,6 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 {
     const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
-    ULONG esize;
 
     TRACE("(%p, %p, %p)\n", pStubMsg, pMemory, pFormat);
 
@@ -4732,51 +4726,19 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 
     pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
-    switch (*pCVArrayFormat)
-    {
-    case RPC_FC_CVARRAY:
-        esize = *(const WORD*)(pCVArrayFormat+2);
-
-        pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                            pCVArrayFormat + 4, 0);
-        pCVArrayFormat = ComputeVariance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                         pCVArrayFormat, 0);
-        break;
-    case RPC_FC_C_CSTRING:
-        TRACE("string=%s\n", debugstr_a((char*)pMemory + pCVStructFormat->memory_size));
-        pStubMsg->ActualCount = strlen((char*)pMemory + pCVStructFormat->memory_size)+1;
-        esize = sizeof(char);
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                                pCVArrayFormat + 2, 0);
-        else
-            pStubMsg->MaxCount = pStubMsg->ActualCount;
-        break;
-    case RPC_FC_C_WSTRING:
-        TRACE("string=%s\n", debugstr_w((LPWSTR)pMemory + pCVStructFormat->memory_size));
-        pStubMsg->ActualCount = strlenW((LPWSTR)pMemory + pCVStructFormat->memory_size)+1;
-        esize = sizeof(WCHAR);
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                                pCVArrayFormat + 2, 0);
-        else
-            pStubMsg->MaxCount = pStubMsg->ActualCount;
-        break;
-    default:
-        ERR("invalid array format type %x\n", *pCVArrayFormat);
-        RpcRaiseException(RPC_S_INTERNAL_ERROR);
-        return;
-    }
-
-    SizeConformance(pStubMsg);
+    array_compute_and_size_conformance(*pCVArrayFormat, pStubMsg,
+                                       pMemory + pCVStructFormat->memory_size,
+                                       pCVArrayFormat);
 
     ALIGN_LENGTH(pStubMsg->BufferLength, pCVStructFormat->alignment + 1);
 
     TRACE("memory_size = %d\n", pCVStructFormat->memory_size);
 
     safe_buffer_length_increment(pStubMsg, pCVStructFormat->memory_size);
-    SizeVariance(pStubMsg);
-    safe_buffer_length_increment(pStubMsg, safe_multiply(pStubMsg->MaxCount, esize));
+
+    array_buffer_size(*pCVArrayFormat, pStubMsg,
+                      pMemory + pCVStructFormat->memory_size, pCVArrayFormat,
+                      FALSE /* fHasPointers */);
 
     EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 }
@@ -4789,8 +4751,6 @@ ULONG WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 {
     const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
     PFORMAT_STRING pCVArrayFormat;
-    ULONG esize;
-    unsigned char cvarray_type;
 
     TRACE("(%p, %p)\n", pStubMsg, pFormat);
 
@@ -4804,46 +4764,21 @@ ULONG WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 
     pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
-    cvarray_type = *pCVArrayFormat;
-    switch (cvarray_type)
-    {
-    case RPC_FC_CVARRAY:
-        esize = *(const WORD*)(pCVArrayFormat+2);
-        pCVArrayFormat = ReadConformance(pStubMsg, pCVArrayFormat + 4);
-        break;
-    case RPC_FC_C_CSTRING:
-        esize = sizeof(char);
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ReadConformance(pStubMsg, pCVArrayFormat + 2);
-        else
-            pCVArrayFormat = ReadConformance(pStubMsg, NULL);
-        break;
-    case RPC_FC_C_WSTRING:
-        esize = sizeof(WCHAR);
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ReadConformance(pStubMsg, pCVArrayFormat + 2);
-        else
-            pCVArrayFormat = ReadConformance(pStubMsg, NULL);
-        break;
-    default:
-        ERR("invalid array format type %x\n", *pCVArrayFormat);
-        RpcRaiseException(RPC_S_INTERNAL_ERROR);
-        return 0;
-    }
+    array_read_conformance(*pCVArrayFormat, pStubMsg, pCVArrayFormat);
 
     ALIGN_POINTER(pStubMsg->Buffer, pCVStructFormat->alignment + 1);
 
     TRACE("memory_size = %d\n", pCVStructFormat->memory_size);
 
     safe_buffer_increment(pStubMsg, pCVStructFormat->memory_size);
-    pCVArrayFormat = ReadVariance(pStubMsg, pCVArrayFormat, pStubMsg->MaxCount);
-    safe_buffer_increment(pStubMsg, safe_multiply(esize, pStubMsg->ActualCount));
+    array_memory_size(*pCVArrayFormat, pStubMsg, pCVArrayFormat,
+                      FALSE /* fHasPointers */);
 
-    pStubMsg->MemorySize += pCVStructFormat->memory_size + safe_multiply(esize, pStubMsg->MaxCount);
+    pStubMsg->MemorySize += pCVStructFormat->memory_size;
 
     EmbeddedPointerMemorySize(pStubMsg, pFormat);
 
-    return pCVStructFormat->memory_size + pStubMsg->MaxCount * esize;
+    return pStubMsg->MemorySize;
 }
 
 /***********************************************************************
@@ -4868,37 +4803,9 @@ void WINAPI NdrConformantVaryingStructFree(PMIDL_STUB_MESSAGE pStubMsg,
 
     pCVArrayFormat = (const unsigned char *)&pCVStructFormat->offset_to_array_description +
         pCVStructFormat->offset_to_array_description;
-    switch (*pCVArrayFormat)
-    {
-    case RPC_FC_CVARRAY:
-        pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                            pCVArrayFormat + 4, 0);
-        pCVArrayFormat = ComputeVariance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                         pCVArrayFormat, 0);
-        break;
-    case RPC_FC_C_CSTRING:
-        TRACE("string=%s\n", debugstr_a((char*)pMemory + pCVStructFormat->memory_size));
-        pStubMsg->ActualCount = strlen((char*)pMemory + pCVStructFormat->memory_size)+1;
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                                pCVArrayFormat + 2, 0);
-        else
-            pStubMsg->MaxCount = pStubMsg->ActualCount;
-        break;
-    case RPC_FC_C_WSTRING:
-        TRACE("string=%s\n", debugstr_w((LPWSTR)pMemory + pCVStructFormat->memory_size));
-        pStubMsg->ActualCount = strlenW((LPWSTR)pMemory + pCVStructFormat->memory_size)+1;
-        if (pCVArrayFormat[1] == RPC_FC_STRING_SIZED)
-            pCVArrayFormat = ComputeConformance(pStubMsg, pMemory + pCVStructFormat->memory_size,
-                                                pCVArrayFormat + 2, 0);
-        else
-            pStubMsg->MaxCount = pStubMsg->ActualCount;
-        break;
-    default:
-        ERR("invalid array format type %x\n", *pCVArrayFormat);
-        RpcRaiseException(RPC_S_INTERNAL_ERROR);
-        return;
-    }
+    array_free(*pCVArrayFormat, pStubMsg,
+               pMemory + pCVStructFormat->memory_size, pCVArrayFormat,
+               FALSE /* fHasPointers */);
 
     TRACE("memory_size = %d\n", pCVStructFormat->memory_size);
 
