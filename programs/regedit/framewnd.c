@@ -440,7 +440,7 @@ static BOOL PrintRegistryHive(HWND hWnd, LPCWSTR path)
     return TRUE;
 }
 
-static BOOL CopyKeyName(HWND hWnd, LPCTSTR keyName)
+static BOOL CopyKeyName(HWND hWnd, LPCWSTR keyName)
 {
     BOOL result;
 
@@ -448,12 +448,12 @@ static BOOL CopyKeyName(HWND hWnd, LPCTSTR keyName)
     if (result) {
         result = EmptyClipboard();
         if (result) {
-            int len = (_tcslen(keyName)+1)*sizeof(TCHAR);
+            int len = (lstrlenW(keyName)+1)*sizeof(WCHAR);
             HANDLE hClipData = GlobalAlloc(GHND, len);
             LPVOID pLoc = GlobalLock(hClipData);
-            _tcscpy(pLoc, keyName);
+            lstrcpyW(pLoc, keyName);
             GlobalUnlock(hClipData);
-            hClipData = SetClipboardData(CF_TEXT, hClipData);
+            hClipData = SetClipboardData(CF_UNICODETEXT, hClipData);
 
         } else {
             /* error emptying clipboard*/
@@ -753,7 +753,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case ID_EDIT_COPYKEYNAME:
     {
-        LPTSTR fullPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
+        LPWSTR fullPath = GetItemFullPathW(g_pChildWnd->hTreeWnd, NULL, FALSE);
         if (fullPath) {
             CopyKeyName(hWnd, fullPath);
             HeapFree(GetProcessHeap(), 0, fullPath);

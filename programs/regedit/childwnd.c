@@ -49,6 +49,28 @@ LPCTSTR GetRootKeyName(HKEY hRootKey)
     return _T("UNKNOWN HKEY, PLEASE REPORT");
 }
 
+LPCWSTR GetRootKeyNameW(HKEY hRootKey)
+{
+    if(hRootKey == HKEY_CLASSES_ROOT)
+        return reg_class_namesW[INDEX_HKEY_CLASSES_ROOT];
+    if(hRootKey == HKEY_CURRENT_USER)
+        return reg_class_namesW[INDEX_HKEY_CURRENT_USER];
+    if(hRootKey == HKEY_LOCAL_MACHINE)
+        return reg_class_namesW[INDEX_HKEY_LOCAL_MACHINE];
+    if(hRootKey == HKEY_USERS)
+        return reg_class_namesW[INDEX_HKEY_USERS];
+    if(hRootKey == HKEY_CURRENT_CONFIG)
+        return reg_class_namesW[INDEX_HKEY_CURRENT_CONFIG];
+    if(hRootKey == HKEY_DYN_DATA)
+        return reg_class_namesW[INDEX_HKEY_DYN_DATA];
+    else
+    {
+        static const WCHAR unknown_key[] = {'U','N','K','N','O','W','N',' ','H','K','E','Y',',',' ',
+                                            'P','L','E','A','S','E',' ','R','E','P','O','R','T',0};
+        return unknown_key;
+    }
+}
+
 static void draw_splitbar(HWND hWnd, int x)
 {
     RECT rt;
@@ -109,6 +131,31 @@ static LPTSTR CombinePaths(LPCTSTR pPaths[], int nPaths) {
     return combined;
 }
 
+static LPWSTR CombinePathsW(LPCWSTR pPaths[], int nPaths) {
+    int i, len, pos;
+    LPWSTR combined;
+    for (i=0, len=0; i<nPaths; i++) {
+        if (pPaths[i] && *pPaths[i]) {
+            len += lstrlenW(pPaths[i])+1;
+        }
+    }
+    combined = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    *combined = '\0';
+    for (i=0, pos=0; i<nPaths; i++) {
+        if (pPaths[i] && *pPaths[i]) {
+            int llen = lstrlenW(pPaths[i]);
+            if (!*combined)
+                lstrcpyW(combined, pPaths[i]);
+            else {
+                combined[pos++] = (TCHAR)'\\';
+                lstrcpyW(combined+pos, pPaths[i]);
+            }
+            pos += llen;
+        }
+    }
+    return combined;
+}
+
 static LPTSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     LPCTSTR parts[2] = {_T(""), _T("")};
     TCHAR text[260];
@@ -128,6 +175,25 @@ static LPTSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     return CombinePaths(parts, 2);
 }
 
+static LPWSTR GetPathRootW(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
+    LPCWSTR parts[2] = {0,0};
+    WCHAR text[260];
+    HKEY hRootKey = NULL;
+    if (!hItem)
+        hItem = TreeView_GetSelection(hwndTV);
+    GetItemPathW(hwndTV, hItem, &hRootKey);
+    if (!bFull && !hRootKey)
+        return NULL;
+    if (hRootKey)
+        parts[1] = GetRootKeyNameW(hRootKey);
+    if (bFull) {
+        DWORD dwSize = sizeof(text)/sizeof(TCHAR);
+        GetComputerNameW(text, &dwSize);
+        parts[0] = text;
+    }
+    return CombinePathsW(parts, 2);
+}
+
 LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     LPTSTR parts[2];
     LPTSTR ret;
@@ -136,6 +202,18 @@ LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     parts[0] = GetPathRoot(hwndTV, hItem, bFull);
     parts[1] = GetItemPath(hwndTV, hItem, &hRootKey);
     ret = CombinePaths((LPCTSTR *)parts, 2);
+    HeapFree(GetProcessHeap(), 0, parts[0]);
+    return ret;
+}
+
+LPWSTR GetItemFullPathW(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
+    LPWSTR parts[2];
+    LPWSTR ret;
+    HKEY hRootKey = NULL;
+
+    parts[0] = GetPathRootW(hwndTV, hItem, bFull);
+    parts[1] = GetItemPathW(hwndTV, hItem, &hRootKey);
+    ret = CombinePathsW((LPCWSTR *)parts, 2);
     HeapFree(GetProcessHeap(), 0, parts[0]);
     return ret;
 }

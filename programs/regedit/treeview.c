@@ -91,6 +91,48 @@ static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPTSTR* pKe
     return TRUE;
 }
 
+static BOOL get_item_pathW(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pKeyPath, int* pPathLen, int* pMaxChars)
+{
+    TVITEMW item;
+    int maxChars, chars;
+    LPWSTR newStr;
+
+    item.mask = TVIF_PARAM;
+    item.hItem = hItem;
+    if (!TreeView_GetItem(hwndTV, &item)) return FALSE;
+
+    if (item.lParam) {
+    /* found root key with valid key value */
+    *phKey = (HKEY)item.lParam;
+    return TRUE;
+    }
+
+    if(!get_item_pathW(hwndTV, TreeView_GetParent(hwndTV, hItem), phKey, pKeyPath, pPathLen, pMaxChars)) return FALSE;
+    if (*pPathLen) {
+        (*pKeyPath)[*pPathLen] = '\\';
+        ++(*pPathLen);
+    }
+
+    do {
+        item.mask = TVIF_TEXT;
+        item.hItem = hItem;
+        item.pszText = *pKeyPath + *pPathLen;
+        item.cchTextMax = maxChars = *pMaxChars - *pPathLen;
+        if (!TreeView_GetItemW(hwndTV, &item)) return FALSE;
+        chars = lstrlenW(item.pszText);
+    if (chars < maxChars - 1) {
+            *pPathLen += chars;
+            break;
+    }
+    newStr = HeapReAlloc(GetProcessHeap(), 0, *pKeyPath, *pMaxChars * 2);
+    if (!newStr) return FALSE;
+    *pKeyPath = newStr;
+    *pMaxChars *= 2;
+    } while(TRUE);
+
+    return TRUE;
+}
+
 LPTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
 {
     int pathLen = 0, maxLen;
@@ -104,6 +146,23 @@ LPTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
     if (!hItem) hItem = TreeView_GetSelection(hwndTV);
     if (!hItem) return NULL;
     if (!get_item_path(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) return NULL;
+    return pathBuffer;
+}
+
+LPWSTR GetItemPathW(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
+{
+    int pathLen = 0, maxLen;
+    WCHAR *pathBuffer;
+
+    pathBuffer = HeapAlloc(GetProcessHeap(), 0, 1024*sizeof(WCHAR));
+    if (!pathBuffer) return NULL;
+    *pathBuffer = 0;
+    maxLen = HeapSize(GetProcessHeap(), 0, pathBuffer);
+    if (maxLen == (SIZE_T) - 1) return NULL;
+    maxLen = maxLen / sizeof(WCHAR);
+    if (!hItem) hItem = TreeView_GetSelection(hwndTV);
+    if (!hItem) return NULL;
+    if (!get_item_pathW(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) return NULL;
     return pathBuffer;
 }
 

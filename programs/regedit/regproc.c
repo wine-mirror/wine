@@ -40,20 +40,9 @@ static const CHAR *reg_class_names[] = {
                                      "HKEY_CURRENT_CONFIG", "HKEY_CURRENT_USER", "HKEY_DYN_DATA"
                                  };
 
-static const WCHAR hkey_local_machine[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',0};
-static const WCHAR hkey_users[] = {'H','K','E','Y','_','U','S','E','R','S',0};
-static const WCHAR hkey_classes_root[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0};
-static const WCHAR hkey_current_config[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','C','O','N','F','I','G',0};
-static const WCHAR hkey_current_user[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R',0};
-static const WCHAR hkey_dyn_data[] = {'H','K','E','Y','_','D','Y','N','_','D','A','T','A',0};
-
-static const WCHAR *reg_class_namesW[] = {hkey_local_machine, hkey_users,
-                                         hkey_classes_root, hkey_current_config,
-                                         hkey_current_user, hkey_dyn_data
-                                        };
-
-
 #define REG_CLASS_NUMBER (sizeof(reg_class_names) / sizeof(reg_class_names[0]))
+
+extern const WCHAR* reg_class_namesW[];
 
 static HKEY reg_class_keys[REG_CLASS_NUMBER] = {
             HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CLASSES_ROOT,
