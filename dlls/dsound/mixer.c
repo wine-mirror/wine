@@ -1026,10 +1026,10 @@ void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser,
 	TRACE("completed processing at %d, duration = %d\n", end_time, end_time - start_time);
 }
 
-void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)
+void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
 	DirectSoundDevice * device = (DirectSoundDevice*)dwUser;
-	TRACE("(%p,%x,%x,%x,%x)\n",hwo,msg,dwUser,dw1,dw2);
+	TRACE("(%p,%x,%lx,%lx,%lx)\n",hwo,msg,dwUser,dw1,dw2);
 	TRACE("entering at %d, msg=%08x(%s)\n", GetTickCount(), msg,
 		msg==MM_WOM_DONE ? "MM_WOM_DONE" : msg==MM_WOM_CLOSE ? "MM_WOM_CLOSE" : 
 		msg==MM_WOM_OPEN ? "MM_WOM_OPEN" : "UNKNOWN");

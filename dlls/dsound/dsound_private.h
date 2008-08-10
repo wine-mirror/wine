@@ -456,7 +456,7 @@ void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DW
 DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, DWORD* overshot);
 
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
-void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
+void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 
 /* sound3d.c */
 
