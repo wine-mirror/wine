@@ -59,7 +59,7 @@ typedef struct tagWINE_DRIVER
 } WINE_DRIVER, *LPWINE_DRIVER;
 
 typedef	DWORD	(CALLBACK *WINEMM_msgFunc16)(UINT16, WORD, DWORD, DWORD, DWORD);
-typedef	DWORD	(CALLBACK *WINEMM_msgFunc32)(UINT  , UINT, DWORD, DWORD, DWORD);
+typedef	DWORD	(CALLBACK *WINEMM_msgFunc32)(UINT  , UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR);
 
 /* for each loaded driver and each known type of driver, this structure contains
  * the information needed to access it
@@ -196,7 +196,7 @@ DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg);
 LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID);
 LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT dstTyped);
 DWORD           MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2, BOOL bFrom32);
-UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1, DWORD dwParam2);
+UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 BOOL            MMDRV_Is32(unsigned int);
 void            MMDRV_InstallMap(unsigned int, MMDRV_MAPFUNC, MMDRV_UNMAPFUNC,
                                  MMDRV_MAPFUNC, MMDRV_UNMAPFUNC, LPDRVCALLBACK);
@@ -240,7 +240,7 @@ LRESULT         MMIO_SendMessage(HMMIO hmmio, UINT uMessage, LPARAM lParam1,
 LPWINE_MMIO     MMIO_Get(HMMIO h);
 
 WORD            TIME_SetEventInternal(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
-                                      DWORD dwUser, UINT wFlags);
+                                      DWORD_PTR dwUser, UINT wFlags);
 void		TIME_MMTimeStop(void);
 
 /* Global variables */

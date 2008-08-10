@@ -273,8 +273,8 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
     if (llTypes[type].Callback)
     {
         *dwFlags = LOWORD(*dwFlags) | CALLBACK_FUNCTION;
-        *dwCallback = (DWORD)llTypes[type].Callback;
-        *dwInstance = (DWORD)mld; /* FIXME: wouldn't some 16 bit drivers only use the loword ? */
+        *dwCallback = (DWORD_PTR)llTypes[type].Callback;
+        *dwInstance = (DWORD_PTR)mld; /* FIXME: wouldn't some 16 bit drivers only use the loword ? */
     }
 
     return mld;
@@ -421,12 +421,12 @@ LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType,
 /**************************************************************************
  * 				MMDRV_PhysicalFeatures		[internal]
  */
-UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
-			       DWORD dwParam2)
+UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg,
+                               DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     WINE_MM_DRIVER*	lpDrv = &MMDrvs[mld->mmdIndex];
 
-    TRACE("(%p, %04x, %08x, %08x)\n", mld, uMsg, dwParam1, dwParam2);
+    TRACE("(%p, %04x, %08lx, %08lx)\n", mld, uMsg, dwParam1, dwParam2);
 
     /* all those function calls are undocumented */
     switch (uMsg) {
