@@ -68,6 +68,8 @@ static BOOL RPCSS_Initialize(void)
   static unsigned short irot_endpoint[] = IROT_ENDPOINT;
   static unsigned short epm_protseq[] = {'n','c','a','c','n','_','n','p',0};
   static unsigned short epm_endpoint[] = {'\\','p','i','p','e','\\','e','p','m','a','p','p','e','r',0};
+  static unsigned short epm_protseq_lrpc[] = {'n','c','a','l','r','p','c',0};
+  static unsigned short epm_endpoint_lrpc[] = {'e','p','m','a','p','p','e','r',0};
   RPC_STATUS status;
 
   WINE_TRACE("\n");
@@ -86,6 +88,11 @@ static BOOL RPCSS_Initialize(void)
                                   epm_endpoint, NULL);
   if (status != RPC_S_OK)
     goto fail;
+
+  status = RpcServerUseProtseqEpW(epm_protseq_lrpc, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
+                                  epm_endpoint_lrpc, NULL);
+  if (status != RPC_S_OK)
+      goto fail;
 
   status = RpcServerUseProtseqEpW(irot_protseq, RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
                                   irot_endpoint, NULL);
