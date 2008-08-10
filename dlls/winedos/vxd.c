@@ -407,6 +407,8 @@ static DWORD CALLBACK timer_thread( void *arg )
         *system_time = GetTickCount();
         Sleep( 55 );
     }
+
+    return 0;
 }
 
 

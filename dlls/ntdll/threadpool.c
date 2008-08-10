@@ -258,6 +258,7 @@ static DWORD CALLBACK iocp_poller(LPVOID Arg)
             callback( err, transferred, overlapped );
         }
     }
+    return 0;
 }
 
 /***********************************************************************

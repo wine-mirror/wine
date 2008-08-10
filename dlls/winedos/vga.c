@@ -295,6 +295,7 @@ static void CALLBACK set_timer_rate( ULONG_PTR arg )
 static DWORD CALLBACK VGA_TimerThread( void *dummy )
 {
     for (;;) SleepEx( INFINITE, TRUE );
+    return 0;
 }
 
 static void VGA_DeinstallTimer(void)
