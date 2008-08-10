@@ -30,7 +30,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 #include <limits.h>
 
 #include "windef.h"
@@ -732,396 +731,6 @@ static void validate_string_data(MIDL_STUB_MESSAGE *pStubMsg, ULONG bufsize, ULO
                 i, pStubMsg->Buffer[i]);
             RpcRaiseException(RPC_S_INVALID_BOUND);
         }
-}
-
-/*
- * NdrConformantString:
- * 
- * What MS calls a ConformantString is, in DCE terminology,
- * a Varying-Conformant String.
- * [
- *   maxlen: DWORD (max # of CHARTYPE characters, inclusive of '\0')
- *   offset: DWORD (actual string data begins at (offset) CHARTYPE's
- *           into unmarshalled string) 
- *   length: DWORD (# of CHARTYPE characters, inclusive of '\0')
- *   [ 
- *     data: CHARTYPE[maxlen]
- *   ] 
- * ], where CHARTYPE is the appropriate character type (specified externally)
- *
- */
-
-/***********************************************************************
- *            NdrConformantStringMarshall [RPCRT4.@]
- */
-unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
-  unsigned char *pszMessage, PFORMAT_STRING pFormat)
-{ 
-  ULONG esize, size;
-
-  TRACE("(pStubMsg == ^%p, pszMessage == ^%p, pFormat == ^%p)\n", pStubMsg, pszMessage, pFormat);
-  
-  if (*pFormat == RPC_FC_C_CSTRING) {
-    TRACE("string=%s\n", debugstr_a((char*)pszMessage));
-    pStubMsg->ActualCount = strlen((char*)pszMessage)+1;
-    esize = 1;
-  }
-  else if (*pFormat == RPC_FC_C_WSTRING) {
-    TRACE("string=%s\n", debugstr_w((LPWSTR)pszMessage));
-    pStubMsg->ActualCount = strlenW((LPWSTR)pszMessage)+1;
-    esize = 2;
-  }
-  else {
-    ERR("Unhandled string type: %#x\n", *pFormat); 
-    /* FIXME: raise an exception. */
-    return NULL;
-  }
-
-  if (pFormat[1] == RPC_FC_STRING_SIZED)
-    pFormat = ComputeConformance(pStubMsg, pszMessage, pFormat + 2, 0);
-  else
-    pStubMsg->MaxCount = pStubMsg->ActualCount;
-  pStubMsg->Offset = 0;
-  WriteConformance(pStubMsg);
-  WriteVariance(pStubMsg);
-
-  size = safe_multiply(esize, pStubMsg->ActualCount);
-  safe_copy_to_buffer(pStubMsg, pszMessage, size); /* the string itself */
-
-  /* success */
-  return NULL; /* is this always right? */
-}
-
-/***********************************************************************
- *           NdrConformantStringBufferSize [RPCRT4.@]
- */
-void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
-  unsigned char* pMemory, PFORMAT_STRING pFormat)
-{
-  ULONG esize;
-
-  TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
-
-  SizeConformance(pStubMsg);
-  SizeVariance(pStubMsg);
-
-  if (*pFormat == RPC_FC_C_CSTRING) {
-    TRACE("string=%s\n", debugstr_a((char*)pMemory));
-    pStubMsg->ActualCount = strlen((char*)pMemory)+1;
-    esize = 1;
-  }
-  else if (*pFormat == RPC_FC_C_WSTRING) {
-    TRACE("string=%s\n", debugstr_w((LPWSTR)pMemory));
-    pStubMsg->ActualCount = strlenW((LPWSTR)pMemory)+1;
-    esize = 2;
-  }
-  else {
-    ERR("Unhandled string type: %#x\n", *pFormat); 
-    /* FIXME: raise an exception */
-    return;
-  }
-
-  if (pFormat[1] == RPC_FC_STRING_SIZED)
-    pFormat = ComputeConformance(pStubMsg, pMemory, pFormat + 2, 0);
-  else
-    pStubMsg->MaxCount = pStubMsg->ActualCount;
-
-  safe_buffer_length_increment(pStubMsg, safe_multiply(esize, pStubMsg->ActualCount));
-}
-
-/************************************************************************
- *            NdrConformantStringMemorySize [RPCRT4.@]
- */
-ULONG WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
-  PFORMAT_STRING pFormat )
-{
-  ULONG bufsize, memsize, esize;
-
-  TRACE("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
-
-  ReadConformance(pStubMsg, NULL);
-  ReadVariance(pStubMsg, NULL, pStubMsg->MaxCount);
-
-  if (pFormat[1] != RPC_FC_STRING_SIZED && (pStubMsg->MaxCount != pStubMsg->ActualCount))
-  {
-    ERR("buffer size %d must equal memory size %ld for non-sized conformant strings\n",
-        pStubMsg->ActualCount, pStubMsg->MaxCount);
-    RpcRaiseException(RPC_S_INVALID_BOUND);
-  }
-  if (pStubMsg->Offset)
-  {
-    ERR("conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
-    RpcRaiseException(RPC_S_INVALID_BOUND);
-  }
-
-  if (*pFormat == RPC_FC_C_CSTRING) esize = 1;
-  else if (*pFormat == RPC_FC_C_WSTRING) esize = 2;
-  else {
-    ERR("Unhandled string type: %#x\n", *pFormat);
-    /* FIXME: raise an exception */
-    esize = 0;
-  }
-
-  memsize = safe_multiply(esize, pStubMsg->MaxCount);
-  bufsize = safe_multiply(esize, pStubMsg->ActualCount);
-
-  validate_string_data(pStubMsg, bufsize, esize);
-
-  safe_buffer_increment(pStubMsg, bufsize);
-  pStubMsg->MemorySize += memsize;
-
-  return pStubMsg->MemorySize;
-}
-
-/************************************************************************
- *           NdrConformantStringUnmarshall [RPCRT4.@]
- */
-unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg,
-  unsigned char** ppMemory, PFORMAT_STRING pFormat, unsigned char fMustAlloc )
-{
-  ULONG bufsize, memsize, esize;
-
-  TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
-    pStubMsg, *ppMemory, pFormat, fMustAlloc);
-
-  assert(pFormat && ppMemory && pStubMsg);
-
-  ReadConformance(pStubMsg, NULL);
-  ReadVariance(pStubMsg, NULL, pStubMsg->MaxCount);
-
-  if (pFormat[1] != RPC_FC_STRING_SIZED && (pStubMsg->MaxCount != pStubMsg->ActualCount))
-  {
-    ERR("buffer size %d must equal memory size %ld for non-sized conformant strings\n",
-        pStubMsg->ActualCount, pStubMsg->MaxCount);
-    RpcRaiseException(RPC_S_INVALID_BOUND);
-    return NULL;
-  }
-  if (pStubMsg->Offset)
-  {
-    ERR("conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
-    RpcRaiseException(RPC_S_INVALID_BOUND);
-    return NULL;
-  }
-
-  if (*pFormat == RPC_FC_C_CSTRING) esize = 1;
-  else if (*pFormat == RPC_FC_C_WSTRING) esize = 2;
-  else {
-    ERR("Unhandled string type: %#x\n", *pFormat);
-    /* FIXME: raise an exception */
-    esize = 0;
-  }
-
-  memsize = safe_multiply(esize, pStubMsg->MaxCount);
-  bufsize = safe_multiply(esize, pStubMsg->ActualCount);
-
-  validate_string_data(pStubMsg, bufsize, esize);
-
-  if (fMustAlloc)
-    *ppMemory = NdrAllocate(pStubMsg, memsize);
-  else
-  {
-    if (!pStubMsg->IsClient && !*ppMemory && (pStubMsg->MaxCount == pStubMsg->ActualCount))
-      /* if the data in the RPC buffer is big enough, we just point straight
-       * into it */
-      *ppMemory = pStubMsg->Buffer;
-    else if (!*ppMemory)
-      *ppMemory = NdrAllocate(pStubMsg, memsize);
-  }
-
-  if (*ppMemory == pStubMsg->Buffer)
-    safe_buffer_increment(pStubMsg, bufsize);
-  else
-    safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
-
-  if (*pFormat == RPC_FC_C_CSTRING) {
-    TRACE("string=%s\n", debugstr_a((char*)*ppMemory));
-  }
-  else if (*pFormat == RPC_FC_C_WSTRING) {
-    TRACE("string=%s\n", debugstr_w((LPWSTR)*ppMemory));
-  }
-
-  return NULL; /* FIXME: is this always right? */
-}
-
-/***********************************************************************
- *           NdrNonConformantStringMarshall [RPCRT4.@]
- */
-unsigned char *  WINAPI NdrNonConformantStringMarshall(PMIDL_STUB_MESSAGE pStubMsg,
-                                unsigned char *pMemory,
-                                PFORMAT_STRING pFormat)
-{
-  ULONG esize, size, maxsize;
-
-  TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
-
-  maxsize = *(USHORT *)&pFormat[2];
-
-  if (*pFormat == RPC_FC_CSTRING)
-  {
-    ULONG i;
-    const char *str = (const char *)pMemory;
-    for (i = 0; i < maxsize && *str; i++, str++)
-        ;
-    TRACE("string=%s\n", debugstr_an(str, i));
-    pStubMsg->ActualCount = i + 1;
-    esize = 1;
-  }
-  else if (*pFormat == RPC_FC_WSTRING)
-  {
-    ULONG i;
-    const WCHAR *str = (const WCHAR *)pMemory;
-    for (i = 0; i < maxsize && *str; i++, str++)
-        ;
-    TRACE("string=%s\n", debugstr_wn(str, i));
-    pStubMsg->ActualCount = i + 1;
-    esize = 2;
-  }
-  else
-  {
-    ERR("Unhandled string type: %#x\n", *pFormat);
-    RpcRaiseException(RPC_X_BAD_STUB_DATA);
-  }
-
-  pStubMsg->Offset = 0;
-  WriteVariance(pStubMsg);
-
-  size = safe_multiply(esize, pStubMsg->ActualCount);
-  safe_copy_to_buffer(pStubMsg, pMemory, size); /* the string itself */
-
-  return NULL;
-}
-
-/***********************************************************************
- *           NdrNonConformantStringUnmarshall [RPCRT4.@]
- */
-unsigned char *  WINAPI NdrNonConformantStringUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
-                                unsigned char **ppMemory,
-                                PFORMAT_STRING pFormat,
-                                unsigned char fMustAlloc)
-{
-  ULONG bufsize, memsize, esize, maxsize;
-
-  TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
-    pStubMsg, *ppMemory, pFormat, fMustAlloc);
-
-  maxsize = *(USHORT *)&pFormat[2];
-
-  ReadVariance(pStubMsg, NULL, maxsize);
-  if (pStubMsg->Offset)
-  {
-    ERR("non-conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
-    RpcRaiseException(RPC_S_INVALID_BOUND);
-  }
-
-  if (*pFormat == RPC_FC_CSTRING) esize = 1;
-  else if (*pFormat == RPC_FC_WSTRING) esize = 2;
-  else
-  {
-    ERR("Unhandled string type: %#x\n", *pFormat);
-    RpcRaiseException(RPC_X_BAD_STUB_DATA);
-  }
-
-  memsize = esize * maxsize;
-  bufsize = safe_multiply(esize, pStubMsg->ActualCount);
-
-  validate_string_data(pStubMsg, bufsize, esize);
-
-  if (fMustAlloc || !*ppMemory)
-    *ppMemory = NdrAllocate(pStubMsg, memsize);
-
-  safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
-
-  if (*pFormat == RPC_FC_CSTRING) {
-    TRACE("string=%s\n", debugstr_an((char*)*ppMemory, pStubMsg->ActualCount));
-  }
-  else if (*pFormat == RPC_FC_WSTRING) {
-    TRACE("string=%s\n", debugstr_wn((LPWSTR)*ppMemory, pStubMsg->ActualCount));
-  }
-
-  return NULL;
-}
-
-/***********************************************************************
- *           NdrNonConformantStringBufferSize [RPCRT4.@]
- */
-void WINAPI NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
-                                unsigned char *pMemory,
-                                PFORMAT_STRING pFormat)
-{
-  ULONG esize, maxsize;
-
-  TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
-
-  maxsize = *(USHORT *)&pFormat[2];
-
-  SizeVariance(pStubMsg);
-
-  if (*pFormat == RPC_FC_CSTRING)
-  {
-    ULONG i;
-    const char *str = (const char *)pMemory;
-    for (i = 0; i < maxsize && *str; i++, str++)
-        ;
-    TRACE("string=%s\n", debugstr_an(str, i));
-    pStubMsg->ActualCount = i + 1;
-    esize = 1;
-  }
-  else if (*pFormat == RPC_FC_WSTRING)
-  {
-    ULONG i;
-    const WCHAR *str = (const WCHAR *)pMemory;
-    for (i = 0; i < maxsize && *str; i++, str++)
-        ;
-    TRACE("string=%s\n", debugstr_wn(str, i));
-    pStubMsg->ActualCount = i + 1;
-    esize = 2;
-  }
-  else
-  {
-    ERR("Unhandled string type: %#x\n", *pFormat);
-    RpcRaiseException(RPC_X_BAD_STUB_DATA);
-  }
-
-  safe_buffer_length_increment(pStubMsg, safe_multiply(esize, pStubMsg->ActualCount));
-}
-
-/***********************************************************************
- *           NdrNonConformantStringMemorySize [RPCRT4.@]
- */
-ULONG WINAPI NdrNonConformantStringMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                PFORMAT_STRING pFormat)
-{
-  ULONG bufsize, memsize, esize, maxsize;
-
-  TRACE("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
-
-  maxsize = *(USHORT *)&pFormat[2];
-
-  ReadVariance(pStubMsg, NULL, maxsize);
-
-  if (pStubMsg->Offset)
-  {
-    ERR("non-conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
-    RpcRaiseException(RPC_S_INVALID_BOUND);
-  }
-
-  if (*pFormat == RPC_FC_CSTRING) esize = 1;
-  else if (*pFormat == RPC_FC_WSTRING) esize = 2;
-  else
-  {
-    ERR("Unhandled string type: %#x\n", *pFormat);
-    RpcRaiseException(RPC_X_BAD_STUB_DATA);
-  }
-
-  memsize = esize * maxsize;
-  bufsize = safe_multiply(esize, pStubMsg->ActualCount);
-
-  validate_string_data(pStubMsg, bufsize, esize);
-
-  safe_buffer_increment(pStubMsg, bufsize);
-  pStubMsg->MemorySize += memsize;
-
-  return pStubMsg->MemorySize;
 }
 
 static inline void dump_pointer_attr(unsigned char attr)
@@ -2143,6 +1752,26 @@ static inline void array_compute_and_size_conformance(
     pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
     SizeConformance(pStubMsg);
     break;
+  case RPC_FC_C_CSTRING:
+  case RPC_FC_C_WSTRING:
+    if (pFormat[0] == RPC_FC_C_CSTRING)
+    {
+      TRACE("string=%s\n", debugstr_a((const char *)pMemory));
+      pStubMsg->ActualCount = strlen((const char *)pMemory)+1;
+    }
+    else
+    {
+      TRACE("string=%s\n", debugstr_w((LPCWSTR)pMemory));
+      pStubMsg->ActualCount = strlenW((LPCWSTR)pMemory)+1;
+    }
+
+    if (fc == RPC_FC_STRING_SIZED)
+      pFormat = ComputeConformance(pStubMsg, pMemory, pFormat + 2, 0);
+    else
+      pStubMsg->MaxCount = pStubMsg->ActualCount;
+
+    SizeConformance(pStubMsg);
+    break;
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2189,6 +1818,18 @@ static inline void array_buffer_size(
 
     EmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
     break;
+  case RPC_FC_C_CSTRING:
+  case RPC_FC_C_WSTRING:
+    if (fc == RPC_FC_C_CSTRING)
+      esize = 1;
+    else
+      esize = 2;
+
+    SizeVariance(pStubMsg);
+
+    size = safe_multiply(esize, pStubMsg->ActualCount);
+    safe_buffer_length_increment(pStubMsg, size);
+    break;
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2208,6 +1849,25 @@ static inline void array_compute_and_write_conformance(
   case RPC_FC_CVARRAY:
     pFormat = ComputeConformance(pStubMsg, pMemory, pFormat + 4, 0);
     pFormat = ComputeVariance(pStubMsg, pMemory, pFormat, 0);
+    WriteConformance(pStubMsg);
+    break;
+  case RPC_FC_C_CSTRING:
+  case RPC_FC_C_WSTRING:
+    if (fc == RPC_FC_C_CSTRING)
+    {
+      TRACE("string=%s\n", debugstr_a((const char *)pMemory));
+      pStubMsg->ActualCount = strlen((const char *)pMemory)+1;
+    }
+    else
+    {
+      TRACE("string=%s\n", debugstr_w((LPCWSTR)pMemory));
+      pStubMsg->ActualCount = strlenW((LPCWSTR)pMemory)+1;
+    }
+    if (pFormat[1] == RPC_FC_STRING_SIZED)
+      pFormat = ComputeConformance(pStubMsg, pMemory, pFormat + 2, 0);
+    else
+      pStubMsg->MaxCount = pStubMsg->ActualCount;
+    pStubMsg->Offset = 0;
     WriteConformance(pStubMsg);
     break;
   default:
@@ -2260,6 +1920,18 @@ static inline void array_write_variance_and_marshall(
 
     EmbeddedPointerMarshall(pStubMsg, pMemory, pFormat);
     break;
+  case RPC_FC_C_CSTRING:
+  case RPC_FC_C_WSTRING:
+    if (fc == RPC_FC_C_CSTRING)
+      esize = 1;
+    else
+      esize = 2;
+
+    WriteVariance(pStubMsg);
+
+    size = safe_multiply(esize, pStubMsg->ActualCount);
+    safe_copy_to_buffer(pStubMsg, pMemory, size); /* the string itself */
+    break;
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2280,6 +1952,18 @@ static inline ULONG array_read_conformance(
   case RPC_FC_CVARRAY:
     esize = *(const WORD*)(pFormat+2);
     pFormat = ReadConformance(pStubMsg, pFormat+4);
+    return safe_multiply(esize, pStubMsg->MaxCount);
+  case RPC_FC_C_CSTRING:
+  case RPC_FC_C_WSTRING:
+    if (fc == RPC_FC_C_CSTRING)
+      esize = 1;
+    else
+      esize = 2;
+
+    if (pFormat[1] == RPC_FC_STRING_SIZED)
+      ReadConformance(pStubMsg, pFormat + 2);
+    else
+      ReadConformance(pStubMsg, NULL);
     return safe_multiply(esize, pStubMsg->MaxCount);
   default:
     ERR("unknown array format 0x%x\n", fc);
@@ -2352,6 +2036,55 @@ static inline void array_read_variance_and_unmarshall(
 
     memcpy(*ppMemory + offset, saved_buffer, bufsize);
     break;
+  case RPC_FC_C_CSTRING:
+  case RPC_FC_C_WSTRING:
+    if (fc == RPC_FC_C_CSTRING)
+      esize = 1;
+    else
+      esize = 2;
+
+    ReadVariance(pStubMsg, NULL, pStubMsg->MaxCount);
+
+    if (pFormat[1] != RPC_FC_STRING_SIZED && (pStubMsg->MaxCount != pStubMsg->ActualCount))
+    {
+      ERR("buffer size %d must equal memory size %ld for non-sized conformant strings\n",
+          pStubMsg->ActualCount, pStubMsg->MaxCount);
+      RpcRaiseException(RPC_S_INVALID_BOUND);
+    }
+    if (pStubMsg->Offset)
+    {
+      ERR("conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
+      RpcRaiseException(RPC_S_INVALID_BOUND);
+    }
+
+    memsize = safe_multiply(esize, pStubMsg->MaxCount);
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
+    validate_string_data(pStubMsg, bufsize, esize);
+
+    if (fMustAlloc)
+      *ppMemory = NdrAllocate(pStubMsg, memsize);
+    else
+    {
+      if (fUseBufferMemoryServer && !pStubMsg->IsClient &&
+          !*ppMemory && (pStubMsg->MaxCount == pStubMsg->ActualCount))
+        /* if the data in the RPC buffer is big enough, we just point straight
+         * into it */
+        *ppMemory = pStubMsg->Buffer;
+      else if (!*ppMemory)
+        *ppMemory = NdrAllocate(pStubMsg, memsize);
+    }
+
+    if (*ppMemory == pStubMsg->Buffer)
+      safe_buffer_increment(pStubMsg, bufsize);
+    else
+      safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
+
+    if (*pFormat == RPC_FC_C_CSTRING)
+      TRACE("string=%s\n", debugstr_a((char*)*ppMemory));
+    else
+      TRACE("string=%s\n", debugstr_w((LPWSTR)*ppMemory));
+    break;
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2400,6 +2133,35 @@ static inline void array_memory_size(
 
     EmbeddedPointerMemorySize(pStubMsg, pFormat);
     break;
+  case RPC_FC_C_CSTRING:
+  case RPC_FC_C_WSTRING:
+    if (fc == RPC_FC_C_CSTRING)
+      esize = 1;
+    else
+      esize = 2;
+
+    ReadVariance(pStubMsg, NULL, pStubMsg->MaxCount);
+
+    if (pFormat[1] != RPC_FC_STRING_SIZED && (pStubMsg->MaxCount != pStubMsg->ActualCount))
+    {
+      ERR("buffer size %d must equal memory size %ld for non-sized conformant strings\n",
+          pStubMsg->ActualCount, pStubMsg->MaxCount);
+      RpcRaiseException(RPC_S_INVALID_BOUND);
+    }
+    if (pStubMsg->Offset)
+    {
+      ERR("conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
+      RpcRaiseException(RPC_S_INVALID_BOUND);
+    }
+
+    memsize = safe_multiply(esize, pStubMsg->MaxCount);
+    bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
+    validate_string_data(pStubMsg, bufsize, esize);
+
+    safe_buffer_increment(pStubMsg, bufsize);
+    pStubMsg->MemorySize += memsize;
+    break;
   default:
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2429,6 +2191,311 @@ static inline void array_free(
     ERR("unknown array format 0x%x\n", fc);
     RpcRaiseException(RPC_X_BAD_STUB_DATA);
   }
+}
+
+/*
+ * NdrConformantString:
+ *
+ * What MS calls a ConformantString is, in DCE terminology,
+ * a Varying-Conformant String.
+ * [
+ *   maxlen: DWORD (max # of CHARTYPE characters, inclusive of '\0')
+ *   offset: DWORD (actual string data begins at (offset) CHARTYPE's
+ *           into unmarshalled string)
+ *   length: DWORD (# of CHARTYPE characters, inclusive of '\0')
+ *   [
+ *     data: CHARTYPE[maxlen]
+ *   ]
+ * ], where CHARTYPE is the appropriate character type (specified externally)
+ *
+ */
+
+/***********************************************************************
+ *            NdrConformantStringMarshall [RPCRT4.@]
+ */
+unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
+  unsigned char *pszMessage, PFORMAT_STRING pFormat)
+{
+  TRACE("(pStubMsg == ^%p, pszMessage == ^%p, pFormat == ^%p)\n", pStubMsg, pszMessage, pFormat);
+
+  if (pFormat[0] != RPC_FC_C_CSTRING && pFormat[0] != RPC_FC_C_WSTRING) {
+    ERR("Unhandled string type: %#x\n", pFormat[0]);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  /* allow compiler to optimise inline function by passing constant into
+   * these functions */
+  if (pFormat[0] == RPC_FC_C_CSTRING) {
+    array_compute_and_write_conformance(RPC_FC_C_CSTRING, pStubMsg, pszMessage, pFormat);
+    array_write_variance_and_marshall(RPC_FC_C_CSTRING, pStubMsg, pszMessage, pFormat);
+  } else {
+    array_compute_and_write_conformance(RPC_FC_C_CSTRING, pStubMsg, pszMessage, pFormat);
+    array_write_variance_and_marshall(RPC_FC_C_CSTRING, pStubMsg, pszMessage, pFormat);
+  }
+
+  return NULL;
+}
+
+/***********************************************************************
+ *           NdrConformantStringBufferSize [RPCRT4.@]
+ */
+void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+  unsigned char* pMemory, PFORMAT_STRING pFormat)
+{
+  TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
+
+  if (pFormat[0] != RPC_FC_C_CSTRING && pFormat[0] != RPC_FC_C_WSTRING) {
+    ERR("Unhandled string type: %#x\n", pFormat[0]);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  /* allow compiler to optimise inline function by passing constant into
+   * these functions */
+  if (pFormat[0] == RPC_FC_C_CSTRING) {
+    array_compute_and_size_conformance(RPC_FC_C_CSTRING, pStubMsg, pMemory, pFormat);
+    array_buffer_size(RPC_FC_C_CSTRING, pStubMsg, pMemory, pFormat);
+  } else {
+    array_compute_and_size_conformance(RPC_FC_C_WSTRING, pStubMsg, pMemory, pFormat);
+    array_buffer_size(RPC_FC_C_WSTRING, pStubMsg, pMemory, pFormat);
+  }
+}
+
+/************************************************************************
+ *            NdrConformantStringMemorySize [RPCRT4.@]
+ */
+ULONG WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
+  PFORMAT_STRING pFormat )
+{
+  TRACE("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
+
+  if (pFormat[0] != RPC_FC_C_CSTRING && pFormat[0] != RPC_FC_C_WSTRING) {
+    ERR("Unhandled string type: %#x\n", pFormat[0]);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  /* allow compiler to optimise inline function by passing constant into
+   * these functions */
+  if (pFormat[0] == RPC_FC_C_CSTRING) {
+    array_read_conformance(RPC_FC_C_CSTRING, pStubMsg, pFormat);
+    array_memory_size(RPC_FC_C_CSTRING, pStubMsg, pFormat);
+  } else {
+    array_read_conformance(RPC_FC_C_WSTRING, pStubMsg, pFormat);
+    array_memory_size(RPC_FC_C_WSTRING, pStubMsg, pFormat);
+  }
+
+  return pStubMsg->MemorySize;
+}
+
+/************************************************************************
+ *           NdrConformantStringUnmarshall [RPCRT4.@]
+ */
+unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg,
+  unsigned char** ppMemory, PFORMAT_STRING pFormat, unsigned char fMustAlloc )
+{
+  TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
+    pStubMsg, *ppMemory, pFormat, fMustAlloc);
+
+  if (pFormat[0] != RPC_FC_C_CSTRING && pFormat[0] != RPC_FC_C_WSTRING) {
+    ERR("Unhandled string type: %#x\n", *pFormat);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  /* allow compiler to optimise inline function by passing constant into
+   * these functions */
+  if (pFormat[0] == RPC_FC_C_CSTRING) {
+    array_read_conformance(RPC_FC_C_CSTRING, pStubMsg, pFormat);
+    array_read_variance_and_unmarshall(RPC_FC_C_CSTRING, pStubMsg, ppMemory,
+                                       pFormat, fMustAlloc,
+                                       TRUE /* fUseBufferMemoryServer */);
+  } else {
+    array_read_conformance(RPC_FC_C_WSTRING, pStubMsg, pFormat);
+    array_read_variance_and_unmarshall(RPC_FC_C_WSTRING, pStubMsg, ppMemory,
+                                       pFormat, fMustAlloc,
+                                       TRUE /* fUseBufferMemoryServer */);
+  }
+
+  return NULL;
+}
+
+/***********************************************************************
+ *           NdrNonConformantStringMarshall [RPCRT4.@]
+ */
+unsigned char *  WINAPI NdrNonConformantStringMarshall(PMIDL_STUB_MESSAGE pStubMsg,
+                                unsigned char *pMemory,
+                                PFORMAT_STRING pFormat)
+{
+  ULONG esize, size, maxsize;
+
+  TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
+
+  maxsize = *(USHORT *)&pFormat[2];
+
+  if (*pFormat == RPC_FC_CSTRING)
+  {
+    ULONG i;
+    const char *str = (const char *)pMemory;
+    for (i = 0; i < maxsize && *str; i++, str++)
+        ;
+    TRACE("string=%s\n", debugstr_an(str, i));
+    pStubMsg->ActualCount = i + 1;
+    esize = 1;
+  }
+  else if (*pFormat == RPC_FC_WSTRING)
+  {
+    ULONG i;
+    const WCHAR *str = (const WCHAR *)pMemory;
+    for (i = 0; i < maxsize && *str; i++, str++)
+        ;
+    TRACE("string=%s\n", debugstr_wn(str, i));
+    pStubMsg->ActualCount = i + 1;
+    esize = 2;
+  }
+  else
+  {
+    ERR("Unhandled string type: %#x\n", *pFormat);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  pStubMsg->Offset = 0;
+  WriteVariance(pStubMsg);
+
+  size = safe_multiply(esize, pStubMsg->ActualCount);
+  safe_copy_to_buffer(pStubMsg, pMemory, size); /* the string itself */
+
+  return NULL;
+}
+
+/***********************************************************************
+ *           NdrNonConformantStringUnmarshall [RPCRT4.@]
+ */
+unsigned char *  WINAPI NdrNonConformantStringUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
+                                unsigned char **ppMemory,
+                                PFORMAT_STRING pFormat,
+                                unsigned char fMustAlloc)
+{
+  ULONG bufsize, memsize, esize, maxsize;
+
+  TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
+    pStubMsg, *ppMemory, pFormat, fMustAlloc);
+
+  maxsize = *(USHORT *)&pFormat[2];
+
+  ReadVariance(pStubMsg, NULL, maxsize);
+  if (pStubMsg->Offset)
+  {
+    ERR("non-conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
+  }
+
+  if (*pFormat == RPC_FC_CSTRING) esize = 1;
+  else if (*pFormat == RPC_FC_WSTRING) esize = 2;
+  else
+  {
+    ERR("Unhandled string type: %#x\n", *pFormat);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  memsize = esize * maxsize;
+  bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
+  validate_string_data(pStubMsg, bufsize, esize);
+
+  if (fMustAlloc || !*ppMemory)
+    *ppMemory = NdrAllocate(pStubMsg, memsize);
+
+  safe_copy_from_buffer(pStubMsg, *ppMemory, bufsize);
+
+  if (*pFormat == RPC_FC_CSTRING) {
+    TRACE("string=%s\n", debugstr_an((char*)*ppMemory, pStubMsg->ActualCount));
+  }
+  else if (*pFormat == RPC_FC_WSTRING) {
+    TRACE("string=%s\n", debugstr_wn((LPWSTR)*ppMemory, pStubMsg->ActualCount));
+  }
+
+  return NULL;
+}
+
+/***********************************************************************
+ *           NdrNonConformantStringBufferSize [RPCRT4.@]
+ */
+void WINAPI NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+                                unsigned char *pMemory,
+                                PFORMAT_STRING pFormat)
+{
+  ULONG esize, maxsize;
+
+  TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
+
+  maxsize = *(USHORT *)&pFormat[2];
+
+  SizeVariance(pStubMsg);
+
+  if (*pFormat == RPC_FC_CSTRING)
+  {
+    ULONG i;
+    const char *str = (const char *)pMemory;
+    for (i = 0; i < maxsize && *str; i++, str++)
+        ;
+    TRACE("string=%s\n", debugstr_an(str, i));
+    pStubMsg->ActualCount = i + 1;
+    esize = 1;
+  }
+  else if (*pFormat == RPC_FC_WSTRING)
+  {
+    ULONG i;
+    const WCHAR *str = (const WCHAR *)pMemory;
+    for (i = 0; i < maxsize && *str; i++, str++)
+        ;
+    TRACE("string=%s\n", debugstr_wn(str, i));
+    pStubMsg->ActualCount = i + 1;
+    esize = 2;
+  }
+  else
+  {
+    ERR("Unhandled string type: %#x\n", *pFormat);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  safe_buffer_length_increment(pStubMsg, safe_multiply(esize, pStubMsg->ActualCount));
+}
+
+/***********************************************************************
+ *           NdrNonConformantStringMemorySize [RPCRT4.@]
+ */
+ULONG WINAPI NdrNonConformantStringMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                PFORMAT_STRING pFormat)
+{
+  ULONG bufsize, memsize, esize, maxsize;
+
+  TRACE("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
+
+  maxsize = *(USHORT *)&pFormat[2];
+
+  ReadVariance(pStubMsg, NULL, maxsize);
+
+  if (pStubMsg->Offset)
+  {
+    ERR("non-conformant strings can't have Offset (%d)\n", pStubMsg->Offset);
+    RpcRaiseException(RPC_S_INVALID_BOUND);
+  }
+
+  if (*pFormat == RPC_FC_CSTRING) esize = 1;
+  else if (*pFormat == RPC_FC_WSTRING) esize = 2;
+  else
+  {
+    ERR("Unhandled string type: %#x\n", *pFormat);
+    RpcRaiseException(RPC_X_BAD_STUB_DATA);
+  }
+
+  memsize = esize * maxsize;
+  bufsize = safe_multiply(esize, pStubMsg->ActualCount);
+
+  validate_string_data(pStubMsg, bufsize, esize);
+
+  safe_buffer_increment(pStubMsg, bufsize);
+  pStubMsg->MemorySize += memsize;
+
+  return pStubMsg->MemorySize;
 }
 
 /* Complex types */
