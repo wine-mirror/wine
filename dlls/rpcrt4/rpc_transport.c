@@ -706,9 +706,6 @@ static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_d
 
     TRACE("(%p, %d, %p, %p)\n", tower_data, (int)tower_size, networkaddr, endpoint);
 
-    *networkaddr = NULL;
-    *endpoint = NULL;
-
     if (tower_size < sizeof(*pipe_floor))
         return EPT_S_NOT_REGISTERED;
 
@@ -719,6 +716,9 @@ static RPC_STATUS rpcrt4_ncalrpc_parse_top_of_tower(const unsigned char *tower_d
         (pipe_floor->protid != EPM_PROTOCOL_SMB) ||
         (pipe_floor->count_rhs > tower_size))
         return EPT_S_NOT_REGISTERED;
+
+    if (networkaddr)
+        *networkaddr = NULL;
 
     if (endpoint)
     {
