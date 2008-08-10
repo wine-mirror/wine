@@ -677,7 +677,7 @@ static size_t rpcrt4_ncalrpc_get_top_of_tower(unsigned char *tower_data,
 
     TRACE("(%p, %s, %s)\n", tower_data, networkaddr, endpoint);
 
-    endpoint_size = strlen(networkaddr) + 1;
+    endpoint_size = strlen(endpoint) + 1;
     size = sizeof(*pipe_floor) + endpoint_size;
 
     if (!tower_data)
