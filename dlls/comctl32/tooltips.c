@@ -1574,6 +1574,9 @@ TOOLTIPS_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nTool = TOOLTIPS_GetToolFromInfoW (infoPtr, lpToolInfo);
     if (nTool == -1) return 0;
 
+    if (infoPtr->tools[nTool].lpszText == NULL)
+	return 0;
+
     strcpyW (lpToolInfo->lpszText, infoPtr->tools[nTool].lpszText);
 
     return 0;
