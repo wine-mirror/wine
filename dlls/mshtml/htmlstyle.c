@@ -455,8 +455,10 @@ static HRESULT WINAPI HTMLStyle_put_background(IHTMLStyle *iface, BSTR v)
 static HRESULT WINAPI HTMLStyle_get_background(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, attrBackground, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundColor(IHTMLStyle *iface, VARIANT v)
