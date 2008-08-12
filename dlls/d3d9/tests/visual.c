@@ -7758,24 +7758,28 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
+    /* on MacOS(10.5.4, radeon X1600), the white dots are have color 0x00fbfbfb rather than 0x00ffffff. This is
+     * kinda strange since no calculations are done on the sampled colors, only on the texture coordinates.
+     * But since testing the color match is not the purpose of the test don't be too picky
+     */
     color = getPixelColor(device, 320-32, 240);
-    ok(color == 0x00ffffff, "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00ffffff, 4), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 320+32, 240);
-    ok(color == 0x00ffffff, "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00ffffff, 4), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 320, 240-32);
-    ok(color == 0x00ffffff, "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00ffffff, 4), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 320, 240+32);
-    ok(color == 0x00ffffff, "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00ffffff, 4), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
     color = getPixelColor(device, 320, 240);
-    ok(color == 0x00000000, "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
+    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
     color = getPixelColor(device, 320+32, 240+32);
-    ok(color == 0x00000000, "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
+    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
     color = getPixelColor(device, 320-32, 240+32);
-    ok(color == 0x00000000, "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
+    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
     color = getPixelColor(device, 320+32, 240-32);
-    ok(color == 0x00000000, "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
+    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
     color = getPixelColor(device, 320-32, 240-32);
-    ok(color == 0x00000000, "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
+    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
 
     hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
     ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
