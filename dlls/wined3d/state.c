@@ -3528,18 +3528,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
             checkGLcall("glTexEnvi(GL_TEXTURE_LOD_BIAS_EXT, ...)");
         }
 
-        if (stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader &&
-            ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function) {
-            /* Using a pixel shader? Verify the sampler types */
-
-            /* Make sure that the texture dimensions are enabled. I don't have to disable the other
-             * dimensions because the shader knows from which texture type to sample from. For the sake of
-             * debugging all dimensions could be enabled and a texture with some ugly pink bound to the unused
-             * dimensions. This should make wrong sampling sources visible :-)
-             */
-            glEnable(stateblock->textureDimensions[sampler]);
-            checkGLcall("glEnable(stateblock->textureDimensions[sampler])");
-        } else if(sampler < stateblock->lowest_disabled_stage) {
+        if(!use_ps(stateblock->wineD3DDevice) && sampler < stateblock->lowest_disabled_stage) {
             if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
                 /* If color keying is enabled update the alpha test, it depends on the existence
                  * of a color key in stage 0
