@@ -232,10 +232,70 @@ static void test_customdraw(void) {
 
 }
 
+static void test_gettext(void)
+{
+    HWND hwnd;
+    TTTOOLINFOA toolinfoA;
+    TTTOOLINFOW toolinfoW;
+    LRESULT r;
+    char bufA[10] = "";
+    WCHAR bufW[10] = { 0 };
+
+    /* For bug 14790 - lpszText is NULL */
+    hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
+                           10, 10, 300, 100,
+                           NULL, NULL, NULL, 0);
+    assert(hwnd);
+
+    toolinfoA.cbSize = sizeof(TTTOOLINFOA);
+    toolinfoA.hwnd = NULL;
+    toolinfoA.hinst = GetModuleHandleA(NULL);
+    toolinfoA.uFlags = 0;
+    toolinfoA.uId = (UINT_PTR)0x1234ABCD;
+    toolinfoA.lpszText = NULL;
+    toolinfoA.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &toolinfoA.rect);
+    r = SendMessageA(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoA);
+    ok(r, "Adding the tool to the tooltip failed\n");
+
+    toolinfoA.hwnd = NULL;
+    toolinfoA.uId = (UINT_PTR)0x1234ABCD;
+    toolinfoA.lpszText = bufA;
+    SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
+    ok(strcmp(toolinfoA.lpszText, "") == 0, "lpszText should be an empty string\n");
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
+                           10, 10, 300, 100,
+                           NULL, NULL, NULL, 0);
+    assert(hwnd);
+
+    toolinfoW.cbSize = sizeof(TTTOOLINFOW);
+    toolinfoW.hwnd = NULL;
+    toolinfoW.hinst = GetModuleHandleA(NULL);
+    toolinfoW.uFlags = 0;
+    toolinfoW.uId = (UINT_PTR)0x1234ABCD;
+    toolinfoW.lpszText = NULL;
+    toolinfoW.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &toolinfoW.rect);
+    r = SendMessageW(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoW);
+    ok(r, "Adding the tool to the tooltip failed\n");
+
+    toolinfoW.hwnd = NULL;
+    toolinfoW.uId = (UINT_PTR)0x1234ABCD;
+    toolinfoW.lpszText = bufW;
+    SendMessageW(hwnd, TTM_GETTEXTW, 0, (LPARAM)&toolinfoW);
+    ok(toolinfoW.lpszText[0] == 0, "lpszText should be an empty string\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(tooltips)
 {
     InitCommonControls();
 
     test_create_tooltip();
     test_customdraw();
+    test_gettext();
 }
