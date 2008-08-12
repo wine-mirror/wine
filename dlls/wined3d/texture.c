@@ -227,6 +227,20 @@ static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface) {
         for (i = 0; i < This->baseTexture.levels; ++i) {
             IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], This->baseTexture.textureName, IWineD3DTexture_GetTextureDimensions(iface));
         }
+        /* Conditinal non power of two textures use a different clamping default. If we're using the GL_WINE_normalized_texrect
+         * partial driver emulation, we're dealing with a GL_TEXTURE_2D texture which has the address mode set to repeat - something
+         * that prevents us from hitting the accelerated codepath. Thus manually set the GL state
+         */
+        if(IWineD3DBaseTexture_IsCondNP2(iface)) {
+            ENTER_GL();
+            glTexParameteri(IWineD3DTexture_GetTextureDimensions(iface), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
+            glTexParameteri(IWineD3DTexture_GetTextureDimensions(iface), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
+            LEAVE_GL();
+            This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]      = WINED3DTADDRESS_CLAMP;
+            This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]      = WINED3DTADDRESS_CLAMP;
+        }
     }
 
     return hr;
