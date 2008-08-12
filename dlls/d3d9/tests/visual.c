@@ -1663,13 +1663,13 @@ static void texbem_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
         color = getPixelColor(device, 320-32, 240);
-        ok(color == 0x00ffffff, "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+        ok(color_match(color, 0x00ffffff, 4), "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
         color = getPixelColor(device, 320+32, 240);
-        ok(color == 0x00ffffff, "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+        ok(color_match(color, 0x00ffffff, 4), "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
         color = getPixelColor(device, 320, 240-32);
-        ok(color == 0x00ffffff, "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+        ok(color_match(color, 0x00ffffff, 4), "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
         color = getPixelColor(device, 320, 240+32);
-        ok(color == 0x00ffffff, "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+        ok(color_match(color, 0x00ffffff, 4), "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
 
         hr = IDirect3DDevice9_SetPixelShader(device, NULL);
         ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
