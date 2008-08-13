@@ -1312,14 +1312,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             case RTL_READTEX:
             case RTL_TEXTEX:
                 ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
-                ENTER_GL();
-                if (This->glDescription.textureName == 0) {
-                    glGenTextures(1, &This->glDescription.textureName);
-                    checkGLcall("glGenTextures");
-                }
-                glBindTexture(This->glDescription.target, This->glDescription.textureName);
-                checkGLcall("glBindTexture(This->glDescription.target, This->glDescription.textureName)");
-                LEAVE_GL();
                 IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* partial texture loading not supported yet */);
                 /* drop through */
 
@@ -3804,15 +3796,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
 
         if((This->resource.usage & WINED3DUSAGE_RENDERTARGET) && (convert == NO_CONVERSION))
         {
-            ENTER_GL();
-            if (This->glDescription.textureName == 0) {
-                glGenTextures(1, &This->glDescription.textureName);
-                checkGLcall("glGenTextures");
-            }
-            glBindTexture(This->glDescription.target, This->glDescription.textureName);
-            checkGLcall("glBindTexture(This->glDescription.target, This->glDescription.textureName)");
-            LEAVE_GL();
-
             /* Make sure the texture is up to date. This call doesn't do anything if the texture is already up to date. */
             IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL);
 
