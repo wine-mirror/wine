@@ -755,7 +755,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
         rc.bottom = bottom;
         if (cell->border.left.width > 0)
         {
-          color = RGB(0,0,0);
+          color = cell->border.left.colorRef;
           width = max(ME_twips2pointsX(c, cell->border.left.width), 1);
         } else {
           color = RGB(192,192,192);
@@ -777,7 +777,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       if (atTop) {
         if (cell->border.top.width > 0)
         {
-          brush = GetStockObject(BLACK_BRUSH);
+          brush = CreateSolidBrush(cell->border.top.colorRef);
           width = max(ME_twips2pointsY(c, cell->border.top.width), 1);
         } else {
           brush = GetStockObject(LTGRAY_BRUSH);
@@ -786,6 +786,8 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
         rc.top = top;
         rc.bottom = rc.top + width;
         FillRect(c->hDC, &rc, brush);
+        if (cell->border.top.width > 0)
+          DeleteObject(brush);
       }
 
       /* Draw the bottom border if at the last paragraph in the cell, and when
@@ -809,13 +811,15 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
         }
         if (rc.left < rc.right) {
           if (cell->border.bottom.width > 0) {
-            brush = GetStockObject(BLACK_BRUSH);
+            brush = CreateSolidBrush(cell->border.bottom.colorRef);
           } else {
             brush = GetStockObject(LTGRAY_BRUSH);
           }
           rc.bottom = bottom;
           rc.top = rc.bottom - width;
           FillRect(c->hDC, &rc, brush);
+          if (cell->border.bottom.width > 0)
+            DeleteObject(brush);
         }
         rc.left = oldLeft;
       }
@@ -827,7 +831,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
         rc.top = top;
         rc.bottom = bottom;
         if (cell->border.right.width > 0) {
-          color = RGB(0,0,0);
+          color = cell->border.right.colorRef;
           width = max(ME_twips2pointsX(c, cell->border.right.width), 1);
         } else {
           color = RGB(192,192,192);
@@ -854,7 +858,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       POINT oldPt;
       PARAFORMAT2 *pNextFmt;
 
-      pen = CreatePen(PS_SOLID, 0, RGB(0,0,0));
+      pen = CreatePen(PS_SOLID, 0, para->border.top.colorRef);
       oldpen = SelectObject(c->hDC, pen);
 
       /* Find the start relative to the text */

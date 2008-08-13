@@ -168,6 +168,7 @@ typedef struct tagME_Document {
 typedef struct tagME_Border
 {
   int width;
+  COLORREF colorRef;
 } ME_Border;
 
 typedef struct tagME_BorderRect
@@ -183,6 +184,7 @@ typedef struct tagME_Paragraph
   PARAFORMAT2 *pFmt;
 
   struct tagME_DisplayItem *pCell; /* v4.1 */
+  ME_BorderRect border;
 
   int nCharOfs;
   int nFlags;

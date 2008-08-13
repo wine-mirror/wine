@@ -1010,6 +1010,7 @@ struct RTFStyleElt
 struct RTFBorder
 {
 	int width;
+	int color;
 };
 
 struct RTFCell

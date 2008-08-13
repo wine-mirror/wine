@@ -177,6 +177,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
 
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
   *new_para->member.para.pFmt = *run_para->member.para.pFmt;
+  new_para->member.para.border = run_para->member.para.border;
 
   /* insert paragraph into paragraph double linked list */
   new_para->member.para.prev_para = run_para;

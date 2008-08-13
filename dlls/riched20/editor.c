@@ -320,6 +320,32 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
   return 0;
 }
 
+static void ME_ApplyBorderProperties(RTF_Info *info,
+                                     ME_BorderRect *borderRect,
+                                     RTFBorder *borderDef)
+{
+  int i, colorNum;
+  ME_Border *pBorders[] = {&borderRect->top,
+                           &borderRect->left,
+                           &borderRect->bottom,
+                           &borderRect->right};
+  for (i = 0; i < 4; i++)
+  {
+    RTFColor *colorDef = info->colorList;
+    pBorders[i]->width = borderDef[i].width;
+    colorNum = borderDef[i].color;
+    while (colorDef && colorDef->rtfCNum != colorNum)
+      colorDef = colorDef->rtfNextColor;
+    if (colorDef)
+      pBorders[i]->colorRef = RGB(
+                           colorDef->rtfCRed >= 0 ? colorDef->rtfCRed : 0,
+                           colorDef->rtfCGreen >= 0 ? colorDef->rtfCGreen : 0,
+                           colorDef->rtfCBlue >= 0 ? colorDef->rtfCBlue : 0);
+    else
+      pBorders[i]->colorRef = RGB(0, 0, 0);
+  }
+}
+
 static void ME_RTFCharAttrHook(RTF_Info *info)
 {
   CHARFORMAT2W fmt;
@@ -767,7 +793,31 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.wBorderSpace = info->rtfParam;
     fmt.dwMask = PFM_BORDER;
     break;
-  }  
+  case rtfBorderColor:
+  {
+    RTFTable *tableDef = info->tableDef;
+    int borderSide = info->borderType & RTFBorderSideMask;
+    int borderType = info->borderType & RTFBorderTypeMask;
+    switch(borderType)
+    {
+    case RTFBorderTypePara:
+      if (!info->editor->bEmulateVersion10) /* v4.1 */
+        break;
+      /* v1.0 - 3.0 treat paragraph and row borders the same. */
+    case RTFBorderTypeRow:
+      if (tableDef) {
+        tableDef->border[borderSide].color = info->rtfParam;
+      }
+      break;
+    case RTFBorderTypeCell:
+      if (tableDef && tableDef->numCellsDefined < MAX_TABLE_CELLS) {
+        tableDef->cells[tableDef->numCellsDefined].border[borderSide].color = info->rtfParam;
+      }
+      break;
+    }
+    break;
+  }
+  }
   if (fmt.dwMask) {
     RTFFlushOutputBuffer(info);
     /* FIXME too slow ? how come ?*/
@@ -930,11 +980,10 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
         } else {
           for (i = 0; i < tableDef->numCellsDefined; i++)
           {
-            cell->member.cell.nRightBoundary = tableDef->cells[i].rightBoundary;
-            cell->member.cell.border.top.width = tableDef->cells[i].border[0].width;
-            cell->member.cell.border.left.width = tableDef->cells[i].border[1].width;
-            cell->member.cell.border.bottom.width = tableDef->cells[i].border[2].width;
-            cell->member.cell.border.right.width = tableDef->cells[i].border[3].width;
+            RTFCell *cellDef = &tableDef->cells[i];
+            cell->member.cell.nRightBoundary = cellDef->rightBoundary;
+            ME_ApplyBorderProperties(info, &cell->member.cell.border,
+                                     cellDef->border);
             cell = cell->member.cell.next_cell;
             if (!cell)
             {
@@ -962,6 +1011,8 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
         para = ME_InsertTableRowEndFromCursor(info->editor);
         para->member.para.pFmt->dxOffset = abs(info->tableDef->gapH);
         para->member.para.pFmt->dxStartIndent = info->tableDef->leftEdge;
+        ME_ApplyBorderProperties(info, &para->member.para.border,
+                                 tableDef->border);
         info->nestingLevel--;
         if (!info->nestingLevel)
         {
@@ -984,6 +1035,10 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
         PARAFORMAT2 *pFmt = para->member.para.pFmt;
         pFmt->dxOffset = info->tableDef->gapH;
         pFmt->dxStartIndent = info->tableDef->leftEdge;
+
+        para = ME_GetParagraph(info->editor->pCursors[0].pRun);
+        ME_ApplyBorderProperties(info, &para->member.para.border,
+                                 tableDef->border);
         while (tableDef->numCellsInserted < tableDef->numCellsDefined)
         {
           WCHAR tab = '\t';
