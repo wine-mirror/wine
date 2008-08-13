@@ -936,9 +936,23 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
       }
       break;
     }
+    case rtfTab:
     case rtfPar:
-      if (tableDef)
-        tableDef->numCellsInserted = 0;
+      if (info->editor->bEmulateVersion10) { /* v1.0 - 3.0 */
+        ME_DisplayItem *para;
+        PARAFORMAT2 *pFmt;
+        RTFFlushOutputBuffer(info);
+        para = ME_GetParagraph(info->editor->pCursors[0].pRun);
+        pFmt = para->member.para.pFmt;
+        if (pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+        {
+          /* rtfPar is treated like a space within a table. */
+          info->rtfClass = rtfText;
+          info->rtfMajor = ' ';
+        }
+        else if (info->rtfMinor == rtfPar && tableDef)
+          tableDef->numCellsInserted = 0;
+      }
       break;
   }
 }
