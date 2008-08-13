@@ -667,9 +667,9 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   ME_DisplayItem *p;
   ME_Run *run;
   ME_Paragraph *para = NULL;
-  RECT rc, rcText, bounds;
+  RECT rc, bounds;
   int y = c->pt.y;
-  int height = 0, baseline = 0, no=0, pno = 0;
+  int height = 0, baseline = 0, no=0;
   BOOL visible = FALSE;
 
   c->pt.x = c->rcView.left;
@@ -680,15 +680,11 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
       case diParagraph:
         para = &p->member.para;
         assert(para);
-        pno = 0;
         if (para->pCell)
         {
           ME_Cell *cell = &para->pCell->member.cell;
           rc.left = cell->pt.x;
           rc.right = rc.left + cell->nWidth;
-          rcText.left = cell->pt.x + ME_twips2pointsX(c, para->pFmt->dxStartIndent);
-          rcText.right = cell->pt.x + cell->nWidth
-               - ME_twips2pointsX(c, para->pFmt->dxRightIndent);
         }
         if (para->nFlags & MEPF_ROWSTART) {
           ME_Cell *cell = &para->next_para->member.para.pCell->member.cell;
@@ -697,8 +693,6 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
           ME_Cell *cell = &para->prev_para->member.para.pCell->member.cell;
           rc.left = cell->pt.x + cell->nWidth;
         }
-        rcText.left = rc.left + ME_twips2pointsX(c, para->pFmt->dxStartIndent);
-        rcText.right = rc.right - ME_twips2pointsX(c, para->pFmt->dxRightIndent);
         ME_DrawParaDecoration(c, para, y, &bounds);
         y += bounds.top;
         break;
@@ -732,8 +726,6 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         
         height = p->member.row.nHeight;
         baseline = p->member.row.nBaseline;
-        if (!pno++)
-          rcText.right += ME_twips2pointsX(c, para->pFmt->dxOffset);
         break;
       case diRun:
         assert(para);
