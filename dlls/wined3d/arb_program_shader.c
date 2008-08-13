@@ -2776,7 +2776,12 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     struct arbfp_ffp_desc *desc;
     unsigned int i;
 
-    if(isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE))) return;
+    if(isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE))) {
+        if(use_pshader) {
+            IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
+        }
+        return;
+    }
 
     if(use_pshader) {
         IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
