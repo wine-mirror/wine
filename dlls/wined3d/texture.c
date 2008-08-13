@@ -229,17 +229,25 @@ static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface) {
         }
         /* Conditinal non power of two textures use a different clamping default. If we're using the GL_WINE_normalized_texrect
          * partial driver emulation, we're dealing with a GL_TEXTURE_2D texture which has the address mode set to repeat - something
-         * that prevents us from hitting the accelerated codepath. Thus manually set the GL state
+         * that prevents us from hitting the accelerated codepath. Thus manually set the GL state. The same applies to filtering.
+         * Even if the texture has only one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW fallback on macos.
          */
         if(IWineD3DBaseTexture_IsCondNP2(iface)) {
             ENTER_GL();
             glTexParameteri(IWineD3DTexture_GetTextureDimensions(iface), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
             glTexParameteri(IWineD3DTexture_GetTextureDimensions(iface), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
+            checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
+            glTexParameteri(IWineD3DTexture_GetTextureDimensions(iface), GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
+            glTexParameteri(IWineD3DTexture_GetTextureDimensions(iface), GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
             LEAVE_GL();
             This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]      = WINED3DTADDRESS_CLAMP;
             This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]      = WINED3DTADDRESS_CLAMP;
+            This->baseTexture.states[WINED3DTEXSTA_MAGFILTER]     = WINED3DTEXF_POINT;
+            This->baseTexture.states[WINED3DTEXSTA_MINFILTER]     = WINED3DTEXF_POINT;
+            This->baseTexture.states[WINED3DTEXSTA_MIPFILTER]     = WINED3DTEXF_NONE;
         }
     }
 
