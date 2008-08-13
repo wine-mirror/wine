@@ -662,6 +662,68 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
   }
 }
 
+static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
+{
+  ME_Paragraph *para = &paragraph->member.para;
+  if (c->editor->bEmulateVersion10) /* v1.0 - 3.0 */
+  {
+    if (para->pFmt->dwMask & PFM_TABLE && para->pFmt->wEffects & PFE_TABLE) {
+      HPEN pen = NULL, oldpen = NULL;
+      int i, firstX, startX, endX, rowY, rowBottom, nHeight;
+      POINT oldPt;
+      PARAFORMAT2 *pNextFmt;
+
+      pen = CreatePen(PS_SOLID, 0, RGB(0,0,0));
+      oldpen = SelectObject(c->hDC, pen);
+
+      /* Find the start relative to the text */
+      firstX = ME_FindItemFwd(paragraph, diRun)->member.run.pt.x;
+      /* Go back by the horizontal gap, which is stored in dxOffset */
+      firstX -= ME_twips2pointsX(c, para->pFmt->dxOffset);
+      /* The left edge, stored in dxStartIndent affected just the first edge */
+      startX = firstX - ME_twips2pointsX(c, para->pFmt->dxStartIndent);
+      rowY = c->pt.y;
+      if (para->pFmt->dwMask & PFM_SPACEBEFORE)
+        rowY += ME_twips2pointsY(c, para->pFmt->dySpaceBefore);
+      nHeight = ME_FindItemFwd(paragraph, diStartRow)->member.row.nHeight;
+      rowBottom = rowY + nHeight;
+
+      /* Draw horizontal lines */
+      MoveToEx(c->hDC, firstX, rowY, &oldPt);
+      i = para->pFmt->cTabCount - 1;
+      endX = startX + ME_twips2pointsX(c, para->pFmt->rgxTabs[i] & 0x00ffffff) + 1;
+      LineTo(c->hDC, endX, rowY);
+      pNextFmt = para->next_para->member.para.pFmt;
+      /* The bottom of the row only needs to be drawn if the next row is
+       * not a table. */
+      if (!(pNextFmt && pNextFmt->dwMask & PFM_TABLE && pNextFmt->wEffects &&
+            para->nRows == 1))
+      {
+        /* Decrement rowBottom to draw the bottom line within the row, and
+         * to not draw over this line when drawing the vertical lines. */
+        rowBottom--;
+        MoveToEx(c->hDC, firstX, rowBottom, NULL);
+        LineTo(c->hDC, endX, rowBottom);
+      }
+
+      /* Draw vertical lines */
+      MoveToEx(c->hDC, firstX, rowY, NULL);
+      LineTo(c->hDC, firstX, rowBottom);
+      for (i = 0; i < para->pFmt->cTabCount; i++)
+      {
+        int rightBoundary = para->pFmt->rgxTabs[i] & 0x00ffffff;
+        endX = startX + ME_twips2pointsX(c, rightBoundary);
+        MoveToEx(c->hDC, endX, rowY, NULL);
+        LineTo(c->hDC, endX, rowBottom);
+      }
+
+      MoveToEx(c->hDC, oldPt.x, oldPt.y, NULL);
+      SelectObject(c->hDC, oldpen);
+      DeleteObject(pen);
+    }
+  }
+}
+
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
   int align = SetTextAlign(c->hDC, TA_BASELINE);
   ME_DisplayItem *p;
@@ -773,6 +835,9 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
     }
     no++;
   }
+
+  ME_DrawTableBorders(c, paragraph);
+
   SetTextAlign(c->hDC, align);
 }
 

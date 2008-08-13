@@ -44,7 +44,9 @@ static ME_DisplayItem *ME_MakeRow(int height, int baseline, int width)
 
 static void ME_BeginRow(ME_WrapContext *wc, ME_DisplayItem *para)
 {
+  PARAFORMAT2 *pFmt;
   assert(para && para->type == diParagraph);
+  pFmt = para->member.para.pFmt;
   wc->pRowStart = NULL;
   wc->bOverflown = FALSE;
   wc->pLastSplittableRun = NULL;
@@ -78,6 +80,10 @@ static void ME_BeginRow(ME_WrapContext *wc, ME_DisplayItem *para)
     wc->nAvailWidth = ~0u >> 1;
   }
   wc->pt.x = wc->context->pt.x;
+  if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
+      pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+    /* Shift the text down because of the border. */
+    wc->pt.y++;
 }
 
 static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
@@ -85,8 +91,10 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
   ME_DisplayItem *p, *row, *para;
   BOOL bSkippingSpaces = TRUE;
   int ascent = 0, descent = 0, width=0, shift = 0, align = 0;
+  PARAFORMAT2 *pFmt;
   /* wrap text */
   para = ME_GetParagraph(wc->pRowStart);
+  pFmt = para->member.para.pFmt;
 
   for (p = pEnd->prev; p!=wc->pRowStart->prev; p = p->prev)
   {
@@ -125,6 +133,15 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
   }
 
   row = ME_MakeRow(ascent+descent, ascent, width);
+  if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
+      pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+  {
+    /* The text was shifted down in ME_BeginRow so move the wrap context
+     * back to where it should be. */
+    wc->pt.y--;
+    /* The height of the row is increased by the borders. */
+    row->member.row.nHeight += 2;
+  }
   row->member.row.pt = wc->pt;
   row->member.row.nLMargin = (!wc->nRow ? wc->nFirstMargin : wc->nLeftMargin);
   row->member.row.nRMargin = wc->nRightMargin;
@@ -142,14 +159,23 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
   }
   ME_InsertBefore(wc->pRowStart, row);
   wc->nRow++;
-  wc->pt.y += ascent+descent;
+  wc->pt.y += row->member.row.nHeight;
   ME_BeginRow(wc, para);
 }
 
 static void ME_WrapEndParagraph(ME_WrapContext *wc, ME_DisplayItem *p)
 {
+  ME_DisplayItem *para = p->member.para.prev_para;
+  PARAFORMAT2 *pFmt = para->member.para.pFmt;
   if (wc->pRowStart)
     ME_InsertRowStart(wc, p);
+  if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
+      pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+  {
+    /* ME_BeginRow was called an extra time for the paragraph, and it shifts the
+     * text down by one pixel for the border, so fix up the wrap context. */
+    wc->pt.y--;
+  }
 
   /*
   p = p->member.para.prev_para->next;
