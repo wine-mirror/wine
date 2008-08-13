@@ -451,6 +451,10 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   switch(info->rtfMinor)
   {
   case rtfParDef: /* restores default paragraph attributes */
+    if (!info->editor->bEmulateVersion10) /* v4.1 */
+      info->borderType = RTFBorderParaLeft;
+    else /* v1.0 - 3.0 */
+      info->borderType = RTFBorderParaTop;
     fmt.dwMask = PFM_ALIGNMENT | PFM_BORDER | PFM_LINESPACING | PFM_TABSTOPS |
         PFM_OFFSET | PFM_RIGHTINDENT | PFM_SPACEAFTER | PFM_SPACEBEFORE |
         PFM_STARTINDENT;
@@ -656,6 +660,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.wNumberingStart = info->rtfParam;
     break;
   case rtfBorderLeft:
+    info->borderType = RTFBorderParaLeft;
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_BORDER))
     {
@@ -667,6 +672,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderRight:
+    info->borderType = RTFBorderParaRight;
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_BORDER))
     {
@@ -678,6 +684,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderTop:
+    info->borderType = RTFBorderParaTop;
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_BORDER))
     {
@@ -689,6 +696,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderBottom:
+    info->borderType = RTFBorderParaBottom;
     ME_GetSelectionParaFormat(info->editor, &fmt);
     if (!(fmt.dwMask & PFM_BORDER))
     {
@@ -735,11 +743,24 @@ static void ME_RTFParAttrHook(RTF_Info *info)
     fmt.dwMask = PFM_BORDER;
     break;
   case rtfBorderWidth:
+  {
+    int borderSide = info->borderType & RTFBorderSideMask;
+    RTFTable *tableDef = info->tableDef;
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
     fmt.wBorderWidth |= ((info->rtfParam / 15) & 7) << 8;
+    if ((info->borderType & RTFBorderTypeMask) == RTFBorderTypeCell)
+    {
+      RTFBorder *border;
+      if (!tableDef || tableDef->numCellsDefined >= MAX_TABLE_CELLS)
+        break;
+      border = &tableDef->cells[tableDef->numCellsDefined].border[borderSide];
+      border->width = info->rtfParam;
+      break;
+    }
     fmt.dwMask = PFM_BORDER;
     break;
+  }
   case rtfBorderSpace:
     ME_GetSelectionParaFormat(info->editor, &fmt);
     /* we assume that borders have been created before (RTF spec) */
@@ -760,6 +781,10 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
   {
     case rtfRowDef:
     {
+      if (!info->editor->bEmulateVersion10) /* v4.1 */
+        info->borderType = 0; /* Not sure */
+      else /* v1.0 - 3.0 */
+        info->borderType = RTFBorderRowTop;
       if (!info->tableDef) {
         info->tableDef = ME_MakeTableDef(info->editor);
       } else {
@@ -785,6 +810,30 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
         pFmt->rgxTabs[cellNum] = 0x00FFFFFF & info->rtfParam;
       }
       info->tableDef->numCellsDefined++;
+      break;
+    case rtfRowBordTop:
+      info->borderType = RTFBorderRowTop;
+      break;
+    case rtfRowBordLeft:
+      info->borderType = RTFBorderRowLeft;
+      break;
+    case rtfRowBordBottom:
+      info->borderType = RTFBorderRowBottom;
+      break;
+    case rtfRowBordRight:
+      info->borderType = RTFBorderRowRight;
+      break;
+    case rtfCellBordTop:
+      info->borderType = RTFBorderCellTop;
+      break;
+    case rtfCellBordLeft:
+      info->borderType = RTFBorderCellLeft;
+      break;
+    case rtfCellBordBottom:
+      info->borderType = RTFBorderCellBottom;
+      break;
+    case rtfCellBordRight:
+      info->borderType = RTFBorderCellRight;
       break;
     case rtfRowGapH:
       if (info->tableDef)
@@ -882,6 +931,10 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
           for (i = 0; i < tableDef->numCellsDefined; i++)
           {
             cell->member.cell.nRightBoundary = tableDef->cells[i].rightBoundary;
+            cell->member.cell.border.top.width = tableDef->cells[i].border[0].width;
+            cell->member.cell.border.left.width = tableDef->cells[i].border[1].width;
+            cell->member.cell.border.bottom.width = tableDef->cells[i].border[2].width;
+            cell->member.cell.border.right.width = tableDef->cells[i].border[3].width;
             cell = cell->member.cell.next_cell;
             if (!cell)
             {

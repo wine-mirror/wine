@@ -950,6 +950,7 @@ typedef struct RTFFont		RTFFont;
 typedef struct RTFColor		RTFColor;
 typedef struct RTFStyle		RTFStyle;
 typedef struct RTFStyleElt	RTFStyleElt;
+typedef struct RTFBorder	RTFBorder;
 typedef struct RTFCell		RTFCell;
 typedef struct RTFTable		RTFTable;
 
@@ -1006,10 +1007,15 @@ struct RTFStyleElt
 	RTFStyleElt	*rtfNextSE;	/* next element in style */
 };
 
+struct RTFBorder
+{
+	int width;
+};
 
 struct RTFCell
 {
 	int rightBoundary;
+	RTFBorder border[4];
 };
 
 
@@ -1019,6 +1025,8 @@ struct RTFTable
 	int numCellsDefined;
 
 	int gapH, leftEdge;
+	/* borders for the table row */
+	RTFBorder border[6];
 
 	/* Used in v1.0 - v3.0 */
 	int numCellsInserted;
@@ -1032,6 +1040,40 @@ struct RTFTable
 	/* Table definitions are stored as a stack to support nested tables. */
 	RTFTable *parent;
 };
+
+
+# define RTFBorderTypeNone       0x00
+# define RTFBorderTypePara       0x10 /* for \brdrX control words */
+# define RTFBorderTypeRow        0x20 /* for \trbrdrX control words */
+# define RTFBorderTypeCell       0x30 /* for \clbrdrX control words */
+# define RTFBorderTypeMask       0xf0
+
+/* The X in the control words \brdrX \trbrdrX and \clbrdrX mentioned above
+ * should be one of t, l, b, r which stand for top, left, bottom, right
+ * respectively. */
+# define RTFBorderSideTop        0x00
+# define RTFBorderSideLeft       0x01
+# define RTFBorderSideBottom     0x02
+# define RTFBorderSideRight      0x03
+# define RTFBorderSideHorizontal 0x04
+# define RTFBorderSideVertical   0x05
+# define RTFBorderSideMask       0x0f
+
+/* Here are the values from the border types and sides put together.  */
+# define RTFBorderParaTop        0x10
+# define RTFBorderParaLeft       0x11
+# define RTFBorderParaBottom     0x12
+# define RTFBorderParaRight      0x13
+# define RTFBorderRowTop         0x20
+# define RTFBorderRowLeft        0x21
+# define RTFBorderRowBottom      0x22
+# define RTFBorderRowRight       0x23
+# define RTFBorderRowHorizontal  0x24
+# define RTFBorderRowVertical    0x25
+# define RTFBorderCellTop        0x30
+# define RTFBorderCellLeft       0x31
+# define RTFBorderCellBottom     0x32
+# define RTFBorderCellRight      0x33
 
 /*
  * Return pointer to new element of type t, or NULL
@@ -1141,6 +1183,7 @@ struct _RTF_Info {
     RTFTable *tableDef;
     int nestingLevel;
     BOOL canInheritInTbl;
+    int borderType; /* value corresponds to the RTFBorder constants. */
 };
 
 

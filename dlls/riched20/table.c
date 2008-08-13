@@ -608,6 +608,7 @@ struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor)
 void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef)
 {
   ZeroMemory(tableDef->cells, sizeof(tableDef->cells));
+  ZeroMemory(tableDef->border, sizeof(tableDef->border));
   tableDef->numCellsDefined = 0;
   tableDef->leftEdge = 0;
   if (!editor->bEmulateVersion10) /* v4.1 */

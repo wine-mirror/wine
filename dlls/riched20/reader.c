@@ -247,6 +247,7 @@ void RTFInit(RTF_Info *info)
         info->tableDef = NULL;
         info->nestingLevel = 0;
         info->canInheritInTbl = FALSE;
+        info->borderType = 0;
 }
 
 /*

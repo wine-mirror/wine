@@ -606,8 +606,24 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
     {
       ME_DisplayItem *cell = ME_FindItemFwd(item, diCell);
       ME_DisplayItem *endRowPara;
+      int borderWidth = 0;
       cell->member.cell.pt = c.pt;
-      endRowPara = ME_GetTableRowEnd(item);
+      /* Offset the text by the largest top border width. */
+      while (cell->member.cell.next_cell) {
+        borderWidth = max(borderWidth, cell->member.cell.border.top.width);
+        cell = cell->member.cell.next_cell;
+      }
+      endRowPara = ME_FindItemFwd(cell, diParagraph);
+      assert(endRowPara->member.para.nFlags & MEPF_ROWEND);
+      if (borderWidth > 0)
+      {
+        borderWidth = max(ME_twips2pointsY(&c, borderWidth), 1);
+        while (cell) {
+          cell->member.cell.yTextOffset = borderWidth;
+          cell = cell->member.cell.prev_cell;
+        }
+        c.pt.y += borderWidth;
+      }
       if (endRowPara->member.para.pFmt->dxStartIndent > 0)
       {
         int dxStartIndent = endRowPara->member.para.pFmt->dxStartIndent;
@@ -620,13 +636,26 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
     {
       /* Set all the cells to the height of the largest cell */
       ME_DisplayItem *startRowPara;
-      int prevHeight, nHeight;
+      int prevHeight, nHeight, bottomBorder = 0;
       ME_DisplayItem *cell = ME_FindItemBack(item, diCell);
+      if (!(item->member.para.next_para->member.para.nFlags & MEPF_ROWSTART))
+      {
+        /* Last row, the bottom border is added to the height. */
+        cell = cell->member.cell.prev_cell;
+        while (cell)
+        {
+          bottomBorder = max(bottomBorder, cell->member.cell.border.bottom.width);
+          cell = cell->member.cell.prev_cell;
+        }
+        bottomBorder = ME_twips2pointsY(&c, bottomBorder);
+        cell = ME_FindItemBack(item, diCell);
+      }
       prevHeight = cell->member.cell.nHeight;
-      nHeight = cell->member.cell.prev_cell->member.cell.nHeight;
+      nHeight = cell->member.cell.prev_cell->member.cell.nHeight + bottomBorder;
       cell->member.cell.nHeight = nHeight;
       item->member.para.nHeight = nHeight;
       cell = cell->member.cell.prev_cell;
+      cell->member.cell.nHeight = nHeight;
       while (cell->member.cell.prev_cell)
       {
         cell = cell->member.cell.prev_cell;
@@ -664,6 +693,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
       c.pt.x = cell->pt.x + cell->nWidth;
       c.pt.y = cell->pt.y;
       cell->next_cell->member.cell.pt = c.pt;
+      c.pt.y += cell->yTextOffset;
     }
     else
     {

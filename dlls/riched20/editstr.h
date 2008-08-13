@@ -165,6 +165,19 @@ typedef struct tagME_Document {
   int last_wrapped_line;
 } ME_Document;
 
+typedef struct tagME_Border
+{
+  int width;
+} ME_Border;
+
+typedef struct tagME_BorderRect
+{
+  ME_Border top;
+  ME_Border left;
+  ME_Border bottom;
+  ME_Border right;
+} ME_BorderRect;
+
 typedef struct tagME_Paragraph
 {
   PARAFORMAT2 *pFmt;
@@ -184,8 +197,10 @@ typedef struct tagME_Cell /* v4.1 */
 {
   int nNestingLevel; /* 0 for normal cells, and greater for nested cells */
   int nRightBoundary;
+  ME_BorderRect border;
   POINT pt;
   int nHeight, nWidth;
+  int yTextOffset; /* The text offset is caused by the largest top border. */
   struct tagME_DisplayItem *prev_cell, *next_cell, *parent_cell;
 } ME_Cell;
 
