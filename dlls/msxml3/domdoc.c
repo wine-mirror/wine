@@ -1444,7 +1444,7 @@ static HRESULT WINAPI domdoc_save(
     HRESULT ret = S_OK;
     DWORD written;
 
-    TRACE("(%p)->(var(vt %x, %s))\n", This, V_VT(&destination),
+    TRACE("(%p)->(var(vt %d, %s))\n", This, V_VT(&destination),
           V_VT(&destination) == VT_BSTR ? debugstr_w(V_BSTR(&destination)) : NULL);
 
     if(V_VT(&destination) != VT_BSTR && V_VT(&destination) != VT_UNKNOWN)
@@ -1474,6 +1474,8 @@ static HRESULT WINAPI domdoc_save(
 
             IXMLDOMDocument_Release(pDocument);
         }
+
+        TRACE("ret %d", ret);
 
         return ret;
     }
