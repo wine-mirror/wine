@@ -2728,13 +2728,15 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return tmp.dwMask;
   }
   case EM_SETPARAFORMAT:
-    ME_SetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
+  {
+    BOOL result = ME_SetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
     ME_RewrapRepaint(editor);
     ME_CommitUndo(editor);
-    return 0;
+    return result;
+  }
   case EM_GETPARAFORMAT:
     ME_GetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
-    return 0;
+    return ((PARAFORMAT2 *)lParam)->dwMask;
   case EM_GETFIRSTVISIBLELINE:
   {
     ME_DisplayItem *p = editor->pBuffer->pFirst;

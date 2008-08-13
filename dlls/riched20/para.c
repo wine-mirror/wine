@@ -430,7 +430,7 @@ void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048])
 #undef DUMP_EFFECT
 }
 
-void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFORMAT2 *pFmt)
+BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFORMAT2 *pFmt)
 {
   PARAFORMAT2 copy;
   assert(sizeof(*para->member.para.pFmt) == sizeof(PARAFORMAT2));
@@ -487,6 +487,8 @@ void ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFOR
 
   if (memcmp(&copy, para->member.para.pFmt, sizeof(PARAFORMAT2)))
     para->member.para.nFlags |= MEPF_REWRAP;
+
+  return TRUE;
 }
 
 
@@ -514,7 +516,7 @@ ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayIte
 }
 
 
-void ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt)
+BOOL ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt)
 {
   ME_DisplayItem *para, *para_end;
   
@@ -526,6 +528,8 @@ void ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt)
       break;
     para = para->member.para.next_para;
   } while(1);
+
+  return TRUE;
 }
 
 void ME_GetParaFormat(ME_TextEditor *editor, const ME_DisplayItem *para, PARAFORMAT2 *pFmt)

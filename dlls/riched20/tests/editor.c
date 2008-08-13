@@ -1087,6 +1087,27 @@ static void test_EM_SETTEXTMODE(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_SETPARAFORMAT(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  PARAFORMAT2 fmt;
+  HRESULT ret;
+  fmt.cbSize = sizeof(PARAFORMAT2);
+  fmt.dwMask = PFM_ALIGNMENT;
+  fmt.wAlignment = PFA_LEFT;
+
+  ret = SendMessage(hwndRichEdit, EM_SETPARAFORMAT, 0, (LPARAM) &fmt);
+  ok(ret != 0, "expected non-zero got %d\n", ret);
+
+  fmt.cbSize = sizeof(PARAFORMAT2);
+  fmt.dwMask = -1;
+  ret = SendMessage(hwndRichEdit, EM_GETPARAFORMAT, 0, (LPARAM) &fmt);
+  ok(ret == PFM_ALL2, "expected %x got %x\n", PFM_ALL2, ret);
+  ok(fmt.dwMask == PFM_ALL2, "expected %x got %x\n", PFM_ALL2, fmt.dwMask);
+
+  DestroyWindow(hwndRichEdit);
+}
+
 static void test_TM_PLAINTEXT(void)
 {
   /*Tests plain text properties*/
@@ -5396,6 +5417,7 @@ START_TEST( editor )
   test_undo_coalescing();
   test_word_movement();
   test_EM_CHARFROMPOS();
+  test_SETPARAFORMAT();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
