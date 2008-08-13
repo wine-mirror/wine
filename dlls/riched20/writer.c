@@ -298,9 +298,7 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
     cell = para->member.para.next_para->member.para.pCell;
     assert(cell);
     do {
-      sprintf(props, "\\cellx%d", cell->member.cell.nRightBoundary);
-      if (!ME_StreamOutPrint(pStream, props))
-        return FALSE;
+      sprintf(props + strlen(props), "\\cellx%d", cell->member.cell.nRightBoundary);
       cell = cell->member.cell.next_cell;
     } while (cell->member.cell.next_cell);
   } else { /* v1.0 - 3.0 */
@@ -308,13 +306,17 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
     int i;
 
     assert(!(para->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)));
+    if (pFmt->dxOffset)
+      sprintf(props + strlen(props), "\\trgaph%d", pFmt->dxOffset);
+    if (pFmt->dxStartIndent)
+      sprintf(props + strlen(props), "\\trleft%d", pFmt->dxStartIndent);
     for (i = 0; i < pFmt->cTabCount; i++)
     {
-      sprintf(props, "\\cellx%d", pFmt->rgxTabs[i] & 0x00FFFFFF);
-      if (!ME_StreamOutPrint(pStream, props))
-        return FALSE;
+      sprintf(props + strlen(props), "\\cellx%d", pFmt->rgxTabs[i] & 0x00FFFFFF);
     }
   }
+  if (!ME_StreamOutPrint(pStream, props))
+    return FALSE;
   props[0] = '\0';
   return TRUE;
 }
@@ -405,43 +407,45 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
   if (fmt->dwMask & PFM_SIDEBYSIDE && fmt->wEffects & PFE_SIDEBYSIDE)
     strcat(props, "\\sbys");
   
-  if (fmt->dwMask & PFM_OFFSET)
-    sprintf(props + strlen(props), "\\li%d", fmt->dxOffset);
-  if (fmt->dwMask & PFM_OFFSETINDENT || fmt->dwMask & PFM_STARTINDENT)
-    sprintf(props + strlen(props), "\\fi%d", fmt->dxStartIndent);
-  if (fmt->dwMask & PFM_RIGHTINDENT)
-    sprintf(props + strlen(props), "\\ri%d", fmt->dxRightIndent);
+  if (!(editor->bEmulateVersion10 && /* v1.0 - 3.0 */
+        fmt->dwMask & PFM_TABLE && fmt->wEffects & PFE_TABLE))
+  {
+    if (fmt->dwMask & PFM_OFFSET)
+      sprintf(props + strlen(props), "\\li%d", fmt->dxOffset);
+    if (fmt->dwMask & PFM_OFFSETINDENT || fmt->dwMask & PFM_STARTINDENT)
+      sprintf(props + strlen(props), "\\fi%d", fmt->dxStartIndent);
+    if (fmt->dwMask & PFM_RIGHTINDENT)
+      sprintf(props + strlen(props), "\\ri%d", fmt->dxRightIndent);
+    if (fmt->dwMask & PFM_TABSTOPS) {
+      static const char * const leader[6] = { "", "\\tldot", "\\tlhyph", "\\tlul", "\\tlth", "\\tleq" };
+
+      for (i = 0; i < fmt->cTabCount; i++) {
+        switch ((fmt->rgxTabs[i] >> 24) & 0xF) {
+          case 1:
+            strcat(props, "\\tqc");
+            break;
+          case 2:
+            strcat(props, "\\tqr");
+            break;
+          case 3:
+            strcat(props, "\\tqdec");
+            break;
+          case 4:
+            /* Word bar tab (vertical bar). Handled below */
+            break;
+        }
+        if (fmt->rgxTabs[i] >> 28 <= 5)
+          strcat(props, leader[fmt->rgxTabs[i] >> 28]);
+        sprintf(props+strlen(props), "\\tx%d", fmt->rgxTabs[i]&0x00FFFFFF);
+      }
+    }
+  }
   if (fmt->dwMask & PFM_SPACEAFTER)
     sprintf(props + strlen(props), "\\sa%d", fmt->dySpaceAfter);
   if (fmt->dwMask & PFM_SPACEBEFORE)
     sprintf(props + strlen(props), "\\sb%d", fmt->dySpaceBefore);
   if (fmt->dwMask & PFM_STYLE)
     sprintf(props + strlen(props), "\\s%d", fmt->sStyle);
-
-  if (fmt->dwMask & PFM_TABSTOPS) {
-    static const char * const leader[6] = { "", "\\tldot", "\\tlhyph", "\\tlul", "\\tlth", "\\tleq" };
-    
-    for (i = 0; i < fmt->cTabCount; i++) {
-      switch ((fmt->rgxTabs[i] >> 24) & 0xF) {
-        case 1:
-          strcat(props, "\\tqc");
-          break;
-        case 2:
-          strcat(props, "\\tqr");
-          break;
-        case 3:
-          strcat(props, "\\tqdec");
-          break;
-        case 4:
-          /* Word bar tab (vertical bar). Handled below */
-          break;
-      }
-      if (fmt->rgxTabs[i] >> 28 <= 5)
-        strcat(props, leader[fmt->rgxTabs[i] >> 28]);
-      sprintf(props+strlen(props), "\\tx%d", fmt->rgxTabs[i]&0x00FFFFFF);
-    }
-  }
-    
   
   if (fmt->dwMask & PFM_SHADING) {
     static const char * const style[16] = { "", "\\bgdkhoriz", "\\bgdkvert", "\\bgdkfdiag",

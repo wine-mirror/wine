@@ -1018,6 +1018,8 @@ struct RTFTable
 	RTFCell cells[MAX_TABLE_CELLS];
 	int numCellsDefined;
 
+	int gapH, leftEdge;
+
 	/* Used in v1.0 - v3.0 */
 	int numCellsInserted;
 

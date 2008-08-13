@@ -62,6 +62,11 @@ static void ME_BeginRow(ME_WrapContext *wc, ME_DisplayItem *para)
     width = cell->nRightBoundary;
     if (cell->prev_cell)
       width -= cell->prev_cell->member.cell.nRightBoundary;
+    if (!cell->prev_cell)
+    {
+      int rowIndent = ME_GetTableRowEnd(para)->member.para.pFmt->dxStartIndent;
+      width -= rowIndent;
+    }
     cell->nWidth = max(ME_twips2pointsX(wc->context, width), 0);
 
     wc->nAvailWidth = cell->nWidth
@@ -427,33 +432,49 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
   ME_WrapContext wc;
   int border = 0;
   int linespace = 0;
+  PARAFORMAT2 *pFmt;
 
   assert(tp->type == diParagraph);
   if (!(tp->member.para.nFlags & MEPF_REWRAP)) {
     return;
   }
   ME_PrepareParagraphForWrapping(c, tp);
+  pFmt = tp->member.para.pFmt;
 
   wc.context = c;
 /*   wc.para_style = tp->member.para.style; */
   wc.style = NULL;
-  wc.nFirstMargin = ME_twips2pointsX(c, tp->member.para.pFmt->dxStartIndent) + beginofs;
-  wc.nLeftMargin = wc.nFirstMargin + ME_twips2pointsX(c, tp->member.para.pFmt->dxOffset);
-  wc.nRightMargin = ME_twips2pointsX(c, tp->member.para.pFmt->dxRightIndent);
+  if (tp->member.para.nFlags & MEPF_ROWEND) {
+    wc.nFirstMargin = wc.nLeftMargin = wc.nRightMargin = 0;
+  } else {
+    int dxStartIndent = pFmt->dxStartIndent;
+    if (tp->member.para.pCell) {
+      dxStartIndent += ME_GetTableRowEnd(tp)->member.para.pFmt->dxOffset;
+    }
+    wc.nFirstMargin = ME_twips2pointsX(c, dxStartIndent);
+    wc.nLeftMargin = wc.nFirstMargin + ME_twips2pointsX(c, pFmt->dxOffset);
+    wc.nRightMargin = ME_twips2pointsX(c, pFmt->dxRightIndent);
+  }
+  if (c->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
+      pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+  {
+    wc.nFirstMargin += ME_twips2pointsX(c, pFmt->dxOffset * 2);
+  }
   wc.nRow = 0;
   wc.pt.y = 0;
-  if (tp->member.para.pFmt->dwMask & PFM_SPACEBEFORE)
-    wc.pt.y += ME_twips2pointsY(c, tp->member.para.pFmt->dySpaceBefore);
-  if (tp->member.para.pFmt->dwMask & PFM_BORDER)
+  if (pFmt->dwMask & PFM_SPACEBEFORE)
+    wc.pt.y += ME_twips2pointsY(c, pFmt->dySpaceBefore);
+  if (!(pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE) &&
+      pFmt->dwMask & PFM_BORDER)
   {
     border = ME_GetParaBorderWidth(c->editor, tp->member.para.pFmt->wBorders);
-    if (tp->member.para.pFmt->wBorders & 1) {
+    if (pFmt->wBorders & 1) {
       wc.nFirstMargin += border;
       wc.nLeftMargin += border;
     }
-    if (tp->member.para.pFmt->wBorders & 2)
+    if (pFmt->wBorders & 2)
       wc.nRightMargin -= border;
-    if (tp->member.para.pFmt->wBorders & 4)
+    if (pFmt->wBorders & 4)
       wc.pt.y += border;
   }
 
@@ -470,10 +491,11 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp, DWORD begino
       wc.pt.y += linespace;
   }
   ME_WrapEndParagraph(&wc, p);
-  if ((tp->member.para.pFmt->dwMask & PFM_BORDER) && (tp->member.para.pFmt->wBorders & 8))
+  if (!(pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE) &&
+      (pFmt->dwMask & PFM_BORDER) && (pFmt->wBorders & 8))
     wc.pt.y += border;
   if (tp->member.para.pFmt->dwMask & PFM_SPACEAFTER)
-    wc.pt.y += ME_twips2pointsY(c, tp->member.para.pFmt->dySpaceAfter);
+    wc.pt.y += ME_twips2pointsY(c, pFmt->dySpaceAfter);
 
   tp->member.para.nFlags &= ~MEPF_REWRAP;
   tp->member.para.nHeight = wc.pt.y;
@@ -528,6 +550,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   int yLastPos = 0;
 
   ME_InitContext(&c, editor, GetDC(editor->hWnd));
+  c.pt.x = editor->selofs;
   editor->nHeight = 0;
   item = editor->pBuffer->pFirst->next;
   while(item != editor->pBuffer->pLast) {
@@ -556,7 +579,16 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
     if (item->member.para.nFlags & MEPF_ROWSTART)
     {
       ME_DisplayItem *cell = ME_FindItemFwd(item, diCell);
+      ME_DisplayItem *endRowPara;
       cell->member.cell.pt = c.pt;
+      endRowPara = ME_GetTableRowEnd(item);
+      if (endRowPara->member.para.pFmt->dxStartIndent > 0)
+      {
+        int dxStartIndent = endRowPara->member.para.pFmt->dxStartIndent;
+        cell = ME_FindItemFwd(item, diCell);
+        cell->member.cell.pt.x += ME_twips2pointsX(&c, dxStartIndent);
+        c.pt.x = cell->member.cell.pt.x;
+      }
     }
     else if (item->member.para.nFlags & MEPF_ROWEND)
     {
@@ -614,7 +646,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
         c.pt.x = item->member.para.pCell->member.cell.pt.x;
       } else {
         /* Normal paragraph */
-        c.pt.x = 0;
+        c.pt.x = editor->selofs;
       }
       c.pt.y += item->member.para.nHeight;
     }

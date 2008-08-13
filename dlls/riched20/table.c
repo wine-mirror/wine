@@ -52,6 +52,7 @@
  */
 
 #include "editor.h"
+#include "rtf.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 WINE_DECLARE_DEBUG_CHANNEL(richedit_lists);
@@ -593,4 +594,24 @@ void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow)
   HideCaret(editor->hWnd);
   ME_ShowCaret(editor);
   ME_SendSelChange(editor);
+}
+
+struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor)
+{
+  RTFTable *tableDef = ALLOC_OBJ(RTFTable);
+  ZeroMemory(tableDef, sizeof(RTFTable));
+  if (!editor->bEmulateVersion10) /* v4.1 */
+    tableDef->gapH = 10;
+  return tableDef;
+}
+
+void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef)
+{
+  ZeroMemory(tableDef->cells, sizeof(tableDef->cells));
+  tableDef->numCellsDefined = 0;
+  tableDef->leftEdge = 0;
+  if (!editor->bEmulateVersion10) /* v4.1 */
+    tableDef->gapH = 10;
+  else /* v1.0 - 3.0 */
+    tableDef->gapH = 0;
 }

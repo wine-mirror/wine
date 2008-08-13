@@ -761,19 +761,16 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
     case rtfRowDef:
     {
       if (!info->tableDef) {
-        info->tableDef = ALLOC_OBJ(RTFTable);
-        ZeroMemory(info->tableDef, sizeof(RTFTable));
+        info->tableDef = ME_MakeTableDef(info->editor);
       } else {
-        ZeroMemory(info->tableDef->cells, sizeof(info->tableDef->cells));
-        info->tableDef->numCellsDefined = 0;
+        ME_InitTableDef(info->editor, info->tableDef);
       }
       break;
     }
     case rtfCellPos:
       if (!info->tableDef)
       {
-        info->tableDef = ALLOC_OBJ(RTFTable);
-        ZeroMemory(info->tableDef, sizeof(RTFTable));
+        info->tableDef = ME_MakeTableDef(info->editor);
       }
       if (info->tableDef->numCellsDefined >= MAX_TABLE_CELLS)
         break;
@@ -788,6 +785,14 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
         pFmt->rgxTabs[cellNum] = 0x00FFFFFF & info->rtfParam;
       }
       info->tableDef->numCellsDefined++;
+      break;
+    case rtfRowGapH:
+      if (info->tableDef)
+        info->tableDef->gapH = info->rtfParam;
+      break;
+    case rtfRowLeftEdge:
+      if (info->tableDef)
+        info->tableDef->leftEdge = info->rtfParam;
       break;
   }
 }
@@ -902,6 +907,8 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
         }
 
         para = ME_InsertTableRowEndFromCursor(info->editor);
+        para->member.para.pFmt->dxOffset = abs(info->tableDef->gapH);
+        para->member.para.pFmt->dxStartIndent = info->tableDef->leftEdge;
         info->nestingLevel--;
         if (!info->nestingLevel)
         {
@@ -922,6 +929,8 @@ static void ME_RTFSpecialCharHook(RTF_Info *info)
         WCHAR endl = '\r';
         ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
         PARAFORMAT2 *pFmt = para->member.para.pFmt;
+        pFmt->dxOffset = info->tableDef->gapH;
+        pFmt->dxStartIndent = info->tableDef->leftEdge;
         while (tableDef->numCellsInserted < tableDef->numCellsDefined)
         {
           WCHAR tab = '\t';

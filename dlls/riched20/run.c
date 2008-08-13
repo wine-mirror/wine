@@ -671,13 +671,21 @@ static SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run 
 
   if (run->nFlags & MERF_TAB)
   {
-    int pos = 0, i = 0, ppos;
+    int pos = 0, i = 0, ppos, shift = 0;
     PARAFORMAT2 *pFmt = para->pFmt;
 
+    if (c->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
+        pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+      /* The horizontal gap shifts the tab positions to leave the gap. */
+      shift = pFmt->dxOffset * 2;
     do {
       if (i < pFmt->cTabCount)
       {
-        pos = pFmt->rgxTabs[i]&0x00FFFFFF;
+        /* Only one side of the horizontal gap is needed at the end of
+         * the table row. */
+        if (i == pFmt->cTabCount -1)
+          shift = shift >> 1;
+        pos = shift + (pFmt->rgxTabs[i]&0x00FFFFFF);
         i++;
       }
       else

@@ -297,6 +297,8 @@ ME_DisplayItem *ME_GetTableRowStart(ME_DisplayItem *para);
 void ME_CheckTablesForCorruption(ME_TextEditor *editor);
 void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, int nOfs,int *nChars);
 void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow);
+struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor);
+void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef);
 
 /* undo.c */
 ME_UndoItem *ME_AddUndoItem(ME_TextEditor *editor, ME_DIType type, const ME_DisplayItem *pdi);
