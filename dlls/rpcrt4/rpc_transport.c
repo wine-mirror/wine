@@ -210,9 +210,7 @@ static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname,
       TRACE("connection failed, error=%x\n", err);
       return RPC_S_SERVER_TOO_BUSY;
     }
-    if (!wait)
-      return RPC_S_SERVER_UNAVAILABLE;
-    if (!WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
+    if (!wait || !WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
       err = GetLastError();
       WARN("connection failed, error=%x\n", err);
       return RPC_S_SERVER_UNAVAILABLE;
