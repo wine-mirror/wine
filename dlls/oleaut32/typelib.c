@@ -1436,6 +1436,18 @@ static inline void TLB_FreeCustData(TLBCustData *pCustData)
     }
 }
 
+static BSTR TLB_MultiByteToBSTR(const char *ptr)
+{
+    DWORD len;
+    BSTR ret;
+
+    len = MultiByteToWideChar(CP_ACP, 0, ptr, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len - 1);
+    if (!ret) return ret;
+    MultiByteToWideChar(CP_ACP, 0, ptr, -1, ret, len);
+    return ret;
+}
+
 /**********************************************************************
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
@@ -2699,7 +2711,6 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
         while(offset < tlbSegDir.pImpFiles.offset +tlbSegDir.pImpFiles.length)
 	{
             char *name;
-            DWORD len;
 
             *ppImpLib = TLB_Alloc(sizeof(TLBImpLib));
             (*ppImpLib)->offset = offset - tlbSegDir.pImpFiles.offset;
@@ -2713,10 +2724,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
             size >>= 2;
             name = TLB_Alloc(size+1);
             MSFT_Read(name, size, &cx, DO_NOT_SEEK);
-            len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0 );
-            (*ppImpLib)->name = TLB_Alloc(len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, name, -1, (*ppImpLib)->name, len );
-            TLB_Free(name);
+            (*ppImpLib)->name = TLB_MultiByteToBSTR(name);
 
             MSFT_ReadGuid(&(*ppImpLib)->guid, oGuid, &cx);
             offset = (offset + sizeof(INT) + sizeof(DWORD) + sizeof(LCID) + sizeof(UINT16) + size + 3) & ~3;
@@ -2749,18 +2757,6 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     return (ITypeLib2*) pTypeLibImpl;
 }
 
-
-static BSTR TLB_MultiByteToBSTR(const char *ptr)
-{
-    DWORD len;
-    BSTR ret;
-
-    len = MultiByteToWideChar(CP_ACP, 0, ptr, -1, NULL, 0);
-    ret = SysAllocStringLen(NULL, len - 1);
-    if (!ret) return ret;
-    MultiByteToWideChar(CP_ACP, 0, ptr, -1, ret, len);
-    return ret;
-}
 
 static BOOL TLB_GUIDFromString(const char *str, GUID *guid)
 {
@@ -3875,7 +3871,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       {
           if (pImpLib->pImpTypeLib)
               ITypeLib_Release((ITypeLib *)pImpLib->pImpTypeLib);
-          TLB_Free(pImpLib->name);
+          SysFreeString(pImpLib->name);
 
           pImpLibNext = pImpLib->next;
           TLB_Free(pImpLib);
