@@ -2753,14 +2753,12 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 static BSTR TLB_MultiByteToBSTR(const char *ptr)
 {
     DWORD len;
-    WCHAR *nameW;
     BSTR ret;
 
     len = MultiByteToWideChar(CP_ACP, 0, ptr, -1, NULL, 0);
-    nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, ptr, -1, nameW, len);
-    ret = SysAllocString(nameW);
-    HeapFree(GetProcessHeap(), 0, nameW);
+    ret = SysAllocStringLen(NULL, len - 1);
+    if (!ret) return ret;
+    MultiByteToWideChar(CP_ACP, 0, ptr, -1, ret, len);
     return ret;
 }
 
@@ -2790,16 +2788,14 @@ static WORD SLTG_ReadString(const char *ptr, BSTR *pBstr)
 {
     WORD bytelen;
     DWORD len;
-    WCHAR *nameW;
 
     *pBstr = NULL;
     bytelen = *(const WORD*)ptr;
     if(bytelen == 0xffff) return 2;
     len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, NULL, 0);
-    nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, nameW, len);
-    *pBstr = SysAllocStringLen(nameW, len);
-    HeapFree(GetProcessHeap(), 0, nameW);
+    *pBstr = SysAllocStringLen(NULL, len - 1);
+    if (*pBstr)
+        len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, *pBstr, len);
     return bytelen + 2;
 }
 
