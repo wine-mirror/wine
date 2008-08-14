@@ -5658,13 +5658,11 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      minimalPKCSSigner, sizeof(minimalPKCSSigner),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
      "Expected CRYPT_E_ASN1_CORRUPT, got %x\n", GetLastError());
     ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      PKCSSignerWithSerial, sizeof(PKCSSignerWithSerial),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     if (buf)
     {
@@ -5691,7 +5689,6 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      PKCSSignerWithHashAlgo, sizeof(PKCSSignerWithHashAlgo),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     if (buf)
     {
@@ -5721,7 +5718,6 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
      PKCSSignerWithHashAndEncryptionAlgo,
      sizeof(PKCSSignerWithHashAndEncryptionAlgo), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     if (buf)
     {
@@ -5752,7 +5748,6 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      PKCSSignerWithHash, sizeof(PKCSSignerWithHash),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     if (buf)
     {
@@ -5787,7 +5782,6 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      CMSSignerWithKeyId, sizeof(CMSSignerWithKeyId),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     if (buf)
     {
