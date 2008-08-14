@@ -329,7 +329,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, RPC_CSTR *StringBinding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingToStringBindingW( RPC_BINDING_HANDLE Binding, RPC_WSTR *StringBinding );
-#define RpcBindingFromStringBinding WINELIB_NAME_AW(RpcBindingFromStringBinding)
+#define RpcBindingToStringBinding WINELIB_NAME_AW(RpcBindingToStringBinding)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingVectorFree( RPC_BINDING_VECTOR** BindingVector );
