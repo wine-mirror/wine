@@ -161,9 +161,33 @@ static void test_WinHttpTimeFromSystemTime(void)
         "Time string returned did not match expected time string.\n");
 }
 
+static void test_WinHttpTimeToSystemTime(void)
+{
+    BOOL ret;
+    SYSTEMTIME time;
+    static const SYSTEMTIME expected_time = {2008, 7, 1, 28, 10, 5, 52, 0};
+    static const WCHAR time_string1[] =
+        {'M','o','n',',',' ','2','8',' ','J','u','l',' ','2','0','0','8',' ',
+         +          '1','0',':','0','5',':','5','2',' ','G','M','T','\n',0};
+    static const WCHAR time_string2[] =
+        {' ','m','o','n',' ','2','8',' ','j','u','l',' ','2','0','0','8',' ',
+         '1','0',' ','0','5',' ','5','2','\n',0};
+
+    ret = WinHttpTimeToSystemTime(time_string1, &time);
+    todo_wine ok(ret == TRUE, "WinHttpTimeToSystemTime failed: %u\n", GetLastError());
+    todo_wine ok(memcmp(&time, &expected_time, sizeof(SYSTEMTIME)) == 0,
+        "Returned SYSTEMTIME structure did not match expected SYSTEMTIME structure.\n");
+
+    ret = WinHttpTimeToSystemTime(time_string2, &time);
+    todo_wine ok(ret == TRUE, "WinHttpTimeToSystemTime failed: %u\n", GetLastError());
+    todo_wine ok(memcmp(&time, &expected_time, sizeof(SYSTEMTIME)) == 0,
+        "Returned SYSTEMTIME structure did not match expected SYSTEMTIME structure.\n");
+}
+
 START_TEST (winhttp)
 {
     test_OpenRequest();
     test_SendRequest();
     test_WinHttpTimeFromSystemTime();
+    test_WinHttpTimeToSystemTime();
 }
