@@ -146,8 +146,24 @@ static void test_SendRequest (void)
     todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing session, got %d.\n", ret);
 }
 
+static void test_WinHttpTimeFromSystemTime(void)
+{
+    BOOL ret;
+    static const SYSTEMTIME time = {2008, 7, 1, 28, 10, 5, 52, 0};
+    static const WCHAR expected_string[] =
+        {'M','o','n',',',' ','2','8',' ','J','u','l',' ','2','0','0','8',' ',
+         '1','0',':','0','5',':','5','2',' ','G','M','T',0};
+    WCHAR time_string[WINHTTP_TIME_FORMAT_BUFSIZE+1];
+
+    ret = WinHttpTimeFromSystemTime(&time, time_string);
+    todo_wine ok(ret == TRUE, "WinHttpTimeFromSystemTime failed: %u\n", GetLastError());
+    todo_wine ok(memcmp(time_string, expected_string, sizeof(expected_string)) == 0,
+        "Time string returned did not match expected time string.\n");
+}
+
 START_TEST (winhttp)
 {
     test_OpenRequest();
     test_SendRequest();
+    test_WinHttpTimeFromSystemTime();
 }
