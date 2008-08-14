@@ -259,3 +259,14 @@ BOOL WINAPI WinHttpWriteData (HINTERNET hRequest, LPCVOID lpBuffer,
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpTimeFromSystemTime (winhttp.@)
+ */
+BOOL WINAPI WinHttpTimeFromSystemTime (CONST SYSTEMTIME* pst, LPWSTR pwszTime)
+{
+    FIXME("(%p, %p): stub\n", pst, pwszTime);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
