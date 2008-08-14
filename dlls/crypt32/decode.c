@@ -2285,6 +2285,7 @@ static BOOL CRYPT_AsnDecodeBool(const BYTE *pbEncoded, DWORD cbEncoded,
     }
     else
     {
+        *pcbStructInfo = sizeof(BOOL);
         *(BOOL *)pvStructInfo = pbEncoded[2] ? TRUE : FALSE;
         ret = TRUE;
     }
@@ -2761,6 +2762,7 @@ static BOOL CRYPT_AsnDecodePathLenConstraint(const BYTE *pbEncoded,
         struct PATH_LEN_CONSTRAINT *constraint =
          (struct PATH_LEN_CONSTRAINT *)pvStructInfo;
 
+        *pcbStructInfo = bytesNeeded;
         size = sizeof(constraint->dwPathLenConstraint);
         ret = CRYPT_AsnDecodeIntInternal(pbEncoded, cbEncoded, dwFlags,
          &constraint->dwPathLenConstraint, &size, pcbDecoded);
@@ -2962,6 +2964,7 @@ static BOOL CRYPT_AsnDecodeOctetsInternal(const BYTE *pbEncoded,
         {
             CRYPT_DATA_BLOB *blob;
 
+            *pcbStructInfo = bytesNeeded;
             blob = (CRYPT_DATA_BLOB *)pvStructInfo;
             blob->cbData = dataLen;
             if (dwFlags & CRYPT_DECODE_NOCOPY_FLAG)
@@ -3063,6 +3066,7 @@ static BOOL CRYPT_AsnDecodeBitsInternal(const BYTE *pbEncoded, DWORD cbEncoded,
             {
                 CRYPT_BIT_BLOB *blob;
 
+                *pcbStructInfo = bytesNeeded;
                 blob = (CRYPT_BIT_BLOB *)pvStructInfo;
                 blob->cbData = dataLen - 1;
                 blob->cUnusedBits = *(pbEncoded + 1 + lenBytes);
@@ -3250,6 +3254,7 @@ static BOOL CRYPT_AsnDecodeIntegerInternal(const BYTE *pbEncoded,
         {
             CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)pvStructInfo;
 
+            *pcbStructInfo = bytesNeeded;
             blob->cbData = dataLen;
             assert(blob->pbData);
             if (blob->cbData)
@@ -3343,6 +3348,7 @@ static BOOL CRYPT_AsnDecodeUnsignedIntegerInternal(const BYTE *pbEncoded,
             {
                 CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)pvStructInfo;
 
+                *pcbStructInfo = bytesNeeded;
                 blob->cbData = dataLen;
                 assert(blob->pbData);
                 /* remove leading zero byte if it exists */
@@ -3939,6 +3945,7 @@ static BOOL CRYPT_AsnDecodeDistPointName(const BYTE *pbEncoded,
             {
                 CRL_DIST_POINT_NAME *name = (CRL_DIST_POINT_NAME *)pvStructInfo;
 
+                *pcbStructInfo = bytesNeeded;
                 if (dataLen)
                 {
                     name->dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
