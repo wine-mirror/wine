@@ -1007,12 +1007,12 @@ static BOOL FAR PASCAL EnumSessions_cb2( LPCDPSESSIONDESC2 lpThisSD,
     if ( lpThisSD->dwFlags & DPSESSION_PASSWORDREQUIRED )
     {
         /* Incorrect password */
-        dpsd.lpszPasswordA = (LPSTR) "sonic boom";
+        U2(dpsd).lpszPasswordA = (LPSTR) "sonic boom";
         hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
         checkHR( DPERR_INVALIDPASSWORD, hr );
 
         /* Correct password */
-        dpsd.lpszPasswordA = (LPSTR) "hadouken";
+        U2(dpsd).lpszPasswordA = (LPSTR) "hadouken";
         hr = IDirectPlayX_Open( pDP, &dpsd, DPOPEN_JOIN );
         checkHR( DP_OK, hr );
     }
@@ -1138,7 +1138,7 @@ static void test_Open(void)
 
     /* Join to protected session */
     IDirectPlayX_Close( pDP_server );
-    dpsd_server.lpszPasswordA = (LPSTR) "hadouken";
+    U2(dpsd_server).lpszPasswordA = (LPSTR) "hadouken";
     hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
     todo_wine checkHR( DP_OK, hr );
 
@@ -1169,7 +1169,7 @@ static BOOL FAR PASCAL EnumSessions_cb( LPCDPSESSIONDESC2 lpThisSD,
     check( FALSE, lpThisSD == NULL );
 
 
-    if ( lpThisSD->lpszPasswordA != NULL )
+    if ( U2(*lpThisSD).lpszPasswordA != NULL )
     {
         check( TRUE, (lpThisSD->dwFlags & DPSESSION_PASSWORDREQUIRED) != 0 );
     }
@@ -1180,7 +1180,7 @@ static BOOL FAR PASCAL EnumSessions_cb( LPCDPSESSIONDESC2 lpThisSD,
     }
 
     check( sizeof(*lpThisSD), lpThisSD->dwSize );
-    checkLP( NULL, lpThisSD->lpszPasswordA );
+    checkLP( NULL, U2(*lpThisSD).lpszPasswordA );
 
     return TRUE;
 }
@@ -1207,7 +1207,7 @@ static LPDIRECTPLAY4 create_session(DPSESSIONDESC2 *lpdpsd)
     {
         ZeroMemory( &name, sizeof(DPNAME) );
         name.dwSize = sizeof(DPNAME);
-        name.lpszShortNameA = (LPSTR) "bofh";
+        U1(name).lpszShortNameA = (LPSTR) "bofh";
 
         hr = IDirectPlayX_CreatePlayer( pDP, &dpid, &name, NULL, NULL,
                                         0, DPPLAYER_SERVERPLAYER );
@@ -1277,41 +1277,41 @@ static void test_EnumSessions(void)
         memcpy( &dpsd_server[i], &dpsd, sizeof(DPSESSIONDESC2) );
     }
 
-    dpsd_server[0].lpszSessionNameA = (LPSTR) "normal";
+    U1(dpsd_server[0]).lpszSessionNameA = (LPSTR) "normal";
     dpsd_server[0].dwFlags = ( DPSESSION_CLIENTSERVER |
                                DPSESSION_DIRECTPLAYPROTOCOL );
     dpsd_server[0].dwMaxPlayers = 10;
 
-    dpsd_server[1].lpszSessionNameA = (LPSTR) "full";
+    U1(dpsd_server[1]).lpszSessionNameA = (LPSTR) "full";
     dpsd_server[1].dwFlags = ( DPSESSION_CLIENTSERVER |
                                DPSESSION_DIRECTPLAYPROTOCOL );
     dpsd_server[1].dwMaxPlayers = 1;
 
-    dpsd_server[2].lpszSessionNameA = (LPSTR) "no new";
+    U1(dpsd_server[2]).lpszSessionNameA = (LPSTR) "no new";
     dpsd_server[2].dwFlags = ( DPSESSION_CLIENTSERVER |
                                DPSESSION_DIRECTPLAYPROTOCOL |
                                DPSESSION_NEWPLAYERSDISABLED );
     dpsd_server[2].dwMaxPlayers = 10;
 
-    dpsd_server[3].lpszSessionNameA = (LPSTR) "no join";
+    U1(dpsd_server[3]).lpszSessionNameA = (LPSTR) "no join";
     dpsd_server[3].dwFlags = ( DPSESSION_CLIENTSERVER |
                                DPSESSION_DIRECTPLAYPROTOCOL |
                                DPSESSION_JOINDISABLED );
     dpsd_server[3].dwMaxPlayers = 10;
 
-    dpsd_server[4].lpszSessionNameA = (LPSTR) "private";
+    U1(dpsd_server[4]).lpszSessionNameA = (LPSTR) "private";
     dpsd_server[4].dwFlags = ( DPSESSION_CLIENTSERVER |
                                DPSESSION_DIRECTPLAYPROTOCOL |
                                DPSESSION_PRIVATE );
     dpsd_server[4].dwMaxPlayers = 10;
-    dpsd_server[4].lpszPasswordA = (LPSTR) "password";
+    U2(dpsd_server[4]).lpszPasswordA = (LPSTR) "password";
 
-    dpsd_server[5].lpszSessionNameA = (LPSTR) "protected";
+    U1(dpsd_server[5]).lpszSessionNameA = (LPSTR) "protected";
     dpsd_server[5].dwFlags = ( DPSESSION_CLIENTSERVER |
                                DPSESSION_DIRECTPLAYPROTOCOL |
                                DPSESSION_PASSWORDREQUIRED );
     dpsd_server[5].dwMaxPlayers = 10;
-    dpsd_server[5].lpszPasswordA = (LPSTR) "password";
+    U2(dpsd_server[5]).lpszPasswordA = (LPSTR) "password";
 
 
     for (i=0; i<N_SESSIONS; i++)
@@ -1426,7 +1426,7 @@ static void test_EnumSessions(void)
     /* - Only session password set */
     for (i=4;i<=5;i++)
     {
-        dpsd_server[i].lpszPasswordA = (LPSTR) "password";
+        U2(dpsd_server[i]).lpszPasswordA = (LPSTR) "password";
         dpsd_server[i].dwFlags = 0;
         pDPserver[i] = create_session( &dpsd_server[i] );
     }
@@ -1450,7 +1450,7 @@ static void test_EnumSessions(void)
     for (i=4; i<=5; i++)
     {
         IDirectPlayX_Release( pDPserver[i] );
-        dpsd_server[i].lpszPasswordA = NULL;
+        U2(dpsd_server[i]).lpszPasswordA = NULL;
     }
     dpsd_server[4].dwFlags = DPSESSION_PRIVATE;
     dpsd_server[5].dwFlags = DPSESSION_PASSWORDREQUIRED;
@@ -1471,7 +1471,7 @@ static void test_EnumSessions(void)
     for (i=4; i<=5; i++)
     {
         IDirectPlayX_Release( pDPserver[i] );
-        dpsd_server[i].lpszPasswordA = (LPSTR) "password";
+        U2(dpsd_server[i]).lpszPasswordA = (LPSTR) "password";
     }
     dpsd_server[4].dwFlags = DPSESSION_PRIVATE;
     dpsd_server[5].dwFlags = DPSESSION_PASSWORDREQUIRED;
@@ -1495,7 +1495,7 @@ static void test_EnumSessions(void)
     check( 1, callbackData.dwCounter1 );
 
     /* - Listing with incorrect password */
-    dpsd.lpszPasswordA = (LPSTR) "bad_password";
+    U2(dpsd).lpszPasswordA = (LPSTR) "bad_password";
     callbackData.dwFlags = 0;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
@@ -1511,7 +1511,7 @@ static void test_EnumSessions(void)
     check( 1, callbackData.dwCounter1 );
 
     /* - Listing with  correct password */
-    dpsd.lpszPasswordA = (LPSTR) "password";
+    U2(dpsd).lpszPasswordA = (LPSTR) "password";
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     (LPVOID) &callbackData,
@@ -1519,7 +1519,7 @@ static void test_EnumSessions(void)
     check( 2, callbackData.dwCounter1 );
 
 
-    dpsd.lpszPasswordA = NULL;
+    U2(dpsd).lpszPasswordA = NULL;
     callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
@@ -1537,12 +1537,12 @@ static void test_EnumSessions(void)
         IDirectPlayX_Release( pDPserver[i] );
         dpsd_server[i].dwFlags = ( DPSESSION_CLIENTSERVER |
                                    DPSESSION_DIRECTPLAYPROTOCOL );
-        dpsd_server[i].lpszPasswordA = NULL;
+        U2(dpsd_server[i]).lpszPasswordA = NULL;
         dpsd_server[i].dwMaxPlayers = 10;
     }
-    dpsd_server[4].lpszSessionNameA = (LPSTR) "normal1";
+    U1(dpsd_server[4]).lpszSessionNameA = (LPSTR) "normal1";
     dpsd_server[4].guidApplication = appGuid;
-    dpsd_server[5].lpszSessionNameA = (LPSTR) "normal2";
+    U1(dpsd_server[5]).lpszSessionNameA = (LPSTR) "normal2";
     dpsd_server[5].guidApplication = appGuid2;
     for (i=4; i<=5; i++)
     {
@@ -1696,14 +1696,14 @@ static void test_SessionDesc(void)
     checkGuid( &lpData[0]->guidInstance, &lpData[1]->guidInstance );
 
     /* Set: Regular operation */
-    dpsd.lpszSessionNameA = (LPSTR) "Wahaa";
+    U1(dpsd).lpszSessionNameA = (LPSTR) "Wahaa";
     hr = IDirectPlayX_SetSessionDesc( pDP[0], &dpsd, 0 );
     checkHR( DP_OK, hr );
 
     dwDataSize = 1024;
     hr = IDirectPlayX_GetSessionDesc( pDP[1], lpData[1], &dwDataSize );
     checkHR( DP_OK, hr );
-    checkStr( dpsd.lpszSessionNameA, lpData[1]->lpszSessionNameA );
+    checkStr( U1(dpsd).lpszSessionNameA, U1(*lpData[1]).lpszSessionNameA );
 
 
     /* Set: Failing to modify a remote session */
@@ -1816,8 +1816,8 @@ static void test_CreatePlayer(void)
 
 
     name.dwSize = sizeof(DPNAME);
-    name.lpszShortNameA = (LPSTR) "test";
-    name.lpszLongNameA = NULL;
+    U1(name).lpszShortNameA = (LPSTR) "test";
+    U2(name).lpszLongNameA = NULL;
 
 
     hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid, &name, NULL, NULL,
@@ -2443,8 +2443,8 @@ static void test_PlayerName(void)
 
 
     playerName.dwSize = sizeof(DPNAME);
-    playerName.lpszShortNameA = (LPSTR) "player_name";
-    playerName.lpszLongNameA = (LPSTR) "player_long_name";
+    U1(playerName).lpszShortNameA = (LPSTR) "player_name";
+    U2(playerName).lpszLongNameA = (LPSTR) "player_long_name";
 
 
     /* Invalid parameters */
@@ -2480,8 +2480,8 @@ static void test_PlayerName(void)
     hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
     checkHR( DP_OK, hr );
     check( 45, dwDataSize );
-    checkStr( playerName.lpszShortNameA, ((LPDPNAME)lpData)->lpszShortNameA );
-    checkStr( playerName.lpszLongNameA,  ((LPDPNAME)lpData)->lpszLongNameA );
+    checkStr( U1(playerName).lpszShortNameA, U1(*(LPDPNAME)lpData).lpszShortNameA );
+    checkStr( U2(playerName).lpszLongNameA,  U2(*(LPDPNAME)lpData).lpszLongNameA );
     check( 0,                            ((LPDPNAME)lpData)->dwFlags );
 
     hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], NULL, 0 );
@@ -2490,8 +2490,8 @@ static void test_PlayerName(void)
     hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
     checkHR( DP_OK, hr );
     check( 16, dwDataSize );
-    checkLP( NULL, ((LPDPNAME)lpData)->lpszShortNameA );
-    checkLP( NULL, ((LPDPNAME)lpData)->lpszLongNameA );
+    checkLP( NULL, U1(*(LPDPNAME)lpData).lpszShortNameA );
+    checkLP( NULL, U2(*(LPDPNAME)lpData).lpszLongNameA );
     check( 0,      ((LPDPNAME)lpData)->dwFlags );
 
 
@@ -2509,8 +2509,8 @@ static void test_PlayerName(void)
     hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
     checkHR( DP_OK, hr );
     check( 16, dwDataSize );
-    checkLP( NULL, ((LPDPNAME)lpData)->lpszShortNameA );
-    checkLP( NULL, ((LPDPNAME)lpData)->lpszLongNameA );
+    checkLP( NULL, U1(*(LPDPNAME)lpData).lpszShortNameA );
+    checkLP( NULL, U2(*(LPDPNAME)lpData).lpszLongNameA );
     check( 0, ((LPDPNAME)lpData)->dwFlags );
 
 
@@ -2520,7 +2520,7 @@ static void test_PlayerName(void)
     checkHR( DP_OK, hr );
 
     /* - Local (no propagation) */
-    playerName.lpszShortNameA = (LPSTR) "no_propagation";
+    U1(playerName).lpszShortNameA = (LPSTR) "no_propagation";
     hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
                                      DPSET_LOCAL );
     checkHR( DP_OK, hr );
@@ -2530,18 +2530,18 @@ static void test_PlayerName(void)
                                      lpData, &dwDataSize ); /* Local fetch */
     checkHR( DP_OK, hr );
     check( 48, dwDataSize );
-    checkStr( "no_propagation", ((LPDPNAME)lpData)->lpszShortNameA );
+    checkStr( "no_propagation", U1(*(LPDPNAME)lpData).lpszShortNameA );
 
     dwDataSize = 1024;
     hr = IDirectPlayX_GetPlayerName( pDP[1], dpid[0],
                                      lpData, &dwDataSize ); /* Remote fetch */
     checkHR( DP_OK, hr );
     check( 45, dwDataSize );
-    checkStr( "player_name", ((LPDPNAME)lpData)->lpszShortNameA );
+    checkStr( "player_name", U1(*(LPDPNAME)lpData).lpszShortNameA );
 
     /* -- 2 */
 
-    playerName.lpszShortNameA = (LPSTR) "no_propagation_2";
+    U1(playerName).lpszShortNameA = (LPSTR) "no_propagation_2";
     hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
                                      DPSET_LOCAL | DPSET_REMOTE );
     checkHR( DP_OK, hr );
@@ -2551,17 +2551,17 @@ static void test_PlayerName(void)
                                      lpData, &dwDataSize ); /* Local fetch */
     checkHR( DP_OK, hr );
     check( 50, dwDataSize );
-    checkStr( "no_propagation_2", ((LPDPNAME)lpData)->lpszShortNameA );
+    checkStr( "no_propagation_2", U1(*(LPDPNAME)lpData).lpszShortNameA );
 
     dwDataSize = 1024;
     hr = IDirectPlayX_GetPlayerName( pDP[1], dpid[0],
                                      lpData, &dwDataSize ); /* Remote fetch */
     checkHR( DP_OK, hr );
     check( 45, dwDataSize );
-    checkStr( "player_name", ((LPDPNAME)lpData)->lpszShortNameA );
+    checkStr( "player_name", U1(*(LPDPNAME)lpData).lpszShortNameA );
 
     /* - Remote (propagation, default) */
-    playerName.lpszShortNameA = (LPSTR) "propagation";
+    U1(playerName).lpszShortNameA = (LPSTR) "propagation";
     hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
                                      DPSET_REMOTE );
     checkHR( DP_OK, hr );
@@ -2571,10 +2571,10 @@ static void test_PlayerName(void)
                                      lpData, &dwDataSize ); /* Remote fetch */
     checkHR( DP_OK, hr );
     check( 45, dwDataSize );
-    checkStr( "propagation", ((LPDPNAME)lpData)->lpszShortNameA );
+    checkStr( "propagation", U1(*(LPDPNAME)lpData).lpszShortNameA );
 
     /* -- 2 */
-    playerName.lpszShortNameA = (LPSTR) "propagation_2";
+    U1(playerName).lpszShortNameA = (LPSTR) "propagation_2";
     hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName,
                                      0 );
     checkHR( DP_OK, hr );
@@ -2584,7 +2584,7 @@ static void test_PlayerName(void)
                                      lpData, &dwDataSize ); /* Remote fetch */
     checkHR( DP_OK, hr );
     check( 47, dwDataSize );
-    checkStr( "propagation_2", ((LPDPNAME)lpData)->lpszShortNameA );
+    checkStr( "propagation_2", U1(*(LPDPNAME)lpData).lpszShortNameA );
 
 
     /* Checking system messages */
@@ -2628,8 +2628,8 @@ static BOOL FAR PASCAL EnumSessions_cb_join_secure( LPCDPSESSIONDESC2 lpThisSD,
 
     ZeroMemory( &dpCredentials, sizeof(DPCREDENTIALS) );
     dpCredentials.dwSize = sizeof(DPCREDENTIALS);
-    dpCredentials.lpszUsernameA = (LPSTR) "user";
-    dpCredentials.lpszPasswordA = (LPSTR) "pass";
+    U1(dpCredentials).lpszUsernameA = (LPSTR) "user";
+    U2(dpCredentials).lpszPasswordA = (LPSTR) "pass";
     hr = IDirectPlayX_SecureOpen( pDP, &dpsd, DPOPEN_JOIN,
                                   NULL, &dpCredentials );
     checkHR( DPERR_LOGONDENIED, hr ); /* TODO: Make this work */
