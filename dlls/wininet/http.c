@@ -4061,9 +4061,9 @@ BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
 
     /* as per RFC 2068, S8.1.2.1, if the client is HTTP/1.1 then assume that
      * the connection is keep-alive by default */
-    if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_VERSION, szVersion,
-                             &dwBufferSize, NULL) ||
-        strcmpiW(szVersion, g_szHttp1_1))
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_VERSION, szVersion,
+                             &dwBufferSize, NULL) &&
+        !strcmpiW(szVersion, g_szHttp1_1))
     {
         keepalive = TRUE;
     }
