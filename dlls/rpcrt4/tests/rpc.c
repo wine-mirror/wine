@@ -722,6 +722,35 @@ static void test_endpoint_mapper(void)
     ok(status == RPC_S_OK, "RpcBindingVectorFree failed with error %lu\n", status);
 }
 
+static void test_RpcStringBindingFromBinding(void)
+{
+    static unsigned char ncacn_np[] = "ncacn_np";
+    static unsigned char address[] = ".";
+    static unsigned char endpoint[] = "\\pipe\\wine_rpc_test";
+    RPC_STATUS status;
+    handle_t handle;
+    RPC_CSTR binding;
+
+    status = RpcStringBindingCompose(NULL, ncacn_np, address,
+                                     endpoint, NULL, &binding);
+    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
+
+    status = RpcBindingFromStringBinding(binding, &handle);
+    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n", status);
+    RpcStringFree(&binding);
+
+    status = RpcBindingToStringBinding(handle, &binding);
+    ok(status == RPC_S_OK, "RpcStringBindingFromBinding failed with error %lu\n", status);
+
+    todo_wine
+    ok(!strcmp((const char *)binding, "ncacn_np:.[\\\\pipe\\\\wine_rpc_test]"),
+       "binding string didn't match what was expected: \"%s\"\n", binding);
+    RpcStringFree(&binding);
+
+    status = RpcBindingFree(&handle);
+    ok(status == RPC_S_OK, "RpcBindingFree failed with error %lu\n", status);
+}
+
 START_TEST( rpc )
 {
     trace ( " ** Uuid Conversion and Comparison Tests **\n" );
@@ -734,4 +763,5 @@ START_TEST( rpc )
     test_RpcStringBindingParseA();
     test_I_RpcExceptionFilter();
     test_endpoint_mapper();
+    test_RpcStringBindingFromBinding();
 }
