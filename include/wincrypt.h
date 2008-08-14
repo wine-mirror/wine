@@ -3629,6 +3629,18 @@ typedef struct _CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA {
 #define CMSG_SIGNER_CERT_ID_PARAM        38
 #define CMSG_CMS_SIGNER_INFO_PARAM       39
 
+typedef struct _CMSG_CMS_SIGNER_INFO {
+    DWORD                      dwVersion;
+    CERT_ID                    SignerId;
+    CRYPT_ALGORITHM_IDENTIFIER HashAlgorithm;
+    CRYPT_ALGORITHM_IDENTIFIER HashEncryptionAlgorithm;
+    CRYPT_DATA_BLOB            EncryptedHash;
+    CRYPT_ATTRIBUTES           AuthAttrs;
+    CRYPT_ATTRIBUTES           UnauthAttrs;
+} CMSG_CMS_SIGNER_INFO, *PCMSG_CMS_SIGNER_INFO;
+
+typedef CRYPT_ATTRIBUTES CMSG_ATTR, *PCMSG_ATTR;
+
 #define CMSG_SIGNED_DATA_V1               1
 #define CMSG_SIGNED_DATA_V3               3
 #define CMSG_SIGNED_DATA_PKCS_1_5_VERSION CMSG_SIGNED_DATA_V1
@@ -3648,6 +3660,61 @@ typedef struct _CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA {
 #define CMSG_ENVELOPED_DATA_V2               2
 #define CMSG_ENVELOPED_DATA_PKCS_1_5_VERSION CMSG_ENVELOPED_DATA_V0
 #define CMSG_ENVELOPED_DATA_CMS_VERSION      CMSG_ENVELOPED_DATA_V2
+
+typedef struct _CMSG_KEY_TRANS_RECIPIENT_INFO {
+    DWORD                      dwVersion;
+    CERT_ID                    RecipientId;
+    CRYPT_ALGORITHM_IDENTIFIER KeyEncryptionAlgorithm;
+    CRYPT_DATA_BLOB            EncryptedKey;
+} CMSG_KEY_TRANS_RECIPIENT_INFO, *PCMSG_KEY_TRANS_RECIPIENT_INFO;
+
+typedef struct _CMSG_RECIPIENT_ENCRYPTED_KEY_INFO {
+    CERT_ID                     RecipientId;
+    CRYPT_DATA_BLOB             EncryptedKey;
+    PCRYPT_ATTRIBUTE_TYPE_VALUE pOtherAttr;
+} CMSG_RECIPIENT_ENCRYPTED_KEY_INFO, *PCMSG_RECIPIENT_ENCRYPTED_KEY_INFO;
+
+typedef struct _CMSG_KEY_AGREE_RECIPIENT_INFO {
+    DWORD                               dwVersion;
+    DWORD                               dwOriginatorChoice;
+    union {
+        CERT_ID              OriginatorCertId;
+        CERT_PUBLIC_KEY_INFO OriginatorPublicKeyInfo;
+    } DUMMYUNIONNAME;
+    CRYPT_ALGORITHM_IDENTIFIER          UserKeyingMaterial;
+    DWORD                               cRecipientEncryptedKeys;
+    PCMSG_RECIPIENT_ENCRYPTED_KEY_INFO *rgpRecipientEncryptedKeys;
+} CMSG_KEY_AGREE_RECIPIENT_INFO, *PCMSG_KEY_AGREE_RECIPIENT_INFO;
+
+#define CMSG_KEY_AGREE_ORIGINATOR_CERT       1
+#define CMSG_KEY_AGREE_ORIGINATOR_PUBLIC_KEY 2
+
+typedef struct _CMSG_MAIL_LIST_RECIPIENT_INFO {
+    DWORD                       dwVersion;
+    CRYPT_DATA_BLOB             KeyId;
+    CRYPT_ALGORITHM_IDENTIFIER  KeyEncryptionAlgorithm;
+    CRYPT_DATA_BLOB             EncryptedKey;
+    FILETIME                    Date;
+    PCRYPT_ATTRIBUTE_TYPE_VALUE pOtherAttr;
+} CMSG_MAIL_LIST_RECIPIENT_INFO, *PCMSG_MAIL_LIST_RECIPIENT_INFO;
+
+typedef struct _CMSG_CMS_RECIPIENT_INFO {
+    DWORD dwRecipientChoice;
+    union {
+        PCMSG_KEY_TRANS_RECIPIENT_INFO pKeyTrans;
+        PCMSG_KEY_AGREE_RECIPIENT_INFO pKeyAgree;
+        PCMSG_MAIL_LIST_RECIPIENT_INFO pMailList;
+    } DUMMYUNIONNAME;
+} CMSG_CMS_RECIPIENT_INFO, *PCMSG_CMS_RECIPIENT_INFO;
+
+#define CMSG_ENVELOPED_RECIPIENT_V0     0
+#define CMSG_ENVELOPED_RECIPIENT_V2     2
+#define CMSG_ENVELOPED_RECIPIENT_V3     3
+#define CMSG_ENVELOPED_RECIPIENT_V4     4
+#define CMSG_KEY_TRANS_PKCS_1_5_VERSION CMSG_ENVELOPED_RECIPIENT_V0
+#define CMSG_KEY_TRANS_CMS_VERSION      CMSG_ENVELOPED_RECIPIENT_V2
+#define CMSG_KEY_AGREE_VERSION          CMSG_ENVELOPED_RECIPIENT_V3
+#define CMSG_MAIL_LIST_VERSION          CMSG_ENVELOPED_RECIPIENT_V4
 
 /* CryptMsgGetAndVerifySigner flags */
 #define CMSG_TRUSTED_SIGNER_FLAG   0x1
