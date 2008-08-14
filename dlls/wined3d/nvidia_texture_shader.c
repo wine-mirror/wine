@@ -105,8 +105,8 @@ static GLenum d3dta_to_combiner_input(DWORD d3dta, DWORD stage, INT texture_idx)
 }
 
 static GLenum invert_mapping(GLenum mapping) {
-    if (mapping == GL_UNSIGNED_INVERT_NV) return GL_SIGNED_IDENTITY_NV;
-    else if (mapping == GL_SIGNED_IDENTITY_NV) return GL_UNSIGNED_INVERT_NV;
+    if (mapping == GL_UNSIGNED_INVERT_NV) return GL_UNSIGNED_IDENTITY_NV;
+    else if (mapping == GL_UNSIGNED_IDENTITY_NV) return GL_UNSIGNED_INVERT_NV;
 
     FIXME("Unhandled mapping %#x\n", mapping);
     return mapping;
@@ -116,7 +116,7 @@ static void get_src_and_opr_nvrc(DWORD stage, DWORD arg, BOOL is_alpha, GLenum* 
     /* The WINED3DTA_COMPLEMENT flag specifies the complement of the input should
     * be used. */
     if (arg & WINED3DTA_COMPLEMENT) *mapping = GL_UNSIGNED_INVERT_NV;
-    else *mapping = GL_SIGNED_IDENTITY_NV;
+    else *mapping = GL_UNSIGNED_IDENTITY_NV; /* Clamp all values to positive ranges */
 
     /* The WINED3DTA_ALPHAREPLICATE flag specifies the alpha component of the input
     * should be used for all input components. */

@@ -9298,6 +9298,116 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
     IDirect3D9_Release(d3d);
 }
 
+static void texop_range_test(IDirect3DDevice9 *device)
+{
+    static const struct {
+        float x, y, z;
+        D3DCOLOR diffuse;
+    } quad[] = {
+        {-1.0f, -1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)},
+        {-1.0f,  1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)},
+        { 1.0f, -1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)},
+        { 1.0f,  1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)}
+    };
+    HRESULT hr;
+    IDirect3DTexture9 *texture;
+    D3DLOCKED_RECT locked_rect;
+    D3DCAPS9 caps;
+    DWORD color;
+
+    /* We need ADD and SUBTRACT operations */
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed with 0x%08x\n", hr);
+    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_ADD)) {
+        skip("D3DTOP_ADD is not supported, skipping value range test\n");
+    }
+    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_SUBTRACT)) {
+        skip("D3DTEXOPCAPS_SUBTRACT is not supported, skipping value range test\n");
+    }
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetFVF failed with 0x%08x\n", hr);
+    /* Stage 1: result = diffuse(=1.0) + diffuse
+     * stage 2: result = result - tfactor(= 0.5)
+     */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x80808080);
+    ok(SUCCEEDED(hr), "SetRenderState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_ADD);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLORARG1, D3DTA_CURRENT);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_SUBTRACT);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00808080, 1), "texop Range > 1.0 returned 0x%08x, expected 0x00808080\n",
+       color);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateTexture failed with 0x%08x\n", hr);
+    hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed with 0x%08x\n", hr);
+    *((DWORD *)locked_rect.pBits) = D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00);
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(SUCCEEDED(hr), "LockRect failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x\n", hr);
+
+    /* Stage 1: result = texture(=0.0) - tfactor(= 0.5)
+     * stage 2: result = result + diffuse(1.0)
+     */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x80808080);
+    ok(SUCCEEDED(hr), "SetRenderState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SUBTRACT);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLORARG1, D3DTA_CURRENT);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_ADD);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ffffff, 1), "texop Range < 0.0 returned 0x%08x, expected 0x00ffffff\n",
+       color);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 1, (IDirect3DBaseTexture9 *)NULL);
+    ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x\n", hr);
+    IDirect3DTexture9_Release(texture);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -9455,6 +9565,7 @@ START_TEST(visual)
     }
     else skip("No ps_1_1 support\n");
     texop_test(device_ptr);
+    texop_range_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
