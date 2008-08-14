@@ -577,7 +577,6 @@ static void test_RpcStringBindingParseA(void)
     ok(!strcmp((char *)uuid, "00000000-0000-0000-c000-000000000046"), "uuid should have been 00000000-0000-0000-C000-000000000046 instead of %s\n", uuid);
     ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
     ok(!strcmp((char *)network_addr, "."), "network_addr should have been . instead of %s\n", network_addr);
-    todo_wine
     ok(!strcmp((char *)endpoint, "pipetest"), "endpoint should have been pipetest instead of %s\n", endpoint);
     todo_wine
     ok(options && !strcmp((char *)options, ""), "options should have been \"\" of \"%s\"\n", options);
@@ -593,7 +592,6 @@ static void test_RpcStringBindingParseA(void)
     ok(!strcmp((char *)uuid, "00000000-0000-0000-c000-000000000046"), "uuid should have been 00000000-0000-0000-C000-000000000046 instead of %s\n", uuid);
     ok(!strcmp((char *)protseq, "ncacn_np"), "protseq should have been ncacn_np instead of %s\n", protseq);
     ok(!strcmp((char *)network_addr, "."), "network_addr should have been . instead of %s\n", network_addr);
-    todo_wine
     ok(!strcmp((char *)endpoint, "pipetest"), "endpoint should have been pipetest instead of %s\n", endpoint);
     todo_wine
     ok(options && !strcmp((char *)options, ""), "options should have been \"\" of \"%s\"\n", options);
@@ -742,7 +740,6 @@ static void test_RpcStringBindingFromBinding(void)
     status = RpcBindingToStringBinding(handle, &binding);
     ok(status == RPC_S_OK, "RpcStringBindingFromBinding failed with error %lu\n", status);
 
-    todo_wine
     ok(!strcmp((const char *)binding, "ncacn_np:.[\\\\pipe\\\\wine_rpc_test]"),
        "binding string didn't match what was expected: \"%s\"\n", binding);
     RpcStringFree(&binding);

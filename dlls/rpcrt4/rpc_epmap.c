@@ -153,7 +153,7 @@ static RPC_STATUS get_epm_handle_client(RPC_BINDING_HANDLE handle, RPC_BINDING_H
 
 static RPC_STATUS get_epm_handle_server(RPC_BINDING_HANDLE *epm_handle)
 {
-    unsigned char string_binding[] = "ncacn_np:.[\\pipe\\epmapper]";
+    unsigned char string_binding[] = "ncacn_np:.[\\\\pipe\\\\epmapper]";
 
     return RpcBindingFromStringBindingA(string_binding, epm_handle);
 }

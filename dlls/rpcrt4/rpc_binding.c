@@ -308,21 +308,6 @@ RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
   }
 }
 
-/* utility functions for string composing and parsing */
-static unsigned RPCRT4_strcopyA(LPSTR data, LPCSTR src)
-{
-  unsigned len = strlen(src);
-  memcpy(data, src, len*sizeof(CHAR));
-  return len;
-}
-
-static unsigned RPCRT4_strcopyW(LPWSTR data, LPCWSTR src)
-{
-  unsigned len = strlenW(src);
-  memcpy(data, src, len*sizeof(WCHAR));
-  return len;
-}
-
 static LPSTR RPCRT4_strconcatA(LPSTR dst, LPCSTR src)
 {
   DWORD len = strlen(dst), slen = strlen(src);
@@ -351,6 +336,123 @@ static LPWSTR RPCRT4_strconcatW(LPWSTR dst, LPCWSTR src)
   return ndst;
 }
 
+/* Copies the escaped version of a component into a string binding.
+ * Note: doesn't nul-terminate the string */
+static RPC_CSTR escape_string_binding_component(RPC_CSTR string_binding,
+                                                const unsigned char *component)
+{
+  for (; *component; component++) {
+    switch (*component) {
+      case '@':
+      case ':':
+      case '[':
+      case ']':
+      case '\\':
+        *string_binding++ = '\\';
+        *string_binding++ = *component;
+        break;
+      default:
+        *string_binding++ = *component;
+        break;
+    }
+  }
+  return string_binding;
+}
+
+static RPC_WSTR escape_string_binding_componentW(RPC_WSTR string_binding,
+                                                 const WCHAR *component)
+{
+  for (; *component; component++) {
+    switch (*component) {
+      case '@':
+      case ':':
+      case '[':
+      case ']':
+      case '\\':
+        *string_binding++ = '\\';
+        *string_binding++ = *component;
+        break;
+      default:
+        *string_binding++ = *component;
+        break;
+    }
+  }
+  return string_binding;
+}
+
+static const unsigned char *string_binding_find_delimiter(
+    const unsigned char *string_binding, unsigned char delim)
+{
+  const unsigned char *next;
+  for (next = string_binding; *next; next++) {
+    if (*next == '\\') {
+      next++;
+      continue;
+    }
+    if (*next == delim)
+      return next;
+  }
+  return NULL;
+}
+
+static const WCHAR *string_binding_find_delimiterW(
+    const WCHAR *string_binding, WCHAR delim)
+{
+  const WCHAR *next;
+  for (next = string_binding; *next; next++) {
+    if (*next == '\\') {
+      next++;
+      continue;
+    }
+    if (*next == delim)
+      return next;
+  }
+  return NULL;
+}
+
+static RPC_CSTR unescape_string_binding_component(
+    const unsigned char *string_binding, int len)
+{
+  RPC_CSTR component, p;
+
+  if (len == -1) len = strlen((const char *)string_binding);
+
+  component = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*component));
+  if (!component) return NULL;
+  for (p = component; len > 0; string_binding++, len--) {
+    if (*string_binding == '\\') {
+      string_binding++;
+      len--;
+      *p++ = *string_binding;
+    } else {
+      *p++ = *string_binding;
+    }
+  }
+  *p = '\0';
+  return component;
+}
+
+static RPC_WSTR unescape_string_binding_componentW(
+    const WCHAR *string_binding, int len)
+{
+  RPC_WSTR component, p;
+
+  if (len == -1) len = strlen((const char *)string_binding);
+
+  component = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*component));
+  if (!component) return NULL;
+  for (p = component; len > 0; string_binding++, len--) {
+    if (*string_binding == '\\') {
+      string_binding++;
+      len--;
+      *p++ = *string_binding;
+    } else {
+      *p++ = *string_binding;
+    }
+  }
+  *p = '\0';
+  return component;
+}
 
 /***********************************************************************
  *             RpcStringBindingComposeA (RPCRT4.@)
@@ -360,42 +462,43 @@ RPC_STATUS WINAPI RpcStringBindingComposeA(RPC_CSTR ObjUuid, RPC_CSTR Protseq,
                                            RPC_CSTR Options, RPC_CSTR *StringBinding )
 {
   DWORD len = 1;
-  LPSTR data;
+  RPC_CSTR data;
 
   TRACE( "(%s,%s,%s,%s,%s,%p)\n",
         debugstr_a( (char*)ObjUuid ), debugstr_a( (char*)Protseq ),
         debugstr_a( (char*)NetworkAddr ), debugstr_a( (char*)Endpoint ),
         debugstr_a( (char*)Options ), StringBinding );
 
-  if (ObjUuid && *ObjUuid) len += strlen((char*)ObjUuid) + 1;
-  if (Protseq && *Protseq) len += strlen((char*)Protseq) + 1;
-  if (NetworkAddr && *NetworkAddr) len += strlen((char*)NetworkAddr);
-  if (Endpoint && *Endpoint) len += strlen((char*)Endpoint) + 2;
-  if (Options && *Options) len += strlen((char*)Options) + 2;
+  /* overestimate for each component for escaping of delimiters */
+  if (ObjUuid && *ObjUuid) len += strlen((char*)ObjUuid) * 2 + 1;
+  if (Protseq && *Protseq) len += strlen((char*)Protseq) * 2 + 1;
+  if (NetworkAddr && *NetworkAddr) len += strlen((char*)NetworkAddr) * 2;
+  if (Endpoint && *Endpoint) len += strlen((char*)Endpoint) * 2 + 2;
+  if (Options && *Options) len += strlen((char*)Options) * 2 + 2;
 
   data = HeapAlloc(GetProcessHeap(), 0, len);
-  *StringBinding = (unsigned char*)data;
+  *StringBinding = data;
 
   if (ObjUuid && *ObjUuid) {
-    data += RPCRT4_strcopyA(data, (char*)ObjUuid);
+    data = escape_string_binding_component(data, ObjUuid);
     *data++ = '@';
   }
   if (Protseq && *Protseq) {
-    data += RPCRT4_strcopyA(data, (char*)Protseq);
+    data = escape_string_binding_component(data, Protseq);
     *data++ = ':';
   }
   if (NetworkAddr && *NetworkAddr)
-    data += RPCRT4_strcopyA(data, (char*)NetworkAddr);
+    data = escape_string_binding_component(data, NetworkAddr);
 
   if ((Endpoint && *Endpoint) ||
       (Options && *Options)) {
     *data++ = '[';
     if (Endpoint && *Endpoint) {
-      data += RPCRT4_strcopyA(data, (char*)Endpoint);
+      data = escape_string_binding_component(data, Endpoint);
       if (Options && *Options) *data++ = ',';
     }
     if (Options && *Options) {
-      data += RPCRT4_strcopyA(data, (char*)Options);
+      data = escape_string_binding_component(data, Options);
     }
     *data++ = ']';
   }
@@ -419,35 +522,36 @@ RPC_STATUS WINAPI RpcStringBindingComposeW( RPC_WSTR ObjUuid, RPC_WSTR Protseq,
        debugstr_w( NetworkAddr ), debugstr_w( Endpoint ),
        debugstr_w( Options ), StringBinding);
 
-  if (ObjUuid && *ObjUuid) len += strlenW(ObjUuid) + 1;
-  if (Protseq && *Protseq) len += strlenW(Protseq) + 1;
-  if (NetworkAddr && *NetworkAddr) len += strlenW(NetworkAddr);
-  if (Endpoint && *Endpoint) len += strlenW(Endpoint) + 2;
-  if (Options && *Options) len += strlenW(Options) + 2;
+  /* overestimate for each component for escaping of delimiters */
+  if (ObjUuid && *ObjUuid) len += strlenW(ObjUuid) * 2 + 1;
+  if (Protseq && *Protseq) len += strlenW(Protseq) * 2 + 1;
+  if (NetworkAddr && *NetworkAddr) len += strlenW(NetworkAddr) * 2;
+  if (Endpoint && *Endpoint) len += strlenW(Endpoint) * 2 + 2;
+  if (Options && *Options) len += strlenW(Options) * 2 + 2;
 
   data = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
   *StringBinding = data;
 
   if (ObjUuid && *ObjUuid) {
-    data += RPCRT4_strcopyW(data, ObjUuid);
+    data = escape_string_binding_componentW(data, ObjUuid);
     *data++ = '@';
   }
   if (Protseq && *Protseq) {
-    data += RPCRT4_strcopyW(data, Protseq);
+    data = escape_string_binding_componentW(data, Protseq);
     *data++ = ':';
   }
   if (NetworkAddr && *NetworkAddr) {
-    data += RPCRT4_strcopyW(data, NetworkAddr);
+    data = escape_string_binding_componentW(data, NetworkAddr);
   }
   if ((Endpoint && *Endpoint) ||
       (Options && *Options)) {
     *data++ = '[';
     if (Endpoint && *Endpoint) {
-      data += RPCRT4_strcopyW(data, Endpoint);
+      data = escape_string_binding_componentW(data, Endpoint);
       if (Options && *Options) *data++ = ',';
     }
     if (Options && *Options) {
-      data += RPCRT4_strcopyW(data, Options);
+      data = escape_string_binding_componentW(data, Options);
     }
     *data++ = ']';
   }
@@ -464,7 +568,7 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
                                           RPC_CSTR *Protseq, RPC_CSTR *NetworkAddr,
                                           RPC_CSTR *Endpoint, RPC_CSTR *Options)
 {
-  CHAR *data, *next;
+  const unsigned char *data, *next;
   static const char ep_opt[] = "endpoint=";
   BOOL endpoint_already_found = FALSE;
 
@@ -477,13 +581,13 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
   if (Endpoint) *Endpoint = NULL;
   if (Options) *Options = NULL;
 
-  data = (char*) StringBinding;
+  data = StringBinding;
 
-  next = strchr(data, '@');
+  next = string_binding_find_delimiter(data, '@');
   if (next) {
     UUID uuid;
     RPC_STATUS status;
-    RPC_CSTR str_uuid = (unsigned char*)RPCRT4_strndupA(data, next - data);
+    RPC_CSTR str_uuid = unescape_string_binding_component(data, next - data);
     status = UuidFromStringA(str_uuid, &uuid);
     if (status != RPC_S_OK) {
       HeapFree(GetProcessHeap(), 0, str_uuid);
@@ -496,42 +600,43 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
     data = next+1;
   }
 
-  next = strchr(data, ':');
+  next = string_binding_find_delimiter(data, ':');
   if (next) {
-    if (Protseq) *Protseq = (unsigned char*)RPCRT4_strndupA(data, next - data);
+    if (Protseq) *Protseq = unescape_string_binding_component(data, next - data);
     data = next+1;
   }
 
-  next = strchr(data, '[');
+  next = string_binding_find_delimiter(data, '[');
   if (next) {
-    CHAR *close, *opt;
+    const unsigned char *close;
+    RPC_CSTR opt;
 
-    if (NetworkAddr) *NetworkAddr = (unsigned char*)RPCRT4_strndupA(data, next - data);
+    if (NetworkAddr) *NetworkAddr = unescape_string_binding_component(data, next - data);
     data = next+1;
-    close = strchr(data, ']');
+    close = string_binding_find_delimiter(data, ']');
     if (!close) goto fail;
 
     /* tokenize options */
     while (data < close) {
-      next = strchr(data, ',');
+      next = string_binding_find_delimiter(data, ',');
       if (!next || next > close) next = close;
       /* FIXME: this is kind of inefficient */
-      opt = RPCRT4_strndupA(data, next - data);
+      opt = unescape_string_binding_component(data, next - data);
       data = next+1;
 
       /* parse option */
-      next = strchr(opt, '=');
+      next = string_binding_find_delimiter(opt, '=');
       if (!next) {
         /* not an option, must be an endpoint */
         if (endpoint_already_found) goto fail;
-        if (Endpoint) *Endpoint = (unsigned char*) opt;
+        if (Endpoint) *Endpoint = opt;
         else HeapFree(GetProcessHeap(), 0, opt);
         endpoint_already_found = TRUE;
       } else {
-        if (strncmp(opt, ep_opt, strlen(ep_opt)) == 0) {
+        if (strncmp((const char *)opt, ep_opt, strlen(ep_opt)) == 0) {
           /* endpoint option */
           if (endpoint_already_found) goto fail;
-          if (Endpoint) *Endpoint = (unsigned char*) RPCRT4_strdupA(next+1);
+          if (Endpoint) *Endpoint = unescape_string_binding_component(next+1, -1);
           HeapFree(GetProcessHeap(), 0, opt);
           endpoint_already_found = TRUE;
         } else {
@@ -539,10 +644,10 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
           if (Options) {
             if (*Options) {
               /* FIXME: this is kind of inefficient */
-              *Options = (unsigned char*) RPCRT4_strconcatA( (char*)*Options, opt);
+              *Options = (unsigned char*) RPCRT4_strconcatA( (char*)*Options, (char *)opt);
               HeapFree(GetProcessHeap(), 0, opt);
             } else
-              *Options = (unsigned char*) opt;
+              *Options = opt;
           } else
             HeapFree(GetProcessHeap(), 0, opt);
         }
@@ -553,7 +658,7 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
     if (*data) goto fail;
   }
   else if (NetworkAddr) 
-    *NetworkAddr = (unsigned char*)RPCRT4_strdupA(data);
+    *NetworkAddr = unescape_string_binding_component(data, -1);
 
   return RPC_S_OK;
 
@@ -573,7 +678,7 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
                                           RPC_WSTR *Protseq, RPC_WSTR *NetworkAddr,
                                           RPC_WSTR *Endpoint, RPC_WSTR *Options)
 {
-  WCHAR *data, *next;
+  const WCHAR *data, *next;
   static const WCHAR ep_opt[] = {'e','n','d','p','o','i','n','t','=',0};
   BOOL endpoint_already_found = FALSE;
 
@@ -588,11 +693,11 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
 
   data = StringBinding;
 
-  next = strchrW(data, '@');
+  next = string_binding_find_delimiterW(data, '@');
   if (next) {
     UUID uuid;
     RPC_STATUS status;
-    RPC_WSTR str_uuid = RPCRT4_strndupW(data, next - data);
+    RPC_WSTR str_uuid = unescape_string_binding_componentW(data, next - data);
     status = UuidFromStringW(str_uuid, &uuid);
     if (status != RPC_S_OK) {
       HeapFree(GetProcessHeap(), 0, str_uuid);
@@ -605,31 +710,32 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
     data = next+1;
   }
 
-  next = strchrW(data, ':');
+  next = string_binding_find_delimiterW(data, ':');
   if (next) {
-    if (Protseq) *Protseq = RPCRT4_strndupW(data, next - data);
+    if (Protseq) *Protseq = unescape_string_binding_componentW(data, next - data);
     data = next+1;
   }
 
-  next = strchrW(data, '[');
+  next = string_binding_find_delimiterW(data, '[');
   if (next) {
-    WCHAR *close, *opt;
+    const WCHAR *close;
+    RPC_WSTR opt;
 
-    if (NetworkAddr) *NetworkAddr = RPCRT4_strndupW(data, next - data);
+    if (NetworkAddr) *NetworkAddr = unescape_string_binding_componentW(data, next - data);
     data = next+1;
-    close = strchrW(data, ']');
+    close = string_binding_find_delimiterW(data, ']');
     if (!close) goto fail;
 
     /* tokenize options */
     while (data < close) {
-      next = strchrW(data, ',');
+      next = string_binding_find_delimiterW(data, ',');
       if (!next || next > close) next = close;
       /* FIXME: this is kind of inefficient */
-      opt = RPCRT4_strndupW(data, next - data);
+      opt = unescape_string_binding_componentW(data, next - data);
       data = next+1;
 
       /* parse option */
-      next = strchrW(opt, '=');
+      next = string_binding_find_delimiterW(opt, '=');
       if (!next) {
         /* not an option, must be an endpoint */
         if (endpoint_already_found) goto fail;
@@ -640,7 +746,7 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
         if (strncmpW(opt, ep_opt, strlenW(ep_opt)) == 0) {
           /* endpoint option */
           if (endpoint_already_found) goto fail;
-          if (Endpoint) *Endpoint = RPCRT4_strdupW(next+1);
+          if (Endpoint) *Endpoint = unescape_string_binding_componentW(next+1, -1);
           HeapFree(GetProcessHeap(), 0, opt);
           endpoint_already_found = TRUE;
         } else {
@@ -661,7 +767,7 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
     data = close+1;
     if (*data) goto fail;
   } else if (NetworkAddr) 
-    *NetworkAddr = RPCRT4_strdupW(data);
+    *NetworkAddr = unescape_string_binding_componentW(data, -1);
 
   return RPC_S_OK;
 
