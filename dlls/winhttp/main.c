@@ -281,3 +281,15 @@ BOOL WINAPI WinHttpTimeToSystemTime (LPCWSTR pwszTime, SYSTEMTIME* pst)
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpQueryHeaders (winhttp.@)
+ */
+BOOL WINAPI WinHttpQueryHeaders (HINTERNET hRequest, DWORD dwInfoLevel, LPCWSTR pwszName,
+                                 LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
+{
+    FIXME("(%d): stub\n", dwInfoLevel);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
