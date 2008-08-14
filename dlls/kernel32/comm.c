@@ -824,7 +824,7 @@ BOOL WINAPI SetCommState( HANDLE handle, LPDCB lpdcb)
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    switch (lpdcb->fDtrControl)
+    switch (lpdcb->fRtsControl)
     {
     case RTS_CONTROL_DISABLE:                                                  break;
     case RTS_CONTROL_ENABLE:      shf.FlowReplace |= SERIAL_RTS_CONTROL;       break;
