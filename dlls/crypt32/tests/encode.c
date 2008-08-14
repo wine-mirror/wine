@@ -5498,14 +5498,12 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     info.SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* To be encoded, a signer must have a valid cert ID, where a valid ID may
@@ -5519,7 +5517,6 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine {
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -5533,13 +5530,11 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
-    }
     info.SignerId.IssuerSerialNumber.SerialNumber.cbData = sizeof(serialNum);
     info.SignerId.IssuerSerialNumber.SerialNumber.pbData = (BYTE *)serialNum;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine {
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -5554,14 +5549,12 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
-    }
     info.SignerId.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
     info.SignerId.KeyId.cbData = sizeof(serialNum);
     info.SignerId.KeyId.pbData = (BYTE *)serialNum;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine {
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -5576,7 +5569,6 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
-    }
     /* While a CERT_ID can have a hash type, that's not allowed in CMS, where
      * only the IssuerAndSerialNumber and SubjectKeyIdentifier types are allowed
      * (see RFC 3852, section 5.3.)
@@ -5587,7 +5579,6 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Now with a hash algo */
@@ -5599,7 +5590,6 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine {
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -5615,12 +5605,10 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
-    }
     info.HashEncryptionAlgorithm.pszObjId = oid2;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine {
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -5636,13 +5624,11 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
-    }
     info.EncryptedHash.cbData = sizeof(hash);
     info.EncryptedHash.pbData = (BYTE *)hash;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine {
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -5656,7 +5642,6 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
             ok(!memcmp(buf, PKCSSignerWithHash, size), "Unexpected value\n");
             LocalFree(buf);
         }
-    }
     }
 }
 
