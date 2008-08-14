@@ -27,5 +27,5 @@
 @ stub WinHttpSetStatusCallback
 @ stub WinHttpSetTimeouts
 @ stdcall WinHttpTimeFromSystemTime(ptr ptr)
-@ stub WinHttpTimeToSystemTime
+@ stdcall WinHttpTimeToSystemTime(wstr ptr)
 @ stdcall WinHttpWriteData(ptr ptr long ptr)

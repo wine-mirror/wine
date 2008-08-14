@@ -270,3 +270,14 @@ BOOL WINAPI WinHttpTimeFromSystemTime (CONST SYSTEMTIME* pst, LPWSTR pwszTime)
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpTimeToSystemTime (winhttp.@)
+ */
+BOOL WINAPI WinHttpTimeToSystemTime (LPCWSTR pwszTime, SYSTEMTIME* pst)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(pwszTime), pst);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}
