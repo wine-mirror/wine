@@ -293,3 +293,15 @@ BOOL WINAPI WinHttpQueryHeaders (HINTERNET hRequest, DWORD dwInfoLevel, LPCWSTR 
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *          WinHttpAddRequestHeaders (winhttp.@)
+ */
+BOOL WINAPI WinHttpAddRequestHeaders (HINTERNET hRequest, LPCWSTR pwszHeaders,
+                                      DWORD dwHeadersLength, DWORD dwModifiers)
+{
+    FIXME("(%s, %d, %d): stub\n", debugstr_w(pwszHeaders), dwHeadersLength, dwModifiers);
+
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return FALSE;
+}

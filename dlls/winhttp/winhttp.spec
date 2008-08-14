@@ -2,7 +2,7 @@
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
-@ stub WinHttpAddRequestHeaders
+@ stdcall WinHttpAddRequestHeaders(ptr wstr long long)
 @ stdcall WinHttpCheckPlatform()
 @ stdcall WinHttpCloseHandle(ptr)
 @ stdcall WinHttpConnect(ptr wstr long long)
