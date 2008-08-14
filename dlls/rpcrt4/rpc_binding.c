@@ -816,8 +816,13 @@ RPC_STATUS WINAPI RpcBindingToStringBindingA( RPC_BINDING_HANDLE Binding, RPC_CS
 
   TRACE("(%p,%p)\n", Binding, StringBinding);
 
-  ret = UuidToStringA(&bind->ObjectUuid, &ObjectUuid);
-  if (ret != RPC_S_OK) return ret;
+  if (UuidIsNil(&bind->ObjectUuid, &ret))
+    ObjectUuid = NULL;
+  else
+  {
+    ret = UuidToStringA(&bind->ObjectUuid, &ObjectUuid);
+    if (ret != RPC_S_OK) return ret;
+  }
 
   ret = RpcStringBindingComposeA(ObjectUuid, (unsigned char*)bind->Protseq, (unsigned char*) bind->NetworkAddr,
                                  (unsigned char*) bind->Endpoint, NULL, StringBinding);
