@@ -129,17 +129,19 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         BOOL exact_alpha;
         BOOL exact_color;
     } matches[] = {
-        /* First, try without aux buffers - this is the most common cause
-         * for not finding a pixel format. Also some drivers(the open source ones)
+        /* First, try without alpha match buffers. MacOS supports aux buffers only
+         * on A8R8G8B8, and we prefer better offscreen rendering over an alpha match.
+         * Then try without aux buffers - this is the most common cause for not
+         * finding a pixel format. Also some drivers(the open source ones)
          * only offer 32 bit ARB pixel formats. First try without an exact alpha
          * match, then try without an exact alpha and color match.
          */
-        { TRUE,  TRUE,  TRUE  },
         { FALSE, TRUE,  TRUE  },
-        { TRUE,  FALSE, TRUE  },
-        { TRUE,  FALSE, FALSE },
+        { TRUE,  TRUE,  TRUE  },
         { FALSE, FALSE, TRUE  },
         { FALSE, FALSE, FALSE },
+        { TRUE,  FALSE, TRUE  },
+        { TRUE,  FALSE, FALSE },
     };
 
     int i = 0;
