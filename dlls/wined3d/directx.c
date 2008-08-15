@@ -2261,7 +2261,6 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         case WINED3DFMT_Q8W8V8U8:
         case WINED3DFMT_V16U16:
         case WINED3DFMT_W11V11U10:
-        case WINED3DFMT_A2W10V10U10:
             getFormatDescEntry(CheckFormat, &GLINFO_LOCATION, &glDesc);
             if(glDesc->conversion_group == WINED3DFMT_UNKNOWN) {
                 /* We have a GL extension giving native support */
@@ -2301,6 +2300,7 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         case WINED3DFMT_INDEX16:
         case WINED3DFMT_INDEX32:
         case WINED3DFMT_Q16W16V16U16:
+        case WINED3DFMT_A2W10V10U10:
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return FALSE;
 
