@@ -19,8 +19,16 @@
 #ifndef _WINE_WINHTTP_PRIVATE_H_
 #define _WINE_WINHTTP_PRIVATE_H_
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
+
 #include "wine/list.h"
 #include "wine/unicode.h"
+
+#ifdef HAVE_NETDB_H
+# include <netdb.h>
+#endif
 
 typedef struct _object_header_t object_header_t;
 
@@ -56,6 +64,19 @@ typedef struct
     LPWSTR proxy_username;
     LPWSTR proxy_password;
 } session_t;
+
+typedef struct
+{
+    object_header_t hdr;
+    session_t *session;
+    LPWSTR hostname;    /* final destination of the request */
+    LPWSTR servername;  /* name of the server we directly connect to */
+    LPWSTR username;
+    LPWSTR password;
+    INTERNET_PORT hostport;
+    INTERNET_PORT serverport;
+    struct sockaddr_in sockaddr;
+} connect_t;
 
 object_header_t *addref_object( object_header_t * );
 object_header_t *grab_object( HINTERNET );

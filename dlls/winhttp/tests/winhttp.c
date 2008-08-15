@@ -42,13 +42,11 @@ static void test_OpenRequest (void)
     SetLastError(0xdeadbeef);
     connection = WinHttpConnect(session, NULL, INTERNET_DEFAULT_HTTP_PORT, 0);
     ok (connection == NULL, "WinHttpConnect succeeded in opening connection to NULL server argument.\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* Test with a valid server name */
     connection = WinHttpConnect (session, test_server, INTERNET_DEFAULT_HTTP_PORT, 0);
-    todo_wine ok(connection != NULL,
-        "WinHttpConnect failed to open a connection, error: %u.\n", GetLastError());
+    ok(connection != NULL, "WinHttpConnect failed to open a connection, error: %u.\n", GetLastError());
 
     request = WinHttpOpenRequest(connection, NULL, NULL, NULL, WINHTTP_NO_REFERER,
         WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
@@ -67,7 +65,7 @@ static void test_OpenRequest (void)
 
  done:
     ret = WinHttpCloseHandle(connection);
-    todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
     ret = WinHttpCloseHandle(session);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing session, got %d.\n", ret);
 
@@ -101,8 +99,7 @@ static void test_SendRequest (void)
     ok(session != NULL, "WinHttpOpen failed to open session.\n");
 
     connection = WinHttpConnect (session, test_site, INTERNET_DEFAULT_HTTP_PORT, 0);
-    todo_wine ok(connection != NULL,
-        "WinHttpConnect failed to open a connection, error: %u.\n", GetLastError());
+    ok(connection != NULL, "WinHttpConnect failed to open a connection, error: %u.\n", GetLastError());
 
     request = WinHttpOpenRequest(connection, test_verb, test_file, NULL, WINHTTP_NO_REFERER,
         WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_BYPASS_PROXY_CACHE);
@@ -140,7 +137,7 @@ static void test_SendRequest (void)
     todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
  done:
     ret = WinHttpCloseHandle(connection);
-    todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
     ret = WinHttpCloseHandle(session);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing session, got %d.\n", ret);
 }
@@ -230,8 +227,7 @@ static void test_WinHttpAddHeaders(void)
     ok(session != NULL, "WinHttpOpen failed to open session.\n");
 
     connection = WinHttpConnect (session, test_site, INTERNET_DEFAULT_HTTP_PORT, 0);
-    todo_wine ok(connection != NULL,
-        "WinHttpConnect failed to open a connection, error: %u.\n", GetLastError());
+    ok(connection != NULL, "WinHttpConnect failed to open a connection, error: %u.\n", GetLastError());
 
     request = WinHttpOpenRequest(connection, test_verb, test_file, NULL, WINHTTP_NO_REFERER,
         WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
@@ -547,7 +543,7 @@ static void test_WinHttpAddHeaders(void)
     todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
  done:
     ret = WinHttpCloseHandle(connection);
-    todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
     ret = WinHttpCloseHandle(session);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing session, got %d.\n", ret);
 

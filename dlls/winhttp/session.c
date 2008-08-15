@@ -102,6 +102,87 @@ end:
 }
 
 /***********************************************************************
+ *          connect_destroy (internal)
+ */
+static void connect_destroy( object_header_t *hdr )
+{
+    connect_t *connect = (connect_t *)hdr;
+
+    TRACE("%p\n", connect);
+
+    release_object( &connect->session->hdr );
+
+    heap_free( connect->hostname );
+    heap_free( connect->servername );
+    heap_free( connect->username );
+    heap_free( connect->password );
+    heap_free( connect );
+}
+
+static const object_vtbl_t connect_vtbl =
+{
+    connect_destroy,
+    NULL,
+    NULL
+};
+
+/***********************************************************************
+ *          WinHttpConnect (winhttp.@)
+ */
+HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PORT port, DWORD reserved )
+{
+    connect_t *connect;
+    session_t *session;
+    HINTERNET hconnect = NULL;
+
+    TRACE("%p, %s, %u, %x\n", hsession, debugstr_w(server), port, reserved);
+
+    if (!server)
+    {
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    if (!(session = (session_t *)grab_object( hsession )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return NULL;
+    }
+    if (session->hdr.type != WINHTTP_HANDLE_TYPE_SESSION)
+    {
+        release_object( &session->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return NULL;
+    }
+    if (!(connect = heap_alloc_zero( sizeof(connect_t) )))
+    {
+        release_object( &session->hdr );
+        return NULL;
+    }
+    connect->hdr.type = WINHTTP_HANDLE_TYPE_CONNECT;
+    connect->hdr.vtbl = &connect_vtbl;
+    connect->hdr.refs = 1;
+    connect->hdr.flags = session->hdr.flags;
+    connect->hdr.callback = session->hdr.callback;
+    connect->hdr.notify_mask = session->hdr.notify_mask;
+
+    addref_object( &session->hdr );
+    connect->session = session;
+    list_add_head( &session->hdr.children, &connect->hdr.entry );
+
+    if (server && !(connect->hostname = strdupW( server ))) goto end;
+    connect->hostport = port;
+
+    if (!(hconnect = alloc_handle( &connect->hdr ))) goto end;
+    connect->hdr.handle = hconnect;
+
+end:
+    release_object( &connect->hdr );
+
+    TRACE("returning %p\n", hconnect);
+    return hconnect;
+}
+
+/***********************************************************************
  *          WinHttpCloseHandle (winhttp.@)
  */
 BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )

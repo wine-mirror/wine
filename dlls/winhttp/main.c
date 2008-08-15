@@ -117,19 +117,6 @@ BOOL WINAPI WinHttpGetIEProxyConfigForCurrentUser(WINHTTP_CURRENT_USER_IE_PROXY_
 }
 
 /***********************************************************************
- *          WinHttpConnect (winhttp.@)
- */
-
-HINTERNET WINAPI WinHttpConnect (HINTERNET hSession, LPCWSTR pwszServerName,
-                                 INTERNET_PORT nServerPort, DWORD dwReserved)
-{
-    FIXME("(%s, %d, 0x%x): stub\n", debugstr_w(pwszServerName), nServerPort, dwReserved);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return NULL;
-}
-
-/***********************************************************************
  *          WinHttpOpenRequest (winhttp.@)
  */
 HINTERNET WINAPI WinHttpOpenRequest (HINTERNET hConnect, LPCWSTR pwszVerb, LPCWSTR pwszObjectName,
