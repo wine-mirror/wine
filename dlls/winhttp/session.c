@@ -183,6 +183,93 @@ end:
 }
 
 /***********************************************************************
+ *          request_destroy (internal)
+ */
+static void request_destroy( object_header_t *hdr )
+{
+    request_t *request = (request_t *)hdr;
+    int i;
+
+    TRACE("%p\n", request);
+
+    release_object( &request->connect->hdr );
+
+    heap_free( request->verb );
+    heap_free( request->path );
+    heap_free( request->version );
+    heap_free( request->raw_headers );
+    heap_free( request->status_text );
+    for (i = 0; i < request->num_headers; i++)
+    {
+        heap_free( request->headers[i].field );
+        heap_free( request->headers[i].value );
+    }
+    heap_free( request->headers );
+    heap_free( request );
+}
+
+static const object_vtbl_t request_vtbl =
+{
+    request_destroy,
+    NULL,
+    NULL
+};
+
+/***********************************************************************
+ *          WinHttpOpenRequest (winhttp.@)
+ */
+HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR object, LPCWSTR version,
+                                     LPCWSTR referrer, LPCWSTR *types, DWORD flags )
+{
+    request_t *request;
+    connect_t *connect;
+    HINTERNET hrequest = NULL;
+
+    TRACE("%p, %s, %s, %s, %s, %p, 0x%08x\n", hconnect, debugstr_w(verb), debugstr_w(object),
+          debugstr_w(version), debugstr_w(referrer), types, flags);
+
+    if (!(connect = (connect_t *)grab_object( hconnect )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return NULL;
+    }
+    if (connect->hdr.type != WINHTTP_HANDLE_TYPE_CONNECT)
+    {
+        release_object( &connect->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return NULL;
+    }
+    if (!(request = heap_alloc_zero( sizeof(request_t) )))
+    {
+        release_object( &connect->hdr );
+        return NULL;
+    }
+    request->hdr.type = WINHTTP_HANDLE_TYPE_REQUEST;
+    request->hdr.vtbl = &request_vtbl;
+    request->hdr.refs = 1;
+    request->hdr.flags = flags;
+    request->hdr.callback = connect->hdr.callback;
+    request->hdr.notify_mask = connect->hdr.notify_mask;
+
+    addref_object( &connect->hdr );
+    request->connect = connect;
+    list_add_head( &connect->hdr.children, &request->hdr.entry );
+
+    if (verb && !(request->verb = strdupW( verb ))) goto end;
+    if (object && !(request->path = strdupW( object ))) goto end;
+    if (version && !(request->version = strdupW( version ))) goto end;
+
+    if (!(hrequest = alloc_handle( &request->hdr ))) goto end;
+    request->hdr.handle = hrequest;
+
+end:
+    release_object( &request->hdr );
+
+    TRACE("returning %p\n", hrequest);
+    return hrequest;
+}
+
+/***********************************************************************
  *          WinHttpCloseHandle (winhttp.@)
  */
 BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )

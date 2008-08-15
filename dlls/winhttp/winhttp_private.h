@@ -78,6 +78,38 @@ typedef struct
     struct sockaddr_in sockaddr;
 } connect_t;
 
+typedef struct
+{
+    int socket;
+    char *peek_msg;
+    char *peek_msg_mem;
+    size_t peek_len;
+} netconn_t;
+
+typedef struct
+{
+    LPWSTR field;
+    LPWSTR value;
+    WORD flags;
+    WORD count;
+} header_t;
+
+typedef struct
+{
+    object_header_t hdr;
+    connect_t *connect;
+    LPWSTR verb;
+    LPWSTR path;
+    LPWSTR version;
+    LPWSTR raw_headers;
+    netconn_t netconn;
+    LPWSTR status_text;
+    DWORD content_length; /* total number of bytes to be read (per chunk) */
+    DWORD content_read;   /* bytes read so far */
+    header_t *headers;
+    DWORD num_headers;
+} request_t;
+
 object_header_t *addref_object( object_header_t * );
 object_header_t *grab_object( HINTERNET );
 void release_object( object_header_t * );

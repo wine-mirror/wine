@@ -55,13 +55,12 @@ static void test_OpenRequest (void)
         skip("Network unreachable, skipping.\n");
         goto done;
     }
-    todo_wine ok(request != NULL,
-        "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
+    ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
 
     ret = WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, NULL, 0, 0, 0);
     todo_wine ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
     ret = WinHttpCloseHandle(request);
-    todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
 
  done:
     ret = WinHttpCloseHandle(connection);
@@ -108,7 +107,7 @@ static void test_SendRequest (void)
         skip("Network unreachable, skipping.\n");
         goto done;
     }
-    todo_wine ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
+    ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
 
     ret = WinHttpSendRequest(request, content_type, header_len, post_data, optional_len, total_len, 0);
     todo_wine ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
@@ -134,7 +133,7 @@ static void test_SendRequest (void)
         "Data read did not match, got '%s'.\n", buffer);
 
     ret = WinHttpCloseHandle(request);
-    todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
  done:
     ret = WinHttpCloseHandle(connection);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
@@ -236,7 +235,7 @@ static void test_WinHttpAddHeaders(void)
         skip("Network unreachable, skipping.\n");
         goto done;
     }
-    todo_wine ok(request != NULL, "WinHttpOpenRequest failed to open a request, error: %u.\n", GetLastError());
+    ok(request != NULL, "WinHttpOpenRequest failed to open a request, error: %u.\n", GetLastError());
 
     index = 0;
     len = sizeof(buffer);
@@ -540,7 +539,7 @@ static void test_WinHttpAddHeaders(void)
     ok(ret == FALSE, "WinHttpQueryHeaders succeeded unexpectedly, found third header.\n");
 
     ret = WinHttpCloseHandle(request);
-    todo_wine ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
  done:
     ret = WinHttpCloseHandle(connection);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
