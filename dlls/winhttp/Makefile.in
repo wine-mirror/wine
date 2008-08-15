@@ -6,7 +6,9 @@ MODULE    = winhttp.dll
 IMPORTLIB = winhttp
 IMPORTS   = kernel32
 
-C_SRCS	  = main.c
+C_SRCS = \
+	handle.c \
+	main.c
 
 @MAKE_DLL_RULES@
 
