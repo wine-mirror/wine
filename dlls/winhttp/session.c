@@ -1,0 +1,121 @@
+/*
+ * Copyright 2008 Hans Leidekker for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "config.h"
+#include "wine/port.h"
+#include "wine/debug.h"
+
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
+#include "winhttp.h"
+
+#include "winhttp_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
+
+static void set_last_error( DWORD error )
+{
+    /* FIXME */
+    SetLastError( error );
+}
+
+/***********************************************************************
+ *          WinHttpCheckPlatform (winhttp.@)
+ */
+BOOL WINAPI WinHttpCheckPlatform( void )
+{
+    TRACE("\n");
+    return TRUE;
+}
+
+/***********************************************************************
+ *          session_destroy (internal)
+ */
+static void session_destroy( object_header_t *hdr )
+{
+    session_t *session = (session_t *)hdr;
+
+    TRACE("%p\n", session);
+
+    heap_free( session->agent );
+    heap_free( session->proxy_server );
+    heap_free( session->proxy_bypass );
+    heap_free( session->proxy_username );
+    heap_free( session->proxy_password );
+    heap_free( session );
+}
+
+static const object_vtbl_t session_vtbl =
+{
+    session_destroy,
+    NULL,
+    NULL
+};
+
+/***********************************************************************
+ *          WinHttpOpen (winhttp.@)
+ */
+HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWSTR bypass, DWORD flags )
+{
+    session_t *session;
+    HINTERNET handle = NULL;
+
+    TRACE("%s, %u, %s, %s, 0x%08x\n", debugstr_w(agent), access, debugstr_w(proxy), debugstr_w(bypass), flags);
+
+    if (!(session = heap_alloc_zero( sizeof(session_t) ))) return NULL;
+
+    session->hdr.type = WINHTTP_HANDLE_TYPE_SESSION;
+    session->hdr.vtbl = &session_vtbl;
+    session->hdr.flags = flags;
+    session->hdr.refs = 1;
+    session->access = access;
+
+    if (agent && !(session->agent = strdupW( agent ))) goto end;
+    if (proxy && !(session->proxy_server = strdupW( proxy ))) goto end;
+    if (bypass && !(session->proxy_bypass = strdupW( bypass ))) goto end;
+
+    if (!(handle = alloc_handle( &session->hdr ))) goto end;
+    session->hdr.handle = handle;
+
+end:
+    release_object( &session->hdr );
+    TRACE("returning %p\n", handle);
+    return handle;
+}
+
+/***********************************************************************
+ *          WinHttpCloseHandle (winhttp.@)
+ */
+BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )
+{
+    object_header_t *hdr;
+
+    TRACE("%p\n", handle);
+
+    if (!(hdr = grab_object( handle )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    release_object( hdr );
+    free_handle( handle );
+    return TRUE;
+}

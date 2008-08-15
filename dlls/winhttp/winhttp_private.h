@@ -20,6 +20,7 @@
 #define _WINE_WINHTTP_PRIVATE_H_
 
 #include "wine/list.h"
+#include "wine/unicode.h"
 
 typedef struct _object_header_t object_header_t;
 
@@ -45,6 +46,23 @@ struct _object_header_t
     struct list children;
 };
 
+typedef struct
+{
+    object_header_t hdr;
+    LPWSTR agent;
+    DWORD access;
+    LPWSTR proxy_server;
+    LPWSTR proxy_bypass;
+    LPWSTR proxy_username;
+    LPWSTR proxy_password;
+} session_t;
+
+object_header_t *addref_object( object_header_t * );
+object_header_t *grab_object( HINTERNET );
+void release_object( object_header_t * );
+HINTERNET alloc_handle( object_header_t * );
+BOOL free_handle( HINTERNET );
+
 static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
@@ -63,6 +81,16 @@ static inline void *heap_realloc_zero( LPVOID mem, SIZE_T size )
 static inline BOOL heap_free( LPVOID mem )
 {
     return HeapFree( GetProcessHeap(), 0, mem );
+}
+
+static inline WCHAR *strdupW( const WCHAR *src )
+{
+    WCHAR *dst;
+
+    if (!src) return NULL;
+    dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) );
+    if (dst) strcpyW( dst, src );
+    return dst;
 }
 
 #endif /* _WINE_WINHTTP_PRIVATE_H_ */

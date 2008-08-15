@@ -84,16 +84,6 @@ HRESULT WINAPI DllUnregisterServer(void)
 }
 
 /***********************************************************************
- *          WinHttpCheckPlatform (winhttp.@)
- */
-BOOL WINAPI WinHttpCheckPlatform(void)
-{
-    FIXME("stub\n");
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
-/***********************************************************************
  *          WinHttpDetectAutoProxyConfigUrl (winhttp.@)
  */
 BOOL WINAPI WinHttpDetectAutoProxyConfigUrl(DWORD flags, LPWSTR *url)
@@ -124,21 +114,6 @@ BOOL WINAPI WinHttpGetIEProxyConfigForCurrentUser(WINHTTP_CURRENT_USER_IE_PROXY_
 
     SetLastError(ERROR_SUCCESS);
     return TRUE;
-}
-
-/***********************************************************************
- *          WinHttpOpen (winhttp.@)
- */
-HINTERNET WINAPI WinHttpOpen(LPCWSTR pwszUserAgent, DWORD dwAccessType,
-                             LPCWSTR pwszProxyName, LPCWSTR pwszProxyByPass,
-                             DWORD dwFlags)
-{
-    FIXME("(%s, %d, %s, %s, 0x%x): stub\n", debugstr_w(pwszUserAgent),
-        dwAccessType, debugstr_w(pwszProxyName), debugstr_w(pwszProxyByPass),
-        dwFlags);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return NULL;
 }
 
 /***********************************************************************
@@ -232,17 +207,6 @@ BOOL WINAPI WinHttpReadData (HINTERNET hInternet, LPVOID lpBuffer, DWORD dwNumbe
                              LPDWORD lpdwNumberOfBytesRead)
 {
     FIXME("(%d): stub\n", dwNumberOfBytesToRead);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
-/***********************************************************************
- *          WinHttpReadData (winhttp.@)
- */
-BOOL WINAPI WinHttpCloseHandle (HINTERNET hInternet)
-{
-    FIXME("stub\n");
 
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
