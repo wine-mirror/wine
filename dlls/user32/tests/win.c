@@ -4786,8 +4786,11 @@ static void test_hwnd_message(void)
 
     found = FindWindowExA( 0, 0, 0, "message window" );
     ok( found == hwnd, "didn't find message window %p/%p\n", found, hwnd );
+    SetLastError(0xdeadbeef);
     found = FindWindowExA( GetDesktopWindow(), 0, 0, "message window" );
     ok( found == 0, "found message window %p/%p\n", found, hwnd );
+    todo_wine
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND, "ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     if (parent)
     {
         found = FindWindowExA( parent, 0, 0, "message window" );
