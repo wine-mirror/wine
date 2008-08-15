@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winhttp.dll
 IMPORTLIB = winhttp
-IMPORTS   = kernel32
+IMPORTS   = wininet kernel32
 
 C_SRCS = \
 	handle.c \

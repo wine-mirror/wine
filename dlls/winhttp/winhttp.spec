@@ -6,8 +6,8 @@
 @ stdcall WinHttpCheckPlatform()
 @ stdcall WinHttpCloseHandle(ptr)
 @ stdcall WinHttpConnect(ptr wstr long long)
-@ stub WinHttpCrackUrl
-@ stub WinHttpCreateUrl
+@ stdcall WinHttpCrackUrl(wstr long long ptr)
+@ stdcall WinHttpCreateUrl(ptr long ptr ptr)
 @ stdcall WinHttpDetectAutoProxyConfigUrl(long ptr)
 @ stdcall WinHttpGetDefaultProxyConfiguration(ptr)
 @ stdcall WinHttpGetIEProxyConfigForCurrentUser(ptr)

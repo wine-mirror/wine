@@ -209,3 +209,24 @@ BOOL WINAPI WinHttpAddRequestHeaders (HINTERNET hRequest, LPCWSTR pwszHeaders,
     SetLastError(ERROR_NOT_SUPPORTED);
     return FALSE;
 }
+
+BOOL WINAPI InternetCrackUrlW( LPCWSTR, DWORD, DWORD, LPURL_COMPONENTSW );
+BOOL WINAPI InternetCreateUrlW( LPURL_COMPONENTS, DWORD, LPWSTR, LPDWORD );
+
+/***********************************************************************
+ *          WinHttpCrackUrl (winhttp.@)
+ */
+BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW components )
+{
+    TRACE("%s, %d, %x, %p\n", debugstr_w(url), len, flags, components);
+    return InternetCrackUrlW( url, len, flags, components );
+}
+
+/***********************************************************************
+ *          WinHttpCreateUrl (winhttp.@)
+ */
+BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS comps, DWORD flags, LPWSTR url, LPDWORD len )
+{
+    TRACE("%p, 0x%08x, %p, %p\n", comps, flags, url, len);
+    return InternetCreateUrlW( comps, flags, url, len );
+}
