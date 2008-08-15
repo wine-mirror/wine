@@ -3919,15 +3919,19 @@ static BOOL CRYPT_AsnDecodeDistPointName(const BYTE *pbEncoded,
              sizeof(CERT_ALT_NAME_ENTRY), TRUE,
              offsetof(CERT_ALT_NAME_ENTRY, u.pwszURL) };
             BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+            DWORD nameLen;
 
             if (dataLen)
             {
-                DWORD nameLen;
-
                 ret = CRYPT_AsnDecodeArray(&arrayDesc,
                  pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
                  0, NULL, NULL, &nameLen, NULL, NULL);
-                bytesNeeded = sizeof(CRL_DIST_POINT_NAME) + nameLen;
+                /* The CERT_ALT_NAME_INFO's size is included by CRYPT_AsnDecodeArray
+                 * as the sizeof(struct GenericArray), so don't include it in the
+                 * total bytes needed.
+                 */
+                bytesNeeded = sizeof(CRL_DIST_POINT_NAME) + nameLen -
+                 sizeof(CERT_ALT_NAME_INFO);
             }
             else
                 bytesNeeded = sizeof(CRL_DIST_POINT_NAME);
@@ -3951,7 +3955,7 @@ static BOOL CRYPT_AsnDecodeDistPointName(const BYTE *pbEncoded,
                     name->dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
                     ret = CRYPT_AsnDecodeArray(&arrayDesc,
                      pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
-                     0, NULL, &name->u.FullName, pcbStructInfo, NULL,
+                     0, NULL, &name->u.FullName, &nameLen, NULL,
                      name->u.FullName.rgAltEntry);
                 }
                 else
