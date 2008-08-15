@@ -955,6 +955,9 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
      */
     if(GL_SUPPORT(ARB_PIXEL_BUFFER_OBJECT) && (This->Flags & SFLAG_DYNLOCK) && !(This->Flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2)) && (This->resource.pool != WINED3DPOOL_SYSTEMMEM)) {
         GLenum error;
+        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
 
         GL_EXTCALL(glGenBuffersARB(1, &This->pbo));
