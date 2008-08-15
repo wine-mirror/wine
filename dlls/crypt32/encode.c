@@ -1561,6 +1561,14 @@ static BOOL CRYPT_AsnEncodeUnicodeStringCoerce(const CERT_NAME_VALUE *value,
     return ret;
 }
 
+static void CRYPT_FreeSpace(PCRYPT_ENCODE_PARA pEncodePara, LPVOID pv)
+{
+    if (pEncodePara && pEncodePara->pfnFree)
+        pEncodePara->pfnFree(pv);
+    else
+        LocalFree(pv);
+}
+
 static BOOL CRYPT_AsnEncodeNumericString(const CERT_NAME_VALUE *value,
  DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
@@ -1602,7 +1610,7 @@ static BOOL CRYPT_AsnEncodeNumericString(const CERT_NAME_VALUE *value,
                 }
             }
             if (!ret && (dwFlags & CRYPT_ENCODE_ALLOC_FLAG))
-                CryptMemFree(*(BYTE **)pbEncoded);
+                CRYPT_FreeSpace(pEncodePara, *(BYTE **)pbEncoded);
         }
     }
     return ret;
@@ -1656,7 +1664,7 @@ static BOOL CRYPT_AsnEncodePrintableString(const CERT_NAME_VALUE *value,
                 }
             }
             if (!ret && (dwFlags & CRYPT_ENCODE_ALLOC_FLAG))
-                CryptMemFree(*(BYTE **)pbEncoded);
+                CRYPT_FreeSpace(pEncodePara, *(BYTE **)pbEncoded);
         }
     }
     return ret;
@@ -1703,7 +1711,7 @@ static BOOL CRYPT_AsnEncodeIA5String(const CERT_NAME_VALUE *value,
                 }
             }
             if (!ret && (dwFlags & CRYPT_ENCODE_ALLOC_FLAG))
-                CryptMemFree(*(BYTE **)pbEncoded);
+                CRYPT_FreeSpace(pEncodePara, *(BYTE **)pbEncoded);
         }
     }
     return ret;
