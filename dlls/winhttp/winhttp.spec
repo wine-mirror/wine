@@ -9,9 +9,9 @@
 @ stub WinHttpCrackUrl
 @ stub WinHttpCreateUrl
 @ stdcall WinHttpDetectAutoProxyConfigUrl(long ptr)
-@ stub WinHttpGetDefaultProxyConfiguration
+@ stdcall WinHttpGetDefaultProxyConfiguration(ptr)
 @ stdcall WinHttpGetIEProxyConfigForCurrentUser(ptr)
-@ stub WinHttpGetProxyForUrl
+@ stdcall WinHttpGetProxyForUrl(ptr wstr ptr ptr)
 @ stdcall WinHttpOpen(wstr long wstr wstr long)
 @ stdcall WinHttpOpenRequest(ptr wstr wstr wstr wstr ptr long)
 @ stub WinHttpQueryAuthSchemes
@@ -22,7 +22,7 @@
 @ stdcall WinHttpReceiveResponse(ptr ptr)
 @ stdcall WinHttpSendRequest(ptr wstr long ptr long long ptr)
 @ stub WinHttpSetCredentials
-@ stub WinHttpSetDefaultProxyConfiguration
+@ stdcall WinHttpSetDefaultProxyConfiguration(ptr long long wstr ptr ptr)
 @ stdcall WinHttpSetOption(ptr long ptr long)
 @ stdcall WinHttpSetStatusCallback(ptr ptr long ptr)
 @ stub WinHttpSetTimeouts

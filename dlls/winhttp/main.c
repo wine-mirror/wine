@@ -84,39 +84,6 @@ HRESULT WINAPI DllUnregisterServer(void)
 }
 
 /***********************************************************************
- *          WinHttpDetectAutoProxyConfigUrl (winhttp.@)
- */
-BOOL WINAPI WinHttpDetectAutoProxyConfigUrl(DWORD flags, LPWSTR *url)
-{
-    FIXME("(%x %p)\n", flags, url);
-
-    SetLastError(ERROR_WINHTTP_AUTODETECTION_FAILED);
-    return FALSE;
-}
-
-/***********************************************************************
- *          WinHttpGetIEProxyConfigForCurrentUser (winhttp.@)
- */
-BOOL WINAPI WinHttpGetIEProxyConfigForCurrentUser(WINHTTP_CURRENT_USER_IE_PROXY_CONFIG* config)
-{
-    if(!config)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    /* TODO: read from HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings */
-    FIXME("returning no proxy used\n");
-    config->fAutoDetect = FALSE;
-    config->lpszAutoConfigUrl = NULL;
-    config->lpszProxy = NULL;
-    config->lpszProxyBypass = NULL;
-
-    SetLastError(ERROR_SUCCESS);
-    return TRUE;
-}
-
-/***********************************************************************
  *          WinHttpSendRequest (winhttp.@)
  */
 BOOL WINAPI WinHttpSendRequest (HINTERNET hRequest, LPCWSTR pwszHeaders, DWORD dwHeadersLength,

@@ -298,6 +298,77 @@ BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )
 }
 
 /***********************************************************************
+ *          WinHttpDetectAutoProxyConfigUrl (winhttp.@)
+ */
+BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
+{
+    FIXME("0x%08x, %p\n", flags, url);
+
+    set_last_error( ERROR_WINHTTP_AUTODETECTION_FAILED );
+    return FALSE;
+}
+
+/***********************************************************************
+ *          WinHttpGetDefaultProxyConfiguration (winhttp.@)
+ */
+BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
+{
+    FIXME("%p\n", info);
+
+    info->dwAccessType    = WINHTTP_ACCESS_TYPE_NO_PROXY;
+    info->lpszProxy       = NULL;
+    info->lpszProxyBypass = NULL;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *          WinHttpGetIEProxyConfigForCurrentUser (winhttp.@)
+ */
+BOOL WINAPI WinHttpGetIEProxyConfigForCurrentUser( WINHTTP_CURRENT_USER_IE_PROXY_CONFIG *config )
+{
+    TRACE("%p\n", config);
+
+    if (!config)
+    {
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    /* FIXME: read from HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings */
+
+    FIXME("returning no proxy used\n");
+    config->fAutoDetect       = FALSE;
+    config->lpszAutoConfigUrl = NULL;
+    config->lpszProxy         = NULL;
+    config->lpszProxyBypass   = NULL;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *          WinHttpGetProxyForUrl (winhttp.@)
+ */
+BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTOPROXY_OPTIONS *options,
+                                   WINHTTP_PROXY_INFO *info )
+{
+    FIXME("%p, %s, %p, %p\n", hsession, debugstr_w(url), options, info);
+
+    set_last_error( ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR );
+    return FALSE;
+}
+
+/***********************************************************************
+ *          WinHttpSetDefaultProxyConfiguration (winhttp.@)
+ */
+BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
+{
+    FIXME("%p [%u, %s, %s]\n", info, info->dwAccessType, debugstr_w(info->lpszProxy),
+          debugstr_w(info->lpszProxyBypass));
+    return TRUE;
+}
+
+/***********************************************************************
  *          WinHttpSetStatusCallback (winhttp.@)
  */
 WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHTTP_STATUS_CALLBACK callback,
