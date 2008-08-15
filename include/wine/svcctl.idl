@@ -63,9 +63,6 @@ interface svcctl
     /* undocumented access rights */
     cpp_quote("#define SERVICE_SET_STATUS   0x8000")
 
-    /* undocumented access rights */
-    cpp_quote("#define SERVICE_SET_STATUS   0x8000")
-
 cpp_quote("#if 0 /* already defined in winsvc.h */")
 typedef struct _QUERY_SERVICE_CONFIGW {
     DWORD   dwServiceType;
