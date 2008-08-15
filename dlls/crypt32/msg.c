@@ -632,15 +632,62 @@ static BOOL CRYPT_IsValidSigner(CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-    if (!signer->pCertInfo->SerialNumber.cbData)
+    if (signer->cbSize == sizeof(CMSG_SIGNER_ENCODE_INFO))
     {
-        SetLastError(E_INVALIDARG);
-        return FALSE;
+        if (!signer->pCertInfo->SerialNumber.cbData)
+        {
+            SetLastError(E_INVALIDARG);
+            return FALSE;
+        }
+        if (!signer->pCertInfo->Issuer.cbData)
+        {
+            SetLastError(E_INVALIDARG);
+            return FALSE;
+        }
     }
-    if (!signer->pCertInfo->Issuer.cbData)
+    else if (signer->cbSize == sizeof(CMSG_SIGNER_ENCODE_INFO_WITH_CMS))
     {
-        SetLastError(E_INVALIDARG);
-        return FALSE;
+        switch (signer->SignerId.dwIdChoice)
+        {
+        case 0:
+            if (!signer->pCertInfo->SerialNumber.cbData)
+            {
+                SetLastError(E_INVALIDARG);
+                return FALSE;
+            }
+            if (!signer->pCertInfo->Issuer.cbData)
+            {
+                SetLastError(E_INVALIDARG);
+                return FALSE;
+            }
+            break;
+        case CERT_ID_ISSUER_SERIAL_NUMBER:
+            if (!signer->SignerId.IssuerSerialNumber.SerialNumber.cbData)
+            {
+                SetLastError(E_INVALIDARG);
+                return FALSE;
+            }
+            if (!signer->SignerId.IssuerSerialNumber.Issuer.cbData)
+            {
+                SetLastError(E_INVALIDARG);
+                return FALSE;
+            }
+            break;
+        case CERT_ID_KEY_IDENTIFIER:
+            if (!signer->SignerId.KeyId.cbData)
+            {
+                SetLastError(E_INVALIDARG);
+                return FALSE;
+            }
+            break;
+        default:
+            SetLastError(E_INVALIDARG);
+        }
+        if (signer->HashEncryptionAlgorithm.pszObjId)
+        {
+            FIXME("CMSG_SIGNER_ENCODE_INFO with CMS fields unsupported\n");
+            return FALSE;
+        }
     }
     if (!signer->hCryptProv)
     {
@@ -651,19 +698,6 @@ static BOOL CRYPT_IsValidSigner(CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
     {
         SetLastError(CRYPT_E_UNKNOWN_ALGO);
         return FALSE;
-    }
-    if (signer->cbSize == sizeof(CMSG_SIGNER_ENCODE_INFO_WITH_CMS))
-    {
-        if (signer->SignerId.dwIdChoice)
-        {
-            FIXME("CMSG_SIGNER_ENCODE_INFO with CMS fields unsupported\n");
-            return FALSE;
-        }
-        if (signer->HashEncryptionAlgorithm.pszObjId)
-        {
-            FIXME("CMSG_SIGNER_ENCODE_INFO with CMS fields unsupported\n");
-            return FALSE;
-        }
     }
     return TRUE;
 }

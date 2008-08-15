@@ -1106,6 +1106,24 @@ static void test_signed_msg_open(void)
         CryptMsgClose(msg);
     }
 
+    /* pCertInfo must still be set, but can be empty if the SignerId's issuer
+     * and serial number are set.
+     */
+    certInfo.Issuer.cbData = 0;
+    certInfo.SerialNumber.cbData = 0;
+    signer.SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+    signer.SignerId.IssuerSerialNumber.Issuer.cbData =
+     sizeof(encodedCommonName);
+    signer.SignerId.IssuerSerialNumber.Issuer.pbData =
+     (BYTE *)encodedCommonName;
+    signer.SignerId.IssuerSerialNumber.SerialNumber.cbData =
+     sizeof(serialNum);
+    signer.SignerId.IssuerSerialNumber.SerialNumber.pbData = (BYTE *)serialNum;
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, &signInfo,
+     NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    CryptMsgClose(msg);
+
     CryptReleaseContext(signer.hCryptProv, 0);
     pCryptAcquireContextA(&signer.hCryptProv, cspNameA, MS_DEF_PROV_A,
      PROV_RSA_FULL, CRYPT_DELETEKEYSET);
