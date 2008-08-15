@@ -3893,7 +3893,7 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
     }
 }
 
-void invalid_func(void *data) {
+static void WINE_GLAPI invalid_func(void *data) {
     ERR("Invalid vertex attribute function called\n");
     DebugBreak();
 }
@@ -3903,7 +3903,7 @@ void invalid_func(void *data) {
 /* Helper functions for providing vertex data to opengl. The arrays are initialized based on
  * the extension detection and are used in drawStridedSlow
  */
-static void position_d3dcolor(void *data) {
+static void WINE_GLAPI position_d3dcolor(void *data) {
     DWORD pos = *((DWORD *) data);
 
     FIXME("Add a test for fixed function position from d3dcolor type\n");
@@ -3912,7 +3912,7 @@ static void position_d3dcolor(void *data) {
                D3DCOLOR_B_B(pos),
                D3DCOLOR_B_A(pos));
 }
-static void position_float4(void *data) {
+static void WINE_GLAPI position_float4(void *data) {
     GLfloat *pos = (float *) data;
 
     if (pos[3] < eps && pos[3] > -eps)
@@ -3924,7 +3924,7 @@ static void position_float4(void *data) {
     }
 }
 
-static void diffuse_d3dcolor(void *data) {
+static void WINE_GLAPI diffuse_d3dcolor(void *data) {
     DWORD diffuseColor = *((DWORD *) data);
 
     glColor4ub(D3DCOLOR_B_R(diffuseColor),
@@ -3933,14 +3933,14 @@ static void diffuse_d3dcolor(void *data) {
                D3DCOLOR_B_A(diffuseColor));
 }
 
-static void specular_d3dcolor(void *data) {
+static void WINE_GLAPI specular_d3dcolor(void *data) {
     DWORD specularColor = *((DWORD *) data);
 
     GL_EXTCALL(glSecondaryColor3ubEXT)(D3DCOLOR_B_R(specularColor),
                                        D3DCOLOR_B_G(specularColor),
                                        D3DCOLOR_B_B(specularColor));
 }
-static void warn_no_specular_func(void *data) {
+static void WINE_GLAPI warn_no_specular_func(void *data) {
     WARN("GL_EXT_secondary_color not supported\n");
 }
 
