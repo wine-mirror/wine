@@ -23,6 +23,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winerror.h>
+#define CMSG_SIGNER_ENCODE_INFO_HAS_CMS_FIELDS
 #include <wincrypt.h>
 
 #include "wine/test.h"
