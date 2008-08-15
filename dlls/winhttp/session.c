@@ -391,3 +391,116 @@ WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHT
     release_object( hdr );
     return ret;
 }
+
+static const WCHAR wkday[7][4] =
+    {{'S','u','n', 0}, {'M','o','n', 0}, {'T','u','e', 0}, {'W','e','d', 0},
+     {'T','h','u', 0}, {'F','r','i', 0}, {'S','a','t', 0}};
+static const WCHAR month[12][4] =
+    {{'J','a','n', 0}, {'F','e','b', 0}, {'M','a','r', 0}, {'A','p','r', 0},
+     {'M','a','y', 0}, {'J','u','n', 0}, {'J','u','l', 0}, {'A','u','g', 0},
+     {'S','e','p', 0}, {'O','c','t', 0}, {'N','o','v', 0}, {'D','e','c', 0}};
+
+/***********************************************************************
+ *           WinHttpTimeFromSystemTime (WININET.@)
+ */
+BOOL WINAPI WinHttpTimeFromSystemTime( const SYSTEMTIME *time, LPWSTR string )
+{
+    static const WCHAR format[] =
+        {'%','s',',',' ','%','0','2','d',' ','%','s',' ','%','4','d',' ','%','0',
+         '2','d',':','%','0','2','d',':','%','0','2','d',' ','G','M','T', 0};
+
+    TRACE("%p, %p\n", time, string);
+
+    if (!time || !string) return FALSE;
+
+    sprintfW( string, format,
+              wkday[time->wDayOfWeek],
+              time->wDay,
+              month[time->wMonth - 1],
+              time->wYear,
+              time->wHour,
+              time->wMinute,
+              time->wSecond );
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           WinHttpTimeToSystemTime (WININET.@)
+ */
+BOOL WINAPI WinHttpTimeToSystemTime( LPCWSTR string, SYSTEMTIME *time )
+{
+    unsigned int i;
+    const WCHAR *s = string;
+    WCHAR *end;
+
+    TRACE("%s, %p\n", debugstr_w(string), time);
+
+    if (!string || !time) return FALSE;
+
+    /* Windows does this too */
+    GetSystemTime( time );
+
+    /*  Convert an RFC1123 time such as 'Fri, 07 Jan 2005 12:06:35 GMT' into
+     *  a SYSTEMTIME structure.
+     */
+
+    while (*s && !isalphaW( *s )) s++;
+    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
+    time->wDayOfWeek = 7;
+
+    for (i = 0; i < 7; i++)
+    {
+        if (toupperW( wkday[i][0] ) == toupperW( s[0] ) &&
+            toupperW( wkday[i][1] ) == toupperW( s[1] ) &&
+            toupperW( wkday[i][2] ) == toupperW( s[2] ) )
+        {
+            time->wDayOfWeek = i;
+            break;
+        }
+    }
+
+    if (time->wDayOfWeek > 6) return TRUE;
+    while (*s && !isdigitW( *s )) s++;
+    time->wDay = strtolW( s, &end, 10 );
+    s = end;
+
+    while (*s && !isalphaW( *s )) s++;
+    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
+    time->wMonth = 0;
+
+    for (i = 0; i < 12; i++)
+    {
+        if (toupperW( month[i][0]) == toupperW( s[0] ) &&
+            toupperW( month[i][1]) == toupperW( s[1] ) &&
+            toupperW( month[i][2]) == toupperW( s[2] ) )
+        {
+            time->wMonth = i + 1;
+            break;
+        }
+    }
+    if (time->wMonth == 0) return TRUE;
+
+    while (*s && !isdigitW( *s )) s++;
+    if (*s == '\0') return TRUE;
+    time->wYear = strtolW( s, &end, 10 );
+    s = end;
+
+    while (*s && !isdigitW( *s )) s++;
+    if (*s == '\0') return TRUE;
+    time->wHour = strtolW( s, &end, 10 );
+    s = end;
+
+    while (*s && !isdigitW( *s )) s++;
+    if (*s == '\0') return TRUE;
+    time->wMinute = strtolW( s, &end, 10 );
+    s = end;
+
+    while (*s && !isdigitW( *s )) s++;
+    if (*s == '\0') return TRUE;
+    time->wSecond = strtolW( s, &end, 10 );
+    s = end;
+
+    time->wMilliseconds = 0;
+    return TRUE;
+}

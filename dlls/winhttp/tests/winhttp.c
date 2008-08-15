@@ -151,8 +151,8 @@ static void test_WinHttpTimeFromSystemTime(void)
     WCHAR time_string[WINHTTP_TIME_FORMAT_BUFSIZE+1];
 
     ret = WinHttpTimeFromSystemTime(&time, time_string);
-    todo_wine ok(ret == TRUE, "WinHttpTimeFromSystemTime failed: %u\n", GetLastError());
-    todo_wine ok(memcmp(time_string, expected_string, sizeof(expected_string)) == 0,
+    ok(ret == TRUE, "WinHttpTimeFromSystemTime failed: %u\n", GetLastError());
+    ok(memcmp(time_string, expected_string, sizeof(expected_string)) == 0,
         "Time string returned did not match expected time string.\n");
 }
 
@@ -169,13 +169,13 @@ static void test_WinHttpTimeToSystemTime(void)
          '1','0',' ','0','5',' ','5','2','\n',0};
 
     ret = WinHttpTimeToSystemTime(time_string1, &time);
-    todo_wine ok(ret == TRUE, "WinHttpTimeToSystemTime failed: %u\n", GetLastError());
-    todo_wine ok(memcmp(&time, &expected_time, sizeof(SYSTEMTIME)) == 0,
+    ok(ret == TRUE, "WinHttpTimeToSystemTime failed: %u\n", GetLastError());
+    ok(memcmp(&time, &expected_time, sizeof(SYSTEMTIME)) == 0,
         "Returned SYSTEMTIME structure did not match expected SYSTEMTIME structure.\n");
 
     ret = WinHttpTimeToSystemTime(time_string2, &time);
-    todo_wine ok(ret == TRUE, "WinHttpTimeToSystemTime failed: %u\n", GetLastError());
-    todo_wine ok(memcmp(&time, &expected_time, sizeof(SYSTEMTIME)) == 0,
+    ok(ret == TRUE, "WinHttpTimeToSystemTime failed: %u\n", GetLastError());
+    ok(memcmp(&time, &expected_time, sizeof(SYSTEMTIME)) == 0,
         "Returned SYSTEMTIME structure did not match expected SYSTEMTIME structure.\n");
 }
 

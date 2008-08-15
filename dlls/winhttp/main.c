@@ -165,28 +165,6 @@ BOOL WINAPI WinHttpWriteData (HINTERNET hRequest, LPCVOID lpBuffer,
 }
 
 /***********************************************************************
- *          WinHttpTimeFromSystemTime (winhttp.@)
- */
-BOOL WINAPI WinHttpTimeFromSystemTime (CONST SYSTEMTIME* pst, LPWSTR pwszTime)
-{
-    FIXME("(%p, %p): stub\n", pst, pwszTime);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
-/***********************************************************************
- *          WinHttpTimeToSystemTime (winhttp.@)
- */
-BOOL WINAPI WinHttpTimeToSystemTime (LPCWSTR pwszTime, SYSTEMTIME* pst)
-{
-    FIXME("(%s, %p): stub\n", debugstr_w(pwszTime), pst);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
-/***********************************************************************
  *          WinHttpQueryHeaders (winhttp.@)
  */
 BOOL WINAPI WinHttpQueryHeaders (HINTERNET hRequest, DWORD dwInfoLevel, LPCWSTR pwszName,
