@@ -2228,10 +2228,14 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
          */
         case WINED3DFMT_L8:
         case WINED3DFMT_A8L8:
-        case WINED3DFMT_A4L4:
         case WINED3DFMT_L16:
             TRACE_(d3d_caps)("[OK]\n");
             return TRUE;
+
+        /* Not supported on Windows, thus disabled */
+        case WINED3DFMT_A4L4:
+            TRACE_(d3d_caps)("[FAILED] - not supported on windows\n");
+            return FALSE;
 
         /*****
          *  Supported: Depth/Stencil formats
