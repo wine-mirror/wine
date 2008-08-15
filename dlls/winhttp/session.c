@@ -37,6 +37,11 @@ static void set_last_error( DWORD error )
     SetLastError( error );
 }
 
+void send_callback( object_header_t *hdr, DWORD status, LPVOID info, DWORD buflen )
+{
+    FIXME("%p, %u, %p, %u\n", hdr, status, info, buflen);
+}
+
 /***********************************************************************
  *          WinHttpCheckPlatform (winhttp.@)
  */
@@ -175,6 +180,8 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     if (!(hconnect = alloc_handle( &connect->hdr ))) goto end;
     connect->hdr.handle = hconnect;
 
+    send_callback( &session->hdr, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, &hconnect, sizeof(hconnect) );
+
 end:
     release_object( &connect->hdr );
 
@@ -262,6 +269,8 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     if (!(hrequest = alloc_handle( &request->hdr ))) goto end;
     request->hdr.handle = hrequest;
 
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, &hrequest, sizeof(hrequest) );
+
 end:
     release_object( &request->hdr );
 
@@ -286,4 +295,28 @@ BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )
     release_object( hdr );
     free_handle( handle );
     return TRUE;
+}
+
+/***********************************************************************
+ *          WinHttpSetStatusCallback (winhttp.@)
+ */
+WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHTTP_STATUS_CALLBACK callback,
+                                                         DWORD flags, DWORD_PTR reserved )
+{
+    object_header_t *hdr;
+    WINHTTP_STATUS_CALLBACK ret;
+
+    TRACE("%p, %p, 0x%08x, 0x%lx\n", handle, callback, flags, reserved);
+
+    if (!(hdr = grab_object( handle )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return WINHTTP_INVALID_STATUS_CALLBACK;
+    }
+    ret = hdr->callback;
+    hdr->callback = callback;
+    hdr->notify_mask = flags;
+
+    release_object( hdr );
+    return ret;
 }

@@ -116,6 +116,8 @@ void release_object( object_header_t * );
 HINTERNET alloc_handle( object_header_t * );
 BOOL free_handle( HINTERNET );
 
+void send_callback( object_header_t *, DWORD, LPVOID, DWORD );
+
 static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
