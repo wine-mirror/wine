@@ -1441,6 +1441,24 @@ UINT WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage,
     return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
 }
 
+/**************************************************************************
+ * 				midiConnect			[WINMM.@]
+ */
+MMRESULT WINAPI midiConnect(HMIDI hMidi, HMIDIOUT hmo, LPVOID pReserved)
+{
+    FIXME("(%p, %p, %p): Stub\n", hMidi, hmo, pReserved);
+    return MMSYSERR_ERROR;
+}
+
+/**************************************************************************
+ * 				midiDisconnect			[WINMM.@]
+ */
+MMRESULT WINAPI midiDisconnect(HMIDI hMidi, HMIDIOUT hmo, LPVOID pReserved)
+{
+    FIXME("(%p, %p, %p): Stub\n", hMidi, hmo, pReserved);
+    return MMSYSERR_ERROR;
+}
+
 typedef struct WINE_MIDIStream {
     HMIDIOUT			hDevice;
     HANDLE			hThread;

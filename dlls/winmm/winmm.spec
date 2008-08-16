@@ -56,8 +56,8 @@
 @ stdcall mciSendStringW(wstr ptr long long)
 @ stdcall mciSetDriverData(long long)
 @ stdcall mciSetYieldProc(long ptr long)
-@ stub midiConnect
-@ stub midiDisconnect
+@ stdcall midiConnect(long long ptr)
+@ stdcall midiDisconnect(long long ptr)
 @ stdcall midiInAddBuffer(long ptr long)
 @ stdcall midiInClose(long)
 @ stdcall midiInGetDevCapsA(long ptr long)
