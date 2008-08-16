@@ -176,7 +176,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
         getDepthStencilBits(DepthStencilFormat, &depthBits, &stencilBits);
     }
 
-    for(matchtry = 0; matchtry < (sizeof(matches) / sizeof(matches[0])); matchtry++) {
+    for(matchtry = 0; matchtry < (sizeof(matches) / sizeof(matches[0])) && !iPixelFormat; matchtry++) {
         for(i=0; i<nCfgs; i++) {
             BOOL exactDepthMatch = TRUE;
             cfgs = &This->adapter->cfgs[i];
