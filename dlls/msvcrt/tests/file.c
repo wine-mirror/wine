@@ -334,6 +334,63 @@ static void test_fgetc( void )
   unlink(tempf);
 }
 
+static void test_fputc( void )
+{
+  char* tempf;
+  FILE *tempfh;
+  int  ret;
+
+  tempf=_tempnam(".","wne");
+  tempfh = fopen(tempf,"wb");
+  ret = fputc(0,tempfh);
+  ok(0 == ret, "fputc(0,tempfh) expected %x got %x\n", 0, ret);
+  ret = fputc(0xff,tempfh);
+  ok(0xff == ret, "fputc(0xff,tempfh) expected %x got %x\n", 0xff, ret);
+  ret = fputc(0xffffffff,tempfh);
+  ok(0xff == ret, "fputc(0xffffffff,tempfh) expected %x got %x\n", 0xff, ret);
+  fclose(tempfh);
+
+  tempfh = fopen(tempf,"rb");
+  ret = fputc(0,tempfh);
+  ok(EOF == ret, "fputc(0,tempfh) on r/o file expected %x got %x\n", EOF, ret);
+  fclose(tempfh);
+
+  unlink(tempf);
+}
+
+static void test_flsbuf( void )
+{
+  char* tempf;
+  FILE *tempfh;
+  int  ret;
+  int  bufmode;
+  int  bufmodes[] = {_IOFBF,_IONBF};
+
+  tempf=_tempnam(".","wne");
+  for (bufmode=0; bufmode < sizeof(bufmodes)/sizeof(bufmodes[0]); bufmode++)
+  {
+    tempfh = fopen(tempf,"wb");
+    setvbuf(tempfh,NULL,bufmodes[bufmode],2048);
+    ret = _flsbuf(0,tempfh);
+    ok(0 == ret, "_flsbuf(0,tempfh) with bufmode %x expected %x got %x\n",
+                         bufmodes[bufmode], 0, ret);
+    ret = _flsbuf(0xff,tempfh);
+    ok(0xff == ret, "_flsbuf(0xff,tempfh) with bufmode %x expected %x got %x\n",
+                         bufmodes[bufmode], 0, ret);
+    ret = _flsbuf(0xffffffff,tempfh);
+    ok(0xff == ret, "_flsbuf(0xffffffff,tempfh) with bufmode %x expected %x got %x\n",
+                         bufmodes[bufmode], 0, ret);
+    fclose(tempfh);
+  }
+
+  tempfh = fopen(tempf,"rb");
+  ret = _flsbuf(0,tempfh);
+  ok(EOF == ret, "_flsbuf(0,tempfh) on r/o file expected %x got %x\n", EOF, ret);
+  fclose(tempfh);
+
+  unlink(tempf);
+}
+
 static void test_fgetwc( void )
 {
 #define LLEN 512
@@ -1061,6 +1118,8 @@ START_TEST(file)
     test_readmode(FALSE); /* binary mode */
     test_readmode(TRUE);  /* ascii mode */
     test_fgetc();
+    test_fputc();
+    test_flsbuf();
     test_fgetwc();
     test_ctrlz();
     test_file_put_get();
