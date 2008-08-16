@@ -1552,7 +1552,6 @@ todo_wine
     }
 
     /* returned bits are DWORD aligned and upside down */
-todo_wine
     ok(!memcmp(buf, dib_bits_24, sizeof(dib_bits_24)), "DIB bits don't match\n");
     DeleteObject(hbmp);
 
