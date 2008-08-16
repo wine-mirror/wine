@@ -898,9 +898,7 @@ static	DWORD	MCI_LoadMciDriver(LPCWSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
 	if (strcmpiW(strDevTyp, wszAll) == 0) {
 	    dwRet = MCIERR_CANNOT_USE_ALL;
 	} else {
-	    FIXME("Couldn't load driver for type %s.\n"
-		  "If you don't have a windows installation accessible from Wine,\n"
-		  "you perhaps forgot to create a [mci] section in system.ini\n",
+	    FIXME("Couldn't load driver for type %s.\n",
 		  debugstr_w(strDevTyp));
 	    dwRet = MCIERR_DEVICE_NOT_INSTALLED;
 	}
