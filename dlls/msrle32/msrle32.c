@@ -395,7 +395,7 @@ static INT MSRLE32_CompressRLE4Line(const CodecInfo *pi, const WORD *lpP,
       INT  i;
       INT  size       = min(count, 254);
       int  bytes      = ((size + 1) & (~1)) / 2;
-      BOOL extra_byte = bytes & 0x01;
+      int  extra_byte = bytes & 0x01;
 
       *lpSizeImage += 2 + bytes + extra_byte;
       assert(((*lpSizeImage) % 2) == 0);
@@ -488,7 +488,7 @@ static INT MSRLE32_CompressRLE8Line(const CodecInfo *pi, const WORD *lpP,
     while (count > 2) {
       INT  i;
       INT  size       = min(count, 255);
-      BOOL extra_byte = size % 2;
+      int  extra_byte = size % 2;
 
       *lpSizeImage += 2 + size + extra_byte;
       count -= size;
