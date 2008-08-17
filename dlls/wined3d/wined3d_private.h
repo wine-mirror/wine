@@ -859,6 +859,8 @@ struct IWineD3DDeviceImpl
     const struct fragment_pipeline *frag_pipe;
     const struct blit_shader *blitter;
 
+    unsigned int max_ffp_textures;
+
     /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */
     BOOL                    untransformed;

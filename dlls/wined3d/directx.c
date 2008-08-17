@@ -3545,6 +3545,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     WINED3DDISPLAYMODE  mode;
     const struct fragment_pipeline *frag_pipeline = NULL;
     int i;
+    struct fragment_caps ffp_caps;
 
     /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
      * number and create a device without a 3D adapter for 2D only operation.
@@ -3597,10 +3598,14 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &object->ps_selected_mode, &object->vs_selected_mode);
     object->shader_backend = select_shader_backend(Adapter, DeviceType);
 
+    memset(&ffp_caps, 0, sizeof(ffp_caps));
     frag_pipeline = select_fragment_implementation(Adapter, DeviceType);
     object->frag_pipe = frag_pipeline;
+    frag_pipeline->get_caps(DeviceType, &GLINFO_LOCATION, &ffp_caps);
+    object->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
     compile_state_table(object->StateTable, object->multistate_funcs, &GLINFO_LOCATION,
                         ffp_vertexstate_template, frag_pipeline, misc_state_template);
+
     object->blitter = select_blit_implementation(Adapter, DeviceType);
 
     /* Prefer the vtable with functions optimized for single dirtifyable objects if the shader
