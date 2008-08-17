@@ -1342,7 +1342,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 
     if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) ||
         nt_name.Length < sizeof(leadin) ||
-        strncmpiW( nt_name.Buffer, leadin, sizeof(leadin)/sizeof(WCHAR) != 0))
+        strncmpiW( nt_name.Buffer, leadin, sizeof(leadin)/sizeof(WCHAR)) != 0)
     {
         RtlFreeUnicodeString( &nt_name );
         SetLastError( ERROR_PATH_NOT_FOUND );
