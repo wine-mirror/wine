@@ -365,8 +365,12 @@ static HRESULT STDMETHODCALLTYPE InPlace_OnPosRectChange(IOleInPlaceSite *iface,
     ICOM_THIS_MULTI(IOleClientSiteImpl, lpvtblOleInPlaceSite, iface);
     IOleInPlaceObject *inplace;
 
-    if (!IOleObject_QueryInterface(This->pBrowserObject, &IID_IOleInPlaceObject, (void **)&inplace))
+    if (IOleObject_QueryInterface(This->pBrowserObject, &IID_IOleInPlaceObject,
+                                  (void **)&inplace) == S_OK)
+    {
         IOleInPlaceObject_SetObjectRects(inplace, lprcPosRect, lprcPosRect);
+        IOleInPlaceObject_Release(inplace);
+    }
 
     return S_OK;
 }
