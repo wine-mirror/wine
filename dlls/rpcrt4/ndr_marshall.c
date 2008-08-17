@@ -2584,8 +2584,6 @@ static unsigned long EmbeddedComplexSize(MIDL_STUB_MESSAGE *pStubMsg,
         return sizeof(double);
     case RPC_FC_HYPER:
         return sizeof(ULONGLONG);
-    case RPC_FC_ERROR_STATUS_T:
-        return sizeof(error_status_t);
     case RPC_FC_ENUM16:
         return sizeof(UINT);
     default:
