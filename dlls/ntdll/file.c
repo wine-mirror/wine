@@ -1565,6 +1565,16 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 RtlSecondsSince1970ToTime( st.st_mtime, &info->LastWriteTime);
                 RtlSecondsSince1970ToTime( st.st_ctime, &info->ChangeTime);
                 RtlSecondsSince1970ToTime( st.st_atime, &info->LastAccessTime);
+#ifdef HAVE_STRUCT_STAT_ST_MTIM
+                info->CreationTime.QuadPart += st.st_mtim.tv_nsec / 100;
+                info->LastWriteTime.QuadPart += st.st_mtim.tv_nsec / 100;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_CTIM
+                info->ChangeTime.QuadPart += st.st_ctim.tv_nsec / 100;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_ATIM
+                info->LastAccessTime.QuadPart += st.st_atim.tv_nsec / 100;
+#endif
             }
         }
         break;
@@ -1653,6 +1663,16 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 RtlSecondsSince1970ToTime( st.st_mtime, &info->BasicInformation.LastWriteTime);
                 RtlSecondsSince1970ToTime( st.st_ctime, &info->BasicInformation.ChangeTime);
                 RtlSecondsSince1970ToTime( st.st_atime, &info->BasicInformation.LastAccessTime);
+#ifdef HAVE_STRUCT_STAT_ST_MTIM
+                info->BasicInformation.CreationTime.QuadPart += st.st_mtim.tv_nsec / 100;
+                info->BasicInformation.LastWriteTime.QuadPart += st.st_mtim.tv_nsec / 100;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_CTIM
+                info->BasicInformation.ChangeTime.QuadPart += st.st_ctim.tv_nsec / 100;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_ATIM
+                info->BasicInformation.LastAccessTime.QuadPart += st.st_atim.tv_nsec / 100;
+#endif
                 info->InternalInformation.IndexNumber.QuadPart = st.st_ino;
                 info->EaInformation.EaSize = 0;
                 info->AccessInformation.AccessFlags = 0;  /* FIXME */

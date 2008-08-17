@@ -1595,8 +1595,8 @@ AC_CHECK_MEMBERS([struct option.name],,,
 #include <getopt.h>
 #endif])
 
-dnl Check for stat.st_blocks
-AC_CHECK_MEMBERS([struct stat.st_blocks])
+dnl Check for stat.st_blocks and ns-resolved times
+AC_CHECK_MEMBERS([struct stat.st_blocks,struct stat.st_mtim,struct stat.st_ctim,struct stat.st_atim])
 
 dnl Check for sin6_scope_id
 AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_scope_id],,,

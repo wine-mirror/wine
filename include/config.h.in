@@ -741,8 +741,17 @@
 /* Define to 1 if `f_blocks' is member of `struct statvfs'. */
 #undef HAVE_STRUCT_STATVFS_F_BLOCKS
 
+/* Define to 1 if `st_atim' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_ATIM
+
 /* Define to 1 if `st_blocks' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BLOCKS
+
+/* Define to 1 if `st_ctim' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_CTIM
+
+/* Define to 1 if `st_mtim' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_MTIM
 
 /* Define to 1 if you have the <syscall.h> header file. */
 #undef HAVE_SYSCALL_H
