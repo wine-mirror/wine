@@ -254,7 +254,7 @@ static HRESULT ForwardCmdSeek( PCRITICAL_SECTION crit_sect, IBaseFilter* from, S
                     IMediaSeeking *seek = NULL;
 
                     hr_local = IPin_QueryInterface( connected, &IID_IMediaSeeking, (void**)&seek );
-                    if (!hr_local)
+                    if (hr_local == S_OK)
                     {
                         foundend = TRUE;
                         if (crit_sect)
