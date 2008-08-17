@@ -1306,7 +1306,6 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9EX iface, DWORD FV
 
     EnterCriticalSection(&d3d9_cs);
     if (0 != FVF) {
-         HRESULT hr;
          IDirect3DVertexDeclaration9* pDecl = getConvertedDecl(This, FVF);
 
          if(!pDecl) {
