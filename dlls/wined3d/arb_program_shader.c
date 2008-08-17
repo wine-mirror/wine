@@ -2756,9 +2756,23 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
             shader_addline(&buffer, "DP3 ret.r, arg1, tex%u;\n", stage - 1);
             shader_addline(&buffer, "SWZ arg1, bumpmat%u, y, w, 0, 0;\n", stage - 1);
             shader_addline(&buffer, "DP3 ret.g, arg1, tex%u;\n", stage - 1);
-            shader_addline(&buffer, "ADD ret, ret, fragment.texcoord[%u];\n", stage);
-            shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
-                            instr, sat, stage, stage, textype);
+
+            /* with projective textures, texbem only divides the static texture coord, not the displacement,
+             * so we can't let the GL handle this.
+             */
+            if (settings->op[stage].projected != proj_none) {
+                /* Note: Currently always divide by .a because the vertex pipeline moves the correct value
+                 * into the 4th component
+                 */
+                shader_addline(&buffer, "RCP arg1.a, fragment.texcoord[%u].a;\n", stage);
+                shader_addline(&buffer, "MUL arg1.rg, fragment.texcoord[%u], arg1.a;\n", stage);
+                shader_addline(&buffer, "ADD ret, ret, arg1;\n");
+            } else {
+                shader_addline(&buffer, "ADD ret, ret, fragment.texcoord[%u];\n", stage);
+            }
+
+            shader_addline(&buffer, "TEX%s tex%u, ret, texture[%u], %s;\n",
+                            sat, stage, stage, textype);
             if(settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
                 shader_addline(&buffer, "MAD ret.r, tex%u.b, luminance%u.r, luminance%u.g;\n",
                                stage - 1, stage - 1, stage - 1);
