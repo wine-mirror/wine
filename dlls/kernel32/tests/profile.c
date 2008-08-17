@@ -380,6 +380,20 @@ static void create_test_file(LPCSTR name, LPCSTR data, DWORD size)
     CloseHandle(hfile);
 }
 
+static BOOL emptystr_ok(CHAR emptystr[MAX_PATH])
+{
+    int i;
+
+    for(i = 0;i < MAX_PATH;++i)
+        if(emptystr[i] != 0)
+        {
+            trace("emptystr[%d] = %d\n",i,emptystr[i]);
+            return FALSE;
+        }
+
+    return TRUE;
+}
+
 static void test_GetPrivateProfileString(void)
 {
     DWORD ret;
@@ -387,6 +401,9 @@ static void test_GetPrivateProfileString(void)
     CHAR def_val[MAX_PATH];
     CHAR path[MAX_PATH];
     CHAR windir[MAX_PATH];
+    /* NT series crashes on r/o empty strings, so pass an r/w
+       empty string and check for modification */
+    CHAR emptystr[MAX_PATH] = "";
     LPSTR tempfile;
 
     static const char filename[] = ".\\winetest.ini";
@@ -410,10 +427,11 @@ static void test_GetPrivateProfileString(void)
 
     /* lpAppName is empty */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("", "name1", "default",
+    ret = GetPrivateProfileStringA(emptystr, "name1", "default",
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is missing */
     lstrcpyA(buf, "kumquat");
@@ -424,42 +442,47 @@ static void test_GetPrivateProfileString(void)
 
     /* lpAppName is empty, lpDefault is NULL */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("", "name1", NULL,
+    ret = GetPrivateProfileStringA(emptystr, "name1", NULL,
                                    buf, MAX_PATH, filename);
     ok(ret == 0, "Expected 0, got %d\n", ret);
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is empty, lpDefault is empty */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("", "name1", "",
+    ret = GetPrivateProfileStringA(emptystr, "name1", "",
                                    buf, MAX_PATH, filename);
     ok(ret == 0, "Expected 0, got %d\n", ret);
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is empty, lpDefault has trailing blank characters */
     lstrcpyA(buf, "kumquat");
     /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "default  ");
-    ret = GetPrivateProfileStringA("", "name1", def_val,
+    ret = GetPrivateProfileStringA(emptystr, "name1", def_val,
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is empty, many blank characters in lpDefault */
     lstrcpyA(buf, "kumquat");
     /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "one two  ");
-    ret = GetPrivateProfileStringA("", "name1", def_val,
+    ret = GetPrivateProfileStringA(emptystr, "name1", def_val,
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "one two"), "Expected \"one two\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpAppName is empty, blank character but not trailing in lpDefault */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("", "name1", "one two",
+    ret = GetPrivateProfileStringA(emptystr, "name1", "one two",
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "one two"), "Expected \"one two\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "AppName modified\n");
 
     /* lpKeyName is NULL */
     lstrcpyA(buf, "kumquat");
@@ -471,10 +494,11 @@ static void test_GetPrivateProfileString(void)
 
     /* lpKeyName is empty */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("section1", "", "default",
+    ret = GetPrivateProfileStringA("section1", emptystr, "default",
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "KeyName modified\n");
 
     /* lpKeyName is missing */
     lstrcpyA(buf, "kumquat");
@@ -485,26 +509,29 @@ static void test_GetPrivateProfileString(void)
 
     /* lpKeyName is empty, lpDefault is NULL */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("section1", "", NULL,
+    ret = GetPrivateProfileStringA("section1", emptystr, NULL,
                                    buf, MAX_PATH, filename);
     ok(ret == 0, "Expected 0, got %d\n", ret);
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "KeyName modified\n");
 
     /* lpKeyName is empty, lpDefault is empty */
     lstrcpyA(buf, "kumquat");
-    ret = GetPrivateProfileStringA("section1", "", "",
+    ret = GetPrivateProfileStringA("section1", emptystr, "",
                                    buf, MAX_PATH, filename);
     ok(ret == 0, "Expected 0, got %d\n", ret);
     ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "KeyName modified\n");
 
     /* lpKeyName is empty, lpDefault has trailing blank characters */
     lstrcpyA(buf, "kumquat");
     /* lpDefault must be writable (trailing blanks are removed inplace in win9x) */
     lstrcpyA(def_val, "default  ");
-    ret = GetPrivateProfileStringA("section1", "", def_val,
+    ret = GetPrivateProfileStringA("section1", emptystr, def_val,
                                    buf, MAX_PATH, filename);
     ok(ret == 7, "Expected 7, got %d\n", ret);
     ok(!lstrcmpA(buf, "default"), "Expected \"default\", got \"%s\"\n", buf);
+    ok(emptystr_ok(emptystr), "KeyName modified\n");
 
     if (0) /* crashes */
     {
