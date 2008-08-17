@@ -6516,7 +6516,7 @@ HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut)
     VARIANT_int_add(decVal.bitsnum, 3, &one, 1);
   }
   decVal.bitsnum[2] = 0;
-  VARIANT_DI_tostringW(&decVal, buff, sizeof(buff));
+  VARIANT_DI_tostringW(&decVal, buff, sizeof(buff)/sizeof(buff[0]));
 
   if (dwFlags & LOCALE_USE_NLS)
   {
