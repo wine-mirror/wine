@@ -348,6 +348,27 @@ static void test_profile_existing(void)
     ok( DeleteFile(testfile2), "delete failed\n" );
 }
 
+static void test_profile_delete_on_close()
+{
+    static CHAR testfile[] = ".\\testwine5.ini";
+    HANDLE h;
+    DWORD size, res;
+    static const char contents[] = "[" SECTION "]\n" KEY "=123\n";
+
+    h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+                    CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok( WriteFile( h, contents, sizeof contents - 1, &size, NULL ),
+                    "Cannot write test file: %x\n", GetLastError() );
+    ok( size == sizeof contents - 1, "Test file: partial write\n");
+
+    res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
+
+    ok( res == 123, "Got %d instead of 123\n", res);
+
+    /* This also deletes the file */
+    CloseHandle(h);
+}
+
 static void create_test_file(LPCSTR name, LPCSTR data, DWORD size)
 {
     HANDLE hfile;
@@ -615,5 +636,6 @@ START_TEST(profile)
     test_profile_sections();
     test_profile_sections_names();
     test_profile_existing();
+    test_profile_delete_on_close();
     test_GetPrivateProfileString();
 }
