@@ -1149,13 +1149,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetSoftwareVertexProcessing(LPDIREC
 
 static BOOL     WINAPI  IDirect3DDevice9Impl_GetSoftwareVertexProcessing(LPDIRECT3DDEVICE9EX iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    HRESULT hr;
+    BOOL ret;
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DDevice_GetSoftwareVertexProcessing(This->WineD3DDevice);
+    ret = IWineD3DDevice_GetSoftwareVertexProcessing(This->WineD3DDevice);
     LeaveCriticalSection(&d3d9_cs);
-    return hr;
+    return ret;
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_SetNPatchMode(LPDIRECT3DDEVICE9EX iface, float nSegments) {
