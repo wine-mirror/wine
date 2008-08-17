@@ -585,7 +585,7 @@ static HRESULT WINAPI RemUnkStub_Invoke(LPRPCSTUBBUFFER iface,
     pMsg->cbBuffer = cIids * sizeof(HRESULT);
 
     IRpcChannelBuffer_GetBuffer(pChannel, pMsg, &IID_IRemUnknown);
-    if (!hr)
+    if (hr == S_OK)
     {
         buf = pMsg->Buffer;
         memcpy(buf, pResults, cIids * sizeof(HRESULT));
@@ -964,12 +964,12 @@ PSFacBuf_CreateStub(
     if (IsEqualIID(&IID_IClassFactory, riid) ||
         IsEqualIID(&IID_IUnknown, riid) /* FIXME: fixup stub manager and remove this*/) {
 	hres = CFStub_Construct(ppStub);
-	if (!hres)
+	if (hres == S_OK)
 	    IRpcStubBuffer_Connect((*ppStub),pUnkServer);
 	return hres;
     } else if (IsEqualIID(&IID_IRemUnknown,riid)) {
 	hres = RemUnkStub_Construct(ppStub);
-	if (!hres)
+	if (hres == S_OK)
 	    IRpcStubBuffer_Connect((*ppStub),pUnkServer);
 	return hres;
     }

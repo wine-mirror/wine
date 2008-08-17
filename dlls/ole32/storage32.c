@@ -2100,7 +2100,6 @@ static HRESULT findPlaceholder(
   INT         typeOfRelation)
 {
   StgProperty storeProperty;
-  HRESULT     hr = S_OK;
   BOOL      res = TRUE;
 
   /*
@@ -2162,12 +2161,12 @@ static HRESULT findPlaceholder(
     }
   }
 
-  hr = StorageImpl_WriteProperty(
+  res = StorageImpl_WriteProperty(
          storage->base.ancestorStorage,
          storePropertyIndex,
          &storeProperty);
 
-  if(! hr)
+  if(!res)
   {
     return E_FAIL;
   }
