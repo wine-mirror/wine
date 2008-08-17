@@ -859,7 +859,7 @@ TREEVIEW_ComputeItemInternalMetrics(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM 
 		> TVS_LINESATROOT);
 #endif
 
-    item->linesOffset = infoPtr->uIndent * (item->iLevel + lar - 1)
+    item->linesOffset = infoPtr->uIndent * (lar ? item->iLevel : item->iLevel - 1)
 	- infoPtr->scrollX;
     item->stateOffset = item->linesOffset + infoPtr->uIndent;
     item->imageOffset = item->stateOffset
