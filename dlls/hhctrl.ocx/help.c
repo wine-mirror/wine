@@ -89,7 +89,7 @@ BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
     BOOL ret;
     HRESULT hres;
 
-    static const WCHAR url_indicator[] = {':', '/', '/'};
+    static const WCHAR url_indicator[] = {':', '/', '/', 0};
 
     TRACE("%s\n", debugstr_w(surl));
 
