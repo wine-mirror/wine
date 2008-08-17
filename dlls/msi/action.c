@@ -3771,7 +3771,11 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
                     &si, &info);
 
     if (brc)
+    {
+        CloseHandle(info.hThread);
         msi_dialog_check_messages(info.hProcess);
+        CloseHandle(info.hProcess);
+    }
 
     msi_free(FullName);
 
