@@ -471,7 +471,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
         pos += 4;
 
     /* Skip ID3 v2 tag, if any */
-    if (SUCCEEDED(hr) && !strncmp("ID3", (char*)header, 3))
+    if (SUCCEEDED(hr) && !memcmp("ID3", header, 3))
     do {
         UINT length;
         hr = IAsyncReader_SyncRead(pPin->pReader, pos, 6, header + 4);
