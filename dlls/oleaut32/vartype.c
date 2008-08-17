@@ -5179,7 +5179,7 @@ static HRESULT VARIANT_DI_div(const VARIANT_DI * dividend, const VARIANT_DI * di
            to multiply quotient by 10 (without overflowing), while adjusting the scale,
            until scale is 0. If this cannot be done, it is a real overflow.
          */
-        while (!r_overflow && quotientscale < 0) {
+        while (r_overflow == S_OK && quotientscale < 0) {
             memset(remainderplusquotient, 0, sizeof(remainderplusquotient));
             memcpy(remainderplusquotient, quotient->bitsnum, sizeof(quotient->bitsnum));
             VARIANT_int_mulbychar(remainderplusquotient, sizeof(remainderplusquotient)/sizeof(DWORD), 10);
@@ -5189,7 +5189,7 @@ static HRESULT VARIANT_DI_div(const VARIANT_DI * dividend, const VARIANT_DI * di
                 memcpy(quotient->bitsnum, remainderplusquotient, sizeof(quotient->bitsnum));
             } else r_overflow = DISP_E_OVERFLOW;
         }
-        if (!r_overflow) {
+        if (r_overflow == S_OK) {
             if (quotientscale <= 255) quotient->scale = quotientscale;
             else VARIANT_DI_clear(quotient);
         }
