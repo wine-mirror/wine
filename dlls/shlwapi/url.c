@@ -2077,7 +2077,7 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
 	  debugstr_w(pszIn), pszOut, pcchOut, *pcchOut, dwPart, dwFlags);
 
     ret = URL_ParseUrl(pszIn, &pl);
-    if (!ret) {
+    if (ret == S_OK) {
 	schaddr = pl.pScheme;
 	schsize = pl.szScheme;
 
