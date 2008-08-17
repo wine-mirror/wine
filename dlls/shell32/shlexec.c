@@ -1091,10 +1091,11 @@ static IDataObject *shellex_get_dataobj( LPSHELLEXECUTEINFOW sei )
     else
     {
         WCHAR fullpath[MAX_PATH];
+        BOOL ret;
 
         fullpath[0] = 0;
-        r = GetFullPathNameW( sei->lpFile, MAX_PATH, fullpath, NULL );
-        if (!r)
+        ret = GetFullPathNameW( sei->lpFile, MAX_PATH, fullpath, NULL );
+        if (!ret)
             goto end;
 
         pidl = ILCreateFromPathW( fullpath );
