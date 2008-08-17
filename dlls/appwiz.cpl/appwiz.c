@@ -404,8 +404,11 @@ static void UninstallProgram(int id)
 
             if (res)
             {
+                CloseHandle(info.hThread);
+
                 /* wait for the process to exit */
                 WaitForSingleObject(info.hProcess, INFINITE);
+                CloseHandle(info.hProcess);
             }
             else
             {
