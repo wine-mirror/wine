@@ -3139,16 +3139,8 @@ static HRESULT StorageImpl_LoadFileHeader(
     /*
      * Make the bitwise arithmetic to get the size of the blocks in bytes.
      */
-    if ((1 << 2) == 4)
-    {
-      This->bigBlockSize   = 0x000000001 << (DWORD)This->bigBlockSizeBits;
-      This->smallBlockSize = 0x000000001 << (DWORD)This->smallBlockSizeBits;
-    }
-    else
-    {
-      This->bigBlockSize   = 0x000000001 >> (DWORD)This->bigBlockSizeBits;
-      This->smallBlockSize = 0x000000001 >> (DWORD)This->smallBlockSizeBits;
-    }
+    This->bigBlockSize   = 0x000000001 << (DWORD)This->bigBlockSizeBits;
+    This->smallBlockSize = 0x000000001 << (DWORD)This->smallBlockSizeBits;
 
     /*
      * Right now, the code is making some assumptions about the size of the
