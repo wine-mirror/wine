@@ -362,8 +362,41 @@ static void test_profile_delete_on_close()
     ok( size == sizeof contents - 1, "Test file: partial write\n");
 
     res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
-
     ok( res == 123, "Got %d instead of 123\n", res);
+
+    /* This also deletes the file */
+    CloseHandle(h);
+}
+
+static void test_profile_refresh(void)
+{
+    static CHAR testfile[] = ".\\winetest4.ini";
+    HANDLE h;
+    DWORD size, res;
+    static const char contents1[] = "[" SECTION "]\n" KEY "=123\n";
+    static const char contents2[] = "[" SECTION "]\n" KEY "=124\n";
+
+    h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+                    CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok( WriteFile( h, contents1, sizeof contents1 - 1, &size, NULL ),
+                    "Cannot write test file: %x\n", GetLastError() );
+    ok( size == sizeof contents1 - 1, "Test file: partial write\n");
+
+    res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
+    ok( res == 123, "Got %d instead of 123\n", res);
+
+    CloseHandle(h);
+
+    /* Test proper invalidation of wine's profile file cache */
+
+    h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+                    CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok( WriteFile( h, contents2, sizeof contents2 - 1, &size, NULL ),
+                    "Cannot write test file: %x\n", GetLastError() );
+    ok( size == sizeof contents2 - 1, "Test file: partial write\n");
+
+    res = GetPrivateProfileInt(SECTION, KEY, 0, testfile);
+    ok( res == 124, "Got %d instead of 124\n", res);
 
     /* This also deletes the file */
     CloseHandle(h);
@@ -416,6 +449,10 @@ static void test_GetPrivateProfileString(void)
         "[section2]\r\n";
 
     create_test_file(filename, content, sizeof(content));
+
+    /* Run this test series with caching. Wine won't cache profile
+       files younger than 2.1 seconds. */
+    Sleep(2500);
 
     /* lpAppName is NULL */
     lstrcpyA(buf, "kumquat");
@@ -664,5 +701,6 @@ START_TEST(profile)
     test_profile_sections_names();
     test_profile_existing();
     test_profile_delete_on_close();
+    test_profile_refresh();
     test_GetPrivateProfileString();
 }
