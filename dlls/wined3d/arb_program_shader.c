@@ -2646,6 +2646,8 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
             bump_used[stage] = TRUE;
             tex_read[stage] = TRUE;
             luminance_used[stage] = TRUE;
+        } else if(settings->op[stage].cop == WINED3DTOP_BLENDFACTORALPHA) {
+            tfactor_used = TRUE;
         }
 
         if(arg0 == WINED3DTA_TFACTOR || arg1 == WINED3DTA_TFACTOR || arg2 == WINED3DTA_TFACTOR) {
