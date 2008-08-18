@@ -157,20 +157,19 @@ static RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPCSTR NetworkAdd
   RPCRT4_strfree(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   RPCRT4_strfree(Binding->Endpoint);
-  if (Endpoint) {
-    Binding->Endpoint = RPCRT4_strdupA(Endpoint);
-  } else {
-    Binding->Endpoint = RPCRT4_strdupA("");
-  }
+  Binding->Endpoint = RPCRT4_strdupA(Endpoint);
   HeapFree(GetProcessHeap(), 0, Binding->NetworkOptions);
   Binding->NetworkOptions = RPCRT4_strdupAtoW(NetworkOptions);
-  if (!Binding->Endpoint) ERR("out of memory?\n");
 
-  status = RPCRT4_GetAssociation(Binding->Protseq, Binding->NetworkAddr,
-                                 Binding->Endpoint, Binding->NetworkOptions,
-                                 &Binding->Assoc);
-  if (status != RPC_S_OK)
-      return status;
+  /* only attempt to get an association if the binding is complete */
+  if (Endpoint && Endpoint[0] != '\0')
+  {
+    status = RPCRT4_GetAssociation(Binding->Protseq, Binding->NetworkAddr,
+                                   Binding->Endpoint, Binding->NetworkOptions,
+                                   &Binding->Assoc);
+    if (status != RPC_S_OK)
+        return status;
+  }
 
   return RPC_S_OK;
 }
@@ -186,20 +185,19 @@ static RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPCWSTR NetworkAd
   RPCRT4_strfree(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupWtoA(NetworkAddr);
   RPCRT4_strfree(Binding->Endpoint);
-  if (Endpoint) {
-    Binding->Endpoint = RPCRT4_strdupWtoA(Endpoint);
-  } else {
-    Binding->Endpoint = RPCRT4_strdupA("");
-  }
-  if (!Binding->Endpoint) ERR("out of memory?\n");
+  Binding->Endpoint = RPCRT4_strdupWtoA(Endpoint);
   HeapFree(GetProcessHeap(), 0, Binding->NetworkOptions);
   Binding->NetworkOptions = RPCRT4_strdupW(NetworkOptions);
 
-  status = RPCRT4_GetAssociation(Binding->Protseq, Binding->NetworkAddr,
-                                 Binding->Endpoint, Binding->NetworkOptions,
-                                 &Binding->Assoc);
-  if (status != RPC_S_OK)
-      return status;
+  /* only attempt to get an association if the binding is complete */
+  if (Endpoint && Endpoint[0] != '\0')
+  {
+    status = RPCRT4_GetAssociation(Binding->Protseq, Binding->NetworkAddr,
+                                   Binding->Endpoint, Binding->NetworkOptions,
+                                   &Binding->Assoc);
+    if (status != RPC_S_OK)
+        return status;
+  }
 
   return RPC_S_OK;
 }
