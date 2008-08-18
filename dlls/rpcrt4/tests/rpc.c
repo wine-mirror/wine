@@ -674,50 +674,50 @@ static void test_I_RpcExceptionFilter(void)
     }
 }
 
-static void test_endpoint_mapper(void)
+static void test_endpoint_mapper(RPC_CSTR protseq, RPC_CSTR address,
+                                 RPC_CSTR endpoint)
 {
     static unsigned char annotation[] = "Test annotation string.";
-    static unsigned char ncacn_ip_tcp[] = "ncacn_np";
-    static unsigned char address[] = ".";
-    static unsigned char endpoint[] = "\\pipe\\wine_rpc_test";
     RPC_STATUS status;
     RPC_BINDING_VECTOR *binding_vector;
     handle_t handle;
     unsigned char *binding;
 
-    status = RpcServerUseProtseqEp(ncacn_ip_tcp, 20, endpoint, NULL);
-    ok(status == RPC_S_OK, "RpcServerUseProtseqEp failed (%lu)\n", status);
+    status = RpcServerUseProtseqEp(protseq, 20, endpoint, NULL);
+    ok(status == RPC_S_OK, "%s: RpcServerUseProtseqEp failed (%lu)\n", protseq, status);
 
     status = RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL);
-    ok(status == RPC_S_OK, "RpcServerRegisterIf failed (%lu)\n", status);
+    ok(status == RPC_S_OK, "%s: RpcServerRegisterIf failed (%lu)\n", protseq, status);
 
     status = RpcServerInqBindings(&binding_vector);
-    ok(status == RPC_S_OK, "RpcServerInqBindings failed with error %lu\n", status);
+    ok(status == RPC_S_OK, "%s: RpcServerInqBindings failed with error %lu\n", protseq, status);
 
     status = RpcEpRegisterA(IFoo_v0_0_s_ifspec, binding_vector, NULL, annotation);
-    ok(status == RPC_S_OK, "RpcEpRegisterA failed with error %lu\n", status);
+    ok(status == RPC_S_OK, "%s: RpcEpRegisterA failed with error %lu\n", protseq, status);
 
-    status = RpcStringBindingCompose(NULL, ncacn_ip_tcp, address,
+    status = RpcStringBindingCompose(NULL, protseq, address,
                                      NULL, NULL, &binding);
-    ok(status == RPC_S_OK, "RpcStringBindingCompose failed (%lu)\n", status);
+    ok(status == RPC_S_OK, "%s: RpcStringBindingCompose failed (%lu)\n", protseq, status);
 
     status = RpcBindingFromStringBinding(binding, &handle);
-    ok(status == RPC_S_OK, "RpcBindingFromStringBinding failed (%lu)\n", status);
+    ok(status == RPC_S_OK, "%s: RpcBindingFromStringBinding failed (%lu)\n", protseq, status);
+
+    RpcStringFree(&binding);
 
     status = RpcEpResolveBinding(handle, IFoo_v0_0_s_ifspec);
-    ok(status == RPC_S_OK, "RpcEpResolveBinding failed with error %lu\n", status);
+    ok(status == RPC_S_OK, "%s: RpcEpResolveBinding failed with error %lu\n", protseq, status);
 
     status = RpcBindingFree(&handle);
-    ok(status == RPC_S_OK, "RpcBindingFree failed with error %lu\n", status);
+    ok(status == RPC_S_OK, "%s: RpcBindingFree failed with error %lu\n", protseq, status);
 
     status = RpcServerUnregisterIf(NULL, NULL, FALSE);
-    ok(status == RPC_S_OK, "RpcServerUnregisterIf failed (%lu)\n", status);
+    ok(status == RPC_S_OK, "%s: RpcServerUnregisterIf failed (%lu)\n", protseq, status);
 
     status = RpcEpUnregister(IFoo_v0_0_s_ifspec, binding_vector, NULL);
-    ok(status == RPC_S_OK, "RpcEpUnregisterA failed with error %lu\n", status);
+    ok(status == RPC_S_OK, "%s: RpcEpUnregisterA failed with error %lu\n", protseq, status);
 
     status = RpcBindingVectorFree(&binding_vector);
-    ok(status == RPC_S_OK, "RpcBindingVectorFree failed with error %lu\n", status);
+    ok(status == RPC_S_OK, "%s: RpcBindingVectorFree failed with error %lu\n", protseq, status);
 }
 
 static void test_RpcStringBindingFromBinding(void)
@@ -750,15 +750,20 @@ static void test_RpcStringBindingFromBinding(void)
 
 START_TEST( rpc )
 {
-    trace ( " ** Uuid Conversion and Comparison Tests **\n" );
+    static unsigned char ncacn_np[] = "ncacn_np";
+    static unsigned char ncalrpc[] = "ncalrpc";
+    static unsigned char np_address[] = ".";
+    static unsigned char np_endpoint[] = "\\pipe\\wine_rpc_test";
+    static unsigned char lrpc_endpoint[] = "wine_rpc_test";
+
     UuidConversionAndComparison();
-    trace ( " ** DceErrorInqText **\n");
     TestDceErrorInqText();
     test_rpc_ncacn_ip_tcp();
     test_towers();
     test_I_RpcMapWin32Status();
     test_RpcStringBindingParseA();
     test_I_RpcExceptionFilter();
-    test_endpoint_mapper();
+    test_endpoint_mapper(ncacn_np, np_address, np_endpoint);
+    test_endpoint_mapper(ncalrpc, NULL, lrpc_endpoint);
     test_RpcStringBindingFromBinding();
 }
