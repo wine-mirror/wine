@@ -213,7 +213,7 @@ RPC_STATUS RPCRT4_ResolveBinding(RpcBinding* Binding, LPCSTR Endpoint)
   RPCRT4_strfree(Binding->Endpoint);
   Binding->Endpoint = RPCRT4_strdupA(Endpoint);
 
-  RpcAssoc_Release(Binding->Assoc);
+  if (Binding->Assoc) RpcAssoc_Release(Binding->Assoc);
   Binding->Assoc = NULL;
   status = RPCRT4_GetAssociation(Binding->Protseq, Binding->NetworkAddr,
                                  Binding->Endpoint, Binding->NetworkOptions,
