@@ -270,6 +270,7 @@ programs/winetest/d3d9_test.exe
 programs/winetest/d3drm_test.exe
 programs/winetest/d3dx8_test.exe
 programs/winetest/d3dx9_36_test.exe
+programs/winetest/d3dxof_test.exe
 programs/winetest/ddraw_test.exe
 programs/winetest/dinput_test.exe
 programs/winetest/dnsapi_test.exe
