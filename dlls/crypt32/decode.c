@@ -231,6 +231,8 @@ static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
         SetLastError(ERROR_MORE_DATA);
         ret = FALSE;
     }
+    else
+        *pcbStructInfo = bytesNeeded;
     return ret;
 }
 
