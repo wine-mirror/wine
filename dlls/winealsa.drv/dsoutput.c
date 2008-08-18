@@ -207,14 +207,13 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
     snd_pcm_sw_params_set_start_threshold(pcm, sw_params, 0);
     snd_pcm_sw_params_get_boundary(sw_params, &boundary);
     snd_pcm_sw_params_set_stop_threshold(pcm, sw_params, boundary);
-    snd_pcm_sw_params_set_silence_threshold(pcm, sw_params, INT_MAX);
+    snd_pcm_sw_params_set_silence_threshold(pcm, sw_params, boundary);
     snd_pcm_sw_params_set_silence_size(pcm, sw_params, 0);
     snd_pcm_sw_params_set_avail_min(pcm, sw_params, 0);
-    snd_pcm_sw_params_set_xrun_mode(pcm, sw_params, SND_PCM_XRUN_NONE);
     err = snd_pcm_sw_params(pcm, sw_params);
 
     avail = snd_pcm_avail_update(pcm);
-    if (avail < 0)
+    if ((snd_pcm_sframes_t)avail < 0)
     {
         ERR("No buffer is available: %s.\n", snd_strerror(avail));
         return DSERR_GENERIC;

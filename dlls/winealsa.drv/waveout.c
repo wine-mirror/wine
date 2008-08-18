@@ -537,6 +537,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	    dwNextFeedTime = dwNextNotifyTime = INFINITE;
 	}
     }
+    return 0;
 }
 
 /**************************************************************************
@@ -574,6 +575,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     unsigned int                period_time = 10000;
     snd_pcm_uframes_t           buffer_size;
     snd_pcm_uframes_t           period_size;
+    snd_pcm_uframes_t           boundary;
     int                         flags;
     int                         err=0;
     int                         dir=0;
@@ -756,12 +758,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     err = snd_pcm_hw_params_get_buffer_size(hw_params, &buffer_size);
 
     snd_pcm_sw_params_current(pcm, sw_params);
+    snd_pcm_sw_params_get_boundary(sw_params, &boundary);
+
     EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, 1), MMSYSERR_ERROR, "unable to set start threshold");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_silence_size(pcm, sw_params, 0), MMSYSERR_ERROR, "unable to set silence size");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_avail_min(pcm, sw_params, period_size), MMSYSERR_ERROR, "unable to set avail min");
-    EXIT_ON_ERROR( snd_pcm_sw_params_set_xfer_align(pcm, sw_params, 1), MMSYSERR_ERROR, "unable to set xfer align");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_silence_threshold(pcm, sw_params, 0), MMSYSERR_ERROR, "unable to set silence threshold");
-    EXIT_ON_ERROR( snd_pcm_sw_params_set_xrun_mode(pcm, sw_params, SND_PCM_XRUN_NONE), MMSYSERR_ERROR, "unable to set xrun mode");
+    EXIT_ON_ERROR( snd_pcm_sw_params_set_stop_threshold(pcm, sw_params, boundary), MMSYSERR_ERROR, "unable to set xrun mode");
     EXIT_ON_ERROR( snd_pcm_sw_params(pcm, sw_params), MMSYSERR_ERROR, "unable to set sw params for playback");
 #undef EXIT_ON_ERROR
 

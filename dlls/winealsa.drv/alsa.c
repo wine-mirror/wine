@@ -621,8 +621,6 @@ void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t *
     int err;
     snd_pcm_format_t   format;
     snd_pcm_access_t   access;
-    err = snd_pcm_hw_params_get_access(hw_params, &access);
-    err = snd_pcm_hw_params_get_format(hw_params, &format);
 
 #define X(x) ((x)? "true" : "false")
     if (full)
@@ -640,8 +638,11 @@ void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t *
 	      X(snd_pcm_hw_params_is_joint_duplex(hw_params)));
 #undef X
 
-    if (access >= 0)
+    err = snd_pcm_hw_params_get_access(hw_params, &access);
+    if (err >= 0)
+    {
 	TRACE("access=%s\n", snd_pcm_access_name(access));
+    }
     else
     {
 	snd_pcm_access_mask_t * acmask;
@@ -654,7 +655,8 @@ void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t *
         HeapFree( GetProcessHeap(), 0, acmask );
     }
 
-    if (format >= 0)
+    err = snd_pcm_hw_params_get_format(hw_params, &format);
+    if (err >= 0)
     {
 	TRACE("format=%s\n", snd_pcm_format_name(format));
 
