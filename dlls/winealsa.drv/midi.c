@@ -1115,6 +1115,8 @@ static DWORD modReset(WORD wDevID)
  */
 static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, int cap, int type)
 {
+    char midiPortName[MAXPNAMELEN];
+
     if (cap & SND_SEQ_PORT_CAP_WRITE) {
 	TRACE("OUT (%d:%s:%s:%d:%s:%x)\n",snd_seq_client_info_get_client(cinfo),
 					  snd_seq_client_info_get_name(cinfo),
@@ -1146,7 +1148,17 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	 * not MIDICAPS_CACHE.
 	 */
 	MidiOutDev[MODM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-	MultiByteToWideChar(CP_ACP, 0, snd_seq_client_info_get_name(cinfo), -1,
+
+	/* Try to use both client and port names, if this is too long take the port name only.
+           In the second case the port name should be explicit enough due to its big size.
+	 */
+	if ( (strlen(snd_seq_client_info_get_name(cinfo)) + strlen(snd_seq_port_info_get_name(pinfo)) + 3) < MAXPNAMELEN ) {
+	    sprintf(midiPortName, "%s - %s", snd_seq_client_info_get_name(cinfo), snd_seq_port_info_get_name(pinfo));
+	} else {
+	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN-1);
+	    midiPortName[MAXPNAMELEN-1] = 0;
+	}
+	MultiByteToWideChar(CP_ACP, 0, midiPortName, -1,
                             MidiOutDev[MODM_NumDevs].caps.szPname,
                             sizeof(MidiOutDev[MODM_NumDevs].caps.szPname) / sizeof(WCHAR));
 
@@ -1201,7 +1213,17 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	 * not MIDICAPS_CACHE.
 	 */
 	MidiInDev[MIDM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-	MultiByteToWideChar(CP_ACP, 0, snd_seq_client_info_get_name(cinfo), -1,
+
+	/* Try to use both client and port names, if this is too long take the port name only.
+           In the second case the port name should be explicit enough due to its big size.
+	 */
+	if ( (strlen(snd_seq_client_info_get_name(cinfo)) + strlen(snd_seq_port_info_get_name(pinfo)) + 3) < MAXPNAMELEN ) {
+	    sprintf(midiPortName, "%s - %s", snd_seq_client_info_get_name(cinfo), snd_seq_port_info_get_name(pinfo));
+	} else {
+	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN-1);
+	    midiPortName[MAXPNAMELEN-1] = 0;
+        }
+	MultiByteToWideChar(CP_ACP, 0, midiPortName, -1,
                             MidiInDev[MIDM_NumDevs].caps.szPname,
                             sizeof(MidiInDev[MIDM_NumDevs].caps.szPname) / sizeof(WCHAR));
 	MidiInDev[MIDM_NumDevs].state = 0;
