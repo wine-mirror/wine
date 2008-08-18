@@ -1767,7 +1767,7 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd,
  *
  * Display a popup menu.
  */
-static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
+static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
                               INT x, INT y, INT xanchor, INT yanchor )
 {
     POPUPMENU *menu;
@@ -1803,6 +1803,13 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
     monitor = MonitorFromPoint( pt, MONITOR_DEFAULTTONEAREST );
     info.cbSize = sizeof(info);
     GetMonitorInfoW( monitor, &info );
+
+    if( flags & TPM_RIGHTALIGN ) x -= width;
+    if( flags & TPM_CENTERALIGN ) x -= width / 2;
+
+    if( flags & TPM_BOTTOMALIGN ) y -= height;
+    if( flags & TPM_VCENTERALIGN ) y -= height / 2;
+
     if( x + width > info.rcWork.right)
     {
         if( xanchor && x >= width - xanchor )
@@ -2390,7 +2397,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
 	}
     }
 
-    MENU_ShowPopup( hwndOwner, item->hSubMenu, menu->FocusedItem,
+    MENU_ShowPopup( hwndOwner, item->hSubMenu, menu->FocusedItem, 0,
 		    rect.left, rect.top, rect.right, rect.bottom );
     if (selectFirst)
         MENU_MoveSelection( hwndOwner, item->hSubMenu, ITEM_NEXT );
@@ -3410,7 +3417,7 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
     if (!(wFlags & TPM_NONOTIFY))
         SendMessageW( hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, 0);
 
-    if (MENU_ShowPopup( hWnd, hMenu, 0, x, y, 0, 0 ))
+    if (MENU_ShowPopup( hWnd, hMenu, 0, wFlags, x, y, 0, 0 ))
         ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd, lpRect );
     MENU_ExitTracking(hWnd);
 
