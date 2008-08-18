@@ -2496,7 +2496,7 @@ static void test_GetSecurityInfo(void)
     /* Create something.  Files have lots of associated security info.  */
     obj = CreateFile(myARGV[0], GENERIC_READ, FILE_SHARE_READ, NULL,
                      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (!obj)
+    if (obj == INVALID_HANDLE_VALUE)
     {
         skip("Couldn't create an object for GetSecurityInfo test\n");
         return;
