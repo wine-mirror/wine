@@ -8588,10 +8588,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   if (!notify(infoPtr, NM_RELEASEDCAPTURE)) return 0;
 
   if (!infoPtr->bFocus)
-  {
     bReceivedFocus = TRUE;
-    SetFocus(infoPtr->hwndSelf);
-  }
 
   /* set left button down flag and record the click position */
   infoPtr->bLButtonDown = TRUE;
@@ -8720,6 +8717,9 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
             GetDoubleClickTime(),
             LISTVIEW_DelayedEditItem);
     }
+
+    if (!infoPtr->bFocus)
+        SetFocus(infoPtr->hwndSelf);
 
     return 0;
 }
