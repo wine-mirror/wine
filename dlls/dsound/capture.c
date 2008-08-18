@@ -1140,7 +1140,7 @@ IDirectSoundCaptureBufferImpl_Start(
 
         if (device->buffer) {
             int c;
-            DWORD blocksize = DSOUND_fraglen(device->pwfx->nSamplesPerSec, device->pwfx->nBlockAlign);
+            DWORD blocksize = 4 * DSOUND_fraglen(device->pwfx->nSamplesPerSec, device->pwfx->nBlockAlign);
             device->nrofpwaves = device->buflen / blocksize + !!(device->buflen % blocksize);
             TRACE("nrofpwaves=%d\n", device->nrofpwaves);
 

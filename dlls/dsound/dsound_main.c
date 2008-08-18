@@ -90,9 +90,9 @@ HRESULT mmErr(UINT err)
 
 /* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
 int ds_emuldriver = 0;
-int ds_hel_buflen = 32768;
-int ds_snd_queue_max = 10;
-int ds_snd_queue_min = 6;
+int ds_hel_buflen = 32768 * 2;
+int ds_snd_queue_max = 20;
+int ds_snd_queue_min = 14;
 int ds_snd_shadow_maxsize = 2;
 int ds_hw_accel = DS_HW_ACCEL_FULL;
 int ds_default_playback = 0;

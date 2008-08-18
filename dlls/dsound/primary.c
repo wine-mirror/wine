@@ -46,13 +46,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
  */
 DWORD DSOUND_fraglen(DWORD nSamplesPerSec, DWORD nBlockAlign)
 {
-    DWORD fraglen = 512 * nBlockAlign;
+    DWORD fraglen = 256 * nBlockAlign;
 
     /* Compensate for only being roughly accurate */
     if (nSamplesPerSec <= 26000)
         fraglen /= 2;
 
-    if (nSamplesPerSec <= 12000)
+    if (nSamplesPerSec <= 10000)
         fraglen /= 2;
 
     if (nSamplesPerSec >= 80000)
