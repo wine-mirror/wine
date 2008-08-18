@@ -156,7 +156,6 @@ static ULONG WINAPI IDirectXFileImpl_Release(IDirectXFile* iface)
 
 /*** IDirectXFile methods ***/
 static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPVOID pvSource, DXFILELOADOPTIONS dwLoadOptions, LPDIRECTXFILEENUMOBJECT* ppEnumObj)
-
 {
   IDirectXFileImpl *This = (IDirectXFileImpl *)iface;
   IDirectXFileEnumObjectImpl* object;
@@ -1126,17 +1125,17 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 {
   IDirectXFileEnumObjectImpl *This = (IDirectXFileEnumObjectImpl *)iface;
   IDirectXFileDataImpl* object;
+  HRESULT hr;
   
   FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppDataObj); 
 
-  object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileDataImpl));
-
-  object->lpVtbl.lpVtbl = &IDirectXFileData_Vtbl;
-  object->ref = 1;
+  hr = IDirectXFileDataImpl_Create(&object);
+  if (!SUCCEEDED(hr))
+    return hr;
 
   *ppDataObj = (LPDIRECTXFILEDATA)object;
 
-  return DXFILEERR_BADVALUE;
+  return DXFILE_OK;
 }
 
 static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectById(IDirectXFileEnumObject* iface, REFGUID rguid, LPDIRECTXFILEDATA* ppDataObj)
