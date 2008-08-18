@@ -123,8 +123,7 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item) {
   }
   if (item->type==diUndoSplitParagraph) {
      FREE_OBJ(item->member.para.pFmt);
-     if (item->member.para.pCell)
-       FREE_OBJ(item->member.para.pCell);
+     FREE_OBJ(item->member.para.pCell);
   }
   FREE_OBJ(item);
 }
