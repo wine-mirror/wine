@@ -2627,6 +2627,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     DWORD arg0, arg1, arg2;
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
     BOOL last = FALSE;
+    BOOL op_equal;
 
     /* Find out which textures are read */
     for(stage = 0; stage < MAX_TEXTURES; stage++) {
@@ -2806,6 +2807,25 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
             last = TRUE;
         }
 
+        if(settings->op[stage].cop == WINED3DTOP_SELECTARG1 &&
+           settings->op[stage].aop == WINED3DTOP_SELECTARG1) {
+            op_equal = settings->op[stage].carg1 == settings->op[stage].aarg1;
+        } else if(settings->op[stage].cop == WINED3DTOP_SELECTARG1 &&
+                  settings->op[stage].aop == WINED3DTOP_SELECTARG2) {
+            op_equal = settings->op[stage].carg1 == settings->op[stage].aarg2;
+        } else if(settings->op[stage].cop == WINED3DTOP_SELECTARG2 &&
+                  settings->op[stage].aop == WINED3DTOP_SELECTARG1) {
+            op_equal = settings->op[stage].carg2 == settings->op[stage].aarg1;
+        } else if(settings->op[stage].cop == WINED3DTOP_SELECTARG2 &&
+                  settings->op[stage].aop == WINED3DTOP_SELECTARG2) {
+            op_equal = settings->op[stage].carg2 == settings->op[stage].aarg2;
+        } else {
+            op_equal = settings->op[stage].aop   == settings->op[stage].cop &&
+                       settings->op[stage].carg0 == settings->op[stage].aarg0 &&
+                       settings->op[stage].carg1 == settings->op[stage].aarg1 &&
+                       settings->op[stage].carg2 == settings->op[stage].aarg2;
+        }
+
         if(settings->op[stage].aop == WINED3DTOP_DISABLE) {
             gen_ffp_instr(&buffer, stage, TRUE, FALSE, last, settings->op[stage].dst,
                           settings->op[stage].cop, settings->op[stage].carg0,
@@ -2817,10 +2837,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
             } else if(stage == 0) {
                 shader_addline(&buffer, "MOV ret.a, fragment.color.primary.a;\n");
             }
-        } else if(settings->op[stage].aop   == settings->op[stage].cop &&
-                  settings->op[stage].carg0 == settings->op[stage].aarg0 &&
-                  settings->op[stage].carg1 == settings->op[stage].aarg1 &&
-                  settings->op[stage].carg2 == settings->op[stage].aarg2) {
+        } else if(op_equal) {
             gen_ffp_instr(&buffer, stage, TRUE, TRUE, last, settings->op[stage].dst,
                           settings->op[stage].cop, settings->op[stage].carg0,
                           settings->op[stage].carg1, settings->op[stage].carg2);
