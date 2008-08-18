@@ -350,7 +350,7 @@
 @ stdcall RpcBindingInqAuthInfoW(ptr ptr ptr ptr ptr ptr)
 @ stdcall RpcBindingInqObject(ptr ptr)
 @ stub RpcBindingInqOption
-@ stub RpcBindingReset
+@ stdcall RpcBindingReset(ptr)
 @ stub RpcBindingServerFromClient
 @ stdcall RpcBindingSetAuthInfoA(ptr str long long ptr long)
 @ stdcall RpcBindingSetAuthInfoExA(ptr str long long ptr long ptr)

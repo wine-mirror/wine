@@ -1013,6 +1013,23 @@ RPC_STATUS RPC_ENTRY RpcBindingCopy(
 }
 
 /***********************************************************************
+ *             RpcBindingReset (RPCRT4.@)
+ */
+RPC_STATUS RPC_ENTRY RpcBindingReset(RPC_BINDING_HANDLE Binding)
+{
+    RpcBinding *bind = Binding;
+
+    TRACE("(%p)\n", Binding);
+
+    RPCRT4_strfree(bind->Endpoint);
+    bind->Endpoint = NULL;
+    if (bind->Assoc) RpcAssoc_Release(bind->Assoc);
+    bind->Assoc = NULL;
+
+    return RPC_S_OK;
+}
+
+/***********************************************************************
  *             RpcImpersonateClient (RPCRT4.@)
  *
  * Impersonates the client connected via a binding handle so that security
