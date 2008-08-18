@@ -52,10 +52,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-typedef struct {
-    uint8_t byte[3];
-} int24_struct;
-
 #ifdef WORDS_BIGENDIAN
 #define le16(x) RtlUshortByteSwap((x))
 #define le32(x) RtlUlongByteSwap((x))
@@ -79,10 +75,10 @@ static void convert_8_to_16 (const void *src, void *dst)
 static void convert_8_to_24 (const void *src, void *dst)
 {
     uint8_t dest = *(uint8_t*)src;
-    int24_struct *dest24 = dst;
-    dest24->byte[0] = dest;
-    dest24->byte[1] = dest;
-    dest24->byte[2] = dest - 0x80;
+    uint8_t *dest24 = dst;
+    dest24[0] = dest;
+    dest24[1] = dest;
+    dest24[2] = dest - 0x80;
 }
 
 static void convert_8_to_32 (const void *src, void *dst)
@@ -107,11 +103,11 @@ static void convert_16_to_16 (const void *src, void *dst)
 static void convert_16_to_24 (const void *src, void *dst)
 {
     uint16_t dest = le16(*(uint16_t*)src);
-    int24_struct *dest24 = dst;
+    uint8_t *dest24 = dst;
 
-    dest24->byte[0] = dest / 256;
-    dest24->byte[1] = dest;
-    dest24->byte[2] = dest / 256;
+    dest24[0] = dest / 256;
+    dest24[1] = dest;
+    dest24[2] = dest / 256;
 }
 
 static void convert_16_to_32 (const void *src, void *dst)
@@ -123,34 +119,37 @@ static void convert_16_to_32 (const void *src, void *dst)
 static void convert_24_to_8 (const void *src, void *dst)
 {
     uint8_t *dst8 = dst;
-    *dst8 = ((int24_struct*)src)->byte[2];
+    *dst8 = ((uint8_t *)src)[2];
 }
 
 static void convert_24_to_16 (const void *src, void *dst)
 {
     uint16_t *dest16 = dst;
-    const int24_struct *source = src;
-    *dest16 = le16(source->byte[2] * 256 + source->byte[1]);
+    const uint8_t *source = src;
+    *dest16 = le16(source[2] * 256 + source[1]);
 }
 
 static void convert_24_to_24 (const void *src, void *dst)
 {
-    int24_struct *dest24 = dst;
-    const int24_struct *src24 = src;
-    *dest24 = *src24;
+    uint8_t *dest24 = dst;
+    const uint8_t *src24 = src;
+
+    dest24[0] = src24[0];
+    dest24[1] = src24[1];
+    dest24[2] = src24[2];
 }
 
 static void convert_24_to_32 (const void *src, void *dst)
 {
     uint32_t *dest32 = dst;
-    const int24_struct *source = src;
-    *dest32 = le32(source->byte[2] * 16777217 + source->byte[1] * 65536 + source->byte[0] * 256);
+    const uint8_t *source = src;
+    *dest32 = le32(source[2] * 16777217 + source[1] * 65536 + source[0] * 256);
 }
 
 static void convert_32_to_8 (const void *src, void *dst)
 {
     uint8_t *dst8 = dst;
-    *dst8 = (le32(*(uint32_t*)src) / 16777216);
+    *dst8 = (le32(*(uint32_t *)src) / 16777216);
     *dst8 -= 0x80;
 }
 
@@ -163,11 +162,11 @@ static void convert_32_to_16 (const void *src, void *dst)
 static void convert_32_to_24 (const void *src, void *dst)
 {
     uint32_t dest = le32(*(uint32_t*)dst);
-    int24_struct *dest24 = dst;
+    uint8_t *dest24 = dst;
 
-    dest24->byte[0] = dest / 256;
-    dest24->byte[1] = dest / 65536;
-    dest24->byte[2] = dest / 16777216;
+    dest24[0] = dest / 256;
+    dest24[1] = dest / 65536;
+    dest24[2] = dest / 16777216;
 }
 
 static void convert_32_to_32 (const void *src, void *dst)
@@ -202,15 +201,15 @@ static void mix16(int16_t *src, int32_t *dst, unsigned len)
     }
 }
 
-static void mix24(int24_struct *src, int32_t *dst, unsigned len)
+static void mix24(uint8_t *src, int32_t *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     len /= 3;
     while (len--)
     {
         uint32_t field;
-        field = ((unsigned)src->byte[2] << 16) + ((unsigned)src->byte[1] << 8) + (unsigned)src->byte[0];
-        if (src->byte[2] & 0x80)
+        field = ((unsigned)src[2] << 16) + ((unsigned)src[1] << 8) + (unsigned)src[0];
+        if (src[2] & 0x80)
             field |= 0xFF000000U;
         *(dst++) += field;
         ++src;
@@ -263,7 +262,7 @@ static void norm16(int32_t *src, int16_t *dst, unsigned len)
     }
 }
 
-static void norm24(int32_t *src, int24_struct *dst, unsigned len)
+static void norm24(int32_t *src, uint8_t *dst, unsigned len)
 {
     TRACE("%p - %p %d\n", src, dst, len);
     len /= 3;
@@ -271,21 +270,21 @@ static void norm24(int32_t *src, int24_struct *dst, unsigned len)
     {
         if (*src <= -0x800000)
         {
-            dst->byte[0] = 0;
-            dst->byte[1] = 0;
-            dst->byte[2] = 0x80;
+            dst[0] = 0;
+            dst[1] = 0;
+            dst[2] = 0x80;
         }
         else if (*src > 0x7fffff)
         {
-            dst->byte[0] = 0xff;
-            dst->byte[1] = 0xff;
-            dst->byte[2] = 0x7f;
+            dst[0] = 0xff;
+            dst[1] = 0xff;
+            dst[2] = 0x7f;
         }
         else
         {
-            dst->byte[0] = *src;
-            dst->byte[1] = *src >> 8;
-            dst->byte[2] = *src >> 16;
+            dst[0] = *src;
+            dst[1] = *src >> 8;
+            dst[2] = *src >> 16;
         }
         ++dst;
         ++src;
