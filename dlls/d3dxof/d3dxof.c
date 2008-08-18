@@ -159,7 +159,8 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
 {
   IDirectXFileImpl *This = (IDirectXFileImpl *)iface;
-  IDirectXFileEnumObjectImpl* object; 
+  IDirectXFileEnumObjectImpl* object;
+  HRESULT hr;
 
   FIXME("(%p/%p)->(%p,%x,%p) stub!\n", This, iface, pvSource, dwLoadOptions, ppEnumObj);
 
@@ -180,13 +181,12 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     FIXME("Source type %d is not handled yet\n", dwLoadOptions);
   }
 
-  object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectXFileEnumObjectImpl));
-
-  object->lpVtbl.lpVtbl = &IDirectXFileEnumObject_Vtbl;
-  object->ref = 1;
+  hr = IDirectXFileEnumObjectImpl_Create(&object);
+  if (!SUCCEEDED(hr))
+    return hr;
 
   *ppEnumObj = (LPDIRECTXFILEENUMOBJECT)object;
-    
+
   return DXFILE_OK;
 }
 
