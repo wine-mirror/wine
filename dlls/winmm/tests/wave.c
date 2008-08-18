@@ -37,6 +37,38 @@
 
 #include "winmm_test.h"
 
+static void test_multiple_waveopens(void)
+{
+    HWAVEOUT handle1, handle2;
+    MMRESULT ret;
+    WAVEFORMATEX wfx;
+
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = 1;
+    wfx.nSamplesPerSec = 11025;
+    wfx.nBlockAlign = 1;
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+    wfx.wBitsPerSample = 8;
+    wfx.cbSize = 0;
+
+    ret = waveOutOpen(&handle1, 0, &wfx, 0, 0, 0);
+    if (ret != MMSYSERR_NOERROR)
+    {
+        skip("Could not do the duplicate waveopen test\n");
+        return;
+    }
+
+    ret = waveOutOpen(&handle2, 0, &wfx, 0, 0, 0);
+    /* In windows this is most likely allowed, in wine an application can use the waveout
+     * interface, but so can directsound.. this causes problems if directsound goes active
+     */
+    todo_wine ok(ret == MMSYSERR_NOERROR, "waveOutOpen returns: %x\n", ret);
+    if (ret == MMSYSERR_NOERROR)
+        waveOutClose(handle2);
+
+    waveOutClose(handle1);
+}
+
 /*
  * Note that in most of this test we may get MMSYSERR_BADDEVICEID errors
  * at about any time if the user starts another application that uses the
@@ -1428,5 +1460,6 @@ static void wave_out_tests(void)
 
 START_TEST(wave)
 {
+    test_multiple_waveopens();
     wave_out_tests();
 }
