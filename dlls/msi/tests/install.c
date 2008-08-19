@@ -726,6 +726,14 @@ static const CHAR mcp_feature_comp_dat[] = "Feature_\tComponent_\n"
                                            "heliox\thelium\n"
                                            "lithia\tlithium";
 
+static const CHAR mcomp_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                     "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                     "File\tFile\n"
+                                     "hydrogen\thydrogen\thydrogen\t0\t\t\t8192\t1\n"
+                                     "helium\thelium\thelium\t0\t\t\t8192\t1\n"
+                                     "lithium\tlithium\tlithium\t0\t\t\t8192\t1\n"
+                                     "beryllium\tmissingcomp\tberyllium\t0\t\t\t8192\t1";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1095,6 +1103,18 @@ static const msi_table mcp_tables[] =
     ADD_TABLE(mcp_feature),
     ADD_TABLE(mcp_feature_comp),
     ADD_TABLE(rem_file),
+    ADD_TABLE(rem_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table mcomp_tables[] =
+{
+    ADD_TABLE(mcp_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(mcp_feature),
+    ADD_TABLE(mcp_feature_comp),
+    ADD_TABLE(mcomp_file),
     ADD_TABLE(rem_install_exec_seq),
     ADD_TABLE(rof_media),
     ADD_TABLE(property),
@@ -4131,6 +4151,7 @@ static void test_removefiles(void)
     create_file("msitest\\hydrogen", 500);
     create_file("msitest\\helium", 500);
     create_file("msitest\\lithium", 500);
+    create_file("msitest\\beryllium", 500);
 
     create_database(msifile, rem_tables, sizeof(rem_tables) / sizeof(msi_table));
 
@@ -5250,6 +5271,47 @@ static void test_MsiConfigureProductEx(void)
     RemoveDirectoryA("msitest");
 }
 
+static void test_missingcomponent(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\hydrogen", 500);
+    create_file("msitest\\helium", 500);
+    create_file("msitest\\lithium", 500);
+    create_file("beryllium", 500);
+
+    create_database(msifile, mcomp_tables, sizeof(mcomp_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, "INSTALLLEVEL=10 PROPVAR=42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
+    ok(pf_exists("msitest\\helium"), "File not installed\n");
+    ok(pf_exists("msitest\\lithium"), "File not installed\n");
+    ok(!pf_exists("msitest\\beryllium"), "File installed\n");
+    ok(pf_exists("msitest"), "File not installed\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL INSTALLLEVEL=10 PROPVAR=42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!pf_exists("msitest\\beryllium"), "File installed\n");
+    todo_wine
+    {
+        ok(!delete_pf("msitest\\hydrogen", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest\\helium", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
+        ok(!delete_pf("msitest", FALSE), "File not removed\n");
+    }
+
+    DeleteFileA(msifile);
+    DeleteFileA("msitest\\hydrogen");
+    DeleteFileA("msitest\\helium");
+    DeleteFileA("msitest\\lithium");
+    DeleteFileA("beryllium");
+    RemoveDirectoryA("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -5303,6 +5365,7 @@ START_TEST(install)
     test_installstate();
     test_sourcepath();
     test_MsiConfigureProductEx();
+    test_missingcomponent();
 
     SetCurrentDirectoryA(prev_path);
 }

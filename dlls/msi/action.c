@@ -1457,7 +1457,12 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     file->Component = get_loaded_component( package, component );
 
     if (!file->Component)
-        ERR("Unfound Component %s\n",debugstr_w(component));
+    {
+        WARN("Component not found: %s\n", debugstr_w(component));
+        msi_free(file->File);
+        msi_free(file);
+        return ERROR_SUCCESS;
+    }
 
     file->FileName = msi_dup_record_field( row, 3 );
     reduce_to_longfilename( file->FileName );
