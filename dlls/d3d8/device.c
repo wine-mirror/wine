@@ -1581,9 +1581,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
             IDirect3DVertexShader8_Release((IUnknown *)object);
             hrc = E_OUTOFMEMORY;
         } else {
-            object->handle = handle;
             *handle = object;
-            *ppShader = (handle - This->shader_handles) + VS_HIGHESTFIXEDFXF + 1;
+            object->handle = (handle - This->shader_handles) + VS_HIGHESTFIXEDFXF + 1;
+            *ppShader = object->handle;
 
             load_local_constants(pDeclaration, object->wineD3DVertexShader);
             TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
@@ -1689,7 +1689,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShader(LPDIRECT3DDEVICE8 ifa
             IDirect3DVertexShader8Impl *d3d8_shader;
             hrc = IWineD3DVertexShader_GetParent(pShader, (IUnknown **)&d3d8_shader);
             IWineD3DVertexShader_Release(pShader);
-            *ppShader = (d3d8_shader->handle - This->shader_handles) + (VS_HIGHESTFIXEDFXF + 1);
+            *ppShader = d3d8_shader->handle;
         } else {
             *ppShader = 0;
             hrc = D3D_OK;
@@ -1889,9 +1889,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 i
                 IDirect3DVertexShader8_Release((IUnknown *)object);
                 hrc = E_OUTOFMEMORY;
             } else {
-                object->handle = handle;
                 *handle = object;
-                *ppShader = (handle - This->shader_handles) + VS_HIGHESTFIXEDFXF + 1;
+                object->handle = (handle - This->shader_handles) + VS_HIGHESTFIXEDFXF + 1;
+                *ppShader = object->handle;
                 TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
             }
         }
@@ -1938,7 +1938,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 ifac
         IDirect3DPixelShader8Impl *d3d8_shader;
         hrc = IWineD3DPixelShader_GetParent(object, (IUnknown **)&d3d8_shader);
         IWineD3DPixelShader_Release(object);
-        *ppShader = (d3d8_shader->handle - This->shader_handles) + (VS_HIGHESTFIXEDFXF + 1);
+        *ppShader = d3d8_shader->handle;
     } else {
         *ppShader = (DWORD)NULL;
     }
