@@ -202,9 +202,38 @@ static void test_SetApplicationName_GetApplicationName(void)
     return;
 }
 
+static void test_CreateTrigger(void)
+{
+    BOOL setup;
+    HRESULT hres;
+    WORD trigger_index;
+    ITaskTrigger *test_trigger;
+
+    setup = setup_task();
+    ok(setup, "Failed to setup test_task\n");
+    if (!setup)
+    {
+        skip("Failed to create task.  Skipping tests.\n");
+        return;
+    }
+
+    hres = ITask_CreateTrigger(test_task, &trigger_index, &test_trigger);
+    todo_wine ok(hres == S_OK, "Failed to create trigger: 0x%08x\n", hres);
+    if (hres != S_OK)
+    {
+        cleanup_task();
+        return;
+    }
+
+    ITaskTrigger_Release(test_trigger);
+    cleanup_task();
+    return;
+}
+
 START_TEST(task)
 {
     CoInitialize(NULL);
     test_SetApplicationName_GetApplicationName();
+    test_CreateTrigger();
     CoUninitialize();
 }
