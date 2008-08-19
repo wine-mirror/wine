@@ -464,6 +464,9 @@ static INT add_streams_to_table(MSISTREAMSVIEW *sv)
         if (FAILED(hr) || !size)
             break;
 
+        if (stat.type != STGTY_STREAM)
+            continue;
+
         /* table streams are not in the _Streams table */
         if (*stat.pwcsName == 0x4840)
         {
