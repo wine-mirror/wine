@@ -1693,19 +1693,26 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
 static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
 {
     MSICOMPONENT *comp;
+    INSTALLSTATE state;
+    UINT r;
 
-    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    state = MsiQueryProductStateW(package->ProductCode);
+
+    LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
     {
-        INSTALLSTATE res;
-
         if (!comp->ComponentId)
             continue;
 
-        res = MsiGetComponentPathW( package->ProductCode,
-                                    comp->ComponentId, NULL, NULL);
-        if (res < 0)
-            res = INSTALLSTATE_ABSENT;
-        comp->Installed = res;
+        if (state != INSTALLSTATE_LOCAL && state != INSTALLSTATE_DEFAULT)
+            comp->Installed = INSTALLSTATE_ABSENT;
+        else
+        {
+            r = MsiQueryComponentStateW(package->ProductCode, NULL,
+                                        package->Context, comp->ComponentId,
+                                        &comp->Installed);
+            if (r != ERROR_SUCCESS)
+                comp->Installed = INSTALLSTATE_ABSENT;
+        }
     }
 }
 
