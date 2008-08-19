@@ -171,6 +171,89 @@ static void test_nextmarker(void)
     GdipDeletePath(path);
 }
 
+static void test_nextmarkerpath(void)
+{
+    GpPath *path, *retpath;
+    GpPathIterator *iter;
+    GpStatus stat;
+    INT result, count;
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    /* NULL */
+    stat = GdipPathIterNextMarkerPath(NULL, NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextMarkerPath(NULL, &result, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextMarkerPath(NULL, &result, path);
+    expect(InvalidParameter, stat);
+
+    GdipAddPathRectangle(path, 5.0, 5.0, 100.0, 50.0);
+
+    /* no markers */
+    GdipCreatePath(FillModeAlternate, &retpath);
+    GdipCreatePathIter(&iter, path);
+    result = -1;
+    stat = GdipPathIterNextMarkerPath(iter, &result, retpath);
+    expect(Ok, stat);
+    expect(4, result);
+    count = -1;
+    GdipGetPointCount(retpath, &count);
+    expect(4, count);
+    result = -1;
+    stat = GdipPathIterNextMarkerPath(iter, &result, retpath);
+    expect(Ok, stat);
+    expect(0, result);
+    count = -1;
+    GdipGetPointCount(retpath, &count);
+    expect(4, count);
+    GdipDeletePathIter(iter);
+    GdipDeletePath(retpath);
+
+    /* one marker */
+    GdipSetPathMarker(path);
+    GdipCreatePath(FillModeAlternate, &retpath);
+    GdipCreatePathIter(&iter, path);
+    result = -1;
+    stat = GdipPathIterNextMarkerPath(iter, &result, retpath);
+    expect(Ok, stat);
+    expect(4, result);
+    count = -1;
+    GdipGetPointCount(retpath, &count);
+    expect(4, count);
+    result = -1;
+    stat = GdipPathIterNextMarkerPath(iter, &result, retpath);
+    expect(Ok, stat);
+    expect(0, result);
+    count = -1;
+    GdipGetPointCount(retpath, &count);
+    expect(4, count);
+    GdipDeletePathIter(iter);
+    GdipDeletePath(retpath);
+
+    /* two markers */
+    GdipAddPathLine(path, 0.0, 0.0, 10.0, 30.0);
+    GdipSetPathMarker(path);
+    GdipCreatePath(FillModeAlternate, &retpath);
+    GdipCreatePathIter(&iter, path);
+    result = -1;
+    stat = GdipPathIterNextMarkerPath(iter, &result, retpath);
+    expect(Ok, stat);
+    expect(4, result);
+    result = -1;
+    stat = GdipPathIterNextMarkerPath(iter, &result, retpath);
+    expect(Ok, stat);
+    expect(2, result);
+    result = -1;
+    stat = GdipPathIterNextMarkerPath(iter, &result, retpath);
+    expect(Ok, stat);
+    expect(0, result);
+    GdipDeletePathIter(iter);
+    GdipDeletePath(retpath);
+
+    GdipDeletePath(path);
+}
+
 static void test_getsubpathcount(void)
 {
     GpPath *path;
@@ -408,6 +491,7 @@ START_TEST(pathiterator)
     test_constructor_destructor();
     test_hascurve();
     test_nextmarker();
+    test_nextmarkerpath();
     test_getsubpathcount();
     test_isvalid();
     test_nextsubpathpath();
