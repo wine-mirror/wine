@@ -7661,6 +7661,9 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
     DWORD color;
     int i;
     D3DCAPS9 caps;
+    BOOL L6V5U5_supported = FALSE;
+    IDirect3DTexture9 *tex1, *tex2;
+    D3DLOCKED_RECT locked_rect;
 
     static const float quad[][7] = {
         {-128.0f/640.0f, -128.0f/480.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f},
@@ -7678,6 +7681,7 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
 
     /* use asymmetric matrix to test loading */
     float bumpenvmat[4] = {0.0,0.5,-0.5,0.0};
+    float scale, offset;
 
     IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
     IDirect3DTexture9           *texture            = NULL;
@@ -7696,6 +7700,9 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
         IDirect3D9 *d3d9;
 
         IDirect3DDevice9_GetDirect3D(device, &d3d9);
+        hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+                                          D3DRTYPE_TEXTURE, D3DFMT_L6V5U5);
+        L6V5U5_supported = SUCCEEDED(hr);
         hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
                                           D3DRTYPE_TEXTURE, D3DFMT_V8U8);
         IDirect3D9_Release(d3d9);
@@ -7781,10 +7788,6 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 320-32, 240-32);
     ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
 
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
-    IDirect3DVertexDeclaration9_Release(vertex_declaration);
-
     for(i = 0; i < 2; i++) {
         hr = IDirect3DDevice9_GetTexture(device, i, (IDirect3DBaseTexture9 **) &texture);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_GetTexture failed (0x%08x)\n", hr);
@@ -7794,11 +7797,88 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
         IDirect3DTexture9_Release(texture); /* To destroy it */
     }
 
+    if(!(caps.TextureOpCaps & D3DTEXOPCAPS_BUMPENVMAPLUMINANCE)) {
+        skip("D3DTOP_BUMPENVMAPLUMINANCE not supported, skipping\n");
+        goto cleanup;
+    }
+    if(L6V5U5_supported == FALSE) {
+        skip("L6V5U5_supported not supported, skipping D3DTOP_BUMPENVMAPLUMINANCE test\n");
+        goto cleanup;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00000000, 0.0, 0x8);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
+    /* This test only tests the luminance part. The bumpmapping part was already tested above and
+     * would only make this test more complicated
+     */
+    hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1, 0, D3DFMT_L6V5U5, D3DPOOL_MANAGED, &tex1, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed, hr=%08x\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &tex2, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed, hr=%08x\n", hr);
+
+    memset(&locked_rect, 0, sizeof(locked_rect));
+    hr = IDirect3DTexture9_LockRect(tex1, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed with 0x%08x\n", hr);
+    *((DWORD *)locked_rect.pBits) = 0x4000; /* L = 0.25, V = 0.0, U = 0.0 */
+    hr = IDirect3DTexture9_UnlockRect(tex1, 0);
+    ok(SUCCEEDED(hr), "UnlockRect failed with 0x%08x\n", hr);
+
+    memset(&locked_rect, 0, sizeof(locked_rect));
+    hr = IDirect3DTexture9_LockRect(tex2, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "LockRect failed with 0x%08x\n", hr);
+    *((DWORD *)locked_rect.pBits) = 0x00ff80c0;
+    hr = IDirect3DTexture9_UnlockRect(tex2, 0);
+    ok(SUCCEEDED(hr), "UnlockRect failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) tex1);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 1, (IDirect3DBaseTexture9 *) tex2);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_BUMPENVMAPLUMINANCE);
+    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
+    scale = 2.0;
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_BUMPENVLSCALE, *((DWORD *)&scale));
+    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
+    offset = 0.1;
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_BUMPENVLOFFSET, *((DWORD *)&offset));
+    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed (0x%08x)\n", hr);
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], sizeof(quad[0]));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (0x%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    color = getPixelColor(device, 320, 240);
+    /* red:   1.0  * (0.25 * 2.0 + 0.1) = 1.0  * 0.6 = 0.6  = 0x99
+     * green: 0.5  * (0.25 * 2.0 + 0.1) = 0.5  * 0.6 = 0.3  = 0x4c
+     * green: 0.75 * (0.25 * 2.0 + 0.1) = 0.75 * 0.6 = 0.45 = 0x72
+     */
+    ok(color_match(color, 0x00994c72, 2), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 1, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (%08x)\n", hr);
+
+    IDirect3DTexture9_Release(tex1);
+    IDirect3DTexture9_Release(tex2);
+
+cleanup:
     hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
     ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
     ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
 
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
 }
 
 static void stencil_cull_test(IDirect3DDevice9 *device) {

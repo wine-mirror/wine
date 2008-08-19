@@ -2220,9 +2220,10 @@ const shader_backend_t arb_program_shader_backend = {
 };
 
 /* ARB_fragment_program fixed function pipeline replacement definitions */
-#define ARB_FFP_CONST_TFACTOR     0
-#define ARB_FFP_CONST_CONSTANT(i) ((ARB_FFP_CONST_TFACTOR) + 1 + i)
-#define ARB_FFP_CONST_BUMPMAT(i)  ((ARB_FFP_CONST_CONSTANT(7)) + 1 + i)
+#define ARB_FFP_CONST_TFACTOR       0
+#define ARB_FFP_CONST_CONSTANT(i)   ((ARB_FFP_CONST_TFACTOR) + 1 + i)
+#define ARB_FFP_CONST_BUMPMAT(i)    ((ARB_FFP_CONST_CONSTANT(7)) + 1 + i)
+#define ARB_FFP_CONST_LUMINANCE(i)  ((ARB_FFP_CONST_BUMPMAT(7)) + 1 + i)
 
 struct arbfp_ffp_desc
 {
@@ -2307,10 +2308,10 @@ static void arbfp_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, str
                            WINED3DTEXOPCAPS_DOTPRODUCT3                 |
                            WINED3DTEXOPCAPS_MULTIPLYADD                 |
                            WINED3DTEXOPCAPS_LERP                        |
-                           WINED3DTEXOPCAPS_BUMPENVMAP;
+                           WINED3DTEXOPCAPS_BUMPENVMAP                  |
+                           WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE;
 
-    /* TODO: Implement WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE
-    and WINED3DTEXOPCAPS_PREMODULATE */
+    /* TODO: Implement WINED3DTEXOPCAPS_PREMODULATE */
 
     caps->MaxTextureBlendStages   = 8;
     caps->MaxSimultaneousTextures = min(GL_LIMITS(fragment_samplers), 8);
@@ -2368,6 +2369,39 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     if(device->shader_backend == &arb_program_shader_backend) {
         device->activeContext->pshader_const_dirty[ARB_FFP_CONST_BUMPMAT(stage)] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
+    }
+}
+
+static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    float param[4];
+
+    if(use_ps(device)) {
+        if(stage != 0 &&
+           ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams[stage]) {
+            /* The pixel shader has to know the luminance offset. Do a constants update if it
+             * isn't scheduled anyway
+             */
+            if(!isStateDirty(context, STATE_PIXELSHADERCONSTANT)) {
+                device->StateTable[STATE_PIXELSHADERCONSTANT].apply(STATE_PIXELSHADERCONSTANT, stateblock, context);
+            }
+        }
+        /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
+        return;
+    }
+
+    param[0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVLSCALE]);
+    param[1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET]);
+    param[2] = 0.0;
+    param[3] = 0.0;
+
+    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_LUMINANCE(stage), param));
+    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_LUMINANCE(stage), param)");
+
+    if(device->shader_backend == &arb_program_shader_backend) {
+        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_LUMINANCE(stage)] = 1;
+        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
     }
 }
 
@@ -2578,6 +2612,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     SHADER_BUFFER buffer;
     BOOL tex_read[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
     BOOL bump_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+    BOOL luminance_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
     const char *textype;
     const char *instr, *sat;
     char colorcor_dst[8];
@@ -2604,6 +2639,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
         if(settings->op[stage].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
             bump_used[stage] = TRUE;
             tex_read[stage] = TRUE;
+            luminance_used[stage] = TRUE;
         }
 
         if(arg0 == WINED3DTA_TFACTOR || arg1 == WINED3DTA_TFACTOR || arg2 == WINED3DTA_TFACTOR) {
@@ -2658,6 +2694,8 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
         shader_addline(&buffer, "TEMP tex%u;\n", stage);
         if(!bump_used[stage]) continue;
         shader_addline(&buffer, "PARAM bumpmat%u = program.env[%u];\n", stage, ARB_FFP_CONST_BUMPMAT(stage));
+        if(!luminance_used[stage]) continue;
+        shader_addline(&buffer, "PARAM luminance%u = program.env[%u];\n", stage, ARB_FFP_CONST_LUMINANCE(stage));
     }
     if(tfactor_used) {
         shader_addline(&buffer, "PARAM tfactor = program.env[%u];\n", ARB_FFP_CONST_TFACTOR);
@@ -2715,6 +2753,11 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
             shader_addline(&buffer, "ADD ret, ret, fragment.texcoord[%u];\n", stage);
             shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
                             instr, sat, stage, stage, textype);
+            if(settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
+                shader_addline(&buffer, "MAD ret.r, tex%u.b, luminance%u.r, luminance%u.g;\n",
+                               stage - 1, stage - 1, stage - 1);
+                shader_addline(&buffer, "MUL tex%u, tex%u, ret.r;\n", stage, stage);
+            }
         } else {
             shader_addline(&buffer, "%s%s tex%u, fragment.texcoord[%u], texture[%u], %s;\n",
                             instr, sat, stage, stage, stage, textype);
@@ -2896,6 +2939,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
+    {STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
+    {STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
     {STATE_TEXTURESTAGE(1, WINED3DTSS_COLOROP),           { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(1, WINED3DTSS_COLORARG1),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(1, WINED3DTSS_COLORARG2),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
@@ -2909,6 +2954,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
+    {STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
+    {STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
     {STATE_TEXTURESTAGE(2, WINED3DTSS_COLOROP),           { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(2, WINED3DTSS_COLORARG1),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(2, WINED3DTSS_COLORARG2),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
@@ -2922,6 +2969,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
+    {STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
+    {STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
     {STATE_TEXTURESTAGE(3, WINED3DTSS_COLOROP),           { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(3, WINED3DTSS_COLORARG1),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(3, WINED3DTSS_COLORARG2),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
@@ -2935,6 +2984,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
+    {STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
+    {STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
     {STATE_TEXTURESTAGE(4, WINED3DTSS_COLOROP),           { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(4, WINED3DTSS_COLORARG1),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(4, WINED3DTSS_COLORARG2),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
@@ -2948,6 +2999,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
+    {STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
+    {STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
     {STATE_TEXTURESTAGE(5, WINED3DTSS_COLOROP),           { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(5, WINED3DTSS_COLORARG1),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(5, WINED3DTSS_COLORARG2),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
@@ -2961,6 +3014,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
+    {STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
+    {STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
     {STATE_TEXTURESTAGE(6, WINED3DTSS_COLOROP),           { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(6, WINED3DTSS_COLORARG1),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(6, WINED3DTSS_COLORARG2),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
@@ -2974,6 +3029,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
+    {STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
+    {STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
     {STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),           { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(7, WINED3DTSS_COLORARG1),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {STATE_TEXTURESTAGE(7, WINED3DTSS_COLORARG2),         { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
@@ -2987,6 +3044,8 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT01),      { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT10),      { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT11),      { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVMAT00),     set_bumpmat_arbfp       }, 0                               },
+    {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
+    {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, 0                               },
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texdim          }, 0                               },
     { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texdim          }, 0                               },
     { STATE_SAMPLER(2),                                   { STATE_SAMPLER(2),                                   sampler_texdim          }, 0                               },
