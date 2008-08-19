@@ -8,7 +8,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2007 Henri Verbeet
+ * Copyright 2007-2008 Henri Verbeet
  * Copyright 2006-2008 Roderick Colenbrander
  *
  * This library is free software; you can redistribute it and/or
@@ -514,24 +514,9 @@ void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
                 IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
             }
         }
-        ENTER_GL();
-        glEnable(This->glDescription.target);/* make sure texture support is enabled in this context */
-        if (!This->glDescription.level) {
-            if (!This->glDescription.textureName) {
-                glGenTextures(1, &This->glDescription.textureName);
-                checkGLcall("glGenTextures");
-                TRACE("Surface %p given name %d\n", This, This->glDescription.textureName);
-            }
-            glBindTexture(This->glDescription.target, This->glDescription.textureName);
-            checkGLcall("glBindTexture");
-            LEAVE_GL();
-            IWineD3DSurface_LoadTexture(iface, FALSE);
-            /* This is where we should be reducing the amount of GLMemoryUsed */
-        } else if (This->glDescription.textureName) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
-            /* assume this is a coding error not a real error for now */
-            FIXME("Mipmap surface has a glTexture bound to it!\n");
-            LEAVE_GL();
-        }
+
+        IWineD3DSurface_LoadTexture(iface, FALSE);
+
         if (This->resource.pool == WINED3DPOOL_DEFAULT) {
             /* Tell opengl to try and keep this texture in video ram (well mostly) */
             GLclampf tmp;
@@ -2361,8 +2346,26 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface) {
         if(!device->isInDraw) {
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
+
         ENTER_GL();
+
+        glEnable(This->glDescription.target);
+
+        if (!This->glDescription.level) {
+            if (!This->glDescription.textureName) {
+                glGenTextures(1, &This->glDescription.textureName);
+                checkGLcall("glGenTextures");
+                TRACE("Surface %p given name %d\n", This, This->glDescription.textureName);
+            }
+            /* This is where we should be reducing the amount of GLMemoryUsed */
+        } else if (This->glDescription.textureName) {
+            /* Mipmap surfaces should have a base texture container */
+            ERR("Mipmap surface has a glTexture bound to it!\n");
+        }
+
         glBindTexture(This->glDescription.target, This->glDescription.textureName);
+        checkGLcall("glBindTexture");
+
         LEAVE_GL();
     }
     return;
