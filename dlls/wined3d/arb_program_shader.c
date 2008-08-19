@@ -2464,6 +2464,12 @@ static const char *get_argreg(SHADER_BUFFER *buffer, DWORD argnum, unsigned int 
         if(argnum == 1) ret = "arg1";
         if(argnum == 2) ret = "arg2";
     }
+    if(arg & WINED3DTA_ALPHAREPLICATE) {
+        shader_addline(buffer, "MOV arg%u, %s.a;\n", argnum, ret);
+        if(argnum == 0) ret = "arg0";
+        if(argnum == 1) ret = "arg1";
+        if(argnum == 2) ret = "arg2";
+    }
     return ret;
 }
 

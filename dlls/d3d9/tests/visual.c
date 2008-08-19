@@ -9492,6 +9492,48 @@ static void texop_range_test(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(texture);
 }
 
+static void alphareplicate_test(IDirect3DDevice9 *device) {
+    struct vertex quad[] = {
+        { -1.0,    -1.0,    0.1,    0x80ff00ff },
+        {  1.0,    -1.0,    0.1,    0x80ff00ff },
+        { -1.0,     1.0,    0.1,    0x80ff00ff },
+        {  1.0,     1.0,    0.1,    0x80ff00ff },
+    };
+    HRESULT hr;
+    DWORD color;
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE | D3DTA_ALPHAREPLICATE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00808080, 1), "alphareplicate test 0x%08x, expected 0x00808080\n",
+       color);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
+
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -9650,6 +9692,7 @@ START_TEST(visual)
     else skip("No ps_1_1 support\n");
     texop_test(device_ptr);
     texop_range_test(device_ptr);
+    alphareplicate_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
