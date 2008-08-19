@@ -213,7 +213,7 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
     if (!(ext = strrchrW(pszManifestFilePath, '.')))
         return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
 
-    if (lstrcmpW(ext, ext_exe) && lstrcmpW(ext, ext_dll))
+    if (lstrcmpiW(ext, ext_exe) && lstrcmpiW(ext, ext_dll))
         return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
 
     if (GetFileAttributesW(pszManifestFilePath) == INVALID_FILE_ATTRIBUTES)
