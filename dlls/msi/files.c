@@ -444,9 +444,6 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         MSIRECORD *uirow;
         LPWSTR uipath, p;
 
-        if ( file->Component->Installed == INSTALLSTATE_LOCAL )
-            continue;
-
         if ( file->state == msifs_installed )
             ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
 
