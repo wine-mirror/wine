@@ -453,10 +453,10 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         if ( file->state != msifs_present )
             continue;
 
-        /* only remove a file if the version to be installed
-         * is strictly newer than the old file
+        /* don't remove a file if the old file
+         * is strictly newer than the version to be installed
          */
-        if ( msi_compare_file_version( file ) >= 0 )
+        if ( msi_compare_file_version( file ) < 0 )
             continue;
 
         TRACE("removing %s\n", debugstr_w(file->File) );
