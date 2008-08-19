@@ -20,6 +20,8 @@
 
 #define COBJMACROS
 
+#include "corerror.h"
+
 #include "initguid.h"
 #include "mstask.h"
 #include "wine/test.h"
@@ -74,9 +76,36 @@ static void test_NewWorkItem(void)
     return;
 }
 
+static void test_Activate(void)
+{
+    HRESULT hres;
+    ITask *task = NULL;
+    const WCHAR not_task_name[] =
+            {'N', 'o', 'S', 'u', 'c', 'h', 'T', 'a', 's', 'k', 0};
+
+    /* Create TaskScheduler */
+    hres = CoCreateInstance(&CLSID_CTaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+            &IID_ITaskScheduler, (void **) &test_task_scheduler);
+    ok(hres == S_OK, "CTaskScheduler CoCreateInstance failed: %08x\n", hres);
+    if (hres != S_OK)
+    {
+        skip("Failed to create task scheduler.  Skipping tests.\n");
+        return;
+    }
+
+    /* Attempt to Activate a non-existant task */
+    hres = ITaskScheduler_Activate(test_task_scheduler, not_task_name,
+            &IID_ITask, (IUnknown**)&task);
+    todo_wine ok(hres == COR_E_FILENOTFOUND, "Expected COR_E_FILENOTFOUND: %08x\n", hres);
+
+    ITaskScheduler_Release(test_task_scheduler);
+    return;
+}
+
 START_TEST(task_scheduler)
 {
     CoInitialize(NULL);
     test_NewWorkItem();
+    test_Activate();
     CoUninitialize();
 }
