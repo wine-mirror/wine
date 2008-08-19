@@ -587,6 +587,7 @@ struct blit_shader {
 };
 
 extern const struct blit_shader ffp_blit;
+extern const struct blit_shader arbfp_blit;
 
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext {

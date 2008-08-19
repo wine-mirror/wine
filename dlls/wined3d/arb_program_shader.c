@@ -2982,3 +2982,296 @@ const struct fragment_pipeline arbfp_fragment_pipeline = {
     shader_arb_conv_supported,
     arbfp_fragmentstate_template
 };
+
+#define GLINFO_LOCATION device->adapter->gl_info
+
+struct arbfp_blit_priv {
+    GLenum yuy2_rect_shader, yuy2_2d_shader;
+    GLenum uyvy_rect_shader, uyvy_2d_shader;
+};
+
+static HRESULT arbfp_blit_alloc(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    device->blit_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct arbfp_blit_priv));
+    if(!device->blit_priv) {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
+    return WINED3D_OK;
+}
+static void arbfp_blit_free(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
+
+    ENTER_GL();
+    GL_EXTCALL(glDeleteProgramsARB(1, &priv->yuy2_rect_shader));
+    GL_EXTCALL(glDeleteProgramsARB(1, &priv->yuy2_2d_shader));
+    GL_EXTCALL(glDeleteProgramsARB(1, &priv->uyvy_rect_shader));
+    GL_EXTCALL(glDeleteProgramsARB(1, &priv->uyvy_2d_shader));
+    checkGLcall("Delete yuv programs\n");
+    LEAVE_GL();
+}
+
+GLenum gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum textype) {
+    GLenum shader;
+    SHADER_BUFFER buffer;
+    const char *tex, *texinstr;
+    char chroma, luminance;
+    struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
+
+    /* Shader header */
+    buffer.bsize = 0;
+    buffer.lineNo = 0;
+    buffer.newline = TRUE;
+    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
+
+    switch(textype) {
+        case GL_TEXTURE_2D:             tex = "2D";     texinstr = "TXP"; break;
+        case GL_TEXTURE_RECTANGLE_ARB:  tex = "RECT";   texinstr = "TEX"; break;
+        default:
+            /* This is more tricky than just replacing the texture type - we have to navigate
+             * properly in the texture to find the correct chroma values
+             */
+            FIXME("Implement yuv correction for non-2d, non-rect textures\n");
+            return 0;
+    }
+
+    if(fmt == WINED3DFMT_UYVY) {
+        chroma = 'r';
+        luminance = 'a';
+    } else {
+        chroma = 'a';
+        luminance = 'r';
+    }
+
+    GL_EXTCALL(glGenProgramsARB(1, &shader));
+    checkGLcall("GL_EXTCALL(glGenProgramsARB(1, &shader))");
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
+    checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
+    if(!shader) return 0;
+
+    /* The YUY2 and UYVY formats contain two pixels packed into a 32 bit macropixel,
+     * giving effectively 16 bit per pixel. The color consists of a luminance(Y) and
+     * two chroma(U and V) values. Each macropixel has two luminance values, one for
+     * each single pixel it contains, and one U and one V value shared between both
+     * pixels.
+     *
+     * The data is loaded into an A8L8 texture. With YUY2, the luminance component
+     * contains the luminance and alpha the chroma. With UYVY it is vice versa. Thus
+     * take the format into account when generating the read swizzles
+     *
+     * Reading the Y value is streightforward - just sample the texture. The hardware
+     * takes care of filtering in the horizontal and vertical direction.
+     *
+     * Reading the U and V values is harder. We have to avoid filtering horizontally,
+     * because that would mix the U and V values of one pixel or two adjacent pixels.
+     * Thus floor the texture coordinate and add 0.5 to get an unfiltered read,
+     * regardless of the filtering setting. Vertical filtering works automatically
+     * though - the U and V values of two rows are mixed nicely.
+     *
+     * Appart of avoiding filtering issues, the code has to know which value it just
+     * read, and where it can find the other one. To determine this, it checks if
+     * it sampled an even or odd pixel, and shifts the 2nd read accordingly.
+     *
+     * Handling horizontal filtering of U and V values requires reading a 2nd pair
+     * of pixels, extracting U and V and mixing them. This is not implemented yet.
+     *
+     * An alternative implementation idea is to load the texture as A8R8G8B8 texture,
+     * with width / 2. This way one read gives all 3 values, finding U and V is easy
+     * in an unfiltered situation. Finding the luminance on the other hand requires
+     * finding out if it is an odd or even pixel. The real drawback of this approach
+     * is filtering. This would have to be emulated completely in the shader, reading
+     * up two 2 packed pixels in up to 2 rows and interpolating both horizontally and
+     * vertically. Beyond that it would require adjustments to the texture handling
+     * code to deal with the width scaling
+     */
+    shader_addline(&buffer, "!!ARBfp1.0\n");
+    shader_addline(&buffer, "TEMP luminance;\n");
+    shader_addline(&buffer, "TEMP temp;\n");
+    shader_addline(&buffer, "TEMP chroma;\n");
+    shader_addline(&buffer, "TEMP texcrd;\n");
+    shader_addline(&buffer, "TEMP texcrd2;\n");
+    shader_addline(&buffer, "PARAM coef = {1.0, 0.5, 2.0, 0.0};\n");
+    shader_addline(&buffer, "PARAM yuv_coef = {1.403, 0.344, 0.714, 1.770};\n");
+    shader_addline(&buffer, "PARAM size = program.local[0];\n");
+
+    /* First we have to read the chroma values. This means we need at least two pixels(no filtering),
+     * or 4 pixels(with filtering). To get the unmodified chromas, we have to rid ourselves of the
+     * filtering when we sample the texture.
+     *
+     * These are the rules for reading the chroma:
+     *
+     * Even pixel: Cr
+     * Even pixel: U
+     * Odd pixel: V
+     *
+     * So we have to get the sampling x position in non-normalized coordinates in integers
+     */
+    if(textype != GL_TEXTURE_RECTANGLE_ARB) {
+        shader_addline(&buffer, "MUL texcrd.rg, fragment.texcoord[0], size.x;\n");
+        shader_addline(&buffer, "MOV texcrd.a, size.x;\n");
+    } else {
+        shader_addline(&buffer, "MOV texcrd, fragment.texcoord[0];\n");
+    }
+    /* We must not allow filtering between pixel x and x+1, this would mix U and V
+     * Vertical filtering is ok. However, bear in mind that the pixel center is at
+     * 0.5, so add 0.5.
+     */
+    shader_addline(&buffer, "FLR texcrd.x, texcrd.x;\n");
+    shader_addline(&buffer, "ADD texcrd.x, texcrd.x, coef.y;\n");
+
+    /* Divide the x coordinate by 0.5 and get the fraction. This gives 0.25 and 0.75 for the
+     * even and odd pixels respectively
+     */
+    shader_addline(&buffer, "MUL texcrd2, texcrd, coef.y;\n");
+    shader_addline(&buffer, "FRC texcrd2, texcrd2;\n");
+
+    /* Sample Pixel 1 */
+    shader_addline(&buffer, "%s luminance, texcrd, texture[0], %s;\n", texinstr, tex);
+
+    /* Put the value into either of the chroma values */
+    shader_addline(&buffer, "SGE temp.x, texcrd2.x, coef.y;\n");
+    shader_addline(&buffer, "MUL chroma.r, luminance.%c, temp.x;\n", chroma);
+    shader_addline(&buffer, "SLT temp.x, texcrd2.x, coef.y;\n");
+    shader_addline(&buffer, "MUL chroma.g, luminance.%c, temp.x;\n", chroma);
+
+    /* Sample pixel 2. If we read an even pixel(SLT above returned 1), sample
+     * the pixel right to the current one. Otherwise, sample the left pixel.
+     * Bias and scale the SLT result to -1;1 and add it to the texcrd.x.
+     */
+    shader_addline(&buffer, "MAD temp.x, temp.x, coef.z, -coef.x;\n");
+    shader_addline(&buffer, "ADD texcrd.x, texcrd, temp.x;\n");
+    shader_addline(&buffer, "%s luminance, texcrd, texture[0], %s;\n", texinstr, tex);
+
+    /* Put the value into the other chroma */
+    shader_addline(&buffer, "SGE temp.x, texcrd2.x, coef.y;\n");
+    shader_addline(&buffer, "MAD chroma.g, luminance.%c, temp.x, chroma.g;\n", chroma);
+    shader_addline(&buffer, "SLT temp.x, texcrd2.x, coef.y;\n");
+    shader_addline(&buffer, "MAD chroma.r, luminance.%c, temp.x, chroma.r;\n", chroma);
+
+    /* TODO: If filtering is enabled, sample a 2nd pair of pixels left or right of
+     * the current one and lerp the two U and V values
+     */
+
+    /* This gives the correctly filtered luminance value */
+    shader_addline(&buffer, "TEX luminance, fragment.texcoord[0], texture[0], %s;\n", tex);
+
+    /* Calculate the final result. Formula is taken from
+     * http://www.fourcc.org/fccyvrgb.php. Note that the chroma
+     * ranges from -0.5 to 0.5
+     */
+    shader_addline(&buffer, "SUB chroma.rg, chroma, coef.y;\n");
+
+    shader_addline(&buffer, "MAD result.color.r, chroma.r, yuv_coef.x, luminance.%c;\n", luminance);
+    shader_addline(&buffer, "MAD temp.r, -chroma.g, yuv_coef.y, luminance.%c;\n", luminance);
+    shader_addline(&buffer, "MAD result.color.g, -chroma.r, yuv_coef.z, temp.r;\n");
+    shader_addline(&buffer, "MAD result.color.b, chroma.g, yuv_coef.w, luminance.%c;\n", luminance);
+    shader_addline(&buffer, "END\n");
+
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(buffer.buffer), buffer.buffer));
+
+    if (glGetError() == GL_INVALID_OPERATION) {
+        GLint pos;
+        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+        FIXME("Fragment program error at position %d: %s\n", pos,
+              debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+    }
+
+    if(fmt == WINED3DFMT_YUY2) {
+        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
+            priv->yuy2_rect_shader = shader;
+        } else {
+            priv->yuy2_2d_shader = shader;
+        }
+    } else {
+        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
+            priv->uyvy_rect_shader = shader;
+        } else {
+            priv->uyvy_2d_shader = shader;
+        }
+    }
+    return shader;
+}
+
+static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum textype, UINT width, UINT height) {
+    GLenum shader;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    float size[4] = {width, height, 1, 1};
+    struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
+    const GlPixelFormatDesc *glDesc;
+
+    getFormatDescEntry(fmt, &GLINFO_LOCATION, &glDesc);
+
+    if(glDesc->conversion_group != WINED3DFMT_YUY2 && glDesc->conversion_group != WINED3DFMT_UYVY) {
+        /* Don't bother setting up a shader for unconverted formats */
+        glEnable(textype);
+        checkGLcall("glEnable(textype)");
+        return WINED3D_OK;
+    }
+
+    if(glDesc->conversion_group == WINED3DFMT_YUY2) {
+        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
+            shader = priv->yuy2_rect_shader;
+        } else {
+            shader = priv->yuy2_2d_shader;
+        }
+    } else {
+        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
+            shader = priv->uyvy_rect_shader;
+        } else {
+            shader = priv->uyvy_2d_shader;
+        }
+    }
+
+    if(!shader) {
+        shader = gen_yuv_shader(device, glDesc->conversion_group, textype);
+    }
+
+    glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
+    checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
+    GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, size));
+    checkGLcall("glProgramLocalParameter4fvARB");
+
+    return WINED3D_OK;
+}
+
+static void arbfp_blit_unset(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    glDisable(GL_FRAGMENT_PROGRAM_ARB);
+    checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+    glDisable(GL_TEXTURE_2D);
+    checkGLcall("glDisable(GL_TEXTURE_2D)");
+    if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
+        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+    }
+    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+        glDisable(GL_TEXTURE_RECTANGLE_ARB);
+        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+    }
+}
+
+static BOOL arbfp_blit_conv_supported(WINED3DFORMAT fmt) {
+    TRACE("Checking blit format support for format %s:", debug_d3dformat(fmt));
+    switch(fmt) {
+        case WINED3DFMT_YUY2:
+        case WINED3DFMT_UYVY:
+            TRACE("[OK]\n");
+            return TRUE;
+        default:
+            TRACE("[FAILED]\n");
+            return FALSE;
+    }
+}
+
+const struct blit_shader arbfp_blit = {
+    arbfp_blit_alloc,
+    arbfp_blit_free,
+    arbfp_blit_set,
+    arbfp_blit_unset,
+    arbfp_blit_conv_supported
+};
+
+#undef GLINFO_LOCATION

@@ -2953,8 +2953,11 @@ static const struct blit_shader *select_blit_implementation(UINT Adapter, WINED3
     int ps_selected_mode;
 
     select_shader_mode(&GLINFO_LOCATION, DeviceType, &ps_selected_mode, &vs_selected_mode);
-    return &ffp_blit;
-
+    if((ps_selected_mode == SHADER_ARB || ps_selected_mode == SHADER_GLSL) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        return &arbfp_blit;
+    } else {
+        return &ffp_blit;
+    }
 }
 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
