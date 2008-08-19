@@ -3774,30 +3774,21 @@ static void test_states(void)
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "three", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
-    todo_wine
-    {
-        ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "four", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
-    todo_wine
-    {
-        ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "five", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
-    todo_wine
-    {
-        ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    }
+    ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
     state = 0xdeadbee;
@@ -4575,20 +4566,14 @@ static void test_states(void)
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "three", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
-    todo_wine
-    {
-        ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "four", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
-    todo_wine
-    {
-        ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
     state = 0xdeadbee;
@@ -5376,21 +5361,15 @@ static void test_states(void)
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "three", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
-    todo_wine
-    {
-        ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
 
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "four", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
-    todo_wine
-    {
-        ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-        ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    }
+    ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok( state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     state = 0xdeadbee;
     action = 0xdeadbee;

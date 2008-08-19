@@ -1716,42 +1716,22 @@ static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
     }
 }
 
-/* scan for and update current install states */
-static void ACTION_UpdateFeatureInstallStates(MSIPACKAGE *package)
+static void ACTION_GetFeatureInstallStates(MSIPACKAGE *package)
 {
-    MSICOMPONENT *comp;
     MSIFEATURE *feature;
+    INSTALLSTATE state;
+
+    state = MsiQueryProductStateW(package->ProductCode);
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        ComponentList *cl;
-        INSTALLSTATE res = INSTALLSTATE_ABSENT;
-
-        LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
+        if (state != INSTALLSTATE_LOCAL && state != INSTALLSTATE_DEFAULT)
+            feature->Installed = INSTALLSTATE_ABSENT;
+        else
         {
-            comp= cl->component;
-
-            if (!comp->ComponentId)
-            {
-                res = INSTALLSTATE_ABSENT;
-                break;
-            }
-
-            if (res == INSTALLSTATE_ABSENT)
-                res = comp->Installed;
-            else
-            {
-                if (res == comp->Installed)
-                    continue;
-
-                if (res != INSTALLSTATE_DEFAULT && res != INSTALLSTATE_LOCAL &&
-                    res != INSTALLSTATE_SOURCE)
-                {
-                    res = INSTALLSTATE_INCOMPLETE;
-                }
-            }
+            feature->Installed = MsiQueryFeatureStateW(package->ProductCode,
+                                                       feature->Feature);
         }
-        feature->Installed = res;
     }
 }
 
@@ -2202,6 +2182,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     /* read components states from the registry */
     ACTION_GetComponentInstallStates(package);
+    ACTION_GetFeatureInstallStates(package);
 
     TRACE("File calculations\n");
     msi_check_file_install_states( package );
@@ -2237,8 +2218,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     /* FIXME: check volume disk space */
     MSI_SetPropertyW(package, szOutOfDiskSpace, szZero);
-
-    ACTION_UpdateFeatureInstallStates(package);
 
     return MSI_SetFeatureStates(package);
 }
