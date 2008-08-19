@@ -275,7 +275,6 @@ static BOOL is_space(char c)
     case ' ':
     case '\t':
       return TRUE;
-      break;
   }
   return FALSE;
 }
@@ -295,7 +294,6 @@ static BOOL is_operator(char c)
     case ',':
     case ';':
       return TRUE;
-      break;
   }
   return FALSE;
 }
@@ -311,34 +309,24 @@ static WORD get_operator_token(char c)
   {
     case '{':
       return TOKEN_OBRACE;
-      break;
     case '}':
       return TOKEN_CBRACE;
-      break;
     case '[':
       return TOKEN_OBRACKET;
-      break;
     case ']':
       return TOKEN_CBRACKET;
-      break;
     case '(':
       return TOKEN_OPAREN;
-      break;
     case ')':
       return TOKEN_CPAREN;
-      break;
     case '<':
       return TOKEN_OANGLE;
-      break;
     case '>':
       return TOKEN_CANGLE;
-      break;
     case ',':
       return TOKEN_COMMA;
-      break;
     case ';':
       return TOKEN_SEMICOLON;
-      break;
   }
   return 0;
 }
