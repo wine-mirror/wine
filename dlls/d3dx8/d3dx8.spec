@@ -109,7 +109,7 @@
 @ stub D3DXWeldVertices
 @ stub D3DXIntersect
 @ stdcall D3DXSphereBoundProbe(ptr long ptr ptr)
-@ stub D3DXBoxBoundProbe
+@ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr)
 @ stub D3DXCreatePolygon
 @ stub D3DXCreateBox
 @ stub D3DXCreateCylinder

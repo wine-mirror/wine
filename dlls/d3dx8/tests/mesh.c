@@ -22,12 +22,57 @@
 
 static void D3DXBoundProbeTest(void)
 {
-/*____________Test the Sphere case________________________*/
-
     BOOL result;
-    D3DXVECTOR3 center, raydirection, rayposition;
+    D3DXVECTOR3 bottom_point, center, top_point, raydirection, rayposition;
     FLOAT radius;
 
+/*____________Test the Box case___________________________*/
+    bottom_point.x = -3.0f; bottom_point.y = -2.0f; bottom_point.z = -1.0f;
+    top_point.x = 7.0f; top_point.y = 8.0f; top_point.z = 9.0f;
+
+    raydirection.x = -4.0f; raydirection.y = -5.0f; raydirection.z = -6.0f;
+    rayposition.x = 5.0f; rayposition.y = 5.0f; rayposition.z = 11.0f;
+    result = D3DXBoxBoundProbe(&bottom_point, &top_point, &rayposition, &raydirection);
+    ok(result == TRUE, "expected TRUE, received FALSE\n");
+
+    raydirection.x = 4.0f; raydirection.y = 5.0f; raydirection.z = 6.0f;
+    rayposition.x = 5.0f; rayposition.y = 5.0f; rayposition.z = 11.0f;
+    result = D3DXBoxBoundProbe(&bottom_point, &top_point, &rayposition, &raydirection);
+    ok(result == FALSE, "expected FALSE, received TRUE\n");
+
+    rayposition.x = -4.0f; rayposition.y = 1.0f; rayposition.z = -2.0f;
+    result = D3DXBoxBoundProbe(&bottom_point, &top_point, &rayposition, &raydirection);
+    ok(result == TRUE, "expected TRUE, received FALSE\n");
+
+    bottom_point.x = 1.0f; bottom_point.y = 0.0f; bottom_point.z = 0.0f;
+    top_point.x = 1.0f; top_point.y = 0.0f; top_point.z = 0.0f;
+    rayposition.x = 0.0f; rayposition.y = 1.0f; rayposition.z = 0.0f;
+    raydirection.x = 0.0f; raydirection.y = 3.0f; raydirection.z = 0.0f;
+    result = D3DXBoxBoundProbe(&bottom_point, &top_point, &rayposition, &raydirection);
+    ok(result == FALSE, "expected FALSE, received TRUE\n");
+
+    bottom_point.x = 1.0f; bottom_point.y = 2.0f; bottom_point.z = 3.0f;
+    top_point.x = 10.0f; top_point.y = 15.0f; top_point.z = 20.0f;
+
+    raydirection.x = 7.0f; raydirection.y = 8.0f; raydirection.z = 9.0f;
+    rayposition.x = 3.0f; rayposition.y = 7.0f; rayposition.z = -6.0f;
+    result = D3DXBoxBoundProbe(&bottom_point, &top_point, &rayposition, &raydirection);
+    ok(result == TRUE, "expected TRUE, received FALSE\n");
+
+    bottom_point.x = 0.0f; bottom_point.y = 0.0f; bottom_point.z = 0.0f;
+    top_point.x = 1.0f; top_point.y = 1.0f; top_point.z = 1.0f;
+
+    raydirection.x = 0.0f; raydirection.y = 1.0f; raydirection.z = .0f;
+    rayposition.x = -3.0f; rayposition.y = 0.0f; rayposition.z = 0.0f;
+    result = D3DXBoxBoundProbe(&bottom_point, &top_point, &rayposition, &raydirection);
+    ok(result == FALSE, "expected FALSE, received TRUE\n");
+
+    raydirection.x = 1.0f; raydirection.y = 0.0f; raydirection.z = .0f;
+    rayposition.x = -3.0f; rayposition.y = 0.0f; rayposition.z = 0.0f;
+    result = D3DXBoxBoundProbe(&bottom_point, &top_point, &rayposition, &raydirection);
+    ok(result == TRUE, "expected TRUE, received FALSE\n");
+
+/*____________Test the Sphere case________________________*/
     radius = sqrt(77.0f);
     center.x = 1.0f; center.y = 2.0f; center.z = 3.0f;
     raydirection.x = 2.0f; raydirection.y = -4.0f; raydirection.z = 2.0f;

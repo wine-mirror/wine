@@ -24,6 +24,76 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+BOOL WINAPI D3DXBoxBoundProbe(CONST D3DXVECTOR3 *pmin, CONST D3DXVECTOR3 *pmax, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
+
+/* Algorithm taken from the article: An Efficient and Robust Ray-Box Intersection Algoritm
+Amy Williams             University of Utah
+Steve Barrus             University of Utah
+R. Keith Morley          University of Utah
+Peter Shirley            University of Utah
+
+International Conference on Computer Graphics and Interactive Techniques  archive
+ACM SIGGRAPH 2005 Courses
+Los Angeles, California
+
+This algorithm is free of patents or of copyrights, as confirmed by Peter Shirley himself.
+
+Algorithm: Consider the box as the intersection of three slabs. Clip the ray
+against each slab, if there's anything left of the ray after we're
+done we've got an intersection of the ray with the box.
+*/
+
+{
+    FLOAT div, tmin, tmax, tymin, tymax, tzmin, tzmax;
+
+    div = 1.0f / praydirection->x;
+    if ( div >= 0.0f )
+    {
+     tmin = ( pmin->x - prayposition->x ) * div;
+     tmax = ( pmax->x - prayposition->x ) * div;
+    }
+    else
+    {
+     tmin = ( pmax->x - prayposition->x ) * div;
+     tmax = ( pmin->x - prayposition->x ) * div;
+    }
+
+    if ( tmax < 0.0f ) return FALSE;
+
+    div = 1.0f / praydirection->y;
+    if ( div >= 0.0f )
+    {
+     tymin = ( pmin->y - prayposition->y ) * div;
+     tymax = ( pmax->y - prayposition->y ) * div;
+    }
+    else
+    {
+     tymin = ( pmax->y - prayposition->y ) * div;
+     tymax = ( pmin->y - prayposition->y ) * div;
+    }
+
+    if ( ( tymax < 0.0f ) || ( tmin > tymax ) || ( tymin > tmax ) ) return FALSE;
+
+    if ( tymin > tmin ) tmin = tymin;
+    if ( tymax < tmax ) tmax = tymax;
+
+    div = 1.0f / praydirection->z;
+    if ( div >= 0.0f )
+    {
+     tzmin = ( pmin->z - prayposition->z ) * div;
+     tzmax = ( pmax->z - prayposition->z ) * div;
+    }
+    else
+    {
+     tzmin = ( pmax->z - prayposition->z ) * div;
+     tzmax = ( pmin->z - prayposition->z ) * div;
+    }
+
+    if ( (tzmax < 0.0f ) || ( tmin > tzmax ) || ( tzmin > tmax ) ) return FALSE;
+
+    return TRUE;
+}
+
 BOOL WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *pcenter, FLOAT radius, CONST D3DXVECTOR3 *prayposition, CONST D3DXVECTOR3 *praydirection)
 {
     D3DXVECTOR3 difference;
