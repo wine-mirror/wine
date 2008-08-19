@@ -104,8 +104,8 @@ static SecurityFunctionTableA securityFunctionTableA = {
     VerifySignature,
     FreeContextBuffer,
     QuerySecurityPackageInfoA,
-    NULL, /* Reserved3 */
-    NULL, /* Reserved4 */
+    EncryptMessage, /* Reserved3 */
+    DecryptMessage, /* Reserved4 */
     ExportSecurityContext,
     ImportSecurityContextA,
     AddCredentialsA,
@@ -135,8 +135,8 @@ static SecurityFunctionTableW securityFunctionTableW = {
     VerifySignature,
     FreeContextBuffer,
     QuerySecurityPackageInfoW,
-    NULL, /* Reserved3 */
-    NULL, /* Reserved4 */
+    EncryptMessage, /* Reserved3 */
+    DecryptMessage, /* Reserved4 */
     ExportSecurityContext,
     ImportSecurityContextW,
     AddCredentialsW,

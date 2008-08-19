@@ -99,10 +99,8 @@ static void test_InitSecurityInterface(void)
     ok(sftA != NULL, "pInitSecurityInterfaceA failed\n");
     ok(sftA->dwVersion == SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION, "wrong dwVersion %ld in security function table\n", sftA->dwVersion);
     ok(!sftA->Reserved2, "Reserved2 should be NULL instead of %p in security function table\n", sftA->Reserved2);
-    todo_wine
-    ok(sftA->Reserved3 != NULL, "Reserved3 should not be NULL in security function table\n");
-    todo_wine
-    ok(sftA->Reserved4 != NULL, "Reserved4 should not be NULL in security function table\n");
+    ok(sftA->Reserved3 == sftA->EncryptMessage, "Reserved3 should be equal to EncryptMessage in the security function table\n");
+    ok(sftA->Reserved4 == sftA->DecryptMessage, "Reserved4 should be equal to DecryptMessage in the security function table\n");
 
     if (!pInitSecurityInterfaceW)
     {
@@ -114,10 +112,8 @@ static void test_InitSecurityInterface(void)
     ok(sftW != NULL, "pInitSecurityInterfaceW failed\n");
     ok(sftW->dwVersion == SECURITY_SUPPORT_PROVIDER_INTERFACE_VERSION, "wrong dwVersion %ld in security function table\n", sftW->dwVersion);
     ok(!sftW->Reserved2, "Reserved2 should be NULL instead of %p in security function table\n", sftW->Reserved2);
-    todo_wine
-    ok(sftW->Reserved3 != NULL, "Reserved3 should note be NULL in security function table\n");
-    todo_wine
-    ok(sftW->Reserved4 != NULL, "Reserved4 should not be NULL in security function table\n");
+    ok(sftW->Reserved3 == sftW->EncryptMessage, "Reserved3 should be equal to EncryptMessage in the security function table\n");
+    ok(sftW->Reserved4 == sftW->DecryptMessage, "Reserved4 should be equal to DecryptMessage in the security function table\n");
 }
 
 START_TEST(secur32)
