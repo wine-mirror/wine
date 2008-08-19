@@ -675,7 +675,7 @@ typedef struct _CRYPT_SMIME_CAPABILITY {
 
 typedef struct _CRYPT_SMIME_CAPABILITIES {
     DWORD                   cCapability;
-    CRYPT_SMIME_CAPABILITY  rgCapability;
+    PCRYPT_SMIME_CAPABILITY rgCapability;
 } CRYPT_SMIME_CAPABILITIES, *PCRYPT_SMIME_CAPABILITIES;
 
 typedef struct _VTableProvStruc {
