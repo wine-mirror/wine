@@ -435,9 +435,99 @@ UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
     return rc;
 }
 
+static BOOL verify_comp_for_removal(MSICOMPONENT *comp, UINT install_mode)
+{
+    INSTALLSTATE request = comp->ActionRequest;
+
+    if (install_mode == msidbRemoveFileInstallModeOnInstall &&
+        (request == INSTALLSTATE_LOCAL || request == INSTALLSTATE_SOURCE))
+        return TRUE;
+
+    if (request == INSTALLSTATE_ABSENT)
+    {
+        if (!comp->ComponentId)
+            return FALSE;
+
+        if (install_mode == msidbRemoveFileInstallModeOnRemove)
+            return TRUE;
+    }
+
+    if (install_mode == msidbRemoveFileInstallModeOnBoth)
+        return TRUE;
+
+    return FALSE;
+}
+
+static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    MSICOMPONENT *comp;
+    LPCWSTR component, filename, dirprop;
+    UINT install_mode;
+    LPWSTR dir = NULL, path = NULL;
+    DWORD size;
+    UINT r;
+
+    component = MSI_RecordGetString(row, 2);
+    filename = MSI_RecordGetString(row, 3);
+    dirprop = MSI_RecordGetString(row, 4);
+    install_mode = MSI_RecordGetInteger(row, 5);
+
+    comp = get_loaded_component(package, component);
+    if (!comp)
+    {
+        ERR("Invalid component: %s\n", debugstr_w(component));
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    if (!verify_comp_for_removal(comp, install_mode))
+    {
+        TRACE("Skipping removal due to missing conditions\n");
+        comp->Action = comp->Installed;
+        return ERROR_SUCCESS;
+    }
+
+    dir = msi_dup_property(package, dirprop);
+    if (!dir)
+        return ERROR_OUTOFMEMORY;
+
+    size = lstrlenW(filename) + lstrlenW(dir) + 2;
+    path = msi_alloc(size * sizeof(WCHAR));
+    if (!path)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    lstrcpyW(path, dir);
+    lstrcatW(path, filename);
+
+    TRACE("Deleting misc file: %s\n", debugstr_w(path));
+    if (!DeleteFileW(path))
+        TRACE("DeleteFileW failed: %d\n", GetLastError());
+
+done:
+    msi_free(path);
+    msi_free(dir);
+    return ERROR_SUCCESS;
+}
+
 UINT ACTION_RemoveFiles( MSIPACKAGE *package )
 {
+    MSIQUERY *view;
     MSIFILE *file;
+    UINT r;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','R','e','m','o','v','e','F','i','l','e','`',0};
+
+    r = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (r == ERROR_SUCCESS)
+    {
+        MSI_IterateRecords(view, NULL, ITERATE_RemoveFiles, package);
+        msiobj_release(&view->hdr);
+    }
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {

@@ -4206,19 +4206,16 @@ static void test_removefiles(void)
     ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
     ok(!pf_exists("msitest\\helium"), "File installed\n");
     ok(pf_exists("msitest\\lithium"), "File not installed\n");
+    ok(!pf_exists("msitest\\furlong"), "File not deleted\n");
+    ok(!pf_exists("msitest\\firkin"), "File not deleted\n");
+    ok(!pf_exists("msitest\\fortnight"), "File not deleted\n");
     ok(pf_exists("msitest\\becquerel"), "File not installed\n");
     ok(pf_exists("msitest\\dioptre"), "File not installed\n");
     ok(pf_exists("msitest\\attoparsec"), "File not installed\n");
+    ok(!pf_exists("msitest\\storeys"), "File not deleted\n");
+    ok(!pf_exists("msitest\\block"), "File not deleted\n");
+    ok(!pf_exists("msitest\\siriometer"), "File not deleted\n");
     ok(pf_exists("msitest"), "File not installed\n");
-    todo_wine
-    {
-        ok(!pf_exists("msitest\\firkin"), "File not deleted\n");
-        ok(!pf_exists("msitest\\fortnight"), "File not deleted\n");
-        ok(!pf_exists("msitest\\furlong"), "File not deleted\n");
-        ok(!pf_exists("msitest\\storeys"), "File not deleted\n");
-        ok(!pf_exists("msitest\\block"), "File not deleted\n");
-        ok(!pf_exists("msitest\\siriometer"), "File not deleted\n");
-    }
 
     create_pf("msitest\\furlong", TRUE);
     create_pf("msitest\\firkin", TRUE);
@@ -4235,15 +4232,12 @@ static void test_removefiles(void)
     ok(delete_pf("msitest\\furlong", TRUE), "File deleted\n");
     ok(delete_pf("msitest\\firkin", TRUE), "File deleted\n");
     ok(delete_pf("msitest\\fortnight", TRUE), "File deleted\n");
+    ok(!delete_pf("msitest\\becquerel", TRUE), "File not deleted\n");
+    ok(!delete_pf("msitest\\dioptre", TRUE), "File not deleted\n");
     ok(delete_pf("msitest\\attoparsec", TRUE), "File deleted\n");
+    ok(!delete_pf("msitest\\storeys", TRUE), "File not deleted\n");
+    ok(!delete_pf("msitest\\block", TRUE), "File not deleted\n");
     ok(delete_pf("msitest\\siriometer", TRUE), "File deleted\n");
-    todo_wine
-    {
-        ok(!delete_pf("msitest\\becquerel", TRUE), "File not deleted\n");
-        ok(!delete_pf("msitest\\dioptre", TRUE), "File not deleted\n");
-        ok(!delete_pf("msitest\\storeys", TRUE), "File not deleted\n");
-        ok(!delete_pf("msitest\\block", TRUE), "File not deleted\n");
-    }
     ok(delete_pf("msitest", FALSE), "File deleted\n");
 
     DeleteFile(msifile);
