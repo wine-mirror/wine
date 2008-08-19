@@ -2202,7 +2202,6 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         case WINED3DFMT_X1R5G5B5:
         case WINED3DFMT_A1R5G5B5:
         case WINED3DFMT_A4R4G4B4:
-        case WINED3DFMT_R3G3B2:
         case WINED3DFMT_A8:
         case WINED3DFMT_X4R4G4B4:
         case WINED3DFMT_A8B8G8R8:
@@ -2212,6 +2211,10 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
         case WINED3DFMT_G16R16:
             TRACE_(d3d_caps)("[OK]\n");
             return TRUE;
+
+        case WINED3DFMT_R3G3B2:
+            TRACE_(d3d_caps)("[FAILED] - Not supported on Windows\n");
+            return FALSE;
 
         /*****
          *  supported: Palettized
