@@ -764,7 +764,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     EXIT_ON_ERROR( snd_pcm_sw_params_set_silence_size(pcm, sw_params, 0), MMSYSERR_ERROR, "unable to set silence size");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_avail_min(pcm, sw_params, period_size), MMSYSERR_ERROR, "unable to set avail min");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_silence_threshold(pcm, sw_params, 0), MMSYSERR_ERROR, "unable to set silence threshold");
-    EXIT_ON_ERROR( snd_pcm_sw_params_set_stop_threshold(pcm, sw_params, boundary), MMSYSERR_ERROR, "unable to set xrun mode");
+    EXIT_ON_ERROR( snd_pcm_sw_params_set_stop_threshold(pcm, sw_params, boundary), MMSYSERR_ERROR, "unable to set stop threshold");
     EXIT_ON_ERROR( snd_pcm_sw_params(pcm, sw_params), MMSYSERR_ERROR, "unable to set sw params for playback");
 #undef EXIT_ON_ERROR
 
