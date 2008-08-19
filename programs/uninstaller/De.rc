@@ -20,24 +20,7 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
-IDD_UNINSTALLER DIALOG DISCARDABLE 0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Anwendungsentferner"
-FONT 10, "MS Sans Serif"
-BEGIN
-        LTEXT           "Bitte wählen Sie die Anwendung aus, die Sie entfernen möchten:",IDC_PLEASESELECT,10,10,250,14
-        EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-        LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT |
-                        LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-        PUSHBUTTON      "&Entfernen",IDC_UNINSTALL,270,48,50,14
-        PUSHBUTTON      "Ü&ber",IDC_ABOUT,270,65,50,14
-        PUSHBUTTON      "E&nde",IDC_EXIT,270,81,50,14
-END
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine Anwendungsentferner"
-     IDS_ABOUT, "Wine Anwendungsentferner (C) 2005 durch Andreas Mohr, Hannu Valtonen und Jonathan Ernst."
-     IDS_ABOUTTITLE, "Über den Anwendungsentferner"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Der Registry-Schlüssel für zu entfernende Anwendung(en) ist (noch) nicht verfügbar, es kann nichts gemacht werden."
      IDS_UNINSTALLFAILED, "Die Ausführung des Entfernungsbefehls '%s' ist fehlgeschlagen, wahrscheinlich durch eine fehlende, ausführbare Datei.\r\nMöchten Sie, dass der Anwendungseintrag aus der Registry entfernt wird?"
 }

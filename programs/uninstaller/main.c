@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uninstaller);
 
+extern void WINAPI Control_RunDLL(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdShow);
+
 typedef struct {
     HKEY  root;
     WCHAR *key;
@@ -44,17 +46,11 @@ static int list_need_update = 1;
 static int oldsel = -1;
 static WCHAR *sFilter;
 static WCHAR sAppName[MAX_STRING_LEN];
-static WCHAR sAboutTitle[MAX_STRING_LEN];
-static WCHAR sAbout[MAX_STRING_LEN];
-static WCHAR sRegistryKeyNotAvailable[MAX_STRING_LEN];
 static WCHAR sUninstallFailed[MAX_STRING_LEN];
 
 static int FetchUninstallInformation(void);
 static void UninstallProgram(void);
-static void UpdateList(HWND hList);
 static int cmp_by_name(const void *a, const void *b);
-static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-
 
 static const WCHAR BackSlashW[] = { '\\', 0 };
 static const WCHAR DisplayNameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
@@ -162,12 +158,11 @@ int wmain(int argc, WCHAR *argv[])
 
     /* Load MessageBox's strings */
     LoadStringW(hInst, IDS_APPNAME, sAppName, sizeof(sAppName)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_ABOUTTITLE, sAboutTitle, sizeof(sAboutTitle)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_ABOUT, sAbout, sizeof(sAbout)/sizeof(WCHAR));
-    LoadStringW(hInst, IDS_REGISTRYKEYNOTAVAILABLE, sRegistryKeyNotAvailable, sizeof(sRegistryKeyNotAvailable)/sizeof(WCHAR));
     LoadStringW(hInst, IDS_UNINSTALLFAILED, sUninstallFailed, sizeof(sUninstallFailed)/sizeof(WCHAR));
 
-    return DialogBoxW(hInst, MAKEINTRESOURCEW(IDD_UNINSTALLER), NULL, DlgProc);
+    /* Start the GUI control panel */
+    Control_RunDLL(GetDesktopWindow(), 0, "appwiz.cpl", SW_SHOW);
+    return 1;
 }
 
 
@@ -284,115 +279,4 @@ static void UninstallProgram(void)
     }
     WINE_TRACE("finished uninstall phase.\n");
     list_need_update = 1;
-}
-
-static void UpdateButtons(HWND hDlg, HWND hList)
-{
-    EnableWindow(GetDlgItem(hDlg, IDC_UNINSTALL), SendMessageW(hList, LB_GETSELCOUNT, 0, 0) > 0);
-}
-
-static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-    TEXTMETRICW tm;
-    HDC hdc;
-    HWND hList = GetDlgItem(hwnd, IDC_LIST);
-    switch(Message)
-    {
-        case WM_INITDIALOG:
-            hdc = GetDC(hwnd);
-            GetTextMetricsW(hdc, &tm);
-            UpdateList(hList);
-            ReleaseDC(hwnd, hdc);
-            UpdateButtons(hwnd, hList);
-            break;
-        case WM_COMMAND:
-            switch(LOWORD(wParam))
-            {
-                case IDC_FILTER:
-                {
-                    if (HIWORD(wParam) == EN_CHANGE)
-                    {
-                        int len = GetWindowTextLengthW(GetDlgItem(hwnd, IDC_FILTER));
-                        list_need_update = 1;
-                        if(len > 0)
-                        {
-                            sFilter = (WCHAR*)GlobalAlloc(GPTR, (len + 1)*sizeof(WCHAR));
-                            GetDlgItemTextW(hwnd, IDC_FILTER, sFilter, len + 1);
-                        }
-                        else sFilter = NULL;
-                        UpdateList(hList);
-                        UpdateButtons(hwnd, hList);
-                    }
-                    break;
-                }
-                case IDC_UNINSTALL:
-                {
-                    int count = SendMessageW(hList, LB_GETSELCOUNT, 0, 0);
-                    if(count != 0)
-                    {
-                        UninstallProgram();
-                        UpdateList(hList);
-                        UpdateButtons(hwnd, hList);
-                    }
-                    break;
-                }
-                case IDC_LIST:
-                    if (HIWORD(wParam) == LBN_SELCHANGE)
-                    {
-                       int sel = SendMessageW(hList, LB_GETCURSEL, 0, 0);
-                       if (oldsel != -1)
-                       {
-                           entries[oldsel].active ^= 1; /* toggle */
-                           WINE_TRACE("toggling %d old %s\n", entries[oldsel].active,
-                           wine_dbgstr_w(entries[oldsel].descr));
-                       }
-                       entries[sel].active ^= 1; /* toggle */
-                       WINE_TRACE("toggling %d %s\n", entries[sel].active,
-                       wine_dbgstr_w(entries[sel].descr));
-                       oldsel = sel;
-                   }
-                    UpdateButtons(hwnd, hList);
-                    break;
-                case IDC_ABOUT:
-                    MessageBoxW(0, sAbout, sAboutTitle, MB_OK);
-                    break;
-                case IDCANCEL:
-                case IDC_EXIT:
-                    EndDialog(hwnd, 0);
-                    break;
-            }
-            break;
-        default:
-            return FALSE;
-    }
-    return TRUE;
-}
-
-
-static void UpdateList(HWND hList)
-{
-    unsigned int i;
-    if (list_need_update)
-    {
-        int prevsel;
-        prevsel = SendMessageW(hList, LB_GETCURSEL, 0, 0);
-        if (!(FetchUninstallInformation()))
-        {
-            MessageBoxW(0, sRegistryKeyNotAvailable, sAppName, MB_OK);
-            PostQuitMessage(0);
-            return;
-        }
-        SendMessageW(hList, LB_RESETCONTENT, 0, 0);
-        SendMessageW(hList, WM_SETREDRAW, FALSE, 0);
-        for (i=0; i < numentries; i++)
-        {
-            WINE_TRACE("adding %s\n", wine_dbgstr_w(entries[i].descr));
-            SendMessageW(hList, LB_ADDSTRING, 0, (LPARAM)entries[i].descr);
-        }
-        WINE_TRACE("setting prevsel %d\n", prevsel);
-        if (prevsel != -1)
-            SendMessageW(hList, LB_SETCURSEL, prevsel, 0 );
-        SendMessageW(hList, WM_SETREDRAW, TRUE, 0);
-        list_need_update = 0;
-    }
 }

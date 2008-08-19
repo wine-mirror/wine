@@ -20,25 +20,7 @@
 
 LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Uygulama Kaldýrýcý"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Lütfen kaldýrmak istediðiniz uygulamayý seçin:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Kaldýr",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&Hakkýnda",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Çýkýþ",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine Uygulama Kaldýrýcý"
-     IDS_ABOUT, "Wine Uygulama Kaldýrýcý (C) 2005 Andreas Mohr, Hannu Valtonen ve Jonathan Ernst."
-     IDS_ABOUTTITLE, "About Kaldýrýcý"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Sistem kaydýnda kurulu program bilgisi bulunmuyor. Yapýlacak birþey yok!"
      IDS_UNINSTALLFAILED, "'%s' kaldýrma komutu çalýþtýrýlamadý, çalýþtýrýbilir dosya var olmayabilir.\r\nSistem kaydýndan bu kaldýrma giriþini silmek ister misiniz?"
 }

@@ -21,25 +21,7 @@
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine - usuwanie programów"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Proszê wybraæ program, których chcesz usun¹æ:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Usuñ",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&O progamie",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Zakoñcz",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine - usuwanie programów"
-     IDS_ABOUT, "Wine - usuwanie programów (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst."
-     IDS_ABOUTTITLE, "O narzêdziu do usuwania programów"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Nie ma (jeszcze) informacji o programach do usuniêcia w rejestrze. Nie ma nic do zrobienia!"
      IDS_UNINSTALLFAILED, "Nie uda³o siê wykonaæ polecenia '%s', które powinno usun¹æ progam. Byæ mo¿e ju¿ by³ usuniêty.\r\nCzy chcesz usun¹æ jego wpis z tej listy?"
 }

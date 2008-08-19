@@ -46,8 +46,3 @@
 #include "Si.rc"
 #include "Sv.rc"
 #include "Tr.rc"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-/* @makedep: uninstaller.ico */
-UNINSTALLER ICON MOVEABLE uninstaller.ico

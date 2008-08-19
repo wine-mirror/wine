@@ -20,25 +20,7 @@
 
 LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Sovelluksen Poistaja"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Valitse poistettava sovellus:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Poista",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&Tietoja",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Sulje",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine Sovelluksen Poistaja"
-     IDS_ABOUT, "Wine Sovelluksen Poistaja (C) 2005 Andreas Mohr, Hannu Valtonen ja Jonathan Ernst."
-     IDS_ABOUTTITLE, "Tietoja Ohjelmasta"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Rekisteriavainta asennuksen poistoon ei ole (viel‰) olemassa, mit‰‰n ei ole teht‰viss‰ !"
      IDS_UNINSTALLFAILED, "Poistokomento '%s' ep‰onnistui, johtuen ehk‰ puuttuvasta tiedostosta.\r\nHaluatko poistaa ohjelman rekisterist‰?"
 }

@@ -20,24 +20,7 @@
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Desinstalador de Aplicações Wine"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Por favor seleccione a aplicação que deseja desinstalar:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT |
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Desinstalar",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&Acerca",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Sair",IDC_EXIT,270,81,50,14
-END
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Desinstalador de Aplicações Wine"
-     IDS_ABOUT, "Desinstalador de Aplicações Wine (C) 2005 por Andreas Mohr, Hannu Valtonen e Jonathan Ernst."
-     IDS_ABOUTTITLE, "Acerca do Desinstalador"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Chave de registo de desinstalação não disponível (ainda), nada a fazer !"
      IDS_UNINSTALLFAILED, "Execução do comando de desinstalação '%s' falhado, talvez devido a faltar o executável.\r\nDeseja remover a entrada de desinstalação do registo ?"
 }

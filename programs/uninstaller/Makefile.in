@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = uninstaller.exe
 APPMODE   = -mconsole -municode
-IMPORTS   = shlwapi user32 gdi32 advapi32 kernel32
+IMPORTS   = shlwapi shell32 user32 gdi32 advapi32 kernel32
 
 C_SRCS = \
 	main.c

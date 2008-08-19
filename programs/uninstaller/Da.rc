@@ -20,25 +20,7 @@
 
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Afinstaller programmer"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Vælg det program du ønsker at afinstallere:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT |
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "A&finstaller",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&Om",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Luk",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Afinstaller programmer"
-     IDS_ABOUT, "Oversat af Jens Albretsen\nOphavsret 2005 for afinstalleringsværktøjet tilhører Andreas Mohr, Hannu Valtonen og Jonathan Ernst."
-     IDS_ABOUTTITLE, "Om"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Afinstaller registeringsdatabase værdi er ikke tilgængelig (endnu); ingenting at gøre."
      IDS_UNINSTALLFAILED, "Køring af afinstallerings kommandoen '%s' fejlede, måske er det på grund af en manglende programfil.\r\nVil du fjerne afinstallerings opførselen fra registeringsdatabasen?"
 }

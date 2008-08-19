@@ -22,26 +22,8 @@
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Odstranjevalec programov"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Izberite program, ki ga želite odstraniti:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT |
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "O&dstrani",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&O programu",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "Iz&hod",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine Odstranjevalec programov"
-     IDS_ABOUT, "Wine Odstranjevalec programov (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst."
-     IDS_ABOUTTITLE, "O Odstranjevalcu"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Odstranitveni ključ ni (še) na voljo. Ničesar nimam za storiti!"
      IDS_UNINSTALLFAILED, "Izvedba odstranitvenega ukaza '%s' ni uspela, morda zaradi manjkajoče izvršljive datoteke.\r\nAli želite odstraniti odstranitveni ključ iz registra?"
 }
 

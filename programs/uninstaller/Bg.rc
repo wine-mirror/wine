@@ -20,25 +20,7 @@
 
 LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Деинсталатор на приложения на Wine"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Изберете, кое приложение желаете да да деинсталирате:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Деинсталирай",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&Относно",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Изход",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine Application Uninstaller"
-     IDS_ABOUT, "Wine Application Uninstaller (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst."
-     IDS_ABOUTTITLE, "Относно деинсталатора"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Ключовете за деинсталиране липсват (все още) в системния регистър, няма какво да правя!"
      IDS_UNINSTALLFAILED, "Изпълнението на командата за деинсталиране '%s' неуспешно, може би заради липсващ изпълним файл.\r\nИскате ли да премахнете записа за деинсталиране от системния регистър?"
 }

@@ -20,25 +20,7 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Удаление приложений WINE"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Пожалуйста, выберите приложение для удаления:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT |
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Удалить",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&О программе",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Выход",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Удаление приложений WINE"
-     IDS_ABOUT, "Удаление приложений WINE (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst."
-     IDS_ABOUTTITLE, "О программе"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Необходимая запись в реестре отсутствует!"
      IDS_UNINSTALLFAILED, "Ошибка выполнения команды удаления '%s', возможно из-за потери файлов приложения.\r\nУдалить информацию об установке из реестра?"
 }

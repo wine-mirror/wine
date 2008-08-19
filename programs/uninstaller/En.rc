@@ -20,25 +20,7 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Application Uninstaller"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Please select the application you wish to uninstall:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Uninstall",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&About",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Exit",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine Application Uninstaller"
-     IDS_ABOUT, "Wine Application Uninstaller (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst."
-     IDS_ABOUTTITLE, "About Uninstaller"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Uninstall registry key not available (yet), nothing to do !"
      IDS_UNINSTALLFAILED, "Execution of uninstall command '%s' failed, perhaps due to missing executable.\r\nDo you want to remove the uninstall entry from the registry ?"
 }

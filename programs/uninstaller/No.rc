@@ -20,25 +20,7 @@
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-IDD_UNINSTALLER DIALOG DISCARDABLE  0, 0, 330, 160
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Avinstaller programmer"
-FONT 10, "MS Sans Serif"
-BEGIN
-    LTEXT           "Velg programmet du ønsker å avinstallere:",IDC_PLEASESELECT,10,10,250,14
-    EDITTEXT        IDC_FILTER,10,25,250,14,ES_AUTOHSCROLL
-    LISTBOX         IDC_LIST,10,43,250,106,LBS_NOINTEGRALHEIGHT | 
-                    LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "A&vinstaller",IDC_UNINSTALL,270,48,50,14
-    PUSHBUTTON      "&Om",IDC_ABOUT,270,65,50,14
-    PUSHBUTTON      "&Lukk",IDC_EXIT,270,81,50,14
-END
-
-
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Avinstaller programmer"
-     IDS_ABOUT, "Oversatt av Alexander N. Sørnes\nKopirett 2005 for avinstalleringsverktøyet tilhører Andreas Mohr, Hannu Valtonen og Jonathan Ernst."
-     IDS_ABOUTTITLE, "Om avinstallereren"
-     IDS_REGISTRYKEYNOTAVAILABLE, "Avinstaller registerverdi er ikke tilgjengelig (ennå); ingenting å gjøre."
      IDS_UNINSTALLFAILED, "Kjøring av avinstalleringskommandoen '%s' feilet, kanskje på grunn av en manglende programfil.\r\nFjerne avinstalleringsoppføringen fra registeret?"
 }
