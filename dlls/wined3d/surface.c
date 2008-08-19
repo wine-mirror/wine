@@ -3436,7 +3436,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
 
         /* Activate the destination context, set it up for blitting */
-        myDevice->activeContext->last_was_blit = FALSE;
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
 
         if(!dstSwapchain) {
