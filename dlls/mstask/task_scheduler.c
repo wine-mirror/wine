@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "corerror.h"
 #include "mstask_private.h"
 #include "wine/debug.h"
 
@@ -99,9 +100,10 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_Activate(
         REFIID riid,
         IUnknown **ppunk)
 {
-    FIXME("%p, %s, %s, %p: stub\n", iface, debugstr_w(pwszName),
+    TRACE("%p, %s, %s, %p: stub\n", iface, debugstr_w(pwszName),
             debugstr_guid(riid), ppunk);
-    return E_NOTIMPL;
+    FIXME("Partial stub always returning COR_E_FILENOTFOUND\n");
+    return COR_E_FILENOTFOUND;
 }
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_Delete(

@@ -96,7 +96,7 @@ static void test_Activate(void)
     /* Attempt to Activate a non-existant task */
     hres = ITaskScheduler_Activate(test_task_scheduler, not_task_name,
             &IID_ITask, (IUnknown**)&task);
-    todo_wine ok(hres == COR_E_FILENOTFOUND, "Expected COR_E_FILENOTFOUND: %08x\n", hres);
+    ok(hres == COR_E_FILENOTFOUND, "Expected COR_E_FILENOTFOUND: %08x\n", hres);
 
     ITaskScheduler_Release(test_task_scheduler);
     return;
