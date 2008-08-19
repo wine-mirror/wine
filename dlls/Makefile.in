@@ -330,6 +330,7 @@ TESTSUBDIRS = \
 	mscms/tests \
 	mshtml/tests \
 	msi/tests \
+	mstask/tests \
 	msvcrt/tests \
 	msvcrtd/tests \
 	msxml3/tests \

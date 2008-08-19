@@ -65,6 +65,7 @@ TESTBINS = \
 	mscms_test.exe \
 	mshtml_test.exe \
 	msi_test.exe \
+	mstask_test.exe \
 	msvcrt_test.exe \
 	msvcrtd_test.exe \
 	msxml3_test.exe \
@@ -190,6 +191,8 @@ mshtml_test.exe: $(DLLDIR)/mshtml/tests/mshtml_test.exe$(DLLEXT)
 	cp $(DLLDIR)/mshtml/tests/mshtml_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msi_test.exe: $(DLLDIR)/msi/tests/msi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msi/tests/msi_test.exe$(DLLEXT) $@ && $(STRIP) $@
+mstask_test.exe: $(DLLDIR)/mstask/tests/mstask_test.exe$(DLLEXT)
+	cp $(DLLDIR)/mstask/tests/mstask_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msvcrt_test.exe: $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msvcrtd_test.exe: $(DLLDIR)/msvcrtd/tests/msvcrtd_test.exe$(DLLEXT)

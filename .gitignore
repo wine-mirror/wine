@@ -296,6 +296,7 @@ programs/winetest/msacm32_test.exe
 programs/winetest/mscms_test.exe
 programs/winetest/mshtml_test.exe
 programs/winetest/msi_test.exe
+programs/winetest/mstask_test.exe
 programs/winetest/msvcrt_test.exe
 programs/winetest/msvcrtd_test.exe
 programs/winetest/msxml3_test.exe
