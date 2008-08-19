@@ -24,7 +24,7 @@
 #include "dxfile.h"
 
 char template[] =
-"xof 0302 txt 064\n"
+"xof 0302txt 0064\n"
 "template Header\n"
 "{\n"
 "<3D82AB43-62DA-11CF-AB390020AF71E433>\n"
@@ -63,7 +63,7 @@ static void test_d3dxof(void)
 
     /* RegisterTemplates does not support txt format yet */
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, strlen(template));
-    todo_wine ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
     ref = IDirectXFile_Release(lpDirectXFile);
     ok(ref == 0, "Got refcount %ld, expected 1\n", ref);

@@ -85,6 +85,7 @@ typedef struct {
   char* dump;
   DWORD pos;
   DWORD size;
+  BOOL txt;
 } parse_buffer;
 
 
@@ -264,28 +265,239 @@ static void dump_TOKEN(WORD token)
 #undef DUMP_TOKEN
 }
 
-static WORD check_TOKEN(parse_buffer * buf)
+static BOOL is_space(char c)
 {
-  WORD token;
-
-  if (!read_bytes(buf, &token, 2))
-    return 0;
-  buf->buffer -= 2;
-  buf->rem_bytes += 2;
-  if (0)
+  switch (c)
   {
-    TRACE("check: ");
-    dump_TOKEN(token);
+    case 0x00:
+    case 0x0D:
+    case 0x0A:
+    case ' ':
+    case '\t':
+      return TRUE;
+      break;
   }
-  return token;
+  return FALSE;
 }
 
-static WORD parse_TOKEN(parse_buffer * buf)
+static BOOL is_operator(char c)
+{
+  switch(c)
+  {
+    case '{':
+    case '}':
+    case '[':
+    case ']':
+    case '(':
+    case ')':
+    case '<':
+    case '>':
+    case ',':
+    case ';':
+      return TRUE;
+      break;
+  }
+  return FALSE;
+}
+
+static inline BOOL is_separator(char c)
+{
+  return is_space(c) || is_operator(c);
+}
+
+static WORD get_operator_token(char c)
+{
+  switch(c)
+  {
+    case '{':
+      return TOKEN_OBRACE;
+      break;
+    case '}':
+      return TOKEN_CBRACE;
+      break;
+    case '[':
+      return TOKEN_OBRACKET;
+      break;
+    case ']':
+      return TOKEN_CBRACKET;
+      break;
+    case '(':
+      return TOKEN_OPAREN;
+      break;
+    case ')':
+      return TOKEN_CPAREN;
+      break;
+    case '<':
+      return TOKEN_OANGLE;
+      break;
+    case '>':
+      return TOKEN_CANGLE;
+      break;
+    case ',':
+      return TOKEN_COMMA;
+      break;
+    case ';':
+      return TOKEN_SEMICOLON;
+      break;
+  }
+  return 0;
+}
+
+static BOOL is_keyword(parse_buffer* buf, const char* keyword)
+{
+  DWORD len = strlen(keyword);
+  if (!strncmp((char*)buf->buffer, keyword,len) && is_separator(*(buf->buffer+len)))
+  {
+    buf->buffer += len;
+    buf->rem_bytes -= len;
+    return TRUE;
+  }
+  return FALSE;
+}
+
+static WORD get_keyword_token(parse_buffer* buf)
+{
+  if (is_keyword(buf, "template"))
+    return TOKEN_TEMPLATE;
+  if (is_keyword(buf, "WORD"))
+    return TOKEN_WORD;
+  if (is_keyword(buf, "DWORD"))
+    return TOKEN_DWORD;
+  if (is_keyword(buf, "FLOAT"))
+    return TOKEN_FLOAT;
+  if (is_keyword(buf, "DOUBLE"))
+    return TOKEN_DOUBLE;
+  if (is_keyword(buf, "CHAR"))
+    return TOKEN_CHAR;
+  if (is_keyword(buf, "UCHAR"))
+    return TOKEN_UCHAR;
+  if (is_keyword(buf, "SWORD"))
+    return TOKEN_SWORD;
+  if (is_keyword(buf, "SDWORD"))
+    return TOKEN_SDWORD;
+  if (is_keyword(buf, "VOID"))
+    return TOKEN_VOID;
+  if (is_keyword(buf, "LPSTR"))
+    return TOKEN_LPSTR;
+  if (is_keyword(buf, "UNICODE"))
+    return TOKEN_UNICODE;
+  if (is_keyword(buf, "CSTRING"))
+    return TOKEN_CSTRING;
+  if (is_keyword(buf, "array"))
+    return TOKEN_ARRAY;
+
+  return 0;
+}
+
+static BOOL is_guid(parse_buffer* buf)
+{
+  static char tmp[50];
+  DWORD pos = 1;
+
+  if (*buf->buffer != '<')
+    return FALSE;
+  tmp[0] = '<';
+  while (*(buf->buffer+pos) != '>')
+  {
+    tmp[pos] = *(buf->buffer+pos);
+    pos++;
+  }
+  tmp[pos++] = '>';
+  tmp[pos] = 0;
+  if (pos != 37 /* <+35+> */)
+  {
+    TRACE("Wrong guid %s (%d) \n", tmp, pos);
+    return FALSE;
+  }
+  TRACE("Found guid %s (%d) \n", tmp, pos);
+  buf->buffer += pos;
+  buf->rem_bytes -= pos;
+
+  return TRUE;
+}
+
+static BOOL is_name(parse_buffer* buf)
+{
+  static char tmp[50];
+  DWORD pos = 0;
+  char c;
+  BOOL error = 0;
+  while (!is_separator(c = *(buf->buffer+pos)))
+  {
+    if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))))
+      error = 1;
+    tmp[pos++] = c;
+  }
+  tmp[pos] = 0;
+
+  if (error)
+  {
+    TRACE("Wrong name %s\n", tmp);
+    return FALSE;
+  }
+
+  buf->buffer += pos;
+  buf->rem_bytes -= pos;
+
+  TRACE("Found name %s\n", tmp);
+
+  return TRUE;
+}
+
+static WORD parse_TOKEN_dbg_opt(parse_buffer * buf, BOOL show_token)
 {
   WORD token;
 
-  if (!read_bytes(buf, &token, 2))
-    return 0;
+  if (buf->txt)
+  {
+    while(1)
+    {
+      char c;
+      if (!read_bytes(buf, &c, 1))
+        return 0;
+      /*TRACE("char = '%c'\n", is_space(c) ? ' ' : c);*/
+      if (is_space(c))
+        continue;
+      if (is_operator(c) && (c != '<'))
+      {
+        token = get_operator_token(c);
+        break;
+      }
+      else if (c == '.')
+      {
+        token = TOKEN_DOT;
+        break;
+      }
+      else
+      {
+        buf->buffer -= 1;
+        buf->rem_bytes += 1;
+
+        if ((token = get_keyword_token(buf)))
+          break;
+
+        if (is_guid(buf))
+        {
+          token = TOKEN_GUID;
+          break;
+        }
+
+        if (is_name(buf))
+        {
+          token = TOKEN_NAME;
+          break;
+        }
+
+        FIXME("Unrecognize element\n");
+        return 0;
+      }
+    }
+  }
+  else
+  {
+    if (!read_bytes(buf, &token, 2))
+      return 0;
+  }
 
   switch(token)
   {
@@ -375,9 +587,39 @@ static WORD parse_TOKEN(parse_buffer * buf)
       return 0;
   }
 
-  if (0)
+  if (show_token)
     dump_TOKEN(token);
 
+  return token;
+}
+
+static inline WORD parse_TOKEN(parse_buffer * buf)
+{
+  return parse_TOKEN_dbg_opt(buf, TRUE);
+}
+
+static WORD check_TOKEN(parse_buffer * buf)
+{
+  WORD token;
+
+  if (buf->txt)
+  {
+    parse_buffer save = *buf;
+    /*TRACE("check: ");*/
+    token = parse_TOKEN_dbg_opt(buf, FALSE);
+    *buf = save;
+    return token;
+  }
+
+  if (!read_bytes(buf, &token, 2))
+    return 0;
+  buf->buffer -= 2;
+  buf->rem_bytes += 2;
+  if (0)
+  {
+    TRACE("check: ");
+    dump_TOKEN(token);
+  }
   return token;
 }
 
@@ -413,6 +655,8 @@ static BOOL parse_name(parse_buffer * buf)
 
   if (parse_TOKEN(buf) != TOKEN_NAME)
     return FALSE;
+  if (buf->txt)
+    return TRUE;
   if (!read_bytes(buf, &count, 4))
     return FALSE;
   if (!read_bytes(buf, strname, count))
@@ -432,6 +676,8 @@ static BOOL parse_class_id(parse_buffer * buf)
 
   if (parse_TOKEN(buf) != TOKEN_GUID)
     return FALSE;
+  if (buf->txt)
+    return TRUE;
   if (!read_bytes(buf, &class_id, 16))
     return FALSE;
   sprintf(strguid, "<%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X>", class_id.Data1, class_id.Data2, class_id.Data3, class_id.Data4[0],
@@ -605,6 +851,18 @@ static BOOL parse_template(parse_buffer * buf)
   if (parse_TOKEN(buf) != TOKEN_CBRACE)
     return FALSE;
   add_string(buf, "\n\n");
+  if (buf->txt)
+  {
+    /* Go to the next template */
+    while (buf->rem_bytes)
+    {
+      if (is_space(*buf->buffer))
+      {
+        buf->buffer++;
+        buf->rem_bytes--;
+      }
+    }
+  }
   return TRUE;
 }
 
@@ -618,6 +876,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   buf.rem_bytes = cbSize;
   buf.dump = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 500);
   buf.size = 500;
+  buf.txt = FALSE;
 
   FIXME("(%p/%p)->(%p,%d) partial stub!\n", This, iface, pvData, cbSize);
 
@@ -652,8 +911,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   if (token_header == XOFFILE_FORMAT_TEXT)
   {
-    FIXME("Text format not supported yet");
-    return DXFILEERR_BADVALUE;
+    buf.txt = TRUE;
   }
 
   if (token_header == XOFFILE_FORMAT_COMPRESSED)
@@ -667,6 +925,8 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   if ((token_header != XOFFILE_FORMAT_FLOAT_BITS_32) && (token_header != XOFFILE_FORMAT_FLOAT_BITS_64))
     return DXFILEERR_BADFILEFLOATSIZE;
 
+  TRACE("Header is correct\n");
+
   while (buf.rem_bytes)
   {
     buf.pos = 0;
@@ -678,7 +938,9 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
     else
       TRACE("Template successfully parsed:\n");
       if (TRACE_ON(d3dxof))
-        DPRINTF(buf.dump);
+        /* Only dump in binary format */
+        if (!buf.txt)
+          DPRINTF(buf.dump);
   }
 
   HeapFree(GetProcessHeap(), 0, buf.dump);
