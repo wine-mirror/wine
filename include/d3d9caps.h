@@ -67,6 +67,7 @@
 #define D3DLINECAPS_BLEND             0x04
 #define D3DLINECAPS_ALPHACMP          0x08
 #define D3DLINECAPS_FOG               0x10
+#define D3DLINECAPS_ANTIALIAS         0x20
 
 #define D3DPBLENDCAPS_ZERO            0x00000001
 #define D3DPBLENDCAPS_ONE             0x00000002

@@ -3252,12 +3252,14 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     } else
         pCaps->VolumeTextureAddressCaps = 0;
 
-    pCaps->LineCaps = WINED3DLINECAPS_TEXTURE |
-                      WINED3DLINECAPS_ZTEST;
-                      /* FIXME: Add
-                        WINED3DLINECAPS_BLEND
-                        WINED3DLINECAPS_ALPHACMP
-                        WINED3DLINECAPS_FOG */
+    pCaps->LineCaps = WINED3DLINECAPS_TEXTURE       |
+                      WINED3DLINECAPS_ZTEST         |
+                      WINED3DLINECAPS_BLEND         |
+                      WINED3DLINECAPS_ALPHACMP      |
+                      WINED3DLINECAPS_FOG;
+    /* WINED3DLINECAPS_ANTIALIAS is not supported on Windows, and dx and gl seem to have a different
+     * idea how generating the smoothing alpha values works; the result is different
+     */
 
     pCaps->MaxTextureWidth  = GL_LIMITS(texture_size);
     pCaps->MaxTextureHeight = GL_LIMITS(texture_size);

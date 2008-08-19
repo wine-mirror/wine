@@ -53,6 +53,7 @@
 #define WINED3DLINECAPS_BLEND                               0x00000004
 #define WINED3DLINECAPS_ALPHACMP                            0x00000008
 #define WINED3DLINECAPS_FOG                                 0x00000010
+#define WINED3DLINECAPS_ANTIALIAS                           0x00000020
 
 #define WINED3DMAX30SHADERINSTRUCTIONS                      32768
 #define WINED3DMIN30SHADERINSTRUCTIONS                      512
