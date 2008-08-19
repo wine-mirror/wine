@@ -2325,10 +2325,14 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat)
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return FALSE;
 
-        /* YUV formats, not supported for now */
+        /* YUV formats */
         case WINED3DFMT_UYVY:
         case WINED3DFMT_YUY2:
-            TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
+            if(GL_SUPPORT(APPLE_YCBCR_422)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            }
+            TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
 
             /* Not supported */

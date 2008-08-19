@@ -9179,6 +9179,125 @@ static void texop_test(IDirect3DDevice9 *device)
     if (vertex_declaration) IDirect3DVertexDeclaration9_Release(vertex_declaration);
 }
 
+static void yuv_color_test(IDirect3DDevice9 *device) {
+    HRESULT hr;
+    IDirect3DSurface9 *surface = NULL, *target = NULL;
+    unsigned int fmt, i;
+    D3DFORMAT format;
+    const char *fmt_string;
+    D3DLOCKED_RECT lr;
+    IDirect3D9 *d3d;
+    HRESULT color;
+    DWORD ref_color_left, ref_color_right;
+
+    struct {
+        DWORD in;           /* The input color */
+        DWORD uyvy_left;    /* "in" interpreted as uyvy and transformed to RGB, pixel 1/1*/
+        DWORD uyvy_right;   /* "in" interpreted as uyvy and transformed to RGB, pixel 2/1*/
+        DWORD yuy2_left;    /* "in" interpreted as yuy2 and transformed to RGB, pixel 1/1 */
+        DWORD yuy2_right;   /* "in" interpreted as yuy2 and transformed to RGB, pixel 2/1 */
+    } test_data[] = {
+    /* Originally I wanted to avoid being evil, and set Y1 = Y2 to avoid triggering troubles in shader converters,
+     * but the main difference between YUY2 and UYVY is the swapped ordering of the chroma and luminance
+     * values. However, handling the two Y's properly could have a big impact on image quality, so be picky about
+     * that
+     */
+      { 0x00000000, 0x00008700, 0x00008700, 0x00008700, 0x00008700 },
+      { 0xff000000, 0x00008700, 0x004bff1c, 0x00b30000, 0x00b30000 },
+      { 0x00ff0000, 0x00b30000, 0x00b30000, 0x00008700, 0x004bff1c },
+      { 0x0000ff00, 0x004bff1c, 0x00008700, 0x000030e1, 0x000030e1 },
+      { 0x000000ff, 0x000030e1, 0x000030e1, 0x004bff1c, 0x00008700 },
+      { 0xffff0000, 0x00b30000, 0x00ffd01c, 0x00b30000, 0x00ffd01c },
+      { 0xff00ff00, 0x004bff1c, 0x004bff1c, 0x00b300e1, 0x00b300e1 },
+      { 0xff0000ff, 0x000030e1, 0x004bffff, 0x00ffd01c, 0x00b30000 },
+      { 0x00ffff00, 0x00ffd01c, 0x00b30000, 0x000030e1, 0x004bffff },
+      { 0x00ff00ff, 0x00b300e1, 0x00b300e1, 0x004bff1c, 0x004bff1c },
+      { 0x0000ffff, 0x004bffff, 0x000030e1, 0x004bffff, 0x000030e1 },
+      { 0xffffff00, 0x00ffd01c, 0x00ffd01c, 0x00b300e1, 0x00ff79ff },
+      { 0xffff00ff, 0x00b300e1, 0x00ff79ff, 0x00ffd01c, 0x00ffd01c },
+      { 0xffffffff, 0x00ff79ff, 0x00ff79ff, 0x00ff79ff, 0x00ff79ff },
+
+      { 0x4cff4c54, 0x00ff0000, 0x00ff0000, 0x000b8b00, 0x00b6ffa3 },
+      { 0x00800080, 0x00000000, 0x00000000, 0x0000ff00, 0x0000ff00 },
+      { 0xFF80FF80, 0x00ffffff, 0x00ffffff, 0x00ff00ff, 0x00ff00ff },
+      { 0x1c6b1cff, 0x000000fd, 0x000000fd, 0x006dff45, 0x0000d500 },
+    };
+
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetDirect3D failed, hr = %08x\n", hr);
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &target);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderTarget failed, hr = %08x\n", hr);
+
+    IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed, hr = %08x\n", hr);
+
+    for(fmt = 0; fmt < 2; fmt++) {
+        if(fmt == 0) {
+            format = D3DFMT_UYVY;
+            fmt_string = "D3DFMT_UYVY";
+        } else {
+            format = D3DFMT_YUY2;
+            fmt_string = "D3DFMT_YUY2";
+        }
+
+        /* Some(all?) Windows drivers do not support YUV 3D textures, only 2D surfaces in StretchRect. Thus use
+                       * StretchRect to draw the YUV surface onto the screen instead of drawPrimitive
+                       */
+        if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+                                        D3DRTYPE_SURFACE, format) != D3D_OK) {
+            skip("%s is not supported\n", fmt_string);
+            continue;
+        }
+
+        /* A pixel is effectively 16 bit large, but two pixels are stored together, so the minimum size is 2x1 */
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 1, format, D3DPOOL_DEFAULT, &surface, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed, hr = %08x\n", hr);
+
+        for(i = 0; i < (sizeof(test_data)/sizeof(test_data[0])); i++) {
+            if(fmt == 0) {
+                ref_color_left = test_data[i].uyvy_left;
+                ref_color_right = test_data[i].uyvy_right;
+            } else {
+                ref_color_left = test_data[i].yuy2_left;
+                ref_color_right = test_data[i].yuy2_right;
+            }
+
+            memset(&lr, 0, sizeof(lr));
+            hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
+            ok(hr == D3D_OK, "IDirect3DSurface9_LockRect failed, hr = %08x\n", hr);
+            *((DWORD *) lr.pBits) = test_data[i].in;
+            hr = IDirect3DSurface9_UnlockRect(surface);
+            ok(hr == D3D_OK, "IDirect3DSurface9_UnlockRect failed, hr = %08x\n", hr);
+
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+            hr = IDirect3DDevice9_StretchRect(device, surface, NULL, target, NULL, D3DTEXF_POINT);
+            ok(hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with 0x%08x\n", hr);
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
+
+            /* Native D3D can't resist filtering the YUY surface, even though we asked it not to do so above. To
+             * prevent running into precision problems, read a far left and far right pixel. In the future we may
+             * want to add tests for the filtered pixels as well.
+             *
+             * Unfortunately different implementations(Windows-NV and Mac-ATI tested) interpret some colors vastly
+             * differently, so we need a max diff of 16
+             */
+            color = getPixelColor(device, 40, 240);
+            ok(color_match(color, ref_color_left, 16),
+               "Input 0x%08x: Got color 0x%08x for pixel 1/1, expected 0x%08x, format %s\n",
+               test_data[i].in, color, ref_color_left, fmt_string);
+            color = getPixelColor(device, 600, 240);
+            ok(color_match(color, ref_color_right, 16),
+               "Input 0x%08x: Got color 0x%08x for pixel 2/1, expected 0x%08x, format %s\n",
+               test_data[i].in, color, ref_color_left, fmt_string);
+        }
+        IDirect3DSurface9_Release(surface);
+    }
+    IDirect3DSurface9_Release(target);
+    IDirect3D9_Release(d3d);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -9274,6 +9393,7 @@ START_TEST(visual)
     pointsize_test(device_ptr);
     tssargtemp_test(device_ptr);
     np2_stretch_rect_test(device_ptr);
+    yuv_color_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
