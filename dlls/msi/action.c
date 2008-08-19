@@ -2178,9 +2178,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     MSIQUERY * view;
     LPWSTR level;
 
-    if ( 1 == msi_get_property_int( package, szCosting, 0 ) )
-        return ERROR_SUCCESS;
-
     TRACE("Building Directory properties\n");
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
@@ -2215,6 +2212,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             TRACE("Disabling component %s\n", debugstr_w(comp->Component));
             comp->Enabled = FALSE;
         }
+        else
+            comp->Enabled = TRUE;
     }
 
     MSI_SetPropertyW(package,szCosting,szOne);
