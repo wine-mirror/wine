@@ -6362,70 +6362,69 @@ struct access_res
 {
     BOOL gothandle;
     DWORD lasterr;
-    BOOL todo;
 };
 
-struct access_res create[16] =
+static const struct access_res create[16] =
 {
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { TRUE, ERROR_SUCCESS, TRUE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { TRUE, ERROR_SUCCESS, TRUE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { TRUE, ERROR_SUCCESS, TRUE }
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { TRUE, ERROR_SUCCESS },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { TRUE, ERROR_SUCCESS },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { TRUE, ERROR_SUCCESS }
 };
 
-struct access_res create_commit[16] =
+static const struct access_res create_commit[16] =
 {
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { TRUE, ERROR_SUCCESS, TRUE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { TRUE, ERROR_SUCCESS, TRUE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
-    { TRUE, ERROR_SUCCESS, TRUE }
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { TRUE, ERROR_SUCCESS },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { TRUE, ERROR_SUCCESS },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { FALSE, ERROR_SHARING_VIOLATION },
+    { TRUE, ERROR_SUCCESS }
 };
 
-struct access_res create_close[16] =
+static const struct access_res create_close[16] =
 {
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE },
-    { TRUE, ERROR_SUCCESS, FALSE }
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS },
+    { TRUE, ERROR_SUCCESS }
 };
 
-static void _test_file_access(LPCSTR file, struct access_res *ares, DWORD line)
+static void _test_file_access(LPCSTR file, const struct access_res *ares, DWORD line)
 {
     DWORD access = 0, share = 0;
     DWORD lasterr;
@@ -6450,37 +6449,15 @@ static void _test_file_access(LPCSTR file, struct access_res *ares, DWORD line)
             hfile = CreateFileA(file, access, share, NULL, OPEN_EXISTING,
                                 FILE_ATTRIBUTE_NORMAL, 0);
             lasterr = GetLastError();
-            if (ares[idx].todo)
-            {
-                todo_wine
-                {
-                    ok((hfile != INVALID_HANDLE_VALUE) == ares[idx].gothandle,
-                       "(%d, handle, %d): Expected %d, got %d\n",
-                       line, idx, ares[idx].gothandle,
-                       (hfile != INVALID_HANDLE_VALUE));
-                }
-            }
-            else
-                ok((hfile != INVALID_HANDLE_VALUE) == ares[idx].gothandle,
-                   "(%d, handle, %d): Expected %d, got %d\n",
-                   line, idx, ares[idx].gothandle,
-                   (hfile != INVALID_HANDLE_VALUE));
 
-            if (ares[idx].todo)
-            {
-                todo_wine
-                {
-                    ok(lasterr == ares[idx].lasterr,
-                       "(%d, lasterr, %d): Expected %d, got %d\n",
-                       line, idx, ares[idx].lasterr, lasterr);
-                }
-            }
-            else
-            {
-                ok(lasterr == ares[idx].lasterr,
-                   "(%d, lasterr, %d): Expected %d, got %d\n",
-                   line, idx, ares[idx].lasterr, lasterr);
-            }
+            ok((hfile != INVALID_HANDLE_VALUE) == ares[idx].gothandle,
+               "(%d, handle, %d): Expected %d, got %d\n",
+               line, idx, ares[idx].gothandle,
+               (hfile != INVALID_HANDLE_VALUE));
+
+            ok(lasterr == ares[idx].lasterr,
+               "(%d, lasterr, %d): Expected %d, got %d\n",
+               line, idx, ares[idx].lasterr, lasterr);
 
             CloseHandle(hfile);
             idx++;

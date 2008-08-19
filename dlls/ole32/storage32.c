@@ -5727,13 +5727,16 @@ HRESULT WINAPI StgCreateDocfile(
   /*
    * Interpret the STGM value grfMode
    */
-  shareMode    = GetShareModeFromSTGM(grfMode);
+  shareMode    = FILE_SHARE_READ | FILE_SHARE_WRITE;
   accessMode   = GetAccessModeFromSTGM(grfMode);
 
   if (grfMode & STGM_DELETEONRELEASE)
     fileAttributes = FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_DELETE_ON_CLOSE;
   else
     fileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
+
+  if (STGM_SHARE_MODE(grfMode) && !(grfMode & STGM_SHARE_DENY_NONE))
+      FIXME("Storage share mode not implemented.\n");
 
   if (grfMode & STGM_TRANSACTED)
     FIXME("Transacted mode not implemented.\n");
