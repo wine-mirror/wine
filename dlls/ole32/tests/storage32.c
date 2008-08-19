@@ -999,6 +999,185 @@ static void test_ReadClassStm(void)
     ok(IsEqualCLSID(&clsid, &test_stg_cls), "clsid should have been set to CLSID_WineTest\n");
 }
 
+struct access_res
+{
+    BOOL gothandle;
+    DWORD lasterr;
+    BOOL todo;
+};
+
+struct access_res create[16] =
+{
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { TRUE, ERROR_SUCCESS, TRUE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { TRUE, ERROR_SUCCESS, TRUE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { TRUE, ERROR_SUCCESS, TRUE }
+};
+
+struct access_res create_commit[16] =
+{
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { TRUE, ERROR_SUCCESS, TRUE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { TRUE, ERROR_SUCCESS, TRUE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { FALSE, ERROR_SHARING_VIOLATION, FALSE },
+    { TRUE, ERROR_SUCCESS, TRUE }
+};
+
+struct access_res create_close[16] =
+{
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE },
+    { TRUE, ERROR_SUCCESS, FALSE }
+};
+
+static void _test_file_access(LPCSTR file, struct access_res *ares, DWORD line)
+{
+    DWORD access = 0, share = 0;
+    DWORD lasterr;
+    HANDLE hfile;
+    int i, j, idx = 0;
+
+    for (i = 0; i < 4; i++)
+    {
+        if (i == 0) access = 0;
+        if (i == 1) access = GENERIC_READ;
+        if (i == 2) access = GENERIC_WRITE;
+        if (i == 3) access = GENERIC_READ | GENERIC_WRITE;
+
+        for (j = 0; j < 4; j++)
+        {
+            if (j == 0) share = 0;
+            if (j == 1) share = FILE_SHARE_READ;
+            if (j == 2) share = FILE_SHARE_WRITE;
+            if (j == 3) share = FILE_SHARE_READ | FILE_SHARE_WRITE;
+
+            SetLastError(0xdeadbeef);
+            hfile = CreateFileA(file, access, share, NULL, OPEN_EXISTING,
+                                FILE_ATTRIBUTE_NORMAL, 0);
+            lasterr = GetLastError();
+            if (ares[idx].todo)
+            {
+                todo_wine
+                {
+                    ok((hfile != INVALID_HANDLE_VALUE) == ares[idx].gothandle,
+                       "(%d, handle, %d): Expected %d, got %d\n",
+                       line, idx, ares[idx].gothandle,
+                       (hfile != INVALID_HANDLE_VALUE));
+                }
+            }
+            else
+                ok((hfile != INVALID_HANDLE_VALUE) == ares[idx].gothandle,
+                   "(%d, handle, %d): Expected %d, got %d\n",
+                   line, idx, ares[idx].gothandle,
+                   (hfile != INVALID_HANDLE_VALUE));
+
+            if (ares[idx].todo)
+            {
+                todo_wine
+                {
+                    ok(lasterr == ares[idx].lasterr,
+                       "(%d, lasterr, %d): Expected %d, got %d\n",
+                       line, idx, ares[idx].lasterr, lasterr);
+                }
+            }
+            else
+            {
+                ok(lasterr == ares[idx].lasterr,
+                   "(%d, lasterr, %d): Expected %d, got %d\n",
+                   line, idx, ares[idx].lasterr, lasterr);
+            }
+
+            CloseHandle(hfile);
+            idx++;
+        }
+    }
+}
+
+#define test_file_access(file, ares) _test_file_access(file, ares, __LINE__)
+
+static void test_access(void)
+{
+    IStorage *stg;
+    HRESULT hr;
+
+    static const WCHAR fileW[] = {'w','i','n','e','t','e','s','t',0};
+
+    /* STGM_TRANSACTED */
+
+    hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE |
+                          STGM_SHARE_EXCLUSIVE | STGM_TRANSACTED, 0, &stg);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    test_file_access("winetest", create);
+
+    hr = IStorage_Commit(stg, STGC_DEFAULT);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    test_file_access("winetest", create_commit);
+
+    IStorage_Release(stg);
+
+    test_file_access("winetest", create_close);
+
+    DeleteFileA("winetest");
+
+    /* STGM_DIRECT */
+
+    hr = StgCreateDocfile(fileW, STGM_CREATE | STGM_READWRITE |
+                          STGM_SHARE_EXCLUSIVE | STGM_DIRECT, 0, &stg);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    test_file_access("winetest", create);
+
+    hr = IStorage_Commit(stg, STGC_DEFAULT);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    test_file_access("winetest", create_commit);
+
+    IStorage_Release(stg);
+
+    test_file_access("winetest", create_close);
+
+    DeleteFileA("winetest");
+
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
@@ -1010,4 +1189,5 @@ START_TEST(storage32)
     test_streamenum();
     test_transact();
     test_ReadClassStm();
+    test_access();
 }
