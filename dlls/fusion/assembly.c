@@ -58,7 +58,7 @@ struct tagASSEMBLY
     HANDLE hmap;
     BYTE *data;
 
-    IMAGE_NT_HEADERS32 *nthdr;
+    IMAGE_NT_HEADERS *nthdr;
     IMAGE_COR20_HEADER *corhdr;
 
     METADATAHDR *metadatahdr;
@@ -647,7 +647,15 @@ static HRESULT parse_pe_header(ASSEMBLY *assembly)
     if (!assembly->nthdr)
         return E_FAIL;
 
-    datadirs = assembly->nthdr->OptionalHeader.DataDirectory;
+    if (assembly->nthdr->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
+    {
+        IMAGE_OPTIONAL_HEADER64 *opthdr =
+                (IMAGE_OPTIONAL_HEADER64 *)&assembly->nthdr->OptionalHeader;
+        datadirs = opthdr->DataDirectory;
+    }
+    else
+        datadirs = assembly->nthdr->OptionalHeader.DataDirectory;
+
     if (!datadirs)
         return E_FAIL;
 
