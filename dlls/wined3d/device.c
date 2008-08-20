@@ -2254,7 +2254,6 @@ err_out:
     if(swapchain) {
         IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
     }
-    This->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GLenum) * GL_LIMITS(buffers));
     if(This->stateBlock) {
         IWineD3DStateBlock_Release((IWineD3DStateBlock *) This->stateBlock);
         This->stateBlock = NULL;
