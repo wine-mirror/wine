@@ -3135,6 +3135,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     pCaps->TextureCaps =  WINED3DPTEXTURECAPS_ALPHA              |
                           WINED3DPTEXTURECAPS_ALPHAPALETTE       |
+                          WINED3DPTEXTURECAPS_TRANSPARENCY       |
                           WINED3DPTEXTURECAPS_BORDER             |
                           WINED3DPTEXTURECAPS_MIPMAP             |
                           WINED3DPTEXTURECAPS_PROJECTED          |
