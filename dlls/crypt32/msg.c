@@ -1631,54 +1631,7 @@ static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_SIGNED_INFO *)&signedInfo,
      &size);
     if (ret)
-    {
-        DWORD i;
-
         msg->u.signed_data.info = signedInfo;
-        ret = CSignedMsgData_AllocateHandles(&msg->u.signed_data);
-        for (i = 0; ret && i < msg->u.signed_data.info->cSignerInfo; i++)
-            ret = CSignedMsgData_ConstructSignerHandles(&msg->u.signed_data, i,
-             msg->crypt_prov);
-        if (ret)
-        {
-            CRYPT_DATA_BLOB *content;
-
-            /* Now that we have all the content, update the hash handles with
-             * it.  If the message is a detached message, the content is stored
-             * in msg->detached_data rather than in the signed message's
-             * content.
-             */
-            if (msg->base.open_flags & CMSG_DETACHED_FLAG)
-                content = &msg->detached_data;
-            else
-                content = &msg->u.signed_data.info->content.Content;
-            if (content->cbData)
-            {
-                /* If the message is not detached, have to decode the message's
-                 * content if the type is szOID_RSA_data.
-                 */
-                if (!(msg->base.open_flags & CMSG_DETACHED_FLAG) &&
-                 !strcmp(msg->u.signed_data.info->content.pszObjId,
-                 szOID_RSA_data))
-                {
-                    CRYPT_DATA_BLOB *blob;
-
-                    ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
-                     X509_OCTET_STRING, content->pbData, content->cbData,
-                     CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&blob, &size);
-                    if (ret)
-                    {
-                        ret = CSignedMsgData_Update(&msg->u.signed_data,
-                         blob->pbData, blob->cbData, TRUE, Verify);
-                        LocalFree(blob);
-                    }
-                }
-                else
-                    ret = CSignedMsgData_Update(&msg->u.signed_data,
-                     content->pbData, content->cbData, TRUE, Verify);
-            }
-        }
-    }
     return ret;
 }
 
@@ -1739,6 +1692,104 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
             LocalFree(info);
         }
     }
+    }
+    return ret;
+}
+
+static BOOL CDecodeMsg_FinalizeHashedContent(CDecodeMsg *msg,
+ CRYPT_DER_BLOB *blob)
+{
+    CRYPT_ALGORITHM_IDENTIFIER *hashAlgoID = NULL;
+    DWORD size = 0;
+    ALG_ID algID = 0;
+    BOOL ret;
+
+    CryptMsgGetParam(msg, CMSG_HASH_ALGORITHM_PARAM, 0, NULL, &size);
+    hashAlgoID = CryptMemAlloc(size);
+    ret = CryptMsgGetParam(msg, CMSG_HASH_ALGORITHM_PARAM, 0, hashAlgoID,
+     &size);
+    if (ret)
+        algID = CertOIDToAlgId(hashAlgoID->pszObjId);
+    ret = CryptCreateHash(msg->crypt_prov, algID, 0, 0, &msg->u.hash);
+    if (ret)
+    {
+        CRYPT_DATA_BLOB content;
+
+        ret = ContextPropertyList_FindProperty(msg->properties,
+         CMSG_CONTENT_PARAM, &content);
+        if (ret)
+            ret = CryptHashData(msg->u.hash, content.pbData, content.cbData, 0);
+    }
+    CryptMemFree(hashAlgoID);
+    return ret;
+}
+
+static BOOL CDecodeMsg_FinalizeSignedContent(CDecodeMsg *msg,
+ CRYPT_DER_BLOB *blob)
+{
+    BOOL ret;
+    DWORD i, size;
+
+    ret = CSignedMsgData_AllocateHandles(&msg->u.signed_data);
+    for (i = 0; ret && i < msg->u.signed_data.info->cSignerInfo; i++)
+        ret = CSignedMsgData_ConstructSignerHandles(&msg->u.signed_data, i,
+         msg->crypt_prov);
+    if (ret)
+    {
+        CRYPT_DATA_BLOB *content;
+
+        /* Now that we have all the content, update the hash handles with
+         * it.  If the message is a detached message, the content is stored
+         * in msg->detached_data rather than in the signed message's
+         * content.
+         */
+        if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+            content = &msg->detached_data;
+        else
+            content = &msg->u.signed_data.info->content.Content;
+        if (content->cbData)
+        {
+            /* If the message is not detached, have to decode the message's
+             * content if the type is szOID_RSA_data.
+             */
+            if (!(msg->base.open_flags & CMSG_DETACHED_FLAG) &&
+             !strcmp(msg->u.signed_data.info->content.pszObjId,
+             szOID_RSA_data))
+            {
+                CRYPT_DATA_BLOB *blob;
+
+                ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
+                 X509_OCTET_STRING, content->pbData, content->cbData,
+                 CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&blob, &size);
+                if (ret)
+                {
+                    ret = CSignedMsgData_Update(&msg->u.signed_data,
+                     blob->pbData, blob->cbData, TRUE, Verify);
+                    LocalFree(blob);
+                }
+            }
+            else
+                ret = CSignedMsgData_Update(&msg->u.signed_data,
+                 content->pbData, content->cbData, TRUE, Verify);
+        }
+    }
+    return ret;
+}
+
+static BOOL CDecodeMsg_FinalizeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob)
+{
+    BOOL ret = FALSE;
+
+    switch (msg->type)
+    {
+    case CMSG_HASHED:
+        ret = CDecodeMsg_FinalizeHashedContent(msg, blob);
+        break;
+    case CMSG_SIGNED:
+        ret = CDecodeMsg_FinalizeSignedContent(msg, blob);
+        break;
+    default:
+        ret = TRUE;
     }
     return ret;
 }
@@ -1815,8 +1866,14 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             }
         }
     }
-    if (ret && msg->base.state == MsgStateFinalized)
+    if (ret &&
+     ((msg->base.open_flags & CMSG_DETACHED_FLAG && msg->base.state ==
+     MsgStateDataFinalized) ||
+     (!(msg->base.open_flags & CMSG_DETACHED_FLAG) && msg->base.state ==
+     MsgStateFinalized)))
         ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data, msg->type);
+    if (ret && msg->base.state == MsgStateFinalized)
+        ret = CDecodeMsg_FinalizeContent(msg, &msg->msg_data);
     return ret;
 }
 
@@ -1847,36 +1904,7 @@ static BOOL CDecodeHashMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
         break;
     }
     case CMSG_COMPUTED_HASH_PARAM:
-        if (!msg->u.hash)
-        {
-            CRYPT_ALGORITHM_IDENTIFIER *hashAlgoID = NULL;
-            DWORD size = 0;
-            ALG_ID algID = 0;
-
-            CryptMsgGetParam(msg, CMSG_HASH_ALGORITHM_PARAM, 0, NULL, &size);
-            hashAlgoID = CryptMemAlloc(size);
-            ret = CryptMsgGetParam(msg, CMSG_HASH_ALGORITHM_PARAM, 0,
-             hashAlgoID, &size);
-            if (ret)
-                algID = CertOIDToAlgId(hashAlgoID->pszObjId);
-            ret = CryptCreateHash(msg->crypt_prov, algID, 0, 0, &msg->u.hash);
-            if (ret)
-            {
-                CRYPT_DATA_BLOB content;
-
-                ret = ContextPropertyList_FindProperty(msg->properties,
-                 CMSG_CONTENT_PARAM, &content);
-                if (ret)
-                    ret = CryptHashData(msg->u.hash, content.pbData,
-                     content.cbData, 0);
-            }
-            CryptMemFree(hashAlgoID);
-        }
-        else
-            ret = TRUE;
-        if (ret)
-            ret = CryptGetHashParam(msg->u.hash, HP_HASHVAL, pvData, pcbData,
-             0);
+        ret = CryptGetHashParam(msg->u.hash, HP_HASHVAL, pvData, pcbData, 0);
         break;
     default:
     {
