@@ -4,6 +4,7 @@
  *  graph.c
  *
  *  Copyright (C) 1999 - 2001  Brian Palmer  <brianp@reactos.org>
+ *  Copyright (C) 2008  Vladimir Pankratov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,10 +27,10 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
-#include <tchar.h>
 #include <stdio.h>
 #include <winnt.h>
     
+#include "wine/unicode.h"
 #include "taskmgr.h"
 #include "perfdata.h"
 
@@ -45,7 +46,7 @@ static void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
     RECT            rcClient;
     RECT            rcBarLeft;
     RECT            rcBarRight;
-    TCHAR            Text[260];
+    WCHAR            Text[256];
     ULONG            CpuUsage;
     ULONG            CpuKernelUsage;
     int                nBars;
@@ -56,6 +57,10 @@ static void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
     int                nBarsFree; 
 /* Top bars that are "unused", i.e. are dark green, representing free cpu time */
     int                i;
+
+    static const WCHAR    wszFormatI[] = {'%','d','%','%',0};
+    static const WCHAR    wszFormatII[] = {' ',' ','%','d','%','%',0};
+    static const WCHAR    wszFormatIII[] = {' ','%','d','%','%',0};
     
     /*
      * Get the client area rectangle
@@ -79,15 +84,15 @@ static void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
      */
     if (CpuUsage == 100)
     {
-        _stprintf(Text, _T("%d%%"), (int)CpuUsage);
+        sprintfW(Text, wszFormatI, (int)CpuUsage);
     }
     else if (CpuUsage < 10)
     {
-        _stprintf(Text, _T("  %d%%"), (int)CpuUsage);
+        sprintfW(Text, wszFormatII, (int)CpuUsage);
     }
     else
     {
-        _stprintf(Text, _T(" %d%%"), (int)CpuUsage);
+        sprintfW(Text, wszFormatIII, (int)CpuUsage);
     }
     
     /*
@@ -221,7 +226,7 @@ static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
     RECT            rcClient;
     RECT            rcBarLeft;
     RECT            rcBarRight;
-    TCHAR            Text[260];
+    WCHAR            Text[256];
     ULONGLONG        CommitChargeTotal;
     ULONGLONG        CommitChargeLimit;
     int                nBars;
@@ -230,6 +235,8 @@ static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
     int                nBarsFree; 
 /* Top bars that are "unused", i.e. are dark green, representing free memory */
     int                i;
+
+    static const WCHAR    wszFormat[] = {'%','d','K',0};
     
     /*
      * Get the client area rectangle
@@ -247,13 +254,13 @@ static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
     CommitChargeTotal = (ULONGLONG)PerfDataGetCommitChargeTotalK();
     CommitChargeLimit = (ULONGLONG)PerfDataGetCommitChargeLimitK();
 
-    _stprintf(Text, _T("%dK"), (int)CommitChargeTotal);
+    sprintfW(Text, wszFormat, (int)CommitChargeTotal);
     
     /*
      * Draw the font text onto the graph
      * The bottom 20 pixels are reserved for the text
      */
-    Font_DrawText(hDC, Text, ((rcClient.right - rcClient.left) - (_tcslen(Text) * 8)) / 2, rcClient.bottom - 11 - 5);
+    Font_DrawText(hDC, Text, ((rcClient.right - rcClient.left) - (strlenW(Text) * 8)) / 2, rcClient.bottom - 11 - 5);
 
     /*
      * Now we have to draw the graph
