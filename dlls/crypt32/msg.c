@@ -1977,10 +1977,58 @@ static DWORD CRYPT_SizeOfAttributes(const CRYPT_ATTRIBUTES *attr)
     return size;
 }
 
+static DWORD CRYPT_SizeOfKeyIdAsIssuerAndSerial(const CRYPT_DATA_BLOB *keyId)
+{
+    static char oid_key_rdn[] = szOID_KEYID_RDN;
+    DWORD size = 0;
+    CERT_RDN_ATTR attr;
+    CERT_RDN rdn = { 1, &attr };
+    CERT_NAME_INFO name = { 1, &rdn };
+
+    attr.pszObjId = oid_key_rdn;
+    attr.dwValueType = CERT_RDN_OCTET_STRING;
+    attr.Value.cbData = keyId->cbData;
+    attr.Value.pbData = keyId->pbData;
+    if (CryptEncodeObject(X509_ASN_ENCODING, X509_NAME, &name, NULL, &size))
+        size++; /* Only include size of special zero serial number on success */
+    return size;
+}
+
+static BOOL CRYPT_CopyKeyIdAsIssuerAndSerial(CERT_NAME_BLOB *issuer,
+ CRYPT_INTEGER_BLOB *serialNumber, const CRYPT_DATA_BLOB *keyId, DWORD encodedLen,
+ LPBYTE *nextData)
+{
+    static char oid_key_rdn[] = szOID_KEYID_RDN;
+    CERT_RDN_ATTR attr;
+    CERT_RDN rdn = { 1, &attr };
+    CERT_NAME_INFO name = { 1, &rdn };
+    BOOL ret;
+
+    /* Encode special zero serial number */
+    serialNumber->cbData = 1;
+    serialNumber->pbData = *nextData;
+    **nextData = 0;
+    (*nextData)++;
+    /* Encode issuer */
+    issuer->pbData = *nextData;
+    attr.pszObjId = oid_key_rdn;
+    attr.dwValueType = CERT_RDN_OCTET_STRING;
+    attr.Value.cbData = keyId->cbData;
+    attr.Value.pbData = keyId->pbData;
+    ret = CryptEncodeObject(X509_ASN_ENCODING, X509_NAME, &name, *nextData,
+     &encodedLen);
+    if (ret)
+    {
+        *nextData += encodedLen;
+        issuer->cbData = encodedLen;
+    }
+    return ret;
+}
+
 static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
  const CMSG_CMS_SIGNER_INFO *in)
 {
-    DWORD size = sizeof(CMSG_SIGNER_INFO);
+    DWORD size = sizeof(CMSG_SIGNER_INFO), rdnSize;
     BOOL ret;
 
     TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
@@ -1992,8 +2040,8 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
     }
     else
     {
-        FIXME("unsupported for key id\n");
-        return FALSE;
+        rdnSize = CRYPT_SizeOfKeyIdAsIssuerAndSerial(&in->SignerId.KeyId);
+        size += rdnSize;
     }
     if (in->HashAlgorithm.pszObjId)
         size += strlen(in->HashAlgorithm.pszObjId) + 1;
@@ -2023,6 +2071,7 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
         LPBYTE nextData = (BYTE *)pvData + sizeof(CMSG_SIGNER_INFO);
         CMSG_SIGNER_INFO *out = (CMSG_SIGNER_INFO *)pvData;
 
+        ret = TRUE;
         out->dwVersion = in->dwVersion;
         if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
         {
@@ -2031,17 +2080,22 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
             CRYPT_CopyBlob(&out->SerialNumber,
              &in->SignerId.IssuerSerialNumber.SerialNumber, &nextData);
         }
-        CRYPT_CopyAlgorithmId(&out->HashAlgorithm, &in->HashAlgorithm,
-         &nextData);
-        CRYPT_CopyAlgorithmId(&out->HashEncryptionAlgorithm,
-         &in->HashEncryptionAlgorithm, &nextData);
-        CRYPT_CopyBlob(&out->EncryptedHash, &in->EncryptedHash, &nextData);
-        /* align pointer */
-        if ((nextData - (LPBYTE)0) % sizeof(DWORD_PTR))
-            nextData += (nextData - (LPBYTE)0) % sizeof(DWORD_PTR);
-        CRYPT_CopyAttributes(&out->AuthAttrs, &in->AuthAttrs, &nextData);
-        CRYPT_CopyAttributes(&out->UnauthAttrs, &in->UnauthAttrs, &nextData);
-        ret = TRUE;
+        else
+            ret = CRYPT_CopyKeyIdAsIssuerAndSerial(&out->Issuer, &out->SerialNumber,
+             &in->SignerId.KeyId, rdnSize, &nextData);
+        if (ret)
+        {
+            CRYPT_CopyAlgorithmId(&out->HashAlgorithm, &in->HashAlgorithm,
+             &nextData);
+            CRYPT_CopyAlgorithmId(&out->HashEncryptionAlgorithm,
+             &in->HashEncryptionAlgorithm, &nextData);
+            CRYPT_CopyBlob(&out->EncryptedHash, &in->EncryptedHash, &nextData);
+            /* align pointer */
+            if ((nextData - (LPBYTE)0) % sizeof(DWORD_PTR))
+                nextData += (nextData - (LPBYTE)0) % sizeof(DWORD_PTR);
+            CRYPT_CopyAttributes(&out->AuthAttrs, &in->AuthAttrs, &nextData);
+            CRYPT_CopyAttributes(&out->UnauthAttrs, &in->UnauthAttrs, &nextData);
+        }
     }
     TRACE("returning %d\n", ret);
     return ret;

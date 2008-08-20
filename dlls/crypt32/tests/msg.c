@@ -2469,7 +2469,6 @@ static void test_decode_msg_get_param(void)
      */
     size = 0;
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
-    todo_wine
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     if (ret)
         buf = CryptMemAlloc(size);
