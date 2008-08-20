@@ -1404,6 +1404,96 @@ static BOOL WINAPI CRYPT_AsnEncodeUnicodeName(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeSMIMECapability(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    __TRY
+    {
+        const CRYPT_SMIME_CAPABILITY *capability =
+         (const CRYPT_SMIME_CAPABILITY *)pvStructInfo;
+
+        if (!capability->pszObjId)
+            SetLastError(E_INVALIDARG);
+        else
+        {
+            struct AsnEncodeSequenceItem items[] = {
+             { capability->pszObjId, CRYPT_AsnEncodeOid, 0 },
+             { &capability->Parameters, CRYPT_CopyEncodedBlob, 0 },
+            };
+
+            ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+             sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+             pcbEncoded);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeSMIMECapabilities(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    __TRY
+    {
+        DWORD bytesNeeded, dataLen, lenBytes, i;
+        const CRYPT_SMIME_CAPABILITIES *capabilities =
+         (const CRYPT_SMIME_CAPABILITIES *)pvStructInfo;
+
+        ret = TRUE;
+        for (i = 0, dataLen = 0; ret && i < capabilities->cCapability; i++)
+        {
+            DWORD size;
+
+            ret = CRYPT_AsnEncodeSMIMECapability(dwCertEncodingType, NULL,
+             &capabilities->rgCapability[i], 0, NULL, NULL, &size);
+            if (ret)
+                dataLen += size;
+        }
+        CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
+        bytesNeeded = 1 + lenBytes + dataLen;
+        if (!pbEncoded)
+            *pcbEncoded = bytesNeeded;
+        else
+        {
+            if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
+             pcbEncoded, bytesNeeded)))
+            {
+                if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                    pbEncoded = *(BYTE **)pbEncoded;
+                *pbEncoded++ = ASN_SEQUENCEOF;
+                CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
+                pbEncoded += lenBytes;
+                for (i = 0; i < capabilities->cCapability; i++)
+                {
+                    DWORD size = dataLen;
+
+                    ret = CRYPT_AsnEncodeSMIMECapability(dwCertEncodingType,
+                     NULL, &capabilities->rgCapability[i], 0, NULL, pbEncoded,
+                     &size);
+                    pbEncoded += size;
+                    dataLen -= size;
+                }
+            }
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodePKCSAttribute(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -3684,6 +3774,9 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         case LOWORD(X509_ENHANCED_KEY_USAGE):
             encodeFunc = CRYPT_AsnEncodeEnhancedKeyUsage;
             break;
+        case LOWORD(PKCS_SMIME_CAPABILITIES):
+            encodeFunc = CRYPT_AsnEncodeSMIMECapabilities;
+            break;
         case LOWORD(PKCS_ATTRIBUTES):
             encodeFunc = CRYPT_AsnEncodePKCSAttributes;
             break;
@@ -3704,6 +3797,8 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
     else if (!strcmp(lpszStructType, szOID_CERT_EXTENSIONS))
         encodeFunc = CRYPT_AsnEncodeExtensions;
     else if (!strcmp(lpszStructType, szOID_RSA_signingTime))
+        encodeFunc = CRYPT_AsnEncodeUtcTime;
+    else if (!strcmp(lpszStructType, szOID_RSA_SMIMECapabilities))
         encodeFunc = CRYPT_AsnEncodeUtcTime;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER))
         encodeFunc = CRYPT_AsnEncodeAuthorityKeyId;

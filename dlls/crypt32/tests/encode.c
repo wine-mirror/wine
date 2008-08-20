@@ -5180,7 +5180,6 @@ static void test_encodePKCSSMimeCapabilities(DWORD dwEncoding)
     capabilities.cCapability = 0;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5198,13 +5197,11 @@ static void test_encodePKCSSMimeCapabilities(DWORD dwEncoding)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     capability[0].pszObjId = oid1;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5217,7 +5214,6 @@ static void test_encodePKCSSMimeCapabilities(DWORD dwEncoding)
     capabilities.cCapability = 2;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
