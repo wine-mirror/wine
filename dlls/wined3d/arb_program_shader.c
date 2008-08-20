@@ -2641,6 +2641,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
         if(arg2 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
 
         if(settings->op[stage].cop == WINED3DTOP_BLENDTEXTUREALPHA) tex_read[stage] = TRUE;
+        if(settings->op[stage].cop == WINED3DTOP_BLENDTEXTUREALPHAPM) tex_read[stage] = TRUE;
         if(settings->op[stage].cop == WINED3DTOP_BUMPENVMAP) {
             bump_used[stage] = TRUE;
             tex_read[stage] = TRUE;
