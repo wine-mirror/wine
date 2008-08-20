@@ -2174,7 +2174,7 @@ static BOOL CRYPT_CopyCMSSignerInfo(void *pvData, DWORD *pcbData,
 static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
  const CMSG_CMS_SIGNER_INFO *in)
 {
-    DWORD size = sizeof(CERT_INFO);
+    DWORD size = sizeof(CERT_INFO), rdnSize;
     BOOL ret;
 
     TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
@@ -2186,8 +2186,8 @@ static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
     }
     else
     {
-        FIXME("unimplemented for key id\n");
-        return FALSE;
+        rdnSize = CRYPT_SizeOfKeyIdAsIssuerAndSerial(&in->SignerId.KeyId);
+        size += rdnSize;
     }
     if (!pvData)
     {
@@ -2206,11 +2206,17 @@ static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
         CERT_INFO *out = (CERT_INFO *)pvData;
 
         memset(out, 0, sizeof(CERT_INFO));
-        CRYPT_CopyBlob(&out->Issuer,
-         &in->SignerId.IssuerSerialNumber.Issuer, &nextData);
-        CRYPT_CopyBlob(&out->SerialNumber,
-         &in->SignerId.IssuerSerialNumber.SerialNumber, &nextData);
-        ret = TRUE;
+        if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+        {
+            CRYPT_CopyBlob(&out->Issuer,
+             &in->SignerId.IssuerSerialNumber.Issuer, &nextData);
+            CRYPT_CopyBlob(&out->SerialNumber,
+             &in->SignerId.IssuerSerialNumber.SerialNumber, &nextData);
+            ret = TRUE;
+        }
+        else
+            ret = CRYPT_CopyKeyIdAsIssuerAndSerial(&out->Issuer, &out->SerialNumber,
+             &in->SignerId.KeyId, rdnSize, &nextData);
     }
     TRACE("returning %d\n", ret);
     return ret;
