@@ -908,7 +908,8 @@ static void libxmlStartDocument(void *ctx)
     saxlocator *This = ctx;
     HRESULT hr;
 
-    if(This->saxreader->contentHandler)
+    if((This->vbInterface && This->saxreader->vbcontentHandler)
+            || (!This->vbInterface && This->saxreader->contentHandler))
     {
         if(This->vbInterface)
             hr = IVBSAXContentHandler_startDocument(This->saxreader->vbcontentHandler);
@@ -932,7 +933,8 @@ static void libxmlEndDocument(void *ctx)
 
     if(This->ret != S_OK) return;
 
-    if(This->saxreader->contentHandler)
+    if((This->vbInterface && This->saxreader->vbcontentHandler)
+            || (!This->vbInterface && This->saxreader->contentHandler))
     {
         if(This->vbInterface)
             hr = IVBSAXContentHandler_endDocument(This->saxreader->vbcontentHandler);
@@ -964,8 +966,8 @@ static void libxmlStartElementNS(
     update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
 
     hr = namespacePush(This, nb_namespaces);
-
-    if(hr==S_OK && This->saxreader->contentHandler)
+    if(hr==S_OK && ((This->vbInterface && This->saxreader->vbcontentHandler)
+                || (!This->vbInterface && This->saxreader->contentHandler)))
     {
         for(index=0; index<nb_namespaces; index++)
         {
@@ -1042,7 +1044,8 @@ static void libxmlEndElementNS(
 
     nsNr = namespacePop(This);
 
-    if(This->saxreader->contentHandler)
+    if((This->vbInterface && This->saxreader->vbcontentHandler)
+            || (!This->vbInterface && This->saxreader->contentHandler))
     {
         NamespaceUri = bstr_from_xmlChar(URI);
         LocalName = bstr_from_xmlChar(localname);
@@ -1120,7 +1123,8 @@ static void libxmlCharacters(
     lineCopy = This->line;
     end = This->lastCur;
 
-    if(This->saxreader->contentHandler)
+    if((This->vbInterface && This->saxreader->vbcontentHandler)
+            || (!This->vbInterface && This->saxreader->contentHandler))
     {
         while(This->lastCur < chEnd)
         {
@@ -1645,7 +1649,8 @@ static HRESULT WINAPI internal_getContentHandler(
     TRACE("(%p)->(%p)\n", This, pContentHandler);
     if(pContentHandler == NULL)
         return E_POINTER;
-    if(This->contentHandler)
+    if((vbInterface && This->vbcontentHandler)
+            || (!vbInterface && This->contentHandler))
     {
         if(vbInterface)
             IVBSAXContentHandler_AddRef(This->vbcontentHandler);
@@ -1672,7 +1677,8 @@ static HRESULT WINAPI internal_putContentHandler(
         else
             ISAXContentHandler_AddRef((ISAXContentHandler*)contentHandler);
     }
-    if(This->contentHandler)
+    if((vbInterface && This->vbcontentHandler)
+            || (!vbInterface && This->contentHandler))
     {
         if(vbInterface)
             IVBSAXContentHandler_Release(This->vbcontentHandler);
