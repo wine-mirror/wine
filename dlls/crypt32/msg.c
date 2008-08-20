@@ -1424,23 +1424,6 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
     return msg;
 }
 
-static inline const char *MSG_TYPE_STR(DWORD type)
-{
-    switch (type)
-    {
-#define _x(x) case (x): return #x
-        _x(CMSG_DATA);
-        _x(CMSG_SIGNED);
-        _x(CMSG_ENVELOPED);
-        _x(CMSG_SIGNED_AND_ENVELOPED);
-        _x(CMSG_HASHED);
-        _x(CMSG_ENCRYPTED);
-#undef _x
-        default:
-            return wine_dbg_sprintf("unknown (%d)", type);
-    }
-}
-
 HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
  DWORD dwMsgType, const void *pvMsgEncodeInfo, LPSTR pszInnerContentObjID,
  PCMSG_STREAM_INFO pStreamInfo)
@@ -1470,7 +1453,7 @@ HCRYPTMSG WINAPI CryptMsgOpenToEncode(DWORD dwMsgEncodingType, DWORD dwFlags,
          pszInnerContentObjID, pStreamInfo);
         break;
     case CMSG_ENVELOPED:
-        FIXME("unimplemented for type %s\n", MSG_TYPE_STR(dwMsgType));
+        FIXME("unimplemented for type CMSG_ENVELOPED\n");
         break;
     case CMSG_SIGNED_AND_ENVELOPED:
     case CMSG_ENCRYPTED:
@@ -1720,7 +1703,7 @@ static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
             msg->type = CMSG_HASHED;
         break;
     case CMSG_ENVELOPED:
-        FIXME("unimplemented for type %s\n", MSG_TYPE_STR(type));
+        FIXME("unimplemented for type CMSG_ENVELOPED\n");
         ret = TRUE;
         break;
     case CMSG_SIGNED:
