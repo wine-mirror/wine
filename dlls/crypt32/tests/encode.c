@@ -5262,7 +5262,6 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      emptySequence, sizeof(emptySequence),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&ptr, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -5274,7 +5273,6 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      singleCapability, sizeof(singleCapability), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&ptr, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -5289,7 +5287,6 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      singleCapabilitywithNULL, sizeof(singleCapabilitywithNULL),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&ptr, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -5307,7 +5304,6 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
     twoCapabilities, sizeof(twoCapabilities), CRYPT_DECODE_ALLOC_FLAG, NULL,
     (BYTE *)&ptr, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
