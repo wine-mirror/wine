@@ -318,3 +318,198 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
     release_object( &request->hdr );
     return ret;
 }
+
+static WCHAR *build_request_string( request_t *request, LPCWSTR verb, LPCWSTR path, LPCWSTR version )
+{
+    static const WCHAR space[]   = {' ',0};
+    static const WCHAR crlf[]    = {'\r','\n',0};
+    static const WCHAR colon[]   = {':',' ',0};
+    static const WCHAR twocrlf[] = {'\r','\n','\r','\n',0};
+
+    WCHAR *ret;
+    const WCHAR **headers, **p;
+    unsigned int len, i = 0, j;
+
+    /* allocate space for an array of all the string pointers to be added */
+    len = request->num_headers * 4 + 7;
+    if (!(headers = heap_alloc( len * sizeof(LPCWSTR) ))) return NULL;
+
+    headers[i++] = verb;
+    headers[i++] = space;
+    headers[i++] = path;
+    headers[i++] = space;
+    headers[i++] = version;
+
+    for (j = 0; j < request->num_headers; j++)
+    {
+        if (request->headers[j].is_request)
+        {
+            headers[i++] = crlf;
+            headers[i++] = request->headers[j].field;
+            headers[i++] = colon;
+            headers[i++] = request->headers[j].value;
+
+            TRACE("adding header %s (%s)\n", debugstr_w(request->headers[j].field),
+                  debugstr_w(request->headers[j].value));
+        }
+    }
+    headers[i++] = twocrlf;
+    headers[i] = NULL;
+
+    len = 0;
+    for (p = headers; *p; p++) len += strlenW( *p );
+    len++;
+
+    if (!(ret = heap_alloc( len * sizeof(WCHAR) )))
+    {
+        heap_free( headers );
+        return NULL;
+    }
+    *ret = 0;
+    for (p = headers; *p; p++) strcatW( ret, *p );
+
+    heap_free( headers );
+    return ret;
+}
+
+#define QUERY_MODIFIER_MASK (WINHTTP_QUERY_FLAG_REQUEST_HEADERS | WINHTTP_QUERY_FLAG_SYSTEMTIME | WINHTTP_QUERY_FLAG_NUMBER)
+
+static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID buffer, LPDWORD buflen, LPDWORD index )
+{
+    header_t *header = NULL;
+    BOOL request_only, ret = FALSE;
+    int requested_index, header_index = -1;
+    DWORD attribute;
+
+    request_only = level & WINHTTP_QUERY_FLAG_REQUEST_HEADERS;
+    requested_index = index ? *index : 0;
+
+    attribute = level & ~QUERY_MODIFIER_MASK;
+    switch (attribute)
+    {
+    case WINHTTP_QUERY_CUSTOM:
+    {
+        header_index = get_header_index( request, name, requested_index, request_only );
+        break;
+    }
+    case WINHTTP_QUERY_RAW_HEADERS_CRLF:
+    {
+        WCHAR *headers;
+        DWORD len;
+
+        if (request_only)
+            headers = build_request_string( request, request->verb, request->path, request->version );
+        else
+            headers = request->raw_headers;
+
+        len = strlenW( headers ) * sizeof(WCHAR);
+        if (len + sizeof(WCHAR) > *buflen)
+        {
+            len += sizeof(WCHAR);
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+        }
+        else if (buffer)
+        {
+            memcpy( buffer, headers, len + sizeof(WCHAR) );
+            TRACE("returning data: %s\n", debugstr_wn(buffer, len / sizeof(WCHAR)));
+            ret = TRUE;
+        }
+        *buflen = len;
+        if (request_only) heap_free( headers );
+        return ret;
+    }
+    default:
+    {
+        FIXME("attribute %u not implemented\n", attribute);
+        return FALSE;
+    }
+    }
+
+    if (header_index >= 0)
+    {
+        header = &request->headers[header_index];
+    }
+    if (!header || (request_only && !header->is_request))
+    {
+        set_last_error( ERROR_WINHTTP_HEADER_NOT_FOUND );
+        return FALSE;
+    }
+    if (index) *index += 1;
+    if (level & WINHTTP_QUERY_FLAG_NUMBER)
+    {
+        int *number = buffer;
+        if (sizeof(int) > *buflen)
+        {
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+        }
+        else if (number)
+        {
+            *number = atoiW( header->value );
+            TRACE("returning number: %d\n", *number);
+            ret = TRUE;
+        }
+        *buflen = sizeof(int);
+    }
+    else if (level & WINHTTP_QUERY_FLAG_SYSTEMTIME)
+    {
+        SYSTEMTIME *st = buffer;
+        if (sizeof(SYSTEMTIME) > *buflen)
+        {
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+        }
+        else if (st && (ret = WinHttpTimeToSystemTime( header->value, st )))
+        {
+            TRACE("returning time: %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n",
+                  st->wYear, st->wMonth, st->wDay, st->wDayOfWeek,
+                  st->wHour, st->wMinute, st->wSecond, st->wMilliseconds);
+        }
+        *buflen = sizeof(SYSTEMTIME);
+    }
+    else if (header->value)
+    {
+        WCHAR *string = buffer;
+        DWORD len = (strlenW( header->value ) + 1) * sizeof(WCHAR);
+        if (len > *buflen)
+        {
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+            *buflen = len;
+            return FALSE;
+        }
+        else if (string)
+        {
+            strcpyW( string, header->value );
+            TRACE("returning string: %s\n", debugstr_w(string));
+            ret = TRUE;
+        }
+        *buflen = len - sizeof(WCHAR);
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *          WinHttpQueryHeaders (winhttp.@)
+ */
+BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, LPVOID buffer, LPDWORD buflen, LPDWORD index )
+{
+    BOOL ret;
+    request_t *request;
+
+    TRACE("%p, 0x%08x, %s, %p, %p, %p\n", hrequest, level, debugstr_w(name), buffer, buflen, index);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    ret = query_headers( request, level, name, buffer, buflen, index );
+
+    release_object( &request->hdr );
+    return ret;
+}

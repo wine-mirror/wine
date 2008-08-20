@@ -164,18 +164,6 @@ BOOL WINAPI WinHttpWriteData (HINTERNET hRequest, LPCVOID lpBuffer,
     return FALSE;
 }
 
-/***********************************************************************
- *          WinHttpQueryHeaders (winhttp.@)
- */
-BOOL WINAPI WinHttpQueryHeaders (HINTERNET hRequest, DWORD dwInfoLevel, LPCWSTR pwszName,
-                                 LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
-{
-    FIXME("(%d): stub\n", dwInfoLevel);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
 BOOL WINAPI InternetCrackUrlW( LPCWSTR, DWORD, DWORD, LPURL_COMPONENTSW );
 BOOL WINAPI InternetCreateUrlW( LPURL_COMPONENTS, DWORD, LPWSTR, LPDWORD );
 
