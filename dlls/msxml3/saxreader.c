@@ -197,7 +197,8 @@ static void format_error_message_from_id(saxlocator *This, HRESULT hr)
     xmlStopParser(This->pParserCtxt);
     This->ret = hr;
 
-    if(This->saxreader->errorHandler)
+    if((This->vbInterface && This->saxreader->vberrorHandler)
+            || (!This->vbInterface && This->saxreader->errorHandler))
     {
         WCHAR msg[1024];
         if(!FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM,
@@ -1257,7 +1258,8 @@ void libxmlFatalError(void *ctx, const char *msg, ...)
     DWORD len;
     va_list args;
 
-    if(!This->saxreader->errorHandler)
+    if((This->vbInterface && !This->saxreader->vberrorHandler)
+            || (!This->vbInterface && !This->saxreader->errorHandler))
     {
         xmlStopParser(This->pParserCtxt);
         This->ret = E_FAIL;
@@ -1272,7 +1274,8 @@ void libxmlFatalError(void *ctx, const char *msg, ...)
 
     len = MultiByteToWideChar(CP_ACP, 0, message, -1, NULL, 0);
     wszError = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
-    MultiByteToWideChar(CP_ACP, 0, message, -1, (LPWSTR)wszError, len);
+    if(wszError)
+        MultiByteToWideChar(CP_ACP, 0, message, -1, (LPWSTR)wszError, len);
 
     if(This->vbInterface)
     {
@@ -1773,13 +1776,12 @@ static HRESULT WINAPI internal_getErrorHandler(
     TRACE("(%p)->(%p)\n", This, pErrorHandler);
     if(pErrorHandler == NULL)
         return E_POINTER;
-    if(This->errorHandler)
-    {
-        if(vbInterface)
-            IVBSAXErrorHandler_AddRef(This->vberrorHandler);
-        else
-            ISAXErrorHandler_AddRef(This->errorHandler);
-    }
+
+    if(vbInterface && This->vberrorHandler)
+        IVBSAXErrorHandler_AddRef(This->vberrorHandler);
+    else if(!vbInterface && This->errorHandler)
+        ISAXErrorHandler_AddRef(This->errorHandler);
+
     if(vbInterface)
         *(IVBSAXErrorHandler**)pErrorHandler = This->vberrorHandler;
     else
@@ -1802,13 +1804,12 @@ static HRESULT WINAPI internal_putErrorHandler(
         else
             ISAXErrorHandler_AddRef((ISAXErrorHandler*)errorHandler);
     }
-    if(This->errorHandler)
-    {
-        if(vbInterface)
-            IVBSAXErrorHandler_Release(This->vberrorHandler);
-        else
-            ISAXErrorHandler_Release(This->errorHandler);
-    }
+
+    if(vbInterface && This->vberrorHandler)
+        IVBSAXErrorHandler_Release(This->vberrorHandler);
+    else if(!vbInterface && This->errorHandler)
+        ISAXErrorHandler_Release(This->errorHandler);
+
     if(vbInterface)
         This->vberrorHandler = errorHandler;
     else
@@ -2018,8 +2019,14 @@ static ULONG WINAPI saxxmlreader_Release(
         if(This->contentHandler)
             ISAXContentHandler_Release(This->contentHandler);
 
+        if(This->vbcontentHandler)
+            IVBSAXContentHandler_Release(This->vbcontentHandler);
+
         if(This->errorHandler)
             ISAXErrorHandler_Release(This->errorHandler);
+
+        if(This->vberrorHandler)
+            IVBSAXErrorHandler_Release(This->vberrorHandler);
 
         HeapFree( GetProcessHeap(), 0, This );
     }
@@ -2528,7 +2535,9 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->lpSAXXMLReaderVtbl = &isaxreader_vtbl;
     reader->ref = 1;
     reader->contentHandler = NULL;
+    reader->vbcontentHandler = NULL;
     reader->errorHandler = NULL;
+    reader->vberrorHandler = NULL;
 
     memset(&reader->sax, 0, sizeof(xmlSAXHandler));
     reader->sax.initialized = XML_SAX2_MAGIC;
