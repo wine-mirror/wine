@@ -1518,22 +1518,22 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
     ContextPropertyList_Free(msg->properties);
 }
 
-static BOOL CDecodeMsg_CopyData(CDecodeMsg *msg, const BYTE *pbData,
+static BOOL CDecodeMsg_CopyData(CRYPT_DATA_BLOB *blob, const BYTE *pbData,
  DWORD cbData)
 {
     BOOL ret = TRUE;
 
     if (cbData)
     {
-        if (msg->msg_data.cbData)
-            msg->msg_data.pbData = CryptMemRealloc(msg->msg_data.pbData,
-             msg->msg_data.cbData + cbData);
+        if (blob->cbData)
+            blob->pbData = CryptMemRealloc(blob->pbData,
+             blob->cbData + cbData);
         else
-            msg->msg_data.pbData = CryptMemAlloc(cbData);
-        if (msg->msg_data.pbData)
+            blob->pbData = CryptMemAlloc(cbData);
+        if (blob->pbData)
         {
-            memcpy(msg->msg_data.pbData + msg->msg_data.cbData, pbData, cbData);
-            msg->msg_data.cbData += cbData;
+            memcpy(blob->pbData + blob->cbData, pbData, cbData);
+            blob->cbData += cbData;
         }
         else
             ret = FALSE;
@@ -1768,7 +1768,7 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             if (msg->base.open_flags & CMSG_DETACHED_FLAG &&
              msg->base.state != MsgStateDataFinalized)
             {
-                ret = CDecodeMsg_CopyData(msg, pbData, cbData);
+                ret = CDecodeMsg_CopyData(&msg->msg_data, pbData, cbData);
                 msg->base.state = MsgStateDataFinalized;
                 if (ret)
                     ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data,
@@ -1784,7 +1784,7 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
         }
         else
         {
-            ret = CDecodeMsg_CopyData(msg, pbData, cbData);
+            ret = CDecodeMsg_CopyData(&msg->msg_data, pbData, cbData);
             if (msg->base.state == MsgStateInit)
                 msg->base.state = MsgStateUpdated;
         }
@@ -1797,7 +1797,7 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
         {
             if (msg->base.state == MsgStateInit)
             {
-                ret = CDecodeMsg_CopyData(msg, pbData, cbData);
+                ret = CDecodeMsg_CopyData(&msg->msg_data, pbData, cbData);
                 if (ret)
                     ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data,
                      msg->type);
