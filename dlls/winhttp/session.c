@@ -39,7 +39,9 @@ static void set_last_error( DWORD error )
 
 void send_callback( object_header_t *hdr, DWORD status, LPVOID info, DWORD buflen )
 {
-    FIXME("%p, %u, %p, %u\n", hdr, status, info, buflen);
+    TRACE("%p, %u, %p, %u\n", hdr, status, info, buflen);
+
+    if (hdr->notify_mask & status) hdr->callback( hdr->handle, hdr->context, status, info, buflen );
 }
 
 /***********************************************************************
