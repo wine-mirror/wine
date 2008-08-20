@@ -753,9 +753,22 @@ static HRESULT WINAPI isaxattributes_getIndexFromQName(
         int *index)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
+    int i;
+    TRACE("(%p)->(%s, %d)\n", This, debugstr_w(pQName), nQNameLength);
 
-    FIXME("(%p)->(%s, %d) stub\n", This, debugstr_w(pQName), nQNameLength);
-    return E_NOTIMPL;
+    if(!pQName || !index) return E_POINTER;
+    if(!nQNameLength) return E_INVALIDARG;
+
+    for(i=0; i<This->nb_attributes; i++)
+    {
+        if(nQNameLength!=SysStringLen(This->szQName[i])) continue;
+        if(memcmp(pQName, This->szQName, sizeof(WCHAR)*nQNameLength)) continue;
+
+        *index = i;
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI isaxattributes_getType(
