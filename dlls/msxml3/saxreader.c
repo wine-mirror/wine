@@ -859,10 +859,15 @@ static HRESULT WINAPI isaxattributes_getValueFromQName(
         const WCHAR **pValue,
         int *nValue)
 {
+    HRESULT hr;
+    int index;
     saxattributes *This = impl_from_ISAXAttributes( iface );
+    TRACE("(%p)->(%s, %d)\n", This, debugstr_w(pQName), nQName);
 
-    FIXME("(%p)->(%s, %d) stub\n", This, debugstr_w(pQName), nQName);
-    return E_NOTIMPL;
+    hr = ISAXAttributes_getIndexFromQName(iface, pQName, nQName, &index);
+    if(hr==S_OK) hr = ISAXAttributes_getValue(iface, index, pValue, nValue);
+
+    return hr;
 }
 
 static const struct ISAXAttributesVtbl isaxattributes_vtbl =
