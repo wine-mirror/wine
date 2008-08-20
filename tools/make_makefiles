@@ -227,14 +227,6 @@ sub parse_makefile($)
 
 
 ################################################################
-# update the makefile list in configure.ac
-
-sub update_makerules(@)
-{
-}
-
-
-################################################################
 # update the tests list in programs/winetest/Makefile.in and programs/winetest/winetest.rc
 
 sub update_winetest(@)
@@ -267,56 +259,30 @@ sub update_winetest(@)
 
 
 ################################################################
-# update the makefile list in configure.ac and Makefile.in
+# update the makefile list in configure.ac
 
 sub update_makefiles(@)
 {
-    my (@targets, @depends, @lines);
+    my (@lines);
 
     foreach my $var (sort { $makerules{$a} cmp $makerules{$b}; } keys %makerules)
     {
-        push @lines, "$var=$makerules{$var}\n";
-        push @lines, "AC_SUBST_FILE($var)\n\n";
-    }
-
-    foreach my $var ((sort values %makerules), (sort @_))
-    {
-        push @lines, "AC_CONFIG_FILES([$var])\n";
-    }
-
-    push @lines, "\nAC_OUTPUT\n";
-    replace_in_file( "configure.ac", '^MAKE_RULES', '^AC_OUTPUT$', @lines);
-
-    foreach my $file (sort values %makerules)
-    {
-        push @targets, $file;
+        my $file = $makerules{$var};
         my %make = %{$makefiles{$file}};
-        if (!defined($make{"=rules"})) { push @depends, "$file: $file.in"; }
-        else { push @depends, "$file: $file.in Make.rules"; }
+        my $rules = $make{"=rules"} ? ",[$make{\"=rules\"}]" : "";
+        push @lines, "WINE_CONFIG_MAKERULES([$file],[$var]$rules)\n";
     }
+    push @lines, "\n";
 
     foreach my $file (sort @_)
     {
-        push @targets, $file unless $file eq "Makefile";
-        my %makefile = %{$makefiles{$file}};
-        my $dep = $makefile{"=rules"};
-        push @depends, "$file: $file.in $dep";
+        my %make = %{$makefiles{$file}};
+        my $rules = $make{"=rules"};
+        push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules])\n";
     }
 
-
-    @lines = ();
-    push @lines, "ALL_MAKEFILES = \\\n\t";
-    push @lines, join (" \\\n\t", @targets ), "\n\n";
-    push @lines, "Makefile \$(ALL_MAKEFILES): config.status\n";
-    push @lines, "\t\@./config.status \$\@\n";
-    push @lines, ".INIT: Makefile\n";
-    push @lines, ".BEGIN: Makefile\n\n";
-    push @lines, "\$(RECURSE_TARGETS) \$(MAKEDEP): \$(ALL_MAKEFILES)\n\n";
-    push @lines, "distclean::\n";
-    push @lines, "\t\$(RM) Makefile \$(ALL_MAKEFILES)\n\n";
-    push @lines, join ("\n", @depends ), "\n";
-
-    replace_in_file( "Makefile.in", '^ALL_MAKEFILES\s*=', undef, @lines );
+    push @lines, "\nAC_OUTPUT\n";
+    replace_in_file( "configure.ac", '^WINE_CONFIG_MAKERULES', '^AC_OUTPUT$', @lines);
 }
 
 

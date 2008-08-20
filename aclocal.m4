@@ -153,6 +153,32 @@ dnl
 AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
 [AC_CONFIG_COMMANDS([$1],[test -d "$1" || (AC_MSG_NOTICE([creating $1]) && mkdir "$1")])])
 
+dnl **** Create a make rules file from config.status ****
+dnl
+dnl Usage: WINE_CONFIG_MAKERULES(file,var,deps)
+dnl
+AC_DEFUN([WINE_CONFIG_MAKERULES],
+[ALL_MAKERULES="$ALL_MAKERULES \\
+	$1"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+$1: m4_ifval([$3],[$1.in $3],[$1.in])"
+$2=$1
+AC_SUBST_FILE([$2])dnl
+AC_CONFIG_FILES([$1])])
+
+dnl **** Create a makefile from config.status ****
+dnl
+dnl Usage: WINE_CONFIG_MAKEFILE(file,deps)
+dnl
+AC_DEFUN([WINE_CONFIG_MAKEFILE],
+[m4_pushdef([ac_dir],m4_bpatsubst([$1],[/?Makefile$],[]))dnl
+m4_ifval(ac_dir,[ALL_MAKEFILES="$ALL_MAKEFILES \\
+	$1"])
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+[$1: ]m4_ifval([$2],[$1.in $2],[$1.in])"
+AC_CONFIG_FILES([$1])dnl
+m4_popdef([ac_dir])])
+
 dnl **** Add a message to the list displayed at the end ****
 dnl
 dnl Usage: WINE_NOTICE(notice)
