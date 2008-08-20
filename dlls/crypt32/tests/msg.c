@@ -1884,6 +1884,87 @@ static void test_signed_msg_get_param(void)
 
     CryptMsgClose(msg);
 
+    /* Opening the message using the CMS fields.. */
+    certInfo.SerialNumber.cbData = 0;
+    certInfo.Issuer.cbData = 0;
+    signer.SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+    signer.SignerId.IssuerSerialNumber.Issuer.cbData =
+     sizeof(encodedCommonName);
+    signer.SignerId.IssuerSerialNumber.Issuer.pbData =
+     (BYTE *)encodedCommonName;
+    signer.SignerId.IssuerSerialNumber.SerialNumber.cbData =
+     sizeof(serialNum);
+    signer.SignerId.IssuerSerialNumber.SerialNumber.pbData = (BYTE *)serialNum;
+    ret = pCryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
+     PROV_RSA_FULL, CRYPT_NEWKEYSET);
+    if (!ret && GetLastError() == NTE_EXISTS)
+        ret = pCryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
+         PROV_RSA_FULL, 0);
+    ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
+     CMSG_CRYPT_RELEASE_CONTEXT_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    /* still results in the version being 1 when the issuer and serial number
+     * are used and no additional CMS fields are used.
+     */
+    size = sizeof(value);
+    ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, (LPBYTE)&value, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == CMSG_SIGNED_DATA_V1, "expected version 1, got %d\n", value);
+    /* Apparently the encoded signer can be retrieved.. */
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    /* but the signer info, CMS signer info, and cert ID can't be. */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_CERT_ID_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Using the KeyId field of the SignerId results in the version becoming
+     * the CMS version.
+     */
+    signer.SignerId.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+    signer.SignerId.KeyId.cbData = sizeof(serialNum);
+    signer.SignerId.KeyId.pbData = (BYTE *)serialNum;
+    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+     PROV_RSA_FULL, CRYPT_NEWKEYSET);
+    if (!ret && GetLastError() == NTE_EXISTS)
+        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+         PROV_RSA_FULL, 0);
+    ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
+    msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
+     CMSG_CRYPT_RELEASE_CONTEXT_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
+    ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
+    size = sizeof(value);
+    ret = CryptMsgGetParam(msg, CMSG_VERSION_PARAM, 0, (LPBYTE)&value, &size);
+    ok(value == CMSG_SIGNED_DATA_V3, "expected version 3, got %d\n", value);
+    /* Even for a CMS message, the signer can be retrieved.. */
+    ret = CryptMsgGetParam(msg, CMSG_ENCODED_SIGNER, 0, NULL, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    /* but the signer info, CMS signer info, and cert ID can't be. */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_CERT_ID_PARAM, 0, NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+
     CryptReleaseContext(signer.hCryptProv, 0);
     pCryptAcquireContextA(&signer.hCryptProv, cspNameA, MS_DEF_PROV_A,
      PROV_RSA_FULL, CRYPT_DELETEKEYSET);
