@@ -4,6 +4,7 @@
  *  perfpage.c
  *
  *  Copyright (C) 1999 - 2001  Brian Palmer  <brianp@reactos.org>
+ *  Copyright (C) 2008  Vladimir Pankratov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,10 +27,10 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
-#include <tchar.h>
 #include <stdio.h>
 #include <winnt.h>
 
+#include "wine/unicode.h"
 #include "taskmgr.h"
 #include "perfdata.h"
 #include "graphctl.h"
@@ -138,7 +139,11 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 	ULONG	TotalThreads;
 	ULONG	TotalProcesses;
 
-	TCHAR	Text[260];
+	WCHAR	Text[256];
+
+	static const WCHAR    wszFormatDigit[] = {'%','d',0};
+	static const WCHAR    wszMemUsage[] = {'M','e','m',' ','U','s','a','g','e',':',' ',
+                                               '%','d','K',' ','/',' ','%','d','K',0};
 
 	/*  Create the event */
 	hPerformancePageEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
@@ -175,14 +180,14 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 			CommitChargeTotal = PerfDataGetCommitChargeTotalK();
 			CommitChargeLimit = PerfDataGetCommitChargeLimitK();
 			CommitChargePeak = PerfDataGetCommitChargePeakK();
-			_ultoa(CommitChargeTotal, Text, 10);
-			SetWindowText(hPerformancePageCommitChargeTotalEdit, Text);
-			_ultoa(CommitChargeLimit, Text, 10);
-			SetWindowText(hPerformancePageCommitChargeLimitEdit, Text);
-			_ultoa(CommitChargePeak, Text, 10);
-			SetWindowText(hPerformancePageCommitChargePeakEdit, Text);
-			wsprintf(Text, _T("Mem Usage: %dK / %dK"), CommitChargeTotal, CommitChargeLimit);
-			SendMessage(hStatusWnd, SB_SETTEXT, 2, (LPARAM)Text);
+			wsprintfW(Text, wszFormatDigit, CommitChargeTotal);
+			SetWindowTextW(hPerformancePageCommitChargeTotalEdit, Text);
+			wsprintfW(Text, wszFormatDigit, CommitChargeLimit);
+			SetWindowTextW(hPerformancePageCommitChargeLimitEdit, Text);
+			wsprintfW(Text, wszFormatDigit, CommitChargePeak);
+			SetWindowTextW(hPerformancePageCommitChargePeakEdit, Text);
+			wsprintfW(Text, wszMemUsage, CommitChargeTotal, CommitChargeLimit);
+			SendMessageW(hStatusWnd, SB_SETTEXTW, 2, (LPARAM)Text);
 
 			/* 
 			 *  Update the kernel memory info
@@ -190,12 +195,12 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 			KernelMemoryTotal = PerfDataGetKernelMemoryTotalK();
 			KernelMemoryPaged = PerfDataGetKernelMemoryPagedK();
 			KernelMemoryNonPaged = PerfDataGetKernelMemoryNonPagedK();
-			_ultoa(KernelMemoryTotal, Text, 10);
-			SetWindowText(hPerformancePageKernelMemoryTotalEdit, Text);
-			_ultoa(KernelMemoryPaged, Text, 10);
-			SetWindowText(hPerformancePageKernelMemoryPagedEdit, Text);
-			_ultoa(KernelMemoryNonPaged, Text, 10);
-			SetWindowText(hPerformancePageKernelMemoryNonPagedEdit, Text);
+			wsprintfW(Text, wszFormatDigit, KernelMemoryTotal);
+			SetWindowTextW(hPerformancePageKernelMemoryTotalEdit, Text);
+			wsprintfW(Text, wszFormatDigit, KernelMemoryPaged);
+			SetWindowTextW(hPerformancePageKernelMemoryPagedEdit, Text);
+			wsprintfW(Text, wszFormatDigit, KernelMemoryNonPaged);
+			SetWindowTextW(hPerformancePageKernelMemoryNonPagedEdit, Text);
 
 			/* 
 			 *  Update the physical memory info
@@ -203,12 +208,12 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 			PhysicalMemoryTotal = PerfDataGetPhysicalMemoryTotalK();
 			PhysicalMemoryAvailable = PerfDataGetPhysicalMemoryAvailableK();
 			PhysicalMemorySystemCache = PerfDataGetPhysicalMemorySystemCacheK();
-			_ultoa(PhysicalMemoryTotal, Text, 10);
-			SetWindowText(hPerformancePagePhysicalMemoryTotalEdit, Text);
-			_ultoa(PhysicalMemoryAvailable, Text, 10);
-			SetWindowText(hPerformancePagePhysicalMemoryAvailableEdit, Text);
-			_ultoa(PhysicalMemorySystemCache, Text, 10);
-			SetWindowText(hPerformancePagePhysicalMemorySystemCacheEdit, Text);
+			wsprintfW(Text, wszFormatDigit, PhysicalMemoryTotal);
+			SetWindowTextW(hPerformancePagePhysicalMemoryTotalEdit, Text);
+			wsprintfW(Text, wszFormatDigit, PhysicalMemoryAvailable);
+			SetWindowTextW(hPerformancePagePhysicalMemoryAvailableEdit, Text);
+			wsprintfW(Text, wszFormatDigit, PhysicalMemorySystemCache);
+			SetWindowTextW(hPerformancePagePhysicalMemorySystemCacheEdit, Text);
 
 			/* 
 			 *  Update the totals info
@@ -216,12 +221,12 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 			TotalHandles = PerfDataGetSystemHandleCount();
 			TotalThreads = PerfDataGetTotalThreadCount();
 			TotalProcesses = PerfDataGetProcessCount();
-			_ultoa(TotalHandles, Text, 10);
-			SetWindowText(hPerformancePageTotalsHandleCountEdit, Text);
-			_ultoa(TotalThreads, Text, 10);
-			SetWindowText(hPerformancePageTotalsThreadCountEdit, Text);
-			_ultoa(TotalProcesses, Text, 10);
-			SetWindowText(hPerformancePageTotalsProcessCountEdit, Text);
+			wsprintfW(Text, wszFormatDigit, TotalHandles);
+			SetWindowTextW(hPerformancePageTotalsHandleCountEdit, Text);
+			wsprintfW(Text, wszFormatDigit, TotalThreads);
+			SetWindowTextW(hPerformancePageTotalsThreadCountEdit, Text);
+			wsprintfW(Text, wszFormatDigit, TotalProcesses);
+			SetWindowTextW(hPerformancePageTotalsProcessCountEdit, Text);
 
 			/* 
 			 *  Redraw the graphs
