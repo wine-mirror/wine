@@ -697,7 +697,7 @@ static BOOL CRYPT_SavePKCSToMem(HCERTSTORE store,
     }
     if (ret)
     {
-        ret = CRYPT_AsnEncodePKCSSignedInfo(&signedInfo, NULL, &size);
+        ret = CRYPT_AsnEncodeCMSSignedInfo(&signedInfo, NULL, &size);
         if (ret)
         {
             if (!blob->pbData)
@@ -711,7 +711,7 @@ static BOOL CRYPT_SavePKCSToMem(HCERTSTORE store,
             else
             {
                 blob->cbData = size;
-                ret = CRYPT_AsnEncodePKCSSignedInfo(&signedInfo, blob->pbData,
+                ret = CRYPT_AsnEncodeCMSSignedInfo(&signedInfo, blob->pbData,
                  &blob->cbData);
             }
         }

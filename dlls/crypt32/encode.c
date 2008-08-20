@@ -3508,7 +3508,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCMSSignerInfo(DWORD dwCertEncodingType,
     return ret;
 }
 
-BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
+BOOL CRYPT_AsnEncodeCMSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
  DWORD *pcbData)
 {
     struct AsnEncodeSequenceItem items[7] = {
@@ -3524,9 +3524,9 @@ BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
     {
         digestAlgorithmsSet.cItems = signedInfo->cSignerInfo;
         digestAlgorithmsSet.items = signedInfo->rgSignerInfo;
-        digestAlgorithmsSet.itemSize = sizeof(CMSG_SIGNER_INFO);
+        digestAlgorithmsSet.itemSize = sizeof(CMSG_CMS_SIGNER_INFO);
         digestAlgorithmsSet.itemOffset =
-         offsetof(CMSG_SIGNER_INFO, HashAlgorithm);
+         offsetof(CMSG_CMS_SIGNER_INFO, HashAlgorithm);
         digestAlgorithmsSet.encode = CRYPT_AsnEncodeAlgorithmIdWithNullParams;
         items[cItem].pvStructInfo = &digestAlgorithmsSet;
         items[cItem].encodeFunc = CRYPT_DEREncodeItemsAsSet;
@@ -3569,9 +3569,9 @@ BOOL CRYPT_AsnEncodePKCSSignedInfo(CRYPT_SIGNED_INFO *signedInfo, void *pvData,
     {
         signerSet.cItems = signedInfo->cSignerInfo;
         signerSet.items = signedInfo->rgSignerInfo;
-        signerSet.itemSize = sizeof(CMSG_SIGNER_INFO);
+        signerSet.itemSize = sizeof(CMSG_CMS_SIGNER_INFO);
         signerSet.itemOffset = 0;
-        signerSet.encode = CRYPT_AsnEncodePKCSSignerInfo;
+        signerSet.encode = CRYPT_AsnEncodeCMSSignerInfo;
         items[cItem].pvStructInfo = &signerSet;
         items[cItem].encodeFunc = CRYPT_DEREncodeItemsAsSet;
         cItem++;

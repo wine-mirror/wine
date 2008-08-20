@@ -4452,8 +4452,8 @@ static BOOL CRYPT_DecodeSignerArray(const BYTE *pbEncoded, DWORD cbEncoded,
 {
     BOOL ret;
     struct AsnArrayDescriptor arrayDesc = { ASN_CONSTRUCTOR | ASN_SETOF,
-     CRYPT_AsnDecodePKCSSignerInfoInternal, sizeof(CMSG_SIGNER_INFO), TRUE,
-     offsetof(CMSG_SIGNER_INFO, Issuer.pbData) };
+     CRYPT_AsnDecodeCMSSignerInfoInternal, sizeof(CMSG_CMS_SIGNER_INFO), TRUE,
+     offsetof(CMSG_CMS_SIGNER_INFO, SignerId.u.KeyId.pbData) };
     struct GenericArray *array = (struct GenericArray *)pvStructInfo;
 
     TRACE("%p, %d, %08x, %p, %d, %p\n", pbEncoded, cbEncoded, dwFlags,
@@ -4465,7 +4465,7 @@ static BOOL CRYPT_DecodeSignerArray(const BYTE *pbEncoded, DWORD cbEncoded,
     return ret;
 }
 
-BOOL CRYPT_AsnDecodePKCSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
+BOOL CRYPT_AsnDecodeCMSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
  CRYPT_SIGNED_INFO *signedInfo, DWORD *pcbSignedInfo)
 {

@@ -799,18 +799,59 @@ static BOOL CRYPT_ConstructAttributes(CRYPT_ATTRIBUTES *out,
     return ret;
 }
 
-/* Constructs a CMSG_SIGNER_INFO from a CMSG_SIGNER_ENCODE_INFO_WITH_CMS. */
-static BOOL CSignerInfo_Construct(CMSG_SIGNER_INFO *info,
- CMSG_SIGNER_ENCODE_INFO_WITH_CMS *in)
+/* Constructs a CMSG_CMS_SIGNER_INFO from a CMSG_SIGNER_ENCODE_INFO_WITH_CMS. */
+static BOOL CSignerInfo_Construct(CMSG_CMS_SIGNER_INFO *info,
+ const CMSG_SIGNER_ENCODE_INFO_WITH_CMS *in)
 {
     BOOL ret;
 
-    /* Note: needs to change if CMS fields are supported */
-    info->dwVersion = CMSG_SIGNER_INFO_V1;
-    ret = CRYPT_ConstructBlob(&info->Issuer, &in->pCertInfo->Issuer);
-    if (ret)
-        ret = CRYPT_ConstructBlob(&info->SerialNumber,
-         &in->pCertInfo->SerialNumber);
+    if (in->cbSize == sizeof(CMSG_SIGNER_ENCODE_INFO))
+    {
+        info->dwVersion = CMSG_SIGNER_INFO_V1;
+        ret = CRYPT_ConstructBlob(&info->SignerId.IssuerSerialNumber.Issuer,
+         &in->pCertInfo->Issuer);
+        if (ret)
+            ret = CRYPT_ConstructBlob(
+             &info->SignerId.IssuerSerialNumber.SerialNumber,
+             &in->pCertInfo->SerialNumber);
+        info->SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+    }
+    else
+    {
+        /* Implicitly in->cbSize == sizeof(CMSG_SIGNER_ENCODE_INFO_WITH_CMS).
+         * See CRYPT_IsValidSigner.
+         */
+        if (!in->SignerId.dwIdChoice)
+        {
+            info->dwVersion = CMSG_SIGNER_INFO_V1;
+            ret = CRYPT_ConstructBlob(&info->SignerId.IssuerSerialNumber.Issuer,
+             &in->pCertInfo->Issuer);
+            if (ret)
+                ret = CRYPT_ConstructBlob(
+                 &info->SignerId.IssuerSerialNumber.SerialNumber,
+                 &in->pCertInfo->SerialNumber);
+            info->SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+        }
+        else if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+        {
+            info->dwVersion = CMSG_SIGNER_INFO_V1;
+            info->SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+            ret = CRYPT_ConstructBlob(&info->SignerId.IssuerSerialNumber.Issuer,
+             &in->SignerId.IssuerSerialNumber.Issuer);
+            if (ret)
+                ret = CRYPT_ConstructBlob(
+                 &info->SignerId.IssuerSerialNumber.SerialNumber,
+                 &in->SignerId.IssuerSerialNumber.SerialNumber);
+        }
+        else
+        {
+            /* Implicitly dwIdChoice == CERT_ID_KEY_IDENTIFIER */
+            info->dwVersion = CMSG_SIGNER_INFO_V3;
+            info->SignerId.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+            ret = CRYPT_ConstructBlob(&info->SignerId.KeyId,
+             &in->SignerId.KeyId);
+        }
+    }
     /* Assumption:  algorithm IDs will point to static strings, not
      * stack-based ones, so copying the pointer values is safe.
      */
@@ -829,12 +870,17 @@ static BOOL CSignerInfo_Construct(CMSG_SIGNER_INFO *info,
     return ret;
 }
 
-static void CSignerInfo_Free(CMSG_SIGNER_INFO *info)
+static void CSignerInfo_Free(CMSG_CMS_SIGNER_INFO *info)
 {
     DWORD i, j;
 
-    CryptMemFree(info->Issuer.pbData);
-    CryptMemFree(info->SerialNumber.pbData);
+    if (info->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+    {
+        CryptMemFree(info->SignerId.IssuerSerialNumber.Issuer.pbData);
+        CryptMemFree(info->SignerId.IssuerSerialNumber.SerialNumber.pbData);
+    }
+    else
+        CryptMemFree(info->SignerId.KeyId.pbData);
     CryptMemFree(info->HashAlgorithm.Parameters.pbData);
     CryptMemFree(info->EncryptedHash.pbData);
     for (i = 0; i < info->AuthAttrs.cAttr; i++)
@@ -1204,7 +1250,7 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
         }
         if (ret)
         {
-            ret = CRYPT_AsnEncodePKCSSignedInfo(&info, pvData, pcbData);
+            ret = CRYPT_AsnEncodeCMSSignedInfo(&info, pvData, pcbData);
             LocalFree(info.content.Content.pbData);
         }
         break;
@@ -1222,7 +1268,7 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
             SetLastError(CRYPT_E_INVALID_INDEX);
         else
             ret = CryptEncodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-             PKCS7_SIGNER_INFO, &msg->msg_data.info->rgSignerInfo[dwIndex], 0,
+             CMS_SIGNER_INFO, &msg->msg_data.info->rgSignerInfo[dwIndex], 0,
              NULL, pvData, pcbData);
         break;
     case CMSG_VERSION_PARAM:
@@ -1325,12 +1371,13 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
             if (info->cSigners)
             {
                 msg->msg_data.info->rgSignerInfo =
-                 CryptMemAlloc(info->cSigners * sizeof(CMSG_SIGNER_INFO));
+                 CryptMemAlloc(info->cSigners * sizeof(CMSG_CMS_SIGNER_INFO));
                 if (msg->msg_data.info->rgSignerInfo)
                 {
                     msg->msg_data.info->cSignerInfo = info->cSigners;
                     memset(msg->msg_data.info->rgSignerInfo, 0,
-                     msg->msg_data.info->cSignerInfo * sizeof(CMSG_SIGNER_INFO));
+                     msg->msg_data.info->cSignerInfo *
+                     sizeof(CMSG_CMS_SIGNER_INFO));
                     ret = CSignedMsgData_AllocateHandles(&msg->msg_data);
                     for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
                     {
@@ -1592,7 +1639,7 @@ static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
     CRYPT_SIGNED_INFO *signedInfo;
     DWORD size;
 
-    ret = CRYPT_AsnDecodePKCSSignedInfo(blob->pbData, blob->cbData,
+    ret = CRYPT_AsnDecodeCMSSignedInfo(blob->pbData, blob->cbData,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (CRYPT_SIGNED_INFO *)&signedInfo,
      &size);
     if (ret)
@@ -1928,15 +1975,23 @@ static DWORD CRYPT_SizeOfAttributes(const CRYPT_ATTRIBUTES *attr)
 }
 
 static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
- const CMSG_SIGNER_INFO *in)
+ const CMSG_CMS_SIGNER_INFO *in)
 {
     DWORD size = sizeof(CMSG_SIGNER_INFO);
     BOOL ret;
 
     TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
 
-    size += in->Issuer.cbData;
-    size += in->SerialNumber.cbData;
+    if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+    {
+        size += in->SignerId.IssuerSerialNumber.Issuer.cbData;
+        size += in->SignerId.IssuerSerialNumber.SerialNumber.cbData;
+    }
+    else
+    {
+        FIXME("unsupported for key id\n");
+        return FALSE;
+    }
     if (in->HashAlgorithm.pszObjId)
         size += strlen(in->HashAlgorithm.pszObjId) + 1;
     size += in->HashAlgorithm.Parameters.cbData;
@@ -1966,8 +2021,13 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
         CMSG_SIGNER_INFO *out = (CMSG_SIGNER_INFO *)pvData;
 
         out->dwVersion = in->dwVersion;
-        CRYPT_CopyBlob(&out->Issuer, &in->Issuer, &nextData);
-        CRYPT_CopyBlob(&out->SerialNumber, &in->SerialNumber, &nextData);
+        if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+        {
+            CRYPT_CopyBlob(&out->Issuer,
+             &in->SignerId.IssuerSerialNumber.Issuer, &nextData);
+            CRYPT_CopyBlob(&out->SerialNumber,
+             &in->SignerId.IssuerSerialNumber.SerialNumber, &nextData);
+        }
         CRYPT_CopyAlgorithmId(&out->HashAlgorithm, &in->HashAlgorithm,
          &nextData);
         CRYPT_CopyAlgorithmId(&out->HashEncryptionAlgorithm,
@@ -1985,15 +2045,23 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
 }
 
 static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
- const CMSG_SIGNER_INFO *in)
+ const CMSG_CMS_SIGNER_INFO *in)
 {
     DWORD size = sizeof(CERT_INFO);
     BOOL ret;
 
     TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
 
-    size += in->Issuer.cbData;
-    size += in->SerialNumber.cbData;
+    if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+    {
+        size += in->SignerId.IssuerSerialNumber.Issuer.cbData;
+        size += in->SignerId.IssuerSerialNumber.SerialNumber.cbData;
+    }
+    else
+    {
+        FIXME("unimplemented for key id\n");
+        return FALSE;
+    }
     if (!pvData)
     {
         *pcbData = size;
@@ -2011,8 +2079,10 @@ static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
         CERT_INFO *out = (CERT_INFO *)pvData;
 
         memset(out, 0, sizeof(CERT_INFO));
-        CRYPT_CopyBlob(&out->Issuer, &in->Issuer, &nextData);
-        CRYPT_CopyBlob(&out->SerialNumber, &in->SerialNumber, &nextData);
+        CRYPT_CopyBlob(&out->Issuer,
+         &in->SignerId.IssuerSerialNumber.Issuer, &nextData);
+        CRYPT_CopyBlob(&out->SerialNumber,
+         &in->SignerId.IssuerSerialNumber.SerialNumber, &nextData);
         ret = TRUE;
     }
     TRACE("returning %d\n", ret);
@@ -2285,15 +2355,26 @@ static BOOL CDecodeSignedMsg_VerifySignature(CDecodeMsg *msg, PCERT_INFO info)
 
     for (i = 0; !ret && i < msg->u.signed_data.info->cSignerInfo; i++)
     {
-        ret = CertCompareCertificateName(X509_ASN_ENCODING,
-         &msg->u.signed_data.info->rgSignerInfo[i].Issuer, &info->Issuer);
-        if (ret)
+        PCMSG_CMS_SIGNER_INFO signerInfo =
+         &msg->u.signed_data.info->rgSignerInfo[i];
+
+        if (signerInfo->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
         {
-            ret = CertCompareIntegerBlob(
-             &msg->u.signed_data.info->rgSignerInfo[i].SerialNumber,
-             &info->SerialNumber);
+            ret = CertCompareCertificateName(X509_ASN_ENCODING,
+             &signerInfo->SignerId.IssuerSerialNumber.Issuer,
+             &info->Issuer);
             if (ret)
-                break;
+            {
+                ret = CertCompareIntegerBlob(
+                 &signerInfo->SignerId.IssuerSerialNumber.SerialNumber,
+                 &info->SerialNumber);
+                if (ret)
+                    break;
+            }
+        }
+        else
+        {
+            FIXME("signer %d: unimplemented for key id\n", i);
         }
     }
     if (ret)
