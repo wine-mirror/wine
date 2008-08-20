@@ -1491,6 +1491,7 @@ typedef struct _CDecodeMsg
         CSignedMsgData signed_data;
     } u;
     CRYPT_DATA_BLOB        msg_data;
+    CRYPT_DATA_BLOB        detached_data;
     PCONTEXT_PROPERTY_LIST properties;
 } CDecodeMsg;
 
@@ -1515,6 +1516,7 @@ static void CDecodeMsg_Close(HCRYPTMSG hCryptMsg)
         break;
     }
     CryptMemFree(msg->msg_data.pbData);
+    CryptMemFree(msg->detached_data.pbData);
     ContextPropertyList_Free(msg->properties);
 }
 
@@ -1763,30 +1765,38 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
     {
         FIXME("(%p, %p, %d, %d): streamed update stub\n", hCryptMsg, pbData,
          cbData, fFinal);
-        if (fFinal)
+        switch (msg->base.state)
         {
-            if (msg->base.open_flags & CMSG_DETACHED_FLAG &&
-             msg->base.state != MsgStateDataFinalized)
+        case MsgStateInit:
+            ret = CDecodeMsg_CopyData(&msg->msg_data, pbData, cbData);
+            if (fFinal)
             {
-                ret = CDecodeMsg_CopyData(&msg->msg_data, pbData, cbData);
-                msg->base.state = MsgStateDataFinalized;
-                if (ret)
-                    ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data,
-                     msg->type);
+                if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+                    msg->base.state = MsgStateDataFinalized;
+                else
+                    msg->base.state = MsgStateFinalized;
             }
             else
-            {
-                FIXME("(%p, %p, %d, %d): detached update stub\n", hCryptMsg,
-                 pbData, cbData, fFinal);
-                ret = TRUE;
-                msg->base.state = MsgStateFinalized;
-            }
-        }
-        else
-        {
-            ret = CDecodeMsg_CopyData(&msg->msg_data, pbData, cbData);
-            if (msg->base.state == MsgStateInit)
                 msg->base.state = MsgStateUpdated;
+            break;
+        case MsgStateUpdated:
+            ret = CDecodeMsg_CopyData(&msg->msg_data, pbData, cbData);
+            if (fFinal)
+            {
+                if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+                    msg->base.state = MsgStateDataFinalized;
+                else
+                    msg->base.state = MsgStateFinalized;
+            }
+            break;
+        case MsgStateDataFinalized:
+            ret = CDecodeMsg_CopyData(&msg->detached_data, pbData, cbData);
+            if (fFinal)
+                msg->base.state = MsgStateFinalized;
+            break;
+        default:
+            SetLastError(CRYPT_E_MSG_ERROR);
+            break;
         }
     }
     else
@@ -1795,26 +1805,26 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             SetLastError(CRYPT_E_MSG_ERROR);
         else
         {
-            if (msg->base.state == MsgStateInit)
+            switch (msg->base.state)
             {
+            case MsgStateInit:
                 ret = CDecodeMsg_CopyData(&msg->msg_data, pbData, cbData);
-                if (ret)
-                    ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data,
-                     msg->type);
                 if (msg->base.open_flags & CMSG_DETACHED_FLAG)
                     msg->base.state = MsgStateDataFinalized;
                 else
                     msg->base.state = MsgStateFinalized;
-            }
-            else if (msg->base.state == MsgStateDataFinalized)
-            {
-                FIXME("(%p, %p, %d, %d): detached update stub\n", hCryptMsg,
-                 pbData, cbData, fFinal);
-                ret = TRUE;
+                break;
+            case MsgStateDataFinalized:
+                ret = CDecodeMsg_CopyData(&msg->detached_data, pbData, cbData);
                 msg->base.state = MsgStateFinalized;
+                break;
+            default:
+                SetLastError(CRYPT_E_MSG_ERROR);
             }
         }
     }
+    if (ret && msg->base.state == MsgStateFinalized)
+        ret = CDecodeMsg_DecodeContent(msg, &msg->msg_data, msg->type);
     return ret;
 }
 
@@ -2648,6 +2658,8 @@ HCRYPTMSG WINAPI CryptMsgOpenToDecode(DWORD dwMsgEncodingType, DWORD dwFlags,
         memset(&msg->u, 0, sizeof(msg->u));
         msg->msg_data.cbData = 0;
         msg->msg_data.pbData = NULL;
+        msg->detached_data.cbData = 0;
+        msg->detached_data.pbData = NULL;
         msg->properties = ContextPropertyList_Create();
     }
     return msg;
