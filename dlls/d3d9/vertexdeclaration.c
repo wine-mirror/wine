@@ -71,7 +71,7 @@ HRESULT vdecl_convert_fvf(
     BOOL has_specular = (fvf & D3DFVF_SPECULAR) !=0;
 
     DWORD num_textures = (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
-    DWORD texcoords = (fvf & 0x00FF0000) >> 16;
+    DWORD texcoords = (fvf & 0xFFFF0000) >> 16;
 
     D3DVERTEXELEMENT9 end_element = D3DDECL_END();
     D3DVERTEXELEMENT9 *elements = NULL;

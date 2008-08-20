@@ -1735,7 +1735,7 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
     BOOL has_specular = (fvf & WINED3DFVF_SPECULAR) !=0;
 
     DWORD num_textures = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
-    DWORD texcoords = (fvf & 0x00FF0000) >> 16;
+    DWORD texcoords = (fvf & 0xFFFF0000) >> 16;
 
     WINED3DVERTEXELEMENT end_element = WINED3DDECL_END();
     WINED3DVERTEXELEMENT *elements = NULL;
