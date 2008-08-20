@@ -131,6 +131,7 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
     BOOL ret = FALSE;
     DWORD size;
     CRYPT_CONTENT_INFO *contentInfo;
+    HCRYPTMSG msg;
 
     TRACE("(%p, %d, %p, %d, %p, %p, %p)\n",
      pVerifyPara, dwSignerIndex, pbSignedBlob, cbSignedBlob,
@@ -149,66 +150,60 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
         return FALSE;
     }
 
-    ret = CryptDecodeObjectEx(pVerifyPara->dwMsgAndCertEncodingType,
+    if (!CryptDecodeObjectEx(pVerifyPara->dwMsgAndCertEncodingType,
      PKCS_CONTENT_INFO, pbSignedBlob, cbSignedBlob,
      CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-     (LPBYTE)&contentInfo, &size);
-    if (ret)
+     (LPBYTE)&contentInfo, &size))
+        return FALSE;
+    if (strcmp(contentInfo->pszObjId, szOID_RSA_signedData))
     {
-        if (strcmp(contentInfo->pszObjId, szOID_RSA_signedData))
-        {
-            SetLastError(CRYPT_E_UNEXPECTED_MSG_TYPE);
-            ret = FALSE;
-        }
-        else
-        {
-            HCRYPTMSG msg = CryptMsgOpenToDecode(
-             pVerifyPara->dwMsgAndCertEncodingType, 0, CMSG_SIGNED,
-             pVerifyPara->hCryptProv, NULL, NULL);
-
-            if (msg)
-            {
-                ret = CryptMsgUpdate(msg, contentInfo->Content.pbData,
-                 contentInfo->Content.cbData, TRUE);
-                if (ret && pcbDecoded)
-                    ret = CRYPT_CopyParam(pbDecoded, pcbDecoded,
-                     contentInfo->Content.pbData, contentInfo->Content.cbData);
-                if (ret)
-                {
-                    CERT_INFO *certInfo = CRYPT_GetSignerCertInfoFromMsg(msg,
-                     dwSignerIndex);
-
-                    ret = FALSE;
-                    if (certInfo)
-                    {
-                        HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MSG,
-                         pVerifyPara->dwMsgAndCertEncodingType,
-                         pVerifyPara->hCryptProv, 0, msg);
-
-                        if (store)
-                        {
-                            PCCERT_CONTEXT cert = CRYPT_GetSignerCertificate(
-                             msg, pVerifyPara, certInfo, store);
-
-                            if (cert)
-                            {
-                                ret = CryptMsgControl(msg, 0,
-                                 CMSG_CTRL_VERIFY_SIGNATURE, cert->pCertInfo);
-                                if (ret && ppSignerCert)
-                                    *ppSignerCert = cert;
-                                else
-                                    CertFreeCertificateContext(cert);
-                            }
-                            CertCloseStore(store, 0);
-                        }
-                    }
-                    CryptMemFree(certInfo);
-                }
-                CryptMsgClose(msg);
-            }
-        }
         LocalFree(contentInfo);
+        SetLastError(CRYPT_E_UNEXPECTED_MSG_TYPE);
+        return FALSE;
     }
+    msg = CryptMsgOpenToDecode(pVerifyPara->dwMsgAndCertEncodingType, 0,
+     CMSG_SIGNED, pVerifyPara->hCryptProv, NULL, NULL);
+    if (msg)
+    {
+        ret = CryptMsgUpdate(msg, contentInfo->Content.pbData,
+         contentInfo->Content.cbData, TRUE);
+        if (ret && pcbDecoded)
+            ret = CRYPT_CopyParam(pbDecoded, pcbDecoded,
+             contentInfo->Content.pbData, contentInfo->Content.cbData);
+        if (ret)
+        {
+            CERT_INFO *certInfo = CRYPT_GetSignerCertInfoFromMsg(msg,
+             dwSignerIndex);
+
+            ret = FALSE;
+            if (certInfo)
+            {
+                HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MSG,
+                 pVerifyPara->dwMsgAndCertEncodingType,
+                 pVerifyPara->hCryptProv, 0, msg);
+
+                if (store)
+                {
+                    PCCERT_CONTEXT cert = CRYPT_GetSignerCertificate(
+                     msg, pVerifyPara, certInfo, store);
+
+                    if (cert)
+                    {
+                        ret = CryptMsgControl(msg, 0,
+                         CMSG_CTRL_VERIFY_SIGNATURE, cert->pCertInfo);
+                        if (ret && ppSignerCert)
+                            *ppSignerCert = cert;
+                        else
+                            CertFreeCertificateContext(cert);
+                    }
+                    CertCloseStore(store, 0);
+                }
+            }
+            CryptMemFree(certInfo);
+        }
+        CryptMsgClose(msg);
+    }
+    LocalFree(contentInfo);
     TRACE("returning %d\n", ret);
     return ret;
 }
