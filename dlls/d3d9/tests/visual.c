@@ -7860,7 +7860,49 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
      * green: 0.5  * (0.25 * 2.0 + 0.1) = 0.5  * 0.6 = 0.3  = 0x4c
      * green: 0.75 * (0.25 * 2.0 + 0.1) = 0.75 * 0.6 = 0.45 = 0x72
      */
-    ok(color_match(color, 0x00994c72, 2), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+    ok(color_match(color, 0x00994c72, 3), "bumpmap failed: Got color 0x%08x, expected 0x00994c72.\n", color);
+
+    /* Check a result scale factor > 1.0 */
+    scale = 10;
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_BUMPENVLSCALE, *((DWORD *)&scale));
+    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
+    offset = 10;
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_BUMPENVLOFFSET, *((DWORD *)&offset));
+    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed (0x%08x)\n", hr);
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], sizeof(quad[0]));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (0x%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff80c0, 1), "bumpmap failed: Got color 0x%08x, expected 0x00ff80c0.\n", color);
+
+    /* Check clamping in the scale factor calculation */
+    scale = 1000;
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_BUMPENVLSCALE, *((DWORD *)&scale));
+    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
+    offset = -1;
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_BUMPENVLOFFSET, *((DWORD *)&offset));
+    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed (0x%08x)\n", hr);
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], sizeof(quad[0]));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (0x%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff80c0, 1), "bumpmap failed: Got color 0x%08x, expected 0x00ff80c0.\n", color);
 
     hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (%08x)\n", hr);

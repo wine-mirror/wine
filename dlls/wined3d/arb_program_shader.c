@@ -2555,7 +2555,8 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
             break;
 
         case WINED3DTOP_BLENDTEXTUREALPHAPM:
-            shader_addline(buffer, "SUB arg0.a, const.x, %s;\n", arg1);
+            arg0 = get_argreg(buffer, 0, stage, WINED3DTA_TEXTURE);
+            shader_addline(buffer, "SUB arg0.a, const.x, %s.a;\n", arg0);
             shader_addline(buffer, "MAD_SAT %s%s, %s, arg0.a, %s;\n", dstreg, dstmask, arg2, arg1);
             break;
 
@@ -2776,7 +2777,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
             shader_addline(&buffer, "TEX%s tex%u, ret, texture[%u], %s;\n",
                             sat, stage, stage, textype);
             if(settings->op[stage - 1].cop == WINED3DTOP_BUMPENVMAPLUMINANCE) {
-                shader_addline(&buffer, "MAD ret.r, tex%u.b, luminance%u.r, luminance%u.g;\n",
+                shader_addline(&buffer, "MAD_SAT ret.r, tex%u.b, luminance%u.r, luminance%u.g;\n",
                                stage - 1, stage - 1, stage - 1);
                 shader_addline(&buffer, "MUL tex%u, tex%u, ret.r;\n", stage, stage);
             }
