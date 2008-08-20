@@ -134,7 +134,7 @@
 @ stub ??6ostream@@QAEAAV0@E@Z  # class ostream & __thiscall ostream::operator<<(unsigned char)
 @ stub ??6ostream@@QAEAAV0@F@Z  # class ostream & __thiscall ostream::operator<<(short)
 @ stub ??6ostream@@QAEAAV0@G@Z  # class ostream & __thiscall ostream::operator<<(unsigned short)
-@ stub ??6ostream@@QAEAAV0@H@Z  # class ostream & __thiscall ostream::operator<<(int)
+@ cdecl -i386 -norelay ??6ostream@@QAEAAV0@H@Z(ptr long) __thiscall_MSVCIRT_operator_sl_int  # class ostream & __thiscall ostream::operator<<(int)
 @ stub ??6ostream@@QAEAAV0@I@Z  # class ostream & __thiscall ostream::operator<<(unsigned int)
 @ stub ??6ostream@@QAEAAV0@J@Z  # class ostream & __thiscall ostream::operator<<(long)
 @ stub ??6ostream@@QAEAAV0@K@Z  # class ostream & __thiscall ostream::operator<<(unsigned long)
@@ -145,7 +145,7 @@
 @ stub ??6ostream@@QAEAAV0@P6AAAVios@@AAV1@@Z@Z  # class ostream & __thiscall ostream::operator<<(class ios & (__cdecl*)(class ios &))
 @ stub ??6ostream@@QAEAAV0@PAVstreambuf@@@Z  # class ostream & __thiscall ostream::operator<<(class streambuf *)
 @ stub ??6ostream@@QAEAAV0@PBC@Z  # class ostream & __thiscall ostream::operator<<(signed char const *)
-@ stub ??6ostream@@QAEAAV0@PBD@Z  # class ostream & __thiscall ostream::operator<<(char const *)
+@ cdecl -i386 -norelay ??6ostream@@QAEAAV0@PBD@Z(ptr ptr) __thiscall_MSVCIRT_operator_sl_pchar  # class ostream & __thiscall ostream::operator<<(char const *)
 @ stub ??6ostream@@QAEAAV0@PBE@Z  # class ostream & __thiscall ostream::operator<<(unsigned char const *)
 @ stub ??6ostream@@QAEAAV0@PBX@Z  # class ostream & __thiscall ostream::operator<<(void const *)
 @ stub ??7ios@@QBEHXZ  # int __thiscall ios::operator!(void)const 
@@ -268,7 +268,7 @@
 @ stub ?eback@streambuf@@IBEPADXZ  # char * __thiscall streambuf::eback(void)const 
 @ stub ?ebuf@streambuf@@IBEPADXZ  # char * __thiscall streambuf::ebuf(void)const 
 @ stub ?egptr@streambuf@@IBEPADXZ  # char * __thiscall streambuf::egptr(void)const 
-@ stub ?endl@@YAAAVostream@@AAV1@@Z  # class ostream & __cdecl endl(class ostream &)
+@ cdecl ?endl@@YAAAVostream@@AAV1@@Z(ptr) MSVCIRT_endl  # class ostream & __cdecl endl(class ostream &)
 @ stub ?ends@@YAAAVostream@@AAV1@@Z  # class ostream & __cdecl ends(class ostream &)
 @ stub ?eof@ios@@QBEHXZ  # int __thiscall ios::eof(void)const 
 @ stub ?epptr@streambuf@@IBEPADXZ  # char * __thiscall streambuf::epptr(void)const 
