@@ -1658,20 +1658,30 @@ static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
              msg->crypt_prov);
         if (ret)
         {
+            CRYPT_DATA_BLOB *content;
+
             /* Now that we have all the content, update the hash handles with
-             * it.  Have to decode it if the type is szOID_RSA_data.
+             * it.  If the message is a detached message, the content is stored
+             * in msg->detached_data rather than in the signed message's
+             * content.
              */
-            if (msg->u.signed_data.info->content.Content.cbData)
+            if (msg->base.open_flags & CMSG_DETACHED_FLAG)
+                content = &msg->detached_data;
+            else
+                content = &msg->u.signed_data.info->content.Content;
+            if (content->cbData)
             {
-                if (!strcmp(msg->u.signed_data.info->content.pszObjId,
+                /* If the message is not detached, have to decode the message's
+                 * content if the type is szOID_RSA_data.
+                 */
+                if (!(msg->base.open_flags & CMSG_DETACHED_FLAG) &&
+                 !strcmp(msg->u.signed_data.info->content.pszObjId,
                  szOID_RSA_data))
                 {
                     CRYPT_DATA_BLOB *blob;
 
                     ret = CryptDecodeObjectEx(X509_ASN_ENCODING,
-                     X509_OCTET_STRING,
-                     msg->u.signed_data.info->content.Content.pbData,
-                     msg->u.signed_data.info->content.Content.cbData,
+                     X509_OCTET_STRING, content->pbData, content->cbData,
                      CRYPT_DECODE_ALLOC_FLAG, NULL, (LPBYTE)&blob, &size);
                     if (ret)
                     {
@@ -1682,14 +1692,13 @@ static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
                 }
                 else
                     ret = CSignedMsgData_Update(&msg->u.signed_data,
-                     msg->u.signed_data.info->content.Content.pbData,
-                     msg->u.signed_data.info->content.Content.cbData, TRUE,
-                     Verify);
+                     content->pbData, content->cbData, TRUE, Verify);
             }
         }
     }
     return ret;
 }
+
 /* Decodes the content in blob as the type given, and updates the value
  * (type, parameters, etc.) of msg based on what blob contains.
  * It doesn't just use msg's type, to allow a recursive call from an implicitly
