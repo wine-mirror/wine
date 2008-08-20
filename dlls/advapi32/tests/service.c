@@ -797,6 +797,64 @@ static void test_get_servicekeyname(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_query_svc(void)
+{
+    SC_HANDLE scm_handle, svc_handle;
+    BOOL ret;
+    SERVICE_STATUS status;
+
+    /* All NULL or wrong  */
+    SetLastError(0xdeadbeef);
+    ret = QueryServiceStatus(NULL, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+
+    /* Check if 'Spooler' exists.
+     * Open with not enough rights to query the status.
+     */
+    svc_handle = OpenServiceA(scm_handle, spooler, STANDARD_RIGHTS_READ);
+    if (!svc_handle)
+    {
+        skip("Spooler service doesn't exist\n");
+        CloseServiceHandle(scm_handle);
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = QueryServiceStatus(svc_handle, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_ADDRESS ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Unexpected last error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = QueryServiceStatus(svc_handle, &status);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED,
+       "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+
+    /* Open the service with just enough rights.
+     * (Verified with 'SERVICE_ALL_ACCESS &~ SERVICE_QUERY_STATUS')
+     */
+    CloseServiceHandle(svc_handle);
+    svc_handle = OpenServiceA(scm_handle, spooler, SERVICE_QUERY_STATUS);
+
+    SetLastError(0xdeadbeef);
+    ret = QueryServiceStatus(svc_handle, &status);
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS /* W2K3 */ ||
+       GetLastError() == 0xdeadbeef /* NT4, XP and Vista */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */,
+       "Unexpected last error %d\n", GetLastError());
+
+    CloseServiceHandle(svc_handle);
+    CloseServiceHandle(scm_handle);
+}
+
 static void test_close(void)
 {
     SC_HANDLE handle;
@@ -1265,6 +1323,7 @@ START_TEST(service)
     test_create_delete_svc();
     test_get_displayname();
     test_get_servicekeyname();
+    test_query_svc();
     test_close();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
