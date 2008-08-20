@@ -798,7 +798,7 @@ static BOOL CRYPT_SaveSerializedToMem(HCERTSTORE store,
  DWORD dwMsgAndCertEncodingType, void *handle)
 {
     CERT_BLOB *blob = (CERT_BLOB *)handle;
-    DWORD size;
+    DWORD size = 0;
     BOOL ret;
 
     ret = CRYPT_WriteSerializedStoreToStream(store, CRYPT_CountSerializedBytes,
