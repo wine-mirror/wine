@@ -2675,6 +2675,53 @@ static void test_msg_control(void)
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     CryptMsgClose(msg);
 
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG, 0, 0,
+     NULL, NULL);
+    /* Can't verify the hash of a detached message before it's been updated. */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
+     "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, detachedHashContent, sizeof(detachedHashContent),
+     TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    /* Still can't verify the hash of a detached message with the content
+     * of the detached hash given..
+     */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_HASH_VALUE,
+     "Expected CRYPT_E_HASH_VALUE, got %08x\n", GetLastError());
+    /* and giving the content of the message after attempting to verify the
+     * hash fails.
+     */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == NTE_BAD_HASH_STATE,
+     "Expected NTE_BAD_HASH_STATE, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+
+    /* Finally, verifying the hash of a detached message in the correct order:
+     * 1. Update with the detached hash message
+     * 2. Update with the content of the message
+     * 3. Verifying the hash of the message
+     * succeeds.
+     */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG, 0, 0,
+     NULL, NULL);
+    ret = CryptMsgUpdate(msg, detachedHashContent, sizeof(detachedHashContent),
+     TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+    todo_wine
+    ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
+
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_SIGNED, 0, NULL,
      NULL);
     /* Can't verify the hash of a signed message */
