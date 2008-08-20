@@ -423,7 +423,7 @@ static void create_drive_mount_points( DRIVER_OBJECT *driver )
         {
             *p = 'a' + i;
             if (!(link = read_symlink( buffer ))) continue;
-            add_mount_point( driver, DRIVE_FIXED, i, link, strlen(link) );
+            add_mount_point( driver, DRIVE_FIXED, i, link, strlen(link) + 1 );
             RtlFreeHeap( GetProcessHeap(), 0, link );
         }
         RtlFreeHeap( GetProcessHeap(), 0, buffer );
