@@ -2047,6 +2047,76 @@ static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
     return ret;
 }
 
+static BOOL CRYPT_CopyCMSSignerInfo(void *pvData, DWORD *pcbData,
+ const CMSG_CMS_SIGNER_INFO *in)
+{
+    DWORD size = sizeof(CMSG_CMS_SIGNER_INFO);
+    BOOL ret;
+
+    TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
+
+    if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+    {
+        size += in->SignerId.IssuerSerialNumber.Issuer.cbData;
+        size += in->SignerId.IssuerSerialNumber.SerialNumber.cbData;
+    }
+    else
+        size += in->SignerId.KeyId.cbData;
+    if (in->HashAlgorithm.pszObjId)
+        size += strlen(in->HashAlgorithm.pszObjId) + 1;
+    size += in->HashAlgorithm.Parameters.cbData;
+    if (in->HashEncryptionAlgorithm.pszObjId)
+        size += strlen(in->HashEncryptionAlgorithm.pszObjId) + 1;
+    size += in->HashEncryptionAlgorithm.Parameters.cbData;
+    size += in->EncryptedHash.cbData;
+    /* align pointer */
+    if (size % sizeof(DWORD_PTR))
+        size += size % sizeof(DWORD_PTR);
+    size += CRYPT_SizeOfAttributes(&in->AuthAttrs);
+    size += CRYPT_SizeOfAttributes(&in->UnauthAttrs);
+    if (!pvData)
+    {
+        *pcbData = size;
+        ret = TRUE;
+    }
+    else if (*pcbData < size)
+    {
+        *pcbData = size;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        LPBYTE nextData = (BYTE *)pvData + sizeof(CMSG_CMS_SIGNER_INFO);
+        CMSG_CMS_SIGNER_INFO *out = (CMSG_CMS_SIGNER_INFO *)pvData;
+
+        out->dwVersion = in->dwVersion;
+        out->SignerId.dwIdChoice = in->SignerId.dwIdChoice;
+        if (in->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+        {
+            CRYPT_CopyBlob(&out->SignerId.IssuerSerialNumber.Issuer,
+             &in->SignerId.IssuerSerialNumber.Issuer, &nextData);
+            CRYPT_CopyBlob(&out->SignerId.IssuerSerialNumber.SerialNumber,
+             &in->SignerId.IssuerSerialNumber.SerialNumber, &nextData);
+        }
+        else
+            CRYPT_CopyBlob(&out->SignerId.KeyId, &in->SignerId.KeyId, &nextData);
+        CRYPT_CopyAlgorithmId(&out->HashAlgorithm, &in->HashAlgorithm,
+         &nextData);
+        CRYPT_CopyAlgorithmId(&out->HashEncryptionAlgorithm,
+         &in->HashEncryptionAlgorithm, &nextData);
+        CRYPT_CopyBlob(&out->EncryptedHash, &in->EncryptedHash, &nextData);
+        /* align pointer */
+        if ((nextData - (LPBYTE)0) % sizeof(DWORD_PTR))
+            nextData += (nextData - (LPBYTE)0) % sizeof(DWORD_PTR);
+        CRYPT_CopyAttributes(&out->AuthAttrs, &in->AuthAttrs, &nextData);
+        CRYPT_CopyAttributes(&out->UnauthAttrs, &in->UnauthAttrs, &nextData);
+        ret = TRUE;
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
 static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
  const CMSG_CMS_SIGNER_INFO *in)
 {
@@ -2236,6 +2306,18 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
     case CMSG_ATTR_CERT_PARAM:
         if (msg->u.signed_data.info)
             SetLastError(CRYPT_E_INVALID_INDEX);
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
+    case CMSG_CMS_SIGNER_INFO_PARAM:
+        if (msg->u.signed_data.info)
+        {
+            if (dwIndex >= msg->u.signed_data.info->cSignerInfo)
+                SetLastError(CRYPT_E_INVALID_INDEX);
+            else
+                ret = CRYPT_CopyCMSSignerInfo(pvData, pcbData,
+                 &msg->u.signed_data.info->rgSignerInfo[dwIndex]);
+        }
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
