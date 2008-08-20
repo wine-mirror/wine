@@ -72,6 +72,9 @@ typedef struct _saxlocator
     int line;
     int column;
     BOOL vbInterface;
+    int nsStackSize;
+    int nsStackLast;
+    int *nsStack;
 } saxlocator;
 
 typedef struct _saxattributes
@@ -116,6 +119,29 @@ static inline saxattributes *impl_from_ISAXAttributes( ISAXAttributes *iface )
     return (saxattributes *)((char*)iface - FIELD_OFFSET(saxattributes, lpSAXAttributesVtbl));
 }
 
+
+static HRESULT namespacePush(saxlocator *locator, int ns)
+{
+    if(locator->nsStackLast>=locator->nsStackSize)
+    {
+        int *new_stack;
+
+        new_stack = HeapReAlloc(GetProcessHeap(), 0,
+                locator->nsStack, locator->nsStackSize*2);
+        if(!new_stack) return E_OUTOFMEMORY;
+        locator->nsStack = new_stack;
+        locator->nsStackSize *= 2;
+    }
+    locator->nsStack[locator->nsStackLast++] = ns;
+
+    return S_OK;
+}
+
+static int namespacePop(saxlocator *locator)
+{
+    if(locator->nsStackLast == 0) return 0;
+    return locator->nsStack[--locator->nsStackLast];
+}
 
 static BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
 {
@@ -937,7 +963,9 @@ static void libxmlStartElementNS(
 
     update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
 
-    if(This->saxreader->contentHandler)
+    hr = namespacePush(This, nb_namespaces);
+
+    if(hr==S_OK && This->saxreader->contentHandler)
     {
         for(index=0; index<nb_namespaces; index++)
         {
@@ -990,10 +1018,10 @@ static void libxmlStartElementNS(
         SysFreeString(NamespaceUri);
         SysFreeString(LocalName);
         SysFreeString(QName);
-
-        if(hr != S_OK)
-            format_error_message_from_id(This, hr);
     }
+
+    if(hr != S_OK)
+        format_error_message_from_id(This, hr);
 }
 
 static void libxmlEndElementNS(
@@ -1002,14 +1030,17 @@ static void libxmlEndElementNS(
         const xmlChar *prefix,
         const xmlChar *URI)
 {
-    BSTR NamespaceUri, LocalName, QName;
+    BSTR NamespaceUri, LocalName, QName, Prefix;
     saxlocator *This = ctx;
     HRESULT hr;
     xmlChar *end;
+    int nsNr, index;
 
     end = This->lastCur;
     while(*end != '<' && *(end+1) != '/') end++;
     update_position(This, end+2);
+
+    nsNr = namespacePop(This);
 
     if(This->saxreader->contentHandler)
     {
@@ -1033,7 +1064,26 @@ static void libxmlEndElementNS(
         SysFreeString(QName);
 
         if(hr != S_OK)
+        {
             format_error_message_from_id(This, hr);
+            return;
+        }
+
+        for(index=This->pParserCtxt->nsNr-2;
+                index>=This->pParserCtxt->nsNr-nsNr*2; index-=2)
+        {
+            Prefix = bstr_from_xmlChar(This->pParserCtxt->nsTab[index]);
+
+            if(This->vbInterface)
+                hr = IVBSAXContentHandler_endPrefixMapping(
+                        This->saxreader->vbcontentHandler, &Prefix);
+            else
+                hr = ISAXContentHandler_endPrefixMapping(
+                        This->saxreader->contentHandler,
+                        Prefix, SysStringLen(Prefix));
+
+            SysFreeString(Prefix);
+        }
     }
 }
 
@@ -1410,6 +1460,7 @@ static ULONG WINAPI isaxlocator_Release(
             SysFreeString(This->publicId);
         if(This->systemId)
             SysFreeString(This->systemId);
+        HeapFree(GetProcessHeap(), 0, This->nsStack);
 
         ISAXXMLReader_Release((ISAXXMLReader*)&This->saxreader->lpSAXXMLReaderVtbl);
         HeapFree( GetProcessHeap(), 0, This );
@@ -1517,6 +1568,15 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     locator->line = 0;
     locator->column = 0;
     locator->ret = S_OK;
+    locator->nsStackSize = 8;
+    locator->nsStackLast = 0;
+    locator->nsStack = HeapAlloc(GetProcessHeap(), 0, locator->nsStackSize);
+    if(!locator->nsStack)
+    {
+        ISAXXMLReader_Release((ISAXXMLReader*)&reader->lpSAXXMLReaderVtbl);
+        HeapFree(GetProcessHeap(), 0, locator);
+        return E_OUTOFMEMORY;
+    }
 
     *ppsaxlocator = locator;
 
