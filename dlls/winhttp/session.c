@@ -394,6 +394,15 @@ WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHT
     return ret;
 }
 
+/***********************************************************************
+ *          WinHttpSetTimeouts (winhttp.@)
+ */
+BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int send, int receive )
+{
+    FIXME("%p, %d, %d, %d, %d\n", handle, resolve, connect, send, receive);
+    return TRUE;
+}
+
 static const WCHAR wkday[7][4] =
     {{'S','u','n', 0}, {'M','o','n', 0}, {'T','u','e', 0}, {'W','e','d', 0},
      {'T','h','u', 0}, {'F','r','i', 0}, {'S','a','t', 0}};

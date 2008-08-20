@@ -25,7 +25,7 @@
 @ stdcall WinHttpSetDefaultProxyConfiguration(ptr long long wstr ptr ptr)
 @ stdcall WinHttpSetOption(ptr long ptr long)
 @ stdcall WinHttpSetStatusCallback(ptr ptr long ptr)
-@ stub WinHttpSetTimeouts
+@ stdcall WinHttpSetTimeouts(ptr long long long long)
 @ stdcall WinHttpTimeFromSystemTime(ptr ptr)
 @ stdcall WinHttpTimeToSystemTime(wstr ptr)
 @ stdcall WinHttpWriteData(ptr ptr long ptr)
