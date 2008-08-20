@@ -5160,6 +5160,170 @@ static void test_decodePKCSAttributes(DWORD dwEncoding)
     }
 }
 
+static const BYTE singleCapability[] = {
+0x30,0x06,0x30,0x04,0x06,0x02,0x2d,0x06 };
+static const BYTE twoCapabilities[] = {
+0x30,0x0c,0x30,0x04,0x06,0x02,0x2d,0x06,0x30,0x04,0x06,0x02,0x2a,0x03 };
+static const BYTE singleCapabilitywithNULL[] = {
+0x30,0x08,0x30,0x06,0x06,0x02,0x2d,0x06,0x05,0x00 };
+
+static void test_encodePKCSSMimeCapabilities(DWORD dwEncoding)
+{
+    static char oid1[] = "1.5.6", oid2[] = "1.2.3";
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+    CRYPT_SMIME_CAPABILITY capability[2];
+    CRYPT_SMIME_CAPABILITIES capabilities;
+
+    /* An empty capabilities is allowed */
+    capabilities.cCapability = 0;
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+     &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(emptySequence), "unexpected size %d\n", size);
+        ok(!memcmp(buf, emptySequence, size), "unexpected value\n");
+        LocalFree(buf);
+    }
+    /* A non-empty capabilities with an empty capability (lacking an OID) is
+     * not allowed
+     */
+    capability[0].pszObjId = NULL;
+    capability[0].Parameters.cbData = 0;
+    capabilities.cCapability = 1;
+    capabilities.rgCapability = capability;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+     &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    capability[0].pszObjId = oid1;
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+     &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(singleCapability), "unexpected size %d\n", size);
+        ok(!memcmp(buf, singleCapability, size), "unexpected value\n");
+        LocalFree(buf);
+    }
+    capability[1].pszObjId = oid2;
+    capability[1].Parameters.cbData = 0;
+    capabilities.cCapability = 2;
+    ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+     &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(twoCapabilities), "unexpected size %d\n", size);
+        ok(!memcmp(buf, twoCapabilities, size), "unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void compareSMimeCapabilities(LPCSTR header,
+ const CRYPT_SMIME_CAPABILITIES *expected, const CRYPT_SMIME_CAPABILITIES *got)
+{
+    DWORD i;
+
+    ok(got->cCapability == expected->cCapability,
+     "%s: expected %d capabilities, got %d\n", header, expected->cCapability,
+     got->cCapability);
+    for (i = 0; i < expected->cCapability; i++)
+    {
+        ok(!strcmp(expected->rgCapability[i].pszObjId,
+         got->rgCapability[i].pszObjId), "%s[%d]: expected %s, got %s\n",
+         header, i, expected->rgCapability[i].pszObjId,
+         got->rgCapability[i].pszObjId);
+        ok(expected->rgCapability[i].Parameters.cbData ==
+         got->rgCapability[i].Parameters.cbData,
+         "%s[%d]: expected %d bytes, got %d\n", header, i,
+         expected->rgCapability[i].Parameters.cbData,
+         got->rgCapability[i].Parameters.cbData);
+        if (expected->rgCapability[i].Parameters.cbData)
+            ok(!memcmp(expected->rgCapability[i].Parameters.pbData,
+             got->rgCapability[i].Parameters.pbData,
+             expected->rgCapability[i].Parameters.cbData),
+             "%s[%d]: unexpected value\n", header, i);
+    }
+}
+
+static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
+{
+    static char oid1[] = "1.5.6", oid2[] = "1.2.3";
+    BOOL ret;
+    DWORD size = 0;
+    CRYPT_SMIME_CAPABILITY capability[2];
+    CRYPT_SMIME_CAPABILITIES capabilities, *ptr;
+
+    SetLastError(0xdeadbeef);
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+     emptySequence, sizeof(emptySequence),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&ptr, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        capabilities.cCapability = 0;
+        compareSMimeCapabilities("empty capabilities", &capabilities, ptr);
+        LocalFree(ptr);
+    }
+    SetLastError(0xdeadbeef);
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+     singleCapability, sizeof(singleCapability), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&ptr, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        capability[0].pszObjId = oid1;
+        capability[0].Parameters.cbData = 0;
+        capabilities.cCapability = 1;
+        capabilities.rgCapability = capability;
+        compareSMimeCapabilities("single capability", &capabilities, ptr);
+        LocalFree(ptr);
+    }
+    SetLastError(0xdeadbeef);
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+     singleCapabilitywithNULL, sizeof(singleCapabilitywithNULL),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&ptr, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        BYTE NULLparam[] = {0x05, 0x00};
+        capability[0].pszObjId = oid1;
+        capability[0].Parameters.cbData = 2;
+        capability[0].Parameters.pbData = NULLparam;
+        capabilities.cCapability = 1;
+        capabilities.rgCapability = capability;
+        compareSMimeCapabilities("single capability with NULL", &capabilities,
+         ptr);
+        LocalFree(ptr);
+    }
+    SetLastError(0xdeadbeef);
+    ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    twoCapabilities, sizeof(twoCapabilities), CRYPT_DECODE_ALLOC_FLAG, NULL,
+    (BYTE *)&ptr, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        capability[0].Parameters.cbData = 0;
+        capability[1].pszObjId = oid2;
+        capability[1].Parameters.cbData = 0;
+        capabilities.cCapability = 2;
+        compareSMimeCapabilities("two capabilities", &capabilities, ptr);
+        LocalFree(ptr);
+    }
+}
+
 static BYTE encodedCommonNameNoNull[] = { 0x30,0x14,0x31,0x12,0x30,0x10,
  0x06,0x03,0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,0x6e,
  0x67 };
@@ -6283,6 +6447,8 @@ START_TEST(encode)
         test_decodePKCSAttribute(encodings[i]);
         test_encodePKCSAttributes(encodings[i]);
         test_decodePKCSAttributes(encodings[i]);
+        test_encodePKCSSMimeCapabilities(encodings[i]);
+        test_decodePKCSSMimeCapabilities(encodings[i]);
         test_encodePKCSSignerInfo(encodings[i]);
         test_decodePKCSSignerInfo(encodings[i]);
         test_encodeCMSSignerInfo(encodings[i]);
