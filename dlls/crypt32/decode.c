@@ -3942,7 +3942,9 @@ static BOOL WINAPI CRYPT_AsnDecodeSequenceOfAny(DWORD dwCertEncodingType,
                     BYTE *nextPtr;
                     DWORD i;
 
-                    if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+                    if (!pvStructInfo)
+                        *pcbStructInfo = bytesNeeded;
+                    else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
                      pvStructInfo, pcbStructInfo, bytesNeeded)))
                     {
                         if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
