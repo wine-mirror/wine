@@ -1652,6 +1652,7 @@ static void DeviceLoadTest()
     IDirectDrawPalette *palettes[5];
     PALETTEENTRY table1[256];
     DDCOLORKEY ddckey;
+    D3DDEVICEDESC7 d3dcaps;
 
     /* Test loading of texture subrectangle with a mipmap surface. */
     memset(texture_levels, 0, sizeof(texture_levels));
@@ -1858,270 +1859,281 @@ static void DeviceLoadTest()
     IDirectDrawSurface7_Release(texture_levels[1][0]);
     memset(texture_levels, 0, sizeof(texture_levels));
 
-    /* Test loading mipmapped cubemap texture subrectangle from another similar texture. */
-    for (i = 0; i < 2; i++)
+    memset(&d3dcaps, 0, sizeof(d3dcaps));
+    hr = IDirect3DDevice7_GetCaps(lpD3DDevice, &d3dcaps);
+    ok(hr == D3D_OK, "IDirect3DDevice7_GetCaps returned %08x\n", hr);
+
+    if (!(d3dcaps.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_CUBEMAP))
     {
-        memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-        ddsd.dwSize = sizeof(ddsd);
-        ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
-        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
-        ddsd.dwWidth = 128;
-        ddsd.dwHeight = 128;
-        U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-        U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
-        U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
-        U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00FF0000;
-        U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000FF00;
-        U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000FF;
-        hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[i][0][0], NULL);
-        ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
-        if (FAILED(hr)) goto out;
-
-        flags = DDSCAPS2_CUBEMAP_NEGATIVEX;
-        for (i1 = 1; i1 < 6; i1++, flags <<= 1)
+        skip("No cubemap support\n");
+    }
+    else
+    {
+        /* Test loading mipmapped cubemap texture subrectangle from another similar texture. */
+        for (i = 0; i < 2; i++)
         {
-            ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
-            ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | flags;
-            hr = IDirectDrawSurface7_GetAttachedSurface(cube_face_levels[i][0][0], &ddsd.ddsCaps, &cube_face_levels[i][i1][0]);
-            ok(hr == DD_OK, "GetAttachedSurface returned %08x\n", hr);
-            if (FAILED(hr)) goto out;
-        }
-
-        for (i1 = 0; i1 < 6; i1++)
-        {
-            /* Check the number of created mipmaps */
             memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
             ddsd.dwSize = sizeof(ddsd);
-            hr = IDirectDrawSurface7_GetSurfaceDesc(cube_face_levels[i][i1][0], &ddsd);
-            ok(hr==DD_OK,"IDirectDrawSurface7_GetSurfaceDesc returned: %x\n",hr);
-            ok(U2(ddsd).dwMipMapCount == 8, "unexpected mip count %u\n", U2(ddsd).dwMipMapCount);
-            if (U2(ddsd).dwMipMapCount != 8) goto out;
+            ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+            ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+            ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
+            ddsd.dwWidth = 128;
+            ddsd.dwHeight = 128;
+            U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+            U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+            U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
+            U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00FF0000;
+            U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000FF00;
+            U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000FF;
+            hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[i][0][0], NULL);
+            ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+            if (FAILED(hr)) goto out;
 
-            for (i2 = 1; i2 < 8; i2++)
+            flags = DDSCAPS2_CUBEMAP_NEGATIVEX;
+            for (i1 = 1; i1 < 6; i1++, flags <<= 1)
             {
-                ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
-                ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
-                hr = IDirectDrawSurface7_GetAttachedSurface(cube_face_levels[i][i1][i2 - 1], &ddsd.ddsCaps, &cube_face_levels[i][i1][i2]);
+                ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+                ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | flags;
+                hr = IDirectDrawSurface7_GetAttachedSurface(cube_face_levels[i][0][0], &ddsd.ddsCaps, &cube_face_levels[i][i1][0]);
                 ok(hr == DD_OK, "GetAttachedSurface returned %08x\n", hr);
                 if (FAILED(hr)) goto out;
             }
-        }
-    }
 
-    for (i = 0; i < 6; i++)
-        for (i1 = 0; i1 < 8; i1++)
-        {
-            memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-            ddsd.dwSize = sizeof(ddsd);
-            hr = IDirectDrawSurface7_Lock(cube_face_levels[0][i][i1], NULL, &ddsd, DDLOCK_WAIT, NULL);
-            ok(hr==DD_OK, "IDirectDrawSurface7_Lock returned: %x\n",hr);
-            if (FAILED(hr)) goto out;
-
-            for (y = 0 ; y < ddsd.dwHeight; y++)
+            for (i1 = 0; i1 < 6; i1++)
             {
-                DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
+                /* Check the number of created mipmaps */
+                memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
+                ddsd.dwSize = sizeof(ddsd);
+                hr = IDirectDrawSurface7_GetSurfaceDesc(cube_face_levels[i][i1][0], &ddsd);
+                ok(hr==DD_OK,"IDirectDrawSurface7_GetSurfaceDesc returned: %x\n",hr);
+                ok(U2(ddsd).dwMipMapCount == 8, "unexpected mip count %u\n", U2(ddsd).dwMipMapCount);
+                if (U2(ddsd).dwMipMapCount != 8) goto out;
 
-                for (x = 0; x < ddsd.dwWidth;  x++)
+                for (i2 = 1; i2 < 8; i2++)
                 {
-                    /* face number in low 4 bits of red, x stored in green component, y in blue. */
-                    DWORD color = 0xf00000 | (i << 16) | (x << 8)  | y;
-                    *textureRow++ = color;
+                    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_MIPMAP;
+                    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
+                    hr = IDirectDrawSurface7_GetAttachedSurface(cube_face_levels[i][i1][i2 - 1], &ddsd.ddsCaps, &cube_face_levels[i][i1][i2]);
+                    ok(hr == DD_OK, "GetAttachedSurface returned %08x\n", hr);
+                    if (FAILED(hr)) goto out;
                 }
             }
-
-            hr = IDirectDrawSurface7_Unlock(cube_face_levels[0][i][i1], NULL);
-            ok(hr==DD_OK, "IDirectDrawSurface7_Unlock returned: %x\n",hr);
         }
 
-    for (i = 0; i < 6; i++)
-        for (i1 = 0; i1 < 8; i1++)
-        {
-            memset(&ddbltfx, 0, sizeof(ddbltfx));
-            ddbltfx.dwSize = sizeof(ddbltfx);
-            U5(ddbltfx).dwFillColor = 0;
-            hr = IDirectDrawSurface7_Blt(cube_face_levels[1][i][i1], NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
-            ok(hr == DD_OK, "IDirectDrawSurface7_Blt failed with %08x\n", hr);
-        }
+        for (i = 0; i < 6; i++)
+            for (i1 = 0; i1 < 8; i1++)
+            {
+                memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
+                ddsd.dwSize = sizeof(ddsd);
+                hr = IDirectDrawSurface7_Lock(cube_face_levels[0][i][i1], NULL, &ddsd, DDLOCK_WAIT, NULL);
+                ok(hr==DD_OK, "IDirectDrawSurface7_Lock returned: %x\n",hr);
+                if (FAILED(hr)) goto out;
 
-    loadpoint.x = loadpoint.y = 10;
-    loadrect.left = 30;
-    loadrect.top = 20;
-    loadrect.right = 93;
-    loadrect.bottom = 52;
+                for (y = 0 ; y < ddsd.dwHeight; y++)
+                {
+                    DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
-    hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], &loadpoint, cube_face_levels[0][0][0], &loadrect,
-                                    DDSCAPS2_CUBEMAP_ALLFACES);
-    ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
+                    for (x = 0; x < ddsd.dwWidth;  x++)
+                    {
+                        /* face number in low 4 bits of red, x stored in green component, y in blue. */
+                        DWORD color = 0xf00000 | (i << 16) | (x << 8)  | y;
+                        *textureRow++ = color;
+                    }
+                }
 
-    for (i = 0; i < 6; i++)
-    {
+                hr = IDirectDrawSurface7_Unlock(cube_face_levels[0][i][i1], NULL);
+                ok(hr==DD_OK, "IDirectDrawSurface7_Unlock returned: %x\n",hr);
+            }
+
+        for (i = 0; i < 6; i++)
+            for (i1 = 0; i1 < 8; i1++)
+            {
+                memset(&ddbltfx, 0, sizeof(ddbltfx));
+                ddbltfx.dwSize = sizeof(ddbltfx);
+                U5(ddbltfx).dwFillColor = 0;
+                hr = IDirectDrawSurface7_Blt(cube_face_levels[1][i][i1], NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
+                ok(hr == DD_OK, "IDirectDrawSurface7_Blt failed with %08x\n", hr);
+            }
+
         loadpoint.x = loadpoint.y = 10;
         loadrect.left = 30;
         loadrect.top = 20;
         loadrect.right = 93;
         loadrect.bottom = 52;
 
-        for (i1 = 0; i1 < 8; i1++)
+        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], &loadpoint, cube_face_levels[0][0][0], &loadrect,
+                                        DDSCAPS2_CUBEMAP_ALLFACES);
+        ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
+
+        for (i = 0; i < 6; i++)
         {
-            diff_count = 0;
-            diff_count2 = 0;
+            loadpoint.x = loadpoint.y = 10;
+            loadrect.left = 30;
+            loadrect.top = 20;
+            loadrect.right = 93;
+            loadrect.bottom = 52;
 
-            memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-            ddsd.dwSize = sizeof(ddsd);
-            hr = IDirectDrawSurface7_Lock(cube_face_levels[1][i][i1], NULL, &ddsd, DDLOCK_WAIT, NULL);
-            ok(hr==DD_OK, "IDirectDrawSurface7_Lock returned: %x\n",hr);
-            if (FAILED(hr)) goto out;
-
-            for (y = 0 ; y < ddsd.dwHeight; y++)
+            for (i1 = 0; i1 < 8; i1++)
             {
-                DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
+                diff_count = 0;
+                diff_count2 = 0;
 
-                for (x = 0; x < ddsd.dwWidth;  x++)
+                memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
+                ddsd.dwSize = sizeof(ddsd);
+                hr = IDirectDrawSurface7_Lock(cube_face_levels[1][i][i1], NULL, &ddsd, DDLOCK_WAIT, NULL);
+                ok(hr==DD_OK, "IDirectDrawSurface7_Lock returned: %x\n",hr);
+                if (FAILED(hr)) goto out;
+
+                for (y = 0 ; y < ddsd.dwHeight; y++)
                 {
-                    DWORD color = *textureRow++;
+                    DWORD *textureRow = (DWORD*)((char*)ddsd.lpSurface + y * U1(ddsd).lPitch);
 
-                    if (x < loadpoint.x || x >= loadpoint.x + loadrect.right - loadrect.left ||
-                        y < loadpoint.y || y >= loadpoint.y + loadrect.bottom - loadrect.top)
+                    for (x = 0; x < ddsd.dwWidth;  x++)
                     {
-                        if (color & 0xffffff) diff_count++;
-                    }
-                    else
-                    {
-                        DWORD r = (color & 0xff0000) >> 16;
-                        DWORD g = (color & 0xff00) >> 8;
-                        DWORD b = (color & 0xff);
+                        DWORD color = *textureRow++;
 
-                        if (r != (0xf0 | i) || g != x + loadrect.left - loadpoint.x ||
-                            b != y + loadrect.top - loadpoint.y) diff_count++;
-                    }
+                        if (x < loadpoint.x || x >= loadpoint.x + loadrect.right - loadrect.left ||
+                            y < loadpoint.y || y >= loadpoint.y + loadrect.bottom - loadrect.top)
+                        {
+                            if (color & 0xffffff) diff_count++;
+                        }
+                        else
+                        {
+                            DWORD r = (color & 0xff0000) >> 16;
+                            DWORD g = (color & 0xff00) >> 8;
+                            DWORD b = (color & 0xff);
 
-                    /* This codepath is for software RGB device. It has what looks like some weird off by one errors, but may
-                    technically be correct as it's not precisely defined by docs. */
-                    if (x < loadpoint.x || x >= loadpoint.x + loadrect.right - loadrect.left ||
-                        y < loadpoint.y || y >= loadpoint.y + loadrect.bottom - loadrect.top + 1)
-                    {
-                        if (color & 0xffffff) diff_count2++;
-                    }
-                    else
-                    {
-                        DWORD r = (color & 0xff0000) >> 16;
-                        DWORD g = (color & 0xff00) >> 8;
-                        DWORD b = (color & 0xff);
+                            if (r != (0xf0 | i) || g != x + loadrect.left - loadpoint.x ||
+                                b != y + loadrect.top - loadpoint.y) diff_count++;
+                        }
 
-                        if (r != (0xf0 | i) || !IS_VALUE_NEAR(g, x + loadrect.left - loadpoint.x) ||
-                            !IS_VALUE_NEAR(b, y + loadrect.top - loadpoint.y)) diff_count2++;
+                        /* This codepath is for software RGB device. It has what looks like some weird off by one errors, but may
+                        technically be correct as it's not precisely defined by docs. */
+                        if (x < loadpoint.x || x >= loadpoint.x + loadrect.right - loadrect.left ||
+                            y < loadpoint.y || y >= loadpoint.y + loadrect.bottom - loadrect.top + 1)
+                        {
+                            if (color & 0xffffff) diff_count2++;
+                        }
+                        else
+                        {
+                            DWORD r = (color & 0xff0000) >> 16;
+                            DWORD g = (color & 0xff00) >> 8;
+                            DWORD b = (color & 0xff);
+
+                            if (r != (0xf0 | i) || !IS_VALUE_NEAR(g, x + loadrect.left - loadpoint.x) ||
+                                !IS_VALUE_NEAR(b, y + loadrect.top - loadpoint.y)) diff_count2++;
+                        }
                     }
                 }
+
+                hr = IDirectDrawSurface7_Unlock(cube_face_levels[1][i][i1], NULL);
+                ok(hr==DD_OK, "IDirectDrawSurface7_Unlock returned: %x\n",hr);
+
+                ok(diff_count == 0 || diff_count2 == 0,
+                    "Unexpected destination texture level pixels; %u differences at face %x level %d\n",
+                    MIN(diff_count, diff_count2), i, i1);
+
+                loadpoint.x /= 2;
+                loadpoint.y /= 2;
+                loadrect.top /= 2;
+                loadrect.left /= 2;
+                loadrect.right = (loadrect.right + 1) / 2;
+                loadrect.bottom = (loadrect.bottom + 1) / 2;
             }
-
-            hr = IDirectDrawSurface7_Unlock(cube_face_levels[1][i][i1], NULL);
-            ok(hr==DD_OK, "IDirectDrawSurface7_Unlock returned: %x\n",hr);
-
-            ok(diff_count == 0 || diff_count2 == 0,
-                "Unexpected destination texture level pixels; %u differences at face %x level %d\n",
-                MIN(diff_count, diff_count2), i, i1);
-
-            loadpoint.x /= 2;
-            loadpoint.y /= 2;
-            loadrect.top /= 2;
-            loadrect.left /= 2;
-            loadrect.right = (loadrect.right + 1) / 2;
-            loadrect.bottom = (loadrect.bottom + 1) / 2;
         }
+
+        for (i = 0; i < 2; i++)
+            for (i1 = 5; i1 >= 0; i1--)
+                for (i2 = 7; i2 >= 0; i2--)
+                {
+                    if (cube_face_levels[i][i1][i2]) IDirectDrawSurface7_Release(cube_face_levels[i][i1][i2]);
+                }
+        memset(cube_face_levels, 0, sizeof(cube_face_levels));
+
+        /* Test cubemap loading from regular texture. */
+        memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
+        ddsd.dwSize = sizeof(ddsd);
+        ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
+        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
+        ddsd.dwWidth = 128;
+        ddsd.dwHeight = 128;
+        hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[0][0][0], NULL);
+        ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+        if (FAILED(hr)) goto out;
+
+        memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
+        ddsd.dwSize = sizeof(ddsd);
+        ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        ddsd.dwWidth = 128;
+        ddsd.dwHeight = 128;
+        hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &texture_levels[0][0], NULL);
+        ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+        if (FAILED(hr)) goto out;
+
+        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, texture_levels[0][0], NULL,
+                                        DDSCAPS2_CUBEMAP_ALLFACES);
+        ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
+
+        IDirectDrawSurface7_Release(cube_face_levels[0][0][0]);
+        memset(cube_face_levels, 0, sizeof(cube_face_levels));
+        IDirectDrawSurface7_Release(texture_levels[0][0]);
+        memset(texture_levels, 0, sizeof(texture_levels));
+
+        /* Test cubemap loading from cubemap with different number of faces. */
+        memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
+        ddsd.dwSize = sizeof(ddsd);
+        ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
+        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX;
+        ddsd.dwWidth = 128;
+        ddsd.dwHeight = 128;
+        hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[0][0][0], NULL);
+        ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+        if (FAILED(hr)) goto out;
+
+        memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
+        ddsd.dwSize = sizeof(ddsd);
+        ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
+        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP_POSITIVEY;
+        ddsd.dwWidth = 128;
+        ddsd.dwHeight = 128;
+        hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[1][0][0], NULL);
+        ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+        if (FAILED(hr)) goto out;
+
+        /* INVALIDPARAMS tests currently would fail because wine doesn't support partial cube faces
+            (the above created cubemaps will have all faces. */
+        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
+                                        DDSCAPS2_CUBEMAP_ALLFACES);
+        todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
+
+        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
+                                        DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP_POSITIVEY);
+        todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
+
+        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
+                                        DDSCAPS2_CUBEMAP_POSITIVEX);
+        todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
+
+        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
+                                        DDSCAPS2_CUBEMAP_ALLFACES);
+        ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
+
+        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
+                                        DDSCAPS2_CUBEMAP_POSITIVEX);
+        ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
+
+        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
+                                        DDSCAPS2_CUBEMAP_POSITIVEZ);
+        ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
+
+        IDirectDrawSurface7_Release(cube_face_levels[0][0][0]);
+        IDirectDrawSurface7_Release(cube_face_levels[1][0][0]);
+        memset(cube_face_levels, 0, sizeof(cube_face_levels));
     }
-
-    for (i = 0; i < 2; i++)
-        for (i1 = 5; i1 >= 0; i1--)
-            for (i2 = 7; i2 >= 0; i2--)
-            {
-                if (cube_face_levels[i][i1][i2]) IDirectDrawSurface7_Release(cube_face_levels[i][i1][i2]);
-            }
-    memset(cube_face_levels, 0, sizeof(cube_face_levels));
-
-    /* Test cubemap loading from regular texture. */
-    memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
-    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
-    ddsd.dwWidth = 128;
-    ddsd.dwHeight = 128;
-    hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[0][0][0], NULL);
-    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
-    if (FAILED(hr)) goto out;
-
-    memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
-    ddsd.dwWidth = 128;
-    ddsd.dwHeight = 128;
-    hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &texture_levels[0][0], NULL);
-    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
-    if (FAILED(hr)) goto out;
-
-    hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, texture_levels[0][0], NULL,
-                                    DDSCAPS2_CUBEMAP_ALLFACES);
-    ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-    IDirectDrawSurface7_Release(cube_face_levels[0][0][0]);
-    memset(cube_face_levels, 0, sizeof(cube_face_levels));
-    IDirectDrawSurface7_Release(texture_levels[0][0]);
-    memset(texture_levels, 0, sizeof(texture_levels));
-
-    /* Test cubemap loading from cubemap with different number of faces. */
-    memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
-    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX;
-    ddsd.dwWidth = 128;
-    ddsd.dwHeight = 128;
-    hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[0][0][0], NULL);
-    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
-    if (FAILED(hr)) goto out;
-
-    memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
-    ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP_POSITIVEY;
-    ddsd.dwWidth = 128;
-    ddsd.dwHeight = 128;
-    hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[1][0][0], NULL);
-    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
-    if (FAILED(hr)) goto out;
-
-    /* INVALIDPARAMS tests currently would fail because wine doesn't support partial cube faces
-        (the above created cubemaps will have all faces. */
-    hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
-                                    DDSCAPS2_CUBEMAP_ALLFACES);
-    todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-    hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
-                                    DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP_POSITIVEY);
-    todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-    hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
-                                    DDSCAPS2_CUBEMAP_POSITIVEX);
-    todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-    hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
-                                    DDSCAPS2_CUBEMAP_ALLFACES);
-    ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-    hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
-                                    DDSCAPS2_CUBEMAP_POSITIVEX);
-    ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-    hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
-                                    DDSCAPS2_CUBEMAP_POSITIVEZ);
-    ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-    IDirectDrawSurface7_Release(cube_face_levels[0][0][0]);
-    IDirectDrawSurface7_Release(cube_face_levels[1][0][0]);
-    memset(cube_face_levels, 0, sizeof(cube_face_levels));
 
     /* Test texture loading with different mip level count (larger levels match, smaller levels missing in destination. */
     for (i = 0; i < 2; i++)

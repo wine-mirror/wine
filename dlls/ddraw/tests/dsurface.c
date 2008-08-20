@@ -1495,7 +1495,7 @@ HRESULT WINAPI CubeTestLvl1Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *de
 static void CubeMapTest(void)
 {
     IDirectDraw7 *dd7 = NULL;
-    IDirectDrawSurface7 *cubemap;
+    IDirectDrawSurface7 *cubemap = NULL;
     DDSURFACEDESC2 ddsd;
     HRESULT hr;
     UINT num = 0;
@@ -1503,6 +1503,7 @@ static void CubeMapTest(void)
 
     hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
     ok(hr == DD_OK, "IDirectDraw::QueryInterface returned %08x\n", hr);
+    if (FAILED(hr)) goto err;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -1521,7 +1522,11 @@ static void CubeMapTest(void)
     U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &cubemap, NULL);
-    ok(hr == DD_OK, "IDirectDraw7::CreateSurface returned %08x\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Can't create cubemap surface\n");
+        goto err;
+    }
 
     hr = IDirectDrawSurface7_GetSurfaceDesc(cubemap, &ddsd);
     ok(hr == DD_OK, "IDirectDrawSurface7_GetSurfaceDesc returned %08x\n", hr);
@@ -1603,7 +1608,8 @@ static void CubeMapTest(void)
     ok(hr == DD_OK, "IDirectDraw_EnumSurfaces returned %08x\n", hr);
     ok(ctx.count == 0, "%d surfaces enumerated, expected 0\n", ctx.count);
 
-    IDirectDraw7_Release(dd7);
+    err:
+    if (dd7) IDirectDraw7_Release(dd7);
 }
 
 static void test_lockrect_invalid(void)
