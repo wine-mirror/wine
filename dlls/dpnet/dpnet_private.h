@@ -35,6 +35,7 @@
 typedef struct IDirectPlay8ClientImpl IDirectPlay8ClientImpl;
 typedef struct IDirectPlay8AddressImpl IDirectPlay8AddressImpl;
 typedef struct IDirectPlay8LobbiedApplicationImpl IDirectPlay8LobbiedApplicationImpl;
+typedef struct IDirectPlay8PeerImpl IDirectPlay8PeerImpl;
 typedef struct IDirectPlay8ThreadPoolImpl IDirectPlay8ThreadPoolImpl;
 
 /* ------------------ */
@@ -78,6 +79,16 @@ struct IDirectPlay8LobbiedApplicationImpl
   const IDirectPlay8LobbiedApplicationVtbl *lpVtbl;
   LONG          ref;
   /* IDirectPlay8LobbiedApplication fields */
+};
+
+/*****************************************************************************
+ * IDirectPlay8Peer implementation structure
+ */
+struct IDirectPlay8PeerImpl
+{
+  /* IUnknown fields */
+  const IDirectPlay8PeerVtbl *lpVtbl;
+  LONG          ref;
 };
 
 /*****************************************************************************
