@@ -90,8 +90,7 @@ typedef struct
 {
     LPWSTR field;
     LPWSTR value;
-    WORD flags;
-    WORD count;
+    BOOL is_request; /* part of request headers? */
 } header_t;
 
 typedef struct
@@ -116,6 +115,7 @@ void release_object( object_header_t * );
 HINTERNET alloc_handle( object_header_t * );
 BOOL free_handle( HINTERNET );
 
+void set_last_error( DWORD );
 void send_callback( object_header_t *, DWORD, LPVOID, DWORD );
 
 static inline void *heap_alloc( SIZE_T size )
@@ -126,6 +126,11 @@ static inline void *heap_alloc( SIZE_T size )
 static inline void *heap_alloc_zero( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+}
+
+static inline void *heap_realloc( LPVOID mem, SIZE_T size )
+{
+    return HeapReAlloc( GetProcessHeap(), 0, mem, size );
 }
 
 static inline void *heap_realloc_zero( LPVOID mem, SIZE_T size )

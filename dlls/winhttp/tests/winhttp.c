@@ -243,7 +243,7 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded, found 'Warning' header.");
     ret = WinHttpAddRequestHeaders(request, test_headers[0], -1L, WINHTTP_ADDREQ_FLAG_ADD);
-    todo_wine ok(ret == TRUE, "WinHttpAddRequestHeader failed to add new header, got %d with error %u.\n", ret, GetLastError());
+    ok(ret == TRUE, "WinHttpAddRequestHeader failed to add new header, got %d with error %u.\n", ret, GetLastError());
 
     index = 0;
     len = sizeof(buffer);
@@ -337,7 +337,7 @@ static void test_WinHttpAddHeaders(void)
 
     /* tests for more indices */
     ret = WinHttpAddRequestHeaders(request, test_headers[1], -1L, WINHTTP_ADDREQ_FLAG_ADD);
-    todo_wine ok(ret == TRUE, "WinHttpAddRequestHeaders failed to add duplicate header: %d\n", ret);
+    ok(ret == TRUE, "WinHttpAddRequestHeaders failed to add duplicate header: %d\n", ret);
 
     index = 0;
     len = sizeof(buffer);
@@ -362,7 +362,7 @@ static void test_WinHttpAddHeaders(void)
     }
 
     ret = WinHttpAddRequestHeaders(request, test_headers[2], -1L, WINHTTP_ADDREQ_FLAG_REPLACE);
-    todo_wine ok(ret == TRUE, "WinHttpAddRequestHeaders failed to add duplicate header.\n");
+    ok(ret == TRUE, "WinHttpAddRequestHeaders failed to add duplicate header.\n");
 
     index = 0;
     len = sizeof(buffer);
@@ -418,7 +418,7 @@ static void test_WinHttpAddHeaders(void)
 
     /* coalesce flag */
     ret = WinHttpAddRequestHeaders(request, test_headers[3], -1L, WINHTTP_ADDREQ_FLAG_COALESCE);
-    todo_wine ok(ret == TRUE, "WinHttpAddRequestHeaders failed with flag WINHTTP_ADDREQ_FLAG_COALESCE.\n");
+    ok(ret == TRUE, "WinHttpAddRequestHeaders failed with flag WINHTTP_ADDREQ_FLAG_COALESCE.\n");
 
     index = 0;
     len = sizeof(buffer);
@@ -448,7 +448,7 @@ static void test_WinHttpAddHeaders(void)
 
     /* coalesce with comma flag */
     ret = WinHttpAddRequestHeaders(request, test_headers[4], -1L, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA);
-    todo_wine ok(ret == TRUE, "WinHttpAddRequestHeaders failed with flag WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA.\n");
+    ok(ret == TRUE, "WinHttpAddRequestHeaders failed with flag WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA.\n");
 
     index = 0;
     len = sizeof(buffer);
@@ -479,7 +479,7 @@ static void test_WinHttpAddHeaders(void)
 
     /* coalesce with semicolon flag */
     ret = WinHttpAddRequestHeaders(request, test_headers[5], -1L, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON);
-    todo_wine ok(ret == TRUE, "WinHttpAddRequestHeaders failed with flag WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON.\n");
+    ok(ret == TRUE, "WinHttpAddRequestHeaders failed with flag WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON.\n");
 
     index = 0;
     len = sizeof(buffer);
@@ -509,8 +509,7 @@ static void test_WinHttpAddHeaders(void)
 
     /* add and replace flags */
     ret = WinHttpAddRequestHeaders(request, test_headers[3], -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE);
-    todo_wine ok(ret == TRUE,
-        "WinHttpAddRequestHeaders failed with flag WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE.\n");
+    ok(ret == TRUE, "WinHttpAddRequestHeaders failed with flag WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE.\n");
 
     index = 0;
     len = sizeof(buffer);

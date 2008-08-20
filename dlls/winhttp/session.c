@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
-static void set_last_error( DWORD error )
+void set_last_error( DWORD error )
 {
     /* FIXME */
     SetLastError( error );

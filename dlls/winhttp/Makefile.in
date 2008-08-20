@@ -9,6 +9,7 @@ IMPORTS   = wininet kernel32
 C_SRCS = \
 	handle.c \
 	main.c \
+	request.c \
 	session.c
 
 @MAKE_DLL_RULES@
