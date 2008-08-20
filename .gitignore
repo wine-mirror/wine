@@ -176,6 +176,7 @@ dlls/kernel32/nls/winerr_deu.mc.rc
 dlls/kernel32/nls/winerr_enu.mc.rc
 dlls/kernel32/nls/winerr_fra.mc.rc
 dlls/kernel32/nls/winerr_kor.mc.rc
+dlls/kernel32/nls/winerr_nor.mc.rc
 dlls/kernel32/tests/*.ok
 dlls/kernel32/tests/kernel32_crosstest.exe
 dlls/kernel32/tests/testlist.c
