@@ -204,6 +204,9 @@ static void test_WinHttpAddHeaders(void)
     static const WCHAR test_flag_coalesce_semicolon[] =
         {'t','e','s','t','2',',',' ','t','e','s','t','4',',',' ','t','e','s','t','5',';',' ','t','e','s','t','6',0};
 
+    static const WCHAR field[] = {'f','i','e','l','d',0};
+    static const WCHAR value[] = {'v','a','l','u','e',' ',0};
+
     static const WCHAR test_headers[][14] =
         {
             {'W','a','r','n','i','n','g',':','t','e','s','t','1',0},
@@ -212,7 +215,14 @@ static void test_WinHttpAddHeaders(void)
             {'W','a','r','n','i','n','g',':','t','e','s','t','4',0},
             {'W','a','r','n','i','n','g',':','t','e','s','t','5',0},
             {'W','a','r','n','i','n','g',':','t','e','s','t','6',0},
-            {'W','a','r','n','i','n','g',':','t','e','s','t','7',0}
+            {'W','a','r','n','i','n','g',':','t','e','s','t','7',0},
+            {0},
+            {':',0},
+            {'a',':',0},
+            {':','b',0},
+            {'c','d',0},
+            {' ','e',' ',':','f',0},
+            {'f','i','e','l','d',':',' ','v','a','l','u','e',' ',0}
         };
     static const WCHAR test_indices[][6] =
         {
@@ -480,6 +490,32 @@ static void test_WinHttpAddHeaders(void)
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
         test_header_name, buffer, &len, &index);
     ok(ret == FALSE, "WinHttpQueryHeaders succeeded unexpectedly, found third header.\n");
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[8], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ok(!ret, "WinHttpAddRequestHeaders failed\n");
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[9], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "WinHttpAddRequestHeaders failed\n");
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[10], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ok(!ret, "WinHttpAddRequestHeaders failed\n");
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[11], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ok(!ret, "WinHttpAddRequestHeaders failed\n");
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[12], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ok(!ret, "WinHttpAddRequestHeaders failed\n");
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[13], ~0UL, WINHTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "WinHttpAddRequestHeaders failed\n");
+
+    index = 0;
+    buffer[0] = 0;
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+        field, buffer, &len, &index);
+    ok(ret, "WinHttpQueryHeaders failed: %u\n", GetLastError());
+    ok(!memcmp(buffer, value, sizeof(value)), "unexpected result\n");
 
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
