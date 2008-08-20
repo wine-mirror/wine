@@ -4077,6 +4077,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
 static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DWORD flag, BOOL persistent) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DBaseTexture *texture;
+    IWineD3DSurfaceImpl *overlay;
 
     TRACE("(%p)->(%s, %s)\n", iface,
           flag == SFLAG_INSYSMEM ? "SFLAG_INSYSMEM" : flag == SFLAG_INDRAWABLE ? "SFLAG_INDRAWABLE" : "SFLAG_INTEXTURE",
@@ -4105,6 +4106,13 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
         }
         This->Flags &= ~SFLAG_LOCATIONS;
         This->Flags |= flag;
+
+        /* Redraw emulated overlays, if any */
+        if(flag & SFLAG_INDRAWABLE && !list_empty(&This->overlays)) {
+            LIST_FOR_EACH_ENTRY(overlay, &This->overlays, IWineD3DSurfaceImpl, overlay_entry) {
+                IWineD3DSurface_DrawOverlay((IWineD3DSurface *) overlay);
+            }
+        }
     } else {
         if((This->Flags & SFLAG_INTEXTURE) && (flag & SFLAG_INTEXTURE)) {
             if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&texture) == WINED3D_OK) {
@@ -4556,9 +4564,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_DrawOverlay(IWineD3DSurface *iface) {
     /* If there's no destination surface there is nothing to do */
     if(!This->overlay_dest) return WINED3D_OK;
 
+    /* Blt calls ModifyLocation on the dest surface, which in turn calls DrawOverlay to
+     * update the overlay. Prevent an endless recursion
+     */
+    if(This->overlay_dest->Flags & SFLAG_INOVERLAYDRAW) {
+        return WINED3D_OK;
+    }
+    This->overlay_dest->Flags |= SFLAG_INOVERLAYDRAW;
     hr = IWineD3DSurfaceImpl_Blt((IWineD3DSurface *) This->overlay_dest, &This->overlay_destrect,
                                  iface, &This->overlay_srcrect, WINEDDBLT_WAIT,
                                  NULL, WINED3DTEXF_LINEAR);
+    This->overlay_dest->Flags &= ~SFLAG_INOVERLAYDRAW;
 
     return hr;
 }

@@ -1423,6 +1423,7 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back);
 #define SFLAG_NORMCOORD     0x00080000 /* Set if the GL texture coords are normalized(non-texture rectangle) */
 #define SFLAG_DS_ONSCREEN   0x00100000 /* Is a depth stencil, last modified onscreen */
 #define SFLAG_DS_OFFSCREEN  0x00200000 /* Is a depth stencil, last modified offscreen */
+#define SFLAG_INOVERLAYDRAW 0x00400000 /* Overlay drawing is in progress. Recursion prevention */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
