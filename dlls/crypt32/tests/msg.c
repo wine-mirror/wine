@@ -2265,9 +2265,56 @@ static void compare_signer_info(const CMSG_SIGNER_INFO *got,
     /* FIXME: check more things */
 }
 
+static void compare_cms_signer_info(const CMSG_CMS_SIGNER_INFO *got,
+ const CMSG_CMS_SIGNER_INFO *expected)
+{
+    ok(got->dwVersion == expected->dwVersion, "Expected version %d, got %d\n",
+     expected->dwVersion, got->dwVersion);
+    ok(got->SignerId.dwIdChoice == expected->SignerId.dwIdChoice,
+     "Expected id choice %d, got %d\n", expected->SignerId.dwIdChoice,
+     got->SignerId.dwIdChoice);
+    if (got->SignerId.dwIdChoice == expected->SignerId.dwIdChoice)
+    {
+        if (got->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER)
+        {
+            ok(got->SignerId.IssuerSerialNumber.Issuer.cbData ==
+             expected->SignerId.IssuerSerialNumber.Issuer.cbData,
+             "Expected issuer size %d, got %d\n",
+             expected->SignerId.IssuerSerialNumber.Issuer.cbData,
+             got->SignerId.IssuerSerialNumber.Issuer.cbData);
+            ok(!memcmp(got->SignerId.IssuerSerialNumber.Issuer.pbData,
+             expected->SignerId.IssuerSerialNumber.Issuer.pbData,
+             got->SignerId.IssuerSerialNumber.Issuer.cbData),
+             "Unexpected issuer\n");
+            ok(got->SignerId.IssuerSerialNumber.SerialNumber.cbData ==
+             expected->SignerId.IssuerSerialNumber.SerialNumber.cbData,
+             "Expected serial number size %d, got %d\n",
+             expected->SignerId.IssuerSerialNumber.SerialNumber.cbData,
+             got->SignerId.IssuerSerialNumber.SerialNumber.cbData);
+            ok(!memcmp(got->SignerId.IssuerSerialNumber.SerialNumber.pbData,
+             expected->SignerId.IssuerSerialNumber.SerialNumber.pbData,
+             got->SignerId.IssuerSerialNumber.SerialNumber.cbData),
+             "Unexpected serial number\n");
+        }
+        else
+        {
+            ok(got->SignerId.KeyId.cbData == expected->SignerId.KeyId.cbData,
+             "expected key id size %d, got %d\n",
+             expected->SignerId.KeyId.cbData, got->SignerId.KeyId.cbData);
+            ok(!memcmp(expected->SignerId.KeyId.pbData,
+             got->SignerId.KeyId.pbData, got->SignerId.KeyId.cbData),
+             "unexpected key id\n");
+        }
+    }
+    /* FIXME: check more things */
+}
+
 static const BYTE signedWithCertAndCrlComputedHash[] = {
 0x08,0xd6,0xc0,0x5a,0x21,0x51,0x2a,0x79,0xa1,0xdf,0xeb,0x9d,0x2a,0x8f,0x26,
 0x2f };
+static BYTE keyIdIssuer[] = {
+0x30,0x13,0x31,0x11,0x30,0x0f,0x06,0x0a,0x2b,0x06,0x01,0x04,0x01,0x82,0x37,
+0x0a,0x07,0x01,0x04,0x01,0x01 };
 
 static void test_decode_msg_get_param(void)
 {
@@ -2354,6 +2401,32 @@ static void test_decode_msg_get_param(void)
         compare_signer_info((CMSG_SIGNER_INFO *)buf, &signer);
         CryptMemFree(buf);
     }
+    /* Getting the CMS signer info of a PKCS7 message is possible. */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    if (ret)
+        buf = CryptMemAlloc(size);
+    else
+        buf = NULL;
+    if (buf)
+    {
+        CMSG_CMS_SIGNER_INFO signer = { 0 };
+
+        signer.dwVersion = 1;
+        signer.SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+        signer.SignerId.IssuerSerialNumber.Issuer.cbData =
+         sizeof(encodedCommonName);
+        signer.SignerId.IssuerSerialNumber.Issuer.pbData = encodedCommonName;
+        signer.SignerId.IssuerSerialNumber.SerialNumber.cbData =
+         sizeof(serialNum);
+        signer.SignerId.IssuerSerialNumber.SerialNumber.pbData = serialNum;
+        signer.HashAlgorithm.pszObjId = oid_rsa_md5;
+        CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, buf, &size);
+        compare_cms_signer_info((CMSG_CMS_SIGNER_INFO *)buf, &signer);
+        CryptMemFree(buf);
+    }
     /* index is ignored when getting signer count */
     size = sizeof(value);
     ret = CryptMsgGetParam(msg, CMSG_SIGNER_COUNT_PARAM, 1, &value, &size);
@@ -2382,6 +2455,68 @@ static void test_decode_msg_get_param(void)
     check_param("signed with cert and CRL computed hash", msg,
      CMSG_COMPUTED_HASH_PARAM, signedWithCertAndCrlComputedHash,
      sizeof(signedWithCertAndCrlComputedHash));
+    CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
+    ret = CryptMsgUpdate(msg, signedKeyIdEmptyContent,
+     sizeof(signedKeyIdEmptyContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    size = sizeof(value);
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_COUNT_PARAM, 0, &value, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(value == 1, "Expected 1 signer, got %d\n", value);
+    /* Getting the regular (non-CMS) signer info from a CMS message is also
+     * possible..
+     */
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    if (ret)
+        buf = CryptMemAlloc(size);
+    else
+        buf = NULL;
+    if (buf)
+    {
+        CMSG_SIGNER_INFO signer;
+        BYTE zero = 0;
+
+        /* and here's the little oddity:  for a CMS message using the key id
+         * variant of a SignerId, retrieving the CMSG_SIGNER_INFO param yields
+         * a signer with a zero (not empty) serial number, and whose issuer is
+         * an RDN with OID szOID_KEYID_RDN, value type CERT_RDN_OCTET_STRING,
+         * and value of the key id.
+         */
+        signer.dwVersion = CMSG_SIGNED_DATA_V3;
+        signer.Issuer.cbData = sizeof(keyIdIssuer);
+        signer.Issuer.pbData = keyIdIssuer;
+        signer.SerialNumber.cbData = 1;
+        signer.SerialNumber.pbData = &zero;
+        CryptMsgGetParam(msg, CMSG_SIGNER_INFO_PARAM, 0, buf, &size);
+        compare_signer_info((CMSG_SIGNER_INFO *)buf, &signer);
+        CryptMemFree(buf);
+    }
+    size = 0;
+    ret = CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, NULL, &size);
+    todo_wine
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    if (ret)
+        buf = CryptMemAlloc(size);
+    else
+        buf = NULL;
+    if (buf)
+    {
+        CMSG_CMS_SIGNER_INFO signer = { 0 };
+
+        signer.dwVersion = CMSG_SIGNED_DATA_V3;
+        signer.SignerId.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
+        signer.SignerId.KeyId.cbData = sizeof(serialNum);
+        signer.SignerId.KeyId.pbData = (BYTE *)serialNum;
+        signer.HashAlgorithm.pszObjId = oid_rsa_md5;
+        CryptMsgGetParam(msg, CMSG_CMS_SIGNER_INFO_PARAM, 0, buf, &size);
+        compare_cms_signer_info((CMSG_CMS_SIGNER_INFO *)buf, &signer);
+        CryptMemFree(buf);
+    }
     CryptMsgClose(msg);
 }
 
