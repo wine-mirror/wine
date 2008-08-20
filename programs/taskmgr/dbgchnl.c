@@ -4,6 +4,7 @@
  *  dbgchnl.c
  *
  *  Copyright (C) 2003 - 2004 Eric Pouech
+ *  Copyright (C) 2008  Vladimir Pankratov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,7 +28,6 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
-#include <tchar.h>
 #include <stdio.h>
 #include <winnt.h>
 #include <dbghelp.h>
@@ -61,9 +61,11 @@ BOOL AreDebugChannelsSupported(void)
 {
     static HANDLE   hDbgHelp /* = NULL */;
 
+    static const WCHAR    wszDbgHelp[] = {'D','B','G','H','E','L','P','.','D','L','L',0};
+
     if (hDbgHelp) return TRUE;
 
-    if (!(hDbgHelp = LoadLibrary("dbghelp.dll"))) return FALSE;
+    if (!(hDbgHelp = LoadLibraryW(wszDbgHelp))) return FALSE;
     pSymSetOptions = (void*)GetProcAddress(hDbgHelp, "SymSetOptions");
     pSymInitialize = (void*)GetProcAddress(hDbgHelp, "SymInitialize");
     pSymLoadModule = (void*)GetProcAddress(hDbgHelp, "SymLoadModule");
@@ -221,42 +223,43 @@ static void DebugChannels_FillList(HWND hChannelLV)
 static void DebugChannels_OnCreate(HWND hwndDlg)
 {
     HWND        hLV = GetDlgItem(hwndDlg, IDC_DEBUG_CHANNELS_LIST);
-    LVCOLUMN    lvc;
-    static TCHAR debug_channelT[] = {'D','e','b','u','g',' ','C','h','a','n','n','e','l',0},
-                 fixmeT[]         = {'F','i','x','m','e',0},
-                 errT[]           = {'E','r','r',0},
-                 warnT[]          = {'W','a','r','n',0},
-                 traceT[]         = {'T','r','a','c','e',0};
+    LVCOLUMNW   lvc;
+
+    static WCHAR debug_channelW[] = {'D','e','b','u','g',' ','C','h','a','n','n','e','l',0},
+                 fixmeW[]         = {'F','i','x','m','e',0},
+                 errW[]           = {'E','r','r',0},
+                 warnW[]          = {'W','a','r','n',0},
+                 traceW[]         = {'T','r','a','c','e',0};
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_LEFT;
-    lvc.pszText = debug_channelT;
+    lvc.pszText = debug_channelW;
     lvc.cx = 100;
-    SendMessage(hLV, LVM_INSERTCOLUMN, 0, (LPARAM) &lvc);
+    SendMessageW(hLV, LVM_INSERTCOLUMNW, 0, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = fixmeT;
+    lvc.pszText = fixmeW;
     lvc.cx = 55;
-    SendMessage(hLV, LVM_INSERTCOLUMN, 1, (LPARAM) &lvc);
+    SendMessageW(hLV, LVM_INSERTCOLUMNW, 1, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = errT;
+    lvc.pszText = errW;
     lvc.cx = 55;
-    SendMessage(hLV, LVM_INSERTCOLUMN, 2, (LPARAM) &lvc);
+    SendMessageW(hLV, LVM_INSERTCOLUMNW, 2, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = warnT;
+    lvc.pszText = warnW;
     lvc.cx = 55;
-    SendMessage(hLV, LVM_INSERTCOLUMN, 3, (LPARAM) &lvc);
+    SendMessageW(hLV, LVM_INSERTCOLUMNW, 3, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = traceT;
+    lvc.pszText = traceW;
     lvc.cx = 55;
-    SendMessage(hLV, LVM_INSERTCOLUMN, 4, (LPARAM) &lvc);
+    SendMessageW(hLV, LVM_INSERTCOLUMNW, 4, (LPARAM) &lvc);
 
     DebugChannels_FillList(hLV);
 }
@@ -331,5 +334,5 @@ static INT_PTR CALLBACK DebugChannelsDlgProc(HWND hDlg, UINT message, WPARAM wPa
 
 void ProcessPage_OnDebugChannels(void)
 {
-    DialogBox(hInst, (LPCTSTR)IDD_DEBUG_CHANNELS_DIALOG, hMainWnd, DebugChannelsDlgProc);
+    DialogBoxW(hInst, (LPCWSTR)IDD_DEBUG_CHANNELS_DIALOG, hMainWnd, DebugChannelsDlgProc);
 }
