@@ -4,7 +4,8 @@ dnl See ChangeLog file for detailed change history.
 
 m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[\1]))
 
-AC_PREREQ(2.53b)
+dnl autoconf versions before 2.59d don't handle multi-line subst variables correctly
+AC_PREREQ(2.59d)
 AC_INIT([Wine],[WINE_VERSION],[wine-devel@winehq.org])
 AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
@@ -1657,21 +1658,7 @@ esac
 
 dnl **** Generate output files ****
 
-dnl autoconf versions before 2.59d need backslashes to escape newlines in subst variables
-AC_SUBST(DEPENDENCIES,m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.59d]), -1,
-["### Dependencies:\\
-\\
-.INIT: Makefile\\
-.BEGIN: Makefile\\
-Makefile: dummy\\
-	-\$(MAKEDEP) -C\$(SRCDIR) -S\$(TOPSRCDIR) -T\$(TOPOBJDIR) \$(EXTRAINCL) \$(DEPEND_SRCS)\\
-\\
-\$(OBJS): \$(IDL_GEN_HEADERS)\\
-\$(IDL_GEN_C_SRCS:.c=.o): \$(IDL_GEN_C_SRCS)\\
-\$(RC_SRCS:.rc=.res): \$(IDL_TLB_SRCS:.idl=.tlb)\\
-\$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)\\
-\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"],
-["### Dependencies:
+AC_SUBST(DEPENDENCIES,["### Dependencies:
 
 .INIT: Makefile
 .BEGIN: Makefile
@@ -1682,7 +1669,7 @@ Makefile: dummy
 \$(IDL_GEN_C_SRCS:.c=.o): \$(IDL_GEN_C_SRCS)
 \$(RC_SRCS:.rc=.res): \$(IDL_TLB_SRCS:.idl=.tlb)
 \$(LEX_SRCS:.l=.yy.o): \$(LEX_SRCS:.l=.yy.c)
-\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"]))
+\$(BISON_SRCS:.y=.tab.o): \$(BISON_SRCS:.y=.tab.c)"])
 
 AH_TOP([#define __WINE_CONFIG_H])
 
