@@ -33,6 +33,19 @@
 
 static const CHAR spooler[] = "Spooler"; /* Should be available on all platforms */
 
+static BOOL (WINAPI *pChangeServiceConfig2A)(SC_HANDLE,DWORD,LPVOID);
+static BOOL (WINAPI *pQueryServiceConfig2A)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD);
+static BOOL (WINAPI *pQueryServiceConfig2W)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD);
+
+static void init_function_pointers(void)
+{
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+
+    pChangeServiceConfig2A = (void*)GetProcAddress(hadvapi32, "ChangeServiceConfig2A");
+    pQueryServiceConfig2A= (void*)GetProcAddress(hadvapi32, "QueryServiceConfig2A");
+    pQueryServiceConfig2W= (void*)GetProcAddress(hadvapi32, "QueryServiceConfig2W");
+}
+
 static void test_open_scm(void)
 {
     SC_HANDLE scm_handle;
@@ -958,13 +971,7 @@ static void test_queryconfig2(void)
     static const CHAR dependencies[] = "Master1\0Master2\0+MasterGroup1\0";
     static const CHAR password    [] = "";
     static const CHAR description [] = "Description";
-    HMODULE dllhandle = GetModuleHandleA("advapi32.dll");
-    BOOL (WINAPI *pChangeServiceConfig2A)(SC_HANDLE,DWORD,LPVOID)
-            = (void*)GetProcAddress(dllhandle, "ChangeServiceConfig2A");
-    BOOL (WINAPI *pQueryServiceConfig2A)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD)
-            = (void*)GetProcAddress(dllhandle, "QueryServiceConfig2A");
-    BOOL (WINAPI *pQueryServiceConfig2W)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD)
-            = (void*)GetProcAddress(dllhandle, "QueryServiceConfig2W");
+
     if(!pQueryServiceConfig2A)
     {
         skip("function QueryServiceConfig2A not present\n");
@@ -1249,6 +1256,8 @@ START_TEST(service)
         return;
     }
     CloseServiceHandle(scm_handle);
+
+    init_function_pointers();
 
     /* First some parameter checking */
     test_open_scm();
