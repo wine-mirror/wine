@@ -730,6 +730,10 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
             }
             glDisable(GL_TEXTURE_3D);
             checkGLcall("glDisable GL_TEXTURE_3D");
+            if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+                glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                checkGLcall("glDisable GL_TEXTURE_RECTANGLE_ARB");
+            }
             glDisable(GL_TEXTURE_2D);
             checkGLcall("glDisable GL_TEXTURE_2D");
 
@@ -755,6 +759,10 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     }
     glDisable(GL_TEXTURE_3D);
     checkGLcall("glDisable GL_TEXTURE_3D");
+    if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
+        glDisable(GL_TEXTURE_RECTANGLE_ARB);
+        checkGLcall("glDisable GL_TEXTURE_RECTANGLE_ARB");
+    }
     glDisable(GL_TEXTURE_2D);
     checkGLcall("glDisable GL_TEXTURE_2D");
 
