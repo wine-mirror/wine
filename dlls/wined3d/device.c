@@ -2259,9 +2259,15 @@ err_out:
         IWineD3DStateBlock_Release((IWineD3DStateBlock *) This->stateBlock);
         This->stateBlock = NULL;
     }
-    This->blitter->free_private(iface);
-    This->frag_pipe->free_private(iface);
-    This->shader_backend->shader_free_private(iface);
+    if (This->blit_priv) {
+        This->blitter->free_private(iface);
+    }
+    if (This->fragment_priv) {
+        This->frag_pipe->free_private(iface);
+    }
+    if (This->shader_priv) {
+        This->shader_backend->shader_free_private(iface);
+    }
     return hr;
 }
 
