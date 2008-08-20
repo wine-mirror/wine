@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <windef.h>
@@ -277,7 +278,7 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, NULL, &len, &index);
     ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded.\n");
     todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
-    todo_wine ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
+    ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
     ok(index == 0, "WinHttpQueryHeaders incorrectly incremented header index.\n");
 
     /* Try with a NULL buffer and a length thats too small */
@@ -289,7 +290,7 @@ static void test_WinHttpAddHeaders(void)
     ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded.\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
         "WinHttpQueryHeaders set incorrect error: expected ERROR_INSUFFICENT_BUFFER, go %u\n", GetLastError());
-    todo_wine ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
+    ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
     ok(index == 0, "WinHttpQueryHeaders incorrectly incremented header index.\n");
 
     index = 0;
@@ -300,7 +301,7 @@ static void test_WinHttpAddHeaders(void)
     ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded.\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
         "WinHttpQueryHeaders set incorrect error: expected ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
-    todo_wine ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
+    ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
     ok(index == 0, "WinHttpQueryHeaders failed: index was incremented.\n");
 
     /* valid query */
@@ -314,13 +315,10 @@ static void test_WinHttpAddHeaders(void)
     ok(len + sizeof(WCHAR) <= oldlen, "WinHttpQueryHeaders resulting length longer than advertized.\n");
     ok((len < sizeof(buffer) - sizeof(WCHAR)) && buffer[len / sizeof(WCHAR)] == 0, "WinHttpQueryHeaders did not append NULL terminator\n");
     ok(len == lstrlenW(buffer) * sizeof(WCHAR), "WinHttpQueryHeaders returned incorrect length.\n");
-    todo_wine
-    {
-        ok(memcmp(buffer, test_header_begin, sizeof(test_header_begin)) == 0,
-            "WinHttpQueryHeaders returned invalid beginning of header string.\n");
-        ok(memcmp(buffer + lstrlenW(buffer) - 4, test_header_end, sizeof(test_header_end)) == 0,
-            "WinHttpQueryHeaders returned invalid end of header string.\n");
-    }
+    ok(memcmp(buffer, test_header_begin, sizeof(test_header_begin)) == 0,
+        "WinHttpQueryHeaders returned invalid beginning of header string.\n");
+    ok(memcmp(buffer + lstrlenW(buffer) - 4, test_header_end, sizeof(test_header_end)) == 0,
+        "WinHttpQueryHeaders returned invalid end of header string.\n");
     ok(index == 0, "WinHttpQueryHeaders incremented header index.\n");
 
     /* tests for more indices */
