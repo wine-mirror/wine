@@ -721,10 +721,29 @@ static HRESULT WINAPI isaxattributes_getIndexFromName(
         int *index)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
-
-    FIXME("(%p)->(%s, %d, %s, %d) stub\n", This, debugstr_w(pUri), cUriLength,
+    int i;
+    TRACE("(%p)->(%s, %d, %s, %d)\n", This, debugstr_w(pUri), cUriLength,
             debugstr_w(pLocalName), cocalNameLength);
-    return E_NOTIMPL;
+
+    if(!pUri || !pLocalName || !index) return E_POINTER;
+
+    for(i=0; i<This->nb_attributes; i++)
+    {
+        if(cUriLength!=SysStringLen(This->szURI[i])
+                || cocalNameLength!=SysStringLen(This->szLocalname[i]))
+            continue;
+        if(cUriLength && memcmp(pUri, This->szURI[i],
+                    sizeof(WCHAR)*cUriLength))
+            continue;
+        if(cocalNameLength && memcmp(pLocalName, This->szLocalname[i],
+                    sizeof(WCHAR)*cocalNameLength))
+            continue;
+
+        *index = i;
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI isaxattributes_getIndexFromQName(
