@@ -1876,8 +1876,20 @@ static HRESULT WINAPI internal_parse(
                     if(hr == E_PENDING) continue;
                     break;
                 }
+                if(hr != S_OK)
+                {
+                    IStream_Release(stream);
+                    break;
+                }
+
                 data = HeapAlloc(GetProcessHeap(), 0,
                         dataInfo.cbSize.QuadPart);
+                if(!data)
+                {
+                    IStream_Release(stream);
+                    break;
+                }
+
                 while(1)
                 {
                     hr = IStream_Read(stream, data,
@@ -1885,6 +1897,13 @@ static HRESULT WINAPI internal_parse(
                     if(hr == E_PENDING) continue;
                     break;
                 }
+                if(hr != S_OK)
+                {
+                    HeapFree(GetProcessHeap(), 0, data);
+                    IStream_Release(stream);
+                    break;
+                }
+
                 hr = internal_parseBuffer(This, data,
                         dataInfo.cbSize.QuadPart, vbInterface);
                 HeapFree(GetProcessHeap(), 0, data);
