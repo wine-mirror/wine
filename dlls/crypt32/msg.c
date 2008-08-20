@@ -1381,6 +1381,9 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
                     ret = CSignedMsgData_AllocateHandles(&msg->msg_data);
                     for (i = 0; ret && i < msg->msg_data.info->cSignerInfo; i++)
                     {
+                        if (info->rgSigners[i].SignerId.dwIdChoice ==
+                         CERT_ID_KEY_IDENTIFIER)
+                            msg->msg_data.info->version = CMSG_SIGNED_DATA_V3;
                         ret = CSignerInfo_Construct(
                          &msg->msg_data.info->rgSignerInfo[i],
                          &info->rgSigners[i]);
