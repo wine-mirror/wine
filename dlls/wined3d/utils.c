@@ -1976,6 +1976,11 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
                 break;
         }
     }
+    if(stateblock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
+        settings->sRGB_write = 1;
+    } else {
+        settings->sRGB_write = 0;
+    }
 }
 #undef GLINFO_LOCATION
 

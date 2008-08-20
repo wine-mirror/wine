@@ -785,6 +785,7 @@ struct ffp_settings {
         FOG_EXP,
         FOG_EXP2
     } fog;
+    unsigned char sRGB_write;
 };
 
 struct ffp_desc

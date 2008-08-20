@@ -1958,6 +1958,28 @@ static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
     return TRUE;
 }
 
+static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcolor, const char *tmp1,
+                                      const char *tmp2, const char *tmp3, const char *tmp4) {
+    /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
+
+    /* Calculate the > 0.0031308 case */
+    shader_addline(buffer, "POW %s.x, %s.x, srgb_pow.x;\n", tmp1, fragcolor);
+    shader_addline(buffer, "POW %s.y, %s.y, srgb_pow.y;\n", tmp1, fragcolor);
+    shader_addline(buffer, "POW %s.z, %s.z, srgb_pow.z;\n", tmp1, fragcolor);
+    shader_addline(buffer, "MUL %s, %s, srgb_mul_hi;\n", tmp1, tmp1);
+    shader_addline(buffer, "SUB %s, %s, srgb_sub_hi;\n", tmp1, tmp1);
+    /* Calculate the < case */
+    shader_addline(buffer, "MUL %s, srgb_mul_low, %s;\n", tmp2, fragcolor);
+    /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
+    shader_addline(buffer, "SLT %s, srgb_comparison, %s;\n", tmp3, fragcolor);
+    shader_addline(buffer, "SGE %s, srgb_comparison, %s;\n", tmp4, fragcolor);
+    /* Store the components > 0.0031308 in the destination */
+    shader_addline(buffer, "MUL %s, %s, %s;\n", fragcolor, tmp1, tmp3);
+    /* Add the components that are < 0.0031308 */
+    shader_addline(buffer, "MAD result.color.xyz, %s, %s, %s;\n", tmp2, tmp4, fragcolor);
+    /* [0.0;1.0] clamping. Not needed, this is done implicitly */
+}
+
 static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
@@ -2002,24 +2024,7 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
         fragcolor = "TMP_COLOR";
     }
     if(This->srgb_enabled) {
-        /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
-
-        /* Calculate the > 0.0031308 case */
-        shader_addline(buffer, "POW TMP.x, %s.x, srgb_pow.x;\n", fragcolor);
-        shader_addline(buffer, "POW TMP.y, %s.y, srgb_pow.y;\n", fragcolor);
-        shader_addline(buffer, "POW TMP.z, %s.z, srgb_pow.z;\n", fragcolor);
-        shader_addline(buffer, "MUL TMP, TMP, srgb_mul_hi;\n");
-        shader_addline(buffer, "SUB TMP, TMP, srgb_sub_hi;\n");
-        /* Calculate the < case */
-        shader_addline(buffer, "MUL TMP2, srgb_mul_low, %s;\n", fragcolor);
-        /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
-        shader_addline(buffer, "SLT TA, srgb_comparison, %s;\n", fragcolor);
-        shader_addline(buffer, "SGE TB, srgb_comparison, %s;\n", fragcolor);
-        /* Store the components > 0.0031308 in the destination */
-        shader_addline(buffer, "MUL %s, TMP, TA;\n", fragcolor);
-        /* Add the components that are < 0.0031308 */
-        shader_addline(buffer, "MAD result.color.xyz, TMP2, TB, %s;\n", fragcolor);
-        /* [0.0;1.0] clamping. Not needed, this is done implicitly */
+        arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TMP2", "TA", "TB");
     }
     if (This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
         shader_addline(buffer, "LRP result.color.rgb, TMP_FOG.x, %s, state.fog.color;\n", fragcolor);
@@ -2644,7 +2649,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
 
     shader_addline(&buffer, "PARAM const = {1, 2, 4, 0.5};\n");
     shader_addline(&buffer, "TEMP ret;\n");
-    if(tempreg_used) shader_addline(&buffer, "TEMP tempreg;\n");
+    if(tempreg_used || settings->sRGB_write) shader_addline(&buffer, "TEMP tempreg;\n");
     shader_addline(&buffer, "TEMP arg0;\n");
     shader_addline(&buffer, "TEMP arg1;\n");
     shader_addline(&buffer, "TEMP arg2;\n");
@@ -2656,6 +2661,19 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     }
     if(tfactor_used) {
         shader_addline(&buffer, "PARAM tfactor = program.env[%u];\n", ARB_FFP_CONST_TFACTOR);
+    }
+
+    if(settings->sRGB_write) {
+        shader_addline(&buffer, "PARAM srgb_mul_low = {%f, %f, %f, 1.0};\n",
+                       srgb_mul_low, srgb_mul_low, srgb_mul_low);
+        shader_addline(&buffer, "PARAM srgb_comparison =  {%f, %f, %f, %f};\n",
+                       srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
+        shader_addline(&buffer, "PARAM srgb_pow =  {%f, %f, %f, 1.0};\n",
+                       srgb_pow, srgb_pow, srgb_pow);
+        shader_addline(&buffer, "PARAM srgb_mul_hi =  {%f, %f, %f, 1.0};\n",
+                       srgb_mul_high, srgb_mul_high, srgb_mul_high);
+        shader_addline(&buffer, "PARAM srgb_sub_hi =  {%f, %f, %f, 0.0};\n",
+                       srgb_sub_high, srgb_sub_high, srgb_sub_high);
     }
 
     /* Generate texture sampling instructions) */
@@ -2714,6 +2732,8 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
                 shader_addline(&buffer, "MOV result.color, fragment.color.primary;\n");
             }
             break;
+        } else if(settings->sRGB_write) {
+            last = FALSE;
         } else if(stage == (MAX_TEXTURES - 1)) {
             last = TRUE;
         } else if(settings->op[stage + 1].cop == WINED3DTOP_DISABLE) {
@@ -2748,7 +2768,10 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
         }
     }
 
-    /* TODO: Generate sRGB write color correction */
+    if(settings->sRGB_write) {
+        arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg");
+        shader_addline(&buffer, "MOV result.color.a, ret.a;\n");
+    }
 
     /* Footer */
     shader_addline(&buffer, "END\n");
@@ -2976,6 +2999,7 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     { STATE_RENDER(WINED3DRS_FOGENABLE),                  { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_arbfp_fog         }, 0                               },
     { STATE_RENDER(WINED3DRS_FOGTABLEMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_arbfp_fog         }, 0                               },
     { STATE_RENDER(WINED3DRS_FOGVERTEXMODE),              { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_arbfp_fog         }, 0                               },
+    { STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, 0                               },
     {0 /* Terminate */,                                   { 0,                                                  0                       }, 0                               },
 };
 
