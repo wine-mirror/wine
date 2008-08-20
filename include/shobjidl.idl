@@ -1349,3 +1349,28 @@ interface IFileSystemBindData : IUnknown
     HRESULT GetFindData(
                 [out] WIN32_FIND_DATAW *pfd);
 }
+
+/*****************************************************************************
+ *    ITaskbarList interface
+ */
+[
+    object,
+    uuid(56FDF342-FD6D-11d0-958A-006097C9A090),
+    pointer_default(unique)
+]
+interface ITaskbarList : IUnknown
+{
+    HRESULT HrInit();
+
+    HRESULT AddTab(
+        [in] HWND hwnd);
+
+    HRESULT DeleteTab(
+        [in] HWND hwnd);
+
+    HRESULT ActivateTab(
+        [in] HWND hwnd);
+
+    HRESULT SetActiveAlt(
+        [in] HWND hwnd);
+}
