@@ -839,11 +839,17 @@ static HRESULT WINAPI isaxattributes_getValueFromName(
         const WCHAR **pValue,
         int *nValue)
 {
+    HRESULT hr;
+    int index;
     saxattributes *This = impl_from_ISAXAttributes( iface );
-
-    FIXME("(%p)->(%s, %d, %s, %d) stub\n", This, debugstr_w(pUri), nUri,
+    TRACE("(%p)->(%s, %d, %s, %d)\n", This, debugstr_w(pUri), nUri,
             debugstr_w(pLocalName), nLocalName);
-    return E_NOTIMPL;
+
+    hr = ISAXAttributes_getIndexFromName(iface,
+            pUri, nUri, pLocalName, nLocalName, &index);
+    if(hr==S_OK) hr = ISAXAttributes_getValue(iface, index, pValue, nValue);
+
+    return hr;
 }
 
 static HRESULT WINAPI isaxattributes_getValueFromQName(
