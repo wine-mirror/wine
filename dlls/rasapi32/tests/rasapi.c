@@ -106,8 +106,9 @@ static void test_rasenum(void)
     rasDevInfo[0].dwSize = sizeof(RASDEVINFOA);
     cb = 0;
     result = pRasEnumDevicesA(rasDevInfo, &cb, &cDevices);
-    ok(result == ERROR_BUFFER_TOO_SMALL,
-    "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
+    ok(result == ERROR_BUFFER_TOO_SMALL ||
+    result == ERROR_INVALID_SIZE, /* vista, 2k8 */
+    "Expected ERROR_BUFFER_TOO_SMALL/ERROR_INVALID_SIZE, got %08d\n", result);
 
     rasDevInfo[0].dwSize = sizeof(RASDEVINFOA);
     cb = bufsize -1;
