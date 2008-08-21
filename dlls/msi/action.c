@@ -2116,7 +2116,6 @@ static UINT msi_check_file_install_states( MSIPACKAGE *package )
         {
             file->state = msifs_missing;
             comp->Cost += file->FileSize;
-            comp->Installed = INSTALLSTATE_INCOMPLETE;
             continue;
         }
 
@@ -2130,7 +2129,6 @@ static UINT msi_check_file_install_states( MSIPACKAGE *package )
             {
                 file->state = msifs_overwrite;
                 comp->Cost += file->FileSize;
-                comp->Installed = INSTALLSTATE_INCOMPLETE;
             }
             else
                 file->state = msifs_present;
