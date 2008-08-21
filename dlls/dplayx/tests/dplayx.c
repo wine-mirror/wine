@@ -27,7 +27,7 @@
 #define check(expected, result)                 \
     ok( (expected) == (result),                 \
         "expected=%d got=%d\n",                 \
-        expected, result );
+        (int)(expected), (int)(result) );
 #define checkLP(expected, result)               \
     ok( (expected) == (result),                 \
         "expected=%p got=%p\n",                 \

@@ -549,7 +549,7 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **ind
     {
         FIXME("Invalid index chunk encountered: %u/%u, %u/%u, %u/%u, %u/%u\n",
               pIndex->bIndexType, AVI_INDEX_OF_CHUNKS, pIndex->wLongsPerEntry, 2,
-              rest, (pIndex->nEntriesInUse * sizeof(DWORD) * pIndex->wLongsPerEntry),
+              rest, (DWORD)(pIndex->nEntriesInUse * sizeof(DWORD) * pIndex->wLongsPerEntry),
               pIndex->bIndexSubType, AVI_INDEX_SUB_DEFAULT);
         *index = NULL;
         return E_INVALIDARG;

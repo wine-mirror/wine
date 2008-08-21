@@ -129,7 +129,7 @@ static void test_SendRequest (void)
     todo_wine ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());
 
     todo_wine ok(bytes_rw == strlen(test_post), "Read %u bytes instead of %d.\n",
-        bytes_rw, strlen(test_post));
+        bytes_rw, lstrlen(test_post));
     todo_wine ok(strncmp(buffer, test_post, bytes_rw) == 0,
         "Data read did not match, got '%s'.\n", buffer);
 
