@@ -368,6 +368,10 @@ static void test_VarFormat(void)
   VARFMT(VT_R8,V_R8,1.0001e-27,"##00.0000e-0",S_OK,"1000.1000e-30");
   VARFMT(VT_R8,V_R8,47.11,".0000E+0",S_OK,".4711E+2");
   VARFMT(VT_R8,V_R8,3.0401e-13,"#####.####e-0%",S_OK,"30401.e-15%");
+  VARFMT(VT_R8,V_R8,1.57,"0.00",S_OK,"1.57");
+  todo_wine {
+  VARFMT(VT_R8,V_R8,-1.57,"0.00",S_OK,"-1.57");
+  }
 
 
   /* 'out' is not cleared */
