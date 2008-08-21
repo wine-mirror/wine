@@ -312,11 +312,16 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
         GL_EXTCALL(glSampleMapATI(GL_REG_0_ATI + stage,
                    GL_TEXTURE0_ARB + stage,
                    GL_SWIZZLE_STR_ATI));
-        TRACE("glPassTexCoordATI(GL_REG_%d_ATI, GL_TEXTURE_%d_ARB, GL_SWIZZLE_STR_ATI)\n",
-              stage + 1, stage + 1);
+        if(op[stage + 1].projected == proj_none) {
+            swizzle = GL_SWIZZLE_STR_ATI;
+        } else {
+            swizzle = GL_SWIZZLE_STQ_DQ_ATI;
+        }
+        TRACE("glPassTexCoordATI(GL_REG_%d_ATI, GL_TEXTURE_%d_ARB, %s)\n",
+              stage + 1, stage + 1, debug_swizzle(swizzle));
         GL_EXTCALL(glPassTexCoordATI(GL_REG_0_ATI + stage + 1,
                    GL_TEXTURE0_ARB + stage + 1,
-                   GL_SWIZZLE_STR_ATI));
+                   swizzle));
 
         /* We need GL_REG_5_ATI as a temporary register to swizzle the bump matrix. So we run into
          * issues if we're bump mapping on stage 4 or 5
