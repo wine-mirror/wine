@@ -118,10 +118,10 @@ static void test_SetApplicationName_GetApplicationName(void)
 
     /* Attempt getting before setting application name */
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    todo_wine ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(stored_name, empty),
+        ok(!lstrcmpW(stored_name, empty),
                 "Got %s, expected empty string\n", dbgstr_w(stored_name));
         CoTaskMemFree(stored_name);
     }
@@ -129,14 +129,14 @@ static void test_SetApplicationName_GetApplicationName(void)
     /* Set application name to a non-existent application and then get
      * the application name that is actually stored */
     hres = ITask_SetApplicationName(test_task, non_application_name);
-    todo_wine ok(hres == S_OK, "Failed setting name %s: %08x\n",
+    ok(hres == S_OK, "Failed setting name %s: %08x\n",
             dbgstr_w(non_application_name), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    todo_wine ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
     if (hres == S_OK)
     {
         full_name = path_resolve_name(non_application_name);
-        todo_wine ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
+        ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
                 dbgstr_w(stored_name), dbgstr_w(full_name));
         CoTaskMemFree(stored_name);
     }
@@ -144,14 +144,14 @@ static void test_SetApplicationName_GetApplicationName(void)
     /* Set a valid application name with program type extension and then
      * get the stored name */
     hres = ITask_SetApplicationName(test_task, notepad_exe);
-    todo_wine ok(hres == S_OK, "Failed setting name %s: %08x\n",
+    ok(hres == S_OK, "Failed setting name %s: %08x\n",
             dbgstr_w(notepad_exe), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    todo_wine ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
     if (hres == S_OK)
     {
         full_name = path_resolve_name(notepad_exe);
-        todo_wine ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
+        ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
                 dbgstr_w(stored_name), dbgstr_w(full_name));
         CoTaskMemFree(stored_name);
     }
@@ -159,13 +159,13 @@ static void test_SetApplicationName_GetApplicationName(void)
     /* Set a valid application name without program type extension and
      * then get the stored name */
     hres = ITask_SetApplicationName(test_task, notepad);
-    todo_wine ok(hres == S_OK, "Failed setting name %s: %08x\n", dbgstr_w(notepad), hres);
+    ok(hres == S_OK, "Failed setting name %s: %08x\n", dbgstr_w(notepad), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    todo_wine ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
     if (hres == S_OK)
     {
         full_name = path_resolve_name(notepad);
-        todo_wine ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
+        ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
                 dbgstr_w(stored_name), dbgstr_w(full_name));
         CoTaskMemFree(stored_name);
     }
@@ -174,26 +174,26 @@ static void test_SetApplicationName_GetApplicationName(void)
      * to a non-existant application and then get the name that is
      * actually stored */
     hres = ITask_SetApplicationName(test_task, non_application_name);
-    todo_wine ok(hres == S_OK, "Failed setting name %s: %08x\n",
+    ok(hres == S_OK, "Failed setting name %s: %08x\n",
             dbgstr_w(non_application_name), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    todo_wine ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
     if (hres == S_OK)
     {
         full_name = path_resolve_name(non_application_name);
-        todo_wine ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
+        ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
                 dbgstr_w(stored_name), dbgstr_w(full_name));
         CoTaskMemFree(stored_name);
     }
 
     /* Clear application name */
     hres = ITask_SetApplicationName(test_task, empty);
-    todo_wine ok(hres == S_OK, "Failed setting name %s: %08x\n", dbgstr_w(empty), hres);
+    ok(hres == S_OK, "Failed setting name %s: %08x\n", dbgstr_w(empty), hres);
     hres = ITask_GetApplicationName(test_task, &stored_name);
-    todo_wine ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(stored_name, empty),
+        ok(!lstrcmpW(stored_name, empty),
                 "Got %s, expected empty string\n", dbgstr_w(stored_name));
         CoTaskMemFree(stored_name);
     }

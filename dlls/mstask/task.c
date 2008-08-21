@@ -323,16 +323,69 @@ static HRESULT WINAPI MSTASK_ITask_SetApplicationName(
         ITask* iface,
         LPCWSTR pwszApplicationName)
 {
-    FIXME("(%p, %s): stub\n", iface, debugstr_w(pwszApplicationName));
-    return E_NOTIMPL;
+    DWORD n;
+    TaskImpl *This = (TaskImpl *)iface;
+    LPWSTR tmp_name;
+
+    TRACE("(%p, %s)\n", iface, debugstr_w(pwszApplicationName));
+
+    /* Empty application name */
+    if (pwszApplicationName[0] == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This->applicationName);
+        This->applicationName = NULL;
+        return S_OK;
+    }
+
+    /* Attempt to set pwszApplicationName to a path resolved application name */
+    n = SearchPathW(NULL, pwszApplicationName, NULL, 0, NULL, NULL);
+    if (n)
+    {
+        tmp_name = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
+        if (!tmp_name)
+            return E_OUTOFMEMORY;
+        n = SearchPathW(NULL, pwszApplicationName, NULL, n, tmp_name, NULL);
+        if (n)
+        {
+            HeapFree(GetProcessHeap(), 0, This->applicationName);
+            This->applicationName = tmp_name;
+            return S_OK;
+        }
+        else
+            HeapFree(GetProcessHeap(), 0, tmp_name);
+    }
+
+    /* If unable to path resolve name, simply set to pwszApplicationName */
+    n = (lstrlenW(pwszApplicationName) + 1);
+    tmp_name = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
+    if (!tmp_name)
+        return E_OUTOFMEMORY;
+    lstrcpyW(tmp_name, pwszApplicationName);
+    HeapFree(GetProcessHeap(), 0, This->applicationName);
+    This->applicationName = tmp_name;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetApplicationName(
         ITask* iface,
         LPWSTR *ppwszApplicationName)
 {
-    FIXME("(%p, %p): stub\n", iface, ppwszApplicationName);
-    return E_NOTIMPL;
+    DWORD n;
+    TaskImpl *This = (TaskImpl *)iface;
+
+    TRACE("(%p, %p)\n", iface, ppwszApplicationName);
+
+    n = This->applicationName ? lstrlenW(This->applicationName) + 1 : 1;
+    *ppwszApplicationName = CoTaskMemAlloc(n * sizeof(WCHAR));
+    if (!*ppwszApplicationName)
+        return E_OUTOFMEMORY;
+
+    if (!This->applicationName)
+        *ppwszApplicationName[0] = 0;
+    else
+        lstrcpyW(*ppwszApplicationName, This->applicationName);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetParameters(
@@ -571,6 +624,7 @@ HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj)
         return E_OUTOFMEMORY;
     }
     lstrcpyW(This->taskName, pwszTaskName);
+    This->applicationName = NULL;
 
     *ppObj = &This->lpVtbl;
     InterlockedIncrement(&dll_ref);

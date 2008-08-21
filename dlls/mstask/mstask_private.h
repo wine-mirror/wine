@@ -58,6 +58,7 @@ typedef struct
     const IPersistFileVtbl *persistVtbl;
     LONG ref;
     LPWSTR taskName;
+    LPWSTR applicationName;
 } TaskImpl;
 extern HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj);
 
