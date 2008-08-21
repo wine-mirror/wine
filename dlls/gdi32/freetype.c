@@ -4356,17 +4356,6 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     if (!font->gm[original_index / GM_BLOCK_SIZE])
         font->gm[original_index / GM_BLOCK_SIZE] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(GM) * GM_BLOCK_SIZE);
 
-    if(font->orientation || (format != GGO_METRICS && format != GGO_BITMAP && format != WINE_GGO_GRAY16_BITMAP) || lpmat)
-        load_flags |= FT_LOAD_NO_BITMAP;
-
-    err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
-
-    if(err) {
-        WARN("FT_Load_Glyph on index %x returns %d\n", glyph_index, err);
-        LeaveCriticalSection( &freetype_cs );
-	return GDI_ERROR;
-    }
-	
     /* Scaling factor */
     if (font->aveWidth)
     {
@@ -4379,13 +4368,6 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     }
     else
         widthRatio = font->scale_y;
-
-    left = (INT)(ft_face->glyph->metrics.horiBearingX) & -64;
-    right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) + 63) & -64;
-
-    adv = (INT)((ft_face->glyph->metrics.horiAdvance) + 63) >> 6;
-    lsb = left >> 6;
-    bbx = (right - left) >> 6;
 
     /* Scaling transform */
     if (widthRatio != 1.0 || font->scale_y != 1.0)
@@ -4453,6 +4435,24 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         pFT_Matrix_Multiply(&extraMat, &transMatUnrotated);
         needsTransform = TRUE;
     }
+
+    if (needsTransform || (format != GGO_METRICS && format != GGO_BITMAP && format != WINE_GGO_GRAY16_BITMAP))
+        load_flags |= FT_LOAD_NO_BITMAP;
+
+    err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
+
+    if(err) {
+        WARN("FT_Load_Glyph on index %x returns %d\n", glyph_index, err);
+        LeaveCriticalSection( &freetype_cs );
+        return GDI_ERROR;
+    }
+
+    left = (INT)(ft_face->glyph->metrics.horiBearingX) & -64;
+    right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) + 63) & -64;
+
+    adv = (INT)((ft_face->glyph->metrics.horiAdvance) + 63) >> 6;
+    lsb = left >> 6;
+    bbx = (right - left) >> 6;
 
     if(!needsTransform) {
 	top = (ft_face->glyph->metrics.horiBearingY + 63) & -64;
