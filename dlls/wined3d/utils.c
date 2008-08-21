@@ -5,7 +5,7 @@
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2006-2007 Henri Verbeet
+ * Copyright 2006-2008 Henri Verbeet
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -1581,7 +1581,7 @@ hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function
     }
     table->bucket_count = initial_size;
 
-    table->entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, table->grow_size * sizeof(hash_table_entry_t));
+    table->entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, table->grow_size * sizeof(struct hash_table_entry_t));
     if (!table->entries)
     {
         ERR("Failed to allocate table entries, returning NULL.\n");
@@ -1614,12 +1614,12 @@ void hash_table_destroy(hash_table_t *table, void (*free_value)(void *value, voi
     HeapFree(GetProcessHeap(), 0, table);
 }
 
-static inline hash_table_entry_t *hash_table_get_by_idx(hash_table_t *table, void *key, unsigned int idx)
+static inline struct hash_table_entry_t *hash_table_get_by_idx(hash_table_t *table, void *key, unsigned int idx)
 {
-    hash_table_entry_t *entry;
+    struct hash_table_entry_t *entry;
 
     if (table->buckets[idx].next)
-        LIST_FOR_EACH_ENTRY(entry, &(table->buckets[idx]), hash_table_entry_t, entry)
+        LIST_FOR_EACH_ENTRY(entry, &(table->buckets[idx]), struct hash_table_entry_t, entry)
             if (table->compare_function(entry->key, key)) return entry;
 
     return NULL;
@@ -1628,7 +1628,7 @@ static inline hash_table_entry_t *hash_table_get_by_idx(hash_table_t *table, voi
 static BOOL hash_table_resize(hash_table_t *table, unsigned int new_bucket_count)
 {
     unsigned int new_entry_count = 0;
-    hash_table_entry_t *new_entries;
+    struct hash_table_entry_t *new_entries;
     struct list *new_buckets;
     unsigned int grow_size = new_bucket_count - (new_bucket_count >> 2);
     unsigned int i;
@@ -1640,7 +1640,7 @@ static BOOL hash_table_resize(hash_table_t *table, unsigned int new_bucket_count
         return FALSE;
     }
 
-    new_entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, grow_size * sizeof(hash_table_entry_t));
+    new_entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, grow_size * sizeof(struct hash_table_entry_t));
     if (!new_entries)
     {
         ERR("Failed to allocate new entries, returning FALSE.\n");
@@ -1652,12 +1652,12 @@ static BOOL hash_table_resize(hash_table_t *table, unsigned int new_bucket_count
     {
         if (table->buckets[i].next)
         {
-            hash_table_entry_t *entry, *entry2;
+            struct hash_table_entry_t *entry, *entry2;
 
-            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &table->buckets[i], hash_table_entry_t, entry)
+            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &table->buckets[i], struct hash_table_entry_t, entry)
             {
                 int j;
-                hash_table_entry_t *new_entry = new_entries + (new_entry_count++);
+                struct hash_table_entry_t *new_entry = new_entries + (new_entry_count++);
                 *new_entry = *entry;
 
                 j = new_entry->hash & (new_bucket_count - 1);
@@ -1688,7 +1688,7 @@ void hash_table_put(hash_table_t *table, void *key, void *value)
 {
     unsigned int idx;
     unsigned int hash;
-    hash_table_entry_t *entry;
+    struct hash_table_entry_t *entry;
 
     hash = table->hash_function(key);
     idx = hash & (table->bucket_count - 1);
@@ -1742,7 +1742,7 @@ void hash_table_put(hash_table_t *table, void *key, void *value)
         struct list *elem = list_head(&table->free_entries);
 
         list_remove(elem);
-        entry = LIST_ENTRY(elem, hash_table_entry_t, entry);
+        entry = LIST_ENTRY(elem, struct hash_table_entry_t, entry);
     } else {
         entry = table->entries + (table->entry_count++);
     }
@@ -1765,7 +1765,7 @@ void hash_table_remove(hash_table_t *table, void *key)
 void *hash_table_get(hash_table_t *table, void *key)
 {
     unsigned int idx;
-    hash_table_entry_t *entry;
+    struct hash_table_entry_t *entry;
 
     idx = table->hash_function(key) & (table->bucket_count - 1);
     entry = hash_table_get_by_idx(table, key, idx);

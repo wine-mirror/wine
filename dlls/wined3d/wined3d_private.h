@@ -47,19 +47,19 @@
 typedef unsigned int (hash_function_t)(void *key);
 typedef BOOL (compare_function_t)(void *keya, void *keyb);
 
-typedef struct {
+struct hash_table_entry_t {
     void *key;
     void *value;
     unsigned int hash;
     struct list entry;
-} hash_table_entry_t;
+};
 
 typedef struct {
     hash_function_t *hash_function;
     compare_function_t *compare_function;
     struct list *buckets;
     unsigned int bucket_count;
-    hash_table_entry_t *entries;
+    struct hash_table_entry_t *entries;
     unsigned int entry_count;
     struct list free_entries;
     unsigned int count;
