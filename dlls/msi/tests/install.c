@@ -3274,10 +3274,7 @@ static void test_publish(void)
 
     r = MsiInstallProductA(msifile, "FULL=1 REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(pf_exists("msitest\\maximus"), "File deleted\n");
-    }
+    ok(pf_exists("msitest\\maximus"), "File deleted\n");
     ok(pf_exists("msitest"), "File deleted\n");
 
     state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
@@ -4248,10 +4245,7 @@ static void test_removefiles(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!pf_exists("msitest\\hydrogen"), "File not deleted\n");
     ok(!pf_exists("msitest\\helium"), "File not deleted\n");
-    todo_wine
-    {
-        ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
-    }
+    ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
     ok(delete_pf("msitest", FALSE), "File deleted\n");
 
     create_pf("msitest", FALSE);
@@ -4270,10 +4264,7 @@ static void test_removefiles(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!pf_exists("msitest\\hydrogen"), "File not deleted\n");
     ok(delete_pf("msitest\\helium", TRUE), "File deleted\n");
-    todo_wine
-    {
-        ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
-    }
+    ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
     ok(delete_pf("msitest", FALSE), "File deleted\n");
 
     create_pf("msitest", FALSE);
@@ -4317,10 +4308,7 @@ static void test_removefiles(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!delete_pf("msitest\\hydrogen", TRUE), "File not deleted\n");
     ok(!delete_pf("msitest\\helium", TRUE), "File not deleted\n");
-    todo_wine
-    {
-        ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
-    }
+    ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
     ok(delete_pf("msitest\\furlong", TRUE), "File deleted\n");
     ok(delete_pf("msitest\\firkin", TRUE), "File deleted\n");
     ok(delete_pf("msitest\\fortnight", TRUE), "File deleted\n");
@@ -4329,7 +4317,10 @@ static void test_removefiles(void)
     ok(delete_pf("msitest\\attoparsec", TRUE), "File deleted\n");
     ok(!delete_pf("msitest\\storeys", TRUE), "File not deleted\n");
     ok(!delete_pf("msitest\\block", TRUE), "File not deleted\n");
-    ok(delete_pf("msitest\\siriometer", TRUE), "File deleted\n");
+    todo_wine
+    {
+        ok(delete_pf("msitest\\siriometer", TRUE), "File deleted\n");
+    }
     ok(pf_exists("msitest\\cabout"), "Directory deleted\n");
     ok(pf_exists("msitest"), "Directory deleted\n");
 

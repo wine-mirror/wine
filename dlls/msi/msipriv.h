@@ -861,8 +861,40 @@ static inline void msi_feature_set_state( MSIFEATURE *feature, INSTALLSTATE stat
 
 static inline void msi_component_set_state( MSICOMPONENT *comp, INSTALLSTATE state )
 {
-    comp->ActionRequest = state;
-    comp->Action = state;
+    if (state == INSTALLSTATE_ABSENT)
+    {
+        switch (comp->Installed)
+        {
+            case INSTALLSTATE_LOCAL:
+            case INSTALLSTATE_SOURCE:
+            case INSTALLSTATE_DEFAULT:
+                comp->ActionRequest = state;
+                comp->Action = state;
+                break;
+            default:
+                comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+                comp->Action = INSTALLSTATE_UNKNOWN;
+        }
+    }
+    else if (state == INSTALLSTATE_SOURCE)
+    {
+        switch (comp->Installed)
+        {
+            case INSTALLSTATE_ABSENT:
+            case INSTALLSTATE_SOURCE:
+                comp->ActionRequest = state;
+                comp->Action = state;
+                break;
+            default:
+                comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+                comp->Action = INSTALLSTATE_UNKNOWN;
+        }
+    }
+    else
+    {
+        comp->ActionRequest = state;
+        comp->Action = state;
+    }
 }
 
 /* actions in other modules */
