@@ -2875,7 +2875,7 @@ void LOCALE_Init(void)
     CFStringGetCString( user_locale_string_ref, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
     CFRelease( user_locale_ref );
     /* Strip modifiers because setlocale() can't parse them. */
-    if (p = strchr( user_locale, '@' )) *p = 0;
+    if ((p = strchr( user_locale, '@' ))) *p = 0;
     if (!strchr( user_locale, '.' )) strcat( user_locale, ".UTF-8" );
     unix_cp = CP_UTF8;  /* default to utf-8 even if we don't get a valid locale */
     setenv( "LANG", user_locale, 0 );
