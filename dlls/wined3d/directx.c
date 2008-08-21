@@ -3608,6 +3608,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->frag_pipe = frag_pipeline;
     frag_pipeline->get_caps(DeviceType, &GLINFO_LOCATION, &ffp_caps);
     object->max_ffp_textures = ffp_caps.MaxSimultaneousTextures;
+    object->max_ffp_texture_stages = ffp_caps.MaxTextureBlendStages;
     compile_state_table(object->StateTable, object->multistate_funcs, &GLINFO_LOCATION,
                         ffp_vertexstate_template, frag_pipeline, misc_state_template);
 

@@ -3750,7 +3750,8 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 
     device_update_fixed_function_usage_map(This);
 
-    if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->lowest_disabled_stage <= This->max_ffp_textures) {
+    if (This->max_ffp_textures == This->max_ffp_texture_stages ||
+        This->stateBlock->lowest_disabled_stage <= This->max_ffp_textures) {
         for (i = 0; i < This->stateBlock->lowest_disabled_stage; ++i) {
             if (!This->fixed_function_usage_map[i]) continue;
 
