@@ -40,6 +40,13 @@ extern ClassFactoryImpl MSTASK_ClassFactory;
 
 typedef struct
 {
+    const ITaskTriggerVtbl *lpVtbl;
+    LONG ref;
+} TaskTriggerImpl;
+extern HRESULT TaskTriggerConstructor(LPVOID *ppObj);
+
+typedef struct
+{
     const ITaskSchedulerVtbl *lpVtbl;
     LONG ref;
 } TaskSchedulerImpl;
