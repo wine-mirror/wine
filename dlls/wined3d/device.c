@@ -5576,10 +5576,46 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *if
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, DWORD* pNumPasses) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DBaseTextureImpl *texture;
+    const GlPixelFormatDesc *gl_info;
+    DWORD i;
+
+    TRACE("(%p) : %p \n", This, pNumPasses);
+
+    for(i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
+        if(This->stateBlock->samplerState[i][WINED3DSAMP_MINFILTER] == WINED3DTEXF_NONE) {
+            WARN("Sampler state %u has minfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
+            return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
+        }
+        if(This->stateBlock->samplerState[i][WINED3DSAMP_MAGFILTER] == WINED3DTEXF_NONE) {
+            WARN("Sampler state %u has magfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
+            return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
+        }
+
+        texture = (IWineD3DBaseTextureImpl *) This->stateBlock->textures[i];
+        if(!texture) continue;
+        getFormatDescEntry(texture->resource.format, &GLINFO_LOCATION, &gl_info);
+        if(gl_info->Flags & WINED3DFMT_FLAG_FILTERING) continue;
+
+        if(This->stateBlock->samplerState[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT) {
+            WARN("Non-filterable texture and mag filter enabled on samper %u, returning E_FAIL\n", i);
+            return E_FAIL;
+        }
+        if(This->stateBlock->samplerState[i][WINED3DSAMP_MINFILTER] != WINED3DTEXF_POINT) {
+            WARN("Non-filterable texture and min filter enabled on samper %u, returning E_FAIL\n", i);
+            return E_FAIL;
+        }
+        if(This->stateBlock->samplerState[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_NONE &&
+           This->stateBlock->samplerState[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_POINT /* sic! */) {
+            WARN("Non-filterable texture and mip filter enabled on samper %u, returning E_FAIL\n", i);
+            return E_FAIL;
+        }
+    }
+
     /* return a sensible default */
     *pNumPasses = 1;
-    /* TODO: If the window is minimized then validate device should return something other than WINED3D_OK */
-    FIXME("(%p) : stub\n", This);
+
+    TRACE("returning D3D_OK\n");
     return WINED3D_OK;
 }
 

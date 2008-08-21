@@ -236,6 +236,93 @@ static void test_mipmap_gen(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(texture);
 }
 
+static void test_filter(IDirect3DDevice9 *device) {
+    HRESULT hr;
+    IDirect3DTexture9 *texture;
+    IDirect3D9 *d3d9;
+    DWORD passes = 0;
+    unsigned int i;
+    struct filter_tests {
+        DWORD magfilter, minfilter, mipfilter;
+        BOOL has_texture;
+        HRESULT result;
+    } tests[] = {
+        { D3DTEXF_NONE,   D3DTEXF_NONE,   D3DTEXF_NONE,   FALSE, D3DERR_UNSUPPORTEDTEXTUREFILTER },
+        { D3DTEXF_POINT,  D3DTEXF_NONE,   D3DTEXF_NONE,   FALSE, D3DERR_UNSUPPORTEDTEXTUREFILTER },
+        { D3DTEXF_NONE,   D3DTEXF_POINT,  D3DTEXF_NONE,   FALSE, D3DERR_UNSUPPORTEDTEXTUREFILTER },
+        { D3DTEXF_POINT,  D3DTEXF_POINT,  D3DTEXF_NONE,   FALSE, D3D_OK },
+        { D3DTEXF_POINT,  D3DTEXF_POINT,  D3DTEXF_POINT,  FALSE, D3D_OK },
+
+        { D3DTEXF_NONE,   D3DTEXF_NONE,   D3DTEXF_NONE,   TRUE,  D3DERR_UNSUPPORTEDTEXTUREFILTER },
+        { D3DTEXF_POINT,  D3DTEXF_NONE,   D3DTEXF_NONE,   TRUE,  D3DERR_UNSUPPORTEDTEXTUREFILTER },
+        { D3DTEXF_POINT,  D3DTEXF_POINT,  D3DTEXF_NONE,   TRUE,  D3D_OK },
+        { D3DTEXF_POINT,  D3DTEXF_POINT,  D3DTEXF_POINT,  TRUE,  D3D_OK },
+
+        { D3DTEXF_NONE,   D3DTEXF_NONE,   D3DTEXF_NONE,   TRUE,  D3DERR_UNSUPPORTEDTEXTUREFILTER },
+        { D3DTEXF_LINEAR, D3DTEXF_NONE,   D3DTEXF_NONE,   TRUE,  D3DERR_UNSUPPORTEDTEXTUREFILTER },
+        { D3DTEXF_LINEAR, D3DTEXF_POINT,  D3DTEXF_NONE,   TRUE,  E_FAIL },
+        { D3DTEXF_POINT,  D3DTEXF_LINEAR, D3DTEXF_NONE,   TRUE,  E_FAIL },
+        { D3DTEXF_POINT,  D3DTEXF_POINT,  D3DTEXF_LINEAR, TRUE,  E_FAIL },
+
+    };
+
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d9);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetDirect3D(levels = 1) returned %08x\n", hr);
+    hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+                                      D3DRTYPE_TEXTURE, D3DFMT_A32B32G32R32F);
+    if(FAILED(hr)) {
+        skip("D3DFMT_A32B32G32R32F not supported\n");
+        goto out;
+    }
+    hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_FILTER,
+                                     D3DRTYPE_TEXTURE, D3DFMT_A32B32G32R32F);
+    if(SUCCEEDED(hr)) {
+        skip("D3DFMT_A32B32G32R32F supports filtering\n");
+        goto out;
+    }
+
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 0, 0, D3DFMT_A32B32G32R32F,
+                                        D3DPOOL_MANAGED, &texture, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %08x\n", hr);
+
+    /* Needed for ValidateDevice */
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
+
+    for(i = 0; i < (sizeof(tests) / sizeof(tests[0])); i++) {
+        if(tests[i].has_texture) {
+            hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %08x\n", hr);
+        } else {
+            hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+            ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %08x\n", hr);
+        }
+
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, tests[i].magfilter);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState returned %08x\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, tests[i].minfilter);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState returned %08x\n", hr);
+        hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, tests[i].mipfilter);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState returned %08x\n", hr);
+
+        passes = 0xdeadbeef;
+        hr = IDirect3DDevice9_ValidateDevice(device, &passes);
+        ok(hr == tests[i].result, "ValidateDevice failed: Texture %s, min %u, mag %u, mip %u. Got %08x, expected %08x\n",
+                                   tests[i].has_texture ? "TRUE" : "FALSE", tests[i].magfilter, tests[i].minfilter,
+                                   tests[i].mipfilter, hr, tests[i].result);
+        if(SUCCEEDED(hr)) {
+            ok(passes != 0, "ValidateDevice succeeded, passes is %u\n", passes);
+        } else {
+            ok(passes == 0xdeadbeef, "ValidateDevice failed, passes is %u\n", passes);
+        }
+    }
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+
+    out:
+    IDirect3D9_Release(d3d9);
+}
+
 START_TEST(texture)
 {
     D3DCAPS9 caps;
@@ -257,4 +344,5 @@ START_TEST(texture)
     test_texture_stage_states(device_ptr, caps.MaxTextureBlendStages);
     test_cube_textures(device_ptr, caps.TextureCaps);
     test_mipmap_gen(device_ptr);
+    test_filter(device_ptr);
 }
