@@ -32,14 +32,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 #include <stdio.h>
 #include <math.h>
 
-#if 0 /* TODO */
-extern IWineD3DVertexShaderImpl*            VertexShaders[64];
-extern IWineD3DVertexDeclarationImpl*       VertexShaderDeclarations[64];
-extern IWineD3DPixelShaderImpl*             PixelShaders[64];
-
-#undef GL_VERSION_1_4 /* To be fixed, caused by mesa headers */
-#endif
-
 /* Issues the glBegin call for gl given the primitive type and count */
 static DWORD primitiveToGl(WINED3DPRIMITIVETYPE PrimitiveType,
                     DWORD            NumPrimitives,
