@@ -4603,9 +4603,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
             This->stateBlock->lowest_disabled_stage = i;
             TRACE("New lowest disabled: %d\n", i);
         }
-        if(GL_SUPPORT(NV_REGISTER_COMBINERS) && !This->stateBlock->pixelShader) {
-            /* TODO: Built a stage -> texture unit mapping for register combiners */
-        }
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, Type));
