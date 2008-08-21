@@ -540,16 +540,24 @@ static HRESULT WINAPI MSTASK_ITask_SetMaxRunTime(
         ITask* iface,
         DWORD dwMaxRunTime)
 {
-    FIXME("(%p, %d): stub\n", iface, dwMaxRunTime);
-    return E_NOTIMPL;
+    TaskImpl *This = (TaskImpl *)iface;
+
+    TRACE("(%p, %d)\n", iface, dwMaxRunTime);
+
+    This->maxRunTime = dwMaxRunTime;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetMaxRunTime(
         ITask* iface,
         DWORD *pdwMaxRunTime)
 {
-    FIXME("(%p, %p): stub\n", iface, pdwMaxRunTime);
-    return E_NOTIMPL;
+    TaskImpl *This = (TaskImpl *)iface;
+
+    TRACE("(%p, %p)\n", iface, pdwMaxRunTime);
+
+    *pdwMaxRunTime = This->maxRunTime;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_IPersistFile_QueryInterface(
@@ -720,6 +728,9 @@ HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj)
     This->applicationName = NULL;
     This->parameters = NULL;
     This->comment = NULL;
+
+    /* Default time is 3 days = 259200000 ms */
+    This->maxRunTime = 259200000;
 
     *ppObj = &This->lpVtbl;
     InterlockedIncrement(&dll_ref);

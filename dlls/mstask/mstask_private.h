@@ -61,6 +61,7 @@ typedef struct
     LPWSTR applicationName;
     LPWSTR parameters;
     LPWSTR comment;
+    DWORD maxRunTime;
 } TaskImpl;
 extern HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj);
 
