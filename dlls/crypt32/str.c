@@ -169,10 +169,8 @@ static DWORD CRYPT_AddPrefixA(LPCSTR prefix, LPSTR psz, DWORD csz)
     {
         chars = min(lstrlenA(prefix), csz);
         memcpy(psz, prefix, chars);
-        csz -= chars;
         *(psz + chars) = '=';
         chars++;
-        csz--;
     }
     else
         chars = lstrlenA(prefix) + 1;
@@ -303,10 +301,8 @@ static DWORD CRYPT_AddPrefixAToW(LPCSTR prefix, LPWSTR psz, DWORD csz)
         chars = min(lstrlenA(prefix), csz);
         for (i = 0; i < chars; i++)
             *(psz + i) = prefix[i];
-        csz -= chars;
         *(psz + chars) = '=';
         chars++;
-        csz--;
     }
     else
         chars = lstrlenA(prefix) + 1;
@@ -328,10 +324,8 @@ static DWORD CRYPT_AddPrefixW(LPCWSTR prefix, LPWSTR psz, DWORD csz)
     {
         chars = min(lstrlenW(prefix), csz);
         memcpy(psz, prefix, chars * sizeof(WCHAR));
-        csz -= chars;
         *(psz + chars) = '=';
         chars++;
-        csz--;
     }
     else
         chars = lstrlenW(prefix) + 1;
