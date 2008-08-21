@@ -26,6 +26,7 @@
 #include "ole2.h"
 #include "xmldom.h"
 #include "msxml2.h"
+#include "dispex.h"
 #include <stdio.h>
 #include <assert.h>
 
@@ -1298,6 +1299,7 @@ static void test_refs(void)
 
     r = IXMLDOMElement_get_childNodes( element, &node_list );
     ok( r == S_OK, "rets %08x\n", r);
+
     ref = IXMLDOMNodeList_AddRef( node_list );
     ok( ref == 2, "ref %d\n", ref );
     IXMLDOMNodeList_Release( node_list );
@@ -1518,6 +1520,7 @@ static void test_getElementsByTagName(void)
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMNodeList *node_list;
+    IDispatchEx *dispex;
     long len;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
@@ -1537,6 +1540,13 @@ static void test_getElementsByTagName(void)
     r = IXMLDOMNodeList_get_length( node_list, &len );
     ok( r == S_OK, "ret %08x\n", r );
     ok( len == 6, "len %ld\n", len );
+
+    r = IXMLDOMNodeList_QueryInterface( node_list, &IID_IDispatchEx, (void**)&dispex );
+    ok( r == S_OK, "rets %08x\n", r);
+    if( r == S_OK )
+        IDispatchEx_Release( dispex );
+
+
     IXMLDOMNodeList_Release( node_list );
     SysFreeString( str );
 

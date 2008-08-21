@@ -26,6 +26,7 @@
 #include "ole2.h"
 #include "xmldom.h"
 #include "msxml2.h"
+#include "dispex.h"
 
 #include "wine/test.h"
 
