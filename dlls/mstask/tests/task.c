@@ -230,10 +230,81 @@ static void test_CreateTrigger(void)
     return;
 }
 
+static void test_SetParameters_GetParameters(void)
+{
+    BOOL setup;
+    HRESULT hres;
+    LPWSTR parameters;
+    const WCHAR parameters_a[] = {'f','o','o','.','t','x','t', 0};
+    const WCHAR parameters_b[] = {'f','o','o','.','t','x','t',' ',
+        'b','a','r','.','t','x','t', 0};
+
+    setup = setup_task();
+    ok(setup, "Failed to setup test_task\n");
+    if (!setup)
+    {
+        skip("Failed to create task.  Skipping tests.\n");
+        return;
+    }
+
+    /* Get parameters before setting them */
+    hres = ITask_GetParameters(test_task, &parameters);
+    todo_wine ok(hres == S_OK, "GetParameters failed: %08x\n", hres);
+    if (hres == S_OK)
+    {
+        todo_wine ok(!lstrcmpW(parameters, empty),
+                "Got %s, expected empty string\n", dbgstr_w(parameters));
+        CoTaskMemFree(parameters);
+    }
+
+    /* Set parameters to a simple string */
+    hres = ITask_SetParameters(test_task, parameters_a);
+    todo_wine ok(hres == S_OK, "Failed setting parameters %s: %08x\n",
+            dbgstr_w(parameters_a), hres);
+    hres = ITask_GetParameters(test_task, &parameters);
+    todo_wine ok(hres == S_OK, "GetParameters failed: %08x\n", hres);
+    if (hres == S_OK)
+    {
+        todo_wine ok(!lstrcmpW(parameters, parameters_a), "Got %s, expected %s\n",
+                dbgstr_w(parameters), dbgstr_w(parameters_a));
+        CoTaskMemFree(parameters);
+    }
+
+    /* Update parameters to a different simple string */
+    hres = ITask_SetParameters(test_task, parameters_b);
+    todo_wine ok(hres == S_OK, "Failed setting parameters %s: %08x\n",
+            dbgstr_w(parameters_b), hres);
+    hres = ITask_GetParameters(test_task, &parameters);
+    todo_wine ok(hres == S_OK, "GetParameters failed: %08x\n", hres);
+    if (hres == S_OK)
+    {
+        todo_wine ok(!lstrcmpW(parameters, parameters_b), "Got %s, expected %s\n",
+                dbgstr_w(parameters), dbgstr_w(parameters_b));
+        CoTaskMemFree(parameters);
+    }
+
+    /* Clear parameters */
+    hres = ITask_SetParameters(test_task, empty);
+    todo_wine ok(hres == S_OK, "Failed setting parameters %s: %08x\n",
+            dbgstr_w(empty), hres);
+    hres = ITask_GetParameters(test_task, &parameters);
+    todo_wine ok(hres == S_OK, "GetParameters failed: %08x\n", hres);
+    if (hres == S_OK)
+    {
+        todo_wine ok(!lstrcmpW(parameters, empty),
+                "Got %s, expected empty string\n", dbgstr_w(parameters));
+        CoTaskMemFree(parameters);
+    }
+
+    cleanup_task();
+    return;
+}
+
 START_TEST(task)
 {
     CoInitialize(NULL);
     test_SetApplicationName_GetApplicationName();
     test_CreateTrigger();
+    test_SetParameters_GetParameters();
     CoUninitialize();
 }
