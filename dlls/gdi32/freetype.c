@@ -3555,6 +3555,12 @@ found:
         /* Windows uses integer scaling factors for bitmap fonts */
         INT scale, scaled_height;
 
+        /* FIXME: rotation of bitmap fonts is ignored */
+        height = abs(GDI_ROUND( (double)height * ret->font_desc.matrix.eM22 ));
+        if (ret->aveWidth)
+            ret->aveWidth = (double)ret->aveWidth * ret->font_desc.matrix.eM11;
+        ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
+
         if (height != 0) height = diff;
         height += face->size.height;
 

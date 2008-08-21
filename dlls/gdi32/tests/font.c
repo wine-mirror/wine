@@ -30,7 +30,7 @@
 
 #include "wine/test.h"
 
-#define near_match(a, b) (abs((a) - (b)) <= 4)
+#define near_match(a, b) (abs((a) - (b)) <= 6)
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
 LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
