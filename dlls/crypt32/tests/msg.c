@@ -2660,7 +2660,6 @@ static void test_msg_control(void)
      TRUE);
     /* Oddly enough, this fails */
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
-    todo_wine
     ok(!ret, "Expected failure\n");
     CryptMsgClose(msg);
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
@@ -2690,7 +2689,6 @@ static void test_msg_control(void)
      */
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_HASH_VALUE,
      "Expected CRYPT_E_HASH_VALUE, got %08x\n", GetLastError());
     /* and giving the content of the message after attempting to verify the
@@ -2718,7 +2716,6 @@ static void test_msg_control(void)
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
-    todo_wine
     ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
     CryptMsgClose(msg);
 
