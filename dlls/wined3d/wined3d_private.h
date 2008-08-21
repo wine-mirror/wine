@@ -629,6 +629,13 @@ struct WineD3DContext {
     HPBUFFERARB             pbuffer;
     BOOL                    isPBuffer;
     GLint                   aux_buffers;
+
+    /* FBOs */
+    IWineD3DSurface       **fbo_color_attachments;
+    IWineD3DSurface        *fbo_depth_attachment;
+    GLuint                  fbo;
+    GLuint                  src_fbo;
+    GLuint                  dst_fbo;
 };
 
 typedef enum ContextUsage {
@@ -880,9 +887,6 @@ struct IWineD3DDeviceImpl
     /* Render Target Support */
     IWineD3DSurface       **render_targets;
     IWineD3DSurface        *auto_depth_stencil_buffer;
-    IWineD3DSurface       **fbo_color_attachments;
-    IWineD3DSurface        *fbo_depth_attachment;
-
     IWineD3DSurface        *stencilBufferTarget;
 
     /* Caches to avoid unneeded context changes */
@@ -897,9 +901,6 @@ struct IWineD3DDeviceImpl
 
     /* For rendering to a texture using glCopyTexImage */
     BOOL                    render_offscreen;
-    GLuint                  fbo;
-    GLuint                  src_fbo;
-    GLuint                  dst_fbo;
     GLenum                  *draw_buffers;
     GLuint                  depth_blt_texture;
     GLuint                  depth_blt_rb;

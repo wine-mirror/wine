@@ -4027,7 +4027,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
                 device->depth_blt_rb_h = This->currentDesc.Height;
             }
 
-            bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->dst_fbo);
+            bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->activeContext->dst_fbo);
             GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, device->depth_blt_rb));
             checkGLcall("glFramebufferRenderbufferEXT");
             attach_depth_stencil_fbo(device, GL_FRAMEBUFFER_EXT, iface, FALSE);
@@ -4037,7 +4037,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             checkGLcall("depth_blt");
 
             if (device->render_offscreen) {
-                bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->fbo);
+                bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->activeContext->fbo);
             } else {
                 GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
                 checkGLcall("glBindFramebuffer()");
@@ -4059,7 +4059,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             checkGLcall("depth_blt");
 
             if (device->render_offscreen) {
-                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, device->fbo));
+                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, device->activeContext->fbo));
                 checkGLcall("glBindFramebuffer()");
             }
 

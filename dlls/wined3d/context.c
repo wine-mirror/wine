@@ -485,6 +485,13 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
     TRACE("Successfully created new context %p\n", ret);
 
+    ret->fbo_color_attachments = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
+    if (!ret->fbo_color_attachments)
+    {
+        ERR("Out of memory!\n");
+        goto out;
+    }
+
     /* Set up the context defaults */
     oldCtx  = pwglGetCurrentContext();
     oldDrawable = pwglGetCurrentDC();
@@ -576,8 +583,11 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
 
-out:
     return ret;
+
+out:
+    HeapFree(GetProcessHeap(), 0, ret->fbo_color_attachments);
+    return NULL;
 }
 
 /*****************************************************************************
@@ -641,6 +651,20 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     } else {
         last_device = NULL;
     }
+
+    /* FIXME: We probably need an active context to do this... */
+    if (context->fbo) {
+        GL_EXTCALL(glDeleteFramebuffersEXT(1, &context->fbo));
+    }
+    if (context->src_fbo) {
+        GL_EXTCALL(glDeleteFramebuffersEXT(1, &context->src_fbo));
+    }
+    if (context->dst_fbo) {
+        GL_EXTCALL(glDeleteFramebuffersEXT(1, &context->dst_fbo));
+    }
+
+    HeapFree(GetProcessHeap(), 0, context->fbo_color_attachments);
+    context->fbo_color_attachments = NULL;
 
     if(context->isPBuffer) {
         GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
@@ -1195,7 +1219,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
                 if (This->render_offscreen) {
                     FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
-                    bind_fbo((IWineD3DDevice *)This, GL_FRAMEBUFFER_EXT, &This->dst_fbo);
+                    bind_fbo((IWineD3DDevice *)This, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
                     attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, target);
                     GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
                     checkGLcall("glFramebufferRenderbufferEXT");
