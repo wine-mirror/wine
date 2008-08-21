@@ -21,6 +21,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mstask);
 
+static inline TaskImpl *impl_from_IPersistFile( IPersistFile *iface )
+{
+    return (TaskImpl*) ((char*)(iface) - FIELD_OFFSET(TaskImpl, persistVtbl));
+}
+
 static void TaskDestructor(TaskImpl *This)
 {
     TRACE("%p\n", This);
@@ -44,6 +49,12 @@ static HRESULT WINAPI MSTASK_ITask_QueryInterface(
             IsEqualGUID(riid, &IID_ITask))
     {
         *ppvObject = &This->lpVtbl;
+        ITask_AddRef(iface);
+        return S_OK;
+    }
+    else if (IsEqualGUID(riid, &IID_IPersistFile))
+    {
+        *ppvObject = &This->persistVtbl;
         ITask_AddRef(iface);
         return S_OK;
     }
@@ -473,22 +484,31 @@ static HRESULT WINAPI MSTASK_IPersistFile_QueryInterface(
         REFIID riid,
         void **ppvObject)
 {
-    FIXME("(%p, %s, %p): stub\n", iface, debugstr_guid(riid), ppvObject);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_IPersistFile(iface);
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(riid), ppvObject);
+    return ITask_QueryInterface((ITask *) This, riid, ppvObject);
 }
 
 static ULONG WINAPI MSTASK_IPersistFile_AddRef(
         IPersistFile* iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_IPersistFile(iface);
+    ULONG ref;
+    TRACE("\n");
+    ref = InterlockedIncrement(&This->ref);
+    return ref;
 }
 
 static ULONG WINAPI MSTASK_IPersistFile_Release(
         IPersistFile* iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    TaskImpl *This = impl_from_IPersistFile(iface);
+    ULONG ref;
+    TRACE("\n");
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0)
+        TaskDestructor(This);
+    return ref;
 }
 
 static HRESULT WINAPI MSTASK_IPersistFile_GetClassID(
