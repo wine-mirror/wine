@@ -29,6 +29,7 @@ static inline TaskImpl *impl_from_IPersistFile( IPersistFile *iface )
 static void TaskDestructor(TaskImpl *This)
 {
     TRACE("%p\n", This);
+    HeapFree(GetProcessHeap(), 0, This->comment);
     HeapFree(GetProcessHeap(), 0, This->parameters);
     HeapFree(GetProcessHeap(), 0, This->taskName);
     HeapFree(GetProcessHeap(), 0, This);
@@ -219,16 +220,52 @@ static HRESULT WINAPI MSTASK_ITask_SetComment(
         ITask* iface,
         LPCWSTR pwszComment)
 {
-    FIXME("(%p, %s): stub\n", iface, debugstr_w(pwszComment));
-    return E_NOTIMPL;
+    DWORD n;
+    TaskImpl *This = (TaskImpl *)iface;
+    LPWSTR tmp_comment;
+
+    TRACE("(%p, %s)\n", iface, debugstr_w(pwszComment));
+
+    /* Empty comment */
+    if (pwszComment[0] == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This->comment);
+        This->comment = NULL;
+        return S_OK;
+    }
+
+    /* Set to pwszComment */
+    n = (lstrlenW(pwszComment) + 1);
+    tmp_comment = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
+    if (!tmp_comment)
+        return E_OUTOFMEMORY;
+    lstrcpyW(tmp_comment, pwszComment);
+    HeapFree(GetProcessHeap(), 0, This->comment);
+    This->comment = tmp_comment;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetComment(
         ITask* iface,
         LPWSTR *ppwszComment)
 {
-    FIXME("(%p, %p): stub\n", iface, ppwszComment);
-    return E_NOTIMPL;
+    DWORD n;
+    TaskImpl *This = (TaskImpl *)iface;
+
+    TRACE("(%p, %p)\n", iface, ppwszComment);
+
+    n = This->comment ? lstrlenW(This->comment) + 1 : 1;
+    *ppwszComment = CoTaskMemAlloc(n * sizeof(WCHAR));
+    if (!*ppwszComment)
+        return E_OUTOFMEMORY;
+
+    if (!This->comment)
+        *ppwszComment[0] = 0;
+    else
+        lstrcpyW(*ppwszComment, This->comment);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetCreator(
@@ -682,6 +719,7 @@ HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj)
     lstrcpyW(This->taskName, pwszTaskName);
     This->applicationName = NULL;
     This->parameters = NULL;
+    This->comment = NULL;
 
     *ppObj = &This->lpVtbl;
     InterlockedIncrement(&dll_ref);

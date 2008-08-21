@@ -319,49 +319,49 @@ static void test_SetComment_GetComment(void)
 
     /* Get comment before setting it*/
     hres = ITask_GetComment(test_task, &comment);
-    todo_wine ok(hres == S_OK, "GetComment failed: %08x\n", hres);
+    ok(hres == S_OK, "GetComment failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(comment, empty),
+        ok(!lstrcmpW(comment, empty),
                 "Got %s, expected empty string\n", dbgstr_w(comment));
         CoTaskMemFree(comment);
     }
 
     /* Set comment to a simple string */
     hres = ITask_SetComment(test_task, comment_a);
-    todo_wine ok(hres == S_OK, "Failed setting comment %s: %08x\n",
+    ok(hres == S_OK, "Failed setting comment %s: %08x\n",
             dbgstr_w(comment_a), hres);
     hres = ITask_GetComment(test_task, &comment);
-    todo_wine ok(hres == S_OK, "GetComment failed: %08x\n", hres);
+    ok(hres == S_OK, "GetComment failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(comment, comment_a), "Got %s, expected %s\n",
+        ok(!lstrcmpW(comment, comment_a), "Got %s, expected %s\n",
                 dbgstr_w(comment), dbgstr_w(comment_a));
         CoTaskMemFree(comment);
     }
 
     /* Update comment to a different simple string */
     hres = ITask_SetComment(test_task, comment_b);
-    todo_wine ok(hres == S_OK, "Failed setting comment %s: %08x\n",
+    ok(hres == S_OK, "Failed setting comment %s: %08x\n",
             dbgstr_w(comment_b), hres);
     hres = ITask_GetComment(test_task, &comment);
-    todo_wine ok(hres == S_OK, "GetComment failed: %08x\n", hres);
+    ok(hres == S_OK, "GetComment failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(comment, comment_b), "Got %s, expected %s\n",
+        ok(!lstrcmpW(comment, comment_b), "Got %s, expected %s\n",
                 dbgstr_w(comment), dbgstr_w(comment_b));
         CoTaskMemFree(comment);
     }
 
     /* Clear comment */
     hres = ITask_SetComment(test_task, empty);
-    todo_wine ok(hres == S_OK, "Failed setting comment %s: %08x\n",
+    ok(hres == S_OK, "Failed setting comment %s: %08x\n",
             dbgstr_w(empty), hres);
     hres = ITask_GetComment(test_task, &comment);
-    todo_wine ok(hres == S_OK, "GetComment failed: %08x\n", hres);
+    ok(hres == S_OK, "GetComment failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(comment, empty),
+        ok(!lstrcmpW(comment, empty),
                 "Got %s, expected empty string\n", dbgstr_w(comment));
         CoTaskMemFree(comment);
     }
