@@ -663,7 +663,7 @@ HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
     ITypeLib *tl;
-    LPWSTR path = NULL;
+    static const WCHAR wszMsXml3[] = {'m','s','x','m','l','3','.','d','l','l',0};
 
     TRACE("\n");
 
@@ -673,14 +673,12 @@ HRESULT WINAPI DllRegisterServer(void)
     if (SUCCEEDED(hr))
 	hr = register_progids(progid_list);
 
-    tl = get_msxml3_typelib( &path );
-    if (tl)
-    {
-        hr = RegisterTypeLib( tl, path, NULL );
-        ITypeLib_Release( tl );
+    if(SUCCEEDED(hr)) {
+
+        hr = LoadTypeLibEx(wszMsXml3, REGKIND_REGISTER, &tl);
+        if(SUCCEEDED(hr))
+            ITypeLib_Release(tl);
     }
-    else
-        hr = E_FAIL;
 
     return hr;
 }
@@ -699,8 +697,8 @@ HRESULT WINAPI DllUnregisterServer(void)
 	hr = unregister_interfaces(interface_list);
     if (SUCCEEDED(hr))
 	hr = unregister_progids(progid_list);
-	if (SUCCEEDED(hr))
-	    hr = UnRegisterTypeLib(&LIBID_MSXML2, 3, 0, LOCALE_SYSTEM_DEFAULT, SYS_WIN32);
+    if (SUCCEEDED(hr))
+        hr = UnRegisterTypeLib(&LIBID_MSXML2, 3, 0, LOCALE_SYSTEM_DEFAULT, SYS_WIN32);
 
     return hr;
 }
