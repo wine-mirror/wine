@@ -5,7 +5,7 @@
  * Copyright 2002-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2006 Henri Verbeet
+ * Copyright 2006, 2008 Henri Verbeet
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -936,6 +936,12 @@ void drawPrimitive(IWineD3DDevice *iface,
         }
     }
 
+    if (This->stencilBufferTarget) {
+        DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+        surface_load_ds_location(This->stencilBufferTarget, location);
+        surface_modify_ds_location(This->stencilBufferTarget, location);
+    }
+
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
 
@@ -943,12 +949,6 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
     ENTER_GL();
-
-    if (This->stencilBufferTarget) {
-        DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
-        surface_load_ds_location(This->stencilBufferTarget, location);
-        surface_modify_ds_location(This->stencilBufferTarget, location);
-    }
 
     {
         GLenum glPrimType;
