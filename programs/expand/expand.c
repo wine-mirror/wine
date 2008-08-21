@@ -26,6 +26,30 @@
 #include <lzexpand.h>
 #include <setupapi.h>
 
+static UINT CALLBACK set_outfile( PVOID context, UINT notification, UINT_PTR param1, UINT_PTR param2 )
+{
+    FILE_IN_CABINET_INFO_A *info = (FILE_IN_CABINET_INFO_A *)param1;
+    char buffer[MAX_PATH];
+    char* basename;
+
+    switch (notification)
+    {
+    case SPFILENOTIFY_FILEINCABINET:
+    {
+        LPSTR outfile = context;
+        if (outfile[0] != 0)
+        {
+            SetLastError( ERROR_NOT_SUPPORTED );
+            return FILEOP_ABORT;
+        }
+        GetFullPathNameA( info->NameInCabinet, sizeof(buffer), buffer, &basename );
+        strcpy( outfile, basename );
+        return FILEOP_SKIP;
+    }
+    default: return NO_ERROR;
+    }
+}
+
 static UINT CALLBACK extract_callback( PVOID context, UINT notification, UINT_PTR param1, UINT_PTR param2 )
 {
     FILE_IN_CABINET_INFO_A *info = (FILE_IN_CABINET_INFO_A *)param1;
@@ -43,29 +67,74 @@ static UINT CALLBACK extract_callback( PVOID context, UINT notification, UINT_PT
     }
 }
 
+static BOOL option_equal(LPCSTR str1, LPCSTR str2)
+{
+    if (str1[0] != '/' && str1[0] != '-')
+        return FALSE;
+    return !lstrcmpA( str1 + 1, str2 );
+}
+
 int main(int argc, char *argv[])
 {
     int ret = 0;
     char infile[MAX_PATH], outfile[MAX_PATH], actual_name[MAX_PATH];
+    char outfile_basename[MAX_PATH], *basename_index;
     UINT comp;
 
     if (argc < 3)
     {
-        fprintf( stderr, "Usage: %s infile outfile\n", argv[0] );
+        fprintf( stderr, "Usage:\n" );
+        fprintf( stderr, "\t%s infile outfile\n", argv[0] );
+        fprintf( stderr, "\t%s /r infile \n", argv[0] );
         return 1;
     }
 
-    GetFullPathNameA( argv[1], sizeof(infile), infile, NULL );
-    GetFullPathNameA( argv[2], sizeof(outfile), outfile, NULL );
+    if (argc == 3 && (option_equal(argv[1], "R") || option_equal(argv[1], "r")))
+        GetFullPathNameA( argv[2], sizeof(infile), infile, NULL );
+    else
+        GetFullPathNameA( argv[1], sizeof(infile), infile, NULL );
+
+    if (!SetupGetFileCompressionInfoExA( infile, actual_name, sizeof(actual_name), NULL, NULL, NULL, &comp ))
+    {
+        fprintf( stderr, "%s: can't open input file %s\n", argv[0], infile );
+        return 1;
+    }
+
+    if (argc == 3 && (option_equal(argv[1], "R") || option_equal(argv[1], "r")))
+    {
+        switch (comp)
+        {
+        case FILE_COMPRESSION_MSZIP:
+        {
+            outfile_basename[0] = 0;
+            if (!SetupIterateCabinetA( infile, 0, set_outfile, (PVOID)outfile_basename ))
+            {
+                fprintf( stderr, "%s: can't determine original name\n", argv[0] );
+                return 1;
+            }
+            GetFullPathNameA( infile, sizeof(outfile), outfile, &basename_index );
+            *basename_index = 0;
+            strcat( outfile, outfile_basename );
+            break;
+        }
+        case FILE_COMPRESSION_WINLZA:
+        {
+            GetExpandedNameA( infile, outfile_basename );
+            break;
+        }
+        default:
+        {
+            fprintf( stderr, "%s: can't determine original\n", argv[0] );
+            return 1;
+        }
+        }
+    }
+    else
+        GetFullPathNameA( argv[2], sizeof(outfile), outfile, NULL );
 
     if (!lstrcmpiA( infile, outfile ))
     {
         fprintf( stderr, "%s: can't expand file to itself\n", argv[0] );
-        return 1;
-    }
-    if (!SetupGetFileCompressionInfoExA( infile, actual_name, sizeof(actual_name), NULL, NULL, NULL, &comp ))
-    {
-        fprintf( stderr, "%s: can't open input file %s\n", argv[0], infile );
         return 1;
     }
 
