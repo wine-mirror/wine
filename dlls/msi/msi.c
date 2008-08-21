@@ -1299,7 +1299,7 @@ static BOOL msi_comp_find_package(LPCWSTR prodcode, MSIINSTALLCONTEXT context)
 
 static BOOL msi_comp_find_prodcode(LPWSTR squished_pc,
                                    MSIINSTALLCONTEXT context,
-                                   LPCWSTR comp, DWORD *sz)
+                                   LPCWSTR comp, LPWSTR val, DWORD *sz)
 {
     HKEY hkey;
     LONG res;
@@ -1313,8 +1313,7 @@ static BOOL msi_comp_find_prodcode(LPWSTR squished_pc,
     if (r != ERROR_SUCCESS)
         return FALSE;
 
-    *sz = 0;
-    res = RegQueryValueExW(hkey, squished_pc, NULL, NULL, NULL, sz);
+    res = RegQueryValueExW(hkey, squished_pc, NULL, NULL, (BYTE *)val, sz);
     if (res != ERROR_SUCCESS)
         return FALSE;
 
@@ -1327,6 +1326,7 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
                                     LPCWSTR szComponent, INSTALLSTATE *pdwState)
 {
     WCHAR squished_pc[GUID_SIZE];
+    WCHAR val[MAX_PATH];
     BOOL found;
     DWORD sz;
 
@@ -1357,13 +1357,22 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
 
     *pdwState = INSTALLSTATE_UNKNOWN;
 
-    if (!msi_comp_find_prodcode(squished_pc, dwContext, szComponent, &sz))
+    sz = MAX_PATH;
+    if (!msi_comp_find_prodcode(squished_pc, dwContext, szComponent, val, &sz))
         return ERROR_UNKNOWN_COMPONENT;
 
     if (sz == 0)
         *pdwState = INSTALLSTATE_NOTUSED;
     else
-        *pdwState = INSTALLSTATE_LOCAL;
+    {
+        if (lstrlenW(val) > 2 &&
+            val[0] >= '0' && val[0] <= '9' && val[1] >= '0' && val[1] <= '9')
+        {
+            *pdwState = INSTALLSTATE_SOURCE;
+        }
+        else
+            *pdwState = INSTALLSTATE_LOCAL;
+    }
 
     return ERROR_SUCCESS;
 }
