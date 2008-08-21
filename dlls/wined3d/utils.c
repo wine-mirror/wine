@@ -375,12 +375,12 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V16U16;
     } else {
         /* Blue = 1.0 fixup, disabled for now */
-#if 0
-        dst = getFmtIdx(WINED3DFMT_V8U8);
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-        dst = getFmtIdx(WINED3DFMT_V16U16);
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-#endif
+        if(0) {
+            dst = getFmtIdx(WINED3DFMT_V8U8);
+            gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
+            dst = getFmtIdx(WINED3DFMT_V16U16);
+            gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
+        }
     }
 
     if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
