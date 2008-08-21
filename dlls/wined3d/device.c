@@ -2172,10 +2172,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     ENTER_GL();
 
-#if 0
-    IWineD3DImpl_CheckGraphicsMemory();
-#endif
-
     { /* Set a default viewport */
         WINED3DVIEWPORT vp;
         vp.X      = 0;
@@ -7589,12 +7585,6 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
                         This->stateBlock->streamSource[streamNumber] = 0;
                     }
                 }
-#if 0   /* TODO: Manage internal tracking properly so that 'this shouldn't happen' */
-                 else { /* This shouldn't happen */
-                    FIXME("Calling application has released the device before relasing all the resources bound to the device\n");
-                }
-#endif
-
             }
         }
         break;

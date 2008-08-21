@@ -34,14 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLINFO_LOCATION ((IWineD3DDeviceImpl *) This->baseShader.device)->adapter->gl_info
 
-#if 0 /* Must not be 1 in cvs version */
-# define PSTRACE(A) TRACE A
-# define TRACE_VSVECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
-#else
-# define PSTRACE(A)
-# define TRACE_VSVECTOR(name)
-#endif
-
 #define GLNAME_REQUIRE_GLSL  ((const char *)1)
 
 static HRESULT  WINAPI IWineD3DPixelShaderImpl_QueryInterface(IWineD3DPixelShader *iface, REFIID riid, LPVOID *ppobj) {

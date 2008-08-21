@@ -4185,28 +4185,6 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         }
     }
 
-#if 0 /* FOG  ----------------------------------------------*/
-    if (sd->u.s.fog.lpData || sd->u.s.fog.VBO) {
-        /* TODO: fog*/
-    if (GL_SUPPORT(EXT_FOG_COORD) {
-             glEnableClientState(GL_FOG_COORDINATE_EXT);
-            (GL_EXTCALL)(FogCoordPointerEXT)(
-                WINED3D_ATR_GLTYPE(sd->u.s.fog.dwType),
-                sd->u.s.fog.dwStride,
-                sd->u.s.fog.lpData + stateblock->loadBaseVertexIndex * sd->u.s.fog.dwStride);
-        } else {
-            /* don't bother falling back to 'slow' as we don't support software FOG yet. */
-            /* FIXME: fixme once */
-            TRACE("Hardware support for FOG is not avaiable, FOG disabled.\n");
-        }
-    } else {
-        if (GL_SUPPRT(EXT_FOR_COORD) {
-             /* make sure fog is disabled */
-             glDisableClientState(GL_FOG_COORDINATE_EXT);
-        }
-    }
-#endif
-
     /* Point Size ----------------------------------------------*/
     if (sd->u.s.pSize.lpData || sd->u.s.pSize.VBO) {
 

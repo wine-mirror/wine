@@ -34,24 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLINFO_LOCATION ((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info
 
-/* Shader debugging - Change the following line to enable debugging of software
-      vertex shaders                                                             */
-#if 0 /* Musxt not be 1 in cvs version */
-# define VSTRACE(A) TRACE A
-# define TRACE_VSVECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
-#else
-# define VSTRACE(A)
-# define TRACE_VSVECTOR(name)
-#endif
-
-/**
- * NVIDIA: DX8 Vertex Shader to NV Vertex Program
- *  http://developer.nvidia.com/view.asp?IO=vstovp
- *
- * NVIDIA: Memory Management with VAR
- *  http://developer.nvidia.com/view.asp?IO=var_memory_management
- */
-
 /* TODO: Vertex and Pixel shaders are almost identical, the only exception being the way that some of the data is looked up or the availability of some of the data i.e. some instructions are only valid for pshaders and some for vshaders
 because of this the bulk of the software pipeline can be shared between pixel and vertex shaders... and it wouldn't surprise me if the program can be cross compiled using a large body of shared code */
 
