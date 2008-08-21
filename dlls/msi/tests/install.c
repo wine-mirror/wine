@@ -4317,10 +4317,7 @@ static void test_removefiles(void)
     ok(delete_pf("msitest\\attoparsec", TRUE), "File deleted\n");
     ok(!delete_pf("msitest\\storeys", TRUE), "File not deleted\n");
     ok(!delete_pf("msitest\\block", TRUE), "File not deleted\n");
-    todo_wine
-    {
-        ok(delete_pf("msitest\\siriometer", TRUE), "File deleted\n");
-    }
+    ok(delete_pf("msitest\\siriometer", TRUE), "File deleted\n");
     ok(pf_exists("msitest\\cabout"), "Directory deleted\n");
     ok(pf_exists("msitest"), "Directory deleted\n");
 

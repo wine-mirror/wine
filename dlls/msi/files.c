@@ -439,6 +439,9 @@ static BOOL verify_comp_for_removal(MSICOMPONENT *comp, UINT install_mode)
 {
     INSTALLSTATE request = comp->ActionRequest;
 
+    if (request == INSTALLSTATE_UNKNOWN)
+        return FALSE;
+
     if (install_mode == msidbRemoveFileInstallModeOnInstall &&
         (request == INSTALLSTATE_LOCAL || request == INSTALLSTATE_SOURCE))
         return TRUE;
