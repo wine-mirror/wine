@@ -558,7 +558,7 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
 
         TRACE("removing %s\n", debugstr_w(file->File) );
         if ( !DeleteFileW( file->TargetPath ) )
-            ERR("failed to delete %s\n",  debugstr_w(file->TargetPath) );
+            TRACE("failed to delete %s\n",  debugstr_w(file->TargetPath));
         file->state = msifs_missing;
 
         /* the UI chunk */
