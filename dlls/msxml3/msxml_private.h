@@ -21,6 +21,10 @@
 #ifndef __MSXML_PRIVATE__
 #define __MSXML_PRIVATE__
 
+#include "dispex.h"
+
+#include "wine/unicode.h"
+
 #ifndef __WINE_CONFIG_H
 # error You must include config.h to use this header
 #endif
@@ -99,7 +103,7 @@ HRESULT bind_url(LPCWSTR, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, 
 void detach_bsc(bsc_t*);
 
 /* typelibs */
-enum tid_t {
+typedef enum tid_t {
     IXMLDOMAttribute_tid,
     IXMLDOMCDATASection_tid,
     IXMLDOMComment_tid,
@@ -131,8 +135,76 @@ enum tid_t {
     IMXReaderControl_tid,
     IMXWriter_tid,
     LAST_tid
-};
+} tid_t;
 
-extern HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo);
+extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
+extern void release_typelib(void);
+
+typedef struct dispex_data_t dispex_data_t;
+typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
+
+#define MSXML_DISPID_CUSTOM_MIN 0x60000000
+#define MSXML_DISPID_CUSTOM_MAX 0x6fffffff
+
+typedef struct {
+    HRESULT (*get_dispid)(IUnknown*,BSTR,DWORD,DISPID*);
+    HRESULT (*invoke)(IUnknown*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*);
+} dispex_static_data_vtbl_t;
+
+typedef struct {
+    const dispex_static_data_vtbl_t *vtbl;
+    const tid_t disp_tid;
+    dispex_data_t *data;
+    const tid_t* const iface_tids;
+} dispex_static_data_t;
+
+typedef struct {
+    const IDispatchExVtbl  *lpIDispatchExVtbl;
+
+    IUnknown *outer;
+
+    dispex_static_data_t *data;
+    dispex_dynamic_data_t *dynamic_data;
+} DispatchEx;
+
+void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
+BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
+
+/* memory allocation functions */
+
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *heap_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}
 
 #endif /* __MSXML_PRIVATE__ */

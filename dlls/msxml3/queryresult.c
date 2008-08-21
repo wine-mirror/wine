@@ -52,6 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct _queryresult
 {
+    DispatchEx dispex;
     const struct IXMLDOMNodeListVtbl *lpVtbl;
     LONG ref;
     xmlNodePtr node;
@@ -64,22 +65,26 @@ static inline queryresult *impl_from_IXMLDOMNodeList( IXMLDOMNodeList *iface )
     return (queryresult *)((char*)iface - FIELD_OFFSET(queryresult, lpVtbl));
 }
 
-
 static HRESULT WINAPI queryresult_QueryInterface(
     IXMLDOMNodeList *iface,
     REFIID riid,
     void** ppvObject )
 {
+    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+
     TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
 
     if(!ppvObject)
         return E_INVALIDARG;
 
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
-         IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IXMLDOMNodeList ) )
     {
         *ppvObject = iface;
+    }
+    else if(dispex_query_interface(&This->dispex, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
     }
     else
     {
@@ -111,7 +116,7 @@ static ULONG WINAPI queryresult_Release(
     {
         xmlXPathFreeObject(This->result);
         xmldoc_release(This->node->doc);
-        CoTaskMemFree(This);
+        heap_free(This);
     }
 
     return ref;
@@ -297,9 +302,20 @@ static const struct IXMLDOMNodeListVtbl queryresult_vtbl =
     queryresult__newEnum,
 };
 
+static const tid_t queryresult_iface_tids[] = {
+    IXMLDOMNodeList_tid,
+    0
+};
+static dispex_static_data_t queryresult_dispex = {
+    NULL,
+    IXMLDOMNodeList_tid,
+    NULL,
+    queryresult_iface_tids
+};
+
 HRESULT queryresult_create(xmlNodePtr node, LPWSTR szQuery, IXMLDOMNodeList **out)
 {
-    queryresult *This = CoTaskMemAlloc(sizeof(queryresult));
+    queryresult *This = heap_alloc_zero(sizeof(queryresult));
     xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);
     xmlChar *str = xmlChar_from_wchar(szQuery);
     HRESULT hr;
@@ -328,7 +344,9 @@ HRESULT queryresult_create(xmlNodePtr node, LPWSTR szQuery, IXMLDOMNodeList **ou
         goto cleanup;
     }
 
-    *out = (IXMLDOMNodeList *)This;
+    init_dispex(&This->dispex, (IUnknown*)&This->lpVtbl, &queryresult_dispex);
+
+    *out = (IXMLDOMNodeList *) &This->lpVtbl;
     hr = S_OK;
     TRACE("found %d matches\n", xmlXPathNodeSetGetLength(This->result->nodesetval));
 

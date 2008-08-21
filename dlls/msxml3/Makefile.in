@@ -13,6 +13,7 @@ C_SRCS = \
 	bsc.c \
 	cdata.c \
 	comment.c \
+	dispex.c \
 	docfrag.c \
 	domdoc.c \
 	domimpl.c \

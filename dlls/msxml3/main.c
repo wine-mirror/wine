@@ -41,91 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-static ITypeLib *typelib;
-static ITypeInfo *typeinfos[LAST_tid];
-
-static REFIID tid_ids[] = {
-    &IID_IXMLDOMAttribute,
-    &IID_IXMLDOMCDATASection,
-    &IID_IXMLDOMComment,
-    &IID_IXMLDOMDocument2,
-    &IID_IXMLDOMDocumentFragment,
-    &IID_IXMLDOMElement,
-    &IID_IXMLDOMEntityReference,
-    &IID_IXMLDOMImplementation,
-    &IID_IXMLDOMNamedNodeMap,
-    &IID_IXMLDOMNode,
-    &IID_IXMLDOMNodeList,
-    &IID_IXMLDOMParseError,
-    &IID_IXMLDOMProcessingInstruction,
-    &IID_IXMLDOMSchemaCollection,
-    &IID_IXMLDOMText,
-    &IID_IXMLElement,
-    &IID_IXMLDOMDocument,
-    &IID_IVBSAXAttributes,
-    &IID_IVBSAXContentHandler,
-    &IID_IVBSAXDeclHandler,
-    &IID_IVBSAXDTDHandler,
-    &IID_IVBSAXEntityResolver,
-    &IID_IVBSAXErrorHandler,
-    &IID_IVBSAXLexicalHandler,
-    &IID_IVBSAXLocator,
-    &IID_IVBSAXXMLFilter,
-    &IID_IVBSAXXMLReader,
-    &IID_IMXAttributes,
-    &IID_IMXReaderControl,
-    &IID_IMXWriter,
-};
-
-HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
-{
-    HRESULT hres;
-
-    if(!typelib) {
-        ITypeLib *tl;
-
-        hres = LoadRegTypeLib(&LIBID_MSXML2, 3, 0, LOCALE_SYSTEM_DEFAULT, &tl);
-        if(FAILED(hres)) {
-            ERR("LoadRegTypeLib failed: %08x\n", hres);
-            return hres;
-        }
-
-        if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
-            ITypeLib_Release(tl);
-    }
-
-    if(!typeinfos[tid]) {
-        ITypeInfo *typeinfo;
-
-        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &typeinfo);
-        if(FAILED(hres)) {
-            ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
-            return hres;
-        }
-
-        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), typeinfo, NULL))
-            ITypeInfo_Release(typeinfo);
-    }
-
-    *typeinfo = typeinfos[tid];
-
-    ITypeInfo_AddRef(typeinfos[tid]);
-    return S_OK;
-}
-
-static void process_detach(void)
-{
-    if(typelib) {
-        unsigned i;
-
-        for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
-            if(typeinfos[i])
-                ITypeInfo_Release(typeinfos[i]);
-
-        ITypeLib_Release(typelib);
-    }
-}
-
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     FIXME("\n");
@@ -160,7 +75,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 #ifdef HAVE_LIBXML2
         xmlCleanupParser();
 #endif
-        process_detach();
+        release_typelib();
         break;
     }
     return TRUE;
