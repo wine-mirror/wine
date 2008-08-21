@@ -740,10 +740,6 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     /* Disable all textures. The caller can then bind a texture it wants to blit
      * from
      */
-    if(GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        glDisable(GL_REGISTER_COMBINERS_NV);
-        checkGLcall("glDisable(GL_REGISTER_COMBINERS_NV)");
-    }
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
         /* The blitting code uses (for now) the fixed function pipeline, so make sure to reset all fixed
          * function texture unit. No need to care for higher samplers
@@ -854,11 +850,6 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
         glDisable(GL_COLOR_SUM_EXT);
         Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SPECULARENABLE), StateTable);
         checkGLcall("glDisable(GL_COLOR_SUM_EXT)");
-    }
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        GL_EXTCALL(glFinalCombinerInputNV(GL_VARIABLE_B_NV, GL_SPARE0_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB));
-        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SPECULARENABLE), StateTable);
-        checkGLcall("glFinalCombinerInputNV");
     }
 
     /* Setup transforms */
