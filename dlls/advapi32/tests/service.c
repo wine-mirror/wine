@@ -36,6 +36,8 @@ static const CHAR spooler[] = "Spooler"; /* Should be available on all platforms
 static BOOL (WINAPI *pChangeServiceConfig2A)(SC_HANDLE,DWORD,LPVOID);
 static BOOL (WINAPI *pQueryServiceConfig2A)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD);
 static BOOL (WINAPI *pQueryServiceConfig2W)(SC_HANDLE,DWORD,LPBYTE,DWORD,LPDWORD);
+static BOOL (WINAPI *pQueryServiceStatusEx)(SC_HANDLE, SC_STATUS_TYPE, LPBYTE,
+                                            DWORD, LPDWORD);
 
 static void init_function_pointers(void)
 {
@@ -44,6 +46,7 @@ static void init_function_pointers(void)
     pChangeServiceConfig2A = (void*)GetProcAddress(hadvapi32, "ChangeServiceConfig2A");
     pQueryServiceConfig2A= (void*)GetProcAddress(hadvapi32, "QueryServiceConfig2A");
     pQueryServiceConfig2W= (void*)GetProcAddress(hadvapi32, "QueryServiceConfig2W");
+    pQueryServiceStatusEx= (void*)GetProcAddress(hadvapi32, "QueryServiceStatusEx");
 }
 
 static void test_open_scm(void)
@@ -802,6 +805,8 @@ static void test_query_svc(void)
     SC_HANDLE scm_handle, svc_handle;
     BOOL ret;
     SERVICE_STATUS status;
+    SERVICE_STATUS_PROCESS *statusproc;
+    DWORD bufsize, needed;
 
     /* All NULL or wrong  */
     SetLastError(0xdeadbeef);
@@ -850,6 +855,96 @@ static void test_query_svc(void)
        GetLastError() == 0xdeadbeef /* NT4, XP and Vista */ ||
        GetLastError() == ERROR_IO_PENDING /* W2K */,
        "Unexpected last error %d\n", GetLastError());
+
+    CloseServiceHandle(svc_handle);
+
+    /* More or less the same tests for QueryServiceStatusEx */
+
+    /* Open service with not enough rights to query the status */
+    svc_handle = OpenServiceA(scm_handle, spooler, STANDARD_RIGHTS_READ);
+
+    /* All NULL or wrong, this proves that info level is checked first */
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceStatusEx(NULL, 1, NULL, 0, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_LEVEL,
+       "Expected ERROR_INVALID_LEVEL, got %d\n", GetLastError());
+
+    /* Passing a NULL parameter for the needed buffer size
+     * will crash on anything but NT4.
+     */
+
+    /* Only info level is correct. It looks like the buffer/size is checked second */
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceStatusEx(NULL, 0, NULL, 0, &needed);
+    /* NT4 checks the handle first */
+    if (GetLastError() != ERROR_INVALID_HANDLE)
+    {
+        ok(!ret, "Expected failure\n");
+        ok(needed == sizeof(SERVICE_STATUS_PROCESS),
+           "Needed buffersize is wrong : %d\n", needed);
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+           "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    }
+
+    /* Pass a correct buffer and buffersize but a NULL handle */
+    statusproc = HeapAlloc(GetProcessHeap(), 0, needed);
+    bufsize = needed;
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceStatusEx(NULL, 0, (BYTE*)statusproc, bufsize, &needed);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, statusproc);
+
+    /* Correct handle and info level */
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceStatusEx(svc_handle, 0, NULL, 0, &needed);
+    /* NT4 doesn't return the needed size */
+    if (GetLastError() != ERROR_INVALID_PARAMETER)
+    {
+        ok(!ret, "Expected failure\n");
+        todo_wine
+        {
+        ok(needed == sizeof(SERVICE_STATUS_PROCESS),
+           "Needed buffersize is wrong : %d\n", needed);
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+           "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+        }
+    }
+
+    /* All parameters are OK but we don't have enough rights */
+    statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
+    bufsize = sizeof(SERVICE_STATUS_PROCESS);
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceStatusEx(svc_handle, 0, (BYTE*)statusproc, bufsize, &needed);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED,
+       "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, statusproc);
+
+    /* Open the service with just enough rights. */
+    CloseServiceHandle(svc_handle);
+    svc_handle = OpenServiceA(scm_handle, spooler, SERVICE_QUERY_STATUS);
+
+    /* Everything should be fine now. */
+    statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
+    bufsize = sizeof(SERVICE_STATUS_PROCESS);
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceStatusEx(svc_handle, 0, (BYTE*)statusproc, bufsize, &needed);
+    ok(ret, "Expected success\n");
+    ok(GetLastError() == ERROR_SUCCESS /* W2K3 */ ||
+       GetLastError() == 0xdeadbeef /* NT4, XP and Vista */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */,
+       "Unexpected last error %d\n", GetLastError());
+    if (statusproc->dwCurrentState == SERVICE_RUNNING)
+        ok(statusproc->dwProcessId != 0,
+           "Expect a process id for this running service\n");
+    else
+        ok(statusproc->dwProcessId == 0,
+           "Expect no process id for this stopped service\n");
+    HeapFree(GetProcessHeap(), 0, statusproc);
 
     CloseServiceHandle(svc_handle);
     CloseServiceHandle(scm_handle);
