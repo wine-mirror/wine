@@ -232,26 +232,30 @@ BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem)
 }
 
 /* Add an entry to the tree. Only give hKey for root nodes (HKEY_ constants) */
-static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HKEY hKey, DWORD dwChildren)
+static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPWSTR label, HKEY hKey, DWORD dwChildren)
 {
     TVINSERTSTRUCT tvins;
+    CHAR* labelA = GetMultiByteString(label);
+    HTREEITEM ret;
 
     if (hKey) {
-        if (RegQueryInfoKey(hKey, 0, 0, 0, &dwChildren, 0, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
+        if (RegQueryInfoKeyW(hKey, 0, 0, 0, &dwChildren, 0, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
             dwChildren = 0;
         }
     }
 
     tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
-    tvins.u.item.pszText = label;
-    tvins.u.item.cchTextMax = lstrlen(label);
+    tvins.u.item.pszText = labelA;
+    tvins.u.item.cchTextMax = lstrlen(labelA);
     tvins.u.item.iImage = Image_Closed;
     tvins.u.item.iSelectedImage = Image_Open;
     tvins.u.item.cChildren = dwChildren;
     tvins.u.item.lParam = (LPARAM)hKey;
     tvins.hInsertAfter = (HTREEITEM)(hKey ? TVI_LAST : TVI_SORT);
     tvins.hParent = hParent;
-    return TreeView_InsertItem(hwndTV, &tvins);
+    ret = TreeView_InsertItem(hwndTV, &tvins);
+    HeapFree(GetProcessHeap(), 0, labelA);
+    return ret;
 }
 
 static BOOL match_string(LPCTSTR sstring1, LPCTSTR sstring2, int mode)
@@ -388,20 +392,20 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
 {
     HKEY hRoot, hKey, hSubKey;
     HTREEITEM childItem;
-    LPTSTR KeyPath;
+    LPWSTR KeyPath;
     DWORD dwCount, dwIndex, dwMaxSubKeyLen;
-    LPSTR Name;
+    LPWSTR Name;
     TVITEM tvItem;
     
     hRoot = NULL;
-    KeyPath = GetItemPath(hwndTV, hItem, &hRoot);
+    KeyPath = GetItemPathW(hwndTV, hItem, &hRoot);
 
     if (!KeyPath || !hRoot)
         return FALSE;
 
     if (*KeyPath) {
-        if (RegOpenKeyEx(hRoot, KeyPath, 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
-            WINE_TRACE("RegOpenKeyEx failed, \"%s\" was probably removed.\n", KeyPath);
+        if (RegOpenKeyExW(hRoot, KeyPath, 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+            WINE_TRACE("RegOpenKeyEx failed, %s was probably removed.\n", wine_dbgstr_w(KeyPath));
             return FALSE;
         }
     } else {
@@ -409,7 +413,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     }
     HeapFree(GetProcessHeap(), 0, KeyPath);
 
-    if (RegQueryInfoKey(hKey, 0, 0, 0, &dwCount, &dwMaxSubKeyLen, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
+    if (RegQueryInfoKeyW(hKey, 0, 0, 0, &dwCount, &dwMaxSubKeyLen, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
         return FALSE;
     }
 
@@ -428,7 +432,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     }
 
     dwMaxSubKeyLen++; /* account for the \0 terminator */
-    if (!(Name = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(TCHAR)))) {
+    if (!(Name = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(WCHAR)))) {
         return FALSE;
     }
     tvItem.cchTextMax = dwMaxSubKeyLen;
@@ -440,20 +444,23 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     for (dwIndex = 0; dwIndex < dwCount; dwIndex++) {
         DWORD cName = dwMaxSubKeyLen, dwSubCount;
         BOOL found;
+        CHAR* NameA;
 
         found = FALSE;
-        if (RegEnumKeyEx(hKey, dwIndex, Name, &cName, 0, 0, 0, NULL) != ERROR_SUCCESS) {
+        if (RegEnumKeyExW(hKey, dwIndex, Name, &cName, 0, 0, 0, NULL) != ERROR_SUCCESS) {
             continue;
         }
 
         /* Find the number of children of the node. */
         dwSubCount = 0;
-        if (RegOpenKeyEx(hKey, Name, 0, KEY_QUERY_VALUE, &hSubKey) == ERROR_SUCCESS) {
+        if (RegOpenKeyExW(hKey, Name, 0, KEY_QUERY_VALUE, &hSubKey) == ERROR_SUCCESS) {
             if (RegQueryInfoKey(hSubKey, 0, 0, 0, &dwSubCount, 0, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
                 dwSubCount = 0;
             }
             RegCloseKey(hSubKey);
         }
+
+        NameA = GetMultiByteString(Name);
 
         /* Check if the node is already in there. */
         for (childItem = TreeView_GetChild(hwndTV, hItem); childItem;
@@ -461,17 +468,19 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
             tvItem.mask = TVIF_TEXT;
             tvItem.hItem = childItem;
             if (!TreeView_GetItem(hwndTV, &tvItem)) {
+                HeapFree(GetProcessHeap(), 0, NameA);
                 return FALSE;
             }
 
-            if (!stricmp(tvItem.pszText, Name)) {
+            if (!stricmp(tvItem.pszText, NameA)) {
                 found = TRUE;
+                HeapFree(GetProcessHeap(), 0, NameA);
                 break;
             }
         }
 
         if (found == FALSE) {
-            WINE_TRACE("New subkey %s\n", Name);
+            WINE_TRACE("New subkey %s\n", NameA);
             AddEntryToTree(hwndTV, hItem, Name, NULL, dwSubCount);
         }
     }
@@ -527,9 +536,7 @@ HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name)
     if (!hItem) hItem = TreeView_GetSelection(hwndTV);
     if (!hItem) return FALSE;
     if (TreeView_GetItemState(hwndTV, hItem, TVIS_EXPANDEDONCE)) {
-	char* nameA = GetMultiByteString(name);
-	hNewItem = AddEntryToTree(hwndTV, hItem, nameA, 0, 0);
-	HeapFree(GetProcessHeap(), 0, nameA);
+	hNewItem = AddEntryToTree(hwndTV, hItem, name, 0, 0);
     } else {
 	item.mask = TVIF_CHILDREN | TVIF_HANDLE;
 	item.hItem = hItem;
@@ -568,7 +575,7 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
 {
     TVINSERTSTRUCT tvins;
     HTREEITEM hRoot;
-    static TCHAR hkcr[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0},
+    static WCHAR hkcr[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0},
                  hkcu[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R',0},
                  hklm[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',0},
                  hku[]  = {'H','K','E','Y','_','U','S','E','R','S',0},
@@ -646,8 +653,8 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
 {
     DWORD dwCount, dwIndex, dwMaxSubKeyLen;
     HKEY hRoot, hNewKey, hKey;
-    LPTSTR keyPath;
-    LPTSTR Name;
+    LPWSTR keyPath;
+    LPWSTR Name;
     LONG errCode;
     HCURSOR hcursorOld;
 
@@ -658,32 +665,32 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
     }
     expanding = TRUE;
     hcursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
-    SendMessage(hwndTV, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(hwndTV, WM_SETREDRAW, FALSE, 0);
 
-    keyPath = GetItemPath(hwndTV, hItem, &hRoot);
+    keyPath = GetItemPathW(hwndTV, hItem, &hRoot);
     if (!keyPath) goto done;
 
     if (*keyPath) {
-        errCode = RegOpenKeyEx(hRoot, keyPath, 0, KEY_READ, &hNewKey);
+        errCode = RegOpenKeyExW(hRoot, keyPath, 0, KEY_READ, &hNewKey);
         if (errCode != ERROR_SUCCESS) goto done;
     } else {
 	hNewKey = hRoot;
     }
 
-    errCode = RegQueryInfoKey(hNewKey, 0, 0, 0, &dwCount, &dwMaxSubKeyLen, 0, 0, 0, 0, 0, 0);
+    errCode = RegQueryInfoKeyW(hNewKey, 0, 0, 0, &dwCount, &dwMaxSubKeyLen, 0, 0, 0, 0, 0, 0);
     if (errCode != ERROR_SUCCESS) goto done;
     dwMaxSubKeyLen++; /* account for the \0 terminator */
-    Name = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(TCHAR));
+    Name = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(WCHAR));
     if (!Name) goto done;
 
     for (dwIndex = 0; dwIndex < dwCount; dwIndex++) {
         DWORD cName = dwMaxSubKeyLen, dwSubCount;
 
-        errCode = RegEnumKeyEx(hNewKey, dwIndex, Name, &cName, 0, 0, 0, 0);
+        errCode = RegEnumKeyExW(hNewKey, dwIndex, Name, &cName, 0, 0, 0, 0);
         if (errCode != ERROR_SUCCESS) continue;
-        errCode = RegOpenKeyEx(hNewKey, Name, 0, KEY_QUERY_VALUE, &hKey);
+        errCode = RegOpenKeyExW(hNewKey, Name, 0, KEY_QUERY_VALUE, &hKey);
         if (errCode == ERROR_SUCCESS) {
-            errCode = RegQueryInfoKey(hKey, 0, 0, 0, &dwSubCount, 0, 0, 0, 0, 0, 0, 0);
+            errCode = RegQueryInfoKeyW(hKey, 0, 0, 0, &dwSubCount, 0, 0, 0, 0, 0, 0, 0);
             RegCloseKey(hKey);
         }
         if (errCode != ERROR_SUCCESS) dwSubCount = 0;
