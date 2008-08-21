@@ -2016,41 +2016,6 @@ static void test_display_formats()
     if(d3d9) IDirect3D9_Release(d3d9);
 }
 
-static void test_set_material(void)
-{
-    D3DPRESENT_PARAMETERS present_parameters;
-    IDirect3DDevice9 *device = NULL;
-    IDirect3D9 *d3d9;
-    HWND hwnd;
-    HRESULT hr;
-
-    d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
-    ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
-    ok(hwnd != NULL, "Failed to create window\n");
-    if (!d3d9 || !hwnd) goto cleanup;
-
-    ZeroMemory(&present_parameters, sizeof(present_parameters));
-    present_parameters.Windowed = TRUE;
-    present_parameters.hDeviceWindow = hwnd;
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-
-    IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
-                                  D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &present_parameters, &device );
-    if(!device)
-    {
-        skip("Failed to create a d3d device\n");
-        goto cleanup;
-    }
-
-    hr = IDirect3DDevice9_SetMaterial(device, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %08x\n",  hr);
-
- cleanup:
-    if(device) IDirect3DDevice9_Release(device);
-    if(d3d9) IDirect3D9_Release(d3d9);
-}
-
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -2080,6 +2045,5 @@ START_TEST(device)
         test_vertex_buffer_alignment();
         test_lights();
         test_set_stream_source();
-        test_set_material();
     }
 }
