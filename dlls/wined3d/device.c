@@ -1319,8 +1319,7 @@ static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *ifac
 
     /* Inform the window about the update. */
     SetWindowPos(window, HWND_TOP, 0, 0,
-                 w, h, SWP_FRAMECHANGED);
-    ShowWindow(window, SW_NORMAL);
+                 w, h, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 }
 
 /*****************************************************************************
