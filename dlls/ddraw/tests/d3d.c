@@ -2735,6 +2735,14 @@ static void DeviceLoadTest()
             }
 }
 
+static void SetMaterialTest(void)
+{
+    HRESULT rc;
+
+    rc =IDirect3DDevice7_SetMaterial(lpD3DDevice, NULL);
+    ok(rc == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %x\n", rc);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -2752,6 +2760,7 @@ START_TEST(d3d)
         SceneTest();
         LimitTest();
         D3D7EnumTest();
+        SetMaterialTest();
         CapsTest();
         VertexBufferDescTest();
         D3D7_OldRenderStateTest();

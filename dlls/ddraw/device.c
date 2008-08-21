@@ -5543,6 +5543,7 @@ IDirect3DDeviceImpl_7_SetMaterial(IDirect3DDevice7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%p): Relay!\n", This, Mat);
 
+    if (!Mat) return DDERR_INVALIDPARAMS;
     /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_SetMaterial(This->wineD3DDevice,

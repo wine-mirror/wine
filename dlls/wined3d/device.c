@@ -3144,8 +3144,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetClipStatus(IWineD3DDevice *iface, 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetMaterial(IWineD3DDevice *iface, CONST WINED3DMATERIAL* pMaterial) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    if (!pMaterial) return WINED3DERR_INVALIDCALL;
-
     This->updateStateBlock->changed.material = TRUE;
     This->updateStateBlock->material = *pMaterial;
 
