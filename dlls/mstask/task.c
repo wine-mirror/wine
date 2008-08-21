@@ -29,6 +29,7 @@ static inline TaskImpl *impl_from_IPersistFile( IPersistFile *iface )
 static void TaskDestructor(TaskImpl *This)
 {
     TRACE("%p\n", This);
+    HeapFree(GetProcessHeap(), 0, This->parameters);
     HeapFree(GetProcessHeap(), 0, This->taskName);
     HeapFree(GetProcessHeap(), 0, This);
     InterlockedDecrement(&dll_ref);
@@ -403,16 +404,51 @@ static HRESULT WINAPI MSTASK_ITask_SetParameters(
         ITask* iface,
         LPCWSTR pwszParameters)
 {
-    FIXME("(%p, %s): stub\n", iface, debugstr_w(pwszParameters));
-    return E_NOTIMPL;
+    DWORD n;
+    TaskImpl *This = (TaskImpl *)iface;
+    LPWSTR tmp_parameters;
+
+    TRACE("(%p, %s)\n", iface, debugstr_w(pwszParameters));
+
+    /* Empty parameter list */
+    if (pwszParameters[0] == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This->parameters);
+        This->parameters = NULL;
+        return S_OK;
+    }
+
+    /* Set to pwszParameters */
+    n = (lstrlenW(pwszParameters) + 1);
+    tmp_parameters = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
+    if (!tmp_parameters)
+        return E_OUTOFMEMORY;
+    lstrcpyW(tmp_parameters, pwszParameters);
+    HeapFree(GetProcessHeap(), 0, This->parameters);
+    This->parameters = tmp_parameters;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetParameters(
         ITask* iface,
         LPWSTR *ppwszParameters)
 {
-    FIXME("(%p, %p): stub\n", iface, ppwszParameters);
-    return E_NOTIMPL;
+    DWORD n;
+    TaskImpl *This = (TaskImpl *)iface;
+
+    TRACE("(%p, %p)\n", iface, ppwszParameters);
+
+    n = This->parameters ? lstrlenW(This->parameters) + 1 : 1;
+    *ppwszParameters = CoTaskMemAlloc(n * sizeof(WCHAR));
+    if (!*ppwszParameters)
+        return E_OUTOFMEMORY;
+
+    if (!This->parameters)
+        *ppwszParameters[0] = 0;
+    else
+        lstrcpyW(*ppwszParameters, This->parameters);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetWorkingDirectory(
@@ -645,6 +681,7 @@ HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj)
     }
     lstrcpyW(This->taskName, pwszTaskName);
     This->applicationName = NULL;
+    This->parameters = NULL;
 
     *ppObj = &This->lpVtbl;
     InterlockedIncrement(&dll_ref);

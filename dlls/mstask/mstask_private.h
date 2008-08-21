@@ -59,6 +59,7 @@ typedef struct
     LONG ref;
     LPWSTR taskName;
     LPWSTR applicationName;
+    LPWSTR parameters;
 } TaskImpl;
 extern HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj);
 
