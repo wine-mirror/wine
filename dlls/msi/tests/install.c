@@ -4269,9 +4269,9 @@ static void test_removefiles(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!pf_exists("msitest\\hydrogen"), "File not deleted\n");
+    ok(delete_pf("msitest\\helium", TRUE), "File deleted\n");
     todo_wine
     {
-        ok(delete_pf("msitest\\helium", TRUE), "File deleted\n");
         ok(delete_pf("msitest\\lithium", TRUE), "File deleted\n");
     }
     ok(delete_pf("msitest", FALSE), "File deleted\n");

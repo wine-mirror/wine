@@ -547,7 +547,8 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         if ( file->state == msifs_installed )
             ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
 
-        if ( file->Component->ActionRequest != INSTALLSTATE_ABSENT )
+        if ( file->Component->ActionRequest != INSTALLSTATE_ABSENT ||
+             file->Component->Installed == INSTALLSTATE_SOURCE )
             continue;
 
         /* don't remove a file if the old file
