@@ -434,6 +434,8 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     LPWSTR account_name;
     const WCHAR dummy_account_name[] = {'N', 'o', 'S', 'u', 'c', 'h',
             'A', 'c', 'c', 'o', 'u', 'n', 't', 0};
+    const WCHAR dummy_account_name_b[] = {'N', 'o', 'S', 'u', 'c', 'h',
+            'A', 'c', 'c', 'o', 'u', 'n', 't', 'B', 0};
 
     setup = setup_task();
     ok(setup, "Failed to setup test_task\n");
@@ -447,20 +449,20 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     hres = ITask_GetAccountInformation(test_task, &account_name);
     /* WinXP returns HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND): 0x80070002 but
      * Win2K returns SCHED_E_CANNOT_OPEN_TASK: 0x8004130d */
-    todo_wine ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
+    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
             hres == SCHED_E_CANNOT_OPEN_TASK,
             "Unset account name generated: 0x%08x\n", hres);
 
     /* Attempt to set to a dummy account without a password */
     /* This test passes on WinXP but fails on Win2K */
     hres = ITask_SetAccountInformation(test_task, dummy_account_name, NULL);
-    todo_wine ok(hres == S_OK,
+    ok(hres == S_OK,
             "Failed setting dummy account with no password: %08x\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
-    todo_wine ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
+    ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(account_name, dummy_account_name),
+        ok(!lstrcmpW(account_name, dummy_account_name),
                 "Got %s, expected %s\n", dbgstr_w(account_name),
                 dbgstr_w(dummy_account_name));
         CoTaskMemFree(account_name);
@@ -468,28 +470,28 @@ static void test_SetAccountInformation_GetAccountInformation(void)
 
     /* Attempt to set to a dummy account with a (invalid) password */
     /* This test passes on WinXP but fails on Win2K */
-    hres = ITask_SetAccountInformation(test_task, dummy_account_name,
-            dummy_account_name);
-    todo_wine ok(hres == S_OK,
+    hres = ITask_SetAccountInformation(test_task, dummy_account_name_b,
+            dummy_account_name_b);
+    ok(hres == S_OK,
             "Failed setting dummy account with password: %08x\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
-    todo_wine ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
+    ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(account_name, dummy_account_name),
+        ok(!lstrcmpW(account_name, dummy_account_name_b),
                 "Got %s, expected %s\n", dbgstr_w(account_name),
-                dbgstr_w(dummy_account_name));
+                dbgstr_w(dummy_account_name_b));
         CoTaskMemFree(account_name);
     }
 
     /* Attempt to set to the local system account */
     hres = ITask_SetAccountInformation(test_task, empty, NULL);
-    todo_wine ok(hres == S_OK, "Failed setting system account: %08x\n", hres);
+    ok(hres == S_OK, "Failed setting system account: %08x\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
-    todo_wine ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
+    ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        todo_wine ok(!lstrcmpW(account_name, empty),
+        ok(!lstrcmpW(account_name, empty),
                 "Got %s, expected empty string\n", dbgstr_w(account_name));
         CoTaskMemFree(account_name);
     }

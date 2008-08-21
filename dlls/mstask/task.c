@@ -29,6 +29,7 @@ static inline TaskImpl *impl_from_IPersistFile( IPersistFile *iface )
 static void TaskDestructor(TaskImpl *This)
 {
     TRACE("%p\n", This);
+    HeapFree(GetProcessHeap(), 0, This->accountName);
     HeapFree(GetProcessHeap(), 0, This->comment);
     HeapFree(GetProcessHeap(), 0, This->parameters);
     HeapFree(GetProcessHeap(), 0, This->taskName);
@@ -355,17 +356,46 @@ static HRESULT WINAPI MSTASK_ITask_SetAccountInformation(
         LPCWSTR pwszAccountName,
         LPCWSTR pwszPassword)
 {
-    FIXME("(%p, %s, %s): stub\n", iface, debugstr_w(pwszAccountName),
+    DWORD n;
+    TaskImpl *This = (TaskImpl *)iface;
+    LPWSTR tmp_account_name;
+
+    TRACE("(%p, %s, %s): partial stub\n", iface, debugstr_w(pwszAccountName),
             debugstr_w(pwszPassword));
-    return E_NOTIMPL;
+
+    if (pwszPassword)
+        FIXME("Partial stub ignores passwords\n");
+
+    n = (lstrlenW(pwszAccountName) + 1);
+    tmp_account_name = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
+    if (!tmp_account_name)
+        return E_OUTOFMEMORY;
+    lstrcpyW(tmp_account_name, pwszAccountName);
+    HeapFree(GetProcessHeap(), 0, This->accountName);
+    This->accountName = tmp_account_name;
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_GetAccountInformation(
         ITask* iface,
         LPWSTR *ppwszAccountName)
 {
-    FIXME("(%p, %p): stub\n", iface, ppwszAccountName);
-    return E_NOTIMPL;
+    DWORD n;
+    TaskImpl *This = (TaskImpl *)iface;
+
+    TRACE("(%p, %p): partial stub\n", iface, ppwszAccountName);
+
+    /* This implements the WinXP behavior when accountName has not yet
+     * set.  Win2K behaves differently, returning SCHED_E_CANNOT_OPEN_TASK */
+    if (!This->accountName)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    n = (lstrlenW(This->accountName) + 1);
+    *ppwszAccountName = CoTaskMemAlloc(n * sizeof(WCHAR));
+    if (!*ppwszAccountName)
+        return E_OUTOFMEMORY;
+    lstrcpyW(*ppwszAccountName, This->accountName);
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_ITask_SetApplicationName(
@@ -728,6 +758,7 @@ HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj)
     This->applicationName = NULL;
     This->parameters = NULL;
     This->comment = NULL;
+    This->accountName = NULL;
 
     /* Default time is 3 days = 259200000 ms */
     This->maxRunTime = 259200000;
