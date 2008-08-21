@@ -551,7 +551,8 @@ static const CHAR rem_remove_files_dat[] = "FileKey\tComponent_\tFileName\tDirPr
                                            "attoparsec\tlithium\tattoparsec\tMSITESTDIR\t2\n"
                                            "storeys\thydrogen\tstoreys\tMSITESTDIR\t3\n"
                                            "block\thelium\tblock\tMSITESTDIR\t3\n"
-                                           "siriometer\tlithium\tsiriometer\tMSITESTDIR\t3\n";
+                                           "siriometer\tlithium\tsiriometer\tMSITESTDIR\t3\n"
+                                           "nanoacre\thydrogen\t\tCABOUTDIR\t3\n";
 
 static const CHAR mov_move_file_dat[] = "FileKey\tComponent_\tSourceName\tDestName\tSourceFolder\tDestFolder\tOptions\n"
                                         "s72\ts72\tS255\tS255\tS72\ts72\ti2\n"
@@ -4228,7 +4229,6 @@ static void test_removefiles(void)
     create_file("msitest\\hydrogen", 500);
     create_file("msitest\\helium", 500);
     create_file("msitest\\lithium", 500);
-    create_file("msitest\\beryllium", 500);
 
     create_database(msifile, rem_tables, sizeof(rem_tables) / sizeof(msi_table));
 
@@ -4283,6 +4283,8 @@ static void test_removefiles(void)
     create_pf("msitest\\storeys", TRUE);
     create_pf("msitest\\block", TRUE);
     create_pf("msitest\\siriometer", TRUE);
+    create_pf("msitest\\cabout", FALSE);
+    create_pf("msitest\\cabout\\blocker", TRUE);
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -4298,6 +4300,7 @@ static void test_removefiles(void)
     ok(!pf_exists("msitest\\storeys"), "File not deleted\n");
     ok(!pf_exists("msitest\\block"), "File not deleted\n");
     ok(!pf_exists("msitest\\siriometer"), "File not deleted\n");
+    ok(pf_exists("msitest\\cabout"), "Directory removed\n");
     ok(pf_exists("msitest"), "File not installed\n");
 
     create_pf("msitest\\furlong", TRUE);
@@ -4324,7 +4327,23 @@ static void test_removefiles(void)
     ok(!delete_pf("msitest\\storeys", TRUE), "File not deleted\n");
     ok(!delete_pf("msitest\\block", TRUE), "File not deleted\n");
     ok(delete_pf("msitest\\siriometer", TRUE), "File deleted\n");
-    ok(delete_pf("msitest", FALSE), "File deleted\n");
+    ok(pf_exists("msitest\\cabout"), "Directory deleted\n");
+    ok(pf_exists("msitest"), "Directory deleted\n");
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\hydrogen", TRUE), "File not installed\n");
+    ok(!delete_pf("msitest\\helium", TRUE), "File installed\n");
+    ok(delete_pf("msitest\\lithium", TRUE), "File not installed\n");
+    ok(pf_exists("msitest\\cabout"), "Directory deleted\n");
+    ok(pf_exists("msitest"), "Directory deleted\n");
+
+    delete_pf("msitest\\cabout\\blocker", TRUE);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!delete_pf("msitest\\cabout", FALSE), "Directory not deleted\n");
+    ok(delete_pf("msitest", FALSE), "Directory deleted\n");
 
     DeleteFile(msifile);
     DeleteFile("msitest\\hydrogen");

@@ -491,7 +491,8 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     if (!dir)
         return ERROR_OUTOFMEMORY;
 
-    size = lstrlenW(filename) + lstrlenW(dir) + 2;
+    size = (filename != NULL) ? lstrlenW(filename) : 0;
+    size += lstrlenW(dir) + 2;
     path = msi_alloc(size * sizeof(WCHAR));
     if (!path)
     {
@@ -500,11 +501,20 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     }
 
     lstrcpyW(path, dir);
-    lstrcatW(path, filename);
+    PathAddBackslashW(path);
 
-    TRACE("Deleting misc file: %s\n", debugstr_w(path));
-    if (!DeleteFileW(path))
-        TRACE("DeleteFileW failed: %d\n", GetLastError());
+    if (filename)
+    {
+        lstrcatW(path, filename);
+
+        TRACE("Deleting misc file: %s\n", debugstr_w(path));
+        DeleteFileW(path);
+    }
+    else
+    {
+        TRACE("Removing misc directory: %s\n", debugstr_w(path));
+        RemoveDirectoryW(path);
+    }
 
 done:
     msi_free(path);
