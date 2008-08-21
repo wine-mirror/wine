@@ -249,7 +249,6 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                     chars = CRYPT_AddPrefixA(prefix,
                      psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
-                    csz -= chars;
                 }
                 /* FIXME: handle quoting */
                 chars = CertRDNValueToStrA(
@@ -277,7 +276,6 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     if (psz && csz)
     {
         *(psz + ret) = '\0';
-        csz--;
         ret++;
     }
     else
@@ -406,7 +404,6 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                     chars = CRYPT_AddPrefixW(prefixW,
                      psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
-                    csz -= chars;
                 }
                 else if (prefixA)
                 {
@@ -414,7 +411,6 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                     chars = CRYPT_AddPrefixAToW(prefixA,
                      psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
-                    csz -= chars;
                 }
                 /* FIXME: handle quoting */
                 chars = CertRDNValueToStrW(
@@ -442,7 +438,6 @@ DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
     if (psz && csz)
     {
         *(psz + ret) = '\0';
-        csz--;
         ret++;
     }
     else
