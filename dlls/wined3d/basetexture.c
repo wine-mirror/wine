@@ -330,26 +330,6 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
     return hr;
 }
 
-HRESULT WINAPI IWineD3DBaseTextureImpl_UnBindTexture(IWineD3DBaseTexture *iface) {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    UINT textureDimensions;
-
-    TRACE("(%p) : About to bind texture\n", This);
-    textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
-
-    ENTER_GL();
-
-    glBindTexture(textureDimensions, 0);
-#if 0 /* TODO: context manager support */
-     IWineD3DContextManager_PopState(This->contextManager, textureDimensions, ENABLED, NOW /* make sure the state is applied now */);
-#else
-    glDisable(textureDimensions);
-#endif
-
-    LEAVE_GL();
-    return WINED3D_OK;
-}
-
 UINT WINAPI IWineD3DBaseTextureImpl_GetTextureDimensions(IWineD3DBaseTexture *iface){
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     FIXME("(%p) : This shouldn't be called\n", This);
@@ -537,7 +517,6 @@ static const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
     IWineD3DBaseTextureImpl_GetDirty,
     /* internal */
     IWineD3DBaseTextureImpl_BindTexture,
-    IWineD3DBaseTextureImpl_UnBindTexture,
     IWineD3DBaseTextureImpl_GetTextureDimensions,
     IWineD3DBaseTextureImpl_IsCondNP2,
     IWineD3DBaseTextureImpl_ApplyStateChanges

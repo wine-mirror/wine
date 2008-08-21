@@ -254,12 +254,6 @@ static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface) {
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_UnBindTexture(IWineD3DTexture *iface) {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    TRACE("(%p) : relay to BaseTexture\n", This);
-    return IWineD3DBaseTextureImpl_UnBindTexture((IWineD3DBaseTexture *)iface);
-}
-
 static UINT WINAPI IWineD3DTextureImpl_GetTextureDimensions(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     TRACE("(%p)\n", This);
@@ -397,7 +391,6 @@ const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_SetDirty,
     IWineD3DTextureImpl_GetDirty,
     IWineD3DTextureImpl_BindTexture,
-    IWineD3DTextureImpl_UnBindTexture,
     IWineD3DTextureImpl_GetTextureDimensions,
     IWineD3DTextureImpl_IsCondNP2,
     IWineD3DTextureImpl_ApplyStateChanges,
