@@ -132,6 +132,11 @@ GpStatus WINGDIPAPI GdipDrawRectanglesI(GpGraphics*,GpPen*,GDIPCONST GpRect*,INT
 GpStatus WINGDIPAPI GdipDrawString(GpGraphics*,GDIPCONST WCHAR*,INT,
     GDIPCONST GpFont*,GDIPCONST RectF*, GDIPCONST GpStringFormat*,
     GDIPCONST GpBrush*);
+
+GpStatus WINGDIPAPI GdipFillClosedCurve2(GpGraphics*,GpBrush*,GDIPCONST GpPointF*,INT,
+    REAL,GpFillMode);
+GpStatus WINGDIPAPI GdipFillClosedCurve2I(GpGraphics*,GpBrush*,GDIPCONST GpPoint*,INT,
+    REAL,GpFillMode);
 GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics*,GpBrush*,REAL,REAL,REAL,REAL);
 GpStatus WINGDIPAPI GdipFillEllipseI(GpGraphics*,GpBrush*,INT,INT,INT,INT);
 GpStatus WINGDIPAPI GdipFillPath(GpGraphics*,GpBrush*,GpPath*);

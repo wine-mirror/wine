@@ -1801,6 +1801,62 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipFillClosedCurve2(GpGraphics *graphics, GpBrush *brush,
+    GDIPCONST GpPointF *points, INT count, REAL tension, GpFillMode fill)
+{
+    GpPath *path;
+    GpStatus stat;
+
+    if(!graphics || !brush || !points)
+        return InvalidParameter;
+
+    stat = GdipCreatePath(fill, &path);
+    if(stat != Ok)
+        return stat;
+
+    stat = GdipAddPathClosedCurve2(path, points, count, tension);
+    if(stat != Ok){
+        GdipDeletePath(path);
+        return stat;
+    }
+
+    stat = GdipFillPath(graphics, brush, path);
+    if(stat != Ok){
+        GdipDeletePath(path);
+        return stat;
+    }
+
+    GdipDeletePath(path);
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipFillClosedCurve2I(GpGraphics *graphics, GpBrush *brush,
+    GDIPCONST GpPoint *points, INT count, REAL tension, GpFillMode fill)
+{
+    GpPointF *ptf;
+    GpStatus stat;
+    INT i;
+
+    if(!points || count <= 0)
+        return InvalidParameter;
+
+    ptf = GdipAlloc(sizeof(GpPointF)*count);
+    if(!ptf)
+        return OutOfMemory;
+
+    for(i = 0;i < count;i++){
+        ptf[i].X = (REAL)points[i].X;
+        ptf[i].Y = (REAL)points[i].Y;
+    }
+
+    stat = GdipFillClosedCurve2(graphics, brush, ptf, count, tension, fill);
+
+    GdipFree(ptf);
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x,
     REAL y, REAL width, REAL height)
 {
