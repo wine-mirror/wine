@@ -950,6 +950,359 @@ static void test_query_svc(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_enum_svc(void)
+{
+    SC_HANDLE scm_handle;
+    BOOL ret;
+    DWORD bufsize, needed, returned, resume;
+    DWORD tempneeded, tempreturned;
+    DWORD drivercountactive, servicecountactive;
+    DWORD drivercountinactive, servicecountinactive;
+    ENUM_SERVICE_STATUS *services;
+    INT i;
+
+    /* All NULL or wrong  */
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(NULL, 1, 0, NULL, 0, NULL, NULL, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    /* Open the service control manager with not enough rights at first */
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+
+    /* Valid handle but rest is still NULL or wrong  */
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, 1, 0, NULL, 0, NULL, NULL, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_ADDRESS ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Unexpected last error %d\n", GetLastError());
+
+    /* Don't specify the two required pointers */
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, 0, 0, NULL, 0, NULL, &returned, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(returned == 0xdeadbeef, "Expected no change to the number of services variable\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_ADDRESS ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Unexpected last error %d\n", GetLastError());
+
+    /* Don't specify the two required pointers */
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, 0, 0, NULL, 0, &needed, NULL, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(needed == 0xdeadbeef, "Expected no change to the needed buffer variable\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_ADDRESS ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
+       "Unexpected last error %d\n", GetLastError());
+
+    /* No valid servicetype and servicestate */
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, 0, 0, NULL, 0, &needed, &returned, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(needed == 0, "Expected needed buffer size to be set to 0, got %d\n", needed);
+    ok(returned == 0, "Expected number of services to be set to 0, got %d\n", returned);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+
+    /* No valid servicetype and servicestate */
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, 0, NULL, 0, &needed, &returned, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(needed == 0, "Expected needed buffer size to be set to 0, got %d\n", needed);
+    ok(returned == 0, "Expected number of services to be set to 0, got %d\n", returned);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+
+    /* No valid servicetype and servicestate */
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, 0, SERVICE_STATE_ALL, NULL, 0,
+                              &needed, &returned, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(needed == 0, "Expected needed buffer size to be set to 0, got %d\n", needed);
+    ok(returned == 0, "Expected number of services to be set to 0, got %d\n", returned);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+
+    /* All parameters are correct but our access rights are wrong */
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL, NULL, 0,
+                              &needed, &returned, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(needed == 0, "Expected needed buffer size to be set to 0, got %d\n", needed);
+    ok(returned == 0, "Expected number of services to be set to 0, got %d\n", returned);
+    }
+    ok(GetLastError() == ERROR_ACCESS_DENIED,
+       "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+
+    /* Open the service control manager with the needed rights */
+    CloseServiceHandle(scm_handle);
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_ENUMERATE_SERVICE);
+
+    /* All parameters are correct. Request the needed buffer size */
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL, NULL, 0,
+                              &needed, &returned, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for this one service\n");
+    ok(returned == 0, "Expected no service returned, got %d\n", returned);
+    ok(GetLastError() == ERROR_MORE_DATA,
+       "Expected ERROR_MORE_DATA, got %d\n", GetLastError());
+    }
+
+    /* Store the needed bytes */
+    tempneeded = needed;
+
+    /* Allocate the correct needed bytes */
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    bufsize = needed;
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
+                              services, bufsize, &needed, &returned, NULL);
+    todo_wine
+    {
+    ok(ret, "Expected success\n");
+    ok(needed == 0, "Expected needed buffer to be 0 as we are done\n");
+    ok(returned != 0xdeadbeef && returned > 0, "Expected some returned services\n");
+    ok(GetLastError() == ERROR_SUCCESS /* W2K3 */ ||
+       GetLastError() == 0xdeadbeef /* NT4, XP and Vista */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */,
+       "Unexpected last error %d\n", GetLastError());
+    }
+    HeapFree(GetProcessHeap(), 0, services);
+
+    /* Store the number of returned services */
+    tempreturned = returned;
+
+    /* Allocate less then the needed bytes and don't specify a resume handle */
+    services = HeapAlloc(GetProcessHeap(), 0, tempneeded - 1);
+    bufsize = tempneeded - 1;
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
+                              services, bufsize, &needed, &returned, NULL);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for this one service\n");
+    ok(returned == (tempreturned - 1), "Expected one service less to be returned\n");
+    ok(GetLastError() == ERROR_MORE_DATA,
+       "Expected ERROR_MORE_DATA, got %d\n", GetLastError());
+    }
+    HeapFree(GetProcessHeap(), 0, services);
+
+    /* Allocate less then the needed bytes, this time with a correct resume handle */
+    services = HeapAlloc(GetProcessHeap(), 0, tempneeded - 1);
+    bufsize = tempneeded - 1;
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    resume = 0;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
+                              services, bufsize, &needed, &returned, &resume);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    {
+    ok(needed != 0xdeadbeef && needed > 0, "Expected the needed buffer size for this one service\n");
+    ok(returned == (tempreturned - 1), "Expected one service less to be returned\n");
+    ok(resume, "Expected a resume handle\n");
+    ok(GetLastError() == ERROR_MORE_DATA,
+       "Expected ERROR_MORE_DATA, got %d\n", GetLastError());
+    }
+    HeapFree(GetProcessHeap(), 0, services);
+
+    /* Fetch that last service but pass a bigger buffer size */
+    services = HeapAlloc(GetProcessHeap(), 0, tempneeded);
+    bufsize = tempneeded;
+    needed = 0xdeadbeef;
+    returned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
+                              services, bufsize, &needed, &returned, &resume);
+    todo_wine
+    {
+    ok(ret, "Expected success\n");
+    ok(needed == 0, "Expected needed buffer to be 0 as we are done\n");
+    ok(returned == 1, "Expected only 1 service to be returned\n");
+    ok(GetLastError() == ERROR_SUCCESS /* W2K3 */ ||
+       GetLastError() == 0xdeadbeef /* NT4, XP and Vista */ ||
+       GetLastError() == ERROR_IO_PENDING /* W2K */,
+       "Unexpected last error %d\n", GetLastError());
+    }
+    ok(resume == 0, "Expected the resume handle to be 0\n");
+    HeapFree(GetProcessHeap(), 0, services);
+
+    /* See if things add up */
+
+    /* Get the number of active driver services */
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_ACTIVE, NULL, 0,
+                        &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_ACTIVE, services,
+                        needed, &needed, &returned, NULL);
+    HeapFree(GetProcessHeap(), 0, services);
+
+    /* Store the number of active driver services */
+    drivercountactive = returned;
+
+    /* Get the number of inactive driver services */
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_INACTIVE, NULL, 0,
+                        &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_INACTIVE, services,
+                        needed, &needed, &returned, NULL);
+    HeapFree(GetProcessHeap(), 0, services);
+
+    drivercountinactive = returned;
+
+    /* Get the number of driver services */
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_STATE_ALL, NULL, 0,
+                        &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_STATE_ALL, services,
+                        needed, &needed, &returned, NULL);
+    HeapFree(GetProcessHeap(), 0, services);
+
+    /* Check if total is the same as active and inactive driver services */
+    todo_wine
+    ok(returned == (drivercountactive + drivercountinactive),
+       "Something wrong in the calculation\n");
+
+    /* Get the number of active win32 services */
+    EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_ACTIVE, NULL, 0,
+                        &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_ACTIVE, services,
+                        needed, &needed, &returned, NULL);
+    HeapFree(GetProcessHeap(), 0, services);
+
+    servicecountactive = returned;
+
+    /* Get the number of inactive win32 services */
+    EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_INACTIVE, NULL, 0,
+                        &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_INACTIVE, services,
+                        needed, &needed, &returned, NULL);
+    HeapFree(GetProcessHeap(), 0, services);
+
+    servicecountinactive = returned;
+
+    /* Get the number of win32 services */
+    EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL, NULL, 0,
+                        &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL, services,
+                        needed, &needed, &returned, NULL);
+    HeapFree(GetProcessHeap(), 0, services);
+
+    /* Check if total is the same as active and inactive win32 services */
+    todo_wine
+    ok(returned == (servicecountactive + servicecountinactive),
+       "Something wrong in the calculation\n");
+
+    /* Get the number of all services */
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
+                        NULL, 0, &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
+                        services, needed, &needed, &returned, NULL);
+
+    /* Check if total is the same as active and inactive win32 services */
+    todo_wine
+    ok(returned == (servicecountactive + servicecountinactive),
+       "Something wrong in the calculation\n");
+
+    /* Get the number of all services.
+     * Fetch the status of the last call as failing could make the following tests crash
+     * on Wine (we don't return anything yet).
+     */
+    EnumServicesStatusA(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
+                        NULL, 0, &needed, &returned, NULL);
+    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    ret = EnumServicesStatusA(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
+                              services, needed, &needed, &returned, NULL);
+
+    /* Check if total is the same as all those single calls */
+    todo_wine
+    ok(returned == (drivercountactive + drivercountinactive + servicecountactive + servicecountinactive),
+       "Something wrong in the calculation\n");
+
+    /* Loop through all those returned services */
+    for (i = 0; ret && i < returned; i++)
+    {
+        SERVICE_STATUS status = services[i].ServiceStatus;
+
+        /* lpServiceName and lpDisplayName should always be filled */
+        ok(lstrlenA(services[i].lpServiceName) > 0, "Expected a service name\n");
+        ok(lstrlenA(services[i].lpDisplayName) > 0, "Expected a display name\n");
+
+        /* Decrement the counters to see if the functions calls return the same
+         * numbers as the contents of these structures.
+         */
+        if (status.dwServiceType & (SERVICE_FILE_SYSTEM_DRIVER | SERVICE_KERNEL_DRIVER))
+        {
+            /* FIXME: should be probably more then just SERVICE_RUNNING */
+            if (status.dwCurrentState == SERVICE_RUNNING)
+                drivercountactive--;
+            else
+                drivercountinactive--;
+        }
+
+        if (status.dwServiceType & (SERVICE_WIN32_OWN_PROCESS | SERVICE_WIN32_SHARE_PROCESS))
+        {
+            if (status.dwCurrentState == SERVICE_RUNNING)
+                servicecountactive--;
+            else
+                servicecountinactive--;
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, services);
+
+    todo_wine
+    {
+    ok(drivercountactive == 0, "Active driver mismatch\n");
+    ok(drivercountinactive == 0, "Inactive driver mismatch\n");
+    ok(servicecountactive == 0, "Active services mismatch\n");
+    ok(servicecountinactive == 0, "Inactive services mismatch\n");
+    }
+
+    CloseServiceHandle(scm_handle);
+}
+
 static void test_close(void)
 {
     SC_HANDLE handle;
@@ -1419,6 +1772,7 @@ START_TEST(service)
     test_get_displayname();
     test_get_servicekeyname();
     test_query_svc();
+    test_enum_svc();
     test_close();
     /* Test the creation, querying and deletion of a service */
     test_sequence();
