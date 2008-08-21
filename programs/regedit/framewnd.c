@@ -673,7 +673,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_REGISTRY_PRINT:
     {
         const WCHAR empty = 0;
-        PrintRegistryHive(hWnd, empty);
+        PrintRegistryHive(hWnd, &empty);
         break;
     }
     case ID_EDIT_DELETE:
