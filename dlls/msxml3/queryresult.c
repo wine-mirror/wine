@@ -50,8 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #include <libxml/xpath.h>
 
-static const struct IXMLDOMNodeListVtbl queryresult_vtbl;
-
 typedef struct _queryresult
 {
     const struct IXMLDOMNodeListVtbl *lpVtbl;
@@ -64,50 +62,6 @@ typedef struct _queryresult
 static inline queryresult *impl_from_IXMLDOMNodeList( IXMLDOMNodeList *iface )
 {
     return (queryresult *)((char*)iface - FIELD_OFFSET(queryresult, lpVtbl));
-}
-
-HRESULT queryresult_create(xmlNodePtr node, LPWSTR szQuery, IXMLDOMNodeList **out)
-{
-    queryresult *This = CoTaskMemAlloc(sizeof(queryresult));
-    xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);
-    xmlChar *str = xmlChar_from_wchar(szQuery);
-    HRESULT hr;
-
-
-    TRACE("(%p, %s, %p)\n", node, wine_dbgstr_w(szQuery), out);
-
-    *out = NULL;
-    if (This == NULL || ctxt == NULL || str == NULL)
-    {
-        hr = E_OUTOFMEMORY;
-        goto cleanup;
-    }
-
-    This->lpVtbl = &queryresult_vtbl;
-    This->ref = 1;
-    This->resultPos = 0;
-    This->node = node;
-    xmldoc_add_ref(This->node->doc);
-
-    ctxt->node = node;
-    This->result = xmlXPathEval(str, ctxt);
-    if (!This->result || This->result->type != XPATH_NODESET)
-    {
-        hr = E_FAIL;
-        goto cleanup;
-    }
-
-    *out = (IXMLDOMNodeList *)This;
-    hr = S_OK;
-    TRACE("found %d matches\n", xmlXPathNodeSetGetLength(This->result->nodesetval));
-
-cleanup:
-    if (This != NULL && FAILED(hr))
-        IXMLDOMNodeList_Release( (IXMLDOMNodeList*) &This->lpVtbl );
-    if (ctxt != NULL)
-        xmlXPathFreeContext(ctxt);
-    HeapFree(GetProcessHeap(), 0, str);
-    return hr;
 }
 
 
@@ -342,5 +296,49 @@ static const struct IXMLDOMNodeListVtbl queryresult_vtbl =
     queryresult_reset,
     queryresult__newEnum,
 };
+
+HRESULT queryresult_create(xmlNodePtr node, LPWSTR szQuery, IXMLDOMNodeList **out)
+{
+    queryresult *This = CoTaskMemAlloc(sizeof(queryresult));
+    xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);
+    xmlChar *str = xmlChar_from_wchar(szQuery);
+    HRESULT hr;
+
+
+    TRACE("(%p, %s, %p)\n", node, wine_dbgstr_w(szQuery), out);
+
+    *out = NULL;
+    if (This == NULL || ctxt == NULL || str == NULL)
+    {
+        hr = E_OUTOFMEMORY;
+        goto cleanup;
+    }
+
+    This->lpVtbl = &queryresult_vtbl;
+    This->ref = 1;
+    This->resultPos = 0;
+    This->node = node;
+    xmldoc_add_ref(This->node->doc);
+
+    ctxt->node = node;
+    This->result = xmlXPathEval(str, ctxt);
+    if (!This->result || This->result->type != XPATH_NODESET)
+    {
+        hr = E_FAIL;
+        goto cleanup;
+    }
+
+    *out = (IXMLDOMNodeList *)This;
+    hr = S_OK;
+    TRACE("found %d matches\n", xmlXPathNodeSetGetLength(This->result->nodesetval));
+
+cleanup:
+    if (This != NULL && FAILED(hr))
+        IXMLDOMNodeList_Release( (IXMLDOMNodeList*) &This->lpVtbl );
+    if (ctxt != NULL)
+        xmlXPathFreeContext(ctxt);
+    HeapFree(GetProcessHeap(), 0, str);
+    return hr;
+}
 
 #endif
