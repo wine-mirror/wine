@@ -242,33 +242,33 @@ done:
     return NULL;
 }
 
-BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR keyName)
+BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR keyName)
 {
     BOOL result = FALSE;
     LONG lRet = ERROR_SUCCESS;
     HKEY retKey = NULL;
-    TCHAR newKey[MAX_NEW_KEY_LEN - 4];
+    WCHAR newKey[MAX_NEW_KEY_LEN - 4];
     int keyNum;
     HKEY hKey;
          
-    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_CREATE_SUB_KEY, &hKey);
+    lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_CREATE_SUB_KEY, &hKey);
     if (lRet != ERROR_SUCCESS) {
 	error_code_messagebox(hwnd, lRet);
 	goto done;
     }
 
-    if (!LoadString(GetModuleHandle(0), IDS_NEWKEY, newKey, COUNT_OF(newKey))) goto done;
+    if (!LoadStringW(GetModuleHandle(0), IDS_NEWKEY, newKey, COUNT_OF(newKey))) goto done;
 
     /* try to find out a name for the newly create key (max 100 times) */
     for (keyNum = 1; keyNum < 100; keyNum++) {
-	wsprintf(keyName, newKey, keyNum);
-	lRet = RegOpenKey(hKey, keyName, &retKey);
+	wsprintfW(keyName, newKey, keyNum);
+	lRet = RegOpenKeyW(hKey, keyName, &retKey);
 	if (lRet != ERROR_SUCCESS) break;
 	RegCloseKey(retKey);
     }
     if (lRet == ERROR_SUCCESS) goto done;
     
-    lRet = RegCreateKey(hKey, keyName, &retKey);
+    lRet = RegCreateKeyW(hKey, keyName, &retKey);
     if (lRet != ERROR_SUCCESS) {
 	error_code_messagebox(hwnd, lRet);
 	goto done;

@@ -761,10 +761,15 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case ID_EDIT_NEW_KEY:
-	if (CreateKey(hWnd, hKeyRoot, keyPath, newKey)) {
-	    if (InsertNode(g_pChildWnd->hTreeWnd, 0, newKey))
-	        StartKeyRename(g_pChildWnd->hTreeWnd);
-	}
+    {
+        WCHAR newKeyW[MAX_NEW_KEY_LEN];
+        WCHAR* keyPathW = GetWideString(keyPath);
+        if (CreateKey(hWnd, hKeyRoot, keyPathW, newKeyW)) {
+            if (InsertNode(g_pChildWnd->hTreeWnd, 0, newKeyW))
+                StartKeyRename(g_pChildWnd->hTreeWnd);
+        }
+        HeapFree(GetProcessHeap(), 0, keyPathW);
+    }
 	break;
     case ID_EDIT_NEW_STRINGVALUE:
 	valueType = REG_SZ;
