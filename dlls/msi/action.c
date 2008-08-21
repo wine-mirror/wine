@@ -2824,13 +2824,6 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
         ACTION_WriteSharedDLLsCount( comp->FullKeypath, comp->RefCount );
 }
 
-/*
- * Ok further analysis makes me think that this work is
- * actually done in the PublishComponents and PublishFeatures
- * step, and not here.  It appears like the keypath and all that is
- * resolved in this step, however actually written in the Publish steps.
- * But we will leave it here for now because it is unclear
- */
 static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 {
     WCHAR squished_pc[GUID_SIZE];
@@ -2840,8 +2833,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     HKEY hkey;
 
     TRACE("\n");
-
-    /* writes the Component values to the registry */
 
     squash_guid(package->ProductCode,squished_pc);
     ui_progress(package,1,COMPONENT_PROGRESS_VALUE,1,0);
@@ -2859,7 +2850,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         msi_free(comp->FullKeypath);
         comp->FullKeypath = resolve_keypath( package, comp );
 
-        /* do the refcounting */
         ACTION_RefCountComponent( package, comp );
 
         TRACE("Component %s (%s), Keypath=%s, RefCount=%i\n",
@@ -2867,11 +2857,9 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                             debugstr_w(squished_cc),
                             debugstr_w(comp->FullKeypath),
                             comp->RefCount);
-        /*
-         * Write the keypath out if the component is to be registered
-         * and delete the key if the component is to be unregistered
-         */
-        if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL))
+
+        if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_LOCAL) ||
+            ACTION_VerifyComponentForAction( comp, INSTALLSTATE_SOURCE))
         {
             if (!comp->FullKeypath)
                 continue;
@@ -2894,7 +2882,42 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 msi_reg_set_val_str(hkey, szPermKey, comp->FullKeypath);
             }
 
-            msi_reg_set_val_str(hkey, squished_pc, comp->FullKeypath);
+            if (comp->Action == INSTALLSTATE_LOCAL)
+                msi_reg_set_val_str(hkey, squished_pc, comp->FullKeypath);
+            else
+            {
+                MSIFILE *file;
+                MSIRECORD *row;
+                LPWSTR ptr, ptr2;
+                WCHAR source[MAX_PATH];
+                WCHAR base[MAX_PATH];
+
+                static const WCHAR fmt[] = {'%','0','2','d','\\',0};
+                static const WCHAR query[] = {
+                    'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+                    '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
+                    '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ',
+                    '>','=',' ','%','i',' ','O','R','D','E','R',' ','B','Y',' ',
+                    '`','D','i','s','k','I','d','`',0};
+
+                file = get_loaded_file(package, comp->KeyPath);
+                if (!file)
+                    continue;
+
+                row = MSI_QueryGetRecord(package->db, query, file->Sequence);
+                sprintfW(source, fmt, MSI_RecordGetInteger(row, 1));
+                ptr2 = strrchrW(source, '\\') + 1;
+                msiobj_release(&row->hdr);
+
+                lstrcpyW(base, package->PackagePath);
+                ptr = strrchrW(base, '\\');
+                *(ptr + 1) = '\0';
+
+                ptr = file->SourcePath + lstrlenW(base);
+                lstrcpyW(ptr2, ptr);
+
+                msi_reg_set_val_str(hkey, squished_pc, source);
+            }
             RegCloseKey(hkey);
         }
         else if (ACTION_VerifyComponentForAction(comp, INSTALLSTATE_ABSENT))

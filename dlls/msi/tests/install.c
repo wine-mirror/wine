@@ -439,6 +439,30 @@ static const CHAR pp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "PublishProduct\tPUBLISH_PRODUCT=1 Or FULL=1\t6400\n"
                                               "InstallFinalize\t\t6600";
 
+static const CHAR ppc_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "maximus\t{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}\tMSITESTDIR\t0\tUILevel=5\tmaximus\n"
+                                        "augustus\t{5AD3C142-CEF8-490D-B569-784D80670685}\tMSITESTDIR\t1\t\taugustus\n";
+
+static const CHAR ppc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "maximus\tmaximus\tmaximus\t500\t\t\t8192\t1\n"
+                                   "augustus\taugustus\taugustus\t500\t\t\t8192\t2";
+
+static const CHAR ppc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                    "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                    "Media\tDiskId\n"
+                                    "1\t2\t\t\tDISK1\t\n";
+
+static const CHAR ppc_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "feature\tmaximus\n"
+                                           "feature\taugustus\n"
+                                           "montecristo\tmaximus";
+
 static const CHAR tp_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
                                        "Component\tComponent\n"
@@ -929,6 +953,18 @@ static const msi_table pp_tables[] =
     ADD_TABLE(rof_file),
     ADD_TABLE(pp_install_exec_seq),
     ADD_TABLE(rof_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table ppc_tables[] =
+{
+    ADD_TABLE(ppc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ppc_feature_comp),
+    ADD_TABLE(ppc_file),
+    ADD_TABLE(pp_install_exec_seq),
+    ADD_TABLE(ppc_media),
     ADD_TABLE(property),
 };
 
@@ -3001,7 +3037,7 @@ static void test_publish_processcomponents(void)
 
     static const CHAR keyfmt[] =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
-        "UserData\\%s\\Components\\CBABC2FDCCB35E749A8944D8C1C098B5";
+        "UserData\\%s\\Components\\%s";
     static const CHAR compkey[] =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Components";
 
@@ -3015,7 +3051,7 @@ static void test_publish_processcomponents(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
 
-    create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
+    create_database(msifile, ppc_tables, sizeof(ppc_tables) / sizeof(msi_table));
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
@@ -3025,7 +3061,7 @@ static void test_publish_processcomponents(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    sprintf(keypath, keyfmt, usersid);
+    sprintf(keypath, keyfmt, usersid, "CBABC2FDCCB35E749A8944D8C1C098B5");
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &comp);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -3044,13 +3080,32 @@ static void test_publish_processcomponents(void)
     RegDeleteKeyA(comp, "");
     RegCloseKey(comp);
 
+    sprintf(keypath, keyfmt, usersid, "241C3DA58FECD0945B9687D408766058");
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &comp);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB",
+                           NULL, NULL, (LPBYTE)val, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(val, "01\\msitest\\augustus"),
+       "Expected \"01\\msitest\\augustus\", got \"%s\"\n", val);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    RegDeleteValueA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB");
+    RegDeleteKeyA(comp, "");
+    RegCloseKey(comp);
+
     /* ProcessComponents, machine */
     r = MsiInstallProductA(msifile, "PROCESS_COMPONENTS=1 ALLUSERS=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    sprintf(keypath, keyfmt, "S-1-5-18");
+    sprintf(keypath, keyfmt, "S-1-5-18", "CBABC2FDCCB35E749A8944D8C1C098B5");
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &comp);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -3061,6 +3116,25 @@ static void test_publish_processcomponents(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     ok(!lstrcmpA(val, "C:\\Program Files\\msitest\\maximus"),
        "Expected \"%s\", got \"%s\"\n", "C:\\Program Files\\msitest\\maximus", val);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    RegDeleteValueA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB");
+    RegDeleteKeyA(comp, "");
+    RegCloseKey(comp);
+
+    sprintf(keypath, keyfmt, "S-1-5-18", "241C3DA58FECD0945B9687D408766058");
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &comp);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    size = MAX_PATH;
+    res = RegQueryValueExA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB",
+                           NULL, NULL, (LPBYTE)val, &size);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(!lstrcmpA(val, "01\\msitest\\augustus"),
+       "Expected \"01\\msitest\\augustus\", got \"%s\"\n", val);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
