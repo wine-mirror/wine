@@ -66,7 +66,7 @@ static void cleanup_trigger(void)
 static BOOL compare_trigger_state(TASK_TRIGGER found_state,
         TASK_TRIGGER expected_state)
 {
-    todo_wine ok(found_state.cbTriggerSize == expected_state.cbTriggerSize,
+    ok(found_state.cbTriggerSize == expected_state.cbTriggerSize,
             "cbTriggerSize: Found %d but expected %d\n",
             found_state.cbTriggerSize, expected_state.cbTriggerSize);
 
@@ -162,7 +162,7 @@ static void test_SetTrigger_GetTrigger(void)
     SYSTEMTIME time;
 
     setup = setup_trigger();
-    todo_wine ok(setup, "Failed to setup test_task\n");
+    ok(setup, "Failed to setup test_task\n");
     if (!setup)
     {
         skip("Failed to create task.  Skipping tests.\n");
@@ -182,8 +182,7 @@ static void test_SetTrigger_GetTrigger(void)
     trigger_state.cbTriggerSize = sizeof(trigger_state);
     hres = ITaskTrigger_GetTrigger(test_trigger, &trigger_state);
     todo_wine ok(hres == S_OK, "Failed to set trigger: 0x%08x\n", hres);
-    todo_wine ok(compare_trigger_state(trigger_state, empty_trigger_state),
-            "Invalid state\n");
+    compare_trigger_state(trigger_state, empty_trigger_state);
 
     /* Test setting basic empty trigger */
     hres = ITaskTrigger_SetTrigger(test_trigger, &empty_trigger_state);
@@ -192,8 +191,7 @@ static void test_SetTrigger_GetTrigger(void)
     trigger_state.cbTriggerSize = sizeof(trigger_state);
     hres = ITaskTrigger_GetTrigger(test_trigger, &trigger_state);
     todo_wine ok(hres == S_OK, "Failed to GetTrigger\n");
-    todo_wine ok(compare_trigger_state(trigger_state, empty_trigger_state),
-            "Invalid state\n");
+    compare_trigger_state(trigger_state, empty_trigger_state);
 
     /* Test setting basic non-empty trigger */
     hres = ITaskTrigger_SetTrigger(test_trigger, &normal_trigger_state);
@@ -202,8 +200,7 @@ static void test_SetTrigger_GetTrigger(void)
     trigger_state.cbTriggerSize = sizeof(trigger_state);
     hres = ITaskTrigger_GetTrigger(test_trigger, &trigger_state);
     todo_wine ok(hres == S_OK, "Failed to GetTrigger\n");
-    todo_wine ok(compare_trigger_state(trigger_state, normal_trigger_state),
-            "Invalid state\n");
+    compare_trigger_state(trigger_state, normal_trigger_state);
 
     /* The following tests modify the normal_trigger_state structure
      * before each test, and return the normal_trigger_state structure
@@ -331,10 +328,10 @@ static void test_SetTrigger_GetTrigger(void)
     memset(&trigger_state, 0xcf, sizeof(trigger_state));
     trigger_state.cbTriggerSize = sizeof(trigger_state);
     hres = ITaskTrigger_GetTrigger(test_trigger, &trigger_state);
-    todo_wine ok(trigger_state.Type.Weekly.WeeksInterval == 0xcfcf,
+    ok(trigger_state.Type.Weekly.WeeksInterval == 0xcfcf,
             "Expected WeeksInterval set remain untouched: %d\n",
             trigger_state.Type.Weekly.WeeksInterval);
-    todo_wine ok(trigger_state.Type.Weekly.rgfDaysOfTheWeek == 0xcfcf,
+    ok(trigger_state.Type.Weekly.rgfDaysOfTheWeek == 0xcfcf,
             "Expected WeeksInterval set remain untouched: %d\n",
             trigger_state.Type.Weekly.rgfDaysOfTheWeek);
     normal_trigger_state.TriggerType = TASK_TIME_TRIGGER_DAILY;

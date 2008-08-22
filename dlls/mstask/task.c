@@ -94,8 +94,8 @@ static HRESULT WINAPI MSTASK_ITask_CreateTrigger(
         WORD *piNewTrigger,
         ITaskTrigger **ppTrigger)
 {
-    FIXME("(%p, %p, %p): stub\n", iface, piNewTrigger, ppTrigger);
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %p)\n", iface, piNewTrigger, ppTrigger);
+    return TaskTriggerConstructor((LPVOID *)ppTrigger);
 }
 
 static HRESULT WINAPI MSTASK_ITask_DeleteTrigger(

@@ -218,7 +218,7 @@ static void test_CreateTrigger(void)
     }
 
     hres = ITask_CreateTrigger(test_task, &trigger_index, &test_trigger);
-    todo_wine ok(hres == S_OK, "Failed to create trigger: 0x%08x\n", hres);
+    ok(hres == S_OK, "Failed to create trigger: 0x%08x\n", hres);
     if (hres != S_OK)
     {
         cleanup_task();
