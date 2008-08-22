@@ -85,7 +85,7 @@ FONT 8, "MS Shell Dlg"
  LTEXT "打印质量(&Q):", 1092, 6, 100, 76, 9
  COMBOBOX cmb1, 80, 100, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  CHECKBOX "打印到文件(&l):", chx1, 20, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- CHECKBOX "Condensed", chx2, 160, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "压小", chx2, 160, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
 }
 
 
@@ -96,7 +96,7 @@ FONT 8, "MS Shell Dlg"
 {
  GROUPBOX "打印机", grp1, 6, 10, 180, 65, BS_GROUPBOX
  RADIOBUTTON "默认打印机(&D)", rad1, 16, 20, 80, 12
- LTEXT "[none]", 1088, 35, 35, 120, 9
+ LTEXT "[无]", 1088, 35, 35, 120, 9
  RADIOBUTTON "指定的打印机(&P)", rad2, 16, 50, 80, 12
  COMBOBOX cmb1, 35, 65, 149, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  DEFPUSHBUTTON "确定", IDOK, 206, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -141,7 +141,7 @@ FONT 8, "MS Shell Dlg"
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "示例",grp2,98,72,120,36,WS_GROUP
     CTEXT           "中文字体AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "Scr&ipt (translate):",stc7,98,114,80,9
+    LTEXT           "语言(&i):",stc7,98,114,80,9
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
@@ -247,7 +247,7 @@ FONT 8, "MS Shell Dlg"
     GROUPBOX        "份数",         grp2, 160, 92, 120,64, WS_GROUP
     LTEXT           "份数(&C):",stc5,168,108,68,8
     ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
-    CONTROL         "C&ollate",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
+    CONTROL         "自动分页(&o)",   chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
     EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
 
     GROUPBOX        "打印范围",    grp1,   8,92,  144,64, WS_GROUP
@@ -351,7 +351,7 @@ FONT 8, "MS Shell Dlg"
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_ABOUTBOX            "&About FolderPicker Test"
+    IDS_ABOUTBOX            "关于文件夹选择器(&A)"
     IDS_DOCUMENTFOLDERS     "文档目录"
     IDS_PERSONAL            "我的文档"
     IDS_FAVORITES           "收藏夹"
@@ -388,59 +388,55 @@ STRINGTABLE DISCARDABLE
 {
     PD32_PRINT_TITLE       "打印"
 
-    PD32_VALUE_UREADABLE                  "Unreadable Entry"
-    PD32_INVALID_PAGE_RANGE "This value does not lie within the page range.\n\
-Please enter a value between %d and %d."
-    PD32_FROM_NOT_ABOVE_TO                "The 'from' entry cannot exceed the \
-'to' entry."
-    PD32_MARGINS_OVERLAP                  "Margins overlap or fall outside \
-Paper boundaries.\nPlease reenter margins."
-    PD32_NR_OF_COPIES_EMPTY               "The number of 'Number of copies' \
-value cannot be empty."
-    PD32_TOO_LARGE_COPIES                 "This large nmuber of copies is not \
-supported by your printer.\nPlease enter a value between 1 and %d."
-    PD32_PRINT_ERROR                      "A printer error occurred."
-    PD32_NO_DEFAULT_PRINTER               "There is not default printer."
-    PD32_CANT_FIND_PRINTER                "Cannot find the printer."
-    PD32_OUT_OF_MEMORY                    "Out of memory."
-    PD32_GENERIC_ERROR                    "Some error occurred."
-    PD32_DRIVER_UNKNOWN                   "Unknown printer driver."
-    PD32_NO_DEVICES                       "Before you can perform printer-related tasks \
-such as page setup or printing a document, you need to install a printer. \
-Please install one and retry."
+    PD32_VALUE_UREADABLE                  "数值不可读"
+    PD32_INVALID_PAGE_RANGE               "这个值不在页数范围。\n \
+请输入一个 %d 和 %d 之间的数。"
+    PD32_FROM_NOT_ABOVE_TO                "'从'项的值不能大于'到'项的值。"
+    PD32_MARGINS_OVERLAP                  "页边距重迭或落于纸外,\n请重新输入页边距。"
+    PD32_NR_OF_COPIES_EMPTY               "'份数' 项不能空."
+    PD32_TOO_LARGE_COPIES                 "你的打印机不支持这么大的份数。\n \
+请输入一个 1 和 %d 之间的数。"
+    PD32_PRINT_ERROR                      "打印机错误。"
+    PD32_NO_DEFAULT_PRINTER               "没有默认打印机。"
+    PD32_CANT_FIND_PRINTER                "找不到打印机。"
+    PD32_OUT_OF_MEMORY                    "内存不够。"
+    PD32_GENERIC_ERROR                    "出现一些错误。"
+    PD32_DRIVER_UNKNOWN                   "找不到打印机驱动器。"
+    PD32_NO_DEVICES                       "在使用与打印机有关功能(页面设置, 打印文件)之前, \
+你必须先装打印机。请装一个打印机再试。"
 
-    PD32_DEFAULT_PRINTER                  "Default Printer; "
-    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "There are %d documents in the queue"
-    PD32_MARGINS_IN_INCHES                "Margins [inches]"
-    PD32_MARGINS_IN_MILIMETERS            "Margins [mm]"
-    PD32_MILIMETERS                       "mm"
+    PD32_DEFAULT_PRINTER                  "默认打印机; "
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "有 %d 个文档正在等待打印"
+    PD32_MARGINS_IN_INCHES                "页边距 [英寸]"
+    PD32_MARGINS_IN_MILIMETERS            "页边距 [毫米]"
+    PD32_MILIMETERS                       "毫米"
 
-    PD32_PRINTER_STATUS_READY             "Ready"
-    PD32_PRINTER_STATUS_PAUSED            "Paused; "
-    PD32_PRINTER_STATUS_ERROR             "Error; "
-    PD32_PRINTER_STATUS_PENDING_DELETION  "Pending deletion; "
-    PD32_PRINTER_STATUS_PAPER_JAM         "Paper jam; "
-    PD32_PRINTER_STATUS_PAPER_OUT         "Out of paper; "
-    PD32_PRINTER_STATUS_MANUAL_FEED       "Feed paper manual; "
-    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Paper problem; "
-    PD32_PRINTER_STATUS_OFFLINE           "Printer offline; "
-    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Active; "
-    PD32_PRINTER_STATUS_BUSY              "Busy; "
-    PD32_PRINTER_STATUS_PRINTING          "Printing; "
-    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Output tray is full; "
-    PD32_PRINTER_STATUS_NOT_AVAILABLE     "Not available; "
-    PD32_PRINTER_STATUS_WAITING           "Waiting; "
-    PD32_PRINTER_STATUS_PROCESSING        "Processing; "
-    PD32_PRINTER_STATUS_INITIALIZING      "Initialising; "
-    PD32_PRINTER_STATUS_WARMING_UP        "Warming up; "
-    PD32_PRINTER_STATUS_TONER_LOW         "Toner low; "
-    PD32_PRINTER_STATUS_NO_TONER          "No toner; "
-    PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
-    PD32_PRINTER_STATUS_USER_INTERVENTION "Interrupted by user; "
-    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Out of memory; "
-    PD32_PRINTER_STATUS_DOOR_OPEN         "The printer door is open; "
-    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Print server unknown; "
-    PD32_PRINTER_STATUS_POWER_SAVE        "Power safe mode; "
+    PD32_PRINTER_STATUS_READY             "待命"
+    PD32_PRINTER_STATUS_PAUSED            "暂停; "
+    PD32_PRINTER_STATUS_ERROR             "错误; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "等待删除; "
+    PD32_PRINTER_STATUS_PAPER_JAM         "卡纸; "
+    PD32_PRINTER_STATUS_PAPER_OUT         "无纸; "
+    PD32_PRINTER_STATUS_MANUAL_FEED       "手动进纸; "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "纸的问题; "
+    PD32_PRINTER_STATUS_OFFLINE           "打印机离线; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O 活动; "
+    PD32_PRINTER_STATUS_BUSY              "繁忙; "
+    PD32_PRINTER_STATUS_PRINTING          "正在打印; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "出纸托盘已满; "
+    PD32_PRINTER_STATUS_NOT_AVAILABLE     "不可用; "
+    PD32_PRINTER_STATUS_WAITING           "等待; "
+    PD32_PRINTER_STATUS_PROCESSING        "正在处理; "
+    PD32_PRINTER_STATUS_INITIALIZING      "正在启动; "
+    PD32_PRINTER_STATUS_WARMING_UP        "预热; "
+    PD32_PRINTER_STATUS_TONER_LOW         "墨低; "
+    PD32_PRINTER_STATUS_NO_TONER          "没墨; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "页内存超支; "
+    PD32_PRINTER_STATUS_USER_INTERVENTION "用户干预; "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "内存不够; "
+    PD32_PRINTER_STATUS_DOOR_OPEN         "打印机盖是打开的; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "找不到打印服务器; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "省电状态; "
 }
 
 #pragma code_page(default)
