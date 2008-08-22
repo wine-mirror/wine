@@ -1,6 +1,7 @@
 /*
  * Variant formatting functions
  *
+ * Copyright 2008 Damjan Jovanovic
  * Copyright 2003 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or
@@ -1181,6 +1182,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
 /* Number formatting state flags */
 #define NUM_WROTE_DEC  0x01 /* Written the decimal separator */
 #define NUM_WRITE_ON   0x02 /* Started to write the number */
+#define NUM_WROTE_SIGN 0x04 /* Written the negative sign */
 
 /* Format a variant using a number format */
 static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
@@ -1320,6 +1322,7 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   {
     WCHAR defaultChar = '?';
     DWORD boolFlag, localeValue = 0;
+    BOOL shouldAdvance = TRUE;
 
     if (pToken - rgbTok > header->size)
     {
@@ -1377,6 +1380,16 @@ VARIANT_FormatNumber_Bool:
       break;
 
     case FMT_NUM_DECIMAL:
+      if ((np.dwOutFlags & NUMPRS_NEG) && !(dwState & NUM_WROTE_SIGN))
+      {
+        /* last chance for a negative sign in the .# case */
+        TRACE("write negative sign\n");
+        localeValue = LOCALE_SNEGATIVESIGN;
+        defaultChar = '-';
+        dwState |= NUM_WROTE_SIGN;
+        shouldAdvance = FALSE;
+        break;
+      }
       TRACE("write decimal separator\n");
       localeValue = LOCALE_SDECIMAL;
       defaultChar = '.';
@@ -1452,6 +1465,16 @@ VARIANT_FormatNumber_Bool:
       {
         int count, count_max;
 
+        if ((np.dwOutFlags & NUMPRS_NEG) && !(dwState & NUM_WROTE_SIGN))
+        {
+          TRACE("write negative sign\n");
+          localeValue = LOCALE_SNEGATIVESIGN;
+          defaultChar = '-';
+          dwState |= NUM_WROTE_SIGN;
+          shouldAdvance = FALSE;
+          break;
+        }
+
         need_int -= pToken[1];
         count_max = have_int + pad - need_int;
         if (count_max < 0)
@@ -1504,7 +1527,8 @@ VARIANT_FormatNumber_Bool:
         *pBuff++ = defaultChar;
       }
     }
-    pToken++;
+    if (shouldAdvance)
+      pToken++;
   }
 
 VARIANT_FormatNumber_Exit:
