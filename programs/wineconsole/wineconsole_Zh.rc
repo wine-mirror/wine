@@ -36,8 +36,8 @@ IDS_FNT_PREVIEW_1,	"这是一段测试语句"
 IDS_FNT_PREVIEW_2,	""
 IDS_DLG_TIT_DEFAULT,    "配置 - 默认设置"
 IDS_DLG_TIT_CURRENT,    "配置 - 当前设置"
-IDS_DLG_TIT_ERROR,      "Configuration error"
-IDS_DLG_ERR_SBWINSIZE,  "Screen buffer size must be greater or equal to the window's one"
+IDS_DLG_TIT_ERROR,      "配置错误"
+IDS_DLG_ERR_SBWINSIZE,  "屏幕缓存大小必须大于或等于视窗缓存"
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
