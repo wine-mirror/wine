@@ -110,8 +110,8 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "全屏（&U）\tCtrl+Shift+S",    ID_VIEW_FULLSCREEN
 #endif
         MENUITEM SEPARATOR
-        MENUITEM "&Minimize on run",            504
-        MENUITEM "&Save settings on exit",      511
+        MENUITEM "启动后最小化（&M）",          504
+        MENUITEM "退出时保存设置（&S）",        511
     }
 
 
