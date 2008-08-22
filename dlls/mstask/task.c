@@ -652,7 +652,9 @@ static HRESULT WINAPI MSTASK_IPersistFile_Save(
         BOOL fRemember)
 {
     FIXME("(%p, %p, %d): stub\n", iface, pszFileName, fRemember);
-    return E_NOTIMPL;
+    WARN("Returning S_OK but not writing to disk: %s %d\n",
+            debugstr_w(pszFileName), fRemember);
+    return S_OK;
 }
 
 static HRESULT WINAPI MSTASK_IPersistFile_SaveCompleted(
