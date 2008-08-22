@@ -434,6 +434,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     }
     tvItem.cchTextMax = dwMaxSubKeyLen;
     if (!(tvItem.pszText = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(WCHAR)))) {
+        HeapFree(GetProcessHeap(), 0, Name);
         return FALSE;
     }
 
@@ -462,6 +463,8 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
             tvItem.mask = TVIF_TEXT;
             tvItem.hItem = childItem;
             if (!TreeView_GetItemW(hwndTV, &tvItem)) {
+                HeapFree(GetProcessHeap(), 0, Name);
+                HeapFree(GetProcessHeap(), 0, tvItem.pszText);
                 return FALSE;
             }
 
