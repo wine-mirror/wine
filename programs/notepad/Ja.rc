@@ -37,14 +37,14 @@ MAIN_MENU MENU
   MENUITEM "終了(&x)",             CMD_EXIT
  }
 POPUP "編集(&E)" {
-  MENUITEM "アンドゥ(&U)\tCtrl+Z",     CMD_UNDO
+  MENUITEM "元に戻す(&U)\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
   MENUITEM "切り取り(&t)\tCtrl+X",      CMD_CUT
   MENUITEM "コピー(&C)\tCtrl+C",     CMD_COPY
-  MENUITEM "ペースト(&P)\tCtrl+V",    CMD_PASTE
+  MENUITEM "貼\り付け(&P)\tCtrl+V",    CMD_PASTE
   MENUITEM "削除(&D)\tDel",      CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "全て選択(&a)\tCtrl+A",       CMD_SELECT_ALL
+  MENUITEM "すべて選択(&a)\tCtrl+A",       CMD_SELECT_ALL
   MENUITEM "日付と時刻(&T)\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "長い行を折り返す(&W)",  CMD_WRAP
@@ -52,14 +52,14 @@ POPUP "編集(&E)" {
  }
 POPUP "検索(&S)" {
   MENUITEM "検索(&S)...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "次の候補を検索(&S)\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "次を検索(&S)\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "ヘルプ(&H)" {
   MENUITEM "目次(&C)",         CMD_HELP_CONTENTS
   MENUITEM "検索(&S)...",        CMD_HELP_SEARCH
   MENUITEM "ヘルプの使い方(&H)",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "メモ帳について(&A)", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
