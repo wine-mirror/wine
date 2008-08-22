@@ -42,6 +42,7 @@ typedef struct
 {
     const ITaskTriggerVtbl *lpVtbl;
     LONG ref;
+    TASK_TRIGGER triggerCond;
 } TaskTriggerImpl;
 extern HRESULT TaskTriggerConstructor(LPVOID *ppObj);
 
