@@ -41,9 +41,9 @@ BEGIN
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_STATIC,119,44,124,72
-    GROUPBOX        " Windows Registration Information ", IDC_STATIC, 15, 110, 230, 55
-    LTEXT           "Owner:", IDC_STATIC, 22, 126, 40, 20
-    LTEXT           "Organization:", IDC_STATIC, 22, 140, 50, 20
+    GROUPBOX        " Windows 登録情報 ", IDC_STATIC, 15, 110, 230, 55
+    LTEXT           "所有者:", IDC_STATIC, 22, 126, 40, 20
+    LTEXT           "組織:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
@@ -68,22 +68,22 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS UI Gothic"
 BEGIN
     GROUPBOX    " ウィンドウ設定 ",IDC_STATIC,8,4,244,84
-    CONTROL     "DirectX アプリケーションがマウスを確保するのを許可する",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Allow the &window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "デスクトップをエミュレートする",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL     "DirectX アプリケーションがマウスを確保するのを許可する(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "ウィンドウマネージャがウィンドウを装飾するのを許可する(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "ウィンドウマネージャがウィンドウを制御するのを許可する(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "仮想デスクトップをエミュレートする(&D)",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "デスクトップの大きさ:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "デスクトップの大きさ(&Z):",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
-    LTEXT       "Vertex Shader サポート: ",IDC_STATIC,15,110,80,32
+    LTEXT       "&Vertex Shader サポート: ",IDC_STATIC,15,110,80,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "Pixel Shader を有効にする(ハードウェアでサポートされている場合のみ)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    CONTROL     "&Pixel Shader を有効にする(ハードウェアでサポートされている場合のみ)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " Screen &Resolution ",IDC_STATIC,8,151,244,93
+    GROUPBOX    " スクリーン解像度(&R) ",IDC_STATIC,8,151,244,93
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
@@ -97,10 +97,10 @@ BEGIN
     GROUPBOX        " DLL オーバーライド ",IDC_STATIC,8,4,244,240
     LTEXT           "ダイナミック・リンク・ライブラリ(DLL)は個別に builtin (Wine版) または native (Windows もしくはアプリケーション提供の物)を選ぶことができます。"
                     ,IDC_STATIC,16,16,220,32
-    LTEXT           "新規ライブラリのオーバーライド:",IDC_STATIC,16,58,100,8
+    LTEXT           "ライブラリの新規オーバーライド(&N):",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "追加(&A)",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
-    LTEXT           "既存のオーバーライド:",IDC_STATIC,16,86,100,8
+    LTEXT           "既存のオーバーライド(&O):",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "編集(&E)",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "削除(&R)",IDC_DLLS_REMOVEDLL,164,114,82,14 
@@ -162,47 +162,47 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS UI Gothic"
 BEGIN
-    GROUPBOX        " Driver Selection ",IDC_STATIC,8,4,244,195
+    GROUPBOX        " ドライバの選択 ",IDC_STATIC,8,4,244,195
     LTEXT           "オーディオドライバ: ",IDC_STATIC,15,20,227,30
     CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
-    PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON      "コントロールパネル",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
+    PUSHBUTTON      "音をテスト(&T)",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON      "コントロールパネル(&C)",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
-    LTEXT	    "ハードウェア・アクセラレーション: ",IDC_STATIC,15,215,90,10
+    LTEXT	    "ハードウェア・アクセラレーション(&H): ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Default &Sample Rate:",IDC_STATIC,15,232,70,8
+    LTEXT           "既定のサンプルレート(&S):",IDC_STATIC,15,232,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Default &Bits Per Sample:",IDC_STATIC,137,232,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "ドライバ・エミュレーション",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+    CONTROL         "ドライバ・エミュレーション(&E)",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS UI Gothic"
 BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
-    LTEXT           "テーマ:",IDC_STATIC,15,16,130,8
+    GROUPBOX        " 外観 ",IDC_STATIC,8,4,244,106
+    LTEXT           "テーマ(&T):",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "テーマのインストール...",IDC_THEME_INSTALL,152,23,93,14
-    LTEXT           "配色:",IDC_THEME_COLORTEXT,15,40,112,8
+    PUSHBUTTON      "テーマをインストール(&I)...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "配色(&C):",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "サイズ:",IDC_THEME_SIZETEXT,135,40,110,8
+    LTEXT           "サイズ(&S):",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "項目:",IDC_STATIC,15,64,112,8
+    LTEXT           "項目(&E):",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
-    LTEXT           "色:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    LTEXT           "色(&O):",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "サイズ:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "サイズ(&Z):",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "フォント",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100
+    PUSHBUTTON      "フォント(&F)",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " シェルフォルダ(&H) ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    CONTROL         "&Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Browse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "参照(&R)",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -222,52 +222,52 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "テーマファイル"
     IDS_THEMEFILE_SELECT    "テーマファイルを選んでください"
-    IDS_SHELL_FOLDER        "Shell Folder"
+    IDS_SHELL_FOLDER        "シェルフォルダ"
     IDS_LINKS_TO            "Links to"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_DLL_WARNING         "Changing the load order of this library is not recommended.\nAre you sure you want to do this?"
-    IDS_DLL_WARNING_CAPTION "Warning: system library"
+    IDS_DLL_WARNING_CAPTION "警告: システムライブラリ"
     IDS_DLL_NATIVE          "native"
     IDS_DLL_BUILTIN         "builtin"
     IDS_DLL_NATIVE_BUILTIN  "native, builtin"
     IDS_DLL_BUILTIN_NATIVE  "builtin, native"
-    IDS_DLL_DISABLED        "disabled"
-    IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "Use global settings"
-    IDS_SELECT_EXECUTABLE   "Select an executable file"
+    IDS_DLL_DISABLED        "無効"
+    IDS_DEFAULT_SETTINGS    "既定の設定"
+    IDS_EXECUTABLE_FILTER   "Wine プログラム (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "全体設定を使う"
+    IDS_SELECT_EXECUTABLE   "実行可能\ファイルを選択"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_SHADER_MODE_HARDWARE    "Hardware"
-    IDS_SHADER_MODE_NONE        "None"
+    IDS_SHADER_MODE_HARDWARE    "ハードウェア"
+    IDS_SHADER_MODE_NONE        "なし"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
-    IDS_DRIVE_FIXED             "Local hard disk"
-    IDS_DRIVE_REMOTE            "Network share"
-    IDS_DRIVE_REMOVABLE         "Floppy disk"
+    IDS_DRIVE_UNKNOWN           "自動検出"
+    IDS_DRIVE_FIXED             "ローカルハードディスク"
+    IDS_DRIVE_REMOTE            "ネットワーク共有"
+    IDS_DRIVE_REMOVABLE         "フロッピーディスク"
     IDS_DRIVE_CDROM             "CD-ROM"
     IDS_DRIVE_LETTERS_EXCEEDED  "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26"
-    IDS_SYSTEM_DRIVE_LABEL      "System drive"
+    IDS_SYSTEM_DRIVE_LABEL      "システムドライブ"
     IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
-    IDS_COL_DRIVELETTER         "Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
-    IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
+    IDS_COL_DRIVELETTER         "レター"
+    IDS_COL_DRIVEMAPPING        "ドライブの割り当て"
+    IDS_NO_DRIVE_C              "ドライブ C がありません。これはあまり良くありません。\n\nドライブ C を作成するためにドライブタブ内の「追加」を忘れずにクリックしてください!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
+    IDS_ACCEL_FULL              "完全"
+    IDS_ACCEL_STANDARD          "標準"
+    IDS_ACCEL_BASIC             "基本"
+    IDS_ACCEL_EMULATION         "エミュレーション"
     IDS_DRIVER_ALSA             "ALSA Driver"
     IDS_DRIVER_ESOUND           "EsounD Driver"
     IDS_DRIVER_OSS              "OSS Driver"
@@ -276,13 +276,13 @@ BEGIN
     IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
     IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
     IDS_OPEN_DRIVER_ERROR       "Couldn't open %s!"
-    IDS_SOUNDDRIVERS            "Sound Drivers"
+    IDS_SOUNDDRIVERS            "サウンドドライバ"
     IDS_DEVICES_WAVEOUT         "Wave Out Devices"
     IDS_DEVICES_WAVEIN          "Wave In Devices"
     IDS_DEVICES_MIDIOUT         "MIDI Out Devices"
     IDS_DEVICES_MIDIIN          "MIDI In Devices"
     IDS_DEVICES_AUX             "Aux Devices"
     IDS_DEVICES_MIXER           "Mixer Devices"
-    IDS_UNAVAILABLE_DRIVER      "Found driver in registry that is not available!\n\nRemove \"%s\" from registry?"
-    IDS_WARNING                 "Warning"
+    IDS_UNAVAILABLE_DRIVER      "利用できないドライバをレジストリ内に見つけました!\n\nレジストリから \"%s\" を削除しますか?"
+    IDS_WARNING                 "警告"
 END
