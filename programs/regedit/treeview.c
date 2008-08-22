@@ -234,9 +234,7 @@ BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem)
 /* Add an entry to the tree. Only give hKey for root nodes (HKEY_ constants) */
 static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPWSTR label, HKEY hKey, DWORD dwChildren)
 {
-    TVINSERTSTRUCT tvins;
-    CHAR* labelA = GetMultiByteString(label);
-    HTREEITEM ret;
+    TVINSERTSTRUCTW tvins;
 
     if (hKey) {
         if (RegQueryInfoKeyW(hKey, 0, 0, 0, &dwChildren, 0, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
@@ -245,17 +243,16 @@ static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPWSTR label, HK
     }
 
     tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
-    tvins.u.item.pszText = labelA;
-    tvins.u.item.cchTextMax = lstrlen(labelA);
+    tvins.u.item.pszText = label;
+    tvins.u.item.cchTextMax = lstrlenW(label);
     tvins.u.item.iImage = Image_Closed;
     tvins.u.item.iSelectedImage = Image_Open;
     tvins.u.item.cChildren = dwChildren;
     tvins.u.item.lParam = (LPARAM)hKey;
     tvins.hInsertAfter = (HTREEITEM)(hKey ? TVI_LAST : TVI_SORT);
     tvins.hParent = hParent;
-    ret = TreeView_InsertItem(hwndTV, &tvins);
-    HeapFree(GetProcessHeap(), 0, labelA);
-    return ret;
+
+    return TreeView_InsertItemW(hwndTV, &tvins);
 }
 
 static BOOL match_string(LPCTSTR sstring1, LPCTSTR sstring2, int mode)
@@ -395,7 +392,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     LPWSTR KeyPath;
     DWORD dwCount, dwIndex, dwMaxSubKeyLen;
     LPWSTR Name;
-    TVITEM tvItem;
+    TVITEMW tvItem;
     
     hRoot = NULL;
     KeyPath = GetItemPathW(hwndTV, hItem, &hRoot);
@@ -421,7 +418,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     tvItem.mask = TVIF_CHILDREN;
     tvItem.hItem = hItem;
     tvItem.cChildren = dwCount;
-    if (!TreeView_SetItem(hwndTV, &tvItem)) {
+    if (!TreeView_SetItemW(hwndTV, &tvItem)) {
         return FALSE;
     }
 
@@ -436,7 +433,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
         return FALSE;
     }
     tvItem.cchTextMax = dwMaxSubKeyLen;
-    if (!(tvItem.pszText = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(TCHAR)))) {
+    if (!(tvItem.pszText = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen * sizeof(WCHAR)))) {
         return FALSE;
     }
 
@@ -444,7 +441,6 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     for (dwIndex = 0; dwIndex < dwCount; dwIndex++) {
         DWORD cName = dwMaxSubKeyLen, dwSubCount;
         BOOL found;
-        CHAR* NameA;
 
         found = FALSE;
         if (RegEnumKeyExW(hKey, dwIndex, Name, &cName, 0, 0, 0, NULL) != ERROR_SUCCESS) {
@@ -460,27 +456,23 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
             RegCloseKey(hSubKey);
         }
 
-        NameA = GetMultiByteString(Name);
-
         /* Check if the node is already in there. */
         for (childItem = TreeView_GetChild(hwndTV, hItem); childItem;
                 childItem = TreeView_GetNextSibling(hwndTV, childItem)) {
             tvItem.mask = TVIF_TEXT;
             tvItem.hItem = childItem;
-            if (!TreeView_GetItem(hwndTV, &tvItem)) {
-                HeapFree(GetProcessHeap(), 0, NameA);
+            if (!TreeView_GetItemW(hwndTV, &tvItem)) {
                 return FALSE;
             }
 
-            if (!stricmp(tvItem.pszText, NameA)) {
+            if (!lstrcmpiW(tvItem.pszText, Name)) {
                 found = TRUE;
-                HeapFree(GetProcessHeap(), 0, NameA);
                 break;
             }
         }
 
         if (found == FALSE) {
-            WINE_TRACE("New subkey %s\n", NameA);
+            WINE_TRACE("New subkey %s\n", wine_dbgstr_w(Name));
             AddEntryToTree(hwndTV, hItem, Name, NULL, dwSubCount);
         }
     }
@@ -493,7 +485,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     while (childItem) {
         HTREEITEM nextItem = TreeView_GetNextSibling(hwndTV, childItem);
         if (RefreshTreeItem(hwndTV, childItem) == FALSE) {
-            SendMessage(hwndTV, TVM_DELETEITEM, 0, (LPARAM)childItem);
+            SendMessageW(hwndTV, TVM_DELETEITEM, 0, (LPARAM)childItem);
         }
         childItem = nextItem;
     }
@@ -529,9 +521,9 @@ BOOL RefreshTreeView(HWND hwndTV)
 
 HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name)
 {
-    TCHAR buf[MAX_NEW_KEY_LEN];
+    WCHAR buf[MAX_NEW_KEY_LEN];
     HTREEITEM hNewItem = 0;
-    TVITEMEX item;
+    TVITEMEXW item;
 
     if (!hItem) hItem = TreeView_GetSelection(hwndTV);
     if (!hItem) return FALSE;
@@ -540,22 +532,20 @@ HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name)
     } else {
 	item.mask = TVIF_CHILDREN | TVIF_HANDLE;
 	item.hItem = hItem;
-	if (!TreeView_GetItem(hwndTV, &item)) return FALSE;
+	if (!TreeView_GetItemW(hwndTV, &item)) return FALSE;
 	item.cChildren = 1;
-	if (!TreeView_SetItem(hwndTV, &item)) return FALSE;
+	if (!TreeView_SetItemW(hwndTV, &item)) return FALSE;
     }
     SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
     if (!hNewItem) {
-	char* nameA = GetMultiByteString(name);
 	for(hNewItem = TreeView_GetChild(hwndTV, hItem); hNewItem; hNewItem = TreeView_GetNextSibling(hwndTV, hNewItem)) {
 	    item.mask = TVIF_HANDLE | TVIF_TEXT;
 	    item.hItem = hNewItem;
 	    item.pszText = buf;
 	    item.cchTextMax = COUNT_OF(buf);
-	    if (!TreeView_GetItem(hwndTV, &item)) continue;
-	    if (lstrcmp(nameA, item.pszText) == 0) break;
+	    if (!TreeView_GetItemW(hwndTV, &item)) continue;
+	    if (lstrcmpW(name, item.pszText) == 0) break;
 	}	
-	HeapFree(GetProcessHeap(), 0, nameA);
     }
     if (hNewItem)
         SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hNewItem);
