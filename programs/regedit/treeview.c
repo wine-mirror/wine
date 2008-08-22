@@ -166,9 +166,9 @@ LPWSTR GetItemPathW(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
     return pathBuffer;
 }
 
-static LPTSTR get_path_component(LPCTSTR *lplpKeyName) {
-     LPCTSTR lpPos = *lplpKeyName;
-     LPTSTR lpResult = NULL;
+static LPWSTR get_path_component(LPCWSTR *lplpKeyName) {
+     LPCWSTR lpPos = *lplpKeyName;
+     LPWSTR lpResult = NULL;
      int len;
      if (!lpPos)
          return NULL;
@@ -176,37 +176,37 @@ static LPTSTR get_path_component(LPCTSTR *lplpKeyName) {
          lpPos++;
      if (*lpPos && lpPos == *lplpKeyName)
          return NULL;
-     len = (lpPos+1-(*lplpKeyName)) * sizeof(TCHAR);
-     lpResult = HeapAlloc(GetProcessHeap(), 0, len);
+     len = lpPos+1-(*lplpKeyName);
+     lpResult = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
      if (!lpResult) /* that would be very odd */
          return NULL;
-     memcpy(lpResult, *lplpKeyName, len-1);
-     lpResult[len-1] = '\0';
+     lstrcpynW(lpResult, *lplpKeyName, len);
      *lplpKeyName = *lpPos ? lpPos+1 : NULL;
      return lpResult;
 }
 
-HTREEITEM FindPathInTree(HWND hwndTV, LPCTSTR lpKeyName) {
-    TVITEMEX tvi;
-    TCHAR buf[261]; /* tree view has 260 character limitation on item name */
+HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
+    TVITEMEXW tvi;
+    WCHAR buf[261]; /* tree view has 260 character limitation on item name */
     HTREEITEM hItem, hOldItem;
 
     buf[260] = '\0';
     hItem = TreeView_GetRoot(hwndTV);
-    SendMessage(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
+    SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
     hItem = TreeView_GetChild(hwndTV, hItem);
     hOldItem = hItem;
     while(1) {
-        LPTSTR lpItemName = get_path_component(&lpKeyName);
+        LPWSTR lpItemName = get_path_component(&lpKeyName);
+
         if (lpItemName) {
             while(hItem) {
                 tvi.mask = TVIF_TEXT | TVIF_HANDLE;
                 tvi.hItem = hItem;
                 tvi.pszText = buf;
                 tvi.cchTextMax = 260;
-                SendMessage(hwndTV, TVM_GETITEM, 0, (LPARAM) &tvi);
-                if (!_tcsicmp(tvi.pszText, lpItemName)) {
-                     SendMessage(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
+                SendMessageW(hwndTV, TVM_GETITEMW, 0, (LPARAM) &tvi);
+                if (!lstrcmpiW(tvi.pszText, lpItemName)) {
+                     SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
                      if (!lpKeyName)
                          return hItem;
                      hOldItem = hItem;
