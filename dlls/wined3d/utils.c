@@ -205,7 +205,7 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
         ,0 },
     {WINED3DFMT_X4R4G4B4       ,GL_RGB4                          ,GL_RGB4                                , 0,           GL_BGRA                   ,GL_UNSIGNED_SHORT_4_4_4_4_REV
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING},
-    {WINED3DFMT_A2B10G10R10    ,GL_RGBA                          ,GL_RGBA                                , 0,           GL_RGBA                   ,GL_UNSIGNED_INT_2_10_10_10_REV
+    {WINED3DFMT_A2B10G10R10    ,GL_RGB10_A2                      ,GL_RGB10_A2                            , 0,           GL_RGBA                   ,GL_UNSIGNED_INT_2_10_10_10_REV
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING},
     {WINED3DFMT_A8B8G8R8       ,GL_RGBA8                         ,GL_RGBA8                               , 0,           GL_RGBA                   ,GL_UNSIGNED_INT_8_8_8_8_REV
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING},
@@ -213,7 +213,7 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING},
     {WINED3DFMT_G16R16         ,GL_RGB16_EXT                     ,GL_RGB16_EXT                           , 0,           GL_RGB                    ,GL_UNSIGNED_SHORT
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
-    {WINED3DFMT_A2R10G10B10    ,GL_RGBA                          ,GL_RGBA                                , 0,           GL_BGRA                   ,GL_UNSIGNED_INT_2_10_10_10_REV
+    {WINED3DFMT_A2R10G10B10    ,GL_RGB10_A2                      ,GL_RGB10_A2                            , 0,           GL_BGRA                   ,GL_UNSIGNED_INT_2_10_10_10_REV
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING },
     {WINED3DFMT_A16B16G16R16   ,GL_RGBA16_EXT                    ,GL_RGBA16_EXT                          , 0,           GL_RGBA                   ,GL_UNSIGNED_SHORT
         ,WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET },
