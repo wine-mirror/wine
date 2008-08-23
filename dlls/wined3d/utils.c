@@ -1166,7 +1166,8 @@ BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op, DWO
 }
 
 /* Setup this textures matrix according to the texture flags*/
-void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed, DWORD coordtype)
+void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed, DWORD coordtype,
+                        BOOL ffp_proj_control)
 {
     float mat[16];
 
@@ -1187,15 +1188,17 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
     memcpy(mat, smat, 16 * sizeof(float));
 
     if (flags & WINED3DTTFF_PROJECTED) {
-        switch (flags & ~WINED3DTTFF_PROJECTED) {
-        case WINED3DTTFF_COUNT2:
-            mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
-            mat[1] = mat[5] = mat[9] = mat[13] = 0;
-            break;
-        case WINED3DTTFF_COUNT3:
-            mat[3] = mat[2], mat[7] = mat[6], mat[11] = mat[10], mat[15] = mat[14];
-            mat[2] = mat[6] = mat[10] = mat[14] = 0;
-            break;
+        if(!ffp_proj_control) {
+            switch (flags & ~WINED3DTTFF_PROJECTED) {
+            case WINED3DTTFF_COUNT2:
+                mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
+                mat[1] = mat[5] = mat[9] = mat[13] = 0;
+                break;
+            case WINED3DTTFF_COUNT3:
+                mat[3] = mat[2], mat[7] = mat[6], mat[11] = mat[10], mat[15] = mat[14];
+                mat[2] = mat[6] = mat[10] = mat[14] = 0;
+                break;
+            }
         }
     } else { /* under directx the R/Z coord can be used for translation, under opengl we use the Q coord instead */
         if(!calculatedCoords) {
@@ -1231,23 +1234,25 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
                     FIXME("Unexpected fixed function texture coord input\n");
             }
         }
-        switch (flags & ~WINED3DTTFF_PROJECTED) {
-            /* case WINED3DTTFF_COUNT1: Won't ever get here */
-            case WINED3DTTFF_COUNT2: mat[2] = mat[6] = mat[10] = mat[14] = 0;
-            /* OpenGL divides the first 3 vertex coord by the 4th by default,
-             * which is essentially the same as D3DTTFF_PROJECTED. Make sure that
-             * the 4th coord evaluates to 1.0 to eliminate that.
-             *
-             * If the fixed function pipeline is used, the 4th value remains unused,
-             * so there is no danger in doing this. With vertex shaders we have a
-             * problem. Should an app hit that problem, the code here would have to
-             * check for pixel shaders, and the shader has to undo the default gl divide.
-             *
-             * A more serious problem occurs if the app passes 4 coordinates in, and the
-             * 4th is != 1.0(opengl default). This would have to be fixed in drawStridedSlow
-             * or a replacement shader
-             */
-            default: mat[3] = mat[7] = mat[11] = 0; mat[15] = 1;
+        if(!ffp_proj_control) {
+            switch (flags & ~WINED3DTTFF_PROJECTED) {
+                /* case WINED3DTTFF_COUNT1: Won't ever get here */
+                case WINED3DTTFF_COUNT2: mat[2] = mat[6] = mat[10] = mat[14] = 0;
+                /* OpenGL divides the first 3 vertex coord by the 4th by default,
+                * which is essentially the same as D3DTTFF_PROJECTED. Make sure that
+                * the 4th coord evaluates to 1.0 to eliminate that.
+                *
+                * If the fixed function pipeline is used, the 4th value remains unused,
+                * so there is no danger in doing this. With vertex shaders we have a
+                * problem. Should an app hit that problem, the code here would have to
+                * check for pixel shaders, and the shader has to undo the default gl divide.
+                *
+                * A more serious problem occurs if the app passes 4 coordinates in, and the
+                * 4th is != 1.0(opengl default). This would have to be fixed in drawStridedSlow
+                * or a replacement shader
+                */
+                default: mat[3] = mat[7] = mat[11] = 0; mat[15] = 1;
+            }
         }
     }
 

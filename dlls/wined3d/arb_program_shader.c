@@ -2066,7 +2066,8 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
-    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
+    WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
     local_constant* lconst;
 
     /*  Create the hw ARB shader */
@@ -2100,7 +2101,7 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
     if(!GL_SUPPORT(NV_VERTEX_PROGRAM)) {
         shader_addline(buffer, "MOV result.color.secondary, -helper_const.wwwy;\n");
 
-        if((GLINFO_LOCATION).set_texcoord_w) {
+        if((GLINFO_LOCATION).set_texcoord_w && !device->frag_pipe->ffp_proj_control) {
             int i;
             for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
                 if(This->baseShader.reg_maps.texcoord_mask[i] != 0 &&
@@ -2746,11 +2747,12 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
 
         if(settings->op[stage].projected == proj_none) {
             instr = "TEX";
-        } else if(settings->op[stage].projected == proj_count4) {
+        } else if(settings->op[stage].projected == proj_count4 ||
+                  settings->op[stage].projected == proj_count3) {
             instr = "TXP";
         } else {
+            FIXME("Unexpected projection mode %d\n", settings->op[stage].projected);
             instr = "TXP";
-            ERR("Implement proj_count3\n");
         }
 
         if(stage > 0 &&
@@ -2768,7 +2770,11 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
                 /* Note: Currently always divide by .a because the vertex pipeline moves the correct value
                  * into the 4th component
                  */
-                shader_addline(&buffer, "RCP arg1.a, fragment.texcoord[%u].a;\n", stage);
+                if(settings->op[stage].projected == proj_count4) {
+                    shader_addline(&buffer, "RCP arg1.a, fragment.texcoord[%u].a;\n", stage);
+                } else {
+                    shader_addline(&buffer, "RCP arg1.a, fragment.texcoord[%u].b;\n", stage);
+                }
                 shader_addline(&buffer, "MUL arg1.rg, fragment.texcoord[%u], arg1.a;\n", stage);
                 shader_addline(&buffer, "ADD ret, ret, arg1;\n");
             } else {
@@ -2782,6 +2788,11 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
                                stage - 1, stage - 1, stage - 1);
                 shader_addline(&buffer, "MUL tex%u, tex%u, ret.r;\n", stage, stage);
             }
+        } else if(settings->op[stage].projected == proj_count3) {
+            shader_addline(&buffer, "MOV ret, fragment.texcoord[%u];\n", stage);
+            shader_addline(&buffer, "MOV ret.a, ret.b;\n");
+            shader_addline(&buffer, "%s%s tex%u, ret, texture[%u], %s;\n",
+                            instr, sat, stage, stage, textype);
         } else {
             shader_addline(&buffer, "%s%s tex%u, fragment.texcoord[%u], texture[%u], %s;\n",
                             instr, sat, stage, stage, stage, textype);
@@ -3122,7 +3133,8 @@ const struct fragment_pipeline arbfp_fragment_pipeline = {
     arbfp_alloc,
     arbfp_free,
     shader_arb_conv_supported,
-    arbfp_fragmentstate_template
+    arbfp_fragmentstate_template,
+    TRUE /* We can disable projected textures */
 };
 
 #define GLINFO_LOCATION device->adapter->gl_info

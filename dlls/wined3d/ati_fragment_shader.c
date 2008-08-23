@@ -314,8 +314,10 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
                    GL_SWIZZLE_STR_ATI));
         if(op[stage + 1].projected == proj_none) {
             swizzle = GL_SWIZZLE_STR_ATI;
-        } else {
+        } else if(op[stage + 1].projected == proj_count4) {
             swizzle = GL_SWIZZLE_STQ_DQ_ATI;
+        } else {
+            swizzle = GL_SWIZZLE_STR_DR_ATI;
         }
         TRACE("glPassTexCoordATI(GL_REG_%d_ATI, GL_TEXTURE_%d_ARB, %s)\n",
               stage + 1, stage + 1, debug_swizzle(swizzle));
@@ -382,15 +384,7 @@ static GLuint gen_ati_shader(struct texture_stage_op op[MAX_TEXTURES], WineD3D_G
         if(op[stage].projected == proj_none) {
             swizzle = GL_SWIZZLE_STR_ATI;
         } else if(op[stage].projected == proj_count3) {
-            /* TODO: D3DTTFF_COUNT3 | D3DTTFF_PROJECTED would be GL_SWIZZLE_STR_DR_ATI.
-             * However, the FFP vertex processing texture transform matrix handler does
-             * some transformations in the texture matrix which makes the 3rd coordinate
-             * arrive in Q, not R in that case. This is needed for opengl fixed function
-             * fragment processing which always divides by Q. In this backend we can
-             * handle that properly and be compatible with vertex shader output and avoid
-             * side effects of the texture matrix games
-             */
-            swizzle = GL_SWIZZLE_STQ_DQ_ATI;
+            swizzle = GL_SWIZZLE_STR_DR_ATI;
         } else {
             swizzle = GL_SWIZZLE_STQ_DQ_ATI;
         }
@@ -875,6 +869,13 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), (float *) mat));
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
 }
+
+static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    if(!isStateDirty(context, STATE_PIXELSHADER)) {
+        set_tex_op_atifs(state, stateblock, context);
+    }
+}
+
 #undef GLINFO_LOCATION
 
 static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
@@ -991,6 +992,14 @@ static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     { STATE_SAMPLER(5),                                   { STATE_SAMPLER(5),                                   sampler_texdim          }, 0                               },
     { STATE_SAMPLER(6),                                   { STATE_SAMPLER(6),                                   sampler_texdim          }, 0                               },
     { STATE_SAMPLER(7),                                   { STATE_SAMPLER(7),                                   sampler_texdim          }, 0                               },
+    {STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(0, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    {STATE_TEXTURESTAGE(1,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(1, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    {STATE_TEXTURESTAGE(2,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(2, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    {STATE_TEXTURESTAGE(3,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(3, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    {STATE_TEXTURESTAGE(4,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(4, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    {STATE_TEXTURESTAGE(5,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(5, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    {STATE_TEXTURESTAGE(6,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(6, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    {STATE_TEXTURESTAGE(7,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(7, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
     {0 /* Terminate */,                                   { 0,                                                  0                       }, 0                               },
 };
 
@@ -1107,5 +1116,6 @@ const struct fragment_pipeline atifs_fragment_pipeline = {
     atifs_alloc,
     atifs_free,
     atifs_conv_supported,
-    atifs_fragmentstate_template
+    atifs_fragmentstate_template,
+    TRUE /* We can disable projected textures */
 };

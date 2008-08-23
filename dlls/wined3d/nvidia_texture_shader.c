@@ -810,7 +810,8 @@ const struct fragment_pipeline nvts_fragment_pipeline = {
     nvrc_fragment_alloc,
     nvrc_fragment_free,
     nvts_conv_supported,
-    nvrc_fragmentstate_template
+    nvrc_fragmentstate_template,
+    FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };
 
 const struct fragment_pipeline nvrc_fragment_pipeline = {
@@ -819,5 +820,6 @@ const struct fragment_pipeline nvrc_fragment_pipeline = {
     nvrc_fragment_alloc,
     nvrc_fragment_free,
     nvts_conv_supported,
-    nvrc_fragmentstate_template
+    nvrc_fragmentstate_template,
+    FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };

@@ -559,6 +559,7 @@ struct fragment_pipeline {
     void (*free_private)(IWineD3DDevice *iface);
     BOOL (*conv_supported)(WINED3DFORMAT conv);
     const struct StateEntryTemplate *states;
+    BOOL ffp_proj_control;
 };
 
 extern const struct StateEntryTemplate misc_state_template[];
@@ -1816,7 +1817,7 @@ GLenum StencilOp(DWORD op);
 GLenum CompareFunc(DWORD func);
 BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst);
-void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed, DWORD coordtype);
+void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed, DWORD coordtype, BOOL ffp_can_disable_proj);
 void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);

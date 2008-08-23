@@ -1,3 +1,4 @@
+
 /*
  * Direct3D state management
  *
@@ -3139,7 +3140,8 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
                         context->last_was_rhw,
                         stateblock->wineD3DDevice->strided_streams.u.s.texCoords[coordIdx].dwStride ?
                             stateblock->wineD3DDevice->strided_streams.u.s.texCoords[coordIdx].dwType:
-                            WINED3DDECLTYPE_UNUSED);
+                            WINED3DDECLTYPE_UNUSED,
+                        stateblock->wineD3DDevice->frag_pipe->ffp_proj_control);
 
     /* The sampler applying function calls us if this changes */
     if(context->lastWasPow2Texture[texUnit] && stateblock->textures[texUnit]) {
@@ -5565,7 +5567,8 @@ const struct fragment_pipeline ffp_fragment_pipeline = {
     ffp_fragment_alloc,
     ffp_fragment_free,
     ffp_conv_supported,
-    ffp_fragmentstate_template
+    ffp_fragmentstate_template,
+    FALSE /* we cannot disable projected textures. The vertex pipe has to do it */
 };
 
 static int num_handlers(APPLYSTATEFUNC *funcs) {

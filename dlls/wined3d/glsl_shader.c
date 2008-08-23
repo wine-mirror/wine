@@ -3008,6 +3008,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     GLhandleARB ret = 0;
     IWineD3DVertexShaderImpl *vs = (IWineD3DVertexShaderImpl *) vertexshader;
     IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) pixelshader;
+    IWineD3DDeviceImpl *device;
     DWORD vs_major = vs ? WINED3DSHADER_VERSION_MAJOR(vs->baseShader.hex_version) : 0;
     DWORD ps_major = ps ? WINED3DSHADER_VERSION_MAJOR(ps->baseShader.hex_version) : 0;
     unsigned int i;
@@ -3029,7 +3030,9 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         /* That one is easy: The vertex shader writes to the builtin varyings, the pixel shader reads from them.
          * Take care about the texcoord .w fixup though if we're using the fixed function fragment pipeline
          */
-        if((GLINFO_LOCATION).set_texcoord_w && ps_major == 0 && vs_major > 0) {
+        device = (IWineD3DDeviceImpl *) vs->baseShader.device;
+        if((GLINFO_LOCATION).set_texcoord_w && ps_major == 0 && vs_major > 0 &&
+            !device->frag_pipe->ffp_proj_control) {
             shader_addline(&buffer, "void order_ps_input() {\n");
             for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
                 if(vs->baseShader.reg_maps.texcoord_mask[i] != 0 &&
