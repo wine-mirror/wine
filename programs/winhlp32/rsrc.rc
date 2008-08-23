@@ -39,6 +39,7 @@ IDI_WINHELP ICON DISCARDABLE winhelp.ico
 #include "Fr.rc"
 #include "Hu.rc"
 #include "It.rc"
+#include "Ja.rc"
 #include "Ko.rc"
 #include "Nl.rc"
 #include "No.rc"
