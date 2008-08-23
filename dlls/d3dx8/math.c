@@ -61,7 +61,7 @@ D3DXCOLOR* WINAPI D3DXColorAdjustSaturation(D3DXCOLOR *pout, CONST D3DXCOLOR *pc
 
 D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, FLOAT scaling, CONST D3DXVECTOR3 *rotationcenter, CONST D3DXQUATERNION *rotation, CONST D3DXVECTOR3 *translation)
 {
-    D3DXMATRIX m1, m2, m3, m4, m5, p1, p2, p3;
+    D3DXMATRIX m1, m2, m3, m4, m5;
 
     D3DXMatrixScaling(&m1, scaling, scaling, scaling);
     if ( !rotationcenter )
@@ -90,10 +90,10 @@ D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation(D3DXMATRIX *pout, FLOAT scalin
     {
      D3DXMatrixTranslation(&m5, translation->x, translation->y, translation->z);
     }
-    D3DXMatrixMultiply(&p1, &m1, &m2);
-    D3DXMatrixMultiply(&p2, &p1, &m3);
-    D3DXMatrixMultiply(&p3, &p2, &m4);
-    D3DXMatrixMultiply(pout, &p3, &m5);
+    D3DXMatrixMultiply(&m1, &m1, &m2);
+    D3DXMatrixMultiply(&m1, &m1, &m3);
+    D3DXMatrixMultiply(&m1, &m1, &m4);
+    D3DXMatrixMultiply(pout, &m1, &m5);
     return pout;
 }
 
@@ -105,7 +105,7 @@ FLOAT WINAPI D3DXMatrixfDeterminant(CONST D3DXMATRIX *pm)
     v1.x = pm->u.m[0][0]; v1.y = pm->u.m[1][0]; v1.z = pm->u.m[2][0]; v1.w = pm->u.m[3][0];
     v2.x = pm->u.m[0][1]; v2.y = pm->u.m[1][1]; v2.z = pm->u.m[2][1]; v2.w = pm->u.m[3][1];
     v3.x = pm->u.m[0][2]; v3.y = pm->u.m[1][2]; v3.z = pm->u.m[2][2]; v3.w = pm->u.m[3][2];
-    D3DXVec4Cross(&minor,&v1,&v2,&v3);
+    D3DXVec4Cross(&minor, &v1, &v2, &v3);
     det =  - (pm->u.m[0][3] * minor.x + pm->u.m[1][3] * minor.y + pm->u.m[2][3] * minor.z + pm->u.m[3][3] * minor.w);
     return det;
 }
@@ -218,10 +218,8 @@ D3DXMATRIX* WINAPI D3DXMatrixMultiply(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, C
 
 D3DXMATRIX* WINAPI D3DXMatrixMultiplyTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm1, CONST D3DXMATRIX *pm2)
 {
-    D3DXMATRIX temp;
-
-    D3DXMatrixMultiply(&temp, pm1, pm2);
-    D3DXMatrixTranspose(pout, &temp);
+    D3DXMatrixMultiply(pout, pm1, pm2);
+    D3DXMatrixTranspose(pout, pout);
     return pout;
 }
 
@@ -421,15 +419,15 @@ D3DXMATRIX* WINAPI D3DXMatrixRotationY(D3DXMATRIX *pout, FLOAT angle)
 
 D3DXMATRIX* WINAPI D3DXMatrixRotationYawPitchRoll(D3DXMATRIX *pout, FLOAT yaw, FLOAT pitch, FLOAT roll)
 {
-    D3DXMATRIX m, pout1, pout2, pout3;
+    D3DXMATRIX m;
 
-    D3DXMatrixIdentity(&pout3);
-    D3DXMatrixRotationZ(&m,roll);
-    D3DXMatrixMultiply(&pout2,&pout3,&m);
-    D3DXMatrixRotationX(&m,pitch);
-    D3DXMatrixMultiply(&pout1,&pout2,&m);
-    D3DXMatrixRotationY(&m,yaw);
-    D3DXMatrixMultiply(pout,&pout1,&m);
+    D3DXMatrixIdentity(pout);
+    D3DXMatrixRotationZ(&m, roll);
+    D3DXMatrixMultiply(pout, pout, &m);
+    D3DXMatrixRotationX(&m, pitch);
+    D3DXMatrixMultiply(pout, pout, &m);
+    D3DXMatrixRotationY(&m, yaw);
+    D3DXMatrixMultiply(pout, pout, &m);
     return pout;
 }
 D3DXMATRIX* WINAPI D3DXMatrixRotationZ(D3DXMATRIX *pout, FLOAT angle)
@@ -479,7 +477,7 @@ D3DXMATRIX* WINAPI D3DXMatrixShadow(D3DXMATRIX *pout, CONST D3DXVECTOR4 *plight,
 
 D3DXMATRIX* WINAPI D3DXMatrixTransformation(D3DXMATRIX *pout, CONST D3DXVECTOR3 *pscalingcenter, CONST D3DXQUATERNION *pscalingrotation, CONST D3DXVECTOR3 *pscaling, CONST D3DXVECTOR3 *protationcenter, CONST D3DXQUATERNION *protation, CONST D3DXVECTOR3 *ptranslation)
 {
-    D3DXMATRIX m1, m2, m3, m4, m5, m6, m7, p1, p2, p3, p4, p5;
+    D3DXMATRIX m1, m2, m3, m4, m5, m6, m7;
     D3DXQUATERNION prc;
     D3DXVECTOR3 psc, pt;
 
@@ -548,12 +546,12 @@ D3DXMATRIX* WINAPI D3DXMatrixTransformation(D3DXMATRIX *pout, CONST D3DXVECTOR3 
     }
     D3DXMatrixTranslation(&m5, psc.x - prc.x,  psc.y - prc.y,  psc.z - prc.z);
     D3DXMatrixTranslation(&m7, prc.x + pt.x, prc.y + pt.y, prc.z + pt.z);
-    D3DXMatrixMultiply(&p1, &m1, &m2);
-    D3DXMatrixMultiply(&p2, &p1, &m3);
-    D3DXMatrixMultiply(&p3, &p2, &m4);
-    D3DXMatrixMultiply(&p4, &p3, &m5);
-    D3DXMatrixMultiply(&p5, &p4, &m6);
-    D3DXMatrixMultiply(pout, &p5, &m7);
+    D3DXMatrixMultiply(&m1, &m1, &m2);
+    D3DXMatrixMultiply(&m1, &m1, &m3);
+    D3DXMatrixMultiply(&m1, &m1, &m4);
+    D3DXMatrixMultiply(&m1, &m1, &m5);
+    D3DXMatrixMultiply(&m1, &m1, &m6);
+    D3DXMatrixMultiply(pout, &m1, &m7);
     return pout;
 }
 
