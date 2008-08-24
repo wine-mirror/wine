@@ -208,7 +208,10 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
                 if (!lstrcmpiW(tvi.pszText, lpItemName)) {
                      SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
                      if (!lpKeyName)
+                     {
+                         HeapFree(GetProcessHeap(), 0, lpItemName);
                          return hItem;
+                     }
                      hOldItem = hItem;
                      hItem = TreeView_GetChild(hwndTV, hItem);
                      break;

@@ -531,6 +531,7 @@ static INT_PTR CALLBACK addtofavorites_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
             EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
             SetWindowTextW(hwndValue, ItemPath);
             SendMessageW(hwndValue, EM_SETLIMITTEXT, 127, 0);
+            HeapFree(GetProcessHeap(), 0, ItemPath);
             return TRUE;
         }
         case WM_COMMAND:
