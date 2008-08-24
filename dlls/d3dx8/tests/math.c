@@ -744,6 +744,106 @@ static void D3X8QuaternionTest(void)
     expectedquat.x = 0.651031f; expectedquat.y = 6.144103f; expectedquat.z = -0.203447f; expectedquat.w = 0.488273f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is near 0 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = -0.9f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 1.709495f; expectedquat.y = 2.339872f; expectedquat.z = -0.534217f; expectedquat.w = 1.282122f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 0.49 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = -0.51f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 1.724923f; expectedquat.y = 2.318944f; expectedquat.z = -0.539039f; expectedquat.w = 1.293692f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 0.51 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = -0.49f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 1.725726f; expectedquat.y = 2.317865f; expectedquat.z = -0.539289f; expectedquat.w = 1.294294f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 0.99 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = -0.01f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 1.745328f; expectedquat.y = 2.291833f; expectedquat.z = -0.545415f; expectedquat.w = 1.308996f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 1.0 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.0f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 1.745743f; expectedquat.y = 2.291288f; expectedquat.z = -0.545545f; expectedquat.w = 1.309307f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 1.01 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.01f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 18.408188f; expectedquat.y = 5.970223f; expectedquat.z = -2.985111f; expectedquat.w = 0.502494f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 1.5 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.5f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 15.105186f; expectedquat.y = 4.898980f; expectedquat.z = -2.449490f; expectedquat.w = 0.612372f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 1.7 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.70f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 14.188852f; expectedquat.y = 4.601790f; expectedquat.z = -2.300895f; expectedquat.w = 0.651920f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 1.99 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.99f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 13.114303f; expectedquat.y = 4.253287f; expectedquat.z = -2.126644f; expectedquat.w = 0.705337f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
+    /* test the case when the trace is 2.0 in a matrix which is not a rotation */
+    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
+    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
+    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
+    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
+    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 2.0f;
+    U(mat).m[3][3] = 48.0f;
+    expectedquat.x = 10.680980f; expectedquat.y = 3.464102f; expectedquat.z = -1.732051f; expectedquat.w = 0.866025f;
+    D3DXQuaternionRotationMatrix(&gotquat,&mat);
+    expect_vec4(expectedquat,gotquat);
 
 /*_______________D3DXQuaternionRotationYawPitchRoll__________*/
     expectedquat.x = 0.303261f; expectedquat.y = 0.262299f; expectedquat.z = 0.410073f; expectedquat.w = 0.819190f;

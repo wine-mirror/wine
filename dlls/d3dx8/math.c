@@ -972,7 +972,7 @@ D3DXQUATERNION* WINAPI D3DXQuaternionRotationMatrix(D3DXQUATERNION *pout, CONST 
     FLOAT maxdiag, S, trace;
 
     trace = pm->u.m[0][0] + pm->u.m[1][1] + pm->u.m[2][2] + 1.0f;
-    if ( trace > 0.0f)
+    if ( trace > 1.0f)
     {
      pout->x = ( pm->u.m[1][2] - pm->u.m[2][1] ) / ( 2.0f * sqrt(trace) );
      pout->y = ( pm->u.m[2][0] - pm->u.m[0][2] ) / ( 2.0f * sqrt(trace) );
