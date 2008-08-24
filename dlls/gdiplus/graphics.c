@@ -892,7 +892,7 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
         ReleaseDC(graphics->hwnd, graphics->hdc);
 
     GdipDeleteMatrix(graphics->worldtrans);
-    HeapFree(GetProcessHeap(), 0, graphics);
+    GdipFree(graphics);
 
     return Ok;
 }
