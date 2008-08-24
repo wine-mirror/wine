@@ -1239,18 +1239,6 @@ static void test_enum_svc(void)
     ok(returned == (servicecountactive + servicecountinactive),
        "Something wrong in the calculation\n");
 
-    /* Get the number of all services */
-    EnumServicesStatusA(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
-                        NULL, 0, &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
-    EnumServicesStatusA(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
-                        services, needed, &needed, &returned, NULL);
-
-    /* Check if total is the same as active and inactive win32 services */
-    todo_wine
-    ok(returned == (servicecountactive + servicecountinactive),
-       "Something wrong in the calculation\n");
-
     /* Get the number of all services.
      * Fetch the status of the last call as failing could make the following tests crash
      * on Wine (we don't return anything yet).
