@@ -1978,8 +1978,8 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     hMemDC = CreateCompatibleDC (hdc);
     if (istep)
         FIXME_(icon)("Ignoring istep=%d\n", istep);
-    if (flags & DI_COMPAT)
-        FIXME_(icon)("Ignoring flag DI_COMPAT\n");
+    if (flags & DI_NOMIRROR)
+        FIXME_(icon)("Ignoring flag DI_NOMIRROR\n");
 
     if (!flags) {
         FIXME_(icon)("no flags set? setting to DI_NORMAL\n");
