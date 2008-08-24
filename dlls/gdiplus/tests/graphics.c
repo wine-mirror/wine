@@ -277,6 +277,8 @@ static void test_GdipDrawArc(void)
     expect(Ok, status);
 
     GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
+
     ReleaseDC(0, hdc);
 }
 
@@ -321,6 +323,8 @@ static void test_GdipDrawArcI(void)
     expect(Ok, status);
 
     GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
+
     ReleaseDC(0, hdc);
 }
 
@@ -359,6 +363,8 @@ static void test_GdipDrawBezierI(void)
     expect(Ok, status);
 
     GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
+
     ReleaseDC(0, hdc);
 }
 
@@ -397,6 +403,8 @@ static void test_GdipDrawLineI(void)
     expect(Ok, status);
 
     GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
+
     ReleaseDC(0, hdc);
 }
 
@@ -449,6 +457,8 @@ static void test_GdipDrawLinesI(void)
 
     GdipFree(ptf);
     GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
+
     ReleaseDC(0, hdc);
 }
 
