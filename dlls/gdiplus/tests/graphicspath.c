@@ -214,6 +214,8 @@ static void test_line2(void)
     expect(Ok, status);
 
     ok_path(path, line2_path, sizeof(line2_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeletePath(path);
 }
 
 static path_test_t arc_path[] = {
@@ -283,6 +285,8 @@ static void test_arc(void)
     expect(Ok, status);
 
     ok_path(path, arc_path, sizeof(arc_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeletePath(path);
 }
 
 static void test_worldbounds(void)
