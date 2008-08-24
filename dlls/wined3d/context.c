@@ -644,15 +644,16 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
  *****************************************************************************/
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
 
-    /* check that we are the current context first */
     TRACE("Destroying ctx %p\n", context);
-    if(pwglGetCurrentContext() == context->glCtx){
-        pwglMakeCurrent(NULL, NULL);
-    } else {
+
+    /* The correct GL context needs to be active to cleanup the GL resources below */
+    if(pwglGetCurrentContext() != context->glCtx){
+        pwglMakeCurrent(context->hdc, context->glCtx);
         last_device = NULL;
     }
 
-    /* FIXME: We probably need an active context to do this... */
+    ENTER_GL();
+
     if (context->fbo) {
         GL_EXTCALL(glDeleteFramebuffersEXT(1, &context->fbo));
     }
@@ -663,9 +664,13 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
         GL_EXTCALL(glDeleteFramebuffersEXT(1, &context->dst_fbo));
     }
 
+    LEAVE_GL();
+
     HeapFree(GetProcessHeap(), 0, context->fbo_color_attachments);
     context->fbo_color_attachments = NULL;
 
+    /* Cleanup the GL context */
+    pwglMakeCurrent(NULL, NULL);
     if(context->isPBuffer) {
         GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
         GL_EXTCALL(wglDestroyPbufferARB(context->pbuffer));
