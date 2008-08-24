@@ -29,7 +29,7 @@ LPCSTR WINAPI D3DXGetPixelShaderProfile(LPDIRECT3DDEVICE9 device)
 {
     D3DCAPS9 caps;
 
-    TRACE("(void): relay\n");
+    TRACE("device %p\n", device);
 
     if (!device) return NULL;
 
@@ -107,7 +107,7 @@ LPCSTR WINAPI D3DXGetVertexShaderProfile(LPDIRECT3DDEVICE9 device)
 {
     D3DCAPS9 caps;
 
-    TRACE("(void): relay\n");
+    TRACE("device %p\n", device);
 
     if (!device) return NULL;
 
