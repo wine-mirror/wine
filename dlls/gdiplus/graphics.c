@@ -2584,7 +2584,7 @@ GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
     return NotImplemented;
 }
 
-GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpGraphics *graphics,
+GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile *metafile,
     UINT limitDpi)
 {
     static int calls;
@@ -2681,6 +2681,9 @@ GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
 {
     FIXME("(%p, %p): stub\n", graphics, hdc);
 
+    if(!graphics || !hdc)
+        return InvalidParameter;
+
     *hdc = NULL;
     return NotImplemented;
 }
@@ -2688,6 +2691,12 @@ GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
 GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
 {
     FIXME("(%p, %p): stub\n", graphics, hdc);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    if(graphics->hdc != hdc)
+        return InvalidParameter;
 
     return NotImplemented;
 }
