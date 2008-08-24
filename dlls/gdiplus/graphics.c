@@ -752,6 +752,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     (*graphics)->compmode = CompositingModeSourceOver;
     (*graphics)->unit = UnitDisplay;
     (*graphics)->scale = 1.0;
+    (*graphics)->busy = FALSE;
 
     return Ok;
 }
@@ -2679,26 +2680,29 @@ GpStatus WINGDIPAPI GdipMultiplyWorldTransform(GpGraphics *graphics, GDIPCONST G
 
 GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
 {
-    FIXME("(%p, %p): stub\n", graphics, hdc);
-
     if(!graphics || !hdc)
         return InvalidParameter;
 
-    *hdc = NULL;
-    return NotImplemented;
+    if(graphics->busy)
+        return ObjectBusy;
+
+    *hdc = graphics->hdc;
+    graphics->busy = TRUE;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
 {
-    FIXME("(%p, %p): stub\n", graphics, hdc);
-
     if(!graphics)
         return InvalidParameter;
 
-    if(graphics->hdc != hdc)
+    if(graphics->hdc != hdc || !(graphics->busy))
         return InvalidParameter;
 
-    return NotImplemented;
+    graphics->busy = FALSE;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)

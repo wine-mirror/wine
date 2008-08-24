@@ -95,6 +95,7 @@ struct GpGraphics{
     GpUnit unit;    /* page unit */
     REAL scale;     /* page scale */
     GpMatrix * worldtrans; /* world transform */
+    BOOL busy;      /* hdc handle obtained by GdipGetDC */
 };
 
 struct GpBrush{

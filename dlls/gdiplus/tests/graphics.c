@@ -545,13 +545,17 @@ static void test_Get_Release_DC(void)
     status = GdipReleaseDC(NULL, (HDC)0xdeadbeef);
     expect(InvalidParameter, status);
 
+    /* Release without Get */
+    status = GdipReleaseDC(graphics, hdc);
+    expect(InvalidParameter, status);
+
     retdc = NULL;
     status = GdipGetDC(graphics, &retdc);
-    todo_wine expect(Ok, status);
-    todo_wine ok(retdc == hdc, "Invalid HDC returned\n");
+    expect(Ok, status);
+    ok(retdc == hdc, "Invalid HDC returned\n");
     /* call it once more */
     status = GdipGetDC(graphics, &retdc);
-    todo_wine expect(ObjectBusy, status);
+    expect(ObjectBusy, status);
 
     /* try all Graphics calls here */
     status = Ok;
@@ -712,7 +716,7 @@ static void test_Get_Release_DC(void)
     todo_wine expect(ObjectBusy, status); status = Ok;
 
     status = GdipReleaseDC(graphics, retdc);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
 
     GdipDeletePen(pen);
     GdipDeleteGraphics(graphics);
