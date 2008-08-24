@@ -1446,11 +1446,12 @@ static HRESULT  WINAPI IWineD3DImpl_RegisterSoftwareDevice(IWineD3D *iface, void
 static HMONITOR WINAPI IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adapter) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
+    TRACE_(d3d_caps)("(%p)->(%d)\n", This, Adapter);
+
     if (Adapter >= IWineD3DImpl_GetAdapterCount(iface)) {
         return NULL;
     }
 
-    TRACE_(d3d_caps)("(%p)->(%d)\n", This, Adapter);
     return MonitorFromPoint(Adapters[Adapter].monitorPoint, MONITOR_DEFAULTTOPRIMARY);
 }
 
