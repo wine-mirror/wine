@@ -194,8 +194,8 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface,
   p = This->properties;
   while (NULL != p) {
     if (dwIndex == i) {  
-      if (cchPropName <= lstrlenW(p->vName)) {
-	return DXDIAG_E_INSUFFICIENT_BUFFER;
+      if (cchPropName <= strlenW(p->vName)) {
+        return DXDIAG_E_INSUFFICIENT_BUFFER;
       }
       lstrcpynW(pwszPropName, p->vName, cchPropName);
       return S_OK;
