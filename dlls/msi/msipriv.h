@@ -33,6 +33,7 @@
 #include "objidl.h"
 #include "winnls.h"
 #include "wine/list.h"
+#include "wine/debug.h"
 
 #define MSI_DATASIZEMASK 0x00ff
 #define MSITYPE_VALID    0x0100
@@ -912,16 +913,16 @@ static inline void msi_component_set_state( MSICOMPONENT *comp, INSTALLSTATE sta
     }
     else if (state == INSTALLSTATE_SOURCE)
     {
-        switch (comp->Installed)
+        if (comp->Installed == INSTALLSTATE_ABSENT ||
+            (comp->Installed == INSTALLSTATE_SOURCE && comp->hasLocalFeature))
         {
-            case INSTALLSTATE_ABSENT:
-            case INSTALLSTATE_SOURCE:
-                comp->ActionRequest = state;
-                comp->Action = state;
-                break;
-            default:
-                comp->ActionRequest = INSTALLSTATE_UNKNOWN;
-                comp->Action = INSTALLSTATE_UNKNOWN;
+            comp->ActionRequest = state;
+            comp->Action = state;
+        }
+        else
+        {
+            comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+            comp->Action = INSTALLSTATE_UNKNOWN;
         }
     }
     else
