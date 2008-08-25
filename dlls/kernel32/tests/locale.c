@@ -1193,7 +1193,7 @@ static void test_LCMapStringW(void)
                        upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        trace("Skipping LCMapStringW tests on Win9x\n");
+        win_skip("LCMapStringW is not implemented\n");
         return;
     }
     ok(!ret, "LCMAP_LOWERCASE and LCMAP_UPPERCASE are mutually exclusive\n");
