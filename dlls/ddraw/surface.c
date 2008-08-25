@@ -331,7 +331,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
                 else
                 {
                     /* Free the d3d window if one was created */
-                    if(ddraw->d3d_window != 0)
+                    if(ddraw->d3d_window != 0 && ddraw->d3d_window != ddraw->dest_window)
                     {
                         TRACE(" (%p) Destroying the hidden render window %p\n", This, ddraw->d3d_window);
                         DestroyWindow(ddraw->d3d_window);
