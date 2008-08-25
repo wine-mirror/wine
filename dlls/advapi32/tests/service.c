@@ -1566,7 +1566,7 @@ static void test_enum_svc(void)
                            NULL, 0, &needed, &returned, NULL, NULL);
     exservices = HeapAlloc(GetProcessHeap(), 0, needed);
     pEnumServicesStatusExA(scm_handle, 0, SERVICE_DRIVER, SERVICE_ACTIVE,
-                           (BYTE*)exservices, bufsize, &needed, &returned, NULL, NULL);
+                           (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
     HeapFree(GetProcessHeap(), 0, exservices);
 
     /* Store the number of active driver services */
