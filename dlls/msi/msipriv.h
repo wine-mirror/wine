@@ -901,9 +901,16 @@ static inline void msi_feature_set_state(MSIPACKAGE *package,
     }
 }
 
-static inline void msi_component_set_state( MSICOMPONENT *comp, INSTALLSTATE state )
+static inline void msi_component_set_state(MSIPACKAGE *package,
+                                           MSICOMPONENT *comp,
+                                           INSTALLSTATE state)
 {
-    if (state == INSTALLSTATE_ABSENT)
+    if (!package->ProductCode)
+    {
+        comp->ActionRequest = state;
+        comp->Action = state;
+    }
+    else if (state == INSTALLSTATE_ABSENT)
     {
         switch (comp->Installed)
         {

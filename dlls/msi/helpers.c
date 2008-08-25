@@ -891,7 +891,7 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
             continue;
  
         if (newstate == INSTALLSTATE_LOCAL)
-            msi_component_set_state( component, INSTALLSTATE_LOCAL );
+            msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
         else 
         {
             ComponentList *clist;
@@ -899,7 +899,7 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
 
             component->hasLocalFeature = FALSE;
 
-            msi_component_set_state( component, newstate );
+            msi_component_set_state(package, component, newstate);
 
             /*if any other feature wants is local we need to set it local*/
             LIST_FOR_EACH_ENTRY( f, &package->features, MSIFEATURE, entry )
@@ -922,14 +922,14 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
                         if (component->Attributes & msidbComponentAttributesOptional)
                         {
                             if (f->Attributes & msidbFeatureAttributesFavorSource)
-                                msi_component_set_state( component, INSTALLSTATE_SOURCE );
+                                msi_component_set_state(package, component, INSTALLSTATE_SOURCE);
                             else
-                                msi_component_set_state( component, INSTALLSTATE_LOCAL );
+                                msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
                         }
                         else if (component->Attributes & msidbComponentAttributesSourceOnly)
-                            msi_component_set_state( component, INSTALLSTATE_SOURCE );
+                            msi_component_set_state(package, component, INSTALLSTATE_SOURCE);
                         else
-                            msi_component_set_state( component, INSTALLSTATE_LOCAL );
+                            msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
                     }
                 }
             }

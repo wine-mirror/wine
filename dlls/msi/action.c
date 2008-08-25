@@ -1193,7 +1193,7 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
     comp->KeyPath = msi_dup_record_field( row, 6 );
 
     comp->Installed = INSTALLSTATE_UNKNOWN;
-    msi_component_set_state( comp, INSTALLSTATE_UNKNOWN );
+    msi_component_set_state(package, comp, INSTALLSTATE_UNKNOWN);
 
     return ERROR_SUCCESS;
 }
@@ -1943,34 +1943,34 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             if ((component->Attributes & msidbComponentAttributesSourceOnly) &&
                  !component->ForceLocalState)
-                msi_component_set_state( component, INSTALLSTATE_SOURCE );
+                msi_component_set_state(package, component, INSTALLSTATE_SOURCE);
             else
-                msi_component_set_state( component, INSTALLSTATE_LOCAL );
+                msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
             continue;
         }
 
         /* if any feature is local, the component must be local too */
         if (component->hasLocalFeature)
         {
-            msi_component_set_state( component, INSTALLSTATE_LOCAL );
+            msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
             continue;
         }
 
         if (component->hasSourceFeature)
         {
-            msi_component_set_state( component, INSTALLSTATE_SOURCE );
+            msi_component_set_state(package, component, INSTALLSTATE_SOURCE);
             continue;
         }
 
         if (component->hasAdvertiseFeature)
         {
-            msi_component_set_state( component, INSTALLSTATE_ADVERTISED );
+            msi_component_set_state(package, component, INSTALLSTATE_ADVERTISED);
             continue;
         }
 
         TRACE("nobody wants component %s\n", debugstr_w(component->Component));
         if (component->anyAbsent)
-            msi_component_set_state(component, INSTALLSTATE_ABSENT);
+            msi_component_set_state(package, component, INSTALLSTATE_ABSENT);
     }
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
@@ -1978,7 +1978,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         if (component->Action == INSTALLSTATE_DEFAULT)
         {
             TRACE("%s was default, setting to local\n", debugstr_w(component->Component));
-            msi_component_set_state( component, INSTALLSTATE_LOCAL );
+            msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
         }
 
         TRACE("Result: Component %s (Installed %i, Action %i)\n",
