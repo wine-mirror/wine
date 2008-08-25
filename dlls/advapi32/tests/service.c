@@ -1068,7 +1068,7 @@ static void test_enum_svc(void)
 
     /* Open the service control manager with the needed rights */
     CloseServiceHandle(scm_handle);
-    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_ENUMERATE_SERVICE);
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
 
     /* All parameters are correct. Request the needed buffer size */
     needed = 0xdeadbeef;
@@ -1438,7 +1438,7 @@ static void test_enum_svc(void)
 
     /* Open the service control manager with the needed rights */
     CloseServiceHandle(scm_handle);
-    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_ENUMERATE_SERVICE);
+    scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
 
     /* All parameters are correct and the group will be checked */
     needed = 0xdeadbeef;
