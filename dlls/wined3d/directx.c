@@ -2323,6 +2323,9 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
             }
             TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
+        case WINED3DFMT_YV12:
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
 
             /* Not supported */
         case WINED3DFMT_A16B16G16R16:
@@ -2394,6 +2397,17 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
             }
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        case WINED3DFMT_NVHU:
+        case WINED3DFMT_NVHS:
+            /* These formats seem to be similar to the HILO formats in GL_NV_texture_shader. NVHU
+             * is said to be GL_UNSIGNED_HILO16, NVHS GL_SIGNED_HILO16. Rumours say that d3d computes
+             * a 3rd channel similarly to D3DFMT_CxV8U8(So NVHS could be called D3DFMT_CxV16U16).
+             * ATI refused to support formats which can easilly be emulated with pixel shaders, so
+             * Applications have to deal with not having NVHS and NVHU.
+             */
             TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
 

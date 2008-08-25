@@ -44,7 +44,7 @@ static const StaticPixelFormatDesc formats[] = {
     /* FourCC formats, kept here to have WINED3DFMT_R8G8B8(=20) at position 20 */
     {WINED3DFMT_UYVY        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,TRUE  },
     {WINED3DFMT_YUY2        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,TRUE  },
-    {WINED3DFMT_YV12        ,0x0        ,0x0        ,0x0        ,0x0        ,1/*?*/ ,0      ,0          ,TRUE  },
+    {WINED3DFMT_YV12        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,TRUE  },
     {WINED3DFMT_DXT1        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
     {WINED3DFMT_DXT2        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
     {WINED3DFMT_DXT3        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
@@ -114,6 +114,8 @@ static const StaticPixelFormatDesc formats[] = {
     {WINED3DFMT_Q16W16V16U16,0x0        ,0x0        ,0x0        ,0x0        ,8      ,0      ,0          ,FALSE },
     /* Vendor-specific formats */
     {WINED3DFMT_ATI2N       ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
+    {WINED3DFMT_NVHU        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,TRUE  },
+    {WINED3DFMT_NVHS        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,TRUE  },
 };
 
 typedef struct {
@@ -528,6 +530,7 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_A2W10V10U10);
     FMT_TO_STR(WINED3DFMT_UYVY);
     FMT_TO_STR(WINED3DFMT_YUY2);
+    FMT_TO_STR(WINED3DFMT_YV12);
     FMT_TO_STR(WINED3DFMT_DXT1);
     FMT_TO_STR(WINED3DFMT_DXT2);
     FMT_TO_STR(WINED3DFMT_DXT3);
@@ -558,6 +561,8 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_A32B32G32R32F);
     FMT_TO_STR(WINED3DFMT_CxV8U8);
     FMT_TO_STR(WINED3DFMT_ATI2N);
+    FMT_TO_STR(WINED3DFMT_NVHU);
+    FMT_TO_STR(WINED3DFMT_NVHS);
 #undef FMT_TO_STR
   default:
     {

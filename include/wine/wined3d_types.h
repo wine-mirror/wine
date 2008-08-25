@@ -305,6 +305,8 @@ typedef enum _WINED3DFORMAT {
 
     /* Vendor specific formats */
     WINED3DFMT_ATI2N                =  WINEMAKEFOURCC('A', 'T', 'I', '2'),
+    WINED3DFMT_NVHU                 =  WINEMAKEFOURCC('N', 'V', 'H', 'U'),
+    WINED3DFMT_NVHS                 =  WINEMAKEFOURCC('N', 'V', 'H', 'S'),
 
     WINED3DFMT_FORCE_DWORD          = 0xFFFFFFFF
 } WINED3DFORMAT;
