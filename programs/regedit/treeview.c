@@ -567,9 +567,9 @@ HWND StartKeyRename(HWND hwndTV)
     return TreeView_EditLabel(hwndTV, hItem);
 }
 
-static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
+static BOOL InitTreeViewItems(HWND hwndTV, LPWSTR pHostName)
 {
-    TVINSERTSTRUCT tvins;
+    TVINSERTSTRUCTW tvins;
     HTREEITEM hRoot;
     static WCHAR hkcr[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0},
                  hkcu[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R',0},
@@ -581,7 +581,7 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
     tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
     /* Set the text of the item.  */
     tvins.u.item.pszText = pHostName;
-    tvins.u.item.cchTextMax = lstrlen(pHostName);
+    tvins.u.item.cchTextMax = lstrlenW(pHostName);
     /* Assume the item is not a parent item, so give it an image.  */
     tvins.u.item.iImage = Image_Root;
     tvins.u.item.iSelectedImage = Image_Root;
@@ -591,7 +591,7 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
     tvins.hInsertAfter = (HTREEITEM)TVI_FIRST;
     tvins.hParent = TVI_ROOT;
     /* Add the item to the tree view control.  */
-    if (!(hRoot = TreeView_InsertItem(hwndTV, &tvins))) return FALSE;
+    if (!(hRoot = TreeView_InsertItemW(hwndTV, &tvins))) return FALSE;
 
     if (!AddEntryToTree(hwndTV, hRoot, hkcr, HKEY_CLASSES_ROOT, 1)) return FALSE;
     if (!AddEntryToTree(hwndTV, hRoot, hkcu, HKEY_CURRENT_USER, 1)) return FALSE;
@@ -601,8 +601,8 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
     if (!AddEntryToTree(hwndTV, hRoot, hkdd, HKEY_DYN_DATA, 1)) return FALSE;
 
     /* expand and select host name */
-    SendMessage(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot );
-    SendMessage(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
+    SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hRoot );
+    SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     return TRUE;
 }
 
@@ -624,13 +624,13 @@ static BOOL InitTreeViewImageLists(HWND hwndTV)
         return FALSE;
 
     /* Add the open file, closed file, and document bitmaps.  */
-    hico = LoadIcon(hInst, MAKEINTRESOURCE(IDI_OPEN_FILE));
+    hico = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_OPEN_FILE));
     Image_Open = ImageList_AddIcon(himl, hico);
 
-    hico = LoadIcon(hInst, MAKEINTRESOURCE(IDI_CLOSED_FILE));
+    hico = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_CLOSED_FILE));
     Image_Closed = ImageList_AddIcon(himl, hico);
 
-    hico = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ROOT));
+    hico = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_ROOT));
     Image_Root = ImageList_AddIcon(himl, hico);
 
     /* Fail if not all of the images were added.  */
@@ -640,7 +640,7 @@ static BOOL InitTreeViewImageLists(HWND hwndTV)
     }
 
     /* Associate the image list with the tree view control.  */
-    SendMessage(hwndTV, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)himl);
+    SendMessageW(hwndTV, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)himl);
 
     return TRUE;
 }
@@ -716,14 +716,15 @@ BOOL OnTreeExpanding(HWND hwndTV, NMTREEVIEW* pnmtv)
  * Returns the handle to the new control if successful, or NULL otherwise.
  * hwndParent - handle to the control's parent window.
  */
-HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, UINT id)
+HWND CreateTreeView(HWND hwndParent, LPWSTR pHostName, UINT id)
 {
     RECT rcClient;
     HWND hwndTV;
+    WCHAR TreeView[] = {'T','r','e','e',' ','V','i','e','w',0};
 
     /* Get the dimensions of the parent window's client area, and create the tree view control.  */
     GetClientRect(hwndParent, &rcClient);
-    hwndTV = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, _T("Tree View"),
+    hwndTV = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW, TreeView,
                             WS_VISIBLE | WS_CHILD | WS_TABSTOP | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT,
                             0, 0, rcClient.right, rcClient.bottom,
                             hwndParent, (HMENU)ULongToHandle(id), hInst, NULL);

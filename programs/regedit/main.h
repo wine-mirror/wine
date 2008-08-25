@@ -72,7 +72,7 @@ typedef struct {
     int     nFocusPanel;      /* 0: left  1: right */
     int	    nSplitPos;
     WINDOWPLACEMENT pos;
-    TCHAR   szPath[MAX_PATH];
+    WCHAR   szPath[MAX_PATH];
 } ChildWnd;
 extern ChildWnd* g_pChildWnd;
 
@@ -128,7 +128,7 @@ extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Res
 extern BOOL IsDefaultValue(HWND hwndLV, int i);
 
 /* treeview.c */
-extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, UINT id);
+extern HWND CreateTreeView(HWND hwndParent, LPWSTR pHostName, UINT id);
 extern BOOL RefreshTreeView(HWND hWndTV);
 extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
 extern LPTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
