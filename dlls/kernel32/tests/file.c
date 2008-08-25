@@ -1353,7 +1353,9 @@ static void test_FindFirstFileA(void)
     ok( 0 == lstrcmpiA(data.cFileName, "nul"), "wrong name %s\n", data.cFileName );
     ok( 0 == data.nFileSizeHigh, "wrong size %d\n", data.nFileSizeHigh );
     ok( 0 == data.nFileSizeLow, "wrong size %d\n", data.nFileSizeLow );
-    ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes, "wrong attributes %x\n", data.dwFileAttributes );
+    ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes ||
+        FILE_ATTRIBUTE_DEVICE == data.dwFileAttributes /* Win9x */,
+        "wrong attributes %x\n", data.dwFileAttributes );
     SetLastError( 0xdeadbeaf );
     ok( !FindNextFileA( handle, &data ), "FindNextFileA succeeded\n" );
     ok( GetLastError() == ERROR_NO_MORE_FILES, "bad error %d\n", GetLastError() );
@@ -1368,7 +1370,9 @@ static void test_FindFirstFileA(void)
     ok( 0 == lstrcmpiA(data.cFileName, "lpt1"), "wrong name %s\n", data.cFileName );
     ok( 0 == data.nFileSizeHigh, "wrong size %d\n", data.nFileSizeHigh );
     ok( 0 == data.nFileSizeLow, "wrong size %d\n", data.nFileSizeLow );
-    ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes, "wrong attributes %x\n", data.dwFileAttributes );
+    ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes ||
+        FILE_ATTRIBUTE_DEVICE == data.dwFileAttributes /* Win9x */,
+        "wrong attributes %x\n", data.dwFileAttributes );
     SetLastError( 0xdeadbeaf );
     ok( !FindNextFileA( handle, &data ), "FindNextFileA succeeded\n" );
     ok( GetLastError() == ERROR_NO_MORE_FILES, "bad error %d\n", GetLastError() );
