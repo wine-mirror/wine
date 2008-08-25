@@ -33,7 +33,7 @@ all: $(PROGRAMS) $(MANPAGES)
 widl$(EXEEXT): $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBPORT) $(LDFLAGS)
 
-install:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
+install install-dev:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_PROGRAM) widl$(EXEEXT) $(DESTDIR)$(bindir)/widl$(EXEEXT)
 	$(INSTALL_DATA) widl.man $(DESTDIR)$(mandir)/man$(prog_manext)/widl.$(prog_manext)
 

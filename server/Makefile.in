@@ -74,7 +74,7 @@ wineserver: $(OBJS)
 wineserver-installed: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LIBS) $(LDRPATH_INSTALL)
 
-install:: wineserver-installed $(MANPAGES) $(INSTALLDIRS)
+install install-lib:: wineserver-installed $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_PROGRAM) wineserver-installed $(DESTDIR)$(bindir)/wineserver
 	$(INSTALL_DATA) wineserver.man $(DESTDIR)$(mandir)/man$(prog_manext)/wineserver.$(prog_manext)
 	$(INSTALL_DATA) wineserver.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wineserver.$(prog_manext)

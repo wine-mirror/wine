@@ -38,7 +38,7 @@ MANPAGES = winedbg.man
 
 all: $(MANPAGES)
 
-install:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
+install install-lib:: $(MANPAGES) $(DESTDIR)$(mandir)/man$(prog_manext)
 	$(INSTALL_DATA) winedbg.man $(DESTDIR)$(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
 
 uninstall::

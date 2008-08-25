@@ -33,7 +33,7 @@ install-progs.so: $(INSTALLPROGS:%=%/__installprog__)
 
 install-progs: # nothing to do here
 
-install:: install-progs$(DLLEXT) $(INSTALLDIRS)
+install install-lib:: install-progs$(DLLEXT) $(INSTALLDIRS)
 
 uninstall::
 	-cd $(DESTDIR)$(bindir) && $(RM) wineapploader $(INSTALLPROGS)

@@ -16,9 +16,6 @@ INSTALLSUBDIRS = \
 
 all: $(SUBDIRS)
 
-install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__)
-install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__)
-
 # Directory dependencies
 
 wine wine/__install__ wine/__install-lib__: port

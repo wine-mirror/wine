@@ -55,7 +55,7 @@ uninstall_prog.so: dummy
 uninstall_prog: dummy
 	$(RM) $(DESTDIR)$(bindir)/$(MODULE)
 
-install:: install_prog$(DLLEXT)
+install install-lib:: install_prog$(DLLEXT)
 
 uninstall:: uninstall_prog$(DLLEXT)
 

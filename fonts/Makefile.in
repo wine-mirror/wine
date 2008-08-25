@@ -179,7 +179,7 @@ cvgasys.fon: system.ttf
 
 $(BITMAP_FONTS): $(SFNT2FNT)
 
-install:: $(FONTS) $(INSTALLDIRS)
+install install-lib:: $(FONTS) $(INSTALLDIRS)
 	for i in $(BITMAP_FONTS); do $(INSTALL_DATA) $$i $(DESTDIR)$(fontdir)/$$i || exit 1; done
 	for i in $(TRUETYPE_FONTS); do $(INSTALL_DATA) $(SRCDIR)/$$i $(DESTDIR)$(fontdir)/$$i || exit 1; done
 

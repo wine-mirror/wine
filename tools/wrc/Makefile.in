@@ -34,7 +34,7 @@ wrc$(EXEEXT): $(OBJS) $(LIBWPP)
 wrc-installed: $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-install:: wrc-installed $(MANPAGES) $(INSTALLDIRS)
+install install-dev:: wrc-installed $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wrc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wrc.$(prog_manext)
 	$(INSTALL_PROGRAM) wrc-installed $(DESTDIR)$(bindir)/wrc$(EXEEXT)
 

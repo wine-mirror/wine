@@ -29,7 +29,7 @@ wmc$(EXEEXT): $(OBJS)
 wmc-installed: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-install:: wmc-installed $(MANPAGES) $(INSTALLDIRS)
+install install-dev:: wmc-installed $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_DATA) wmc.man $(DESTDIR)$(mandir)/man$(prog_manext)/wmc.$(prog_manext)
 	$(INSTALL_PROGRAM) wmc-installed $(DESTDIR)$(bindir)/wmc$(EXEEXT)
 

@@ -26,8 +26,6 @@ $(MODULE:%=lib%.a): $(OBJS) Makefile.in
 install install-dev:: $(MODULE:%=lib%.a) $(DESTDIR)$(dlldir)
 	$(INSTALL_DATA) $(MODULE:%=lib%.a) $(DESTDIR)$(dlldir)/$(MODULE:%=lib%.a)
 
-install-lib::
-
 uninstall::
 	$(RM) $(DESTDIR)$(dlldir)/$(MODULE:%=lib%.a)
 

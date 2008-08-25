@@ -85,7 +85,7 @@ install install-lib:: wine.inf wineprefixcreate $(INSTALLDIRS)
 	$(INSTALL_DATA) wineprefixcreate.man $(DESTDIR)$(mandir)/man$(prog_manext)/wineprefixcreate.$(prog_manext)
 	-$(UPDATE_DESKTOP_DATABASE)
 
-install install-dev:: $(INSTALLSUBDIRS:%=%/__install__) $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+install install-dev:: $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(DESTDIR)$(bindir)/winemaker
 	$(INSTALL_DATA) winemaker.man $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 

@@ -41,20 +41,16 @@ SUBDIRS = \
 	server \
 	tools
 
-# Sub-directories to install for install-lib
-INSTALLLIBSUBDIRS = \
+# Sub-directories to run make install/uninstall into
+INSTALLSUBDIRS = \
 	$(FONTSSUBDIRS) \
+	dlls \
+	include \
+	libs \
 	loader \
 	programs \
-	server
-
-# Sub-directories to install for install-dev
-INSTALLDEVSUBDIRS = include
-
-# Sub-directories to install for both install-lib and install-dev
-INSTALLBOTHSUBDIRS = dlls libs tools
-
-INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
+	server \
+	tools
 
 # Sub-directories to run make test into
 TESTSUBDIRS = dlls
@@ -91,29 +87,27 @@ wine: $(WINEWRAPPER)
 install install-dev:: $(DESTDIR)$(datadir)/aclocal dummy
 	$(INSTALL_DATA) $(SRCDIR)/aclocal.m4 $(DESTDIR)$(datadir)/aclocal/wine.m4
 
-install install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-lib__)
-
-install install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__) $(INSTALLBOTHSUBDIRS:%=%/__install-dev__)
-
-uninstall:: $(INSTALLBOTHSUBDIRS:%=%/__uninstall__)
+uninstall::
 	$(RM) $(DESTDIR)$(datadir)/aclocal/wine.m4
 	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(datadir)/aclocal
 
 # Dependencies between directories
 
-all: $(INSTALLSUBDIRS) $(INSTALLBOTHSUBDIRS)
+all: $(INSTALLSUBDIRS)
 dlls: include libs tools
 fonts loader server: libs tools
 programs: dlls include libs tools
 include: libs tools
 tools: libs
 
-dlls/__install-lib__ dlls/__install-dev__: libs tools include
-include/__install__: include libs tools
-libs/__install-lib__ libs/__install-dev__: libs
-fonts/__install__ loader/__install__ server/__install__: libs tools
-programs/__install__: libs tools include dlls/__install-lib__
-tools/__install-lib__ tools/__install-dev__: tools
+dlls/__install__ dlls/__install-lib__ dlls/__install-dev__: libs tools include
+fonts/__install__ fonts/__install-lib__: libs tools
+include/__install__ include/__install-dev__: include libs tools
+libs/__install__ libs/__install-lib__ libs/__install-dev__: libs
+loader/__install__ loader/__install-lib__: libs tools
+server/__install__ server/__install-lib__: libs tools
+programs/__install__ programs/__install-lib__: libs tools include dlls/__install-lib__
+tools/__install__ tools/__install-lib__ tools/__install-dev__: tools
 
 RECURSE_TARGETS = \
 	$(SUBDIRS) \

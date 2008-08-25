@@ -80,7 +80,7 @@ wine-pthread-installed: $(PTHREAD_OBJS) Makefile.in
 $(MODULE): $(MAIN_BINARY)
 	$(RM) $(MODULE) && $(LN_S) $(MAIN_BINARY) $(MODULE)
 
-install:: $(WINE_BINARIES:%=%-installed) $(MANPAGES) $(INSTALLDIRS)
+install install-lib:: $(WINE_BINARIES:%=%-installed) $(MANPAGES) $(INSTALLDIRS)
 	for f in $(WINE_BINARIES); do \
 	  if [ "$(MAIN_BINARY)" = "$$f" ]; \
 	  then $(INSTALL_PROGRAM) $$f-installed $(DESTDIR)$(bindir)/$(MODULE); \

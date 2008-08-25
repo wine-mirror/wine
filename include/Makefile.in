@@ -471,7 +471,7 @@ OBJDIR_INCLUDES = $(IDL_H_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb)
 
 all: $(OBJDIR_INCLUDES)
 
-install:: $(OBJDIR_INCLUDES) $(INSTALLDIRS)
+install install-dev:: $(OBJDIR_INCLUDES) $(INSTALLDIRS)
 	for f in $(SRCDIR_INCLUDES); do case $$f in \
 	  wine/*)   $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
 	  msvcrt/*) $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/$$f ;; \
