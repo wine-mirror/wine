@@ -1327,7 +1327,7 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     feature->Attributes = MSI_RecordGetInteger(row,8);
 
     feature->Installed = INSTALLSTATE_UNKNOWN;
-    msi_feature_set_state( feature, INSTALLSTATE_UNKNOWN );
+    msi_feature_set_state(package, feature, INSTALLSTATE_UNKNOWN);
 
     list_add_tail( &package->features, &feature->entry );
 
@@ -1754,7 +1754,7 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
             continue;
 
         if (strcmpiW(override,all)==0)
-            msi_feature_set_state( feature, state );
+            msi_feature_set_state(package, feature, state);
         else
         {
             LPWSTR ptr = override;
@@ -1765,7 +1765,7 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
                 if ((ptr2 && strncmpW(ptr,feature->Feature, ptr2-ptr)==0)
                     || (!ptr2 && strcmpW(ptr,feature->Feature)==0))
                 {
-                    msi_feature_set_state(feature, state);
+                    msi_feature_set_state(package, feature, state);
                     break;
                 }
                 if (ptr2)
@@ -1841,11 +1841,11 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             if ((feature_state) && (feature->Action == INSTALLSTATE_UNKNOWN))
             {
                 if (feature->Attributes & msidbFeatureAttributesFavorSource)
-                    msi_feature_set_state( feature, INSTALLSTATE_SOURCE );
+                    msi_feature_set_state(package, feature, INSTALLSTATE_SOURCE);
                 else if (feature->Attributes & msidbFeatureAttributesFavorAdvertise)
-                    msi_feature_set_state( feature, INSTALLSTATE_ADVERTISED );
+                    msi_feature_set_state(package, feature, INSTALLSTATE_ADVERTISED);
                 else
-                    msi_feature_set_state( feature, INSTALLSTATE_LOCAL );
+                    msi_feature_set_state(package, feature, INSTALLSTATE_LOCAL);
             }
         }
 
@@ -1858,7 +1858,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 continue;
 
             LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
-                msi_feature_set_state( fl->feature, INSTALLSTATE_UNKNOWN );
+                msi_feature_set_state(package, fl->feature, INSTALLSTATE_UNKNOWN);
         }
     }
     else
@@ -1891,7 +1891,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 cl->component->ForceLocalState &&
                 feature->Action == INSTALLSTATE_SOURCE)
             {
-                msi_feature_set_state( feature, INSTALLSTATE_LOCAL );
+                msi_feature_set_state(package, feature, INSTALLSTATE_LOCAL);
                 break;
             }
         }
@@ -5736,7 +5736,8 @@ static BOOL init_functionpointers(void)
     return TRUE;
 }
 
-static UINT install_assembly(MSIASSEMBLY *assembly, LPWSTR path)
+static UINT install_assembly(MSIPACKAGE *package, MSIASSEMBLY *assembly,
+                             LPWSTR path)
 {
     IAssemblyCache *cache;
     HRESULT hr;
@@ -5745,7 +5746,7 @@ static UINT install_assembly(MSIASSEMBLY *assembly, LPWSTR path)
     TRACE("installing assembly: %s\n", debugstr_w(path));
 
     if (assembly->feature)
-        msi_feature_set_state(assembly->feature, INSTALLSTATE_LOCAL);
+        msi_feature_set_state(package, assembly->feature, INSTALLSTATE_LOCAL);
 
     if (assembly->manifest)
         FIXME("Manifest unhandled\n");
@@ -5905,7 +5906,7 @@ static BOOL installassembly_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
     {
         assembly->installed = TRUE;
 
-        r = install_assembly(assembly, temppath);
+        r = install_assembly(package, assembly, temppath);
         if (r != ERROR_SUCCESS)
             ERR("Failed to install assembly\n");
     }
@@ -5970,7 +5971,7 @@ static UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
         {
             lstrcpyW(path, assembly->file->SourcePath);
 
-            r = install_assembly(assembly, path);
+            r = install_assembly(package, assembly, path);
             if (r != ERROR_SUCCESS)
                 ERR("Failed to install assembly\n");
         }

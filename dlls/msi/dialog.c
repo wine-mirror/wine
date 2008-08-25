@@ -1909,7 +1909,7 @@ msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
     case INSTALLSTATE_LOCAL:
     case INSTALLSTATE_ADVERTISED:
     case INSTALLSTATE_ABSENT:
-        msi_feature_set_state( feature, r );
+        msi_feature_set_state(package, feature, r);
         break;
     default:
         FIXME("select feature and all children\n");

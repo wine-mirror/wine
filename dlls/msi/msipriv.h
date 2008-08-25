@@ -854,9 +854,16 @@ extern UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UIN
 extern void ACTION_FinishCustomActions( const MSIPACKAGE* package);
 extern UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, UINT script, BOOL execute);
 
-static inline void msi_feature_set_state( MSIFEATURE *feature, INSTALLSTATE state )
+static inline void msi_feature_set_state(MSIPACKAGE *package,
+                                         MSIFEATURE *feature,
+                                         INSTALLSTATE state)
 {
-    if (state == INSTALLSTATE_ABSENT)
+    if (!package->ProductCode)
+    {
+        feature->ActionRequest = state;
+        feature->Action = state;
+    }
+    else if (state == INSTALLSTATE_ABSENT)
     {
         switch (feature->Installed)
         {

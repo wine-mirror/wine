@@ -774,7 +774,7 @@ UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
         feature->Attributes & msidbFeatureAttributesDisallowAdvertise)
         return ERROR_FUNCTION_FAILED;
 
-    msi_feature_set_state( feature, iState );
+    msi_feature_set_state(package, feature, iState);
 
     ACTION_UpdateComponentStates(package,szFeature);
 
