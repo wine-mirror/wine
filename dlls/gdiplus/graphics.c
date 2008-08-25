@@ -889,6 +889,8 @@ GpStatus WINGDIPAPI GdipCreateStreamOnFile(GDIPCONST WCHAR * filename,
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
 {
     if(!graphics) return InvalidParameter;
+    if(graphics->busy) return ObjectBusy;
+
     if(graphics->hwnd)
         ReleaseDC(graphics->hwnd, graphics->hdc);
 

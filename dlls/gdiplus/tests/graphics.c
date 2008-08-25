@@ -714,6 +714,9 @@ static void test_Get_Release_DC(void)
     status = GdipMultiplyWorldTransform(graphics, m, MatrixOrderPrepend);
     status = GdipGetClip(graphics, region);
     expect(ObjectBusy, status); status = Ok;
+    /* try to delete before release */
+    status = GdipDeleteGraphics(graphics);
+    expect(ObjectBusy, status);
 
     status = GdipReleaseDC(graphics, retdc);
     expect(Ok, status);
