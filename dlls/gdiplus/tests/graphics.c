@@ -764,6 +764,40 @@ static void test_transformpoints(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_getclip(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    HDC hdc = GetDC(0);
+    GpRegion *clip;
+    BOOL res;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreateRegion(&clip);
+
+    /* NULL arguments */
+    status = GdipGetClip(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetClip(graphics, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetClip(NULL, clip);
+    expect(InvalidParameter, status);
+
+    res = FALSE;
+    status = GdipGetClip(graphics, clip);
+    todo_wine expect(Ok, status);
+    status = GdipIsInfiniteRegion(clip, graphics, &res);
+    todo_wine expect(Ok, status);
+    todo_wine expect(TRUE, res);
+
+    GdipDeleteRegion(clip);
+
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -785,6 +819,7 @@ START_TEST(graphics)
     test_GdipDrawLinesI();
     test_Get_Release_DC();
     test_transformpoints();
+    test_getclip();
 
     GdiplusShutdown(gdiplusToken);
 }
