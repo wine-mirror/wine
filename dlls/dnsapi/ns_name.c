@@ -17,6 +17,8 @@
 
 #include "config.h"
 
+#ifdef HAVE_RESOLV
+
 #include <sys/types.h>
 
 #ifdef HAVE_NETINET_IN_H
@@ -441,3 +443,5 @@ static int
 printable(int ch) {
 	return (ch > 0x20 && ch < 0x7f);
 }
+
+#endif  /* HAVE_RESOLV */

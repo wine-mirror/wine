@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 static inline void *heap_alloc( SIZE_T size )
 {
@@ -140,7 +143,9 @@ static inline LPSTR dns_strdup_ua( const char *src )
 
 const char *dns_type_to_str( unsigned short );
 
+#ifdef HAVE_RESOLV
 int dns_ns_initparse( const u_char *, int, ns_msg * );
 int dns_ns_parserr( ns_msg *, ns_sect, int, ns_rr * );
 int dns_ns_name_skip( const u_char **, const u_char * );
 int dns_ns_name_uncompress( const u_char *, const u_char *, const u_char *, char *, size_t );
+#endif
