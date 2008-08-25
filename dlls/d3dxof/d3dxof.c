@@ -367,7 +367,7 @@ static WORD get_keyword_token(parse_buffer* buf)
 
 static BOOL is_guid(parse_buffer* buf)
 {
-  static char tmp[50];
+  char tmp[50];
   DWORD pos = 1;
   GUID class_id;
   DWORD tab[10];
@@ -417,7 +417,7 @@ static BOOL is_guid(parse_buffer* buf)
 
 static BOOL is_name(parse_buffer* buf)
 {
-  static char tmp[50];
+  char tmp[50];
   DWORD pos = 0;
   char c;
   BOOL error = 0;
@@ -446,7 +446,7 @@ static BOOL is_name(parse_buffer* buf)
 
 static BOOL is_integer(parse_buffer* buf)
 {
-  static char tmp[50];
+  char tmp[50];
   DWORD pos = 0;
   char c;
   DWORD integer;
@@ -666,7 +666,7 @@ static inline BOOL is_primitive_type(WORD token)
 static BOOL parse_name(parse_buffer * buf)
 {
   DWORD count;
-  static char strname[100];
+  char strname[100];
 
   if (parse_TOKEN(buf) != TOKEN_NAME)
     return FALSE;
