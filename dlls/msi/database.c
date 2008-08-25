@@ -204,7 +204,6 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     if( !db->strings )
         goto end;
 
-    msi_table_set_strref( db->bytes_per_strref );
     ret = ERROR_SUCCESS;
 
     msiobj_addref( &db->hdr );
