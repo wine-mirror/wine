@@ -3486,15 +3486,19 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
   /* FPS support */
   if (TRACE_ON(fps))
   {
-      static long prev_time, frames;
+      static long prev_time, start_time;
+      static unsigned long frames, frames_total;
 
       DWORD time = GetTickCount();
       frames++;
+      frames_total++;
       /* every 1.5 seconds */
       if (time - prev_time > 1500) {
-          TRACE_(fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
+          TRACE_(fps)("@ approx %.2ffps, total %.2ffps\n",
+                      1000.0*frames/(time - prev_time), 1000.0*frames_total/(time - start_time));
           prev_time = time;
           frames = 0;
+          if(start_time == 0) start_time = time;
       }
   }
 
