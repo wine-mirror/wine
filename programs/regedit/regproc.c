@@ -666,13 +666,22 @@ void processRegLinesA(FILE *in)
             if (s_eol > line && *(s_eol-1) == '\\') {
                 int c;
                 s = s_eol-1;
-                /* The following error protection could be made more self-
-                 * correcting but I thought it not worth trying.
-                 */
-                if ((c = fgetc (in)) == EOF || c != ' ' ||
-                        (c = fgetc (in)) == EOF || c != ' ')
+
+                do
+                {
+                    c = fgetc(in);
+                } while(c == ' ' || c == '\t');
+
+                if(c == EOF)
+                {
                     fprintf(stderr,"%s: ERROR - invalid continuation.\n",
                             getAppName());
+                }
+                else
+                {
+                    *s = c;
+                    s++;
+                }
                 continue;
             }
 
