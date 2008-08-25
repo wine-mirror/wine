@@ -2887,6 +2887,12 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
 GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
                                         GpCoordinateSpace src_space, GpPointF *points, INT count)
 {
+    if(!graphics || !points || count <= 0)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
     FIXME("(%p, %d, %d, %p, %d): stub\n", graphics, dst_space, src_space, points, count);
 
     return NotImplemented;

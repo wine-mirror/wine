@@ -714,6 +714,8 @@ static void test_Get_Release_DC(void)
     status = GdipMultiplyWorldTransform(graphics, m, MatrixOrderPrepend);
     status = GdipGetClip(graphics, region);
     expect(ObjectBusy, status); status = Ok;
+    status = GdipTransformPoints(graphics, CoordinateSpacePage, CoordinateSpaceWorld, ptf, 5);
+    expect(ObjectBusy, status); status = Ok;
     /* try to delete before release */
     status = GdipDeleteGraphics(graphics);
     expect(ObjectBusy, status);
@@ -729,6 +731,36 @@ static void test_Get_Release_DC(void)
     GdipDeleteRegion(region);
     GdipDeleteMatrix(m);
 
+    ReleaseDC(0, hdc);
+}
+
+static void test_transformpoints(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    HDC hdc = GetDC(0);
+    GpPointF ptf[5];
+    INT i;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    for(i = 0; i < 5; i++){
+        ptf[i].X = 200.0 + i * 50.0 * (i % 2);
+        ptf[i].Y = 200.0 + i * 50.0 * !(i % 2);
+    }
+
+    /* NULL arguments */
+    status = GdipTransformPoints(NULL, CoordinateSpacePage, CoordinateSpaceWorld, NULL, 0);
+    expect(InvalidParameter, status);
+    status = GdipTransformPoints(graphics, CoordinateSpacePage, CoordinateSpaceWorld, NULL, 0);
+    expect(InvalidParameter, status);
+    status = GdipTransformPoints(graphics, CoordinateSpacePage, CoordinateSpaceWorld, ptf, 0);
+    expect(InvalidParameter, status);
+    status = GdipTransformPoints(graphics, CoordinateSpacePage, CoordinateSpaceWorld, ptf, -1);
+    expect(InvalidParameter, status);
+
+    GdipDeleteGraphics(graphics);
     ReleaseDC(0, hdc);
 }
 
@@ -752,6 +784,7 @@ START_TEST(graphics)
     test_GdipDrawLineI();
     test_GdipDrawLinesI();
     test_Get_Release_DC();
+    test_transformpoints();
 
     GdiplusShutdown(gdiplusToken);
 }
