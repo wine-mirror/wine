@@ -39,7 +39,7 @@
 static WCHAR favoritesKey[] =  {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','A','p','p','l','e','t','s','\\','R','e','g','E','d','i','t','\\','F','a','v','o','r','i','t','e','s',0};
 static BOOL bInMenuLoop = FALSE;        /* Tells us if we are in the menu loop */
 static WCHAR favoriteName[128];
-static TCHAR searchString[128];
+static WCHAR searchString[128];
 static int searchMask = SEARCH_KEYS | SEARCH_VALUES | SEARCH_CONTENT;
 
 static TCHAR FileNameBuffer[_MAX_PATH];
@@ -484,26 +484,26 @@ static INT_PTR CALLBACK find_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
             CheckDlgButton(hwndDlg, IDC_FIND_VALUES, searchMask&SEARCH_VALUES ? BST_CHECKED : BST_UNCHECKED);
             CheckDlgButton(hwndDlg, IDC_FIND_CONTENT, searchMask&SEARCH_CONTENT ? BST_CHECKED : BST_UNCHECKED);
             CheckDlgButton(hwndDlg, IDC_FIND_WHOLE, searchMask&SEARCH_WHOLE ? BST_CHECKED : BST_UNCHECKED);
-            SendMessage(hwndValue, EM_SETLIMITTEXT, 127, 0);
-            SetWindowText(hwndValue, searchString);
+            SendMessageW(hwndValue, EM_SETLIMITTEXT, 127, 0);
+            SetWindowTextW(hwndValue, searchString);
             return TRUE;
         case WM_COMMAND:
             switch(LOWORD(wParam)) {
             case IDC_VALUE_NAME:
                 if (HIWORD(wParam) == EN_UPDATE) {
-                    EnableWindow(GetDlgItem(hwndDlg, IDOK),  GetWindowTextLength(hwndValue)>0);
+                    EnableWindow(GetDlgItem(hwndDlg, IDOK),  GetWindowTextLengthW(hwndValue)>0);
                     return TRUE;
                 }
                 break;
             case IDOK:
-                if (GetWindowTextLength(hwndValue)>0) {
+                if (GetWindowTextLengthW(hwndValue)>0) {
                     int mask = 0;
                     if (IsDlgButtonChecked(hwndDlg, IDC_FIND_KEYS)) mask |= SEARCH_KEYS;
                     if (IsDlgButtonChecked(hwndDlg, IDC_FIND_VALUES)) mask |= SEARCH_VALUES;
                     if (IsDlgButtonChecked(hwndDlg, IDC_FIND_CONTENT)) mask |= SEARCH_CONTENT;
                     if (IsDlgButtonChecked(hwndDlg, IDC_FIND_WHOLE)) mask |= SEARCH_WHOLE;
                     searchMask = mask;
-                    GetWindowText(hwndValue, searchString, 128);
+                    GetWindowTextW(hwndValue, searchString, 128);
                     EndDialog(hwndDlg, IDOK);
                 }
                 return TRUE;
@@ -747,7 +747,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     SetFocus(g_pChildWnd->hTreeWnd);
                 }
             } else {
-                error(hWnd, IDS_NOTFOUND, searchString);
+                CHAR* searchStringA = GetMultiByteString(searchString);
+                error(hWnd, IDS_NOTFOUND, searchStringA);
+                HeapFree(GetProcessHeap(), 0, searchStringA);
             }
         }
         break;

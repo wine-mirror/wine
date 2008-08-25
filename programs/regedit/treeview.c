@@ -258,18 +258,18 @@ static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPWSTR label, HK
     return TreeView_InsertItemW(hwndTV, &tvins);
 }
 
-static BOOL match_string(LPCTSTR sstring1, LPCTSTR sstring2, int mode)
+static BOOL match_string(LPCWSTR sstring1, LPCWSTR sstring2, int mode)
 {
     if (mode & SEARCH_WHOLE)
-        return !stricmp(sstring1, sstring2);
+        return !lstrcmpiW(sstring1, sstring2);
     else
-        return NULL != StrStrI(sstring1, sstring2);
+        return NULL != StrStrIW(sstring1, sstring2);
 }
 
-static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mode, int *row)
+static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int *row)
 {
-    TVITEM item;
-    TCHAR keyname[KEY_MAX_LEN];
+    TVITEMW item;
+    WCHAR keyname[KEY_MAX_LEN];
     item.mask = TVIF_TEXT;
     item.hItem = hItem;
     item.pszText = keyname;
@@ -282,26 +282,26 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mode, 
 
     if (mode & (SEARCH_VALUES | SEARCH_CONTENT)) {
         int i, adjust;
-        TCHAR valName[KEY_MAX_LEN], *KeyPath;
+        WCHAR valName[KEY_MAX_LEN], *KeyPath;
         HKEY hKey, hRoot;
         DWORD lenName;
         
-        KeyPath = GetItemPath(hwndTV, hItem, &hRoot);
+        KeyPath = GetItemPathW(hwndTV, hItem, &hRoot);
 
         if (!KeyPath || !hRoot)
              return FALSE;
 
-        if (RegOpenKeyEx(hRoot, KeyPath, 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+        if (RegOpenKeyExW(hRoot, KeyPath, 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
             HeapFree(GetProcessHeap(), 0, KeyPath);
             return FALSE;
         }
-            
+
         HeapFree(GetProcessHeap(), 0, KeyPath);
         lenName = KEY_MAX_LEN;
         adjust = 0;
         /* RegEnumValue won't return empty default value, so fake it when dealing with *row,
            which corresponds to list view rows, not value ids */
-        if (ERROR_SUCCESS == RegEnumValue(hKey, 0, valName, &lenName, NULL, NULL, NULL, NULL) && *valName)
+        if (ERROR_SUCCESS == RegEnumValueW(hKey, 0, valName, &lenName, NULL, NULL, NULL, NULL) && *valName)
             adjust = 1;
         
         i = (*row)-adjust;
@@ -310,7 +310,7 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mode, 
             DWORD lenValue = 0, type = 0;
             lenName = KEY_MAX_LEN;
             
-            if (ERROR_SUCCESS != RegEnumValue(hKey, 
+            if (ERROR_SUCCESS != RegEnumValueW(hKey,
                 i, valName, &lenName, NULL, &type, NULL, &lenValue))
                 break;
             
@@ -323,9 +323,9 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mode, 
             }
             
             if ((mode & SEARCH_CONTENT) && (type == REG_EXPAND_SZ || type == REG_SZ)) {
-                LPTSTR buffer;
+                LPWSTR buffer;
                 buffer = HeapAlloc(GetProcessHeap(), 0, lenValue);
-                RegEnumValue(hKey, i, valName, &lenName, NULL, &type, (LPBYTE)buffer, &lenValue);
+                RegEnumValueW(hKey, i, valName, &lenName, NULL, &type, (LPBYTE)buffer, &lenValue);
                 if (match_string(buffer, sstring, mode)) {
                     HeapFree(GetProcessHeap(), 0, buffer);
                     RegCloseKey(hKey);
@@ -342,7 +342,7 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mode, 
     return FALSE;
 }
 
-HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mode, int *row)
+HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int *row)
 {
     HTREEITEM hTry, hLast;
     

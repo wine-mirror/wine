@@ -137,7 +137,7 @@ extern BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem);
 extern HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name);
 extern HWND StartKeyRename(HWND hwndTV);
 extern HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName);
-extern HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCTSTR sstring, int mode, int *row);
+extern HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int *row);
 
 /* edit.c */
 extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR newKeyName);
