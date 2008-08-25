@@ -101,6 +101,8 @@ static NTSTATUS (WINAPI *pNtQueryObject)(HANDLE,OBJECT_INFORMATION_CLASS,PVOID,U
 static DWORD (WINAPI *pSetEntriesInAclW)(ULONG, PEXPLICIT_ACCESSW, PACL, PACL*);
 static BOOL (WINAPI *pSetSecurityDescriptorControl)(PSECURITY_DESCRIPTOR, SECURITY_DESCRIPTOR_CONTROL,
                                                     SECURITY_DESCRIPTOR_CONTROL);
+static DWORD (WINAPI *pGetSecurityInfo)(HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
+                                        PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
 
 static HMODULE hmod;
 static int     myARGC;
@@ -149,6 +151,7 @@ static void init(void)
     pMakeSelfRelativeSD = (void *)GetProcAddress(hmod, "MakeSelfRelativeSD");
     pSetEntriesInAclW = (void *)GetProcAddress(hmod, "SetEntriesInAclW");
     pSetSecurityDescriptorControl = (void *)GetProcAddress(hmod, "SetSecurityDescriptorControl");
+    pGetSecurityInfo = (void *)GetProcAddress(hmod, "GetSecurityInfo");
 
     myARGC = winetest_get_mainargs( &myARGV );
 }
@@ -2493,6 +2496,12 @@ static void test_GetSecurityInfo(void)
     PACL dacl;
     DWORD ret;
 
+    if (!pGetSecurityInfo)
+    {
+        win_skip("GetSecurityInfo is not available\n");
+        return;
+    }
+
     /* Create something.  Files have lots of associated security info.  */
     obj = CreateFile(myARGV[0], GENERIC_READ, FILE_SHARE_READ, NULL,
                      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -2502,9 +2511,15 @@ static void test_GetSecurityInfo(void)
         return;
     }
 
-    ret = GetSecurityInfo(obj, SE_FILE_OBJECT,
+    ret = pGetSecurityInfo(obj, SE_FILE_OBJECT,
                           OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
                           &owner, &group, &dacl, NULL, &sd);
+    if (ret == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("GetSecurityInfo is not implemented\n");
+        CloseHandle(obj);
+        return;
+    }
     ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
     ok(sd != NULL, "GetSecurityInfo\n");
     ok(owner != NULL, "GetSecurityInfo\n");
@@ -2516,7 +2531,7 @@ static void test_GetSecurityInfo(void)
 
     /* If we don't ask for the security descriptor, Windows will still give us
        the other stuff, leaving us no way to free it.  */
-    ret = GetSecurityInfo(obj, SE_FILE_OBJECT,
+    ret = pGetSecurityInfo(obj, SE_FILE_OBJECT,
                           OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
                           &owner, &group, &dacl, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
