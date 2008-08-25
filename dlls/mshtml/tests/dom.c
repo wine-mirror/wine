@@ -2026,6 +2026,7 @@ static void test_window(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window, *window2, *self;
     IHTMLDocument2 *doc2 = NULL;
+    IDispatch *disp;
     HRESULT hres;
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
@@ -2051,6 +2052,12 @@ static void test_window(IHTMLDocument2 *doc)
 
     IHTMLWindow2_Release(window2);
     IHTMLWindow2_Release(self);
+
+    disp = NULL;
+    hres = IHTMLDocument2_get_Script(doc, &disp);
+    ok(hres == S_OK, "get_Script failed: %08x\n", hres);
+    ok(disp == (void*)window, "disp != window\n");
+    IDispatch_Release(disp);
 
     IHTMLWindow2_Release(window);
 }
