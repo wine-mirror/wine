@@ -1667,7 +1667,7 @@ static void test_OpenFile(void)
     BOOL ret;
     DWORD retval;
     
-    static const char *file = "\\regsvr32.exe";
+    static const char *file = "\\regedit.exe";
     static const char *foo = ".\\foo-bar-foo.baz";
     static const char *foo_too_long = ".\\foo-bar-foo.baz+++++++++++++++"
         "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -1682,7 +1682,7 @@ static void test_OpenFile(void)
     UINT length;
     
     /* Check for existing file */
-    length = GetSystemDirectoryA(buff, MAX_PATH);
+    length = GetWindowsDirectoryA(buff, MAX_PATH);
 
     if (length + lstrlen(file) < MAX_PATH)
     {
