@@ -463,6 +463,52 @@ static void test_getregiondata(void)
     expect(Ok, status);
 }
 
+static void test_isinfinite(void)
+{
+    GpStatus status;
+    GpRegion *region;
+    GpGraphics *graphics = NULL;
+    GpMatrix *m;
+    HDC hdc = GetDC(0);
+    BOOL res;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    GdipCreateRegion(&region);
+
+    GdipCreateMatrix2(3.0, 0.0, 0.0, 1.0, 20.0, 30.0, &m);
+
+    /* NULL arguments */
+    status = GdipIsInfiniteRegion(NULL, NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsInfiniteRegion(region, NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsInfiniteRegion(NULL, graphics, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsInfiniteRegion(NULL, NULL, &res);
+    expect(InvalidParameter, status);
+    status = GdipIsInfiniteRegion(region, NULL, &res);
+    expect(InvalidParameter, status);
+
+    res = FALSE;
+    status = GdipIsInfiniteRegion(region, graphics, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+
+    /* after world transform */
+    status = GdipSetWorldTransform(graphics, m);
+    expect(Ok, status);
+
+    res = FALSE;
+    status = GdipIsInfiniteRegion(region, graphics, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+
+    GdipDeleteMatrix(m);
+    GdipDeleteRegion(region);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -476,6 +522,7 @@ START_TEST(region)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_getregiondata();
+    test_isinfinite();
 
     GdiplusShutdown(gdiplusToken);
 

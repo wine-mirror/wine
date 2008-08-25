@@ -770,11 +770,17 @@ GpStatus WINGDIPAPI GdipIsEqualRegion(GpRegion *region, GpRegion *region2, GpGra
     return NotImplemented;
 }
 
+/* I think graphics is ignored here */
 GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *region, GpGraphics *graphics, BOOL *res)
 {
-    FIXME("(%p, %p, %p): stub\n", region, graphics, res);
+    TRACE("(%p, %p, %p)\n", region, graphics, res);
 
-    return NotImplemented;
+    if(!region || !graphics || !res)
+        return InvalidParameter;
+
+    *res = (region->node.type == RegionDataInfiniteRect);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *region)

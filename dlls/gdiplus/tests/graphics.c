@@ -770,12 +770,16 @@ static void test_getclip(void)
     GpGraphics *graphics = NULL;
     HDC hdc = GetDC(0);
     GpRegion *clip;
+    GpRectF rect;
     BOOL res;
 
     status = GdipCreateFromHDC(hdc, &graphics);
     expect(Ok, status);
 
-    status = GdipCreateRegion(&clip);
+    rect.X = rect.Y = 0.0;
+    rect.Height = rect.Width = 100.0;
+
+    status = GdipCreateRegionRect(&rect, &clip);
 
     /* NULL arguments */
     status = GdipGetClip(NULL, NULL);
@@ -789,7 +793,7 @@ static void test_getclip(void)
     status = GdipGetClip(graphics, clip);
     todo_wine expect(Ok, status);
     status = GdipIsInfiniteRegion(clip, graphics, &res);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     todo_wine expect(TRUE, res);
 
     GdipDeleteRegion(clip);
