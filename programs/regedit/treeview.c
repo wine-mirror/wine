@@ -508,7 +508,7 @@ BOOL RefreshTreeView(HWND hwndTV)
     WINE_TRACE("\n");
     hSelectedItem = TreeView_GetSelection(hwndTV);
     hcursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
-    SendMessage(hwndTV, WM_SETREDRAW, FALSE, 0);
+    SendMessageW(hwndTV, WM_SETREDRAW, FALSE, 0);
 
     hItem = TreeView_GetChild(hwndTV, TreeView_GetRoot(hwndTV));
     while (hItem) {
@@ -516,12 +516,12 @@ BOOL RefreshTreeView(HWND hwndTV)
         hItem = TreeView_GetNextSibling(hwndTV, hItem);
     }
 
-    SendMessage(hwndTV, WM_SETREDRAW, TRUE, 0);
+    SendMessageW(hwndTV, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(hwndTV, NULL, FALSE);
     SetCursor(hcursorOld);
     
     /* We reselect the currently selected node, this will prompt a refresh of the listview. */
-    SendMessage(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hSelectedItem);
+    SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hSelectedItem);
     return TRUE;
 }
 
@@ -697,7 +697,7 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
 
 done:
     TreeView_SetItemState(hwndTV, hItem, TVIS_EXPANDEDONCE, TVIS_EXPANDEDONCE);
-    SendMessage(hwndTV, WM_SETREDRAW, TRUE, 0);
+    SendMessageW(hwndTV, WM_SETREDRAW, TRUE, 0);
     SetCursor(hcursorOld);
     expanding = FALSE;
     HeapFree(GetProcessHeap(), 0, keyPath);
