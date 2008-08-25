@@ -1586,7 +1586,7 @@ static HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 {
     HKEY newkey;
     DWORD data_len, dwType;
-    WCHAR value[MAX_PATH], data[MAX_PATH];
+    WCHAR data[MAX_PATH];
 
     static const WCHAR prefix_keyW[] =
         {'S','o','f','t','w','a','r','e',
@@ -1598,14 +1598,12 @@ static HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 
     /* get and prepend default */
     RegOpenKeyExW(HKEY_LOCAL_MACHINE, prefix_keyW, 0, 1, &newkey);
-    data_len = MAX_PATH;
-    value[0] = '@';
-    value[1] = '\0';
-    RegQueryValueExW(newkey, value, 0, &dwType, (LPBYTE)data, &data_len);
+    data_len = sizeof(data);
+    RegQueryValueExW(newkey, NULL, 0, &dwType, (LPBYTE)data, &data_len);
     RegCloseKey(newkey);
     if (strlenW(data) + strlenW(pszIn) + 1 > *pcchOut) {
-	*pcchOut = strlenW(data) + strlenW(pszIn) + 1;
-	return E_POINTER;
+        *pcchOut = strlenW(data) + strlenW(pszIn) + 1;
+        return E_POINTER;
     }
     strcpyW(pszOut, data);
     strcatW(pszOut, pszIn);
