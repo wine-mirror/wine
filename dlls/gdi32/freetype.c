@@ -6175,4 +6175,10 @@ DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair
     return 0;
 }
 
+BOOL WineEngRealizationInfo(GdiFont *font, realization_info_t *info)
+{
+    ERR("called but we don't have FreeType\n");
+    return FALSE;
+}
+
 #endif /* HAVE_FREETYPE */
