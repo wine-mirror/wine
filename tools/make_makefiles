@@ -273,6 +273,14 @@ sub update_makefiles(@)
         if ($rules eq $makerules{"MAKE_DLL_RULES"}) { $args = ",[dlls],[ALL_DLL_DIRS]"; }
         elsif ($rules eq $makerules{"MAKE_IMPLIB_RULES"}) { $args = ",[dlls],[ALL_IMPLIB_DIRS]"; }
         elsif ($rules eq $makerules{"MAKE_TEST_RULES"}) { $args = ",[dlls],[ALL_TEST_DIRS]"; }
+        elsif ($rules eq $makerules{"MAKE_PROG_RULES"})
+        {
+            (my $name = $file) =~ s/^programs\/(.*)\/Makefile/$1/;
+            $args = ",[programs],[ALL_PROGRAM_DIRS";
+            $args .= ",ALL_PROGRAM_INSTALL_DIRS" unless $dont_install{$name};
+            $args .= ",ALL_PROGRAM_BIN_INSTALL_DIRS" if $bin_install{$name};
+            $args .= "]";
+        }
         push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules]$args)\n";
     }
 
@@ -508,41 +516,6 @@ sub update_dlls(@)
 
 
 ################################################################
-# update programs/Makefile.in
-
-sub update_progs(@)
-{
-    my (@subdirs, @install_subdirs, @install_progs);
-
-    my @ignores = ();
-
-    foreach my $make (@_)
-    {
-        my %makefile = %{$makefiles{$make}};
-        my $module = $makefile{"MODULE"};
-        (my $dir = $make) =~ s/^programs\/(.*)\/Makefile$/$1/;
-        die "Invalid module $module in $make" unless "$dir.exe" eq $module;
-        next if defined $makefile{"=skip"};
-        push @subdirs, $dir;
-        push @ignores, "programs/$dir/$dir";
-        push @install_subdirs, $dir unless $dont_install{$dir};
-        push @install_progs, $dir if $bin_install{$dir};
-    }
-
-    replace_in_file( "programs/Makefile.in", '^SUBDIRS\s*=', '^INSTALLDIRS',
-                     "SUBDIRS = \\\n\t",
-                     join( " \\\n\t", @subdirs ),
-                     "\n\n# Sub-directories to run make install into\nINSTALLSUBDIRS = \\\n\t",
-                     join( " \\\n\t", @install_subdirs ),
-                     "\n\n# Programs to install in bin directory\nINSTALLPROGS = \\\n\t",
-                     join( " \\\n\t", @install_progs ),
-                     "\n\nINSTALLDIRS = \$(DESTDIR)\$(bindir)\n" );
-
-    return @ignores;
-}
-
-
-################################################################
 # update include/Makefile.in
 
 sub update_includes()
@@ -592,6 +565,10 @@ sub update_gitignore(@)
         {
             push @ignores, map { s/\$\(EXEEXT\)//; $dir . $_; } @{$makefile{"PROGRAMS"}};
         }
+        if ($dir =~ /^programs\/(.*)\/$/)
+        {
+            push @ignores, "$dir$1";
+        }
     }
 
     # prepend a slash to paths that don't have one
@@ -628,5 +605,4 @@ update_makefiles( @makefiles );
 push @ignores, update_ignores( @makefiles );
 push @ignores, update_winetest( @makefiles );
 push @ignores, update_dlls( sort grep /^dlls\//, @makefiles );
-push @ignores, update_progs( sort grep /^programs\/.*\/Makefile$/, @makefiles );
 update_gitignore( @ignores );

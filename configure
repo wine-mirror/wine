@@ -778,6 +778,9 @@ ALL_MAKEFILE_DEPENDS
 ALL_DLL_DIRS
 ALL_IMPLIB_DIRS
 ALL_TEST_DIRS
+ALL_PROGRAM_DIRS
+ALL_PROGRAM_INSTALL_DIRS
+ALL_PROGRAM_BIN_INSTALL_DIRS
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files='MAKE_RULES
@@ -22176,6 +22179,12 @@ ALL_IMPLIB_DIRS=""
 
 ALL_TEST_DIRS=""
 
+ALL_PROGRAM_DIRS=""
+
+ALL_PROGRAM_INSTALL_DIRS=""
+
+ALL_PROGRAM_BIN_INSTALL_DIRS=""
+
 
 
 
@@ -25158,315 +25167,416 @@ ac_config_files="$ac_config_files programs/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/clock/Makefile"
-
+test "x$enable_clock" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	clock" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	clock"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/clock/Makefile: programs/clock/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/clock/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/cmd/Makefile"
-
+test "x$enable_cmd" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	cmd" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	cmd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/cmd/Makefile: programs/cmd/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/cmd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/cmdlgtst/Makefile"
-
+test "x$enable_cmdlgtst" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	cmdlgtst"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/cmdlgtst/Makefile: programs/cmdlgtst/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/cmdlgtst/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/control/Makefile"
-
+test "x$enable_control" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	control" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	control"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/control/Makefile: programs/control/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/control/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/eject/Makefile"
-
+test "x$enable_eject" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	eject" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	eject"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/eject/Makefile: programs/eject/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/eject/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/expand/Makefile"
-
+test "x$enable_expand" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	expand" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	expand"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/expand/Makefile: programs/expand/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/expand/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/explorer/Makefile"
-
+test "x$enable_explorer" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	explorer" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	explorer"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/explorer/Makefile: programs/explorer/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/explorer/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/hh/Makefile"
-
+test "x$enable_hh" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	hh" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	hh"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/hh/Makefile: programs/hh/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/hh/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/icinfo/Makefile"
-
+test "x$enable_icinfo" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	icinfo" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	icinfo"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/icinfo/Makefile: programs/icinfo/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/icinfo/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/iexplore/Makefile"
-
+test "x$enable_iexplore" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	iexplore" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	iexplore"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/iexplore/Makefile: programs/iexplore/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/iexplore/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/msiexec/Makefile"
-
+test "x$enable_msiexec" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	msiexec" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	msiexec" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	msiexec"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/msiexec/Makefile: programs/msiexec/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/msiexec/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/net/Makefile"
-
+test "x$enable_net" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	net" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	net"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/net/Makefile: programs/net/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/net/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/notepad/Makefile"
-
+test "x$enable_notepad" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	notepad" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	notepad" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	notepad"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/notepad/Makefile: programs/notepad/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/notepad/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/oleview/Makefile"
-
+test "x$enable_oleview" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	oleview" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	oleview"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/oleview/Makefile: programs/oleview/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/oleview/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/progman/Makefile"
-
+test "x$enable_progman" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	progman" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	progman" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	progman"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/progman/Makefile: programs/progman/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/progman/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/reg/Makefile"
-
+test "x$enable_reg" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	reg" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	reg"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/reg/Makefile: programs/reg/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/reg/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/regedit/Makefile"
-
+test "x$enable_regedit" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	regedit" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	regedit" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	regedit"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/regedit/Makefile: programs/regedit/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/regedit/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/regsvr32/Makefile"
-
+test "x$enable_regsvr32" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	regsvr32" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	regsvr32" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	regsvr32"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/regsvr32/Makefile: programs/regsvr32/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/regsvr32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/rpcss/Makefile"
-
+test "x$enable_rpcss" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	rpcss" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	rpcss"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/rpcss/Makefile: programs/rpcss/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/rpcss/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/rundll32/Makefile"
-
+test "x$enable_rundll32" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	rundll32" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	rundll32"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/rundll32/Makefile: programs/rundll32/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/rundll32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/secedit/Makefile"
-
+test "x$enable_secedit" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	secedit" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	secedit"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/secedit/Makefile: programs/secedit/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/secedit/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/services/Makefile"
-
+test "x$enable_services" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	services" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	services"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/services/Makefile: programs/services/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/services/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/spoolsv/Makefile"
-
+test "x$enable_spoolsv" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	spoolsv" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	spoolsv"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/spoolsv/Makefile: programs/spoolsv/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/spoolsv/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/start/Makefile"
-
+test "x$enable_start" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	start" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	start"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/start/Makefile: programs/start/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/start/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/svchost/Makefile"
-
+test "x$enable_svchost" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	svchost" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	svchost"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/svchost/Makefile: programs/svchost/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/svchost/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/taskmgr/Makefile"
-
+test "x$enable_taskmgr" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	taskmgr" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	taskmgr"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/taskmgr/Makefile: programs/taskmgr/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/taskmgr/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/uninstaller/Makefile"
-
+test "x$enable_uninstaller" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	uninstaller" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	uninstaller" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	uninstaller"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/uninstaller/Makefile: programs/uninstaller/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/uninstaller/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/view/Makefile"
-
+test "x$enable_view" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	view"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/view/Makefile: programs/view/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/view/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/wineboot/Makefile"
-
+test "x$enable_wineboot" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	wineboot" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	wineboot" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	wineboot"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/wineboot/Makefile: programs/wineboot/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/wineboot/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winebrowser/Makefile"
-
+test "x$enable_winebrowser" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winebrowser" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winebrowser" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	winebrowser"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winebrowser/Makefile: programs/winebrowser/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winebrowser/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winecfg/Makefile"
-
+test "x$enable_winecfg" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winecfg" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winecfg" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	winecfg"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winecfg/Makefile: programs/winecfg/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winecfg/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/wineconsole/Makefile"
-
+test "x$enable_wineconsole" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	wineconsole" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	wineconsole" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	wineconsole"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/wineconsole/Makefile: programs/wineconsole/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/wineconsole/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winedbg/Makefile"
-
+test "x$enable_winedbg" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winedbg" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winedbg" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	winedbg"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winedbg/Makefile: programs/winedbg/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winedbg/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winedevice/Makefile"
-
+test "x$enable_winedevice" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winedevice" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winedevice"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winedevice/Makefile: programs/winedevice/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winedevice/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winefile/Makefile"
-
+test "x$enable_winefile" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winefile" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winefile" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	winefile"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winefile/Makefile: programs/winefile/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winefile/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winemenubuilder/Makefile"
-
+test "x$enable_winemenubuilder" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winemenubuilder" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winemenubuilder"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winemenubuilder/Makefile: programs/winemenubuilder/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winemenubuilder/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winemine/Makefile"
-
+test "x$enable_winemine" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winemine" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winemine" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	winemine"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winemine/Makefile: programs/winemine/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winemine/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winepath/Makefile"
-
+test "x$enable_winepath" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winepath" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winepath" && ALL_PROGRAM_BIN_INSTALL_DIRS="$ALL_PROGRAM_BIN_INSTALL_DIRS \\
+	winepath"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winepath/Makefile: programs/winepath/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winepath/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winetest/Makefile"
-
+test "x$enable_winetest" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winetest"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winetest/Makefile: programs/winetest/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winetest/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winevdm/Makefile"
-
+test "x$enable_winevdm" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winevdm" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winevdm"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winevdm/Makefile: programs/winevdm/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winevdm/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winhlp32/Makefile"
-
+test "x$enable_winhlp32" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winhlp32" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winhlp32"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winhlp32/Makefile: programs/winhlp32/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winhlp32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winver/Makefile"
-
+test "x$enable_winver" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	winver" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	winver"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/winver/Makefile: programs/winver/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/winver/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/wordpad/Makefile"
-
+test "x$enable_wordpad" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	wordpad" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	wordpad"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/wordpad/Makefile: programs/wordpad/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/wordpad/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/write/Makefile"
-
+test "x$enable_write" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	write" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	write"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/write/Makefile: programs/write/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/write/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/xcopy/Makefile"
-
+test "x$enable_xcopy" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	xcopy" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	xcopy"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/xcopy/Makefile: programs/xcopy/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/xcopy/Makefile"
@@ -26809,11 +26919,14 @@ ALL_MAKEFILE_DEPENDS!$ALL_MAKEFILE_DEPENDS$ac_delim
 ALL_DLL_DIRS!$ALL_DLL_DIRS$ac_delim
 ALL_IMPLIB_DIRS!$ALL_IMPLIB_DIRS$ac_delim
 ALL_TEST_DIRS!$ALL_TEST_DIRS$ac_delim
+ALL_PROGRAM_DIRS!$ALL_PROGRAM_DIRS$ac_delim
+ALL_PROGRAM_INSTALL_DIRS!$ALL_PROGRAM_INSTALL_DIRS$ac_delim
+ALL_PROGRAM_BIN_INSTALL_DIRS!$ALL_PROGRAM_BIN_INSTALL_DIRS$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 83; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

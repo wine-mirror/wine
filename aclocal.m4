@@ -175,8 +175,8 @@ AC_DEFUN([WINE_CONFIG_MAKEFILE],
 m4_ifval(ac_dir,[ALL_MAKEFILES="$ALL_MAKEFILES \\
 	$1"])
 AS_VAR_PUSHDEF([ac_enable],m4_default([$5],[enable_]ac_dir))dnl
-m4_ifval([$4],[test "x$ac_enable" != xno && $4="$[$4] \\
-	ac_dir"])
+m4_ifval([$4],[test "x$ac_enable" != xno]m4_foreach([ac_var],[$4],[ && ac_var="$ac_var \\
+	ac_dir"]))
 AS_VAR_POPDEF([ac_enable])dnl
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 [$1: ]m4_ifval([$2],[$1.in $2],[$1.in])"
