@@ -971,6 +971,20 @@ static long _get_node_type(unsigned line, IUnknown *unk)
     return type;
 }
 
+#define test_elem_get_parent(u) _test_elem_get_parent(__LINE__,u)
+static IHTMLElement *_test_elem_get_parent(unsigned line, IUnknown *unk)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    IHTMLElement *parent;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_parentElement(elem, &parent);
+    IHTMLElement_Release(elem);
+    ok_(__FILE__,line) (hres == S_OK, "get_parentElement failed: %08x\n", hres);
+
+    return parent;
+}
+
 #define elem_get_scroll_height(u) _elem_get_scroll_height(__LINE__,u)
 static long _elem_get_scroll_height(unsigned line, IUnknown *unk)
 {
@@ -2209,7 +2223,7 @@ static void test_elems(IHTMLDocument2 *doc)
 {
     IHTMLElementCollection *col;
     IHTMLDOMChildrenCollection *child_col;
-    IHTMLElement *elem;
+    IHTMLElement *elem, *elem2, *elem3;
     IHTMLDOMNode *node, *node2;
     IDispatch *disp;
     long type;
@@ -2298,6 +2312,17 @@ static void test_elems(IHTMLDocument2 *doc)
         node2 = test_node_get_parent((IUnknown*)node);
         IHTMLDOMNode_Release(node);
         ok(node2 == NULL, "node != NULL\n");
+
+        elem2 = test_elem_get_parent((IUnknown*)elem);
+        ok(elem2 != NULL, "elem2 == NULL\n");
+        test_node_name((IUnknown*)elem2, "BODY");
+        elem3 = test_elem_get_parent((IUnknown*)elem2);
+        IHTMLElement_Release(elem2);
+        ok(elem3 != NULL, "elem3 == NULL\n");
+        test_node_name((IUnknown*)elem3, "HTML");
+        elem2 = test_elem_get_parent((IUnknown*)elem3);
+        IHTMLElement_Release(elem3);
+        ok(elem2 == NULL, "elem2 != NULL\n");
 
         test_elem_getelembytag((IUnknown*)elem, ET_OPTION, 2);
         test_elem_getelembytag((IUnknown*)elem, ET_SELECT, 0);

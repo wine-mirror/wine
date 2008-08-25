@@ -382,8 +382,21 @@ static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLElement_get_parentElement(IHTMLElement *iface, IHTMLElement **p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IHTMLDOMNode *node;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = IHTMLDOMNode_get_parentNode(HTMLDOMNODE(&This->node), &node);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLDOMNode_QueryInterface(node, &IID_IHTMLElement, (void**)p);
+    IHTMLDOMNode_Release(node);
+    if(FAILED(hres))
+        *p = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_style(IHTMLElement *iface, IHTMLStyle **p)
