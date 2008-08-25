@@ -32,6 +32,9 @@
 #ifdef HAVE_NETDB_H
 # include <netdb.h>
 #endif
+#if defined(__MINGW32__) || defined (_MSC_VER)
+# include <ws2tcpip.h>
+#endif
 
 typedef struct _object_header_t object_header_t;
 
