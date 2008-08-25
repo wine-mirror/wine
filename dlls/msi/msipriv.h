@@ -855,8 +855,42 @@ extern UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, UINT sc
 
 static inline void msi_feature_set_state( MSIFEATURE *feature, INSTALLSTATE state )
 {
-    feature->ActionRequest = state;
-    feature->Action = state;
+    if (state == INSTALLSTATE_ABSENT)
+    {
+        switch (feature->Installed)
+        {
+            case INSTALLSTATE_ABSENT:
+                feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+                feature->Action = INSTALLSTATE_UNKNOWN;
+                break;
+            default:
+                feature->ActionRequest = state;
+                feature->Action = state;
+        }
+    }
+    else if (state == INSTALLSTATE_SOURCE)
+    {
+        switch (feature->Installed)
+        {
+            case INSTALLSTATE_ABSENT:
+            case INSTALLSTATE_SOURCE:
+                feature->ActionRequest = state;
+                feature->Action = state;
+                break;
+            case INSTALLSTATE_LOCAL:
+                feature->ActionRequest = INSTALLSTATE_LOCAL;
+                feature->Action = INSTALLSTATE_LOCAL;
+                break;
+            default:
+                feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+                feature->Action = INSTALLSTATE_UNKNOWN;
+        }
+    }
+    else
+    {
+        feature->ActionRequest = state;
+        feature->Action = state;
+    }
 }
 
 static inline void msi_component_set_state( MSICOMPONENT *comp, INSTALLSTATE state )
