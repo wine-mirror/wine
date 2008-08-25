@@ -1193,6 +1193,7 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   NUMPARSE np;
   int have_int, need_int = 0, have_frac, need_frac, exponent = 0, pad = 0;
   WCHAR buff[256], *pBuff = buff;
+  WCHAR thousandSeparator[32];
   VARIANT vString, vBool;
   DWORD dwState = 0;
   FMT_HEADER *header = (FMT_HEADER*)rgbTok;
@@ -1313,6 +1314,16 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
     }
     TRACE("have_int=%d,need_int=%d,have_frac=%d,need_frac=%d,pad=%d,exp=%d\n",
           have_int, need_int, have_frac, need_frac, pad, exponent);
+  }
+
+  if (numHeader->flags & FMT_FLAG_THOUSANDS)
+  {
+    if (!GetLocaleInfoW(lcid, LOCALE_STHOUSAND, thousandSeparator,
+                        sizeof(thousandSeparator)/sizeof(WCHAR)))
+    {
+      thousandSeparator[0] = ',';
+      thousandSeparator[1] = 0;
+    }
   }
 
   pToken = (const BYTE*)numHeader + sizeof(FMT_NUMBER_HEADER);
@@ -1463,7 +1474,7 @@ VARIANT_FormatNumber_Bool:
       }
       else
       {
-        int count, count_max;
+        int count, count_max, position;
 
         if ((np.dwOutFlags & NUMPRS_NEG) && !(dwState & NUM_WROTE_SIGN))
         {
@@ -1475,6 +1486,9 @@ VARIANT_FormatNumber_Bool:
           break;
         }
 
+        position = have_int + pad;
+        if (dwState & NUM_WRITE_ON)
+          position = max(position, need_int);
         need_int -= pToken[1];
         count_max = have_int + pad - need_int;
         if (count_max < 0)
@@ -1484,25 +1498,55 @@ VARIANT_FormatNumber_Bool:
           count = pToken[1] - count_max;
           TRACE("write %d leading zeros\n", count);
           while (count-- > 0)
+          {
             *pBuff++ = '0';
+            if ((numHeader->flags & FMT_FLAG_THOUSANDS) &&
+                position > 1 && (--position % 3) == 0)
+            {
+              int k;
+              TRACE("write thousand separator\n");
+              for (k = 0; thousandSeparator[k]; k++)
+                *pBuff++ = thousandSeparator[k];
+            }
+          }
         }
         if (*pToken == FMT_NUM_COPY_ZERO || have_int > 1 ||
             (have_int > 0 && *prgbDig > 0))
         {
-          dwState |= NUM_WRITE_ON;
           count = min(count_max, have_int);
           count_max -= count;
           have_int -= count;
           TRACE("write %d whole number digits\n", count);
           while (count--)
+          {
+            dwState |= NUM_WRITE_ON;
             *pBuff++ = '0' + *prgbDig++;
+            if ((numHeader->flags & FMT_FLAG_THOUSANDS) &&
+                position > 1 && (--position % 3) == 0)
+            {
+              int k;
+              TRACE("write thousand separator\n");
+              for (k = 0; thousandSeparator[k]; k++)
+                *pBuff++ = thousandSeparator[k];
+            }
+          }
         }
         count = min(count_max, pad);
         count_max -= count;
         pad -= count;
         TRACE("write %d whole trailing 0's\n", count);
         while (count--)
+        {
           *pBuff++ = '0';
+          if ((numHeader->flags & FMT_FLAG_THOUSANDS) &&
+              position > 1 && (--position % 3) == 0)
+          {
+            int k;
+            TRACE("write thousand separator\n");
+            for (k = 0; thousandSeparator[k]; k++)
+              *pBuff++ = thousandSeparator[k];
+          }
+        }
       }
       pToken++;
       break;
