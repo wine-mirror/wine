@@ -1905,6 +1905,7 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     INSTALLSTATE r;
     BOOL missing = FALSE;
     BOOL machine = FALSE;
+    BOOL source = FALSE;
 
     TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
 
@@ -1978,6 +1979,12 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         path = msi_reg_get_val_str(hkey, squishProduct);
         if (!path)
             missing = TRUE;
+        else if (lstrlenW(path) > 2 &&
+                 path[0] >= '0' && path[0] <= '9' &&
+                 path[1] >= '0' && path[1] <= '9')
+        {
+            source = TRUE;
+        }
 
         msi_free(path);
     }
@@ -1987,6 +1994,9 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 
     if (missing)
         return INSTALLSTATE_ADVERTISED;
+
+    if (source)
+        return INSTALLSTATE_SOURCE;
 
     return INSTALLSTATE_LOCAL;
 }
