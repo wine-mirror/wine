@@ -22,7 +22,7 @@
 @ stdcall WinHttpReceiveResponse(ptr ptr)
 @ stdcall WinHttpSendRequest(ptr wstr long ptr long long ptr)
 @ stub WinHttpSetCredentials
-@ stdcall WinHttpSetDefaultProxyConfiguration(ptr long long wstr ptr ptr)
+@ stdcall WinHttpSetDefaultProxyConfiguration(ptr)
 @ stdcall WinHttpSetOption(ptr long ptr long)
 @ stdcall WinHttpSetStatusCallback(ptr ptr long ptr)
 @ stdcall WinHttpSetTimeouts(ptr long long long long)
