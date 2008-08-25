@@ -1735,10 +1735,11 @@ static void ACTION_GetFeatureInstallStates(MSIPACKAGE *package)
     }
 }
 
-static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property, 
-                                    INSTALLSTATE state)
+static BOOL process_state_property(MSIPACKAGE* package, int level,
+                                   LPCWSTR property, INSTALLSTATE state)
 {
     static const WCHAR all[]={'A','L','L',0};
+    static const WCHAR remove[] = {'R','E','M','O','V','E',0};
     LPWSTR override;
     MSIFEATURE *feature;
 
@@ -1748,6 +1749,10 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
+        if (lstrcmpW(property, remove) &&
+            (feature->Level <= 0 || feature->Level > level))
+            continue;
+
         if (strcmpiW(override,all)==0)
             msi_feature_set_state( feature, state );
         else
@@ -1760,7 +1765,7 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
                 if ((ptr2 && strncmpW(ptr,feature->Feature, ptr2-ptr)==0)
                     || (!ptr2 && strcmpW(ptr,feature->Feature)==0))
                 {
-                    msi_feature_set_state( feature, state );
+                    msi_feature_set_state(feature, state);
                     break;
                 }
                 if (ptr2)
@@ -1780,7 +1785,7 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
 
 UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 {
-    int install_level;
+    int level;
     static const WCHAR szlevel[] =
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szAddLocal[] =
@@ -1800,7 +1805,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     TRACE("Checking Install Level\n");
 
-    install_level = msi_get_property_int( package, szlevel, 1 );
+    level = msi_get_property_int(package, szlevel, 1);
 
     /* ok here is the _real_ rub
      * all these activation/deactivation things happen in order and things
@@ -1821,17 +1826,17 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
      * REMOVE are the big ones, since we don't handle administrative installs
      * yet anyway.
      */
-    override |= process_state_property(package,szAddLocal,INSTALLSTATE_LOCAL);
-    override |= process_state_property(package,szRemove,INSTALLSTATE_ABSENT);
-    override |= process_state_property(package,szAddSource,INSTALLSTATE_SOURCE);
-    override |= process_state_property(package,szReinstall,INSTALLSTATE_LOCAL);
+    override |= process_state_property(package, level, szAddLocal, INSTALLSTATE_LOCAL);
+    override |= process_state_property(package, level, szRemove, INSTALLSTATE_ABSENT);
+    override |= process_state_property(package, level, szAddSource, INSTALLSTATE_SOURCE);
+    override |= process_state_property(package, level, szReinstall, INSTALLSTATE_LOCAL);
 
     if (!override)
     {
         LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
         {
             BOOL feature_state = ((feature->Level > 0) &&
-                             (feature->Level <= install_level));
+                                  (feature->Level <= level));
 
             if ((feature_state) && (feature->Action == INSTALLSTATE_UNKNOWN))
             {
@@ -1849,7 +1854,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             FeatureList *fl;
 
-            if (feature->Level > 0 && feature->Level <= install_level)
+            if (feature->Level > 0 && feature->Level <= level)
                 continue;
 
             LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
