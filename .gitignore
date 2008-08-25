@@ -36,6 +36,7 @@ dlls/dispdib.dll16
 dlls/display.drv16
 dlls/gdi.exe16
 dlls/imm.dll16
+dlls/jscript/jsglobal.tlb
 dlls/kernel32/nls/winerr_deu.mc.rc
 dlls/kernel32/nls/winerr_enu.mc.rc
 dlls/kernel32/nls/winerr_fra.mc.rc

@@ -11,6 +11,8 @@ C_SRCS = \
 	jscript.c \
 	jscript_main.c
 
+IDL_TLB_SRCS = jsglobal.idl
+
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
