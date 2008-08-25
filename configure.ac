@@ -218,11 +218,7 @@ dnl Check for -lpthread
 AC_CHECK_LIB(pthread,pthread_create,AC_SUBST(LIBPTHREAD,"-lpthread"))
 
 AC_SUBST(XLIB,"")
-AC_SUBST(XFILES,"")
-AC_SUBST(OPENGLFILES,"")
-AC_SUBST(GLU32FILES,"")
 AC_SUBST(OPENGL_LIBS,"")
-AC_SUBST(QUARTZFILES,"")
 
 dnl **** Check for header files ****
 
@@ -513,7 +509,7 @@ case $host_os in
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         AC_SUBST(CARBONLIB,"-framework Carbon")
-        QUARTZFILES='$(QUARTZFILES)'
+        enable_winequartz_drv=${enable_winequartz_drv:-yes}
     fi
     ;;
   *)
@@ -595,6 +591,8 @@ case $host_os in
     fi
     ;;
 esac
+
+enable_winequartz_drv=${enable_winequartz_drv:-no}
 
 if test "$LIBEXT" = "a"; then
   AC_MSG_ERROR(
@@ -758,11 +756,9 @@ then
 		dnl Check for the presence of the library
 		WINE_CHECK_SONAME(GL,glXCreateContext,
 			     [OPENGL_LIBS="-lGL"
-                             OPENGLFILES='$(OPENGLFILES)'
                              AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])],
                              [WINE_CHECK_SONAME(GL,glXCreateContext,
 				    [OPENGL_LIBS="-Xlinker -dylib_file -Xlinker /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -lGL"
-	                            OPENGLFILES='$(OPENGLFILES)'
 	                            AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])],
 				    [if test -f /usr/X11R6/lib/libGL.a
 	                            then
@@ -775,8 +771,7 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
                  if test "$ac_cv_header_GL_glu_h" = "yes"
                  then
-                    WINE_CHECK_SONAME(GLU,gluLookAt,[GLU32FILES='$(GLU32FILES)'],,
-                                      [$OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS])
+                    WINE_CHECK_SONAME(GLU,gluLookAt,,,[$OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS])
                  fi
                  WINE_NOTICE_WITH(glu,[test "x$ac_cv_lib_soname_GLU" = "x"],
                                  [libGLU development files not found, GLU won't be supported.])
@@ -789,6 +784,9 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
     fi
     WINE_WARNING_WITH(opengl,[test -n "$opengl_msg"],[$opengl_msg
 OpenGL and Direct3D won't be supported.])
+
+    test -n "$opengl_msg" && enable_opengl32=${enable_opengl32:-no}
+    test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
 
     dnl **** Check for NAS ****
     AC_SUBST(NASLIBS,"")
@@ -804,11 +802,13 @@ OpenGL and Direct3D won't be supported.])
                        [-lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
 
     CPPFLAGS="$ac_save_CPPFLAGS"
-    XFILES='$(XFILES)'
 else
     XLIB=""
     X_CFLAGS=""
     X_LIBS=""
+    enable_winex11_drv=${enable_winex11_drv:-no}
+    enable_opengl32=${enable_opengl32:-no}
+    enable_glu32=${enable_glu32:-no}
 fi
 WINE_ERROR_WITH(x,[test "x$XLIB" = "x"],[X development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need to install

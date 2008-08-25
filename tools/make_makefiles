@@ -56,15 +56,6 @@ my %dont_install =
   "winetest" => 1,
 );
 
-# Special dlls that can be switched on or off by configure
-my %special_dlls =
-(
-  "glu32"    => "GLU32FILES",
-  "opengl32" => "OPENGLFILES",
-  "winex11.drv" => "XFILES",
-  "winequartz.drv" => "QUARTZFILES"
-);
-
 # Default patterns for top-level .gitignore
 my @ignores = (
     "*.[oa]",
@@ -377,36 +368,6 @@ sub update_dlls(@)
         }
     }
 
-    # output special dlls configure definitions
-
-    $text .= "# special configure-dependent targets\n\n";
-    my %specials = ();
-    foreach my $mod (sort keys %special_dlls)
-    {
-        $specials{$special_dlls{$mod}} .= " " . $mod;
-    }
-    foreach my $i (sort keys %specials)
-    {
-        $text .= $i . " =" . $specials{$i} . "\n";
-    }
-    $text .= "EXTRADIRS =";
-    foreach my $i (sort keys %specials) { $text .= sprintf " \@%s\@", $i; }
-    $text .= "\n\n";
-
-    # output the subdirs list
-
-    $text .= "# Subdir list\n\n";
-    $text .= "BASEDIRS =";
-    foreach my $dir (sort values %directories)
-    {
-        next if defined($special_dlls{$dir});  # skip special dlls
-        $text .= " \\\n\t" . $dir;
-    }
-
-    $text .= "\n\nBUILDSUBDIRS   = \$(BASEDIRS) \$(EXTRADIRS) \$(TESTSUBDIRS)\n";
-    $text .= "INSTALLSUBDIRS = \$(BASEDIRS) \$(EXTRADIRS) \$(IMPLIBSUBDIRS)\n";
-    $text .= "DOCSUBDIRS     = \$(BASEDIRS) \$(EXTRADIRS)\n";
-
     # output the list of 16-bit files
 
     my @targets16 = ();
@@ -418,7 +379,7 @@ sub update_dlls(@)
             push @targets16, $i . "16";
         }
     }
-    $text .= "\n# 16-bit dlls\n\n";
+    $text .= "# 16-bit dlls\n\n";
     $text .= "WIN16_FILES = \\\n";
     $text .=  "\t" . join( " \\\n\t", sort @targets16 ) . "\n\n";
     $text .= "\@MAKE_RULES\@\n\n";
@@ -526,7 +487,7 @@ sub update_dlls(@)
     $text .= "\n# Misc rules\n";
 
     replace_in_file( "dlls/Makefile.in",
-                     '^# special configure-dependent targets',
+                     '^# 16-bit dlls',
                      '^# Misc rules',
                      $text );
 

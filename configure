@@ -713,11 +713,7 @@ ICOTOOL
 PRELINK
 LIBPTHREAD
 XLIB
-XFILES
-OPENGLFILES
-GLU32FILES
 OPENGL_LIBS
-QUARTZFILES
 DLLEXT
 DLLFLAGS
 LDSHARED
@@ -6851,15 +6847,7 @@ fi
 
 XLIB=""
 
-XFILES=""
-
-OPENGLFILES=""
-
-GLU32FILES=""
-
 OPENGL_LIBS=""
-
-QUARTZFILES=""
 
 
 
@@ -8625,7 +8613,7 @@ fi
     then
         CARBONLIB="-framework Carbon"
 
-        QUARTZFILES='$(QUARTZFILES)'
+        enable_winequartz_drv=${enable_winequartz_drv:-yes}
     fi
     ;;
   *)
@@ -9561,6 +9549,8 @@ test -n "$MINGWAR" || MINGWAR="false"
     fi
     ;;
 esac
+
+enable_winequartz_drv=${enable_winequartz_drv:-no}
 
 if test "$LIBEXT" = "a"; then
   { { echo "$as_me:$LINENO: error: could not find a way to build shared libraries.
@@ -11256,7 +11246,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
        OPENGL_LIBS="-Xlinker -dylib_file -Xlinker /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -lGL"
-	                            OPENGLFILES='$(OPENGLFILES)'
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_OPENGL 1
@@ -11273,7 +11262,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
        OPENGL_LIBS="-lGL"
-                             OPENGLFILES='$(OPENGLFILES)'
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_OPENGL 1
@@ -11358,7 +11346,7 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBGLU "$ac_cv_lib_soname_GLU"
 _ACEOF
 
-       GLU32FILES='$(GLU32FILES)'
+
 fi
 
                  fi
@@ -11396,6 +11384,9 @@ This is an error since --with-opengl was requested." >&2;}
 esac
 fi
 
+
+    test -n "$opengl_msg" && enable_opengl32=${enable_opengl32:-no}
+    test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
 
         NASLIBS=""
 
@@ -11740,11 +11731,13 @@ done
 
 
     CPPFLAGS="$ac_save_CPPFLAGS"
-    XFILES='$(XFILES)'
 else
     XLIB=""
     X_CFLAGS=""
     X_LIBS=""
+    enable_winex11_drv=${enable_winex11_drv:-no}
+    enable_opengl32=${enable_opengl32:-no}
+    enable_glu32=${enable_glu32:-no}
 fi
 if test "x$XLIB" = "x"; then
   case "x$with_x" in
@@ -26751,11 +26744,7 @@ ICOTOOL!$ICOTOOL$ac_delim
 PRELINK!$PRELINK$ac_delim
 LIBPTHREAD!$LIBPTHREAD$ac_delim
 XLIB!$XLIB$ac_delim
-XFILES!$XFILES$ac_delim
-OPENGLFILES!$OPENGLFILES$ac_delim
-GLU32FILES!$GLU32FILES$ac_delim
 OPENGL_LIBS!$OPENGL_LIBS$ac_delim
-QUARTZFILES!$QUARTZFILES$ac_delim
 DLLEXT!$DLLEXT$ac_delim
 DLLFLAGS!$DLLFLAGS$ac_delim
 LDSHARED!$LDSHARED$ac_delim
@@ -26824,7 +26813,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 83; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
