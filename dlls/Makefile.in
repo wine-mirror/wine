@@ -7,6 +7,11 @@ VPATH     = @srcdir@
 
 INSTALLDIRS = $(DESTDIR)$(dlldir)
 
+DLLSUBDIRS    = @ALL_DLL_DIRS@
+IMPLIBSUBDIRS = @ALL_IMPLIB_DIRS@
+TESTSUBDIRS   = @ALL_TEST_DIRS@
+SUBDIRS       = $(DLLSUBDIRS) $(IMPLIBSUBDIRS) $(TESTSUBDIRS)
+
 # special configure-dependent targets
 
 GLU32FILES = glu32
@@ -278,111 +283,6 @@ BASEDIRS = \
 	ws2_32 \
 	wsock32 \
 	wtsapi32
-
-IMPLIBSUBDIRS = \
-	adsiid \
-	dxerr8 \
-	dxerr9 \
-	dxguid \
-	strmiids \
-	uuid \
-	winecrt0
-
-TESTSUBDIRS = \
-	advapi32/tests \
-	advpack/tests \
-	browseui/tests \
-	cabinet/tests \
-	comcat/tests \
-	comctl32/tests \
-	comdlg32/tests \
-	credui/tests \
-	crypt32/tests \
-	cryptnet/tests \
-	d3d8/tests \
-	d3d9/tests \
-	d3drm/tests \
-	d3dx8/tests \
-	d3dx9_36/tests \
-	d3dxof/tests \
-	ddraw/tests \
-	dinput/tests \
-	dnsapi/tests \
-	dplayx/tests \
-	dsound/tests \
-	fusion/tests \
-	gdi32/tests \
-	gdiplus/tests \
-	hlink/tests \
-	imm32/tests \
-	inetcomm/tests \
-	inetmib1/tests \
-	infosoft/tests \
-	iphlpapi/tests \
-	itss/tests \
-	jscript/tests \
-	kernel32/tests \
-	localspl/tests \
-	localui/tests \
-	lz32/tests \
-	mapi32/tests \
-	mlang/tests \
-	msacm32/tests \
-	mscms/tests \
-	mshtml/tests \
-	msi/tests \
-	mstask/tests \
-	msvcrt/tests \
-	msvcrtd/tests \
-	msxml3/tests \
-	netapi32/tests \
-	ntdll/tests \
-	ntdsapi/tests \
-	ntprint/tests \
-	odbccp32/tests \
-	ole32/tests \
-	oleaut32/tests \
-	opengl32/tests \
-	pdh/tests \
-	psapi/tests \
-	qedit/tests \
-	qmgr/tests \
-	quartz/tests \
-	rasapi32/tests \
-	riched20/tests \
-	riched32/tests \
-	rpcrt4/tests \
-	rsaenh/tests \
-	schannel/tests \
-	secur32/tests \
-	serialui/tests \
-	setupapi/tests \
-	shdocvw/tests \
-	shell32/tests \
-	shlwapi/tests \
-	snmpapi/tests \
-	spoolss/tests \
-	urlmon/tests \
-	user32/tests \
-	userenv/tests \
-	usp10/tests \
-	uxtheme/tests \
-	version/tests \
-	winhttp/tests \
-	wininet/tests \
-	winmm/tests \
-	winspool.drv/tests \
-	wintrust/tests \
-	ws2_32/tests
-
-SUBDIRS = \
-	$(BASEDIRS) \
-	$(IMPLIBSUBDIRS) \
-	$(TESTSUBDIRS) \
-	glu32 \
-	opengl32 \
-	winequartz.drv \
-	winex11.drv
 
 BUILDSUBDIRS   = $(BASEDIRS) $(EXTRADIRS) $(TESTSUBDIRS)
 INSTALLSUBDIRS = $(BASEDIRS) $(EXTRADIRS) $(IMPLIBSUBDIRS)

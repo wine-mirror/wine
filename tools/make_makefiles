@@ -278,7 +278,11 @@ sub update_makefiles(@)
     {
         my %make = %{$makefiles{$file}};
         my $rules = $make{"=rules"};
-        push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules])\n";
+        my $args = "";
+        if ($rules eq $makerules{"MAKE_DLL_RULES"}) { $args = ",[dlls],[ALL_DLL_DIRS]"; }
+        elsif ($rules eq $makerules{"MAKE_IMPLIB_RULES"}) { $args = ",[dlls],[ALL_IMPLIB_DIRS]"; }
+        elsif ($rules eq $makerules{"MAKE_TEST_RULES"}) { $args = ",[dlls],[ALL_TEST_DIRS]"; }
+        push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules]$args)\n";
     }
 
     push @lines, "\nAC_OUTPUT\n";
@@ -318,7 +322,7 @@ sub update_ignores(@)
 
 sub update_dlls(@)
 {
-    my (%directories, %testdirs, %importlibs, %static_implibs, %staticlib_dirs, %altnames);
+    my (%directories, %importlibs, %static_implibs, %staticlib_dirs, %altnames);
     my $text = "";
     my @ignores = ();
 
@@ -326,13 +330,7 @@ sub update_dlls(@)
     {
         my %makefile = %{$makefiles{$make}};
         next if defined $makefile{"=skip"};
-
-        if ($make =~ /dlls\/(.*)\/tests\/Makefile/)
-        {
-            $testdirs{$1} = "$1/tests";
-            (my $crosstest = $makefile{"TESTDLL"}) =~ s/\.dll$//;
-            next;
-        }
+        next if ($makefile{"=rules"} eq $makerules{"MAKE_TEST_RULES"});
 
         next unless defined $makefile{"MODULE"};
         my $module = $makefile{"MODULE"};
@@ -404,15 +402,6 @@ sub update_dlls(@)
         next if defined($special_dlls{$dir});  # skip special dlls
         $text .= " \\\n\t" . $dir;
     }
-
-    $text .= "\n\nIMPLIBSUBDIRS = \\\n\t";
-    $text .=  join " \\\n\t", sort values %staticlib_dirs;
-
-    $text .= "\n\nTESTSUBDIRS = \\\n\t";
-    $text .= join " \\\n\t", sort values %testdirs;
-
-    $text .=  "\n\nSUBDIRS = \\\n\t";
-    $text .= join " \\\n\t", "\$(BASEDIRS)", "\$(IMPLIBSUBDIRS)", "\$(TESTSUBDIRS)", sort keys %special_dlls;
 
     $text .= "\n\nBUILDSUBDIRS   = \$(BASEDIRS) \$(EXTRADIRS) \$(TESTSUBDIRS)\n";
     $text .= "INSTALLSUBDIRS = \$(BASEDIRS) \$(EXTRADIRS) \$(IMPLIBSUBDIRS)\n";

@@ -168,12 +168,14 @@ AC_CONFIG_FILES([$1])])
 
 dnl **** Create a makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_MAKEFILE(file,deps)
+dnl Usage: WINE_CONFIG_MAKEFILE(file,deps,prefix,var)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],
-[m4_pushdef([ac_dir],m4_bpatsubst([$1],[/?Makefile$],[]))dnl
+[m4_pushdef([ac_dir],m4_bpatsubst([$1],[^\($3/?\(.*\)/\)?Makefile$],[\2]))dnl
 m4_ifval(ac_dir,[ALL_MAKEFILES="$ALL_MAKEFILES \\
 	$1"])
+m4_ifval([$4],[$4="$[$4] \\
+	ac_dir"])
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 [$1: ]m4_ifval([$2],[$1.in $2],[$1.in])"
 AC_CONFIG_FILES([$1])dnl
