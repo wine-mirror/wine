@@ -281,6 +281,7 @@ sub update_makefiles(@)
             $args .= ",ALL_PROGRAM_BIN_INSTALL_DIRS" if $bin_install{$name};
             $args .= "]";
         }
+        elsif ($file =~ /^[^\/]*\/Makefile$/) { $args = ",[],[ALL_TOP_DIRS]"; }
         push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules]$args)\n";
     }
 

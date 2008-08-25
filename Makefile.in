@@ -27,8 +27,6 @@ LIBEXT    = @LIBEXT@
 MODULE    = none
 PROGRAMS  = wine
 
-FONTSSUBDIRS = @FONTSSUBDIRS@
-
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
 	dlls \
@@ -42,15 +40,7 @@ SUBDIRS = \
 	tools
 
 # Sub-directories to run make install/uninstall into
-INSTALLSUBDIRS = \
-	$(FONTSSUBDIRS) \
-	dlls \
-	include \
-	libs \
-	loader \
-	programs \
-	server \
-	tools
+INSTALLSUBDIRS = @ALL_TOP_DIRS@
 
 # Sub-directories to run make test into
 TESTSUBDIRS = dlls

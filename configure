@@ -753,7 +753,6 @@ LCMSLIBS
 ft_devel
 FREETYPELIBS
 FREETYPEINCL
-FONTSSUBDIRS
 ESDCONFIG
 ESDINCL
 ESDLIBS
@@ -775,6 +774,7 @@ DEPENDENCIES
 ALL_MAKERULES
 ALL_MAKEFILES
 ALL_MAKEFILE_DEPENDS
+ALL_TOP_DIRS
 ALL_DLL_DIRS
 ALL_IMPLIB_DIRS
 ALL_TEST_DIRS
@@ -14163,8 +14163,6 @@ _ACEOF
 
             FREETYPEINCL="$ac_freetype_incl"
 
-            FONTSSUBDIRS="fonts"
-
 	fi
     fi
 fi
@@ -14181,6 +14179,7 @@ Use the --without-freetype option if you really want this." >&2;}
 esac
 fi
 
+test "x$FREETYPELIBS" = "x" && enable_fonts=${enable_fonts:-no}
 
 { echo "$as_me:$LINENO: checking for parport header/ppdev.h" >&5
 echo $ECHO_N "checking for parport header/ppdev.h... $ECHO_C" >&6; }
@@ -22173,6 +22172,8 @@ ALL_MAKEFILES=""
 ALL_MAKEFILE_DEPENDS="# Makefile dependencies"
 
 
+ALL_TOP_DIRS=""
+
 ALL_DLL_DIRS=""
 
 ALL_IMPLIB_DIRS=""
@@ -22249,7 +22250,8 @@ ac_config_files="$ac_config_files Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/Makefile"
-
+test "x$enable_dlls" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	dlls"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/Makefile: dlls/Makefile.in Make.rules"
 ac_config_files="$ac_config_files dlls/Makefile"
@@ -25104,28 +25106,32 @@ ac_config_files="$ac_config_files dlls/wtsapi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	documentation/Makefile"
-
+test "x$enable_documentation" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	documentation"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 documentation/Makefile: documentation/Makefile.in Make.rules"
 ac_config_files="$ac_config_files documentation/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	fonts/Makefile"
-
+test "x$enable_fonts" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	fonts"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 fonts/Makefile: fonts/Makefile.in Make.rules"
 ac_config_files="$ac_config_files fonts/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	include/Makefile"
-
+test "x$enable_include" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	include"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 include/Makefile: include/Makefile.in Make.rules"
 ac_config_files="$ac_config_files include/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	libs/Makefile"
-
+test "x$enable_libs" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	libs"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 libs/Makefile: libs/Makefile.in Make.rules"
 ac_config_files="$ac_config_files libs/Makefile"
@@ -25153,14 +25159,16 @@ ac_config_files="$ac_config_files libs/wpp/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	loader/Makefile"
-
+test "x$enable_loader" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	loader"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 loader/Makefile: loader/Makefile.in Make.rules"
 ac_config_files="$ac_config_files loader/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/Makefile"
-
+test "x$enable_programs" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	programs"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 programs/Makefile: programs/Makefile.in Make.rules"
 ac_config_files="$ac_config_files programs/Makefile"
@@ -25583,14 +25591,16 @@ ac_config_files="$ac_config_files programs/xcopy/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	server/Makefile"
-
+test "x$enable_server" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	server"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 server/Makefile: server/Makefile.in Make.rules"
 ac_config_files="$ac_config_files server/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	tools/Makefile"
-
+test "x$enable_tools" != xno && ALL_TOP_DIRS="$ALL_TOP_DIRS \\
+	tools"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 tools/Makefile: tools/Makefile.in Make.rules"
 ac_config_files="$ac_config_files tools/Makefile"
@@ -26894,7 +26904,6 @@ LCMSLIBS!$LCMSLIBS$ac_delim
 ft_devel!$ft_devel$ac_delim
 FREETYPELIBS!$FREETYPELIBS$ac_delim
 FREETYPEINCL!$FREETYPEINCL$ac_delim
-FONTSSUBDIRS!$FONTSSUBDIRS$ac_delim
 ESDCONFIG!$ESDCONFIG$ac_delim
 ESDINCL!$ESDINCL$ac_delim
 ESDLIBS!$ESDLIBS$ac_delim
@@ -26916,6 +26925,7 @@ DEPENDENCIES!$DEPENDENCIES$ac_delim
 ALL_MAKERULES!$ALL_MAKERULES$ac_delim
 ALL_MAKEFILES!$ALL_MAKEFILES$ac_delim
 ALL_MAKEFILE_DEPENDS!$ALL_MAKEFILE_DEPENDS$ac_delim
+ALL_TOP_DIRS!$ALL_TOP_DIRS$ac_delim
 ALL_DLL_DIRS!$ALL_DLL_DIRS$ac_delim
 ALL_IMPLIB_DIRS!$ALL_IMPLIB_DIRS$ac_delim
 ALL_TEST_DIRS!$ALL_TEST_DIRS$ac_delim

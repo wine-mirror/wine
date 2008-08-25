@@ -1020,12 +1020,12 @@ then
 	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
             AC_SUBST(FREETYPELIBS,"$ac_freetype_libs")
             AC_SUBST(FREETYPEINCL,"$ac_freetype_incl")
-            AC_SUBST(FONTSSUBDIRS,"fonts")
 	fi
     fi
 fi
 WINE_ERROR_WITH(freetype,[test "x$FREETYPELIBS" = "x"],[FreeType development files not found.
 Fonts will not be built. Dialog text may be invisible or unaligned.])
+test "x$FREETYPELIBS" = "x" && enable_fonts=${enable_fonts:-no}
 
 dnl **** Check for parport (currently Linux only) ****
 AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,
@@ -1675,6 +1675,7 @@ AC_SUBST(ALL_MAKERULES,"")
 AC_SUBST(ALL_MAKEFILES,"")
 AC_SUBST(ALL_MAKEFILE_DEPENDS,["# Makefile dependencies"])
 
+AC_SUBST(ALL_TOP_DIRS,"")
 AC_SUBST(ALL_DLL_DIRS,"")
 AC_SUBST(ALL_IMPLIB_DIRS,"")
 AC_SUBST(ALL_TEST_DIRS,"")
@@ -1700,7 +1701,7 @@ WINE_CONFIG_MAKERULES([dlls/Maketest.rules],[MAKE_TEST_RULES],[Make.rules])
 WINE_CONFIG_MAKERULES([programs/Makeprog.rules],[MAKE_PROG_RULES],[Make.rules])
 
 WINE_CONFIG_MAKEFILE([Makefile],[Make.rules])
-WINE_CONFIG_MAKEFILE([dlls/Makefile],[Make.rules])
+WINE_CONFIG_MAKEFILE([dlls/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/acledit/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/activeds/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/actxprxy/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
@@ -2057,15 +2058,15 @@ WINE_CONFIG_MAKEFILE([dlls/ws2_32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL
 WINE_CONFIG_MAKEFILE([dlls/ws2_32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wsock32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wtsapi32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
-WINE_CONFIG_MAKEFILE([documentation/Makefile],[Make.rules])
-WINE_CONFIG_MAKEFILE([fonts/Makefile],[Make.rules])
-WINE_CONFIG_MAKEFILE([include/Makefile],[Make.rules])
-WINE_CONFIG_MAKEFILE([libs/Makefile],[Make.rules])
+WINE_CONFIG_MAKEFILE([documentation/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
+WINE_CONFIG_MAKEFILE([fonts/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
+WINE_CONFIG_MAKEFILE([include/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
+WINE_CONFIG_MAKEFILE([libs/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
 WINE_CONFIG_MAKEFILE([libs/port/Makefile],[Make.rules])
 WINE_CONFIG_MAKEFILE([libs/wine/Makefile],[Make.rules])
 WINE_CONFIG_MAKEFILE([libs/wpp/Makefile],[Make.rules])
-WINE_CONFIG_MAKEFILE([loader/Makefile],[Make.rules])
-WINE_CONFIG_MAKEFILE([programs/Makefile],[Make.rules])
+WINE_CONFIG_MAKEFILE([loader/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
+WINE_CONFIG_MAKEFILE([programs/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
 WINE_CONFIG_MAKEFILE([programs/clock/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/cmd/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/cmdlgtst/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS])
@@ -2111,8 +2112,8 @@ WINE_CONFIG_MAKEFILE([programs/winver/Makefile],[programs/Makeprog.rules],[progr
 WINE_CONFIG_MAKEFILE([programs/wordpad/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/write/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
 WINE_CONFIG_MAKEFILE([programs/xcopy/Makefile],[programs/Makeprog.rules],[programs],[ALL_PROGRAM_DIRS,ALL_PROGRAM_INSTALL_DIRS])
-WINE_CONFIG_MAKEFILE([server/Makefile],[Make.rules])
-WINE_CONFIG_MAKEFILE([tools/Makefile],[Make.rules])
+WINE_CONFIG_MAKEFILE([server/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
+WINE_CONFIG_MAKEFILE([tools/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
 WINE_CONFIG_MAKEFILE([tools/widl/Makefile],[Make.rules])
 WINE_CONFIG_MAKEFILE([tools/winebuild/Makefile],[Make.rules])
 WINE_CONFIG_MAKEFILE([tools/winedump/Makefile],[Make.rules])
