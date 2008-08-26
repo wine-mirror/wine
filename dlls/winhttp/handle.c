@@ -26,7 +26,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winnls.h"
 #include "winhttp.h"
 
 #include "winhttp_private.h"
