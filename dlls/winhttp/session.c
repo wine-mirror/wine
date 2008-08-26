@@ -177,7 +177,10 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     list_add_head( &session->hdr.children, &connect->hdr.entry );
 
     if (server && !(connect->hostname = strdupW( server ))) goto end;
-    connect->hostport = port;
+    connect->hostport = port ? port : (connect->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
+
+    if (server && !(connect->servername = strdupW( server ))) goto end;
+    connect->serverport = port ? port : (connect->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
 
     if (!(hconnect = alloc_handle( &connect->hdr ))) goto end;
     connect->hdr.handle = hconnect;
@@ -267,6 +270,8 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     addref_object( &connect->hdr );
     request->connect = connect;
     list_add_head( &connect->hdr.children, &request->hdr.entry );
+
+    if (!netconn_init( &request->netconn )) goto end;
 
     if (!verb) verb = get;
     if (!object) object = slash;

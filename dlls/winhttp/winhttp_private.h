@@ -123,6 +123,7 @@ BOOL free_handle( HINTERNET );
 
 void set_last_error( DWORD );
 void send_callback( object_header_t *, DWORD, LPVOID, DWORD );
+void close_connection( request_t * );
 
 BOOL netconn_close( netconn_t * );
 BOOL netconn_connect( netconn_t *, const struct sockaddr *, unsigned int );
@@ -167,6 +168,18 @@ static inline WCHAR *strdupW( const WCHAR *src )
     if (!src) return NULL;
     dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) );
     if (dst) strcpyW( dst, src );
+    return dst;
+}
+
+static inline WCHAR *strdupAW( const char *src )
+{
+    WCHAR *dst = NULL;
+    if (src)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
+        if ((dst = heap_alloc( len * sizeof(WCHAR) )))
+            MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
+    }
     return dst;
 }
 

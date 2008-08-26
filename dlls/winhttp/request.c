@@ -21,6 +21,9 @@
 #include "wine/debug.h"
 
 #include <stdarg.h>
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -650,6 +653,145 @@ BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, 
     }
 
     ret = query_headers( request, level, name, buffer, buflen, index );
+
+    release_object( &request->hdr );
+    return ret;
+}
+
+static BOOL open_connection( request_t *request )
+{
+    connect_t *connect;
+    char address[32];
+    WCHAR *addressW;
+
+    if (netconn_connected( &request->netconn )) return TRUE;
+
+    connect = request->connect;
+    if (!netconn_resolve( connect->servername, connect->serverport, &connect->sockaddr )) return FALSE;
+
+    inet_ntop( connect->sockaddr.sin_family, &connect->sockaddr.sin_addr, address, sizeof(address) );
+    TRACE("connecting to %s:%u\n", address, ntohs(connect->sockaddr.sin_port));
+    addressW = strdupAW( address );
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
+
+    if (!netconn_create( &request->netconn, connect->sockaddr.sin_family, SOCK_STREAM, 0 ))
+    {
+        heap_free( addressW );
+        return FALSE;
+    }
+    if (!netconn_connect( &request->netconn, (struct sockaddr *)&connect->sockaddr, sizeof(struct sockaddr_in) ))
+    {
+        netconn_close( &request->netconn );
+        heap_free( addressW );
+        return FALSE;
+    }
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, 0 );
+
+    heap_free( addressW );
+    return TRUE;
+}
+
+void close_connection( request_t *request )
+{
+    if (!netconn_connected( &request->netconn )) return;
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0, 0 );
+    netconn_close( &request->netconn );
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 0 );
+}
+
+static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len, LPVOID optional,
+                          DWORD optional_len, DWORD total_len, DWORD_PTR context )
+{
+    static const WCHAR keep_alive[] = {'K','e','e','p','-','A','l','i','v','e',0};
+    static const WCHAR no_cache[]   = {'n','o','-','c','a','c','h','e',0};
+    static const WCHAR length_fmt[] = {'%','l','d',0};
+
+    BOOL ret = FALSE;
+    connect_t *connect = request->connect;
+    session_t *session = connect->session;
+    WCHAR *req = NULL;
+    char *req_ascii;
+    int bytes_sent;
+    DWORD len;
+
+    if (session->agent)
+        process_header( request, attr_user_agent, session->agent, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+
+    if (connect->hostname)
+        process_header( request, attr_host, connect->hostname, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+
+    if (optional_len)
+    {
+        WCHAR length[21]; /* decimal long int + null */
+        sprintfW( length, length_fmt, optional_len );
+        process_header( request, attr_content_length, length, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+    }
+    if (!(request->hdr.flags & WINHTTP_DISABLE_KEEP_ALIVE))
+    {
+        process_header( request, attr_connection, keep_alive, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+    }
+    if (request->hdr.flags & WINHTTP_FLAG_REFRESH)
+    {
+        process_header( request, attr_pragma, no_cache, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        process_header( request, attr_cache_control, no_cache, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+    }
+    if (headers && !add_request_headers( request, headers, headers_len, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE ))
+    {
+        TRACE("failed to add request headers\n");
+        return FALSE;
+    }
+
+    if (!(ret = open_connection( request ))) goto end;
+    if (!(req = build_request_string( request, request->verb, request->path, request->version ))) goto end;
+
+    if (!(req_ascii = strdupWA( req ))) goto end;
+    TRACE("full request: %s\n", debugstr_a(req_ascii));
+    len = strlen(req_ascii);
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST, NULL, 0 );
+
+    ret = netconn_send( &request->netconn, req_ascii, len, 0, &bytes_sent );
+    heap_free( req_ascii );
+    if (!ret) goto end;
+
+    if (optional_len && !netconn_send( &request->netconn, optional, optional_len, 0, &bytes_sent )) goto end;
+    len += optional_len;
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_SENT, &len, sizeof(DWORD) );
+
+end:
+    heap_free( req );
+    return ret;
+}
+
+/***********************************************************************
+ *          WinHttpSendRequest (winhttp.@)
+ */
+BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD headers_len,
+                                LPVOID optional, DWORD optional_len, DWORD total_len, DWORD_PTR context )
+{
+    BOOL ret;
+    request_t *request;
+
+    TRACE("%p, %s, 0x%x, %u, %u, %lx\n",
+          hrequest, debugstr_w(headers), headers_len, optional_len, total_len, context);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    ret = send_request( request, headers, headers_len, optional, optional_len, total_len, context );
 
     release_object( &request->hdr );
     return ret;

@@ -84,19 +84,6 @@ HRESULT WINAPI DllUnregisterServer(void)
 }
 
 /***********************************************************************
- *          WinHttpSendRequest (winhttp.@)
- */
-BOOL WINAPI WinHttpSendRequest (HINTERNET hRequest, LPCWSTR pwszHeaders, DWORD dwHeadersLength,
-                                LPVOID lpOptional, DWORD dwOptionalLength, DWORD dwTotalLength,
-                                DWORD_PTR dwContext)
-{
-    FIXME("(%s, %d, %d, %d): stub\n", debugstr_w(pwszHeaders), dwHeadersLength, dwOptionalLength, dwTotalLength);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
-/***********************************************************************
  *          WinHttpQueryOption (winhttp.@)
  */
 BOOL WINAPI WinHttpQueryOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, LPDWORD lpdwBufferLength)

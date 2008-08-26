@@ -59,7 +59,7 @@ static void test_OpenRequest (void)
     ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
 
     ret = WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, NULL, 0, 0, 0);
-    todo_wine ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
+    ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
 
@@ -111,7 +111,7 @@ static void test_SendRequest (void)
     ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
 
     ret = WinHttpSendRequest(request, content_type, header_len, post_data, optional_len, total_len, 0);
-    todo_wine ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
+    ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
 
     for (i = 3; post_data[i]; i++)
     {

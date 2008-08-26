@@ -77,6 +77,8 @@ void release_object( object_header_t *hdr )
     TRACE("object %p refcount = %d\n", hdr, refs);
     if (!refs)
     {
+        if (hdr->type == WINHTTP_HANDLE_TYPE_REQUEST) close_connection( (request_t *)hdr );
+
         send_callback( hdr, WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, &hdr->handle, sizeof(HINTERNET) );
 
         TRACE("destroying object %p\n", hdr);
