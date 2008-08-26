@@ -188,6 +188,14 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             indent++;
             print_client("_Handle = NDRCContextBinding(%s%s);\n", is_ch_ptr ? "*" : "", context_handle_var->name);
             indent--;
+            if (is_attr(context_handle_var->attrs, ATTR_IN) &&
+                !is_attr(context_handle_var->attrs, ATTR_OUT))
+            {
+                print_client("else\n");
+                indent++;
+                print_client("RpcRaiseException(RPC_X_SS_IN_NULL_CONTEXT);\n");
+                indent--;
+            }
             fprintf(client, "\n");
         }
         else if (implicit_handle)

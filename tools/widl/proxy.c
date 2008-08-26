@@ -199,6 +199,11 @@ int cant_be_null(const var_t *v)
   const attr_list_t *attrs = v->attrs;
   const type_t *type = v->type;
 
+  /* context handles have their own checking so they can be null for the
+   * purposes of null ref pointer checking */
+  if (is_aliaschain_attr(type, ATTR_CONTEXTHANDLE))
+      return 0;
+
   if (! attrs && type)
   {
     attrs = type->attrs;
