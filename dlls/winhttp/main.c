@@ -106,18 +106,6 @@ BOOL WINAPI WinHttpSetOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuff
 }
 
 /***********************************************************************
- *          WinHttpReadData (winhttp.@)
- */
-BOOL WINAPI WinHttpReadData (HINTERNET hInternet, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead,
-                             LPDWORD lpdwNumberOfBytesRead)
-{
-    FIXME("(%d): stub\n", dwNumberOfBytesToRead);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
-/***********************************************************************
  *          WinHttpWriteData (winhttp.@)
  */
 BOOL WINAPI WinHttpWriteData (HINTERNET hRequest, LPCVOID lpBuffer,

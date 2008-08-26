@@ -976,3 +976,136 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
     release_object( &request->hdr );
     return ret;
 }
+
+static BOOL read_data( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
+{
+    DWORD to_read;
+    int bytes_read;
+
+    to_read = min( size, request->content_length - request->content_read );
+    if (!netconn_recv( &request->netconn, buffer, to_read, async ? 0 : MSG_WAITALL, &bytes_read ))
+    {
+        if (bytes_read != to_read)
+        {
+            ERR("not all data received %d/%d\n", bytes_read, to_read);
+        }
+        /* always return success, even if the network layer returns an error */
+        *read = 0;
+        return TRUE;
+    }
+    request->content_read += bytes_read;
+    *read = bytes_read;
+    return TRUE;
+}
+
+static DWORD get_chunk_size( const char *buffer )
+{
+    const char *p;
+    DWORD size = 0;
+
+    for (p = buffer; *p; p++)
+    {
+        if (*p >= '0' && *p <= '9') size = size * 16 + *p - '0';
+        else if (*p >= 'a' && *p <= 'f') size = size * 16 + *p - 'a' + 10;
+        else if (*p >= 'A' && *p <= 'F') size = size * 16 + *p - 'A' + 10;
+        else if (*p == ';') break;
+    }
+    return size;
+}
+
+static BOOL read_data_chunked( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
+{
+    char reply[MAX_REPLY_LEN], *p = buffer;
+    DWORD buflen, to_read, to_write = size;
+    int bytes_read;
+
+    *read = 0;
+    for (;;)
+    {
+        if (*read == size) break;
+
+        if (request->content_length == ~0UL) /* new chunk */
+        {
+            buflen = sizeof(reply);
+            if (!netconn_get_next_line( &request->netconn, reply, &buflen )) break;
+
+            if (!(request->content_length = get_chunk_size( reply )))
+            {
+                /* zero sized chunk marks end of transfer; read any trailing headers and return */
+                receive_response( request, FALSE );
+                break;
+            }
+        }
+        to_read = min( to_write, request->content_length - request->content_read );
+
+        if (!netconn_recv( &request->netconn, p, to_read, async ? 0 : MSG_WAITALL, &bytes_read ))
+        {
+            if (bytes_read != to_read)
+            {
+                ERR("Not all data received %d/%d\n", bytes_read, to_read);
+            }
+            /* always return success, even if the network layer returns an error */
+            *read = 0;
+            break;
+        }
+        if (!bytes_read) break;
+
+        request->content_read += bytes_read;
+        to_write -= bytes_read;
+        *read += bytes_read;
+        p += bytes_read;
+
+        if (request->content_read == request->content_length) /* chunk complete */
+        {
+            request->content_read = 0;
+            request->content_length = ~0UL;
+
+            buflen = sizeof(reply);
+            if (!netconn_get_next_line( &request->netconn, reply, &buflen ))
+            {
+                ERR("Malformed chunk\n");
+                *read = 0;
+                break;
+            }
+        }
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *          WinHttpReadData (winhttp.@)
+ */
+BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, LPDWORD read )
+{
+    static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
+
+    BOOL ret;
+    request_t *request;
+    WCHAR encoding[20];
+    DWORD buflen = sizeof(encoding);
+
+    TRACE("%p, %p, %d, %p\n", hrequest, buffer, to_read, read);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
+        !strcmpiW( encoding, chunked ))
+    {
+        ret = read_data_chunked( request, buffer, to_read, read, request->hdr.flags & WINHTTP_FLAG_ASYNC );
+    }
+    else
+        ret = read_data( request, buffer, to_read, read, request->hdr.flags & WINHTTP_FLAG_ASYNC );
+
+    release_object( &request->hdr );
+    return ret;
+}

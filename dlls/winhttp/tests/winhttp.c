@@ -126,12 +126,10 @@ static void test_SendRequest (void)
 
     bytes_rw = -1;
     ret = WinHttpReadData(request, buffer, sizeof(buffer) - 1, &bytes_rw);
-    todo_wine ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());
+    ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());
 
-    todo_wine ok(bytes_rw == strlen(test_post), "Read %u bytes instead of %d.\n",
-        bytes_rw, lstrlen(test_post));
-    todo_wine ok(strncmp(buffer, test_post, bytes_rw) == 0,
-        "Data read did not match, got '%s'.\n", buffer);
+    ok(bytes_rw == strlen(test_post), "Read %u bytes instead of %d.\n", bytes_rw, lstrlen(test_post));
+    ok(strncmp(buffer, test_post, bytes_rw) == 0, "Data read did not match, got '%s'.\n", buffer);
 
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
