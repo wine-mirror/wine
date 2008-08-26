@@ -14,7 +14,7 @@
 @ stdcall WinHttpGetProxyForUrl(ptr wstr ptr ptr)
 @ stdcall WinHttpOpen(wstr long wstr wstr long)
 @ stdcall WinHttpOpenRequest(ptr wstr wstr wstr wstr ptr long)
-@ stub WinHttpQueryAuthSchemes
+@ stdcall WinHttpQueryAuthSchemes(ptr ptr ptr ptr)
 @ stdcall WinHttpQueryDataAvailable(ptr ptr)
 @ stdcall WinHttpQueryHeaders(ptr long wstr ptr ptr ptr)
 @ stdcall WinHttpQueryOption(ptr long ptr ptr)

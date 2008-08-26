@@ -1136,3 +1136,99 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
     release_object( &request->hdr );
     return ret;
 }
+
+#define ARRAYSIZE(array) (sizeof(array) / sizeof((array)[0]))
+
+static DWORD auth_scheme_from_header( WCHAR *header )
+{
+    static const WCHAR basic[]     = {'B','a','s','i','c'};
+    static const WCHAR ntlm[]      = {'N','T','L','M'};
+    static const WCHAR passport[]  = {'P','a','s','s','p','o','r','t'};
+    static const WCHAR digest[]    = {'D','i','g','e','s','t'};
+    static const WCHAR negotiate[] = {'N','e','g','o','t','i','a','t','e'};
+
+    if (!strncmpiW( header, basic, ARRAYSIZE(basic) ) &&
+        (header[ARRAYSIZE(basic)] == ' ' || !header[ARRAYSIZE(basic)])) return WINHTTP_AUTH_SCHEME_BASIC;
+
+    if (!strncmpiW( header, ntlm, ARRAYSIZE(ntlm) ) &&
+        (header[ARRAYSIZE(ntlm)] == ' ' || !header[ARRAYSIZE(ntlm)])) return WINHTTP_AUTH_SCHEME_NTLM;
+
+    if (!strncmpiW( header, passport, ARRAYSIZE(passport) ) &&
+        (header[ARRAYSIZE(passport)] == ' ' || !header[ARRAYSIZE(passport)])) return WINHTTP_AUTH_SCHEME_PASSPORT;
+
+    if (!strncmpiW( header, digest, ARRAYSIZE(digest) ) &&
+        (header[ARRAYSIZE(digest)] == ' ' || !header[ARRAYSIZE(digest)])) return WINHTTP_AUTH_SCHEME_DIGEST;
+
+    if (!strncmpiW( header, negotiate, ARRAYSIZE(negotiate) ) &&
+        (header[ARRAYSIZE(negotiate)] == ' ' || !header[ARRAYSIZE(negotiate)])) return WINHTTP_AUTH_SCHEME_NEGOTIATE;
+
+    return 0;
+}
+
+static BOOL query_auth_schemes( request_t *request, DWORD level, LPDWORD supported, LPDWORD first )
+{
+    DWORD index = 0;
+    BOOL ret = FALSE;
+
+    for (;;)
+    {
+        WCHAR *buffer;
+        DWORD size, scheme;
+
+        size = 0;
+        query_headers( request, level, NULL, NULL, &size, &index );
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) break;
+
+        index--;
+        if (!(buffer = heap_alloc( size ))) return FALSE;
+        if (!query_headers( request, level, NULL, buffer, &size, &index ))
+        {
+            heap_free( buffer );
+            return FALSE;
+        }
+        scheme = auth_scheme_from_header( buffer );
+        if (index == 1) *first = scheme;
+        *supported |= scheme;
+
+        heap_free( buffer );
+        ret = TRUE;
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *          WinHttpQueryAuthSchemes (winhttp.@)
+ */
+BOOL WINAPI WinHttpQueryAuthSchemes( HINTERNET hrequest, LPDWORD supported, LPDWORD first, LPDWORD target )
+{
+    BOOL ret = FALSE;
+    request_t *request;
+
+    TRACE("%p, %p, %p, %p\n", hrequest, supported, first, target);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    if (query_auth_schemes( request, WINHTTP_QUERY_WWW_AUTHENTICATE, supported, first ))
+    {
+        *target = WINHTTP_AUTH_TARGET_SERVER;
+        ret = TRUE;
+    }
+    else if (query_auth_schemes( request, WINHTTP_QUERY_PROXY_AUTHENTICATE, supported, first ))
+    {
+        *target = WINHTTP_AUTH_TARGET_PROXY;
+        ret = TRUE;
+    }
+
+    release_object( &request->hdr );
+    return ret;
+}
