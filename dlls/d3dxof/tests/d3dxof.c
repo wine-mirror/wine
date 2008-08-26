@@ -23,6 +23,9 @@
 #include "wine/test.h"
 #include "dxfile.h"
 
+static HMODULE hd3dxof;
+static HRESULT (WINAPI *pDirectXFileCreate)(LPDIRECTXFILE*);
+
 char template[] =
 "xof 0302txt 0064\n"
 "template Header\n"
@@ -32,6 +35,14 @@ char template[] =
 "WORD minor ;\n"
 "DWORD flags ;\n"
 "}\n";
+
+static void init_function_pointers(void)
+{
+    /* We have to use LoadLibrary as no d3dxof functions are referenced directly */
+    hd3dxof = LoadLibraryA("d3dxof.dll");
+
+    pDirectXFileCreate = (void *)GetProcAddress(hd3dxof, "DirectXFileCreate");
+}
 
 static unsigned long getRefcount(IUnknown *iface)
 {
@@ -44,11 +55,18 @@ static void test_d3dxof(void)
     HRESULT hr;
     unsigned long ref;
     LPDIRECTXFILE lpDirectXFile = NULL;
-    hr = DirectXFileCreate(&lpDirectXFile);
+
+    if (!pDirectXFileCreate)
+    {
+        win_skip("DirectXFileCreate is not available\n");
+        return;
+    }
+
+    hr = pDirectXFileCreate(&lpDirectXFile);
     ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
     if(!lpDirectXFile)
     {
-        trace("Couldn't create DirectXFile interface, skipping tests\n");
+        skip("Couldn't create DirectXFile interface\n");
         return;
     }
 
@@ -71,5 +89,9 @@ static void test_d3dxof(void)
 
 START_TEST(d3dxof)
 {
+    init_function_pointers();
+
     test_d3dxof();
+
+    FreeLibrary(hd3dxof);
 }
