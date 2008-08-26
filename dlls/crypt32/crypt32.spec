@@ -185,7 +185,7 @@
 @ stub CryptUnregisterOIDInfo
 @ stdcall CryptVerifyCertificateSignature(long long ptr long ptr)
 @ stdcall CryptVerifyCertificateSignatureEx(long long long ptr long ptr long ptr)
-@ stub CryptVerifyDetachedMessageHash
+@ stdcall CryptVerifyDetachedMessageHash(ptr ptr long long ptr ptr ptr ptr)
 @ stub CryptVerifyDetachedMessageSignature
 @ stub CryptVerifyMessageHash
 @ stdcall CryptVerifyMessageSignature(ptr long ptr long ptr ptr ptr)
