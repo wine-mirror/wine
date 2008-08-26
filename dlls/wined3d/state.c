@@ -3105,7 +3105,7 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext
 }
 
 static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    DWORD texUnit = state - STATE_TRANSFORM(WINED3DTS_TEXTURE0);
+    DWORD texUnit = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[texUnit];
     BOOL generated;
     int coordIdx;
@@ -3375,7 +3375,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
     /* Update the texture matrix */
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage))) {
-        transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage), stateblock, context);
+        transform_texture(STATE_TEXTURESTAGE(stage, WINED3DTSS_TEXTURETRANSFORMFLAGS), stateblock, context);
     }
 
     if(!isStateDirty(context, STATE_VDECL) && context->namedArraysLoaded) {
@@ -3448,7 +3448,7 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
         if(texIsPow2 || context->lastWasPow2Texture[sampler]) {
             context->lastWasPow2Texture[sampler] = texIsPow2;
-            transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock, context);
+            transform_texture(STATE_TEXTURESTAGE(stateblock->wineD3DDevice->texUnitMap[sampler], WINED3DTSS_TEXTURETRANSFORMFLAGS), stateblock, context);
         }
     }
 }
@@ -4624,7 +4624,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         int i;
         for(i = 0; i < MAX_TEXTURES; i++) {
             if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + i))) {
-                transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + i), stateblock, context);
+                transform_texture(STATE_TEXTURESTAGE(i, WINED3DTSS_TEXTURETRANSFORMFLAGS), stateblock, context);
             }
         }
     }
@@ -5053,14 +5053,14 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
       /* Transform states follow                    */
     { STATE_TRANSFORM(WINED3DTS_VIEW),                    { STATE_TRANSFORM(WINED3DTS_VIEW),                    transform_view      }, 0                               },
     { STATE_TRANSFORM(WINED3DTS_PROJECTION),              { STATE_TRANSFORM(WINED3DTS_PROJECTION),              transform_projection}, 0                               },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE0),                { STATE_TRANSFORM(WINED3DTS_TEXTURE0),                transform_texture   }, 0                               },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE1),                { STATE_TRANSFORM(WINED3DTS_TEXTURE1),                transform_texture   }, 0                               },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE2),                { STATE_TRANSFORM(WINED3DTS_TEXTURE2),                transform_texture   }, 0                               },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE3),                { STATE_TRANSFORM(WINED3DTS_TEXTURE3),                transform_texture   }, 0                               },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE4),                { STATE_TRANSFORM(WINED3DTS_TEXTURE4),                transform_texture   }, 0                               },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE5),                { STATE_TRANSFORM(WINED3DTS_TEXTURE5),                transform_texture   }, 0                               },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE6),                { STATE_TRANSFORM(WINED3DTS_TEXTURE6),                transform_texture   }, 0                               },
-    { STATE_TRANSFORM(WINED3DTS_TEXTURE7),                { STATE_TRANSFORM(WINED3DTS_TEXTURE7),                transform_texture   }, 0                               },
+    { STATE_TRANSFORM(WINED3DTS_TEXTURE0),                { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),  transform_texture   }, 0                               },
+    { STATE_TRANSFORM(WINED3DTS_TEXTURE1),                { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),  transform_texture   }, 0                               },
+    { STATE_TRANSFORM(WINED3DTS_TEXTURE2),                { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),  transform_texture   }, 0                               },
+    { STATE_TRANSFORM(WINED3DTS_TEXTURE3),                { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),  transform_texture   }, 0                               },
+    { STATE_TRANSFORM(WINED3DTS_TEXTURE4),                { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),  transform_texture   }, 0                               },
+    { STATE_TRANSFORM(WINED3DTS_TEXTURE5),                { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),  transform_texture   }, 0                               },
+    { STATE_TRANSFORM(WINED3DTS_TEXTURE6),                { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),  transform_texture   }, 0                               },
+    { STATE_TRANSFORM(WINED3DTS_TEXTURE7),                { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),  transform_texture   }, 0                               },
     { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  0)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  0)),        transform_world     }, 0                               },
     { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  1)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  1)),        transform_world     }, 0                               },
     { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  2)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(  2)),        transform_world     }, 0                               },
@@ -5317,14 +5317,14 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(253)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(253)),        transform_world     }, 0                               },
     { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(254)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(254)),        transform_world     }, 0                               },
     { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)),        { STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)),        transform_world     }, 0                               },
-    { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TRANSFORM(WINED3DTS_TEXTURE0),              transform_texture   }, 0                               },
-    { STATE_TEXTURESTAGE(1,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TRANSFORM(WINED3DTS_TEXTURE1),              transform_texture   }, 0                               },
-    { STATE_TEXTURESTAGE(2,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TRANSFORM(WINED3DTS_TEXTURE2),              transform_texture   }, 0                               },
-    { STATE_TEXTURESTAGE(3,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TRANSFORM(WINED3DTS_TEXTURE3),              transform_texture   }, 0                               },
-    { STATE_TEXTURESTAGE(4,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TRANSFORM(WINED3DTS_TEXTURE4),              transform_texture   }, 0                               },
-    { STATE_TEXTURESTAGE(5,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TRANSFORM(WINED3DTS_TEXTURE5),              transform_texture   }, 0                               },
-    { STATE_TEXTURESTAGE(6,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TRANSFORM(WINED3DTS_TEXTURE6),              transform_texture   }, 0                               },
-    { STATE_TEXTURESTAGE(7,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TRANSFORM(WINED3DTS_TEXTURE7),              transform_texture   }, 0                               },
+    { STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),transform_texture   }, 0                               },
+    { STATE_TEXTURESTAGE(1,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(1,WINED3DTSS_TEXTURETRANSFORMFLAGS),transform_texture   }, 0                               },
+    { STATE_TEXTURESTAGE(2,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(2,WINED3DTSS_TEXTURETRANSFORMFLAGS),transform_texture   }, 0                               },
+    { STATE_TEXTURESTAGE(3,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(3,WINED3DTSS_TEXTURETRANSFORMFLAGS),transform_texture   }, 0                               },
+    { STATE_TEXTURESTAGE(4,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(4,WINED3DTSS_TEXTURETRANSFORMFLAGS),transform_texture   }, 0                               },
+    { STATE_TEXTURESTAGE(5,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(5,WINED3DTSS_TEXTURETRANSFORMFLAGS),transform_texture   }, 0                               },
+    { STATE_TEXTURESTAGE(6,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(6,WINED3DTSS_TEXTURETRANSFORMFLAGS),transform_texture   }, 0                               },
+    { STATE_TEXTURESTAGE(7,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(7,WINED3DTSS_TEXTURETRANSFORMFLAGS),transform_texture   }, 0                               },
     { STATE_TEXTURESTAGE(0, WINED3DTSS_TEXCOORDINDEX),    { STATE_TEXTURESTAGE(0, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      }, 0                               },
     { STATE_TEXTURESTAGE(1, WINED3DTSS_TEXCOORDINDEX),    { STATE_TEXTURESTAGE(1, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      }, 0                               },
     { STATE_TEXTURESTAGE(2, WINED3DTSS_TEXCOORDINDEX),    { STATE_TEXTURESTAGE(2, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      }, 0                               },
