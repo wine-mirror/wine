@@ -1085,6 +1085,19 @@ static void test_pipes(const char* selfname)
     ok(fclose(file) == 0, "unable to close the pipe: %d\n", errno);
 }
 
+static void test_unlink(void)
+{
+    FILE* file;
+    ok(mkdir("test_unlink") == 0, "unable to create test dir\n");
+    file = fopen("test_unlink\\empty", "w");
+    ok(file != NULL, "unable to create test file\n");
+    if(file)
+      fclose(file);
+    todo_wine ok(_unlink("test_unlink") != 0, "unlinking a non-empty directory must fail\n");
+    unlink("test_unlink\\empty");
+    rmdir("test_unlink");
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -1109,6 +1122,7 @@ START_TEST(file)
     test_file_write_read();
     test_chsize();
     test_stat();
+    test_unlink();
 
     /* testing stream I/O */
     test_fdopen();
