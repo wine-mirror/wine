@@ -218,7 +218,8 @@ BOOL X11DRV_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPA
             RECT monrect = monitors[i].rcMonitor;
             OffsetRect( &monrect, -origin.x, -origin.y );
             if (IntersectRect( &monrect, &monrect, &limit ))
-                if (!proc( index_to_monitor(i), hdc, &monrect, lp )) break;
+                if (!proc( index_to_monitor(i), hdc, &monrect, lp ))
+                    return FALSE;
         }
     }
     else
@@ -227,7 +228,8 @@ BOOL X11DRV_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPA
         {
             RECT unused;
             if (!rect || IntersectRect( &unused, &monitors[i].rcMonitor, rect ))
-                if (!proc( index_to_monitor(i), 0, &monitors[i].rcMonitor, lp )) break;
+                if (!proc( index_to_monitor(i), 0, &monitors[i].rcMonitor, lp ))
+                    return FALSE;
         }
     }
     return TRUE;

@@ -2,6 +2,7 @@
  * Unit tests for monitor APIs
  *
  * Copyright 2005 Huw Davies
+ * Copyright 2008 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,7 +62,7 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc,
     mi.cbSize = sizeof(mi);
 
     ok(pGetMonitorInfoA(hmon, (MONITORINFO*)&mi), "GetMonitorInfo failed\n");
-    if(mi.dwFlags == MONITORINFOF_PRIMARY)
+    if (mi.dwFlags & MONITORINFOF_PRIMARY)
         strcpy(primary, mi.szDevice);
 
     return TRUE;
@@ -73,9 +74,15 @@ static void test_enumdisplaydevices(void)
     char primary_device_name[32];
     char primary_monitor_device_name[32];
     DWORD primary_num = -1, num = 0;
+    BOOL ret;
+
+    if (!pEnumDisplayDevicesA)
+    {
+        skip("EnumDisplayDevicesA is not available\n");
+        return;
+    }
 
     dd.cb = sizeof(dd);
-    if(pEnumDisplayDevicesA == NULL) return;
     while(1)
     {
         BOOL ret;
@@ -99,14 +106,18 @@ static void test_enumdisplaydevices(void)
     }
     ok(primary_num != -1, "Didn't get the primary device\n");
 
-    if(pEnumDisplayMonitors && pGetMonitorInfoA) {
-        ok(pEnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)primary_monitor_device_name),
-           "EnumDisplayMonitors failed\n");
-
-        ok(!strcmp(primary_monitor_device_name, primary_device_name),
-           "monitor device name %s, device name %s\n", primary_monitor_device_name,
-           primary_device_name);
+    if (!pEnumDisplayMonitors || !pGetMonitorInfoA)
+    {
+        skip("EnumDisplayMonitors or GetMonitorInfoA are not available\n");
+        return;
     }
+
+    primary_monitor_device_name[0] = 0;
+    ret = pEnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)primary_monitor_device_name);
+    ok(ret, "EnumDisplayMonitors failed\n");
+    ok(!strcmp(primary_monitor_device_name, primary_device_name),
+       "monitor device name %s, device name %s\n", primary_monitor_device_name,
+       primary_device_name);
 }
 
 struct vid_mode
@@ -267,6 +278,12 @@ static void test_monitors(void)
     HMONITOR monitor, primary;
     POINT pt;
 
+    if (!pMonitorFromPoint || !pMonitorFromWindow)
+    {
+        skip("MonitorFromPoint or MonitorFromWindow are not available\n");
+        return;
+    }
+
     pt.x = pt.y = 0;
     primary = pMonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY );
     ok( primary != 0, "couldn't get primary monitor\n" );
@@ -279,15 +296,96 @@ static void test_monitors(void)
     ok( monitor == primary, "got %p, should get primary %p for MONITOR_DEFAULTTONEAREST\n", monitor, primary );
 }
 
+static BOOL CALLBACK find_primary_mon(HMONITOR hmon, HDC hdc, LPRECT rc, LPARAM lp)
+{
+    MONITORINFO mi;
+    BOOL ret;
+
+    mi.cbSize = sizeof(mi);
+    ret = pGetMonitorInfoA(hmon, &mi);
+    ok(ret, "GetMonitorInfo failed\n");
+    if (mi.dwFlags & MONITORINFOF_PRIMARY)
+    {
+        *(HMONITOR *)lp = hmon;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static void test_work_area(void)
+{
+    HMONITOR hmon;
+    MONITORINFO mi;
+    RECT rc_work, rc_normal;
+    HWND hwnd;
+    WINDOWPLACEMENT wp;
+    BOOL ret;
+
+    if (!pEnumDisplayMonitors || !pGetMonitorInfoA)
+    {
+        skip("EnumDisplayMonitors or GetMonitorInfoA are not available\n");
+        return;
+    }
+
+    hmon = 0;
+    ret = pEnumDisplayMonitors(NULL, NULL, find_primary_mon, (LPARAM)&hmon);
+    ok(!ret && hmon != 0, "Failed to find primary monitor\n");
+
+    mi.cbSize = sizeof(mi);
+    SetLastError(0xdeadbeef);
+    ret = pGetMonitorInfoA(hmon, &mi);
+    ok(ret, "GetMonitorInfo error %u\n", GetLastError());
+    ok(mi.dwFlags & MONITORINFOF_PRIMARY, "not a primary monitor\n");
+    trace("primary monitor (%d,%d-%d,%d)\n",
+        mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
+
+    SetLastError(0xdeadbeef);
+    ret = SystemParametersInfo(SPI_GETWORKAREA, 0, &rc_work, 0);
+    ok(ret, "SystemParametersInfo error %u\n", GetLastError());
+    trace("work area (%d,%d-%d,%d)\n", rc_work.left, rc_work.top, rc_work.right, rc_work.bottom);
+    ok(EqualRect(&rc_work, &mi.rcWork), "work area is different\n");
+
+    hwnd = CreateWindowEx(0, "static", NULL, WS_OVERLAPPEDWINDOW|WS_VISIBLE,100,100,10,10,0,0,0,NULL);
+    ok(hwnd != 0, "CreateWindowEx failed\n");
+
+    ret = GetWindowRect(hwnd, &rc_normal);
+    ok(ret, "GetWindowRect failed\n");
+    trace("normal (%d,%d-%d,%d)\n", rc_normal.left, rc_normal.top, rc_normal.right, rc_normal.bottom);
+
+    wp.length = sizeof(wp);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "GetWindowPlacement failed\n");
+    trace("min: %d,%d max %d,%d normal %d,%d-%d,%d\n",
+          wp.ptMinPosition.x, wp.ptMinPosition.y,
+          wp.ptMaxPosition.x, wp.ptMaxPosition.y,
+          wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+          wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
+    OffsetRect(&rc_normal, -rc_work.left, -rc_work.top);
+    if (!EqualRect(&mi.rcMonitor, &mi.rcWork)) /* FIXME: remove once Wine is fixed */
+        todo_wine ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
+    else
+        ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
+
+    SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
+
+    wp.length = sizeof(wp);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "GetWindowPlacement failed\n");
+    trace("min: %d,%d max %d,%d normal %d,%d-%d,%d\n",
+          wp.ptMinPosition.x, wp.ptMinPosition.y,
+          wp.ptMaxPosition.x, wp.ptMaxPosition.y,
+          wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+          wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
+    ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
+
+    DestroyWindow(hwnd);
+}
 
 START_TEST(monitor)
 {
     init_function_pointers();
     test_enumdisplaydevices();
     test_ChangeDisplaySettingsEx();
-
-    if (pMonitorFromPoint && pMonitorFromWindow)
-        test_monitors();
-    else
-        skip("MonitorFromPoint and/or MonitorFromWindow are not available\n");
+    test_monitors();
+    test_work_area();
 }
