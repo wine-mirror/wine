@@ -41,6 +41,7 @@ static HMODULE hshell32;
 static int (WINAPI *pSHCreateDirectoryExA)(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
 static int (WINAPI *pSHCreateDirectoryExW)(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
 static int (WINAPI *pSHFileOperationW)(LPSHFILEOPSTRUCTW);
+static DWORD_PTR (WINAPI *pSHGetFileInfoW)(LPCWSTR, DWORD , SHFILEINFOW*, UINT, UINT);
 static int (WINAPI *pSHPathPrepareForWriteA)(HWND, IUnknown*, LPCSTR, DWORD);
 static int (WINAPI *pSHPathPrepareForWriteW)(HWND, IUnknown*, LPCWSTR, DWORD);
 
@@ -50,6 +51,7 @@ static void InitFunctionPointers(void)
     pSHCreateDirectoryExA = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExA");
     pSHCreateDirectoryExW = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExW");
     pSHFileOperationW = (void*)GetProcAddress(hshell32, "SHFileOperationW");
+    pSHGetFileInfoW = (void*)GetProcAddress(hshell32, "SHGetFileInfoW");
     pSHPathPrepareForWriteA = (void*)GetProcAddress(hshell32, "SHPathPrepareForWriteA");
     pSHPathPrepareForWriteW = (void*)GetProcAddress(hshell32, "SHPathPrepareForWriteW");
 }
@@ -168,15 +170,20 @@ static void test_get_file_info(void)
     ok(shfi.iIcon == 0xcfcfcfcf, "SHGetFileInfoA('' | 0) should not clear iIcon\n");
     ok(shfi.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoA('' | 0) should not clear dwAttributes\n");
 
-    /* Test whether fields of SHFILEINFOW are always cleared */
-    memset(&shfiw, 0xcf, sizeof(shfiw));
-    rc=SHGetFileInfoW(NULL, 0, &shfiw, sizeof(shfiw), 0);
-    todo_wine ok(!rc, "SHGetFileInfoW(NULL | 0) should fail\n");
-    ok(shfiw.hIcon == (HANDLE) 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear hIcon\n");
-    todo_wine ok(shfiw.szDisplayName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szDisplayName[0]\n");
-    todo_wine ok(shfiw.szTypeName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szTypeName[0]\n");
-    todo_wine ok(shfiw.iIcon == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear iIcon\n");
-    ok(shfiw.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear dwAttributes\n");
+    if (pSHGetFileInfoW)
+    {
+        /* Test whether fields of SHFILEINFOW are always cleared */
+        memset(&shfiw, 0xcf, sizeof(shfiw));
+        rc=pSHGetFileInfoW(NULL, 0, &shfiw, sizeof(shfiw), 0);
+        todo_wine ok(!rc, "SHGetFileInfoW(NULL | 0) should fail\n");
+        ok(shfiw.hIcon == (HANDLE) 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear hIcon\n");
+        todo_wine ok(shfiw.szDisplayName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szDisplayName[0]\n");
+        todo_wine ok(shfiw.szTypeName[0] == 0xcfcf, "SHGetFileInfoW(NULL | 0) should not clear szTypeName[0]\n");
+        todo_wine ok(shfiw.iIcon == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear iIcon\n");
+        ok(shfiw.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(NULL | 0) should not clear dwAttributes\n");
+    }
+    else
+        win_skip("SHGetFileInfoW is not available\n");
 
 
     /* Test some flag combinations that MSDN claims are not allowed,
@@ -284,8 +291,14 @@ static void test_get_file_info_iconlist(void)
     ok(shInfoa.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoA(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should not change dwAttributes\n");
     CloseHandle(hSysImageList);
 
+    if (!pSHGetFileInfoW)
+    {
+        win_skip("SHGetFileInfoW is not available\n");
+        ILFree(pidList);
+    }
+
     memset(&shInfow, 0xcf, sizeof(shInfow));
-    hSysImageList = (HIMAGELIST) SHGetFileInfoW((const WCHAR *)pidList, 0,
+    hSysImageList = (HIMAGELIST) pSHGetFileInfoW((const WCHAR *)pidList, 0,
             &shInfow, sizeof(shInfow),
 	    SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_PIDL);
     ok(hSysImageList != INVALID_HANDLE_VALUE, "Can't get handle for CSIDL_DESKTOP imagelist\n");
