@@ -634,8 +634,8 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
     if (!connection->useSSL)
     {
         struct pollfd pfd;
-	BOOL bSuccess = FALSE;
 	DWORD nRecv = 0;
+        int ret;
 
         pfd.fd = connection->socketFD;
         pfd.events = POLLIN;
@@ -644,16 +644,18 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	{
 	    if (poll(&pfd,1, RESPONSE_TIMEOUT * 1000) > 0)
 	    {
-		if (recv(connection->socketFD, &lpszBuffer[nRecv], 1, 0) <= 0)
+		if ((ret = recv(connection->socketFD, &lpszBuffer[nRecv], 1, 0)) <= 0)
 		{
-		    INTERNET_SetLastError(sock_get_error(errno));
-		    goto lend;
+		    if (ret == -1) INTERNET_SetLastError(sock_get_error(errno));
+                    break;
 		}
 
 		if (lpszBuffer[nRecv] == '\n')
 		{
-		    bSuccess = TRUE;
-		    break;
+                    lpszBuffer[nRecv++] = '\0';
+                    *dwBuffer = nRecv;
+                    TRACE(":%u %s\n", nRecv, lpszBuffer);
+                    return TRUE;
 		}
 		if (lpszBuffer[nRecv] != '\r')
 		    nRecv++;
@@ -661,21 +663,8 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	    else
 	    {
 		INTERNET_SetLastError(ERROR_INTERNET_TIMEOUT);
-		goto lend;
+                break;
 	    }
-	}
-
-    lend:             /* FIXME: don't use labels */
-	if (bSuccess)
-	{
-	    lpszBuffer[nRecv++] = '\0';
-	    *dwBuffer = nRecv;
-	    TRACE(":%u %s\n", nRecv, lpszBuffer);
-            return TRUE;
-	}
-	else
-	{
-	    return FALSE;
 	}
     }
     else
@@ -714,11 +703,9 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 	    TRACE("_SSL:%u %s\n", nRecv, lpszBuffer);
             return TRUE;
 	}
-        return FALSE;
-#else
-	return FALSE;
 #endif
     }
+    return FALSE;
 }
 
 
