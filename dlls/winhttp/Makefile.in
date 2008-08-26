@@ -9,6 +9,7 @@ IMPORTS   = wininet kernel32
 C_SRCS = \
 	handle.c \
 	main.c \
+	net.c \
 	request.c \
 	session.c
 

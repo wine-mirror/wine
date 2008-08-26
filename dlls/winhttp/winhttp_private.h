@@ -124,6 +124,17 @@ BOOL free_handle( HINTERNET );
 void set_last_error( DWORD );
 void send_callback( object_header_t *, DWORD, LPVOID, DWORD );
 
+BOOL netconn_close( netconn_t * );
+BOOL netconn_connect( netconn_t *, const struct sockaddr *, unsigned int );
+BOOL netconn_connected( netconn_t * );
+BOOL netconn_create( netconn_t *, int, int, int );
+BOOL netconn_get_next_line( netconn_t *, char *, DWORD * );
+BOOL netconn_init( netconn_t * );
+BOOL netconn_query_data_available( netconn_t *, DWORD * );
+BOOL netconn_recv( netconn_t *, void *, size_t, int, int * );
+BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_in * );
+BOOL netconn_send( netconn_t *, const void *, size_t, int, int * );
+
 static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
@@ -156,6 +167,18 @@ static inline WCHAR *strdupW( const WCHAR *src )
     if (!src) return NULL;
     dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) );
     if (dst) strcpyW( dst, src );
+    return dst;
+}
+
+static inline char *strdupWA( const WCHAR *src )
+{
+    char *dst = NULL;
+    if (src)
+    {
+        int len = WideCharToMultiByte( CP_ACP, 0, src, -1, NULL, 0, NULL, NULL );
+        if ((dst = heap_alloc( len )))
+            WideCharToMultiByte( CP_ACP, 0, src, -1, dst, len, NULL, NULL );
+    }
     return dst;
 }
 
