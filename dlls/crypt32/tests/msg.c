@@ -1900,7 +1900,7 @@ static void test_signed_msg_get_param(void)
     if (!ret && GetLastError() == NTE_EXISTS)
         ret = pCryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
          PROV_RSA_FULL, 0);
-    ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
+    ok(ret, "CryptAcquireContextA failed: %x\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
      CMSG_CRYPT_RELEASE_CONTEXT_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
@@ -1935,12 +1935,12 @@ static void test_signed_msg_get_param(void)
     signer.SignerId.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
     signer.SignerId.KeyId.cbData = sizeof(serialNum);
     signer.SignerId.KeyId.pbData = (BYTE *)serialNum;
-    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+    ret = pCryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
      PROV_RSA_FULL, CRYPT_NEWKEYSET);
     if (!ret && GetLastError() == NTE_EXISTS)
-        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
+        ret = pCryptAcquireContextA(&signer.hCryptProv, cspNameA, NULL,
          PROV_RSA_FULL, 0);
-    ok(ret, "CryptAcquireContextW failed: %x\n", GetLastError());
+    ok(ret, "CryptAcquireContextA failed: %x\n", GetLastError());
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING,
      CMSG_CRYPT_RELEASE_CONTEXT_FLAG, CMSG_SIGNED, &signInfo, NULL, NULL);
     ok(msg != NULL, "CryptMsgOpenToEncode failed: %x\n", GetLastError());
@@ -2791,6 +2791,8 @@ static BOOL detect_nt(void)
     CMSG_SIGNER_ENCODE_INFO signer = { sizeof(signer), 0 };
     CERT_INFO certInfo = { 0 };
 
+    if (!pCryptAcquireContextW)
+        return FALSE;
 
     certInfo.SerialNumber.cbData = sizeof(serialNum);
     certInfo.SerialNumber.pbData = serialNum;
