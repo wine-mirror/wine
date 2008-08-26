@@ -48,15 +48,9 @@ LRESULT process_dochost_task(DocHost *This, LPARAM lparam)
 
 static void navigate_complete(DocHost *This)
 {
-    IDispatch *disp = NULL;
     DISPPARAMS dispparams;
     VARIANTARG params[2];
     VARIANT url;
-    HRESULT hres;
-
-    hres = IUnknown_QueryInterface(This->document, &IID_IDispatch, (void**)&disp);
-    if(FAILED(hres))
-        FIXME("Could not get IDispatch interface\n");
 
     dispparams.cArgs = 2;
     dispparams.cNamedArgs = 0;
@@ -67,7 +61,7 @@ static void navigate_complete(DocHost *This)
     V_BYREF(params) = &url;
 
     V_VT(params+1) = VT_DISPATCH;
-    V_DISPATCH(params+1) = disp;
+    V_DISPATCH(params+1) = This->disp;
 
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = SysAllocString(This->url);
@@ -76,8 +70,6 @@ static void navigate_complete(DocHost *This)
     call_sink(This->cps.wbe2, DISPID_DOCUMENTCOMPLETE, &dispparams);
 
     SysFreeString(V_BSTR(&url));
-    if(disp)
-        IDispatch_Release(disp);
     This->busy = VARIANT_FALSE;
 }
 
