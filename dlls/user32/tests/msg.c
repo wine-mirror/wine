@@ -1584,6 +1584,7 @@ static int after_end_dialog, test_def_id;
 static int sequence_cnt, sequence_size;
 static struct message* sequence;
 static int log_all_parent_messages;
+static int paint_loop_done;
 
 /* user32 functions */
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
@@ -7039,6 +7040,31 @@ static LRESULT WINAPI ShowWindowProcA(HWND hwnd, UINT message, WPARAM wParam, LP
     return ret;
 }
 
+LRESULT WINAPI PaintLoopProcA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+        case WM_CREATE: return 0;
+        case WM_PAINT:
+        {
+            MSG msg2;
+            static int i = 0;
+
+            i++;
+            if (PeekMessageA(&msg2, 0, 0, 0, 1))
+            {
+                TranslateMessage(&msg2);
+                DispatchMessage(&msg2);
+            }
+            i--;
+            if ( i == 0)
+                paint_loop_done = 1;
+            return DefWindowProcA(hWnd,msg,wParam,lParam);
+        }
+    }
+    return DefWindowProcA(hWnd,msg,wParam,lParam);
+}
+
 static BOOL RegisterWindowClasses(void)
 {
     WNDCLASSA cls;
@@ -7070,6 +7096,10 @@ static BOOL RegisterWindowClasses(void)
 
     cls.lpfnWndProc = DefWindowProcA;
     cls.lpszClassName = "SimpleWindowClass";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = PaintLoopProcA;
+    cls.lpszClassName = "PaintLoopWindowClass";
     if(!RegisterClassA(&cls)) return FALSE;
 
     cls.style = CS_NOCLOSE;
@@ -11033,6 +11063,31 @@ static void test_menu_messages(void)
     DestroyMenu(hmenu);
 }
 
+
+static void test_paintingloop(void)
+{
+    HWND hwnd;
+
+    paint_loop_done = 0;
+    hwnd = CreateWindowExA(0x0,"PaintLoopWindowClass",
+                               "PaintLoopWindowClass",WS_OVERLAPPEDWINDOW,
+                                100, 100, 100, 100, 0, 0, 0, NULL );
+    ok(hwnd != 0, "PaintLoop window error %u\n", GetLastError());
+    ShowWindow(hwnd,SW_NORMAL);
+    SetFocus(hwnd);
+
+    while (!paint_loop_done)
+    {
+        MSG msg;
+        if (PeekMessageA(&msg, 0, 0, 0, 1))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+    DestroyWindow(hwnd);
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -11116,6 +11171,7 @@ START_TEST(msg)
     test_nullCallback();
     test_dbcs_wm_char();
     test_menu_messages();
+    test_paintingloop();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
      */
