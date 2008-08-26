@@ -43,6 +43,12 @@ static BOOL first_connection_to_test_url = TRUE;
 #define SET_EXPECT(status) \
     SET_EXPECT2(status, 1)
 
+#define SET_OPTIONAL2(status, num) \
+    optional[status] = num
+
+#define SET_OPTIONAL(status) \
+    SET_OPTIONAL2(status, 1)
+
 /* SET_WINE_ALLOW's should be used with an appropriate
  * todo_wine CHECK_NOTIFIED at a later point in the code */
 #define SET_WINE_ALLOW2(status, num) \
@@ -53,7 +59,7 @@ static BOOL first_connection_to_test_url = TRUE;
 
 #define CHECK_EXPECT(status) \
     do { \
-        if (!expect[status] && wine_allow[status]) \
+        if (!expect[status] && !optional[status] && wine_allow[status]) \
         { \
             todo_wine ok(expect[status], "unexpected status %d (%s)\n", status, \
                          status < MAX_INTERNET_STATUS && status_string[status][0] != 0 ? \
@@ -62,10 +68,11 @@ static BOOL first_connection_to_test_url = TRUE;
         } \
         else \
         { \
-            ok(expect[status], "unexpected status %d (%s)\n", status,   \
+            ok(expect[status] || optional[status], "unexpected status %d (%s)\n", status,   \
                status < MAX_INTERNET_STATUS && status_string[status][0] != 0 ? \
                status_string[status] : "unknown");                      \
-            expect[status]--;                                           \
+            if (expect[status]) expect[status]--; \
+            else optional[status]--; \
         } \
         notified[status]++; \
     }while(0)
@@ -73,7 +80,7 @@ static BOOL first_connection_to_test_url = TRUE;
 /* CLEAR_NOTIFIED used in cases when notification behavior
  * differs between Windows versions */
 #define CLEAR_NOTIFIED(status) \
-    expect[status] = wine_allow[status] = notified[status] = 0;
+    expect[status] = optional[status] = wine_allow[status] = notified[status] = 0;
 
 #define CHECK_NOTIFIED2(status, num) \
     do { \
@@ -91,8 +98,8 @@ static BOOL first_connection_to_test_url = TRUE;
 
 #define MAX_INTERNET_STATUS (INTERNET_STATUS_COOKIE_HISTORY+1)
 #define MAX_STATUS_NAME 50
-static int expect[MAX_INTERNET_STATUS], wine_allow[MAX_INTERNET_STATUS],
-    notified[MAX_INTERNET_STATUS];
+static int expect[MAX_INTERNET_STATUS], optional[MAX_INTERNET_STATUS],
+    wine_allow[MAX_INTERNET_STATUS], notified[MAX_INTERNET_STATUS];
 static CHAR status_string[MAX_INTERNET_STATUS][MAX_STATUS_NAME];
 
 static HANDLE hCompleteEvent;
@@ -301,11 +308,13 @@ static void InternetReadFile_test(int flags)
     {
         SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
         SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
+        SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
+        SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
     }
     else
     {
-        SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
-        SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
+        SET_WINE_ALLOW2(INTERNET_STATUS_RESOLVING_NAME,2);
+        SET_WINE_ALLOW2(INTERNET_STATUS_NAME_RESOLVED,2);
     }
     SET_WINE_ALLOW(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -315,7 +324,11 @@ static void InternetReadFile_test(int flags)
     SET_EXPECT2(INTERNET_STATUS_REQUEST_SENT, 2);
     SET_EXPECT2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
     SET_EXPECT2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
+    SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTION_CLOSED);
     SET_EXPECT(INTERNET_STATUS_REDIRECT);
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER);
     if (flags & INTERNET_FLAG_ASYNC)
         SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
     else
@@ -335,12 +348,12 @@ static void InternetReadFile_test(int flags)
     if (flags & INTERNET_FLAG_ASYNC)
         WaitForSingleObject(hCompleteEvent, INFINITE);
 
-    if (first_connection_to_test_url)
+    todo_wine if (first_connection_to_test_url)
     {
         CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
         CHECK_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
     }
-    else todo_wine
+    else
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
@@ -464,7 +477,7 @@ abort:
           Sleep(100);
     }
     CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
-    if (hor != 0x0) todo_wine
+    if (hor != 0x0 && (flags & INTERNET_FLAG_ASYNC)) todo_wine
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
@@ -537,11 +550,13 @@ static void InternetReadFileExA_test(int flags)
     {
         SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
         SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
+        SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
+        SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
     }
     else
     {
-        SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
-        SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
+        SET_WINE_ALLOW2(INTERNET_STATUS_RESOLVING_NAME,2);
+        SET_WINE_ALLOW2(INTERNET_STATUS_NAME_RESOLVED,2);
     }
     SET_WINE_ALLOW(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -551,6 +566,8 @@ static void InternetReadFileExA_test(int flags)
     SET_EXPECT2(INTERNET_STATUS_REQUEST_SENT, 2);
     SET_EXPECT2(INTERNET_STATUS_RECEIVING_RESPONSE, 2);
     SET_EXPECT2(INTERNET_STATUS_RESPONSE_RECEIVED, 2);
+    SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTION_CLOSED);
     SET_EXPECT(INTERNET_STATUS_REDIRECT);
     if (flags & INTERNET_FLAG_ASYNC)
         SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
@@ -618,8 +635,11 @@ static void InternetReadFileExA_test(int flags)
     inetbuffers.dwOffsetLow = 5678;
     SET_WINE_ALLOW(INTERNET_STATUS_RECEIVING_RESPONSE);
     SET_WINE_ALLOW(INTERNET_STATUS_RESPONSE_RECEIVED);
+    SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
     rc = InternetReadFileEx(hor, &inetbuffers, 0, 0xdeadcafe);
     ok(rc, "InternetReadFileEx failed with error %u\n", GetLastError());
+        trace("read %i bytes\n", inetbuffers.dwBufferLength);
     todo_wine
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
@@ -697,7 +717,7 @@ static void InternetReadFileExA_test(int flags)
 
         length += inetbuffers.dwBufferLength;
     }
-    ok(length > 0, "failed to read any of the document\n");
+    todo_wine ok(length > 0, "failed to read any of the document\n");
     trace("Finished. Read %d bytes\n", length);
 
     /* WinXP does not send, but Win98 does */
@@ -725,16 +745,8 @@ abort:
           Sleep(100);
       CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     }
-    if (hor != 0x0) todo_wine
-    {
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
-    }
-    else
-    {
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
-    }
+    CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CloseHandle(hCompleteEvent);
     first_connection_to_test_url = FALSE;
 }
@@ -2095,6 +2107,7 @@ static void test_open_url_async(void)
 static void init_status_tests(void)
 {
     memset(expect, 0, sizeof(expect));
+    memset(optional, 0, sizeof(optional));
     memset(wine_allow, 0, sizeof(wine_allow));
     memset(notified, 0, sizeof(notified));
     memset(status_string, 0, sizeof(status_string));
