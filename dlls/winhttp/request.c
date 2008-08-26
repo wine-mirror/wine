@@ -31,6 +31,142 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
+static const WCHAR attr_accept[] = {'A','c','c','e','p','t',0};
+static const WCHAR attr_accept_charset[] = {'A','c','c','e','p','t','-','C','h','a','r','s','e','t', 0};
+static const WCHAR attr_accept_encoding[] = {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',0};
+static const WCHAR attr_accept_language[] = {'A','c','c','e','p','t','-','L','a','n','g','u','a','g','e',0};
+static const WCHAR attr_accept_ranges[] = {'A','c','c','e','p','t','-','R','a','n','g','e','s',0};
+static const WCHAR attr_age[] = {'A','g','e',0};
+static const WCHAR attr_allow[] = {'A','l','l','o','w',0};
+static const WCHAR attr_authorization[] = {'A','u','t','h','o','r','i','z','a','t','i','o','n',0};
+static const WCHAR attr_cache_control[] = {'C','a','c','h','e','-','C','o','n','t','r','o','l',0};
+static const WCHAR attr_connection[] = {'C','o','n','n','e','c','t','i','o','n',0};
+static const WCHAR attr_content_base[] = {'C','o','n','t','e','n','t','-','B','a','s','e',0};
+static const WCHAR attr_content_encoding[] = {'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g',0};
+static const WCHAR attr_content_id[] = {'C','o','n','t','e','n','t','-','I','D',0};
+static const WCHAR attr_content_language[] = {'C','o','n','t','e','n','t','-','L','a','n','g','u','a','g','e',0};
+static const WCHAR attr_content_length[] = {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0};
+static const WCHAR attr_content_location[] = {'C','o','n','t','e','n','t','-','L','o','c','a','t','i','o','n',0};
+static const WCHAR attr_content_md5[] = {'C','o','n','t','e','n','t','-','M','D','5',0};
+static const WCHAR attr_content_range[] = {'C','o','n','t','e','n','t','-','R','a','n','g','e',0};
+static const WCHAR attr_content_transfer_encoding[] = {'C','o','n','t','e','n','t','-','T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0};
+static const WCHAR attr_content_type[] = {'C','o','n','t','e','n','t','-','T','y','p','e',0};
+static const WCHAR attr_cookie[] = {'C','o','o','k','i','e',0};
+static const WCHAR attr_date[] = {'D','a','t','e',0};
+static const WCHAR attr_from[] = {'F','r','o','m',0};
+static const WCHAR attr_etag[] = {'E','T','a','g',0};
+static const WCHAR attr_expect[] = {'E','x','p','e','c','t',0};
+static const WCHAR attr_expires[] = {'E','x','p','i','r','e','s',0};
+static const WCHAR attr_host[] = {'H','o','s','t',0};
+static const WCHAR attr_if_match[] = {'I','f','-','M','a','t','c','h',0};
+static const WCHAR attr_if_modified_since[] = {'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0};
+static const WCHAR attr_if_none_match[] = {'I','f','-','N','o','n','e','-','M','a','t','c','h',0};
+static const WCHAR attr_if_range[] = {'I','f','-','R','a','n','g','e',0};
+static const WCHAR attr_if_unmodified_since[] = {'I','f','-','U','n','m','o','d','i','f','i','e','d','-','S','i','n','c','e',0};
+static const WCHAR attr_last_modified[] = {'L','a','s','t','-','M','o','d','i','f','i','e','d',0};
+static const WCHAR attr_location[] = {'L','o','c','a','t','i','o','n',0};
+static const WCHAR attr_max_forwards[] = {'M','a','x','-','F','o','r','w','a','r','d','s',0};
+static const WCHAR attr_mime_version[] = {'M','i','m','e','-','V','e','r','s','i','o','n',0};
+static const WCHAR attr_pragma[] = {'P','r','a','g','m','a',0};
+static const WCHAR attr_proxy_authenticate[] = {'P','r','o','x','y','-','A','u','t','h','e','n','t','i','c','a','t','e',0};
+static const WCHAR attr_proxy_authorization[] = {'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0};
+static const WCHAR attr_proxy_connection[] = {'P','r','o','x','y','-','C','o','n','n','e','c','t','i','o','n',0};
+static const WCHAR attr_public[] = {'P','u','b','l','i','c',0};
+static const WCHAR attr_range[] = {'R','a','n','g','e',0};
+static const WCHAR attr_referer[] = {'R','e','f','e','r','e','r',0};
+static const WCHAR attr_retry_after[] = {'R','e','t','r','y','-','A','f','t','e','r',0};
+static const WCHAR attr_server[] = {'S','e','r','v','e','r',0};
+static const WCHAR attr_set_cookie[] = {'S','e','t','-','C','o','o','k','i','e',0};
+static const WCHAR attr_status[] = {'S','t','a','t','u','s',0};
+static const WCHAR attr_transfer_encoding[] = {'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0};
+static const WCHAR attr_unless_modified_since[] = {'U','n','l','e','s','s','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0};
+static const WCHAR attr_upgrade[] = {'U','p','g','r','a','d','e',0};
+static const WCHAR attr_uri[] = {'U','R','I',0};
+static const WCHAR attr_user_agent[] = {'U','s','e','r','-','A','g','e','n','t',0};
+static const WCHAR attr_vary[] = {'V','a','r','y',0};
+static const WCHAR attr_via[] = {'V','i','a',0};
+static const WCHAR attr_warning[] = {'W','a','r','n','i','n','g',0};
+static const WCHAR attr_www_authenticate[] = {'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0};
+
+static const WCHAR *attribute_table[] =
+{
+    attr_mime_version,              /* WINHTTP_QUERY_MIME_VERSION               = 0  */
+    attr_content_type,              /* WINHTTP_QUERY_CONTENT_TYPE               = 1  */
+    attr_content_transfer_encoding, /* WINHTTP_QUERY_CONTENT_TRANSFER_ENCODING  = 2  */
+    attr_content_id,                /* WINHTTP_QUERY_CONTENT_ID                 = 3  */
+    NULL,                           /* WINHTTP_QUERY_CONTENT_DESCRIPTION        = 4  */
+    attr_content_length,            /* WINHTTP_QUERY_CONTENT_LENGTH             = 5  */
+    attr_content_language,          /* WINHTTP_QUERY_CONTENT_LANGUAGE           = 6  */
+    attr_allow,                     /* WINHTTP_QUERY_ALLOW                      = 7  */
+    attr_public,                    /* WINHTTP_QUERY_PUBLIC                     = 8  */
+    attr_date,                      /* WINHTTP_QUERY_DATE                       = 9  */
+    attr_expires,                   /* WINHTTP_QUERY_EXPIRES                    = 10 */
+    attr_last_modified,             /* WINHTTP_QUERY_LAST_MODIFIEDcw            = 11 */
+    NULL,                           /* WINHTTP_QUERY_MESSAGE_ID                 = 12 */
+    attr_uri,                       /* WINHTTP_QUERY_URI                        = 13 */
+    attr_from,                      /* WINHTTP_QUERY_DERIVED_FROM               = 14 */
+    NULL,                           /* WINHTTP_QUERY_COST                       = 15 */
+    NULL,                           /* WINHTTP_QUERY_LINK                       = 16 */
+    attr_pragma,                    /* WINHTTP_QUERY_PRAGMA                     = 17 */
+    NULL,                           /* WINHTTP_QUERY_VERSION                    = 18 */
+    attr_status,                    /* WINHTTP_QUERY_STATUS_CODE                = 19 */
+    NULL,                           /* WINHTTP_QUERY_STATUS_TEXT                = 20 */
+    NULL,                           /* WINHTTP_QUERY_RAW_HEADERS                = 21 */
+    NULL,                           /* WINHTTP_QUERY_RAW_HEADERS_CRLF           = 22 */
+    attr_connection,                /* WINHTTP_QUERY_CONNECTION                 = 23 */
+    attr_accept,                    /* WINHTTP_QUERY_ACCEPT                     = 24 */
+    attr_accept_charset,            /* WINHTTP_QUERY_ACCEPT_CHARSET             = 25 */
+    attr_accept_encoding,           /* WINHTTP_QUERY_ACCEPT_ENCODING            = 26 */
+    attr_accept_language,           /* WINHTTP_QUERY_ACCEPT_LANGUAGE            = 27 */
+    attr_authorization,             /* WINHTTP_QUERY_AUTHORIZATION              = 28 */
+    attr_content_encoding,          /* WINHTTP_QUERY_CONTENT_ENCODING           = 29 */
+    NULL,                           /* WINHTTP_QUERY_FORWARDED                  = 30 */
+    NULL,                           /* WINHTTP_QUERY_FROM                       = 31 */
+    attr_if_modified_since,         /* WINHTTP_QUERY_IF_MODIFIED_SINCE          = 32 */
+    attr_location,                  /* WINHTTP_QUERY_LOCATION                   = 33 */
+    NULL,                           /* WINHTTP_QUERY_ORIG_URI                   = 34 */
+    attr_referer,                   /* WINHTTP_QUERY_REFERER                    = 35 */
+    attr_retry_after,               /* WINHTTP_QUERY_RETRY_AFTER                = 36 */
+    attr_server,                    /* WINHTTP_QUERY_SERVER                     = 37 */
+    NULL,                           /* WINHTTP_TITLE                            = 38 */
+    attr_user_agent,                /* WINHTTP_QUERY_USER_AGENT                 = 39 */
+    attr_www_authenticate,          /* WINHTTP_QUERY_WWW_AUTHENTICATE           = 40 */
+    attr_proxy_authenticate,        /* WINHTTP_QUERY_PROXY_AUTHENTICATE         = 41 */
+    attr_accept_ranges,             /* WINHTTP_QUERY_ACCEPT_RANGES              = 42 */
+    attr_set_cookie,                /* WINHTTP_QUERY_SET_COOKIE                 = 43 */
+    attr_cookie,                    /* WINHTTP_QUERY_COOKIE                     = 44 */
+    NULL,                           /* WINHTTP_QUERY_REQUEST_METHOD             = 45 */
+    NULL,                           /* WINHTTP_QUERY_REFRESH                    = 46 */
+    NULL,                           /* WINHTTP_QUERY_CONTENT_DISPOSITION        = 47 */
+    attr_age,                       /* WINHTTP_QUERY_AGE                        = 48 */
+    attr_cache_control,             /* WINHTTP_QUERY_CACHE_CONTROL              = 49 */
+    attr_content_base,              /* WINHTTP_QUERY_CONTENT_BASE               = 50 */
+    attr_content_location,          /* WINHTTP_QUERY_CONTENT_LOCATION           = 51 */
+    attr_content_md5,               /* WINHTTP_QUERY_CONTENT_MD5                = 52 */
+    attr_content_range,             /* WINHTTP_QUERY_CONTENT_RANGE              = 53 */
+    attr_etag,                      /* WINHTTP_QUERY_ETAG                       = 54 */
+    attr_host,                      /* WINHTTP_QUERY_HOST                       = 55 */
+    attr_if_match,                  /* WINHTTP_QUERY_IF_MATCH                   = 56 */
+    attr_if_none_match,             /* WINHTTP_QUERY_IF_NONE_MATCH              = 57 */
+    attr_if_range,                  /* WINHTTP_QUERY_IF_RANGE                   = 58 */
+    attr_if_unmodified_since,       /* WINHTTP_QUERY_IF_UNMODIFIED_SINCE        = 59 */
+    attr_max_forwards,              /* WINHTTP_QUERY_MAX_FORWARDS               = 60 */
+    attr_proxy_authorization,       /* WINHTTP_QUERY_PROXY_AUTHORIZATION        = 61 */
+    attr_range,                     /* WINHTTP_QUERY_RANGE                      = 62 */
+    attr_transfer_encoding,         /* WINHTTP_QUERY_TRANSFER_ENCODING          = 63 */
+    attr_upgrade,                   /* WINHTTP_QUERY_UPGRADE                    = 64 */
+    attr_vary,                      /* WINHTTP_QUERY_VARY                       = 65 */
+    attr_via,                       /* WINHTTP_QUERY_VIA                        = 66 */
+    attr_warning,                   /* WINHTTP_QUERY_WARNING                    = 67 */
+    attr_expect,                    /* WINHTTP_QUERY_EXPECT                     = 68 */
+    attr_proxy_connection,          /* WINHTTP_QUERY_PROXY_CONNECTION           = 69 */
+    attr_unless_modified_since,     /* WINHTTP_QUERY_UNLESS_MODIFIED_SINCE      = 70 */
+    NULL,                           /* WINHTTP_QUERY_PROXY_SUPPORT              = 75 */
+    NULL,                           /* WINHTTP_QUERY_AUTHENTICATION_INFO        = 76 */
+    NULL,                           /* WINHTTP_QUERY_PASSPORT_URLS              = 77 */
+    NULL                            /* WINHTTP_QUERY_PASSPORT_CONFIG            = 78 */
+};
+
 static void free_header( header_t *header )
 {
     heap_free( header->field );
@@ -379,13 +515,13 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
     header_t *header = NULL;
     BOOL request_only, ret = FALSE;
     int requested_index, header_index = -1;
-    DWORD attribute;
+    DWORD attr;
 
     request_only = level & WINHTTP_QUERY_FLAG_REQUEST_HEADERS;
     requested_index = index ? *index : 0;
 
-    attribute = level & ~QUERY_MODIFIER_MASK;
-    switch (attribute)
+    attr = level & ~QUERY_MODIFIER_MASK;
+    switch (attr)
     {
     case WINHTTP_QUERY_CUSTOM:
     {
@@ -420,8 +556,13 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
     }
     default:
     {
-        FIXME("attribute %u not implemented\n", attribute);
-        return FALSE;
+        if (attr > sizeof(attribute_table)/sizeof(attribute_table[0]) || !attribute_table[attr])
+        {
+            FIXME("attribute %u not implemented\n", attr);
+            return FALSE;
+        }
+        TRACE("attribute %s\n", debugstr_w(attribute_table[attr]));
+        header_index = get_header_index( request, attribute_table[attr], requested_index, request_only );
     }
     }
 
