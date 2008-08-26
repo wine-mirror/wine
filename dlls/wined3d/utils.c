@@ -1871,9 +1871,19 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
             cop = WINED3DTOP_SELECTARG1;
         }
 
-        aarg1 = (args[aop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG1] : 0xffffffff;
-        aarg2 = (args[aop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG2] : 0xffffffff;
-        aarg0 = (args[aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : 0xffffffff;
+        if(cop == WINED3DTOP_DOTPRODUCT3) {
+            /* A dotproduct3 on the colorop overwrites the alphaop operation and replicates
+             * the color result to the alpha component of the destination
+             */
+            aop = cop;
+            aarg1 = carg1;
+            aarg2 = carg2;
+            aarg0 = carg0;
+        } else {
+            aarg1 = (args[aop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG1] : 0xffffffff;
+            aarg2 = (args[aop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG2] : 0xffffffff;
+            aarg0 = (args[aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : 0xffffffff;
+        }
 
         if(i == 0 && stateblock->textures[0] &&
                   stateblock->renderState[WINED3DRS_COLORKEYENABLE] &&
