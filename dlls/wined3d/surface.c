@@ -231,6 +231,9 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
 /* This call just uploads data, the caller is responsible for activating the
  * right context and binding the correct texture. */
 static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) {
+
+    if(This->heightscale != 1.0 && This->heightscale != 0.0) height *= This->heightscale;
+
     if (This->resource.format == WINED3DFMT_DXT1 ||
             This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
             This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5 ||
@@ -292,6 +295,8 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
     BOOL enable_client_storage = FALSE;
     BYTE *mem = NULL;
+
+    if(This->heightscale != 1.0 && This->heightscale != 0.0) height *= This->heightscale;
 
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n", This,
             This->glDescription.target, This->glDescription.level, debug_d3dformat(This->resource.format), internal, width, height, format, type);

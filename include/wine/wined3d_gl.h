@@ -3813,6 +3813,7 @@ typedef struct {
     GLint                   glInternal, glGammaInternal, rtInternal, glFormat, glType;
     WINED3DFORMAT           conversion_group;
     unsigned int            Flags;
+    float                   heightscale;
 } GlPixelFormatDesc;
 
 typedef struct _WINED3DGLTYPE {

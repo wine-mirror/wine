@@ -3142,6 +3142,7 @@ const struct fragment_pipeline arbfp_fragment_pipeline = {
 struct arbfp_blit_priv {
     GLenum yuy2_rect_shader, yuy2_2d_shader;
     GLenum uyvy_rect_shader, uyvy_2d_shader;
+    GLenum yv12_rect_shader, yv12_2d_shader;
 };
 
 static HRESULT arbfp_blit_alloc(IWineD3DDevice *iface) {
@@ -3162,23 +3163,23 @@ static void arbfp_blit_free(IWineD3DDevice *iface) {
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yuy2_2d_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->uyvy_rect_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->uyvy_2d_shader));
+    GL_EXTCALL(glDeleteProgramsARB(1, &priv->yv12_rect_shader));
+    GL_EXTCALL(glDeleteProgramsARB(1, &priv->yv12_2d_shader));
     checkGLcall("Delete yuv programs\n");
     LEAVE_GL();
 }
 
-GLenum gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum textype) {
-    GLenum shader;
-    SHADER_BUFFER buffer;
+BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, char *luminance) {
+    char chroma;
     const char *tex, *texinstr;
-    char chroma, luminance;
-    struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
 
-    /* Shader header */
-    buffer.bsize = 0;
-    buffer.lineNo = 0;
-    buffer.newline = TRUE;
-    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
-
+    if(fmt == WINED3DFMT_UYVY) {
+        chroma = 'r';
+        *luminance = 'a';
+    } else {
+        chroma = 'a';
+        *luminance = 'r';
+    }
     switch(textype) {
         case GL_TEXTURE_2D:             tex = "2D";     texinstr = "TXP"; break;
         case GL_TEXTURE_RECTANGLE_ARB:  tex = "RECT";   texinstr = "TEX"; break;
@@ -3187,16 +3188,229 @@ GLenum gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum text
              * properly in the texture to find the correct chroma values
              */
             FIXME("Implement yuv correction for non-2d, non-rect textures\n");
-            return 0;
+            return FALSE;
     }
 
-    if(fmt == WINED3DFMT_UYVY) {
-        chroma = 'r';
-        luminance = 'a';
+    /* First we have to read the chroma values. This means we need at least two pixels(no filtering),
+     * or 4 pixels(with filtering). To get the unmodified chromas, we have to rid ourselves of the
+     * filtering when we sample the texture.
+     *
+     * These are the rules for reading the chroma:
+     *
+     * Even pixel: Cr
+     * Even pixel: U
+     * Odd pixel: V
+     *
+     * So we have to get the sampling x position in non-normalized coordinates in integers
+     */
+    if(textype != GL_TEXTURE_RECTANGLE_ARB) {
+        shader_addline(buffer, "MUL texcrd.rg, fragment.texcoord[0], size.x;\n");
+        shader_addline(buffer, "MOV texcrd.a, size.x;\n");
     } else {
-        chroma = 'a';
-        luminance = 'r';
+        shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
     }
+    /* We must not allow filtering between pixel x and x+1, this would mix U and V
+     * Vertical filtering is ok. However, bear in mind that the pixel center is at
+     * 0.5, so add 0.5.
+     */
+    shader_addline(buffer, "FLR texcrd.x, texcrd.x;\n");
+    shader_addline(buffer, "ADD texcrd.x, texcrd.x, coef.y;\n");
+
+    /* Divide the x coordinate by 0.5 and get the fraction. This gives 0.25 and 0.75 for the
+     * even and odd pixels respectively
+     */
+    shader_addline(buffer, "MUL texcrd2, texcrd, coef.y;\n");
+    shader_addline(buffer, "FRC texcrd2, texcrd2;\n");
+
+    /* Sample Pixel 1 */
+    shader_addline(buffer, "%s luminance, texcrd, texture[0], %s;\n", texinstr, tex);
+
+    /* Put the value into either of the chroma values */
+    shader_addline(buffer, "SGE temp.x, texcrd2.x, coef.y;\n");
+    shader_addline(buffer, "MUL chroma.r, luminance.%c, temp.x;\n", chroma);
+    shader_addline(buffer, "SLT temp.x, texcrd2.x, coef.y;\n");
+    shader_addline(buffer, "MUL chroma.g, luminance.%c, temp.x;\n", chroma);
+
+    /* Sample pixel 2. If we read an even pixel(SLT above returned 1), sample
+     * the pixel right to the current one. Otherwise, sample the left pixel.
+     * Bias and scale the SLT result to -1;1 and add it to the texcrd.x.
+     */
+    shader_addline(buffer, "MAD temp.x, temp.x, coef.z, -coef.x;\n");
+    shader_addline(buffer, "ADD texcrd.x, texcrd, temp.x;\n");
+    shader_addline(buffer, "%s luminance, texcrd, texture[0], %s;\n", texinstr, tex);
+
+    /* Put the value into the other chroma */
+    shader_addline(buffer, "SGE temp.x, texcrd2.x, coef.y;\n");
+    shader_addline(buffer, "MAD chroma.g, luminance.%c, temp.x, chroma.g;\n", chroma);
+    shader_addline(buffer, "SLT temp.x, texcrd2.x, coef.y;\n");
+    shader_addline(buffer, "MAD chroma.r, luminance.%c, temp.x, chroma.r;\n", chroma);
+
+    /* TODO: If filtering is enabled, sample a 2nd pair of pixels left or right of
+     * the current one and lerp the two U and V values
+     */
+
+    /* This gives the correctly filtered luminance value */
+    shader_addline(buffer, "TEX luminance, fragment.texcoord[0], texture[0], %s;\n", tex);
+
+    return TRUE;
+}
+
+BOOL gen_yv12_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, char *luminance) {
+    const char *tex;
+
+    switch(textype) {
+        case GL_TEXTURE_2D:             tex = "2D";     break;
+        case GL_TEXTURE_RECTANGLE_ARB:  tex = "RECT";   break;
+        default:
+            FIXME("Implement yv12 correction for non-2d, non-rect textures\n");
+            return FALSE;
+    }
+
+    /* YV12 surfaces contain a WxH sized luminance plane, followed by a (W/2)x(H/2)
+     * V and a (W/2)x(H/2) U plane, each with 8 bit per pixel. So the effective
+     * bitdepth is 12 bits per pixel. Since the U and V planes have only half the
+     * pitch of the luminance plane, the packing into the gl texture is a bit
+     * unfortunate. If the whole texture is interpreted as luminance data it looks
+     * approximately like this:
+     *
+     *        +----------------------------------+----
+     *        |                                  |
+     *        |                                  |
+     *        |                                  |
+     *        |                                  |
+     *        |                                  |   2
+     *        |            LUMINANCE             |   -
+     *        |                                  |   3
+     *        |                                  |
+     *        |                                  |
+     *        |                                  |
+     *        |                                  |
+     *        +----------------+-----------------+----
+     *        |                |                 |
+     *        |  U even rows   |  U odd rows     |
+     *        |                |                 |   1
+     *        +----------------+------------------   -
+     *        |                |                 |   3
+     *        |  V even rows   |  V odd rows     |
+     *        |                |                 |
+     *        +----------------+-----------------+----
+     *        |                |                 |
+     *        |     0.5        |       0.5       |
+     *
+     * So it appears as if there are 4 chroma images, but in fact the odd rows
+     * in the chroma images are in the same row as the even ones. So its is
+     * kinda tricky to read
+     *
+     * When reading from rectangle textures, keep in mind that the input y coordinates
+     * go from 0 to d3d_height, whereas the opengl texture height is 1.5 * d3d_height
+     */
+    shader_addline(buffer, "PARAM yv12_coef = {%f, %f, %f, %f};\n",
+                   2.0 / 3.0, 1.0 / 6.0, (2.0 / 3.0) + (1.0 / 6.0), 1.0 / 3.0);
+
+    shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
+    /* the chroma planes have only half the width */
+    shader_addline(buffer, "MUL texcrd.x, texcrd.x, coef.y;\n");
+
+    /* The first value is between 2/3 and 5/6th of the texture's height, so scale+bias
+     * the coordinate. Also read the right side of the image when reading odd lines
+     *
+     * Don't forget to clamp the y values in into the range, otherwise we'll get filtering
+     * bleeding
+     */
+    if(textype == GL_TEXTURE_2D) {
+
+        shader_addline(buffer, "RCP chroma.w, size.y;\n");
+
+        shader_addline(buffer, "MUL texcrd2.y, texcrd.y, size.y;\n");
+
+        shader_addline(buffer, "FLR texcrd2.y, texcrd2.y;\n");
+        shader_addline(buffer, "MAD texcrd.y, texcrd.y, yv12_coef.y, yv12_coef.x;\n");
+
+        /* Read odd lines from the right side(add size * 0.5 to the x coordinate */
+        shader_addline(buffer, "ADD texcrd2.x, texcrd2.y, yv12_coef.y;\n"); /* To avoid 0.5 == 0.5 comparisons */
+        shader_addline(buffer, "FRC texcrd2.x, texcrd2.x;\n");
+        shader_addline(buffer, "SGE texcrd2.x, texcrd2.x, coef.y;\n");
+        shader_addline(buffer, "MAD texcrd.x, texcrd2.x, coef.y, texcrd.x;\n");
+
+        /* clamp, keep the half pixel origin in mind */
+        shader_addline(buffer, "MAD temp.y, coef.y, chroma.w, yv12_coef.x;\n");
+        shader_addline(buffer, "MAX texcrd.y, temp.y, texcrd.y;\n");
+        shader_addline(buffer, "MAD temp.y, -coef.y, chroma.w, yv12_coef.z;\n");
+        shader_addline(buffer, "MIN texcrd.y, temp.y, texcrd.y;\n");
+    } else {
+        /* Read from [size - size+size/4] */
+        shader_addline(buffer, "FLR texcrd.y, texcrd.y;\n");
+        shader_addline(buffer, "MAD texcrd.y, texcrd.y, coef.w, size.y;\n");
+
+        /* Read odd lines from the right side(add size * 0.5 to the x coordinate */
+        shader_addline(buffer, "ADD texcrd2.x, texcrd.y, yv12_coef.y;\n"); /* To avoid 0.5 == 0.5 comparisons */
+        shader_addline(buffer, "FRC texcrd2.x, texcrd2.x;\n");
+        shader_addline(buffer, "SGE texcrd2.x, texcrd2.x, coef.y;\n");
+        shader_addline(buffer, "MUL texcrd2.x, texcrd2.x, size.x;\n");
+        shader_addline(buffer, "MAD texcrd.x, texcrd2.x, coef.y, texcrd.x;\n");
+
+        /* Make sure to read exactly from the pixel center */
+        shader_addline(buffer, "FLR texcrd.y, texcrd.y;\n");
+        shader_addline(buffer, "ADD texcrd.y, texcrd.y, coef.y;\n");
+
+        /* Clamp */
+        shader_addline(buffer, "MAD temp.y, size.y, coef.w, size.y;\n");
+        shader_addline(buffer, "ADD temp.y, temp.y, -coef.y;\n");
+        shader_addline(buffer, "MIN texcrd.y, temp.y, texcrd.y;\n");
+        shader_addline(buffer, "ADD temp.y, size.y, -coef.y;\n");
+        shader_addline(buffer, "MAX texcrd.y, temp.y, texcrd.y;\n");
+    }
+    /* Read the texture, put the result into the output register */
+    shader_addline(buffer, "TEX temp, texcrd, texture[0], %s;\n", tex);
+    shader_addline(buffer, "MOV chroma.r, temp.a;\n");
+
+    /* The other chroma value is 1/6th of the texture lower, from 5/6th to 6/6th
+     * No need to clamp because we're just reusing the already clamped value from above
+     */
+    if(textype == GL_TEXTURE_2D) {
+        shader_addline(buffer, "ADD texcrd.y, texcrd.y, yv12_coef.y;\n");
+    } else {
+        shader_addline(buffer, "MAD texcrd.y, size.y, coef.w, texcrd.y;\n");
+    }
+    shader_addline(buffer, "TEX temp, texcrd, texture[0], %s;\n", tex);
+    shader_addline(buffer, "MOV chroma.g, temp.a;\n");
+
+    /* Sample the luminance value. It is in the top 2/3rd of the texture, so scale the y coordinate.
+     * Clamp the y coordinate to prevent the chroma values from bleeding into the sampled luminance
+     * values due to filtering
+     */
+    shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
+    if(textype == GL_TEXTURE_2D) {
+        /* Multiply the y coordinate by 2/3 and clamp it */
+        shader_addline(buffer, "MUL texcrd.y, texcrd.y, yv12_coef.x;\n");
+        shader_addline(buffer, "MAD temp.y, -coef.y, chroma.w, yv12_coef.x;\n");
+        shader_addline(buffer, "MIN texcrd.y, temp.y, texcrd.y;\n");
+        shader_addline(buffer, "TEX luminance, texcrd, texture[0], %s;\n", tex);
+    } else {
+        /* Reading from texture_rectangles is pretty streightforward, just use the unmodified
+         * texture coordinate. It is still a good idea to clamp it though, since the opengl texture
+         * is bigger
+         */
+        shader_addline(buffer, "ADD temp.x, size.y, -coef.y;\n");
+        shader_addline(buffer, "MIN texcrd.y, texcrd.y, size.x;\n");
+        shader_addline(buffer, "TEX luminance, texcrd, texture[0], %s;\n", tex);
+    }
+    *luminance = 'a';
+
+    return TRUE;
+}
+
+GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum textype) {
+    GLenum shader;
+    SHADER_BUFFER buffer;
+    char luminance_component;
+    struct arbfp_blit_priv *priv = (struct arbfp_blit_priv *) device->blit_priv;
+
+    /* Shader header */
+    buffer.bsize = 0;
+    buffer.lineNo = 0;
+    buffer.newline = TRUE;
+    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
 
     GL_EXTCALL(glGenProgramsARB(1, &shader));
     checkGLcall("GL_EXTCALL(glGenProgramsARB(1, &shader))");
@@ -3245,70 +3459,19 @@ GLenum gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum text
     shader_addline(&buffer, "TEMP chroma;\n");
     shader_addline(&buffer, "TEMP texcrd;\n");
     shader_addline(&buffer, "TEMP texcrd2;\n");
-    shader_addline(&buffer, "PARAM coef = {1.0, 0.5, 2.0, 0.0};\n");
+    shader_addline(&buffer, "PARAM coef = {1.0, 0.5, 2.0, 0.25};\n");
     shader_addline(&buffer, "PARAM yuv_coef = {1.403, 0.344, 0.714, 1.770};\n");
     shader_addline(&buffer, "PARAM size = program.local[0];\n");
 
-    /* First we have to read the chroma values. This means we need at least two pixels(no filtering),
-     * or 4 pixels(with filtering). To get the unmodified chromas, we have to rid ourselves of the
-     * filtering when we sample the texture.
-     *
-     * These are the rules for reading the chroma:
-     *
-     * Even pixel: Cr
-     * Even pixel: U
-     * Odd pixel: V
-     *
-     * So we have to get the sampling x position in non-normalized coordinates in integers
-     */
-    if(textype != GL_TEXTURE_RECTANGLE_ARB) {
-        shader_addline(&buffer, "MUL texcrd.rg, fragment.texcoord[0], size.x;\n");
-        shader_addline(&buffer, "MOV texcrd.a, size.x;\n");
+    if(fmt == WINED3DFMT_UYVY || fmt ==WINED3DFMT_YUY2) {
+        if(gen_planar_yuv_read(&buffer, fmt, textype, &luminance_component) == FALSE) {
+            return 0;
+        }
     } else {
-        shader_addline(&buffer, "MOV texcrd, fragment.texcoord[0];\n");
+        if(gen_yv12_read(&buffer, fmt, textype, &luminance_component) == FALSE) {
+            return 0;
+        }
     }
-    /* We must not allow filtering between pixel x and x+1, this would mix U and V
-     * Vertical filtering is ok. However, bear in mind that the pixel center is at
-     * 0.5, so add 0.5.
-     */
-    shader_addline(&buffer, "FLR texcrd.x, texcrd.x;\n");
-    shader_addline(&buffer, "ADD texcrd.x, texcrd.x, coef.y;\n");
-
-    /* Divide the x coordinate by 0.5 and get the fraction. This gives 0.25 and 0.75 for the
-     * even and odd pixels respectively
-     */
-    shader_addline(&buffer, "MUL texcrd2, texcrd, coef.y;\n");
-    shader_addline(&buffer, "FRC texcrd2, texcrd2;\n");
-
-    /* Sample Pixel 1 */
-    shader_addline(&buffer, "%s luminance, texcrd, texture[0], %s;\n", texinstr, tex);
-
-    /* Put the value into either of the chroma values */
-    shader_addline(&buffer, "SGE temp.x, texcrd2.x, coef.y;\n");
-    shader_addline(&buffer, "MUL chroma.r, luminance.%c, temp.x;\n", chroma);
-    shader_addline(&buffer, "SLT temp.x, texcrd2.x, coef.y;\n");
-    shader_addline(&buffer, "MUL chroma.g, luminance.%c, temp.x;\n", chroma);
-
-    /* Sample pixel 2. If we read an even pixel(SLT above returned 1), sample
-     * the pixel right to the current one. Otherwise, sample the left pixel.
-     * Bias and scale the SLT result to -1;1 and add it to the texcrd.x.
-     */
-    shader_addline(&buffer, "MAD temp.x, temp.x, coef.z, -coef.x;\n");
-    shader_addline(&buffer, "ADD texcrd.x, texcrd, temp.x;\n");
-    shader_addline(&buffer, "%s luminance, texcrd, texture[0], %s;\n", texinstr, tex);
-
-    /* Put the value into the other chroma */
-    shader_addline(&buffer, "SGE temp.x, texcrd2.x, coef.y;\n");
-    shader_addline(&buffer, "MAD chroma.g, luminance.%c, temp.x, chroma.g;\n", chroma);
-    shader_addline(&buffer, "SLT temp.x, texcrd2.x, coef.y;\n");
-    shader_addline(&buffer, "MAD chroma.r, luminance.%c, temp.x, chroma.r;\n", chroma);
-
-    /* TODO: If filtering is enabled, sample a 2nd pair of pixels left or right of
-     * the current one and lerp the two U and V values
-     */
-
-    /* This gives the correctly filtered luminance value */
-    shader_addline(&buffer, "TEX luminance, fragment.texcoord[0], texture[0], %s;\n", tex);
 
     /* Calculate the final result. Formula is taken from
      * http://www.fourcc.org/fccyvrgb.php. Note that the chroma
@@ -3316,10 +3479,10 @@ GLenum gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum text
      */
     shader_addline(&buffer, "SUB chroma.rg, chroma, coef.y;\n");
 
-    shader_addline(&buffer, "MAD result.color.r, chroma.r, yuv_coef.x, luminance.%c;\n", luminance);
-    shader_addline(&buffer, "MAD temp.r, -chroma.g, yuv_coef.y, luminance.%c;\n", luminance);
+    shader_addline(&buffer, "MAD result.color.r, chroma.r, yuv_coef.x, luminance.%c;\n", luminance_component);
+    shader_addline(&buffer, "MAD temp.r, -chroma.g, yuv_coef.y, luminance.%c;\n", luminance_component);
     shader_addline(&buffer, "MAD result.color.g, -chroma.r, yuv_coef.z, temp.r;\n");
-    shader_addline(&buffer, "MAD result.color.b, chroma.g, yuv_coef.w, luminance.%c;\n", luminance);
+    shader_addline(&buffer, "MAD result.color.b, chroma.g, yuv_coef.w, luminance.%c;\n", luminance_component);
     shader_addline(&buffer, "END\n");
 
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(buffer.buffer), buffer.buffer));
@@ -3337,11 +3500,17 @@ GLenum gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum text
         } else {
             priv->yuy2_2d_shader = shader;
         }
-    } else {
+    } else if(fmt == WINED3DFMT_UYVY) {
         if(textype == GL_TEXTURE_RECTANGLE_ARB) {
             priv->uyvy_rect_shader = shader;
         } else {
             priv->uyvy_2d_shader = shader;
+        }
+    } else {
+        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
+            priv->yv12_rect_shader = shader;
+        } else {
+            priv->yv12_2d_shader = shader;
         }
     }
     return shader;
@@ -3356,7 +3525,9 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
 
     getFormatDescEntry(fmt, &GLINFO_LOCATION, &glDesc);
 
-    if(glDesc->conversion_group != WINED3DFMT_YUY2 && glDesc->conversion_group != WINED3DFMT_UYVY) {
+    if(glDesc->conversion_group != WINED3DFMT_YUY2 && glDesc->conversion_group != WINED3DFMT_UYVY &&
+       glDesc->conversion_group != WINED3DFMT_YV12) {
+        ERR("Format: %s\n", debug_d3dformat(glDesc->conversion_group));
         /* Don't bother setting up a shader for unconverted formats */
         glEnable(textype);
         checkGLcall("glEnable(textype)");
@@ -3369,11 +3540,17 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
         } else {
             shader = priv->yuy2_2d_shader;
         }
-    } else {
+    } else if(glDesc->conversion_group == WINED3DFMT_UYVY) {
         if(textype == GL_TEXTURE_RECTANGLE_ARB) {
             shader = priv->uyvy_rect_shader;
         } else {
             shader = priv->uyvy_2d_shader;
+        }
+    } else {
+        if(textype == GL_TEXTURE_RECTANGLE_ARB) {
+            shader = priv->yv12_rect_shader;
+        } else {
+            shader = priv->yv12_2d_shader;
         }
     }
 
@@ -3412,6 +3589,7 @@ static BOOL arbfp_blit_conv_supported(WINED3DFORMAT fmt) {
     switch(fmt) {
         case WINED3DFMT_YUY2:
         case WINED3DFMT_UYVY:
+        case WINED3DFMT_YV12:
             TRACE("[OK]\n");
             return TRUE;
         default:

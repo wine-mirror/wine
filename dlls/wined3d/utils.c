@@ -44,7 +44,7 @@ static const StaticPixelFormatDesc formats[] = {
     /* FourCC formats, kept here to have WINED3DFMT_R8G8B8(=20) at position 20 */
     {WINED3DFMT_UYVY        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,TRUE  },
     {WINED3DFMT_YUY2        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,TRUE  },
-    {WINED3DFMT_YV12        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,0      ,0          ,TRUE  },
+    {WINED3DFMT_YV12        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
     {WINED3DFMT_DXT1        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
     {WINED3DFMT_DXT2        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
     {WINED3DFMT_DXT3        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,0      ,0          ,TRUE  },
@@ -145,6 +145,8 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_UYVY           ,GL_RGB                           ,GL_RGB                                 , 0,           GL_YCBCR_422_APPLE        ,UNSIGNED_SHORT_8_8_APPLE
         ,WINED3DFMT_FLAG_FILTERING },
     {WINED3DFMT_YUY2           ,GL_RGB                           ,GL_RGB                                 , 0,           GL_YCBCR_422_APPLE        ,UNSIGNED_SHORT_8_8_REV_APPLE
+        ,WINED3DFMT_FLAG_FILTERING },
+    {WINED3DFMT_YV12           ,GL_ALPHA                         ,GL_ALPHA                               , 0,           GL_ALPHA                  ,GL_UNSIGNED_BYTE
         ,WINED3DFMT_FLAG_FILTERING },
     {WINED3DFMT_DXT1           ,GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ,GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT , 0,           GL_RGBA                   ,GL_UNSIGNED_BYTE
         ,WINED3DFMT_FLAG_FILTERING },
@@ -273,6 +275,10 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
         ,0 },
     /* Vendor-specific formats */
     {WINED3DFMT_ATI2N          ,0                                ,0                                      , 0,           GL_LUMINANCE_ALPHA        ,GL_UNSIGNED_BYTE
+        ,0 },
+    {WINED3DFMT_NVHU           ,0                                ,0                                      , 0,           GL_LUMINANCE_ALPHA        ,GL_UNSIGNED_BYTE
+        ,0 },
+    {WINED3DFMT_NVHS           ,0                                ,0                                      , 0,           GL_LUMINANCE_ALPHA        ,GL_UNSIGNED_BYTE
         ,0 }
 };
 
@@ -314,6 +320,7 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         gl_info->gl_formats[dst].glType          = gl_formats_template[src].glType;
         gl_info->gl_formats[dst].conversion_group= WINED3DFMT_UNKNOWN;
         gl_info->gl_formats[dst].Flags           = gl_formats_template[src].Flags;
+        gl_info->gl_formats[dst].heightscale     = 1.0;
 
         if(wined3d_settings.offscreen_rendering_mode == ORM_FBO &&
            gl_formats_template[src].rtInternal != 0) {
@@ -430,6 +437,11 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         gl_info->gl_formats[dst].glType = GL_UNSIGNED_BYTE;
         gl_info->gl_formats[dst].conversion_group = WINED3DFMT_UYVY;
     }
+
+    dst = getFmtIdx(WINED3DFMT_YV12);
+    gl_info->gl_formats[dst].heightscale = 1.5;
+    gl_info->gl_formats[dst].conversion_group = WINED3DFMT_YV12;
+
     return TRUE;
 }
 

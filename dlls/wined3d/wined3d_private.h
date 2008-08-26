@@ -703,7 +703,6 @@ typedef struct WineD3D_PixelFormat
 } WineD3D_PixelFormat;
 
 /* The adapter structure */
-typedef struct GLPixelFormatDesc GLPixelFormatDesc;
 struct WineD3DAdapter
 {
     UINT                    num;
@@ -1312,6 +1311,7 @@ struct IWineD3DSurfaceImpl
 
     UINT                      pow2Width;
     UINT                      pow2Height;
+    float                     heightscale;
 
     /* A method to retrieve the drawable size. Not in the Vtable to make it changeable */
     void (*get_drawable_size)(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);

@@ -586,7 +586,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int Size       = 1;
-    const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(Format, NULL, NULL);
+    const GlPixelFormatDesc *glDesc;
+    const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
     TRACE("(%p) Create surface\n",This);
     
     /** FIXME: Check ranges on the inputs are valid 
@@ -637,8 +638,10 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     } else {
        /* The pitch is a multiple of 4 bytes */
         Size = ((Width * tableEntry->bpp) + This->surface_alignment - 1) & ~(This->surface_alignment - 1);
-       Size *= Height;
+        Size *= Height;
     }
+
+    if(glDesc->heightscale != 0.0) Size *= glDesc->heightscale;
 
     /** Create and initialise the surface resource **/
     D3DCREATERESOURCEOBJECTINSTANCE(object,Surface,WINED3DRTYPE_SURFACE, Size)
@@ -650,6 +653,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     object->currentDesc.MultiSampleType    = MultiSample;
     object->currentDesc.MultiSampleQuality = MultisampleQuality;
     object->glDescription.level            = Level;
+    object->heightscale                    = glDesc->heightscale != 0.0 ? glDesc->heightscale : 1.0;
     list_init(&object->overlays);
 
     /* Flags */
