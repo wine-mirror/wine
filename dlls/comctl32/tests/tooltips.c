@@ -266,9 +266,16 @@ static void test_gettext(void)
 
     DestroyWindow(hwnd);
 
+    SetLastError(0xdeadbeef);
     hwnd = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
                            10, 10, 300, 100,
                            NULL, NULL, NULL, 0);
+
+    if (!hwnd && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        win_skip("CreateWindowExW is not implemented\n");
+        return;
+    }
+
     assert(hwnd);
 
     toolinfoW.cbSize = sizeof(TTTOOLINFOW);
