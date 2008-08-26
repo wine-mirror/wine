@@ -344,3 +344,25 @@ BOOL lengthen_path(GpPath *path, INT len)
 
     return TRUE;
 }
+
+/* recursive deletion of GpRegion nodes */
+inline void delete_element(region_element* element)
+{
+    switch(element->type)
+    {
+        case RegionDataRect:
+            break;
+        case RegionDataPath:
+            GdipDeletePath(element->elementdata.pathdata.path);
+            break;
+        case RegionDataEmptyRect:
+        case RegionDataInfiniteRect:
+            break;
+        default:
+            delete_element(element->elementdata.combine.left);
+            delete_element(element->elementdata.combine.right);
+            GdipFree(element->elementdata.combine.left);
+            GdipFree(element->elementdata.combine.right);
+            break;
+    }
+}

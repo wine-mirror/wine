@@ -73,14 +73,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
  *
  */
 
-typedef enum RegionType
-{
-    RegionDataRect          = 0x10000000,
-    RegionDataPath          = 0x10000001,
-    RegionDataEmptyRect     = 0x10000002,
-    RegionDataInfiniteRect  = 0x10000003,
-} RegionType;
-
 #define FLAGS_NOFLAGS   0x0
 #define FLAGS_INTPATH   0x4000
 
@@ -139,27 +131,6 @@ static inline GpStatus init_region(GpRegion* region, const RegionType type)
     region->header.size     = sizeheader_size + get_element_size(&region->node);
 
     return Ok;
-}
-
-static inline void delete_element(region_element* element)
-{
-    switch(element->type)
-    {
-        case RegionDataRect:
-            break;
-        case RegionDataPath:
-            GdipDeletePath(element->elementdata.pathdata.path);
-            break;
-        case RegionDataEmptyRect:
-        case RegionDataInfiniteRect:
-            break;
-        default:
-            delete_element(element->elementdata.combine.left);
-            delete_element(element->elementdata.combine.right);
-            GdipFree(element->elementdata.combine.left);
-            GdipFree(element->elementdata.combine.right);
-            break;
-    }
 }
 
 static inline GpStatus clone_element(const region_element* element,

@@ -791,10 +791,10 @@ static void test_getclip(void)
 
     res = FALSE;
     status = GdipGetClip(graphics, clip);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     status = GdipIsInfiniteRegion(clip, graphics, &res);
     expect(Ok, status);
-    todo_wine expect(TRUE, res);
+    expect(TRUE, res);
 
     GdipDeleteRegion(clip);
 

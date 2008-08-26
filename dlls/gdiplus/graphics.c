@@ -743,6 +743,12 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
         return retval;
     }
 
+    if((retval = GdipCreateRegion(&(*graphics)->clip)) != Ok){
+        GdipFree((*graphics)->worldtrans);
+        GdipFree(*graphics);
+        return retval;
+    }
+
     (*graphics)->hdc = hdc;
     (*graphics)->hwnd = NULL;
     (*graphics)->smoothing = SmoothingModeDefault;
@@ -894,6 +900,7 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     if(graphics->hwnd)
         ReleaseDC(graphics->hwnd, graphics->hdc);
 
+    GdipDeleteRegion(graphics->clip);
     GdipDeleteMatrix(graphics->worldtrans);
     GdipFree(graphics);
 
@@ -2874,14 +2881,25 @@ GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
 
 GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
 {
+    GpRegion *clip;
+    GpStatus status;
+
+    TRACE("(%p, %p)\n", graphics, region);
+
     if(!graphics || !region)
         return InvalidParameter;
 
     if(graphics->busy)
         return ObjectBusy;
 
-    FIXME("(%p, %p): stub\n", graphics, region);
-    return NotImplemented;
+    if((status = GdipCloneRegion(graphics->clip, &clip)) != Ok)
+        return status;
+
+    /* free everything except root node and header */
+    delete_element(&region->node);
+    memcpy(region, clip, sizeof(GpRegion));
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
