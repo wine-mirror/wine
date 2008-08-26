@@ -719,7 +719,7 @@ static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
 
-    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+    *dwParam1 = MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].interface_name, -1,
                                     NULL, 0 ) * sizeof(WCHAR);
     return MMSYSERR_NOERROR;
 }
@@ -729,10 +729,10 @@ static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
  */
 static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
-    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+    if (dwParam2 >= MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].interface_name, -1,
                                         NULL, 0 ) * sizeof(WCHAR))
     {
-        MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+        MultiByteToWideChar(CP_UNIXCP, 0, WInDev[wDevID].interface_name, -1,
                             dwParam1, dwParam2 / sizeof(WCHAR));
         return MMSYSERR_NOERROR;
     }

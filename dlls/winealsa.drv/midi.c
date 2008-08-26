@@ -1158,7 +1158,7 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN-1);
 	    midiPortName[MAXPNAMELEN-1] = 0;
 	}
-	MultiByteToWideChar(CP_ACP, 0, midiPortName, -1,
+	MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1,
                             MidiOutDev[MODM_NumDevs].caps.szPname,
                             sizeof(MidiOutDev[MODM_NumDevs].caps.szPname) / sizeof(WCHAR));
 
@@ -1223,7 +1223,7 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	    lstrcpynA(midiPortName, snd_seq_port_info_get_name(pinfo), MAXPNAMELEN-1);
 	    midiPortName[MAXPNAMELEN-1] = 0;
         }
-	MultiByteToWideChar(CP_ACP, 0, midiPortName, -1,
+	MultiByteToWideChar(CP_UNIXCP, 0, midiPortName, -1,
                             MidiInDev[MIDM_NumDevs].caps.szPname,
                             sizeof(MidiInDev[MIDM_NumDevs].caps.szPname) / sizeof(WCHAR));
 	MidiInDev[MIDM_NumDevs].state = 0;

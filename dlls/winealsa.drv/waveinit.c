@@ -490,7 +490,7 @@ static int ALSA_AddPlaybackDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pc
     if (rc)
         return(rc);
 
-    MultiByteToWideChar(CP_ACP, 0, wwo.ds_desc.szDesc, -1,
+    MultiByteToWideChar(CP_UNIXCP, 0, wwo.ds_desc.szDesc, -1,
                         wwo.outcaps.szPname, sizeof(wwo.outcaps.szPname)/sizeof(WCHAR));
     wwo.outcaps.szPname[sizeof(wwo.outcaps.szPname)/sizeof(WCHAR) - 1] = '\0';
 
@@ -530,7 +530,7 @@ static int ALSA_AddCaptureDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcm
     if (rc)
         return(rc);
 
-    MultiByteToWideChar(CP_ACP, 0, wwi.ds_desc.szDesc, -1,
+    MultiByteToWideChar(CP_UNIXCP, 0, wwi.ds_desc.szDesc, -1,
                         wwi.incaps.szPname, sizeof(wwi.incaps.szPname) / sizeof(WCHAR));
     wwi.incaps.szPname[sizeof(wwi.incaps.szPname)/sizeof(WCHAR) - 1] = '\0';
 
