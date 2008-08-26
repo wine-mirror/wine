@@ -215,6 +215,7 @@ LPWSTR GetItemFullPathW(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     parts[1] = GetItemPathW(hwndTV, hItem, &hRootKey);
     ret = CombinePathsW((LPCWSTR *)parts, 2);
     HeapFree(GetProcessHeap(), 0, parts[0]);
+    HeapFree(GetProcessHeap(), 0, parts[1]);
     return ret;
 }
 
