@@ -167,9 +167,12 @@ static inline GpStatus clone_element(const region_element* element,
 {
     GpStatus stat;
 
-    *element2 = GdipAlloc(sizeof(region_element));
-    if (!*element2)
-        return OutOfMemory;
+    /* root node is allocated with GpRegion */
+    if(!*element2){
+        *element2 = GdipAlloc(sizeof(region_element));
+        if (!*element2)
+            return OutOfMemory;
+    }
 
     (*element2)->type = element->type;
 
@@ -188,6 +191,9 @@ static inline GpStatus clone_element(const region_element* element,
             if (stat != Ok) goto clone_out;
             break;
         default:
+            (*element2)->elementdata.combine.left  = NULL;
+            (*element2)->elementdata.combine.right = NULL;
+
             stat = clone_element(element->elementdata.combine.left,
                     &(*element2)->elementdata.combine.left);
             if (stat != Ok) goto clone_out;
@@ -344,7 +350,7 @@ GpStatus WINGDIPAPI GdipCombineRegionRectI(GpRegion *region,
 GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1,
         GpRegion *region2, CombineMode mode)
 {
-    region_element *left, *right;
+    region_element *left, *right = NULL;
     GpStatus stat;
 
     TRACE("%p %p %d\n", region1, region2, mode);
