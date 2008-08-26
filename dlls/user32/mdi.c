@@ -1257,7 +1257,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         return 0;
 
       case WM_SIZE:
-        if( ci->hwndChildMaximized )
+        if( ci->hwndActiveChild && IsZoomed(ci->hwndActiveChild) )
 	{
 	    RECT	rect;
 
@@ -1265,10 +1265,9 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 	    rect.top = 0;
 	    rect.right = LOWORD(lParam);
 	    rect.bottom = HIWORD(lParam);
-
-	    AdjustWindowRectEx( &rect, GetWindowLongA(ci->hwndChildMaximized, GWL_STYLE),
-                               0, GetWindowLongA(ci->hwndChildMaximized, GWL_EXSTYLE) );
-	    MoveWindow( ci->hwndChildMaximized, rect.left, rect.top,
+	    AdjustWindowRectEx(&rect, GetWindowLongA(ci->hwndActiveChild, GWL_STYLE),
+                               0, GetWindowLongA(ci->hwndActiveChild, GWL_EXSTYLE) );
+	    MoveWindow(ci->hwndActiveChild, rect.left, rect.top,
 			 rect.right - rect.left, rect.bottom - rect.top, 1);
 	}
 	else
