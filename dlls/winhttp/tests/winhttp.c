@@ -117,8 +117,8 @@ static void test_SendRequest (void)
     {
         bytes_rw = -1;
         ret = WinHttpWriteData(request, &post_data[i], 1, &bytes_rw);
-        todo_wine ok(ret == TRUE, "WinHttpWriteData failed: %u.\n", GetLastError());
-        todo_wine ok(bytes_rw == 1, "WinHttpWriteData failed, wrote %u bytes instead of 1 byte.\n", bytes_rw);
+        ok(ret == TRUE, "WinHttpWriteData failed: %u.\n", GetLastError());
+        ok(bytes_rw == 1, "WinHttpWriteData failed, wrote %u bytes instead of 1 byte.\n", bytes_rw);
     }
 
     ret = WinHttpReceiveResponse(request, NULL);

@@ -105,18 +105,6 @@ BOOL WINAPI WinHttpSetOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuff
     return FALSE;
 }
 
-/***********************************************************************
- *          WinHttpWriteData (winhttp.@)
- */
-BOOL WINAPI WinHttpWriteData (HINTERNET hRequest, LPCVOID lpBuffer,
-                              DWORD dwNumberOfBytesToWrite, LPDWORD lpdwNumberOfBytesWritten)
-{
-    FIXME("(%p, %d, %p): stub\n", lpBuffer, dwNumberOfBytesToWrite, lpdwNumberOfBytesWritten);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
 BOOL WINAPI InternetCrackUrlW( LPCWSTR, DWORD, DWORD, LPURL_COMPONENTSW );
 BOOL WINAPI InternetCreateUrlW( LPURL_COMPONENTS, DWORD, LPWSTR, LPDWORD );
 

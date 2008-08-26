@@ -1109,3 +1109,31 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
     release_object( &request->hdr );
     return ret;
 }
+
+/***********************************************************************
+ *          WinHttpWriteData (winhttp.@)
+ */
+BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write, LPDWORD written )
+{
+    BOOL ret;
+    request_t *request;
+
+    TRACE("%p, %p, %d, %p\n", hrequest, buffer, to_write, written);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    ret = netconn_send( &request->netconn, buffer, to_write, 0, (int *)written );
+
+    release_object( &request->hdr );
+    return ret;
+}
