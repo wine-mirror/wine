@@ -31,6 +31,7 @@
 
 #include "main.h"
 #include "regproc.h"
+#include "wine/unicode.h"
 
 /********************************************************************************
  * Global and Local Variables:
@@ -82,12 +83,13 @@ static void resize_frame_client(HWND hWnd)
 static void OnEnterMenuLoop(HWND hWnd)
 {
     int nParts;
+    WCHAR empty = 0;
 
     /* Update the status bar pane sizes */
     nParts = -1;
-    SendMessage(hStatusBar, SB_SETPARTS, 1, (long)&nParts);
+    SendMessageW(hStatusBar, SB_SETPARTS, 1, (long)&nParts);
     bInMenuLoop = TRUE;
-    SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)0, (LPARAM)_T(""));
+    SendMessageW(hStatusBar, SB_SETTEXTW, (WPARAM)0, (LPARAM)&empty);
 }
 
 static void OnExitMenuLoop(HWND hWnd)
@@ -102,8 +104,8 @@ static void UpdateMenuItems(HMENU hMenu) {
     HWND hwndTV = g_pChildWnd->hTreeWnd;
     BOOL bAllowEdit = FALSE;
     HKEY hRootKey = NULL;
-    LPCTSTR keyName;
-    keyName = GetItemPath(hwndTV, TreeView_GetSelection(hwndTV), &hRootKey);
+    LPWSTR keyName;
+    keyName = GetItemPathW(hwndTV, TreeView_GetSelection(hwndTV), &hRootKey);
     if (GetFocus() != hwndTV || (keyName && *keyName)) { /* can't modify root keys, but allow for their values */
         bAllowEdit = TRUE;
     }
@@ -115,6 +117,8 @@ static void UpdateMenuItems(HMENU hMenu) {
     EnableMenuItem(hMenu, ID_FAVORITES_ADDTOFAVORITES, (hRootKey ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_FAVORITES_REMOVEFAVORITE, 
         (GetMenuItemCount(hMenu)>2 ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+
+    HeapFree(GetProcessHeap(), 0, keyName);
 }
 
 static void OnInitMenuPopup(HWND hWnd, HMENU hMenu, short wItem)
@@ -154,23 +158,23 @@ static void OnInitMenuPopup(HWND hWnd, HMENU hMenu, short wItem)
 
 static void OnMenuSelect(HWND hWnd, UINT nItemID, UINT nFlags, HMENU hSysMenu)
 {
-    TCHAR str[100];
+    WCHAR str[100];
 
-    _tcscpy(str, _T(""));
+    str[0] = 0;
     if (nFlags & MF_POPUP) {
         if (hSysMenu != GetMenu(hWnd)) {
             if (nItemID == 2) nItemID = 5;
         }
     }
-    if (LoadString(hInst, nItemID, str, 100)) {
+    if (LoadStringW(hInst, nItemID, str, 100)) {
         /* load appropriate string*/
-        LPTSTR lpsz = str;
+        LPWSTR lpsz = str;
         /* first newline terminates actual string*/
-        lpsz = _tcschr(lpsz, '\n');
+        lpsz = strchrW(lpsz, '\n');
         if (lpsz != NULL)
             *lpsz = '\0';
     }
-    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)str);
+    SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)str);
 }
 
 void SetupStatusBar(HWND hWnd, BOOL bResize)
@@ -181,15 +185,15 @@ void SetupStatusBar(HWND hWnd, BOOL bResize)
     nParts = rc.right;
     /*    nParts = -1;*/
     if (bResize)
-        SendMessage(hStatusBar, WM_SIZE, 0, 0);
-    SendMessage(hStatusBar, SB_SETPARTS, 1, (LPARAM)&nParts);
+        SendMessageW(hStatusBar, WM_SIZE, 0, 0);
+    SendMessageW(hStatusBar, SB_SETPARTS, 1, (LPARAM)&nParts);
     UpdateStatusBar();
 }
 
 void UpdateStatusBar(void)
 {
-    LPTSTR fullPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, TRUE);
-    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
+    LPWSTR fullPath = GetItemFullPathW(g_pChildWnd->hTreeWnd, NULL, TRUE);
+    SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
     HeapFree(GetProcessHeap(), 0, fullPath);
 }
 
