@@ -1232,3 +1232,136 @@ BOOL WINAPI WinHttpQueryAuthSchemes( HINTERNET hrequest, LPDWORD supported, LPDW
     release_object( &request->hdr );
     return ret;
 }
+
+static UINT encode_base64( const char *bin, unsigned int len, WCHAR *base64 )
+{
+    UINT n = 0, x;
+    static const char base64enc[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    while (len > 0)
+    {
+        /* first 6 bits, all from bin[0] */
+        base64[n++] = base64enc[(bin[0] & 0xfc) >> 2];
+        x = (bin[0] & 3) << 4;
+
+        /* next 6 bits, 2 from bin[0] and 4 from bin[1] */
+        if (len == 1)
+        {
+            base64[n++] = base64enc[x];
+            base64[n++] = '=';
+            base64[n++] = '=';
+            break;
+        }
+        base64[n++] = base64enc[x | ((bin[1] & 0xf0) >> 4)];
+        x = (bin[1] & 0x0f) << 2;
+
+        /* next 6 bits 4 from bin[1] and 2 from bin[2] */
+        if (len == 2)
+        {
+            base64[n++] = base64enc[x];
+            base64[n++] = '=';
+            break;
+        }
+        base64[n++] = base64enc[x | ((bin[2] & 0xc0) >> 6)];
+
+        /* last 6 bits, all from bin [2] */
+        base64[n++] = base64enc[bin[2] & 0x3f];
+        bin += 3;
+        len -= 3;
+    }
+    base64[n] = 0;
+    return n;
+}
+
+static BOOL set_credentials( request_t *request, DWORD target, DWORD scheme, LPCWSTR username, LPCWSTR password )
+{
+    static const WCHAR basic[] = {'B','a','s','i','c',' ',0};
+
+    const WCHAR *auth_scheme, *auth_target;
+    WCHAR *auth_header;
+    DWORD len, auth_data_len;
+    char *auth_data;
+    BOOL ret;
+
+    switch (target)
+    {
+    case WINHTTP_AUTH_TARGET_SERVER: auth_target = attr_authorization; break;
+    case WINHTTP_AUTH_TARGET_PROXY:  auth_target = attr_proxy_authorization; break;
+    default:
+        WARN("unknown target %x\n", target);
+        return FALSE;
+    }
+    switch (scheme)
+    {
+    case WINHTTP_AUTH_SCHEME_BASIC:
+    {
+        int userlen = WideCharToMultiByte( CP_UTF8, 0, username, strlenW( username ), NULL, 0, NULL, NULL );
+        int passlen = WideCharToMultiByte( CP_UTF8, 0, password, strlenW( password ), NULL, 0, NULL, NULL );
+
+        TRACE("basic authentication\n");
+
+        auth_scheme = basic;
+        auth_data_len = userlen + 1 + passlen;
+        if (!(auth_data = heap_alloc( auth_data_len ))) return FALSE;
+
+        WideCharToMultiByte( CP_UTF8, 0, username, -1, auth_data, userlen, NULL, NULL );
+        auth_data[userlen] = ':';
+        WideCharToMultiByte( CP_UTF8, 0, password, -1, auth_data + userlen + 1, passlen, NULL, NULL );
+        break;
+    }
+    case WINHTTP_AUTH_SCHEME_NTLM:
+    case WINHTTP_AUTH_SCHEME_PASSPORT:
+    case WINHTTP_AUTH_SCHEME_DIGEST:
+    case WINHTTP_AUTH_SCHEME_NEGOTIATE:
+        FIXME("unimplemented authentication scheme %x\n", scheme);
+        return FALSE;
+    default:
+        WARN("unknown authentication scheme %x\n", scheme);
+        return FALSE;
+    }
+
+    len = strlenW( auth_scheme ) + ((auth_data_len + 2) * 4) / 3;
+    if (!(auth_header = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+    {
+        heap_free( auth_data );
+        return FALSE;
+    }
+    strcpyW( auth_header, auth_scheme );
+    encode_base64( auth_data, auth_data_len, auth_header + strlenW( auth_header ) );
+
+    ret = process_header( request, auth_target, auth_header, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE, TRUE );
+
+    heap_free( auth_data );
+    heap_free( auth_header );
+    return ret;
+}
+
+/***********************************************************************
+ *          WinHttpSetCredentials (winhttp.@)
+ */
+BOOL WINAPI WinHttpSetCredentials( HINTERNET hrequest, DWORD target, DWORD scheme, LPCWSTR username,
+                                   LPCWSTR password, LPVOID params )
+{
+    BOOL ret;
+    request_t *request;
+
+    TRACE("%p, %x, 0x%08x, %s, %p, %p\n", hrequest, target, scheme, debugstr_w(username), password, params);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    ret = set_credentials( request, target, scheme, username, password );
+
+    release_object( &request->hdr );
+    return ret;
+}
