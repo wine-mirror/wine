@@ -119,6 +119,7 @@ static char subjectStrSemicolon[] =
 static char subjectStrCRLF[] =
  "2.5.4.6=US\r\n2.5.4.8=Minnesota\r\n2.5.4.7=Minneapolis\r\n2.5.4.10=CodeWeavers\r\n2.5.4.11=Wine Development\r\n2.5.4.3=localhost\r\n1.2.840.113549.1.9.1=aric@codeweavers.com";
 static char x500SubjectStr[] = "C=US, S=Minnesota, L=Minneapolis, O=CodeWeavers, OU=Wine Development, CN=localhost, E=aric@codeweavers.com";
+static char x500SubjectStrSemicolonReverse[] = "E=aric@codeweavers.com; CN=localhost; OU=Wine Development; O=CodeWeavers; L=Minneapolis; S=Minnesota; C=US";
 static WCHAR issuerStrW[] = {
  'U','S',',',' ','M','i','n','n','e','s','o','t','a',',',' ','M','i','n','n',
  'e','a','p','o','l','i','s',',',' ','C','o','d','e','W','e','a','v','e','r',
@@ -167,6 +168,13 @@ static WCHAR subjectStrCRLFW[] = {
  'h','o','s','t','\r','\n','1','.','2','.','8','4','0','.','1','1','3','5','4',
  '9','.','1','.','9','.','1','=','a','r','i','c','@','c','o','d','e','w','e',
  'a','v','e','r','s','.','c','o','m',0 };
+static WCHAR x500SubjectStrSemicolonReverseW[] = {
+ 'E','=','a','r','i','c','@','c','o','d','e','w','e','a','v','e','r','s','.','c',
+ 'o','m',';',' ','C','N','=','l','o','c','a','l','h','o','s','t',';',' ','O','U',
+ '=','W','i','n','e',' ','D','e','v','e','l','o','p','m','e','n','t',';',' ','O',
+ '=','C','o','d','e','W','e','a','v','e','r','s',';',' ','L','=','M','i','n','n',
+ 'e','a','p','o','l','i','s',';',' ','S','=','M','i','n','n','e','s','o','t','a',
+ ';',' ','C','=','U','S',0 };
 
 typedef BOOL (WINAPI *CryptDecodeObjectFunc)(DWORD, LPCSTR, const BYTE *,
  DWORD, DWORD, void *, DWORD *);
@@ -371,6 +379,8 @@ static void test_CertNameToStrA(void)
          subjectStrCRLF);
         test_NameToStrConversionA(&context->pCertInfo->Subject,
          CERT_X500_NAME_STR, x500SubjectStr);
+        test_NameToStrConversionA(&context->pCertInfo->Subject,
+         CERT_X500_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG | CERT_NAME_STR_REVERSE_FLAG, x500SubjectStrSemicolonReverse);
 
         CertFreeCertificateContext(context);
     }
@@ -446,6 +456,8 @@ static void test_CertNameToStrW(void)
         test_NameToStrConversionW(&context->pCertInfo->Subject,
          CERT_OID_NAME_STR | CERT_NAME_STR_CRLF_FLAG,
          subjectStrCRLFW);
+        test_NameToStrConversionW(&context->pCertInfo->Subject,
+         CERT_X500_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG | CERT_NAME_STR_REVERSE_FLAG, x500SubjectStrSemicolonReverseW);
 
         CertFreeCertificateContext(context);
     }
