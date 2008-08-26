@@ -1272,10 +1272,10 @@ void libxmlFatalError(void *ctx, const char *msg, ...)
     vsprintf(message, msg, args);
     va_end(args);
 
-    len = MultiByteToWideChar(CP_ACP, 0, message, -1, NULL, 0);
+    len = MultiByteToWideChar(CP_UNIXCP, 0, message, -1, NULL, 0);
     wszError = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
     if(wszError)
-        MultiByteToWideChar(CP_ACP, 0, message, -1, (LPWSTR)wszError, len);
+        MultiByteToWideChar(CP_UNIXCP, 0, message, -1, (LPWSTR)wszError, len);
 
     if(This->vbInterface)
     {
