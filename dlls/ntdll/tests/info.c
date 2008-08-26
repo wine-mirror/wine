@@ -68,7 +68,8 @@ static void test_query_basic(void)
     /* Use a nonexistent info class */
     trace("Check nonexistent info class\n");
     status = pNtQuerySystemInformation(-1, NULL, 0, NULL);
-    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08x\n", status);
+    ok( status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED /* vista */,
+        "Expected STATUS_INVALID_INFO_CLASS or STATUS_NOT_IMPLEMENTED, got %08x\n", status);
 
     /* Use an existing class but with a zero-length buffer */
     trace("Check zero-length buffer\n");
@@ -78,7 +79,8 @@ static void test_query_basic(void)
     /* Use an existing class, correct length but no SystemInformation buffer */
     trace("Check no SystemInformation buffer\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, NULL, sizeof(sbi), NULL);
-    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_PARAMETER /* vista */,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER, got %08x\n", status);
 
     /* Use a existing class, correct length, a pointer to a buffer but no ReturnLength pointer */
     trace("Check no ReturnLength pointer\n");
@@ -202,7 +204,8 @@ static void test_query_timeofday(void)
     
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 49, &ReturnLength);
         ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
+        ok( ReturnLength == 0 || ReturnLength == sizeof(sti) /* vista */,
+            "ReturnLength should be 0, it is (%d)\n", ReturnLength);
     
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength);
         ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
@@ -404,28 +407,27 @@ static void test_query_handle(void)
     SYSTEM_HANDLE_INFORMATION* shi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
 
     /* Request the needed length : a SystemInformationLength greater than one struct sets ReturnLength */
-    status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
+    status = pNtQuerySystemInformation(SystemHandleInformation, shi, 0, &ReturnLength);
 
-    /* The following check assumes more than one handle on any given system */
-    todo_wine
-    {
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-    }
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
     ok( ReturnLength > 0, "Expected ReturnLength to be > 0, it was %d\n", ReturnLength);
 
-    SystemInformationLength = ReturnLength;
+    SystemInformationLength = ReturnLength + sizeof(HANDLE);
     shi = HeapReAlloc(GetProcessHeap(), 0, shi , SystemInformationLength);
     status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-
-    /* Check if we have some return values */
-    trace("Number of Handles : %d\n", shi->Count);
-    todo_wine
+    if (status != STATUS_INFO_LENGTH_MISMATCH) /* vista */
     {
-        /* our implementation is a stub for now */
-        ok( shi->Count > 1, "Expected more than 1 handles, got (%d)\n", shi->Count);
-    }
+        ok( status == STATUS_SUCCESS,
+            "Expected STATUS_SUCCESS, got %08x\n", status);
 
+        /* Check if we have some return values */
+        trace("Number of Handles : %d\n", shi->Count);
+        todo_wine
+        {
+            /* our implementation is a stub for now */
+            ok( shi->Count > 1, "Expected more than 1 handles, got (%d)\n", shi->Count);
+        }
+    }
     HeapFree( GetProcessHeap(), 0, shi);
 }
 
@@ -534,7 +536,8 @@ static void test_query_process_basic(void)
     /* Use a nonexistent info class */
     trace("Check nonexistent info class\n");
     status = pNtQueryInformationProcess(NULL, -1, NULL, 0, NULL);
-    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08x\n", status);
+    ok( status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED /* vista */,
+        "Expected STATUS_INVALID_INFO_CLASS or STATUS_NOT_IMPLEMENTED, got %08x\n", status);
 
     /* Do not give a handle and buffer */
     trace("Check NULL handle and buffer and zero-length buffersize\n");
@@ -708,7 +711,8 @@ static void test_query_process_times(void)
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessTimes, &spti, sizeof(spti) * 2, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-    ok( sizeof(spti) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
+    ok( sizeof(spti) == ReturnLength || ReturnLength == 0 /* vista */,
+        "Inconsistent length %d\n", ReturnLength);
 }
 
 static void test_query_process_handlecount(void)
