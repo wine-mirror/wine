@@ -343,7 +343,7 @@ static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSor
     if (g_columnToSort == 2) {
         /* FIXME: Sort on value */
     }
-    return g_invertSort ? lstrcmpW(r->name, l->name) : lstrcmpW(l->name, r->name);
+    return g_invertSort ? lstrcmpiW(r->name, l->name) : lstrcmpiW(l->name, r->name);
 }
 
 HWND StartValueRename(HWND hwndLV)
