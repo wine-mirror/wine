@@ -1504,32 +1504,38 @@ HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, DWORD nDestLen)
 HRESULT WINAPI UrlApplySchemeA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut, DWORD dwFlags)
 {
     LPWSTR in, out;
-    DWORD ret, len, len2;
+    HRESULT ret;
+    DWORD len;
 
-    TRACE("(in %s, out size %d, flags %08x) using W version\n",
-	  debugstr_a(pszIn), *pcchOut, dwFlags);
+    TRACE("(%s, %p, %p:out size %d, 0x%08x)\n", debugstr_a(pszIn),
+            pszOut, pcchOut, pcchOut ? *pcchOut : 0, dwFlags);
+
+    if (!pszIn || !pszOut || !pcchOut) return E_INVALIDARG;
 
     in = HeapAlloc(GetProcessHeap(), 0,
-			      (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
+                  (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
     out = in + INTERNET_MAX_URL_LENGTH;
 
-    MultiByteToWideChar(0, 0, pszIn, -1, in, INTERNET_MAX_URL_LENGTH);
+    MultiByteToWideChar(CP_ACP, 0, pszIn, -1, in, INTERNET_MAX_URL_LENGTH);
     len = INTERNET_MAX_URL_LENGTH;
 
     ret = UrlApplySchemeW(in, out, &len, dwFlags);
-    if ((ret != S_OK) && (ret != S_FALSE)) {
-	HeapFree(GetProcessHeap(), 0, in);
-	return ret;
+    if (ret != S_OK) {
+        HeapFree(GetProcessHeap(), 0, in);
+        return ret;
     }
 
-    len2 = WideCharToMultiByte(0, 0, out, len+1, 0, 0, 0, 0);
-    if (len2 > *pcchOut) {
-	*pcchOut = len2;
-	HeapFree(GetProcessHeap(), 0, in);
-	return E_POINTER;
+    len = WideCharToMultiByte(CP_ACP, 0, out, -1, NULL, 0, NULL, NULL);
+    if (len > *pcchOut) {
+        ret = E_POINTER;
+        goto cleanup;
     }
-    WideCharToMultiByte(0, 0, out, len+1, pszOut, *pcchOut, 0, 0);
-    *pcchOut = len2;
+
+    WideCharToMultiByte(CP_ACP, 0, out, -1, pszOut, *pcchOut, NULL, NULL);
+    len--;
+
+cleanup:
+    *pcchOut = len;
     HeapFree(GetProcessHeap(), 0, in);
     return ret;
 }
@@ -1623,8 +1629,10 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
     DWORD res1;
     HRESULT ret;
 
-    TRACE("(in %s, out size %d, flags %08x)\n",
-	  debugstr_w(pszIn), *pcchOut, dwFlags);
+    TRACE("(%s, %p, %p:out size %d, 0x%08x)\n", debugstr_w(pszIn),
+            pszOut, pcchOut, pcchOut ? *pcchOut : 0, dwFlags);
+
+    if (!pszIn || !pszOut || !pcchOut) return E_INVALIDARG;
 
     if (dwFlags & URL_APPLY_GUESSFILE) {
 	FIXME("(%s %p %p(%d) 0x%08x): stub URL_APPLY_GUESSFILE not implemented\n",
@@ -1669,14 +1677,6 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
 	return URL_ApplyDefault(pszIn, pszOut, pcchOut);
     }
 
-    /* just copy and give proper return code */
-    if (strlenW(pszIn) + 1 > *pcchOut) {
-	*pcchOut = strlenW(pszIn) + 1;
-	return E_POINTER;
-    }
-    strcpyW(pszOut, pszIn);
-    *pcchOut = strlenW(pszOut);
-    TRACE("returning copy, left alone\n");
     return S_FALSE;
 }
 
