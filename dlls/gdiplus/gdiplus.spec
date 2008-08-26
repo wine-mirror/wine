@@ -458,7 +458,7 @@
 @ stdcall GdipPathIterIsValid(ptr ptr)
 @ stdcall GdipPathIterNextMarker(ptr ptr ptr ptr)
 @ stdcall GdipPathIterNextMarkerPath(ptr ptr ptr)
-@ stub GdipPathIterNextPathType
+@ stdcall GdipPathIterNextPathType(ptr ptr ptr ptr ptr)
 @ stdcall GdipPathIterNextSubpath(ptr ptr ptr ptr ptr)
 @ stdcall GdipPathIterNextSubpathPath(ptr ptr ptr ptr)
 @ stdcall GdipPathIterRewind(ptr)

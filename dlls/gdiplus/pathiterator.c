@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 Google (Evan Stade)
+ * Copyright (C) 2008 Nikolay Sivov <bunglehead at gmail dot com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,6 +27,9 @@
 
 #include "gdiplus.h"
 #include "gdiplus_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 GpStatus WINGDIPAPI GdipCreatePathIter(GpPathIterator **iterator, GpPath* path)
 {
@@ -260,6 +264,15 @@ GpStatus WINGDIPAPI GdipPathIterIsValid(GpPathIterator* iterator, BOOL* valid)
     *valid = TRUE;
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipPathIterNextPathType(GpPathIterator* iter, INT* result,
+    BYTE* type, INT* start, INT* end)
+{
+    if(!iter || !result || !type || !start || !end)
+        return InvalidParameter;
+
+    return NotImplemented;
 }
 
 GpStatus WINGDIPAPI GdipPathIterNextSubpathPath(GpPathIterator* iter, INT* result,

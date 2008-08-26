@@ -476,6 +476,34 @@ static void test_nextsubpath(void)
     GdipDeletePath(path);
 }
 
+static void test_nextpathtype(void)
+{
+    GpPath *path;
+    GpPathIterator *iter;
+    GpStatus stat;
+    INT start, end, result;
+    BYTE type;
+
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipCreatePathIter(&iter, path);
+
+    /* NULL arguments */
+    stat = GdipPathIterNextPathType(NULL, NULL, NULL, NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextPathType(iter, NULL, NULL, NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextPathType(iter, &result, NULL, NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextPathType(iter, NULL, &type, NULL, NULL);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextPathType(iter, NULL, NULL, &start, &end);
+    expect(InvalidParameter, stat);
+    stat = GdipPathIterNextPathType(iter, NULL, &type, &start, &end);
+    expect(InvalidParameter, stat);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(pathiterator)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -496,6 +524,7 @@ START_TEST(pathiterator)
     test_isvalid();
     test_nextsubpathpath();
     test_nextsubpath();
+    test_nextpathtype();
 
     GdiplusShutdown(gdiplusToken);
 }
