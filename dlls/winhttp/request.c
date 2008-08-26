@@ -278,8 +278,6 @@ static BOOL insert_header( request_t *request, header_t *header )
     DWORD count;
     header_t *hdrs;
 
-    TRACE("inserting %s: %s\n", debugstr_w(header->field), debugstr_w(header->value));
-
     count = request->num_headers + 1;
     if (count > 1)
         hdrs = heap_realloc_zero( request->headers, sizeof(header_t) * count );
@@ -792,6 +790,160 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
     }
 
     ret = send_request( request, headers, headers_len, optional, optional_len, total_len, context );
+
+    release_object( &request->hdr );
+    return ret;
+}
+
+static void clear_response_headers( request_t *request )
+{
+    unsigned int i;
+
+    for (i = 0; i < request->num_headers; i++)
+    {
+        if (!request->headers[i].field) continue;
+        if (!request->headers[i].value) continue;
+        if (request->headers[i].is_request) continue;
+        delete_header( request, i );
+        i--;
+    }
+}
+
+#define MAX_REPLY_LEN   1460
+#define INITIAL_HEADER_BUFFER_SIZE  512
+
+static BOOL receive_response( request_t *request, BOOL clear )
+{
+    static const WCHAR crlf[] = {'\r','\n',0};
+
+    char buffer[MAX_REPLY_LEN];
+    DWORD buflen, len, offset, received_len, crlf_len = 2; /* strlenW(crlf) */
+    char *status_code, *status_text;
+    WCHAR *versionW, *status_textW, *raw_headers;
+    WCHAR status_codeW[4]; /* sizeof("nnn") */
+
+    if (!netconn_connected( &request->netconn )) return FALSE;
+
+    /* clear old response headers (eg. from a redirect response) */
+    if (clear) clear_response_headers( request );
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+
+    received_len = 0;
+    do
+    {
+        buflen = MAX_REPLY_LEN;
+        if (!netconn_get_next_line( &request->netconn, buffer, &buflen )) return FALSE;
+        received_len += buflen;
+
+        /* first line should look like 'HTTP/1.x nnn OK' where nnn is the status code */
+        if (!(status_code = strchr( buffer, ' ' ))) return FALSE;
+        status_code++;
+        if (!(status_text = strchr( status_code, ' ' ))) return FALSE;
+        if ((len = status_text - status_code) != sizeof("nnn") - 1) return FALSE;
+        status_text++;
+
+        TRACE("version [%s] status code [%s] status text [%s]\n",
+              debugstr_an(buffer, status_code - buffer - 1),
+              debugstr_an(status_code, len),
+              debugstr_a(status_text));
+
+    } while (!memcmp( status_code, "100", len )); /* ignore "100 Continue" responses */
+
+    /*  we rely on the fact that the protocol is ascii */
+    MultiByteToWideChar( CP_ACP, 0, status_code, len, status_codeW, len );
+    status_codeW[len] = 0;
+    if (!(process_header( request, attr_status, status_codeW, WINHTTP_ADDREQ_FLAG_REPLACE, FALSE ))) return FALSE;
+
+    len = status_code - buffer;
+    if (!(versionW = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( CP_ACP, 0, buffer, len - 1, versionW, len -1 );
+    versionW[len - 1] = 0;
+
+    heap_free( request->version );
+    request->version = versionW;
+
+    len = buflen - (status_text - buffer);
+    if (!(status_textW = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( CP_ACP, 0, status_text, len, status_textW, len );
+
+    heap_free( request->status_text );
+    request->status_text = status_textW;
+
+    len = max( buflen + crlf_len, INITIAL_HEADER_BUFFER_SIZE );
+    if (!(raw_headers = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers, buflen );
+    memcpy( raw_headers + buflen - 1, crlf, sizeof(crlf) );
+
+    heap_free( request->raw_headers );
+    request->raw_headers = raw_headers;
+
+    offset = buflen + crlf_len - 1;
+    for (;;)
+    {
+        header_t *header;
+
+        buflen = MAX_REPLY_LEN;
+        if (!netconn_get_next_line( &request->netconn, buffer, &buflen )) goto end;
+        received_len += buflen;
+        if (!*buffer) break;
+
+        while (len - offset < buflen + crlf_len)
+        {
+            WCHAR *tmp;
+            len *= 2;
+            if (!(tmp = heap_realloc( raw_headers, len * sizeof(WCHAR) ))) return FALSE;
+            request->raw_headers = raw_headers = tmp;
+        }
+        MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers + offset, buflen );
+
+        if (!(header = parse_header( raw_headers + offset ))) break;
+        if (!(process_header( request, header->field, header->value, WINHTTP_ADDREQ_FLAG_ADD, FALSE )))
+        {
+            free_header( header );
+            break;
+        }
+        free_header( header );
+        memcpy( raw_headers + offset + buflen - 1, crlf, sizeof(crlf) );
+        offset += buflen + crlf_len - 1;
+    }
+
+    TRACE("raw headers: %s\n", debugstr_w(raw_headers));
+
+end:
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, &received_len, sizeof(DWORD) );
+    return TRUE;
+}
+
+/***********************************************************************
+ *          WinHttpReceiveResponse (winhttp.@)
+ */
+BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
+{
+    BOOL ret = TRUE;
+    request_t *request;
+    DWORD size, query;
+
+    TRACE("%p, %p\n", hrequest, reserved);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    ret = receive_response( request, TRUE );
+
+    size = sizeof(DWORD);
+    query = WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER;
+    if (!query_headers( request, query, NULL, &request->content_length, &size, NULL ))
+        request->content_length = ~0UL;
 
     release_object( &request->hdr );
     return ret;

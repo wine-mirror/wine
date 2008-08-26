@@ -106,17 +106,6 @@ BOOL WINAPI WinHttpQueryDataAvailable (HINTERNET hInternet, LPDWORD lpdwNumberOf
 }
 
 /***********************************************************************
- *          WinHttpReceiveResponse (winhttp.@)
- */
-BOOL WINAPI WinHttpReceiveResponse (HINTERNET hRequest, LPVOID lpReserved)
-{
-    FIXME("stub\n");
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
-/***********************************************************************
  *          WinHttpSetOption (winhttp.@)
  */
 BOOL WINAPI WinHttpSetOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, DWORD dwBufferLength)

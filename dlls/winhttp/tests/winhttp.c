@@ -122,7 +122,7 @@ static void test_SendRequest (void)
     }
 
     ret = WinHttpReceiveResponse(request, NULL);
-    todo_wine ok(ret == TRUE, "WinHttpReceiveResponse failed: %u.\n", GetLastError());
+    ok(ret == TRUE, "WinHttpReceiveResponse failed: %u.\n", GetLastError());
 
     bytes_rw = -1;
     ret = WinHttpReadData(request, buffer, sizeof(buffer) - 1, &bytes_rw);
