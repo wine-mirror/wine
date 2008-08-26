@@ -913,7 +913,8 @@ static void test_PathCanonicalizeA(void)
     ok(!res, "Expected failure\n");
     todo_wine
     {
-        ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+        ok(GetLastError() == 0xdeadbeef || GetLastError() == ERROR_FILENAME_EXCED_RANGE /* Vista */,
+        "Expected 0xdeadbeef or ERROR_FILENAME_EXCED_RANGE, got %d\n", GetLastError());
     }
     ok(lstrlen(too_long) == LONG_LEN - 1, "Expected length LONG_LEN - 1, got %i\n", lstrlen(too_long));
 }
