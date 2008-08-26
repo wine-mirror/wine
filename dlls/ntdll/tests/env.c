@@ -155,7 +155,9 @@ static void testSetHelper(LPWSTR* env, const char* var, const char* val, NTSTATU
             ok(lstrcmpW(bval1, bval2) == 0, "Cannot get value written to environment\n");
             break;
         case STATUS_VARIABLE_NOT_FOUND:
-            ok(val == NULL, "Couldn't find variable, but didn't delete it. val = %s\n", val);
+            ok(val == NULL ||
+               broken(strchr(var,'=') != NULL), /* variable containing '=' may be set but not found again on NT4 */
+               "Couldn't find variable, but didn't delete it. val = %s\n", val);
             break;
         default:
             ok(0, "Wrong ret %u for %s\n", nts, var);
@@ -178,7 +180,7 @@ static void testSet(void)
     testSetHelper(&env, "cat", NULL, STATUS_SUCCESS, 0);
     testSetHelper(&env, "cat", NULL, STATUS_SUCCESS, STATUS_VARIABLE_NOT_FOUND);
     testSetHelper(&env, "foo", "meouw", STATUS_SUCCESS, 0);
-    testSetHelper(&env, "me=too", "also", STATUS_INVALID_PARAMETER, 0);
+    testSetHelper(&env, "me=too", "also", STATUS_SUCCESS, STATUS_INVALID_PARAMETER);
     testSetHelper(&env, "me", "too=also", STATUS_SUCCESS, 0);
     testSetHelper(&env, "=too", "also", STATUS_SUCCESS, 0);
     testSetHelper(&env, "=", "also", STATUS_SUCCESS, 0);
