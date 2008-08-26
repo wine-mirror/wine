@@ -109,35 +109,30 @@ static void test_verify_detached_message_hash(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     para.dwMsgEncodingType = X509_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     para.dwMsgEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     /* Curiously, passing no data to hash succeeds.. */
@@ -150,7 +145,6 @@ static void test_verify_detached_message_hash(void)
     pMsgData = msgData;
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, NULL, NULL);
-    todo_wine
     ok(ret, "CryptVerifyDetachedMessageHash failed: %08x\n", GetLastError());
     /* while passing data to hash that isn't the content of the message fails.
      */
@@ -159,7 +153,6 @@ static void test_verify_detached_message_hash(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_HASH_VALUE,
      "expected CRYPT_E_HASH_VALUE, got %08x\n", GetLastError());
     /* Getting the size of the hash while passing no hash data causes the
@@ -168,28 +161,23 @@ static void test_verify_detached_message_hash(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 0, NULL, NULL, NULL, &hashSize);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_HASH_VALUE,
      "expected CRYPT_E_HASH_VALUE, got %08x\n", GetLastError());
     size = sizeof(msgData);
     pMsgData = msgData;
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, NULL, &hashSize);
-    todo_wine {
     ok(ret, "CryptVerifyDetachedMessageHash failed: %08x\n", GetLastError());
     ok(hashSize == sizeof(hash), "unexpected size %d\n", hashSize);
-    }
     hashSize = 1;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, hash, &hashSize);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_MORE_DATA,
      "expected ERROR_MORE_DATA, got %08x\n", GetLastError());
     hashSize = sizeof(hash);
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), 1, &pMsgData, &size, hash, &hashSize);
-    todo_wine
     ok(ret, "CryptVerifyDetachedMessageHash failed: %08x\n", GetLastError());
 }
 
