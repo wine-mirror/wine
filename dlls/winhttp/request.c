@@ -948,3 +948,31 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
     release_object( &request->hdr );
     return ret;
 }
+
+/***********************************************************************
+ *          WinHttpQueryDataAvailable (winhttp.@)
+ */
+BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
+{
+    BOOL ret;
+    request_t *request;
+
+    TRACE("%p, %p\n", hrequest, available);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    ret = netconn_query_data_available( &request->netconn, available );
+
+    release_object( &request->hdr );
+    return ret;
+}
