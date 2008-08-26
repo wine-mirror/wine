@@ -106,6 +106,24 @@ HRESULT WINAPI CertTrustFinalPolicy(CRYPT_PROVIDER_DATA *pProvData)
 }
 
 /***********************************************************************
+ *		CertViewPropertiesA (CRYPTDLG.@)
+ */
+BOOL WINAPI CertViewPropertiesA(CERT_VIEWPROPERTIES_STRUCT_A *info)
+{
+    FIXME("(%p): stub\n", info);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		CertViewPropertiesW (CRYPTDLG.@)
+ */
+BOOL WINAPI CertViewPropertiesW(CERT_VIEWPROPERTIES_STRUCT_W *info)
+{
+    FIXME("(%p): stub\n", info);
+    return FALSE;
+}
+
+/***********************************************************************
  *		DllRegisterServer (CRYPTDLG.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

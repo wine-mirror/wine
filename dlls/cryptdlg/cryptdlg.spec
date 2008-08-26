@@ -13,8 +13,8 @@
 13 stub CertModifyCertificatesToTrust
 14 stub CertSelectCertificateA
 15 stub CertSelectCertificateW
-16 stub CertViewPropertiesA
-17 stub CertViewPropertiesW
+16 stdcall CertViewPropertiesA(ptr)
+17 stdcall CertViewPropertiesW(ptr)
 18 stdcall -private DllRegisterServer()
 19 stdcall -private DllUnregisterServer()
 20 stdcall GetFriendlyNameOfCertA(ptr ptr long)
