@@ -2221,10 +2221,11 @@ const shader_backend_t arb_program_shader_backend = {
 };
 
 /* ARB_fragment_program fixed function pipeline replacement definitions */
-#define ARB_FFP_CONST_TFACTOR       0
-#define ARB_FFP_CONST_CONSTANT(i)   ((ARB_FFP_CONST_TFACTOR) + 1 + i)
-#define ARB_FFP_CONST_BUMPMAT(i)    ((ARB_FFP_CONST_CONSTANT(7)) + 1 + i)
-#define ARB_FFP_CONST_LUMINANCE(i)  ((ARB_FFP_CONST_BUMPMAT(7)) + 1 + i)
+#define ARB_FFP_CONST_TFACTOR           0
+#define ARB_FFP_CONST_SPECULAR_ENABLE   ((ARB_FFP_CONST_TFACTOR) + 1)
+#define ARB_FFP_CONST_CONSTANT(i)       ((ARB_FFP_CONST_SPECULAR_ENABLE) + 1 + i)
+#define ARB_FFP_CONST_BUMPMAT(i)        ((ARB_FFP_CONST_CONSTANT(7)) + 1 + i)
+#define ARB_FFP_CONST_LUMINANCE(i)      ((ARB_FFP_CONST_BUMPMAT(7)) + 1 + i)
 
 struct arbfp_ffp_desc
 {
@@ -2337,6 +2338,31 @@ static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *statebloc
         device = stateblock->wineD3DDevice;
         device->activeContext->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
+    }
+}
+
+static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    float col[4];
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+
+    /* Do not overwrite pixel shader constants if a pshader is in use */
+    if(use_ps(device)) return;
+
+    if(stateblock->renderState[WINED3DRS_SPECULARENABLE]) {
+        /* The specular color has no alpha */
+        col[0] = 1.0; col[1] = 1.0;
+        col[2] = 1.0; col[3] = 0.0;
+    } else {
+        col[0] = 0.0; col[1] = 0.0;
+        col[2] = 0.0; col[3] = 0.0;
+    }
+    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col));
+    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col)");
+
+    if(device->shader_backend == &arb_program_shader_backend) {
+        device = stateblock->wineD3DDevice;
+        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
+        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
 }
 
@@ -2474,7 +2500,7 @@ static const char *get_argreg(SHADER_BUFFER *buffer, DWORD argnum, unsigned int 
     return ret;
 }
 
-static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color, BOOL alpha, BOOL last,
+static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color, BOOL alpha,
                           DWORD dst, DWORD op, DWORD dw_arg0, DWORD dw_arg1, DWORD dw_arg2) {
     const char *dstmask, *dstreg, *arg0, *arg1, *arg2;
     unsigned int mul = 1;
@@ -2484,9 +2510,7 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
     else if(color) dstmask = ".rgb";
     else dstmask = ".a";
 
-    if(dst == tempreg && last) FIXME("Last texture stage writes to D3DTA_TEMP\n");
     if(dst == tempreg) dstreg = "tempreg";
-    else if(last) dstreg = "result.color";
     else dstreg = "ret";
 
     arg0 = get_argreg(buffer, 0, stage, dw_arg0);
@@ -2627,8 +2651,8 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     GLuint ret;
     DWORD arg0, arg1, arg2;
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
-    BOOL last = FALSE;
     BOOL op_equal;
+    const char *final_combiner_src = "ret";
 
     /* Find out which textures are read */
     for(stage = 0; stage < MAX_TEXTURES; stage++) {
@@ -2712,6 +2736,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     if(tfactor_used) {
         shader_addline(&buffer, "PARAM tfactor = program.env[%u];\n", ARB_FFP_CONST_TFACTOR);
     }
+        shader_addline(&buffer, "PARAM specular_enable = program.env[%u];\n", ARB_FFP_CONST_SPECULAR_ENABLE);
 
     if(settings->sRGB_write) {
         shader_addline(&buffer, "PARAM srgb_mul_low = {%f, %f, %f, 1.0};\n",
@@ -2808,15 +2833,9 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     for(stage = 0; stage < MAX_TEXTURES; stage++) {
         if(settings->op[stage].cop == WINED3DTOP_DISABLE) {
             if(stage == 0) {
-                shader_addline(&buffer, "MOV result.color, fragment.color.primary;\n");
+                final_combiner_src = "fragment.color.primary";
             }
             break;
-        } else if(settings->sRGB_write) {
-            last = FALSE;
-        } else if(stage == (MAX_TEXTURES - 1)) {
-            last = TRUE;
-        } else if(settings->op[stage + 1].cop == WINED3DTOP_DISABLE) {
-            last = TRUE;
         }
 
         if(settings->op[stage].cop == WINED3DTOP_SELECTARG1 &&
@@ -2839,33 +2858,32 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
         }
 
         if(settings->op[stage].aop == WINED3DTOP_DISABLE) {
-            gen_ffp_instr(&buffer, stage, TRUE, FALSE, last, settings->op[stage].dst,
+            gen_ffp_instr(&buffer, stage, TRUE, FALSE, settings->op[stage].dst,
                           settings->op[stage].cop, settings->op[stage].carg0,
                           settings->op[stage].carg1, settings->op[stage].carg2);
-            if(last && stage == 0) {
-                shader_addline(&buffer, "MOV result.color.a, fragment.color.primary.a;\n");
-            } else if(last) {
-                shader_addline(&buffer, "MOV result.color.a, ret.a;\n");
-            } else if(stage == 0) {
+            if(stage == 0) {
                 shader_addline(&buffer, "MOV ret.a, fragment.color.primary.a;\n");
             }
         } else if(op_equal) {
-            gen_ffp_instr(&buffer, stage, TRUE, TRUE, last, settings->op[stage].dst,
+            gen_ffp_instr(&buffer, stage, TRUE, TRUE, settings->op[stage].dst,
                           settings->op[stage].cop, settings->op[stage].carg0,
                           settings->op[stage].carg1, settings->op[stage].carg2);
         } else {
-            gen_ffp_instr(&buffer, stage, TRUE, FALSE, last, settings->op[stage].dst,
+            gen_ffp_instr(&buffer, stage, TRUE, FALSE, settings->op[stage].dst,
                           settings->op[stage].cop, settings->op[stage].carg0,
                           settings->op[stage].carg1, settings->op[stage].carg2);
-            gen_ffp_instr(&buffer, stage, FALSE, TRUE, last, settings->op[stage].dst,
+            gen_ffp_instr(&buffer, stage, FALSE, TRUE, settings->op[stage].dst,
                           settings->op[stage].aop, settings->op[stage].aarg0,
                           settings->op[stage].aarg1, settings->op[stage].aarg2);
         }
     }
 
     if(settings->sRGB_write) {
+        shader_addline(&buffer, "MAD ret, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
         arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg");
         shader_addline(&buffer, "MOV result.color.a, ret.a;\n");
+    } else {
+        shader_addline(&buffer, "MAD result.color, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
     }
 
     /* Footer */
@@ -2938,6 +2956,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
                 set_bumpmat_arbfp(STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00), stateblock, context);
             }
             state_texfactor_arbfp(STATE_RENDER(WINED3DRS_TEXTUREFACTOR), stateblock, context);
+            state_arb_specularenable(STATE_RENDER(WINED3DRS_SPECULARENABLE), stateblock, context);
         }
     }
 
@@ -3125,6 +3144,7 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(5,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(5, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
     {STATE_TEXTURESTAGE(6,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(6, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
     {STATE_TEXTURESTAGE(7,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(7, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, 0                               },
+    { STATE_RENDER(WINED3DRS_SPECULARENABLE),             { STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_arb_specularenable}, 0                               },
     {0 /* Terminate */,                                   { 0,                                                  0                       }, 0                               },
 };
 
