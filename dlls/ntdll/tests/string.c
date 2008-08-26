@@ -939,6 +939,7 @@ static void test_wtol(void)
 typedef struct {
     const char *str;
     LONGLONG value;
+    int overflow;
 } str2longlong_t;
 
 static const str2longlong_t str2longlong[] = {
@@ -993,8 +994,8 @@ static const str2longlong_t str2longlong[] = {
     { "00x12345",              0   },
     { "0xx12345",              0   },
     { "1x34",                  1   },
-    { "-99999999999999999999", -ULL(0x6bc75e2d,0x630fffff) }, /* Big negative integer */
-    { "-9223372036854775809",   ULL(0x7fffffff,0xffffffff) }, /* Too small to fit in 64 bits */
+    { "-99999999999999999999", -ULL(0x6bc75e2d,0x630fffff), -1 }, /* Big negative integer */
+    { "-9223372036854775809",   ULL(0x7fffffff,0xffffffff), -1 }, /* Too small to fit in 64 bits */
     { "-9223372036854775808",   ULL(0x80000000,0x00000000) }, /* Smallest negative 64 bit integer */
     { "-9223372036854775807",  -ULL(0x7fffffff,0xffffffff) },
     { "-9999999999",           -ULL(0x00000002,0x540be3ff) },
@@ -1014,12 +1015,12 @@ static const str2longlong_t str2longlong[] = {
     { "9999999999",             ULL(0x00000002,0x540be3ff) },
     { "9223372036854775806",    ULL(0x7fffffff,0xfffffffe) },
     { "9223372036854775807",    ULL(0x7fffffff,0xffffffff) }, /* Largest signed positive 64 bit integer */
-    { "9223372036854775808",    ULL(0x80000000,0x00000000) }, /* Pos int equal to smallest neg 64 bit int */
-    { "9223372036854775809",    ULL(0x80000000,0x00000001) },
-    { "18446744073709551614",   ULL(0xffffffff,0xfffffffe) },
-    { "18446744073709551615",   ULL(0xffffffff,0xffffffff) }, /* Largest unsigned 64 bit integer */
-    { "18446744073709551616",                            0 }, /* Too big to fit in 64 bits */
-    { "99999999999999999999",   ULL(0x6bc75e2d,0x630fffff) }, /* Big positive integer */
+    { "9223372036854775808",    ULL(0x80000000,0x00000000), 1 }, /* Pos int equal to smallest neg 64 bit int */
+    { "9223372036854775809",    ULL(0x80000000,0x00000001), 1 },
+    { "18446744073709551614",   ULL(0xffffffff,0xfffffffe), 1 },
+    { "18446744073709551615",   ULL(0xffffffff,0xffffffff), 1 }, /* Largest unsigned 64 bit integer */
+    { "18446744073709551616",                            0, 1 }, /* Too big to fit in 64 bits */
+    { "99999999999999999999",   ULL(0x6bc75e2d,0x630fffff), 1 }, /* Big positive integer */
     { "056789",            56789   }, /* Leading zero and still decimal */
     { "b1011101100",           0   }, /* Binary (b-notation) */
     { "-b1011101100",          0   }, /* Negative Binary (b-notation) */
@@ -1066,11 +1067,19 @@ static void test_atoi64(void)
 
     for (test_num = 0; test_num < NB_STR2LONGLONG; test_num++) {
 	result = p_atoi64(str2longlong[test_num].str);
-	ok(result == str2longlong[test_num].value,
-           "(test %d): call failed: _atoi64(\"%s\") has result 0x%x%08x, expected: 0x%x%08x\n",
-	   test_num, str2longlong[test_num].str, (DWORD)(result >> 32), (DWORD)result,
-	   (DWORD)(str2longlong[test_num].value >> 32), (DWORD)str2longlong[test_num].value);
-    } /* for */
+        if (str2longlong[test_num].overflow)
+            ok(result == str2longlong[test_num].value ||
+               (result == (str2longlong[test_num].overflow == -1) ?
+                ULL(0x80000000,0x00000000) : ULL(0x7fffffff,0xffffffff)),
+               "(test %d): call failed: _atoi64(\"%s\") has result 0x%x%08x, expected: 0x%x%08x\n",
+               test_num, str2longlong[test_num].str, (DWORD)(result >> 32), (DWORD)result,
+               (DWORD)(str2longlong[test_num].value >> 32), (DWORD)str2longlong[test_num].value);
+        else
+            ok(result == str2longlong[test_num].value,
+               "(test %d): call failed: _atoi64(\"%s\") has result 0x%x%08x, expected: 0x%x%08x\n",
+               test_num, str2longlong[test_num].str, (DWORD)(result >> 32), (DWORD)result,
+               (DWORD)(str2longlong[test_num].value >> 32), (DWORD)str2longlong[test_num].value);
+    }
 }
 
 
@@ -1083,12 +1092,20 @@ static void test_wtoi64(void)
     for (test_num = 0; test_num < NB_STR2LONGLONG; test_num++) {
 	pRtlCreateUnicodeStringFromAsciiz(&uni, str2longlong[test_num].str);
 	result = p_wtoi64(uni.Buffer);
-	ok(result == str2longlong[test_num].value,
-           "(test %d): call failed: _wtoi64(\"%s\") has result 0x%x%08x, expected: 0x%x%08x\n",
-	   test_num, str2longlong[test_num].str, (DWORD)(result >> 32), (DWORD)result, 
-	   (DWORD)(str2longlong[test_num].value >> 32), (DWORD)str2longlong[test_num].value);
+        if (str2longlong[test_num].overflow)
+            ok(result == str2longlong[test_num].value ||
+               (result == (str2longlong[test_num].overflow == -1) ?
+                ULL(0x80000000,0x00000000) : ULL(0x7fffffff,0xffffffff)),
+               "(test %d): call failed: _atoi64(\"%s\") has result 0x%x%08x, expected: 0x%x%08x\n",
+               test_num, str2longlong[test_num].str, (DWORD)(result >> 32), (DWORD)result,
+               (DWORD)(str2longlong[test_num].value >> 32), (DWORD)str2longlong[test_num].value);
+        else
+            ok(result == str2longlong[test_num].value,
+               "(test %d): call failed: _atoi64(\"%s\") has result 0x%x%08x, expected: 0x%x%08x\n",
+               test_num, str2longlong[test_num].str, (DWORD)(result >> 32), (DWORD)result,
+               (DWORD)(str2longlong[test_num].value >> 32), (DWORD)str2longlong[test_num].value);
 	pRtlFreeUnicodeString(&uni);
-    } /* for */
+    }
 }
 
 static void test_wcsfuncs(void)

@@ -1218,7 +1218,7 @@ typedef struct {
     int base;
     const char *str;
     int value;
-    NTSTATUS result;
+    NTSTATUS result, alternative;
 } str2int_t;
 
 static const str2int_t str2int[] = {
@@ -1297,7 +1297,7 @@ static const str2int_t str2int[] = {
     { 0, "0xF",                 0xf, STATUS_SUCCESS}, /* one digit hexadecimal */
     { 0, "0xG",                   0, STATUS_SUCCESS}, /* empty hexadecimal */
     { 0, "0x",                    0, STATUS_SUCCESS}, /* empty hexadecimal */
-    { 0, "",                      0, STATUS_SUCCESS}, /* empty string */
+    { 0, "",                      0, STATUS_SUCCESS, STATUS_INVALID_PARAMETER}, /* empty string */
     { 2, "1011101100",          748, STATUS_SUCCESS},
     { 2, "-1011101100",        -748, STATUS_SUCCESS},
     { 2, "2",                     0, STATUS_SUCCESS},
@@ -1305,7 +1305,7 @@ static const str2int_t str2int[] = {
     { 2, "0o1011101100",          0, STATUS_SUCCESS},
     { 2, "0d1011101100",          0, STATUS_SUCCESS},
     { 2, "0x1011101100",          0, STATUS_SUCCESS},
-    { 2, "",                      0, STATUS_SUCCESS}, /* empty string */
+    { 2, "",                      0, STATUS_SUCCESS, STATUS_INVALID_PARAMETER}, /* empty string */
     { 8, "1011101100",    136610368, STATUS_SUCCESS},
     { 8, "-1011101100",  -136610368, STATUS_SUCCESS},
     { 8, "8",                     0, STATUS_SUCCESS},
@@ -1313,7 +1313,7 @@ static const str2int_t str2int[] = {
     { 8, "0o1011101100",          0, STATUS_SUCCESS},
     { 8, "0d1011101100",          0, STATUS_SUCCESS},
     { 8, "0x1011101100",          0, STATUS_SUCCESS},
-    { 8, "",                      0, STATUS_SUCCESS}, /* empty string */
+    { 8, "",                      0, STATUS_SUCCESS, STATUS_INVALID_PARAMETER}, /* empty string */
     {10, "1011101100",   1011101100, STATUS_SUCCESS},
     {10, "-1011101100", -1011101100, STATUS_SUCCESS},
     {10, "0b1011101100",          0, STATUS_SUCCESS},
@@ -1321,7 +1321,7 @@ static const str2int_t str2int[] = {
     {10, "0d1011101100",          0, STATUS_SUCCESS},
     {10, "0x1011101100",          0, STATUS_SUCCESS},
     {10, "o12345",                0, STATUS_SUCCESS}, /* Octal although base is 10 */
-    {10, "",                      0, STATUS_SUCCESS}, /* empty string */
+    {10, "",                      0, STATUS_SUCCESS, STATUS_INVALID_PARAMETER}, /* empty string */
     {16, "1011101100",    286265600, STATUS_SUCCESS},
     {16, "-1011101100",  -286265600, STATUS_SUCCESS},
     {16, "G",                     0, STATUS_SUCCESS},
@@ -1330,9 +1330,9 @@ static const str2int_t str2int[] = {
     {16, "0o1011101100",          0, STATUS_SUCCESS},
     {16, "0d1011101100",  286265600, STATUS_SUCCESS},
     {16, "0x1011101100",          0, STATUS_SUCCESS},
-    {16, "",                      0, STATUS_SUCCESS}, /* empty string */
-    {20, "0",            0xdeadbeef, STATUS_INVALID_PARAMETER}, /* illegal base */
-    {-8, "0",            0xdeadbeef, STATUS_INVALID_PARAMETER}, /* Negative base */
+    {16, "",                      0, STATUS_SUCCESS, STATUS_INVALID_PARAMETER}, /* empty string */
+    {20, "0",                     0, STATUS_INVALID_PARAMETER}, /* illegal base */
+    {-8, "0",                     0, STATUS_INVALID_PARAMETER}, /* Negative base */
 /*    { 0, NULL,                    0, STATUS_SUCCESS}, */ /* NULL as string */
 };
 #define NB_STR2INT (sizeof(str2int)/sizeof(*str2int))
@@ -1351,12 +1351,19 @@ static void test_RtlUnicodeStringToInteger(void)
 	value = 0xdeadbeef;
 	pRtlInitUnicodeString(&uni, wstr);
 	result = pRtlUnicodeStringToInteger(&uni, str2int[test_num].base, &value);
-	ok(result == str2int[test_num].result,
-           "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) has result %x, expected: %x\n",
-	   test_num, str2int[test_num].str, str2int[test_num].base, result, str2int[test_num].result);
-	ok(value == str2int[test_num].value,
-	   "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
-	   test_num, str2int[test_num].str, str2int[test_num].base, value, str2int[test_num].value);
+	ok(result == str2int[test_num].result ||
+           (str2int[test_num].alternative && result == str2int[test_num].alternative),
+           "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) has result %x, expected: %x (%x)\n",
+	   test_num, str2int[test_num].str, str2int[test_num].base, result,
+           str2int[test_num].result, str2int[test_num].alternative);
+        if (result == STATUS_SUCCESS)
+            ok(value == str2int[test_num].value,
+               "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
+               test_num, str2int[test_num].str, str2int[test_num].base, value, str2int[test_num].value);
+        else
+            ok(value == 0xdeadbeef || value == 0 /* vista */,
+               "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) assigns value %d, expected 0 or deadbeef\n",
+               test_num, str2int[test_num].str, str2int[test_num].base, value);
 	free(wstr);
     }
 
@@ -1367,7 +1374,7 @@ static void test_RtlUnicodeStringToInteger(void)
        "call failed: RtlUnicodeStringToInteger(\"%s\", %d, NULL) has result %x\n",
        str2int[1].str, str2int[1].base, result);
     result = pRtlUnicodeStringToInteger(&uni, 20, NULL);
-    ok(result == STATUS_INVALID_PARAMETER,
+    ok(result == STATUS_INVALID_PARAMETER || result == STATUS_ACCESS_VIOLATION,
        "call failed: RtlUnicodeStringToInteger(\"%s\", 20, NULL) has result %x\n",
        str2int[1].str, result);
 
@@ -1382,12 +1389,11 @@ static void test_RtlUnicodeStringToInteger(void)
 
     uni.Length = 5; /* Use odd Length (2.5 WCHARS) */
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, &value);
-    ok(result == STATUS_SUCCESS,
+    ok(result == STATUS_SUCCESS || result == STATUS_INVALID_PARAMETER /* vista */,
        "call failed: RtlUnicodeStringToInteger(\"12\", %d, [out]) has result %x\n",
        str2int[1].base, result);
-    ok(value == 12,
-       "didn't return expected value (test b): expected: %d, got: %d\n",
-       12, value);
+    if (result == STATUS_SUCCESS)
+        ok(value == 12, "didn't return expected value (test b): expected: %d, got: %d\n", 12, value);
 
     uni.Length = 2;
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, &value);
@@ -1413,12 +1419,19 @@ static void test_RtlCharToInteger(void)
 	if (str2int[test_num].str[0] != '\0') {
 	    value = 0xdeadbeef;
 	    result = pRtlCharToInteger(str2int[test_num].str, str2int[test_num].base, &value);
-	    ok(result == str2int[test_num].result,
-               "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) has result %x, expected: %x\n",
-	       test_num, str2int[test_num].str, str2int[test_num].base, result, str2int[test_num].result);
-	    ok(value == str2int[test_num].value,
-	       "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
-	       test_num, str2int[test_num].str, str2int[test_num].base, value, str2int[test_num].value);
+	    ok(result == str2int[test_num].result ||
+               (str2int[test_num].alternative && result == str2int[test_num].alternative),
+               "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) has result %x, expected: %x (%x)\n",
+	       test_num, str2int[test_num].str, str2int[test_num].base, result,
+               str2int[test_num].result, str2int[test_num].alternative);
+            if (result == STATUS_SUCCESS)
+                ok(value == str2int[test_num].value,
+                   "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
+                   test_num, str2int[test_num].str, str2int[test_num].base, value, str2int[test_num].value);
+            else
+                ok(value == 0 || value == 0xdeadbeef,
+                   "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) assigns value %d, expected 0 or deadbeef\n",
+                   test_num, str2int[test_num].str, str2int[test_num].base, value);
 	}
     }
 
