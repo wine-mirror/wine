@@ -1,7 +1,7 @@
 /* Unit test suite for Path functions
  *
  * Copyright 2002 Matthew Mastracci
- * Copyright 2007 Detlef Riekenberg
+ * Copyright 2007,2008 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,35 @@ static const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%20
 static const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
 static const WCHAR winehqW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
 static const  CHAR winehqA[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
+
+/* ################ */
+
+static const CHAR untouchedA[] = "untouched";
+
+#define TEST_APPLY_MAX_LENGTH INTERNET_MAX_URL_LENGTH
+
+typedef struct _TEST_URL_APPLY {
+    const char * url;
+    DWORD flags;
+    HRESULT res;
+    DWORD newlen;
+    const char * newurl;
+} TEST_URL_APPLY;
+
+static const TEST_URL_APPLY TEST_APPLY[] = {
+    {"www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 21, "http://www.winehq.org"},
+    {"www.winehq.org", URL_APPLY_GUESSSCHEME, S_OK, 21, "http://www.winehq.org"},
+    {"www.winehq.org", URL_APPLY_DEFAULT, S_OK, 21, "http://www.winehq.org"},
+    {"ftp.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 20, "ftp://ftp.winehq.org"},
+    {"ftp.winehq.org", URL_APPLY_GUESSSCHEME, S_OK, 20, "ftp://ftp.winehq.org"},
+    {"ftp.winehq.org", URL_APPLY_DEFAULT, S_OK, 21, "http://ftp.winehq.org"},
+    {"winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 17, "http://winehq.org"},
+    {"winehq.org", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"winehq.org", URL_APPLY_DEFAULT, S_OK, 17, "http://winehq.org"},
+    {"", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 7, "http://"},
+    {"", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"", URL_APPLY_DEFAULT, S_OK, 7, "http://"}
+};
 
 /* ################ */
 
@@ -334,6 +363,79 @@ static LPWSTR GetWideString(const char* szString)
 static void FreeWideString(LPWSTR wszString)
 {
    HeapFree(GetProcessHeap(), 0, wszString);
+}
+
+/* ########################### */
+
+static void test_UrlApplyScheme(void)
+{
+    CHAR newurl[TEST_APPLY_MAX_LENGTH];
+    WCHAR urlW[TEST_APPLY_MAX_LENGTH];
+    WCHAR newurlW[TEST_APPLY_MAX_LENGTH];
+    HRESULT res;
+    DWORD len;
+    DWORD i;
+
+    for(i = 0; i < sizeof(TEST_APPLY)/sizeof(TEST_APPLY[0]); i++) {
+        len = TEST_APPLY_MAX_LENGTH;
+        lstrcpyA(newurl, untouchedA);
+        res = UrlApplySchemeA(TEST_APPLY[i].url, newurl, &len, TEST_APPLY[i].flags);
+        ok( res == TEST_APPLY[i].res,
+            "#%dA: got HRESULT 0x%x (expected 0x%x)\n", i, res, TEST_APPLY[i].res);
+
+        ok( len == TEST_APPLY[i].newlen,
+            "#%dA: got len %d (expected %d)\n", i, len, TEST_APPLY[i].newlen);
+
+        ok( !lstrcmpA(newurl, TEST_APPLY[i].newurl),
+            "#%dA: got '%s' (expected '%s')\n", i, newurl, TEST_APPLY[i].newurl);
+
+        /* returned length is in character */
+        len = TEST_APPLY_MAX_LENGTH;
+        lstrcpyA(newurl, untouchedA);
+        MultiByteToWideChar(CP_ACP, 0, newurl, -1, newurlW, len);
+        MultiByteToWideChar(CP_ACP, 0, TEST_APPLY[i].url, -1, urlW, len);
+
+        res = UrlApplySchemeW(urlW, newurlW, &len, TEST_APPLY[i].flags);
+        WideCharToMultiByte(CP_ACP, 0, newurlW, -1, newurl, TEST_APPLY_MAX_LENGTH, NULL, NULL);
+        ok( res == TEST_APPLY[i].res,
+            "#%dW: got HRESULT 0x%x (expected 0x%x)\n", i, res, TEST_APPLY[i].res);
+
+        ok( len == TEST_APPLY[i].newlen,
+            "#%dW: got len %d (expected %d)\n", i, len, TEST_APPLY[i].newlen);
+
+        ok( !lstrcmpA(newurl, TEST_APPLY[i].newurl),
+            "#%dW: got '%s' (expected '%s')\n", i, newurl, TEST_APPLY[i].newurl);
+
+    }
+
+    /* buffer too small */
+    lstrcpyA(newurl, untouchedA);
+    len = lstrlenA(TEST_APPLY[0].newurl);
+    res = UrlApplySchemeA(TEST_APPLY[0].url, newurl, &len, TEST_APPLY[0].flags);
+    ok(res == E_POINTER, "got HRESULT 0x%x (expected E_POINTER)\n", res);
+    /* The returned length include the space for the terminating 0 */
+    i = lstrlenA(TEST_APPLY[0].newurl)+1;
+    ok(len == i, "got len %d (expected %d)\n", len, i);
+    ok(!lstrcmpA(newurl, untouchedA), "got '%s' (expected '%s')\n", newurl, untouchedA);
+
+    /* NULL as parameter. The length and the buffer are not modified */
+    lstrcpyA(newurl, untouchedA);
+    len = TEST_APPLY_MAX_LENGTH;
+    res = UrlApplySchemeA(NULL, newurl, &len, TEST_APPLY[0].flags);
+    ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
+    ok(len == TEST_APPLY_MAX_LENGTH, "got len %d (expected %d)\n", len, TEST_APPLY_MAX_LENGTH);
+    ok(!lstrcmpA(newurl, untouchedA), "got '%s' (expected '%s')\n", newurl, untouchedA);
+
+    len = TEST_APPLY_MAX_LENGTH;
+    res = UrlApplySchemeA(TEST_APPLY[0].url, NULL, &len, TEST_APPLY[0].flags);
+    ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
+    ok(len == TEST_APPLY_MAX_LENGTH, "got len %d (expected %d)\n", len, TEST_APPLY_MAX_LENGTH);
+
+    lstrcpyA(newurl, untouchedA);
+    res = UrlApplySchemeA(TEST_APPLY[0].url, newurl, NULL, TEST_APPLY[0].flags);
+    ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
+    ok(!lstrcmpA(newurl, untouchedA), "got '%s' (expected '%s')\n", newurl, untouchedA);
+
 }
 
 /* ########################### */
@@ -840,6 +942,7 @@ START_TEST(url)
   hShlwapi = GetModuleHandleA("shlwapi.dll");
   pUrlCanonicalizeW = (void *) GetProcAddress(hShlwapi, "UrlCanonicalizeW");
 
+  test_UrlApplyScheme();
   test_UrlHash();
   test_UrlGetPart();
   test_UrlCanonicalizeA();
