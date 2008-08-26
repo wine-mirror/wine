@@ -123,7 +123,7 @@ static void test_SHAppBarMessage(void)
         ok(abd.hWnd == (HWND)0xcccccccc, "hWnd overwritten\n");
 todo_wine
 {
-        ok(abd.uEdge >= ABE_LEFT && abd.uEdge <= ABE_BOTTOM, "uEdge not returned\n");
+        ok(abd.uEdge <= ABE_BOTTOM, "uEdge not returned\n");
         ok(abd.rc.left != 0xcccccccc, "rc not updated\n");
 }
     }
