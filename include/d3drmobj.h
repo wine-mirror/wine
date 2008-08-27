@@ -65,6 +65,9 @@ typedef struct _D3DRMPICKDESC2
 /*****************************************************************************
  * IDirect3DRMObject interface
  */
+#ifdef WINE_NO_UNICODE_MACROS
+#undef GetClassName
+#endif
 #define INTERFACE IDirect3DRMObject
 DECLARE_INTERFACE_(IDirect3DRMObject,IUnknown)
 {
