@@ -19,140 +19,145 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* Chinese text is encoded in UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
 /* Menu */
 
 IDM_WINEFILE MENU FIXED IMPURE
 {
-    POPUP "ÎÄ¼þ£¨&F£©"  {
-        MENUITEM "´ò¿ª£¨&O£©\tEnter",           ID_ACTIVATE
-        MENUITEM "ÒÆ¶¯£¨&M£©...\tF7",           ID_FILE_MOVE
-        MENUITEM "¸´ÖÆ£¨&C£©...\tF8",           ID_FILE_COPY
-        MENUITEM "Î»ÓÚ¼ôÌù°å£¨&I£©...\tF9",     118
-        MENUITEM "É¾³ý£¨&D£©\tDel",             ID_FILE_DELETE
-        MENUITEM "¸ÄÃû£¨&N£©...",               109
-        MENUITEM "ÊôÐÔ£¨&I£©...\tAlt+Enter",    ID_EDIT_PROPERTIES
+    POPUP "æ–‡ä»¶(&F)"  {
+        MENUITEM "æ‰“å¼€(&O)\tEnter",           ID_ACTIVATE
+        MENUITEM "ç§»åŠ¨(&M)...\tF7",           ID_FILE_MOVE
+        MENUITEM "å¤åˆ¶(&C)...\tF8",           ID_FILE_COPY
+        MENUITEM "ä½äºŽå‰ªè´´æ¿(&I)...\tF9",     118
+        MENUITEM "åˆ é™¤(&D)\tDel",             ID_FILE_DELETE
+        MENUITEM "æ”¹å(&N)...",               109
+        MENUITEM "å±žæ€§(&I)...\tAlt+Enter",    ID_EDIT_PROPERTIES
         MENUITEM SEPARATOR
-        MENUITEM "Ñ¹Ëõ£¨&O£©...",               119
-        MENUITEM "½âÑ¹Ëõ£¨&O£©...",             120
+        MENUITEM "åŽ‹ç¼©(&O)...",               119
+        MENUITEM "è§£åŽ‹ç¼©(&O)...",             120
         MENUITEM SEPARATOR
-        MENUITEM "ÔËÐÐ£¨&R£©...",               ID_EXECUTE
-        MENUITEM "´òÓ¡£¨&P£©...",               102
-        MENUITEM "ÅäÖÃÎÄ¼þÏà¹Ø...",             103
+        MENUITEM "è¿è¡Œ(&R)...",               ID_EXECUTE
+        MENUITEM "æ‰“å°(&P)...",               102
+        MENUITEM "é…ç½®æ–‡ä»¶ç›¸å…³...",             103
         MENUITEM SEPARATOR
-        MENUITEM "½¨Á¢Ä¿Â¼£¨&E£©...",           111
-        MENUITEM "²éÕÒ£¨&H£©...",               104
-        MENUITEM "Ñ¡ÔñÎÄ¼þ£¨&S£©...",           116
+        MENUITEM "å»ºç«‹ç›®å½•(&E)...",           111
+        MENUITEM "æŸ¥æ‰¾(&H)...",               104
+        MENUITEM "é€‰æ‹©æ–‡ä»¶(&S)...",           116
         MENUITEM SEPARATOR
 #ifndef _NO_EXTENSIONS
-        MENUITEM "ÍË³ö£¨&X£©\tAlt+X",           ID_FILE_EXIT
+        MENUITEM "é€€å‡º(&X)\tAlt+X",           ID_FILE_EXIT
 #else
-        MENUITEM "ÍË³ö£¨&X£©",                  ID_FILE_EXIT
+        MENUITEM "é€€å‡º(&X)",                  ID_FILE_EXIT
 #endif
     }
 
-    POPUP "´ÅÅÌ£¨&D£©"  {
-        MENUITEM "¸´ÖÆ£¨&C£©...",               201
-        MENUITEM "ÃüÃû£¨&L£©...",               202
+    POPUP "ç£ç›˜(&D)"  {
+        MENUITEM "å¤åˆ¶(&C)...",               201
+        MENUITEM "å‘½å(&L)...",               202
         MENUITEM SEPARATOR
-        MENUITEM "¸ñÊ½»¯£¨&£©...",              ID_FORMAT_DISK
+        MENUITEM "æ ¼å¼åŒ–(&)...",              ID_FORMAT_DISK
 #ifdef _WIN95
-        MENUITEM "½¨Á¢ÏµÍ³ÅÌ£¨&M£©...", -1  /*TODO*/
+        MENUITEM "å»ºç«‹ç³»ç»Ÿç›˜(&M)...", -1  /*TODO*/
 #endif
         MENUITEM SEPARATOR
-        MENUITEM "Á¬½ÓÍøÂçÇý¶¯Æ÷£¨&N£©",        ID_CONNECT_NETWORK_DRIVE
-        MENUITEM "¶Ï¿ªÍøÂçÇý¶¯Æ÷Á¬½Ó£¨&D£©",    ID_DISCONNECT_NETWORK_DRIVE
+        MENUITEM "è¿žæŽ¥ç½‘ç»œé©±åŠ¨å™¨(&N)",        ID_CONNECT_NETWORK_DRIVE
+        MENUITEM "æ–­å¼€ç½‘ç»œé©±åŠ¨å™¨è¿žæŽ¥(&D)",    ID_DISCONNECT_NETWORK_DRIVE
         MENUITEM SEPARATOR
-        MENUITEM "¹²ÏíÎª...",                   254
-        MENUITEM "É¾³ý¹²Ïí£¨&R£©...",           255
+        MENUITEM "å…±äº«ä¸º...",                   254
+        MENUITEM "åˆ é™¤å…±äº«(&R)...",           255
         MENUITEM SEPARATOR
-        MENUITEM "Ñ¡ÔñÇý¶¯Æ÷£¨&S£©...",         251
+        MENUITEM "é€‰æ‹©é©±åŠ¨å™¨(&S)...",         251
     }
 
-    POPUP "Ä¿Â¼£¨&D£©"  {
-        MENUITEM "ÏÂÒ»²ã£¨&N£©\t+",             301
-        MENUITEM "Õ¹¿ª£¨&T£©\t*",               302
-        MENUITEM "È«²¿Õ¹¿ª£¨&A£©\tStrg+*",      303
-        MENUITEM "ÕÛµþ£¨&R£©\t-",               304
+    POPUP "ç›®å½•(&D)"  {
+        MENUITEM "ä¸‹ä¸€å±‚(&N)\t+",             301
+        MENUITEM "å±•å¼€(&T)\t*",               302
+        MENUITEM "å…¨éƒ¨å±•å¼€(&A)\tStrg+*",      303
+        MENUITEM "æŠ˜å (&R)\t-",               304
         MENUITEM SEPARATOR
-        MENUITEM "±ê¼Ç×ÓÄ¿Â¼£¨&M£©",            505
+        MENUITEM "æ ‡è®°å­ç›®å½•(&M)",            505
     }
 
-    POPUP "ÊÓÍ¼£¨&V£©"  {
-        MENUITEM "Ä¿Â¼Ê÷»úÆ÷ÄÚÈÝ£¨&R£©",        413
-        MENUITEM "½öÏÔÊ¾Ä¿Â¼Ê÷£¨&E£©",          411
-        MENUITEM "½öÏÔÊ¾Ä¿Â¼ÄÚÈÝ£¨&O£©",        412
+    POPUP "è§†å›¾(&V)"  {
+        MENUITEM "ç›®å½•æ ‘æœºå™¨å†…å®¹(&R)",        413
+        MENUITEM "ä»…æ˜¾ç¤ºç›®å½•æ ‘(&E)",          411
+        MENUITEM "ä»…æ˜¾ç¤ºç›®å½•å†…å®¹(&O)",        412
         MENUITEM SEPARATOR
-        MENUITEM "·Ö¸î£¨&L£©",                  ID_VIEW_SPLIT
+        MENUITEM "åˆ†å‰²(&L)",                  ID_VIEW_SPLIT
         MENUITEM SEPARATOR
-        MENUITEM "ÎÄ¼þÃûÃû£¨&N£©",              ID_VIEW_NAME
-        MENUITEM "ÎÄ¼þÏêÏ¤ÁÐ±í£¨&A£©",          ID_VIEW_ALL_ATTRIBUTES, CHECKED
-        MENUITEM "²¿·ÖÊôÐÔ£¨&P£©...",           ID_VIEW_SELECTED_ATTRIBUTES
+        MENUITEM "æ–‡ä»¶åç§°(&N)",              ID_VIEW_NAME
+        MENUITEM "æ–‡ä»¶è¯¦æƒ…åˆ—è¡¨(&A)",          ID_VIEW_ALL_ATTRIBUTES, CHECKED
+        MENUITEM "éƒ¨åˆ†å±žæ€§(&P)...",           ID_VIEW_SELECTED_ATTRIBUTES
         MENUITEM SEPARATOR
-        MENUITEM "°´ÎÄ¼þÃûÅÅÐò£¨&S£©",          ID_VIEW_SORT_NAME
-        MENUITEM "°´ÀàÐÍÅÅÐò£¨&B£©",            ID_VIEW_SORT_TYPE
-        MENUITEM "°´´óÐ¡ÅÅÐò£¨&Z£©",            ID_VIEW_SORT_SIZE
-        MENUITEM "°´ÈÕÆÚÅÅÐò£¨&D£©",            ID_VIEW_SORT_DATE
+        MENUITEM "æŒ‰æ–‡ä»¶åæŽ’åº(&S)",          ID_VIEW_SORT_NAME
+        MENUITEM "æŒ‰ç±»åž‹æŽ’åº(&B)",            ID_VIEW_SORT_TYPE
+        MENUITEM "æŒ‰å¤§å°æŽ’åº(&Z)",            ID_VIEW_SORT_SIZE
+        MENUITEM "æŒ‰æ—¥æœŸæŽ’åº(&D)",            ID_VIEW_SORT_DATE
         MENUITEM SEPARATOR
-        MENUITEM "¶¨ÖÆÅÅÐò...",                 ID_VIEW_FILTER
+        MENUITEM "å®šåˆ¶æŽ’åº...",                 ID_VIEW_FILTER
     }
 
-    POPUP "Ñ¡Ïî£¨&O£©"  {
-        MENUITEM "È·¶¨·½Ê½£¨&C£©...",           501
-        MENUITEM "×ÖÌå£¨&F£©...",               ID_SELECT_FONT
-        MENUITEM "¶¨ÖÆ¹¤¾ßÌõ£¨&B£©...",         512
+    POPUP "é€‰é¡¹(&O)"  {
+        MENUITEM "ç¡®å®šæ–¹å¼(&C)...",           501
+        MENUITEM "å­—ä½“(&F)...",               ID_SELECT_FONT
+        MENUITEM "å®šåˆ¶å·¥å…·æ¡(&B)...",         512
         MENUITEM SEPARATOR
-        MENUITEM "¹¤¾ßÌõ£¨&T£©",                ID_VIEW_TOOL_BAR, CHECKED
-        MENUITEM "Çý¶¯Æ÷ÁÐ±í£¨&D£©",            ID_VIEW_DRIVE_BAR, CHECKED
-        MENUITEM "×´Ì¬À¸£¨&S£©",                ID_VIEW_STATUSBAR, CHECKED
+        MENUITEM "å·¥å…·æ¡(&T)",                ID_VIEW_TOOL_BAR, CHECKED
+        MENUITEM "é©±åŠ¨å™¨åˆ—è¡¨(&D)",            ID_VIEW_DRIVE_BAR, CHECKED
+        MENUITEM "çŠ¶æ€æ (&S)",                ID_VIEW_STATUSBAR, CHECKED
 #ifndef _NO_EXTENSIONS
-        MENUITEM "È«ÆÁ£¨&U£©\tCtrl+Shift+S",    ID_VIEW_FULLSCREEN
+        MENUITEM "å…¨å±(&U)\tCtrl+Shift+S",    ID_VIEW_FULLSCREEN
 #endif
         MENUITEM SEPARATOR
-        MENUITEM "Æô¶¯ºó×îÐ¡»¯£¨&M£©",          504
-        MENUITEM "ÍË³öÊ±±£´æÉèÖÃ£¨&S£©",        511
+        MENUITEM "å¯åŠ¨åŽæœ€å°åŒ–(&M)",          504
+        MENUITEM "é€€å‡ºæ—¶ä¿å­˜è®¾ç½®(&S)",        511
     }
 
 
-    POPUP "°²È«£¨&S£©"  {
-        MENUITEM "·ÃÎÊ£¨&A£©...",               605
-        MENUITEM "µÇÂ¼£¨&L£©...",               606
-        MENUITEM "ËùÓÐÕß£¨&O£©...",             607
+    POPUP "å®‰å…¨(&S)"  {
+        MENUITEM "è®¿é—®(&A)...",               605
+        MENUITEM "ç™»å½•(&L)...",               606
+        MENUITEM "æ‰€æœ‰è€…(&O)...",             607
     }
 
-    POPUP "´°¿Ú£¨&W£©"  {
-        MENUITEM "ÐÂ½¨£¨&W)",                   ID_WINDOW_NEW
-        MENUITEM "²ãµþ\tCtrl+F5",               ID_WINDOW_CASCADE
-        MENUITEM "Ë®Æ½Æ½ÆÌ£¨&H£©",              ID_WINDOW_TILE_HORZ
-        MENUITEM "´¹Ö±Æ½ÆÌ£¨&£©\tCtrl+F4",      ID_WINDOW_TILE_VERT
+    POPUP "çª—å£(&W)"  {
+        MENUITEM "æ–°å»º(&W)",                   ID_WINDOW_NEW
+        MENUITEM "å±‚å \tCtrl+F5",               ID_WINDOW_CASCADE
+        MENUITEM "æ°´å¹³å¹³é“º(&H)",              ID_WINDOW_TILE_HORZ
+        MENUITEM "åž‚ç›´å¹³é“º(&)\tCtrl+F4",      ID_WINDOW_TILE_VERT
 #ifndef _NO_EXTENSIONS
-        MENUITEM "×Ô¶¯ÅÅÁÐ",                    ID_WINDOW_AUTOSORT
+        MENUITEM "è‡ªåŠ¨æŽ’åˆ—",                    ID_WINDOW_AUTOSORT
 #endif
-        MENUITEM "×Ô¶¯ÅÅÁÐÍ¼±ê£¨&S£©",          ID_WINDOW_ARRANGE
-        MENUITEM "Ë¢ÐÂ£¨&R£©\tF5",              ID_REFRESH
+        MENUITEM "è‡ªåŠ¨æŽ’åˆ—å›¾æ ‡(&S)",          ID_WINDOW_ARRANGE
+        MENUITEM "åˆ·æ–°(&R)\tF5",              ID_REFRESH
     }
 
     POPUP "&?"  {
-        MENUITEM "°ïÖúÖ÷Ìâ£¨&H£©\tF1",          ID_HELP
-        MENUITEM "ËÑË÷°ïÖú£¨&S£©...\tF1",       ID_HELP
-        MENUITEM "Ê¹ÓÃ°ïÖú£¨&U£©\tF1",          ID_HELP_USING
+        MENUITEM "å¸®åŠ©ä¸»é¢˜(&H)\tF1",          ID_HELP
+        MENUITEM "æœç´¢å¸®åŠ©(&S)...\tF1",       ID_HELP
+        MENUITEM "ä½¿ç”¨å¸®åŠ©(&U)\tF1",          ID_HELP_USING
         MENUITEM SEPARATOR
-        MENUITEM "&¹ØÓÚ Winefile...",           ID_ABOUT
+        MENUITEM "&å…³äºŽ Winefile...",           ID_ABOUT
     }
 }
 
 
 IDD_EXECUTE DIALOG FIXED IMPURE 15, 13, 210, 63
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ÔËÐÐ"
+CAPTION "è¿è¡Œ"
 FONT 8, "MS Shell Dlg"
 {
     CONTROL         "", 101, "Static", SS_SIMPLE|SS_NOPREFIX, 3, 6, 162, 10
-    CONTROL         "ÃüÁî£¨&C£©£º", -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
+    CONTROL         "å‘½ä»¤(&C):", -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
     EDITTEXT        201, 3, 29, 134, 12, ES_AUTOHSCROLL
-    CONTROL         "×÷ÎªÁ¬½Ó£¨&S£©", 214, "Button", BS_AUTOCHECKBOX|WS_TABSTOP,3, 45, 71, 12
-    DEFPUSHBUTTON   "È·¶¨", 1, 158, 6, 47, 14
-    PUSHBUTTON      "È¡Ïû", 2, 158, 23, 47, 14
-    PUSHBUTTON      "°ïÖú£¨&H£©", 254, 158, 43, 47, 14
+    CONTROL         "ä½œä¸ºè¿žæŽ¥(&S)", 214, "Button", BS_AUTOCHECKBOX|WS_TABSTOP,3, 45, 71, 12
+    DEFPUSHBUTTON   "ç¡®å®š", 1, 158, 6, 47, 14
+    PUSHBUTTON      "å–æ¶ˆ", 2, 158, 23, 47, 14
+    PUSHBUTTON      "å¸®åŠ©(&H)", 254, 158, 43, 47, 14
 }
+
+#pragma code_page(default)
