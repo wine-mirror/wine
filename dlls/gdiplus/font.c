@@ -169,6 +169,9 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     if(!logfont || !font)
         return InvalidParameter;
 
+    if (logfont->lfFaceName[0] == 0)
+        return NotTrueTypeFont;
+
     *font = GdipAlloc(sizeof(GpFont));
     if(!*font)  return OutOfMemory;
 

@@ -112,9 +112,7 @@ static void test_logfont(void)
     lfw.lfFaceName[0] = 0;
     stat = GdipCreateFontFromLogfontW(hdc, &lfw, &font);
 
-todo_wine {
     expect(NotTrueTypeFont, stat);
-}
 
     memcpy(&lfw.lfFaceName, arial, 6 * sizeof(WCHAR));
 
