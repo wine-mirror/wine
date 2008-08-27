@@ -350,10 +350,10 @@ GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1,
 
 GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **region)
 {
+    TRACE("%p\n", region);
+
     if(!region)
         return InvalidParameter;
-
-    TRACE("%p\n", region);
 
     *region = GdipAlloc(sizeof(GpRegion));
     if(!*region)
@@ -692,10 +692,11 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
 {
     INT filled = 0;
 
+    TRACE("%p, %p, %d, %p\n", region, buffer, size, needed);
+
     if (!(region && buffer && size))
         return InvalidParameter;
 
-    TRACE("%p, %p, %d, %p\n", region, buffer, size, needed);
     memcpy(buffer, &region->header, sizeof(region->header));
     filled += sizeof(region->header) / sizeof(DWORD);
     /* With few exceptions, everything written is DWORD aligned,
@@ -710,10 +711,10 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
 
 GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
 {
+    TRACE("%p, %p\n", region, needed);
+
     if (!(region && needed))
         return InvalidParameter;
-
-    TRACE("%p, %p\n", region, needed);
 
     /* header.size doesn't count header.size and header.checksum */
     *needed = region->header.size + sizeof(DWORD) * 2;
@@ -779,10 +780,10 @@ GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *region)
 {
     GpStatus stat;
 
+    TRACE("%p\n", region);
+
     if (!region)
         return InvalidParameter;
-
-    TRACE("%p\n", region);
 
     delete_element(&region->node);
     stat = init_region(region, RegionDataInfiniteRect);
