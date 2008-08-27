@@ -295,6 +295,13 @@ GpStatus WINGDIPAPI GdipGetFontSize(GpFont *font, REAL *size)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetFontStyle(GpFont *font, INT *style)
+{
+    FIXME("stub: %p %p\n", font, style);
+
+    return NotImplemented;
+}
+
 /*******************************************************************************
  * GdipGetFontUnit  [GDIPLUS.@]
  *
