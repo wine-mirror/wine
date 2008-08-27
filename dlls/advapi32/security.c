@@ -4553,6 +4553,19 @@ BOOL WINAPI ConvertSidToStringSidA(PSID pSid, LPSTR *pstr)
     return TRUE;
 }
 
+BOOL WINAPI ConvertToAutoInheritPrivateObjectSecurity(
+        PSECURITY_DESCRIPTOR pdesc,
+        PSECURITY_DESCRIPTOR cdesc,
+        PSECURITY_DESCRIPTOR* ndesc,
+        GUID* objtype,
+        BOOL isdir,
+        PGENERIC_MAPPING genmap )
+{
+    FIXME("%p %p %p %p %d %p - stub\n", pdesc, cdesc, ndesc, objtype, isdir, genmap);
+
+    return FALSE;
+}
+
 BOOL WINAPI CreatePrivateObjectSecurity(
         PSECURITY_DESCRIPTOR ParentDescriptor,
         PSECURITY_DESCRIPTOR CreatorDescriptor,

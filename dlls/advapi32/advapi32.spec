@@ -87,7 +87,7 @@
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr)
 @ stdcall ConvertStringSidToSidA(ptr ptr)
 @ stdcall ConvertStringSidToSidW(ptr ptr)
-# @ stub ConvertToAutoInheritPrivateObjectSecurity
+@ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr)
 @ stdcall CopySid(long ptr ptr)
 # @ stub CreateCodeAuthzLevel
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
