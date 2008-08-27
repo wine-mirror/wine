@@ -296,7 +296,8 @@ static struct {
     const char *expect;
 } TEST_URL_UNESCAPE[] = {
     {"file://foo/bar", "file://foo/bar"},
-    {"file://fo%20o%5Ca/bar", "file://fo o\\a/bar"}
+    {"file://fo%20o%5Ca/bar", "file://fo o\\a/bar"},
+    {"file://%24%25foobar", "file://$%foobar"}
 };
 
 /* ################ */
@@ -906,13 +907,20 @@ static void test_UrlUnescape(void)
     DWORD dwEscaped;
     size_t i;
     static char inplace[] = "file:///C:/Program%20Files";
+    static char another_inplace[] = "file:///C:/Program%20Files";
     static const char expected[] = "file:///C:/Program Files";
     static WCHAR inplaceW[] = {'f','i','l','e',':','/','/','/','C',':','/','P','r','o','g','r','a','m',' ','F','i','l','e','s',0};
+    static WCHAR another_inplaceW[] = {'f','i','l','e',':','/','/','/','C',':','/','P','r','o','g','r','a','m','%','2','0','F','i','l','e','s',0};
 
     for(i=0; i<sizeof(TEST_URL_UNESCAPE)/sizeof(TEST_URL_UNESCAPE[0]); i++) {
         dwEscaped=INTERNET_MAX_URL_LENGTH;
         ok(UrlUnescapeA(TEST_URL_UNESCAPE[i].url, szReturnUrl, &dwEscaped, 0) == S_OK, "UrlUnescapeA didn't return 0x%08x from \"%s\"\n", S_OK, TEST_URL_UNESCAPE[i].url);
         ok(strcmp(szReturnUrl,TEST_URL_UNESCAPE[i].expect)==0, "Expected \"%s\", but got \"%s\" from \"%s\"\n", TEST_URL_UNESCAPE[i].expect, szReturnUrl, TEST_URL_UNESCAPE[i].url);
+
+        ZeroMemory(szReturnUrl, sizeof(szReturnUrl));
+        /* if we set the bufferpointer to NULL here UrlUnescape  fails and string gets not converted */
+        ok(UrlUnescapeA(TEST_URL_UNESCAPE[i].url, szReturnUrl, NULL, 0) == E_INVALIDARG, "UrlUnescapeA didn't return 0x%08x from \"%s\"\n", E_INVALIDARG ,TEST_URL_UNESCAPE[i].url);
+        ok(strcmp(szReturnUrl,"")==0, "Expected empty string\n");
 
         dwEscaped = INTERNET_MAX_URL_LENGTH;
         urlW = GetWideString(TEST_URL_UNESCAPE[i].url);
@@ -929,9 +937,22 @@ static void test_UrlUnescape(void)
     ok(!strcmp(inplace, expected), "got %s expected %s\n", inplace, expected);
     ok(dwEscaped == 27, "got %d expected 27\n", dwEscaped);
 
+    todo_wine {
+    /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
+    ok(UrlUnescapeA(another_inplace, NULL, NULL, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeA failed unexpectedly\n");
+    ok(!strcmp(another_inplace, expected), "got %s expected %s\n", another_inplace, expected);
+    }
+
     dwEscaped = sizeof(inplaceW);
     ok(UrlUnescapeW(inplaceW, NULL, &dwEscaped, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeW failed unexpectedly\n");
     ok(dwEscaped == 50, "got %d expected 50\n", dwEscaped);
+
+    todo_wine {
+    /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
+    ok(UrlUnescapeW(another_inplaceW, NULL, NULL, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeW failed unexpectedly\n");
+    ok(lstrlenW(another_inplaceW) == 24, "got %d expected 24\n", lstrlenW(another_inplaceW));
+    }
+
 }
 
 /* ########################### */
