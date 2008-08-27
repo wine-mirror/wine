@@ -585,6 +585,7 @@ static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, LPCWSTR base, BOOL
     WCHAR buf[128];
     HKEY hkey;
     BOOL ret = TRUE;
+    DWORD res;
 
     memcpy(buf, typelibW, sizeof(typelibW));
     StringFromGUID2(uid, buf + lstrlenW(buf), 40);
@@ -597,8 +598,16 @@ static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, LPCWSTR base, BOOL
 
     wsprintfW(buf + lstrlenW(buf), formatW, maj, min );
 
-    if (RegCreateKeyExW(HKEY_CLASSES_ROOT, buf, 0, NULL, 0,
-                        KEY_WRITE, NULL, &hkey, NULL) != ERROR_SUCCESS)
+    SetLastError(0xdeadbeef);
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, buf, 0, NULL, 0,
+                          KEY_WRITE, NULL, &hkey, NULL);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("W-calls are not implemented\n");
+        return FALSE;
+    }
+
+    if (res != ERROR_SUCCESS)
     {
         trace("RegCreateKeyExW failed\n");
         return FALSE;
