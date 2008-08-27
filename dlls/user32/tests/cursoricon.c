@@ -813,7 +813,6 @@ static void test_LoadImage(void)
     /* Test loading an icon as a cursor. */
     SetLastError(0xdeadbeef);
     handle = LoadImageA(NULL, "icon.ico", IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
-    todo_wine
     ok(handle != NULL, "LoadImage() failed.\n");
     error = GetLastError();
     ok(error == 0, "Last error: %u\n", error);
@@ -821,7 +820,6 @@ static void test_LoadImage(void)
     /* Test the icon information. */
     SetLastError(0xdeadbeef);
     ret = GetIconInfo(handle, &icon_info);
-    todo_wine
     ok(ret, "GetIconInfo() failed.\n");
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
@@ -838,7 +836,6 @@ static void test_LoadImage(void)
     /* Clean up. */
     SetLastError(0xdeadbeef);
     ret = DestroyCursor(handle);
-    todo_wine
     ok(ret, "DestroyCursor() failed.\n");
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
