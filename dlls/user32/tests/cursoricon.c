@@ -851,6 +851,99 @@ static void test_LoadImage(void)
     test_LoadImageFile(pngimage, sizeof(pngimage), "png", 0);
 }
 
+static void test_CreateIconFromResource(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    DWORD error;
+    BITMAPINFOHEADER *icon_header;
+    INT16 *hotspot;
+    ICONINFO icon_info;
+
+#define ICON_RES_WIDTH 32
+#define ICON_RES_HEIGHT 32
+#define ICON_RES_AND_SIZE (ICON_WIDTH*ICON_HEIGHT/8)
+#define ICON_RES_BPP 32
+#define ICON_RES_SIZE \
+    (sizeof(BITMAPINFOHEADER) + ICON_AND_SIZE + ICON_AND_SIZE*ICON_BPP)
+#define CRSR_RES_SIZE (2*sizeof(INT16) + ICON_RES_SIZE)
+
+    /* Set icon data. */
+    hotspot = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, CRSR_RES_SIZE);
+
+    /* Cursor resources have an extra hotspot, icon resources not. */
+    hotspot[0] = 3;
+    hotspot[1] = 3;
+
+    icon_header = (BITMAPINFOHEADER *) (hotspot + 2);
+    icon_header->biSize = sizeof(BITMAPINFOHEADER);
+    icon_header->biWidth = ICON_WIDTH;
+    icon_header->biHeight = ICON_HEIGHT*2;
+    icon_header->biPlanes = 1;
+    icon_header->biBitCount = ICON_BPP;
+    icon_header->biSizeImage = 0; /* Uncompressed bitmap. */
+
+    /* Test creating a cursor. */
+    SetLastError(0xdeadbeef);
+    handle = CreateIconFromResource((PBYTE) hotspot, CRSR_RES_SIZE, FALSE, 0x00030000);
+    ok(handle != NULL, "Create cursor failed.\n");
+
+    /* Test the icon information. */
+    SetLastError(0xdeadbeef);
+    ret = GetIconInfo(handle, &icon_info);
+    ok(ret, "GetIconInfo() failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    if (ret)
+    {
+        ok(icon_info.fIcon == FALSE, "fIcon != FALSE.\n");
+        ok(icon_info.xHotspot == 3, "xHotspot is %u.\n", icon_info.xHotspot);
+        ok(icon_info.yHotspot == 3, "yHotspot is %u.\n", icon_info.yHotspot);
+        ok(icon_info.hbmColor != NULL, "No hbmColor!\n");
+        ok(icon_info.hbmMask != NULL, "No hbmMask!\n");
+    }
+
+    /* Clean up. */
+    SetLastError(0xdeadbeef);
+    ret = DestroyCursor(handle);
+    ok(ret, "DestroyCursor() failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    /* Test creating an icon. */
+    SetLastError(0xdeadbeef);
+    handle = CreateIconFromResource((PBYTE) icon_header, ICON_RES_SIZE, TRUE,
+				    0x00030000);
+    ok(handle != NULL, "Create icon failed.\n");
+
+    /* Test the icon information. */
+    SetLastError(0xdeadbeef);
+    ret = GetIconInfo(handle, &icon_info);
+    ok(ret, "GetIconInfo() failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    if (ret)
+    {
+        ok(icon_info.fIcon == TRUE, "fIcon != TRUE.\n");
+	/* Icons always have hotspot in the middle */
+        ok(icon_info.xHotspot == ICON_WIDTH/2, "xHotspot is %u.\n", icon_info.xHotspot);
+        ok(icon_info.yHotspot == ICON_HEIGHT/2, "yHotspot is %u.\n", icon_info.yHotspot);
+        ok(icon_info.hbmColor != NULL, "No hbmColor!\n");
+        ok(icon_info.hbmMask != NULL, "No hbmMask!\n");
+    }
+
+    /* Clean up. */
+    SetLastError(0xdeadbeef);
+    ret = DestroyCursor(handle);
+    ok(ret, "DestroyCursor() failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    HeapFree(GetProcessHeap(), 0, hotspot);
+}
+
 static void test_DestroyCursor(void)
 {
     static const BYTE bmp_bits[4096];
@@ -955,6 +1048,7 @@ START_TEST(cursoricon)
     test_initial_cursor();
     test_CreateIcon();
     test_LoadImage();
+    test_CreateIconFromResource();
     test_DestroyCursor();
     do_parent();
     test_child_process();
