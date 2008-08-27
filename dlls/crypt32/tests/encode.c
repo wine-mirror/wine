@@ -4799,7 +4799,6 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     /* Having no access descriptions is allowed */
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -4813,7 +4812,6 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     aia.rgAccDescr = accessDescription;
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     /* It can't have an empty location */
@@ -4821,14 +4819,12 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     accessDescription[0].AccessLocation.dwAltNameChoice = CERT_ALT_NAME_URL;
     accessDescription[0].AccessLocation.pwszURL = (LPWSTR)url;
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -4849,7 +4845,6 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     aia.cAccDescr = 2;
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
