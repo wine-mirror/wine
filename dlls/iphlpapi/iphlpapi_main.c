@@ -632,7 +632,7 @@ DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
 DWORD WINAPI GetAdapterIndex(LPWSTR AdapterName, PULONG IfIndex)
 {
   char adapterName[MAX_ADAPTER_NAME];
-  int i;
+  unsigned int i;
   DWORD ret;
 
   TRACE("(AdapterName %p, IfIndex %p)\n", AdapterName, IfIndex);
