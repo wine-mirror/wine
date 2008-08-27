@@ -5003,7 +5003,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     memset(&info, 0, sizeof(info));
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5015,7 +5014,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.dwVersion = 1;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5029,7 +5027,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.SubjectUsage.rgpszUsageIdentifier = &pOid1;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5044,7 +5041,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.ListIdentifier.pbData = (LPBYTE)serialNum;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5058,7 +5054,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.SequenceNumber.pbData = (LPBYTE)serialNum;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5072,7 +5067,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     SystemTimeToFileTime(&thisUpdate, &info.ThisUpdate);
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5084,7 +5078,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     SystemTimeToFileTime(&thisUpdate, &info.NextUpdate);
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5099,7 +5092,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.SubjectAlgorithm.pszObjId = oid2;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5125,7 +5117,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.rgCTLEntry = ctlEntry;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5138,7 +5129,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     value1.pbData = (LPBYTE)emptySequence;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5159,7 +5149,6 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.cCTLEntry = 2;
     ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
