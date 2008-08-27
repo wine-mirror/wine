@@ -578,27 +578,31 @@ static BOOL WINAPI CRYPT_AsnEncodeCRLEntries(DWORD dwCertEncodingType,
         if (ret)
             dataLen += size;
     }
-    CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
-    bytesNeeded = 1 + lenBytes + dataLen;
-    if (!pbEncoded)
-        *pcbEncoded = bytesNeeded;
-    else
+    if (ret)
     {
-        if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
-         pcbEncoded, bytesNeeded)))
+        CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
+        bytesNeeded = 1 + lenBytes + dataLen;
+        if (!pbEncoded)
+            *pcbEncoded = bytesNeeded;
+        else
         {
-            if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
-                pbEncoded = *(BYTE **)pbEncoded;
-            *pbEncoded++ = ASN_SEQUENCEOF;
-            CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
-            pbEncoded += lenBytes;
-            for (i = 0; i < cCRLEntry; i++)
+            if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
+             pcbEncoded, bytesNeeded)))
             {
-                DWORD size = dataLen;
+                if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                    pbEncoded = *(BYTE **)pbEncoded;
+                *pbEncoded++ = ASN_SEQUENCEOF;
+                CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
+                pbEncoded += lenBytes;
+                for (i = 0; i < cCRLEntry; i++)
+                {
+                    DWORD size = dataLen;
 
-                ret = CRYPT_AsnEncodeCRLEntry(&rgCRLEntry[i], pbEncoded, &size);
-                pbEncoded += size;
-                dataLen -= size;
+                    ret = CRYPT_AsnEncodeCRLEntry(&rgCRLEntry[i], pbEncoded,
+                     &size);
+                    pbEncoded += size;
+                    dataLen -= size;
+                }
             }
         }
     }
@@ -731,28 +735,31 @@ static BOOL WINAPI CRYPT_AsnEncodeExtensions(DWORD dwCertEncodingType,
             if (ret)
                 dataLen += size;
         }
-        CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
-        bytesNeeded = 1 + lenBytes + dataLen;
-        if (!pbEncoded)
-            *pcbEncoded = bytesNeeded;
-        else
+        if (ret)
         {
-            if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
-             pcbEncoded, bytesNeeded)))
+            CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
+            bytesNeeded = 1 + lenBytes + dataLen;
+            if (!pbEncoded)
+                *pcbEncoded = bytesNeeded;
+            else
             {
-                if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
-                    pbEncoded = *(BYTE **)pbEncoded;
-                *pbEncoded++ = ASN_SEQUENCEOF;
-                CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
-                pbEncoded += lenBytes;
-                for (i = 0; i < exts->cExtension; i++)
+                if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara,
+                 pbEncoded, pcbEncoded, bytesNeeded)))
                 {
-                    DWORD size = dataLen;
+                    if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                        pbEncoded = *(BYTE **)pbEncoded;
+                    *pbEncoded++ = ASN_SEQUENCEOF;
+                    CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
+                    pbEncoded += lenBytes;
+                    for (i = 0; i < exts->cExtension; i++)
+                    {
+                        DWORD size = dataLen;
 
-                    ret = CRYPT_AsnEncodeExtension(&exts->rgExtension[i],
-                     pbEncoded, &size);
-                    pbEncoded += size;
-                    dataLen -= size;
+                        ret = CRYPT_AsnEncodeExtension(&exts->rgExtension[i],
+                         pbEncoded, &size);
+                        pbEncoded += size;
+                        dataLen -= size;
+                    }
                 }
             }
         }
@@ -1459,29 +1466,32 @@ static BOOL WINAPI CRYPT_AsnEncodeSMIMECapabilities(DWORD dwCertEncodingType,
             if (ret)
                 dataLen += size;
         }
-        CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
-        bytesNeeded = 1 + lenBytes + dataLen;
-        if (!pbEncoded)
-            *pcbEncoded = bytesNeeded;
-        else
+        if (ret)
         {
-            if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
-             pcbEncoded, bytesNeeded)))
+            CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
+            bytesNeeded = 1 + lenBytes + dataLen;
+            if (!pbEncoded)
+                *pcbEncoded = bytesNeeded;
+            else
             {
-                if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
-                    pbEncoded = *(BYTE **)pbEncoded;
-                *pbEncoded++ = ASN_SEQUENCEOF;
-                CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
-                pbEncoded += lenBytes;
-                for (i = 0; i < capabilities->cCapability; i++)
+                if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara,
+                 pbEncoded, pcbEncoded, bytesNeeded)))
                 {
-                    DWORD size = dataLen;
+                    if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                        pbEncoded = *(BYTE **)pbEncoded;
+                    *pbEncoded++ = ASN_SEQUENCEOF;
+                    CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
+                    pbEncoded += lenBytes;
+                    for (i = 0; i < capabilities->cCapability; i++)
+                    {
+                        DWORD size = dataLen;
 
-                    ret = CRYPT_AsnEncodeSMIMECapability(dwCertEncodingType,
-                     NULL, &capabilities->rgCapability[i], 0, NULL, pbEncoded,
-                     &size);
-                    pbEncoded += size;
-                    dataLen -= size;
+                        ret = CRYPT_AsnEncodeSMIMECapability(dwCertEncodingType,
+                         NULL, &capabilities->rgCapability[i], 0, NULL,
+                         pbEncoded, &size);
+                        pbEncoded += size;
+                        dataLen -= size;
+                    }
                 }
             }
         }
