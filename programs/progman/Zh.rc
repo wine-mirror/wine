@@ -19,45 +19,50 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* Chinese text is encoded in UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
 /* Menu */
 
-MAIN_MENU MENU LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+MAIN_MENU MENU
 {
- POPUP "ÎÄ¼þ£¨&F£©" {
-   MENUITEM "ÐÂ½¨£¨&N£©...",              PM_NEW
-   MENUITEM "´ò¿ª£¨&O£©\tEnter",             PM_OPEN
-   MENUITEM "ÒÆ¶¯£¨&M£©...\tF7",             PM_MOVE,      GRAYED
-   MENUITEM "¸´ÖÆ£¨&C£©...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "É¾³ý£¨&D£©\tEntf",           PM_DELETE
-   MENUITEM "ÊôÐÔ£¨&A£©...\tAlt+Enter",       PM_ATTRIBUTES
+ POPUP "æ–‡ä»¶(&F)" {
+   MENUITEM "æ–°å»º(&N)...",              PM_NEW
+   MENUITEM "æ‰“å¼€(&O)\tEnter",             PM_OPEN
+   MENUITEM "ç§»åŠ¨(&M)...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "å¤åˆ¶(&C)...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "åˆ é™¤(&D)\tEntf",           PM_DELETE
+   MENUITEM "å±žæ€§(&A)...\tAlt+Enter",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
-   MENUITEM "Ö´ÐÐ£¨&E£©...",          PM_EXECUTE
+   MENUITEM "æ‰§è¡Œ(&E)...",          PM_EXECUTE
    MENUITEM SEPARATOR
-   MENUITEM "ÍË³ö Windows£¨&X£©...",             PM_EXIT
+   MENUITEM "é€€å‡º Windows(&X)...",             PM_EXIT
  }
- POPUP "Ñ¡Ïî£¨&O£©" {
-   MENUITEM "×Ô¶¯ÅÅÁÐ£¨&A)",  PM_AUTO_ARRANGE
-   MENUITEM "ÔËÐÐÊ±×îÐ¡»¯£¨&M£©",    PM_MIN_ON_RUN
-   MENUITEM "ÍË³öÊ±±£´æÉèÖÃ£¨&S£©", PM_SAVE_SETTINGS
+ POPUP "é€‰é¡¹(&O)" {
+   MENUITEM "è‡ªåŠ¨æŽ’åˆ—(&A)",  PM_AUTO_ARRANGE
+   MENUITEM "è¿è¡Œæ—¶æœ€å°åŒ–(&M)",    PM_MIN_ON_RUN
+   MENUITEM "é€€å‡ºæ—¶ä¿å­˜è®¾ç½®(&S)", PM_SAVE_SETTINGS
  }
- POPUP "´°¿Ú£¨&W£©" {
-   MENUITEM "²ãµþ£¨&O£©\tShift+F5",       PM_OVERLAP
-   MENUITEM "²¢ÅÅ£¨&S£©\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "ÅÅÁÐÍ¼±ê£¨&A£©",       PM_ARRANGE
+ POPUP "çª—å£(&W)" {
+   MENUITEM "å±‚å (&O)\tShift+F5",       PM_OVERLAP
+   MENUITEM "å¹¶æŽ’(&S)\tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "æŽ’åˆ—å›¾æ ‡(&A)",       PM_ARRANGE
  }
 
-POPUP "°ïÖú£¨&H£©" {
-   MENUITEM "ÄÚÈÝ£¨&C£©",         PM_CONTENTS
-   MENUITEM "ËÑË÷£¨&S£©...",           PM_SEARCH
+POPUP "å¸®åŠ©(&H)" {
+   MENUITEM "å†…å®¹(&C)",         PM_CONTENTS
+   MENUITEM "æœç´¢(&S)...",           PM_SEARCH
    MENUITEM SEPARATOR
-   MENUITEM "ÈçºÎÊ¹ÓÃ°ïÖú£¨&H£©",     PM_HELPONHELP
-   MENUITEM "½Ì³Ì£¨&T£©",         PM_TUTORIAL
+   MENUITEM "å¦‚ä½•ä½¿ç”¨å¸®åŠ©(&H)",     PM_HELPONHELP
+   MENUITEM "æ•™ç¨‹(&T)",         PM_TUTORIAL
    MENUITEM SEPARATOR
 
-   POPUP "×ÊÁÏÐÅÏ¢£¨&I£©..." {
-     MENUITEM "ÓÃ»§Ðí¿ÉÐ­Òé£¨&L£©",        PM_LICENSE
-     MENUITEM "ÔðÈÎÎÞ¹Ø£¨&N£©",    PM_NO_WARRANTY
-     MENUITEM "¹ØÓÚ Wine£¨&A£©",     PM_ABOUT_WINE
+   POPUP "èµ„æ–™ä¿¡æ¯(&I)..." {
+     MENUITEM "ç”¨æˆ·è®¸å¯åè®®(&L)",        PM_LICENSE
+     MENUITEM "è´£ä»»æ— å…³(&N)",    PM_NO_WARRANTY
+     MENUITEM "å…³äºŽ Wine(&A)",     PM_ABOUT_WINE
    }
  }
 }
@@ -65,157 +70,150 @@ POPUP "°ïÖú£¨&H£©" {
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ÐÂ½¨"
+CAPTION "æ–°å»º"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
-LTEXT         "³ÌÐò×é£¨&G£©",   PM_NEW_GROUP,    20, 18,  80, 15
+LTEXT         "ç¨‹åºç»„(&G)",   PM_NEW_GROUP,    20, 18,  80, 15
 RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
-LTEXT         "³ÌÐò£¨&P£©", PM_NEW_PROGRAM,  20, 38,  80, 15
-DEFPUSHBUTTON "È·¶¨",          IDOK,           105,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "È¡Ïû",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "°ïÖú£¨&H£©",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+LTEXT         "ç¨‹åº(&P)", PM_NEW_PROGRAM,  20, 38,  80, 15
+DEFPUSHBUTTON "ç¡®å®š",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å–æ¶ˆ",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å¸®åŠ©(&H)",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Move' */
 
 DIALOG_MOVE DIALOG 0, 0, 250, 65
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ÒÆ¶¯³ÌÐò"
+CAPTION "ç§»åŠ¨ç¨‹åº"
 {
-LTEXT         "ÒÆ¶¯³ÌÐò£º",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "ç§»åŠ¨ç¨‹åº:",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "´Ó´Ë³ÌÐò×éÖÐ£º", IDIGNORE,            5, 13,  90, 15
+LTEXT         "ä»Žæ­¤ç¨‹åºç»„ä¸­:", IDIGNORE,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "ÒÆ¶¯µ½³ÌÐò×é£¨&T£©£º",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "ç§»åŠ¨åˆ°ç¨‹åºç»„(&T):",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
-DEFPUSHBUTTON "È·¶¨",              IDOK,              185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "È¡Ïû",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "°ïÖú£¨&H£©",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+DEFPUSHBUTTON "ç¡®å®š",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å–æ¶ˆ",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å¸®åŠ©(&H)",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Copy' */
 
 DIALOG_COPY DIALOG 0, 0, 250, 65
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "¸´ÖÆ³ÌÐò"
+CAPTION "å¤åˆ¶ç¨‹åº"
 {
-LTEXT         "¸´ÖÆ³ÌÐò£º",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "å¤åˆ¶ç¨‹åº:",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "´Ó´Ë³ÌÐò×éÖÐ£º", IDIGNORE,            5, 13,  90, 15
+LTEXT         "ä»Žæ­¤ç¨‹åºç»„ä¸­:", IDIGNORE,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "ÒÆ¶¯µ½³ÌÐò×é£¨&T£©£º",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "ç§»åŠ¨åˆ°ç¨‹åºç»„(&T):",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
-DEFPUSHBUTTON "È·¶¨",              IDOK,              185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "È¡Ïû",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "°ïÖú£¨&H£©",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+DEFPUSHBUTTON "ç¡®å®š",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å–æ¶ˆ",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å¸®åŠ©(&H)",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Group attributes' */
 
 DIALOG_GROUP DIALOG 0, 0, 230, 65
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "³ÌÐò×éÊôÐÔ"
+CAPTION "ç¨‹åºç»„å±žæ€§"
 {
-LTEXT     "ÃèÊö£¨&D£©£º", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+LTEXT     "æè¿°(&D):", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
-LTEXT     "×éÎÄ¼þ£¨&G£©£º",        PM_FILE_TXT,          05, 38,  50, 10
+LTEXT     "ç»„æ–‡ä»¶(&G):",        PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
-DEFPUSHBUTTON "È·¶¨",            IDOK,                155,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "È¡Ïû",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "°ïÖú£¨&H£©",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+DEFPUSHBUTTON "ç¡®å®š",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å–æ¶ˆ",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å¸®åŠ©(&H)",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Program attributes' */
 
 DIALOG_PROGRAM DIALOG 0, 0, 250, 105
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "³ÌÐòÊôÐÔ"
+CAPTION "ç¨‹åºå±žæ€§"
 {
-LTEXT         "ÃèÊö£¨&D£©£º",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+LTEXT         "æè¿°(&D):",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
 EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
-LTEXT         "ÃüÁîÐÐ£¨&C£©£º", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+LTEXT         "å‘½ä»¤è¡Œ(&C):", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
 EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
-LTEXT         "¹¤×÷Ä¿Â¼£¨&W£©£º",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+LTEXT         "å·¥ä½œç›®å½•(&W):",    PM_DIRECTORY_TXT,     05, 40,  60, 10
 EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
-LTEXT         "¿ì½Ý¼ü£¨&K£©£º",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+LTEXT         "å¿«æ·é”®(&K):",      PM_HOT_KEY_TXT,       05, 55,  60, 10
 EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
 ICON          "",                          PM_ICON,              20, 70
 CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "Æô¶¯ºó×îÐ¡»¯£¨&M£©",       IDIGNORE,             95, 75,  75, 10
-DEFPUSHBUTTON "È·¶¨",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "È¡Ïû",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "ä¯ÀÀ£¨&B£©...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "ÐÞ¸ÄÍ¼±ê£¨&I£©...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
-PUSHBUTTON    "°ïÖú£¨&H£©",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+LTEXT         "å¯åŠ¨åŽæœ€å°åŒ–(&M)",       IDIGNORE,             95, 75,  75, 10
+DEFPUSHBUTTON "ç¡®å®š",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å–æ¶ˆ",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "æµè§ˆ(&B)...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "ä¿®æ”¹å›¾æ ‡(&I)...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å¸®åŠ©(&H)",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Symbol' */
 
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ÐÞ¸ÄÍ¼±ê"
+CAPTION "ä¿®æ”¹å›¾æ ‡"
 {
-LTEXT     "ÎÄ¼þÃû£¨&F£©£º",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+LTEXT     "æ–‡ä»¶å(&F):",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
-LTEXT     "µ±Ç°Í¼±ê£¨&I£©£º", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+LTEXT     "å½“å‰å›¾æ ‡(&I):", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
 COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
-DEFPUSHBUTTON "È·¶¨",         IDOK,              135,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "È¡Ïû",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "ä¯ÀÀ£¨&B£©...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "°ïÖú£¨&H£©",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+DEFPUSHBUTTON "ç¡®å®š",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å–æ¶ˆ",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "æµè§ˆ(&B)...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å¸®åŠ©(&H)",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Execute' */
 
 DIALOG_EXECUTE DIALOG 0, 0, 200, 85
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Ö´ÐÐ³ÌÐò"
+CAPTION "æ‰§è¡Œç¨‹åº"
 {
-LTEXT     "ÃüÁîÐÐ£¨&C£©£º", IDIGNORE,   05, 15, 120, 10
+LTEXT     "å‘½ä»¤è¡Œ(&C):", IDIGNORE,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "Æô¶¯ºó×îÐ¡»¯£¨&M£©",   IDIGNORE,   20, 45, 120, 10
-DEFPUSHBUTTON "È·¶¨",               IDOK,      135,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "È¡Ïû",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "ä¯ÀÀ£¨&B£©...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "°ïÖú£¨&H£©",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+LTEXT         "å¯åŠ¨åŽæœ€å°åŒ–(&M)",   IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "ç¡®å®š",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å–æ¶ˆ",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "æµè§ˆ(&B)...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "å¸®åŠ©(&H)",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Strings */
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STRINGTABLE DISCARDABLE
 {
-IDS_PROGRAM_MANAGER,		"³ÌÐò¹ÜÀíÆ÷"
-IDS_ERROR,			"´íÎó"
-IDS_WARNING,			"¾¯¸æ"
-IDS_INFO,			"ÐÅÏ¢"
-IDS_DELETE,			"É¾³ý"
-IDS_DELETE_GROUP_s,		"ÊÇ·ñÉ¾³ý³ÌÐò×é `%s' £¿"
-IDS_DELETE_PROGRAM_s,		"ÊÇ·ñÉ¾³ý³ÌÐò×é `%s' ?"
-IDS_NOT_IMPLEMENTED,		"´Ë¹¦ÄÜÎ´ÊµÏÖ"
-IDS_FILE_READ_ERROR_s,		"¶ÁÈ¡ÎÄ¼þ %s Ê±·¢Éú´íÎó¡£"
-IDS_FILE_WRITE_ERROR_s,		"Ð´ÈëÎÄ¼þ %s Ê±·¢Éú´íÎó¡£"
-IDS_GRPFILE_READ_ERROR_s,	"\
-²»ÄÜ´ò¿ª×éÎÄ¼þ `%s' ¡£\n\
-ÊÇ·ñ¼ÌÐø³¢ÊÔ£¿"
-IDS_OUT_OF_MEMORY,		"ÄÚ´æÒç³ö¡£"
-IDS_WINHELP_ERROR,		"Ã»ÓÐ¿ÉÓÃµÄ°ïÖúÐÅÏ¢¡£"
-IDS_UNKNOWN_FEATURE_s,		"ÔÚ %s ÖÐ·¢ÏÖÎ´ÖªÌØÐÔ"
-IDS_FILE_NOT_OVERWRITTEN_s,	"ÎÄ¼þ %s ÒÑ¾­´æÔÚ¡£²»¸²¸ÇÒÑÓÐÎÄ¼þ¡£"
-IDS_SAVE_GROUP_AS_s,		"½«³ÌÐò×é±£´æÎª %s ¿ÉÒÔ±ÜÃâ¸´¸ÇÒÑÓÐµÄÎÄ¼þ¡£"
-IDS_NO_HOT_KEY,			"Î´¶¨Òå"
-IDS_ALL_FILES,			"ËùÓÐÎÄ¼þ (*.*)"
-IDS_PROGRAMS,			"³ÌÐò"
-IDS_LIBRARIES_DLL,		"¶¯Ì¬Á¬½Ó¿â (*.dll)"
-IDS_SYMBOL_FILES,		"Í¼±êÎÄ¼þ"
-IDS_SYMBOLS_ICO,		"Í¼±ê (*.ico)"
+IDS_PROGRAM_MANAGER,		"ç¨‹åºç®¡ç†å™¨"
+IDS_ERROR,			"é”™è¯¯"
+IDS_WARNING,			"è­¦å‘Š"
+IDS_INFO,			"ä¿¡æ¯"
+IDS_DELETE,			"åˆ é™¤"
+IDS_DELETE_GROUP_s,		"æ˜¯å¦åˆ é™¤ç¨‹åºç»„ `%s' ï¼Ÿ"
+IDS_DELETE_PROGRAM_s,		"æ˜¯å¦åˆ é™¤ç¨‹åºç»„ `%s' ?"
+IDS_NOT_IMPLEMENTED,		"æ­¤åŠŸèƒ½æœªå®žçŽ°"
+IDS_FILE_READ_ERROR_s,		"è¯»å–æ–‡ä»¶ %s æ—¶å‘ç”Ÿé”™è¯¯ã€‚"
+IDS_FILE_WRITE_ERROR_s,		"å†™å…¥æ–‡ä»¶ %s æ—¶å‘ç”Ÿé”™è¯¯ã€‚"
+IDS_GRPFILE_READ_ERROR_s,	"ä¸èƒ½æ‰“å¼€ç»„æ–‡ä»¶ `%s' ã€‚\næ˜¯å¦ç»§ç»­å°è¯•ï¼Ÿ"
+IDS_OUT_OF_MEMORY,		"å†…å­˜æº¢å‡ºã€‚"
+IDS_WINHELP_ERROR,		"æ²¡æœ‰å¯ç”¨çš„å¸®åŠ©ä¿¡æ¯ã€‚"
+IDS_UNKNOWN_FEATURE_s,		"åœ¨ %s ä¸­å‘çŽ°æœªçŸ¥ç‰¹æ€§"
+IDS_FILE_NOT_OVERWRITTEN_s,	"æ–‡ä»¶ %s å·²ç»å­˜åœ¨ã€‚ä¸è¦†ç›–å·²æœ‰æ–‡ä»¶ã€‚"
+IDS_SAVE_GROUP_AS_s,		"å°†ç¨‹åºç»„ä¿å­˜ä¸º %s å¯ä»¥é¿å…å¤ç›–å·²æœ‰çš„æ–‡ä»¶ã€‚"
+IDS_NO_HOT_KEY,			"æœªå®šä¹‰"
+IDS_ALL_FILES,			"æ‰€æœ‰æ–‡ä»¶ (*.*)"
+IDS_PROGRAMS,			"ç¨‹åº"
+IDS_LIBRARIES_DLL,		"åŠ¨æ€è¿žæŽ¥åº“ (*.dll)"
+IDS_SYMBOL_FILES,		"å›¾æ ‡æ–‡ä»¶"
+IDS_SYMBOLS_ICO,		"å›¾æ ‡ (*.ico)"
 }
+
+#pragma code_page(default)
