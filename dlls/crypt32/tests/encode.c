@@ -5303,7 +5303,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     memset(&info, 0, sizeof(info));
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, emptyCTL, sizeof(emptyCTL),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5315,7 +5314,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, emptyCTLWithVersion1,
      sizeof(emptyCTLWithVersion1), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
      &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5329,7 +5327,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithUsageIdentifier,
      sizeof(ctlWithUsageIdentifier), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5343,7 +5340,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithListIdentifier,
      sizeof(ctlWithListIdentifier), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5357,7 +5353,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithSequenceNumber,
      sizeof(ctlWithSequenceNumber), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5370,7 +5365,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithThisUpdate,
      sizeof(ctlWithThisUpdate), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5382,7 +5376,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithThisAndNextUpdate,
      sizeof(ctlWithThisAndNextUpdate), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5398,7 +5391,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithAlgId,
      sizeof(ctlWithAlgId), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5410,9 +5402,9 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithBogusEntry,
      sizeof(ctlWithBogusEntry), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD || CRYPT_E_ASN1_CORRUPT),
+     "expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %08x\n",
+     GetLastError());
     info.SubjectAlgorithm.Parameters.cbData = 0;
     info.ThisUpdate.dwLowDateTime = info.ThisUpdate.dwHighDateTime = 0;
     info.NextUpdate.dwLowDateTime = info.NextUpdate.dwHighDateTime = 0;
@@ -5433,7 +5425,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithOneEntry,
      sizeof(ctlWithOneEntry), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
@@ -5454,7 +5445,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithTwoEntries,
      sizeof(ctlWithTwoEntries), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
