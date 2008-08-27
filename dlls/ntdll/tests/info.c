@@ -358,7 +358,8 @@ static void test_query_procperf(void)
     /* A too large given buffer size */
     sppi = HeapReAlloc(GetProcessHeap(), 0, sppi , NeededLength + 2);
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, NeededLength + 2, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( status == STATUS_SUCCESS || status == STATUS_INFO_LENGTH_MISMATCH /* vista */,
+        "Expected STATUS_SUCCESS or STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
     ok( NeededLength == ReturnLength, "Inconsistent length (%d) <-> (%d)\n", NeededLength, ReturnLength);
 
     HeapFree( GetProcessHeap(), 0, sppi);
@@ -407,12 +408,10 @@ static void test_query_handle(void)
     SYSTEM_HANDLE_INFORMATION* shi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
 
     /* Request the needed length : a SystemInformationLength greater than one struct sets ReturnLength */
-    status = pNtQuerySystemInformation(SystemHandleInformation, shi, 0, &ReturnLength);
+    status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
+    todo_wine ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-    ok( ReturnLength > 0, "Expected ReturnLength to be > 0, it was %d\n", ReturnLength);
-
-    SystemInformationLength = ReturnLength + sizeof(HANDLE);
+    SystemInformationLength = ReturnLength;
     shi = HeapReAlloc(GetProcessHeap(), 0, shi , SystemInformationLength);
     status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
     if (status != STATUS_INFO_LENGTH_MISMATCH) /* vista */
@@ -822,7 +821,7 @@ static void test_readvirtualmemory(void)
     /* illegal remote address */
     todo_wine{
     status = pNtReadVirtualMemory(process, (void *) 0x1234, buffer, 12, &readcount);
-    ok( status == STATUS_PARTIAL_COPY, "Expected STATUS_PARTIAL_COPY, got %08x\n", status);
+    ok( status == STATUS_PARTIAL_COPY || broken(status == STATUS_ACCESS_VIOLATION), "Expected STATUS_PARTIAL_COPY, got %08x\n", status);
     if (status == STATUS_PARTIAL_COPY)
         ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
     }
