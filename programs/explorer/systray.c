@@ -430,12 +430,24 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     return ret;
 }
 
+static void do_hide_systray(void)
+{
+    SetWindowPos( tray_window, 0,
+                  GetSystemMetrics(SM_XVIRTUALSCREEN) + GetSystemMetrics(SM_CXVIRTUALSCREEN),
+                  GetSystemMetrics(SM_YVIRTUALSCREEN) + GetSystemMetrics(SM_CYVIRTUALSCREEN),
+                  0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+}
+
 static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
     case WM_COPYDATA:
         return handle_incoming((HWND)wparam, (COPYDATASTRUCT *)lparam);
+
+    case WM_DISPLAYCHANGE:
+        if (hide_systray) do_hide_systray();
+        break;
 
     case WM_TIMER:
         cleanup_destroyed_windows();
@@ -568,5 +580,8 @@ void initialize_systray(void)
         WINE_ERR("Could not create tray window\n");
         return;
     }
+
+    if (hide_systray) do_hide_systray();
+
     SetTimer( tray_window, 1, 2000, NULL );
 }
