@@ -1205,7 +1205,8 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
                                         d3ddm.Format /* AdapterFormat */,
                                         WINED3DUSAGE_DEPTHSTENCIL /* Usage */,
                                         WINED3DRTYPE_SURFACE,
-                                        FormatList[i]);
+                                        FormatList[i],
+                                        SURFACE_OPENGL);
         if(hr == D3D_OK)
         {
             DDPIXELFORMAT pformat;

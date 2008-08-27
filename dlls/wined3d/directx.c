@@ -148,7 +148,7 @@ static const struct {
 static int numAdapters = 0;
 static struct WineD3DAdapter Adapters[1];
 
-static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat);
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat, WINED3DSURFTYPE SurfaceType);
 static const struct fragment_pipeline *select_fragment_implementation(UINT Adapter, WINED3DDEVTYPE DeviceType);
 static const shader_backend_t *select_shader_backend(UINT Adapter, WINED3DDEVTYPE DeviceType);
 static const struct blit_shader *select_blit_implementation(UINT Adapter, WINED3DDEVTYPE DeviceType);
@@ -1954,7 +1954,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
     }
 
     /* Use CheckDeviceFormat to see if the BackBufferFormat is usable with the given DisplayFormat */
-    hr = IWineD3DImpl_CheckDeviceFormat(iface, Adapter, DeviceType, DisplayFormat, WINED3DUSAGE_RENDERTARGET, WINED3DRTYPE_SURFACE, BackBufferFormat);
+    hr = IWineD3DImpl_CheckDeviceFormat(iface, Adapter, DeviceType, DisplayFormat, WINED3DUSAGE_RENDERTARGET, WINED3DRTYPE_SURFACE, BackBufferFormat, SURFACE_OPENGL);
     if(FAILED(hr))
         TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s/%s\n", debug_d3dformat(DisplayFormat), debug_d3dformat(BackBufferFormat));
 
@@ -2421,8 +2421,36 @@ static BOOL CheckTextureCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
     return FALSE;
 }
 
-static BOOL CheckSurfaceCapability(UINT Adapter, WINED3DFORMAT AdapterFormat, WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat) {
+static BOOL CheckSurfaceCapability(UINT Adapter, WINED3DFORMAT AdapterFormat, WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat, WINED3DSURFTYPE SurfaceType) {
     const struct blit_shader *blitter;
+
+    if(SurfaceType == SURFACE_GDI) {
+        switch(CheckFormat) {
+            case WINED3DFMT_R8G8B8:
+            case WINED3DFMT_A8R8G8B8:
+            case WINED3DFMT_X8R8G8B8:
+            case WINED3DFMT_R5G6B5:
+            case WINED3DFMT_X1R5G5B5:
+            case WINED3DFMT_A1R5G5B5:
+            case WINED3DFMT_A4R4G4B4:
+            case WINED3DFMT_R3G3B2:
+            case WINED3DFMT_A8:
+            case WINED3DFMT_A8R3G3B2:
+            case WINED3DFMT_X4R4G4B4:
+            case WINED3DFMT_A2B10G10R10:
+            case WINED3DFMT_A8B8G8R8:
+            case WINED3DFMT_X8B8G8R8:
+            case WINED3DFMT_G16R16:
+            case WINED3DFMT_A2R10G10B10:
+            case WINED3DFMT_A16B16G16R16:
+            case WINED3DFMT_P8:
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            default:
+                TRACE_(d3d_caps)("[FAILED] - not available on GDI surfaces\n");
+                return FALSE;
+        }
+    }
 
     /* All format that are supported for textures are supported for surfaces as well */
     if(CheckTextureCapability(Adapter, DeviceType, CheckFormat)) return TRUE;
@@ -2465,7 +2493,8 @@ static BOOL CheckVertexTextureCapability(UINT Adapter, WINED3DFORMAT CheckFormat
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
-                                              WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
+        WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat,
+        WINED3DSURFTYPE SurfaceType) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     DWORD UsageCaps = 0;
 
@@ -2483,6 +2512,12 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     }
 
     if(RType == WINED3DRTYPE_CUBETEXTURE) {
+
+        if(SurfaceType != SURFACE_OPENGL) {
+            TRACE("[FAILED]\n");
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
         /* Cubetexture allows:
          *                    - D3DUSAGE_AUTOGENMIPMAP
          *                    - D3DUSAGE_DEPTHSTENCIL
@@ -2596,7 +2631,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                - D3DUSAGE_RENDERTARGET
          */
 
-        if(CheckSurfaceCapability(Adapter, AdapterFormat, DeviceType, CheckFormat)) {
+        if(CheckSurfaceCapability(Adapter, AdapterFormat, DeviceType, CheckFormat, SurfaceType)) {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
                 if(CheckDepthStencilCapability(Adapter, AdapterFormat, CheckFormat)) {
                     UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
@@ -2641,6 +2676,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                - D3DUSAGE_TEXTAPI (d3d9ex)
          *                - D3DUSAGE_QUERY_WRAPANDMIP
          */
+
+        if(SurfaceType != SURFACE_OPENGL) {
+            TRACE("[FAILED]\n");
+            return WINED3DERR_NOTAVAILABLE;
+        }
 
         /* Check if the texture format is around */
         if(CheckTextureCapability(Adapter, DeviceType, CheckFormat)) {
@@ -2763,6 +2803,11 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                      - D3DUSAGE_SOFTWAREPROCESSING
          *                      - D3DUSAGE_QUERY_WRAPANDMIP
          */
+
+        if(SurfaceType != SURFACE_OPENGL) {
+            TRACE("[FAILED]\n");
+            return WINED3DERR_NOTAVAILABLE;
+        }
 
         /* Check volume texture and volume usage caps */
         if(GL_SUPPORT(EXT_TEXTURE3D)) {
@@ -2896,7 +2941,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         /* For instance vertexbuffer/indexbuffer aren't supported yet because no Windows drivers seem to offer it */
         TRACE_(d3d_caps)("Unhandled resource type D3DRTYPE_INDEXBUFFER / D3DRTYPE_VERTEXBUFFER\n");
         return WINED3DERR_NOTAVAILABLE;
-     }
+    }
 
     /* This format is nothing special and it is supported perfectly.
      * However, ati and nvidia driver on windows do not mark this format as

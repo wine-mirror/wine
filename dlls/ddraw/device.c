@@ -1210,7 +1210,8 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
                                         0 /* AdapterFormat */,
                                         0 /* Usage */,
                                         0 /* ResourceType */,
-                                        FormatList[i]);
+                                        FormatList[i],
+                                        SURFACE_OPENGL);
         if(hr == D3D_OK)
         {
             DDPIXELFORMAT pformat;
@@ -1238,7 +1239,8 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
                                         0 /* AdapterFormat */,
                                         WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
                                         0 /* ResourceType */,
-                                        BumpFormatList[i]);
+                                        BumpFormatList[i],
+                                        SURFACE_OPENGL);
         if(hr == D3D_OK)
         {
             DDPIXELFORMAT pformat;
@@ -1347,7 +1349,8 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
                                         0 /* AdapterFormat */,
                                         0 /* Usage */,
                                         0 /* ResourceType */,
-                                        FormatList[i]);
+                                        FormatList[i],
+                                        SURFACE_OPENGL);
         if(hr == D3D_OK)
         {
             DDSURFACEDESC sdesc;

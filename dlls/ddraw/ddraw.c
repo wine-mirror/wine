@@ -887,6 +887,7 @@ IDirectDrawImpl_GetFourCCCodes(IDirectDraw7 *iface,
     DWORD count = 0, i, outsize;
     HRESULT hr;
     WINED3DDISPLAYMODE d3ddm;
+    WINED3DSURFTYPE type = This->ImplType;
     TRACE("(%p)->(%p, %p)\n", This, NumCodes, Codes);
 
     IWineD3DDevice_GetDisplayMode(This->wineD3DDevice,
@@ -895,6 +896,8 @@ IDirectDrawImpl_GetFourCCCodes(IDirectDraw7 *iface,
 
     outsize = NumCodes && Codes ? *NumCodes : 0;
 
+    if(type == SURFACE_UNKNOWN) type = SURFACE_GDI;
+
     for(i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
         hr = IWineD3D_CheckDeviceFormat(This->wineD3D,
                                         WINED3DADAPTER_DEFAULT,
@@ -902,7 +905,8 @@ IDirectDrawImpl_GetFourCCCodes(IDirectDraw7 *iface,
                                         d3ddm.Format /* AdapterFormat */,
                                         0 /* usage */,
                                         WINED3DRTYPE_SURFACE,
-                                        formats[i]);
+                                        formats[i],
+                                        type);
         if(SUCCEEDED(hr)) {
             if(count < outsize) {
                 Codes[count] = formats[i];

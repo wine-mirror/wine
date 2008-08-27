@@ -186,7 +186,7 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormat(LPDIRECT3D9EX iface,
 
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, AdapterFormat,
-                                    Usage, RType, CheckFormat);
+                                    Usage, RType, CheckFormat, SURFACE_OPENGL);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }
