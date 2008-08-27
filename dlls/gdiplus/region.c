@@ -242,6 +242,13 @@ GpStatus WINGDIPAPI GdipCombineRegionPath(GpRegion *region, GpPath *path, Combin
     if (stat != Ok)
         return stat;
 
+    /* simply replace region data */
+    if(mode == CombineModeReplace){
+        delete_element(&region->node);
+        memcpy(region, path_region, sizeof(GpRegion));
+        return Ok;
+    }
+
     left = GdipAlloc(sizeof(region_element));
     if (!left)
         goto out;
@@ -278,6 +285,13 @@ GpStatus WINGDIPAPI GdipCombineRegionRect(GpRegion *region,
     stat = GdipCreateRegionRect(rect, &rect_region);
     if (stat != Ok)
         return stat;
+
+    /* simply replace region data */
+    if(mode == CombineModeReplace){
+        delete_element(&region->node);
+        memcpy(region, rect_region, sizeof(GpRegion));
+        return Ok;
+    }
 
     left = GdipAlloc(sizeof(region_element));
     if (!left)
@@ -323,11 +337,22 @@ GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1,
 {
     region_element *left, *right = NULL;
     GpStatus stat;
+    GpRegion *reg2copy;
 
     TRACE("%p %p %d\n", region1, region2, mode);
 
     if(!(region1 && region2))
         return InvalidParameter;
+
+    /* simply replace region data */
+    if(mode == CombineModeReplace){
+        stat = GdipCloneRegion(region2, &reg2copy);
+        if(stat != Ok)  return stat;
+
+        delete_element(&region1->node);
+        memcpy(region1, reg2copy, sizeof(GpRegion));
+        return Ok;
+    }
 
     left  = GdipAlloc(sizeof(region_element));
     if (!left)
