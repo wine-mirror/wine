@@ -156,6 +156,7 @@ GpStatus WINGDIPAPI GdipFillRectangles(GpGraphics*,GpBrush*,GDIPCONST GpRectF*,I
 GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics*,GpBrush*,GDIPCONST GpRect*,INT);
 GpStatus WINGDIPAPI GdipGetCompositingMode(GpGraphics*,CompositingMode*);
 GpStatus WINGDIPAPI GdipGetClip(GpGraphics*,GpRegion*);
+GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics*,GpRegion*,CombineMode);
 GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics*,CompositingQuality*);
 GpStatus WINGDIPAPI GdipGetDC(GpGraphics*,HDC*);
 GpStatus WINGDIPAPI GdipGetImageDimension(GpImage*,REAL*,REAL*);

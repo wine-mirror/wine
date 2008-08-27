@@ -2737,14 +2737,17 @@ GpStatus WINGDIPAPI GdipSetClipRectI(GpGraphics *graphics, INT x, INT y,
 }
 
 GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
-                                     CombineMode combineMode)
+                                      CombineMode mode)
 {
-    static int calls;
+    TRACE("(%p, %p, %d)\n", graphics, region, mode);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if(!graphics || !region)
+        return InvalidParameter;
 
-    return NotImplemented;
+    if(graphics->busy)
+        return ObjectBusy;
+
+    return GdipCombineRegionRegion(graphics->clip, region, mode);
 }
 
 GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile *metafile,

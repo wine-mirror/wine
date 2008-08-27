@@ -485,6 +485,7 @@ static void test_Get_Release_DC(void)
     GpPoint  pt[5];
     GpRectF  rectf[2];
     GpRect   rect[2];
+    GpRegion *clip;
     INT i;
 
     pt[0].X = 10;
@@ -523,6 +524,7 @@ static void test_Get_Release_DC(void)
     GdipCreateRegion(&region);
     GdipCreateSolidFill((ARGB)0xdeadbeef, &brush);
     GdipCreatePath(FillModeAlternate, &path);
+    GdipCreateRegion(&clip);
 
     status = GdipCreateFromHDC(hdc, &graphics);
     expect(Ok, status);
@@ -702,7 +704,8 @@ static void test_Get_Release_DC(void)
     expect(ObjectBusy, status); status = Ok;
     status = GdipSetClipRectI(graphics, 0, 0, 10, 10, CombineModeReplace);
     expect(ObjectBusy, status); status = Ok;
-    /* GdipSetClipRegion */
+    status = GdipSetClipRegion(graphics, clip, CombineModeReplace);
+    expect(ObjectBusy, status);
     status = GdipDrawPolygon(graphics, pen, ptf, 5);
     expect(ObjectBusy, status); status = Ok;
     status = GdipDrawPolygonI(graphics, pen, pt, 5);
@@ -730,6 +733,7 @@ static void test_Get_Release_DC(void)
     GdipDeleteBrush((GpBrush*)brush);
     GdipDeleteRegion(region);
     GdipDeleteMatrix(m);
+    GdipDeleteRegion(region);
 
     ReleaseDC(0, hdc);
 }
@@ -764,7 +768,7 @@ static void test_transformpoints(void)
     ReleaseDC(0, hdc);
 }
 
-static void test_getclip(void)
+static void test_get_set_clip(void)
 {
     GpStatus status;
     GpGraphics *graphics = NULL;
@@ -787,6 +791,11 @@ static void test_getclip(void)
     status = GdipGetClip(graphics, NULL);
     expect(InvalidParameter, status);
     status = GdipGetClip(NULL, clip);
+    expect(InvalidParameter, status);
+
+    status = GdipSetClipRegion(NULL, NULL, CombineModeReplace);
+    expect(InvalidParameter, status);
+    status = GdipSetClipRegion(graphics, NULL, CombineModeReplace);
     expect(InvalidParameter, status);
 
     res = FALSE;
@@ -823,7 +832,7 @@ START_TEST(graphics)
     test_GdipDrawLinesI();
     test_Get_Release_DC();
     test_transformpoints();
-    test_getclip();
+    test_get_set_clip();
 
     GdiplusShutdown(gdiplusToken);
 }
