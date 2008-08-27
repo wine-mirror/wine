@@ -660,46 +660,24 @@ static CURSORICONFILEDIRENTRY *CURSORICON_FindBestIconFile( CURSORICONFILEDIR *d
     return &dir->idEntries[n];
 }
 
-/**********************************************************************
- *		CreateIconFromResourceEx (USER32.@)
- *
- * FIXME: Convert to mono when cFlag is LR_MONOCHROME. Do something
- *        with cbSize parameter as well.
- */
-HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
-                                       BOOL bIcon, DWORD dwVersion,
-                                       INT width, INT height,
-                                       UINT cFlag )
+static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
+					   POINT16 hotspot, BOOL bIcon,
+					   DWORD dwVersion,
+					   INT width, INT height,
+					   UINT cFlag )
 {
     HGLOBAL16 hObj;
     static HDC hdcMem;
     int sizeAnd, sizeXor;
     HBITMAP hAndBits = 0, hXorBits = 0; /* error condition for later */
     BITMAP bmpXor, bmpAnd;
-    POINT16 hotspot;
-    BITMAPINFO *bmi;
     BOOL DoStretch;
     INT size;
 
-    hotspot.x = ICON_HOTSPOT;
-    hotspot.y = ICON_HOTSPOT;
-
-    TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
-                   bits, cbSize, dwVersion, width, height,
-                                  bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
     if (dwVersion == 0x00020000)
     {
         FIXME_(cursor)("\t2.xx resources are not supported\n");
         return 0;
-    }
-
-    if (bIcon)
-        bmi = (BITMAPINFO *)bits;
-    else /* get the hotspot */
-    {
-        POINT16 *pt = (POINT16 *)bits;
-        hotspot = *pt;
-        bmi = (BITMAPINFO *)(pt + 1);
     }
 
     /* Check bitmap header */
@@ -873,6 +851,41 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
 
 
 /**********************************************************************
+ *		CreateIconFromResourceEx (USER32.@)
+ *
+ * FIXME: Convert to mono when cFlag is LR_MONOCHROME. Do something
+ *        with cbSize parameter as well.
+ */
+HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
+                                       BOOL bIcon, DWORD dwVersion,
+                                       INT width, INT height,
+                                       UINT cFlag )
+{
+    POINT16 hotspot;
+    BITMAPINFO *bmi;
+
+    hotspot.x = ICON_HOTSPOT;
+    hotspot.y = ICON_HOTSPOT;
+
+    TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
+                   bits, cbSize, dwVersion, width, height,
+                                  bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
+
+    if (bIcon)
+        bmi = (BITMAPINFO *)bits;
+    else /* get the hotspot */
+    {
+        POINT16 *pt = (POINT16 *)bits;
+        hotspot = *pt;
+        bmi = (BITMAPINFO *)(pt + 1);
+    }
+
+    return CURSORICON_CreateIconFromBMI( bmi, hotspot, bIcon, dwVersion,
+					 width, height, cFlag );
+}
+
+
+/**********************************************************************
  *		CreateIconFromResource (USER32.@)
  */
 HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
@@ -891,6 +904,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     DWORD filesize = 0;
     HICON hIcon = 0;
     LPBYTE bits;
+    POINT16 hotspot;
 
     TRACE("loading %s\n", debugstr_w( filename ));
 
@@ -926,8 +940,11 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     if ( entry->dwDIBOffset + entry->dwDIBSize > filesize )
         goto end;
 
-    hIcon = CreateIconFromResourceEx( &bits[entry->dwDIBOffset], entry->dwDIBSize,
-                                      !fCursor, 0x00030000, width, height, loadflags );
+    hotspot.x = entry->xHotspot;
+    hotspot.y = entry->yHotspot;
+    hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)&bits[entry->dwDIBOffset],
+					  hotspot, !fCursor, 0x00030000,
+					  width, height, loadflags );
 end:
     TRACE("loaded %s -> %p\n", debugstr_w( filename ), hIcon );
     UnmapViewOfFile( bits );
