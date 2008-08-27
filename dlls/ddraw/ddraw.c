@@ -3279,7 +3279,7 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
     TRACE("(%p)->(%p)\n", This, primary);
 
     /* If there's no window, create a hidden window. WineD3D needs it */
-    if(window == 0)
+    if(window == 0 || window == GetDesktopWindow())
     {
         window = CreateWindowExA(0, This->classname, "Hidden D3D Window",
                                  WS_DISABLED, 0, 0,
