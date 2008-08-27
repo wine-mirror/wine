@@ -434,6 +434,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC,GDIPCONST LOGFONTW*,GpFont**)
 GpStatus WINGDIPAPI GdipDeleteFont(GpFont*);
 GpStatus WINGDIPAPI GdipGetLogFontW(GpFont*,GpGraphics*,LOGFONTW*);
 GpStatus WINGDIPAPI GdipCloneFont(GpFont*,GpFont**);
+GpStatus WINGDIPAPI GdipGetFamily(GpFont*, GpFontFamily**);
 GpStatus WINGDIPAPI GdipGetFontUnit(GpFont*, Unit*);
 GpStatus WINGDIPAPI GdipGetFontSize(GpFont*, REAL*);
 GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont*, REAL, REAL*);

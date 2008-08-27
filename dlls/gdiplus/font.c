@@ -250,6 +250,26 @@ GpStatus WINGDIPAPI GdipCreateFontFromDC(HDC hdc, GpFont **font)
     return GdipCreateFontFromLogfontW(hdc, &lfw, font);
 }
 
+/*******************************************************************************
+ * GdipGetFamily [GDIPLUS.@]
+ *
+ * Returns the FontFamily for the specified Font
+ *
+ * PARAMS
+ *  font    [I] Font to request from
+ *  family  [O] Resulting FontFamily object
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: An element of GpStatus
+ */
+GpStatus WINGDIPAPI GdipGetFamily(GpFont *font, GpFontFamily **family)
+{
+    FIXME("stub: %p %p\n", font, family);
+
+    return NotImplemented;
+}
+
 /******************************************************************************
  * GdipGetFontSize [GDIPLUS.@]
  *
