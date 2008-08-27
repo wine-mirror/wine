@@ -2640,6 +2640,52 @@ static BOOL WINAPI CRYPT_AsnDecodeAuthorityKeyId2(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeAccessDescription(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    struct AsnDecodeSequenceItem items[] = {
+     { 0, offsetof(CERT_ACCESS_DESCRIPTION, pszAccessMethod),
+       CRYPT_AsnDecodeOidInternal, sizeof(LPSTR), FALSE, TRUE,
+       offsetof(CERT_ACCESS_DESCRIPTION, pszAccessMethod), 0 },
+     { 0, offsetof(CERT_ACCESS_DESCRIPTION, AccessLocation),
+       CRYPT_AsnDecodeAltNameEntry, sizeof(CERT_ALT_NAME_ENTRY), FALSE,
+       TRUE, offsetof(CERT_ACCESS_DESCRIPTION, AccessLocation.u.pwszURL), 0 },
+    };
+    CERT_ACCESS_DESCRIPTION *descr = (CERT_ACCESS_DESCRIPTION *)pvStructInfo;
+
+    return CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
+     pbEncoded, cbEncoded, dwFlags, NULL, pvStructInfo, pcbStructInfo,
+     pcbDecoded, descr ? descr->pszAccessMethod : NULL);
+}
+
+static BOOL WINAPI CRYPT_AsnDecodeAuthorityInfoAccess(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, *pcbStructInfo);
+
+    __TRY
+    {
+        struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+         CRYPT_AsnDecodeAccessDescription, sizeof(CERT_ACCESS_DESCRIPTION),
+         TRUE, offsetof(CERT_ACCESS_DESCRIPTION, pszAccessMethod) };
+
+        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodePKCSContent(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
@@ -4686,6 +4732,9 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         case LOWORD(X509_AUTHORITY_KEY_ID2):
             decodeFunc = CRYPT_AsnDecodeAuthorityKeyId2;
             break;
+        case LOWORD(X509_AUTHORITY_INFO_ACCESS):
+            decodeFunc = CRYPT_AsnDecodeAuthorityInfoAccess;
+            break;
         case LOWORD(PKCS_CONTENT_INFO):
             decodeFunc = CRYPT_AsnDecodePKCSContentInfo;
             break;
@@ -4759,6 +4808,8 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         decodeFunc = CRYPT_AsnDecodeIssuingDistPoint;
     else if (!strcmp(lpszStructType, szOID_NAME_CONSTRAINTS))
         decodeFunc = CRYPT_AsnDecodeNameConstraints;
+    else if (!strcmp(lpszStructType, szOID_AUTHORITY_INFO_ACCESS))
+        decodeFunc = CRYPT_AsnDecodeAuthorityInfoAccess;
     return decodeFunc;
 }
 

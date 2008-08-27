@@ -4888,7 +4888,6 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
      emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     if (buf)
     {
@@ -4902,7 +4901,6 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
     ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
      authorityInfoAccessWithUrl, sizeof(authorityInfoAccessWithUrl),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     if (buf)
     {
@@ -4923,7 +4921,6 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
      authorityInfoAccessWithUrlAndIPAddr,
      sizeof(authorityInfoAccessWithUrlAndIPAddr), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
     if (buf)
     {
