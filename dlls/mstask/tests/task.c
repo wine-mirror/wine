@@ -448,7 +448,14 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     /* Get account information before it is set */
     hres = ITask_GetAccountInformation(test_task, &account_name);
     /* WinXP returns HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND): 0x80070002 but
-     * Win2K returns SCHED_E_CANNOT_OPEN_TASK: 0x8004130d */
+     * Win2K returns SCHED_E_CANNOT_OPEN_TASK: 0x8004130d
+     * Win9x doesn't support security services */
+    if (hres == SCHED_E_NO_SECURITY_SERVICES)
+    {
+        win_skip("Security services are not supported\n");
+        cleanup_task();
+        return;
+    }
     ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
             hres == SCHED_E_CANNOT_OPEN_TASK,
             "Unset account name generated: 0x%08x\n", hres);
