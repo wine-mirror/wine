@@ -59,6 +59,10 @@ static void test_rasenum(void)
         win_skip("RAS configuration problem\n");
         return;
     }
+    if(ERROR_SUCCESS == result) {
+        win_skip("RasEnumDevicesA found nothing to enumerate\n");
+        return;
+    }
     trace("RasEnumDevicesA: returned %d buffersize %d\n", result, cb);
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
