@@ -4775,6 +4775,185 @@ static void test_decodeAuthorityKeyId2(DWORD dwEncoding)
     }
 }
 
+static const BYTE authorityInfoAccessWithUrl[] = {
+0x30,0x19,0x30,0x17,0x06,0x02,0x2a,0x03,0x86,0x11,0x68,0x74,0x74,0x70,0x3a,
+0x2f,0x2f,0x77,0x69,0x6e,0x65,0x68,0x71,0x2e,0x6f,0x72,0x67 };
+static const BYTE authorityInfoAccessWithUrlAndIPAddr[] = {
+0x30,0x29,0x30,0x17,0x06,0x02,0x2a,0x03,0x86,0x11,0x68,0x74,0x74,0x70,0x3a,
+0x2f,0x2f,0x77,0x69,0x6e,0x65,0x68,0x71,0x2e,0x6f,0x72,0x67,0x30,0x0e,0x06,
+0x02,0x2d,0x06,0x87,0x08,0x30,0x06,0x87,0x04,0x7f,0x00,0x00,0x01 };
+
+static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
+{
+    static char oid1[] = "1.2.3";
+    static char oid2[] = "1.5.6";
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+    CERT_ACCESS_DESCRIPTION accessDescription[2];
+    CERT_AUTHORITY_INFO_ACCESS aia;
+
+    memset(accessDescription, 0, sizeof(accessDescription));
+    aia.cAccDescr = 0;
+    aia.rgAccDescr = NULL;
+    /* Having no access descriptions is allowed */
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(emptySequence), "unexpected size %d\n", size);
+        ok(!memcmp(buf, emptySequence, size), "unexpected value\n");
+        LocalFree(buf);
+        buf = NULL;
+    }
+    /* It can't have an empty access method */
+    aia.cAccDescr = 1;
+    aia.rgAccDescr = accessDescription;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    /* It can't have an empty location */
+    accessDescription[0].pszAccessMethod = oid1;
+    SetLastError(0xdeadbeef);
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    accessDescription[0].AccessLocation.dwAltNameChoice = CERT_ALT_NAME_URL;
+    accessDescription[0].AccessLocation.pwszURL = (LPWSTR)url;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(authorityInfoAccessWithUrl), "unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, authorityInfoAccessWithUrl, size),
+         "unexpected value\n");
+        LocalFree(buf);
+        buf = NULL;
+    }
+    accessDescription[1].pszAccessMethod = oid2;
+    accessDescription[1].AccessLocation.dwAltNameChoice =
+     CERT_ALT_NAME_IP_ADDRESS;
+    accessDescription[1].AccessLocation.IPAddress.cbData =
+     sizeof(encodedIPAddr);
+    accessDescription[1].AccessLocation.IPAddress.pbData =
+     (LPBYTE)encodedIPAddr;
+    aia.cAccDescr = 2;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (buf)
+    {
+        ok(size == sizeof(authorityInfoAccessWithUrlAndIPAddr),
+         "unexpected size %d\n", size);
+        ok(!memcmp(buf, authorityInfoAccessWithUrlAndIPAddr, size),
+         "unexpected value\n");
+        LocalFree(buf);
+        buf = NULL;
+    }
+}
+
+static void compareAuthorityInfoAccess(LPCSTR header,
+ const CERT_AUTHORITY_INFO_ACCESS *expected,
+ const CERT_AUTHORITY_INFO_ACCESS *got)
+{
+    DWORD i;
+
+    ok(expected->cAccDescr == got->cAccDescr,
+     "%s: expected %d access descriptions, got %d\n", header,
+     expected->cAccDescr, got->cAccDescr);
+    for (i = 0; i < expected->cAccDescr; i++)
+    {
+        ok(!strcmp(expected->rgAccDescr[i].pszAccessMethod,
+         got->rgAccDescr[i].pszAccessMethod), "%s[%d]: expected %s, got %s\n",
+         header, i, expected->rgAccDescr[i].pszAccessMethod,
+         got->rgAccDescr[i].pszAccessMethod);
+        compareAltNameEntry(&expected->rgAccDescr[i].AccessLocation,
+         &got->rgAccDescr[i].AccessLocation);
+    }
+}
+
+static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
+{
+    static char oid1[] = "1.2.3";
+    static char oid2[] = "1.5.6";
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+
+    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
+     emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        CERT_AUTHORITY_INFO_ACCESS aia = { 0, NULL };
+
+        compareAuthorityInfoAccess("empty AIA", &aia,
+         (CERT_AUTHORITY_INFO_ACCESS *)buf);
+        LocalFree(buf);
+        buf = NULL;
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
+     authorityInfoAccessWithUrl, sizeof(authorityInfoAccessWithUrl),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        CERT_ACCESS_DESCRIPTION accessDescription;
+        CERT_AUTHORITY_INFO_ACCESS aia;
+
+        accessDescription.pszAccessMethod = oid1;
+        accessDescription.AccessLocation.dwAltNameChoice = CERT_ALT_NAME_URL;
+        accessDescription.AccessLocation.pwszURL = (LPWSTR)url;
+        aia.cAccDescr = 1;
+        aia.rgAccDescr = &accessDescription;
+        compareAuthorityInfoAccess("AIA with URL", &aia,
+         (CERT_AUTHORITY_INFO_ACCESS *)buf);
+        LocalFree(buf);
+        buf = NULL;
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
+     authorityInfoAccessWithUrlAndIPAddr,
+     sizeof(authorityInfoAccessWithUrlAndIPAddr), CRYPT_DECODE_ALLOC_FLAG,
+     NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
+    if (buf)
+    {
+        CERT_ACCESS_DESCRIPTION accessDescription[2];
+        CERT_AUTHORITY_INFO_ACCESS aia;
+
+        accessDescription[0].pszAccessMethod = oid1;
+        accessDescription[0].AccessLocation.dwAltNameChoice = CERT_ALT_NAME_URL;
+        accessDescription[0].AccessLocation.pwszURL = (LPWSTR)url;
+        accessDescription[1].pszAccessMethod = oid2;
+        accessDescription[1].AccessLocation.dwAltNameChoice =
+         CERT_ALT_NAME_IP_ADDRESS;
+        accessDescription[1].AccessLocation.IPAddress.cbData =
+         sizeof(encodedIPAddr);
+        accessDescription[1].AccessLocation.IPAddress.pbData =
+         (LPBYTE)encodedIPAddr;
+        aia.cAccDescr = 2;
+        aia.rgAccDescr = accessDescription;
+        compareAuthorityInfoAccess("AIA with URL and IP addr", &aia,
+         (CERT_AUTHORITY_INFO_ACCESS *)buf);
+        LocalFree(buf);
+        buf = NULL;
+    }
+}
+
 static const BYTE emptyPKCSContentInfo[] = { 0x30,0x04,0x06,0x02,0x2a,0x03 };
 static const BYTE emptyPKCSContentInfoExtraBytes[] = { 0x30,0x04,0x06,0x02,0x2a,
  0x03,0,0,0,0,0,0 };
@@ -6433,6 +6612,8 @@ START_TEST(encode)
         test_decodeAuthorityKeyId(encodings[i]);
         test_encodeAuthorityKeyId2(encodings[i]);
         test_decodeAuthorityKeyId2(encodings[i]);
+        test_encodeAuthorityInfoAccess(encodings[i]);
+        test_decodeAuthorityInfoAccess(encodings[i]);
         test_encodePKCSContentInfo(encodings[i]);
         test_decodePKCSContentInfo(encodings[i]);
         test_encodePKCSAttribute(encodings[i]);
