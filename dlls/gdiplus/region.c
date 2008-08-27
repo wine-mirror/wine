@@ -735,9 +735,14 @@ GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *region, GpGraphics *graphics, HR
 
 GpStatus WINGDIPAPI GdipIsEmptyRegion(GpRegion *region, GpGraphics *graphics, BOOL *res)
 {
-    FIXME("(%p, %p, %p): stub\n", region, graphics, res);
+    TRACE("(%p, %p, %p)\n", region, graphics, res);
 
-    return NotImplemented;
+    if(!region || !graphics || !res)
+        return InvalidParameter;
+
+    *res = (region->node.type == RegionDataEmptyRect);
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipIsEqualRegion(GpRegion *region, GpRegion *region2, GpGraphics *graphics,

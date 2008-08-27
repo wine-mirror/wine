@@ -506,6 +506,50 @@ static void test_isinfinite(void)
 
     GdipDeleteMatrix(m);
     GdipDeleteRegion(region);
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(0, hdc);
+}
+
+static void test_isempty(void)
+{
+    GpStatus status;
+    GpRegion *region;
+    GpGraphics *graphics = NULL;
+    HDC hdc = GetDC(0);
+    BOOL res;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    GdipCreateRegion(&region);
+
+    /* NULL arguments */
+    status = GdipIsEmptyRegion(NULL, NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsEmptyRegion(region, NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsEmptyRegion(NULL, graphics, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsEmptyRegion(NULL, NULL, &res);
+    expect(InvalidParameter, status);
+    status = GdipIsEmptyRegion(region, NULL, &res);
+    expect(InvalidParameter, status);
+
+    /* default is infinite */
+    res = TRUE;
+    status = GdipIsEmptyRegion(region, graphics, &res);
+    expect(Ok, status);
+    expect(FALSE, res);
+
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+
+    res = FALSE;
+    status = GdipIsEmptyRegion(region, graphics, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+
+    GdipDeleteRegion(region);
+    GdipDeleteGraphics(graphics);
     ReleaseDC(0, hdc);
 }
 
@@ -523,6 +567,7 @@ START_TEST(region)
 
     test_getregiondata();
     test_isinfinite();
+    test_isempty();
 
     GdiplusShutdown(gdiplusToken);
 
