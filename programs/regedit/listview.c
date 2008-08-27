@@ -549,7 +549,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
         errCode = RegEnumValueW(hKey, index, valName, &valNameLen, NULL, &valType, valBuf, &valSize);
 	if (errCode != ERROR_SUCCESS) goto done;
         valBuf[valSize] = 0;
-        if (valName && highlightValueW && lstrcmpW(valName, highlightValueW))
+        if (valName && highlightValueW && !lstrcmpW(valName, highlightValueW))
             bSelected = TRUE;
         AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize, bSelected);
     }
