@@ -26,6 +26,7 @@
 #include "ole2.h"
 #include "xmldom.h"
 #include "msxml2.h"
+#include "msxml2did.h"
 #include "dispex.h"
 #include <stdio.h>
 #include <assert.h>
@@ -1544,7 +1545,39 @@ static void test_getElementsByTagName(void)
     r = IXMLDOMNodeList_QueryInterface( node_list, &IID_IDispatchEx, (void**)&dispex );
     ok( r == S_OK, "rets %08x\n", r);
     if( r == S_OK )
+    {
+        DISPID dispid = DISPID_XMLDOM_NODELIST_RESET;
+        DWORD dwProps = 0;
+        BSTR sName;
+        IUnknown *pUnk;
+
+        sName = SysAllocString( szstar );
+        r = IDispatchEx_DeleteMemberByName(dispex, sName, fdexNameCaseSensitive);
+        ok(r == E_NOTIMPL, "expected E_NOTIMPL got %08x\n", r);
+        SysFreeString( sName );
+
+        r = IDispatchEx_DeleteMemberByDispID(dispex, dispid);
+        ok(r == E_NOTIMPL, "expected E_NOTIMPL got %08x\n", r);
+
+        r = IDispatchEx_GetMemberProperties(dispex, dispid, grfdexPropCanAll, &dwProps);
+        ok(r == E_NOTIMPL, "expected E_NOTIMPL got %08x\n", r);
+        ok(dwProps == 0, "expected 0 got %d\n", dwProps);
+
+        r = IDispatchEx_GetMemberName(dispex, dispid, &sName);
+        ok(r == E_NOTIMPL, "expected E_NOTIMPL got %08x\n", r);
+        if(sName)
+            SysFreeString(sName);
+
+        r = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_XMLDOM_NODELIST_RESET, &dispid);
+        ok(r == E_NOTIMPL, "expected E_NOTIMPL got %08x\n", r);
+
+        r = IDispatchEx_GetNameSpaceParent(dispex, &pUnk);
+        ok(r == E_NOTIMPL, "expected E_NOTIMPL got %08x\n", r);
+        if(r == S_OK)
+            IUnknown_Release(pUnk);
+
         IDispatchEx_Release( dispex );
+    }
 
 
     IXMLDOMNodeList_Release( node_list );
