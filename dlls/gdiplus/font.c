@@ -265,9 +265,12 @@ GpStatus WINGDIPAPI GdipCreateFontFromDC(HDC hdc, GpFont **font)
  */
 GpStatus WINGDIPAPI GdipGetFamily(GpFont *font, GpFontFamily **family)
 {
-    FIXME("stub: %p %p\n", font, family);
+    TRACE("%p %p\n", font, family);
 
-    return NotImplemented;
+    if (!(font && family))
+        return InvalidParameter;
+
+    return GdipCreateFontFamilyFromName(font->lfw.lfFaceName, NULL, family);
 }
 
 /******************************************************************************

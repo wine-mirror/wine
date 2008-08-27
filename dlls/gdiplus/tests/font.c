@@ -67,11 +67,9 @@ static void test_createfont(void)
     expect (UnitPoint, unit);
 
     stat = GdipGetFamily(font, &fontfamily2);
-todo_wine
     expect(Ok, stat);
     stat = GdipGetFamilyName(fontfamily2, familyname, 0);
     expect(Ok, stat);
-todo_wine
     ok (lstrcmpiW(arial, familyname) == 0, "Expected arial, got %s\n",
             debugstr_w(familyname));
     stat = GdipDeleteFontFamily(fontfamily2);
