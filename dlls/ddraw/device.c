@@ -1164,6 +1164,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     HRESULT hr;
+    WINED3DDISPLAYMODE mode;
     int i;
 
     WINED3DFORMAT FormatList[] = {
@@ -1202,14 +1203,25 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
+
+    memset(&mode, 0, sizeof(mode));
+    hr = IWineD3DDevice_GetDisplayMode(This->ddraw->wineD3DDevice,
+                                       0,
+                                       &mode);
+    if(FAILED(hr)) {
+        LeaveCriticalSection(&ddraw_cs);
+        WARN("Cannot get the current adapter format\n");
+        return hr;
+    }
+
     for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
     {
         hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
-                                        0 /* Adapter */,
-                                        0 /* DeviceType */,
-                                        0 /* AdapterFormat */,
+                                        WINED3DADAPTER_DEFAULT,
+                                        WINED3DDEVTYPE_HAL,
+                                        mode.Format,
                                         0 /* Usage */,
-                                        0 /* ResourceType */,
+                                        WINED3DRTYPE_TEXTURE,
                                         FormatList[i],
                                         SURFACE_OPENGL);
         if(hr == D3D_OK)
@@ -1234,11 +1246,11 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
     for(i = 0; i < sizeof(BumpFormatList) / sizeof(WINED3DFORMAT); i++)
     {
         hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
-                                        0 /* Adapter */,
-                                        0 /* DeviceType */,
-                                        0 /* AdapterFormat */,
+                                        WINED3DADAPTER_DEFAULT,
+                                        WINED3DDEVTYPE_HAL,
+                                        mode.Format,
                                         WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
-                                        0 /* ResourceType */,
+                                        WINED3DRTYPE_TEXTURE,
                                         BumpFormatList[i],
                                         SURFACE_OPENGL);
         if(hr == D3D_OK)
@@ -1317,6 +1329,7 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
     HRESULT hr;
     int i;
+    WINED3DDISPLAYMODE mode;
 
     WINED3DFORMAT FormatList[] = {
         /* 32 bit */
@@ -1341,14 +1354,25 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
+
+    memset(&mode, 0, sizeof(mode));
+    hr = IWineD3DDevice_GetDisplayMode(This->ddraw->wineD3DDevice,
+                                       0,
+                                       &mode);
+    if(FAILED(hr)) {
+        LeaveCriticalSection(&ddraw_cs);
+        WARN("Cannot get the current adapter format\n");
+        return hr;
+    }
+
     for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
     {
         hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
                                         0 /* Adapter */,
-                                        0 /* DeviceType */,
-                                        0 /* AdapterFormat */,
+                                        WINED3DDEVTYPE_HAL,
+                                        mode.Format,
                                         0 /* Usage */,
-                                        0 /* ResourceType */,
+                                        WINED3DRTYPE_TEXTURE,
                                         FormatList[i],
                                         SURFACE_OPENGL);
         if(hr == D3D_OK)
