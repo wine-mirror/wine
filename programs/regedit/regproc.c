@@ -113,28 +113,28 @@ static BOOL convertHexToDWord(WCHAR* str, DWORD *dw)
 /******************************************************************************
  * Converts a hex comma separated values list into a binary string.
  */
-static BYTE* convertHexCSVToHex(WCHAR *strW, DWORD *size)
+static BYTE* convertHexCSVToHex(WCHAR *str, DWORD *size)
 {
-    char *s;
+    WCHAR *s;
     BYTE *d, *data;
-    char* strA = GetMultiByteString(strW);
 
     /* The worst case is 1 digit + 1 comma per byte */
-    *size=(strlen(strA)+1)/2;
+    *size=(lstrlenW(str)+1)/2;
     data=HeapAlloc(GetProcessHeap(), 0, *size);
     CHECK_ENOUGH_MEMORY(data);
 
-    s = strA;
+    s = str;
     d = data;
     *size=0;
     while (*s != '\0') {
         UINT wc;
-        char *end;
+        WCHAR *end;
 
-        wc = strtoul(s,&end,16);
+        wc = strtoulW(s,&end,16);
         if (end == s || wc > 0xff || (*end && *end != ',')) {
+            char* strA = GetMultiByteString(s);
             fprintf(stderr,"%s: ERROR converting CSV hex stream. Invalid value at '%s'\n",
-                    getAppName(), s);
+                    getAppName(), strA);
             HeapFree(GetProcessHeap(), 0, data);
             HeapFree(GetProcessHeap(), 0, strA);
             return NULL;
@@ -144,8 +144,6 @@ static BYTE* convertHexCSVToHex(WCHAR *strW, DWORD *size)
         if (*end) end++;
         s = end;
     }
-
-    HeapFree(GetProcessHeap(), 0, strA);
 
     return data;
 }
