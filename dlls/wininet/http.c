@@ -2187,15 +2187,18 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
     case HTTP_QUERY_RAW_HEADERS_CRLF:
         {
             LPWSTR headers;
-            DWORD len;
+            DWORD len = 0;
             BOOL ret = FALSE;
+            static const WCHAR CRLF[] = {'\r','\n',0};
 
             if (request_only)
                 headers = HTTP_BuildHeaderRequestString(lpwhr, lpwhr->lpszVerb, lpwhr->lpszPath, lpwhr->lpszVersion);
             else
                 headers = lpwhr->lpszRawHeaders;
 
-            len = strlenW(headers) * sizeof(WCHAR);
+            if (headers)
+                len = strlenW(headers) * sizeof(WCHAR);
+
             if (len + sizeof(WCHAR) > *lpdwBufferLength)
             {
                 len += sizeof(WCHAR);
@@ -2204,7 +2207,13 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
             }
             else if (lpBuffer)
             {
-                memcpy(lpBuffer, headers, len + sizeof(WCHAR));
+                if (headers)
+                    memcpy(lpBuffer, headers, len + sizeof(WCHAR));
+                else
+                {
+                    len = strlenW(CRLF) * sizeof(WCHAR);
+                    memcpy(lpBuffer, CRLF, sizeof(CRLF));
+                }
                 TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len / sizeof(WCHAR)));
                 ret = TRUE;
             }

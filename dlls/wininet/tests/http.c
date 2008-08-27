@@ -1208,6 +1208,16 @@ static void HttpHeaders_test(void)
 
     /* end of W version tests */
 
+    /* Without HTTP_QUERY_FLAG_REQUEST_HEADERS */
+    index = 0;
+    len = sizeof(buffer);
+    memset(buffer, 'x', sizeof(buffer));
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF,
+                buffer,&len,&index) == TRUE,"Query failed\n");
+    ok(len == 2, "Expected 2, got %d\n", len);
+    ok(strcmp(buffer, "\r\n") == 0, "Expected CRLF, got '%s'\n", buffer);
+    ok(index == 0, "Index was incremented\n");
+
     ok(HttpAddRequestHeaders(hRequest,"Warning:test2",-1,HTTP_ADDREQ_FLAG_ADD),
             "Failed to add duplicate header using HTTP_ADDREQ_FLAG_ADD\n");
 
