@@ -35,10 +35,7 @@
 
 #define expect_magic(value) ok(*value == RGNDATA_MAGIC || *value == RGNDATA_MAGIC2, "Expected a known magic value, got %8x\n", *value)
 
-static inline void expect_dword(DWORD *value, DWORD expected)
-{
-    ok(*value == expected, "expected %08x got %08x\n", expected, *value);
-}
+#define expect_dword(value, expected) ok(*(value) == expected, "expected %08x got %08x\n", expected, *(value))
 
 static inline void expect_float(DWORD *value, FLOAT expected)
 {
@@ -553,6 +550,39 @@ static void test_isempty(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_combinereplace(void)
+{
+    GpStatus status;
+    GpRegion *region;
+    GpRectF rectf;
+    UINT needed;
+    DWORD buf[10];
+
+    rectf.X = rectf.Y = 0.0;
+    rectf.Width = rectf.Height = 100.0;
+
+    status = GdipCreateRegionRect(&rectf, &region);
+    expect(Ok, status);
+
+    /* replace with the same rectangle */
+    status = GdipCombineRegionRect(region, &rectf,CombineModeReplace);
+    expect(Ok, status);
+
+    status = GdipGetRegionDataSize(region, &needed);
+    expect(Ok, status);
+    todo_wine expect(36, needed);
+    status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
+    expect(Ok, status);
+    todo_wine expect(36, needed);
+    todo_wine expect_dword(buf, 28);
+    trace("buf[1] = %08x\n", buf[1]);
+    expect_magic((DWORD*)(buf + 2));
+    todo_wine expect_dword(buf + 3, 0);
+    todo_wine expect_dword(buf + 4, RGNDATA_RECT);
+
+    GdipDeleteRegion(region);
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -568,6 +598,7 @@ START_TEST(region)
     test_getregiondata();
     test_isinfinite();
     test_isempty();
+    test_combinereplace();
 
     GdiplusShutdown(gdiplusToken);
 
