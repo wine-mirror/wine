@@ -172,13 +172,10 @@ todo_wine {
     expect(0, lfw2.lfQuality);
     expect(0, lfw2.lfPitchAndFamily);
 
-todo_wine
-{
     stat = GdipGetFontStyle(font, &style);
     expect(Ok, stat);
     ok (style == (FontStyleItalic | FontStyleUnderline | FontStyleStrikeout),
             "Expected , got %d\n", style);
-}
 
     GdipDeleteFont(font);
 

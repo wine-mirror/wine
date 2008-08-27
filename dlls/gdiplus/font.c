@@ -298,11 +298,38 @@ GpStatus WINGDIPAPI GdipGetFontSize(GpFont *font, REAL *size)
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipGetFontStyle [GDIPLUS.@]
+ *
+ * Gets the font's style, returned in bitwise OR of FontStyle enumeration
+ *
+ * PARAMS
+ *  font    [I] font to request from
+ *  style   [O] resulting pointer to a FontStyle enumeration
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: InvalidParameter
+ */
 GpStatus WINGDIPAPI GdipGetFontStyle(GpFont *font, INT *style)
 {
-    FIXME("stub: %p %p\n", font, style);
+    TRACE("%p %p\n", font, style);
 
-    return NotImplemented;
+    if (!(font && style))
+        return InvalidParameter;
+
+    if (font->lfw.lfWeight > 400)
+        *style = FontStyleBold;
+    else
+        *style = 0;
+    if (font->lfw.lfItalic)
+        *style |= FontStyleItalic;
+    if (font->lfw.lfUnderline)
+        *style |= FontStyleUnderline;
+    if (font->lfw.lfStrikeOut)
+        *style |= FontStyleStrikeout;
+
+    return Ok;
 }
 
 /*******************************************************************************
