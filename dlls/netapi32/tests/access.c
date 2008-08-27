@@ -217,7 +217,7 @@ static void run_querydisplayinformation1_tests(void)
         pNetApiBufferFree(Buffer);
     } while (Result == ERROR_MORE_DATA);
 
-    ok(hasAdmin, "Has Administrator account\n");
+    ok(hasAdmin, "Doesn't have 'Administrator' account\n");
 }
 
 static void run_usermodalsget_tests(void)
