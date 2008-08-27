@@ -53,6 +53,7 @@ typedef struct tagWINDOWPROC
 #define WINPROC_HANDLE (~0UL >> 16)
 #define MAX_WINPROCS  8192
 #define BUILTIN_WINPROCS 9  /* first BUILTIN_WINPROCS entries are reserved for builtin procs */
+#define MAX_WINPROC_RECURSION  64
 
 WNDPROC EDIT_winproc_handle = 0;
 
@@ -2177,6 +2178,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
 BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                           LRESULT *result, BOOL unicode, enum wm_char_mapping mapping )
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
     WND *wndPtr;
     WINDOWPROC *proc;
 
@@ -2191,6 +2193,9 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     WIN_ReleasePtr( wndPtr );
 
     if (!proc) return TRUE;
+
+    if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return FALSE;
+    thread_info->recursion_count++;
 
     if (unicode)
     {
@@ -2210,6 +2215,7 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         else
             WINPROC_CallProc32ATo16( call_window_proc16, hwnd, msg, wParam, lParam, result, proc->proc16 );
     }
+    thread_info->recursion_count--;
     return TRUE;
 }
 

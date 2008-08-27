@@ -52,7 +52,6 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
 #define WM_NCMOUSELAST  (WM_NCMOUSEFIRST+(WM_MOUSELAST-WM_MOUSEFIRST))
 
 #define MAX_PACK_COUNT 4
-#define MAX_SENDMSG_RECURSION  64
 
 #define SYS_TIMER_RATE  55   /* min. timer rate in ms (actually 54.925)*/
 
@@ -1613,13 +1612,9 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                  BOOL unicode, BOOL same_thread, enum wm_char_mapping mapping )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
     LRESULT result = 0;
     CWPSTRUCT cwp;
     CWPRETSTRUCT cwpret;
-
-    if (thread_info->recursion_count > MAX_SENDMSG_RECURSION) return 0;
-    thread_info->recursion_count++;
 
     if (msg & 0x80000000)
     {
@@ -1646,7 +1641,6 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     cwpret.hwnd    = hwnd;
     HOOK_CallHooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, unicode );
  done:
-    thread_info->recursion_count--;
     return result;
 }
 
