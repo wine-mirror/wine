@@ -428,12 +428,22 @@ GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont *font,
  */
 GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, REAL *height)
 {
-    if (!(font && height)) return InvalidParameter;
-
-    FIXME("%p (%s), %f, %p\n", font,
+    TRACE("%p (%s), %f, %p\n", font,
             debugstr_w(font->lfw.lfFaceName), dpi, height);
 
-    return NotImplemented;
+    if (!(font && height)) return InvalidParameter;
+
+    switch (font->unit)
+    {
+        case UnitPixel:
+            *height = font->emSize;
+            break;
+        default:
+            FIXME("Unhandled unit type: %d\n", font->unit);
+            return NotImplemented;
+    }
+
+    return Ok;
 }
 
 /***********************************************************************
