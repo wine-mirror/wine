@@ -960,8 +960,7 @@ static void test_enum_svc(void)
     BOOL ret;
     DWORD bufsize, needed, returned, resume;
     DWORD tempneeded, tempreturned;
-    DWORD drivercountactive, servicecountactive;
-    DWORD drivercountinactive, servicecountinactive;
+    DWORD servicecountactive, servicecountinactive;
     ENUM_SERVICE_STATUS *services;
     ENUM_SERVICE_STATUS_PROCESS *exservices;
     INT i;
@@ -1172,39 +1171,15 @@ static void test_enum_svc(void)
 
     /* See if things add up */
 
-    /* Get the number of active driver services */
-    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_ACTIVE, NULL, 0,
-                        &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
-    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_ACTIVE, services,
-                        needed, &needed, &returned, NULL);
-    HeapFree(GetProcessHeap(), 0, services);
-
-    /* Store the number of active driver services */
-    drivercountactive = returned;
-
-    /* Get the number of inactive driver services */
-    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_INACTIVE, NULL, 0,
-                        &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
-    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_INACTIVE, services,
-                        needed, &needed, &returned, NULL);
-    HeapFree(GetProcessHeap(), 0, services);
-
-    drivercountinactive = returned;
-
-    /* Get the number of driver services */
-    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_STATE_ALL, NULL, 0,
-                        &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
-    EnumServicesStatusA(scm_handle, SERVICE_DRIVER, SERVICE_STATE_ALL, services,
-                        needed, &needed, &returned, NULL);
-    HeapFree(GetProcessHeap(), 0, services);
-
-    /* Check if total is the same as active and inactive driver services */
-    todo_wine
-    ok(returned == (drivercountactive + drivercountinactive),
-       "Something wrong in the calculation\n");
+    /* Vista only shows the drivers with a state of SERVICE_RUNNING as active
+     * and doesn't count the others as inactive. This means that Vista could
+     * show a total that is greater then the sum of active and inactive drivers.
+     *
+     * The number of active and inactive drivers is greatly influenced by the
+     * time when tests are run, immediately after boot or later for example.
+     *
+     * Both reasons make calculations for drivers not so useful
+     */
 
     /* Get the number of active win32 services */
     EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_ACTIVE, NULL, 0,
@@ -1239,7 +1214,8 @@ static void test_enum_svc(void)
     ok(returned == (servicecountactive + servicecountinactive),
        "Something wrong in the calculation\n");
 
-    /* Get the number of all services.
+    /* Get all drivers and services
+     *
      * Fetch the status of the last call as failing could make the following tests crash
      * on Wine (we don't return anything yet).
      */
@@ -1249,12 +1225,7 @@ static void test_enum_svc(void)
     ret = EnumServicesStatusA(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
                               services, needed, &needed, &returned, NULL);
 
-    /* Check if total is the same as all those single calls */
-    todo_wine
-    ok(returned == (drivercountactive + drivercountinactive + servicecountactive + servicecountinactive),
-       "Something wrong in the calculation\n");
-
-    /* Loop through all those returned services */
+    /* Loop through all those returned drivers and services */
     for (i = 0; ret && i < returned; i++)
     {
         SERVICE_STATUS status = services[i].ServiceStatus;
@@ -1266,15 +1237,6 @@ static void test_enum_svc(void)
         /* Decrement the counters to see if the functions calls return the same
          * numbers as the contents of these structures.
          */
-        if (status.dwServiceType & (SERVICE_FILE_SYSTEM_DRIVER | SERVICE_KERNEL_DRIVER))
-        {
-            /* FIXME: should be probably more then just SERVICE_RUNNING */
-            if (status.dwCurrentState == SERVICE_RUNNING)
-                drivercountactive--;
-            else
-                drivercountinactive--;
-        }
-
         if (status.dwServiceType & (SERVICE_WIN32_OWN_PROCESS | SERVICE_WIN32_SHARE_PROCESS))
         {
             if (status.dwCurrentState == SERVICE_RUNNING)
@@ -1287,8 +1249,6 @@ static void test_enum_svc(void)
 
     todo_wine
     {
-    ok(drivercountactive == 0, "Active driver mismatch\n");
-    ok(drivercountinactive == 0, "Inactive driver mismatch\n");
     ok(servicecountactive == 0, "Active services mismatch\n");
     ok(servicecountinactive == 0, "Inactive services mismatch\n");
     }
@@ -1561,39 +1521,6 @@ static void test_enum_svc(void)
 
     /* See if things add up */
 
-    /* Get the number of active driver services */
-    pEnumServicesStatusExA(scm_handle, 0, SERVICE_DRIVER, SERVICE_ACTIVE,
-                           NULL, 0, &needed, &returned, NULL, NULL);
-    exservices = HeapAlloc(GetProcessHeap(), 0, needed);
-    pEnumServicesStatusExA(scm_handle, 0, SERVICE_DRIVER, SERVICE_ACTIVE,
-                           (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, exservices);
-
-    /* Store the number of active driver services */
-    drivercountactive = returned;
-
-    /* Get the number of inactive driver services */
-    pEnumServicesStatusExA(scm_handle, 0, SERVICE_DRIVER, SERVICE_INACTIVE,
-                           NULL, 0, &needed, &returned, NULL, NULL);
-    exservices = HeapAlloc(GetProcessHeap(), 0, needed);
-    pEnumServicesStatusExA(scm_handle, 0, SERVICE_DRIVER, SERVICE_INACTIVE,
-                           (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, exservices);
-
-    drivercountinactive = returned;
-
-    /* Get the number of driver services */
-    pEnumServicesStatusExA(scm_handle, 0, SERVICE_DRIVER, SERVICE_STATE_ALL,
-                           NULL, 0, &needed, &returned, NULL, NULL);
-    exservices = HeapAlloc(GetProcessHeap(), 0, needed);
-    pEnumServicesStatusExA(scm_handle, 0, SERVICE_DRIVER, SERVICE_STATE_ALL,
-                           (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, exservices);
-
-    /* Check if total is the same as active and inactive driver services */
-    ok(returned == (drivercountactive + drivercountinactive),
-       "Something wrong in the calculation\n");
-
     /* Get the number of active win32 services */
     pEnumServicesStatusExA(scm_handle, 0, SERVICE_WIN32, SERVICE_ACTIVE,
                            NULL, 0, &needed, &returned, NULL, NULL);
@@ -1626,18 +1553,14 @@ static void test_enum_svc(void)
     ok(returned == (servicecountactive + servicecountinactive),
        "Something wrong in the calculation\n");
 
-    /* Get the number of all services */
+    /* Get all drivers and services */
     pEnumServicesStatusExA(scm_handle, 0, SERVICE_WIN32 | SERVICE_DRIVER,
                            SERVICE_STATE_ALL, NULL, 0, &needed, &returned, NULL, NULL);
     exservices = HeapAlloc(GetProcessHeap(), 0, needed);
     pEnumServicesStatusExA(scm_handle, 0, SERVICE_WIN32 | SERVICE_DRIVER,
                            SERVICE_STATE_ALL, (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
 
-    /* Check if total is the same as all those single calls */
-    ok(returned == (drivercountactive + drivercountinactive + servicecountactive + servicecountinactive),
-       "Something wrong in the calculation\n");
-
-    /* Loop through all those returned services */
+    /* Loop through all those returned drivers and services */
     for (i = 0; i < returned; i++)
     {
         SERVICE_STATUS_PROCESS status = exservices[i].ServiceStatusProcess;
@@ -1653,11 +1576,6 @@ static void test_enum_svc(void)
          */
         if (status.dwServiceType & (SERVICE_FILE_SYSTEM_DRIVER | SERVICE_KERNEL_DRIVER))
         {
-            if (status.dwCurrentState == SERVICE_RUNNING)
-                drivercountactive--;
-            else
-                drivercountinactive--;
-
             /* We shouldn't have a process id for drivers */
             ok(status.dwProcessId == 0,
                "This driver shouldn't have an associated process id\n");
@@ -1684,8 +1602,6 @@ static void test_enum_svc(void)
     }
     HeapFree(GetProcessHeap(), 0, exservices);
 
-    ok(drivercountactive == 0, "Active driver mismatch\n");
-    ok(drivercountinactive == 0, "Inactive driver mismatch\n");
     ok(servicecountactive == 0, "Active services mismatch\n");
     ok(servicecountinactive == 0, "Inactive services mismatch\n");
 
