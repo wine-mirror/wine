@@ -267,7 +267,7 @@
 @ stdcall GdipGetFamilyName(ptr ptr long)
 @ stdcall GdipGetFontCollectionFamilyCount(ptr ptr)
 @ stdcall GdipGetFontCollectionFamilyList(ptr long ptr ptr)
-@ stub GdipGetFontHeight
+@ stdcall GdipGetFontHeight(ptr ptr ptr)
 @ stdcall GdipGetFontHeightGivenDPI(ptr long ptr)
 @ stdcall GdipGetFontSize(ptr ptr)
 @ stdcall GdipGetFontStyle(ptr ptr)

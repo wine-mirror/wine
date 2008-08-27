@@ -384,6 +384,31 @@ GpStatus WINGDIPAPI GdipCloneFont(GpFont *font, GpFont **cloneFont)
 }
 
 /*******************************************************************************
+ * GdipGetFontHeight [GDIPLUS.@]
+ * PARAMS
+ *  font        [I] Font to retrieve height from
+ *  graphics    [I] The current graphics context
+ *  height      [O] Resulting height
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: Another element of GpStatus
+ *
+ * NOTES
+ *  Forwards to GdipGetFontHeightGivenDPI
+ */
+GpStatus WINGDIPAPI GdipGetFontHeight(GDIPCONST GpFont *font,
+        GDIPCONST GpGraphics *graphics, REAL *height)
+{
+    REAL dpi;
+
+    TRACE("%p %p %p\n", font, graphics, height);
+
+    dpi = GetDeviceCaps(graphics->hdc, LOGPIXELSY);
+
+    return GdipGetFontHeightGivenDPI(font, dpi, height);
+}
+
+/*******************************************************************************
  * GdipGetFontHeightGivenDPI [GDIPLUS.@]
  * PARAMS
  *  font        [I] Font to retrieve DPI from
