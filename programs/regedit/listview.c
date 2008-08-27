@@ -46,8 +46,8 @@ typedef struct tagLINE_INFO
 static WNDPROC g_orgListWndProc;
 static DWORD g_columnToSort = ~0U;
 static BOOL  g_invertSort = FALSE;
-static LPTSTR g_valueName;
-static LPTSTR g_currentPath;
+static LPWSTR g_valueName;
+static LPWSTR g_currentPath;
 static HKEY g_currentRootKey;
 static WCHAR g_szValueNotSetW[64];
 static TCHAR g_szValueNotSet[64];
@@ -79,18 +79,41 @@ LPTSTR GetItemText(HWND hwndLV, UINT item)
     return NULL;
 }
 
-LPCTSTR GetValueName(HWND hwndLV)
+LPWSTR GetItemTextW(HWND hwndLV, UINT item)
+{
+    LPWSTR newStr, curStr;
+    unsigned int maxLen = 128;
+
+    curStr = HeapAlloc(GetProcessHeap(), 0, maxLen * sizeof(WCHAR));
+    if (!curStr) return NULL;
+    if (item == 0) { /* first item is ALWAYS a default */
+        HeapFree(GetProcessHeap(), 0, curStr);
+        return NULL;
+    }
+    do {
+        ListView_GetItemTextW(hwndLV, item, 0, curStr, maxLen * sizeof(WCHAR));
+        if (lstrlenW(curStr) < maxLen - 1) return curStr;
+        newStr = HeapReAlloc(GetProcessHeap(), 0, curStr, maxLen * 2 * sizeof(WCHAR));
+        if (!newStr) break;
+        curStr = newStr;
+        maxLen *= 2;
+    } while (TRUE);
+    HeapFree(GetProcessHeap(), 0, curStr);
+    return NULL;
+}
+
+LPCWSTR GetValueName(HWND hwndLV)
 {
     INT item;
 
-    if (g_valueName != LPSTR_TEXTCALLBACK)
+    if (g_valueName != LPSTR_TEXTCALLBACKW)
         HeapFree(GetProcessHeap(), 0,  g_valueName);
     g_valueName = NULL;
 
     item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED);
     if (item == -1) return NULL;
 
-    g_valueName = GetItemText(hwndLV, item);
+    g_valueName = GetItemTextW(hwndLV, item);
 
     return g_valueName;
 }
@@ -400,11 +423,18 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 	case LVN_ENDLABELEDIT: {
 	        LPNMLVDISPINFO dispInfo = (LPNMLVDISPINFO)lParam;
 		LPTSTR valueName = GetItemText(hWnd, dispInfo->item.iItem);
+                LPSTR pathA;
                 LONG ret;
                 if (!valueName) return -1; /* cannot rename a default value */
-	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, valueName, dispInfo->item.pszText);
+                pathA = GetMultiByteString(g_currentPath);
+	        ret = RenameValue(hWnd, g_currentRootKey, pathA, valueName, dispInfo->item.pszText);
+                HeapFree(GetProcessHeap(), 0, pathA);
 		if (ret)
-                    RefreshListView(hWnd, g_currentRootKey, g_currentPath, dispInfo->item.pszText);
+                {
+                    WCHAR* itemTextW = GetWideString(dispInfo->item.pszText);
+                    RefreshListView(hWnd, g_currentRootKey, g_currentPath, itemTextW);
+                    HeapFree(GetProcessHeap(), 0, itemTextW);
+                }
 		HeapFree(GetProcessHeap(), 0, valueName);
 		return 0;
 	    }
@@ -490,7 +520,7 @@ fail:
     return NULL;
 }
 
-BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highlightValue)
+BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highlightValue)
 {
     BOOL result = FALSE;
     DWORD max_sub_key_len;
@@ -503,17 +533,12 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
     LONG errCode;
     INT count, i;
     LVITEMW item;
-    WCHAR* keyPathW;
-    WCHAR* highlightValueW;
 
     if (!hwndLV) return FALSE;
 
     SendMessageW(hwndLV, WM_SETREDRAW, FALSE, 0);
 
-    keyPathW = GetWideString(keyPath);
-    highlightValueW = GetWideString(highlightValue);
-
-    errCode = RegOpenKeyExW(hKeyRoot, keyPathW, 0, KEY_READ, &hKey);
+    errCode = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ, &hKey);
     if (errCode != ERROR_SUCCESS) goto done;
 
     count = ListView_GetItemCount(hwndLV);
@@ -542,14 +567,14 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
         AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0, !highlightValue);
     }
     for(index = 0; index < val_count; index++) {
-        BOOL bSelected = (valName == highlightValueW); /* NOT a bug, we check for double NULL here */
+        BOOL bSelected = (valName == highlightValue); /* NOT a bug, we check for double NULL here */
         valNameLen = max_val_name_len;
         valSize = max_val_size;
 	valType = 0;
         errCode = RegEnumValueW(hKey, index, valName, &valNameLen, NULL, &valType, valBuf, &valSize);
 	if (errCode != ERROR_SUCCESS) goto done;
         valBuf[valSize] = 0;
-        if (valName && highlightValueW && !lstrcmpW(valName, highlightValueW))
+        if (valName && highlightValue && !lstrcmpW(valName, highlightValue))
             bSelected = TRUE;
         AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize, bSelected);
     }
@@ -558,9 +583,9 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
     g_currentRootKey = hKeyRoot;
     if (keyPath != g_currentPath) {
 	HeapFree(GetProcessHeap(), 0, g_currentPath);
-	g_currentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(keyPath) + 1) * sizeof(TCHAR));
+	g_currentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(keyPath) + 1) * sizeof(WCHAR));
 	if (!g_currentPath) goto done;
-	lstrcpy(g_currentPath, keyPath);
+	lstrcpyW(g_currentPath, keyPath);
     }
 
     result = TRUE;
@@ -568,8 +593,6 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR highli
 done:
     HeapFree(GetProcessHeap(), 0, valBuf);
     HeapFree(GetProcessHeap(), 0, valName);
-    HeapFree(GetProcessHeap(), 0, keyPathW);
-    HeapFree(GetProcessHeap(), 0, highlightValueW);
     SendMessageW(hwndLV, WM_SETREDRAW, TRUE, 0);
     if (hKey) RegCloseKey(hKey);
 

@@ -233,10 +233,11 @@ static LPTSTR GetPathFullPath(HWND hwndTV, LPTSTR path) {
 static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BOOL bRefreshLV)
 {
     if (bRefreshLV) {
-        LPCTSTR keyPath;
+        LPWSTR keyPath;
         HKEY hRootKey = NULL;
-        keyPath = GetItemPath(hwndTV, hItem, &hRootKey);
+        keyPath = GetItemPathW(hwndTV, hItem, &hRootKey);
         RefreshListView(hwndLV, hRootKey, keyPath, NULL);
+        HeapFree(GetProcessHeap(), 0, keyPath);
     }
     UpdateStatusBar();
 }
