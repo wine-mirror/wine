@@ -63,8 +63,7 @@ static const CHAR component_dat[] = "Component\tComponentId\tDirectory_\tAttribu
                                     "Three\t{010B6ADD-B27D-4EDD-9B3D-34C4F7D61684}\tCHANGEDDIR\t2\t\tthree.txt\n"
                                     "Two\t{BF03D1A6-20DA-4A65-82F3-6CAC995915CE}\tFIRSTDIR\t2\t\ttwo.txt\n"
                                     "dangler\t{6091DF25-EF96-45F1-B8E9-A9B1420C7A3C}\tTARGETDIR\t4\t\tregdata\n"
-                                    "component\t\tMSITESTDIR\t0\t1\tfile\n"
-                                    "service_comp\t\tMSITESTDIR\t0\t1\tservice_file";
+                                    "component\t\tMSITESTDIR\t0\t1\tfile\n";
 
 static const CHAR directory_dat[] = "Directory\tDirectory_Parent\tDefaultDir\n"
                                     "s72\tS72\tl255\n"
@@ -85,8 +84,7 @@ static const CHAR feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\t
                                   "One\t\tOne\tThe One Feature\t1\t3\tMSITESTDIR\t0\n"
                                   "Three\tOne\tThree\tThe Three Feature\t3\t3\tCHANGEDDIR\t0\n"
                                   "Two\tOne\tTwo\tThe Two Feature\t2\t3\tFIRSTDIR\t0\n"
-                                  "feature\t\t\t\t2\t1\tTARGETDIR\t0\n"
-                                  "service_feature\t\t\t\t2\t1\tTARGETDIR\t0";
+                                  "feature\t\t\t\t2\t1\tTARGETDIR\t0\n";
 
 static const CHAR feature_comp_dat[] = "Feature_\tComponent_\n"
                                        "s38\ts72\n"
@@ -96,8 +94,7 @@ static const CHAR feature_comp_dat[] = "Feature_\tComponent_\n"
                                        "One\tOne\n"
                                        "Three\tThree\n"
                                        "Two\tTwo\n"
-                                       "feature\tcomponent\n"
-                                       "service_feature\tservice_comp\n";
+                                       "feature\tcomponent\n";
 
 static const CHAR file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
                                "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
@@ -107,8 +104,7 @@ static const CHAR file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tL
                                "one.txt\tOne\tone.txt\t1000\t\t\t0\t1\n"
                                "three.txt\tThree\tthree.txt\t1000\t\t\t0\t3\n"
                                "two.txt\tTwo\ttwo.txt\t1000\t\t\t0\t2\n"
-                               "file\tcomponent\tfilename\t100\t\t\t8192\t1\n"
-                               "service_file\tservice_comp\tservice.exe\t100\t\t\t8192\t1";
+                               "file\tcomponent\tfilename\t100\t\t\t8192\t1\n";
 
 static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "s72\tS255\tI2\n"
@@ -118,7 +114,6 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "CostInitialize\t\t800\n"
                                            "FileCost\t\t900\n"
                                            "InstallFiles\t\t4000\n"
-                                           "InstallServices\t\t5000\n"
                                            "RegisterProduct\t\t6100\n"
                                            "PublishProduct\t\t6400\n"
                                            "InstallFinalize\t\t6600\n"
@@ -158,17 +153,6 @@ static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_
                                    "regdata\t2\tSOFTWARE\\Wine\\msitest\tblah\tbad\tdangler\n"
                                    "OrderTest\t2\tSOFTWARE\\Wine\\msitest\tOrderTestName\tOrderTestValue\tcomponent";
 
-static const CHAR service_install_dat[] = "ServiceInstall\tName\tDisplayName\tServiceType\tStartType\tErrorControl\t"
-                                          "LoadOrderGroup\tDependencies\tStartName\tPassword\tArguments\tComponent_\tDescription\n"
-                                          "s72\ts255\tL255\ti4\ti4\ti4\tS255\tS255\tS255\tS255\tS255\ts72\tL255\n"
-                                          "ServiceInstall\tServiceInstall\n"
-                                          "TestService\tTestService\tTestService\t2\t3\t0\t\t\tTestService\t\t\tservice_comp\t\t";
-
-static const CHAR service_control_dat[] = "ServiceControl\tName\tEvent\tArguments\tWait\tComponent_\n"
-                                          "s72\tl255\ti2\tL255\tI2\ts72\n"
-                                          "ServiceControl\tServiceControl\n"
-                                          "ServiceControl\tTestService\t8\t\t0\tservice_comp";
-
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -188,9 +172,7 @@ static const msi_table tables[] =
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property),
-    ADD_TABLE(registry),
-    ADD_TABLE(service_install),
-    ADD_TABLE(service_control)
+    ADD_TABLE(registry)
 };
 
 typedef struct _msi_summary_info
@@ -343,7 +325,6 @@ static void create_test_files(void)
     CreateDirectoryA("msitest\\cabout\\new",NULL);
     create_file("msitest\\cabout\\new\\five.txt", 100);
     create_file("msitest\\filename", 100);
-    create_file("msitest\\service.exe", 100);
 }
 
 static BOOL delete_pf(const CHAR *rel_path, BOOL is_file)
@@ -368,31 +349,12 @@ static void delete_test_files(void)
     DeleteFileA("msitest\\second\\three.txt");
     DeleteFileA("msitest\\first\\two.txt");
     DeleteFileA("msitest\\one.txt");
-    DeleteFileA("msitest\\service.exe");
     DeleteFileA("msitest\\filename");
     RemoveDirectoryA("msitest\\cabout\\new");
     RemoveDirectoryA("msitest\\cabout");
     RemoveDirectoryA("msitest\\second");
     RemoveDirectoryA("msitest\\first");
     RemoveDirectoryA("msitest");
-}
-
-static void check_service_is_installed(void)
-{
-    SC_HANDLE scm, service;
-    BOOL res;
-
-    scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-    ok(scm != NULL, "Failed to open the SC Manager\n");
-
-    service = OpenService(scm, "TestService", SC_MANAGER_ALL_ACCESS);
-    ok(service != NULL, "Failed to open TestService\n");
-
-    res = DeleteService(service);
-    ok(res, "Failed to delete TestService\n");
-
-    CloseServiceHandle(service);
-    CloseServiceHandle(scm);
 }
 
 /*
@@ -2272,7 +2234,6 @@ static void test_Installer_InstallProduct(void)
     ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
     ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
-    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
@@ -2305,8 +2266,6 @@ static void test_Installer_InstallProduct(void)
 
     res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-
-    check_service_is_installed();
 
     /* Remove registry keys written by RegisterProduct standard action */
     res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{F1C3AF50-8B56-4A69-A00C-00773FE42F30}");
