@@ -41,12 +41,13 @@ static const char *debugstr_w(LPCWSTR str)
 
 static void test_createfont(void)
 {
-    GpFontFamily* fontfamily = NULL;
+    GpFontFamily* fontfamily = NULL, *fontfamily2;
     GpFont* font = NULL;
     GpStatus stat;
     Unit unit;
     UINT i;
     REAL size;
+    WCHAR familyname[LF_FACESIZE];
 
     stat = GdipCreateFontFamilyFromName(nonexistent, NULL, &fontfamily);
     expect (FontFamilyNotFound, stat);
@@ -64,6 +65,17 @@ static void test_createfont(void)
     stat = GdipGetFontUnit (font, &unit);
     expect (Ok, stat);
     expect (UnitPoint, unit);
+
+    stat = GdipGetFamily(font, &fontfamily2);
+todo_wine
+    expect(Ok, stat);
+    stat = GdipGetFamilyName(fontfamily2, familyname, 0);
+    expect(Ok, stat);
+todo_wine
+    ok (lstrcmpiW(arial, familyname) == 0, "Expected arial, got %s\n",
+            debugstr_w(familyname));
+    stat = GdipDeleteFontFamily(fontfamily2);
+    expect(Ok, stat);
 
     /* Test to see if returned size is based on unit (its not) */
     GdipGetFontSize(font, &size);
