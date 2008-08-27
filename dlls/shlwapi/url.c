@@ -1155,13 +1155,15 @@ HRESULT WINAPI UrlUnescapeA(
     TRACE("(%s, %p, %p, 0x%08x)\n", debugstr_a(pszUrl), pszUnescaped,
 	  pcchUnescaped, dwFlags);
 
-    if(!pszUrl || (!pszUnescaped && !(dwFlags & URL_UNESCAPE_INPLACE)) || !pcchUnescaped)
-	return E_INVALIDARG;
+    if (!pszUrl) return E_INVALIDARG;
 
     if(dwFlags & URL_UNESCAPE_INPLACE)
         dst = pszUrl;
     else
+    {
+        if (!pszUnescaped || !pcchUnescaped) return E_INVALIDARG;
         dst = pszUnescaped;
+    }
 
     for(src = pszUrl, needed = 0; *src; src++, needed++) {
         if(dwFlags & URL_DONT_UNESCAPE_EXTRA_INFO &&
@@ -1222,13 +1224,15 @@ HRESULT WINAPI UrlUnescapeW(
     TRACE("(%s, %p, %p, 0x%08x)\n", debugstr_w(pszUrl), pszUnescaped,
 	  pcchUnescaped, dwFlags);
 
-    if(!pszUrl || (!pszUnescaped && !(dwFlags & URL_UNESCAPE_INPLACE))|| !pcchUnescaped)
-	return E_INVALIDARG;
+    if(!pszUrl) return E_INVALIDARG;
 
     if(dwFlags & URL_UNESCAPE_INPLACE)
         dst = pszUrl;
     else
+    {
+        if (!pszUnescaped || !pcchUnescaped) return E_INVALIDARG;
         dst = pszUnescaped;
+    }
 
     for(src = pszUrl, needed = 0; *src; src++, needed++) {
         if(dwFlags & URL_DONT_UNESCAPE_EXTRA_INFO &&

@@ -937,21 +937,17 @@ static void test_UrlUnescape(void)
     ok(!strcmp(inplace, expected), "got %s expected %s\n", inplace, expected);
     ok(dwEscaped == 27, "got %d expected 27\n", dwEscaped);
 
-    todo_wine {
     /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
     ok(UrlUnescapeA(another_inplace, NULL, NULL, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeA failed unexpectedly\n");
     ok(!strcmp(another_inplace, expected), "got %s expected %s\n", another_inplace, expected);
-    }
 
     dwEscaped = sizeof(inplaceW);
     ok(UrlUnescapeW(inplaceW, NULL, &dwEscaped, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeW failed unexpectedly\n");
     ok(dwEscaped == 50, "got %d expected 50\n", dwEscaped);
 
-    todo_wine {
     /* if we set the bufferpointer to NULL, the string apparently still gets converted (Google Lively does this)) */
     ok(UrlUnescapeW(another_inplaceW, NULL, NULL, URL_UNESCAPE_INPLACE) == S_OK, "UrlUnescapeW failed unexpectedly\n");
     ok(lstrlenW(another_inplaceW) == 24, "got %d expected 24\n", lstrlenW(another_inplaceW));
-    }
 
 }
 
