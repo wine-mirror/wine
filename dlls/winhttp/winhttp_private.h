@@ -87,6 +87,9 @@ typedef struct
 typedef struct
 {
     int socket;
+    BOOL secure; /* SSL active on connection? */
+    void *ssl_ctx;
+    void *ssl_conn;
     char *peek_msg;
     char *peek_msg_mem;
     size_t peek_len;
@@ -130,10 +133,11 @@ BOOL netconn_connect( netconn_t *, const struct sockaddr *, unsigned int );
 BOOL netconn_connected( netconn_t * );
 BOOL netconn_create( netconn_t *, int, int, int );
 BOOL netconn_get_next_line( netconn_t *, char *, DWORD * );
-BOOL netconn_init( netconn_t * );
+BOOL netconn_init( netconn_t *, BOOL );
 BOOL netconn_query_data_available( netconn_t *, DWORD * );
 BOOL netconn_recv( netconn_t *, void *, size_t, int, int * );
 BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_in * );
+BOOL netconn_secure_connect( netconn_t * );
 BOOL netconn_send( netconn_t *, const void *, size_t, int, int * );
 
 static inline void *heap_alloc( SIZE_T size )

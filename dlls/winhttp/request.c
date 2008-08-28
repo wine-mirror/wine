@@ -683,6 +683,12 @@ static BOOL open_connection( request_t *request )
         heap_free( addressW );
         return FALSE;
     }
+    if (request->hdr.flags & WINHTTP_FLAG_SECURE && !netconn_secure_connect( &request->netconn ))
+    {
+        netconn_close( &request->netconn );
+        heap_free( addressW );
+        return FALSE;
+    }
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, 0 );
 

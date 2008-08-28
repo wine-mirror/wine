@@ -19,6 +19,7 @@
 #include "config.h"
 #include "wine/port.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -36,6 +37,11 @@
 #endif
 #ifdef HAVE_POLL_H
 # include <poll.h>
+#endif
+#ifdef HAVE_OPENSSL_SSL_H
+# include <openssl/ssl.h>
+#undef FAR
+#undef DSA
 #endif
 
 #include "windef.h"
@@ -64,6 +70,42 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": cs_gethostbyname") }
 };
 static CRITICAL_SECTION cs_gethostbyname = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+#endif
+
+#ifdef SONAME_LIBSSL
+
+#include <openssl/err.h>
+
+static void *libssl_handle;
+static void *libcrypto_handle;
+
+static SSL_METHOD *method;
+
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+
+MAKE_FUNCPTR( SSL_library_init );
+MAKE_FUNCPTR( SSL_load_error_strings );
+MAKE_FUNCPTR( SSLv23_method );
+MAKE_FUNCPTR( SSL_CTX_new );
+MAKE_FUNCPTR( SSL_CTX_free );
+MAKE_FUNCPTR( SSL_new );
+MAKE_FUNCPTR( SSL_free );
+MAKE_FUNCPTR( SSL_set_fd );
+MAKE_FUNCPTR( SSL_connect );
+MAKE_FUNCPTR( SSL_shutdown );
+MAKE_FUNCPTR( SSL_write );
+MAKE_FUNCPTR( SSL_read );
+MAKE_FUNCPTR( SSL_get_verify_result );
+MAKE_FUNCPTR( SSL_get_peer_certificate );
+MAKE_FUNCPTR( SSL_CTX_get_timeout );
+MAKE_FUNCPTR( SSL_CTX_set_timeout );
+MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
+
+MAKE_FUNCPTR( BIO_new_fp );
+MAKE_FUNCPTR( ERR_get_error );
+MAKE_FUNCPTR( ERR_error_string );
+#undef MAKE_FUNCPTR
 
 #endif
 
@@ -132,9 +174,75 @@ static int sock_get_error( int err )
     return err;
 }
 
-BOOL netconn_init( netconn_t *conn )
+BOOL netconn_init( netconn_t *conn, BOOL secure )
 {
     conn->socket = -1;
+    if (!secure) return TRUE;
+
+#if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
+    if (libssl_handle) return TRUE;
+    if (!(libssl_handle = wine_dlopen( SONAME_LIBSSL, RTLD_NOW, NULL, 0 )))
+    {
+        ERR("Trying to use SSL but couldn't load %s. Expect trouble.\n", SONAME_LIBSSL);
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        return FALSE;
+    }
+    if (!(libcrypto_handle = wine_dlopen( SONAME_LIBCRYPTO, RTLD_NOW, NULL, 0 )))
+    {
+        ERR("Trying to use SSL but couldn't load %s. Expect trouble.\n", SONAME_LIBCRYPTO);
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        return FALSE;
+    }
+#define LOAD_FUNCPTR(x) \
+    if (!(p##x = wine_dlsym( libssl_handle, #x, NULL, 0 ))) \
+    { \
+        ERR("Failed to load symbol %s\n", #x); \
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR ); \
+        return FALSE; \
+    }
+    LOAD_FUNCPTR( SSL_library_init );
+    LOAD_FUNCPTR( SSL_load_error_strings );
+    LOAD_FUNCPTR( SSLv23_method );
+    LOAD_FUNCPTR( SSL_CTX_new );
+    LOAD_FUNCPTR( SSL_CTX_free );
+    LOAD_FUNCPTR( SSL_new );
+    LOAD_FUNCPTR( SSL_free );
+    LOAD_FUNCPTR( SSL_set_fd );
+    LOAD_FUNCPTR( SSL_connect );
+    LOAD_FUNCPTR( SSL_shutdown );
+    LOAD_FUNCPTR( SSL_write );
+    LOAD_FUNCPTR( SSL_read );
+    LOAD_FUNCPTR( SSL_get_verify_result );
+    LOAD_FUNCPTR( SSL_get_peer_certificate );
+    LOAD_FUNCPTR( SSL_CTX_get_timeout );
+    LOAD_FUNCPTR( SSL_CTX_set_timeout );
+    LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
+#undef LOAD_FUNCPTR
+
+#define LOAD_FUNCPTR(x) \
+    if (!(p##x = wine_dlsym( libcrypto_handle, #x, NULL, 0 ))) \
+    { \
+        ERR("Failed to load symbol %s\n", #x); \
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR ); \
+        return FALSE; \
+    }
+    LOAD_FUNCPTR( BIO_new_fp );
+    LOAD_FUNCPTR( ERR_get_error );
+    LOAD_FUNCPTR( ERR_error_string );
+#undef LOAD_FUNCPTR
+
+    pSSL_library_init();
+    pSSL_load_error_strings();
+    pBIO_new_fp( stderr, BIO_NOCLOSE );
+
+    method = pSSLv23_method();
+    conn->ssl_ctx = pSSL_CTX_new( method );
+
+#else
+    WARN("SSL support not compiled in.\n");
+    set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+    return FALSE;
+#endif
     return TRUE;
 }
 
@@ -158,6 +266,23 @@ BOOL netconn_close( netconn_t *conn )
 {
     int res;
 
+#ifdef SONAME_LIBSSL
+    if (conn->secure)
+    {
+        heap_free( conn->peek_msg_mem );
+        conn->peek_msg_mem = NULL;
+        conn->peek_msg = NULL;
+        conn->peek_len = 0;
+
+        pSSL_shutdown( conn->ssl_conn );
+        pSSL_free( conn->ssl_conn );
+        pSSL_CTX_free( conn->ssl_ctx );
+
+        conn->ssl_conn = NULL;
+        conn->ssl_ctx = NULL;
+        conn->secure = FALSE;
+    }
+#endif
     res = close( conn->socket );
     conn->socket = -1;
     if (res == -1)
@@ -179,9 +304,76 @@ BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned
     return TRUE;
 }
 
+BOOL netconn_secure_connect( netconn_t *conn )
+{
+#ifdef SONAME_LIBSSL
+    X509 *cert;
+    long res;
+
+    if (!pSSL_CTX_set_default_verify_paths( conn->ssl_ctx ))
+    {
+        ERR("SSL_CTX_set_default_verify_paths failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
+    if (!(conn->ssl_conn = pSSL_new( conn->ssl_ctx )))
+    {
+        ERR("SSL_new failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_OUTOFMEMORY );
+        goto fail;
+    }
+    if (!pSSL_set_fd( conn->ssl_conn, conn->socket ))
+    {
+        ERR("SSL_set_fd failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        goto fail;
+    }
+    if (pSSL_connect( conn->ssl_conn ) <= 0)
+    {
+        ERR("SSL_connect failed: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        goto fail;
+    }
+    if (!(cert = pSSL_get_peer_certificate( conn->ssl_conn )))
+    {
+        ERR("No certificate for server: %s\n", pERR_error_string( pERR_get_error(), 0 ));
+        set_last_error( ERROR_WINHTTP_SECURE_CHANNEL_ERROR );
+        goto fail;
+    }
+    if ((res = pSSL_get_verify_result( conn->ssl_conn )) != X509_V_OK)
+    {
+        /* FIXME: we should set an error and return, but we only print an error at the moment */
+        ERR("couldn't verify server certificate (%ld)\n", res);
+    }
+    TRACE("established SSL connection\n");
+    conn->secure = TRUE;
+    return TRUE;
+
+fail:
+    if (conn->ssl_conn)
+    {
+        pSSL_shutdown( conn->ssl_conn );
+        pSSL_free( conn->ssl_conn );
+        conn->ssl_conn = NULL;
+    }
+#endif
+    return FALSE;
+}
+
 BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int flags, int *sent )
 {
     if (!netconn_connected( conn )) return FALSE;
+    if (conn->secure)
+    {
+#ifdef SONAME_LIBSSL
+        if (flags) FIXME("SSL_write doesn't support any flags (%08x)\n", flags);
+        *sent = pSSL_write( conn->ssl_conn, msg, len );
+        if (*sent < 1 && len) return FALSE;
+        return TRUE;
+#else
+        return FALSE;
+#endif
+    }
     if ((*sent = send( conn->socket, msg, len, flags )) == -1)
     {
         set_last_error( sock_get_error( errno ) );
@@ -195,6 +387,59 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
     *recvd = 0;
     if (!netconn_connected( conn )) return FALSE;
     if (!len) return TRUE;
+
+    if (conn->secure)
+    {
+#ifdef SONAME_LIBSSL
+        if (flags & ~(MSG_PEEK | MSG_WAITALL))
+            FIXME("SSL_read does not support the following flags: %08x\n", flags);
+
+        /* this ugly hack is all for MSG_PEEK */
+        if (flags & MSG_PEEK && !conn->peek_msg)
+        {
+            if (!(conn->peek_msg = conn->peek_msg_mem = heap_alloc( len + 1 ))) return FALSE;
+        }
+        else if (flags & MSG_PEEK && conn->peek_msg)
+        {
+            if (len < conn->peek_len) FIXME("buffer isn't big enough, should we wrap?\n");
+            *recvd = min( len, conn->peek_len );
+            memcpy( buf, conn->peek_msg, *recvd );
+            return TRUE;
+        }
+        else if (conn->peek_msg)
+        {
+            *recvd = min( len, conn->peek_len );
+            memcpy( buf, conn->peek_msg, *recvd );
+            conn->peek_len -= *recvd;
+            conn->peek_msg += *recvd;
+
+            if (conn->peek_len == 0)
+            {
+                heap_free( conn->peek_msg_mem );
+                conn->peek_msg_mem = NULL;
+                conn->peek_msg = NULL;
+            }
+            /* check if we have enough data from the peek buffer */
+            if (!(flags & MSG_WAITALL) || (*recvd == len)) return TRUE;
+        }
+        *recvd += pSSL_read( conn->ssl_conn, (char *)buf + *recvd, len - *recvd );
+        if (flags & MSG_PEEK) /* must copy into buffer */
+        {
+            conn->peek_len = *recvd;
+            if (!*recvd)
+            {
+                heap_free( conn->peek_msg_mem );
+                conn->peek_msg_mem = NULL;
+                conn->peek_msg = NULL;
+            }
+            else memcpy( conn->peek_msg, buf, *recvd );
+        }
+        if (*recvd < 1 && len) return FALSE;
+        return TRUE;
+#else
+        return FALSE;
+#endif
+    }
     if ((*recvd = recv( conn->socket, buf, len, flags )) == -1)
     {
         set_last_error( sock_get_error( errno ) );
@@ -210,6 +455,14 @@ BOOL netconn_query_data_available( netconn_t *conn, DWORD *available )
 #endif
     *available = 0;
     if (!netconn_connected( conn )) return FALSE;
+
+    if (conn->secure)
+    {
+#ifdef SONAME_LIBSSL
+        if (conn->peek_msg) *available = conn->peek_len;
+#endif
+        return TRUE;
+    }
 #ifdef FIONREAD
     if (!(ret = ioctl( conn->socket, FIONREAD, &unread )))
     {
@@ -227,6 +480,42 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
     DWORD recvd = 0;
 
     if (!netconn_connected( conn )) return FALSE;
+
+    if (conn->secure)
+    {
+#ifdef SONAME_LIBSSL
+        long timeout;
+
+        timeout = pSSL_CTX_get_timeout( conn->ssl_ctx );
+        pSSL_CTX_set_timeout( conn->ssl_ctx, DEFAULT_RECEIVE_TIMEOUT );
+
+        while (recvd < *buflen)
+        {
+            int dummy;
+            if (!netconn_recv( conn, &buffer[recvd], 1, 0, &dummy ))
+            {
+                set_last_error( ERROR_CONNECTION_ABORTED );
+                break;
+            }
+            if (buffer[recvd] == '\n')
+            {
+                ret = TRUE;
+                break;
+            }
+            if (buffer[recvd] != '\r') recvd++;
+        }
+        pSSL_CTX_set_timeout( conn->ssl_ctx, timeout );
+        if (ret)
+        {
+            buffer[recvd++] = 0;
+            *buflen = recvd;
+            TRACE("received line %s\n", debugstr_a(buffer));
+        }
+        return ret;
+#else
+        return FALSE;
+#endif
+    }
 
     pfd.fd = conn->socket;
     pfd.events = POLLIN;
@@ -257,9 +546,8 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
         buffer[recvd++] = 0;
         *buflen = recvd;
         TRACE("received line %s\n", debugstr_a(buffer));
-        return TRUE;
     }
-    return FALSE;
+    return ret;
 }
 
 DWORD netconn_set_timeout( netconn_t *netconn, BOOL send, int value )
