@@ -778,6 +778,20 @@ void WINAPI MmResetDriverPaging(PVOID AddrInSection)
     TRACE("%p\n", AddrInSection);
 }
 
+
+ /***********************************************************************
+ *           ObReferenceObjectByHandle    (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE obj, ACCESS_MASK access,
+                                           POBJECT_TYPE type,
+                                           KPROCESSOR_MODE mode, PVOID* ptr,
+                                           POBJECT_HANDLE_INFORMATION info)
+{
+    FIXME( "stub: %p %x %p %d %p %p\n", obj, access, type, mode, ptr, info);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
 /***********************************************************************
  *           PsCreateSystemThread   (NTOSKRNL.EXE.@)
  */
