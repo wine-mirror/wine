@@ -592,7 +592,8 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_PALETTEISCHANGING",
     "WM_PALETTECHANGED",
     "WM_HOTKEY",                /* 0x0312 */
-    NULL, NULL, NULL, NULL,
+    "WM_POPUPSYSTEMMENU",       /* 0x0313 */
+    NULL, NULL, NULL,
     "WM_PRINT",                 /* 0x0317 */
     "WM_PRINTCLIENT",           /* 0x0318 */
     "WM_APPCOMMAND",            /* 0x0319 */

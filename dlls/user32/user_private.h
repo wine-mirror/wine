@@ -82,6 +82,7 @@ static inline HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
 
 #define WM_SYSTIMER	    0x0118
+#define WM_POPUPSYSTEMMENU  0x0313
 
 /* internal messages codes */
 enum wine_internal_message
