@@ -2248,7 +2248,6 @@ static void test_decode_msg_update(void)
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     ret = CryptMsgUpdate(msg, detachedSignedContent, sizeof(detachedSignedContent), FALSE);
-    todo_wine
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
     ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());

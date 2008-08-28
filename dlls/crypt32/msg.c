@@ -1880,7 +1880,7 @@ static BOOL CDecodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
             }
         }
     }
-    if (ret &&
+    if (ret && fFinal &&
      ((msg->base.open_flags & CMSG_DETACHED_FLAG && msg->base.state ==
      MsgStateDataFinalized) ||
      (!(msg->base.open_flags & CMSG_DETACHED_FLAG) && msg->base.state ==
