@@ -3678,6 +3678,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         para = ME_GetParagraph(cursor.pRun);
         if (ME_IsSelection(editor) &&
             cursor.pRun->member.run.nCharOfs + cursor.nOffset == 0 &&
+            to == ME_GetCursorOfs(editor, 0) &&
             para->member.para.prev_para->type == diParagraph)
         {
           para = para->member.para.prev_para;
