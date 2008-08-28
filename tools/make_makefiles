@@ -74,7 +74,9 @@ my @ignores = (
     "dlls/*/tests/*crosstest.exe",
     "dlls/*/tests/testlist.c",
     "include/config.h",
-    "include/stamp-h"
+    "include/stamp-h",
+    "programs/winetest/tests.rc",
+    "programs/winetest/*_test.exe",
 );
 
 # Source files and their resulting target to ignore
@@ -207,33 +209,8 @@ sub parse_makefile($)
             $make{$1} = \@list;
             next;
         }
-        if (/^\#\s*MKDLL_SKIP/ || /^\#\s*MKPROG_SKIP/)
-        {
-            $make{"=skip"} = 1;
-            next;
-        }
     }
     return %make;
-}
-
-
-################################################################
-# update the tests list in programs/winetest/winetest.rc
-
-sub update_winetest(@)
-{
-    my (@tests, @lines);
-
-    foreach my $file (@_)
-    {
-        if ($file =~ /^dlls\/(.*)\/tests\/Makefile/) { push @tests, $1; }
-    }
-
-    replace_in_file( "programs/winetest/winetest.rc", ' TESTRES ', undef,
-                     map { $_ . "_test.exe TESTRES \"" . $_ . "_test.exe\"\n"; } sort @tests );
-
-    # return a list of test exe files for .gitignore
-    return map { "programs/winetest/" . $_ . "_test.exe"; } sort @tests;
 }
 
 
@@ -296,7 +273,6 @@ sub update_ignores(@)
             next unless defined $makefile{$pattern[0]};
             push @list, map { (my $ret = $_) =~ s/$pattern[1]$/$pattern[2]/; $ret; } @{$makefile{$pattern[0]}};
         }
-        push @list, @{$makefile{"RC_BINARIES"}} if defined $makefile{"RC_BINARIES"};
         foreach my $f (@list)
         {
             push @ignores, $makefile{"=dir"} . $f unless $f =~ /\$\(.*\)/;  # skip make variables
@@ -317,7 +293,6 @@ sub update_dlls(@)
     foreach my $make (@_)
     {
         my %makefile = %{$makefiles{$make}};
-        next if defined $makefile{"=skip"};
         next if ($makefile{"=rules"} eq $makerules{"MAKE_TEST_RULES"});
 
         next unless defined $makefile{"MODULE"};
@@ -592,6 +567,5 @@ foreach my $file (sort values %makerules, @makefiles)
 
 update_makefiles( @makefiles );
 push @ignores, update_ignores( @makefiles );
-push @ignores, update_winetest( @makefiles );
 push @ignores, update_dlls( sort grep /^dlls\//, @makefiles );
 update_gitignore( @ignores );

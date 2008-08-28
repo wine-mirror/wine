@@ -31,8 +31,13 @@ TESTBINS = $(ALL_TEST_DIRS:%/tests=%_test.exe)
 
 winetest.res: $(TESTBINS)
 
+tests.rc: Makefile.in $(TOPOBJDIR)/config.status
+	(for i in $(TESTBINS); do echo "$$i TESTRES \"$$i\""; done) >$@ || ($(RM) $@ && false)
+
 clean::
-	$(RM) dist.res winetest-dist winetest-dist.exe $(TESTBINS)
+	$(RM) tests.rc dist.res winetest-dist winetest-dist.exe $(TESTBINS)
+
+depend: tests.rc
 
 # Rules for building distributable executable
 
@@ -49,6 +54,8 @@ winetest-dist: $(WINEWRAPPER)
 winetest-dist.exe: $(OBJS) dist.res.o Makefile.in
 	$(CC) $(APPMODE) $(OBJS) dist.res.o -o $@ $(DELAYIMPORTS:%=-l%) $(ALL_LIBS)
 
-dist.res: winetest.rc build.nfo tests.url winetest.ico $(TESTBINS)
+dist.res: winetest.rc tests.rc build.nfo tests.url winetest.ico $(TESTBINS)
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
+
+winetest.res: tests.rc
