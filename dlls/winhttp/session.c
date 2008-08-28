@@ -272,9 +272,9 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
 
     if (!netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE )) goto end;
 
-    if (!verb) verb = get;
-    if (!object) object = slash;
-    if (!version) version = http1_1;
+    if (!verb || !*verb) verb = get;
+    if (!object || !*object) object = slash;
+    if (!version || !*version) version = http1_1;
 
     if (!(request->verb = strdupW( verb ))) goto end;
     if (!(request->path = strdupW( object ))) goto end;
