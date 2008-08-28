@@ -27,6 +27,7 @@
 #include "dshow.h"
 #include "control.h"
 
+static const CHAR fileA[] = "test.avi";
 static const WCHAR file[] = {'t','e','s','t','.','a','v','i',0};
 
 IGraphBuilder* pgraph;
@@ -143,7 +144,7 @@ static void test_render_run(void)
     if (!createfiltergraph())
         return;
 
-    h = CreateFileW(file, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    h = CreateFileA(fileA, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (h != INVALID_HANDLE_VALUE) {
         CloseHandle(h);
         renderfile();
