@@ -9,6 +9,7 @@ CTESTS = \
 	d3d.c \
 	ddrawmodes.c \
 	dsurface.c \
+	overlay.c \
 	refcount.c \
 	visual.c
 
