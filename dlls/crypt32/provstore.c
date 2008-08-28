@@ -240,13 +240,13 @@ PWINECRYPT_CERTSTORE CRYPT_ProvCreateStore(DWORD dwFlags,
             ret->provWriteCrl = pProvInfo->rgpvStoreProvFunc[
              CERT_STORE_PROV_WRITE_CRL_FUNC];
         else
-            ret->provWriteCert = NULL;
+            ret->provWriteCrl = NULL;
         if (pProvInfo->cStoreProvFunc >
          CERT_STORE_PROV_DELETE_CRL_FUNC)
             ret->provDeleteCrl = pProvInfo->rgpvStoreProvFunc[
              CERT_STORE_PROV_DELETE_CRL_FUNC];
         else
-            ret->provDeleteCert = NULL;
+            ret->provDeleteCrl = NULL;
         if (pProvInfo->cStoreProvFunc >
          CERT_STORE_PROV_CONTROL_FUNC)
             ret->provControl = pProvInfo->rgpvStoreProvFunc[
