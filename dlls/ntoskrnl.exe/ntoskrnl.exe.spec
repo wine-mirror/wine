@@ -431,7 +431,7 @@
 @ stub IoRegisterFsRegistrationChange
 @ stub IoRegisterLastChanceShutdownNotification
 @ stub IoRegisterPlugPlayNotification
-@ stub IoRegisterShutdownNotification
+@ stdcall IoRegisterShutdownNotification(ptr)
 @ stub IoReleaseCancelSpinLock
 @ stub IoReleaseRemoveLockAndWaitEx
 @ stub IoReleaseRemoveLockEx

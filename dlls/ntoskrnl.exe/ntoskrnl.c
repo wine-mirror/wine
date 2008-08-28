@@ -480,6 +480,16 @@ void WINAPI IoRegisterDriverReinitialization( PDRIVER_OBJECT obj, PDRIVER_REINIT
 
 
 /***********************************************************************
+ *           IoRegisterShutdownNotification    (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoRegisterShutdownNotification( PDEVICE_OBJECT obj )
+{
+    FIXME( "stub: %p\n", obj );
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
  *           IofCompleteRequest   (NTOSKRNL.EXE.@)
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
