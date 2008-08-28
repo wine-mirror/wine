@@ -793,6 +793,15 @@ NTSTATUS WINAPI ObReferenceObjectByHandle( HANDLE obj, ACCESS_MASK access,
 
 
 /***********************************************************************
+ *           ObfDereferenceObject   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ObfDereferenceObject( VOID *obj )
+{
+    FIXME( "stub: %p\n", obj );
+}
+
+
+/***********************************************************************
  *           PsCreateSystemThread   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI PsCreateSystemThread(PHANDLE ThreadHandle, ULONG DesiredAccess,
