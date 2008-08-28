@@ -1410,6 +1410,28 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     style = ME_GetSelectionInsertStyle(editor);
 
     ME_InternalDeleteText(editor, from, to-from, FALSE);
+
+    /* Don't insert text at the end of the table row */
+    if (!editor->bEmulateVersion10) { /* v4.1 */
+      ME_DisplayItem *para = ME_GetParagraph(editor->pCursors->pRun);
+      if (para->member.para.nFlags & MEPF_ROWEND)
+      {
+        para = para->member.para.next_para;
+        editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
+        editor->pCursors[0].nOffset = 0;
+      }
+      if (para->member.para.nFlags & MEPF_ROWSTART)
+      {
+        para = para->member.para.next_para;
+        editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
+        editor->pCursors[0].nOffset = 0;
+      }
+      editor->pCursors[1] = editor->pCursors[0];
+    } else { /* v1.0 - 3.0 */
+      if (editor->pCursors[0].pRun->member.run.nFlags & MERF_ENDPARA &&
+          ME_IsInTable(editor->pCursors[0].pRun))
+        return 0;
+    }
   }
   else {
     ME_DisplayItem *para_item;
