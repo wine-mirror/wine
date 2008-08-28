@@ -459,6 +459,17 @@ NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK acc
     return STATUS_NOT_IMPLEMENTED;
 }
 
+
+/***********************************************************************
+ *           IoGetRelatedDeviceObject    (NTOSKRNL.EXE.@)
+ */
+PDEVICE_OBJECT WINAPI IoGetRelatedDeviceObject( PFILE_OBJECT obj )
+{
+    FIXME( "stub: %p\n", obj );
+    return NULL;
+}
+
+
 /***********************************************************************
  *           IofCompleteRequest   (NTOSKRNL.EXE.@)
  */

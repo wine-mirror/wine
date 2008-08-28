@@ -391,7 +391,7 @@
 @ stub IoGetFileObjectGenericMapping
 @ stub IoGetInitialStack
 @ stub IoGetLowerDeviceObject
-@ stub IoGetRelatedDeviceObject
+@ stdcall IoGetRelatedDeviceObject(ptr)
 @ stub IoGetRequestorProcess
 @ stub IoGetRequestorProcessId
 @ stub IoGetRequestorSessionId
