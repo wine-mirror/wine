@@ -636,14 +636,10 @@ static INT_PTR CALLBACK removefavorite_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HKEY hKeyRoot = 0;
-    LPCTSTR keyPath;
     LPCTSTR valueName;
-    TCHAR newKey[MAX_NEW_KEY_LEN];
     DWORD valueType;
     int curIndex;
     BOOL firstItem = TRUE;
-
-    keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
 
     if (LOWORD(wParam) >= ID_FAVORITE_FIRST && LOWORD(wParam) <= ID_FAVORITE_LAST) {
         HKEY hKey;
@@ -683,15 +679,15 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case ID_EDIT_DELETE:
 	if (GetFocus() == g_pChildWnd->hTreeWnd) {
-	    WCHAR* keyPathW = GetWideString(keyPath);
+	    WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
 	    if (keyPath == 0 || *keyPath == 0) {
-	        MessageBeep(MB_ICONHAND); 
-            } else if (DeleteKey(hWnd, hKeyRoot, keyPathW)) {
+	        MessageBeep(MB_ICONHAND);
+            } else if (DeleteKey(hWnd, hKeyRoot, keyPath)) {
 		DeleteNode(g_pChildWnd->hTreeWnd, 0);
             }
-            HeapFree(GetProcessHeap(), 0, keyPathW);
+            HeapFree(GetProcessHeap(), 0, keyPath);
 	} else if (GetFocus() == g_pChildWnd->hListWnd) {
-        WCHAR* keyPathW = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, -1, LVNI_SELECTED);
         while(curIndex != -1) {
             WCHAR* valueNameW;
@@ -705,7 +701,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     break;
             }
             valueNameW = GetWideString(valueName);
-            if (!DeleteValue(hWnd, hKeyRoot, keyPathW, valueNameW, curIndex==-1 && firstItem))
+            if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueNameW, curIndex==-1 && firstItem))
             {
                 HeapFree(GetProcessHeap(), 0, valueNameW);
                 break;
@@ -713,8 +709,8 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             firstItem = FALSE;
             HeapFree(GetProcessHeap(), 0, valueNameW);
         }
-        RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPathW, NULL);
-        HeapFree(GetProcessHeap(), 0, keyPathW);
+        RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
+        HeapFree(GetProcessHeap(), 0, keyPath);
 	}
         break;
     case ID_EDIT_MODIFY:
@@ -722,10 +718,12 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         LPCWSTR valueNameW = GetValueName(g_pChildWnd->hListWnd);
         CHAR* valueNameA = GetMultiByteString(valueNameW);
         WCHAR* keyPathW = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
-        if (ModifyValue(hWnd, hKeyRoot, keyPath, valueNameA))
+        CHAR* keyPathA = GetMultiByteString(keyPathW);
+        if (ModifyValue(hWnd, hKeyRoot, keyPathA, valueNameA))
             RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPathW, valueNameW);
         HeapFree(GetProcessHeap(), 0, valueNameA);
         HeapFree(GetProcessHeap(), 0, keyPathW);
+        HeapFree(GetProcessHeap(), 0, keyPathA);
         break;
     }
     case ID_EDIT_FIND:
@@ -774,12 +772,12 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_EDIT_NEW_KEY:
     {
         WCHAR newKeyW[MAX_NEW_KEY_LEN];
-        WCHAR* keyPathW = GetWideString(keyPath);
-        if (CreateKey(hWnd, hKeyRoot, keyPathW, newKeyW)) {
+        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        if (CreateKey(hWnd, hKeyRoot, keyPath, newKeyW)) {
             if (InsertNode(g_pChildWnd->hTreeWnd, 0, newKeyW))
                 StartKeyRename(g_pChildWnd->hTreeWnd);
         }
-        HeapFree(GetProcessHeap(), 0, keyPathW);
+        HeapFree(GetProcessHeap(), 0, keyPath);
     }
 	break;
     case ID_EDIT_NEW_STRINGVALUE:
@@ -795,24 +793,29 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	valueType = REG_DWORD;
 	/* fall through */
     create_value:
-	if (CreateValue(hWnd, hKeyRoot, keyPath, valueType, newKey)) {
-            WCHAR* keyPathW = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
-            WCHAR* newKeyW = GetWideString(newKey);
-            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPathW, newKeyW);
-            HeapFree(GetProcessHeap(), 0, keyPathW);
-            HeapFree(GetProcessHeap(), 0, newKeyW);
+    {
+        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR newKey[MAX_NEW_KEY_LEN];
+        if (CreateValue(hWnd, hKeyRoot, keyPath, valueType, newKey)) {
+            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, newKey);
             StartValueRename(g_pChildWnd->hListWnd);
-	    /* FIXME: start rename */
-	}
+            /* FIXME: start rename */
+        }
+        HeapFree(GetProcessHeap(), 0, keyPath);
+    }
 	break;
     case ID_EDIT_RENAME:
-	if (keyPath == 0 || *keyPath == 0) {
-	    MessageBeep(MB_ICONHAND); 
-	} else if (GetFocus() == g_pChildWnd->hTreeWnd) {
-	    StartKeyRename(g_pChildWnd->hTreeWnd);
-	} else if (GetFocus() == g_pChildWnd->hListWnd) {
-	    StartValueRename(g_pChildWnd->hListWnd);
-	}
+    {
+        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        if (keyPath == 0 || *keyPath == 0) {
+            MessageBeep(MB_ICONHAND);
+        } else if (GetFocus() == g_pChildWnd->hTreeWnd) {
+            StartKeyRename(g_pChildWnd->hTreeWnd);
+        } else if (GetFocus() == g_pChildWnd->hListWnd) {
+            StartValueRename(g_pChildWnd->hListWnd);
+        }
+        HeapFree(GetProcessHeap(), 0, keyPath);
+    }
 	break;
     case ID_REGISTRY_PRINTERSETUP:
         /*PRINTDLG pd;*/
@@ -856,10 +859,10 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case ID_VIEW_REFRESH:
     {
-        WCHAR* keyPathW = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         RefreshTreeView(g_pChildWnd->hTreeWnd);
-        RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPathW, NULL);
-        HeapFree(GetProcessHeap(), 0, keyPathW);
+        RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
+        HeapFree(GetProcessHeap(), 0, keyPath);
     }
         break;
    /*case ID_OPTIONS_TOOLBAR:*/

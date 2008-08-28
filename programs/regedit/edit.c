@@ -449,27 +449,27 @@ done:
     return result;
 }
 
-BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType, LPTSTR valueName)
+BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPWSTR valueName)
 {
     LONG lRet = ERROR_SUCCESS;
-    TCHAR newValue[256];
+    WCHAR newValue[256];
     DWORD valueDword = 0;
     BOOL result = FALSE;
     int valueNum;
     HKEY hKey;
          
-    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
+    lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) {
 	error_code_messagebox(hwnd, lRet);
 	return FALSE;
     }
 
-    if (!LoadString(GetModuleHandle(0), IDS_NEWVALUE, newValue, COUNT_OF(newValue))) goto done;
+    if (!LoadStringW(GetModuleHandle(0), IDS_NEWVALUE, newValue, COUNT_OF(newValue))) goto done;
 
     /* try to find out a name for the newly create key (max 100 times) */
     for (valueNum = 1; valueNum < 100; valueNum++) {
-	wsprintf(valueName, newValue, valueNum);
-	lRet = RegQueryValueEx(hKey, valueName, 0, 0, 0, 0);
+	wsprintfW(valueName, newValue, valueNum);
+	lRet = RegQueryValueExW(hKey, valueName, 0, 0, 0, 0);
 	if (lRet == ERROR_FILE_NOT_FOUND) break;
     }
     if (lRet != ERROR_FILE_NOT_FOUND) {
@@ -477,7 +477,7 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType, LPT
 	goto done;
     }
    
-    lRet = RegSetValueEx(hKey, valueName, 0, valueType, (BYTE*)&valueDword, sizeof(DWORD));
+    lRet = RegSetValueExW(hKey, valueName, 0, valueType, (BYTE*)&valueDword, sizeof(DWORD));
     if (lRet != ERROR_SUCCESS) {
 	error_code_messagebox(hwnd, lRet);
 	goto done;
