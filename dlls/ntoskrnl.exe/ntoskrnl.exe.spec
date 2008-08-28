@@ -382,7 +382,7 @@
 @ stub IoGetDeviceAttachmentBaseRef
 @ stub IoGetDeviceInterfaceAlias
 @ stub IoGetDeviceInterfaces
-@ stub IoGetDeviceObjectPointer
+@ stdcall IoGetDeviceObjectPointer(ptr long ptr ptr)
 @ stub IoGetDeviceProperty
 @ stub IoGetDeviceToVerify
 @ stub IoGetDiskDeviceObject

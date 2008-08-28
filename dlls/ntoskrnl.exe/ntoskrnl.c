@@ -451,6 +451,15 @@ NTSTATUS WINAPI IoDeleteSymbolicLink( UNICODE_STRING *name )
 
 
 /***********************************************************************
+ *           IoGetDeviceObjectPointer   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK access, PFILE_OBJECT *file, PDEVICE_OBJECT *device )
+{
+    FIXME( "stub: %s %x %p %p\n", debugstr_us(name), access, file, device );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *           IofCompleteRequest   (NTOSKRNL.EXE.@)
  */
 #ifdef DEFINE_FASTCALL2_ENTRYPOINT
