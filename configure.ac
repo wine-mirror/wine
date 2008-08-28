@@ -2121,6 +2121,20 @@ WINE_CONFIG_MAKEFILE([tools/winegcc/Makefile],[Make.rules])
 WINE_CONFIG_MAKEFILE([tools/wmc/Makefile],[Make.rules])
 WINE_CONFIG_MAKEFILE([tools/wrc/Makefile],[Make.rules])
 
+dnl Build dependencies for test files compiled into winetest
+
+AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
+for dir in $ALL_TEST_DIRS
+do
+    if test "$dir" != "\\"
+    then
+        testname=`expr $dir : '\(.*\)/tests'`_test.exe
+        ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
+$testname: \$(DLLDIR)/$dir/$testname\$(DLLEXT)
+	cp \$(DLLDIR)/$dir/$testname\$(DLLEXT) \$@ && \$(STRIP) \$@"
+    fi
+done
+
 AC_OUTPUT
 
 if test "$no_create" = "yes"

@@ -218,7 +218,7 @@ sub parse_makefile($)
 
 
 ################################################################
-# update the tests list in programs/winetest/Makefile.in and programs/winetest/winetest.rc
+# update the tests list in programs/winetest/winetest.rc
 
 sub update_winetest(@)
 {
@@ -228,18 +228,6 @@ sub update_winetest(@)
     {
         if ($file =~ /^dlls\/(.*)\/tests\/Makefile/) { push @tests, $1; }
     }
-    push @lines, "TESTBINS =";
-    push @lines, map { " \\\n\t" . $_ . "_test.exe"; } sort @tests;
-    push @lines, "\n\n";
-
-    foreach my $test (sort @tests)
-    {
-        push @lines, "${test}_test.exe: \$(DLLDIR)/$test/tests/${test}_test.exe\$(DLLEXT)\n";
-        push @lines, "\tcp \$(DLLDIR)/$test/tests/${test}_test.exe\$(DLLEXT) \$\@ && \$(STRIP) \$\@\n";
-    }
-    push @lines, "\n# Special rules\n";
-
-    replace_in_file( "programs/winetest/Makefile.in", '^TESTBINS\s*=', '^# Special rules', @lines );
 
     replace_in_file( "programs/winetest/winetest.rc", ' TESTRES ', undef,
                      map { $_ . "_test.exe TESTRES \"" . $_ . "_test.exe\"\n"; } sort @tests );
@@ -285,8 +273,8 @@ sub update_makefiles(@)
         push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules]$args)\n";
     }
 
-    push @lines, "\nAC_OUTPUT\n";
-    replace_in_file( "configure.ac", '^WINE_CONFIG_MAKERULES', '^AC_OUTPUT$', @lines);
+    push @lines, "\ndnl Build dependencies for test files compiled into winetest\n";
+    replace_in_file( "configure.ac", '^WINE_CONFIG_MAKERULES', '^dnl Build dependencies for test files compiled into winetest$', @lines);
 }
 
 

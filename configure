@@ -781,6 +781,7 @@ ALL_TEST_DIRS
 ALL_PROGRAM_DIRS
 ALL_PROGRAM_INSTALL_DIRS
 ALL_PROGRAM_BIN_INSTALL_DIRS
+ALL_WINETEST_DEPENDS
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files='MAKE_RULES
@@ -25648,6 +25649,20 @@ tools/wrc/Makefile: tools/wrc/Makefile.in Make.rules"
 ac_config_files="$ac_config_files tools/wrc/Makefile"
 
 
+
+ALL_WINETEST_DEPENDS="# Test binaries"
+
+for dir in $ALL_TEST_DIRS
+do
+    if test "$dir" != "\\"
+    then
+        testname=`expr $dir : '\(.*\)/tests'`_test.exe
+        ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
+$testname: \$(DLLDIR)/$dir/$testname\$(DLLEXT)
+	cp \$(DLLDIR)/$dir/$testname\$(DLLEXT) \$@ && \$(STRIP) \$@"
+    fi
+done
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -26932,11 +26947,12 @@ ALL_TEST_DIRS!$ALL_TEST_DIRS$ac_delim
 ALL_PROGRAM_DIRS!$ALL_PROGRAM_DIRS$ac_delim
 ALL_PROGRAM_INSTALL_DIRS!$ALL_PROGRAM_INSTALL_DIRS$ac_delim
 ALL_PROGRAM_BIN_INSTALL_DIRS!$ALL_PROGRAM_BIN_INSTALL_DIRS$ac_delim
+ALL_WINETEST_DEPENDS!$ALL_WINETEST_DEPENDS$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
