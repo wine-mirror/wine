@@ -426,7 +426,7 @@
 @ stub IoReadTransferCount
 @ stub IoRegisterBootDriverReinitialization
 @ stub IoRegisterDeviceInterface
-@ stub IoRegisterDriverReinitialization
+@ stdcall IoRegisterDriverReinitialization(ptr ptr ptr)
 @ stub IoRegisterFileSystem
 @ stub IoRegisterFsRegistrationChange
 @ stub IoRegisterLastChanceShutdownNotification

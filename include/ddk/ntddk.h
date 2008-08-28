@@ -46,4 +46,8 @@ typedef enum _BUS_DATA_TYPE
     MaximumBusDataType
 } BUS_DATA_TYPE, *PBUS_DATA_TYPE;
 
+typedef VOID (WINAPI *PDRIVER_REINITIALIZE)(PDRIVER_OBJECT,PVOID,ULONG);
+
+void      WINAPI IoRegisterDriverReinitialization(PDRIVER_OBJECT,PDRIVER_REINITIALIZE,PVOID);
+
 #endif

@@ -31,7 +31,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "excpt.h"
-#include "ddk/wdm.h"
+#include "ddk/ntddk.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -467,6 +467,15 @@ PDEVICE_OBJECT WINAPI IoGetRelatedDeviceObject( PFILE_OBJECT obj )
 {
     FIXME( "stub: %p\n", obj );
     return NULL;
+}
+
+
+/***********************************************************************
+ *           IoRegisterDriverReinitialization    (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoRegisterDriverReinitialization( PDRIVER_OBJECT obj, PDRIVER_REINITIALIZE reinit, PVOID context )
+{
+    FIXME( "stub: %p %p %p\n", obj, reinit, context );
 }
 
 
