@@ -402,12 +402,14 @@ static ME_DisplayItem* ME_AppendTableRow(ME_TextEditor *editor,
     insertedCell = ME_FindItemFwd(para, diCell);
       /* Copy cell properties */
     insertedCell->member.cell.nRightBoundary = cell->member.cell.nRightBoundary;
+    insertedCell->member.cell.border = cell->member.cell.border;
     while (cell->member.cell.next_cell) {
       cell = cell->member.cell.next_cell;
       para = ME_InsertTableCellFromCursor(editor);
       insertedCell = ME_FindItemBack(para, diCell);
       /* Copy cell properties */
       insertedCell->member.cell.nRightBoundary = cell->member.cell.nRightBoundary;
+      insertedCell->member.cell.border = cell->member.cell.border;
     };
     ME_InsertTableRowEndFromCursor(editor);
     /* return the table row start for the inserted paragraph */
