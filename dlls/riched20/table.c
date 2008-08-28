@@ -345,7 +345,7 @@ void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, int nOfs,int *nChars)
     ME_DisplayItem *pRun;
     int nCharsToBoundary;
 
-    if (this_para->member.para.nCharOfs != nOfs &&
+    if ((this_para->member.para.nCharOfs != nOfs || this_para == end_para) &&
         this_para->member.para.pFmt->dwMask & PFM_TABLE &&
         this_para->member.para.pFmt->wEffects & PFE_TABLE)
     {
@@ -360,27 +360,13 @@ void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, int nOfs,int *nChars)
     } else if (end_para->member.para.pFmt->dwMask & PFM_TABLE &&
                end_para->member.para.pFmt->wEffects & PFE_TABLE)
     {
-      if (this_para == end_para)
-      {
-        pRun = c2.pRun;
-        /* Find the previous tab or end paragraph to use as a delete boundary */
-        while (pRun && !(pRun->member.run.nFlags & (MERF_TAB|MERF_ENDPARA)))
-          pRun = ME_FindItemBack(pRun, diRun);
-        if (pRun && pRun->member.run.nFlags & MERF_ENDPARA)
-        {
-          /* We are in the first cell, and have gone back to the previous
-           * paragraph, so nothing needs to be protected. */
-          pRun = NULL;
-        }
-      } else {
-        /* The deletion starts from before the row, so don't join it with
-         * previous non-empty paragraphs. */
-        pRun = NULL;
-        if (nOfs > this_para->member.para.nCharOfs)
-          pRun = ME_FindItemBack(end_para, diRun);
-        if (!pRun)
-          pRun = ME_FindItemFwd(end_para, diRun);
-      }
+      /* The deletion starts from before the row, so don't join it with
+       * previous non-empty paragraphs. */
+      pRun = NULL;
+      if (nOfs > this_para->member.para.nCharOfs)
+        pRun = ME_FindItemBack(end_para, diRun);
+      if (!pRun)
+        pRun = ME_FindItemFwd(end_para, diRun);
       if (pRun)
       {
         nCharsToBoundary = ME_GetParagraph(pRun)->member.para.nCharOfs
