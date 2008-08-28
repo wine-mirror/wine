@@ -2685,6 +2685,33 @@ typedef struct _CRL_FIND_ISSUED_FOR_PARA
     PCCERT_CONTEXT pIssuerCert;
 } CRL_FIND_ISSUED_FOR_PARA, *PCRL_FIND_ISSUED_FOR_PARA;
 
+#define CTL_FIND_ANY       0
+#define CTL_FIND_SHA1_HASH 1
+#define CTL_FIND_MD5_HASH  2
+#define CTL_FIND_USAGE     3
+#define CTL_FIND_SUBJECT   4
+#define CTL_FIND_EXISTING  5
+
+typedef struct _CTL_FIND_USAGE_PARA
+{
+    DWORD           cbSize;
+    CTL_USAGE       SubjectUsage;
+    CRYPT_DATA_BLOB ListIdentifier;
+    PCERT_INFO      pSigner;
+} CTL_FIND_USAGE_PARA, *PCTL_FIND_USAGE_PARA;
+
+#define CTL_FIND_NO_LIST_ID_CBDATA 0xffffffff
+#define CTL_FIND_NO_SIGNER_PTR     ((PCERT_INFO)-1)
+#define CTL_FIND_SAME_USAGE_FLAG   0x00000001
+
+typedef struct _CTL_FIND_SUBJECT_PARA
+{
+    DWORD                cbSize;
+    PCTL_FIND_USAGE_PARA pUsagePara;
+    DWORD                dwSubjectType;
+    void                *pvSubject;
+} CTL_FIND_SUBJECT_PARA, *PCTL_FIND_SUBJECT_PARA;
+
 /* PFN_CERT_STORE_PROV_WRITE_CERT dwFlags values */
 #define CERT_STORE_PROV_WRITE_ADD_FLAG 0x1
 
