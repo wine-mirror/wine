@@ -2241,6 +2241,22 @@ static void test_decode_msg_update(void)
     ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
      "expected CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
     CryptMsgClose(msg);
+
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG, 0, 0, NULL, &streamInfo);
+    ret = CryptMsgUpdate(msg, detachedSignedContent, sizeof(detachedSignedContent), FALSE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, detachedSignedContent, sizeof(detachedSignedContent), FALSE);
+    todo_wine
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+
+    ret = CryptMsgUpdate(msg, detachedSignedContent, sizeof(detachedSignedContent), TRUE);
+    ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
+     "expected CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
 }
 
 static const BYTE hashParam[] = { 0x08,0xd6,0xc0,0x5a,0x21,0x51,0x2a,0x79,0xa1,
