@@ -1295,7 +1295,10 @@ server(void)
   iptcp_status = RpcServerUseProtseqEp(iptcp, 20, port, NULL);
   ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %ld\n", iptcp_status);
   np_status = RpcServerUseProtseqEp(np, 0, pipe, NULL);
-  ok(np_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_np) failed with status %ld\n", np_status);
+  if (np_status == RPC_S_PROTSEQ_NOT_SUPPORTED)
+    skip("Protocol sequence ncacn_np is not supported\n");
+  else
+    ok(np_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_np) failed with status %ld\n", np_status);
 
   pRpcServerRegisterIfEx = (void *)GetProcAddress(GetModuleHandle("rpcrt4.dll"), "RpcServerRegisterIfEx");
   if (pRpcServerRegisterIfEx)
