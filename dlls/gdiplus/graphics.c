@@ -2514,6 +2514,17 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipResetClip(GpGraphics *graphics)
+{
+    if(!graphics)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    return GdipSetInfinite(graphics->clip);
+}
+
 GpStatus WINGDIPAPI GdipResetWorldTransform(GpGraphics *graphics)
 {
     if(!graphics)

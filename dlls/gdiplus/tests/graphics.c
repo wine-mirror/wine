@@ -674,6 +674,8 @@ static void test_Get_Release_DC(void)
     expect(ObjectBusy, status); status = Ok;
     /* GdipMeasureCharacterRanges */
     /* GdipMeasureString */
+    status = GdipResetClip(graphics);
+    expect(ObjectBusy, status); status = Ok;
     status = GdipResetWorldTransform(graphics);
     expect(ObjectBusy, status); status = Ok;
     /* GdipRestoreGraphics */
@@ -801,6 +803,37 @@ static void test_get_set_clip(void)
     res = FALSE;
     status = GdipGetClip(graphics, clip);
     expect(Ok, status);
+    status = GdipIsInfiniteRegion(clip, graphics, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+
+    /* remains infinite after reset */
+    res = FALSE;
+    status = GdipResetClip(graphics);
+    expect(Ok, status);
+    status = GdipGetClip(graphics, clip);
+    expect(Ok, status);
+    status = GdipIsInfiniteRegion(clip, graphics, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+
+    /* set to empty and then reset to infinite */
+    status = GdipSetEmpty(clip);
+    expect(Ok, status);
+    status = GdipSetClipRegion(graphics, clip, CombineModeReplace);
+    expect(Ok, status);
+
+    status = GdipGetClip(graphics, clip);
+    expect(Ok, status);
+    res = FALSE;
+    status = GdipIsEmptyRegion(clip, graphics, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+    status = GdipResetClip(graphics);
+    expect(Ok, status);
+    status = GdipGetClip(graphics, clip);
+    expect(Ok, status);
+    res = FALSE;
     status = GdipIsInfiniteRegion(clip, graphics, &res);
     expect(Ok, status);
     expect(TRUE, res);
