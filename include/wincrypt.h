@@ -2947,8 +2947,8 @@ typedef struct _CRL_FIND_ISSUED_FOR_PARA
 #endif
 #define szOID_REMOVE_CERTIFICATE             "1.3.6.1.4.1.311.10.8.1"
 #define szOID_CROSS_CERT_DIST_POINTS         "1.3.6.1.4.1.311.10.9.1"
-#define szOID_CTL                            "1.3.6.1.4.1.311.10.10.1"
-#define szOID_SORTED_CTL                     "1.3.6.1.4.1.311.10.10.1.1"
+#define szOID_CTL                            "1.3.6.1.4.1.311.10.1"
+#define szOID_SORTED_CTL                     "1.3.6.1.4.1.311.10.1.1"
 #define szOID_ANY_APPLICATION_POLICY         "1.3.6.1.4.1.311.10.12.1"
 #define szOID_RENEWAL_CERTIFICATE            "1.3.6.1.4.1.311.13.1"
 #define szOID_ENROLLMENT_NAME_VALUE_PAIR     "1.3.6.1.4.1.311.13.2.1"
