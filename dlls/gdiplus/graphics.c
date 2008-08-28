@@ -2392,6 +2392,14 @@ GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipIsClipEmpty(GpGraphics *graphics, BOOL *res)
+{
+    if(!graphics || !res)
+        return InvalidParameter;
+
+    return GdipIsEmptyRegion(graphics->clip, graphics, res);
+}
+
 GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
         GDIPCONST WCHAR* string, INT length, GDIPCONST GpFont* font,
         GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,

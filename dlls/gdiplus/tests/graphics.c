@@ -844,6 +844,40 @@ static void test_get_set_clip(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_isempty(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    HDC hdc = GetDC(0);
+    GpRegion *clip;
+    BOOL res;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreateRegion(&clip);
+    expect(Ok, status);
+
+    /* NULL */
+    status = GdipIsClipEmpty(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsClipEmpty(graphics, NULL);
+    expect(InvalidParameter, status);
+    status = GdipIsClipEmpty(NULL, &res);
+    expect(InvalidParameter, status);
+
+    /* default is infinite */
+    res = TRUE;
+    status = GdipIsClipEmpty(graphics, &res);
+    expect(Ok, status);
+    expect(FALSE, res);
+
+    GdipDeleteRegion(clip);
+
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -866,6 +900,7 @@ START_TEST(graphics)
     test_Get_Release_DC();
     test_transformpoints();
     test_get_set_clip();
+    test_isempty();
 
     GdiplusShutdown(gdiplusToken);
 }

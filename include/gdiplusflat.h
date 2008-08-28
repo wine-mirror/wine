@@ -158,6 +158,7 @@ GpStatus WINGDIPAPI GdipGetCompositingMode(GpGraphics*,CompositingMode*);
 GpStatus WINGDIPAPI GdipGetClip(GpGraphics*,GpRegion*);
 GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics*,GpRegion*,CombineMode);
 GpStatus WINGDIPAPI GdipResetClip(GpGraphics*);
+GpStatus WINGDIPAPI GdipIsClipEmpty(GpGraphics*, BOOL*);
 GpStatus WINGDIPAPI GdipGetCompositingQuality(GpGraphics*,CompositingQuality*);
 GpStatus WINGDIPAPI GdipGetDC(GpGraphics*,HDC*);
 GpStatus WINGDIPAPI GdipGetImageDimension(GpImage*,REAL*,REAL*);

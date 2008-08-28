@@ -414,7 +414,7 @@
 @ stub GdipImageSetAbort
 @ stub GdipInitializePalette
 @ stdcall GdipInvertMatrix(ptr)
-@ stub GdipIsClipEmpty
+@ stdcall GdipIsClipEmpty(ptr ptr)
 @ stdcall GdipIsEmptyRegion(ptr ptr ptr)
 @ stdcall GdipIsEqualRegion(ptr ptr ptr ptr)
 @ stdcall GdipIsInfiniteRegion(ptr ptr ptr)
