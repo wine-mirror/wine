@@ -538,6 +538,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         else
             headers = request->raw_headers;
 
+        if (!headers) return FALSE;
         len = strlenW( headers ) * sizeof(WCHAR);
         if (len + sizeof(WCHAR) > *buflen)
         {
