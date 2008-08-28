@@ -1,7 +1,8 @@
 /*
- * Clock ( Simplified Chinese resources)
+ * Clock ( Simplified and Traditional Chinese Language Support)
  *
  * Copyright 2002 liuspider <liuspider@yahoo.com>
+ * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,6 +49,35 @@ MAIN_MENU MENU
 STRINGTABLE DISCARDABLE
 {
 IDS_CLOCK, "时钟"
+}
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+
+MAIN_MENU MENU
+{
+ POPUP "屬性(&P)" {
+  MENUITEM "模擬時鐘(&L)", IDM_ANALOG
+  MENUITEM "數字時鐘(&T)", IDM_DIGITAL
+  MENUITEM SEPARATOR
+  MENUITEM "字型(&F)...", IDM_FONT
+  MENUITEM SEPARATOR
+  MENUITEM "無標題欄(&W)", IDM_NOTITLE
+  MENUITEM SEPARATOR
+  MENUITEM "秒(&S)", IDM_SECONDS
+  MENUITEM "日期(&D)", IDM_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "總是在最上面(&A)", IDM_ONTOP
+ }
+ POPUP "資料資訊(&O)" {
+  MENUITEM "用戶許可協議(&L)...", IDM_LICENSE
+  MENUITEM "責任無關(&N)...", IDM_NOWARRANTY
+  MENUITEM "關於 Wine(&A)...", IDM_ABOUT
+ }
+}
+
+STRINGTABLE DISCARDABLE
+{
+IDS_CLOCK, "時鐘"
 }
 
 #pragma code_page(default)
