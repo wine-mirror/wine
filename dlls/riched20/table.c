@@ -381,8 +381,8 @@ void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, int nOfs,int *nChars)
   }
 }
 
-static ME_DisplayItem* ME_AppendTableRow(ME_TextEditor *editor,
-                                         ME_DisplayItem *table_row)
+ME_DisplayItem* ME_AppendTableRow(ME_TextEditor *editor,
+                                  ME_DisplayItem *table_row)
 {
   WCHAR endl = '\r', tab = '\t';
   ME_DisplayItem *run;
@@ -390,9 +390,13 @@ static ME_DisplayItem* ME_AppendTableRow(ME_TextEditor *editor,
   int i;
 
   assert(table_row);
+  assert(table_row->type == diParagraph);
   if (!editor->bEmulateVersion10) { /* v4.1 */
     ME_DisplayItem *insertedCell, *para, *cell;
-    cell = ME_FindItemFwd(table_row, diCell);
+    if (table_row->member.para.nFlags & MEPF_ROWEND)
+      cell = ME_FindItemBack(table_row, diCell);
+    else
+      cell = ME_FindItemFwd(table_row, diCell);
     run = ME_GetTableRowEnd(table_row)->member.para.next_para;
     run = ME_FindItemFwd(run, diRun);
     editor->pCursors[0].pRun = run;

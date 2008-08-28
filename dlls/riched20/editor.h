@@ -296,6 +296,7 @@ ME_DisplayItem *ME_GetTableRowEnd(ME_DisplayItem *para);
 ME_DisplayItem *ME_GetTableRowStart(ME_DisplayItem *para);
 void ME_CheckTablesForCorruption(ME_TextEditor *editor);
 void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, int nOfs,int *nChars);
+ME_DisplayItem* ME_AppendTableRow(ME_TextEditor *editor, ME_DisplayItem *table_row);
 void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow);
 struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor);
 void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef);
