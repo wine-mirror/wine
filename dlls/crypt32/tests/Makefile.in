@@ -10,6 +10,7 @@ CTESTS = \
 	cert.c \
 	chain.c \
 	crl.c \
+	ctl.c \
 	encode.c \
 	main.c \
 	message.c \
