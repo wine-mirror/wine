@@ -1100,12 +1100,6 @@ BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
     return TRUE;
 }
 
-BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
-{
-    FIXME("(%p): stub\n", pCtlContext);
-    return TRUE;
-}
-
 HCERTSTORE WINAPI CertDuplicateStore(HCERTSTORE hCertStore)
 {
     WINECRYPT_CERTSTORE *hcs = (WINECRYPT_CERTSTORE *)hCertStore;

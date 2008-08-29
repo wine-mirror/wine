@@ -68,6 +68,33 @@ PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
     return ret;
 }
 
+BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", pCtlContext);
+
+    if (!pCtlContext)
+        ret = TRUE;
+    else if (!pCtlContext->hCertStore)
+    {
+        ret = TRUE;
+        CertFreeCTLContext(pCtlContext);
+    }
+    else
+    {
+        PWINECRYPT_CERTSTORE hcs =
+         (PWINECRYPT_CERTSTORE)pCtlContext->hCertStore;
+
+        if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
+            ret = FALSE;
+        else
+            ret = hcs->ctls.deleteContext(hcs, (void *)pCtlContext);
+        CertFreeCTLContext(pCtlContext);
+    }
+    return ret;
+}
+
 PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
  const BYTE *pbCtlEncoded, DWORD cbCtlEncoded)
 {
