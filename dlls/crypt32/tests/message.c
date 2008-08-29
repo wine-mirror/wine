@@ -414,9 +414,11 @@ static void test_hash_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL,
      &hashedBlobSize, NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_UNKNOWN_ALGO,
-     "expected CRYPT_E_UNKNOWN_ALGO, got 0x%08x (%d)\n", GetLastError(),
-     GetLastError());
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_UNKNOWN_ALGO ||
+      GetLastError() == CRYPT_E_OID_FORMAT), /* Vista */
+     "expected CRYPT_E_UNKNOWN_ALGO or CRYPT_E_OID_FORMAT, got 0x%08x (%d)\n",
+     GetLastError(), GetLastError());
     para.HashAlgorithm.pszObjId = oid_rsa_md5;
     /* With a valid hash algorithm, this succeeds, even though fDetached is
      * FALSE.
