@@ -50,7 +50,7 @@ struct atifs_ffp_desc
 
 struct atifs_private_data
 {
-    hash_table_t *fragment_shaders; /* A hashtable to track fragment pipeline replacement shaders */
+    struct hash_table_t *fragment_shaders; /* A hashtable to track fragment pipeline replacement shaders */
 
 };
 

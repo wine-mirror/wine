@@ -1564,12 +1564,12 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
 
 /* Hash table functions */
 
-hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function)
+struct hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function)
 {
-    hash_table_t *table;
+    struct hash_table_t *table;
     unsigned int initial_size = 8;
 
-    table = HeapAlloc(GetProcessHeap(), 0, sizeof(hash_table_t) + (initial_size * sizeof(struct list)));
+    table = HeapAlloc(GetProcessHeap(), 0, sizeof(struct hash_table_t) + (initial_size * sizeof(struct list)));
     if (!table)
     {
         ERR("Failed to allocate table, returning NULL.\n");
@@ -1607,7 +1607,7 @@ hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function
     return table;
 }
 
-void hash_table_destroy(hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb)
+void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb)
 {
     unsigned int i = 0;
 
@@ -1624,7 +1624,7 @@ void hash_table_destroy(hash_table_t *table, void (*free_value)(void *value, voi
     HeapFree(GetProcessHeap(), 0, table);
 }
 
-static inline struct hash_table_entry_t *hash_table_get_by_idx(hash_table_t *table, void *key, unsigned int idx)
+static inline struct hash_table_entry_t *hash_table_get_by_idx(struct hash_table_t *table, void *key, unsigned int idx)
 {
     struct hash_table_entry_t *entry;
 
@@ -1635,7 +1635,7 @@ static inline struct hash_table_entry_t *hash_table_get_by_idx(hash_table_t *tab
     return NULL;
 }
 
-static BOOL hash_table_resize(hash_table_t *table, unsigned int new_bucket_count)
+static BOOL hash_table_resize(struct hash_table_t *table, unsigned int new_bucket_count)
 {
     unsigned int new_entry_count = 0;
     struct hash_table_entry_t *new_entries;
@@ -1694,7 +1694,7 @@ static BOOL hash_table_resize(hash_table_t *table, unsigned int new_bucket_count
     return TRUE;
 }
 
-void hash_table_put(hash_table_t *table, void *key, void *value)
+void hash_table_put(struct hash_table_t *table, void *key, void *value)
 {
     unsigned int idx;
     unsigned int hash;
@@ -1767,12 +1767,12 @@ void hash_table_put(hash_table_t *table, void *key, void *value)
     ++table->count;
 }
 
-void hash_table_remove(hash_table_t *table, void *key)
+void hash_table_remove(struct hash_table_t *table, void *key)
 {
     hash_table_put(table, key, NULL);
 }
 
-void *hash_table_get(hash_table_t *table, void *key)
+void *hash_table_get(struct hash_table_t *table, void *key)
 {
     unsigned int idx;
     struct hash_table_entry_t *entry;
@@ -2004,11 +2004,11 @@ void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *setting
 }
 #undef GLINFO_LOCATION
 
-struct ffp_desc *find_ffp_shader(hash_table_t *fragment_shaders, struct ffp_settings *settings)
+struct ffp_desc *find_ffp_shader(struct hash_table_t *fragment_shaders, struct ffp_settings *settings)
 {
     return (struct ffp_desc *)hash_table_get(fragment_shaders, settings);}
 
-void add_ffp_shader(hash_table_t *shaders, struct ffp_desc *desc) {
+void add_ffp_shader(struct hash_table_t *shaders, struct ffp_desc *desc) {
     struct ffp_settings *key = HeapAlloc(GetProcessHeap(), 0, sizeof(*key));
     /* Note that the key is the implementation independent part of the ffp_desc structure,
      * whereas desc points to an extended structure with implementation specific parts.
