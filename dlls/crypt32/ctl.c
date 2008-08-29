@@ -29,6 +29,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
+ DWORD dwMsgAndCertEncodingType, const BYTE *pbCtlEncoded, DWORD cbCtlEncoded,
+ DWORD dwAddDisposition, PCCTL_CONTEXT *ppCtlContext)
+{
+    PCCTL_CONTEXT ctl = CertCreateCTLContext(dwMsgAndCertEncodingType,
+     pbCtlEncoded, cbCtlEncoded);
+    BOOL ret;
+
+    TRACE("(%p, %08x, %p, %d, %08x, %p)\n", hCertStore,
+     dwMsgAndCertEncodingType, pbCtlEncoded, cbCtlEncoded, dwAddDisposition,
+     ppCtlContext);
+
+    if (ctl)
+    {
+        ret = CertAddCTLContextToStore(hCertStore, ctl, dwAddDisposition,
+         ppCtlContext);
+        CertFreeCTLContext(ctl);
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
  const BYTE *pbCtlEncoded, DWORD cbCtlEncoded)
 {

@@ -1043,16 +1043,6 @@ PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore,
     return ret;
 }
 
-BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
- DWORD dwMsgAndCertEncodingType, const BYTE *pbCtlEncoded, DWORD cbCtlEncoded,
- DWORD dwAddDisposition, PCCTL_CONTEXT *ppCtlContext)
-{
-    FIXME("(%p, %08x, %p, %d, %08x, %p): stub\n", hCertStore,
-     dwMsgAndCertEncodingType, pbCtlEncoded, cbCtlEncoded, dwAddDisposition,
-     ppCtlContext);
-    return FALSE;
-}
-
 BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
  PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
  PCCTL_CONTEXT* ppStoreContext)
