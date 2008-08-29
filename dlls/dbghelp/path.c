@@ -329,18 +329,6 @@ BOOL WINAPI EnumDirTree(HANDLE hProcess, PCSTR root, PCSTR file,
 
 struct sffip
 {
-    enum module_type            kind;
-    /* pe:  id  -> DWORD:timestamp
-     *      two -> size of image (from PE header)
-     * pdb: id  -> PDB signature
-     *            I think either DWORD:timestamp or GUID:guid depending on PDB version
-     *      two -> PDB age ???
-     * elf: id  -> DWORD:CRC 32 of ELF image (Wine only)
-     */
-    PVOID                       id;
-    DWORD                       two;
-    DWORD                       three;
-    DWORD                       flags;
     PFINDFILEINPATHCALLBACKW    cb;
     void*                       user;
 };
@@ -353,113 +341,8 @@ struct sffip
 static BOOL CALLBACK sffip_cb(PCWSTR buffer, PVOID user)
 {
     struct sffip*       s = (struct sffip*)user;
-    DWORD               size, checksum;
 
-    /* FIXME: should check that id/two/three match the file pointed
-     * by buffer
-     */
-    switch (s->kind)
-    {
-    case DMT_PE:
-        {
-            HANDLE  hFile, hMap;
-            void*   mapping;
-            DWORD   timestamp;
-
-            timestamp = ~(DWORD_PTR)s->id;
-            size = ~s->two;
-            hFile = CreateFileW(buffer, GENERIC_READ, FILE_SHARE_READ, NULL,
-                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (hFile == INVALID_HANDLE_VALUE) return FALSE;
-            if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
-            {
-                if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
-                {
-                    IMAGE_NT_HEADERS*   nth = RtlImageNtHeader(mapping);
-                    timestamp = nth->FileHeader.TimeDateStamp;
-                    size = nth->OptionalHeader.SizeOfImage;
-                    UnmapViewOfFile(mapping);
-                }
-                CloseHandle(hMap);
-            }
-            CloseHandle(hFile);
-            if (timestamp != (DWORD_PTR)s->id || size != s->two)
-            {
-                WARN("Found %s, but wrong size or timestamp\n", debugstr_w(buffer));
-                return FALSE;
-            }
-        }
-        break;
-    case DMT_ELF:
-        if (elf_fetch_file_info(buffer, 0, &size, &checksum))
-        {
-            if (checksum != (DWORD_PTR)s->id)
-            {
-                WARN("Found %s, but wrong checksums: %08x %08lx\n",
-                     debugstr_w(buffer), checksum, (DWORD_PTR)s->id);
-                return FALSE;
-            }
-        }
-        else
-        {
-            WARN("Couldn't read %s\n", debugstr_w(buffer));
-            return FALSE;
-        }
-        break;
-    case DMT_PDB:
-        {
-            struct pdb_lookup   pdb_lookup;
-            char                fn[MAX_PATH];
-
-            WideCharToMultiByte(CP_ACP, 0, buffer, -1, fn, MAX_PATH, NULL, NULL);
-            pdb_lookup.filename = fn;
-
-            if (!pdb_fetch_file_info(&pdb_lookup)) return FALSE;
-            switch (pdb_lookup.kind)
-            {
-            case PDB_JG:
-                if (s->flags & SSRVOPT_GUIDPTR)
-                {
-                    WARN("Found %s, but wrong PDB version\n", debugstr_w(buffer));
-                    return FALSE;
-                }
-                if (pdb_lookup.u.jg.timestamp != (DWORD_PTR)s->id)
-                {
-                    WARN("Found %s, but wrong signature: %08x %08lx\n",
-                         debugstr_w(buffer), pdb_lookup.u.jg.timestamp, (DWORD_PTR)s->id);
-                    return FALSE;
-                }
-                break;
-            case PDB_DS:
-                if (!(s->flags & SSRVOPT_GUIDPTR))
-                {
-                    WARN("Found %s, but wrong PDB version\n", debugstr_w(buffer));
-                    return FALSE;
-                }
-                if (memcmp(&pdb_lookup.u.ds.guid, (GUID*)s->id, sizeof(GUID)))
-                {
-                    WARN("Found %s, but wrong GUID: %s %s\n",
-                         debugstr_w(buffer), debugstr_guid(&pdb_lookup.u.ds.guid),
-                         debugstr_guid((GUID*)s->id));
-                    return FALSE;
-                }
-                break;
-            }
-            if (pdb_lookup.age != s->two)
-            {
-                WARN("Found %s, but wrong age: %08x %08x\n",
-                     debugstr_w(buffer), pdb_lookup.age, s->two);
-                return FALSE;
-            }
-        }
-        break;
-    case DMT_DBG:
-        FIXME("NIY\n");
-        break;
-    default:
-        FIXME("What the heck??\n");
-        return FALSE;
-    }
+    if (!s->cb) return TRUE;
     /* yes, EnumDirTree/do_search and SymFindFileInPath callbacks use the opposite
      * convention to stop/continue enumeration. sigh.
      */
@@ -488,15 +371,10 @@ BOOL WINAPI SymFindFileInPathW(HANDLE hProcess, PCWSTR searchPath, PCWSTR full_p
     if (!pcs) return FALSE;
     if (!searchPath) searchPath = pcs->search_path;
 
-    s.id = id;
-    s.two = two;
-    s.three = three;
-    s.flags = flags;
     s.cb = cb;
     s.user = user;
 
     filename = file_nameW(full_path);
-    s.kind = module_get_type_by_name(filename);
 
     /* first check full path to file */
     if (sffip_cb(full_path, &s))
