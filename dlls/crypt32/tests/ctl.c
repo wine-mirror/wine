@@ -173,7 +173,88 @@ static void testCreateCTL(void)
         CertFreeCTLContext(ctl);
 }
 
+static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
+ PCCTL_CONTEXT context, DWORD propID)
+{
+    BYTE hash[20] = { 0 }, hashProperty[20];
+    BOOL ret;
+    DWORD size;
+
+    memset(hash, 0, sizeof(hash));
+    memset(hashProperty, 0, sizeof(hashProperty));
+    size = sizeof(hash);
+    ret = CryptHashCertificate(0, algID, 0, data, dataLen, hash, &size);
+    ret = CertGetCTLContextProperty(context, propID, hashProperty, &size);
+    ok(ret, "CertGetCTLContextProperty failed: %08x\n", GetLastError());
+    if (ret)
+        ok(!memcmp(hash, hashProperty, size),
+         "Unexpected hash for property %d\n", propID);
+}
+
+static void testCTLProperties(void)
+{
+    PCCTL_CONTEXT ctl;
+    BOOL ret;
+    DWORD propID, numProps, access, size;
+
+    ctl = CertCreateCTLContext(X509_ASN_ENCODING,
+     signedCTLWithCTLInnerContent, sizeof(signedCTLWithCTLInnerContent));
+    if (!ctl)
+    {
+        skip("CertCreateCTLContext failed: %08x\n", GetLastError());
+        return;
+    }
+
+    /* No properties as yet */
+    propID = 0;
+    numProps = 0;
+    do {
+        propID = CertEnumCTLContextProperties(ctl, propID);
+        if (propID)
+            numProps++;
+    } while (propID != 0);
+    ok(numProps == 0, "Expected 0 properties, got %d\n", numProps);
+
+    /* An implicit property */
+    ret = CertGetCTLContextProperty(ctl, CERT_ACCESS_STATE_PROP_ID, NULL,
+     &size);
+    todo_wine
+    ok(ret, "CertGetCTLContextProperty failed: %08x\n", GetLastError());
+    ret = CertGetCTLContextProperty(ctl, CERT_ACCESS_STATE_PROP_ID, &access,
+     &size);
+    todo_wine
+    ok(ret, "CertGetCTLContextProperty failed: %08x", GetLastError());
+    todo_wine
+    ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
+     "Didn't expect a persisted cert\n");
+
+    todo_wine
+    checkHash(signedCTLWithCTLInnerContent,
+     sizeof(signedCTLWithCTLInnerContent), CALG_SHA1, ctl, CERT_HASH_PROP_ID);
+
+    /* Now that the hash property is set, we should get one property when
+     * enumerating.
+     */
+    propID = 0;
+    numProps = 0;
+    do {
+        propID = CertEnumCTLContextProperties(ctl, propID);
+        if (propID)
+            numProps++;
+    } while (propID != 0);
+    todo_wine
+    ok(numProps == 1, "Expected 1 properties, got %d\n", numProps);
+
+    todo_wine
+    checkHash(signedCTLWithCTLInnerContent,
+     sizeof(signedCTLWithCTLInnerContent), CALG_MD5, ctl,
+     CERT_MD5_HASH_PROP_ID);
+
+    CertFreeCTLContext(ctl);
+}
+
 START_TEST(ctl)
 {
     testCreateCTL();
+    testCTLProperties();
 }
