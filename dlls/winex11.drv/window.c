@@ -1194,7 +1194,7 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
         mask |= CWX | CWY;
     }
 
-    if (!(swp_flags & SWP_NOZORDER))
+    if (!(swp_flags & SWP_NOZORDER) || (swp_flags & SWP_SHOWWINDOW))
     {
         /* find window that this one must be after */
         HWND prev = GetWindow( data->hwnd, GW_HWNDPREV );
