@@ -68,6 +68,132 @@ PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
     return ret;
 }
 
+typedef BOOL (*CtlCompareFunc)(PCCTL_CONTEXT pCtlContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara);
+
+static BOOL compare_ctl_any(PCCTL_CONTEXT pCtlContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    return TRUE;
+}
+
+static BOOL compare_ctl_by_md5_hash(PCCTL_CONTEXT pCtlContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    BOOL ret;
+    BYTE hash[16];
+    DWORD size = sizeof(hash);
+
+    ret = CertGetCTLContextProperty(pCtlContext, CERT_MD5_HASH_PROP_ID, hash,
+     &size);
+    if (ret)
+    {
+        const CRYPT_HASH_BLOB *pHash = (const CRYPT_HASH_BLOB *)pvPara;
+
+        if (size == pHash->cbData)
+            ret = !memcmp(pHash->pbData, hash, size);
+        else
+            ret = FALSE;
+    }
+    return ret;
+}
+
+static BOOL compare_ctl_by_sha1_hash(PCCTL_CONTEXT pCtlContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    BOOL ret;
+    BYTE hash[20];
+    DWORD size = sizeof(hash);
+
+    ret = CertGetCTLContextProperty(pCtlContext, CERT_SHA1_HASH_PROP_ID, hash,
+     &size);
+    if (ret)
+    {
+        const CRYPT_HASH_BLOB *pHash = (const CRYPT_HASH_BLOB *)pvPara;
+
+        if (size == pHash->cbData)
+            ret = !memcmp(pHash->pbData, hash, size);
+        else
+            ret = FALSE;
+    }
+    return ret;
+}
+
+static BOOL compare_ctl_existing(PCCTL_CONTEXT pCtlContext, DWORD dwType,
+ DWORD dwFlags, const void *pvPara)
+{
+    BOOL ret;
+
+    if (pvPara)
+    {
+        PCCTL_CONTEXT ctl = (PCCTL_CONTEXT)pvPara;
+
+        if (pCtlContext->cbCtlContext == ctl->cbCtlContext)
+        {
+            if (ctl->cbCtlContext)
+                ret = !memcmp(pCtlContext->pbCtlContext, ctl->pbCtlContext,
+                 ctl->cbCtlContext);
+            else
+                ret = TRUE;
+        }
+        else
+            ret = FALSE;
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
+PCCTL_CONTEXT WINAPI CertFindCTLInStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
+ const void *pvFindPara, PCCTL_CONTEXT pPrevCtlContext)
+{
+    PCCTL_CONTEXT ret;
+    CtlCompareFunc compare;
+
+    TRACE("(%p, %d, %d, %d, %p, %p)\n", hCertStore, dwCertEncodingType,
+	 dwFindFlags, dwFindType, pvFindPara, pPrevCtlContext);
+
+    switch (dwFindType)
+    {
+    case CTL_FIND_ANY:
+        compare = compare_ctl_any;
+        break;
+    case CTL_FIND_SHA1_HASH:
+        compare = compare_ctl_by_sha1_hash;
+        break;
+    case CTL_FIND_MD5_HASH:
+        compare = compare_ctl_by_md5_hash;
+        break;
+    case CTL_FIND_EXISTING:
+        compare = compare_ctl_existing;
+        break;
+    default:
+        FIXME("find type %08x unimplemented\n", dwFindType);
+        compare = NULL;
+    }
+
+    if (compare)
+    {
+        BOOL matches = FALSE;
+
+        ret = pPrevCtlContext;
+        do {
+            ret = CertEnumCTLsInStore(hCertStore, ret);
+            if (ret)
+                matches = compare(ret, dwFindType, dwFindFlags, pvFindPara);
+        } while (ret != NULL && !matches);
+        if (!ret)
+            SetLastError(CRYPT_E_NOT_FOUND);
+    }
+    else
+    {
+        SetLastError(CRYPT_E_NOT_FOUND);
+        ret = NULL;
+    }
+    return ret;
+}
+
 BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
 {
     BOOL ret;

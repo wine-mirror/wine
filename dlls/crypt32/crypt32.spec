@@ -38,7 +38,7 @@
 @ stdcall CertEnumSystemStore(long ptr ptr ptr)
 @ stdcall CertFindAttribute(str long ptr)
 @ stdcall CertFindCRLInStore(long long long long ptr ptr)
-@ stub CertFindCTLInStore
+@ stdcall CertFindCTLInStore(long long long long ptr ptr)
 @ stdcall CertFindCertificateInStore(long long long long ptr ptr)
 @ stdcall CertFindCertificateInCRL(ptr ptr long ptr ptr)
 @ stdcall CertFindExtension(str long ptr)
