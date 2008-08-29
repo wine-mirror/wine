@@ -233,7 +233,7 @@
 @ stdcall GdipFillRegion(ptr ptr ptr)
 @ stdcall GdipFindFirstImageItem(ptr ptr)
 @ stub GdipFindNextImageItem
-@ stub GdipFlattenPath
+@ stdcall GdipFlattenPath(ptr ptr long)
 @ stdcall GdipFlush(ptr long)
 @ stdcall GdipFree(ptr)
 @ stub GdipGetAdjustableArrowCapFillState

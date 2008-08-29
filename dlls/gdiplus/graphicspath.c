@@ -816,6 +816,19 @@ GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipFlattenPath(GpPath *path, GpMatrix* matrix, REAL flatness)
+{
+    static int calls;
+
+    if(!path)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetPathData(GpPath *path, GpPathData* pathData)
 {
     TRACE("(%p, %p)\n", path, pathData);
