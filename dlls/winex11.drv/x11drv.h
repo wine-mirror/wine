@@ -237,6 +237,7 @@ extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y );
 
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse );
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
+extern void X11DRV_DIB_DestroyXImage( XImage *image );
 extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc);
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );

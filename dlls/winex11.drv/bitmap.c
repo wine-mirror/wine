@@ -316,7 +316,7 @@ LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
     wine_tsx11_lock();
     image = XCreateImage( gdi_display, visual, physBitmap->pixmap_depth, ZPixmap, 0, NULL,
                           bitmap.bmWidth, height, 32, 0 );
-    if (!(image->data = malloc(image->bytes_per_line * height)))
+    if (!(image->data = HeapAlloc( GetProcessHeap(), 0, image->bytes_per_line * height )))
     {
         WARN("No memory to create image data.\n");
         XDestroyImage( image );
@@ -407,7 +407,9 @@ LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
     }
     XPutImage( gdi_display, physBitmap->pixmap, BITMAP_GC(physBitmap),
                image, 0, 0, 0, 0, bitmap.bmWidth, height );
-    XDestroyImage( image ); /* frees image->data too */
+    HeapFree( GetProcessHeap(), 0, image->data );
+    image->data = NULL;
+    XDestroyImage( image );
     wine_tsx11_unlock();
     return count;
 }

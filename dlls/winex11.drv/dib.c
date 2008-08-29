@@ -221,15 +221,32 @@ int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
 XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth )
 {
     int width_bytes;
-    XImage *image;
+    XImage *image = NULL;
+    void *data;
 
     wine_tsx11_lock();
     width_bytes = X11DRV_DIB_GetXImageWidthBytes( width, depth );
-    image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0,
-                          calloc( height, width_bytes ),
-                          width, height, 32, width_bytes );
+    data = HeapAlloc( GetProcessHeap(), 0, height * width_bytes );
+    if (data) image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0,
+                                    data, width, height, 32, width_bytes );
+    if (!image) HeapFree( GetProcessHeap(), 0, data );
     wine_tsx11_unlock();
     return image;
+}
+
+
+/***********************************************************************
+ *           X11DRV_DIB_DestroyXImage
+ *
+ * Destroy an X image created with X11DRV_DIB_CreateXImage.
+ */
+void X11DRV_DIB_DestroyXImage( XImage *image )
+{
+    HeapFree( GetProcessHeap(), 0, image->data );
+    image->data = NULL;
+    wine_tsx11_lock();
+    XDestroyImage( image );
+    wine_tsx11_unlock();
 }
 
 
@@ -3520,7 +3537,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     else {
         bmpImage = XCreateImage( gdi_display, visual, descr->depth, ZPixmap, 0, NULL,
 				 descr->infoWidth, lines, 32, 0 );
-	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
+	bmpImage->data = HeapAlloc( GetProcessHeap(), 0, lines * bmpImage->bytes_per_line );
         if(bmpImage->data == NULL) {
             ERR("Out of memory!\n");
             XDestroyImage( bmpImage );
@@ -3628,7 +3645,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
                        descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
                        descr->width, descr->height );
     }
-    if (!descr->image) XDestroyImage( bmpImage );
+    if (!descr->image) X11DRV_DIB_DestroyXImage( bmpImage );
     wine_tsx11_unlock();
     return lines;
 }
@@ -3649,7 +3666,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     else {
         bmpImage = XCreateImage( gdi_display, visual, descr->depth, ZPixmap, 0, NULL,
 				 descr->infoWidth, lines, 32, 0 );
-	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
+	bmpImage->data = HeapAlloc( GetProcessHeap(), 0, lines * bmpImage->bytes_per_line );
         if(bmpImage->data == NULL) {
             ERR("Out of memory!\n");
             XDestroyImage( bmpImage );
@@ -3766,12 +3783,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         break;
     }
 
-    if (!descr->image)
-    {
-        wine_tsx11_lock();
-        XDestroyImage( bmpImage );
-        wine_tsx11_unlock();
-    }
+    if (!descr->image) X11DRV_DIB_DestroyXImage( bmpImage );
     return lines;
 }
 
@@ -4751,7 +4763,7 @@ void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib)
       }
       else
 #endif
-          XDestroyImage( physBitmap->image );
+          X11DRV_DIB_DestroyXImage( physBitmap->image );
       wine_tsx11_unlock();
   }
 

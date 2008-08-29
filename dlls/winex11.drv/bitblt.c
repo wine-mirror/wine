@@ -896,7 +896,7 @@ static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE 
     XPutImage( gdi_display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
     XDestroyImage( imageSrc );
-    XDestroyImage( imageDst );
+    X11DRV_DIB_DestroyXImage( imageDst );
     wine_tsx11_unlock();
     return 0;  /* no exposure events generated */
 }
@@ -1026,7 +1026,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
             XPutImage( gdi_display, pixmap, gc, imageDst,
                        0, 0, 0, 0, width, height );
             XDestroyImage( imageSrc );
-            XDestroyImage( imageDst );
+            X11DRV_DIB_DestroyXImage( imageDst );
             wine_tsx11_unlock();
         }
     }
