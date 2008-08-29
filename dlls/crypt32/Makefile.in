@@ -14,6 +14,7 @@ C_SRCS = \
 	collectionstore.c \
 	context.c \
 	crl.c \
+	ctl.c \
 	decode.c \
 	encode.c \
 	filestore.c \

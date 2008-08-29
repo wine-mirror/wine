@@ -113,19 +113,16 @@ static void testCreateCTL(void)
 
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(0, NULL, 0);
-    todo_wine
     ok(!ctl && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, NULL, 0);
-    todo_wine
     ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     /* An empty CTL can't be created.. */
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, emptyCTL, sizeof(emptyCTL));
-    todo_wine
     ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
@@ -134,21 +131,18 @@ static void testCreateCTL(void)
      */
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, signedCTL, sizeof(signedCTL));
-    todo_wine
     ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, ctlWithOneEntry,
      sizeof(ctlWithOneEntry));
-    todo_wine
     ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING,
      signedCTLWithSubjectAlgorithm, sizeof(signedCTLWithSubjectAlgorithm));
-    todo_wine
     ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
@@ -156,7 +150,6 @@ static void testCreateCTL(void)
      */
     ctl = CertCreateCTLContext(X509_ASN_ENCODING,
      signedCTLWithCTLInnerContent, sizeof(signedCTLWithCTLInnerContent));
-    todo_wine
     ok(ctl != NULL, "CertCreateCTLContext failed: %08x\n", GetLastError());
     if (ctl)
     {
@@ -175,7 +168,6 @@ static void testCreateCTL(void)
     ctl = CertCreateCTLContext(X509_ASN_ENCODING,
      signedCTLWithCTLInnerContentAndBadSig,
      sizeof(signedCTLWithCTLInnerContentAndBadSig));
-    todo_wine
     ok(ctl != NULL, "CertCreateCTLContext failed: %08x\n", GetLastError());
     if (ctl)
         CertFreeCTLContext(ctl);

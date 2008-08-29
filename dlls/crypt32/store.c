@@ -1043,14 +1043,6 @@ PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore,
     return ret;
 }
 
-PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwCertEncodingType,
-  const BYTE* pbCtlEncoded, DWORD cbCtlEncoded)
-{
-    FIXME("(%08x, %p, %08x): stub\n", dwCertEncodingType, pbCtlEncoded,
-     cbCtlEncoded);
-    return NULL;
-}
-
 BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
  DWORD dwMsgAndCertEncodingType, const BYTE *pbCtlEncoded, DWORD cbCtlEncoded,
  DWORD dwAddDisposition, PCCTL_CONTEXT *ppCtlContext)
@@ -1074,12 +1066,6 @@ PCCTL_CONTEXT WINAPI CertDuplicateCTLContext(PCCTL_CONTEXT pCtlContext)
 {
     FIXME("(%p): stub\n", pCtlContext );
     return pCtlContext;
-}
-
-BOOL WINAPI CertFreeCTLContext(PCCTL_CONTEXT pCtlContext)
-{
-    FIXME("(%p): stub\n", pCtlContext );
-    return TRUE;
 }
 
 BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext)
