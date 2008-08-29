@@ -185,10 +185,10 @@ static void update_resources_version(void)
                         MAKEINTRESOURCE(0x4567),
                         0xabcd,
                         foo, sizeof foo );
-    ok( r == TRUE, "UpdateResource failed\n");
+    ok( r == TRUE, "UpdateResource failed: %d\n", GetLastError());
 
     r = EndUpdateResource( res, FALSE );
-    ok( r, "EndUpdateResource failed\n");
+    ok( r, "EndUpdateResource failed: %d\n", GetLastError());
 }
 
 
