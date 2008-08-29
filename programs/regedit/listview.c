@@ -422,20 +422,17 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
             break;
 	case LVN_ENDLABELEDIT: {
 	        LPNMLVDISPINFO dispInfo = (LPNMLVDISPINFO)lParam;
-		LPTSTR valueName = GetItemText(hWnd, dispInfo->item.iItem);
-                LPSTR pathA;
+		LPWSTR oldName = GetItemTextW(hWnd, dispInfo->item.iItem);
+                WCHAR* newName = GetWideString(dispInfo->item.pszText);
                 LONG ret;
-                if (!valueName) return -1; /* cannot rename a default value */
-                pathA = GetMultiByteString(g_currentPath);
-	        ret = RenameValue(hWnd, g_currentRootKey, pathA, valueName, dispInfo->item.pszText);
-                HeapFree(GetProcessHeap(), 0, pathA);
+                if (!oldName) return -1; /* cannot rename a default value */
+	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, oldName, newName);
 		if (ret)
                 {
-                    WCHAR* itemTextW = GetWideString(dispInfo->item.pszText);
-                    RefreshListView(hWnd, g_currentRootKey, g_currentPath, itemTextW);
-                    HeapFree(GetProcessHeap(), 0, itemTextW);
+                    RefreshListView(hWnd, g_currentRootKey, g_currentPath, newName);
                 }
-		HeapFree(GetProcessHeap(), 0, valueName);
+                HeapFree(GetProcessHeap(), 0, newName);
+		HeapFree(GetProcessHeap(), 0, oldName);
 		return 0;
 	    }
         case NM_RETURN: {
