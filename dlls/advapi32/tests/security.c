@@ -1705,8 +1705,10 @@ static void test_security_descriptor(void)
     }
 }
 
-#define TEST_GRANTED_ACCESS(a,b) test_granted_access(a,b,__LINE__)
-static void test_granted_access(HANDLE handle, ACCESS_MASK access, int line)
+#define TEST_GRANTED_ACCESS(a,b) test_granted_access(a,b,0,__LINE__)
+#define TEST_GRANTED_ACCESS2(a,b,c) test_granted_access(a,b,c,__LINE__)
+static void test_granted_access(HANDLE handle, ACCESS_MASK access,
+                                ACCESS_MASK alt, int line)
 {
     OBJECT_BASIC_INFORMATION obj_info;
     NTSTATUS status;
@@ -1720,8 +1722,13 @@ static void test_granted_access(HANDLE handle, ACCESS_MASK access, int line)
     status = pNtQueryObject( handle, ObjectBasicInformation, &obj_info,
                              sizeof(obj_info), NULL );
     ok_(__FILE__, line)(!status, "NtQueryObject with err: %08x\n", status);
-    ok_(__FILE__, line)(obj_info.GrantedAccess == access, "Granted access should "
-        "be 0x%08x, instead of 0x%08x\n", access, obj_info.GrantedAccess);
+    if (alt)
+        ok_(__FILE__, line)(obj_info.GrantedAccess == access ||
+            obj_info.GrantedAccess == alt, "Granted access should be 0x%08x "
+            "or 0x%08x, instead of 0x%08x\n", access, alt, obj_info.GrantedAccess);
+    else
+        ok_(__FILE__, line)(obj_info.GrantedAccess == access, "Granted access should "
+            "be 0x%08x, instead of 0x%08x\n", access, obj_info.GrantedAccess);
 }
 
 #define CHECK_SET_SECURITY(o,i,e) \
@@ -1833,7 +1840,8 @@ static void test_process_security(void)
     /* Doesn't matter what ACL say we should get full access for ourselves */
     ok(CreateProcessA( NULL, buffer, &psa, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
         "CreateProcess with err:%d\n", GetLastError());
-    TEST_GRANTED_ACCESS( info.hProcess, PROCESS_ALL_ACCESS );
+    TEST_GRANTED_ACCESS2( info.hProcess, PROCESS_ALL_ACCESS,
+                          STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
     winetest_wait_child_process( info.hProcess );
 
     CloseHandle( info.hProcess );
@@ -1882,7 +1890,8 @@ static void test_process_security_child(void)
     ok(DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
                         &handle, 0, TRUE, DUPLICATE_SAME_ACCESS ),
        "duplicating handle err:%d\n", GetLastError());
-    TEST_GRANTED_ACCESS( handle, PROCESS_ALL_ACCESS );
+    TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS,
+                          STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
 
     CloseHandle( handle );
 
@@ -1890,7 +1899,8 @@ static void test_process_security_child(void)
     ok(DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
                         &handle, PROCESS_ALL_ACCESS, TRUE, 0 ),
        "duplicating handle err:%d\n", GetLastError());
-    TEST_GRANTED_ACCESS( handle, PROCESS_ALL_ACCESS );
+    TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS,
+                          STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
     ok(DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
                         &handle1, PROCESS_VM_READ, TRUE, 0 ),
        "duplicating handle err:%d\n", GetLastError());
