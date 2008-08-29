@@ -363,7 +363,9 @@ static void test_dpa(void)
         rc=CheckDPA(dpa,  0x123456, &dw);
         ok(rc, "dw=0x%x\n",  dw);
         rc=CheckDPA(dpa2, 0x123456, &dw2);
-        ok(rc, "dw2=0x%x\n", dw2);
+        ok(rc ||
+           broken(!rc), /* win98 */
+           "dw2=0x%x\n", dw2);
         rc=CheckDPA(dpa3, 0x123456, &dw3);
         ok(rc, "dw3=0x%x\n", dw3);
     }
