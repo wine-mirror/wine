@@ -795,7 +795,6 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (CreateValue(hWnd, hKeyRoot, keyPath, valueType, newKey)) {
             RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, newKey);
             StartValueRename(g_pChildWnd->hListWnd);
-            /* FIXME: start rename */
         }
         HeapFree(GetProcessHeap(), 0, keyPath);
     }
