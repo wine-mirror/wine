@@ -77,7 +77,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 #define TOKEN_CSTRING     51
 #define TOKEN_ARRAY       52
 
-#define CLSIDFMT "<%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X>"
+#define CLSIDFMT "<%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X>"
 
 typedef struct {
   /* Buffer to parse */
@@ -383,7 +383,7 @@ static BOOL is_guid(parse_buffer* buf)
   }
   tmp[pos++] = '>';
   tmp[pos] = 0;
-  if (pos != 37 /* <+35+> */)
+  if (pos != 38 /* <+36+> */)
   {
     TRACE("Wrong guid %s (%d) \n", tmp, pos);
     return FALSE;

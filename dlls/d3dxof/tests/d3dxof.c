@@ -30,10 +30,10 @@ char template[] =
 "xof 0302txt 0064\n"
 "template Header\n"
 "{\n"
-"<3D82AB43-62DA-11CF-AB390020AF71E433>\n"
-"WORD major ;\n"
-"WORD minor ;\n"
-"DWORD flags ;\n"
+"<3D82AB43-62DA-11CF-AB39-0020AF71E433>\n"
+"WORD major;\n"
+"WORD minor;\n"
+"DWORD flags;\n"
 "}\n";
 
 static void init_function_pointers(void)
@@ -79,7 +79,6 @@ static void test_d3dxof(void)
     ref = IDirectXFile_Release(lpDirectXFile);
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
 
-    /* RegisterTemplates does not support txt format yet */
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, strlen(template));
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
 
