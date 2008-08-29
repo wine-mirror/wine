@@ -1180,13 +1180,15 @@ static void test_Console(void)
     /* Try to set invalid CP */
     SetLastError(0xdeadbeef);
     ok(!SetConsoleCP(0), "Shouldn't succeed\n");
-    ok(GetLastError()==ERROR_INVALID_PARAMETER,
+    ok(GetLastError()==ERROR_INVALID_PARAMETER ||
+       broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win95 */
        "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
     SetLastError(0xdeadbeef);
     ok(!SetConsoleOutputCP(0), "Shouldn't succeed\n");
-    ok(GetLastError()==ERROR_INVALID_PARAMETER,
+    ok(GetLastError()==ERROR_INVALID_PARAMETER ||
+       broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win95 */
        "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
