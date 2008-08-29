@@ -57,7 +57,12 @@ static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 double CDECL MSVCRT_acos( double x )
 {
   if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return acos(x);
+  /* glibc implements acos() as the FPU equivalent of atan2(sqrt(1 - x ^ 2), x).
+   * asin() uses a similar construction. This is bad because as x gets nearer to
+   * 1 the error in the expression "1 - x^2" can get relatively large due to
+   * cancellation. The sqrt() makes things worse. A safer way to calculate
+   * acos() is to use atan2(sqrt((1 - x) * (1 + x)), x). */
+  return atan2(sqrt((1 - x) * (1 + x)), x);
 }
 
 /*********************************************************************
@@ -66,7 +71,7 @@ double CDECL MSVCRT_acos( double x )
 double CDECL MSVCRT_asin( double x )
 {
   if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return asin(x);
+  return atan2(x, sqrt((1 - x) * (1 + x)));
 }
 
 /*********************************************************************
