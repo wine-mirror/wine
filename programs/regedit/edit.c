@@ -34,14 +34,14 @@
 #include "regproc.h"
 #include "resource.h"
 
-static const TCHAR* editValueName;
-static TCHAR* stringValueData;
+static const WCHAR* editValueName;
+static WCHAR* stringValueData;
 static BOOL isDecimal;
 
 struct edit_params
 {
     HKEY    hKey;
-    LPCTSTR lpszValueName;
+    LPCWSTR lpszValueName;
     void   *pData;
     LONG    cbData;
 };
@@ -114,14 +114,14 @@ static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
 
 static INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TCHAR* valueData;
+    WCHAR* valueData;
     HWND hwndValue;
     int len;
 
     switch(uMsg) {
     case WM_INITDIALOG:
-        SetDlgItemText(hwndDlg, IDC_VALUE_NAME, editValueName);
-        SetDlgItemText(hwndDlg, IDC_VALUE_DATA, stringValueData);
+        SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, editValueName);
+        SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, stringValueData);
 	CheckRadioButton(hwndDlg, IDC_DWORD_HEX, IDC_DWORD_DEC, isDecimal ? IDC_DWORD_DEC : IDC_DWORD_HEX);
         return TRUE;
     case WM_COMMAND:
@@ -134,10 +134,10 @@ static INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 	break;
         case IDOK:
             if ((hwndValue = GetDlgItem(hwndDlg, IDC_VALUE_DATA))) {
-                len = GetWindowTextLength(hwndValue);
-                if ((valueData = HeapReAlloc(GetProcessHeap(), 0, stringValueData, (len + 1) * sizeof(TCHAR)))) {
+                len = GetWindowTextLengthW(hwndValue);
+                if ((valueData = HeapReAlloc(GetProcessHeap(), 0, stringValueData, (len + 1) * sizeof(WCHAR)))) {
                     stringValueData = valueData;
-                    if (!GetWindowText(hwndValue, stringValueData, len + 1))
+                    if (!GetWindowTextW(hwndValue, stringValueData, len + 1))
                         *stringValueData = 0;
                 }
             }
@@ -162,9 +162,9 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
         params = (struct edit_params *)lParam;
         SetWindowLongPtr(hwndDlg, DWLP_USER, (ULONG_PTR)params);
         if (params->lpszValueName)
-            SetDlgItemText(hwndDlg, IDC_VALUE_NAME, params->lpszValueName);
+            SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, params->lpszValueName);
         else
-            SetDlgItemText(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueName);
+            SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueNameW);
         SendDlgItemMessage(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->cbData, (LPARAM)params->pData);
         return TRUE;
     case WM_COMMAND:
@@ -176,8 +176,8 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
 
             if (pData)
             {
-                SendDlgItemMessage(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)cbData, (LPARAM)pData);
-                lRet = RegSetValueEx(params->hKey, params->lpszValueName, 0, REG_BINARY, pData, cbData);
+                SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)cbData, (LPARAM)pData);
+                lRet = RegSetValueExW(params->hKey, params->lpszValueName, 0, REG_BINARY, pData, cbData);
             }
             else
                 lRet = ERROR_OUTOFMEMORY;
@@ -242,6 +242,45 @@ done:
     return NULL;
 }
 
+static LPWSTR read_valueW(HWND hwnd, HKEY hKey, LPCWSTR valueName, DWORD *lpType, LONG *len)
+{
+    DWORD valueDataLen;
+    LPWSTR buffer = NULL;
+    LONG lRet;
+	WCHAR empty = 0;
+
+    lRet = RegQueryValueExW(hKey, valueName ? valueName : &empty, 0, lpType, 0, &valueDataLen);
+    if (lRet != ERROR_SUCCESS) {
+        if (lRet == ERROR_FILE_NOT_FOUND && !valueName) { /* no default value here, make it up */
+            if (len) *len = 1;
+            if (lpType) *lpType = REG_SZ;
+            buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR));
+            *buffer = '\0';
+            return buffer;
+        }
+        error(hwnd, IDS_BAD_VALUE, valueName);
+        goto done;
+    }
+    if ( *lpType == REG_DWORD ) valueDataLen = sizeof(DWORD);
+    if (!(buffer = HeapAlloc(GetProcessHeap(), 0, valueDataLen+sizeof(WCHAR)))) {
+        error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
+        goto done;
+    }
+    lRet = RegQueryValueExW(hKey, valueName, 0, 0, (LPBYTE)buffer, &valueDataLen);
+    if (lRet != ERROR_SUCCESS) {
+        error(hwnd, IDS_BAD_VALUE, valueName);
+        goto done;
+    }
+    if((valueDataLen % sizeof(WCHAR)) == 0)
+        buffer[valueDataLen / sizeof(WCHAR)] = 0;
+    if(len) *len = valueDataLen;
+    return buffer;
+
+done:
+    HeapFree(GetProcessHeap(), 0, buffer);
+    return NULL;
+}
+
 BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR keyName)
 {
     BOOL result = FALSE;
@@ -281,7 +320,7 @@ done:
     return result;
 }
 
-BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
+BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 {
     BOOL result = FALSE;
     DWORD type;
@@ -289,30 +328,34 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
     HKEY hKey;
     LONG len;
 
-    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
+    lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) {
 	error_code_messagebox(hwnd, lRet);
 	return FALSE;
     }
 
-    editValueName = valueName ? valueName : g_pszDefaultValueName;
-    if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, &len))) goto done;
+    editValueName = valueName ? valueName : g_pszDefaultValueNameW;
+    if(!(stringValueData = read_valueW(hwnd, hKey, valueName, &type, &len))) goto done;
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
-        if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_dlgproc) == IDOK) {
-            lRet = RegSetValueEx(hKey, valueName, 0, type, (LPBYTE)stringValueData, lstrlen(stringValueData) + 1);
+        if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_STRING), hwnd, modify_dlgproc) == IDOK) {
+            lRet = RegSetValueExW(hKey, valueName, 0, type, (LPBYTE)stringValueData, (lstrlenW(stringValueData) + 1) * sizeof(WCHAR));
             if (lRet == ERROR_SUCCESS) result = TRUE;
             else error_code_messagebox(hwnd, lRet);
         }
     } else if ( type == REG_DWORD ) {
-	wsprintf(stringValueData, isDecimal ? "%u" : "%x", *((DWORD*)stringValueData));
-	if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
+	const WCHAR u[] = {'%','u',0};
+	const WCHAR x[] = {'%','x',0};
+	wsprintfW(stringValueData, isDecimal ? u : x, *((DWORD*)stringValueData));
+	if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
 	    DWORD val;
-	    if (_stscanf(stringValueData, isDecimal ? "%u" : "%x", &val)) {
-		lRet = RegSetValueEx(hKey, valueName, 0, type, (BYTE*)&val, sizeof(val));
+	    CHAR* valueA = GetMultiByteString(stringValueData);
+	    if (_stscanf(valueA, isDecimal ? "%u" : "%x", &val)) {
+		lRet = RegSetValueExW(hKey, valueName, 0, type, (BYTE*)&val, sizeof(val));
 		if (lRet == ERROR_SUCCESS) result = TRUE;
 		else error_code_messagebox(hwnd, lRet);
 	    }
+	    HeapFree(GetProcessHeap(), 0, valueA);
 	}
     } else if ( type == REG_BINARY ) {
         struct edit_params params;
@@ -323,14 +366,14 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
         result = DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_EDIT_BINARY), hwnd,
             bin_modify_dlgproc, (LPARAM)&params);
     } else if ( type == REG_MULTI_SZ ) {
-        TCHAR char1 = (TCHAR)'\r', char2 = (TCHAR)'\n';
-        TCHAR *tmpValueData = NULL;
+        WCHAR char1 = '\r', char2 = '\n';
+        WCHAR *tmpValueData = NULL;
         INT i, j, count;
 
         for ( i = 0, count = 0; i < len - 1; i++)
             if ( !stringValueData[i] && stringValueData[i + 1] )
                 count++;
-        tmpValueData = HeapAlloc( GetProcessHeap(), 0, ( len + count ) * sizeof(TCHAR));
+        tmpValueData = HeapAlloc( GetProcessHeap(), 0, ( len + count ) * sizeof(WCHAR));
         if ( !tmpValueData ) goto done;
 
         for ( i = 0, j = 0; i < len - 1; i++)
@@ -348,10 +391,10 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
         stringValueData = tmpValueData;
         tmpValueData = NULL;
 
-        if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_MULTI_STRING), hwnd, modify_dlgproc) == IDOK)
+        if (DialogBoxW(0, MAKEINTRESOURCEW(IDD_EDIT_MULTI_STRING), hwnd, modify_dlgproc) == IDOK)
         {
-            len = lstrlen( stringValueData );
-            tmpValueData = HeapAlloc( GetProcessHeap(), 0, (len + 2) * sizeof(TCHAR));
+            len = lstrlenW( stringValueData );
+            tmpValueData = HeapAlloc( GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR));
             if ( !tmpValueData ) goto done;
 
             for ( i = 0, j = 0; i < len - 1; i++)
@@ -371,7 +414,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
             HeapFree( GetProcessHeap(), 0, stringValueData);
             stringValueData = tmpValueData;
 
-            lRet = RegSetValueEx(hKey, valueName, 0, type, (LPBYTE)stringValueData, j * sizeof(TCHAR));
+            lRet = RegSetValueExW(hKey, valueName, 0, type, (LPBYTE)stringValueData, j * sizeof(TCHAR));
             if (lRet == ERROR_SUCCESS) result = TRUE;
             else error_code_messagebox(hwnd, lRet);
         }

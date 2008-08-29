@@ -715,15 +715,11 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case ID_EDIT_MODIFY:
     {
-        LPCWSTR valueNameW = GetValueName(g_pChildWnd->hListWnd);
-        CHAR* valueNameA = GetMultiByteString(valueNameW);
-        WCHAR* keyPathW = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
-        CHAR* keyPathA = GetMultiByteString(keyPathW);
-        if (ModifyValue(hWnd, hKeyRoot, keyPathA, valueNameA))
-            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPathW, valueNameW);
-        HeapFree(GetProcessHeap(), 0, valueNameA);
-        HeapFree(GetProcessHeap(), 0, keyPathW);
-        HeapFree(GetProcessHeap(), 0, keyPathA);
+        LPCWSTR valueName = GetValueName(g_pChildWnd->hListWnd);
+        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        if (ModifyValue(hWnd, hKeyRoot, keyPath, valueName))
+            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, valueName);
+        HeapFree(GetProcessHeap(), 0, keyPath);
         break;
     }
     case ID_EDIT_FIND:
