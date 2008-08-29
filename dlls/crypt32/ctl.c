@@ -29,6 +29,91 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+#define CtlContext_CopyProperties(to, from) \
+ Context_CopyProperties((to), (from), sizeof(CTL_CONTEXT))
+
+BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
+ PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
+ PCCTL_CONTEXT* ppStoreContext)
+{
+    PWINECRYPT_CERTSTORE store = (PWINECRYPT_CERTSTORE)hCertStore;
+    BOOL ret = TRUE;
+    PCCTL_CONTEXT toAdd = NULL, existing = NULL;
+
+    TRACE("(%p, %p, %08x, %p)\n", hCertStore, pCtlContext, dwAddDisposition,
+     ppStoreContext);
+
+    if (dwAddDisposition != CERT_STORE_ADD_ALWAYS)
+    {
+        existing = CertFindCTLInStore(hCertStore, 0, 0, CTL_FIND_EXISTING,
+         pCtlContext, NULL);
+    }
+
+    switch (dwAddDisposition)
+    {
+    case CERT_STORE_ADD_ALWAYS:
+        toAdd = CertDuplicateCTLContext(pCtlContext);
+        break;
+    case CERT_STORE_ADD_NEW:
+        if (existing)
+        {
+            TRACE("found matching CTL, not adding\n");
+            SetLastError(CRYPT_E_EXISTS);
+            ret = FALSE;
+        }
+        else
+            toAdd = CertDuplicateCTLContext(pCtlContext);
+        break;
+    case CERT_STORE_ADD_NEWER:
+        if (existing)
+        {
+            LONG newer = CompareFileTime(&existing->pCtlInfo->ThisUpdate,
+             &pCtlContext->pCtlInfo->ThisUpdate);
+
+            if (newer < 0)
+                toAdd = CertDuplicateCTLContext(pCtlContext);
+            else
+            {
+                TRACE("existing CTL is newer, not adding\n");
+                SetLastError(CRYPT_E_EXISTS);
+                ret = FALSE;
+            }
+        }
+        else
+            toAdd = CertDuplicateCTLContext(pCtlContext);
+        break;
+    case CERT_STORE_ADD_REPLACE_EXISTING:
+        toAdd = CertDuplicateCTLContext(pCtlContext);
+        break;
+    case CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES:
+        toAdd = CertDuplicateCTLContext(pCtlContext);
+        if (existing)
+            CtlContext_CopyProperties(toAdd, existing);
+        break;
+    case CERT_STORE_ADD_USE_EXISTING:
+        if (existing)
+            CtlContext_CopyProperties(existing, pCtlContext);
+        break;
+    default:
+        FIXME("Unimplemented add disposition %d\n", dwAddDisposition);
+        ret = FALSE;
+    }
+
+    if (toAdd)
+    {
+        if (store)
+            ret = store->ctls.addContext(store, (void *)toAdd,
+             (void *)existing, (const void **)ppStoreContext);
+        else if (ppStoreContext)
+            *ppStoreContext = CertDuplicateCTLContext(toAdd);
+        CertFreeCTLContext(toAdd);
+    }
+    CertFreeCTLContext(existing);
+
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
 BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
  DWORD dwMsgAndCertEncodingType, const BYTE *pbCtlEncoded, DWORD cbCtlEncoded,
  DWORD dwAddDisposition, PCCTL_CONTEXT *ppCtlContext)

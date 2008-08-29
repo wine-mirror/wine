@@ -333,7 +333,6 @@ static void testAddCTLToStore(void)
         if (ctl)
             numCTLs++;
     } while (ctl);
-    todo_wine
     ok(numCTLs == 2, "expected 2 CTLs, got %d\n", numCTLs);
     CertCloseStore(store, 0);
 
@@ -350,7 +349,6 @@ static void testAddCTLToStore(void)
      signedCTLWithCTLInnerContentAndBadSig,
      sizeof(signedCTLWithCTLInnerContentAndBadSig), CERT_STORE_ADD_NEW,
      NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_EXISTS,
      "expected CRYPT_E_EXISTS, got %08x\n", GetLastError());
     CertCloseStore(store, 0);
@@ -376,7 +374,6 @@ static void testAddCTLToStore(void)
         if (ctl)
             numCTLs++;
     } while (ctl);
-    todo_wine
     ok(numCTLs == 2, "expected 2 CTLs, got %d\n", numCTLs);
     CertCloseStore(store, 0);
 
@@ -401,7 +398,6 @@ static void testAddCTLToStore(void)
         if (ctl)
             numCTLs++;
     } while (ctl);
-    todo_wine
     ok(numCTLs == 2, "expected 2 CTLs, got %d\n", numCTLs);
     CertCloseStore(store, 0);
 }

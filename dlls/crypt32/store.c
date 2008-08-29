@@ -1091,15 +1091,6 @@ PCCRL_CONTEXT WINAPI CertEnumCRLsInStore(HCERTSTORE hCertStore,
     return ret;
 }
 
-BOOL WINAPI CertAddCTLContextToStore(HCERTSTORE hCertStore,
- PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
- PCCTL_CONTEXT* ppStoreContext)
-{
-    FIXME("(%p, %p, %08x, %p): stub\n", hCertStore, pCtlContext,
-     dwAddDisposition, ppStoreContext);
-    return TRUE;
-}
-
 HCERTSTORE WINAPI CertDuplicateStore(HCERTSTORE hCertStore)
 {
     WINECRYPT_CERTSTORE *hcs = (WINECRYPT_CERTSTORE *)hCertStore;
