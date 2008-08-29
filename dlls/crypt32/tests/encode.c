@@ -6387,8 +6387,9 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == E_INVALIDARG,
-     "Expected E_INVALIDARG, got %08x\n", GetLastError());
+    ok(!ret, "Expected failure, got %d\n", ret);
+    ok(GetLastError() == E_INVALIDARG,
+       "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* To be encoded, a signer must have a valid cert ID, where a valid ID may
      * be a key id or a issuer serial number with at least the issuer set, and
      * the encoding must include PKCS_7_ASN_ENCODING.
