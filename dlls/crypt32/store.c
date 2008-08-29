@@ -1234,28 +1234,6 @@ BOOL WINAPI CertSetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
     return ret;
 }
 
-DWORD WINAPI CertEnumCTLContextProperties(PCCTL_CONTEXT pCTLContext,
- DWORD dwPropId)
-{
-    FIXME("(%p, %d): stub\n", pCTLContext, dwPropId);
-    return 0;
-}
-
-BOOL WINAPI CertGetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
- DWORD dwPropId, void *pvData, DWORD *pcbData)
-{
-    FIXME("(%p, %d, %p, %p): stub\n", pCTLContext, dwPropId, pvData, pcbData);
-    return FALSE;
-}
-
-BOOL WINAPI CertSetCTLContextProperty(PCCTL_CONTEXT pCTLContext,
- DWORD dwPropId, DWORD dwFlags, const void *pvData)
-{
-    FIXME("(%p, %d, %08x, %p): stub\n", pCTLContext, dwPropId, dwFlags,
-     pvData);
-    return FALSE;
-}
-
 static LONG CRYPT_OpenParentStore(DWORD dwFlags,
     void *pvSystemStoreLocationPara, HKEY *key)
 {

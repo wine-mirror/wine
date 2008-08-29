@@ -218,17 +218,13 @@ static void testCTLProperties(void)
     /* An implicit property */
     ret = CertGetCTLContextProperty(ctl, CERT_ACCESS_STATE_PROP_ID, NULL,
      &size);
-    todo_wine
     ok(ret, "CertGetCTLContextProperty failed: %08x\n", GetLastError());
     ret = CertGetCTLContextProperty(ctl, CERT_ACCESS_STATE_PROP_ID, &access,
      &size);
-    todo_wine
     ok(ret, "CertGetCTLContextProperty failed: %08x", GetLastError());
-    todo_wine
     ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
      "Didn't expect a persisted cert\n");
 
-    todo_wine
     checkHash(signedCTLWithCTLInnerContent,
      sizeof(signedCTLWithCTLInnerContent), CALG_SHA1, ctl, CERT_HASH_PROP_ID);
 
@@ -242,10 +238,8 @@ static void testCTLProperties(void)
         if (propID)
             numProps++;
     } while (propID != 0);
-    todo_wine
     ok(numProps == 1, "Expected 1 properties, got %d\n", numProps);
 
-    todo_wine
     checkHash(signedCTLWithCTLInnerContent,
      sizeof(signedCTLWithCTLInnerContent), CALG_MD5, ctl,
      CERT_MD5_HASH_PROP_ID);
