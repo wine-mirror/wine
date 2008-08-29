@@ -70,6 +70,7 @@ static const struct message create_parent_wnd_seq[] = {
     { WM_CREATE, sent },
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_QUERYNEWPALETTE,   sent|optional },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
