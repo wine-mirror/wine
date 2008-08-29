@@ -168,7 +168,7 @@ static HRESULT register_server(BOOL doregister)
     STRTABLEA strtable;
     STRENTRYA pse[1];
     static CLSID const *clsids[34];
-    int i = 0;
+    unsigned int i = 0;
 
     static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
 
