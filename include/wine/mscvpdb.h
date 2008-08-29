@@ -1879,7 +1879,7 @@ typedef struct OMFSignatureRSDS
 {
     char        Signature[4];
     GUID        guid;
-    DWORD       unknown;
+    DWORD       age;
     CHAR        name[1];
 } OMFSignatureRSDS;
 
@@ -1888,7 +1888,7 @@ typedef struct _CODEVIEW_PDB_DATA
     char        Signature[4];
     long        filepos;
     DWORD       timestamp;
-    DWORD       unknown;
+    DWORD       age;
     CHAR        name[1];
 } CODEVIEW_PDB_DATA, *PCODEVIEW_PDB_DATA;
 

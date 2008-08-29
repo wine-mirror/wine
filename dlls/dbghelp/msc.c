@@ -2496,7 +2496,7 @@ static BOOL codeview_process_info(const struct process* pcs,
         pdb_lookup.kind = PDB_JG;
         pdb_lookup.u.jg.timestamp = pdb->timestamp;
         pdb_lookup.u.jg.toc = NULL;
-        pdb_lookup.age = pdb->unknown;
+        pdb_lookup.age = pdb->age;
         ret = pdb_process_file(pcs, msc_dbg, &pdb_lookup);
         break;
     }
@@ -2504,13 +2504,13 @@ static BOOL codeview_process_info(const struct process* pcs,
     {
         const OMFSignatureRSDS* rsds = (const OMFSignatureRSDS*)msc_dbg->root;
 
-        TRACE("Got RSDS type of PDB file: guid=%s unk=%08x name=%s\n",
-              wine_dbgstr_guid(&rsds->guid), rsds->unknown, rsds->name);
+        TRACE("Got RSDS type of PDB file: guid=%s age=%08x name=%s\n",
+              wine_dbgstr_guid(&rsds->guid), rsds->age, rsds->name);
         pdb_lookup.filename = rsds->name;
         pdb_lookup.kind = PDB_DS;
         pdb_lookup.u.ds.guid = rsds->guid;
         pdb_lookup.u.ds.toc = NULL;
-        pdb_lookup.age = rsds->unknown;
+        pdb_lookup.age = rsds->age;
         ret = pdb_process_file(pcs, msc_dbg, &pdb_lookup);
         break;
     }

@@ -418,7 +418,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
         printf("      Filepos:           0x%08lX\n", pdb_data->filepos);
 	printf("      TimeStamp:         %08X (%s)\n",
 	       pdb_data->timestamp, get_time_str(pdb_data->timestamp));
-	printf("      Dunno:             %08X\n", pdb_data->unknown);
+	printf("      Age:               %08X\n", pdb_data->age);
 	printf("      Filename:          %s\n", pdb_data->name);
 	return;
     }
@@ -428,7 +428,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
 
 	rsds_data = (const void *)cv_base;
 	printf("      Guid:              %s\n", get_guid_str(&rsds_data->guid));
-	printf("      Dunno:             %08X\n", rsds_data->unknown);
+	printf("      Age:               %08X\n", rsds_data->age);
 	printf("      Filename:          %s\n", rsds_data->name);
 	return;
     }
