@@ -208,9 +208,10 @@ UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR szProductCodeOrPatchCode,
                                          LPWSTR szDiskPrompt, LPDWORD pcchDiskPrompt)
 {
     WCHAR squished_pc[GUID_SIZE];
+    WCHAR convert[11];
     LPWSTR value = NULL;
     LPWSTR data = NULL;
-    LPWSTR ptr;
+    LPWSTR ptr, ptr2;
     HKEY source, media;
     DWORD valuesz, datasz = 0;
     DWORD type;
@@ -218,6 +219,8 @@ UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR szProductCodeOrPatchCode,
     LONG res;
     UINT r;
     static int index = 0;
+
+    static const WCHAR fmt[] = {'#','%','d',0};
 
     TRACE("(%s, %s, %d, %d, %d, %p, %p, %p, %p)\n", debugstr_w(szProductCodeOrPatchCode),
           debugstr_w(szUserSid), dwContext, dwOptions, dwIndex, szVolumeLabel,
@@ -285,6 +288,7 @@ UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR szProductCodeOrPatchCode,
     if (pdwDiskId)
         *pdwDiskId = atolW(value);
 
+    ptr2 = data;
     ptr = strchrW(data, ';');
     if (!ptr)
         ptr = data;
@@ -293,11 +297,19 @@ UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR szProductCodeOrPatchCode,
 
     if (pcchVolumeLabel)
     {
-        size = lstrlenW(data);
+        if (type == REG_DWORD)
+        {
+            sprintfW(convert, fmt, *data);
+            size = lstrlenW(convert);
+            ptr2 = convert;
+        }
+        else
+            size = lstrlenW(data);
+
         if (size >= *pcchVolumeLabel)
             r = ERROR_MORE_DATA;
         else if (szVolumeLabel)
-            lstrcpyW(szVolumeLabel, data);
+            lstrcpyW(szVolumeLabel, ptr2);
 
         *pcchVolumeLabel = size;
     }
@@ -306,6 +318,15 @@ UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR szProductCodeOrPatchCode,
     {
         if (!*ptr)
             ptr++;
+
+        if (type == REG_DWORD)
+        {
+            sprintfW(convert, fmt, *ptr);
+            size = lstrlenW(convert);
+            ptr = convert;
+        }
+        else
+            size = lstrlenW(ptr);
 
         size = lstrlenW(ptr);
         if (size >= *pcchDiskPrompt)
