@@ -102,7 +102,7 @@ static int compare_fourcc(DWORD fcc1, DWORD fcc2)
   return strncasecmp(fcc_str1, fcc_str2, 4);
 }
 
-typedef BOOL (*enum_handler_t)(const char*, int, void*);
+typedef BOOL (*enum_handler_t)(const char*, unsigned int, void*);
 
 static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
 {
@@ -173,7 +173,7 @@ DWORD WINAPI VideoForWindowsVersion(void)
     return 0x040003B6; /* 4.950 */
 }
 
-static BOOL ICInfo_enum_handler(const char *drv, int nr, void *param)
+static BOOL ICInfo_enum_handler(const char *drv, unsigned int nr, void *param)
 {
     ICINFO *lpicinfo = (ICINFO *)param;
     DWORD fccHandler = mmioStringToFOURCCA(drv + 5, 0);
@@ -519,7 +519,7 @@ static HIC try_driver(driver_info_t *info)
     return 0;
 }
 
-static BOOL ICLocate_enum_handler(const char *drv, int nr, void *param)
+static BOOL ICLocate_enum_handler(const char *drv, unsigned int nr, void *param)
 {
     driver_info_t *info = (driver_info_t *)param;
     info->fccHandler = mmioStringToFOURCCA(drv + 5, 0);
