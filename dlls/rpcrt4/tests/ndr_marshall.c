@@ -1185,6 +1185,9 @@ static void test_client_init(void)
     TEST_ZERO(fInDontFree, "%d");
     TEST_ZERO(fDontCallFreeInst, "%d");
     TEST_ZERO(fInOnlyParam, "%d");
+    ok(stubMsg.fInOnlyParam == 0 ||
+       stubMsg.fInOnlyParam == -1, /* Vista */
+       "fInOnlyParam should have been set to 0 or -1 instead of %d\n", stubMsg.fInOnlyParam);
     TEST_ZERO(fHasReturn, "%d");
     TEST_ZERO(fHasExtensions, "%d");
     TEST_ZERO(fHasNewCorrDesc, "%d");
@@ -1195,7 +1198,9 @@ static void test_client_init(void)
     TEST_ZERO(fHasMemoryValidateCallback, "%d");
     TEST_ZERO(fInFree, "%d");
     TEST_ZERO(fNeedMCCP, "%d");
-    TEST_ZERO(fUnused, "0x%x");
+    ok(stubMsg.fUnused == 0 ||
+       stubMsg.fUnused == -2, /* Vista */
+       "fUnused should have been set to 0 or -2 instead of %d\n", stubMsg.fUnused);
     ok(stubMsg.fUnused2 == 0xffffcccc, "stubMsg.fUnused2 should have been 0xffffcccc instead of 0x%x\n", stubMsg.fUnused2);
     ok(stubMsg.dwDestContext == MSHCTX_DIFFERENTMACHINE, "stubMsg.dwDestContext should have been MSHCTX_DIFFERENTMACHINE instead of %d\n", stubMsg.dwDestContext);
     TEST_ZERO(pvDestContext, "%p");
@@ -1271,7 +1276,9 @@ todo_wine
        "stubMsg.pPointerQueueState should have been unset instead of %p\n", stubMsg.pPointerQueueState);
     TEST_ZERO(IgnoreEmbeddedPointers, "%d");
     TEST_ZERO(PointerBufferMark, "%p");
-    ok(stubMsg.CorrDespIncrement == 0xcc, "CorrDespIncrement should have been unset instead of 0x%x\n", stubMsg.CorrDespIncrement);
+    ok(stubMsg.CorrDespIncrement == 0xcc ||
+       stubMsg.CorrDespIncrement == 0,
+       "CorrDespIncrement should have been unset instead of 0x%x\n", stubMsg.CorrDespIncrement);
     TEST_ZERO(uFlags, "%d");
     /* FIXME: UniquePtrCount */
     TEST_ULONG_PTR_UNSET(MaxCount);
@@ -1289,7 +1296,9 @@ todo_wine
     TEST_ZERO(PointerLength, "%d");
     TEST_ZERO(fInDontFree, "%d");
     TEST_ZERO(fDontCallFreeInst, "%d");
-    TEST_ZERO(fInOnlyParam, "%d");
+    ok(stubMsg.fInOnlyParam == 0 ||
+       stubMsg.fInOnlyParam == -1, /* Vista */
+       "fInOnlyParam should have been set to 0 or -1 instead of %d\n", stubMsg.fInOnlyParam);
     TEST_ZERO(fHasReturn, "%d");
     TEST_ZERO(fHasExtensions, "%d");
     TEST_ZERO(fHasNewCorrDesc, "%d");
@@ -1300,7 +1309,9 @@ todo_wine
     TEST_ZERO(fHasMemoryValidateCallback, "%d");
     TEST_ZERO(fInFree, "%d");
     TEST_ZERO(fNeedMCCP, "%d");
-    TEST_ZERO(fUnused, "0x%x");
+    ok(stubMsg.fUnused == 0 ||
+       stubMsg.fUnused == -2, /* Vista */
+       "fUnused should have been set to 0 or -2 instead of %d\n", stubMsg.fUnused);
     ok(stubMsg.fUnused2 == 0xffffcccc, "stubMsg.fUnused2 should have been 0xffffcccc instead of 0x%x\n", stubMsg.fUnused2);
     ok(stubMsg.dwDestContext == MSHCTX_DIFFERENTMACHINE, "stubMsg.dwDestContext should have been MSHCTX_DIFFERENTMACHINE instead of %d\n", stubMsg.dwDestContext);
     TEST_ZERO(pvDestContext, "%p");
