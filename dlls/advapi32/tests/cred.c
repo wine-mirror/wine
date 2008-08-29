@@ -222,6 +222,12 @@ static void test_domain_password(DWORD cred_type)
     new_cred.TargetAlias = NULL;
     new_cred.UserName = (char *)"test\\winetest";
     ret = pCredWriteA(&new_cred, 0);
+    if (!ret && GetLastError() == ERROR_NO_SUCH_LOGON_SESSION)
+    {
+        skip("CRED_TYPE_DOMAIN_PASSWORD credentials are not supported "
+             "or are disabled. Skipping\n");
+        return;
+    }
     ok(ret, "CredWriteA failed with error %d\n", GetLastError());
 
     ret = pCredEnumerateA(NULL, 0, &count, &creds);
