@@ -1,5 +1,8 @@
 /*
+ * comdlg32 (Traditional Chinese Resource)
+ *
  * Copyright 2000 Aric Stewart
+ * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,7 +31,7 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
 OPEN_FILE DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 275, 134
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "開啟"
-FONT 8, "MS Shell Dlg"
+FONT 8, "PMingLiu"
 {
  LTEXT "檔案名稱(&N):", 1090, 6, 6, 100, 9
  EDITTEXT 1152, 6, 16, 90, 12, ES_AUTOHSCROLL | ES_OEMCONVERT | WS_BORDER | WS_TABSTOP
@@ -50,7 +53,7 @@ FONT 8, "MS Shell Dlg"
 SAVE_FILE DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 275, 134
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "另存新檔..."
-FONT 8, "MS Shell Dlg"
+FONT 8, "PMingLiu"
 {
  LTEXT "檔案名稱(&N):", 1090, 6, 6, 76, 9
  EDITTEXT 1152, 6, 16, 90, 12, ES_AUTOHSCROLL | ES_OEMCONVERT | WS_BORDER | WS_TABSTOP
@@ -71,7 +74,7 @@ FONT 8, "MS Shell Dlg"
 CHOOSE_FONT DIALOG DISCARDABLE  13, 54, 294, 147
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "字型"
-FONT 8, "MS Shell Dlg"
+FONT 8, "PMingLiu"
 {
     LTEXT           "字型(&F):",1088 ,6,3,40,9
     COMBOBOX        1136 ,6,13,124,54,  CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
@@ -94,7 +97,7 @@ FONT 8, "MS Shell Dlg"
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "範例",grp2,98,72,120,36,WS_GROUP
     CTEXT           "AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "Scr&ipt (translate):",stc7 ,98,114,80,9
+    LTEXT           "语言:",stc7 ,98,114,80,9
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
@@ -103,7 +106,7 @@ FONT 8, "MS Shell Dlg"
 CHOOSE_COLOR DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 300, 185
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "色彩"
-FONT 8, "MS Shell Dlg"
+FONT 8, "PMingLiu"
 {
  LTEXT "基本色彩(&B):",   1088, 4,    4,  140, 10
  LTEXT "自定色彩(&C):",  1089, 4,   106, 140, 10
@@ -137,7 +140,7 @@ FONT 8, "MS Shell Dlg"
 FINDDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 263, 62
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "搜尋"
-FONT 8, "MS Shell Dlg"
+FONT 8, "PMingLiu"
 {
  LTEXT "搜尋目標(&N):", -1, 4, 8, 50, 8
  EDITTEXT 1152, 61, 7, 130, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
@@ -156,14 +159,14 @@ FONT 8, "MS Shell Dlg"
 REPLACEDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 263, 94
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "取代"
-FONT 8, "MS Shell Dlg"
+FONT 8, "PMingLiu"
 {
  LTEXT "尋找目標(&N):", -1, 4, 9, 50, 8
  EDITTEXT 1152, 61, 7, 130, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
  LTEXT "取代為(&P):", -1, 4, 26, 50, 8
  EDITTEXT 1153, 61, 24, 130, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
  CHECKBOX "全字拼寫須符合(&W)", 1040, 5, 46, 89, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- CHECKBOX "大小寫視為想異(&C)", 1041, 5, 62, 89, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+ CHECKBOX "大小寫視為相異(&C)", 1041, 5, 62, 89, 12, BS_AUTOCHECKBOX | WS_TABSTOP
 
  DEFPUSHBUTTON "找下一個(&F)", IDOK, 199,  4, 60, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "取代(&R)", psh1	 , 199, 21, 60, 14, WS_GROUP | WS_TABSTOP
@@ -175,7 +178,7 @@ FONT 8, "MS Shell Dlg"
 NEWFILEOPENORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 280, 164
 STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_VISIBLE | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN
 CAPTION "開啟舊檔"
-FONT 8, "MS Shell Dlg"
+FONT 8, "PMingLiu"
 {
     LTEXT	"搜尋位置(&I)",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
     COMBOBOX	IDC_LOOKIN,52,3,130,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
@@ -198,9 +201,9 @@ FONT 8, "MS Shell Dlg"
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_ABOUTBOX            "&About FolderPicker Test"
-    IDS_DOCUMENTFOLDERS     "文件夾"
-    IDS_PERSONAL            "我的文件"
+    IDS_ABOUTBOX            "关于資料夹选择器(&A)"
+    IDS_DOCUMENTFOLDERS     "資料夾"
+    IDS_PERSONAL            "我的檔案"
     IDS_FAVORITES           "我的最愛"
     IDS_PATH                "系統路徑"
     IDS_DESKTOP             "桌面"
@@ -210,16 +213,16 @@ STRINGTABLE DISCARDABLE
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_SYSTEMFOLDERS       "System Folders"
-    IDS_LOCALHARDRIVES      "Local Hard Drives"
-    IDS_FILENOTFOUND        "File not found"
-    IDS_VERIFYFILE          "Please verify if the correct file name was given"
-    IDS_CREATEFILE          "File does not exist\nDo you want to create file"
-    IDS_OVERWRITEFILE       "File does already exist.\nDo you want to replace it?"
-    IDS_INVALID_FILENAME_TITLE "Invalid character(s) in path"
-    IDS_INVALID_FILENAME    "A filename cannot contain any of the following characters:\n                          / : < > |"
-    IDS_PATHNOTEXISTING     "Path does not exist"
-    IDS_FILENOTEXISTING     "File does not exist"
+    IDS_SYSTEMFOLDERS       "系統資料夾"
+    IDS_LOCALHARDRIVES      "本地硬盤驅動器"
+    IDS_FILENOTFOUND        "找不到檔案"
+    IDS_VERIFYFILE          "請檢驗是否給予正確的檔案名稱。"
+    IDS_CREATEFILE          "找不到檔案\n是否創建新檔案?"
+    IDS_OVERWRITEFILE       "檔案已經存在。\n要替換嗎?"
+    IDS_INVALID_FILENAME_TITLE "檔案名中存在無效的字符"
+    IDS_INVALID_FILENAME    "檔案名中不能包含任何一下字符::\n                          / : < > |"
+    IDS_PATHNOTEXISTING     "資料夾不存在"
+    IDS_FILENOTEXISTING     "檔案不存在"
 }
 
 STRINGTABLE DISCARDABLE
@@ -229,6 +232,61 @@ STRINGTABLE DISCARDABLE
     IDS_LISTVIEW         "清單"
     IDS_REPORTVIEW       "詳細資料"
     IDS_TODESKTOP        "顯示桌面"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    PD32_PRINT_TITLE       "列印"
+
+    PD32_VALUE_UREADABLE                  "數值不可讀"
+    PD32_INVALID_PAGE_RANGE               "這個值不在頁數範圍。\n \
+請輸入一個 %d 和 %d 之間的數。"
+    PD32_FROM_NOT_ABOVE_TO                "'從'項的值不能大於'到'項的值。"
+    PD32_MARGINS_OVERLAP                  "邊緣空白重迭或落於紙外,\n請重新輸入邊緣空白。"
+    PD32_NR_OF_COPIES_EMPTY               "'份數' 項不能空."
+    PD32_TOO_LARGE_COPIES                 "你的印表機不支持這麼大的份數。\n \
+請輸入一個 1 和 %d 之間的數。"
+    PD32_PRINT_ERROR                      "印表機錯誤。"
+    PD32_NO_DEFAULT_PRINTER               "沒有默認印表機。"
+    PD32_CANT_FIND_PRINTER                "找不到印表機。"
+    PD32_OUT_OF_MEMORY                    "內存不夠。"
+    PD32_GENERIC_ERROR                    "出現一些錯誤。"
+    PD32_DRIVER_UNKNOWN                   "找不到印表機驅動器。"
+    PD32_NO_DEVICES                       "在使用與印表機有關功能(版面設定, 列印檔案)之前, \
+你必須先裝印表機。請裝一個印表機再試。"
+
+    PD32_DEFAULT_PRINTER                  "默認印表機; "
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "有 %d 個文檔正在等待列印"
+    PD32_MARGINS_IN_INCHES                "邊緣空白 [英寸]"
+    PD32_MARGINS_IN_MILIMETERS            "邊緣空白 [毫米]"
+    PD32_MILIMETERS                       "毫米"
+
+    PD32_PRINTER_STATUS_READY             "待命"
+    PD32_PRINTER_STATUS_PAUSED            "暫停; "
+    PD32_PRINTER_STATUS_ERROR             "錯誤; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "等待刪除; "
+    PD32_PRINTER_STATUS_PAPER_JAM         "卡紙; "
+    PD32_PRINTER_STATUS_PAPER_OUT         "無紙; "
+    PD32_PRINTER_STATUS_MANUAL_FEED       "手動進紙; "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "紙的問題; "
+    PD32_PRINTER_STATUS_OFFLINE           "印表機離線; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O 活動; "
+    PD32_PRINTER_STATUS_BUSY              "繁忙; "
+    PD32_PRINTER_STATUS_PRINTING          "正在列印; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "出紙托盤已滿; "
+    PD32_PRINTER_STATUS_NOT_AVAILABLE     "不可用; "
+    PD32_PRINTER_STATUS_WAITING           "等待; "
+    PD32_PRINTER_STATUS_PROCESSING        "正在處理; "
+    PD32_PRINTER_STATUS_INITIALIZING      "正在啓動; "
+    PD32_PRINTER_STATUS_WARMING_UP        "預熱; "
+    PD32_PRINTER_STATUS_TONER_LOW         "墨低; "
+    PD32_PRINTER_STATUS_NO_TONER          "沒墨; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "頁處理內存超支; "
+    PD32_PRINTER_STATUS_USER_INTERVENTION "用戶干預; "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "內存不夠; "
+    PD32_PRINTER_STATUS_DOOR_OPEN         "印表機蓋是打開的; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "找不到列印服務器; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "省電狀態; "
 }
 
 #pragma code_page(default)
