@@ -50,6 +50,8 @@ static const struct message create_parent_wnd_seq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_QUERYNEWPALETTE,   sent|optional },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED,  sent|optional },
+    { WM_NCCALCSIZE,        sent|wparam|optional, 1 },
     { WM_ACTIVATEAPP,       sent|wparam, 1 },
     { WM_NCACTIVATE,        sent|wparam, 1 },
     { WM_ACTIVATE,          sent|wparam, 1 },
