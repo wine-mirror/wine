@@ -91,6 +91,7 @@ typedef struct _WINE_MEMSTORE
     WINECRYPT_CERTSTORE hdr;
     struct ContextList *certs;
     struct ContextList *crls;
+    struct ContextList *ctls;
 } WINE_MEMSTORE, *PWINE_MEMSTORE;
 
 void CRYPT_InitStore(WINECRYPT_CERTSTORE *store, DWORD dwFlags,
@@ -229,6 +230,47 @@ static BOOL CRYPT_MemDeleteCrl(PWINECRYPT_CERTSTORE store, void *pCrlContext)
     return TRUE;
 }
 
+static BOOL CRYPT_MemAddCtl(PWINECRYPT_CERTSTORE store, void *ctl,
+ void *toReplace, const void **ppStoreContext)
+{
+    WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
+    PCTL_CONTEXT context;
+
+    TRACE("(%p, %p, %p, %p)\n", store, ctl, toReplace, ppStoreContext);
+
+    context = (PCTL_CONTEXT)ContextList_Add(ms->ctls, ctl, toReplace);
+    if (context)
+    {
+        context->hCertStore = store;
+        if (ppStoreContext)
+            *ppStoreContext = CertDuplicateCTLContext(context);
+    }
+    return context ? TRUE : FALSE;
+}
+
+static void *CRYPT_MemEnumCtl(PWINECRYPT_CERTSTORE store, void *pPrev)
+{
+    WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
+    void *ret;
+
+    TRACE("(%p, %p)\n", store, pPrev);
+
+    ret = ContextList_Enum(ms->ctls, pPrev);
+    if (!ret)
+        SetLastError(CRYPT_E_NOT_FOUND);
+
+    TRACE("returning %p\n", ret);
+    return ret;
+}
+
+static BOOL CRYPT_MemDeleteCtl(PWINECRYPT_CERTSTORE store, void *pCtlContext)
+{
+    WINE_MEMSTORE *ms = (WINE_MEMSTORE *)store;
+
+    ContextList_Delete(ms->ctls, pCtlContext);
+    return TRUE;
+}
+
 static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
     WINE_MEMSTORE *store = (WINE_MEMSTORE *)hCertStore;
@@ -239,6 +281,7 @@ static void WINAPI CRYPT_MemCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 
     ContextList_Free(store->certs);
     ContextList_Free(store->crls);
+    ContextList_Free(store->ctls);
     CRYPT_FreeStore((PWINECRYPT_CERTSTORE)store);
 }
 
@@ -268,11 +311,16 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
             store->hdr.crls.addContext     = CRYPT_MemAddCrl;
             store->hdr.crls.enumContext    = CRYPT_MemEnumCrl;
             store->hdr.crls.deleteContext  = CRYPT_MemDeleteCrl;
+            store->hdr.ctls.addContext     = CRYPT_MemAddCtl;
+            store->hdr.ctls.enumContext    = CRYPT_MemEnumCtl;
+            store->hdr.ctls.deleteContext  = CRYPT_MemDeleteCtl;
             store->hdr.control             = NULL;
             store->certs = ContextList_Create(pCertInterface,
              sizeof(CERT_CONTEXT));
             store->crls = ContextList_Create(pCRLInterface,
              sizeof(CRL_CONTEXT));
+            store->ctls = ContextList_Create(pCTLInterface,
+             sizeof(CTL_CONTEXT));
             /* Mem store doesn't need crypto provider, so close it */
             if (hCryptProv && !(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
                 CryptReleaseContext(hCryptProv, 0);

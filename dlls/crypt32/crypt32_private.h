@@ -227,6 +227,7 @@ typedef struct WINE_CRYPTCERTSTORE
     PFN_CERT_STORE_PROV_CLOSE   closeStore;
     CONTEXT_FUNCS               certs;
     CONTEXT_FUNCS               crls;
+    CONTEXT_FUNCS               ctls;
     PFN_CERT_STORE_PROV_CONTROL control; /* optional */
     PCONTEXT_PROPERTY_LIST      properties;
 } WINECRYPT_CERTSTORE, *PWINECRYPT_CERTSTORE;
