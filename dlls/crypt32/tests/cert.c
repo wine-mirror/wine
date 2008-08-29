@@ -511,8 +511,10 @@ static void testCertProperties(void)
     size = 0;
     ret = CertGetCertificateContextProperty(context,
      CERT_SIGNATURE_HASH_PROP_ID, NULL, &size);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    ok(!ret &&
+       (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+        GetLastError() == CRYPT_E_NOT_FOUND),
+       "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
 
     /* Test key contexts and handles and such */
     size = 0;
