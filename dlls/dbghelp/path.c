@@ -453,6 +453,9 @@ static BOOL CALLBACK sffip_cb(PCWSTR buffer, PVOID user)
             }
         }
         break;
+    case DMT_DBG:
+        FIXME("NIY\n");
+        break;
     default:
         FIXME("What the heck??\n");
         return FALSE;
@@ -581,7 +584,7 @@ struct module_find
 static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
 {
     struct module_find* mf = (struct module_find*)user;
-    DWORD               size, checksum;
+    DWORD               size, checksum, timestamp;
     unsigned            matched = 0;
 
     /* the matching weights:
@@ -683,6 +686,36 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
                 WARN("Found %s, but wrong age: %08x %08x\n",
                      debugstr_w(buffer), pdb_lookup.age, mf->dw2);
             }
+        }
+        break;
+    case DMT_DBG:
+        {
+            HANDLE  hFile, hMap;
+            void*   mapping;
+
+            timestamp = ~mf->dw1;
+            hFile = CreateFileW(buffer, GENERIC_READ, FILE_SHARE_READ, NULL,
+                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (hFile == INVALID_HANDLE_VALUE) return FALSE;
+            if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
+            {
+                if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
+                {
+                    const IMAGE_SEPARATE_DEBUG_HEADER*  hdr;
+                    hdr = (const IMAGE_SEPARATE_DEBUG_HEADER*)mapping;
+
+                    if (hdr->Signature == IMAGE_SEPARATE_DEBUG_SIGNATURE)
+                    {
+                        matched++;
+                        timestamp = hdr->TimeDateStamp;
+                    }
+                    UnmapViewOfFile(mapping);
+                }
+                CloseHandle(hMap);
+            }
+            CloseHandle(hFile);
+            if (timestamp == mf->dw1) matched++;
+            else WARN("Found %s, but wrong timestamp\n", debugstr_w(buffer));
         }
         break;
     default:
