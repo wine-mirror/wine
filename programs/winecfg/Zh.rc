@@ -40,11 +40,11 @@ BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    LTEXT           "這一函式庫是自由軟體， 你可以遵照自由軟體基金會出版的 GNU 較寬鬆通用公共許\可證條款 來修改和重新發佈這一程式， 或者是許\可證的2.1版， 或是 (根據你的選擇) 任何更新的版本。",
+    LTEXT           "這個函式庫是自由軟體﹐你可以遵照\n自由軟體基金會出版的 GNU LGPL 2.1\n版或新版的許可條款來修改和重新\n發佈這一程式。",
                     IDC_STATIC,119,44,124,72
-    GROUPBOX        " Windows Registration Information ", IDC_STATIC, 15, 110, 230, 55
-    LTEXT           "Owner:", IDC_STATIC, 22, 126, 40, 20
-    LTEXT           "Organization:", IDC_STATIC, 22, 140, 50, 20
+    GROUPBOX        " Windows 註冊信息 ", IDC_STATIC, 15, 110, 230, 55
+    LTEXT           "姓名:", IDC_STATIC, 22, 126, 40, 20
+    LTEXT           "單位:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
@@ -69,9 +69,9 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "PMingLiu"
 BEGIN
     GROUPBOX    " 視窗設定 ",IDC_STATIC,8,4,244,84
-    CONTROL     "允許\ DirectX 程式防止游標離開它的視窗(&m)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "允許\視窗管理器控制視窗(&w)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "允許 DirectX 程式防止游標離開它的視窗(&m)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "允許視窗管理器裝飾視窗(&d)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "允許視窗管理器控制視窗(&w)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "模擬一個虛擬桌面(&d)",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
     LTEXT       "桌面大小(&s)：",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
@@ -82,7 +82,7 @@ BEGIN
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
     LTEXT       "&Vertex Shader支援：",IDC_STATIC,15,110,80,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "允許\&Pixel Shader（如果硬體支援）",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    CONTROL     "允許&Pixel Shader（如果硬體支援）",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
     GROUPBOX    " 螢幕解析度(&R) ",IDC_STATIC,8,151,244,93
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
@@ -96,7 +96,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "PMingLiu"
 BEGIN
     GROUPBOX        " DLL 頂替 ",IDC_STATIC,8,4,244,240
-    LTEXT           "動態連結函式庫可以個別設定， 來指定要使用 Wine 提供的內建版本， 還是使用取自 Windows 或程式所提供的原生版本。"
+    LTEXT           "動態連結函式庫可以個別設定, 來指定要使用 Wine 提供的內建版本, 還是使用取自 Windows 或程式所提供的原生版本。"
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "新增函式庫頂替(&N)：",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
@@ -164,7 +164,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "PMingLiu"
 BEGIN
     GROUPBOX        " 驅動程式選擇 ",IDC_STATIC,8,4,244,195
-    LTEXT           "勾選方框來選擇想要的驅動程式。 不選擇任何驅動程式將停用音效。 不建議同時選擇複數的驅動程式。 按下滑鼠右鍵來對驅動程式設定。",IDC_STATIC,15,20,227,30
+    LTEXT           "請選擇想要的驅動程式。不選擇任何驅動程式將停用音效。 不建議同時選擇多個驅動程式。按下滑鼠右鍵來對驅動程式設定。",IDC_STATIC,15,20,227,30
     CONTROL         "裝置",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
     PUSHBUTTON      "測試音效(&T)",IDC_AUDIO_TEST,170,50,59,14
     PUSHBUTTON	    "控制台(&C)",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
@@ -269,13 +269,13 @@ BEGIN
     IDS_ACCEL_STANDARD          "標準"
     IDS_ACCEL_BASIC             "基本"
     IDS_ACCEL_EMULATION         "軟體模擬"
-    IDS_DRIVER_ALSA             "ALSA Driver"
-    IDS_DRIVER_ESOUND           "EsounD Driver"
-    IDS_DRIVER_OSS              "OSS Driver"
-    IDS_DRIVER_JACK             "JACK Driver"
-    IDS_DRIVER_NAS              "NAS Driver"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
-    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
+    IDS_DRIVER_ALSA             "ALSA 驅動"
+    IDS_DRIVER_ESOUND           "EsounD 驅動"
+    IDS_DRIVER_OSS              "OSS 驅動"
+    IDS_DRIVER_JACK             "JACK 驅動"
+    IDS_DRIVER_NAS              "NAS 驅動"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) 驅動"
+    IDS_DRIVER_COREAUDIO        "CoreAudio 驅動"
     IDS_OPEN_DRIVER_ERROR       "無法開啟 %s ！"
     IDS_SOUNDDRIVERS            "音效驅動程式"
     IDS_DEVICES_WAVEOUT         "Wave 輸出裝置"
@@ -290,22 +290,22 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDC_SYSPARAMS_BUTTON            "控制項背景"
-    IDC_SYSPARAMS_BUTTON_TEXT       "控制項文字"
+    IDC_SYSPARAMS_BUTTON            "按鈕背景"
+    IDC_SYSPARAMS_BUTTON_TEXT       "按鈕文字"
     IDC_SYSPARAMS_DESKTOP           "桌面"
-    IDC_SYSPARAMS_MENU              "選單背景"
-    IDC_SYSPARAMS_MENU_TEXT         "選單文字"
+    IDC_SYSPARAMS_MENU              "功能表背景"
+    IDC_SYSPARAMS_MENU_TEXT         "功能表文字"
     IDC_SYSPARAMS_SCROLLBAR         "捲軸"
-    IDC_SYSPARAMS_SELECTION         "Selection Background"
-    IDC_SYSPARAMS_SELECTION_TEXT    "Selection Text"
-    IDC_SYSPARAMS_TOOLTIP           "ToolTip Background"
-    IDC_SYSPARAMS_TOOLTIP_TEXT      "ToolTip Text"
-    IDC_SYSPARAMS_WINDOW            "Window Background"
-    IDC_SYSPARAMS_WINDOW_TEXT       "Window Text"
-    IDC_SYSPARAMS_ACTIVE_TITLE      "Active Title Bar"
-    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Active Title Text"
-    IDC_SYSPARAMS_INACTIVE_TITLE    "Inactive Title Bar"
-    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactive Title Text"
+    IDC_SYSPARAMS_SELECTION         "選择區背景"
+    IDC_SYSPARAMS_SELECTION_TEXT    "選择區文字"
+    IDC_SYSPARAMS_TOOLTIP           "提示區背景"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "提示區文字"
+    IDC_SYSPARAMS_WINDOW            "視窗背景"
+    IDC_SYSPARAMS_WINDOW_TEXT       "視窗文字"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "當前標題欄"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "當前標題欄文字"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "非當前標題欄"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "非當前標題欄文字"
 END
 
 #pragma code_page(default)
