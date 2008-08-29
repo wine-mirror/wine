@@ -401,6 +401,8 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
+        trace("parent: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
+
         msg.message = message;
         msg.flags = sent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;
@@ -449,6 +451,8 @@ static LRESULT WINAPI trackbar_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
+
+    trace("trackbar: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
