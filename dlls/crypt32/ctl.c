@@ -52,6 +52,22 @@ BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
     return ret;
 }
 
+PCCTL_CONTEXT WINAPI CertEnumCTLsInStore(HCERTSTORE hCertStore,
+ PCCTL_CONTEXT pPrev)
+{
+    WINECRYPT_CERTSTORE *hcs = (WINECRYPT_CERTSTORE *)hCertStore;
+    PCCTL_CONTEXT ret;
+
+    TRACE("(%p, %p)\n", hCertStore, pPrev);
+    if (!hCertStore)
+        ret = NULL;
+    else if (hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC)
+        ret = NULL;
+    else
+        ret = (PCCTL_CONTEXT)hcs->ctls.enumContext(hcs, (void *)pPrev);
+    return ret;
+}
+
 PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
  const BYTE *pbCtlEncoded, DWORD cbCtlEncoded)
 {
