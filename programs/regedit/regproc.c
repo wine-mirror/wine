@@ -70,13 +70,17 @@ if (!(p)) \
  */
 WCHAR* GetWideString(const char* strA)
 {
-    WCHAR* strW = NULL;
-    int len = MultiByteToWideChar(CP_ACP, 0, strA, -1, NULL, 0);
+    if(strA)
+    {
+        WCHAR* strW = NULL;
+        int len = MultiByteToWideChar(CP_ACP, 0, strA, -1, NULL, 0);
 
-    strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    CHECK_ENOUGH_MEMORY(strW);
-    MultiByteToWideChar(CP_ACP, 0, strA, -1, strW, len);
-    return strW;
+        strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        CHECK_ENOUGH_MEMORY(strW);
+        MultiByteToWideChar(CP_ACP, 0, strA, -1, strW, len);
+        return strW;
+    }
+    return NULL;
 }
 
 /******************************************************************************
@@ -85,13 +89,17 @@ WCHAR* GetWideString(const char* strA)
  */
 char* GetMultiByteString(const WCHAR* strW)
 {
-    char* strA = NULL;
-    int len = WideCharToMultiByte(CP_ACP, 0, strW, -1, NULL, 0, NULL, NULL);
+    if(strW)
+    {
+        char* strA = NULL;
+        int len = WideCharToMultiByte(CP_ACP, 0, strW, -1, NULL, 0, NULL, NULL);
 
-    strA = HeapAlloc(GetProcessHeap(), 0, len);
-    CHECK_ENOUGH_MEMORY(strA);
-    WideCharToMultiByte(CP_ACP, 0, strW, -1, strA, len, NULL, NULL);
-    return strA;
+        strA = HeapAlloc(GetProcessHeap(), 0, len);
+        CHECK_ENOUGH_MEMORY(strA);
+        WideCharToMultiByte(CP_ACP, 0, strW, -1, strA, len, NULL, NULL);
+        return strA;
+    }
+    return NULL;
 }
 
 /******************************************************************************
