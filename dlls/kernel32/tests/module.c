@@ -216,6 +216,111 @@ static void testGetProcAddress_Wrong(void)
         "Expected ERROR_MOD_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %d\n", GetLastError());
 }
 
+static void testLoadLibraryEx(void)
+{
+    CHAR path[MAX_PATH];
+    HMODULE hmodule;
+    HANDLE hfile;
+
+    hfile = CreateFileA("testfile.dll", GENERIC_READ | GENERIC_WRITE,
+                        FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "Expected a valid file handle\n");
+
+    /* NULL lpFileName */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA(NULL, NULL, 0);
+    ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
+    ok(GetLastError() == ERROR_MOD_NOT_FOUND,
+       "Expected ERROR_MOD_NOT_FOUND, got %d\n", GetLastError());
+
+    /* empty lpFileName */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA("", NULL, 0);
+    ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
+    ok(GetLastError() == ERROR_MOD_NOT_FOUND,
+       "Expected ERROR_MOD_NOT_FOUND, got %d\n", GetLastError());
+
+    /* hFile is non-NULL */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA("testfile.dll", hfile, 0);
+    ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
+    todo_wine
+    {
+        ok(GetLastError() == ERROR_SHARING_VIOLATION,
+           "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
+    }
+
+    /* has nothing to do with hFile */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA("testfile.dll", NULL, 0);
+    ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
+    todo_wine
+    {
+        ok(GetLastError() == ERROR_SHARING_VIOLATION,
+           "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
+    }
+
+    /* one last try with hFile */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA(NULL, hfile, 0);
+    ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
+    ok(GetLastError() == ERROR_MOD_NOT_FOUND,
+       "Expected ERROR_MOD_NOT_FOUND, got %d\n", GetLastError());
+
+    CloseHandle(hfile);
+
+    /* load empty file */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA("testfile.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
+    ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
+    todo_wine
+    {
+        ok(GetLastError() == ERROR_FILE_INVALID,
+          "Expected ERROR_FILE_INVALID, got %d\n", GetLastError());
+    }
+
+    DeleteFileA("testfile.dll");
+
+    GetSystemDirectoryA(path, MAX_PATH);
+    if (path[lstrlenA(path) - 1] != '\\')
+        lstrcatA(path, "\\");
+    lstrcatA(path, "kernel32.dll");
+
+    /* load kernel32.dll with an absolute path */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
+    ok(hmodule != 0, "Expected valid module handle\n");
+    ok(GetLastError() == 0xdeadbeef,
+       "Expected 0xdeadbeef, got %d\n", GetLastError());
+
+    CloseHandle(hmodule);
+
+    /* load kernel32.dll with no path */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA("kernel32.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
+    ok(hmodule != 0, "Expected valid module handle\n");
+    ok(GetLastError() == 0xdeadbeef,
+       "Expected 0xdeadbeef, got %d\n", GetLastError());
+
+    CloseHandle(hmodule);
+
+    GetCurrentDirectoryA(MAX_PATH, path);
+    if (path[lstrlenA(path) - 1] != '\\')
+        lstrcatA(path, "\\");
+    lstrcatA(path, "kernel32.dll");
+
+    /* load kernel32.dll with an absolute path that does not exist */
+    SetLastError(0xdeadbeef);
+    hmodule = LoadLibraryExA(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
+    todo_wine
+    {
+        ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
+    }
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -238,4 +343,5 @@ START_TEST(module)
     testNestedLoadLibraryA();
     testLoadLibraryA_Wrong();
     testGetProcAddress_Wrong();
+    testLoadLibraryEx();
 }
