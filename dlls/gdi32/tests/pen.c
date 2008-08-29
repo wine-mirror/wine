@@ -29,6 +29,8 @@
 #include "wine/test.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+#define expect2(expected, alt, got) ok(got == expected || got == alt, \
+                                       "Expected %.8x or %.8x, got %.8x\n", expected, alt, got)
 
 static void test_logpen(void)
 {
@@ -504,7 +506,7 @@ static void test_ps_userstyle(void)
 
     pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 0, style);
     ok(pen == 0, "ExtCreatePen should fail\n");
-    expect(0xdeadbeef, GetLastError());
+    expect2(0xdeadbeef, ERROR_INVALID_PARAMETER, GetLastError());
     DeleteObject(pen);
     SetLastError(0xdeadbeef);
 
