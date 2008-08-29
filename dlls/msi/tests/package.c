@@ -7869,6 +7869,165 @@ static void test_access(void)
     DeleteFileA(msifile);
 }
 
+static void test_emptypackage(void)
+{
+    MSIHANDLE hpkg, hdb, hsuminfo;
+    MSIHANDLE hview, hrec;
+    MSICONDITION condition;
+    CHAR buffer[MAX_PATH];
+    DWORD size;
+    UINT r;
+
+    r = MsiOpenPackageA("", &hpkg);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    hdb = MsiGetActiveDatabase(hpkg);
+    todo_wine
+    {
+        ok(hdb != 0, "Expected a valid database handle\n");
+    }
+
+    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Tables`", &hview);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    r = MsiViewFetch(hview, &hrec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(hrec, 1, buffer, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buffer, "_Property"),
+           "Expected \"_Property\", got \"%s\"\n", buffer);
+    }
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewFetch(hview, &hrec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(hrec, 1, buffer, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buffer, "#_FolderCache"),
+           "Expected \"_Property\", got \"%s\"\n", buffer);
+    }
+
+    MsiCloseHandle(hrec);
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    condition = MsiDatabaseIsTablePersistentA(hdb, "_Property");
+    todo_wine
+    {
+        ok(condition == MSICONDITION_FALSE,
+           "Expected MSICONDITION_FALSE, got %d\n", condition);
+    }
+
+    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Property`", &hview);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* _Property table is not empty */
+    r = MsiViewFetch(hview, &hrec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    MsiCloseHandle(hrec);
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    condition = MsiDatabaseIsTablePersistentA(hdb, "#_FolderCache");
+    todo_wine
+    {
+        ok(condition == MSICONDITION_FALSE,
+           "Expected MSICONDITION_FALSE, got %d\n", condition);
+    }
+
+    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `#_FolderCache`", &hview);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+    r = MsiViewExecute(hview, 0);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    /* #_FolderCache is not empty */
+    r = MsiViewFetch(hview, &hrec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    MsiCloseHandle(hrec);
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Streams`", &hview);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_QUERY_SYNTAX,
+           "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    }
+
+    r = MsiDatabaseOpenView(hdb, "SELECT * FROM `_Storages`", &hview);
+    todo_wine
+    {
+        ok(r == ERROR_BAD_QUERY_SYNTAX,
+           "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+    }
+
+    r = MsiGetSummaryInformationA(hdb, NULL, 0, &hsuminfo);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_PACKAGE_INVALID,
+           "Expected ERROR_INSTALL_PACKAGE_INVALID, got %d\n", r);
+    }
+
+    MsiCloseHandle(hsuminfo);
+
+    r = MsiDatabaseCommit(hdb);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    MsiCloseHandle(hdb);
+    MsiCloseHandle(hpkg);
+}
+
 START_TEST(package)
 {
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
@@ -7895,4 +8054,5 @@ START_TEST(package)
     test_shortlongsource();
     test_sourcedir();
     test_access();
+    test_emptypackage();
 }
