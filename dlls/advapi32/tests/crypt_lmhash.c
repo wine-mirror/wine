@@ -348,18 +348,20 @@ static void test_SystemFunction005(void)
     out.Length = 0;
     out.MaximumLength = 0;
     r = pSystemFunction005(&out, &key, &res);
-    ok(r == STATUS_SUCCESS, "function failed\n");
+    ok(r == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", r);
 
     ok(res.Length == in.Length, "Length wrong\n");
     ok(!memcmp(res.Buffer, in.Buffer, in.Length), "data wrong\n");
 
     res.MaximumLength = 0;
     r = pSystemFunction005(&out, &key, &res);
-    ok(r == STATUS_BUFFER_TOO_SMALL, "function failed\n");
+    ok(r == STATUS_BUFFER_TOO_SMALL,
+       "Expected STATUS_BUFFER_TOO_SMALL, got %08x\n", r);
 
     key.Length = 1;
     r = pSystemFunction005(&out, &key, &res);
-    ok(r == STATUS_UNKNOWN_REVISION, "function failed\n");
+    ok(r == STATUS_UNKNOWN_REVISION,
+       "Expected STATUS_UNKNOWN_REVISION, got %08x\n", r);
 
     key.Length = 0;
     r = pSystemFunction005(&out, &key, &res);
