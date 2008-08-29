@@ -18,8 +18,6 @@
 
 #include "config.h"
 #include "wine/port.h"
-#include "wine/debug.h"
-#include "wine/library.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -43,6 +41,9 @@
 #undef FAR
 #undef DSA
 #endif
+
+#include "wine/debug.h"
+#include "wine/library.h"
 
 #include "windef.h"
 #include "winbase.h"
