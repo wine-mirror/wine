@@ -1303,6 +1303,11 @@ static void MONTHCAL_GoToNextMonth(MONTHCAL_INFO *infoPtr)
     nmds.cDayState	= infoPtr->monthRange;
     nmds.prgDayState	= Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
 
+    nmds.stStart = infoPtr->todaysDate;
+    nmds.stStart.wYear = infoPtr->currentYear;
+    nmds.stStart.wMonth = infoPtr->currentMonth;
+    nmds.stStart.wDay = 1;
+
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmds.nmhdr.idFrom, (LPARAM)&nmds);
     for(i=0; i<infoPtr->monthRange; i++)
       infoPtr->monthdayState[i] = nmds.prgDayState[i];
@@ -1332,6 +1337,11 @@ static void MONTHCAL_GoToPrevMonth(MONTHCAL_INFO *infoPtr)
     nmds.cDayState	= infoPtr->monthRange;
     nmds.prgDayState	= Alloc
                         (infoPtr->monthRange * sizeof(MONTHDAYSTATE));
+
+    nmds.stStart = infoPtr->todaysDate;
+    nmds.stStart.wYear = infoPtr->currentYear;
+    nmds.stStart.wMonth = infoPtr->currentMonth;
+    nmds.stStart.wDay = 1;
 
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmds.nmhdr.idFrom, (LPARAM)&nmds);
     for(i=0; i<infoPtr->monthRange; i++)
