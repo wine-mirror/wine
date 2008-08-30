@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "main.h"
+#include "regproc.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -219,13 +220,13 @@ LPWSTR GetItemFullPathW(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     return ret;
 }
 
-static LPTSTR GetPathFullPath(HWND hwndTV, LPTSTR path) {
-    LPTSTR parts[2];
-    LPTSTR ret;
+static LPWSTR GetPathFullPath(HWND hwndTV, LPWSTR path) {
+    LPWSTR parts[2];
+    LPWSTR ret;
 
-    parts[0] = GetPathRoot(hwndTV, 0, TRUE);
+    parts[0] = GetPathRootW(hwndTV, 0, TRUE);
     parts[1] = path;
-    ret = CombinePaths((LPCTSTR *)parts, 2);
+    ret = CombinePathsW((LPCWSTR*)parts, 2);
     HeapFree(GetProcessHeap(), 0, parts[0]);
     return ret;
 }
@@ -424,19 +425,22 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	    case TVN_ENDLABELEDIT: {
 		HKEY hRootKey;
 	        LPNMTVDISPINFO dispInfo = (LPNMTVDISPINFO)lParam;
-		LPCTSTR path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
-	        BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
+                WCHAR* itemText = GetWideString(dispInfo->item.pszText);
+		LPWSTR path = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hRootKey);
+	        BOOL res = RenameKey(hWnd, hRootKey, path, itemText);
 		if (res) {
-		    TVITEMEX item;
-                    LPTSTR fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd,
-                     dispInfo->item.pszText);
+		    TVITEMEXW item;
+                    LPWSTR fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd,
+                     itemText);
 		    item.mask = TVIF_HANDLE | TVIF_TEXT;
 		    item.hItem = TreeView_GetSelection(g_pChildWnd->hTreeWnd);
-		    item.pszText = dispInfo->item.pszText;
-                    SendMessage( g_pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
-                    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
+		    item.pszText = itemText;
+                    SendMessageW( g_pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
+                    SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
                     HeapFree(GetProcessHeap(), 0, fullPath);
 		}
+                HeapFree(GetProcessHeap(), 0, path);
+                HeapFree(GetProcessHeap(), 0, itemText);
 		return res;
 	    }
             default:

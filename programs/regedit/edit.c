@@ -30,6 +30,7 @@
 #include <shellapi.h>
 #include <shlwapi.h>
 
+#include "wine/unicode.h"
 #include "main.h"
 #include "regproc.h"
 #include "resource.h"
@@ -536,10 +537,10 @@ done:
 }
 
 
-BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
+BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName)
 {
-    LPTSTR parentPath = 0;
-    LPCTSTR srcSubKey = 0;
+    LPWSTR parentPath = 0;
+    LPCWSTR srcSubKey = 0;
     HKEY parentKey = 0;
     HKEY destKey = 0;
     BOOL result = FALSE;
@@ -548,17 +549,18 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
 
     if (!keyPath || !newName) return FALSE;
 
-    if (!strrchr(keyPath, '\\')) {
+    if (!strrchrW(keyPath, '\\')) {
 	parentKey = hRootKey;
 	srcSubKey = keyPath;
     } else {
-	LPTSTR srcSubKey_copy;
+	LPWSTR srcSubKey_copy;
 
-	parentPath = strdup(keyPath);
-	srcSubKey_copy = strrchr(parentPath, '\\');
+	parentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(keyPath)+1)*sizeof(WCHAR));
+	lstrcpyW(parentPath, keyPath);
+	srcSubKey_copy = strrchrW(parentPath, '\\');
 	*srcSubKey_copy = 0;
 	srcSubKey = srcSubKey_copy + 1;
-	lRet = RegOpenKeyEx(hRootKey, parentPath, 0, KEY_READ | KEY_CREATE_SUB_KEY, &parentKey);
+	lRet = RegOpenKeyExW(hRootKey, parentPath, 0, KEY_READ | KEY_CREATE_SUB_KEY, &parentKey);
 	if (lRet != ERROR_SUCCESS) {
 	    error_code_messagebox(hwnd, lRet);
 	    goto done;
@@ -566,9 +568,9 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
     }
 
     /* The following fails if the old name is the same as the new name. */
-    if (!strcmp(srcSubKey, newName)) goto done;
+    if (!lstrcmpW(srcSubKey, newName)) goto done;
 
-    lRet = RegCreateKeyEx(parentKey, newName, 0, NULL, REG_OPTION_NON_VOLATILE,
+    lRet = RegCreateKeyExW(parentKey, newName, 0, NULL, REG_OPTION_NON_VOLATILE,
         KEY_WRITE, NULL /* FIXME */, &destKey, &disposition);
     if (disposition == REG_OPENED_EXISTING_KEY)
         lRet = ERROR_FILE_EXISTS; /* FIXME: we might want a better error message than this */
@@ -578,15 +580,15 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
     }
 
     /* FIXME: SHCopyKey does not copy the security attributes */
-    lRet = SHCopyKey(parentKey, srcSubKey, destKey, 0);
+    lRet = SHCopyKeyW(parentKey, srcSubKey, destKey, 0);
     if (lRet != ERROR_SUCCESS) {
         RegCloseKey(destKey);
-        RegDeleteKey(parentKey, newName);
+        RegDeleteKeyW(parentKey, newName);
         error_code_messagebox(hwnd, lRet);
         goto done;
     }
 
-    lRet = SHDeleteKey(hRootKey, keyPath);
+    lRet = SHDeleteKeyW(hRootKey, keyPath);
     if (lRet != ERROR_SUCCESS) {
         error_code_messagebox(hwnd, lRet);
         goto done;
@@ -598,7 +600,7 @@ done:
     RegCloseKey(destKey);
     if (parentKey) {
         RegCloseKey(parentKey); 
-        free(parentPath);
+        HeapFree(GetProcessHeap(), 0, parentPath);
     }
     return result;
 }

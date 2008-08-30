@@ -146,7 +146,7 @@ extern BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR value
 extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR oldName, LPCWSTR newName);
-extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName);
+extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName);
 extern void error(HWND hwnd, INT resId, ...);
 
 /* hexedit.c */
