@@ -509,7 +509,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
                    de->u.CreateProcessInfo.nDebugInfoSize);
         dbg_set_process_name(dbg_curr_process, buffer);
 
-        if (!SymInitialize(dbg_curr_process->handle, NULL, FALSE))
+        if (!dbg_init(dbg_curr_process->handle, buffer, FALSE))
             dbg_printf("Couldn't initiate DbgHelp\n");
         if (!SymLoadModule(dbg_curr_process->handle, de->u.CreateProcessInfo.hFile, buffer, NULL,
                            (unsigned long)de->u.CreateProcessInfo.lpBaseOfImage, 0))

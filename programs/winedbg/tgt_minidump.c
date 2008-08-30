@@ -304,7 +304,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     dbg_curr_process->pio_data = data;
     dbg_set_process_name(dbg_curr_process, exec_name);
 
-    SymInitialize(hProc, NULL, FALSE);
+    dbg_init(hProc, NULL, FALSE);
 
     if (MiniDumpReadDumpStream(data->mapping, ThreadListStream, &dir, &stream, &size))
     {

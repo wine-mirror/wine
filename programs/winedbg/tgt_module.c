@@ -55,7 +55,7 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
 
     SymSetOptions((opts & ~(SYMOPT_UNDNAME|SYMOPT_DEFERRED_LOADS)) |
                   SYMOPT_LOAD_LINES | SYMOPT_AUTO_PUBLICS | 0x40000000);
-    if (!SymInitialize(hDummy, NULL, FALSE))
+    if (!dbg_init(hDummy, NULL, FALSE))
         return start_error_init;
     if (!SymLoadModule(hDummy, NULL, name, NULL, 0, 0))
     {

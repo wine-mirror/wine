@@ -505,7 +505,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                     de->u.CreateProcessInfo.nDebugInfoSize);
 
         /* de->u.CreateProcessInfo.lpStartAddress; */
-        if (!SymInitialize(gdbctx->process->handle, NULL, TRUE))
+        if (!dbg_init(gdbctx->process->handle, buffer, TRUE))
             fprintf(stderr, "Couldn't initiate DbgHelp\n");
 
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)

@@ -346,6 +346,45 @@ void dbg_del_process(struct dbg_process* p)
     HeapFree(GetProcessHeap(), 0, p);
 }
 
+/******************************************************************
+ *		dbg_init
+ *
+ * Initializes the dbghelp library, and also sets the application directory
+ * as a place holder for symbol searches.
+ */
+BOOL dbg_init(HANDLE hProc, const char* in, BOOL invade)
+{
+    BOOL        ret;
+
+    ret = SymInitialize(hProc, NULL, invade);
+    if (ret && in)
+    {
+        const char*     last;
+
+        for (last = in + strlen(in) - 1; last >= in; last--)
+        {
+            if (*last == '/' || *last == '\\')
+            {
+                char*       tmp;
+                tmp = HeapAlloc(GetProcessHeap(), 0, 1024 + 1 + (last - in) + 1);
+                if (tmp && SymGetSearchPath(hProc, tmp, 1024))
+                {
+                    char*       x = tmp + strlen(tmp);
+
+                    *x++ = ';';
+                    memcpy(x, in, last - in);
+                    x[last - in] = '\0';
+                    ret = SymSetSearchPath(hProc, tmp);
+                }
+                else ret = FALSE;
+                HeapFree(GetProcessHeap(), 0, tmp);
+                break;
+            }
+        }
+    }
+    return ret;
+}
+
 struct mod_loader_info
 {
     HANDLE              handle;

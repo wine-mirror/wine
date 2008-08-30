@@ -446,6 +446,7 @@ extern void             dbg_del_process(struct dbg_process* p);
 struct dbg_thread*	dbg_add_thread(struct dbg_process* p, DWORD tid, HANDLE h, void* teb);
 extern struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid);
 extern void             dbg_del_thread(struct dbg_thread* t);
+extern BOOL             dbg_init(HANDLE hProc, const char* in, BOOL invade);
 extern BOOL             dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod);
 
   /* gdbproxy.c */
