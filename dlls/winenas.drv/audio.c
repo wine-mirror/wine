@@ -867,7 +867,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
            nas_add_buffer(wwo);
            wodPlayer_PlayPtrNext(wwo);
         }
-
+    return 0;
     }
 }
 
