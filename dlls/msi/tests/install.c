@@ -1776,6 +1776,8 @@ static void test_packagecoltypes(void)
     MsiCloseHandle(rec);
     MsiCloseHandle(view);
     MsiCloseHandle(hdb);
+    CoUninitialize();
+
     DeleteFile(msifile);
 }
 
