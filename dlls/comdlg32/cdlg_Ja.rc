@@ -141,7 +141,7 @@ FONT 9, "MS UI Gothic"
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "サンプル",grp2,98,72,120,36,WS_GROUP
     CTEXT           "AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "Scr&ipt (translate):",stc7 ,98,114,80,9
+    LTEXT           "文字セット(&I):",stc7 ,98,114,80,9
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
@@ -295,6 +295,36 @@ BEGIN
     CONTROL         "横(&A)",     rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
 END
 
+PAGESETUPDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "ページ設定"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL "", rct1, "Static", SS_WHITERECT, 80, 8, 80, 80
+  CONTROL "", rct2, "Static", SS_GRAYRECT, 160, 12, 4, 80
+  CONTROL "", rct3, "Static", SS_GRAYRECT,  84, 88, 80, 4
+  GROUPBOX "用紙", grp2, 8, 96, 224, 56, BS_GROUPBOX
+  LTEXT "サイズ(&S):", stc2, 16, 112, 36, 8
+  COMBOBOX cmb2, 64, 110, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  LTEXT "給紙方法(&T):", stc3, 16, 132, 36, 8
+  COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  GROUPBOX "印刷の向き", grp1, 8, 156, 64, 56, BS_GROUPBOX
+  AUTORADIOBUTTON "縦(&P)", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "横(&L)", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
+  GROUPBOX "余白", grp4, 80, 156, 152, 56, BS_GROUPBOX
+  LTEXT "左(&E):", stc15, 88, 172, 21, 8
+  EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER|ES_NUMBER
+  LTEXT "右(&R):", stc16, 159, 172, 27, 8
+  EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER|ES_NUMBER
+  LTEXT "上(&O):", stc17, 88, 192, 21, 8
+  EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER|ES_NUMBER
+  LTEXT "下(&B):", stc18, 159, 192, 23, 8
+  EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER|ES_NUMBER
+  DEFPUSHBUTTON "OK", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
+  PUSHBUTTON "キャンセル", IDCANCEL, 126, 220, 50, 14
+  PUSHBUTTON "プリンタ(&R)...", psh3, 184, 220, 48, 14
+END
+
 NEWFILEOPENORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 280, 164
 STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_VISIBLE | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN
 CAPTION "ファイルを開く"
@@ -338,9 +368,115 @@ STRINGTABLE DISCARDABLE
     IDS_FILENOTFOUND        "ファイルが見つかりません。"
     IDS_VERIFYFILE          "ファイル名を確認してください。"
     IDS_CREATEFILE          "このファイルは存在しません。\n作成しますか?"
-    IDS_OVERWRITEFILE       "File already exists.\nDo you want to replace it?"
+    IDS_OVERWRITEFILE       "ファイルは既に存在します。\n上書きしますか?"
     IDS_INVALID_FILENAME_TITLE "Invalid character(s) in path"
-    IDS_INVALID_FILENAME    "A filename cannot contain any of the following characters:\n                          / : < > |"
+    IDS_INVALID_FILENAME    "ファイル名には以下の文字は使えません:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Path does not exist"
     IDS_FILENOTEXISTING     "File does not exist"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_UPFOLDER         "Up One Level"
+    IDS_NEWFOLDER        "Create New Folder"
+    IDS_LISTVIEW         "List"
+    IDS_REPORTVIEW       "Details"
+    IDS_TODESKTOP        "Browse to Desktop"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    PD32_PRINT_TITLE       "Print"
+
+    PD32_VALUE_UREADABLE                  "Unreadable Entry"
+    PD32_INVALID_PAGE_RANGE "This value does not lie within the page range.\n\
+Please enter a value between %d and %d."
+    PD32_FROM_NOT_ABOVE_TO                "The 'from' entry cannot exceed the \
+'to' entry."
+    PD32_MARGINS_OVERLAP                  "Margins overlap or fall outside \
+Paper boundaries.\nPlease reenter margins."
+    PD32_NR_OF_COPIES_EMPTY               "The number of 'Number of copies' \
+value cannot be empty."
+    PD32_TOO_LARGE_COPIES                 "This large number of copies is not \
+supported by your printer.\nPlease enter a value between 1 and %d."
+    PD32_PRINT_ERROR                      "A printer error occurred."
+    PD32_NO_DEFAULT_PRINTER               "No default printer defined."
+    PD32_CANT_FIND_PRINTER                "Cannot find the printer."
+    PD32_OUT_OF_MEMORY                    "Out of memory."
+    PD32_GENERIC_ERROR                    "An error occurred."
+    PD32_DRIVER_UNKNOWN                   "Unknown printer driver."
+    PD32_NO_DEVICES                       "Before you can perform printer-related tasks \
+such as page setup or printing a document, you need to install a printer. \
+Please install one and retry."
+
+    PD32_DEFAULT_PRINTER                  "Default Printer; "
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "There are %d documents in the queue"
+    PD32_MARGINS_IN_INCHES                "Margins [inches]"
+    PD32_MARGINS_IN_MILIMETERS            "Margins [mm]"
+    PD32_MILIMETERS                       "mm"
+
+    PD32_PRINTER_STATUS_READY             "Ready"
+    PD32_PRINTER_STATUS_PAUSED            "Paused; "
+    PD32_PRINTER_STATUS_ERROR             "Error; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "Pending deletion; "
+    PD32_PRINTER_STATUS_PAPER_JAM         "Paper jam; "
+    PD32_PRINTER_STATUS_PAPER_OUT         "Out of paper; "
+    PD32_PRINTER_STATUS_MANUAL_FEED       "Feed paper manual; "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Paper problem; "
+    PD32_PRINTER_STATUS_OFFLINE           "Printer offline; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Active; "
+    PD32_PRINTER_STATUS_BUSY              "Busy; "
+    PD32_PRINTER_STATUS_PRINTING          "Printing; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Output tray is full; "
+    PD32_PRINTER_STATUS_NOT_AVAILABLE     "Not available; "
+    PD32_PRINTER_STATUS_WAITING           "Waiting; "
+    PD32_PRINTER_STATUS_PROCESSING        "Processing; "
+    PD32_PRINTER_STATUS_INITIALIZING      "Initialising; "
+    PD32_PRINTER_STATUS_WARMING_UP        "Warming up; "
+    PD32_PRINTER_STATUS_TONER_LOW         "Toner low; "
+    PD32_PRINTER_STATUS_NO_TONER          "No toner; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
+    PD32_PRINTER_STATUS_USER_INTERVENTION "Interrupted by user; "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Out of memory; "
+    PD32_PRINTER_STATUS_DOOR_OPEN         "The printer door is open; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Print server unknown; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Power save mode; "
+}
+
+STRINGTABLE DISCARDABLE /* Font styles */
+{
+    IDS_FONT_REGULAR       "標準"
+    IDS_FONT_BOLD          "太字"
+    IDS_FONT_ITALIC        "斜体"
+    IDS_FONT_BOLD_ITALIC   "太字 斜体"
+}
+
+STRINGTABLE DISCARDABLE /* Color names */
+{
+    IDS_COLOR_BLACK     "黒"
+    IDS_COLOR_MAROON    "茶色"
+    IDS_COLOR_GREEN     "緑"
+    IDS_COLOR_OLIVE     "オリーブ"
+    IDS_COLOR_NAVY      "紺"
+    IDS_COLOR_PURPLE    "紫"
+    IDS_COLOR_TEAL      "青緑"
+    IDS_COLOR_GRAY      "灰色"
+    IDS_COLOR_SILVER    "銀色"
+    IDS_COLOR_RED       "赤"
+    IDS_COLOR_LIME      "黄緑"
+    IDS_COLOR_YELLOW    "黄"
+    IDS_COLOR_BLUE      "青"
+    IDS_COLOR_FUCHSIA   "赤紫"
+    IDS_COLOR_AQUA      "水色"
+    IDS_COLOR_WHITE     "白"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_FONT_SIZE   "Select a font size between %d and %d points."
+    IDS_SAVE_BUTTON "&Save"
+    IDS_SAVE_IN     "Save &in:"
+    IDS_SAVE        "Save"
+    IDS_SAVE_AS     "Save as"
+    IDS_OPEN_FILE   "Open File"
 }
