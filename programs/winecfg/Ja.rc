@@ -69,8 +69,8 @@ FONT 9, "MS UI Gothic"
 BEGIN
     GROUPBOX    " ウィンドウ設定 ",IDC_STATIC,8,4,244,84
     CONTROL     "DirectX アプリケーションがマウスを確保するのを許可する(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "ウィンドウマネージャがウィンドウを装飾するのを許可する(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "ウィンドウマネージャがウィンドウを制御するのを許可する(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "ウィンドウ マネージャがウィンドウを装飾するのを許可する(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "ウィンドウ マネージャがウィンドウを制御するのを許可する(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "仮想デスクトップをエミュレートする(&D)",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
     LTEXT       "デスクトップの大きさ(&Z):",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
@@ -95,7 +95,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS UI Gothic"
 BEGIN
     GROUPBOX        " DLL オーバーライド ",IDC_STATIC,8,4,244,240
-    LTEXT           "ダイナミック・リンク・ライブラリ(DLL)は個別に builtin (Wine版) または native (Windows もしくはアプリケーション提供の物)を選ぶことができます。"
+    LTEXT           "ダイナミック リンク ライブラリ(DLL)は個別に builtin (Wine版) または native (Windows もしくはアプリケーション提供の物)を選ぶことができます。"
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "ライブラリの新規オーバーライド(&N):",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
@@ -166,15 +166,15 @@ BEGIN
     LTEXT           "オーディオドライバ: ",IDC_STATIC,15,20,227,30
     CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
     PUSHBUTTON      "音をテスト(&T)",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON      "コントロールパネル(&C)",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
+    PUSHBUTTON      "コントロール パネル(&C)",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
-    LTEXT	    "ハードウェア・アクセラレーション(&H): ",IDC_STATIC,15,215,90,10
+    LTEXT	    "ハードウェア アクセラレーション(&H): ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "既定のサンプルレート(&S):",IDC_STATIC,15,232,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Default &Bits Per Sample:",IDC_STATIC,137,232,80,8
     COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "ドライバ・エミュレーション(&E)",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+    CONTROL         "ドライバ エミュレーション(&E)",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
@@ -184,7 +184,7 @@ BEGIN
     GROUPBOX        " 外観 ",IDC_STATIC,8,4,244,106
     LTEXT           "テーマ(&T):",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "テーマをインストール(&I)...",IDC_THEME_INSTALL,152,23,93,14
+    PUSHBUTTON      "テーマのインストール(&I)...",IDC_THEME_INSTALL,152,23,93,14
     LTEXT           "配色(&C):",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "サイズ(&S):",IDC_THEME_SIZETEXT,135,40,110,8
@@ -222,6 +222,7 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
     IDS_THEMEFILE           "テーマファイル"
     IDS_THEMEFILE_SELECT    "テーマファイルを選んでください"
+    IDS_AUDIO_MISSING       "There is no audio driver currently specified in the registry.\n\nA recommended driver has been selected for you.\nYou can use this driver or select another driver if available.\n\nYou must click Apply for the selection to take effect."
     IDS_SHELL_FOLDER        "シェルフォルダ"
     IDS_LINKS_TO            "Links to"
 END
@@ -259,7 +260,7 @@ BEGIN
     IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
     IDS_COL_DRIVELETTER         "レター"
     IDS_COL_DRIVEMAPPING        "ドライブの割り当て"
-    IDS_NO_DRIVE_C              "ドライブ C がありません。これはあまり良くありません。\n\nドライブ C を作成するためにドライブタブ内の「追加」を忘れずにクリックしてください!\n"
+    IDS_NO_DRIVE_C              "ドライブ C がありません。これはあまり良くありません。\n\nドライブ C を作成するためにドライブタブ内の [追加] を忘れずにクリックしてください!\n"
 END
 
 STRINGTABLE DISCARDABLE
@@ -285,4 +286,40 @@ BEGIN
     IDS_DEVICES_MIXER           "Mixer Devices"
     IDS_UNAVAILABLE_DRIVER      "利用できないドライバをレジストリ内に見つけました!\n\nレジストリから \"%s\" を削除しますか?"
     IDS_WARNING                 "警告"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "コントロールの背景"
+    IDC_SYSPARAMS_BUTTON_TEXT       "コントロールのテキスト"
+    IDC_SYSPARAMS_DESKTOP           "デスクトップ"
+    IDC_SYSPARAMS_MENU              "メニューの背景"
+    IDC_SYSPARAMS_MENU_TEXT         "メニューのテキスト"
+    IDC_SYSPARAMS_SCROLLBAR         "スクロールバー"
+    IDC_SYSPARAMS_SELECTION         "選択項目の背景"
+    IDC_SYSPARAMS_SELECTION_TEXT    "選択項目のテキスト"
+    IDC_SYSPARAMS_TOOLTIP           "ヒントの背景"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "ヒントのテキスト"
+    IDC_SYSPARAMS_WINDOW            "ウィンドウの背景"
+    IDC_SYSPARAMS_WINDOW_TEXT       "ウィンドウのテキスト"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "アクティブ タイトル バー"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "アクティブ タイトルのテキスト"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "非アクティブ タイトル バー"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "非アクティブ タイトルのテキスト"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "メッセージ ボックスのテキスト"
+    IDC_SYSPARAMS_APPWORKSPACE      "アプリケーション作業域"
+    IDC_SYSPARAMS_WINDOW_FRAME      "ウィンドウの境界"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "アクティブ境界"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "非アクティブ境界"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Controls Shadow"
+    IDC_SYSPARAMS_GRAY_TEXT         "Gray Text"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Controls Highlight"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Controls Dark Shadow"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Controls Light"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Controls Alternate Background"
+    IDC_SYSPARAMS_HOT_TRACKING      "Hot Tracked Item"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Active Title Bar Gradient"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Inactive Title Bar Gradient"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Menu Highlight"
+    IDC_SYSPARAMS_MENUBAR           "メニュー バー"
 END
