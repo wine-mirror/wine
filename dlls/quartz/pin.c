@@ -1611,6 +1611,7 @@ static DWORD WINAPI PullPin_Thread_Main(LPVOID pv)
         default: ERR("Unknown state request: %d\n", This->state); break;
         }
     }
+    return 0;
 }
 
 static HRESULT PullPin_InitProcessing(PullPin * This)
