@@ -138,7 +138,7 @@ static LPWSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     HKEY hRootKey = NULL;
     if (!hItem)
         hItem = TreeView_GetSelection(hwndTV);
-    GetItemPath(hwndTV, hItem, &hRootKey);
+    HeapFree(GetProcessHeap(), 0, GetItemPath(hwndTV, hItem, &hRootKey));
     if (!bFull && !hRootKey)
         return NULL;
     if (hRootKey)
