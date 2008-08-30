@@ -41,3 +41,4 @@
 #include "wineboot_Ru.rc"
 #include "wineboot_Si.rc"
 #include "wineboot_Sv.rc"
+#include "wineboot_Zh.rc"

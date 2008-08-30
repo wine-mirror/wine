@@ -1,0 +1,55 @@
+/*
+ * wineboot (Simplified and Traditional Chinese Resource)
+ *
+ * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+/* Chinese text is encoded in UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "正在等待程序"
+FONT 9, "MS Song"
+BEGIN
+    DEFPUSHBUTTON   "取消",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "中断进程",IDOK,51,49,71,15
+    LTEXT           "正在模拟关机, 但是这个程序没有反应.",
+                    IDC_STATIC,7,7,172,19
+    LTEXT           "如果你中断进程，有可能丢失没有保存的数据.",
+                    IDC_STATIC,7,28,172,15
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+
+IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "正在等待程式"
+FONT 8, "PMingLiu"
+BEGIN
+    DEFPUSHBUTTON   "取消",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "中斷進程",IDOK,51,49,71,15
+    LTEXT           "正在模擬關機, 但是這個程式沒有反應.",
+                    IDC_STATIC,7,7,172,19
+    LTEXT           "如果你中斷進程，有可能丟失沒有儲存的數據.",
+                    IDC_STATIC,7,28,172,15
+END
+
+#pragma code_page(default)
