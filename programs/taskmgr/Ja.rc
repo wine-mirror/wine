@@ -36,16 +36,16 @@ BEGIN
     END
     POPUP "オプション(&O)"
     BEGIN
-        MENUITEM "常に手前に表示(&A)",              ID_OPTIONS_ALWAYSONTOP
+        MENUITEM "常に手前に表\示(&A)",              ID_OPTIONS_ALWAYSONTOP
         , CHECKED
         MENUITEM "未使用時に最小化(&M)",            ID_OPTIONS_MINIMIZEONUSE
         , CHECKED
         MENUITEM "最小化時に隠す(&H)",        ID_OPTIONS_HIDEWHENMINIMIZED
         , CHECKED
-        MENUITEM "16bit タスクの表示(&S)",          ID_OPTIONS_SHOW16BITTASKS
+        MENUITEM "16bit タスクの表\示(&S)",          ID_OPTIONS_SHOW16BITTASKS
         , CHECKED
     END
-    POPUP "表示(&V)"
+    POPUP "表\示(&V)"
     BEGIN
         MENUITEM "最新の情報に更新(&R)",                ID_VIEW_REFRESH
         POPUP "更新の頻度(&U)"
@@ -69,16 +69,16 @@ BEGIN
             MENUITEM "CPU ごとに 1 グラフ(&P)",          ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
             , CHECKED
         END
-        MENUITEM "カーネル時間を表示する(&S)",          ID_VIEW_SHOWKERNELTIMES
+        MENUITEM "カーネル時間を表\示する(&S)",          ID_VIEW_SHOWKERNELTIMES
     END
     POPUP "ウィンドウ(&W)"
     BEGIN
-        MENUITEM "上下に並べて表示(&H)",          ID_WINDOWS_TILEHORIZONTALLY
-        MENUITEM "左右に並べて表示(&V)",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "上下に並べて表\示(&H)",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "左右に並べて表\示(&V)",            ID_WINDOWS_TILEVERTICALLY
         MENUITEM "最小化(&M)",                   ID_WINDOWS_MINIMIZE
         MENUITEM "最大化(&X)",                   ID_WINDOWS_MAXIMIZE
-        MENUITEM "重ねて表示(&C)",                    ID_WINDOWS_CASCADE
-        MENUITEM "手前に表示(&B)",             ID_WINDOWS_BRINGTOFRONT
+        MENUITEM "重ねて表\示(&C)",                    ID_WINDOWS_CASCADE
+        MENUITEM "手前に表\示(&B)",             ID_WINDOWS_BRINGTOFRONT
     END
     POPUP "ヘルプ(&H)"
     BEGIN
@@ -90,12 +90,12 @@ END
 
 IDR_WINDOWSMENU MENU DISCARDABLE
 BEGIN
-    MENUITEM "上下に並べて表示(&H)",          ID_WINDOWS_TILEHORIZONTALLY
-    MENUITEM "左右に並べて表示(&V)",            ID_WINDOWS_TILEVERTICALLY
+    MENUITEM "上下に並べて表\示(&H)",          ID_WINDOWS_TILEHORIZONTALLY
+    MENUITEM "左右に並べて表\示(&V)",            ID_WINDOWS_TILEVERTICALLY
     MENUITEM "最小化(&M)",                   ID_WINDOWS_MINIMIZE
     MENUITEM "最大化(&X)",                   ID_WINDOWS_MAXIMIZE
-    MENUITEM "重ねて表示(&C)",                    ID_WINDOWS_CASCADE
-    MENUITEM "手前に表示(&B)",             ID_WINDOWS_BRINGTOFRONT
+    MENUITEM "重ねて表\示(&C)",                    ID_WINDOWS_CASCADE
+    MENUITEM "手前に表\示(&B)",             ID_WINDOWS_BRINGTOFRONT
 END
 
 IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
@@ -115,16 +115,16 @@ BEGIN
     POPUP "DUMMY"
     BEGIN
         MENUITEM "切り替え(&S)",                  ID_APPLICATION_PAGE_SWITCHTO
-        MENUITEM "手前に表示(&B)",             ID_WINDOWS_BRINGTOFRONT
+        MENUITEM "手前に表\示(&B)",             ID_WINDOWS_BRINGTOFRONT
         MENUITEM SEPARATOR
-        MENUITEM "上下に並べて表示(&H)",          ID_WINDOWS_TILEHORIZONTALLY
-        MENUITEM "左右に並べて表示(&V)",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "上下に並べて表\示(&H)",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "左右に並べて表\示(&V)",            ID_WINDOWS_TILEVERTICALLY
         MENUITEM "最小化(&M)",                   ID_WINDOWS_MINIMIZE
         MENUITEM "最大化(&X)",                   ID_WINDOWS_MAXIMIZE
-        MENUITEM "重ねて表示(&C)",                    ID_WINDOWS_CASCADE
+        MENUITEM "重ねて表\示(&C)",                    ID_WINDOWS_CASCADE
         MENUITEM SEPARATOR
         MENUITEM "タスクの終了(&E)",                   ID_APPLICATION_PAGE_ENDTASK
-        MENUITEM "プロセスの表示(&G)",              ID_APPLICATION_PAGE_GOTOPROCESS
+        MENUITEM "プロセスの表\示(&G)",              ID_APPLICATION_PAGE_GOTOPROCESS
     END
 END
 
@@ -135,7 +135,7 @@ BEGIN
         MENUITEM "元のサイズに戻す(&R)",                    ID_RESTORE
         MENUITEM "閉じる(&C)",                      ID_FILE_EXIT
         MENUITEM SEPARATOR
-        MENUITEM "常に手前に表示(&A)",              ID_OPTIONS_ALWAYSONTOP
+        MENUITEM "常に手前に表\示(&A)",              ID_OPTIONS_ALWAYSONTOP
     END
 END
 
@@ -202,7 +202,7 @@ BEGIN
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
                     WS_BORDER | WS_TABSTOP,7,7,233,177
     PUSHBUTTON      "プロセスの終了(&E)",IDC_ENDPROCESS,171,189,69,14
-    CONTROL         "すべてのユーザーのプロセスを表示(&S)",IDC_SHOWALLPROCESSES,
+    CONTROL         "すべてのユーザーのプロセスを表\示(&S)",IDC_SHOWALLPROCESSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,111,10
 END
 
@@ -358,7 +358,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,84,178,50,14
     PUSHBUTTON      "キャンセル",IDCANCEL,138,178,50,14
-    LTEXT           "タスク マネージャの [プロセス] ページに表示する列を選択します。",
+    LTEXT           "タスク マネージャの [プロセス] ページに表\示する列を選択します。",
                     IDC_STATIC,7,7,181,17
     CONTROL         "イメージ パス名(&I)",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
@@ -426,41 +426,41 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_FILE_NEW             "新しいプログラムを実行します。"
-    ID_OPTIONS_ALWAYSONTOP  "最小化されない限り、常にタスク マネージャがほかのすべてのウィンドウよりも手前に表示されます。"
+    ID_OPTIONS_ALWAYSONTOP  "最小化されない限り、常にタスク マネージャがほかのすべてのウィンドウよりも手前に表\示されます。"
     ID_OPTIONS_MINIMIZEONUSE
                             "[切り替え] 操作を実行すると、タスク マネージャが最小化されます。"
     ID_OPTIONS_HIDEWHENMINIMIZED "最小化されたときに、タスク マネージャを隠します。"
     ID_VIEW_REFRESH         "[更新の頻度] の設定にかかわらず、今すぐタスク マネージャを更新します。"
-    ID_VIEW_LARGE           "タスクの表示に 大アイコン を使用します。"
-    ID_VIEW_SMALL           "タスクの表示に 小アイコン を使用します。"
-    ID_VIEW_DETAILS         "各タスクの情報を表示します。"
-    ID_VIEW_UPDATESPEED_HIGH "毎秒 2回表示を更新します。"
-    ID_VIEW_UPDATESPEED_NORMAL "2秒に 1回表示を更新します。"
-    ID_VIEW_UPDATESPEED_LOW "4秒に 1回表示を更新します。"
+    ID_VIEW_LARGE           "タスクの表\示に 大アイコン を使用します。"
+    ID_VIEW_SMALL           "タスクの表\示に 小アイコン を使用します。"
+    ID_VIEW_DETAILS         "各タスクの情報を表\示します。"
+    ID_VIEW_UPDATESPEED_HIGH "毎秒 2回表\示を更新します。"
+    ID_VIEW_UPDATESPEED_NORMAL "2秒に 1回表\示を更新します。"
+    ID_VIEW_UPDATESPEED_LOW "4秒に 1回表\示を更新します。"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_VIEW_UPDATESPEED_PAUSED "表示を自動的に更新しません。"
+    ID_VIEW_UPDATESPEED_PAUSED "表\示を自動的に更新しません。"
     ID_WINDOWS_TILEHORIZONTALLY
-                            "デスクトップ上でウィンドウが重ならないように上下に並べて表示します。"
-    ID_WINDOWS_TILEVERTICALLY "デスクトップ上でウィンドウが重ならないように左右に並べて表示します。"
+                            "デスクトップ上でウィンドウが重ならないように上下に並べて表\示します。"
+    ID_WINDOWS_TILEVERTICALLY "デスクトップ上でウィンドウが重ならないように左右に並べて表\示します。"
     ID_WINDOWS_MINIMIZE     "ウィンドウを最小化します。"
     ID_WINDOWS_MAXIMIZE     "ウィンドウを画面いっぱいに拡大します。"
-    ID_WINDOWS_CASCADE      "デスクトップ上でウィンドウを重ねて表示します。"
-    ID_WINDOWS_BRINGTOFRONT "ウィンドウを手前に表示しますが、切り替えません。"
-    ID_HELP_TOPICS          "タスク マネージャのヘルプ トピックを表示します。"
-    ID_HELP_ABOUT           "プログラム情報、バージョン番号、著作権を表示します。"
+    ID_WINDOWS_CASCADE      "デスクトップ上でウィンドウを重ねて表\示します。"
+    ID_WINDOWS_BRINGTOFRONT "ウィンドウを手前に表\示しますが、切り替えません。"
+    ID_HELP_TOPICS          "タスク マネージャのヘルプ トピックを表\示します。"
+    ID_HELP_ABOUT           "プログラム情報、バージョン番号、著作権を表\示します。"
     ID_FILE_EXIT            "タスク マネージャ アプリケーションを終了します。"
     ID_OPTIONS_SHOW16BITTASKS
-                            "16 ビット Windows タスクを、関連付けられた ntvdm.exe の下に表示します。"
-    ID_VIEW_SELECTCOLUMNS   "[プロセス] ページに表示する列を選択します。"
-    ID_VIEW_SHOWKERNELTIMES "カーネル時間をパフォーマンスグラフ上に表示します。"
+                            "16 ビット Windows タスクを、関連付けられた ntvdm.exe の下に表\示します。"
+    ID_VIEW_SELECTCOLUMNS   "[プロセス] ページに表\示する列を選択します。"
+    ID_VIEW_SHOWKERNELTIMES "カーネル時間をパフォーマンスグラフ上に表\示します。"
     ID_VIEW_CPUHISTORY_ONEGRAPHALL
-                            "1 つの履歴グラフで CPU 使用率の合計を表示します。"
-    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "CPU 使用率の履歴を CPU ごとにグラフで表示します。"
+                            "1 つの履歴グラフで CPU 使用率の合計を表\示します。"
+    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "CPU 使用率の履歴を CPU ごとにグラフで表\示します。"
     ID_APPLICATION_PAGE_SWITCHTO
-                            "選択したタスクを手前に表示して切り替えます。"
+                            "選択したタスクを手前に表\示して切り替えます。"
 END
 
 STRINGTABLE DISCARDABLE
