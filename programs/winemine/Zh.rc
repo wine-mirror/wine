@@ -1,0 +1,166 @@
+/*
+ * WineMine (Simplified and Traditional Chinese Resource)
+ *
+ * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/* Chinese text is encoded in UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+STRINGTABLE {
+     IDS_APPNAME, "Wine地雷"
+     IDS_NOBODY,  "无人"
+     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
+}
+
+MENU_WINEMINE MENU DISCARDABLE
+{
+    POPUP "选项(&O)" {
+        MENUITEM "新游戏(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "标出问题(&M)", IDM_MARKQ
+        MENUITEM SEPARATOR
+        MENUITEM "初学者(&B)", IDM_BEGINNER
+        MENUITEM "高级(&A)", IDM_ADVANCED
+        MENUITEM "专家(&E)", IDM_EXPERT
+        MENUITEM "自定义(&C)", IDM_CUSTOM
+        MENUITEM SEPARATOR
+        MENUITEM "退出(&X)\tAlt+X", IDM_EXIT
+    }
+    POPUP "信息(&I)" {
+        MENUITEM "最快时间(&F)", IDM_TIMES
+        MENUITEM "关于(&A)", IDM_ABOUT
+    }
+}
+
+DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
+STYLE  DS_MODALFRAME | DS_3DLOOK |
+    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
+CAPTION "最快时间"
+{
+    GROUPBOX        "最快时间", IDIGNORE,  10,  10, 140,  45
+    LTEXT           "初学者", IDIGNORE,  20,  20,  40,   8
+    LTEXT           "高级", IDIGNORE,  20,  30,  40,   8
+    LTEXT           "专家", IDIGNORE,  20,  40,  40,   8
+    LTEXT           "999", IDC_TIME1,  70,  20,  15,   8
+    LTEXT           "999", IDC_TIME2,  70,  30,  15,   8
+    LTEXT           "999", IDC_TIME3,  70,  40,  15,   8
+    LTEXT           "", IDC_NAME1,  90,  20,  55,   8
+    LTEXT           "", IDC_NAME2,  90,  30,  55,   8
+    LTEXT           "", IDC_NAME3,  90,  40,  55,   8
+    DEFPUSHBUTTON   "确定", IDOK,  55,  60,  50,  15
+}
+
+DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60
+STYLE  DS_MODALFRAME | DS_3DLOOK |
+    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
+CAPTION "祝贺!"
+{
+    LTEXT           "请输入你的名字", IDIGNORE,  10,  10, 150,  10
+    EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
+    DEFPUSHBUTTON   "确定", IDOK,  60,  40,  40,  15
+}
+
+DLG_CUSTOM DIALOG DISCARDABLE  0, 0, 100, 100
+STYLE  DS_MODALFRAME | DS_3DLOOK |
+    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
+CAPTION "自定义游戏"
+{
+    LTEXT           "行", IDIGNORE,   5,   5,  30,  10
+    LTEXT           "列", IDIGNORE,   5,  35,  30,  10
+    LTEXT           "地雷", IDIGNORE,   5,  65,  30,  10
+    EDITTEXT              IDC_EDITROWS,   5,  15,  20,  12, ES_NUMBER
+    EDITTEXT              IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
+    EDITTEXT             IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER
+    DEFPUSHBUTTON   "确定", IDOK,      40,  30,  50,  15
+    PUSHBUTTON      "取消", IDCANCEL,  40,  50,  50,  15
+}
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+
+STRINGTABLE {
+     IDS_APPNAME, "Wine地雷"
+     IDS_NOBODY,  "無人"
+     IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
+}
+
+MENU_WINEMINE MENU DISCARDABLE
+{
+    POPUP "選項(&O)" {
+        MENUITEM "新遊戲(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "標出問題(&M)", IDM_MARKQ
+        MENUITEM SEPARATOR
+        MENUITEM "初學者(&B)", IDM_BEGINNER
+        MENUITEM "高級(&A)", IDM_ADVANCED
+        MENUITEM "專家(&E)", IDM_EXPERT
+        MENUITEM "自定義(&C)", IDM_CUSTOM
+        MENUITEM SEPARATOR
+        MENUITEM "結束(&X)\tAlt+X", IDM_EXIT
+    }
+    POPUP "資訊(&I)" {
+        MENUITEM "最快時間(&F)", IDM_TIMES
+        MENUITEM "關於(&A)", IDM_ABOUT
+    }
+}
+
+DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
+STYLE  DS_MODALFRAME | DS_3DLOOK |
+    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
+CAPTION "最快時間"
+{
+    GROUPBOX        "最快時間", IDIGNORE,  10,  10, 140,  45
+    LTEXT           "初學者", IDIGNORE,  20,  20,  40,   8
+    LTEXT           "高級", IDIGNORE,  20,  30,  40,   8
+    LTEXT           "專家", IDIGNORE,  20,  40,  40,   8
+    LTEXT           "999", IDC_TIME1,  70,  20,  15,   8
+    LTEXT           "999", IDC_TIME2,  70,  30,  15,   8
+    LTEXT           "999", IDC_TIME3,  70,  40,  15,   8
+    LTEXT           "", IDC_NAME1,  90,  20,  55,   8
+    LTEXT           "", IDC_NAME2,  90,  30,  55,   8
+    LTEXT           "", IDC_NAME3,  90,  40,  55,   8
+    DEFPUSHBUTTON   "確定", IDOK,  55,  60,  50,  15
+}
+
+DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60
+STYLE  DS_MODALFRAME | DS_3DLOOK |
+    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
+CAPTION "祝賀!"
+{
+    LTEXT           "請輸入你的名字", IDIGNORE,  10,  10, 150,  10
+    EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
+    DEFPUSHBUTTON   "確定", IDOK,  60,  40,  40,  15
+}
+
+DLG_CUSTOM DIALOG DISCARDABLE  0, 0, 100, 100
+STYLE  DS_MODALFRAME | DS_3DLOOK |
+    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
+CAPTION "自定義遊戲"
+{
+    LTEXT           "行", IDIGNORE,   5,   5,  30,  10
+    LTEXT           "列", IDIGNORE,   5,  35,  30,  10
+    LTEXT           "地雷", IDIGNORE,   5,  65,  30,  10
+    EDITTEXT              IDC_EDITROWS,   5,  15,  20,  12, ES_NUMBER
+    EDITTEXT              IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
+    EDITTEXT             IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER
+    DEFPUSHBUTTON   "確定", IDOK,      40,  30,  50,  15
+    PUSHBUTTON      "取消", IDCANCEL,  40,  50,  50,  15
+}
+
+#pragma code_page(default)
