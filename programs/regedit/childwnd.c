@@ -107,32 +107,7 @@ static void OnPaint(HWND hWnd)
     EndPaint(hWnd, &ps);
 }
 
-static LPTSTR CombinePaths(LPCTSTR pPaths[], int nPaths) {
-    int i, len, pos;
-    LPTSTR combined;
-    for (i=0, len=0; i<nPaths; i++) {
-        if (pPaths[i] && *pPaths[i]) {
-            len += lstrlen(pPaths[i])+1;
-        }
-    }
-    combined = HeapAlloc(GetProcessHeap(), 0, len * sizeof(TCHAR));
-    *combined = '\0';
-    for (i=0, pos=0; i<nPaths; i++) {
-        if (pPaths[i] && *pPaths[i]) {
-            int llen = _tcslen(pPaths[i]);
-            if (!*combined)
-                _tcscpy(combined, pPaths[i]);
-            else {
-                combined[pos++] = (TCHAR)'\\';
-                _tcscpy(combined+pos, pPaths[i]);
-            }
-            pos += llen;
-        }
-    }
-    return combined;
-}
-
-static LPWSTR CombinePathsW(LPCWSTR pPaths[], int nPaths) {
+static LPWSTR CombinePaths(LPCWSTR pPaths[], int nPaths) {
     int i, len, pos;
     LPWSTR combined;
     for (i=0, len=0; i<nPaths; i++) {
@@ -157,32 +132,13 @@ static LPWSTR CombinePathsW(LPCWSTR pPaths[], int nPaths) {
     return combined;
 }
 
-static LPTSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
-    LPCTSTR parts[2] = {_T(""), _T("")};
-    TCHAR text[260];
-    HKEY hRootKey = NULL;
-    if (!hItem)
-        hItem = TreeView_GetSelection(hwndTV);
-    GetItemPath(hwndTV, hItem, &hRootKey);
-    if (!bFull && !hRootKey)
-        return NULL;
-    if (hRootKey)
-        parts[1] = GetRootKeyName(hRootKey);
-    if (bFull) {
-        DWORD dwSize = sizeof(text)/sizeof(TCHAR);
-        GetComputerName(text, &dwSize);
-        parts[0] = text;
-    }
-    return CombinePaths(parts, 2);
-}
-
-static LPWSTR GetPathRootW(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
+static LPWSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     LPCWSTR parts[2] = {0,0};
     WCHAR text[260];
     HKEY hRootKey = NULL;
     if (!hItem)
         hItem = TreeView_GetSelection(hwndTV);
-    GetItemPathW(hwndTV, hItem, &hRootKey);
+    GetItemPath(hwndTV, hItem, &hRootKey);
     if (!bFull && !hRootKey)
         return NULL;
     if (hRootKey)
@@ -192,29 +148,17 @@ static LPWSTR GetPathRootW(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
         GetComputerNameW(text, &dwSize);
         parts[0] = text;
     }
-    return CombinePathsW(parts, 2);
+    return CombinePaths(parts, 2);
 }
 
-LPTSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
-    LPTSTR parts[2];
-    LPTSTR ret;
-    HKEY hRootKey = NULL;
-
-    parts[0] = GetPathRoot(hwndTV, hItem, bFull);
-    parts[1] = GetItemPath(hwndTV, hItem, &hRootKey);
-    ret = CombinePaths((LPCTSTR *)parts, 2);
-    HeapFree(GetProcessHeap(), 0, parts[0]);
-    return ret;
-}
-
-LPWSTR GetItemFullPathW(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
+LPWSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     LPWSTR parts[2];
     LPWSTR ret;
     HKEY hRootKey = NULL;
 
-    parts[0] = GetPathRootW(hwndTV, hItem, bFull);
-    parts[1] = GetItemPathW(hwndTV, hItem, &hRootKey);
-    ret = CombinePathsW((LPCWSTR *)parts, 2);
+    parts[0] = GetPathRoot(hwndTV, hItem, bFull);
+    parts[1] = GetItemPath(hwndTV, hItem, &hRootKey);
+    ret = CombinePaths((LPCWSTR *)parts, 2);
     HeapFree(GetProcessHeap(), 0, parts[0]);
     HeapFree(GetProcessHeap(), 0, parts[1]);
     return ret;
@@ -224,9 +168,9 @@ static LPWSTR GetPathFullPath(HWND hwndTV, LPWSTR path) {
     LPWSTR parts[2];
     LPWSTR ret;
 
-    parts[0] = GetPathRootW(hwndTV, 0, TRUE);
+    parts[0] = GetPathRoot(hwndTV, 0, TRUE);
     parts[1] = path;
-    ret = CombinePathsW((LPCWSTR*)parts, 2);
+    ret = CombinePaths((LPCWSTR*)parts, 2);
     HeapFree(GetProcessHeap(), 0, parts[0]);
     return ret;
 }
@@ -236,7 +180,7 @@ static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BO
     if (bRefreshLV) {
         LPWSTR keyPath;
         HKEY hRootKey = NULL;
-        keyPath = GetItemPathW(hwndTV, hItem, &hRootKey);
+        keyPath = GetItemPath(hwndTV, hItem, &hRootKey);
         RefreshListView(hwndLV, hRootKey, keyPath, NULL);
         HeapFree(GetProcessHeap(), 0, keyPath);
     }
@@ -426,7 +370,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		HKEY hRootKey;
 	        LPNMTVDISPINFO dispInfo = (LPNMTVDISPINFO)lParam;
                 WCHAR* itemText = GetWideString(dispInfo->item.pszText);
-		LPWSTR path = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hRootKey);
+		LPWSTR path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
 	        BOOL res = RenameKey(hWnd, hRootKey, path, itemText);
 		if (res) {
 		    TVITEMEXW item;

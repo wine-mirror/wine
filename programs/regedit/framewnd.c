@@ -105,7 +105,7 @@ static void UpdateMenuItems(HMENU hMenu) {
     BOOL bAllowEdit = FALSE;
     HKEY hRootKey = NULL;
     LPWSTR keyName;
-    keyName = GetItemPathW(hwndTV, TreeView_GetSelection(hwndTV), &hRootKey);
+    keyName = GetItemPath(hwndTV, TreeView_GetSelection(hwndTV), &hRootKey);
     if (GetFocus() != hwndTV || (keyName && *keyName)) { /* can't modify root keys, but allow for their values */
         bAllowEdit = TRUE;
     }
@@ -192,7 +192,7 @@ void SetupStatusBar(HWND hWnd, BOOL bResize)
 
 void UpdateStatusBar(void)
 {
-    LPWSTR fullPath = GetItemFullPathW(g_pChildWnd->hTreeWnd, NULL, TRUE);
+    LPWSTR fullPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, TRUE);
     SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
     HeapFree(GetProcessHeap(), 0, fullPath);
 }
@@ -263,7 +263,6 @@ static UINT CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARA
 {
     static OPENFILENAME* pOpenFileName;
     OFNOTIFY *pOfNotify;
-    LPTSTR path;
 
     switch (uiMsg) {
     case WM_INITDIALOG:
@@ -278,11 +277,15 @@ static UINT CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARA
         switch (pOfNotify->hdr.code)
         {
             case CDN_INITDONE:
-                path = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
-                SendDlgItemMessage(hdlg, IDC_EXPORT_PATH, WM_SETTEXT, 0, (LPARAM)path);
-                HeapFree(GetProcessHeap(), 0, path);
+            {
+                WCHAR* pathW = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
+                CHAR* pathA = GetMultiByteString(pathW);
+                SendDlgItemMessage(hdlg, IDC_EXPORT_PATH, WM_SETTEXT, 0, (LPARAM)pathA);
+                HeapFree(GetProcessHeap(), 0, pathW);
+                HeapFree(GetProcessHeap(), 0, pathA);
                 CheckRadioButton(hdlg, IDC_EXPORT_ALL, IDC_EXPORT_SELECTED, pOpenFileName->lCustData ? IDC_EXPORT_SELECTED : IDC_EXPORT_ALL);
                 break;
+            }
             case CDN_FILEOK:
                 ExportRegistryFile_StoreSelection(hdlg, pOpenFileName);
                 break;
@@ -528,10 +531,10 @@ static INT_PTR CALLBACK addtofavorites_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
         case WM_INITDIALOG:
         {
             HKEY hKeyRoot = NULL;
-            LPWSTR ItemPath = GetItemPathW(g_pChildWnd->hTreeWnd, NULL, &hKeyRoot);
+            LPWSTR ItemPath = GetItemPath(g_pChildWnd->hTreeWnd, NULL, &hKeyRoot);
 
             if(!ItemPath || !*ItemPath)
-                ItemPath = GetItemFullPathW(g_pChildWnd->hTreeWnd, NULL, FALSE);
+                ItemPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
             EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
             SetWindowTextW(hwndValue, ItemPath);
             SendMessageW(hwndValue, EM_SETLIMITTEXT, 127, 0);
@@ -679,7 +682,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case ID_EDIT_DELETE:
 	if (GetFocus() == g_pChildWnd->hTreeWnd) {
-	    WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+	    WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
 	    if (keyPath == 0 || *keyPath == 0) {
 	        MessageBeep(MB_ICONHAND);
             } else if (DeleteKey(hWnd, hKeyRoot, keyPath)) {
@@ -687,7 +690,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             HeapFree(GetProcessHeap(), 0, keyPath);
 	} else if (GetFocus() == g_pChildWnd->hListWnd) {
-        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, -1, LVNI_SELECTED);
         while(curIndex != -1) {
             WCHAR* valueNameW;
@@ -716,7 +719,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_EDIT_MODIFY:
     {
         LPCWSTR valueName = GetValueName(g_pChildWnd->hListWnd);
-        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         if (ModifyValue(hWnd, hKeyRoot, keyPath, valueName))
             RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, valueName);
         HeapFree(GetProcessHeap(), 0, keyPath);
@@ -758,7 +761,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case ID_EDIT_COPYKEYNAME:
     {
-        LPWSTR fullPath = GetItemFullPathW(g_pChildWnd->hTreeWnd, NULL, FALSE);
+        LPWSTR fullPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
         if (fullPath) {
             CopyKeyName(hWnd, fullPath);
             HeapFree(GetProcessHeap(), 0, fullPath);
@@ -768,7 +771,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_EDIT_NEW_KEY:
     {
         WCHAR newKeyW[MAX_NEW_KEY_LEN];
-        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         if (CreateKey(hWnd, hKeyRoot, keyPath, newKeyW)) {
             if (InsertNode(g_pChildWnd->hTreeWnd, 0, newKeyW))
                 StartKeyRename(g_pChildWnd->hTreeWnd);
@@ -790,7 +793,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	/* fall through */
     create_value:
     {
-        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         WCHAR newKey[MAX_NEW_KEY_LEN];
         if (CreateValue(hWnd, hKeyRoot, keyPath, valueType, newKey)) {
             RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, newKey);
@@ -801,7 +804,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
     case ID_EDIT_RENAME:
     {
-        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         if (keyPath == 0 || *keyPath == 0) {
             MessageBeep(MB_ICONHAND);
         } else if (GetFocus() == g_pChildWnd->hTreeWnd) {
@@ -826,7 +829,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_FAVORITES_ADDTOFAVORITES:
     {
     	HKEY hKey;
-	LPWSTR lpKeyPath = GetItemFullPathW(g_pChildWnd->hTreeWnd, NULL, FALSE);
+	LPWSTR lpKeyPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
     	if (lpKeyPath) {
             if (DialogBox(0, MAKEINTRESOURCE(IDD_ADDFAVORITE), hWnd, addtofavorites_dlgproc) == IDOK) {
                 if (RegCreateKeyExW(HKEY_CURRENT_USER, favoritesKey,
@@ -854,7 +857,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case ID_VIEW_REFRESH:
     {
-        WCHAR* keyPath = GetItemPathW(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+        WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         RefreshTreeView(g_pChildWnd->hTreeWnd);
         RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
         HeapFree(GetProcessHeap(), 0, keyPath);

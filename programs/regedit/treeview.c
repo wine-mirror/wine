@@ -2,6 +2,7 @@
  * Regedit treeview
  *
  * Copyright (C) 2002 Robert Dickenson <robd@reactos.org>
+ * Copyright (C) 2008 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,7 +26,6 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
-#include <tchar.h>
 #include <stdio.h>
 #include <wine/debug.h>
 #include <shlwapi.h>
@@ -49,49 +49,7 @@ int Image_Root;
 
 static BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state);
 
-static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPTSTR* pKeyPath, int* pPathLen, int* pMaxLen)
-{
-    TVITEM item;
-    int maxLen, len;
-    LPTSTR newStr;
-
-    item.mask = TVIF_PARAM;
-    item.hItem = hItem;
-    if (!TreeView_GetItem(hwndTV, &item)) return FALSE;
-
-    if (item.lParam) {
-	/* found root key with valid key value */
-	*phKey = (HKEY)item.lParam;
-	return TRUE;
-    }
-
-    if(!get_item_path(hwndTV, TreeView_GetParent(hwndTV, hItem), phKey, pKeyPath, pPathLen, pMaxLen)) return FALSE;
-    if (*pPathLen) {
-        (*pKeyPath)[*pPathLen] = _T('\\');
-        ++(*pPathLen);
-    }
-
-    do {
-        item.mask = TVIF_TEXT;
-        item.hItem = hItem;
-        item.pszText = *pKeyPath + *pPathLen;
-        item.cchTextMax = maxLen = *pMaxLen - *pPathLen;
-        if (!TreeView_GetItem(hwndTV, &item)) return FALSE;
-        len = _tcslen(item.pszText);
-	if (len < maxLen - 1) {
-            *pPathLen += len;
-            break;
-	}
-	newStr = HeapReAlloc(GetProcessHeap(), 0, *pKeyPath, *pMaxLen * 2);
-	if (!newStr) return FALSE;
-	*pKeyPath = newStr;
-	*pMaxLen *= 2;
-    } while(TRUE);
-
-    return TRUE;
-}
-
-static BOOL get_item_pathW(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pKeyPath, int* pPathLen, int* pMaxChars)
+static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pKeyPath, int* pPathLen, int* pMaxChars)
 {
     TVITEMW item;
     int maxChars, chars;
@@ -107,7 +65,7 @@ static BOOL get_item_pathW(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pK
     return TRUE;
     }
 
-    if(!get_item_pathW(hwndTV, TreeView_GetParent(hwndTV, hItem), phKey, pKeyPath, pPathLen, pMaxChars)) return FALSE;
+    if(!get_item_path(hwndTV, TreeView_GetParent(hwndTV, hItem), phKey, pKeyPath, pPathLen, pMaxChars)) return FALSE;
     if (*pPathLen) {
         (*pKeyPath)[*pPathLen] = '\\';
         ++(*pPathLen);
@@ -133,23 +91,7 @@ static BOOL get_item_pathW(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pK
     return TRUE;
 }
 
-LPTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
-{
-    int pathLen = 0, maxLen;
-    TCHAR *pathBuffer;
-
-    pathBuffer = HeapAlloc(GetProcessHeap(), 0, 1024);
-    if (!pathBuffer) return NULL;
-    *pathBuffer = 0;
-    maxLen = HeapSize(GetProcessHeap(), 0, pathBuffer);
-    if (maxLen == (SIZE_T) - 1) return NULL;
-    if (!hItem) hItem = TreeView_GetSelection(hwndTV);
-    if (!hItem) return NULL;
-    if (!get_item_path(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) return NULL;
-    return pathBuffer;
-}
-
-LPWSTR GetItemPathW(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
+LPWSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
 {
     int pathLen = 0, maxLen;
     WCHAR *pathBuffer;
@@ -162,7 +104,7 @@ LPWSTR GetItemPathW(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
     maxLen = maxLen / sizeof(WCHAR);
     if (!hItem) hItem = TreeView_GetSelection(hwndTV);
     if (!hItem) return NULL;
-    if (!get_item_pathW(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) return NULL;
+    if (!get_item_path(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) return NULL;
     return pathBuffer;
 }
 
@@ -286,7 +228,7 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, 
         HKEY hKey, hRoot;
         DWORD lenName;
         
-        KeyPath = GetItemPathW(hwndTV, hItem, &hRoot);
+        KeyPath = GetItemPath(hwndTV, hItem, &hRoot);
 
         if (!KeyPath || !hRoot)
              return FALSE;
@@ -398,7 +340,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     TVITEMW tvItem;
     
     hRoot = NULL;
-    KeyPath = GetItemPathW(hwndTV, hItem, &hRoot);
+    KeyPath = GetItemPath(hwndTV, hItem, &hRoot);
 
     if (!KeyPath || !hRoot)
         return FALSE;
@@ -663,7 +605,7 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
     hcursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
     SendMessageW(hwndTV, WM_SETREDRAW, FALSE, 0);
 
-    keyPath = GetItemPathW(hwndTV, hItem, &hRoot);
+    keyPath = GetItemPath(hwndTV, hItem, &hRoot);
     if (!keyPath) goto done;
 
     if (*keyPath) {
