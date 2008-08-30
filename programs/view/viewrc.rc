@@ -37,6 +37,7 @@
 #include "Ru.rc"
 #include "Si.rc"
 #include "Tr.rc"
+#include "Zh.rc"
 
 /*
  * Icon
