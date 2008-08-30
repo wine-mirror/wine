@@ -385,6 +385,7 @@ SRCDIR_INCLUDES = \
 	sql.h \
 	sqlext.h \
 	sqltypes.h \
+	srrestoreptapi.h \
 	sspi.h \
 	storage.h \
 	svrapi.h \
