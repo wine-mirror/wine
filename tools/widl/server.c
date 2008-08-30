@@ -63,13 +63,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         /* check for a defined binding handle */
         explicit_handle_var = get_explicit_handle_var(func);
 
-        fprintf(server, "void __RPC_STUB\n");
-        fprintf(server, "%s_", iface->name);
-        write_name(server, def);
-        fprintf(server, "(\n");
-        indent++;
-        print_server("PRPC_MESSAGE _pRpcMessage)\n");
-        indent--;
+        print_server("void __RPC_STUB %s_%s( PRPC_MESSAGE _pRpcMessage )\n", iface->name, get_name(def));
 
         /* write the functions body */
         fprintf(server, "{\n");
@@ -150,7 +144,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             print_server("_RetVal = ");
         else
             print_server("");
-        write_prefix_name(server, prefix_server, def);
+        fprintf(server, "%s%s", prefix_server, get_name(def));
 
         if (func->args)
         {
@@ -176,10 +170,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                 }
                 else
                 {
-                    print_server("");
-                    if (var->type->declarray)
-                        fprintf(server, "*");
-                    write_name(server, var);
+                    print_server("%s%s", var->type->declarray ? "*" : "", get_name(var));
                 }
             }
             fprintf(server, ");\n");
@@ -260,11 +251,7 @@ static void write_dispatchtable(type_t *iface)
     if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
     {
         var_t *def = func->def;
-
-        print_server("%s_", iface->name);
-        write_name(server, def);
-        fprintf(server, ",\n");
-
+        print_server("%s_%s,\n", iface->name, get_name(def));
         method_count++;
     }
     print_server("0\n");

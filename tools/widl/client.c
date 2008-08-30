@@ -103,8 +103,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         if (needs_space_after(get_func_return_type(func)))
           fprintf(client, " ");
         if (callconv) fprintf(client, "%s ", callconv);
-        write_prefix_name(client, prefix_client, def);
-        fprintf(client, "(\n");
+        fprintf(client, "%s%s(\n", prefix_client, get_name(def));
         indent++;
         if (func->args)
             write_args(client, func->args, iface->name, 0, TRUE);
