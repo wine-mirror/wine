@@ -353,7 +353,7 @@ static WORD get_keyword_token(parse_buffer* buf)
     return TOKEN_SDWORD;
   if (is_keyword(buf, "VOID"))
     return TOKEN_VOID;
-  if (is_keyword(buf, "LPSTR"))
+  if (is_keyword(buf, "STRING"))
     return TOKEN_LPSTR;
   if (is_keyword(buf, "UNICODE"))
     return TOKEN_UNICODE;
@@ -423,7 +423,7 @@ static BOOL is_name(parse_buffer* buf)
   BOOL error = 0;
   while (!is_separator(c = *(buf->buffer+pos)))
   {
-    if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))))
+    if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9'))))
       error = 1;
     tmp[pos++] = c;
   }
@@ -597,7 +597,7 @@ static const char* get_primitive_string(WORD token)
     case TOKEN_VOID:
       return "VOID";
     case TOKEN_LPSTR:
-      return "LPSTR";
+      return "STRING";
     case TOKEN_UNICODE:
       return "UNICODE";
     case TOKEN_CSTRING:
@@ -927,13 +927,10 @@ static BOOL parse_template(parse_buffer * buf)
   if (buf->txt)
   {
     /* Go to the next template */
-    while (buf->rem_bytes)
+    while (buf->rem_bytes && is_space(*buf->buffer))
     {
-      if (is_space(*buf->buffer))
-      {
-        buf->buffer++;
-        buf->rem_bytes--;
-      }
+      buf->buffer++;
+      buf->rem_bytes--;
     }
   }
 
@@ -1021,7 +1018,8 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
         i = This->nb_xtemplates - 1;
         clsid = &This->xtemplates[i].class_id;
 
-        DPRINTF("template %s {\n", This->xtemplates[i].name);
+        DPRINTF("template %s\n", This->xtemplates[i].name);
+        DPRINTF("{\n");
         DPRINTF(CLSIDFMT "\n", clsid->Data1, clsid->Data2, clsid->Data3, clsid->Data4[0],
           clsid->Data4[1], clsid->Data4[2], clsid->Data4[3], clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7]);
         for (j = 0; j < This->xtemplates[i].nb_members; j++)
