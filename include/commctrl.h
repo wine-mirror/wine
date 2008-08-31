@@ -2859,6 +2859,10 @@ typedef struct tagTVKEYDOWN
 #define TreeView_MapHTREEITEMToAccID(hwnd, htreeitem) \
     (UINT)SNDMSG((hwnd), TVM_MAPHTREEITEMTOACCID, (WPARAM)htreeitem, 0)
 
+#define TreeView_SetUnicodeFormat(hwnd, fUnicode) \
+    (BOOL)SNDMSG((hwnd), TVM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
+#define TreeView_GetUnicodeFormat(hwnd) \
+    (BOOL)SNDMSG((hwnd), TVM_GETUNICODEFORMAT, 0, 0)
 
 /* Listview control */
 
@@ -3921,6 +3925,10 @@ typedef struct NMLVSCROLL
     (UINT)SNDMSG((hwnd), LVM_MAPINDEXTOID, (WPARAM)index, (LPARAM)0)
 #define ListView_MapIDToIndex(hwnd, id) \
     (UINT)SNDMSG((hwnd), LVM_MAPIDTOINDEX, (WPARAM)id, (LPARAM)0)
+#define ListView_SetUnicodeFormat(hwnd, fUnicode) \
+    (BOOL)SNDMSG((hwnd), LVM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
+#define ListView_GetUnicodeFormat(hwnd) \
+    (BOOL)SNDMSG((hwnd), LVM_GETUNICODEFORMAT, 0, 0)
 
 /* Tab Control */
 
