@@ -120,7 +120,7 @@ extern void UpdateStatusBar(void);
 extern HWND CreateListView(HWND hwndParent, UINT id);
 extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highlightValue);
 extern HWND StartValueRename(HWND hwndLV);
-extern LPTSTR GetItemText(HWND hwndLV, UINT item);
+extern LPWSTR GetItemText(HWND hwndLV, UINT item);
 extern LPCWSTR GetValueName(HWND hwndLV);
 extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
 extern BOOL IsDefaultValue(HWND hwndLV, int i);

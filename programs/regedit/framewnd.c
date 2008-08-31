@@ -639,7 +639,6 @@ static INT_PTR CALLBACK removefavorite_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HKEY hKeyRoot = 0;
-    LPCTSTR valueName;
     DWORD valueType;
     int curIndex;
     BOOL firstItem = TRUE;
@@ -693,9 +692,8 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, -1, LVNI_SELECTED);
         while(curIndex != -1) {
-            WCHAR* valueNameW;
+            WCHAR* valueName = GetItemText(g_pChildWnd->hListWnd, curIndex);
 
-            valueName = GetItemText(g_pChildWnd->hListWnd, curIndex);
             curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, curIndex, LVNI_SELECTED);
             if(curIndex != -1 && firstItem) {
                 if (MessageBoxW(hWnd, MAKEINTRESOURCEW(IDS_DELETE_BOX_TEXT_MULTIPLE),
@@ -703,14 +701,14 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                 MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
                     break;
             }
-            valueNameW = GetWideString(valueName);
-            if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueNameW, curIndex==-1 && firstItem))
+
+            if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueName, curIndex==-1 && firstItem))
             {
-                HeapFree(GetProcessHeap(), 0, valueNameW);
+                HeapFree(GetProcessHeap(), 0, valueName);
                 break;
             }
             firstItem = FALSE;
-            HeapFree(GetProcessHeap(), 0, valueNameW);
+            HeapFree(GetProcessHeap(), 0, valueName);
         }
         RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
         HeapFree(GetProcessHeap(), 0, keyPath);

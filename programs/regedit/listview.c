@@ -22,11 +22,9 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
-#include <tchar.h>
 #include <stdio.h>
 
 #include "main.h"
-#include "regproc.h"
 
 #include "wine/unicode.h"
 static INT Image_String;
@@ -56,30 +54,7 @@ static WCHAR g_szValueNotSet[64];
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
 static int column_alignment[MAX_LIST_COLUMNS] = { LVCFMT_LEFT, LVCFMT_LEFT, LVCFMT_LEFT };
 
-LPTSTR GetItemText(HWND hwndLV, UINT item)
-{
-    LPTSTR newStr, curStr;
-    unsigned int maxLen = 128;
-
-    curStr = HeapAlloc(GetProcessHeap(), 0, maxLen);
-    if (!curStr) return NULL;
-    if (item == 0) { /* first item is ALWAYS a default */
-        HeapFree(GetProcessHeap(), 0, curStr);
-        return NULL;
-    }
-    do {
-        ListView_GetItemText(hwndLV, item, 0, curStr, maxLen);
-	if (_tcslen(curStr) < maxLen - 1) return curStr;
-	newStr = HeapReAlloc(GetProcessHeap(), 0, curStr, maxLen * 2);
-	if (!newStr) break;
-	curStr = newStr;
-	maxLen *= 2;
-    } while (TRUE);
-    HeapFree(GetProcessHeap(), 0, curStr);
-    return NULL;
-}
-
-LPWSTR GetItemTextW(HWND hwndLV, UINT item)
+LPWSTR GetItemText(HWND hwndLV, UINT item)
 {
     LPWSTR newStr, curStr;
     unsigned int maxLen = 128;
@@ -113,7 +88,7 @@ LPCWSTR GetValueName(HWND hwndLV)
     item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED);
     if (item == -1) return NULL;
 
-    g_valueName = GetItemTextW(hwndLV, item);
+    g_valueName = GetItemText(hwndLV, item);
 
     return g_valueName;
 }
@@ -422,7 +397,7 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
             break;
 	case LVN_ENDLABELEDITW: {
 	        LPNMLVDISPINFOW dispInfo = (LPNMLVDISPINFOW)lParam;
-		LPWSTR oldName = GetItemTextW(hWnd, dispInfo->item.iItem);
+		LPWSTR oldName = GetItemText(hWnd, dispInfo->item.iItem);
                 LONG ret;
                 if (!oldName) return -1; /* cannot rename a default value */
 	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, oldName, dispInfo->item.pszText);
