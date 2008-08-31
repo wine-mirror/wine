@@ -373,12 +373,38 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
     return Ok;
 }
 
+/*******************************************************************************
+ * GdipCreateTexture [GDIPLUS.@]
+ *
+ * PARAMS
+ *  image       [I] image to use
+ *  wrapmode    [I] optional
+ *  texture     [O] pointer to the resulting texturebrush
+ *
+ * RETURNS
+ *  SUCCESS: Ok
+ *  FAILURE: element of GpStatus
+ */
 GpStatus WINGDIPAPI GdipCreateTexture(GpImage *image, GpWrapMode wrapmode,
         GpTexture **texture)
 {
-    FIXME("stub: %p, %d %p\n", image, wrapmode, texture);
+    UINT width, height;
+    GpImageAttributes attributes;
+    GpStatus stat;
 
-    return NotImplemented;
+    TRACE("%p, %d %p\n", image, wrapmode, texture);
+
+    if (!(image && texture))
+        return InvalidParameter;
+
+    stat = GdipGetImageWidth(image, &width);
+    if (stat != Ok) return stat;
+    stat = GdipGetImageHeight(image, &height);
+    if (stat != Ok) return stat;
+    attributes.wrap = wrapmode;
+
+    return GdipCreateTextureIA(image, &attributes, 0, 0, width, height,
+            texture);
 }
 
 GpStatus WINGDIPAPI GdipCreateTexture2(GpImage *image, GpWrapMode wrapmode,
