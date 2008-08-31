@@ -96,9 +96,19 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
                                                 LCID lcid, DISPID *rgDispId)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+    UINT i;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
           lcid, rgDispId);
-    return E_NOTIMPL;
+
+    for(i=0; i < cNames; i++) {
+        hres = IDispatchEx_GetDispID(_IDispatchEx_(This), rgszNames[i], 0, rgDispId+i);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
