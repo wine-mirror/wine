@@ -25,16 +25,38 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "dispex.h"
 #include "activscp.h"
 
 typedef struct _script_ctx_t script_ctx_t;
+
+typedef struct DispatchEx {
+    const IDispatchExVtbl  *lpIDispatchExVtbl;
+
+    LONG ref;
+
+    script_ctx_t *ctx;
+} DispatchEx;
+
+#define _IDispatchEx_(x) ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
+
+HRESULT create_dispex(script_ctx_t*,DispatchEx**);
 
 struct _script_ctx_t {
     LONG ref;
 
     SCRIPTSTATE state;
     LCID lcid;
+
+    DispatchEx *script_disp;
 };
+
+void script_release(script_ctx_t*);
+
+static void inline script_addref(script_ctx_t *ctx)
+{
+    ctx->ref++;
+}
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 

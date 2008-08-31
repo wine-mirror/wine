@@ -23,6 +23,7 @@
 #include <ole2.h>
 #include <activscp.h>
 #include <objsafe.h>
+#include <dispex.h>
 
 #include "wine/test.h"
 
@@ -171,6 +172,32 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
 
 static IActiveScriptSite ActiveScriptSite = { &ActiveScriptSiteVtbl };
 
+static void test_script_dispatch(IActiveScript *script, BOOL initialized)
+{
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    HRESULT hres;
+
+    disp = (void*)0xdeadbeef;
+    hres = IActiveScript_GetScriptDispatch(script, NULL, &disp);
+    if(!initialized) {
+        ok(hres == E_UNEXPECTED, "hres = %08x, expected E_UNEXPECTED\n", hres);
+        ok(!disp, "disp != NULL\n");
+        return;
+    }
+
+    ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    ok(disp != NULL, "disp == NULL\n");
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    IDispatch_Release(disp);
+    ok(hres == S_OK, "Could not get IDispatchEx interface: %08x\n", hres);
+
+    IDispatchEx_Release(dispex);
+}
+
 static void test_safety(IUnknown *unk)
 {
     IObjectSafety *safety;
@@ -261,6 +288,8 @@ static void test_jscript(void)
     hres = IActiveScript_SetScriptSite(script, NULL);
     ok(hres == E_POINTER, "SetScriptSite failed: %08x, expected E_POINTER\n", hres);
 
+    test_script_dispatch(script, FALSE);
+
     SET_EXPECT(GetLCID);
     SET_EXPECT(OnStateChange_INITIALIZED);
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
@@ -271,10 +300,14 @@ static void test_jscript(void)
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
     ok(hres == E_UNEXPECTED, "SetScriptSite failed: %08x, expected E_UNEXPECTED\n", hres);
 
+    test_script_dispatch(script, TRUE);
+
     SET_EXPECT(OnStateChange_CLOSED);
     hres = IActiveScript_Close(script);
     ok(hres == S_OK, "Close failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_CLOSED);
+
+    test_script_dispatch(script, FALSE);
 
     IActiveScriptParse_Release(parse);
     IActiveScript_Release(script);

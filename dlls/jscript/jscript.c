@@ -152,6 +152,10 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
             return hres;
     }
 
+    hres = create_dispex(This->ctx, &This->ctx->script_disp);
+    if(FAILED(hres))
+        return hres;
+
     if(InterlockedCompareExchange(&This->thread_id, GetCurrentThreadId(), 0))
         return E_UNEXPECTED;
 
@@ -197,8 +201,14 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
     if(This->thread_id != GetCurrentThreadId())
         return E_UNEXPECTED;
 
-    if(This->ctx)
+    if(This->ctx) {
         change_state(This, SCRIPTSTATE_CLOSED);
+
+        if(This->ctx->script_disp) {
+            IDispatchEx_Release(_IDispatchEx_(This->ctx->script_disp));
+            This->ctx->script_disp = NULL;
+        }
+    }
 
     if(This->site) {
         IActiveScriptSite_Release(This->site);
@@ -228,8 +238,20 @@ static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR 
                                                 IDispatch **ppdisp)
 {
     JScript *This = ACTSCRIPT_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppdisp);
+
+    if(!ppdisp)
+        return E_POINTER;
+
+    if(This->thread_id != GetCurrentThreadId() || !This->ctx->script_disp) {
+        *ppdisp = NULL;
+        return E_UNEXPECTED;
+    }
+
+    *ppdisp = (IDispatch*)_IDispatchEx_(This->ctx->script_disp);
+    IDispatch_AddRef(*ppdisp);
+    return S_OK;
 }
 
 static HRESULT WINAPI JScript_GetCurrentScriptThreadID(IActiveScript *iface,
