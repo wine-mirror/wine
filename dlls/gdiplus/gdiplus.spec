@@ -131,7 +131,7 @@
 @ stdcall GdipCreateSolidFill(long ptr)
 @ stdcall GdipCreateStreamOnFile(ptr long ptr)
 @ stdcall GdipCreateStringFormat(long long ptr)
-@ stub GdipCreateTexture2
+@ stdcall GdipCreateTexture2(ptr long long long long long ptr)
 @ stub GdipCreateTexture2I
 @ stdcall GdipCreateTexture(ptr long ptr)
 @ stdcall GdipCreateTextureIA(ptr ptr long long long long ptr)
