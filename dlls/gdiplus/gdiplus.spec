@@ -133,7 +133,7 @@
 @ stdcall GdipCreateStringFormat(long long ptr)
 @ stub GdipCreateTexture2
 @ stub GdipCreateTexture2I
-@ stub GdipCreateTexture
+@ stdcall GdipCreateTexture(ptr long ptr)
 @ stdcall GdipCreateTextureIA(ptr ptr long long long long ptr)
 @ stdcall GdipCreateTextureIAI(ptr ptr long long long long ptr)
 @ stdcall GdipDeleteBrush(ptr)

@@ -373,6 +373,14 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateTexture(GpImage *image, GpWrapMode wrapmode,
+        GpTexture **texture)
+{
+    FIXME("stub: %p, %d %p\n", image, wrapmode, texture);
+
+    return NotImplemented;
+}
+
 /* FIXME: imageattr ignored */
 GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     GDIPCONST GpImageAttributes *imageattr, REAL x, REAL y, REAL width,
