@@ -350,11 +350,11 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_NOTIFY:
         if (((int)wParam == TREE_WINDOW) && (g_pChildWnd != NULL)) {
             switch (((LPNMHDR)lParam)->code) {
-            case TVN_ITEMEXPANDING:
+            case TVN_ITEMEXPANDINGW:
                 return !OnTreeExpanding(g_pChildWnd->hTreeWnd, (NMTREEVIEW*)lParam);
-            case TVN_SELCHANGED:
+            case TVN_SELCHANGEDW:
                 OnTreeSelectionChanged(g_pChildWnd->hTreeWnd, g_pChildWnd->hListWnd,
-                    ((NMTREEVIEW *)lParam)->itemNew.hItem, TRUE);
+                    ((NMTREEVIEWW *)lParam)->itemNew.hItem, TRUE);
                 break;
 	    case NM_SETFOCUS:
 		g_pChildWnd->nFocusPanel = 0;
@@ -366,25 +366,23 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			       TPM_RIGHTBUTTON, pt.x, pt.y, 0, hFrameWnd, NULL);
 		break;
             }
-	    case TVN_ENDLABELEDIT: {
+	    case TVN_ENDLABELEDITW: {
 		HKEY hRootKey;
-	        LPNMTVDISPINFO dispInfo = (LPNMTVDISPINFO)lParam;
-                WCHAR* itemText = GetWideString(dispInfo->item.pszText);
+	        LPNMTVDISPINFOW dispInfo = (LPNMTVDISPINFOW)lParam;
 		LPWSTR path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
-	        BOOL res = RenameKey(hWnd, hRootKey, path, itemText);
+	        BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
 		if (res) {
 		    TVITEMEXW item;
                     LPWSTR fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd,
-                     itemText);
+                     dispInfo->item.pszText);
 		    item.mask = TVIF_HANDLE | TVIF_TEXT;
 		    item.hItem = TreeView_GetSelection(g_pChildWnd->hTreeWnd);
-		    item.pszText = itemText;
+		    item.pszText = dispInfo->item.pszText;
                     SendMessageW( g_pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
                     SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
                     HeapFree(GetProcessHeap(), 0, fullPath);
 		}
                 HeapFree(GetProcessHeap(), 0, path);
-                HeapFree(GetProcessHeap(), 0, itemText);
 		return res;
 	    }
             default:

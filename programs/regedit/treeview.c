@@ -670,6 +670,7 @@ HWND CreateTreeView(HWND hwndParent, LPWSTR pHostName, UINT id)
                             WS_VISIBLE | WS_CHILD | WS_TABSTOP | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT,
                             0, 0, rcClient.right, rcClient.bottom,
                             hwndParent, (HMENU)ULongToHandle(id), hInst, NULL);
+    SendMessageW(hwndTV, TVM_SETUNICODEFORMAT, TRUE, 0);
     /* Initialize the image list, and add items to the control.  */
     if (!InitTreeViewImageLists(hwndTV) || !InitTreeViewItems(hwndTV, pHostName)) {
         DestroyWindow(hwndTV);
