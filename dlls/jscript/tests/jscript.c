@@ -110,6 +110,12 @@ static void test_jscript(void)
 
     test_safety(unk);
 
+    hres = IActiveScriptParse_InitNew(parse);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parse);
+    ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
+
     IActiveScriptParse_Release(parse);
     IActiveScript_Release(script);
     IUnknown_Release(unk);

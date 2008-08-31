@@ -25,6 +25,15 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "activscp.h"
+
+typedef struct _script_ctx_t script_ctx_t;
+
+struct _script_ctx_t {
+    LONG ref;
+
+    SCRIPTSTATE state;
+};
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 

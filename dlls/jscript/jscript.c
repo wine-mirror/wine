@@ -17,7 +17,6 @@
  */
 
 #include "jscript.h"
-#include "activscp.h"
 #include "objsafe.h"
 
 #include "wine/debug.h"
@@ -34,6 +33,7 @@ typedef struct {
     LONG ref;
 
     DWORD safeopt;
+    script_ctx_t *ctx;
 } JScript;
 
 #define ACTSCRIPT(x)    ((IActiveScript*)                 &(x)->lpIActiveScriptVtbl)
@@ -41,6 +41,14 @@ typedef struct {
 #define ASPARSEPROC(x)  ((IActiveScriptParseProcedure2*)  &(x)->lpIActiveScriptParseProcedure2Vtbl)
 #define ACTSCPPROP(x)   ((IActiveScriptProperty*)         &(x)->lpIActiveScriptPropertyVtbl)
 #define OBJSAFETY(x)    ((IObjectSafety*)                 &(x)->lpIObjectSafetyVtbl)
+
+void script_release(script_ctx_t *ctx)
+{
+    if(--ctx->ref)
+        return;
+
+    heap_free(ctx);
+}
 
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
 
@@ -100,6 +108,8 @@ static ULONG WINAPI JScript_Release(IActiveScript *iface)
     TRACE("(%p) ref=%d\n", iface, ref);
 
     if(!ref) {
+        if(This->ctx)
+            script_release(This->ctx);
         heap_free(This);
         unlock_module();
     }
@@ -251,8 +261,27 @@ static ULONG WINAPI JScriptParse_Release(IActiveScriptParse *iface)
 static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
 {
     JScript *This = ASPARSE_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    script_ctx_t *ctx;
+
+    TRACE("(%p)\n", This);
+
+    if(This->ctx)
+        return E_UNEXPECTED;
+
+    ctx = heap_alloc_zero(sizeof(script_ctx_t));
+    if(!ctx)
+        return E_OUTOFMEMORY;
+
+    ctx->ref = 1;
+    ctx->state = SCRIPTSTATE_UNINITIALIZED;
+
+    ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
+    if(ctx) {
+        script_release(ctx);
+        return E_UNEXPECTED;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JScriptParse_AddScriptlet(IActiveScriptParse *iface,
@@ -449,7 +478,7 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
 
     lock_module();
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = heap_alloc_zero(sizeof(*ret));
 
     ret->lpIActiveScriptVtbl                 = &JScriptVtbl;
     ret->lpIActiveScriptParseVtbl            = &JScriptParseVtbl;
