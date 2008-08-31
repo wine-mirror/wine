@@ -34,6 +34,9 @@ typedef struct {
 
     DWORD safeopt;
     script_ctx_t *ctx;
+    LONG thread_id;
+
+    IActiveScriptSite *site;
 } JScript;
 
 #define ACTSCRIPT(x)    ((IActiveScript*)                 &(x)->lpIActiveScriptVtbl)
@@ -48,6 +51,15 @@ void script_release(script_ctx_t *ctx)
         return;
 
     heap_free(ctx);
+}
+
+static void change_state(JScript *This, SCRIPTSTATE state)
+{
+    if(This->ctx->state == state)
+        return;
+
+    This->ctx->state = state;
+    IActiveScriptSite_OnStateChange(This->site, state);
 }
 
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
@@ -110,6 +122,8 @@ static ULONG WINAPI JScript_Release(IActiveScript *iface)
     if(!ref) {
         if(This->ctx)
             script_release(This->ctx);
+        if(This->site)
+            IActiveScriptSite_Release(This->site);
         heap_free(This);
         unlock_module();
     }
@@ -121,8 +135,35 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
                                             IActiveScriptSite *pass)
 {
     JScript *This = ACTSCRIPT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pass);
-    return E_NOTIMPL;
+    LCID lcid;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pass);
+
+    if(!pass)
+        return E_POINTER;
+
+    if(This->site)
+        return E_UNEXPECTED;
+
+    if(!This->ctx) {
+        hres = IActiveScriptParse_InitNew(ASPARSE(This));
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(InterlockedCompareExchange(&This->thread_id, GetCurrentThreadId(), 0))
+        return E_UNEXPECTED;
+
+    This->site = pass;
+    IActiveScriptSite_AddRef(This->site);
+
+    hres = IActiveScriptSite_GetLCID(This->site, &lcid);
+    if(hres == S_OK)
+        This->ctx->lcid = lcid;
+
+    change_state(This, SCRIPTSTATE_INITIALIZED);
+    return S_OK;
 }
 
 static HRESULT WINAPI JScript_GetScriptSite(IActiveScript *iface, REFIID riid,

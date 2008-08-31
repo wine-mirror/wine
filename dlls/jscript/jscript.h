@@ -33,6 +33,7 @@ struct _script_ctx_t {
     LONG ref;
 
     SCRIPTSTATE state;
+    LCID lcid;
 };
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
