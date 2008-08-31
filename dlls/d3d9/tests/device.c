@@ -3,6 +3,7 @@
  * Copyright (C) 2006 Chris Robinson
  * Copyright (C) 2006-2007 Stefan Dösinger(For CodeWeavers)
  * Copyright 2007 Henri Verbeet
+ * Copyright (C) 2008 Rico Schüller
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2016,6 +2017,100 @@ static void test_display_formats()
     if(d3d9) IDirect3D9_Release(d3d9);
 }
 
+static void test_scissor_size(void)
+{
+    IDirect3D9 *d3d9_ptr = 0;
+    int i;
+    static const struct {
+        int winx; int winy; int backx; int backy; BOOL window;
+    } scts[] = { /* scissor tests */
+        {800, 600, 640, 480, TRUE},
+        {800, 600, 640, 480, FALSE},
+        {640, 480, 800, 600, TRUE},
+        {640, 480, 800, 600, FALSE},
+    };
+
+    d3d9_ptr = pDirect3DCreate9(D3D_SDK_VERSION);
+    ok(d3d9_ptr != NULL, "Failed to create IDirect3D9 object\n");
+    if (!d3d9_ptr){
+        skip("Failed to create IDirect3D9 object\n");
+        return;
+    }
+
+    for(i=0; i<sizeof(scts)/sizeof(scts[0]); i++) {
+        IDirect3DDevice9 *device_ptr = 0;
+        D3DPRESENT_PARAMETERS present_parameters;
+        HRESULT hr;
+        WNDCLASS wc = {0};
+        HWND hwnd = 0;
+        RECT scissorrect;
+
+        wc.lpfnWndProc = DefWindowProc;
+        wc.lpszClassName = "d3d9_test_wc";
+        RegisterClass(&wc);
+
+        hwnd = CreateWindow("d3d9_test_wc", "d3d9_test",
+                        WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, scts[i].winx, scts[i].winy, 0, 0, 0, 0);
+
+        ZeroMemory(&present_parameters, sizeof(present_parameters));
+        present_parameters.Windowed = scts[i].window;
+        present_parameters.hDeviceWindow = hwnd;
+        present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+        present_parameters.BackBufferWidth = scts[i].backx;
+        present_parameters.BackBufferHeight = scts[i].backy;
+        present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+        present_parameters.EnableAutoDepthStencil = TRUE;
+        present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+        hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
+        if(FAILED(hr)) {
+            present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
+            hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
+            if(FAILED(hr)) {
+                hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
+            }
+        }
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D_CreateDevice returned: %08x\n", hr);
+
+        if (!device_ptr)
+        {
+            DestroyWindow(hwnd);
+            skip("Creating the device failed\n");
+            goto err_out;
+        }
+
+        /* Check for the default scissor rect size */
+        hr = IDirect3DDevice9_GetScissorRect(device_ptr, &scissorrect);
+        ok(hr == D3D_OK, "IDirect3DDevice9_GetScissorRect failed with: %08x\n", hr);
+        ok(scissorrect.right == scts[i].backx && scissorrect.bottom == scts[i].backy && scissorrect.top == 0 && scissorrect.left == 0, "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom, scts[i].backx, scts[i].backy);
+
+        /* check the scissorrect values after a reset */
+        present_parameters.BackBufferWidth = 1024;
+        present_parameters.BackBufferHeight = 768;
+        hr = IDirect3DDevice9_Reset(device_ptr, &present_parameters);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
+        hr = IDirect3DDevice9_TestCooperativeLevel(device_ptr);
+        ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
+
+        hr = IDirect3DDevice9_GetScissorRect(device_ptr, &scissorrect);
+        ok(hr == D3D_OK, "IDirect3DDevice9_GetScissorRect failed with: %08x\n", hr);
+        ok(scissorrect.right == 1024 && scissorrect.bottom == 768 && scissorrect.top == 0 && scissorrect.left == 0, "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom, 1024, 768);
+
+        if(device_ptr) {
+            ULONG ref;
+
+            ref = IDirect3DDevice9_Release(device_ptr);
+            DestroyWindow(hwnd);
+            ok(ref == 0, "The device was not properly freed: refcount %u\n", ref);
+        }
+    }
+
+err_out:
+    if(d3d9_ptr) IDirect3D9_Release(d3d9_ptr);
+    return;
+}
+
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -2045,5 +2140,6 @@ START_TEST(device)
         test_vertex_buffer_alignment();
         test_lights();
         test_set_stream_source();
+        test_scissor_size();
     }
 }

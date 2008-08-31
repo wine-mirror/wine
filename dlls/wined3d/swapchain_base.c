@@ -102,6 +102,15 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* Return invalid if there is no backbufferarray, otherwise it will crash when ddraw is
+     * used (there This->backBuffer is allways NULL). We need this because this function have
+     * to be called from IWineD3DStateBlockImpl_InitStartupStateBlock to get the default
+     * scissorrect dimensions. */
+    if( !This->backBuffer ) {
+        *ppBackBuffer = NULL;
+        return WINED3DERR_INVALIDCALL;
+    }
+
     *ppBackBuffer = This->backBuffer[iBackBuffer];
     TRACE("(%p) : BackBuf %d Type %d  returning %p\n", This, iBackBuffer, Type, *ppBackBuffer);
 

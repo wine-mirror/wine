@@ -1037,6 +1037,12 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         DWORD d;
     } tmpfloat;
     unsigned int i;
+    IWineD3DSwapChain *swapchain;
+    IWineD3DSurface *backbuffer;
+    WINED3DSURFACE_DESC desc = {0};
+    UINT width, height;
+    RECT scissorrect;
+    HRESULT hr;
 
     /* Note this may have a large overhead but it should only be executed
        once, in order to initialize the complete state of the device and
@@ -1237,6 +1243,30 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         /* Note: This avoids calling SetTexture, so pretend it has been called */
         This->changed.textures[i] = TRUE;
         This->textures[i]         = NULL;
+    }
+
+    /* Set the default scissor rect values */
+    desc.Width = &width;
+    desc.Height = &height;
+
+    /* check the return values, because the GetBackBuffer call isn't valid for ddraw */
+    hr = IWineD3DDevice_GetSwapChain(device, 0, &swapchain);
+    if( hr == WINED3D_OK && swapchain != NULL) {
+        hr = IWineD3DSwapChain_GetBackBuffer(swapchain, 0, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
+        if( hr == WINED3D_OK && backbuffer != NULL) {
+            IWineD3DSurface_GetDesc(backbuffer, &desc);
+            IWineD3DSurface_Release(backbuffer);
+
+            scissorrect.left = 0;
+            scissorrect.right = width;
+            scissorrect.top = 0;
+            scissorrect.bottom = height;
+            hr = IWineD3DDevice_SetScissorRect(device, &scissorrect);
+            if( hr != WINED3D_OK ) {
+                ERR("This should never happen, expect rendering issues!\n");
+            }
+        }
+        IWineD3DSwapChain_Release(swapchain);
     }
 
     TRACE("-----------------------> Device defaults now set up...\n");
