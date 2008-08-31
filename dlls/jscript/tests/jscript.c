@@ -66,6 +66,17 @@ DEFINE_EXPECT(OnStateChange_INITIALIZED);
 DEFINE_EXPECT(OnEnterScript);
 DEFINE_EXPECT(OnLeaveScript);
 
+#define test_state(s,ss) _test_state(__LINE__,s,ss)
+static void _test_state(unsigned line, IActiveScript *script, SCRIPTSTATE exstate)
+{
+    SCRIPTSTATE state = -1;
+    HRESULT hres;
+
+    hres = IActiveScript_GetScriptState(script, &state);
+    ok_(__FILE__,line) (hres == S_OK, "GetScriptState failed: %08x\n", hres);
+    ok_(__FILE__,line) (state == exstate, "state=%d, expected %d\n", state, exstate);
+}
+
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -277,6 +288,7 @@ static void test_jscript(void)
     hres = IUnknown_QueryInterface(unk, &IID_IActiveScriptParse, (void**)&parse);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
 
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
     test_safety(unk);
 
     hres = IActiveScriptParse_InitNew(parse);
@@ -288,6 +300,7 @@ static void test_jscript(void)
     hres = IActiveScript_SetScriptSite(script, NULL);
     ok(hres == E_POINTER, "SetScriptSite failed: %08x, expected E_POINTER\n", hres);
 
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
     test_script_dispatch(script, FALSE);
 
     SET_EXPECT(GetLCID);
@@ -296,6 +309,8 @@ static void test_jscript(void)
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
     CHECK_CALLED(GetLCID);
     CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    test_state(script, SCRIPTSTATE_INITIALIZED);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
     ok(hres == E_UNEXPECTED, "SetScriptSite failed: %08x, expected E_UNEXPECTED\n", hres);
@@ -307,6 +322,7 @@ static void test_jscript(void)
     ok(hres == S_OK, "Close failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_CLOSED);
 
+    test_state(script, SCRIPTSTATE_CLOSED);
     test_script_dispatch(script, FALSE);
 
     IActiveScriptParse_Release(parse);

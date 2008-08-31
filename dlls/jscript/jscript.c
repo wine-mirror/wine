@@ -188,8 +188,22 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
 static HRESULT WINAPI JScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *pssState)
 {
     JScript *This = ACTSCRIPT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pssState);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pssState);
+
+    if(!pssState)
+        return E_POINTER;
+
+    if(!This->thread_id) {
+        *pssState = SCRIPTSTATE_UNINITIALIZED;
+        return S_OK;
+    }
+
+    if(This->thread_id != GetCurrentThreadId())
+        return E_UNEXPECTED;
+
+    *pssState = This->ctx ? This->ctx->state : SCRIPTSTATE_UNINITIALIZED;
+    return S_OK;
 }
 
 static HRESULT WINAPI JScript_Close(IActiveScript *iface)
