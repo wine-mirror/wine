@@ -2,6 +2,7 @@
  *
  * Copyright 2007 Jeff Latimer
  * Copyright 2007 Andrey Turkin
+ * Copyright 2008 Jeff Zaroyko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,9 +39,12 @@
 #define IO_COMPLETION_ALL_ACCESS 0x001F0003
 #endif
 
+static NTSTATUS (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
+static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
 static NTSTATUS (WINAPI *pNtCreateMailslotFile)( PHANDLE, ULONG, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK,
                                        ULONG, ULONG, ULONG, PLARGE_INTEGER );
+static NTSTATUS (WINAPI *pNtDeleteFile)(POBJECT_ATTRIBUTES ObjectAttributes);
 static NTSTATUS (WINAPI *pNtReadFile)(HANDLE hFile, HANDLE hEvent,
                                       PIO_APC_ROUTINE apc, void* apc_user,
                                       PIO_STATUS_BLOCK io_status, void* buffer, ULONG length,
@@ -134,6 +138,68 @@ static void WINAPI apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
            iosb, U(*iosb).Status, iosb->Information );
     (*count)++;
     ok( !reserved, "reserved is not 0: %x\n", reserved );
+}
+
+static void delete_file_test(void)
+{
+    NTSTATUS ret;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    WCHAR pathW[MAX_PATH];
+    WCHAR pathsubW[MAX_PATH];
+    static const WCHAR testdirW[] = {'n','t','d','e','l','e','t','e','f','i','l','e',0};
+    static const WCHAR subdirW[]  = {'\\','s','u','b',0};
+
+    ret = GetTempPathW(MAX_PATH, pathW);
+    if (!ret)
+    {
+	ok(0, "couldn't get temp dir\n");
+	return;
+    }
+    if (ret + sizeof(testdirW)/sizeof(WCHAR)-1 + sizeof(subdirW)/sizeof(WCHAR)-1 >= MAX_PATH)
+    {
+	ok(0, "MAX_PATH exceeded in constructing paths\n");
+	return;
+    }
+
+    lstrcatW(pathW, testdirW);
+    lstrcpyW(pathsubW, pathW);
+    lstrcatW(pathsubW, subdirW);
+
+    ret = CreateDirectoryW(pathW, NULL);
+    ok(ret == TRUE, "couldn't create directory ntdeletefile\n");
+    if (!pRtlDosPathNameToNtPathName_U(pathW, &nameW, NULL, NULL))
+    {
+	ok(0,"RtlDosPathNametoNtPathName_U failed\n");
+	return;
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    /* test NtDeleteFile on an empty directory */
+    ret = pNtDeleteFile(&attr);
+    ok(ret == STATUS_SUCCESS, "NtDeleteFile should succeed in removing an empty directory\n");
+    ret = RemoveDirectoryW(pathW);
+    ok(ret == FALSE, "expected to fail removing directory, NtDeleteFile should have removed it\n");
+
+    /* test NtDeleteFile on a non-empty directory */
+    ret = CreateDirectoryW(pathW, NULL);
+    ok(ret == TRUE, "couldn't create directory ntdeletefile ?!\n");
+    ret = CreateDirectoryW(pathsubW, NULL);
+    ok(ret == TRUE, "couldn't create directory subdir\n");
+    ret = pNtDeleteFile(&attr);
+    ok(ret == STATUS_SUCCESS, "expected NtDeleteFile to ret STATUS_SUCCESS\n");
+    ret = RemoveDirectoryW(pathsubW);
+    ok(ret == TRUE, "expected to remove directory ntdeletefile\\sub\n");
+    ret = RemoveDirectoryW(pathW);
+    ok(ret == TRUE, "expected to remove directory ntdeletefile, NtDeleteFile failed.\n");
+
+    pRtlFreeUnicodeString( &nameW );
 }
 
 static void read_file_test(void)
@@ -623,8 +689,11 @@ START_TEST(file)
         return;
     }
 
+    pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
+    pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pNtCreateMailslotFile   = (void *)GetProcAddress(hntdll, "NtCreateMailslotFile");
+    pNtDeleteFile           = (void *)GetProcAddress(hntdll, "NtDeleteFile");
     pNtReadFile             = (void *)GetProcAddress(hntdll, "NtReadFile");
     pNtWriteFile            = (void *)GetProcAddress(hntdll, "NtWriteFile");
     pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
@@ -635,6 +704,7 @@ START_TEST(file)
     pNtSetIoCompletion      = (void *)GetProcAddress(hntdll, "NtSetIoCompletion");
     pNtSetInformationFile   = (void *)GetProcAddress(hntdll, "NtSetInformationFile");
 
+    delete_file_test();
     read_file_test();
     nt_mailslot_test();
     test_iocompletion();
