@@ -240,15 +240,15 @@ static BOOL InitListViewImageList(HWND hWndListView)
     if (!himl)
         return FALSE;
 
-    hicon = LoadImage(hInst, MAKEINTRESOURCE(IDI_STRING),
+    hicon = LoadImageW(hInst, MAKEINTRESOURCEW(IDI_STRING),
         IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR);
     Image_String = ImageList_AddIcon(himl, hicon);
 
-    hicon = LoadImage(hInst, MAKEINTRESOURCE(IDI_BIN),
+    hicon = LoadImageW(hInst, MAKEINTRESOURCEW(IDI_BIN),
         IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR);
     Image_Binary = ImageList_AddIcon(himl, hicon);
 
-    SendMessage( hWndListView, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM) himl );
+    SendMessageW( hWndListView, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM) himl );
 
     /* fail if some of the icons failed to load */
     if (ImageList_GetImageCount(himl) < 2)
@@ -259,9 +259,9 @@ static BOOL InitListViewImageList(HWND hWndListView)
 
 static BOOL CreateListColumns(HWND hWndListView)
 {
-    TCHAR szText[50];
+    WCHAR szText[50];
     int index;
-    LV_COLUMN lvC;
+    LVCOLUMNW lvC;
 
     /* Create columns. */
     lvC.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -272,8 +272,8 @@ static BOOL CreateListColumns(HWND hWndListView)
         lvC.iSubItem = index;
         lvC.cx = default_column_widths[index];
         lvC.fmt = column_alignment[index];
-        LoadString(hInst, IDS_LIST_COLUMN_FIRST + index, szText, sizeof(szText)/sizeof(TCHAR));
-        if (ListView_InsertColumn(hWndListView, index, &lvC) == -1) return FALSE;
+        LoadStringW(hInst, IDS_LIST_COLUMN_FIRST + index, szText, sizeof(szText)/sizeof(WCHAR));
+        if (ListView_InsertColumnW(hWndListView, index, &lvC) == -1) return FALSE;
     }
     return TRUE;
 }
@@ -493,6 +493,7 @@ HWND CreateListView(HWND hwndParent, UINT id)
 {
     RECT rcClient;
     HWND hwndLV;
+    WCHAR ListView[] = {'L','i','s','t',' ','V','i','e','w',0};
 
     /* prepare strings */
     LoadString(hInst, IDS_REGISTRY_VALUE_NOT_SET, g_szValueNotSet, COUNT_OF(g_szValueNotSet));
@@ -500,17 +501,17 @@ HWND CreateListView(HWND hwndParent, UINT id)
 
     /* Get the dimensions of the parent window's client area, and create the list view control.  */
     GetClientRect(hwndParent, &rcClient);
-    hwndLV = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, _T("List View"),
+    hwndLV = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, ListView,
                             WS_VISIBLE | WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_EDITLABELS,
                             0, 0, rcClient.right, rcClient.bottom,
                             hwndParent, (HMENU)ULongToHandle(id), hInst, NULL);
     if (!hwndLV) return NULL;
-    SendMessage(hwndLV, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+    SendMessageW(hwndLV, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
     /* Initialize the image list */
     if (!InitListViewImageList(hwndLV)) goto fail;
     if (!CreateListColumns(hwndLV)) goto fail;
-    g_orgListWndProc = (WNDPROC) SetWindowLongPtr(hwndLV, GWLP_WNDPROC, (LPARAM)ListWndProc);
+    g_orgListWndProc = (WNDPROC) SetWindowLongPtrW(hwndLV, GWLP_WNDPROC, (LPARAM)ListWndProc);
     return hwndLV;
 fail:
     DestroyWindow(hwndLV);
