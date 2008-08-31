@@ -165,7 +165,7 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
         if (params->lpszValueName)
             SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, params->lpszValueName);
         else
-            SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueNameW);
+            SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueName);
         SendDlgItemMessage(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->cbData, (LPARAM)params->pData);
         return TRUE;
     case WM_COMMAND:
@@ -299,7 +299,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
 	return FALSE;
     }
 
-    editValueName = valueName ? valueName : g_pszDefaultValueNameW;
+    editValueName = valueName ? valueName : g_pszDefaultValueName;
     if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, &len))) goto done;
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
@@ -428,7 +428,7 @@ BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, B
     BOOL result = FALSE;
     LONG lRet;
     HKEY hKey;
-    LPCWSTR visibleValueName = valueName ? valueName : g_pszDefaultValueNameW;
+    LPCWSTR visibleValueName = valueName ? valueName : g_pszDefaultValueName;
     WCHAR empty = 0;
 
     lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);

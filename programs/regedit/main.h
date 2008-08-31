@@ -90,8 +90,7 @@ extern enum OPTION_FLAGS Options;
 extern TCHAR szTitle[];
 extern const TCHAR szFrameClass[];
 extern const TCHAR szChildClass[];
-extern TCHAR g_pszDefaultValueName[];
-extern WCHAR g_pszDefaultValueNameW[];
+extern WCHAR g_pszDefaultValueName[];
 
 /* Registry class names and their indexes */
 extern const WCHAR* reg_class_namesW[];

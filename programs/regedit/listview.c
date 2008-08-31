@@ -2,6 +2,7 @@
  * Regedit listviews
  *
  * Copyright (C) 2002 Robert Dickenson <robd@reactos.org>
+ * Copyright (C) 2008 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -49,8 +50,7 @@ static BOOL  g_invertSort = FALSE;
 static LPWSTR g_valueName;
 static LPWSTR g_currentPath;
 static HKEY g_currentRootKey;
-static WCHAR g_szValueNotSetW[64];
-static TCHAR g_szValueNotSet[64];
+static WCHAR g_szValueNotSet[64];
 
 #define MAX_LIST_COLUMNS (IDS_LIST_COLUMN_LAST - IDS_LIST_COLUMN_FIRST + 1)
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
@@ -192,7 +192,7 @@ static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType,
             if (ValBuf) {
                 ListView_SetItemTextW(hwndLV, index, 2, ValBuf);
             } else {
-                ListView_SetItemTextW(hwndLV, index, 2, g_szValueNotSetW);
+                ListView_SetItemTextW(hwndLV, index, 2, g_szValueNotSet);
             }
             break;
         case REG_DWORD: {
@@ -280,10 +280,10 @@ static BOOL CreateListColumns(HWND hWndListView)
 
 /* OnGetDispInfo - processes the LVN_GETDISPINFO notification message.  */
 
-static void OnGetDispInfo(NMLVDISPINFO* plvdi)
+static void OnGetDispInfo(NMLVDISPINFOW* plvdi)
 {
-    static TCHAR buffer[200];
-    static TCHAR reg_szT[]               = {'R','E','G','_','S','Z',0},
+    static WCHAR buffer[200];
+    static WCHAR reg_szT[]               = {'R','E','G','_','S','Z',0},
                  reg_expand_szT[]        = {'R','E','G','_','E','X','P','A','N','D','_','S','Z',0},
                  reg_binaryT[]           = {'R','E','G','_','B','I','N','A','R','Y',0},
                  reg_dwordT[]            = {'R','E','G','_','D','W','O','R','D',0},
@@ -300,7 +300,7 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
 
     switch (plvdi->item.iSubItem) {
     case 0:
-        plvdi->item.pszText = (LPSTR)g_pszDefaultValueName;
+        plvdi->item.pszText = g_pszDefaultValueName;
         break;
     case 1:
         switch (((LINE_INFO*)plvdi->item.lParam)->dwValType) {
@@ -333,9 +333,9 @@ static void OnGetDispInfo(NMLVDISPINFO* plvdi)
             break;
         default:
           {
-            TCHAR szUnknownFmt[64];
-            LoadString(hInst, IDS_REGISTRY_UNKNOWN_TYPE, szUnknownFmt, COUNT_OF(szUnknownFmt));
-            wsprintf(buffer, szUnknownFmt, plvdi->item.lParam);
+            WCHAR szUnknownFmt[64];
+            LoadStringW(hInst, IDS_REGISTRY_UNKNOWN_TYPE, szUnknownFmt, COUNT_OF(szUnknownFmt));
+            wsprintfW(buffer, szUnknownFmt, plvdi->item.lParam);
             plvdi->item.pszText = buffer;
             break;
           }
@@ -403,12 +403,12 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
     case WM_NOTIFY_REFLECT:
         switch (((LPNMHDR)lParam)->code) {
 	
-        case LVN_BEGINLABELEDIT:
-            if (!((NMLVDISPINFO *)lParam)->item.iItem)
+        case LVN_BEGINLABELEDITW:
+            if (!((NMLVDISPINFOW *)lParam)->item.iItem)
                 return 1;
             return 0;
-        case LVN_GETDISPINFO:
-            OnGetDispInfo((NMLVDISPINFO*)lParam);
+        case LVN_GETDISPINFOW:
+            OnGetDispInfo((NMLVDISPINFOW*)lParam);
             break;
         case LVN_COLUMNCLICK:
             if (g_columnToSort == ((LPNMLISTVIEW)lParam)->iSubItem)
@@ -418,20 +418,18 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
                 g_invertSort = FALSE;
             }
                     
-            SendMessage(hWnd, LVM_SORTITEMS, (WPARAM)hWnd, (LPARAM)CompareFunc);
+            SendMessageW(hWnd, LVM_SORTITEMS, (WPARAM)hWnd, (LPARAM)CompareFunc);
             break;
-	case LVN_ENDLABELEDIT: {
-	        LPNMLVDISPINFO dispInfo = (LPNMLVDISPINFO)lParam;
+	case LVN_ENDLABELEDITW: {
+	        LPNMLVDISPINFOW dispInfo = (LPNMLVDISPINFOW)lParam;
 		LPWSTR oldName = GetItemTextW(hWnd, dispInfo->item.iItem);
-                WCHAR* newName = GetWideString(dispInfo->item.pszText);
                 LONG ret;
                 if (!oldName) return -1; /* cannot rename a default value */
-	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, oldName, newName);
+	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, oldName, dispInfo->item.pszText);
 		if (ret)
                 {
-                    RefreshListView(hWnd, g_currentRootKey, g_currentPath, newName);
+                    RefreshListView(hWnd, g_currentRootKey, g_currentPath, dispInfo->item.pszText);
                 }
-                HeapFree(GetProcessHeap(), 0, newName);
 		HeapFree(GetProcessHeap(), 0, oldName);
 		return 0;
 	    }
@@ -496,8 +494,7 @@ HWND CreateListView(HWND hwndParent, UINT id)
     WCHAR ListView[] = {'L','i','s','t',' ','V','i','e','w',0};
 
     /* prepare strings */
-    LoadString(hInst, IDS_REGISTRY_VALUE_NOT_SET, g_szValueNotSet, COUNT_OF(g_szValueNotSet));
-    LoadStringW(hInst, IDS_REGISTRY_VALUE_NOT_SET, g_szValueNotSetW, COUNT_OF(g_szValueNotSetW));
+    LoadStringW(hInst, IDS_REGISTRY_VALUE_NOT_SET, g_szValueNotSet, COUNT_OF(g_szValueNotSet));
 
     /* Get the dimensions of the parent window's client area, and create the list view control.  */
     GetClientRect(hwndParent, &rcClient);
@@ -506,6 +503,7 @@ HWND CreateListView(HWND hwndParent, UINT id)
                             0, 0, rcClient.right, rcClient.bottom,
                             hwndParent, (HMENU)ULongToHandle(id), hInst, NULL);
     if (!hwndLV) return NULL;
+    SendMessageW(hwndLV, LVM_SETUNICODEFORMAT, TRUE, 0);
     SendMessageW(hwndLV, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
     /* Initialize the image list */
