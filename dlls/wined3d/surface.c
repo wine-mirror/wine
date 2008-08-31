@@ -3812,10 +3812,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
 
             /* Re-upload the palette */
             d3dfmt_p8_upload_palette(iface, convert);
-
-            /* Without this some palette updates are missed. This at least happens on Nvidia drivers but
-             * it works fine using Mesa. */
-            glFlush();
         } else {
             if(!(This->Flags & SFLAG_INSYSMEM)) {
                 TRACE("Palette changed with surface that does not have an up to date system memory copy\n");
