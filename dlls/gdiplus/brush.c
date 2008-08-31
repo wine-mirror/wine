@@ -410,10 +410,14 @@ GpStatus WINGDIPAPI GdipCreateTexture(GpImage *image, GpWrapMode wrapmode,
 GpStatus WINGDIPAPI GdipCreateTexture2(GpImage *image, GpWrapMode wrapmode,
         REAL x, REAL y, REAL width, REAL height, GpTexture **texture)
 {
-    FIXME("stub: %p %d %f %f %f %f %p\n", image, wrapmode,
+    GpImageAttributes attributes;
+
+    TRACE("%p %d %f %f %f %f %p\n", image, wrapmode,
             x, y, width, height, texture);
 
-    return NotImplemented;
+    attributes.wrap = wrapmode;
+    return GdipCreateTextureIA(image, &attributes, x, y, width, height,
+            texture);
 }
 
 /* FIXME: imageattr ignored */
