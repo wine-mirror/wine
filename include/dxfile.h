@@ -207,14 +207,14 @@ DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject)
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
-#define IDirectXFileData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IDirectXFileData_AddRef(p)             (p)->lpVtbl->AddRef(p)
-#define IDirectXFileData_Release(p)            (p)->lpVtbl->Release(p)
+#define IDirectXFileDataReference_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectXFileDataReference_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectXFileDataReference_Release(p)            (p)->lpVtbl->Release(p)
     /*** IDirectXFileObject methods ***/
-#define IDirectXFileData_GetName(p,a,b) (p)->lpVtbl->GetName(p,a,b)
-#define IDirectXFileData_GetId(p,a)     (p)->lpVtbl->GetId(p,a)
+#define IDirectXFileDataReference_GetName(p,a,b) (p)->lpVtbl->GetName(p,a,b)
+#define IDirectXFileDataReference_GetId(p,a)     (p)->lpVtbl->GetId(p,a)
     /*** IDirectXFileDataReference methods ***/
-#define IDirectXFileData_Resolve(p,a) (p)->lpVtbl->GetData(p,a)
+#define IDirectXFileDataReference_Resolve(p,a) (p)->lpVtbl->GetData(p,a)
 #endif
 
 #define INTERFACE IDirectXFileBinary
