@@ -120,10 +120,10 @@ static ULONG WINAPI JScript_Release(IActiveScript *iface)
     TRACE("(%p) ref=%d\n", iface, ref);
 
     if(!ref) {
+        if(This->ctx && This->ctx->state != SCRIPTSTATE_CLOSED)
+            IActiveScript_Close(ACTSCRIPT(This));
         if(This->ctx)
             script_release(This->ctx);
-        if(This->site)
-            IActiveScriptSite_Release(This->site);
         heap_free(This);
         unlock_module();
     }
@@ -191,8 +191,21 @@ static HRESULT WINAPI JScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *
 static HRESULT WINAPI JScript_Close(IActiveScript *iface)
 {
     JScript *This = ACTSCRIPT_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->()\n", This);
+
+    if(This->thread_id != GetCurrentThreadId())
+        return E_UNEXPECTED;
+
+    if(This->ctx)
+        change_state(This, SCRIPTSTATE_CLOSED);
+
+    if(This->site) {
+        IActiveScriptSite_Release(This->site);
+        This->site = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
