@@ -544,9 +544,14 @@ GpStatus WINGDIPAPI GdipCreateTextureIAI(GpImage *image, GDIPCONST GpImageAttrib
 GpStatus WINGDIPAPI GdipCreateTexture2I(GpImage *image, GpWrapMode wrapmode,
         INT x, INT y, INT width, INT height, GpTexture **texture)
 {
-    FIXME("stub: %p %d %d %d %d %d %p", image, wrapmode, x, y, width, height, texture);
+    GpImageAttributes imageattr;
 
-    return NotImplemented;
+    TRACE("%p %d %d %d %d %d %p", image, wrapmode, x, y, width, height,
+            texture);
+
+    imageattr.wrap = wrapmode;
+
+    return GdipCreateTextureIA(image, &imageattr, x, y, width, height, texture);
 }
 
 GpStatus WINGDIPAPI GdipGetBrushType(GpBrush *brush, GpBrushType *type)
