@@ -959,6 +959,14 @@ GpStatus WINGDIPAPI GdipSetLineTransform(GpLineGradient *brush,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipTranslateLineTransform(GpLineGradient* brush,
+        REAL dx, REAL dy, GpMatrixOrder order)
+{
+    FIXME("stub: %p %f %f %d\n", brush, dx, dy, order);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetLineRect(GpLineGradient *brush, GpRectF *rect)
 {
     if(!brush || !rect)
