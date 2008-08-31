@@ -4995,6 +4995,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     WINED3DVIEWPORT *vp = &This->stateBlock->viewport;
     UINT drawable_width, drawable_height;
     IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *) This->stencilBufferTarget;
+    IWineD3DSwapChainImpl *swapchain = NULL;
 
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
      * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
@@ -5163,6 +5164,14 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     }
 
     LEAVE_GL();
+
+    IWineD3DSurface_GetContainer( (IWineD3DSurface *) target, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    if (swapchain) {
+        if (target == (IWineD3DSurfaceImpl*) swapchain->frontBuffer) {
+            glFlush();
+        }
+        IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+    }
 
     return WINED3D_OK;
 }
