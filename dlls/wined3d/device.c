@@ -588,6 +588,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     unsigned int Size       = 1;
     const GlPixelFormatDesc *glDesc;
     const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
+    UINT mul_4w, mul_4h;
     TRACE("(%p) Create surface\n",This);
     
     /** FIXME: Check ranges on the inputs are valid 
@@ -625,16 +626,18 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
      *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
      *  space!
       *********************************/
+    mul_4w = (Width + 3) & ~3;
+    mul_4h = (Height + 3) & ~3;
     if (WINED3DFMT_UNKNOWN == Format) {
         Size = 0;
     } else if (Format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
-       Size = ((max(Width,4) * tableEntry->bpp) * max(Height,4)) >> 1;
+        Size = (mul_4w * tableEntry->bpp * mul_4h) >> 1;
 
     } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
                Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5 ||
                Format == WINED3DFMT_ATI2N) {
-       Size = ((max(Width,4) * tableEntry->bpp) * max(Height,4));
+        Size = (mul_4w * tableEntry->bpp * mul_4h);
     } else {
        /* The pitch is a multiple of 4 bytes */
         Size = ((Width * tableEntry->bpp) + This->surface_alignment - 1) & ~(This->surface_alignment - 1);
