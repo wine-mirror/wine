@@ -43,13 +43,13 @@ CAPTION "Installer/Avinstaller"
 FONT 8, "MS Sans Serif"
 {
  CONTROL "Trykk «Installer» for å installere et program fra en diskett, CD-stasjon eller annet medium.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
- CONTROL "&Installer ...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+ CONTROL "&Installer...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
  CONTROL "Følgende programmer kan fjernes automatisk. Merk et program og trykk «Legg til/Fjern» for å fjerne det eller endre installerte komponenter", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
- CONTROL "Legg til/Fje&rn ...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
- CONTROL "&Støtteinformasjon ...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 170, 198, 70, 14
+ CONTROL "Legg til/Fje&rn...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
+ CONTROL "&Støtteinformasjon...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 170, 198, 70, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
 
