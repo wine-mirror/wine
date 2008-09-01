@@ -591,6 +591,28 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     HTMLBodyElement_destructor
 };
 
+static const tid_t HTMLBodyElement_iface_tids[] = {
+    IHTMLBodyElement_tid,
+    IHTMLBodyElement2_tid,
+    IHTMLControlElement_tid,
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    IHTMLElement3_tid,
+    IHTMLElement4_tid,
+    IHTMLTextContainer_tid,
+    IHTMLUniqueName_tid,
+    0
+};
+
+static dispex_static_data_t HTMLBodyElement_dispex = {
+    NULL,
+    DispHTMLBody_tid,
+    NULL,
+    HTMLBodyElement_iface_tids
+};
+
 HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLBodyElement *ret = heap_alloc_zero(sizeof(HTMLBodyElement));
@@ -601,6 +623,8 @@ HTMLElement *HTMLBodyElement_Create(nsIDOMHTMLElement *nselem)
     HTMLTextContainer_Init(&ret->textcont);
 
     ret->lpHTMLBodyElementVtbl = &HTMLBodyElementVtbl;
+
+    init_dispex(&ret->textcont.element.node.dispex, (IUnknown*)HTMLBODY(ret), &HTMLBodyElement_dispex);
     ret->textcont.element.node.vtbl = &HTMLBodyElementImplVtbl;
 
     ConnectionPoint_Init(&ret->cp_propnotif, &ret->textcont.element.cp_container, &IID_IPropertyNotifySink);
