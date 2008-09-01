@@ -454,4 +454,6 @@ START_TEST(xmlelem)
 
     test_xmlelem();
     test_xmlelem_collection();
+
+    CoUninitialize();
 }
