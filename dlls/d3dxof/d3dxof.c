@@ -385,7 +385,7 @@ static BOOL is_guid(parse_buffer* buf)
   tmp[pos] = 0;
   if (pos != 38 /* <+36+> */)
   {
-    TRACE("Wrong guid %s (%d) \n", tmp, pos);
+    TRACE("Wrong guid %s (%d)\n", tmp, pos);
     return FALSE;
   }
   buf->buffer += pos;
@@ -394,10 +394,10 @@ static BOOL is_guid(parse_buffer* buf)
   ret = sscanf(tmp, CLSIDFMT, &class_id.Data1, tab, tab+1, tab+2, tab+3, tab+4, tab+5, tab+6, tab+7, tab+8, tab+9);
   if (ret != 11)
   {
-    TRACE("Wrong guid %s (%d) \n", tmp, pos);
+    TRACE("Wrong guid %s (%d)\n", tmp, pos);
     return FALSE;
   }
-  TRACE("Found guid %s (%d) \n", tmp, pos);
+  TRACE("Found guid %s (%d)\n", tmp, pos);
 
   class_id.Data2 = tab[0];
   class_id.Data3 = tab[1];
@@ -989,7 +989,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   if (token_header == XOFFILE_FORMAT_COMPRESSED)
   {
-    FIXME("Compressed formats not supported yet");
+    FIXME("Compressed formats not supported yet\n");
     return DXFILEERR_BADVALUE;
   }
 
