@@ -3179,7 +3179,7 @@ static void test_CreateGroup(void)
 
 
     groupName.dwSize = sizeof(DPNAME);
-    groupName.lpszShortNameA = (LPSTR) lpData;
+    U1(groupName).lpszShortNameA = (LPSTR) lpData;
 
 
     hr = IDirectPlayX_CreateGroup( pDP, &idGroup,
@@ -3198,14 +3198,14 @@ static void test_CreateGroup(void)
         hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, 0,
                                    (LPVOID) lpDataGet, &dwDataSizeGet );
         checkHR( DP_OK, hr );
-        if ( NULL == lpDataGet->dpnName.lpszShortNameA )
+        if ( NULL == U1(lpDataGet->dpnName).lpszShortNameA )
         {
             check( 48, dwDataSizeGet );
         }
         else
         {
             check( 48 + dwDataSize, dwDataSizeGet );
-            checkStr( lpData, lpDataGet->dpnName.lpszShortNameA );
+            checkStr( lpData, U1(lpDataGet->dpnName).lpszShortNameA );
         }
         check( DPID_SYSMSG, idFrom );
         checkConv( DPSYS_CREATEPLAYERORGROUP, lpDataGet->dwType, dpMsgType2str );
@@ -5305,7 +5305,7 @@ static void test_Receive(void)
             check( DPPLAYERTYPE_PLAYER,   lpDataCreate->dwPlayerType );
             checkLP( NULL,                lpDataCreate->lpData );
             check( 0,                     lpDataCreate->dwDataSize );
-            checkLP( NULL,                lpDataCreate->dpnName.lpszShortNameA );
+            checkLP( NULL,                U1(lpDataCreate->dpnName).lpszShortNameA );
             check( 0,                     lpDataCreate->dpIdParent );
         }
         else  /* Player destruction */
@@ -5319,7 +5319,7 @@ static void test_Receive(void)
             check( 0,                     lpDataDestroy->dwLocalDataSize );
             checkLP( NULL,                lpDataDestroy->lpRemoteData );
             check( 0,                     lpDataDestroy->dwRemoteDataSize );
-            checkLP( NULL,                lpDataDestroy->dpnName.lpszShortNameA );
+            checkLP( NULL,                U1(lpDataDestroy->dpnName).lpszShortNameA );
             check( 0,                     lpDataDestroy->dpIdParent );
         }
 
