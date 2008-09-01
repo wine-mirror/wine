@@ -88,6 +88,8 @@ typedef struct {
 typedef struct {
     IDirectXFileEnumObject lpVtbl;
     LONG ref;
+    DXFILELOADOPTIONS source;
+    HANDLE hFile;
 } IDirectXFileEnumObjectImpl;
 
 typedef struct {

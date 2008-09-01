@@ -161,33 +161,110 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   IDirectXFileImpl *This = (IDirectXFileImpl *)iface;
   IDirectXFileEnumObjectImpl* object;
   HRESULT hr;
+  DWORD header[4];
+  DWORD size;
+  HANDLE hFile = INVALID_HANDLE_VALUE;
 
-  FIXME("(%p/%p)->(%p,%x,%p) stub!\n", This, iface, pvSource, dwLoadOptions, ppEnumObj);
+  FIXME("(%p/%p)->(%p,%x,%p) partial stub!\n", This, iface, pvSource, dwLoadOptions, ppEnumObj);
+
+  if (!ppEnumObj)
+    return DXFILEERR_BADVALUE;
 
   if (dwLoadOptions == DXFILELOAD_FROMFILE)
   {
-    HANDLE hFile;
     TRACE("Open source file '%s'\n", (char*)pvSource);
+
     hFile = CreateFileA((char*)pvSource, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
       TRACE("File '%s' not found\n", (char*)pvSource);
       return DXFILEERR_FILENOTFOUND;
     }
-    CloseHandle(hFile);
+
+    if (!ReadFile(hFile, header, 16, &size, NULL))
+    {
+      hr = DXFILEERR_BADVALUE;
+      goto error;
+    }
+
+    if (size < 16)
+    {
+      hr = DXFILEERR_BADFILETYPE;
+      goto error;
+    }
+
+    if (TRACE_ON(d3dxof))
+    {
+      char string[17];
+      memcpy(string, header, 16);
+      string[16] = 0;
+      TRACE("header = '%s'\n", string);
+    }
   }
   else
   {
     FIXME("Source type %d is not handled yet\n", dwLoadOptions);
+    hr = DXFILEERR_NOTDONEYET;
+    goto error;
   }
+
+  if (header[0] != XOFFILE_FORMAT_MAGIC)
+  {
+    hr = DXFILEERR_BADFILETYPE;
+    goto error;
+  }
+
+  if (header[1] != XOFFILE_FORMAT_VERSION)
+  {
+    hr = DXFILEERR_BADFILEVERSION;
+    goto error;
+  }
+
+  if ((header[2] != XOFFILE_FORMAT_BINARY) && (header[2] != XOFFILE_FORMAT_TEXT) && (header[2] != XOFFILE_FORMAT_COMPRESSED))
+  {
+    hr = DXFILEERR_BADFILETYPE;
+    goto error;
+  }
+
+  if (header[2] == XOFFILE_FORMAT_TEXT)
+  {
+    FIXME("Binary format not supported yet\n");
+    hr = DXFILEERR_NOTDONEYET;
+    goto error;
+  }
+
+  if (header[2] == XOFFILE_FORMAT_COMPRESSED)
+  {
+    FIXME("Compressed formats not supported yet");
+    hr = DXFILEERR_BADVALUE;
+    goto error;
+  }
+
+  if ((header[3] != XOFFILE_FORMAT_FLOAT_BITS_32) && (header[3] != XOFFILE_FORMAT_FLOAT_BITS_64))
+  {
+    hr = DXFILEERR_BADFILEFLOATSIZE;
+    goto error;
+  }
+
+  TRACE("Header is correct\n");
 
   hr = IDirectXFileEnumObjectImpl_Create(&object);
   if (!SUCCEEDED(hr))
-    return hr;
+    goto error;
+
+  object->source = dwLoadOptions;
+  object->hFile = hFile;
 
   *ppEnumObj = (LPDIRECTXFILEENUMOBJECT)object;
 
   return DXFILE_OK;
+
+error:
+  if (hFile != INVALID_HANDLE_VALUE)
+    CloseHandle(hFile);
+  *ppEnumObj = NULL;
+
+  return hr;
 }
 
 static HRESULT WINAPI IDirectXFileImpl_CreateSaveObject(IDirectXFile* iface, LPCSTR szFileName, DXFILEFORMAT dwFileFormat, LPDIRECTXFILESAVEOBJECT* ppSaveObj)
