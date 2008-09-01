@@ -226,7 +226,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     goto error;
   }
 
-  if (header[2] == XOFFILE_FORMAT_TEXT)
+  if (header[2] == XOFFILE_FORMAT_BINARY)
   {
     FIXME("Binary format not supported yet\n");
     hr = DXFILEERR_NOTDONEYET;
@@ -560,6 +560,24 @@ static WORD parse_TOKEN_dbg_opt(parse_buffer * buf, BOOL show_token)
       if (!read_bytes(buf, &c, 1))
         return 0;
       /*TRACE("char = '%c'\n", is_space(c) ? ' ' : c);*/
+      if ((c == '#') || (c == '/'))
+      {
+        /* Handle comment (# or //) */
+        if (c == '/')
+        {
+          if (!read_bytes(buf, &c, 1))
+            return 0;
+          if (c != '/')
+            return 0;
+        }
+        c = 0;
+        while (c != 0x0A)
+        {
+          if (!read_bytes(buf, &c, 1))
+            return 0;
+        }
+        continue;
+      }
       if (is_space(c))
         continue;
       if (is_operator(c) && (c != '<'))
