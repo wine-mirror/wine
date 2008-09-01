@@ -29,6 +29,7 @@
 #include <msi.h>
 #include <fci.h>
 #include <objidl.h>
+#include <srrestoreptapi.h>
 
 #include "wine/test.h"
 
@@ -38,6 +39,10 @@ static UINT (WINAPI *pMsiSourceListEnumSourcesA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPSTR, LPDWORD);
 static UINT (WINAPI *pMsiSourceListGetInfoA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, LPSTR, LPDWORD);
+
+static HMODULE hsrclient = 0;
+static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
+static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
 
 static const char *msifile = "msitest.msi";
 static const char *msifile2 = "winetest2.msi";
@@ -1271,14 +1276,18 @@ static void init_functionpointers(void)
 {
     HMODULE hmsi = GetModuleHandleA("msi.dll");
 
-#define GET_PROC(func) \
-    p ## func = (void*)GetProcAddress(hmsi, #func); \
+#define GET_PROC(mod, func) \
+    p ## func = (void*)GetProcAddress(mod, #func); \
     if(!p ## func) \
       trace("GetProcAddress(%s) failed\n", #func);
 
-    GET_PROC(MsiQueryComponentStateA);
-    GET_PROC(MsiSourceListEnumSourcesA);
-    GET_PROC(MsiSourceListGetInfoA);
+    GET_PROC(hmsi, MsiQueryComponentStateA);
+    GET_PROC(hmsi, MsiSourceListEnumSourcesA);
+    GET_PROC(hmsi, MsiSourceListGetInfoA);
+
+    hsrclient = LoadLibraryA("srclient.dll");
+    GET_PROC(hsrclient, SRRemoveRestorePoint);
+    GET_PROC(hsrclient, SRSetRestorePointA);
 
 #undef GET_PROC
 }
@@ -1616,6 +1625,27 @@ static void check_service_is_installed(void)
 
     CloseServiceHandle(service);
     CloseServiceHandle(scm);
+}
+
+static BOOL notify_system_change(DWORD event_type, STATEMGRSTATUS *status)
+{
+    RESTOREPOINTINFOA spec;
+
+    spec.dwEventType = event_type;
+    spec.dwRestorePtType = APPLICATION_INSTALL;
+    spec.llSequenceNumber = status->llSequenceNumber;
+    lstrcpyA(spec.szDescription, "msitest restore point");
+
+    return pSRSetRestorePointA(&spec, status);
+}
+
+static void remove_restore_point(DWORD seq_number)
+{
+    DWORD res;
+
+    res = pSRRemoveRestorePoint(seq_number);
+    if (res != ERROR_SUCCESS)
+        trace("Failed to remove the restore point : %08x\n", res);
 }
 
 static void test_MsiInstallProduct(void)
@@ -5402,6 +5432,8 @@ START_TEST(install)
 {
     DWORD len;
     char temp_path[MAX_PATH], prev_path[MAX_PATH];
+    STATEMGRSTATUS status;
+    BOOL ret = FALSE;
 
     init_functionpointers();
 
@@ -5416,6 +5448,15 @@ START_TEST(install)
         CURR_DIR[len - 1] = 0;
 
     get_program_files_dir(PROG_FILES_DIR, COMMON_FILES_DIR);
+
+    /* Create a restore point ourselves so we circumvent the multitude of restore points
+     * that would have been created by all the installation and removal tests.
+     */
+    if (pSRSetRestorePointA)
+    {
+        memset(&status, 0, sizeof(status));
+        ret = notify_system_change(BEGIN_NESTED_SYSTEM_CHANGE, &status);
+    }
 
     test_MsiInstallProduct();
     test_MsiSetComponentState();
@@ -5452,6 +5493,14 @@ START_TEST(install)
     test_sourcepath();
     test_MsiConfigureProductEx();
     test_missingcomponent();
+
+    if (pSRSetRestorePointA && ret)
+    {
+        ret = notify_system_change(END_NESTED_SYSTEM_CHANGE, &status);
+        if (ret)
+            remove_restore_point(status.llSequenceNumber);
+    }
+    FreeLibrary(hsrclient);
 
     SetCurrentDirectoryA(prev_path);
 }
