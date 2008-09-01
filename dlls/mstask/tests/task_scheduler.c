@@ -93,7 +93,7 @@ static void test_Activate(void)
         return;
     }
 
-    /* Attempt to Activate a non-existant task */
+    /* Attempt to activate a nonexistent task */
     hres = ITaskScheduler_Activate(test_task_scheduler, not_task_name,
             &IID_ITask, (IUnknown**)&task);
     ok(hres == COR_E_FILENOTFOUND, "Expected COR_E_FILENOTFOUND: %08x\n", hres);

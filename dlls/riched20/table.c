@@ -29,7 +29,7 @@
  * Richedit version 1.0 - 3.0:
  *   Tables are implemented in these versions using tabs at the end of cells,
  *   and tab stops to position the cells.  The paragraph format flag PFE_TABLE
- *   will indicate the the paragraph is a table row.  Note that in this
+ *   will indicate that the paragraph is a table row.  Note that in this
  *   implementation there is one paragraph per table row.
  *
  * Richedit version 4.1:
@@ -37,7 +37,7 @@
  *   each with it's own paragraph format, and cells may even contain tables
  *   nested within the cell.
  *
- *   There are is also a paragraph at the start of each table row that contains
+ *   There is also a paragraph at the start of each table row that contains
  *   the rows paragraph format (e.g. to change the row alignment to row), and a
  *   paragraph at the end of the table row with the PFE_TABLEROWDELIMITER flag
  *   set. The paragraphs at the start and end of the table row should always be

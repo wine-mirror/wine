@@ -267,13 +267,15 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded, second index should not exist.\n");
 
-    /* Try to fetch the header info with a buffer thats big enough to fit string but not NULL terminator. */
+    /* Try to fetch the header info with a buffer that's big enough to fit the
+     * string but not the NULL terminator.
+     */
     index = 0;
     len = 5*sizeof(WCHAR);
     memcpy(buffer, check_buffer, sizeof(buffer));
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
         test_header_name, buffer, &len, &index);
-    ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded with a buffer thats too small.\n");
+    ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded with a buffer that's too small.\n");
     ok(memcmp(buffer, check_buffer, sizeof(buffer)) == 0,
             "WinHttpQueryHeaders failed, modified the buffer when it should not have.\n");
     ok(len == 6*sizeof(WCHAR), "WinHttpQueryHeaders returned invalid length, expected 12, got %d\n", len);
@@ -289,7 +291,7 @@ static void test_WinHttpAddHeaders(void)
     ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
     ok(index == 0, "WinHttpQueryHeaders incorrectly incremented header index.\n");
 
-    /* Try with a NULL buffer and a length thats too small */
+    /* Try with a NULL buffer and a length that's too small */
     index = 0;
     len = 10;
     SetLastError(0xdeadbeef);

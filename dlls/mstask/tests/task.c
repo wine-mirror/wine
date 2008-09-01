@@ -126,7 +126,7 @@ static void test_SetApplicationName_GetApplicationName(void)
         CoTaskMemFree(stored_name);
     }
 
-    /* Set application name to a non-existent application and then get
+    /* Set application name to a nonexistent application and then get
      * the application name that is actually stored */
     hres = ITask_SetApplicationName(test_task, non_application_name);
     ok(hres == S_OK, "Failed setting name %s: %08x\n",
@@ -170,8 +170,8 @@ static void test_SetApplicationName_GetApplicationName(void)
         CoTaskMemFree(stored_name);
     }
 
-    /* After having a valid application name set, set application name
-     * to a non-existant application and then get the name that is
+    /* After having a valid application name set, set application the name
+     * to a nonexistent application and then get the name that is
      * actually stored */
     hres = ITask_SetApplicationName(test_task, non_application_name);
     ok(hres == S_OK, "Failed setting name %s: %08x\n",

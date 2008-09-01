@@ -778,7 +778,7 @@ static BOOL parse_template_members_list(parse_buffer * buf)
       }
       if (cur_member->idx_template == buf->pdxf->nb_xtemplates)
       {
-        TRACE("Reference to non existing template '%s'\n", (char*)buf->value);
+        TRACE("Reference to a nonexistent template '%s'\n", (char*)buf->value);
         return FALSE;
       }
       if (check_TOKEN(buf) == TOKEN_NAME)
@@ -817,7 +817,7 @@ static BOOL parse_template_members_list(parse_buffer * buf)
         }
         if (cur_member->idx_template == buf->pdxf->nb_xtemplates)
         {
-          TRACE("Reference to non existing template '%s'\n", (char*)buf->value);
+          TRACE("Reference to nonexistent template '%s'\n", (char*)buf->value);
           return FALSE;
         }
       }

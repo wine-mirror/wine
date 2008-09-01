@@ -171,7 +171,7 @@ static void test_NullURLs(void)
 
         hr = urlA->lpVtbl->GetURL(urlA, &url);
         ok(SUCCEEDED(hr), "getting uninitialized URL unexpectedly failed, hr=0x%x\n", hr);
-        ok(url == NULL, "unitialized URL is not NULL but %s\n", url);
+        ok(url == NULL, "uninitialized URL is not NULL but %s\n", url);
 
         hr = urlA->lpVtbl->SetURL(urlA, NULL, 0);
         ok(SUCCEEDED(hr), "setting NULL URL unexpectedly failed, hr=0x%x\n", hr);

@@ -3882,7 +3882,7 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
      *  This usually means that ARB_tex_npot is supported in hardware as long as the application is staying
      *  within the limits enforced by the ARB_texture_rectangle extension. This however is not true for the
      *  FX series, which instantly falls back to a slower software path as soon as ARB_tex_npot is used.
-     *  We therefore completly remove ARB_tex_npot from the list of supported extensions.
+     *  We therefore completely remove ARB_tex_npot from the list of supported extensions.
      *
      *  Note that wine_normalized_texrect can't be used in this case because internally it uses ARB_tex_npot,
      *  triggering the software fallback. There is not much we can do here apart from disabling the

@@ -1110,7 +1110,7 @@ static void test_enum_svc(void)
     /* Store the number of returned services */
     tempreturned = returned;
 
-    /* Allocate less then the needed bytes and don't specify a resume handle */
+    /* Allocate less than the needed bytes and don't specify a resume handle */
     services = HeapAlloc(GetProcessHeap(), 0, tempneeded - 1);
     bufsize = tempneeded - 1;
     needed = 0xdeadbeef;
@@ -1128,7 +1128,7 @@ static void test_enum_svc(void)
     }
     HeapFree(GetProcessHeap(), 0, services);
 
-    /* Allocate less then the needed bytes, this time with a correct resume handle */
+    /* Allocate less than the needed bytes, this time with a correct resume handle */
     services = HeapAlloc(GetProcessHeap(), 0, tempneeded - 1);
     bufsize = tempneeded - 1;
     needed = 0xdeadbeef;
@@ -1173,8 +1173,8 @@ static void test_enum_svc(void)
 
     /* Vista only shows the drivers with a state of SERVICE_RUNNING as active
      * and doesn't count the others as inactive. This means that Vista could
-     * show a total that is greater then the sum of active and inactive drivers.
-     *
+     * show a total that is greater than the sum of active and inactive
+     * drivers.
      * The number of active and inactive drivers is greatly influenced by the
      * time when tests are run, immediately after boot or later for example.
      *
@@ -1460,7 +1460,7 @@ static void test_enum_svc(void)
     /* Store the number of returned services */
     tempreturned = returned;
 
-    /* Allocate less then the needed bytes and don't specify a resume handle */
+    /* Allocate less than the needed bytes and don't specify a resume handle */
     exservices = HeapAlloc(GetProcessHeap(), 0, tempneeded - 1);
     bufsize = tempneeded - 1;
     needed = 0xdeadbeef;
@@ -1478,7 +1478,7 @@ static void test_enum_svc(void)
     }
     HeapFree(GetProcessHeap(), 0, exservices);
 
-    /* Allocate less then the needed bytes, this time with a correct resume handle */
+    /* Allocate less than the needed bytes, this time with a correct resume handle */
     exservices = HeapAlloc(GetProcessHeap(), 0, tempneeded - 1);
     bufsize = tempneeded - 1;
     needed = 0xdeadbeef;
