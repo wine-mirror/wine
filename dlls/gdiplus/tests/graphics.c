@@ -540,9 +540,9 @@ static void test_Get_Release_DC(void)
     status = GdipGetDC(NULL, &retdc);
     expect(InvalidParameter, status);
 
-    status = GdipReleaseDC(NULL, (HDC)0);
+    status = GdipReleaseDC(NULL, NULL);
     expect(InvalidParameter, status);
-    status = GdipReleaseDC(graphics, (HDC)0);
+    status = GdipReleaseDC(graphics, NULL);
     expect(InvalidParameter, status);
     status = GdipReleaseDC(NULL, (HDC)0xdeadbeef);
     expect(InvalidParameter, status);
