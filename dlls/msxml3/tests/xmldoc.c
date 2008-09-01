@@ -350,4 +350,6 @@ START_TEST(xmldoc)
 
     test_xmldoc();
     test_createElement();
+
+    CoUninitialize();
 }
