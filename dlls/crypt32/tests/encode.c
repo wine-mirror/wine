@@ -4822,7 +4822,7 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     accessDescription[0].AccessLocation.dwAltNameChoice = CERT_ALT_NAME_URL;
-    accessDescription[0].AccessLocation.pwszURL = (LPWSTR)url;
+    U(accessDescription[0].AccessLocation).pwszURL = (LPWSTR)url;
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
@@ -4838,9 +4838,9 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     accessDescription[1].pszAccessMethod = oid2;
     accessDescription[1].AccessLocation.dwAltNameChoice =
      CERT_ALT_NAME_IP_ADDRESS;
-    accessDescription[1].AccessLocation.IPAddress.cbData =
+    U(accessDescription[1].AccessLocation).IPAddress.cbData =
      sizeof(encodedIPAddr);
-    accessDescription[1].AccessLocation.IPAddress.pbData =
+    U(accessDescription[1].AccessLocation).IPAddress.pbData =
      (LPBYTE)encodedIPAddr;
     aia.cAccDescr = 2;
     ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
@@ -4909,7 +4909,7 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
 
         accessDescription.pszAccessMethod = oid1;
         accessDescription.AccessLocation.dwAltNameChoice = CERT_ALT_NAME_URL;
-        accessDescription.AccessLocation.pwszURL = (LPWSTR)url;
+        U(accessDescription.AccessLocation).pwszURL = (LPWSTR)url;
         aia.cAccDescr = 1;
         aia.rgAccDescr = &accessDescription;
         compareAuthorityInfoAccess("AIA with URL", &aia,
@@ -4929,13 +4929,13 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
 
         accessDescription[0].pszAccessMethod = oid1;
         accessDescription[0].AccessLocation.dwAltNameChoice = CERT_ALT_NAME_URL;
-        accessDescription[0].AccessLocation.pwszURL = (LPWSTR)url;
+        U(accessDescription[0].AccessLocation).pwszURL = (LPWSTR)url;
         accessDescription[1].pszAccessMethod = oid2;
         accessDescription[1].AccessLocation.dwAltNameChoice =
          CERT_ALT_NAME_IP_ADDRESS;
-        accessDescription[1].AccessLocation.IPAddress.cbData =
+        U(accessDescription[1].AccessLocation).IPAddress.cbData =
          sizeof(encodedIPAddr);
-        accessDescription[1].AccessLocation.IPAddress.pbData =
+        U(accessDescription[1].AccessLocation).IPAddress.pbData =
          (LPBYTE)encodedIPAddr;
         aia.cAccDescr = 2;
         aia.rgAccDescr = accessDescription;
@@ -6395,9 +6395,9 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
      * the encoding must include PKCS_7_ASN_ENCODING.
      * (That isn't enough to be decoded, see decoding tests.)
      */
-    info.SignerId.IssuerSerialNumber.Issuer.cbData =
+    U(info.SignerId).IssuerSerialNumber.Issuer.cbData =
      sizeof(encodedCommonNameNoNull);
-    info.SignerId.IssuerSerialNumber.Issuer.pbData = encodedCommonNameNoNull;
+    U(info.SignerId).IssuerSerialNumber.Issuer.pbData = encodedCommonNameNoNull;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
@@ -6414,8 +6414,8 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
-    info.SignerId.IssuerSerialNumber.SerialNumber.cbData = sizeof(serialNum);
-    info.SignerId.IssuerSerialNumber.SerialNumber.pbData = (BYTE *)serialNum;
+    U(info.SignerId).IssuerSerialNumber.SerialNumber.cbData = sizeof(serialNum);
+    U(info.SignerId).IssuerSerialNumber.SerialNumber.pbData = (BYTE *)serialNum;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
@@ -6434,8 +6434,8 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
         }
     }
     info.SignerId.dwIdChoice = CERT_ID_KEY_IDENTIFIER;
-    info.SignerId.KeyId.cbData = sizeof(serialNum);
-    info.SignerId.KeyId.pbData = (BYTE *)serialNum;
+    U(info.SignerId).KeyId.cbData = sizeof(serialNum);
+    U(info.SignerId).KeyId.pbData = (BYTE *)serialNum;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
@@ -6458,8 +6458,8 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
      * (see RFC 3852, section 5.3.)
      */
     info.SignerId.dwIdChoice = CERT_ID_SHA1_HASH;
-    info.SignerId.HashId.cbData = sizeof(hash);
-    info.SignerId.HashId.pbData = (BYTE *)hash;
+    U(info.SignerId).HashId.cbData = sizeof(hash);
+    U(info.SignerId).HashId.pbData = (BYTE *)hash;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
@@ -6467,9 +6467,9 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Now with a hash algo */
     info.SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
-    info.SignerId.IssuerSerialNumber.Issuer.cbData =
+    U(info.SignerId).IssuerSerialNumber.Issuer.cbData =
      sizeof(encodedCommonNameNoNull);
-    info.SignerId.IssuerSerialNumber.Issuer.pbData = encodedCommonNameNoNull;
+    U(info.SignerId).IssuerSerialNumber.Issuer.pbData = encodedCommonNameNoNull;
     info.HashAlgorithm.pszObjId = oid1;
     SetLastError(0xdeadbeef);
     ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
@@ -6556,17 +6556,17 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
         ok(info->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER,
          "Expected CERT_ID_ISSUER_SERIAL_NUMBER, got %d\n",
          info->SignerId.dwIdChoice);
-        ok(info->SignerId.IssuerSerialNumber.Issuer.cbData ==
+        ok(U(info->SignerId).IssuerSerialNumber.Issuer.cbData ==
          sizeof(encodedCommonNameNoNull), "Unexpected size %d\n",
-         info->SignerId.IssuerSerialNumber.Issuer.cbData);
-        ok(!memcmp(info->SignerId.IssuerSerialNumber.Issuer.pbData,
+         U(info->SignerId).IssuerSerialNumber.Issuer.cbData);
+        ok(!memcmp(U(info->SignerId).IssuerSerialNumber.Issuer.pbData,
          encodedCommonNameNoNull,
-         info->SignerId.IssuerSerialNumber.Issuer.cbData),
+         U(info->SignerId).IssuerSerialNumber.Issuer.cbData),
          "Unexpected value\n");
-        ok(info->SignerId.IssuerSerialNumber.SerialNumber.cbData ==
+        ok(U(info->SignerId).IssuerSerialNumber.SerialNumber.cbData ==
          sizeof(serialNum), "Unexpected size %d\n",
-         info->SignerId.IssuerSerialNumber.SerialNumber.cbData);
-        ok(!memcmp(info->SignerId.IssuerSerialNumber.SerialNumber.pbData,
+         U(info->SignerId).IssuerSerialNumber.SerialNumber.cbData);
+        ok(!memcmp(U(info->SignerId).IssuerSerialNumber.SerialNumber.pbData,
          serialNum, sizeof(serialNum)), "Unexpected value\n");
         LocalFree(buf);
     }
@@ -6582,17 +6582,17 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
         ok(info->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER,
          "Expected CERT_ID_ISSUER_SERIAL_NUMBER, got %d\n",
          info->SignerId.dwIdChoice);
-        ok(info->SignerId.IssuerSerialNumber.Issuer.cbData ==
+        ok(U(info->SignerId).IssuerSerialNumber.Issuer.cbData ==
          sizeof(encodedCommonNameNoNull), "Unexpected size %d\n",
-         info->SignerId.IssuerSerialNumber.Issuer.cbData);
-        ok(!memcmp(info->SignerId.IssuerSerialNumber.Issuer.pbData,
+         U(info->SignerId).IssuerSerialNumber.Issuer.cbData);
+        ok(!memcmp(U(info->SignerId).IssuerSerialNumber.Issuer.pbData,
          encodedCommonNameNoNull,
-         info->SignerId.IssuerSerialNumber.Issuer.cbData),
+         U(info->SignerId).IssuerSerialNumber.Issuer.cbData),
          "Unexpected value\n");
-        ok(info->SignerId.IssuerSerialNumber.SerialNumber.cbData ==
+        ok(U(info->SignerId).IssuerSerialNumber.SerialNumber.cbData ==
          sizeof(serialNum), "Unexpected size %d\n",
-         info->SignerId.IssuerSerialNumber.SerialNumber.cbData);
-        ok(!memcmp(info->SignerId.IssuerSerialNumber.SerialNumber.pbData,
+         U(info->SignerId).IssuerSerialNumber.SerialNumber.cbData);
+        ok(!memcmp(U(info->SignerId).IssuerSerialNumber.SerialNumber.pbData,
          serialNum, sizeof(serialNum)), "Unexpected value\n");
         ok(!strcmp(info->HashAlgorithm.pszObjId, oid1),
          "Expected %s, got %s\n", oid1, info->HashAlgorithm.pszObjId);
@@ -6611,17 +6611,17 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
         ok(info->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER,
          "Expected CERT_ID_ISSUER_SERIAL_NUMBER, got %d\n",
          info->SignerId.dwIdChoice);
-        ok(info->SignerId.IssuerSerialNumber.Issuer.cbData ==
+        ok(U(info->SignerId).IssuerSerialNumber.Issuer.cbData ==
          sizeof(encodedCommonNameNoNull), "Unexpected size %d\n",
-         info->SignerId.IssuerSerialNumber.Issuer.cbData);
-        ok(!memcmp(info->SignerId.IssuerSerialNumber.Issuer.pbData,
+         U(info->SignerId).IssuerSerialNumber.Issuer.cbData);
+        ok(!memcmp(U(info->SignerId).IssuerSerialNumber.Issuer.pbData,
          encodedCommonNameNoNull,
-         info->SignerId.IssuerSerialNumber.Issuer.cbData),
+         U(info->SignerId).IssuerSerialNumber.Issuer.cbData),
          "Unexpected value\n");
-        ok(info->SignerId.IssuerSerialNumber.SerialNumber.cbData ==
+        ok(U(info->SignerId).IssuerSerialNumber.SerialNumber.cbData ==
          sizeof(serialNum), "Unexpected size %d\n",
-         info->SignerId.IssuerSerialNumber.SerialNumber.cbData);
-        ok(!memcmp(info->SignerId.IssuerSerialNumber.SerialNumber.pbData,
+         U(info->SignerId).IssuerSerialNumber.SerialNumber.cbData);
+        ok(!memcmp(U(info->SignerId).IssuerSerialNumber.SerialNumber.pbData,
          serialNum, sizeof(serialNum)), "Unexpected value\n");
         ok(!strcmp(info->HashAlgorithm.pszObjId, oid1),
          "Expected %s, got %s\n", oid1, info->HashAlgorithm.pszObjId);
@@ -6641,17 +6641,17 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
         ok(info->SignerId.dwIdChoice == CERT_ID_ISSUER_SERIAL_NUMBER,
          "Expected CERT_ID_ISSUER_SERIAL_NUMBER, got %d\n",
          info->SignerId.dwIdChoice);
-        ok(info->SignerId.IssuerSerialNumber.Issuer.cbData ==
+        ok(U(info->SignerId).IssuerSerialNumber.Issuer.cbData ==
          sizeof(encodedCommonNameNoNull), "Unexpected size %d\n",
-         info->SignerId.IssuerSerialNumber.Issuer.cbData);
-        ok(!memcmp(info->SignerId.IssuerSerialNumber.Issuer.pbData,
+         U(info->SignerId).IssuerSerialNumber.Issuer.cbData);
+        ok(!memcmp(U(info->SignerId).IssuerSerialNumber.Issuer.pbData,
          encodedCommonNameNoNull,
-         info->SignerId.IssuerSerialNumber.Issuer.cbData),
+         U(info->SignerId).IssuerSerialNumber.Issuer.cbData),
          "Unexpected value\n");
-        ok(info->SignerId.IssuerSerialNumber.SerialNumber.cbData ==
+        ok(U(info->SignerId).IssuerSerialNumber.SerialNumber.cbData ==
          sizeof(serialNum), "Unexpected size %d\n",
-         info->SignerId.IssuerSerialNumber.SerialNumber.cbData);
-        ok(!memcmp(info->SignerId.IssuerSerialNumber.SerialNumber.pbData,
+         U(info->SignerId).IssuerSerialNumber.SerialNumber.cbData);
+        ok(!memcmp(U(info->SignerId).IssuerSerialNumber.SerialNumber.pbData,
          serialNum, sizeof(serialNum)), "Unexpected value\n");
         ok(!strcmp(info->HashAlgorithm.pszObjId, oid1),
          "Expected %s, got %s\n", oid1, info->HashAlgorithm.pszObjId);
@@ -6675,9 +6675,9 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
         ok(info->SignerId.dwIdChoice == CERT_ID_KEY_IDENTIFIER,
          "Expected CERT_ID_KEY_IDENTIFIER, got %d\n",
          info->SignerId.dwIdChoice);
-        ok(info->SignerId.KeyId.cbData == sizeof(serialNum),
-         "Unexpected size %d\n", info->SignerId.KeyId.cbData);
-        ok(!memcmp(info->SignerId.KeyId.pbData, serialNum, sizeof(serialNum)),
+        ok(U(info->SignerId).KeyId.cbData == sizeof(serialNum),
+         "Unexpected size %d\n", U(info->SignerId).KeyId.cbData);
+        ok(!memcmp(U(info->SignerId).KeyId.pbData, serialNum, sizeof(serialNum)),
          "Unexpected value\n");
         LocalFree(buf);
     }
