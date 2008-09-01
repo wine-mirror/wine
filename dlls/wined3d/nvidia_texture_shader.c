@@ -673,7 +673,7 @@ static void nvrc_fragment_free(IWineD3DDevice *iface) {}
  */
 
 static BOOL nvts_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking shader format support for format %s: [FAILED]", debug_d3dformat(fmt));
+    TRACE("Checking shader format support for format %s: [FAILED]\n", debug_d3dformat(fmt));
     return FALSE;
 }
 

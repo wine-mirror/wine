@@ -5557,7 +5557,7 @@ static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_in
 static HRESULT ffp_fragment_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
 static void ffp_fragment_free(IWineD3DDevice *iface) {}
 static BOOL ffp_conv_supported(WINED3DFORMAT fmt) {
-    TRACE("Checking shader format support for format %s: [FAILED]", debug_d3dformat(fmt));
+    TRACE("Checking shader format support for format %s: [FAILED]\n", debug_d3dformat(fmt));
     return FALSE;
 }
 
