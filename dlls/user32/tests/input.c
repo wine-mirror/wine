@@ -1194,7 +1194,7 @@ static void test_ToUnicode(void)
     todo_wine ok(ret == 0, "ToUnicode for CTRL + Tab didn't return 0 (was %i)\n", ret);
 
     ret = ToUnicode(VK_RETURN, SC_RETURN, state, wStr, 2, 0);
-    ok(ret == 1, "ToUnicode for CTRL + Return didn't return 1 (was %i)", ret);
+    ok(ret == 1, "ToUnicode for CTRL + Return didn't return 1 (was %i)\n", ret);
     if(ret == 1)
         ok(wStr[0]=='\n', "ToUnicode for CTRL + Return was %i (expected 10)\n", wStr[0]);
 
