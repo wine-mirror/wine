@@ -87,7 +87,7 @@ STID_BACK, 		"返回(&B)"
 STID_ALL_FILES, 	"所有文件 (*.*)"
 STID_HELP_FILES_HLP, 	"帮助文件 (*.hlp)"
 STID_FILE_NOT_FOUND_s	"不能打开文件 '%s'. 你想要自己找这个文件吗?"
-STID_NO_RICHEDIT	"找不到 richedit ... 终止"
+STID_NO_RICHEDIT	"找不到 richedit... 终止"
 STID_PSH_INDEX,		"帮助内容: "
 }
 
@@ -155,7 +155,7 @@ STID_BACK, 		"返回(&B)"
 STID_ALL_FILES, 	"所有檔案 (*.*)"
 STID_HELP_FILES_HLP, 	"幫助檔案 (*.hlp)"
 STID_FILE_NOT_FOUND_s	"不能開啟檔案 '%s'. 你想要自己找這個檔案嗎?"
-STID_NO_RICHEDIT	"找不到 richedit ... 終止"
+STID_NO_RICHEDIT	"找不到 richedit... 終止"
 STID_PSH_INDEX,		"幫助內容: "
 }
 
