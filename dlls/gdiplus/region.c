@@ -227,6 +227,9 @@ GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *region, GpRegion **clone)
     return clone_element(&region->node, &element);
 }
 
+/*****************************************************************************
+ * GdipCombineRegionPath [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCombineRegionPath(GpRegion *region, GpPath *path, CombineMode mode)
 {
     GpRegion *path_region;
@@ -270,6 +273,9 @@ out:
     return stat;
 }
 
+/*****************************************************************************
+ * GdipCombineRegionRect [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCombineRegionRect(GpRegion *region,
         GDIPCONST GpRectF *rect, CombineMode mode)
 {
@@ -314,6 +320,9 @@ out:
     return stat;
 }
 
+/*****************************************************************************
+ * GdipCombineRegionRectI [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCombineRegionRectI(GpRegion *region,
         GDIPCONST GpRect *rect, CombineMode mode)
 {
@@ -373,6 +382,9 @@ GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1,
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipCreateRegion [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **region)
 {
     TRACE("%p\n", region);
@@ -505,6 +517,9 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipCreateRegionRect [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateRegionRect(GDIPCONST GpRectF *rect,
         GpRegion **region)
 {
@@ -734,6 +749,9 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipGetRegionDataSize [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
 {
     TRACE("%p, %p\n", region, needed);
@@ -778,9 +796,12 @@ GpStatus WINGDIPAPI GdipIsEqualRegion(GpRegion *region, GpRegion *region2, GpGra
     return NotImplemented;
 }
 
-/* I think graphics is ignored here */
+/*****************************************************************************
+ * GdipIsInfiniteRegion [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *region, GpGraphics *graphics, BOOL *res)
 {
+    /* I think graphics is ignored here */
     TRACE("(%p, %p, %p)\n", region, graphics, res);
 
     if(!region || !graphics || !res)
@@ -791,6 +812,9 @@ GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *region, GpGraphics *graphics,
     return Ok;
 }
 
+/*****************************************************************************
+ * GdipSetEmptye [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *region)
 {
     GpStatus stat;
