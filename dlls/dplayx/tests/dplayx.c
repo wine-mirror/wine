@@ -1223,8 +1223,6 @@ static LPDIRECTPLAY4 create_session(DPSESSIONDESC2 *lpdpsd)
     DPID dpid;
     HRESULT hr;
 
-    CoInitialize(NULL);
-
     CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
                       &IID_IDirectPlay4A, (LPVOID*) &pDP );
 
