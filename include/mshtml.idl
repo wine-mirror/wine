@@ -3357,6 +3357,202 @@ interface IHTMLElement2 : IDispatch
         [retval, out] IHTMLElementCollection **pelColl);
 }
 
+
+/*****************************************************************************
+ *    IHTMLElement3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f673-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLElement3 : IDispatch
+{
+    [id(DISPID_IHTMLELEMENT3_MERGEATTRIBUTES)] HRESULT mergeAttributes([in]
+    IHTMLElement* mergeThis,[optional, in] VARIANT* pvarFlags);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ISMULTILINE)]
+    HRESULT isMultiLine([retval, out] VARIANT_BOOL * p);
+
+    [propget, id(DISPID_IHTMLELEMENT3_CANHAVEHTML)]
+    HRESULT canHaveHTML([retval, out] VARIANT_BOOL * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
+    HRESULT onlayoutcomplete([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE), displaybind, bindable]
+    HRESULT onlayoutcomplete([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
+    HRESULT onpage([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONPAGE), displaybind, bindable]
+    HRESULT onpage([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
+    HRESULT inflateBlock([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_INFLATEBLOCK), hidden, restricted, nonbrowsable]
+    HRESULT inflateBlock([retval, out] VARIANT_BOOL * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
+    HRESULT onbeforedeactivate([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONBEFOREDEACTIVATE), displaybind, bindable]
+    HRESULT onbeforedeactivate([retval, out] VARIANT * p);
+
+    [id(DISPID_IHTMLELEMENT3_SETACTIVE)] HRESULT setActive();
+
+    [propput, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
+    HRESULT contentEditable([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_CONTENTEDITABLE), displaybind, bindable]
+    HRESULT contentEditable([retval, out] BSTR * p);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ISCONTENTEDITABLE)]
+    HRESULT isContentEditable([retval, out] VARIANT_BOOL * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
+    HRESULT hideFocus([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_HIDEFOCUS), displaybind, bindable]
+    HRESULT hideFocus([retval, out] VARIANT_BOOL * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
+    HRESULT disabled([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_DISABLED), displaybind, bindable]
+    HRESULT disabled([retval, out] VARIANT_BOOL * p);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ISDISABLED)]
+    HRESULT isDisabled([retval, out] VARIANT_BOOL * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
+    HRESULT onmove([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOVE), displaybind, bindable]
+    HRESULT onmove([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
+    HRESULT oncontrolselect([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONCONTROLSELECT), displaybind, bindable]
+    HRESULT oncontrolselect([retval, out] VARIANT * p);
+
+    [id(DISPID_IHTMLELEMENT3_FIREEVENT)]
+    HRESULT fireEvent(
+        [in] BSTR bstrEventName,
+        [optional, in] VARIANT* pvarEventObject,
+        [retval, out] VARIANT_BOOL* pfCancelled);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
+    HRESULT onresizestart([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZESTART), displaybind, bindable]
+    HRESULT onresizestart([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
+    HRESULT onresizeend([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONRESIZEEND), displaybind, bindable]
+    HRESULT onresizeend([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
+    HRESULT onmovestart([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOVESTART), displaybind, bindable]
+    HRESULT onmovestart([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
+    HRESULT onmoveend([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOVEEND), displaybind, bindable]
+    HRESULT onmoveend([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
+    HRESULT onmouseenter([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSEENTER), displaybind, bindable]
+    HRESULT onmouseenter([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
+    HRESULT onmouseleave([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONMOUSELEAVE), displaybind, bindable]
+    HRESULT onmouseleave([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
+    HRESULT onactivate([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONACTIVATE), displaybind, bindable]
+    HRESULT onactivate([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
+    HRESULT ondeactivate([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT3_ONDEACTIVATE), displaybind, bindable]
+    HRESULT ondeactivate([retval, out] VARIANT * p);
+
+    [id(DISPID_IHTMLELEMENT3_DRAGDROP)] HRESULT dragDrop([retval, out]
+    VARIANT_BOOL* pfRet);
+
+    [propget, id(DISPID_IHTMLELEMENT3_GLYPHMODE), hidden, restricted, nonbrowsable]
+    HRESULT glyphMode([retval, out] LONG * p);
+};
+/*****************************************************************************
+ *    IHTMLElement4 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f80f-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLElement4 : IDispatch
+{
+    [propput, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
+    HRESULT onmousewheel([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT4_ONMOUSEWHEEL), displaybind, bindable]
+    HRESULT onmousewheel([retval, out] VARIANT * p);
+
+    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
+    HRESULT normalize();
+
+    [id(DISPID_IHTMLELEMENT4_GETATTRIBUTENODE)]
+    HRESULT getAttributeNode([in] BSTR bstrname,
+        [retval, out] IHTMLDOMAttribute** ppAttribute);
+
+    [id(DISPID_IHTMLELEMENT4_SETATTRIBUTENODE)]
+    HRESULT setAttributeNode(
+        [in] IHTMLDOMAttribute* pattr,
+        [retval, out] IHTMLDOMAttribute** ppretAttribute);
+
+    [id(DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE)]
+    HRESULT removeAttributeNode(
+        [in] IHTMLDOMAttribute* pattr,
+        [retval, out] IHTMLDOMAttribute** ppretAttribute);
+
+    [propput, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
+    HRESULT onbeforeactivate([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT4_ONBEFOREACTIVATE), displaybind, bindable]
+    HRESULT onbeforeactivate([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
+    HRESULT onfocusin([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSIN), displaybind, bindable]
+    HRESULT onfocusin([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
+    HRESULT onfocusout([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT4_ONFOCUSOUT), displaybind, bindable]
+    HRESULT onfocusout([retval, out] VARIANT * p);
+};
+
 /*****************************************************************************
  *    IHTMLGenericElement interface
  */
@@ -5816,7 +6012,91 @@ methods:
 
     [propget, id(DISPID_IHTMLIMGELEMENT2_LONGDESC), displaybind, bindable]
     BSTR longDesc();
-}
+};
+
+/*****************************************************************************
+ *    IHTMLUniqueName interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4d0-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLUniqueName : IDispatch
+{
+    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUENUMBER), hidden]
+    HRESULT uniqueNumber([retval, out] long * p);
+
+    [propget, id(DISPID_IHTMLUNIQUENAME_UNIQUEID), hidden]
+    HRESULT uniqueID([retval, out] BSTR * p);
+};
+
+/*****************************************************************************
+ *    IHTMLControlElement interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4e9-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLControlElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLCONTROLELEMENT_TABINDEX), displaybind, bindable]
+    HRESULT tabIndex([in] short v);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_TABINDEX), displaybind, bindable]
+    HRESULT tabIndex([retval, out] short * p);
+
+    [id(DISPID_IHTMLCONTROLELEMENT_FOCUS)]
+    HRESULT focus();
+
+    [propput, id(DISPID_IHTMLCONTROLELEMENT_ACCESSKEY), displaybind, bindable]
+    HRESULT accessKey([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_ACCESSKEY), displaybind, bindable]
+    HRESULT accessKey([retval, out] BSTR * p);
+
+    [propput, id(DISPID_IHTMLCONTROLELEMENT_ONBLUR), displaybind, bindable]
+    HRESULT onblur([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_ONBLUR), displaybind, bindable]
+    HRESULT onblur([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLCONTROLELEMENT_ONFOCUS), displaybind, bindable]
+    HRESULT onfocus([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_ONFOCUS), displaybind, bindable]
+    HRESULT onfocus([retval, out] VARIANT * p);
+
+    [propput, id(DISPID_IHTMLCONTROLELEMENT_ONRESIZE), displaybind, bindable]
+    HRESULT onresize([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_ONRESIZE), displaybind, bindable]
+    HRESULT onresize([retval, out] VARIANT * p);
+
+    [id(DISPID_IHTMLCONTROLELEMENT_BLUR)]
+    HRESULT blur();
+
+    [id(DISPID_IHTMLCONTROLELEMENT_ADDFILTER)]
+    HRESULT addFilter([in] IUnknown* pUnk);
+
+    [id(DISPID_IHTMLCONTROLELEMENT_REMOVEFILTER)]
+    HRESULT removeFilter([in] IUnknown* pUnk);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTHEIGHT), displaybind, bindable]
+    HRESULT clientHeight([retval, out] long * p);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTWIDTH), displaybind, bindable]
+    HRESULT clientWidth([retval, out] long * p);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTTOP), displaybind, bindable]
+    HRESULT clientTop([retval, out] long * p);
+
+    [propget, id(DISPID_IHTMLCONTROLELEMENT_CLIENTLEFT), displaybind, bindable]
+    HRESULT clientLeft([retval, out] long * p);
+};
 
 /*****************************************************************************
  *    IHTMLBodyElement interface
@@ -11937,6 +12217,210 @@ methods:
 
     [id(DISPID_HTMLTEXTCONTAINEREVENTS_ONSELECT)]
     void onselect();
+};
+
+/*****************************************************************************
+ *    HTMLTextContainerEvents2 interface
+ */
+[
+    hidden,
+    uuid(3050f624-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface HTMLTextContainerEvents2
+{
+properties:
+methods:
+    [id(DISPID_HTMLELEMENTEVENTS2_ONHELP)]
+    VARIANT_BOOL onhelp([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCLICK)]
+    VARIANT_BOOL onclick([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDBLCLICK)]
+    VARIANT_BOOL ondblclick([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONKEYPRESS)]
+    VARIANT_BOOL onkeypress([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONKEYDOWN)]
+    void onkeydown([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONKEYUP)]
+    void onkeyup([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEOUT)]
+    void onmouseout([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEOVER)]
+    void onmouseover([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEMOVE)]
+    void onmousemove([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEDOWN)]
+    void onmousedown([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEUP)]
+    void onmouseup([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONSELECTSTART)]
+    VARIANT_BOOL onselectstart([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONFILTERCHANGE)]
+    void onfilterchange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGSTART)]
+    VARIANT_BOOL ondragstart([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFOREUPDATE)]
+    VARIANT_BOOL onbeforeupdate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONAFTERUPDATE)]
+    void onafterupdate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONERRORUPDATE)]
+    VARIANT_BOOL onerrorupdate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONROWEXIT)]
+    VARIANT_BOOL onrowexit([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONROWENTER)]
+    void onrowenter([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDATASETCHANGED)]
+    void ondatasetchanged([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDATAAVAILABLE)]
+    void ondataavailable([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDATASETCOMPLETE)]
+    void ondatasetcomplete([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONLOSECAPTURE)]
+    void onlosecapture([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONPROPERTYCHANGE)]
+    void onpropertychange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONSCROLL)]
+    void onscroll([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONFOCUS)]
+    void onfocus([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBLUR)]
+    void onblur([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONRESIZE)]
+    void onresize([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAG)]
+    VARIANT_BOOL ondrag([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGEND)]
+    void ondragend([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGENTER)]
+    VARIANT_BOOL ondragenter([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGOVER)]
+    VARIANT_BOOL ondragover([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDRAGLEAVE)]
+    void ondragleave([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDROP)]
+    VARIANT_BOOL ondrop([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFORECUT)]
+    VARIANT_BOOL onbeforecut([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCUT)]
+    VARIANT_BOOL oncut([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFORECOPY)]
+    VARIANT_BOOL onbeforecopy([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCOPY)]
+    VARIANT_BOOL oncopy([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFOREPASTE)]
+    VARIANT_BOOL onbeforepaste([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONPASTE)]
+    VARIANT_BOOL onpaste([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCONTEXTMENU)]
+    VARIANT_BOOL oncontextmenu([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONROWSDELETE)]
+    void onrowsdelete([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONROWSINSERTED)]
+    void onrowsinserted([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCELLCHANGE)]
+    void oncellchange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONREADYSTATECHANGE)]
+    void onreadystatechange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONLAYOUTCOMPLETE)]
+    void onlayoutcomplete([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONPAGE)]
+    void onpage([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEENTER)]
+    void onmouseenter([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSELEAVE)]
+    void onmouseleave([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONACTIVATE)]
+    void onactivate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONDEACTIVATE)]
+    void ondeactivate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFOREDEACTIVATE)]
+    VARIANT_BOOL onbeforedeactivate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONBEFOREACTIVATE)]
+    VARIANT_BOOL onbeforeactivate([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONFOCUSIN)]
+    void onfocusin([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONFOCUSOUT)]
+    void onfocusout([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOVE)]
+    void onmove([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONCONTROLSELECT)]
+    VARIANT_BOOL oncontrolselect([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOVESTART)]
+    VARIANT_BOOL onmovestart([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOVEEND)]
+    void onmoveend([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONRESIZESTART)]
+    VARIANT_BOOL onresizestart([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONRESIZEEND)]
+    void onresizeend([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLELEMENTEVENTS2_ONMOUSEWHEEL)]
+    VARIANT_BOOL onmousewheel([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLTEXTCONTAINEREVENTS2_ONCHANGE)]
+    void onchange([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLTEXTCONTAINEREVENTS2_ONSELECT)]
+    void onselect([in] IHTMLEventObj* pEvtObj);
 };
 
 /*****************************************************************************
