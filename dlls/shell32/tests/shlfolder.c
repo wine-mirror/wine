@@ -1271,7 +1271,12 @@ static void test_ITEMIDLIST_format(void) {
     ok(bResult, "SHGetSpecialFolderPathW failed! Last error: %u\n", GetLastError());
     if (!bResult) return;
 
+    SetLastError(0xdeadbeef);
     bResult = SetCurrentDirectoryW(wszPersonal);
+    if (!bResult && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        win_skip("Most W-calls are not implemented\n");
+        return;
+    }
     ok(bResult, "SetCurrentDirectory failed! Last error: %u\n", GetLastError());
     if (!bResult) return;
 
