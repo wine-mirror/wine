@@ -205,12 +205,12 @@ STRING_UNTITLED,       "(未命名)"
 STRING_ALL_FILES,      "所有檔案 (*.*)"
 STRING_TEXT_FILES_TXT, "文本檔案 (*.txt)"
 
-STRING_TOOLARGE,       "記事本不能開啟 '%s' 這麼大的檔案, \n請使用別的編輯器。"
+STRING_TOOLARGE,       "記事本不能開啟 '%s' 這麼大的檔案,\n請使用別的編輯器。"
 STRING_NOTEXT,         "您沒有輸入任何文本。\n請輸入一些再試"
 STRING_DOESNOTEXIST,   "檔案 '%s'\n不存在\n\n您想新建一個檔案嗎？"
 STRING_NOTSAVED,       "檔案 '%s'\n正文已更改\n\n是否儲存更改？"
 STRING_NOTFOUND,       "找不到: '%s'"
-STRING_OUT_OF_MEMORY,  "沒有足夠的內存來完成此項任務, \n請關閉一些程式後再試。"
+STRING_OUT_OF_MEMORY,  "沒有足夠的內存來完成此項任務,\n請關閉一些程式後再試。"
 }
 
 #pragma code_page(default)
