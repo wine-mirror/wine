@@ -1475,7 +1475,7 @@ static HRESULT WINAPI domdoc_save(
             IXMLDOMDocument_Release(pDocument);
         }
 
-        TRACE("ret %d", ret);
+        TRACE("ret %d\n", ret);
 
         return ret;
     }
