@@ -70,8 +70,11 @@ dlls/ole2nls.dll16
 dlls/ole2prox.dll16
 dlls/ole2thk.dll16
 dlls/ole32/dcom.h
+dlls/ole32/dcom_p.c
 dlls/ole32/irot.h
 dlls/ole32/irot_c.c
+dlls/ole32/ole32_unknwn.h
+dlls/ole32/ole32_unknwn_p.c
 dlls/oleaut32/oleaut32_oaidl.h
 dlls/oleaut32/oleaut32_oaidl_p.c
 dlls/oleaut32/tests/test_tlb.tlb

@@ -1957,3 +1957,47 @@ void __RPC_USER SNB_UserFree(ULONG *pFlags, SNB *pSnb)
 {
     FIXME(":stub\n");
 }
+
+/* call_as/local stubs for unknwn.idl */
+
+HRESULT CALLBACK IClassFactory_CreateInstance_Proxy(
+    IClassFactory* This,
+    IUnknown *pUnkOuter,
+    REFIID riid,
+    void **ppvObject)
+{
+    TRACE("(%p, %s, %p)\n", pUnkOuter, debugstr_guid(riid), ppvObject);
+    *ppvObject = NULL;
+    if (pUnkOuter)
+    {
+        ERR("aggregation is not allowed on remote objects\n");
+        return CLASS_E_NOAGGREGATION;
+    }
+    return IClassFactory_RemoteCreateInstance_Proxy(This, riid,
+                                                    (IUnknown **) ppvObject);
+}
+
+HRESULT __RPC_STUB IClassFactory_CreateInstance_Stub(
+    IClassFactory* This,
+    REFIID riid,
+    IUnknown **ppvObject)
+{
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppvObject);
+    return IClassFactory_CreateInstance(This, NULL, riid, (void **) ppvObject);
+}
+
+HRESULT CALLBACK IClassFactory_LockServer_Proxy(
+    IClassFactory* This,
+    BOOL fLock)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IClassFactory_LockServer_Stub(
+    IClassFactory* This,
+    BOOL fLock)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
