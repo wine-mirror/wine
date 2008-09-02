@@ -251,7 +251,6 @@ static void test_RtlGetFullPathName_U(void)
             { "c:/TEST",                     "c:\\test",         "test"},
             { "c:/test/file",                "c:\\test\\file",   "file"},
             { "c:/test./file",               "c:\\test\\file",   "file"},
-            { "c:/test../file",              "c:\\test.\\file",  "file"},
             { "c:/test.. /file",             "c:\\test.. \\file","file"},
             { "c:/test/././file",            "c:\\test\\file",   "file"},
             { "c:/test\\.\\.\\file",         "c:\\test\\file",   "file"},
@@ -267,6 +266,7 @@ static void test_RtlGetFullPathName_U(void)
     WCHAR pathbufW[2*MAX_PATH], rbufferW[MAX_PATH];
     CHAR  rbufferA[MAX_PATH], rfileA[MAX_PATH];
     ULONG ret;
+    NTSTATUS status;
     WCHAR *file_part;
     DWORD reslen;
     UINT len;
@@ -292,6 +292,23 @@ static void test_RtlGetFullPathName_U(void)
         }
     }
 
+    /* "c:/test../file",              "c:\\test.\\file",  "file"}, */
+    pRtlMultiByteToUnicodeN(pathbufW, sizeof(pathbufW), NULL,
+                            "c:/test../file", strlen("c:/test../file") + 1);
+    ret = pRtlGetFullPathName_U(pathbufW, MAX_PATH, rbufferW, &file_part);
+    ok(ret == strlen("c:\\test.\\file") * sizeof(WCHAR) ||
+       ret == strlen("c:\\test..\\file") * sizeof(WCHAR), /* Vista */
+       "Expected 26 or 28, got %d\n", ret);
+    status = pRtlUnicodeToMultiByteN(rbufferA, MAX_PATH, &reslen, rbufferW,
+                                     (lstrlenW(rbufferW) + 1) * sizeof(WCHAR));
+    ok(status == STATUS_SUCCESS, "RtlUnicodeToMultiByteN failed\n");
+    ok(!lstrcmpiA(rbufferA, "c:\\test.\\file") ||
+       !lstrcmpiA(rbufferA, "c:\\test..\\file"),
+       "Expected \"c:\\test.\\file\" or \"c:\\test..\\file\", got \"%s\"\n", rbufferA);
+    status = pRtlUnicodeToMultiByteN(rfileA, MAX_PATH, &reslen, file_part,
+                                     (lstrlenW(file_part) + 1) * sizeof(WCHAR));
+    ok(status == STATUS_SUCCESS, "RtlUnicodeToMultiByteN failed\n");
+    ok(!lstrcmpiA(rfileA, "file"), "Got \"%s\" expected \"file\"\n", rfileA);
 }
 
 START_TEST(path)
