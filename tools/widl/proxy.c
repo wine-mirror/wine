@@ -553,36 +553,38 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy("\n");
 }
 
-static int write_proxy_methods(type_t *iface)
+static int write_proxy_methods(type_t *iface, int skip)
 {
   const func_t *cur;
   int i = 0;
 
-  if (iface->ref) i = write_proxy_methods(iface->ref);
+  if (iface->ref) i = write_proxy_methods(iface->ref, iface->ref->ref != NULL);
   if (iface->funcs) LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry ) {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       if (i) fprintf(proxy, ",\n");
-      print_proxy( "%s_%s_Proxy", iface->name, get_name(def));
+      if (skip) print_proxy( "0  /* %s_%s_Proxy */", iface->name, get_name(def));
+      else print_proxy( "%s_%s_Proxy", iface->name, get_name(def));
       i++;
     }
   }
   return i;
 }
 
-static int write_stub_methods(type_t *iface)
+static int write_stub_methods(type_t *iface, int skip)
 {
   const func_t *cur;
   int i = 0;
 
-  if (iface->ref) i = write_stub_methods(iface->ref);
+  if (iface->ref) i = write_stub_methods(iface->ref, TRUE);
   else return i; /* skip IUnknown */
 
   if (iface->funcs) LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry ) {
     var_t *def = cur->def;
     if (!is_local(def->attrs)) {
       if (i) fprintf(proxy,",\n");
-      print_proxy( "%s_%s_Stub", iface->name, get_name(def));
+      if (skip) print_proxy("STUB_FORWARDING_FUNCTION");
+      else print_proxy( "%s_%s_Stub", iface->name, get_name(def));
       i++;
     }
   }
@@ -637,7 +639,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "},\n");
   print_proxy( "{\n");
   indent++;
-  write_proxy_methods(iface);
+  write_proxy_methods(iface, FALSE);
   fprintf(proxy, "\n");
   indent--;
   print_proxy( "}\n");
@@ -649,7 +651,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "static const PRPC_STUB_FUNCTION %s_table[] =\n", iface->name);
   print_proxy( "{\n");
   indent++;
-  stubs = write_stub_methods(iface);
+  stubs = write_stub_methods(iface, FALSE);
   fprintf(proxy, "\n");
   indent--;
   fprintf(proxy, "};\n");
