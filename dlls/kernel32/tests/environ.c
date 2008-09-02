@@ -163,7 +163,9 @@ static void test_GetSetEnvironmentVariableW(void)
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value));
-    ok_w(lstrcmpW(buf, fooW) == 0, "should not touch the buffer: %s\n", buf);
+    ok_w(lstrcmpW(buf, fooW) == 0 ||
+         lstrlenW(buf) == 0, /* Vista */
+         "Expected untouched or empty buffer, got \"%s\"\n", buf);
 
     ok(ret_size == lstrlenW(value) + 1,
        "should return length with terminating 0 ret_size=%d\n", ret_size);
