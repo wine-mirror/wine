@@ -922,6 +922,12 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
     UNICODE_STRING      wstr;
     HMODULE             res;
 
+    if (hfile)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
     if (!libnameW)
     {
         SetLastError(ERROR_INVALID_PARAMETER);

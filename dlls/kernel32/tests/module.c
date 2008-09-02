@@ -245,13 +245,12 @@ static void testLoadLibraryEx(void)
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA("testfile.dll", hfile, 0);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_SHARING_VIOLATION,
-           "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_SHARING_VIOLATION ||
+       GetLastError() == ERROR_INVALID_PARAMETER, /* win2k3 */
+       "Expected ERROR_SHARING_VIOLATION or ERROR_INVALID_PARAMETER, got %d\n",
+       GetLastError());
 
-    /* has nothing to do with hFile */
+    /* try to open a file that is locked */
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA("testfile.dll", NULL, 0);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
@@ -261,12 +260,14 @@ static void testLoadLibraryEx(void)
            "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
     }
 
-    /* one last try with hFile */
+    /* lpFileName does not matter */
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA(NULL, hfile, 0);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
-    ok(GetLastError() == ERROR_MOD_NOT_FOUND,
-       "Expected ERROR_MOD_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_MOD_NOT_FOUND ||
+       GetLastError() == ERROR_INVALID_PARAMETER, /* win2k3 */
+       "Expected ERROR_MOD_NOT_FOUND or ERROR_INVALID_PARAMETER, got %d\n",
+       GetLastError());
 
     CloseHandle(hfile);
 
