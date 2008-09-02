@@ -32,6 +32,17 @@
 #include <time.h>
 #include <wine/test.h>
 
+static CHAR string1[MAX_PATH], string2[MAX_PATH];
+
+#define ok_w2(format, szString1, szString2) \
+\
+    if (lstrcmpW(szString1, szString2) != 0) \
+    { \
+        WideCharToMultiByte(CP_ACP, 0, szString1, -1, string1, MAX_PATH, NULL, NULL); \
+        WideCharToMultiByte(CP_ACP, 0, szString2, -1, string2, MAX_PATH, NULL, NULL); \
+        ok(0, format, string1, string2); \
+    }
+
 static HMODULE hmoduleRichEdit;
 
 static HWND new_window(LPCTSTR lpClassName, DWORD dwStyle, HWND parent) {
@@ -3439,9 +3450,7 @@ static void test_EM_SETTEXTEX(void)
   setText.flags = ST_SELECTION;
   SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) buf);
   SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
-  ok(lstrcmpW(buf, TestItem1alt) == 0,
-      "EM_GETTEXTEX results not what was set by EM_SETTEXTEX when"
-      " using ST_SELECTION on an RTF string and non-Unicode\n");
+  ok_w2("Expected \"%s\", got \"%s\"\n", TestItem1alt, buf);
 
   /* The following test demonstrates that EM_SETTEXTEX replacing a selection */
   setText.codepage = 1200;  /* no constant for unicode */
