@@ -1512,6 +1512,7 @@ void parser_release(parser_ctx_t *ctx)
     if(--ctx->ref)
         return;
 
+    jsheap_free(&ctx->heap);
     heap_free(ctx);
 }
 
@@ -1533,7 +1534,11 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, parser_ctx_t **ret)
     script_addref(ctx);
     parser_ctx->script = ctx;
 
+    jsheap_init(&parser_ctx->tmp_heap);
+    jsheap_init(&parser_ctx->heap);
+
     parser_parse(parser_ctx);
+    jsheap_free(&parser_ctx->tmp_heap);
     if(FAILED(parser_ctx->hres)) {
         hres = parser_ctx->hres;
         parser_release(parser_ctx);

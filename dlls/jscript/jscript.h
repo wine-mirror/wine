@@ -29,6 +29,7 @@
 #include "activscp.h"
 
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 typedef struct _script_ctx_t script_ctx_t;
 
@@ -62,6 +63,19 @@ static void inline script_addref(script_ctx_t *ctx)
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
+typedef struct {
+    void **blocks;
+    DWORD block_cnt;
+    DWORD last_block;
+    DWORD offset;
+    struct list custom_blocks;
+} jsheap_t;
+
+void jsheap_init(jsheap_t*);
+void *jsheap_alloc(jsheap_t*,DWORD);
+void jsheap_clear(jsheap_t*);
+void jsheap_free(jsheap_t*);
+
 extern LONG module_ref;
 
 static inline void lock_module(void)
@@ -82,6 +96,11 @@ static inline void *heap_alloc(size_t len)
 static inline void *heap_alloc_zero(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
 }
 
 static inline BOOL heap_free(void *mem)

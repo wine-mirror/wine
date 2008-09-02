@@ -29,6 +29,9 @@ typedef struct _parser_ctx_t {
     source_elements_t *source;
     BOOL nl;
     HRESULT hres;
+
+    jsheap_t tmp_heap;
+    jsheap_t heap;
 } parser_ctx_t;
 
 HRESULT script_parse(script_ctx_t*,const WCHAR*,parser_ctx_t**);
@@ -43,12 +46,12 @@ static inline void parser_addref(parser_ctx_t *ctx)
 
 static inline void *parser_alloc(parser_ctx_t *ctx, DWORD size)
 {
-    return heap_alloc(size); /* FIXME */
+    return jsheap_alloc(&ctx->heap, size);
 }
 
 static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
 {
-    return heap_alloc(size); /* FIXME */
+    return jsheap_alloc(&ctx->tmp_heap, size);
 }
 
 typedef struct {
