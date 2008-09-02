@@ -189,7 +189,7 @@ static void test_setpos(void)
     do_events();
 
     /* the windows are adjusted to they don't overlap */
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
@@ -198,7 +198,7 @@ static void test_setpos(void)
     window1_info.desired_rect.top = screen_height - 20;
     testwindow_setpos(window1);
     do_events();
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
@@ -224,15 +224,15 @@ static void test_setpos(void)
     testwindow_setpos(window3);
     do_events();
 
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom);
-    todo_wine ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
@@ -246,15 +246,15 @@ static void test_setpos(void)
     testwindow_setpos(window3);
     do_events();
 
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom);
-    todo_wine ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
@@ -272,11 +272,11 @@ static void test_setpos(void)
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom);
-    todo_wine ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
@@ -290,15 +290,15 @@ static void test_setpos(void)
     testwindow_setpos(window2);
     do_events();
 
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
-    todo_wine ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom);
-    todo_wine ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
@@ -315,7 +315,7 @@ static void test_setpos(void)
 
     ok(window2_info.allocated_rect.bottom = expected, "window2's bottom is %i, expected %i\n", window2_info.allocated_rect.bottom, expected);
 
-    todo_wine ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
+    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
         "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
         window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);

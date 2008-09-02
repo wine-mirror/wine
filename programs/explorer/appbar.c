@@ -16,6 +16,15 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ * TODO: freedesktop _NET_WM_STRUT integration
+ *
+ * TODO: find when a fullscreen app is in the foreground and send FULLSCREENAPP
+ *  notifications
+ *
+ * TODO: detect changes in the screen size and send ABN_POSCHANGED ?
+ *
+ * TODO: multiple monitor support
  */
 
 #include "wine/unicode.h"
@@ -82,6 +91,39 @@ static void send_poschanged(HWND hwnd)
     }
 }
 
+/* appbar_cliprect: cut out parts of the rectangle that interfere with existing appbars */
+static void appbar_cliprect(PAPPBARDATA abd)
+{
+    struct appbar_data* data;
+    LIST_FOR_EACH_ENTRY(data, &appbars, struct appbar_data, entry)
+    {
+        if (data->hwnd == abd->hWnd)
+        {
+            /* we only care about appbars that were added before this one */
+            return;
+        }
+        if (data->space_reserved)
+        {
+            /* move in the side that corresponds to the other appbar's edge */
+            switch (data->edge)
+            {
+            case ABE_BOTTOM:
+                abd->rc.bottom = min(abd->rc.bottom, data->rc.top);
+                break;
+            case ABE_LEFT:
+                abd->rc.left = max(abd->rc.left, data->rc.right);
+                break;
+            case ABE_RIGHT:
+                abd->rc.right = min(abd->rc.right, data->rc.left);
+                break;
+            case ABE_TOP:
+                abd->rc.top = max(abd->rc.top, data->rc.bottom);
+                break;
+            }
+        }
+    }
+}
+
 static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
 {
     struct appbar_data* data;
@@ -120,10 +162,11 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
             WINE_WARN("removing hwnd %p not on the list\n", abd->hWnd);
         return TRUE;
     case ABM_QUERYPOS:
-        WINE_FIXME("SHAppBarMessage(ABM_QUERYPOS, hwnd=%p, edge=%x, rc=%s): stub\n", abd->hWnd, abd->uEdge, wine_dbgstr_rect(&abd->rc));
+        if (abd->uEdge > ABE_BOTTOM)
+            WINE_WARN("invalid edge %i for %p\n", abd->uEdge, abd->hWnd);
+        appbar_cliprect(abd);
         return TRUE;
     case ABM_SETPOS:
-        WINE_FIXME("SHAppBarMessage(ABM_SETPOS, hwnd=%p, edge=%x, rc=%s): stub\n", abd->hWnd, abd->uEdge, wine_dbgstr_rect(&abd->rc));
         if (abd->uEdge > ABE_BOTTOM)
         {
             WINE_WARN("invalid edge %i for %p\n", abd->uEdge, abd->hWnd);
@@ -131,9 +174,13 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
         }
         if ((data = get_appbar(abd->hWnd)))
         {
+            /* calculate acceptable space */
+            appbar_cliprect(abd);
+
             if (!EqualRect(&abd->rc, &data->rc))
                 send_poschanged(abd->hWnd);
 
+            /* reserve that space for this appbar */
             data->edge = abd->uEdge;
             data->rc = abd->rc;
             data->space_reserved = TRUE;
