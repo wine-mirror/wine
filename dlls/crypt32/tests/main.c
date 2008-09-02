@@ -361,7 +361,9 @@ static void test_CryptInstallOssGlobal(void)
     for(i=0;i<30;i++)
     {
       ret =  pI_CryptInstallOssGlobal(rand(),rand(),rand());
-      ok((9+i) == ret,"Expected %d, got %d\n",(9+i),ret);
+      ok((9+i) == ret ||
+         ret == 0, /* Vista */
+         "Expected %d or 0, got %d\n",(9+i),ret);
     }
 }
 
