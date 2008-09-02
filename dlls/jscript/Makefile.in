@@ -11,7 +11,8 @@ C_SRCS = \
 	dispex.c \
 	engine.c \
 	jscript.c \
-	jscript_main.c
+	jscript_main.c \
+	lex.c
 
 IDL_TLB_SRCS = jsglobal.idl
 

@@ -1543,9 +1543,3 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, parser_ctx_t **ret)
     *ret = parser_ctx;
     return S_OK;
 }
-
-int parser_lex(void *lval, parser_ctx_t *ctx)
-{
-    FIXME("\n");
-    return 0;
-}
