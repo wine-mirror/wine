@@ -1184,7 +1184,6 @@ static void test_client_init(void)
     TEST_ZERO(PointerLength, "%d");
     TEST_ZERO(fInDontFree, "%d");
     TEST_ZERO(fDontCallFreeInst, "%d");
-    TEST_ZERO(fInOnlyParam, "%d");
     ok(stubMsg.fInOnlyParam == 0 ||
        stubMsg.fInOnlyParam == -1, /* Vista */
        "fInOnlyParam should have been set to 0 or -1 instead of %d\n", stubMsg.fInOnlyParam);
