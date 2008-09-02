@@ -373,6 +373,15 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH];
         ok(0, format, string1, string2); \
     }
 
+#define ok_w2n(format, szString1, szString2, len) \
+\
+    if (memcmp(szString1, szString2, len * sizeof(WCHAR)) != 0) \
+    { \
+        WideCharToMultiByte(CP_ACP, 0, szString1, -1, string1, MAX_PATH, NULL, NULL); \
+        WideCharToMultiByte(CP_ACP, 0, szString2, -1, string2, MAX_PATH, NULL, NULL); \
+        ok(0, format, string1, string2); \
+    }
+
 #define ok_aw(format, aString, wString) \
 \
     WideCharToMultiByte(CP_ACP, 0, wString, -1, string1, MAX_PATH, NULL, NULL); \
@@ -1888,10 +1897,12 @@ static void test_Installer_RegistryValue(void)
     ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
     ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szFour);
 
+    /* Vista does not NULL-terminate this case */
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(curr_user, szKey, szFive, szString);
     ok(hr == S_OK, "Installer_RegistryValueW failed, hresult 0x%08x\n", hr);
-    ok_w2("Registry value \"%s\" does not match expected \"%s\"\n", szString, szFiveHi);
+    ok_w2n("Registry value \"%s\" does not match expected \"%s\"\n",
+           szString, szFiveHi, lstrlenW(szFiveHi));
 
     memset(szString, 0, sizeof(szString));
     hr = Installer_RegistryValueW(curr_user, szKey, szSix, szString);
