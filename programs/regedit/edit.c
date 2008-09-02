@@ -379,7 +379,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
             HeapFree( GetProcessHeap(), 0, stringValueData);
             stringValueData = tmpValueData;
 
-            lRet = RegSetValueExW(hKey, valueName, 0, type, (LPBYTE)stringValueData, j * sizeof(TCHAR));
+            lRet = RegSetValueExW(hKey, valueName, 0, type, (LPBYTE)stringValueData, j * sizeof(WCHAR));
             if (lRet == ERROR_SUCCESS) result = TRUE;
             else error_code_messagebox(hwnd, lRet);
         }

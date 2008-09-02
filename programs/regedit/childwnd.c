@@ -123,7 +123,7 @@ static LPWSTR CombinePaths(LPCWSTR pPaths[], int nPaths) {
             if (!*combined)
                 lstrcpyW(combined, pPaths[i]);
             else {
-                combined[pos++] = (TCHAR)'\\';
+                combined[pos++] = '\\';
                 lstrcpyW(combined+pos, pPaths[i]);
             }
             pos += llen;
@@ -144,7 +144,7 @@ static LPWSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     if (hRootKey)
         parts[1] = GetRootKeyNameW(hRootKey);
     if (bFull) {
-        DWORD dwSize = sizeof(text)/sizeof(TCHAR);
+        DWORD dwSize = sizeof(text)/sizeof(WCHAR);
         GetComputerNameW(text, &dwSize);
         parts[0] = text;
     }
