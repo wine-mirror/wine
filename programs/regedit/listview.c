@@ -411,7 +411,7 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
         case NM_RETURN: {
                 int cnt = ListView_GetNextItem(hWnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
 	        if (cnt != -1)
-		    SendMessage(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
+		    SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
 	    }
 	    break;
         case NM_DBLCLK: {
@@ -439,7 +439,7 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
                     ListView_SetItemState(hWnd, -1, 0, LVIS_FOCUSED|LVIS_SELECTED);
                     ListView_SetItemState(hWnd, info.iItem, LVIS_FOCUSED|LVIS_SELECTED,
                         LVIS_FOCUSED|LVIS_SELECTED);
-		    SendMessage(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
+		    SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
                 }
             }
             break;

@@ -379,7 +379,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             if (((int)wParam == LIST_WINDOW) && (g_pChildWnd != NULL)) {
 		if (((LPNMHDR)lParam)->code == NM_SETFOCUS) {
 		    g_pChildWnd->nFocusPanel = 1;
-		} else if (!SendMessage(g_pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam)) {
+		} else if (!SendMessageW(g_pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam)) {
                     goto def;
                 }
             }

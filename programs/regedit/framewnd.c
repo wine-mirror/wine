@@ -56,7 +56,7 @@ static void resize_frame_rect(HWND hWnd, PRECT prect)
     RECT rt;
     /*
     	if (IsWindowVisible(hToolBar)) {
-    		SendMessage(hToolBar, WM_SIZE, 0, 0);
+		SendMessageW(hToolBar, WM_SIZE, 0, 0);
     		GetClientRect(hToolBar, &rt);
     		prect->top = rt.bottom+3;
     		prect->bottom -= rt.bottom+3;
@@ -607,8 +607,8 @@ static INT_PTR CALLBACK removefavorite_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
                 }
                 break;
             case IDOK: {
-                int pos = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-                int len = SendMessage(hwndList, LB_GETTEXTLEN, pos, 0);
+                int pos = SendMessageW(hwndList, LB_GETCURSEL, 0, 0);
+                int len = SendMessageW(hwndList, LB_GETTEXTLEN, pos, 0);
                 if (len>0) {
                     LPWSTR lpName = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
                     SendMessageW(hwndList, LB_GETTEXT, pos, (LPARAM)lpName);
@@ -739,7 +739,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hItem = FindNext(g_pChildWnd->hTreeWnd, hItem, searchString, searchMask, &row);
             SetCursor(hcursorOld);
             if (hItem) {
-                SendMessage( g_pChildWnd->hTreeWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM) hItem );
+                SendMessageW( g_pChildWnd->hTreeWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM) hItem );
                 InvalidateRect(g_pChildWnd->hTreeWnd, NULL, TRUE);
                 UpdateWindow(g_pChildWnd->hTreeWnd);
                 if (row != -1) {
@@ -886,7 +886,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if(ClientToScreen(g_pChildWnd->hWnd, &pts)) {
             SetCursorPos(pts.x, pts.y);
             SetCursor(LoadCursor(0, IDC_SIZEWE));
-            SendMessage(g_pChildWnd->hWnd, WM_LBUTTONDOWN, 0, MAKELPARAM(pt.x, pt.y));
+            SendMessageW(g_pChildWnd->hWnd, WM_LBUTTONDOWN, 0, MAKELPARAM(pt.x, pt.y));
         }
         return TRUE;
     }

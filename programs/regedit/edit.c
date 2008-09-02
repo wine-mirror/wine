@@ -87,17 +87,19 @@ void error(HWND hwnd, INT resId, ...)
 
 static void error_code_messagebox(HWND hwnd, DWORD error_code)
 {
-    LPTSTR lpMsgBuf;
+    LPWSTR lpMsgBuf;
     DWORD status;
-    TCHAR title[256];
-    static TCHAR fallback[] = TEXT("Error displaying error message.\n");
-    if (!LoadString(hInst, IDS_ERROR, title, COUNT_OF(title)))
-        lstrcpy(title, TEXT("Error"));
-    status = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                           NULL, error_code, 0, (LPTSTR)&lpMsgBuf, 0, NULL);
+    WCHAR title[256];
+    static WCHAR fallback[] = {'E','r','r','o','r',' ','d','i','s','p','l','a','y','i','n','g',' ','e','r','r','o','r',' ','m','e','s','s','a','g','e','.','\n',0};
+    static const WCHAR title_error[] = {'E','r','r','o','r',0};
+
+    if (!LoadStringW(hInst, IDS_ERROR, title, COUNT_OF(title)))
+        lstrcpyW(title, title_error);
+    status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                           NULL, error_code, 0, (LPWSTR)&lpMsgBuf, 0, NULL);
     if (!status)
         lpMsgBuf = fallback;
-    MessageBox(hwnd, lpMsgBuf, title, MB_OK | MB_ICONERROR);
+    MessageBoxW(hwnd, lpMsgBuf, title, MB_OK | MB_ICONERROR);
     if (lpMsgBuf != fallback)
         LocalFree(lpMsgBuf);
 }
