@@ -166,6 +166,8 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     HFONT hfont, oldfont;
     TEXTMETRICW textmet;
 
+    TRACE("(%p, %p, %p)\n", hdc, logfont, font);
+
     if(!logfont || !font)
         return InvalidParameter;
 
@@ -206,6 +208,8 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC hdc,
 {
     LOGFONTW lfw;
 
+    TRACE("(%p, %p, %p)\n", hdc, lfa, font);
+
     if(!lfa || !font)
         return InvalidParameter;
 
@@ -224,6 +228,8 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC hdc,
  */
 GpStatus WINGDIPAPI GdipDeleteFont(GpFont* font)
 {
+    TRACE("(%p)\n", font);
+
     if(!font)
         return InvalidParameter;
 
@@ -239,6 +245,8 @@ GpStatus WINGDIPAPI GdipCreateFontFromDC(HDC hdc, GpFont **font)
 {
     HFONT hfont;
     LOGFONTW lfw;
+
+    TRACE("(%p, %p)\n", hdc, font);
 
     if(!font)
         return InvalidParameter;
@@ -294,6 +302,8 @@ GpStatus WINGDIPAPI GdipGetFamily(GpFont *font, GpFontFamily **family)
  */
 GpStatus WINGDIPAPI GdipGetFontSize(GpFont *font, REAL *size)
 {
+    TRACE("(%p, %p)\n", font, size);
+
     if (!(font && size)) return InvalidParameter;
 
     *size = font->emSize;
@@ -348,6 +358,8 @@ GpStatus WINGDIPAPI GdipGetFontStyle(GpFont *font, INT *style)
  */
 GpStatus WINGDIPAPI GdipGetFontUnit(GpFont *font, Unit *unit)
 {
+    TRACE("(%p, %p)\n", font, unit);
+
     if (!(font && unit)) return InvalidParameter;
 
     *unit = font->unit;
@@ -361,6 +373,8 @@ GpStatus WINGDIPAPI GdipGetFontUnit(GpFont *font, Unit *unit)
 GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
     LOGFONTW *lfw)
 {
+    TRACE("(%p, %p, %p)\n", font, graphics, lfw);
+
     /* FIXME: use graphics */
     if(!font || !graphics || !lfw)
         return InvalidParameter;
@@ -375,6 +389,8 @@ GpStatus WINGDIPAPI GdipGetLogFontW(GpFont *font, GpGraphics *graphics,
  */
 GpStatus WINGDIPAPI GdipCloneFont(GpFont *font, GpFont **cloneFont)
 {
+    TRACE("(%p, %p)\n", font, cloneFont);
+
     if(!font || !cloneFont)
         return InvalidParameter;
 
@@ -624,6 +640,8 @@ GpStatus WINGDIPAPI GdipGetCellAscent(GDIPCONST GpFontFamily *family,
 GpStatus WINGDIPAPI GdipGetCellDescent(GDIPCONST GpFontFamily *family,
         INT style, UINT16* CellDescent)
 {
+    TRACE("(%p, %d, %p)\n", family, style, CellDescent);
+
     if (!(family && CellDescent)) return InvalidParameter;
 
     *CellDescent = family->tmw.tmDescent;
@@ -730,6 +748,8 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily **nativeFamily)
 {
     static const WCHAR TimesNewRoman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
 
+    TRACE("(%p)\n", nativeFamily);
+
     if (nativeFamily == NULL) return InvalidParameter;
 
     return GdipCreateFontFamilyFromName(TimesNewRoman, NULL, nativeFamily);
@@ -752,6 +772,8 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamil
     /* FIXME: On Windows this is called Microsoft Sans Serif, this shouldn't
      * affect anything */
     static const WCHAR MSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
+
+    TRACE("(%p)\n", nativeFamily);
 
     if (nativeFamily == NULL) return InvalidParameter;
 
