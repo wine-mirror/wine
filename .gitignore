@@ -75,6 +75,8 @@ dlls/ole32/irot.h
 dlls/ole32/irot_c.c
 dlls/ole32/ole32_objidl.h
 dlls/ole32/ole32_objidl_p.c
+dlls/ole32/ole32_oleidl.h
+dlls/ole32/ole32_oleidl_p.c
 dlls/ole32/ole32_unknwn.h
 dlls/ole32/ole32_unknwn_p.c
 dlls/oleaut32/oleaut32_oaidl.h

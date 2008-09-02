@@ -51,11 +51,13 @@ CSTDSTUBBUFFERRELEASE(&PSFactoryBuffer)
 
 extern const ExtendedProxyFileInfo dcom_ProxyFileInfo;
 extern const ExtendedProxyFileInfo ole32_objidl_ProxyFileInfo;
+extern const ExtendedProxyFileInfo ole32_oleidl_ProxyFileInfo;
 extern const ExtendedProxyFileInfo ole32_unknwn_ProxyFileInfo;
 
 static const ProxyFileInfo *OLE32_ProxyFileList[] = {
   &dcom_ProxyFileInfo,
   &ole32_objidl_ProxyFileInfo,
+  &ole32_oleidl_ProxyFileInfo,
   &ole32_unknwn_ProxyFileInfo,
   NULL
 };

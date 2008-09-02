@@ -2577,3 +2577,182 @@ HRESULT __RPC_STUB IDataObject_SetData_Stub(
     FIXME(":stub\n");
     return E_NOTIMPL;
 }
+
+/* call_as/local stubs for oleidl.idl */
+
+HRESULT CALLBACK IOleInPlaceActiveObject_TranslateAccelerator_Proxy(
+    IOleInPlaceActiveObject* This,
+    LPMSG lpmsg)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IOleInPlaceActiveObject_TranslateAccelerator_Stub(
+    IOleInPlaceActiveObject* This)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IOleInPlaceActiveObject_ResizeBorder_Proxy(
+    IOleInPlaceActiveObject* This,
+    LPCRECT prcBorder,
+    IOleInPlaceUIWindow *pUIWindow,
+    BOOL fFrameWindow)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IOleInPlaceActiveObject_ResizeBorder_Stub(
+    IOleInPlaceActiveObject* This,
+    LPCRECT prcBorder,
+    REFIID riid,
+    IOleInPlaceUIWindow *pUIWindow,
+    BOOL fFrameWindow)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IOleCache2_UpdateCache_Proxy(
+    IOleCache2* This,
+    LPDATAOBJECT pDataObject,
+    DWORD grfUpdf,
+    LPVOID pReserved)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IOleCache2_UpdateCache_Stub(
+    IOleCache2* This,
+    LPDATAOBJECT pDataObject,
+    DWORD grfUpdf,
+    LONG_PTR pReserved)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IEnumOLEVERB_Next_Proxy(
+    IEnumOLEVERB* This,
+    ULONG celt,
+    LPOLEVERB rgelt,
+    ULONG *pceltFetched)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IEnumOLEVERB_Next_Stub(
+    IEnumOLEVERB* This,
+    ULONG celt,
+    LPOLEVERB rgelt,
+    ULONG *pceltFetched)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IViewObject_Draw_Proxy(
+    IViewObject* This,
+    DWORD dwDrawAspect,
+    LONG lindex,
+    void *pvAspect,
+    DVTARGETDEVICE *ptd,
+    HDC hdcTargetDev,
+    HDC hdcDraw,
+    LPCRECTL lprcBounds,
+    LPCRECTL lprcWBounds,
+    BOOL (STDMETHODCALLTYPE *pfnContinue)(ULONG_PTR dwContinue),
+    ULONG_PTR dwContinue)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewObject_Draw_Stub(
+    IViewObject* This,
+    DWORD dwDrawAspect,
+    LONG lindex,
+    ULONG_PTR pvAspect,
+    DVTARGETDEVICE *ptd,
+    ULONG_PTR hdcTargetDev,
+    ULONG_PTR hdcDraw,
+    LPCRECTL lprcBounds,
+    LPCRECTL lprcWBounds,
+    IContinue *pContinue)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IViewObject_GetColorSet_Proxy(
+    IViewObject* This,
+    DWORD dwDrawAspect,
+    LONG lindex,
+    void *pvAspect,
+    DVTARGETDEVICE *ptd,
+    HDC hicTargetDev,
+    LOGPALETTE **ppColorSet)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewObject_GetColorSet_Stub(
+    IViewObject* This,
+    DWORD dwDrawAspect,
+    LONG lindex,
+    ULONG_PTR pvAspect,
+    DVTARGETDEVICE *ptd,
+    ULONG_PTR hicTargetDev,
+    LOGPALETTE **ppColorSet)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IViewObject_Freeze_Proxy(
+    IViewObject* This,
+    DWORD dwDrawAspect,
+    LONG lindex,
+    void *pvAspect,
+    DWORD *pdwFreeze)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewObject_Freeze_Stub(
+    IViewObject* This,
+    DWORD dwDrawAspect,
+    LONG lindex,
+    ULONG_PTR pvAspect,
+    DWORD *pdwFreeze)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IViewObject_GetAdvise_Proxy(
+    IViewObject* This,
+    DWORD *pAspects,
+    DWORD *pAdvf,
+    IAdviseSink **ppAdvSink)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewObject_GetAdvise_Stub(
+    IViewObject* This,
+    DWORD *pAspects,
+    DWORD *pAdvf,
+    IAdviseSink **ppAdvSink)
+{
+    FIXME(":stub\n");
+    return E_NOTIMPL;
+}
