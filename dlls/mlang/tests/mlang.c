@@ -1273,15 +1273,6 @@ static void test_JapaneseConversion(void)
     ok(destsz == unc_jp[i][0],"(%i) Expected %i, got %i\n",i,unc_jp[i][0],destsz);
     ok(srcsz == sjis_jp[i][0],"(%i) Expected %i, got %i\n",i,sjis_jp[i][0],srcsz);
     ok(memcmp(outputW,&unc_jp[i][1],destsz)==0,"(%i) Strings do not match\n",i);
-
-    i = 2;
-    destsz = 30;
-    srcsz = euc_jp[i][0];
-    hr = pConvertINetMultiByteToUnicode(NULL, 50932, &euc_jp[i][1], &srcsz, outputW, &destsz);
-    ok(hr == S_OK,"(%i) Expected S_OK, got %08x\n",i,hr);
-    ok(destsz == unc_jp[i][0],"(%i) Expected %i, got %i\n",i,unc_jp[i][0],destsz);
-    ok(srcsz == euc_jp[i][0],"(%i) Expected %i, got %i\n",i,euc_jp[i][0],srcsz);
-    ok(memcmp(outputW,&unc_jp[i][1],destsz)==0,"(%i) Strings do not match\n",i);
 }
 
 START_TEST(mlang)
