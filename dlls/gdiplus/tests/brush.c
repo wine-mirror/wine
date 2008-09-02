@@ -145,6 +145,30 @@ static void test_getbounds(void)
     GdipDeleteBrush((GpBrush*) brush);
 }
 
+static void test_getgamma(void)
+{
+    GpStatus status;
+    GpLineGradient *line;
+    GpPointF start, end;
+    BOOL gamma;
+
+    start.X = start.Y = 0.0;
+    end.X = end.Y = 100.0;
+
+    status = GdipCreateLineBrush(&start, &end, (ARGB)0xdeadbeef, 0xdeadbeef, WrapModeTile, &line);
+    expect(Ok, status);
+
+    /* NULL arguments */
+    status = GdipGetLineGammaCorrection(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetLineGammaCorrection(line, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetLineGammaCorrection(NULL, &gamma);
+    expect(InvalidParameter, status);
+
+    GdipDeleteBrush((GpBrush*)line);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -162,6 +186,7 @@ START_TEST(brush)
     test_gradientblendcount();
     test_getblend();
     test_getbounds();
+    test_getgamma();
 
     GdiplusShutdown(gdiplusToken);
 }

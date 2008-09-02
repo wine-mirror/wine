@@ -631,7 +631,7 @@ GpStatus WINGDIPAPI GdipGetLineGammaCorrection(GpLineGradient *line,
 {
     TRACE("(%p, %p)\n", line, usinggamma);
 
-    if(!line)
+    if(!line || !usinggamma)
         return InvalidParameter;
 
     *usinggamma = line->gamma;
