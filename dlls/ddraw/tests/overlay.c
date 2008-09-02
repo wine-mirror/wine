@@ -24,6 +24,8 @@
 #include "ddraw.h"
 #include "unknwn.h"
 
+static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
+
 static IDirectDraw7 *ddraw = NULL;
 static IDirectDrawSurface7 *primary = NULL;
 
@@ -51,8 +53,15 @@ static BOOL CreateDirectDraw(void)
     HRESULT hr;
     DDSURFACEDESC2 ddsd;
     IDirectDrawSurface7 *overlay = NULL;
+    HMODULE hmod = GetModuleHandleA("ddraw.dll");
 
-    hr = DirectDrawCreateEx(NULL, (void**)&ddraw, &IID_IDirectDraw7, NULL);
+    pDirectDrawCreateEx = (void*)GetProcAddress(hmod, "DirectDrawCreateEx");
+    if (!pDirectDrawCreateEx) {
+        win_skip("DirectDrawCreateEx is not available\n");
+        return FALSE;
+    }
+
+    hr = pDirectDrawCreateEx(NULL, (void**)&ddraw, &IID_IDirectDraw7, NULL);
     ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", hr);
     if (!ddraw) {
         trace("DirectDrawCreateEx() failed with an error %x\n", hr);
