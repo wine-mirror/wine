@@ -21,11 +21,9 @@
 #define WIN32_LEAN_AND_MEAN     /* Exclude rarely-used stuff from Windows headers */
 #include <windows.h>
 #include <commctrl.h>
-#include <tchar.h>
 #include <stdio.h>
 
 #include "main.h"
-#include "regproc.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -39,18 +37,7 @@ static int last_split;
  * Local module support methods
  */
 
-LPCTSTR GetRootKeyName(HKEY hRootKey)
-{
-    if (hRootKey == HKEY_CLASSES_ROOT) return _T("HKEY_CLASSES_ROOT");
-    if (hRootKey == HKEY_CURRENT_USER) return _T("HKEY_CURRENT_USER");
-    if (hRootKey == HKEY_LOCAL_MACHINE) return _T("HKEY_LOCAL_MACHINE");
-    if (hRootKey == HKEY_USERS) return _T("HKEY_USERS");
-    if (hRootKey == HKEY_CURRENT_CONFIG) return _T("HKEY_CURRENT_CONFIG");
-    if (hRootKey == HKEY_DYN_DATA) return _T("HKEY_DYN_DATA");
-    return _T("UNKNOWN HKEY, PLEASE REPORT");
-}
-
-LPCWSTR GetRootKeyNameW(HKEY hRootKey)
+LPCWSTR GetRootKeyName(HKEY hRootKey)
 {
     if(hRootKey == HKEY_CLASSES_ROOT)
         return reg_class_namesW[INDEX_HKEY_CLASSES_ROOT];
@@ -142,7 +129,7 @@ static LPWSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     if (!bFull && !hRootKey)
         return NULL;
     if (hRootKey)
-        parts[1] = GetRootKeyNameW(hRootKey);
+        parts[1] = GetRootKeyName(hRootKey);
     if (bFull) {
         DWORD dwSize = sizeof(text)/sizeof(WCHAR);
         GetComputerNameW(text, &dwSize);

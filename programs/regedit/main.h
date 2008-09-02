@@ -107,7 +107,6 @@ extern const WCHAR* reg_class_namesW[];
 extern void ShowAboutBox(HWND hWnd);
 
 /* childwnd.c */
-extern LPCTSTR GetRootKeyName(HKEY hRootKey);
 extern LPWSTR GetItemFullPath(HWND hwndTV, HTREEITEM hItem, BOOL bFull);
 extern LRESULT CALLBACK ChildWndProc(HWND, UINT, WPARAM, LPARAM);
 
