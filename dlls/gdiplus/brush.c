@@ -36,6 +36,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
 {
+    TRACE("(%p, %p)\n", brush, clone);
+
     if(!brush || !clone)
         return InvalidParameter;
 
@@ -125,6 +127,9 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
 {
     COLORREF col = ARGB2COLORREF(startcolor);
 
+    TRACE("(%p, %p, %x, %x, %d, %p)\n", startpoint, endpoint,
+          startcolor, endcolor, wrap, line);
+
     if(!line || !startpoint || !endpoint || wrap == WrapModeClamp)
         return InvalidParameter;
 
@@ -156,6 +161,9 @@ GpStatus WINGDIPAPI GdipCreateLineBrushI(GDIPCONST GpPoint* startpoint,
     GpPointF stF;
     GpPointF endF;
 
+    TRACE("(%p, %p, %x, %x, %d, %p)\n", startpoint, endpoint,
+          startcolor, endcolor, wrap, line);
+
     if(!startpoint || !endpoint)
         return InvalidParameter;
 
@@ -172,6 +180,9 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
     GpLineGradient **line)
 {
     GpPointF start, end;
+
+    TRACE("(%p, %x, %x, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
+          wrap, line);
 
     if(!line || !rect)
         return InvalidParameter;
@@ -190,6 +201,9 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,
 {
     GpRectF rectF;
 
+    TRACE("(%p, %x, %x, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
+          wrap, line);
+
     rectF.X      = (REAL) rect->X;
     rectF.Y      = (REAL) rect->Y;
     rectF.Width  = (REAL) rect->Width;
@@ -205,6 +219,9 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF* rect
     ARGB startcolor, ARGB endcolor, REAL angle, BOOL isAngleScalable, GpWrapMode wrap,
     GpLineGradient **line)
 {
+    TRACE("(%p, %x, %x, %.2f, %d, %d, %p)\n", rect, startcolor, endcolor, angle, isAngleScalable,
+          wrap, line);
+
     return GdipCreateLineBrushFromRect(rect, startcolor, endcolor, LinearGradientModeForwardDiagonal,
                                        wrap, line);
 }
@@ -213,6 +230,9 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngleI(GDIPCONST GpRect* rect
     ARGB startcolor, ARGB endcolor, REAL angle, BOOL isAngleScalable, GpWrapMode wrap,
     GpLineGradient **line)
 {
+    TRACE("(%p, %x, %x, %.2f, %d, %d, %p)\n", rect, startcolor, endcolor, angle, isAngleScalable,
+          wrap, line);
+
     return GdipCreateLineBrushFromRectI(rect, startcolor, endcolor, LinearGradientModeForwardDiagonal,
                                         wrap, line);
 }
@@ -221,6 +241,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     INT count, GpWrapMode wrap, GpPathGradient **grad)
 {
     COLORREF col = ARGB2COLORREF(0xffffffff);
+
+    TRACE("(%p, %d, %d, %p)\n", points, count, wrap, grad);
 
     if(!points || !grad)
         return InvalidParameter;
@@ -278,6 +300,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradientI(GDIPCONST GpPoint* points,
     GpStatus ret;
     INT i;
 
+    TRACE("(%p, %d, %d, %p)\n", points, count, wrap, grad);
+
     if(!points || !grad)
         return InvalidParameter;
 
@@ -304,6 +328,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     GpPathGradient **grad)
 {
     COLORREF col = ARGB2COLORREF(0xffffffff);
+
+    TRACE("(%p, %p)\n", path, grad);
 
     if(!path || !grad)
         return InvalidParameter;
@@ -356,6 +382,8 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
 GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
 {
     COLORREF col = ARGB2COLORREF(color);
+
+    TRACE("(%x, %p)\n", color, sf);
 
     if(!sf)  return InvalidParameter;
 
@@ -433,6 +461,9 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     INT n_x, n_y, n_width, n_height, abs_height, stride, image_stride, i, bytespp;
     BOOL bm_is_selected;
     BYTE *dibits, *buff, *textbits;
+
+    TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %p)\n", image, imageattr, x, y, width, height,
+           texture);
 
     if(!image || !texture || x < 0.0 || y < 0.0 || width < 0.0 || height < 0.0)
         return InvalidParameter;
@@ -538,6 +569,9 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
 GpStatus WINGDIPAPI GdipCreateTextureIAI(GpImage *image, GDIPCONST GpImageAttributes *imageattr,
     INT x, INT y, INT width, INT height, GpTexture **texture)
 {
+    TRACE("(%p, %p, %d, %d, %d, %d, %p)\n", image, imageattr, x, y, width, height,
+           texture);
+
     return GdipCreateTextureIA(image,imageattr,(REAL)x,(REAL)y,(REAL)width,(REAL)height,texture);
 }
 
@@ -556,6 +590,8 @@ GpStatus WINGDIPAPI GdipCreateTexture2I(GpImage *image, GpWrapMode wrapmode,
 
 GpStatus WINGDIPAPI GdipGetBrushType(GpBrush *brush, GpBrushType *type)
 {
+    TRACE("(%p, %p)\n", brush, type);
+
     if(!brush || !type)  return InvalidParameter;
 
     *type = brush->bt;
@@ -565,6 +601,8 @@ GpStatus WINGDIPAPI GdipGetBrushType(GpBrush *brush, GpBrushType *type)
 
 GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
 {
+    TRACE("(%p)\n", brush);
+
     if(!brush)  return InvalidParameter;
 
     switch(brush->bt)
@@ -591,6 +629,8 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
 GpStatus WINGDIPAPI GdipGetLineGammaCorrection(GpLineGradient *line,
     BOOL *usinggamma)
 {
+    TRACE("(%p, %p)\n", line, usinggamma);
+
     if(!line)
         return InvalidParameter;
 
@@ -601,6 +641,8 @@ GpStatus WINGDIPAPI GdipGetLineGammaCorrection(GpLineGradient *line,
 
 GpStatus WINGDIPAPI GdipGetLineWrapMode(GpLineGradient *brush, GpWrapMode *wrapmode)
 {
+    TRACE("(%p, %p)\n", brush, wrapmode);
+
     if(!brush || !wrapmode)
         return InvalidParameter;
 
@@ -612,6 +654,8 @@ GpStatus WINGDIPAPI GdipGetLineWrapMode(GpLineGradient *brush, GpWrapMode *wrapm
 GpStatus WINGDIPAPI GdipGetPathGradientBlend(GpPathGradient *brush, REAL *blend,
     REAL *positions, INT count)
 {
+    TRACE("(%p, %p, %p, %d)\n", brush, blend, positions, count);
+
     if(!brush || !blend || !positions || count <= 0)
         return InvalidParameter;
 
@@ -628,6 +672,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientBlend(GpPathGradient *brush, REAL *blend,
 
 GpStatus WINGDIPAPI GdipGetPathGradientBlendCount(GpPathGradient *brush, INT *count)
 {
+    TRACE("(%p, %p)\n", brush, count);
+
     if(!brush || !count)
         return InvalidParameter;
 
@@ -639,6 +685,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientBlendCount(GpPathGradient *brush, INT *co
 GpStatus WINGDIPAPI GdipGetPathGradientCenterPoint(GpPathGradient *grad,
     GpPointF *point)
 {
+    TRACE("(%p, %p)\n", grad, point);
+
     if(!grad || !point)
         return InvalidParameter;
 
@@ -653,6 +701,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientCenterPointI(GpPathGradient *grad,
 {
     GpStatus ret;
     GpPointF ptf;
+
+    TRACE("(%p, %p)\n", grad, point);
 
     if(!point)
         return InvalidParameter;
@@ -670,6 +720,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientCenterPointI(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipGetPathGradientFocusScales(GpPathGradient *grad,
     REAL *x, REAL *y)
 {
+    TRACE("(%p, %p, %p)\n", grad, x, y);
+
     if(!grad || !x || !y)
         return InvalidParameter;
 
@@ -682,6 +734,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientFocusScales(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipGetPathGradientGammaCorrection(GpPathGradient *grad,
     BOOL *gamma)
 {
+    TRACE("(%p, %p)\n", grad, gamma);
+
     if(!grad || !gamma)
         return InvalidParameter;
 
@@ -693,6 +747,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientGammaCorrection(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipGetPathGradientPointCount(GpPathGradient *grad,
     INT *count)
 {
+    TRACE("(%p, %p)\n", grad, count);
+
     if(!grad || !count)
         return InvalidParameter;
 
@@ -706,6 +762,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientRect(GpPathGradient *brush, GpRectF *rect
     GpRectF r;
     GpPath* path;
     GpStatus stat;
+
+    TRACE("(%p, %p)\n", brush, rect);
 
     if(!brush || !rect)
         return InvalidParameter;
@@ -731,6 +789,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientRectI(GpPathGradient *brush, GpRect *rect
 {
     GpRectF rectf;
     GpStatus stat;
+
+    TRACE("(%p, %p)\n", brush, rect);
 
     if(!brush || !rect)
         return InvalidParameter;
@@ -763,6 +823,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient
 GpStatus WINGDIPAPI GdipGetPathGradientWrapMode(GpPathGradient *brush,
     GpWrapMode *wrapmode)
 {
+    TRACE("(%p, %p)\n", brush, wrapmode);
+
     if(!brush || !wrapmode)
         return InvalidParameter;
 
@@ -773,6 +835,8 @@ GpStatus WINGDIPAPI GdipGetPathGradientWrapMode(GpPathGradient *brush,
 
 GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
 {
+    TRACE("(%p, %p)\n", sf, argb);
+
     if(!sf || !argb)
         return InvalidParameter;
 
@@ -798,6 +862,8 @@ GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
 GpStatus WINGDIPAPI GdipSetLineGammaCorrection(GpLineGradient *line,
     BOOL usegamma)
 {
+    TRACE("(%p, %d)\n", line, usegamma);
+
     if(!line)
         return InvalidParameter;
 
@@ -823,6 +889,8 @@ GpStatus WINGDIPAPI GdipSetLineSigmaBlend(GpLineGradient *line, REAL focus,
 GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient *line,
     GpWrapMode wrap)
 {
+    TRACE("(%p, %d)\n", line, wrap);
+
     if(!line || wrap == WrapModeClamp)
         return InvalidParameter;
 
@@ -834,6 +902,8 @@ GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient *line,
 GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
     ARGB argb)
 {
+    TRACE("(%p, %x)\n", grad, argb);
+
     if(!grad)
         return InvalidParameter;
 
@@ -849,6 +919,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipSetPathGradientCenterPoint(GpPathGradient *grad,
     GpPointF *point)
 {
+    TRACE("(%p, %p)\n", grad, point);
+
     if(!grad || !point)
         return InvalidParameter;
 
@@ -863,6 +935,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterPointI(GpPathGradient *grad,
 {
     GpPointF ptf;
 
+    TRACE("(%p, %p)\n", grad, point);
+
     if(!point)
         return InvalidParameter;
 
@@ -875,6 +949,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientCenterPointI(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipSetPathGradientFocusScales(GpPathGradient *grad,
     REAL x, REAL y)
 {
+    TRACE("(%p, %.2f, %.2f)\n", grad, x, y);
+
     if(!grad)
         return InvalidParameter;
 
@@ -887,6 +963,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientFocusScales(GpPathGradient *grad,
 GpStatus WINGDIPAPI GdipSetPathGradientGammaCorrection(GpPathGradient *grad,
     BOOL gamma)
 {
+    TRACE("(%p, %d)\n", grad, gamma);
+
     if(!grad)
         return InvalidParameter;
 
@@ -927,6 +1005,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
 GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient *grad,
     GpWrapMode wrap)
 {
+    TRACE("(%p, %d)\n", grad, wrap);
+
     if(!grad)
         return InvalidParameter;
 
@@ -937,6 +1017,8 @@ GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient *grad,
 
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
 {
+    TRACE("(%p, %x)\n", sf, argb);
+
     if(!sf)
         return InvalidParameter;
 
@@ -966,6 +1048,8 @@ GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *texture,
 GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient *brush, ARGB color1,
     ARGB color2)
 {
+    TRACE("(%p, %x, %x)\n", brush, color1, color2);
+
     if(!brush)
         return InvalidParameter;
 
@@ -977,6 +1061,8 @@ GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient *brush, ARGB color1,
 
 GpStatus WINGDIPAPI GdipGetLineColors(GpLineGradient *brush, ARGB *colors)
 {
+    TRACE("(%p, %p)\n", brush, colors);
+
     if(!brush || !colors)
         return InvalidParameter;
 
@@ -1029,6 +1115,8 @@ GpStatus WINGDIPAPI GdipTranslateLineTransform(GpLineGradient* brush,
 
 GpStatus WINGDIPAPI GdipGetLineRect(GpLineGradient *brush, GpRectF *rect)
 {
+    TRACE("(%p, %p)\n", brush, rect);
+
     if(!brush || !rect)
         return InvalidParameter;
 
@@ -1045,6 +1133,8 @@ GpStatus WINGDIPAPI GdipGetLineRectI(GpLineGradient *brush, GpRect *rect)
 {
     GpRectF  rectF;
     GpStatus ret;
+
+    TRACE("(%p, %p)\n", brush, rect);
 
     if(!rect)
         return InvalidParameter;
