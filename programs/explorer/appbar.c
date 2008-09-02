@@ -48,6 +48,10 @@ struct appbar_data
     struct list entry;
     HWND hwnd;
     UINT callback_msg;
+    UINT edge;
+    RECT rc;
+    BOOL space_reserved;
+    /* BOOL autohide; */
 };
 
 static struct list appbars = LIST_INIT(appbars);
@@ -63,6 +67,19 @@ static struct appbar_data* get_appbar(HWND hwnd)
     }
 
     return NULL;
+}
+
+/* send_poschanged: send ABN_POSCHANGED to every appbar except one */
+static void send_poschanged(HWND hwnd)
+{
+    struct appbar_data* data;
+    LIST_FOR_EACH_ENTRY(data, &appbars, struct appbar_data, entry)
+    {
+        if (data->hwnd != hwnd)
+        {
+            PostMessageW(data->hwnd, data->callback_msg, ABN_POSCHANGED, 0);
+        }
+    }
 }
 
 static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
@@ -95,6 +112,8 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
         {
             list_remove(&data->entry);
 
+            send_poschanged(abd->hWnd);
+
             HeapFree(GetProcessHeap(), 0, data);
         }
         else
@@ -105,6 +124,24 @@ static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
         return TRUE;
     case ABM_SETPOS:
         WINE_FIXME("SHAppBarMessage(ABM_SETPOS, hwnd=%p, edge=%x, rc=%s): stub\n", abd->hWnd, abd->uEdge, wine_dbgstr_rect(&abd->rc));
+        if (abd->uEdge > ABE_BOTTOM)
+        {
+            WINE_WARN("invalid edge %i for %p\n", abd->uEdge, abd->hWnd);
+            return TRUE;
+        }
+        if ((data = get_appbar(abd->hWnd)))
+        {
+            if (!EqualRect(&abd->rc, &data->rc))
+                send_poschanged(abd->hWnd);
+
+            data->edge = abd->uEdge;
+            data->rc = abd->rc;
+            data->space_reserved = TRUE;
+        }
+        else
+        {
+            WINE_WARN("app sent ABM_SETPOS message for %p without ABM_ADD\n", abd->hWnd);
+        }
         return TRUE;
     case ABM_GETSTATE:
         WINE_FIXME("SHAppBarMessage(ABM_GETSTATE): stub\n");
