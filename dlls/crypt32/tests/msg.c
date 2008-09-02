@@ -2712,8 +2712,10 @@ static void test_msg_control(void)
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     todo_wine
-    ok(!ret && GetLastError() == NTE_BAD_HASH_STATE,
-     "Expected NTE_BAD_HASH_STATE, got %08x\n", GetLastError());
+    ok(!ret &&
+       (GetLastError() == NTE_BAD_HASH_STATE ||
+        GetLastError() == CRYPT_E_MSG_ERROR), /* Vista */
+     "Expected NTE_BAD_HASH_STATE or CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
     CryptMsgClose(msg);
 
     /* Finally, verifying the hash of a detached message in the correct order:
