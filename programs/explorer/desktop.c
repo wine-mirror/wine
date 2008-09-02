@@ -307,6 +307,7 @@ void manage_desktop( WCHAR *arg )
         SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
         SetDeskWallPaper( (LPSTR)-1 );
         initialize_display_settings( hwnd );
+        initialize_appbar();
         initialize_systray();
     }
     else

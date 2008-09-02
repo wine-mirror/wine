@@ -9,6 +9,7 @@ IMPORTS   = rpcrt4 user32 gdi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = comctl32
 
 C_SRCS = \
+	appbar.c \
 	desktop.c \
 	explorer.c \
 	systray.c
