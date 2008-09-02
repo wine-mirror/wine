@@ -735,7 +735,12 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 		{
 			RtlAcquireResourceShared(&iter->lock, TRUE);
 			if (x1)
-				DSOUND_MixToTemporary(iter, (DWORD_PTR)p1 - (DWORD_PTR)iter->buffer->memory, x1, FALSE);
+                        {
+			    if(x1 + (DWORD_PTR)p1 - (DWORD_PTR)iter->buffer->memory > iter->buflen)
+			      hres = DSERR_INVALIDPARAM;
+			    else
+			      DSOUND_MixToTemporary(iter, (DWORD_PTR)p1 - (DWORD_PTR)iter->buffer->memory, x1, FALSE);
+                        }
 			if (x2)
 				DSOUND_MixToTemporary(iter, 0, x2, FALSE);
 			RtlReleaseResource(&iter->lock);

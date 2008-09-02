@@ -197,6 +197,9 @@ static int buffer_refill(play_state_t* state, DWORD size)
         state->written+=len2;
     }
     state->offset=state->written % state->buffer_size;
+    /* some apps blindly pass &ptr1 instead of ptr1 */
+    rc=IDirectSoundBuffer_Unlock(state->dsbo,&ptr1,len1,ptr2,len2);
+    ok(rc==DSERR_INVALIDPARAM, "IDDirectSoundBuffer_Unlock(): expected %08x got %08x, %p %p\n",DSERR_INVALIDPARAM, rc, &ptr1, ptr1);
     rc=IDirectSoundBuffer_Unlock(state->dsbo,ptr1,len1,ptr2,len2);
     ok(rc==DS_OK,"IDirectSoundBuffer_Unlock() failed: %08x\n", rc);
     if (rc!=DS_OK)
