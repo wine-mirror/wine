@@ -390,9 +390,9 @@ static void test_sprintf( void )
     format = "asdf%n";
     x = 0;
     r = sprintf(buffer, format, &x );
-    ok(x == 4, "should write to x\n");
+    ok(x == 4, "should write to x: %d\n", x);
     ok(!strcmp(buffer,"asdf"), "failed\n");
-    ok( r==4, "return count wrong\n");
+    ok( r==4, "return count wrong: %d\n", r);
 
     format = "%-1d";
     r = sprintf(buffer, format,2);
