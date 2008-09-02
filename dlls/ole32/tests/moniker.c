@@ -571,26 +571,18 @@ static void test_ROT(void)
     /* try with our own moniker that doesn't support IROTData */
     hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
         (IUnknown*)&Test_ClassFactory, &MonikerNoROTData, &dwCookie);
-    todo_wine { /* only fails because of lack of IMoniker marshaling */
     ok_ole_success(hr, IRunningObjectTable_Register);
-    }
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
-    todo_wine { /* only fails because of lack of IMoniker marshaling */
     ok_more_than_one_lock();
-    }
 
     expected_method_list = methods_isrunning_no_ROTData;
     hr = IRunningObjectTable_IsRunning(pROT, &MonikerNoROTData);
-    todo_wine { /* only fails because of lack of IMoniker marshaling */
     ok_ole_success(hr, IRunningObjectTable_IsRunning);
-    }
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
     hr = IRunningObjectTable_Revoke(pROT, dwCookie);
-    todo_wine { /* only fails because of lack of IMoniker marshaling */
     ok_ole_success(hr, IRunningObjectTable_Revoke);
-    }
 
     ok_no_locks();
 
@@ -598,26 +590,18 @@ static void test_ROT(void)
     /* try with our own moniker */
     hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
         (IUnknown*)&Test_ClassFactory, &Moniker, &dwCookie);
-    todo_wine { /* only fails because of lack of IMoniker marshaling */
     ok_ole_success(hr, IRunningObjectTable_Register);
-    }
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
-    todo_wine { /* only fails because of lack of IMoniker marshaling */
     ok_more_than_one_lock();
-    }
 
     expected_method_list = methods_isrunning;
     hr = IRunningObjectTable_IsRunning(pROT, &Moniker);
-    todo_wine { /* only fails because of lack of IMoniker marshaling */
     ok_ole_success(hr, IRunningObjectTable_IsRunning);
-    }
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 
     hr = IRunningObjectTable_Revoke(pROT, dwCookie);
-    todo_wine { /* only fails because of lack of IMoniker marshaling */
     ok_ole_success(hr, IRunningObjectTable_Revoke);
-    }
 
     ok_no_locks();
 
