@@ -1900,7 +1900,7 @@ static void test_process_security_child(void)
                         &handle, PROCESS_ALL_ACCESS, TRUE, 0 ),
        "duplicating handle err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS2( handle, PROCESS_ALL_ACCESS,
-                          STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
+                          PROCESS_ALL_ACCESS | PROCESS_QUERY_LIMITED_INFORMATION );
     ok(DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
                         &handle1, PROCESS_VM_READ, TRUE, 0 ),
        "duplicating handle err:%d\n", GetLastError());
