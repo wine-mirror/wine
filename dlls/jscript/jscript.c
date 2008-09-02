@@ -17,6 +17,7 @@
  */
 
 #include "jscript.h"
+#include "engine.h"
 #include "objsafe.h"
 
 #include "wine/debug.h"
@@ -394,9 +395,18 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
     JScript *This = ASPARSE_THIS(iface);
+    parser_ctx_t *parser_ctx;
+    HRESULT hres;
+
     FIXME("(%p)->(%s %s %p %s %x %u %x %p %p)\n", This, debugstr_w(pstrCode),
           debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
           dwSourceContextCookie, ulStartingLine, dwFlags, pvarResult, pexcepinfo);
+
+    hres = script_parse(This->ctx, pstrCode, &parser_ctx);
+    if(FAILED(hres))
+        return hres;
+
+    parser_release(parser_ctx);
     return E_NOTIMPL;
 }
 

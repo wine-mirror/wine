@@ -9,10 +9,14 @@ RC_SRCS = rsrc.rc
 
 C_SRCS = \
 	dispex.c \
+	engine.c \
 	jscript.c \
 	jscript_main.c
 
 IDL_TLB_SRCS = jsglobal.idl
+
+BISON_SRCS = \
+        parser.y
 
 @MAKE_DLL_RULES@
 

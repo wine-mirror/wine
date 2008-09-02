@@ -28,6 +28,8 @@
 #include "dispex.h"
 #include "activscp.h"
 
+#include "wine/unicode.h"
+
 typedef struct _script_ctx_t script_ctx_t;
 
 typedef struct DispatchEx {
