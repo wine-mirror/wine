@@ -2728,7 +2728,9 @@ static void run_domtest(const char *str, domtest_t test)
     }
 
     ref = IHTMLDocument2_Release(doc);
-    ok(!ref, "ref = %d\n", ref);
+    ok(!ref ||
+       ref == 1, /* Vista */
+       "ref = %d\n", ref);
 }
 
 static void gecko_installer_workaround(BOOL disable)
