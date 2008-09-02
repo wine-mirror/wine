@@ -813,7 +813,7 @@ GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *region, GpGraphics *graphics,
 }
 
 /*****************************************************************************
- * GdipSetEmptye [GDIPLUS.@]
+ * GdipSetEmpty [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipSetEmpty(GpRegion *region)
 {
