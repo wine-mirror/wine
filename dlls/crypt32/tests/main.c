@@ -200,8 +200,7 @@ static void test_cryptAllocate(void)
     buf = CryptMemAlloc(0);
     ok(buf != NULL, "CryptMemAlloc failed: %08x\n", GetLastError());
     CryptMemFree(buf);
-    buf = CryptMemRealloc(NULL, 0);
-    ok(!buf, "Expected NULL\n");
+    /* CryptMemRealloc(NULL, 0) fails pre-Vista */
     buf = CryptMemAlloc(0);
     buf = CryptMemRealloc(buf, 1);
     ok(buf != NULL, "CryptMemRealloc failed: %08x\n", GetLastError());
