@@ -33,6 +33,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap* from,
     GpCustomLineCap** to)
 {
+    TRACE("(%p, %p)\n", from, to);
+
     if(!from || !to)
         return InvalidParameter;
 
@@ -108,6 +110,8 @@ GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath
 
 GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap *customCap)
 {
+    TRACE("(%p)\n", customCap);
+
     if(!customCap)
         return InvalidParameter;
 
@@ -121,6 +125,8 @@ GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap *customCap)
 GpStatus WINGDIPAPI GdipGetCustomLineCapStrokeJoin(GpCustomLineCap* customCap,
     GpLineJoin* lineJoin)
 {
+    TRACE("(%p, %p)\n", customCap, lineJoin);
+
     if(!customCap || !lineJoin)
         return InvalidParameter;
 
@@ -132,6 +138,8 @@ GpStatus WINGDIPAPI GdipGetCustomLineCapStrokeJoin(GpCustomLineCap* customCap,
 GpStatus WINGDIPAPI GdipGetCustomLineCapWidthScale(GpCustomLineCap* custom,
     REAL* widthScale)
 {
+    TRACE("(%p, %p)\n", custom, widthScale);
+
     if(!custom || !widthScale)
         return InvalidParameter;
 
@@ -168,6 +176,8 @@ GpStatus WINGDIPAPI GdipSetCustomLineCapBaseCap(GpCustomLineCap* custom,
 GpStatus WINGDIPAPI GdipGetCustomLineCapBaseInset(GpCustomLineCap* custom,
     REAL* inset)
 {
+    TRACE("(%p, %p)\n", custom, inset);
+
     if(!custom || !inset)
         return InvalidParameter;
 
@@ -191,6 +201,8 @@ GpStatus WINGDIPAPI GdipSetCustomLineCapBaseInset(GpCustomLineCap* custom,
 GpStatus WINGDIPAPI GdipSetCustomLineCapStrokeJoin(GpCustomLineCap* custom,
     GpLineJoin join)
 {
+    TRACE("(%p, %d)\n", custom, join);
+
     if(!custom)
         return InvalidParameter;
 
@@ -212,6 +224,8 @@ GpStatus WINGDIPAPI GdipSetCustomLineCapWidthScale(GpCustomLineCap* custom,
 
 GpStatus WINGDIPAPI GdipGetCustomLineCapBaseCap(GpCustomLineCap *customCap, GpLineCap *baseCap)
 {
+    TRACE("(%p, %p)\n", customCap, baseCap);
+
     if(!customCap || !baseCap)
         return InvalidParameter;
 
