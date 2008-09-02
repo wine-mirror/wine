@@ -156,7 +156,7 @@ static void test_setpos(void)
 
     /* ABM_NEW should return FALSE if the window is already registered */
     ret = SHAppBarMessage(ABM_NEW, &abd);
-    todo_wine ok(ret == FALSE, "SHAppBarMessage returned %i\n", ret);
+    ok(ret == FALSE, "SHAppBarMessage returned %i\n", ret);
     do_events();
 
     /* dock window1 to the bottom of the screen */

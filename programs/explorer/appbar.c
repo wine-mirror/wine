@@ -43,15 +43,62 @@ struct appbar_response
 
 static HWND appbarmsg_window = NULL;
 
+struct appbar_data
+{
+    struct list entry;
+    HWND hwnd;
+    UINT callback_msg;
+};
+
+static struct list appbars = LIST_INIT(appbars);
+
+static struct appbar_data* get_appbar(HWND hwnd)
+{
+    struct appbar_data* data;
+
+    LIST_FOR_EACH_ENTRY(data, &appbars, struct appbar_data, entry)
+    {
+        if (data->hwnd == hwnd)
+            return data;
+    }
+
+    return NULL;
+}
+
 static UINT_PTR handle_appbarmessage(DWORD msg, PAPPBARDATA abd)
 {
+    struct appbar_data* data;
+
     switch (msg)
     {
     case ABM_NEW:
-        WINE_FIXME("SHAppBarMessage(ABM_NEW, hwnd=%p, callback=%x): stub\n", abd->hWnd, abd->uCallbackMessage);
+        if (get_appbar(abd->hWnd))
+        {
+            /* fail when adding an hwnd the second time */
+            return FALSE;
+        }
+
+        data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct appbar_data));
+        if (!data)
+        {
+            WINE_ERR("out of memory\n");
+            return FALSE;
+        }
+        data->hwnd = abd->hWnd;
+        data->callback_msg = abd->uCallbackMessage;
+
+        list_add_tail(&appbars, &data->entry);
+
         return TRUE;
     case ABM_REMOVE:
-        WINE_FIXME("SHAppBarMessage(ABM_REMOVE, hwnd=%p): stub\n", abd->hWnd);
+        if ((data = get_appbar(abd->hWnd)))
+        {
+            list_remove(&data->entry);
+
+            HeapFree(GetProcessHeap(), 0, data);
+        }
+        else
+            WINE_WARN("removing hwnd %p not on the list\n", abd->hWnd);
         return TRUE;
     case ABM_QUERYPOS:
         WINE_FIXME("SHAppBarMessage(ABM_QUERYPOS, hwnd=%p, edge=%x, rc=%s): stub\n", abd->hWnd, abd->uEdge, wine_dbgstr_rect(&abd->rc));
