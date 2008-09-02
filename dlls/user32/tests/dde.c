@@ -73,6 +73,12 @@ static void create_dde_window(HWND *hwnd, LPCSTR name, WNDPROC wndproc)
     assert(*hwnd);
 }
 
+static void destroy_dde_window(HWND *hwnd, LPCSTR name)
+{
+    DestroyWindow(*hwnd);
+    UnregisterClass(name, GetModuleHandleA(0));
+}
+
 static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     UINT_PTR lo, hi;
@@ -243,7 +249,7 @@ static void test_msg_server(HANDLE hproc, HANDLE hthread)
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     }
 
-    DestroyWindow(hwnd);
+    destroy_dde_window(&hwnd, "dde_server");
     GetExitCodeProcess( hproc, &res );
     ok( !res, "client failed with %u error(s)\n", res );
 }
@@ -1107,7 +1113,7 @@ static void test_msg_client()
 
     flush_events();
 
-    DestroyWindow(client_hwnd);
+    destroy_dde_window(&client_hwnd, "dde_client");
 }
 
 static LRESULT WINAPI hook_dde_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
