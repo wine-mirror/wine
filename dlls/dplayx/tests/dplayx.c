@@ -695,6 +695,8 @@ static void init_TCPIP_provider( LPDIRECTPLAY4 pDP,
     hr = IDirectPlayX_InitializeConnection( pDP, pAddress, 0 );
     todo_wine checkHR( DP_OK, hr );
 
+    HeapFree( GetProcessHeap(), 0, pAddress );
+
 }
 
 static BOOL CALLBACK EnumSessions_cb_join( LPCDPSESSIONDESC2 lpThisSD,
@@ -1779,6 +1781,7 @@ static void test_SessionDesc(void)
     checkStr( "S1,S1,S1,S1,S1,S1,", callbackData.szTrace1 );
     checkStr( "90,90,90,90,90,90,", callbackData.szTrace2 );
 
+    HeapFree( GetProcessHeap(), 0, lpDataMsg );
     for (i=0; i<2; i++)
     {
         HeapFree( GetProcessHeap(), 0, lpData[i] );
@@ -6206,6 +6209,7 @@ static void test_remote_data_replication(void)
     checkStr( "", callbackData.szTrace1 );
 
 
+    HeapFree( GetProcessHeap(), 0, lpDataGet );
     HeapFree( GetProcessHeap(), 0, lpData );
     IDirectPlayX_Release( pDP[0] );
     IDirectPlayX_Release( pDP[1] );
