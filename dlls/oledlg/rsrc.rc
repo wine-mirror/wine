@@ -51,3 +51,4 @@
 #include "oledlg_Si.rc"
 #include "oledlg_Sv.rc"
 #include "oledlg_Tr.rc"
+#include "oledlg_Zh.rc"
