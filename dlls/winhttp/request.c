@@ -932,6 +932,108 @@ end:
     return TRUE;
 }
 
+static BOOL handle_redirect( request_t *request )
+{
+    BOOL ret = FALSE;
+    DWORD size, len;
+    URL_COMPONENTS uc;
+    connect_t *connect = request->connect;
+    INTERNET_PORT port;
+    WCHAR *hostname = NULL, *location = NULL;
+
+    size = 0;
+    query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
+    if (!(location = heap_alloc( size ))) return FALSE;
+    if (!query_headers( request, WINHTTP_QUERY_LOCATION, NULL, location, &size, NULL )) goto end;
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REDIRECT, location, size / sizeof(WCHAR) + 1 );
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = ~0UL;
+
+    if (!(ret = WinHttpCrackUrl( location, size / sizeof(WCHAR), 0, &uc ))) goto end;
+
+    if (uc.nScheme == INTERNET_SCHEME_HTTP && request->hdr.flags & WINHTTP_FLAG_SECURE)
+    {
+        TRACE("redirect from secure page to non-secure page\n");
+        request->hdr.flags &= ~WINHTTP_FLAG_SECURE;
+    }
+    else if (uc.nScheme == INTERNET_SCHEME_HTTPS && !(request->hdr.flags & WINHTTP_FLAG_SECURE))
+    {
+        TRACE("redirect from non-secure page to secure page\n");
+        request->hdr.flags |= WINHTTP_FLAG_SECURE;
+    }
+
+    len = uc.dwHostNameLength;
+    if (!(hostname = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+    memcpy( hostname, uc.lpszHostName, len * sizeof(WCHAR) );
+    hostname[len] = 0;
+
+    port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
+    if (strcmpiW( connect->servername, hostname ) || connect->serverport != port)
+    {
+        heap_free( connect->servername );
+        connect->servername = hostname;
+        connect->serverport = port;
+
+        netconn_close( &request->netconn );
+        if (!(ret = netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE ))) goto end;
+    }
+    if (!(ret = process_header( request, attr_host, hostname, WINHTTP_ADDREQ_FLAG_REPLACE, TRUE ))) goto end;
+    if (!(ret = open_connection( request ))) goto end;
+
+    heap_free( request->path );
+    request->path = NULL;
+    if (uc.lpszUrlPath)
+    {
+        len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
+        if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+        strcpyW( request->path, uc.lpszUrlPath );
+    }
+
+    ret = TRUE;
+
+end:
+    if (!ret) heap_free( hostname );
+    heap_free( location );
+    return ret;
+}
+
+static BOOL read_data( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
+{
+    DWORD to_read;
+    int bytes_read;
+
+    to_read = min( size, request->content_length - request->content_read );
+    if (!netconn_recv( &request->netconn, buffer, to_read, async ? 0 : MSG_WAITALL, &bytes_read ))
+    {
+        if (bytes_read != to_read)
+        {
+            ERR("not all data received %d/%d\n", bytes_read, to_read);
+        }
+        /* always return success, even if the network layer returns an error */
+        *read = 0;
+        return TRUE;
+    }
+    request->content_read += bytes_read;
+    *read = bytes_read;
+    return TRUE;
+}
+
+/* read any content returned by the server so that the connection can be reused */
+static void drain_content( request_t *request )
+{
+    DWORD bytes_read;
+    char buffer[2048];
+
+    if (request->content_length == ~0UL) return;
+    for (;;)
+    {
+        if (!read_data( request, buffer, sizeof(buffer), &bytes_read, FALSE ) || !bytes_read) return;
+    }
+}
+
 /***********************************************************************
  *          WinHttpReceiveResponse (winhttp.@)
  */
@@ -939,7 +1041,7 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
 {
     BOOL ret = TRUE;
     request_t *request;
-    DWORD size, query;
+    DWORD size, query, status;
 
     TRACE("%p, %p\n", hrequest, reserved);
 
@@ -955,12 +1057,28 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
         return FALSE;
     }
 
-    ret = receive_response( request, TRUE );
+    for (;;)
+    {
+        if (!(ret = receive_response( request, TRUE ))) break;
 
-    size = sizeof(DWORD);
-    query = WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER;
-    if (!query_headers( request, query, NULL, &request->content_length, &size, NULL ))
-        request->content_length = ~0UL;
+        size = sizeof(DWORD);
+        query = WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER;
+        if (!(ret = query_headers( request, query, NULL, &status, &size, NULL ))) break;
+
+        size = sizeof(DWORD);
+        query = WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER;
+        if (!query_headers( request, query, NULL, &request->content_length, &size, NULL ))
+            request->content_length = ~0UL;
+
+        if (status == 200) break;
+        if (status == 301 || status == 302)
+        {
+            if (request->hdr.flags & WINHTTP_DISABLE_REDIRECTS) break;
+            drain_content( request );
+            if (!(ret = handle_redirect( request ))) break;
+        }
+        ret = send_request( request, NULL, 0, NULL, 0, 0, 0 );
+    }
 
     release_object( &request->hdr );
     return ret;
@@ -992,27 +1110,6 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
 
     release_object( &request->hdr );
     return ret;
-}
-
-static BOOL read_data( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
-{
-    DWORD to_read;
-    int bytes_read;
-
-    to_read = min( size, request->content_length - request->content_read );
-    if (!netconn_recv( &request->netconn, buffer, to_read, async ? 0 : MSG_WAITALL, &bytes_read ))
-    {
-        if (bytes_read != to_read)
-        {
-            ERR("not all data received %d/%d\n", bytes_read, to_read);
-        }
-        /* always return success, even if the network layer returns an error */
-        *read = 0;
-        return TRUE;
-    }
-    request->content_read += bytes_read;
-    *read = bytes_read;
-    return TRUE;
 }
 
 static DWORD get_chunk_size( const char *buffer )

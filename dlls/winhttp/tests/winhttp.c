@@ -532,7 +532,7 @@ static void test_secure_connection(void)
     static const WCHAR google[] = {'w','w','w','.','g','o','o','g','l','e','.','c','o','m',0};
 
     HANDLE ses, con, req;
-    DWORD size;
+    DWORD size, status;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -566,6 +566,10 @@ static void test_secure_connection(void)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
 
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed unexpectedly %u\n", GetLastError());
+
     size = 0;
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, NULL, &size, NULL);
     ok(!ret, "succeeded unexpectedly\n");
@@ -581,6 +585,7 @@ static void test_request_parameter_defaults(void)
     static const WCHAR codeweavers[] = {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
 
     HANDLE ses, con, req;
+    DWORD size, status;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -598,6 +603,11 @@ static void test_request_parameter_defaults(void)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
 
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed unexpectedly %u\n", GetLastError());
+    ok(status == 200, "request failed unexpectedly %u\n", status);
+
     WinHttpCloseHandle(req);
 
     req = WinHttpOpenRequest(con, empty, empty, empty, NULL, NULL, 0);
@@ -608,6 +618,11 @@ static void test_request_parameter_defaults(void)
 
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
+
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed unexpectedly %u\n", GetLastError());
+    ok(status == 200, "request failed unexpectedly %u\n", status);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
