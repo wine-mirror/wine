@@ -50,3 +50,4 @@
 #include "ui_Ru.rc"
 #include "ui_Si.rc"
 #include "ui_Sv.rc"
+#include "ui_Zh.rc"
