@@ -458,16 +458,24 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
     return ret;
 }
 
-static WCHAR *build_request_string( request_t *request, LPCWSTR verb, LPCWSTR path, LPCWSTR version )
+static WCHAR *build_request_string( request_t *request )
 {
     static const WCHAR space[]   = {' ',0};
     static const WCHAR crlf[]    = {'\r','\n',0};
     static const WCHAR colon[]   = {':',' ',0};
     static const WCHAR twocrlf[] = {'\r','\n','\r','\n',0};
+    static const WCHAR get[]     = {'G','E','T',0};
+    static const WCHAR slash[]   = {'/',0};
+    static const WCHAR http1_1[] = {'H','T','T','P','/','1','.','1',0};
 
     WCHAR *ret;
     const WCHAR **headers, **p;
+    const WCHAR *verb = get, *path = slash, *version = http1_1;
     unsigned int len, i = 0, j;
+
+    if (request->verb && request->verb[0]) verb = request->verb;
+    if (request->path && request->path[0]) path = request->path;
+    if (request->version && request->version[0]) version = request->version;
 
     /* allocate space for an array of all the string pointers to be added */
     len = request->num_headers * 4 + 7;
@@ -537,7 +545,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         DWORD len;
 
         if (request_only)
-            headers = build_request_string( request, request->verb, request->path, request->version );
+            headers = build_request_string( request );
         else
             headers = request->raw_headers;
 
@@ -752,7 +760,7 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     }
 
     if (!(ret = open_connection( request ))) goto end;
-    if (!(req = build_request_string( request, request->verb, request->path, request->version ))) goto end;
+    if (!(req = build_request_string( request ))) goto end;
 
     if (!(req_ascii = strdupWA( req ))) goto end;
     TRACE("full request: %s\n", debugstr_a(req_ascii));

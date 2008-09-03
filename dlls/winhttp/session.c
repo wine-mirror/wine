@@ -232,10 +232,6 @@ static const object_vtbl_t request_vtbl =
 HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR object, LPCWSTR version,
                                      LPCWSTR referrer, LPCWSTR *types, DWORD flags )
 {
-    static const WCHAR get[] = {'G','E','T',0};
-    static const WCHAR slash[] = {'/',0};
-    static const WCHAR http1_1[] = {'H','T','T','P','/','1','.','1',0};
-
     request_t *request;
     connect_t *connect;
     HINTERNET hrequest = NULL;
@@ -272,13 +268,9 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
 
     if (!netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE )) goto end;
 
-    if (!verb || !*verb) verb = get;
-    if (!object || !*object) object = slash;
-    if (!version || !*version) version = http1_1;
-
-    if (!(request->verb = strdupW( verb ))) goto end;
-    if (!(request->path = strdupW( object ))) goto end;
-    if (!(request->version = strdupW( version ))) goto end;
+    if (verb && !(request->verb = strdupW( verb ))) goto end;
+    if (object && !(request->path = strdupW( object ))) goto end;
+    if (version && !(request->version = strdupW( version ))) goto end;
 
     if (!(hrequest = alloc_handle( &request->hdr ))) goto end;
     request->hdr.handle = hrequest;
