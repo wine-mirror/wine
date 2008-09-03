@@ -432,7 +432,8 @@ static void testGetTcpTable(void)
      "GetTcpTable(NULL, NULL, FALSE) returned %d, expected ERROR_INVALID_PARAMETER\n",
      apiReturn);
     apiReturn = gGetTcpTable(NULL, &dwSize, FALSE);
-    ok(apiReturn == ERROR_INSUFFICIENT_BUFFER,
+    ok(apiReturn == ERROR_INSUFFICIENT_BUFFER ||
+       broken(apiReturn == ERROR_NO_DATA), /* win95 */
      "GetTcpTable(NULL, &dwSize, FALSE) returned %d, expected ERROR_INSUFFICIENT_BUFFER\n",
      apiReturn);
     if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
