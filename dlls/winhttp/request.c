@@ -768,7 +768,7 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
         sprintfW( length, length_fmt, total_len );
         process_header( request, attr_content_length, length, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
-    if (!(request->hdr.flags & WINHTTP_DISABLE_KEEP_ALIVE))
+    if (!(request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE))
     {
         process_header( request, attr_connection, keep_alive, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
@@ -1097,7 +1097,7 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
         if (status == 200) break;
         if (status == 301 || status == 302)
         {
-            if (request->hdr.flags & WINHTTP_DISABLE_REDIRECTS) break;
+            if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS) break;
             drain_content( request );
             if (!(ret = handle_redirect( request ))) break;
         }

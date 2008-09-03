@@ -69,11 +69,36 @@ static void session_destroy( object_header_t *hdr )
     heap_free( session );
 }
 
+static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
+{
+    switch (option)
+    {
+    case WINHTTP_OPTION_PROXY:
+    {
+        WINHTTP_PROXY_INFO *pi = buffer;
+
+        FIXME("%u %s %s\n", pi->dwAccessType, debugstr_w(pi->lpszProxy), debugstr_w(pi->lpszProxyBypass));
+        return TRUE;
+    }
+    case WINHTTP_OPTION_REDIRECT_POLICY:
+    {
+        DWORD policy = *(DWORD *)buffer;
+
+        TRACE("0x%x\n", policy);
+        hdr->redirect_policy = policy;
+        return TRUE;
+    }
+    default:
+        FIXME("unimplemented option %u\n", option);
+        return TRUE;
+    }
+}
+
 static const object_vtbl_t session_vtbl =
 {
     session_destroy,
     NULL,
-    NULL
+    session_set_option
 };
 
 /***********************************************************************
@@ -220,11 +245,52 @@ static void request_destroy( object_header_t *hdr )
     heap_free( request );
 }
 
+static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
+{
+    switch (option)
+    {
+    case WINHTTP_OPTION_PROXY:
+    {
+        WINHTTP_PROXY_INFO *pi = buffer;
+
+        FIXME("%u %s %s\n", pi->dwAccessType, debugstr_w(pi->lpszProxy), debugstr_w(pi->lpszProxyBypass));
+        return TRUE;
+    }
+    case WINHTTP_OPTION_DISABLE_FEATURE:
+    {
+        DWORD disable = *(DWORD *)buffer;
+
+        TRACE("0x%x\n", disable);
+        hdr->disable_flags &= disable;
+        return TRUE;
+    }
+    case WINHTTP_OPTION_AUTOLOGON_POLICY:
+    {
+        DWORD policy = *(DWORD *)buffer;
+
+        TRACE("0x%x\n", policy);
+        hdr->logon_policy = policy;
+        return TRUE;
+    }
+    case WINHTTP_OPTION_REDIRECT_POLICY:
+    {
+        DWORD policy = *(DWORD *)buffer;
+
+        TRACE("0x%x\n", policy);
+        hdr->redirect_policy = policy;
+        return TRUE;
+    }
+    default:
+        FIXME("unimplemented option %u\n", option);
+        return TRUE;
+    }
+}
+
 static const object_vtbl_t request_vtbl =
 {
     request_destroy,
     NULL,
-    NULL
+    request_set_option
 };
 
 /***********************************************************************
@@ -350,7 +416,7 @@ BOOL WINAPI WinHttpQueryOption( HINTERNET handle, DWORD option, LPVOID buffer, L
 
 static BOOL set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
 {
-    BOOL ret = FALSE;
+    BOOL ret = TRUE;
 
     switch (option)
     {

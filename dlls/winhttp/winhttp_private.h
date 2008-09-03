@@ -51,6 +51,9 @@ struct _object_header_t
     HINTERNET handle;
     const object_vtbl_t *vtbl;
     DWORD flags;
+    DWORD disable_flags;
+    DWORD logon_policy;
+    DWORD redirect_policy;
     DWORD error;
     DWORD_PTR context;
     LONG refs;

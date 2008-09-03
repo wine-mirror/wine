@@ -532,11 +532,15 @@ static void test_secure_connection(void)
     static const WCHAR google[] = {'w','w','w','.','g','o','o','g','l','e','.','c','o','m',0};
 
     HANDLE ses, con, req;
-    DWORD size, status;
+    DWORD size, status, policy;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    policy = WINHTTP_OPTION_REDIRECT_POLICY_ALWAYS;
+    ret = WinHttpSetOption(ses, WINHTTP_OPTION_REDIRECT_POLICY, &policy, sizeof(policy));
+    ok(ret, "failed to set redirect policy %u\n", GetLastError());
 
     con = WinHttpConnect(ses, google, 443, 0);
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
@@ -569,6 +573,7 @@ static void test_secure_connection(void)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed unexpectedly %u\n", GetLastError());
+    ok(status == 200, "request failed unexpectedly %u\n", status);
 
     size = 0;
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, NULL, &size, NULL);
