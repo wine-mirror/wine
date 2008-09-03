@@ -237,6 +237,10 @@ static IHTMLDocument2 *create_and_load_doc(const char *str)
     ULONG ref;
     MSG msg;
     HRESULT hres;
+    static const WCHAR ucPtr[] = {'b','a','c','k','g','r','o','u','n','d',0};
+    DISPID dispID = -1;
+    OLECHAR *name;
+
 
     doc = create_doc_with_string(str);
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
@@ -255,6 +259,12 @@ static IHTMLDocument2 *create_and_load_doc(const char *str)
         ok(!ref, "ref = %d\n", ref);
         return NULL;
     }
+
+    /* Check we can query for function on the IHTMLElementBody interface */
+    name = (WCHAR*)ucPtr;
+    hres = IHTMLElement_GetIDsOfNames(body, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispID);
+    ok(hres == S_OK, "GetIDsOfNames(background) failed %08x\n", hres);
+    ok(dispID == DISPID_IHTMLBODYELEMENT_BACKGROUND, "Incorrect dispID got (%d)\n", dispID);
 
     IHTMLElement_Release(body);
     return doc;
