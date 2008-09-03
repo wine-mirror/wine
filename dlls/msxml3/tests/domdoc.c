@@ -1877,6 +1877,7 @@ static void test_IXMLDOMDocument2(void)
     BSTR str;
     IXMLDOMDocument *doc;
     IXMLDOMDocument2 *doc2;
+    IDispatchEx *dispex;
     VARIANT var;
     int ref;
 
@@ -1894,6 +1895,13 @@ static void test_IXMLDOMDocument2(void)
     r = IXMLDOMDocument_QueryInterface( doc, &IID_IXMLDOMDocument2, (void**)&doc2 );
     ok( r == S_OK, "ret %08x\n", r );
     ok( doc == (IXMLDOMDocument*)doc2, "interfaces differ\n");
+
+    r = IXMLDOMDocument_QueryInterface( doc, &IID_IDispatchEx, (void**)&dispex );
+    ok( r == S_OK, "ret %08x\n", r );
+    if(r == S_OK)
+    {
+        IDispatchEx_Release(dispex);
+    }
 
     /* we will check if the variant got cleared */
     ref = IXMLDOMDocument2_AddRef(doc2);
