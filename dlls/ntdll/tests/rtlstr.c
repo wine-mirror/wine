@@ -1696,12 +1696,17 @@ static void test_RtlIsTextUnicode(void)
     WCHAR mixed_controls[] = {'\t',0x9000,0x0d00,'\n',0};
     WCHAR *be_unicode;
     WCHAR *be_unicode_no_controls;
+    BOOLEAN res;
     int flags;
     int i;
 
     ok(!pRtlIsTextUnicode(ascii, sizeof(ascii), NULL), "ASCII text detected as Unicode\n");
 
-    ok(pRtlIsTextUnicode(unicode, sizeof(unicode), NULL), "Text should be Unicode\n");
+    res = pRtlIsTextUnicode(unicode, sizeof(unicode), NULL);
+    ok(res ||
+       broken(res == FALSE), /* NT4 */
+       "Text should be Unicode\n");
+
     ok(!pRtlIsTextUnicode(unicode, sizeof(unicode) - 1, NULL), "Text should be Unicode\n");
 
     flags =  IS_TEXT_UNICODE_UNICODE_MASK;
