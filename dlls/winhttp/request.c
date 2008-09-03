@@ -727,6 +727,7 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     static const WCHAR keep_alive[] = {'K','e','e','p','-','A','l','i','v','e',0};
     static const WCHAR no_cache[]   = {'n','o','-','c','a','c','h','e',0};
     static const WCHAR length_fmt[] = {'%','l','d',0};
+    static const WCHAR post[]       = {'P','O','S','T',0};
 
     BOOL ret = FALSE;
     connect_t *connect = request->connect;
@@ -742,10 +743,10 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     if (connect->hostname)
         process_header( request, attr_host, connect->hostname, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
 
-    if (optional_len)
+    if (total_len || !strcmpW( request->verb, post ))
     {
         WCHAR length[21]; /* decimal long int + null */
-        sprintfW( length, length_fmt, optional_len );
+        sprintfW( length, length_fmt, total_len );
         process_header( request, attr_content_length, length, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
     if (!(request->hdr.flags & WINHTTP_DISABLE_KEEP_ALIVE))
