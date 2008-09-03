@@ -1165,6 +1165,7 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
         fclose(file);
     }
     HeapFree(GetProcessHeap(), 0, reg_key_name);
+    HeapFree(GetProcessHeap(), 0, val_name_buf);
     HeapFree(GetProcessHeap(), 0, val_buf);
     return TRUE;
 }
