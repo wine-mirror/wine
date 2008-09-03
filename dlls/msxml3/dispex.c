@@ -79,6 +79,7 @@ static REFIID tid_ids[] = {
     &IID_IXMLDOMAttribute,
     &IID_IXMLDOMCDATASection,
     &IID_IXMLDOMComment,
+    &IID_IXMLDOMDocument,
     &IID_IXMLDOMDocument2,
     &IID_IXMLDOMDocumentFragment,
     &IID_IXMLDOMElement,
