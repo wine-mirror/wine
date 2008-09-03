@@ -43,9 +43,9 @@ static WCHAR favoriteName[128];
 static WCHAR searchString[128];
 static int searchMask = SEARCH_KEYS | SEARCH_VALUES | SEARCH_CONTENT;
 
-static TCHAR FileNameBuffer[_MAX_PATH];
-static TCHAR FileTitleBuffer[_MAX_PATH];
-static TCHAR FilterBuffer[_MAX_PATH];
+static WCHAR FileNameBuffer[_MAX_PATH];
+static WCHAR FileTitleBuffer[_MAX_PATH];
+static WCHAR FilterBuffer[_MAX_PATH];
 
 /*******************************************************************************
  * Local module support methods
@@ -247,42 +247,40 @@ static BOOL CheckCommDlgError(HWND hWnd)
     return TRUE;
 }
 
-static void ExportRegistryFile_StoreSelection(HWND hdlg, OPENFILENAME *pOpenFileName)
+static void ExportRegistryFile_StoreSelection(HWND hdlg, OPENFILENAMEW *pOpenFileName)
 {
     if (IsDlgButtonChecked(hdlg, IDC_EXPORT_SELECTED))
     {
-        INT len = SendDlgItemMessage(hdlg, IDC_EXPORT_PATH, WM_GETTEXTLENGTH, 0, 0);
-        pOpenFileName->lCustData = (LPARAM)HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(TCHAR));
-        SendDlgItemMessage(hdlg, IDC_EXPORT_PATH, WM_GETTEXT, len+1, pOpenFileName->lCustData);
+        INT len = SendDlgItemMessageW(hdlg, IDC_EXPORT_PATH, WM_GETTEXTLENGTH, 0, 0);
+        pOpenFileName->lCustData = (LPARAM)HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+        SendDlgItemMessageW(hdlg, IDC_EXPORT_PATH, WM_GETTEXT, len+1, pOpenFileName->lCustData);
     }
     else
-        pOpenFileName->lCustData = (LPARAM)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TCHAR));
+        pOpenFileName->lCustData = (LPARAM)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR));
 }
 
 static UINT CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 {
-    static OPENFILENAME* pOpenFileName;
-    OFNOTIFY *pOfNotify;
+    static OPENFILENAMEW* pOpenFileName;
+    OFNOTIFYW *pOfNotify;
 
     switch (uiMsg) {
     case WM_INITDIALOG:
-        pOpenFileName = (OPENFILENAME*)lParam;
+        pOpenFileName = (OPENFILENAMEW*)lParam;
         break;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDC_EXPORT_PATH && HIWORD(wParam) == EN_UPDATE)
             CheckRadioButton(hdlg, IDC_EXPORT_ALL, IDC_EXPORT_SELECTED, IDC_EXPORT_SELECTED);
         break;
     case WM_NOTIFY:
-        pOfNotify = (OFNOTIFY*)lParam;
+        pOfNotify = (OFNOTIFYW*)lParam;
         switch (pOfNotify->hdr.code)
         {
             case CDN_INITDONE:
             {
-                WCHAR* pathW = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
-                CHAR* pathA = GetMultiByteString(pathW);
-                SendDlgItemMessage(hdlg, IDC_EXPORT_PATH, WM_SETTEXT, 0, (LPARAM)pathA);
-                HeapFree(GetProcessHeap(), 0, pathW);
-                HeapFree(GetProcessHeap(), 0, pathA);
+                WCHAR* path = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
+                SendDlgItemMessageW(hdlg, IDC_EXPORT_PATH, WM_SETTEXT, 0, (LPARAM)path);
+                HeapFree(GetProcessHeap(), 0, path);
                 CheckRadioButton(hdlg, IDC_EXPORT_ALL, IDC_EXPORT_SELECTED, pOpenFileName->lCustData ? IDC_EXPORT_SELECTED : IDC_EXPORT_ALL);
                 break;
             }
@@ -298,15 +296,15 @@ static UINT CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARA
 }
 
 
-static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME *pofn)
+static BOOL InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn)
 {
-    memset(pofn, 0, sizeof(OPENFILENAME));
-    pofn->lStructSize = sizeof(OPENFILENAME);
+    memset(pofn, 0, sizeof(OPENFILENAMEW));
+    pofn->lStructSize = sizeof(OPENFILENAMEW);
     pofn->hwndOwner = hWnd;
     pofn->hInstance = hInst;
 
     if (FilterBuffer[0] == 0)
-        LoadString(hInst, IDS_FILEDIALOG_FILTER, FilterBuffer, _MAX_PATH);
+        LoadStringW(hInst, IDS_FILEDIALOG_FILTER, FilterBuffer, _MAX_PATH);
     pofn->lpstrFilter = FilterBuffer;
     pofn->nFilterIndex = 1;
     pofn->lpstrFile = FileNameBuffer;
@@ -336,17 +334,20 @@ static BOOL import_registry_filename(LPTSTR filename)
 
 static BOOL ImportRegistryFile(HWND hWnd)
 {
-    OPENFILENAME ofn;
-    TCHAR title[128];
+    OPENFILENAMEW ofn;
+    WCHAR title[128];
 
     InitOpenFileName(hWnd, &ofn);
-    LoadString(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, COUNT_OF(title));
+    LoadStringW(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
-    if (GetOpenFileName(&ofn)) {
-        if (!import_registry_filename(ofn.lpstrFile)) {
+    if (GetOpenFileNameW(&ofn)) {
+        CHAR* fileA = GetMultiByteString(ofn.lpstrFile);
+        if (!import_registry_filename(fileA)) {
             /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
+            HeapFree(GetProcessHeap(), 0, fileA);
             return FALSE;
         }
+        HeapFree(GetProcessHeap(), 0, fileA);
     } else {
         CheckCommDlgError(hWnd);
     }
@@ -357,21 +358,25 @@ static BOOL ImportRegistryFile(HWND hWnd)
 
 static BOOL ExportRegistryFile(HWND hWnd, BOOL export_branch)
 {
-    OPENFILENAME ofn;
-    TCHAR ExportKeyPath[_MAX_PATH];
-    TCHAR title[128];
+    OPENFILENAMEW ofn;
+    WCHAR ExportKeyPath[_MAX_PATH];
+    WCHAR title[128];
 
-    ExportKeyPath[0] = _T('\0');
+    ExportKeyPath[0] = 0;
     InitOpenFileName(hWnd, &ofn);
-    LoadString(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, COUNT_OF(title));
+    LoadStringW(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
     ofn.lCustData = export_branch;
     ofn.Flags = OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_EXPLORER | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
     ofn.lpfnHook = ExportRegistryFile_OFNHookProc;
-    ofn.lpTemplateName = MAKEINTRESOURCE(IDD_EXPORT_TEMPLATE);
-    if (GetSaveFileName(&ofn)) {
+    ofn.lpTemplateName = MAKEINTRESOURCEW(IDD_EXPORT_TEMPLATE);
+    if (GetSaveFileNameW(&ofn)) {
         BOOL result;
-        result = export_registry_key(ofn.lpstrFile, (LPTSTR)ofn.lCustData);
+        CHAR* fileA = GetMultiByteString(ofn.lpstrFile);
+        CHAR* sectionA = GetMultiByteString((LPWSTR)ofn.lCustData);
+        result = export_registry_key(fileA, sectionA);
+        HeapFree(GetProcessHeap(), 0, fileA);
+        HeapFree(GetProcessHeap(), 0, sectionA);
         if (!result) {
             /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
             return FALSE;
