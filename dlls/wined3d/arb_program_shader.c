@@ -2912,6 +2912,13 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     if(isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE))) {
         if(use_pshader) {
             IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
+        } else if(device->shader_backend == &arb_program_shader_backend && context->last_was_pshader) {
+            /* Reload fixed function constants since they collide with the pixel shader constants */
+            for(i = 0; i < MAX_TEXTURES; i++) {
+                set_bumpmat_arbfp(STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00), stateblock, context);
+            }
+            state_texfactor_arbfp(STATE_RENDER(WINED3DRS_TEXTUREFACTOR), stateblock, context);
+            state_arb_specularenable(STATE_RENDER(WINED3DRS_SPECULARENABLE), stateblock, context);
         }
         return;
     }
