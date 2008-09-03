@@ -34,3 +34,4 @@
 #include "msvfw32_Si.rc"
 #include "msvfw32_Sv.rc"
 #include "msvfw32_Tr.rc"
+#include "msvfw32_Zh.rc"
