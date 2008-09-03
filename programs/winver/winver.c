@@ -23,9 +23,5 @@
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
-   return ShellAbout(NULL, PACKAGE_NAME, PACKAGE_STRING, 0);
+   return ShellAboutA(NULL, PACKAGE_NAME, PACKAGE_STRING, 0);
 }
-
-/* Local Variables:     */
-/* c-files style: "GNU" */
-/* End:                 */

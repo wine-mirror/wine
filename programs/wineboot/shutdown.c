@@ -227,7 +227,7 @@ static LRESULT send_messages_with_timeout_dialog(
         }
         else if ((ret == WAIT_TIMEOUT) && !hwnd_endtask)
         {
-            hwnd_endtask = CreateDialogParamW( GetModuleHandle(NULL),
+            hwnd_endtask = CreateDialogParamW( GetModuleHandleW(NULL),
                                                MAKEINTRESOURCEW(IDD_ENDTASK),
                                                NULL, endtask_dlg_proc,
                                                (LPARAM)&dlg_data );

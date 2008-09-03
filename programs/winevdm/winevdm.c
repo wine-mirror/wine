@@ -218,7 +218,7 @@ static VOID pif_cmd( char *filename, char *cmdline)
     if( (p = strrchr( progname, '.')) && !strcasecmp( p, ".bat"))
         WINE_FIXME(".bat programs in pif files are not supported.\n"); 
     /* first change dir, so the search below can start from there */
-    if( startdir[0] && !SetCurrentDirectory( startdir)) {
+    if( startdir[0] && !SetCurrentDirectoryA( startdir)) {
         WINE_ERR("Cannot change directory %s\n", wine_dbgstr_a( startdir));
         sprintf( buf, "%s\nInvalid startup directory. Check your pif file.", 
                 filename);

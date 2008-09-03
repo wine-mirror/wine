@@ -284,9 +284,9 @@ static WCHAR *get_url_from_dde(void)
     while (!ddeString)
     {
         MSG msg;
-        if (!GetMessage(&msg, NULL, 0, 0)) break;
+        if (!GetMessageW(&msg, NULL, 0, 0)) break;
         if (msg.message == WM_TIMER) break;
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 
     if (ddeString)
@@ -381,7 +381,7 @@ int wmain(int argc, WCHAR *argv[])
 
     /* check if the argument is a local file */
     wine_get_unix_file_name_ptr = (wine_get_unix_file_name_t)
-        GetProcAddress( GetModuleHandle( "KERNEL32" ), "wine_get_unix_file_name" );
+        GetProcAddress( GetModuleHandleA( "KERNEL32" ), "wine_get_unix_file_name" );
 
     if (wine_get_unix_file_name_ptr == NULL)
     {

@@ -96,7 +96,7 @@ static void fatal_string_error(int which, DWORD error_code)
 {
 	WCHAR msg[2048];
 
-	if (!LoadStringW(GetModuleHandle(NULL), which,
+	if (!LoadStringW(GetModuleHandleW(NULL), which,
 					msg, sizeof(msg)/sizeof(WCHAR)))
 		WINE_ERR("LoadString failed, error %d\n", GetLastError());
 
@@ -107,7 +107,7 @@ static void fatal_string(int which)
 {
 	WCHAR msg[2048];
 
-	if (!LoadStringW(GetModuleHandle(NULL), which,
+	if (!LoadStringW(GetModuleHandleW(NULL), which,
 					msg, sizeof(msg)/sizeof(WCHAR)))
 		WINE_ERR("LoadString failed, error %d\n", GetLastError());
 
@@ -262,7 +262,7 @@ int wmain (int argc, WCHAR *argv[])
 		char* multibyte_unixpath;
 		int multibyte_unixpath_len;
 
-		wine_get_dos_file_name_ptr = (void*)GetProcAddress(GetModuleHandle("KERNEL32"), "wine_get_dos_file_name");
+		wine_get_dos_file_name_ptr = (void*)GetProcAddress(GetModuleHandleA("KERNEL32"), "wine_get_dos_file_name");
 
 		if (!wine_get_dos_file_name_ptr)
 			fatal_string(STRING_UNIXFAIL);

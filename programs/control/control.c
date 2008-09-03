@@ -35,8 +35,8 @@ static void launch(const char *what)
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpszCmdLine, INT nCmdShow)
 {
     char szParams[255];
-    lstrcpy(szParams, lpszCmdLine);
-    CharUpper(szParams);
+    strcpy(szParams, lpszCmdLine);
+    CharUpperA(szParams);
 
     /* no parameters - pop up whole "Control Panel" by default */
     if (!*szParams) {

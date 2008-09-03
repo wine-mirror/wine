@@ -109,7 +109,7 @@ static void create_tooltip(struct icon *icon)
         tooltips_initialized = TRUE;
     }
 
-    icon->tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+    icon->tooltip = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASSW, NULL,
                                    WS_POPUP | TTS_ALWAYSTIP,
                                    CW_USEDEFAULT, CW_USEDEFAULT,
                                    CW_USEDEFAULT, CW_USEDEFAULT,
@@ -351,7 +351,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     int ret = FALSE;
 
     if (cds->cbData < NOTIFYICONDATAW_V1_SIZE) return FALSE;
-    cbSize = ((PNOTIFYICONDATA)cds->lpData)->cbSize;
+    cbSize = ((PNOTIFYICONDATAW)cds->lpData)->cbSize;
     if (cbSize < NOTIFYICONDATAW_V1_SIZE) return FALSE;
 
     ZeroMemory(&nid, sizeof(nid));
@@ -544,7 +544,7 @@ void initialize_systray(void)
 {
     HMODULE x11drv;
     SIZE size;
-    WNDCLASSEX class;
+    WNDCLASSEXW class;
     static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
     static const WCHAR winname[] = {'W','i','n','e',' ','S','y','s','t','e','m',' ','T','r','a','y',0};
 
@@ -561,12 +561,12 @@ void initialize_systray(void)
     class.style         = CS_DBLCLKS;
     class.lpfnWndProc   = tray_wndproc;
     class.hInstance     = NULL;
-    class.hIcon         = LoadIcon(0, IDI_WINLOGO);
-    class.hCursor       = LoadCursor(0, IDC_ARROW);
+    class.hIcon         = LoadIconW(0, (LPCWSTR)IDI_WINLOGO);
+    class.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     class.hbrBackground = (HBRUSH) COLOR_WINDOW;
     class.lpszClassName = (WCHAR *) &classname;
 
-    if (!RegisterClassEx(&class))
+    if (!RegisterClassExW(&class))
     {
         WINE_ERR("Could not register SysTray window class\n");
         return;

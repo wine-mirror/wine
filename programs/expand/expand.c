@@ -155,12 +155,12 @@ int main(int argc, char *argv[])
         OFSTRUCT ofin, ofout;
         LONG error;
 
-        if ((hin = LZOpenFile( infile, &ofin, OF_READ )) < 0)
+        if ((hin = LZOpenFileA( infile, &ofin, OF_READ )) < 0)
         {
             fprintf( stderr, "%s: can't open input file %s\n", argv[0], infile );
             return 1;
         }
-        if ((hout = LZOpenFile( outfile, &ofout, OF_CREATE | OF_WRITE )) < 0)
+        if ((hout = LZOpenFileA( outfile, &ofout, OF_CREATE | OF_WRITE )) < 0)
         {
             LZClose( hin );
             fprintf( stderr, "%s: can't open output file %s\n", argv[0], outfile );

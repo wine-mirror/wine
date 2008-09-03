@@ -86,7 +86,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
 {
     VOID* (*proc)(void);
 
-    *DllHandle = LoadLibraryEx(strDll, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+    *DllHandle = LoadLibraryExA(strDll, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!*DllHandle)
     {
         if(!Silent)

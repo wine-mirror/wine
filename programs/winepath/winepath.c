@@ -155,7 +155,7 @@ int wmain(int argc, const WCHAR *argv[])
 
     if (outputformats & UNIXFORMAT) {
         wine_get_unix_file_name_ptr = (void*)
-            GetProcAddress(GetModuleHandle("KERNEL32"),
+            GetProcAddress(GetModuleHandleA("KERNEL32"),
                            "wine_get_unix_file_name");
         if (wine_get_unix_file_name_ptr == NULL) {
             fprintf(stderr, "%s: cannot get the address of "
@@ -166,7 +166,7 @@ int wmain(int argc, const WCHAR *argv[])
 
     if (outputformats & WINDOWSFORMAT) {
         wine_get_dos_file_name_ptr = (void*)
-            GetProcAddress(GetModuleHandle("KERNEL32"),
+            GetProcAddress(GetModuleHandleA("KERNEL32"),
                            "wine_get_dos_file_name");
         if (wine_get_dos_file_name_ptr == NULL) {
             fprintf(stderr, "%s: cannot get the address of "
