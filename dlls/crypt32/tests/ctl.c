@@ -117,13 +117,17 @@ static void testCreateCTL(void)
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, NULL, 0);
-    ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
+    ok(!ctl &&
+     (GetLastError() == ERROR_INVALID_DATA ||
+      GetLastError() == OSS_MORE_INPUT), /* win9x */
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     /* An empty CTL can't be created.. */
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, emptyCTL, sizeof(emptyCTL));
-    ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
+    ok(!ctl &&
+     (GetLastError() == ERROR_INVALID_DATA ||
+      GetLastError() == OSS_DATA_ERROR), /* win9x */
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     /* Nor can any of these "signed" CTLs whose inner content OID isn't
@@ -131,19 +135,25 @@ static void testCreateCTL(void)
      */
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, signedCTL, sizeof(signedCTL));
-    ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
+    ok(!ctl &&
+     (GetLastError() == ERROR_INVALID_DATA ||
+      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE), /* win9x */
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING, ctlWithOneEntry,
      sizeof(ctlWithOneEntry));
-    ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
+    ok(!ctl &&
+     (GetLastError() == ERROR_INVALID_DATA ||
+      GetLastError() == OSS_DATA_ERROR), /* win9x */
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     SetLastError(0xdeadbeef);
     ctl = CertCreateCTLContext(X509_ASN_ENCODING,
      signedCTLWithSubjectAlgorithm, sizeof(signedCTLWithSubjectAlgorithm));
-    ok(!ctl && GetLastError() == ERROR_INVALID_DATA,
+    ok(!ctl &&
+     (GetLastError() == ERROR_INVALID_DATA ||
+      GetLastError() == CRYPT_E_UNEXPECTED_MSG_TYPE), /* win9x */
      "expected ERROR_INVALID_DATA, got %d (0x%08x)\n", GetLastError(),
      GetLastError());
     /* This signed CTL with the appropriate inner content type can be decoded.
@@ -349,7 +359,9 @@ static void testAddCTLToStore(void)
      signedCTLWithCTLInnerContentAndBadSig,
      sizeof(signedCTLWithCTLInnerContentAndBadSig), CERT_STORE_ADD_NEW,
      NULL);
-    ok(!ret && GetLastError() == CRYPT_E_EXISTS,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_EXISTS ||
+      GetLastError() == CRYPT_E_NOT_FOUND), /* win9x */
      "expected CRYPT_E_EXISTS, got %08x\n", GetLastError());
     CertCloseStore(store, 0);
 
