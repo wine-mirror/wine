@@ -6128,6 +6128,7 @@ void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo) {
     if (!*fbo) {
         GL_EXTCALL(glGenFramebuffersEXT(1, fbo));
         checkGLcall("glGenFramebuffersEXT()");
+        TRACE("Created FBO %d\n", *fbo);
     }
     GL_EXTCALL(glBindFramebufferEXT(target, *fbo));
     checkGLcall("glBindFramebuffer()");

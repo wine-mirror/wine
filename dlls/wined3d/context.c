@@ -632,6 +632,25 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
     HeapFree(GetProcessHeap(), 0, oldArray);
 }
 
+static void destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
+{
+    int i = 0;
+
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *fbo));
+    checkGLcall("glBindFramebuffer()");
+    for (i = 0; i < GL_LIMITS(buffers); ++i)
+    {
+        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i, GL_TEXTURE_2D, 0, 0));
+        checkGLcall("glFramebufferTexture2D()");
+    }
+    GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
+    checkGLcall("glFramebufferTexture2D()");
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+    checkGLcall("glBindFramebuffer()");
+    GL_EXTCALL(glDeleteFramebuffersEXT(1, fbo));
+    checkGLcall("glDeleteFramebuffers()");
+}
+
 /*****************************************************************************
  * DestroyContext
  *
@@ -655,13 +674,16 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     ENTER_GL();
 
     if (context->fbo) {
-        GL_EXTCALL(glDeleteFramebuffersEXT(1, &context->fbo));
+        TRACE("Destroy FBO %d\n", context->fbo);
+        destroy_fbo(This, &context->fbo);
     }
     if (context->src_fbo) {
-        GL_EXTCALL(glDeleteFramebuffersEXT(1, &context->src_fbo));
+        TRACE("Destroy src FBO %d\n", context->src_fbo);
+        destroy_fbo(This, &context->src_fbo);
     }
     if (context->dst_fbo) {
-        GL_EXTCALL(glDeleteFramebuffersEXT(1, &context->dst_fbo));
+        TRACE("Destroy dst FBO %d\n", context->dst_fbo);
+        destroy_fbo(This, &context->dst_fbo);
     }
 
     LEAVE_GL();
