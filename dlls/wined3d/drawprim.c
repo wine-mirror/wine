@@ -928,20 +928,21 @@ void drawPrimitive(IWineD3DDevice *iface,
         }
     }
 
+    /* Signals other modules that a drawing is in progress and the stateblock finalized */
+    This->isInDraw = TRUE;
+
+    ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
+
     if (This->stencilBufferTarget) {
+        /* Note that this depends on the ActivateContext call above to set
+         * This->render_offscreen properly */
         DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         surface_load_ds_location(This->stencilBufferTarget, location);
         surface_modify_ds_location(This->stencilBufferTarget, location);
     }
 
-    /* Signals other modules that a drawing is in progress and the stateblock finalized */
-    This->isInDraw = TRUE;
-
     /* Ok, we will be updating the screen from here onwards so grab the lock */
-
-    ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
     ENTER_GL();
-
     {
         GLenum glPrimType;
         BOOL emulation = FALSE;
