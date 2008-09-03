@@ -6160,6 +6160,7 @@ void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWine
 
         IWineD3DSurface_PreLoad(depth_stencil);
 
+        glBindTexture(target, depth_stencil_impl->glDescription.textureName);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
@@ -6202,6 +6203,7 @@ void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, 
 
     IWineD3DSurface_PreLoad(surface);
 
+    glBindTexture(target, surface_impl->glDescription.textureName);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(target, old_binding);
