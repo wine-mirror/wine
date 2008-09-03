@@ -5152,10 +5152,6 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
          * it is most likely more efficient to perform a clear on the sysmem copy too instead of downloading it
          */
         IWineD3DSurface_ModifyLocation(This->lastActiveRenderTarget, SFLAG_INDRAWABLE, TRUE);
-        /* TODO: Move the fbo logic into ModifyLocation() */
-        if(This->render_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-            target->Flags |= SFLAG_INTEXTURE;
-        }
     }
     if (Flags & WINED3DCLEAR_ZBUFFER) {
         /* Note that WINED3DCLEAR_ZBUFFER implies a depth stencil exists on the device */

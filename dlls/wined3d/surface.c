@@ -3437,7 +3437,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Now load the surface */
         IWineD3DSurface_PreLoad((IWineD3DSurface *) Src);
 
-
         /* Activate the destination context, set it up for blitting */
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
 
@@ -3545,10 +3544,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
          * is outdated now
          */
         IWineD3DSurface_ModifyLocation((IWineD3DSurface *) This, SFLAG_INDRAWABLE, TRUE);
-        /* TODO: This should be moved to ModifyLocation() */
-        if(!(dstSwapchain || wined3d_settings.offscreen_rendering_mode != ORM_FBO)) {
-            This->Flags |= SFLAG_INTEXTURE;
-        }
 
         return WINED3D_OK;
     } else {
