@@ -148,7 +148,9 @@ static void testGetInfo(void)
        PackageInfo.fCapabilities);
     ok(PackageInfo.wVersion == 1, "wVersion: %d\n", PackageInfo.wVersion);
     ok(PackageInfo.wRPCID == 14, "wRPCID: %d\n", PackageInfo.wRPCID);
-    ok(PackageInfo.cbMaxToken == 0x4000, "cbMaxToken: 0x%lx\n",
+    ok(PackageInfo.cbMaxToken == 0x4000 ||
+       PackageInfo.cbMaxToken == 0x6000, /* Vista */
+       "cbMaxToken: 0x%lx\n",
        PackageInfo.cbMaxToken);
 
     /* Second package: SChannel */
