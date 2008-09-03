@@ -357,7 +357,8 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
     MOD_GotDrawItemMsg = FALSE;
     mii.fMask = MIIM_FTYPE | MIIM_DATA | MIIM_STATE;
     mii.fType = 0;
-    mii.fState = MF_CHECKED;
+    /* check the menu item unless MNS_CHECKORBMP is set */
+    mii.fState = (mnuopt != 2 ? MFS_CHECKED : MFS_UNCHECKED);
     mii.dwItemData =0;
     MODsizes[0] = bmpsize;
     hastab = 0;
@@ -447,10 +448,20 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
     if( hbmp == HBMMENU_CALLBACK && MOD_GotDrawItemMsg) {
         /* check the position of the bitmap */
         /* horizontal */
-        expect = ispop ? (4 + ( mnuopt  ? 0 : GetSystemMetrics(SM_CXMENUCHECK)))
-            : 3;
-        ok( expect == MOD_rc[0].left,
-                "bitmap left is %d expected %d\n", MOD_rc[0].left, expect);
+        if (!ispop)
+            expect = 3;
+        else if (mnuopt == 0)
+            expect = 4 + GetSystemMetrics(SM_CXMENUCHECK);
+        else if (mnuopt == 1)
+            expect = 4;
+        else /* mnuopt == 2 */
+            expect = 2;
+        if (ispop && mnuopt == 2)
+            todo_wine ok( expect == MOD_rc[0].left,
+                    "bitmap left is %d expected %d\n", MOD_rc[0].left, expect);
+        else
+            ok( expect == MOD_rc[0].left,
+                    "bitmap left is %d expected %d\n", MOD_rc[0].left, expect);
         failed = failed || !(expect == MOD_rc[0].left);
         /* vertical */
         expect = (rc.bottom - rc.top - MOD_rc[0].bottom + MOD_rc[0].top) / 2;
