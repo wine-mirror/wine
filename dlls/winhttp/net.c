@@ -524,9 +524,10 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
     {
         if (poll( &pfd, 1, DEFAULT_RECEIVE_TIMEOUT * 1000 ) > 0)
         {
-            if (recv( conn->socket, &buffer[recvd], 1, 0 ) <= 0)
+            int res;
+            if ((res = recv( conn->socket, &buffer[recvd], 1, 0 )) <= 0)
             {
-                set_last_error( sock_get_error( errno ) );
+                if (res == -1) set_last_error( sock_get_error( errno ) );
                 break;
             }
             if (buffer[recvd] == '\n')
