@@ -136,12 +136,12 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
          * only offer 32 bit ARB pixel formats. First try without an exact alpha
          * match, then try without an exact alpha and color match.
          */
-        { FALSE, TRUE,  TRUE  },
         { TRUE,  TRUE,  TRUE  },
-        { FALSE, FALSE, TRUE  },
-        { FALSE, FALSE, FALSE },
         { TRUE,  FALSE, TRUE  },
+        { FALSE, TRUE,  TRUE  },
+        { FALSE, FALSE, TRUE  },
         { TRUE,  FALSE, FALSE },
+        { FALSE, FALSE, FALSE },
     };
 
     int i = 0;
