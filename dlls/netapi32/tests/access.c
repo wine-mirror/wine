@@ -257,7 +257,9 @@ static void run_userhandling_tests(void)
         ok(ret == NERR_Success, "Deleting the user failed : %d\n", ret);
     }
     else
-        ok(ret == NERR_BadUsername, "Adding user with too long username returned 0x%08x\n", ret);
+        ok(ret == NERR_BadUsername ||
+           broken(ret == NERR_PasswordTooShort), /* NT4 */
+           "Adding user with too long username returned 0x%08x\n", ret);
 
     usri.usri1_name = sTestUserName;
     usri.usri1_password = sTooLongPassword;
@@ -293,7 +295,9 @@ static void run_userhandling_tests(void)
         return;
     }
 
-    ok(ret == NERR_Success, "Adding user failed with error 0x%08x\n", ret);
+    ok(ret == NERR_Success ||
+       broken(ret == NERR_PasswordTooShort), /* NT4 */
+       "Adding user failed with error 0x%08x\n", ret);
     if(ret != NERR_Success)
         return;
 
