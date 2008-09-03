@@ -268,12 +268,9 @@ static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum 
 #endif
 
     } else {
-
-        /* Note first is now zero as we shuffled along earlier */
-        TRACE("(%p) : glDrawArrays(%x, 0, %d)\n", This, glPrimitiveType, numberOfVertices);
+        TRACE("(%p) : glDrawArrays(%#x, %d, %d)\n", This, glPrimitiveType, startVertex, numberOfVertices);
         glDrawArrays(glPrimitiveType, startVertex, numberOfVertices);
         checkGLcall("glDrawArrays");
-
     }
 
     return;
