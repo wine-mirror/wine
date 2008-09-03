@@ -277,10 +277,8 @@ BOOL netconn_close( netconn_t *conn )
 
         pSSL_shutdown( conn->ssl_conn );
         pSSL_free( conn->ssl_conn );
-        pSSL_CTX_free( conn->ssl_ctx );
 
         conn->ssl_conn = NULL;
-        conn->ssl_ctx = NULL;
         conn->secure = FALSE;
     }
 #endif
