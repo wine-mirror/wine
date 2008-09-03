@@ -62,3 +62,4 @@
 #include "wininet_Si.rc"
 #include "wininet_Sv.rc"
 #include "wininet_Tr.rc"
+#include "wininet_Zh.rc"
