@@ -3468,9 +3468,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
 
         ENTER_GL();
-        glDrawBuffer(buffer);
-        checkGLcall("glDrawBuffer");
-
         myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format,
                                        Src->glDescription.target, Src->pow2Width, Src->pow2Height);
 
@@ -3543,13 +3540,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Leave the opengl state valid for blitting */
         myDevice->blitter->unset_shader((IWineD3DDevice *) myDevice);
 
-        /* The draw buffer should only need to be restored if we were drawing to the front buffer, and there is a back buffer.
-         * otherwise the context manager should choose between GL_BACK / offscreenDrawBuffer
-         */
-        if(dstSwapchain && This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer && dstSwapchain->backBuffer) {
-            glDrawBuffer(GL_BACK);
-            checkGLcall("glDrawBuffer");
-        }
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;
         Src->SrcBltCKey = oldBltCKey;
