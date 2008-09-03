@@ -680,7 +680,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
     }
 
     /* Start drawing in GL */
-    VTRACE(("glBegin(%x)\n", glPrimType));
+    VTRACE(("glBegin(%x)\n", glPrimitiveType));
     glBegin(glPrimitiveType);
 
     for (vx_index = 0; vx_index < numberOfVertices; ++vx_index) {
