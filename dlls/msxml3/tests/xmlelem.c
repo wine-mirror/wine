@@ -260,13 +260,13 @@ static void test_xmlelem_collection(void)
     IXMLElement *element = NULL, *child;
     IXMLElementCollection *collection = NULL;
     IEnumVARIANT *enumVar = NULL;
+    CHAR pathA[MAX_PATH];
     WCHAR path[MAX_PATH];
     long length, type;
     ULONG num_vars;
     VARIANT var, vIndex, vName;
     BSTR url, str;
-
-    static const WCHAR szBankXML[] = {'b','a','n','k','.','x','m','l',0};
+    static const CHAR szBankXML[] = "bank.xml";
     static const WCHAR szNumber[] = {'N','U','M','B','E','R',0};
     static const WCHAR szName[] = {'N','A','M','E',0};
 
@@ -278,13 +278,13 @@ static void test_xmlelem_collection(void)
         return;
     }
 
-    create_xml_file("bank.xml");
-    GetFullPathNameW(szBankXML, MAX_PATH, path, NULL);
+    create_xml_file(szBankXML);
+    GetFullPathNameA(szBankXML, MAX_PATH, pathA, NULL);
+    MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
 
     url = SysAllocString(path);
     hr = IXMLDocument_put_URL(doc, url);
-    /* Win98 returns ERROR_URL_NOT_FOUND */
-    ok(hr == S_OK || hr == ERROR_URL_NOT_FOUND, "Expected S_OK, got 0x%08x\n", hr);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
     SysFreeString(url);
 
     if(hr != S_OK)
