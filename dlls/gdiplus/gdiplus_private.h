@@ -167,6 +167,10 @@ struct GpCustomLineCap{
     REAL scale;
 };
 
+struct GpAdustableArrowCap{
+    GpCustomLineCap cap;
+};
+
 struct GpImage{
     IPicture* picture;
     ImageType type;

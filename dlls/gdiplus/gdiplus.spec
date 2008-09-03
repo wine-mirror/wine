@@ -69,7 +69,7 @@
 @ stdcall GdipConvertToEmfPlus(ptr ptr ptr long ptr ptr)
 @ stub GdipConvertToEmfPlusToFile
 @ stub GdipConvertToEmfPlusToStream
-@ stub GdipCreateAdjustableArrowCap
+@ stdcall GdipCreateAdjustableArrowCap(long long long ptr)
 @ stub GdipCreateBitmapFromDirectDrawSurface
 @ stdcall GdipCreateBitmapFromFile(wstr ptr)
 @ stdcall GdipCreateBitmapFromFileICM(wstr ptr)
@@ -236,10 +236,10 @@
 @ stdcall GdipFlattenPath(ptr ptr long)
 @ stdcall GdipFlush(ptr long)
 @ stdcall GdipFree(ptr)
-@ stub GdipGetAdjustableArrowCapFillState
-@ stub GdipGetAdjustableArrowCapHeight
-@ stub GdipGetAdjustableArrowCapMiddleInset
-@ stub GdipGetAdjustableArrowCapWidth
+@ stdcall GdipGetAdjustableArrowCapFillState(ptr ptr)
+@ stdcall GdipGetAdjustableArrowCapHeight(ptr ptr)
+@ stdcall GdipGetAdjustableArrowCapMiddleInset(ptr ptr)
+@ stdcall GdipGetAdjustableArrowCapWidth(ptr ptr)
 @ stub GdipGetAllPropertyItems
 @ stdcall GdipGetBrushType(ptr ptr)
 @ stdcall GdipGetCellAscent(ptr long ptr)
@@ -502,10 +502,10 @@
 @ stub GdipScalePenTransform
 @ stub GdipScaleTextureTransform
 @ stdcall GdipScaleWorldTransform(ptr long long long)
-@ stub GdipSetAdjustableArrowCapFillState
-@ stub GdipSetAdjustableArrowCapHeight
-@ stub GdipSetAdjustableArrowCapMiddleInset
-@ stub GdipSetAdjustableArrowCapWidth
+@ stdcall GdipSetAdjustableArrowCapFillState(ptr long)
+@ stdcall GdipSetAdjustableArrowCapHeight(ptr long)
+@ stdcall GdipSetAdjustableArrowCapMiddleInset(ptr long)
+@ stdcall GdipSetAdjustableArrowCapWidth(ptr long)
 @ stub GdipSetClipGraphics
 @ stub GdipSetClipHrgn
 @ stub GdipSetClipPath
