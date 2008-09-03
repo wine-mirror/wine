@@ -27,6 +27,8 @@
 
 #include "wine/debug.h"
 
+#include "winhttp_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
 /******************************************************************
@@ -105,6 +107,9 @@ BOOL WINAPI WinHttpSetOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuff
     return FALSE;
 }
 
+#define SCHEME_HTTP  3
+#define SCHEME_HTTPS 4
+
 BOOL WINAPI InternetCrackUrlW( LPCWSTR, DWORD, DWORD, LPURL_COMPONENTSW );
 BOOL WINAPI InternetCreateUrlW( LPURL_COMPONENTS, DWORD, LPWSTR, LPDWORD );
 
@@ -113,8 +118,22 @@ BOOL WINAPI InternetCreateUrlW( LPURL_COMPONENTS, DWORD, LPWSTR, LPDWORD );
  */
 BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW components )
 {
+    BOOL ret;
+
     TRACE("%s, %d, %x, %p\n", debugstr_w(url), len, flags, components);
-    return InternetCrackUrlW( url, len, flags, components );
+
+    if ((ret = InternetCrackUrlW( url, len, flags, components )))
+    {
+        /* fix up an incompatibility between wininet and winhttp */
+        if (components->nScheme == SCHEME_HTTP) components->nScheme = INTERNET_SCHEME_HTTP;
+        else if (components->nScheme == SCHEME_HTTPS) components->nScheme = INTERNET_SCHEME_HTTPS;
+        else
+        {
+            set_last_error( ERROR_WINHTTP_UNRECOGNIZED_SCHEME );
+            return FALSE;
+        }
+    }
+    return ret;
 }
 
 /***********************************************************************
