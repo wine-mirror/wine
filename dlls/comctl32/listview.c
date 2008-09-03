@@ -9709,9 +9709,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_GETTOPINDEX:
     return LISTVIEW_GetTopIndex(infoPtr);
 
-  /*case LVM_GETUNICODEFORMAT:
-    FIXME("LVM_GETUNICODEFORMAT: unimplemented\n");
-    return FALSE;*/
+  case LVM_GETUNICODEFORMAT:
+    return (infoPtr->notifyFormat == NFR_UNICODE);
 
   /* case LVM_GETVIEW: */
 
