@@ -33,6 +33,135 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+typedef struct path_list_node_t path_list_node_t;
+struct path_list_node_t {
+    GpPointF pt;
+    BYTE type; /* PathPointTypeStart or PathPointTypeLine */
+    path_list_node_t *next;
+};
+
+/* init list */
+static BOOL init_path_list(path_list_node_t **node, REAL x, REAL y)
+{
+    *node = GdipAlloc(sizeof(path_list_node_t));
+    if(!*node)
+        return FALSE;
+
+    (*node)->pt.X = x;
+    (*node)->pt.Y = y;
+    (*node)->type = PathPointTypeStart;
+    (*node)->next = NULL;
+
+    return TRUE;
+}
+
+/* free all nodes including argument */
+static void free_path_list(path_list_node_t *node)
+{
+    path_list_node_t *n = node;
+
+    while(n){
+        n = n->next;
+        GdipFree(node);
+        node = n;
+    }
+}
+
+/* Add a node after 'node' */
+/*
+ * Returns
+ *  pointer on success
+ *  NULL    on allocation problems
+ */
+static path_list_node_t* add_path_list_node(path_list_node_t *node, REAL x, REAL y, BOOL type)
+{
+    path_list_node_t *new;
+
+    new = GdipAlloc(sizeof(path_list_node_t));
+    if(!new)
+        return NULL;
+
+    new->pt.X  = x;
+    new->pt.Y  = y;
+    new->type  = type;
+    new->next  = node->next;
+    node->next = new;
+
+    return new;
+}
+
+/* returns element count */
+static INT path_list_count(path_list_node_t *node)
+{
+    INT count = 1;
+
+    while((node = node->next))
+        ++count;
+
+    return count;
+}
+
+/* GdipFlattenPath helper */
+/*
+ * Used to recursively flatten single Bezier curve
+ * Parameters:
+ *  - start   : pointer to start point node;
+ *  - (x2, y2): first control point;
+ *  - (x3, y3): second control point;
+ *  - end     : pointer to end point node
+ *  - flatness: admissible error of linear approximation.
+ *
+ * Return value:
+ *  TRUE : success
+ *  FALSE: out of memory
+ *
+ * TODO: used quality criteria should be revised to match native as
+ *       closer as possible.
+ */
+static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, REAL y3,
+                           path_list_node_t *end, REAL flatness)
+{
+    /* this 5 middle points with start/end define to half-curves */
+    GpPointF mp[5];
+    GpPointF pt, pt_st;
+    path_list_node_t *node;
+
+    /* calculate bezier curve middle points == new control points */
+    mp[0].X = (start->pt.X + x2) / 2.0;
+    mp[0].Y = (start->pt.Y + y2) / 2.0;
+    /* middle point between control points */
+    pt.X = (x2 + x3) / 2.0;
+    pt.Y = (y2 + y3) / 2.0;
+    mp[1].X = (mp[0].X + pt.X) / 2.0;
+    mp[1].Y = (mp[0].Y + pt.Y) / 2.0;
+    mp[4].X = (end->pt.X + x3) / 2.0;
+    mp[4].Y = (end->pt.Y + y3) / 2.0;
+    mp[3].X = (mp[4].X + pt.X) / 2.0;
+    mp[3].Y = (mp[4].Y + pt.Y) / 2.0;
+
+    mp[2].X = (mp[1].X + mp[3].X) / 2.0;
+    mp[2].Y = (mp[1].Y + mp[3].Y) / 2.0;
+
+    pt = end->pt;
+    pt_st = start->pt;
+    /* check flatness as a half of distance between middle point and a linearized path */
+    if(fabs(((pt.Y - pt_st.Y)*mp[2].X + (pt_st.X - pt.X)*mp[2].Y +
+        (pt_st.Y*pt.X - pt_st.X*pt.Y))) <=
+        (0.5 * flatness*sqrtf((powf(pt.Y - pt_st.Y, 2.0) + powf(pt_st.X - pt.X, 2.0))))){
+        return TRUE;
+    }
+    else
+        /* add a middle point */
+        if(!(node = add_path_list_node(start, mp[2].X, mp[2].Y, PathPointTypeLine)))
+            return FALSE;
+
+    /* do the same with halfs */
+    flatten_bezier(start, mp[0].X, mp[0].Y, mp[1].X, mp[1].Y, node, flatness);
+    flatten_bezier(node,  mp[3].X, mp[3].Y, mp[4].X, mp[4].Y, end,  flatness);
+
+    return TRUE;
+}
+
 GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     REAL y2, REAL startAngle, REAL sweepAngle)
 {
@@ -818,15 +947,106 @@ GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
 
 GpStatus WINGDIPAPI GdipFlattenPath(GpPath *path, GpMatrix* matrix, REAL flatness)
 {
-    static int calls;
+    path_list_node_t *list, *node;
+    GpPointF pt;
+    INT i = 1;
+    INT startidx = 0;
+
+    TRACE("(%p, %p, %.2f)\n", path, matrix, flatness);
 
     if(!path)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if(matrix){
+        WARN("transformation not supported yet!\n");
+        return NotImplemented;
+    }
 
-    return NotImplemented;
+    if(path->pathdata.Count == 0)
+        return Ok;
+
+    pt = path->pathdata.Points[0];
+    if(!init_path_list(&list, pt.X, pt.Y))
+        return OutOfMemory;
+
+    node = list;
+
+    while(i < path->pathdata.Count){
+
+        BYTE type = path->pathdata.Types[i] & PathPointTypePathTypeMask;
+        path_list_node_t *start;
+
+        pt = path->pathdata.Points[i];
+
+        /* save last start point index */
+        if(type == PathPointTypeStart)
+            startidx = i;
+
+        /* always add line points and start points */
+        if((type == PathPointTypeStart) || (type == PathPointTypeLine)){
+            type = (path->pathdata.Types[i] & ~PathPointTypeBezier) | PathPointTypeLine;
+            if(!add_path_list_node(node, pt.X, pt.Y, type))
+                goto memout;
+
+            node = node->next;
+            continue;
+        }
+
+        /* Bezier curve always stored as 4 points */
+        if((path->pathdata.Types[i-1] & PathPointTypePathTypeMask) != PathPointTypeStart){
+            type = (path->pathdata.Types[i] & ~PathPointTypeBezier) | PathPointTypeLine;
+            if(!add_path_list_node(node, pt.X, pt.Y, type))
+                goto memout;
+
+            node = node->next;
+        }
+
+        /* test for closed figure */
+        if(path->pathdata.Types[i+1] & PathPointTypeCloseSubpath){
+            pt = path->pathdata.Points[startidx];
+            ++i;
+        }
+        else
+        {
+            i += 2;
+            pt = path->pathdata.Points[i];
+        };
+
+        start = node;
+        /* add Bezier end point */
+        type = (path->pathdata.Types[i] & ~PathPointTypeBezier) | PathPointTypeLine;
+        if(!add_path_list_node(node, pt.X, pt.Y, type))
+            goto memout;
+        node = node->next;
+
+        /* flatten curve */
+        if(!flatten_bezier(start, path->pathdata.Points[i-2].X, path->pathdata.Points[i-2].Y,
+                                  path->pathdata.Points[i-1].X, path->pathdata.Points[i-1].Y,
+                           node, flatness))
+            goto memout;
+
+        ++i;
+    }/* while */
+
+    /* store path data back */
+    i = path_list_count(list);
+    if(!lengthen_path(path, i))
+        goto memout;
+    path->pathdata.Count = i;
+
+    node = list;
+    for(i = 0; i < path->pathdata.Count; i++){
+        path->pathdata.Points[i] = node->pt;
+        path->pathdata.Types[i]  = node->type;
+        node = node->next;
+    }
+
+    free_path_list(list);
+    return Ok;
+
+memout:
+    free_path_list(list);
+    return OutOfMemory;
 }
 
 GpStatus WINGDIPAPI GdipGetPathData(GpPath *path, GpPathData* pathData)
