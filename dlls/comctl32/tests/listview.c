@@ -735,7 +735,9 @@ static void test_columns(void)
 
     /* Check its width */
     rc = ListView_GetColumnWidth(hwnd, 0);
-    ok(rc==10, "Inserting column with no mask failed to set width to 10 with %d\n", rc);
+    ok(rc==10 ||
+       broken(rc==0), /* win9x */
+       "Inserting column with no mask failed to set width to 10 with %d\n", rc);
 
     DestroyWindow(hwnd);
 }
