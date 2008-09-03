@@ -32,6 +32,7 @@
 #include "No.rc"
 #include "Pl.rc"
 #include "Ru.rc"
+#include "Zh.rc"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 

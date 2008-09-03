@@ -1,0 +1,410 @@
+/*
+ * OleView (Simplified and Traditional Chinese Resources)
+ *
+ * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/* Chinese text is encoded in UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+IDM_MENU MENU
+{
+    POPUP "文件(&F)"
+    {
+        MENUITEM "文件绑定(&B)...", IDM_BIND
+        MENUITEM "查看 &TypeLib...", IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "系统设置(&S)...", IDM_SYSCONF
+        MENUITEM "运行注册表编辑器(&R)", IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "退出(&X)", IDM_EXIT
+    }
+    POPUP "对象(&O)"
+    {
+        POPUP "&CoCreateInstance 参数"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER", IDM_FLAG_INSERV,CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER", IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER", IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER", IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "查看类型信息(&T)", IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "创建实例(&I)", IDM_CREATEINST, GRAYED
+        MENUITEM "创建实例在(&O)...", IDM_CREATEINSTON, GRAYED
+        MENUITEM "释放实例(&R)", IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "复制 C&LSID 到剪贴板", IDM_COPYCLSID, GRAYED
+        MENUITEM "复制 &HTML 对象标记到剪贴板", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "视图(&V)...", IDM_VIEW, GRAYED
+    }
+    POPUP "视图(&V)"
+    {
+        MENUITEM "专家状态(&E)", IDM_EXPERT,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "隐藏部件分类(&H)", IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "工具栏(&T)", IDM_TOOLBAR,CHECKED
+        MENUITEM "状态栏(&S)", IDM_STATUSBAR,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "刷新(&R)\tF5", IDM_REFRESH
+    }
+    POPUP "帮助(&H)"
+    {
+        MENUITEM "关于 &OleView", IDM_ABOUT
+    }
+}
+
+IDM_TYPELIB MENU
+{
+    POPUP "文件(&F)"
+    {
+        MENUITEM "另存为(&S)...", IDM_SAVEAS
+        MENUITEM "关闭(&C)", IDM_CLOSE
+    }
+    POPUP "视图(&V)"
+    {
+        MENUITEM "按类型分组(&G)", IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "工具栏(&T)", IDM_TOOLBAR
+        MENUITEM "状态栏(&S)", IDM_STATUSBAR,CHECKED
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OleView"
+    IDS_APPTITLE           "OleView"
+    IDS_READY              "待命"
+    IDS_ABOUT              "OleView - OLE/COM 对象查看器"
+    IDS_ABOUTVER           "版本 1.0 "
+    IDS_TYPELIBTITLE       "ITypeLib 查看器"
+    IDS_OPEN               "打开"
+    IDS_OPEN_TYPELIB_FILTER "TypeLib 文件 (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
+
+    IDM_BIND,              "通过文件绰号绑定到文件"
+    IDM_TYPELIB,           "打开 TypeLib 文件并查看内容"
+    IDM_SYSCONF,           "修改本机分布式 COM 设置"
+    IDM_REGEDIT,           "运行 Wine 注册表编辑器"
+    IDM_EXIT,              "退出程序. 提示保存"
+    IDM_CREATEINST,        "创建当前选定对象实例"
+    IDM_CREATEINSTON,      "创建当前选定对象在指定计算机的实例"
+    IDM_RELEASEINST,       "释放当前选定对象实例"
+    IDM_COPYCLSID,         "把当前选定项目的 GUID 复制到剪贴板"
+    IDM_VIEW,              "显示选定项目的查看器"
+    IDM_FLAG_INSERV,       "呼叫 CoGetClassObject 时使用 CLSCTX_INPROC_SERVER"
+    IDM_FLAG_INHANDL,      "呼叫 CoGetClassObject 时使用 CLSCTX_INPROC_HANDLER"
+    IDM_FLAG_LOCSERV,      "呼叫 CoGetClassObject 时使用 CLSCTX_LOCAL_SERVER"
+    IDM_FLAG_REMSERV,      "呼叫 CoGetClassObject 时使用 CLSCTX_REMOTE_SERVER"
+    IDM_EXPERT,            "切换专家和新手显示模式"
+    IDM_HIDDEN,            "切换隐藏组件类显示"
+    IDM_TOOLBAR,           "显示或隐藏工具栏"
+    IDM_STATUSBAR,         "显示或隐藏状态栏"
+    IDM_REFRESH,           "刷新所有名单"
+    IDM_ABOUT,             "显示程序信息、版本号及版权"
+
+    IDM_SAVEAS,            "存为 .IDL 或 .H 文件"
+    IDM_CLOSE,             "关闭窗口"
+    IDM_GROUP,             "按类别分组"
+
+    IDS_TREE_OC,           "对象类型"
+    IDS_TREE_GBCC,         "按部件类型分组"
+    IDS_TREE_O1O,          "OLE 1.0 对象"
+    IDS_TREE_CLO,          "COM 函数库对象"
+    IDS_TREE_AO,           "所有对象"
+    IDS_TREE_AID,          "应用程序 IDs"
+    IDS_TREE_TL,           "类型函数库"
+    IDS_TL_VER,            "版本"
+    IDS_TREE_I,            "界面"
+
+    IDS_TAB_REG,           "注册表"
+    IDS_TAB_IMPL,          "实行"
+    IDS_TAB_ACTIV,         "激活"
+
+    IDS_CGCOFAIL,          "CoGetClassObject 失败."
+    IDS_ERROR_UNKN,        "未知错误"
+    IDS_TRUE,              "真"
+    IDS_FALSE,             "假"
+    IDS_BYTES,             "字节"
+
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) 失败 ($%x)"
+    IDS_INHERITINTERFACES, "遗传界面"
+}
+
+DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "连接到另外一台计算机"
+FONT 9, "MS Song"
+{
+    LTEXT         "计算机名称(&M):", IDIGNORE, 5, 6, 190, 8
+    EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON "确定(&O)", IDOK, 200, 5, 45, 14
+    PUSHBUTTON    "取消(&C)", IDCANCEL, 200, 22, 45, 14
+}
+
+DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "系统设置"
+FONT 9, "MS Song"
+{
+    LTEXT         "系统设置", IDIGNORE, 5, 6, 160, 8
+    CHECKBOX      "启用分布式CO&M", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX      "启用远程连接(限&Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT         "这些设置只改变注册表值.\n它对Wine的性能没有影响.", IDIGNORE, 5, 50, 160, 40
+    DEFPUSHBUTTON "确定(&O)", IDOK, 70, 80, 45, 14
+    PUSHBUTTON    "取消(&C)", IDCANCEL, 120, 80, 45, 14
+}
+
+DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "默认界面查看器"
+FONT 9, "MS Song"
+{
+    LTEXT   "界面", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON    "查看类型信息(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersist 界面查看器"
+FONT 9, "MS Song"
+{
+    LTEXT   "类别名称:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersistStream 界面查看器"
+FONT 9, "MS Song"
+{
+    LTEXT   "类别名称:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON    "已修改(&I)", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+    PUSHBUTTON    "获取最大(&G)", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
+}
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+
+IDM_MENU MENU
+{
+    POPUP "檔案(&F)"
+    {
+        MENUITEM "檔案綁定(&B)...", IDM_BIND
+        MENUITEM "查看 &TypeLib...", IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "系統設定(&S)...", IDM_SYSCONF
+        MENUITEM "執行註冊表編輯器(&R)", IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "結束(&X)", IDM_EXIT
+    }
+    POPUP "對象(&O)"
+    {
+        POPUP "&CoCreateInstance 參數"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER", IDM_FLAG_INSERV,CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER", IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER", IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER", IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "查看類型資訊(&T)", IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "創建實例(&I)", IDM_CREATEINST, GRAYED
+        MENUITEM "創建實例在(&O)...", IDM_CREATEINSTON, GRAYED
+        MENUITEM "釋放實例(&R)", IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "複製 C&LSID 到剪貼板", IDM_COPYCLSID, GRAYED
+        MENUITEM "複製 &HTML 對象標記到剪貼板", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "檢視(&V)...", IDM_VIEW, GRAYED
+    }
+    POPUP "檢視(&V)"
+    {
+        MENUITEM "專家狀態(&E)", IDM_EXPERT,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "隱藏部件分類(&H)", IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "工具欄(&T)", IDM_TOOLBAR,CHECKED
+        MENUITEM "狀態欄(&S)", IDM_STATUSBAR,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "刷新(&R)\tF5", IDM_REFRESH
+    }
+    POPUP "幫助(&H)"
+    {
+        MENUITEM "關於 &OleView", IDM_ABOUT
+    }
+}
+
+IDM_TYPELIB MENU
+{
+    POPUP "檔案(&F)"
+    {
+        MENUITEM "另存為(&S)...", IDM_SAVEAS
+        MENUITEM "關閉(&C)", IDM_CLOSE
+    }
+    POPUP "檢視(&V)"
+    {
+        MENUITEM "按類型分組(&G)", IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "工具欄(&T)", IDM_TOOLBAR
+        MENUITEM "狀態欄(&S)", IDM_STATUSBAR,CHECKED
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OleView"
+    IDS_APPTITLE           "OleView"
+    IDS_READY              "待命"
+    IDS_ABOUT              "OleView - OLE/COM 對象查看器"
+    IDS_ABOUTVER           "版本 1.0 "
+    IDS_TYPELIBTITLE       "ITypeLib 查看器"
+    IDS_OPEN               "開啟"
+    IDS_OPEN_TYPELIB_FILTER "TypeLib 檔案 (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
+
+    IDM_BIND,              "通過檔案綽號綁定到檔案"
+    IDM_TYPELIB,           "開啟 TypeLib 檔案並查看內容"
+    IDM_SYSCONF,           "修改本機分佈式 COM 設定"
+    IDM_REGEDIT,           "執行 Wine 註冊表編輯器"
+    IDM_EXIT,              "結束程式. 提示儲存"
+    IDM_CREATEINST,        "創建當前選定對象實例"
+    IDM_CREATEINSTON,      "創建當前選定對象在指定電腦的實例"
+    IDM_RELEASEINST,       "釋放當前選定對象實例"
+    IDM_COPYCLSID,         "把當前選定項目的 GUID 複製到剪貼板"
+    IDM_VIEW,              "顯示選定項目的查看器"
+    IDM_FLAG_INSERV,       "呼叫 CoGetClassObject 時使用 CLSCTX_INPROC_SERVER"
+    IDM_FLAG_INHANDL,      "呼叫 CoGetClassObject 時使用 CLSCTX_INPROC_HANDLER"
+    IDM_FLAG_LOCSERV,      "呼叫 CoGetClassObject 時使用 CLSCTX_LOCAL_SERVER"
+    IDM_FLAG_REMSERV,      "呼叫 CoGetClassObject 時使用 CLSCTX_REMOTE_SERVER"
+    IDM_EXPERT,            "切換專家和新手顯示模式"
+    IDM_HIDDEN,            "切換隱藏組件類顯示"
+    IDM_TOOLBAR,           "顯示或隱藏工具欄"
+    IDM_STATUSBAR,         "顯示或隱藏狀態欄"
+    IDM_REFRESH,           "刷新所有名單"
+    IDM_ABOUT,             "顯示程式資訊、版本號及版權"
+
+    IDM_SAVEAS,            "存為 .IDL 或 .H 檔案"
+    IDM_CLOSE,             "關閉窗口"
+    IDM_GROUP,             "按類別分組"
+
+    IDS_TREE_OC,           "對象類型"
+    IDS_TREE_GBCC,         "按部件類型分組"
+    IDS_TREE_O1O,          "OLE 1.0 對象"
+    IDS_TREE_CLO,          "COM 函式庫對象"
+    IDS_TREE_AO,           "所有對象"
+    IDS_TREE_AID,          "應用程式 IDs"
+    IDS_TREE_TL,           "類型函式庫"
+    IDS_TL_VER,            "版本"
+    IDS_TREE_I,            "界面"
+
+    IDS_TAB_REG,           "註冊表"
+    IDS_TAB_IMPL,          "實行"
+    IDS_TAB_ACTIV,         "激活"
+
+    IDS_CGCOFAIL,          "CoGetClassObject 失敗."
+    IDS_ERROR_UNKN,        "未知錯誤"
+    IDS_TRUE,              "真"
+    IDS_FALSE,             "假"
+    IDS_BYTES,             "字節"
+
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) 失敗 ($%x)"
+    IDS_INHERITINTERFACES, "遺傳界面"
+}
+
+DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "連接到另外一台電腦"
+FONT 8, "PMingLiu"
+{
+    LTEXT         "電腦名稱(&M):", IDIGNORE, 5, 6, 190, 8
+    EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON "確定(&O)", IDOK, 200, 5, 45, 14
+    PUSHBUTTON    "取消(&C)", IDCANCEL, 200, 22, 45, 14
+}
+
+DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "系統設定"
+FONT 8, "PMingLiu"
+{
+    LTEXT         "系統設定", IDIGNORE, 5, 6, 160, 8
+    CHECKBOX      "啟用分佈式CO&M", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX      "啟用遠程連接(限&Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT         "這些設定只改變註冊表值.\n它對Wine的性能沒有影響.", IDIGNORE, 5, 50, 160, 40
+    DEFPUSHBUTTON "確定(&O)", IDOK, 70, 80, 45, 14
+    PUSHBUTTON    "取消(&C)", IDCANCEL, 120, 80, 45, 14
+}
+
+DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "默認界面查看器"
+FONT 8, "PMingLiu"
+{
+    LTEXT   "界面", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON "關閉(&C)", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON    "查看類型資訊(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersist 界面查看器"
+FONT 8, "PMingLiu"
+{
+    LTEXT   "類別名稱:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON "關閉(&C)", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersistStream 界面查看器"
+FONT 8, "PMingLiu"
+{
+    LTEXT   "類別名稱:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON "關閉(&C)", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON    "已修改(&I)", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+    PUSHBUTTON    "獲取最大(&G)", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
+}
+
+#pragma code_page(default)
