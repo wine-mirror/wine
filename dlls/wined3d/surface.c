@@ -1533,7 +1533,11 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if( !(GL_SUPPORT(EXT_PALETTED_TEXTURE) || (GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && primary_render_target_is_p8(device))) || colorkey_active || !use_texturing ) {
+            if( !(GL_SUPPORT(EXT_PALETTED_TEXTURE) ||
+                  (GL_SUPPORT(ARB_FRAGMENT_PROGRAM) &&
+                   device->render_targets &&
+                   This == (IWineD3DSurfaceImpl*)device->render_targets[0])) ||
+                colorkey_active || !use_texturing ) {
                 *format = GL_RGBA;
                 *internal = GL_RGBA;
                 *type = GL_UNSIGNED_BYTE;
