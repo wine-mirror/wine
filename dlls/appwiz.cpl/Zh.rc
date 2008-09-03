@@ -1,0 +1,143 @@
+/*
+* Add/Remove Programs (Simplified and Traditional Chinese Resources)
+*
+* Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+*
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+*
+*/
+
+/* Chinese text is encoded in UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+STRINGTABLE
+{
+   IDS_CPL_TITLE, "添加/删除程序"
+   IDS_CPL_DESC, "允许你安装新软件, 和从你的电脑里删除现有程序."
+   IDS_TAB1_TITLE, "运用程序"
+
+   IDS_UNINSTALL_FAILED, "不能运行卸载程序 '%s'. 你想把这个卸载程序从注册表中删除吗?"
+   IDS_NOT_SPECIFIED, "没指定"
+
+   IDS_COLUMN_NAME, "名称"
+   IDS_COLUMN_PUBLISHER, "生产商"
+   IDS_COLUMN_VERSION, "版本"
+}
+
+/* TODO: it's best to use the constant WC_LISTVIEW instead of SysListView32 directly, but the Wine resource compiler doesn't seem to like that... */
+
+IDD_MAIN DIALOG 0, 0, 320, 220
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "安装/卸载"
+FONT 9, "MS Song"
+{
+ CONTROL "要从软盘，光盘或硬盘安装新程序，请按'安装'.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "安装(&I)...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+ CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
+ CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
+ CONTROL "下列软件可以自动卸载. 按'添加/删除'可卸载选定程序或者调整已安装部件.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
+ CONTROL "添加/删除(&R)...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
+ CONTROL "技术支持(&S)...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
+ CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
+}
+
+IDD_INFO DIALOG 0, 0, 256, 138
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "技术支持信息"
+FONT 9, "MS Song"
+{
+ CONTROL "确定", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
+ CONTROL "%s 技术支持信息:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "生产商:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
+ CONTROL "版本:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
+ CONTROL "联系人:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
+ CONTROL "支持信息:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
+ CONTROL "支持电话:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
+ CONTROL "产品说明:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
+ CONTROL "产品更新:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "备注:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
+ CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
+ CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
+ CONTROL "", IDC_INFO_CONTACT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 50, 136, 8
+ CONTROL "", IDC_INFO_SUPPORT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 60, 136, 8
+ CONTROL "", IDC_INFO_PHONE, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 70, 136, 8
+ CONTROL "", IDC_INFO_README, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 80, 136, 8
+ CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
+ CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
+}
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+
+STRINGTABLE
+{
+   IDS_CPL_TITLE, "添加/刪除程式"
+   IDS_CPL_DESC, "允許你安裝新軟件, 和從你的電腦裡刪除現有程式."
+   IDS_TAB1_TITLE, "運用程式"
+
+   IDS_UNINSTALL_FAILED, "不能執行卸載程式 '%s'. 你想把這個卸載程式從註冊表中刪除嗎?"
+   IDS_NOT_SPECIFIED, "沒指定"
+
+   IDS_COLUMN_NAME, "名稱"
+   IDS_COLUMN_PUBLISHER, "生產商"
+   IDS_COLUMN_VERSION, "版本"
+}
+
+/* TODO: it's best to use the constant WC_LISTVIEW instead of SysListView32 directly, but the Wine resource compiler doesn't seem to like that... */
+
+IDD_MAIN DIALOG 0, 0, 320, 220
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "安裝/卸載"
+FONT 8, "PMingLiu"
+{
+ CONTROL "要從軟碟，光碟或硬碟安裝新程式，請按'安裝'.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "安裝(&I)...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+ CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
+ CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
+ CONTROL "下列軟件可以自動卸載. 按'添加/刪除'可卸載選定程式或者調整已安裝部件.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
+ CONTROL "添加/刪除(&R)...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
+ CONTROL "技術支援(&S)...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
+ CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
+}
+
+IDD_INFO DIALOG 0, 0, 256, 138
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "技術支援資訊"
+FONT 8, "PMingLiu"
+{
+ CONTROL "確定", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
+ CONTROL "%s 技術支援資訊:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "生產商:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
+ CONTROL "版本:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
+ CONTROL "聯繫人:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
+ CONTROL "支援資訊:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
+ CONTROL "支援電話:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
+ CONTROL "產品說明:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
+ CONTROL "產品更新:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "備註:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
+ CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
+ CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
+ CONTROL "", IDC_INFO_CONTACT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 50, 136, 8
+ CONTROL "", IDC_INFO_SUPPORT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 60, 136, 8
+ CONTROL "", IDC_INFO_PHONE, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 70, 136, 8
+ CONTROL "", IDC_INFO_README, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 80, 136, 8
+ CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
+ CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
+}
+
+#pragma code_page(default)
