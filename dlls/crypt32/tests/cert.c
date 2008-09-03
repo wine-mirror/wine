@@ -513,7 +513,8 @@ static void testCertProperties(void)
      CERT_SIGNATURE_HASH_PROP_ID, NULL, &size);
     ok(!ret &&
        (GetLastError() == CRYPT_E_ASN1_BADTAG ||
-        GetLastError() == CRYPT_E_NOT_FOUND),
+        GetLastError() == CRYPT_E_NOT_FOUND ||
+        GetLastError() == OSS_DATA_ERROR), /* win9x */
        "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
 
     /* Test key contexts and handles and such */
@@ -1815,7 +1816,9 @@ static void testSignAndEncodeCert(void)
      */
     ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
      X509_CERT_TO_BE_SIGNED, &info, &algID, NULL, NULL, &size);
-    ok(!ret && GetLastError() == NTE_BAD_ALGID,
+    ok(!ret &&
+     (GetLastError() == NTE_BAD_ALGID ||
+      GetLastError() == OSS_BAD_PTR), /* win9x */
      "Expected NTE_BAD_ALGID, got %08x\n", GetLastError());
     algID.pszObjId = oid_rsa_md5rsa;
     ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
@@ -2625,19 +2628,25 @@ static void testHashToBeSigned(void)
      "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, NULL, 0, NULL, &size);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_EOD ||
+      GetLastError() == OSS_BAD_ARG), /* win9x */
      "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     /* Can't sign anything:  has to be asn.1 encoded, at least */
     SetLastError(0xdeadbeef);
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, int1, sizeof(int1),
      NULL, &size);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+      GetLastError() == OSS_MORE_INPUT), /* win9x */
      "expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     /* Can't be empty, either */
     SetLastError(0xdeadbeef);
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, emptyCert,
      sizeof(emptyCert), NULL, &size);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
+      GetLastError() == OSS_DATA_ERROR), /* win9x */
      "expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
     /* Signing a cert works */
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, md5SignedEmptyCert,
@@ -3021,7 +3030,9 @@ static void testGetPublicKeyLength(void)
      ret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
-    ok(ret == 0 && GetLastError() == CRYPT_E_ASN1_EOD,
+    ok(ret == 0 &&
+     (GetLastError() == CRYPT_E_ASN1_EOD ||
+      GetLastError() == OSS_BAD_ARG), /* win9x */
      "Expected length 0 and CRYPT_E_ASN1_EOD, got length %d, %08x\n",
      ret, GetLastError());
     /* With a nearly-empty public key info */
@@ -3033,7 +3044,9 @@ static void testGetPublicKeyLength(void)
      ret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
-    ok(ret == 0 && GetLastError() == CRYPT_E_ASN1_EOD,
+    ok(ret == 0 &&
+     (GetLastError() == CRYPT_E_ASN1_EOD ||
+      GetLastError() == OSS_BAD_ARG), /* win9x */
      "Expected length 0 and CRYPT_E_ASN1_EOD, got length %d, %08x\n",
      ret, GetLastError());
     /* With a bogus key */
@@ -3046,7 +3059,9 @@ static void testGetPublicKeyLength(void)
      ret, GetLastError());
     SetLastError(0xdeadbeef);
     ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
-    ok(ret == 0 && GetLastError() == CRYPT_E_ASN1_BADTAG,
+    ok(ret == 0 &&
+     (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+      GetLastError() == OSS_PDU_MISMATCH), /* win9x */
      "Expected length 0 and CRYPT_E_ASN1_BADTAGTAG, got length %d, %08x\n",
      ret, GetLastError());
     /* With a believable RSA key but a bogus OID */
@@ -3065,7 +3080,9 @@ static void testGetPublicKeyLength(void)
     info.Algorithm.pszObjId = oid_rsa_dh;
     SetLastError(0xdeadbeef);
     ret = CertGetPublicKeyLength(X509_ASN_ENCODING, &info);
-    ok(ret == 0 && GetLastError() == CRYPT_E_ASN1_BADTAG,
+    ok(ret == 0 &&
+     (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+      GetLastError() == E_INVALIDARG), /* win9x */
      "Expected length 0 and CRYPT_E_ASN1_BADTAG, got length %d, %08x\n",
      ret, GetLastError());
     /* With the RSA OID */
