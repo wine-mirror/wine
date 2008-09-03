@@ -6,6 +6,7 @@ TESTDLL   = winhttp.dll
 IMPORTS   = winhttp kernel32
 
 CTESTS = \
+	notification.c \
 	winhttp.c
 
 @MAKE_TEST_RULES@

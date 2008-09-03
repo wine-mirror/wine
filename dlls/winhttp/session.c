@@ -38,7 +38,7 @@ void set_last_error( DWORD error )
 
 void send_callback( object_header_t *hdr, DWORD status, LPVOID info, DWORD buflen )
 {
-    TRACE("%p, %u, %p, %u\n", hdr, status, info, buflen);
+    TRACE("%p, 0x%08x, %p, %u\n", hdr, status, info, buflen);
 
     if (hdr->notify_mask & status) hdr->callback( hdr->handle, hdr->context, status, info, buflen );
 }
@@ -170,6 +170,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     connect->hdr.flags = session->hdr.flags;
     connect->hdr.callback = session->hdr.callback;
     connect->hdr.notify_mask = session->hdr.notify_mask;
+    connect->hdr.context = session->hdr.context;
 
     addref_object( &session->hdr );
     connect->session = session;
@@ -261,6 +262,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->hdr.flags = flags;
     request->hdr.callback = connect->hdr.callback;
     request->hdr.notify_mask = connect->hdr.notify_mask;
+    request->hdr.context = connect->hdr.context;
 
     addref_object( &connect->hdr );
     request->connect = connect;

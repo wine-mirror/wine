@@ -674,13 +674,17 @@ static BOOL open_connection( request_t *request )
     WCHAR *addressW;
 
     if (netconn_connected( &request->netconn )) return TRUE;
-
     connect = request->connect;
-    if (!netconn_resolve( connect->servername, connect->serverport, &connect->sockaddr )) return FALSE;
 
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, connect->servername, strlenW(connect->servername) + 1 );
+
+    if (!netconn_resolve( connect->servername, connect->serverport, &connect->sockaddr )) return FALSE;
     inet_ntop( connect->sockaddr.sin_family, &connect->sockaddr.sin_addr, address, sizeof(address) );
-    TRACE("connecting to %s:%u\n", address, ntohs(connect->sockaddr.sin_port));
     addressW = strdupAW( address );
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, addressW, strlenW(addressW) + 1 );
+
+    TRACE("connecting to %s:%u\n", address, ntohs(connect->sockaddr.sin_port));
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
 
@@ -702,7 +706,7 @@ static BOOL open_connection( request_t *request )
         return FALSE;
     }
 
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, 0 );
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, strlenW(addressW) + 1 );
 
     heap_free( addressW );
     return TRUE;
