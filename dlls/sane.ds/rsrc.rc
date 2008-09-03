@@ -39,3 +39,4 @@
 #include "sane_Ru.rc"
 #include "sane_Si.rc"
 #include "sane_Sv.rc"
+#include "sane_Zh.rc"
