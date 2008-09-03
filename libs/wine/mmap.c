@@ -286,7 +286,30 @@ static void reserve_area( void *addr, void *end )
     }
 #endif
 }
+
+
+/***********************************************************************
+ *           reserve_malloc_space
+ *
+ * Solaris malloc is not smart enough to obtain space through mmap(), so try to make
+ * sure that there is some available sbrk() space before we reserve other things.
+ */
+static void reserve_malloc_space( size_t size )
+{
+#ifdef __sun
+    size_t i, count = size / 1024;
+    void **ptrs = malloc( count * sizeof(ptrs[0]) );
+
+    if (!ptrs) return;
+
+    for (i = 0; i < count; i++) if (!(ptrs[i] = malloc( 1024 ))) break;
+    if (i--)  /* free everything except the last one */
+        while (i) free( ptrs[--i] );
+    free( ptrs );
 #endif
+}
+
+#endif  /* __i386__ */
 
 
 /***********************************************************************
@@ -324,6 +347,8 @@ void mmap_init(void)
     char stack;
     char * const stack_ptr = &stack;
     char *user_space_limit = (char *)0x7ffe0000;
+
+    reserve_malloc_space( 8 * 1024 * 1024 );
 
     /* check for a reserved area starting at the user space limit */
     /* to avoid wasting time trying to allocate it again */
