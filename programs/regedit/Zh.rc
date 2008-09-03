@@ -1,0 +1,656 @@
+/*
+ * Regedit (Simplified and Traditional Chinese Resources)
+ *
+ * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/* Chinese text is encoded in UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "注册表(&R)"
+    BEGIN
+        MENUITEM "导入注册表文件(&I)...", ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "导出注册表文件(&E)...", ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "连接网络注册表(&C)...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "断开网络注册表(&D)...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "打印(&P)\tCtrl+P", ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "退出(&X)", ID_REGISTRY_EXIT
+    END
+    POPUP "编辑(&E)"
+    BEGIN
+        MENUITEM "修改(&M)", ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "新建(&N)"
+        BEGIN
+            MENUITEM "关键词(&K)", ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "字符串值(&S)", ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "二进制值(&B)", ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "整数值(&D)", ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "多字符串值(&M)", ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "删除(&D)\tDEL", ID_EDIT_DELETE
+        MENUITEM "改名(&R)\tF2", ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "复制关键词名称(&C)", ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "查找(&F)\tCtrl+F", ID_EDIT_FIND, GRAYED
+        MENUITEM "找下一个(&X)\tF3", ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "视图(&V)"
+    BEGIN
+        MENUITEM "状态栏(&B)", ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "切开(&L)", ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "刷新(&R)\tF5", ID_VIEW_REFRESH
+    END
+    POPUP "我的最爱(&F)"
+    BEGIN
+        MENUITEM "添加到我的最爱(&A)...", ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "删除我的最爱(&R)...", ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "帮助(&H)"
+    BEGIN
+        MENUITEM "帮助内容(&H)\tF1", ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "关于注册表编辑器(&A)", ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "修改(&M)", ID_EDIT_MODIFY
+	MENUITEM "修改二进制数据", ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "删除(&D)\tDEL", ID_EDIT_DELETE
+	MENUITEM "改名(&R)", ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "新建(&N)"
+        BEGIN
+            MENUITEM "关键词(&K)", ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "字符串值(&S)", ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "二进制值(&B)", ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "整数值(&D)", ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "多字符串值(&M)", ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "删除(&D)\tDEL", ID_EDIT_DELETE
+        MENUITEM "改名(&R)\tF2", ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "导出(&E)...", ID_EDIT_EXPORT
+        MENUITEM "复制关键词名称(&C)", ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "查找(&F)\tCtrl+F", ID_EDIT_FIND, GRAYED
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 9, "MS Song"
+BEGIN
+    GROUPBOX "导出注册表", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "全部(&A)", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "指定分支(&E):", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 220, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "查找"
+FONT 9, "MS Song"
+BEGIN
+    LTEXT           "查找:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "在这找:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "关键词", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "值名称", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "值内容", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "整词匹配", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "查找",IDOK,175,5,40,15,WS_GROUP
+    PUSHBUTTON      "关闭",IDCANCEL,175,24,40,15, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "添加我的最爱"
+FONT 9, "MS Song"
+BEGIN
+    LTEXT           "名称:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "确定",IDOK,120,36,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,36,40,15,WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "删除我的最爱"
+FONT 9, "MS Song"
+BEGIN
+    LTEXT           "名称:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "确定",IDOK,120,72,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,72,40,15,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "编辑字符串"
+FONT 9, "MS Song"
+BEGIN
+    LTEXT           "值名称:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "值数据:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "确定",IDOK,120,56,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,56,40,15,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "编辑整数"
+FONT 9, "MS Song"
+BEGIN
+    LTEXT           "值名称:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "值数据:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "进位制", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "十六进制", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "十进制", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "确定",IDOK,120,78,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,78,40,15,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "编辑二进制"
+FONT 9, "MS Song"
+BEGIN
+    LTEXT           "值名称:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,160,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "值数据:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,5,40,160,40
+    DEFPUSHBUTTON   "确定",IDOK,80,83,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,125,83,40,15,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "编辑多个字符串"
+FONT 9, "MS Song"
+BEGIN
+    LTEXT           "值名称:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "值数据:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "确定",IDOK,120,156,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,156,40,15,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "名称"
+    IDS_LIST_COLUMN_TYPE    "类型"
+    IDS_LIST_COLUMN_DATA    "数据"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "注册表编辑器"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "含有与注册表有关的全部命令"
+    ID_EDIT_MENU            "含有与编辑数值有关的全部命令"
+    ID_VIEW_MENU            "含有与注册表个性化有关的全部命令"
+    ID_FAVORITES_MENU       "含有与使用常用关键词有关的全部命令"
+    ID_HELP_MENU            "含有与帮助信息有关的全部命令"
+    ID_EDIT_NEW_MENU        "含有与创建新值有关的全部命令"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY                        "修改值的数据"
+    ID_EDIT_NEW_KEY                       "添加一个新的关键词"
+    ID_EDIT_NEW_STRINGVALUE               "添加一个新的字符串值"
+    ID_EDIT_NEW_BINARYVALUE               "添加一个新的二进制值"
+    ID_EDIT_NEW_DWORDVALUE                "添加一个新的整数值"
+    ID_EDIT_NEW_MULTI_STRINGVALUE         "添加一个新的多字符串值"
+    ID_REGISTRY_IMPORTREGISTRYFILE        "将文本文件导入注册表"
+    ID_REGISTRY_EXPORTREGISTRYFILE        "将注册表导出到文本文件"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY    "连接到远程计算机的注册表"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY "断开远程计算机的注册表"
+    ID_REGISTRY_PRINT                     "打印注册表的全部或部分"
+/*    ID_HELP_HELPTOPICS                  "打开注册表编辑器帮助" */
+    ID_HELP_ABOUT                         "显示程序信息、版本号及版权"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "退出注册表编辑器"
+    ID_FAVORITES_ADDTOFAVORITES "把关键词添加到我的最爱"
+    ID_FAVORITES_REMOVEFAVORITE "从我的最爱中删除关键词"
+    ID_VIEW_STATUSBAR       "显示或隐藏状态栏"
+    ID_VIEW_SPLIT           "改变两个窗格之间的分隔线位置"
+    ID_VIEW_REFRESH         "刷新视窗"
+    ID_EDIT_DELETE          "删除选定项"
+    ID_EDIT_RENAME          "选定项更名"
+    ID_EDIT_COPYKEYNAME     "把关键词的名称复制到剪贴板"
+    ID_EDIT_FIND            "在关键词、值或数据中找字符串"
+    ID_EDIT_FINDNEXT        "查找下一个刚找过的字符串"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		        "错误"
+    IDS_BAD_KEY		        "不能查询关键词'%s'"
+    IDS_BAD_VALUE           "不能查询值'%s'"
+    IDS_UNSUPPORTED_TYPE    "不能编辑这类型的关键词 (%ld)"
+    IDS_TOO_BIG_VALUE       "值太大 (%ld)"
+    IDS_DELETE_BOX_TITLE    "值删除确认"
+    IDS_DELETE_BOX_TEXT     "你确认要删除这个值吗 '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "你确认要删除这些值吗?"
+    IDS_NEWKEY              "关键词 #%d"
+    IDS_NEWVALUE            "新值 #%d"
+    IDS_NOTFOUND            "查找字符串 '%s' 没找到"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "导入注册表文件"
+    IDS_FILEDIALOG_EXPORT_TITLE   "导出注册表文件"
+    IDS_FILEDIALOG_FILTER         "注册表文件\0*.reg\0Win9x/NT4 注册表文件 (REGEDIT4)\0*.reg\0所有文件 (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "我的电脑"
+    IDS_REGISTRY_DEFAULT_VALUE       "(默认)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(没有设值)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(不能显示值)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(未知 %d)"
+END
+
+/*****************************************************************/
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+
+
+/*
+ * String Table
+ */
+
+/*
+ *STRINGTABLE DISCARDABLE
+ *BEGIN
+ *    ID_HELP_HELPTOPICS      "Opens Registry Editor Help."
+ *    ID_HELP_ABOUT           "Displays program information, version number, and copyright."
+ *END
+ */
+
+/*****************************************************************/
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "註冊表(&R)"
+    BEGIN
+        MENUITEM "導入註冊表檔案(&I)...", ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "導出註冊表檔案(&E)...", ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "连接網路註冊表(&C)...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "斷開網路註冊表(&D)...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "列印(&P)\tCtrl+P", ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "結束(&X)", ID_REGISTRY_EXIT
+    END
+    POPUP "編輯(&E)"
+    BEGIN
+        MENUITEM "修改(&M)", ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "新建(&N)"
+        BEGIN
+            MENUITEM "關鍵詞(&K)", ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "字符串值(&S)", ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "二進制值(&B)", ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "整數值(&D)", ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "多字符串值(&M)", ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "刪除(&D)\tDEL", ID_EDIT_DELETE
+        MENUITEM "改名(&R)\tF2", ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "複製關鍵詞名稱(&C)", ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "查找(&F)\tCtrl+F", ID_EDIT_FIND, GRAYED
+        MENUITEM "找下一個(&X)\tF3", ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "檢視(&V)"
+    BEGIN
+        MENUITEM "狀態欄(&B)", ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "切開(&L)", ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "刷新(&R)\tF5", ID_VIEW_REFRESH
+    END
+    POPUP "我的最愛(&F)"
+    BEGIN
+        MENUITEM "添加到我的最愛(&A)...", ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "刪除我的最愛(&R)...", ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "幫助(&H)"
+    BEGIN
+        MENUITEM "幫助內容(&H)\tF1", ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "關於註冊表編輯器(&A)", ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "修改(&M)", ID_EDIT_MODIFY
+	MENUITEM "修改二進制數據", ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "刪除(&D)\tDEL", ID_EDIT_DELETE
+	MENUITEM "改名(&R)", ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "新建(&N)"
+        BEGIN
+            MENUITEM "關鍵詞(&K)", ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "字符串值(&S)", ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "二進制值(&B)", ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "整數值(&D)", ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "多字符串值(&M)", ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "刪除(&D)\tDEL", ID_EDIT_DELETE
+        MENUITEM "改名(&R)\tF2", ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "導出(&E)...", ID_EDIT_EXPORT
+        MENUITEM "複製關鍵詞名稱(&C)", ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "查找(&F)\tCtrl+F", ID_EDIT_FIND, GRAYED
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "PMingLiu"
+BEGIN
+    GROUPBOX "導出註冊表", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "全部(&A)", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "指定分支(&E):", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 220, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "查找"
+FONT 8, "PMingLiu"
+BEGIN
+    LTEXT           "查找:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "在這找:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "關鍵詞", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "值名稱", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "值內容", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "整詞匹配", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "查找",IDOK,175,5,40,15,WS_GROUP
+    PUSHBUTTON      "關閉",IDCANCEL,175,24,40,15, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "添加我的最愛"
+FONT 8, "PMingLiu"
+BEGIN
+    LTEXT           "名稱:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "確定",IDOK,120,36,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,36,40,15,WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "刪除我的最愛"
+FONT 8, "PMingLiu"
+BEGIN
+    LTEXT           "名稱:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "確定",IDOK,120,72,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,72,40,15,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "編輯字符串"
+FONT 8, "PMingLiu"
+BEGIN
+    LTEXT           "值名稱:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "值數據:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "確定",IDOK,120,56,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,56,40,15,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "編輯整數"
+FONT 8, "PMingLiu"
+BEGIN
+    LTEXT           "值名稱:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "值數據:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "進位制", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "十六進制", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "十進制", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "確定",IDOK,120,78,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,78,40,15,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "編輯二進制"
+FONT 8, "PMingLiu"
+BEGIN
+    LTEXT           "值名稱:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,160,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "值數據:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,5,40,160,40
+    DEFPUSHBUTTON   "確定",IDOK,80,83,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,125,83,40,15,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "編輯多個字符串"
+FONT 8, "PMingLiu"
+BEGIN
+    LTEXT           "值名稱:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "值數據:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "確定",IDOK,120,156,40,15,WS_GROUP
+    PUSHBUTTON      "取消",IDCANCEL,165,156,40,15,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "名稱"
+    IDS_LIST_COLUMN_TYPE    "類型"
+    IDS_LIST_COLUMN_DATA    "數據"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "註冊表編輯器"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "含有與註冊表有關的全部指令"
+    ID_EDIT_MENU            "含有與編輯數值有關的全部指令"
+    ID_VIEW_MENU            "含有與註冊表個性化有關的全部指令"
+    ID_FAVORITES_MENU       "含有與使用常用關鍵詞有關的全部指令"
+    ID_HELP_MENU            "含有與幫助資訊有關的全部指令"
+    ID_EDIT_NEW_MENU        "含有與創建新值有關的全部指令"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY                        "修改值的數據"
+    ID_EDIT_NEW_KEY                       "添加一個新的關鍵詞"
+    ID_EDIT_NEW_STRINGVALUE               "添加一個新的字符串值"
+    ID_EDIT_NEW_BINARYVALUE               "添加一個新的二進制值"
+    ID_EDIT_NEW_DWORDVALUE                "添加一個新的整數值"
+    ID_EDIT_NEW_MULTI_STRINGVALUE         "添加一個新的多字符串值"
+    ID_REGISTRY_IMPORTREGISTRYFILE        "將文本檔案導入註冊表"
+    ID_REGISTRY_EXPORTREGISTRYFILE        "將註冊表導出到文本檔案"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY    "连接到遠程電腦的註冊表"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY "斷開遠程電腦的註冊表"
+    ID_REGISTRY_PRINT                     "列印註冊表的全部或部分"
+/*    ID_HELP_HELPTOPICS                  "開啟註冊表編輯器幫助" */
+    ID_HELP_ABOUT                         "顯示程式資訊、版本號及版權"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "結束註冊表編輯器"
+    ID_FAVORITES_ADDTOFAVORITES "把關鍵詞添加到我的最愛"
+    ID_FAVORITES_REMOVEFAVORITE "從我的最愛中刪除關鍵詞"
+    ID_VIEW_STATUSBAR       "顯示或隱藏狀態欄"
+    ID_VIEW_SPLIT           "改變兩個窗格之間的分隔線位置"
+    ID_VIEW_REFRESH         "刷新視窗"
+    ID_EDIT_DELETE          "刪除選定項"
+    ID_EDIT_RENAME          "選定項更名"
+    ID_EDIT_COPYKEYNAME     "把關鍵詞的名稱複製到剪貼板"
+    ID_EDIT_FIND            "在關鍵詞、值或數據中找字符串"
+    ID_EDIT_FINDNEXT        "查找下一個剛找過的字符串"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		        "錯誤"
+    IDS_BAD_KEY		        "不能查詢關鍵詞'%s'"
+    IDS_BAD_VALUE           "不能查詢值'%s'"
+    IDS_UNSUPPORTED_TYPE    "不能編輯這類型的關鍵詞 (%ld)"
+    IDS_TOO_BIG_VALUE       "值太大 (%ld)"
+    IDS_DELETE_BOX_TITLE    "值刪除確認"
+    IDS_DELETE_BOX_TEXT     "你確認要刪除這個值嗎 '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "你確認要刪除這些值嗎?"
+    IDS_NEWKEY              "關鍵詞 #%d"
+    IDS_NEWVALUE            "新值 #%d"
+    IDS_NOTFOUND            "查找字符串 '%s' 沒找到"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "導入註冊表檔案"
+    IDS_FILEDIALOG_EXPORT_TITLE   "導出註冊表檔案"
+    IDS_FILEDIALOG_FILTER         "註冊表檔案\0*.reg\0Win9x/NT4 註冊表檔案 (REGEDIT4)\0*.reg\0所有檔案 (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "我的電腦"
+    IDS_REGISTRY_DEFAULT_VALUE       "(默認)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(沒有設值)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(不能顯示值)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(未知 %d)"
+END
+
+/*****************************************************************/
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+
+
+/*
+ * String Table
+ */
+
+/*
+ *STRINGTABLE DISCARDABLE
+ *BEGIN
+ *    ID_HELP_HELPTOPICS      "Opens Registry Editor Help."
+ *    ID_HELP_ABOUT           "Displays program information, version number, and copyright."
+ *END
+ */
+
+/*****************************************************************/
+
+#pragma code_page(default)
