@@ -41,7 +41,7 @@ typedef struct _object_header_t object_header_t;
 typedef struct
 {
     void (*destroy)( object_header_t * );
-    BOOL (*query_option)( object_header_t *, DWORD, void *, DWORD *, BOOL );
+    BOOL (*query_option)( object_header_t *, DWORD, void *, DWORD * );
     BOOL (*set_option)( object_header_t *, DWORD, void *, DWORD );
 } object_vtbl_t;
 

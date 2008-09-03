@@ -85,28 +85,6 @@ HRESULT WINAPI DllUnregisterServer(void)
     return S_OK;
 }
 
-/***********************************************************************
- *          WinHttpQueryOption (winhttp.@)
- */
-BOOL WINAPI WinHttpQueryOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, LPDWORD lpdwBufferLength)
-{
-    FIXME("(%d): stub\n", dwOption);
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
-/***********************************************************************
- *          WinHttpSetOption (winhttp.@)
- */
-BOOL WINAPI WinHttpSetOption (HINTERNET hInternet, DWORD dwOption, LPVOID lpBuffer, DWORD dwBufferLength)
-{
-    FIXME("stub\n");
-
-    SetLastError(ERROR_NOT_SUPPORTED);
-    return FALSE;
-}
-
 #define SCHEME_HTTP  3
 #define SCHEME_HTTPS 4
 

@@ -303,6 +303,91 @@ BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )
     return TRUE;
 }
 
+static BOOL query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
+{
+    BOOL ret = FALSE;
+
+    switch (option)
+    {
+    case WINHTTP_OPTION_CONTEXT_VALUE:
+    {
+        *(DWORD_PTR *)buffer = hdr->context;
+        *buflen = sizeof(DWORD_PTR);
+        return TRUE;
+    }
+    default:
+    {
+        if (hdr->vtbl->query_option) ret = hdr->vtbl->query_option( hdr, option, buffer, buflen );
+        else FIXME("unimplemented option %u\n", option);
+    }
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *          WinHttpQueryOption (winhttp.@)
+ */
+BOOL WINAPI WinHttpQueryOption( HINTERNET handle, DWORD option, LPVOID buffer, LPDWORD buflen )
+{
+    BOOL ret = FALSE;
+    object_header_t *hdr;
+
+    TRACE("%p, %u, %p, %p\n", handle, option, buffer, buflen);
+
+    if (!(hdr = grab_object( handle )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    ret = query_option( hdr, option, buffer, buflen );
+
+    release_object( hdr );
+    return ret;
+}
+
+static BOOL set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
+{
+    BOOL ret = FALSE;
+
+    switch (option)
+    {
+    case WINHTTP_OPTION_CONTEXT_VALUE:
+    {
+        hdr->context = *(DWORD_PTR *)buffer;
+        return TRUE;
+    }
+    default:
+    {
+        if (hdr->vtbl->set_option) ret = hdr->vtbl->set_option( hdr, option, buffer, buflen );
+        else FIXME("unimplemented option %u\n", option);
+    }
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *          WinHttpSetOption (winhttp.@)
+ */
+BOOL WINAPI WinHttpSetOption( HINTERNET handle, DWORD option, LPVOID buffer, DWORD buflen )
+{
+    BOOL ret = FALSE;
+    object_header_t *hdr;
+
+    TRACE("%p, %u, %p, %u\n", handle, option, buffer, buflen);
+
+    if (!(hdr = grab_object( handle )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    ret = set_option( hdr, option, buffer, buflen );
+
+    release_object( hdr );
+    return ret;
+}
+
 /***********************************************************************
  *          WinHttpDetectAutoProxyConfigUrl (winhttp.@)
  */
