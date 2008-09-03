@@ -59,13 +59,15 @@ static void test_msg_get_signer_count(void)
     SetLastError(0xdeadbeef);
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING, NULL, 0);
     ok(count == -1, "Expected -1, got %d\n", count);
-    ok(GetLastError() == CRYPT_E_ASN1_EOD,
+    ok(GetLastError() == CRYPT_E_ASN1_EOD ||
+       GetLastError() == OSS_BAD_ARG, /* win9x */
      "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
      dataEmptyBareContent, sizeof(dataEmptyBareContent));
     ok(count == -1, "Expected -1, got %d\n", count);
-    ok(GetLastError() == CRYPT_E_ASN1_BADTAG,
+    ok(GetLastError() == CRYPT_E_ASN1_BADTAG ||
+       GetLastError() == OSS_PDU_MISMATCH, /* win9x */
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
@@ -77,11 +79,14 @@ static void test_msg_get_signer_count(void)
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
      signedEmptyBareContent, sizeof(signedEmptyBareContent));
     ok(count == -1, "Expected -1, got %d\n", count);
-    ok(GetLastError() == CRYPT_E_ASN1_BADTAG,
+    ok(GetLastError() == CRYPT_E_ASN1_BADTAG ||
+       GetLastError() == OSS_DATA_ERROR, /* win9x */
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING,
      signedEmptyContent, sizeof(signedEmptyContent));
-    ok(count == 1, "Expected 1, got %d\n", count);
+    ok(count == 1 ||
+       broken(count == -1), /* win9x */
+       "Expected 1, got %d\n", count);
 }
 
 static BYTE detachedHashContent[] = {
@@ -121,7 +126,9 @@ static void test_verify_detached_message_hash(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_EOD ||
+      GetLastError() == OSS_BAD_ARG), /* win9x */
      "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     para.dwMsgEncodingType = X509_ASN_ENCODING;
     SetLastError(0xdeadbeef);
@@ -133,7 +140,9 @@ static void test_verify_detached_message_hash(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageHash(&para, NULL, 0, 0, NULL, NULL, NULL,
      NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_EOD ||
+      GetLastError() == OSS_BAD_ARG), /* win9x */
      "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     /* Curiously, passing no data to hash succeeds.. */
     ret = CryptVerifyDetachedMessageHash(&para, detachedHashContent,
@@ -282,7 +291,9 @@ static void test_verify_message_signature(void)
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, 0, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_EOD ||
+      GetLastError() == OSS_BAD_ARG), /* win9x */
      "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     /* Check whether cert is set on error */
     cert = (PCCERT_CONTEXT)0xdeadbeef;
@@ -296,7 +307,8 @@ static void test_verify_message_signature(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, dataEmptyBareContent,
      sizeof(dataEmptyBareContent), NULL, 0, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+    ok(GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH, /* win9x */
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, dataEmptyContent,
@@ -306,17 +318,23 @@ static void test_verify_message_signature(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, signedEmptyBareContent,
      sizeof(signedEmptyBareContent), NULL, 0, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+      GetLastError() == OSS_DATA_ERROR), /* win9x */
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, signedEmptyContent,
      sizeof(signedEmptyContent), NULL, 0, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_NOT_FOUND ||
+      GetLastError() == OSS_DATA_ERROR), /* win9x */
      "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, signedContent,
      sizeof(signedContent), NULL, 0, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_NOT_FOUND ||
+      GetLastError() == OSS_DATA_ERROR), /* win9x */
      "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     /* FIXME: Windows fails with CRYPT_E_NOT_FOUND for these messages, but
      * their signer certs have invalid public keys that fail to decode.  In
