@@ -42,3 +42,4 @@
 #include "msacm_Si.rc"
 #include "msacm_Sv.rc"
 #include "msacm_Tr.rc"
+#include "msacm_Zh.rc"
