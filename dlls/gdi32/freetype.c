@@ -163,7 +163,11 @@ MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_Matrix_Multiply);
+#ifdef FT_MULFIX_INLINED
+#define pFT_MulFix FT_MULFIX_INLINED
+#else
 MAKE_FUNCPTR(FT_MulFix);
+#endif
 MAKE_FUNCPTR(FT_New_Face);
 MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
@@ -2434,7 +2438,9 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_Matrix_Multiply)
+#ifndef FT_MULFIX_INLINED
     LOAD_FUNCPTR(FT_MulFix)
+#endif
     LOAD_FUNCPTR(FT_New_Face)
     LOAD_FUNCPTR(FT_New_Memory_Face)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
