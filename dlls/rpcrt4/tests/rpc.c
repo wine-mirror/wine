@@ -328,7 +328,9 @@ static void test_towers(void)
     BOOL same;
 
     ret = TowerConstruct(&mapi_if_id, &ndr_syntax, "ncacn_ip_tcp", "135", "10.0.0.1", &tower);
-    ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
+    ok(ret == RPC_S_OK ||
+       broken(ret == RPC_S_INVALID_RPC_PROTSEQ), /* Vista */
+       "TowerConstruct failed with error %ld\n", ret);
     if (ret == RPC_S_INVALID_RPC_PROTSEQ)
     {
         /* Windows Vista fails with this error and crashes if we continue */
