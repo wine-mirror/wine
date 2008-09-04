@@ -27,7 +27,7 @@ static int reg_printfW(const WCHAR *msg, ...)
     WCHAR msg_buffer[8192];
 
     va_start(va_args, msg);
-    wvsprintf(msg_buffer, msg, va_args);
+    wvsprintfW(msg_buffer, msg, va_args);
     va_end(va_args);
 
     wlen = lstrlenW(msg_buffer);
@@ -57,7 +57,7 @@ static int reg_message(int msg, ...)
     va_list va_args;
     WCHAR msg_buffer[8192];
 
-    LoadString(GetModuleHandle(NULL), msg, msg_buffer,
+    LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
         sizeof(msg_buffer)/sizeof(WCHAR));
     va_start(va_args, msg);
     reg_printfW(msg_buffer, va_args);
