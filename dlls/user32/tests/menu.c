@@ -456,12 +456,8 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
             expect = 4;
         else /* mnuopt == 2 */
             expect = 2;
-        if (ispop && mnuopt == 2)
-            todo_wine ok( expect == MOD_rc[0].left,
-                    "bitmap left is %d expected %d\n", MOD_rc[0].left, expect);
-        else
-            ok( expect == MOD_rc[0].left,
-                    "bitmap left is %d expected %d\n", MOD_rc[0].left, expect);
+        ok( expect == MOD_rc[0].left,
+                "bitmap left is %d expected %d\n", MOD_rc[0].left, expect);
         failed = failed || !(expect == MOD_rc[0].left);
         /* vertical */
         expect = (rc.bottom - rc.top - MOD_rc[0].bottom + MOD_rc[0].top) / 2;

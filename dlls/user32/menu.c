@@ -1504,11 +1504,13 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
                 bmprc.left = 3;
             else 
                 bmprc.left = lpitem->text ? menucharsize.cx : 0;          
-        } else {
-            bmprc.left = 4;
-            if( !(menu->dwStyle & ( MNS_CHECKORBMP | MNS_NOCHECK)))
-                bmprc.left += GetSystemMetrics( SM_CXMENUCHECK); 
         }
+        else if (menu->dwStyle & MNS_NOCHECK)
+            bmprc.left = 4;
+        else if (menu->dwStyle & MNS_CHECKORBMP)
+            bmprc.left = 2;
+        else
+            bmprc.left = 4 + GetSystemMetrics(SM_CXMENUCHECK);
         bmprc.right =  bmprc.left + lpitem->bmpsize.cx;
         if( menuBar && !(lpitem->hbmpItem == HBMMENU_CALLBACK))
             bmprc.top = 0;
