@@ -899,6 +899,169 @@ BOOL WINAPI ReleaseSemaphore( HANDLE handle, LONG count, LONG *previous )
 
 
 /*
+ * Jobs
+ */
+
+/******************************************************************************
+ *		CreateJobObjectW (KERNEL32.@)
+ */
+HANDLE WINAPI CreateJobObjectW( LPSECURITY_ATTRIBUTES sa, LPCWSTR name )
+{
+    HANDLE ret = 0;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
+    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
+    {
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
+    }
+
+    status = NtCreateJobObject( &ret, JOB_OBJECT_ALL_ACCESS, &attr );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
+/******************************************************************************
+ *		CreateJobObjectA (KERNEL32.@)
+ */
+HANDLE WINAPI CreateJobObjectA( LPSECURITY_ATTRIBUTES attr, LPCSTR name )
+{
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return CreateJobObjectW( attr, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return CreateJobObjectW( attr, buffer );
+}
+
+/******************************************************************************
+ *		OpenJobObjectW (KERNEL32.@)
+ */
+HANDLE WINAPI OpenJobObjectW( DWORD access, BOOL inherit, LPCWSTR name )
+{
+    HANDLE ret;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
+    {
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
+        attr.RootDirectory = get_BaseNamedObjects_handle();
+    }
+
+    status = NtOpenJobObject( &ret, access, &attr );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+    return ret;
+}
+
+/******************************************************************************
+ *		OpenJobObjectA (KERNEL32.@)
+ */
+HANDLE WINAPI OpenJobObjectA( DWORD access, BOOL inherit, LPCSTR name )
+{
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return OpenJobObjectW( access, inherit, NULL );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return OpenJobObjectW( access, inherit, buffer );
+}
+
+/******************************************************************************
+ *		TerminateJobObject (KERNEL32.@)
+ */
+BOOL WINAPI TerminateJobObject( HANDLE job, UINT exit_code )
+{
+    NTSTATUS status = NtTerminateJobObject( job, exit_code );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+/******************************************************************************
+ *		QueryInformationJobObject (KERNEL32.@)
+ */
+BOOL WINAPI QueryInformationJobObject( HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info,
+                                       DWORD len, DWORD *ret_len )
+{
+    NTSTATUS status = NtQueryInformationJobObject( job, class, info, len, ret_len );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+/******************************************************************************
+ *		SetInformationJobObject (KERNEL32.@)
+ */
+BOOL WINAPI SetInformationJobObject( HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info, DWORD len )
+{
+    NTSTATUS status = NtSetInformationJobObject( job, class, info, len );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+/******************************************************************************
+ *		AssignProcessToJobObject (KERNEL32.@)
+ */
+BOOL WINAPI AssignProcessToJobObject( HANDLE job, HANDLE process )
+{
+    NTSTATUS status = NtAssignProcessToJobObject( job, process );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+/******************************************************************************
+ *		IsProcessInJob (KERNEL32.@)
+ */
+BOOL WINAPI IsProcessInJob( HANDLE process, HANDLE job, PBOOL result )
+{
+    NTSTATUS status = NtIsProcessInJob( job, process );
+    switch(status)
+    {
+    case STATUS_PROCESS_IN_JOB:
+        *result = TRUE;
+        return TRUE;
+    case STATUS_PROCESS_NOT_IN_JOB:
+        *result = FALSE;
+        return TRUE;
+    default:
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+}
+
+
+/*
  * Timers
  */
 
@@ -2005,55 +2168,6 @@ BOOL WINAPI BindIoCompletionCallback( HANDLE FileHandle, LPOVERLAPPED_COMPLETION
     if (status == STATUS_SUCCESS) return TRUE;
     SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
-}
-
-/******************************************************************************
- *		CreateJobObjectW (KERNEL32.@)
- */
-HANDLE WINAPI CreateJobObjectW( LPSECURITY_ATTRIBUTES attr, LPCWSTR name )
-{
-    FIXME("%p %s\n", attr, debugstr_w(name) );
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
-}
-
-/******************************************************************************
- *		CreateJobObjectA (KERNEL32.@)
- */
-HANDLE WINAPI CreateJobObjectA( LPSECURITY_ATTRIBUTES attr, LPCSTR name )
-{
-    LPWSTR str = NULL;
-    UINT len;
-    HANDLE r;
-
-    TRACE("%p %s\n", attr, debugstr_a(name) );
-
-    if( name )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
-        str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-        if( !str )
-        {
-            SetLastError( ERROR_OUTOFMEMORY );
-            return 0;
-        }
-        len = MultiByteToWideChar( CP_ACP, 0, name, -1, str, len );
-    }
-
-    r = CreateJobObjectW( attr, str );
-
-    HeapFree( GetProcessHeap(), 0, str );
-
-    return r;
-}
-
-/******************************************************************************
- *		AssignProcessToJobObject (KERNEL32.@)
- */
-BOOL WINAPI AssignProcessToJobObject( HANDLE hJob, HANDLE hProcess )
-{
-    FIXME("%p %p\n", hJob, hProcess);
-    return TRUE;
 }
 
 #ifdef __i386__

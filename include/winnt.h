@@ -4008,6 +4008,13 @@ typedef enum tagSID_NAME_USE {
 #define MUTEX_MODIFY_STATE         0x0001
 #define MUTEX_ALL_ACCESS           (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x1)
 
+#define JOB_OBJECT_ASSIGN_PROCESS           0x0001
+#define JOB_OBJECT_SET_ATTRIBUTES           0x0002
+#define JOB_OBJECT_QUERY                    0x0004
+#define JOB_OBJECT_TERMINATE                0x0008
+#define JOB_OBJECT_SET_SECURITY_ATTRIBUTES  0x0010
+#define JOB_OBJECT_ALL_ACCESS               (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x1f)
+
 #define TIMER_QUERY_STATE          0x0001
 #define TIMER_MODIFY_STATE         0x0002
 #define TIMER_ALL_ACCESS           (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
@@ -4900,6 +4907,21 @@ typedef enum _ACTIVATION_CONTEXT_INFO_CLASS {
 #define ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION        7
 #define ACTIVATION_CONTEXT_SECTION_GLOBAL_OBJECT_RENAME_TABLE    8
 #define ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES                9
+
+typedef enum _JOBOBJECTINFOCLASS
+{
+    JobObjectBasicAccountingInformation = 1,
+    JobObjectBasicLimitInformation,
+    JobObjectBasicProcessIdList,
+    JobObjectBasicUIRestrictions,
+    JobObjectSecurityLimitInformation,
+    JobObjectEndOfJobTimeInformation,
+    JobObjectAssociateCompletionPortInformation,
+    JobObjectBasicAndIoAccountingInformation,
+    JobObjectExtendedLimitInformation,
+    JobObjectJobSetInformation,
+    MaxJobObjectInfoClass
+} JOBOBJECTINFOCLASS;
 
 #ifdef __cplusplus
 }

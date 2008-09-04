@@ -735,7 +735,7 @@
 @ stdcall IsDBCSLeadByteEx(long long)
 @ stdcall IsDebuggerPresent()
 @ stub IsLSCallback
-# @ stub IsProcessInJob
+@ stdcall IsProcessInJob(long long ptr)
 @ stdcall IsProcessorFeaturePresent(long)
 @ stub IsSLCallback
 @ stdcall IsSystemResumeAutomatic()
@@ -822,8 +822,8 @@
 @ stdcall OpenFile(str ptr long)
 @ stdcall OpenFileMappingA(long long str)
 @ stdcall OpenFileMappingW(long long wstr)
-@ stub OpenJobObjectA
-@ stub OpenJobObjectW
+@ stdcall OpenJobObjectA(long long str)
+@ stdcall OpenJobObjectW(long long wstr)
 @ stdcall OpenMutexA(long long str)
 @ stdcall OpenMutexW(long long wstr)
 @ stdcall OpenProcess(long long long)
@@ -857,7 +857,7 @@
 @ stdcall QueryDepthSList(ptr) ntdll.RtlQueryDepthSList
 @ stdcall QueryDosDeviceA(str ptr long)
 @ stdcall QueryDosDeviceW(wstr ptr long)
-@ stub QueryInformationJobObject
+@ stdcall QueryInformationJobObject(long long ptr long ptr)
 # @ stub QueryMemoryResourceNotification
 @ stub QueryNumberOfEventLogRecords
 @ stub QueryOldestEventLogRecord
@@ -1014,7 +1014,7 @@
 @ stdcall SetHandleContext(long long)
 @ stdcall SetHandleCount(long)
 @ stdcall SetHandleInformation(long long long)
-@ stub SetInformationJobObject
+@ stdcall SetInformationJobObject(long long ptr long)
 @ stub SetLastConsoleEventActive
 @ stdcall SetLastError(long)
 # @ stub SetLocalPrimaryComputerNameA
@@ -1066,7 +1066,7 @@
 @ stdcall SwitchToThread()
 @ stdcall SystemTimeToFileTime(ptr ptr)
 @ stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr)
-@ stub TerminateJobObject
+@ stdcall TerminateJobObject(long long)
 @ stdcall TerminateProcess(long long)
 @ stdcall TerminateThread(long long)
 @ stdcall TermsrvAppInstallMode()
