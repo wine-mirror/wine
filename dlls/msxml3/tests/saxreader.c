@@ -140,7 +140,7 @@ static void test_saxstr(unsigned line, const WCHAR *szStr, int nStr, const char 
     if(len != nStr)
         return;
 
-    MultiByteToWideChar(CP_ACP, 0, szTest, -1, buf, sizeof(buf));
+    MultiByteToWideChar(CP_ACP, 0, szTest, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok_(__FILE__,line) (!memcmp(szStr, buf, len*sizeof(WCHAR)), "unexpected szStr %s, expected %s\n",
                         debugstr_wn(szStr, nStr), szTest);
 }
