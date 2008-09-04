@@ -708,11 +708,11 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
     glEnd();
 }
 
-void depth_blt(IWineD3DDevice *iface, GLuint texture) {
+void depth_blt(IWineD3DDevice *iface, GLuint texture, GLsizei w, GLsizei h) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLint old_binding = 0;
 
-    glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT);
 
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
@@ -723,6 +723,7 @@ void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     glDepthFunc(GL_ALWAYS);
     glDepthMask(GL_TRUE);
     glBlendFunc(GL_ZERO, GL_ONE);
+    glViewport(0, 0, w, h);
 
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);

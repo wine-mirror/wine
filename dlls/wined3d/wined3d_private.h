@@ -785,7 +785,11 @@ struct ffp_settings {
         FOG_EXP,
         FOG_EXP2
     } fog;
-    unsigned char sRGB_write;
+    /* Use an int instead of a char to get dword alignment. gcc tends to align the
+     * size of the whole structure, so there are 3 padding bytes. These remain
+     * uninitialized in the construction function and cause confusion in the hashmap
+     */
+    unsigned int sRGB_write;
 };
 
 struct ffp_desc
@@ -2516,6 +2520,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo);
 void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
 void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
-void depth_blt(IWineD3DDevice *iface, GLuint texture);
+void depth_blt(IWineD3DDevice *iface, GLuint texture, GLsizei w, GLsizei h);
 
 #endif
