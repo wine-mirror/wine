@@ -1760,7 +1760,7 @@ WDML_CONV*	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
     pConv->next = pInstance->convs[side];
     pInstance->convs[side] = pConv;
 
-    TRACE("pConv->wStatus %04x\n", pConv->wStatus);
+    TRACE("pConv->wStatus %04x pInstance(%p)\n", pConv->wStatus, pInstance);
 
     return pConv;
 }

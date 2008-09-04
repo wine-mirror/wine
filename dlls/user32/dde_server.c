@@ -340,8 +340,8 @@ static WDML_CONV* WDML_CreateServerConv(WDML_INSTANCE* pInstance, HWND hwndClien
                                       hwndServerName, 0, 0, 0);
     }
 
-    TRACE("Created convServer=%p (nameServer=%p) for instance=%08x\n",
-	  hwndServerConv, hwndServerName, pInstance->instanceID);
+    TRACE("Created convServer=%p (nameServer=%p) for instance=%08x unicode=%d\n",
+	  hwndServerConv, hwndServerName, pInstance->instanceID, pInstance->unicode);
 
     pConv = WDML_AddConv(pInstance, WDML_SERVER_SIDE, hszApp, hszTopic,
 			 hwndClient, hwndServerConv);
