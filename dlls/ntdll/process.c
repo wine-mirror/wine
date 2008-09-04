@@ -389,6 +389,28 @@ NTSTATUS WINAPI NtSetInformationProcess(
             SERVER_END_REQ;
         }
         break;
+
+    case ProcessExecuteFlags:
+        if (ProcessInformationLength != sizeof(ULONG))
+            return STATUS_INVALID_PARAMETER;
+        else
+        {
+            BOOL enable;
+            switch (*(ULONG *)ProcessInformation & (MEM_EXECUTE_OPTION_ENABLE|MEM_EXECUTE_OPTION_DISABLE))
+            {
+            case MEM_EXECUTE_OPTION_ENABLE:
+                enable = FALSE;
+                break;
+            case MEM_EXECUTE_OPTION_DISABLE:
+                enable = TRUE;
+                break;
+            default:
+                return STATUS_INVALID_PARAMETER;
+            }
+            VIRTUAL_SetForceExec( enable );
+        }
+        break;
+
     default:
         FIXME("(%p,0x%08x,%p,0x%08x) stub\n",
               ProcessHandle,ProcessInformationClass,ProcessInformation,
