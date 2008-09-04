@@ -23,7 +23,7 @@
 
 extern HANDLE me_heap;
 
-static inline void *heap_alloc( size_t len )
+static inline void __WINE_ALLOC_SIZE(1) *heap_alloc( size_t len )
 {
     return HeapAlloc( me_heap, 0, len );
 }
@@ -33,7 +33,7 @@ static inline BOOL heap_free( void *ptr )
     return HeapFree( me_heap, 0, ptr );
 }
 
-static inline void *heap_realloc( void *ptr, size_t len )
+static inline void __WINE_ALLOC_SIZE(2) *heap_realloc( void *ptr, size_t len )
 {
     return HeapReAlloc( me_heap, 0, ptr, len );
 }

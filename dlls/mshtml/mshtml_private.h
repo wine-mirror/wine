@@ -490,7 +490,7 @@ void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWO
 void call_property_onchanged(ConnectionPoint*,DISPID);
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*);
 
-void *nsalloc(size_t);
+void *nsalloc(size_t) __WINE_ALLOC_SIZE(1);
 void nsfree(void*);
 
 void nsACString_Init(nsACString*,const char*);
@@ -654,17 +654,17 @@ extern LONG module_ref;
 
 /* memory allocation functions */
 
-static inline void *heap_alloc(size_t len)
+static inline void __WINE_ALLOC_SIZE(1) *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
 }
 
-static inline void *heap_alloc_zero(size_t len)
+static inline void __WINE_ALLOC_SIZE(1) *heap_alloc_zero(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
 }
 
-static inline void *heap_realloc(void *mem, size_t len)
+static inline void __WINE_ALLOC_SIZE(2) *heap_realloc(void *mem, size_t len)
 {
     return HeapReAlloc(GetProcessHeap(), 0, mem, len);
 }

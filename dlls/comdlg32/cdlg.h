@@ -30,7 +30,7 @@
 extern HINSTANCE	COMDLG32_hInstance;
 
 void	COMDLG32_SetCommDlgExtendedError(DWORD err);
-LPVOID	COMDLG32_AllocMem(int size);
+LPVOID	COMDLG32_AllocMem(int size) __WINE_ALLOC_SIZE(1);
 
 /* handle<-handle16 conversion */
 #define HINSTANCE_32(h16)           ((HINSTANCE)(ULONG_PTR)(h16))

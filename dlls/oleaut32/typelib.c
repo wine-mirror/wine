@@ -1357,6 +1357,8 @@ static void TLB_abort(void)
 {
     DebugBreak();
 }
+
+static void * TLB_Alloc(unsigned size) __WINE_ALLOC_SIZE(1);
 static void * TLB_Alloc(unsigned size)
 {
     void * ret;

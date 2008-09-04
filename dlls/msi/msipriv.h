@@ -1040,21 +1040,25 @@ extern const WCHAR cszRootDrive[];
 extern const WCHAR cszbs[];
 
 /* memory allocation macro functions */
+static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
 static inline void *msi_alloc( size_t len )
 {
     return HeapAlloc( GetProcessHeap(), 0, len );
 }
 
+static void *msi_alloc_zero( size_t len ) __WINE_ALLOC_SIZE(1);
 static inline void *msi_alloc_zero( size_t len )
 {
     return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
 }
 
+static void *msi_realloc( void *mem, size_t len ) __WINE_ALLOC_SIZE(2);
 static inline void *msi_realloc( void *mem, size_t len )
 {
     return HeapReAlloc( GetProcessHeap(), 0, mem, len );
 }
 
+static void *msi_realloc_zero( void *mem, size_t len ) __WINE_ALLOC_SIZE(2);
 static inline void *msi_realloc_zero( void *mem, size_t len )
 {
     return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len );

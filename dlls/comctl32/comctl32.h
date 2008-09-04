@@ -175,8 +175,8 @@ typedef struct
 
 /* undocumented functions */
 
-LPVOID WINAPI Alloc (DWORD);
-LPVOID WINAPI ReAlloc (LPVOID, DWORD);
+LPVOID WINAPI Alloc (DWORD) __WINE_ALLOC_SIZE(1);
+LPVOID WINAPI ReAlloc (LPVOID, DWORD) __WINE_ALLOC_SIZE(2);
 BOOL   WINAPI Free (LPVOID);
 DWORD  WINAPI GetSize (LPVOID);
 
