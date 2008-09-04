@@ -475,6 +475,14 @@ case $host_os in
     dnl We can't build 16-bit NE dlls
     WIN16_FILES=""
     WIN16_INSTALL=""
+    dnl Disable modules that can't be used on Windows
+    enable_iphlpapi=${enable_iphlpapi:-no}
+    enable_kernel32=${enable_kernel32:-no}
+    enable_msvcrt=${enable_msvcrt:-no}
+    enable_ntdll=${enable_ntdll:-no}
+    enable_ws2_32=${enable_ws2_32:-no}
+    enable_loader=${enable_loader:-no}
+    enable_server=${enable_server:-no}
     ;;
   darwin*|macosx*)
     DLLEXT=".so"

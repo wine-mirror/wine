@@ -8581,6 +8581,13 @@ fi
     IMPLIBEXT="a"
         WIN16_FILES=""
     WIN16_INSTALL=""
+        enable_iphlpapi=${enable_iphlpapi:-no}
+    enable_kernel32=${enable_kernel32:-no}
+    enable_msvcrt=${enable_msvcrt:-no}
+    enable_ntdll=${enable_ntdll:-no}
+    enable_ws2_32=${enable_ws2_32:-no}
+    enable_loader=${enable_loader:-no}
+    enable_server=${enable_server:-no}
     ;;
   darwin*|macosx*)
     DLLEXT=".so"
