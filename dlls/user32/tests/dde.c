@@ -1176,7 +1176,6 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
         ack.fBusy = 0;
 
         cmd = GlobalLock((HGLOBAL)hi);
-
         if (!cmd || (lstrcmpA(cmd, exec_cmdA) && lstrcmpW((LPCWSTR)cmd, exec_cmdW)))
         {
             trace("ignoring unknown WM_DDE_EXECUTE command\n");
@@ -2141,14 +2140,16 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     {
     case XTYP_REGISTER:
     {
-        ok(msg_index == 1 || msg_index == 7, "Expected 1 or 7, got %d\n", msg_index);
+        ok(msg_index == 1 || msg_index == 7 || msg_index == 13 || msg_index == 19,
+                             "Expected 1, 7, 13 or 19, got %d\n", msg_index);
         return (HDDEDATA)TRUE;
         break;
     }
 
     case XTYP_CONNECT:
     {
-        ok(msg_index == 2 || msg_index == 8, "Expected 2 or 8, got %d\n", msg_index);
+        ok(msg_index == 2 || msg_index == 8 || msg_index == 14 || msg_index == 20,
+                             "Expected 2, 8, 14 or 20, got %d\n", msg_index);
         ok(uFmt == 0, "Expected 0, got %d, msg_index=%d\n", uFmt, msg_index);
         ok(hconv == 0, "Expected 0, got %p, msg_index=%d\n", hconv, msg_index);
         ok(hdata == 0, "Expected 0, got %p, msg_index=%d\n", hdata, msg_index);
@@ -2170,7 +2171,8 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     }
     case XTYP_CONNECT_CONFIRM:
     {
-        ok(msg_index == 3 || msg_index == 9, "Expected 3 or 9, got %d\n", msg_index);
+        ok(msg_index == 3 || msg_index == 9  ||  msg_index == 15 ||  msg_index == 21,
+                             "Expected 3, 9, 15 or 21 got %d\n", msg_index);
         conversation = hconv;
         return (HDDEDATA) TRUE;
     }
@@ -2178,8 +2180,9 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     {
         BYTE *buffer = NULL;
 
-        ok(msg_index == 4 || msg_index == 5 || msg_index == 10 || msg_index == 11,
-                             "Expected 4, 5 10 or 11, got %d\n", msg_index);
+        ok(msg_index == 4 || msg_index == 5 || msg_index == 10 || msg_index == 11 ||
+           msg_index == 16 || msg_index == 17 || msg_index == 22 || msg_index == 23,
+           "Expected 4, 5, 10, 11, 16, 17, 22 or 23, got %d\n", msg_index);
         ok(uFmt == 0, "Expected 0, got %d\n", uFmt);
         ok(hconv == conversation, "Expected conversation handle, got %p, msg_index=%d\n",
                              hconv, msg_index);
@@ -2193,13 +2196,18 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         ok(size == 12, "Expected 12, got %d, msg_index=%d\n", size, msg_index);
 
         size = DdeGetData(hdata, NULL, 0, 0);
-        if (msg_index == 10 || msg_index == 11)
-          if (msg_index == 10)
+        if (msg_index == 10 || msg_index ==11 || msg_index == 16 || msg_index ==17)
+          if (msg_index == 10 || msg_index == 16)
           todo_wine
             ok(size == 34, "Expected that size should be 34 not %d, msg_index=%d\n",
                              size, msg_index);
           else
             ok(size == 34, "Expected that size should be 34 not %d, msg_index=%d\n",
+                             size, msg_index);
+        else
+        if (msg_index ==22)
+        todo_wine
+            ok(size == 9, "Expected that size should be 9 not %d, msg_index=%d\n",
                              size, msg_index);
         else
           if (msg_index == 5)
@@ -2211,11 +2219,11 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                              size, msg_index);
         ok((buffer = HeapAlloc(GetProcessHeap(), 0, size)) != NULL, "should not be null\n");
         rsize = DdeGetData(hdata, buffer, size, 0);
-        if (msg_index == 10 || msg_index == 11)
+        if (msg_index == 10 || msg_index == 11 || msg_index == 16 || msg_index ==17)
         {
             ok(rsize == size, "Incorrect size returned, expected %d got %d, msg_index=%d\n",
                              size, rsize, msg_index);
-          if (msg_index == 10)
+          if (msg_index == 10 || msg_index == 16)
           todo_wine {
             ok(!lstrcmpW((WCHAR*)buffer, test_cmd_w),
                              "Expected \"Test dde command\", msg_index=%d\n",
@@ -2228,6 +2236,10 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                              msg_index);
             ok(size == 34, "Expected 34, got %d, msg_index=%d\n", size, msg_index);
           }
+        }else if (msg_index == 22)
+        {
+            ok(rsize == size, "Incorrect size returned, expected %d got %d, msg_index=%d\n",
+                             size, rsize, msg_index);
         } else
         {
             ok(rsize == size, "Incorrect size returned, expected %d got %d, msg_index=%d\n",
@@ -2244,6 +2256,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                              test_cmd, buffer, msg_index);
             ok(size == 17, "Expected size should be 17, got %d, msg_index=%d\n", size, msg_index);
           }
+
         }
 
         return (HDDEDATA) DDE_FACK;
@@ -2288,7 +2301,7 @@ static void test_end_to_end_client(BOOL type_a)
     HCONV hconv;
     HDDEDATA hdata;
     static char test_cmd[] = "test dde command";
-    static WCHAR test_cmd_w[] = {'t','e','s','t',' ','d','d','e',' ','c','o','m','m','a','n','d',0,};
+    static WCHAR test_cmd_w[] = {'t','e','s','t',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
     static char test_service[] = "TestDDEService";
     static WCHAR test_service_w[] = {'T','e','s','t','D','D','E','S','e','r','v','i','c','e',0};
     static char test_topic[] = "TestDDETopic";
@@ -2435,6 +2448,18 @@ START_TEST(dde)
                    CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
 
     test_end_to_end_server(proc.hProcess, proc.hThread, FALSE);
+
+    sprintf(buffer, "%s dde enda", argv[0]);
+    CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
+                   CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
+
+    test_end_to_end_server(proc.hProcess, proc.hThread, FALSE);
+
+    sprintf(buffer, "%s dde endw", argv[0]);
+    CreateProcessA(NULL, buffer, NULL, NULL, FALSE,
+                   CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
+
+    test_end_to_end_server(proc.hProcess, proc.hThread, TRUE);
 
     test_dde_aw_transaction();
 
