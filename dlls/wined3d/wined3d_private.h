@@ -785,10 +785,7 @@ struct ffp_settings {
         FOG_EXP,
         FOG_EXP2
     } fog;
-    /* Use an int instead of a char to get dword alignment. gcc tends to align the
-     * size of the whole structure, so there are 3 padding bytes. These remain
-     * uninitialized in the construction function and cause confusion in the hashmap
-     */
+    /* Use an int instead of a char to get dword alignment */
     unsigned int sRGB_write;
 };
 
