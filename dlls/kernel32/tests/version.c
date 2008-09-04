@@ -164,8 +164,11 @@ static void test_VerifyVersionInfo(void)
         pVerSetConditionMask(pVerSetConditionMask(0, VER_MINORVERSION, VER_GREATER_EQUAL),
             VER_MAJORVERSION, VER_GREATER_EQUAL));
     if (servicepack == 0)
-        ok(!ret && (GetLastError() == ERROR_OLD_WIN_VERSION),
-            "VerifyVersionInfoA should have failed with ERROR_OLD_WIN_VERSION instead of %d\n", GetLastError());
+    {
+        ok(!ret, "VerifyVersionInfoA should have failed\n");
+        ok(GetLastError() == ERROR_OLD_WIN_VERSION,
+            "Expected ERROR_OLD_WIN_VERSION instead of %d\n", GetLastError());
+    }
     else
         ok(ret, "VerifyVersionInfoA failed with error %d\n", GetLastError());
 
