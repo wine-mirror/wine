@@ -1481,7 +1481,8 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     /* if the compressed bits are not set in the file attributes,
      * then read the information from the package word count property
      */
-    if (file->Attributes & msidbFileAttributesCompressed)
+    if (file->Attributes &
+        (msidbFileAttributesCompressed | msidbFileAttributesPatchAdded))
     {
         file->IsCompressed = TRUE;
     }
