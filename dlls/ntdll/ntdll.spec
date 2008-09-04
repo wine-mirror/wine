@@ -105,7 +105,7 @@
 @ stdcall NtAllocateUuids(ptr ptr ptr)
 @ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long)
 @ stdcall NtAreMappedFilesTheSame(ptr ptr)
-# @ stub NtAssignProcessToJobObject
+@ stdcall NtAssignProcessToJobObject(long long)
 @ stub NtCallbackReturn
 # @ stub NtCancelDeviceWakeupRequest
 @ stdcall NtCancelIoFile(long ptr)
@@ -125,7 +125,7 @@
 @ stub NtCreateEventPair
 @ stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr)
 @ stdcall NtCreateIoCompletion(ptr long ptr long)
-# @ stub NtCreateJobObject
+@ stdcall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
 @ stdcall NtCreateKey(ptr long ptr long ptr long long)
 # @ stub NtCreateKeyedEvent
@@ -184,7 +184,7 @@
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry
 @ stdcall NtInitiatePowerAction (long long long long)
-# @ stub NtIsProcessInJob
+@ stdcall NtIsProcessInJob(long long)
 # @ stub NtIsSystemResumeAutomatic
 @ stdcall NtListenPort(ptr ptr)
 @ stdcall NtLoadDriver(ptr)
@@ -208,7 +208,7 @@
 @ stub NtOpenEventPair
 @ stdcall NtOpenFile(ptr long ptr ptr long long)
 @ stdcall NtOpenIoCompletion(ptr long ptr)
-# @ stub NtOpenJobObject
+@ stdcall NtOpenJobObject(ptr long ptr)
 @ stdcall NtOpenKey(ptr long ptr)
 # @ stub NtOpenKeyedEvent
 @ stdcall NtOpenMutant(ptr long ptr)
@@ -243,7 +243,7 @@
 @ stdcall NtQueryFullAttributesFile(ptr ptr)
 @ stdcall NtQueryInformationAtom(long long ptr long ptr)
 @ stdcall NtQueryInformationFile(long ptr ptr long long)
-# @ stub NtQueryInformationJobObject
+@ stdcall NtQueryInformationJobObject(long long ptr long ptr)
 @ stub NtQueryInformationPort
 @ stdcall NtQueryInformationProcess(long long ptr long ptr)
 @ stdcall NtQueryInformationThread(long long ptr long ptr)
@@ -321,7 +321,7 @@
 @ stub NtSetHighWaitLowThread
 # @ stub NtSetInformationDebugObject
 @ stdcall NtSetInformationFile(long long long long long)
-# @ stub NtSetInformationJobObject
+@ stdcall NtSetInformationJobObject(long long ptr long)
 @ stdcall NtSetInformationKey(long long ptr long)
 @ stdcall NtSetInformationObject(long long ptr long)
 @ stdcall NtSetInformationProcess(long long long long)
@@ -353,7 +353,7 @@
 # @ stub NtSuspendProcess
 @ stdcall NtSuspendThread(long ptr)
 @ stub NtSystemDebugControl
-# @ stub NtTerminateJobObject
+@ stdcall NtTerminateJobObject(long long)
 @ stdcall NtTerminateProcess(long long)
 @ stdcall NtTerminateThread(long long)
 @ stub NtTestAlert
@@ -950,7 +950,7 @@
 @ stdcall ZwAllocateUuids(ptr ptr ptr) NtAllocateUuids
 @ stdcall ZwAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
 @ stdcall ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
-# @ stub ZwAssignProcessToJobObject
+@ stdcall ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
 @ stub ZwCallbackReturn
 # @ stub ZwCancelDeviceWakeupRequest
 @ stdcall ZwCancelIoFile(long ptr) NtCancelIoFile
@@ -970,7 +970,7 @@
 @ stub ZwCreateEventPair
 @ stdcall ZwCreateFile(ptr long ptr ptr long long long ptr long long ptr) NtCreateFile
 @ stdcall ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
-# @ stub ZwCreateJobObject
+@ stdcall ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
 @ stdcall ZwCreateKey(ptr long ptr long ptr long long) NtCreateKey
 # @ stub ZwCreateKeyedEvent
@@ -1028,7 +1028,7 @@
 @ stub ZwImpersonateThread
 @ stub ZwInitializeRegistry
 @ stdcall ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
-# @ stub ZwIsProcessInJob
+@ stdcall ZwIsProcessInJob(long long) NtIsProcessInJob
 # @ stub ZwIsSystemResumeAutomatic
 @ stdcall ZwListenPort(ptr ptr) NtListenPort
 @ stdcall ZwLoadDriver(ptr) NtLoadDriver
@@ -1052,7 +1052,7 @@
 @ stub ZwOpenEventPair
 @ stdcall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
 @ stdcall ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
-# @ stub ZwOpenJobObject
+@ stdcall ZwOpenJobObject(ptr long ptr) NtOpenJobObject
 @ stdcall ZwOpenKey(ptr long ptr) NtOpenKey
 # @ stub ZwOpenKeyedEvent
 @ stdcall ZwOpenMutant(ptr long ptr) NtOpenMutant
@@ -1087,7 +1087,7 @@
 @ stdcall ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
 @ stdcall ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
 @ stdcall ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
-# @ stub ZwQueryInformationJobObject
+@ stdcall ZwQueryInformationJobObject(long long ptr long ptr) NtQueryInformationJobObject
 @ stub ZwQueryInformationPort
 @ stdcall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
 @ stdcall ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
@@ -1165,7 +1165,7 @@
 @ stub ZwSetHighWaitLowThread
 # @ stub ZwSetInformationDebugObject
 @ stdcall ZwSetInformationFile(long long long long long) NtSetInformationFile
-# @ stub ZwSetInformationJobObject
+@ stdcall ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
 @ stdcall ZwSetInformationKey(long long ptr long) NtSetInformationKey
 @ stdcall ZwSetInformationObject(long long ptr long) NtSetInformationObject
 @ stdcall ZwSetInformationProcess(long long long long) NtSetInformationProcess
@@ -1197,7 +1197,7 @@
 # @ stub ZwSuspendProcess
 @ stdcall ZwSuspendThread(long ptr) NtSuspendThread
 @ stub ZwSystemDebugControl
-# @ stub ZwTerminateJobObject
+@ stdcall ZwTerminateJobObject(long long) NtTerminateJobObject
 @ stdcall ZwTerminateProcess(long long) NtTerminateProcess
 @ stdcall ZwTerminateThread(long long) NtTerminateThread
 @ stub ZwTestAlert

@@ -512,6 +512,82 @@ NTSTATUS WINAPI NtQueryMutant(IN HANDLE handle,
 }
 
 /*
+ *	Jobs
+ */
+
+/******************************************************************************
+ *              NtCreateJobObject   [NTDLL.@]
+ *              ZwCreateJobObject   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtCreateJobObject( PHANDLE handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    FIXME( "stub: %p %x %s\n", handle, access, attr ? debugstr_us(attr->ObjectName) : "" );
+    *handle = (HANDLE)0xdead;
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *              NtOpenJobObject   [NTDLL.@]
+ *              ZwOpenJobObject   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtOpenJobObject( PHANDLE handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    FIXME( "stub: %p %x %s\n", handle, access, attr ? debugstr_us(attr->ObjectName) : "" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *              NtTerminateJobObject   [NTDLL.@]
+ *              ZwTerminateJobObject   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtTerminateJobObject( HANDLE handle, NTSTATUS status )
+{
+    FIXME( "stub: %p %x\n", handle, status );
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *              NtQueryInformationJobObject   [NTDLL.@]
+ *              ZwQueryInformationJobObject   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS class, PVOID info,
+                                             ULONG len, PULONG ret_len )
+{
+    FIXME( "stub: %p %u %p %u %p\n", handle, class, info, len, ret_len );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *              NtSetInformationJobObject   [NTDLL.@]
+ *              ZwSetInformationJobObject   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtSetInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS class, PVOID info, ULONG len )
+{
+    FIXME( "stub: %p %u %p %u\n", handle, class, info, len );
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *              NtIsProcessInJob   [NTDLL.@]
+ *              ZwIsProcessInJob   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtIsProcessInJob( HANDLE process, HANDLE job )
+{
+    FIXME( "stub: %p %p\n", process, job );
+    return STATUS_PROCESS_NOT_IN_JOB;
+}
+
+/******************************************************************************
+ *              NtAssignProcessToJobObject   [NTDLL.@]
+ *              ZwAssignProcessToJobObject   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtAssignProcessToJobObject( HANDLE job, HANDLE process )
+{
+    FIXME( "stub: %p %p\n", job, process );
+    return STATUS_SUCCESS;
+}
+
+/*
  *	Timers
  */
 
