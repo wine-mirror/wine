@@ -337,6 +337,10 @@ AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         switch (LOWORD (wParam)) {
         case IDOK:
             len = GetWindowTextLengthA (GetDlgItem (hwnd, IDC_TAG));
+	    if(!len) {
+               report (R_WARNING, "You must enter a tag to continue");
+               return FALSE;
+            }
             tag = xmalloc (len+1);
             GetDlgItemTextA (hwnd, IDC_TAG, tag, len+1);
             EndDialog (hwnd, IDOK);

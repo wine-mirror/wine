@@ -672,7 +672,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             SetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", "0" );
         }
 
-        if (!tag) {
+        while (!tag) {
             if (!interactive)
                 report (R_FATAL, "Please specify a tag (-t option) if "
                         "running noninteractive!");
