@@ -96,21 +96,30 @@ NTSTATUS WINAPI NtOpenProcessToken(
 	DWORD DesiredAccess,
 	HANDLE *TokenHandle)
 {
+    return NtOpenProcessTokenEx( ProcessHandle, DesiredAccess, 0, TokenHandle );
+}
+
+/******************************************************************************
+ *  NtOpenProcessTokenEx   [NTDLL.@]
+ *  ZwOpenProcessTokenEx   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtOpenProcessTokenEx( HANDLE process, DWORD access, DWORD attributes,
+                                      HANDLE *handle )
+{
     NTSTATUS ret;
 
-    TRACE("(%p,0x%08x,%p)\n", ProcessHandle,DesiredAccess, TokenHandle);
+    TRACE("(%p,0x%08x,0x%08x,%p)\n", process, access, attributes, handle);
 
     SERVER_START_REQ( open_token )
     {
-        req->handle     = ProcessHandle;
-        req->access     = DesiredAccess;
-        req->attributes = 0;
+        req->handle     = process;
+        req->access     = access;
+        req->attributes = attributes;
         req->flags      = 0;
         ret = wine_server_call( req );
-        if (!ret) *TokenHandle = reply->token;
+        if (!ret) *handle = reply->token;
     }
     SERVER_END_REQ;
-
     return ret;
 }
 
@@ -124,20 +133,29 @@ NTSTATUS WINAPI NtOpenThreadToken(
 	BOOLEAN OpenAsSelf,
 	HANDLE *TokenHandle)
 {
+    return NtOpenThreadTokenEx( ThreadHandle, DesiredAccess, OpenAsSelf, 0, TokenHandle );
+}
+
+/******************************************************************************
+ *  NtOpenThreadTokenEx   [NTDLL.@]
+ *  ZwOpenThreadTokenEx   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtOpenThreadTokenEx( HANDLE thread, DWORD access, BOOLEAN as_self, DWORD attributes,
+                                     HANDLE *handle )
+{
     NTSTATUS ret;
 
-    TRACE("(%p,0x%08x,0x%08x,%p)\n",
-          ThreadHandle,DesiredAccess, OpenAsSelf, TokenHandle);
+    TRACE("(%p,0x%08x,%u,0x%08x,%p)\n", thread, access, as_self, attributes, handle );
 
     SERVER_START_REQ( open_token )
     {
-        req->handle     = ThreadHandle;
-        req->access     = DesiredAccess;
-        req->attributes = 0;
+        req->handle     = thread;
+        req->access     = access;
+        req->attributes = attributes;
         req->flags      = OPEN_TOKEN_THREAD;
-        if (OpenAsSelf) req->flags |= OPEN_TOKEN_AS_SELF;
+        if (as_self) req->flags |= OPEN_TOKEN_AS_SELF;
         ret = wine_server_call( req );
-        if (!ret) *TokenHandle = reply->token;
+        if (!ret) *handle = reply->token;
     }
     SERVER_END_REQ;
 

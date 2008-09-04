@@ -214,14 +214,14 @@
 @ stdcall NtOpenMutant(ptr long ptr)
 @ stub NtOpenObjectAuditAlarm
 @ stdcall NtOpenProcess(ptr long ptr ptr)
-@ stdcall NtOpenProcessToken(long long long)
-# @ stub NtOpenProcessTokenEx
+@ stdcall NtOpenProcessToken(long long ptr)
+@ stdcall NtOpenProcessTokenEx(long long long ptr)
 @ stdcall NtOpenSection(ptr long ptr)
 @ stdcall NtOpenSemaphore(long long ptr)
 @ stdcall NtOpenSymbolicLinkObject (ptr long ptr)
 @ stdcall NtOpenThread(ptr long ptr ptr)
-@ stdcall NtOpenThreadToken(long long long long)
-# @ stub NtOpenThreadTokenEx
+@ stdcall NtOpenThreadToken(long long long ptr)
+@ stdcall NtOpenThreadTokenEx(long long long long ptr)
 @ stdcall NtOpenTimer(ptr long ptr)
 @ stub NtPlugPlayControl
 @ stdcall NtPowerInformation(long ptr long ptr long)
@@ -1058,14 +1058,14 @@
 @ stdcall ZwOpenMutant(ptr long ptr) NtOpenMutant
 @ stub ZwOpenObjectAuditAlarm
 @ stdcall ZwOpenProcess(ptr long ptr ptr) NtOpenProcess
-@ stdcall ZwOpenProcessToken(long long long) NtOpenProcessToken
-# @ stub ZwOpenProcessTokenEx
+@ stdcall ZwOpenProcessToken(long long ptr) NtOpenProcessToken
+@ stdcall ZwOpenProcessTokenEx(long long long ptr) NtOpenProcessTokenEx
 @ stdcall ZwOpenSection(ptr long ptr) NtOpenSection
 @ stdcall ZwOpenSemaphore(long long ptr) NtOpenSemaphore
 @ stdcall ZwOpenSymbolicLinkObject (ptr long ptr) NtOpenSymbolicLinkObject
 @ stdcall ZwOpenThread(ptr long ptr ptr) NtOpenThread
-@ stdcall ZwOpenThreadToken(long long long long) NtOpenThreadToken
-# @ stub ZwOpenThreadTokenEx
+@ stdcall ZwOpenThreadToken(long long long ptr) NtOpenThreadToken
+@ stdcall ZwOpenThreadTokenEx(long long long long ptr) NtOpenThreadTokenEx
 @ stdcall ZwOpenTimer(ptr long ptr) NtOpenTimer
 @ stub ZwPlugPlayControl
 @ stdcall ZwPowerInformation(long ptr long ptr long) NtPowerInformation
