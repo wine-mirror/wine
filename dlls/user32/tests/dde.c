@@ -2170,7 +2170,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     }
     case XTYP_CONNECT_CONFIRM:
     {
-        ok(msg_index == 3 || msg_index == 4 || msg_index == 8, "Expected 3 or 8, got %d\n", msg_index);
+        ok(msg_index == 3 || msg_index == 8, "Expected 3 or 8, got %d\n", msg_index);
         conversation = hconv;
         return (HDDEDATA) TRUE;
     }
@@ -2178,7 +2178,6 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     {
         BYTE *buffer = NULL;
 
-      todo_wine
         ok(msg_index == 4 || msg_index == 9, "Expected 4 or 9, got %d\n", msg_index);
         ok(uFmt == 0, "Expected 0, got %d\n", uFmt);
         ok(hconv == conversation, "Expected conversation handle, got %p, msg_index=%d\n",

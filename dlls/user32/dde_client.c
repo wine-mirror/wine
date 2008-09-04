@@ -1331,8 +1331,6 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	    pConv->wStatus |= ST_ISLOCAL;
 	}
 
-	WDML_BroadcastDDEWindows(WDML_szEventClass, WM_WDML_CONNECT_CONFIRM, (WPARAM)hwnd, wParam);
-
 	GlobalDeleteAtom(uiLo);
 	GlobalDeleteAtom(uiHi);
 
