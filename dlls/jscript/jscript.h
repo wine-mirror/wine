@@ -56,7 +56,7 @@ struct _script_ctx_t {
 
 void script_release(script_ctx_t*);
 
-static void inline script_addref(script_ctx_t *ctx)
+static inline void script_addref(script_ctx_t *ctx)
 {
     ctx->ref++;
 }
