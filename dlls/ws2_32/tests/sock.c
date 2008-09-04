@@ -887,9 +887,9 @@ static void do_test( test_setup *test )
     DWORD i, n = min (test->general.n_clients, MAX_CLIENTS);
     DWORD wait;
 
-    server_ready = CreateEventW ( NULL, TRUE, FALSE, NULL );
+    server_ready = CreateEventA ( NULL, TRUE, FALSE, NULL );
     for (i = 0; i <= n; i++)
-        client_ready[i] = CreateEventW ( NULL, TRUE, FALSE, NULL );
+        client_ready[i] = CreateEventA ( NULL, TRUE, FALSE, NULL );
 
     StartServer ( test->srv, &test->general, &test->srv_params );
     StartClients ( test->clt, &test->general, &test->clt_params );
@@ -1675,7 +1675,7 @@ static void test_select(void)
 
     thread_params.s = fdRead;
     thread_params.ReadKilled = FALSE;
-    server_ready = CreateEventW(NULL, TRUE, FALSE, NULL);
+    server_ready = CreateEventA(NULL, TRUE, FALSE, NULL);
     thread_handle = CreateThread (NULL, 0, (LPTHREAD_START_ROUTINE) &SelectReadThread, &thread_params, 0, &id );
     ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %d\n", GetLastError());
 
@@ -1735,7 +1735,7 @@ static void test_accept(void)
         goto done;
     }
 
-    server_ready = CreateEventW(NULL, TRUE, FALSE, NULL);
+    server_ready = CreateEventA(NULL, TRUE, FALSE, NULL);
     if (server_ready == INVALID_HANDLE_VALUE)
     {
         trace("error creating event: %d\n", GetLastError());
@@ -2069,10 +2069,10 @@ static void test_write_events(void)
         goto end;
     }
 
-    hEvent = CreateEventW(NULL, FALSE, TRUE, NULL);
+    hEvent = CreateEventA(NULL, FALSE, TRUE, NULL);
     if (hEvent == INVALID_HANDLE_VALUE)
     {
-        ok(0, "CreateEventW failed, error %d\n", GetLastError());
+        ok(0, "CreateEventA failed, error %d\n", GetLastError());
         goto end;
     }
 
