@@ -277,7 +277,7 @@ static void fixup_imports( IMAGE_IMPORT_DESCRIPTOR *dir, BYTE *base, int delta )
         fixup_rva_dwords( &dir->u.OriginalFirstThunk, delta, 1 );
         fixup_rva_dwords( &dir->Name, delta, 1 );
         fixup_rva_dwords( &dir->FirstThunk, delta, 1 );
-        ptr = (UINT_PTR *)(base + dir->FirstThunk);
+        ptr = (UINT_PTR *)(base + (dir->u.OriginalFirstThunk ? dir->u.OriginalFirstThunk : dir->FirstThunk));
         while (*ptr)
         {
             if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
