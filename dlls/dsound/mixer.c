@@ -826,8 +826,32 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		mixplaypos = DSOUND_bufpos_to_mixpos(device, device->playpos);
 		mixplaypos2 = DSOUND_bufpos_to_mixpos(device, playpos);
-		/* wipe out just-played sound data */
-		if (playpos < device->playpos) {
+
+		/* calc maximum prebuff */
+		prebuff_max = (device->prebuf * device->fraglen);
+		if (!device->hwbuf && playpos + prebuff_max >= device->helfrags * device->fraglen)
+			prebuff_max += device->buflen - device->helfrags * device->fraglen;
+
+		/* check how close we are to an underrun. It occurs when the writepos overtakes the mixpos */
+		prebuff_left = DSOUND_BufPtrDiff(device->buflen, device->mixpos, playpos);
+		writelead = DSOUND_BufPtrDiff(device->buflen, writepos, playpos);
+
+		/* check for underrun. underrun occurs when the write position passes the mix position
+		 * also wipe out just-played sound data */
+		if((prebuff_left > prebuff_max) || (device->state == STATE_STOPPED) || (device->state == STATE_STARTING)){
+			if (device->state == STATE_STOPPING || device->state == STATE_PLAYING)
+				WARN("Probable buffer underrun\n");
+			else TRACE("Buffer starting or buffer underrun\n");
+
+			/* recover mixing for all buffers */
+			recover = TRUE;
+
+			/* reset mix position to write position */
+			device->mixpos = writepos;
+
+			ZeroMemory(device->mix_buffer, device->mix_buffer_len);
+			ZeroMemory(device->buffer, device->buflen);
+		} else if (playpos < device->playpos) {
 			buf1 = device->buffer + device->playpos;
 			buf2 = device->buffer;
 			size1 = device->buflen - device->playpos;
@@ -861,33 +885,11 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		}
 		device->playpos = playpos;
 
-		/* calc maximum prebuff */
-		prebuff_max = (device->prebuf * device->fraglen);
-		if (!device->hwbuf && playpos + prebuff_max >= device->helfrags * device->fraglen)
-			prebuff_max += device->buflen - device->helfrags * device->fraglen;
-
-		/* check how close we are to an underrun. It occurs when the writepos overtakes the mixpos */
-		prebuff_left = DSOUND_BufPtrDiff(device->buflen, device->mixpos, playpos);
-		writelead = DSOUND_BufPtrDiff(device->buflen, writepos, playpos);
-
 		/* find the maximum we can prebuffer from current write position */
 		maxq = (writelead < prebuff_max) ? (prebuff_max - writelead) : 0;
 
 		TRACE("prebuff_left = %d, prebuff_max = %dx%d=%d, writelead=%d\n",
 			prebuff_left, device->prebuf, device->fraglen, prebuff_max, writelead);
-
-		/* check for underrun. underrun occurs when the write position passes the mix position */
-		if((prebuff_left > prebuff_max) || (device->state == STATE_STOPPED) || (device->state == STATE_STARTING)){
-			if (device->state == STATE_STOPPING || device->state == STATE_PLAYING)
-				WARN("Probable buffer underrun\n");
-			else TRACE("Buffer starting or buffer underrun\n");
-
-			/* recover mixing for all buffers */
-			recover = TRUE;
-
-			/* reset mix position to write position */
-			device->mixpos = writepos;
-		}
 
 		/* Do we risk an 'underrun' if we don't advance pointer? */
 		if (writelead/device->fraglen <= ds_snd_queue_min || recover)

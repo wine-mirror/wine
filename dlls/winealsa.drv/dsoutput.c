@@ -329,6 +329,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_Lock(PIDSDRIVERBUFFER iface,
         TRACE("Hit mmap_pos, locking data!\n");
         snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
     }
+    else
+        WARN("mmap_pos (%lu) != writepos (%lu) not locking data!\n", This->mmap_pos, writepos);
 
     LeaveCriticalSection(&This->pcm_crst);
     /* **** */
@@ -551,7 +553,9 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 
         if (used < 0)
         {
+            This->mmap_pos += -used;
             snd_pcm_forward(This->pcm, -used);
+            This->mmap_pos %= This->mmap_buflen_frames;
             used = 0;
         }
 
