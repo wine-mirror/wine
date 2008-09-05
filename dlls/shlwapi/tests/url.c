@@ -424,13 +424,13 @@ static void test_UrlApplyScheme(void)
     len = TEST_APPLY_MAX_LENGTH;
     res = UrlApplySchemeA(NULL, newurl, &len, TEST_APPLY[0].flags);
     ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
-    ok(len == TEST_APPLY_MAX_LENGTH, "got len %d (expected %d)\n", len, TEST_APPLY_MAX_LENGTH);
+    ok(len == TEST_APPLY_MAX_LENGTH, "got len %d\n", len);
     ok(!lstrcmpA(newurl, untouchedA), "got '%s' (expected '%s')\n", newurl, untouchedA);
 
     len = TEST_APPLY_MAX_LENGTH;
     res = UrlApplySchemeA(TEST_APPLY[0].url, NULL, &len, TEST_APPLY[0].flags);
     ok(res == E_INVALIDARG, "got HRESULT 0x%x (expected E_INVALIDARG)\n", res);
-    ok(len == TEST_APPLY_MAX_LENGTH, "got len %d (expected %d)\n", len, TEST_APPLY_MAX_LENGTH);
+    ok(len == TEST_APPLY_MAX_LENGTH, "got len %d\n", len);
 
     lstrcpyA(newurl, untouchedA);
     res = UrlApplySchemeA(TEST_APPLY[0].url, newurl, NULL, TEST_APPLY[0].flags);
