@@ -477,4 +477,6 @@ START_TEST(avisplitter)
     test_threads();
 
     release_avisplitter();
+
+    CoUninitialize();
 }
