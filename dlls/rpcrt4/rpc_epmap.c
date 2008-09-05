@@ -114,6 +114,17 @@ static BOOL start_rpcss(void)
     return rslt;
 }
 
+static inline BOOL is_epm_destination_local(RPC_BINDING_HANDLE handle)
+{
+    RpcBinding *bind = (RpcBinding *)handle;
+    const char *protseq = bind->Protseq;
+    const char *network_addr = bind->NetworkAddr;
+
+    return ((!strcmp(protseq, "ncalrpc") && !network_addr) ||
+            (!strcmp(protseq, "ncacn_np") &&
+                (!network_addr || !strcmp(network_addr, "."))));
+}
+
 static RPC_STATUS get_epm_handle_client(RPC_BINDING_HANDLE handle, RPC_BINDING_HANDLE *epm_handle)
 {
     RpcBinding *bind = (RpcBinding *)handle;
@@ -243,7 +254,8 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
               status2 = GetExceptionCode();
           }
           __ENDTRY
-          if (status2 == RPC_S_SERVER_UNAVAILABLE)
+          if (status2 == RPC_S_SERVER_UNAVAILABLE &&
+              is_epm_destination_local(handle))
           {
               if (start_rpcss())
                   continue;
@@ -407,7 +419,8 @@ RPC_STATUS WINAPI RpcEpResolveBinding( RPC_BINDING_HANDLE Binding, RPC_IF_HANDLE
       status2 = GetExceptionCode();
     }
     __ENDTRY
-    if (status2 == RPC_S_SERVER_UNAVAILABLE)
+    if (status2 == RPC_S_SERVER_UNAVAILABLE &&
+        is_epm_destination_local(handle))
     {
       if (start_rpcss())
         continue;
