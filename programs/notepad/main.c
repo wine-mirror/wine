@@ -31,6 +31,7 @@
 #include "main.h"
 #include "dialog.h"
 #include "notepad_res.h"
+#include "wine/unicode.h"
 
 NOTEPAD_GLOBALS Globals;
 static ATOM aFINDMSGSTRING;
@@ -590,7 +591,7 @@ static void HandleCommandLine(LPWSTR cmdline)
             static const WCHAR txtW[] = { '.','t','x','t',0 };
 
             /* try to find file with ".txt" extension */
-            if (!lstrcmp(txtW, cmdline + lstrlen(cmdline) - lstrlen(txtW)))
+            if (strchrW(PathFindFileNameW(cmdline), '.'))
             {
                 file_exists = FALSE;
                 file_name = cmdline;
