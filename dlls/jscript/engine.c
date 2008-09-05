@@ -114,8 +114,10 @@ HRESULT var_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt
 
 HRESULT empty_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    V_VT(ret) = VT_EMPTY;
+    return S_OK;
 }
 
 HRESULT expression_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)

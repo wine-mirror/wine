@@ -349,6 +349,7 @@ static void parse_script_a(const char *src)
 static void run_tests(void)
 {
     parse_script_a("");
+    parse_script_a("/* empty */ ;");
 }
 
 START_TEST(run)
