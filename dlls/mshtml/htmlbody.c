@@ -257,15 +257,44 @@ static HRESULT WINAPI HTMLBodyElement_get_noWrap(IHTMLBodyElement *iface, VARIAN
 static HRESULT WINAPI HTMLBodyElement_put_bgColor(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    nsAString strColor;
+    nsresult nsres;
+
+    TRACE("(%p)->()\n", This);
+
+    if(!variant_to_nscolor(&v, &strColor))
+        return S_OK;
+
+    nsres = nsIDOMHTMLBodyElement_SetBgColor(This->nsbody, &strColor);
+    nsAString_Finish(&strColor);
+    if(NS_FAILED(nsres))
+        ERR("SetBgColor failed: %08x\n", nsres);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_get_bgColor(IHTMLBodyElement *iface, VARIANT *p)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString strColor;
+    nsresult nsres;
+    const PRUnichar *color;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&strColor, NULL);
+    nsres = nsIDOMHTMLBodyElement_GetBgColor(This->nsbody, &strColor);
+    if(NS_FAILED(nsres))
+        ERR("SetBgColor failed: %08x\n", nsres);
+
+    nsAString_GetData(&strColor, &color);
+
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = SysAllocString(color);
+
+    nsAString_Finish(&strColor);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_text(IHTMLBodyElement *iface, VARIANT v)
