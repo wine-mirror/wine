@@ -465,4 +465,6 @@ START_TEST(asn)
     test_decodeSPCLink();
     test_encodeSPCPEImage();
     test_decodeSPCPEImage();
+
+    FreeLibrary(hCrypt32);
 }
