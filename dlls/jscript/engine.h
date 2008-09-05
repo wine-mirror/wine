@@ -32,6 +32,8 @@ typedef struct _parser_ctx_t {
 
     jsheap_t tmp_heap;
     jsheap_t heap;
+
+    struct _parser_ctx_t *next;
 } parser_ctx_t;
 
 HRESULT script_parse(script_ctx_t*,const WCHAR*,parser_ctx_t**);
@@ -54,17 +56,20 @@ static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
     return jsheap_alloc(&ctx->tmp_heap, size);
 }
 
-typedef struct {
-    enum{
-        RT_NORMAL,
-        RT_RETURN,
-        RT_BREAK
-    } type;
-} return_type_t;
+struct _exec_ctx_t {
+    LONG ref;
 
-typedef struct _exec_ctx_t {
     parser_ctx_t *parser;
-} exec_ctx_t;
+};
+
+static inline void exec_addref(exec_ctx_t *ctx)
+{
+    ctx->ref++;
+}
+
+void exec_release(exec_ctx_t*);
+HRESULT create_exec_ctx(exec_ctx_t**);
+HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,jsexcept_t*,VARIANT*);
 
 typedef struct _statement_t statement_t;
 typedef struct _expression_t expression_t;
@@ -87,6 +92,16 @@ typedef struct _variable_declaration_t {
 
     struct _variable_declaration_t *next;
 } variable_declaration_t;
+
+typedef struct {
+    enum{
+        RT_NORMAL,
+        RT_RETURN,
+        RT_BREAK,
+        RT_CONTINUE
+    } type;
+    jsexcept_t ei;
+} return_type_t;
 
 typedef HRESULT (*statement_eval_t)(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 
@@ -201,7 +216,6 @@ HRESULT throw_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT try_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 
 typedef struct exprval_t exprval_t;
-typedef struct jsexcept_t jsexcept_t;
 
 typedef HRESULT (*expression_eval_t)(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 

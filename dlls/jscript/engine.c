@@ -23,6 +23,83 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
+static inline HRESULT stat_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+{
+    return stat->eval(ctx, stat, rt, ret);
+}
+
+HRESULT create_exec_ctx(exec_ctx_t **ret)
+{
+    exec_ctx_t *ctx;
+
+    ctx = heap_alloc_zero(sizeof(exec_ctx_t));
+    if(!ctx)
+        return E_OUTOFMEMORY;
+
+    *ret = ctx;
+    return S_OK;
+}
+
+void exec_release(exec_ctx_t *ctx)
+{
+    if(--ctx->ref)
+        return;
+
+    heap_free(ctx);
+}
+
+HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, jsexcept_t *ei, VARIANT *retv)
+{
+    script_ctx_t *script = parser->script;
+    parser_ctx_t *prev_parser;
+    VARIANT val, tmp;
+    statement_t *stat;
+    exec_ctx_t *prev_ctx;
+    return_type_t rt;
+    HRESULT hres = S_OK;
+
+    prev_ctx = script->exec_ctx;
+    script->exec_ctx = ctx;
+
+    prev_parser = ctx->parser;
+    ctx->parser = parser;
+
+    V_VT(&val) = VT_EMPTY;
+    memset(&rt, 0, sizeof(rt));
+    rt.type = RT_NORMAL;
+
+    for(stat = source->statement; stat; stat = stat->next) {
+        hres = stat_eval(ctx, stat, &rt, &tmp);
+        if(FAILED(hres))
+            break;
+
+        VariantClear(&val);
+        val = tmp;
+        if(rt.type != RT_NORMAL)
+            break;
+    }
+
+    script->exec_ctx = prev_ctx;
+    ctx->parser = prev_parser;
+
+    if(rt.type != RT_NORMAL && rt.type != RT_RETURN) {
+        FIXME("wrong rt %d\n", rt.type);
+        hres = E_FAIL;
+    }
+
+    *ei = rt.ei;
+    if(FAILED(hres)) {
+        VariantClear(&val);
+        return hres;
+    }
+
+    if(retv)
+        *retv = val;
+    else
+        VariantClear(&val);
+    return S_OK;
+}
+
 HRESULT block_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
     FIXME("\n");

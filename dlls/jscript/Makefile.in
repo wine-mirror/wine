@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = jscript.dll
-IMPORTS   = kernel32
+IMPORTS   = oleaut32 kernel32
 
 RC_SRCS = rsrc.rc
 

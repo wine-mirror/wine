@@ -38,6 +38,9 @@ typedef struct {
     LONG thread_id;
 
     IActiveScriptSite *site;
+
+    parser_ctx_t *queue_head;
+    parser_ctx_t *queue_tail;
 } JScript;
 
 #define ACTSCRIPT(x)    ((IActiveScript*)                 &(x)->lpIActiveScriptVtbl)
@@ -61,6 +64,56 @@ static void change_state(JScript *This, SCRIPTSTATE state)
 
     This->ctx->state = state;
     IActiveScriptSite_OnStateChange(This->site, state);
+}
+
+static inline BOOL is_started(script_ctx_t *ctx)
+{
+    return ctx->state == SCRIPTSTATE_STARTED
+        || ctx->state == SCRIPTSTATE_CONNECTED
+        || ctx->state == SCRIPTSTATE_DISCONNECTED;
+}
+
+static HRESULT exec_global_code(JScript *This, parser_ctx_t *parser_ctx)
+{
+    exec_ctx_t *exec_ctx;
+    jsexcept_t jsexcept;
+    VARIANT var;
+    HRESULT hres;
+
+    hres = create_exec_ctx(&exec_ctx);
+    if(FAILED(hres))
+        return hres;
+
+    IActiveScriptSite_OnEnterScript(This->site);
+
+    memset(&jsexcept, 0, sizeof(jsexcept));
+    hres = exec_source(exec_ctx, parser_ctx, parser_ctx->source, &jsexcept, &var);
+    VariantClear(&jsexcept.var);
+    exec_release(exec_ctx);
+    if(SUCCEEDED(hres))
+        VariantClear(&var);
+
+    IActiveScriptSite_OnLeaveScript(This->site);
+
+    return hres;
+}
+
+static void clear_script_queue(JScript *This)
+{
+    parser_ctx_t *iter, *iter2;
+
+    if(!This->queue_head)
+        return;
+
+    iter = This->queue_head;
+    while(iter) {
+        iter2 = iter->next;
+        iter->next = NULL;
+        parser_release(iter);
+        iter = iter2;
+    }
+
+    This->queue_head = This->queue_tail = NULL;
 }
 
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
@@ -215,6 +268,8 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
 
     if(This->thread_id != GetCurrentThreadId())
         return E_UNEXPECTED;
+
+    clear_script_queue(This);
 
     if(This->ctx) {
         change_state(This, SCRIPTSTATE_CLOSED);
@@ -398,16 +453,29 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     parser_ctx_t *parser_ctx;
     HRESULT hres;
 
-    FIXME("(%p)->(%s %s %p %s %x %u %x %p %p)\n", This, debugstr_w(pstrCode),
+    TRACE("(%p)->(%s %s %p %s %x %u %x %p %p)\n", This, debugstr_w(pstrCode),
           debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
           dwSourceContextCookie, ulStartingLine, dwFlags, pvarResult, pexcepinfo);
+
+    if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
+        return E_UNEXPECTED;
 
     hres = script_parse(This->ctx, pstrCode, &parser_ctx);
     if(FAILED(hres))
         return hres;
 
+    if(!is_started(This->ctx)) {
+        if(This->queue_tail)
+            This->queue_tail = This->queue_tail->next = parser_ctx;
+        else
+            This->queue_head = This->queue_tail = parser_ctx;
+        return S_OK;
+    }
+
+    hres = exec_global_code(This, parser_ctx);
     parser_release(parser_ctx);
-    return E_NOTIMPL;
+
+    return hres;
 }
 
 #undef ASPARSE_THIS

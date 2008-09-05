@@ -32,6 +32,12 @@
 #include "wine/list.h"
 
 typedef struct _script_ctx_t script_ctx_t;
+typedef struct _exec_ctx_t exec_ctx_t;
+
+typedef struct {
+    EXCEPINFO ei;
+    VARIANT var;
+} jsexcept_t;
 
 typedef struct DispatchEx {
     const IDispatchExVtbl  *lpIDispatchExVtbl;
@@ -49,6 +55,7 @@ struct _script_ctx_t {
     LONG ref;
 
     SCRIPTSTATE state;
+    exec_ctx_t *exec_ctx;
     LCID lcid;
 
     DispatchEx *script_disp;
