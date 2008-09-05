@@ -1149,6 +1149,7 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
 BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
 {
     BOOL ret;
+    DWORD num_bytes;
     request_t *request;
 
     TRACE("%p, %p\n", hrequest, available);
@@ -1165,8 +1166,9 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
         return FALSE;
     }
 
-    ret = netconn_query_data_available( &request->netconn, available );
+    ret = netconn_query_data_available( &request->netconn, &num_bytes );
 
+    if (ret && available) *available = num_bytes;
     release_object( &request->hdr );
     return ret;
 }
@@ -1255,7 +1257,7 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
     BOOL ret;
     request_t *request;
     WCHAR encoding[20];
-    DWORD buflen = sizeof(encoding);
+    DWORD num_bytes, buflen = sizeof(encoding);
 
     TRACE("%p, %p, %d, %p\n", hrequest, buffer, to_read, read);
 
@@ -1274,11 +1276,12 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
     if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
         !strcmpiW( encoding, chunked ))
     {
-        ret = read_data_chunked( request, buffer, to_read, read, request->hdr.flags & WINHTTP_FLAG_ASYNC );
+        ret = read_data_chunked( request, buffer, to_read, &num_bytes, request->hdr.flags & WINHTTP_FLAG_ASYNC );
     }
     else
-        ret = read_data( request, buffer, to_read, read, request->hdr.flags & WINHTTP_FLAG_ASYNC );
+        ret = read_data( request, buffer, to_read, &num_bytes, request->hdr.flags & WINHTTP_FLAG_ASYNC );
 
+    if (ret && read) *read = num_bytes;
     release_object( &request->hdr );
     return ret;
 }
