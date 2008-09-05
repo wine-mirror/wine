@@ -76,7 +76,7 @@ static HRESULT init_register_strtable(STRTABLEA *strtable)
     };
 #undef CLSID_EXPANSION_ENTRY
     static STRENTRYA pse[sizeof expns / sizeof expns[0]];
-    int i;
+    DWORD i;
 
     strtable->cEntries = sizeof pse / sizeof pse[0];
     strtable->pse = pse;
@@ -98,7 +98,7 @@ static HRESULT init_register_strtable(STRTABLEA *strtable)
 
 static void cleanup_register_strtable(STRTABLEA *strtable)
 {
-    int i;
+    DWORD i;
     for (i = 0; i < strtable->cEntries; i++) {
         HeapFree(GetProcessHeap(), 0, strtable->pse[i].pszName);
         HeapFree(GetProcessHeap(), 0, strtable->pse[i].pszValue);
