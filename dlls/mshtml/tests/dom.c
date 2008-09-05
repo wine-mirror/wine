@@ -2036,6 +2036,36 @@ static void test_default_body(IHTMLBodyElement *body)
     ok(!l, "scrollWidth = %ld\n", l);
 }
 
+static void test_body_funs(IHTMLBodyElement *body)
+{
+    static WCHAR sRed[] = {'r','e','d',0};
+    static WCHAR sRedbg[] = {'#','f','f','0','0','0','0',0};
+    VARIANT vbg;
+    VARIANT vDefaultbg;
+    HRESULT hres;
+
+    hres = IHTMLBodyElement_get_bgColor(body, &vDefaultbg);
+    ok(hres == S_OK, "get_background failed: %08x\n", hres);
+    ok(V_VT(&vDefaultbg) == VT_BSTR, "bstr != NULL\n");
+
+    V_VT(&vbg) = VT_BSTR;
+    V_BSTR(&vbg) = SysAllocString(sRed);
+    hres = IHTMLBodyElement_put_bgColor(body, vbg);
+    ok(hres == S_OK, "get_background failed: %08x\n", hres);
+    VariantClear(&vbg);
+
+    hres = IHTMLBodyElement_get_bgColor(body, &vbg);
+    ok(hres == S_OK, "get_background failed: %08x\n", hres);
+    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(!lstrcmpW(V_BSTR(&vbg), sRedbg), "Unexpected type %s\n", dbgstr_w(V_BSTR(&vbg)));
+    VariantClear(&vbg);
+
+    /* Restore Originial */
+    hres = IHTMLBodyElement_put_bgColor(body, vDefaultbg);
+    ok(hres == S_OK, "get_background failed: %08x\n", hres);
+    VariantClear(&vDefaultbg);
+}
+
 static void test_window(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window, *window2, *self;
@@ -2091,6 +2121,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
     ok(hres == S_OK, "Could not get IHTMBodyElement: %08x\n", hres);
     test_default_body(body);
+    test_body_funs(body);
     IHTMLBodyElement_Release(body);
 
     hres = IHTMLElement_get_style(elem, &style);
