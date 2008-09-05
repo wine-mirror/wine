@@ -754,7 +754,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     }
 
     (*graphics)->hdc = hdc;
-    (*graphics)->hwnd = NULL;
+    (*graphics)->hwnd = WindowFromDC(hdc);
     (*graphics)->smoothing = SmoothingModeDefault;
     (*graphics)->compqual = CompositingQualityDefault;
     (*graphics)->interpolation = InterpolationModeDefault;
