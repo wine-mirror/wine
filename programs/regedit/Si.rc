@@ -294,6 +294,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Vrednost (%ld) je prevelika"
     IDS_DELETE_BOX_TITLE    "Potrditev brisanja vrednosti"
     IDS_DELETE_BOX_TEXT     "Ali ste prepričani, da želite izbrisati vrednost '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_NEWKEY              "Nov ključ #%d"
     IDS_NEWVALUE            "Nova vrednost #%d"
     IDS_NOTFOUND            "Iskanega niza '%s' ni mogoče najti"

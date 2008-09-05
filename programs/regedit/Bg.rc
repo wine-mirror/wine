@@ -270,6 +270,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Стойността е прекалено голяма (%ld)"
     IDS_DELETE_BOX_TITLE    "Потвърдете изтриването на стойността"
     IDS_DELETE_BOX_TEXT     "Наистина ли искате да изтриете стойността '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_NEWKEY              "Нов ключ #%d"
     IDS_NEWVALUE            "Нова стойност #%d"
     IDS_NOTFOUND            "Search string '%s' not found"

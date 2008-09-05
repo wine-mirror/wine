@@ -267,6 +267,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Deðer çok büyük (%ld)"
     IDS_DELETE_BOX_TITLE    "Deðer silmeyi onayla"
     IDS_DELETE_BOX_TEXT     "'%s' deðerini silmek istediðinizden emin misiniz?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_NEWKEY              "Yeni Anahtar #%d"
     IDS_NEWVALUE            "Yeni Deðer #%d"
     IDS_NOTFOUND            "Arama dizesi '%s' bulunamadý"

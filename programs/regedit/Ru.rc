@@ -292,6 +292,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Значение слишком велико (%ld)"
     IDS_DELETE_BOX_TITLE    "Подтверждение"
     IDS_DELETE_BOX_TEXT     "Удалить значение '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_NEWKEY              "Новый ключ #%d"
     IDS_NEWVALUE            "Новое значени #%d"
     IDS_NOTFOUND            "Искомая строка '%s' не найдена"

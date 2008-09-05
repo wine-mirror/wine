@@ -232,6 +232,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Az érték túl nagy: (%ld)"
     IDS_DELETE_BOX_TITLE    "Értéktörlés jóváhagyása"
     IDS_DELETE_BOX_TEXT     "Biztos hogy törölni szeretné a(z) '%s' kulcsot?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_NEWKEY              "Új kulcs #%d"
     IDS_NEWVALUE            "Új érték #%d"
     IDS_NOTFOUND            "A(z) '%s' keresési kifejezés nem található"

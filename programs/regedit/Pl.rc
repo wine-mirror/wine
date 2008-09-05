@@ -292,6 +292,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Wartoœæ jest zbyt du¿a (%ld)"
     IDS_DELETE_BOX_TITLE    "Potwierdzenie kasowania"
     IDS_DELETE_BOX_TEXT     "Jesteœ pewien, ¿e chcesz usun¹æ dan¹ '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_NEWKEY              "Nowy klucz #%d"
     IDS_NEWVALUE            "Nowa dana #%d"
     IDS_NOTFOUND            "Nie uda³o siê wyszukaæ ci¹gu '%s'"
