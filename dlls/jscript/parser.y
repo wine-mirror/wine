@@ -951,7 +951,7 @@ static case_list_t *case_list_add(parser_ctx_t *ctx, case_list_t *list, case_cla
 static case_clausule_t *new_case_block(parser_ctx_t *ctx, case_list_t *case_list1,
         case_clausule_t *default_clausule, case_list_t *case_list2)
 {
-    case_clausule_t *ret = NULL, *iter, *iter2;
+    case_clausule_t *ret = NULL, *iter = NULL, *iter2;
     statement_t *stat = NULL;
 
     if(case_list1) {
