@@ -2073,7 +2073,7 @@ static BOOL CRYPT_CopyKeyIdAsIssuerAndSerial(CERT_NAME_BLOB *issuer,
 static BOOL CRYPT_CopySignerInfo(void *pvData, DWORD *pcbData,
  const CMSG_CMS_SIGNER_INFO *in)
 {
-    DWORD size = sizeof(CMSG_SIGNER_INFO), rdnSize;
+    DWORD size = sizeof(CMSG_SIGNER_INFO), rdnSize = 0;
     BOOL ret;
 
     TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
@@ -2219,7 +2219,7 @@ static BOOL CRYPT_CopyCMSSignerInfo(void *pvData, DWORD *pcbData,
 static BOOL CRYPT_CopySignerCertInfo(void *pvData, DWORD *pcbData,
  const CMSG_CMS_SIGNER_INFO *in)
 {
-    DWORD size = sizeof(CERT_INFO), rdnSize;
+    DWORD size = sizeof(CERT_INFO), rdnSize = 0;
     BOOL ret;
 
     TRACE("(%p, %d, %p)\n", pvData, pvData ? *pcbData : 0, in);
@@ -2803,7 +2803,7 @@ BOOL WINAPI CryptMsgGetAndVerifySigner(HCRYPTMSG hCryptMsg, DWORD cSignerStore,
  DWORD *pdwSignerIndex)
 {
     HCERTSTORE store;
-    DWORD i, signerIndex;
+    DWORD i, signerIndex = 0;
     PCCERT_CONTEXT signerCert = NULL;
     BOOL ret = FALSE;
 
