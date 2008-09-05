@@ -231,7 +231,7 @@ static void testCTLProperties(void)
     ok(ret, "CertGetCTLContextProperty failed: %08x\n", GetLastError());
     ret = CertGetCTLContextProperty(ctl, CERT_ACCESS_STATE_PROP_ID, &access,
      &size);
-    ok(ret, "CertGetCTLContextProperty failed: %08x", GetLastError());
+    ok(ret, "CertGetCTLContextProperty failed: %08x\n", GetLastError());
     ok(!(access & CERT_ACCESS_STATE_WRITE_PERSIST_FLAG),
      "Didn't expect a persisted cert\n");
 
