@@ -526,7 +526,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
     header_t *header = NULL;
     BOOL request_only, ret = FALSE;
     int requested_index, header_index = -1;
-    DWORD attr;
+    DWORD attr, len;
 
     request_only = level & WINHTTP_QUERY_FLAG_REQUEST_HEADERS;
     requested_index = index ? *index : 0;
@@ -539,10 +539,45 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         header_index = get_header_index( request, name, requested_index, request_only );
         break;
     }
+    case WINHTTP_QUERY_RAW_HEADERS:
+    {
+        WCHAR *headers, *p, *q;
+
+        if (request_only)
+            headers = build_request_string( request );
+        else
+            headers = request->raw_headers;
+
+        if (!(p = headers)) return FALSE;
+        for (len = 0; *p; p++) if (*p != '\r') len++;
+
+        if ((len + 1) * sizeof(WCHAR) > *buflen || !buffer)
+        {
+            len++;
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+        }
+        else if (buffer)
+        {
+            for (p = headers, q = (WCHAR *)buffer; *p; p++, q++)
+            {
+                if (*p != '\r') *q = *p;
+                else
+                {
+                    *q = 0;
+                    p++; /* skip '\n' */
+                }
+            }
+            *q = 0;
+            TRACE("returning data: %s\n", debugstr_wn((WCHAR *)buffer, len));
+            ret = TRUE;
+        }
+        *buflen = len * sizeof(WCHAR);
+        if (request_only) heap_free( headers );
+        return ret;
+    }
     case WINHTTP_QUERY_RAW_HEADERS_CRLF:
     {
         WCHAR *headers;
-        DWORD len;
 
         if (request_only)
             headers = build_request_string( request );
@@ -551,7 +586,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
 
         if (!headers) return FALSE;
         len = strlenW( headers ) * sizeof(WCHAR);
-        if (len + sizeof(WCHAR) > *buflen)
+        if (len + sizeof(WCHAR) > *buflen || !buffer)
         {
             len += sizeof(WCHAR);
             set_last_error( ERROR_INSUFFICIENT_BUFFER );

@@ -287,7 +287,7 @@ static void test_WinHttpAddHeaders(void)
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_RAW_HEADERS_CRLF | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
         test_header_name, NULL, &len, &index);
     ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded.\n");
-    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
     ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
     ok(index == 0, "WinHttpQueryHeaders incorrectly incremented header index.\n");
 
@@ -330,6 +330,30 @@ static void test_WinHttpAddHeaders(void)
     ok(memcmp(buffer + lstrlenW(buffer) - 4, test_header_end, sizeof(test_header_end)) == 0,
         "WinHttpQueryHeaders returned invalid end of header string.\n");
     ok(index == 0, "WinHttpQueryHeaders incremented header index.\n");
+
+    index = 0;
+    len = 0;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_RAW_HEADERS | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+        test_header_name, NULL, &len, &index);
+    ok(ret == FALSE, "WinHttpQueryHeaders unexpectedly succeeded.\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+        "WinHttpQueryHeaders set incorrect error: expected ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
+    ok(len > 40, "WinHttpQueryHeaders returned invalid length: expected greater than 40, got %d\n", len);
+    ok(index == 0, "WinHttpQueryHeaders failed: index was incremented.\n");
+
+    oldlen = len;
+    index = 0;
+    len = sizeof(buffer);
+    memset(buffer, 0xff, sizeof(buffer));
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_RAW_HEADERS | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+        test_header_name, buffer, &len, &index);
+    ok(ret == TRUE, "WinHttpQueryHeaders failed %u\n", GetLastError());
+    ok(len + sizeof(WCHAR) <= oldlen, "resulting length longer than advertized\n");
+    ok((len < sizeof(buffer) - sizeof(WCHAR)) && !buffer[len / sizeof(WCHAR)] && !buffer[len / sizeof(WCHAR) - 1],
+        "no double NULL terminator\n");
+    ok(!memcmp(buffer, test_header_begin, sizeof(test_header_begin)), "invalid beginning of header string\n");
+    ok(index == 0, "header index was incremented\n");
 
     /* tests for more indices */
     ret = WinHttpAddRequestHeaders(request, test_headers[1], -1L, WINHTTP_ADDREQ_FLAG_ADD);
