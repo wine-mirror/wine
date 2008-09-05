@@ -98,7 +98,6 @@ FONT 8, "MS Shell Dlg"
 
 STRINGTABLE
 {
-    IDS_CPANEL_TITLE            "Wine Control Panel"
     IDS_CPANEL_NAME             "Name"
     IDS_CPANEL_DESCRIPTION      "Description"
 }
