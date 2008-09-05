@@ -2897,6 +2897,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
         FIXME("Vertex program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
+    HeapFree(GetProcessHeap(), 0, buffer.buffer);
     return ret;
 }
 
