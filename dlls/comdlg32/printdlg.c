@@ -309,8 +309,13 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
         if (IsDlgButtonChecked(hDlg, rad3) == BST_CHECKED) { /* Pages */
 	    WORD nToPage;
 	    WORD nFromPage;
+            BOOL translated;
 	    nFromPage = GetDlgItemInt(hDlg, edt1, NULL, FALSE);
-	    nToPage   = GetDlgItemInt(hDlg, edt2, NULL, FALSE);
+	    nToPage   = GetDlgItemInt(hDlg, edt2, &translated, FALSE);
+
+	    /* if no ToPage value is entered, use the FromPage value */
+	    if(!translated) nToPage = nFromPage;
+
 	    if (nFromPage < lppd->nMinPage || nFromPage > lppd->nMaxPage ||
 		nToPage < lppd->nMinPage || nToPage > lppd->nMaxPage) {
 	        WCHAR resourcestr[256];
@@ -407,8 +412,13 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
         if (IsDlgButtonChecked(hDlg, rad3) == BST_CHECKED) { /* Pages */
 	    WORD nToPage;
 	    WORD nFromPage;
+            BOOL translated;
 	    nFromPage = GetDlgItemInt(hDlg, edt1, NULL, FALSE);
-	    nToPage   = GetDlgItemInt(hDlg, edt2, NULL, FALSE);
+	    nToPage   = GetDlgItemInt(hDlg, edt2, &translated, FALSE);
+
+	    /* if no ToPage value is entered, use the FromPage value */
+	    if(!translated) nToPage = nFromPage;
+
 	    if (nFromPage < lppd->nMinPage || nFromPage > lppd->nMaxPage ||
 		nToPage < lppd->nMinPage || nToPage > lppd->nMaxPage) {
 	        WCHAR resourcestr[256];
