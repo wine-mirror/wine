@@ -862,7 +862,7 @@ static void test_DeleteFileW( void )
     ret = GetTempPathW(MAX_PATH, pathW);
     if (ret + sizeof(dirW)/sizeof(WCHAR)-1 + sizeof(subdirW)/sizeof(WCHAR)-1 >= MAX_PATH)
     {
-        ok(0, "MAX_PATH exceeded in constructing paths");
+        ok(0, "MAX_PATH exceeded in constructing paths\n");
         return;
     }
     lstrcatW(pathW, dirW);
