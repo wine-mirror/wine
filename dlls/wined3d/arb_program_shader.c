@@ -2894,7 +2894,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     if (glGetError() == GL_INVALID_OPERATION) {
         GLint pos;
         glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
-        FIXME("Vertex program error at position %d: %s\n", pos,
+        FIXME("Fragment program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
     HeapFree(GetProcessHeap(), 0, buffer.buffer);
@@ -3442,7 +3442,10 @@ GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum text
     checkGLcall("GL_EXTCALL(glGenProgramsARB(1, &shader))");
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
     checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
-    if(!shader) return 0;
+    if(!shader) {
+        HeapFree(GetProcessHeap(), 0, buffer.buffer);
+        return 0;
+    }
 
     /* The YUY2 and UYVY formats contain two pixels packed into a 32 bit macropixel,
      * giving effectively 16 bit per pixel. The color consists of a luminance(Y) and
@@ -3491,10 +3494,12 @@ GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum text
 
     if(fmt == WINED3DFMT_UYVY || fmt ==WINED3DFMT_YUY2) {
         if(gen_planar_yuv_read(&buffer, fmt, textype, &luminance_component) == FALSE) {
+            HeapFree(GetProcessHeap(), 0, buffer.buffer);
             return 0;
         }
     } else {
         if(gen_yv12_read(&buffer, fmt, textype, &luminance_component) == FALSE) {
+            HeapFree(GetProcessHeap(), 0, buffer.buffer);
             return 0;
         }
     }
@@ -3519,6 +3524,7 @@ GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum text
         FIXME("Fragment program error at position %d: %s\n", pos,
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
+    HeapFree(GetProcessHeap(), 0, buffer.buffer);
 
     if(fmt == WINED3DFMT_YUY2) {
         if(textype == GL_TEXTURE_RECTANGLE_ARB) {
