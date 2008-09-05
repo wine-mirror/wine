@@ -652,7 +652,7 @@ RPCRTAPI LONG RPC_ENTRY
   NdrDcomAsyncStubCall( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, DWORD * pdwStubPhase );
 
 RPCRTAPI void* RPC_ENTRY
-  NdrAllocate( PMIDL_STUB_MESSAGE pStubMsg, size_t Len ) __WINE_ALLOC_SIZE(2);
+  NdrAllocate( PMIDL_STUB_MESSAGE pStubMsg, SIZE_T Len ) __WINE_ALLOC_SIZE(2);
 
 RPCRTAPI void RPC_ENTRY
   NdrClearOutParameters( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, void *ArgAddr );
