@@ -1441,7 +1441,7 @@ GpStatus WINGDIPAPI GdipDrawImageRectRect(GpGraphics *graphics, GpImage *image,
 {
     GpPointF points[3];
 
-    TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %d, %p, %p, %p)\n)",
+    TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %d, %p, %p, %p)\n",
           graphics, image, dstx, dsty, dstwidth, dstheight, srcx, srcy,
           srcwidth, srcheight, srcUnit, imageattr, callback, callbackData);
 
@@ -1464,7 +1464,7 @@ GpStatus WINGDIPAPI GdipDrawImageRectRectI(GpGraphics *graphics, GpImage *image,
 {
     GpPointF points[3];
 
-    TRACE("(%p, %p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p, %p, %p)\n)",
+    TRACE("(%p, %p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p, %p, %p)\n",
           graphics, image, dstx, dsty, dstwidth, dstheight, srcx, srcy,
           srcwidth, srcheight, srcUnit, imageAttributes, callback, callbackData);
 

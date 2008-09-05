@@ -580,7 +580,7 @@ GpStatus WINGDIPAPI GdipCreateTexture2I(GpImage *image, GpWrapMode wrapmode,
 {
     GpImageAttributes imageattr;
 
-    TRACE("%p %d %d %d %d %d %p", image, wrapmode, x, y, width, height,
+    TRACE("%p %d %d %d %d %d %p\n", image, wrapmode, x, y, width, height,
             texture);
 
     imageattr.wrap = wrapmode;
