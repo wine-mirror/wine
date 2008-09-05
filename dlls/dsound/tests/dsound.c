@@ -759,7 +759,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
             wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx) + 1;
 
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(DSERR_CONTROLUNAVAIL && !secondary,
+            ok(rc==DSERR_CONTROLUNAVAIL && !secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
