@@ -403,7 +403,7 @@
 @ stub GdipGetVisibleClipBounds
 @ stub GdipGetVisibleClipBoundsI
 @ stdcall GdipGetWorldTransform(ptr ptr)
-@ stub GdipGraphicsClear
+@ stdcall GdipGraphicsClear(ptr long)
 @ stub GdipGraphicsSetAbort
 @ stub GdipImageForceValidation
 @ stdcall GdipImageGetFrameCount(ptr ptr ptr)

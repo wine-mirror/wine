@@ -672,6 +672,8 @@ static void test_Get_Release_DC(void)
     expect(ObjectBusy, status); status = Ok;
     status = GdipGetWorldTransform(graphics, m);
     expect(ObjectBusy, status); status = Ok;
+    status = GdipGraphicsClear(graphics, 0xdeadbeef);
+    expect(ObjectBusy, status); status = Ok;
     /* GdipMeasureCharacterRanges */
     /* GdipMeasureString */
     status = GdipResetClip(graphics);
@@ -878,6 +880,14 @@ static void test_isempty(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_clear(void)
+{
+    GpStatus status;
+
+    status = GdipGraphicsClear(NULL, 0xdeadbeef);
+    expect(InvalidParameter, status);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -901,6 +911,7 @@ START_TEST(graphics)
     test_transformpoints();
     test_get_set_clip();
     test_isempty();
+    test_clear();
 
     GdiplusShutdown(gdiplusToken);
 }

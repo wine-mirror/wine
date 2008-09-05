@@ -2538,6 +2538,41 @@ GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGraphicsClear(GpGraphics *graphics, ARGB color)
+{
+    GpSolidFill *brush;
+    GpStatus stat;
+    RECT rect;
+
+    TRACE("(%p, %x)\n", graphics, color);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    if((stat = GdipCreateSolidFill(color, &brush)) != Ok)
+        return stat;
+
+    if(graphics->hwnd){
+        if(!GetWindowRect(graphics->hwnd, &rect)){
+            GdipDeleteBrush((GpBrush*)brush);
+            return GenericError;
+        }
+
+        GdipFillRectangle(graphics, (GpBrush*)brush, 0.0, 0.0, (REAL)(rect.right  - rect.left),
+                                                               (REAL)(rect.bottom - rect.top));
+    }
+    else
+        GdipFillRectangle(graphics, (GpBrush*)brush, 0.0, 0.0, (REAL)GetDeviceCaps(graphics->hdc, HORZRES),
+                                                               (REAL)GetDeviceCaps(graphics->hdc, VERTRES));
+
+    GdipDeleteBrush((GpBrush*)brush);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipIsClipEmpty(GpGraphics *graphics, BOOL *res)
 {
     TRACE("(%p, %p)\n", graphics, res);
