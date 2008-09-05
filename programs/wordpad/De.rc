@@ -236,6 +236,10 @@ BEGIN
                                  "Möchten Sie den Vorgang trotzdem fortsetzen?"
     STRING_INVALID_NUMBER,       "Diese Maßeinheit ist nicht zulässig."
     STRING_OLE_STORAGE_NOT_SUPPORTED, "OLE-Dokumentenspeicherung wird nicht unterstützt."
+    STRING_WRITE_FAILED,         "Die Datei konnte nicht gespeichert werden."
+    STRING_WRITE_ACCESS_DENIED,  "Sie haben keine ausreichende Zugriffsberechtigung um die Datei zu speichern."
+    STRING_OPEN_FAILED,          "Die Datei konnte nicht geöffnet werden."
+    STRING_OPEN_ACCESS_DENIED,   "Sie haben keine ausreichende Zugriffsberechtigung um die Datei zu öffnen."
 END
 
 #pragma code_page(default)
