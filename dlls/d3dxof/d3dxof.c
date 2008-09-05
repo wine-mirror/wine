@@ -235,7 +235,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
 
   if (header[2] == XOFFILE_FORMAT_COMPRESSED)
   {
-    FIXME("Compressed formats not supported yet");
+    FIXME("Compressed formats not supported yet\n");
     hr = DXFILEERR_BADVALUE;
     goto error;
   }
