@@ -167,7 +167,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
 
     if (!refCount)
     {
-        int i;
+        ULONG i;
         for (i = 0; i < This->enumMediaDetails.cMediaTypes; i++)
            if (This->enumMediaDetails.pMediaTypes[i].pbFormat)
               CoTaskMemFree(This->enumMediaDetails.pMediaTypes[i].pbFormat);
