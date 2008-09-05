@@ -5588,7 +5588,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
     const GlPixelFormatDesc *gl_info;
     DWORD i;
 
-    TRACE("(%p) : %p \n", This, pNumPasses);
+    TRACE("(%p) : %p\n", This, pNumPasses);
 
     for(i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
         if(This->stateBlock->samplerState[i][WINED3DSAMP_MINFILTER] == WINED3DTEXF_NONE) {
