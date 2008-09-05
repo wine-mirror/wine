@@ -245,6 +245,25 @@ static void request_destroy( object_header_t *hdr )
     heap_free( request );
 }
 
+static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
+{
+    switch (option)
+    {
+    case WINHTTP_OPTION_SECURITY_FLAGS:
+    {
+        DWORD flags = 0;
+
+        if (hdr->flags & WINHTTP_FLAG_SECURE) flags |= SECURITY_FLAG_SECURE;
+        *(DWORD *)buffer = flags;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    }
+    default:
+        FIXME("unimplemented option %u\n", option);
+        return FALSE;
+    }
+}
+
 static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD buflen )
 {
     switch (option)
@@ -289,7 +308,7 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
 static const object_vtbl_t request_vtbl =
 {
     request_destroy,
-    NULL,
+    request_query_option,
     request_set_option
 };
 
