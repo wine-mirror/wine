@@ -36,6 +36,7 @@
 #include "sane_i.h"
 #include "wine/debug.h"
 #include "resource.h"
+#include "wine/unicode.h"
 
 #ifdef SONAME_LIBSANE
 
@@ -622,7 +623,7 @@ static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt,
         else
             si = position;
 
-        len = wsprintfW( buffer, formatW, si );
+        len = sprintfW( buffer, formatW, si );
     }
     else if  (opt->type == SANE_TYPE_FIXED)
     {
@@ -636,7 +637,7 @@ static void UpdateRelevantEdit(HWND hwnd, const SANE_Option_Descriptor *opt,
         else
             dd = position * 0.01;
 
-        len = wsprintfW( buffer, formatW, dd );
+        len = sprintfW( buffer, formatW, dd );
     }
     else return;
 
