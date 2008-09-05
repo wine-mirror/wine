@@ -504,21 +504,18 @@ static void test_GdipCloneImage(void)
     /* Create an image, clone it, delete the original, make sure the copy works */
     stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
     expect(Ok, stat);
-todo_wine
-{
+
     image_src = ((GpImage*)bm);
     stat = GdipCloneImage(image_src, &image_dest);
     expect(Ok, stat);
-}
+
     stat = GdipDisposeImage((GpImage*)bm);
     expect(Ok, stat);
-todo_wine
-{
     stat = GdipGetImageBounds(image_dest, &rectF, &unit);
     expect(Ok, stat);
+
     stat = GdipDisposeImage(image_dest);
     expect(Ok, stat);
-}
 }
 
 START_TEST(image)
