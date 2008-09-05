@@ -2143,7 +2143,6 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         ok(msg_index == 1 || msg_index == 7 || msg_index == 13 || msg_index == 19,
                              "Expected 1, 7, 13 or 19, got %d\n", msg_index);
         return (HDDEDATA)TRUE;
-        break;
     }
 
     case XTYP_CONNECT:
@@ -2167,7 +2166,6 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         ok(size == 14, "Expected 14, got %d, msg_index=%d\n", size, msg_index);
 
         return (HDDEDATA) TRUE;
-        break;
     }
     case XTYP_CONNECT_CONFIRM:
     {
@@ -2262,10 +2260,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         return (HDDEDATA) DDE_FACK;
     }
     case XTYP_DISCONNECT:
-    {
         return (HDDEDATA) TRUE;
-        break;
-    }
 
     default:
         ok(FALSE, "Unhandled msg: %08x, msg_index=%d\n", uType, msg_index);
@@ -2281,10 +2276,7 @@ static HDDEDATA CALLBACK client_end_to_end_callback(UINT uType, UINT uFmt, HCONV
     switch (uType)
     {
     case XTYP_DISCONNECT:
-    {
         return (HDDEDATA) TRUE;
-        break;
-    }
 
     default:
         ok(FALSE, "Unhandled msg: %08x\n", uType);
