@@ -693,7 +693,9 @@ static void test_DeleteMonitor(void)
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
     res = DeleteMonitorA(NULL, invalid_env, winetest);
-    ok(res, "returned %d with %d (expected '!=0')\n", res, GetLastError());
+    ok( res ||
+        (!res && GetLastError() == ERROR_INVALID_ENVIRONMENT) /* Vista/W2K8 */,
+        "returned %d with %d\n", res, GetLastError());
 
     /* the monitor-name */
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
