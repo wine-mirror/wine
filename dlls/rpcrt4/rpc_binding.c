@@ -435,7 +435,7 @@ static RPC_WSTR unescape_string_binding_componentW(
 {
   RPC_WSTR component, p;
 
-  if (len == -1) len = strlen((const char *)string_binding);
+  if (len == -1) len = strlenW(string_binding);
 
   component = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*component));
   if (!component) return NULL;
