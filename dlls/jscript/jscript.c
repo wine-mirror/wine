@@ -116,6 +116,16 @@ static void clear_script_queue(JScript *This)
     This->queue_head = This->queue_tail = NULL;
 }
 
+static void exec_queued_code(JScript *This)
+{
+    parser_ctx_t *iter;
+
+    for(iter = This->queue_head; iter; iter = iter->next)
+        exec_global_code(This, iter);
+
+    clear_script_queue(This);
+}
+
 #define ACTSCRIPT_THIS(iface) DEFINE_THIS(JScript, IActiveScript, iface)
 
 static HRESULT WINAPI JScript_QueryInterface(IActiveScript *iface, REFIID riid, void **ppv)
@@ -235,8 +245,26 @@ static HRESULT WINAPI JScript_GetScriptSite(IActiveScript *iface, REFIID riid,
 static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE ss)
 {
     JScript *This = ACTSCRIPT_THIS(iface);
-    FIXME("(%p)->(%d)\n", This, ss);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, ss);
+
+    if(!This->ctx || GetCurrentThreadId() != This->thread_id)
+        return E_UNEXPECTED;
+
+    switch(ss) {
+    case SCRIPTSTATE_STARTED:
+        if(This->ctx->state == SCRIPTSTATE_CLOSED)
+            return E_UNEXPECTED;
+
+        exec_queued_code(This);
+        break;
+    default:
+        FIXME("unimplemented state %d\n", ss);
+        return E_NOTIMPL;
+    }
+
+    change_state(This, ss);
+    return S_OK;
 }
 
 static HRESULT WINAPI JScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *pssState)

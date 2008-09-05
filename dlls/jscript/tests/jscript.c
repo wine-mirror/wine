@@ -317,6 +317,13 @@ static void test_jscript(void)
 
     test_script_dispatch(script, TRUE);
 
+    SET_EXPECT(OnStateChange_STARTED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_STARTED);
+
+    test_state(script, SCRIPTSTATE_STARTED);
+
     SET_EXPECT(OnStateChange_CLOSED);
     hres = IActiveScript_Close(script);
     ok(hres == S_OK, "Close failed: %08x\n", hres);
