@@ -28,23 +28,23 @@ MAIN_MENU MENU
   MENUITEM "新規作成(&N)\tCtrl+N",           CMD_NEW
   MENUITEM "開く(&O)...\tCtrl+O",     CMD_OPEN
   MENUITEM "保存(&S)\tCtrl+S",     CMD_SAVE
-  MENUITEM "名前を付けて保存(&a)...",       CMD_SAVE_AS
+  MENUITEM "名前を付けて保存(&A)...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "印刷(&P)...\tCtrl+P",            CMD_PRINT
-  MENUITEM "ページ設定(&t)...",    CMD_PAGE_SETUP
-  MENUITEM "プリンタの設定(&r)...", CMD_PRINTER_SETUP
+  MENUITEM "ページ設定(&T)...",    CMD_PAGE_SETUP
+  MENUITEM "プリンタの設定(&R)...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "終了(&x)",             CMD_EXIT
+  MENUITEM "終了(&X)",             CMD_EXIT
  }
 POPUP "編集(&E)" {
   MENUITEM "元に戻す(&U)\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "切り取り(&t)\tCtrl+X",      CMD_CUT
+  MENUITEM "切り取り(&T)\tCtrl+X",      CMD_CUT
   MENUITEM "コピー(&C)\tCtrl+C",     CMD_COPY
   MENUITEM "貼\り付け(&P)\tCtrl+V",    CMD_PASTE
   MENUITEM "削除(&D)\tDel",      CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "すべて選択(&a)\tCtrl+A",       CMD_SELECT_ALL
+  MENUITEM "すべて選択(&A)\tCtrl+A",       CMD_SELECT_ALL
   MENUITEM "日付と時刻(&T)\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "長い行を折り返す(&W)",  CMD_WRAP
