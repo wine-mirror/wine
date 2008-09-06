@@ -1300,9 +1300,28 @@ static void codeview_add_func_linenum(struct module* module,
     }
 }
 
+static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
+                                         struct symt_compiland* compiland,
+                                         const char* name,
+                                         unsigned segment, unsigned offset,
+                                         unsigned symtype, BOOL is_local, BOOL force)
+{
+    if (name && *name)
+    {
+        unsigned        address = codeview_get_address(msc_dbg, segment, offset);
+
+        if (force || !symt_find_nearest(msc_dbg->module, address))
+        {
+            symt_new_global_variable(msc_dbg->module, compiland,
+                                     name, is_local, address, 0,
+                                     codeview_get_type(symtype, FALSE));
+        }
+    }
+}
+
 static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root, 
                           int offset, int size,
-                          struct codeview_linetab* linetab)
+                          struct codeview_linetab* linetab, BOOL do_globals)
 {
     struct symt_function*               curr_func = NULL;
     int                                 i, length;
@@ -1333,51 +1352,34 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
          */
 	case S_GDATA_V1:
 	case S_LDATA_V1:
-            symt_new_global_variable(msc_dbg->module, compiland,
-                                     terminate_string(&sym->data_v1.p_name), sym->generic.id == S_LDATA_V1,
-                                     codeview_get_address(msc_dbg, sym->data_v1.segment, sym->data_v1.offset),
-                                     0,
-                                     codeview_get_type(sym->data_v1.symtype, FALSE));
+            if (do_globals)
+                codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v1.p_name),
+                                      sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
+                                      sym->generic.id == S_LDATA_V1, TRUE);
 	    break;
 	case S_GDATA_V2:
 	case S_LDATA_V2:
-            name = terminate_string(&sym->data_v2.p_name);
-            if (name)
-                symt_new_global_variable(msc_dbg->module, compiland,
-                                         name, sym->generic.id == S_LDATA_V2,
-                                         codeview_get_address(msc_dbg, sym->data_v2.segment, sym->data_v2.offset),
-                                         0,
-                                         codeview_get_type(sym->data_v2.symtype, FALSE));
+            if (do_globals)
+                codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v2.p_name),
+                                      sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
+                                      sym->generic.id == S_LDATA_V2, TRUE);
 	    break;
 	case S_GDATA_V3:
 	case S_LDATA_V3:
-            if (*sym->data_v3.name)
-                symt_new_global_variable(msc_dbg->module, compiland,
-                                         sym->data_v3.name,
-                                         sym->generic.id == S_LDATA_V3,
-                                         codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
-                                         0,
-                                         codeview_get_type(sym->data_v3.symtype, FALSE));
+            if (do_globals)
+                codeview_add_variable(msc_dbg, compiland, sym->data_v3.name,
+                                      sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
+                                      sym->generic.id == S_LDATA_V3, TRUE);
 	    break;
 
-	case S_PUB_V1: /* FIXME is this really a 'data_v1' structure ?? */
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
-            {
-                symt_new_public(msc_dbg->module, compiland,
-                                terminate_string(&sym->data_v1.p_name), 
-                                codeview_get_address(msc_dbg, sym->data_v1.segment, sym->data_v1.offset),
-                                1, TRUE /* FIXME */, TRUE /* FIXME */);
-            }
+        /* Public symbols */
+	case S_PUB_V1:
+	case S_PUB_V2:
+        case S_PUB_V3:
+        case S_PUB_FUNC1_V3:
+        case S_PUB_FUNC2_V3:
+            /* will be handled later on in codeview_snarf_public */
             break;
-	case S_PUB_V2: /* FIXME is this really a 'data_v2' structure ?? */
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
-            {
-                symt_new_public(msc_dbg->module, compiland,
-                                terminate_string(&sym->data_v2.p_name), 
-                                codeview_get_address(msc_dbg, sym->data_v2.segment, sym->data_v2.offset),
-                                1, TRUE /* FIXME */, TRUE /* FIXME */);
-            }
-	    break;
 
         /*
          * Sort of like a global function, but it just points
@@ -1711,29 +1713,6 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             length += (*name + 1 + 3) & ~3;
             break;
 
-        case S_PUB_V3:
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
-            {
-                symt_new_public(msc_dbg->module, compiland,
-                                sym->data_v3.name, 
-                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
-                                1, FALSE /* FIXME */, FALSE);
-            }
-            break;
-        case S_PUB_FUNC1_V3:
-        case S_PUB_FUNC2_V3: /* using a data_v3 isn't what we'd expect */
-#if 0
-            /* FIXME: this is plain wrong (from a simple test) */
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
-            {
-                symt_new_public(msc_dbg->module, compiland,
-                                sym->data_v3.name, 
-                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
-                                1, TRUE /* FIXME */, TRUE);
-            }
-#endif
-            break;
-
         case S_MSTOOL_V3: /* just to silence a few warnings */
             break;
 
@@ -1760,6 +1739,107 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
     if (curr_func) symt_normalize_function(msc_dbg->module, curr_func);
 
     HeapFree(GetProcessHeap(), 0, linetab);
+    return TRUE;
+}
+
+static int codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BYTE* root,
+                                 int offset, int size)
+
+{
+    int                                 i, length;
+    struct symt_compiland*              compiland = NULL;
+
+    /*
+     * Loop over the different types of records and whenever we
+     * find something we are interested in, record it and move on.
+     */
+    for (i = offset; i < size; i += length)
+    {
+        const union codeview_symbol* sym = (const union codeview_symbol*)(root + i);
+        length = sym->generic.len + 2;
+        if (i + length > size) break;
+        if (!sym->generic.id || length < 4) break;
+        if (length & 3) FIXME("unpadded len %u\n", length);
+
+        switch (sym->generic.id)
+        {
+	case S_PUB_V1: /* FIXME is this really a 'data_v1' structure ?? */
+            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
+            {
+                symt_new_public(msc_dbg->module, compiland,
+                                terminate_string(&sym->data_v1.p_name),
+                                codeview_get_address(msc_dbg, sym->data_v1.segment, sym->data_v1.offset),
+                                1, TRUE /* FIXME */, TRUE /* FIXME */);
+            }
+            break;
+	case S_PUB_V2: /* FIXME is this really a 'data_v2' structure ?? */
+            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
+            {
+                symt_new_public(msc_dbg->module, compiland,
+                                terminate_string(&sym->data_v2.p_name),
+                                codeview_get_address(msc_dbg, sym->data_v2.segment, sym->data_v2.offset),
+                                1, TRUE /* FIXME */, TRUE /* FIXME */);
+            }
+	    break;
+
+        case S_PUB_V3:
+            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
+            {
+                symt_new_public(msc_dbg->module, compiland,
+                                sym->data_v3.name,
+                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
+                                1, FALSE /* FIXME */, FALSE);
+            }
+            break;
+        case S_PUB_FUNC1_V3:
+        case S_PUB_FUNC2_V3: /* using a data_v3 isn't what we'd expect */
+#if 0
+            /* FIXME: this is plain wrong (from a simple test) */
+            if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
+            {
+                symt_new_public(msc_dbg->module, compiland,
+                                sym->data_v3.name,
+                                codeview_get_address(msc_dbg, sym->data_v3.segment, sym->data_v3.offset),
+                                1, TRUE /* FIXME */, TRUE);
+            }
+#endif
+            break;
+        /*
+         * Global and local data symbols.  We don't associate these
+         * with any given source file.
+         */
+	case S_GDATA_V1:
+	case S_LDATA_V1:
+            codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v1.p_name),
+                                  sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
+                                  sym->generic.id == S_LDATA_V1, FALSE);
+	    break;
+	case S_GDATA_V2:
+	case S_LDATA_V2:
+            codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v2.p_name),
+                                  sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
+                                  sym->generic.id == S_LDATA_V2, FALSE);
+	    break;
+	case S_GDATA_V3:
+	case S_LDATA_V3:
+            codeview_add_variable(msc_dbg, compiland, sym->data_v3.name,
+                                  sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
+                                  sym->generic.id == S_LDATA_V3, FALSE);
+	    break;
+        /*
+         * These are special, in that they are always followed by an
+         * additional length-prefixed string which is *not* included
+         * into the symbol length count.  We need to skip it.
+         */
+	case S_PROCREF_V1:
+	case S_DATAREF_V1:
+	case S_LPROCREF_V1:
+            length += (((const char*)sym)[length] + 1 + 3) & ~3;
+            break;
+        }
+        msc_dbg->module->sortlist_valid = TRUE;
+    }
+    msc_dbg->module->sortlist_valid = FALSE;
     return TRUE;
 }
 
@@ -2237,6 +2317,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
     if (symbols_image)
     {
         PDB_SYMBOLS symbols;
+        BYTE*       globalimage;
         BYTE*       modimage;
         BYTE*       file;
         int         header_size = 0;
@@ -2257,13 +2338,11 @@ static BOOL pdb_process_internal(const struct process* pcs,
         pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image, pdb_lookup, module_index);
 
         /* Read global symbol table */
-        modimage = pdb_read_file(image, pdb_lookup, symbols.gsym_file);
-        if (modimage)
+        globalimage = pdb_read_file(image, pdb_lookup, symbols.gsym_file);
+        if (globalimage)
         {
-            codeview_snarf(msc_dbg, modimage, 0, 
-                           pdb_get_file_size(pdb_lookup, symbols.gsym_file), NULL);
-
-            pdb_free(modimage);
+            codeview_snarf(msc_dbg, globalimage, 0,
+                           pdb_get_file_size(pdb_lookup, symbols.gsym_file), NULL, FALSE);
         }
 
         /* Read per-module symbol / linenumber tables */
@@ -2290,13 +2369,21 @@ static BOOL pdb_process_internal(const struct process* pcs,
 
                 if (sfile.symbol_size)
                     codeview_snarf(msc_dbg, modimage, sizeof(DWORD),
-                                   sfile.symbol_size, linetab);
+                                   sfile.symbol_size, linetab, TRUE);
 
                 pdb_free(modimage);
             }
             file_name = (const char*)file + size;
             file_name += strlen(file_name) + 1;
             file = (BYTE*)((DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3);
+        }
+        /* finish the remaining public and global information */
+        if (globalimage)
+        {
+            codeview_snarf_public(msc_dbg, globalimage, 0,
+                                  pdb_get_file_size(pdb_lookup, symbols.gsym_file));
+
+            pdb_free(globalimage);
         }
     }
     else
@@ -2462,7 +2549,7 @@ static BOOL codeview_process_info(const struct process* pcs,
                                                      TRUE);
 
                 codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD),
-                               ent->cb, linetab);
+                               ent->cb, linetab, TRUE);
             }
         }
 
