@@ -715,6 +715,18 @@ static BOOL resort_symbols(struct module* module)
     return module->sortlist_valid = TRUE;
 }
 
+static void symt_get_length(struct symt* symt, ULONG64* size)
+{
+    DWORD       type_index;
+
+    if (symt_get_info(symt, TI_GET_LENGTH, size) && *size)
+        return;
+
+    if (symt_get_info(symt, TI_GET_TYPE, &type_index) &&
+        symt_get_info((struct symt*)type_index, TI_GET_LENGTH, size)) return;
+    *size = 0x1000; /* arbitrary value */
+}
+
 /* assume addr is in module */
 struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
 {
@@ -737,8 +749,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
     if (high)
     {
         symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref_addr);
-        if (!symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_LENGTH, &ref_size) || !ref_size)
-            ref_size = 0x1000; /* arbitrary value */
+        symt_get_length(&module->addr_sorttab[high - 1]->symt, &ref_size);
         if (addr >= ref_addr + ref_size) return NULL;
     }
     
@@ -772,8 +783,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
     /* finally check that we fit into the found symbol */
     symt_get_info(&module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
     if (addr < ref_addr) return NULL;
-    if (!symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_LENGTH, &ref_size) || !ref_size)
-        ref_size = 0x1000; /* arbitrary value */
+    symt_get_length(&module->addr_sorttab[low]->symt, &ref_size);
     if (addr >= ref_addr + ref_size) return NULL;
 
     return module->addr_sorttab[low];
