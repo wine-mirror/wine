@@ -1,5 +1,9 @@
 /*
+ * View
+ * Japanese Language Support
+ *
  * Copyright 1998 Douglas Ridgway
+ * Copyright 2003 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,32 +20,52 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
-
-#include "resource.h"
-
-#include "Cs.rc"
-#include "Da.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Eo.rc"
-#include "Es.rc"
-#include "Fr.rc"
-#include "It.rc"
-#include "Ja.rc"
-#include "Ko.rc"
-#include "Nl.rc"
-#include "No.rc"
-#include "Pl.rc"
-#include "Pt.rc"
-#include "Ro.rc"
-#include "Ru.rc"
-#include "Si.rc"
-#include "Tr.rc"
-#include "Zh.rc"
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 /*
- * Icon
+ *
+ * Menu
+ *
  */
 
-/*IDI_APPICON             ICON    DISCARDABLE     "view.ico"*/
+VIEW MENU
+BEGIN
+    POPUP "ファイル(&F)"
+    BEGIN
+	MENUITEM "開く(&O)",			IDM_OPEN
+        MENUITEM "終了(&X)",                       IDM_EXIT
+    END
+    POPUP "パン(&P)"
+    BEGIN
+      MENUITEM "ウィンドウに合わせる(&S)",              IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
+      MENUITEM "左(&L)",				IDM_LEFT
+      MENUITEM "右(&R)",			IDM_RIGHT
+      MENUITEM "上(&U)",				IDM_UP
+      MENUITEM "下(&D)",				IDM_DOWN
+    END
+END
+
+
+/*
+ *
+ * Accelerator
+ *
+ */
+
+VIEW ACCELERATORS
+BEGIN
+    "Q", IDM_EXIT, VIRTKEY, CONTROL
+END
+
+
+/*
+ *
+ * String Table
+ *
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DESCRIPTION         "標準メタファイル ビュアー"
+END
