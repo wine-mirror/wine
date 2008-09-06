@@ -518,6 +518,17 @@ static void test_GdipCloneImage(void)
     expect(Ok, stat);
 }
 
+static void test_testcontrol(void)
+{
+    GpStatus stat;
+    DWORD param;
+
+    param = 0;
+    stat = GdipTestControl(TestControlGetBuildNumber, &param);
+    expect(Ok, stat);
+    ok(param != 0, "Build number expected, got %u\n", param);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -540,6 +551,7 @@ START_TEST(image)
     test_GdipCreateBitmapFromHBITMAP();
     test_GdipGetImageFlags();
     test_GdipCloneImage();
+    test_testcontrol();
 
     GdiplusShutdown(gdiplusToken);
 }

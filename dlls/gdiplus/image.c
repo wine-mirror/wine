@@ -1280,3 +1280,24 @@ GpStatus WINGDIPAPI GdipGetImageFlags(GpImage *image, UINT *flags)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipTestControl(GpTestControlEnum control, void *param)
+{
+    TRACE("(%d, %p)\n", control, param);
+
+    switch(control){
+        case TestControlForceBilinear:
+            if(param)
+                FIXME("TestControlForceBilinear not handled\n");
+            break;
+        case TestControlNoICM:
+            if(param)
+                FIXME("TestControlNoICM not handled\n");
+            break;
+        case TestControlGetBuildNumber:
+            *((DWORD*)param) = 3102;
+            break;
+    }
+
+    return Ok;
+}

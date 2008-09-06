@@ -602,7 +602,7 @@
 @ stdcall GdipStartPathFigure(ptr)
 @ stdcall GdipStringFormatGetGenericDefault(ptr)
 @ stdcall GdipStringFormatGetGenericTypographic(ptr)
-@ stub GdipTestControl
+@ stdcall GdipTestControl(long ptr)
 @ stdcall GdipTransformMatrixPoints(ptr ptr long)
 @ stdcall GdipTransformMatrixPointsI(ptr ptr long)
 @ stdcall GdipTransformPath(ptr ptr)

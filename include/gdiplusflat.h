@@ -537,6 +537,8 @@ GpStatus WINGDIPAPI GdipSetAdjustableArrowCapHeight(GpAdjustableArrowCap*,REAL);
 GpStatus WINGDIPAPI GdipSetAdjustableArrowCapMiddleInset(GpAdjustableArrowCap*,REAL);
 GpStatus WINGDIPAPI GdipSetAdjustableArrowCapWidth(GpAdjustableArrowCap*,REAL);
 
+GpStatus WINGDIPAPI GdipTestControl(GpTestControlEnum,void*);
+
 #ifdef __cplusplus
 }
 #endif

@@ -329,6 +329,13 @@ enum CoordinateSpace
     CoordinateSpaceDevice
 };
 
+enum GpTestControlEnum
+{
+    TestControlForceBilinear  = 0,
+    TestControlNoICM          = 1,
+    TestControlGetBuildNumber = 2
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -364,6 +371,7 @@ typedef enum ImageCodecFlags ImageCodecFlags;
 typedef enum CombineMode CombineMode;
 typedef enum FlushIntention FlushIntention;
 typedef enum CoordinateSpace CoordinateSpace;
+typedef enum GpTestControlEnum GpTestControlEnum;
 
 #endif /* end of c typedefs */
 
