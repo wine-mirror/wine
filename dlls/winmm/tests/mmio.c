@@ -302,24 +302,6 @@ static void test_mmioOpen(char *fname)
     memset(&mmio, 0, sizeof(mmio));
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = 0;
-    mmio.pchBuffer = buf;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
-
-    memset(&mmio, 0, sizeof(mmio));
-    ret = mmioGetInfo(hmmio, &mmio, 0);
-    ok(ret == MMSYSERR_NOERROR, "mmioGetInfo error %u\n", ret);
-    ok(mmio.dwFlags == MMIO_READ, "expected MMIO_READ, got %x\n", mmio.dwFlags);
-    ok(mmio.wErrorRet == MMSYSERR_NOERROR, "expected MMSYSERR_NOERROR, got %u\n", mmio.wErrorRet);
-    ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
-    ok(mmio.cchBuffer == MMIO_DEFAULTBUFFER, "expected MMIO_DEFAULTBUFFER, got %u\n", mmio.cchBuffer);
-    ok(mmio.pchBuffer == buf, "expected %p, got %p\n", buf, mmio.pchBuffer);
-
-    mmioClose(hmmio, 0);
-
-    memset(&mmio, 0, sizeof(mmio));
-    mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
-    mmio.cchBuffer = 0;
     mmio.pchBuffer = NULL;
     hmmio = mmioOpen(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
     ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
@@ -350,6 +332,30 @@ static void test_mmioOpen(char *fname)
     ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
     ok(mmio.cchBuffer == 256, "expected 256, got %u\n", mmio.cchBuffer);
     ok(mmio.pchBuffer != NULL, "expected not NULL\n");
+
+    mmioClose(hmmio, 0);
+
+    memset(&mmio, 0, sizeof(mmio));
+    mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
+    mmio.cchBuffer = 0;
+    mmio.pchBuffer = buf;
+    hmmio = mmioOpen(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
+    if (!hmmio && mmio.wErrorRet == ERROR_BAD_FORMAT)
+    {
+        /* Seen on Win9x, WinMe but also XP-SP1 */
+        skip("Some Windows versions don't like a 0 size and a given buffer\n");
+        return;
+    }
+    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+
+    memset(&mmio, 0, sizeof(mmio));
+    ret = mmioGetInfo(hmmio, &mmio, 0);
+    ok(ret == MMSYSERR_NOERROR, "mmioGetInfo error %u\n", ret);
+    ok(mmio.dwFlags == MMIO_READ, "expected MMIO_READ, got %x\n", mmio.dwFlags);
+    ok(mmio.wErrorRet == MMSYSERR_NOERROR, "expected MMSYSERR_NOERROR, got %u\n", mmio.wErrorRet);
+    ok(mmio.fccIOProc == (fname ? FOURCC_DOS : FOURCC_MEM), "got %4.4s\n", (LPCSTR)&mmio.fccIOProc);
+    ok(mmio.cchBuffer == MMIO_DEFAULTBUFFER, "expected MMIO_DEFAULTBUFFER, got %u\n", mmio.cchBuffer);
+    ok(mmio.pchBuffer == buf, "expected %p, got %p\n", buf, mmio.pchBuffer);
 
     mmioClose(hmmio, 0);
 }
