@@ -340,6 +340,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         case btInt:
         case btLong:
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            if (size == 1) goto print_char;
             dbg_print_longlong(val_int, TRUE);
             break;
         case btUInt:
@@ -354,6 +355,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         case btChar:
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
             /* FIXME: should do the same for a Unicode character (size == 2) */
+        print_char:
             if (size == 1 && (val_int < 0x20 || val_int > 0x80))
                 dbg_printf("%d", (int)val_int);
             else
@@ -381,8 +383,8 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         if (!types_get_real_type(&sub_type, &tag)) return;
 
         if (types_get_info(&sub_type, TI_GET_SYMTAG, &tag) && tag == SymTagBaseType &&
-            types_get_info(&sub_type, TI_GET_BASETYPE, &bt) && bt == btChar &&
-            types_get_info(&sub_type, TI_GET_LENGTH, &size64))
+            types_get_info(&sub_type, TI_GET_BASETYPE, &bt) && (bt == btChar || bt == btInt) &&
+            types_get_info(&sub_type, TI_GET_LENGTH, &size64) && size64 == 1)
         {
             char    buffer[1024];
 
