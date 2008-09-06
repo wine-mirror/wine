@@ -1746,6 +1746,10 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             TRACE("S-Align V1\n");
             break;
 
+        case 0x112c:
+            TRACE("Unsupported symbol id %x\n", sym->generic.id);
+            break;
+
         default:
             FIXME("Unsupported symbol id %x\n", sym->generic.id);
             dump(sym, 2 + sym->generic.len);
