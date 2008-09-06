@@ -1612,14 +1612,18 @@ static void testGetCertChain(void)
     SetLastError(0xdeadbeef);
     ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
-    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_DATA ||
+     GetLastError() == CRYPT_E_ASN1_BADTAG /* Vista */,
+     "Expected ERROR_INVALID_DATA or CRYPT_E_ASN1_BADTAG, got %d\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
-    ok(!ret && GetLastError() == ERROR_INVALID_DATA,
-     "Expected ERROR_INVALID_DATA, got %d\n", GetLastError());
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_DATA ||
+     GetLastError() == CRYPT_E_ASN1_BADTAG /* Vista */,
+     "Expected ERROR_INVALID_DATA or CRYPT_E_ASN1_BADTAG, got %d\n", GetLastError());
     CertFreeCertificateContext(cert);
 
     for (i = 0; i < sizeof(chainCheck) / sizeof(chainCheck[0]); i++)
