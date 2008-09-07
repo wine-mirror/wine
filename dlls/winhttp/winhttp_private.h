@@ -91,7 +91,6 @@ typedef struct
 {
     int socket;
     BOOL secure; /* SSL active on connection? */
-    void *ssl_ctx;
     void *ssl_conn;
     char *peek_msg;
     char *peek_msg_mem;
