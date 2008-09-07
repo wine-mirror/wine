@@ -2262,7 +2262,7 @@ static void test_EM_SCROLL(void)
 unsigned int recursionLevel = 0;
 unsigned int WM_SIZE_recursionLevel = 0;
 BOOL bailedOutOfRecursion = FALSE;
-LRESULT WINAPI (*richeditProc)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT (WINAPI *richeditProc)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 static LRESULT WINAPI RicheditStupidOverrideProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
