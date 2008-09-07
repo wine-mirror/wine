@@ -1190,6 +1190,17 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
 
     ret = netconn_query_data_available( &request->netconn, &num_bytes );
 
+    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &num_bytes, sizeof(DWORD) );
+        else
+        {
+            WINHTTP_ASYNC_RESULT async;
+            async.dwResult = API_QUERY_DATA_AVAILABLE;
+            async.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
+        }
+    }
     if (ret && available) *available = num_bytes;
     release_object( &request->hdr );
     return ret;
@@ -1304,6 +1315,17 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
     else
         ret = read_data( request, buffer, to_read, &num_bytes, async );
 
+    if (async)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, num_bytes );
+        else
+        {
+            WINHTTP_ASYNC_RESULT async;
+            async.dwResult = API_READ_DATA;
+            async.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
+        }
+    }
     if (ret && read) *read = num_bytes;
     release_object( &request->hdr );
     return ret;
@@ -1334,6 +1356,17 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
 
     ret = netconn_send( &request->netconn, buffer, to_write, 0, &num_bytes );
 
+    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_FLAG_WRITE_COMPLETE, &num_bytes, sizeof(DWORD) );
+        else
+        {
+            WINHTTP_ASYNC_RESULT async;
+            async.dwResult = API_WRITE_DATA;
+            async.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
+        }
+    }
     if (ret && written) *written = num_bytes;
     release_object( &request->hdr );
     return ret;
