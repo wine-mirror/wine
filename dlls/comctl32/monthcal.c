@@ -994,7 +994,7 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-MONTHCAL_GetRange(HWND hwnd, WPARAM wParam, LPARAM lParam)
+MONTHCAL_GetRange(HWND hwnd, LPARAM lParam)
 {
   MONTHCAL_INFO *infoPtr = MONTHCAL_GetInfoPtr(hwnd);
   SYSTEMTIME *lprgSysTimeArray = (SYSTEMTIME *)lParam;
@@ -1631,7 +1631,7 @@ MONTHCAL_Timer(MONTHCAL_INFO *infoPtr, WPARAM wParam)
 
 
 static LRESULT
-MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+MONTHCAL_MouseMove(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
   MCHITTESTINFO ht;
   int oldselday, selday, hit;
@@ -1891,7 +1891,7 @@ static LRESULT theme_changed (const MONTHCAL_INFO* infoPtr)
 
 /* FIXME: check whether dateMin/dateMax need to be adjusted. */
 static LRESULT
-MONTHCAL_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
+MONTHCAL_Create(HWND hwnd, LPARAM lParam)
 {
   MONTHCAL_INFO *infoPtr;
 
@@ -2021,7 +2021,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return MONTHCAL_SetFirstDayOfWeek(infoPtr, lParam);
 
   case MCM_GETRANGE:
-    return MONTHCAL_GetRange(hwnd, wParam, lParam);
+    return MONTHCAL_GetRange(hwnd, lParam);
 
   case MCM_SETRANGE:
     return MONTHCAL_SetRange(infoPtr, wParam, lParam);
@@ -2048,7 +2048,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return MONTHCAL_LButtonDown(infoPtr, lParam);
 
   case WM_MOUSEMOVE:
-    return MONTHCAL_MouseMove(infoPtr, wParam, lParam);
+    return MONTHCAL_MouseMove(infoPtr, lParam);
 
   case WM_LBUTTONUP:
     return MONTHCAL_LButtonUp(infoPtr, lParam);
@@ -2064,7 +2064,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return MONTHCAL_Size(infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_CREATE:
-    return MONTHCAL_Create(hwnd, wParam, lParam);
+    return MONTHCAL_Create(hwnd, lParam);
 
   case WM_SETFONT:
     return MONTHCAL_SetFont(infoPtr, (HFONT)wParam, (BOOL)lParam);
