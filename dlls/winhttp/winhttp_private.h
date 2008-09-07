@@ -120,6 +120,52 @@ typedef struct
     DWORD num_headers;
 } request_t;
 
+typedef struct _task_header_t task_header_t;
+
+struct _task_header_t
+{
+    request_t *request;
+    void (*proc)( task_header_t * );
+};
+
+typedef struct
+{
+    task_header_t hdr;
+    LPWSTR headers;
+    DWORD headers_len;
+    LPVOID optional;
+    DWORD optional_len;
+    DWORD total_len;
+    DWORD_PTR context;
+} send_request_t;
+
+typedef struct
+{
+    task_header_t hdr;
+} receive_response_t;
+
+typedef struct
+{
+    task_header_t hdr;
+    LPDWORD available;
+} query_data_t;
+
+typedef struct
+{
+    task_header_t hdr;
+    LPVOID buffer;
+    DWORD to_read;
+    LPDWORD read;
+} read_data_t;
+
+typedef struct
+{
+    task_header_t hdr;
+    LPCVOID buffer;
+    DWORD to_write;
+    LPDWORD written;
+} write_data_t;
+
 object_header_t *addref_object( object_header_t * );
 object_header_t *grab_object( HINTERNET );
 void release_object( object_header_t * );

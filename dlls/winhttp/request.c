@@ -172,6 +172,22 @@ static const WCHAR *attribute_table[] =
     NULL                            /* WINHTTP_QUERY_PASSPORT_CONFIG            = 78 */
 };
 
+static DWORD CALLBACK task_thread( LPVOID param )
+{
+    task_header_t *task = param;
+
+    task->proc( task );
+
+    release_object( &task->request->hdr );
+    heap_free( task );
+    return ERROR_SUCCESS;
+}
+
+static BOOL queue_task( task_header_t *task )
+{
+    return QueueUserWorkItem( task_thread, task, WT_EXECUTELONGFUNCTION );
+}
+
 static void free_header( header_t *header )
 {
     heap_free( header->field );
@@ -776,7 +792,7 @@ static BOOL add_host_header( request_t *request, WCHAR *hostname, INTERNET_PORT 
 }
 
 static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len, LPVOID optional,
-                          DWORD optional_len, DWORD total_len, DWORD_PTR context )
+                          DWORD optional_len, DWORD total_len, DWORD_PTR context, BOOL async )
 {
     static const WCHAR keep_alive[] = {'K','e','e','p','-','A','l','i','v','e',0};
     static const WCHAR no_cache[]   = {'n','o','-','c','a','c','h','e',0};
@@ -837,8 +853,26 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_SENT, &len, sizeof(DWORD) );
 
 end:
+    if (async)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE, NULL, 0 );
+        else
+        {
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_SEND_REQUEST;
+            result.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
     heap_free( req );
     return ret;
+}
+
+static void task_send_request( task_header_t *task )
+{
+    send_request_t *s = (send_request_t *)task;
+    send_request( s->hdr.request, s->headers, s->headers_len, s->optional, s->optional_len, s->total_len, s->context, TRUE );
+    heap_free( s->headers );
 }
 
 /***********************************************************************
@@ -865,19 +899,26 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
         return FALSE;
     }
 
-    ret = send_request( request, headers, headers_len, optional, optional_len, total_len, context );
-
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE, NULL, 0 );
-        else
-        {
-            WINHTTP_ASYNC_RESULT async;
-            async.dwResult = API_SEND_REQUEST;
-            async.dwError  = get_last_error();
-            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
-        }
+        send_request_t *s;
+
+        if (!(s = heap_alloc( sizeof(send_request_t) ))) return FALSE;
+        s->hdr.request  = request;
+        s->hdr.proc     = task_send_request;
+        s->headers      = strdupW( headers );
+        s->headers_len  = headers_len;
+        s->optional     = optional;
+        s->optional_len = optional_len;
+        s->total_len    = total_len;
+        s->context      = context;
+
+        addref_object( &request->hdr );
+        ret = queue_task( (task_header_t *)s );
     }
+    else
+        ret = send_request( request, headers, headers_len, optional, optional_len, total_len, context, FALSE );
+
     release_object( &request->hdr );
     return ret;
 }
@@ -899,7 +940,7 @@ static void clear_response_headers( request_t *request )
 #define MAX_REPLY_LEN   1460
 #define INITIAL_HEADER_BUFFER_LEN  512
 
-static BOOL receive_response( request_t *request, BOOL clear )
+static BOOL read_reply( request_t *request, BOOL clear )
 {
     static const WCHAR crlf[] = {'\r','\n',0};
 
@@ -1070,7 +1111,7 @@ end:
     return ret;
 }
 
-static BOOL read_data( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
+static BOOL receive_data( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
 {
     DWORD to_read;
     int bytes_read;
@@ -1100,36 +1141,18 @@ static void drain_content( request_t *request )
     if (request->content_length == ~0UL) return;
     for (;;)
     {
-        if (!read_data( request, buffer, sizeof(buffer), &bytes_read, FALSE ) || !bytes_read) return;
+        if (!receive_data( request, buffer, sizeof(buffer), &bytes_read, FALSE ) || !bytes_read) return;
     }
 }
 
-/***********************************************************************
- *          WinHttpReceiveResponse (winhttp.@)
- */
-BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
+static BOOL receive_response( request_t *request, BOOL async )
 {
-    BOOL ret = TRUE;
-    request_t *request;
+    BOOL ret;
     DWORD size, query, status;
-
-    TRACE("%p, %p\n", hrequest, reserved);
-
-    if (!(request = (request_t *)grab_object( hrequest )))
-    {
-        set_last_error( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
-    {
-        release_object( &request->hdr );
-        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
-        return FALSE;
-    }
 
     for (;;)
     {
-        if (!(ret = receive_response( request, TRUE ))) break;
+        if (!(ret = read_reply( request, TRUE ))) break;
 
         size = sizeof(DWORD);
         query = WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER;
@@ -1147,22 +1170,95 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
             drain_content( request );
             if (!(ret = handle_redirect( request ))) break;
         }
-        ret = send_request( request, NULL, 0, NULL, 0, 0, 0 );
+        ret = send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
     }
 
-    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+    if (async)
     {
         if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, NULL, 0 );
         else
         {
-            WINHTTP_ASYNC_RESULT async;
-            async.dwResult = API_RECEIVE_RESPONSE;
-            async.dwError  = get_last_error();
-            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_RECEIVE_RESPONSE;
+            result.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
         }
     }
+    return ret;
+}
+
+static void task_receive_response( task_header_t *task )
+{
+    receive_response_t *r = (receive_response_t *)task;
+    receive_response( r->hdr.request, TRUE );
+}
+
+/***********************************************************************
+ *          WinHttpReceiveResponse (winhttp.@)
+ */
+BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
+{
+    BOOL ret;
+    request_t *request;
+
+    TRACE("%p, %p\n", hrequest, reserved);
+
+    if (!(request = (request_t *)grab_object( hrequest )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+    {
+        receive_response_t *r;
+
+        if (!(r = heap_alloc( sizeof(receive_response_t) ))) return FALSE;
+        r->hdr.request = request;
+        r->hdr.proc    = task_receive_response;
+
+        addref_object( &request->hdr );
+        ret = queue_task( (task_header_t *)r );
+    }
+    else
+        ret = receive_response( request, FALSE );
+
     release_object( &request->hdr );
     return ret;
+}
+
+static BOOL query_data( request_t *request, LPDWORD available, BOOL async )
+{
+    BOOL ret;
+    DWORD num_bytes;
+
+    ret = netconn_query_data_available( &request->netconn, &num_bytes );
+
+    if (async)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &num_bytes, sizeof(DWORD) );
+        else
+        {
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_QUERY_DATA_AVAILABLE;
+            result.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
+    if (ret && available) *available = num_bytes;
+    return ret;
+}
+
+static void task_query_data( task_header_t *task )
+{
+    query_data_t *q = (query_data_t *)task;
+    query_data( q->hdr.request, q->available, TRUE );
 }
 
 /***********************************************************************
@@ -1171,7 +1267,6 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
 BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
 {
     BOOL ret;
-    DWORD num_bytes;
     request_t *request;
 
     TRACE("%p, %p\n", hrequest, available);
@@ -1188,20 +1283,21 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
         return FALSE;
     }
 
-    ret = netconn_query_data_available( &request->netconn, &num_bytes );
-
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &num_bytes, sizeof(DWORD) );
-        else
-        {
-            WINHTTP_ASYNC_RESULT async;
-            async.dwResult = API_QUERY_DATA_AVAILABLE;
-            async.dwError  = get_last_error();
-            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
-        }
+        query_data_t *q;
+
+        if (!(q = heap_alloc( sizeof(query_data_t) ))) return FALSE;
+        q->hdr.request = request;
+        q->hdr.proc    = task_query_data;
+        q->available   = available;
+
+        addref_object( &request->hdr );
+        ret = queue_task( (task_header_t *)q );
     }
-    if (ret && available) *available = num_bytes;
+    else
+        ret = query_data( request, available, FALSE );
+
     release_object( &request->hdr );
     return ret;
 }
@@ -1221,7 +1317,7 @@ static DWORD get_chunk_size( const char *buffer )
     return size;
 }
 
-static BOOL read_data_chunked( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
+static BOOL receive_data_chunked( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
 {
     char reply[MAX_REPLY_LEN], *p = buffer;
     DWORD buflen, to_read, to_write = size;
@@ -1240,7 +1336,7 @@ static BOOL read_data_chunked( request_t *request, void *buffer, DWORD size, DWO
             if (!(request->content_length = get_chunk_size( reply )))
             {
                 /* zero sized chunk marks end of transfer; read any trailing headers and return */
-                receive_response( request, FALSE );
+                read_reply( request, FALSE );
                 break;
             }
         }
@@ -1280,17 +1376,50 @@ static BOOL read_data_chunked( request_t *request, void *buffer, DWORD size, DWO
     return TRUE;
 }
 
+static BOOL read_data( request_t *request, void *buffer, DWORD to_read, DWORD *read, BOOL async )
+{
+    static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
+
+    BOOL ret;
+    WCHAR encoding[20];
+    DWORD num_bytes, buflen = sizeof(encoding);
+
+    if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
+        !strcmpiW( encoding, chunked ))
+    {
+        ret = receive_data_chunked( request, buffer, to_read, &num_bytes, async );
+    }
+    else
+        ret = receive_data( request, buffer, to_read, &num_bytes, async );
+
+    if (async)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, num_bytes );
+        else
+        {
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_READ_DATA;
+            result.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
+    if (ret && read) *read = num_bytes;
+    return ret;
+}
+
+static void task_read_data( task_header_t *task )
+{
+    read_data_t *r = (read_data_t *)task;
+    read_data( r->hdr.request, r->buffer, r->to_read, r->read, TRUE );
+}
+
 /***********************************************************************
  *          WinHttpReadData (winhttp.@)
  */
 BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, LPDWORD read )
 {
-    static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
-
-    BOOL ret, async;
+    BOOL ret;
     request_t *request;
-    WCHAR encoding[20];
-    DWORD num_bytes, buflen = sizeof(encoding);
 
     TRACE("%p, %p, %d, %p\n", hrequest, buffer, to_read, read);
 
@@ -1306,29 +1435,53 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
         return FALSE;
     }
 
-    async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC;
-    if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
-        !strcmpiW( encoding, chunked ))
+    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        ret = read_data_chunked( request, buffer, to_read, &num_bytes, async );
+        read_data_t *r;
+
+        if (!(r = heap_alloc( sizeof(read_data_t) ))) return FALSE;
+        r->hdr.request = request;
+        r->hdr.proc    = task_read_data;
+        r->buffer      = buffer;
+        r->to_read     = to_read;
+        r->read        = read;
+
+        addref_object( &request->hdr );
+        ret = queue_task( (task_header_t *)r );
     }
     else
-        ret = read_data( request, buffer, to_read, &num_bytes, async );
+        ret = read_data( request, buffer, to_read, read, FALSE );
+
+    release_object( &request->hdr );
+    return ret;
+}
+
+static BOOL write_data( request_t *request, LPCVOID buffer, DWORD to_write, LPDWORD written, BOOL async )
+{
+    BOOL ret;
+    int num_bytes;
+
+    ret = netconn_send( &request->netconn, buffer, to_write, 0, &num_bytes );
 
     if (async)
     {
-        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, num_bytes );
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_FLAG_WRITE_COMPLETE, &num_bytes, sizeof(DWORD) );
         else
         {
-            WINHTTP_ASYNC_RESULT async;
-            async.dwResult = API_READ_DATA;
-            async.dwError  = get_last_error();
-            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_WRITE_DATA;
+            result.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
         }
     }
-    if (ret && read) *read = num_bytes;
-    release_object( &request->hdr );
+    if (ret && written) *written = num_bytes;
     return ret;
+}
+
+static void task_write_data( task_header_t *task )
+{
+    write_data_t *w = (write_data_t *)task;
+    write_data( w->hdr.request, w->buffer, w->to_write, w->written, TRUE );
 }
 
 /***********************************************************************
@@ -1337,7 +1490,6 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
 BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write, LPDWORD written )
 {
     BOOL ret;
-    int num_bytes;
     request_t *request;
 
     TRACE("%p, %p, %d, %p\n", hrequest, buffer, to_write, written);
@@ -1354,20 +1506,23 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
         return FALSE;
     }
 
-    ret = netconn_send( &request->netconn, buffer, to_write, 0, &num_bytes );
-
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_FLAG_WRITE_COMPLETE, &num_bytes, sizeof(DWORD) );
-        else
-        {
-            WINHTTP_ASYNC_RESULT async;
-            async.dwResult = API_WRITE_DATA;
-            async.dwError  = get_last_error();
-            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
-        }
+        write_data_t *w;
+
+        if (!(w = heap_alloc( sizeof(write_data_t) ))) return FALSE;
+        w->hdr.request = request;
+        w->hdr.proc    = task_write_data;
+        w->buffer      = buffer;
+        w->to_write    = to_write;
+        w->written     = written;
+
+        addref_object( &request->hdr );
+        ret = queue_task( (task_header_t *)w );
     }
-    if (ret && written) *written = num_bytes;
+    else
+        ret = write_data( request, buffer, to_write, written, FALSE );
+
     release_object( &request->hdr );
     return ret;
 }

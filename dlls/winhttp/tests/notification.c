@@ -34,6 +34,9 @@ enum api
     winhttp_open_request,
     winhttp_send_request,
     winhttp_receive_response,
+    winhttp_query_data,
+    winhttp_read_data,
+    winhttp_write_data,
     winhttp_close_handle
 };
 
@@ -70,12 +73,15 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
         ok(info->test[i].status == status, "expected status 0x%08x got 0x%08x\n", info->test[i].status, status);
         ok(info->test[i].function == info->function, "expected function %u got %u\n", info->test[i].function, info->function);
     }
-    else todo_wine
+    else
     {
-        ok(info->test[i].status == status, "expected status 0x%08x got 0x%08x\n", info->test[i].status, status);
-        ok(info->test[i].function == info->function, "expected function %u got %u\n", info->test[i].function, info->function);
+        todo_wine ok(info->test[i].status == status, "expected status 0x%08x got 0x%08x\n", info->test[i].status, status);
+        if (info->test[i].status == status)
+        {
+            todo_wine ok(info->test[i].function == info->function, "expected function %u got %u\n", info->test[i].function, info->function);
+        }
     }
-    info->index++;
+    if (info->test[i].status == status) info->index++;
     if (status & WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS) SetEvent( info->wait );
 }
 
@@ -146,7 +152,7 @@ static void test_connection_cache( void )
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
 
-    Sleep(2000); /* make sure connection is evicted from cache */
+    Sleep(1500); /* make sure connection is evicted from cache */
 
     info.index = 0;
 
@@ -287,6 +293,10 @@ static const struct notification async_test[] =
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, 0 },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, 0 },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, 0 },
+    { winhttp_query_data,       WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, 0 },
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, 1 },
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, 1 },
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_READ_COMPLETE, 1 },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0 },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0 },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 0 },
@@ -302,6 +312,7 @@ static void test_async( void )
     DWORD size, status;
     BOOL ret;
     struct info info, *context = &info;
+    char buffer[1024];
 
     info.test  = async_test;
     info.count = sizeof(async_test) / sizeof(async_test[0]);
@@ -341,6 +352,18 @@ static void test_async( void )
     ok(ret, "failed unexpectedly %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
 
+    info.function = winhttp_query_data;
+    ret = WinHttpQueryDataAvailable( req, NULL );
+    ok(ret, "failed to query data available %u\n", GetLastError());
+
+    WaitForSingleObject( info.wait, INFINITE );
+
+    info.function = winhttp_read_data;
+    ret = WinHttpReadData( req, buffer, sizeof(buffer), NULL );
+    ok(ret, "failed to query data available %u\n", GetLastError());
+
+    WaitForSingleObject( info.wait, INFINITE );
+
     info.function = winhttp_close_handle;
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
@@ -352,5 +375,6 @@ START_TEST (notification)
 {
     test_connection_cache();
     test_redirect();
+    Sleep(1500); /* make sure previous connection is evicted from cache */
     test_async();
 }
