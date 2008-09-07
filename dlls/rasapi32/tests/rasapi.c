@@ -63,7 +63,7 @@ static void test_rasenum(void)
         win_skip("RasEnumDevicesA found nothing to enumerate\n");
         return;
     }
-    trace("RasEnumDevicesA: returned %d buffersize %d\n", result, cb);
+    trace("RasEnumDevicesA: returned %d buffersize %d\n", result, bufsize);
     ok(result == ERROR_BUFFER_TOO_SMALL,
     "Expected ERROR_BUFFER_TOO_SMALL, got %08d\n", result);
 
