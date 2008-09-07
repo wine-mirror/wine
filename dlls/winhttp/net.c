@@ -48,6 +48,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winhttp.h"
+#include "wincrypt.h"
 
 /* to avoid conflicts with the Unix socket headers */
 #define USE_WS_PREFIX
@@ -102,6 +103,7 @@ MAKE_FUNCPTR( SSL_get_peer_certificate );
 MAKE_FUNCPTR( SSL_CTX_get_timeout );
 MAKE_FUNCPTR( SSL_CTX_set_timeout );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
+MAKE_FUNCPTR( i2d_X509 );
 
 MAKE_FUNCPTR( BIO_new_fp );
 MAKE_FUNCPTR( ERR_get_error );
@@ -218,6 +220,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_CTX_get_timeout );
     LOAD_FUNCPTR( SSL_CTX_set_timeout );
     LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
+    LOAD_FUNCPTR( i2d_X509 );
 #undef LOAD_FUNCPTR
 
 #define LOAD_FUNCPTR(x) \
@@ -615,4 +618,47 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_in *
     LeaveCriticalSection( &cs_gethostbyname );
 #endif
     return TRUE;
+}
+
+const void *netconn_get_certificate( netconn_t *conn )
+{
+#ifdef SONAME_LIBSSL
+    X509 *cert;
+    unsigned char *buffer, *p;
+    int len;
+    BOOL malloc = FALSE;
+    const CERT_CONTEXT *ret;
+
+    if (!conn->secure) return NULL;
+
+    if (!(cert = pSSL_get_peer_certificate( conn->ssl_conn ))) return NULL;
+    p = NULL;
+    if ((len = pi2d_X509( cert, &p )) < 0) return NULL;
+    /*
+     * SSL 0.9.7 and above malloc the buffer if it is null.
+     * however earlier version do not and so we would need to alloc the buffer.
+     *
+     * see the i2d_X509 man page for more details.
+     */
+    if (!p)
+    {
+        if (!(buffer = heap_alloc( len ))) return NULL;
+        p = buffer;
+        len = pi2d_X509( cert, &p );
+    }
+    else
+    {
+        buffer = p;
+        malloc = TRUE;
+    }
+
+    ret = CertCreateCertificateContext( X509_ASN_ENCODING, buffer, len );
+
+    if (malloc) free( buffer );
+    else heap_free( buffer );
+
+    return ret;
+#else
+    return NULL;
+#endif
 }

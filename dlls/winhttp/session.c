@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winhttp.h"
+#include "wincrypt.h"
 
 #include "winhttp_private.h"
 
@@ -261,6 +262,22 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
 
         if (hdr->flags & WINHTTP_FLAG_SECURE) flags |= SECURITY_FLAG_SECURE;
         *(DWORD *)buffer = flags;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    }
+    case WINHTTP_OPTION_SERVER_CERT_CONTEXT:
+    {
+        const CERT_CONTEXT *cert;
+        request_t *request = (request_t *)hdr;
+
+        if (!(cert = netconn_get_certificate( &request->netconn ))) return FALSE;
+        memcpy( buffer, cert, sizeof(CERT_CONTEXT) );
+        *buflen = sizeof(cert);
+        return TRUE;
+    }
+    case WINHTTP_OPTION_SECURITY_KEY_BITNESS:
+    {
+        *(DWORD *)buffer = 128; /* FIXME */
         *buflen = sizeof(DWORD);
         return TRUE;
     }
