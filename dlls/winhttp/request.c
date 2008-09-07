@@ -867,6 +867,17 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
 
     ret = send_request( request, headers, headers_len, optional, optional_len, total_len, context );
 
+    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE, NULL, 0 );
+        else
+        {
+            WINHTTP_ASYNC_RESULT async;
+            async.dwResult = API_SEND_REQUEST;
+            async.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
+        }
+    }
     release_object( &request->hdr );
     return ret;
 }
@@ -886,7 +897,7 @@ static void clear_response_headers( request_t *request )
 }
 
 #define MAX_REPLY_LEN   1460
-#define INITIAL_HEADER_BUFFER_SIZE  512
+#define INITIAL_HEADER_BUFFER_LEN  512
 
 static BOOL receive_response( request_t *request, BOOL clear )
 {
@@ -946,7 +957,7 @@ static BOOL receive_response( request_t *request, BOOL clear )
     heap_free( request->status_text );
     request->status_text = status_textW;
 
-    len = max( buflen + crlf_len, INITIAL_HEADER_BUFFER_SIZE );
+    len = max( buflen + crlf_len, INITIAL_HEADER_BUFFER_LEN );
     if (!(raw_headers = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
     MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers, buflen );
     memcpy( raw_headers + buflen - 1, crlf, sizeof(crlf) );
@@ -1139,6 +1150,17 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
         ret = send_request( request, NULL, 0, NULL, 0, 0, 0 );
     }
 
+    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, NULL, 0 );
+        else
+        {
+            WINHTTP_ASYNC_RESULT async;
+            async.dwResult = API_RECEIVE_RESPONSE;
+            async.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &async, sizeof(async) );
+        }
+    }
     release_object( &request->hdr );
     return ret;
 }
@@ -1254,7 +1276,7 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
 {
     static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
 
-    BOOL ret;
+    BOOL ret, async;
     request_t *request;
     WCHAR encoding[20];
     DWORD num_bytes, buflen = sizeof(encoding);
@@ -1273,13 +1295,14 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
         return FALSE;
     }
 
+    async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC;
     if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
         !strcmpiW( encoding, chunked ))
     {
-        ret = read_data_chunked( request, buffer, to_read, &num_bytes, request->hdr.flags & WINHTTP_FLAG_ASYNC );
+        ret = read_data_chunked( request, buffer, to_read, &num_bytes, async );
     }
     else
-        ret = read_data( request, buffer, to_read, &num_bytes, request->hdr.flags & WINHTTP_FLAG_ASYNC );
+        ret = read_data( request, buffer, to_read, &num_bytes, async );
 
     if (ret && read) *read = num_bytes;
     release_object( &request->hdr );

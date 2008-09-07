@@ -128,6 +128,7 @@ HINTERNET alloc_handle( object_header_t * );
 BOOL free_handle( HINTERNET );
 
 void set_last_error( DWORD );
+DWORD get_last_error( void );
 void send_callback( object_header_t *, DWORD, LPVOID, DWORD );
 void close_connection( request_t * );
 

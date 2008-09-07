@@ -36,6 +36,12 @@ void set_last_error( DWORD error )
     SetLastError( error );
 }
 
+DWORD get_last_error( void )
+{
+    /* FIXME */
+    return GetLastError();
+}
+
 void send_callback( object_header_t *hdr, DWORD status, LPVOID info, DWORD buflen )
 {
     TRACE("%p, 0x%08x, %p, %u\n", hdr, status, info, buflen);
