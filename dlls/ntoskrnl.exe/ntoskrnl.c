@@ -469,6 +469,18 @@ PDEVICE_OBJECT WINAPI IoGetRelatedDeviceObject( PFILE_OBJECT obj )
     return NULL;
 }
 
+static CONFIGURATION_INFORMATION configuration_information;
+
+/***********************************************************************
+ *           IoGetConfigurationInformation    (NTOSKRNL.EXE.@)
+ */
+PCONFIGURATION_INFORMATION WINAPI IoGetConfigurationInformation(void)
+{
+    FIXME( "partial stub\n" );
+    /* FIXME: return actual devices on system */
+    return &configuration_information;
+}
+
 
 /***********************************************************************
  *           IoRegisterDriverReinitialization    (NTOSKRNL.EXE.@)

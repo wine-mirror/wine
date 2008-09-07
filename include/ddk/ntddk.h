@@ -46,6 +46,21 @@ typedef enum _BUS_DATA_TYPE
     MaximumBusDataType
 } BUS_DATA_TYPE, *PBUS_DATA_TYPE;
 
+typedef struct _CONFIGURATION_INFORMATION
+{
+    ULONG DiskCount;
+    ULONG FloppyCount;
+    ULONG CdRomCount;
+    ULONG TapeCount;
+    ULONG ScsiPortCount;
+    ULONG SerialCount;
+    ULONG ParallelCount;
+    BOOLEAN AtDiskPrimaryAddressClaimed;
+    BOOLEAN AtDiskSecondaryAddressClaimed;
+    ULONG Version;
+    ULONG MediumChangerCount;
+} CONFIGURATION_INFORMATION, *PCONFIGURATION_INFORMATION;
+
 typedef VOID (WINAPI *PDRIVER_REINITIALIZE)(PDRIVER_OBJECT,PVOID,ULONG);
 
 void      WINAPI IoRegisterDriverReinitialization(PDRIVER_OBJECT,PDRIVER_REINITIALIZE,PVOID);

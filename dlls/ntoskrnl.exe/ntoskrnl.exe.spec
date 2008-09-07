@@ -377,7 +377,7 @@
 @ stub IoGetAttachedDeviceReference
 @ stub IoGetBaseFileSystemDeviceObject
 @ stub IoGetBootDiskInformation
-@ stub IoGetConfigurationInformation
+@ stdcall IoGetConfigurationInformation()
 @ stub IoGetCurrentProcess
 @ stub IoGetDeviceAttachmentBaseRef
 @ stub IoGetDeviceInterfaceAlias
