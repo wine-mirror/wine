@@ -1315,6 +1315,7 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
 BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write, LPDWORD written )
 {
     BOOL ret;
+    int num_bytes;
     request_t *request;
 
     TRACE("%p, %p, %d, %p\n", hrequest, buffer, to_write, written);
@@ -1331,8 +1332,9 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
         return FALSE;
     }
 
-    ret = netconn_send( &request->netconn, buffer, to_write, 0, (int *)written );
+    ret = netconn_send( &request->netconn, buffer, to_write, 0, &num_bytes );
 
+    if (ret && written) *written = num_bytes;
     release_object( &request->hdr );
     return ret;
 }
