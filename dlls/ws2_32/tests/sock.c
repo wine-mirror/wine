@@ -1993,9 +1993,23 @@ static DWORD WINAPI drain_socket_thread(LPVOID arg)
 {
     char buffer[1024];
     SOCKET sock = *(SOCKET*)arg;
+    int ret;
 
-    while (recv(sock, buffer, sizeof(buffer), 0) > 0)
-        ;
+    while ((ret = recv(sock, buffer, sizeof(buffer), 0)) != 0)
+    {
+        if (ret < 0)
+        {
+            if (WSAGetLastError() == WSAEWOULDBLOCK)
+            {
+                fd_set readset;
+                FD_ZERO(&readset);
+                FD_SET(sock, &readset);
+                select(0, &readset, NULL, NULL, NULL);
+            }
+            else
+                break;
+        }
+    }
     return 0;
 }
 
@@ -2051,15 +2065,41 @@ static void test_write_events(void)
     SOCKET dst = INVALID_SOCKET;
     HANDLE hThread = NULL;
     HANDLE hEvent = INVALID_HANDLE_VALUE;
-    int len;
+    char *buffer = NULL;
+    int bufferSize = 1024*1024;
     u_long one = 1;
     int ret;
     DWORD id;
+    WSANETWORKEVENTS netEvents;
+    DWORD dwRet;
 
     if (tcp_socketpair(&src, &dst) != 0)
     {
         ok(0, "creating socket pair failed, skipping test\n");
         return;
+    }
+
+    /* On Windows it seems when a non-blocking socket sends to a
+       blocking socket on the same host, the send() is BLOCKING,
+       so make both sockets non-blocking */
+    ret = ioctlsocket(src, FIONBIO, &one);
+    if (ret)
+    {
+        ok(0, "ioctlsocket failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+    ret = ioctlsocket(dst, FIONBIO, &one);
+    if (ret)
+    {
+        ok(0, "ioctlsocket failed, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, bufferSize);
+    if (buffer == NULL)
+    {
+        ok(0, "could not allocate memory for test\n");
+        goto end;
     }
 
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
@@ -2076,13 +2116,6 @@ static void test_write_events(void)
         goto end;
     }
 
-    ret = ioctlsocket(src, FIONBIO, &one);
-    if (ret)
-    {
-        ok(0, "ioctlsocket failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
-
     ret = WSAEventSelect(src, hEvent, FD_WRITE | FD_CLOSE);
     if (ret)
     {
@@ -2090,41 +2123,72 @@ static void test_write_events(void)
         goto end;
     }
 
-    for (len = 100; len > 0; --len)
+    /* FD_WRITE should be set initially, and allow us to send at least 1 byte */
+    dwRet = WaitForSingleObject(hEvent, 5000);
+    if (dwRet != WAIT_OBJECT_0)
     {
-         WSANETWORKEVENTS netEvents;
-         DWORD dwRet = WaitForSingleObject(hEvent, 5000);
-         if (dwRet != WAIT_OBJECT_0)
-         {
-             ok(0, "WaitForSingleObject failed, error %d\n", dwRet);
-             goto end;
-         }
+        ok(0, "Initial WaitForSingleObject failed, error %d\n", dwRet);
+        goto end;
+    }
+    ret = WSAEnumNetworkEvents(src, NULL, &netEvents);
+    if (ret)
+    {
+        ok(0, "WSAEnumNetworkEvents failed, error %d\n", ret);
+        goto end;
+    }
+    if (netEvents.lNetworkEvents & FD_WRITE)
+    {
+        ret = send(src, "a", 1, 0);
+        ok(ret == 1, "sending 1 byte failed, error %d\n", WSAGetLastError());
+        if (ret != 1)
+            goto end;
+    }
+    else
+    {
+        ok(0, "FD_WRITE not among initial events\n");
+        goto end;
+    }
 
-         ret = WSAEnumNetworkEvents(src, NULL, &netEvents);
-         if (ret)
-         {
-             ok(0, "WSAEnumNetworkEvents failed, error %d\n", ret);
-             goto end;
-         }
+    /* Now FD_WRITE should not be set, because the socket send buffer isn't full yet */
+    dwRet = WaitForSingleObject(hEvent, 2000);
+    if (dwRet == WAIT_OBJECT_0)
+    {
+        ok(0, "WaitForSingleObject should have timed out, but succeeded!\n");
+        goto end;
+    }
 
-         if (netEvents.lNetworkEvents & FD_WRITE)
-         {
-             ret = send(src, "a", 1, 0);
-             if (ret < 0 && WSAGetLastError() != WSAEWOULDBLOCK)
-             {
-                 ok(0, "send failed, error %d\n", WSAGetLastError());
-                 goto end;
-             }
-         }
-
-         if (netEvents.lNetworkEvents & FD_CLOSE)
-         {
-             ok(0, "unexpected close\n");
-             goto end;
-         }
+    /* Now if we send a tonne of data, the socket send buffer will only take some of it,
+       and we will get a short write, which will trigger another FD_WRITE event
+       as soon as data is sent and more space becomes available, but not any earlier. */
+    do
+    {
+        ret = send(src, buffer, bufferSize, 0);
+    } while (ret == bufferSize);
+    if (ret >= 0 || WSAGetLastError() == WSAEWOULDBLOCK)
+    {
+        dwRet = WaitForSingleObject(hEvent, 5000);
+        ok(dwRet == WAIT_OBJECT_0, "Waiting failed with %d\n", dwRet);
+        if (dwRet == WAIT_OBJECT_0)
+        {
+            ret = WSAEnumNetworkEvents(src, NULL, &netEvents);
+            ok(ret == 0, "WSAEnumNetworkEvents failed, error %d\n", ret);
+            if (ret == 0)
+                goto end;
+            ok(netEvents.lNetworkEvents & FD_WRITE,
+                "FD_WRITE event not set as expected, events are 0x%x\n", netEvents.lNetworkEvents);
+        }
+        else
+            goto end;
+    }
+    else
+    {
+        ok(0, "sending a lot of data failed with error %d\n", WSAGetLastError());
+        goto end;
     }
 
 end:
+    if (buffer != NULL)
+        HeapFree(GetProcessHeap(), 0, buffer);
     if (src != INVALID_SOCKET)
         closesocket(src);
     if (dst != INVALID_SOCKET)

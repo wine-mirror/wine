@@ -1250,8 +1250,13 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
 
         if (result >= 0)
         {
+            int totalLength = 0;
+            int i;
             status = STATUS_SUCCESS;
-            _enable_event( wsa->hSocket, FD_WRITE, 0, 0 );
+            for (i = 0; i < wsa->n_iovecs; i++)
+                totalLength += wsa->iovec[i].iov_len;
+            if (result < totalLength)
+                _enable_event( wsa->hSocket, FD_WRITE, 0, 0 );
         }
         else
         {
@@ -2667,6 +2672,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     unsigned int i, options;
     int n, fd, err;
     struct iovec iovec[WS_MSG_MAXIOVLEN];
+    int totalLength = 0;
     ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
 
     TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
@@ -2694,6 +2700,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     {
         iovec[i].iov_base = lpBuffers[i].buf;
         iovec[i].iov_len  = lpBuffers[i].len;
+        totalLength += lpBuffers[i].len;
     }
 
     for (;;)
@@ -2819,7 +2826,8 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     }
     else  /* non-blocking */
     {
-        _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
+        if (n < totalLength)
+            _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
         if (n == -1)
         {
             err = WSAEWOULDBLOCK;
