@@ -23,7 +23,6 @@
 #include "objsafe.h"
 #include "engine.h"
 
-#define YYSTYPE
 #include "parser.tab.h"
 
 #include "wine/debug.h"

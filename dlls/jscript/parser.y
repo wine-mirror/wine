@@ -32,7 +32,7 @@ static int parser_error(const char*);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
 static void program_parsed(parser_ctx_t*,source_elements_t*);
 
-typedef struct {
+typedef struct _statement_list_t {
     statement_t *head;
     statement_t *tail;
 } statement_list_t;
@@ -42,7 +42,7 @@ static literal_t *new_null_literal(parser_ctx_t*);
 static literal_t *new_undefined_literal(parser_ctx_t*);
 static literal_t *new_boolean_literal(parser_ctx_t*,VARIANT_BOOL);
 
-typedef struct {
+typedef struct _property_list_t {
     prop_val_t *head;
     prop_val_t *tail;
 } property_list_t;
@@ -50,7 +50,7 @@ typedef struct {
 static property_list_t *new_property_list(parser_ctx_t*,literal_t*,expression_t*);
 static property_list_t *property_list_add(parser_ctx_t*,property_list_t*,literal_t*,expression_t*);
 
-typedef struct {
+typedef struct _element_list_t {
     array_element_t *head;
     array_element_t *tail;
 } element_list_t;
@@ -58,7 +58,7 @@ typedef struct {
 static element_list_t *new_element_list(parser_ctx_t*,int,expression_t*);
 static element_list_t *element_list_add(parser_ctx_t*,element_list_t*,int,expression_t*);
 
-typedef struct {
+typedef struct _argument_list_t {
     argument_t *head;
     argument_t *tail;
 } argument_list_t;
@@ -66,7 +66,7 @@ typedef struct {
 static argument_list_t *new_argument_list(parser_ctx_t*,expression_t*);
 static argument_list_t *argument_list_add(parser_ctx_t*,argument_list_t*,expression_t*);
 
-typedef struct {
+typedef struct _case_list_t {
     case_clausule_t *head;
     case_clausule_t *tail;
 } case_list_t;
@@ -77,7 +77,7 @@ static case_list_t *new_case_list(parser_ctx_t*,case_clausule_t*);
 static case_list_t *case_list_add(parser_ctx_t*,case_list_t*,case_clausule_t*);
 static case_clausule_t *new_case_block(parser_ctx_t*,case_list_t*,case_clausule_t*,case_list_t*);
 
-typedef struct {
+typedef struct _variable_list_t {
     variable_declaration_t *head;
     variable_declaration_t *tail;
 } variable_list_t;
@@ -112,7 +112,7 @@ struct statement_list_t {
 statement_list_t *new_statement_list(parser_ctx_t*,statement_t*);
 statement_list_t *statement_list_add(statement_list_t*,statement_t*);
 
-typedef struct {
+typedef struct _parameter_list_t {
     parameter_t *head;
     parameter_t *tail;
 } parameter_list_t;
@@ -148,20 +148,20 @@ static source_elements_t *source_elements_add_function(source_elements_t*,functi
     int                     ival;
     LPCWSTR                 wstr;
     literal_t               *literal;
-    argument_list_t         *argument_list;
+    struct _argument_list_t *argument_list;
     case_clausule_t         *case_clausule;
-    case_list_t             *case_list;
+    struct _case_list_t     *case_list;
     catch_block_t           *catch_block;
-    element_list_t          *element_list;
+    struct _element_list_t  *element_list;
     expression_t            *expr;
     const WCHAR            *identifier;
     function_declaration_t  *function_declaration;
-    parameter_list_t        *parameter_list;
-    property_list_t         *property_list;
+    struct _parameter_list_t *parameter_list;
+    struct _property_list_t *property_list;
     source_elements_t       *source_elements;
     statement_t             *statement;
-    statement_list_t        *statement_list;
-    variable_list_t         *variable_list;
+    struct _statement_list_t *statement_list;
+    struct _variable_list_t *variable_list;
     variable_declaration_t  *variable_declaration;
 }
 
