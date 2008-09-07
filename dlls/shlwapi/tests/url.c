@@ -133,7 +133,6 @@ static const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"A", 0, S_OK, "A", FALSE},
     {"/uri-res/N2R?urn:sha1:B3K", URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY /*0x82000000*/, S_OK, "/uri-res/N2R?urn:sha1:B3K", TRUE} /*LimeWire online installer calls this*/,
     {"http:www.winehq.org/dir/../index.html", 0, S_OK, "http:www.winehq.org/index.html"},
-    {"", 0, S_OK, "", FALSE}
 };
 
 /* ################ */
@@ -547,19 +546,23 @@ static void test_url_escape(const char *szUrl, DWORD dwFlags, HRESULT dwExpectRe
 
 }
 
-static void test_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, HRESULT dwExpectReturn, const char *szExpectUrl, BOOL todo)
+static void test_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, HRESULT dwExpectReturn, HRESULT dwExpectReturnAlt, const char *szExpectUrl, BOOL todo)
 {
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
     WCHAR wszReturnUrl[INTERNET_MAX_URL_LENGTH];
     LPWSTR wszUrl = GetWideString(szUrl);
     LPWSTR wszExpectUrl = GetWideString(szExpectUrl);
     LPWSTR wszConvertedUrl;
+    HRESULT ret;
 
     DWORD dwSize;
 
     dwSize = INTERNET_MAX_URL_LENGTH;
     ok(UrlCanonicalizeA(szUrl, NULL, &dwSize, dwFlags) != dwExpectReturn, "Unexpected return for NULL buffer, index %d\n", index);
-    ok(UrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeA didn't return 0x%08x, index %d\n", dwExpectReturn, index);
+    ret = UrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags);
+    ok(ret == dwExpectReturn || ret == dwExpectReturnAlt,
+       "UrlCanonicalizeA failed: expected=0x%08x or 0x%08x, got=0x%08x, index %d\n",
+       dwExpectReturn, dwExpectReturnAlt, ret, index);
     if (todo)
         todo_wine
         ok(strcmp(szReturnUrl,szExpectUrl)==0, "UrlCanonicalizeA dwFlags 0x%08x url '%s' Expected \"%s\", but got \"%s\", index %d\n", dwFlags, szUrl, szExpectUrl, szReturnUrl, index);
@@ -668,11 +671,12 @@ static void test_UrlCanonicalizeA(void)
         "got 0x%x with %u and size %u for '%s' and %u (expected 'S_OK' and size %u)\n",
         hr, GetLastError(), dwSize, szReturnUrl, lstrlenA(szReturnUrl), urllen);
 
+    test_url_canonicalize(-1, "", 0, S_OK, S_FALSE /* Vista/win2k8 */, "", FALSE);
 
     /* test url-modification */
     for(i=0; i<sizeof(TEST_CANONICALIZE)/sizeof(TEST_CANONICALIZE[0]); i++) {
         test_url_canonicalize(i, TEST_CANONICALIZE[i].url, TEST_CANONICALIZE[i].flags,
-                              TEST_CANONICALIZE[i].expectret, TEST_CANONICALIZE[i].expecturl,
+                              TEST_CANONICALIZE[i].expectret, TEST_CANONICALIZE[i].expectret, TEST_CANONICALIZE[i].expecturl,
                               TEST_CANONICALIZE[i].todo);
     }
 }
