@@ -42,6 +42,131 @@ struct _dispex_prop_t {
     } u;
 };
 
+static inline DISPID prop_to_id(DispatchEx *This, dispex_prop_t *prop)
+{
+    return prop - This->props;
+}
+
+static const builtin_prop_t *find_builtin_prop(DispatchEx *This, const WCHAR *name)
+{
+    int min = 0, max, i, r;
+
+    max = This->builtin_info->props_cnt-1;
+    while(min <= max) {
+        i = (min+max)/2;
+
+        r = strcmpW(name, This->builtin_info->props[i].name);
+        if(!r)
+            return This->builtin_info->props + i;
+
+        if(r < 0)
+            max = i-1;
+        else
+            min = i+1;
+    }
+
+    return NULL;
+}
+
+static dispex_prop_t *alloc_prop(DispatchEx *This, const WCHAR *name, prop_type_t type, DWORD flags)
+{
+    dispex_prop_t *ret;
+
+    if(This->buf_size == This->prop_cnt) {
+        dispex_prop_t *tmp = heap_realloc(This->props, (This->buf_size<<=1)*sizeof(*This->props));
+        if(!tmp)
+            return NULL;
+        This->props = tmp;
+    }
+
+    ret = This->props + This->prop_cnt++;
+    ret->type = type;
+    ret->flags = flags;
+    ret->name = heap_strdupW(name);
+    if(!ret->name)
+        return NULL;
+
+    return ret;
+}
+
+static dispex_prop_t *alloc_protref(DispatchEx *This, const WCHAR *name, DWORD ref)
+{
+    dispex_prop_t *ret;
+
+    ret = alloc_prop(This, name, PROP_PROTREF, 0);
+    if(!ret)
+        return NULL;
+
+    ret->u.ref = ref;
+    return ret;
+}
+
+static HRESULT find_prop_name(DispatchEx *This, const WCHAR *name, dispex_prop_t **ret)
+{
+    const builtin_prop_t *builtin;
+    dispex_prop_t *prop;
+
+    for(prop = This->props; prop < This->props+This->prop_cnt; prop++) {
+        if(prop->name && !strcmpW(prop->name, name)) {
+            *ret = prop;
+            return S_OK;
+        }
+    }
+
+    builtin = find_builtin_prop(This, name);
+    if(builtin) {
+        prop = alloc_prop(This, name, PROP_BUILTIN, builtin->flags);
+        if(!prop)
+            return E_OUTOFMEMORY;
+
+        prop->u.p = builtin;
+        *ret = prop;
+        return S_OK;
+    }
+
+    *ret = NULL;
+    return S_OK;
+}
+
+static HRESULT find_prop_name_prot(DispatchEx *This, const WCHAR *name, BOOL alloc, dispex_prop_t **ret)
+{
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    hres = find_prop_name(This, name, &prop);
+    if(FAILED(hres))
+        return hres;
+    if(prop) {
+        *ret = prop;
+        return S_OK;
+    }
+
+    if(This->prototype) {
+        hres = find_prop_name_prot(This->prototype, name, FALSE, &prop);
+        if(FAILED(hres))
+            return hres;
+        if(prop) {
+            prop = alloc_protref(This, prop->name, prop - This->prototype->props);
+            if(!prop)
+                return E_OUTOFMEMORY;
+            *ret = prop;
+            return S_OK;
+        }
+    }
+
+    if(alloc) {
+        TRACE("creating prop %s\n", debugstr_w(name));
+
+        prop = alloc_prop(This, name, PROP_VARIANT, PROPF_ENUM);
+        if(!prop)
+            return E_OUTOFMEMORY;
+        VariantInit(&prop->u.var);
+    }
+
+    *ret = prop;
+    return S_OK;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -158,8 +283,26 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
-    return E_NOTIMPL;
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+
+    if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure|fdexNameImplicit)) {
+        FIXME("Unsupported grfdex %x\n", grfdex);
+        return E_NOTIMPL;
+    }
+
+    hres = find_prop_name_prot(This, bstrName, (grfdex&fdexNameEnsure) != 0, &prop);
+    if(FAILED(hres))
+        return hres;
+    if(prop) {
+        *pid = prop_to_id(This, prop);
+        return S_OK;
+    }
+
+    TRACE("not found %s\n", debugstr_w(bstrName));
+    return DISP_E_UNKNOWNNAME;
 }
 
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
