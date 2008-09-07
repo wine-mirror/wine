@@ -23,6 +23,25 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
+typedef enum {
+    PROP_VARIANT,
+    PROP_BUILTIN,
+    PROP_PROTREF,
+    PROP_DELETED
+} prop_type_t;
+
+struct _dispex_prop_t {
+    WCHAR *name;
+    prop_type_t type;
+    DWORD flags;
+
+    union {
+        VARIANT var;
+        const builtin_prop_t *p;
+        DWORD ref;
+    } u;
+};
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -66,8 +85,20 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        dispex_prop_t *prop;
+
+        for(prop = This->props; prop < This->props+This->prop_cnt; prop++) {
+            if(prop->type == PROP_VARIANT)
+                VariantClear(&prop->u.var);
+            heap_free(prop->name);
+        }
+        heap_free(This->props);
         script_release(This->ctx);
-        heap_free(This);
+
+        if(This->builtin_info->destructor)
+            This->builtin_info->destructor(This);
+        else
+            heap_free(This);
     }
 
     return ref;
@@ -201,10 +232,64 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
-static HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx)
+static HRESULT jsdisp_set_prot_prop(DispatchEx *dispex, DispatchEx *prototype)
 {
+    VARIANT *var;
+
+    if(!dispex->props[1].name)
+        return E_OUTOFMEMORY;
+
+    dispex->props[1].type = PROP_VARIANT;
+    dispex->props[1].flags = 0;
+
+    var = &dispex->props[1].u.var;
+    V_VT(var) = VT_DISPATCH;
+    V_DISPATCH(var) = (IDispatch*)_IDispatchEx_(prototype);
+
+    return S_OK;
+}
+
+static HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, DispatchEx *prototype)
+{
+    static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
+
+    TRACE("%p (%p)\n", dispex, prototype);
+
     dispex->lpIDispatchExVtbl = &DispatchExVtbl;
     dispex->ref = 1;
+    dispex->builtin_info = builtin_info;
+
+    dispex->props = heap_alloc((dispex->buf_size=4) * sizeof(dispex_prop_t));
+    if(!dispex->props)
+        return E_OUTOFMEMORY;
+
+    dispex->prototype = prototype;
+    if(prototype)
+        IDispatchEx_AddRef(_IDispatchEx_(prototype));
+
+    dispex->prop_cnt = 2;
+    dispex->props[0].name = NULL;
+    dispex->props[0].flags = 0;
+    if(builtin_info->value_prop.invoke) {
+        dispex->props[0].type = PROP_BUILTIN;
+        dispex->props[0].u.p = &builtin_info->value_prop;
+    }else {
+        dispex->props[0].type = PROP_DELETED;
+    }
+
+    dispex->props[1].type = PROP_DELETED;
+    dispex->props[1].name = SysAllocString(prototypeW);
+    dispex->props[1].flags = 0;
+
+    if(prototype) {
+        HRESULT hres;
+
+        hres = jsdisp_set_prot_prop(dispex, prototype);
+        if(FAILED(hres)) {
+            IDispatchEx_Release(_IDispatchEx_(dispex));
+            return hres;
+        }
+    }
 
     script_addref(ctx);
     dispex->ctx = ctx;
@@ -212,7 +297,15 @@ static HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx)
     return S_OK;
 }
 
-HRESULT create_dispex(script_ctx_t *ctx, DispatchEx **dispex)
+static const builtin_info_t dispex_info = {
+    JSCLASS_NONE,
+    {NULL, NULL, 0},
+    0, NULL,
+    NULL,
+    NULL
+};
+
+HRESULT create_dispex(script_ctx_t *ctx, const builtin_info_t *builtin_info, DispatchEx *prototype, DispatchEx **dispex)
 {
     DispatchEx *ret;
     HRESULT hres;
@@ -221,7 +314,7 @@ HRESULT create_dispex(script_ctx_t *ctx, DispatchEx **dispex)
     if(!ret)
         return E_OUTOFMEMORY;
 
-    hres = init_dispex(ret, ctx);
+    hres = init_dispex(ret, ctx, builtin_info ? builtin_info : &dispex_info, prototype);
     if(FAILED(hres))
         return hres;
 

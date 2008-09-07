@@ -216,7 +216,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
             return hres;
     }
 
-    hres = create_dispex(This->ctx, &This->ctx->script_disp);
+    hres = create_dispex(This->ctx, NULL, NULL, &This->ctx->script_disp);
     if(FAILED(hres))
         return hres;
 

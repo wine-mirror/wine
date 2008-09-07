@@ -33,23 +33,59 @@
 
 typedef struct _script_ctx_t script_ctx_t;
 typedef struct _exec_ctx_t exec_ctx_t;
+typedef struct _dispex_prop_t dispex_prop_t;
 
 typedef struct {
     EXCEPINFO ei;
     VARIANT var;
 } jsexcept_t;
 
-typedef struct DispatchEx {
+typedef struct DispatchEx DispatchEx;
+
+#define PROPF_ARGMASK 0x00ff
+#define PROPF_METHOD  0x0100
+#define PROPF_ENUM    0x0200
+#define PROPF_CONSTR  0x0400
+
+typedef enum {
+    JSCLASS_NONE
+} jsclass_t;
+
+typedef HRESULT (*builtin_invoke_t)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+
+typedef struct {
+    const WCHAR *name;
+    builtin_invoke_t invoke;
+    DWORD flags;
+} builtin_prop_t;
+
+typedef struct {
+    jsclass_t class;
+    builtin_prop_t value_prop;
+    DWORD props_cnt;
+    const builtin_prop_t *props;
+    void (*destructor)(DispatchEx*);
+    void (*on_put)(DispatchEx*,const WCHAR*);
+} builtin_info_t;
+
+struct DispatchEx {
     const IDispatchExVtbl  *lpIDispatchExVtbl;
 
     LONG ref;
 
+    DWORD buf_size;
+    DWORD prop_cnt;
+    dispex_prop_t *props;
     script_ctx_t *ctx;
-} DispatchEx;
+
+    DispatchEx *prototype;
+
+    const builtin_info_t *builtin_info;
+};
 
 #define _IDispatchEx_(x) ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
-HRESULT create_dispex(script_ctx_t*,DispatchEx**);
+HRESULT create_dispex(script_ctx_t*,const builtin_info_t*,DispatchEx*,DispatchEx**);
 
 struct _script_ctx_t {
     LONG ref;
