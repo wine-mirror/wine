@@ -767,6 +767,48 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
+    UINT num, PropertyItem* items)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return InvalidParameter;
+}
+
+GpStatus WINGDIPAPI GdipGetPropertyCount(GpImage *image, UINT* num)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return InvalidParameter;
+}
+
+GpStatus WINGDIPAPI GdipGetPropertyIdList(GpImage *image, UINT num, PROPID* list)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return InvalidParameter;
+}
+
+GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID id, UINT size,
+    PropertyItem* buffer)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return InvalidParameter;
+}
+
 GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID pid,
     UINT* size)
 {
@@ -781,6 +823,16 @@ GpStatus WINGDIPAPI GdipGetPropertyItemSize(GpImage *image, PROPID pid,
         FIXME("not implemented\n");
 
     return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipGetPropertySize(GpImage *image, UINT* size, UINT* num)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return InvalidParameter;
 }
 
 GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
@@ -945,6 +997,16 @@ GpStatus WINGDIPAPI GdipRemovePropertyItem(GpImage *image, PROPID propId)
 
     if(!image)
         return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipSetPropertyItem(GpImage *image, GDIPCONST PropertyItem* item)
+{
+    static int calls;
 
     if(!(calls++))
         FIXME("not implemented\n");

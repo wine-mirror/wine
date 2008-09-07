@@ -370,11 +370,11 @@
 @ stdcall GdipGetPenWidth(ptr ptr)
 @ stdcall GdipGetPixelOffsetMode(ptr ptr)
 @ stdcall GdipGetPointCount(ptr ptr)
-@ stub GdipGetPropertyCount
-@ stub GdipGetPropertyIdList
-@ stub GdipGetPropertyItem
+@ stdcall GdipGetPropertyCount(ptr ptr)
+@ stdcall GdipGetPropertyIdList(ptr long ptr)
+@ stdcall GdipGetPropertyItem(ptr long long ptr)
 @ stdcall GdipGetPropertyItemSize(ptr long ptr)
-@ stub GdipGetPropertySize
+@ stdcall GdipGetPropertySize(ptr ptr ptr)
 @ stdcall GdipGetRegionBounds(ptr ptr ptr)
 @ stdcall GdipGetRegionBoundsI(ptr ptr ptr)
 @ stdcall GdipGetRegionData(ptr ptr long ptr)
@@ -581,7 +581,7 @@
 @ stub GdipSetPenUnit
 @ stdcall GdipSetPenWidth(ptr long)
 @ stdcall GdipSetPixelOffsetMode(ptr long)
-@ stub GdipSetPropertyItem
+@ stdcall GdipSetPropertyItem(ptr ptr)
 @ stub GdipSetRenderingOrigin
 @ stdcall GdipSetSmoothingMode(ptr long)
 @ stdcall GdipSetSolidFillColor(ptr ptr)
