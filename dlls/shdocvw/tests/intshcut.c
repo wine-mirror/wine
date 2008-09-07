@@ -39,7 +39,7 @@
 
 #include "wine/test.h"
 
-static WINAPI HRESULT Unknown_QueryInterface(IUnknown *pUnknown, REFIID riid, void **ppvObject)
+static HRESULT WINAPI Unknown_QueryInterface(IUnknown *pUnknown, REFIID riid, void **ppvObject)
 {
     if (IsEqualGUID(&IID_IUnknown, riid))
     {
@@ -49,12 +49,12 @@ static WINAPI HRESULT Unknown_QueryInterface(IUnknown *pUnknown, REFIID riid, vo
     return E_NOINTERFACE;
 }
 
-static WINAPI ULONG Unknown_AddRef(IUnknown *pUnknown)
+static ULONG WINAPI Unknown_AddRef(IUnknown *pUnknown)
 {
     return 2;
 }
 
-static WINAPI ULONG Unknown_Release(IUnknown *pUnknown)
+static ULONG WINAPI Unknown_Release(IUnknown *pUnknown)
 {
     return 1;
 }
