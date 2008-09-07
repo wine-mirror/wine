@@ -40,9 +40,9 @@ static IDirectDrawSurface7 *create_overlay(DWORD width, DWORD height, DWORD form
     ddsd.dwWidth = width;
     ddsd.dwHeight = height;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OVERLAY;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
-    ddsd.ddpfPixelFormat.dwFourCC = format;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+    U4(ddsd).ddpfPixelFormat.dwFourCC = format;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &ret, NULL);
     if(FAILED(hr)) return NULL;
     else return ret;
@@ -158,13 +158,13 @@ static void offscreen_test(void) {
     ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
     ddsd.dwWidth = 64;
     ddsd.dwHeight = 64;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwFourCC = 0;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
-    ddsd.ddpfPixelFormat.dwRBitMask = 0xF800;
-    ddsd.ddpfPixelFormat.dwGBitMask = 0x07e0;
-    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U4(ddsd).ddpfPixelFormat.dwFourCC = 0;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07e0;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &offscreen, NULL);
     ok(hr == DD_OK, "IDirectDraw7_CreateSurface failed with hr=0x%08x\n", hr);
@@ -204,7 +204,7 @@ static void yv12_test(void)
     ok(desc.dwWidth == 256 && desc.dwHeight == 256, "Expected size 64x64, got %ux%u\n",
        desc.dwWidth, desc.dwHeight);
     /* The overlay pitch seems to have 256 byte alignment */
-    ok(desc.lPitch == 256, "Unexpected pitch %u, expected 256\n", desc.lPitch);
+    ok(U1(desc).lPitch == 256, "Unexpected pitch %u, expected 256\n", U1(desc).lPitch);
 
     hr = IDirectDrawSurface7_Unlock(surface, NULL);
     ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
