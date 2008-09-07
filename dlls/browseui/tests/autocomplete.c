@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#include <shlguid.h>
 
 #include "wine/test.h"
 
