@@ -146,7 +146,7 @@ typedef struct _SecBuffer
 #define SECBUFFER_MISSING             4
 #define SECBUFFER_EXTRA               5
 #define SECBUFFER_STREAM_TRAILER      6
-#define SECBUFFER_HEADER              7
+#define SECBUFFER_STREAM_HEADER       7
 #define SECBUFFER_NEGOTIATION_INFO    8
 #define SECBUFFER_PADDING             9
 #define SECBUFFER_STREAM             10
