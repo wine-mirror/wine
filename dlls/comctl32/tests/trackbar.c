@@ -38,6 +38,7 @@ static const struct message create_parent_wnd_seq[] = {
     { WM_NCCREATE, sent },
     { WM_NCCALCSIZE, sent|wparam, 0 },
     { WM_CREATE, sent },
+    { WM_QUERYNEWPALETTE, sent|optional },
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
@@ -79,6 +80,7 @@ static const struct message parent_create_trackbar_wnd_seq[] = {
 };
 
 static const struct message parent_new_window_test_seq[] = {
+    { WM_QUERYNEWPALETTE, sent|optional },
     { WM_WINDOWPOSCHANGING, sent},
     { WM_NCACTIVATE, sent},
     { PBT_APMRESUMECRITICAL, sent},
