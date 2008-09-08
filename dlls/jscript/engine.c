@@ -152,6 +152,38 @@ static HRESULT put_value(script_ctx_t *ctx, exprval_t *ref, VARIANT *v, jsexcept
     return disp_propput(ref->u.idref.disp, ref->u.idref.id, ctx->lcid, v, ei, NULL/*FIXME*/);
 }
 
+static HRESULT literal_to_var(literal_t *literal, VARIANT *v)
+{
+    V_VT(v) = literal->vt;
+
+    switch(V_VT(v)) {
+    case VT_EMPTY:
+    case VT_NULL:
+        break;
+    case VT_I4:
+        V_I4(v) = literal->u.lval;
+        break;
+    case VT_R8:
+        V_R8(v) = literal->u.dval;
+        break;
+    case VT_BSTR:
+        V_BSTR(v) = SysAllocString(literal->u.wstr);
+        break;
+    case VT_BOOL:
+        V_BOOL(v) = literal->u.bval;
+        break;
+    case VT_DISPATCH:
+        IDispatch_AddRef(literal->u.disp);
+        V_DISPATCH(v) = literal->u.disp;
+        break;
+    default:
+        ERR("wrong type %d\n", V_VT(v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, jsexcept_t *ei, VARIANT *retv)
 {
     script_ctx_t *script = parser->script;
@@ -431,10 +463,22 @@ HRESULT identifier_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
     return hres;
 }
 
-HRESULT literal_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    7.8 */
+HRESULT literal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    literal_expression_t *expr = (literal_expression_t*)_expr;
+    VARIANT var;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = literal_to_var(expr->literal, &var);
+    if(FAILED(hres))
+        return hres;
+
+    ret->type = EXPRVAL_VARIANT;
+    ret->u.var = var;
+    return S_OK;
 }
 
 HRESULT array_literal_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
