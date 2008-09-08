@@ -25,8 +25,8 @@ typedef LONGLONG REFERENCE_TIME;
 typedef DWORD D3DFORMAT;
 typedef DWORD D3DPOOL;
 typedef HANDLE HMONITOR;
-typedef struct { } AM_MEDIA_TYPE;
-typedef struct { } D3DCOLOR;
+typedef struct { char dummy; } AM_MEDIA_TYPE;
+typedef struct { char dummy; } D3DCOLOR;
 cpp_quote("#endif")
 
 interface IVMRSurface9;
