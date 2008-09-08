@@ -108,13 +108,16 @@ void scope_release(scope_chain_t *scope)
     heap_free(scope);
 }
 
-HRESULT create_exec_ctx(scope_chain_t *scope, exec_ctx_t **ret)
+HRESULT create_exec_ctx(DispatchEx *var_disp, scope_chain_t *scope, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
 
     ctx = heap_alloc_zero(sizeof(exec_ctx_t));
     if(!ctx)
         return E_OUTOFMEMORY;
+
+    IDispatchEx_AddRef(_IDispatchEx_(var_disp));
+    ctx->var_disp = var_disp;
 
     if(scope) {
         scope_addref(scope);
@@ -132,6 +135,8 @@ void exec_release(exec_ctx_t *ctx)
 
     if(ctx->scope_chain)
         scope_release(ctx->scope_chain);
+    if(ctx->var_disp)
+        IDispatchEx_Release(_IDispatchEx_(ctx->var_disp));
     heap_free(ctx);
 }
 
@@ -300,8 +305,12 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
     }
 
     if(flags & EXPR_NEWREF) {
-        FIXME("create ref\n");
-        return E_NOTIMPL;
+        hres = dispex_get_id(_IDispatchEx_(ctx->var_disp), identifier, fdexNameEnsure, &id);
+        if(FAILED(hres))
+            return hres;
+
+        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->var_disp), id);
+        return S_OK;
     }
 
     WARN("Could not find identifier %s\n", debugstr_w(identifier));
