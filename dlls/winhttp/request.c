@@ -1238,7 +1238,26 @@ static BOOL query_data( request_t *request, LPDWORD available, BOOL async )
     BOOL ret;
     DWORD num_bytes;
 
-    ret = netconn_query_data_available( &request->netconn, &num_bytes );
+    if ((ret = netconn_query_data_available( &request->netconn, &num_bytes )))
+    {
+        if (request->content_read < request->content_length)
+        {
+            if (!num_bytes)
+            {
+                char buffer[4096];
+                size_t to_read = min( sizeof(buffer), request->content_length - request->content_read );
+
+                ret = netconn_recv( &request->netconn, buffer, to_read, MSG_PEEK, (int *)&num_bytes );
+                if (ret && !num_bytes) WARN("expected more data to be available\n");
+            }
+        }
+        else if (num_bytes)
+        {
+            WARN("extra data available %u\n", num_bytes);
+            ret = FALSE;
+        }
+    }
+    TRACE("%u bytes available\n", num_bytes);
 
     if (async)
     {

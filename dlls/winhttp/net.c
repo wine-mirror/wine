@@ -464,11 +464,7 @@ BOOL netconn_query_data_available( netconn_t *conn, DWORD *available )
         return TRUE;
     }
 #ifdef FIONREAD
-    if (!(ret = ioctl( conn->socket, FIONREAD, &unread )))
-    {
-        TRACE("%d bytes of queued, but unread data\n", unread);
-        *available += unread;
-    }
+    if (!(ret = ioctl( conn->socket, FIONREAD, &unread ))) *available = unread;
 #endif
     return TRUE;
 }
