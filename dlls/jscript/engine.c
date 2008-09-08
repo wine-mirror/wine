@@ -23,9 +23,67 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
+#define EXPR_NOVAL   0x0001
+#define EXPR_NEWREF  0x0002
+#define EXPR_STRREF  0x0004
+
 static inline HRESULT stat_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
     return stat->eval(ctx, stat, rt, ret);
+}
+
+static inline HRESULT expr_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    return _expr->eval(ctx, _expr, flags, ei, ret);
+}
+
+static void exprval_release(exprval_t *val)
+{
+    switch(val->type) {
+    case EXPRVAL_VARIANT:
+        VariantClear(&val->u.var);
+        return;
+    case EXPRVAL_IDREF:
+        if(val->u.idref.disp)
+            IDispatch_Release(val->u.idref.disp);
+        return;
+    case EXPRVAL_NAMEREF:
+        if(val->u.nameref.disp)
+            IDispatch_Release(val->u.nameref.disp);
+        SysFreeString(val->u.nameref.name);
+    }
+}
+
+/* ECMA-262 3rd Edition    8.7.1 */
+static HRESULT exprval_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, VARIANT *ret)
+{
+    V_VT(ret) = VT_EMPTY;
+
+    switch(val->type) {
+    case EXPRVAL_VARIANT:
+        return VariantCopy(ret, &val->u.var);
+    case EXPRVAL_IDREF:
+        if(!val->u.idref.disp) {
+            FIXME("throw ReferenceError\n");
+            return E_FAIL;
+        }
+
+        return disp_propget(val->u.idref.disp, val->u.idref.id, ctx->lcid, ret, ei, NULL/*FIXME*/);
+    default:
+        ERR("type %d\n", val->type);
+        return E_FAIL;
+    }
+}
+
+static HRESULT exprval_to_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, VARIANT *ret)
+{
+    if(val->type == EXPRVAL_VARIANT) {
+        *ret = val->u.var;
+        V_VT(&val->u.var) = VT_EMPTY;
+        return S_OK;
+    }
+
+    return exprval_value(ctx, val, ei, ret);
 }
 
 HRESULT create_exec_ctx(exec_ctx_t **ret)
@@ -112,6 +170,7 @@ HRESULT var_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    12.3 */
 HRESULT empty_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
     TRACE("\n");
@@ -120,10 +179,28 @@ HRESULT empty_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *
     return S_OK;
 }
 
-HRESULT expression_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.4 */
+HRESULT expression_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    expression_statement_t *stat = (expression_statement_t*)_stat;
+    exprval_t exprval;
+    VARIANT val;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, stat->expr, EXPR_NOVAL, &rt->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, &val);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = val;
+    TRACE("= %s\n", debugstr_variant(ret));
+    return S_OK;
 }
 
 HRESULT if_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)

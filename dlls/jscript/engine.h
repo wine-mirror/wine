@@ -215,7 +215,24 @@ HRESULT switch_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT throw_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT try_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 
-typedef struct exprval_t exprval_t;
+typedef struct {
+    enum {
+        EXPRVAL_VARIANT,
+        EXPRVAL_IDREF,
+        EXPRVAL_NAMEREF
+    } type;
+    union {
+        VARIANT var;
+        struct {
+            IDispatch *disp;
+            DISPID id;
+        } idref;
+        struct {
+            IDispatch *disp;
+            BSTR name;
+        } nameref;
+    } u;
+} exprval_t;
 
 typedef HRESULT (*expression_eval_t)(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 

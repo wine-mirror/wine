@@ -837,3 +837,38 @@ HRESULT disp_call(IDispatch *disp, DISPID id, LCID lcid, WORD flags, DISPPARAMS 
 
     return hres;
 }
+
+HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DISPPARAMS dp  = {NULL,NULL,0,0};
+    IDispatchEx *dispex;
+    DispatchEx *jsdisp;
+    HRESULT hres;
+
+    jsdisp = iface_to_jsdisp((IUnknown*)disp);
+    if(jsdisp) {
+        dispex_prop_t *prop;
+
+        prop = get_prop(jsdisp, id);
+        if(prop)
+            hres = prop_get(jsdisp, prop, lcid, &dp, val, ei, caller);
+        else
+            hres = DISP_E_MEMBERNOTFOUND;
+
+        IDispatchEx_Release(_IDispatchEx_(jsdisp));
+        return hres;
+    }
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(FAILED(hres)) {
+        ULONG err = 0;
+
+        TRACE("uding IDispatch\n");
+        return IDispatchEx_Invoke(dispex, id, &IID_NULL, lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, &err);
+    }
+
+    hres = IDispatchEx_InvokeEx(dispex, id, lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, caller);
+    IDispatchEx_Release(dispex);
+
+    return hres;
+}
