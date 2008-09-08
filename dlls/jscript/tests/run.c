@@ -57,6 +57,11 @@ static const CLSID CLSID_JScript =
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+DEFINE_EXPECT(global_propget_d);
+DEFINE_EXPECT(global_propget_i);
+
+#define DISPID_GLOBAL_TESTPROPGET   0x1000
+
 static const WCHAR testW[] = {'t','e','s','t',0};
 
 static const char *debugstr_w(LPCWSTR str)
@@ -80,6 +85,13 @@ static BSTR a2bstr(const char *str)
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
 
     return ret;
+}
+
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    WCHAR buf[512];
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    return lstrcmpW(strw, buf);
 }
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -173,12 +185,41 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
+    if(!strcmp_wa(bstrName, "testPropGet")) {
+        CHECK_EXPECT(global_propget_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_GLOBAL_TESTPROPGET;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", debugstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
 }
 
 static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
+     switch(id) {
+     case DISPID_GLOBAL_TESTPROPGET:
+        CHECK_EXPECT(global_propget_i);
+
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = 1;
+
+        return S_OK;
+     }
+
+     ok(0, "unexpected call %x\n", id);
     return DISP_E_MEMBERNOTFOUND;
 }
 
@@ -326,7 +367,6 @@ static void parse_script(BSTR script_str)
 
     hres = IActiveScript_AddNamedItem(engine, testW,
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
-    todo_wine
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
@@ -350,6 +390,12 @@ static void run_tests(void)
 {
     parse_script_a("");
     parse_script_a("/* empty */ ;");
+
+    SET_EXPECT(global_propget_d);
+    SET_EXPECT(global_propget_i);
+    parse_script_a("testPropGet;");
+    CHECK_CALLED(global_propget_d);
+    CHECK_CALLED(global_propget_i);
 }
 
 START_TEST(run)

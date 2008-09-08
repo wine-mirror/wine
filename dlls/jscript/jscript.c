@@ -320,8 +320,41 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
                                            LPCOLESTR pstrName, DWORD dwFlags)
 {
     JScript *This = ACTSCRIPT_THIS(iface);
-    FIXME("(%p)->(%s %x)\n", This, debugstr_w(pstrName), dwFlags);
-    return E_NOTIMPL;
+    named_item_t *item;
+    IDispatch *disp;
+    IUnknown *unk;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x)\n", This, debugstr_w(pstrName), dwFlags);
+
+    if(This->thread_id != GetCurrentThreadId() || !This->ctx || This->ctx->state == SCRIPTSTATE_CLOSED)
+        return E_UNEXPECTED;
+
+    hres = IActiveScriptSite_GetItemInfo(This->site, pstrName, SCRIPTINFO_IUNKNOWN, &unk, NULL);
+    if(FAILED(hres)) {
+        WARN("GetItemInfo failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
+    IUnknown_Release(unk);
+    if(FAILED(hres)) {
+        WARN("object does not implement IDispatch\n");
+        return hres;
+    }
+
+    item = heap_alloc(sizeof(*item));
+    if(!item) {
+        IDispatch_Release(disp);
+        return E_OUTOFMEMORY;
+    }
+
+    item->disp = disp;
+    item->flags = dwFlags;
+    item->next = This->ctx->named_items;
+    This->ctx->named_items = item;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI JScript_AddTypeLib(IActiveScript *iface, REFGUID rguidTypeLib,

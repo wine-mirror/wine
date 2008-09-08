@@ -123,6 +123,24 @@ static HRESULT dispex_get_id(IDispatchEx *dispex, BSTR name, DWORD flags, DISPID
     return IDispatchEx_GetDispID(dispex, name, flags|fdexNameCaseSensitive, id);
 }
 
+static HRESULT disp_get_id(IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
+{
+    IDispatchEx *dispex;
+    HRESULT hres;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(FAILED(hres)) {
+        TRACE("unsing IDispatch\n");
+
+        *id = 0;
+        return IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);
+    }
+
+    hres = dispex_get_id(dispex, name, flags, id);
+    IDispatchEx_Release(dispex);
+    return hres;
+}
+
 HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, jsexcept_t *ei, VARIANT *retv)
 {
     script_ctx_t *script = parser->script;
@@ -178,6 +196,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 /* ECMA-262 3rd Edition    10.1.4 */
 static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, exprval_t *ret)
 {
+    named_item_t *item;
     DISPID id = 0;
     HRESULT hres;
 
@@ -185,7 +204,17 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
 
     /* FIXME: scope chain */
     /* FIXME: global */
-    /* FIXME: named items */
+
+    for(item = ctx->parser->script->named_items; item; item = item->next) {
+        hres = disp_get_id(item->disp, identifier, 0, &id);
+        if(SUCCEEDED(hres))
+            break;
+    }
+
+    if(item) {
+        exprval_set_idref(ret, (IDispatch*)item->disp, id);
+        return S_OK;
+    }
 
     hres = dispex_get_id(_IDispatchEx_(ctx->parser->script->script_disp), identifier, 0, &id);
     if(SUCCEEDED(hres)) {

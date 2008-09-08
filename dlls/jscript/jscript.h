@@ -89,11 +89,19 @@ HRESULT create_dispex(script_ctx_t*,const builtin_info_t*,DispatchEx*,DispatchEx
 HRESULT disp_call(IDispatch*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propget(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 
+typedef struct named_item_t {
+    IDispatch *disp;
+    DWORD flags;
+
+    struct named_item_t *next;
+} named_item_t;
+
 struct _script_ctx_t {
     LONG ref;
 
     SCRIPTSTATE state;
     exec_ctx_t *exec_ctx;
+    named_item_t *named_items;
     LCID lcid;
 
     DispatchEx *script_disp;
