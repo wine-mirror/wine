@@ -9652,6 +9652,65 @@ static void dp3_alpha_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
 }
 
+static void zwriteenable_test(IDirect3DDevice9 *device) {
+    HRESULT hr;
+    DWORD color;
+    struct vertex quad1[] = {
+        { -1.0,  -1.0,  0.1,    0x00ff0000},
+        { -1.0,   1.0,  0.1,    0x00ff0000},
+        {  1.0,  -1.0,  0.1,    0x00ff0000},
+        {  1.0,   1.0,  0.1,    0x00ff0000},
+    };
+    struct vertex quad2[] = {
+        { -1.0,  -1.0,  0.9,    0x0000ff00},
+        { -1.0,   1.0,  0.9,    0x0000ff00},
+        {  1.0,  -1.0,  0.9,    0x0000ff00},
+        {  1.0,   1.0,  0.9,    0x0000ff00},
+    };
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x000000ff, 1.0f, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+    if(SUCCEEDED(hr)) {
+        /* The Z buffer is filled with 1.0. Draw a red quad with z = 0.1, zenable = D3DZB_FALSE, zwriteenable = TRUE.
+         * The red color is written because the z test is disabled. The question is wether the z = 0.1 values
+         * are written into the Z buffer. After the draw, set zenable = TRUE and draw a green quad at z = 0.9.
+         * If the values are written, the z test will fail(0.9 > 0.1) and the red color remains. If the values
+         * are not written, the z test succeeds(0.9 < 1.0) and the green color is written. It turns out that
+         * the screen is green, so zenable = D3DZB_FALSE and zwriteenable  = TRUE does NOT write to the z buffer.
+         */
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(*quad1));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed with 0x%08x\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed with 0x%08x\n", hr);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ff00, 1), "zwriteenable test returned 0x%08x, expected 0x0000ff00\n",
+       color);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -9748,6 +9807,7 @@ START_TEST(visual)
     tssargtemp_test(device_ptr);
     np2_stretch_rect_test(device_ptr);
     yuv_color_test(device_ptr);
+    zwriteenable_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
