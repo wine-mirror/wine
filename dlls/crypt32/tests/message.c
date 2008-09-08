@@ -190,6 +190,73 @@ static void test_verify_detached_message_hash(void)
     ok(ret, "CryptVerifyDetachedMessageHash failed: %08x\n", GetLastError());
 }
 
+static BYTE hashContent[] = {
+0x30,0x47,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x05,0xa0,0x3a,
+0x30,0x38,0x02,0x01,0x00,0x30,0x0c,0x06,0x08,0x2a,0x86,0x48,0x86,0xf7,0x0d,
+0x02,0x05,0x05,0x00,0x30,0x13,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,
+0x07,0x01,0xa0,0x06,0x04,0x04,0x01,0x02,0x03,0x04,0x04,0x10,0x08,0xd6,0xc0,
+0x5a,0x21,0x51,0x2a,0x79,0xa1,0xdf,0xeb,0x9d,0x2a,0x8f,0x26,0x2f };
+
+static void test_verify_message_hash(void)
+{
+    BOOL ret;
+    CRYPT_HASH_MESSAGE_PARA para;
+    DWORD size;
+    BYTE *buf = NULL;
+
+    memset(&para, 0, sizeof(para));
+    /* Crash */
+    if (0)
+        ret = CryptVerifyMessageHash(NULL, NULL, 0, NULL, NULL, NULL, NULL);
+    SetLastError(0xdeadbeef);
+    ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    para.cbSize = sizeof(para);
+    SetLastError(0xdeadbeef);
+    ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
+    SetLastError(0xdeadbeef);
+    ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+     "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    /* Verifying the hash of a detached message succeeds? */
+    ret = CryptVerifyMessageHash(&para, detachedHashContent,
+     sizeof(detachedHashContent), NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
+    /* As does verifying the hash of a regular message. */
+    ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
+     NULL, NULL, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
+    ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
+     NULL, &size, NULL, NULL);
+    todo_wine
+    ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
+    if (ret)
+        buf = CryptMemAlloc(size);
+    if (buf)
+    {
+        size = 1;
+        ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
+         buf, &size, NULL, NULL);
+        ok(!ret && GetLastError() == ERROR_MORE_DATA,
+         "expected ERROR_MORE_DATA, got %08x\n", GetLastError());
+        ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
+         buf, &size, NULL, NULL);
+        ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
+        ok(size == sizeof(msgData), "unexpected size %d\n", size);
+        ok(!memcmp(buf, msgData, size), "unexpected value\n");
+        CryptMemFree(buf);
+    }
+}
+
 static const BYTE signedContent[] = {
 0x30,0x81,0xb2,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x02,0xa0,
 0x81,0xa4,0x30,0x81,0xa1,0x02,0x01,0x01,0x31,0x0e,0x30,0x0c,0x06,0x08,0x2a,
@@ -522,6 +589,7 @@ START_TEST(message)
 {
     test_msg_get_signer_count();
     test_verify_detached_message_hash();
+    test_verify_message_hash();
     test_verify_message_signature();
     test_hash_message();
 }
