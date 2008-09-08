@@ -61,9 +61,12 @@ DEFINE_EXPECT(global_propget_d);
 DEFINE_EXPECT(global_propget_i);
 DEFINE_EXPECT(global_propput_d);
 DEFINE_EXPECT(global_propput_i);
+DEFINE_EXPECT(global_success_d);
+DEFINE_EXPECT(global_success_i);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
 #define DISPID_GLOBAL_TESTPROPPUT   0x1001
+#define DISPID_GLOBAL_REPORTSUCCESS 0x1002
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -188,6 +191,12 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
+    if(!strcmp_wa(bstrName, "reportSuccess")) {
+        CHECK_EXPECT(global_success_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_GLOBAL_REPORTSUCCESS;
+        return S_OK;
+    }
     if(!strcmp_wa(bstrName, "testPropGet")) {
         CHECK_EXPECT(global_propget_d);
         ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
@@ -209,6 +218,19 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
      switch(id) {
+     case DISPID_GLOBAL_REPORTSUCCESS:
+         CHECK_EXPECT(global_success_i);
+
+        ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 0, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        return S_OK;
+
      case DISPID_GLOBAL_TESTPROPGET:
         CHECK_EXPECT(global_propget_i);
 
@@ -427,6 +449,12 @@ static void run_tests(void)
     parse_script_a("testPropPut = 1;");
     CHECK_CALLED(global_propput_d);
     CHECK_CALLED(global_propput_i);
+
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    parse_script_a("reportSuccess();");
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
 }
 
 START_TEST(run)

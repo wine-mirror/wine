@@ -464,16 +464,100 @@ HRESULT member_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags,
     return E_NOTIMPL;
 }
 
+static void free_dp(DISPPARAMS *dp)
+{
+    DWORD i;
+
+    for(i=0; i < dp->cArgs; i++)
+        VariantClear(dp->rgvarg+i);
+    heap_free(dp->rgvarg);
+}
+
+static HRESULT args_to_param(exec_ctx_t *ctx, argument_t *args, jsexcept_t *ei, DISPPARAMS *dp)
+{
+    VARIANTARG *vargs;
+    exprval_t exprval;
+    argument_t *iter;
+    DWORD cnt = 0, i;
+    HRESULT hres = S_OK;
+
+    memset(dp, 0, sizeof(*dp));
+
+    for(iter = args; iter; iter = iter->next)
+        cnt++;
+    if(!cnt)
+        return S_OK;
+
+    vargs = heap_alloc_zero(cnt * sizeof(*vargs));
+    if(!vargs)
+        return E_OUTOFMEMORY;
+
+    for(i = cnt, iter = args; iter; iter = iter->next) {
+        hres = expr_eval(ctx, iter->expr, 0, ei, &exprval);
+        if(FAILED(hres))
+            break;
+
+        hres = exprval_to_value(ctx->parser->script, &exprval, ei, vargs + (--i));
+        exprval_release(&exprval);
+        if(FAILED(hres))
+            break;
+    }
+
+    if(FAILED(hres)) {
+        free_dp(dp);
+        return hres;
+    }
+
+    dp->rgvarg = vargs;
+    dp->cArgs = cnt;
+    return S_OK;
+}
+
 HRESULT member_new_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    call_expression_t *expr = (call_expression_t*)_expr;
+    VARIANT func, var;
+    exprval_t exprval;
+    DISPPARAMS dp;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = args_to_param(ctx, expr->argument_list, ei, &dp);
+    if(SUCCEEDED(hres)) {
+        switch(exprval.type) {
+        case EXPRVAL_IDREF:
+            hres = disp_call(exprval.u.idref.disp, exprval.u.idref.id, ctx->parser->script->lcid, DISPATCH_METHOD,
+                    &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
+            if(flags & EXPR_NOVAL)
+                V_VT(&var) = VT_EMPTY;
+            break;
+        default:
+            FIXME("unimplemented type %d\n", V_VT(&func));
+            hres = E_NOTIMPL;
+        }
+
+        free_dp(&dp);
+    }
+
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("= %s\n", debugstr_variant(&var));
+    ret->type = EXPRVAL_VARIANT;
+    ret->u.var = var;
+    return S_OK;
 }
 
 HRESULT this_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
