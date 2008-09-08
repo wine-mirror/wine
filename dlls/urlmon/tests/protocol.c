@@ -871,6 +871,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         LPWSTR additional_headers = NULL;
         BYTE sec_id[100];
         DWORD fetched = 0, size = 100;
+        DWORD tid;
 
         SET_EXPECT(GetBindString_USER_AGENT);
         hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_USER_AGENT,
@@ -927,7 +928,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
         IServiceProvider_Release(service_provider);
 
-        CreateThread(NULL, 0, thread_proc, NULL, 0, NULL);
+        CreateThread(NULL, 0, thread_proc, NULL, 0, &tid);
 
         return S_OK;
     }
