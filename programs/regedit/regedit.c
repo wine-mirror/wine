@@ -196,6 +196,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
         }
     case ACTION_EXPORT: {
             CHAR filename[MAX_PATH];
+            WCHAR* filenameW;
 
             filename[0] = '\0';
             get_file_name(&s, filename);
@@ -205,14 +206,19 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                 exit(1);
             }
 
+            filenameW = GetWideString(filename);
             if (s[0]) {
                 CHAR reg_key_name[KEY_MAX_LEN];
+                WCHAR* reg_key_nameW;
 
                 get_file_name(&s, reg_key_name);
-                export_registry_key(filename, reg_key_name);
+                reg_key_nameW = GetWideString(reg_key_name);
+                export_registry_key(filenameW, reg_key_nameW);
+                HeapFree(GetProcessHeap(), 0, reg_key_nameW);
             } else {
-                export_registry_key(filename, NULL);
+                export_registry_key(filenameW, NULL);
             }
+            HeapFree(GetProcessHeap(), 0, filenameW);
             break;
         }
     default:

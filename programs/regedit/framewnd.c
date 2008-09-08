@@ -372,11 +372,7 @@ static BOOL ExportRegistryFile(HWND hWnd, BOOL export_branch)
     ofn.lpTemplateName = MAKEINTRESOURCEW(IDD_EXPORT_TEMPLATE);
     if (GetSaveFileNameW(&ofn)) {
         BOOL result;
-        CHAR* fileA = GetMultiByteString(ofn.lpstrFile);
-        CHAR* sectionA = GetMultiByteString((LPWSTR)ofn.lCustData);
-        result = export_registry_key(fileA, sectionA);
-        HeapFree(GetProcessHeap(), 0, fileA);
-        HeapFree(GetProcessHeap(), 0, sectionA);
+        result = export_registry_key(ofn.lpstrFile, (LPWSTR)ofn.lCustData);
         if (!result) {
             /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
             return FALSE;
