@@ -62,6 +62,21 @@ static inline dispex_prop_t *get_prop(DispatchEx *This, DISPID id)
     return This->props+id;
 }
 
+static DWORD get_flags(DispatchEx *This, dispex_prop_t *prop)
+{
+    if(prop->type == PROP_PROTREF) {
+        dispex_prop_t *parent = get_prop(This->prototype, prop->u.ref);
+        if(!parent) {
+            prop->type = PROP_DELETED;
+            return 0;
+        }
+
+        return get_flags(This->prototype, parent);
+    }
+
+    return prop->flags;
+}
+
 static const builtin_prop_t *find_builtin_prop(DispatchEx *This, const WCHAR *name)
 {
     int min = 0, max, i, r;
@@ -347,6 +362,30 @@ static HRESULT prop_put(DispatchEx *This, dispex_prop_t *prop, LCID lcid, DISPPA
     return S_OK;
 }
 
+static HRESULT fill_protrefs(DispatchEx *This)
+{
+    dispex_prop_t *iter, *prop;
+    HRESULT hres;
+
+    if(!This->prototype)
+        return S_OK;
+
+    fill_protrefs(This->prototype);
+
+    for(iter = This->prototype->props; iter < This->prototype->props+This->prototype->prop_cnt; iter++) {
+        hres = find_prop_name(This, iter->name, &prop);
+        if(FAILED(hres))
+            return hres;
+        if(!prop) {
+            prop = alloc_protref(This, iter->name, iter - This->prototype->props);
+            if(!prop)
+                return E_OUTOFMEMORY;
+        }
+    }
+
+    return S_OK;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -564,8 +603,33 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
 static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
-    return E_NOTIMPL;
+    dispex_prop_t *iter;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
+
+    if(id == DISPID_STARTENUM) {
+        hres = fill_protrefs(This);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    iter = get_prop(This, id+1);
+    if(!iter) {
+        *pid = DISPID_STARTENUM;
+        return S_FALSE;
+    }
+
+    while(iter < This->props + This->prop_cnt) {
+        if(iter->name && (get_flags(This, iter) & PROPF_ENUM)) {
+            *pid = prop_to_id(This, iter);
+            return S_OK;
+        }
+        iter++;
+    }
+
+    *pid = DISPID_STARTENUM;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
