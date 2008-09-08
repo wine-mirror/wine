@@ -475,6 +475,11 @@ static BOOL CRYPT_AsnDecodeSequence(struct AsnDecodeSequenceItem items[],
      cbEncoded, dwFlags, pDecodePara, pvStructInfo, *pcbStructInfo,
      startingPointer);
 
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        return FALSE;
+    }
     if (pbEncoded[0] == ASN_SEQUENCE)
     {
         DWORD dataLen;
