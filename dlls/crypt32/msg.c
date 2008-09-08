@@ -1723,15 +1723,13 @@ static BOOL CDecodeMsg_FinalizeHashedContent(CDecodeMsg *msg,
         {
             /* Unlike for non-detached messages, the data were never stored as
              * the content param, but were saved in msg->detached_data instead.
-             * Set the content property with the detached data so the data may
-             * be hashed.
              */
-            ContextPropertyList_SetProperty(msg->properties,
-             CMSG_CONTENT_PARAM, msg->detached_data.pbData,
-             msg->detached_data.cbData);
+            content.pbData = msg->detached_data.pbData;
+            content.cbData = msg->detached_data.cbData;
         }
-        ret = ContextPropertyList_FindProperty(msg->properties,
-         CMSG_CONTENT_PARAM, &content);
+        else
+            ret = ContextPropertyList_FindProperty(msg->properties,
+             CMSG_CONTENT_PARAM, &content);
         if (ret)
             ret = CryptHashData(msg->u.hash, content.pbData, content.cbData, 0);
     }
