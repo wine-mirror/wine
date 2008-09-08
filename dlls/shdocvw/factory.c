@@ -215,7 +215,7 @@ static HRESULT register_server(BOOL doregister)
     STRTABLEA strtable;
     STRENTRYA pse[14];
     static CLSID const *clsids[14];
-    int i = 0;
+    unsigned int i = 0;
     HRESULT hres;
 
     INF_SET_CLSID(CUrlHistory);

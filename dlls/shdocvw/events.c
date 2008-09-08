@@ -286,7 +286,7 @@ static void ConnectionPoint_Create(REFIID riid, ConnectionPoint **cp,
 
 static void ConnectionPoint_Destroy(ConnectionPoint *This)
 {
-    int i;
+    DWORD i;
 
     for(i=0; i<This->sinks_size; i++) {
         if(This->sinks[i])
