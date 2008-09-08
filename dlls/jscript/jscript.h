@@ -48,7 +48,8 @@ typedef struct DispatchEx DispatchEx;
 #define PROPF_CONSTR  0x0400
 
 typedef enum {
-    JSCLASS_NONE
+    JSCLASS_NONE,
+    JSCLASS_GLOBAL
 } jsclass_t;
 
 typedef HRESULT (*builtin_invoke_t)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
@@ -105,6 +106,7 @@ struct _script_ctx_t {
     LCID lcid;
 
     DispatchEx *script_disp;
+    DispatchEx *global;
 };
 
 void script_release(script_ctx_t*);
@@ -113,6 +115,8 @@ static inline void script_addref(script_ctx_t *ctx)
 {
     ctx->ref++;
 }
+
+HRESULT init_global(script_ctx_t*);
 
 const char *debugstr_variant(const VARIANT*);
 

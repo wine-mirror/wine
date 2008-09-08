@@ -216,7 +216,13 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
             return hres;
     }
 
-    hres = create_dispex(This->ctx, NULL, NULL, &This->ctx->script_disp);
+    if(!This->ctx->script_disp) {
+        hres = create_dispex(This->ctx, NULL, NULL, &This->ctx->script_disp);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    hres = init_global(This->ctx);
     if(FAILED(hres))
         return hres;
 
@@ -305,6 +311,11 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
         if(This->ctx->script_disp) {
             IDispatchEx_Release(_IDispatchEx_(This->ctx->script_disp));
             This->ctx->script_disp = NULL;
+        }
+
+        if(This->ctx->global) {
+            IDispatchEx_Release(_IDispatchEx_(This->ctx->global));
+            This->ctx->global = NULL;
         }
     }
 

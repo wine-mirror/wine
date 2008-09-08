@@ -203,7 +203,12 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
     TRACE("%s\n", debugstr_w(identifier));
 
     /* FIXME: scope chain */
-    /* FIXME: global */
+
+    hres = dispex_get_id(_IDispatchEx_(ctx->parser->script->global), identifier, 0, &id);
+    if(SUCCEEDED(hres)) {
+        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->global), id);
+        return S_OK;
+    }
 
     for(item = ctx->parser->script->named_items; item; item = item->next) {
         hres = disp_get_id(item->disp, identifier, 0, &id);
