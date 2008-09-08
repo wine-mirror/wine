@@ -271,7 +271,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         request_t *request = (request_t *)hdr;
 
         if (!(cert = netconn_get_certificate( &request->netconn ))) return FALSE;
-        memcpy( buffer, cert, sizeof(CERT_CONTEXT) );
+        *(CERT_CONTEXT **)buffer = (CERT_CONTEXT *)cert;
         *buflen = sizeof(cert);
         return TRUE;
     }

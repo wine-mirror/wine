@@ -23,6 +23,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winhttp.h>
+#include <wincrypt.h>
 
 #include "wine/test.h"
 
@@ -556,8 +557,9 @@ static void test_secure_connection(void)
     static const WCHAR google[] = {'w','w','w','.','g','o','o','g','l','e','.','c','o','m',0};
 
     HANDLE ses, con, req;
-    DWORD size, status, policy;
+    DWORD size, status, policy, bitness;
     BOOL ret;
+    CERT_CONTEXT *cert;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
@@ -590,6 +592,14 @@ static void test_secure_connection(void)
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     ok(ret, "failed to send request %u\n", GetLastError());
+
+    size = sizeof(cert);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &cert, &size );
+    ok(ret, "failed to retrieve certificate context %u\n", GetLastError());
+
+    size = sizeof(bitness);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_SECURITY_KEY_BITNESS, &bitness, &size );
+    ok(ret, "failed to retrieve key bitness %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
