@@ -884,7 +884,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_Open(PIDSCDRIVER iface)
         return hr;
     }
 
-    err = snd_pcm_open(&pcm, WOutDev[This->wDevID].pcmname, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
+    err = snd_pcm_open(&pcm, WInDev[This->wDevID].pcmname, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
     if (err < 0) goto err;
     err = snd_pcm_hw_params_any(pcm, hw_params);
     if (err < 0) goto err;
