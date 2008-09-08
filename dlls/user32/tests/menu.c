@@ -1796,6 +1796,7 @@ static void test_menu_input(void) {
     WNDCLASSA  wclass;
     HINSTANCE hInstance = GetModuleHandleA( NULL );
     HANDLE hThread, hWnd;
+    DWORD tid;
 
     wclass.lpszClassName = "MenuTestClass";
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
@@ -1831,7 +1832,7 @@ static void test_menu_input(void) {
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
 
-    hThread = CreateThread(NULL, 0, test_menu_input_thread, hWnd, 0, NULL);
+    hThread = CreateThread(NULL, 0, test_menu_input_thread, hWnd, 0, &tid);
     while(1)
     {
         if (WAIT_TIMEOUT != WaitForSingleObject(hThread, 50))
