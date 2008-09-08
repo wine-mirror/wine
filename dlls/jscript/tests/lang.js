@@ -23,6 +23,15 @@ ok(!null, "!null is not true");
 ok(!0, "!0 is not true");
 ok(!0.0, "!0.0 is not true");
 
+ok(1 === 1, "1 === 1 is false");
+ok(!(1 === 2), "!(1 === 2) is false");
+ok(1.0 === 1, "1.0 === 1 is false");
+ok("abc" === "abc", "\"abc\" === \"abc\" is false");
+ok(true === true, "true === true is false");
+ok(null === null, "null === null is false");
+ok(undefined === undefined, "undefined === undefined is false");
+ok(!(undefined === null), "!(undefined === null) is false");
+
 var trueVar = true;
 ok(trueVar, "trueVar is not true");
 

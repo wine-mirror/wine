@@ -194,6 +194,97 @@ static HRESULT put_value(script_ctx_t *ctx, exprval_t *ref, VARIANT *v, jsexcept
     return disp_propput(ref->u.idref.disp, ref->u.idref.id, ctx->lcid, v, ei, NULL/*FIXME*/);
 }
 
+static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
+{
+    IObjectIdentity *identity;
+    IUnknown *unk1, *unk2;
+    HRESULT hres;
+
+    if(disp1 == disp2) {
+        *ret = TRUE;
+        return S_OK;
+    }
+
+    hres = IDispatch_QueryInterface(disp1, &IID_IUnknown, (void**)&unk1);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IDispatch_QueryInterface(disp2, &IID_IUnknown, (void**)&unk2);
+    if(FAILED(hres)) {
+        IUnknown_Release(unk1);
+        return hres;
+    }
+
+    if(unk1 == unk2) {
+        *ret = TRUE;
+    }else {
+        hres = IUnknown_QueryInterface(unk1, &IID_IObjectIdentity, (void**)&identity);
+        if(SUCCEEDED(hres)) {
+            hres = IObjectIdentity_IsEqualObject(identity, unk2);
+            IObjectIdentity_Release(identity);
+            *ret = hres == S_OK;
+        }else {
+            *ret = FALSE;
+        }
+    }
+
+    IUnknown_Release(unk1);
+    IUnknown_Release(unk2);
+    return S_OK;
+}
+
+static inline BOOL is_num_vt(enum VARENUM vt)
+{
+    return vt == VT_I4 || vt == VT_R8;
+}
+
+static inline DOUBLE num_val(const VARIANT *v)
+{
+    return V_VT(v) == VT_I4 ? V_I4(v) : V_R8(v);
+}
+
+/* ECMA-262 3rd Edition    11.9.6 */
+HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
+{
+    TRACE("\n");
+
+    if(V_VT(lval) != V_VT(rval)) {
+        if(is_num_vt(V_VT(lval)) && is_num_vt(V_VT(rval))) {
+            *ret = num_val(lval) == num_val(rval);
+            return S_OK;
+        }
+
+        *ret = FALSE;
+        return S_OK;
+    }
+
+    switch(V_VT(lval)) {
+    case VT_EMPTY:
+    case VT_NULL:
+        *ret = VARIANT_TRUE;
+        break;
+    case VT_I4:
+        *ret = V_I4(lval) == V_I4(rval);
+        break;
+    case VT_R8:
+        *ret = V_R8(lval) == V_R8(rval);
+        break;
+    case VT_BSTR:
+        *ret = !strcmpW(V_BSTR(lval), V_BSTR(rval));
+        break;
+    case VT_DISPATCH:
+        return disp_cmp(V_DISPATCH(lval), V_DISPATCH(rval), ret);
+    case VT_BOOL:
+        *ret = !V_BOOL(lval) == !V_BOOL(rval);
+        break;
+    default:
+        FIXME("unimplemented vt %d\n", V_VT(lval));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT literal_to_var(literal_t *literal, VARIANT *v)
 {
     V_VT(v) = literal->vt;
@@ -506,6 +597,34 @@ static HRESULT return_bool(exprval_t *ret, DWORD b)
     ret->type = EXPRVAL_VARIANT;
     V_VT(&ret->u.var) = VT_BOOL;
     V_BOOL(&ret->u.var) = b ? VARIANT_TRUE : VARIANT_FALSE;
+
+    return S_OK;
+}
+
+static HRESULT get_binary_expr_values(exec_ctx_t *ctx, binary_expression_t *expr, jsexcept_t *ei, VARIANT *lval, VARIANT *rval)
+{
+    exprval_t exprval;
+    HRESULT hres;
+
+    hres = expr_eval(ctx, expr->expression1, 0, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, ei, lval);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = expr_eval(ctx, expr->expression2, 0, ei, &exprval);
+    if(SUCCEEDED(hres)) {
+        hres = exprval_to_value(ctx->parser->script, &exprval, ei, rval);
+        exprval_release(&exprval);
+    }
+
+    if(FAILED(hres)) {
+        VariantClear(lval);
+        return hres;
+    }
 
     return S_OK;
 }
@@ -829,10 +948,25 @@ HRESULT equal_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, 
     return E_NOTIMPL;
 }
 
-HRESULT equal2_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.9.4 */
+HRESULT equal2_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+    VARIANT rval, lval;
+    BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = get_binary_expr_values(ctx, expr, ei, &rval, &lval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = equal2_values(&rval, &lval, &b);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bool(ret, b);
 }
 
 HRESULT not_equal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
