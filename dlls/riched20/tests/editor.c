@@ -38,7 +38,7 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH], string3[MAX_PATH];
     WideCharToMultiByte(CP_ACP, 0, szString1, -1, string1, MAX_PATH, NULL, NULL); \
     WideCharToMultiByte(CP_ACP, 0, szString2, -1, string2, MAX_PATH, NULL, NULL); \
     WideCharToMultiByte(CP_ACP, 0, szString3, -1, string3, MAX_PATH, NULL, NULL); \
-    ok(!lstrcmpW(szString3, szString1) || !lstrcmpW(szString3, szString1), \
+    ok(!lstrcmpW(szString3, szString1) || !lstrcmpW(szString3, szString2), \
        format, string1, string2, string3);
 
 static HMODULE hmoduleRichEdit;
@@ -3217,7 +3217,7 @@ static void test_EM_SETTEXTEX(void)
                           'm', 'e', 'T', 'e',
                           'x', 't', 0};
   WCHAR TestItem1altn[] = {'T','T','e','s','t','S','o','m','e','T','e','x','t',
-                           '\n','t','S','o','m','e','T','e','x','t',0};
+                           '\r','t','S','o','m','e','T','e','x','t',0};
   WCHAR TestItem2[] = {'T', 'e', 's', 't',
                        'S', 'o', 'm', 'e',
                        'T', 'e', 'x', 't',
