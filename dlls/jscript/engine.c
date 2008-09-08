@@ -86,6 +86,16 @@ static HRESULT exprval_to_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *e
     return exprval_value(ctx, val, ei, ret);
 }
 
+static void exprval_set_idref(exprval_t *val, IDispatch *disp, DISPID id)
+{
+    val->type = EXPRVAL_IDREF;
+    val->u.idref.disp = disp;
+    val->u.idref.id = id;
+
+    if(disp)
+        IDispatch_AddRef(disp);
+}
+
 HRESULT create_exec_ctx(exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
@@ -104,6 +114,13 @@ void exec_release(exec_ctx_t *ctx)
         return;
 
     heap_free(ctx);
+}
+
+static HRESULT dispex_get_id(IDispatchEx *dispex, BSTR name, DWORD flags, DISPID *id)
+{
+    *id = 0;
+
+    return IDispatchEx_GetDispID(dispex, name, flags|fdexNameCaseSensitive, id);
 }
 
 HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, jsexcept_t *ei, VARIANT *retv)
@@ -156,6 +173,33 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     else
         VariantClear(&val);
     return S_OK;
+}
+
+/* ECMA-262 3rd Edition    10.1.4 */
+static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, exprval_t *ret)
+{
+    DISPID id = 0;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(identifier));
+
+    /* FIXME: scope chain */
+    /* FIXME: global */
+    /* FIXME: named items */
+
+    hres = dispex_get_id(_IDispatchEx_(ctx->parser->script->script_disp), identifier, 0, &id);
+    if(SUCCEEDED(hres)) {
+        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->script_disp), id);
+        return S_OK;
+    }
+
+    if(flags & EXPR_NEWREF) {
+        FIXME("create ref\n");
+        return E_NOTIMPL;
+    }
+
+    WARN("Could not find identifier %s\n", debugstr_w(identifier));
+    return E_FAIL;
 }
 
 HRESULT block_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
@@ -323,10 +367,23 @@ HRESULT this_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, j
     return E_NOTIMPL;
 }
 
-HRESULT identifier_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    10.1.4 */
+HRESULT identifier_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    identifier_expression_t *expr = (identifier_expression_t*)_expr;
+    BSTR identifier;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    identifier = SysAllocString(expr->identifier);
+    if(!identifier)
+        return E_OUTOFMEMORY;
+
+    hres = identifier_eval(ctx, identifier, flags, ret);
+
+    SysFreeString(identifier);
+    return hres;
 }
 
 HRESULT literal_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
