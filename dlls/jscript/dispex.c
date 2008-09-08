@@ -614,8 +614,19 @@ static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID 
 static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%x %p)\n", This, id, pbstrName);
-    return E_NOTIMPL;
+    dispex_prop_t *prop;
+
+    TRACE("(%p)->(%x %p)\n", This, id, pbstrName);
+
+    prop = get_prop(This, id);
+    if(!prop || !prop->name || prop->type == PROP_DELETED)
+        return DISP_E_MEMBERNOTFOUND;
+
+    *pbstrName = SysAllocString(prop->name);
+    if(!*pbstrName)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
