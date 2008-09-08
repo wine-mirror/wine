@@ -335,34 +335,29 @@ static void test_verify_detached_message_signature(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(NULL, 0, NULL, 0, 0, NULL,
      NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
      NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
      NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     para.dwMsgAndCertEncodingType = X509_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
      NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     para.dwMsgAndCertEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
      NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     /* None of these messages contains a cert in the message itself, so the
@@ -377,13 +372,11 @@ static void test_verify_detached_message_signature(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, signedContent,
      sizeof(signedContent), 0, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
      "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 0, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
      "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
@@ -391,14 +384,12 @@ static void test_verify_detached_message_signature(void)
     cbContent = sizeof(msgData);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 1, &pContent, &cbContent, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
      "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     /* Passing the correct callback results in success */
     para.pfnGetSignerCertificate = msg_get_signer_callback;
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 1, &pContent, &cbContent, NULL);
-    todo_wine
     ok(ret, "CryptVerifyDetachedMessageSignature failed: %08x\n",
      GetLastError());
     /* Not passing the correct data to be signed results in the signature not
@@ -407,7 +398,6 @@ static void test_verify_detached_message_signature(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 0, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
      "expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
 }
