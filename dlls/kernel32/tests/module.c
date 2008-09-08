@@ -300,8 +300,9 @@ static void testLoadLibraryEx(void)
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
     ok(hmodule != 0, "Expected valid module handle\n");
-    ok(GetLastError() == 0xdeadbeef,
-       "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_SUCCESS, /* win9x */
+       "Expected 0xdeadbeef or ERROR_SUCCESS, got %d\n", GetLastError());
 
     CloseHandle(hmodule);
 
@@ -309,8 +310,9 @@ static void testLoadLibraryEx(void)
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA("kernel32.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
     ok(hmodule != 0, "Expected valid module handle\n");
-    ok(GetLastError() == 0xdeadbeef,
-       "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       GetLastError() == ERROR_SUCCESS, /* win9x */
+       "Expected 0xdeadbeef or ERROR_SUCCESS, got %d\n", GetLastError());
 
     CloseHandle(hmodule);
 
