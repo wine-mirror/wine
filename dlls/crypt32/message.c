@@ -60,6 +60,18 @@ LONG WINAPI CryptGetMessageSignerCount(DWORD dwMsgEncodingType,
     return count;
 }
 
+BOOL WINAPI CryptVerifyDetachedMessageSignature(
+ PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara, DWORD dwSignerIndex,
+ const BYTE *pbDetachedSignBlob, DWORD cbDetachedSignBlob, DWORD cToBeSigned,
+ const BYTE *rgpbToBeSigned[], DWORD rgcbToBeSigned[],
+ PCCERT_CONTEXT *ppSignerCert)
+{
+    FIXME("(%p, %d, %p, %d, %d, %p, %p, %p): stub\n", pVerifyPara, dwSignerIndex,
+     pbDetachedSignBlob, cbDetachedSignBlob, cToBeSigned, rgpbToBeSigned,
+     rgcbToBeSigned, ppSignerCert);
+    return FALSE;
+}
+
 static BOOL CRYPT_CopyParam(void *pvData, DWORD *pcbData, const void *src,
  DWORD len)
 {
