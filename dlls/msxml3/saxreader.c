@@ -1680,6 +1680,57 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     return S_OK;
 }
 
+static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInterface)
+{
+    saxlocator *locator;
+    HRESULT hr;
+    ULONG dataRead;
+    char data[1024];
+
+    hr = IStream_Read(stream, data, sizeof(data), &dataRead);
+    if(hr != S_OK)
+        return hr;
+
+    hr = SAXLocator_create(This, &locator, vbInterface);
+    if(FAILED(hr))
+        return E_FAIL;
+
+    locator->pParserCtxt = xmlCreatePushParserCtxt(
+            &locator->saxreader->sax, locator,
+            data, dataRead, NULL);
+    if(!locator->pParserCtxt)
+    {
+        ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
+        return E_FAIL;
+    }
+
+    while(1)
+    {
+        hr = IStream_Read(stream, data, sizeof(data), &dataRead);
+        if(hr != S_OK)
+            break;
+
+        if(xmlParseChunk(locator->pParserCtxt, data, dataRead, 0)) hr = E_FAIL;
+        else hr = locator->ret;
+
+        if(hr != S_OK) break;
+
+        if(dataRead != sizeof(data))
+        {
+            if(xmlParseChunk(locator->pParserCtxt, data, 0, 1)) hr = E_FAIL;
+            else hr = locator->ret;
+
+            break;
+        }
+    }
+
+    locator->pParserCtxt->sax = NULL;
+    xmlFreeParserCtxt(locator->pParserCtxt);
+    locator->pParserCtxt = NULL;
+    ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
+    return hr;
+}
+
 static HRESULT WINAPI internal_getEntityResolver(
         saxreader *This,
         void *pEntityResolver,
@@ -1867,47 +1918,7 @@ static HRESULT WINAPI internal_parse(
             if(stream || IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                         &IID_IStream, (void**)&stream) == S_OK)
             {
-                STATSTG dataInfo;
-                ULONG dataRead;
-                char *data;
-
-                while(1)
-                {
-                    hr = IStream_Stat(stream, &dataInfo, STATFLAG_NONAME);
-                    if(hr == E_PENDING) continue;
-                    break;
-                }
-                if(hr != S_OK)
-                {
-                    IStream_Release(stream);
-                    break;
-                }
-
-                data = HeapAlloc(GetProcessHeap(), 0,
-                        dataInfo.cbSize.QuadPart);
-                if(!data)
-                {
-                    IStream_Release(stream);
-                    break;
-                }
-
-                while(1)
-                {
-                    hr = IStream_Read(stream, data,
-                            dataInfo.cbSize.QuadPart, &dataRead);
-                    if(hr == E_PENDING) continue;
-                    break;
-                }
-                if(hr != S_OK)
-                {
-                    HeapFree(GetProcessHeap(), 0, data);
-                    IStream_Release(stream);
-                    break;
-                }
-
-                hr = internal_parseBuffer(This, data,
-                        dataInfo.cbSize.QuadPart, vbInterface);
-                HeapFree(GetProcessHeap(), 0, data);
+                hr = internal_parseStream(This, stream, vbInterface);
                 IStream_Release(stream);
                 break;
             }
