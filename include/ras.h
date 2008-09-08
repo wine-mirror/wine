@@ -81,6 +81,10 @@ typedef struct tagRASCONNA {
     CHAR     szDeviceName[ RAS_MaxDeviceName + 1 ];
     CHAR     szPhonebook[ MAX_PATH ];
     DWORD    dwSubEntry;
+    GUID     guidEntry;
+    DWORD    dwFlags;
+    LUID     luid;
+    GUID     guidCorrelationId;
 } RASCONNA,*LPRASCONNA;
 
 typedef struct tagRASCONNW {
@@ -91,6 +95,10 @@ typedef struct tagRASCONNW {
     WCHAR    szDeviceName[ RAS_MaxDeviceName + 1 ];
     WCHAR    szPhonebook[ MAX_PATH ];
     DWORD    dwSubEntry;
+    GUID     guidEntry;
+    DWORD    dwFlags;
+    LUID     luid;
+    GUID     guidCorrelationId;
 } RASCONNW,*LPRASCONNW;
 
 DECL_WINELIB_TYPE_AW(RASCONN)

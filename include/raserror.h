@@ -21,6 +21,7 @@
 
 #define RASBASE                                600
 #define ERROR_BUFFER_TOO_SMALL                 (RASBASE+3)
+#define ERROR_BUFFER_INVALID                   (RASBASE+10)
 #define ERROR_INVALID_SIZE                     (RASBASE+32)
 #define ERROR_RASMAN_CANNOT_INITIALIZE         (RASBASE+111)
 
