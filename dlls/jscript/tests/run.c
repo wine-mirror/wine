@@ -59,8 +59,11 @@ static const CLSID CLSID_JScript =
 
 DEFINE_EXPECT(global_propget_d);
 DEFINE_EXPECT(global_propget_i);
+DEFINE_EXPECT(global_propput_d);
+DEFINE_EXPECT(global_propput_i);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
+#define DISPID_GLOBAL_TESTPROPPUT   0x1001
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -191,6 +194,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_TESTPROPGET;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "testPropPut")) {
+        CHECK_EXPECT(global_propput_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_GLOBAL_TESTPROPPUT;
+        return S_OK;
+    }
 
     ok(0, "unexpected call %s\n", debugstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -216,6 +225,22 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_VT(pvarRes) = VT_I4;
         V_I4(pvarRes) = 1;
 
+        return S_OK;
+
+    case DISPID_GLOBAL_TESTPROPPUT:
+        CHECK_EXPECT(global_propput_i);
+
+        ok(wFlags == INVOKE_PROPERTYPUT, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+        ok(!pvarRes, "pvarRes != NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_I4, "V_VT(pdp->rgvarg)=%d\n", V_VT(pdp->rgvarg));
+        ok(V_I4(pdp->rgvarg) == 1, "V_I4(pdp->rgvarg)=%d\n", V_I4(pdp->rgvarg));
         return S_OK;
      }
 
@@ -396,6 +421,12 @@ static void run_tests(void)
     parse_script_a("testPropGet;");
     CHECK_CALLED(global_propget_d);
     CHECK_CALLED(global_propget_i);
+
+    SET_EXPECT(global_propput_d);
+    SET_EXPECT(global_propput_i);
+    parse_script_a("testPropPut = 1;");
+    CHECK_CALLED(global_propput_d);
+    CHECK_CALLED(global_propput_i);
 }
 
 START_TEST(run)
