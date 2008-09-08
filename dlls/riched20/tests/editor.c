@@ -32,16 +32,14 @@
 #include <time.h>
 #include <wine/test.h>
 
-static CHAR string1[MAX_PATH], string2[MAX_PATH];
+static CHAR string1[MAX_PATH], string2[MAX_PATH], string3[MAX_PATH];
 
-#define ok_w2(format, szString1, szString2) \
-\
-    if (lstrcmpW(szString1, szString2) != 0) \
-    { \
-        WideCharToMultiByte(CP_ACP, 0, szString1, -1, string1, MAX_PATH, NULL, NULL); \
-        WideCharToMultiByte(CP_ACP, 0, szString2, -1, string2, MAX_PATH, NULL, NULL); \
-        ok(0, format, string1, string2); \
-    }
+#define ok_w3(format, szString1, szString2, szString3) \
+    WideCharToMultiByte(CP_ACP, 0, szString1, -1, string1, MAX_PATH, NULL, NULL); \
+    WideCharToMultiByte(CP_ACP, 0, szString2, -1, string2, MAX_PATH, NULL, NULL); \
+    WideCharToMultiByte(CP_ACP, 0, szString3, -1, string3, MAX_PATH, NULL, NULL); \
+    ok(!lstrcmpW(szString3, szString1) || !lstrcmpW(szString3, szString1), \
+       format, string1, string2, string3);
 
 static HMODULE hmoduleRichEdit;
 
@@ -2318,8 +2316,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
@@ -2329,8 +2327,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text);
@@ -2595,8 +2593,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
@@ -2606,8 +2604,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a");
@@ -2617,8 +2615,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
@@ -2628,8 +2626,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text);
@@ -2743,8 +2741,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   /* Ditto, see above */
@@ -2755,8 +2753,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   /* Ditto, see above */
@@ -2767,8 +2765,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   /* Ditto, see above */
@@ -2779,8 +2777,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   /* Ditto, see above */
@@ -2791,8 +2789,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text);
@@ -2818,8 +2816,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
@@ -2829,8 +2827,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a");
@@ -2840,8 +2838,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
@@ -2851,8 +2849,8 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) == 0),
     "Vertical scrollbar is visible, should be invisible.\n");
-  ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 0,
-        "reported page/range is %d (%d..%d) expected all 0\n",
+  ok(si.nPage == 0 && si.nMin == 0 && (si.nMax == 0 || si.nMax == 100),
+        "reported page/range is %d (%d..%d) expected all 0 or nMax=100\n",
         si.nPage, si.nMin, si.nMax);
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text);
@@ -3218,6 +3216,8 @@ static void test_EM_SETTEXTEX(void)
                           't', 't', 'S', 'o',
                           'm', 'e', 'T', 'e',
                           'x', 't', 0};
+  WCHAR TestItem1altn[] = {'T','T','e','s','t','S','o','m','e','T','e','x','t',
+                           '\n','t','S','o','m','e','T','e','x','t',0};
   WCHAR TestItem2[] = {'T', 'e', 's', 't',
                        'S', 'o', 'm', 'e',
                        'T', 'e', 'x', 't',
@@ -3450,7 +3450,7 @@ static void test_EM_SETTEXTEX(void)
   setText.flags = ST_SELECTION;
   SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM) buf);
   SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
-  ok_w2("Expected \"%s\", got \"%s\"\n", TestItem1alt, buf);
+  ok_w3("Expected \"%s\" or \"%s\", got \"%s\"\n", TestItem1alt, TestItem1altn, buf);
 
   /* The following test demonstrates that EM_SETTEXTEX replacing a selection */
   setText.codepage = 1200;  /* no constant for unicode */
@@ -4395,7 +4395,7 @@ static void test_EM_FORMATRANGE(void)
 
   r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) &fr);
   todo_wine {
-    ok(r == 20, "EM_FORMATRANGE expect %d, got %d\n", 20, r);
+    ok(r == 20 || r == 9, "EM_FORMATRANGE expect 20 or 9, got %d\n", r);
   }
 
   fr.chrg.cpMin = 0;
