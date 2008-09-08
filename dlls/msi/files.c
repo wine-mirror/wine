@@ -131,13 +131,13 @@ static UINT copy_file(MSIFILE *file)
     BOOL ret;
 
     ret = CopyFileW(file->SourcePath, file->TargetPath, FALSE);
-    if (ret)
-    {
-        file->state = msifs_installed;
-        return ERROR_SUCCESS;
-    }
+    if (!ret)
+        return GetLastError();
 
-    return GetLastError();
+    SetFileAttributesW(file->TargetPath, FILE_ATTRIBUTE_NORMAL);
+
+    file->state = msifs_installed;
+    return ERROR_SUCCESS;
 }
 
 static UINT copy_install_file(MSIFILE *file)
