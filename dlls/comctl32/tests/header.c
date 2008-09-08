@@ -999,7 +999,7 @@ static void test_hdm_imageMessages(HWND hParent)
 static void test_hdm_filterMessages(HWND hParent)
 {
     HWND hChild;
-    int retVal;
+    int retVal, timeout;
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
@@ -1007,21 +1007,27 @@ static void test_hdm_filterMessages(HWND hParent)
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
                                     "adder header control to parent", FALSE);
 
+    timeout = SendMessage(hChild, HDM_SETFILTERCHANGETIMEOUT, 1, 100);
+    SendMessage(hChild, HDM_SETFILTERCHANGETIMEOUT, 1, timeout);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    /* msdn incorrectly states that return value
+     * is the index of the filter control being
+     * modified. The sendMessage here should
+     * return previous filter timeout value
+     */
+
+    retVal = SendMessage(hChild, HDM_SETFILTERCHANGETIMEOUT, 1, 100);
+    expect(timeout, retVal);
+
     todo_wine
     {
-     /* msdn incorrectly states that return value
-      * is the index of the filter control being
-      * modified. The sendMessage here should
-      * return previous filter timeout value
-     */
-        retVal = SendMessage(hChild, HDM_SETFILTERCHANGETIMEOUT, 1, 100);
-        expect(1000, retVal);
         retVal = SendMessage(hChild, HDM_CLEARFILTER, 0, 1);
         expect(1, retVal);
         retVal = SendMessage(hChild, HDM_EDITFILTER, 1, 0);
         expect(1, retVal);
-     }
+    }
     if (winetest_interactive)
          ok_sequence(sequences, HEADER_SEQ_INDEX, filterMessages_seq_interactive,
                      "filterMessages sequence testing", TRUE);
