@@ -336,11 +336,23 @@ static void sync_window_style( Display *display, struct x11drv_win_data *data )
  *
  * Update the X11 window region.
  */
-static void sync_window_region( Display *display, struct x11drv_win_data *data, HRGN hrgn )
+static void sync_window_region( Display *display, struct x11drv_win_data *data, HRGN win_region )
 {
 #ifdef HAVE_LIBXSHAPE
+    HRGN hrgn = win_region;
+
     if (!data->whole_window) return;
     data->shaped = FALSE;
+
+    if (hrgn == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
+    {
+        if (!(hrgn = CreateRectRgn( 0, 0, 0, 0 ))) return;
+        if (GetWindowRgn( data->hwnd, hrgn ) == ERROR)
+        {
+            DeleteObject( hrgn );
+            hrgn = 0;
+        }
+    }
 
     if (!hrgn)
     {
@@ -364,6 +376,7 @@ static void sync_window_region( Display *display, struct x11drv_win_data *data, 
             data->shaped = TRUE;
         }
     }
+    if (hrgn && hrgn != win_region) DeleteObject( hrgn );
 #endif  /* HAVE_LIBXSHAPE */
 }
 
@@ -1327,7 +1340,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     int cx, cy, mask;
     XSetWindowAttributes attr;
     WCHAR text[1024];
-    HRGN hrgn;
 
     if (!(cx = data->window_rect.right - data->window_rect.left)) cx = 1;
     if (!(cy = data->window_rect.bottom - data->window_rect.top)) cy = 1;
@@ -1375,11 +1387,8 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     sync_window_text( display, data->whole_window, text );
 
     /* set the window region */
-    if ((hrgn = CreateRectRgn( 0, 0, 0, 0 )))
-    {
-        if (GetWindowRgn( data->hwnd, hrgn ) != ERROR) sync_window_region( display, data, hrgn );
-        DeleteObject( hrgn );
-    }
+    sync_window_region( display, data, (HRGN)1 );
+
     wine_tsx11_lock();
     XFlush( display );  /* make sure the window exists before we start painting to it */
     wine_tsx11_unlock();
@@ -2142,13 +2151,10 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     {
         sync_window_region( thread_display(), data, hrgn );
     }
-    else if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
+    else if (X11DRV_get_whole_window( hwnd ))
     {
-        FIXME( "not supported on other thread window %p\n", hwnd );
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return FALSE;
+        SendMessageW( hwnd, WM_X11DRV_SET_WIN_REGION, 0, 0 );
     }
-
     return TRUE;
 }
 
@@ -2158,6 +2164,8 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
  */
 LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
+    struct x11drv_win_data *data;
+
     switch(msg)
     {
     case WM_X11DRV_ACQUIRE_SELECTION:
@@ -2166,6 +2174,9 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         return SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     case WM_X11DRV_SET_WIN_FORMAT:
         return set_win_format( hwnd, (XID)wp );
+    case WM_X11DRV_SET_WIN_REGION:
+        if ((data = X11DRV_get_win_data( hwnd ))) sync_window_region( thread_display(), data, (HRGN)1 );
+        return 0;
     case WM_X11DRV_RESIZE_DESKTOP:
         X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
         return 0;
