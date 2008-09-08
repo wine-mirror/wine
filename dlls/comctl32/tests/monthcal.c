@@ -50,6 +50,7 @@ static const struct message create_parent_window_seq[] = {
     { WM_NCCREATE, sent },
     { WM_NCCALCSIZE, sent|wparam, 0 },
     { WM_CREATE, sent },
+    { WM_QUERYNEWPALETTE, sent|optional },
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
