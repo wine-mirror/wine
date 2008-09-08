@@ -69,7 +69,7 @@ static const struct message create_parent_window_seq[] = {
 
 static const struct message create_monthcal_control_seq[] = {
     { WM_NOTIFYFORMAT, sent|lparam, 0, NF_QUERY },
-    { WM_QUERYUISTATE, sent },
+    { WM_QUERYUISTATE, sent|optional },
     { WM_GETFONT, sent },
     { WM_PARENTNOTIFY, sent|wparam, WM_CREATE},
     { 0 }
@@ -77,7 +77,7 @@ static const struct message create_monthcal_control_seq[] = {
 
 static const struct message create_monthcal_multi_sel_style_seq[] = {
     { WM_NOTIFYFORMAT, sent|lparam, 0, NF_QUERY },
-    { WM_QUERYUISTATE, sent },
+    { WM_QUERYUISTATE, sent|optional },
     { WM_GETFONT, sent },
     { 0 }
 };
