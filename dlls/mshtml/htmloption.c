@@ -68,16 +68,14 @@ static ULONG WINAPI HTMLOptionElement_Release(IHTMLOptionElement *iface)
 static HRESULT WINAPI HTMLOptionElement_GetTypeInfoCount(IHTMLOptionElement *iface, UINT *pctinfo)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pctinfo);
-    return E_NOTIMPL;
+    return IDispatchEx_GetTypeInfoCount(DISPATCHEX(&This->element.node.dispex), pctinfo);
 }
 
 static HRESULT WINAPI HTMLOptionElement_GetTypeInfo(IHTMLOptionElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    return IDispatchEx_GetTypeInfo(DISPATCHEX(&This->element.node.dispex), iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLOptionElement_GetIDsOfNames(IHTMLOptionElement *iface, REFIID riid,
@@ -85,9 +83,7 @@ static HRESULT WINAPI HTMLOptionElement_GetIDsOfNames(IHTMLOptionElement *iface,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-                                        lcid, rgDispId);
-    return E_NOTIMPL;
+    return IDispatchEx_GetIDsOfNames(DISPATCHEX(&This->element.node.dispex), riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI HTMLOptionElement_Invoke(IHTMLOptionElement *iface, DISPID dispIdMember,
@@ -95,9 +91,8 @@ static HRESULT WINAPI HTMLOptionElement_Invoke(IHTMLOptionElement *iface, DISPID
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return E_NOTIMPL;
+    return IDispatchEx_Invoke(DISPATCHEX(&This->element.node.dispex), dispIdMember, riid, lcid, wFlags, pDispParams,
+            pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI HTMLOptionElement_put_selected(IHTMLOptionElement *iface, VARIANT_BOOL v)
