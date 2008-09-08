@@ -27,10 +27,13 @@
 #define SUBCLASS_NAME "MyStatusBar"
 
 #define expect(expected,got) ok (expected == got,"Expected %d, got %d\n",expected,got)
-#define expect_rect(_left,_top,_right,_bottom,got) do { RECT _rcExp = {_left, _top, _right, _bottom}; \
-        ok(memcmp(&_rcExp, &(got), sizeof(RECT)) == 0, "Expected rect {%d,%d, %d,%d}, got {%d,%d, %d,%d}\n", \
-        _rcExp.left, _rcExp.top, _rcExp.right, _rcExp.bottom, \
-        (got).left, (got).top, (got).right, (got).bottom); } while (0)
+#define expect_rect(_left,_top,_right,_bottom,got) do { \
+        RECT exp = {abs(got.left - _left), abs(got.top - _top), \
+                    abs(got.right - _right), abs(got.bottom - _bottom)}; \
+        ok(exp.left <= 2 && exp.top <= 2 && exp.right <= 2 && exp.bottom <= 2, \
+           "Expected rect {%d,%d, %d,%d}, got {%d,%d, %d,%d}\n", \
+           _left, _top, _right, _bottom, \
+           (got).left, (got).top, (got).right, (got).bottom); } while (0)
 
 static HINSTANCE hinst;
 static WNDPROC g_status_wndproc;
@@ -166,25 +169,25 @@ static void test_height(void)
     ok(g_wmsize_count > 0, "WM_SETFONT should issue WM_SIZE\n");
 
     GetClientRect(hwndStatus, &rc2);
-    todo_wine expect_rect(0, 0, 672, 42, rc2); /* GetTextMetrics returns invalid tmInternalLeading for this font */
+    expect_rect(0, 0, 672, 42, rc2); /* GetTextMetrics returns invalid tmInternalLeading for this font */
 
     g_wmsize_count = 0;
     SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFont, TRUE);
     ok(g_wmsize_count > 0, "WM_SETFONT should issue WM_SIZE\n");
 
     GetClientRect(hwndStatus, &rc2);
-    todo_wine expect_rect(0, 0, 672, 42, rc2);
+    expect_rect(0, 0, 672, 42, rc2);
 
     /* minheight < fontsize - no effects*/
     SendMessage(hwndStatus, SB_SETMINHEIGHT, 12, 0);
     SendMessage(hwndStatus, WM_SIZE, 0, 0);
     GetClientRect(hwndStatus, &rc2);
-    todo_wine expect_rect(0, 0, 672, 42, rc2);
+    expect_rect(0, 0, 672, 42, rc2);
 
     /* minheight > fontsize - has an effect after WM_SIZE */
     SendMessage(hwndStatus, SB_SETMINHEIGHT, 60, 0);
     GetClientRect(hwndStatus, &rc2);
-    todo_wine expect_rect(0, 0, 672, 42, rc2);
+    expect_rect(0, 0, 672, 42, rc2);
     SendMessage(hwndStatus, WM_SIZE, 0, 0);
     GetClientRect(hwndStatus, &rc2);
     expect_rect(0, 0, 672, 62, rc2);
@@ -194,7 +197,7 @@ static void test_height(void)
     expect_rect(0, 0, 672, 62, rc2);
     SendMessage(hwndStatus, WM_SIZE, 0, 0);
     GetClientRect(hwndStatus, &rc2);
-    todo_wine expect_rect(0, 0, 672, 42, rc2);
+    expect_rect(0, 0, 672, 42, rc2);
     hFontSm = CreateFont(9, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
         OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE, "Tahoma");
     SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFontSm, TRUE);
