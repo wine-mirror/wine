@@ -96,7 +96,8 @@ include/__install__ include/__install-dev__: include libs tools
 libs/__install__ libs/__install-lib__ libs/__install-dev__: libs
 loader/__install__ loader/__install-lib__: libs tools
 server/__install__ server/__install-lib__: libs tools
-programs/__install__ programs/__install-lib__: libs tools include dlls/__install-lib__
+programs/__install__: libs tools include dlls/__install__
+programs/__install-lib__: libs tools include dlls/__install-lib__
 tools/__install__ tools/__install-lib__ tools/__install-dev__: tools
 
 RECURSE_TARGETS = \
