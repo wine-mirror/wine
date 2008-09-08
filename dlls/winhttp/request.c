@@ -1132,16 +1132,120 @@ static BOOL receive_data( request_t *request, void *buffer, DWORD size, DWORD *r
     return TRUE;
 }
 
+static DWORD get_chunk_size( const char *buffer )
+{
+    const char *p;
+    DWORD size = 0;
+
+    for (p = buffer; *p; p++)
+    {
+        if (*p >= '0' && *p <= '9') size = size * 16 + *p - '0';
+        else if (*p >= 'a' && *p <= 'f') size = size * 16 + *p - 'a' + 10;
+        else if (*p >= 'A' && *p <= 'F') size = size * 16 + *p - 'A' + 10;
+        else if (*p == ';') break;
+    }
+    return size;
+}
+
+static BOOL receive_data_chunked( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
+{
+    char reply[MAX_REPLY_LEN], *p = buffer;
+    DWORD buflen, to_read, to_write = size;
+    int bytes_read;
+
+    *read = 0;
+    for (;;)
+    {
+        if (*read == size) break;
+
+        if (request->content_length == ~0UL) /* new chunk */
+        {
+            buflen = sizeof(reply);
+            if (!netconn_get_next_line( &request->netconn, reply, &buflen )) break;
+
+            if (!(request->content_length = get_chunk_size( reply )))
+            {
+                /* zero sized chunk marks end of transfer; read any trailing headers and return */
+                read_reply( request, FALSE );
+                break;
+            }
+        }
+        to_read = min( to_write, request->content_length - request->content_read );
+
+        if (!netconn_recv( &request->netconn, p, to_read, async ? 0 : MSG_WAITALL, &bytes_read ))
+        {
+            if (bytes_read != to_read)
+            {
+                ERR("Not all data received %d/%d\n", bytes_read, to_read);
+            }
+            /* always return success, even if the network layer returns an error */
+            *read = 0;
+            break;
+        }
+        if (!bytes_read) break;
+
+        request->content_read += bytes_read;
+        to_write -= bytes_read;
+        *read += bytes_read;
+        p += bytes_read;
+
+        if (request->content_read == request->content_length) /* chunk complete */
+        {
+            request->content_read = 0;
+            request->content_length = ~0UL;
+
+            buflen = sizeof(reply);
+            if (!netconn_get_next_line( &request->netconn, reply, &buflen ))
+            {
+                ERR("Malformed chunk\n");
+                *read = 0;
+                break;
+            }
+        }
+    }
+    return TRUE;
+}
+
+static BOOL read_data( request_t *request, void *buffer, DWORD to_read, DWORD *read, BOOL async )
+{
+    static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
+
+    BOOL ret;
+    WCHAR encoding[20];
+    DWORD num_bytes, buflen = sizeof(encoding);
+
+    if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
+        !strcmpiW( encoding, chunked ))
+    {
+        ret = receive_data_chunked( request, buffer, to_read, &num_bytes, async );
+    }
+    else
+        ret = receive_data( request, buffer, to_read, &num_bytes, async );
+
+    if (async)
+    {
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, num_bytes );
+        else
+        {
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_READ_DATA;
+            result.dwError  = get_last_error();
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
+    if (ret && read) *read = num_bytes;
+    return ret;
+}
+
 /* read any content returned by the server so that the connection can be reused */
 static void drain_content( request_t *request )
 {
     DWORD bytes_read;
     char buffer[2048];
 
-    if (request->content_length == ~0UL) return;
     for (;;)
     {
-        if (!receive_data( request, buffer, sizeof(buffer), &bytes_read, FALSE ) || !bytes_read) return;
+        if (!read_data( request, buffer, sizeof(buffer), &bytes_read, FALSE ) || !bytes_read) return;
     }
 }
 
@@ -1318,111 +1422,6 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
         ret = query_data( request, available, FALSE );
 
     release_object( &request->hdr );
-    return ret;
-}
-
-static DWORD get_chunk_size( const char *buffer )
-{
-    const char *p;
-    DWORD size = 0;
-
-    for (p = buffer; *p; p++)
-    {
-        if (*p >= '0' && *p <= '9') size = size * 16 + *p - '0';
-        else if (*p >= 'a' && *p <= 'f') size = size * 16 + *p - 'a' + 10;
-        else if (*p >= 'A' && *p <= 'F') size = size * 16 + *p - 'A' + 10;
-        else if (*p == ';') break;
-    }
-    return size;
-}
-
-static BOOL receive_data_chunked( request_t *request, void *buffer, DWORD size, DWORD *read, BOOL async )
-{
-    char reply[MAX_REPLY_LEN], *p = buffer;
-    DWORD buflen, to_read, to_write = size;
-    int bytes_read;
-
-    *read = 0;
-    for (;;)
-    {
-        if (*read == size) break;
-
-        if (request->content_length == ~0UL) /* new chunk */
-        {
-            buflen = sizeof(reply);
-            if (!netconn_get_next_line( &request->netconn, reply, &buflen )) break;
-
-            if (!(request->content_length = get_chunk_size( reply )))
-            {
-                /* zero sized chunk marks end of transfer; read any trailing headers and return */
-                read_reply( request, FALSE );
-                break;
-            }
-        }
-        to_read = min( to_write, request->content_length - request->content_read );
-
-        if (!netconn_recv( &request->netconn, p, to_read, async ? 0 : MSG_WAITALL, &bytes_read ))
-        {
-            if (bytes_read != to_read)
-            {
-                ERR("Not all data received %d/%d\n", bytes_read, to_read);
-            }
-            /* always return success, even if the network layer returns an error */
-            *read = 0;
-            break;
-        }
-        if (!bytes_read) break;
-
-        request->content_read += bytes_read;
-        to_write -= bytes_read;
-        *read += bytes_read;
-        p += bytes_read;
-
-        if (request->content_read == request->content_length) /* chunk complete */
-        {
-            request->content_read = 0;
-            request->content_length = ~0UL;
-
-            buflen = sizeof(reply);
-            if (!netconn_get_next_line( &request->netconn, reply, &buflen ))
-            {
-                ERR("Malformed chunk\n");
-                *read = 0;
-                break;
-            }
-        }
-    }
-    return TRUE;
-}
-
-static BOOL read_data( request_t *request, void *buffer, DWORD to_read, DWORD *read, BOOL async )
-{
-    static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
-
-    BOOL ret;
-    WCHAR encoding[20];
-    DWORD num_bytes, buflen = sizeof(encoding);
-
-    if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
-        !strcmpiW( encoding, chunked ))
-    {
-        ret = receive_data_chunked( request, buffer, to_read, &num_bytes, async );
-    }
-    else
-        ret = receive_data( request, buffer, to_read, &num_bytes, async );
-
-    if (async)
-    {
-        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, num_bytes );
-        else
-        {
-            WINHTTP_ASYNC_RESULT result;
-            result.dwResult = API_READ_DATA;
-            result.dwError  = get_last_error();
-            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
-        }
-    }
-    if (ret && read) *read = num_bytes;
     return ret;
 }
 
