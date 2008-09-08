@@ -3905,19 +3905,32 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
             divide by the Width/Height, so we need the half range(1.0) to translate by
             half a pixel.
 
+            Note that when rendering offscreen, we need to translate 1 pixel
+            (2/h in normalized device coordinates) down after doing the flip,
+            because of the way the viewport transformation works in OpenGL:
+            (-1,1) in normalized device coordinates corresponds to the upper
+            left corner of the upper left pixel in the viewport. (-1,-1)
+            corresponds to lower left corner of the lower left pixel in the
+            viewport. In other words, the upper left corner of the pixel
+            *below* the lower left pixel in the viewport. See also section
+            2.11.1 "Controlling the Viewport" of the GL 2.1 spec.
+
             The other fun is that d3d's output z range after the transformation is [0;1],
             but opengl's is [-1;1]. Since the z buffer is in range [0;1] for both, gl
             scales [-1;1] to [0;1]. This would mean that we end up in [0.5;1] and loose a lot
             of Z buffer precision and the clear values do not match in the z test. Thus scale
             [0;1] to [-1;1], so when gl undoes that we utilize the full z range
          */
-        glTranslatef(1.0 / stateblock->viewport.Width, -1.0/ stateblock->viewport.Height, -1.0);
-        checkGLcall("glTranslatef (1.0 / width, -1.0 / height, -1.0)");
+
         if (stateblock->wineD3DDevice->render_offscreen) {
             /* D3D texture coordinates are flipped compared to OpenGL ones, so
              * render everything upside down when rendering offscreen. */
+            glTranslatef(1.0 / stateblock->viewport.Width, 1.0 / stateblock->viewport.Height, -1.0);
+            checkGLcall("glTranslatef(1.0 / width, 1.0 / height, -1.0)");
             glScalef(1.0, -1.0, 2.0);
         } else {
+            glTranslatef(1.0 / stateblock->viewport.Width, -1.0 / stateblock->viewport.Height, -1.0);
+            checkGLcall("glTranslatef(1.0 / width, -1.0 / height, -1.0)");
             glScalef(1.0, 1.0, 2.0);
         }
         checkGLcall("glScalef");
@@ -4504,7 +4517,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
          */
         if (useVertexShaderFunction) {
             device->posFixup[1] = device->render_offscreen ? -1.0 : 1.0;
-            device->posFixup[3] = -device->posFixup[1] / stateblock->viewport.Height;
+            device->posFixup[3] = -1.0 / stateblock->viewport.Height;
         }
     }
 
@@ -4636,7 +4649,7 @@ static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
 static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     stateblock->wineD3DDevice->posFixup[2] = 1.0 / stateblock->viewport.Width;
-    stateblock->wineD3DDevice->posFixup[3] = -stateblock->wineD3DDevice->posFixup[1] / stateblock->viewport.Height;
+    stateblock->wineD3DDevice->posFixup[3] = -1.0 / stateblock->viewport.Height;
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
         transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
     }
