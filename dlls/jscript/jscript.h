@@ -86,6 +86,7 @@ struct DispatchEx {
 #define _IDispatchEx_(x) ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
 HRESULT create_dispex(script_ctx_t*,const builtin_info_t*,DispatchEx*,DispatchEx**);
+HRESULT disp_call(IDispatch*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 
 struct _script_ctx_t {
     LONG ref;
@@ -103,6 +104,8 @@ static inline void script_addref(script_ctx_t *ctx)
 {
     ctx->ref++;
 }
+
+const char *debugstr_variant(const VARIANT*);
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 
