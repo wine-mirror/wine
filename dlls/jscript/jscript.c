@@ -80,7 +80,7 @@ static HRESULT exec_global_code(JScript *This, parser_ctx_t *parser_ctx)
     VARIANT var;
     HRESULT hres;
 
-    hres = create_exec_ctx(&exec_ctx);
+    hres = create_exec_ctx(NULL, &exec_ctx);
     if(FAILED(hres))
         return hres;
 

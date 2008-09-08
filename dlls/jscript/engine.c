@@ -96,13 +96,30 @@ static void exprval_set_idref(exprval_t *val, IDispatch *disp, DISPID id)
         IDispatch_AddRef(disp);
 }
 
-HRESULT create_exec_ctx(exec_ctx_t **ret)
+void scope_release(scope_chain_t *scope)
+{
+    if(--scope->ref)
+        return;
+
+    if(scope->next)
+        scope_release(scope->next);
+
+    IDispatchEx_Release(_IDispatchEx_(scope->obj));
+    heap_free(scope);
+}
+
+HRESULT create_exec_ctx(scope_chain_t *scope, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
 
     ctx = heap_alloc_zero(sizeof(exec_ctx_t));
     if(!ctx)
         return E_OUTOFMEMORY;
+
+    if(scope) {
+        scope_addref(scope);
+        ctx->scope_chain = scope;
+    }
 
     *ret = ctx;
     return S_OK;
@@ -113,6 +130,8 @@ void exec_release(exec_ctx_t *ctx)
     if(--ctx->ref)
         return;
 
+    if(ctx->scope_chain)
+        scope_release(ctx->scope_chain);
     heap_free(ctx);
 }
 
@@ -239,13 +258,23 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 /* ECMA-262 3rd Edition    10.1.4 */
 static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, exprval_t *ret)
 {
+    scope_chain_t *scope;
     named_item_t *item;
     DISPID id = 0;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(identifier));
 
-    /* FIXME: scope chain */
+    for(scope = ctx->scope_chain; scope; scope = scope->next) {
+        hres = dispex_get_id(_IDispatchEx_(scope->obj), identifier, 0, &id);
+        if(SUCCEEDED(hres))
+            break;
+    }
+
+    if(scope) {
+        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(scope->obj), id);
+        return S_OK;
+    }
 
     hres = dispex_get_id(_IDispatchEx_(ctx->parser->script->global), identifier, 0, &id);
     if(SUCCEEDED(hres)) {

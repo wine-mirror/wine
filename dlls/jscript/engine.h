@@ -56,10 +56,25 @@ static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
     return jsheap_alloc(&ctx->tmp_heap, size);
 }
 
+typedef struct _scope_chain_t {
+    LONG ref;
+    DispatchEx *obj;
+    struct _scope_chain_t *next;
+} scope_chain_t;
+
+HRESULT scope_push(scope_chain_t*,DispatchEx*,scope_chain_t**);
+void scope_release(scope_chain_t*);
+
+static inline void scope_addref(scope_chain_t *scope)
+{
+    scope->ref++;
+}
+
 struct _exec_ctx_t {
     LONG ref;
 
     parser_ctx_t *parser;
+    scope_chain_t *scope_chain;
 };
 
 static inline void exec_addref(exec_ctx_t *ctx)
@@ -68,7 +83,7 @@ static inline void exec_addref(exec_ctx_t *ctx)
 }
 
 void exec_release(exec_ctx_t*);
-HRESULT create_exec_ctx(exec_ctx_t**);
+HRESULT create_exec_ctx(scope_chain_t*,exec_ctx_t**);
 HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,jsexcept_t*,VARIANT*);
 
 typedef struct _statement_t statement_t;
