@@ -38,4 +38,6 @@ ok(null !== undefined, "null !== undefined is false");
 var trueVar = true;
 ok(trueVar, "trueVar is not true");
 
+ok(ScriptEngine.length === 0, "ScriptEngine.length is not 0");
+
 reportSuccess();
