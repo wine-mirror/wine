@@ -2554,6 +2554,11 @@ static BOOL CDecodeSignedMsg_VerifySignature(CDecodeMsg *msg, PCERT_INFO info)
     BOOL ret = FALSE;
     DWORD i;
 
+    if (!msg->u.signed_data.signerHandles)
+    {
+        SetLastError(NTE_BAD_SIGNATURE);
+        return FALSE;
+    }
     for (i = 0; !ret && i < msg->u.signed_data.info->cSignerInfo; i++)
     {
         PCMSG_CMS_SIGNER_INFO signerInfo =
@@ -2596,6 +2601,8 @@ static BOOL CDecodeSignedMsg_VerifySignatureEx(CDecodeMsg *msg,
         SetLastError(ERROR_INVALID_PARAMETER);
     else if (para->dwSignerIndex >= msg->u.signed_data.info->cSignerInfo)
         SetLastError(CRYPT_E_SIGNER_NOT_FOUND);
+    else if (!msg->u.signed_data.signerHandles)
+        SetLastError(NTE_BAD_SIGNATURE);
     else
     {
         switch (para->dwSignerType)
