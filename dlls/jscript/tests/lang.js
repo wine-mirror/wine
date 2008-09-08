@@ -40,4 +40,10 @@ ok(trueVar, "trueVar is not true");
 
 ok(ScriptEngine.length === 0, "ScriptEngine.length is not 0");
 
+function testFunc1(x, y) {
+    return true;
+}
+
+ok(testFunc1.length === 2, "testFunc1.length is not 2");
+
 reportSuccess();

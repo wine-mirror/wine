@@ -17,6 +17,7 @@
  */
 
 #include "jscript.h"
+#include "engine.h"
 
 #include "wine/debug.h"
 
@@ -26,6 +27,10 @@ typedef struct {
     DispatchEx dispex;
     builtin_invoke_t value_proc;
     DWORD flags;
+    source_elements_t *source;
+    parameter_t *parameters;
+    scope_chain_t *scope_chain;
+    parser_ctx_t *parser;
     DWORD length;
 } FunctionInstance;
 
@@ -126,6 +131,10 @@ static void Function_destructor(DispatchEx *dispex)
 {
     FunctionInstance *This = (FunctionInstance*)dispex;
 
+    if(This->parser)
+        parser_release(This->parser);
+    if(This->scope_chain)
+        scope_release(This->scope_chain);
     heap_free(This);
 }
 
@@ -189,6 +198,37 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
         return hres;
 
     function->value_proc = value_proc;
+
+    *ret = &function->dispex;
+    return S_OK;
+}
+
+HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, source_elements_t *source,
+        scope_chain_t *scope_chain, DispatchEx **ret)
+{
+    FunctionInstance *function;
+    parameter_t *iter;
+    DWORD length = 0;
+    HRESULT hres;
+
+    hres = create_function(ctx->script, PROPF_CONSTR, NULL, &function);
+    if(FAILED(hres))
+        return hres;
+
+    function->source = source;
+    function->parameters = parameters;
+
+    if(scope_chain) {
+        scope_addref(scope_chain);
+        function->scope_chain = scope_chain;
+    }
+
+    parser_addref(ctx);
+    function->parser = ctx;
+
+    for(iter = parameters; iter; iter = iter->next)
+        length++;
+    function->length = length;
 
     *ret = &function->dispex;
     return S_OK;

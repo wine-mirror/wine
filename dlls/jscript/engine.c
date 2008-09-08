@@ -326,12 +326,29 @@ static HRESULT literal_to_var(literal_t *literal, VARIANT *v)
 HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, jsexcept_t *ei, VARIANT *retv)
 {
     script_ctx_t *script = parser->script;
+    function_declaration_t *func;
     parser_ctx_t *prev_parser;
     VARIANT val, tmp;
     statement_t *stat;
     exec_ctx_t *prev_ctx;
     return_type_t rt;
     HRESULT hres = S_OK;
+
+    for(func = source->functions; func; func = func->next) {
+        DispatchEx *func_obj;
+        VARIANT var;
+
+        hres = create_source_function(parser, func->parameter_list, func->source_elements, ctx->scope_chain, &func_obj);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(&var) = VT_DISPATCH;
+        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(func_obj);
+        hres = jsdisp_propput_name(ctx->var_disp, func->identifier, script->lcid, &var, ei, NULL);
+        IDispatchEx_Release(_IDispatchEx_(func_obj));
+        if(FAILED(hres))
+            return hres;
+    }
 
     prev_ctx = script->exec_ctx;
     script->exec_ctx = ctx;

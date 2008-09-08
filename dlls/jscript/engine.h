@@ -91,6 +91,8 @@ typedef struct _statement_t statement_t;
 typedef struct _expression_t expression_t;
 typedef struct _parameter_t parameter_t;
 
+HRESULT create_source_function(parser_ctx_t*,parameter_t*,source_elements_t*,scope_chain_t*,DispatchEx**);
+
 typedef struct {
     VARTYPE vt;
     union {
