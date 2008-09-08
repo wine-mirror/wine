@@ -80,6 +80,8 @@ static CERT_INFO *CRYPT_GetSignerCertInfoFromMsg(HCRYPTMSG msg,
             }
         }
     }
+    else
+        SetLastError(CRYPT_E_UNEXPECTED_MSG_TYPE);
     return certInfo;
 }
 
@@ -179,34 +181,11 @@ BOOL WINAPI CryptVerifyDetachedMessageSignature(
     return ret;
 }
 
-static BOOL CRYPT_CopyParam(void *pvData, DWORD *pcbData, const void *src,
- DWORD len)
-{
-    BOOL ret = TRUE;
-
-    if (!pvData)
-        *pcbData = len;
-    else if (*pcbData < len)
-    {
-        *pcbData = len;
-        SetLastError(ERROR_MORE_DATA);
-        ret = FALSE;
-    }
-    else
-    {
-        *pcbData = len;
-        memcpy(pvData, src, len);
-    }
-    return ret;
-}
-
 BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
  DWORD dwSignerIndex, const BYTE* pbSignedBlob, DWORD cbSignedBlob,
  BYTE* pbDecoded, DWORD* pcbDecoded, PCCERT_CONTEXT* ppSignerCert)
 {
     BOOL ret = FALSE;
-    DWORD size;
-    CRYPT_CONTENT_INFO *contentInfo;
     HCRYPTMSG msg;
 
     TRACE("(%p, %d, %p, %d, %p, %p, %p)\n",
@@ -226,26 +205,14 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
         return FALSE;
     }
 
-    if (!CryptDecodeObjectEx(pVerifyPara->dwMsgAndCertEncodingType,
-     PKCS_CONTENT_INFO, pbSignedBlob, cbSignedBlob,
-     CRYPT_DECODE_ALLOC_FLAG | CRYPT_DECODE_NOCOPY_FLAG, NULL,
-     (LPBYTE)&contentInfo, &size))
-        return FALSE;
-    if (strcmp(contentInfo->pszObjId, szOID_RSA_signedData))
-    {
-        LocalFree(contentInfo);
-        SetLastError(CRYPT_E_UNEXPECTED_MSG_TYPE);
-        return FALSE;
-    }
-    msg = CryptMsgOpenToDecode(pVerifyPara->dwMsgAndCertEncodingType, 0,
-     CMSG_SIGNED, pVerifyPara->hCryptProv, NULL, NULL);
+    msg = CryptMsgOpenToDecode(pVerifyPara->dwMsgAndCertEncodingType, 0, 0,
+     pVerifyPara->hCryptProv, NULL, NULL);
     if (msg)
     {
-        ret = CryptMsgUpdate(msg, contentInfo->Content.pbData,
-         contentInfo->Content.cbData, TRUE);
+        ret = CryptMsgUpdate(msg, pbSignedBlob, cbSignedBlob, TRUE);
         if (ret && pcbDecoded)
-            ret = CRYPT_CopyParam(pbDecoded, pcbDecoded,
-             contentInfo->Content.pbData, contentInfo->Content.cbData);
+            ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, pbDecoded,
+             pcbDecoded);
         if (ret)
         {
             CERT_INFO *certInfo = CRYPT_GetSignerCertInfoFromMsg(msg,
@@ -279,7 +246,6 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
         }
         CryptMsgClose(msg);
     }
-    LocalFree(contentInfo);
     TRACE("returning %d\n", ret);
     return ret;
 }
