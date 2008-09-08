@@ -456,8 +456,8 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_SetNotifyCmdLine(
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_GetNotifyCmdLine(
     IBackgroundCopyJob2 *iface,
-    LPWSTR prog,
-    LPWSTR params)
+    LPWSTR *prog,
+    LPWSTR *params)
 {
     FIXME("Not implemented\n");
     return E_NOTIMPL;

@@ -30,7 +30,7 @@ import "bits.idl";
 interface IBackgroundCopyJob2 : IBackgroundCopyJob
 {
     HRESULT SetNotifyCmdLine([unique] LPCWSTR prog, [unique] LPCWSTR params);
-    HRESULT GetNotifyCmdLine([out] LPWSTR prog, [out] LPWSTR params);
+    HRESULT GetNotifyCmdLine([out] LPWSTR *prog, [out] LPWSTR *params);
 
     typedef struct _BG_JOB_REPLY_PROGRESS
     {
