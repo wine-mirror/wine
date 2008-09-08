@@ -65,7 +65,7 @@ static const struct message parent_empty_test_seq[] = {
 
 static const struct message parent_create_trackbar_wnd_seq[] = {
     { WM_NOTIFYFORMAT, sent},
-    { 0x0129, sent}, /* should be WM_QUERYUISTATE instead of 0x0129 */
+    { WM_QUERYUISTATE, sent|optional},
     { WM_WINDOWPOSCHANGING, sent},
     { WM_NCACTIVATE, sent},
     { PBT_APMRESUMECRITICAL, sent},
@@ -86,7 +86,7 @@ static const struct message parent_new_window_test_seq[] = {
     { WM_IME_NOTIFY, sent|defwinproc|optional},
     { WM_SETFOCUS, sent|defwinproc},
     { WM_NOTIFYFORMAT, sent},
-    { 0x0129, sent}, /* should be WM_QUERYUISTATE instead of 0x0129*/
+    { WM_QUERYUISTATE, sent|optional},
     {0}
 };
 
