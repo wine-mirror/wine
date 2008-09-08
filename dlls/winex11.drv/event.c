@@ -1354,29 +1354,6 @@ static void X11DRV_ClientMessage( HWND hwnd, XEvent *xev )
 }
 
 
-/**********************************************************************
- *           X11DRV_WindowMessage   (X11DRV.@)
- */
-LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
-{
-    switch(msg)
-    {
-    case WM_X11DRV_ACQUIRE_SELECTION:
-        return X11DRV_AcquireClipboard( hwnd );
-    case WM_X11DRV_DELETE_WINDOW:
-        return SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
-    case WM_X11DRV_SET_WIN_FORMAT:
-        return X11DRV_set_win_format( hwnd, (XID)wp );
-    case WM_X11DRV_RESIZE_DESKTOP:
-        X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
-        return 0;
-    default:
-        FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );
-        return 0;
-    }
-}
-
-
 /***********************************************************************
  *		X11DRV_SendInput  (X11DRV.@)
  */

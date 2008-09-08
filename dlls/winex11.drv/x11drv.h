@@ -715,7 +715,6 @@ extern struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern Window X11DRV_get_client_window( HWND hwnd );
 extern XIC X11DRV_get_ic( HWND hwnd );
-extern BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig );
 
 extern int pixelformat_from_fbconfig_id( XID fbconfig_id );
 extern XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id );

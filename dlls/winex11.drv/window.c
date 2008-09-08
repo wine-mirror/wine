@@ -412,9 +412,9 @@ static void sync_window_text( Display *display, Window win, const WCHAR *text )
 
 
 /***********************************************************************
- *              X11DRV_set_win_format
+ *              set_win_format
  */
-BOOL X11DRV_set_win_format( HWND hwnd, XID fbconfig_id )
+static BOOL set_win_format( HWND hwnd, XID fbconfig_id )
 {
     struct x11drv_win_data *data;
     XVisualInfo *vis;
@@ -2150,6 +2150,29 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     }
 
     return TRUE;
+}
+
+
+/**********************************************************************
+ *           X11DRV_WindowMessage   (X11DRV.@)
+ */
+LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch(msg)
+    {
+    case WM_X11DRV_ACQUIRE_SELECTION:
+        return X11DRV_AcquireClipboard( hwnd );
+    case WM_X11DRV_DELETE_WINDOW:
+        return SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+    case WM_X11DRV_SET_WIN_FORMAT:
+        return set_win_format( hwnd, (XID)wp );
+    case WM_X11DRV_RESIZE_DESKTOP:
+        X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
+        return 0;
+    default:
+        FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );
+        return 0;
+    }
 }
 
 
