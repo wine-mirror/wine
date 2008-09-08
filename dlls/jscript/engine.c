@@ -141,6 +141,17 @@ static HRESULT disp_get_id(IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
     return hres;
 }
 
+/* ECMA-262 3rd Edition    8.7.2 */
+static HRESULT put_value(script_ctx_t *ctx, exprval_t *ref, VARIANT *v, jsexcept_t *ei)
+{
+    if(ref->type != EXPRVAL_IDREF) {
+        FIXME("throw ReferemceError\n");
+        return E_FAIL;
+    }
+
+    return disp_propput(ref->u.idref.disp, ref->u.idref.id, ctx->lcid, v, ei, NULL/*FIXME*/);
+}
+
 HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, jsexcept_t *ei, VARIANT *retv)
 {
     script_ctx_t *script = parser->script;
@@ -655,10 +666,38 @@ HRESULT right2_shift_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD
     return E_NOTIMPL;
 }
 
-HRESULT assign_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.13.1 */
+HRESULT assign_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+    exprval_t exprval, exprvalr;
+    VARIANT rval;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression1, EXPR_NEWREF, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = expr_eval(ctx, expr->expression2, 0, ei, &exprvalr);
+    if(SUCCEEDED(hres)) {
+        hres = exprval_to_value(ctx->parser->script, &exprvalr, ei, &rval);
+        exprval_release(&exprvalr);
+    }
+
+    if(SUCCEEDED(hres))
+        hres = put_value(ctx->parser->script, &exprval, &rval, ei);
+
+    exprval_release(&exprval);
+    if(FAILED(hres)) {
+        VariantClear(&rval);
+        return hres;
+    }
+
+    ret->type = EXPRVAL_VARIANT;
+    ret->u.var = rval;
+    return S_OK;
 }
 
 HRESULT assign_lshift_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
