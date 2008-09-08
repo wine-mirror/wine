@@ -49,6 +49,7 @@ typedef struct DispatchEx DispatchEx;
 
 typedef enum {
     JSCLASS_NONE,
+    JSCLASS_FUNCTION,
     JSCLASS_GLOBAL
 } jsclass_t;
 
@@ -87,10 +88,14 @@ struct DispatchEx {
 #define _IDispatchEx_(x) ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
 HRESULT create_dispex(script_ctx_t*,const builtin_info_t*,DispatchEx*,DispatchEx**);
+HRESULT init_dispex(DispatchEx*,script_ctx_t*,const builtin_info_t*,DispatchEx*);
 HRESULT disp_call(IDispatch*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propget(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propput(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propput_name(DispatchEx*,const WCHAR*,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_set_prototype(DispatchEx*,DispatchEx*);
+
+HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,DWORD,DispatchEx*,DispatchEx**);
 
 HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
 

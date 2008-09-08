@@ -10,6 +10,7 @@ RC_SRCS = rsrc.rc
 C_SRCS = \
 	dispex.c \
 	engine.c \
+	function.c \
 	global.c \
 	jscript.c \
 	jscript_main.c \

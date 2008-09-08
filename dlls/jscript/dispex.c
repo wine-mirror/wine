@@ -292,8 +292,16 @@ static HRESULT prop_get(DispatchEx *This, dispex_prop_t *prop, LCID lcid, DISPPA
     switch(prop->type) {
     case PROP_BUILTIN:
         if(prop->u.p->flags & PROPF_METHOD) {
-            FIXME("function objects not supported\n");
-            return E_NOTIMPL;
+            DispatchEx *obj;
+            hres = create_builtin_function(This->ctx, prop->u.p->invoke, prop->u.p->flags, NULL, &obj);
+            if(FAILED(hres))
+                break;
+
+            prop->type = PROP_VARIANT;
+            V_VT(&prop->u.var) = VT_DISPATCH;
+            V_DISPATCH(&prop->u.var) = (IDispatch*)_IDispatchEx_(obj);
+
+            hres = VariantCopy(retv, &prop->u.var);
         }else {
             hres = prop->u.p->invoke(This, lcid, DISPATCH_PROPERTYGET, dp, retv, ei, caller);
         }
@@ -688,7 +696,7 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
-static HRESULT jsdisp_set_prot_prop(DispatchEx *dispex, DispatchEx *prototype)
+HRESULT jsdisp_set_prototype(DispatchEx *dispex, DispatchEx *prototype)
 {
     VARIANT *var;
 
@@ -705,7 +713,7 @@ static HRESULT jsdisp_set_prot_prop(DispatchEx *dispex, DispatchEx *prototype)
     return S_OK;
 }
 
-static HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, DispatchEx *prototype)
+HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, DispatchEx *prototype)
 {
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
 
@@ -740,7 +748,7 @@ static HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx, const builtin_
     if(prototype) {
         HRESULT hres;
 
-        hres = jsdisp_set_prot_prop(dispex, prototype);
+        hres = jsdisp_set_prototype(dispex, prototype);
         if(FAILED(hres)) {
             IDispatchEx_Release(_IDispatchEx_(dispex));
             return hres;
