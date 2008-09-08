@@ -42,14 +42,14 @@ STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMEN
 CAPTION "Installation/Désinstallation"
 FONT 8, "MS Sans Serif"
 {
-CONTROL "Pour installer un nouveau programme à partir d'une disquette, d'un cdrom ou de votre disque dur, cliquer sur Installation.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
- CONTROL "&Installer...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+CONTROL "Pour installer un nouveau programme à partir d'une disquette, d'un cdrom ou de votre disque dur, cliquer sur Installer.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "&Installer", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
- CONTROL "Ce logiciel peut être automatiquement désinstaller. Pour supprimer un programme ou modifier ses composants, sélectionner le dans la liste, et cliquer sur Ajouter/Supprimer.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "Les logiciels suivants peuvent être automatiquement désinstallés. Pour supprimer un programme ou modifier ses composants, le sélectionner dans la liste, et cliquer sur Ajouter/Supprimer.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
- CONTROL "Ajouter/&Supprimer...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
- CONTROL "&Info. support..", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
+ CONTROL "Ajouter/&Supprimer", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
+ CONTROL "&Info. support", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
 
