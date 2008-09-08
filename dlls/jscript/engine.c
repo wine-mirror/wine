@@ -976,10 +976,25 @@ HRESULT not_equal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD fl
     return E_NOTIMPL;
 }
 
-HRESULT not_equal2_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.9.5 */
+HRESULT not_equal2_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+    VARIANT rval, lval;
+    BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = get_binary_expr_values(ctx, expr, ei, &rval, &lval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = equal2_values(&rval, &lval, &b);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bool(ret, !b);
 }
 
 HRESULT less_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)

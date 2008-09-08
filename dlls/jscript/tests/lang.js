@@ -32,6 +32,9 @@ ok(null === null, "null === null is false");
 ok(undefined === undefined, "undefined === undefined is false");
 ok(!(undefined === null), "!(undefined === null) is false");
 
+ok(1 !== 2, "1 !== 2 is false");
+ok(null !== undefined, "null !== undefined is false");
+
 var trueVar = true;
 ok(trueVar, "trueVar is not true");
 
