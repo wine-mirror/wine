@@ -25,6 +25,11 @@ struct wine_pthread_callbacks;
 
 #include <signal.h>
 
+#ifndef HAVE_SIGSET_T
+struct sigset_t;
+typedef struct sigset_t sigset_t;
+#endif
+
 #ifdef HAVE_PTHREAD_H
 
 #define _GNU_SOURCE
