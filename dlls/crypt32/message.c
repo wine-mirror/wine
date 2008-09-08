@@ -318,3 +318,13 @@ BOOL WINAPI CryptVerifyDetachedMessageHash(PCRYPT_HASH_MESSAGE_PARA pHashPara,
     }
     return ret;
 }
+
+BOOL WINAPI CryptVerifyMessageHash(PCRYPT_HASH_MESSAGE_PARA pHashPara,
+ BYTE *pbHashedBlob, DWORD cbHashedBlob, BYTE *pbToBeHashed,
+ DWORD *pcbToBeHashed, BYTE *pbComputedHash, DWORD *pcbComputedHash)
+{
+    FIXME("(%p, %p, %d, %p, %p, %p, %p): stub\n", pHashPara, pbHashedBlob,
+     cbHashedBlob, pbToBeHashed, pcbToBeHashed, pbComputedHash,
+     pcbComputedHash);
+    return FALSE;
+}
