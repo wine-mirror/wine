@@ -2841,6 +2841,37 @@ static void test_msg_control(void)
     ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
     ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
     CryptMsgClose(msg);
+
+    /* Test verifying signature of a detached signed message */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG, 0, 0,
+     NULL, NULL);
+    ret = CryptMsgUpdate(msg, detachedSignedContent,
+     sizeof(detachedSignedContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    /* Can't verify the sig without having updated the data */
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
+     "expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
+    /* Now that the signature's been checked, can't do the final update */
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    todo_wine
+    ok(!ret && GetLastError() == NTE_BAD_HASH_STATE,
+     "expected NTE_BAD_HASH_STATE, got %08x\n", GetLastError());
+    CryptMsgClose(msg);
+    /* Updating with the detached portion of the message and the data of the
+     * the message allows the sig to be verified.
+     */
+    msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG, 0, 0,
+     NULL, NULL);
+    ret = CryptMsgUpdate(msg, detachedSignedContent,
+     sizeof(detachedSignedContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
+    ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_SIGNATURE, &certInfo);
+    ok(ret, "CryptMsgControl failed: %08x\n", GetLastError());
+    CryptMsgClose(msg);
 }
 
 /* win9x has much less parameter checks and will crash on many tests
