@@ -132,3 +132,34 @@ void jsheap_free(jsheap_t *heap)
 
     jsheap_init(heap);
 }
+
+/* ECMA-262 3rd Edition    9.2 */
+HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
+{
+    switch(V_VT(v)) {
+    case VT_EMPTY:
+    case VT_NULL:
+        *b = VARIANT_FALSE;
+        break;
+    case VT_I4:
+        *b = V_I4(v) ? VARIANT_TRUE : VARIANT_FALSE;
+        break;
+    case VT_R8:
+        *b = V_R8(v) ? VARIANT_TRUE : VARIANT_FALSE;
+        break;
+    case VT_BSTR:
+        *b = V_BSTR(v) && *V_BSTR(v) ? VARIANT_TRUE : VARIANT_FALSE;
+        break;
+    case VT_DISPATCH:
+        *b = V_DISPATCH(v) ? VARIANT_TRUE : VARIANT_FALSE;
+        break;
+    case VT_BOOL:
+        *b = V_BOOL(v);
+        break;
+    default:
+        FIXME("unimplemented for vt %d\n", V_VT(v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}

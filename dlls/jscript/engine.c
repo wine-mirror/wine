@@ -86,6 +86,24 @@ static HRESULT exprval_to_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *e
     return exprval_value(ctx, val, ei, ret);
 }
 
+static HRESULT exprval_to_boolean(script_ctx_t *ctx, exprval_t *exprval, jsexcept_t *ei, VARIANT_BOOL *b)
+{
+    if(exprval->type != EXPRVAL_VARIANT) {
+        VARIANT val;
+        HRESULT hres;
+
+        hres = exprval_to_value(ctx, exprval, ei, &val);
+        if(FAILED(hres))
+            return hres;
+
+        hres = to_boolean(&val, b);
+        VariantClear(&val);
+        return hres;
+    }
+
+    return to_boolean(&exprval->u.var, b);
+}
+
 static void exprval_set_idref(exprval_t *val, IDispatch *disp, DISPID id)
 {
     val->type = EXPRVAL_IDREF;
@@ -438,6 +456,15 @@ HRESULT try_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt
 {
     FIXME("\n");
     return E_NOTIMPL;
+}
+
+static HRESULT return_bool(exprval_t *ret, DWORD b)
+{
+    ret->type = EXPRVAL_VARIANT;
+    V_VT(&ret->u.var) = VT_BOOL;
+    V_BOOL(&ret->u.var) = b ? VARIANT_TRUE : VARIANT_FALSE;
+
+    return S_OK;
 }
 
 HRESULT function_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
@@ -808,10 +835,26 @@ HRESULT binary_negation_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWO
     return E_NOTIMPL;
 }
 
-HRESULT logical_negation_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.4.9 */
+HRESULT logical_negation_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    unary_expression_t *expr = (unary_expression_t*)_expr;
+    exprval_t exprval;
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, EXPR_NEWREF, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_boolean(ctx->parser->script, &exprval, ei, &b);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bool(ret, !b);
 }
 
 HRESULT left_shift_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)

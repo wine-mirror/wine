@@ -17,5 +17,10 @@
  */
 
 ok(true, "true is not true?");
+ok(!false, "!false is not true");
+ok(!undefined, "!undefined is not true");
+ok(!null, "!null is not true");
+ok(!0, "!0 is not true");
+ok(!0.0, "!0.0 is not true");
 
 reportSuccess();

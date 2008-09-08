@@ -91,6 +91,8 @@ HRESULT disp_call(IDispatch*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,I
 HRESULT disp_propget(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propput(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 
+HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
+
 typedef struct named_item_t {
     IDispatch *disp;
     DWORD flags;
