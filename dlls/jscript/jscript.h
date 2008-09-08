@@ -98,6 +98,7 @@ HRESULT jsdisp_set_prototype(DispatchEx*,DispatchEx*);
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,DWORD,DispatchEx*,DispatchEx**);
 
 HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
+HRESULT to_object(exec_ctx_t*,VARIANT*,IDispatch**);
 
 typedef struct named_item_t {
     IDispatch *disp;

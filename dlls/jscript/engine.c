@@ -104,6 +104,12 @@ static HRESULT exprval_to_boolean(script_ctx_t *ctx, exprval_t *exprval, jsexcep
     return to_boolean(&exprval->u.var, b);
 }
 
+static void exprval_init(exprval_t *val)
+{
+    val->type = EXPRVAL_VARIANT;
+    V_VT(&val->u.var) = VT_EMPTY;
+}
+
 static void exprval_set_idref(exprval_t *val, IDispatch *disp, DISPID id)
 {
     val->type = EXPRVAL_IDREF;
@@ -647,10 +653,52 @@ HRESULT array_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, 
     return E_NOTIMPL;
 }
 
-HRESULT member_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.2.1 */
+HRESULT member_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    member_expression_t *expr = (member_expression_t*)_expr;
+    IDispatch *obj = NULL;
+    exprval_t exprval;
+    VARIANT member;
+    DISPID id;
+    BSTR str;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, ei, &member);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_object(ctx, &member, &obj);
+    VariantClear(&member);
+    if(FAILED(hres))
+        return hres;
+
+    str = SysAllocString(expr->identifier);
+    if(flags & EXPR_STRREF) {
+        ret->type = EXPRVAL_NAMEREF;
+        ret->u.nameref.disp = obj;
+        ret->u.nameref.name = str;
+        return S_OK;
+    }
+
+    hres = disp_get_id(obj, str, flags & EXPR_NEW ? fdexNameEnsure : 0, &id);
+    SysFreeString(str);
+    if(SUCCEEDED(hres)) {
+        exprval_set_idref(ret, obj, id);
+    }else if(!(flags & EXPR_NEWREF) && hres == DISP_E_UNKNOWNNAME) {
+        exprval_init(ret);
+        hres = S_OK;
+    }
+
+    IDispatch_Release(obj);
+    return hres;
 }
 
 static void free_dp(DISPPARAMS *dp)

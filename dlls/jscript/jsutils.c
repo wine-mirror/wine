@@ -163,3 +163,19 @@ HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
 
     return S_OK;
 }
+
+/* ECMA-262 3rd Edition    9.9 */
+HRESULT to_object(exec_ctx_t *ctx, VARIANT *v, IDispatch **disp)
+{
+    switch(V_VT(v)) {
+    case VT_DISPATCH:
+        IDispatch_AddRef(V_DISPATCH(v));
+        *disp = V_DISPATCH(v);
+        break;
+    default:
+        FIXME("unsupported vt %d\n", V_VT(v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
