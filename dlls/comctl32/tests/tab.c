@@ -92,7 +92,7 @@ static const struct message add_tab_to_parent[] = {
     { TCM_INSERTITEMA, sent },
     { TCM_INSERTITEMA, sent },
     { WM_NOTIFYFORMAT, sent|defwinproc },
-    { WM_QUERYUISTATE, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_QUERYUISTATE, sent|wparam|lparam|defwinproc|optional, 0, 0 },
     { WM_PARENTNOTIFY, sent|defwinproc },
     { TCM_INSERTITEMA, sent },
     { TCM_INSERTITEMA, sent },
@@ -125,7 +125,7 @@ static const struct message add_tab_to_parent_interactive[] = {
 
 static const struct message add_tab_control_parent_seq[] = {
     { WM_NOTIFYFORMAT, sent },
-    { WM_QUERYUISTATE, sent|wparam|lparam, 0, 0 },
+    { WM_QUERYUISTATE, sent|wparam|lparam|optional, 0, 0 },
     { 0 }
 };
 
@@ -217,10 +217,10 @@ static const struct message getset_item_seq[] = {
 };
 
 static const struct message getset_tooltip_seq[] = {
-    { WM_NOTIFYFORMAT, sent },
-    { WM_QUERYUISTATE, sent|wparam|lparam, 0, 0 },
+    { WM_NOTIFYFORMAT, sent|optional },
+    { WM_QUERYUISTATE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_NOTIFYFORMAT, sent },
+    { WM_NOTIFYFORMAT, sent|optional },
     { TCM_SETTOOLTIPS, sent|lparam, 0 },
     { TCM_GETTOOLTIPS, sent|wparam|lparam, 0, 0 },
     { TCM_SETTOOLTIPS, sent|lparam, 0 },
@@ -241,7 +241,7 @@ static const struct message insert_focus_seq[] = {
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_INSERTITEM, sent|wparam, 2 },
     { WM_NOTIFYFORMAT, sent|defwinproc, },
-    { WM_QUERYUISTATE, sent|defwinproc, },
+    { WM_QUERYUISTATE, sent|defwinproc|optional, },
     { WM_PARENTNOTIFY, sent|defwinproc, },
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
