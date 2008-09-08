@@ -654,6 +654,7 @@ static void test_monthcal_firstDay(HWND hwnd)
     /* check for locale first day */
     if(GetLocaleInfo(lcid, LOCALE_IFIRSTDAYOFWEEK, b, 128)){
         fday = atoi(b);
+        trace("fday: %d\n", fday);
         res = SendMessage(hwnd, MCM_GETFIRSTDAYOFWEEK, 0, 0);
         expect(fday, res);
         prev = fday;
