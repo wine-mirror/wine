@@ -637,8 +637,8 @@ cpp_quote("#endif /* _WINGDI_ */")
         HRESULT NearestPoint(
             [in] long X,
             [in] long Y,
-            [in, out] float PointOnStroke,
-            [in, out] float DistanceFromPacket,
+            [in, out] float *PointOnStroke,
+            [in, out] float *DistanceFromPacket,
             [out, retval] IInkStrokeDisp **Stroke);
         HRESULT CreateStrokes(
             [in] VARIANT StrokeIds,
