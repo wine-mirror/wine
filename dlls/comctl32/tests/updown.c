@@ -101,7 +101,7 @@ static const struct message add_updown_with_edit_seq[] = {
 
 static const struct message add_updown_to_parent_seq[] = {
     { WM_NOTIFYFORMAT, sent|lparam, 0, NF_QUERY },
-    { WM_QUERYUISTATE, sent },
+    { WM_QUERYUISTATE, sent|optional },
     { WM_PARENTNOTIFY, sent|wparam, MAKELONG(WM_CREATE, WM_CREATE) },
     { 0 }
 };
