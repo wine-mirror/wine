@@ -1248,7 +1248,8 @@ cpp_quote("#define INewShortcutHook WINELIB_NAME_AW(INewShortcutHook)")
 [
     object,
     uuid(000214e1-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface INewShortcutHookA : IUnknown
 {
@@ -1278,7 +1279,8 @@ interface INewShortcutHookA : IUnknown
 [
     object,
     uuid(000214f7-0000-0000-c000-000000000046),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface INewShortcutHookW : IUnknown
 {
@@ -1307,7 +1309,8 @@ interface INewShortcutHookW : IUnknown
 [
     object,
     uuid(85788d00-6807-11d0-b810-00c04fd706ec),
-    pointer_default(unique)
+    pointer_default(unique),
+    local
 ]
 interface IRunnableTask : IUnknown
 {
