@@ -323,8 +323,40 @@ BOOL WINAPI CryptVerifyMessageHash(PCRYPT_HASH_MESSAGE_PARA pHashPara,
  BYTE *pbHashedBlob, DWORD cbHashedBlob, BYTE *pbToBeHashed,
  DWORD *pcbToBeHashed, BYTE *pbComputedHash, DWORD *pcbComputedHash)
 {
-    FIXME("(%p, %p, %d, %p, %p, %p, %p): stub\n", pHashPara, pbHashedBlob,
+    HCRYPTMSG msg;
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %p, %d, %p, %p, %p, %p)\n", pHashPara, pbHashedBlob,
      cbHashedBlob, pbToBeHashed, pcbToBeHashed, pbComputedHash,
      pcbComputedHash);
-    return FALSE;
+
+    if (pHashPara->cbSize != sizeof(CRYPT_HASH_MESSAGE_PARA))
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (GET_CMSG_ENCODING_TYPE(pHashPara->dwMsgEncodingType) !=
+     PKCS_7_ASN_ENCODING)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    msg = CryptMsgOpenToDecode(pHashPara->dwMsgEncodingType, 0, 0,
+     pHashPara->hCryptProv, NULL, NULL);
+    if (msg)
+    {
+        ret = CryptMsgUpdate(msg, pbHashedBlob, cbHashedBlob, TRUE);
+        if (ret)
+        {
+            ret = CryptMsgControl(msg, 0, CMSG_CTRL_VERIFY_HASH, NULL);
+            if (ret && pcbToBeHashed)
+                ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0,
+                 pbToBeHashed, pcbToBeHashed);
+            if (ret && pcbComputedHash)
+                ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0,
+                 pbComputedHash, pcbComputedHash);
+        }
+        CryptMsgClose(msg);
+    }
+    return ret;
 }

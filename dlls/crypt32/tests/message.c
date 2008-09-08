@@ -210,19 +210,16 @@ static void test_verify_message_hash(void)
         ret = CryptVerifyMessageHash(NULL, NULL, 0, NULL, NULL, NULL, NULL);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     /* Verifying the hash of a detached message succeeds? */
@@ -233,11 +230,9 @@ static void test_verify_message_hash(void)
     /* As does verifying the hash of a regular message. */
     ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
      NULL, NULL, NULL, NULL);
-    todo_wine
     ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
     ret = CryptVerifyMessageHash(&para, hashContent, sizeof(hashContent),
      NULL, &size, NULL, NULL);
-    todo_wine
     ok(ret, "CryptVerifyMessageHash failed: %08x\n", GetLastError());
     if (ret)
         buf = CryptMemAlloc(size);
