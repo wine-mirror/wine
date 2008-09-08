@@ -89,7 +89,7 @@ static const struct message add_header_to_parent_seq_interactive[] = {
 
 static const struct message add_header_to_parent_seq[] = {
     { WM_NOTIFYFORMAT, sent|lparam, 0, NF_QUERY },
-    { WM_QUERYUISTATE, sent },
+    { WM_QUERYUISTATE, sent|optional },
     { WM_PARENTNOTIFY, sent },
     { 0 }
 };
@@ -196,8 +196,8 @@ static const struct message filterMessages_seq_noninteractive[] = {
     { HDM_SETFILTERCHANGETIMEOUT, sent|wparam|lparam, 1, 100 },
     { HDM_CLEARFILTER, sent|wparam|lparam, 0, 1 },
     { HDM_EDITFILTER,  sent|wparam|lparam, 1, 0 },
-    { WM_PARENTNOTIFY, sent|wparam|defwinproc, WM_CREATE },
-    { WM_COMMAND, sent|defwinproc },
+    { WM_PARENTNOTIFY, sent|wparam|defwinproc|optional, WM_CREATE },
+    { WM_COMMAND, sent|defwinproc|optional },
     { 0 }
 };
 
@@ -811,7 +811,7 @@ static void test_hdm_getitemrect(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     retVal = SendMessage(hChild, HDM_GETITEMRECT, 1, (LPARAM) &rect);
     ok(retVal == TRUE, "Getting item rect should TRUE, got %d\n", retVal);
@@ -855,7 +855,7 @@ static void test_hdm_layout(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     retVal = SendMessage(hChild, HDM_LAYOUT, 0, (LPARAM) &hdLayout);
@@ -874,7 +874,7 @@ static void test_hdm_ordertoindex(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     retVal = SendMessage(hChild, HDM_ORDERTOINDEX, 1, 0);
@@ -902,7 +902,7 @@ static void test_hdm_hittest(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     retVal = SendMessage(hChild, HDM_HITTEST, 0, (LPARAM) &hdHitTestInfo);
@@ -947,7 +947,7 @@ static void test_hdm_sethotdivider(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     todo_wine
@@ -978,7 +978,7 @@ static void test_hdm_imageMessages(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -1005,7 +1005,7 @@ static void test_hdm_filterMessages(HWND hParent)
     hChild = create_custom_header_control(hParent, TRUE);
     assert(hChild);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     todo_wine
@@ -1027,7 +1027,7 @@ static void test_hdm_filterMessages(HWND hParent)
                      "filterMessages sequence testing", TRUE);
     else
          ok_sequence(sequences, HEADER_SEQ_INDEX, filterMessages_seq_noninteractive,
-                     "filterMessages sequence testing", TRUE);
+                     "filterMessages sequence testing", FALSE);
     DestroyWindow(hChild);
 
 }
@@ -1040,7 +1040,7 @@ static void test_hdm_unicodeformatMessages(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     retVal = SendMessage(hChild, HDM_SETUNICODEFORMAT, TRUE, 0);
@@ -1061,7 +1061,7 @@ static void test_hdm_bitmapmarginMessages(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                    "adder header control to parent", TRUE);
+                                    "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     retVal = SendMessage(hChild, HDM_GETBITMAPMARGIN, 0, 0);
@@ -1100,7 +1100,7 @@ static void test_hdm_index_messages(HWND hParent)
                                               "adder header control to parent", TRUE);
     else
          ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
-                                     "adder header control to parent", TRUE);
+                                     "adder header control to parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     for ( loopcnt = 0 ; loopcnt < 4 ; loopcnt++ )
     {
