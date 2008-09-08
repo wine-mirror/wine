@@ -838,6 +838,20 @@ HRESULT disp_call(IDispatch *disp, DISPID id, LCID lcid, WORD flags, DISPPARAMS 
     return hres;
 }
 
+HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DISPID named_arg = DISPID_PROPERTYPUT;
+    DISPPARAMS dp = {val, &named_arg, 1, 1};
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    hres = find_prop_name_prot(obj, name, TRUE, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    return prop_put(obj, prop, lcid, &dp, ei, caller);
+}
+
 HRESULT disp_propput(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPID dispid = DISPID_PROPERTYPUT;

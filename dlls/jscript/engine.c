@@ -341,10 +341,53 @@ HRESULT block_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *
     return E_NOTIMPL;
 }
 
-HRESULT var_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.2 */
+static HRESULT variable_list_eval(exec_ctx_t *ctx, variable_declaration_t *var_list, jsexcept_t *ei)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    variable_declaration_t *iter;
+    HRESULT hres;
+
+    for(iter = var_list; iter; iter = iter->next) {
+        VARIANT val;
+
+        if(iter->expr) {
+            exprval_t exprval;
+
+            hres = expr_eval(ctx, iter->expr, 0, ei, &exprval);
+            if(FAILED(hres))
+                break;
+
+            hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
+            exprval_release(&exprval);
+            if(FAILED(hres))
+                break;
+        }else {
+            V_VT(&val) = VT_EMPTY;
+        }
+
+        hres = jsdisp_propput_name(ctx->var_disp, iter->identifier, ctx->parser->script->lcid, &val, ei, NULL/*FIXME*/);
+        VariantClear(&val);
+        if(FAILED(hres))
+            break;
+    }
+
+    return hres;
+}
+
+/* ECMA-262 3rd Edition    12.2 */
+HRESULT var_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
+{
+    var_statement_t *stat = (var_statement_t*)_stat;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = variable_list_eval(ctx, stat->variable_list, &rt->ei);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(ret) = VT_EMPTY;
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.3 */

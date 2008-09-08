@@ -23,4 +23,7 @@ ok(!null, "!null is not true");
 ok(!0, "!0 is not true");
 ok(!0.0, "!0.0 is not true");
 
+var trueVar = true;
+ok(trueVar, "trueVar is not true");
+
 reportSuccess();
