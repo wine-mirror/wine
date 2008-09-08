@@ -575,8 +575,26 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
-    return E_NOTIMPL;
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
+
+    if(grfdex & ~(fdexNameCaseSensitive|fdexNameEnsure|fdexNameImplicit))
+        FIXME("Unsupported grfdex %x\n", grfdex);
+
+    hres = find_prop_name(This, bstrName, &prop);
+    if(FAILED(hres))
+        return hres;
+    if(!prop) {
+        TRACE("not found\n");
+        return S_OK;
+    }
+
+    heap_free(prop->name);
+    prop->name = NULL;
+    prop->type = PROP_DELETED;
+    return S_OK;
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
