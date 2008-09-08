@@ -3511,10 +3511,7 @@ static void test_publish(void)
     /* complete install */
     r = MsiInstallProductA(msifile, "FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(pf_exists("msitest\\maximus"), "File not installed\n");
-    }
+    ok(pf_exists("msitest\\maximus"), "File not installed\n");
     ok(pf_exists("msitest"), "File not installed\n");
 
     state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");

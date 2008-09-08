@@ -793,9 +793,6 @@ BOOL ACTION_VerifyComponentForAction( const MSICOMPONENT* comp, INSTALLSTATE che
     if (!comp)
         return FALSE;
 
-    if (comp->Installed == check)
-        return FALSE;
-
     if (comp->ActionRequest == check)
         return TRUE;
     else
