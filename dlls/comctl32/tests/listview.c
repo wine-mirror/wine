@@ -870,7 +870,7 @@ static void test_icon_spacing(void)
     /* now we can request what the defaults are */
     r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1, -1));
     w = LOWORD(r);
-    h = LOWORD(r);
+    h = HIWORD(r);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
