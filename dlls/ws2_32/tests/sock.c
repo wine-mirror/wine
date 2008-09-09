@@ -2187,8 +2187,7 @@ static void test_write_events(void)
     }
 
 end:
-    if (buffer != NULL)
-        HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, buffer);
     if (src != INVALID_SOCKET)
         closesocket(src);
     if (dst != INVALID_SOCKET)
