@@ -2187,13 +2187,16 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
 
     pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return FALSE;
-    for (i = 0, winpos = pDWP->winPos; i < pDWP->actualCount; i++, winpos++)
+    for (i = 0, winpos = pDWP->winPos; res && i < pDWP->actualCount; i++, winpos++)
     {
         TRACE("hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
                winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y,
                winpos->cx, winpos->cy, winpos->flags);
 
-        if (!(res = USER_SetWindowPos( winpos ))) break;
+        if (WIN_IsCurrentThread( winpos->hwnd ))
+            res = USER_SetWindowPos( winpos );
+        else
+            res = SendMessageW( winpos->hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)winpos );
     }
     USER_HEAP_FREE( hdwp );
     return res;
