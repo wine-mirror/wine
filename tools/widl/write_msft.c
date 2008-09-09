@@ -1648,7 +1648,6 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
             varflags |= 0x01; /* VARFLAG_FREADONLY */
             break;
         /* FIXME: VARFLAG_FREPLACEABLE */
-            break;
         case ATTR_REQUESTEDIT:
             varflags |= 0x08; /* VARFLAG_FREQUESTEDIT */
             break;
