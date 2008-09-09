@@ -1267,14 +1267,16 @@ static BOOL receive_response( request_t *request, BOOL async )
         if (!query_headers( request, query, NULL, &request->content_length, &size, NULL ))
             request->content_length = ~0UL;
 
-        if (status == 200) break;
         if (status == 301 || status == 302)
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS) break;
             drain_content( request );
             if (!(ret = handle_redirect( request ))) break;
+            ret = send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
+            continue;
         }
-        ret = send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
+        if (status == 401) FIXME("authentication not supported\n");
+        break;
     }
 
     if (async)
