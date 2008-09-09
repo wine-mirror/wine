@@ -2345,6 +2345,12 @@ int WINAPI WS_ioctlsocket(SOCKET s, LONG cmd, WS_u_long *argp)
     long newcmd  = cmd;
 
     TRACE("socket %04lx, cmd %08x, ptr %p\n", s, cmd, argp);
+    /* broken apps like defcon pass the argp value directly instead of a pointer to it */
+    if(IS_INTRESOURCE(argp))
+    {
+       SetLastError(WSAEFAULT);
+       return SOCKET_ERROR;
+    }
 
     switch( cmd )
     {

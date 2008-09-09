@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Martin Wilck
  * Copyright 2005 Thomas Kho
+ * Copyright 2008 Jeff Zaroyko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1989,6 +1990,31 @@ static void test_inet_addr(void)
     ok(addr == INADDR_NONE, "inet_addr succeeded unexpectedly\n");
 }
 
+static void test_ioctlsocket(void)
+{
+    SOCKET sock;
+    int ret;
+    long cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
+    int i;
+
+    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(sock != INVALID_SOCKET, "Creating the socket failed: %d\n", WSAGetLastError());
+    if(sock == INVALID_SOCKET)
+    {
+        skip("Can't continue without a socket.\n");
+        return;
+    }
+
+    for(i = 0; i < sizeof(cmds)/sizeof(long); i++)
+    {
+        /* broken apps like defcon pass the argp value directly instead of a pointer to it */
+        ret = ioctlsocket(sock, cmds[i], (u_long *)1);
+        ok(ret == SOCKET_ERROR, "ioctlsocket succeeded unexpectedly\n");
+        ret = WSAGetLastError();
+        ok(ret == WSAEFAULT, "expected WSAEFAULT, got %d instead\n", ret);
+    }
+}
+
 static DWORD WINAPI drain_socket_thread(LPVOID arg)
 {
     char buffer[1024];
@@ -2304,6 +2330,7 @@ START_TEST( sock )
     test_accept();
     test_getsockname();
     test_inet_addr();
+    test_ioctlsocket();
     test_dns();
     test_gethostbyname_hack();
 
