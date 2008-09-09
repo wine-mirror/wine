@@ -152,7 +152,7 @@ static void test_connection_cache( void )
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
 
-    Sleep(1500); /* make sure connection is evicted from cache */
+    Sleep(2000); /* make sure connection is evicted from cache */
 
     info.index = 0;
 
@@ -375,6 +375,6 @@ START_TEST (notification)
 {
     test_connection_cache();
     test_redirect();
-    Sleep(1500); /* make sure previous connection is evicted from cache */
+    Sleep(2000); /* make sure previous connection is evicted from cache */
     test_async();
 }
