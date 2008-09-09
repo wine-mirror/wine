@@ -1082,7 +1082,7 @@ typedef BOOL (WINAPI *PFN_CERT_ENUM_PHYSICAL_STORE)(const void *pvSystemStore,
  void *pvReserved, void *pvArg);
 
 /* Encode/decode object */
-typedef LPVOID (WINAPI *PFN_CRYPT_ALLOC)(size_t cbsize);
+typedef LPVOID (__WINE_ALLOC_SIZE(1) WINAPI *PFN_CRYPT_ALLOC)(size_t cbsize);
 typedef VOID   (WINAPI *PFN_CRYPT_FREE)(LPVOID pv);
 
 typedef struct _CRYPT_ENCODE_PARA {
