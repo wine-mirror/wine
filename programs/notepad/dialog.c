@@ -182,8 +182,7 @@ BOOL DoCloseFile(void)
         /* prompt user to save changes */
         nResult = AlertFileNotSaved(Globals.szFileName);
         switch (nResult) {
-            case IDYES:     DIALOG_FileSave();
-                            break;
+            case IDYES:     return DIALOG_FileSave();
 
             case IDNO:      break;
 
@@ -316,15 +315,16 @@ VOID DIALOG_FileOpen(VOID)
 }
 
 
-VOID DIALOG_FileSave(VOID)
+BOOL DIALOG_FileSave(VOID)
 {
     if (Globals.szFileName[0] == '\0')
-        DIALOG_FileSaveAs();
+        return DIALOG_FileSaveAs();
     else
         DoSaveFile();
+    return TRUE;
 }
 
-VOID DIALOG_FileSaveAs(VOID)
+BOOL DIALOG_FileSaveAs(VOID)
 {
     OPENFILENAME saveas;
     WCHAR szPath[MAX_PATH];
@@ -352,7 +352,9 @@ VOID DIALOG_FileSaveAs(VOID)
         SetFileName(szPath);
         UpdateWindowCaption();
         DoSaveFile();
+        return TRUE;
     }
+    return FALSE;
 }
 
 typedef struct {
