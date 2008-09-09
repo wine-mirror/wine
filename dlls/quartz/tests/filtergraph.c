@@ -1122,9 +1122,12 @@ static HRESULT TestFilter_Create(const CLSID* pClsid, const TestFilterPinData *p
 
     error:
 
-    for (i = 0; i < nPins; i++)
+    if (pTestFilter->ppPins)
     {
-        if (pTestFilter->ppPins[i]) IPin_Release(pTestFilter->ppPins[i]);
+        for (i = 0; i < nPins; i++)
+        {
+            if (pTestFilter->ppPins[i]) IPin_Release(pTestFilter->ppPins[i]);
+        }
     }
     CoTaskMemFree(pTestFilter->ppPins);
     DeleteCriticalSection(&pTestFilter->csFilter);
