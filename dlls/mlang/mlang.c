@@ -3049,7 +3049,9 @@ static HRESULT WINAPI fnIMLangFontLink2_GetStrCodePages( IMLangFontLink2* This,
         DWORD *pdwCodePages, long *pcchCodePages)
 {
     FIXME("(%p)->%s %li %x %p %p\n",This, debugstr_wn(pszSrc,cchSrc),cchSrc,dwPriorityCodePages,pdwCodePages,pcchCodePages);
-    return E_NOTIMPL;
+    *pdwCodePages = 0;
+    *pcchCodePages = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_CodePageToCodePages(IMLangFontLink2* This,
