@@ -206,11 +206,8 @@ static void test_threads()
         return;
     }
 
-    /* Before doing anything */
+    /* Before doing anything (number of threads at the start differs per OS) */
     baselevel = count_threads();
-    expected = 1;
-    ok(baselevel == expected,
-        "Basic amount of threads should be %d, not %d!\n", expected, baselevel);
 
     file = CreateFileW(wfile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
         NULL, OPEN_EXISTING, 0, NULL);
@@ -374,11 +371,7 @@ static void test_threads()
     IBaseFilter_GetState(pavi, INFINITE, &state);
 
     curlevel = count_threads();
-    /* On a 2 stream filter, there are 4 or 5 threads (seems to be 5)
-     * One is the thread we are in. That leaves 3 or 4 for other dark purposes
-     * Wine is 1 thread short!
-     */
-    ok(curlevel == expected || curlevel == expected + 1,
+    ok(curlevel == expected,
         "Amount of threads should be %d not %d\n", expected, curlevel);
 
     IBaseFilter_Pause(pavi);
@@ -452,8 +445,10 @@ fail:
     if (pfile)
         IUnknown_Release(pfile);
 
-    ok(baselevel == 1,
-        "Basic amount of threads should be %d, not %d!\n", 1, baselevel);
+    curlevel = count_threads();
+    todo_wine
+    ok(curlevel == baselevel,
+        "Amount of threads should be %d not %d\n", baselevel, curlevel);
 }
 
 START_TEST(avisplitter)
