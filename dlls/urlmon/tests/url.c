@@ -2122,7 +2122,8 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
                 CHECK_CALLED(OnProgress_CONNECTING);
             }else todo_wine {
                 CHECK_NOT_CALLED(OnProgress_FINDINGRESOURCE);
-                CHECK_NOT_CALLED(OnProgress_CONNECTING);
+                /* IE7 does call this */
+                CLEAR_CALLED(OnProgress_CONNECTING);
             }
         }
         if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
@@ -2281,7 +2282,8 @@ static void test_BindToObject(int protocol, BOOL emul)
                 CHECK_CALLED(Obj_OnProgress_CONNECTING);
             }else todo_wine {
                 CHECK_NOT_CALLED(Obj_OnProgress_FINDINGRESOURCE);
-                CHECK_NOT_CALLED(Obj_OnProgress_CONNECTING);
+                /* IE7 does call this */
+                CLEAR_CALLED(Obj_OnProgress_CONNECTING);
             }
         }
         if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST) {
@@ -2383,8 +2385,10 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
             CHECK_CALLED(QueryInterface_IHttpNegotiate2);
             CHECK_CALLED(GetRootSecurityId);
         }
-        if(test_protocol == HTTP_TEST || test_protocol == FILE_TEST)
+        if(test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
+        else if(test_protocol == HTTP_TEST)
+            CLEAR_CALLED(OnProgress_SENDINGREQUEST); /* not called by IE7 */
         if(test_protocol == HTTP_TEST)
             CHECK_CALLED(OnResponse);
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
