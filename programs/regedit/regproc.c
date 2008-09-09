@@ -84,6 +84,26 @@ WCHAR* GetWideString(const char* strA)
 }
 
 /******************************************************************************
+ * Allocates memory and convers input from multibyte to wide chars
+ * Returned string must be freed by the caller
+ */
+WCHAR* GetWideStringN(const char* strA, int chars, DWORD *len)
+{
+    if(strA)
+    {
+        WCHAR* strW = NULL;
+        *len = MultiByteToWideChar(CP_ACP, 0, strA, chars, NULL, 0);
+
+        strW = HeapAlloc(GetProcessHeap(), 0, *len * sizeof(WCHAR));
+        CHECK_ENOUGH_MEMORY(strW);
+        MultiByteToWideChar(CP_ACP, 0, strA, chars, strW, *len);
+        return strW;
+    }
+    *len = 0;
+    return NULL;
+}
+
+/******************************************************************************
  * Allocates memory and convers input from wide chars to multibyte
  * Returned string must be freed by the caller
  */
@@ -322,7 +342,7 @@ static HKEY  currentKeyHandle = NULL;
  * val_name - name of the registry value
  * val_data - registry value data
  */
-static LONG setValue(WCHAR* val_name, WCHAR* val_data)
+static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
 {
     LONG res;
     DWORD  dwDataType, dwParseType;
@@ -371,6 +391,14 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data)
         lpbData = convertHexCSVToHex(val_data, &dwLen);
         if (!lpbData)
             return ERROR_INVALID_DATA;
+
+        if(dwDataType == REG_MULTI_SZ && !is_unicode)
+        {
+            LPBYTE tmp = lpbData;
+            lpbData = (LPBYTE)GetWideStringN((char*)lpbData, dwLen, &dwLen);
+            dwLen *= sizeof(WCHAR);
+            HeapFree(GetProcessHeap(), 0, tmp);
+        }
     }
     else                                /* unknown format */
     {
@@ -451,7 +479,7 @@ static void closeKey(void)
  * line - registry file unwrapped line. Should have the registry value name and
  *      complete registry value data.
  */
-static void processSetValue(WCHAR* line)
+static void processSetValue(WCHAR* line, BOOL is_unicode)
 {
     WCHAR* val_name;                   /* registry value name   */
     WCHAR* val_data;                   /* registry value data   */
@@ -499,7 +527,7 @@ static void processSetValue(WCHAR* line)
     val_data = line + line_idx;
 
     REGPROC_unescape_string(val_name);
-    res = setValue(val_name, val_data);
+    res = setValue(val_name, val_data, is_unicode);
     if ( res != ERROR_SUCCESS )
     {
         char* val_nameA = GetMultiByteString(val_name);
@@ -517,8 +545,9 @@ static void processSetValue(WCHAR* line)
 /******************************************************************************
  * This function receives the currently read entry and performs the
  * corresponding action.
+ * isUnicode affects parsing of REG_MULTI_SZ values
  */
-static void processRegEntry(WCHAR* stdInput)
+static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
 {
     /*
      * We encountered the end of the file, make sure we
@@ -553,7 +582,7 @@ static void processRegEntry(WCHAR* stdInput)
                (( stdInput[0] == '@') || /* reading a default @=data pair */
                 ( stdInput[0] == '\"'))) /* reading a new value=data pair */
     {
-        processSetValue(stdInput);
+        processSetValue(stdInput, isUnicode);
     } else
     {
         /* Since we are assuming that the file format is valid we must be
@@ -677,10 +706,10 @@ void processRegLinesA(FILE *in)
             break; /* That is the full virtual line */
         }
 
-        processRegEntry(lineW);
+        processRegEntry(lineW, FALSE);
         HeapFree(GetProcessHeap(), 0, lineW);
     }
-    processRegEntry(NULL);
+    processRegEntry(NULL, FALSE);
 
     HeapFree(GetProcessHeap(), 0, line);
 }
@@ -786,14 +815,14 @@ void processRegLinesW(FILE *in)
             if(!s_eol)
                 break;
 
-            processRegEntry(s);
+            processRegEntry(s, TRUE);
             s = s_eol + 1;
             s_eol = 0;
             continue; /* That is the full virtual line */
         }
     }
 
-    processRegEntry(NULL);
+    processRegEntry(NULL, TRUE);
 
     HeapFree(GetProcessHeap(), 0, buf);
 }
