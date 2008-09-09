@@ -2261,6 +2261,25 @@ HRESULT WINAPI QISearch(
 }
 
 /*************************************************************************
+ * @ [SHLWAPI.220]
+ *
+ * Set the Font for a window and the "PropDlgFont" property of the parent window.
+ *
+ * PARAMS
+ *  hWnd [I] Parent Window to set the property
+ *  id   [I] Index of child Window to set the Font
+ *
+ * RETURNS
+ *  Success: S_OK
+ *
+ */
+HRESULT WINAPI SHSetDefaultDialogFont(HWND hWnd, INT id)
+{
+    FIXME("(%p, %d) stub\n", hWnd, id);
+    return S_OK;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.221]
  *
  * Remove the "PropDlgFont" property from a window.

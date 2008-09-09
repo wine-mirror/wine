@@ -217,7 +217,7 @@
 217 stdcall -noname SHUnicodeToAnsi(wstr ptr ptr)
 218 stdcall -noname SHUnicodeToAnsiCP(long wstr ptr ptr)
 219 stdcall -noname QISearch(long long long long)
-220 stub -noname SHSetDefaultDialogFont
+220 stdcall -noname SHSetDefaultDialogFont(ptr long)
 221 stdcall -noname SHRemoveDefaultDialogFont(ptr)
 222 stdcall -noname SHGlobalCounterCreate(long)
 223 stdcall -noname SHGlobalCounterGetValue(long)
