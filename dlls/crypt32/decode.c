@@ -2586,7 +2586,7 @@ static BOOL CRYPT_AsnDecodeAltNameEntry(const BYTE *pbEncoded, DWORD cbEncoded,
             {
                 *pcbStructInfo = bytesNeeded;
                 /* MS used values one greater than the asn1 ones.. sigh */
-                entry->dwAltNameChoice = (pbEncoded[0] & 0x7f) + 1;
+                entry->dwAltNameChoice = (pbEncoded[0] & ASN_TYPE_MASK) + 1;
                 switch (pbEncoded[0] & ASN_TYPE_MASK)
                 {
                 case 1: /* rfc822Name */
@@ -2604,7 +2604,6 @@ static BOOL CRYPT_AsnDecodeAltNameEntry(const BYTE *pbEncoded, DWORD cbEncoded,
                     break;
                 }
                 case 4: /* directoryName */
-                    entry->dwAltNameChoice = CERT_ALT_NAME_DIRECTORY_NAME;
                     /* The data are memory-equivalent with the IPAddress case,
                      * fall-through
                      */
