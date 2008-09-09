@@ -716,8 +716,9 @@ static HRESULT test_secondary(LPGUID lpGuid)
             if (gotdx8 || wfx.wBitsPerSample <= 16)
             {
                 if (wfx.wBitsPerSample > 16)
-                    ok((rc == DSERR_CONTROLUNAVAIL || rc == DSERR_INVALIDCALL) &&
-                        !secondary, "IDirectSound_CreateSoundBuffer() "
+                    ok(((rc == DSERR_CONTROLUNAVAIL || rc == DSERR_INVALIDCALL || rc == DSERR_INVALIDPARAM /* 2003 */) && !secondary)
+                        || rc == DS_OK, /* driver dependent? */
+                        "IDirectSound_CreateSoundBuffer() "
                         "should have returned (DSERR_CONTROLUNAVAIL or DSERR_INVALIDCALL) "
                         "and NULL, returned: %08x %p\n", rc, secondary);
                 else
@@ -750,20 +751,27 @@ static HRESULT test_secondary(LPGUID lpGuid)
             wfxe.dwChannelMask = (wfx.nChannels == 1 ? KSAUDIO_SPEAKER_MONO : KSAUDIO_SPEAKER_STEREO);
 
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(rc==DSERR_INVALIDPARAM && !secondary,
+            ok((rc==DSERR_INVALIDPARAM || rc==DSERR_INVALIDCALL /* 2003 */) && !secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
+            {
                 IDirectSoundBuffer_Release(secondary);
+                secondary=NULL;
+            }
 
             wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx) + 1;
 
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(rc==DSERR_CONTROLUNAVAIL && !secondary,
+            ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL) && !secondary)
+                || rc==DS_OK, /* 2003 / 2008 */
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
+            {
                 IDirectSoundBuffer_Release(secondary);
+                secondary=NULL;
+            }
 
             wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx);
             wfxe.SubFormat = GUID_NULL;
@@ -772,7 +780,10 @@ static HRESULT test_secondary(LPGUID lpGuid)
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
+            {
                 IDirectSoundBuffer_Release(secondary);
+                secondary=NULL;
+            }
             wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
 
             ++wfxe.Samples.wValidBitsPerSample;
@@ -781,7 +792,10 @@ static HRESULT test_secondary(LPGUID lpGuid)
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
+            {
                 IDirectSoundBuffer_Release(secondary);
+                secondary=NULL;
+            }
             --wfxe.Samples.wValidBitsPerSample;
 
             wfxe.Samples.wValidBitsPerSample = 0;
@@ -790,7 +804,10 @@ static HRESULT test_secondary(LPGUID lpGuid)
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
+            {
                 IDirectSoundBuffer_Release(secondary);
+                secondary=NULL;
+            }
             wfxe.Samples.wValidBitsPerSample = wfxe.Format.wBitsPerSample;
 
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
