@@ -54,10 +54,12 @@ struct info
     unsigned int count;
     unsigned int index;
     HANDLE wait;
+    unsigned int line;
 };
 
 static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DWORD status, LPVOID buffer, DWORD buflen )
 {
+    BOOL status_ok, function_ok;
     struct info *info = (struct info *)context;
     unsigned int i = info->index;
 
@@ -68,20 +70,23 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
     }
     ok(i < info->count, "unexpected notification 0x%08x\n", status);
     if (i >= info->count) return;
+
+    status_ok   = (info->test[i].status == status);
+    function_ok = (info->test[i].function == info->function);
     if (!info->test[i].todo)
     {
-        ok(info->test[i].status == status, "expected status 0x%08x got 0x%08x\n", info->test[i].status, status);
-        ok(info->test[i].function == info->function, "expected function %u got %u\n", info->test[i].function, info->function);
+        ok(status_ok, "%u: expected status 0x%08x got 0x%08x\n", info->line, info->test[i].status, status);
+        ok(function_ok, "%u: expected function %u got %u\n", info->line, info->test[i].function, info->function);
     }
     else
     {
-        todo_wine ok(info->test[i].status == status, "expected status 0x%08x got 0x%08x\n", info->test[i].status, status);
-        if (info->test[i].status == status)
+        todo_wine ok(status_ok, "%u: expected status 0x%08x got 0x%08x\n", info->line, info->test[i].status, status);
+        if (status_ok)
         {
-            todo_wine ok(info->test[i].function == info->function, "expected function %u got %u\n", info->test[i].function, info->function);
+            todo_wine ok(function_ok, "%u: expected function %u got %u\n", info->line, info->test[i].function, info->function);
         }
     }
-    if (info->test[i].status == status) info->index++;
+    if (status_ok) info->index++;
     if (status & WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS) SetEvent( info->wait );
 }
 
@@ -103,6 +108,12 @@ static const struct notification cache_test[] =
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 1 },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 1 }
 };
+
+static void setup_test( struct info *info, enum api function, unsigned int line )
+{
+    info->function = function;
+    info->line = line;
+}
 
 static void test_connection_cache( void )
 {
@@ -126,19 +137,19 @@ static void test_connection_cache( void )
     ret = WinHttpSetOption( ses, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
     ok(ret, "failed to set context value %u\n", GetLastError());
 
-    info.function = winhttp_connect;
+    setup_test( &info, winhttp_connect, __LINE__ );
     con = WinHttpConnect( ses, codeweavers, 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
-    info.function = winhttp_open_request;
+    setup_test( &info, winhttp_open_request, __LINE__ );
     req = WinHttpOpenRequest( con, NULL, NULL, NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
-    info.function = winhttp_send_request;
+    setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
     ok(ret, "failed to send request %u\n", GetLastError());
 
-    info.function = winhttp_receive_response;
+    setup_test( &info, winhttp_receive_response, __LINE__ );
     ret = WinHttpReceiveResponse( req, NULL );
     ok(ret, "failed to receive response %u\n", GetLastError());
 
@@ -147,7 +158,7 @@ static void test_connection_cache( void )
     ok(ret, "failed unexpectedly %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
 
-    info.function = winhttp_close_handle;
+    setup_test( &info, winhttp_close_handle, __LINE__ );
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
@@ -164,22 +175,22 @@ static void test_connection_cache( void )
     ret = WinHttpSetOption( ses, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
     ok(ret, "failed to set context value %u\n", GetLastError());
 
-    info.function = winhttp_connect;
+    setup_test( &info, winhttp_connect, __LINE__ );
     con = WinHttpConnect( ses, codeweavers, 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
-    info.function = winhttp_open_request;
+    setup_test( &info, winhttp_open_request, __LINE__ );
     req = WinHttpOpenRequest( con, NULL, NULL, NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSetOption( req, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
     ok(ret, "failed to set context value %u\n", GetLastError());
 
-    info.function = winhttp_send_request;
+    setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
     ok(ret, "failed to send request %u\n", GetLastError());
 
-    info.function = winhttp_receive_response;
+    setup_test( &info, winhttp_receive_response, __LINE__ );
     ret = WinHttpReceiveResponse( req, NULL );
     ok(ret, "failed to receive response %u\n", GetLastError());
 
@@ -188,7 +199,7 @@ static void test_connection_cache( void )
     ok(ret, "failed unexpectedly %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
 
-    info.function = winhttp_close_handle;
+    setup_test( &info, winhttp_close_handle, __LINE__ );
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
@@ -244,18 +255,18 @@ static void test_redirect( void )
     ret = WinHttpSetOption( ses, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
     ok(ret, "failed to set context value %u\n", GetLastError());
 
-    info.function = winhttp_connect;
+    setup_test( &info, winhttp_connect, __LINE__ );
     con = WinHttpConnect( ses, codeweavers, 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
-    info.function = winhttp_open_request;
+    setup_test( &info, winhttp_open_request, __LINE__ );
     req = WinHttpOpenRequest( con, NULL, NULL, NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
-    info.function = winhttp_send_request;
+    setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
 
-    info.function = winhttp_receive_response;
+    setup_test( &info, winhttp_receive_response, __LINE__ );
     ret = WinHttpReceiveResponse( req, NULL );
     ok(ret, "failed to receive response %u\n", GetLastError());
 
@@ -264,7 +275,7 @@ static void test_redirect( void )
     ok(ret, "failed unexpectedly %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
 
-    info.function = winhttp_close_handle;
+    setup_test( &info, winhttp_close_handle, __LINE__ );
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
@@ -327,21 +338,21 @@ static void test_async( void )
     ret = WinHttpSetOption( ses, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
     ok(ret, "failed to set context value %u\n", GetLastError());
 
-    info.function = winhttp_connect;
+    setup_test( &info, winhttp_connect, __LINE__ );
     con = WinHttpConnect( ses, codeweavers, 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
-    info.function = winhttp_open_request;
+    setup_test( &info, winhttp_open_request, __LINE__ );
     req = WinHttpOpenRequest( con, NULL, NULL, NULL, NULL, NULL, 0 );
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
-    info.function = winhttp_send_request;
+    setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
     ok(ret, "failed to send request %u\n", GetLastError());
 
     WaitForSingleObject( info.wait, INFINITE );
 
-    info.function = winhttp_receive_response;
+    setup_test( &info, winhttp_receive_response, __LINE__ );
     ret = WinHttpReceiveResponse( req, NULL );
     ok(ret, "failed to receive response %u\n", GetLastError());
 
@@ -352,19 +363,19 @@ static void test_async( void )
     ok(ret, "failed unexpectedly %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
 
-    info.function = winhttp_query_data;
+    setup_test( &info, winhttp_query_data, __LINE__ );
     ret = WinHttpQueryDataAvailable( req, NULL );
     ok(ret, "failed to query data available %u\n", GetLastError());
 
     WaitForSingleObject( info.wait, INFINITE );
 
-    info.function = winhttp_read_data;
+    setup_test( &info, winhttp_read_data, __LINE__ );
     ret = WinHttpReadData( req, buffer, sizeof(buffer), NULL );
     ok(ret, "failed to query data available %u\n", GetLastError());
 
     WaitForSingleObject( info.wait, INFINITE );
 
-    info.function = winhttp_close_handle;
+    setup_test( &info, winhttp_close_handle, __LINE__ );
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
