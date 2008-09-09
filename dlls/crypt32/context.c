@@ -173,6 +173,7 @@ void Context_CopyProperties(const void *to, const void *from,
 
     toProperties = Context_GetProperties((void *)to, contextSize);
     fromProperties = Context_GetProperties((void *)from, contextSize);
+    assert(toProperties && fromProperties);
     ContextPropertyList_Copy(toProperties, fromProperties);
 }
 
