@@ -18729,6 +18729,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
+#include <sys/types.h>
 #include <signal.h>
 
 typedef sigset_t ac__type_new_;

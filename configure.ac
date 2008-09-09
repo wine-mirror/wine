@@ -1487,7 +1487,8 @@ dnl **** Check for types ****
 AC_C_CONST
 AC_C_INLINE
 AC_CHECK_TYPES([mode_t, off_t, pid_t, size_t, ssize_t, long long, fsblkcnt_t, fsfilcnt_t])
-AC_CHECK_TYPES([sigset_t],,,[#include <signal.h>])
+AC_CHECK_TYPES([sigset_t],,,[#include <sys/types.h>
+#include <signal.h>])
 AC_CHECK_TYPES([request_sense],,,[#include <linux/cdrom.h>])
 
 AC_CHECK_MEMBERS([struct ff_effect.direction],,,
