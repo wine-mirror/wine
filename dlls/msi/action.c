@@ -3838,7 +3838,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     MSIFEATURE *feature;
     UINT rc;
     HKEY hkey;
-    HKEY userdata;
+    HKEY userdata = NULL;
 
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
