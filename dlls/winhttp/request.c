@@ -619,7 +619,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
     }
     default:
     {
-        if (attr > sizeof(attribute_table)/sizeof(attribute_table[0]) || !attribute_table[attr])
+        if (attr >= sizeof(attribute_table)/sizeof(attribute_table[0]) || !attribute_table[attr])
         {
             FIXME("attribute %u not implemented\n", attr);
             return FALSE;
