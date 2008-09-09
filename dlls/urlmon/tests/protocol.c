@@ -350,7 +350,8 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
             CHECK_CALLED(ReportProgress_CONNECTING);
         } else todo_wine {
             CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
-            CHECK_NOT_CALLED(ReportProgress_CONNECTING);
+            /* IE7 does call this */
+            CLEAR_CALLED(ReportProgress_CONNECTING);
         }
         CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         SET_EXPECT(OnResponse);
