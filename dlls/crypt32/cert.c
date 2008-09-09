@@ -607,6 +607,11 @@ static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert,
                  CERT_KEY_PROV_INFO_PROP_ID, info, &size);
                 allocated = TRUE;
             }
+            else
+            {
+                SetLastError(ERROR_OUTOFMEMORY);
+                ret = FALSE;
+            }
         }
         else
             SetLastError(CRYPT_E_NO_KEY_PROPERTY);
