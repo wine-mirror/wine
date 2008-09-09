@@ -3922,7 +3922,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
 {
   X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
   X11DRV_DIB_IMAGEBITS_DESCR descr;
-  BITMAP bitmap;
+  DIBSECTION ds;
   LONG width, height, tmpheight;
   INT result;
 
@@ -3939,7 +3939,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   if (!lines || (startscan >= height))
       return 0;
 
-  if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return 0;
+  if (!GetObjectW( hbitmap, sizeof(ds), &ds )) return 0;
 
   if (startscan + lines > height) lines = height - startscan;
 
@@ -3986,7 +3986,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   descr.ySrc      = 0;
   descr.xDest     = 0;
   descr.yDest     = height - startscan - lines;
-  descr.width     = bitmap.bmWidth;
+  descr.width     = ds.dsBm.bmWidth;
   descr.height    = lines;
   descr.useShm    = FALSE;
   descr.dibpitch  = ((descr.infoWidth * descr.infoBpp + 31) &~31) / 8;
@@ -3998,27 +3998,27 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
    * cheap - saves a round trip to the X server */
   if (descr.compression == BI_RGB &&
       coloruse == DIB_RGB_COLORS &&
-      descr.infoBpp == bitmap.bmBitsPixel &&
+      descr.infoBpp == ds.dsBm.bmBitsPixel &&
       physBitmap->base && physBitmap->size < 65536)
   {
-      unsigned int srcwidthb = bitmap.bmWidthBytes;
+      unsigned int srcwidthb = ds.dsBm.bmWidthBytes;
       int dstwidthb = X11DRV_DIB_GetDIBWidthBytes( width, descr.infoBpp );
       LPBYTE dbits = physBitmap->base, sbits = (LPBYTE)bits + (startscan * srcwidthb);
       int widthb;
       UINT y;
 
       TRACE("syncing compatible set bits to app bits\n");
-      if ((tmpheight < 0) ^ (bitmap.bmHeight < 0))
+      if ((tmpheight < 0) ^ (ds.dsBmih.biHeight < 0))
       {
           dbits += dstwidthb * (lines-1);
           dstwidthb = -dstwidthb;
       }
-	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
+      X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
       widthb = min(srcwidthb, abs(dstwidthb));
       for (y = 0; y < lines; y++, dbits += dstwidthb, sbits += srcwidthb)
           memcpy(dbits, sbits, widthb);
-	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
-	  physBitmap->status = DIB_Status_InSync;
+      X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
+      physBitmap->status = DIB_Status_InSync;
   }
   X11DRV_DIB_Unlock( physBitmap, TRUE );
 
