@@ -885,7 +885,9 @@ static int encode_type(
             next_vt = VT_VOID;
 
         encode_type(typelib, next_vt, type->ref, &target_type, NULL, NULL, &child_size);
-        if(type->ref && (type->ref->type == RPC_FC_IP)) {
+        /* these types already have an implicit pointer, so we don't need to
+         * add another */
+        if(next_vt == VT_DISPATCH || next_vt == VT_UNKNOWN) {
             chat("encode_type: skipping ptr\n");
             *encoded_type = target_type;
             *width = 4;
@@ -1030,24 +1032,6 @@ static int encode_type(
 	*encoded_type = typeoffset;
 	*width = 0;
 	*alignment = 1;
-
-        if(type->type == RPC_FC_IP) {
-            for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
-                typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-                if ((typedata[0] == ((0x7fff << 16) | VT_PTR)) && (typedata[1] == *encoded_type)) break;
-            }
-            if (typeoffset == typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
-                typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
-                typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-
-                typedata[0] = (0x7fff << 16) | VT_PTR;
-                typedata[1] = *encoded_type;
-            }
-            *encoded_type = typeoffset;
-            *width = 4;
-            *alignment = 4;
-            *decoded_size += 8;
-        }
         break;
       }
 
@@ -1177,7 +1161,9 @@ static int encode_var(
     dump_type(type);
 
     encode_type(typelib, vt, type, encoded_type, width, alignment, decoded_size);
-    if(type->type == RPC_FC_IP) return 2;
+    /* these types already have an implicit pointer, so we don't need to
+     * add another */
+    if(vt == VT_DISPATCH || vt == VT_UNKNOWN) return 2;
     return 0;
 }
 
