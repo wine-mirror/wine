@@ -703,10 +703,34 @@ static HRESULT get_binary_expr_values(exec_ctx_t *ctx, binary_expression_t *expr
     return S_OK;
 }
 
-HRESULT function_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    13 */
+HRESULT function_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    function_expression_t *expr = (function_expression_t*)_expr;
+    DispatchEx *dispex;
+    VARIANT var;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = create_source_function(ctx->parser, expr->parameter_list, expr->source_elements, ctx->scope_chain, &dispex);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(dispex);
+
+    if(expr->identifier) {
+        hres = jsdisp_propput_name(ctx->var_disp, expr->identifier, ctx->parser->script->lcid, &var, ei, NULL/*FIXME*/);
+        if(FAILED(hres)) {
+            jsdisp_release(dispex);
+            return hres;
+        }
+    }
+
+    ret->type = EXPRVAL_VARIANT;
+    ret->u.var = var;
+    return S_OK;
 }
 
 HRESULT conditional_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)

@@ -81,5 +81,16 @@ ok(testFunc1(true, "test") === true, "testFunc1 not returned true");
 
 var obj1 = new Object();
 ok(typeof(obj1) === "object", "typeof(obj1) is not object");
+obj1.test = true;
+obj1.func = function () {
+    ok(this === obj1, "this is not obj1");
+    ok(this.test === true, "this.test is not true");
+    ok(arguments.length === 1, "arguments.length is not 1");
+    ok(arguments["0"] === true, "arguments[0] is not true");
+
+    return "test";
+};
+
+ok(obj1.func(true) === "test", "obj1.func(true) is not \"test\"");
 
 reportSuccess();
