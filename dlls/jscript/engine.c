@@ -1050,10 +1050,57 @@ HRESULT array_literal_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD
     return E_NOTIMPL;
 }
 
-HRESULT property_value_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.1.5 */
+HRESULT property_value_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    property_value_expression_t *expr = (property_value_expression_t*)_expr;
+    VARIANT val, tmp;
+    DispatchEx *obj;
+    prop_val_t *iter;
+    exprval_t exprval;
+    BSTR name;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = create_object(ctx->parser->script, NULL, &obj);
+    if(FAILED(hres))
+        return hres;
+
+    for(iter = expr->property_list; iter; iter = iter->next) {
+        hres = literal_to_var(iter->name, &tmp);
+        if(FAILED(hres))
+            break;
+
+        hres = to_string(ctx->parser->script, &tmp, ei, &name);
+        VariantClear(&tmp);
+        if(FAILED(hres))
+            break;
+
+        hres = expr_eval(ctx, iter->value, 0, ei, &exprval);
+        if(SUCCEEDED(hres)) {
+            hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
+            exprval_release(&exprval);
+            if(SUCCEEDED(hres)) {
+                hres = jsdisp_propput_name(obj, name, ctx->parser->script->lcid, &val, ei, NULL/*FIXME*/);
+                VariantClear(&val);
+            }
+        }
+
+        SysFreeString(name);
+        if(FAILED(hres))
+            break;
+    }
+
+    if(FAILED(hres)) {
+        jsdisp_release(obj);
+        return hres;
+    }
+
+    ret->type = EXPRVAL_VARIANT;
+    V_VT(&ret->u.var) = VT_DISPATCH;
+    V_DISPATCH(&ret->u.var) = (IDispatch*)_IDispatchEx_(obj);
+    return S_OK;
 }
 
 HRESULT comma_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)

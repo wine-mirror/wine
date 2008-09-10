@@ -140,4 +140,8 @@ if(true)
     tmp = 1;
 ok(tmp === 1, "tmp !== 1, if(true) not evaluated?");
 
+var obj3 = { prop1: 1,  prop2: typeof(false) };
+ok(obj3.prop1 === 1, "obj3.prop1 is not 1");
+ok(obj3.prop2 === "boolean", "obj3.prop2 is not \"boolean\"");
+
 reportSuccess();
