@@ -7356,9 +7356,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         pPresentationParameters->hDeviceWindow != swapchain->presentParms.hDeviceWindow) {
         ERR("Cannot change the device window yet\n");
     }
-    if(pPresentationParameters->EnableAutoDepthStencil != swapchain->presentParms.EnableAutoDepthStencil) {
-        ERR("What do do about a changed auto depth stencil parameter?\n");
+    if (pPresentationParameters->EnableAutoDepthStencil && !This->auto_depth_stencil_buffer) {
+        WARN("Auto depth stencil enabled, but no auto depth stencil present, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
     }
+
+    /* Reset the depth stencil */
+    if (pPresentationParameters->EnableAutoDepthStencil)
+        IWineD3DDevice_SetDepthStencilSurface(iface, This->auto_depth_stencil_buffer);
+    else
+        IWineD3DDevice_SetDepthStencilSurface(iface, NULL);
 
     delete_opengl_contexts(iface, (IWineD3DSwapChain *) swapchain);
 
