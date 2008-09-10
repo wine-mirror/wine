@@ -153,4 +153,12 @@ ok(blockVar === 2, "blockVar !== 2");
 ok((true ? 1 : 2) === 1, "conditional expression true is not 1");
 ok((0 === 2 ? 1 : 2) === 2, "conditional expression true is not 2");
 
+ok(getVT(undefined) === "VT_EMPTY", "getVT(undefined) is not VT_EMPTY");
+ok(getVT(null) === "VT_NULL", "getVT(null) is not VT_NULL");
+ok(getVT(0) === "VT_I4", "getVT(0) is not VT_I4");
+ok(getVT(0.5) === "VT_R8", "getVT(1.5) is not VT_R8");
+ok(getVT("test") === "VT_BSTR", "getVT(\"test\") is not VT_BSTR");
+ok(getVT(Math) === "VT_DISPATCH", "getVT(Math) is not VT_DISPATCH");
+ok(getVT(false) === "VT_BOOL", "getVT(false) is not VT_BOOL");
+
 reportSuccess();

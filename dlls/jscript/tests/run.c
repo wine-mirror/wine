@@ -69,6 +69,7 @@ DEFINE_EXPECT(global_success_i);
 #define DISPID_GLOBAL_REPORTSUCCESS 0x1002
 #define DISPID_GLOBAL_TRACE         0x1003
 #define DISPID_GLOBAL_OK            0x1004
+#define DISPID_GLOBAL_GETVT         0x1005
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -224,6 +225,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_TESTPROPPUT;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "getVT")) {
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_GLOBAL_GETVT;
+        return S_OK;
+    }
 
     if(strict_dispid_check)
         ok(0, "unexpected call %s\n", debugstr_w(bstrName));
@@ -311,6 +317,46 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(pdp->rgvarg) == VT_I4, "V_VT(pdp->rgvarg)=%d\n", V_VT(pdp->rgvarg));
         ok(V_I4(pdp->rgvarg) == 1, "V_I4(pdp->rgvarg)=%d\n", V_I4(pdp->rgvarg));
+        return S_OK;
+
+     case DISPID_GLOBAL_GETVT:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_BSTR;
+        switch(V_VT(pdp->rgvarg)) {
+        case VT_EMPTY:
+            V_BSTR(pvarRes) = a2bstr("VT_EMPTY");
+            break;
+        case VT_NULL:
+            V_BSTR(pvarRes) = a2bstr("VT_NULL");
+            break;
+        case VT_I4:
+            V_BSTR(pvarRes) = a2bstr("VT_I4");
+            break;
+        case VT_R8:
+            V_BSTR(pvarRes) = a2bstr("VT_R8");
+            break;
+        case VT_BSTR:
+            V_BSTR(pvarRes) = a2bstr("VT_BSTR");
+            break;
+        case VT_DISPATCH:
+            V_BSTR(pvarRes) = a2bstr("VT_DISPATCH");
+            break;
+        case VT_BOOL:
+            V_BSTR(pvarRes) = a2bstr("VT_BOOL");
+            break;
+        default:
+            ok(0, "unknown vt %d\n", V_VT(pdp->rgvarg));
+            return E_FAIL;
+        }
+
         return S_OK;
      }
 
