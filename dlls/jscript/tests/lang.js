@@ -79,4 +79,7 @@ ok(typeof(this) === "object", "typeof(this) is not object");
 
 ok(testFunc1(true, "test") === true, "testFunc1 not returned true");
 
+var obj1 = new Object();
+ok(typeof(obj1) === "object", "typeof(obj1) is not object");
+
 reportSuccess();

@@ -185,6 +185,28 @@ static HRESULT invoke_function(FunctionInstance *function, LCID lcid, DISPPARAMS
     return invoke_source(function, this_obj, lcid, dp, retv, ei, caller);
 }
 
+static HRESULT invoke_constructor(FunctionInstance *function, LCID lcid, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DispatchEx *this_obj;
+    VARIANT var;
+    HRESULT hres;
+
+    hres = create_object(function->dispex.ctx, &function->dispex, &this_obj);
+    if(FAILED(hres))
+        return hres;
+
+    hres = invoke_source(function, (IDispatch*)_IDispatchEx_(this_obj), lcid, dp, retv, ei, caller);
+    jsdisp_release(this_obj);
+    if(FAILED(hres))
+        return hres;
+
+    VariantClear(&var);
+    V_VT(retv) = VT_DISPATCH;
+    V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(this_obj);
+    return S_OK;
+}
+
 static HRESULT invoke_value_proc(FunctionInstance *function, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -300,6 +322,12 @@ static HRESULT Function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
             return invoke_value_proc(function, lcid, flags, dp, retv, ei, caller);
 
         return invoke_function(function, lcid, dp, retv, ei, caller);
+
+    case DISPATCH_CONSTRUCT:
+        if(function->value_proc)
+            return invoke_value_proc(function, lcid, flags, dp, retv, ei, caller);
+
+        return invoke_constructor(function, lcid, dp, retv, ei, caller);
 
     default:
         FIXME("not implemented flags %x\n", flags);
