@@ -111,8 +111,16 @@ static ULONG WINAPI MimeInternat_Release( IMimeInternational *iface )
 
 static HRESULT WINAPI MimeInternat_SetDefaultCharset(IMimeInternational *iface, HCHARSET hCharset)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    internat *This = impl_from_IMimeInternational( iface );
+
+    TRACE("(%p)->(%p)\n", iface, hCharset);
+
+    if(hCharset == NULL) return E_INVALIDARG;
+    /* FIXME check hCharset is valid */
+
+    InterlockedExchangePointer(&This->default_charset, hCharset);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeInternat_GetDefaultCharset(IMimeInternational *iface, LPHCHARSET phCharset)
