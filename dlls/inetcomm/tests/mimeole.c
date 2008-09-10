@@ -26,7 +26,6 @@
 #include "ole2.h"
 #include "ocidl.h"
 
-#include "initguid.h"
 #include "mimeole.h"
 
 #include <stdio.h>

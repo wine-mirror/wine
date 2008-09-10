@@ -27,6 +27,9 @@
 
 #include "mimeole.h"
 
+#include "initguid.h"
+#include "mlang.h"
+
 #include <stdio.h>
 #include <assert.h>
 
@@ -52,11 +55,41 @@ static void test_create(void)
     IMimeInternational_Release(internat);
 }
 
+static inline HRESULT get_mlang(IMultiLanguage **ml)
+{
+    return CoCreateInstance(&CLSID_CMultiLanguage, NULL,  CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                            &IID_IMultiLanguage, (void **)ml);
+}
+
+static HRESULT mlang_getcsetinfo(const char *charset, MIMECSETINFO *mlang_info)
+{
+    DWORD len = MultiByteToWideChar(CP_ACP, 0, charset, -1, NULL, 0);
+    BSTR bstr = SysAllocStringLen(NULL, len - 1);
+    HRESULT hr;
+    IMultiLanguage *ml;
+
+    MultiByteToWideChar(CP_ACP, 0, charset, -1, bstr, len);
+
+    hr = get_mlang(&ml);
+
+    if(SUCCEEDED(hr))
+    {
+        hr = IMultiLanguage_GetCharsetInfo(ml, bstr, mlang_info);
+        IMultiLanguage_Release(ml);
+    }
+    SysFreeString(bstr);
+    if(FAILED(hr)) hr = MIME_E_NOT_FOUND;
+    return hr;
+}
+
+
 static void test_charset(void)
 {
     IMimeInternational *internat;
     HRESULT hr;
     HCHARSET hcs, hcs_windows_1252, hcs_windows_1251;
+    INETCSETINFO cs_info;
+    MIMECSETINFO mlang_cs_info;
 
     hr = MimeOleGetInternat(&internat);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -73,6 +106,18 @@ static void test_charset(void)
     hr = IMimeInternational_FindCharset(internat, "windows-1251", &hcs_windows_1251);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(hcs_windows_1252 != hcs_windows_1251, "got the same hcharset for the different names\n");
+
+    hr = IMimeInternational_GetCharsetInfo(internat, hcs_windows_1252, &cs_info);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = mlang_getcsetinfo("windows-1252", &mlang_cs_info);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(cs_info.cpiWindows == mlang_cs_info.uiCodePage, "cpiWindows %d while mlang uiCodePage %d\n",
+       cs_info.cpiWindows, mlang_cs_info.uiCodePage);
+    ok(cs_info.cpiInternet == mlang_cs_info.uiInternetEncoding, "cpiInternet %d while mlang uiInternetEncoding %d\n",
+       cs_info.cpiInternet, mlang_cs_info.uiInternetEncoding);
+    ok(cs_info.hCharset == hcs_windows_1252, "hCharset doesn't match requested\n");
+    ok(!strcmp(cs_info.szName, "windows-1252"), "szName doesn't match requested\n");
 
     IMimeInternational_Release(internat);
 }
