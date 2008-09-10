@@ -65,7 +65,7 @@ static ULONG WINAPI IDirectPlay8ThreadPoolImpl_AddRef(PDIRECTPLAY8THREADPOOL ifa
 
 static ULONG WINAPI IDirectPlay8ThreadPoolImpl_Release(PDIRECTPLAY8THREADPOOL iface)
 {
-    IDirectPlay8ThreadPoolImpl* This = (IDirectPlay8ThreadPoolImpl*)This;
+    IDirectPlay8ThreadPoolImpl* This = (IDirectPlay8ThreadPoolImpl*)iface;
     ULONG RefCount = InterlockedDecrement(&This->ref);
 
     if(!RefCount)
