@@ -737,15 +737,12 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDE
 
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice,&pZStencilSurface);
-    if(hr == D3D_OK) {
-        if(pZStencilSurface != NULL){
-            IWineD3DSurface_GetParent(pZStencilSurface,(IUnknown**)ppZStencilSurface);
-            IWineD3DSurface_Release(pZStencilSurface);
-        } else {
-            *ppZStencilSurface = NULL;
-        }
+    if (hr == WINED3D_OK) {
+        IWineD3DSurface_GetParent(pZStencilSurface,(IUnknown**)ppZStencilSurface);
+        IWineD3DSurface_Release(pZStencilSurface);
     } else {
-        WARN("Call to IWineD3DDevice_GetDepthStencilSurface failed\n");
+        if (hr != WINED3DERR_NOTFOUND)
+                WARN("Call to IWineD3DDevice_GetDepthStencilSurface failed with 0x%08x\n", hr);
         *ppZStencilSurface = NULL;
     }
     LeaveCriticalSection(&d3d9_cs);
