@@ -105,8 +105,29 @@ static const builtin_info_t Object_info = {
 static HRESULT ObjectConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT: {
+        DispatchEx *obj;
+
+        hres = create_object(dispex->ctx, NULL, &obj);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(obj);
+        break;
+    }
+
+    default:
+        FIXME("unimplemented flags: %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 HRESULT create_object_constr(script_ctx_t *ctx, DispatchEx **ret)
@@ -122,4 +143,23 @@ HRESULT create_object_constr(script_ctx_t *ctx, DispatchEx **ret)
 
     jsdisp_release(object);
     return hres;
+}
+
+HRESULT create_object(script_ctx_t *ctx, DispatchEx *constr, DispatchEx **ret)
+{
+    DispatchEx *object;
+    HRESULT hres;
+
+    object = heap_alloc_zero(sizeof(DispatchEx));
+    if(!object)
+        return E_OUTOFMEMORY;
+
+    hres = init_dispex_from_constr(object, ctx, &Object_info, constr ? constr : ctx->object_constr);
+    if(FAILED(hres)) {
+        heap_free(object);
+        return hres;
+    }
+
+    *ret = object;
+    return S_OK;
 }

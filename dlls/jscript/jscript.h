@@ -113,6 +113,7 @@ HRESULT jsdisp_propput_idx(DispatchEx*,DWORD,LCID,VARIANT*,jsexcept_t*,IServiceP
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,DWORD,DispatchEx*,DispatchEx**);
 
+HRESULT create_object(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_math(script_ctx_t*,DispatchEx**);
 
 HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
