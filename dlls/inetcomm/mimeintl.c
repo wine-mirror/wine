@@ -120,12 +120,61 @@ static HRESULT WINAPI MimeInternat_GetDefaultCharset(IMimeInternational *iface, 
     return E_NOTIMPL;
 }
 
+static HRESULT mlang_getcodepageinfo(UINT cp, MIMECPINFO *mlang_cp_info)
+{
+    HRESULT hr;
+    IMultiLanguage *ml;
+
+    hr = get_mlang(&ml);
+
+    if(SUCCEEDED(hr))
+    {
+        hr = IMultiLanguage_GetCodePageInfo(ml, cp, mlang_cp_info);
+        IMultiLanguage_Release(ml);
+    }
+    return hr;
+}
+
 static HRESULT WINAPI MimeInternat_GetCodePageCharset(IMimeInternational *iface, CODEPAGEID cpiCodePage,
                                                       CHARSETTYPE ctCsetType,
                                                       LPHCHARSET phCharset)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    MIMECPINFO mlang_cp_info;
+
+    TRACE("(%p)->(%d, %d, %p)\n", iface, cpiCodePage, ctCsetType, phCharset);
+
+    *phCharset = NULL;
+
+    if(ctCsetType < CHARSET_BODY || ctCsetType > CHARSET_WEB)
+        return MIME_E_INVALID_CHARSET_TYPE;
+
+    hr = mlang_getcodepageinfo(cpiCodePage, &mlang_cp_info);
+    if(SUCCEEDED(hr))
+    {
+        const WCHAR *charset_nameW = NULL;
+        char *charset_name;
+        DWORD len;
+
+        switch(ctCsetType)
+        {
+        case CHARSET_BODY:
+            charset_nameW = mlang_cp_info.wszBodyCharset;
+            break;
+        case CHARSET_HEADER:
+            charset_nameW = mlang_cp_info.wszHeaderCharset;
+            break;
+        case CHARSET_WEB:
+            charset_nameW = mlang_cp_info.wszWebCharset;
+            break;
+        }
+        len = WideCharToMultiByte(CP_ACP, 0, charset_nameW, -1, NULL, 0, NULL, NULL);
+        charset_name = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP, 0, charset_nameW, -1, charset_name, len, NULL, NULL);
+        hr = IMimeInternational_FindCharset(iface, charset_name, phCharset);
+        HeapFree(GetProcessHeap(), 0, charset_name);
+    }
+    return hr;
 }
 
 static HRESULT mlang_getcsetinfo(const char *charset, MIMECSETINFO *mlang_info)
