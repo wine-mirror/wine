@@ -88,17 +88,52 @@ static HRESULT init_parameters(DispatchEx *var_disp, FunctionInstance *function,
     return S_OK;
 }
 
+static HRESULT init_arguments(DispatchEx *arg_disp, FunctionInstance *function, LCID lcid, DISPPARAMS *dp,
+        jsexcept_t *ei, IServiceProvider *caller)
+{
+    VARIANT var;
+    DWORD i;
+    HRESULT hres;
+
+    for(i=0; i < dp->cArgs-dp->cNamedArgs; i++) {
+        hres = jsdisp_propput_idx(arg_disp, i, lcid, dp->rgvarg+dp->cArgs-1-i, ei, caller);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = dp->cArgs - dp->cNamedArgs;
+    return jsdisp_propput_name(arg_disp, lengthW, lcid, &var, ei, caller);
+}
+
 static HRESULT create_var_disp(FunctionInstance *function, LCID lcid, DISPPARAMS *dp, jsexcept_t *ei,
                                IServiceProvider *caller, DispatchEx **ret)
 {
-    DispatchEx *var_disp;
+    DispatchEx *var_disp, *arg_disp;
     HRESULT hres;
+
+    static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
     hres = create_dispex(function->dispex.ctx, NULL, NULL, &var_disp);
     if(FAILED(hres))
         return hres;
 
-    hres = init_parameters(var_disp, function, lcid, dp, ei, caller);
+    hres = create_dispex(function->dispex.ctx, NULL, NULL, &arg_disp);
+    if(SUCCEEDED(hres)) {
+        hres = init_arguments(arg_disp, function, lcid, dp, ei, caller);
+        if(SUCCEEDED(hres)) {
+            VARIANT var;
+
+            V_VT(&var) = VT_DISPATCH;
+            V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(arg_disp);
+            hres = jsdisp_propput_name(var_disp, argumentsW, lcid, &var, ei, caller);
+        }
+
+        jsdisp_release(arg_disp);
+    }
+
+    if(SUCCEEDED(hres))
+        hres = init_parameters(var_disp, function, lcid, dp, ei, caller);
     if(FAILED(hres)) {
         jsdisp_release(var_disp);
         return hres;

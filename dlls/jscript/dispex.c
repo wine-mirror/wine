@@ -883,6 +883,16 @@ HRESULT jsdisp_propput_name(DispatchEx *obj, const WCHAR *name, LCID lcid, VARIA
     return prop_put(obj, prop, lcid, &dp, ei, caller);
 }
 
+HRESULT jsdisp_propput_idx(DispatchEx *obj, DWORD idx, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
+{
+    WCHAR buf[12];
+
+    static const WCHAR formatW[] = {'%','d',0};
+
+    sprintfW(buf, formatW, idx);
+    return jsdisp_propput_name(obj, buf, lcid, val, ei, caller);
+}
+
 HRESULT disp_propput(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPID dispid = DISPID_PROPERTYPUT;

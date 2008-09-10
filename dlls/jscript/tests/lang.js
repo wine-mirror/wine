@@ -44,6 +44,7 @@ function testFunc1(x, y) {
     ok(this !== undefined, "this is undefined");
     ok(x === true, "x is not 1");
     ok(y === "test", "y is not \"test\"");
+    ok(arguments.length === 2, "arguments.length is not 2");
 
     return true;
 }
