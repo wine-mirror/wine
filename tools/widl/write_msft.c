@@ -1005,10 +1005,7 @@ static int encode_type(
                 add_coclass_typeinfo(typelib, type);
                 break;
             case 0:
-                if (type->kind == TKIND_DISPATCH)
-                    add_dispinterface_typeinfo(typelib, type);
-                else
-                    error("encode_type: VT_USERDEFINED - can't yet add typedef's on the fly\n");
+                error("encode_type: VT_USERDEFINED - can't yet add typedef's on the fly\n");
                 break;
             default:
                 error("encode_type: VT_USERDEFINED - unhandled type %d\n", type->type);
