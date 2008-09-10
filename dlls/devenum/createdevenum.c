@@ -191,7 +191,7 @@ static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS *rgPin)
 
             if (rgPin->nMediaTypes == dwMediaTypeSize)
             {
-                DWORD dwNewSize = dwMediaTypeSize + (dwMediaTypeSize < 2) ? 1 : dwMediaTypeSize / 2;
+                DWORD dwNewSize = dwMediaTypeSize + (dwMediaTypeSize < 2 ? 1 : dwMediaTypeSize / 2);
                 REGPINTYPES *lpNewMediaType;
 
                 lpNewMediaType = CoTaskMemRealloc(lpMediaType, sizeof(REGPINTYPES) * dwNewSize);
