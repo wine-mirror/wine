@@ -8,6 +8,7 @@ IMPORTS   = oleaut32 kernel32
 RC_SRCS = rsrc.rc
 
 C_SRCS = \
+	array.c \
 	dispex.c \
 	engine.c \
 	function.c \

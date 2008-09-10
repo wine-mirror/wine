@@ -82,8 +82,9 @@ static HRESULT JSGlobal_Infinity(DispatchEx *dispex, LCID lcid, WORD flags, DISP
 static HRESULT JSGlobal_Array(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    return constructor_call(dispex->ctx->array_constr, lcid, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Boolean(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -297,6 +298,10 @@ static const builtin_info_t JSGlobal_info = {
 static HRESULT init_constructors(script_ctx_t *ctx)
 {
     HRESULT hres;
+
+    hres = create_array_constr(ctx, &ctx->array_constr);
+    if(FAILED(hres))
+        return hres;
 
     hres = create_object_constr(ctx, &ctx->object_constr);
     if(FAILED(hres))
