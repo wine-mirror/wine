@@ -181,10 +181,29 @@ static void test_charset(void)
     IMimeInternational_Release(internat);
 }
 
+static void test_defaultcharset(void)
+{
+    IMimeInternational *internat;
+    HRESULT hr;
+    HCHARSET hcs_default, hcs;
+
+    hr = MimeOleGetInternat(&internat);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeInternational_GetDefaultCharset(internat, &hcs_default);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeInternational_GetCodePageCharset(internat, GetACP(), CHARSET_BODY, &hcs);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(hcs_default == hcs, "Unexpected default charset\n");
+
+    IMimeInternational_Release(internat);
+}
+
 START_TEST(mimeintl)
 {
     OleInitialize(NULL);
     test_create();
     test_charset();
+    test_defaultcharset();
     OleUninitialize();
 }
