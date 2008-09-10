@@ -1054,6 +1054,30 @@ static long _elem_get_scroll_top(unsigned line, IUnknown *unk)
     return l;
 }
 
+#define elem_get_scroll_left(u) _elem_get_scroll_left(__LINE__,u)
+static void _elem_get_scroll_left(unsigned line, IUnknown *unk)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    IHTMLTextContainer *txtcont;
+    long l = -1, l2 = -1;
+    HRESULT hres;
+
+    hres = IHTMLElement2_get_scrollLeft(elem, NULL);
+    ok(hres == E_INVALIDARG, "expect E_INVALIDARG got 0x%08x", hres);
+
+    hres = IHTMLElement2_get_scrollLeft(elem, &l);
+    ok(hres == S_OK, "get_scrollTop failed: %08x\n", hres);
+    IHTMLElement2_Release(elem);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLTextContainer, (void**)&txtcont);
+    ok(hres == S_OK, "Could not get IHTMLTextContainer: %08x\n", hres);
+
+    hres = IHTMLTextContainer_get_scrollLeft(txtcont, &l2);
+    IHTMLTextContainer_Release(txtcont);
+    ok(hres == S_OK, "IHTMLTextContainer::get_scrollLeft failed: %ld\n", l2);
+    ok(l == l2, "unexpected left %ld, expected %ld\n", l2, l);
+}
+
 #define test_img_set_src(u,s) _test_img_set_src(__LINE__,u,s)
 static void _test_img_set_src(unsigned line, IUnknown *unk, const char *src)
 {
@@ -2033,7 +2057,8 @@ static void test_default_body(IHTMLBodyElement *body)
     l = elem_get_scroll_width((IUnknown*)body);
     ok(l != -1, "scrollWidth == -1\n");
     l = elem_get_scroll_top((IUnknown*)body);
-    ok(!l, "scrollWidth = %ld\n", l);
+    ok(!l, "scrollTop = %ld\n", l);
+    elem_get_scroll_left((IUnknown*)body);
 }
 
 static void test_body_funs(IHTMLBodyElement *body)
