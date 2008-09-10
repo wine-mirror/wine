@@ -16,7 +16,8 @@ C_SRCS = \
 	jscript_main.c \
 	jsutils.c \
 	lex.c \
-	object.c
+	object.c \
+	string.c
 
 IDL_TLB_SRCS = jsglobal.idl
 

@@ -125,8 +125,9 @@ static HRESULT JSGlobal_Object(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 static HRESULT JSGlobal_String(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    return constructor_call(dispex->ctx->string_constr, lcid, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_RegExp(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -298,6 +299,10 @@ static HRESULT init_constructors(script_ctx_t *ctx)
     HRESULT hres;
 
     hres = create_object_constr(ctx, &ctx->object_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_string_constr(ctx, &ctx->string_constr);
     if(FAILED(hres))
         return hres;
 

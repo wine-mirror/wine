@@ -48,5 +48,6 @@ ok(testFunc1.length === 2, "testFunc1.length is not 2");
 
 ok(Object.prototype !== undefined, "Object.prototype is undefined");
 ok(Object.prototype.prototype === undefined, "Object.prototype is not undefined");
+ok(String.prototype !== undefined, "String.prototype is undefined");
 
 reportSuccess();

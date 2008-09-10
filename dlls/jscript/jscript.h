@@ -51,7 +51,8 @@ typedef enum {
     JSCLASS_NONE,
     JSCLASS_FUNCTION,
     JSCLASS_GLOBAL,
-    JSCLASS_OBJECT
+    JSCLASS_OBJECT,
+    JSCLASS_STRING
 } jsclass_t;
 
 typedef HRESULT (*builtin_invoke_t)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
@@ -128,6 +129,7 @@ struct _script_ctx_t {
     DispatchEx *script_disp;
     DispatchEx *global;
     DispatchEx *object_constr;
+    DispatchEx *string_constr;
 };
 
 void script_release(script_ctx_t*);
@@ -140,6 +142,7 @@ static inline void script_addref(script_ctx_t *ctx)
 HRESULT init_global(script_ctx_t*);
 
 HRESULT create_object_constr(script_ctx_t*,DispatchEx**);
+HRESULT create_string_constr(script_ctx_t*,DispatchEx**);
 
 const char *debugstr_variant(const VARIANT*);
 
