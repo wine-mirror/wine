@@ -889,7 +889,8 @@ HRESULT DPLAYX_SetConnectionSettingsA
   {
     DPLAYX_ReleaseSemaphore();
 
-    ERR("DPSESSIONDESC passed in? Size=%u\n", lpConn->lpSessionDesc->dwSize );
+    ERR("DPSESSIONDESC passed in? Size=%u\n",
+        lpConn->lpSessionDesc?lpConn->lpSessionDesc->dwSize:0 );
 
     return DPERR_INVALIDPARAMS;
   }
