@@ -3321,21 +3321,33 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
     if (!(fwKeys & MK_LBUTTON))
         infoPtr->bLButtonDown = FALSE;
 
-    if (infoPtr->bLButtonDown && DragDetect(infoPtr->hwndSelf, infoPtr->ptClickPos))
+    if (infoPtr->bLButtonDown)
     {
-        LVHITTESTINFO lvHitTestInfo;
-        NMLISTVIEW nmlv;
+        MSG msg;
+        BOOL skip = FALSE;
+        /* Check to see if we got a WM_LBUTTONUP, and skip the DragDetect.
+         * Otherwise, DragDetect will eat it.
+         */
+        if (PeekMessageW(&msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_NOREMOVE))
+            if (msg.message == WM_LBUTTONUP)
+                skip = TRUE;
 
-        lvHitTestInfo.pt = infoPtr->ptClickPos;
-        LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
+        if (!skip && DragDetect(infoPtr->hwndSelf, infoPtr->ptClickPos))
+        {
+            LVHITTESTINFO lvHitTestInfo;
+            NMLISTVIEW nmlv;
 
-        ZeroMemory(&nmlv, sizeof(nmlv));
-        nmlv.iItem = lvHitTestInfo.iItem;
-        nmlv.ptAction = infoPtr->ptClickPos;
+            lvHitTestInfo.pt = infoPtr->ptClickPos;
+            LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
 
-        notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
+            ZeroMemory(&nmlv, sizeof(nmlv));
+            nmlv.iItem = lvHitTestInfo.iItem;
+            nmlv.ptAction = infoPtr->ptClickPos;
 
-        return 0;
+            notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
+
+            return 0;
+        }
     }
     else
         infoPtr->bLButtonDown = FALSE;
