@@ -1013,13 +1013,14 @@ static void test_so_reuseaddr(void)
     rc = setsockopt(s2, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
     ok(rc==0, "setsockopt() failed error: %d\n", WSAGetLastError());
 
-    todo_wine {
+    /* On Win2k3 and above, all SO_REUSEADDR seems to do is to allow binding to
+     * a port immediately after closing another socket on that port, so
+     * basically following the BSD socket semantics here. */
+    closesocket(s1);
     rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
     ok(rc==0, "bind() failed error: %d\n", WSAGetLastError());
-    }
 
     closesocket(s2);
-    closesocket(s1);
 }
 
 /************* Array containing the tests to run **********/
