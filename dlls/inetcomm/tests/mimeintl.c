@@ -52,9 +52,35 @@ static void test_create(void)
     IMimeInternational_Release(internat);
 }
 
+static void test_charset(void)
+{
+    IMimeInternational *internat;
+    HRESULT hr;
+    HCHARSET hcs, hcs_windows_1252, hcs_windows_1251;
+
+    hr = MimeOleGetInternat(&internat);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeInternational_FindCharset(internat, "non-existent", &hcs);
+    ok(hr == MIME_E_NOT_FOUND, "got %08x\n", hr);
+
+    hr = IMimeInternational_FindCharset(internat, "windows-1252", &hcs_windows_1252);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IMimeInternational_FindCharset(internat, "windows-1252", &hcs);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hcs_windows_1252 == hcs, "got different hcharsets for the same name\n");
+
+    hr = IMimeInternational_FindCharset(internat, "windows-1251", &hcs_windows_1251);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hcs_windows_1252 != hcs_windows_1251, "got the same hcharset for the different names\n");
+
+    IMimeInternational_Release(internat);
+}
+
 START_TEST(mimeintl)
 {
     OleInitialize(NULL);
     test_create();
+    test_charset();
     OleUninitialize();
 }
