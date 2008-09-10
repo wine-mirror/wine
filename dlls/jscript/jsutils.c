@@ -133,6 +133,31 @@ void jsheap_free(jsheap_t *heap)
     jsheap_init(heap);
 }
 
+/* ECMA-262 3rd Edition    9.1 */
+HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
+{
+    switch(V_VT(v)) {
+    case VT_EMPTY:
+    case VT_NULL:
+    case VT_BOOL:
+    case VT_I4:
+    case VT_R8:
+        *ret = *v;
+        break;
+    case VT_BSTR:
+        V_VT(ret) = VT_BSTR;
+        V_BSTR(ret) = SysAllocString(V_BSTR(v));
+        break;
+    case VT_DISPATCH:
+        return disp_propget(V_DISPATCH(v), DISPID_VALUE, ctx->lcid, ret, ei, NULL /*FIXME*/);
+    default:
+        FIXME("Unimplemented for vt %d\n", V_VT(v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 /* ECMA-262 3rd Edition    9.2 */
 HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
 {
@@ -155,6 +180,22 @@ HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
         break;
     case VT_BOOL:
         *b = V_BOOL(v);
+        break;
+    default:
+        FIXME("unimplemented for vt %d\n", V_VT(v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    9.3 */
+HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
+{
+    switch(V_VT(v)) {
+    case VT_I4:
+    case VT_R8:
+        *ret = *v;
         break;
     default:
         FIXME("unimplemented for vt %d\n", V_VT(v));

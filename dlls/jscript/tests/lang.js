@@ -161,4 +161,19 @@ ok(getVT("test") === "VT_BSTR", "getVT(\"test\") is not VT_BSTR");
 ok(getVT(Math) === "VT_DISPATCH", "getVT(Math) is not VT_DISPATCH");
 ok(getVT(false) === "VT_BOOL", "getVT(false) is not VT_BOOL");
 
+tmp = 2+2;
+ok(tmp === 4, "2+2 !== 4");
+ok(getVT(tmp) === "VT_I4", "getVT(2+2) !== VT_I4");
+
+tmp = 2+2.5;
+ok(tmp === 4.5, "2+2.5 !== 4.5");
+ok(getVT(tmp) === "VT_R8", "getVT(2+2.5) !== VT_R8");
+
+tmp = 1.5+2.5;
+ok(tmp === 4, "1.4+2.5 !== 4");
+ok(getVT(tmp) === "VT_I4", "getVT(1.5+2.5) !== VT_I4");
+
+tmp = "ab" + "cd";
+ok(tmp === "abcd", "\"ab\" + \"cd\" !== \"abcd\"");
+
 reportSuccess();
