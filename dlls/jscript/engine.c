@@ -120,6 +120,30 @@ static void exprval_set_idref(exprval_t *val, IDispatch *disp, DISPID id)
         IDispatch_AddRef(disp);
 }
 
+HRESULT scope_push(scope_chain_t *scope, DispatchEx *obj, scope_chain_t **ret)
+{
+    scope_chain_t *new_scope;
+
+    new_scope = heap_alloc(sizeof(scope_chain_t));
+    if(!new_scope)
+        return E_OUTOFMEMORY;
+
+    new_scope->ref = 1;
+
+    IDispatchEx_AddRef(_IDispatchEx_(obj));
+    new_scope->obj = obj;
+
+    if(scope) {
+        scope_addref(scope);
+        new_scope->next = scope;
+    }else {
+        new_scope->next = NULL;
+    }
+
+    *ret = new_scope;
+    return S_OK;
+}
+
 void scope_release(scope_chain_t *scope)
 {
     if(--scope->ref)

@@ -70,4 +70,6 @@ ok(typeof(String) === "function", "typeof(String) is not function");
 ok(typeof(ScriptEngine) === "function", "typeof(ScriptEngine) is not function");
 ok(typeof(this) === "object", "typeof(this) is not object");
 
+ok(testFunc1(true, "test") === true, "testFunc1 not returned true");
+
 reportSuccess();

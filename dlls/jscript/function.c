@@ -46,6 +46,99 @@ static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p',
 static const WCHAR propertyIsEnumerableW[] = {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
 
+static IDispatch *get_this(DISPPARAMS *dp)
+{
+    DWORD i;
+
+    for(i=0; i < dp->cNamedArgs; i++) {
+        if(dp->rgdispidNamedArgs[i] == DISPID_THIS) {
+            if(V_VT(dp->rgvarg+i) == VT_DISPATCH)
+                return V_DISPATCH(dp->rgvarg+i);
+
+            WARN("This is not VT_DISPATCH\n");
+            return NULL;
+        }
+    }
+
+    TRACE("no this passed\n");
+    return NULL;
+}
+
+static HRESULT create_var_disp(FunctionInstance *function, LCID lcid, DISPPARAMS *dp, jsexcept_t *ei,
+                               IServiceProvider *caller, DispatchEx **ret)
+{
+    DispatchEx *var_disp;
+    HRESULT hres;
+
+    hres = create_dispex(function->dispex.ctx, NULL, NULL, &var_disp);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = var_disp;
+    return S_OK;
+}
+
+static HRESULT invoke_source(FunctionInstance *function, IDispatch *this_obj, LCID lcid, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DispatchEx *var_disp;
+    exec_ctx_t *exec_ctx;
+    scope_chain_t *scope;
+    HRESULT hres;
+
+    if(!function->source) {
+        FIXME("no source\n");
+        return E_FAIL;
+    }
+
+    hres = create_var_disp(function, lcid, dp, ei, caller, &var_disp);
+    if(FAILED(hres))
+        return hres;
+
+    hres = scope_push(function->scope_chain, var_disp, &scope);
+    if(SUCCEEDED(hres)) {
+        hres = create_exec_ctx(this_obj, var_disp, scope, &exec_ctx);
+        scope_release(scope);
+    }
+    if(FAILED(hres))
+        return hres;
+
+    hres = exec_source(exec_ctx, function->parser, function->source, ei, retv);
+    exec_release(exec_ctx);
+
+    return hres;
+}
+
+static HRESULT invoke_function(FunctionInstance *function, LCID lcid, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    IDispatch *this_obj;
+
+    if(!(this_obj = get_this(dp)))
+        this_obj = (IDispatch*)_IDispatchEx_(function->dispex.ctx->script_disp);
+
+    return invoke_source(function, this_obj, lcid, dp, retv, ei, caller);
+}
+
+static HRESULT invoke_value_proc(FunctionInstance *function, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DispatchEx *this_obj = NULL;
+    IDispatch *this_disp;
+    HRESULT hres;
+
+    this_disp = get_this(dp);
+    if(this_disp)
+        this_obj = iface_to_jsdisp((IUnknown*)this_disp);
+
+    hres = function->value_proc(this_obj ? this_obj : function->dispex.ctx->script_disp, lcid,
+                                flags, dp, retv, ei, caller);
+
+    if(this_obj)
+        jsdisp_release(this_obj);
+    return hres;
+}
+
 static HRESULT Function_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -123,10 +216,32 @@ static HRESULT Function_isPrototypeOf(DispatchEx *dispex, LCID lcid, WORD flags,
 }
 
 static HRESULT Function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    FunctionInstance *function;
+
+    TRACE("\n");
+
+    if(dispex->builtin_info->class != JSCLASS_FUNCTION) {
+        ERR("dispex is not a function\n");
+        return E_FAIL;
+    }
+
+    function = (FunctionInstance*)dispex;
+
+    switch(flags) {
+    case DISPATCH_METHOD:
+        if(function->value_proc)
+            return invoke_value_proc(function, lcid, flags, dp, retv, ei, caller);
+
+        return invoke_function(function, lcid, dp, retv, ei, caller);
+
+    default:
+        FIXME("not implemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static void Function_destructor(DispatchEx *dispex)
