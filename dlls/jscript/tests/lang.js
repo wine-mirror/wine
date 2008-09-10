@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+var tmp;
+
 ok(true, "true is not true?");
 ok(!false, "!false is not true");
 ok(!undefined, "!undefined is not true");
@@ -115,5 +117,27 @@ ok(obj2.pvar === 2, "obj2.pvar is not 2");
 obj2.pvar = 3;
 testConstr1.prototype.pvar = 1;
 ok(obj2.pvar === 3, "obj2.pvar is not 3");
+
+tmp = 0;
+if(true)
+    tmp = 1;
+else
+    ok(false, "else evaluated");
+ok(tmp === 1, "tmp !== 1, if not evaluated?");
+
+tmp = 0;
+if(1 === 0)
+    ok(false, "if evaluated");
+else
+    tmp = 1;
+ok(tmp === 1, "tmp !== 1, if not evaluated?");
+
+if(false)
+    ok(false, "if(false) evaluated");
+
+tmp = 0;
+if(true)
+    tmp = 1;
+ok(tmp === 1, "tmp !== 1, if(true) not evaluated?");
 
 reportSuccess();

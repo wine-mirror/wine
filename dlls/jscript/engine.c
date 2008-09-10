@@ -566,10 +566,33 @@ HRESULT expression_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_ty
     return S_OK;
 }
 
-HRESULT if_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.5 */
+HRESULT if_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    if_statement_t *stat = (if_statement_t*)_stat;
+    exprval_t exprval;
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_boolean(ctx->parser->script, &exprval, &rt->ei, &b);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    if(b)
+        hres = stat_eval(ctx, stat->if_stat, rt, ret);
+    else if(stat->else_stat)
+        hres = stat_eval(ctx, stat->else_stat, rt, ret);
+    else
+        V_VT(ret) = VT_EMPTY;
+
+    return hres;
 }
 
 HRESULT dowhile_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
