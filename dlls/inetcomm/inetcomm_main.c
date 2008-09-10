@@ -37,6 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(inetcomm);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
+    IMimeInternational *international;
+
     TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason)
@@ -47,8 +49,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         DisableThreadLibraryCalls(hinstDLL);
         if (!InternetTransport_RegisterClass(hinstDLL))
             return FALSE;
+        MimeInternational_Construct(&international);
         break;
     case DLL_PROCESS_DETACH:
+        IMimeInternational_Release(international);
         InternetTransport_UnregisterClass(hinstDLL);
         break;
     default:

@@ -71,3 +71,5 @@ void InternetTransport_UnregisterClass(HINSTANCE hInstance);
 
 HRESULT MimeBody_create(IUnknown *outer, void **obj);
 HRESULT MimeAllocator_create(IUnknown *outer, void **obj);
+
+HRESULT MimeInternational_Construct(IMimeInternational **internat);

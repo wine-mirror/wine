@@ -31,8 +31,8 @@
 #include "ocidl.h"
 
 #include "initguid.h"
-#include "inetcomm_private.h"
 #include "mimeole.h"
+#include "inetcomm_private.h"
 
 #include "wine/debug.h"
 

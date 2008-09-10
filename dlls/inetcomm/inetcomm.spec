@@ -76,7 +76,7 @@
 @ stub MimeOleGetFileExtension
 @ stub MimeOleGetFileInfo
 @ stub MimeOleGetFileInfoW
-@ stub MimeOleGetInternat
+@ stdcall MimeOleGetInternat(ptr)
 @ stub MimeOleGetPropA
 @ stub MimeOleGetPropW
 @ stub MimeOleGetPropertySchema
