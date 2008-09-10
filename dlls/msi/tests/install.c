@@ -5459,6 +5459,11 @@ START_TEST(install)
         ret = notify_system_change(BEGIN_NESTED_SYSTEM_CHANGE, &status);
     }
 
+    /* Create only one log file and don't append. We have to pass something
+     * for the log mode for this to work.
+     */
+    MsiEnableLogA(INSTALLLOGMODE_FATALEXIT, "msitest.log", 0);
+
     test_MsiInstallProduct();
     test_MsiSetComponentState();
     test_packagecoltypes();
@@ -5494,6 +5499,8 @@ START_TEST(install)
     test_sourcepath();
     test_MsiConfigureProductEx();
     test_missingcomponent();
+
+    DeleteFileA("msitest.log");
 
     if (pSRSetRestorePointA && ret)
     {
