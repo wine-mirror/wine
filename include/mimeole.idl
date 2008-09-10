@@ -40,6 +40,13 @@ cpp_quote("#define MIME_E_BOUNDARY_MISMATCH      0x800cce04")
 cpp_quote("#define MIME_E_NOT_FOUND              0x800cce05")
 cpp_quote("#define MIME_E_NO_DATA                0x800cce05")
 cpp_quote("#define MIME_E_BUFFER_TOO_SMALL       0x800cce06")
+cpp_quote("#define MIME_E_INVALID_ITEM_FLAGS     0x800cce07")
+cpp_quote("#define MIME_E_ONE_LINE_ITEME         0x800cce08")
+cpp_quote("#define MIME_E_INVALID_HANDLE         0x800cce09")
+cpp_quote("#define MIME_E_CHARSET_TRANSLATE      0x800cce0a")
+cpp_quote("#define MIME_E_NOT_INITIALIZED        0x800cce0b")
+
+cpp_quote("#define MIME_E_INVALID_CHARSET_TYPE   0x800cce31")
 
 cpp_quote("#define MIME_E_INVALID_TEXT_TYPE      0x800cce38")
 
