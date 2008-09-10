@@ -53,6 +53,18 @@ static const WCHAR ScriptEngineBuildVersionW[] =
 static const WCHAR CollectGarbageW[] = {'C','o','l','l','e','c','t','G','a','r','b','a','g','e',0};
 static const WCHAR MathW[] = {'M','a','t','h',0};
 
+static HRESULT constructor_call(DispatchEx *constr, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    if(flags != DISPATCH_PROPERTYGET)
+        return jsdisp_call_value(constr, lcid, flags, dp, retv, ei, sp);
+
+    V_VT(retv) = VT_DISPATCH;
+    V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(constr);
+    IDispatchEx_AddRef(_IDispatchEx_(constr));
+    return S_OK;
+}
+
 static HRESULT JSGlobal_NaN(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -105,8 +117,9 @@ static HRESULT JSGlobal_Number(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 static HRESULT JSGlobal_Object(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    return constructor_call(dispex->ctx->object_constr, lcid, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_String(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -280,10 +293,27 @@ static const builtin_info_t JSGlobal_info = {
     NULL
 };
 
+static HRESULT init_constructors(script_ctx_t *ctx)
+{
+    HRESULT hres;
+
+    hres = create_object_constr(ctx, &ctx->object_constr);
+    if(FAILED(hres))
+        return hres;
+
+    return S_OK;
+}
+
 HRESULT init_global(script_ctx_t *ctx)
 {
+    HRESULT hres;
+
     if(ctx->global)
         return S_OK;
+
+    hres = init_constructors(ctx);
+    if(FAILED(hres))
+        return hres;
 
     return create_dispex(ctx, &JSGlobal_info, NULL, &ctx->global);
 }

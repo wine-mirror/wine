@@ -34,6 +34,8 @@ typedef struct {
     DWORD length;
 } FunctionInstance;
 
+static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
+
 static const WCHAR lengthW[] = {'l','e','n','g','t','h',0};
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
@@ -176,7 +178,14 @@ static HRESULT create_function(script_ctx_t *ctx, DWORD flags, DispatchEx *proto
     function->length = flags & PROPF_ARGMASK;
 
     if(prototype) {
-        hres = jsdisp_set_prototype(&function->dispex, prototype);
+        jsexcept_t jsexcept;
+        VARIANT var;
+
+        V_VT(&var) = VT_DISPATCH;
+        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(prototype);
+        memset(&jsexcept, 0, sizeof(jsexcept));
+
+        hres = jsdisp_propput_name(&function->dispex, prototypeW, ctx->lcid, &var, &jsexcept, NULL/*FIXME*/);
         if(FAILED(hres)) {
             IDispatchEx_Release(_IDispatchEx_(&function->dispex));
             return hres;

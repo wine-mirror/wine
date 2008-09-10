@@ -50,7 +50,8 @@ typedef struct DispatchEx DispatchEx;
 typedef enum {
     JSCLASS_NONE,
     JSCLASS_FUNCTION,
-    JSCLASS_GLOBAL
+    JSCLASS_GLOBAL,
+    JSCLASS_OBJECT
 } jsclass_t;
 
 typedef HRESULT (*builtin_invoke_t)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
@@ -87,9 +88,18 @@ struct DispatchEx {
 
 #define _IDispatchEx_(x) ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
+static inline void jsdisp_release(DispatchEx *jsdisp)
+{
+    IDispatchEx_Release(_IDispatchEx_(jsdisp));
+}
+
 HRESULT create_dispex(script_ctx_t*,const builtin_info_t*,DispatchEx*,DispatchEx**);
 HRESULT init_dispex(DispatchEx*,script_ctx_t*,const builtin_info_t*,DispatchEx*);
+HRESULT init_dispex_from_constr(DispatchEx*,script_ctx_t*,const builtin_info_t*,DispatchEx*);
+DispatchEx *iface_to_jsdisp(IUnknown*);
+
 HRESULT disp_call(IDispatch*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_call_value(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propget(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propput(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propput_name(DispatchEx*,const WCHAR*,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
@@ -117,6 +127,7 @@ struct _script_ctx_t {
 
     DispatchEx *script_disp;
     DispatchEx *global;
+    DispatchEx *object_constr;
 };
 
 void script_release(script_ctx_t*);
@@ -127,6 +138,8 @@ static inline void script_addref(script_ctx_t *ctx)
 }
 
 HRESULT init_global(script_ctx_t*);
+
+HRESULT create_object_constr(script_ctx_t*,DispatchEx**);
 
 const char *debugstr_variant(const VARIANT*);
 

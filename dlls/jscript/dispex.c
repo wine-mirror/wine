@@ -715,8 +715,6 @@ HRESULT jsdisp_set_prototype(DispatchEx *dispex, DispatchEx *prototype)
 
 HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, DispatchEx *prototype)
 {
-    static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
-
     TRACE("%p (%p)\n", dispex, prototype);
 
     dispex->lpIDispatchExVtbl = &DispatchExVtbl;
@@ -731,7 +729,7 @@ HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx, const builtin_info_t 
     if(prototype)
         IDispatchEx_AddRef(_IDispatchEx_(prototype));
 
-    dispex->prop_cnt = 2;
+    dispex->prop_cnt = 1;
     dispex->props[0].name = NULL;
     dispex->props[0].flags = 0;
     if(builtin_info->value_prop.invoke) {
@@ -739,20 +737,6 @@ HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx, const builtin_info_t 
         dispex->props[0].u.p = &builtin_info->value_prop;
     }else {
         dispex->props[0].type = PROP_DELETED;
-    }
-
-    dispex->props[1].type = PROP_DELETED;
-    dispex->props[1].name = SysAllocString(prototypeW);
-    dispex->props[1].flags = 0;
-
-    if(prototype) {
-        HRESULT hres;
-
-        hres = jsdisp_set_prototype(dispex, prototype);
-        if(FAILED(hres)) {
-            IDispatchEx_Release(_IDispatchEx_(dispex));
-            return hres;
-        }
     }
 
     script_addref(ctx);
@@ -786,6 +770,39 @@ HRESULT create_dispex(script_ctx_t *ctx, const builtin_info_t *builtin_info, Dis
     return S_OK;
 }
 
+HRESULT init_dispex_from_constr(DispatchEx *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, DispatchEx *constr)
+{
+    DispatchEx *prot = NULL;
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
+
+    hres = find_prop_name_prot(constr, prototypeW, FALSE, &prop);
+    if(SUCCEEDED(hres) && prop) {
+        jsexcept_t jsexcept;
+        VARIANT var;
+
+        V_VT(&var) = VT_EMPTY;
+        memset(&jsexcept, 0, sizeof(jsexcept));
+        hres = prop_get(constr, prop, ctx->lcid, NULL, &var, &jsexcept, NULL/*FIXME*/);
+        if(FAILED(hres)) {
+            ERR("Could not get prototype\n");
+            return hres;
+        }
+
+        if(V_VT(&var) == VT_DISPATCH)
+            prot = iface_to_jsdisp((IUnknown*)V_DISPATCH(&var));
+        VariantClear(&var);
+    }
+
+    hres = init_dispex(dispex, ctx, builtin_info, prot);
+
+    if(prot)
+        IDispatchEx_Release(_IDispatchEx_(prot));
+    return hres;
+}
+
 DispatchEx *iface_to_jsdisp(IUnknown *iface)
 {
     DispatchEx *ret;
@@ -796,6 +813,12 @@ DispatchEx *iface_to_jsdisp(IUnknown *iface)
         return NULL;
 
     return ret;
+}
+
+HRESULT jsdisp_call_value(DispatchEx *disp, LCID lcid, WORD flags, DISPPARAMS *dp, VARIANT *retv,
+        jsexcept_t *ei, IServiceProvider *caller)
+{
+    return disp->builtin_info->value_prop.invoke(disp, lcid, flags, dp, retv, ei, caller);
 }
 
 HRESULT jsdisp_call(DispatchEx *disp, DISPID id, LCID lcid, WORD flags, DISPPARAMS *dp, VARIANT *retv,
