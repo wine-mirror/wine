@@ -207,8 +207,27 @@ static HRESULT WINAPI MimeInternat_FindCharset(IMimeInternational *iface, LPCSTR
 static HRESULT WINAPI MimeInternat_GetCharsetInfo(IMimeInternational *iface, HCHARSET hCharset,
                                                   LPINETCSETINFO pCsetInfo)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    internat *This = impl_from_IMimeInternational( iface );
+    HRESULT hr = MIME_E_INVALID_HANDLE;
+    charset_entry *charset;
+
+    TRACE("(%p)->(%p, %p)\n", iface, hCharset, pCsetInfo);
+
+    EnterCriticalSection(&This->cs);
+
+    LIST_FOR_EACH_ENTRY(charset, &This->charsets, charset_entry, entry)
+    {
+        if(charset->cs_info.hCharset ==  hCharset)
+        {
+            *pCsetInfo = charset->cs_info;
+            hr = S_OK;
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI MimeInternat_GetCodePageInfo(IMimeInternational *iface, CODEPAGEID cpiCodePage,
