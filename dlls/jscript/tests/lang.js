@@ -53,5 +53,7 @@ ok(Array.prototype !== undefined, "Array.prototype is undefined");
 ok(Boolean.prototype !== undefined, "Boolean.prototype is undefined");
 ok(Number.prototype !== undefined, "Number.prototype is undefined");
 ok(RegExp.prototype !== undefined, "RegExp.prototype is undefined");
+ok(Math !== undefined, "Math is undefined");
+ok(Math.prototype === undefined, "Math.prototype is not undefined");
 
 reportSuccess();

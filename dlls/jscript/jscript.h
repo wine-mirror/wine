@@ -53,6 +53,7 @@ typedef enum {
     JSCLASS_BOOLEAN,
     JSCLASS_FUNCTION,
     JSCLASS_GLOBAL,
+    JSCLASS_MATH,
     JSCLASS_NUMBER,
     JSCLASS_OBJECT,
     JSCLASS_REGEXP,
@@ -111,6 +112,8 @@ HRESULT jsdisp_propput_name(DispatchEx*,const WCHAR*,LCID,VARIANT*,jsexcept_t*,I
 HRESULT jsdisp_set_prototype(DispatchEx*,DispatchEx*);
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,DWORD,DispatchEx*,DispatchEx**);
+
+HRESULT create_math(script_ctx_t*,DispatchEx**);
 
 HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
 HRESULT to_object(exec_ctx_t*,VARIANT*,IDispatch**);

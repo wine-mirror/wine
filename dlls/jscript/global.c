@@ -252,13 +252,6 @@ static HRESULT JSGlobal_CollectGarbage(DispatchEx *dispex, LCID lcid, WORD flags
     return E_NOTIMPL;
 }
 
-static HRESULT JSGlobal_Math(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static const builtin_prop_t JSGlobal_props[] = {
     {ActiveXObjectW,             JSGlobal_ActiveXObject,             PROPF_METHOD},
     {ArrayW,                     JSGlobal_Array,                     PROPF_CONSTR},
@@ -269,7 +262,7 @@ static const builtin_prop_t JSGlobal_props[] = {
     {FunctionW,                  JSGlobal_Function,                  PROPF_CONSTR},
     {GetObjectW,                 JSGlobal_GetObject,                 PROPF_METHOD},
     {InfinityW,                  JSGlobal_Infinity,                  0},
-    {MathW,                      JSGlobal_Math,                      0},
+/*  {MathW,                      JSGlobal_Math,                      0},  */
     {NaNW,                       JSGlobal_NaN,                       0},
     {NumberW,                    JSGlobal_Number,                    PROPF_CONSTR},
     {ObjectW,                    JSGlobal_Object,                    PROPF_CONSTR},
@@ -331,6 +324,8 @@ static HRESULT init_constructors(script_ctx_t *ctx)
 
 HRESULT init_global(script_ctx_t *ctx)
 {
+    DispatchEx *math;
+    VARIANT var;
     HRESULT hres;
 
     if(ctx->global)
@@ -340,5 +335,18 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return create_dispex(ctx, &JSGlobal_info, NULL, &ctx->global);
+    hres = create_dispex(ctx, &JSGlobal_info, NULL, &ctx->global);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_math(ctx, &math);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(math);
+    hres = jsdisp_propput_name(ctx->global, MathW, ctx->lcid, &var, NULL/*FIXME*/, NULL/*FIXME*/);
+    jsdisp_release(math);
+
+    return hres;
 }
