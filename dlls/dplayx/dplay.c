@@ -3032,7 +3032,7 @@ static HRESULT WINAPI DP_IF_Receive
   }
 
   /* Copy into the provided buffer */
-  CopyMemory( lpData, lpMsg->msg, *lpdwDataSize );
+  if (lpData) CopyMemory( lpData, lpMsg->msg, *lpdwDataSize );
 
   return DP_OK;
 }
