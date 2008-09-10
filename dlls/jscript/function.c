@@ -424,11 +424,17 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
         scope_chain_t *scope_chain, DispatchEx **ret)
 {
     FunctionInstance *function;
+    DispatchEx *prototype;
     parameter_t *iter;
     DWORD length = 0;
     HRESULT hres;
 
-    hres = create_function(ctx->script, PROPF_CONSTR, NULL, &function);
+    hres = create_object(ctx->script, NULL, &prototype);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_function(ctx->script, PROPF_CONSTR, prototype, &function);
+    jsdisp_release(prototype);
     if(FAILED(hres))
         return hres;
 

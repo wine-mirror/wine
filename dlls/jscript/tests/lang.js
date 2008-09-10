@@ -93,4 +93,27 @@ obj1.func = function () {
 
 ok(obj1.func(true) === "test", "obj1.func(true) is not \"test\"");
 
+function testConstr1() {
+    this.var1 = 1;
+
+    ok(this !== undefined, "this is undefined");
+    ok(arguments.length === 1, "arguments.length is not 1");
+    ok(arguments["0"] === true, "arguments[0] is not 1");
+
+    return false;
+}
+
+testConstr1.prototype.pvar = 1;
+
+var obj2 = new testConstr1(true);
+ok(typeof(obj2) === "object", "typeof(obj2) is not object");
+ok(obj2.pvar === 1, "obj2.pvar is not 1");
+
+testConstr1.prototype.pvar = 2;
+ok(obj2.pvar === 2, "obj2.pvar is not 2");
+
+obj2.pvar = 3;
+testConstr1.prototype.pvar = 1;
+ok(obj2.pvar === 3, "obj2.pvar is not 3");
+
 reportSuccess();
