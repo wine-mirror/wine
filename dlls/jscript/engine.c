@@ -959,10 +959,74 @@ HRESULT void_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, j
     return E_NOTIMPL;
 }
 
-HRESULT typeof_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT typeof_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    unary_expression_t *expr = (unary_expression_t*)_expr;
+    const WCHAR *str;
+    exprval_t exprval;
+    VARIANT val;
+    HRESULT hres;
+
+    static const WCHAR booleanW[] = {'b','o','o','l','e','a','n',0};
+    static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
+    static const WCHAR numberW[] = {'n','u','m','b','e','r',0};
+    static const WCHAR objectW[] = {'o','b','j','e','c','t',0};
+    static const WCHAR stringW[] = {'s','t','r','i','n','g',0};
+    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    switch(V_VT(&val)) {
+    case VT_EMPTY:
+        str = undefinedW;
+        break;
+    case VT_NULL:
+        str = objectW;
+        break;
+    case VT_BOOL:
+        str = booleanW;
+        break;
+    case VT_I4:
+    case VT_R8:
+        str = numberW;
+        break;
+    case VT_BSTR:
+        str = stringW;
+        break;
+    case VT_DISPATCH: {
+        DispatchEx *dispex;
+
+        dispex = iface_to_jsdisp((IUnknown*)V_DISPATCH(&val));
+        if(dispex) {
+            str = dispex->builtin_info->class == JSCLASS_FUNCTION ? functionW : objectW;
+            IDispatchEx_Release(_IDispatchEx_(dispex));
+        }else {
+            str = objectW;
+        }
+        break;
+    }
+    default:
+        FIXME("unhandled vt %d\n", V_VT(&val));
+        hres = E_NOTIMPL;
+    }
+
+    VariantClear(&val);
+    if(FAILED(hres))
+        return hres;
+
+    ret->type = EXPRVAL_VARIANT;
+    V_VT(&ret->u.var) = VT_BSTR;
+    V_BSTR(&ret->u.var) = SysAllocString(str);
+    return S_OK;
 }
 
 HRESULT minus_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)

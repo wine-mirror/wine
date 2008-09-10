@@ -56,4 +56,17 @@ ok(RegExp.prototype !== undefined, "RegExp.prototype is undefined");
 ok(Math !== undefined, "Math is undefined");
 ok(Math.prototype === undefined, "Math.prototype is not undefined");
 
+ok(typeof(0) === "number", "typeof(0) is not number");
+ok(typeof(1.5) === "number", "typeof(1.5) is not number");
+ok(typeof("abc") === "string", "typeof(\"abc\") is not string");
+ok(typeof("") === "string", "typeof(\"\") is not string");
+ok(typeof(true) === "boolean", "typeof(true) is not boolean");
+ok(typeof(null) === "object", "typeof(null) is not object");
+ok(typeof(undefined) === "undefined", "typeof(undefined) is not undefined");
+ok(typeof(Math) === "object", "typeof(Math) is not object");
+ok(typeof(String.prototype) === "object", "typeof(String.prototype) is not object");
+ok(typeof(testFunc1) === "function", "typeof(testFunc1) is not function");
+ok(typeof(String) === "function", "typeof(String) is not function");
+ok(typeof(ScriptEngine) === "function", "typeof(ScriptEngine) is not function");
+
 reportSuccess();
