@@ -50,6 +50,7 @@ typedef struct DispatchEx DispatchEx;
 typedef enum {
     JSCLASS_NONE,
     JSCLASS_ARRAY,
+    JSCLASS_BOOLEAN,
     JSCLASS_FUNCTION,
     JSCLASS_GLOBAL,
     JSCLASS_OBJECT,
@@ -130,6 +131,7 @@ struct _script_ctx_t {
     DispatchEx *script_disp;
     DispatchEx *global;
     DispatchEx *array_constr;
+    DispatchEx *bool_constr;
     DispatchEx *object_constr;
     DispatchEx *string_constr;
 };
@@ -144,6 +146,7 @@ static inline void script_addref(script_ctx_t *ctx)
 HRESULT init_global(script_ctx_t*);
 
 HRESULT create_array_constr(script_ctx_t*,DispatchEx**);
+HRESULT create_bool_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_object_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_string_constr(script_ctx_t*,DispatchEx**);
 

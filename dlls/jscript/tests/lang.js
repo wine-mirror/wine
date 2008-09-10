@@ -50,5 +50,6 @@ ok(Object.prototype !== undefined, "Object.prototype is undefined");
 ok(Object.prototype.prototype === undefined, "Object.prototype is not undefined");
 ok(String.prototype !== undefined, "String.prototype is undefined");
 ok(Array.prototype !== undefined, "Array.prototype is undefined");
+ok(Boolean.prototype !== undefined, "Boolean.prototype is undefined");
 
 reportSuccess();

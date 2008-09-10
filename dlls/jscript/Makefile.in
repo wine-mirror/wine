@@ -9,6 +9,7 @@ RC_SRCS = rsrc.rc
 
 C_SRCS = \
 	array.c \
+	bool.c \
 	dispex.c \
 	engine.c \
 	function.c \
