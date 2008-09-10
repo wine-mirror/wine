@@ -144,4 +144,10 @@ var obj3 = { prop1: 1,  prop2: typeof(false) };
 ok(obj3.prop1 === 1, "obj3.prop1 is not 1");
 ok(obj3.prop2 === "boolean", "obj3.prop2 is not \"boolean\"");
 
+{
+    var blockVar = 1;
+    blockVar = 2;
+}
+ok(blockVar === 2, "blockVar !== 2");
+
 reportSuccess();

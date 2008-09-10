@@ -478,10 +478,35 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
     return E_FAIL;
 }
 
-HRESULT block_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.1 */
+HRESULT block_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    block_statement_t *stat = (block_statement_t*)_stat;
+    VARIANT val, tmp;
+    statement_t *iter;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    V_VT(&val) = VT_EMPTY;
+    for(iter = stat->stat_list; iter; iter = iter->next) {
+        hres = stat_eval(ctx, iter, rt, &tmp);
+        if(FAILED(hres))
+            break;
+
+        VariantClear(&val);
+        val = tmp;
+        if(rt->type != RT_NORMAL)
+            break;
+    }
+
+    if(FAILED(hres)) {
+        VariantClear(&val);
+        return hres;
+    }
+
+    *ret = val;
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.2 */
