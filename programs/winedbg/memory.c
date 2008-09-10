@@ -452,9 +452,9 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                             }
                         }
                     }
+                    count -= min(count, 256);
+                    fcp->Start += 256;
                 }
-                count -= min(count, 256);
-                fcp->Start += 256;
             }
             if (!ok) dbg_print_longlong(val_int, TRUE);
         }
