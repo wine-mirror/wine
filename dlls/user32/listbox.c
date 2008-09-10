@@ -2658,6 +2658,8 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             INT countW = MultiByteToWideChar(CP_ACP, 0, textA, -1, NULL, 0);
             if((textW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR))))
                 MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, countW);
+            else
+                return LB_ERRSPACE;
         }
         wParam = LISTBOX_FindStringPos( descr, textW, FALSE );
         ret = LISTBOX_InsertString( descr, wParam, textW );
@@ -2682,6 +2684,8 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             INT countW = MultiByteToWideChar(CP_ACP, 0, textA, -1, NULL, 0);
             if((textW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR))))
                 MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, countW);
+            else
+                return LB_ERRSPACE;
         }
         ret = LISTBOX_InsertString( descr, wParam, textW );
         if(!unicode && HAS_STRINGS(descr))
@@ -2704,6 +2708,8 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             INT countW = MultiByteToWideChar(CP_ACP, 0, textA, -1, NULL, 0);
             if((textW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR))))
                 MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, countW);
+            else
+                return LB_ERRSPACE;
         }
         wParam = LISTBOX_FindFileStrPos( descr, textW );
         ret = LISTBOX_InsertString( descr, wParam, textW );
