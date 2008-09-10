@@ -805,13 +805,22 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 ifa
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DSurface8Impl *pSurface = (IDirect3DSurface8Impl *)pRenderTarget;
     IDirect3DSurface8Impl *pZSurface = (IDirect3DSurface8Impl *)pNewZStencil;
+    IWineD3DSurface *original_ds = NULL;
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, NULL == pZSurface ? NULL : pZSurface->wineD3DSurface);
-
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface ? pSurface->wineD3DSurface : NULL);
+
+    hr = IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice, &original_ds);
+    if (hr == WINED3D_OK || hr == WINED3DERR_NOTFOUND)
+    {
+        hr = IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, pZSurface ? pZSurface->wineD3DSurface : NULL);
+        if (SUCCEEDED(hr) && pSurface)
+            hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface->wineD3DSurface);
+        if (FAILED(hr)) IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, original_ds);
+    }
+    if (original_ds) IWineD3DSurface_Release(original_ds);
+
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
