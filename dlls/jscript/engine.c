@@ -584,10 +584,32 @@ HRESULT break_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *
     return E_NOTIMPL;
 }
 
-HRESULT return_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.9 */
+HRESULT return_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    expression_statement_t *stat = (expression_statement_t*)_stat;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(stat->expr) {
+        exprval_t exprval;
+
+        hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
+        if(FAILED(hres))
+            return hres;
+
+        hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, ret);
+        exprval_release(&exprval);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        V_VT(ret) = VT_EMPTY;
+    }
+
+    TRACE("= %s\n", debugstr_variant(ret));
+    rt->type = RT_RETURN;
+    return S_OK;
 }
 
 HRESULT with_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
