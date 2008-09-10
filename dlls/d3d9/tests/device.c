@@ -744,6 +744,8 @@ static void test_reset(void)
     d3dpp.BackBufferWidth  = 800;
     d3dpp.BackBufferHeight  = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
 
     for(i = 0; i < IDirect3D9_GetAdapterModeCount(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format); i++) {
         ZeroMemory( &d3ddm2, sizeof(d3ddm2) );
@@ -923,6 +925,32 @@ static void test_reset(void)
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
+
+    /* The depth stencil should get reset to the auto depth stencil when present. */
+    hr = IDirect3DDevice9_SetDepthStencilSurface(pDevice, NULL);
+    ok(hr == D3D_OK, "SetDepthStencilSurface failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &surface);
+    ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned 0x%08x, expected D3DERR_NOTFOUND\n", hr);
+    ok(surface == NULL, "Depth stencil should be NULL\n");
+
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &surface);
+    ok(hr == D3D_OK, "GetDepthStencilSurface failed with 0x%08x\n", hr);
+    ok(surface != NULL, "Depth stencil should not be NULL\n");
+    if (surface) IDirect3DSurface9_Release(surface);
+
+    d3dpp.EnableAutoDepthStencil = FALSE;
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &surface);
+    ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned 0x%08x, expected D3DERR_NOTFOUND\n", hr);
+    ok(surface == NULL, "Depth stencil should be NULL\n");
 
     /* Will a sysmem or scratch survive while locked */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
