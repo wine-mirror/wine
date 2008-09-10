@@ -53,6 +53,7 @@ typedef enum {
     JSCLASS_BOOLEAN,
     JSCLASS_FUNCTION,
     JSCLASS_GLOBAL,
+    JSCLASS_NUMBER,
     JSCLASS_OBJECT,
     JSCLASS_STRING
 } jsclass_t;
@@ -132,6 +133,7 @@ struct _script_ctx_t {
     DispatchEx *global;
     DispatchEx *array_constr;
     DispatchEx *bool_constr;
+    DispatchEx *number_constr;
     DispatchEx *object_constr;
     DispatchEx *string_constr;
 };
@@ -147,6 +149,7 @@ HRESULT init_global(script_ctx_t*);
 
 HRESULT create_array_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_bool_constr(script_ctx_t*,DispatchEx**);
+HRESULT create_number_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_object_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_string_constr(script_ctx_t*,DispatchEx**);
 

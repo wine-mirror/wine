@@ -18,6 +18,7 @@ C_SRCS = \
 	jscript_main.c \
 	jsutils.c \
 	lex.c \
+	number.c \
 	object.c \
 	string.c
 

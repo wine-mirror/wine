@@ -112,8 +112,9 @@ static HRESULT JSGlobal_Function(DispatchEx *dispex, LCID lcid, WORD flags, DISP
 static HRESULT JSGlobal_Number(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    return constructor_call(dispex->ctx->number_constr, lcid, flags, dp, retv, ei, sp);
 }
 
 static HRESULT JSGlobal_Object(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -305,6 +306,10 @@ static HRESULT init_constructors(script_ctx_t *ctx)
         return hres;
 
     hres = create_bool_constr(ctx, &ctx->bool_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_number_constr(ctx, &ctx->number_constr);
     if(FAILED(hres))
         return hres;
 
