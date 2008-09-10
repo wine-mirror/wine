@@ -575,6 +575,7 @@ static const CHAR mov_move_file_dat[] = "FileKey\tComponent_\tSourceName\tDestNa
                                         "kazakhstan\taugustus\t\tkiribati\tFILEPATHGOOD\tMSITESTDIR\t1\n"
                                         "laos\taugustus\tlatvia\tlebanon\tSourceDir\tMSITESTDIR\t1\n"
                                         "namibia\taugustus\tnauru\tkiribati\tSourceDir\tMSITESTDIR\t1\n"
+                                        "pakistan\taugustus\tperu\tsfn|poland\tSourceDir\tMSITESTDIR\t1\n"
                                         "wildcard\taugustus\tapp*\twildcard\tSourceDir\tMSITESTDIR\t1\n"
                                         "single\taugustus\tf?o\tsingle\tSourceDir\tMSITESTDIR\t1\n"
                                         "wildcardnodest\taugustus\tbudd*\t\tSourceDir\tMSITESTDIR\t1\n"
@@ -4390,6 +4391,7 @@ static void test_movefiles(void)
     create_file("kenya", 100);
     CreateDirectoryA("latvia", NULL);
     create_file("nauru", 100);
+    create_file("peru", 100);
     create_file("apple", 100);
     create_file("application", 100);
     create_file("ape", 100);
@@ -4430,6 +4432,7 @@ static void test_movefiles(void)
     ok(delete_pf("msitest\\kiribati", TRUE), "File not moved\n");
     ok(!delete_pf("msitest\\lebanon", TRUE), "File moved\n");
     ok(!delete_pf("msitest\\lebanon", FALSE), "Directory moved\n");
+    ok(delete_pf("msitest\\poland", TRUE), "File not moved\n");
     /* either apple or application will be moved depending on directory order */
     if (!delete_pf("msitest\\apple", TRUE))
         ok(delete_pf("msitest\\application", TRUE), "File not moved\n");
@@ -4462,6 +4465,7 @@ static void test_movefiles(void)
     ok(!DeleteFileA("kenya"), "File not moved\n");
     ok(RemoveDirectoryA("latvia"), "Directory moved\n");
     ok(!DeleteFileA("nauru"), "File not moved\n");
+    ok(!DeleteFileA("peru"), "File not moved\n");
     ok(!DeleteFileA("apple"), "File not moved\n");
     ok(!DeleteFileA("application"), "File not moved\n");
     ok(DeleteFileA("ape"), "File moved\n");

@@ -5564,7 +5564,8 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
-    LPCWSTR sourcename, destname;
+    LPCWSTR sourcename;
+    LPWSTR destname = NULL;
     LPWSTR sourcedir = NULL, destdir = NULL;
     LPWSTR source = NULL, dest = NULL;
     int options;
@@ -5582,7 +5583,6 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
     }
 
     sourcename = MSI_RecordGetString(rec, 3);
-    destname = MSI_RecordGetString(rec, 4);
     options = MSI_RecordGetInteger(rec, 7);
 
     sourcedir = msi_dup_property(package, MSI_RecordGetString(rec, 5));
@@ -5617,11 +5617,20 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 
     wildcards = strchrW(source, '*') || strchrW(source, '?');
 
-    if (!destname && !wildcards)
+    if (MSI_RecordIsNull(rec, 4))
     {
-        destname = strdupW(sourcename);
-        if (!destname)
-            goto done;
+        if (!wildcards)
+        {
+            destname = strdupW(sourcename);
+            if (!destname)
+                goto done;
+        }
+    }
+    else
+    {
+        destname = strdupW(MSI_RecordGetString(rec, 4));
+        if (destname)
+            reduce_to_longfilename(destname);
     }
 
     size = 0;
@@ -5658,6 +5667,7 @@ static UINT ITERATE_MoveFiles( MSIRECORD *rec, LPVOID param )
 done:
     msi_free(sourcedir);
     msi_free(destdir);
+    msi_free(destname);
     msi_free(source);
     msi_free(dest);
 
