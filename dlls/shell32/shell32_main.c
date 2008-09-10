@@ -596,18 +596,22 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                     }
                     else 
                     {
-                        IconNotYetLoaded=FALSE;
+                        UINT ret;
                         if (flags & SHGFI_SMALLICON)
-                            PrivateExtractIconsW( sTemp,icon_idx,
+                            ret = PrivateExtractIconsW( sTemp,icon_idx,
                                 GetSystemMetrics( SM_CXSMICON ),
                                 GetSystemMetrics( SM_CYSMICON ),
                                 &psfi->hIcon, 0, 1, 0);
                         else
-                            PrivateExtractIconsW( sTemp, icon_idx,
+                            ret = PrivateExtractIconsW( sTemp, icon_idx,
                                 GetSystemMetrics( SM_CXICON),
                                 GetSystemMetrics( SM_CYICON),
                                 &psfi->hIcon, 0, 1, 0);
-                        psfi->iIcon = icon_idx;
+                        if (ret != 0 && ret != 0xFFFFFFFF)
+                        {
+                            IconNotYetLoaded=FALSE;
+                            psfi->iIcon = icon_idx;
+                        }
                     }
                 }
             }
