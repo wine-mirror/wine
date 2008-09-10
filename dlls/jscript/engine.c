@@ -132,13 +132,16 @@ void scope_release(scope_chain_t *scope)
     heap_free(scope);
 }
 
-HRESULT create_exec_ctx(DispatchEx *var_disp, scope_chain_t *scope, exec_ctx_t **ret)
+HRESULT create_exec_ctx(IDispatch *this_obj, DispatchEx *var_disp, scope_chain_t *scope, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
 
     ctx = heap_alloc_zero(sizeof(exec_ctx_t));
     if(!ctx)
         return E_OUTOFMEMORY;
+
+    IDispatch_AddRef(this_obj);
+    ctx->this_obj = this_obj;
 
     IDispatchEx_AddRef(_IDispatchEx_(var_disp));
     ctx->var_disp = var_disp;
@@ -161,6 +164,8 @@ void exec_release(exec_ctx_t *ctx)
         scope_release(ctx->scope_chain);
     if(ctx->var_disp)
         IDispatchEx_Release(_IDispatchEx_(ctx->var_disp));
+    if(ctx->this_obj)
+        IDispatch_Release(ctx->this_obj);
     heap_free(ctx);
 }
 
@@ -816,8 +821,13 @@ HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
 
 HRESULT this_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    ret->type = EXPRVAL_VARIANT;
+    V_VT(&ret->u.var) = VT_DISPATCH;
+    V_DISPATCH(&ret->u.var) = ctx->this_obj;
+    IDispatch_AddRef(ctx->this_obj);
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */

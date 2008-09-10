@@ -68,5 +68,6 @@ ok(typeof(String.prototype) === "object", "typeof(String.prototype) is not objec
 ok(typeof(testFunc1) === "function", "typeof(testFunc1) is not function");
 ok(typeof(String) === "function", "typeof(String) is not function");
 ok(typeof(ScriptEngine) === "function", "typeof(ScriptEngine) is not function");
+ok(typeof(this) === "object", "typeof(this) is not object");
 
 reportSuccess();
