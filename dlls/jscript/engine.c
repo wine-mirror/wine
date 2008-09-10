@@ -869,10 +869,43 @@ static HRESULT args_to_param(exec_ctx_t *ctx, argument_t *args, jsexcept_t *ei, 
     return S_OK;
 }
 
-HRESULT member_new_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.2.2 */
+HRESULT member_new_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    call_expression_t *expr = (call_expression_t*)_expr;
+    exprval_t exprval;
+    VARIANT constr, var;
+    DISPPARAMS dp;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = args_to_param(ctx, expr->argument_list, ei, &dp);
+    if(SUCCEEDED(hres))
+        hres = exprval_to_value(ctx->parser->script, &exprval, ei, &constr);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(&constr) != VT_DISPATCH) {
+        FIXME("throw TypeError\n");
+        VariantClear(&constr);
+        return E_FAIL;
+    }
+
+    hres = disp_call(V_DISPATCH(&constr), DISPID_VALUE, ctx->parser->script->lcid,
+                     DISPATCH_CONSTRUCT, &dp, &var, ei, NULL/*FIXME*/);
+    IDispatch_Release(V_DISPATCH(&constr));
+    if(FAILED(hres))
+        return hres;
+
+    ret->type = EXPRVAL_VARIANT;
+    ret->u.var = var;
+    return S_OK;
 }
 
 HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
