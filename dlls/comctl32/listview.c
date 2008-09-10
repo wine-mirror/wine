@@ -257,6 +257,7 @@ typedef struct tagLISTVIEW_INFO
   HIMAGELIST himlState;
   BOOL bLButtonDown;
   BOOL bRButtonDown;
+  BOOL bDragging;
   POINT ptClickPos;         /* point where the user clicked */ 
   BOOL bNoItemMetrics;		/* flags if item metrics are not yet computed */
   INT nItemHeight;
@@ -3344,7 +3345,11 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
             nmlv.iItem = lvHitTestInfo.iItem;
             nmlv.ptAction = infoPtr->ptClickPos;
 
-            notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
+            if (!infoPtr->bDragging)
+            {
+                notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
+                infoPtr->bDragging = TRUE;
+            }
 
             return 0;
         }
@@ -8605,6 +8610,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   /* set left button down flag and record the click position */
   infoPtr->bLButtonDown = TRUE;
   infoPtr->ptClickPos = pt;
+  infoPtr->bDragging = FALSE;
 
   lvHitTestInfo.pt.x = x;
   lvHitTestInfo.pt.y = y;
@@ -8715,6 +8721,12 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
 
     /* set left button flag */
     infoPtr->bLButtonDown = FALSE;
+
+    if (infoPtr->bDragging)
+    {
+        infoPtr->bDragging = FALSE;
+        return 0;
+    }
 
     /* if we clicked on a selected item, edit the label */
     if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem && (lvHitTestInfo.flags & LVHT_ONITEMLABEL))
