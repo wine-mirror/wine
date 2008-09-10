@@ -2131,7 +2131,6 @@ START_TEST(device)
         test_mipmap_levels();
         test_cursor();
         test_reset();
-        test_reset();
         test_scene();
         test_limits();
         test_depthstenciltest();
