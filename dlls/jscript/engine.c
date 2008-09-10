@@ -715,10 +715,61 @@ HRESULT conditional_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD f
     return E_NOTIMPL;
 }
 
-HRESULT array_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.2.1 */
+HRESULT array_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    array_expression_t *expr = (array_expression_t*)_expr;
+    exprval_t exprval;
+    VARIANT member, val;
+    DISPID id;
+    BSTR str;
+    IDispatch *obj = NULL;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->member_expr, EXPR_NEWREF, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, ei, &member);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = expr_eval(ctx, expr->expression, EXPR_NEWREF, ei, &exprval);
+    if(SUCCEEDED(hres)) {
+        hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
+        exprval_release(&exprval);
+    }
+
+    if(SUCCEEDED(hres))
+        hres = to_object(ctx, &member, &obj);
+    VariantClear(&member);
+    if(SUCCEEDED(hres)) {
+        hres = to_string(ctx->parser->script, &val, ei, &str);
+        if(SUCCEEDED(hres)) {
+            if(flags & EXPR_STRREF) {
+                ret->type = EXPRVAL_NAMEREF;
+                ret->u.nameref.disp = obj;
+                ret->u.nameref.name = str;
+                return S_OK;
+            }
+
+            hres = disp_get_id(obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
+        }
+
+        if(SUCCEEDED(hres)) {
+            exprval_set_idref(ret, obj, id);
+        }else if(!(flags & EXPR_NEWREF) && hres == DISP_E_UNKNOWNNAME) {
+            exprval_init(ret);
+            hres = S_OK;
+        }
+
+        IDispatch_Release(obj);
+    }
+
+    return hres;
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */

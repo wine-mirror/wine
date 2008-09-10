@@ -164,6 +164,21 @@ HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    9.8 */
+HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
+{
+    switch(V_VT(v)) {
+    case VT_BSTR:
+        *str = SysAllocString(V_BSTR(v));
+        return S_OK;
+
+    default:
+        FIXME("unsupported vt %d\n", V_VT(v));
+    }
+
+    return E_NOTIMPL;
+}
+
 /* ECMA-262 3rd Edition    9.9 */
 HRESULT to_object(exec_ctx_t *ctx, VARIANT *v, IDispatch **disp)
 {

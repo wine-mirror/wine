@@ -45,6 +45,8 @@ function testFunc1(x, y) {
     ok(x === true, "x is not 1");
     ok(y === "test", "y is not \"test\"");
     ok(arguments.length === 2, "arguments.length is not 2");
+    ok(arguments["0"] === true, "arguments[0] is not true");
+    ok(arguments["1"] === "test", "arguments[1] is not \"test\"");
 
     return true;
 }
