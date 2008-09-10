@@ -831,8 +831,34 @@ static HRESULT WINAPI HTMLElement2_put_scrollLeft(IHTMLElement2 *iface, long v)
 static HRESULT WINAPI HTMLElement2_get_scrollLeft(IHTMLElement2 *iface, long *p)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    PRInt32 left = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_INVALIDARG;
+
+    if(!This->nselem)
+    {
+        FIXME("NULL nselem\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    if(NS_SUCCEEDED(nsres))
+    {
+        nsres = nsIDOMNSHTMLElement_GetScrollLeft(nselem, &left);
+        nsIDOMNSHTMLElement_Release(nselem);
+        if(NS_FAILED(nsres))
+            left = 0;
+    }
+
+    *p = left;
+    TRACE("*p = %ld\n", *p);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_clearAttributes(IHTMLElement2 *iface)
