@@ -576,7 +576,7 @@ static const IActiveScriptParseVtbl JScriptParseVtbl = {
     JScriptParse_ParseScriptText
 };
 
-#define ASPARSEPROC_THIS(iface) DEFINE_THIS(JScript, IActiveScriptParse, iface)
+#define ASPARSEPROC_THIS(iface) DEFINE_THIS(JScript, IActiveScriptParseProcedure2, iface)
 
 static HRESULT WINAPI JScriptParseProcedure_QueryInterface(IActiveScriptParseProcedure2 *iface, REFIID riid, void **ppv)
 {
@@ -602,8 +602,30 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
         DWORD dwSourceContextCookie, ULONG ulStartingLineNumber, DWORD dwFlags, IDispatch **ppdisp)
 {
     JScript *This = ASPARSEPROC_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    parser_ctx_t *parser_ctx;
+    DispatchEx *dispex;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %s %s %p %s %x %u %x %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),
+          debugstr_w(pstrProcedureName), debugstr_w(pstrItemName), punkContext, debugstr_w(pstrDelimiter),
+          dwSourceContextCookie, ulStartingLineNumber, dwFlags, ppdisp);
+
+    if(This->thread_id != GetCurrentThreadId() || This->ctx->state == SCRIPTSTATE_CLOSED)
+        return E_UNEXPECTED;
+
+    hres = script_parse(This->ctx, pstrCode, &parser_ctx);
+    if(FAILED(hres)) {
+        WARN("Parse failed %08x\n", hres);
+        return hres;
+    }
+
+    hres = create_source_function(parser_ctx, NULL, parser_ctx->source, NULL, &dispex);
+    parser_release(parser_ctx);
+    if(FAILED(hres))
+        return hres;
+
+    *ppdisp = (IDispatch*)_IDispatchEx_(dispex);
+    return S_OK;
 }
 
 #undef ASPARSEPROC_THIS
