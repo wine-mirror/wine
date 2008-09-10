@@ -1283,6 +1283,76 @@ static void test_render_zero_triangles(void)
     if(d3d8) IDirect3D8_Release(d3d8);
 }
 
+static void test_depth_stencil_reset(void)
+{
+    D3DPRESENT_PARAMETERS present_parameters;
+    D3DDISPLAYMODE display_mode;
+    IDirect3DSurface8 *surface;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d8;
+    HRESULT hr;
+    HWND hwnd;
+
+    d3d8 = pDirect3DCreate8(D3D_SDK_VERSION);
+    ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow("static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!d3d8 || !hwnd) goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &display_mode);
+    memset(&present_parameters, 0, sizeof(present_parameters));
+    present_parameters.Windowed               = TRUE;
+    present_parameters.SwapEffect             = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferFormat       = display_mode.Format;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
+    if(FAILED(hr))
+    {
+        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
+
+    hr = IDirect3DDevice8_TestCooperativeLevel(device);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed with %#x\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, NULL, NULL);
+    ok(hr == D3D_OK, "SetRenderTarget failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice8_GetRenderTarget(device, &surface);
+    ok(hr == D3D_OK, "GetRenderTarget failed with 0x%08x\n", hr);
+    ok(surface != NULL, "Render target should not be NULL\n");
+    if (surface) IDirect3DSurface8_Release(surface);
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surface);
+    ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned 0x%08x, expected D3DERR_NOTFOUND\n", hr);
+    ok(surface == NULL, "Depth stencil should be NULL\n");
+
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    hr = IDirect3DDevice8_Reset(device, &present_parameters);
+    ok(hr == D3D_OK, "Reset failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surface);
+    ok(hr == D3D_OK, "GetDepthStencilSurface failed with 0x%08x\n", hr);
+    ok(surface != NULL, "Depth stencil should not be NULL\n");
+    if (surface) IDirect3DSurface8_Release(surface);
+
+    present_parameters.EnableAutoDepthStencil = FALSE;
+    hr = IDirect3DDevice8_Reset(device, &present_parameters);
+    ok(hr == D3D_OK, "Reset failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surface);
+    ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned 0x%08x, expected D3DERR_NOTFOUND\n", hr);
+    ok(surface == NULL, "Depth stencil should be NULL\n");
+
+cleanup:
+    if(d3d8) IDirect3D8_Release(d3d8);
+    if(device) IDirect3D8_Release(device);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -1308,5 +1378,6 @@ START_TEST(device)
         test_limits();
         test_lights();
         test_render_zero_triangles();
+        test_depth_stencil_reset();
     }
 }
