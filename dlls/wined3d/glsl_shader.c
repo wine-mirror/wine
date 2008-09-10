@@ -3672,7 +3672,7 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
      *
      * Basically we want (in homogeneous coordinates) z = z * 2 - 1. However, shaders are run
      * before the homogeneous divide, so we have to take the w into account: z = ((z / w) * 2 - 1) * w,
-     * which is the same as z = z / 2 - w.
+     * which is the same as z = z * 2 - w.
      */
     shader_addline(buffer, "gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;\n");
 
