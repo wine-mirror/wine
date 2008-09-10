@@ -130,6 +130,15 @@ static void test_GetICMProfileW( HDC dc )
 static void test_SetICMMode( HDC dc )
 {
     INT ret, knob, save;
+    BOOL impl;
+
+    SetLastError( 0xdeadbeef );
+    impl = GetICMProfileA( NULL, NULL, NULL );
+    if ( !impl && ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED ) )
+    {
+        skip( "On NT4 where SetICMMode is not implemented but this is not advertised\n" );
+        return;
+    }
 
     SetLastError( 0xdeadbeef );
     ret = SetICMMode( NULL, 0 );
