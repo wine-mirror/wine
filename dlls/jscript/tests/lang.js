@@ -150,4 +150,7 @@ ok(obj3.prop2 === "boolean", "obj3.prop2 is not \"boolean\"");
 }
 ok(blockVar === 2, "blockVar !== 2");
 
+ok((true ? 1 : 2) === 1, "conditional expression true is not 1");
+ok((0 === 2 ? 1 : 2) === 2, "conditional expression true is not 2");
+
 reportSuccess();

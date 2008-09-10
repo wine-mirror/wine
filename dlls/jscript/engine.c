@@ -781,10 +781,26 @@ HRESULT function_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD fla
     return S_OK;
 }
 
-HRESULT conditional_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.12 */
+HRESULT conditional_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    conditional_expression_t *expr = (conditional_expression_t*)_expr;
+    exprval_t exprval;
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_boolean(ctx->parser->script, &exprval, ei, &b);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    return expr_eval(ctx, b ? expr->true_expression : expr->false_expression, flags, ei, ret);
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */
