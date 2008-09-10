@@ -41,6 +41,10 @@ ok(trueVar, "trueVar is not true");
 ok(ScriptEngine.length === 0, "ScriptEngine.length is not 0");
 
 function testFunc1(x, y) {
+    ok(this !== undefined, "this is undefined");
+    ok(x === true, "x is not 1");
+    ok(y === "test", "y is not \"test\"");
+
     return true;
 }
 

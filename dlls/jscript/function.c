@@ -64,6 +64,30 @@ static IDispatch *get_this(DISPPARAMS *dp)
     return NULL;
 }
 
+static HRESULT init_parameters(DispatchEx *var_disp, FunctionInstance *function, LCID lcid, DISPPARAMS *dp,
+        jsexcept_t *ei, IServiceProvider *caller)
+{
+    parameter_t *param;
+    VARIANT var_empty;
+    DWORD cargs, i=0;
+    HRESULT hres;
+
+    V_VT(&var_empty) = VT_EMPTY;
+    cargs = dp->cArgs - dp->cNamedArgs;
+
+    for(param = function->parameters; param; param = param->next) {
+        hres = jsdisp_propput_name(var_disp, param->identifier, lcid,
+                i < cargs ? dp->rgvarg + dp->cArgs-1 - i : &var_empty,
+                ei, caller);
+        if(FAILED(hres))
+            return hres;
+
+        i++;
+    }
+
+    return S_OK;
+}
+
 static HRESULT create_var_disp(FunctionInstance *function, LCID lcid, DISPPARAMS *dp, jsexcept_t *ei,
                                IServiceProvider *caller, DispatchEx **ret)
 {
@@ -73,6 +97,12 @@ static HRESULT create_var_disp(FunctionInstance *function, LCID lcid, DISPPARAMS
     hres = create_dispex(function->dispex.ctx, NULL, NULL, &var_disp);
     if(FAILED(hres))
         return hres;
+
+    hres = init_parameters(var_disp, function, lcid, dp, ei, caller);
+    if(FAILED(hres)) {
+        jsdisp_release(var_disp);
+        return hres;
+    }
 
     *ret = var_disp;
     return S_OK;
