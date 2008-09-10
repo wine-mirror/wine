@@ -1025,7 +1025,7 @@ void drawPrimitive(IWineD3DDevice *iface,
             WINED3DLOCKED_RECT r;
             char buffer[80];
             IWineD3DSurface_LockRect(This->render_targets[0], &r, NULL, WINED3DLOCK_READONLY);
-            sprintf(buffer, "/tmp/backbuffer_%d.tga", primCounter);
+            sprintf(buffer, "/tmp/backbuffer_%ld.tga", primCounter);
             TRACE("Saving screenshot %s\n", buffer);
             IWineD3DSurface_SaveSnapshot(This->render_targets[0], buffer);
             IWineD3DSurface_UnlockRect(This->render_targets[0]);
@@ -1036,7 +1036,7 @@ void drawPrimitive(IWineD3DDevice *iface,
             int textureNo;
             for (textureNo = 0; textureNo < MAX_COMBINED_SAMPLERS; ++textureNo) {
                 if (This->stateBlock->textures[textureNo] != NULL) {
-                    sprintf(buffer, "/tmp/texture_%p_%d_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
+                    sprintf(buffer, "/tmp/texture_%p_%ld_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
                     TRACE("Saving texture %s\n", buffer);
                     if (IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]) == WINED3DRTYPE_TEXTURE) {
                             IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[textureNo], 0, &pSur);
@@ -1050,7 +1050,7 @@ void drawPrimitive(IWineD3DDevice *iface,
            }
 #endif
         }
-        TRACE("drawprim #%d\n", primCounter);
+        TRACE("drawprim #%ld\n", primCounter);
         ++primCounter;
     }
 #endif
