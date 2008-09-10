@@ -54,6 +54,7 @@ typedef struct
 
     struct list charsets;
     LONG next_charset_handle;
+    HCHARSET default_charset;
 } internat;
 
 static inline internat *impl_from_IMimeInternational( IMimeInternational *iface )
@@ -116,8 +117,21 @@ static HRESULT WINAPI MimeInternat_SetDefaultCharset(IMimeInternational *iface, 
 
 static HRESULT WINAPI MimeInternat_GetDefaultCharset(IMimeInternational *iface, LPHCHARSET phCharset)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    internat *This = impl_from_IMimeInternational( iface );
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)->(%p)\n", iface, phCharset);
+
+    if(This->default_charset == NULL)
+    {
+        HCHARSET hcs;
+        hr = IMimeInternational_GetCodePageCharset(iface, GetACP(), CHARSET_BODY, &hcs);
+        if(SUCCEEDED(hr))
+            InterlockedCompareExchangePointer(&This->default_charset, hcs, NULL);
+    }
+    *phCharset = This->default_charset;
+
+    return hr;
 }
 
 static HRESULT mlang_getcodepageinfo(UINT cp, MIMECPINFO *mlang_cp_info)
@@ -389,6 +403,7 @@ HRESULT MimeInternational_Construct(IMimeInternational **internat)
 
     list_init(&global_internat->charsets);
     global_internat->next_charset_handle = 0;
+    global_internat->default_charset = NULL;
 
     *internat = (IMimeInternational*)&global_internat->lpVtbl;
 
