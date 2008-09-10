@@ -82,6 +82,53 @@ static HRESULT mlang_getcsetinfo(const char *charset, MIMECSETINFO *mlang_info)
     return hr;
 }
 
+static HRESULT mlang_getcodepageinfo(UINT cp, MIMECPINFO *mlang_cp_info)
+{
+    HRESULT hr;
+    IMultiLanguage *ml;
+
+    hr = get_mlang(&ml);
+
+    if(SUCCEEDED(hr))
+    {
+        hr = IMultiLanguage_GetCodePageInfo(ml, cp, mlang_cp_info);
+        IMultiLanguage_Release(ml);
+    }
+    return hr;
+}
+
+static HRESULT mlang_getcsetinfo_from_cp(UINT cp, CHARSETTYPE charset_type, MIMECSETINFO *mlang_info)
+{
+    MIMECPINFO mlang_cp_info;
+    WCHAR *charset_name;
+    HRESULT hr;
+    IMultiLanguage *ml;
+
+    hr = mlang_getcodepageinfo(cp, &mlang_cp_info);
+    if(FAILED(hr)) return hr;
+
+    switch(charset_type)
+    {
+    case CHARSET_BODY:
+        charset_name = mlang_cp_info.wszBodyCharset;
+        break;
+    case CHARSET_HEADER:
+        charset_name = mlang_cp_info.wszHeaderCharset;
+        break;
+    case CHARSET_WEB:
+        charset_name = mlang_cp_info.wszWebCharset;
+        break;
+    }
+
+    hr = get_mlang(&ml);
+
+    if(SUCCEEDED(hr))
+    {
+        hr = IMultiLanguage_GetCharsetInfo(ml, charset_name, mlang_info);
+        IMultiLanguage_Release(ml);
+    }
+    return hr;
+}
 
 static void test_charset(void)
 {
@@ -118,6 +165,18 @@ static void test_charset(void)
        cs_info.cpiInternet, mlang_cs_info.uiInternetEncoding);
     ok(cs_info.hCharset == hcs_windows_1252, "hCharset doesn't match requested\n");
     ok(!strcmp(cs_info.szName, "windows-1252"), "szName doesn't match requested\n");
+
+    hr = IMimeInternational_GetCodePageCharset(internat, 1252, CHARSET_BODY, &hcs);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IMimeInternational_GetCharsetInfo(internat, hcs, &cs_info);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = mlang_getcsetinfo_from_cp(1252, CHARSET_BODY, &mlang_cs_info);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(cs_info.cpiWindows == mlang_cs_info.uiCodePage, "cpiWindows %d while mlang uiCodePage %d\n",
+       cs_info.cpiWindows, mlang_cs_info.uiCodePage);
+    ok(cs_info.cpiInternet == mlang_cs_info.uiInternetEncoding, "cpiInternet %d while mlang uiInternetEncoding %d\n",
+       cs_info.cpiInternet, mlang_cs_info.uiInternetEncoding);
 
     IMimeInternational_Release(internat);
 }
