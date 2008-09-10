@@ -185,7 +185,7 @@ static void test_defaultcharset(void)
 {
     IMimeInternational *internat;
     HRESULT hr;
-    HCHARSET hcs_default, hcs;
+    HCHARSET hcs_default, hcs, hcs_windows_1251;
 
     hr = MimeOleGetInternat(&internat);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -195,6 +195,17 @@ static void test_defaultcharset(void)
     hr = IMimeInternational_GetCodePageCharset(internat, GetACP(), CHARSET_BODY, &hcs);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(hcs_default == hcs, "Unexpected default charset\n");
+
+    hr = IMimeInternational_FindCharset(internat, "windows-1251", &hcs_windows_1251);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IMimeInternational_SetDefaultCharset(internat, hcs_windows_1251);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeInternational_GetDefaultCharset(internat, &hcs);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(hcs == hcs_windows_1251, "didn't retrieve recently set default\n");
+    /* Set the old default back again */
+    hr = IMimeInternational_SetDefaultCharset(internat, hcs_default);
+    ok(hr == S_OK, "ret %08x\n", hr);
 
     IMimeInternational_Release(internat);
 }
