@@ -55,6 +55,7 @@ typedef enum {
     JSCLASS_GLOBAL,
     JSCLASS_NUMBER,
     JSCLASS_OBJECT,
+    JSCLASS_REGEXP,
     JSCLASS_STRING
 } jsclass_t;
 
@@ -135,6 +136,7 @@ struct _script_ctx_t {
     DispatchEx *bool_constr;
     DispatchEx *number_constr;
     DispatchEx *object_constr;
+    DispatchEx *regexp_constr;
     DispatchEx *string_constr;
 };
 
@@ -151,6 +153,7 @@ HRESULT create_array_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_bool_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_number_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_object_constr(script_ctx_t*,DispatchEx**);
+HRESULT create_regexp_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_string_constr(script_ctx_t*,DispatchEx**);
 
 const char *debugstr_variant(const VARIANT*);
