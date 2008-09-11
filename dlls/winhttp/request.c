@@ -1118,6 +1118,9 @@ static BOOL handle_redirect( request_t *request )
         }
     }
 
+    /* redirects are always GET requests */
+    heap_free( request->verb );
+    request->verb = NULL;
     ret = TRUE;
 
 end:
