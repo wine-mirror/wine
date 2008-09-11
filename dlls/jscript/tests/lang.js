@@ -223,4 +223,8 @@ ok("abce" >= "abcd", "abce >= abce failed");
 ok("x" >= "", "\"x\" >= \"\" failed");
 ok(0 >= 0, "0 >= 0");
 
+tmp = 1;
+ok(++tmp === 2, "++tmp (1) is not 2");
+ok(tmp === 2, "incremented tmp is not 2");
+
 reportSuccess();
