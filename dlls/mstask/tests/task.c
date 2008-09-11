@@ -466,7 +466,9 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     ok(hres == S_OK,
             "Failed setting dummy account with no password: %08x\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
-    ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
+    ok(hres == S_OK ||
+       broken(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)),
+       "GetAccountInformation failed: %08x\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(account_name, dummy_account_name),
@@ -482,7 +484,9 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     ok(hres == S_OK,
             "Failed setting dummy account with password: %08x\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
-    ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
+    ok(hres == S_OK ||
+       broken(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)),
+       "GetAccountInformation failed: %08x\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(account_name, dummy_account_name_b),
@@ -495,7 +499,9 @@ static void test_SetAccountInformation_GetAccountInformation(void)
     hres = ITask_SetAccountInformation(test_task, empty, NULL);
     ok(hres == S_OK, "Failed setting system account: %08x\n", hres);
     hres = ITask_GetAccountInformation(test_task, &account_name);
-    ok(hres == S_OK, "GetAccountInformation failed: %08x\n", hres);
+    ok(hres == S_OK ||
+       broken(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)),
+       "GetAccountInformation failed: %08x\n", hres);
     if (hres == S_OK)
     {
         ok(!lstrcmpW(account_name, empty),
