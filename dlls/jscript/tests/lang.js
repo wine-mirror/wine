@@ -180,4 +180,10 @@ tmp = 1;
 ok((tmp += 1) === 2, "tmp += 1 !== 2");
 ok(tmp === 2, "tmp !== 2");
 
+tmp = 3 || ok(false, "second or expression called");
+ok(tmp === 3, "3 || (...) is not 3");
+
+tmp = false || 2;
+ok(tmp === 2, "false || 2 is not 2");
+
 reportSuccess();
