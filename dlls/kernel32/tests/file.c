@@ -1612,18 +1612,22 @@ static void test_async_file_errors(void)
     szFile[0] = '\0';
     GetWindowsDirectoryA(szFile, sizeof(szFile)/sizeof(szFile[0])-1-strlen("\\win.ini"));
     strcat(szFile, "\\win.ini");
-    hFile = CreateFileA(szFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
-    ok(hFile != NULL, "CreateFileA(%s ...) failed\n", szFile);
+    hFile = CreateFileA(szFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA(%s ...) failed\n", szFile);
     while (TRUE)
     {
         BOOL res;
+        DWORD count;
         while (WaitForSingleObjectEx(hSem, INFINITE, TRUE) == WAIT_IO_COMPLETION)
             ;
         res = ReadFileEx(hFile, lpBuffer, 4096, &ovl, FileIOComplete);
         /*printf("Offset = %ld, result = %s\n", ovl.Offset, res ? "TRUE" : "FALSE");*/
         if (!res)
             break;
-        S(U(ovl)).Offset += 4096;
+        if (!GetOverlappedResult(hFile, &ovl, &count, FALSE))
+            break;
+        S(U(ovl)).Offset += count;
         /* i/o completion routine only called if ReadFileEx returned success.
          * we only care about violations of this rule so undo what should have
          * been done */
