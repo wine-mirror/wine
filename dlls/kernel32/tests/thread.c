@@ -478,7 +478,9 @@ static VOID test_CreateThread_suspended(void)
   ok(suspend_count == -1, "SuspendThread returned %d, expected -1\n", suspend_count);
 
   suspend_count = ResumeThread(thread);
-  ok(suspend_count == 0, "ResumeThread returned %d, expected 0\n", suspend_count);
+  ok(suspend_count == 0 ||
+     broken(suspend_count == -1), /* win9x */
+     "ResumeThread returned %d, expected 0\n", suspend_count);
 
   ok(CloseHandle(thread)!=0,"CloseHandle failed\n");
 }
