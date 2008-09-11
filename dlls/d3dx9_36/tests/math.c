@@ -21,8 +21,35 @@
 
 #define ARRAY_SIZE 5
 
-#define admitted_error 0.01f
+#define admitted_error 0.0001f
+
 #define relative_error(exp, out) ((exp == out) ? 0.0f : (fabs(out - exp) / fabs(exp)))
+
+#define compare_rotation(exp, got) \
+    ok(fabs(exp.w - got.w) < admitted_error && \
+       fabs(exp.x - got.x) < admitted_error && \
+       fabs(exp.y - got.y) < admitted_error && \
+       fabs(exp.z - got.z) < admitted_error, \
+       "Expected rotation = (%f, %f, %f, %f), \
+        got rotation = (%f, %f, %f, %f)\n", \
+        exp.w, exp.x, exp.y, exp.z, got.w, got.x, got.y, got.z)
+
+#define compare_scale(exp, got) \
+    ok(fabs(exp.x - got.x) < admitted_error && \
+       fabs(exp.y - got.y) < admitted_error && \
+       fabs(exp.z - got.z) < admitted_error, \
+       "Expected scale = (%f, %f, %f), \
+        got scale = (%f, %f, %f)\n", \
+        exp.x, exp.y, exp.z, got.x, got.y, got.z)
+
+#define compare_translation(exp, got) \
+    ok(fabs(exp.x - got.x) < admitted_error && \
+       fabs(exp.y - got.y) < admitted_error && \
+       fabs(exp.z - got.z) < admitted_error, \
+       "Expected translation = (%f, %f, %f), \
+        got translation = (%f, %f, %f)\n", \
+        exp.x, exp.y, exp.z, got.x, got.y, got.z)
+
 #define compare_vectors(exp, out) \
     for (i = 0; i < ARRAY_SIZE + 2; ++i) { \
         ok(relative_error(exp[i].x, out[i].x) < admitted_error && \
@@ -34,6 +61,7 @@
             exp[i].x, exp[i].y, exp[i].z, exp[i].w, \
             i); \
     }
+
 #define compare_planes(exp, out) \
     for (i = 0; i < ARRAY_SIZE + 2; ++i) { \
         ok(relative_error(exp[i].a, out[i].a) < admitted_error && \
@@ -59,6 +87,346 @@
  *     says they can, and some testing with a native DLL
  *     says so too).
  */
+
+static void test_Matrix_Decompose(void)
+{
+    D3DXMATRIX pm;
+    D3DXQUATERNION exp_rotation, got_rotation;
+    D3DXVECTOR3 exp_scale, got_scale, exp_translation, got_translation;
+    HRESULT hr;
+
+/*___________*/
+
+    pm.m[0][0] = -0.9238790f;
+    pm.m[1][0] = -0.2705984f;
+    pm.m[2][0] = 0.2705984f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = 0.2705984f;
+    pm.m[1][1] = 0.03806049f;
+    pm.m[2][1] = 0.9619395f;
+    pm.m[3][1] = 0.0f;
+    pm.m[0][2] = -0.2705984f;
+    pm.m[1][2] = 0.9619395f;
+    pm.m[2][2] = 0.03806049f;
+    pm.m[3][2] = 10.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    exp_scale.x = 1.0f;
+    exp_scale.y = 1.0f;
+    exp_scale.z = 1.0f;
+
+    exp_rotation.w = 0.195091f;
+    exp_rotation.x = 0.0f;
+    exp_rotation.y = 0.693520f;
+    exp_rotation.z = 0.693520f;
+
+    exp_translation.x = -5.0f;
+    exp_translation.y = 0.0f;
+    exp_translation.z = 10.0f;
+
+    D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+
+    compare_scale(exp_scale, got_scale);
+    compare_rotation(exp_rotation, got_rotation);
+    compare_translation(exp_translation, got_translation);
+
+/*_________*/
+
+    pm.m[0][0] = -2.255813f;
+    pm.m[1][0] = 1.302324f;
+    pm.m[2][0] = 1.488373f;
+    pm.m[3][0] = 1.0f;
+    pm.m[0][1] = 1.302327f;
+    pm.m[1][1] = -0.7209296f;
+    pm.m[2][1] = 2.60465f;
+    pm.m[3][1] = 2.0f;
+    pm.m[0][2] = 1.488371f;
+    pm.m[1][2] = 2.604651f;
+    pm.m[2][2] = -0.02325551f;
+    pm.m[3][2] = 3.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    exp_scale.x = 3.0f;
+    exp_scale.y = 3.0f;
+    exp_scale.z = 3.0f;
+
+    exp_rotation.w = 0.0;
+    exp_rotation.x = 0.352180f;
+    exp_rotation.y = 0.616316f;
+    exp_rotation.z = 0.704361f;
+
+    exp_translation.x = 1.0f;
+    exp_translation.y = 2.0f;
+    exp_translation.z = 3.0f;
+
+    D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+
+    compare_scale(exp_scale, got_scale);
+    compare_rotation(exp_rotation, got_rotation);
+    compare_translation(exp_translation, got_translation);
+
+/*_____________*/
+
+    pm.m[0][0] = 2.427051f;
+    pm.m[1][0] = 0.0f;
+    pm.m[2][0] = 1.763355f;
+    pm.m[3][0] = 5.0f;
+    pm.m[0][1] = 0.0f;
+    pm.m[1][1] = 3.0f;
+    pm.m[2][1] = 0.0f;
+    pm.m[3][1] = 5.0f;
+    pm.m[0][2] = -1.763355f;
+    pm.m[1][2] = 0.0f;
+    pm.m[2][2] = 2.427051f;
+    pm.m[3][2] = 5.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    exp_scale.x = 3.0f;
+    exp_scale.y = 3.0f;
+    exp_scale.z = 3.0f;
+
+    exp_rotation.w = 0.951057f;
+    exp_rotation.x = 0.0f;
+    exp_rotation.y = 0.309017f;
+    exp_rotation.z = 0.0f;
+
+    exp_translation.x = 5.0f;
+    exp_translation.y = 5.0f;
+    exp_translation.z = 5.0f;
+
+    D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+
+    compare_scale(exp_scale, got_scale);
+    compare_rotation(exp_rotation, got_rotation);
+    compare_translation(exp_translation, got_translation);
+
+/*_____________*/
+
+    pm.m[0][0] = -0.9238790f;
+    pm.m[1][0] = -0.2705984f;
+    pm.m[2][0] = 0.2705984f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = 0.2705984f;
+    pm.m[1][1] = 0.03806049f;
+    pm.m[2][1] = 0.9619395f;
+    pm.m[3][1] = 0.0f;
+    pm.m[0][2] = -0.2705984f;
+    pm.m[1][2] = 0.9619395f;
+    pm.m[2][2] = 0.03806049f;
+    pm.m[3][2] = 10.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    exp_scale.x = 1.0f;
+    exp_scale.y = 1.0f;
+    exp_scale.z = 1.0f;
+
+    exp_rotation.w = 0.195091f;
+    exp_rotation.x = 0.0f;
+    exp_rotation.y = 0.693520f;
+    exp_rotation.z = 0.693520f;
+
+    exp_translation.x = -5.0f;
+    exp_translation.y = 0.0f;
+    exp_translation.z = 10.0f;
+
+    D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+
+    compare_scale(exp_scale, got_scale);
+    compare_rotation(exp_rotation, got_rotation);
+    compare_translation(exp_translation, got_translation);
+
+/*__________*/
+
+    pm.m[0][0] = -0.9238790f;
+    pm.m[1][0] = -0.5411968f;
+    pm.m[2][0] = 0.8117952f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = 0.2705984f;
+    pm.m[1][1] = 0.07612098f;
+    pm.m[2][1] = 2.8858185f;
+    pm.m[3][1] = 0.0f;
+    pm.m[0][2] = -0.2705984f;
+    pm.m[1][2] = 1.9238790f;
+    pm.m[2][2] = 0.11418147f;
+    pm.m[3][2] = 10.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    exp_scale.x = 1.0f;
+    exp_scale.y = 2.0f;
+    exp_scale.z = 3.0f;
+
+    exp_rotation.w = 0.195091f;
+    exp_rotation.x = 0.0f;
+    exp_rotation.y = 0.693520f;
+    exp_rotation.z = 0.693520f;
+
+    exp_translation.x = -5.0f;
+    exp_translation.y = 0.0f;
+    exp_translation.z = 10.0f;
+
+    D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+
+    compare_scale(exp_scale, got_scale);
+    compare_rotation(exp_rotation, got_rotation);
+    compare_translation(exp_translation, got_translation);
+
+/*__________*/
+
+    pm.m[0][0] = 0.7156004f;
+    pm.m[1][0] = -0.5098283f;
+    pm.m[2][0] = -0.4774843f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = -0.6612288f;
+    pm.m[1][1] = -0.7147621f;
+    pm.m[2][1] = -0.2277977f;
+    pm.m[3][1] = 0.0f;
+    pm.m[0][2] = -0.2251499f;
+    pm.m[1][2] = 0.4787385f;
+    pm.m[2][2] = -0.8485972f;
+    pm.m[3][2] = 10.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    exp_scale.x = 1.0f;
+    exp_scale.y = 1.0f;
+    exp_scale.z = 1.0f;
+
+    exp_rotation.w = 0.195091f;
+    exp_rotation.x = 0.905395f;
+    exp_rotation.y = -0.323355f;
+    exp_rotation.z = -0.194013f;
+
+    exp_translation.x = -5.0f;
+    exp_translation.y = 0.0f;
+    exp_translation.z = 10.0f;
+
+    D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+
+    compare_scale(exp_scale, got_scale);
+    compare_rotation(exp_rotation, got_rotation);
+    compare_translation(exp_translation, got_translation);
+
+/*_____________*/
+
+    pm.m[0][0] = 0.06554436f;
+    pm.m[1][0] = -0.6873012f;
+    pm.m[2][0] = 0.7234092f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = -0.9617381f;
+    pm.m[1][1] = -0.2367795f;
+    pm.m[2][1] = -0.1378230f;
+    pm.m[3][1] = 0.0f;
+    pm.m[0][2] = 0.2660144f;
+    pm.m[1][2] = -0.6866967f;
+    pm.m[2][2] = -0.6765233f;
+    pm.m[3][2] = 10.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    exp_scale.x = 1.0f;
+    exp_scale.y = 1.0f;
+    exp_scale.z = 1.0f;
+
+    exp_rotation.w = -0.195091f;
+    exp_rotation.x = 0.703358f;
+    exp_rotation.y = -0.586131f;
+    exp_rotation.z = 0.351679f;
+
+    exp_translation.x = -5.0f;
+    exp_translation.y = 0.0f;
+    exp_translation.z = 10.0f;
+
+    D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+
+    compare_scale(exp_scale, got_scale);
+    compare_rotation(exp_rotation, got_rotation);
+    compare_translation(exp_translation, got_translation);
+
+/*_________*/
+
+    pm.m[0][0] = 7.121047f;
+    pm.m[1][0] = -5.883487f;
+    pm.m[2][0] = 11.81843f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = 5.883487f;
+    pm.m[1][1] = -10.60660f;
+    pm.m[2][1] = -8.825232f;
+    pm.m[3][1] = 0.0f;
+    pm.m[0][2] = 11.81843f;
+    pm.m[1][2] = 8.8252320f;
+    pm.m[2][2] = -2.727645f;
+    pm.m[3][2] = 2.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    exp_scale.x = 15.0f;
+    exp_scale.y = 15.0f;
+    exp_scale.z = 15.0f;
+
+    exp_rotation.w = 0.382684f;
+    exp_rotation.x = 0.768714f;
+    exp_rotation.y = 0.0f;
+    exp_rotation.z = 0.512476f;
+
+    exp_translation.x = -5.0f;
+    exp_translation.y = 0.0f;
+    exp_translation.z = 2.0f;
+
+    D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+
+    compare_scale(exp_scale, got_scale);
+    compare_rotation(exp_rotation, got_rotation);
+    compare_translation(exp_translation, got_translation);
+
+/*__________*/
+
+    pm.m[0][0] = 0.0f;
+    pm.m[1][0] = 4.0f;
+    pm.m[2][0] = 5.0f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = 0.0f;
+    pm.m[1][1] = -10.60660f;
+    pm.m[2][1] = -8.825232f;
+    pm.m[3][1] = 6.0f;
+    pm.m[0][2] = 0.0f;
+    pm.m[1][2] = 8.8252320f;
+    pm.m[2][2] = 2.727645;
+    pm.m[3][2] = 3.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
+
+    hr = D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %x\n", hr);
+
+/*___________*/
+
+    hr = D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %x\n", hr);
+}
+
 static void test_D3DXVec_Array(void)
 {
     unsigned int i;
@@ -198,5 +566,6 @@ static void test_D3DXVec_Array(void)
 
 START_TEST(math)
 {
+    test_Matrix_Decompose();
     test_D3DXVec_Array();
 }
