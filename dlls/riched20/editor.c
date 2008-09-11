@@ -3701,7 +3701,15 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       } else if (!editor->bEmulateVersion10) { /* v4.1 */
         if (para->member.para.nFlags & MEPF_ROWEND) {
           if (wstr=='\r') {
-            /* FIXME: Add a new table row after this row. */
+            /* Add a new table row after this row. */
+            para = ME_AppendTableRow(editor, para);
+            para = para->member.para.next_para;
+            editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
+            editor->pCursors[0].nOffset = 0;
+            editor->pCursors[1] = editor->pCursors[0];
+            ME_CommitUndo(editor);
+            ME_CheckTablesForCorruption(editor);
+            ME_UpdateRepaint(editor);
             return 0;
           } else if (from == to) {
             para = para->member.para.next_para;

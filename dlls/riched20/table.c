@@ -227,7 +227,7 @@ void ME_CheckTablesForCorruption(ME_TextEditor *editor)
         }
         else if (!(p->member.para.nFlags & MEPF_ROWSTART))
         {
-          assert(!(p->member.para.pFmt->wEffects & (PFE_TABLE|PFE_TABLEROWDELIMITER)));
+          assert(!(p->member.para.pFmt->wEffects & PFE_TABLEROWDELIMITER));
           /* ROWSTART must be followed by a cell. */
           assert(!(p->member.para.nFlags & MEPF_CELL));
           /* ROWSTART must be followed by a cell. */
@@ -393,10 +393,7 @@ ME_DisplayItem* ME_AppendTableRow(ME_TextEditor *editor,
   assert(table_row->type == diParagraph);
   if (!editor->bEmulateVersion10) { /* v4.1 */
     ME_DisplayItem *insertedCell, *para, *cell;
-    if (table_row->member.para.nFlags & MEPF_ROWEND)
-      cell = ME_FindItemBack(table_row, diCell);
-    else
-      cell = ME_FindItemFwd(table_row, diCell);
+    cell = ME_FindItemFwd(ME_GetTableRowStart(table_row), diCell);
     run = ME_GetTableRowEnd(table_row)->member.para.next_para;
     run = ME_FindItemFwd(run, diRun);
     editor->pCursors[0].pRun = run;
