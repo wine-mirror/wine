@@ -552,8 +552,6 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
                hwnd, IsWindowEnabled(hwnd), IsWindowVisible(hwnd), GetWindowLongW(hwnd, GWL_STYLE),
                GetFocus(), GetActiveWindow(), GetForegroundWindow(), last_focus );
 
-        if (hwnd == GetForegroundWindow()) return;
-
         if (can_activate_window(hwnd))
         {
             /* simulate a mouse click on the caption to find out
