@@ -384,7 +384,9 @@ static void test_towers(void)
     ok(ret == RPC_S_OK, "TowerConstruct failed with error %ld\n", ret);
     ret = TowerExplode(tower, NULL, NULL, NULL, NULL, &address);
     ok(ret == RPC_S_OK, "TowerExplode failed with error %ld\n", ret);
-    ok(!strcmp(address, "0.0.0.0"), "address was \"%s\" instead of \"0.0.0.0\"\n", address);
+    ok(!strcmp(address, "0.0.0.0") ||
+       broken(!strcmp(address, "255.255.255.255")),
+       "address was \"%s\" instead of \"0.0.0.0\"\n", address);
 
     I_RpcFree(address);
     I_RpcFree(tower);
@@ -665,6 +667,7 @@ static void test_I_RpcExceptionFilter(void)
             ok(retval == EXCEPTION_CONTINUE_SEARCH, "I_RpcExceptionFilter(0x%x) should have returned %d instead of %d\n",
                exception, EXCEPTION_CONTINUE_SEARCH, retval);
             break;
+        case STATUS_GUARD_PAGE_VIOLATION:
         case STATUS_IN_PAGE_ERROR:
         case STATUS_HANDLE_NOT_CLOSABLE:
             trace("I_RpcExceptionFilter(0x%x) returned %d\n", exception, retval);
