@@ -2135,7 +2135,7 @@ static void test_decodeBasicConstraints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
      badBool.encoded, badBool.encoded[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &bufSize);
-    ok(ret, "pCryptDecodeObjectEx failed: %08x\n", GetLastError());
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         CERT_BASIC_CONSTRAINTS2_INFO *info =
@@ -3642,7 +3642,7 @@ static void test_encodeCRLToBeSigned(DWORD dwEncoding)
     entry.rgExtension = &criticalExt;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(ret, "pCryptEncodeObjectEx failed: %08x\n", GetLastError());
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         ok(size == sizeof(v1CRLWithEntryExt), "Wrong size %d\n", size);
@@ -4664,7 +4664,7 @@ static void test_encodeAuthorityKeyId2(DWORD dwEncoding)
     U(entry).pwszURL = (LPWSTR)url;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_KEY_ID2, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(ret, "pCryptEncodeObjectEx failed: %08x\n", GetLastError());
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         ok(size == sizeof(authorityKeyIdWithIssuerUrl), "Unexpected size %d\n",
@@ -4797,7 +4797,7 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     aia.cAccDescr = 0;
     aia.rgAccDescr = NULL;
     /* Having no access descriptions is allowed */
-    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -4810,20 +4810,20 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     /* It can't have an empty access method */
     aia.cAccDescr = 1;
     aia.rgAccDescr = accessDescription;
-    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     /* It can't have an empty location */
     accessDescription[0].pszAccessMethod = oid1;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     accessDescription[0].AccessLocation.dwAltNameChoice = CERT_ALT_NAME_URL;
     U(accessDescription[0].AccessLocation).pwszURL = (LPWSTR)url;
-    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -4843,7 +4843,7 @@ static void test_encodeAuthorityInfoAccess(DWORD dwEncoding)
     U(accessDescription[1].AccessLocation).IPAddress.pbData =
      (LPBYTE)encodedIPAddr;
     aia.cAccDescr = 2;
-    ret = CryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
+    ret = pCryptEncodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS, &aia,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -4885,7 +4885,7 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
     LPBYTE buf = NULL;
     DWORD size = 0;
 
-    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
      emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
@@ -4898,7 +4898,7 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
         LocalFree(buf);
         buf = NULL;
     }
-    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
      authorityInfoAccessWithUrl, sizeof(authorityInfoAccessWithUrl),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
@@ -4917,7 +4917,7 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
         LocalFree(buf);
         buf = NULL;
     }
-    ret = CryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
+    ret = pCryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
      authorityInfoAccessWithUrlAndIPAddr,
      sizeof(authorityInfoAccessWithUrlAndIPAddr), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
@@ -5001,7 +5001,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     CRYPT_ATTR_BLOB value1, value2;
 
     memset(&info, 0, sizeof(info));
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5012,7 +5012,7 @@ static void test_encodeCTL(DWORD dwEncoding)
         buf = NULL;
     }
     info.dwVersion = 1;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5025,7 +5025,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.dwVersion = 0;
     info.SubjectUsage.cUsageIdentifier = 1;
     info.SubjectUsage.rgpszUsageIdentifier = &pOid1;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5039,7 +5039,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.SubjectUsage.cUsageIdentifier = 0;
     info.ListIdentifier.cbData = sizeof(serialNum);
     info.ListIdentifier.pbData = (LPBYTE)serialNum;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5052,7 +5052,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.ListIdentifier.cbData = 0;
     info.SequenceNumber.cbData = sizeof(serialNum);
     info.SequenceNumber.pbData = (LPBYTE)serialNum;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5065,7 +5065,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     }
     info.SequenceNumber.cbData = 0;
     SystemTimeToFileTime(&thisUpdate, &info.ThisUpdate);
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5076,7 +5076,7 @@ static void test_encodeCTL(DWORD dwEncoding)
         buf = NULL;
     }
     SystemTimeToFileTime(&thisUpdate, &info.NextUpdate);
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5090,7 +5090,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     info.ThisUpdate.dwLowDateTime = info.ThisUpdate.dwHighDateTime = 0;
     info.NextUpdate.dwLowDateTime = info.NextUpdate.dwHighDateTime = 0;
     info.SubjectAlgorithm.pszObjId = oid2;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5115,7 +5115,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     ctlEntry[0].rgAttribute = &attr1;
     info.cCTLEntry = 1;
     info.rgCTLEntry = ctlEntry;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5127,7 +5127,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     }
     value1.cbData = sizeof(emptySequence);
     value1.pbData = (LPBYTE)emptySequence;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5147,7 +5147,7 @@ static void test_encodeCTL(DWORD dwEncoding)
     ctlEntry[1].cAttribute = 1;
     ctlEntry[1].rgAttribute = &attr2;
     info.cCTLEntry = 2;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CTL, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5337,7 +5337,7 @@ static void test_decodeCTL(DWORD dwEncoding)
     CRYPT_ATTR_BLOB value1, value2;
 
     memset(&info, 0, sizeof(info));
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, emptyCTL, sizeof(emptyCTL),
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, emptyCTL, sizeof(emptyCTL),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5347,7 +5347,7 @@ static void test_decodeCTL(DWORD dwEncoding)
         buf = NULL;
     }
     info.dwVersion = 1;
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, emptyCTLWithVersion1,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, emptyCTLWithVersion1,
      sizeof(emptyCTLWithVersion1), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
      &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5360,7 +5360,7 @@ static void test_decodeCTL(DWORD dwEncoding)
     info.dwVersion = 0;
     info.SubjectUsage.cUsageIdentifier = 1;
     info.SubjectUsage.rgpszUsageIdentifier = &pOid1;
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithUsageIdentifier,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithUsageIdentifier,
      sizeof(ctlWithUsageIdentifier), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5373,7 +5373,7 @@ static void test_decodeCTL(DWORD dwEncoding)
     info.SubjectUsage.cUsageIdentifier = 0;
     info.ListIdentifier.cbData = sizeof(serialNum);
     info.ListIdentifier.pbData = (LPBYTE)serialNum;
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithListIdentifier,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithListIdentifier,
      sizeof(ctlWithListIdentifier), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5386,7 +5386,7 @@ static void test_decodeCTL(DWORD dwEncoding)
     info.ListIdentifier.cbData = 0;
     info.SequenceNumber.cbData = sizeof(serialNum);
     info.SequenceNumber.pbData = (LPBYTE)serialNum;
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithSequenceNumber,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithSequenceNumber,
      sizeof(ctlWithSequenceNumber), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5398,7 +5398,7 @@ static void test_decodeCTL(DWORD dwEncoding)
     }
     info.SequenceNumber.cbData = 0;
     SystemTimeToFileTime(&thisUpdate, &info.ThisUpdate);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithThisUpdate,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithThisUpdate,
      sizeof(ctlWithThisUpdate), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5409,7 +5409,7 @@ static void test_decodeCTL(DWORD dwEncoding)
         buf = NULL;
     }
     SystemTimeToFileTime(&thisUpdate, &info.NextUpdate);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithThisAndNextUpdate,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithThisAndNextUpdate,
      sizeof(ctlWithThisAndNextUpdate), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5424,7 +5424,7 @@ static void test_decodeCTL(DWORD dwEncoding)
     info.SubjectAlgorithm.pszObjId = oid2;
     info.SubjectAlgorithm.Parameters.cbData = sizeof(nullData);
     info.SubjectAlgorithm.Parameters.pbData = nullData;
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithAlgId,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithAlgId,
      sizeof(ctlWithAlgId), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5435,7 +5435,7 @@ static void test_decodeCTL(DWORD dwEncoding)
         buf = NULL;
     }
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithBogusEntry,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithBogusEntry,
      sizeof(ctlWithBogusEntry), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD || CRYPT_E_ASN1_CORRUPT),
@@ -5458,7 +5458,7 @@ static void test_decodeCTL(DWORD dwEncoding)
     info.cCTLEntry = 1;
     info.rgCTLEntry = ctlEntry;
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithOneEntry,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithOneEntry,
      sizeof(ctlWithOneEntry), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5478,7 +5478,7 @@ static void test_decodeCTL(DWORD dwEncoding)
     ctlEntry[1].cAttribute = 1;
     ctlEntry[1].rgAttribute = &attr2;
     info.cCTLEntry = 2;
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithTwoEntries,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, ctlWithTwoEntries,
      sizeof(ctlWithTwoEntries), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5490,12 +5490,12 @@ static void test_decodeCTL(DWORD dwEncoding)
     }
     /* A signed CTL isn't decodable, even if the inner content is a CTL */
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL, signedCTL,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL, signedCTL,
      sizeof(signedCTL), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
      "expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_CTL,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CTL,
      signedCTLWithCTLInnerContent, sizeof(signedCTLWithCTLInnerContent),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
@@ -5905,7 +5905,7 @@ static void test_encodePKCSSMimeCapabilities(DWORD dwEncoding)
 
     /* An empty capabilities is allowed */
     capabilities.cCapability = 0;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5922,12 +5922,12 @@ static void test_encodePKCSSMimeCapabilities(DWORD dwEncoding)
     capabilities.cCapability = 1;
     capabilities.rgCapability = capability;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     capability[0].pszObjId = oid1;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5939,7 +5939,7 @@ static void test_encodePKCSSMimeCapabilities(DWORD dwEncoding)
     capability[1].pszObjId = oid2;
     capability[1].Parameters.cbData = 0;
     capabilities.cCapability = 2;
-    ret = CryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      &capabilities, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
@@ -5986,7 +5986,7 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
     CRYPT_SMIME_CAPABILITIES capabilities, *ptr;
 
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      emptySequence, sizeof(emptySequence),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&ptr, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -5997,7 +5997,7 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
         LocalFree(ptr);
     }
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      singleCapability, sizeof(singleCapability), CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&ptr, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -6011,7 +6011,7 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
         LocalFree(ptr);
     }
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
      singleCapabilitywithNULL, sizeof(singleCapabilitywithNULL),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&ptr, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -6028,7 +6028,7 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
         LocalFree(ptr);
     }
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
+    ret = pCryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
     twoCapabilities, sizeof(twoCapabilities), CRYPT_DECODE_ALLOC_FLAG, NULL,
     (BYTE *)&ptr, &size);
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
@@ -6379,13 +6379,13 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     static char oid1[] = "1.2.3", oid2[] = "1.5.6";
 
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
     info.SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret, "Expected failure, got %d\n", ret);
     ok(GetLastError() == E_INVALIDARG,
@@ -6399,7 +6399,7 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
      sizeof(encodedCommonNameNoNull);
     U(info.SignerId).IssuerSerialNumber.Issuer.pbData = encodedCommonNameNoNull;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
@@ -6417,7 +6417,7 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     U(info.SignerId).IssuerSerialNumber.SerialNumber.cbData = sizeof(serialNum);
     U(info.SignerId).IssuerSerialNumber.SerialNumber.pbData = (BYTE *)serialNum;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
@@ -6437,7 +6437,7 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     U(info.SignerId).KeyId.cbData = sizeof(serialNum);
     U(info.SignerId).KeyId.pbData = (BYTE *)serialNum;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
@@ -6461,7 +6461,7 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     U(info.SignerId).HashId.cbData = sizeof(hash);
     U(info.SignerId).HashId.pbData = (BYTE *)hash;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -6472,7 +6472,7 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     U(info.SignerId).IssuerSerialNumber.Issuer.pbData = encodedCommonNameNoNull;
     info.HashAlgorithm.pszObjId = oid1;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
@@ -6491,7 +6491,7 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     }
     info.HashEncryptionAlgorithm.pszObjId = oid2;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
@@ -6511,7 +6511,7 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     info.EncryptedHash.cbData = sizeof(hash);
     info.EncryptedHash.pbData = (BYTE *)hash;
     SetLastError(0xdeadbeef);
-    ret = CryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
+    ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     if (!(dwEncoding & PKCS_7_ASN_ENCODING))
         ok(!ret && GetLastError() == E_INVALIDARG,
@@ -6539,12 +6539,12 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
 
     /* A CMS signer can't be decoded without a serial number. */
     SetLastError(0xdeadbeef);
-    ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
+    ret = pCryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      minimalPKCSSigner, sizeof(minimalPKCSSigner),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
      "Expected CRYPT_E_ASN1_CORRUPT, got %x\n", GetLastError());
-    ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
+    ret = pCryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      PKCSSignerWithSerial, sizeof(PKCSSignerWithSerial),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
@@ -6570,7 +6570,7 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
          serialNum, sizeof(serialNum)), "Unexpected value\n");
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
+    ret = pCryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      PKCSSignerWithHashAlgo, sizeof(PKCSSignerWithHashAlgo),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
@@ -6598,7 +6598,7 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
          "Expected %s, got %s\n", oid1, info->HashAlgorithm.pszObjId);
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
+    ret = pCryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      PKCSSignerWithHashAndEncryptionAlgo,
      sizeof(PKCSSignerWithHashAndEncryptionAlgo), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
@@ -6629,7 +6629,7 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
          "Expected %s, got %s\n", oid2, info->HashEncryptionAlgorithm.pszObjId);
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
+    ret = pCryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      PKCSSignerWithHash, sizeof(PKCSSignerWithHash),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
@@ -6663,7 +6663,7 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
          "Unexpected value\n");
         LocalFree(buf);
     }
-    ret = CryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
+    ret = pCryptDecodeObjectEx(dwEncoding, CMS_SIGNER_INFO,
      CMSSignerWithKeyId, sizeof(CMSSignerWithKeyId),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
