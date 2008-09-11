@@ -1048,6 +1048,7 @@ static BOOL handle_redirect( request_t *request )
     connect_t *connect = request->connect;
     INTERNET_PORT port;
     WCHAR *hostname = NULL, *location = NULL;
+    int index;
 
     size = 0;
     query_headers( request, WINHTTP_QUERY_LOCATION, NULL, NULL, &size, NULL );
@@ -1114,6 +1115,10 @@ static BOOL handle_redirect( request_t *request )
             strcpyW( request->path, uc.lpszUrlPath );
         }
     }
+
+    /* remove content-type/length headers */
+    if ((index = get_header_index( request, attr_content_type, 0, TRUE )) >= 0) delete_header( request, index );
+    if ((index = get_header_index( request, attr_content_length, 0, TRUE )) >= 0 ) delete_header( request, index );
 
     /* redirects are always GET requests */
     heap_free( request->verb );
