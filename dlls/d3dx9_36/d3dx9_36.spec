@@ -198,7 +198,7 @@
 @ stub D3DXLoadVolumeFromVolume
 @ stdcall D3DXMatrixAffineTransformation(ptr long ptr ptr ptr) d3dx8.D3DXMatrixAffineTransformation
 @ stub D3DXMatrixAffineTransformation2D
-@ stub D3DXMatrixDecompose
+@ stdcall D3DXMatrixDecompose(ptr ptr ptr ptr)
 @ stdcall D3DXMatrixDeterminant(ptr) d3dx8.D3DXMatrixfDeterminant
 @ stdcall D3DXMatrixInverse(ptr ptr ptr) d3dx8.D3DXMatrixInverse
 @ stdcall D3DXMatrixLookAtLH(ptr ptr ptr ptr) d3dx8.D3DXMatrixLookAtLH
