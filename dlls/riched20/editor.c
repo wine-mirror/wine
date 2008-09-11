@@ -843,24 +843,27 @@ void ME_RTFTblAttrHook(RTF_Info *info)
       break;
     }
     case rtfCellPos:
+    {
+      int cellNum;
       if (!info->tableDef)
       {
         info->tableDef = ME_MakeTableDef(info->editor);
       }
-      if (info->tableDef->numCellsDefined >= MAX_TABLE_CELLS)
+      cellNum = info->tableDef->numCellsDefined;
+      if (cellNum >= MAX_TABLE_CELLS)
         break;
-      info->tableDef->cells[info->tableDef->numCellsDefined].rightBoundary = info->rtfParam;
-      {
+      info->tableDef->cells[cellNum].rightBoundary = info->rtfParam;
+      if (cellNum < MAX_TAB_STOPS) {
         /* Tab stops were used to store cell positions before v4.1 but v4.1
          * still seems to set the tabstops without using them. */
         ME_DisplayItem *para = ME_GetParagraph(info->editor->pCursors[0].pRun);
         PARAFORMAT2 *pFmt = para->member.para.pFmt;
-        int cellNum = info->tableDef->numCellsDefined;
         pFmt->rgxTabs[cellNum] &= ~0x00FFFFFF;
         pFmt->rgxTabs[cellNum] = 0x00FFFFFF & info->rtfParam;
       }
       info->tableDef->numCellsDefined++;
       break;
+    }
     case rtfRowBordTop:
       info->borderType = RTFBorderRowTop;
       break;
@@ -1045,7 +1048,7 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
           ME_InsertTextFromCursor(info->editor, 0, &tab, 1, info->style);
           tableDef->numCellsInserted++;
         }
-        pFmt->cTabCount = tableDef->numCellsDefined;
+        pFmt->cTabCount = min(tableDef->numCellsDefined, MAX_TAB_STOPS);
         if (!tableDef->numCellsDefined)
           pFmt->wEffects &= ~PFE_TABLE;
         ME_InsertTextFromCursor(info->editor, 0, &endl, 1, info->style);
