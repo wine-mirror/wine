@@ -997,7 +997,7 @@ static HRESULT WINAPI IShellExecuteHookW_fnExecute(IShellExecuteHookW* iface, LP
     path[0] = '\"';
     /* Return value from MultiByteToWideChar includes terminating NUL, which
      * compensates for the starting double quote we just put in */
-    l = MultiByteToWideChar(CP_ACP, 0, pcpanel->szName, -1, path+1, MAX_PATH);
+    l = MultiByteToWideChar(CP_ACP, 0, pcpanel->szName, -1, path+1, MAX_PATH-1);
 
     /* pass applet name to Control_RunDLL to distinguish between applets in one .cpl file */
     path[l++] = '"';
