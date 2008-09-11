@@ -346,7 +346,7 @@ static void ME_ApplyBorderProperties(RTF_Info *info,
   }
 }
 
-static void ME_RTFCharAttrHook(RTF_Info *info)
+void ME_RTFCharAttrHook(RTF_Info *info)
 {
   CHARFORMAT2W fmt;
   fmt.cbSize = sizeof(fmt);
@@ -468,7 +468,7 @@ static void ME_RTFCharAttrHook(RTF_Info *info)
 
 /* FIXME this function doesn't get any information about context of the RTF tag, which is very bad,
    the same tags mean different things in different contexts */
-static void ME_RTFParAttrHook(RTF_Info *info)
+void ME_RTFParAttrHook(RTF_Info *info)
 {
   PARAFORMAT2 fmt;
   fmt.cbSize = sizeof(fmt);
@@ -825,7 +825,7 @@ static void ME_RTFParAttrHook(RTF_Info *info)
   }
 }
 
-static void ME_RTFTblAttrHook(RTF_Info *info)
+void ME_RTFTblAttrHook(RTF_Info *info)
 {
   switch (info->rtfMinor)
   {
@@ -896,7 +896,7 @@ static void ME_RTFTblAttrHook(RTF_Info *info)
   }
 }
 
-static void ME_RTFSpecialCharHook(RTF_Info *info)
+void ME_RTFSpecialCharHook(RTF_Info *info)
 {
   RTFTable *tableDef = info->tableDef;
   switch (info->rtfMinor)
@@ -1325,7 +1325,8 @@ static void ME_RTFReadObjectGroup(RTF_Info *info)
   RTFRouteToken(info);	/* feed "}" back to router */
 }
 
-static void ME_RTFReadHook(RTF_Info *info) {
+static void ME_RTFReadHook(RTF_Info *info)
+{
   switch(info->rtfClass)
   {
     case rtfGroup:
@@ -1361,23 +1362,6 @@ static void ME_RTFReadHook(RTF_Info *info) {
           }
           break;
         }
-      }
-      break;
-    case rtfControl:
-      switch(info->rtfMajor)
-      {
-        case rtfCharAttr:
-          ME_RTFCharAttrHook(info);
-          break;
-        case rtfParAttr:
-          ME_RTFParAttrHook(info);
-          break;
-        case rtfTblAttr:
-          ME_RTFTblAttrHook(info);
-          break;
-        case rtfSpecialChar:
-          ME_RTFSpecialCharHook(info);
-          break;
       }
       break;
   }

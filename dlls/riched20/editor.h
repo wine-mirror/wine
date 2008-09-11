@@ -21,6 +21,8 @@
 #include "editstr.h"
 #include "wine/unicode.h"
 
+struct _RTF_Info;
+
 extern HANDLE me_heap;
 
 static inline void __WINE_ALLOC_SIZE(1) *heap_alloc( size_t len )
@@ -275,6 +277,10 @@ void ME_SendOldNotify(ME_TextEditor *editor, int nCode);
 void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam);
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, BOOL bCRLF);
 ME_DisplayItem *ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int *nItemOffset);
+void ME_RTFCharAttrHook(struct _RTF_Info *info);
+void ME_RTFParAttrHook(struct _RTF_Info *info);
+void ME_RTFTblAttrHook(struct _RTF_Info *info);
+void ME_RTFSpecialCharHook(struct _RTF_Info *info);
 void ME_StreamInFill(ME_InStream *stream);
 int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar);
 extern int me_debug;

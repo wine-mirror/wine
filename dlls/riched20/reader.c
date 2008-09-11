@@ -2477,6 +2477,13 @@ ControlClass (RTF_Info *info)
 	{
         case rtfCharAttr:
                 CharAttr(info);
+                ME_RTFCharAttrHook(info);
+                break;
+        case rtfParAttr:
+                ME_RTFParAttrHook(info);
+                break;
+        case rtfTblAttr:
+                ME_RTFTblAttrHook(info);
                 break;
         case rtfCharSet:
                 CharSet(info);
@@ -2492,6 +2499,7 @@ ControlClass (RTF_Info *info)
                 break;
 	case rtfSpecialChar:
                 SpecialChar (info);
+                ME_RTFSpecialCharHook(info);
 		break;
 	}
 }
