@@ -101,9 +101,9 @@ static BSTR a2bstr(const char *str)
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
-    WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    return lstrcmpW(strw, buf);
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), 0, 0);
+    return lstrcmpA(buf, stra);
 }
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
