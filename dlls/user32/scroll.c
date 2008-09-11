@@ -1256,7 +1256,9 @@ static BOOL SCROLL_GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO in
     info->xyThumbBottom = info->xyThumbTop + info->dxyLineButton;
 
     infoPtr = SCROLL_GetInternalInfo(hwnd, nBar, TRUE);
-    
+    if (!infoPtr)
+        return FALSE;
+
     /* Scroll bar state */
     info->rgstate[0] = 0;
     if ((nBar == SB_HORZ && !(style & WS_HSCROLL))
