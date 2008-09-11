@@ -230,5 +230,7 @@ ok(--tmp === 1, "--tmp (2) is not 1");
 ok(tmp === 1, "decremented tmp is not 1");
 ok(tmp++ === 1, "tmp++ (1) is not 1");
 ok(tmp === 2, "incremented tmp(1) is not 2");
+ok(tmp-- === 2, "tmp-- (2) is not 2");
+ok(tmp === 1, "decremented tmp is not 1");
 
 reportSuccess();
