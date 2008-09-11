@@ -1858,6 +1858,7 @@ static void test_getsockname(void)
     int sa_set_len = sizeof(struct sockaddr_in);
     int sa_get_len = sa_set_len;
     static const unsigned char null_padding[] = {0,0,0,0,0,0,0,0};
+    int ret;
 
     if(WSAStartup(MAKEWORD(2,0), &wsa)){
         trace("Winsock failed: %d. Aborting test\n", WSAGetLastError());
@@ -1900,7 +1901,8 @@ static void test_getsockname(void)
         return;
     }
 
-    ok(memcmp(sa_get.sin_zero, null_padding, 8) == 0,
+    ret = memcmp(sa_get.sin_zero, null_padding, 8);
+    ok(ret == 0 || broken(ret != 0), /* NT4 */
             "getsockname did not zero the sockaddr_in structure\n");
 
     closesocket(sock);
