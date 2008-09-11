@@ -176,4 +176,8 @@ ok(getVT(tmp) === "VT_I4", "getVT(1.5+2.5) !== VT_I4");
 tmp = "ab" + "cd";
 ok(tmp === "abcd", "\"ab\" + \"cd\" !== \"abcd\"");
 
+tmp = 1;
+ok((tmp += 1) === 2, "tmp += 1 !== 2");
+ok(tmp === 2, "tmp !== 2");
+
 reportSuccess();
