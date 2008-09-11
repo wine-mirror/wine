@@ -183,13 +183,14 @@ static void test_profile_sections(void)
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
     /* And a real one */
+    SetLastError(0xdeadbeef);
     ret=GetPrivateProfileSectionA("section1", buf, sizeof(buf), testfile4);
     for( p = buf + strlen(buf) + 1; *p;p += strlen(p)+1)
         p[-1] = ',';
     ok( ret == 35 && !strcmp( buf, "name1=val1,name2=,name3,name4=val4"), "wrong section returned(%d): %s\n",
             ret, buf);
     ok( buf[ret-1] == 0 && buf[ret] == 0, "returned buffer not terminated with double-null\n" );
-    ok( GetLastError() == S_OK, "expected S_OK, got %d\n", GetLastError());
+    ok( GetLastError() == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", GetLastError());
 
     DeleteFileA( testfile4 );
 }
