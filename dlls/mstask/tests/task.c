@@ -121,7 +121,7 @@ static void test_SetApplicationName_GetApplicationName(void)
     ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        ok(!lstrcmpW(stored_name, empty),
+        ok(!lstrcmpiW(stored_name, empty),
                 "Got %s, expected empty string\n", dbgstr_w(stored_name));
         CoTaskMemFree(stored_name);
     }
@@ -136,7 +136,7 @@ static void test_SetApplicationName_GetApplicationName(void)
     if (hres == S_OK)
     {
         full_name = path_resolve_name(non_application_name);
-        ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
+        ok(!lstrcmpiW(stored_name, full_name), "Got %s, expected %s\n",
                 dbgstr_w(stored_name), dbgstr_w(full_name));
         CoTaskMemFree(stored_name);
     }
@@ -151,7 +151,7 @@ static void test_SetApplicationName_GetApplicationName(void)
     if (hres == S_OK)
     {
         full_name = path_resolve_name(notepad_exe);
-        ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
+        ok(!lstrcmpiW(stored_name, full_name), "Got %s, expected %s\n",
                 dbgstr_w(stored_name), dbgstr_w(full_name));
         CoTaskMemFree(stored_name);
     }
@@ -165,7 +165,7 @@ static void test_SetApplicationName_GetApplicationName(void)
     if (hres == S_OK)
     {
         full_name = path_resolve_name(notepad);
-        ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
+        ok(!lstrcmpiW(stored_name, full_name), "Got %s, expected %s\n",
                 dbgstr_w(stored_name), dbgstr_w(full_name));
         CoTaskMemFree(stored_name);
     }
@@ -181,7 +181,7 @@ static void test_SetApplicationName_GetApplicationName(void)
     if (hres == S_OK)
     {
         full_name = path_resolve_name(non_application_name);
-        ok(!lstrcmpW(stored_name, full_name), "Got %s, expected %s\n",
+        ok(!lstrcmpiW(stored_name, full_name), "Got %s, expected %s\n",
                 dbgstr_w(stored_name), dbgstr_w(full_name));
         CoTaskMemFree(stored_name);
     }
@@ -193,7 +193,7 @@ static void test_SetApplicationName_GetApplicationName(void)
     ok(hres == S_OK, "GetApplicationName failed: %08x\n", hres);
     if (hres == S_OK)
     {
-        ok(!lstrcmpW(stored_name, empty),
+        ok(!lstrcmpiW(stored_name, empty),
                 "Got %s, expected empty string\n", dbgstr_w(stored_name));
         CoTaskMemFree(stored_name);
     }
