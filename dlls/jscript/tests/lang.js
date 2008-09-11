@@ -209,4 +209,11 @@ ok("abcd" <= "abce", "abce <= abce failed");
 ok("" <= "x", "\"\" <= \"x\" failed");
 ok(0 <= 0, "0 <= 0 failed");
 
+ok(3.4 > 1, "3.4 > 1 failed");
+ok(!(1 > 3.4), "1 > 3.4");
+ok("abcd" > "abc", "abc > abcd failed");
+ok("abce" > "abcd", "abce > abce failed");
+ok("x" > "", "\"x\" > \"\" failed");
+ok(!(0 > 0), "0 > 0");
+
 reportSuccess();
