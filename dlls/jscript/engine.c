@@ -1582,10 +1582,38 @@ HRESULT pre_increment_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWOR
     return S_OK;
 }
 
-HRESULT pre_decrement_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.4.5 */
+HRESULT pre_decrement_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    unary_expression_t *expr = (unary_expression_t*)_expr;
+    VARIANT val, num;
+    exprval_t exprval;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, EXPR_NEWREF, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_value(ctx->parser->script, &exprval, ei, &val);
+    if(SUCCEEDED(hres)) {
+        hres = to_number(ctx->parser->script, &val, ei, &num);
+        VariantClear(&val);
+    }
+
+    if(SUCCEEDED(hres)) {
+        num_set_val(&val, num_val(&num)-1.0);
+        hres = put_value(ctx->parser->script, &exprval, &val, ei);
+    }
+
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    ret->type = EXPRVAL_VARIANT;
+    ret->u.var = val;
+    return S_OK;
 }
 
 HRESULT new_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
