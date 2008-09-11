@@ -477,7 +477,12 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
  */
 BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
-    return USER_Driver->pGetMonitorInfo( hMonitor, lpMonitorInfo );
+    BOOL ret = USER_Driver->pGetMonitorInfo( hMonitor, lpMonitorInfo );
+    if (ret)
+        TRACE("flags %04x, monitor %s, work %s\n", lpMonitorInfo->dwFlags,
+              wine_dbgstr_rect(&lpMonitorInfo->rcMonitor),
+              wine_dbgstr_rect(&lpMonitorInfo->rcWork));
+    return ret;
 }
 
 /***********************************************************************
