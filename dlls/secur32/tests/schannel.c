@@ -283,14 +283,16 @@ static void testAcquireSecurityContext(void)
     schanCred.paCred = &certs[1];
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
      NULL, &schanCred, NULL, NULL, &cred, NULL);
-    ok(st == SEC_E_UNKNOWN_CREDENTIALS || st == SEC_E_NO_CREDENTIALS,
-     "Expected SEC_E_UNKNOWN_CREDENTIALS or SEC_E_NO_CREDENTIALS, got %08x\n",
-     st);
+    ok(st == SEC_E_UNKNOWN_CREDENTIALS || st == SEC_E_NO_CREDENTIALS ||
+       st == SEC_E_INTERNAL_ERROR, /* win2k */
+     "Expected SEC_E_UNKNOWN_CREDENTIALS, SEC_E_NO_CREDENTIALS "
+     "or SEC_E_INTERNAL_ERROR, got %08x\n", st);
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND,
      NULL, &schanCred, NULL, NULL, NULL, NULL);
-    ok(st == SEC_E_UNKNOWN_CREDENTIALS || st == SEC_E_NO_CREDENTIALS,
-     "Expected SEC_E_UNKNOWN_CREDENTIALS or SEC_E_NO_CREDENTIALS, got %08x\n",
-     st);
+    ok(st == SEC_E_UNKNOWN_CREDENTIALS || st == SEC_E_NO_CREDENTIALS ||
+       st == SEC_E_INTERNAL_ERROR, /* win2k */
+     "Expected SEC_E_UNKNOWN_CREDENTIALS, SEC_E_NO_CREDENTIALS "
+     "or SEC_E_INTERNAL_ERROR, got %08x\n", st);
 
     /* Good cert, with CRYPT_KEY_PROV_INFO set before it's had a key loaded. */
     if (pCertSetCertificateContextProperty)
