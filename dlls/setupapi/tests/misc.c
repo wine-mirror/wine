@@ -166,8 +166,9 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = pSetupCopyOEMInfA("", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_BAD_PATHNAME, /* Win98 */
+       "Expected ERROR_FILE_NOT_FOUND or ERROR_BAD_PATHNAME, got %d\n", GetLastError());
 
     /* try a relative nonexistent SourceInfFileName */
     SetLastError(0xdeadbeef);
@@ -191,8 +192,9 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = pSetupCopyOEMInfA(toolong, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_FILENAME_EXCED_RANGE, /* Win98 */
+       "Expected ERROR_FILE_NOT_FOUND or ERROR_FILENAME_EXCED_RANGE, got %d\n", GetLastError());
 
     get_temp_filename(tmpfile);
     create_inf_file(tmpfile);
