@@ -588,6 +588,22 @@ void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow)
   ME_SendSelChange(editor);
 }
 
+/* Make sure the cursor is not in the hidden table row start paragraph
+ * without a selection. */
+void ME_MoveCursorFromTableRowStartParagraph(ME_TextEditor *editor)
+{
+  ME_DisplayItem *para = ME_GetParagraph(editor->pCursors[0].pRun);
+  if (para == ME_GetParagraph(editor->pCursors[1].pRun) &&
+      para->member.para.nFlags & MEPF_ROWSTART) {
+    /* The cursors should not be at the hidden start row paragraph without
+     * a selection, so the cursor is moved into the first cell. */
+    para = para->member.para.next_para;
+    editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
+    editor->pCursors[0].nOffset = 0;
+    editor->pCursors[1] = editor->pCursors[0];
+  }
+}
+
 struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor)
 {
   RTFTable *tableDef = ALLOC_OBJ(RTFTable);

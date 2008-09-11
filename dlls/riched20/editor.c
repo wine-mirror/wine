@@ -2012,6 +2012,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       }
       else
         return TRUE;
+      ME_MoveCursorFromTableRowStartParagraph(editor);
       ME_UpdateSelectionLinkAttribute(editor);
       ME_UpdateRepaint(editor);
       ME_SendRequestResize(editor, FALSE);
