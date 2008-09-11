@@ -940,7 +940,7 @@ static void clear_response_headers( request_t *request )
 #define MAX_REPLY_LEN   1460
 #define INITIAL_HEADER_BUFFER_LEN  512
 
-static BOOL read_reply( request_t *request, BOOL clear )
+static BOOL read_reply( request_t *request )
 {
     static const WCHAR crlf[] = {'\r','\n',0};
 
@@ -951,9 +951,6 @@ static BOOL read_reply( request_t *request, BOOL clear )
     WCHAR status_codeW[4]; /* sizeof("nnn") */
 
     if (!netconn_connected( &request->netconn )) return FALSE;
-
-    /* clear old response headers (eg. from a redirect response) */
-    if (clear) clear_response_headers( request );
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
 
@@ -1184,7 +1181,7 @@ static BOOL receive_data_chunked( request_t *request, void *buffer, DWORD size, 
             if (!(request->content_length = get_chunk_size( reply )))
             {
                 /* zero sized chunk marks end of transfer; read any trailing headers and return */
-                read_reply( request, FALSE );
+                read_reply( request );
                 break;
             }
         }
@@ -1267,6 +1264,20 @@ static void drain_content( request_t *request )
     }
 }
 
+/* copy cookies from response headers to request headers */
+static void add_cookies( request_t *request )
+{
+    unsigned int i;
+
+    for (i = 0; i < request->num_headers; i++)
+    {
+        if (!strcmpiW( request->headers[i].field, attr_set_cookie ) && !request->headers[i].is_request)
+        {
+            process_header( request, attr_cookie, request->headers[i].value, WINHTTP_ADDREQ_FLAG_ADD, TRUE );
+        }
+    }
+}
+
 static BOOL receive_response( request_t *request, BOOL async )
 {
     BOOL ret;
@@ -1274,7 +1285,7 @@ static BOOL receive_response( request_t *request, BOOL async )
 
     for (;;)
     {
-        if (!(ret = read_reply( request, TRUE ))) break;
+        if (!(ret = read_reply( request ))) break;
 
         size = sizeof(DWORD);
         query = WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER;
@@ -1289,7 +1300,11 @@ static BOOL receive_response( request_t *request, BOOL async )
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS) break;
             drain_content( request );
+
             if (!(ret = handle_redirect( request ))) break;
+            if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) add_cookies( request );
+
+            clear_response_headers( request );
             ret = send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
             continue;
         }
