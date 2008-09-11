@@ -1063,44 +1063,59 @@ static BOOL handle_redirect( request_t *request )
     uc.dwStructSize = sizeof(uc);
     uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = ~0UL;
 
-    if (!(ret = WinHttpCrackUrl( location, size / sizeof(WCHAR), 0, &uc ))) goto end;
-
-    if (uc.nScheme == INTERNET_SCHEME_HTTP && request->hdr.flags & WINHTTP_FLAG_SECURE)
+    if (!WinHttpCrackUrl( location, size / sizeof(WCHAR), 0, &uc )) /* assume relative redirect */
     {
-        TRACE("redirect from secure page to non-secure page\n");
-        request->hdr.flags &= ~WINHTTP_FLAG_SECURE;
+        WCHAR *path, *p;
+
+        len = strlenW( location ) + 1;
+        if (location[0] != '/') len++;
+        if (!(p = path = heap_alloc( len * sizeof(WCHAR) ))) goto end;
+
+        if (location[0] != '/') *p++ = '/';
+        strcpyW( p, location );
+
+        heap_free( request->path );
+        request->path = path;
     }
-    else if (uc.nScheme == INTERNET_SCHEME_HTTPS && !(request->hdr.flags & WINHTTP_FLAG_SECURE))
+    else
     {
-        TRACE("redirect from non-secure page to secure page\n");
-        request->hdr.flags |= WINHTTP_FLAG_SECURE;
-    }
+        if (uc.nScheme == INTERNET_SCHEME_HTTP && request->hdr.flags & WINHTTP_FLAG_SECURE)
+        {
+            TRACE("redirect from secure page to non-secure page\n");
+            request->hdr.flags &= ~WINHTTP_FLAG_SECURE;
+        }
+        else if (uc.nScheme == INTERNET_SCHEME_HTTPS && !(request->hdr.flags & WINHTTP_FLAG_SECURE))
+        {
+            TRACE("redirect from non-secure page to secure page\n");
+            request->hdr.flags |= WINHTTP_FLAG_SECURE;
+        }
 
-    len = uc.dwHostNameLength;
-    if (!(hostname = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-    memcpy( hostname, uc.lpszHostName, len * sizeof(WCHAR) );
-    hostname[len] = 0;
+        len = uc.dwHostNameLength;
+        if (!(hostname = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+        memcpy( hostname, uc.lpszHostName, len * sizeof(WCHAR) );
+        hostname[len] = 0;
 
-    port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
-    if (strcmpiW( connect->servername, hostname ) || connect->serverport != port)
-    {
-        heap_free( connect->servername );
-        connect->servername = hostname;
-        connect->serverport = connect->hostport = port;
+        port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
+        if (strcmpiW( connect->servername, hostname ) || connect->serverport != port)
+        {
+            heap_free( connect->servername );
+            connect->servername = hostname;
+            connect->serverport = connect->hostport = port;
 
-        netconn_close( &request->netconn );
-        if (!(ret = netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE ))) goto end;
-    }
-    if (!(ret = add_host_header( request, hostname, port, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
-    if (!(ret = open_connection( request ))) goto end;
+            netconn_close( &request->netconn );
+            if (!(ret = netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE ))) goto end;
+        }
+        if (!(ret = add_host_header( request, hostname, port, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
+        if (!(ret = open_connection( request ))) goto end;
 
-    heap_free( request->path );
-    request->path = NULL;
-    if (uc.lpszUrlPath)
-    {
-        len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
-        if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
-        strcpyW( request->path, uc.lpszUrlPath );
+        heap_free( request->path );
+        request->path = NULL;
+        if (uc.lpszUrlPath)
+        {
+            len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
+            if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+            strcpyW( request->path, uc.lpszUrlPath );
+        }
     }
 
     ret = TRUE;
