@@ -1621,10 +1621,66 @@ HRESULT not_equal2_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
     return return_bool(ret, !b);
 }
 
-HRESULT less_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.8.5 */
+static HRESULT less_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_t *ei, BOOL *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT l, r, ln, rn;
+    HRESULT hres;
+
+    hres = to_primitive(ctx->parser->script, lval, ei, &l);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_primitive(ctx->parser->script, rval, ei, &r);
+    if(FAILED(hres)) {
+        VariantClear(&l);
+        return hres;
+    }
+
+    if(V_VT(&l) == VT_BSTR && V_VT(&r) == VT_BSTR) {
+        *ret = strcmpW(V_BSTR(&l), V_BSTR(&r)) < 0;
+        SysFreeString(V_BSTR(&l));
+        SysFreeString(V_BSTR(&r));
+        return S_OK;
+    }
+
+    hres = to_number(ctx->parser->script, &l, ei, &ln);
+    VariantClear(&l);
+    if(SUCCEEDED(hres))
+        hres = to_number(ctx->parser->script, &r, ei, &rn);
+    VariantClear(&r);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(&ln) == VT_I4 && V_VT(&rn) == VT_I4)
+        *ret = V_I4(&ln) < V_I4(&rn);
+    else
+        *ret = num_val(&ln) < num_val(&rn);
+
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.8.1 */
+HRESULT less_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+    VARIANT rval, lval;
+    BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = get_binary_expr_values(ctx, expr, ei, &lval, &rval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = less_eval(ctx, &lval, &rval, ei, &b);
+    VariantClear(&lval);
+    VariantClear(&rval);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bool(ret, b);
 }
 
 HRESULT lesseq_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)

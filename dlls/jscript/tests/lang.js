@@ -195,4 +195,11 @@ ok(tmp === "test", "true && \"test\" is not \"test\"");
 tmp = true && 0;
 ok(tmp === 0, "true && 0 is not 0");
 
+ok(1 < 3.4, "1 < 3.4 failed");
+ok(!(3.4 < 1), "3.4 < 1");
+ok("abc" < "abcd", "abc < abcd failed");
+ok("abcd" < "abce", "abce < abce failed");
+ok("" < "x", "\"\" < \"x\" failed");
+ok(!(0 < 0), "0 < 0");
+
 reportSuccess();
