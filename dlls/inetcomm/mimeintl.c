@@ -311,8 +311,21 @@ static HRESULT WINAPI MimeInternat_GetCodePageInfo(IMimeInternational *iface, CO
 static HRESULT WINAPI MimeInternat_CanConvertCodePages(IMimeInternational *iface, CODEPAGEID cpiSource,
                                                        CODEPAGEID cpiDest)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    IMultiLanguage *ml;
+
+    TRACE("(%p)->(%d, %d)\n", iface, cpiSource, cpiDest);
+
+    /* Could call mlang.IsConvertINetStringAvailable() to avoid the COM overhead if need be. */
+
+    hr = get_mlang(&ml);
+    if(SUCCEEDED(hr))
+    {
+        hr = IMultiLanguage_IsConvertible(ml, cpiSource, cpiDest);
+        IMultiLanguage_Release(ml);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI MimeInternat_DecodeHeader(IMimeInternational *iface, HCHARSET hCharset,
