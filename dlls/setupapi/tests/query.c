@@ -136,6 +136,7 @@ static void test_SetupGetInfInformation(void)
     PSP_INF_INFORMATION info;
     CHAR inf_filename[MAX_PATH];
     CHAR inf_one[MAX_PATH], inf_two[MAX_PATH];
+    LPSTR revfile;
     DWORD size;
     HINF hinf;
     BOOL ret;
@@ -240,11 +241,6 @@ static void test_SetupGetInfInformation(void)
     ok(check_info_filename(info, inf_filename), "Expected returned filename to be equal\n");
     SetupCloseInfFile(hinf);
 
-    lstrcpyA(inf_one, WIN_DIR);
-    lstrcatA(inf_one, "\\inf\\");
-    lstrcatA(inf_one, "test.inf");
-    create_inf_file(inf_one);
-
     lstrcpyA(inf_two, WIN_DIR);
     lstrcatA(inf_two, "\\system32\\");
     lstrcatA(inf_two, "test.inf");
@@ -253,9 +249,24 @@ static void test_SetupGetInfInformation(void)
     HeapFree(GetProcessHeap(), 0, info);
     info = alloc_inf_info("test.inf", INFINFO_DEFAULT_SEARCH, &size);
 
+    /* check if system32 is searched for inf */
+    ret = SetupGetInfInformationA("test.inf", INFINFO_DEFAULT_SEARCH, info, size, &size);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+        revfile = inf_one; /* Vista */
+    else
+        revfile = inf_two;
+
+    lstrcpyA(inf_one, WIN_DIR);
+    lstrcatA(inf_one, "\\inf\\");
+    lstrcatA(inf_one, "test.inf");
+    create_inf_file(inf_one);
+
+    HeapFree(GetProcessHeap(), 0, info);
+    info = alloc_inf_info("test.inf", INFINFO_DEFAULT_SEARCH, &size);
+
     /* test the INFINFO_DEFAULT_SEARCH search flag */
     ret = SetupGetInfInformationA("test.inf", INFINFO_DEFAULT_SEARCH, info, size, &size);
-    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
+    ok(ret == TRUE, "Expected SetupGetInfInformation to succeed: %d\n", GetLastError());
     ok(check_info_filename(info, inf_one), "Expected returned filename to be equal\n");
 
     HeapFree(GetProcessHeap(), 0, info);
@@ -264,7 +275,7 @@ static void test_SetupGetInfInformation(void)
     /* test the INFINFO_REVERSE_DEFAULT_SEARCH search flag */
     ret = SetupGetInfInformationA("test.inf", INFINFO_REVERSE_DEFAULT_SEARCH, info, size, &size);
     ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
-    ok(check_info_filename(info, inf_two), "Expected returned filename to be equal\n");
+    ok(check_info_filename(info, revfile), "Expected returned filename to be equal\n");
 
     HeapFree(GetProcessHeap(), 0, info);
 
