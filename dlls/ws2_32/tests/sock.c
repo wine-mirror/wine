@@ -2020,6 +2020,7 @@ static void test_ioctlsocket(void)
     }
 }
 
+static int drain_pause=0;
 static DWORD WINAPI drain_socket_thread(LPVOID arg)
 {
     char buffer[1024];
@@ -2036,6 +2037,8 @@ static DWORD WINAPI drain_socket_thread(LPVOID arg)
                 FD_ZERO(&readset);
                 FD_SET(sock, &readset);
                 select(0, &readset, NULL, NULL, NULL);
+                while (drain_pause)
+                    Sleep(100);
             }
             else
                 break;
@@ -2188,13 +2191,17 @@ static void test_write_events(void)
         goto end;
     }
 
-    /* Now if we send a tonne of data, the socket send buffer will only take some of it,
-       and we will get a short write, which will trigger another FD_WRITE event
-       as soon as data is sent and more space becomes available, but not any earlier. */
+    /* Now if we send a ton of data and the 'server' does not drain it fast
+     * enough (set drain_pause to be sure), the socket send buffer will only
+     * take some of it, and we will get a short write. This will trigger
+     * another FD_WRITE event as soon as data is sent and more space becomes
+     * available, but not any earlier. */
+    drain_pause=1;
     do
     {
         ret = send(src, buffer, bufferSize, 0);
     } while (ret == bufferSize);
+    drain_pause=0;
     if (ret >= 0 || WSAGetLastError() == WSAEWOULDBLOCK)
     {
         dwRet = WaitForSingleObject(hEvent, 5000);
