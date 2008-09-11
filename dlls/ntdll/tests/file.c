@@ -377,7 +377,9 @@ static void read_file_test(void)
     offset.QuadPart = 0;
     ResetEvent( event );
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, strlen(text) + 10, &offset, NULL );
-    ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
+    ok( status == STATUS_SUCCESS ||
+        status == STATUS_PENDING, /* vista */
+        "wrong status %x\n", status );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == strlen(text), "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is signaled\n" );
@@ -391,13 +393,25 @@ static void read_file_test(void)
     iosb.Information = 0xdeadbeef;
     offset.QuadPart = strlen(text) + 2;
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, 2, &offset, NULL );
-    ok( status == STATUS_END_OF_FILE, "wrong status %x\n", status );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
-    ok( !is_signaled( event ), "event is signaled\n" );
-    ok( !apc_count, "apc was called\n" );
-    SleepEx( 1, TRUE ); /* alertable sleep */
-    ok( !apc_count, "apc was called\n" );
+    if (status == STATUS_PENDING)  /* vista */
+    {
+        ok( U(iosb).Status == STATUS_END_OF_FILE, "wrong status %x\n", U(iosb).Status );
+        ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
+        ok( is_signaled( event ), "event is signaled\n" );
+        ok( !apc_count, "apc was called\n" );
+        SleepEx( 1, TRUE ); /* alertable sleep */
+        ok( apc_count == 1, "apc was not called\n" );
+    }
+    else
+    {
+        ok( status == STATUS_END_OF_FILE, "wrong status %x\n", status );
+        ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
+        ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+        ok( !is_signaled( event ), "event is signaled\n" );
+        ok( !apc_count, "apc was called\n" );
+        SleepEx( 1, TRUE ); /* alertable sleep */
+        ok( !apc_count, "apc was called\n" );
+    }
     CloseHandle( handle );
 
     /* now a non-overlapped file */
@@ -407,7 +421,9 @@ static void read_file_test(void)
     iosb.Information = 0xdeadbeef;
     offset.QuadPart = 0;
     pNtWriteFile( handle, event, apc, &apc_count, &iosb, text, strlen(text), &offset, NULL );
-    ok( status == STATUS_END_OF_FILE, "wrong status %x\n", status );
+    ok( status == STATUS_END_OF_FILE ||
+        status == STATUS_PENDING,  /* vista */
+        "wrong status %x\n", status );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == strlen(text), "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is signaled\n" );
