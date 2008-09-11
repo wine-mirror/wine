@@ -1139,6 +1139,19 @@ static void load_nonclient_metrics(void)
     spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
 }
 
+static BOOL CALLBACK enum_monitors( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+{
+    MONITORINFO mi;
+
+    mi.cbSize = sizeof(mi);
+    if (GetMonitorInfoW( monitor, &mi ) && (mi.dwFlags & MONITORINFOF_PRIMARY))
+    {
+        LPRECT work = (LPRECT)lp;
+        *work = mi.rcWork;
+        return FALSE;
+    }
+    return TRUE;
+}
 
 /***********************************************************************
  *		SystemParametersInfoW (USER32.@)
@@ -1725,10 +1738,11 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             SetRect( &work_area, 0, 0,
                      GetSystemMetrics( SM_CXSCREEN ),
                      GetSystemMetrics( SM_CYSCREEN ) );
+            EnumDisplayMonitors( 0, NULL, enum_monitors, (LPARAM)&work_area );
             spi_loaded[spi_idx] = TRUE;
         }
         CopyRect( (RECT *)pvParam, &work_area );
-
+        TRACE("work area %s\n", wine_dbgstr_rect( &work_area ));
         break;
     }
 
