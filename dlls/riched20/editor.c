@@ -1461,8 +1461,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   if (!invalidRTF && !inStream.editstream->dwError)
   {
     if (format & SF_RTF) {
-      ME_DisplayItem *para;
-
       /* setup the RTF parser */
       memset(&parser, 0, sizeof parser);
       RTFSetEditStream(&parser, &inStream);
@@ -1486,13 +1484,13 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       RTFRead(&parser);
       RTFFlushOutputBuffer(&parser);
       if (!editor->bEmulateVersion10) { /* v4.1 */
-        if (parser.tableDef && parser.tableDef->tableRowStart)
+        if (parser.tableDef && parser.tableDef->tableRowStart &&
+            (parser.nestingLevel > 0 || parser.canInheritInTbl))
         {
           /* Delete any incomplete table row at the end of the rich text. */
           int nOfs, nChars;
           ME_DisplayItem *pCell;
-
-          para = parser.tableDef->tableRowStart;
+          ME_DisplayItem *para;
 
           parser.rtfMinor = rtfRow;
           /* Complete the table row before deleting it.
@@ -1501,14 +1499,14 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
            * will be added for this change to the current paragraph format. */
           if (parser.nestingLevel > 0)
           {
-            while (parser.nestingLevel--)
-              ME_RTFSpecialCharHook(&parser);
-          } else if (parser.canInheritInTbl) {
+            while (parser.nestingLevel > 1)
+              ME_RTFSpecialCharHook(&parser); /* Decrements nestingLevel */
+            para = parser.tableDef->tableRowStart;
             ME_RTFSpecialCharHook(&parser);
-          }
-          if (parser.tableDef && parser.tableDef->tableRowStart &&
-              para->member.para.nFlags & MEPF_ROWEND)
-          {
+          } else {
+            para = parser.tableDef->tableRowStart;
+            ME_RTFSpecialCharHook(&parser);
+            assert(para->member.para.nFlags & MEPF_ROWEND);
             para = para->member.para.next_para;
           }
           pCell = para->member.para.pCell;
@@ -1518,7 +1516,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           nOfs = ME_GetCursorOfs(editor, 1);
           nChars = ME_GetCursorOfs(editor, 0) - nOfs;
           ME_InternalDeleteText(editor, nOfs, nChars, TRUE);
-          parser.tableDef->tableRowStart = NULL;
+          if (parser.tableDef)
+            parser.tableDef->tableRowStart = NULL;
         }
       }
       ME_CheckTablesForCorruption(editor);

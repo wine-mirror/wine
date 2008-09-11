@@ -242,8 +242,6 @@ void RTFInit(RTF_Info *info)
 		info->cpOutputBuffer = heap_alloc(info->dwMaxCPOutputCount);
 	}
 
-        if (info->tableDef)
-            ZeroMemory(info->tableDef, sizeof(info->tableDef));
         info->tableDef = NULL;
         info->nestingLevel = 0;
         info->canInheritInTbl = FALSE;
