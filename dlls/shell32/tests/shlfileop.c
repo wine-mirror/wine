@@ -942,7 +942,9 @@ static void test_copy(void)
     shfo.pTo = "two.txt\0";
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
-    ok(retval == 1148 || retval == 1026, "Expected 1148 or 1026, got %d\n", retval);
+    ok(retval == 1148 || retval == 1026 ||
+       retval == ERROR_ACCESS_DENIED, /* win2k */
+       "Expected 1148, 1026 or ERROR_ACCESS_DENIED, got %d\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
 
@@ -984,7 +986,9 @@ static void test_copy(void)
     shfo.pTo = to;
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperation(&shfo);
-    ok(retval == 1148 || retval == 1026, "Expected 1148 or 1026, got %d\n", retval);
+    ok(retval == 1148 || retval == 1026 ||
+       retval == ERROR_ACCESS_DENIED, /* win2k */
+       "Expected 1148, 1026 or ERROR_ACCESS_DENIED, got %d\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
 
