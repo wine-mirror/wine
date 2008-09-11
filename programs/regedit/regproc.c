@@ -878,30 +878,62 @@ static void REGPROC_resize_char_buffer(WCHAR **buffer, DWORD *len, DWORD require
 /******************************************************************************
  * Prints string str to file
  */
-static void REGPROC_export_string(FILE *file, WCHAR *str)
+static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD *line_size, WCHAR *str)
 {
-    CHAR* strA = GetMultiByteString(str);
-    size_t len = strlen(strA);
-    size_t i;
+    DWORD len = lstrlenW(str);
+    DWORD i;
+    DWORD extra = 0;
+
+    REGPROC_resize_char_buffer(line_buf, line_buf_size, len + 10);
 
     /* escaping characters */
     for (i = 0; i < len; i++) {
-        CHAR c = str[i];
+        WCHAR c = str[i];
         switch (c) {
         case '\\':
-            fputs("\\\\", file);
-            break;
-        case '\"':
-            fputs("\\\"", file);
-            break;
-        case '\n':
-            fputs("\\\n", file);
-            break;
-        default:
-            fputc(c, file);
+        {
+            const WCHAR escape[] = {'\\','\\'};
+
+            extra++;
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + extra);
+            memcpy(*line_buf + *line_size - 1, escape, 2 * sizeof(WCHAR));
             break;
         }
+        case '\"':
+        {
+            const WCHAR escape[] = {'\\','"'};
+
+            extra++;
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + extra);
+            memcpy(*line_buf + *line_size - 1, escape, 2 * sizeof(WCHAR));
+            break;
+        }
+        case '\n':
+        {
+            const WCHAR escape[] = {'\\','\n'};
+
+            extra++;
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + extra);
+            memcpy(*line_buf + *line_size - 1, escape, 2 * sizeof(WCHAR));
+            break;
+        }
+        default:
+            memcpy(*line_buf + *line_size - 1, &c, sizeof(WCHAR));
+            break;
+        }
+        *line_size += 1;
     }
+    *(*line_buf + *line_size - 1) = 0;
+    *line_size += extra;
+}
+
+/******************************************************************************
+ * Writes the given line to a file, in multi-byte or wide characters
+ */
+static void REGPROC_write_line(FILE *file, const WCHAR* str)
+{
+    char* strA = GetMultiByteString(str);
+    fprintf(file, strA);
     HeapFree(GetProcessHeap(), 0, strA);
 }
 
@@ -924,7 +956,8 @@ static void REGPROC_export_string(FILE *file, WCHAR *str)
 static void export_hkey(FILE *file, HKEY key,
                  WCHAR **reg_key_name_buf, DWORD *reg_key_name_len,
                  WCHAR **val_name_buf, DWORD *val_name_len,
-                 BYTE **val_buf, DWORD *val_size)
+                 BYTE **val_buf, DWORD *val_size,
+                 WCHAR **line_buf, DWORD *line_buf_size)
 {
     DWORD max_sub_key_len;
     DWORD max_val_name_len;
@@ -933,7 +966,8 @@ static void export_hkey(FILE *file, HKEY key,
     DWORD i;
     BOOL more_data;
     LONG ret;
-    CHAR* bufA;
+    WCHAR key_format[] = {'\n','[','%','s',']','\n',0};
+    DWORD line_pos;
 
     /* get size information and resize the buffers if necessary */
     if (RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL,
@@ -954,12 +988,11 @@ static void export_hkey(FILE *file, HKEY key,
         CHECK_ENOUGH_MEMORY(val_buf);
     }
 
+    REGPROC_resize_char_buffer(line_buf, line_buf_size, lstrlenW(*reg_key_name_buf) + 4);
     /* output data for the current key */
-    fputs("\n[", file);
-    bufA = GetMultiByteString(*reg_key_name_buf);
-    fputs(bufA, file);
-    HeapFree(GetProcessHeap(), 0, bufA);
-    fputs("]\n", file);
+    wsprintfW(*line_buf, key_format, *reg_key_name_buf);
+    REGPROC_write_line(file, *line_buf);
+
     /* print all the values */
     i = 0;
     more_data = TRUE;
@@ -967,6 +1000,7 @@ static void export_hkey(FILE *file, HKEY key,
         DWORD value_type;
         DWORD val_name_len1 = *val_name_len;
         DWORD val_size1 = *val_size;
+        DWORD line_size = 0;
         ret = RegEnumValueW(key, i, *val_name_buf, &val_name_len1, NULL,
                            &value_type, *val_buf, &val_size1);
         if (ret != ERROR_SUCCESS) {
@@ -978,24 +1012,48 @@ static void export_hkey(FILE *file, HKEY key,
             i++;
 
             if ((*val_name_buf)[0]) {
-                fputs("\"", file);
-                REGPROC_export_string(file, *val_name_buf);
-                fputs("\"=", file);
+                const WCHAR val_start[] = {'"','%','s','"','=',0};
+
+                line_size = 4 + lstrlenW(*val_name_buf);
+                REGPROC_resize_char_buffer(line_buf, line_buf_size, line_size);
+                wsprintfW(*line_buf, val_start, *val_name_buf);
+                line_pos = lstrlenW(*line_buf);
             } else {
-                fputs("@=", file);
+                const WCHAR std_val[] = {'@','=',0};
+                line_size = 3;
+                REGPROC_resize_char_buffer(line_buf, line_buf_size, line_size);
+                lstrcpyW(*line_buf, std_val);
+                line_pos = lstrlenW(*line_buf);
             }
 
             switch (value_type) {
             case REG_SZ:
             case REG_EXPAND_SZ:
-                fputs("\"", file);
-                if (val_size1) REGPROC_export_string(file, (WCHAR*) *val_buf);
-                fputs("\"\n", file);
+            {
+                const WCHAR start[] = {'"',0};
+                const WCHAR end[] = {'"','\n',0};
+
+                line_size += lstrlenW(start);
+                REGPROC_resize_char_buffer(line_buf, line_buf_size, line_size);
+                lstrcatW(*line_buf, start);
+
+                if (val_size1) REGPROC_export_string(line_buf, line_buf_size, &line_size, (WCHAR*) *val_buf);
+
+                line_size += lstrlenW(end);
+                REGPROC_resize_char_buffer(line_buf, line_buf_size, line_size);
+                lstrcatW(*line_buf, end);
                 break;
+            }
 
             case REG_DWORD:
-                fprintf(file, "dword:%08x\n", *((DWORD *)*val_buf));
+            {
+                WCHAR format[] = {'d','w','o','r','d',':','%','0','8','x','\n',0};
+
+                line_size += 20;
+                REGPROC_resize_char_buffer(line_buf, line_buf_size, line_size);
+                wsprintfW(*line_buf + line_pos, format, *((DWORD *)*val_buf));
                 break;
+            }
 
             default:
                 fprintf(stderr,"%s: warning - unsupported registry format '%d', "
@@ -1013,7 +1071,10 @@ static void export_hkey(FILE *file, HKEY key,
                     int cur_pos;
                     const WCHAR hex[] = {'h','e','x',':',0};
                     const WCHAR delim[] = {'"','"','=',0};
-                    CHAR* hex_prefixA;
+                    const WCHAR format[] = {'%','0','2','x',0};
+                    const WCHAR comma[] = {',',0};
+                    const WCHAR concat[] = {'\\','\n',' ',' ',0};
+                    const WCHAR newline[] = {'\n',0};
                     BYTE* val_buf1 = *val_buf;
                     DWORD val_buf1_size = val_size1;
 
@@ -1032,28 +1093,34 @@ static void export_hkey(FILE *file, HKEY key,
                     cur_pos = lstrlenW(delim) + lstrlenW(hex) +
                               lstrlenW(*val_name_buf);
 
-                    hex_prefixA = GetMultiByteString(hex_prefix);
-                    fputs(hex_prefixA, file);
-                    HeapFree(GetProcessHeap(), 0, hex_prefixA);
+                    line_size += lstrlenW(hex_prefix);
+                    line_size += val_buf1_size * 3 + lstrlenW(concat) * ((int)((float)val_buf1_size * 3.0 / (float)REG_FILE_HEX_LINE_LEN) + 1 ) + 1;
+                    REGPROC_resize_char_buffer(line_buf, line_buf_size, line_size);
+                    lstrcatW(*line_buf, hex_prefix);
+                    line_pos += lstrlenW(hex_prefix);
                     for (i1 = 0; i1 < val_buf1_size; i1++) {
-                        fprintf(file, "%02x", (unsigned int)(val_buf1)[i1]);
+                        wsprintfW(*line_buf + line_pos, format, (unsigned int)(val_buf1)[i1]);
+                        line_pos += 2;
                         if (i1 + 1 < val_buf1_size) {
-                            fputs(",", file);
+                            lstrcpyW(*line_buf + line_pos, comma);
+                            line_pos++;
                         }
                         cur_pos += 3;
 
                         /* wrap the line */
                         if (cur_pos > REG_FILE_HEX_LINE_LEN) {
-                            fputs("\\\n  ", file);
+                            lstrcpyW(*line_buf + line_pos, concat);
+                            line_pos += lstrlenW(concat);
                             cur_pos = 2;
                         }
                     }
                     if(value_type == REG_MULTI_SZ)
                         HeapFree(GetProcessHeap(), 0, val_buf1);
-                    fputs("\n", file);
+                    lstrcpyW(*line_buf + line_pos, newline);
                     break;
                 }
             }
+            REGPROC_write_line(file, *line_buf);
         }
     }
 
@@ -1077,7 +1144,8 @@ static void export_hkey(FILE *file, HKEY key,
             if (RegOpenKeyW(key, *reg_key_name_buf + curr_len + 1,
                            &subkey) == ERROR_SUCCESS) {
                 export_hkey(file, subkey, reg_key_name_buf, reg_key_name_len,
-                            val_name_buf, val_name_len, val_buf, val_size);
+                            val_name_buf, val_name_len, val_buf, val_size,
+                            line_buf, line_buf_size);
                 RegCloseKey(subkey);
             } else {
                 REGPROC_print_error();
@@ -1126,9 +1194,11 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
     WCHAR *reg_key_name_buf;
     WCHAR *val_name_buf;
     BYTE *val_buf;
+    WCHAR *line_buf;
     DWORD reg_key_name_len = KEY_MAX_LEN;
     DWORD val_name_len = KEY_MAX_LEN;
     DWORD val_size = REG_VAL_BUF_SIZE;
+    DWORD line_buf_size = KEY_MAX_LEN + REG_VAL_BUF_SIZE;
     FILE *file = NULL;
 
     reg_key_name_buf = HeapAlloc(GetProcessHeap(), 0,
@@ -1136,6 +1206,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
     val_name_buf = HeapAlloc(GetProcessHeap(), 0,
                              val_name_len * sizeof(*val_name_buf));
     val_buf = HeapAlloc(GetProcessHeap(), 0, val_size);
+    line_buf = HeapAlloc(GetProcessHeap(), 0, line_buf_size);
     CHECK_ENOUGH_MEMORY(reg_key_name_buf && val_name_buf && val_buf);
 
     if (reg_key_name && reg_key_name[0]) {
@@ -1161,13 +1232,13 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
             export_hkey(file, reg_key_class,
                         &reg_key_name_buf, &reg_key_name_len,
                         &val_name_buf, &val_name_len,
-                        &val_buf, &val_size);
+                        &val_buf, &val_size, &line_buf, &line_buf_size);
         } else if (RegOpenKeyW(reg_key_class, branch_name, &key) == ERROR_SUCCESS) {
             file = REGPROC_open_export_file(file_name);
             export_hkey(file, key,
                         &reg_key_name_buf, &reg_key_name_len,
                         &val_name_buf, &val_name_len,
-                        &val_buf, &val_size);
+                        &val_buf, &val_size, &line_buf, &line_buf_size);
             RegCloseKey(key);
         } else {
             CHAR* key_nameA = GetMultiByteString(reg_key_name);
@@ -1191,7 +1262,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
                 export_hkey(file, reg_class_keys[i],
                             &reg_key_name_buf, &reg_key_name_len,
                             &val_name_buf, &val_name_len,
-                            &val_buf, &val_size);
+                            &val_buf, &val_size, &line_buf, &line_buf_size);
             }
         }
     }
@@ -1202,6 +1273,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
     HeapFree(GetProcessHeap(), 0, reg_key_name);
     HeapFree(GetProcessHeap(), 0, val_name_buf);
     HeapFree(GetProcessHeap(), 0, val_buf);
+    HeapFree(GetProcessHeap(), 0, line_buf);
     return TRUE;
 }
 
