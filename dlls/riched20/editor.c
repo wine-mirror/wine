@@ -1476,7 +1476,10 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       RTFSetDestinationCallback(&parser, rtfPict, ME_RTFReadPictGroup);
       RTFSetDestinationCallback(&parser, rtfObject, ME_RTFReadObjectGroup);
       if (!parser.editor->bEmulateVersion10) /* v4.1 */
+      {
         RTFSetDestinationCallback(&parser, rtfNoNestTables, RTFSkipGroup);
+        RTFSetDestinationCallback(&parser, rtfNestTableProps, RTFReadGroup);
+      }
       BeginFile(&parser);
 
       /* do the parsing */

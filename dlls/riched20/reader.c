@@ -406,6 +406,16 @@ void RTFSkipGroup(RTF_Info *info)
 	}
 }
 
+/*
+ * Do no special processing on the group.
+ *
+ * This acts as a placeholder for a callback in order to indicate that it
+ * shouldn't be ignored.  Instead it will fallback on the loop in RTFRead.
+ */
+void RTFReadGroup (RTF_Info *info)
+{
+}
+
 
 /*
  * Read one token.  Call the read hook if there is one.  The
