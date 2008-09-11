@@ -512,16 +512,6 @@ static void test_iocp_callback(void)
     ret = DeleteFileA(filename);
     ok( ret, "DeleteFileA: error %d\n", GetLastError());
 
-    hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                        CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_OVERLAPPED, 0);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
-    retb = p_BindIoCompletionCallback(hFile, NULL, 0);
-    ok(retb == TRUE, "BindIoCompletionCallback failed with a NULL callback(first time set)\n");
-    ret = CloseHandle(hFile);
-    ok( ret, "CloseHandle: error %d\n", GetLastError());
-    ret = DeleteFileA(filename);
-    ok( ret, "DeleteFileA: error %d\n", GetLastError());
-
     /* win2k3 requires the Flags parameter to be zero */
     SetLastError(0xdeadbeef);
     hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
@@ -540,7 +530,9 @@ static void test_iocp_callback(void)
 
     retb = p_BindIoCompletionCallback(NULL, iocp_callback, 0);
     ok(retb == FALSE, "BindIoCompletionCallback succeeded on a NULL file\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "Last error is %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE ||
+       GetLastError() == ERROR_INVALID_PARAMETER, /* vista */
+       "Last error is %d\n", GetLastError());
 }
 
 static void CALLBACK timer_queue_cb1(PVOID p, BOOLEAN timedOut)
