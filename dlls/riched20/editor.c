@@ -3725,7 +3725,24 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
                  para->member.para.prev_para->member.para.nFlags & MEPF_ROWSTART &&
                  !para->member.para.prev_para->member.para.nCharOfs)
         {
-          /* FIXME: Insert a newline before the table. */
+          /* Insert a newline before the table. */
+          WCHAR endl = '\r';
+          para = para->member.para.prev_para;
+          para->member.para.nFlags &= ~MEPF_ROWSTART;
+          editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
+          editor->pCursors[1] = editor->pCursors[0];
+          ME_InsertTextFromCursor(editor, 0, &endl, 1,
+                                  editor->pCursors[0].pRun->member.run.style);
+          para = editor->pBuffer->pFirst->member.para.next_para;
+          ME_SetDefaultParaFormat(para->member.para.pFmt);
+          para->member.para.nFlags = MEPF_REWRAP;
+          editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
+          editor->pCursors[1] = editor->pCursors[0];
+          para->member.para.next_para->member.para.nFlags |= MEPF_ROWSTART;
+          ME_CommitCoalescingUndo(editor);
+          ME_CheckTablesForCorruption(editor);
+          ME_UpdateRepaint(editor);
+          return 0;
         }
       } else { /* v1.0 - 3.0 */
         ME_DisplayItem *para = ME_GetParagraph(cursor.pRun);
