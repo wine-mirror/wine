@@ -4280,9 +4280,8 @@ static void test_EnumGroupsInGroup(void)
     checkHR( DP_OK, hr );
 
     /* - Open session */
-    callbackData.pDP = pDP[1];
     hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd[0], 0, EnumSessions_cb_join,
-                                    (LPVOID) &callbackData, 0 );
+                                    (LPVOID) pDP[1], 0 );
     checkHR( DP_OK, hr );
 
 
