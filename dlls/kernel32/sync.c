@@ -308,8 +308,13 @@ BOOL WINAPI UnregisterWait( HANDLE WaitHandle )
  */
 BOOL WINAPI UnregisterWaitEx( HANDLE WaitHandle, HANDLE CompletionEvent ) 
 {
-    FIXME("%p %p\n",WaitHandle, CompletionEvent);
-    return FALSE;
+    NTSTATUS status;
+
+    TRACE("%p %p\n",WaitHandle, CompletionEvent);
+
+    status = RtlDeregisterWaitEx( WaitHandle, CompletionEvent );
+    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 /***********************************************************************
