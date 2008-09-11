@@ -257,7 +257,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"HTML",      elem_iids,        NULL},
     {"HEAD",      elem_iids,        NULL},
     {"TITLE",     elem_iids,        NULL},
-    {"BODY",      body_iids,        NULL},
+    {"BODY",      body_iids,        &DIID_DispHTMLBody},
     {"A",         anchor_iids,      NULL},
     {"INPUT",     input_iids,       &DIID_DispHTMLInputElement},
     {"SELECT",    select_iids,      &DIID_DispHTMLSelectElement},
