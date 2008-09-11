@@ -186,4 +186,13 @@ ok(tmp === 3, "3 || (...) is not 3");
 tmp = false || 2;
 ok(tmp === 2, "false || 2 is not 2");
 
+tmp = 0 && ok(false, "second and expression called");
+ok(tmp === 0, "0 && (...) is not 0");
+
+tmp = true && "test";
+ok(tmp === "test", "true && \"test\" is not \"test\"");
+
+tmp = true && 0;
+ok(tmp === 0, "true && 0 is not 0");
+
 reportSuccess();
