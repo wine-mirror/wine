@@ -1352,7 +1352,8 @@ static void update_lock_state(BYTE vkey, WORD scan, DWORD time)
 void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 {
     XKeyEvent *event = &xev->xkey;
-    char Str[24];
+    char buf[24];
+    char *Str = buf;
     KeySym keysym = 0;
     WORD vkey = 0, bScan;
     DWORD dwFlags;
@@ -1367,19 +1368,32 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     wine_tsx11_lock();
     /* Clients should pass only KeyPress events to XmbLookupString */
     if (xic && event->type == KeyPress)
-        ascii_chars = XmbLookupString(xic, event, Str, sizeof(Str), &keysym, &status);
+    {
+        ascii_chars = XmbLookupString(xic, event, buf, sizeof(buf), &keysym, &status);
+        TRACE("XmbLookupString needs %i byte(s)\n", ascii_chars);
+        if (status == XBufferOverflow)
+        {
+            Str = HeapAlloc(GetProcessHeap(), 0, ascii_chars);
+            if (Str == NULL)
+            {
+                ERR("Failed to allocate memory!\n");
+                wine_tsx11_unlock();
+                return;
+            }
+            ascii_chars = XmbLookupString(xic, event, Str, ascii_chars, &keysym, &status);
+        }
+    }
     else
-        ascii_chars = XLookupString(event, Str, sizeof(Str), &keysym, NULL);
+        ascii_chars = XLookupString(event, buf, sizeof(buf), &keysym, NULL);
     wine_tsx11_unlock();
 
     TRACE_(key)("nbyte = %d, status 0x%x\n", ascii_chars, status);
 
-    if (status == XBufferOverflow)
-        ERR("Buffer Overflow need %i!\n",ascii_chars);
-
     if (status == XLookupChars)
     {
         X11DRV_XIMLookupChars( Str, ascii_chars );
+        if (buf != Str)
+            HeapFree(GetProcessHeap(), 0, Str);
         return;
     }
 
@@ -1407,6 +1421,8 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
                     (event->type == KeyPress) ? "KeyPress" : "KeyRelease",
                     keysym, ksname, ascii_chars, debugstr_an(Str, ascii_chars));
     }
+    if (buf != Str)
+        HeapFree(GetProcessHeap(), 0, Str);
 
     wine_tsx11_lock();
     vkey = EVENT_event_to_vkey(xic,event);
@@ -2419,7 +2435,8 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     KeySym keysym = 0;
     INT ret;
     int keyc;
-    char lpChar[10];
+    char buf[10];
+    char *lpChar = buf;
     HWND focus;
     XIC xic;
     Status status = 0;
@@ -2518,15 +2535,26 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
      * e.type was set to KeyPress above.
      */
     if (xic)
-        ret = XmbLookupString(xic, &e, lpChar, sizeof(lpChar), &keysym, &status);
+    {
+        ret = XmbLookupString(xic, &e, buf, sizeof(buf), &keysym, &status);
+        TRACE("XmbLookupString needs %d byte(s)\n", ret);
+        if (status == XBufferOverflow)
+        {
+            lpChar = HeapAlloc(GetProcessHeap(), 0, ret);
+            if (lpChar == NULL)
+            {
+                ERR("Failed to allocate memory!\n");
+                wine_tsx11_unlock();
+                return 0;
+            }
+            ret = XmbLookupString(xic, &e, lpChar, ret, &keysym, &status);
+        }
+    }
     else
-        ret = XLookupString(&e, lpChar, sizeof(lpChar), &keysym, NULL);
+        ret = XLookupString(&e, buf, sizeof(buf), &keysym, NULL);
     wine_tsx11_unlock();
 
     TRACE_(key)("nbyte = %d, status 0x%x\n", ret, status);
-
-    if (status == XBufferOverflow)
-        ERR("Buffer Overflow need %d!\n", ret);
 
     if (TRACE_ON(key))
     {
@@ -2661,6 +2689,8 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     }
 
 found:
+    if (buf != lpChar)
+        HeapFree(GetProcessHeap(), 0, lpChar);
     TRACE_(key)("ToUnicode about to return %d with char %x %s\n",
 		ret, (ret && bufW) ? bufW[0] : 0, bufW ? "" : "(no buffer)");
     return ret;
