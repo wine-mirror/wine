@@ -359,10 +359,17 @@ static void testAddCTLToStore(void)
      signedCTLWithCTLInnerContentAndBadSig,
      sizeof(signedCTLWithCTLInnerContentAndBadSig), CERT_STORE_ADD_NEW,
      NULL);
-    ok(!ret &&
-     (GetLastError() == CRYPT_E_EXISTS ||
-      GetLastError() == CRYPT_E_NOT_FOUND), /* win9x */
-     "expected CRYPT_E_EXISTS, got %d %08x\n", ret, GetLastError());
+    if (ret)
+    {
+        /* win9x */
+        ok(GetLastError() == CRYPT_E_NOT_FOUND,
+           "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    }
+    else
+    {
+        ok(!ret && GetLastError() == CRYPT_E_EXISTS,
+           "expected CRYPT_E_EXISTS, got %d %08x\n", ret, GetLastError());
+    }
     CertCloseStore(store, 0);
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
