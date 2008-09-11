@@ -14,7 +14,7 @@
 14 stub CryptUIDlgViewCertificateA
 15 stub CryptUIDlgViewCertificatePropertiesA
 16 stub CryptUIDlgViewCertificatePropertiesW
-17 stub CryptUIDlgViewCertificateW
+17 stdcall CryptUIDlgViewCertificateW(ptr ptr)
 18 stub CryptUIDlgViewContext
 19 stub CryptUIDlgViewSignerInfoA
 20 stub CryptUIDlgViewSignerInfoW

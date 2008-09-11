@@ -55,3 +55,11 @@ BOOL WINAPI CryptUIDlgCertMgr(PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr)
     FIXME("(%p): stub\n", pCryptUICertMgr);
     return FALSE;
 }
+
+BOOL WINAPI CryptUIDlgViewCertificateW(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
+                                       BOOL *pfPropertiesChanged)
+{
+    FIXME("(%p, %p): stub\n", pCertViewInfo, pfPropertiesChanged);
+    if (pfPropertiesChanged) *pfPropertiesChanged = FALSE;
+    return TRUE;
+}
