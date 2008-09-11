@@ -186,9 +186,6 @@ static BOOL load_driver(void)
     HeapFree( GetProcessHeap(), 0, str );
     if (!path) return FALSE;
 
-    /* make sure msvcrt is loaded to resolve the ntoskrnl.exe forwards */
-    LoadLibraryA( "msvcrt.dll" );
-
     /* GameGuard uses an NT-style path name */
     str = path;
     if (!strncmpW( path, ntprefixW, 4 )) str += 4;
