@@ -267,7 +267,6 @@ static int           proximity_out_type;
 static HWND          hwndTabletDefault;
 static WTPACKET      gMsgPacket;
 static DWORD         gSerial;
-static INT           button_state[10];
 
 /* Reference: http://www.wacomeng.com/devsupport/ibmpc/gddevpc.html
  *
@@ -303,6 +302,7 @@ static INT           button_state[10];
  * So to support that we need CURSORMAX of 12 (0 to 11)
  * FIXME: we don't support more than 4 regular tablets or 2 multimode tablets */
 #define             CURSORMAX 12
+static INT           button_state[CURSORMAX];
 
 static LOGCONTEXTW      gSysContext;
 static WTI_DEVICES_INFO gSysDevice;
