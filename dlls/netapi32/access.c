@@ -417,6 +417,10 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
                       LPDWORD entriesread, LPDWORD totalentries)
 {
     NET_API_STATUS status;
+    const WCHAR admins[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r','s',0};
+    LPWSTR currentuser;
+    LOCALGROUP_USERS_INFO_0* info;
+    DWORD size;
 
     FIXME("(%s, %s, %d, %08x, %p %d, %p, %p) stub!\n",
           debugstr_w(servername), debugstr_w(username), level, flags, bufptr,
@@ -426,12 +430,37 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
     if (status != NERR_Success)
         return status;
 
-    if (!NETAPI_FindUser(username))
-        return NERR_UserNotFound;
+    size = UNLEN + 1;
+    NetApiBufferAllocate(size, (LPVOID*)&currentuser);
+    GetUserNameW(currentuser, &size);
 
-    if (bufptr) *bufptr = NULL;
-    if (entriesread) *entriesread = 0;
-    if (totalentries) *totalentries = 0;
+    if (lstrcmpiW(username, currentuser) && NETAPI_FindUser(username))
+    {
+        NetApiBufferFree(currentuser);
+        return NERR_UserNotFound;
+    }
+
+    NetApiBufferFree(currentuser);
+    *totalentries = 1;
+    size = sizeof(*info) + sizeof(admins);
+
+    if(prefmaxlen < size)
+        status = ERROR_MORE_DATA;
+    else
+        status = NetApiBufferAllocate(size, (LPVOID*)&info);
+
+    if(status != NERR_Success)
+    {
+        *bufptr = NULL;
+        *entriesread = 0;
+        return status;
+    }
+
+    info->lgrui0_name = (LPWSTR)((LPBYTE)info + sizeof(*info));
+    lstrcpyW(info->lgrui0_name, admins);
+
+    *bufptr = (LPBYTE)info;
+    *entriesread = 1;
 
     return NERR_Success;
 }
