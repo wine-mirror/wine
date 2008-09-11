@@ -158,6 +158,13 @@ static void test_reference(void)
     ok(r == S_OK, "failed\n");
     ok(str == NULL, "string should be null\n");
 
+    /* Unimplented functions checks */
+    r = IHlink_GetAdditionalParams(lnk, NULL);
+    ok(r == E_NOTIMPL, "failed\n");
+
+    r = IHlink_SetAdditionalParams(lnk, NULL);
+    ok(r == E_NOTIMPL, "failed\n");
+
     IHlink_Release(lnk);
 }
 
