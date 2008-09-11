@@ -1687,7 +1687,9 @@ static void test_select(void)
     ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", ret);
 
     WaitForSingleObject (thread_handle, 1000);
-    ok ( (thread_params.ReadKilled), "closesocket did not wakeup select\n");
+    ok ( (thread_params.ReadKilled) ||
+         broken(thread_params.ReadKilled == 0), /*Win98*/
+            "closesocket did not wakeup select\n");
 
 }
 
