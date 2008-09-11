@@ -308,6 +308,13 @@ static HRESULT WINAPI MimeInternat_GetCodePageInfo(IMimeInternational *iface, CO
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI MimeInternat_CanConvertCodePages(IMimeInternational *iface, CODEPAGEID cpiSource,
+                                                       CODEPAGEID cpiDest)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI MimeInternat_DecodeHeader(IMimeInternational *iface, HCHARSET hCharset,
                                                 LPCSTR pszData,
                                                 LPPROPVARIANT pDecoded,
@@ -390,6 +397,7 @@ static IMimeInternationalVtbl mime_internat_vtbl =
     MimeInternat_FindCharset,
     MimeInternat_GetCharsetInfo,
     MimeInternat_GetCodePageInfo,
+    MimeInternat_CanConvertCodePages,
     MimeInternat_DecodeHeader,
     MimeInternat_EncodeHeader,
     MimeInternat_ConvertBuffer,

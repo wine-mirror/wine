@@ -252,6 +252,9 @@ library MIMEOLE
         HRESULT GetCodePageInfo(
             [in]        CODEPAGEID cpiCodePage,
             [in, out]   LPCODEPAGEINFO pCodePageInfo);
+        HRESULT CanConvertCodePages(
+            [in]        CODEPAGEID cpiSource,
+            [in]        CODEPAGEID cpiDest);
         HRESULT DecodeHeader(
             [in]        HCHARSET hCharset,
             [in]        LPCSTR pszData,
@@ -273,22 +276,22 @@ library MIMEOLE
             [in]        CODEPAGEID cpiDest,
             [in]        LPPROPVARIANT pIn,
             [in, out]   LPPROPVARIANT pOut);
-        HRESULT MLANG_ConvertInetReset();
+        HRESULT MLANG_ConvertInetReset(void);
         HRESULT MLANG_ConvertInetString(
             [in]        CODEPAGEID cpiSource,
             [in]        CODEPAGEID cpiDest,
             [in]        LPCSTR pSource,
             [in]        int *pnSizeOfSource,
-            [out]       LPSTR pDestination,
+            [in,out,unique]  LPSTR pDestination,
             [in]        int *pnDstSize);
         HRESULT Rfc1522Decode(
             [in]        LPCSTR pszValue,
-            [in]        LPCSTR pszCharset,
+            [in,ref]    LPCSTR pszCharset,
             [in]        ULONG cchmax,
             [out]       LPSTR *ppszDecoded);
         HRESULT Rfc1522Encode(
             [in]        LPCSTR pszValue,
-            [in]         HCHARSET hCharset,
+            [in]        HCHARSET hCharset,
             [out]       LPSTR *ppszEncoded);
     }
 
