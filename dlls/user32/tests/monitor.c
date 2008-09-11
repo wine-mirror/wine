@@ -360,7 +360,7 @@ static void test_work_area(void)
           wp.ptMaxPosition.x, wp.ptMaxPosition.y,
           wp.rcNormalPosition.left, wp.rcNormalPosition.top,
           wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
-    OffsetRect(&rc_normal, -rc_work.left, -rc_work.top);
+    OffsetRect(&wp.rcNormalPosition, rc_work.left, rc_work.top);
     if (!EqualRect(&mi.rcMonitor, &mi.rcWork)) /* FIXME: remove once Wine is fixed */
         todo_wine ok(EqualRect(&rc_normal, &wp.rcNormalPosition), "normal pos is different\n");
     else
