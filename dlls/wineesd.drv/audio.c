@@ -1680,7 +1680,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     WINE_WAVEIN*	wwi = (WINE_WAVEIN*)&WInDev[uDevID];
     WAVEHDR*		lpWaveHdr;
     DWORD		dwSleepTime;
-    DWORD		bytesRead;
+    int			bytesRead;
     enum win_wm_message msg;
     DWORD		param;
     HANDLE		ev;
@@ -1707,11 +1707,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 			      lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
 			      lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
 		TRACE("bytesRead=%d\n",bytesRead);
-		if (bytesRead == -1 && errno == EAGAIN)
-			bytesRead = 0;
-		if (bytesRead==0) break; /* So we can stop recording smoothly */
-		if (bytesRead < 0)
-			bytesRead = 0;
+		if (bytesRead <= 0) break; /* So we can stop recording smoothly */
  
 		lpWaveHdr->dwBytesRecorded	+= bytesRead;
 		wwi->dwRecordedTotal		+= bytesRead;
