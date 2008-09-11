@@ -2011,6 +2011,24 @@ static void test_default_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
     ok(!strcmp_wa(V_BSTR(&v), "auto"), "V_BSTR(v)=%s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    /* margin tests */
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_margin(style, &str);
+    ok(hres == S_OK, "get_margin failed: %08x\n", hres);
+    ok(!str, "margin = %s\n", dbgstr_w(str));
+
+    str = a2bstr("1");
+    hres = IHTMLStyle_put_margin(style, str);
+    ok(hres == S_OK, "get_margin failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_margin(style, &str);
+    ok(hres == S_OK, "get_margin failed: %08x\n", hres);
+    ok(strcmp_wa(str, "1"), "margin = %s\n", dbgstr_w(str));
+
+    hres = IHTMLStyle_put_margin(style, NULL);
+    ok(hres == S_OK, "get_margin failed: %08x\n", hres);
 }
 
 static void test_default_selection(IHTMLDocument2 *doc)
