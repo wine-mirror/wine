@@ -352,7 +352,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
   }
 
   /* clean up */
-  I_RpcFreeBuffer(msg);
+  I_RpcFree(msg->Buffer);
   RPCRT4_FreeHeader(hdr);
   HeapFree(GetProcessHeap(), 0, msg);
 }
