@@ -3058,3 +3058,22 @@ enum message_type
     unsigned int   status;        /* completion status */
     unsigned long  information;   /* IO_STATUS_BLOCK Information */
 @END
+
+
+/* Retrieve layered info for a window */
+@REQ(get_window_layered_info)
+    user_handle_t  handle;        /* handle to the window */
+@REPLY
+    unsigned int   color_key;     /* color key */
+    unsigned int   alpha;         /* alpha (0..255) */
+    unsigned int   flags;         /* LWA_* flags */
+@END
+
+
+/* Set layered info for a window */
+@REQ(set_window_layered_info)
+    user_handle_t  handle;        /* handle to the window */
+    unsigned int   color_key;     /* color key */
+    unsigned int   alpha;         /* alpha (0..255) */
+    unsigned int   flags;         /* LWA_* flags */
+@END

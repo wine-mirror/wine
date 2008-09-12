@@ -3321,21 +3321,46 @@ BOOL WINAPI SwitchDesktop( HDESK hDesktop)
 /*****************************************************************************
  *              SetLayeredWindowAttributes (USER32.@)
  */
-BOOL WINAPI SetLayeredWindowAttributes( HWND hWnd, COLORREF rgbKey, 
-                                        BYTE bAlpha, DWORD dwFlags )
+BOOL WINAPI SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
-    FIXME("(%p,0x%.8x,%d,%d): stub!\n", hWnd, rgbKey, bAlpha, dwFlags);
-    return TRUE;
+    BOOL ret;
+
+    FIXME("(%p,%08x,%d,%x): stub!\n", hwnd, key, alpha, flags);
+
+    SERVER_START_REQ( set_window_layered_info )
+    {
+        req->handle = hwnd;
+        req->color_key = key;
+        req->alpha = alpha;
+        req->flags = flags;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
+
 
 /*****************************************************************************
  *              GetLayeredWindowAttributes (USER32.@)
  */
-BOOL WINAPI GetLayeredWindowAttributes( HWND hWnd, COLORREF *prgbKey,
-                                        BYTE *pbAlpha, DWORD *pdwFlags )
+BOOL WINAPI GetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *alpha, DWORD *flags )
 {
-    FIXME("(%p,%p,%p,%p): stub!\n", hWnd, prgbKey, pbAlpha, pdwFlags);
-    return FALSE;
+    BOOL ret;
+
+    SERVER_START_REQ( get_window_layered_info )
+    {
+        req->handle = hwnd;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            if (key) *key = reply->color_key;
+            if (alpha) *alpha = reply->alpha;
+            if (flags) *flags = reply->flags;
+        }
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /*****************************************************************************

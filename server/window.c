@@ -79,6 +79,10 @@ struct window
     void*            instance;        /* creator instance */
     unsigned int     is_unicode : 1;  /* ANSI or unicode */
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
+    unsigned int     is_layered : 1;  /* has layered info been set? */
+    unsigned int     color_key;       /* color key for a layered window */
+    unsigned int     alpha;           /* alpha value for a layered window */
+    unsigned int     layered_flags;   /* flags for a layered window */
     unsigned long    user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     unsigned int     paint_flags;     /* various painting flags */
@@ -479,6 +483,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->instance       = NULL;
     win->is_unicode     = 1;
     win->is_linked      = 0;
+    win->is_layered     = 0;
     win->user_data      = 0;
     win->text           = NULL;
     win->paint_flags    = 0;
@@ -1873,6 +1878,7 @@ DECL_HANDLER(set_window_info)
         /* WS_EX_TOPMOST can only be changed for unlinked windows */
         if (!win->is_linked) win->ex_style = req->ex_style;
         else win->ex_style = (req->ex_style & ~WS_EX_TOPMOST) | (win->ex_style & WS_EX_TOPMOST);
+        if (!(win->ex_style & WS_EX_LAYERED)) win->is_layered = 0;
     }
     if (req->flags & SET_WIN_ID) win->id = req->id;
     if (req->flags & SET_WIN_INSTANCE) win->instance = req->instance;
@@ -2467,4 +2473,40 @@ DECL_HANDLER(set_global_windows)
     shell_listview = new_shell_listview;
     progman_window = new_progman_window;
     taskman_window = new_taskman_window;
+}
+
+/* retrieve layered info for a window */
+DECL_HANDLER(get_window_layered_info)
+{
+    struct window *win = get_window( req->handle );
+
+    if (!win) return;
+
+    if (win->is_layered)
+    {
+        reply->color_key = win->color_key;
+        reply->alpha     = win->alpha;
+        reply->flags     = win->layered_flags;
+    }
+    else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+}
+
+
+/* set layered info for a window */
+DECL_HANDLER(set_window_layered_info)
+{
+    struct window *win = get_window( req->handle );
+
+    if (!win) return;
+
+    if (win->ex_style & WS_EX_LAYERED)
+    {
+        if (req->flags & LWA_ALPHA) win->alpha = req->alpha;
+        else if (!win->is_layered) win->alpha = 0;  /* alpha init value is 0 */
+
+        win->color_key     = req->color_key;
+        win->layered_flags = req->flags;
+        win->is_layered    = 1;
+    }
+    else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
 }

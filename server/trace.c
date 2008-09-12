@@ -3773,6 +3773,26 @@ static void dump_add_fd_completion_request( const struct add_fd_completion_reque
     fprintf( stderr, " information=%lx", req->information );
 }
 
+static void dump_get_window_layered_info_request( const struct get_window_layered_info_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_window_layered_info_reply( const struct get_window_layered_info_reply *req )
+{
+    fprintf( stderr, " color_key=%08x,", req->color_key );
+    fprintf( stderr, " alpha=%08x,", req->alpha );
+    fprintf( stderr, " flags=%08x", req->flags );
+}
+
+static void dump_set_window_layered_info_request( const struct set_window_layered_info_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " color_key=%08x,", req->color_key );
+    fprintf( stderr, " alpha=%08x,", req->alpha );
+    fprintf( stderr, " flags=%08x", req->flags );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -4006,6 +4026,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_query_completion_request,
     (dump_func)dump_set_completion_info_request,
     (dump_func)dump_add_fd_completion_request,
+    (dump_func)dump_get_window_layered_info_request,
+    (dump_func)dump_set_window_layered_info_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4240,6 +4262,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_remove_completion_reply,
     (dump_func)dump_query_completion_reply,
     (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_get_window_layered_info_reply,
     (dump_func)0,
 };
 
@@ -4476,6 +4500,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "query_completion",
     "set_completion_info",
     "add_fd_completion",
+    "get_window_layered_info",
+    "set_window_layered_info",
 };
 
 static const struct
