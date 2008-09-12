@@ -27,6 +27,13 @@
 
 #define ALIGN_SIZE(size, alignment) (((size) + (alignment - 1)) & ~((alignment - 1)))
 
+static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
+{
+    if (rva == 0)
+        return NULL;
+    return ((char*) module) + rva;
+}
+
 static const struct
 {
     WORD e_magic;      /* 00: MZ Header signature */
@@ -103,7 +110,7 @@ static IMAGE_SECTION_HEADER section =
     IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ, /* Characteristics */
 };
 
-START_TEST(loader)
+static void test_Loader(void)
 {
     static const struct test_data
     {
@@ -479,4 +486,66 @@ endloop:
         SetLastError(0xdeadbeef);
         ok(DeleteFile(dll_name), "DeleteFile error %d\n", GetLastError());
     }
+}
+
+/* Verify linking style of import descriptors */
+static void test_ImportDescriptors(void)
+{
+    HMODULE kernel32_module = NULL;
+    PIMAGE_DOS_HEADER d_header;
+    PIMAGE_NT_HEADERS nt_headers;
+    DWORD import_dir_size;
+    DWORD_PTR dir_offset;
+    PIMAGE_IMPORT_DESCRIPTOR import_chunk;
+
+    /* Load kernel32 module */
+    kernel32_module = GetModuleHandleA("kernel32.dll");
+    assert( kernel32_module != NULL );
+
+    /* Get PE header info from module image */
+    d_header = (PIMAGE_DOS_HEADER) kernel32_module;
+    nt_headers = (PIMAGE_NT_HEADERS) (((char*) d_header) +
+            d_header->e_lfanew);
+
+    /* Get size of import entry directory */
+    import_dir_size = nt_headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
+    if (!import_dir_size)
+    {
+        skip("Unable to continue testing due to missing import directory.\n");
+        return;
+    }
+
+    /* Get address of first import chunk */
+    dir_offset = nt_headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
+    import_chunk = RVAToAddr(dir_offset, kernel32_module);
+    ok(import_chunk != 0, "Invalid import_chunk: %p\n", import_chunk);
+    if (!import_chunk) return;
+
+    /* Iterate through import descriptors and verify set name,
+     * OriginalFirstThunk, and FirstThunk.  Core Windows DLLs, such as
+     * kernel32.dll, don't use Borland-style linking, where the table of
+     * imported names is stored directly in FirstThunk and overwritten
+     * by the relocation, instead of being stored in OriginalFirstThunk.
+     * */
+    for (; import_chunk->FirstThunk; import_chunk++)
+    {
+        LPCSTR module_name = (LPCSTR) RVAToAddr(
+                import_chunk->Name, kernel32_module);
+        PIMAGE_THUNK_DATA name_table = (PIMAGE_THUNK_DATA) RVAToAddr(
+                import_chunk->OriginalFirstThunk, kernel32_module);
+        PIMAGE_THUNK_DATA iat = (PIMAGE_THUNK_DATA) RVAToAddr(
+                import_chunk->FirstThunk, kernel32_module);
+        ok(module_name != NULL, "Imported module name should not be NULL\n");
+        ok(name_table != NULL,
+                "Name table for imported module %s should not be NULL\n",
+                module_name);
+        ok(iat != NULL, "IAT for imported module %s should not be NULL\n",
+                module_name);
+    }
+}
+
+START_TEST(loader)
+{
+    test_Loader();
+    test_ImportDescriptors();
 }
