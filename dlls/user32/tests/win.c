@@ -47,6 +47,8 @@ void dump_region(HRGN hrgn);
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
 static BOOL (WINAPI *pGetWindowInfo)(HWND,WINDOWINFO*);
 static UINT (WINAPI *pGetWindowModuleFileNameA)(HWND,LPSTR,UINT);
+static BOOL (WINAPI *pGetLayeredWindowAttributes)(HWND,COLORREF*,BYTE*,DWORD*);
+static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
 
 static BOOL test_lbuttondown_flag;
 static HWND hwndMessage;
@@ -4809,11 +4811,94 @@ static void test_hwnd_message(void)
     DestroyWindow(hwnd);
 }
 
+static void test_layered_window(void)
+{
+    HWND hwnd;
+    COLORREF key = 0;
+    BYTE alpha = 0;
+    DWORD flags = 0;
+    BOOL ret;
+
+    if (!pGetLayeredWindowAttributes || !pSetLayeredWindowAttributes)
+    {
+        win_skip( "layered windows not supported\n" );
+        return;
+    }
+    hwnd = CreateWindowExA(0, "MainWindowClass", "message window", WS_CAPTION,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    assert( hwnd );
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( !ret, "GetLayeredWindowAttributes should fail on non-layered window\n" );
+    ret = pSetLayeredWindowAttributes( hwnd, 0, 0, LWA_ALPHA );
+    ok( !ret, "SetLayeredWindowAttributes should fail on non-layered window\n" );
+    SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( !ret, "GetLayeredWindowAttributes should fail on layered but not initialized window\n" );
+    ret = pSetLayeredWindowAttributes( hwnd, 0x123456, 44, LWA_ALPHA );
+    ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( ret, "GetLayeredWindowAttributes should succeed on layered window\n" );
+    ok( key == 0x123456, "wrong color key %x\n", key );
+    ok( alpha == 44, "wrong alpha %u\n", alpha );
+    ok( flags == LWA_ALPHA, "wrong flags %x\n", flags );
+
+    /* clearing WS_EX_LAYERED resets attributes */
+    SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED );
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( !ret, "GetLayeredWindowAttributes should fail on no longer layered window\n" );
+    SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( !ret, "GetLayeredWindowAttributes should fail on layered but not initialized window\n" );
+    ret = pSetLayeredWindowAttributes( hwnd, 0x654321, 22, LWA_COLORKEY | LWA_ALPHA );
+    ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( ret, "GetLayeredWindowAttributes should succeed on layered window\n" );
+    ok( key == 0x654321, "wrong color key %x\n", key );
+    ok( alpha == 22, "wrong alpha %u\n", alpha );
+    ok( flags == (LWA_COLORKEY | LWA_ALPHA), "wrong flags %x\n", flags );
+
+    /* alpha not changed if LWA_ALPHA is not set */
+    ret = pSetLayeredWindowAttributes( hwnd, 0x888888, 33, LWA_COLORKEY );
+    ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
+    alpha = 0;
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( ret, "GetLayeredWindowAttributes should succeed on layered window\n" );
+    ok( key == 0x888888, "wrong color key %x\n", key );
+    ok( alpha == 22, "wrong alpha %u\n", alpha );
+    ok( flags == LWA_COLORKEY, "wrong flags %x\n", flags );
+
+    /* color key always changed */
+    ret = pSetLayeredWindowAttributes( hwnd, 0x999999, 44, 0 );
+    ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
+    alpha = 0;
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( ret, "GetLayeredWindowAttributes should succeed on layered window\n" );
+    ok( key == 0x999999, "wrong color key %x\n", key );
+    ok( alpha == 22, "wrong alpha %u\n", alpha );
+    ok( flags == 0, "wrong flags %x\n", flags );
+
+    /* default alpha is 0 */
+    SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED );
+    SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
+    ret = pSetLayeredWindowAttributes( hwnd, 0x222222, 55, 0 );
+    ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( ret, "GetLayeredWindowAttributes should succeed on layered window\n" );
+    ok( key == 0x222222, "wrong color key %x\n", key );
+    ok( alpha == 0, "wrong alpha %u\n", alpha );
+    ok( flags == 0, "wrong flags %x\n", flags );
+
+    DestroyWindow( hwnd );
+}
+
 START_TEST(win)
 {
-    pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
-    pGetWindowInfo = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetWindowInfo" );
-    pGetWindowModuleFileNameA = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetWindowModuleFileNameA" );
+    HMODULE user32 = GetModuleHandleA( "user32.dll" );
+    pGetAncestor = (void *)GetProcAddress( user32, "GetAncestor" );
+    pGetWindowInfo = (void *)GetProcAddress( user32, "GetWindowInfo" );
+    pGetWindowModuleFileNameA = (void *)GetProcAddress( user32, "GetWindowModuleFileNameA" );
+    pGetLayeredWindowAttributes = (void *)GetProcAddress( user32, "GetLayeredWindowAttributes" );
+    pSetLayeredWindowAttributes = (void *)GetProcAddress( user32, "SetLayeredWindowAttributes" );
 
     if (!RegisterWindowClasses()) assert(0);
 
@@ -4878,6 +4963,7 @@ START_TEST(win)
     test_gettext();
     test_GetUpdateRect();
     test_Expose();
+    test_layered_window();
 
     /* add the tests above this line */
     UnhookWindowsHookEx(hhook);
