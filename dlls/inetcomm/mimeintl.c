@@ -383,7 +383,7 @@ static HRESULT WINAPI MimeInternat_MLANG_ConvertInetString(IMimeInternational *i
 }
 
 static HRESULT WINAPI MimeInternat_Rfc1522Decode(IMimeInternational *iface, LPCSTR pszValue,
-                                                 LPCSTR pszCharset,
+                                                 LPSTR pszCharset,
                                                  ULONG cchmax,
                                                  LPSTR *ppszDecoded)
 {

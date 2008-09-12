@@ -286,7 +286,7 @@ library MIMEOLE
             [in]        int *pnDstSize);
         HRESULT Rfc1522Decode(
             [in]        LPCSTR pszValue,
-            [in,ref]    LPCSTR pszCharset,
+            [in,ref]    LPSTR pszCharset,
             [in]        ULONG cchmax,
             [out]       LPSTR *ppszDecoded);
         HRESULT Rfc1522Encode(
