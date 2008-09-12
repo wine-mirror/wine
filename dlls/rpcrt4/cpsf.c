@@ -174,7 +174,7 @@ HRESULT WINAPI NdrDllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv,
     if(max_delegating_vtbl_size > 0)
       create_delegating_vtbl(max_delegating_vtbl_size);
   }
-  if (IsEqualGUID(rclsid, pclsid))
+  if (pclsid && IsEqualGUID(rclsid, pclsid))
     return IPSFactoryBuffer_QueryInterface((LPPSFACTORYBUFFER)pPSFactoryBuffer, iid, ppv);
   else {
     const ProxyFileInfo *info;
