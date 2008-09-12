@@ -405,7 +405,7 @@ static void WINAPI VGA_DoExit(ULONG_PTR arg)
 
 static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 {
-    LRESULT	res;
+    HRESULT	res;
     ModeSet *par = (ModeSet *)arg;
     par->ret=1;
 
@@ -422,7 +422,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
         }
         res = pDirectDrawCreate(NULL,&lpddraw,NULL);
         if (!lpddraw) {
-            ERR("DirectDraw is not available (res = %lx)\n",res);
+            ERR("DirectDraw is not available (res = 0x%x)\n",res);
             return;
         }
         if (!vga_hwnd) {
@@ -439,33 +439,36 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
         else
             SetWindowPos(vga_hwnd,0,0,0,par->Xres,par->Yres,SWP_NOMOVE|SWP_NOZORDER);
 
-        if ((res=IDirectDraw_SetCooperativeLevel(lpddraw,vga_hwnd,DDSCL_FULLSCREEN|DDSCL_EXCLUSIVE))) {
-	    ERR("Could not set cooperative level to exclusive (%lx)\n",res);
+        res=IDirectDraw_SetCooperativeLevel(lpddraw,vga_hwnd,DDSCL_FULLSCREEN|DDSCL_EXCLUSIVE);
+        if (res != S_OK) {
+	    ERR("Could not set cooperative level to exclusive (0x%x)\n",res);
 	}
 
-        if ((res=IDirectDraw_SetDisplayMode(lpddraw,par->Xres,par->Yres,par->Depth))) {
-            ERR("DirectDraw does not support requested display mode (%dx%dx%d), res = %lx!\n",par->Xres,par->Yres,par->Depth,res);
+        res=IDirectDraw_SetDisplayMode(lpddraw,par->Xres,par->Yres,par->Depth);
+        if (res != S_OK) {
+            ERR("DirectDraw does not support requested display mode (%dx%dx%d), res = 0x%x!\n",par->Xres,par->Yres,par->Depth,res);
             IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
             return;
         }
 
         res=IDirectDraw_CreatePalette(lpddraw,DDPCAPS_8BIT,NULL,&lpddpal,NULL);
-        if (res) {
-	    ERR("Could not create palette (res = %lx)\n",res);
+        if (res != S_OK) {
+	    ERR("Could not create palette (res = 0x%x)\n",res);
             IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
             return;
         }
         if ((res=IDirectDrawPalette_SetEntries(lpddpal,0,0,256,vga_def_palette))) {
-            ERR("Could not set default palette entries (res = %lx)\n", res);
+            ERR("Could not set default palette entries (res = 0x%x)\n", res);
         }
 
         memset(&sdesc,0,sizeof(sdesc));
         sdesc.dwSize=sizeof(sdesc);
 	sdesc.dwFlags = DDSD_CAPS;
 	sdesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-        if (IDirectDraw_CreateSurface(lpddraw,&sdesc,&lpddsurf,NULL)||(!lpddsurf)) {
+        res=IDirectDraw_CreateSurface(lpddraw,&sdesc,&lpddsurf,NULL);
+        if (res != S_OK || !lpddsurf) {
             ERR("DirectDraw surface is not available\n");
             IDirectDraw_Release(lpddraw);
             lpddraw=NULL;
@@ -600,7 +603,7 @@ static LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Dep
 {
     if (!lpddraw) return NULL;
     if (!lpddsurf) return NULL;
-    if (IDirectDrawSurface_Lock(lpddsurf,NULL,&sdesc,0,0)) {
+    if (IDirectDrawSurface_Lock(lpddsurf,NULL,&sdesc,0,0) != S_OK) {
         ERR("could not lock surface!\n");
         return NULL;
     }
