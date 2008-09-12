@@ -2293,8 +2293,8 @@ LRESULT X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
     xev.xclient.display = display;
     xev.xclient.send_event = True;
     xev.xclient.format = 32;
-    xev.xclient.data.l[0] = x; /* x coord */
-    xev.xclient.data.l[1] = y; /* y coord */
+    xev.xclient.data.l[0] = x - virtual_screen_rect.left; /* x coord */
+    xev.xclient.data.l[1] = y - virtual_screen_rect.top;  /* y coord */
     xev.xclient.data.l[2] = dir; /* direction */
     xev.xclient.data.l[3] = 1; /* button */
     xev.xclient.data.l[4] = 0; /* unused */
