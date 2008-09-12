@@ -408,7 +408,7 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 
 	if (device->hwbuf) {
 		HRESULT err=IDsDriverBuffer_GetPosition(device->hwbuf,playpos,writepos);
-		if (err) {
+		if (err != S_OK) {
 			WARN("IDsDriverBuffer_GetPosition failed\n");
 			return err;
 		}
