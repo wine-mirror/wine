@@ -849,14 +849,14 @@ HRESULT WINAPI GenericChainFinalProv(CRYPT_PROVIDER_DATA *data)
             else
                 err = ERROR_OUTOFMEMORY;
         }
-        if (!err)
+        if (err == NO_ERROR)
             err = policyCallback(data, TRUSTERROR_STEP_FINAL_POLICYPROV,
              data->dwRegPolicySettings, data->csSigners, signers, policyArg);
         data->psPfns->pfnFree(signers);
     }
-    if (err)
+    if (err != NO_ERROR)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_POLICYPROV] = err;
-    TRACE("returning %d (%08x)\n", !err ? S_OK : S_FALSE,
+    TRACE("returning %d (%08x)\n", err == NO_ERROR ? S_OK : S_FALSE,
      data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_POLICYPROV]);
     return err == NO_ERROR ? S_OK : S_FALSE;
 }
