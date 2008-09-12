@@ -583,12 +583,12 @@ static void do_parse_theme(WCHAR *file)
     WINE_TRACE("%s\n", wine_dbgstr_w(file));
 
     GetPrivateProfileStringW(colorSect, NULL, NULL, keyName,
-                             MAX_PATH*sizeof(WCHAR), file);
+                             MAX_PATH, file);
 
     keyNamePtr = keyName;
     while (*keyNamePtr!=0) {
         GetPrivateProfileStringW(colorSect, keyNamePtr, NULL, keyNameValue,
-                                 MAX_PATH*sizeof(WCHAR), file);
+                                 MAX_PATH, file);
 
         keyNameValueSize = WideCharToMultiByte(CP_ACP, 0, keyNameValue, -1,
                                                keyNameValueA, 0, NULL, NULL);
