@@ -382,6 +382,28 @@ static void sync_window_region( Display *display, struct x11drv_win_data *data, 
 
 
 /***********************************************************************
+ *              sync_window_opacity
+ */
+static void sync_window_opacity( Display *display, Window win,
+                                 COLORREF key, BYTE alpha, DWORD flags )
+{
+    unsigned long opacity = 0xffffffff;
+
+    if (flags & LWA_ALPHA) opacity = (0xffffffff / 0xff) * alpha;
+
+    if (flags & LWA_COLORKEY) FIXME("LWA_COLORKEY not supported\n");
+
+    wine_tsx11_lock();
+    if (opacity == 0xffffffff)
+        XDeleteProperty( display, win, x11drv_atom(_NET_WM_WINDOW_OPACITY) );
+    else
+        XChangeProperty( display, win, x11drv_atom(_NET_WM_WINDOW_OPACITY),
+                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&opacity, 1 );
+    wine_tsx11_unlock();
+}
+
+
+/***********************************************************************
  *              sync_window_text
  */
 static void sync_window_text( Display *display, Window win, const WCHAR *text )
@@ -1340,6 +1362,9 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     int cx, cy, mask;
     XSetWindowAttributes attr;
     WCHAR text[1024];
+    COLORREF key;
+    BYTE alpha;
+    DWORD layered_flags;
 
     if (!(cx = data->window_rect.right - data->window_rect.left)) cx = 1;
     if (!(cy = data->window_rect.bottom - data->window_rect.top)) cy = 1;
@@ -1388,6 +1413,10 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
 
     /* set the window region */
     sync_window_region( display, data, (HRGN)1 );
+
+    /* set the window opacity */
+    if (!GetLayeredWindowAttributes( data->hwnd, &key, &alpha, &layered_flags )) layered_flags = 0;
+    sync_window_opacity( display, data->whole_window, key, alpha, layered_flags );
 
     wine_tsx11_lock();
     XFlush( display );  /* make sure the window exists before we start painting to it */
@@ -1487,6 +1516,13 @@ void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
             XSetWMHints( thread_display(), data->whole_window, data->wm_hints );
             wine_tsx11_unlock();
         }
+    }
+
+    if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED))
+    {
+        /* changing WS_EX_LAYERED resets attributes */
+        if ((data = X11DRV_get_win_data( hwnd )) && data->whole_window)
+            sync_window_opacity( thread_display(), data->whole_window, 0, 0, 0 );
     }
 }
 
@@ -2155,6 +2191,19 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
         SendMessageW( hwnd, WM_X11DRV_SET_WIN_REGION, 0, 0 );
     }
     return TRUE;
+}
+
+
+/***********************************************************************
+ *		SetLayeredWindowAttributes  (X11DRV.@)
+ *
+ * Set transparency attributes for a layered window.
+ */
+void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+{
+    Window win = X11DRV_get_whole_window( hwnd );
+
+    if (win) sync_window_opacity( thread_display(), win, key, alpha, flags );
 }
 
 

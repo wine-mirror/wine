@@ -106,6 +106,7 @@
 @ cdecl SetClipboardData(long long long long) X11DRV_SetClipboardData
 @ cdecl SetCapture(long long) X11DRV_SetCapture
 @ cdecl SetFocus(long) X11DRV_SetFocus
+@ cdecl SetLayeredWindowAttributes(long long long long) X11DRV_SetLayeredWindowAttributes
 @ cdecl SetParent(long long long) X11DRV_SetParent
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
