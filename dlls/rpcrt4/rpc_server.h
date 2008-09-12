@@ -73,6 +73,7 @@ typedef struct _RpcServerInterface
   /* set when unregistering interface to let the caller of
    * RpcServerUnregisterIf* know that all calls have finished */
   HANDLE CallsCompletedEvent;
+  BOOL Delete; /* delete when the last call finishes */
 } RpcServerInterface;
 
 void RPCRT4_new_client(RpcConnection* conn);

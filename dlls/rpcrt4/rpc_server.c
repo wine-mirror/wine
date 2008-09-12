@@ -147,10 +147,11 @@ static RpcServerInterface* RPCRT4_find_interface(UUID* object,
 static void RPCRT4_release_server_interface(RpcServerInterface *sif)
 {
   if (!InterlockedDecrement(&sif->CurrentCalls) &&
-      sif->CallsCompletedEvent) {
+      sif->Delete) {
     /* sif must have been removed from server_interfaces before
      * CallsCompletedEvent is set */
-    SetEvent(sif->CallsCompletedEvent);
+    if (sif->CallsCompletedEvent)
+      SetEvent(sif->CallsCompletedEvent);
     HeapFree(GetProcessHeap(), 0, sif);
   }
 }
@@ -888,8 +889,10 @@ RPC_STATUS WINAPI RpcServerUnregisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid
     if ((!IfSpec || !memcmp(&If->InterfaceId, &cif->If->InterfaceId, sizeof(RPC_SYNTAX_IDENTIFIER))) &&
         UuidEqual(MgrTypeUuid, &cif->MgrTypeUuid, &status)) {
       list_remove(&cif->entry);
+      TRACE("unregistering cif %p\n", cif);
       if (cif->CurrentCalls) {
         completed = FALSE;
+        cif->Delete = TRUE;
         if (WaitForCallsToComplete)
           cif->CallsCompletedEvent = event = CreateEventW(NULL, FALSE, FALSE, NULL);
       }
