@@ -114,6 +114,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(ScrollDC);
         GET_USER_FUNC(SetCapture);
         GET_USER_FUNC(SetFocus);
+        GET_USER_FUNC(SetLayeredWindowAttributes);
         GET_USER_FUNC(SetParent);
         GET_USER_FUNC(SetWindowRgn);
         GET_USER_FUNC(SetWindowIcon);
@@ -375,6 +376,10 @@ static void nulldrv_SetFocus( HWND hwnd )
 {
 }
 
+static void nulldrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+{
+}
+
 static void nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
 }
@@ -473,6 +478,7 @@ static USER_DRIVER null_driver =
     nulldrv_ScrollDC,
     nulldrv_SetCapture,
     nulldrv_SetFocus,
+    nulldrv_SetLayeredWindowAttributes,
     nulldrv_SetParent,
     nulldrv_SetWindowRgn,
     nulldrv_SetWindowIcon,
@@ -708,6 +714,11 @@ static void loaderdrv_SetFocus( HWND hwnd )
     load_driver()->pSetFocus( hwnd );
 }
 
+static void loaderdrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+{
+    load_driver()->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
+}
+
 static void loaderdrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
     load_driver()->pSetParent( hwnd, parent, old_parent );
@@ -814,6 +825,7 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_ScrollDC,
     loaderdrv_SetCapture,
     loaderdrv_SetFocus,
+    loaderdrv_SetLayeredWindowAttributes,
     loaderdrv_SetParent,
     loaderdrv_SetWindowRgn,
     loaderdrv_SetWindowIcon,

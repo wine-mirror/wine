@@ -3325,7 +3325,7 @@ BOOL WINAPI SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
 {
     BOOL ret;
 
-    FIXME("(%p,%08x,%d,%x): stub!\n", hwnd, key, alpha, flags);
+    TRACE("(%p,%08x,%d,%x): stub!\n", hwnd, key, alpha, flags);
 
     SERVER_START_REQ( set_window_layered_info )
     {
@@ -3336,6 +3336,8 @@ BOOL WINAPI SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+
+    if (ret) USER_Driver->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
 
     return ret;
 }
