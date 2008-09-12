@@ -511,6 +511,7 @@ static const IRpcProxyBufferVtbl tmproxyvtable = {
 static int
 _argsize(TYPEDESC *tdesc, ITypeInfo *tinfo) {
     switch (tdesc->vt) {
+    case VT_I8:
     case VT_UI8:
 	return 8/sizeof(DWORD);
     case VT_R8:
@@ -519,6 +520,8 @@ _argsize(TYPEDESC *tdesc, ITypeInfo *tinfo) {
         return sizeof(CY)/sizeof(DWORD);
     case VT_DATE:
 	return sizeof(DATE)/sizeof(DWORD);
+    case VT_DECIMAL:
+        return (sizeof(DECIMAL)+3)/sizeof(DWORD);
     case VT_VARIANT:
 	return (sizeof(VARIANT)+3)/sizeof(DWORD);
     default:
@@ -532,8 +535,11 @@ _xsize(const TYPEDESC *td, ITypeInfo *tinfo) {
     switch (td->vt) {
     case VT_DATE:
 	return sizeof(DATE);
+    case VT_CY:
+        return sizeof(CY);
+    /* FIXME: VT_BOOL should return 2? */
     case VT_VARIANT:
-	return sizeof(VARIANT)+3;
+	return sizeof(VARIANT)+3; /* FIXME: why the +3? */
     case VT_CARRAY: {
 	int i, arrsize = 1;
 	const ARRAYDESC *adesc = td->u.lpadesc;
@@ -544,6 +550,7 @@ _xsize(const TYPEDESC *td, ITypeInfo *tinfo) {
     }
     case VT_UI8:
     case VT_I8:
+    case VT_R8:
 	return 8;
     case VT_UI2:
     case VT_I2:
