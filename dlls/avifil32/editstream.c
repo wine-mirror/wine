@@ -261,7 +261,7 @@ static LPVOID AVIFILE_ReadFrame(IAVIEditStreamImpl* const This,
     if (pg == NULL)
       return NULL;
     if (This->pg != NULL) {
-      if (IGetFrame_SetFormat(pg, This->lpFrame, NULL, 0, 0, -1, -1)) {
+      if (IGetFrame_SetFormat(pg, This->lpFrame, NULL, 0, 0, -1, -1) != S_OK) {
         AVIStreamGetFrameClose(pg);
         ERR(": IGetFrame_SetFormat failed\n");
         return NULL;
@@ -896,7 +896,7 @@ static LONG    WINAPI IEditAVIStream_fnFindSample(IAVIStream*iface,LONG pos,
 
   /* map our position to a stream and position in it */
   if (AVIFILE_FindStreamInTable(This, pos, &stream, &streamPos,
-                                &streamNr, TRUE))
+                                &streamNr, TRUE) != S_OK)
     return -1; /* doesn't exist */
 
   if (This->bDecompress) {
