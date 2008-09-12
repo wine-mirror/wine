@@ -388,6 +388,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     packet = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcPacket));
     if (!packet) {
       I_RpcFree(msg->Buffer);
+      RPCRT4_FreeHeader(hdr);
       HeapFree(GetProcessHeap(), 0, msg);
       break;
     }
@@ -397,6 +398,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     if (!QueueUserWorkItem(RPCRT4_worker_thread, packet, WT_EXECUTELONGFUNCTION)) {
       ERR("couldn't queue work item for worker thread, error was %d\n", GetLastError());
       I_RpcFree(msg->Buffer);
+      RPCRT4_FreeHeader(hdr);
       HeapFree(GetProcessHeap(), 0, msg);
       HeapFree(GetProcessHeap(), 0, packet);
       break;
