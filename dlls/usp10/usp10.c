@@ -225,7 +225,8 @@ static HRESULT get_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
 
         if (!hdc) return E_PENDING;
         if (!(sc = heap_alloc_zero(sizeof(ScriptCache)))) return E_OUTOFMEMORY;
-        if ((ret = init_script_cache(hdc, sc)))
+        ret = init_script_cache(hdc, sc);
+        if (ret != S_OK)
         {
             heap_free(sc);
             return ret;
@@ -337,7 +338,10 @@ HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPR
     TRACE("%p,%p,%p\n", hdc, psc, sfp);
 
     if (!sfp) return E_INVALIDARG;
-    if ((hr = get_script_cache(hdc, psc))) return hr;
+
+    hr = get_script_cache(hdc, psc);
+    if (hr != S_OK)
+        return hr;
 
     if (sfp->cBytes != sizeof(SCRIPT_FONTPROPERTIES))
         return E_INVALIDARG;
@@ -625,7 +629,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
         hr = ScriptItemize(pString, cString, num_items, psControl, psState, analysis->pItem,
                            &analysis->numItems);
     }
-    if (hr) goto error;
+    if (hr != S_OK) goto error;
 
     if ((analysis->logattrs = heap_alloc(sizeof(SCRIPT_LOGATTR) * cString)))
         ScriptBreak(pString, cString, (SCRIPT_STRING_ANALYSIS)analysis, analysis->logattrs);
@@ -1248,7 +1252,9 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 
     if (!psva || !pcGlyphs) return E_INVALIDARG;
     if (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
-    if ((hr = get_script_cache(hdc, psc))) return hr;
+
+    hr = get_script_cache(hdc, psc);
+    if (hr != S_OK) return hr;
 
     *pcGlyphs = cChars;
 
@@ -1315,7 +1321,9 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
           debugstr_wn(pwGlyphs, cGlyphs), cGlyphs, psva, psa, piAdvance);
 
     if (!psva) return E_INVALIDARG;
-    if ((hr = get_script_cache(hdc, psc))) return hr;
+
+    hr = get_script_cache(hdc, psc);
+    if (hr != S_OK) return hr;
 
     hfont = select_cached_font(psc);
 
@@ -1388,7 +1396,8 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     TRACE("(%p,%p,%s,%d,0x%x,%p)\n", hdc, psc, debugstr_wn(pwcInChars, cChars),
           cChars, dwFlags, pwOutGlyphs);
 
-    if ((hr = get_script_cache(hdc, psc))) return hr;
+    hr = get_script_cache(hdc, psc);
+    if (hr != S_OK) return hr;
 
     hfont = select_cached_font(psc);
     if (GetGlyphIndicesW(get_cache_hdc(psc), pwcInChars, cChars, pwOutGlyphs, 0) == GDI_ERROR)
@@ -1447,7 +1456,9 @@ HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, LONG *height)
     TRACE("(%p, %p, %p)\n", hdc, psc, height);
 
     if (!height) return E_INVALIDARG;
-    if ((hr = get_script_cache(hdc, psc))) return hr;
+
+    hr = get_script_cache(hdc, psc);
+    if (hr != S_OK) return hr;
 
     *height = get_cache_height(psc);
     return S_OK;
@@ -1475,7 +1486,8 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
 
     TRACE("(%p, %p, 0x%04x, %p)\n", hdc, psc, glyph, abc);
 
-    if ((hr = get_script_cache(hdc, psc))) return hr;
+    hr = get_script_cache(hdc, psc);
+    if (hr != S_OK) return hr;
 
     hfont = select_cached_font(psc);
     if (!GetCharABCWidthsI(get_cache_hdc(psc), 0, 1, &glyph, abc)) hr = E_HANDLE;
