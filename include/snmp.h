@@ -275,8 +275,8 @@ INT WINAPI SnmpUtilVarBindListCpy(SnmpVarBindList *pVblDst,
  SnmpVarBindList *pVblSrc);
 VOID WINAPI SnmpUtilVarBindListFree(SnmpVarBindList *pVbl);
 
-LPVOID WINAPI SnmpUtilMemAlloc(UINT nBytes);
-LPVOID WINAPI SnmpUtilMemReAlloc(LPVOID pMem, UINT nBytes);
+LPVOID WINAPI SnmpUtilMemAlloc(UINT nBytes) __WINE_ALLOC_SIZE(1);
+LPVOID WINAPI SnmpUtilMemReAlloc(LPVOID pMem, UINT nBytes) __WINE_ALLOC_SIZE(2);
 VOID WINAPI SnmpUtilMemFree(LPVOID pMem);
 
 LPSTR WINAPI SnmpUtilOidToA(AsnObjectIdentifier *Oid);

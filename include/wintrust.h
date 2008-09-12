@@ -260,7 +260,7 @@ struct _CRYPT_PROVIDER_DATA;
 
 #define TRUSTERROR_MAX_STEPS                   38
 
-typedef void * (WINAPI *PFN_CPD_MEM_ALLOC)(DWORD cbSize);
+typedef void * (__WINE_ALLOC_SIZE(1) WINAPI *PFN_CPD_MEM_ALLOC)(DWORD cbSize);
 typedef void (WINAPI *PFN_CPD_MEM_FREE)(void *pvMem2Free);
 typedef BOOL (WINAPI *PFN_CPD_ADD_STORE)(struct _CRYPT_PROVIDER_DATA *pProvData,
  HCERTSTORE hStore2Add);

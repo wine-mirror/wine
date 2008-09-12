@@ -163,7 +163,7 @@ typedef struct {
 
 /**********************************************************************/
 
-typedef void * (__cdecl *PFNFCIALLOC)(ULONG cb);
+typedef void * (__cdecl __WINE_ALLOC_SIZE(1) *PFNFCIALLOC)(ULONG cb);
 #define FNFCIALLOC(fn) void * __cdecl fn(ULONG cb)
 
 typedef void (__cdecl *PFNFCIFREE)(void *memory);
