@@ -388,7 +388,7 @@ static void nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
 }
 
-static void nulldrv_SetWindowStyle( HWND hwnd, DWORD old_style )
+static void nulldrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
 }
 
@@ -723,9 +723,9 @@ static void loaderdrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
     load_driver()->pSetWindowIcon( hwnd, type, icon );
 }
 
-static void loaderdrv_SetWindowStyle( HWND hwnd, DWORD old_style )
+static void loaderdrv_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
-    load_driver()->pSetWindowStyle( hwnd, old_style );
+    load_driver()->pSetWindowStyle( hwnd, offset, style );
 }
 
 static void loaderdrv_SetWindowText( HWND hwnd, LPCWSTR text )

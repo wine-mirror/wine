@@ -536,7 +536,7 @@ HWND WIN_SetOwner( HWND hwnd, HWND owner )
 ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
 {
     BOOL ok;
-    ULONG new_style, old_style = 0;
+    STYLESTRUCT style;
     WND *win = WIN_GetPtr( hwnd );
 
     if (!win || win == WND_DESKTOP) return 0;
@@ -547,32 +547,33 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
                  set_bits, clear_bits, hwnd );
         return 0;
     }
-    new_style = (win->dwStyle | set_bits) & ~clear_bits;
-    if (new_style == win->dwStyle)
+    style.styleOld = win->dwStyle;
+    style.styleNew = (win->dwStyle | set_bits) & ~clear_bits;
+    if (style.styleNew == style.styleOld)
     {
         WIN_ReleasePtr( win );
-        return new_style;
+        return style.styleNew;
     }
     SERVER_START_REQ( set_window_info )
     {
         req->handle = hwnd;
         req->flags  = SET_WIN_STYLE;
-        req->style  = new_style;
+        req->style  = style.styleNew;
         req->extra_offset = -1;
         if ((ok = !wine_server_call( req )))
         {
-            old_style = reply->old_style;
-            win->dwStyle = new_style;
+            style.styleOld = reply->old_style;
+            win->dwStyle = style.styleNew;
         }
     }
     SERVER_END_REQ;
     WIN_ReleasePtr( win );
     if (ok)
     {
-        USER_Driver->pSetWindowStyle( hwnd, old_style );
-        if ((old_style ^ new_style) & WS_VISIBLE) invalidate_dce( hwnd, NULL );
+        USER_Driver->pSetWindowStyle( hwnd, GWL_STYLE, &style );
+        if ((style.styleOld ^ style.styleNew) & WS_VISIBLE) invalidate_dce( hwnd, NULL );
     }
-    return old_style;
+    return style.styleOld;
 }
 
 
@@ -2131,10 +2132,11 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
 
     if (!ok) return 0;
 
-    if (offset == GWL_STYLE) USER_Driver->pSetWindowStyle( hwnd, retval );
-
     if (offset == GWL_STYLE || offset == GWL_EXSTYLE)
+    {
+        USER_Driver->pSetWindowStyle( hwnd, offset, &style );
         SendMessageW( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
+    }
 
     return retval;
 }

@@ -1455,16 +1455,15 @@ void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
  *
  * Update the X state of a window to reflect a style change
  */
-void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
+void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
     struct x11drv_win_data *data;
-    DWORD new_style, changed;
+    DWORD changed;
 
     if (hwnd == GetDesktopWindow()) return;
-    new_style = GetWindowLongW( hwnd, GWL_STYLE );
-    changed = new_style ^ old_style;
+    changed = style->styleNew ^ style->styleOld;
 
-    if ((changed & WS_VISIBLE) && (new_style & WS_VISIBLE))
+    if (offset == GWL_STYLE && (changed & WS_VISIBLE) && (style->styleNew & WS_VISIBLE))
     {
         /* we don't unmap windows, that causes trouble with the window manager */
         if (!(data = X11DRV_get_win_data( hwnd )) &&
@@ -1474,17 +1473,17 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
         {
             Display *display = thread_display();
             set_wm_hints( display, data );
-            if (!data->mapped) map_window( display, data, new_style );
+            if (!data->mapped) map_window( display, data, style->styleNew );
         }
     }
 
-    if (changed & WS_DISABLED)
+    if (offset == GWL_STYLE && (changed & WS_DISABLED))
     {
         data = X11DRV_get_win_data( hwnd );
         if (data && data->wm_hints)
         {
             wine_tsx11_lock();
-            data->wm_hints->input = !(new_style & WS_DISABLED);
+            data->wm_hints->input = !(style->styleNew & WS_DISABLED);
             XSetWMHints( thread_display(), data->whole_window, data->wm_hints );
             wine_tsx11_unlock();
         }
