@@ -168,9 +168,6 @@ static HRESULT WINAPI MimeInternat_GetCodePageCharset(IMimeInternational *iface,
 
     *phCharset = NULL;
 
-    if(ctCsetType < CHARSET_BODY || ctCsetType > CHARSET_WEB)
-        return MIME_E_INVALID_CHARSET_TYPE;
-
     hr = mlang_getcodepageinfo(cpiCodePage, &mlang_cp_info);
     if(SUCCEEDED(hr))
     {
@@ -189,6 +186,8 @@ static HRESULT WINAPI MimeInternat_GetCodePageCharset(IMimeInternational *iface,
         case CHARSET_WEB:
             charset_nameW = mlang_cp_info.wszWebCharset;
             break;
+        default:
+            return MIME_E_INVALID_CHARSET_TYPE;
         }
         len = WideCharToMultiByte(CP_ACP, 0, charset_nameW, -1, NULL, 0, NULL, NULL);
         charset_name = HeapAlloc(GetProcessHeap(), 0, len);
