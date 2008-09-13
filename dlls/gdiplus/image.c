@@ -1277,6 +1277,35 @@ static const ImageCodecInfo codecs[NUM_ENCODERS_SUPPORTED] =
     };
 
 /*****************************************************************************
+ * GdipGetImageDecodersSize [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetImageDecodersSize(UINT *numDecoders, UINT *size)
+{
+    FIXME("%p %p stub!\n", numDecoders, size);
+
+    if (!numDecoders || !size)
+        return InvalidParameter;
+
+    *numDecoders = 0;
+    *size = 0;
+
+    return Ok;
+}
+
+/*****************************************************************************
+ * GdipGetImageDecoders [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetImageDecoders(UINT numDecoders, UINT size, ImageCodecInfo *decoders)
+{
+    FIXME("%u %u %p stub!\n", numDecoders, size, decoders);
+
+    if (!decoders)
+        return GenericError;
+
+    return NotImplemented;
+}
+
+/*****************************************************************************
  * GdipGetImageEncodersSize [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipGetImageEncodersSize(UINT *numEncoders, UINT *size)

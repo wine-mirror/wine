@@ -281,8 +281,8 @@
 @ stub GdipGetHemfFromMetafile
 @ stub GdipGetImageAttributesAdjustedPalette
 @ stdcall GdipGetImageBounds(ptr ptr ptr)
-@ stub GdipGetImageDecoders
-@ stub GdipGetImageDecodersSize
+@ stdcall GdipGetImageDecoders(long long ptr)
+@ stdcall GdipGetImageDecodersSize(ptr ptr)
 @ stdcall GdipGetImageDimension(ptr ptr ptr)
 @ stdcall GdipGetImageEncoders(long long ptr)
 @ stdcall GdipGetImageEncodersSize(ptr ptr)
