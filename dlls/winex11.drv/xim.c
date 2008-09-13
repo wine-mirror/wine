@@ -177,15 +177,20 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
 void X11DRV_XIMLookupChars( const char *str, DWORD count )
 {
     DWORD dwOutput;
-    WCHAR wcOutput[64];
+    WCHAR *wcOutput;
     HWND focus;
 
-    dwOutput = MultiByteToWideChar(CP_UNIXCP, 0, str, count, wcOutput, sizeof(wcOutput)/sizeof(WCHAR));
+    dwOutput = MultiByteToWideChar(CP_UNIXCP, 0, str, count, NULL, 0);
+    wcOutput = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * dwOutput);
+    if (wcOutput == NULL)
+        return;
+    MultiByteToWideChar(CP_UNIXCP, 0, str, count, wcOutput, dwOutput);
 
     if ((focus = GetFocus()))
         IME_UpdateAssociation(focus);
 
     X11DRV_ImmSetInternalString(GCS_RESULTSTR,0,0,wcOutput,dwOutput);
+    HeapFree(GetProcessHeap(), 0, wcOutput);
 }
 
 static void X11DRV_ImmSetOpenStatus(BOOL fOpen)
