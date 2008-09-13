@@ -542,7 +542,7 @@ static inline int lstrncmpiW(LPCWSTR s1, LPCWSTR s2, int n)
 {
     int res;
 
-    n = min(min(n, strlenW(s1)), strlenW(s2));
+    n = min(min(n, lstrlenW(s1)), lstrlenW(s2));
     res = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, s1, n, s2, n);
     return res ? res - sizeof(WCHAR) : res;
 }
@@ -823,7 +823,7 @@ static BOOL notify_deleteitem(const LISTVIEW_INFO *infoPtr, INT nItem)
     return IsWindow(hwnd);
 }
 
-static int get_ansi_notification(INT unicodeNotificationCode)
+static int get_ansi_notification(UINT unicodeNotificationCode)
 {
     switch (unicodeNotificationCode)
     {
@@ -847,11 +847,12 @@ static int get_ansi_notification(INT unicodeNotificationCode)
   pdi : dispinfo structure (can be unicode or ansi)
   isW : TRUE if dispinfo is Unicode
 */
-static BOOL notify_dispinfoT(const LISTVIEW_INFO *infoPtr, INT notificationCode, LPNMLVDISPINFOW pdi, BOOL isW)
+static BOOL notify_dispinfoT(const LISTVIEW_INFO *infoPtr, UINT notificationCode, LPNMLVDISPINFOW pdi, BOOL isW)
 {
     BOOL bResult = FALSE;
     BOOL convertToAnsi = FALSE, convertToUnicode = FALSE;
-    INT cchTempBufMax = 0, savCchTextMax = 0, realNotifCode;
+    INT cchTempBufMax = 0, savCchTextMax = 0;
+    UINT realNotifCode;
     LPWSTR pszTempBuf = NULL, savPszText = NULL;
 
     if ((pdi->item.mask & LVIF_TEXT) && is_textT(pdi->item.pszText, isW))

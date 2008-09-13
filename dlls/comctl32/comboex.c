@@ -198,7 +198,7 @@ static INT COMBOEX_Notify (COMBOEX_INFO *infoPtr, INT code, NMHDR *hdr)
 
 
 static INT
-COMBOEX_NotifyItem (COMBOEX_INFO *infoPtr, INT code, NMCOMBOBOXEXW *hdr)
+COMBOEX_NotifyItem (COMBOEX_INFO *infoPtr, UINT code, NMCOMBOBOXEXW *hdr)
 {
     /* Change the Text item from Unicode to ANSI if necessary for NOTIFY */
     if (infoPtr->NtfUnicode)
