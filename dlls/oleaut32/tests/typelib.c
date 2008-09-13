@@ -37,10 +37,10 @@
 #define expect_hex(expr, value) expect_eq(expr, (int)value, int, "0x%x")
 #define expect_null(expr) expect_eq(expr, NULL, const void *, "%p")
 
-#define expect_wstr_utf8val(expr, value) \
+#define expect_wstr_acpval(expr, value) \
     { \
         CHAR buf[260]; \
-        expect_eq(!WideCharToMultiByte(CP_UTF8, 0, (expr), -1, buf, 260, NULL, NULL), 0, int, "%d"); \
+        expect_eq(!WideCharToMultiByte(CP_ACP, 0, (expr), -1, buf, 260, NULL, NULL), 0, int, "%d"); \
         ok(lstrcmp(value, buf) == 0, #expr " expected \"%s\" got \"%s\"\n", value, buf); \
     }
 
@@ -1279,7 +1279,7 @@ static void test_dump_typelib(const char *name)
     int ifcount = sizeof(info)/sizeof(info[0]);
     int iface, func;
 
-    MultiByteToWideChar(CP_UTF8, 0, name, -1, wszName, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, name, -1, wszName, MAX_PATH);
     ole_check(LoadTypeLibEx(wszName, REGKIND_NONE, &typelib));
     expect_eq(ITypeLib_GetTypeInfoCount(typelib), ifcount, UINT, "%d");
     for (iface = 0; iface < ifcount; iface++)
@@ -1292,7 +1292,7 @@ static void test_dump_typelib(const char *name)
         trace("Interface %s\n", if_info->name);
         ole_check(ITypeLib_GetTypeInfo(typelib, iface, &typeinfo));
         ole_check(ITypeLib_GetDocumentation(typelib, iface, &bstrIfName, NULL, NULL, NULL));
-        expect_wstr_utf8val(bstrIfName, if_info->name);
+        expect_wstr_acpval(bstrIfName, if_info->name);
         SysFreeString(bstrIfName);
 
         ole_check(ITypeInfo_GetTypeAttr(typeinfo, &typeattr));
@@ -1325,7 +1325,7 @@ static void test_dump_typelib(const char *name)
             ole_check(ITypeInfo_GetNames(typeinfo, desc->memid, namesTab, 256, &cNames));
             for (i = 0; i < cNames; i++)
             {
-                expect_wstr_utf8val(namesTab[i], fn_info->names[i]);
+                expect_wstr_acpval(namesTab[i], fn_info->names[i]);
                 SysFreeString(namesTab[i]);
             }
             expect_null(fn_info->names[cNames]);
