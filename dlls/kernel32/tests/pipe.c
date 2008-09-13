@@ -713,14 +713,17 @@ static int test_DisconnectNamedPipe(void)
     DWORD written;
     DWORD readden;
 
+    SetLastError(0xdeadbeef);
     hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    if (INVALID_HANDLE_VALUE == hnp) {
-        trace ("Seems we have no named pipes.\n");
+    if ((hnp == INVALID_HANDLE_VALUE /* Win98 */ || !hnp /* Win95 */)
+        && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+
+        win_skip("Named pipes are not implemented\n");
         return 1;
     }
 
