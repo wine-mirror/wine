@@ -130,6 +130,8 @@ static int get_user_sid(LPSTR *usersid)
     PTOKEN_USER user;
     BOOL rc;
 
+    if (!pConvertSidToStringSidA)
+        return 0;
     rc=OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
     if (!rc && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
         return 0;
