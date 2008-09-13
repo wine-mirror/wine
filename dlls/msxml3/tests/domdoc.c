@@ -1669,10 +1669,7 @@ static void test_get_text(void)
 
     r = IXMLDOMNode_get_text( node, &str );
     ok( r == S_OK, "ret %08x\n", r );
-todo_wine {
-    ok( !memcmp(str, szfn1_txt, sizeof(szfn1_txt)), "wrong string\n" );
- }
-    ok( !memcmp(str, szfn1_txt, sizeof(szfn1_txt)-4), "wrong string\n" );
+    ok( !memcmp(str, szfn1_txt, lstrlenW(szfn1_txt) ), "wrong string\n" );
     SysFreeString(str);
 
     r = IXMLDOMNode_get_attributes( node, &node_map );
