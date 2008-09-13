@@ -301,14 +301,14 @@ void RefreshDetails(HTREEITEM item)
             memset(&tci, 0, sizeof(TCITEM));
             tci.mask = TCIF_TEXT;
             tci.pszText = wszBuf;
-            tci.cchTextMax = sizeof(WCHAR[MAX_LOAD_STRING]);
+            tci.cchTextMax = sizeof(wszBuf)/sizeof(wszBuf[0]);
 
             LoadString(globals.hMainInst, IDS_TAB_IMPL,
-                    wszBuf, sizeof(WCHAR[MAX_LOAD_STRING]));
+                    wszBuf, sizeof(wszBuf)/sizeof(wszBuf[0]));
             SendMessage(details.hTab, TCM_INSERTITEM, 1, (LPARAM)&tci);
 
             LoadString(globals.hMainInst, IDS_TAB_ACTIV,
-                    wszBuf, sizeof(WCHAR[MAX_LOAD_STRING]));
+                    wszBuf, sizeof(wszBuf)/sizeof(wszBuf[0]));
             SendMessage(details.hTab, TCM_INSERTITEM, 2, (LPARAM)&tci);
         }
     }
@@ -336,13 +336,13 @@ static void CreateTabCtrl(HWND hWnd)
     memset(&tci, 0, sizeof(TCITEM));
     tci.mask = TCIF_TEXT;
     tci.pszText = buffer;
-    tci.cchTextMax = sizeof(WCHAR[MAX_LOAD_STRING]);
+    tci.cchTextMax = sizeof(buffer)/sizeof(buffer[0]);
 
     details.hTab = CreateWindow(WC_TABCONTROL, NULL, WS_CHILD|WS_VISIBLE,
             0, 0, 0, 0, hWnd, (HMENU)TAB_WINDOW, globals.hMainInst, NULL);
     ShowWindow(details.hTab, SW_HIDE);
 
-    LoadString(globals.hMainInst, IDS_TAB_REG, buffer, sizeof(WCHAR[MAX_LOAD_STRING]));
+    LoadString(globals.hMainInst, IDS_TAB_REG, buffer, sizeof(buffer)/sizeof(buffer[0]));
     SendMessage(details.hTab, TCM_INSERTITEM, 0, (LPARAM)&tci);
 
     details.hReg = CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, NULL,

@@ -109,9 +109,9 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
     if(FAILED(hRes))
     {
         LoadString(globals.hMainInst, IDS_CGCOFAIL, wszMessage,
-                sizeof(WCHAR[MAX_LOAD_STRING]));
+                sizeof(wszMessage)/sizeof(wszMessage[0]));
         LoadString(globals.hMainInst, IDS_ABOUT, wszTitle,
-                sizeof(WCHAR[MAX_LOAD_STRING]));
+                sizeof(wszTitle)/sizeof(wszTitle[0]));
 
 #define CASE_ERR(i) case i: \
     MultiByteToWideChar(CP_ACP, 0, #i, -1, wszFlagName, MAX_LOAD_STRING); \
@@ -130,7 +130,7 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
             CASE_ERR(CO_E_APPDIDNTREG);
             CASE_ERR(CLASS_E_CLASSNOTAVAILABLE);
             default:
-                LoadString(globals.hMainInst, IDS_ERROR_UNKN, wszFlagName, MAX_LOAD_STRING);
+                LoadString(globals.hMainInst, IDS_ERROR_UNKN, wszFlagName, sizeof(wszFlagName)/sizeof(wszFlagName[0]));
         }
 
         wsprintfW(&wszMessage[lstrlenW(wszMessage)], wszFormat,
@@ -419,7 +419,7 @@ static void AddTypeLib(void)
                     && *buffer)
             {
                 LoadString(globals.hMainInst, IDS_TL_VER, wszVer,
-                        sizeof(WCHAR[MAX_LOAD_STRING]));
+                        sizeof(wszVer)/sizeof(wszVer[0]));
 
                 wsprintfW(&buffer[lstrlenW(buffer)], wszFormat, wszVer, valName);
                 U(tvis).item.pszText = buffer;
@@ -550,43 +550,43 @@ static void AddBaseEntries(void)
     tvis.hParent = TVI_ROOT;
 
     LoadString(globals.hMainInst, IDS_TREE_I, U(tvis).item.pszText,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            MAX_LOAD_STRING);
     U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszInterface, NULL, NULL);
     tree.hI = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_TL, U(tvis).item.pszText,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            MAX_LOAD_STRING);
     U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszTypeLib, NULL, NULL);
     tree.hTL = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_AID, U(tvis).item.pszText,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            MAX_LOAD_STRING);
     U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH, wszAppID, NULL, NULL);
     tree.hAID = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_OC, U(tvis).item.pszText,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            MAX_LOAD_STRING);
     U(tvis).item.lParam = (LPARAM)NULL;
     tree.hOC = TreeView_InsertItem(globals.hTree, &tvis);
 
 
     tvis.hParent = tree.hOC;
     LoadString(globals.hMainInst, IDS_TREE_AO, U(tvis).item.pszText,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            MAX_LOAD_STRING);
     U(tvis).item.lParam = CreateITEM_INFO(REGTOP, wszCLSID, NULL, NULL);
     tree.hAO = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_CLO, U(tvis).item.pszText,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            MAX_LOAD_STRING);
     tree.hCLO = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_O1O, U(tvis).item.pszText,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            MAX_LOAD_STRING);
     U(tvis).item.lParam = (LPARAM)NULL;
     tree.hO1O = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_GBCC, U(tvis).item.pszText,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            MAX_LOAD_STRING);
     U(tvis).item.lParam = CreateITEM_INFO(REGTOP|REGPATH,
             wszComponentCategories, NULL, NULL);
     tree.hGBCC = TreeView_InsertItem(globals.hTree, &tvis);

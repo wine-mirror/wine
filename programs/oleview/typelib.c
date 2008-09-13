@@ -105,7 +105,7 @@ static void ShowLastError(void)
     WCHAR wszTitle[MAX_LOAD_STRING];
 
     LoadString(globals.hMainInst, IDS_TYPELIBTITLE, wszTitle,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            sizeof(wszTitle)/sizeof(wszTitle[0]));
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
             NULL, error, 0, (LPTSTR) &lpMsgBuf, 0, NULL);
     MessageBox(NULL, lpMsgBuf, wszTitle, MB_OK | MB_ICONERROR);
@@ -731,7 +731,7 @@ static int EnumImplTypes(ITypeInfo *pTypeInfo, int cImplTypes, HTREEITEM hParent
     if(!cImplTypes) return 0;
 
     LoadString(globals.hMainInst, IDS_INHERITINTERFACES, wszInheritedInterfaces,
-            sizeof(WCHAR[MAX_LOAD_STRING]));
+            sizeof(wszInheritedInterfaces)/sizeof(wszInheritedInterfaces[0]));
 
     U(tvis).item.mask = TVIF_TEXT;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
@@ -1191,7 +1191,7 @@ static int PopulateTree(void)
         WCHAR wszError[MAX_LOAD_STRING];
 
         LoadString(globals.hMainInst, IDS_ERROR_LOADTYPELIB,
-                wszError, sizeof(WCHAR[MAX_LOAD_STRING]));
+                wszError, sizeof(wszError)/sizeof(wszError[0]));
         wsprintfW(wszMessage, wszError, typelib.wszFileName, hRes);
         MessageBox(globals.hMainWnd, wszMessage, NULL, MB_OK|MB_ICONEXCLAMATION);
         return 1;
@@ -1516,8 +1516,8 @@ static void UpdateTypeLibStatusBar(int itemID)
 {
     WCHAR info[MAX_LOAD_STRING];
 
-    if(!LoadString(globals.hMainInst, itemID, info, sizeof(WCHAR[MAX_LOAD_STRING])))
-        LoadString(globals.hMainInst, IDS_READY, info, sizeof(WCHAR[MAX_LOAD_STRING]));
+    if(!LoadString(globals.hMainInst, itemID, info, sizeof(info)/sizeof(info[0])))
+        LoadString(globals.hMainInst, IDS_READY, info, sizeof(info)/sizeof(info[0]));
 
     SendMessage(typelib.hStatusBar, SB_SETTEXT, 0, (LPARAM)info);
 }
@@ -1615,7 +1615,7 @@ BOOL TypeLibRegisterClass(void)
 BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName)
 {
     WCHAR wszTitle[MAX_LOAD_STRING];
-    LoadString(hInst, IDS_TYPELIBTITLE, wszTitle, sizeof(WCHAR[MAX_LOAD_STRING]));
+    LoadString(hInst, IDS_TYPELIBTITLE, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
 
     if(wszFileName) lstrcpyW(typelib.wszFileName, wszFileName);
     else
