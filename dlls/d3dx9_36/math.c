@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
+
 #include "config.h"
 #include "windef.h"
 #include "wingdi.h"
@@ -40,25 +42,25 @@ HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutr
     }
 
     /*Compute the scaling part.*/
-    vec.x=pm->m[0][0];
-    vec.y=pm->m[0][1];
-    vec.z=pm->m[0][2];
+    vec.x=pm->u.m[0][0];
+    vec.y=pm->u.m[0][1];
+    vec.z=pm->u.m[0][2];
     poutscale->x=D3DXVec3Length(&vec);
 
-    vec.x=pm->m[1][0];
-    vec.y=pm->m[1][1];
-    vec.z=pm->m[1][2];
+    vec.x=pm->u.m[1][0];
+    vec.y=pm->u.m[1][1];
+    vec.z=pm->u.m[1][2];
     poutscale->y=D3DXVec3Length(&vec);
 
-    vec.x=pm->m[2][0];
-    vec.y=pm->m[2][1];
-    vec.z=pm->m[2][2];
+    vec.x=pm->u.m[2][0];
+    vec.y=pm->u.m[2][1];
+    vec.z=pm->u.m[2][2];
     poutscale->z=D3DXVec3Length(&vec);
 
     /*Compute the translation part.*/
-    pouttranslation->x=pm->m[3][0];
-    pouttranslation->y=pm->m[3][1];
-    pouttranslation->z=pm->m[3][2];
+    pouttranslation->x=pm->u.m[3][0];
+    pouttranslation->y=pm->u.m[3][1];
+    pouttranslation->z=pm->u.m[3][2];
 
     /*Let's calculate the rotation now*/
     if ( (poutscale->x == 0.0f) || (poutscale->y == 0.0f) || (poutscale->z == 0.0f) )
@@ -66,15 +68,15 @@ HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutr
      return D3DERR_INVALIDCALL;
     }
 
-    normalized.m[0][0]=pm->m[0][0]/poutscale->x;
-    normalized.m[0][1]=pm->m[0][1]/poutscale->x;
-    normalized.m[0][2]=pm->m[0][2]/poutscale->x;
-    normalized.m[1][0]=pm->m[1][0]/poutscale->y;
-    normalized.m[1][1]=pm->m[1][1]/poutscale->y;
-    normalized.m[1][2]=pm->m[1][2]/poutscale->y;
-    normalized.m[2][0]=pm->m[2][0]/poutscale->z;
-    normalized.m[2][1]=pm->m[2][1]/poutscale->z;
-    normalized.m[2][2]=pm->m[2][2]/poutscale->z;
+    normalized.u.m[0][0]=pm->u.m[0][0]/poutscale->x;
+    normalized.u.m[0][1]=pm->u.m[0][1]/poutscale->x;
+    normalized.u.m[0][2]=pm->u.m[0][2]/poutscale->x;
+    normalized.u.m[1][0]=pm->u.m[1][0]/poutscale->y;
+    normalized.u.m[1][1]=pm->u.m[1][1]/poutscale->y;
+    normalized.u.m[1][2]=pm->u.m[1][2]/poutscale->y;
+    normalized.u.m[2][0]=pm->u.m[2][0]/poutscale->z;
+    normalized.u.m[2][1]=pm->u.m[2][1]/poutscale->z;
+    normalized.u.m[2][2]=pm->u.m[2][2]/poutscale->z;
 
     D3DXQuaternionRotationMatrix(poutrotation,&normalized);
     return S_OK;
