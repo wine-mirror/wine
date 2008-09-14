@@ -1063,7 +1063,7 @@ static void _elem_get_scroll_left(unsigned line, IUnknown *unk)
     HRESULT hres;
 
     hres = IHTMLElement2_get_scrollLeft(elem, NULL);
-    ok(hres == E_INVALIDARG, "expect E_INVALIDARG got 0x%08x", hres);
+    ok(hres == E_INVALIDARG, "expect E_INVALIDARG got 0x%08x\n", hres);
 
     hres = IHTMLElement2_get_scrollLeft(elem, &l);
     ok(hres == S_OK, "get_scrollTop failed: %08x\n", hres);
