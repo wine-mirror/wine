@@ -272,10 +272,8 @@ static void PROFILE_Free( PROFILESECTION *section )
 /* returns 1 if a character white space else 0 */
 static inline int PROFILE_isspaceW(WCHAR c)
 {
-	if (isspaceW(c)) return 1;
-	if (c=='\r' || c==0x1a) return 1;
-	/* CR and ^Z (DOS EOF) are spaces too  (found on CD-ROMs) */
-	return 0;
+	/* ^Z (DOS EOF) is a space too  (found on CD-ROMs) */
+	return isspaceW(c) || c == 0x1a;
 }
 
 static inline ENCODING PROFILE_DetectTextEncoding(const void * buffer, int * len)
@@ -415,7 +413,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
 
         /* get rid of white space */
         while (szLineStart < szLineEnd && PROFILE_isspaceW(*szLineStart)) szLineStart++;
-        while ((szLineEnd > szLineStart) && ((szLineEnd[-1] == '\n') || PROFILE_isspaceW(szLineEnd[-1]))) szLineEnd--;
+        while ((szLineEnd > szLineStart) && PROFILE_isspaceW(szLineEnd[-1])) szLineEnd--;
 
         if (szLineStart >= szLineEnd) continue;
 
