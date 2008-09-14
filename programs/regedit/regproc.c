@@ -4,6 +4,7 @@
  *
  * Copyright 1999 Sylvain St-Germain
  * Copyright 2002 Andriy Palamarchuk
+ * Copyright 2008 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -930,11 +931,17 @@ static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
 /******************************************************************************
  * Writes the given line to a file, in multi-byte or wide characters
  */
-static void REGPROC_write_line(FILE *file, const WCHAR* str)
+static void REGPROC_write_line(FILE *file, const WCHAR* str, BOOL unicode)
 {
-    char* strA = GetMultiByteString(str);
-    fprintf(file, strA);
-    HeapFree(GetProcessHeap(), 0, strA);
+    if(unicode)
+    {
+        fwrite(str, sizeof(WCHAR), lstrlenW(str), file);
+    } else
+    {
+        char* strA = GetMultiByteString(str);
+        fprintf(file, strA);
+        HeapFree(GetProcessHeap(), 0, strA);
+    }
 }
 
 /******************************************************************************
@@ -957,7 +964,8 @@ static void export_hkey(FILE *file, HKEY key,
                  WCHAR **reg_key_name_buf, DWORD *reg_key_name_len,
                  WCHAR **val_name_buf, DWORD *val_name_len,
                  BYTE **val_buf, DWORD *val_size,
-                 WCHAR **line_buf, DWORD *line_buf_size)
+                 WCHAR **line_buf, DWORD *line_buf_size,
+                 BOOL unicode)
 {
     DWORD max_sub_key_len;
     DWORD max_val_name_len;
@@ -991,7 +999,7 @@ static void export_hkey(FILE *file, HKEY key,
     REGPROC_resize_char_buffer(line_buf, line_buf_size, lstrlenW(*reg_key_name_buf) + 4);
     /* output data for the current key */
     wsprintfW(*line_buf, key_format, *reg_key_name_buf);
-    REGPROC_write_line(file, *line_buf);
+    REGPROC_write_line(file, *line_buf, unicode);
 
     /* print all the values */
     i = 0;
@@ -1084,7 +1092,7 @@ static void export_hkey(FILE *file, HKEY key,
                         const WCHAR hex_format[] = {'h','e','x','(','%','d',')',':',0};
                         hex_prefix = buf;
                         wsprintfW(buf, hex_format, value_type);
-                        if(value_type == REG_MULTI_SZ)
+                        if(value_type == REG_MULTI_SZ && !unicode)
                             val_buf1 = (BYTE*)GetMultiByteStringN((WCHAR*)*val_buf, val_size1 / sizeof(WCHAR), &val_buf1_size);
                     }
 
@@ -1114,13 +1122,13 @@ static void export_hkey(FILE *file, HKEY key,
                             cur_pos = 2;
                         }
                     }
-                    if(value_type == REG_MULTI_SZ)
+                    if(value_type == REG_MULTI_SZ && !unicode)
                         HeapFree(GetProcessHeap(), 0, val_buf1);
                     lstrcpyW(*line_buf + line_pos, newline);
                     break;
                 }
             }
-            REGPROC_write_line(file, *line_buf);
+            REGPROC_write_line(file, *line_buf, unicode);
         }
     }
 
@@ -1145,7 +1153,7 @@ static void export_hkey(FILE *file, HKEY key,
                            &subkey) == ERROR_SUCCESS) {
                 export_hkey(file, subkey, reg_key_name_buf, reg_key_name_len,
                             val_name_buf, val_name_len, val_buf, val_size,
-                            line_buf, line_buf_size);
+                            line_buf, line_buf_size, unicode);
                 RegCloseKey(subkey);
             } else {
                 REGPROC_print_error();
@@ -1158,7 +1166,7 @@ static void export_hkey(FILE *file, HKEY key,
 /******************************************************************************
  * Open file for export.
  */
-static FILE *REGPROC_open_export_file(WCHAR *file_name)
+static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
 {
     FILE *file;
     WCHAR dash = '-';
@@ -1177,7 +1185,17 @@ static FILE *REGPROC_open_export_file(WCHAR *file_name)
         }
         HeapFree(GetProcessHeap(), 0, file_nameA);
     }
-    fputs("REGEDIT4\n", file);
+    if(unicode)
+    {
+        const BYTE unicode_seq[] = {0xff,0xfe};
+        const WCHAR header[] = {'W','i','n','d','o','w','s',' ','R','e','g','i','s','t','r','y',' ','E','d','i','t','o','r',' ','V','e','r','s','i','o','n',' ','5','.','0','0','\n'};
+        fwrite(unicode_seq, sizeof(BYTE), sizeof(unicode_seq)/sizeof(unicode_seq[0]), file);
+        fwrite(header, sizeof(WCHAR), sizeof(header)/sizeof(header[0]), file);
+    } else
+    {
+        fputs("REGEDIT4\n", file);
+    }
+
     return file;
 }
 
@@ -1189,7 +1207,7 @@ static FILE *REGPROC_open_export_file(WCHAR *file_name)
  * reg_key_name - registry branch to export. The whole registry is exported if
  *      reg_key_name is NULL or contains an empty string.
  */
-BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
+BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
 {
     WCHAR *reg_key_name_buf;
     WCHAR *val_name_buf;
@@ -1200,6 +1218,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
     DWORD val_size = REG_VAL_BUF_SIZE;
     DWORD line_buf_size = KEY_MAX_LEN + REG_VAL_BUF_SIZE;
     FILE *file = NULL;
+    BOOL unicode = (format == REG_FORMAT_5);
 
     reg_key_name_buf = HeapAlloc(GetProcessHeap(), 0,
                                  reg_key_name_len  * sizeof(*reg_key_name_buf));
@@ -1228,17 +1247,19 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
         }
         if (!branch_name[0]) {
             /* no branch - registry class is specified */
-            file = REGPROC_open_export_file(file_name);
+            file = REGPROC_open_export_file(file_name, unicode);
             export_hkey(file, reg_key_class,
                         &reg_key_name_buf, &reg_key_name_len,
                         &val_name_buf, &val_name_len,
-                        &val_buf, &val_size, &line_buf, &line_buf_size);
+                        &val_buf, &val_size, &line_buf,
+                        &line_buf_size, unicode);
         } else if (RegOpenKeyW(reg_key_class, branch_name, &key) == ERROR_SUCCESS) {
-            file = REGPROC_open_export_file(file_name);
+            file = REGPROC_open_export_file(file_name, unicode);
             export_hkey(file, key,
                         &reg_key_name_buf, &reg_key_name_len,
                         &val_name_buf, &val_name_len,
-                        &val_buf, &val_size, &line_buf, &line_buf_size);
+                        &val_buf, &val_size, &line_buf,
+                        &line_buf_size, unicode);
             RegCloseKey(key);
         } else {
             CHAR* key_nameA = GetMultiByteString(reg_key_name);
@@ -1251,7 +1272,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
         unsigned int i;
 
         /* export all registry classes */
-        file = REGPROC_open_export_file(file_name);
+        file = REGPROC_open_export_file(file_name, unicode);
         for (i = 0; i < REG_CLASS_NUMBER; i++) {
             /* do not export HKEY_CLASSES_ROOT */
             if (reg_class_keys[i] != HKEY_CLASSES_ROOT &&
@@ -1262,7 +1283,8 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name)
                 export_hkey(file, reg_class_keys[i],
                             &reg_key_name_buf, &reg_key_name_len,
                             &val_name_buf, &val_name_len,
-                            &val_buf, &val_size, &line_buf, &line_buf_size);
+                            &val_buf, &val_size, &line_buf,
+                            &line_buf_size, unicode);
             }
         }
     }

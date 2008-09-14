@@ -213,10 +213,10 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
 
                 get_file_name(&s, reg_key_name);
                 reg_key_nameW = GetWideString(reg_key_name);
-                export_registry_key(filenameW, reg_key_nameW);
+                export_registry_key(filenameW, reg_key_nameW, REG_FORMAT_4);
                 HeapFree(GetProcessHeap(), 0, reg_key_nameW);
             } else {
-                export_registry_key(filenameW, NULL);
+                export_registry_key(filenameW, NULL, REG_FORMAT_4);
             }
             HeapFree(GetProcessHeap(), 0, filenameW);
             break;

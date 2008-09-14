@@ -19,9 +19,12 @@
 
 #define KEY_MAX_LEN             1024
 
+#define REG_FORMAT_5 1
+#define REG_FORMAT_4 2
+
 const CHAR *getAppName(void);
 
-BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name);
+BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format);
 BOOL import_registry_file(FILE *in);
 void delete_registry_key(WCHAR *reg_key_name);
 WCHAR* GetWideString(const char* strA);

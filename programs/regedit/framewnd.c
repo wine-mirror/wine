@@ -306,7 +306,7 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn)
     if (FilterBuffer[0] == 0)
         LoadStringW(hInst, IDS_FILEDIALOG_FILTER, FilterBuffer, _MAX_PATH);
     pofn->lpstrFilter = FilterBuffer;
-    pofn->nFilterIndex = 1;
+    pofn->nFilterIndex = 2;
     pofn->lpstrFile = FileNameBuffer;
     pofn->nMaxFile = _MAX_PATH;
     pofn->lpstrFileTitle = FileTitleBuffer;
@@ -372,7 +372,7 @@ static BOOL ExportRegistryFile(HWND hWnd, BOOL export_branch)
     ofn.lpTemplateName = MAKEINTRESOURCEW(IDD_EXPORT_TEMPLATE);
     if (GetSaveFileNameW(&ofn)) {
         BOOL result;
-        result = export_registry_key(ofn.lpstrFile, (LPWSTR)ofn.lCustData);
+        result = export_registry_key(ofn.lpstrFile, (LPWSTR)ofn.lCustData, ofn.nFilterIndex);
         if (!result) {
             /*printf("Can't open file \"%s\"\n", ofn.lpstrFile);*/
             return FALSE;
