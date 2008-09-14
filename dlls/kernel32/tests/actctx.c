@@ -223,7 +223,7 @@ static BOOL create_wide_manifest(const char *filename, const char *manifest, BOO
     BOOL ret;
     int offset = (fBOM ? 0 : 1);
 
-    MultiByteToWideChar(CP_ACP, 0, manifest, -1, &wmanifest[1], (strlen(manifest)+1) * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, manifest, -1, &wmanifest[1], (strlen(manifest)+1));
     wmanifest[0] = 0xfeff;
     if (fReverse)
     {
