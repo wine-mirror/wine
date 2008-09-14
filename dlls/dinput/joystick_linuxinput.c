@@ -264,14 +264,18 @@ static void find_joydevs(void)
           )
          ) {
 
-        joydev.device = strdup(buf);
-
-        if (-1!=ioctl(fd, EVIOCGNAME(MAX_PATH-1), buf)) {
-          buf[MAX_PATH-1] = 0;
-          joydev.name = strdup(buf);
-        } else {
-          joydev.name = joydev.device;
+        if (!(joydev.device = HeapAlloc(GetProcessHeap(), 0, strlen(buf) + 1))) {
+          close(fd);
+          continue;
         }
+        strcpy(joydev.device, buf);
+
+        buf[MAX_PATH - 1] = 0;
+        if (ioctl(fd, EVIOCGNAME(MAX_PATH - 1), buf) != -1 &&
+            (joydev.name = HeapAlloc(GetProcessHeap(), 0, strlen(buf) + 1)))
+          strcpy(joydev.name, buf);
+        else
+          joydev.name = joydev.device;
 
 	joydev.guid = DInput_Wine_Joystick_Base_GUID;
 	joydev.guid.Data3 += have_joydevs;
