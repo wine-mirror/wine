@@ -34,6 +34,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+/******************************************************************************
+ * GdipCloneBrush [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
 {
     TRACE("(%p, %p)\n", brush, clone);
@@ -121,6 +124,9 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
     return Ok;
 }
 
+/******************************************************************************
+ * GdipCreateLineBrush [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
     GDIPCONST GpPointF* endpoint, ARGB startcolor, ARGB endcolor,
     GpWrapMode wrap, GpLineGradient **line)
@@ -212,9 +218,13 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,
     return GdipCreateLineBrushFromRect(&rectF, startcolor, endcolor, mode, wrap, line);
 }
 
-/* FIXME: angle value completely ignored. Don't know how to use it since native
-          always set Brush rectangle to rect (independetly of this angle).
-          Maybe it's used only on drawing.  */
+/******************************************************************************
+ * GdipCreateLineBrushFromRectWithAngle [GDIPLUS.@]
+ *
+ * FIXME: angle value completely ignored. Don't know how to use it since native
+ *        always set Brush rectangle to rect (independetly of this angle).
+ *        Maybe it's used only on drawing.
+ */
 GpStatus WINGDIPAPI GdipCreateLineBrushFromRectWithAngle(GDIPCONST GpRectF* rect,
     ARGB startcolor, ARGB endcolor, REAL angle, BOOL isAngleScalable, GpWrapMode wrap,
     GpLineGradient **line)
@@ -323,7 +333,11 @@ GpStatus WINGDIPAPI GdipCreatePathGradientI(GDIPCONST GpPoint* points,
     return ret;
 }
 
-/* FIXME: path gradient brushes not truly supported (drawn as solid brushes) */
+/******************************************************************************
+ * GdipCreatePathGradientFromPath [GDIPLUS.@]
+ *
+ * FIXME: path gradient brushes not truly supported (drawn as solid brushes)
+ */
 GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     GpPathGradient **grad)
 {
@@ -379,6 +393,9 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     return Ok;
 }
 
+/******************************************************************************
+ * GdipCreateSolidFill [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
 {
     COLORREF col = ARGB2COLORREF(color);
@@ -401,7 +418,7 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
     return Ok;
 }
 
-/*******************************************************************************
+/******************************************************************************
  * GdipCreateTexture [GDIPLUS.@]
  *
  * PARAMS
@@ -435,6 +452,9 @@ GpStatus WINGDIPAPI GdipCreateTexture(GpImage *image, GpWrapMode wrapmode,
             texture);
 }
 
+/******************************************************************************
+ * GdipCreateTexture2 [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateTexture2(GpImage *image, GpWrapMode wrapmode,
         REAL x, REAL y, REAL width, REAL height, GpTexture **texture)
 {
@@ -448,7 +468,11 @@ GpStatus WINGDIPAPI GdipCreateTexture2(GpImage *image, GpWrapMode wrapmode,
             texture);
 }
 
-/* FIXME: imageattr ignored */
+/******************************************************************************
+ * GdipCreateTextureIA [GDIPLUS.@]
+ *
+ * FIXME: imageattr ignored
+ */
 GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     GDIPCONST GpImageAttributes *imageattr, REAL x, REAL y, REAL width,
     REAL height, GpTexture **texture)
@@ -566,6 +590,9 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     return Ok;
 }
 
+/******************************************************************************
+ * GdipCreateTextureIAI [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipCreateTextureIAI(GpImage *image, GDIPCONST GpImageAttributes *imageattr,
     INT x, INT y, INT width, INT height, GpTexture **texture)
 {
