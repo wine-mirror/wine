@@ -899,11 +899,11 @@ DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
  */
 BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
 {
-    FILE_END_OF_FILE_INFORMATION info;
+    FILE_STANDARD_INFORMATION info;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
-    status = NtQueryInformationFile( hFile, &io, &info, sizeof(info), FileEndOfFileInformation );
+    status = NtQueryInformationFile( hFile, &io, &info, sizeof(info), FileStandardInformation );
     if (status == STATUS_SUCCESS)
     {
         *lpFileSize = info.EndOfFile;
