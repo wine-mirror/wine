@@ -3559,7 +3559,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
 
     if(glDesc->conversion_group != WINED3DFMT_YUY2 && glDesc->conversion_group != WINED3DFMT_UYVY &&
        glDesc->conversion_group != WINED3DFMT_YV12) {
-        ERR("Format: %s\n", debug_d3dformat(glDesc->conversion_group));
+        TRACE("Format: %s\n", debug_d3dformat(glDesc->conversion_group));
         /* Don't bother setting up a shader for unconverted formats */
         glEnable(textype);
         checkGLcall("glEnable(textype)");
