@@ -430,6 +430,42 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
     return DI_OK;
 }
 
+/******************************************************************************
+ *      GetProperty : Retrieves information about the input device.
+ */
+static HRESULT WINAPI SysKeyboardAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
+        REFGUID rguid, LPDIPROPHEADER pdiph)
+{
+    TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
+    _dump_DIPROPHEADER(pdiph);
+
+    if (HIWORD(rguid)) return DI_OK;
+
+    switch (LOWORD(rguid))
+    {
+        case (DWORD)DIPROP_KEYNAME:
+        {
+            HRESULT hr;
+            LPDIPROPSTRING ps = (LPDIPROPSTRING)pdiph;
+            DIDEVICEOBJECTINSTANCEW didoi;
+
+            if (pdiph->dwSize != sizeof(DIPROPSTRING))
+                return DIERR_INVALIDPARAM;
+
+            didoi.dwSize = sizeof(DIDEVICEOBJECTINSTANCEW);
+
+            hr = SysKeyboardWImpl_GetObjectInfo((LPDIRECTINPUTDEVICE8W)iface , &didoi,
+                                                 ps->diph.dwObj, ps->diph.dwHow);
+            if (hr == DI_OK)
+                memcpy(ps->wsz, didoi.tszName, sizeof(ps->wsz));
+            return hr;
+        }
+        default:
+            return IDirectInputDevice2AImpl_GetProperty( iface, rguid, pdiph );
+    }
+    return DI_OK;
+}
+
 static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -437,7 +473,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
         IDirectInputDevice2AImpl_Release,
 	SysKeyboardAImpl_GetCapabilities,
         IDirectInputDevice2AImpl_EnumObjects,
-	IDirectInputDevice2AImpl_GetProperty,
+        SysKeyboardAImpl_GetProperty,
 	IDirectInputDevice2AImpl_SetProperty,
 	IDirectInputDevice2AImpl_Acquire,
 	IDirectInputDevice2AImpl_Unacquire,
@@ -479,7 +515,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
         XCAST(Release)IDirectInputDevice2AImpl_Release,
 	XCAST(GetCapabilities)SysKeyboardAImpl_GetCapabilities,
         IDirectInputDevice2WImpl_EnumObjects,
-	XCAST(GetProperty)IDirectInputDevice2AImpl_GetProperty,
+        XCAST(GetProperty)SysKeyboardAImpl_GetProperty,
 	XCAST(SetProperty)IDirectInputDevice2AImpl_SetProperty,
 	XCAST(Acquire)IDirectInputDevice2AImpl_Acquire,
 	XCAST(Unacquire)IDirectInputDevice2AImpl_Unacquire,
