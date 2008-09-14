@@ -338,25 +338,9 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     static const int sec_flags = SEC_FILE | SEC_IMAGE | SEC_RESERVE | SEC_COMMIT | SEC_NOCACHE;
 
     HANDLE ret;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
     NTSTATUS status;
     DWORD access, sec_type;
     LARGE_INTEGER size;
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
-    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    if (name)
-    {
-        RtlInitUnicodeString( &nameW, name );
-        attr.ObjectName = &nameW;
-        attr.RootDirectory = get_BaseNamedObjects_handle();
-    }
 
     sec_type = protect & sec_flags;
     protect &= ~sec_flags;
@@ -402,7 +386,27 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     size.u.LowPart  = size_low;
     size.u.HighPart = size_high;
 
-    status = NtCreateSection( &ret, access, &attr, &size, protect, sec_type, hFile );
+    if (sa || name)
+    {
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING nameW;
+
+        attr.Length                   = sizeof(attr);
+        attr.RootDirectory            = 0;
+        attr.ObjectName               = NULL;
+        attr.Attributes               = OBJ_OPENIF | ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
+        attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+        attr.SecurityQualityOfService = NULL;
+        if (name)
+        {
+            RtlInitUnicodeString( &nameW, name );
+            attr.ObjectName = &nameW;
+            attr.RootDirectory = get_BaseNamedObjects_handle();
+        }
+        status = NtCreateSection( &ret, access, &attr, &size, protect, sec_type, hFile );
+    }
+    else status = NtCreateSection( &ret, access, NULL, &size, protect, sec_type, hFile );
+
     if (status == STATUS_OBJECT_NAME_EXISTS)
         SetLastError( ERROR_ALREADY_EXISTS );
     else
