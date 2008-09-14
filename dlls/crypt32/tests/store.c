@@ -1260,11 +1260,15 @@ static void testFileNameStore(void)
     BOOL ret;
     DWORD GLE;
 
-    store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0, 0, NULL);
-    GLE = GetLastError();
-    ok(!store && (GLE == ERROR_PATH_NOT_FOUND || GLE == ERROR_INVALID_PARAMETER),
-     "Expected ERROR_PATH_NOT_FOUND or ERROR_INVALID_PARAMETER, got %08x\n",
-     GLE);
+    if (0)
+    {
+        /* Crashes on NT4 */
+        store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0, 0, NULL);
+        GLE = GetLastError();
+        ok(!store && (GLE == ERROR_PATH_NOT_FOUND || GLE == ERROR_INVALID_PARAMETER),
+         "Expected ERROR_PATH_NOT_FOUND or ERROR_INVALID_PARAMETER, got %08x\n",
+         GLE);
+    }
 
     if (!GetTempFileNameW(szDot, szPrefix, 0, filename))
        return;
