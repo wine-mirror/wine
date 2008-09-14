@@ -982,7 +982,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
         case NameSamCompatible:
             {
                 WCHAR name[MAX_COMPUTERNAME_LENGTH + 1];
-                DWORD size = sizeof(name);
+                DWORD size = sizeof(name)/sizeof(name[0]);
                 if (GetComputerNameW(name, &size))
                 {
                     int len = domainInfo->Name.Length + size + 3;
