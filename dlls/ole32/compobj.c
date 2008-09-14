@@ -209,8 +209,8 @@ static void COMPOBJ_InitProcess( void )
      * following class is created. The *caller* of CoMarshalInterface (i.e., the
      * application) is responsible for pumping the message loop in that thread.
      * The WM_USER messages which point to the RPCs are then dispatched to
-     * COM_AptWndProc by the user's code from the apartment in which the interface
-     * was unmarshalled.
+     * apartment_wndproc by the user's code from the apartment in which the
+     * interface was unmarshalled.
      */
     memset(&wclass, 0, sizeof(wclass));
     wclass.lpfnWndProc = apartment_wndproc;
