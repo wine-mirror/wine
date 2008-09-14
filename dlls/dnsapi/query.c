@@ -773,7 +773,7 @@ static DNS_STATUS dns_get_hostname_a( COMPUTER_NAME_FORMAT format,
                                       PSTR buffer, PDWORD len )
 {
     char name[256];
-    DWORD size = sizeof(name);
+    DWORD size = sizeof(name)/sizeof(name[0]);
 
     if (!GetComputerNameExA( format, name, &size ))
         return DNS_ERROR_NAME_DOES_NOT_EXIST;
@@ -792,7 +792,7 @@ static DNS_STATUS dns_get_hostname_w( COMPUTER_NAME_FORMAT format,
                                       PWSTR buffer, PDWORD len )
 {
     WCHAR name[256];
-    DWORD size = sizeof(name);
+    DWORD size = sizeof(name)/sizeof(name[0]);
 
     if (!GetComputerNameExW( format, name, &size ))
         return DNS_ERROR_NAME_DOES_NOT_EXIST;
