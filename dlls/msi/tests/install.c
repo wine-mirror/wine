@@ -2109,7 +2109,7 @@ static void test_readonlyfile(void)
     file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                       NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
 
-    WriteFile(file, "readonlyfile", 20, &size, NULL);
+    WriteFile(file, "readonlyfile", strlen("readonlyfile"), &size, NULL);
     CloseHandle(file);
 
     r = MsiInstallProductA(msifile, NULL);
