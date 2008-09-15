@@ -583,6 +583,7 @@ static void run_tests(void)
 
     run_from_res("lang.js");
     run_from_res("api.js");
+    run_from_res("regexp.js");
 }
 
 START_TEST(run)

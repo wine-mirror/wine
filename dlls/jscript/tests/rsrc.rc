@@ -21,3 +21,6 @@ api.js 40 "api.js"
 
 /* @makedep: lang.js */
 lang.js 40 "lang.js"
+
+/* @makedep: regexp.js */
+regexp.js 40 "regexp.js"
