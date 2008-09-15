@@ -344,8 +344,11 @@ void print(FILE *file, int indent, const char *format, va_list va)
 static void write_var_init(FILE *file, int indent, const type_t *t, const char *n, const char *local_var_prefix)
 {
     if (decl_indirect(t))
+    {
         print_file(file, indent, "MIDL_memset(&%s%s, 0, sizeof(%s%s));\n",
                    local_var_prefix, n, local_var_prefix, n);
+        print_file(file, indent, "%s_p_%s = &%s%s;\n", local_var_prefix, n, local_var_prefix, n);
+    }
     else if (is_ptr(t) || is_array(t))
         print_file(file, indent, "%s%s = 0;\n", local_var_prefix, n);
 }
@@ -3204,8 +3207,7 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
             fprintf(file, ";\n");
 
             if (decl_indirect(var->type))
-                print_file(file, indent, "void *_p_%s = &%s;\n",
-                           var->name, var->name);
+                print_file(file, indent, "void *_p_%s;\n", var->name);
         }
     }
 }
