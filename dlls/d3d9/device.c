@@ -1168,13 +1168,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetNPatchMode(LPDIRECT3DDEVICE9EX i
 
 static float    WINAPI  IDirect3DDevice9Impl_GetNPatchMode(LPDIRECT3DDEVICE9EX iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    HRESULT hr;
+    float ret;
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DDevice_GetNPatchMode(This->WineD3DDevice);
+    ret = IWineD3DDevice_GetNPatchMode(This->WineD3DDevice);
     LeaveCriticalSection(&d3d9_cs);
-    return hr;
+    return ret;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_DrawPrimitive(LPDIRECT3DDEVICE9EX iface, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) {
