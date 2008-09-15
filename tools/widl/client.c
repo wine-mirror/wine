@@ -115,6 +115,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         /* write the functions body */
         fprintf(client, "{\n");
         indent++;
+        print_client( "struct __client_frame __f, * const __frame = &__f;\n" );
 
         /* declare return value '_RetVal' */
         if (!is_void(get_func_return_type(func)))
@@ -128,7 +129,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             print_client("RPC_BINDING_HANDLE _Handle = 0;\n");
 
         print_client("RPC_MESSAGE _RpcMessage;\n");
-        print_client("MIDL_STUB_MESSAGE _StubMsg;\n");
         if (!is_void(get_func_return_type(func)) && decl_indirect(get_func_return_type(func)))
         {
             print_client("void *_p_%s = &%s;\n",
@@ -149,7 +149,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_client("NdrClientInitializeNew(\n");
         indent++;
         print_client("(PRPC_MESSAGE)&_RpcMessage,\n");
-        print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
+        print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
         print_client("(PMIDL_STUB_DESC)&%s_StubDesc,\n", iface->name);
         print_client("%d);\n", method_count);
         indent--;
@@ -207,8 +207,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         print_client("NdrGetBuffer(\n");
         indent++;
-        print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
-        print_client("_StubMsg.BufferLength,\n");
+        print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
+        print_client("__frame->_StubMsg.BufferLength,\n");
         if (implicit_handle || explicit_handle_var || explicit_generic_handle_var || context_handle_var)
             print_client("_Handle);\n");
         else
@@ -221,16 +221,16 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */
-        /* print_client("(unsigned char *)_StubMsg.Buffer,\n"); */
+        /* print_client("(unsigned char *)__frame->_StubMsg.Buffer,\n"); */
         /* print_client("(RPC_BINDING_HANDLE *) &%s__MIDL_AutoBindHandle);\n", iface->name); */
         print_client("NdrSendReceive(\n");
         indent++;
-        print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
-        print_client("(unsigned char *)_StubMsg.Buffer);\n\n");
+        print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
+        print_client("(unsigned char *)__frame->_StubMsg.Buffer);\n\n");
         indent--;
 
-        print_client("_StubMsg.BufferStart = (unsigned char *)_RpcMessage.Buffer;\n");
-        print_client("_StubMsg.BufferEnd = _StubMsg.BufferStart + _RpcMessage.BufferLength;\n");
+        print_client("__frame->_StubMsg.BufferStart = (unsigned char *)_RpcMessage.Buffer;\n");
+        print_client("__frame->_StubMsg.BufferEnd = __frame->_StubMsg.BufferStart + _RpcMessage.BufferLength;\n");
 
         if (has_out_arg_or_return(func))
         {
@@ -240,7 +240,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             indent++;
             print_client("NdrConvert(\n");
             indent++;
-            print_client("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
+            print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
             print_client("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", *proc_offset);
             indent -= 2;
         }
@@ -282,7 +282,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         if (has_full_pointer)
             write_full_pointer_free(client, indent, func);
 
-        print_client("NdrFreeBuffer((PMIDL_STUB_MESSAGE)&_StubMsg);\n");
+        print_client("NdrFreeBuffer((PMIDL_STUB_MESSAGE)&__frame->_StubMsg);\n");
 
         if (!implicit_handle && explicit_generic_handle_var)
         {
@@ -434,7 +434,12 @@ static void init_client(void)
     print_client("#endif\n");
     fprintf(client, "\n");
     print_client("#include \"%s\"\n", header_name);
-    fprintf(client, "\n");
+    print_client( "\n");
+    print_client( "struct __client_frame\n");
+    print_client( "{\n");
+    print_client( "    MIDL_STUB_MESSAGE _StubMsg;\n");
+    print_client( "};\n");
+    print_client( "\n");
 }
 
 

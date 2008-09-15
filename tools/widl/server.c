@@ -68,11 +68,11 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         /* write the functions body */
         fprintf(server, "{\n");
         indent++;
+        print_server( "struct __server_frame __f, * const __frame = &__f;\n" );
 
         /* Declare arguments */
         declare_stub_args(server, indent, func);
 
-        print_server("MIDL_STUB_MESSAGE _StubMsg;\n");
         print_server("RPC_STATUS _Status;\n");
         fprintf(server, "\n");
 
@@ -81,7 +81,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_server("NdrServerInitializeNew(\n");
         indent++;
         print_server("_pRpcMessage,\n");
-        print_server("&_StubMsg,\n");
+        print_server("&__frame->_StubMsg,\n");
         print_server("&%s_StubDesc);\n", iface->name);
         indent--;
         fprintf(server, "\n");
@@ -110,7 +110,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             indent++;
             print_server("NdrConvert(\n");
             indent++;
-            print_server("(PMIDL_STUB_MESSAGE)&_StubMsg,\n");
+            print_server("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
             print_server("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", *proc_offset);
             indent -= 2;
             fprintf(server, "\n");
@@ -119,7 +119,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             write_remoting_arguments(server, indent, func, PASS_IN, PHASE_UNMARSHAL);
         }
 
-        print_server("if (_StubMsg.Buffer > _StubMsg.BufferEnd)\n");
+        print_server("if (__frame->_StubMsg.Buffer > __frame->_StubMsg.BufferEnd)\n");
         print_server("{\n");
         indent++;
         print_server("RpcRaiseException(RPC_X_BAD_STUB_DATA);\n");
@@ -188,7 +188,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             if (!is_void(get_func_return_type(func)))
                 write_remoting_arguments(server, indent, func, PASS_RETURN, PHASE_BUFFERSIZE);
 
-            print_server("_pRpcMessage->BufferLength = _StubMsg.BufferLength;\n");
+            print_server("_pRpcMessage->BufferLength = __frame->_StubMsg.BufferLength;\n");
             fprintf(server, "\n");
             print_server("_Status = I_RpcGetBuffer(_pRpcMessage);\n");
             print_server("if (_Status)\n");
@@ -196,7 +196,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             print_server("RpcRaiseException(_Status);\n");
             indent--;
             fprintf(server, "\n");
-            print_server("_StubMsg.Buffer = (unsigned char *)_pRpcMessage->Buffer;\n");
+            print_server("__frame->_StubMsg.Buffer = (unsigned char *)_pRpcMessage->Buffer;\n");
             fprintf(server, "\n");
         }
 
@@ -226,7 +226,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         fprintf(server, "\n");
         print_server("_pRpcMessage->BufferLength =\n");
         indent++;
-        print_server("(unsigned int)(_StubMsg.Buffer - (unsigned char *)_pRpcMessage->Buffer);\n");
+        print_server("(unsigned int)(__frame->_StubMsg.Buffer - (unsigned char *)_pRpcMessage->Buffer);\n");
         indent--;
         indent--;
         fprintf(server, "}\n");
@@ -382,6 +382,7 @@ static void init_server(void)
     print_server( "{\n");
     print_server( "    EXCEPTION_REGISTRATION_RECORD frame;\n");
     print_server( "    sigjmp_buf                    jmp;\n");
+    print_server( "    MIDL_STUB_MESSAGE             _StubMsg;\n");
     print_server( "};\n");
     print_server( "\n");
     print_server("static DWORD __server_exception_handler( EXCEPTION_RECORD *record,\n");
@@ -405,25 +406,25 @@ static void init_server(void)
     print_server("    siglongjmp( server_frame->jmp, 1 );\n");
     print_server("}\n");
     print_server("#define RpcTryExcept \\\n");
-    print_server("    do { \\\n");
-    print_server("        struct __server_frame __server_frame; \\\n");
-    print_server("        __server_frame.frame.Handler = __server_exception_handler; \\\n");
-    print_server("        if (!sigsetjmp( __server_frame.jmp, 0 )) \\\n");
+    print_server("        __frame->frame.Handler = __server_exception_handler; \\\n");
+    print_server("        if (!sigsetjmp( __frame->jmp, 0 )) \\\n");
     print_server("        { \\\n");
-    print_server("            __wine_push_frame( &__server_frame.frame ); \\\n");
-    print_server("            {\n");
+    print_server("            __wine_push_frame( &__frame->frame );\n");
     print_server("\n");
     print_server("#define RpcExcept(expr) \\\n");
-    print_server("            } \\\n");
-    print_server("            __wine_pop_frame( &__server_frame.frame ); \\\n");
+    print_server("            __wine_pop_frame( &__frame->frame ); \\\n");
     print_server("        } \\\n");
-    print_server("        else \\\n");
-    print_server("        {\n");
+    print_server("        else\n");
     print_server("\n");
-    print_server("#define RpcEndExcept \\\n");
-    print_server("        } \\\n");
-    print_server("    } while(0);\n");
+    print_server("#define RpcEndExcept\n");
     print_server("\n");
+    print_server( "#else /* USE_COMPILER_EXCEPTIONS */\n");
+    print_server( "\n");
+    print_server( "struct __server_frame\n");
+    print_server( "{\n");
+    print_server( "    MIDL_STUB_MESSAGE _StubMsg;\n");
+    print_server( "};\n");
+    print_server( "\n");
     print_server("#endif /* USE_COMPILER_EXCEPTIONS */\n");
     print_server("\n");
 }

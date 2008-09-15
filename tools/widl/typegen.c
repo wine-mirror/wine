@@ -897,14 +897,14 @@ int is_full_pointer_function(const func_t *func)
 
 void write_full_pointer_init(FILE *file, int indent, const func_t *func, int is_server)
 {
-    print_file(file, indent, "_StubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,%s);\n",
+    print_file(file, indent, "__frame->_StubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,%s);\n",
                    is_server ? "XLAT_SERVER" : "XLAT_CLIENT");
     fprintf(file, "\n");
 }
 
 void write_full_pointer_free(FILE *file, int indent, const func_t *func)
 {
-    print_file(file, indent, "NdrFullPointerXlatFree(_StubMsg.FullPtrXlatTables);\n");
+    print_file(file, indent, "NdrFullPointerXlatFree(__frame->_StubMsg.FullPtrXlatTables);\n");
     fprintf(file, "\n");
 }
 
@@ -2656,7 +2656,7 @@ static void print_phase_function(FILE *file, int indent, const char *type,
 
     print_file(file, indent, "Ndr%s%s(\n", type, function);
     indent++;
-    print_file(file, indent, "&_StubMsg,\n");
+    print_file(file, indent, "&__frame->_StubMsg,\n");
     print_file(file, indent, "%s%s%s%s,\n",
                (phase == PHASE_UNMARSHAL) ? "(unsigned char **)" : "(unsigned char *)",
                (phase == PHASE_UNMARSHAL || decl_indirect(var->type)) ? "&" : "",
@@ -2728,8 +2728,8 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
     }
 
     if (phase == PHASE_MARSHAL)
-        print_file(file, indent, "MIDL_memset(_StubMsg.Buffer, 0, (0x%x - (long)_StubMsg.Buffer) & 0x%x);\n", alignment, alignment - 1);
-    print_file(file, indent, "_StubMsg.Buffer = (unsigned char *)(((long)_StubMsg.Buffer + %u) & ~0x%x);\n",
+        print_file(file, indent, "MIDL_memset(__frame->_StubMsg.Buffer, 0, (0x%x - (long)__frame->_StubMsg.Buffer) & 0x%x);\n", alignment, alignment - 1);
+    print_file(file, indent, "__frame->_StubMsg.Buffer = (unsigned char *)(((long)__frame->_StubMsg.Buffer + %u) & ~0x%x);\n",
                 alignment - 1, alignment - 1);
 
     if (phase == PHASE_MARSHAL)
@@ -2737,17 +2737,17 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
         print_file(file, indent, "*(");
         write_type_decl(file, is_ptr(type) ? type->ref : type, NULL);
         if (is_ptr(type))
-            fprintf(file, " *)_StubMsg.Buffer = *");
+            fprintf(file, " *)__frame->_StubMsg.Buffer = *");
         else
-            fprintf(file, " *)_StubMsg.Buffer = ");
+            fprintf(file, " *)__frame->_StubMsg.Buffer = ");
         fprintf(file, "%s", varname);
         fprintf(file, ";\n");
     }
     else if (phase == PHASE_UNMARSHAL)
     {
-        print_file(file, indent, "if (_StubMsg.Buffer + sizeof(");
+        print_file(file, indent, "if (__frame->_StubMsg.Buffer + sizeof(");
         write_type_decl(file, is_ptr(type) ? type->ref : type, NULL);
-        fprintf(file, ") > _StubMsg.BufferEnd)\n");
+        fprintf(file, ") > __frame->_StubMsg.BufferEnd)\n");
         print_file(file, indent, "{\n");
         print_file(file, indent + 1, "RpcRaiseException(RPC_X_BAD_STUB_DATA);\n");
         print_file(file, indent, "}\n");
@@ -2761,10 +2761,10 @@ void print_phase_basetype(FILE *file, int indent, enum remoting_phase phase,
         else
             fprintf(file, " = *(");
         write_type_decl(file, is_ptr(type) ? type->ref : type, NULL);
-        fprintf(file, " *)_StubMsg.Buffer;\n");
+        fprintf(file, " *)__frame->_StubMsg.Buffer;\n");
     }
 
-    print_file(file, indent, "_StubMsg.Buffer += sizeof(");
+    print_file(file, indent, "__frame->_StubMsg.Buffer += sizeof(");
     write_type_decl(file, var->type, NULL);
     fprintf(file, ");\n");
 }
@@ -2812,14 +2812,14 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent,
             {
                 if (type->size_is)
                 {
-                    print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                    print_file(file, indent, "__frame->_StubMsg.MaxCount = (unsigned long)");
                     write_expr(file, type->size_is, 1, 1, NULL, NULL);
                     fprintf(file, ";\n\n");
                 }
                 if (type->length_is)
                 {
-                    print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
-                               print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
+                    print_file(file, indent, "__frame->_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
+                               print_file(file, indent, "__frame->_StubMsg.ActualCount = (unsigned long)");
                                write_expr(file, type->length_is, 1, 1, NULL, NULL);
                                fprintf(file, ";\n\n");
                 }
@@ -2830,7 +2830,7 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent,
         {
             if (is_conformance_needed_for_phase(phase))
             {
-                print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
+                print_file(file, indent, "__frame->_StubMsg.MaxCount = (unsigned long)");
                 write_expr(file, get_attrp(var->attrs, ATTR_SWITCHIS), 1, 1, NULL, NULL);
                 fprintf(file, ";\n\n");
             }
@@ -2842,7 +2842,7 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent,
 
             if (is_conformance_needed_for_phase(phase) && (iid = get_attrp( var->attrs, ATTR_IIDIS )))
             {
-                print_file( file, indent, "_StubMsg.MaxCount = (unsigned long) " );
+                print_file( file, indent, "__frame->_StubMsg.MaxCount = (unsigned long) " );
                 write_expr( file, iid, 1, 1, NULL, NULL );
                 fprintf( file, ";\n\n" );
             }
@@ -2900,14 +2900,14 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
                  * be direct, otherwise it is a pointer */
                 int is_ch_ptr = is_aliaschain_attr(type, ATTR_CONTEXTHANDLE) ? FALSE : TRUE;
                 print_file(file, indent, "NdrClientContextMarshall(\n");
-                print_file(file, indent + 1, "&_StubMsg,\n");
+                print_file(file, indent + 1, "&__frame->_StubMsg,\n");
                 print_file(file, indent + 1, "(NDR_CCONTEXT)%s%s,\n", is_ch_ptr ? "*" : "", var->name);
                 print_file(file, indent + 1, "%s);\n", in_attr && out_attr ? "1" : "0");
             }
             else
             {
                 print_file(file, indent, "NdrServerContextNewMarshall(\n");
-                print_file(file, indent + 1, "&_StubMsg,\n");
+                print_file(file, indent + 1, "&__frame->_StubMsg,\n");
                 print_file(file, indent + 1, "(NDR_SCONTEXT)%s,\n", var->name);
                 print_file(file, indent + 1, "(NDR_RUNDOWN)%s_rundown,\n", get_context_handle_type_name(var->type));
                 print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n", start_offset);
@@ -2920,14 +2920,14 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
                 if (!in_attr)
                     print_file(file, indent, "*%s = 0;\n", var->name);
                 print_file(file, indent, "NdrClientContextUnmarshall(\n");
-                print_file(file, indent + 1, "&_StubMsg,\n");
+                print_file(file, indent + 1, "&__frame->_StubMsg,\n");
                 print_file(file, indent + 1, "(NDR_CCONTEXT *)%s,\n", var->name);
                 print_file(file, indent + 1, "_Handle);\n");
             }
             else
             {
                 print_file(file, indent, "%s = NdrServerContextNewUnmarshall(\n", var->name);
-                print_file(file, indent + 1, "&_StubMsg,\n");
+                print_file(file, indent + 1, "&__frame->_StubMsg,\n");
                 print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n", start_offset);
             }
         }
@@ -2989,7 +2989,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
             {
                 print_file(file, indent, "if (%s)\n", var->name);
                 indent++;
-                print_file(file, indent, "_StubMsg.pfnFree(%s);\n", var->name);
+                print_file(file, indent, "__frame->_StubMsg.pfnFree(%s);\n", var->name);
             }
         }
     }
@@ -3031,7 +3031,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func,
                 expr_t *iid;
                 if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
                 {
-                    print_file( file, indent, "_StubMsg.MaxCount = (unsigned long) " );
+                    print_file( file, indent, "__frame->_StubMsg.MaxCount = (unsigned long) " );
                     write_expr( file, iid, 1, 1, NULL, NULL );
                     fprintf( file, ";\n\n" );
                 }
@@ -3071,7 +3071,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
     if (phase == PHASE_BUFFERSIZE && pass != PASS_RETURN)
     {
         unsigned int size = get_function_buffer_size( func, pass );
-        print_file(file, indent, "_StubMsg.BufferLength = %u;\n", size);
+        print_file(file, indent, "__frame->_StubMsg.BufferLength = %u;\n", size);
     }
 
     if (pass == PASS_RETURN)
@@ -3234,7 +3234,7 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
             if (is_context_handle(var->type))
             {
                 fprintf(file, " = NdrContextHandleInitialize(\n");
-                print_file(file, indent + 1, "&_StubMsg,\n");
+                print_file(file, indent + 1, "&__frame->_StubMsg,\n");
                 print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n",
                            var->type->typestring_offset);
             }
@@ -3243,7 +3243,7 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
                 unsigned int size, align = 0;
                 type_t *type = var->type;
 
-                fprintf(file, " = NdrAllocate(&_StubMsg, ");
+                fprintf(file, " = NdrAllocate(&__frame->_StubMsg, ");
                 for ( ; type->size_is ; type = type->ref)
                 {
                     write_expr(file, type->size_is, TRUE, TRUE, NULL, NULL);
