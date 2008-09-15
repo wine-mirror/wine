@@ -582,6 +582,7 @@ static void run_tests(void)
     CHECK_CALLED(global_success_i);
 
     run_from_res("lang.js");
+    run_from_res("api.js");
 }
 
 START_TEST(run)

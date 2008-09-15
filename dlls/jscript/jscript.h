@@ -115,6 +115,7 @@ HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,DWORD,DispatchEx*
 
 HRESULT create_object(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_math(script_ctx_t*,DispatchEx**);
+HRESULT create_array(script_ctx_t*,DWORD,DispatchEx**);
 
 HRESULT to_primitive(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);
 HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
@@ -162,6 +163,16 @@ HRESULT create_number_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_object_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_regexp_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_string_constr(script_ctx_t*,DispatchEx**);
+
+static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
+{
+    return dp->rgvarg + dp->cArgs-i-1;
+}
+
+static inline DWORD arg_cnt(const DISPPARAMS *dp)
+{
+    return dp->cArgs - dp->cNamedArgs;
+}
 
 const char *debugstr_variant(const VARIANT*);
 

@@ -24,6 +24,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
     DispatchEx dispex;
+
+    DWORD length;
 } ArrayInstance;
 
 static const WCHAR lengthW[] = {'l','e','n','g','t','h',0};
@@ -212,10 +214,56 @@ static const builtin_info_t Array_info = {
 };
 
 static HRESULT ArrayConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DispatchEx *obj;
+    VARIANT *arg_var;
+    DWORD i;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT: {
+        if(arg_cnt(dp) == 1 && V_VT((arg_var = get_arg(dp, 0))) == VT_I4) {
+            if(V_I4(arg_var) < 0) {
+                FIXME("throw RangeError\n");
+                return E_FAIL;
+            }
+
+            hres = create_array(dispex->ctx, V_I4(arg_var), &obj);
+            if(FAILED(hres))
+                return hres;
+
+            V_VT(retv) = VT_DISPATCH;
+            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(obj);
+            return S_OK;
+        }
+
+        hres = create_array(dispex->ctx, arg_cnt(dp), &obj);
+        if(FAILED(hres))
+            return hres;
+
+        for(i=0; i < arg_cnt(dp); i++) {
+            hres = jsdisp_propput_idx(obj, i, lcid, get_arg(dp, i), ei, caller);
+            if(FAILED(hres))
+                break;
+        }
+        if(FAILED(hres)) {
+            jsdisp_release(obj);
+            return hres;
+        }
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(obj);
+        break;
+    }
+    default:
+        FIXME("unimplemented flags: %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT alloc_array(script_ctx_t *ctx, BOOL use_constr, ArrayInstance **ret)
@@ -250,4 +298,19 @@ HRESULT create_array_constr(script_ctx_t *ctx, DispatchEx **ret)
 
     IDispatchEx_Release(_IDispatchEx_(&array->dispex));
     return hres;
+}
+
+HRESULT create_array(script_ctx_t *ctx, DWORD length, DispatchEx **ret)
+{
+    ArrayInstance *array;
+    HRESULT hres;
+
+    hres = alloc_array(ctx, TRUE, &array);
+    if(FAILED(hres))
+        return hres;
+
+    array->length = length;
+
+    *ret = &array->dispex;
+    return S_OK;
 }

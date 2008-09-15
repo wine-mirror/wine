@@ -16,8 +16,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* @makedep: api.js */
-api.js 40 "api.js"
+var arr = new Array();
+ok(typeof(arr) === "object", "arr () is not object");
+ok(arr["0"] === undefined, "arr[0] is not undefined");
 
-/* @makedep: lang.js */
-lang.js 40 "lang.js"
+var arr = new Array(1, 2, "test");
+ok(typeof(arr) === "object", "arr (1,2,test) is not object");
+ok(arr["0"] === 1, "arr[0] is not 1");
+ok(arr["1"] === 2, "arr[1] is not 2");
+ok(arr["2"] === "test", "arr[2] is not \"test\"");
+
+var arr = new Array(6);
+ok(typeof(arr) === "object", "arr (6) is not object");
+ok(arr["0"] === undefined, "arr[0] is not undefined");
+
+reportSuccess();
