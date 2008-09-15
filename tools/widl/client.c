@@ -135,6 +135,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                          "_RetVal", "_RetVal");
         }
         fprintf(client, "\n");
+        print_client( "RpcExceptionInit( 0, __client_finally );\n" );
 
         if (has_full_pointer)
             write_full_pointer_init(client, indent, func, FALSE);
@@ -435,10 +436,17 @@ static void init_client(void)
     fprintf(client, "\n");
     print_client("#include \"%s\"\n", header_name);
     print_client( "\n");
+    write_exceptions( client );
+    print_client( "\n");
     print_client( "struct __client_frame\n");
     print_client( "{\n");
+    print_client("    __DECL_EXCEPTION_FRAME;\n");
     print_client( "    MIDL_STUB_MESSAGE _StubMsg;\n");
     print_client( "};\n");
+    print_client( "\n");
+    print_client("static void __client_finally( struct __client_frame *__frame )\n");
+    print_client( "{\n");
+    print_client( "}\n");
     print_client( "\n");
 }
 

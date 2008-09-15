@@ -53,6 +53,7 @@ int write_expr_eval_routines(FILE *file, const char *iface);
 void write_expr_eval_routine_list(FILE *file, const char *iface);
 void write_user_quad_list(FILE *file);
 void write_endpoints( FILE *f, const char *prefix, const str_list_t *list );
+void write_exceptions( FILE *file );
 size_t type_memsize(const type_t *t, unsigned int *align);
 int decl_indirect(const type_t *t);
 void write_parameters_init(FILE *file, int indent, const func_t *func);
