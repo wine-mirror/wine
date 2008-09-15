@@ -3116,6 +3116,79 @@ good:
     return x;
 }
 
+static REMatchState *MatchRegExp(REGlobalData *gData, REMatchState *x)
+{
+    REMatchState *result;
+    const WCHAR *cp = x->cp;
+    const WCHAR *cp2;
+    UINT j;
+
+    /*
+     * Have to include the position beyond the last character
+     * in order to detect end-of-input/line condition.
+     */
+    for (cp2 = cp; cp2 <= gData->cpend; cp2++) {
+        gData->skipped = cp2 - cp;
+        x->cp = cp2;
+        for (j = 0; j < gData->regexp->parenCount; j++)
+            x->parens[j].index = -1;
+        result = ExecuteREBytecode(gData, x);
+        if (!gData->ok || result || (gData->regexp->flags & JSREG_STICKY))
+            return result;
+        gData->backTrackSP = gData->backTrackStack;
+        gData->cursz = 0;
+        gData->stateStackTop = 0;
+        cp2 = cp + gData->skipped;
+    }
+    return NULL;
+}
+
+#define MIN_BACKTRACK_LIMIT 400000
+
+static REMatchState *InitMatch(script_ctx_t *cx, REGlobalData *gData, JSRegExp *re, size_t length)
+{
+    REMatchState *result;
+    UINT i;
+
+    gData->backTrackStackSize = INITIAL_BACKTRACK;
+    gData->backTrackStack = jsheap_alloc(gData->pool, INITIAL_BACKTRACK);
+    if (!gData->backTrackStack)
+        goto bad;
+
+    gData->backTrackSP = gData->backTrackStack;
+    gData->cursz = 0;
+    gData->backTrackCount = 0;
+    gData->backTrackLimit = 0;
+
+    gData->stateStackLimit = INITIAL_STATESTACK;
+    gData->stateStack = jsheap_alloc(gData->pool, sizeof(REProgState) * INITIAL_STATESTACK);
+    if (!gData->stateStack)
+        goto bad;
+
+    gData->stateStackTop = 0;
+    gData->cx = cx;
+    gData->regexp = re;
+    gData->ok = TRUE;
+
+    result = jsheap_alloc(gData->pool, offsetof(REMatchState, parens) + re->parenCount * sizeof(RECapture));
+    if (!result)
+        goto bad;
+
+    for (i = 0; i < re->classCount; i++) {
+        if (!re->classList[i].converted &&
+            !ProcessCharSet(gData, &re->classList[i])) {
+            return NULL;
+        }
+    }
+
+    return result;
+
+bad:
+    js_ReportOutOfScriptQuota(cx);
+    gData->ok = FALSE;
+    return NULL;
+}
+
 static void
 js_DestroyRegExp(JSRegExp *re)
 {
@@ -3222,6 +3295,84 @@ js_NewRegExp(script_ctx_t *cx, BSTR str, UINT flags, BOOL flat)
 out:
     jsheap_clear(mark);
     return re;
+}
+
+HRESULT regexp_match(DispatchEx *dispex, const WCHAR *str, DWORD len, BOOL gflag, match_result_t **match_result,
+        DWORD *result_cnt)
+{
+    RegExpInstance *This = (RegExpInstance*)dispex;
+    match_result_t *ret = NULL;
+    const WCHAR *cp = str;
+    REGlobalData gData;
+    REMatchState *x, *result;
+    DWORD matchlen;
+    DWORD i=0, ret_size = 0;
+    jsheap_t *mark;
+    size_t length;
+    HRESULT hres = E_FAIL;
+
+    length = len;
+
+    mark = jsheap_mark(&This->dispex.ctx->tmp_heap);
+    gData.pool = &This->dispex.ctx->tmp_heap;
+
+    while(1) {
+        gData.cpbegin = cp;
+        gData.cpend = str + len;
+        gData.start = cp-str;
+        gData.skipped = 0;
+
+        x = InitMatch(NULL, &gData, This->jsregexp, length);
+        if(!x) {
+            WARN("InitMatch failed\n");
+            break;
+        }
+
+        x->cp = cp;
+        result = MatchRegExp(&gData, x);
+        if(!gData.ok) {
+            WARN("MatchRegExp failed\n");
+            break;
+        }
+
+        if(!result) {
+            hres = S_OK;
+            break;
+        }
+
+        matchlen = (result->cp-cp) - gData.skipped;
+
+        if(ret)
+            ret = heap_realloc(ret, (ret_size <<= 1) * sizeof(match_result_t));
+        else if(ret_size == i)
+            ret = heap_alloc((ret_size=4) * sizeof(match_result_t));
+        if(!ret) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        ret[i].str = result->cp-matchlen;
+        ret[i].len = matchlen;
+
+        length -= result->cp-cp;
+        cp = result->cp;
+        i++;
+
+        if(!gflag && !(This->jsregexp->flags & JSREG_GLOB)) {
+            hres = S_OK;
+            break;
+        }
+    }
+
+    jsheap_clear(mark);
+    if(FAILED(hres)) {
+        heap_free(ret);
+        return hres;
+    }
+
+    *match_result = ret;
+    *result_cnt = i;
+    return S_OK;
 }
 
 static HRESULT RegExp_source(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

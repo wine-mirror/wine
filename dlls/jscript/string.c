@@ -189,8 +189,77 @@ static HRESULT String_link(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    StringInstance *This = (StringInstance*)dispex;
+    match_result_t *match_result;
+    DispatchEx *array;
+    VARIANT var, *arg_var;
+    DWORD match_cnt, i;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    if(dp->cArgs - dp->cNamedArgs != 1) {
+        FIXME("unsupported args\n");
+        return E_NOTIMPL;
+    }
+
+    arg_var = get_arg(dp, 0);
+    switch(V_VT(arg_var)) {
+    case VT_DISPATCH: {
+        DispatchEx *regexp;
+
+        regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg_var));
+        if(regexp) {
+            if(regexp->builtin_info->class == JSCLASS_REGEXP) {
+                hres = regexp_match(regexp, This->str, This->length, FALSE, &match_result, &match_cnt);
+                jsdisp_release(regexp);
+                if(FAILED(hres))
+                    return hres;
+                break;
+            }
+            jsdisp_release(regexp);
+        }
+    }
+    default:
+        FIXME("implemented only for regexp args\n");
+        return E_NOTIMPL;
+    }
+
+    if(!match_cnt) {
+        TRACE("no match\n");
+
+        if(retv)
+            V_VT(retv) = VT_NULL;
+        return S_OK;
+    }
+
+    hres = create_array(dispex->ctx, match_cnt, &array);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&var) = VT_BSTR;
+
+    for(i=0; i < match_cnt; i++) {
+        V_BSTR(&var) = SysAllocStringLen(match_result[i].str, match_result[i].len);
+        if(!V_BSTR(&var)) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        hres = jsdisp_propput_idx(array, i, lcid, &var, ei, NULL/*FIXME*/);
+        SysFreeString(V_BSTR(&var));
+        if(FAILED(hres))
+            break;
+    }
+
+    if(FAILED(hres)) {
+        jsdisp_release(array);
+        return hres;
+    }
+
+    V_VT(retv) = VT_DISPATCH;
+    V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(array);
+    return S_OK;
 }
 
 static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

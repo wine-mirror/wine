@@ -184,6 +184,13 @@ HRESULT create_object_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_regexp_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_string_constr(script_ctx_t*,DispatchEx**);
 
+typedef struct {
+    const WCHAR *str;
+    DWORD len;
+} match_result_t;
+
+HRESULT regexp_match(DispatchEx*,const WCHAR*,DWORD,BOOL,match_result_t**,DWORD*);
+
 static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
 {
     return dp->rgvarg + dp->cArgs-i-1;
