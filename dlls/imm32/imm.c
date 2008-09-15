@@ -1078,10 +1078,56 @@ static INT CopyCompAttrIMEtoClient(InputContextData *data, LPBYTE source, INT sl
 static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE ssource, INT sslen,
                                      LPBYTE target, INT tlen, BOOL unicode )
 {
-    if ( target && source && tlen >= slen)
-        memcpy( target , source , slen);
+    INT rc;
 
-    return slen;
+    if (is_himc_ime_unicode(data) && !unicode)
+    {
+        if (tlen)
+        {
+            int i;
+
+            if (slen < tlen)
+                tlen = slen;
+            tlen /= sizeof (DWORD);
+            for (i = 0; i < tlen; ++i)
+            {
+                ((DWORD *)target)[i] = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)ssource,
+                                                          ((DWORD *)source)[i],
+                                                          NULL, 0,
+                                                          NULL, NULL);
+            }
+            rc = sizeof (DWORD) * i;
+        }
+        else
+            rc = slen;
+    }
+    else if (!is_himc_ime_unicode(data) && unicode)
+    {
+        if (tlen)
+        {
+            int i;
+
+            if (slen < tlen)
+                tlen = slen;
+            tlen /= sizeof (DWORD);
+            for (i = 0; i < tlen; ++i)
+            {
+                ((DWORD *)target)[i] = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ssource,
+                                                          ((DWORD *)source)[i],
+                                                          NULL, 0);
+            }
+            rc = sizeof (DWORD) * i;
+        }
+        else
+            rc = slen;
+    }
+    else
+    {
+        memcpy( target, source, min(slen,tlen));
+        rc = slen;
+    }
+
+    return rc;
 }
 
 static INT CopyCompOffsetIMEtoClient(InputContextData *data, DWORD offset, LPBYTE ssource, BOOL unicode)
