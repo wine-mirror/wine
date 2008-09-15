@@ -346,13 +346,52 @@ static HRESULT WINAPI MimeInternat_EncodeHeader(IMimeInternational *iface, HCHAR
 }
 
 static HRESULT WINAPI MimeInternat_ConvertBuffer(IMimeInternational *iface, CODEPAGEID cpiSource,
-                                                 CODEPAGEID cpiDest,
-                                                 LPBLOB pIn,
-                                                 LPBLOB pOut,
+                                                 CODEPAGEID cpiDest, LPBLOB pIn, LPBLOB pOut,
                                                  ULONG *pcbRead)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    IMultiLanguage *ml;
+
+    TRACE("(%p)->(%d, %d, %p, %p, %p)\n", iface, cpiSource, cpiDest, pIn, pOut, pcbRead);
+
+    *pcbRead = 0;
+    pOut->cbSize = 0;
+
+    /* Could call mlang.ConvertINetString() to avoid the COM overhead if need be. */
+
+    hr = get_mlang(&ml);
+    if(SUCCEEDED(hr))
+    {
+        DWORD mode = 0;
+        UINT in_size = pIn->cbSize, out_size;
+
+        hr = IMultiLanguage_ConvertString(ml, &mode, cpiSource, cpiDest, pIn->pBlobData, &in_size,
+                                          NULL, &out_size);
+        if(hr == S_OK) /* S_FALSE means the conversion could not be performed */
+        {
+            pOut->pBlobData = CoTaskMemAlloc(out_size);
+            if(!pOut->pBlobData)
+                hr = E_OUTOFMEMORY;
+            else
+            {
+                mode = 0;
+                in_size = pIn->cbSize;
+                hr = IMultiLanguage_ConvertString(ml, &mode, cpiSource, cpiDest, pIn->pBlobData, &in_size,
+                                                  pOut->pBlobData, &out_size);
+
+                if(hr == S_OK)
+                {
+                    *pcbRead = in_size;
+                    pOut->cbSize = out_size;
+                }
+                else
+                    CoTaskMemFree(pOut->pBlobData);
+            }
+        }
+        IMultiLanguage_Release(ml);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI MimeInternat_ConvertString(IMimeInternational *iface, CODEPAGEID cpiSource,
