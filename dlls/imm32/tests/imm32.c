@@ -220,8 +220,36 @@ static int test_ImmNotifyIME(void) {
     return 0;
 }
 
+static int test_ImmGetCompositionString(void)
+{
+    HIMC imc;
+    static const WCHAR string[] = {'w','i','n','e',0x65e5,0x672c,0x8a9e};
+    char cstring[20];
+    WCHAR wstring[20];
+    DWORD len;
+    DWORD alen,wlen;
+
+    imc = ImmGetContext(hwnd);
+    ImmSetCompositionStringW(imc, SCS_SETSTR, string, sizeof(string), NULL,0);
+    alen = ImmGetCompositionStringA(imc, GCS_COMPSTR, cstring, 20);
+    wlen = ImmGetCompositionStringW(imc, GCS_COMPSTR, wstring, 20);
+    /* windows machines without any IME installed just return 0 above */
+    if( alen && wlen)
+    {
+        len = ImmGetCompositionStringW(imc, GCS_COMPATTR, NULL, 0);
+        ok(len*sizeof(WCHAR)==wlen,"GCS_COMPATTR(W) not returning correct count\n");
+        len = ImmGetCompositionStringA(imc, GCS_COMPATTR, NULL, 0);
+        ok(len==alen,"GCS_COMPATTR(A) not returning correct count\n");
+    }
+    ImmReleaseContext(hwnd, imc);
+    return 0;
+}
+
 START_TEST(imm32) {
     if (init())
+    {
         test_ImmNotifyIME();
+        test_ImmGetCompositionString();
+    }
     cleanup();
 }
