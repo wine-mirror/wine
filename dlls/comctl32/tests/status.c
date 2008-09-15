@@ -303,18 +303,28 @@ static void test_status_control(void)
 
     /* Set background color */
     r = SendMessage(hWndStatus, SB_SETBKCOLOR , 0, RGB(255,0,0));
-    expect(CLR_DEFAULT,r);
+    ok(r == CLR_DEFAULT ||
+       broken(r == 0), /* win95 */
+       "Expected %d, got %d\n", CLR_DEFAULT, r);
     r = SendMessage(hWndStatus, SB_SETBKCOLOR , 0, CLR_DEFAULT);
-    expect(RGB(255,0,0),r);
+    ok(r == RGB(255,0,0) ||
+       broken(r == 0), /* win95 */
+       "Expected %d, got %d\n", RGB(255,0,0), r);
 
     /* Add an icon to the status bar */
     hIcon = LoadIcon(NULL, IDI_QUESTION);
     r = SendMessage(hWndStatus, SB_SETICON, 1, (LPARAM) NULL);
-    ok(r != 0, "Expected non-zero, got %d\n", r);
+    ok(r != 0 ||
+       broken(r == 0), /* win95 */
+       "Expected non-zero, got %d\n", r);
     r = SendMessage(hWndStatus, SB_SETICON, 1, (LPARAM) hIcon);
-    ok(r != 0, "Expected non-zero, got %d\n", r);
+    ok(r != 0 ||
+       broken(r == 0), /* win95 */
+       "Expected non-zero, got %d\n", r);
     r = SendMessage(hWndStatus, SB_SETICON, 1, (LPARAM) NULL);
-    ok(r != 0, "Expected non-zero, got %d\n", r);
+    ok(r != 0 ||
+       broken(r == 0), /* win95 */
+       "Expected non-zero, got %d\n", r);
 
     /* Set the Unicode format */
     r = SendMessage(hWndStatus, SB_SETUNICODEFORMAT, FALSE, 0);
@@ -323,7 +333,9 @@ static void test_status_control(void)
     r = SendMessage(hWndStatus, SB_SETUNICODEFORMAT, TRUE, 0);
     expect(FALSE,r);
     r = SendMessage(hWndStatus, SB_GETUNICODEFORMAT, 0, 0);
-    expect(TRUE,r);
+    ok(r == TRUE ||
+       broken(r == FALSE), /* win95 */
+       "Expected TRUE, got %d\n", r);
 
     /* Reset number of parts */
     r = SendMessage(hWndStatus, SB_SETPARTS, 2, (LPARAM)nParts);
