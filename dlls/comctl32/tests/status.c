@@ -166,6 +166,11 @@ static void test_height(void)
 
     g_wmsize_count = 0;
     SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFont, TRUE);
+    if (!g_wmsize_count)
+    {
+        skip("Status control not resized in win95, skipping broken tests.");
+        return;
+    }
     ok(g_wmsize_count > 0, "WM_SETFONT should issue WM_SIZE\n");
 
     GetClientRect(hwndStatus, &rc2);
@@ -361,8 +366,11 @@ static void test_status_control(void)
     todo_wine
     {
         SendMessage(hWndStatus, SB_SETTIPTEXT, 0,(LPARAM) "Tooltip Text");
+        lstrcpyA(charArray, "apple");
         SendMessage(hWndStatus, SB_GETTIPTEXT, MAKEWPARAM (0, 20),(LPARAM) charArray);
-        ok(strcmp(charArray,"Tooltip Text") == 0, "Expected Tooltip Text, got %s\n", charArray);
+        ok(strcmp(charArray,"Tooltip Text") == 0 ||
+           broken(!strcmp(charArray, "apple")), /* win95 */
+           "Expected Tooltip Text, got %s\n", charArray);
     }
 
     /* Make simple */
