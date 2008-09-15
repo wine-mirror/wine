@@ -110,14 +110,30 @@ void *jsheap_alloc(jsheap_t *heap, DWORD size)
     return list+1;
 }
 
+void *jsheap_grow(jsheap_t *heap, void *mem, DWORD size, DWORD inc)
+{
+    if(mem == (BYTE*)heap->blocks[heap->last_block] + heap->offset-size
+       && heap->offset+inc < block_size(heap->last_block)) {
+        heap->offset += inc;
+        return mem;
+    }
+
+    return jsheap_alloc(heap, size+inc);
+}
+
 void jsheap_clear(jsheap_t *heap)
 {
     struct list *tmp;
+
+    if(!heap)
+        return;
 
     while((tmp = list_next(&heap->custom_blocks, &heap->custom_blocks))) {
         list_remove(tmp);
         heap_free(tmp);
     }
+
+    heap->last_block = heap->offset = 0;
 }
 
 void jsheap_free(jsheap_t *heap)
@@ -131,6 +147,15 @@ void jsheap_free(jsheap_t *heap)
     heap_free(heap->blocks);
 
     jsheap_init(heap);
+}
+
+jsheap_t *jsheap_mark(jsheap_t *heap)
+{
+    if(heap->mark)
+        return NULL;
+
+    heap->mark = TRUE;
+    return heap;
 }
 
 /* ECMA-262 3rd Edition    9.1 */

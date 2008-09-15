@@ -54,6 +54,7 @@ void script_release(script_ctx_t *ctx)
     if(--ctx->ref)
         return;
 
+    jsheap_free(&ctx->tmp_heap);
     heap_free(ctx);
 }
 
@@ -507,6 +508,7 @@ static HRESULT WINAPI JScriptParse_InitNew(IActiveScriptParse *iface)
 
     ctx->ref = 1;
     ctx->state = SCRIPTSTATE_UNINITIALIZED;
+    jsheap_init(&ctx->tmp_heap);
 
     ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
     if(ctx) {

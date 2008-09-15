@@ -40,6 +40,22 @@ typedef struct {
     VARIANT var;
 } jsexcept_t;
 
+typedef struct {
+    void **blocks;
+    DWORD block_cnt;
+    DWORD last_block;
+    DWORD offset;
+    BOOL mark;
+    struct list custom_blocks;
+} jsheap_t;
+
+void jsheap_init(jsheap_t*);
+void *jsheap_alloc(jsheap_t*,DWORD);
+void *jsheap_grow(jsheap_t*,void*,DWORD,DWORD);
+void jsheap_clear(jsheap_t*);
+void jsheap_free(jsheap_t*);
+jsheap_t *jsheap_mark(jsheap_t*);
+
 typedef struct DispatchEx DispatchEx;
 
 #define PROPF_ARGMASK 0x00ff
@@ -139,6 +155,8 @@ struct _script_ctx_t {
     named_item_t *named_items;
     LCID lcid;
 
+    jsheap_t tmp_heap;
+
     DispatchEx *script_disp;
     DispatchEx *global;
     DispatchEx *array_constr;
@@ -178,19 +196,6 @@ static inline DWORD arg_cnt(const DISPPARAMS *dp)
 const char *debugstr_variant(const VARIANT*);
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
-
-typedef struct {
-    void **blocks;
-    DWORD block_cnt;
-    DWORD last_block;
-    DWORD offset;
-    struct list custom_blocks;
-} jsheap_t;
-
-void jsheap_init(jsheap_t*);
-void *jsheap_alloc(jsheap_t*,DWORD);
-void jsheap_clear(jsheap_t*);
-void jsheap_free(jsheap_t*);
 
 extern LONG module_ref;
 

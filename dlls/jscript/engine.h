@@ -35,7 +35,6 @@ typedef struct _parser_ctx_t {
     BOOL nl;
     HRESULT hres;
 
-    jsheap_t tmp_heap;
     jsheap_t heap;
 
     obj_literal_t *obj_literals;
@@ -60,7 +59,7 @@ static inline void *parser_alloc(parser_ctx_t *ctx, DWORD size)
 
 static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
 {
-    return jsheap_alloc(&ctx->tmp_heap, size);
+    return jsheap_alloc(&ctx->script->tmp_heap, size);
 }
 
 typedef struct _scope_chain_t {
