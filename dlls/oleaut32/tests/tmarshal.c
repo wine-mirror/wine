@@ -24,12 +24,25 @@
 #include <ocidl.h>
 #include <stdio.h>
 
-#include <wine/test.h>
+#include "wine/test.h"
 
 #include "tmarshal.h"
 #include "tmarshal_dispids.h"
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", (unsigned long int)hr)
+
+/* ULL suffix is not portable */
+#define ULL_CONST(dw1, dw2) ((((ULONGLONG)dw1) << 32) | (ULONGLONG)dw2)
+
+const MYSTRUCT MYSTRUCT_BYVAL = {0x12345678, ULL_CONST(0xdeadbeef, 0x98765432)};
+const MYSTRUCT MYSTRUCT_BYPTR = {0x91827364, ULL_CONST(0x88776655, 0x44332211)};
+const MYSTRUCT MYSTRUCT_ARRAY[5] = {
+    {0x1a1b1c1d, ULL_CONST(0x1e1f1011, 0x12131415)},
+    {0x2a2b2c2d, ULL_CONST(0x2e2f2021, 0x22232425)},
+    {0x3a3b3c3d, ULL_CONST(0x3e3f3031, 0x32333435)},
+    {0x4a4b4c4d, ULL_CONST(0x4e4f4041, 0x42434445)},
+    {0x5a5b5c5d, ULL_CONST(0x5e5f5051, 0x52535455)},
+};
 
 /* Debugging functions from wine/libs/wine/debug.c */
 
@@ -575,6 +588,18 @@ void WINAPI Widget_VarArg(
     ok(hr == S_OK, "SafeArrayUnaccessData failed with %x\n", hr);
 }
 
+void WINAPI Widget_StructArgs(
+    IWidget * iface,
+    MYSTRUCT byval,
+    MYSTRUCT *byptr,
+    MYSTRUCT arr[5])
+{
+    ok(memcmp(&byval, &MYSTRUCT_BYVAL, sizeof(MYSTRUCT))==0, "Struct parameter passed by value corrupted\n");
+    ok(memcmp(byptr,  &MYSTRUCT_BYPTR, sizeof(MYSTRUCT))==0, "Struct parameter passed by pointer corrupted\n");
+    ok(memcmp(arr,    MYSTRUCT_ARRAY,  sizeof(MYSTRUCT_ARRAY))==0, "Array of structs corrupted\n");
+}
+
+
 HRESULT WINAPI Widget_Error(
     IWidget __RPC_FAR * iface)
 {
@@ -616,6 +641,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_VariantArrayPtr,
     Widget_Variant,
     Widget_VarArg,
+    Widget_StructArgs,
     Widget_Error,
     Widget_CloneInterface
 };
@@ -932,6 +958,8 @@ static void test_typelibmarshal(void)
     DWORD tid;
     BSTR bstr;
     ITypeInfo *pTypeInfo;
+    MYSTRUCT mystruct;
+    MYSTRUCT mystructArray[5];
 
     ok(pKEW != NULL, "Widget creation failed\n");
 
@@ -1070,6 +1098,11 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_GETOLECOLOR, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
     VariantClear(&varresult);
+
+    /* call StructArgs (direct) */
+    mystruct = MYSTRUCT_BYPTR;
+    memcpy(mystructArray, MYSTRUCT_ARRAY, sizeof(mystructArray));
+    IWidget_StructArgs(pWidget, MYSTRUCT_BYVAL, &mystruct, mystructArray);
 
     /* call Clone */
     dispparams.cNamedArgs = 0;

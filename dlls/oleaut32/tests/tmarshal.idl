@@ -35,6 +35,12 @@ library TestTypelib
         STATE_WIDGETIFIED
     } STATE;
 
+    typedef struct tagMYSTRUCT
+    {
+        INT field1;
+        ULONGLONG field2;
+    } MYSTRUCT;
+
     coclass ApplicationObject2;
 
     [
@@ -110,6 +116,9 @@ library TestTypelib
 
         [vararg, id(DISPID_TM_VARARG)]
         void VarArg([in] int numexpect, [in] SAFEARRAY(VARIANT) values);
+
+        [id(DISPID_TM_STRUCTARGS)]
+        void StructArgs([in] MYSTRUCT byval, [in] MYSTRUCT *byptr, [in] MYSTRUCT arr[5]);
 
         [id(DISPID_TM_ERROR)]
         HRESULT Error();

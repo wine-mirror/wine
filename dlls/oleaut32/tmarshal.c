@@ -524,6 +524,22 @@ _argsize(TYPEDESC *tdesc, ITypeInfo *tinfo) {
         return (sizeof(DECIMAL)+3)/sizeof(DWORD);
     case VT_VARIANT:
 	return (sizeof(VARIANT)+3)/sizeof(DWORD);
+    case VT_USERDEFINED:
+    {
+        ITypeInfo *tinfo2;
+        TYPEATTR *tattr;
+        HRESULT hres;
+        DWORD ret;
+
+        hres = ITypeInfo_GetRefTypeInfo(tinfo,tdesc->u.hreftype,&tinfo2);
+        if (FAILED(hres))
+            return 0; /* should fail critically in serialize_param */
+        ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+        ret = (tattr->cbSizeInstance+3)/sizeof(DWORD);
+        ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
+        ITypeInfo_Release(tinfo2);
+        return ret;
+    }
     default:
 	return 1;
     }
@@ -558,6 +574,22 @@ _xsize(const TYPEDESC *td, ITypeInfo *tinfo) {
     case VT_UI1:
     case VT_I1:
 	return 1;
+    case VT_USERDEFINED:
+    {
+        ITypeInfo *tinfo2;
+        TYPEATTR *tattr;
+        HRESULT hres;
+        DWORD ret;
+
+        hres = ITypeInfo_GetRefTypeInfo(tinfo,td->u.hreftype,&tinfo2);
+        if (FAILED(hres))
+            return 0;
+        ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+        ret = tattr->cbSizeInstance;
+        ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
+        ITypeInfo_Release(tinfo2);
+        return ret;
+    }
     default:
 	return 4;
     }
@@ -1149,9 +1181,6 @@ deserialize_param(
 		case TKIND_RECORD: {
 		    int i;
 
-		    if (alloc)
-			*arg = (DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,tattr->cbSizeInstance);
-
 		    if (debugout) TRACE_(olerelay)("{");
 		    for (i=0;i<tattr->cVars;i++) {
 			VARDESC *vdesc;
@@ -1169,7 +1198,7 @@ deserialize_param(
 			    debugout,
 			    alloc,
 			    &vdesc->elemdescVar.tdesc,
-			    (DWORD*)(((LPBYTE)*arg)+vdesc->u.oInst),
+			    (DWORD*)(((LPBYTE)arg)+vdesc->u.oInst),
 			    buf
 			);
                         ITypeInfo2_ReleaseVarDesc(tinfo2, vdesc);
