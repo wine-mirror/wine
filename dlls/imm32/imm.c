@@ -1010,10 +1010,69 @@ static INT CopyCompStringIMEtoClient(InputContextData *data, LPBYTE source, INT 
 static INT CopyCompAttrIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE ssource, INT sslen,
                                    LPBYTE target, INT tlen, BOOL unicode )
 {
-    if ( target && source && tlen >= slen)
-        memcpy( target , source , slen);
+    INT rc;
 
-    return slen;
+    if (is_himc_ime_unicode(data) && !unicode)
+    {
+        rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)ssource, sslen, NULL, 0, NULL, NULL);
+        if (tlen)
+        {
+            const BYTE *src = source;
+            LPBYTE dst = target;
+            int i, j = 0, k = 0;
+
+            if (rc < tlen)
+                tlen = rc;
+            for (i = 0; i < sslen; ++i)
+            {
+                int len;
+
+                len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)ssource + i, 1,
+                                          NULL, 0, NULL, NULL);
+                for (; len > 0; --len)
+                {
+                    dst[j++] = src[k];
+
+                    if (j >= tlen)
+                        goto end;
+                }
+                ++k;
+            }
+        end:
+            rc = j;
+        }
+    }
+    else if (!is_himc_ime_unicode(data) && unicode)
+    {
+        rc = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ssource, sslen, NULL, 0);
+        if (tlen)
+        {
+            const BYTE *src = source;
+            LPBYTE dst = target;
+            int i, j = 0;
+
+            if (rc < tlen)
+                tlen = rc;
+            for (i = 0; i < sslen; ++i)
+            {
+                if (IsDBCSLeadByte(((LPSTR)ssource)[i]))
+                    continue;
+
+                dst[j++] = src[i];
+
+                if (j >= tlen)
+                    break;
+            }
+            rc = j;
+        }
+    }
+    else
+    {
+        memcpy( target, source, min(slen,tlen));
+        rc = slen;
+    }
+
+    return rc;
 }
 
 static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT slen, LPBYTE ssource, INT sslen,
