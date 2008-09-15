@@ -3388,6 +3388,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "#undef RpcFinally\n");
     fprintf( file, "#undef RpcEndFinally\n");
     fprintf( file, "#undef RpcExceptionCode\n");
+    fprintf( file, "#undef RpcAbnormalTermination\n");
     fprintf( file, "\n");
     fprintf( file, "struct __exception_frame;\n");
     fprintf( file, "typedef int (*__filter_func)(EXCEPTION_RECORD *, struct __exception_frame *);\n");
@@ -3399,6 +3400,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "    __finally_func                finally; \\\n");
     fprintf( file, "    sigjmp_buf                    jmp; \\\n");
     fprintf( file, "    DWORD                         code; \\\n");
+    fprintf( file, "    unsigned char                 abnormal_termination; \\\n");
     fprintf( file, "    unsigned char                 filter_level; \\\n");
     fprintf( file, "    unsigned char                 finally_level;\n");
     fprintf( file, "\n");
@@ -3416,7 +3418,10 @@ void write_exceptions( FILE *file )
     fprintf( file, "    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))\n");
     fprintf( file, "    {\n" );
     fprintf( file, "        if (exc_frame->finally_level && (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))\n");
+    fprintf( file, "        {\n" );
+    fprintf( file, "            exc_frame->abnormal_termination = 1;\n");
     fprintf( file, "            exc_frame->finally( exc_frame );\n");
+    fprintf( file, "        }\n" );
     fprintf( file, "        return ExceptionContinueSearch;\n");
     fprintf( file, "    }\n" );
     fprintf( file, "    exc_frame->code = record->ExceptionCode;\n");
@@ -3425,6 +3430,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "        __wine_rtl_unwind( frame, record );\n");
     fprintf( file, "        if (exc_frame->finally_level > exc_frame->filter_level)\n" );
     fprintf( file, "        {\n");
+    fprintf( file, "            exc_frame->abnormal_termination = 1;\n");
     fprintf( file, "            exc_frame->finally( exc_frame );\n");
     fprintf( file, "            __wine_pop_frame( frame );\n");
     fprintf( file, "        }\n");
@@ -3464,11 +3470,14 @@ void write_exceptions( FILE *file )
     fprintf( file, "\n");
     fprintf( file, "#define RpcEndFinally\n");
     fprintf( file, "\n");
+    fprintf( file, "#define RpcAbnormalTermination() (__frame->abnormal_termination)\n");
+    fprintf( file, "\n");
     fprintf( file, "#define RpcExceptionInit(filter_func,finally_func) \\\n");
     fprintf( file, "    do { \\\n");
     fprintf( file, "        __frame->frame.Handler = __widl_exception_handler; \\\n");
     fprintf( file, "        __frame->filter = (__filter_func)(filter_func); \\\n" );
     fprintf( file, "        __frame->finally = (__finally_func)(finally_func); \\\n");
+    fprintf( file, "        __frame->abnormal_termination = 0; \\\n");
     fprintf( file, "        __frame->filter_level = 0; \\\n");
     fprintf( file, "        __frame->finally_level = 0; \\\n");
     fprintf( file, "    } while (0)\n");
