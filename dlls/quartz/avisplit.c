@@ -447,10 +447,12 @@ static HRESULT AVISplitter_first_request(LPVOID iface)
 
         /* Could be an EOF instead */
         have_sample = (hr == S_OK);
-        if (FAILED(hr))
-            break;
         if (hr == S_FALSE)
             AVISplitter_SendEndOfFile(This, x);
+
+        if (FAILED(hr) && hr != VFW_E_NOT_CONNECTED)
+            break;
+        hr = S_OK;
     }
 
     /* FIXME: Don't do this for each pin that sent an EOF */
