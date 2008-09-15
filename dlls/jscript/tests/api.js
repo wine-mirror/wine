@@ -28,6 +28,9 @@ ok(arr["0"] === 1, "arr[0] is not 1");
 ok(arr["1"] === 2, "arr[1] is not 2");
 ok(arr["2"] === "test", "arr[2] is not \"test\"");
 
+arr["7"] = true;
+ok((arr.length === 8), "arr.length is not 8");
+
 var arr = new Array(6);
 ok(typeof(arr) === "object", "arr (6) is not object");
 ok((arr.length === 6), "arr.length is not 6");

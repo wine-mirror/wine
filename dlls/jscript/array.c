@@ -194,7 +194,23 @@ static void Array_destructor(DispatchEx *dispex)
 
 static void Array_on_put(DispatchEx *dispex, const WCHAR *name)
 {
-    FIXME("\n");
+    ArrayInstance *array = (ArrayInstance*)dispex;
+    const WCHAR *ptr = name;
+    DWORD id = 0;
+
+    if(!isdigitW(*ptr))
+        return;
+
+    while(*ptr && isdigitW(*ptr)) {
+        id = id*10 + (*ptr-'0');
+        ptr++;
+    }
+
+    if(*ptr)
+        return;
+
+    if(id >= array->length)
+        array->length = id+1;
 }
 
 static const builtin_prop_t Array_props[] = {
