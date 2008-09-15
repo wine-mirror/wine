@@ -3172,6 +3172,8 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
             case VT_UI2:
             case VT_I4:
             case VT_UI4:
+            case VT_INT:
+            case VT_UINT:
               V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) =
                 *(INT*)(pBlk + pItem->byte_offs);
               break;
