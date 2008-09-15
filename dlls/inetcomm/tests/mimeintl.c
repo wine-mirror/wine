@@ -210,11 +210,41 @@ static void test_defaultcharset(void)
     IMimeInternational_Release(internat);
 }
 
+static void test_convert(void)
+{
+    IMimeInternational *internat;
+    HRESULT hr;
+    BLOB src, dst;
+    ULONG read;
+    static const char test_string[] = "test string";
+
+    hr = MimeOleGetInternat(&internat);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    src.pBlobData = (BYTE*)test_string;
+    src.cbSize = sizeof(test_string);
+    hr = IMimeInternational_ConvertBuffer(internat, 1252, 28591, &src, &dst, &read);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(read == sizeof(test_string), "got %d\n", read);
+    ok(dst.cbSize == sizeof(test_string), "got %d\n", dst.cbSize);
+    CoTaskMemFree(dst.pBlobData);
+
+    src.cbSize = 2;
+    hr = IMimeInternational_ConvertBuffer(internat, 1252, 28591, &src, &dst, &read);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(read == 2, "got %d\n", read);
+    ok(dst.cbSize == 2, "got %d\n", dst.cbSize);
+    CoTaskMemFree(dst.pBlobData);
+
+    IMimeInternational_Release(internat);
+}
+
 START_TEST(mimeintl)
 {
     OleInitialize(NULL);
     test_create();
     test_charset();
     test_defaultcharset();
+    test_convert();
     OleUninitialize();
 }
