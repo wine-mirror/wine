@@ -3146,7 +3146,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
 						       sizeof(VARIANT));
         V_VT((*ppVarDesc)->vardesc.u.lpvarValue) = VT_INT;
         if (pItem->flags & 0x08)
-          V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) = pItem->byte_offs;
+          V_INT((*ppVarDesc)->vardesc.u.lpvarValue) = pItem->byte_offs;
         else {
           switch ((*ppVarDesc)->vardesc.elemdescVar.tdesc.vt)
           {
@@ -3174,7 +3174,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
             case VT_UI4:
             case VT_INT:
             case VT_UINT:
-              V_UNION((*ppVarDesc)->vardesc.u.lpvarValue, intVal) =
+              V_INT((*ppVarDesc)->vardesc.u.lpvarValue) =
                 *(INT*)(pBlk + pItem->byte_offs);
               break;
             default:
