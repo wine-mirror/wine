@@ -3613,6 +3613,9 @@ static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
 
+    /* ignore registered messages */
+    if (message >= 0xc000) return 0;
+
     switch (message)
     {
 	/* ignore */
@@ -4890,6 +4893,9 @@ static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
 
+    /* ignore registered messages */
+    if (message >= 0xc000) return 0;
+
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
@@ -5030,6 +5036,9 @@ static LRESULT CALLBACK static_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
+
+    /* ignore registered messages */
+    if (message >= 0xc000) return 0;
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
@@ -6362,6 +6371,7 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
         /* ignore some unwanted messages */
         if (msg.message == WM_MOUSEMOVE ||
             msg.message == WM_GETICON ||
+            msg.message == WM_TIMER ||
             msg.message == WM_DEVICECHANGE)
             continue;
 
@@ -6588,6 +6598,9 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
 
+    /* ignore registered messages */
+    if (message >= 0xc000) return 0;
+
     switch (message)
     {
 	case WM_ENABLE:
@@ -6780,6 +6793,9 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
 
+    /* ignore registered messages */
+    if (message >= 0xc000) return 0;
+
     logged_lParam=lParam;
     if (log_all_parent_messages ||
         message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
@@ -6883,6 +6899,9 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
+
+    /* ignore registered messages */
+    if (message >= 0xc000) return 0;
 
     if (test_def_id)
     {
@@ -7050,13 +7069,17 @@ LRESULT WINAPI PaintLoopProcA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             MSG msg2;
             static int i = 0;
 
-            i++;
-            if (PeekMessageA(&msg2, 0, 0, 0, 1))
+            if (i < 256)
             {
-                TranslateMessage(&msg2);
-                DispatchMessage(&msg2);
+                i++;
+                if (PeekMessageA(&msg2, 0, 0, 0, 1))
+                {
+                    TranslateMessage(&msg2);
+                    DispatchMessage(&msg2);
+                }
+                i--;
             }
-            i--;
+            else ok(broken(1), "infinite loop\n");
             if ( i == 0)
                 paint_loop_done = 1;
             return DefWindowProcA(hWnd,msg,wParam,lParam);
@@ -8593,6 +8616,9 @@ static LRESULT CALLBACK edit_hook_proc(HWND hwnd, UINT message, WPARAM wParam, L
 
     /* explicitly ignore WM_GETICON message */
     if (message == WM_GETICON) return 0;
+
+    /* ignore registered messages */
+    if (message >= 0xc000) return 0;
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
