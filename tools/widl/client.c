@@ -99,6 +99,50 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                 context_handle_var = get_context_handle_var(func);
         }
 
+        print_client( "struct __frame_%s%s\n{\n", prefix_client, get_name(def) );
+        indent++;
+        print_client( "__DECL_EXCEPTION_FRAME\n" );
+        print_client("MIDL_STUB_MESSAGE _StubMsg;\n");
+        if (implicit_handle || explicit_handle_var || explicit_generic_handle_var || context_handle_var)
+        {
+            if (!implicit_handle && explicit_generic_handle_var)
+                print_client("%s %s;\n",
+                             get_explicit_generic_handle_type(explicit_generic_handle_var)->name,
+                             explicit_generic_handle_var->name );
+            print_client("RPC_BINDING_HANDLE _Handle;\n");
+        }
+
+        if (!is_void(get_func_return_type(func)) && decl_indirect(get_func_return_type(func)))
+        {
+            print_client("void *_p_%s;\n", "_RetVal" );
+        }
+        indent--;
+        print_client( "};\n\n" );
+
+        print_client( "static void __finally_%s%s(", prefix_client, get_name(def) );
+        print_client( " struct __frame_%s%s *__frame )\n{\n", prefix_client, get_name(def) );
+        indent++;
+
+        /* FIXME: emit client finally code */
+
+        if (has_full_pointer)
+            write_full_pointer_free(client, indent, func);
+
+        print_client("NdrFreeBuffer((PMIDL_STUB_MESSAGE)&__frame->_StubMsg);\n");
+
+        if (!implicit_handle && explicit_generic_handle_var)
+        {
+            fprintf(client, "\n");
+            print_client("if (__frame->_Handle)\n");
+            indent++;
+            print_client("%s_unbind(__frame->%s, __frame->_Handle);\n",
+                get_explicit_generic_handle_type(explicit_generic_handle_var)->name,
+                explicit_generic_handle_var->name);
+            indent--;
+        }
+        indent--;
+        print_client( "}\n\n" );
+
         write_type_decl_left(client, get_func_return_type(func));
         if (needs_space_after(get_func_return_type(func)))
           fprintf(client, " ");
@@ -115,7 +159,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         /* write the functions body */
         fprintf(client, "{\n");
         indent++;
-        print_client( "struct __client_frame __f, * const __frame = &__f;\n" );
+        print_client( "struct __frame_%s%s __f, * const __frame = &__f;\n", prefix_client, get_name(def) );
 
         /* declare return value '_RetVal' */
         if (!is_void(get_func_return_type(func)))
@@ -124,18 +168,23 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             write_type_decl_left(client, get_func_return_type(func));
             fprintf(client, " _RetVal;\n");
         }
+        print_client("RPC_MESSAGE _RpcMessage;\n");
 
         if (implicit_handle || explicit_handle_var || explicit_generic_handle_var || context_handle_var)
-            print_client("RPC_BINDING_HANDLE _Handle = 0;\n");
-
-        print_client("RPC_MESSAGE _RpcMessage;\n");
+        {
+            print_client( "__frame->_Handle = 0;\n" );
+            if (!implicit_handle && explicit_generic_handle_var)
+                print_client("__frame->%s = %s;\n",
+                             explicit_generic_handle_var->name, explicit_generic_handle_var->name );
+        }
         if (!is_void(get_func_return_type(func)) && decl_indirect(get_func_return_type(func)))
         {
-            print_client("void *_p_%s = &%s;\n",
+            print_client("__frame->_p_%s = &%s;\n",
                          "_RetVal", "_RetVal");
         }
         fprintf(client, "\n");
-        print_client( "RpcExceptionInit( 0, __client_finally );\n" );
+
+        print_client( "RpcExceptionInit( 0, __finally_%s%s );\n", prefix_client, get_name(def) );
 
         if (has_full_pointer)
             write_full_pointer_init(client, indent, func, FALSE);
@@ -168,12 +217,12 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         if (explicit_handle_var)
         {
-            print_client("_Handle = %s;\n", explicit_handle_var->name);
+            print_client("__frame->_Handle = %s;\n", explicit_handle_var->name);
             fprintf(client, "\n");
         }
         else if (explicit_generic_handle_var)
         {
-            print_client("_Handle = %s_bind(%s);\n",
+            print_client("__frame->_Handle = %s_bind(%s);\n",
                 get_explicit_generic_handle_type(explicit_generic_handle_var)->name,
                 explicit_generic_handle_var->name);
             fprintf(client, "\n");
@@ -186,7 +235,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             int is_ch_ptr = is_aliaschain_attr(context_handle_var->type, ATTR_CONTEXTHANDLE) ? FALSE : TRUE;
             print_client("if (%s%s != 0)\n", is_ch_ptr ? "*" : "", context_handle_var->name);
             indent++;
-            print_client("_Handle = NDRCContextBinding(%s%s);\n", is_ch_ptr ? "*" : "", context_handle_var->name);
+            print_client("__frame->_Handle = NDRCContextBinding(%s%s);\n",
+                         is_ch_ptr ? "*" : "", context_handle_var->name);
             indent--;
             if (is_attr(context_handle_var->attrs, ATTR_IN) &&
                 !is_attr(context_handle_var->attrs, ATTR_OUT))
@@ -200,7 +250,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         }
         else if (implicit_handle)
         {
-            print_client("_Handle = %s;\n", implicit_handle);
+            print_client("__frame->_Handle = %s;\n", implicit_handle);
             fprintf(client, "\n");
         }
 
@@ -211,7 +261,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
         print_client("__frame->_StubMsg.BufferLength,\n");
         if (implicit_handle || explicit_handle_var || explicit_generic_handle_var || context_handle_var)
-            print_client("_Handle);\n");
+            print_client("__frame->_Handle);\n");
         else
             print_client("%s__MIDL_AutoBindHandle);\n", iface->name);
         indent--;
@@ -276,26 +326,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_client("RpcFinally\n");
         print_client("{\n");
         indent++;
-
-
-        /* FIXME: emit client finally code */
-
-        if (has_full_pointer)
-            write_full_pointer_free(client, indent, func);
-
-        print_client("NdrFreeBuffer((PMIDL_STUB_MESSAGE)&__frame->_StubMsg);\n");
-
-        if (!implicit_handle && explicit_generic_handle_var)
-        {
-            fprintf(client, "\n");
-            print_client("if (_Handle)\n");
-            indent++;
-            print_client("%s_unbind(%s, _Handle);\n",
-                get_explicit_generic_handle_type(explicit_generic_handle_var)->name,
-                explicit_generic_handle_var->name);
-            indent--;
-        }
-
+        print_client( "__finally_%s%s( __frame );\n", prefix_client, get_name(def) );
         indent--;
         print_client("}\n");
         print_client("RpcEndFinally\n");
@@ -437,16 +468,6 @@ static void init_client(void)
     print_client("#include \"%s\"\n", header_name);
     print_client( "\n");
     write_exceptions( client );
-    print_client( "\n");
-    print_client( "struct __client_frame\n");
-    print_client( "{\n");
-    print_client("    __DECL_EXCEPTION_FRAME;\n");
-    print_client( "    MIDL_STUB_MESSAGE _StubMsg;\n");
-    print_client( "};\n");
-    print_client( "\n");
-    print_client("static void __client_finally( struct __client_frame *__frame )\n");
-    print_client( "{\n");
-    print_client( "}\n");
     print_client( "\n");
 }
 

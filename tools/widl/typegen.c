@@ -2925,7 +2925,7 @@ static void write_remoting_arg(FILE *file, int indent, const func_t *func, const
                 print_file(file, indent, "NdrClientContextUnmarshall(\n");
                 print_file(file, indent + 1, "&__frame->_StubMsg,\n");
                 print_file(file, indent + 1, "(NDR_CCONTEXT *)%s%s,\n", local_var_prefix, var->name);
-                print_file(file, indent + 1, "_Handle);\n");
+                print_file(file, indent + 1, "__frame->_Handle);\n");
             }
             else
             {
