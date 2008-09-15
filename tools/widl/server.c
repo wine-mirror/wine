@@ -87,7 +87,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         fprintf(server, "\n");
         print_server( "RpcExceptionInit( __server_filter, __server_finally );\n" );
 
-        write_parameters_init(server, indent, func);
+        write_parameters_init(server, indent, func, "");
 
         if (explicit_handle_var)
         {
@@ -117,7 +117,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             fprintf(server, "\n");
 
             /* unmarshall arguments */
-            write_remoting_arguments(server, indent, func, PASS_IN, PHASE_UNMARSHAL);
+            write_remoting_arguments(server, indent, func, "", PASS_IN, PHASE_UNMARSHAL);
         }
 
         print_server("if (__frame->_StubMsg.Buffer > __frame->_StubMsg.BufferEnd)\n");
@@ -138,7 +138,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         fprintf(server, "\n");
 
         /* Assign 'out' arguments */
-        assign_stub_out_args(server, indent, func);
+        assign_stub_out_args(server, indent, func, "");
 
         /* Call the real server function */
         if (!is_void(get_func_return_type(func)))
@@ -184,10 +184,10 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         if (has_out_arg_or_return(func))
         {
-            write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_BUFFERSIZE);
+            write_remoting_arguments(server, indent, func, "", PASS_OUT, PHASE_BUFFERSIZE);
 
             if (!is_void(get_func_return_type(func)))
-                write_remoting_arguments(server, indent, func, PASS_RETURN, PHASE_BUFFERSIZE);
+                write_remoting_arguments(server, indent, func, "", PASS_RETURN, PHASE_BUFFERSIZE);
 
             print_server("_pRpcMessage->BufferLength = __frame->_StubMsg.BufferLength;\n");
             fprintf(server, "\n");
@@ -202,11 +202,11 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         }
 
         /* marshall arguments */
-        write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_MARSHAL);
+        write_remoting_arguments(server, indent, func, "", PASS_OUT, PHASE_MARSHAL);
 
         /* marshall the return value */
         if (!is_void(get_func_return_type(func)))
-            write_remoting_arguments(server, indent, func, PASS_RETURN, PHASE_MARSHAL);
+            write_remoting_arguments(server, indent, func, "", PASS_RETURN, PHASE_MARSHAL);
 
         indent--;
         print_server("}\n");
@@ -214,7 +214,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_server("{\n");
         indent++;
 
-        write_remoting_arguments(server, indent, func, PASS_OUT, PHASE_FREE);
+        write_remoting_arguments(server, indent, func, "", PASS_OUT, PHASE_FREE);
 
         if (has_full_pointer)
             write_full_pointer_free(server, indent, func);

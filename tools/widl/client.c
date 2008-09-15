@@ -204,7 +204,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             fprintf(client, "\n");
         }
 
-        write_remoting_arguments(client, indent, func, PASS_IN, PHASE_BUFFERSIZE);
+        write_remoting_arguments(client, indent, func, "", PASS_IN, PHASE_BUFFERSIZE);
 
         print_client("NdrGetBuffer(\n");
         indent++;
@@ -218,7 +218,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         fprintf(client, "\n");
 
         /* marshal arguments */
-        write_remoting_arguments(client, indent, func, PASS_IN, PHASE_MARSHAL);
+        write_remoting_arguments(client, indent, func, "", PASS_IN, PHASE_MARSHAL);
 
         /* send/receive message */
         /* print_client("NdrNsSendReceive(\n"); */
@@ -248,7 +248,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         /* unmarshall arguments */
         fprintf(client, "\n");
-        write_remoting_arguments(client, indent, func, PASS_OUT, PHASE_UNMARSHAL);
+        write_remoting_arguments(client, indent, func, "", PASS_OUT, PHASE_UNMARSHAL);
 
         /* unmarshal return value */
         if (!is_void(get_func_return_type(func)))
@@ -257,7 +257,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
                 print_client("MIDL_memset(&%s, 0, sizeof(%s));\n", "_RetVal", "_RetVal");
             else if (is_ptr(get_func_return_type(func)) || is_array(get_func_return_type(func)))
                 print_client("%s = 0;\n", "_RetVal");
-            write_remoting_arguments(client, indent, func, PASS_RETURN, PHASE_UNMARSHAL);
+            write_remoting_arguments(client, indent, func, "", PASS_RETURN, PHASE_UNMARSHAL);
         }
 
         /* update proc_offset */

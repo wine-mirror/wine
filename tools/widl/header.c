@@ -194,7 +194,7 @@ static void write_enums(FILE *h, var_list_t *enums)
       fprintf(h, "%s", get_name(v));
       if (v->eval) {
         fprintf(h, " = ");
-        write_expr(h, v->eval, 0, 1, NULL, NULL);
+        write_expr(h, v->eval, 0, 1, NULL, NULL, "");
       }
     }
     if (list_next( enums, &v->entry )) fprintf(h, ",\n");
@@ -499,7 +499,7 @@ void write_declaration(const var_t *v, int is_in_interface)
   if (is_const_decl(v) && v->eval)
   {
     fprintf(header, "#define %s (", v->name);
-    write_expr(header, v->eval, 0, 1, NULL, NULL);
+    write_expr(header, v->eval, 0, 1, NULL, NULL, "");
     fprintf(header, ")\n\n");
   }
   else if (v->type->type != RPC_FC_FUNCTION || !is_in_interface)
