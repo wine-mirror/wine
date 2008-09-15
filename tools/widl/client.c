@@ -128,7 +128,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         if (has_full_pointer)
             write_full_pointer_free(client, indent, func);
 
-        print_client("NdrFreeBuffer((PMIDL_STUB_MESSAGE)&__frame->_StubMsg);\n");
+        print_client("NdrFreeBuffer(&__frame->_StubMsg);\n");
 
         if (!implicit_handle && explicit_generic_handle_var)
         {
@@ -196,14 +196,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         print_client("{\n");
         indent++;
 
-        print_client("NdrClientInitializeNew(\n");
-        indent++;
-        print_client("(PRPC_MESSAGE)&_RpcMessage,\n");
-        print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
-        print_client("(PMIDL_STUB_DESC)&%s_StubDesc,\n", iface->name);
-        print_client("%d);\n", method_count);
-        indent--;
-        fprintf(client, "\n");
+        print_client("NdrClientInitializeNew(&_RpcMessage, &__frame->_StubMsg, &%s_StubDesc, %d);\n",
+                     iface->name, method_count);
 
         if (is_attr(def->attrs, ATTR_IDEMPOTENT) || is_attr(def->attrs, ATTR_BROADCAST))
         {
@@ -256,16 +250,11 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         write_remoting_arguments(client, indent, func, "", PASS_IN, PHASE_BUFFERSIZE);
 
-        print_client("NdrGetBuffer(\n");
-        indent++;
-        print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
-        print_client("__frame->_StubMsg.BufferLength,\n");
+        print_client("NdrGetBuffer(&__frame->_StubMsg, __frame->_StubMsg.BufferLength, ");
         if (implicit_handle || explicit_handle_var || explicit_generic_handle_var || context_handle_var)
-            print_client("__frame->_Handle);\n");
+            fprintf(client, "__frame->_Handle);\n\n");
         else
-            print_client("%s__MIDL_AutoBindHandle);\n", iface->name);
-        indent--;
-        fprintf(client, "\n");
+            fprintf(client,"%s__MIDL_AutoBindHandle);\n\n", iface->name);
 
         /* marshal arguments */
         write_remoting_arguments(client, indent, func, "", PASS_IN, PHASE_MARSHAL);
@@ -274,13 +263,9 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         /* print_client("NdrNsSendReceive(\n"); */
         /* print_client("(unsigned char *)__frame->_StubMsg.Buffer,\n"); */
         /* print_client("(RPC_BINDING_HANDLE *) &%s__MIDL_AutoBindHandle);\n", iface->name); */
-        print_client("NdrSendReceive(\n");
-        indent++;
-        print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
-        print_client("(unsigned char *)__frame->_StubMsg.Buffer);\n\n");
-        indent--;
+        print_client("NdrSendReceive(&__frame->_StubMsg, __frame->_StubMsg.Buffer);\n\n");
 
-        print_client("__frame->_StubMsg.BufferStart = (unsigned char *)_RpcMessage.Buffer;\n");
+        print_client("__frame->_StubMsg.BufferStart = _RpcMessage.Buffer;\n");
         print_client("__frame->_StubMsg.BufferEnd = __frame->_StubMsg.BufferStart + _RpcMessage.BufferLength;\n");
 
         if (has_out_arg_or_return(func))
@@ -289,11 +274,9 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
             print_client("if ((_RpcMessage.DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)\n");
             indent++;
-            print_client("NdrConvert(\n");
-            indent++;
-            print_client("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
-            print_client("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", *proc_offset);
-            indent -= 2;
+            print_client("NdrConvert(&__frame->_StubMsg, (PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n",
+                         *proc_offset);
+            indent--;
         }
 
         /* unmarshall arguments */

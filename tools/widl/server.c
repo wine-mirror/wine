@@ -126,11 +126,9 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
         {
             print_server("if ((_pRpcMessage->DataRepresentation & 0x0000FFFFUL) != NDR_LOCAL_DATA_REPRESENTATION)\n");
             indent++;
-            print_server("NdrConvert(\n");
-            indent++;
-            print_server("(PMIDL_STUB_MESSAGE)&__frame->_StubMsg,\n");
-            print_server("(PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n", *proc_offset);
-            indent -= 2;
+            print_server("NdrConvert(&__frame->_StubMsg, (PFORMAT_STRING)&__MIDL_ProcFormatString.Format[%u]);\n",
+                         *proc_offset);
+            indent--;
             fprintf(server, "\n");
 
             /* unmarshall arguments */
@@ -215,7 +213,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
             print_server("RpcRaiseException(_Status);\n");
             indent--;
             fprintf(server, "\n");
-            print_server("__frame->_StubMsg.Buffer = (unsigned char *)_pRpcMessage->Buffer;\n");
+            print_server("__frame->_StubMsg.Buffer = _pRpcMessage->Buffer;\n");
             fprintf(server, "\n");
         }
 
@@ -238,10 +236,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset)
 
         /* calculate buffer length */
         fprintf(server, "\n");
-        print_server("_pRpcMessage->BufferLength =\n");
-        indent++;
-        print_server("(unsigned int)(__frame->_StubMsg.Buffer - (unsigned char *)_pRpcMessage->Buffer);\n");
-        indent--;
+        print_server("_pRpcMessage->BufferLength = __frame->_StubMsg.Buffer - (unsigned char *)_pRpcMessage->Buffer;\n");
         indent--;
         fprintf(server, "}\n");
         fprintf(server, "\n");
