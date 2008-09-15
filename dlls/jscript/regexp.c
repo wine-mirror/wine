@@ -22,6 +22,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
+#define JSREG_FOLD      0x01    /* fold uppercase to lowercase */
+#define JSREG_GLOB      0x02    /* global exec, creates array of matches */
+#define JSREG_MULTILINE 0x04    /* treat ^ and $ as begin and end of line */
+#define JSREG_STICKY    0x08    /* only match starting at lastIndex */
+
 typedef struct {
     DispatchEx dispex;
 } RegExpInstance;
@@ -174,6 +179,12 @@ static HRESULT alloc_regexp(script_ctx_t *ctx, BOOL use_constr, RegExpInstance *
     return S_OK;
 }
 
+static HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD flags, DispatchEx **ret)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT RegExpConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -194,4 +205,35 @@ HRESULT create_regexp_constr(script_ctx_t *ctx, DispatchEx **ret)
 
     jsdisp_release(&regexp->dispex);
     return hres;
+}
+
+HRESULT create_regexp_str(script_ctx_t *ctx, const WCHAR *exp, DWORD exp_len, const WCHAR *opt,
+        DWORD opt_len, DispatchEx **ret)
+{
+    const WCHAR *p;
+    DWORD flags = 0;
+
+    if(opt) {
+        for (p = opt; p < opt+opt_len; p++) {
+            switch (*p) {
+            case 'g':
+                flags |= JSREG_GLOB;
+                break;
+            case 'i':
+                flags |= JSREG_FOLD;
+                break;
+            case 'm':
+                flags |= JSREG_MULTILINE;
+                break;
+            case 'y':
+                flags |= JSREG_STICKY;
+                break;
+            default:
+                WARN("wrong flag %c\n", *p);
+                return E_FAIL;
+            }
+        }
+    }
+
+    return create_regexp(ctx, exp, exp_len, flags, ret);
 }

@@ -18,6 +18,11 @@
 
 typedef struct _source_elements_t source_elements_t;
 
+typedef struct _obj_literal_t {
+    DispatchEx *obj;
+    struct _obj_literal_t *next;
+} obj_literal_t;
+
 typedef struct _parser_ctx_t {
     LONG ref;
 
@@ -32,6 +37,8 @@ typedef struct _parser_ctx_t {
 
     jsheap_t tmp_heap;
     jsheap_t heap;
+
+    obj_literal_t *obj_literals;
 
     struct _parser_ctx_t *next;
 } parser_ctx_t;
@@ -104,6 +111,8 @@ typedef struct {
         IDispatch *disp;
     } u;
 } literal_t;
+
+literal_t *parse_regexp(parser_ctx_t*);
 
 typedef struct _variable_declaration_t {
     const WCHAR *identifier;

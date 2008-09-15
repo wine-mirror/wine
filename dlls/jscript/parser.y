@@ -775,7 +775,8 @@ Literal
         | BooleanLiteral        { $$ = $1; }
         | tNumericLiteral       { $$ = $1; }
         | tStringLiteral        { $$ = new_string_literal(ctx, $1); }
-        | '/'                   { FIXME("RegExp literal\n"); YYABORT; }
+        | '/'                   { $$ = parse_regexp(ctx);
+                                  if(!$$) YYABORT; }
 
 /* ECMA-262 3rd Edition    7.8.2 */
 BooleanLiteral
@@ -1509,8 +1510,13 @@ static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
 
 void parser_release(parser_ctx_t *ctx)
 {
+    obj_literal_t *iter;
+
     if(--ctx->ref)
         return;
+
+    for(iter = ctx->obj_literals; iter; iter = iter->next)
+        jsdisp_release(iter->obj);
 
     jsheap_free(&ctx->heap);
     heap_free(ctx);
