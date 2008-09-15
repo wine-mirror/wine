@@ -1790,6 +1790,10 @@ HRESULT WINAPI PullPin_EndFlush(IPin * iface)
     EnterCriticalSection(&This->thread_lock);
     {
         FILTER_STATE state;
+
+        if (This->pReader)
+            IAsyncReader_EndFlush(This->pReader);
+
         IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
 
         if (state != State_Stopped)

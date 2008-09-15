@@ -231,6 +231,7 @@ HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
     if (This->state == State_Stopped)
     {
         LeaveCriticalSection(&This->csFilter);
+        IAsyncReader_EndFlush(This->pInputPin->pReader);
         LeaveCriticalSection(&pin->thread_lock);
         return S_OK;
     }
@@ -246,6 +247,7 @@ HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
 
     PullPin_PauseProcessing(This->pInputPin);
     PullPin_WaitForStateChange(This->pInputPin, INFINITE);
+    IAsyncReader_EndFlush(This->pInputPin->pReader);
 
     LeaveCriticalSection(&pin->thread_lock);
     return S_OK;
