@@ -115,6 +115,12 @@ typedef unsigned char boolean;
 #define NdrFcLong(s)  (unsigned char)(s & 0xff), (unsigned char)((s & 0x0000ff00) >> 8), \
   (unsigned char)((s & 0x00ff0000) >> 16), (unsigned char)(s >> 24)
 
+#define RPC_BAD_STUB_DATA_EXCEPTION_FILTER  \
+  ((RpcExceptionCode() == STATUS_ACCESS_VIOLATION) || \
+   (RpcExceptionCode() == STATUS_DATATYPE_MISALIGNMENT) || \
+   (RpcExceptionCode() == RPC_X_BAD_STUB_DATA) || \
+   (RpcExceptionCode() == RPC_S_INVALID_BOUND))
+
 typedef struct
 {
   void *pad[2];
