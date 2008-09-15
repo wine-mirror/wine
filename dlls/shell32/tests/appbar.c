@@ -26,7 +26,7 @@
 
 #define MSG_APPBAR WM_APP
 
-static const WCHAR testwindow_class[] = {'t','e','s','t','w','i','n','d','o','w',0};
+static const CHAR testwindow_class[] = "testwindow";
 
 static HMONITOR (WINAPI *pMonitorFromWindow)(HWND, DWORD);
 
@@ -107,16 +107,16 @@ static void do_events(void)
 {
     MSG msg;
 
-    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
     {
         TranslateMessage(&msg);
-        DispatchMessageW(&msg);
+        DispatchMessageA(&msg);
     }
 }
 
 static void register_testwindow_class(void)
 {
-    WNDCLASSEXW cls;
+    WNDCLASSEXA cls;
 
     ZeroMemory(&cls, sizeof(cls));
     cls.cbSize = sizeof(cls);
@@ -127,7 +127,7 @@ static void register_testwindow_class(void)
     cls.hbrBackground = (HBRUSH) COLOR_WINDOW;
     cls.lpszClassName = testwindow_class;
 
-    RegisterClassExW(&cls);
+    RegisterClassExA(&cls);
 }
 
 static void test_setpos(void)
@@ -143,7 +143,7 @@ static void test_setpos(void)
     screen_height = GetSystemMetrics(SM_CYSCREEN);
 
     /* create and register window1 */
-    window1 = CreateWindowExW(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
+    window1 = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
         testwindow_class, testwindow_class, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0,
         NULL, NULL, NULL, NULL);
     ok(window1 != NULL, "couldn't create window\n");
@@ -170,7 +170,7 @@ static void test_setpos(void)
     do_events();
 
     /* create and register window2 */
-    window2 = CreateWindowExW(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
+    window2 = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
         testwindow_class, testwindow_class, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0,
         NULL, NULL, NULL, NULL);
     ok(window2 != NULL, "couldn't create window\n");
@@ -204,7 +204,7 @@ static void test_setpos(void)
         window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
 
     /* create and register window3 */
-    window3 = CreateWindowExW(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
+    window3 = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
         testwindow_class, testwindow_class, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0,
         NULL, NULL, NULL, NULL);
     ok(window3 != NULL, "couldn't create window\n");
