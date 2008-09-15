@@ -26,12 +26,53 @@ typedef struct {
     DispatchEx dispex;
 } RegExpInstance;
 
+static const WCHAR sourceW[] = {'s','o','u','r','c','e',0};
+static const WCHAR globalW[] = {'g','l','o','b','a','l',0};
+static const WCHAR ignoreCaseW[] = {'i','g','n','o','r','e','C','a','s','e',0};
+static const WCHAR multilineW[] = {'m','u','l','t','i','l','i','n','e',0};
+static const WCHAR lastIndexW[] = {'l','a','s','t','I','n','d','e','x',0};
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
 static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p','e','r','t','y',0};
 static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
+static const WCHAR execW[] = {'e','x','e','c',0};
+
+static HRESULT RegExp_source(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT RegExp_global(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT RegExp_ignoreCase(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT RegExp_multiline(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT RegExp_lastIndex(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
 
 static HRESULT RegExp_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
@@ -68,6 +109,13 @@ static HRESULT RegExp_isPrototypeOf(DispatchEx *dispex, LCID lcid, WORD flags, D
     return E_NOTIMPL;
 }
 
+static HRESULT RegExp_exec(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT RegExp_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -81,9 +129,15 @@ static void RegExp_destructor(DispatchEx *dispex)
 }
 
 static const builtin_prop_t RegExp_props[] = {
+    {execW,                  RegExp_exec,                  PROPF_METHOD},
+    {globalW,                RegExp_global,                0},
     {hasOwnPropertyW,        RegExp_hasOwnProperty,        PROPF_METHOD},
+    {ignoreCaseW,            RegExp_ignoreCase,            0},
     {isPrototypeOfW,         RegExp_isPrototypeOf,         PROPF_METHOD},
+    {lastIndexW,             RegExp_lastIndex,             0},
+    {multilineW,             RegExp_multiline,             0},
     {propertyIsEnumerableW,  RegExp_propertyIsEnumerable,  PROPF_METHOD},
+    {sourceW,                RegExp_source,                0},
     {toLocaleStringW,        RegExp_toLocaleString,        PROPF_METHOD},
     {toStringW,              RegExp_toString,              PROPF_METHOD}
 };
