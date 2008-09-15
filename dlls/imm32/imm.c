@@ -1132,7 +1132,20 @@ static INT CopyCompClauseIMEtoClient(InputContextData *data, LPBYTE source, INT 
 
 static INT CopyCompOffsetIMEtoClient(InputContextData *data, DWORD offset, LPBYTE ssource, BOOL unicode)
 {
-    return offset;
+    int rc;
+
+    if (is_himc_ime_unicode(data) && !unicode)
+    {
+        rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)ssource, offset, NULL, 0, NULL, NULL);
+    }
+    else if (!is_himc_ime_unicode(data) && unicode)
+    {
+        rc = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ssource, offset, NULL, 0);
+    }
+    else
+        rc = offset;
+
+    return rc;
 }
 
 static LONG ImmGetCompositionStringT( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf,
