@@ -51,8 +51,21 @@ static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','
 static HRESULT Array_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ArrayInstance *This = (ArrayInstance*)dispex;
+
+    TRACE("%p %d\n", This, This->length);
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = This->length;
+        break;
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT Array_concat(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

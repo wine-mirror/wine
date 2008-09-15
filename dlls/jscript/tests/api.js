@@ -18,16 +18,19 @@
 
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
+ok((arr.length === 0), "arr.length is not 0");
 ok(arr["0"] === undefined, "arr[0] is not undefined");
 
 var arr = new Array(1, 2, "test");
 ok(typeof(arr) === "object", "arr (1,2,test) is not object");
+ok((arr.length === 3), "arr.length is not 3");
 ok(arr["0"] === 1, "arr[0] is not 1");
 ok(arr["1"] === 2, "arr[1] is not 2");
 ok(arr["2"] === "test", "arr[2] is not \"test\"");
 
 var arr = new Array(6);
 ok(typeof(arr) === "object", "arr (6) is not object");
+ok((arr.length === 6), "arr.length is not 6");
 ok(arr["0"] === undefined, "arr[0] is not undefined");
 
 reportSuccess();
