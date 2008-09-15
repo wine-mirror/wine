@@ -24,6 +24,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
     DispatchEx dispex;
+
+    WCHAR *str;
+    DWORD length;
 } StringInstance;
 
 static const WCHAR lengthW[] = {'l','e','n','g','t','h',0};
@@ -63,11 +66,6 @@ static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p',
 static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
-
-static void String_destructor(DispatchEx *dispex)
-{
-    FIXME("\n");
-}
 
 static HRESULT String_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
@@ -328,6 +326,14 @@ static HRESULT String_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return E_NOTIMPL;
 }
 
+static void String_destructor(DispatchEx *dispex)
+{
+    StringInstance *This = (StringInstance*)dispex;
+
+    heap_free(This->str);
+    heap_free(This);
+}
+
 static const builtin_prop_t String_props[] = {
     {anchorW,                String_anchor,                PROPF_METHOD},
     {bigW,                   String_big,                   PROPF_METHOD},
@@ -418,4 +424,31 @@ HRESULT create_string_constr(script_ctx_t *ctx, DispatchEx **ret)
 
     jsdisp_release(&string->dispex);
     return hres;
+}
+
+HRESULT create_string(script_ctx_t *ctx, const WCHAR *str, DWORD len, DispatchEx **ret)
+{
+    StringInstance *string;
+    HRESULT hres;
+
+    hres = string_alloc(ctx, TRUE, &string);
+    if(FAILED(hres))
+        return hres;
+
+    if(len == -1)
+        len = strlenW(str);
+
+    string->length = len;
+    string->str = heap_alloc((len+1)*sizeof(WCHAR));
+    if(!string->str) {
+        jsdisp_release(&string->dispex);
+        return E_OUTOFMEMORY;
+    }
+
+    memcpy(string->str, str, len*sizeof(WCHAR));
+    string->str[len] = 0;
+
+    *ret = &string->dispex;
+    return S_OK;
+
 }

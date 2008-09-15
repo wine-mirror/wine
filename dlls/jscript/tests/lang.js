@@ -233,4 +233,7 @@ ok(tmp === 2, "incremented tmp(1) is not 2");
 ok(tmp-- === 2, "tmp-- (2) is not 2");
 ok(tmp === 1, "decremented tmp is not 1");
 
+String.prototype.test = true;
+ok("".test === true, "\"\",test is not true");
+
 reportSuccess();

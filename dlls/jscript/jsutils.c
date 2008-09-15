@@ -17,6 +17,7 @@
  */
 
 #include "jscript.h"
+#include "engine.h"
 
 #include "wine/debug.h"
 
@@ -248,7 +249,17 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
 /* ECMA-262 3rd Edition    9.9 */
 HRESULT to_object(exec_ctx_t *ctx, VARIANT *v, IDispatch **disp)
 {
+    DispatchEx *dispex;
+    HRESULT hres;
+
     switch(V_VT(v)) {
+    case VT_BSTR:
+        hres = create_string(ctx->parser->script, V_BSTR(v), SysStringLen(V_BSTR(v)), &dispex);
+        if(FAILED(hres))
+            return hres;
+
+        *disp = (IDispatch*)_IDispatchEx_(dispex);
+        break;
     case VT_DISPATCH:
         IDispatch_AddRef(V_DISPATCH(v));
         *disp = V_DISPATCH(v);
