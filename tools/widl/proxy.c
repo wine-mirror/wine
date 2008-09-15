@@ -118,19 +118,9 @@ static void init_proxy(const statement_list_t *stmts)
   print_proxy( "    void             *This;\n");
   print_proxy( "};\n");
   print_proxy( "\n");
-  print_proxy( "struct __stub_frame\n");
-  print_proxy( "{\n");
-  print_proxy( "    __DECL_EXCEPTION_FRAME;\n");
-  print_proxy( "    MIDL_STUB_MESSAGE _StubMsg;\n");
-  print_proxy( "};\n");
-  print_proxy( "\n");
   print_proxy("static int __proxy_filter( struct __proxy_frame *__frame )\n");
   print_proxy( "{\n");
   print_proxy( "    return (__frame->_StubMsg.dwStubPhase != PROXY_SENDRECEIVE);\n");
-  print_proxy( "}\n");
-  print_proxy( "\n");
-  print_proxy("static void __stub_finally( struct __stub_frame *__frame )\n");
-  print_proxy( "{\n");
   print_proxy( "}\n");
   print_proxy( "\n");
   write_formatstringsdecl(proxy, indent, stmts, need_proxy);
@@ -404,6 +394,24 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   int has_full_pointer = is_full_pointer_function(cur);
 
   indent = 0;
+  print_proxy( "struct __frame_%s_%s_Stub\n{\n", iface->name, get_name(def));
+  indent++;
+  print_proxy( "__DECL_EXCEPTION_FRAME\n" );
+  print_proxy( "MIDL_STUB_MESSAGE _StubMsg;\n");
+  print_proxy( "%s * _This;\n", iface->name );
+  declare_stub_args( proxy, indent, cur );
+  indent--;
+  print_proxy( "};\n\n" );
+
+  print_proxy( "static void __finally_%s_%s_Stub(", iface->name, get_name(def) );
+  print_proxy( " struct __frame_%s_%s_Stub *__frame )\n{\n", iface->name, get_name(def) );
+  indent++;
+  write_remoting_arguments(proxy, indent, cur, "__frame->", PASS_OUT, PHASE_FREE);
+  if (has_full_pointer)
+    write_full_pointer_free(proxy, indent, cur);
+  indent--;
+  print_proxy( "}\n\n" );
+
   print_proxy( "void __RPC_STUB %s_%s_Stub(\n", iface->name, get_name(def));
   indent++;
   print_proxy( "IRpcStubBuffer* This,\n");
@@ -413,18 +421,18 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   indent--;
   print_proxy( "{\n");
   indent++;
-  print_proxy( "struct __stub_frame __f, * const __frame = &__f;\n" );
-  print_proxy("%s * _This = (%s*)((CStdStubBuffer*)This)->pvServerObject;\n", iface->name, iface->name);
-  declare_stub_args( proxy, indent, cur );
-  fprintf(proxy, "\n");
+  print_proxy( "struct __frame_%s_%s_Stub __f, * const __frame = &__f;\n\n",
+               iface->name, get_name(def) );
+
+  print_proxy("__frame->_This = (%s*)((CStdStubBuffer*)This)->pvServerObject;\n\n", iface->name);
 
   /* FIXME: trace */
 
   print_proxy("NdrStubInitialize(_pRpcMessage, &__frame->_StubMsg, &Object_StubDesc, _pRpcChannelBuffer);\n");
   fprintf(proxy, "\n");
-  print_proxy( "RpcExceptionInit( 0, __stub_finally );\n" );
+  print_proxy( "RpcExceptionInit( 0, __finally_%s_%s_Stub );\n", iface->name, get_name(def) );
 
-  write_parameters_init(proxy, indent, cur, "");
+  write_parameters_init(proxy, indent, cur, "__frame->");
 
   print_proxy("RpcTryFinally\n");
   print_proxy("{\n");
@@ -437,53 +445,50 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   indent--;
   fprintf(proxy, "\n");
 
-  write_remoting_arguments(proxy, indent, cur, "", PASS_IN, PHASE_UNMARSHAL);
+  write_remoting_arguments(proxy, indent, cur, "__frame->", PASS_IN, PHASE_UNMARSHAL);
   fprintf(proxy, "\n");
 
-  assign_stub_out_args( proxy, indent, cur, "" );
+  assign_stub_out_args( proxy, indent, cur, "__frame->" );
 
   print_proxy("*_pdwStubPhase = STUB_CALL_SERVER;\n");
   fprintf(proxy, "\n");
   print_proxy("");
-  if (has_ret) fprintf(proxy, "_RetVal = ");
+  if (has_ret) fprintf(proxy, "__frame->_RetVal = ");
   if (cas) fprintf(proxy, "%s_%s_Stub", iface->name, cas);
-  else fprintf(proxy, "_This->lpVtbl->%s", get_name(def));
-  fprintf(proxy, "(_This");
+  else fprintf(proxy, "__frame->_This->lpVtbl->%s", get_name(def));
+  fprintf(proxy, "(__frame->_This");
 
   if (cur->args)
   {
       LIST_FOR_EACH_ENTRY( arg, cur->args, const var_t, entry )
-          fprintf(proxy, ", %s%s", arg->type->declarray ? "*" : "", get_name(arg));
+          fprintf(proxy, ", %s__frame->%s", arg->type->declarray ? "*" : "", arg->name);
   }
   fprintf(proxy, ");\n");
   fprintf(proxy, "\n");
   print_proxy("*_pdwStubPhase = STUB_MARSHAL;\n");
   fprintf(proxy, "\n");
 
-  write_remoting_arguments(proxy, indent, cur, "", PASS_OUT, PHASE_BUFFERSIZE);
+  write_remoting_arguments(proxy, indent, cur, "__frame->", PASS_OUT, PHASE_BUFFERSIZE);
 
   if (!is_void(get_func_return_type(cur)))
-      write_remoting_arguments(proxy, indent, cur, "", PASS_RETURN, PHASE_BUFFERSIZE);
+    write_remoting_arguments(proxy, indent, cur, "__frame->", PASS_RETURN, PHASE_BUFFERSIZE);
 
   print_proxy("NdrStubGetBuffer(This, _pRpcChannelBuffer, &__frame->_StubMsg);\n");
 
-  write_remoting_arguments(proxy, indent, cur, "", PASS_OUT, PHASE_MARSHAL);
+  write_remoting_arguments(proxy, indent, cur, "__frame->", PASS_OUT, PHASE_MARSHAL);
   fprintf(proxy, "\n");
 
   /* marshall the return value */
   if (!is_void(get_func_return_type(cur)))
-      write_remoting_arguments(proxy, indent, cur, "", PASS_RETURN, PHASE_MARSHAL);
+    write_remoting_arguments(proxy, indent, cur, "__frame->", PASS_RETURN, PHASE_MARSHAL);
 
   indent--;
   print_proxy("}\n");
   print_proxy("RpcFinally\n");
   print_proxy("{\n");
-
-  write_remoting_arguments(proxy, indent+1, cur, "", PASS_OUT, PHASE_FREE);
-
-  if (has_full_pointer)
-    write_full_pointer_free(proxy, indent, cur);
-
+  indent++;
+  print_proxy( "__finally_%s_%s_Stub( __frame );\n", iface->name, get_name(def) );
+  indent--;
   print_proxy("}\n");
   print_proxy("RpcEndFinally\n");
 
