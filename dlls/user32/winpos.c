@@ -582,36 +582,6 @@ BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
     return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
 
-/***********************************************************************
- *           WINPOS_InitPlacement
- */
-static void WINPOS_InitPlacement( WND* wnd )
-{
-    if (IsRectEmpty( &wnd->normal_rect ))
-    {
-	/* this happens when the window is minimized/maximized
-	 * for the first time (rectWindow is not adjusted yet) */
-
-        wnd->normal_rect = wnd->rectWindow;
-        wnd->min_pos.x = wnd->min_pos.y = -1;
-        wnd->max_pos.x = wnd->max_pos.y = -1;
-    }
-
-    if( wnd->dwStyle & WS_MINIMIZE )
-    {
-        wnd->min_pos.x = wnd->rectWindow.left;
-        wnd->min_pos.y = wnd->rectWindow.top;
-    }
-    else if( wnd->dwStyle & WS_MAXIMIZE )
-    {
-        wnd->max_pos.x = wnd->rectWindow.left;
-        wnd->max_pos.y = wnd->rectWindow.top;
-    }
-    else
-    {
-        wnd->normal_rect = wnd->rectWindow;
-    }
-}
 
 /***********************************************************************
  *           WINPOS_RedrawIconTitle
@@ -1201,7 +1171,22 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
         return FALSE;
     }
 
-    WINPOS_InitPlacement( pWnd );
+    /* update the placement according to the current style */
+    if (pWnd->dwStyle & WS_MINIMIZE)
+    {
+        pWnd->min_pos.x = pWnd->rectWindow.left;
+        pWnd->min_pos.y = pWnd->rectWindow.top;
+    }
+    else if (pWnd->dwStyle & WS_MAXIMIZE)
+    {
+        pWnd->max_pos.x = pWnd->rectWindow.left;
+        pWnd->max_pos.y = pWnd->rectWindow.top;
+    }
+    else
+    {
+        pWnd->normal_rect = pWnd->rectWindow;
+    }
+
     wndpl->length  = sizeof(*wndpl);
     if( pWnd->dwStyle & WS_MINIMIZE )
         wndpl->showCmd = SW_SHOWMINIMIZED;

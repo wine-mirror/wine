@@ -1072,6 +1072,9 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
     wndPtr->hSysMenu       = 0;
     wndPtr->flags         |= (flags & WIN_ISWIN32);
 
+    wndPtr->min_pos.x = wndPtr->min_pos.y = -1;
+    wndPtr->max_pos.x = wndPtr->max_pos.y = -1;
+
     if (wndPtr->dwStyle & WS_SYSMENU) SetSystemMenu( hwnd, 0 );
 
     /*
