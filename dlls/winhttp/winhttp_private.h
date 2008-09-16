@@ -70,6 +70,21 @@ struct _object_header_t
 
 typedef struct
 {
+    struct list entry;
+    WCHAR *name;
+    struct list cookies;
+} domain_t;
+
+typedef struct
+{
+    struct list entry;
+    WCHAR *name;
+    WCHAR *value;
+    WCHAR *path;
+} cookie_t;
+
+typedef struct
+{
     object_header_t hdr;
     LPWSTR agent;
     DWORD access;
@@ -77,6 +92,7 @@ typedef struct
     LPWSTR proxy_bypass;
     LPWSTR proxy_username;
     LPWSTR proxy_password;
+    struct list cookie_cache;
 } session_t;
 
 typedef struct
@@ -194,6 +210,11 @@ BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_in * );
 BOOL netconn_secure_connect( netconn_t * );
 BOOL netconn_send( netconn_t *, const void *, size_t, int, int * );
 const void *netconn_get_certificate( netconn_t * );
+
+BOOL set_cookies( request_t *, const WCHAR * );
+BOOL add_cookie_headers( request_t * );
+BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD );
+void delete_domain( domain_t * );
 
 static inline void *heap_alloc( SIZE_T size )
 {

@@ -65,9 +65,16 @@ BOOL WINAPI WinHttpCheckPlatform( void )
 static void session_destroy( object_header_t *hdr )
 {
     session_t *session = (session_t *)hdr;
+    struct list *item, *next;
+    domain_t *domain;
 
     TRACE("%p\n", session);
 
+    LIST_FOR_EACH_SAFE( item, next, &session->cookie_cache )
+    {
+        domain = LIST_ENTRY( item, domain_t, entry );
+        delete_domain( domain );
+    }
     heap_free( session->agent );
     heap_free( session->proxy_server );
     heap_free( session->proxy_bypass );
@@ -173,6 +180,7 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     session->hdr.refs = 1;
     session->access = access;
     session->hdr.redirect_policy = WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
+    list_init( &session->cookie_cache );
 
     if (agent && !(session->agent = strdupW( agent ))) goto end;
     if (proxy && !(session->proxy_server = strdupW( proxy ))) goto end;

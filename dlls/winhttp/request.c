@@ -404,7 +404,7 @@ static BOOL process_header( request_t *request, LPCWSTR field, LPCWSTR value, DW
     return TRUE;
 }
 
-static BOOL add_request_headers( request_t *request, LPCWSTR headers, DWORD len, DWORD flags )
+BOOL add_request_headers( request_t *request, LPCWSTR headers, DWORD len, DWORD flags )
 {
     BOOL ret = FALSE;
     WCHAR *buffer, *p, *q;
@@ -822,6 +822,11 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     if (headers && !add_request_headers( request, headers, headers_len, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE ))
     {
         TRACE("failed to add request headers\n");
+        return FALSE;
+    }
+    if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES) && !add_cookie_headers( request ))
+    {
+        WARN("failed to add cookie headers\n");
         return FALSE;
     }
 
@@ -1273,16 +1278,16 @@ static void drain_content( request_t *request )
     }
 }
 
-/* copy cookies from response headers to request headers */
-static void add_cookies( request_t *request )
+static void record_cookies( request_t *request )
 {
     unsigned int i;
 
     for (i = 0; i < request->num_headers; i++)
     {
-        if (!strcmpiW( request->headers[i].field, attr_set_cookie ) && !request->headers[i].is_request)
+        header_t *set_cookie = &request->headers[i];
+        if (!strcmpiW( set_cookie->field, attr_set_cookie ) && !set_cookie->is_request)
         {
-            process_header( request, attr_cookie, request->headers[i].value, WINHTTP_ADDREQ_FLAG_ADD, TRUE );
+            set_cookies( request, set_cookie->value );
         }
     }
 }
@@ -1305,13 +1310,14 @@ static BOOL receive_response( request_t *request, BOOL async )
         if (!query_headers( request, query, NULL, &request->content_length, &size, NULL ))
             request->content_length = ~0UL;
 
+        if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) record_cookies( request );
+
         if (status == 301 || status == 302)
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS) break;
-            drain_content( request );
 
+            drain_content( request );
             if (!(ret = handle_redirect( request ))) break;
-            if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) add_cookies( request );
 
             clear_response_headers( request );
             ret = send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */

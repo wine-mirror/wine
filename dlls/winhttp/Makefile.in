@@ -8,6 +8,7 @@ IMPORTS   = wininet kernel32
 DELAYIMPORTS = crypt32
 
 C_SRCS = \
+	cookie.c \
 	handle.c \
 	main.c \
 	net.c \
