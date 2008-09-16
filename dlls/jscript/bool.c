@@ -24,6 +24,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
     DispatchEx dispex;
+
+    VARIANT_BOOL val;
 } BoolInstance;
 
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
@@ -144,4 +146,19 @@ HRESULT create_bool_constr(script_ctx_t *ctx, DispatchEx **ret)
 
     jsdisp_release(&bool->dispex);
     return hres;
+}
+
+HRESULT create_bool(script_ctx_t *ctx, VARIANT_BOOL b, DispatchEx **ret)
+{
+    BoolInstance *bool;
+    HRESULT hres;
+
+    hres = alloc_bool(ctx, TRUE, &bool);
+    if(FAILED(hres))
+        return hres;
+
+    bool->val = b;
+
+    *ret = &bool->dispex;
+    return S_OK;
 }

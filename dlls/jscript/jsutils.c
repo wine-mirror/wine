@@ -264,6 +264,13 @@ HRESULT to_object(exec_ctx_t *ctx, VARIANT *v, IDispatch **disp)
         IDispatch_AddRef(V_DISPATCH(v));
         *disp = V_DISPATCH(v);
         break;
+    case VT_BOOL:
+        hres = create_bool(ctx->parser->script, V_BOOL(v), &dispex);
+        if(FAILED(hres))
+            return hres;
+
+        *disp = (IDispatch*)_IDispatchEx_(dispex);
+        break;
     default:
         FIXME("unsupported vt %d\n", V_VT(v));
         return E_NOTIMPL;
