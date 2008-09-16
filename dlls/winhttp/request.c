@@ -1225,7 +1225,21 @@ static BOOL receive_data_chunked( request_t *request, void *buffer, DWORD size, 
 
 static void finished_reading( request_t *request )
 {
-    /* FIXME: close connection here if necessary */
+    static const WCHAR closeW[] = {'c','l','o','s','e',0};
+
+    BOOL close = FALSE;
+    WCHAR connection[20];
+    DWORD size = sizeof(connection);
+
+    if (request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE) close = TRUE;
+    else if (query_headers( request, WINHTTP_QUERY_CONNECTION, NULL, connection, &size, NULL ) ||
+             query_headers( request, WINHTTP_QUERY_PROXY_CONNECTION, NULL, connection, &size, NULL ))
+    {
+        if (!strcmpiW( connection, closeW )) close = TRUE;
+    }
+    else if (!strcmpW( request->version, http1_0 )) close = TRUE;
+
+    if (close) close_connection( request );
     request->content_length = ~0UL;
     request->content_read = 0;
 }

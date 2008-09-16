@@ -39,6 +39,7 @@
 static const WCHAR getW[]    = {'G','E','T',0};
 static const WCHAR postW[]   = {'P','O','S','T',0};
 static const WCHAR slashW[]  = {'/',0};
+static const WCHAR http1_0[] = {'H','T','T','P','/','1','.','0',0};
 static const WCHAR http1_1[] = {'H','T','T','P','/','1','.','1',0};
 
 typedef struct _object_header_t object_header_t;
