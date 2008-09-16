@@ -400,12 +400,18 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
     ICOM_THIS_MULTI(VfwCapture, IAMStreamConfig_vtbl, iface);
     IPinImpl *pin;
 
-    TRACE("(%p): %p->%p\n", iface, pmt, pmt->pbFormat);
+    TRACE("(%p): %p->%p\n", iface, pmt, pmt ? pmt->pbFormat : NULL);
 
     if (This->state != State_Stopped)
     {
         TRACE("Returning not stopped error\n");
         return VFW_E_NOT_STOPPED;
+    }
+
+    if (!pmt)
+    {
+        TRACE("pmt is NULL\n");
+        return E_POINTER;
     }
 
     dump_AM_MEDIA_TYPE(pmt);
