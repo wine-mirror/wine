@@ -400,7 +400,7 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
         }
 
         TRACE("0x%x\n", disable);
-        hdr->disable_flags &= disable;
+        hdr->disable_flags |= disable;
         return TRUE;
     }
     case WINHTTP_OPTION_AUTOLOGON_POLICY:
