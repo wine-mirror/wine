@@ -480,28 +480,20 @@ static WCHAR *build_request_string( request_t *request )
     static const WCHAR crlf[]    = {'\r','\n',0};
     static const WCHAR colon[]   = {':',' ',0};
     static const WCHAR twocrlf[] = {'\r','\n','\r','\n',0};
-    static const WCHAR get[]     = {'G','E','T',0};
-    static const WCHAR slash[]   = {'/',0};
-    static const WCHAR http1_1[] = {'H','T','T','P','/','1','.','1',0};
 
     WCHAR *ret;
     const WCHAR **headers, **p;
-    const WCHAR *verb = get, *path = slash, *version = http1_1;
     unsigned int len, i = 0, j;
-
-    if (request->verb && request->verb[0]) verb = request->verb;
-    if (request->path && request->path[0]) path = request->path;
-    if (request->version && request->version[0]) version = request->version;
 
     /* allocate space for an array of all the string pointers to be added */
     len = request->num_headers * 4 + 7;
     if (!(headers = heap_alloc( len * sizeof(LPCWSTR) ))) return NULL;
 
-    headers[i++] = verb;
+    headers[i++] = request->verb;
     headers[i++] = space;
-    headers[i++] = path;
+    headers[i++] = request->path;
     headers[i++] = space;
-    headers[i++] = version;
+    headers[i++] = request->version;
 
     for (j = 0; j < request->num_headers; j++)
     {
@@ -797,7 +789,6 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     static const WCHAR keep_alive[] = {'K','e','e','p','-','A','l','i','v','e',0};
     static const WCHAR no_cache[]   = {'n','o','-','c','a','c','h','e',0};
     static const WCHAR length_fmt[] = {'%','l','d',0};
-    static const WCHAR post[]       = {'P','O','S','T',0};
 
     BOOL ret = FALSE;
     connect_t *connect = request->connect;
@@ -813,7 +804,7 @@ static BOOL send_request( request_t *request, LPCWSTR headers, DWORD headers_len
     if (connect->hostname)
         add_host_header( request, connect->hostname, connect->hostport, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
 
-    if (total_len || (request->verb && !strcmpW( request->verb, post )))
+    if (total_len || (request->verb && !strcmpW( request->verb, postW )))
     {
         WCHAR length[21]; /* decimal long int + null */
         sprintfW( length, length_fmt, total_len );
@@ -1114,6 +1105,7 @@ static BOOL handle_redirect( request_t *request )
             if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
             strcpyW( request->path, uc.lpszUrlPath );
         }
+        else request->path = strdupW( slashW );
     }
 
     /* remove content-type/length headers */
@@ -1122,7 +1114,7 @@ static BOOL handle_redirect( request_t *request )
 
     /* redirects are always GET requests */
     heap_free( request->verb );
-    request->verb = NULL;
+    request->verb = strdupW( getW );
     ret = TRUE;
 
 end:
