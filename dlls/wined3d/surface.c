@@ -624,7 +624,7 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
 
 void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    TRACE("(%p) : setting textureName %u, target %i\n", This, textureName, target);
+    TRACE("(%p) : setting textureName %u, target %#x\n", This, textureName, target);
     if (This->glDescription.textureName == 0 && textureName != 0) {
         IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
         if((This->Flags & SFLAG_LOCATIONS) == 0) {
