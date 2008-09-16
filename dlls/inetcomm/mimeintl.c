@@ -546,3 +546,19 @@ HRESULT WINAPI MimeOleGetInternat(IMimeInternational **internat)
     IMimeInternational_AddRef(*internat);
     return S_OK;
 }
+
+HRESULT WINAPI MimeOleGetCharsetInfo(HCHARSET hCharset, LPINETCSETINFO pCsetInfo)
+{
+    IMimeInternational *internat;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", hCharset, pCsetInfo);
+
+    hr = MimeOleGetInternat(&internat);
+    if(SUCCEEDED(hr))
+    {
+        hr = IMimeInternational_GetCharsetInfo(internat, hCharset, pCsetInfo);
+        IMimeInternational_Release(internat);
+    }
+    return S_OK;
+}
