@@ -236,4 +236,35 @@ ok(tmp === 1, "decremented tmp is not 1");
 String.prototype.test = true;
 ok("".test === true, "\"\",test is not true");
 
+var state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+}catch(ex) {
+    ok(false, "unexpected catch");
+}
+ok(state === "try", "state = " + state + " expected try");
+
+state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+}finally {
+    ok(state === "try", "funally: state = " + state);
+    state = "finally";
+}
+ok(state === "finally", "state = " + state + " expected finally");
+
+state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+}catch(ex) {
+    ok(false, "unexpected catch");
+}finally {
+    ok(state === "try", "funally: state = " + state);
+    state = "finally";
+}
+ok(state === "finally", "state = " + state + " expected finally");
+
 reportSuccess();

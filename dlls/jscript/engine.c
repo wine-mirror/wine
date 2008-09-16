@@ -144,6 +144,15 @@ HRESULT scope_push(scope_chain_t *scope, DispatchEx *obj, scope_chain_t **ret)
     return S_OK;
 }
 
+static void scope_pop(scope_chain_t **scope)
+{
+    scope_chain_t *tmp;
+
+    tmp = *scope;
+    *scope = tmp->next;
+    scope_release(tmp);
+}
+
 void scope_release(scope_chain_t *scope)
 {
     if(--scope->ref)
@@ -713,16 +722,74 @@ HRESULT switch_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t 
     return E_NOTIMPL;
 }
 
-HRESULT throw_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+HRESULT throw_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-HRESULT try_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.14 */
+static HRESULT catch_eval(exec_ctx_t *ctx, catch_block_t *block, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DispatchEx *var_disp;
+    VARIANT ex, val;
+    HRESULT hres;
+
+    ex = rt->ei.var;
+    memset(&rt->ei, 0, sizeof(jsexcept_t));
+
+    hres = create_dispex(ctx->parser->script, NULL, NULL, &var_disp);
+    if(SUCCEEDED(hres)) {
+        hres = jsdisp_propput_name(var_disp, block->identifier, ctx->parser->script->lcid,
+                &ex, &rt->ei, NULL/*FIXME*/);
+        if(SUCCEEDED(hres)) {
+            hres = scope_push(ctx->scope_chain, var_disp, &ctx->scope_chain);
+            if(SUCCEEDED(hres)) {
+                hres = stat_eval(ctx, block->statement, rt, &val);
+                scope_pop(&ctx->scope_chain);
+            }
+        }
+
+        jsdisp_release(var_disp);
+    }
+
+    VariantClear(&ex);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = val;
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    12.14 */
+HRESULT try_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
+{
+    try_statement_t *stat = (try_statement_t*)_stat;
+    VARIANT val;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stat_eval(ctx, stat->try_statement, rt, &val);
+    if(FAILED(hres)) {
+        TRACE("EXCEPTION\n");
+        if(!stat->catch_block)
+            return hres;
+
+        hres = catch_eval(ctx, stat->catch_block, rt, &val);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(stat->finally_statement) {
+        VariantClear(&val);
+        hres = stat_eval(ctx, stat->finally_statement, rt, &val);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    *ret = val;
+    return S_OK;
 }
 
 static HRESULT return_bool(exprval_t *ret, DWORD b)
