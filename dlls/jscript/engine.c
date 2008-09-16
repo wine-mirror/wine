@@ -2080,10 +2080,14 @@ HRESULT assign_add_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, add_eval, ei, ret);
 }
 
-HRESULT assign_sub_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.13.2 */
+HRESULT assign_sub_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+
+    TRACE("\n");
+
+    return assign_oper_eval(ctx, expr->expression1, expr->expression2, sub_eval, ei, ret);
 }
 
 HRESULT assign_mul_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
