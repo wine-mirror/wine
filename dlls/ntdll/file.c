@@ -2221,6 +2221,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
             }
             else
             {
+                ULONGLONG bsize;
                 /* Linux's fstatvfs is buggy */
 #if !defined(linux) || !defined(HAVE_FSTATFS)
                 struct statvfs stfs;
@@ -2230,7 +2231,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                     io->u.Status = FILE_GetNtStatus();
                     break;
                 }
-                info->BytesPerSector = stfs.f_frsize;
+                bsize = stfs.f_frsize;
 #else
                 struct statfs stfs;
                 if (fstatfs( fd, &stfs ) < 0)
@@ -2238,11 +2239,12 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                     io->u.Status = FILE_GetNtStatus();
                     break;
                 }
-                info->BytesPerSector = stfs.f_bsize;
+                bsize = stfs.f_bsize;
 #endif
-                info->TotalAllocationUnits.QuadPart = stfs.f_blocks;
-                info->AvailableAllocationUnits.QuadPart = stfs.f_bavail;
-                info->SectorsPerAllocationUnit = 1;
+                info->BytesPerSector = 512;
+                info->SectorsPerAllocationUnit = 8;
+                info->TotalAllocationUnits.QuadPart = bsize * stfs.f_blocks / (512 * 8);
+                info->AvailableAllocationUnits.QuadPart = bsize * stfs.f_bavail / (512 * 8);
                 io->Information = sizeof(*info);
                 io->u.Status = STATUS_SUCCESS;
             }
