@@ -181,6 +181,10 @@ tmp = 4.5-2;
 ok(tmp === 2.5, "4.5-2 !== 2.5");
 ok(getVT(tmp) === "VT_R8", "getVT(4-2) !== VT_R8");
 
+tmp = -2;
+ok(tmp === 0-2, "-2 !== 0-2");
+ok(getVT(tmp) === "VT_I4", "getVT(-2) !== VT_I4");
+
 tmp = 2*3;
 ok(tmp === 6, "2*3 !== 6");
 ok(getVT(tmp) === "VT_I4", "getVT(2*3) !== VT_I4");
