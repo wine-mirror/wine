@@ -23,8 +23,7 @@
  *
  * Note that TREEVIEW_INFO * and HTREEITEM are the same thing.
  *
- * Note2: All items always! have valid (allocated) pszText field.
- *      If item's text == LPSTR_TEXTCALLBACKA we allocate buffer
+ * Note2: If item's text == LPSTR_TEXTCALLBACKA we allocate buffer
  *      of size TEXT_CALLBACK_SIZE in DoSetItem.
  *      We use callbackMask to keep track of fields to be updated.
  *
@@ -2083,7 +2082,12 @@ TREEVIEW_GetItemT(const TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
 
     if (tvItem->mask & TVIF_TEXT)
     {
-        if (isW)
+        if (wineItem->pszText == NULL)
+        {
+            if (tvItem->cchTextMax > 0)
+                tvItem->pszText[0] = '\0';
+        }
+        else if (isW)
         {
             if (wineItem->pszText == LPSTR_TEXTCALLBACKW)
             {
@@ -3662,8 +3666,11 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     }
 
     /* Get string length in pixels */
-    GetTextExtentPoint32W(hdc, editItem->pszText, strlenW(editItem->pszText),
-			  &sz);
+    if (editItem->pszText)
+        GetTextExtentPoint32W(hdc, editItem->pszText, strlenW(editItem->pszText),
+                        &sz);
+    else
+        GetTextExtentPoint32A(hdc, "", 0, &sz);
 
     /* Add Extra spacing for the next character */
     GetTextMetricsW(hdc, &textMetric);
@@ -3712,7 +3719,10 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     }
 
     infoPtr->selectedItem = hItem;
-    SetWindowTextW(hwndEdit, editItem->pszText);
+
+    if (editItem->pszText)
+        SetWindowTextW(hwndEdit, editItem->pszText);
+
     SetFocus(hwndEdit);
     SendMessageW(hwndEdit, EM_SETSEL, 0, -1);
     ShowWindow(hwndEdit, SW_SHOW);
@@ -4186,10 +4196,14 @@ TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     hdc = CreateCompatibleDC(htopdc);
 
     hOldFont = SelectObject(hdc, infoPtr->hFont);
-    GetTextExtentPoint32W(hdc, dragItem->pszText, strlenW(dragItem->pszText),
+
+    if (dragItem->pszText)
+        GetTextExtentPoint32W(hdc, dragItem->pszText, strlenW(dragItem->pszText),
 			  &size);
-    TRACE("%d %d %s %d\n", size.cx, size.cy, debugstr_w(dragItem->pszText),
-	  strlenW(dragItem->pszText));
+    else
+        GetTextExtentPoint32A(hdc, "", 0, &size);
+
+    TRACE("%d %d %s\n", size.cx, size.cy, debugstr_w(dragItem->pszText));
     hbmp = CreateCompatibleBitmap(htopdc, size.cx, size.cy);
     hOldbmp = SelectObject(hdc, hbmp);
 
@@ -4210,8 +4224,11 @@ TREEVIEW_CreateDragImage(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 /* draw item text */
 
     SetRect(&rc, cx, 0, size.cx, size.cy);
-    DrawTextW(hdc, dragItem->pszText, strlenW(dragItem->pszText), &rc,
-	      DT_LEFT);
+
+    if (dragItem->pszText)
+        DrawTextW(hdc, dragItem->pszText, strlenW(dragItem->pszText), &rc,
+                  DT_LEFT);
+
     SelectObject(hdc, hOldFont);
     SelectObject(hdc, hOldbmp);
 
