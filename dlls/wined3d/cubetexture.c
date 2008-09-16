@@ -47,7 +47,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_QueryInterface(IWineD3DCubeTexture
         || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DResource)
         || IsEqualGUID(riid, &IID_IWineD3DBaseTexture)
-        || IsEqualGUID(riid, &IID_IWineD3DTexture)) {
+        || IsEqualGUID(riid, &IID_IWineD3DCubeTexture)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
         return S_OK;
