@@ -39,6 +39,22 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
 #define GLINFO_LOCATION      (*gl_info)
 
+/* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
+ * so upload them above that
+ */
+#define ARB_SHADER_PRIVCONST_BASE GL_LIMITS(vshader_constantsF)
+#define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
+
+/* ARB_program_shader private data */
+struct shader_arb_priv {
+    GLuint                  current_vprogram_id;
+    GLuint                  current_fprogram_id;
+    GLuint                  depth_blt_vprogram_id;
+    GLuint                  depth_blt_fprogram_id;
+    BOOL                    use_arbfp_fixed_func;
+    struct hash_table_t     *fragment_shaders;
+};
+
 /********************************************************
  * ARB_[vertex/fragment]_program helper functions follow
  ********************************************************/
@@ -150,7 +166,7 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, Win
  * We only support float constants in ARB at the moment, so don't 
  * worry about the Integers or Booleans
  */
-void shader_arb_load_constants(
+static void shader_arb_load_constants(
     IWineD3DDevice* device,
     char usePixelShader,
     char useVertexShader) {
@@ -234,7 +250,7 @@ void shader_arb_load_constants(
 }
 
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
-void shader_generate_arb_declarations(
+static void shader_generate_arb_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
     SHADER_BUFFER* buffer,
@@ -3195,7 +3211,7 @@ static void arbfp_blit_free(IWineD3DDevice *iface) {
     LEAVE_GL();
 }
 
-BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, char *luminance) {
+static BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, char *luminance) {
     char chroma;
     const char *tex, *texinstr;
 
@@ -3281,7 +3297,7 @@ BOOL gen_planar_yuv_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textyp
     return TRUE;
 }
 
-BOOL gen_yv12_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, char *luminance) {
+static BOOL gen_yv12_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, char *luminance) {
     const char *tex;
 
     switch(textype) {
@@ -3426,7 +3442,7 @@ BOOL gen_yv12_read(SHADER_BUFFER *buffer, WINED3DFORMAT fmt, GLenum textype, cha
     return TRUE;
 }
 
-GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum textype) {
+static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLenum textype) {
     GLenum shader;
     SHADER_BUFFER buffer;
     char luminance_component;

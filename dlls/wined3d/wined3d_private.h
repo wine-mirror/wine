@@ -255,16 +255,6 @@ extern const shader_backend_t glsl_shader_backend;
 extern const shader_backend_t arb_program_shader_backend;
 extern const shader_backend_t none_shader_backend;
 
-/* ARB_program_shader private data */
-struct shader_arb_priv {
-    GLuint                  current_vprogram_id;
-    GLuint                  current_fprogram_id;
-    GLuint                  depth_blt_vprogram_id;
-    GLuint                  depth_blt_fprogram_id;
-    BOOL                    use_arbfp_fixed_func;
-    struct hash_table_t     *fragment_shaders;
-};
-
 /* X11 locking */
 
 extern void (*wine_tsx11_lock_ptr)(void);
@@ -467,8 +457,6 @@ extern glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
 
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
-
-void depth_copy(IWineD3DDevice *iface);
 
 /* Routines and structures related to state management */
 typedef struct WineD3DContext WineD3DContext;
@@ -2023,12 +2011,6 @@ extern BOOL vshader_input_is_color(
 
 extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
 
-/* ARB_[vertex/fragment]_program helper functions */
-extern void shader_arb_load_constants(
-    IWineD3DDevice* device,
-    char usePixelShader,
-    char useVertexShader);
-
 /* ARB shader program Prototypes */
 extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
 
@@ -2193,12 +2175,6 @@ extern HRESULT shader_get_registers_used(
     CONST DWORD* pToken,
     IWineD3DStateBlockImpl *stateBlock);
 
-extern void shader_generate_arb_declarations(
-    IWineD3DBaseShader *iface,
-    shader_reg_maps* reg_maps,
-    SHADER_BUFFER* buffer,
-    WineD3D_GL_Info* gl_info);
-
 extern void shader_generate_main(
     IWineD3DBaseShader *iface,
     SHADER_BUFFER* buffer,
@@ -2296,12 +2272,6 @@ static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD 
     return FALSE;
 
 }
-
-/* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
- * so upload them above that
- */
-#define ARB_SHADER_PRIVCONST_BASE GL_LIMITS(vshader_constantsF)
-#define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
