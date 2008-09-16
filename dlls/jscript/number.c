@@ -24,6 +24,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
     DispatchEx dispex;
+
+    VARIANT num;
 } NumberInstance;
 
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
@@ -164,4 +166,19 @@ HRESULT create_number_constr(script_ctx_t *ctx, DispatchEx **ret)
 
     jsdisp_release(&number->dispex);
     return hres;
+}
+
+HRESULT create_number(script_ctx_t *ctx, VARIANT *num, DispatchEx **ret)
+{
+    NumberInstance *number;
+    HRESULT hres;
+
+    hres = alloc_number(ctx, TRUE, &number);
+    if(FAILED(hres))
+        return hres;
+
+    number->num = *num;
+
+    *ret = &number->dispex;
+    return S_OK;
 }

@@ -239,6 +239,10 @@ ok("".test === true, "\"\".test is not true");
 Boolean.prototype.test = true;
 ok(true.test === true, "true.test is not true");
 
+Number.prototype.test = true;
+ok((0).test === true, "(0).test is not true");
+ok((0.5).test === true, "(0.5).test is not true");
+
 var state = "";
 try {
     ok(state === "", "try: state = " + state);

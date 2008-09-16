@@ -260,6 +260,14 @@ HRESULT to_object(exec_ctx_t *ctx, VARIANT *v, IDispatch **disp)
 
         *disp = (IDispatch*)_IDispatchEx_(dispex);
         break;
+    case VT_I4:
+    case VT_R8:
+        hres = create_number(ctx->parser->script, v, &dispex);
+        if(FAILED(hres))
+            return hres;
+
+        *disp = (IDispatch*)_IDispatchEx_(dispex);
+        break;
     case VT_DISPATCH:
         IDispatch_AddRef(V_DISPATCH(v));
         *disp = V_DISPATCH(v);
