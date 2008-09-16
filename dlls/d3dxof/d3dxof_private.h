@@ -38,6 +38,8 @@
 #define MAX_MEMBERS 50
 #define MAX_CHILDS 10
 #define MAX_TEMPLATES 200
+#define MAX_OBJECTS 200
+#define MAX_SUBOBJECTS 20
 
 typedef struct {
     DWORD type;
@@ -59,6 +61,26 @@ typedef struct {
 } xtemplate;
 
 typedef struct {
+    char name[MAX_NAME_LEN];
+    LPBYTE start;
+    ULONG size;
+} xobject_member;
+
+struct _xobject {
+   char name[MAX_NAME_LEN];
+   GUID class_id;
+   GUID type;
+   LPBYTE pdata;
+   DWORD size;
+   ULONG nb_members;
+   xobject_member members[MAX_MEMBERS];
+   ULONG nb_childs;
+   struct _xobject * childs[MAX_CHILDS];
+};
+
+typedef struct _xobject xobject;
+
+typedef struct {
     IDirectXFile lpVtbl;
     LONG ref;
     ULONG nb_xtemplates;
@@ -73,6 +95,8 @@ typedef struct {
 typedef struct {
     IDirectXFileData lpVtbl;
     LONG ref;
+    xobject* pobj;
+    int cur_enum_object;
 } IDirectXFileDataImpl;
 
 typedef struct {
@@ -86,10 +110,29 @@ typedef struct {
 } IDirectXFileObjectImpl;
 
 typedef struct {
+  /* Buffer to parse */
+  LPBYTE buffer;
+  DWORD rem_bytes;
+  /* Misc info */
+  BOOL txt;
+  ULONG cur_subobject;
+  LPBYTE cur_pdata;
+  BYTE value[100];
+  IDirectXFileImpl* pdxf;
+  xobject* pxo;
+  xtemplate* pxt[MAX_SUBOBJECTS];
+  ULONG level;
+} parse_buffer;
+
+typedef struct {
     IDirectXFileEnumObject lpVtbl;
     LONG ref;
     DXFILELOADOPTIONS source;
     HANDLE hFile;
+    parse_buffer buf;
+    IDirectXFileImpl* pDirectXFile;
+    ULONG nb_xobjects;
+    xobject xobjects[MAX_OBJECTS][MAX_SUBOBJECTS];
 } IDirectXFileEnumObjectImpl;
 
 typedef struct {
