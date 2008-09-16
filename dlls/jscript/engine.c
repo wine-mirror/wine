@@ -1558,10 +1558,32 @@ HRESULT mul_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, j
     return binary_expr_eval(ctx, expr, mul_eval, ei, ret);
 }
 
-HRESULT div_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.5.2 */
+static HRESULT div_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_t *ei, VARIANT *retv)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT lnum, rnum;
+    HRESULT hres;
+
+    hres = to_number(ctx->parser->script, lval, ei, &lnum);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_number(ctx->parser->script, rval, ei, &rnum);
+    if(FAILED(hres))
+        return hres;
+
+    num_set_val(retv, num_val(&lnum) / num_val(&rnum));
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.5.2 */
+HRESULT div_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+
+    TRACE("\n");
+
+    return binary_expr_eval(ctx, expr, div_eval, ei, ret);
 }
 
 HRESULT mod_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
