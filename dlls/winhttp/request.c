@@ -1226,6 +1226,13 @@ static BOOL receive_data_chunked( request_t *request, void *buffer, DWORD size, 
     return TRUE;
 }
 
+static void finished_reading( request_t *request )
+{
+    /* FIXME: close connection here if necessary */
+    request->content_length = ~0UL;
+    request->content_read = 0;
+}
+
 static BOOL read_data( request_t *request, void *buffer, DWORD to_read, DWORD *read, BOOL async )
 {
     static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
@@ -1253,7 +1260,11 @@ static BOOL read_data( request_t *request, void *buffer, DWORD to_read, DWORD *r
             send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
         }
     }
-    if (ret && read) *read = num_bytes;
+    if (ret)
+    {
+        if (read) *read = num_bytes;
+        if (!num_bytes) finished_reading( request );
+    }
     return ret;
 }
 
@@ -1263,6 +1274,7 @@ static void drain_content( request_t *request )
     DWORD bytes_read;
     char buffer[2048];
 
+    if (!request->content_length) return;
     for (;;)
     {
         if (!read_data( request, buffer, sizeof(buffer), &bytes_read, FALSE ) || !bytes_read) return;
@@ -1523,7 +1535,7 @@ static BOOL write_data( request_t *request, LPCVOID buffer, DWORD to_write, LPDW
 
     if (async)
     {
-        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_FLAG_WRITE_COMPLETE, &num_bytes, sizeof(DWORD) );
+        if (ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, &num_bytes, sizeof(DWORD) );
         else
         {
             WINHTTP_ASYNC_RESULT result;
