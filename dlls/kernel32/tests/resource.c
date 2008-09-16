@@ -173,12 +173,15 @@ static void update_resources_version(void)
     res = BeginUpdateResource( filename, TRUE );
     ok( res != NULL, "BeginUpdateResource failed\n");
 
-    r = UpdateResource( res,
-                        MAKEINTRESOURCE(0x1230),
-                        MAKEINTRESOURCE(0x4567),
-                        0xabcd,
-                        NULL, 0 );
-    ok( r == FALSE, "UpdateResource failed\n");
+    if (0)  /* this causes subsequent tests to fail on Vista */
+    {
+        r = UpdateResource( res,
+                            MAKEINTRESOURCE(0x1230),
+                            MAKEINTRESOURCE(0x4567),
+                            0xabcd,
+                            NULL, 0 );
+        ok( r == FALSE, "UpdateResource failed\n");
+    }
 
     r = UpdateResource( res,
                         MAKEINTRESOURCE(0x1230),
