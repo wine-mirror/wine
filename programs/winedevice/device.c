@@ -147,6 +147,8 @@ static NTSTATUS init_driver( HMODULE module, UNICODE_STRING *keyname )
 /* load the .sys module for a device driver */
 static BOOL load_driver(void)
 {
+    static const WCHAR driversW[] = {'\\','d','r','i','v','e','r','s','\\',0};
+    static const WCHAR postfixW[] = {'.','s','y','s',0};
     static const WCHAR ntprefixW[] = {'\\','?','?','\\',0};
     static const WCHAR ImagePathW[] = {'I','m','a','g','e','P','a','t','h',0};
     static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
@@ -174,17 +176,31 @@ static BOOL load_driver(void)
 
     /* read the executable path from memory */
     size = 0;
-    if (RegQueryValueExW( driver_hkey, ImagePathW, NULL, &type, NULL, &size )) return FALSE;
-
-    str = HeapAlloc( GetProcessHeap(), 0, size );
-    if (!RegQueryValueExW( driver_hkey, ImagePathW, NULL, &type, (LPBYTE)str, &size ))
+    if (!RegQueryValueExW( driver_hkey, ImagePathW, NULL, &type, NULL, &size ))
     {
-        size = ExpandEnvironmentStringsW(str,NULL,0);
-        path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
-        ExpandEnvironmentStringsW(str,path,size);
+        str = HeapAlloc( GetProcessHeap(), 0, size );
+        if (!RegQueryValueExW( driver_hkey, ImagePathW, NULL, &type, (LPBYTE)str, &size ))
+        {
+            size = ExpandEnvironmentStringsW(str,NULL,0);
+            path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
+            ExpandEnvironmentStringsW(str,path,size);
+        }
+        HeapFree( GetProcessHeap(), 0, str );
+        if (!path) return FALSE;
     }
-    HeapFree( GetProcessHeap(), 0, str );
-    if (!path) return FALSE;
+    else
+    {
+        /* default is to use the driver name + ".sys" */
+        WCHAR buffer[MAX_PATH];
+        GetSystemDirectoryW(buffer, MAX_PATH);
+        path = HeapAlloc(GetProcessHeap(),0,
+          (strlenW(buffer) + strlenW(driversW) + strlenW(driver_name) + strlenW(postfixW) + 1)
+          *sizeof(WCHAR));
+        lstrcpyW(path, buffer);
+        lstrcatW(path, driversW);
+        lstrcatW(path, driver_name);
+        lstrcatW(path, postfixW);
+    }
 
     /* GameGuard uses an NT-style path name */
     str = path;
