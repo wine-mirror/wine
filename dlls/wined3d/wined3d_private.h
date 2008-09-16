@@ -255,13 +255,6 @@ extern const shader_backend_t glsl_shader_backend;
 extern const shader_backend_t arb_program_shader_backend;
 extern const shader_backend_t none_shader_backend;
 
-/* GLSL shader private data */
-struct shader_glsl_priv {
-    struct hash_table_t *glsl_program_lookup;
-    struct glsl_shader_prog_link *glsl_program;
-    GLhandleARB             depth_blt_glsl_program_id;
-};
-
 /* ARB_program_shader private data */
 struct shader_arb_priv {
     GLuint                  current_vprogram_id;
@@ -1893,34 +1886,6 @@ unsigned int count_bits(unsigned int mask);
 
 typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
 
-/* Struct to maintain a list of GLSL shader programs and their associated pixel and
- * vertex shaders.  A list of this type is maintained on the DeviceImpl, and is only
- * used if the user is using GLSL shaders. */
-struct glsl_shader_prog_link {
-    struct list             vshader_entry;
-    struct list             pshader_entry;
-    GLhandleARB             programId;
-    GLhandleARB             *vuniformF_locations;
-    GLhandleARB             *puniformF_locations;
-    GLhandleARB             vuniformI_locations[MAX_CONST_I];
-    GLhandleARB             puniformI_locations[MAX_CONST_I];
-    GLhandleARB             posFixup_location;
-    GLhandleARB             bumpenvmat_location[MAX_TEXTURES];
-    GLhandleARB             luminancescale_location[MAX_TEXTURES];
-    GLhandleARB             luminanceoffset_location[MAX_TEXTURES];
-    GLhandleARB             srgb_comparison_location;
-    GLhandleARB             srgb_mul_low_location;
-    GLhandleARB             ycorrection_location;
-    GLenum                  vertex_color_clamp;
-    GLhandleARB             vshader;
-    GLhandleARB             pshader;
-};
-
-typedef struct {
-    GLhandleARB vshader;
-    GLhandleARB pshader;
-} glsl_program_key_t;
-
 /* TODO: Make this dynamic, based on shader limits ? */
 #define MAX_REG_ADDR 1
 #define MAX_REG_TEMP 32
@@ -2103,10 +2068,6 @@ extern void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg);
 
 /* GLSL helper functions */
 extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);
-extern void shader_glsl_load_constants(
-    IWineD3DDevice* device,
-    char usePixelShader,
-    char useVertexShader);
 
 /** The following translate DirectX pixel/vertex shader opcodes to GLSL lines */
 extern void shader_glsl_cross(SHADER_OPCODE_ARG* arg);
@@ -2165,10 +2126,6 @@ extern void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg);
 extern void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_input_pack(
-   SHADER_BUFFER* buffer,
-   semantic* semantics_out,
-   IWineD3DPixelShader *iface);
 
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
@@ -2236,12 +2193,6 @@ extern HRESULT shader_get_registers_used(
     CONST DWORD* pToken,
     IWineD3DStateBlockImpl *stateBlock);
 
-extern void shader_generate_glsl_declarations(
-    IWineD3DBaseShader *iface,
-    shader_reg_maps* reg_maps,
-    SHADER_BUFFER* buffer,
-    WineD3D_GL_Info* gl_info);
-
 extern void shader_generate_arb_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
@@ -2276,10 +2227,6 @@ extern int shader_get_param(
 extern int shader_skip_unrecognized(
     IWineD3DBaseShader* iface,
     const DWORD* pToken);
-
-extern void print_glsl_info_log(
-    WineD3D_GL_Info *gl_info,
-    GLhandleARB obj);
 
 static inline int shader_get_regtype(const DWORD param) {
     return (((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT) |

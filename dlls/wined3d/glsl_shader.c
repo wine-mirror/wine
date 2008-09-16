@@ -53,9 +53,42 @@ typedef struct {
     DWORD coord_mask;
 } glsl_sample_function_t;
 
+/* GLSL shader private data */
+struct shader_glsl_priv {
+    struct hash_table_t *glsl_program_lookup;
+    struct glsl_shader_prog_link *glsl_program;
+    GLhandleARB             depth_blt_glsl_program_id;
+};
+
+/* Struct to maintain data about a linked GLSL program */
+struct glsl_shader_prog_link {
+    struct list             vshader_entry;
+    struct list             pshader_entry;
+    GLhandleARB             programId;
+    GLhandleARB             *vuniformF_locations;
+    GLhandleARB             *puniformF_locations;
+    GLhandleARB             vuniformI_locations[MAX_CONST_I];
+    GLhandleARB             puniformI_locations[MAX_CONST_I];
+    GLhandleARB             posFixup_location;
+    GLhandleARB             bumpenvmat_location[MAX_TEXTURES];
+    GLhandleARB             luminancescale_location[MAX_TEXTURES];
+    GLhandleARB             luminanceoffset_location[MAX_TEXTURES];
+    GLhandleARB             srgb_comparison_location;
+    GLhandleARB             srgb_mul_low_location;
+    GLhandleARB             ycorrection_location;
+    GLenum                  vertex_color_clamp;
+    GLhandleARB             vshader;
+    GLhandleARB             pshader;
+};
+
+typedef struct {
+    GLhandleARB vshader;
+    GLhandleARB pshader;
+} glsl_program_key_t;
+
+
 /** Prints the GLSL info log which will contain error messages if they exist */
-void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
-    
+static void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
     int infologLength = 0;
     char *infoLog;
     int i;
@@ -364,7 +397,7 @@ static void shader_glsl_load_constantsB(
 /**
  * Loads the app-supplied constants into the currently set GLSL program.
  */
-void shader_glsl_load_constants(
+static void shader_glsl_load_constants(
     IWineD3DDevice* device,
     char usePixelShader,
     char useVertexShader) {
@@ -497,7 +530,7 @@ void shader_glsl_load_constants(
 }
 
 /** Generate the variable & register declarations for the GLSL output target */
-void shader_generate_glsl_declarations(
+static void shader_generate_glsl_declarations(
     IWineD3DBaseShader *iface,
     shader_reg_maps* reg_maps,
     SHADER_BUFFER* buffer,
@@ -2762,7 +2795,7 @@ void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg) {
     }
 }
 
-void pshader_glsl_input_pack(
+static void pshader_glsl_input_pack(
    SHADER_BUFFER* buffer,
    semantic* semantics_in,
    IWineD3DPixelShader *iface) {
@@ -2838,7 +2871,7 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_p
     return (struct glsl_shader_prog_link *)hash_table_get(priv->glsl_program_lookup, &key);
 }
 
-void delete_glsl_program_entry(struct shader_glsl_priv *priv, WineD3D_GL_Info *gl_info, struct glsl_shader_prog_link *entry) {
+static void delete_glsl_program_entry(struct shader_glsl_priv *priv, WineD3D_GL_Info *gl_info, struct glsl_shader_prog_link *entry) {
     glsl_program_key_t *key;
 
     key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
