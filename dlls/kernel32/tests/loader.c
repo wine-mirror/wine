@@ -120,6 +120,7 @@ static void test_Loader(void)
         DWORD section_alignment, file_alignment;
         DWORD size_of_image, size_of_headers;
         DWORD error; /* 0 means LoadLibrary should succeed */
+        DWORD alt_error; /* alternate error */
     } td[] =
     {
         { &dos_header, sizeof(dos_header),
@@ -148,7 +149,7 @@ static void test_Loader(void)
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x200, 0x200,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x200,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER),
-          ERROR_SUCCESS
+          ERROR_SUCCESS, ERROR_INVALID_ADDRESS /* vista is more strict */
         },
         { &dos_header, sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x200, 0x1000,
@@ -175,25 +176,25 @@ static void test_Loader(void)
           1, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           sizeof(dos_header) + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum) + sizeof(IMAGE_SECTION_HEADER) + 0x10,
           sizeof(dos_header) + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum) + sizeof(IMAGE_SECTION_HEADER),
-          ERROR_SUCCESS
+          ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT /* vista is more strict */
         },
         { &dos_header, sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           0xd0, /* beyond of the end of file */
           0xc0, /* beyond of the end of file */
-          ERROR_SUCCESS
+          ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT /* vista is more strict */
         },
         { &dos_header, sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           0x1000,
           0,
-          ERROR_SUCCESS
+          ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT /* vista is more strict */
         },
         { &dos_header, sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           1,
           0,
-          ERROR_SUCCESS
+          ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT /* vista is more strict */
         },
 #if 0 /* not power of 2 alignments need more test cases */
         { &dos_header, sizeof(dos_header),
@@ -207,13 +208,13 @@ static void test_Loader(void)
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 4, 4,
           1,
           0,
-          ERROR_SUCCESS
+          ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT /* vista is more strict */
         },
         { &dos_header, sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 1, 1,
           1,
           0,
-          ERROR_SUCCESS
+          ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT /* vista is more strict */
         },
         { &dos_header, sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
@@ -234,7 +235,7 @@ static void test_Loader(void)
           0x04 /* also serves as e_lfanew in the truncated MZ header */, 0x04,
           1,
           0,
-          ERROR_SUCCESS
+          ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT /* vista is more strict */
         }
     };
     static const char filler[0x1000];
@@ -330,18 +331,11 @@ static void test_Loader(void)
 
         SetLastError(0xdeadbeef);
         hlib = LoadLibrary(dll_name);
-        if (td[i].error == ERROR_SUCCESS)
+        if (hlib)
         {
             MEMORY_BASIC_INFORMATION info;
 
-            ok(hlib != 0, "%d: LoadLibrary error %d\n", i, GetLastError());
-
-            /* No point in crashing. Test crashes on Vista with some of the given files */
-            if (hlib == 0)
-            {
-                skip("Failed to load dll number %d\n", i);
-                goto endloop;
-            }
+            ok( td[i].error == ERROR_SUCCESS, "%d: should have failed\n", i );
 
             SetLastError(0xdeadbeef);
             ok(VirtualQuery(hlib, &info, sizeof(info)) == sizeof(info),
@@ -468,8 +462,8 @@ static void test_Loader(void)
             ok(FreeLibrary(hlib_as_data_file), "FreeLibrary error %d\n", GetLastError());
         }
         else
-        {   /* LoadLibrary is expected to fail */
-            ok(!hlib, "%d: LoadLibrary should fail\n", i);
+        {
+            ok(td[i].error || td[i].alt_error, "%d: LoadLibrary should succeed\n", i);
 
             if (GetLastError() == ERROR_GEN_FAILURE) /* Win9x, broken behaviour */
             {
@@ -478,11 +472,11 @@ static void test_Loader(void)
                 return;
             }
 
-            ok(td[i].error == GetLastError(), "%d: expected error %d, got %d\n",
-               i, td[i].error, GetLastError());
+            ok(td[i].error == GetLastError() || td[i].alt_error == GetLastError(),
+               "%d: expected error %d or %d, got %d\n",
+               i, td[i].error, td[i].alt_error, GetLastError());
         }
 
-endloop:
         SetLastError(0xdeadbeef);
         ok(DeleteFile(dll_name), "DeleteFile error %d\n", GetLastError());
     }
