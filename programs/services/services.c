@@ -106,9 +106,9 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
         return err;
     if ((err = load_reg_string(hKey, SZ_DESCRIPTION,  0,    &entry->description)) != 0)
         return err;
-    if ((err = load_reg_multisz(hKey, SZ_DEPEND_ON_SERVICE, &entry->dependOnServices)) != 0)
+    if ((err = load_reg_multisz(hKey, SZ_DEPEND_ON_SERVICE, TRUE, &entry->dependOnServices)) != 0)
         return err;
-    if ((err = load_reg_multisz(hKey, SZ_DEPEND_ON_GROUP,   &entry->dependOnGroups)) != 0)
+    if ((err = load_reg_multisz(hKey, SZ_DEPEND_ON_GROUP, FALSE, &entry->dependOnGroups)) != 0)
         return err;
 
     if ((err = load_reg_dword(hKey, SZ_TYPE,  &entry->config.dwServiceType)) != 0)

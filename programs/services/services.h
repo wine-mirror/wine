@@ -87,7 +87,7 @@ LPWSTR strdupW(LPCWSTR str);
 BOOL check_multisz(LPCWSTR lpMultiSz, DWORD cbSize);
 
 DWORD load_reg_string(HKEY hKey, LPCWSTR szValue, BOOL bExpand, LPWSTR *output);
-DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, LPWSTR *output);
+DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, BOOL bAllowSingle, LPWSTR *output);
 DWORD load_reg_dword(HKEY hKey, LPCWSTR szValue, DWORD *output);
 
 static inline LPCWSTR get_display_name(struct service_entry *service)

@@ -102,7 +102,7 @@ failed:
     return err;
 }
 
-DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, LPWSTR *output)
+DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, BOOL bAllowSingle, LPWSTR *output)
 {
     DWORD size, type;
     LPWSTR buf = NULL;
@@ -118,7 +118,7 @@ DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, LPWSTR *output)
         }
         goto failed;
     }
-    if (type != REG_MULTI_SZ)
+    if (!((type == REG_MULTI_SZ) || ((type == REG_SZ) && bAllowSingle)))
     {
         err = ERROR_INVALID_DATATYPE;
         goto failed;
