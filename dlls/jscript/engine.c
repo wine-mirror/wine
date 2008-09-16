@@ -722,10 +722,27 @@ HRESULT switch_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t 
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    12.13 */
 HRESULT throw_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    expression_statement_t *stat = (expression_statement_t*)_stat;
+    exprval_t exprval;
+    VARIANT val;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, &val);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    rt->ei.var = val;
+    return DISP_E_EXCEPTION;
 }
 
 /* ECMA-262 3rd Edition    12.14 */

@@ -267,4 +267,80 @@ try {
 }
 ok(state === "finally", "state = " + state + " expected finally");
 
+var state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+    throw "except";
+}catch(ex) {
+    ok(state === "try", "catch: state = " + state);
+    ok(ex === "except", "ex is not \"except\"");
+    state = "catch";
+}
+ok(state === "catch", "state = " + state + " expected catch");
+
+var state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+    throw true;
+}catch(ex) {
+    ok(state === "try", "catch: state = " + state);
+    ok(ex === true, "ex is not true");
+    state = "catch";
+}finally {
+    ok(state === "catch", "funally: state = " + state);
+    state = "finally";
+}
+ok(state === "finally", "state = " + state + " expected finally");
+
+var state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+    try { throw true; } finally {}
+}catch(ex) {
+    ok(state === "try", "catch: state = " + state);
+    ok(ex === true, "ex is not true");
+    state = "catch";
+}finally {
+    ok(state === "catch", "funally: state = " + state);
+    state = "finally";
+}
+ok(state === "finally", "state = " + state + " expected finally");
+
+var state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+    try { throw "except"; } catch(ex) { throw true; }
+}catch(ex) {
+    ok(state === "try", "catch: state = " + state);
+    ok(ex === true, "ex is not true");
+    state = "catch";
+}finally {
+    ok(state === "catch", "funally: state = " + state);
+    state = "finally";
+}
+ok(state === "finally", "state = " + state + " expected finally");
+
+function throwFunc(x) {
+    throw x;
+}
+
+var state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+    throwFunc(true);
+}catch(ex) {
+    ok(state === "try", "catch: state = " + state);
+    ok(ex === true, "ex is not true");
+    state = "catch";
+}finally {
+    ok(state === "catch", "funally: state = " + state);
+    state = "finally";
+}
+ok(state === "finally", "state = " + state + " expected finally");
+
 reportSuccess();
