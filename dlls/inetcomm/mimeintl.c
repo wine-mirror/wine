@@ -34,6 +34,7 @@
 #include "mlang.h"
 
 #include "wine/list.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "inetcomm_private.h"
@@ -395,12 +396,71 @@ static HRESULT WINAPI MimeInternat_ConvertBuffer(IMimeInternational *iface, CODE
 }
 
 static HRESULT WINAPI MimeInternat_ConvertString(IMimeInternational *iface, CODEPAGEID cpiSource,
-                                                 CODEPAGEID cpiDest,
-                                                 LPPROPVARIANT pIn,
+                                                 CODEPAGEID cpiDest, LPPROPVARIANT pIn,
                                                  LPPROPVARIANT pOut)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    int src_len;
+    IMultiLanguage *ml;
+
+    TRACE("(%p)->(%d, %d, %p %p)\n", iface, cpiSource, cpiDest, pIn, pOut);
+
+    switch(pIn->vt)
+    {
+    case VT_LPSTR:
+        if(cpiSource == CP_UNICODE) cpiSource = GetACP();
+        src_len = strlen(pIn->u.pszVal);
+        break;
+    case VT_LPWSTR:
+        cpiSource = CP_UNICODE;
+        src_len = strlenW(pIn->u.pwszVal) * sizeof(WCHAR);
+        break;
+    default:
+        return E_INVALIDARG;
+    }
+
+    hr = get_mlang(&ml);
+    if(SUCCEEDED(hr))
+    {
+        DWORD mode = 0;
+        UINT in_size = src_len, out_size;
+
+        hr = IMultiLanguage_ConvertString(ml, &mode, cpiSource, cpiDest, (BYTE*)pIn->u.pszVal, &in_size,
+                                          NULL, &out_size);
+        if(hr == S_OK) /* S_FALSE means the conversion could not be performed */
+        {
+            out_size += (cpiDest == CP_UNICODE) ? sizeof(WCHAR) : sizeof(char);
+
+            pOut->u.pszVal = CoTaskMemAlloc(out_size);
+            if(!pOut->u.pszVal)
+                hr = E_OUTOFMEMORY;
+            else
+            {
+                mode = 0;
+                in_size = src_len;
+                hr = IMultiLanguage_ConvertString(ml, &mode, cpiSource, cpiDest, (BYTE*)pIn->u.pszVal, &in_size,
+                                                  (BYTE*)pOut->u.pszVal, &out_size);
+
+                if(hr == S_OK)
+                {
+                    if(cpiDest == CP_UNICODE)
+                    {
+                        pOut->u.pwszVal[out_size / sizeof(WCHAR)] = 0;
+                        pOut->vt = VT_LPWSTR;
+                    }
+                    else
+                    {
+                        pOut->u.pszVal[out_size] = '\0';
+                        pOut->vt = VT_LPSTR;
+                    }
+                }
+                else
+                    CoTaskMemFree(pOut->u.pszVal);
+            }
+        }
+        IMultiLanguage_Release(ml);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI MimeInternat_MLANG_ConvertInetReset(IMimeInternational *iface)
