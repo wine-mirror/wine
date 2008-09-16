@@ -727,6 +727,7 @@
 # @ stub UnregisterMessagePumpHook
 # @ stub UnregisterUserApiHook
 @ stdcall UpdateLayeredWindow(long long ptr ptr long ptr long ptr long)
+@ stdcall UpdateLayeredWindowIndirect(long ptr)
 @ stub UpdatePerUserSystemParameters
 @ stdcall UpdateWindow(long)
 @ stdcall User32InitializeImmEntryTable(ptr)

@@ -3368,6 +3368,66 @@ BOOL WINAPI GetLayeredWindowAttributes( HWND hwnd, COLORREF *key, BYTE *alpha, D
     return ret;
 }
 
+
+/*****************************************************************************
+ *              UpdateLayeredWindowIndirect  (USER32.@)
+ */
+BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info )
+{
+    BYTE alpha = 0xff;
+
+    if (!(info->dwFlags & ULW_EX_NORESIZE) && (info->pptDst || info->psize))
+    {
+        int x = 0, y = 0, cx = 0, cy = 0;
+        DWORD flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOSENDCHANGING;
+
+        if (info->pptDst)
+        {
+            x = info->pptDst->x;
+            y = info->pptDst->y;
+            flags &= ~SWP_NOMOVE;
+        }
+        if (info->psize)
+        {
+            cx = info->psize->cx;
+            cy = info->psize->cy;
+            flags &= ~SWP_NOSIZE;
+        }
+        TRACE( "moving window %p pos %d,%d %dx%x\n", hwnd, x, y, cx, cy );
+        SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
+    }
+
+    if (info->hdcSrc)
+    {
+        RECT rect;
+        HDC hdc = GetDCEx( hwnd, 0, DCX_CACHE );
+
+        if (hdc)
+        {
+            int x = 0, y = 0;
+
+            GetClientRect( hwnd, &rect );
+            if (info->pptSrc)
+            {
+                x = info->pptSrc->x;
+                y = info->pptSrc->y;
+            }
+            /* FIXME: intersect rect with info->prcDirty */
+            TRACE( "copying window %p pos %d,%d\n", hwnd, x, y );
+            BitBlt( hdc, rect.left, rect.top, rect.right, rect.bottom,
+                    info->hdcSrc, rect.left + x, rect.top + y, SRCCOPY );
+            ReleaseDC( hwnd, hdc );
+        }
+    }
+
+    if (info->pblend && !(info->dwFlags & ULW_OPAQUE)) alpha = info->pblend->SourceConstantAlpha;
+    TRACE( "setting window %p alpha %u\n", hwnd, alpha );
+    USER_Driver->pSetLayeredWindowAttributes( hwnd, info->crKey, alpha,
+                                              info->dwFlags & (LWA_ALPHA | LWA_COLORKEY) );
+    return TRUE;
+}
+
+
 /*****************************************************************************
  *              UpdateLayeredWindow (USER32.@)
  */
@@ -3375,14 +3435,19 @@ BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psi
                                  HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend,
                                  DWORD dwFlags)
 {
-    static int once;
-    if (!once)
-    {
-        once = 1;
-        FIXME("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%d): stub!\n",
-              hwnd, hdcDst, pptDst, psize, hdcSrc, pptSrc, crKey, pblend, dwFlags);
-    }
-    return 0;
+    UPDATELAYEREDWINDOWINFO info;
+
+    info.cbSize   = sizeof(info);
+    info.hdcDst   = hdcDst;
+    info.pptDst   = pptDst;
+    info.psize    = psize;
+    info.hdcSrc   = hdcSrc;
+    info.pptSrc   = pptSrc;
+    info.crKey    = crKey;
+    info.pblend   = pblend;
+    info.dwFlags  = dwFlags;
+    info.prcDirty = NULL;
+    return UpdateLayeredWindowIndirect( hwnd, &info );
 }
 
 /* 64bit versions */

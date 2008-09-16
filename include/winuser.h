@@ -3300,6 +3300,12 @@ typedef struct {
 #define LWA_COLORKEY        0x00000001
 #define LWA_ALPHA           0x00000002
 
+/* UpdateLayeredWindow() flags */
+#define ULW_COLORKEY        0x00000001
+#define ULW_ALPHA           0x00000002
+#define ULW_OPAQUE          0x00000004
+#define ULW_EX_NORESIZE     0x00000008
+
   /* ShowWindow() codes */
 #define SW_HIDE             0
 #define SW_SHOWNORMAL       1
