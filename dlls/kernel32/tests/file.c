@@ -1614,6 +1614,9 @@ static void test_async_file_errors(void)
     strcat(szFile, "\\win.ini");
     hFile = CreateFileA(szFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                         NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)  /* win9x doesn't like FILE_SHARE_DELETE */
+        hFile = CreateFileA(szFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
     ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA(%s ...) failed\n", szFile);
     while (TRUE)
     {
@@ -2078,7 +2081,9 @@ static void test_ReplaceFileA(void)
     ret = GetFileTime(hReplacedFile, NULL, NULL, &ftReplaced);
     ok( ret, "GetFileTime error (backup %d\n", GetLastError());
     ok(CompareFileTime(&ftReplaced, &ftReplacement) == 0,
-        "replaced file has wrong filetime\n");
+       "replaced file has wrong filetime %x%08x / %x%08x\n",
+       ftReplaced.dwHighDateTime, ftReplaced.dwLowDateTime,
+       ftReplacement.dwHighDateTime, ftReplacement.dwLowDateTime );
     CloseHandle(hReplacedFile);
 
     /* re-create replacement file for pass w/o backup (blank) */
