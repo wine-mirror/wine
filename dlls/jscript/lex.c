@@ -666,7 +666,7 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
         if(++ctx->ptr < ctx->end) {
             if(*ctx->ptr == '=') {  /* /= */
                 ctx->ptr++;
-                *(int*)lval = EXPR_ASSIGNMUL;
+                *(int*)lval = EXPR_ASSIGNDIV;
                 return tAssignOper;
             }
         }

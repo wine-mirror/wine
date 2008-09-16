@@ -220,6 +220,10 @@ tmp = 2;
 ok((tmp *= 1.5) === 3, "tmp *= 1.5 !== 3");
 ok(tmp === 3, "tmp !=== 3");
 
+tmp = 5;
+ok((tmp /= 2) === 2.5, "tmp /= 2 !== 2.5");
+ok(tmp === 2.5, "tmp !=== 2.5");
+
 tmp = 3 || ok(false, "second or expression called");
 ok(tmp === 3, "3 || (...) is not 3");
 
