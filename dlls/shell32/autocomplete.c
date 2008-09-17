@@ -31,6 +31,8 @@
   - implement ACO_FILTERPREFIXES style
   - implement ACO_USETAB style
   - implement ACO_RTLREADING style
+  - implement ResetEnumerator
+  - string compares should be case-insensitive, the content of the list should be sorted
   
  */
 #include "config.h"
@@ -253,12 +255,9 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     TRACE("(%p)->(0x%08lx, %p, %s, %s)\n", 
 	  This, (long)hwndEdit, punkACL, debugstr_w(pwzsRegKeyPath), debugstr_w(pwszQuickComplete));
 
-    if (This->options & ACO_AUTOSUGGEST) TRACE(" ACO_AUTOSUGGEST\n");
-    if (This->options & ACO_AUTOAPPEND) TRACE(" ACO_AUTOAPPEND\n");
     if (This->options & ACO_SEARCH) FIXME(" ACO_SEARCH not supported\n");
     if (This->options & ACO_FILTERPREFIXES) FIXME(" ACO_FILTERPREFIXES not supported\n");
     if (This->options & ACO_USETAB) FIXME(" ACO_USETAB not supported\n");
-    if (This->options & ACO_UPDOWNKEYDROPSLIST) TRACE(" ACO_UPDOWNKEYDROPSLIST\n");
     if (This->options & ACO_RTLREADING) FIXME(" ACO_RTLREADING not supported\n");
 
     This->hwndEdit = hwndEdit;
