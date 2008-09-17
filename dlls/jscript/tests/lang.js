@@ -301,6 +301,10 @@ tmp = 5;
 ok((tmp ^= 3) === 6, "tmp(5) ^= 3 !== 6");
 ok(getVT(tmp) === "VT_I4", "getVT(tmp ^= 3) = " + getVT(tmp));
 
+tmp = ~1;
+ok(tmp === -2, "~1 !== -2");
+ok(getVT(tmp) === "VT_I4", "getVT(~1) = " + getVT(tmp));
+
 ok((3,4) === 4, "(3,4) !== 4");
 
 ok(1 < 3.4, "1 < 3.4 failed");

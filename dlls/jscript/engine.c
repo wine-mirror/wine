@@ -2328,10 +2328,34 @@ HRESULT greatereq_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD fl
     return return_bool(ret, !b);
 }
 
-HRESULT binary_negation_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.4.8 */
+HRESULT binary_negation_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    unary_expression_t *expr = (unary_expression_t*)_expr;
+    exprval_t exprval;
+    VARIANT val;
+    INT i;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, EXPR_NEWREF, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_int32(ctx->parser->script, &val, ei, &i);
+    if(FAILED(hres))
+        return hres;
+
+    ret->type = EXPRVAL_VARIANT;
+    V_VT(&ret->u.var) = VT_I4;
+    V_I4(&ret->u.var) = ~i;
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    11.4.9 */
