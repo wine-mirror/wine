@@ -34,6 +34,10 @@
 #include <dmplugin.h>
 #include <pshpack8.h>
 
+#ifdef WINE_NO_UNICODE_MACROS
+#undef AddPort
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
