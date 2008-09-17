@@ -593,4 +593,26 @@ while(tmp < 4) {
 }
 ok(tmp === 4, "tmp !== 4");
 
+for(tmp=0; tmp < 4; tmp++)
+    ok(tmp < 4, "tmp = " + tmp);
+ok(tmp === 4, "tmp !== 4");
+
+for(tmp=0; tmp < 4; tmp++) {
+    if(tmp === 2)
+        break;
+    ok(tmp < 2, "tmp = " + tmp);
+}
+ok(tmp === 2, "tmp !== 2");
+
+for(tmp=0; tmp < 4; tmp++) {
+    if(tmp === 2)
+        continue;
+    ok(tmp < 4 && tmp != 2, "tmp = " + tmp);
+}
+ok(tmp === 4, "tmp !== 4");
+
+for(var fi=0; fi < 4; fi++)
+    ok(fi < 4, "fi = " + fi);
+ok(fi === 4, "fi !== 4");
+
 reportSuccess();

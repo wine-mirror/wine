@@ -695,10 +695,84 @@ HRESULT while_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t 
     return S_OK;
 }
 
-HRESULT for_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.6.3 */
+HRESULT for_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    for_statement_t *stat = (for_statement_t*)_stat;
+    VARIANT val, tmp, retv;
+    exprval_t exprval;
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(stat->variable_list) {
+        hres = variable_list_eval(ctx, stat->variable_list, &rt->ei);
+        if(FAILED(hres))
+            return hres;
+    }else if(stat->begin_expr) {
+        hres = expr_eval(ctx, stat->begin_expr, EXPR_NEWREF, &rt->ei, &exprval);
+        if(FAILED(hres))
+            return hres;
+
+        hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, &val);
+        exprval_release(&exprval);
+        if(FAILED(hres))
+            return hres;
+
+        VariantClear(&val);
+    }
+
+    V_VT(&retv) = VT_EMPTY;
+
+    while(1) {
+        if(stat->expr) {
+            hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
+            if(FAILED(hres))
+                break;
+
+            hres = exprval_to_boolean(ctx->parser->script, &exprval, &rt->ei, &b);
+            exprval_release(&exprval);
+            if(FAILED(hres) || !b)
+                break;
+        }
+
+        hres = stat_eval(ctx, stat->statement, rt, &tmp);
+        if(FAILED(hres))
+            break;
+
+        VariantClear(&retv);
+        retv = tmp;
+
+        if(rt->type == RT_CONTINUE)
+            rt->type = RT_NORMAL;
+        else if(rt->type != RT_NORMAL)
+            break;
+
+        if(stat->end_expr) {
+            hres = expr_eval(ctx, stat->end_expr, 0, &rt->ei, &exprval);
+            if(FAILED(hres))
+                break;
+
+            hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, &val);
+            exprval_release(&exprval);
+            if(FAILED(hres))
+                break;
+
+            VariantClear(&val);
+        }
+    }
+
+    if(FAILED(hres)) {
+        VariantClear(&retv);
+        return hres;
+    }
+
+    if(rt->type == RT_BREAK)
+        rt->type = RT_NORMAL;
+
+    *ret = retv;
+    return S_OK;
 }
 
 HRESULT forin_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
