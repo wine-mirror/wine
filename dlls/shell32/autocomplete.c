@@ -361,15 +361,36 @@ static HRESULT WINAPI IAutoCompleteDropDown_fnGetDropDownStatus(
     LPWSTR *ppwszString)
 {
     IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
+    BOOL dropped;
 
-    FIXME("(%p) -> (%p, %p): stub\n", This, pdwFlags, ppwszString);
+    TRACE("(%p) -> (%p, %p)\n", This, pdwFlags, ppwszString);
+
+    dropped = IsWindowVisible(This->hwndListBox);
 
     if (pdwFlags)
-        *pdwFlags = 0;
-    if (ppwszString)
-        *ppwszString = NULL;
+        *pdwFlags = (dropped ? ACDD_VISIBLE : 0);
 
-    return E_NOTIMPL;
+    if (ppwszString) {
+        if (dropped) {
+            int sel;
+
+            sel = SendMessageW(This->hwndListBox, LB_GETCURSEL, 0, 0);
+            if (sel >= 0)
+            {
+                DWORD len;
+
+                len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
+                *ppwszString = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
+                SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)*ppwszString);
+            }
+            else
+                *ppwszString = NULL;
+        }
+        else
+            *ppwszString = NULL;
+    }
+
+    return S_OK;
 }
 
 /**************************************************************************
