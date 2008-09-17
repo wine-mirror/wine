@@ -231,6 +231,20 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    9.5 */
+HRESULT to_int32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, INT *ret)
+{
+    VARIANT num;
+    HRESULT hres;
+
+    hres = to_number(ctx, v, ei, &num);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = V_VT(&num) == VT_I4 ? V_I4(&num) : (INT)V_R8(&num);
+    return S_OK;
+}
+
 /* ECMA-262 3rd Edition    9.8 */
 HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
 {

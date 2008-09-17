@@ -261,6 +261,18 @@ ok(tmp === "test", "true && \"test\" is not \"test\"");
 tmp = true && 0;
 ok(tmp === 0, "true && 0 is not 0");
 
+tmp = 3 | 4;
+ok(tmp === 7, "3 | 4 !== 7");
+ok(getVT(tmp) === "VT_I4", "getVT(3|4) = " + getVT(tmp));
+
+tmp = 3.5 | 0;
+ok(tmp === 3, "3.5 | 0 !== 3");
+ok(getVT(tmp) === "VT_I4", "getVT(3.5|0) = " + getVT(tmp));
+
+tmp = -3.5 | 0;
+ok(tmp === -3, "-3.5 | 0 !== -3");
+ok(getVT(tmp) === "VT_I4", "getVT(3.5|0) = " + getVT(tmp));
+
 ok(1 < 3.4, "1 < 3.4 failed");
 ok(!(3.4 < 1), "3.4 < 1");
 ok("abc" < "abcd", "abc < abcd failed");
