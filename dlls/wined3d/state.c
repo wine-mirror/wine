@@ -3210,6 +3210,8 @@ static void loadTexCoords(IWineD3DStateBlockImpl *stateblock, WineDirect3DVertex
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
         }
     }
+
+    checkGLcall("loadTexCoords");
 }
 
 static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
