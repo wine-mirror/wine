@@ -46,6 +46,11 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
      * Read the unit back instead of switching to 0, this avoids messing around with the state manager's
      * gl states. The current texture unit should always be a valid one.
      *
+     * To be more specific, this is tricky because we can implicitly be called
+     * from sampler() in state.c. This means we can't touch anything other than
+     * whatever happens to be the currently active texture, or we would risk
+     * marking already applied sampler states dirty again.
+     *
      * TODO: Track the current active texture per GL context instead of using glGet
      */
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
