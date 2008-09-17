@@ -2064,6 +2064,10 @@ static void test_default_body(IHTMLBodyElement *body)
     long l;
     BSTR bstr;
     HRESULT hres;
+    VARIANT v;
+    WCHAR sBodyText[] = {'#','F','F','0','0','0','0',0};
+    WCHAR sTextInvalid[] = {'I','n','v','a','l','i','d',0};
+    WCHAR sResInvalid[] = {'#','0','0','a','0','d','0',0};
 
     bstr = (void*)0xdeadbeef;
     hres = IHTMLBodyElement_get_background(body, &bstr);
@@ -2077,6 +2081,39 @@ static void test_default_body(IHTMLBodyElement *body)
     l = elem_get_scroll_top((IUnknown*)body);
     ok(!l, "scrollTop = %ld\n", l);
     elem_get_scroll_left((IUnknown*)body);
+
+    /* get_text tests */
+    hres = IHTMLBodyElement_get_text(body, &v);
+    ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
+    ok(bstr == NULL, "bstr != NULL\n");
+
+
+    /* get_text - Invalid Text */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(sTextInvalid);
+    hres = IHTMLBodyElement_put_text(body, v);
+    ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLBodyElement_get_text(body, &v);
+    ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
+    ok(!lstrcmpW(sResInvalid, V_BSTR(&v)), "bstr != sResInvalid\n");
+    VariantClear(&v);
+
+    /* get_text - Valid Text */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(sBodyText);
+    hres = IHTMLBodyElement_put_text(body, v);
+    ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLBodyElement_get_text(body, &v);
+    ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
+    ok(lstrcmpW(bstr, V_BSTR(&v)), "bstr != V_BSTR(&v)\n");
+    VariantClear(&v);
 }
 
 static void test_body_funs(IHTMLBodyElement *body)

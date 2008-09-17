@@ -300,15 +300,46 @@ static HRESULT WINAPI HTMLBodyElement_get_bgColor(IHTMLBodyElement *iface, VARIA
 static HRESULT WINAPI HTMLBodyElement_put_text(IHTMLBodyElement *iface, VARIANT v)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    nsAString text;
+    nsresult nsres;
+
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+
+    if(!variant_to_nscolor(&v, &text))
+        return S_OK;
+
+    nsres = nsIDOMHTMLBodyElement_SetText(This->nsbody, &text);
+    nsAString_Finish(&text);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_get_text(IHTMLBodyElement *iface, VARIANT *p)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString text;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&text, NULL);
+
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = NULL;
+
+    nsres = nsIDOMHTMLBodyElement_GetText(This->nsbody, &text);
+    if(NS_SUCCEEDED(nsres))
+    {
+        const PRUnichar *sText;
+        nsAString_GetData(&text, &sText);
+
+        V_VT(p) = VT_BSTR;
+        V_BSTR(p) = SysAllocString(sText);
+    }
+
+    nsAString_Finish(&text);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_link(IHTMLBodyElement *iface, VARIANT v)
