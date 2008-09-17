@@ -26,6 +26,44 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
+static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
+    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
+    IWineD3DVolumeTexture *texture;
+    int active_sampler;
+
+    /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
+     * Read the unit back instead of switching to 0, this avoids messing around with the state manager's
+     * gl states. The current texture unit should always be a valid one.
+     *
+     * To be more specific, this is tricky because we can implicitly be called
+     * from sampler() in state.c. This means we can't touch anything other than
+     * whatever happens to be the currently active texture, or we would risk
+     * marking already applied sampler states dirty again.
+     *
+     * TODO: Track the current active texture per GL context instead of using glGet
+     */
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        GLint active_texture;
+        ENTER_GL();
+        glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
+        LEAVE_GL();
+        active_sampler = This->resource.wineD3DDevice->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
+    } else {
+        active_sampler = 0;
+    }
+
+    if (active_sampler != -1) {
+        IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(active_sampler));
+    }
+
+    if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DVolumeTexture, (void **)&texture))) {
+        IWineD3DVolumeTexture_BindTexture(texture);
+        IWineD3DVolumeTexture_Release(texture);
+    } else {
+        ERR("Volume should be part of a volume texture\n");
+    }
+}
+
 /* *******************************************
    IWineD3DVolume IUnknown parts follow
    ******************************************* */
@@ -276,6 +314,8 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int 
     getFormatDescEntry(format, &GLINFO_LOCATION, &glDesc);
 
     TRACE("(%p) : level %u, format %s (0x%08x)\n", This, gl_level, debug_d3dformat(format), format);
+
+    volume_bind_and_dirtify(iface);
 
     TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
             GL_TEXTURE_3D,
