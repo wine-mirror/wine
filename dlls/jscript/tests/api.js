@@ -16,6 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+ok("".length === 0, "\"\".length = " + "".length);
+ok(getVT("".length) == "VT_I4", "\"\".length = " + "".length);
+ok("abc".length === 3, "\"abc\".length = " + "abc".length);
+ok(String.prototype.length === 0, "String.prototype.length = " + String.prototype.length);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");
