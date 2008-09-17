@@ -446,4 +446,20 @@ case false:
 }
 ok(state === "false", "state = " + state);
 
+state = "";
+switch(1) {
+case "1":
+    ok(false, "unexpected case \"1\"");
+case 1:
+    ok(state === "", "case 1: state = " + state);
+    state = "1";
+default:
+    ok(state === "1", "default: state = " + state);
+    state = "default";
+    break;
+case false:
+    ok(false, "unexpected case false");
+}
+ok(state === "default", "state = " + state);
+
 reportSuccess();

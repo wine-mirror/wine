@@ -671,10 +671,21 @@ HRESULT continue_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_
     return E_NOTIMPL;
 }
 
-HRESULT break_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.8 */
+HRESULT break_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    branch_statement_t *stat = (branch_statement_t*)_stat;
+
+    TRACE("\n");
+
+    if(stat->identifier) {
+        FIXME("indentifier not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    rt->type = RT_BREAK;
+    V_VT(ret) = VT_EMPTY;
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.9 */
