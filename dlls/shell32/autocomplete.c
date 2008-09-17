@@ -94,6 +94,25 @@ static inline IAutoCompleteImpl *impl_from_IAutoCompleteDropDown(IAutoCompleteDr
 static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+static void create_listbox(IAutoCompleteImpl *This)
+{
+    HWND hwndParent;
+
+    hwndParent = GetParent(This->hwndEdit);
+
+    /* FIXME : The listbox should be resizable with the mouse. WS_THICKFRAME looks ugly */
+    This->hwndListBox = CreateWindowExW(0, WC_LISTBOXW, NULL,
+                                    WS_BORDER | WS_CHILD | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
+                                    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                                    hwndParent, NULL,
+                                    (HINSTANCE)GetWindowLongPtrW( hwndParent, GWLP_HINSTANCE ), NULL);
+
+    if (This->hwndListBox) {
+        This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
+        SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
+    }
+}
+
 /**************************************************************************
  *  IAutoComplete_Constructor
  */
@@ -230,7 +249,6 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     LPCOLESTR pwszQuickComplete)
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
-    static const WCHAR lbName[] = {'L','i','s','t','B','o','x',0};
 
     TRACE("(%p)->(0x%08lx, %p, %s, %s)\n", 
 	  This, (long)hwndEdit, punkACL, debugstr_w(pwzsRegKeyPath), debugstr_w(pwszQuickComplete));
@@ -253,23 +271,8 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     This->wpOrigEditProc = (WNDPROC) SetWindowLongPtrW( hwndEdit, GWLP_WNDPROC, (LONG_PTR) ACEditSubclassProc);
     SetWindowLongPtrW( hwndEdit, GWLP_USERDATA, (LONG_PTR)This);
 
-    if (This->options & ACO_AUTOSUGGEST) {
-	HWND hwndParent;
-
-	hwndParent = GetParent(This->hwndEdit);
-	
-	/* FIXME : The listbox should be resizable with the mouse. WS_THICKFRAME looks ugly */
-	This->hwndListBox = CreateWindowExW(0, lbName, NULL, 
-					    WS_BORDER | WS_CHILD | WS_VSCROLL | LBS_HASSTRINGS | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT, 
-					    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-					    hwndParent, NULL, 
-					    (HINSTANCE)GetWindowLongPtrW( hwndParent, GWLP_HINSTANCE ), NULL);
-					    
-	if (This->hwndListBox) {
-	    This->wpOrigLBoxProc = (WNDPROC) SetWindowLongPtrW( This->hwndListBox, GWLP_WNDPROC, (LONG_PTR) ACLBoxSubclassProc);
-	    SetWindowLongPtrW( This->hwndListBox, GWLP_USERDATA, (LONG_PTR)This);
-	}
-    }
+    if (This->options & ACO_AUTOSUGGEST)
+        create_listbox(This);
 
     if (pwzsRegKeyPath) {
 	WCHAR *key;
@@ -342,6 +345,9 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
     TRACE("(%p) -> (0x%x)\n", This, dwFlag);
 
     This->options = dwFlag;
+
+    if ((This->options & ACO_AUTOSUGGEST) && This->hwndEdit && !This->hwndListBox)
+        create_listbox(This);
 
     return hr;
 }
@@ -562,17 +568,19 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 		    break;
 
 		if (strstrW(strs, hwndText) == strs) {
-		    if (This->options & ACO_AUTOAPPEND) {
+                    if (!filled && (This->options & ACO_AUTOAPPEND)) {
 			SetWindowTextW(hwnd, strs);
 			SendMessageW(hwnd, EM_SETSEL, lstrlenW(hwndText), lstrlenW(strs));
-			break;
+                        if (!(This->options & ACO_AUTOSUGGEST))
+                            break;
 		    }		
 
 		    if (This->options & ACO_AUTOSUGGEST) {
 			SendMessageW(This->hwndListBox, LB_ADDSTRING, 0, (LPARAM)strs);
-			filled = TRUE;
 			cpt++;
 		    }
+
+                    filled = TRUE;
 		}		
 	    }
 	    
