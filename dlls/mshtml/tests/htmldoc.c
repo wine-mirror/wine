@@ -1009,8 +1009,10 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
             BINDSTATUS_ENDDOWNLOADDATA, NULL);
     ok(hres == S_OK, "OnProgress(BINDSTATUS_ENDDOWNLOADDATA) failed: %08x\n", hres);
 
+    SET_EXPECT(GetBindResult);
     hres = IBindStatusCallback_OnStopBinding(callback, S_OK, NULL);
     ok(hres == S_OK, "OnStopBinding failed: %08x\n", hres);
+    SET_CALLED(GetBindResult); /* IE7 */
 
     IBindStatusCallback_Release(callback);
 
@@ -2637,6 +2639,7 @@ static void test_Load(IPersistMoniker *persist)
     }
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_ShellDocView_84);
+    SET_EXPECT(IsSystemMoniker);
     SET_EXPECT(BindToStorage);
     SET_EXPECT(SetActiveObject);
     if(set_clientsite) {
@@ -2674,6 +2677,7 @@ static void test_Load(IPersistMoniker *persist)
         container_locked = TRUE;
     }
     CHECK_CALLED(OnChanged_READYSTATE);
+    SET_CALLED(IsSystemMoniker); /* IE7 */
     SET_CALLED(Exec_ShellDocView_84);
     CHECK_CALLED(BindToStorage);
     SET_CALLED(SetActiveObject); /* FIXME */
@@ -3046,6 +3050,7 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(IsSystemMoniker);
     SET_EXPECT(Exec_ShellDocView_84);
     if(loaded)
         SET_EXPECT(BindToStorage);
@@ -3071,6 +3076,7 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(OnChanged_READYSTATE);
+    SET_CALLED(IsSystemMoniker); /* IE7 */
     SET_CALLED(Exec_ShellDocView_84);
     if(loaded)
         CHECK_CALLED(BindToStorage);

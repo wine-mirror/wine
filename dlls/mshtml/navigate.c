@@ -344,6 +344,8 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
     TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
 
+    /* NOTE: IE7 calls GetBindResult here */
+
     if(This->binding) {
         IBinding_Release(This->binding);
         This->binding = NULL;
@@ -687,6 +689,9 @@ HRESULT start_binding(HTMLDocument *doc, BSCallback *bscallback, IBindCtx *bctx)
     HRESULT hres;
 
     bscallback->doc = doc;
+
+    /* NOTE: IE7 calls IsSystemMoniker here*/
+
     call_docview_84(doc);
 
     if(bctx) {
