@@ -2116,6 +2116,7 @@ UINT X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 
     if (!data || !data->whole_window || !data->managed || !data->mapped || data->iconic) return swp;
     if (style & WS_MINIMIZE) return swp;
+    if (IsRectEmpty( rect )) return swp;
 
     /* only fetch the new rectangle if the ShowWindow was a result of a window manager event */
 
