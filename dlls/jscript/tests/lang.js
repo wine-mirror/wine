@@ -49,6 +49,9 @@ ok(true == 1, "true == 1 is false");
 ok(!(true == 2), "true == 2");
 ok(0 == false, "0 == false is false");
 
+ok(1 != 2, "1 != 2 is false");
+ok(false != 1, "false != 1 is false");
+
 var trueVar = true;
 ok(trueVar, "trueVar is not true");
 
