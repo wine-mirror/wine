@@ -641,16 +641,58 @@ HRESULT if_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt
     return hres;
 }
 
-HRESULT dowhile_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.6.2 */
+HRESULT while_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
-}
+    while_statement_t *stat = (while_statement_t*)_stat;
+    exprval_t exprval;
+    VARIANT val, tmp;
+    VARIANT_BOOL b;
+    BOOL test_expr;
+    HRESULT hres;
 
-HRESULT while_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    V_VT(&val) = VT_EMPTY;
+    test_expr = !stat->do_while;
+
+    while(1) {
+        if(test_expr) {
+            hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
+            if(FAILED(hres))
+                break;
+
+            hres = exprval_to_boolean(ctx->parser->script, &exprval, &rt->ei, &b);
+            exprval_release(&exprval);
+            if(FAILED(hres) || !b)
+                break;
+        }else {
+            test_expr = TRUE;
+        }
+
+        hres = stat_eval(ctx, stat->statement, rt, &tmp);
+        if(FAILED(hres))
+            break;
+
+        VariantClear(&val);
+        val = tmp;
+
+        if(rt->type == RT_CONTINUE)
+            rt->type = RT_NORMAL;
+        if(rt->type != RT_NORMAL)
+            break;
+    }
+
+    if(FAILED(hres)) {
+        VariantClear(&val);
+        return hres;
+    }
+
+    if(rt->type == RT_BREAK)
+        rt->type = RT_NORMAL;
+
+    *ret = val;
+    return S_OK;
 }
 
 HRESULT for_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)

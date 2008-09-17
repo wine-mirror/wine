@@ -1086,8 +1086,9 @@ static statement_t *new_while_statement(parser_ctx_t *ctx, BOOL dowhile, express
 {
     while_statement_t *ret = parser_alloc(ctx, sizeof(while_statement_t));
 
-    ret->stat.eval = dowhile ? dowhile_statement_eval : while_statement_eval;
+    ret->stat.eval = while_statement_eval;
     ret->stat.next = NULL;
+    ret->do_while = dowhile;
     ret->expr = expr;
     ret->statement = stat;
 

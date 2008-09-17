@@ -161,6 +161,7 @@ typedef struct {
 
 typedef struct {
     statement_t stat;
+    BOOL do_while;
     expression_t *expr;
     statement_t *statement;
 } while_statement_t;
@@ -229,7 +230,6 @@ HRESULT var_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT empty_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT expression_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT if_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-HRESULT dowhile_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT while_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT for_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 HRESULT forin_statement_eval(exec_ctx_t*,statement_t*,return_type_t*,VARIANT*);

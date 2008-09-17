@@ -550,4 +550,36 @@ ok(tmp["3"] === 2, "tmp[3] !== 2");
 ok(tmp["6"] === true, "tmp[6] !== true");
 ok(tmp[2] === 1, "tmp[2] !== 1");
 
+tmp = 0;
+while(tmp < 4) {
+    ok(tmp < 4, "tmp >= 4");
+    tmp++;
+}
+ok(tmp === 4, "tmp !== 4");
+
+tmp = 0;
+while(true) {
+    ok(tmp < 4, "tmp >= 4");
+    tmp++;
+    if(tmp === 4) {
+        break;
+        ok(false, "break did not break");
+    }
+}
+ok(tmp === 4, "tmp !== 4");
+
+tmp = 0;
+do {
+    ok(tmp < 4, "tmp >= 4");
+    tmp++;
+} while(tmp < 4);
+ok(tmp === 4, "tmp !== 4");
+
+tmp = 0;
+do {
+    ok(tmp === 0, "tmp !=== 0");
+    tmp++;
+} while(false);
+ok(tmp === 1, "tmp !== 4");
+
 reportSuccess();
