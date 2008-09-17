@@ -253,19 +253,54 @@ HRESULT to_int32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, INT *ret)
     return S_OK;
 }
 
+static BSTR int_to_bstr(INT i)
+{
+    WCHAR buf[12], *p;
+    BOOL neg = FALSE;
+
+    if(!i) {
+        static const WCHAR zeroW[] = {'0',0};
+        return SysAllocString(zeroW);
+    }
+
+    if(i < 0) {
+        neg = TRUE;
+        i = -i;
+    }
+
+    p = buf + sizeof(buf)/sizeof(*buf)-1;
+    *p-- = 0;
+    while(i) {
+        *p-- = i%10 + '0';
+        i /= 10;
+    }
+
+    if(neg)
+        *p = '-';
+    else
+        p++;
+
+    return SysAllocString(p);
+}
+
 /* ECMA-262 3rd Edition    9.8 */
 HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
 {
     switch(V_VT(v)) {
+    case VT_I4:
+        *str = int_to_bstr(V_I4(v));
+        break;
+
     case VT_BSTR:
         *str = SysAllocString(V_BSTR(v));
-        return S_OK;
+        break;
 
     default:
         FIXME("unsupported vt %d\n", V_VT(v));
+        return E_NOTIMPL;
     }
 
-    return E_NOTIMPL;
+    return *str ? S_OK : E_OUTOFMEMORY;
 }
 
 /* ECMA-262 3rd Edition    9.9 */

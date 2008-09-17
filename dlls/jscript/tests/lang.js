@@ -312,6 +312,10 @@ ok(+true === 1, "+true !== 1");
 ok(+false === 0, "+false !== 0");
 ok(+null === 0, "+null !== 0");
 
+ok("" + 0 === "0", "\"\" + 0 !== \"0\"");
+ok("" + 123 === "123", "\"\" + 123 !== \"123\"");
+ok("" + (-5) === "-5", "\"\" + (-5) !== \"-5\"");
+
 ok(1 < 3.4, "1 < 3.4 failed");
 ok(!(3.4 < 1), "3.4 < 1");
 ok("abc" < "abcd", "abc < abcd failed");
@@ -544,5 +548,6 @@ ok(tmp.length === 7, "tmp.length !== 7");
 ok(tmp["0"] === undefined, "tmp[0] is not undefined");
 ok(tmp["3"] === 2, "tmp[3] !== 2");
 ok(tmp["6"] === true, "tmp[6] !== true");
+ok(tmp[2] === 1, "tmp[2] !== 1");
 
 reportSuccess();
