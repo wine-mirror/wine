@@ -1329,10 +1329,56 @@ HRESULT literal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flag
     return S_OK;
 }
 
-HRESULT array_literal_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.1.4 */
+HRESULT array_literal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    array_literal_expression_t *expr = (array_literal_expression_t*)_expr;
+    DWORD length = 0, i = 0;
+    array_element_t *elem;
+    DispatchEx *array;
+    exprval_t exprval;
+    VARIANT val;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    for(elem = expr->element_list; elem; elem = elem->next)
+        length += elem->elision+1;
+    length += expr->length;
+
+    hres = create_array(ctx->parser->script, length, &array);
+    if(FAILED(hres))
+        return hres;
+
+    for(elem = expr->element_list; elem; elem = elem->next) {
+        i += elem->elision;
+
+        hres = expr_eval(ctx, elem->expr, 0, ei, &exprval);
+        if(FAILED(hres))
+            break;
+
+        hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
+        exprval_release(&exprval);
+        if(FAILED(hres))
+            break;
+
+        hres = jsdisp_propput_idx(array, i, ctx->parser->script->lcid, &val, ei, NULL/*FIXME*/);
+        VariantClear(&val);
+        if(FAILED(hres))
+            break;
+
+        i++;
+    }
+
+    if(FAILED(hres)) {
+        jsdisp_release(array);
+        return hres;
+    }
+
+    ret->type = EXPRVAL_VARIANT;
+    V_VT(&ret->u.var) = VT_DISPATCH;
+    V_DISPATCH(&ret->u.var) = (IDispatch*)_IDispatchEx_(array);
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    11.1.5 */

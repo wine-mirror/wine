@@ -539,4 +539,10 @@ try {
 }
 ok(state === "finally", "state = " + state + " expected finally");
 
+tmp = [,,1,2,,,true];
+ok(tmp.length === 7, "tmp.length !== 7");
+ok(tmp["0"] === undefined, "tmp[0] is not undefined");
+ok(tmp["3"] === 2, "tmp[3] !== 2");
+ok(tmp["6"] === true, "tmp[6] !== true");
+
 reportSuccess();
