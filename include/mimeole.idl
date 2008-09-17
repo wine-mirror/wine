@@ -1074,6 +1074,8 @@ cpp_quote("#endif")
     ]
     interface IMimeEnumProperties : IUnknown
     {
+        typedef [unique] IMimeEnumProperties *LPMIMEENUMPROPERTIES;
+
         typedef struct tagENUMPROPERTY
         {
             LPSTR       pszName;
@@ -1081,7 +1083,22 @@ cpp_quote("#endif")
             DWORD       dwPropId;
         } ENUMPROPERTY, *LPENUMPROPERTY;
 
-        /* FIXME: fill this in */
+        HRESULT Next(
+            [in]      ULONG cFetch,
+            [in, out] LPENUMPROPERTY prgProp,
+            [out]     ULONG *pcFetched);
+
+        HRESULT Skip(
+            [in]      ULONG cItems);
+
+        HRESULT Reset(void);
+
+        HRESULT Clone(
+            [out]      IMimeEnumProperties **ppEnum);
+
+        HRESULT Count(
+            [out]      ULONG *pcItems);
+
     }
 
     [
