@@ -911,16 +911,21 @@ static void handle_wm_state_notify( struct x11drv_win_data *data, XPropertyEvent
     switch(event->state)
     {
     case PropertyDelete:
+        TRACE( "%p/%lx: WM_STATE deleted from %d\n", data->hwnd, data->whole_window, data->wm_state );
         data->wm_state = WithdrawnState;
-        TRACE( "%p/%lx: WM_STATE deleted\n", data->hwnd, data->whole_window );
         break;
     case PropertyNewValue:
         {
+            int old_state = data->wm_state;
             int new_state = get_window_wm_state( event->display, data );
             if (new_state != -1 && new_state != data->wm_state)
             {
-                TRACE( "%p/%lx: new WM_STATE %d\n", data->hwnd, data->whole_window, new_state );
+                TRACE( "%p/%lx: new WM_STATE %d from %d\n",
+                       data->hwnd, data->whole_window, new_state, old_state );
                 data->wm_state = new_state;
+                /* ignore the initial state transition out of withdrawn state */
+                /* metacity does Withdrawn->NormalState->IconicState when mapping an iconic window */
+                if (!old_state) return;
             }
         }
         break;
