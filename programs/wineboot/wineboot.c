@@ -115,7 +115,7 @@ static char *get_wine_inf_path(void)
 }
 
 /* update the timestamp if different from the reference time */
-static BOOL update_timestamp( const char *config_dir, unsigned long timestamp, int force )
+static BOOL update_timestamp( const char *config_dir, unsigned long timestamp )
 {
     BOOL ret = FALSE;
     int fd, count;
@@ -132,7 +132,7 @@ static BOOL update_timestamp( const char *config_dir, unsigned long timestamp, i
         {
             buffer[count] = 0;
             if (!strncmp( buffer, "disable", sizeof("disable")-1 )) goto done;
-            if (!force && timestamp == strtoul( buffer, NULL, 10 )) goto done;
+            if (timestamp == strtoul( buffer, NULL, 10 )) goto done;
         }
         lseek( fd, 0, SEEK_SET );
         ftruncate( fd, 0 );
@@ -681,7 +681,7 @@ static void update_wineprefix( int force )
         goto done;
     }
 
-    if (update_timestamp( config_dir, st.st_mtime, force ))
+    if (update_timestamp( config_dir, st.st_mtime ) || force)
     {
         WCHAR *buffer;
         DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, inf_path, -1, NULL, 0 );
