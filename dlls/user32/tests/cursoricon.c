@@ -76,11 +76,10 @@ static LRESULT CALLBACK callback_child(HWND hwnd, UINT msg, WPARAM wParam, LPARA
             SetLastError(0xdeadbeef);
             ret = DestroyCursor((HCURSOR) lParam);
             error = GetLastError();
-            todo_wine {
-            ok(!ret, "DestroyCursor on the active cursor succeeded.\n");
-            ok(error == ERROR_DESTROY_OBJECT_OF_OTHER_THREAD,
+            todo_wine ok(!ret, "DestroyCursor on the active cursor succeeded.\n");
+            ok(error == ERROR_DESTROY_OBJECT_OF_OTHER_THREAD ||
+               error == 0xdeadbeef,  /* vista */
                 "Last error: %u\n", error);
-            }
             return TRUE;
         case WM_DESTROY:
             PostQuitMessage(0);
@@ -132,7 +131,7 @@ static void do_child(void)
     PostMessage(parent, PROC_INIT, (WPARAM) child, 0);
 
     /* Receive messages. */
-    while ((ret = GetMessage(&msg, child, 0, 0)))
+    while ((ret = GetMessage(&msg, 0, 0, 0)))
     {
         ok(ret != -1, "GetMessage failed.  Error: %u\n", GetLastError());
         TranslateMessage(&msg);
@@ -990,7 +989,8 @@ static void test_DestroyCursor(void)
     todo_wine {
         ok(!ret, "DestroyCursor succeeded.\n");
         error = GetLastError();
-        ok(error == ERROR_INVALID_CURSOR_HANDLE, "Last error: 0x%08x\n", error);
+        ok(error == ERROR_INVALID_CURSOR_HANDLE || error == 0xdeadbeef, /* vista */
+           "Last error: 0x%08x\n", error);
     }
 
     DeleteObject(cursorInfo.hbmMask);
