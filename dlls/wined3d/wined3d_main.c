@@ -26,7 +26,7 @@
 #include "initguid.h"
 #include "wined3d_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wine_d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 int num_lock = 0;
 void (*wine_tsx11_lock_ptr)(void) = NULL;

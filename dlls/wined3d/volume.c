@@ -23,7 +23,7 @@
 #include "config.h"
 #include "wined3d_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
 static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
