@@ -582,4 +582,15 @@ do {
 } while(false);
 ok(tmp === 1, "tmp !== 4");
 
+tmp = 0;
+while(tmp < 4) {
+    tmp++;
+    if(tmp === 2) {
+        continue;
+        ok(false, "break did not break");
+    }
+    ok(tmp <= 4 && tmp != 2, "tmp = " + tmp);
+}
+ok(tmp === 4, "tmp !== 4");
+
 reportSuccess();
