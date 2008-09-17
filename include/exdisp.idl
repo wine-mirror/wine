@@ -26,6 +26,10 @@ import "docobj.idl";
 #include <olectl.h>
 #include <exdispid.h>
 
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef FindText")
+cpp_quote("#endif")
+
 /*****************************************************************************
  * SHDocVw library
  */
