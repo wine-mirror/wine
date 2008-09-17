@@ -533,7 +533,7 @@ HRESULT block_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t 
 static HRESULT variable_list_eval(exec_ctx_t *ctx, variable_declaration_t *var_list, jsexcept_t *ei)
 {
     variable_declaration_t *iter;
-    HRESULT hres;
+    HRESULT hres = E_FAIL;
 
     for(iter = var_list; iter; iter = iter->next) {
         VARIANT val;
