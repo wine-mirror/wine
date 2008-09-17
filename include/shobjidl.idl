@@ -1377,3 +1377,22 @@ interface ITaskbarList : IUnknown
     HRESULT SetActiveAlt(
         [in] HWND hwnd);
 }
+
+/*****************************************************************************
+ *    IAutoCompleteDropDown interface
+ */
+[
+    object,
+    uuid(3CD141F4-3C6A-11d2-BCAA-00C04FD929DB),
+    pointer_default(unique)
+]
+interface IAutoCompleteDropDown : IUnknown
+{
+cpp_quote("#define ACDD_VISIBLE   0x0001")
+
+    HRESULT GetDropDownStatus(
+        [out] DWORD *pdwFlags,
+        [out, string] LPWSTR *ppwszString);
+
+    HRESULT ResetEnumerator();
+}
