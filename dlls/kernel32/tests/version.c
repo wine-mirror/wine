@@ -165,7 +165,8 @@ static void test_VerifyVersionInfo(void)
             VER_MAJORVERSION, VER_GREATER_EQUAL));
     if (servicepack == 0)
     {
-        ok(!ret, "VerifyVersionInfoA should have failed\n");
+        ok(!ret || broken(ret), /* win2k3 */
+           "VerifyVersionInfoA should have failed\n");
         ok(GetLastError() == ERROR_OLD_WIN_VERSION,
             "Expected ERROR_OLD_WIN_VERSION instead of %d\n", GetLastError());
     }
