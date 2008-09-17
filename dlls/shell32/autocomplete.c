@@ -62,6 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 typedef struct
 {
     const IAutoComplete2Vtbl  *lpVtbl;
+    const IAutoCompleteDropDownVtbl *lpDropDownVtbl;
     LONG ref;
     BOOL  enabled;
     HWND hwndEdit;
@@ -75,13 +76,20 @@ typedef struct
 } IAutoCompleteImpl;
 
 static const IAutoComplete2Vtbl acvt;
+static const IAutoCompleteDropDownVtbl acdropdownvt;
 
 
 /*
   converts This to an interface pointer
 */
 #define _IUnknown_(This) (IUnknown*)&(This->lpVtbl)
-#define _IAutoComplete2_(This)  (IAutoComplete2*)&(This->lpvtbl)
+#define _IAutoComplete2_(This)  (IAutoComplete2*)&(This->lpVtbl)
+#define _IAutoCompleteDropDown_(This)  (IAutoCompleteDropDown*)&(This->lpDropDownVtbl)
+
+static inline IAutoCompleteImpl *impl_from_IAutoCompleteDropDown(IAutoCompleteDropDown *iface)
+{
+    return (IAutoCompleteImpl *)((char *)iface - FIELD_OFFSET(IAutoCompleteImpl, lpDropDownVtbl));
+}
 
 static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -102,6 +110,7 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
 
     lpac->ref = 1;
     lpac->lpVtbl = &acvt;
+    lpac->lpDropDownVtbl = &acdropdownvt;
     lpac->enabled = TRUE;
     lpac->enumstr = NULL;
     lpac->options = ACO_AUTOAPPEND;
@@ -139,6 +148,10 @@ static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
     {
 	*ppvObj = (IAutoComplete2*)This;
     }
+    else if (IsEqualIID(riid, &IID_IAutoCompleteDropDown))
+    {
+        *ppvObj = _IAutoCompleteDropDown_(This);
+    }
 
     if (*ppvObj)
     {
@@ -146,7 +159,7 @@ static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
 	TRACE("-- Interface: (%p)->(%p)\n", ppvObj, *ppvObj);
 	return S_OK;
     }
-    TRACE("-- Interface: E_NOINTERFACE\n");
+    WARN("unsupported interface: %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;	
 }
 
@@ -334,7 +347,42 @@ static HRESULT WINAPI IAutoComplete2_fnSetOptions(
 }
 
 /**************************************************************************
- *  IAutoComplete2_fnVTable
+ *  IAutoCompleteDropDown_fnGetDropDownStatus
+ */
+static HRESULT WINAPI IAutoCompleteDropDown_fnGetDropDownStatus(
+    IAutoCompleteDropDown *iface,
+    DWORD *pdwFlags,
+    LPWSTR *ppwszString)
+{
+    IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
+
+    FIXME("(%p) -> (%p, %p): stub\n", This, pdwFlags, ppwszString);
+
+    if (pdwFlags)
+        *pdwFlags = 0;
+    if (ppwszString)
+        *ppwszString = NULL;
+
+    return E_NOTIMPL;
+}
+
+/**************************************************************************
+ *  IAutoCompleteDropDown_fnResetEnumarator
+ */
+static HRESULT WINAPI IAutoCompleteDropDown_fnResetEnumerator(
+    IAutoCompleteDropDown *iface)
+{
+    IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
+
+    FIXME("(%p): stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+
+
+/**************************************************************************
+ *  IAutoComplete2 VTable
  */
 static const IAutoComplete2Vtbl acvt =
 {
@@ -346,6 +394,38 @@ static const IAutoComplete2Vtbl acvt =
     /* IAutoComplete2 */
     IAutoComplete2_fnSetOptions,
     IAutoComplete2_fnGetOptions,
+};
+
+
+static HRESULT WINAPI IAutoCompleteDropDown_fnQueryInterface(IAutoCompleteDropDown *iface,
+            REFIID riid, LPVOID *ppvObj)
+{
+    IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
+    return IAutoComplete2_fnQueryInterface(_IAutoComplete2_(This), riid, ppvObj);
+}
+
+static ULONG WINAPI IAutoCompleteDropDown_fnAddRef(IAutoCompleteDropDown *iface)
+{
+    IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
+    return IAutoComplete2_fnAddRef(_IAutoComplete2_(This));
+}
+
+static ULONG WINAPI IAutoCompleteDropDown_fnRelease(IAutoCompleteDropDown *iface)
+{
+    IAutoCompleteImpl *This = impl_from_IAutoCompleteDropDown(iface);
+    return IAutoComplete2_fnRelease(_IAutoComplete2_(This));
+}
+
+/**************************************************************************
+ *  IAutoCompleteDropDown VTable
+ */
+static const IAutoCompleteDropDownVtbl acdropdownvt =
+{
+    IAutoCompleteDropDown_fnQueryInterface,
+    IAutoCompleteDropDown_fnAddRef,
+    IAutoCompleteDropDown_fnRelease,
+    IAutoCompleteDropDown_fnGetDropDownStatus,
+    IAutoCompleteDropDown_fnResetEnumerator,
 };
 
 /*
