@@ -1853,10 +1853,123 @@ HRESULT new_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, js
     return E_NOTIMPL;
 }
 
-HRESULT equal_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.9.3 */
+static HRESULT equal_values(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_t *ei, BOOL *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    if(V_VT(lval) == V_VT(rval) || (is_num_vt(V_VT(lval)) && is_num_vt(V_VT(rval))))
+       return equal2_values(lval, rval, ret);
+
+    /* FIXME: NULL disps should be handled in more general way */
+    if(V_VT(lval) == VT_DISPATCH && !V_DISPATCH(lval)) {
+        VARIANT v;
+        V_VT(&v) = VT_NULL;
+        return equal_values(ctx, &v, rval, ei, ret);
+    }
+
+    if(V_VT(rval) == VT_DISPATCH && !V_DISPATCH(rval)) {
+        VARIANT v;
+        V_VT(&v) = VT_NULL;
+        return equal_values(ctx, lval, &v, ei, ret);
+    }
+
+    if((V_VT(lval) == VT_NULL && V_VT(rval) == VT_EMPTY) ||
+       (V_VT(lval) == VT_EMPTY && V_VT(rval) == VT_NULL)) {
+        *ret = TRUE;
+        return S_OK;
+    }
+
+    if(V_VT(lval) == VT_BSTR && is_num_vt(V_VT(rval))) {
+        VARIANT v;
+        HRESULT hres;
+
+        hres = to_number(ctx->parser->script, lval, ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        return equal_values(ctx, &v, rval, ei, ret);
+    }
+
+    if(V_VT(rval) == VT_BSTR && is_num_vt(V_VT(lval))) {
+        VARIANT v;
+        HRESULT hres;
+
+        hres = to_number(ctx->parser->script, rval, ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        return equal_values(ctx, lval, &v, ei, ret);
+    }
+
+    if(V_VT(rval) == VT_BOOL) {
+        VARIANT v;
+
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = V_BOOL(rval) ? 1 : 0;
+        return equal_values(ctx, lval, &v, ei, ret);
+    }
+
+    if(V_VT(lval) == VT_BOOL) {
+        VARIANT v;
+
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = V_BOOL(lval) ? 1 : 0;
+        return equal_values(ctx, &v, rval, ei, ret);
+    }
+
+
+    if(V_VT(rval) == VT_DISPATCH && (V_VT(lval) == VT_BSTR || is_num_vt(V_VT(lval)))) {
+        VARIANT v;
+        HRESULT hres;
+
+        hres = to_primitive(ctx->parser->script, rval, ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        hres = equal_values(ctx, lval, &v, ei, ret);
+
+        VariantClear(&v);
+        return hres;
+    }
+
+
+    if(V_VT(lval) == VT_DISPATCH && (V_VT(rval) == VT_BSTR || is_num_vt(V_VT(rval)))) {
+        VARIANT v;
+        HRESULT hres;
+
+        hres = to_primitive(ctx->parser->script, lval, ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        hres = equal_values(ctx, &v, rval, ei, ret);
+
+        VariantClear(&v);
+        return hres;
+    }
+
+
+    *ret = FALSE;
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.9.1 */
+HRESULT equal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+    VARIANT rval, lval;
+    BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = get_binary_expr_values(ctx, expr, ei, &rval, &lval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = equal_values(ctx, &rval, &lval, ei, &b);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bool(ret, b);
 }
 
 /* ECMA-262 3rd Edition    11.9.4 */

@@ -37,6 +37,18 @@ ok(!(undefined === null), "!(undefined === null) is false");
 ok(1 !== 2, "1 !== 2 is false");
 ok(null !== undefined, "null !== undefined is false");
 
+ok(1 == 1, "1 == 1 is false");
+ok(!(1 == 2), "!(1 == 2) is false");
+ok(1.0 == 1, "1.0 == 1 is false");
+ok("abc" == "abc", "\"abc\" == \"abc\" is false");
+ok(true == true, "true == true is false");
+ok(null == null, "null == null is false");
+ok(undefined == undefined, "undefined == undefined is false");
+ok(undefined == null, "undefined == null is false");
+ok(true == 1, "true == 1 is false");
+ok(!(true == 2), "true == 2");
+ok(0 == false, "0 == false is false");
+
 var trueVar = true;
 ok(trueVar, "trueVar is not true");
 
