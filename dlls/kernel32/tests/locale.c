@@ -1332,14 +1332,14 @@ static void test_LCMapStringW(void)
 
     /* test srclen = 0 */
     SetLastError(0xdeadbeef);
-    ret = LCMapStringW(LOCALE_USER_DEFAULT, 0, upper_case, 0, buf, sizeof(buf));
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, 0, upper_case, 0, buf, sizeof(buf)/sizeof(WCHAR));
     ok(!ret, "LCMapStringW should fail with srclen = 0\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "unexpected error code %d\n", GetLastError());
 }
 
 /* this requires collation table patch to make it MS compatible */
-const char *strings_sorted[] =
+static const char * const strings_sorted[] =
 {
 "'",
 "-",
@@ -1371,7 +1371,7 @@ const char *strings_sorted[] =
 "C"
 };
 
-const char *strings[] =
+static const char * const strings[] =
 {
 "C",
 "\"",
