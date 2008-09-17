@@ -2452,6 +2452,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
 
     } else { /* bind the real texture, and make sure it up to date */
         IWineD3DSurface_PreLoad(iface);
+        surface_bind_and_dirtify(This);
     }
     allocatedMemory = HeapAlloc(GetProcessHeap(), 0, width  * height * 4);
     ENTER_GL();

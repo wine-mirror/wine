@@ -389,7 +389,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
     GLint textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
     BOOL cond_np2 = IWineD3DBaseTexture_IsCondNP2(iface);
 
-    IWineD3DBaseTexture_PreLoad(iface);
+    /* ApplyStateChanges relies on the correct texture being bound and loaded. */
 
     if(samplerStates[WINED3DSAMP_ADDRESSU]      != This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]) {
         state = samplerStates[WINED3DSAMP_ADDRESSU];
