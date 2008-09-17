@@ -385,6 +385,10 @@ typedef struct _CRYPT_PROVUI_FUNCS {
 
 #include <poppack.h>
 
+#define WVT_OFFSETOF(t,f)     ((ULONG)((ULONG_PTR)(&((t*)0)->f)))
+#define WVT_ISINSTRUCT(t,s,f) (WVT_OFFSETOF(t,f) + sizeof(((t*)0)->f) <= (s))
+#define WVT_IS_CBSTRUCT_GT_MEMBEROFFSET(t,s,f) WVT_ISINSTRUCT(t,s,f)
+
 #define WTPF_TRUSTTEST            0x00000020
 #define WTPF_TESTCANBEVALID       0x00000080
 #define WTPF_IGNOREEXPIRATION     0x00000100
