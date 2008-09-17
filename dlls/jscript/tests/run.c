@@ -544,7 +544,7 @@ static void run_from_res(const char *name)
     data = LoadResource(NULL, src);
 
     len = MultiByteToWideChar(CP_ACP, 0, data, size, NULL, 0);
-    str = SysAllocStringLen(NULL, len-1);
+    str = SysAllocStringLen(NULL, len);
     len = MultiByteToWideChar(CP_ACP, 0, data, size, str, len);
 
     SET_EXPECT(global_success_d);
