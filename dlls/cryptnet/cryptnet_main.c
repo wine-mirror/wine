@@ -26,6 +26,7 @@
 #define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
