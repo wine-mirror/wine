@@ -475,7 +475,7 @@
 @ stdcall LockSetForegroundWindow (long)
 @ stub LockWindowStation
 @ stdcall LockWindowUpdate(long)
-@ stub LockWorkStation
+@ stdcall LockWorkStation()
 @ stdcall LookupIconIdFromDirectory(ptr long)
 @ stdcall LookupIconIdFromDirectoryEx(ptr long long long long)
 @ stub MBToWCSEx

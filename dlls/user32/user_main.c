@@ -391,6 +391,16 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reason )
 }
 
 /***********************************************************************
+ *		LockWorkStation (USER32.@)
+ */
+BOOL WINAPI LockWorkStation(void)
+{
+    TRACE(": stub\n");
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+/***********************************************************************
  *		RegisterServicesProcess (USER32.@)
  */
 int WINAPI RegisterServicesProcess(DWORD ServicesProcessId)
