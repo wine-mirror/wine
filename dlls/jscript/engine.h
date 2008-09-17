@@ -395,7 +395,6 @@ typedef enum {
      EXPR_POSTDEC,
      EXPR_PREINC,
      EXPR_PREDEC,
-     EXPR_NEW,
      EXPR_EQ,
      EXPR_EQEQ,
      EXPR_NOTEQ,
@@ -427,7 +426,7 @@ HRESULT function_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exp
 HRESULT conditional_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT array_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT member_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT member_new_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
+HRESULT new_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT call_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT this_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT identifier_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
@@ -457,7 +456,6 @@ HRESULT post_increment_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_
 HRESULT post_decrement_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT pre_increment_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT pre_decrement_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-HRESULT new_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT equal_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT equal2_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 HRESULT not_equal_expression_eval(exec_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);

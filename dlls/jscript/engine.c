@@ -41,7 +41,8 @@ static void exprval_release(exprval_t *val)
 {
     switch(val->type) {
     case EXPRVAL_VARIANT:
-        VariantClear(&val->u.var);
+        if(V_VT(&val->u.var) != VT_EMPTY)
+            VariantClear(&val->u.var);
         return;
     case EXPRVAL_IDREF:
         if(val->u.idref.disp)
@@ -1054,7 +1055,7 @@ HRESULT member_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags
         return S_OK;
     }
 
-    hres = disp_get_id(obj, str, flags & EXPR_NEW ? fdexNameEnsure : 0, &id);
+    hres = disp_get_id(obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
     SysFreeString(str);
     if(SUCCEEDED(hres)) {
         exprval_set_idref(ret, obj, id);
@@ -1085,11 +1086,11 @@ static HRESULT args_to_param(exec_ctx_t *ctx, argument_t *args, jsexcept_t *ei, 
     HRESULT hres = S_OK;
 
     memset(dp, 0, sizeof(*dp));
+    if(!args)
+        return S_OK;
 
     for(iter = args; iter; iter = iter->next)
         cnt++;
-    if(!cnt)
-        return S_OK;
 
     vargs = heap_alloc_zero(cnt * sizeof(*vargs));
     if(!vargs)
@@ -1117,7 +1118,7 @@ static HRESULT args_to_param(exec_ctx_t *ctx, argument_t *args, jsexcept_t *ei, 
 }
 
 /* ECMA-262 3rd Edition    11.2.2 */
-HRESULT member_new_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT new_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     call_expression_t *expr = (call_expression_t*)_expr;
     exprval_t exprval;
@@ -1845,12 +1846,6 @@ HRESULT pre_decrement_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWOR
     ret->type = EXPRVAL_VARIANT;
     ret->u.var = val;
     return S_OK;
-}
-
-HRESULT new_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
 }
 
 /* ECMA-262 3rd Edition    11.9.3 */

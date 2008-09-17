@@ -126,7 +126,7 @@ static expression_t *new_unary_expression(parser_ctx_t*,expression_type_t,expres
 static expression_t *new_conditional_expression(parser_ctx_t*,expression_t*,expression_t*,expression_t*);
 static expression_t *new_array_expression(parser_ctx_t*,expression_t*,expression_t*);
 static expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
-static expression_t *new_member_new_expression(parser_ctx_t*,expression_t*,argument_list_t*);
+static expression_t *new_new_expression(parser_ctx_t*,expression_t*,argument_list_t*);
 static expression_t *new_call_expression(parser_ctx_t*,expression_t*,argument_list_t*);
 static expression_t *new_this_expression(parser_ctx_t*);
 static expression_t *new_identifier_expression(parser_ctx_t*,const WCHAR*);
@@ -676,7 +676,7 @@ LeftHandSideExpression
 /* ECMA-262 3rd Edition    11.2 */
 NewExpression
         : MemberExpression      { $$ = $1; }
-        | kNEW NewExpression    { $$ = new_unary_expression(ctx, EXPR_NEW, $2); }
+        | kNEW NewExpression    { $$ = new_new_expression(ctx, $2, NULL); }
 
 /* ECMA-262 3rd Edition    11.2 */
 MemberExpression
@@ -687,7 +687,7 @@ MemberExpression
         | MemberExpression '.' tIdentifier
                                 { $$ = new_member_expression(ctx, $1, $3); }
         | kNEW MemberExpression Arguments
-                                { $$ = new_member_new_expression(ctx, $2, $3); }
+                                { $$ = new_new_expression(ctx, $2, $3); }
 
 /* ECMA-262 3rd Edition    11.2 */
 CallExpression
@@ -1281,7 +1281,6 @@ static const expression_eval_t expression_eval_table[] = {
    post_decrement_expression_eval,
    pre_increment_expression_eval,
    pre_decrement_expression_eval,
-   new_expression_eval,
    equal_expression_eval,
    equal2_expression_eval,
    not_equal_expression_eval,
@@ -1366,11 +1365,11 @@ static expression_t *new_member_expression(parser_ctx_t *ctx, expression_t *expr
     return &ret->expr;
 }
 
-static expression_t *new_member_new_expression(parser_ctx_t *ctx, expression_t *expression, argument_list_t *argument_list)
+static expression_t *new_new_expression(parser_ctx_t *ctx, expression_t *expression, argument_list_t *argument_list)
 {
     call_expression_t *ret = parser_alloc(ctx, sizeof(call_expression_t));
 
-    ret->expr.eval = member_new_expression_eval;
+    ret->expr.eval = new_expression_eval;
     ret->expression = expression;
     ret->argument_list = argument_list ? argument_list->head : NULL;
 
