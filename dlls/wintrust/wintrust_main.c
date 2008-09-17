@@ -381,6 +381,8 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
         err = WINTRUST_PublishedSoftware(hwnd, ActionID, ActionData);
     else
     {
+        DWORD stateAction;
+
         /* Check known actions to warn of possible problems */
         if (!IsEqualGUID(ActionID, &unknown) &&
          !IsEqualGUID(ActionID, &generic_verify_v2) &&
@@ -388,7 +390,14 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
          !IsEqualGUID(ActionID, &generic_chain_verify))
             WARN("unknown action %s, default behavior may not be right\n",
              debugstr_guid(ActionID));
-        switch (actionData->dwStateAction)
+        if (WVT_ISINSTRUCT(WINTRUST_DATA, actionData->cbStruct, dwStateAction))
+            stateAction = actionData->dwStateAction;
+        else
+        {
+            TRACE("no dwStateAction, assuming WTD_STATEACTION_IGNORE\n");
+            stateAction = WTD_STATEACTION_IGNORE;
+        }
+        switch (stateAction)
         {
         case WTD_STATEACTION_IGNORE:
             err = WINTRUST_DefaultVerifyAndClose(hwnd, ActionID, ActionData);
