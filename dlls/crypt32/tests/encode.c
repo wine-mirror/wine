@@ -102,13 +102,16 @@ static void test_encodeInt(DWORD dwEncoding)
      &bufSize);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    /* check with NULL integer buffer.  Windows XP incorrectly returns an
-     * NTSTATUS.
-     */
-    ret = pCryptEncodeObjectEx(dwEncoding, X509_INTEGER, NULL, 0, NULL, NULL,
-     &bufSize);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* check with NULL integer buffer.  Windows XP incorrectly returns an
+         * NTSTATUS (crashes on win9x).
+         */
+        ret = pCryptEncodeObjectEx(dwEncoding, X509_INTEGER, NULL, 0, NULL, NULL,
+         &bufSize);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     for (i = 0; i < sizeof(ints) / sizeof(ints[0]); i++)
     {
         /* encode as normal integer */
@@ -729,11 +732,14 @@ static void test_encodeName(DWORD dwEncoding)
     DWORD size = 0;
     BOOL ret;
 
-    /* Test with NULL pvStructInfo */
-    ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME, NULL,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* Test with NULL pvStructInfo (crashes on win9x) */
+        ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME, NULL,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* Test with empty CERT_NAME_INFO */
     info.cRDN = 0;
     info.rgRDN = NULL;
@@ -746,12 +752,15 @@ static void test_encodeName(DWORD dwEncoding)
          "Got unexpected encoding for empty name\n");
         LocalFree(buf);
     }
-    /* Test with bogus CERT_RDN */
-    info.cRDN = 1;
-    ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME, &info,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* Test with bogus CERT_RDN (crashes on win9x) */
+        info.cRDN = 1;
+        ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME, &info,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* Test with empty CERT_RDN */
     rdn.cRDNAttr = 0;
     rdn.rgRDNAttr = NULL;
@@ -766,13 +775,16 @@ static void test_encodeName(DWORD dwEncoding)
          "Got unexpected encoding for empty RDN array\n");
         LocalFree(buf);
     }
-    /* Test with bogus attr array */
-    rdn.cRDNAttr = 1;
-    rdn.rgRDNAttr = NULL;
-    ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME, &info,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* Test with bogus attr array (crashes on win9x) */
+        rdn.cRDNAttr = 1;
+        rdn.rgRDNAttr = NULL;
+        ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME, &info,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* oddly, a bogus OID is accepted by Windows XP; not testing.
     attrs[0].pszObjId = "bogus";
     attrs[0].dwValueType = CERT_RDN_PRINTABLE_STRING;
@@ -870,11 +882,14 @@ static void test_encodeUnicodeName(DWORD dwEncoding)
     DWORD size = 0;
     BOOL ret;
 
-    /* Test with NULL pvStructInfo */
-    ret = pCryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME, NULL,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* Test with NULL pvStructInfo (crashes on win9x) */
+        ret = pCryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME, NULL,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* Test with empty CERT_NAME_INFO */
     info.cRDN = 0;
     info.rgRDN = NULL;
@@ -1681,10 +1696,14 @@ static void test_encodeUnicodeNameValue(DWORD dwEncoding)
     BOOL ret;
     CERT_NAME_VALUE value;
 
-    ret = pCryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, NULL,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* Crashes on win9x */
+        ret = pCryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, NULL,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* Have to have a string of some sort */
     value.dwValueType = 0; /* aka CERT_RDN_ANY_TYPE */
     value.Value.pbData = NULL;
@@ -2804,11 +2823,14 @@ static void test_encodeCertToBeSigned(DWORD dwEncoding)
     static char oid_subject_key_identifier[] = szOID_SUBJECT_KEY_IDENTIFIER;
     CERT_EXTENSION ext;
 
-    /* Test with NULL pvStructInfo */
-    ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, NULL,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* Test with NULL pvStructInfo (crashes on win9x) */
+        ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, NULL,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* Test with a V1 cert */
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
@@ -2931,10 +2953,14 @@ static void test_decodeCertToBeSigned(DWORD dwEncoding)
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
      "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
-    ret = pCryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, NULL, 1,
-     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* Crashes on win9x */
+        ret = pCryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, NULL, 1,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* The following certs all fail with CRYPT_E_ASN1_CORRUPT, because at a
      * minimum a cert must have a non-zero serial number, an issuer, and a
      * subject.
@@ -3606,13 +3632,17 @@ static void test_encodeCRLToBeSigned(DWORD dwEncoding)
         ok(!memcmp(buf, v1CRLWithIssuer, size), "Got unexpected value\n");
         LocalFree(buf);
     }
-    /* v1 CRL with a name and a NULL entry pointer */
-    info.cCRLEntry = 1;
-    ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED, &info,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    if (0)
+    {
+        /* v1 CRL with a name and a NULL entry pointer (crashes on win9x) */
+        info.cCRLEntry = 1;
+        ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED, &info,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
+    }
     /* now set an empty entry */
+    info.cCRLEntry = 1;
     info.rgCRLEntry = &entry;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_CRL_TO_BE_SIGNED, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
@@ -5519,11 +5549,15 @@ static void test_encodePKCSContentInfo(DWORD dwEncoding)
     CRYPT_CONTENT_INFO info = { 0 };
     char oid1[] = "1.2.3";
 
-    SetLastError(0xdeadbeef);
-    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CONTENT_INFO, NULL,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    if (0)
+    {
+        /* Crashes on win9x */
+        SetLastError(0xdeadbeef);
+        ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CONTENT_INFO, NULL,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    }
     SetLastError(0xdeadbeef);
     ret = pCryptEncodeObjectEx(dwEncoding, PKCS_CONTENT_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
@@ -5676,11 +5710,15 @@ static void test_encodePKCSAttribute(DWORD dwEncoding)
     CRYPT_ATTR_BLOB blob;
     char oid[] = "1.2.3";
 
-    SetLastError(0xdeadbeef);
-    ret = pCryptEncodeObjectEx(dwEncoding, PKCS_ATTRIBUTE, NULL,
-     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    if (0)
+    {
+        /* Crashes on win9x */
+        SetLastError(0xdeadbeef);
+        ret = pCryptEncodeObjectEx(dwEncoding, PKCS_ATTRIBUTE, NULL,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+         "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    }
     SetLastError(0xdeadbeef);
     ret = pCryptEncodeObjectEx(dwEncoding, PKCS_ATTRIBUTE, &attr,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
