@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
 #include <stdio.h>
 #include "wine/unicode.h"
 
@@ -34,6 +36,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
 static BOOL using_root;
 
+/* screen saver handler */
+static BOOL start_screensaver( void )
+{
+    if (using_root)
+    {
+        const char *argv[3] = { "xdg-screensaver", "activate", NULL };
+        int pid = spawnvp( _P_NOWAIT, argv[0], argv );
+        if (pid > 0)
+        {
+            WINE_TRACE( "started process %d\n", pid );
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 /* window procedure for the desktop window */
 static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
 {
@@ -42,7 +60,14 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
     switch(message)
     {
     case WM_SYSCOMMAND:
-        if ((wp & 0xfff0) == SC_CLOSE) ExitWindows( 0, 0 );
+        switch(wp & 0xfff0)
+        {
+        case SC_CLOSE:
+            ExitWindows( 0, 0 );
+            break;
+        case SC_SCREENSAVE:
+            return start_screensaver();
+        }
         return 0;
 
     case WM_CLOSE:
