@@ -566,27 +566,27 @@ BitwiseORExpressionNoIn
 BitwiseXORExpression
         : BitwiseANDExpression  { $$ = $1; }
         | BitwiseXORExpression '^' BitwiseANDExpression
-                                { new_binary_expression(ctx, EXPR_BXOR, $1, $3); }
+                                { $$ = new_binary_expression(ctx, EXPR_BXOR, $1, $3); }
 
 /* ECMA-262 3rd Edition    11.10 */
 BitwiseXORExpressionNoIn
         : BitwiseANDExpressionNoIn
                                 { $$ = $1; }
         | BitwiseXORExpressionNoIn '^' BitwiseANDExpressionNoIn
-                                { new_binary_expression(ctx, EXPR_BXOR, $1, $3); }
+                                { $$ = new_binary_expression(ctx, EXPR_BXOR, $1, $3); }
 
 /* ECMA-262 3rd Edition    11.10 */
 BitwiseANDExpression
         : EqualityExpression    { $$ = $1; }
         | BitwiseANDExpression '&' EqualityExpression
-                                { new_binary_expression(ctx, EXPR_BAND, $1, $3); }
+                                { $$ = new_binary_expression(ctx, EXPR_BAND, $1, $3); }
 
 /* ECMA-262 3rd Edition    11.10 */
 BitwiseANDExpressionNoIn
         : EqualityExpressionNoIn
                                 { $$ = $1; }
         | BitwiseANDExpressionNoIn '&' EqualityExpressionNoIn
-                                { new_binary_expression(ctx, EXPR_BAND, $1, $3); }
+                                { $$ = new_binary_expression(ctx, EXPR_BAND, $1, $3); }
 
 /* ECMA-262 3rd Edition    11.9 */
 EqualityExpression

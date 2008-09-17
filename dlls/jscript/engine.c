@@ -1519,10 +1519,33 @@ HRESULT binary_xor_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD fl
     return E_NOTIMPL;
 }
 
-HRESULT binary_and_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.10 */
+static HRESULT bitand_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_t *ei, VARIANT *retv)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    INT li, ri;
+    HRESULT hres;
+
+    hres = to_int32(ctx->parser->script, lval, ei, &li);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_int32(ctx->parser->script, rval, ei, &ri);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(retv) = VT_I4;
+    V_I4(retv) = li&ri;
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.10 */
+HRESULT binary_and_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+
+    TRACE("\n");
+
+    return binary_expr_eval(ctx, expr, bitand_eval, ei, ret);
 }
 
 HRESULT instanceof_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)

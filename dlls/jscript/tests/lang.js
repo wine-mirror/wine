@@ -277,6 +277,18 @@ tmp = 10;
 ok((tmp |= 0x10) === 26, "tmp(10) |= 0x10 !== 26");
 ok(getVT(tmp) === "VT_I4", "getVT(tmp |= 10) = " + getVT(tmp));
 
+tmp = 3 & 5;
+ok(tmp === 1, "3 & 5 !== 1");
+ok(getVT(tmp) === "VT_I4", "getVT(3|5) = " + getVT(tmp));
+
+tmp = 3.5 & 0xffff;
+ok(tmp === 3, "3.5 & 0xffff !== 3 ");
+ok(getVT(tmp) === "VT_I4", "getVT(3.5&0xffff) = " + getVT(tmp));
+
+tmp = (-3.5) & 0xffffffff;
+ok(tmp === -3, "-3.5 & 0xffff !== -3");
+ok(getVT(tmp) === "VT_I4", "getVT(3.5&0xffff) = " + getVT(tmp));
+
 ok(1 < 3.4, "1 < 3.4 failed");
 ok(!(3.4 < 1), "3.4 < 1");
 ok("abc" < "abcd", "abc < abcd failed");
