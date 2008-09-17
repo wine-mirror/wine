@@ -114,13 +114,13 @@ static void test_fileops( void )
     fclose (file);
     fd = open ("fdopen.tst", O_RDONLY | O_TEXT);
     file = fdopen (fd, "rt"); /* open in TEXT mode */
-    ok(fgetws(wbuffer,sizeof(wbuffer),file) !=0,"fgetws failed unexpected\n");
-    ok(fgetws(wbuffer,sizeof(wbuffer),file) ==0,"fgetws didn't signal EOF\n");
+    ok(fgetws(wbuffer,sizeof(wbuffer)/sizeof(wbuffer[0]),file) !=0,"fgetws failed unexpected\n");
+    ok(fgetws(wbuffer,sizeof(wbuffer)/sizeof(wbuffer[0]),file) ==0,"fgetws didn't signal EOF\n");
     ok(feof(file) !=0,"feof doesn't signal EOF\n");
     rewind(file);
     ok(fgetws(wbuffer,strlen(outbuffer),file) !=0,"fgetws failed unexpected\n");
     ok(lstrlenW(wbuffer) == (lstrlenA(outbuffer) -1),"fgetws didn't read right size\n");
-    ok(fgetws(wbuffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected\n");
+    ok(fgetws(wbuffer,sizeof(outbuffer)/sizeof(outbuffer[0]),file) !=0,"fgets failed unexpected\n");
     ok(lstrlenW(wbuffer) == 1,"fgets dropped chars\n");
     fclose (file);
 
