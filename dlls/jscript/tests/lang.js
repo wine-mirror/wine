@@ -307,6 +307,8 @@ ok(getVT(tmp) === "VT_I4", "getVT(~1) = " + getVT(tmp));
 
 ok((3,4) === 4, "(3,4) !== 4");
 
+ok(+3 === 3, "+3 !== 3");
+
 ok(1 < 3.4, "1 < 3.4 failed");
 ok(!(3.4 < 1), "3.4 < 1");
 ok("abc" < "abcd", "abc < abcd failed");
