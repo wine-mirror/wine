@@ -293,6 +293,10 @@ tmp = 10;
 ok((tmp &= 8) === 8, "tmp(10) &= 8 !== 8");
 ok(getVT(tmp) === "VT_I4", "getVT(tmp &= 8) = " + getVT(tmp));
 
+tmp = 0xf0f0^0xff00;
+ok(tmp === 0x0ff0, "0xf0f0^0xff00 !== 0x0ff0");
+ok(getVT(tmp) === "VT_I4", "getVT(0xf0f0^0xff00) = " + getVT(tmp));
+
 ok(1 < 3.4, "1 < 3.4 failed");
 ok(!(3.4 < 1), "3.4 < 1");
 ok("abc" < "abcd", "abc < abcd failed");
