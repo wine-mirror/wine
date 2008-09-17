@@ -825,12 +825,6 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
            event->x, event->y, event->width, event->height );
     X11DRV_X_to_window_rect( data, &rect );
 
-    x     = rect.left;
-    y     = rect.top;
-    cx    = rect.right - rect.left;
-    cy    = rect.bottom - rect.top;
-    flags = SWP_NOACTIVATE | SWP_NOZORDER;
-
     if (is_net_wm_state_maximized( event->display, data ))
     {
         if (!IsZoomed( data->hwnd ))
@@ -852,21 +846,28 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     /* Compare what has changed */
 
-    GetWindowRect( hwnd, &rect );
-    if (rect.left == x && rect.top == y) flags |= SWP_NOMOVE;
+    x     = rect.left;
+    y     = rect.top;
+    cx    = rect.right - rect.left;
+    cy    = rect.bottom - rect.top;
+    flags = SWP_NOACTIVATE | SWP_NOZORDER;
+
+    if (data->window_rect.left == x && data->window_rect.top == y) flags |= SWP_NOMOVE;
     else
         TRACE( "%p moving from (%d,%d) to (%d,%d)\n",
-               hwnd, rect.left, rect.top, x, y );
+               hwnd, data->window_rect.left, data->window_rect.top, x, y );
 
-    if ((rect.right - rect.left == cx && rect.bottom - rect.top == cy) ||
-        (IsRectEmpty( &rect ) && event->width == 1 && event->height == 1))
+    if ((data->window_rect.right - data->window_rect.left == cx &&
+         data->window_rect.bottom - data->window_rect.top == cy) ||
+        (IsRectEmpty( &data->window_rect ) && event->width == 1 && event->height == 1))
     {
         if (flags & SWP_NOMOVE) return;  /* if nothing changed, don't do anything */
         flags |= SWP_NOSIZE;
     }
     else
         TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
-               hwnd, rect.right - rect.left, rect.bottom - rect.top, cx, cy );
+               hwnd, data->window_rect.right - data->window_rect.left,
+               data->window_rect.bottom - data->window_rect.top, cx, cy );
 
     SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
