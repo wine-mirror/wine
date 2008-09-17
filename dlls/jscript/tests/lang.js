@@ -416,4 +416,34 @@ try {
 }
 ok(state === "finally", "state = " + state + " expected finally");
 
+state = "";
+switch(1) {
+case "1":
+    ok(false, "unexpected case \"1\"");
+case 1:
+    ok(state === "", "case 1: state = " + state);
+    state = "1";
+default:
+    ok(state === "1", "default: state = " + state);
+    state = "default";
+case false:
+    ok(state === "default", "case false: state = " + state);
+    state = "false";
+}
+ok(state === "false", "state = " + state);
+
+state = "";
+switch("") {
+case "1":
+case 1:
+    ok(false, "unexpected case 1");
+default:
+    ok(state === "", "default: state = " + state);
+    state = "default";
+case false:
+    ok(state === "default", "case false: state = " + state);
+    state = "false";
+}
+ok(state === "false", "state = " + state);
+
 reportSuccess();

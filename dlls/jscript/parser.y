@@ -977,14 +977,14 @@ static case_clausule_t *new_case_block(parser_ctx_t *ctx, case_list_t *case_list
     if(!ret)
         return NULL;
 
-    for(iter = ret->next; iter->next; iter = iter->next) {
-        for(iter2 = iter; iter2 && !iter2->expr; iter2 = iter2->next);
+    for(iter = ret; iter; iter = iter->next) {
+        for(iter2 = iter; iter2 && !iter2->stat; iter2 = iter2->next);
         if(!iter2)
             break;
 
         while(iter != iter2) {
             iter->stat = iter2->stat;
-            iter2 = iter2->next;
+            iter = iter->next;
         }
 
         if(stat) {

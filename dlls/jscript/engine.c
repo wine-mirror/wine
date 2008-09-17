@@ -717,10 +717,83 @@ HRESULT labelled_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_
     return E_NOTIMPL;
 }
 
-HRESULT switch_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.13 */
+HRESULT switch_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    switch_statement_t *stat = (switch_statement_t*)_stat;
+    case_clausule_t *iter, *default_clausule = NULL;
+    statement_t *stat_iter;
+    VARIANT val, cval;
+    exprval_t exprval;
+    BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, &val);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    for(iter = stat->case_list; iter; iter = iter->next) {
+        if(!iter->expr) {
+            default_clausule = iter;
+            continue;
+        }
+
+        hres = expr_eval(ctx, iter->expr, 0, &rt->ei, &exprval);
+        if(FAILED(hres))
+            break;
+
+        hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, &cval);
+        exprval_release(&exprval);
+        if(FAILED(hres))
+            break;
+
+        hres = equal2_values(&val, &cval, &b);
+        VariantClear(&cval);
+        if(FAILED(hres) || b)
+            break;
+    }
+
+    VariantClear(&val);
+    if(FAILED(hres))
+        return hres;
+
+    if(!iter)
+        iter = default_clausule;
+
+    V_VT(&val) = VT_EMPTY;
+    if(iter) {
+        VARIANT tmp;
+
+        for(stat_iter = iter->stat; stat_iter; stat_iter = stat_iter->next) {
+            hres = stat_eval(ctx, stat_iter, rt, &tmp);
+            if(FAILED(hres))
+                break;
+
+            VariantClear(&val);
+            val = tmp;
+
+            if(rt->type != RT_NORMAL)
+                break;
+        }
+    }
+
+    if(FAILED(hres)) {
+        VariantClear(&val);
+        return hres;
+    }
+
+    if(rt->type == RT_BREAK)
+        rt->type = RT_NORMAL;
+
+    *ret = val;
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.13 */
