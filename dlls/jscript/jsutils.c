@@ -219,9 +219,17 @@ HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
 HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
 {
     switch(V_VT(v)) {
+    case VT_NULL:
+        V_VT(ret) = VT_I4;
+        V_I4(ret) = 0;
+        break;
     case VT_I4:
     case VT_R8:
         *ret = *v;
+        break;
+    case VT_BOOL:
+        V_VT(ret) = VT_I4;
+        V_I4(ret) = V_BOOL(v) ? 1 : 0;
         break;
     default:
         FIXME("unimplemented for vt %d\n", V_VT(v));
