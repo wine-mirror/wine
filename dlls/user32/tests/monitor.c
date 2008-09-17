@@ -123,7 +123,7 @@ static void test_enumdisplaydevices(void)
 struct vid_mode
 {
     DWORD w, h, bpp, freq, fields;
-    LONG success;
+    BOOL must_succeed;
 };
 
 static const struct vid_mode vid_modes_test[] = {
@@ -131,11 +131,11 @@ static const struct vid_mode vid_modes_test[] = {
     {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT |                 DM_DISPLAYFREQUENCY, 1},
     {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , 1},
     {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT                                      , 1},
-    {640, 480, 0, 0,                                DM_BITSPERPEL                      , 1},
-    {640, 480, 0, 0,                                                DM_DISPLAYFREQUENCY, 1},
+    {640, 480, 0, 0,                                DM_BITSPERPEL                      , 0},
+    {640, 480, 0, 0,                                                DM_DISPLAYFREQUENCY, 0},
 
-    {0, 0, 0, 0, DM_PELSWIDTH, 1},
-    {0, 0, 0, 0, DM_PELSHEIGHT, 1},
+    {0, 0, 0, 0, DM_PELSWIDTH, 0},
+    {0, 0, 0, 0, DM_PELSHEIGHT, 0},
 
     {640, 480, 0, 0, DM_PELSWIDTH, 0},
     {640, 480, 0, 0, DM_PELSHEIGHT, 0},
@@ -237,9 +237,9 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmDisplayFrequency = vid_modes_test[i].freq;
         dm.dmFields           = vid_modes_test[i].fields;
         res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_TEST, NULL);
-        ok(vid_modes_test[i].success ?
+        ok(vid_modes_test[i].must_succeed ?
            (res == DISP_CHANGE_SUCCESSFUL) :
-           (res == DISP_CHANGE_BADMODE || res == DISP_CHANGE_BADPARAM),
+           (res == DISP_CHANGE_SUCCESSFUL || res == DISP_CHANGE_BADMODE || res == DISP_CHANGE_BADPARAM),
            "Unexpected ChangeDisplaySettingsEx() return code for resolution[%d]: %d\n", i, res);
 
         if (res == DISP_CHANGE_SUCCESSFUL)
@@ -266,7 +266,10 @@ static void test_ChangeDisplaySettingsEx(void)
             SetRect(&r1, virt.left - 10, virt.top - 10, virt.right + 20, virt.bottom + 20);
             ok(ClipCursor(&r1), "ClipCursor() failed\n");
             ok(GetClipCursor(&r), "GetClipCursor() failed\n");
-            ok(EqualRect(&r, &virt), "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
+            ok(EqualRect(&r, &virt) ||
+               broken(EqualRect(&r, &r1)) /* win9x */,
+               "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
+            ClipCursor(&virt);
         }
     }
     res = pChangeDisplaySettingsExA(NULL, NULL, NULL, CDS_RESET, NULL);
