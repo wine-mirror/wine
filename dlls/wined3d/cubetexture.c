@@ -123,7 +123,6 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
         srgb_was_toggled = (This->baseTexture.is_srgb != srgb_mode);
         This->baseTexture.is_srgb = srgb_mode;
     }
-    IWineD3DCubeTexture_BindTexture(iface);
 
     if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) {
         for (i = 0; i < This->baseTexture.levels; i++) {

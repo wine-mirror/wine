@@ -100,8 +100,6 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *ifac
 
     TRACE("(%p) : About to load texture\n", This);
 
-    IWineD3DVolumeTexture_BindTexture(iface);
-
     if(!device->isInDraw) {
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     } else if (GL_SUPPORT(EXT_TEXTURE_SRGB) && This->baseTexture.bindCount > 0) {
