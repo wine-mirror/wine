@@ -1216,8 +1216,10 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
     /* resizing a managed maximized window is not allowed */
     if (!(style & WS_MAXIMIZE) || !data->managed)
     {
-        if ((changes.width = data->whole_rect.right - data->whole_rect.left) <= 0) changes.width = 1;
-        if ((changes.height = data->whole_rect.bottom - data->whole_rect.top) <= 0) changes.height = 1;
+        changes.width = data->whole_rect.right - data->whole_rect.left;
+        changes.height = data->whole_rect.bottom - data->whole_rect.top;
+        /* if window rect is empty force size to 1x1 */
+        if (changes.width <= 0 || changes.height <= 0) changes.width = changes.height = 1;
         mask |= CWWidth | CWHeight;
     }
 
