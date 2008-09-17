@@ -513,4 +513,30 @@ case false:
 }
 ok(state === "default", "state = " + state);
 
+tmp = eval("1");
+ok(tmp === 1, "eval(\"1\") !== 1");
+eval("{ ok(tmp === 1, 'eval: tmp !== 1'); } tmp = 2;");
+ok(tmp === 2, "tmp !== 2");
+
+ok(eval(false) === false, "eval(false) !== false");
+ok(eval() === undefined, "eval() !== undefined");
+
+tmp = eval("1", "2");
+ok(tmp === 1, "eval(\"1\", \"2\") !== 1");
+
+var state = "";
+try {
+    ok(state === "", "try: state = " + state);
+    state = "try";
+    eval("throwFunc(true);");
+}catch(ex) {
+    ok(state === "try", "catch: state = " + state);
+    ok(ex === true, "ex is not true");
+    state = "catch";
+}finally {
+    ok(state === "catch", "funally: state = " + state);
+    state = "finally";
+}
+ok(state === "finally", "state = " + state + " expected finally");
+
 reportSuccess();

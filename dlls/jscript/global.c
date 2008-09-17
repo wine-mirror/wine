@@ -17,6 +17,7 @@
  */
 
 #include "jscript.h"
+#include "engine.h"
 
 #include "wine/debug.h"
 
@@ -169,11 +170,47 @@ static HRESULT JSGlobal_escape(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.1.2.1 */
 static HRESULT JSGlobal_eval(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    parser_ctx_t *parser_ctx;
+    VARIANT *arg;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        if(retv)
+            V_VT(retv) = VT_EMPTY;
+        return S_OK;
+    }
+
+    arg = get_arg(dp, 0);
+    if(V_VT(arg) != VT_BSTR) {
+        if(retv) {
+            V_VT(retv) = VT_EMPTY;
+            return VariantCopy(retv, arg);
+        }
+        return S_OK;
+    }
+
+    if(!dispex->ctx->exec_ctx) {
+        FIXME("No active exec_ctx\n");
+        return E_UNEXPECTED;
+    }
+
+    TRACE("parsing %s\n", debugstr_w(V_BSTR(arg)));
+    hres = script_parse(dispex->ctx, V_BSTR(arg), &parser_ctx);
+    if(FAILED(hres)) {
+        FIXME("parse failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = exec_source(dispex->ctx->exec_ctx, parser_ctx, parser_ctx->source, ei, retv);
+    parser_release(parser_ctx);
+
+    return hres;
 }
 
 static HRESULT JSGlobal_isNaN(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -274,7 +311,7 @@ static const builtin_prop_t JSGlobal_props[] = {
     {StringW,                    JSGlobal_String,                    PROPF_CONSTR},
     {VBArrayW,                   JSGlobal_VBArray,                   PROPF_METHOD},
     {escapeW,                    JSGlobal_escape,                    PROPF_METHOD},
-    {evalW,                      JSGlobal_eval,                      PROPF_METHOD},
+    {evalW,                      JSGlobal_eval,                      PROPF_METHOD|1},
     {isFiniteW,                  JSGlobal_isFinite,                  PROPF_METHOD},
     {isNaNW,                     JSGlobal_isNaN,                     PROPF_METHOD},
     {parseFloatW,                JSGlobal_parseFloat,                PROPF_METHOD},
