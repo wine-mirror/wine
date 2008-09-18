@@ -194,14 +194,14 @@ static void context_check_fbo_status(IWineD3DDevice *iface)
         /* Dump the FBO attachments */
         for (i = 0; i < GL_LIMITS(buffers); ++i)
         {
-            attachment = (IWineD3DSurfaceImpl *)This->activeContext->fbo_color_attachments[i];
+            attachment = (IWineD3DSurfaceImpl *)This->activeContext->current_fbo->render_targets[i];
             if (attachment)
             {
                 FIXME("\tColor attachment %d: (%p) %s %ux%u\n", i, attachment, debug_d3dformat(attachment->resource.format),
                         attachment->pow2Width, attachment->pow2Height);
             }
         }
-        attachment = (IWineD3DSurfaceImpl *)This->activeContext->fbo_depth_attachment;
+        attachment = (IWineD3DSurfaceImpl *)This->activeContext->current_fbo->depth_stencil;
         if (attachment)
         {
             FIXME("\tDepth attachment: (%p) %s %ux%u\n", attachment, debug_d3dformat(attachment->resource.format),
@@ -210,67 +210,109 @@ static void context_check_fbo_status(IWineD3DDevice *iface)
     }
 }
 
-static BOOL context_depth_mismatch_fbo(IWineD3DDevice *iface)
+static struct fbo_entry *context_create_fbo_entry(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *rt_impl = (IWineD3DSurfaceImpl *)This->render_targets[0];
-    IWineD3DSurfaceImpl *ds_impl = (IWineD3DSurfaceImpl *)This->stencilBufferTarget;
+    struct fbo_entry *entry;
 
-    if (!ds_impl) return FALSE;
+    entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
+    entry->render_targets = HeapAlloc(GetProcessHeap(), 0, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
+    memcpy(entry->render_targets, This->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
+    entry->depth_stencil = This->stencilBufferTarget;
+    entry->attached = FALSE;
+    entry->id = 0;
 
-    if (ds_impl->current_renderbuffer)
-    {
-        return (rt_impl->pow2Width != ds_impl->current_renderbuffer->width ||
-                rt_impl->pow2Height != ds_impl->current_renderbuffer->height);
-    }
-
-    return (rt_impl->pow2Width != ds_impl->pow2Width ||
-            rt_impl->pow2Height != ds_impl->pow2Height);
+    return entry;
 }
 
-void context_apply_fbo_state(IWineD3DDevice *iface)
+void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, struct fbo_entry *entry)
+{
+    if (entry->id)
+    {
+        TRACE("Destroy FBO %d\n", entry->id);
+        context_destroy_fbo(This, &entry->id);
+    }
+    list_remove(&entry->entry);
+    HeapFree(GetProcessHeap(), 0, entry->render_targets);
+    HeapFree(GetProcessHeap(), 0, entry);
+}
+
+
+static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DContext *context)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineD3DContext *context = This->activeContext;
+    struct fbo_entry *entry;
+
+    LIST_FOR_EACH_ENTRY(entry, &context->fbo_list, struct fbo_entry, entry)
+    {
+        if (!memcmp(entry->render_targets, This->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets))
+                && entry->depth_stencil == This->stencilBufferTarget)
+        {
+            return entry;
+        }
+    }
+
+    entry = context_create_fbo_entry(iface);
+    list_add_head(&context->fbo_list, &entry->entry);
+    return entry;
+}
+
+static void context_apply_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *entry)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     unsigned int i;
 
-    if (This->render_offscreen)
-    {
-        context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &context->fbo);
+    context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &entry->id);
 
+    if (!entry->attached)
+    {
         /* Apply render targets */
         for (i = 0; i < GL_LIMITS(buffers); ++i)
         {
             IWineD3DSurface *render_target = This->render_targets[i];
-            if (context->fbo_color_attachments[i] != render_target)
-            {
-                context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, i, render_target);
-                context->fbo_color_attachments[i] = render_target;
-            }
+            context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, i, render_target);
         }
 
         /* Apply depth targets */
-        if (context->fbo_depth_attachment != This->stencilBufferTarget || context_depth_mismatch_fbo(iface))
-        {
+        if (This->stencilBufferTarget) {
             unsigned int w = ((IWineD3DSurfaceImpl *)This->render_targets[0])->pow2Width;
             unsigned int h = ((IWineD3DSurfaceImpl *)This->render_targets[0])->pow2Height;
 
-            if (This->stencilBufferTarget)
-            {
-                surface_set_compatible_renderbuffer(This->stencilBufferTarget, w, h);
-            }
-            context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, This->stencilBufferTarget, TRUE);
-            context->fbo_depth_attachment = This->stencilBufferTarget;
+            surface_set_compatible_renderbuffer(This->stencilBufferTarget, w, h);
         }
+        context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, This->stencilBufferTarget, TRUE);
 
+        entry->attached = TRUE;
+    } else {
         for (i = 0; i < GL_LIMITS(buffers); ++i)
         {
             if (This->render_targets[i])
-                This->draw_buffers[i] = GL_COLOR_ATTACHMENT0_EXT + i;
-            else
-                This->draw_buffers[i] = GL_NONE;
+                context_apply_attachment_filter_states(iface, This->render_targets[i], FALSE);
         }
+        if (This->stencilBufferTarget)
+            context_apply_attachment_filter_states(iface, This->stencilBufferTarget, FALSE);
+    }
+
+    for (i = 0; i < GL_LIMITS(buffers); ++i)
+    {
+        if (This->render_targets[i])
+            This->draw_buffers[i] = GL_COLOR_ATTACHMENT0_EXT + i;
+        else
+            This->draw_buffers[i] = GL_NONE;
+    }
+}
+
+static void context_apply_fbo_state(IWineD3DDevice *iface)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WineD3DContext *context = This->activeContext;
+
+    if (This->render_offscreen)
+    {
+        context->current_fbo = context_find_fbo_entry(iface, context);
+        context_apply_fbo_entry(iface, context->current_fbo);
     } else {
+        context->current_fbo = NULL;
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
     }
 
@@ -726,12 +768,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
     TRACE("Successfully created new context %p\n", ret);
 
-    ret->fbo_color_attachments = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
-    if (!ret->fbo_color_attachments)
-    {
-        ERR("Out of memory!\n");
-        goto out;
-    }
+    list_init(&ret->fbo_list);
 
     /* Set up the context defaults */
     oldCtx  = pwglGetCurrentContext();
@@ -827,7 +864,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     return ret;
 
 out:
-    HeapFree(GetProcessHeap(), 0, ret->fbo_color_attachments);
     return NULL;
 }
 
@@ -884,6 +920,7 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
  *
  *****************************************************************************/
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
+    struct fbo_entry *entry, *entry2;
 
     TRACE("Destroying ctx %p\n", context);
 
@@ -895,9 +932,8 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
 
     ENTER_GL();
 
-    if (context->fbo) {
-        TRACE("Destroy FBO %d\n", context->fbo);
-        context_destroy_fbo(This, &context->fbo);
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
+        context_destroy_fbo_entry(This, entry);
     }
     if (context->src_fbo) {
         TRACE("Destroy src FBO %d\n", context->src_fbo);
@@ -909,9 +945,6 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     }
 
     LEAVE_GL();
-
-    HeapFree(GetProcessHeap(), 0, context->fbo_color_attachments);
-    context->fbo_color_attachments = NULL;
 
     /* Cleanup the GL context */
     pwglMakeCurrent(NULL, NULL);

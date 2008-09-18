@@ -4004,8 +4004,8 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             depth_blt((IWineD3DDevice *)device, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height);
             checkGLcall("depth_blt");
 
-            if (device->render_offscreen) {
-                context_bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->activeContext->fbo);
+            if (device->activeContext->current_fbo) {
+                context_bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->activeContext->current_fbo->id);
             } else {
                 GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
                 checkGLcall("glBindFramebuffer()");
@@ -4026,8 +4026,8 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             depth_blt((IWineD3DDevice *)device, This->glDescription.textureName, This->currentDesc.Width, This->currentDesc.Height);
             checkGLcall("depth_blt");
 
-            if (device->render_offscreen) {
-                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, device->activeContext->fbo));
+            if (device->activeContext->current_fbo) {
+                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, device->activeContext->current_fbo->id));
                 checkGLcall("glBindFramebuffer()");
             }
 

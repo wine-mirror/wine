@@ -6174,8 +6174,8 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface, CONS
     glClear(GL_COLOR_BUFFER_BIT);
     checkGLcall("glClear");
 
-    if (This->render_offscreen) {
-        context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->activeContext->fbo);
+    if (This->activeContext->current_fbo) {
+        context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         checkGLcall("glBindFramebuffer()");
@@ -6567,8 +6567,8 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
     IWineD3DSurface_ModifyLocation(dst_surface, SFLAG_INDRAWABLE, TRUE);
 
-    if (This->render_offscreen) {
-        context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->activeContext->fbo);
+    if (This->activeContext->current_fbo) {
+        context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         checkGLcall("glBindFramebuffer()");
@@ -7376,14 +7376,20 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
                 }
 
                 for (i = 0; i < This->numContexts; ++i) {
+                    struct fbo_entry *entry, *entry2;
                     int j;
-                    for (j = 0; j < GL_LIMITS(buffers); ++j) {
-                        if (This->contexts[i]->fbo_color_attachments[j] == (IWineD3DSurface *)resource) {
-                            This->contexts[i]->fbo_color_attachments[j] = NULL;
+
+                    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->contexts[i]->fbo_list, struct fbo_entry, entry) {
+                        BOOL destroyed = FALSE;
+                        for (j = 0; !destroyed && j < GL_LIMITS(buffers); ++j) {
+                            if (entry->render_targets[j] == (IWineD3DSurface *)resource) {
+                                context_destroy_fbo_entry(This, entry);
+                                destroyed = TRUE;
+                            }
                         }
-                    }
-                    if (This->contexts[i]->fbo_depth_attachment == (IWineD3DSurface *)resource) {
-                        This->contexts[i]->fbo_depth_attachment = NULL;
+                        if (!destroyed && entry->depth_stencil == (IWineD3DSurface *)resource) {
+                            context_destroy_fbo_entry(This, entry);
+                        }
                     }
                 }
             }

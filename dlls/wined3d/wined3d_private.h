@@ -613,9 +613,8 @@ struct WineD3DContext {
     GLint                   aux_buffers;
 
     /* FBOs */
-    IWineD3DSurface       **fbo_color_attachments;
-    IWineD3DSurface        *fbo_depth_attachment;
-    GLuint                  fbo;
+    struct list             fbo_list;
+    struct fbo_entry        *current_fbo;
     GLuint                  src_fbo;
     GLuint                  dst_fbo;
 };
@@ -1259,6 +1258,15 @@ typedef struct {
     UINT width;
     UINT height;
 } renderbuffer_entry_t;
+
+struct fbo_entry
+{
+    struct list entry;
+    IWineD3DSurface **render_targets;
+    IWineD3DSurface *depth_stencil;
+    BOOL attached;
+    GLuint id;
+};
 
 /*****************************************************************************
  * IWineD3DClipp implementation structure
@@ -2435,4 +2443,5 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         IWineD3DSurface *dst_surface, WINED3DRECT *dst_rect, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip);
 void depth_blt(IWineD3DDevice *iface, GLuint texture, GLsizei w, GLsizei h);
 
+void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, struct fbo_entry *entry);
 #endif
