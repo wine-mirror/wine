@@ -8,9 +8,6 @@
  * Copyright (C) 1998 Matthew Becker
  * Copyright (C) 1999 Sylvain St-Germain
  *
- * This file is concerned about handle management and interaction with the Wine server.
- * Registry file I/O is in misc/registry.c.
- *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
