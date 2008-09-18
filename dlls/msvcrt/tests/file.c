@@ -1093,7 +1093,7 @@ static void test_unlink(void)
     ok(file != NULL, "unable to create test file\n");
     if(file)
       fclose(file);
-    todo_wine ok(_unlink("test_unlink") != 0, "unlinking a non-empty directory must fail\n");
+    ok(_unlink("test_unlink") != 0, "unlinking a non-empty directory must fail\n");
     unlink("test_unlink\\empty");
     rmdir("test_unlink");
 }

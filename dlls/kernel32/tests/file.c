@@ -871,9 +871,9 @@ static void test_DeleteFileW( void )
     ret = CreateDirectoryW(pathW, NULL);
     ok(ret == TRUE, "couldn't create directory deletefile\n");
     ret = DeleteFileW(pathW);
-    todo_wine ok(ret == FALSE, "DeleteFile should fail for empty directories\n");
+    ok(ret == FALSE, "DeleteFile should fail for empty directories\n");
     ret = RemoveDirectoryW(pathW);
-    todo_wine ok(ret == TRUE, "expected to remove directory deletefile\n");
+    ok(ret == TRUE, "expected to remove directory deletefile\n");
 
     /* test DeleteFile on non-empty directory */
     ret = CreateDirectoryW(pathW, NULL);
@@ -881,7 +881,7 @@ static void test_DeleteFileW( void )
     ret = CreateDirectoryW(pathsubW, NULL);
     ok(ret == TRUE, "couldn't create directory deletefile\\sub\n");
     ret = DeleteFileW(pathW);
-    todo_wine ok(ret == FALSE, "DeleteFile should fail for non-empty directories\n");
+    ok(ret == FALSE, "DeleteFile should fail for non-empty directories\n");
     ret = RemoveDirectoryW(pathsubW);
     ok(ret == TRUE, "expected to remove directory deletefile\\sub\n");
     ret = RemoveDirectoryW(pathW);

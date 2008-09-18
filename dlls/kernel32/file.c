@@ -3,6 +3,7 @@
  *
  * Copyright 1993 John Burton
  * Copyright 1996, 2004 Alexandre Julliard
+ * Copyright 2008 Jeff Zaroyko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1528,6 +1529,8 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
+    HANDLE hFile;
+    IO_STATUS_BLOCK io;
 
     TRACE("%s\n", debugstr_w(path) );
 
@@ -1544,7 +1547,12 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtDeleteFile(&attr);
+    status = NtCreateFile(&hFile, GENERIC_READ | GENERIC_WRITE | DELETE,
+			  &attr, &io, NULL, 0,
+			  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+			  FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0);
+    if (status == STATUS_SUCCESS) status = NtClose(hFile);
+
     RtlFreeUnicodeString( &nameW );
     if (status)
     {
