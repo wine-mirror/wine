@@ -924,12 +924,50 @@ HRESULT return_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t
     return S_OK;
 }
 
-HRESULT with_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.10 */
+HRESULT with_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    with_statement_t *stat = (with_statement_t*)_stat;
+    exprval_t exprval;
+    IDispatch *disp;
+    DispatchEx *obj;
+    VARIANT val;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, &val);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_object(ctx, &val, &disp);
+    VariantClear(&val);
+    if(FAILED(hres))
+        return hres;
+
+    obj = iface_to_jsdisp((IUnknown*)disp);
+    IDispatch_Release(disp);
+    if(!obj) {
+        FIXME("disp id not jsdisp\n");
+        return E_NOTIMPL;
+    }
+
+    hres = scope_push(ctx->scope_chain, obj, &ctx->scope_chain);
+    jsdisp_release(obj);
+    if(FAILED(hres));
+
+    hres = stat_eval(ctx, stat->statement, rt, ret);
+
+    scope_pop(&ctx->scope_chain);
+    return hres;
 }
 
+/* ECMA-262 3rd Edition    12.12 */
 HRESULT labelled_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
     FIXME("\n");

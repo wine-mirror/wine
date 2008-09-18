@@ -657,4 +657,8 @@ ok(typeof(tmp.test) === "undefined", "tmp.test type = " + typeof(tmp.test));
 for(iter in tmp)
     ok(false, "tmp has prop " + iter);
 
+tmp.testWith = true;
+with(tmp)
+    ok(testWith === true, "testWith !== true");
+
 reportSuccess();
