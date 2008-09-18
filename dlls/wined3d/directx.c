@@ -1088,7 +1088,7 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     vidmem = 384; /* The 9600GSO has 384MB, the 9600GT has 512-1024MB */
                 }
                 /* Geforce8 - highend */
-                if (strstr(gl_info->gl_renderer, "8800")) {
+                else if (strstr(gl_info->gl_renderer, "8800")) {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_8800GTS;
                     vidmem = 320; /* The 8800GTS uses 320MB, a 8800GTX can have 768MB */
                 }
