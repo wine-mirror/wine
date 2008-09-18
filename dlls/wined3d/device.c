@@ -7325,10 +7325,14 @@ static void WINAPI IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWin
 
 static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IWineD3DResource *resource){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    WINED3DRESOURCETYPE type = IWineD3DResource_GetType(resource);
     int counter;
 
     TRACE("(%p) : resource %p\n", This, resource);
-    switch(IWineD3DResource_GetType(resource)){
+
+    context_resource_released(iface, resource, type);
+
+    switch (type) {
         /* TODO: check front and back buffers, rendertargets etc..  possibly swapchains? */
         case WINED3DRTYPE_SURFACE: {
             unsigned int i;
@@ -7373,24 +7377,6 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
                 }
                 if (This->stencilBufferTarget == (IWineD3DSurface *)resource) {
                     This->stencilBufferTarget = NULL;
-                }
-
-                for (i = 0; i < This->numContexts; ++i) {
-                    struct fbo_entry *entry, *entry2;
-                    int j;
-
-                    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->contexts[i]->fbo_list, struct fbo_entry, entry) {
-                        BOOL destroyed = FALSE;
-                        for (j = 0; !destroyed && j < GL_LIMITS(buffers); ++j) {
-                            if (entry->render_targets[j] == (IWineD3DSurface *)resource) {
-                                context_destroy_fbo_entry(This, entry);
-                                destroyed = TRUE;
-                            }
-                        }
-                        if (!destroyed && entry->depth_stencil == (IWineD3DSurface *)resource) {
-                            context_destroy_fbo_entry(This, entry);
-                        }
-                    }
                 }
             }
 

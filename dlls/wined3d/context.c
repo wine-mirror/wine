@@ -226,7 +226,7 @@ static struct fbo_entry *context_create_fbo_entry(IWineD3DDevice *iface)
     return entry;
 }
 
-void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, struct fbo_entry *entry)
+static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, struct fbo_entry *entry)
 {
     if (entry->id)
     {
@@ -318,6 +318,46 @@ static void context_apply_fbo_state(IWineD3DDevice *iface)
     }
 
     context_check_fbo_status(iface);
+}
+
+void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    UINT i;
+
+    switch(type)
+    {
+        case WINED3DRTYPE_SURFACE:
+        {
+            for (i = 0; i < This->numContexts; ++i)
+            {
+                struct fbo_entry *entry, *entry2;
+
+                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->contexts[i]->fbo_list, struct fbo_entry, entry)
+                {
+                    BOOL destroyed = FALSE;
+                    UINT j;
+
+                    for (j = 0; !destroyed && j < GL_LIMITS(buffers); ++j)
+                    {
+                        if (entry->render_targets[j] == (IWineD3DSurface *)resource)
+                        {
+                            context_destroy_fbo_entry(This, entry);
+                            destroyed = TRUE;
+                        }
+                    }
+
+                    if (!destroyed && entry->depth_stencil == (IWineD3DSurface *)resource)
+                        context_destroy_fbo_entry(This, entry);
+                }
+            }
+
+            break;
+        }
+
+        default:
+            break;
+    }
 }
 
 /*****************************************************************************
