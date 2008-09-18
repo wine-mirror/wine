@@ -1486,6 +1486,7 @@ HRESULT new_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, j
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    11.2.3 */
 HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     call_expression_t *expr = (call_expression_t*)_expr;
@@ -1527,6 +1528,7 @@ HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    11.1.1 */
 HRESULT this_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     TRACE("\n");
@@ -1877,12 +1879,14 @@ HRESULT binary_and_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
     return binary_expr_eval(ctx, expr, bitand_eval, ei, ret);
 }
 
+/* ECMA-262 3rd Edition    11.8.6 */
 HRESULT instanceof_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    11.8.7 */
 HRESULT in_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     FIXME("\n");
@@ -2046,6 +2050,7 @@ HRESULT div_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, j
     return binary_expr_eval(ctx, expr, div_eval, ei, ret);
 }
 
+/* ECMA-262 3rd Edition    11.5.3 */
 HRESULT mod_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     FIXME("\n");
@@ -2553,11 +2558,11 @@ HRESULT not_equal2_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
 
     TRACE("\n");
 
-    hres = get_binary_expr_values(ctx, expr, ei, &rval, &lval);
+    hres = get_binary_expr_values(ctx, expr, ei, &lval, &rval);
     if(FAILED(hres))
         return hres;
 
-    hres = equal2_values(&rval, &lval, &b);
+    hres = equal2_values(&lval, &rval, &b);
     if(FAILED(hres))
         return hres;
 
@@ -2940,6 +2945,7 @@ HRESULT assign_div_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, div_eval, ei, ret);
 }
 
+/* ECMA-262 3rd Edition    11.13.2 */
 HRESULT assign_mod_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     FIXME("\n");
