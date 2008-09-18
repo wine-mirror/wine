@@ -1424,7 +1424,7 @@ interface IAdviseSink : IUnknown
     case TYMED_FILE:     LPOLESTR lpszFileName;
     case TYMED_ISTREAM:  BYTE_BLOB *pstm;
     case TYMED_ISTORAGE: BYTE_BLOB *pstg;
-    };
+    } DUMMYUNIONNAME;
     IUnknown *pUnkForRelease;
   } userSTGMEDIUM;
 
