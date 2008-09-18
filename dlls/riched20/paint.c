@@ -1046,6 +1046,9 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
 {
   SCROLLINFO si;
   int nOrigPos, nNewPos, nActualScroll;
+  HWND hWnd;
+  LONG winStyle;
+  BOOL bScrollBarIsVisible, bScrollBarWillBeVisible;
 
   nOrigPos = ME_GetYScrollPos(editor);
   
@@ -1083,7 +1086,15 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
     ME_Repaint(editor);
   }
   
-  editor->vert_si.nMax = 0;
+  hWnd = editor->hWnd;
+  winStyle = GetWindowLongW(hWnd, GWL_STYLE);
+  bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
+  bScrollBarWillBeVisible = (editor->nHeight > editor->sizeWindow.cy)
+                            || (winStyle & ES_DISABLENOSCROLL);
+  if (bScrollBarIsVisible != bScrollBarWillBeVisible)
+  {
+    ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
+  }
   ME_UpdateScrollBar(editor);
 }
 
