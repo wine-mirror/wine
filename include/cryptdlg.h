@@ -278,7 +278,7 @@ typedef struct _CERT_VERIFY_CERTIFICATE_TRUST
     LPSTR            pszUsageOid;
     HCRYPTPROV       hprov;
     DWORD            cRootStores;
-    HCERTSTORE       rghstoreRoots;
+    HCERTSTORE      *rghstoreRoots;
     DWORD            cStores;
     HCERTSTORE      *rghstoreCAs;
     DWORD            cTrustStores;
