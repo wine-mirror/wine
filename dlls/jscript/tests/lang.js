@@ -342,6 +342,10 @@ ok(+null === 0, "+null !== 0");
 ok("" + 0 === "0", "\"\" + 0 !== \"0\"");
 ok("" + 123 === "123", "\"\" + 123 !== \"123\"");
 ok("" + (-5) === "-5", "\"\" + (-5) !== \"-5\"");
+ok("" + null === "null", "\"\" + null !== \"null\"");
+ok("" + undefined === "undefined", "\"\" + undefined !== \"undefined\"");
+ok("" + true === "true", "\"\" + true !== \"true\"");
+ok("" + false === "false", "\"\" + false !== \"false\"");
 
 ok(1 < 3.4, "1 < 3.4 failed");
 ok(!(3.4 < 1), "3.4 < 1");

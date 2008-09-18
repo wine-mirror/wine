@@ -320,15 +320,39 @@ static BSTR int_to_bstr(INT i)
 /* ECMA-262 3rd Edition    9.8 */
 HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
 {
+    const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
+    const WCHAR nullW[] = {'n','u','l','l',0};
+    const WCHAR trueW[] = {'t','r','u','e',0};
+    const WCHAR falseW[] = {'f','a','l','s','e',0};
+
     switch(V_VT(v)) {
+    case VT_EMPTY:
+        *str = SysAllocString(undefinedW);
+        break;
+    case VT_NULL:
+        *str = SysAllocString(nullW);
+        break;
     case VT_I4:
         *str = int_to_bstr(V_I4(v));
         break;
-
     case VT_BSTR:
         *str = SysAllocString(V_BSTR(v));
         break;
+    case VT_DISPATCH: {
+        VARIANT prim;
+        HRESULT hres;
 
+        hres = to_primitive(ctx, v, ei, &prim);
+        if(FAILED(hres))
+            return hres;
+
+        hres = to_string(ctx, &prim, ei, str);
+        VariantClear(&prim);
+        return hres;
+    }
+    case VT_BOOL:
+        *str = SysAllocString(V_BOOL(v) ? trueW : falseW);
+        break;
     default:
         FIXME("unsupported vt %d\n", V_VT(v));
         return E_NOTIMPL;
