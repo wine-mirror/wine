@@ -246,6 +246,9 @@ tmp = 5;
 ok((tmp /= 2) === 2.5, "tmp /= 2 !== 2.5");
 ok(tmp === 2.5, "tmp !=== 2.5");
 
+tmp = 8;
+ok((tmp <<= 1) === 16, "tmp <<= 1 !== 16");
+
 tmp = 3 || ok(false, "second or expression called");
 ok(tmp === 3, "3 || (...) is not 3");
 
