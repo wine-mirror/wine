@@ -154,12 +154,19 @@ void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWO
 {
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
 
-    context_apply_attachment_filter_states((IWineD3DDevice *)This, surface, TRUE);
+    TRACE("Attach surface %p to %u\n", surface, idx);
 
-    GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, surface_impl->glDescription.target,
-            surface_impl->glDescription.textureName, surface_impl->glDescription.level));
+    if (surface)
+    {
+        context_apply_attachment_filter_states((IWineD3DDevice *)This, surface, TRUE);
 
-    checkGLcall("attach_surface_fbo");
+        GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, surface_impl->glDescription.target,
+                surface_impl->glDescription.textureName, surface_impl->glDescription.level));
+        checkGLcall("glFramebufferTexture2DEXT()");
+    } else {
+        GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, GL_TEXTURE_2D, 0, 0));
+        checkGLcall("glFramebufferTexture2DEXT()");
+    }
 }
 
 /* TODO: Handle stencil attachments */
@@ -174,21 +181,6 @@ static void context_set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface
         context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, depth_stencil, TRUE);
     } else {
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
-        checkGLcall("glFramebufferTexture2DEXT()");
-    }
-}
-
-static void context_set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target)
-{
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    TRACE("Set render target %u to %p\n", idx, render_target);
-
-    if (render_target)
-    {
-        context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, idx, render_target);
-    } else {
-        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + idx, GL_TEXTURE_2D, 0, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
     }
 }
@@ -260,7 +252,7 @@ void context_apply_fbo_state(IWineD3DDevice *iface)
             IWineD3DSurface *render_target = This->render_targets[i];
             if (context->fbo_color_attachments[i] != render_target)
             {
-                context_set_render_target_fbo(iface, i, render_target);
+                context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, i, render_target);
                 context->fbo_color_attachments[i] = render_target;
             }
         }
