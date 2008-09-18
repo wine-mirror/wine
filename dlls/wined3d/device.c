@@ -1718,8 +1718,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
 
     hr = IWineD3DVertexDeclaration_SetDeclaration((IWineD3DVertexDeclaration *)object, elements, element_count);
     if(FAILED(hr)) {
+        IWineD3DVertexDeclaration_Release((IWineD3DVertexDeclaration *)object);
         *ppVertexDeclaration = NULL;
-        HeapFree(GetProcessHeap(), 0, object);
     }
 
     return hr;
