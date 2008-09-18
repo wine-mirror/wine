@@ -137,15 +137,23 @@ void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_targe
 {
     IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
 
-    if (use_render_buffer && depth_stencil_impl->current_renderbuffer)
-    {
-        GL_EXTCALL(glFramebufferRenderbufferEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depth_stencil_impl->current_renderbuffer->id));
-        checkGLcall("glFramebufferRenderbufferEXT()");
-    } else {
-        context_apply_attachment_filter_states((IWineD3DDevice *)This, depth_stencil, TRUE);
+    TRACE("Attach depth stencil %p\n", depth_stencil);
 
-        GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, depth_stencil_impl->glDescription.target,
-                    depth_stencil_impl->glDescription.textureName, depth_stencil_impl->glDescription.level));
+    if (depth_stencil)
+    {
+        if (use_render_buffer && depth_stencil_impl->current_renderbuffer)
+        {
+            GL_EXTCALL(glFramebufferRenderbufferEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depth_stencil_impl->current_renderbuffer->id));
+            checkGLcall("glFramebufferRenderbufferEXT()");
+        } else {
+            context_apply_attachment_filter_states((IWineD3DDevice *)This, depth_stencil, TRUE);
+
+            GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, depth_stencil_impl->glDescription.target,
+                        depth_stencil_impl->glDescription.textureName, depth_stencil_impl->glDescription.level));
+            checkGLcall("glFramebufferTexture2DEXT()");
+        }
+    } else {
+        GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
     }
 }
@@ -165,22 +173,6 @@ void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWO
         checkGLcall("glFramebufferTexture2DEXT()");
     } else {
         GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, GL_TEXTURE_2D, 0, 0));
-        checkGLcall("glFramebufferTexture2DEXT()");
-    }
-}
-
-/* TODO: Handle stencil attachments */
-static void context_set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_stencil)
-{
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    TRACE("Set depth stencil to %p\n", depth_stencil);
-
-    if (depth_stencil)
-    {
-        context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, depth_stencil, TRUE);
-    } else {
-        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
     }
 }
@@ -267,7 +259,7 @@ void context_apply_fbo_state(IWineD3DDevice *iface)
             {
                 surface_set_compatible_renderbuffer(This->stencilBufferTarget, w, h);
             }
-            context_set_depth_stencil_fbo(iface, This->stencilBufferTarget);
+            context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, This->stencilBufferTarget, TRUE);
             context->fbo_depth_attachment = This->stencilBufferTarget;
         }
 
