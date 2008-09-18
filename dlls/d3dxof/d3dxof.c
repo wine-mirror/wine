@@ -1390,8 +1390,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetType(IDirectXFileData* iface, cons
   if (!pguid)
     return DXFILEERR_BADVALUE;
 
-  /* Native dll returns object guid instead of object template one */
-  memcpy(&guid, &This->pobj->class_id, 16);
+  memcpy(&guid, &This->pobj->type, 16);
   *pguid = &guid;
 
   return DXFILE_OK;
@@ -1803,6 +1802,7 @@ static BOOL parse_object(parse_buffer * buf)
     if (!strcmp((char*)buf->value, buf->pdxf->xtemplates[i].name))
     {
       buf->pxt[buf->level] = &buf->pdxf->xtemplates[i];
+      memcpy(&buf->pxo->type, &buf->pdxf->xtemplates[i].class_id, 16);
       break;
     }
   }
@@ -1811,6 +1811,7 @@ static BOOL parse_object(parse_buffer * buf)
     FIXME("Unknown template %s\n", (char*)buf->value);
     return FALSE;
   }
+
   if (check_TOKEN(buf) == TOKEN_NAME)
   {
     parse_TOKEN(buf);
