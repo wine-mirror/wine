@@ -289,6 +289,12 @@ tmp = (-3.5) & 0xffffffff;
 ok(tmp === -3, "-3.5 & 0xffff !== -3");
 ok(getVT(tmp) === "VT_I4", "getVT(3.5&0xffff) = " + getVT(tmp));
 
+tmp = 2 << 3;
+ok(tmp === 16, "2 << 3 = " + tmp);
+
+tmp = 2 << 35;
+ok(tmp === 16, "2 << 35 = " + tmp);
+
 tmp = 10;
 ok((tmp &= 8) === 8, "tmp(10) &= 8 !== 8");
 ok(getVT(tmp) === "VT_I4", "getVT(tmp &= 8) = " + getVT(tmp));

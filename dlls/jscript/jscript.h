@@ -142,6 +142,7 @@ HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
 HRESULT to_number(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);
 HRESULT to_integer(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);
 HRESULT to_int32(script_ctx_t*,VARIANT*,jsexcept_t*,INT*);
+HRESULT to_uint32(script_ctx_t*,VARIANT*,jsexcept_t*,DWORD*);
 HRESULT to_string(script_ctx_t*,VARIANT*,jsexcept_t*,BSTR*);
 HRESULT to_object(exec_ctx_t*,VARIANT*,IDispatch**);
 

@@ -273,6 +273,20 @@ HRESULT to_int32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, INT *ret)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    9.6 */
+HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
+{
+    VARIANT num;
+    HRESULT hres;
+
+    hres = to_number(ctx, v, ei, &num);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = V_VT(&num) == VT_I4 ? V_I4(&num) : (DWORD)V_R8(&num);
+    return S_OK;
+}
+
 static BSTR int_to_bstr(INT i)
 {
     WCHAR buf[12], *p;
