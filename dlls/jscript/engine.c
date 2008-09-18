@@ -1939,12 +1939,33 @@ HRESULT delete_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags,
     return E_NOTIMPL;
 }
 
-HRESULT void_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.4.2 */
+HRESULT void_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    unary_expression_t *expr = (unary_expression_t*)_expr;
+    exprval_t exprval;
+    VARIANT tmp;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, ei, &tmp);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    VariantClear(&tmp);
+
+    ret->type = EXPRVAL_VARIANT;
+    V_VT(&ret->u.var) = VT_EMPTY;
+    return S_OK;
 }
 
+/* ECMA-262 3rd Edition    11.4.3 */
 HRESULT typeof_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     unary_expression_t *expr = (unary_expression_t*)_expr;

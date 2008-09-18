@@ -615,4 +615,6 @@ for(var fi=0; fi < 4; fi++)
     ok(fi < 4, "fi = " + fi);
 ok(fi === 4, "fi !== 4");
 
+ok((void 1) === undefined, "(void 1) !== undefined");
+
 reportSuccess();
