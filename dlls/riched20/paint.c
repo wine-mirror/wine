@@ -1072,6 +1072,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   }
   
   nNewPos = SetScrollInfo(editor->hWnd, SB_VERT, &si, editor->bRedraw);
+  editor->vert_si.nPos = nNewPos;
   nActualScroll = nOrigPos - nNewPos;
   if (editor->bRedraw)
   {
@@ -1105,7 +1106,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   bScrollBarWasVisible = ME_GetYScrollVisible(editor);
   bScrollBarWillBeVisible = editor->nHeight > editor->sizeWindow.cy;
   
-  si.fMask = SIF_PAGE | SIF_RANGE;
+  si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
   if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
     si.fMask |= SIF_DISABLENOSCROLL;
   if ((si.fMask & SIF_DISABLENOSCROLL))
@@ -1122,7 +1123,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   
   si.nMin = 0;  
   si.nMax = editor->nTotalLength;
-
+  si.nPos = editor->vert_si.nPos;
   si.nPage = editor->sizeWindow.cy;
      
   if (!(si.nMin == editor->vert_si.nMin && si.nMax == editor->vert_si.nMax && si.nPage == editor->vert_si.nPage))
@@ -1138,17 +1139,18 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
     else
     {
       if (bScrollBarWasVisible && !(si.fMask & SIF_DISABLENOSCROLL))
+      {
+        SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
         ShowScrollBar(hWnd, SB_VERT, FALSE);
+        ME_ScrollAbs(editor, 0);
+      }
     }
   }
 }
 
 int ME_GetYScrollPos(ME_TextEditor *editor)
 {
-  SCROLLINFO si;
-  si.cbSize = sizeof(si);
-  si.fMask = SIF_POS;
-  return GetScrollInfo(editor->hWnd, SB_VERT, &si) ? si.nPos : 0;
+  return editor->vert_si.nPos;
 }
 
 BOOL ME_GetYScrollVisible(ME_TextEditor *editor)
