@@ -1500,6 +1500,7 @@ typedef struct IWineD3DVertexDeclarationImpl {
     IWineD3DDeviceImpl      *wineD3DDevice;
 
     WINED3DVERTEXELEMENT    *pDeclarationWine;
+    BOOL                    *ffp_valid;
     UINT                    declarationWNumElements;
 
     DWORD                   streams[MAX_STREAMS];

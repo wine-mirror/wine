@@ -219,17 +219,22 @@ void primitiveDeclarationConvertToStridedData(
             stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
 
         if (stride_used) {
-            TRACE("Loaded %s array %u [usage=%s, usage_idx=%u, "
+            TRACE("Load %s array %u [usage=%s, usage_idx=%u, "
                     "stream=%u, offset=%u, stride=%u, type=%s, VBO=%u]\n",
                     useVertexShaderFunction? "shader": "fixed function", idx,
                     debug_d3ddeclusage(element->Usage), element->UsageIndex,
                     element->Stream, element->Offset, stride, debug_d3ddecltype(element->Type), streamVBO);
 
-            strided->u.input[idx].lpData = data;
-            strided->u.input[idx].dwType = element->Type;
-            strided->u.input[idx].dwStride = stride;
-            strided->u.input[idx].VBO = streamVBO;
-            strided->u.input[idx].streamNo = element->Stream;
+            if (!useVertexShaderFunction && !vertexDeclaration->ffp_valid[i]) {
+                WARN("Skipping unsupported fixed function element of type %s and usage %s\n",
+                    debug_d3ddecltype(element->Type), debug_d3ddeclusage(element->Usage));
+            } else {
+                strided->u.input[idx].lpData = data;
+                strided->u.input[idx].dwType = element->Type;
+                strided->u.input[idx].dwStride = stride;
+                strided->u.input[idx].VBO = streamVBO;
+                strided->u.input[idx].streamNo = element->Stream;
+            }
         }
     }
     /* Now call PreLoad on all the vertex buffers. In the very rare case
