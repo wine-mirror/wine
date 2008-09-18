@@ -1182,8 +1182,12 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
         if (buffer >= This->samples)
         {
             if (buffer != This->samples)
+            {
                 FIXME("Returned: %u (%08x)\n", buffer, GetLastError());
-            hr = VFW_E_TIMEOUT;
+                hr = VFW_E_TIMEOUT;
+            }
+            else
+                hr = VFW_E_WRONG_STATE;
             buffer = ~0;
         }
         else
