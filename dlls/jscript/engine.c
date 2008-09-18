@@ -764,10 +764,102 @@ HRESULT for_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *r
     return S_OK;
 }
 
-HRESULT forin_statement_eval(exec_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+/* ECMA-262 3rd Edition    12.6.4 */
+HRESULT forin_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    forin_statement_t *stat = (forin_statement_t*)_stat;
+    VARIANT val, name, retv, tmp;
+    DISPID id = DISPID_STARTENUM;
+    BSTR str, identifier = NULL;
+    IDispatchEx *in_obj;
+    exprval_t exprval;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(stat->variable) {
+        hres = variable_list_eval(ctx, stat->variable, &rt->ei);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    hres = expr_eval(ctx, stat->in_expr, EXPR_NEWREF, &rt->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, &rt->ei, &val);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(&val) != VT_DISPATCH) {
+        FIXME("in vt %d\n", V_VT(&val));
+        VariantClear(&val);
+        return E_NOTIMPL;
+    }
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&val), &IID_IDispatchEx, (void**)&in_obj);
+    IDispatch_Release(V_DISPATCH(&val));
+    if(FAILED(hres)) {
+        FIXME("Object doesn't support IDispatchEx\n");
+        return E_NOTIMPL;
+    }
+
+    V_VT(&retv) = VT_EMPTY;
+
+    if(stat->variable)
+        identifier = SysAllocString(stat->variable->identifier);
+
+    while(1) {
+        hres = IDispatchEx_GetNextDispID(in_obj, fdexEnumDefault, id, &id);
+        if(FAILED(hres) || hres == S_FALSE)
+            break;
+
+        hres = IDispatchEx_GetMemberName(in_obj, id, &str);
+        if(FAILED(hres))
+            break;
+
+        TRACE("iter %s\n", debugstr_w(str));
+
+        if(stat->variable)
+            hres = identifier_eval(ctx, identifier, 0, &exprval);
+        else
+            hres = expr_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
+        if(SUCCEEDED(hres)) {
+            V_VT(&name) = VT_BSTR;
+            V_BSTR(&name) = str;
+            hres = put_value(ctx->parser->script, &exprval, &name, &rt->ei);
+            exprval_release(&exprval);
+        }
+        SysFreeString(str);
+        if(FAILED(hres))
+            break;
+
+        hres = stat_eval(ctx, stat->statement, rt, &tmp);
+        if(FAILED(hres))
+            break;
+
+        VariantClear(&retv);
+        retv = tmp;
+
+        if(rt->type == RT_CONTINUE)
+            rt->type = RT_NORMAL;
+        else if(rt->type != RT_NORMAL)
+            break;
+    }
+
+    SysFreeString(identifier);
+    IDispatchEx_Release(in_obj);
+    if(FAILED(hres)) {
+        VariantClear(&retv);
+        return hres;
+    }
+
+    if(rt->type == RT_BREAK)
+        rt->type = RT_NORMAL;
+
+    *ret = retv;
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.7 */

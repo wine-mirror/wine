@@ -381,6 +381,8 @@ static HRESULT fill_protrefs(DispatchEx *This)
     fill_protrefs(This->prototype);
 
     for(iter = This->prototype->props; iter < This->prototype->props+This->prototype->prop_cnt; iter++) {
+        if(!iter->name)
+            continue;
         hres = find_prop_name(This, iter->name, &prop);
         if(FAILED(hres))
             return hres;

@@ -617,4 +617,37 @@ ok(fi === 4, "fi !== 4");
 
 ok((void 1) === undefined, "(void 1) !== undefined");
 
+var inobj = new Object();
+
+for(var iter in inobj)
+    ok(false, "unexpected iter = " + iter);
+
+inobj.test = true;
+tmp = 0;
+for(iter in inobj) {
+    ok(iter == "test", "unexpected iter = " + iter);
+    tmp++;
+}
+ok(tmp === 1, "for..in tmp = " + tmp);
+
+function forinTestObj() {}
+
+forinTestObj.prototype.test3 = true;
+
+var arr = new Array();
+inobj = new forinTestObj();
+inobj.test1 = true;
+inobj.test2 = true;
+
+tmp = 0;
+for(iter in inobj) {
+    arr[iter] = true;
+    tmp++;
+}
+
+ok(tmp === 3, "for..in tmp = " + tmp);
+ok(arr["test1"] === true, "arr[test1] !== true");
+ok(arr["test2"] === true, "arr[test2] !== true");
+ok(arr["test3"] === true, "arr[test3] !== true");
+
 reportSuccess();
