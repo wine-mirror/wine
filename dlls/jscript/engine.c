@@ -2014,10 +2014,42 @@ HRESULT mod_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, js
     return E_NOTIMPL;
 }
 
-HRESULT delete_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.4.2 */
+HRESULT delete_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    unary_expression_t *expr = (unary_expression_t*)_expr;
+    VARIANT_BOOL b = VARIANT_FALSE;
+    exprval_t exprval;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx, expr->expression, EXPR_STRREF, ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    switch(exprval.type) {
+    case EXPRVAL_NAMEREF: {
+        IDispatchEx *dispex;
+
+        hres = IDispatch_QueryInterface(exprval.u.nameref.disp, &IID_IDispatchEx, (void**)&dispex);
+        if(SUCCEEDED(hres)) {
+            hres = IDispatchEx_DeleteMemberByName(dispex, exprval.u.nameref.name, fdexNameCaseSensitive);
+            b = VARIANT_TRUE;
+            IDispatchEx_Release(dispex);
+        }
+        break;
+    }
+    default:
+        FIXME("unsupported type %d\n", exprval.type);
+        hres = E_NOTIMPL;
+    }
+
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    return return_bool(ret, b);
 }
 
 /* ECMA-262 3rd Edition    11.4.2 */

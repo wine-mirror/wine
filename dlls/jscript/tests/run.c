@@ -63,6 +63,7 @@ DEFINE_EXPECT(global_propput_d);
 DEFINE_EXPECT(global_propput_i);
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
+DEFINE_EXPECT(testobj_delete);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
 #define DISPID_GLOBAL_TESTPROPPUT   0x1001
@@ -70,6 +71,7 @@ DEFINE_EXPECT(global_success_i);
 #define DISPID_GLOBAL_TRACE         0x1003
 #define DISPID_GLOBAL_OK            0x1004
 #define DISPID_GLOBAL_GETVT         0x1005
+#define DISPID_GLOBAL_TESTOBJ       0x1006
 
 static const WCHAR testW[] = {'t','e','s','t',0};
 
@@ -195,6 +197,48 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testObj_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+{
+    CHECK_EXPECT(testobj_delete);
+
+    ok(!strcmp_wa(bstrName, "deleteTest"), "unexpected name %s\n", debugstr_w(bstrName));
+    ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+    return S_OK;
+}
+
+static IDispatchExVtbl testObjVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    DispatchEx_InvokeEx,
+    testObj_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx testObj = { &testObjVtbl };
+
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!strcmp_wa(bstrName, "ok")) {
@@ -228,6 +272,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
     if(!strcmp_wa(bstrName, "getVT")) {
         ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
         *pid = DISPID_GLOBAL_GETVT;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "testObj")) {
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        *pid = DISPID_GLOBAL_TESTOBJ;
         return S_OK;
     }
 
@@ -361,7 +410,22 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         }
 
         return S_OK;
-     }
+
+    case DISPID_GLOBAL_TESTOBJ:
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&testObj;
+        return S_OK;
+    }
 
     ok(0, "unexpected call %x\n", id);
     return DISP_E_MEMBERNOTFOUND;
@@ -583,6 +647,10 @@ static void run_tests(void)
     parse_script_a("reportSuccess();");
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
+
+    SET_EXPECT(testobj_delete);
+    parse_script_a("delete testObj.deleteTest;");
+    CHECK_CALLED(testobj_delete);
 
     run_from_res("lang.js");
     run_from_res("api.js");

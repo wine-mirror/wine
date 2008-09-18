@@ -650,4 +650,11 @@ ok(arr["test1"] === true, "arr[test1] !== true");
 ok(arr["test2"] === true, "arr[test2] !== true");
 ok(arr["test3"] === true, "arr[test3] !== true");
 
+tmp = new Object();
+tmp.test = false;
+ok((delete tmp.test) === true, "delete returned false");
+ok(typeof(tmp.test) === "undefined", "tmp.test type = " + typeof(tmp.test));
+for(iter in tmp)
+    ok(false, "tmp has prop " + iter);
+
 reportSuccess();
