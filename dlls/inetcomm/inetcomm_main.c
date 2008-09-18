@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(inetcomm);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    IMimeInternational *international;
+    static IMimeInternational *international;
 
     TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
