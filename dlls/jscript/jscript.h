@@ -165,6 +165,7 @@ struct _script_ctx_t {
 
     DispatchEx *script_disp;
     DispatchEx *global;
+    DispatchEx *function_constr;
     DispatchEx *array_constr;
     DispatchEx *bool_constr;
     DispatchEx *number_constr;
@@ -181,6 +182,7 @@ static inline void script_addref(script_ctx_t *ctx)
 }
 
 HRESULT init_global(script_ctx_t*);
+HRESULT init_function_constr(script_ctx_t*);
 
 HRESULT create_array_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_bool_constr(script_ctx_t*,DispatchEx**);

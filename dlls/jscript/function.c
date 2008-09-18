@@ -369,7 +369,21 @@ static const builtin_info_t Function_info = {
     NULL
 };
 
-static HRESULT create_function(script_ctx_t *ctx, DWORD flags, DispatchEx *prototype, FunctionInstance **ret)
+static HRESULT FunctionConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT FunctionProt_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT create_function(script_ctx_t *ctx, DWORD flags, BOOL funcprot, DispatchEx *prototype, FunctionInstance **ret)
 {
     FunctionInstance *function;
     HRESULT hres;
@@ -378,7 +392,10 @@ static HRESULT create_function(script_ctx_t *ctx, DWORD flags, DispatchEx *proto
     if(!function)
         return E_OUTOFMEMORY;
 
-    hres = init_dispex(&function->dispex, ctx, &Function_info, NULL);
+    if(funcprot)
+        hres = init_dispex(&function->dispex, ctx, &Function_info, prototype);
+    else
+        hres = init_dispex_from_constr(&function->dispex, ctx, &Function_info, ctx->function_constr);
     if(FAILED(hres))
         return hres;
 
@@ -410,7 +427,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
     FunctionInstance *function;
     HRESULT hres;
 
-    hres = create_function(ctx, flags, prototype, &function);
+    hres = create_function(ctx, flags, FALSE, prototype, &function);
     if(FAILED(hres))
         return hres;
 
@@ -433,7 +450,7 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
     if(FAILED(hres))
         return hres;
 
-    hres = create_function(ctx->script, PROPF_CONSTR, prototype, &function);
+    hres = create_function(ctx->script, PROPF_CONSTR, FALSE, prototype, &function);
     jsdisp_release(prototype);
     if(FAILED(hres))
         return hres;
@@ -455,4 +472,25 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
 
     *ret = &function->dispex;
     return S_OK;
+}
+
+HRESULT init_function_constr(script_ctx_t *ctx)
+{
+    FunctionInstance *prot, *constr;
+    HRESULT hres;
+
+    hres = create_function(ctx, PROPF_CONSTR, TRUE, NULL, &prot);
+    if(FAILED(hres))
+        return hres;
+
+    prot->value_proc = FunctionProt_value;
+
+    hres = create_function(ctx, PROPF_CONSTR, TRUE, &prot->dispex, &constr);
+    jsdisp_release(&prot->dispex);
+    if(FAILED(hres))
+        return hres;
+
+    constr->value_proc = FunctionConstr_value;
+    ctx->function_constr = &constr->dispex;
+    return hres;
 }

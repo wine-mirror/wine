@@ -79,6 +79,12 @@ ok(Number.prototype !== undefined, "Number.prototype is undefined");
 ok(RegExp.prototype !== undefined, "RegExp.prototype is undefined");
 ok(Math !== undefined, "Math is undefined");
 ok(Math.prototype === undefined, "Math.prototype is not undefined");
+ok(Function.prototype !== undefined, "Function.prototype is undefined");
+ok(Function.prototype.prototype === undefined, "Function.prototype is not undefined");
+
+Function.prototype.test = true;
+ok(testFunc1.test === true, "testFunc1.test !== true");
+ok(Function.test === true, "Function.test !== true");
 
 ok(typeof(0) === "number", "typeof(0) is not number");
 ok(typeof(1.5) === "number", "typeof(1.5) is not number");
