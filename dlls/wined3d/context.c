@@ -187,12 +187,9 @@ static void context_set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWin
     if (render_target)
     {
         context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, idx, render_target);
-        This->draw_buffers[idx] = GL_COLOR_ATTACHMENT0_EXT + idx;
     } else {
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + idx, GL_TEXTURE_2D, 0, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
-
-        This->draw_buffers[idx] = GL_NONE;
     }
 }
 
@@ -280,6 +277,14 @@ void context_apply_fbo_state(IWineD3DDevice *iface)
             }
             context_set_depth_stencil_fbo(iface, This->stencilBufferTarget);
             context->fbo_depth_attachment = This->stencilBufferTarget;
+        }
+
+        for (i = 0; i < GL_LIMITS(buffers); ++i)
+        {
+            if (This->render_targets[i])
+                This->draw_buffers[i] = GL_COLOR_ATTACHMENT0_EXT + i;
+            else
+                This->draw_buffers[i] = GL_NONE;
         }
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
