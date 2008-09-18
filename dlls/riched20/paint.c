@@ -1119,9 +1119,8 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
   
   si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
   if (GetWindowLongW(hWnd, GWL_STYLE) & ES_DISABLENOSCROLL)
-    si.fMask |= SIF_DISABLENOSCROLL;
-  if ((si.fMask & SIF_DISABLENOSCROLL))
   {
+    si.fMask |= SIF_DISABLENOSCROLL;
     bScrollBarWillBeVisible = TRUE;
   }
 
