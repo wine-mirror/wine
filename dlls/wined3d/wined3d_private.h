@@ -630,7 +630,9 @@ typedef enum ContextUsage {
 void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
-void apply_fbo_state(IWineD3DDevice *iface);
+void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo);
+void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
+void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
 
 void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain);
 HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain);
@@ -2431,9 +2433,6 @@ static inline BOOL use_ps(IWineD3DDeviceImpl *device) {
 
 void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED3DRECT *src_rect,
         IWineD3DSurface *dst_surface, WINED3DRECT *dst_rect, const WINED3DTEXTUREFILTERTYPE filter, BOOL flip);
-void bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo);
-void attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
-void attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
 void depth_blt(IWineD3DDevice *iface, GLuint texture, GLsizei w, GLsizei h);
 
 #endif
