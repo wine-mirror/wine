@@ -2271,18 +2271,15 @@ BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
  */
 BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 {
-    monitor_t * pm = NULL;
     LPMONITOR_INFO_2W mi2w;
-    HKEY    hroot = NULL;
-    HKEY    hentry = NULL;
-    DWORD   disposition;
-    BOOL    res = FALSE;
 
     mi2w = (LPMONITOR_INFO_2W) pMonitors;
     TRACE("(%s, %d, %p) :  %s %s %s\n", debugstr_w(pName), Level, pMonitors,
           debugstr_w(mi2w ? mi2w->pName : NULL),
           debugstr_w(mi2w ? mi2w->pEnvironment : NULL),
           debugstr_w(mi2w ? mi2w->pDLLName : NULL));
+
+    if ((backend == NULL)  && !load_backend()) return FALSE;
 
     if (Level != 2) {
         SetLastError(ERROR_INVALID_LEVEL);
@@ -2294,76 +2291,7 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         return FALSE;
     }
 
-    if (pName && (pName[0])) {
-        FIXME("for server %s not implemented\n", debugstr_w(pName));
-        SetLastError(ERROR_ACCESS_DENIED);
-        return FALSE;
-    }
-
-
-    if (!mi2w->pName || (! mi2w->pName[0])) {
-        WARN("pName not valid : %s\n", debugstr_w(mi2w->pName));
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (!mi2w->pEnvironment || lstrcmpW(mi2w->pEnvironment, envname_x86W)) {
-        WARN("Environment %s requested (we support only %s)\n", 
-                debugstr_w(mi2w->pEnvironment), debugstr_w(envname_x86W));
-        SetLastError(ERROR_INVALID_ENVIRONMENT);
-        return FALSE;
-    }
-
-    if (!mi2w->pDLLName || (! mi2w->pDLLName[0])) {
-        WARN("pDLLName not valid : %s\n", debugstr_w(mi2w->pDLLName));
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    /* Load and initialize the monitor. SetLastError() is called on failure */
-    if ((pm = monitor_load(mi2w->pName, mi2w->pDLLName)) == NULL) {
-        return FALSE;
-    }
-    monitor_unload(pm);
-
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hroot) != ERROR_SUCCESS) {
-        ERR("unable to create key %s\n", debugstr_w(MonitorsW));
-        return FALSE;
-    }
-
-    if(RegCreateKeyExW( hroot, mi2w->pName, 0, NULL, REG_OPTION_NON_VOLATILE,
-                        KEY_WRITE | KEY_QUERY_VALUE, NULL, &hentry,
-                        &disposition) == ERROR_SUCCESS) {
-
-        /* Some installers set options for the port before calling AddMonitor.
-           We query the "Driver" entry to verify that the monitor is installed,
-           before we return an error.
-           When a user installs two print monitors at the same time with the
-           same name but with a different driver DLL and a task switch comes
-           between RegQueryValueExW and RegSetValueExW, a race condition
-           is possible but silently ignored. */
-
-        DWORD   namesize = 0;
-
-        if ((disposition == REG_OPENED_EXISTING_KEY) &&
-            (RegQueryValueExW(hentry, DriverW, NULL, NULL, NULL,
-                              &namesize) == ERROR_SUCCESS)) {
-            TRACE("monitor %s already exists\n", debugstr_w(mi2w->pName));
-            /* NT: ERROR_PRINT_MONITOR_ALREADY_INSTALLED (3006)
-               9x: ERROR_ALREADY_EXISTS (183) */
-            SetLastError(ERROR_PRINT_MONITOR_ALREADY_INSTALLED);
-        }
-        else
-        {
-               INT len;
-               len = (lstrlenW(mi2w->pDLLName) +1) * sizeof(WCHAR);
-               res = (RegSetValueExW(hentry, DriverW, 0,
-                      REG_SZ, (LPBYTE) mi2w->pDLLName, len) == ERROR_SUCCESS);
-        }
-        RegCloseKey(hentry);
-    }
-
-    RegCloseKey(hroot);
-    return (res);
+    return backend->fpAddMonitor(pName, Level, pMonitors);
 }
 
 /******************************************************************
