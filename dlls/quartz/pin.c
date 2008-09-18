@@ -1526,6 +1526,7 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
 
         TRACE("Process sample\n");
 
+        pSample = NULL;
         hr = IAsyncReader_WaitForNext(This->pReader, 10000, &pSample, &dwUser);
 
         /* Return an empty sample on error to the implementation in case it does custom parsing, so it knows it's gone */
@@ -1537,6 +1538,12 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
         {
             /* FIXME: This is not well handled yet! */
             ERR("Processing error: %x\n", hr);
+            if (hr == VFW_E_TIMEOUT)
+            {
+                assert(!pSample);
+                hr = S_OK;
+                continue;
+            }
         }
 
         if (pSample)
