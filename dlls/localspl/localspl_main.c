@@ -40,6 +40,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(localspl);
 
 /* ############################### */
 
+static CRITICAL_SECTION monitor_handles_cs;
+static CRITICAL_SECTION_DEBUG monitor_handles_cs_debug =
+{
+    0, 0, &monitor_handles_cs,
+    { &monitor_handles_cs_debug.ProcessLocksList, &monitor_handles_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": monitor_handles_cs") }
+};
+static CRITICAL_SECTION monitor_handles_cs = { &monitor_handles_cs_debug, -1, 0, 0, 0, 0 };
+
+/* ############################### */
+
 typedef struct {
     WCHAR   src[MAX_PATH+MAX_PATH];
     WCHAR   dst[MAX_PATH+MAX_PATH];
@@ -71,6 +82,9 @@ typedef struct {
 
 /* ############################### */
 
+static struct list monitor_handles = LIST_INIT( monitor_handles );
+static monitor_t * pm_localport;
+
 HINSTANCE LOCALSPL_hInstance = NULL;
 
 static const PRINTPROVIDOR * pp = NULL;
@@ -91,6 +105,7 @@ static const WCHAR fmt_driversW[] = { 'S','y','s','t','e','m','\\',
                                   '%','s','\\','D','r','i','v','e','r','s','%','s',0 };
 static const WCHAR hardwareidW[] = {'H','a','r','d','w','a','r','e','I','D',0};
 static const WCHAR help_fileW[] = {'H','e','l','p',' ','F','i','l','e',0};
+static const WCHAR localportW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
 static const WCHAR locationW[] = {'L','o','c','a','t','i','o','n',0};
 static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
 static const WCHAR monitorW[] = {'M','o','n','i','t','o','r',0};
@@ -133,6 +148,25 @@ static const DWORD di_sizeof[] = {0, sizeof(DRIVER_INFO_1W), sizeof(DRIVER_INFO_
                                      sizeof(DRIVER_INFO_5W), sizeof(DRIVER_INFO_6W),
                                   0, sizeof(DRIVER_INFO_8W)};
 
+
+/******************************************************************
+ * strdupW [internal]
+ *
+ * create a copy of a unicode-string
+ *
+ */
+
+static LPWSTR strdupW(LPCWSTR p)
+{
+    LPWSTR ret;
+    DWORD len;
+
+    if(!p) return NULL;
+    len = (lstrlenW(p) + 1) * sizeof(WCHAR);
+    ret = heap_alloc(len);
+    memcpy(ret, p, len);
+    return ret;
+}
 
 /******************************************************************
  *  apd_copyfile [internal]
@@ -234,6 +268,190 @@ static LONG copy_servername_from_name(LPCWSTR name, LPWSTR target)
         }
     }
     return 0;
+}
+
+/******************************************************************
+ * monitor_unload [internal]
+ *
+ * release a printmonitor and unload it from memory, when needed
+ *
+ */
+static void monitor_unload(monitor_t * pm)
+{
+    if (pm == NULL) return;
+    TRACE("%p (refcount: %d) %s\n", pm, pm->refcount, debugstr_w(pm->name));
+
+    EnterCriticalSection(&monitor_handles_cs);
+
+    if (pm->refcount) pm->refcount--;
+
+    if (pm->refcount == 0) {
+        list_remove(&pm->entry);
+        FreeLibrary(pm->hdll);
+        heap_free(pm->name);
+        heap_free(pm->dllname);
+        heap_free(pm);
+    }
+    LeaveCriticalSection(&monitor_handles_cs);
+}
+
+/******************************************************************
+ * monitor_load [internal]
+ *
+ * load a printmonitor, get the dllname from the registry, when needed
+ * initialize the monitor and dump found function-pointers
+ *
+ * On failure, SetLastError() is called and NULL is returned
+ */
+
+static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
+{
+    LPMONITOR2  (WINAPI *pInitializePrintMonitor2) (PMONITORINIT, LPHANDLE);
+    PMONITORUI  (WINAPI *pInitializePrintMonitorUI)(VOID);
+    LPMONITOREX (WINAPI *pInitializePrintMonitor)  (LPWSTR);
+    DWORD (WINAPI *pInitializeMonitorEx)(LPWSTR, LPMONITOR);
+    DWORD (WINAPI *pInitializeMonitor)  (LPWSTR);
+
+    monitor_t * pm = NULL;
+    monitor_t * cursor;
+    LPWSTR  regroot = NULL;
+    LPWSTR  driver = dllname;
+
+    TRACE("(%s, %s)\n", debugstr_w(name), debugstr_w(dllname));
+    /* Is the Monitor already loaded? */
+    EnterCriticalSection(&monitor_handles_cs);
+
+    if (name) {
+        LIST_FOR_EACH_ENTRY(cursor, &monitor_handles, monitor_t, entry)
+        {
+            if (cursor->name && (lstrcmpW(name, cursor->name) == 0)) {
+                pm = cursor;
+                break;
+            }
+        }
+    }
+
+    if (pm == NULL) {
+        pm = heap_alloc_zero(sizeof(monitor_t));
+        if (pm == NULL) goto cleanup;
+        list_add_tail(&monitor_handles, &pm->entry);
+    }
+    pm->refcount++;
+
+    if (pm->name == NULL) {
+        /* Load the monitor */
+        LPMONITOREX pmonitorEx;
+        DWORD   len;
+
+        if (name) {
+            len = lstrlenW(monitorsW) + lstrlenW(name) + 2;
+            regroot = heap_alloc(len * sizeof(WCHAR));
+        }
+
+        if (regroot) {
+            lstrcpyW(regroot, monitorsW);
+            lstrcatW(regroot, name);
+            /* Get the Driver from the Registry */
+            if (driver == NULL) {
+                HKEY    hroot;
+                DWORD   namesize;
+                if (RegOpenKeyW(HKEY_LOCAL_MACHINE, regroot, &hroot) == ERROR_SUCCESS) {
+                    if (RegQueryValueExW(hroot, driverW, NULL, NULL, NULL,
+                                        &namesize) == ERROR_SUCCESS) {
+                        driver = heap_alloc(namesize);
+                        RegQueryValueExW(hroot, driverW, NULL, NULL, (LPBYTE) driver, &namesize) ;
+                    }
+                    RegCloseKey(hroot);
+                }
+            }
+        }
+
+        pm->name = strdupW(name);
+        pm->dllname = strdupW(driver);
+
+        if ((name && (!regroot || !pm->name)) || !pm->dllname) {
+            monitor_unload(pm);
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            pm = NULL;
+            goto cleanup;
+        }
+
+        pm->hdll = LoadLibraryW(driver);
+        TRACE("%p: LoadLibrary(%s) => %d\n", pm->hdll, debugstr_w(driver), GetLastError());
+
+        if (pm->hdll == NULL) {
+            monitor_unload(pm);
+            SetLastError(ERROR_MOD_NOT_FOUND);
+            pm = NULL;
+            goto cleanup;
+        }
+
+        pInitializePrintMonitor2  = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitor2");
+        pInitializePrintMonitorUI = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitorUI");
+        pInitializePrintMonitor   = (void *)GetProcAddress(pm->hdll, "InitializePrintMonitor");
+        pInitializeMonitorEx = (void *)GetProcAddress(pm->hdll, "InitializeMonitorEx");
+        pInitializeMonitor   = (void *)GetProcAddress(pm->hdll, "InitializeMonitor");
+
+
+        TRACE("%p: %s,pInitializePrintMonitor2\n", pInitializePrintMonitor2, debugstr_w(driver));
+        TRACE("%p: %s,pInitializePrintMonitorUI\n", pInitializePrintMonitorUI, debugstr_w(driver));
+        TRACE("%p: %s,pInitializePrintMonitor\n", pInitializePrintMonitor, debugstr_w(driver));
+        TRACE("%p: %s,pInitializeMonitorEx\n", pInitializeMonitorEx, debugstr_w(driver));
+        TRACE("%p: %s,pInitializeMonitor\n", pInitializeMonitor, debugstr_w(driver));
+
+        if (pInitializePrintMonitorUI  != NULL) {
+            pm->monitorUI = pInitializePrintMonitorUI();
+            TRACE("%p: MONITORUI from %s,InitializePrintMonitorUI()\n", pm->monitorUI, debugstr_w(driver));
+            if (pm->monitorUI) {
+                TRACE("0x%08x: dwMonitorSize (%d)\n",
+                        pm->monitorUI->dwMonitorUISize, pm->monitorUI->dwMonitorUISize);
+
+            }
+        }
+
+        if (pInitializePrintMonitor && regroot) {
+            pmonitorEx = pInitializePrintMonitor(regroot);
+            TRACE("%p: LPMONITOREX from %s,InitializePrintMonitor(%s)\n",
+                    pmonitorEx, debugstr_w(driver), debugstr_w(regroot));
+
+            if (pmonitorEx) {
+                pm->dwMonitorSize = pmonitorEx->dwMonitorSize;
+                pm->monitor = &(pmonitorEx->Monitor);
+            }
+        }
+
+        if (pm->monitor) {
+            TRACE("0x%08x: dwMonitorSize (%d)\n", pm->dwMonitorSize, pm->dwMonitorSize);
+
+        }
+
+        if (!pm->monitor && regroot) {
+            if (pInitializePrintMonitor2 != NULL) {
+                FIXME("%s,InitializePrintMonitor2 not implemented\n", debugstr_w(driver));
+            }
+            if (pInitializeMonitorEx != NULL) {
+                FIXME("%s,InitializeMonitorEx not implemented\n", debugstr_w(driver));
+            }
+            if (pInitializeMonitor != NULL) {
+                FIXME("%s,InitializeMonitor not implemented\n", debugstr_w(driver));
+            }
+        }
+        if (!pm->monitor && !pm->monitorUI) {
+            monitor_unload(pm);
+            SetLastError(ERROR_PROC_NOT_FOUND);
+            pm = NULL;
+        }
+    }
+cleanup:
+    if ((pm_localport ==  NULL) && (pm != NULL) && (lstrcmpW(pm->name, localportW) == 0)) {
+        pm->refcount++;
+        pm_localport = pm;
+    }
+    LeaveCriticalSection(&monitor_handles_cs);
+    if (driver != dllname) heap_free(driver);
+    heap_free(regroot);
+    TRACE("=> %p\n", pm);
+    return pm;
 }
 
 /******************************************************************
@@ -663,6 +881,107 @@ static BOOL WINAPI myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD d
 }
 
 /******************************************************************************
+ * fpAddMonitor [exported through PRINTPROVIDOR]
+ *
+ * Install a Printmonitor
+ *
+ * PARAMS
+ *  pName       [I] Servername or NULL (local Computer)
+ *  Level       [I] Structure-Level (Must be 2)
+ *  pMonitors   [I] PTR to MONITOR_INFO_2
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  All Files for the Monitor must already be copied to %winsysdir% ("%SystemRoot%\system32")
+ *
+ */
+BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
+{
+    monitor_t * pm = NULL;
+    LPMONITOR_INFO_2W mi2w;
+    HKEY    hroot = NULL;
+    HKEY    hentry = NULL;
+    DWORD   disposition;
+    BOOL    res = FALSE;
+
+    mi2w = (LPMONITOR_INFO_2W) pMonitors;
+    TRACE("(%s, %d, %p): %s %s %s\n", debugstr_w(pName), Level, pMonitors,
+            debugstr_w(mi2w ? mi2w->pName : NULL),
+            debugstr_w(mi2w ? mi2w->pEnvironment : NULL),
+            debugstr_w(mi2w ? mi2w->pDLLName : NULL));
+
+    if (copy_servername_from_name(pName, NULL)) {
+        FIXME("server %s not supported\n", debugstr_w(pName));
+        SetLastError(ERROR_ACCESS_DENIED);
+        return FALSE;
+    }
+
+    if (!mi2w->pName || (! mi2w->pName[0])) {
+        WARN("pName not valid : %s\n", debugstr_w(mi2w->pName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!mi2w->pEnvironment || lstrcmpW(mi2w->pEnvironment, x86_envnameW)) {
+        WARN("Environment %s requested (we support only %s)\n",
+                debugstr_w(mi2w->pEnvironment), debugstr_w(x86_envnameW));
+        SetLastError(ERROR_INVALID_ENVIRONMENT);
+        return FALSE;
+    }
+
+    if (!mi2w->pDLLName || (! mi2w->pDLLName[0])) {
+        WARN("pDLLName not valid : %s\n", debugstr_w(mi2w->pDLLName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* Load and initialize the monitor. SetLastError() is called on failure */
+    if ((pm = monitor_load(mi2w->pName, mi2w->pDLLName)) == NULL) {
+        return FALSE;
+    }
+    monitor_unload(pm);
+
+    if (RegCreateKeyW(HKEY_LOCAL_MACHINE, monitorsW, &hroot) != ERROR_SUCCESS) {
+        ERR("unable to create key %s\n", debugstr_w(monitorsW));
+        return FALSE;
+    }
+
+    if (RegCreateKeyExW(hroot, mi2w->pName, 0, NULL, REG_OPTION_NON_VOLATILE,
+                        KEY_WRITE | KEY_QUERY_VALUE, NULL, &hentry,
+                        &disposition) == ERROR_SUCCESS) {
+
+        /* Some installers set options for the port before calling AddMonitor.
+           We query the "Driver" entry to verify that the monitor is installed,
+           before we return an error.
+           When a user installs two print monitors at the same time with the
+           same name, a race condition is possible but silently ignored. */
+
+        DWORD   namesize = 0;
+
+        if ((disposition == REG_OPENED_EXISTING_KEY) &&
+            (RegQueryValueExW(hentry, driverW, NULL, NULL, NULL,
+                              &namesize) == ERROR_SUCCESS)) {
+            TRACE("monitor %s already exists\n", debugstr_w(mi2w->pName));
+            /* 9x use ERROR_ALREADY_EXISTS */
+            SetLastError(ERROR_PRINT_MONITOR_ALREADY_INSTALLED);
+        }
+        else
+        {
+            INT len;
+            len = (lstrlenW(mi2w->pDLLName) +1) * sizeof(WCHAR);
+            res = (RegSetValueExW(hentry, driverW, 0, REG_SZ,
+                    (LPBYTE) mi2w->pDLLName, len) == ERROR_SUCCESS);
+        }
+        RegCloseKey(hentry);
+    }
+
+    RegCloseKey(hroot);
+    return (res);
+}
+
+/******************************************************************************
  * fpAddPrinterDriverEx [exported through PRINTPROVIDOR]
  *
  * Install a Printer Driver with the Option to upgrade / downgrade the Files
@@ -879,7 +1198,7 @@ static const PRINTPROVIDOR * get_backend(void)
         NULL,   /* fpAddPrinterConnection */
         NULL,   /* fpDeletePrinterConnection */
         NULL,   /* fpPrinterMessageBox */
-        NULL,   /* fpAddMonitor */
+        fpAddMonitor,
         fpDeleteMonitor,
         NULL,   /* fpResetPrinter */
         NULL,   /* fpGetPrinterDriverEx */
