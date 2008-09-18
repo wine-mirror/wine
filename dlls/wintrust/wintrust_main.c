@@ -607,6 +607,8 @@ BOOL WINAPI WINTRUST_AddStore(CRYPT_PROVIDER_DATA *data, HCERTSTORE store)
 {
     BOOL ret = FALSE;
 
+    TRACE("(%p, %p)\n", data, store);
+
     if (data->chStores)
         data->pahStores = WINTRUST_ReAlloc(data->pahStores,
          (data->chStores + 1) * sizeof(HCERTSTORE));
@@ -629,6 +631,8 @@ BOOL WINAPI WINTRUST_AddSgnr(CRYPT_PROVIDER_DATA *data,
  BOOL fCounterSigner, DWORD idxSigner, CRYPT_PROVIDER_SGNR *sgnr)
 {
     BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %d, %p)\n", data, fCounterSigner, idxSigner, sgnr);
 
     if (sgnr->cbStruct > sizeof(CRYPT_PROVIDER_SGNR))
     {
@@ -680,6 +684,9 @@ BOOL WINAPI WINTRUST_AddCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
  BOOL fCounterSigner, DWORD idxCounterSigner, PCCERT_CONTEXT pCert2Add)
 {
     BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %d, %d, %p)\n", data, idxSigner, fCounterSigner,
+     idxSigner, pCert2Add);
 
     if (fCounterSigner)
     {
