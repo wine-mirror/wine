@@ -1026,11 +1026,19 @@ static void LoadSubstList(void)
     }
 }
 
-static WCHAR *get_familyname(FT_Face ft_face)
+
+/*****************************************************************
+ *       get_name_table_entry
+ *
+ * Supply the platform, encoding, language and name ids in req
+ * and if the name exists the function will fill in the string
+ * and string_len members.  The string is owned by FreeType so
+ * don't free it.  Returns TRUE if the name is found else FALSE.
+ */
+static BOOL get_name_table_entry(FT_Face ft_face, FT_SfntName *req)
 {
-    WCHAR *family = NULL;
     FT_SfntName name;
-    FT_UInt num_names, name_index, i;
+    FT_UInt num_names, name_index;
 
     if(FT_IS_SFNT(ft_face))
     {
@@ -1040,28 +1048,49 @@ static WCHAR *get_familyname(FT_Face ft_face)
         {
             if(!pFT_Get_Sfnt_Name(ft_face, name_index, &name))
             {
-                if((name.name_id == TT_NAME_ID_FONT_FAMILY) &&
-                   (name.language_id == GetUserDefaultLCID()) &&
-                   (name.platform_id == TT_PLATFORM_MICROSOFT) &&
-                   (name.encoding_id == TT_MS_ID_UNICODE_CS))
+                if((name.platform_id == req->platform_id) &&
+                   (name.encoding_id == req->encoding_id) &&
+                   (name.language_id == req->language_id) &&
+                   (name.name_id     == req->name_id))
                 {
-                    /* String is not nul terminated and string_len is a byte length. */
-                    family = HeapAlloc(GetProcessHeap(), 0, name.string_len + 2);
-                    for(i = 0; i < name.string_len / 2; i++)
-                    {
-                        WORD *tmp = (WORD *)&name.string[i * 2];
-                        family[i] = GET_BE_WORD(*tmp);
-                    }
-                    family[i] = 0;
-
-                    TRACE("Got localised name %s\n", debugstr_w(family));
-                    return family;
+                    req->string = name.string;
+                    req->string_len = name.string_len;
+                    return TRUE;
                 }
             }
         }
     }
+    req->string = NULL;
+    req->string_len = 0;
+    return FALSE;
+}
 
-    return NULL;
+static WCHAR *get_familyname(FT_Face ft_face)
+{
+    WCHAR *family = NULL;
+    FT_SfntName name;
+
+    name.platform_id = TT_PLATFORM_MICROSOFT;
+    name.encoding_id = TT_MS_ID_UNICODE_CS;
+    name.language_id = GetUserDefaultLCID();
+    name.name_id     = TT_NAME_ID_FONT_FAMILY;
+
+    if(get_name_table_entry(ft_face, &name))
+    {
+        int i;
+
+        /* String is not nul terminated and string_len is a byte length. */
+        family = HeapAlloc(GetProcessHeap(), 0, name.string_len + 2);
+        for(i = 0; i < name.string_len / 2; i++)
+        {
+            WORD *tmp = (WORD *)&name.string[i * 2];
+            family[i] = GET_BE_WORD(*tmp);
+        }
+        family[i] = 0;
+        TRACE("Got localised name %s\n", debugstr_w(family));
+    }
+
+    return family;
 }
 
 
