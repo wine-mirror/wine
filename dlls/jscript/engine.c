@@ -288,17 +288,6 @@ static inline DOUBLE num_val(const VARIANT *v)
     return V_VT(v) == VT_I4 ? V_I4(v) : V_R8(v);
 }
 
-static inline void num_set_val(VARIANT *v, DOUBLE d)
-{
-    if(d == (DOUBLE)(INT)d) {
-        V_VT(v) = VT_I4;
-        V_I4(v) = d;
-    }else {
-        V_VT(v) = VT_R8;
-        V_R8(v) = d;
-    }
-}
-
 /* ECMA-262 3rd Edition    11.9.6 */
 HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
 {

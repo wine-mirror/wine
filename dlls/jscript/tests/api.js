@@ -16,10 +16,29 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+var tmp;
+
 ok("".length === 0, "\"\".length = " + "".length);
 ok(getVT("".length) == "VT_I4", "\"\".length = " + "".length);
 ok("abc".length === 3, "\"abc\".length = " + "abc".length);
 ok(String.prototype.length === 0, "String.prototype.length = " + String.prototype.length);
+
+tmp = "abc".charAt(0);
+ok(tmp === "a", "'abc',charAt(0) = " + tmp);
+tmp = "abc".charAt(1);
+ok(tmp === "b", "'abc',charAt(1) = " + tmp);
+tmp = "abc".charAt(2);
+ok(tmp === "c", "'abc',charAt(2) = " + tmp);
+tmp = "abc".charAt(3);
+ok(tmp === "", "'abc',charAt(3) = " + tmp);
+tmp = "abc".charAt(4);
+ok(tmp === "", "'abc',charAt(4) = " + tmp);
+tmp = "abc".charAt();
+ok(tmp === "a", "'abc',charAt() = " + tmp);
+tmp = "abc".charAt(-1);
+ok(tmp === "", "'abc',charAt(-1) = " + tmp);
+tmp = "abc".charAt(0,2);
+ok(tmp === "a", "'abc',charAt(0.2) = " + tmp);
 
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");

@@ -130,11 +130,52 @@ static HRESULT String_bold(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.5.4.5 */
 static HRESULT String_charAt(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    StringInstance *strobj;
+    BSTR str;
+    INT pos = 0;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(dispex->builtin_info->class != JSCLASS_STRING) {
+        FIXME("not string this not supported\n");
+        return E_NOTIMPL;
+    }
+
+    strobj = (StringInstance*)dispex;
+
+    if(arg_cnt(dp)) {
+        VARIANT num;
+
+        hres = to_integer(dispex->ctx, get_arg(dp, 0), ei, &num);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&num) == VT_I4) {
+            pos = V_I4(&num);
+        }else {
+            WARN("pos = %lf\n", V_R8(&num));
+            pos = -1;
+        }
+    }
+
+    if(!retv)
+        return S_OK;
+
+    if(0 <= pos && pos < strobj->length)
+        str = SysAllocStringLen(strobj->str+pos, 1);
+    else
+        str = SysAllocStringLen(NULL, 0);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    V_VT(retv) = VT_BSTR;
+    V_BSTR(retv) = str;
+    return S_OK;
 }
 
 static HRESULT String_charCodeAt(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -200,6 +241,7 @@ static HRESULT String_link(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.5.4.10 */
 static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {

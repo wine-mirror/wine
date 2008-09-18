@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
+
 #include "jscript.h"
 #include "engine.h"
 
@@ -235,6 +237,24 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
         FIXME("unimplemented for vt %d\n", V_VT(v));
         return E_NOTIMPL;
     }
+
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    9.4 */
+HRESULT to_integer(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
+{
+    VARIANT num;
+    HRESULT hres;
+
+    hres = to_number(ctx, v, ei, &num);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(&num) == VT_I4)
+        *ret = *v;
+    else
+        num_set_val(ret, V_R8(&num) >= 0.0 ? floor(V_R8(&num)) : -floor(-V_R8(&num)));
 
     return S_OK;
 }

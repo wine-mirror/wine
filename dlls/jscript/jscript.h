@@ -140,6 +140,7 @@ HRESULT create_number(script_ctx_t*,VARIANT*,DispatchEx**);
 HRESULT to_primitive(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);
 HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
 HRESULT to_number(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);
+HRESULT to_integer(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);
 HRESULT to_int32(script_ctx_t*,VARIANT*,jsexcept_t*,INT*);
 HRESULT to_string(script_ctx_t*,VARIANT*,jsexcept_t*,BSTR*);
 HRESULT to_object(exec_ctx_t*,VARIANT*,IDispatch**);
@@ -202,6 +203,17 @@ static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
 static inline DWORD arg_cnt(const DISPPARAMS *dp)
 {
     return dp->cArgs - dp->cNamedArgs;
+}
+
+static inline void num_set_val(VARIANT *v, DOUBLE d)
+{
+    if(d == (DOUBLE)(INT)d) {
+        V_VT(v) = VT_I4;
+        V_I4(v) = d;
+    }else {
+        V_VT(v) = VT_R8;
+        V_R8(v) = d;
+    }
 }
 
 const char *debugstr_variant(const VARIANT*);
