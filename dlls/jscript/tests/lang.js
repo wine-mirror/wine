@@ -301,6 +301,12 @@ ok(tmp === 2, "8 >> 2 = " + tmp);
 tmp = -64 >> 4;
 ok(tmp === -4, "-64 >> 4 = " + tmp);
 
+tmp = 8 >>> 2;
+ok(tmp === 2, "8 >> 2 = " + tmp);
+
+tmp = -64 >>> 4;
+ok(tmp === 0x0ffffffc, "-64 >>> 4 = " + tmp);
+
 tmp = 10;
 ok((tmp &= 8) === 8, "tmp(10) &= 8 !== 8");
 ok(getVT(tmp) === "VT_I4", "getVT(tmp &= 8) = " + getVT(tmp));

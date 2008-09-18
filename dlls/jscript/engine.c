@@ -2807,10 +2807,33 @@ HRESULT right_shift_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD 
     return binary_expr_eval(ctx, expr, rshift_eval, ei, ret);
 }
 
+/* ECMA-262 3rd Edition    11.7.3 */
+static HRESULT rshift2_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_t *ei, VARIANT *retv)
+{
+    DWORD li, ri;
+    HRESULT hres;
+
+    hres = to_uint32(ctx->parser->script, lval, ei, &li);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_uint32(ctx->parser->script, rval, ei, &ri);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(retv) = VT_I4;
+    V_I4(retv) = li >> (ri&0x1f);
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.7.3 */
 HRESULT right2_shift_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+
+    TRACE("\n");
+
+    return binary_expr_eval(ctx, expr, rshift2_eval, ei, ret);
 }
 
 /* ECMA-262 3rd Edition    11.13.1 */
