@@ -575,7 +575,7 @@ static void test_RtlpNtQueryValueKey(void)
 
 START_TEST(reg)
 {
-    static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t','\\',0};
+    static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t',0};
     if(!InitFunctionPtrs())
         return;
     pRtlFormatCurrentUserKeyPath(&winetestpath);
