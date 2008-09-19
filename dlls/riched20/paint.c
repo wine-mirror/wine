@@ -1099,7 +1099,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
 }
 
  
- void ME_UpdateScrollBar(ME_TextEditor *editor)
+void ME_UpdateScrollBar(ME_TextEditor *editor)
 { 
   /* Note that this is the only function that should ever call SetScrolLInfo
    * with SIF_PAGE or SIF_RANGE. SetScrollPos and SetScrollRange should never
