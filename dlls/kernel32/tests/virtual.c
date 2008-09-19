@@ -270,6 +270,7 @@ static void test_VirtualAlloc(void)
 static void test_MapViewOfFile(void)
 {
     static const char testfile[] = "testfile.xxx";
+    const char *name;
     HANDLE file, mapping;
     void *ptr, *ptr2;
     MEMORY_BASIC_INFORMATION info;
@@ -450,11 +451,18 @@ static void test_MapViewOfFile(void)
     DeleteFileA( testfile );
 
     SetLastError(0xdeadbeef);
-    file = CreateFileMapping( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "Local\\Foo");
+    name = "Local\\Foo";
+    file = CreateFileMapping( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, name );
+    /* nt4 doesn't have Local\\ */
+    if (!file && GetLastError() == ERROR_PATH_NOT_FOUND)
+    {
+        name = "Foo";
+        file = CreateFileMapping( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, name );
+    }
     ok( file != 0, "CreateFileMapping PAGE_READWRITE error %u\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
-    mapping = OpenFileMapping( FILE_MAP_READ, FALSE, "Local\\Foo" );
+    mapping = OpenFileMapping( FILE_MAP_READ, FALSE, name );
     ok( mapping != 0, "OpenFileMapping FILE_MAP_READ error %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
@@ -476,7 +484,7 @@ todo_wine ok( info.Protect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.Prote
     CloseHandle( mapping );
 
     SetLastError(0xdeadbeef);
-    mapping = OpenFileMapping( FILE_MAP_WRITE, FALSE, "Local\\Foo" );
+    mapping = OpenFileMapping( FILE_MAP_WRITE, FALSE, name );
     ok( mapping != 0, "OpenFileMapping FILE_MAP_WRITE error %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );

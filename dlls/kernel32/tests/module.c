@@ -328,7 +328,8 @@ static void testLoadLibraryEx(void)
     {
         ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
     }
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       broken(GetLastError() == ERROR_INVALID_HANDLE),  /* nt4 */
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 }
 
