@@ -2328,6 +2328,12 @@ static void test_GetTextFace(void)
     HDC dc;
     int n;
 
+    if(!is_font_installed("Tahoma"))
+    {
+        skip("Tahoma is not installed so skipping this test\n");
+        return;
+    }
+
     /* 'A' case.  */
     memcpy(fA.lfFaceName, faceA, sizeof faceA);
     f = CreateFontIndirectA(&fA);
