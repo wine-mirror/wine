@@ -323,6 +323,17 @@ static void test_filter(IDirect3DDevice9 *device) {
     IDirect3D9_Release(d3d9);
 }
 
+static void test_gettexture(IDirect3DDevice9 *device) {
+    HRESULT hr;
+    IDirect3DBaseTexture9 *texture = (IDirect3DBaseTexture9 *) 0xdeadbeef;
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed, hr = 0x%08x\n", hr);
+    hr = IDirect3DDevice9_GetTexture(device, 0, &texture);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetTexture failed, hr = 0x%08x\n", hr);
+    ok(texture == NULL, "Texture returned is %p, expected NULL\n", texture);
+}
+
 START_TEST(texture)
 {
     D3DCAPS9 caps;
@@ -345,4 +356,5 @@ START_TEST(texture)
     test_cube_textures(device_ptr, caps.TextureCaps);
     test_mipmap_gen(device_ptr);
     test_filter(device_ptr);
+    test_gettexture(device_ptr);
 }

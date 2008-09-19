@@ -990,11 +990,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTexture(LPDIRECT3DDEVICE9EX ifac
 
     EnterCriticalSection(&d3d9_cs);
     rc = IWineD3DDevice_GetTexture(This->WineD3DDevice, Stage, &retTexture);
-    if (rc == D3D_OK && NULL != retTexture) {
+    if (SUCCEEDED(rc) && NULL != retTexture) {
         IWineD3DBaseTexture_GetParent(retTexture, (IUnknown **)ppTexture);
         IWineD3DBaseTexture_Release(retTexture);
-    }else{
-        FIXME("Call to get texture  (%d) failed (%p)\n", Stage, retTexture);
+    } else {
+        if(FAILED(rc)) {
+            WARN("Call to get texture  (%d) failed (%p)\n", Stage, retTexture);
+        }
         *ppTexture = NULL;
     }
     LeaveCriticalSection(&d3d9_cs);
