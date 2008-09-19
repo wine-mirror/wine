@@ -1085,6 +1085,37 @@ static BSTR EnsureCorrectEOL(BSTR sInput)
     return sNew;
 }
 
+/* Removes encoding information and last character (nullbyte) */
+static BSTR EnsureNoEncoding(BSTR sInput)
+{
+    static const WCHAR wszEncoding[] = {'e','n','c','o','d','i','n','g','='};
+    BSTR sNew;
+    WCHAR *pBeg, *pEnd;
+
+    pBeg = sInput;
+    while(*pBeg != '\n' && memcmp(pBeg, wszEncoding, sizeof(wszEncoding)))
+        pBeg++;
+
+    if(*pBeg == '\n')
+    {
+        SysReAllocStringLen(&sInput, sInput, SysStringLen(sInput)-1);
+        return sInput;
+    }
+    pBeg--;
+
+    pEnd = pBeg + sizeof(wszEncoding)/sizeof(WCHAR) + 2;
+    while(*pEnd != '\"') pEnd++;
+    pEnd++;
+
+    sNew = SysAllocStringLen(NULL,
+            pBeg-sInput + SysStringLen(sInput)-(pEnd-sInput)-1);
+    memcpy(sNew, sInput, (pBeg-sInput)*sizeof(WCHAR));
+    memcpy(&sNew[pBeg-sInput], pEnd, (SysStringLen(sInput)-(pEnd-sInput)-1)*sizeof(WCHAR));
+
+    SysFreeString(sInput);
+    return sNew;
+}
+
 /*
  * We are trying to replicate the same behaviour as msxml by converting
  * line endings to \r\n and using idents as \t. The problem is that msxml
@@ -1123,7 +1154,18 @@ static HRESULT WINAPI xmlnode_get_xml(
             else
                 bstrContent = bstr_from_xmlChar(pContent);
 
-            *xmlString = This->node->type == XML_ELEMENT_NODE ? EnsureCorrectEOL(bstrContent) : bstrContent;
+            switch(This->node->type)
+            {
+                case XML_ELEMENT_NODE:
+                    *xmlString = EnsureCorrectEOL(bstrContent);
+                    break;
+                case XML_DOCUMENT_NODE:
+                    *xmlString = EnsureCorrectEOL(bstrContent);
+                    *xmlString = EnsureNoEncoding(*xmlString);
+                    break;
+                default:
+                    *xmlString = bstrContent;
+            }
         }
 
         xmlBufferFree(pXmlBuf);
