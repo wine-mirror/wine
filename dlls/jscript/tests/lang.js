@@ -633,7 +633,7 @@ do {
     ok(tmp === 0, "tmp !=== 0");
     tmp++;
 } while(false);
-ok(tmp === 1, "tmp !== 4");
+ok(tmp === 1, "tmp !== 1");
 
 tmp = 0;
 while(tmp < 4) {
