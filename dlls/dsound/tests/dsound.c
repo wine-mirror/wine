@@ -763,8 +763,9 @@ static HRESULT test_secondary(LPGUID lpGuid)
             wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx) + 1;
 
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL) && !secondary)
-                || rc==DS_OK, /* 2003 / 2008 */
+            ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL || rc==DSERR_INVALIDPARAM)
+                && !secondary)
+               || rc==DS_OK, /* 2003 / 2008 */
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
