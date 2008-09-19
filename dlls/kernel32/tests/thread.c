@@ -104,13 +104,15 @@ CreateThread
    certain chunks of code at a time, and we know which one is executing
    it.  It basically makes multithreaded execution linear, which defeats
    the purpose of multiple threads, but makes testing easy.  */
-static HANDLE all_synced;
+static HANDLE start_event, stop_event;
 static LONG num_syncing_threads, num_synced;
 
 static void init_thread_sync_helpers(LONG num_threads)
 {
-  all_synced = CreateEvent(NULL, FALSE, FALSE, NULL);
-  ok(all_synced != NULL, "CreateEvent failed\n");
+  start_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+  ok(start_event != NULL, "CreateEvent failed\n");
+  stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+  ok(stop_event != NULL, "CreateEvent failed\n");
   num_syncing_threads = num_threads;
   num_synced = 0;
 }
@@ -120,13 +122,13 @@ static BOOL sync_threads_and_run_one(DWORD sync_id, DWORD my_id)
   LONG num = InterlockedIncrement(&num_synced);
   assert(0 < num && num <= num_syncing_threads);
   if (num == num_syncing_threads)
-    /* FIXME: MSDN claims PulseEvent is unreliable.  For a test this isn't
-       so important, but we could use condition variables with more effort.
-       The given approach is clearer, though.  */
-    PulseEvent(all_synced);
+  {
+      ResetEvent( stop_event );
+      SetEvent( start_event );
+  }
   else
   {
-    DWORD ret = WaitForSingleObject(all_synced, 60000);
+    DWORD ret = WaitForSingleObject(start_event, 10000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
   }
   return sync_id == my_id;
@@ -137,18 +139,21 @@ static void resync_after_run(void)
   LONG num = InterlockedDecrement(&num_synced);
   assert(0 <= num && num < num_syncing_threads);
   if (num == 0)
-    PulseEvent(all_synced);
+  {
+      ResetEvent( start_event );
+      SetEvent( stop_event );
+  }
   else
   {
-    DWORD ret = WaitForSingleObject(all_synced, 60000);
+    DWORD ret = WaitForSingleObject(stop_event, 10000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
   }
 }
 
 static void cleanup_thread_sync_helpers(void)
 {
-  CloseHandle(all_synced);
-  all_synced = NULL;
+  CloseHandle(start_event);
+  CloseHandle(stop_event);
 }
 
 DWORD tlsIndex;
