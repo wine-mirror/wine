@@ -479,6 +479,9 @@ static void test_saxreader(void)
     HANDLE file;
     static const CHAR testXmlA[] = "test.xml";
     static const WCHAR testXmlW[] = {'t','e','s','t','.','x','m','l',0};
+    IXMLDOMDocument *domDocument;
+    BSTR bstrData;
+    VARIANT_BOOL vBool;
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISAXXMLReader, (LPVOID*)&reader);
@@ -575,6 +578,24 @@ static void test_saxreader(void)
     test_expect_call(CH_ENDTEST);
 
     DeleteFileA(testXmlA);
+
+    hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IXMLDOMDocument, (LPVOID*)&domDocument);
+    if(FAILED(hr))
+    {
+        skip("Failed to create DOMDocument instance\n");
+        return;
+    }
+    bstrData = SysAllocString(szSimpleXML);
+    hr = IXMLDOMDocument_loadXML(domDocument, bstrData, &vBool);
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown*)domDocument;
+
+    expectCall = contentHandlerTest2;
+    hr = ISAXXMLReader_parse(reader, var);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    test_expect_call(CH_ENDTEST);
+    IXMLDOMDocument_Release(domDocument);
 
     ISAXXMLReader_Release(reader);
 }
