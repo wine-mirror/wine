@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cryptui.dll
 IMPORTS   = kernel32
+IMPORTLIB = cryptui
 
 C_SRCS = \
 	main.c
