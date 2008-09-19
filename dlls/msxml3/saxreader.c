@@ -1909,6 +1909,17 @@ static HRESULT WINAPI internal_parse(
             IXMLDOMDocument *xmlDoc;
 
             if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
+                        &IID_IXMLDOMDocument, (void**)&xmlDoc) == S_OK)
+            {
+                BSTR bstrData;
+
+                IXMLDOMDocument_get_xml(xmlDoc, &bstrData);
+                hr = internal_parseBuffer(This, (const char*)bstrData,
+                        SysStringByteLen(bstrData), vbInterface);
+                IXMLDOMDocument_Release(xmlDoc);
+                break;
+            }
+            if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                         &IID_IPersistStream, (void**)&persistStream) == S_OK)
             {
                 hr = IPersistStream_Save(persistStream, stream, TRUE);
@@ -1920,18 +1931,6 @@ static HRESULT WINAPI internal_parse(
             {
                 hr = internal_parseStream(This, stream, vbInterface);
                 IStream_Release(stream);
-                break;
-            }
-            if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
-                                       &IID_IXMLDOMDocument, (void**)&xmlDoc) == S_OK)
-            {
-                BSTR bstrData;
-
-                IXMLDOMDocument_get_xml(xmlDoc, &bstrData);
-                hr = internal_parseBuffer(This, (const char*)bstrData,
-                        SysStringByteLen(bstrData), vbInterface);
-                IXMLDOMDocument_Release(xmlDoc);
-                hr = E_NOTIMPL;
                 break;
             }
         }
