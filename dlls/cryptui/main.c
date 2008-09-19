@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winuser.h"
 #include "cryptuiapi.h"
 #include "wine/debug.h"
@@ -54,6 +55,40 @@ BOOL WINAPI CryptUIDlgCertMgr(PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr)
 {
     FIXME("(%p): stub\n", pCryptUICertMgr);
     return FALSE;
+}
+
+BOOL WINAPI CryptUIDlgViewCertificateA(
+ PCCRYPTUI_VIEWCERTIFICATE_STRUCTA pCertViewInfo, BOOL *pfPropertiesChanged)
+{
+    CRYPTUI_VIEWCERTIFICATE_STRUCTW viewInfo;
+    LPWSTR title = NULL;
+    BOOL ret;
+
+    TRACE("(%p, %p)\n", pCertViewInfo, pfPropertiesChanged);
+
+    memcpy(&viewInfo, pCertViewInfo, sizeof(viewInfo));
+    if (pCertViewInfo->szTitle)
+    {
+        int len = MultiByteToWideChar(CP_ACP, 0, pCertViewInfo->szTitle, -1,
+         NULL, 0);
+
+        title = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (title)
+        {
+            MultiByteToWideChar(CP_ACP, 0, pCertViewInfo->szTitle, -1, title,
+             len);
+            viewInfo.szTitle = title;
+        }
+        else
+        {
+            ret = FALSE;
+            goto error;
+        }
+    }
+    ret = CryptUIDlgViewCertificateW(&viewInfo, pfPropertiesChanged);
+    HeapFree(GetProcessHeap(), 0, title);
+error:
+    return ret;
 }
 
 BOOL WINAPI CryptUIDlgViewCertificateW(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,

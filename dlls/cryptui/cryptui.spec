@@ -11,7 +11,7 @@
 11 stub CryptUIDlgViewCRLW
 12 stub CryptUIDlgViewCTLA
 13 stub CryptUIDlgViewCTLW
-14 stub CryptUIDlgViewCertificateA
+14 stdcall CryptUIDlgViewCertificateA(ptr ptr)
 15 stub CryptUIDlgViewCertificatePropertiesA
 16 stub CryptUIDlgViewCertificatePropertiesW
 17 stdcall CryptUIDlgViewCertificateW(ptr ptr)
