@@ -919,6 +919,7 @@ static const struct message WmShowChildInvisibleParentSeq_1[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_STATECHANGED },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_CHILDACTIVATE, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOREDRAW|SWP_NOCOPYBITS|SWP_STATECHANGED },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_MINIMIZED },
@@ -1674,7 +1675,7 @@ static void flush_events(void)
         if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
         while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
         diff = time - GetTickCount();
-        min_timeout = 10;
+        min_timeout = 20;
     }
 }
 
@@ -2690,7 +2691,7 @@ static const struct message WmMaximizeMDIchildInvisibleSeq2[] = {
 
     { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc|optional, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCACTIVATE, sent|wparam|defwinproc|optional, 1 },
-    { HCBT_SETFOCUS, hook },
+    { HCBT_SETFOCUS, hook|optional },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|optional }, /* in MDI client */
@@ -8435,6 +8436,7 @@ struct sendmsg_info
 static DWORD CALLBACK send_msg_thread( LPVOID arg )
 {
     struct sendmsg_info *info = arg;
+    SetLastError( 0xdeadbeef );
     info->ret = SendMessageTimeoutA( info->hwnd, WM_USER, 0, 0, 0, info->timeout, NULL );
     if (!info->ret) ok( GetLastError() == ERROR_TIMEOUT, "unexpected error %d\n", GetLastError());
     return 0;
@@ -9341,8 +9343,8 @@ static void pump_msg_loop_timeout(DWORD timeout, BOOL inject_mouse_move)
     DWORD start_ticks, end_ticks;
 
     start_ticks = GetTickCount();
-    /* add some deviation (5%) to cover not expected delays */
-    start_ticks += timeout / 20;
+    /* add some deviation (50%) to cover not expected delays */
+    start_ticks += timeout / 2;
 
     do
     {
