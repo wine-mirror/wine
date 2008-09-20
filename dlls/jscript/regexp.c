@@ -2571,7 +2571,7 @@ SimpleMatch(REGlobalData *gData, REMatchState *x, REOp op,
         if (!updatecp)
             x->cp = startcp;
         *startpc = pc;
-        TRACE(" * \n");
+        TRACE(" *\n");
         return result;
     }
     x->cp = startcp;
@@ -3001,7 +3001,7 @@ ExecuteREBytecode(REGlobalData *gData, REMatchState *x)
     }while(0)
 
                 if (!result) {
-                    TRACE(" - \n");
+                    TRACE(" -\n");
                     /*
                      * Non-greedy failure - try to consume another child.
                      */
