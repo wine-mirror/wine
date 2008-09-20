@@ -1512,6 +1512,8 @@ static void test_FindFirstFileExA(void)
 
     ok(FindNextFile(handle, &search_results) == FALSE, "Fetching sixth file should failed\n");
 
+    FindClose( handle );
+
 cleanup:
     DeleteFileA("test-dir\\file1");
     DeleteFileA("test-dir\\file2");
