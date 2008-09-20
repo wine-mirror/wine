@@ -253,6 +253,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   object->pDirectXFile = This;
   object->buf.pdxf = This;
   object->buf.txt = TRUE;
+  object->buf.token_present = FALSE;
   object->buf.cur_subobject = 0;
 
   object->buf.buffer = HeapAlloc(GetProcessHeap(), 0, MAX_INPUT_SIZE+1);
@@ -596,7 +597,7 @@ static BOOL is_integer(parse_buffer* buf)
   return TRUE;
 }
 
-static WORD parse_TOKEN_dbg_opt(parse_buffer * buf, BOOL show_token)
+static WORD parse_TOKEN(parse_buffer * buf)
 {
   WORD token;
 
@@ -754,8 +755,7 @@ static WORD parse_TOKEN_dbg_opt(parse_buffer * buf, BOOL show_token)
     }
   }
 
-  if (show_token)
-    dump_TOKEN(token);
+  dump_TOKEN(token);
 
   return token;
 }
@@ -794,34 +794,28 @@ static const char* get_primitive_string(WORD token)
   return NULL;
 }
 
-static inline WORD parse_TOKEN(parse_buffer * buf)
+static WORD get_TOKEN(parse_buffer * buf)
 {
-  return parse_TOKEN_dbg_opt(buf, TRUE);
+  if (buf->token_present)
+  {
+    buf->token_present = FALSE;
+    return buf->current_token;
+  }
+
+  buf->current_token = parse_TOKEN(buf);
+
+  return buf->current_token;
 }
 
 static WORD check_TOKEN(parse_buffer * buf)
 {
-  WORD token;
+  if (buf->token_present)
+    return buf->current_token;
 
-  if (buf->txt)
-  {
-    parse_buffer save = *buf;
-    /*TRACE("check: ");*/
-    token = parse_TOKEN_dbg_opt(buf, FALSE);
-    *buf = save;
-    return token;
-  }
+  buf->current_token = parse_TOKEN(buf);
+  buf->token_present = TRUE;
 
-  if (!read_bytes(buf, &token, 2))
-    return 0;
-  buf->buffer -= 2;
-  buf->rem_bytes += 2;
-  if (0)
-  {
-    TRACE("check: ");
-    dump_TOKEN(token);
-  }
-  return token;
+  return buf->current_token;
 }
 
 static inline BOOL is_primitive_type(WORD token)
@@ -855,10 +849,10 @@ static BOOL parse_template_option_info(parse_buffer * buf)
 
   if (check_TOKEN(buf) == TOKEN_DOT)
   {
-    parse_TOKEN(buf);
-    if (parse_TOKEN(buf) != TOKEN_DOT)
+    get_TOKEN(buf);
+    if (get_TOKEN(buf) != TOKEN_DOT)
       return FALSE;
-    if (parse_TOKEN(buf) != TOKEN_DOT)
+    if (get_TOKEN(buf) != TOKEN_DOT)
       return FALSE;
     cur_template->open = TRUE;
   }
@@ -866,15 +860,15 @@ static BOOL parse_template_option_info(parse_buffer * buf)
   {
     while (1)
     {
-      if (parse_TOKEN(buf) != TOKEN_NAME)
+      if (get_TOKEN(buf) != TOKEN_NAME)
         return FALSE;
       strcpy(cur_template->childs[cur_template->nb_childs], (char*)buf->value);
       if (check_TOKEN(buf) == TOKEN_GUID)
-        parse_TOKEN(buf);
+        get_TOKEN(buf);
       cur_template->nb_childs++;
       if (check_TOKEN(buf) != TOKEN_COMMA)
         break;
-      parse_TOKEN(buf);
+      get_TOKEN(buf);
     }
     cur_template->open = FALSE;
   }
@@ -895,13 +889,13 @@ static BOOL parse_template_members_list(parse_buffer * buf)
 
     if (check_TOKEN(buf) == TOKEN_ARRAY)
     {
-      parse_TOKEN(buf);
+      get_TOKEN(buf);
       array = 1;
     }
 
     if (check_TOKEN(buf) == TOKEN_NAME)
     {
-      cur_member->type = parse_TOKEN(buf);
+      cur_member->type = get_TOKEN(buf);
       cur_member->idx_template = 0;
       while (cur_member->idx_template < buf->pdxf->nb_xtemplates)
       {
@@ -916,11 +910,11 @@ static BOOL parse_template_members_list(parse_buffer * buf)
       }
     }
     else if (is_primitive_type(check_TOKEN(buf)))
-      cur_member->type = parse_TOKEN(buf);
+      cur_member->type = get_TOKEN(buf);
     else
       break;
 
-    if (parse_TOKEN(buf) != TOKEN_NAME)
+    if (get_TOKEN(buf) != TOKEN_NAME)
       return FALSE;
     strcpy(cur_member->name, (char*)buf->value);
 
@@ -933,22 +927,22 @@ static BOOL parse_template_members_list(parse_buffer * buf)
           FIXME("No support for multi-dimensional array yet\n");
           return FALSE;
         }
-        parse_TOKEN(buf);
+        get_TOKEN(buf);
         if (check_TOKEN(buf) == TOKEN_INTEGER)
         {
-          parse_TOKEN(buf);
+          get_TOKEN(buf);
           cur_member->dim_fixed[nb_dims] = TRUE;
           cur_member->dim_value[nb_dims] = *(DWORD*)buf->value;
         }
         else
         {
-          if (parse_TOKEN(buf) != TOKEN_NAME)
+          if (get_TOKEN(buf) != TOKEN_NAME)
             return FALSE;
           cur_member->dim_fixed[nb_dims] = FALSE;
           /* Hack: Assume array size is specified in previous member */
           cur_member->dim_value[nb_dims] = idx_member - 1;
         }
-        if (parse_TOKEN(buf) != TOKEN_CBRACKET)
+        if (get_TOKEN(buf) != TOKEN_CBRACKET)
           return FALSE;
         nb_dims++;
       }
@@ -956,7 +950,7 @@ static BOOL parse_template_members_list(parse_buffer * buf)
         return FALSE;
       cur_member->nb_dims = nb_dims;
     }
-    if (parse_TOKEN(buf) != TOKEN_SEMICOLON)
+    if (get_TOKEN(buf) != TOKEN_SEMICOLON)
       return FALSE;
 
     idx_member++;
@@ -973,10 +967,10 @@ static BOOL parse_template_parts(parse_buffer * buf)
     return FALSE;
   if (check_TOKEN(buf) == TOKEN_OBRACKET)
   {
-    parse_TOKEN(buf);
+    get_TOKEN(buf);
     if (!parse_template_option_info(buf))
       return FALSE;
-    if (parse_TOKEN(buf) != TOKEN_CBRACKET)
+    if (get_TOKEN(buf) != TOKEN_CBRACKET)
      return FALSE;
   }
 
@@ -985,19 +979,19 @@ static BOOL parse_template_parts(parse_buffer * buf)
 
 static BOOL parse_template(parse_buffer * buf)
 {
-  if (parse_TOKEN(buf) != TOKEN_TEMPLATE)
+  if (get_TOKEN(buf) != TOKEN_TEMPLATE)
     return FALSE;
-  if (parse_TOKEN(buf) != TOKEN_NAME)
+  if (get_TOKEN(buf) != TOKEN_NAME)
     return FALSE;
   strcpy(buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].name, (char*)buf->value);
-  if (parse_TOKEN(buf) != TOKEN_OBRACE)
+  if (get_TOKEN(buf) != TOKEN_OBRACE)
     return FALSE;
-  if (parse_TOKEN(buf) != TOKEN_GUID)
+  if (get_TOKEN(buf) != TOKEN_GUID)
     return FALSE;
   buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].class_id = *(GUID*)buf->value;
   if (!parse_template_parts(buf))
     return FALSE;
-  if (parse_TOKEN(buf) != TOKEN_CBRACE)
+  if (get_TOKEN(buf) != TOKEN_CBRACE)
     return FALSE;
   if (buf->txt)
   {
@@ -1024,6 +1018,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   buf.buffer = (LPBYTE)pvData;
   buf.rem_bytes = cbSize;
   buf.txt = FALSE;
+  buf.token_present = FALSE;
   buf.pdxf = This;
 
   TRACE("(%p/%p)->(%p,%d)\n", This, iface, pvData, cbSize);
@@ -1645,7 +1640,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
     {
       if (k)
       {
-        if (parse_TOKEN(buf) != TOKEN_COMMA)
+        if (get_TOKEN(buf) != TOKEN_COMMA)
           return FALSE;
       }
 
@@ -1677,7 +1672,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           return FALSE;
         }
         buf->level--;
-        /*if (parse_TOKEN(buf) != TOKEN_SEMICOLON)
+        /*if (get_TOKEN(buf) != TOKEN_SEMICOLON)
           return FALSE;*/
       }
       else
@@ -1685,7 +1680,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         token = check_TOKEN(buf);
         if (token == TOKEN_INTEGER)
         {
-          parse_TOKEN(buf);
+          get_TOKEN(buf);
           last_dword = *(DWORD*)buf->value;
           TRACE("%s = %d\n", pt->members[i].name, *(DWORD*)buf->value);
           /* Assume larger size */
@@ -1712,7 +1707,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         }
         else if (token == TOKEN_FLOAT)
         {
-          parse_TOKEN(buf);
+          get_TOKEN(buf);
           TRACE("%s = %f\n", pt->members[i].name, *(float*)buf->value);
           /* Assume larger size */
           if ((buf->cur_pdata - buf->pxo->pdata + 4) > MAX_DATA_SIZE)
@@ -1736,7 +1731,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
       }
     }
 
-    token = parse_TOKEN(buf);
+    token = get_TOKEN(buf);
     if (token != TOKEN_SEMICOLON)
     {
       /* Allow comma instead of semicolon in some specific cases */
@@ -1758,16 +1753,16 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
   {
     /* Skip trailing semicolon */
     while (check_TOKEN(buf) == TOKEN_SEMICOLON)
-      parse_TOKEN(buf);
+      get_TOKEN(buf);
 
     while (1)
     {
       if (check_TOKEN(buf) == TOKEN_OBRACE)
       {
-        parse_TOKEN(buf);
-        if (parse_TOKEN(buf) != TOKEN_NAME)
+        get_TOKEN(buf);
+        if (get_TOKEN(buf) != TOKEN_NAME)
           return FALSE;
-        if (parse_TOKEN(buf) != TOKEN_CBRACE)
+        if (get_TOKEN(buf) != TOKEN_CBRACE)
           return FALSE;
       }
       else if (check_TOKEN(buf) == TOKEN_NAME)
@@ -1793,7 +1788,7 @@ static BOOL parse_object(parse_buffer * buf)
 {
   int i;
 
-  if (parse_TOKEN(buf) != TOKEN_NAME)
+  if (get_TOKEN(buf) != TOKEN_NAME)
     return FALSE;
 
   /* To do template lookup */
@@ -1814,17 +1809,17 @@ static BOOL parse_object(parse_buffer * buf)
 
   if (check_TOKEN(buf) == TOKEN_NAME)
   {
-    parse_TOKEN(buf);
+    get_TOKEN(buf);
     strcpy(buf->pxo->name, (char*)buf->value);
   }
   else
     buf->pxo->name[0] = 0;
 
-  if (parse_TOKEN(buf) != TOKEN_OBRACE)
+  if (get_TOKEN(buf) != TOKEN_OBRACE)
     return FALSE;
   if (check_TOKEN(buf) == TOKEN_GUID)
   {
-    parse_TOKEN(buf);
+    get_TOKEN(buf);
     memcpy(&buf->pxo->class_id, buf->value, 16);
   }
   else
@@ -1832,7 +1827,7 @@ static BOOL parse_object(parse_buffer * buf)
 
   if (!parse_object_parts(buf, TRUE))
     return FALSE;
-  if (parse_TOKEN(buf) != TOKEN_CBRACE)
+  if (get_TOKEN(buf) != TOKEN_CBRACE)
     return FALSE;
 
   if (buf->txt)

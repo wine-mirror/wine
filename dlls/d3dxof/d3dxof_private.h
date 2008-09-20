@@ -114,6 +114,8 @@ typedef struct {
   LPBYTE buffer;
   DWORD rem_bytes;
   /* Misc info */
+  WORD current_token;
+  BOOL token_present;
   BOOL txt;
   ULONG cur_subobject;
   LPBYTE cur_pdata;
