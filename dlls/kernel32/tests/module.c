@@ -343,7 +343,7 @@ START_TEST(module)
     GetModuleFileNameW(NULL, filenameW, MAX_PATH);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        trace("GetModuleFileNameW not existing on this platform, skipping W-calls\n");
+        win_skip("GetModuleFileNameW not existing on this platform, skipping W-calls\n");
         is_unicode_enabled = FALSE;
     }
 
