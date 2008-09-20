@@ -1040,7 +1040,7 @@ BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
 		HWND hQuality = GetDlgItem(hDlg, cmb1);
 		LONG* Resolutions;
 		char buf[255];
-		int i;
+		DWORD i;
 		int dpiX, dpiY;
 		HDC hPrinterDC = CreateDCA(PrintStructures->lpPrinterInfo->pDriverName,
 					   PrintStructures->lpPrinterInfo->pPrinterName,

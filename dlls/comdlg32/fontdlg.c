@@ -150,7 +150,7 @@ static const struct {
 
 void _dump_cf_flags(DWORD cflags)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(cfflags)/sizeof(cfflags[0]); i++)
         if (cfflags[i].mask & cflags)
@@ -428,7 +428,7 @@ static int AddFontSizeToCombo3(HWND hwnd, UINT h, const CHOOSEFONTW *lpcf)
 static int SetFontSizesToCombo3(HWND hwnd, const CHOOSEFONTW *lpcf)
 {
     static const BYTE sizes[]={6,7,8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(sizes)/sizeof(sizes[0]); i++)
         if (AddFontSizeToCombo3(hwnd, sizes[i], lpcf)) return 1;
