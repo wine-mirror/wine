@@ -113,7 +113,7 @@ static const WNDPROC subclassProcs[NUM_SUBCLASSES] = {
  */
 void THEMING_Initialize (void)
 {
-    int i;
+    unsigned int i;
     static const WCHAR subclassPropName[] = 
         { 'C','C','3','2','T','h','e','m','i','n','g','S','u','b','C','l',0 };
     static const WCHAR refDataPropName[] = 
@@ -161,7 +161,7 @@ void THEMING_Initialize (void)
  */
 void THEMING_Uninitialize (void)
 {
-    int i;
+    unsigned int i;
 
     if (!atSubclassProp) return;  /* not initialized */
 
