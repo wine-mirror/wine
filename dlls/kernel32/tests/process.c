@@ -348,8 +348,18 @@ static void     doChild(const char* file, const char* option)
             childPrintf(hFile, "OutputMode=%ld\n", modeOut);
 
         /* now that we have written all relevant information, let's change it */
-        ok(SetConsoleCP(1252), "Setting CP\n");
-        ok(SetConsoleOutputCP(1252), "Setting SB CP\n");
+        SetLastError(0xdeadbeef);
+        ret = SetConsoleCP(1252);
+        if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            win_skip("Setting the codepage is not implemented");
+        }
+        else
+        {
+            ok(ret, "Setting CP\n");
+            ok(SetConsoleOutputCP(1252), "Setting SB CP\n");
+        }
+
         ret = SetConsoleMode(hConIn, modeIn ^ 1);
         ok( ret, "Setting mode (%d)\n", GetLastError());
         ret = SetConsoleMode(hConOut, modeOut ^ 1);
@@ -1125,6 +1135,7 @@ static void test_Console(void)
     HANDLE              hChildIn, hChildInInh, hChildOut, hChildOutInh, hParentIn, hParentOut;
     const char*         msg = "This is a std-handle inheritance test.";
     unsigned            msg_len;
+    BOOL                run_tests = TRUE;
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -1181,14 +1192,17 @@ static void test_Console(void)
     SetLastError(0xdeadbeef);
     ok(!SetConsoleCP(0), "Shouldn't succeed\n");
     ok(GetLastError()==ERROR_INVALID_PARAMETER ||
-       broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win95 */
+       broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win9x */
        "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_PARAMETER, GetLastError());
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        run_tests = FALSE;
+
 
     SetLastError(0xdeadbeef);
     ok(!SetConsoleOutputCP(0), "Shouldn't succeed\n");
     ok(GetLastError()==ERROR_INVALID_PARAMETER ||
-       broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win95 */
+       broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win9x */
        "GetLastError: expecting %u got %u\n",
        ERROR_INVALID_PARAMETER, GetLastError());
 
@@ -1231,8 +1245,14 @@ static void test_Console(void)
     okChildInt("Console", "InputMode", modeIn);
     okChildInt("Console", "OutputMode", modeOut);
 
-    ok(cpInC == 1252, "Wrong console CP (expected 1252 got %d/%d)\n", cpInC, cpIn);
-    ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %d/%d)\n", cpOutC, cpOut);
+    if (run_tests)
+    {
+        ok(cpInC == 1252, "Wrong console CP (expected 1252 got %d/%d)\n", cpInC, cpIn);
+        ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %d/%d)\n", cpOutC, cpOut);
+    }
+    else
+        win_skip("Setting the codepage is not implemented");
+
     ok(modeInC == (modeIn ^ 1), "Wrong console mode\n");
     ok(modeOutC == (modeOut ^ 1), "Wrong console-SB mode\n");
     trace("cursor position(X): %d/%d\n",sbi.dwCursorPosition.X, sbiC.dwCursorPosition.X);
