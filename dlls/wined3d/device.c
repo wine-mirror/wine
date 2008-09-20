@@ -5970,6 +5970,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
 
         } else {
+            const unsigned char* data =((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
             glTexSubImage2D(glDescription->target
                     ,glDescription->level
                     ,destLeft
@@ -5978,7 +5979,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
                     ,srcHeight
                     ,glDescription->glFormat
                     ,glDescription->glType
-                    ,IWineD3DSurface_GetData(pSourceSurface)
+                    ,data
                 );
         }
      }
