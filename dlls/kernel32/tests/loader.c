@@ -526,7 +526,7 @@ static void test_ImportDescriptors(void)
         LPCSTR module_name = (LPCSTR) RVAToAddr(
                 import_chunk->Name, kernel32_module);
         PIMAGE_THUNK_DATA name_table = (PIMAGE_THUNK_DATA) RVAToAddr(
-                import_chunk->OriginalFirstThunk, kernel32_module);
+                U(*import_chunk).OriginalFirstThunk, kernel32_module);
         PIMAGE_THUNK_DATA iat = (PIMAGE_THUNK_DATA) RVAToAddr(
                 import_chunk->FirstThunk, kernel32_module);
         ok(module_name != NULL, "Imported module name should not be NULL\n");
