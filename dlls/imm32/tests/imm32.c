@@ -135,6 +135,7 @@ static HWND hwnd;
 
 static int init(void) {
     WNDCLASSEX wc;
+    HIMC imc;
 
     wc.cbSize        = sizeof(WNDCLASSEX);
     wc.style         = 0;
@@ -157,6 +158,14 @@ static int init(void) {
                           240, 120, NULL, NULL, GetModuleHandle(0), NULL);
     if (!hwnd)
         return 0;
+
+    imc = ImmGetContext(hwnd);
+    if (!imc)
+    {
+        skip("IME support not implemented\n");
+        return 0;
+    }
+    ImmReleaseContext(hwnd, imc);
 
     ShowWindow(hwnd, SW_SHOWNORMAL);
     UpdateWindow(hwnd);
