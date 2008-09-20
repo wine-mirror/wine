@@ -1560,12 +1560,16 @@ static void test_MapFile(void)
     ok( GetLastError() == ERROR_FILE_INVALID, "not ERROR_FILE_INVALID\n");
 
     hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0x80000000, 0, NULL );
-    ok( hmap == NULL, "mapping should fail\n");
+    ok( hmap == NULL || broken(hmap != NULL) /* NT4 */, "mapping should fail\n");
     /* GetLastError() varies between win9x and WinNT and also depends on the filesystem */
+    if ( hmap )
+        CloseHandle( hmap );
 
     hmap = CreateFileMapping( handle, NULL, PAGE_READWRITE, 0x80000000, 0x10000, NULL );
-    ok( hmap == NULL, "mapping should fail\n");
+    ok( hmap == NULL || broken(hmap != NULL) /* NT4 */, "mapping should fail\n");
     /* GetLastError() varies between win9x and WinNT and also depends on the filesystem */
+    if ( hmap )
+        CloseHandle( hmap );
 
     /* On XP you can now map again, on Win 95 you cannot. */
 
