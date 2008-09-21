@@ -1517,10 +1517,8 @@ static ULONG WINAPI isaxlocator_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        if(This->publicId)
-            SysFreeString(This->publicId);
-        if(This->systemId)
-            SysFreeString(This->systemId);
+        SysFreeString(This->publicId);
+        SysFreeString(This->systemId);
         HeapFree(GetProcessHeap(), 0, This->nsStack);
 
         ISAXXMLReader_Release((ISAXXMLReader*)&This->saxreader->lpSAXXMLReaderVtbl);
@@ -1558,7 +1556,7 @@ static HRESULT WINAPI isaxlocator_getPublicId(
     BSTR publicId;
     saxlocator *This = impl_from_ISAXLocator( iface );
 
-    if(This->publicId) SysFreeString(This->publicId);
+    SysFreeString(This->publicId);
 
     publicId = bstr_from_xmlChar(xmlSAX2GetPublicId(This->pParserCtxt));
     if(SysStringLen(publicId))
@@ -1580,7 +1578,7 @@ static HRESULT WINAPI isaxlocator_getSystemId(
     BSTR systemId;
     saxlocator *This = impl_from_ISAXLocator( iface );
 
-    if(This->systemId) SysFreeString(This->systemId);
+    SysFreeString(This->systemId);
 
     systemId = bstr_from_xmlChar(xmlSAX2GetSystemId(This->pParserCtxt));
     if(SysStringLen(systemId))
