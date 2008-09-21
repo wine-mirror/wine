@@ -69,6 +69,17 @@ ok(str.toString() === "test", "str.toString() = " + str.toString());
 tmp = "value " + str;
 ok(tmp === "value test", "'value ' + str = " + tmp);
 
+tmp = String();
+ok(tmp === "", "String() = " + tmp);
+tmp = String(false);
+ok(tmp === "false", "String(false) = " + tmp);
+tmp = String(null);
+ok(tmp === "null", "String(null) = " + tmp);
+tmp = String("test");
+ok(tmp === "test", "String('test') = " + tmp);
+tmp = String("test", "abc");
+ok(tmp === "test", "String('test','abc') = " + tmp);
+
 tmp = "abc".charAt(0);
 ok(tmp === "a", "'abc',charAt(0) = " + tmp);
 tmp = "abc".charAt(1);

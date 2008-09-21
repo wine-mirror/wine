@@ -772,7 +772,26 @@ static HRESULT StringConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 {
     HRESULT hres;
 
+    TRACE("\n");
+
     switch(flags) {
+    case INVOKE_FUNC: {
+        BSTR str;
+
+        if(arg_cnt(dp)) {
+            hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &str);
+            if(FAILED(hres))
+                return hres;
+        }else {
+            str = SysAllocStringLen(NULL, 0);
+            if(!str)
+                return E_OUTOFMEMORY;
+        }
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = str;
+        break;
+    }
     case DISPATCH_CONSTRUCT: {
         DispatchEx *ret;
 
