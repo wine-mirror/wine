@@ -291,4 +291,13 @@ ok(tmp === 1, "Math.abs(true) = " + tmp);
 tmp = Math.abs(-3, 2);
 ok(tmp === 3, "Math.abs(-3, 2) = " + tmp);
 
+tmp = Math.pow(2, 2);
+ok(tmp === 4, "Math.pow(2, 2) = " + tmp);
+
+tmp = Math.pow(4, 0.5);
+ok(tmp === 2, "Math.pow(2, 2) = " + tmp);
+
+tmp = Math.pow(2, 2, 3);
+ok(tmp === 4, "Math.pow(2, 2, 3) = " + tmp);
+
 reportSuccess();

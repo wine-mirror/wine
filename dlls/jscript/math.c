@@ -272,11 +272,31 @@ static HRESULT Math_min(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *d
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.8.2.13 */
 static HRESULT Math_pow(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT x, y;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(arg_cnt(dp) < 2) {
+        FIXME("unimplemented arg_cnt %d\n", arg_cnt(dp));
+        return E_NOTIMPL;
+    }
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &x);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &y);
+    if(FAILED(hres))
+        return hres;
+
+    if(retv)
+        num_set_val(retv, pow(num_val(&x), num_val(&y)));
+    return S_OK;
 }
 
 static HRESULT Math_random(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
