@@ -228,10 +228,83 @@ static HRESULT JSGlobal_isFinite(DispatchEx *dispex, LCID lcid, WORD flags, DISP
     return E_NOTIMPL;
 }
 
+static INT char_to_int(WCHAR c)
+{
+    if('0' <= c && c <= '9')
+        return c - '0';
+    if('a' <= c && c <= 'z')
+        return c - 'a' + 10;
+    if('A' <= c && c <= 'Z')
+        return c - 'A' + 10;
+    return 100;
+}
+
 static HRESULT JSGlobal_parseInt(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    return E_NOTIMPL;
+    DOUBLE ret = 0.0;
+    INT radix=10, i;
+    WCHAR *ptr;
+    BOOL neg = FALSE;
+    BSTR str;
+    HRESULT hres;
+
+    if(!arg_cnt(dp)) {
+        FIXME("NAN\n");
+        return E_NOTIMPL;
+    }
+
+    if(arg_cnt(dp) >= 2) {
+        hres = to_int32(dispex->ctx, get_arg(dp, 1), ei, &radix);
+        if(FAILED(hres))
+            return hres;
+
+        if(!radix) {
+            radix = 10;
+        }else if(radix < 2 || radix > 36) {
+            WARN("radix %d out of range\n", radix);
+            return E_FAIL;
+        }
+    }
+
+    hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &str);
+    if(FAILED(hres))
+        return hres;
+
+    for(ptr = str; isspaceW(*ptr); ptr++);
+
+    switch(*ptr) {
+    case '+':
+        ptr++;
+        break;
+    case '-':
+        neg = TRUE;
+        ptr++;
+        break;
+    case '0':
+        ptr++;
+        if(*ptr == 'x' || *ptr == 'X') {
+            radix = 16;
+            ptr++;
+        }
+    }
+
+    while(*ptr) {
+        i = char_to_int(*ptr++);
+        if(i > radix)
+            break;
+
+        ret = ret*radix + i;
+    }
+
+    SysFreeString(str);
+
+    if(neg)
+        ret = -ret;
+
+    if(retv)
+        num_set_val(retv, ret);
+    return S_OK;
 }
 
 static HRESULT JSGlobal_parseFloat(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

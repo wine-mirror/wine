@@ -16,7 +16,26 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-var tmp;
+var tmp, i;
+
+i = parseInt("0");
+ok(i === 0, "parseInt('0') = " + i);
+i = parseInt("123");
+ok(i === 123, "parseInt('123') = " + i);
+i = parseInt("-123");
+ok(i === -123, "parseInt('-123') = " + i);
+i = parseInt("0xff");
+ok(i === 0xff, "parseInt('0xff') = " + i);
+i = parseInt("11", 8);
+ok(i === 9, "parseInt('11', 8) = " + i);
+i = parseInt("1j", 22);
+ok(i === 41, "parseInt('1j', 32) = " + i);
+i = parseInt("123", 0);
+ok(i === 123, "parseInt('123', 0) = " + i);
+i = parseInt("123", 10, "test");
+ok(i === 123, "parseInt('123', 10, 'test') = " + i);
+i = parseInt("11", "8");
+ok(i === 9, "parseInt('11', '8') = " + i);
 
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
