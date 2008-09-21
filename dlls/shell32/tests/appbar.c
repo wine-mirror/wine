@@ -30,12 +30,20 @@ static const CHAR testwindow_class[] = "testwindow";
 
 static HMONITOR (WINAPI *pMonitorFromWindow)(HWND, DWORD);
 
+typedef BOOL (*boolean_function)(void);
+
 struct testwindow_info
 {
+    HWND hwnd;
+    BOOL registered;
     RECT desired_rect;
     UINT edge;
     RECT allocated_rect;
 };
+
+static struct testwindow_info windows[3];
+
+static int expected_bottom;
 
 static void testwindow_setpos(HWND hwnd)
 {
@@ -45,7 +53,7 @@ static void testwindow_setpos(HWND hwnd)
 
     ok(info != NULL, "got unexpected ABN_POSCHANGED notification\n");
 
-    if (!info)
+    if (!info || !info->registered)
     {
         return;
     }
@@ -102,6 +110,32 @@ static LRESULT CALLBACK testwindow_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+/* process pending messages until a condition is true or 3 seconds pass */
+static void do_events_until(boolean_function test)
+{
+    MSG msg;
+    UINT_PTR timerid;
+    BOOL timedout=FALSE;
+
+    timerid = SetTimer(0, 0, 3000, NULL);
+
+    while (1)
+    {
+        while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            if (msg.hwnd == 0 && msg.message == WM_TIMER && msg.wParam == timerid)
+                timedout = TRUE;
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+        if (timedout || test())
+            break;
+        WaitMessage();
+    }
+
+    KillTimer(0, timerid);
+}
+
 /* process any pending messages */
 static void do_events(void)
 {
@@ -112,6 +146,28 @@ static void do_events(void)
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
     }
+}
+
+static BOOL no_appbars_intersect(void)
+{
+    int i, j;
+    RECT rc;
+
+    for (i=0; i<2; i++)
+    {
+        for (j=i+1; j<3; j++)
+        {
+            if (windows[i].registered && windows[j].registered &&
+                IntersectRect(&rc, &windows[i].allocated_rect, &windows[j].allocated_rect))
+                return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+static BOOL got_expected_bottom(void)
+{
+    return (no_appbars_intersect() && windows[1].allocated_rect.bottom == expected_bottom);
 }
 
 static void register_testwindow_class(void)
@@ -130,26 +186,30 @@ static void register_testwindow_class(void)
     RegisterClassExA(&cls);
 }
 
+#define test_window_rects(a, b) \
+    ok(!IntersectRect(&rc, &windows[a].allocated_rect, &windows[b].allocated_rect), \
+        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n", \
+        windows[a].allocated_rect.left, windows[a].allocated_rect.top, windows[a].allocated_rect.right, windows[a].allocated_rect.bottom, \
+        windows[b].allocated_rect.left, windows[b].allocated_rect.top, windows[b].allocated_rect.right, windows[b].allocated_rect.bottom)
+
 static void test_setpos(void)
 {
     APPBARDATA abd;
     RECT rc;
-    int screen_width, screen_height, expected;
-    HWND window1, window2, window3;
-    struct testwindow_info window1_info, window2_info, window3_info;
+    int screen_width, screen_height;
     BOOL ret;
 
     screen_width = GetSystemMetrics(SM_CXSCREEN);
     screen_height = GetSystemMetrics(SM_CYSCREEN);
 
-    /* create and register window1 */
-    window1 = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
+    /* create and register windows[0] */
+    windows[0].hwnd = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
         testwindow_class, testwindow_class, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0,
         NULL, NULL, NULL, NULL);
-    ok(window1 != NULL, "couldn't create window\n");
+    ok(windows[0].hwnd != NULL, "couldn't create window\n");
     do_events();
     abd.cbSize = sizeof(abd);
-    abd.hWnd = window1;
+    abd.hWnd = windows[0].hwnd;
     abd.uCallbackMessage = MSG_APPBAR;
     ret = SHAppBarMessage(ABM_NEW, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
@@ -159,181 +219,140 @@ static void test_setpos(void)
     ok(ret == FALSE, "SHAppBarMessage returned %i\n", ret);
     do_events();
 
-    /* dock window1 to the bottom of the screen */
-    window1_info.edge = ABE_BOTTOM;
-    window1_info.desired_rect.left = 0;
-    window1_info.desired_rect.right = screen_width;
-    window1_info.desired_rect.top = screen_height - 15;
-    window1_info.desired_rect.bottom = screen_height;
-    SetWindowLongPtr(window1, GWLP_USERDATA, (LONG_PTR)&window1_info);
-    testwindow_setpos(window1);
+    /* dock windows[0] to the bottom of the screen */
+    windows[0].registered = TRUE;
+    windows[0].edge = ABE_BOTTOM;
+    windows[0].desired_rect.left = 0;
+    windows[0].desired_rect.right = screen_width;
+    windows[0].desired_rect.top = screen_height - 15;
+    windows[0].desired_rect.bottom = screen_height;
+    SetWindowLongPtr(windows[0].hwnd, GWLP_USERDATA, (LONG_PTR)&windows[0]);
+    testwindow_setpos(windows[0].hwnd);
     do_events();
 
-    /* create and register window2 */
-    window2 = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
+    /* create and register windows[1] */
+    windows[1].hwnd = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
         testwindow_class, testwindow_class, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0,
         NULL, NULL, NULL, NULL);
-    ok(window2 != NULL, "couldn't create window\n");
-    abd.hWnd = window2;
+    ok(windows[1].hwnd != NULL, "couldn't create window\n");
+    abd.hWnd = windows[1].hwnd;
     ret = SHAppBarMessage(ABM_NEW, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
 
-    /* dock window2 to the bottom of the screen */
-    window2_info.edge = ABE_BOTTOM;
-    window2_info.desired_rect.left = 0;
-    window2_info.desired_rect.right = screen_width;
-    window2_info.desired_rect.top = screen_height - 10;
-    window2_info.desired_rect.bottom = screen_height;
-    SetWindowLongPtr(window2, GWLP_USERDATA, (LONG_PTR)&window2_info);
-    testwindow_setpos(window2);
-    do_events();
+    /* dock windows[1] to the bottom of the screen */
+    windows[1].registered = TRUE;
+    windows[1].edge = ABE_BOTTOM;
+    windows[1].desired_rect.left = 0;
+    windows[1].desired_rect.right = screen_width;
+    windows[1].desired_rect.top = screen_height - 10;
+    windows[1].desired_rect.bottom = screen_height;
+    SetWindowLongPtr(windows[1].hwnd, GWLP_USERDATA, (LONG_PTR)&windows[1]);
+    testwindow_setpos(windows[1].hwnd);
 
     /* the windows are adjusted to they don't overlap */
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
+    do_events_until(no_appbars_intersect);
+    test_window_rects(0, 1);
 
-    /* make window1 larger, forcing window2 to move out of its way */
-    window1_info.desired_rect.top = screen_height - 20;
-    testwindow_setpos(window1);
-    do_events();
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
+    /* make windows[0] larger, forcing windows[1] to move out of its way */
+    windows[0].desired_rect.top = screen_height - 20;
+    testwindow_setpos(windows[0].hwnd);
+    do_events_until(no_appbars_intersect);
+    test_window_rects(0, 1);
 
-    /* create and register window3 */
-    window3 = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
+    /* create and register windows[2] */
+    windows[2].hwnd = CreateWindowExA(WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
         testwindow_class, testwindow_class, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0,
         NULL, NULL, NULL, NULL);
-    ok(window3 != NULL, "couldn't create window\n");
+    ok(windows[2].hwnd != NULL, "couldn't create window\n");
     do_events();
 
-    abd.hWnd = window3;
+    abd.hWnd = windows[2].hwnd;
     ret = SHAppBarMessage(ABM_NEW, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
 
-    /* dock window3 to the bottom of the screen */
-    window3_info.edge = ABE_BOTTOM;
-    window3_info.desired_rect.left = 0;
-    window3_info.desired_rect.right = screen_width;
-    window3_info.desired_rect.top = screen_height - 10;
-    window3_info.desired_rect.bottom = screen_height;
-    SetWindowLongPtr(window3, GWLP_USERDATA, (LONG_PTR)&window3_info);
-    testwindow_setpos(window3);
-    do_events();
+    /* dock windows[2] to the bottom of the screen */
+    windows[2].registered = TRUE;
+    windows[2].edge = ABE_BOTTOM;
+    windows[2].desired_rect.left = 0;
+    windows[2].desired_rect.right = screen_width;
+    windows[2].desired_rect.top = screen_height - 10;
+    windows[2].desired_rect.bottom = screen_height;
+    SetWindowLongPtr(windows[2].hwnd, GWLP_USERDATA, (LONG_PTR)&windows[2]);
+    testwindow_setpos(windows[2].hwnd);
 
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom);
-    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
+    do_events_until(no_appbars_intersect);
+    test_window_rects(0, 1);
+    test_window_rects(0, 2);
+    test_window_rects(1, 2);
 
-    /* move window3 to the right side of the screen */
-    window3_info.edge = ABE_RIGHT;
-    window3_info.desired_rect.left = screen_width - 15;
-    window3_info.desired_rect.right = screen_width;
-    window3_info.desired_rect.top = 0;
-    window3_info.desired_rect.bottom = screen_height;
-    testwindow_setpos(window3);
-    do_events();
+    /* move windows[2] to the right side of the screen */
+    windows[2].edge = ABE_RIGHT;
+    windows[2].desired_rect.left = screen_width - 15;
+    windows[2].desired_rect.right = screen_width;
+    windows[2].desired_rect.top = 0;
+    windows[2].desired_rect.bottom = screen_height;
+    testwindow_setpos(windows[2].hwnd);
 
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom);
-    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
+    do_events_until(no_appbars_intersect);
+    test_window_rects(0, 1);
+    test_window_rects(0, 2);
+    test_window_rects(1, 2);
 
-    /* move window2 to the top of the screen */
-    window2_info.edge = ABE_TOP;
-    window2_info.desired_rect.left = 0;
-    window2_info.desired_rect.right = screen_width;
-    window2_info.desired_rect.top = 0;
-    window2_info.desired_rect.bottom = 15;
-    testwindow_setpos(window2);
-    do_events();
+    /* move windows[1] to the top of the screen */
+    windows[1].edge = ABE_TOP;
+    windows[1].desired_rect.left = 0;
+    windows[1].desired_rect.right = screen_width;
+    windows[1].desired_rect.top = 0;
+    windows[1].desired_rect.bottom = 15;
+    testwindow_setpos(windows[1].hwnd);
 
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom);
-    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
+    do_events_until(no_appbars_intersect);
+    test_window_rects(0, 1);
+    test_window_rects(0, 2);
+    test_window_rects(1, 2);
 
-    /* move window2 back to the bottom of the screen */
-    window2_info.edge = ABE_BOTTOM;
-    window2_info.desired_rect.left = 0;
-    window2_info.desired_rect.right = screen_width;
-    window2_info.desired_rect.top = screen_height - 10;
-    window2_info.desired_rect.bottom = screen_height;
-    testwindow_setpos(window2);
-    do_events();
+    /* move windows[1] back to the bottom of the screen */
+    windows[1].edge = ABE_BOTTOM;
+    windows[1].desired_rect.left = 0;
+    windows[1].desired_rect.right = screen_width;
+    windows[1].desired_rect.top = screen_height - 10;
+    windows[1].desired_rect.bottom = screen_height;
+    testwindow_setpos(windows[1].hwnd);
 
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
-    ok(!IntersectRect(&rc, &window1_info.allocated_rect, &window3_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window1_info.allocated_rect.left, window1_info.allocated_rect.top, window1_info.allocated_rect.right, window1_info.allocated_rect.bottom,
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom);
-    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
+    do_events_until(no_appbars_intersect);
+    test_window_rects(0, 1);
+    test_window_rects(0, 2);
+    test_window_rects(1, 2);
 
-    /* removing window1 will cause window2 to move down into its space */
-    expected = max(window1_info.allocated_rect.bottom, window2_info.allocated_rect.bottom);
+    /* removing windows[0] will cause windows[1] to move down into its space */
+    expected_bottom = max(windows[0].allocated_rect.bottom, windows[1].allocated_rect.bottom);
 
-    SetWindowLongPtr(window1, GWLP_USERDATA, 0); /* don't expect further ABN_POSCHANGED notifications */
-    abd.hWnd = window1;
+    abd.hWnd = windows[0].hwnd;
     ret = SHAppBarMessage(ABM_REMOVE, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
-    do_events();
-    DestroyWindow(window1);
+    windows[0].registered = FALSE;
+    DestroyWindow(windows[0].hwnd);
 
-    ok(window2_info.allocated_rect.bottom = expected, "window2's bottom is %i, expected %i\n", window2_info.allocated_rect.bottom, expected);
+    do_events_until(got_expected_bottom);
 
-    ok(!IntersectRect(&rc, &window3_info.allocated_rect, &window2_info.allocated_rect),
-        "rectangles intersect (%i,%i,%i,%i)/(%i,%i,%i,%i)\n",
-        window3_info.allocated_rect.left, window3_info.allocated_rect.top, window3_info.allocated_rect.right, window3_info.allocated_rect.bottom,
-        window2_info.allocated_rect.left, window2_info.allocated_rect.top, window2_info.allocated_rect.right, window2_info.allocated_rect.bottom);
+    ok(windows[1].allocated_rect.bottom = expected_bottom, "windows[1]'s bottom is %i, expected %i\n", windows[1].allocated_rect.bottom, expected_bottom);
+
+    test_window_rects(1, 2);
 
     /* remove the other windows */
-    SetWindowLongPtr(window2, GWLP_USERDATA, 0);
-    abd.hWnd = window2;
+    SetWindowLongPtr(windows[1].hwnd, GWLP_USERDATA, 0);
+    abd.hWnd = windows[1].hwnd;
     ret = SHAppBarMessage(ABM_REMOVE, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
-    do_events();
-    DestroyWindow(window2);
+    windows[1].registered = FALSE;
+    DestroyWindow(windows[1].hwnd);
 
-    SetWindowLongPtr(window3, GWLP_USERDATA, 0);
-    abd.hWnd = window3;
+    SetWindowLongPtr(windows[2].hwnd, GWLP_USERDATA, 0);
+    abd.hWnd = windows[2].hwnd;
     ret = SHAppBarMessage(ABM_REMOVE, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
-    do_events();
-    DestroyWindow(window3);
+    windows[2].registered = FALSE;
+    DestroyWindow(windows[2].hwnd);
 }
 
 static void test_appbarget(void)
