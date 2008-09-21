@@ -3459,6 +3459,12 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         /* Activate the destination context, set it up for blitting */
         ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
 
+        /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
+         * while OpenGL coordinates are window relative.
+         * Also beware of the origin difference(top left vs bottom left).
+         * Also beware that the front buffer's surface size is screen width x screen height,
+         * whereas the real gl drawable size is the size of the window.
+         */
         if (dstSwapchain && (IWineD3DSurface *)This == dstSwapchain->frontBuffer) {
             RECT windowsize;
             POINT offset = {0,0};
