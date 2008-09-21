@@ -885,7 +885,7 @@ static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
     DWORD i;
     DWORD extra = 0;
 
-    REGPROC_resize_char_buffer(line_buf, line_buf_size, len + 10);
+    REGPROC_resize_char_buffer(line_buf, line_buf_size, len + *line_size + 10);
 
     /* escaping characters */
     for (i = 0; i < len; i++) {
@@ -895,37 +895,36 @@ static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
         {
             const WCHAR escape[] = {'\\','\\'};
 
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + *line_size + extra + 1);
+            memcpy(*line_buf + *line_size + i + extra - 1, escape, 2 * sizeof(WCHAR));
             extra++;
-            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + extra);
-            memcpy(*line_buf + *line_size - 1, escape, 2 * sizeof(WCHAR));
             break;
         }
-        case '\"':
+        case '"':
         {
             const WCHAR escape[] = {'\\','"'};
 
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + *line_size + extra + 1);
+            memcpy(*line_buf + *line_size + i + extra - 1, escape, 2 * sizeof(WCHAR));
             extra++;
-            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + extra);
-            memcpy(*line_buf + *line_size - 1, escape, 2 * sizeof(WCHAR));
             break;
         }
         case '\n':
         {
-            const WCHAR escape[] = {'\\','\n'};
+            const WCHAR escape[] = {'\\','n'};
 
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + *line_size + extra + 1);
+            memcpy(*line_buf + *line_size + i + extra - 1, escape, 2 * sizeof(WCHAR));
             extra++;
-            REGPROC_resize_char_buffer(line_buf, line_buf_size, len + extra);
-            memcpy(*line_buf + *line_size - 1, escape, 2 * sizeof(WCHAR));
             break;
         }
         default:
-            memcpy(*line_buf + *line_size - 1, &c, sizeof(WCHAR));
+            memcpy(*line_buf + *line_size + i + extra - 1, &c, sizeof(WCHAR));
             break;
         }
-        *line_size += 1;
     }
+    *line_size += len + extra;
     *(*line_buf + *line_size - 1) = 0;
-    *line_size += extra;
 }
 
 /******************************************************************************
