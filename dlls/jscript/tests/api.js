@@ -321,6 +321,8 @@ var func = function  (a) {
     }.toString();
 ok(func.toString() === "function  (a) {\n        var a = 1;\n        if(a) return;\n    }",
    "func.toString() = " + func.toString());
+ok("" + func === "function  (a) {\n        var a = 1;\n        if(a) return;\n    }",
+   "'' + func.toString() = " + func);
 
 function testFuncToString(x,y) {
     return x+y;
@@ -328,5 +330,7 @@ function testFuncToString(x,y) {
 
 ok(testFuncToString.toString() === "function testFuncToString(x,y) {\n    return x+y;\n}",
    "testFuncToString.toString() = " + testFuncToString.toString());
+ok("" + testFuncToString === "function testFuncToString(x,y) {\n    return x+y;\n}",
+   "'' + testFuncToString = " + testFuncToString);
 
 reportSuccess();

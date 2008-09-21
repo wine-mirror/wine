@@ -364,6 +364,19 @@ static HRESULT Function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 
         return invoke_function(function, lcid, dp, retv, ei, caller);
 
+    case DISPATCH_PROPERTYGET: {
+        HRESULT hres;
+        BSTR str;
+
+        hres = function_to_string(function, &str);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = str;
+        break;
+    }
+
     case DISPATCH_CONSTRUCT:
         if(function->value_proc)
             return invoke_value_proc(function, lcid, flags, dp, retv, ei, caller);
