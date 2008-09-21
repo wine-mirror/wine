@@ -74,6 +74,23 @@ ok(tmp === "bc", "'abcd'.substring(1,3,2) = " + tmp);
 tmp = "abcd".substring();
 ok(tmp === "abcd", "'abcd'.substring() = " + tmp);
 
+tmp = "abcd".slice(1,3);
+ok(tmp === "bc", "'abcd'.slice(1,3) = " + tmp);
+tmp = "abcd".slice(1,-1);
+ok(tmp === "bc", "'abcd'.slice(1,-1) = " + tmp);
+tmp = "abcd".slice(-3,3);
+ok(tmp === "bc", "'abcd'.slice(-3,3) = " + tmp);
+tmp = "abcd".slice(-6,3);
+ok(tmp === "abc", "'abcd'.slice(-6,3) = " + tmp);
+tmp = "abcd".slice(3,1);
+ok(tmp === "", "'abcd'.slice(3,1) = " + tmp);
+tmp = "abcd".slice(true,3);
+ok(tmp === "bc", "'abcd'.slice(true,3) = " + tmp);
+tmp = "abcd".slice();
+ok(tmp === "abcd", "'abcd'.slice() = " + tmp);
+tmp = "abcd".slice(1);
+ok(tmp === "bcd", "'abcd'.slice(1) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");

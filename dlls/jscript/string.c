@@ -353,11 +353,82 @@ static HRESULT String_search(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.5.4.13 */
 static HRESULT String_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const WCHAR *str;
+    DWORD length;
+    INT start=0, end;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_STRING)) {
+        StringInstance *string = (StringInstance*)dispex;
+
+        str = string->str;
+        length = string->length;
+    }else {
+        FIXME("this is not a string class");
+        return E_NOTIMPL;
+    }
+
+    if(arg_cnt(dp)) {
+        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) == VT_I4) {
+            start = V_I4(&v);
+            if(start < 0) {
+                start = length + start;
+                if(start < 0)
+                    start = 0;
+            }else if(start > length) {
+                start = length;
+            }
+        }else {
+            start = V_R8(&v) < 0.0 ? 0 : length;
+        }
+    }else {
+        start = 0;
+    }
+
+    if(arg_cnt(dp) >= 2) {
+        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-2, ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) == VT_I4) {
+            end = V_I4(&v);
+            if(end < 0) {
+                end = length + end;
+                if(end < 0)
+                    end = 0;
+            }else if(end > length) {
+                end = length;
+            }
+        }else {
+            end = V_R8(&v) < 0.0 ? 0 : length;
+        }
+    }else {
+        end = length;
+    }
+
+    if(end < start)
+        end = start;
+
+    if(retv) {
+        BSTR retstr = SysAllocStringLen(str+start, end-start);
+        if(!str)
+            return E_OUTOFMEMORY;
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = retstr;
+    }
+    return S_OK;
 }
 
 static HRESULT String_small(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
