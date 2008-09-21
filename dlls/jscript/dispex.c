@@ -698,23 +698,6 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
-HRESULT jsdisp_set_prototype(DispatchEx *dispex, DispatchEx *prototype)
-{
-    VARIANT *var;
-
-    if(!dispex->props[1].name)
-        return E_OUTOFMEMORY;
-
-    dispex->props[1].type = PROP_VARIANT;
-    dispex->props[1].flags = 0;
-
-    var = &dispex->props[1].u.var;
-    V_VT(var) = VT_DISPATCH;
-    V_DISPATCH(var) = (IDispatch*)_IDispatchEx_(prototype);
-
-    return S_OK;
-}
-
 HRESULT init_dispex(DispatchEx *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, DispatchEx *prototype)
 {
     TRACE("%p (%p)\n", dispex, prototype);
