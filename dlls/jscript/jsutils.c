@@ -358,7 +358,7 @@ HRESULT to_integer(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
         return hres;
 
     if(V_VT(&num) == VT_I4)
-        *ret = *v;
+        *ret = num;
     else
         num_set_val(ret, V_R8(&num) >= 0.0 ? floor(V_R8(&num)) : -floor(-V_R8(&num)));
 
