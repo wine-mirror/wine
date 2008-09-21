@@ -476,4 +476,8 @@ START_TEST(atom)
         test_NtRefPinAtom();
         test_Global();
     }
+    else
+        win_skip("Needed atom functions are not available\n");
+
+    FreeLibrary(hntdll);
 }
