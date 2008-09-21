@@ -133,8 +133,44 @@ static const builtin_info_t Number_info = {
 static HRESULT NumberConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT num;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT: {
+        DispatchEx *obj;
+
+        switch(arg_cnt(dp)) {
+        case 0:
+            V_VT(&num) = VT_I4;
+            V_I4(&num) = 0;
+            break;
+        case 1:
+            hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &num);
+            if(FAILED(hres))
+                return hres;
+            break;
+        default:
+            FIXME("unimplemented args\n");
+            return E_NOTIMPL;
+        }
+
+        hres = create_number(dispex->ctx, &num, &obj);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(obj);
+        break;
+    }
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT alloc_number(script_ctx_t *ctx, BOOL use_constr, NumberInstance **ret)

@@ -84,4 +84,6 @@ ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 tmp = arr.toString("test");
 ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 
+var num = new Number(2);
+
 reportSuccess();
