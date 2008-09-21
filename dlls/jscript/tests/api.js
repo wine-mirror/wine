@@ -84,6 +84,26 @@ ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 tmp = arr.toString("test");
 ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 
+arr = [5,true,2,-1,3,false,"2.5"];
+tmp = arr.sort(function(x,y) { return y-x; });
+ok(tmp === arr, "tmp !== arr");
+tmp = [5,3,"2.5",2,true,false,-1];
+for(var i=0; i < arr.length; i++)
+    ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
+
+arr = [5,false,2,0,"abc",3,"a",-1];
+tmp = arr.sort();
+ok(tmp === arr, "tmp !== arr");
+tmp = [-1,0,2,3,5,"a","abc",false];
+for(var i=0; i < arr.length; i++)
+    ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
+
+arr = ["a", "b", "ab"];
+tmp = ["a", "ab", "b"];
+ok(arr.sort() === arr, "arr.sort() !== arr");
+for(var i=0; i < arr.length; i++)
+    ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
+
 var num = new Number(2);
 ok(num.toString() === "2", "num(2).toString !== 2");
 var num = new Number();

@@ -214,6 +214,16 @@ static inline BOOL is_class(DispatchEx *jsdisp, jsclass_t class)
     return jsdisp->builtin_info->class == class;
 }
 
+static inline BOOL is_num_vt(enum VARENUM vt)
+{
+    return vt == VT_I4 || vt == VT_R8;
+}
+
+static inline DOUBLE num_val(const VARIANT *v)
+{
+    return V_VT(v) == VT_I4 ? V_I4(v) : V_R8(v);
+}
+
 static inline void num_set_val(VARIANT *v, DOUBLE d)
 {
     if(d == (DOUBLE)(INT)d) {

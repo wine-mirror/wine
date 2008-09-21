@@ -265,11 +265,215 @@ static HRESULT Array_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     return E_NOTIMPL;
 }
 
-static HRESULT Array_sort(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+static HRESULT sort_cmp(script_ctx_t *ctx, DispatchEx *cmp_func, VARIANT *v1, VARIANT *v2, jsexcept_t *ei,
+        IServiceProvider *caller, INT *cmp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    if(cmp_func) {
+        VARIANTARG args[2];
+        DISPPARAMS dp = {args, NULL, 2, 0};
+        VARIANT tmp;
+        VARIANT res;
+
+        args[0] = *v2;
+        args[1] = *v1;
+
+        hres = jsdisp_call_value(cmp_func, ctx->lcid, DISPATCH_METHOD, &dp, &res, ei, caller);
+        if(FAILED(hres))
+            return hres;
+
+        hres = to_number(ctx, &res, ei, &tmp);
+        VariantClear(&res);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&tmp) == VT_I4)
+            *cmp = V_I4(&tmp);
+        else
+            *cmp = V_R8(&tmp) > 0.0 ? 1 : -1;
+    }else if(is_num_vt(V_VT(v1))) {
+        if(is_num_vt(V_VT(v2))) {
+            DOUBLE d = num_val(v1)-num_val(v2);
+            if(d > 0.0)
+                *cmp = 1;
+            else if(d < -0.0)
+                *cmp = -1;
+            else
+                *cmp = 0;
+        }else {
+            *cmp = -1;
+        }
+    }else if(is_num_vt(V_VT(v2))) {
+        *cmp = 1;
+    }else if(V_VT(v1) == VT_BSTR) {
+        if(V_VT(v2) == VT_BSTR)
+            *cmp = strcmpW(V_BSTR(v1), V_BSTR(v2));
+        else
+            *cmp = -1;
+    }else if(V_VT(v2) == VT_BSTR) {
+        *cmp = 1;
+    }else {
+        *cmp = 0;
+    }
+
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    15.4.4.11 */
+static HRESULT Array_sort(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DispatchEx *cmp_func = NULL;
+    VARIANT *vtab, **sorttab = NULL;
+    DWORD length;
+    DWORD i;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_ARRAY)) {
+        length = ((ArrayInstance*)dispex)->length;
+    }else {
+        FIXME("unsupported this not array\n");
+        return E_NOTIMPL;
+    }
+
+    if(arg_cnt(dp) > 1) {
+        WARN("invalid arg_cnt %d\n", arg_cnt(dp));
+        return E_FAIL;
+    }
+
+    if(arg_cnt(dp) == 1) {
+        VARIANT *arg = get_arg(dp, 0);
+
+        if(V_VT(arg) != VT_DISPATCH) {
+            WARN("arg is not dispatch\n");
+            return E_FAIL;
+        }
+
+
+        cmp_func = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
+        if(!is_class(cmp_func, JSCLASS_FUNCTION)) {
+            WARN("cmp_func is not a function\n");
+            jsdisp_release(cmp_func);
+            return E_FAIL;
+        }
+    }
+
+    if(!length) {
+        if(cmp_func)
+            jsdisp_release(cmp_func);
+        if(retv) {
+            V_VT(retv) = VT_DISPATCH;
+            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(dispex);
+	    IDispatchEx_AddRef(_IDispatchEx_(dispex));
+        }
+        return S_OK;
+    }
+
+    vtab = heap_alloc_zero(length * sizeof(VARIANT));
+    if(vtab) {
+        for(i=0; i<length; i++) {
+            hres = jsdisp_propget_idx(dispex, i, lcid, vtab+i, ei, caller);
+            if(FAILED(hres) && hres != DISP_E_UNKNOWNNAME) {
+                WARN("Could not get elem %d: %08x\n", i, hres);
+                break;
+            }
+        }
+    }else {
+        hres = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hres)) {
+        sorttab = heap_alloc(length*2*sizeof(VARIANT*));
+        if(!sorttab)
+            hres = E_OUTOFMEMORY;
+    }
+
+    /* merge-sort */
+    if(SUCCEEDED(hres)) {
+        VARIANT *tmpv, **tmpbuf;
+        INT cmp;
+
+        tmpbuf = sorttab + length;
+        for(i=0; i < length; i++)
+            sorttab[i] = vtab+i;
+
+        for(i=0; i < length/2; i++) {
+            hres = sort_cmp(dispex->ctx, cmp_func, sorttab[2*i+1], sorttab[2*i], ei, caller, &cmp);
+            if(FAILED(hres))
+                break;
+
+            if(cmp < 0) {
+                tmpv = sorttab[2*i];
+                sorttab[2*i] = sorttab[2*i+1];
+                sorttab[2*i+1] = tmpv;
+            }
+        }
+
+        if(SUCCEEDED(hres)) {
+            DWORD k, a, b, bend;
+
+            for(k=2; k < length; k *= 2) {
+                for(i=0; i+k < length; i += 2*k) {
+                    a = b = 0;
+                    if(i+2*k <= length)
+                        bend = k;
+                    else
+                        bend = length - (i+k);
+
+                    memcpy(tmpbuf, sorttab+i, k*sizeof(VARIANT*));
+
+                    while(a < k && b < bend) {
+                        hres = sort_cmp(dispex->ctx, cmp_func, tmpbuf[a], sorttab[i+k+b], ei, caller, &cmp);
+                        if(FAILED(hres))
+                            break;
+
+                        if(cmp < 0) {
+                            sorttab[i+a+b] = tmpbuf[a];
+                            a++;
+                        }else {
+                            sorttab[i+a+b] = sorttab[i+k+b];
+                            b++;
+                        }
+                    }
+
+                    if(FAILED(hres))
+                        break;
+
+                    if(a < k)
+                        memcpy(sorttab+i+a+b, tmpbuf+a, (k-a)*sizeof(VARIANT*));
+                }
+
+                if(FAILED(hres))
+                    break;
+            }
+        }
+
+        for(i=0; SUCCEEDED(hres) && i < length; i++)
+            hres = jsdisp_propput_idx(dispex, i, lcid, sorttab[i], ei, caller);
+    }
+
+    if(vtab) {
+        for(i=0; i < length; i++)
+            VariantClear(vtab+i);
+        heap_free(vtab);
+    }
+    heap_free(sorttab);
+    if(cmp_func)
+        jsdisp_release(cmp_func);
+
+    if(FAILED(hres))
+        return hres;
+
+    if(retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(dispex);
+        IDispatch_AddRef(_IDispatchEx_(dispex));
+    }
+
+    return S_OK;
 }
 
 static HRESULT Array_splice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

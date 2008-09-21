@@ -278,16 +278,6 @@ static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
     return S_OK;
 }
 
-static inline BOOL is_num_vt(enum VARENUM vt)
-{
-    return vt == VT_I4 || vt == VT_R8;
-}
-
-static inline DOUBLE num_val(const VARIANT *v)
-{
-    return V_VT(v) == VT_I4 ? V_I4(v) : V_R8(v);
-}
-
 /* ECMA-262 3rd Edition    11.9.6 */
 HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
 {
