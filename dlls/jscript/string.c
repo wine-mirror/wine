@@ -701,8 +701,39 @@ static const builtin_info_t String_info = {
 static HRESULT StringConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT: {
+        DispatchEx *ret;
+
+        if(arg_cnt(dp)) {
+            BSTR str;
+
+            hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &str);
+            if(FAILED(hres))
+                return hres;
+
+            hres = create_string(dispex->ctx, str, SysStringLen(str), &ret);
+            SysFreeString(str);
+        }else {
+            hres = create_string(dispex->ctx, NULL, 0, &ret);
+        }
+
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
+        break;
+    }
+
+    default:
+        FIXME("unimplemented flags: %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT string_alloc(script_ctx_t *ctx, BOOL use_constr, StringInstance **ret)

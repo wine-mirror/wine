@@ -59,6 +59,13 @@ ok(tmp === "test", "''.valueOf() = " + tmp);
 tmp = "test".valueOf(3);
 ok(tmp === "test", "''.valueOf(3) = " + tmp);
 
+var str = new String("test");
+ok(str.toString() === "test", "str.toString() = " + str.toString());
+var str = new String();
+ok(str.toString() === "", "str.toString() = " + str.toString());
+var str = new String("test", "abc");
+ok(str.toString() === "test", "str.toString() = " + str.toString());
+
 tmp = "abc".charAt(0);
 ok(tmp === "a", "'abc',charAt(0) = " + tmp);
 tmp = "abc".charAt(1);
