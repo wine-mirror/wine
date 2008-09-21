@@ -162,8 +162,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
             IOleClientSite_Release(CLIENTSITE(This->doc_host));
         if(This->post_data)
             GlobalFree(This->post_data);
-        if(This->headers)
-            SysFreeString(This->headers);
+        SysFreeString(This->headers);
         heap_free(This->url);
         heap_free(This);
     }
