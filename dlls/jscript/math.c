@@ -236,11 +236,27 @@ static HRESULT Math_random(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.8.2.15 */
 static HRESULT Math_round(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        FIXME("arg_cnt = 0\n");
+        return E_NOTIMPL;
+    }
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+
+    if(retv)
+        num_set_val(retv, floor(num_val(&v)+0.5));
+    return S_OK;
 }
 
 static HRESULT Math_sin(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

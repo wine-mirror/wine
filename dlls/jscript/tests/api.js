@@ -255,4 +255,19 @@ ok(tmp === 0, "Math.min(1, false) = " + tmp);
 tmp = Math.min(1, false, true, null, -3);
 ok(tmp === -3, "Math.min(1, false, true, null, -3) = " + tmp);
 
+tmp = Math.round(0.5);
+ok(tmp === 1, "Math.round(0.5) = " + tmp);
+
+tmp = Math.round(-0.5);
+ok(tmp === 0, "Math.round(-0.5) = " + tmp);
+
+tmp = Math.round(1.1);
+ok(tmp === 1, "Math.round(1.1) = " + tmp);
+
+tmp = Math.round(true);
+ok(tmp === 1, "Math.round(true) = " + tmp);
+
+tmp = Math.round(1.1, 3, 4);
+ok(tmp === 1, "Math.round(1.1, 3, 4) = " + tmp);
+
 reportSuccess();
