@@ -89,11 +89,35 @@ static HRESULT Array_pop(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.4.4.7 */
 static HRESULT Array_push(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DWORD length = 0;
+    int i, n;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(dispex->builtin_info->class == JSCLASS_ARRAY) {
+        length = ((ArrayInstance*)dispex)->length;
+    }else {
+        FIXME("not Array this\n");
+        return E_NOTIMPL;
+    }
+
+    n = dp->cArgs - dp->cNamedArgs;
+    for(i=0; i < n; i++) {
+        hres = jsdisp_propput_idx(dispex, length+i, lcid, get_arg(dp, i), ei, sp);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = length+n;
+    }
+    return S_OK;
 }
 
 static HRESULT Array_reverse(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

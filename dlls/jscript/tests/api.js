@@ -60,4 +60,12 @@ ok(typeof(arr) === "object", "arr (6) is not object");
 ok((arr.length === 6), "arr.length is not 6");
 ok(arr["0"] === undefined, "arr[0] is not undefined");
 
+ok(arr.push() === 6, "arr.push() !== 6");
+ok(arr.push(1) === 7, "arr.push(1) !== 7");
+ok(arr[6] === 1, "arr[6] != 1");
+ok(arr.length === 7, "arr.length != 10");
+ok(arr.push(true, 'b', false) === 10, "arr.push(true, 'b', false) !== 10");
+ok(arr[8] === "b", "arr[8] != 'b'");
+ok(arr.length === 10, "arr.length != 10");
+
 reportSuccess();
