@@ -838,7 +838,7 @@ enddeleteloop:
     }
 
 end:
-    if (tlibPath) SysFreeString(tlibPath);
+    SysFreeString(tlibPath);
     if (typeLib) ITypeLib_Release(typeLib);
     if (subKey) RegCloseKey(subKey);
     if (key) RegCloseKey(key);
@@ -3833,29 +3833,17 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       }
       TRACE(" destroying ITypeLib(%p)\n",This);
 
-      if (This->Name)
-      {
-          SysFreeString(This->Name);
-          This->Name = NULL;
-      }
+      SysFreeString(This->Name);
+      This->Name = NULL;
 
-      if (This->DocString)
-      {
-          SysFreeString(This->DocString);
-          This->DocString = NULL;
-      }
+      SysFreeString(This->DocString);
+      This->DocString = NULL;
 
-      if (This->HelpFile)
-      {
-          SysFreeString(This->HelpFile);
-          This->HelpFile = NULL;
-      }
+      SysFreeString(This->HelpFile);
+      This->HelpFile = NULL;
 
-      if (This->HelpStringDll)
-      {
-          SysFreeString(This->HelpStringDll);
-          This->HelpStringDll = NULL;
-      }
+      SysFreeString(This->HelpStringDll);
+      This->HelpStringDll = NULL;
 
       for (pCustData = This->pCustData; pCustData; pCustData = pCustDataNext)
       {
@@ -4679,23 +4667,14 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
       if (This->no_free_data)
           goto finish_free;
 
-      if (This->Name)
-      {
-          SysFreeString(This->Name);
-          This->Name = 0;
-      }
+      SysFreeString(This->Name);
+      This->Name = NULL;
 
-      if (This->DocString)
-      {
-          SysFreeString(This->DocString);
-          This->DocString = 0;
-      }
+      SysFreeString(This->DocString);
+      This->DocString = NULL;
 
-      if (This->DllName)
-      {
-          SysFreeString(This->DllName);
-          This->DllName = 0;
-      }
+      SysFreeString(This->DllName);
+      This->DllName = NULL;
 
       for (pFInfo = This->funclist; pFInfo; pFInfo = pFInfoNext)
       {
@@ -6526,7 +6505,7 @@ static HRESULT WINAPI ITypeInfo_fnAddressOfMember( ITypeInfo2 *iface,
     {
         ERR("couldn't load %s\n", debugstr_w(dll));
         SysFreeString(dll);
-        if (entry) SysFreeString(entry);
+        SysFreeString(entry);
         return STG_E_FILENOTFOUND;
     }
     /* FIXME: store library somewhere where we can free it */
@@ -6552,7 +6531,7 @@ static HRESULT WINAPI ITypeInfo_fnAddressOfMember( ITypeInfo2 *iface,
     }
 
     SysFreeString(dll);
-    if (entry) SysFreeString(entry);
+    SysFreeString(entry);
 
     if (!*ppv)
         return TYPE_E_DLLFUNCTIONNOTFOUND;
