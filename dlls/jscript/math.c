@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
+
 #include "jscript.h"
 
 #include "wine/debug.h"
@@ -182,11 +184,42 @@ static HRESULT Math_max(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *d
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.8.2.12 */
 static HRESULT Math_min(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DOUBLE min, d;
+    VARIANT v;
+    DWORD i;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    /* FIXME: Handle NaN */
+
+    if(!arg_cnt(dp)) {
+        FIXME("arg_cnt = 0\n");
+        return E_NOTIMPL;
+    }
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+
+    min = num_val(&v);
+    for(i=1; i < arg_cnt(dp); i++) {
+        hres = to_number(dispex->ctx, get_arg(dp, i), ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        d = num_val(&v);
+        if(d < min)
+            min = d;
+    }
+
+    if(retv)
+        num_set_val(retv, min);
+    return S_OK;
 }
 
 static HRESULT Math_pow(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

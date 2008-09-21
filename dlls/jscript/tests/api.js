@@ -246,4 +246,13 @@ ok(Number() === 0, "Number() = " + Number());
 ok(Number(false) === 0, "Number(false) = " + Number(false));
 ok(Number("43") === 43, "Number('43') = " + Number("43"));
 
+tmp = Math.min(1);
+ok(tmp === 1, "Math.min(1) = " + tmp);
+
+tmp = Math.min(1, false);
+ok(tmp === 0, "Math.min(1, false) = " + tmp);
+
+tmp = Math.min(1, false, true, null, -3);
+ok(tmp === -3, "Math.min(1, false, true, null, -3) = " + tmp);
+
 reportSuccess();
