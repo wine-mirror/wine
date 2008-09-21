@@ -58,6 +58,11 @@ ok(arr["2"] === "test", "arr[2] is not \"test\"");
 arr["7"] = true;
 ok((arr.length === 8), "arr.length is not 8");
 
+tmp = "" + [];
+ok(tmp === "", "'' + [] = " + tmp);
+tmp = "" + [1,true];
+ok(tmp === "1,true", "'' + [1,true] = " + tmp);
+
 var arr = new Array(6);
 ok(typeof(arr) === "object", "arr (6) is not object");
 ok((arr.length === 6), "arr.length is not 6");

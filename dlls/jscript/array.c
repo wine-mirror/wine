@@ -621,8 +621,17 @@ static HRESULT Array_isPrototypeOf(DispatchEx *dispex, LCID lcid, WORD flags, DI
 static HRESULT Array_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    switch(flags) {
+    case INVOKE_PROPERTYGET:
+        return array_join(dispex, lcid, ((ArrayInstance*)dispex)->length, default_separatorW, retv, ei, sp);
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static void Array_destructor(DispatchEx *dispex)
