@@ -405,6 +405,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     {
         szLineStart = next_line;
         next_line = memchrW(szLineStart, '\n', szEnd - szLineStart);
+        if (!next_line) next_line = memchrW(szLineStart, '\r', szEnd - szLineStart);
         if (!next_line) next_line = szEnd;
         else next_line++;
         szLineEnd = next_line;

@@ -428,7 +428,7 @@ static BOOL emptystr_ok(CHAR emptystr[MAX_PATH])
     return TRUE;
 }
 
-static void test_GetPrivateProfileString(void)
+static void test_GetPrivateProfileString(const char *content, const char *descript)
 {
     DWORD ret;
     CHAR buf[MAX_PATH];
@@ -441,15 +441,10 @@ static void test_GetPrivateProfileString(void)
     LPSTR tempfile;
 
     static const char filename[] = ".\\winetest.ini";
-    static const char content[]=
-        "[section1]\r\n"
-        "name1=val1\r\n"
-        "name2=\"val2\"\r\n"
-        "name3\r\n"
-        "name4=a\r\n"
-        "[section2]\r\n";
 
-    create_test_file(filename, content, sizeof(content));
+    trace("test_GetPrivateProfileStringA: %s\n", descript);
+
+    create_test_file(filename, content, lstrlenA(content));
 
     /* Run this test series with caching. Wine won't cache profile
        files younger than 2.1 seconds. */
@@ -674,7 +669,7 @@ static void test_GetPrivateProfileString(void)
     GetWindowsDirectoryA(windir, MAX_PATH);
     GetTempFileNameA(windir, "pre", 0, path);
     tempfile = strrchr(path, '\\') + 1;
-    create_test_file(path, content, sizeof(content));
+    create_test_file(path, content, lstrlenA(content));
 
     /* only filename is used, file exists in windows directory */
     lstrcpyA(buf, "kumquat");
@@ -703,5 +698,20 @@ START_TEST(profile)
     test_profile_existing();
     test_profile_delete_on_close();
     test_profile_refresh();
-    test_GetPrivateProfileString();
+    test_GetPrivateProfileString(
+        "[section1]\r\n"
+        "name1=val1\r\n"
+        "name2=\"val2\"\r\n"
+        "name3\r\n"
+        "name4=a\r\n"
+        "[section2]\r\n",
+        "CR+LF");
+    test_GetPrivateProfileString(
+        "[section1]\r"
+        "name1=val1\r"
+        "name2=\"val2\"\r"
+        "name3\r"
+        "name4=a\r"
+        "[section2]\r",
+        "CR only");
 }
