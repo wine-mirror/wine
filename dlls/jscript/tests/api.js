@@ -255,6 +255,15 @@ ok(tmp === 0, "Math.min(1, false) = " + tmp);
 tmp = Math.min(1, false, true, null, -3);
 ok(tmp === -3, "Math.min(1, false, true, null, -3) = " + tmp);
 
+tmp = Math.max(1);
+ok(tmp === 1, "Math.max(1) = " + tmp);
+
+tmp = Math.max(true, 0);
+ok(tmp === 1, "Math.max(true, 0) = " + tmp);
+
+tmp = Math.max(-2, false, true, null, 1);
+ok(tmp === 1, "Math.max(-2, false, true, null, 1) = " + tmp);
+
 tmp = Math.round(0.5);
 ok(tmp === 1, "Math.round(0.5) = " + tmp);
 
