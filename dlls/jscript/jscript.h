@@ -126,6 +126,7 @@ HRESULT disp_propget(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvide
 HRESULT disp_propput(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propput_name(DispatchEx*,const WCHAR*,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propput_idx(DispatchEx*,DWORD,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_propget_idx(DispatchEx*,DWORD,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,DWORD,DispatchEx*,DispatchEx**);
 
@@ -206,6 +207,11 @@ static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
 static inline DWORD arg_cnt(const DISPPARAMS *dp)
 {
     return dp->cArgs - dp->cNamedArgs;
+}
+
+static inline BOOL is_class(DispatchEx *jsdisp, jsclass_t class)
+{
+    return jsdisp->builtin_info->class == class;
 }
 
 static inline void num_set_val(VARIANT *v, DOUBLE d)

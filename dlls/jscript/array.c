@@ -47,6 +47,7 @@ static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
 
+const WCHAR default_separatorW[] = {',',0};
 
 static HRESULT Array_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
@@ -75,11 +76,134 @@ static HRESULT Array_concat(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return E_NOTIMPL;
 }
 
-static HRESULT Array_join(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+static HRESULT array_join(DispatchEx *array, LCID lcid, DWORD length, const WCHAR *sep, VARIANT *retv,
+        jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR *str_tab, ret = NULL;
+    VARIANT var;
+    DWORD i;
+    HRESULT hres = E_FAIL;
+
+    if(!length) {
+        if(retv) {
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = SysAllocStringLen(NULL, 0);
+            if(!V_BSTR(retv))
+                return E_OUTOFMEMORY;
+        }
+        return S_OK;
+    }
+
+    str_tab = heap_alloc_zero(length * sizeof(BSTR));
+    if(!str_tab)
+        return E_OUTOFMEMORY;
+
+    for(i=0; i < length; i++) {
+        hres = jsdisp_propget_idx(array, i, lcid, &var, ei, caller);
+        if(FAILED(hres))
+            break;
+
+        if(V_VT(&var) != VT_EMPTY && V_VT(&var) != VT_NULL)
+            hres = to_string(array->ctx, &var, ei, str_tab+i);
+        VariantClear(&var);
+        if(FAILED(hres))
+            break;
+    }
+
+    if(SUCCEEDED(hres)) {
+        DWORD seplen = 0, len = 0;
+        WCHAR *ptr;
+
+        seplen = strlenW(sep);
+
+        if(str_tab[0])
+            len = SysStringLen(str_tab[0]);
+        for(i=1; i < length; i++)
+            len += seplen + SysStringLen(str_tab[i]);
+
+        ret = SysAllocStringLen(NULL, len);
+        if(ret) {
+            DWORD tmplen = 0;
+
+            if(str_tab[0]) {
+                tmplen = SysStringLen(str_tab[0]);
+                memcpy(ret, str_tab[0], tmplen*sizeof(WCHAR));
+            }
+
+            ptr = ret + tmplen;
+            for(i=1; i < length; i++) {
+                if(seplen) {
+                    memcpy(ptr, sep, seplen*sizeof(WCHAR));
+                    ptr += seplen;
+                }
+
+                if(str_tab[i]) {
+                    tmplen = SysStringLen(str_tab[i]);
+                    memcpy(ptr, str_tab[i], tmplen*sizeof(WCHAR));
+                    ptr += tmplen;
+                }
+            }
+            *ptr=0;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+    }
+
+    for(i=0; i < length; i++)
+        SysFreeString(str_tab[i]);
+    heap_free(str_tab);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("= %s\n", debugstr_w(ret));
+
+    if(retv) {
+        if(!ret) {
+            ret = SysAllocStringLen(NULL, 0);
+            if(!ret)
+                return E_OUTOFMEMORY;
+        }
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }else {
+        SysFreeString(ret);
+    }
+
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    15.4.4.5 */
+static HRESULT Array_join(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DWORD length;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_ARRAY)) {
+        length = ((ArrayInstance*)dispex)->length;
+    }else {
+        FIXME("dispid is not Array\n");
+        return E_NOTIMPL;
+    }
+
+    if(arg_cnt(dp)) {
+        BSTR sep;
+
+        hres = to_string(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &sep);
+        if(FAILED(hres))
+            return hres;
+
+        hres = array_join(dispex, lcid, length, sep, retv, ei, caller);
+
+        SysFreeString(sep);
+    }else {
+        hres = array_join(dispex, lcid, length, default_separatorW, retv, ei, caller);
+    }
+
+    return hres;
 }
 
 static HRESULT Array_pop(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

@@ -68,4 +68,15 @@ ok(arr.push(true, 'b', false) === 10, "arr.push(true, 'b', false) !== 10");
 ok(arr[8] === "b", "arr[8] != 'b'");
 ok(arr.length === 10, "arr.length != 10");
 
+arr = [1,2,null,false,undefined,,"a"];
+
+tmp = arr.join();
+ok(tmp === "1,2,,false,,,a", "arr.join() = " + tmp);
+tmp = arr.join(";");
+ok(tmp === "1;2;;false;;;a", "arr.join(';') = " + tmp);
+tmp = arr.join(";","test");
+ok(tmp === "1;2;;false;;;a", "arr.join(';') = " + tmp);
+tmp = arr.join("");
+ok(tmp === "12falsea", "arr.join('') = " + tmp);
+
 reportSuccess();
