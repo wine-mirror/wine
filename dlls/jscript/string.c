@@ -88,11 +88,30 @@ static HRESULT String_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.5.4.2 */
 static HRESULT String_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    StringInstance *string;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        WARN("this is not a string object\n");
+        return E_FAIL;
+    }
+
+    string = (StringInstance*)dispex;
+
+    if(retv) {
+        BSTR str = SysAllocString(string->str);
+        if(!str)
+            return E_OUTOFMEMORY;
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = str;
+    }
+    return S_OK;
 }
 
 static HRESULT String_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

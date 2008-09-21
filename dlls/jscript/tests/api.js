@@ -26,6 +26,13 @@ ok(getVT("".length) == "VT_I4", "\"\".length = " + "".length);
 ok("abc".length === 3, "\"abc\".length = " + "abc".length);
 ok(String.prototype.length === 0, "String.prototype.length = " + String.prototype.length);
 
+tmp = "".toString();
+ok(tmp === "", "''.toString() = " + tmp);
+tmp = "test".toString();
+ok(tmp === "test", "''.toString() = " + tmp);
+tmp = "test".toString(3);
+ok(tmp === "test", "''.toString(3) = " + tmp);
+
 tmp = "abc".charAt(0);
 ok(tmp === "a", "'abc',charAt(0) = " + tmp);
 tmp = "abc".charAt(1);
