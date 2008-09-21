@@ -1068,8 +1068,15 @@ START_TEST(dsound)
     hDsound = LoadLibrary("dsound.dll");
     if (hDsound)
     {
+        BOOL ret;
+
         ok( FreeLibrary(hDsound), "FreeLibrary(1) returned %d\n", GetLastError());
-        ok( FreeLibrary(hDsound), "FreeLibrary(2) returned %d\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = FreeLibrary(hDsound);
+        ok( ret ||
+            broken(!ret && GetLastError() == ERROR_MOD_NOT_FOUND) || /* NT4 */
+            broken(!ret && GetLastError() == ERROR_INVALID_HANDLE),  /* Win9x */
+            "FreeLibrary(2) returned %d\n", GetLastError());
         ok(!FreeLibrary(hDsound), "DirectSound DLL still loaded\n");
     }
 
