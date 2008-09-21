@@ -137,8 +137,9 @@ HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","www",,"http://"
 
 
 [Settings.Reg]
-HKCU,"Software\Microsoft\Internet Explorer\Main","Start Page",,"http://www.winehq.org"
-HKCU,"Software\Microsoft\Internet Explorer\Main","Search Page",,"http://www.google.com"
+HKCU,"Software\Microsoft\Internet Explorer\Main","Start Page",2,"http://www.winehq.org"
+HKCU,"Software\Microsoft\Internet Explorer\Main","Search Page",2,"http://www.google.com"
+HKLM,"Software\Microsoft\Internet Explorer\Main","Default_Page_URL",2,"http://www.winehq.org"
 
 
 [IE.Reg]
