@@ -387,7 +387,7 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
             e = e*10 + *ctx->ptr++ - '0';
         e *= sign;
 
-        d = pow(d, e);
+        d *= pow(10, e);
     }
 
     *literal = parser_alloc(ctx, sizeof(literal_t));
