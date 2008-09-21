@@ -315,4 +315,18 @@ ok(tmp === 2, "Math.pow(2, 2) = " + tmp);
 tmp = Math.pow(2, 2, 3);
 ok(tmp === 4, "Math.pow(2, 2, 3) = " + tmp);
 
+var func = function  (a) {
+        var a = 1;
+        if(a) return;
+    }.toString();
+ok(func.toString() === "function  (a) {\n        var a = 1;\n        if(a) return;\n    }",
+   "func.toString() = " + func.toString());
+
+function testFuncToString(x,y) {
+    return x+y;
+}
+
+ok(testFuncToString.toString() === "function testFuncToString(x,y) {\n    return x+y;\n}",
+   "testFuncToString.toString() = " + testFuncToString.toString());
+
 reportSuccess();

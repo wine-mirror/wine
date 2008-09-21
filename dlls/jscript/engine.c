@@ -367,7 +367,8 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         DispatchEx *func_obj;
         VARIANT var;
 
-        hres = create_source_function(parser, func->parameter_list, func->source_elements, ctx->scope_chain, &func_obj);
+        hres = create_source_function(parser, func->parameter_list, func->source_elements,
+                ctx->scope_chain, func->src_str, func->src_len, &func_obj);
         if(FAILED(hres))
             return hres;
 
@@ -1242,7 +1243,8 @@ HRESULT function_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD fla
 
     TRACE("\n");
 
-    hres = create_source_function(ctx->parser, expr->parameter_list, expr->source_elements, ctx->scope_chain, &dispex);
+    hres = create_source_function(ctx->parser, expr->parameter_list, expr->source_elements, ctx->scope_chain,
+            expr->src_str, expr->src_len, &dispex);
     if(FAILED(hres))
         return hres;
 

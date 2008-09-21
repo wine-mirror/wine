@@ -101,7 +101,7 @@ static int lex_error(parser_ctx_t *ctx, HRESULT hres)
     return -1;
 }
 
-static int check_keyword(parser_ctx_t *ctx, const WCHAR *word)
+static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lval)
 {
     const WCHAR *p1 = ctx->ptr;
     const WCHAR *p2 = word;
@@ -116,6 +116,7 @@ static int check_keyword(parser_ctx_t *ctx, const WCHAR *word)
     if(*p2 || (p1 < ctx->end && isalnumW(*p1)))
         return 1;
 
+    *lval = ctx->ptr;
     ctx->ptr = p1;
     return 0;
 }
@@ -145,14 +146,14 @@ static int hex_to_int(WCHAR c)
     return -1;
 }
 
-static int check_keywords(parser_ctx_t *ctx)
+static int check_keywords(parser_ctx_t *ctx, const WCHAR **lval)
 {
     int min = 0, max = sizeof(keywords)/sizeof(keywords[0])-1, r, i;
 
     while(min <= max) {
         i = (min+max)/2;
 
-        r = check_keyword(ctx, keywords[i].word);
+        r = check_keyword(ctx, keywords[i].word, lval);
         if(!r)
             return keywords[i].token;
 
@@ -468,7 +469,7 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
     }while(skip_comment(ctx));
 
     if(isalphaW(*ctx->ptr)) {
-        ret = check_keywords(ctx);
+        ret = check_keywords(ctx, lval);
         if(ret)
             return ret;
 
@@ -480,7 +481,6 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
 
     switch(*ctx->ptr) {
     case '{':
-    case '}':
     case '(':
     case ')':
     case '[':
@@ -491,6 +491,10 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
     case '?':
     case ':':
         return *ctx->ptr++;
+
+    case '}':
+        *(const WCHAR**)lval = ctx->ptr++;
+        return '}';
 
     case '.':
         if(++ctx->ptr < ctx->end && isdigitW(*ctx->ptr))

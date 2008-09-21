@@ -98,7 +98,8 @@ typedef struct _statement_t statement_t;
 typedef struct _expression_t expression_t;
 typedef struct _parameter_t parameter_t;
 
-HRESULT create_source_function(parser_ctx_t*,parameter_t*,source_elements_t*,scope_chain_t*,DispatchEx**);
+HRESULT create_source_function(parser_ctx_t*,parameter_t*,source_elements_t*,scope_chain_t*,
+        const WCHAR*,DWORD,DispatchEx**);
 
 typedef struct {
     VARTYPE vt;
@@ -277,6 +278,8 @@ typedef struct _function_declaration_t {
     const WCHAR *identifier;
     parameter_t *parameter_list;
     source_elements_t *source_elements;
+    const WCHAR *src_str;
+    DWORD src_len;
 
     struct _function_declaration_t *next;
 } function_declaration_t;
@@ -293,6 +296,8 @@ typedef struct {
     const WCHAR *identifier;
     parameter_t *parameter_list;
     source_elements_t *source_elements;
+    const WCHAR *src_str;
+    DWORD src_len;
 } function_expression_t;
 
 typedef struct {

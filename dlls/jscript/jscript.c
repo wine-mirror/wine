@@ -621,7 +621,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
         return hres;
     }
 
-    hres = create_source_function(parser_ctx, NULL, parser_ctx->source, NULL, &dispex);
+    hres = create_source_function(parser_ctx, NULL, parser_ctx->source, NULL, NULL, 0, &dispex);
     parser_release(parser_ctx);
     if(FAILED(hres))
         return hres;

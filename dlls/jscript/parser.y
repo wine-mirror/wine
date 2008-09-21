@@ -120,7 +120,8 @@ typedef struct _parameter_list_t {
 static parameter_list_t *new_parameter_list(parser_ctx_t*,const WCHAR*);
 static parameter_list_t *parameter_list_add(parser_ctx_t*,parameter_list_t*,const WCHAR*);
 
-static expression_t *new_function_expression(parser_ctx_t*,const WCHAR*,parameter_list_t*,source_elements_t*);
+static expression_t *new_function_expression(parser_ctx_t*,const WCHAR*,parameter_list_t*,
+        source_elements_t*,const WCHAR*,DWORD);
 static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expression_t*,expression_t*);
 static expression_t *new_unary_expression(parser_ctx_t*,expression_type_t,expression_t*);
 static expression_t *new_conditional_expression(parser_ctx_t*,expression_t*,expression_t*,expression_t*);
@@ -134,7 +135,8 @@ static expression_t *new_literal_expression(parser_ctx_t*,literal_t*);
 static expression_t *new_array_literal_expression(parser_ctx_t*,element_list_t*,int);
 static expression_t *new_prop_and_value_expression(parser_ctx_t*,property_list_t*);
 
-static function_declaration_t *new_function_declaration(parser_ctx_t*,const WCHAR*,parameter_list_t*,source_elements_t*);
+static function_declaration_t *new_function_declaration(parser_ctx_t*,const WCHAR*,parameter_list_t*,
+        source_elements_t*,const WCHAR*,DWORD);
 static source_elements_t *new_source_elements(parser_ctx_t*);
 static source_elements_t *source_elements_add_statement(source_elements_t*,statement_t*);
 static source_elements_t *source_elements_add_function(source_elements_t*,function_declaration_t*);
@@ -146,6 +148,7 @@ static source_elements_t *source_elements_add_function(source_elements_t*,functi
 
 %union {
     int                     ival;
+    const WCHAR             *srcptr;
     LPCWSTR                 wstr;
     literal_t               *literal;
     struct _argument_list_t *argument_list;
@@ -166,9 +169,11 @@ static source_elements_t *source_elements_add_function(source_elements_t*,functi
 }
 
 /* keywords */
-%token kBREAK kCASE kCATCH kCONTINUE kDEFAULT kDELETE kDO kELSE kIF kFINALLY kFOR kFUNCTION kIN
+%token kBREAK kCASE kCATCH kCONTINUE kDEFAULT kDELETE kDO kELSE kIF kFINALLY kFOR kIN
 %token kINSTANCEOF kNEW kNULL kUNDEFINED kRETURN kSWITCH kTHIS kTHROW kTRUE kFALSE kTRY kTYPEOF kVAR kVOID kWHILE kWITH
 %token tANDAND tOROR tINC tDEC
+
+%token <srcptr> kFUNCTION '}'
 
 /* tokens */
 %token <identifier> tIdentifier
@@ -257,12 +262,12 @@ SourceElements
 /* ECMA-262 3rd Edition    13 */
 FunctionDeclaration
         : kFUNCTION tIdentifier '(' FormalParameterList_opt ')' '{' FunctionBody '}'
-                                { $$ = new_function_declaration(ctx, $2, $4, $7); }
+                                { $$ = new_function_declaration(ctx, $2, $4, $7, $1, $8-$1+1); }
 
 /* ECMA-262 3rd Edition    13 */
 FunctionExpression
         : kFUNCTION Identifier_opt '(' FormalParameterList_opt ')' '{' FunctionBody '}'
-                                { $$ = new_function_expression(ctx, $2, $4, $7); }
+                                { $$ = new_function_expression(ctx, $2, $4, $7, $1, $8-$1+1); }
 
 /* ECMA-262 3rd Edition    13 */
 FunctionBody
@@ -1247,7 +1252,7 @@ static parameter_list_t *parameter_list_add(parser_ctx_t *ctx, parameter_list_t 
 }
 
 static expression_t *new_function_expression(parser_ctx_t *ctx, const WCHAR *identifier,
-       parameter_list_t *parameter_list, source_elements_t *source_elements)
+       parameter_list_t *parameter_list, source_elements_t *source_elements, const WCHAR *src_str, DWORD src_len)
 {
     function_expression_t *ret = parser_alloc(ctx, sizeof(function_expression_t));
 
@@ -1255,6 +1260,8 @@ static expression_t *new_function_expression(parser_ctx_t *ctx, const WCHAR *ide
     ret->identifier = identifier;
     ret->parameter_list = parameter_list ? parameter_list->head : NULL;
     ret->source_elements = source_elements;
+    ret->src_str = src_str;
+    ret->src_len = src_len;
 
     return &ret->expr;
 }
@@ -1444,13 +1451,15 @@ static expression_t *new_literal_expression(parser_ctx_t *ctx, literal_t *litera
 }
 
 static function_declaration_t *new_function_declaration(parser_ctx_t *ctx, const WCHAR *identifier,
-       parameter_list_t *parameter_list, source_elements_t *source_elements)
+       parameter_list_t *parameter_list, source_elements_t *source_elements, const WCHAR *src_str, DWORD src_len)
 {
     function_declaration_t *ret = parser_alloc(ctx, sizeof(function_declaration_t));
 
     ret->identifier = identifier;
     ret->parameter_list = parameter_list ? parameter_list->head : NULL;
     ret->source_elements = source_elements;
+    ret->src_str = src_str;
+    ret->src_len = src_len;
     ret->next = NULL;
 
     return ret;
