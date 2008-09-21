@@ -33,6 +33,13 @@ ok(tmp === "test", "''.toString() = " + tmp);
 tmp = "test".toString(3);
 ok(tmp === "test", "''.toString(3) = " + tmp);
 
+tmp = "".valueOf();
+ok(tmp === "", "''.valueOf() = " + tmp);
+tmp = "test".valueOf();
+ok(tmp === "test", "''.valueOf() = " + tmp);
+tmp = "test".valueOf(3);
+ok(tmp === "test", "''.valueOf(3) = " + tmp);
+
 tmp = "abc".charAt(0);
 ok(tmp === "a", "'abc',charAt(0) = " + tmp);
 tmp = "abc".charAt(1);

@@ -114,11 +114,13 @@ static HRESULT String_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.5.4.2 */
 static HRESULT String_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    return String_toString(dispex, lcid, flags, dp, retv, ei, sp);
 }
 
 static HRESULT String_anchor(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
