@@ -441,7 +441,7 @@ static HRESULT WINAPI AutomationObject_Invoke(
     if (pVarResult == &varResultDummy) VariantClear(pVarResult);
 
     /* Free function name if we retrieved it */
-    if (bstrName) SysFreeString(bstrName);
+    SysFreeString(bstrName);
 
     TRACE("Returning 0x%08x, %s\n", hr, SUCCEEDED(hr) ? "ok" : "not ok");
 
