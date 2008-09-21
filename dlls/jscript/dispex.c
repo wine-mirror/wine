@@ -844,6 +844,11 @@ HRESULT disp_call(IDispatch *disp, DISPID id, LCID lcid, WORD flags, DISPPARAMS 
     if(FAILED(hres)) {
         UINT err = 0;
 
+        if(flags == DISPATCH_CONSTRUCT) {
+            WARN("IDispatch cannot be constructor\n");
+            return DISP_E_MEMBERNOTFOUND;
+        }
+
         TRACE("using IDispatch\n");
         return IDispatch_Invoke(disp, id, &IID_NULL, lcid, flags, dp, retv, &ei->ei, &err);
     }
