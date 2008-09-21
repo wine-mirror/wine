@@ -241,11 +241,62 @@ static HRESULT String_charCodeAt(DispatchEx *dispex, LCID lcid, WORD flags, DISP
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.5.4.6 */
 static HRESULT String_concat(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR *strs = NULL, ret = NULL;
+    DWORD len = 0, i, l, str_cnt;
+    VARIANT var;
+    WCHAR *ptr;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    str_cnt = arg_cnt(dp)+1;
+    strs = heap_alloc_zero(str_cnt * sizeof(BSTR));
+    if(!strs)
+        return E_OUTOFMEMORY;
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(dispex);
+
+    hres = to_string(dispex->ctx, &var, ei, strs);
+    if(SUCCEEDED(hres)) {
+        for(i=0; i < arg_cnt(dp); i++) {
+            hres = to_string(dispex->ctx, get_arg(dp, i), ei, strs+i+1);
+            if(FAILED(hres))
+                break;
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        for(i=0; i < str_cnt; i++)
+            len += SysStringLen(strs[i]);
+
+        ptr = ret = SysAllocStringLen(NULL, len);
+
+        for(i=0; i < str_cnt; i++) {
+            l = SysStringLen(strs[i]);
+            memcpy(ptr, strs[i], l*sizeof(WCHAR));
+            ptr += l;
+        }
+    }
+
+    for(i=0; i < str_cnt; i++)
+        SysFreeString(strs[i]);
+    heap_free(strs);
+
+    if(FAILED(hres))
+        return hres;
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }else {
+        SysFreeString(ret);
+    }
+    return S_OK;
 }
 
 static HRESULT String_fixed(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

@@ -133,6 +133,13 @@ ok(tmp === "abcd", "'abcd'.slice() = " + tmp);
 tmp = "abcd".slice(1);
 ok(tmp === "bcd", "'abcd'.slice(1) = " + tmp);
 
+tmp = "abc".concat(["d",1],2,false);
+ok(tmp === "abcd,12false", "concat returned " + tmp);
+var arr = new Array(2,"a");
+arr.concat = String.prototype.concat;
+tmp = arr.concat("d");
+ok(tmp === "2,ad", "arr.concat = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");
