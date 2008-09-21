@@ -57,6 +57,19 @@ ok(tmp === "", "'abc',charAt(-1) = " + tmp);
 tmp = "abc".charAt(0,2);
 ok(tmp === "a", "'abc',charAt(0.2) = " + tmp);
 
+tmp = "abc".charCodeAt(0);
+ok(tmp === 0x61, "'abc'.charCodeAt(0) = " + tmp);
+tmp = "abc".charCodeAt(1);
+ok(tmp === 0x62, "'abc'.charCodeAt(1) = " + tmp);
+tmp = "abc".charCodeAt(2);
+ok(tmp === 0x63, "'abc'.charCodeAt(2) = " + tmp);
+tmp = "abc".charCodeAt();
+ok(tmp === 0x61, "'abc'.charCodeAt() = " + tmp);
+tmp = "abc".charCodeAt(true);
+ok(tmp === 0x62, "'abc'.charCodeAt(true) = " + tmp);
+tmp = "abc".charCodeAt(0,2);
+ok(tmp === 0x61, "'abc'.charCodeAt(0,2) = " + tmp);
+
 tmp = "abcd".substring(1,3);
 ok(tmp === "bc", "'abcd'.substring(1,3) = " + tmp);
 tmp = "abcd".substring(-1,3);

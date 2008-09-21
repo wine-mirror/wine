@@ -199,11 +199,46 @@ static HRESULT String_charAt(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.5.4.5 */
 static HRESULT String_charCodeAt(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const WCHAR *str;
+    DWORD length, idx = 0;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(dispex->builtin_info->class == JSCLASS_STRING) {
+        StringInstance *string = (StringInstance*)dispex;
+
+        str = string->str;
+        length = string->length;
+    }else {
+        FIXME("not string this not supported\n");
+        return E_NOTIMPL;
+    }
+
+    if(arg_cnt(dp) > 0) {
+        VARIANT v;
+
+        hres = to_integer(dispex->ctx, get_arg(dp, 0), ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) != VT_I4 || V_I4(&v) < 0 || V_I4(&v) >= length) {
+            FIXME("NAN\n");
+            return E_FAIL;
+        }
+
+        idx = V_I4(&v);
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = str[idx];
+    }
+    return S_OK;
 }
 
 static HRESULT String_concat(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
