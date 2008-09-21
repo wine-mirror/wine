@@ -43,6 +43,23 @@ ok(tmp === "", "'abc',charAt(-1) = " + tmp);
 tmp = "abc".charAt(0,2);
 ok(tmp === "a", "'abc',charAt(0.2) = " + tmp);
 
+tmp = "abcd".substring(1,3);
+ok(tmp === "bc", "'abcd'.substring(1,3) = " + tmp);
+tmp = "abcd".substring(-1,3);
+ok(tmp === "abc", "'abcd'.substring(-1,3) = " + tmp);
+tmp = "abcd".substring(1,6);
+ok(tmp === "bcd", "'abcd'.substring(1,6) = " + tmp);
+tmp = "abcd".substring(3,1);
+ok(tmp === "bc", "'abcd'.substring(3,1) = " + tmp);
+tmp = "abcd".substring(2,2);
+ok(tmp === "", "'abcd'.substring(2,2) = " + tmp);
+tmp = "abcd".substring(true,"3");
+ok(tmp === "bc", "'abcd'.substring(true,'3') = " + tmp);
+tmp = "abcd".substring(1,3,2);
+ok(tmp === "bc", "'abcd'.substring(1,3,2) = " + tmp);
+tmp = "abcd".substring();
+ok(tmp === "abcd", "'abcd'.substring() = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");

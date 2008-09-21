@@ -367,11 +367,75 @@ static HRESULT String_sub(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.5.4.15 */
 static HRESULT String_substring(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const WCHAR *str;
+    INT start=0, end;
+    DWORD length;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_STRING)) {
+        StringInstance *string = (StringInstance*)dispex;
+
+        length = string->length;
+        str = string->str;
+    }else {
+        FIXME("not string this not supported\n");
+        return E_NOTIMPL;
+    }
+
+    if(arg_cnt(dp) >= 1) {
+        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) == VT_I4) {
+            start = V_I4(&v);
+            if(start < 0)
+                start = 0;
+            else if(start >= length)
+                start = length;
+        }else {
+            start = V_R8(&v) < 0.0 ? 0 : length;
+        }
+    }
+
+    if(arg_cnt(dp) >= 2) {
+        hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-2, ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) == VT_I4) {
+            end = V_I4(&v);
+            if(end < 0)
+                end = 0;
+            else if(end > length)
+                end = length;
+        }else {
+            end = V_R8(&v) < 0.0 ? 0 : length;
+        }
+    }else {
+        end = length;
+    }
+
+    if(start > end) {
+        INT tmp = start;
+        start = end;
+        end = tmp;
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = SysAllocStringLen(str+start, end-start);
+        if(!V_BSTR(retv))
+            return E_OUTOFMEMORY;
+    }
+    return S_OK;
 }
 
 static HRESULT String_substr(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
