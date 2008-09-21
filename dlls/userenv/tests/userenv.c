@@ -189,14 +189,22 @@ static void test_create_env(void)
     r = SetEnvironmentVariableA("WINE_XYZZY", "ZZYZX");
     expect(TRUE, r);
 
-    r = CreateEnvironmentBlock(NULL, NULL, FALSE);
-    expect(FALSE, r);
+    if (0)
+    {
+        /* Crashes on NT4 */
+        r = CreateEnvironmentBlock(NULL, NULL, FALSE);
+        expect(FALSE, r);
+    }
 
     r = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &htok);
     expect(TRUE, r);
 
-    r = CreateEnvironmentBlock(NULL, htok, FALSE);
-    expect(FALSE, r);
+    if (0)
+    {
+        /* Crashes on NT4 */
+        r = CreateEnvironmentBlock(NULL, htok, FALSE);
+        expect(FALSE, r);
+    }
 
     r = CreateEnvironmentBlock((LPVOID) &env1, NULL, FALSE);
     expect(TRUE, r);
