@@ -576,8 +576,10 @@ static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
             delete_registry_key(stdInput + 1);
         } else if ( openKeyW(stdInput) != ERROR_SUCCESS )
         {
+            char* stdInputA = GetMultiByteString(stdInput);
             fprintf(stderr,"%s: setValue failed to open key %s\n",
-                    getAppName(), stdInput);
+                    getAppName(), stdInputA);
+            HeapFree(GetProcessHeap(), 0, stdInputA);
         }
     } else if( currentKeyHandle &&
                (( stdInput[0] == '@') || /* reading a default @=data pair */
@@ -1063,11 +1065,17 @@ static void export_hkey(FILE *file, HKEY key,
             }
 
             default:
+            {
+                char* key_nameA = GetMultiByteString(*reg_key_name_buf);
+                char* value_nameA = GetMultiByteString(*val_name_buf);
                 fprintf(stderr,"%s: warning - unsupported registry format '%d', "
                         "treat as binary\n",
                         getAppName(), value_type);
-                fprintf(stderr,"key name: \"%s\"\n", *reg_key_name_buf);
-                fprintf(stderr,"value name:\"%s\"\n\n", *val_name_buf);
+                fprintf(stderr,"key name: \"%s\"\n", key_nameA);
+                fprintf(stderr,"value name:\"%s\"\n\n", value_nameA);
+                HeapFree(GetProcessHeap(), 0, key_nameA);
+                HeapFree(GetProcessHeap(), 0, value_nameA);
+            }
                 /* falls through */
             case REG_MULTI_SZ:
                 /* falls through */
