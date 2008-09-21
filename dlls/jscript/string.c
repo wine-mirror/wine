@@ -638,8 +638,26 @@ static HRESULT String_isPrototypeOf(DispatchEx *dispex, LCID lcid, WORD flags, D
 static HRESULT String_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    StringInstance *This = (StringInstance*)dispex;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        BSTR str = SysAllocString(This->str);
+        if(!str)
+            return E_OUTOFMEMORY;
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = str;
+        break;
+    }
+    default:
+        FIXME("flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static void String_destructor(DispatchEx *dispex)

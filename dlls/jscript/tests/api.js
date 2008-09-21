@@ -66,6 +66,9 @@ ok(str.toString() === "", "str.toString() = " + str.toString());
 var str = new String("test", "abc");
 ok(str.toString() === "test", "str.toString() = " + str.toString());
 
+tmp = "value " + str;
+ok(tmp === "value test", "'value ' + str = " + tmp);
+
 tmp = "abc".charAt(0);
 ok(tmp === "a", "'abc',charAt(0) = " + tmp);
 tmp = "abc".charAt(1);
