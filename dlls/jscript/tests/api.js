@@ -89,4 +89,8 @@ ok(num.toString() === "2", "num(2).toString !== 2");
 var num = new Number();
 ok(num.toString() === "0", "num().toString !== 0");
 
+ok(Number() === 0, "Number() = " + Number());
+ok(Number(false) === 0, "Number(false) = " + Number(false));
+ok(Number("43") === 43, "Number('43') = " + Number("43"));
+
 reportSuccess();

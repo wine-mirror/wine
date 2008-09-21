@@ -167,6 +167,23 @@ static HRESULT NumberConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DIS
     TRACE("\n");
 
     switch(flags) {
+    case INVOKE_FUNC:
+        if(!arg_cnt(dp)) {
+            if(retv) {
+                V_VT(retv) = VT_I4;
+                V_I4(retv) = 0;
+            }
+            return S_OK;
+        }
+
+        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &num);
+        if(FAILED(hres))
+            return hres;
+
+        if(retv)
+            *retv = num;
+        break;
+
     case DISPATCH_CONSTRUCT: {
         DispatchEx *obj;
 
