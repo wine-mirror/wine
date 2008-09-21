@@ -284,8 +284,13 @@ static void testcooperativelevels_normal(void)
 
     /* Try creating a double buffered primary in normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
-    ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08x\n", rc);
-    ok(surface == NULL, "Returned surface pointer is %p\n", surface);
+    if (rc == DDERR_UNSUPPORTEDMODE)
+        skip("Unsupported mode\n");
+    else
+    {
+        ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08x\n", rc);
+        ok(surface == NULL, "Returned surface pointer is %p\n", surface);
+    }
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
 
     /* Set the focus window */
