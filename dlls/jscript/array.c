@@ -279,11 +279,18 @@ static HRESULT Array_splice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.4.4.2 */
 static HRESULT Array_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_ARRAY)) {
+        WARN("not Array object\n");
+        return E_FAIL;
+    }
+
+    return array_join(dispex, lcid, ((ArrayInstance*)dispex)->length, default_separatorW, retv, ei, sp);
 }
 
 static HRESULT Array_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

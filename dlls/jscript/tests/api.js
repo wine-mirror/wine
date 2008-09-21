@@ -79,4 +79,9 @@ ok(tmp === "1;2;;false;;;a", "arr.join(';') = " + tmp);
 tmp = arr.join("");
 ok(tmp === "12falsea", "arr.join('') = " + tmp);
 
+tmp = arr.toString();
+ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
+tmp = arr.toString("test");
+ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
+
 reportSuccess();
