@@ -275,6 +275,11 @@ static void testExpand(void)
 START_TEST(env)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
+    if (!mod)
+    {
+        win_skip("Not running on NT, skipping tests\n");
+        return;
+    }
 
     pRtlMultiByteToUnicodeN = (void *)GetProcAddress(mod,"RtlMultiByteToUnicodeN");
     pRtlCreateEnvironment = (void*)GetProcAddress(mod, "RtlCreateEnvironment");
