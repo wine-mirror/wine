@@ -783,9 +783,10 @@ HRESULT forin_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t 
         return hres;
 
     if(V_VT(&val) != VT_DISPATCH) {
-        FIXME("in vt %d\n", V_VT(&val));
+        TRACE("in vt %d\n", V_VT(&val));
         VariantClear(&val);
-        return E_NOTIMPL;
+        V_VT(ret) = VT_EMPTY;
+        return S_OK;
     }
 
     hres = IDispatch_QueryInterface(V_DISPATCH(&val), &IID_IDispatchEx, (void**)&in_obj);

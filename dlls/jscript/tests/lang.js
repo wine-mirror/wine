@@ -142,6 +142,15 @@ ok(obj2.pvar === 3, "obj2.pvar is not 3");
 var obj3 = new Object;
 ok(typeof(obj3) === "object", "typeof(obj3) is not object");
 
+for(var iter in "test")
+    ok(false, "unexpected forin call, test = " + iter);
+
+for(var iter in null)
+    ok(false, "unexpected forin call, test = " + iter);
+
+for(var iter in false)
+    ok(false, "unexpected forin call, test = " + iter);
+
 tmp = 0;
 if(true)
     tmp = 1;
