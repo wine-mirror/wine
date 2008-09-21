@@ -279,6 +279,21 @@ ok(tmp === 1, "Math.round(true) = " + tmp);
 tmp = Math.round(1.1, 3, 4);
 ok(tmp === 1, "Math.round(1.1, 3, 4) = " + tmp);
 
+tmp = Math.ceil(0.5);
+ok(tmp === 1, "Math.ceil(0.5) = " + tmp);
+
+tmp = Math.ceil(-0.5);
+ok(tmp === 0, "Math.ceil(-0.5) = " + tmp);
+
+tmp = Math.ceil(1.1);
+ok(tmp === 2, "Math.round(1.1) = " + tmp);
+
+tmp = Math.ceil(true);
+ok(tmp === 1, "Math.ceil(true) = " + tmp);
+
+tmp = Math.ceil(1.1, 3, 4);
+ok(tmp === 2, "Math.ceil(1.1, 3, 4) = " + tmp);
+
 tmp = Math.abs(3);
 ok(tmp === 3, "Math.abs(3) = " + tmp);
 

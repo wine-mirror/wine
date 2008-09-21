@@ -160,11 +160,27 @@ static HRESULT Math_atan2(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.8.2.6 */
 static HRESULT Math_ceil(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        FIXME("arg_cnt = 0\n");
+        return E_NOTIMPL;
+    }
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+
+    if(retv)
+        num_set_val(retv, ceil(num_val(&v)));
+    return S_OK;
 }
 
 static HRESULT Math_cos(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -232,7 +248,6 @@ static HRESULT Math_max(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *d
         num_set_val(retv, max);
     return S_OK;
 }
-
 
 /* ECMA-262 3rd Edition    15.8.2.12 */
 static HRESULT Math_min(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
