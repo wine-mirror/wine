@@ -18,6 +18,9 @@
 
 var tmp;
 
+tmp = "" + new Object();
+ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
+
 ok("".length === 0, "\"\".length = " + "".length);
 ok(getVT("".length) == "VT_I4", "\"\".length = " + "".length);
 ok("abc".length === 3, "\"abc\".length = " + "abc".length);
