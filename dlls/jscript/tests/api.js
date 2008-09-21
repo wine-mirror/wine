@@ -85,5 +85,8 @@ tmp = arr.toString("test");
 ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 
 var num = new Number(2);
+ok(num.toString() === "2", "num(2).toString !== 2");
+var num = new Number();
+ok(num.toString() === "0", "num().toString !== 0");
 
 reportSuccess();
