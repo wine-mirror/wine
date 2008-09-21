@@ -104,6 +104,23 @@ ok(arr.sort() === arr, "arr.sort() !== arr");
 for(var i=0; i < arr.length; i++)
     ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
 
+var num = new Number(6);
+arr = [0,1,2];
+tmp = arr.concat(3, [4,5], num);
+ok(tmp !== arr, "tmp === arr");
+for(var i=0; i<6; i++)
+    ok(tmp[i] === i, "tmp[" + i + "] = " + tmp[i]);
+ok(tmp[6] === num, "tmp[6] !== num");
+ok(tmp.length === 7, "tmp.length = " + tmp.length);
+
+arr = [].concat();
+ok(arr.length === 0, "arr.length = " + arr.lrngth);
+
+arr = [1,];
+tmp = arr.concat([2]);
+ok(tmp.length === 3, "tmp.length = " + tmp.length);
+ok(tmp[1] === undefined, "tmp[1] = " + tmp[1]);
+
 var num = new Number(2);
 ok(num.toString() === "2", "num(2).toString !== 2");
 var num = new Number();

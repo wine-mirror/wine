@@ -69,11 +69,90 @@ static HRESULT Array_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
-static HRESULT Array_concat(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+static HRESULT concat_array(DispatchEx *array, ArrayInstance *obj, DWORD *len, LCID lcid,
+        jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT var;
+    DWORD i;
+    HRESULT hres;
+
+    for(i=0; i < obj->length; i++) {
+        hres = jsdisp_propget_idx(&obj->dispex, i, lcid, &var, ei, caller);
+        if(hres == DISP_E_UNKNOWNNAME)
+            continue;
+        if(FAILED(hres))
+            return hres;
+
+        hres = jsdisp_propput_idx(array, *len+i, lcid, &var, ei, caller);
+        VariantClear(&var);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    *len += obj->length;
+    return S_OK;
+}
+
+static HRESULT concat_obj(DispatchEx *array, IDispatch *obj, DWORD *len, LCID lcid, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DispatchEx *jsobj;
+    VARIANT var;
+    HRESULT hres;
+
+    jsobj = iface_to_jsdisp((IUnknown*)obj);
+    if(jsobj) {
+        if(is_class(jsobj, JSCLASS_ARRAY)) {
+            hres = concat_array(array, (ArrayInstance*)jsobj, len, lcid, ei, caller);
+            jsdisp_release(jsobj);
+            return hres;
+        }
+        jsdisp_release(jsobj);
+    }
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = obj;
+    return jsdisp_propput_idx(array, (*len)++, lcid, &var, ei, caller);
+}
+
+static HRESULT Array_concat(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DispatchEx *ret;
+    DWORD len = 0;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = create_array(dispex->ctx, 0, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    hres = concat_obj(ret, (IDispatch*)_IDispatchEx_(dispex), &len, lcid, ei, caller);
+    if(SUCCEEDED(hres)) {
+        VARIANT *arg;
+        DWORD i;
+
+        for(i=0; i < arg_cnt(dp); i++) {
+            arg = get_arg(dp, i);
+            if(V_VT(arg) == VT_DISPATCH)
+                hres = concat_obj(ret, V_DISPATCH(arg), &len, lcid, ei, caller);
+            else
+                hres = jsdisp_propput_idx(ret, len++, lcid, arg, ei, caller);
+            if(FAILED(hres))
+                break;
+        }
+    }
+
+    if(FAILED(hres))
+        return hres;
+
+    if(retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
+    }else {
+        jsdisp_release(ret);
+    }
+    return S_OK;
 }
 
 static HRESULT array_join(DispatchEx *array, LCID lcid, DWORD length, const WCHAR *sep, VARIANT *retv,
