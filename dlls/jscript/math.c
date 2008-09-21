@@ -107,11 +107,29 @@ static HRESULT Math_SQRT1_2(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.8.2.12 */
 static HRESULT Math_abs(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    DOUBLE d;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        FIXME("arg_cnt = 0\n");
+        return E_NOTIMPL;
+    }
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+
+    d = num_val(&v);
+    if(retv)
+        num_set_val(retv, d < 0.0 ? -d : d);
+    return S_OK;
 }
 
 static HRESULT Math_acos(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

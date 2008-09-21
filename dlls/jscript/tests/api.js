@@ -270,4 +270,16 @@ ok(tmp === 1, "Math.round(true) = " + tmp);
 tmp = Math.round(1.1, 3, 4);
 ok(tmp === 1, "Math.round(1.1, 3, 4) = " + tmp);
 
+tmp = Math.abs(3);
+ok(tmp === 3, "Math.abs(3) = " + tmp);
+
+tmp = Math.abs(-3);
+ok(tmp === 3, "Math.abs(-3) = " + tmp);
+
+tmp = Math.abs(true);
+ok(tmp === 1, "Math.abs(true) = " + tmp);
+
+tmp = Math.abs(-3, 2);
+ok(tmp === 3, "Math.abs(-3, 2) = " + tmp);
+
 reportSuccess();
