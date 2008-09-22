@@ -784,27 +784,60 @@ HRESULT WINAPI SoftpubAuthenticode(CRYPT_PROVIDER_DATA *data)
         ret = TRUE;
         for (i = 0; ret && i < data->csSigners; i++)
         {
-            CERT_CHAIN_POLICY_PARA policyPara = { sizeof(policyPara), 0 };
+            BYTE hash[20];
+            DWORD size = sizeof(hash);
 
-            if (data->dwRegPolicySettings & WTPF_TRUSTTEST)
-                policyPara.dwFlags |= CERT_CHAIN_POLICY_TRUST_TESTROOT_FLAG;
-            if (data->dwRegPolicySettings & WTPF_TESTCANBEVALID)
-                policyPara.dwFlags |= CERT_CHAIN_POLICY_ALLOW_TESTROOT_FLAG;
-            if (data->dwRegPolicySettings & WTPF_IGNOREEXPIRATION)
-                policyPara.dwFlags |=
-                 CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG |
-                 CERT_CHAIN_POLICY_IGNORE_CTL_NOT_TIME_VALID_FLAG |
-                 CERT_CHAIN_POLICY_IGNORE_NOT_TIME_NESTED_FLAG;
-            if (data->dwRegPolicySettings & WTPF_IGNOREREVOKATION)
-                policyPara.dwFlags |=
-                 CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG |
-                 CERT_CHAIN_POLICY_IGNORE_CTL_SIGNER_REV_UNKNOWN_FLAG |
-                 CERT_CHAIN_POLICY_IGNORE_CA_REV_UNKNOWN_FLAG |
-                 CERT_CHAIN_POLICY_IGNORE_ROOT_REV_UNKNOWN_FLAG;
-            CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_AUTHENTICODE,
-             data->pasSigners[i].pChainContext, &policyPara, &policyStatus);
-            if (policyStatus.dwError != NO_ERROR)
-                ret = FALSE;
+            /* First make sure cert isn't disallowed */
+            if ((ret = CertGetCertificateContextProperty(
+             data->pasSigners[i].pasCertChain[0].pCert,
+             CERT_SIGNATURE_HASH_PROP_ID, hash, &size)))
+            {
+                static const WCHAR disallowedW[] =
+                 { 'D','i','s','a','l','l','o','w','e','d',0 };
+                HCERTSTORE disallowed = CertOpenStore(CERT_STORE_PROV_SYSTEM_W,
+                 X509_ASN_ENCODING, 0, CERT_SYSTEM_STORE_CURRENT_USER,
+                 disallowedW);
+
+                if (disallowed)
+                {
+                    PCCERT_CONTEXT found = CertFindCertificateInStore(
+                     disallowed, X509_ASN_ENCODING, 0, CERT_FIND_SIGNATURE_HASH,
+                     hash, NULL);
+
+                    if (found)
+                    {
+                        /* Disallowed!  Can't verify it. */
+                        policyStatus.dwError = TRUST_E_SUBJECT_NOT_TRUSTED;
+                        ret = FALSE;
+                        CertFreeCertificateContext(found);
+                    }
+                    CertCloseStore(disallowed, 0);
+                }
+            }
+            if (ret)
+            {
+                CERT_CHAIN_POLICY_PARA policyPara = { sizeof(policyPara), 0 };
+
+                if (data->dwRegPolicySettings & WTPF_TRUSTTEST)
+                    policyPara.dwFlags |= CERT_CHAIN_POLICY_TRUST_TESTROOT_FLAG;
+                if (data->dwRegPolicySettings & WTPF_TESTCANBEVALID)
+                    policyPara.dwFlags |= CERT_CHAIN_POLICY_ALLOW_TESTROOT_FLAG;
+                if (data->dwRegPolicySettings & WTPF_IGNOREEXPIRATION)
+                    policyPara.dwFlags |=
+                     CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG |
+                     CERT_CHAIN_POLICY_IGNORE_CTL_NOT_TIME_VALID_FLAG |
+                     CERT_CHAIN_POLICY_IGNORE_NOT_TIME_NESTED_FLAG;
+                if (data->dwRegPolicySettings & WTPF_IGNOREREVOKATION)
+                    policyPara.dwFlags |=
+                     CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG |
+                     CERT_CHAIN_POLICY_IGNORE_CTL_SIGNER_REV_UNKNOWN_FLAG |
+                     CERT_CHAIN_POLICY_IGNORE_CA_REV_UNKNOWN_FLAG |
+                     CERT_CHAIN_POLICY_IGNORE_ROOT_REV_UNKNOWN_FLAG;
+                CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_AUTHENTICODE,
+                 data->pasSigners[i].pChainContext, &policyPara, &policyStatus);
+                if (policyStatus.dwError != NO_ERROR)
+                    ret = FALSE;
+            }
         }
     }
     if (!ret)
