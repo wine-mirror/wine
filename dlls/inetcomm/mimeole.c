@@ -69,7 +69,7 @@ static const property_t default_props[] =
     {"Content-Type",                 PID_HDR_CNTTYPE,    MPF_MIME | MPF_HASPARAMS,        VT_LPSTR},
     {"Content-Transfer-Encoding",    PID_HDR_CNTXFER,    MPF_MIME,                        VT_LPSTR},
     {"Content-ID",                   PID_HDR_CNTID,      MPF_MIME,                        VT_LPSTR},
-    {"Content-Disposition",          PID_HDR_CNTDISP,    MPF_MIME,                        VT_LPSTR},
+    {"Content-Disposition",          PID_HDR_CNTDISP,    MPF_MIME | MPF_HASPARAMS,        VT_LPSTR},
     {"To",                           PID_HDR_TO,         MPF_ADDRESS,                     VT_LPSTR},
     {"Cc",                           PID_HDR_CC,         MPF_ADDRESS,                     VT_LPSTR},
     {"Sender",                       PID_HDR_SENDER,     MPF_ADDRESS,                     VT_LPSTR},
