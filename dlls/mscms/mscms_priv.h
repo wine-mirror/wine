@@ -44,6 +44,7 @@
 #undef CopyMemory
 
 #undef LOWORD
+#undef HIWORD
 #undef MAX_PATH
 
 #ifdef HAVE_LCMS_LCMS_H
