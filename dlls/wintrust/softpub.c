@@ -606,6 +606,11 @@ static void WINTRUST_CreateChainPolicyCreateInfo(
     chainPara->cbSize = sizeof(CERT_CHAIN_PARA);
     if (data->pRequestUsage)
         chainPara->RequestedUsage = *data->pRequestUsage;
+    else
+    {
+        chainPara->RequestedUsage.dwType = 0;
+        chainPara->RequestedUsage.Usage.cUsageIdentifier = 0;
+    }
     info->u.cbSize = sizeof(WTD_GENERIC_CHAIN_POLICY_CREATE_INFO);
     info->hChainEngine = NULL;
     info->pChainPara = chainPara;
