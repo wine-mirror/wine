@@ -125,6 +125,42 @@ oom:
     return NULL;
 }
 
+/* Adds trust steps for each function in psPfns.  Assumes steps has at least
+ * 5 entries.  Returns the number of steps added.
+ */
+static DWORD WINTRUST_AddTrustStepsFromFunctions(struct wintrust_step *steps,
+ const CRYPT_PROVIDER_FUNCTIONS *psPfns)
+{
+    DWORD numSteps = 0;
+
+    if (psPfns->pfnInitialize)
+    {
+        steps[numSteps].func = psPfns->pfnInitialize;
+        steps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_WVTINIT;
+    }
+    if (psPfns->pfnObjectTrust)
+    {
+        steps[numSteps].func = psPfns->pfnObjectTrust;
+        steps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_OBJPROV;
+    }
+    if (psPfns->pfnSignatureTrust)
+    {
+        steps[numSteps].func = psPfns->pfnSignatureTrust;
+        steps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_SIGPROV;
+    }
+    if (psPfns->pfnCertificateTrust)
+    {
+        steps[numSteps].func = psPfns->pfnCertificateTrust;
+        steps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_CERTPROV;
+    }
+    if (psPfns->pfnFinalPolicy)
+    {
+        steps[numSteps].func = psPfns->pfnFinalPolicy;
+        steps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_POLICYPROV;
+    }
+    return numSteps;
+}
+
 static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
  WINTRUST_DATA *data)
 {
@@ -155,31 +191,8 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
     provData->pgActionID = actionID;
     WintrustGetRegPolicyFlags(&provData->dwRegPolicySettings);
 
-    if (provData->psPfns->pfnInitialize)
-    {
-        verifySteps[numSteps].func = provData->psPfns->pfnInitialize;
-        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_WVTINIT;
-    }
-    if (provData->psPfns->pfnObjectTrust)
-    {
-        verifySteps[numSteps].func = provData->psPfns->pfnObjectTrust;
-        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_OBJPROV;
-    }
-    if (provData->psPfns->pfnSignatureTrust)
-    {
-        verifySteps[numSteps].func = provData->psPfns->pfnSignatureTrust;
-        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_SIGPROV;
-    }
-    if (provData->psPfns->pfnCertificateTrust)
-    {
-        verifySteps[numSteps].func = provData->psPfns->pfnCertificateTrust;
-        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_CERTPROV;
-    }
-    if (provData->psPfns->pfnFinalPolicy)
-    {
-        verifySteps[numSteps].func = provData->psPfns->pfnFinalPolicy;
-        verifySteps[numSteps++].error_index = TRUSTERROR_STEP_FINAL_POLICYPROV;
-    }
+    numSteps = WINTRUST_AddTrustStepsFromFunctions(verifySteps,
+     provData->psPfns);
     err = WINTRUST_ExecuteSteps(verifySteps, numSteps, provData);
     goto done;
 
