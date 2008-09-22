@@ -44,6 +44,8 @@ MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
 MAKE_FUNCPTR(gnutls_certificate_free_credentials);
 MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
+MAKE_FUNCPTR(gnutls_global_set_log_function);
+MAKE_FUNCPTR(gnutls_global_set_log_level);
 #undef MAKE_FUNCPTR
 
 enum schan_handle_type
@@ -446,6 +448,11 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     return ret;
 }
 
+static void schan_gnutls_log(int level, const char *msg)
+{
+    TRACE("<%d> %s", level, msg);
+}
+
 static const SecurityFunctionTableA schanTableA = {
     1,
     NULL, /* EnumerateSecurityPackagesA */
@@ -537,6 +544,8 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_certificate_free_credentials)
     LOAD_FUNCPTR(gnutls_global_deinit)
     LOAD_FUNCPTR(gnutls_global_init)
+    LOAD_FUNCPTR(gnutls_global_set_log_function)
+    LOAD_FUNCPTR(gnutls_global_set_log_level)
 #undef LOAD_FUNCPTR
 
     provider = SECUR32_addProvider(&schanTableA, &schanTableW, schannelDllName);
@@ -574,6 +583,11 @@ void SECUR32_initSchannelSP(void)
         schan_handle_table_size = 64;
 
         pgnutls_global_init();
+        if (TRACE_ON(secur32))
+        {
+            pgnutls_global_set_log_level(4);
+            pgnutls_global_set_log_function(schan_gnutls_log);
+        }
     }
 }
 
