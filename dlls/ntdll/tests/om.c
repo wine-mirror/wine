@@ -451,23 +451,15 @@ static void test_directory(void)
     pNtClose(dir);
 }
 
-#define SYMLNK_TEST_CREATE_FAILURE(h,e) \
-    status = pNtCreateSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr, &target);\
-    ok(status == e,"NtCreateSymbolicLinkObject should have failed with %s got(%08x)\n", #e, status);
-#define SYMLNK_TEST_OPEN_FAILURE(h,e) \
-    status = pNtOpenSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr);\
-    ok(status == e,"NtOpenSymbolicLinkObject should have failed with %s got(%08x)\n", #e, status);
 #define SYMLNK_TEST_CREATE_OPEN_FAILURE(h,n,t,e) \
     pRtlCreateUnicodeStringFromAsciiz(&str, n);\
     pRtlCreateUnicodeStringFromAsciiz(&target, t);\
-    SYMLNK_TEST_CREATE_FAILURE(h,e)\
-    SYMLNK_TEST_OPEN_FAILURE(h,e)\
+    status = pNtCreateSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr, &target);\
+    ok(status == e,"NtCreateSymbolicLinkObject should have failed with %s got(%08x)\n", #e, status);\
+    status = pNtOpenSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr);\
+    ok(status == e,"NtOpenSymbolicLinkObject should have failed with %s got(%08x)\n", #e, status);\
     pRtlFreeUnicodeString(&target);\
     pRtlFreeUnicodeString(&str);
-
-#define SYMLNK_TEST_CREATE_SUCCESS(h) \
-    status = pNtCreateSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr, &target); \
-    ok(status == STATUS_SUCCESS, "Failed to create SymbolicLink(%08x)\n", status);
 
 static void test_symboliclink(void)
 {
@@ -490,26 +482,38 @@ static void test_symboliclink(void)
     /* No attributes */
     pRtlCreateUnicodeStringFromAsciiz(&target, "\\DosDevices");
     status = pNtCreateSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, NULL, &target);
-    ok(status == STATUS_SUCCESS, "NtCreateSymbolicLinkObject failed(%08x)\n", status);
+    ok(status == STATUS_SUCCESS || status == STATUS_ACCESS_VIOLATION, /* nt4 */
+       "NtCreateSymbolicLinkObject failed(%08x)\n", status);
     pRtlFreeUnicodeString(&target);
-    pNtClose(h);
+    if (!status) pNtClose(h);
 
     InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
-    SYMLNK_TEST_CREATE_FAILURE(&link, STATUS_INVALID_PARAMETER)
-    SYMLNK_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD)
+    status = pNtCreateSymbolicLinkObject(&link, SYMBOLIC_LINK_QUERY, &attr, &target);
+    ok(status == STATUS_INVALID_PARAMETER ||
+       broken(status == STATUS_SUCCESS),  /* nt4 */
+       "NtCreateSymbolicLinkObject should have failed with STATUS_INVALID_PARAMETER got(%08x)\n", status);
+    if (!status) pNtClose(h);
+    status = pNtOpenSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, &attr);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,
+       "NtOpenSymbolicLinkObject should have failed with STATUS_OBJECT_PATH_SYNTAX_BAD got(%08x)\n", status);
 
     /* Bad name */
     pRtlCreateUnicodeStringFromAsciiz(&target, "anywhere");
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "");
-    SYMLNK_TEST_CREATE_SUCCESS(&link)
-    SYMLNK_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD)
+    status = pNtCreateSymbolicLinkObject(&link, SYMBOLIC_LINK_QUERY, &attr, &target);
+    ok(status == STATUS_SUCCESS, "Failed to create SymbolicLink(%08x)\n", status);
+    status = pNtOpenSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, &attr);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD,
+       "NtOpenSymbolicLinkObject should have failed with STATUS_OBJECT_PATH_SYNTAX_BAD got(%08x)\n", status);
     pNtClose(link);
     pRtlFreeUnicodeString(&str);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\");
-    todo_wine {SYMLNK_TEST_CREATE_FAILURE(&h, STATUS_OBJECT_TYPE_MISMATCH)}
+    status = pNtCreateSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, &attr, &target);
+    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH,
+                 "NtCreateSymbolicLinkObject should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
     pRtlFreeUnicodeString(&target);
 
@@ -534,7 +538,8 @@ static void test_symboliclink(void)
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "test-link");
     pRtlCreateUnicodeStringFromAsciiz(&target, "\\DosDevices");
-    SYMLNK_TEST_CREATE_SUCCESS(&link)
+    status = pNtCreateSymbolicLinkObject(&link, SYMBOLIC_LINK_QUERY, &attr, &target);
+    ok(status == STATUS_SUCCESS, "Failed to create SymbolicLink(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
     pRtlFreeUnicodeString(&target);
 
