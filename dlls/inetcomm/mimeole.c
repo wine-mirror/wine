@@ -820,8 +820,26 @@ static HRESULT WINAPI MimeBody_SetOption(
                                 const TYPEDID oid,
                                 LPCPROPVARIANT pValue)
 {
-    FIXME("(%p)->(%08x, %p): stub\n", iface, oid, pValue);
-    return E_NOTIMPL;
+    HRESULT hr = E_NOTIMPL;
+    TRACE("(%p)->(%08x, %p)\n", iface, oid, pValue);
+
+    if(pValue->vt != TYPEDID_TYPE(oid))
+    {
+        WARN("Called with vartype %04x and oid %08x\n", pValue->vt, oid);
+        return E_INVALIDARG;
+    }
+
+    switch(oid)
+    {
+    case OID_SECURITY_HWND_OWNER:
+        FIXME("OID_SECURITY_HWND_OWNER (value %08x): ignoring\n", pValue->u.ulVal);
+        hr = S_OK;
+        break;
+    default:
+        FIXME("Unhandled oid %08x\n", oid);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI MimeBody_GetOption(
