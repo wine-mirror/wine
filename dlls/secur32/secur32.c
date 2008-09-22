@@ -673,6 +673,8 @@ static void SECUR32_freeProviders(void)
     TRACE("\n");
     EnterCriticalSection(&cs);
 
+    SECUR32_deinitSchannelSP();
+
     if (packageTable)
     {
         LIST_FOR_EACH_ENTRY(package, &packageTable->table, SecurePackage, entry)

@@ -19,18 +19,32 @@
  * implementation.
  */
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
+#ifdef SONAME_LIBGNUTLS
+#include <gnutls/gnutls.h>
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "sspi.h"
 #include "schannel.h"
 #include "secur32_priv.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 #ifdef SONAME_LIBGNUTLS
+
+static void *libgnutls_handle;
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
+MAKE_FUNCPTR(gnutls_certificate_free_credentials);
+MAKE_FUNCPTR(gnutls_global_deinit);
+MAKE_FUNCPTR(gnutls_global_init);
+#undef MAKE_FUNCPTR
 
 enum schan_handle_type
 {
@@ -47,6 +61,7 @@ struct schan_handle
 struct schan_credentials
 {
     ULONG credential_use;
+    gnutls_certificate_credentials_t credentials;
 };
 
 static struct schan_handle *schan_handle_table;
@@ -273,6 +288,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         }
 
         creds->credential_use = SECPKG_CRED_OUTBOUND;
+        pgnutls_certificate_allocate_credentials(&creds->credentials);
 
         phCredential->dwLower = handle;
         phCredential->dwUpper = 0;
@@ -371,6 +387,8 @@ static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
     creds = schan_free_handle(phCredential->dwLower, SCHAN_HANDLE_CRED);
     if (!creds) return SEC_E_INVALID_HANDLE;
 
+    if (creds->credential_use == SECPKG_CRED_OUTBOUND)
+        pgnutls_certificate_free_credentials(creds->credentials);
     HeapFree(GetProcessHeap(), 0, creds);
 
     return SEC_E_OK;
@@ -496,8 +514,32 @@ static const WCHAR schannelDllName[] = { 's','c','h','a','n','n','e','l','.','d'
 
 void SECUR32_initSchannelSP(void)
 {
-    SecureProvider *provider = SECUR32_addProvider(&schanTableA, &schanTableW,
-     schannelDllName);
+    SecureProvider *provider;
+
+
+    libgnutls_handle = wine_dlopen(SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0);
+    if (!libgnutls_handle)
+    {
+        WARN("Failed to load libgnutls.\n");
+        return;
+    }
+
+#define LOAD_FUNCPTR(f) \
+    if (!(p##f = wine_dlsym(libgnutls_handle, #f, NULL, 0))) \
+    { \
+        ERR("Failed to load %s\n", #f); \
+        wine_dlclose(libgnutls_handle, NULL, 0); \
+        libgnutls_handle = NULL; \
+        return; \
+    }
+
+    LOAD_FUNCPTR(gnutls_certificate_allocate_credentials)
+    LOAD_FUNCPTR(gnutls_certificate_free_credentials)
+    LOAD_FUNCPTR(gnutls_global_deinit)
+    LOAD_FUNCPTR(gnutls_global_init)
+#undef LOAD_FUNCPTR
+
+    provider = SECUR32_addProvider(&schanTableA, &schanTableW, schannelDllName);
 
     if (provider)
     {
@@ -530,11 +572,20 @@ void SECUR32_initSchannelSP(void)
 
         schan_handle_table = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 64 * sizeof(*schan_handle_table));
         schan_handle_table_size = 64;
+
+        pgnutls_global_init();
     }
+}
+
+void SECUR32_deinitSchannelSP(void)
+{
+    pgnutls_global_deinit();
+    if (libgnutls_handle) wine_dlclose(libgnutls_handle, NULL, 0);
 }
 
 #else /* SONAME_LIBGNUTLS */
 
 void SECUR32_initSchannelSP(void) {}
+void SECUR32_deinitSchannelSP(void) {}
 
 #endif /* SONAME_LIBGNUTLS */

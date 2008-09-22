@@ -124,6 +124,9 @@ void SECUR32_initSchannelSP(void);
 void SECUR32_initNegotiateSP(void);
 void SECUR32_initNTLMSP(void);
 
+/* Cleanup functions for built-in providers */
+void SECUR32_deinitSchannelSP(void);
+
 /* Functions from dispatcher.c used elsewhere in the code */
 SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
         char * const argv[]);
