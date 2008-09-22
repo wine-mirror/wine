@@ -32,6 +32,89 @@ WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 #ifdef SONAME_LIBGNUTLS
 
+enum schan_handle_type
+{
+    SCHAN_HANDLE_CRED,
+    SCHAN_HANDLE_FREE
+};
+
+struct schan_handle
+{
+    void *object;
+    enum schan_handle_type type;
+};
+
+struct schan_credentials
+{
+    ULONG credential_use;
+};
+
+static struct schan_handle *schan_handle_table;
+static struct schan_handle *schan_free_handles;
+static SIZE_T schan_handle_table_size;
+static SIZE_T schan_handle_count;
+
+static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
+{
+    struct schan_handle *handle;
+
+    if (schan_free_handles)
+    {
+        /* Use a free handle */
+        handle = schan_free_handles;
+        if (handle->type != SCHAN_HANDLE_FREE)
+        {
+            ERR("Handle %d(%p) is in the free list, but has type %#x.\n", (handle-schan_handle_table), handle, handle->type);
+            return -1;
+        }
+        schan_free_handles = (struct schan_handle *)handle->object;
+        handle->object = object;
+        handle->type = type;
+
+        return handle - schan_handle_table;
+    }
+    if (!(schan_handle_count < schan_handle_table_size))
+    {
+        /* Grow the table */
+        SIZE_T new_size = schan_handle_table_size + (schan_handle_table_size >> 1);
+        struct schan_handle *new_table = HeapReAlloc(GetProcessHeap(), 0, schan_handle_table, new_size * sizeof(*schan_handle_table));
+        if (!new_table)
+        {
+            ERR("Failed to grow the handle table\n");
+            return -1;
+        }
+        schan_handle_table = new_table;
+        schan_handle_table_size = new_size;
+    }
+
+    handle = &schan_handle_table[schan_handle_count++];
+    handle->object = object;
+    handle->type = type;
+
+    return handle - schan_handle_table;
+}
+
+static void *schan_free_handle(ULONG_PTR handle_idx, enum schan_handle_type type)
+{
+    struct schan_handle *handle;
+    void *object;
+
+    if (handle_idx == -1) return NULL;
+    handle = &schan_handle_table[handle_idx];
+    if (handle->type != type)
+    {
+        ERR("Handle %ld(%p) is not of type %#x\n", handle_idx, handle, type);
+        return NULL;
+    }
+
+    object = handle->object;
+    handle->object = schan_free_handles;
+    handle->type = SCHAN_HANDLE_FREE;
+    schan_free_handles = handle;
+
+    return object;
+}
+
 static SECURITY_STATUS schan_QueryCredentialsAttributes(
  PCredHandle phCredential, ULONG ulAttribute, const VOID *pBuffer)
 {
@@ -162,6 +245,8 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
 {
     SECURITY_STATUS st = SEC_E_OK;
 
+    TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
+
     if (schanCred)
     {
         st = schan_CheckCreds(schanCred);
@@ -174,7 +259,24 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
      */
     if (st == SEC_E_OK)
     {
-        phCredential->dwUpper = SECPKG_CRED_OUTBOUND;
+        ULONG_PTR handle;
+        struct schan_credentials *creds;
+
+        creds = HeapAlloc(GetProcessHeap(), 0, sizeof(*creds));
+        if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
+
+        handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
+        if (handle == -1)
+        {
+            HeapFree(GetProcessHeap(), 0, creds);
+            return SEC_E_INTERNAL_ERROR;
+        }
+
+        creds->credential_use = SECPKG_CRED_OUTBOUND;
+
+        phCredential->dwLower = handle;
+        phCredential->dwUpper = 0;
+
         /* Outbound credentials have no expiry */
         if (ptsExpiry)
         {
@@ -190,12 +292,30 @@ static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schan
 {
     SECURITY_STATUS st;
 
+    TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
+
     if (!schanCred) return SEC_E_NO_CREDENTIALS;
 
     st = schan_CheckCreds(schanCred);
     if (st == SEC_E_OK)
     {
-        phCredential->dwUpper = SECPKG_CRED_INBOUND;
+        ULONG_PTR handle;
+        struct schan_credentials *creds;
+
+        creds = HeapAlloc(GetProcessHeap(), 0, sizeof(*creds));
+        if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
+        creds->credential_use = SECPKG_CRED_INBOUND;
+
+        handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
+        if (handle == -1)
+        {
+            HeapFree(GetProcessHeap(), 0, creds);
+            return SEC_E_INTERNAL_ERROR;
+        }
+
+        phCredential->dwLower = handle;
+        phCredential->dwUpper = 0;
+
         /* FIXME: get expiry from cert */
     }
     return st;
@@ -242,7 +362,17 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleW(
 static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
  PCredHandle phCredential)
 {
-    FIXME("(%p): stub\n", phCredential);
+    struct schan_credentials *creds;
+
+    TRACE("phCredential %p\n", phCredential);
+
+    if (!phCredential) return SEC_E_INVALID_HANDLE;
+
+    creds = schan_free_handle(phCredential->dwLower, SCHAN_HANDLE_CRED);
+    if (!creds) return SEC_E_INVALID_HANDLE;
+
+    HeapFree(GetProcessHeap(), 0, creds);
+
     return SEC_E_OK;
 }
 
@@ -397,6 +527,9 @@ void SECUR32_initSchannelSP(void)
 
         SECUR32_addPackages(provider, sizeof(info) / sizeof(info[0]), NULL,
          info);
+
+        schan_handle_table = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 64 * sizeof(*schan_handle_table));
+        schan_handle_table_size = 64;
     }
 }
 
