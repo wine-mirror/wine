@@ -38,6 +38,7 @@ AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeT
 AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Digital Camera support)]))
 AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]),
             [if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi])
+AC_ARG_WITH(gnutls,    AS_HELP_STRING([--without-gnutls],[do not use GnuTLS (schannel support)]))
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
 AC_ARG_WITH(jack,      AS_HELP_STRING([--without-jack],[do not use the Jack sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_jack_jack_h=no; fi])
@@ -906,6 +907,21 @@ then
 fi
 WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x"],
                  [libhal development files not found, no dynamic device support.])
+
+dnl **** Check for libgnutls ****
+if test "x$with_gnutls" != "xno" -a "$PKG_CONFIG" != "false"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_gnutls_libs="`$PKG_CONFIG --libs gnutls 2>/dev/null`"
+    ac_gnutls_cflags="`$PKG_CONFIG --cflags gnutls 2>/dev/null`"
+    CPPFLAGS="$CPPFLAGS $ac_gnutls_cflags"
+    AC_CHECK_HEADER(gnutls/gnutls.h,
+        [WINE_CHECK_SONAME(gnutls,gnutls_global_init,
+            [AC_SUBST(GNUTLSINCL,"$ac_gnutls_cflags")],,[$ac_gnutls_libs])])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+WINE_NOTICE_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],
+                 [libgnutls development files not found, no schannel support.])
 
 dnl **** Check which curses lib to use ***
 CURSESLIBS=""

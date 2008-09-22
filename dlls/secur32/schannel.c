@@ -18,6 +18,8 @@
  * FIXME: It should be rather obvious that this file is empty of any
  * implementation.
  */
+#include "config.h"
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -27,6 +29,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
+
+#ifdef SONAME_LIBGNUTLS
 
 static SECURITY_STATUS schan_QueryCredentialsAttributes(
  PCredHandle phCredential, ULONG ulAttribute, const VOID *pBuffer)
@@ -395,3 +399,9 @@ void SECUR32_initSchannelSP(void)
          info);
     }
 }
+
+#else /* SONAME_LIBGNUTLS */
+
+void SECUR32_initSchannelSP(void) {}
+
+#endif /* SONAME_LIBGNUTLS */

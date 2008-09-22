@@ -6,6 +6,7 @@ MODULE    = secur32.dll
 IMPORTLIB = secur32
 IMPORTS   = netapi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = crypt32
+EXTRAINCL = @GNUTLSINCL@
 
 C_SRCS = \
 	base64_codec.c \

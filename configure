@@ -742,6 +742,7 @@ XML2INCL
 XSLTLIBS
 XSLTINCL
 HALINCL
+GNUTLSINCL
 sane_devel
 SANEINCL
 gphoto2_devel
@@ -1401,6 +1402,7 @@ Optional Packages:
   --without-freetype      do not use the FreeType library
   --without-gphoto        do not use gphoto (Digital Camera support)
   --without-glu           do not use the GLU library
+  --without-gnutls        do not use GnuTLS (schannel support)
   --without-hal           do not use HAL (dynamic device support)
   --without-jack          do not use the Jack sound support
   --without-jpeg          do not use JPEG
@@ -1994,6 +1996,12 @@ fi
 # Check whether --with-glu was given.
 if test "${with_glu+set}" = set; then
   withval=$with_glu; if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi
+fi
+
+
+# Check whether --with-gnutls was given.
+if test "${with_gnutls+set}" = set; then
+  withval=$with_gnutls;
 fi
 
 
@@ -12724,6 +12732,240 @@ if test "x$ac_cv_lib_soname_hal" = "x"; then
 This is an error since --with-hal was requested." >&5
 echo "$as_me: error: libhal development files not found, no dynamic device support.
 This is an error since --with-hal was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+fi
+
+
+if test "x$with_gnutls" != "xno" -a "$PKG_CONFIG" != "false"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    ac_gnutls_libs="`$PKG_CONFIG --libs gnutls 2>/dev/null`"
+    ac_gnutls_cflags="`$PKG_CONFIG --cflags gnutls 2>/dev/null`"
+    CPPFLAGS="$CPPFLAGS $ac_gnutls_cflags"
+    if test "${ac_cv_header_gnutls_gnutls_h+set}" = set; then
+  { echo "$as_me:$LINENO: checking for gnutls/gnutls.h" >&5
+echo $ECHO_N "checking for gnutls/gnutls.h... $ECHO_C" >&6; }
+if test "${ac_cv_header_gnutls_gnutls_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_header_gnutls_gnutls_h" >&5
+echo "${ECHO_T}$ac_cv_header_gnutls_gnutls_h" >&6; }
+else
+  # Is the header compilable?
+{ echo "$as_me:$LINENO: checking gnutls/gnutls.h usability" >&5
+echo $ECHO_N "checking gnutls/gnutls.h usability... $ECHO_C" >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <gnutls/gnutls.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_header_compiler=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ echo "$as_me:$LINENO: checking gnutls/gnutls.h presence" >&5
+echo $ECHO_N "checking gnutls/gnutls.h presence... $ECHO_C" >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <gnutls/gnutls.h>
+_ACEOF
+if { (ac_try="$ac_cpp conftest.$ac_ext"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null && {
+	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       }; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+
+rm -f conftest.err conftest.$ac_ext
+{ echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: gnutls/gnutls.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: gnutls/gnutls.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: gnutls/gnutls.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: gnutls/gnutls.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: gnutls/gnutls.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: gnutls/gnutls.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: gnutls/gnutls.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: gnutls/gnutls.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: gnutls/gnutls.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: gnutls/gnutls.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: gnutls/gnutls.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: gnutls/gnutls.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: gnutls/gnutls.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: gnutls/gnutls.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: gnutls/gnutls.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: gnutls/gnutls.h: in the future, the compiler will take precedence" >&2;}
+    ( cat <<\_ASBOX
+## ------------------------------------ ##
+## Report this to wine-devel@winehq.org ##
+## ------------------------------------ ##
+_ASBOX
+     ) | sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+{ echo "$as_me:$LINENO: checking for gnutls/gnutls.h" >&5
+echo $ECHO_N "checking for gnutls/gnutls.h... $ECHO_C" >&6; }
+if test "${ac_cv_header_gnutls_gnutls_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_gnutls_gnutls_h=$ac_header_preproc
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_header_gnutls_gnutls_h" >&5
+echo "${ECHO_T}$ac_cv_header_gnutls_gnutls_h" >&6; }
+
+fi
+if test $ac_cv_header_gnutls_gnutls_h = yes; then
+  { echo "$as_me:$LINENO: checking for -lgnutls" >&5
+echo $ECHO_N "checking for -lgnutls... $ECHO_C" >&6; }
+if test "${ac_cv_lib_soname_gnutls+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lgnutls $ac_gnutls_libs $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gnutls_global_init ();
+int
+main ()
+{
+return gnutls_global_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  case "$LIBEXT" in
+    dll) ;;
+    dylib) ac_cv_lib_soname_gnutls=`otool -L conftest$ac_exeext | grep "libgnutls\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libgnutls\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_gnutls=`$ac_cv_path_LDD conftest$ac_exeext | grep "libgnutls\\.$LIBEXT" | sed -e "s/^.*\(libgnutls\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if test "x$ac_cv_lib_soname_gnutls" = "x"; then
+  { echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6; }
+
+else
+  { echo "$as_me:$LINENO: result: $ac_cv_lib_soname_gnutls" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_gnutls" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBGNUTLS "$ac_cv_lib_soname_gnutls"
+_ACEOF
+
+       GNUTLSINCL="$ac_gnutls_cflags"
+
+fi
+
+fi
+
+
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+if test "x$ac_cv_lib_soname_gnutls" = "x"; then
+  case "x$with_gnutls" in
+  x)   wine_notices="$wine_notices|libgnutls development files not found, no schannel support." ;;
+  xno) ;;
+  *)   { { echo "$as_me:$LINENO: error: libgnutls development files not found, no schannel support.
+This is an error since --with-gnutls was requested." >&5
+echo "$as_me: error: libgnutls development files not found, no schannel support.
+This is an error since --with-gnutls was requested." >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 fi
@@ -26916,6 +27158,7 @@ XML2INCL!$XML2INCL$ac_delim
 XSLTLIBS!$XSLTLIBS$ac_delim
 XSLTINCL!$XSLTINCL$ac_delim
 HALINCL!$HALINCL$ac_delim
+GNUTLSINCL!$GNUTLSINCL$ac_delim
 sane_devel!$sane_devel$ac_delim
 SANEINCL!$SANEINCL$ac_delim
 gphoto2_devel!$gphoto2_devel$ac_delim
@@ -26960,7 +27203,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 88; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

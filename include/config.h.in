@@ -1068,6 +1068,9 @@
 /* Define to the soname of the libGLU library. */
 #undef SONAME_LIBGLU
 
+/* Define to the soname of the libgnutls library. */
+#undef SONAME_LIBGNUTLS
+
 /* Define to the soname of the libhal library. */
 #undef SONAME_LIBHAL
 
