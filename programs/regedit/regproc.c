@@ -940,7 +940,7 @@ static void REGPROC_write_line(FILE *file, const WCHAR* str, BOOL unicode)
     } else
     {
         char* strA = GetMultiByteString(str);
-        fprintf(file, strA);
+        fputs(strA, file);
         HeapFree(GetProcessHeap(), 0, strA);
     }
 }
