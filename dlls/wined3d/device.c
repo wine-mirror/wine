@@ -1618,19 +1618,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
             if (This->auto_depth_stencil_buffer != NULL)
                 IWineD3DSurface_SetContainer(This->auto_depth_stencil_buffer, 0);
         }
-
-        /** TODO: A check on width, height and multisample types
-        *(since the zbuffer must be at least as large as the render target and have the same multisample parameters)
-         ****************************/
-        object->wantsDepthStencilBuffer = TRUE;
-    } else {
-        object->wantsDepthStencilBuffer = FALSE;
     }
 
     IWineD3DSwapChain_GetGammaRamp((IWineD3DSwapChain *) object, &object->orig_gamma);
 
     TRACE("Created swapchain %p\n", object);
-    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil %d\n",object->frontBuffer, object->backBuffer ? object->backBuffer[0] : NULL, object->wantsDepthStencilBuffer);
+    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil %d\n",object->frontBuffer, object->backBuffer ? object->backBuffer[0] : NULL, pPresentationParameters->EnableAutoDepthStencil);
     return WINED3D_OK;
 
 error:

@@ -1746,7 +1746,6 @@ typedef struct IWineD3DSwapChainImpl
     /* IWineD3DSwapChain fields */
     IWineD3DSurface         **backBuffer;
     IWineD3DSurface          *frontBuffer;
-    BOOL                      wantsDepthStencilBuffer;
     WINED3DPRESENT_PARAMETERS presentParms;
     DWORD                     orig_width, orig_height;
     WINED3DFORMAT             orig_fmt;
