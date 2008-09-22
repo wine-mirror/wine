@@ -2172,8 +2172,30 @@ static HRESULT WINAPI MimeMessage_SetOption(
     const TYPEDID oid,
     LPCPROPVARIANT pValue)
 {
-    FIXME("(%p)->(%08x, %p)\n", iface, oid, pValue);
-    return E_NOTIMPL;
+    HRESULT hr = E_NOTIMPL;
+    TRACE("(%p)->(%08x, %p)\n", iface, oid, pValue);
+
+    if(pValue->vt != TYPEDID_TYPE(oid))
+    {
+        WARN("Called with vartype %04x and oid %08x\n", pValue->vt, oid);
+        return E_INVALIDARG;
+    }
+
+    switch(oid)
+    {
+    case OID_HIDE_TNEF_ATTACHMENTS:
+        FIXME("OID_HIDE_TNEF_ATTACHMENTS (value %d): ignoring\n", pValue->u.boolVal);
+        hr = S_OK;
+        break;
+    case OID_SHOW_MACBINARY:
+        FIXME("OID_SHOW_MACBINARY (value %d): ignoring\n", pValue->u.boolVal);
+        hr = S_OK;
+        break;
+    default:
+        FIXME("Unhandled oid %08x\n", oid);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI MimeMessage_GetOption(
