@@ -1238,6 +1238,7 @@ then
   WINE_TRY_CFLAGS([-fshort-wchar],
                   [AC_DEFINE(CC_FLAG_SHORT_WCHAR, "-fshort-wchar",
                              [Specifies the compiler flag that forces a short wchar_t])])
+  WINE_TRY_CFLAGS([-fno-builtin],[AC_SUBST(BUILTINFLAG,"-fno-builtin")])
   WINE_TRY_CFLAGS([-fno-strict-aliasing])
   WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
   WINE_TRY_CFLAGS([-Wwrite-strings])
@@ -1252,17 +1253,6 @@ then
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
-  fi
-
-  AC_SUBST(BUILTINFLAG,"")
-  saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -Werror"
-  AC_CACHE_CHECK([for builtin wchar inlines], ac_cv_c_builtin_wchar_ctype,
-      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[int iswlower(unsigned short);]])],[ac_cv_c_builtin_wchar_ctype=no],[ac_cv_c_builtin_wchar_ctype=yes]))
-  CFLAGS="$saved_CFLAGS"
-  if test "$ac_cv_c_builtin_wchar_ctype" = "yes"
-  then
-    BUILTINFLAG="-fno-builtin"
   fi
 fi
 

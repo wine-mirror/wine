@@ -16266,6 +16266,65 @@ _ACEOF
 
 fi
 
+  { echo "$as_me:$LINENO: checking whether the compiler supports -fno-builtin" >&5
+echo $ECHO_N "checking whether the compiler supports -fno-builtin... $ECHO_C" >&6; }
+if test "${ac_cv_cflags__fno_builtin+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fno-builtin"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_cflags__fno_builtin=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_cflags__fno_builtin=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_cflags__fno_builtin" >&5
+echo "${ECHO_T}$ac_cv_cflags__fno_builtin" >&6; }
+if test $ac_cv_cflags__fno_builtin = yes; then
+  BUILTINFLAG="-fno-builtin"
+
+fi
+
   { echo "$as_me:$LINENO: checking whether the compiler supports -fno-strict-aliasing" >&5
 echo $ECHO_N "checking whether the compiler supports -fno-strict-aliasing... $ECHO_C" >&6; }
 if test "${ac_cv_cflags__fno_strict_aliasing+set}" = set; then
@@ -16554,65 +16613,6 @@ echo "${ECHO_T}$ac_cv_c_string_h_warnings" >&6; }
   if test "$ac_cv_c_string_h_warnings" = "no"
   then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
-  fi
-
-  BUILTINFLAG=""
-
-  saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -Werror"
-  { echo "$as_me:$LINENO: checking for builtin wchar inlines" >&5
-echo $ECHO_N "checking for builtin wchar inlines... $ECHO_C" >&6; }
-if test "${ac_cv_c_builtin_wchar_ctype+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-int
-main ()
-{
-int iswlower(unsigned short);
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  ac_cv_c_builtin_wchar_ctype=no
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_c_builtin_wchar_ctype=yes
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_c_builtin_wchar_ctype" >&5
-echo "${ECHO_T}$ac_cv_c_builtin_wchar_ctype" >&6; }
-  CFLAGS="$saved_CFLAGS"
-  if test "$ac_cv_c_builtin_wchar_ctype" = "yes"
-  then
-    BUILTINFLAG="-fno-builtin"
   fi
 fi
 
