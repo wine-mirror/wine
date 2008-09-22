@@ -27,6 +27,7 @@
 #include "wintrust.h"
 #include "winuser.h"
 #include "cryptdlg.h"
+#include "cryptuiapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cryptdlg);
@@ -145,8 +146,61 @@ error:
  */
 BOOL WINAPI CertViewPropertiesW(CERT_VIEWPROPERTIES_STRUCT_W *info)
 {
-    FIXME("(%p): stub\n", info);
-    return FALSE;
+    static GUID cert_action_verify = CERT_CERTIFICATE_ACTION_VERIFY;
+    CERT_VERIFY_CERTIFICATE_TRUST trust;
+    WINTRUST_BLOB_INFO blob;
+    WINTRUST_DATA wtd;
+    LONG err;
+    BOOL ret;
+
+    TRACE("(%p)\n", info);
+
+    memset(&trust, 0, sizeof(trust));
+    trust.cbSize = sizeof(trust);
+    trust.pccert = info->pCertContext;
+    trust.cRootStores = info->cRootStores;
+    trust.rghstoreRoots = info->rghstoreRoots;
+    trust.cStores = info->cStores;
+    trust.rghstoreCAs = info->rghstoreCAs;
+    trust.cTrustStores = info->cTrustStores;
+    trust.rghstoreTrust = info->rghstoreTrust;
+    memset(&blob, 0, sizeof(blob));
+    blob.cbStruct = sizeof(blob);
+    blob.cbMemObject = sizeof(trust);
+    blob.pbMemObject = (BYTE *)&trust;
+    memset(&wtd, 0, sizeof(wtd));
+    wtd.cbStruct = sizeof(wtd);
+    wtd.dwUIChoice = WTD_UI_NONE;
+    wtd.dwUnionChoice = WTD_CHOICE_BLOB;
+    wtd.pBlob = &blob;
+    wtd.dwStateAction = WTD_STATEACTION_VERIFY;
+    err = WinVerifyTrust(NULL, &cert_action_verify, &wtd);
+    if (err == ERROR_SUCCESS)
+    {
+        CRYPTUI_VIEWCERTIFICATE_STRUCTW uiInfo;
+        BOOL propsChanged = FALSE;
+
+        memset(&uiInfo, 0, sizeof(uiInfo));
+        uiInfo.dwSize = sizeof(uiInfo);
+        uiInfo.hwndParent = info->hwndParent;
+        uiInfo.dwFlags =
+         CRYPTUI_DISABLE_ADDTOSTORE | CRYPTUI_ENABLE_EDITPROPERTIES;
+        uiInfo.szTitle = info->szTitle;
+        uiInfo.pCertContext = info->pCertContext;
+        uiInfo.cPurposes = info->cArrayPurposes;
+        uiInfo.rgszPurposes = (LPCSTR *)info->arrayPurposes;
+        uiInfo.hWVTStateData = wtd.hWVTStateData;
+        uiInfo.fpCryptProviderDataTrustedUsage = TRUE;
+        uiInfo.cPropSheetPages = info->cArrayPropSheetPages;
+        uiInfo.rgPropSheetPages = info->arrayPropSheetPages;
+        uiInfo.nStartPage = info->nStartPage;
+        ret = CryptUIDlgViewCertificateW(&uiInfo, &propsChanged);
+        wtd.dwStateAction = WTD_STATEACTION_CLOSE;
+        WinVerifyTrust(NULL, &cert_action_verify, &wtd);
+    }
+    else
+        ret = FALSE;
+    return ret;
 }
 
 /***********************************************************************
