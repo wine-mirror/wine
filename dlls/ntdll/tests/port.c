@@ -138,6 +138,7 @@ static BOOL init_function_ptrs(void)
         !pNtRequestPort || !pNtRegisterThreadTerminatePort ||
         !pNtConnectPort || !pRtlInitUnicodeString)
     {
+        win_skip("Needed port functions are not available\n");
         FreeLibrary(hntdll);
         return FALSE;
     }
