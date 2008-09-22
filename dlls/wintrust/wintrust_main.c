@@ -33,6 +33,7 @@
 #include "mscat.h"
 #include "objbase.h"
 #include "winuser.h"
+#include "cryptdlg.h"
 #include "wintrust_priv.h"
 #include "wine/debug.h"
 
@@ -267,6 +268,184 @@ static LONG WINTRUST_PublishedSoftware(HWND hwnd, GUID *actionID,
     return WINTRUST_DefaultVerifyAndClose(hwnd, actionID, &wintrust_data);
 }
 
+/* Sadly, the function to load the cert for the CERT_CERTIFICATE_ACTION_VERIFY
+ * action is not stored in the registry and is located in wintrust, not in
+ * cryptdlg along with the rest of the implementation (verified by running the
+ * action with a native wintrust.dll.)
+ */
+static HRESULT WINAPI WINTRUST_CertVerifyObjTrust(CRYPT_PROVIDER_DATA *data)
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", data);
+
+    if (!data->padwTrustStepErrors)
+        return S_FALSE;
+
+    switch (data->pWintrustData->dwUnionChoice)
+    {
+    case WTD_CHOICE_BLOB:
+        if (data->pWintrustData->u.pBlob &&
+         data->pWintrustData->u.pBlob->cbStruct == sizeof(WINTRUST_BLOB_INFO) &&
+         data->pWintrustData->u.pBlob->cbMemObject ==
+         sizeof(CERT_VERIFY_CERTIFICATE_TRUST) &&
+         data->pWintrustData->u.pBlob->pbMemObject)
+        {
+            CERT_VERIFY_CERTIFICATE_TRUST *pCert =
+             (CERT_VERIFY_CERTIFICATE_TRUST *)
+             data->pWintrustData->u.pBlob->pbMemObject;
+
+            if (pCert->cbSize == sizeof(CERT_VERIFY_CERTIFICATE_TRUST) &&
+             pCert->pccert)
+            {
+                CRYPT_PROVIDER_SGNR signer = { sizeof(signer), { 0 } };
+                DWORD i;
+                SYSTEMTIME sysTime;
+
+                /* Add a signer with nothing but the time to verify, so we can
+                 * add a cert to it
+                 */
+                GetSystemTime(&sysTime);
+                SystemTimeToFileTime(&sysTime, &signer.sftVerifyAsOf);
+                ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, 0, &signer);
+                if (!ret)
+                    goto error;
+                ret = data->psPfns->pfnAddCert2Chain(data, 0, FALSE, 0,
+                 pCert->pccert);
+                if (!ret)
+                    goto error;
+                for (i = 0; ret && i < pCert->cRootStores; i++)
+                    ret = data->psPfns->pfnAddStore2Chain(data,
+                     pCert->rghstoreRoots[i]);
+                for (i = 0; ret && i < pCert->cStores; i++)
+                    ret = data->psPfns->pfnAddStore2Chain(data,
+                     pCert->rghstoreCAs[i]);
+                for (i = 0; ret && i < pCert->cTrustStores; i++)
+                    ret = data->psPfns->pfnAddStore2Chain(data,
+                     pCert->rghstoreTrust[i]);
+            }
+            else
+            {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                ret = FALSE;
+            }
+        }
+        else
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            ret = FALSE;
+        }
+        break;
+    default:
+        FIXME("unimplemented for %d\n", data->pWintrustData->dwUnionChoice);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        ret = FALSE;
+    }
+
+error:
+    if (!ret)
+        data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] =
+         GetLastError();
+    TRACE("returning %d (%08x)\n", ret ? S_OK : S_FALSE,
+     data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
+    return ret ? S_OK : S_FALSE;
+}
+
+static LONG WINTRUST_CertVerify(HWND hwnd, GUID *actionID,
+ WINTRUST_DATA *data)
+{
+    DWORD err = ERROR_SUCCESS, numSteps = 0;
+    CRYPT_PROVIDER_DATA *provData;
+    BOOL ret;
+    struct wintrust_step verifySteps[5];
+
+    TRACE("(%p, %s, %p)\n", hwnd, debugstr_guid(actionID), data);
+
+    provData = WINTRUST_AllocateProviderData();
+    if (!provData)
+        return ERROR_OUTOFMEMORY;
+
+    ret = WintrustLoadFunctionPointers(actionID, provData->psPfns);
+    if (!ret)
+    {
+        err = GetLastError();
+        goto error;
+    }
+    if (!provData->psPfns->pfnObjectTrust)
+        provData->psPfns->pfnObjectTrust = WINTRUST_CertVerifyObjTrust;
+    /* Not sure why, but native skips the policy check */
+    provData->psPfns->pfnCertCheckPolicy = NULL;
+
+    data->hWVTStateData = (HANDLE)provData;
+    provData->pWintrustData = data;
+    if (hwnd == INVALID_HANDLE_VALUE)
+        provData->hWndParent = GetDesktopWindow();
+    else
+        provData->hWndParent = hwnd;
+    provData->pgActionID = actionID;
+    WintrustGetRegPolicyFlags(&provData->dwRegPolicySettings);
+
+    numSteps = WINTRUST_AddTrustStepsFromFunctions(verifySteps,
+     provData->psPfns);
+    err = WINTRUST_ExecuteSteps(verifySteps, numSteps, provData);
+    goto done;
+
+error:
+    if (provData)
+    {
+        WINTRUST_Free(provData->padwTrustStepErrors);
+        WINTRUST_Free(provData->u.pPDSip);
+        WINTRUST_Free(provData->psPfns);
+        WINTRUST_Free(provData);
+    }
+done:
+    TRACE("returning %08x\n", err);
+    return err;
+}
+
+static LONG WINTRUST_CertVerifyAndClose(HWND hwnd, GUID *actionID,
+ WINTRUST_DATA *data)
+{
+    LONG err;
+
+    TRACE("(%p, %s, %p)\n", hwnd, debugstr_guid(actionID), data);
+
+    err = WINTRUST_CertVerify(hwnd, actionID, data);
+    WINTRUST_DefaultClose(hwnd, actionID, data);
+    TRACE("returning %08x\n", err);
+    return err;
+}
+
+static LONG WINTRUST_CertActionVerify(HWND hwnd, GUID *actionID,
+ WINTRUST_DATA *data)
+{
+    DWORD stateAction;
+    LONG err = ERROR_SUCCESS;
+
+    if (WVT_ISINSTRUCT(WINTRUST_DATA, data->cbStruct, dwStateAction))
+        stateAction = data->dwStateAction;
+    else
+    {
+        TRACE("no dwStateAction, assuming WTD_STATEACTION_IGNORE\n");
+        stateAction = WTD_STATEACTION_IGNORE;
+    }
+    switch (stateAction)
+    {
+    case WTD_STATEACTION_IGNORE:
+        err = WINTRUST_CertVerifyAndClose(hwnd, actionID, data);
+        break;
+    case WTD_STATEACTION_VERIFY:
+        err = WINTRUST_CertVerify(hwnd, actionID, data);
+        break;
+    case WTD_STATEACTION_CLOSE:
+        err = WINTRUST_DefaultClose(hwnd, actionID, data);
+        break;
+    default:
+        FIXME("unimplemented for %d\n", data->dwStateAction);
+    }
+    return err;
+}
+
 static void dump_file_info(WINTRUST_FILE_INFO *pFile)
 {
     TRACE("%p\n", pFile);
@@ -402,6 +581,7 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
     static const GUID generic_verify_v2 = WINTRUST_ACTION_GENERIC_VERIFY_V2;
     static const GUID generic_cert_verify = WINTRUST_ACTION_GENERIC_CERT_VERIFY;
     static const GUID generic_chain_verify = WINTRUST_ACTION_GENERIC_CHAIN_VERIFY;
+    static const GUID cert_action_verify = CERT_CERTIFICATE_ACTION_VERIFY;
     LONG err = ERROR_SUCCESS;
     WINTRUST_DATA *actionData = (WINTRUST_DATA *)ActionData;
 
@@ -411,6 +591,8 @@ LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID, LPVOID ActionData )
     /* Support for known old-style callers: */
     if (IsEqualGUID(ActionID, &published_software))
         err = WINTRUST_PublishedSoftware(hwnd, ActionID, ActionData);
+    else if (IsEqualGUID(ActionID, &cert_action_verify))
+        err = WINTRUST_CertActionVerify(hwnd, ActionID, ActionData);
     else
     {
         DWORD stateAction;
