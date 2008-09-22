@@ -120,6 +120,7 @@ typedef struct {
   ULONG cur_subobject;
   LPBYTE cur_pdata;
   BYTE value[100];
+  xobject* pxo_tab;
   IDirectXFileImpl* pdxf;
   xobject* pxo;
   xtemplate* pxt[MAX_SUBOBJECTS];

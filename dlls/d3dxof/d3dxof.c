@@ -161,7 +161,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   DWORD size;
   HANDLE hFile = INVALID_HANDLE_VALUE;
 
-  FIXME("(%p/%p)->(%p,%x,%p) partial stub!\n", This, iface, pvSource, dwLoadOptions, ppEnumObj);
+  TRACE("(%p/%p)->(%p,%x,%p)\n", This, iface, pvSource, dwLoadOptions, ppEnumObj);
 
   if (!ppEnumObj)
     return DXFILEERR_BADVALUE;
@@ -1393,14 +1393,25 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetType(IDirectXFileData* iface, cons
 
 static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface, LPDIRECTXFILEOBJECT* ppChildObj)
 {
+  HRESULT hr;
   IDirectXFileDataImpl *This = (IDirectXFileDataImpl *)iface;
+  IDirectXFileDataImpl *object;
 
-  FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppChildObj); 
+  TRACE("(%p/%p)->(%p)\n", This, iface, ppChildObj);
 
   if (This->cur_enum_object >= This->pobj->nb_childs)
     return DXFILEERR_NOMOREOBJECTS;
 
-  return DXFILEERR_BADVALUE;
+  hr = IDirectXFileDataImpl_Create(&object);
+  if (hr != S_OK)
+    return DXFILEERR_BADVALUE;
+
+  object->pobj = This->pobj->childs[This->cur_enum_object++];
+  object->cur_enum_object = 0;
+
+  *ppChildObj = (LPDIRECTXFILEOBJECT)object;
+
+  return DXFILE_OK;
 }
 
 static HRESULT WINAPI IDirectXFileDataImpl_AddDataObject(IDirectXFileData* iface, LPDIRECTXFILEDATA pDataObj)
@@ -1751,6 +1762,8 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
 
   if (allow_optional)
   {
+    buf->pxo->size = buf->cur_pdata - buf->pxo->pdata;
+
     /* Skip trailing semicolon */
     while (check_TOKEN(buf) == TOKEN_SEMICOLON)
       get_TOKEN(buf);
@@ -1767,6 +1780,9 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
       }
       else if (check_TOKEN(buf) == TOKEN_NAME)
       {
+        xobject* pxo = buf->pxo;
+        buf->pxo = buf->pxo->childs[buf->pxo->nb_childs] = &buf->pxo_tab[buf->cur_subobject++];
+
         TRACE("Enter optional %s\n", (char*)buf->value);
         buf->level++;
         if (!parse_object(buf))
@@ -1775,6 +1791,8 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
           return FALSE;
         }
         buf->level--;
+        buf->pxo = pxo;
+        buf->pxo->nb_childs++;
       }
       else
         break;
@@ -1787,6 +1805,8 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
 static BOOL parse_object(parse_buffer * buf)
 {
   int i;
+
+  buf->pxo->pdata = buf->cur_pdata;
 
   if (get_TOKEN(buf) != TOKEN_NAME)
     return FALSE;
@@ -1849,10 +1869,9 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   IDirectXFileEnumObjectImpl *This = (IDirectXFileEnumObjectImpl *)iface;
   IDirectXFileDataImpl* object;
   HRESULT hr;
+  LPBYTE pdata;
   
-  FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppDataObj); 
-
-  /*printf("%d\n", This->buf.rem_bytes);*/
+  TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
 
   if (!This->buf.rem_bytes)
     return DXFILEERR_NOMOREOBJECTS;
@@ -1861,19 +1880,18 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   if (!SUCCEEDED(hr))
     return hr;
 
-  This->buf.pxo = &This->xobjects[This->nb_xobjects][This->buf.cur_subobject];
-  TRACE("Start %d %d\n", This->nb_xobjects, This->buf.cur_subobject);
+  This->buf.pxo_tab = &This->xobjects[This->nb_xobjects][0];
+  This->buf.cur_subobject = 0;
+  This->buf.pxo = &This->buf.pxo_tab[This->buf.cur_subobject++];
 
-  This->buf.pxo->pdata = HeapAlloc(GetProcessHeap(), 0, MAX_DATA_SIZE);
-  if (!This->buf.pxo->pdata)
+  pdata = HeapAlloc(GetProcessHeap(), 0, MAX_DATA_SIZE);
+  if (!pdata)
   {
     WARN("Out of memory\n");
     return DXFILEERR_BADALLOC;
   }
-  This->buf.cur_pdata = This->buf.pxo->pdata;
+  This->buf.cur_pdata = pdata;
   This->buf.level = 0;
-
-  This->buf.pxo->pdata = This->buf.cur_pdata;
 
   if (!parse_object(&This->buf))
   {
@@ -1882,9 +1900,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     return DXFILEERR_PARSEERROR;
   }
 
-  This->buf.pxo->size = This->buf.cur_pdata - This->buf.pxo->pdata;
-
   object->pobj = This->buf.pxo;
+  object->cur_enum_object = 0;
 
   *ppDataObj = (LPDIRECTXFILEDATA)object;
 
