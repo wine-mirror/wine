@@ -302,8 +302,10 @@ static const struct message destroy_parent_seq[] = {
     { 0x0090, sent|optional }, /* Vista */
     { WM_WINDOWPOSCHANGING, sent|wparam, 0},
     { WM_WINDOWPOSCHANGED, sent|wparam, 0},
-    { WM_NCACTIVATE, sent|wparam|lparam, 0, 0},
-    { WM_ACTIVATE, sent|wparam|lparam, 0, 0},
+    { WM_NCACTIVATE, sent|wparam, 0},
+    { WM_ACTIVATE, sent|wparam, 0},
+    { WM_NCACTIVATE, sent|wparam|lparam|optional, 0, 0},
+    { WM_ACTIVATE, sent|wparam|lparam|optional, 0, 0},
     { WM_ACTIVATEAPP, sent|wparam, 0},
     { WM_KILLFOCUS, sent|wparam|lparam, 0, 0},
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0},
