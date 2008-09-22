@@ -88,15 +88,9 @@ static DWORD WINTRUST_ExecuteSteps(const struct wintrust_step *steps,
     return err;
 }
 
-static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
- WINTRUST_DATA *data)
+static CRYPT_PROVIDER_DATA *WINTRUST_AllocateProviderData(void)
 {
-    DWORD err = ERROR_SUCCESS, numSteps = 0;
     CRYPT_PROVIDER_DATA *provData;
-    BOOL ret;
-    struct wintrust_step verifySteps[5];
-
-    TRACE("(%p, %s, %p)\n", hwnd, debugstr_guid(actionID), data);
 
     provData = WINTRUST_Alloc(sizeof(CRYPT_PROVIDER_DATA));
     if (!provData)
@@ -118,6 +112,33 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
     if (!provData->psPfns)
         goto oom;
     provData->psPfns->cbStruct = sizeof(CRYPT_PROVIDER_FUNCTIONS);
+    return provData;
+
+oom:
+    if (provData)
+    {
+        WINTRUST_Free(provData->padwTrustStepErrors);
+        WINTRUST_Free(provData->u.pPDSip);
+        WINTRUST_Free(provData->psPfns);
+        WINTRUST_Free(provData);
+    }
+    return NULL;
+}
+
+static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
+ WINTRUST_DATA *data)
+{
+    DWORD err = ERROR_SUCCESS, numSteps = 0;
+    CRYPT_PROVIDER_DATA *provData;
+    BOOL ret;
+    struct wintrust_step verifySteps[5];
+
+    TRACE("(%p, %s, %p)\n", hwnd, debugstr_guid(actionID), data);
+
+    provData = WINTRUST_AllocateProviderData();
+    if (!provData)
+        return ERROR_OUTOFMEMORY;
+
     ret = WintrustLoadFunctionPointers(actionID, provData->psPfns);
     if (!ret)
     {
@@ -162,8 +183,6 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
     err = WINTRUST_ExecuteSteps(verifySteps, numSteps, provData);
     goto done;
 
-oom:
-    err = ERROR_OUTOFMEMORY;
 error:
     if (provData)
     {
