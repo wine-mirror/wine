@@ -2030,7 +2030,6 @@ extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
 extern void pshader_hw_bem(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_cnd(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_cmp(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_tex(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg);
@@ -2052,12 +2051,12 @@ extern void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg);
 extern void pshader_hw_texreg2rgb(SHADER_OPCODE_ARG* arg);
 
 /* ARB vertex / pixel shader common prototypes */
+extern void shader_hw_map2gl(SHADER_OPCODE_ARG* arg);
 extern void shader_hw_nrm(SHADER_OPCODE_ARG* arg);
 extern void shader_hw_sincos(SHADER_OPCODE_ARG* arg);
 extern void shader_hw_mnxn(SHADER_OPCODE_ARG* arg);
 
 /* ARB vertex shader prototypes */
-extern void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
 extern void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg);
 
 /* GLSL helper functions */

@@ -1083,71 +1083,119 @@ void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg) {
 }
 
 /* Map the opcode 1-to-1 to the GL code */
-void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
+void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
+{
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl*)arg->shader;
+    CONST SHADER_OPCODE* curOpcode = arg->opcode;
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD dst = arg->dst;
+    DWORD* src = arg->src;
 
-     CONST SHADER_OPCODE* curOpcode = arg->opcode;
-     SHADER_BUFFER* buffer = arg->buffer;
-     DWORD dst = arg->dst;
-     DWORD* src = arg->src;
+    char tmpLine[256];
+    unsigned int i;
 
-     unsigned int i;
-     char tmpLine[256];
+    if (shader_is_pshader_version(shader->baseShader.hex_version))
+    {
+        BOOL saturate = FALSE;
+        BOOL centroid = FALSE;
+        BOOL partialprecision = FALSE;
+        DWORD shift;
 
-     /* Output token related */
-     char output_rname[256];
-     char output_wmask[20];
-     BOOL saturate = FALSE;
-     BOOL centroid = FALSE;
-     BOOL partialprecision = FALSE;
-     DWORD shift;
+        strcpy(tmpLine, curOpcode->glname);
 
-     strcpy(tmpLine, curOpcode->glname);
+        /* Process modifiers */
+        if (dst & WINED3DSP_DSTMOD_MASK)
+        {
+            DWORD mask = dst & WINED3DSP_DSTMOD_MASK;
 
-     /* Process modifiers */
-     if (0 != (dst & WINED3DSP_DSTMOD_MASK)) {
-         DWORD mask = dst & WINED3DSP_DSTMOD_MASK;
+            saturate = mask & WINED3DSPDM_SATURATE;
+            centroid = mask & WINED3DSPDM_MSAMPCENTROID;
+            partialprecision = mask & WINED3DSPDM_PARTIALPRECISION;
+            mask &= ~(WINED3DSPDM_MSAMPCENTROID | WINED3DSPDM_PARTIALPRECISION | WINED3DSPDM_SATURATE);
+            if (mask)
+                FIXME("Unrecognized modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
 
-         saturate = mask & WINED3DSPDM_SATURATE;
-         centroid = mask & WINED3DSPDM_MSAMPCENTROID;
-         partialprecision = mask & WINED3DSPDM_PARTIALPRECISION;
-         mask &= ~(WINED3DSPDM_MSAMPCENTROID | WINED3DSPDM_PARTIALPRECISION | WINED3DSPDM_SATURATE);
-         if (mask)
-            FIXME("Unrecognized modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
+            if (centroid)
+                FIXME("Unhandled modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
+        }
+        shift = (dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
 
-         if (centroid)
-             FIXME("Unhandled modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
-     }
-     shift = (dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+        /* Generate input and output registers */
+        if (curOpcode->num_params > 0)
+        {
+            /* Output token related */
+            char output_rname[256];
+            char output_wmask[20];
+            char operands[4][100];
 
-      /* Generate input and output registers */
-      if (curOpcode->num_params > 0) {
-          char operands[4][100];
+            /* Generate input register names (with modifiers) */
+            for (i = 1; i < curOpcode->num_params; ++i)
+                pshader_gen_input_modifier_line(arg->shader, buffer, src[i-1], i-1, operands[i]);
 
-          /* Generate input register names (with modifiers) */
-          for (i = 1; i < curOpcode->num_params; ++i)
-              pshader_gen_input_modifier_line(arg->shader, buffer, src[i-1], i-1, operands[i]);
+            /* Handle output register */
+            pshader_get_register_name(arg->shader, dst, output_rname);
+            strcpy(operands[0], output_rname);
+            shader_arb_get_write_mask(arg, dst, output_wmask);
+            strcat(operands[0], output_wmask);
 
-          /* Handle output register */
-          pshader_get_register_name(arg->shader, dst, output_rname);
-          strcpy(operands[0], output_rname);
-          shader_arb_get_write_mask(arg, dst, output_wmask);
-          strcat(operands[0], output_wmask);
+            if (saturate && (shift == 0))
+                strcat(tmpLine, "_SAT");
+            strcat(tmpLine, " ");
+            strcat(tmpLine, operands[0]);
+            for (i = 1; i < curOpcode->num_params; i++)
+            {
+                strcat(tmpLine, ", ");
+                strcat(tmpLine, operands[i]);
+            }
+            strcat(tmpLine,";\n");
+            shader_addline(buffer, tmpLine);
 
-          if (saturate && (shift == 0))
-             strcat(tmpLine, "_SAT");
-          strcat(tmpLine, " ");
-          strcat(tmpLine, operands[0]);
-          for (i = 1; i < curOpcode->num_params; i++) {
-              strcat(tmpLine, ", ");
-              strcat(tmpLine, operands[i]);
-          }
-          strcat(tmpLine,";\n");
-          shader_addline(buffer, tmpLine);
+            /* A shift requires another line. */
+            if (shift != 0)
+                pshader_gen_output_modifier_line(buffer, saturate, output_wmask, shift, output_rname);
+        }
+    } else {
+        if ((curOpcode->opcode == WINED3DSIO_MOV && shader_get_regtype(dst) == WINED3DSPR_ADDR)
+                || curOpcode->opcode == WINED3DSIO_MOVA) {
+            memset(tmpLine, 0, sizeof(tmpLine));
+            if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
+            {
+                vshader_program_add_param(arg, src[0], TRUE, tmpLine);
+                shader_addline(buffer, "ADD TMP.x, %s, helper_const.z;\n", tmpLine);
+                shader_addline(buffer, "ARL A0.x, TMP.x;\n");
+            } else {
+                /* Apple's ARB_vertex_program implementation does not accept an ARL source argument
+                 * with more than one component. Thus replicate the first source argument over all
+                 * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc)
+                 */
+                DWORD parm = src[0] & ~(WINED3DVS_SWIZZLE_MASK);
+                if((src[0] & WINED3DVS_X_W) == WINED3DVS_X_W) {
+                    parm |= WINED3DVS_X_W | WINED3DVS_Y_W | WINED3DVS_Z_W | WINED3DVS_W_W;
+                } else if((src[0] & WINED3DVS_X_Z) == WINED3DVS_X_Z) {
+                    parm |= WINED3DVS_X_Z | WINED3DVS_Y_Z | WINED3DVS_Z_Z | WINED3DVS_W_Z;
+                } else if((src[0] & WINED3DVS_X_Y) == WINED3DVS_X_Y) {
+                    parm |= WINED3DVS_X_Y | WINED3DVS_Y_Y | WINED3DVS_Z_Y | WINED3DVS_W_Y;
+                } else if((src[0] & WINED3DVS_X_X) == WINED3DVS_X_X) {
+                    parm |= WINED3DVS_X_X | WINED3DVS_Y_X | WINED3DVS_Z_X | WINED3DVS_W_X;
+                }
+                vshader_program_add_param(arg, parm, TRUE, tmpLine);
+                shader_addline(buffer, "ARL A0.x, %s;\n", tmpLine);
+            }
+            return;
+        } else
+            strcpy(tmpLine, curOpcode->glname);
 
-          /* A shift requires another line. */
-          if (shift != 0)
-              pshader_gen_output_modifier_line(buffer, saturate, output_wmask, shift, output_rname);
-      }
+        if (curOpcode->num_params > 0)
+        {
+            vshader_program_add_param(arg, dst, FALSE, tmpLine);
+            for (i = 1; i < curOpcode->num_params; ++i)
+            {
+                strcat(tmpLine, ",");
+                vshader_program_add_param(arg, src[i-1], TRUE, tmpLine);
+            }
+        }
+        shader_addline(buffer, "%s;\n", tmpLine);
+    }
 }
 
 void pshader_hw_texkill(SHADER_OPCODE_ARG* arg) {
@@ -1660,7 +1708,7 @@ void shader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     for (i = 0; i < nComponents; i++) {
         tmpArg.dst = ((arg->dst) & ~WINED3DSP_WRITEMASK_ALL)|(WINED3DSP_WRITEMASK_0<<i);
         tmpArg.src[1] = arg->src[1]+i;
-        vshader_hw_map2gl(&tmpArg);
+        shader_hw_map2gl(&tmpArg);
     }
 }
 
@@ -1731,58 +1779,6 @@ void shader_hw_sincos(SHADER_OPCODE_ARG* arg) {
     if (shift != 0)
         pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
 
-}
-
-/* TODO: merge with pixel shader */
-/* Map the opcode 1-to-1 to the GL code */
-void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
-
-    IWineD3DVertexShaderImpl *shader = (IWineD3DVertexShaderImpl*) arg->shader;
-    CONST SHADER_OPCODE* curOpcode = arg->opcode;
-    SHADER_BUFFER* buffer = arg->buffer;
-    DWORD dst = arg->dst;
-    DWORD* src = arg->src;
-
-    DWORD dst_regtype = shader_get_regtype(dst);
-    char tmpLine[256];
-    unsigned int i;
-
-    if ((curOpcode->opcode == WINED3DSIO_MOV && dst_regtype == WINED3DSPR_ADDR) || curOpcode->opcode == WINED3DSIO_MOVA) {
-        memset(tmpLine, 0, sizeof(tmpLine));
-        if(shader->rel_offset) {
-            vshader_program_add_param(arg, src[0], TRUE, tmpLine);
-            shader_addline(buffer, "ADD TMP.x, %s, helper_const.z;\n", tmpLine);
-            shader_addline(buffer, "ARL A0.x, TMP.x;\n");
-        } else {
-            /* Apple's ARB_vertex_program implementation does not accept an ARL source argument
-             * with more than one component. Thus replicate the first source argument over all
-             * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc)
-             */
-            DWORD parm = src[0] & ~(WINED3DVS_SWIZZLE_MASK);
-                   if((src[0] & WINED3DVS_X_W) == WINED3DVS_X_W) {
-                parm |= WINED3DVS_X_W | WINED3DVS_Y_W | WINED3DVS_Z_W | WINED3DVS_W_W;
-            } else if((src[0] & WINED3DVS_X_Z) == WINED3DVS_X_Z) {
-                parm |= WINED3DVS_X_Z | WINED3DVS_Y_Z | WINED3DVS_Z_Z | WINED3DVS_W_Z;
-            } else if((src[0] & WINED3DVS_X_Y) == WINED3DVS_X_Y) {
-                parm |= WINED3DVS_X_Y | WINED3DVS_Y_Y | WINED3DVS_Z_Y | WINED3DVS_W_Y;
-            } else if((src[0] & WINED3DVS_X_X) == WINED3DVS_X_X) {
-                parm |= WINED3DVS_X_X | WINED3DVS_Y_X | WINED3DVS_Z_X | WINED3DVS_W_X;
-            }
-            vshader_program_add_param(arg, parm, TRUE, tmpLine);
-            shader_addline(buffer, "ARL A0.x, %s;\n", tmpLine);
-        }
-        return;
-    } else
-        strcpy(tmpLine, curOpcode->glname);
-
-    if (curOpcode->num_params > 0) {
-        vshader_program_add_param(arg, dst, FALSE, tmpLine);
-        for (i = 1; i < curOpcode->num_params; ++i) {
-           strcat(tmpLine, ",");
-           vshader_program_add_param(arg, src[i-1], TRUE, tmpLine);
-        }
-    }
-   shader_addline(buffer, "%s;\n", tmpLine);
 }
 
 static GLuint create_arb_blt_vertex_program(WineD3D_GL_Info *gl_info) {
