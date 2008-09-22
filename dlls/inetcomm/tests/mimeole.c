@@ -130,6 +130,8 @@ static void test_CreateBody(void)
     ok(hr == S_FALSE, "ret %08x\n", hr);
     hr = IMimeBody_IsContentType(body, NULL, "mixed");
     ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeBody_IsType(body, IBT_EMPTY);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     hr = IMimeBody_SetData(body, IET_8BIT, "text", "plain", &IID_IStream, in);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -147,6 +149,9 @@ static void test_CreateBody(void)
     ok(offsets.cbHeaderStart == 0, "got %d\n", offsets.cbHeaderStart);
     ok(offsets.cbBodyStart == 0, "got %d\n", offsets.cbBodyStart);
     ok(offsets.cbBodyEnd == 0, "got %d\n", offsets.cbBodyEnd);
+
+    hr = IMimeBody_IsType(body, IBT_EMPTY);
+    ok(hr == S_FALSE, "got %08x\n", hr);
 
     hr = MimeOleGetAllocator(&alloc);
     ok(hr == S_OK, "ret %08x\n", hr);

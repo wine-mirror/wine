@@ -864,8 +864,17 @@ static HRESULT WINAPI MimeBody_IsType(
                              IMimeBody* iface,
                              IMSGBODYTYPE bodytype)
 {
-    FIXME("(%p)->(%d): stub\n", iface, bodytype);
-    return E_NOTIMPL;
+    MimeBody *This = impl_from_IMimeBody(iface);
+
+    TRACE("(%p)->(%d)\n", iface, bodytype);
+    switch(bodytype)
+    {
+    case IBT_EMPTY:
+        return This->data ? S_FALSE : S_OK;
+    default:
+        FIXME("Unimplemented bodytype %d - returning S_OK\n", bodytype);
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_SetDisplayName(
