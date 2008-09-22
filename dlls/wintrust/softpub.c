@@ -552,6 +552,20 @@ BOOL WINAPI SoftpubCheckCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
     return ret;
 }
 
+static DWORD WINTRUST_TrustStatusToConfidence(DWORD errorStatus)
+{
+    DWORD confidence = 0;
+
+    confidence = 0;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_SIGNATURE_VALID))
+        confidence |= CERT_CONFIDENCE_SIG;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_TIME_VALID))
+        confidence |= CERT_CONFIDENCE_TIME;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_TIME_NESTED))
+        confidence |= CERT_CONFIDENCE_TIMENEST;
+    return confidence;
+}
+
 static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 {
     BOOL ret;
@@ -559,6 +573,11 @@ static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
      data->pasSigners[signerIdx].pChainContext->rgpChain[0];
     DWORD i;
 
+    data->pasSigners[signerIdx].pasCertChain[0].dwConfidence =
+     WINTRUST_TrustStatusToConfidence(
+     simpleChain->rgpElement[0]->TrustStatus.dwErrorStatus);
+    data->pasSigners[signerIdx].pasCertChain[0].dwError =
+     simpleChain->rgpElement[0]->TrustStatus.dwErrorStatus;
     data->pasSigners[signerIdx].pasCertChain[0].pChainElement =
      simpleChain->rgpElement[0];
     ret = TRUE;
@@ -567,8 +586,15 @@ static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
         ret = data->psPfns->pfnAddCert2Chain(data, signerIdx, FALSE, 0,
          simpleChain->rgpElement[i]->pCertContext);
         if (ret)
+        {
             data->pasSigners[signerIdx].pasCertChain[i].pChainElement =
              simpleChain->rgpElement[i];
+            data->pasSigners[signerIdx].pasCertChain[i].dwConfidence =
+             WINTRUST_TrustStatusToConfidence(
+             simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus);
+            data->pasSigners[signerIdx].pasCertChain[i].dwError =
+             simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus;
+        }
     }
     return ret;
 }
