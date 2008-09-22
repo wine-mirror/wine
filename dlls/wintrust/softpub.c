@@ -599,7 +599,20 @@ static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
  PCERT_CHAIN_PARA chainPara)
 {
     BOOL ret = TRUE;
+    HCERTSTORE store = NULL;
 
+    if (data->chStores)
+    {
+        store = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        if (store)
+        {
+            DWORD i;
+
+            for (i = 0; i < data->chStores; i++)
+                CertAddStoreToCollection(store, data->pahStores[i], 0, 0);
+        }
+    }
     /* Expect the end certificate for each signer to be the only cert in the
      * chain:
      */
@@ -608,8 +621,7 @@ static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
         /* Create a certificate chain for each signer */
         ret = CertGetCertificateChain(createInfo->hChainEngine,
          data->pasSigners[signer].pasCertChain[0].pCert,
-         &data->pasSigners[signer].sftVerifyAsOf,
-         data->chStores ? data->pahStores[0] : NULL,
+         &data->pasSigners[signer].sftVerifyAsOf, store,
          chainPara, createInfo->dwFlags, createInfo->pvReserved,
          &data->pasSigners[signer].pChainContext);
         if (ret)
@@ -627,6 +639,7 @@ static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
             }
         }
     }
+    CertCloseStore(store, 0);
     return ret;
 }
 
