@@ -1131,6 +1131,8 @@ typedef struct _D3DPRESENT_PARAMETERS_ {
 
 } D3DPRESENT_PARAMETERS;
 
+#define D3DPRESENTFLAG_LOCKABLE_BACKBUFFER  0x00000001
+
 typedef struct _D3DRANGE {
     UINT                Offset;
     UINT                Size;
