@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wincrypt.h"
 #include "wintrust.h"
 #include "winuser.h"
@@ -110,8 +111,33 @@ HRESULT WINAPI CertTrustFinalPolicy(CRYPT_PROVIDER_DATA *pProvData)
  */
 BOOL WINAPI CertViewPropertiesA(CERT_VIEWPROPERTIES_STRUCT_A *info)
 {
-    FIXME("(%p): stub\n", info);
-    return FALSE;
+    CERT_VIEWPROPERTIES_STRUCT_W infoW;
+    LPWSTR title = NULL;
+    BOOL ret;
+
+    TRACE("(%p)\n", info);
+
+    memcpy(&infoW, info, sizeof(infoW));
+    if (info->szTitle)
+    {
+        int len = MultiByteToWideChar(CP_ACP, 0, info->szTitle, -1, NULL, 0);
+
+        title = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (title)
+        {
+            MultiByteToWideChar(CP_ACP, 0, info->szTitle, -1, title, len);
+            infoW.szTitle = title;
+        }
+        else
+        {
+            ret = FALSE;
+            goto error;
+        }
+    }
+    ret = CertViewPropertiesW(&infoW);
+    HeapFree(GetProcessHeap(), 0, title);
+error:
+    return ret;
 }
 
 /***********************************************************************
