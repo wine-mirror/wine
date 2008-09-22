@@ -250,7 +250,7 @@ static HRESULT WINAPI MimeInternat_FindCharset(IMimeInternational *iface, LPCSTR
 
     LIST_FOR_EACH_ENTRY(charset, &This->charsets, charset_entry, entry)
     {
-        if(!strcmp(charset->cs_info.szName, pszCharset))
+        if(!lstrcmpiA(charset->cs_info.szName, pszCharset))
         {
             *phCharset = charset->cs_info.hCharset;
             hr = S_OK;

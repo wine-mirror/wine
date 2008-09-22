@@ -149,6 +149,9 @@ static void test_charset(void)
     hr = IMimeInternational_FindCharset(internat, "windows-1252", &hcs);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(hcs_windows_1252 == hcs, "got different hcharsets for the same name\n");
+    hr = IMimeInternational_FindCharset(internat, "WiNdoWs-1252", &hcs);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(hcs_windows_1252 == hcs, "got different hcharsets for the same name\n");
 
     hr = IMimeInternational_FindCharset(internat, "windows-1251", &hcs_windows_1251);
     ok(hr == S_OK, "got %08x\n", hr);
