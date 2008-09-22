@@ -76,8 +76,15 @@ DWORD WINAPI GetFriendlyNameOfCertW(PCCERT_CONTEXT pccert, LPWSTR pchBuffer,
  */
 HRESULT WINAPI CertTrustInit(CRYPT_PROVIDER_DATA *pProvData)
 {
-    FIXME("(%p)\n", pProvData);
-    return E_NOTIMPL;
+    HRESULT ret = S_FALSE;
+
+    TRACE("(%p)\n", pProvData);
+
+    if (pProvData->padwTrustStepErrors &&
+     !pProvData->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_WVTINIT])
+        ret = S_OK;
+    TRACE("returning %08x\n", ret);
+    return ret;
 }
 
 /***********************************************************************
