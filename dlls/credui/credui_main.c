@@ -441,7 +441,7 @@ static void CredDialogCommandOk(HWND hwndDlg, struct cred_dialog_params *params)
 
     if (!strchrW(user, '\\') && !strchrW(user, '@'))
     {
-        INT len_target = strlenW(params->pszTargetName);
+        ULONG len_target = strlenW(params->pszTargetName);
         memcpy(params->pszUsername, params->pszTargetName,
                min(len_target, params->ulUsernameMaxChars) * sizeof(WCHAR));
         if (len_target + 1 < params->ulUsernameMaxChars)
