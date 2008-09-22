@@ -30,6 +30,8 @@
 static HMODULE secdll, crypt32dll;
 
 static ACQUIRE_CREDENTIALS_HANDLE_FN_A pAcquireCredentialsHandleA;
+static ENUMERATE_SECURITY_PACKAGES_FN_A pEnumerateSecurityPackagesA;
+static FREE_CONTEXT_BUFFER_FN pFreeContextBuffer;
 static FREE_CREDENTIALS_HANDLE_FN pFreeCredentialsHandle;
 static QUERY_CREDENTIALS_ATTRIBUTES_FN_A pQueryCredentialsAttributesA;
 
@@ -120,6 +122,8 @@ static void InitFunctionPtrs(void)
     if(secdll)
     {
         GET_PROC(secdll, AcquireCredentialsHandleA);
+        GET_PROC(secdll, EnumerateSecurityPackagesA);
+        GET_PROC(secdll, FreeContextBuffer);
         GET_PROC(secdll, FreeCredentialsHandle);
         GET_PROC(secdll, QueryCredentialsAttributesA);
     }
@@ -150,6 +154,9 @@ static void test_strength(PCredHandle handle)
 
 static void testAcquireSecurityContext(void)
 {
+    BOOL has_schannel = FALSE;
+    SecPkgInfoA *package_info;
+    ULONG i;
     SECURITY_STATUS st;
     CredHandle cred;
     TimeStamp exp;
@@ -163,9 +170,28 @@ static void testAcquireSecurityContext(void)
     CRYPT_KEY_PROV_INFO keyProvInfo;
 
     if (!pAcquireCredentialsHandleA || !pCertCreateCertificateContext ||
+        !pEnumerateSecurityPackagesA || !pFreeContextBuffer ||
         !pFreeCredentialsHandle || !pCryptAcquireContextW)
     {
         skip("Needed functions are not available\n");
+        return;
+    }
+
+    if (SUCCEEDED(pEnumerateSecurityPackagesA(&i, &package_info)))
+    {
+        while(i--)
+        {
+            if (!strcmp(package_info[i].Name, unisp_name_a))
+            {
+                has_schannel = TRUE;
+                break;
+            }
+        }
+        pFreeContextBuffer(package_info);
+    }
+    if (!has_schannel)
+    {
+        skip("Schannel not available\n");
         return;
     }
 
