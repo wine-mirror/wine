@@ -2365,6 +2365,19 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface) {
                 glGenTextures(1, &This->glDescription.textureName);
                 checkGLcall("glGenTextures");
                 TRACE("Surface %p given name %d\n", This, This->glDescription.textureName);
+
+                glBindTexture(This->glDescription.target, This->glDescription.textureName);
+                checkGLcall("glBindTexture");
+                glTexParameteri(This->glDescription.target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
+                glTexParameteri(This->glDescription.target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
+                glTexParameteri(This->glDescription.target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)");
+                glTexParameteri(This->glDescription.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
+                glTexParameteri(This->glDescription.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
             }
             /* This is where we should be reducing the amount of GLMemoryUsed */
         } else if (This->glDescription.textureName) {
