@@ -2204,9 +2204,18 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
  */
 void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
-    Window win = X11DRV_get_whole_window( hwnd );
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
-    if (win) sync_window_opacity( thread_display(), win, key, alpha, flags );
+    if (data)
+    {
+        if (data->whole_window)
+            sync_window_opacity( thread_display(), data->whole_window, key, alpha, flags );
+    }
+    else
+    {
+        Window win = X11DRV_get_whole_window( hwnd );
+        if (win) sync_window_opacity( gdi_display, win, key, alpha, flags );
+    }
 }
 
 
