@@ -259,6 +259,13 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         }
     }
 
+    if (This->wineD3DDevice->stencilBufferTarget) {
+        if (This->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
+                || ((IWineD3DSurfaceImpl *)This->wineD3DDevice->stencilBufferTarget)->Flags & SFLAG_DISCARD) {
+            surface_modify_ds_location(This->wineD3DDevice->stencilBufferTarget, SFLAG_DS_DISCARDED);
+        }
+    }
+
     if(This->presentParms.PresentationInterval != WINED3DPRESENT_INTERVAL_IMMEDIATE && GL_SUPPORT(SGI_VIDEO_SYNC)) {
         retval = GL_EXTCALL(glXGetVideoSyncSGI(&sync));
         if(retval != 0) {

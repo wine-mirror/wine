@@ -6647,9 +6647,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
          ******************************************************/
 
         if (This->stencilBufferTarget) {
-            ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
-            surface_load_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
-            surface_modify_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
+            if (((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
+                    || ((IWineD3DSurfaceImpl *)This->stencilBufferTarget)->Flags & SFLAG_DISCARD) {
+                surface_modify_ds_location(This->stencilBufferTarget, SFLAG_DS_DISCARDED);
+            } else {
+                ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
+                surface_load_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
+                surface_modify_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
+            }
         }
 
         tmp = This->stencilBufferTarget;

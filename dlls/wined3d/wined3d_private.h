@@ -1449,6 +1449,7 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back);
 
 #define SFLAG_DS_LOCATIONS  (SFLAG_DS_ONSCREEN | \
                              SFLAG_DS_OFFSCREEN)
+#define SFLAG_DS_DISCARDED   SFLAG_DS_LOCATIONS
 
 BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]);
 
