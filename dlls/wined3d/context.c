@@ -77,7 +77,8 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
     IWineD3DBaseTextureImpl *texture_impl;
-    BOOL update_minfilter, update_magfilter;
+    BOOL update_minfilter = FALSE;
+    BOOL update_magfilter = FALSE;
 
     /* Update base texture states array */
     if (SUCCEEDED(IWineD3DSurface_GetContainer(surface, &IID_IWineD3DBaseTexture, (void **)&texture_impl)))
