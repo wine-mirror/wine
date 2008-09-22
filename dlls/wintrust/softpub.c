@@ -665,8 +665,13 @@ static BOOL WINTRUST_CreateChainForSigner(CRYPT_PROVIDER_DATA *data,
             else
             {
                 if ((ret = WINTRUST_CopyChain(data, signer)))
-                    ret = data->psPfns->pfnCertCheckPolicy(data, signer, FALSE,
-                     0);
+                {
+                    if (data->psPfns->pfnCertCheckPolicy)
+                        ret = data->psPfns->pfnCertCheckPolicy(data, signer,
+                         FALSE, 0);
+                    else
+                        TRACE("no cert check policy, skipping policy check\n");
+                }
             }
         }
     }
