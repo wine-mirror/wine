@@ -57,7 +57,10 @@ static int prepare_test(void)
     ntdll = LoadLibraryA("ntdll.dll");
     pRtlNtStatusToDosError = (void*)GetProcAddress(ntdll, "RtlNtStatusToDosError");
     if (!pRtlNtStatusToDosError)
+    {
+        win_skip("RtlNtStatusToDosError is not available\n");
         return 0;
+    }
 
     argc = winetest_get_mainargs(&argv);
     strict=(argc >= 3 && strcmp(argv[2],"strict")==0);
