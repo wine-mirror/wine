@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "wincrypt.h"
 #include "wintrust.h"
 #include "winuser.h"
@@ -105,13 +106,265 @@ HRESULT WINAPI CertTrustCleanup(CRYPT_PROVIDER_DATA *pProvData)
     return E_NOTIMPL;
 }
 
+static BOOL CRYPTDLG_CheckOnlineCRL(void)
+{
+    static const WCHAR policyFlagsKey[] = { 'S','o','f','t','w','a','r','e',
+     '\\','M','i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g',
+     'r','a','p','h','y','\\','{','7','8','0','1','e','b','d','0','-','c','f',
+     '4','b','-','1','1','d','0','-','8','5','1','f','-','0','0','6','0','9',
+     '7','9','3','8','7','e','a','}',0 };
+    static const WCHAR policyFlags[] = { 'P','o','l','i','c','y','F','l','a',
+     'g','s',0 };
+    HKEY key;
+    BOOL ret = FALSE;
+
+    if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, policyFlagsKey, 0, KEY_READ, &key))
+    {
+        DWORD type, flags, size = sizeof(flags);
+
+        if (!RegQueryValueExW(key, policyFlags, NULL, &type, (BYTE *)&flags,
+         &size) && type == REG_DWORD)
+        {
+            /* The flag values aren't defined in any header I'm aware of, but
+             * this value is well documented on the net.
+             */
+            if (flags & 0x00010000)
+                ret = TRUE;
+        }
+        RegCloseKey(key);
+    }
+    return ret;
+}
+
+/* Returns TRUE if pCert is not in the Disallowed system store, or FALSE if it
+ * is.
+ */
+static BOOL CRYPTDLG_IsCertAllowed(PCCERT_CONTEXT pCert)
+{
+    BOOL ret;
+    BYTE hash[20];
+    DWORD size = sizeof(hash);
+
+    if ((ret = CertGetCertificateContextProperty(pCert,
+     CERT_SIGNATURE_HASH_PROP_ID, hash, &size)))
+    {
+        static const WCHAR disallowedW[] =
+         { 'D','i','s','a','l','l','o','w','e','d',0 };
+        HCERTSTORE disallowed = CertOpenStore(CERT_STORE_PROV_SYSTEM_W,
+         X509_ASN_ENCODING, 0, CERT_SYSTEM_STORE_CURRENT_USER, disallowedW);
+
+        if (disallowed)
+        {
+            PCCERT_CONTEXT found = CertFindCertificateInStore(disallowed,
+             X509_ASN_ENCODING, 0, CERT_FIND_SIGNATURE_HASH, hash, NULL);
+
+            if (found)
+            {
+                ret = FALSE;
+                CertFreeCertificateContext(found);
+            }
+            CertCloseStore(disallowed, 0);
+        }
+    }
+    return ret;
+}
+
+static DWORD CRYPTDLG_TrustStatusToConfidence(DWORD errorStatus)
+{
+    DWORD confidence = 0;
+
+    confidence = 0;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_SIGNATURE_VALID))
+        confidence |= CERT_CONFIDENCE_SIG;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_TIME_VALID))
+        confidence |= CERT_CONFIDENCE_TIME;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_TIME_NESTED))
+        confidence |= CERT_CONFIDENCE_TIMENEST;
+    return confidence;
+}
+
+static BOOL CRYPTDLG_CopyChain(CRYPT_PROVIDER_DATA *data,
+ PCCERT_CHAIN_CONTEXT chain)
+{
+    BOOL ret;
+    CRYPT_PROVIDER_SGNR signer;
+    PCERT_SIMPLE_CHAIN simpleChain = chain->rgpChain[0];
+    DWORD i;
+
+    memset(&signer, 0, sizeof(signer));
+    signer.cbStruct = sizeof(signer);
+    ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, 0, &signer);
+    if (ret)
+    {
+        CRYPT_PROVIDER_SGNR *sgnr = WTHelperGetProvSignerFromChain(data, 0,
+         FALSE, 0);
+
+        if (sgnr)
+        {
+            sgnr->dwError = simpleChain->TrustStatus.dwErrorStatus;
+            sgnr->pChainContext = CertDuplicateCertificateChain(chain);
+        }
+        else
+            ret = FALSE;
+        for (i = 0; ret && i < simpleChain->cElement; i++)
+        {
+            ret = data->psPfns->pfnAddCert2Chain(data, 0, FALSE, 0,
+             simpleChain->rgpElement[i]->pCertContext);
+            if (ret)
+            {
+                CRYPT_PROVIDER_CERT *cert;
+
+                if ((cert = WTHelperGetProvCertFromChain(sgnr, i)))
+                {
+                    CERT_CHAIN_ELEMENT *element = simpleChain->rgpElement[i];
+
+                    cert->dwConfidence = CRYPTDLG_TrustStatusToConfidence(
+                     element->TrustStatus.dwErrorStatus);
+                    cert->dwError = element->TrustStatus.dwErrorStatus;
+                    cert->pChainElement = element;
+                }
+                else
+                    ret = FALSE;
+            }
+        }
+    }
+    return ret;
+}
+
+static CERT_VERIFY_CERTIFICATE_TRUST *CRYPTDLG_GetVerifyData(
+ CRYPT_PROVIDER_DATA *data)
+{
+    CERT_VERIFY_CERTIFICATE_TRUST *pCert = NULL;
+
+    /* This should always be true, but just in case the calling function is
+     * called directly:
+     */
+    if (data->pWintrustData->dwUnionChoice == WTD_CHOICE_BLOB &&
+     data->pWintrustData->pBlob && data->pWintrustData->pBlob->cbMemObject ==
+     sizeof(CERT_VERIFY_CERTIFICATE_TRUST) &&
+     data->pWintrustData->pBlob->pbMemObject)
+         pCert = (CERT_VERIFY_CERTIFICATE_TRUST *)
+          data->pWintrustData->pBlob->pbMemObject;
+    return pCert;
+}
+
+static HCERTCHAINENGINE CRYPTDLG_MakeEngine(CERT_VERIFY_CERTIFICATE_TRUST *cert)
+{
+    HCERTCHAINENGINE engine = NULL;
+    HCERTSTORE root = NULL, trust = NULL;
+    DWORD i;
+
+    if (cert->cRootStores)
+    {
+        root = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        if (root)
+        {
+            for (i = 0; i < cert->cRootStores; i++)
+                CertAddStoreToCollection(root, cert->rghstoreRoots[i], 0, 0);
+        }
+    }
+    if (cert->cTrustStores)
+    {
+        trust = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
+         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        if (root)
+        {
+            for (i = 0; i < cert->cTrustStores; i++)
+                CertAddStoreToCollection(trust, cert->rghstoreTrust[i], 0, 0);
+        }
+    }
+    if (cert->cRootStores || cert->cStores || cert->cTrustStores)
+    {
+        CERT_CHAIN_ENGINE_CONFIG config;
+
+        memset(&config, 0, sizeof(config));
+        config.cbSize = sizeof(config);
+        config.hRestrictedRoot = root;
+        config.hRestrictedTrust = trust;
+        config.cAdditionalStore = cert->cStores;
+        config.rghAdditionalStore = cert->rghstoreCAs;
+        config.hRestrictedRoot = root;
+        CertCreateCertificateChainEngine(&config, &engine);
+        CertCloseStore(root, 0);
+        CertCloseStore(trust, 0);
+    }
+    return engine;
+}
+
 /***********************************************************************
  *		CertTrustFinalPolicy (CRYPTDLG.@)
  */
-HRESULT WINAPI CertTrustFinalPolicy(CRYPT_PROVIDER_DATA *pProvData)
+HRESULT WINAPI CertTrustFinalPolicy(CRYPT_PROVIDER_DATA *data)
 {
-    FIXME("(%p)\n", pProvData);
-    return E_NOTIMPL;
+    BOOL ret;
+    DWORD err = S_OK;
+    CERT_VERIFY_CERTIFICATE_TRUST *pCert = CRYPTDLG_GetVerifyData(data);
+
+    TRACE("(%p)\n", data);
+
+    if (data->pWintrustData->dwUIChoice != WTD_UI_NONE)
+        FIXME("unimplemented for UI choice %d\n",
+         data->pWintrustData->dwUIChoice);
+    if (pCert)
+    {
+        DWORD flags = 0;
+        CERT_CHAIN_PARA chainPara;
+        HCERTCHAINENGINE engine;
+
+        memset(&chainPara, 0, sizeof(chainPara));
+        chainPara.cbSize = sizeof(chainPara);
+        if (CRYPTDLG_CheckOnlineCRL())
+            flags |= CERT_CHAIN_REVOCATION_CHECK_END_CERT;
+        engine = CRYPTDLG_MakeEngine(pCert);
+        GetSystemTimeAsFileTime(&data->sftSystemTime);
+        ret = CRYPTDLG_IsCertAllowed(pCert->pccert);
+        if (ret)
+        {
+            PCCERT_CHAIN_CONTEXT chain;
+
+            ret = CertGetCertificateChain(engine, pCert->pccert,
+             &data->sftSystemTime, NULL, &chainPara, flags, NULL, &chain);
+            if (ret)
+            {
+                if (chain->cChain != 1)
+                {
+                    FIXME("unimplemented for more than 1 simple chain\n");
+                    err = TRUST_E_SUBJECT_FORM_UNKNOWN;
+                    ret = FALSE;
+                }
+                else if ((ret = CRYPTDLG_CopyChain(data, chain)))
+                {
+                    if (CertVerifyTimeValidity(&data->sftSystemTime,
+                     pCert->pccert->pCertInfo))
+                    {
+                        ret = FALSE;
+                        err = CERT_E_EXPIRED;
+                    }
+                }
+                else
+                    err = TRUST_E_SYSTEM_ERROR;
+                CertFreeCertificateChain(chain);
+            }
+            else
+                err = TRUST_E_SUBJECT_NOT_TRUSTED;
+        }
+        CertFreeCertificateChainEngine(engine);
+    }
+    else
+    {
+        ret = FALSE;
+        err = TRUST_E_NOSIGNATURE;
+    }
+    /* Oddly, native doesn't set the error in the trust step error location,
+     * probably because this action is more advisory than anything else.
+     * Instead it stores it as the final error, but the function "succeeds" in
+     * any case.
+     */
+    if (!ret)
+        data->dwFinalError = err;
+    TRACE("returning %d (%08x)\n", S_OK, data->dwFinalError);
+    return S_OK;
 }
 
 /***********************************************************************
