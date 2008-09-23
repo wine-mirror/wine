@@ -1177,7 +1177,11 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_QueryInterface(IDirectXFileBinary* 
     return S_OK;
   }
 
-  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  /* Do not print an error for interfaces that can be queried to retrieve the type of the object */
+  if (!IsEqualGUID(riid, &IID_IDirectXFileData)
+      && !IsEqualGUID(riid, &IID_IDirectXFileDataReference))
+    ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+
   return E_NOINTERFACE;
 }
 
@@ -1296,7 +1300,11 @@ static HRESULT WINAPI IDirectXFileDataImpl_QueryInterface(IDirectXFileData* ifac
     return S_OK;
   }
 
-  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  /* Do not print an error for interfaces that can be queried to retreive the type of the object */
+  if (!IsEqualGUID(riid, &IID_IDirectXFileBinary)
+      && !IsEqualGUID(riid, &IID_IDirectXFileDataReference))
+    ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+
   return E_NOINTERFACE;
 }
 
@@ -1488,7 +1496,11 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_QueryInterface(IDirectXFileD
     return S_OK;
   }
 
-  ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+  /* Do not print an error for interfaces that can be queried to retreive the type of the object */
+  if (!IsEqualGUID(riid, &IID_IDirectXFileData)
+      && !IsEqualGUID(riid, &IID_IDirectXFileBinary))
+    ERR("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+
   return E_NOINTERFACE;
 }
 
