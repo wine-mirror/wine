@@ -373,6 +373,7 @@ SRCDIR_INCLUDES = \
 	sensapi.h \
 	setupapi.h \
 	sfc.h \
+	shdispid.h \
 	shellapi.h \
 	shlguid.h \
 	shlobj.h \
