@@ -995,7 +995,7 @@ BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
 
 static void oid_init_localizednames(HINSTANCE hInstance)
 {
-    int i;
+    unsigned int i;
 
     for(i = 0; i < sizeof(LocalizedKeys)/sizeof(LPCWSTR); i++)
     {
@@ -1008,7 +1008,7 @@ static void oid_init_localizednames(HINSTANCE hInstance)
  */
 LPCWSTR WINAPI CryptFindLocalizedName(LPCWSTR pwszCryptName)
 {
-    int i;
+    unsigned int i;
 
     for(i = 0; i < sizeof(LocalizedKeys)/sizeof(LPCWSTR); i++)
     {
