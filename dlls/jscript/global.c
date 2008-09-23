@@ -426,7 +426,7 @@ static HRESULT init_constructors(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = create_object_constr(ctx, &ctx->regexp_constr);
+    hres = create_regexp_constr(ctx, &ctx->regexp_constr);
     if(FAILED(hres))
         return hres;
 

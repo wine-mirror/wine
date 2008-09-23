@@ -51,4 +51,28 @@ ok(m.length === 2, "m.length is not 1");
 ok(m["0"] === "aaab", "m[0] is not \"ab\"");
 ok(m["1"] === "ab", "m[1] is not \"ab\"");
 
+m = "abcabc".match(new RegExp("ab"));
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 1, "m.length is not 1");
+ok(m["0"] === "ab", "m[0] is not \"ab\"");
+
+/*
+m = "abcabc".match(new RegExp("ab","g"));
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 2, "m.length is not 1");
+ok(m["0"] === "ab", "m[0] is not \"ab\"");
+ok(m["1"] === "ab", "m[1] is not \"ab\"");
+
+m = "abcabc".match(new RegExp(/ab/g));
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 2, "m.length is not 1");
+ok(m["0"] === "ab", "m[0] is not \"ab\"");
+ok(m["1"] === "ab", "m[1] is not \"ab\"");
+
+m = "abcabc".match(new RegExp("ab","g", "test"));
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 2, "m.length is not 1");
+ok(m["0"] === "ab", "m[0] is not \"ab\"");
+ok(m["1"] === "ab", "m[1] is not \"ab\"");
+*/
 reportSuccess();

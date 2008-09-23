@@ -3546,11 +3546,81 @@ static HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD
     return S_OK;
 }
 
+static HRESULT regexp_constructor(script_ctx_t *ctx, DISPPARAMS *dp, VARIANT *retv)
+{
+    const WCHAR *opt = emptyW, *src;
+    DispatchEx *ret;
+    VARIANT *arg;
+    HRESULT hres;
+
+    if(!arg_cnt(dp)) {
+        FIXME("no args\n");
+        return E_NOTIMPL;
+    }
+
+    arg = get_arg(dp,0);
+    if(V_VT(arg) == VT_DISPATCH) {
+        DispatchEx *obj;
+
+        obj = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
+        if(obj) {
+            if(is_class(obj, JSCLASS_REGEXP)) {
+                RegExpInstance *regexp = (RegExpInstance*)obj;
+
+                hres = create_regexp(ctx, regexp->str, -1, regexp->jsregexp->flags, &ret);
+                jsdisp_release(obj);
+                if(FAILED(hres))
+                    return hres;
+
+                V_VT(retv) = VT_DISPATCH;
+                V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
+                return S_OK;
+            }
+
+            jsdisp_release(obj);
+        }
+    }
+
+    if(V_VT(arg) != VT_BSTR) {
+        FIXME("vt arg0 = %d\n", V_VT(arg));
+        return E_NOTIMPL;
+    }
+
+    src = V_BSTR(arg);
+
+    if(arg_cnt(dp) >= 2) {
+        arg = get_arg(dp,1);
+        if(V_VT(arg) != VT_BSTR) {
+            FIXME("unimplemented for vt %d\n", V_VT(arg));
+            return E_NOTIMPL;
+        }
+
+        opt = V_BSTR(arg);
+    }
+
+    hres = create_regexp_str(ctx, src, -1, opt, strlenW(opt), &ret);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(retv) = VT_DISPATCH;
+    V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
+    return S_OK;
+}
+
 static HRESULT RegExpConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT:
+        return regexp_constructor(dispex->ctx, dp, retv);
+    default:
+        FIXME("unimplemented flags: %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 HRESULT create_regexp_constr(script_ctx_t *ctx, DispatchEx **ret)
