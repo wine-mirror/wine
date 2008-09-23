@@ -341,7 +341,6 @@ typedef struct {
     BOOL (*shader_conv_supported)(WINED3DFORMAT conv);
 } shader_backend_t;
 
-extern const shader_backend_t atifs_shader_backend;
 extern const shader_backend_t glsl_shader_backend;
 extern const shader_backend_t arb_program_shader_backend;
 extern const shader_backend_t none_shader_backend;
