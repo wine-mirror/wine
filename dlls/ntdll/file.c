@@ -2309,6 +2309,59 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
 
 
 /******************************************************************
+ *		NtQueryEaFile  (NTDLL.@)
+ *
+ * Read extended attributes from NTFS files.
+ *
+ * PARAMS
+ *  hFile         [I] File handle, must be opened with FILE_READ_EA access
+ *  iosb          [O] Receives information about the operation on return
+ *  buffer        [O] Output buffer
+ *  length        [I] Length of output buffer
+ *  single_entry  [I] Only read and return one entry
+ *  ea_list       [I] Optional list with names of EAs to return
+ *  ea_list_len   [I] Length of ea_list in bytes
+ *  ea_index      [I] Optional pointer to 1-based index of attribute to return
+ *  restart       [I] restart EA scan
+ *
+ * RETURNS
+ *  Success: 0. Atrributes read into buffer
+ *  Failure: An NTSTATUS error code describing the error.
+ */
+NTSTATUS WINAPI NtQueryEaFile( HANDLE hFile, PIO_STATUS_BLOCK iosb, PVOID buffer, ULONG length,
+                               BOOLEAN single_entry, PVOID ea_list, ULONG ea_list_len,
+                               PULONG ea_index, BOOLEAN restart )
+{
+    FIXME("(%p,%p,%p,%d,%d,%p,%d,%p,%d) stub\n",
+            hFile, iosb, buffer, length, single_entry, ea_list,
+            ea_list_len, ea_index, restart);
+    return STATUS_ACCESS_DENIED;
+}
+
+
+/******************************************************************
+ *		NtSetEaFile  (NTDLL.@)
+ *
+ * Update extended attributes for NTFS files.
+ *
+ * PARAMS
+ *  hFile         [I] File handle, must be opened with FILE_READ_EA access
+ *  iosb          [O] Receives information about the operation on return
+ *  buffer        [I] Buffer with EA information
+ *  length        [I] Length of buffer
+ *
+ * RETURNS
+ *  Success: 0. Attributes are updated
+ *  Failure: An NTSTATUS error code describing the error.
+ */
+NTSTATUS WINAPI NtSetEaFile( HANDLE hFile, PIO_STATUS_BLOCK iosb, PVOID buffer, ULONG length )
+{
+    FIXME("(%p,%p,%p,%d) stub\n", hFile, iosb, buffer, length);
+    return STATUS_ACCESS_DENIED;
+}
+
+
+/******************************************************************
  *		NtFlushBuffersFile  (NTDLL.@)
  *
  * Flush any buffered data on an open file handle.

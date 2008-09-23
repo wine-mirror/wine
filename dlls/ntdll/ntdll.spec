@@ -238,7 +238,7 @@
 @ stdcall NtQueryDefaultUILanguage(ptr)
 @ stdcall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
 @ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
-@ stub NtQueryEaFile
+@ stdcall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
 @ stdcall NtQueryEvent(long long ptr long ptr)
 @ stdcall NtQueryFullAttributesFile(ptr ptr)
 @ stdcall NtQueryInformationAtom(long long ptr long ptr)
@@ -313,7 +313,7 @@
 @ stub NtSetDefaultHardErrorPort
 @ stdcall NtSetDefaultLocale(long long)
 @ stdcall NtSetDefaultUILanguage(long)
-@ stub NtSetEaFile
+@ stdcall NtSetEaFile(long ptr ptr long)
 @ stdcall NtSetEvent(long long)
 # @ stub NtSetEventBoostPriority
 @ stub NtSetHighEventPair
@@ -1082,7 +1082,7 @@
 @ stdcall ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
 @ stdcall ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) NtQueryDirectoryFile
 @ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
-@ stub ZwQueryEaFile
+@ stdcall ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
 @ stdcall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
 @ stdcall ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
 @ stdcall ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
@@ -1157,7 +1157,7 @@
 @ stub ZwSetDefaultHardErrorPort
 @ stdcall ZwSetDefaultLocale(long long) NtSetDefaultLocale
 @ stdcall ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
-@ stub ZwSetEaFile
+@ stdcall ZwSetEaFile(long ptr ptr long) NtSetEaFile
 @ stdcall ZwSetEvent(long long) NtSetEvent
 # @ stub ZwSetEventBoostPriority
 @ stub ZwSetHighEventPair
