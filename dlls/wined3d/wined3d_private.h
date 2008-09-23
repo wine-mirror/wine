@@ -217,6 +217,96 @@ typedef struct SHADER_BUFFER {
     BOOL newline;
 } SHADER_BUFFER;
 
+enum WINED3D_SHADER_INSTRUCTION_HANDLER
+{
+    WINED3DSIH_ABS,
+    WINED3DSIH_ADD,
+    WINED3DSIH_BEM,
+    WINED3DSIH_BREAK,
+    WINED3DSIH_BREAKC,
+    WINED3DSIH_BREAKP,
+    WINED3DSIH_CALL,
+    WINED3DSIH_CALLNZ,
+    WINED3DSIH_CMP,
+    WINED3DSIH_CND,
+    WINED3DSIH_CRS,
+    WINED3DSIH_DCL,
+    WINED3DSIH_DEF,
+    WINED3DSIH_DEFB,
+    WINED3DSIH_DEFI,
+    WINED3DSIH_DP2ADD,
+    WINED3DSIH_DP3,
+    WINED3DSIH_DP4,
+    WINED3DSIH_DST,
+    WINED3DSIH_DSX,
+    WINED3DSIH_DSY,
+    WINED3DSIH_ELSE,
+    WINED3DSIH_ENDIF,
+    WINED3DSIH_ENDLOOP,
+    WINED3DSIH_ENDREP,
+    WINED3DSIH_EXP,
+    WINED3DSIH_EXPP,
+    WINED3DSIH_FRC,
+    WINED3DSIH_IF,
+    WINED3DSIH_IFC,
+    WINED3DSIH_LABEL,
+    WINED3DSIH_LIT,
+    WINED3DSIH_LOG,
+    WINED3DSIH_LOGP,
+    WINED3DSIH_LOOP,
+    WINED3DSIH_LRP,
+    WINED3DSIH_M3x2,
+    WINED3DSIH_M3x3,
+    WINED3DSIH_M3x4,
+    WINED3DSIH_M4x3,
+    WINED3DSIH_M4x4,
+    WINED3DSIH_MAD,
+    WINED3DSIH_MAX,
+    WINED3DSIH_MIN,
+    WINED3DSIH_MOV,
+    WINED3DSIH_MOVA,
+    WINED3DSIH_MUL,
+    WINED3DSIH_NOP,
+    WINED3DSIH_NRM,
+    WINED3DSIH_PHASE,
+    WINED3DSIH_POW,
+    WINED3DSIH_RCP,
+    WINED3DSIH_REP,
+    WINED3DSIH_RET,
+    WINED3DSIH_RSQ,
+    WINED3DSIH_SETP,
+    WINED3DSIH_SGE,
+    WINED3DSIH_SGN,
+    WINED3DSIH_SINCOS,
+    WINED3DSIH_SLT,
+    WINED3DSIH_SUB,
+    WINED3DSIH_TEX,
+    WINED3DSIH_TEXBEM,
+    WINED3DSIH_TEXBEML,
+    WINED3DSIH_TEXCOORD,
+    WINED3DSIH_TEXDEPTH,
+    WINED3DSIH_TEXDP3,
+    WINED3DSIH_TEXDP3TEX,
+    WINED3DSIH_TEXKILL,
+    WINED3DSIH_TEXLDD,
+    WINED3DSIH_TEXLDL,
+    WINED3DSIH_TEXM3x2DEPTH,
+    WINED3DSIH_TEXM3x2PAD,
+    WINED3DSIH_TEXM3x2TEX,
+    WINED3DSIH_TEXM3x3,
+    WINED3DSIH_TEXM3x3DIFF,
+    WINED3DSIH_TEXM3x3PAD,
+    WINED3DSIH_TEXM3x3SPEC,
+    WINED3DSIH_TEXM3x3TEX,
+    WINED3DSIH_TEXM3x3VSPEC,
+    WINED3DSIH_TEXREG2AR,
+    WINED3DSIH_TEXREG2GB,
+    WINED3DSIH_TEXREG2RGB,
+    WINED3DSIH_TABLE_SIZE
+};
+
+typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
+
 struct shader_caps {
     DWORD               VertexShaderVersion;
     DWORD               MaxVertexShaderConst;
@@ -234,6 +324,7 @@ struct shader_caps {
 };
 
 typedef struct {
+    const SHADER_HANDLER *shader_instruction_handler_table;
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(IWineD3DDevice *iface);
     void (*shader_deselect_depth_blt)(IWineD3DDevice *iface);
@@ -1884,7 +1975,6 @@ unsigned int count_bits(unsigned int mask);
     /*** class static members ***/
     void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface);
 
-typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
 
 /* TODO: Make this dynamic, based on shader limits ? */
 #define MAX_REG_ADDR 1
@@ -1955,8 +2045,7 @@ typedef struct SHADER_OPCODE {
     const char*   glname;
     char          dst_token;
     CONST UINT    num_params;
-    SHADER_HANDLER hw_fct;
-    SHADER_HANDLER hw_glsl_fct;
+    enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
     DWORD         min_version;
     DWORD         max_version;
 } SHADER_OPCODE;
