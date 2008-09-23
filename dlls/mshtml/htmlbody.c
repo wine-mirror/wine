@@ -140,8 +140,23 @@ static HRESULT WINAPI HTMLBodyElement_Invoke(IHTMLBodyElement *iface, DISPID dis
 static HRESULT WINAPI HTMLBodyElement_put_background(IHTMLBodyElement *iface, BSTR v)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_Init(&nsstr, v);
+
+    nsres = nsIDOMHTMLBodyElement_SetBackground(This->nsbody, &nsstr);
+    if(!NS_SUCCEEDED(nsres))
+    {
+        hr = E_FAIL;
+    }
+
+    nsAString_Finish(&nsstr);
+
+    return hr;
 }
 
 static HRESULT WINAPI HTMLBodyElement_get_background(IHTMLBodyElement *iface, BSTR *p)
