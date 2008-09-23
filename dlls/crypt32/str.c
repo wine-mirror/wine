@@ -167,7 +167,7 @@ static DWORD CRYPT_AddPrefixA(LPCSTR prefix, LPSTR psz, DWORD csz)
 
     if (psz)
     {
-        chars = min(lstrlenA(prefix), csz);
+        chars = min(strlen(prefix), csz);
         memcpy(psz, prefix, chars);
         *(psz + chars) = '=';
         chars++;
@@ -304,7 +304,7 @@ static DWORD CRYPT_AddPrefixAToW(LPCSTR prefix, LPWSTR psz, DWORD csz)
     {
         DWORD i;
 
-        chars = min(lstrlenA(prefix), csz);
+        chars = min(strlen(prefix), csz);
         for (i = 0; i < chars; i++)
             *(psz + i) = prefix[i];
         *(psz + chars) = '=';
@@ -328,7 +328,7 @@ static DWORD CRYPT_AddPrefixW(LPCWSTR prefix, LPWSTR psz, DWORD csz)
 
     if (psz)
     {
-        chars = min(lstrlenW(prefix), csz);
+        chars = min(strlenW(prefix), csz);
         memcpy(psz, prefix, chars * sizeof(WCHAR));
         *(psz + chars) = '=';
         chars++;
@@ -478,7 +478,7 @@ BOOL WINAPI CertStrToNameA(DWORD dwCertEncodingType, LPCSTR pszX500,
             {
                 if (!ret)
                 {
-                    DWORD i;
+                    LONG i;
 
                     *ppszError = pszX500;
                     for (i = 0; i < errorStr - x500; i++)
@@ -665,7 +665,7 @@ static BOOL CRYPT_EncodeValueWithType(DWORD dwCertEncodingType,
     {
         if (value->end > value->start)
         {
-            DWORD i;
+            LONG i;
             LPWSTR ptr = (LPWSTR)nameValue.Value.pbData;
 
             for (i = 0; i < value->end - value->start; i++)
