@@ -956,7 +956,7 @@ static inline void pshader_gen_output_modifier_line(
         regstr, write_mask, regstr, shift_tab[shift]);
 }
 
-void pshader_hw_bem(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_bem(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
 
     SHADER_BUFFER* buffer = arg->buffer;
@@ -994,7 +994,7 @@ void pshader_hw_bem(SHADER_OPCODE_ARG* arg) {
     }
 }
 
-void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
     SHADER_BUFFER* buffer = arg->buffer;
@@ -1028,7 +1028,7 @@ void pshader_hw_cnd(SHADER_OPCODE_ARG* arg) {
         pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
 }
 
-void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
 
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_wmask[20];
@@ -1057,7 +1057,7 @@ void pshader_hw_cmp(SHADER_OPCODE_ARG* arg) {
 
 /** Process the WINED3DSIO_DP2ADD instruction in ARB.
  * dst = dot2(src0, src1) + src2 */
-void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_wmask[20];
     char dst_name[50];
@@ -1083,7 +1083,7 @@ void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg) {
 }
 
 /* Map the opcode 1-to-1 to the GL code */
-void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
+static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl*)arg->shader;
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
@@ -1198,7 +1198,7 @@ void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
     }
 }
 
-void pshader_hw_texkill(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texkill(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD hex_version = This->baseShader.hex_version;
     SHADER_BUFFER* buffer = arg->buffer;
@@ -1222,7 +1222,7 @@ void pshader_hw_texkill(SHADER_OPCODE_ARG* arg) {
     }
 }
 
-void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
 
@@ -1286,7 +1286,7 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
   shader_hw_sample(arg, reg_sampler_code, reg_dest, reg_coord, projected, bias);
 }
 
-void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD dst = arg->dst;
@@ -1307,7 +1307,7 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
    }
 }
 
-void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
      IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
@@ -1326,7 +1326,7 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
      shader_hw_sample(arg, reg1, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED, FALSE);
 }
 
-void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
      SHADER_BUFFER* buffer = arg->buffer;
 
@@ -1341,7 +1341,7 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
      shader_hw_sample(arg, reg1, dst_str, "TMP", FALSE, FALSE);
 }
 
-void pshader_hw_texreg2rgb(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texreg2rgb(SHADER_OPCODE_ARG* arg) {
 
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
@@ -1353,7 +1353,7 @@ void pshader_hw_texreg2rgb(SHADER_OPCODE_ARG* arg) {
     shader_hw_sample(arg, reg1, dst_str, src_str, FALSE, FALSE);
 }
 
-void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     BOOL has_bumpmat = FALSE;
     BOOL has_luminance = FALSE;
@@ -1424,7 +1424,7 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
     }
 }
 
-void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
@@ -1434,7 +1434,7 @@ void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "DP3 TMP.x, T%u, %s;\n", reg, src0_name);
 }
 
-void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
@@ -1451,7 +1451,7 @@ void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
     shader_hw_sample(arg, reg, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED, FALSE);
 }
 
-void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
@@ -1464,7 +1464,7 @@ void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
-void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
@@ -1485,7 +1485,7 @@ void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
-void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
@@ -1521,7 +1521,7 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
-void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
@@ -1558,7 +1558,7 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     current_state->current_row = 0;
 }
 
-void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_name[50];
 
@@ -1587,7 +1587,7 @@ void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXDP3TEX instruction in ARB:
  * Take a 3-component dot product of the TexCoord[dstreg] and src,
  * then perform a 1D texture lookup from stage dstregnum, place into dst. */
-void pshader_hw_texdp3tex(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texdp3tex(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
     char src0[50];
@@ -1603,7 +1603,7 @@ void pshader_hw_texdp3tex(SHADER_OPCODE_ARG* arg) {
 
 /** Process the WINED3DSIO_TEXDP3 instruction in ARB:
  * Take a 3-component dot product of the TexCoord[dstreg] and src. */
-void pshader_hw_texdp3(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texdp3(SHADER_OPCODE_ARG* arg) {
     char src0[50];
     char dst_str[50];
     char dst_mask[6];
@@ -1622,7 +1622,7 @@ void pshader_hw_texdp3(SHADER_OPCODE_ARG* arg) {
 
 /** Process the WINED3DSIO_TEXM3X3 instruction in ARB
  * Perform the 3rd row of a 3x3 matrix multiply */
-void pshader_hw_texm3x3(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x3(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_str[50];
     char dst_mask[6];
@@ -1644,7 +1644,7 @@ void pshader_hw_texm3x3(SHADER_OPCODE_ARG* arg) {
  * Calculate tmp0.y = TexCoord[dstreg] . src.xyz;  (tmp0.x has already been calculated)
  * depth = (tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y
  */
-void pshader_hw_texm3x2depth(SHADER_OPCODE_ARG* arg) {
+static void pshader_hw_texm3x2depth(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD dst_reg = arg->dst & WINED3DSP_REGNUM_MASK;
     char src0[50];
@@ -1664,7 +1664,7 @@ void pshader_hw_texm3x2depth(SHADER_OPCODE_ARG* arg) {
 
 /** Handles transforming all WINED3DSIO_M?x? opcodes for
     Vertex/Pixel shaders to ARB_vertex_program codes */
-void shader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
+static void shader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
 
     int i;
     int nComponents = 0;
@@ -1712,7 +1712,7 @@ void shader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     }
 }
 
-void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg) {
+static void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg) {
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD dst = arg->dst;
@@ -1735,7 +1735,7 @@ void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "%s;\n", tmpLine);
 }
 
-void shader_hw_nrm(SHADER_OPCODE_ARG* arg) {
+static void shader_hw_nrm(SHADER_OPCODE_ARG* arg) {
     SHADER_BUFFER* buffer = arg->buffer;
     char dst_name[50];
     char src_name[50];
@@ -1757,7 +1757,7 @@ void shader_hw_nrm(SHADER_OPCODE_ARG* arg) {
         pshader_gen_output_modifier_line(buffer, FALSE, dst_wmask, shift, dst_name);
 }
 
-void shader_hw_sincos(SHADER_OPCODE_ARG* arg) {
+static void shader_hw_sincos(SHADER_OPCODE_ARG* arg) {
     /* This instruction exists in ARB, but the d3d instruction takes two extra parameters which
      * must contain fixed constants. So we need a separate function to filter those constants and
      * can't use map2gl

@@ -2111,42 +2111,6 @@ extern BOOL vshader_input_is_color(
 
 extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
 
-/* ARB shader program Prototypes */
-extern void shader_hw_def(SHADER_OPCODE_ARG *arg);
-
-/* ARB pixel shader prototypes */
-extern void pshader_hw_bem(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_cnd(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_cmp(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_tex(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texbem(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texdepth(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texkill(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texdp3tex(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texdp3(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texm3x3(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texm3x2depth(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_dp2add(SHADER_OPCODE_ARG* arg);
-extern void pshader_hw_texreg2rgb(SHADER_OPCODE_ARG* arg);
-
-/* ARB vertex / pixel shader common prototypes */
-extern void shader_hw_map2gl(SHADER_OPCODE_ARG* arg);
-extern void shader_hw_nrm(SHADER_OPCODE_ARG* arg);
-extern void shader_hw_sincos(SHADER_OPCODE_ARG* arg);
-extern void shader_hw_mnxn(SHADER_OPCODE_ARG* arg);
-
-/* ARB vertex shader prototypes */
-extern void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg);
-
 /* GLSL helper functions */
 extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);
 
