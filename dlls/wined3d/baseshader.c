@@ -882,6 +882,8 @@ void shader_generate_main(
                 device->shader_backend->shader_color_correction(&hw_arg);
 
                 /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
+                /* FIXME: This should be internal to the shader backend.
+                 * Also, right now this is the only reason "shader_mode" exists. */
                 if (This->baseShader.shader_mode == SHADER_GLSL)
                     shader_glsl_add_instruction_modifiers(&hw_arg);
 

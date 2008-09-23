@@ -2114,64 +2114,6 @@ extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
 /* GLSL helper functions */
 extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);
 
-/** The following translate DirectX pixel/vertex shader opcodes to GLSL lines */
-extern void shader_glsl_cross(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_arith(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_mov(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_mad(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_lrp(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_dot(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_rcp(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_rsq(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_cnd(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_compare(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_def(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_defi(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_defb(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_expp(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_cmp(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_lit(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_dst(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_sincos(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_loop(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_end(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_if(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_ifc(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_else(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_break(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_breakc(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_rep(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_call(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_callnz(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_label(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_pow(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_log(SHADER_OPCODE_ARG* arg);
-extern void shader_glsl_texldl(SHADER_OPCODE_ARG* arg);
-
-/** GLSL Pixel Shader Prototypes */
-extern void pshader_glsl_tex(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texdp3(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texm3x2depth(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_bem(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg);
-extern void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg);
-
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
  */
