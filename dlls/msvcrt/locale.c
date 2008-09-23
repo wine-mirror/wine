@@ -189,7 +189,8 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
     res->match_flags = flags;
     res->found_lang_id = LangID;
   }
-  if (flags & (FOUND_LANGUAGE & FOUND_COUNTRY & FOUND_CODEPAGE))
+  if ((flags & (FOUND_LANGUAGE | FOUND_COUNTRY | FOUND_CODEPAGE)) ==
+        (FOUND_LANGUAGE | FOUND_COUNTRY | FOUND_CODEPAGE))
   {
     TRACE(":found exact locale match\n");
     return STOP_LOOKING;
