@@ -67,7 +67,7 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
   if (hres == S_OK) { \
     ok(str && strcmpW(str,szResult1) == 0, \
        "VarFormatNumber (vt %d): string different\n", vt); \
-    if (str) SysFreeString(str); \
+    SysFreeString(str); \
   }
 
 static void test_VarFormatNumber(void)
@@ -137,7 +137,7 @@ static const char *szVarFmtFail = "VT %d|0x%04x Format %s: expected 0x%08x, '%s'
   ok(hres == ret && (FAILED(ret) || !strcmp(buff, str)), \
      szVarFmtFail, \
      (vt)&VT_TYPEMASK,(vt)&~VT_TYPEMASK,fmt?fmt:"<null>",ret,str,hres,buff); \
-  if (out) SysFreeString(out); \
+  SysFreeString(out); \
   } while(0)
 
 typedef struct tagFMTRES
