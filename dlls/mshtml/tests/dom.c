@@ -87,12 +87,12 @@ typedef enum {
     ET_IMG
 } elem_type_t;
 
-static REFIID const none_iids[] = {
+static const IID * const none_iids[] = {
     &IID_IUnknown,
     NULL
 };
 
-static REFIID const elem_iids[] = {
+static const IID * const elem_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -102,7 +102,7 @@ static REFIID const elem_iids[] = {
     NULL
 };
 
-static REFIID const body_iids[] = {
+static const IID * const body_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -114,7 +114,7 @@ static REFIID const body_iids[] = {
     NULL
 };
 
-static REFIID const anchor_iids[] = {
+static const IID * const anchor_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -125,7 +125,7 @@ static REFIID const anchor_iids[] = {
     NULL
 };
 
-static REFIID const input_iids[] = {
+static const IID * const input_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -137,7 +137,7 @@ static REFIID const input_iids[] = {
     NULL
 };
 
-static REFIID const select_iids[] = {
+static const IID * const select_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -148,7 +148,7 @@ static REFIID const select_iids[] = {
     NULL
 };
 
-static REFIID const textarea_iids[] = {
+static const IID * const textarea_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -159,7 +159,7 @@ static REFIID const textarea_iids[] = {
     NULL
 };
 
-static REFIID const option_iids[] = {
+static const IID * const option_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -170,7 +170,7 @@ static REFIID const option_iids[] = {
     NULL
 };
 
-static REFIID const table_iids[] = {
+static const IID * const table_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -181,7 +181,7 @@ static REFIID const table_iids[] = {
     NULL
 };
 
-static REFIID const script_iids[] = {
+static const IID * const script_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -192,20 +192,20 @@ static REFIID const script_iids[] = {
     NULL
 };
 
-static REFIID const text_iids[] = {
+static const IID * const text_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLDOMTextNode,
     NULL
 };
 
-static REFIID const location_iids[] = {
+static const IID * const location_iids[] = {
     &IID_IDispatch,
     &IID_IHTMLLocation,
     NULL
 };
 
-static REFIID const window_iids[] = {
+static const IID * const window_iids[] = {
     &IID_IDispatch,
     &IID_IHTMLWindow2,
     &IID_IHTMLWindow3,
@@ -213,7 +213,7 @@ static REFIID const window_iids[] = {
     NULL
 };
 
-static REFIID const comment_iids[] = {
+static const IID * const comment_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -224,7 +224,7 @@ static REFIID const comment_iids[] = {
     NULL
 };
 
-static REFIID const img_iids[] = {
+static const IID * const img_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
@@ -235,7 +235,7 @@ static REFIID const img_iids[] = {
     NULL
 };
 
-static REFIID const generic_iids[] = {
+static const IID * const generic_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLElement,
