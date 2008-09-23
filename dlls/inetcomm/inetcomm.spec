@@ -59,7 +59,7 @@
 @ stub MimeOleDecodeHeader
 @ stub MimeOleEncodeHeader
 @ stub MimeOleFileTimeToInetDate
-@ stub MimeOleFindCharset
+@ stdcall MimeOleFindCharset(str ptr)
 @ stub MimeOleGenerateCID
 @ stub MimeOleGenerateFileName
 @ stub MimeOleGenerateMID
@@ -71,7 +71,7 @@
 @ stub MimeOleGetCodePageCharset
 @ stub MimeOleGetCodePageInfo
 @ stub MimeOleGetContentTypeExt
-@ stub MimeOleGetDefaultCharset
+@ stdcall MimeOleGetDefaultCharset(ptr)
 @ stub MimeOleGetExtContentType
 @ stub MimeOleGetFileExtension
 @ stub MimeOleGetFileInfo
