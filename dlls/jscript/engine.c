@@ -951,7 +951,8 @@ HRESULT with_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *
 
     hres = scope_push(ctx->scope_chain, obj, &ctx->scope_chain);
     jsdisp_release(obj);
-    if(FAILED(hres));
+    if(FAILED(hres))
+        return hres;
 
     hres = stat_eval(ctx, stat->statement, rt, ret);
 
