@@ -221,9 +221,7 @@ void create_delegating_vtbl(DWORD num_methods)
         if(current_vtbl.table && current_vtbl.table->ref == 0)
         {
             TRACE("freeing old table\n");
-            VirtualFree(current_vtbl.table->methods,
-                        (current_vtbl.table->size - 3) * sizeof(vtbl_method_t),
-                        MEM_RELEASE);
+            VirtualFree(current_vtbl.table->methods, 0, MEM_RELEASE);
             HeapFree(GetProcessHeap(), 0, current_vtbl.table);
         }
         size = (num_methods - 3) * sizeof(vtbl_method_t);
@@ -258,9 +256,7 @@ static void release_delegating_vtbl(IUnknownVtbl *vtbl)
     if(table->ref == 0 && table != current_vtbl.table)
     {
         TRACE("... and we're not current so free'ing\n");
-        VirtualFree(current_vtbl.table->methods,
-                    (current_vtbl.table->size - 3) * sizeof(vtbl_method_t),
-                    MEM_RELEASE);
+        VirtualFree(current_vtbl.table->methods, 0, MEM_RELEASE);
         HeapFree(GetProcessHeap(), 0, table);
     }
     LeaveCriticalSection(&delegating_vtbl_section);
