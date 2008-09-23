@@ -96,7 +96,7 @@ static void msvcrt_search_executable(const MSVCRT_wchar_t *name, MSVCRT_wchar_t 
     if (path_len + name_len <= MAX_PATH - 2)
     {
       memcpy(buffer, env, path_len * sizeof(MSVCRT_wchar_t));
-      if (buffer[path_len] != '/' || buffer[path_len] != '\\')
+      if (buffer[path_len] != '/' && buffer[path_len] != '\\')
       {
         buffer[path_len++] = '\\';
         buffer[path_len] = '\0';

@@ -990,7 +990,7 @@ void CDECL _searchenv(const char* file, const char* env, char *buf)
       return;
     }
     memcpy(curPath, penv, end - penv);
-    if (curPath[end - penv] != '/' || curPath[end - penv] != '\\')
+    if (curPath[end - penv] != '/' && curPath[end - penv] != '\\')
     {
       curPath[end - penv] = '\\';
       curPath[end - penv + 1] = '\0';
@@ -1053,7 +1053,7 @@ void CDECL _wsearchenv(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env, MS
       return;
     }
     memcpy(curPath, penv, (end - penv) * sizeof(MSVCRT_wchar_t));
-    if (curPath[end - penv] != '/' || curPath[end - penv] != '\\')
+    if (curPath[end - penv] != '/' && curPath[end - penv] != '\\')
     {
       curPath[end - penv] = '\\';
       curPath[end - penv + 1] = '\0';
