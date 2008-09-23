@@ -399,13 +399,13 @@
 @ stdcall RpcMgmtInqIfIds(ptr ptr)
 @ stub RpcMgmtInqServerPrincNameA
 @ stub RpcMgmtInqServerPrincNameW
-@ stub RpcMgmtInqStats
+@ stdcall RpcMgmtInqStats(ptr ptr)
 @ stdcall RpcMgmtIsServerListening(ptr)
 @ stub RpcMgmtSetAuthorizationFn
 @ stdcall RpcMgmtSetCancelTimeout(long)
 @ stdcall RpcMgmtSetComTimeout(ptr long)
 @ stdcall RpcMgmtSetServerStackSize(long)
-@ stub RpcMgmtStatsVectorFree
+@ stdcall RpcMgmtStatsVectorFree(ptr)
 @ stdcall RpcMgmtStopServerListening(ptr)
 @ stdcall RpcMgmtWaitServerListen()
 @ stub RpcNetworkInqProtseqsA

@@ -1124,6 +1124,40 @@ RPC_STATUS WINAPI RpcMgmtInqIfIds(RPC_BINDING_HANDLE Binding, RPC_IF_ID_VECTOR *
 }
 
 /***********************************************************************
+ *             RpcMgmtInqStats (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtInqStats(RPC_BINDING_HANDLE Binding, RPC_STATS_VECTOR **Statistics)
+{
+  RPC_STATS_VECTOR *stats;
+
+  FIXME("(%p,%p)\n", Binding, Statistics);
+
+  if ((stats = HeapAlloc(GetProcessHeap(), 0, sizeof(RPC_STATS_VECTOR))))
+  {
+    stats->Count = 1;
+    stats->Stats[0] = 0;
+    *Statistics = stats;
+    return RPC_S_OK;
+  }
+  return RPC_S_OUT_OF_RESOURCES;
+}
+
+/***********************************************************************
+ *             RpcMgmtStatsVectorFree (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcMgmtStatsVectorFree(RPC_STATS_VECTOR **StatsVector)
+{
+  FIXME("(%p)\n", StatsVector);
+
+  if (StatsVector)
+  {
+    HeapFree(GetProcessHeap(), 0, *StatsVector);
+    *StatsVector = NULL;
+  }
+  return RPC_S_OK;
+}
+
+/***********************************************************************
  *             RpcMgmtEpEltInqBegin (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE Binding, ULONG InquiryType,
