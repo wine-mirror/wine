@@ -13,7 +13,8 @@ C_SRCS = \
 	main.c \
 	net.c \
 	request.c \
-	session.c
+	session.c \
+	url.c
 
 RC_SRCS = \
 	version.rc
