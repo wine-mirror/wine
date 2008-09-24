@@ -199,7 +199,8 @@ static void testQuerySecurityPackageInfo(void)
     pkg_info = (void *)0xdeadbeef;
     sec_status = setupPackageA(ntlm, &pkg_info);
 
-    ok((sec_status == SEC_E_OK) || (sec_status == SEC_E_SECPKG_NOT_FOUND), 
+    ok((sec_status == SEC_E_OK) || (sec_status == SEC_E_SECPKG_NOT_FOUND) ||
+       broken(sec_status == SEC_E_UNSUPPORTED_FUNCTION), /* win95 */
        "Return value of QuerySecurityPackageInfo() shouldn't be %s\n",
        getSecError(sec_status) );
 
