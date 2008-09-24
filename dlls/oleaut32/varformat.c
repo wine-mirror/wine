@@ -1391,7 +1391,7 @@ VARIANT_FormatNumber_Bool:
       break;
 
     case FMT_NUM_DECIMAL:
-      if ((np.dwOutFlags & NUMPRS_NEG) && !(dwState & NUM_WROTE_SIGN))
+      if ((np.dwOutFlags & NUMPRS_NEG) && !(dwState & NUM_WROTE_SIGN) && !header->starts[1])
       {
         /* last chance for a negative sign in the .# case */
         TRACE("write negative sign\n");
@@ -1476,7 +1476,7 @@ VARIANT_FormatNumber_Bool:
       {
         int count, count_max, position;
 
-        if ((np.dwOutFlags & NUMPRS_NEG) && !(dwState & NUM_WROTE_SIGN))
+        if ((np.dwOutFlags & NUMPRS_NEG) && !(dwState & NUM_WROTE_SIGN) && !header->starts[1])
         {
           TRACE("write negative sign\n");
           localeValue = LOCALE_SNEGATIVESIGN;
