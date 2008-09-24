@@ -457,7 +457,7 @@ static HRESULT String_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
         str = string->str;
         length = string->length;
     }else {
-        FIXME("this is not a string class");
+        FIXME("this is not a string class\n");
         return E_NOTIMPL;
     }
 
