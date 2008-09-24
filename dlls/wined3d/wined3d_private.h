@@ -1907,10 +1907,13 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
 void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 
-void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
+void surface_force_reload(IWineD3DSurface *iface);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);
-void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location);
 void surface_load_ds_location(IWineD3DSurface *iface, DWORD location);
+void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location);
+void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
+void surface_set_texture_name(IWineD3DSurface *iface, GLuint name);
+void surface_set_texture_target(IWineD3DSurface *iface, GLenum target);
 
 BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize);
 BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize);

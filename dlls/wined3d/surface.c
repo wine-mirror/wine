@@ -39,6 +39,53 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
 static inline void clear_unused_channels(IWineD3DSurfaceImpl *This);
 static void surface_remove_pbo(IWineD3DSurfaceImpl *This);
 
+void surface_force_reload(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+
+    This->Flags &= ~SFLAG_ALLOCATED;
+}
+
+void surface_set_texture_name(IWineD3DSurface *iface, GLuint name)
+{
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("(%p) : setting texture name %u\n", This, name);
+
+    if (!This->glDescription.textureName && name)
+    {
+        /* FIXME: We shouldn't need to remove SFLAG_INTEXTURE if the
+         * surface has no texture name yet. See if we can get rid of this. */
+        if (This->Flags & SFLAG_INTEXTURE)
+            ERR("Surface has SFLAG_INTEXTURE set, but no texture name\n");
+        IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
+    }
+
+    This->glDescription.textureName = name;
+    surface_force_reload(iface);
+}
+
+void surface_set_texture_target(IWineD3DSurface *iface, GLenum target)
+{
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("(%p) : setting target %#x\n", This, target);
+
+    if (This->glDescription.target != target)
+    {
+        if (target == GL_TEXTURE_RECTANGLE_ARB)
+        {
+            This->Flags &= ~SFLAG_NORMCOORD;
+        }
+        else if (This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB)
+        {
+            This->Flags |= SFLAG_NORMCOORD;
+        }
+    }
+    This->glDescription.target = target;
+    surface_force_reload(iface);
+}
+
 static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This) {
     int active_sampler;
 
@@ -626,22 +673,6 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
 /* ******************************************************
    IWineD3DSurface IWineD3DSurface parts follow
    ****************************************************** */
-
-void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    TRACE("(%p) : setting textureName %u, target %#x\n", This, textureName, target);
-    if (This->glDescription.textureName == 0 && textureName != 0) {
-        IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
-    }
-    if(target == GL_TEXTURE_RECTANGLE_ARB && This->glDescription.target != target) {
-        This->Flags &= ~SFLAG_NORMCOORD;
-    } else if(This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB && target != GL_TEXTURE_RECTANGLE_ARB) {
-        This->Flags |= SFLAG_NORMCOORD;
-    }
-    This->glDescription.textureName = textureName;
-    This->glDescription.target      = target;
-    This->Flags &= ~SFLAG_ALLOCATED;
-}
 
 void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -4605,7 +4636,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_BindTexture,
     IWineD3DSurfaceImpl_SaveSnapshot,
     IWineD3DSurfaceImpl_SetContainer,
-    IWineD3DSurfaceImpl_SetGlTextureDesc,
     IWineD3DSurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
