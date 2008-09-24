@@ -168,7 +168,7 @@ static void test_height(void)
     SendMessage(hwndStatus, WM_SETFONT, (WPARAM)hFont, TRUE);
     if (!g_wmsize_count)
     {
-        skip("Status control not resized in win95, skipping broken tests.");
+        skip("Status control not resized in win95, skipping broken tests.\n");
         return;
     }
     ok(g_wmsize_count > 0, "WM_SETFONT should issue WM_SIZE\n");
