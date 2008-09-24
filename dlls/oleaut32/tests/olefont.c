@@ -138,7 +138,9 @@ static void test_QueryInterface(void)
 
         /* Test if QueryInterface increments ref counter for IFONTs */
         ret = IFont_AddRef(font);
-        ok(ret == 3, "IFont_QI expected ref value 3 but instead got %12u\n",ret);
+        ok(ret == 3 ||
+           broken(ret == 1), /* win95 */
+           "IFont_QI expected ref value 3 but instead got %ld\n",ret);
         IFont_Release(font);
 
         ok(hres == S_OK,"IFont_QI does not return S_OK, but 0x%08x\n", hres);
