@@ -785,8 +785,92 @@ static HRESULT String_small(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    StringInstance *string;
+    match_result_t *match_result;
+    DWORD match_cnt, i, len;
+    const WCHAR *ptr;
+    VARIANT *arg, var;
+    DispatchEx *array;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        FIXME("not String this\n");
+        return E_NOTIMPL;
+    }
+
+    string = (StringInstance*)dispex;
+
+    if(arg_cnt(dp) != 1) {
+        FIXME("unsupported args\n");
+        return E_NOTIMPL;
+    }
+
+    arg = get_arg(dp, 0);
+    switch(V_VT(arg)) {
+    case VT_DISPATCH: {
+        DispatchEx *regexp;
+
+        regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
+        if(regexp) {
+            if(is_class(regexp, JSCLASS_REGEXP)) {
+                hres = regexp_match(regexp, string->str, string->length, TRUE, &match_result, &match_cnt);
+                jsdisp_release(regexp);
+                if(FAILED(hres))
+                    return hres;
+                break;
+            }
+            jsdisp_release(regexp);
+        }
+    }
+    default:
+        FIXME("unsupported vt %d\n", V_VT(arg));
+        return E_NOTIMPL;
+    }
+
+    hres = create_array(dispex->ctx, match_cnt+1, &array);
+
+    if(SUCCEEDED(hres)) {
+        ptr = string->str;
+        for(i=0; i < match_cnt; i++) {
+            len = match_result[i].str-ptr;
+            V_VT(&var) = VT_BSTR;
+            V_BSTR(&var) = SysAllocStringLen(ptr, len);
+            if(!V_BSTR(&var)) {
+                hres = E_OUTOFMEMORY;
+                break;
+            }
+
+            hres = jsdisp_propput_idx(array, i, lcid, &var, ei, sp);
+            SysFreeString(V_BSTR(&var));
+            if(FAILED(hres))
+                break;
+
+            ptr = match_result[i].str + match_result[i].len;
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        len = (string->str+string->length) - ptr;
+
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocStringLen(ptr, len);
+
+        hres = jsdisp_propput_idx(array, i, lcid, &var, ei, sp);
+        SysFreeString(V_BSTR(&var));
+    }
+
+    heap_free(match_result);
+
+    if(SUCCEEDED(hres) && retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(array);
+    }else {
+        jsdisp_release(array);
+    }
+
+    return hres;
 }
 
 static HRESULT String_strike(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
