@@ -451,15 +451,19 @@ static void test_directory(void)
     pNtClose(dir);
 }
 
-#define SYMLNK_TEST_CREATE_OPEN_FAILURE(h,n,t,e) \
+#define SYMLNK_TEST_CREATE_OPEN_FAILURE2(h,n,t,e,e2) \
     pRtlCreateUnicodeStringFromAsciiz(&str, n);\
     pRtlCreateUnicodeStringFromAsciiz(&target, t);\
     status = pNtCreateSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr, &target);\
-    ok(status == e,"NtCreateSymbolicLinkObject should have failed with %s got(%08x)\n", #e, status);\
+    ok(status == e || status == e2, \
+       "NtCreateSymbolicLinkObject should have failed with %s or %s got(%08x)\n", #e, #e2, status);\
     status = pNtOpenSymbolicLinkObject(h, SYMBOLIC_LINK_QUERY, &attr);\
-    ok(status == e,"NtOpenSymbolicLinkObject should have failed with %s got(%08x)\n", #e, status);\
+    ok(status == e || status == e2, \
+       "NtOpenSymbolicLinkObject should have failed with %s or %s got(%08x)\n", #e, #e2, status);\
     pRtlFreeUnicodeString(&target);\
     pRtlFreeUnicodeString(&str);
+
+#define SYMLNK_TEST_CREATE_OPEN_FAILURE(h,n,t,e) SYMLNK_TEST_CREATE_OPEN_FAILURE2(h,n,t,e,e)
 
 static void test_symboliclink(void)
 {
@@ -521,7 +525,8 @@ static void test_symboliclink(void)
     SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\", "->Somewhere", STATUS_OBJECT_NAME_INVALID)
     SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\\\BaseNamedObjects", "->Somewhere", STATUS_OBJECT_NAME_INVALID)
     SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\\\om.c-test", "->Somewhere", STATUS_OBJECT_NAME_INVALID)
-    SYMLNK_TEST_CREATE_OPEN_FAILURE(&h, "\\BaseNamedObjects\\om.c-test\\", "->Somewhere", STATUS_OBJECT_NAME_INVALID)
+    SYMLNK_TEST_CREATE_OPEN_FAILURE2(&h, "\\BaseNamedObjects\\om.c-test\\", "->Somewhere",
+                                     STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_PATH_NOT_FOUND)
 
 
     /* Compaund test */
