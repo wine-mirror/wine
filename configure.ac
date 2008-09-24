@@ -790,12 +790,14 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
          else
              opengl_msg="OpenGL development headers not found."
 	 fi
+         test -n "$opengl_msg" && enable_opengl32=${enable_opengl32:-no}
+         test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
+    else
+         enable_opengl32=${enable_opengl32:-no}
+         enable_glu32=${enable_glu32:-no}
     fi
     WINE_WARNING_WITH(opengl,[test -n "$opengl_msg"],[$opengl_msg
 OpenGL and Direct3D won't be supported.])
-
-    test -n "$opengl_msg" && enable_opengl32=${enable_opengl32:-no}
-    test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
 
     dnl **** Check for NAS ****
     AC_SUBST(NASLIBS,"")

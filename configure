@@ -11387,6 +11387,11 @@ fi
          else
              opengl_msg="OpenGL development headers not found."
 	 fi
+         test -n "$opengl_msg" && enable_opengl32=${enable_opengl32:-no}
+         test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
+    else
+         enable_opengl32=${enable_opengl32:-no}
+         enable_glu32=${enable_glu32:-no}
     fi
     if test -n "$opengl_msg"; then
   case "x$with_opengl" in
@@ -11403,9 +11408,6 @@ This is an error since --with-opengl was requested." >&2;}
 esac
 fi
 
-
-    test -n "$opengl_msg" && enable_opengl32=${enable_opengl32:-no}
-    test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
 
         NASLIBS=""
 
