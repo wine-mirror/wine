@@ -335,6 +335,18 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
         break;
     case VT_BSTR:
         return str_to_number(V_BSTR(v), ret);
+    case VT_DISPATCH: {
+        VARIANT prim;
+        HRESULT hres;
+
+        hres = to_primitive(ctx, v, ei, &prim);
+        if(FAILED(hres))
+            return hres;
+
+        hres = to_number(ctx, &prim, ei, ret);
+        VariantClear(&prim);
+        return hres;
+    }
     case VT_BOOL:
         V_VT(ret) = VT_I4;
         V_I4(ret) = V_BOOL(v) ? 1 : 0;
