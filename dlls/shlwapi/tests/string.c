@@ -664,16 +664,14 @@ static void test_StrRetToBSTR(void)
     ret = pStrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_WSTR: dup failed, ret=0x%08x, bstr %p\n", ret, bstr);
-    if (bstr)
-      SysFreeString(bstr);
+    SysFreeString(bstr);
 
     strret.uType = STRRET_CSTR;
     lstrcpyA(U(strret).cStr, "Test");
     ret = pStrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_CSTR: dup failed, ret=0x%08x, bstr %p\n", ret, bstr);
-    if (bstr)
-      SysFreeString(bstr);
+    SysFreeString(bstr);
 
     strret.uType = STRRET_OFFSET;
     U(strret).uOffset = 1;
@@ -681,8 +679,7 @@ static void test_StrRetToBSTR(void)
     ret = pStrRetToBSTR(&strret, iidl, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_OFFSET: dup failed, ret=0x%08x, bstr %p\n", ret, bstr);
-    if (bstr)
-      SysFreeString(bstr);
+    SysFreeString(bstr);
 
     /* Native crashes if str is NULL */
 }
