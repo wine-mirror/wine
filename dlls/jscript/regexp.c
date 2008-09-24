@@ -3297,66 +3297,101 @@ out:
     return re;
 }
 
+static HRESULT do_regexp_match_next(RegExpInstance *regexp, const WCHAR *str, DWORD len,
+        const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt, match_result_t *ret)
+{
+    REMatchState *x, *result;
+    REGlobalData gData;
+    DWORD matchlen;
+
+    gData.cpbegin = *cp;
+    gData.cpend = str + len;
+    gData.start = *cp-str;
+    gData.skipped = 0;
+    gData.pool = &regexp->dispex.ctx->tmp_heap;
+
+    x = InitMatch(NULL, &gData, regexp->jsregexp, gData.cpend - gData.cpbegin);
+    if(!x) {
+        WARN("InitMatch failed\n");
+        return E_FAIL;
+    }
+
+    x->cp = *cp;
+    result = MatchRegExp(&gData, x);
+    if(!gData.ok) {
+        WARN("MatchRegExp failed\n");
+        return E_FAIL;
+    }
+
+    if(!result)
+        return S_FALSE;
+
+    if(parens) {
+        DWORD i;
+
+        if(regexp->jsregexp->parenCount > *parens_size) {
+            match_result_t *new_parens;
+
+            if(*parens)
+                new_parens = heap_realloc(*parens, sizeof(match_result_t)*regexp->jsregexp->parenCount);
+            else
+                new_parens = heap_alloc(sizeof(match_result_t)*regexp->jsregexp->parenCount);
+            if(!new_parens)
+                return E_OUTOFMEMORY;
+
+            *parens = new_parens;
+        }
+
+        *parens_cnt = regexp->jsregexp->parenCount;
+
+        for(i=0; i < regexp->jsregexp->parenCount; i++) {
+            (*parens)[i].str = *cp + result->parens[i].index;
+            (*parens)[i].len = result->parens[i].length;
+        }
+    }
+
+    matchlen = (result->cp-*cp) - gData.skipped;
+    *cp = result->cp;
+    ret->str = result->cp-matchlen;
+    ret->len = matchlen;
+
+    return S_OK;
+}
+
 HRESULT regexp_match(DispatchEx *dispex, const WCHAR *str, DWORD len, BOOL gflag, match_result_t **match_result,
         DWORD *result_cnt)
 {
     RegExpInstance *This = (RegExpInstance*)dispex;
-    match_result_t *ret = NULL;
+    match_result_t *ret = NULL, cres;
     const WCHAR *cp = str;
-    REGlobalData gData;
-    REMatchState *x, *result;
-    DWORD matchlen;
     DWORD i=0, ret_size = 0;
     jsheap_t *mark;
-    size_t length;
-    HRESULT hres = E_FAIL;
-
-    length = len;
+    HRESULT hres;
 
     mark = jsheap_mark(&This->dispex.ctx->tmp_heap);
-    gData.pool = &This->dispex.ctx->tmp_heap;
 
     while(1) {
-        gData.cpbegin = cp;
-        gData.cpend = str + len;
-        gData.start = cp-str;
-        gData.skipped = 0;
-
-        x = InitMatch(NULL, &gData, This->jsregexp, length);
-        if(!x) {
-            WARN("InitMatch failed\n");
-            break;
-        }
-
-        x->cp = cp;
-        result = MatchRegExp(&gData, x);
-        if(!gData.ok) {
-            WARN("MatchRegExp failed\n");
-            break;
-        }
-
-        if(!result) {
+        hres = do_regexp_match_next(This, str, len, &cp, NULL, NULL, NULL, &cres);
+        if(hres == S_FALSE) {
             hres = S_OK;
             break;
         }
 
-        matchlen = (result->cp-cp) - gData.skipped;
+        if(FAILED(hres))
+            return hres;
 
-        if(ret)
-            ret = heap_realloc(ret, (ret_size <<= 1) * sizeof(match_result_t));
-        else if(ret_size == i)
-            ret = heap_alloc((ret_size=4) * sizeof(match_result_t));
-        if(!ret) {
-            hres = E_OUTOFMEMORY;
-            break;
+        if(ret_size == i) {
+            if(ret)
+                ret = heap_realloc(ret, (ret_size <<= 1) * sizeof(match_result_t));
+            else
+                ret = heap_alloc((ret_size=4) * sizeof(match_result_t));
+            if(!ret) {
+                hres = E_OUTOFMEMORY;
+                break;
+            }
         }
 
-        ret[i].str = result->cp-matchlen;
-        ret[i].len = matchlen;
-
-        length -= result->cp-cp;
-        cp = result->cp;
-        i++;
+        ret[i++] = cres;
 
         if(!gflag && !(This->jsregexp->flags & JSREG_GLOB)) {
             hres = S_OK;
