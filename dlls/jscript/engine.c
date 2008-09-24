@@ -1930,9 +1930,9 @@ static HRESULT add_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_
             memcpy(V_BSTR(retv)+len1, rstr, (len2+1)*sizeof(WCHAR));
         }
 
-        if(lstr && V_VT(&l) != VT_BSTR)
+        if(V_VT(&l) != VT_BSTR)
             SysFreeString(lstr);
-        if(rstr && V_VT(&r) != VT_BSTR)
+        if(V_VT(&r) != VT_BSTR)
             SysFreeString(rstr);
     }else {
         VARIANT nl, nr;
