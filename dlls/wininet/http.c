@@ -3484,11 +3484,32 @@ static DWORD HTTPSESSION_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, voi
     return INET_QueryOption(option, buffer, size, unicode);
 }
 
+static DWORD HTTPSESSION_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD size)
+{
+    WININETHTTPSESSIONW *ses = (WININETHTTPSESSIONW*)hdr;
+
+    switch(option) {
+    case INTERNET_OPTION_USERNAME:
+    {
+        if (!(ses->lpszUserName = WININET_strdupW(buffer))) break;
+        return ERROR_SUCCESS;
+    }
+    case INTERNET_OPTION_PASSWORD:
+    {
+        if (!(ses->lpszPassword = WININET_strdupW(buffer))) break;
+        return ERROR_SUCCESS;
+    }
+    default: break;
+    }
+
+    return ERROR_INTERNET_INVALID_OPTION;
+}
+
 static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
     HTTPSESSION_Destroy,
     NULL,
     HTTPSESSION_QueryOption,
-    NULL,
+    HTTPSESSION_SetOption,
     NULL,
     NULL,
     NULL,
