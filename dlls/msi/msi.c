@@ -3021,3 +3021,15 @@ UINT WINAPI MsiIsProductElevatedA( LPCSTR szProduct, BOOL *pfElevated )
     *pfElevated = TRUE;
     return ERROR_SUCCESS;
 }
+
+/***********************************************************************
+ * MsiSetExternalUIRecord     [MSI.@]
+ */
+UINT WINAPI MsiSetExternalUIRecord( INSTALLUI_HANDLER_RECORD puiHandler,
+                                    DWORD dwMessageFilter, LPVOID pvContext,
+                                    PINSTALLUI_HANDLER_RECORD ppuiPrevHandler)
+{
+    FIXME("%p %08x %p %p\n", puiHandler, dwMessageFilter ,pvContext,
+                             ppuiPrevHandler);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

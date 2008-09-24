@@ -274,7 +274,7 @@
 278 stub MsiDetermineApplicablePatchesW
 279 stub MsiMessageBoxExA
 280 stub MsiMessageBoxExW
-281 stub MsiSetExternalUIRecord
+281 stdcall MsiSetExternalUIRecord(ptr long ptr ptr)
 
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
