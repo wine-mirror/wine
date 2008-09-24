@@ -411,7 +411,7 @@ static  unsigned        dump_exception_info(struct dump_context* dc,
     MINIDUMP_EXCEPTION_STREAM   mdExcpt;
     EXCEPTION_RECORD            rec, *prec;
     CONTEXT                     ctx, *pctx;
-    int                         i;
+    DWORD                       i;
 
     mdExcpt.ThreadId = except->ThreadId;
     mdExcpt.__alignment = 0;
@@ -907,7 +907,7 @@ BOOL WINAPI MiniDumpReadDumpStream(PVOID base, ULONG str_idx,
     if (mdHead->Signature == MINIDUMP_SIGNATURE)
     {
         MINIDUMP_DIRECTORY* dir;
-        int                 i;
+        DWORD               i;
 
         dir = (MINIDUMP_DIRECTORY*)((char*)base + mdHead->StreamDirectoryRva);
         for (i = 0; i < mdHead->NumberOfStreams; i++, dir++)

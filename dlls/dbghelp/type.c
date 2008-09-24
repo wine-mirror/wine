@@ -218,7 +218,7 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     TRACE_(dbghelp_symt)("Adding %s to UDT %s\n", name, udt_type->hash_elt.name);
     if (name)
     {
-        int    i;
+        unsigned int    i;
         for (i=0; i<vector_length(&udt_type->vchildren); i++)
         {
             m = *(struct symt_data**)vector_at(&udt_type->vchildren, i);
@@ -384,7 +384,7 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
     const char*         tmp;
     struct symt*        type;
     DWORD64             size;
-    int                 i;
+    unsigned int        i;
 
     TRACE("(%p %s %p %p)\n",
           hProcess, wine_dbgstr_longlong(BaseOfDll), EnumSymbolsCallback,

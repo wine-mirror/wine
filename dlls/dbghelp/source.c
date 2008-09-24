@@ -235,7 +235,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     hash_table_iter_init(&pair.effective->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
     {
-        int    i;
+        unsigned int    i;
 
         sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
         if (sym->symt.tag != SymTagFunction) continue;

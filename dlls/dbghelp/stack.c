@@ -386,7 +386,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
 
     if (curr_mode == stm_16bit)
     {
-        int     i;
+        unsigned int     i;
 
         p = sw_xlat_addr(cb, &frame->AddrFrame);
         if (!sw_read_mem(cb, p + sizeof(WORD), &val, sizeof(WORD)))

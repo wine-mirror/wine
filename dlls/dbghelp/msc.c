@@ -68,7 +68,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_msc);
 
 static void dump(const void* ptr, unsigned len)
 {
-    int         i, j;
+    unsigned int i, j;
     char        msg[128];
     const char* hexof = "0123456789abcdef";
     const BYTE* x = (const BYTE*)ptr;
@@ -829,7 +829,7 @@ static void codeview_add_func_signature_args(struct codeview_type_parse* ctp,
     sym->rettype = codeview_fetch_type(ctp, ret_type, FALSE);
     if (args_list && (reftype = codeview_jump_to_type(ctp, args_list)))
     {
-        int i;
+        unsigned int i;
         switch (reftype->generic.id)
         {
         case LF_ARGLIST_V1:
