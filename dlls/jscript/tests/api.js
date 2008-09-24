@@ -151,6 +151,11 @@ arr.concat = String.prototype.concat;
 tmp = arr.concat("d");
 ok(tmp === "2,ad", "arr.concat = " + tmp);
 
+m = "a+bcabc".match("a+");
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 1, "m.length is not 1");
+ok(m["0"] === "a", "m[0] is not \"ab\"");
+
 r = "- [test] -".replace("[test]", "success");
 ok(r === "- success -", "r = " + r + " expected '- success -'");
 

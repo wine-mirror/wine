@@ -354,6 +354,7 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 {
     StringInstance *This = (StringInstance*)dispex;
     match_result_t *match_result;
+    DispatchEx *regexp;
     DispatchEx *array;
     VARIANT var, *arg_var;
     DWORD match_cnt, i;
@@ -361,32 +362,38 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 
     TRACE("\n");
 
-    if(dp->cArgs - dp->cNamedArgs != 1) {
+    if(arg_cnt(dp) != 1) {
         FIXME("unsupported args\n");
         return E_NOTIMPL;
     }
 
     arg_var = get_arg(dp, 0);
     switch(V_VT(arg_var)) {
-    case VT_DISPATCH: {
-        DispatchEx *regexp;
-
+    case VT_DISPATCH:
         regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg_var));
         if(regexp) {
-            if(regexp->builtin_info->class == JSCLASS_REGEXP) {
-                hres = regexp_match(regexp, This->str, This->length, FALSE, &match_result, &match_cnt);
-                jsdisp_release(regexp);
-                if(FAILED(hres))
-                    return hres;
+            if(regexp->builtin_info->class == JSCLASS_REGEXP)
                 break;
-            }
             jsdisp_release(regexp);
         }
+    default: {
+        BSTR match_str;
+
+        hres = to_string(dispex->ctx, arg_var, ei, &match_str);
+        if(FAILED(hres))
+            return hres;
+
+        hres = create_regexp_str(dispex->ctx, match_str, SysStringLen(match_str), NULL, 0, &regexp);
+        SysFreeString(match_str);
+        if(FAILED(hres))
+            return hres;
     }
-    default:
-        FIXME("implemented only for regexp args\n");
-        return E_NOTIMPL;
     }
+
+    hres = regexp_match(regexp, This->str, This->length, FALSE, &match_result, &match_cnt);
+    jsdisp_release(regexp);
+    if(FAILED(hres))
+        return hres;
 
     if(!match_cnt) {
         TRACE("no match\n");
@@ -415,14 +422,13 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
             break;
     }
 
-    if(FAILED(hres)) {
+    if(SUCCEEDED(hres) && retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(array);
+    }else {
         jsdisp_release(array);
-        return hres;
     }
-
-    V_VT(retv) = VT_DISPATCH;
-    V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(array);
-    return S_OK;
+    return hres;
 }
 
 typedef struct {
