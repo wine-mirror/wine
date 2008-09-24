@@ -376,7 +376,9 @@ static void test_status_control(void)
     /* Make simple */
     SendMessage(hWndStatus, SB_SIMPLE, TRUE, 0);
     r = SendMessage(hWndStatus, SB_ISSIMPLE, 0, 0);
-    expect(TRUE,r);
+    ok(r == TRUE ||
+       broken(r == FALSE), /* win95 */
+       "Expected TRUE, got %d\n", r);
 
     DestroyWindow(hWndStatus);
 }
