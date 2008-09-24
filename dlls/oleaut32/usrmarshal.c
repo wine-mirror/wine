@@ -186,12 +186,9 @@ unsigned char * WINAPI BSTR_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, 
     header = (bstr_wire_t*)Buffer;
     if(header->len != header->len2)
         FIXME("len %08x != len2 %08x\n", header->len, header->len2);
-    
-    if(*pstr)
-    {
-        SysFreeString(*pstr);
-        *pstr = NULL;
-    }
+
+    SysFreeString(*pstr);
+    *pstr = NULL;
 
     if(header->byte_len != 0xffffffff)
         *pstr = SysAllocStringByteLen((char*)(header + 1), header->byte_len);
@@ -203,11 +200,8 @@ unsigned char * WINAPI BSTR_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, 
 void WINAPI BSTR_UserFree(ULONG *pFlags, BSTR *pstr)
 {
     TRACE("(%x,%p) => %p\n", *pFlags, pstr, *pstr);
-    if (*pstr)
-    {
-        SysFreeString(*pstr);
-        *pstr = NULL;
-    }
+    SysFreeString(*pstr);
+    *pstr = NULL;
 }
 
 /* VARIANT */

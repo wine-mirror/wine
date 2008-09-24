@@ -608,8 +608,7 @@ HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
       }
       else if (V_VT(pVarg) == VT_BSTR)
       {
-        if (V_BSTR(pVarg))
-          SysFreeString(V_BSTR(pVarg));
+        SysFreeString(V_BSTR(pVarg));
       }
       else if (V_VT(pVarg) == VT_RECORD)
       {

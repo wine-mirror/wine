@@ -419,8 +419,7 @@ INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR str)
     /*
      * Make sure we free the old string.
      */
-    if (*old!=NULL)
-      SysFreeString(*old);
+    SysFreeString(*old);
 
     /*
      * Allocate the new string
