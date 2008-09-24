@@ -44,7 +44,7 @@ static const char * const strings[4] = {
   "Fourth added which is very long because at some time we only had a 256 byte character buffer and that was overflowing in one of those applications that had a common dialog file open box and tried to add a 300 characters long custom filter string which of course the code did not like and crashed. Just make sure this string is longer than 256 characters."
 };
 
-static const char BAD_EXTENSION[] = "*.txtbad";
+static const char BAD_EXTENSION[] = "*.badtxt";
 
 static HWND
 create_listbox (DWORD add_style, HWND parent)
@@ -458,18 +458,18 @@ static void test_itemfrompoint(void)
     HWND hList = CreateWindow( "ListBox", "list test",
                                WS_VISIBLE|WS_POPUP|LBS_NOINTEGRALHEIGHT,
                                1, 1, 600, 100, NULL, NULL, NULL, NULL );
-    LONG r, id;
+    ULONG r, id;
     RECT rc;
 
-    /* For an empty listbox win2k returns 0x1ffff, win98 returns 0x10000 */
+    /* For an empty listbox win2k returns 0x1ffff, win98 returns 0x10000, nt4 returns 0xffffffff */
     r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 30 ));
-    ok( r == 0x1ffff || r == 0x10000, "ret %x\n", r );
+    ok( r == 0x1ffff || r == 0x10000 || r == 0xffffffff, "ret %x\n", r );
 
     r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( 700, 30 ));
-    ok( r == 0x1ffff || r == 0x10000, "ret %x\n", r );
+    ok( r == 0x1ffff || r == 0x10000 || r == 0xffffffff, "ret %x\n", r );
 
     r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( 30, 300 ));
-    ok( r == 0x1ffff || r == 0x10000, "ret %x\n", r );
+    ok( r == 0x1ffff || r == 0x10000 || r == 0xffffffff, "ret %x\n", r );
 
     id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi");
     ok( id == 0, "item id wrong\n");
@@ -480,7 +480,8 @@ static void test_itemfrompoint(void)
     ok( r == 0x1, "ret %x\n", r );
 
     r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 601 ));
-    ok( r == 0x10001, "ret %x\n", r );
+    ok( r == 0x10001 || broken(r == 1), /* nt4 */
+        "ret %x\n", r );
 
     /* Resize control so that below assertions about sizes are valid */
     r = SendMessage( hList, LB_GETITEMRECT, 0, (LPARAM)&rc);
@@ -517,16 +518,20 @@ static void test_itemfrompoint(void)
     ok( r == 1, "ret %x\n", r);
 
     r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(1000, 10) );
-    ok( r == 0x10001, "ret %x\n", r );
+    ok( r == 0x10001 || broken(r == 1), /* nt4 */
+        "ret %x\n", r );
 
     r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(10, -10) );
-    ok( r == 0x10001, "ret %x\n", r );
+    ok( r == 0x10001 || broken(r == 1), /* nt4 */
+        "ret %x\n", r );
 
     r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(10, 100) );
-    ok( r == 0x10005, "item %x\n", r );
+    ok( r == 0x10005 || broken(r == 5), /* nt4 */
+        "item %x\n", r );
 
     r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(10, 200) );
-    ok( r == 0x10005, "item %x\n", r );
+    ok( r == 0x10005 || broken(r == 5), /* nt4 */
+        "item %x\n", r );
 
     DestroyWindow( hList );
 }
@@ -585,6 +590,11 @@ static void test_listbox_LB_DIR()
     strcpy(pathBuffer, "*");
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, 0, (LPARAM)pathBuffer);
+    if (res == -1)  /* "*" wildcard doesn't work on win9x */
+    {
+        strcpy(pathBuffer, "*.*");
+        res = SendMessage(hList, LB_DIR, 0, (LPARAM)pathBuffer);
+    }
     ok (res >= 0, "SendMessage(LB_DIR, 0, *) failed - 0x%08x\n", GetLastError());
 
     /* There should be some content in the listbox */
@@ -640,6 +650,11 @@ static void test_listbox_LB_DIR()
     strcpy(pathBuffer, "*");
     SendMessage(hList, LB_RESETCONTENT, 0, 0);
     res = SendMessage(hList, LB_DIR, DDL_DIRECTORY, (LPARAM)pathBuffer);
+    if (res == -1)  /* "*" wildcard doesn't work on win9x */
+    {
+        strcpy(pathBuffer, "*.*");
+        res = SendMessage(hList, LB_DIR, DDL_DIRECTORY, (LPARAM)pathBuffer);
+    }
     ok (res > 0, "SendMessage(LB_DIR, DDL_DIRECTORY, *) failed - 0x%08x\n", GetLastError());
 
     /* There should be some content in the listbox.
