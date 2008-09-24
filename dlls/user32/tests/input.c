@@ -371,6 +371,7 @@ static void empty_message_queue(void) {
 struct transition_s {
     WORD wVk;
     BYTE before_state;
+    BYTE optional;
 };
 
 typedef enum {
@@ -448,11 +449,12 @@ struct sendinput_test_s {
     /* test L-SHIFT & R-SHIFT: */
     /* RSHIFT == LSHIFT */
     {VK_RSHIFT, 0, 0,
-        {{VK_SHIFT, 0x00}, {VK_LSHIFT, 0x00}, {0}},
+     /* recent windows versions (>= w2k3) correctly report an RSHIFT transition */
+       {{VK_SHIFT, 0x00}, {VK_LSHIFT, 0x00, TRUE}, {VK_RSHIFT, 0x00, TRUE}, {0}},
         {{WM_KEYDOWN, hook|wparam, VK_RSHIFT},
         {WM_KEYDOWN}, {0}}},
     {VK_RSHIFT, KEYEVENTF_KEYUP, 0,
-        {{VK_SHIFT, 0x80}, {VK_LSHIFT, 0x80}, {0}},
+       {{VK_SHIFT, 0x80}, {VK_LSHIFT, 0x80, TRUE}, {VK_RSHIFT, 0x80, TRUE}, {0}},
         {{WM_KEYUP, hook, hook|wparam, VK_RSHIFT},
         {WM_KEYUP}, {0}}},
 
@@ -643,7 +645,7 @@ static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_tes
                    ~t->before_state&0x80);
             }
         } else {
-            ok(matched, "%02d: %02x from %02x -> %02x "
+            ok(matched || t->optional, "%02d: %02x from %02x -> %02x "
                "instead of %02x -> %02x\n", id, t->wVk,
                ks1[t->wVk]&0x80, ks2[t->wVk]&0x80, t->before_state,
                ~t->before_state&0x80);
@@ -1008,19 +1010,19 @@ static void test_GetMouseMovePointsEx(void)
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(0, &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT)-1, &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT)+1, &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     /* test second and third parameter
@@ -1028,7 +1030,7 @@ static void test_GetMouseMovePointsEx(void)
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), NULL, out, BUFLIM, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_NOACCESS == GetLastError(),
+    ok(GetLastError() == ERROR_NOACCESS || GetLastError() == MYERROR,
        "expected error ERROR_NOACCESS, got %u\n", GetLastError());
 
     SetLastError(MYERROR);
@@ -1059,7 +1061,7 @@ static void test_GetMouseMovePointsEx(void)
     count = -1;
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), &in, out, count, GMMP_USE_DISPLAY_POINTS);
     ok(retval == count, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     SetLastError(MYERROR);
@@ -1083,7 +1085,7 @@ static void test_GetMouseMovePointsEx(void)
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM+1, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     /* it was not possible to force an error with the fifth parameter on win2k */
@@ -1092,25 +1094,25 @@ static void test_GetMouseMovePointsEx(void)
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT)-1, NULL, out, BUFLIM, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT)-1, &in, NULL, BUFLIM, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), NULL, out, BUFLIM+1, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     SetLastError(MYERROR);
     retval = pGetMouseMovePointsEx(sizeof(MOUSEMOVEPOINT), &in, NULL, BUFLIM+1, GMMP_USE_DISPLAY_POINTS);
     ok(retval == -1, "expected GetMouseMovePointsEx to fail, got %d\n", retval);
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
 #undef BUFLIM
