@@ -3358,6 +3358,24 @@ static HRESULT do_regexp_match_next(RegExpInstance *regexp, const WCHAR *str, DW
     return S_OK;
 }
 
+HRESULT regexp_match_next(DispatchEx *dispex, BOOL gcheck, const WCHAR *str, DWORD len,
+        const WCHAR **cp, match_result_t **parens, DWORD *parens_size, DWORD *parens_cnt, match_result_t *ret)
+{
+    RegExpInstance *regexp = (RegExpInstance*)dispex;
+    jsheap_t *mark;
+    HRESULT hres;
+
+    if(gcheck && !(regexp->jsregexp->flags & JSREG_GLOB))
+        return S_FALSE;
+
+    mark = jsheap_mark(&regexp->dispex.ctx->tmp_heap);
+
+    hres = do_regexp_match_next(regexp, str, len, cp, parens, parens_size, parens_cnt, ret);
+
+    jsheap_clear(mark);
+    return hres;
+}
+
 HRESULT regexp_match(DispatchEx *dispex, const WCHAR *str, DWORD len, BOOL gflag, match_result_t **match_result,
         DWORD *result_cnt)
 {

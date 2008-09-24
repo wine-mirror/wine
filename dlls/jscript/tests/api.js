@@ -151,6 +151,29 @@ arr.concat = String.prototype.concat;
 tmp = arr.concat("d");
 ok(tmp === "2,ad", "arr.concat = " + tmp);
 
+r = "- [test] -".replace("[test]", "success");
+ok(r === "- success -", "r = " + r + " expected '- success -'");
+
+r = "- [test] -".replace("[test]", "success", "test");
+ok(r === "- success -", "r = " + r + " expected '- success -'");
+
+r = "test".replace();
+ok(r === "test", "r = " + r + " expected 'test'");
+
+function replaceFunc3(m, off, str) {
+    ok(arguments.length === 3, "arguments.length = " + arguments.length);
+    ok(m === "[test]", "m = " + m + " expected [test1]");
+    ok(off === 1, "off = " + off + " expected 0");
+    ok(str === "-[test]-", "str = " + arguments[3]);
+    return "ret";
+}
+
+r = "-[test]-".replace("[test]", replaceFunc3);
+ok(r === "-ret-", "r = " + r + " expected '-ret-'");
+
+r = "-[test]-".replace("[test]", replaceFunc3, "test");
+ok(r === "-ret-", "r = " + r + " expected '-ret-'");
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");

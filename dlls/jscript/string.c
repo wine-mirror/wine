@@ -425,11 +425,263 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
-static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+typedef struct {
+    WCHAR *buf;
+    DWORD size;
+    DWORD len;
+} strbuf_t;
+
+static HRESULT strbuf_append(strbuf_t *buf, const WCHAR *str, DWORD len)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    if(!len)
+        return S_OK;
+
+    if(len + buf->len > buf->size) {
+        WCHAR *new_buf;
+        DWORD new_size;
+
+        new_size = buf->size ? buf->size<<1 : 16;
+        if(new_size < buf->len+len)
+            new_size = buf->len+len;
+        if(buf->buf)
+            new_buf = heap_realloc(buf->buf, new_size*sizeof(WCHAR));
+        else
+            new_buf = heap_alloc(new_size*sizeof(WCHAR));
+        if(!new_buf)
+            return E_OUTOFMEMORY;
+
+        buf->buf = new_buf;
+        buf->size = new_size;
+    }
+
+    memcpy(buf->buf+buf->len, str, len*sizeof(WCHAR));
+    buf->len += len;
+    return S_OK;
+}
+
+static HRESULT rep_call(DispatchEx *func, const WCHAR *str, match_result_t *match, match_result_t *parens,
+        DWORD parens_cnt, LCID lcid, BSTR *ret, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DISPPARAMS dp = {NULL, NULL, 0, 0};
+    VARIANTARG *args, *arg;
+    VARIANT var;
+    DWORD i;
+    HRESULT hres = S_OK;
+
+    dp.cArgs = parens_cnt+3;
+    dp.rgvarg = args = heap_alloc_zero(sizeof(VARIANT)*dp.cArgs);
+    if(!args)
+        return E_OUTOFMEMORY;
+
+    arg = get_arg(&dp,0);
+    V_VT(arg) = VT_BSTR;
+    V_BSTR(arg) = SysAllocStringLen(match->str, match->len);
+    if(!V_BSTR(arg))
+        hres = E_OUTOFMEMORY;
+
+    if(SUCCEEDED(hres)) {
+        for(i=0; i < parens_cnt; i++) {
+            arg = get_arg(&dp,i+1);
+            V_VT(arg) = VT_BSTR;
+            V_BSTR(arg) = SysAllocStringLen(parens[i].str, parens[i].len);
+            if(!V_BSTR(arg)) {
+               hres = E_OUTOFMEMORY;
+               break;
+            }
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        arg = get_arg(&dp,parens_cnt+1);
+        V_VT(arg) = VT_I4;
+        V_I4(arg) = match->str - str;
+
+        arg = get_arg(&dp,parens_cnt+2);
+        V_VT(arg) = VT_BSTR;
+        V_BSTR(arg) = SysAllocString(str);
+        if(!V_BSTR(arg))
+            hres = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hres))
+        hres = jsdisp_call_value(func, lcid, DISPATCH_METHOD, &dp, &var, ei, caller);
+
+    for(i=0; i < parens_cnt+1; i++) {
+        if(i != parens_cnt+1)
+            SysFreeString(V_BSTR(get_arg(&dp,i)));
+    }
+    heap_free(args);
+
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_string(func->ctx, &var, ei, ret);
+    VariantClear(&var);
+    return hres;
+}
+
+/* ECMA-262 3rd Edition    15.5.4.11 */
+static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DWORD parens_cnt, parens_size=0, rep_len=0, length;
+    BSTR rep_str = NULL, match_str = NULL, ret_str;
+    DispatchEx *rep_func = NULL, *regexp = NULL;
+    match_result_t *parens = NULL, match;
+    const WCHAR *str;
+    strbuf_t ret = {NULL,0,0};
+    BOOL gcheck = FALSE;
+    VARIANT *arg_var;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_STRING)) {
+        StringInstance *string = (StringInstance*)dispex;
+        str = string->str;
+        length = string->length;
+    }else {
+        FIXME("not String this\n");
+        return E_NOTIMPL;
+    }
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            ret_str = SysAllocString(str);
+            if(!ret_str)
+                return E_OUTOFMEMORY;
+
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = ret_str;
+        }
+        return S_OK;
+    }
+
+    arg_var = get_arg(dp, 0);
+    switch(V_VT(arg_var)) {
+    case VT_DISPATCH:
+        regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg_var));
+        if(regexp) {
+            if(is_class(regexp, JSCLASS_REGEXP)) {
+                break;
+            }else {
+                jsdisp_release(regexp);
+                regexp = NULL;
+            }
+        }
+
+    default:
+        hres = to_string(dispex->ctx, arg_var, ei, &match_str);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(arg_cnt(dp) >= 2) {
+        arg_var = get_arg(dp,1);
+        switch(V_VT(arg_var)) {
+        case VT_DISPATCH:
+            rep_func = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg_var));
+            if(rep_func) {
+                if(is_class(rep_func, JSCLASS_FUNCTION)) {
+                    break;
+                }else {
+                    jsdisp_release(rep_func);
+                    rep_func = NULL;
+                }
+            }
+
+        default:
+            hres = to_string(dispex->ctx, arg_var, ei, &rep_str);
+            if(FAILED(hres))
+                break;
+
+            if(strchrW(rep_str, '$')) {
+                FIXME("unsupported $ in replace string\n");
+                hres = E_NOTIMPL;
+            }
+
+            rep_len = SysStringLen(rep_str);
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        const WCHAR *cp, *ecp;
+
+        cp = ecp = str;
+
+        while(1) {
+            if(regexp) {
+                hres = regexp_match_next(regexp, gcheck, str, length, &cp, rep_func ? &parens : NULL,
+                                         &parens_size, &parens_cnt, &match);
+                gcheck = TRUE;
+
+                if(hres == S_FALSE) {
+                    hres = S_OK;
+                    break;
+                }
+                if(FAILED(hres))
+                    break;
+            }else {
+                match.str = strstrW(cp, match_str);
+                if(!match.str)
+                    break;
+                match.len = SysStringLen(match_str);
+                cp = match.str+match.len;
+            }
+
+            hres = strbuf_append(&ret, ecp, match.str-ecp);
+            ecp = match.str+match.len;
+            if(FAILED(hres))
+                break;
+
+            if(rep_func) {
+                BSTR cstr;
+
+                hres = rep_call(rep_func, str, &match, parens, parens_cnt, lcid, &cstr, ei, caller);
+                if(FAILED(hres))
+                    break;
+
+                hres = strbuf_append(&ret, cstr, SysStringLen(cstr));
+                SysFreeString(cstr);
+                if(FAILED(hres))
+                    break;
+            }else if(rep_str) {
+                hres = strbuf_append(&ret, rep_str, rep_len);
+                if(FAILED(hres))
+                    break;
+            }else {
+                static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d'};
+
+                hres = strbuf_append(&ret, undefinedW, sizeof(undefinedW)/sizeof(WCHAR));
+                if(FAILED(hres))
+                    break;
+            }
+        }
+
+        if(SUCCEEDED(hres))
+            hres = strbuf_append(&ret, ecp, (str+length)-ecp);
+    }
+
+    if(rep_func)
+        jsdisp_release(rep_func);
+    if(regexp)
+        jsdisp_release(regexp);
+    SysFreeString(rep_str);
+    SysFreeString(match_str);
+    heap_free(parens);
+
+    if(SUCCEEDED(hres) && retv) {
+        ret_str = SysAllocStringLen(ret.buf, ret.len);
+        if(!ret_str)
+            return E_OUTOFMEMORY;
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret_str;
+        TRACE("= %s\n", debugstr_w(ret_str));
+    }
+
+    heap_free(ret.buf);
+    return hres;
 }
 
 static HRESULT String_search(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
