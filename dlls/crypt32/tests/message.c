@@ -220,8 +220,10 @@ static void test_verify_message_hash(void)
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageHash(&para, NULL, 0, NULL, NULL, NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == CRYPT_E_ASN1_EOD ||
+       GetLastError() == OSS_BAD_ARG, /* win98 */
+     "Expected CRYPT_E_ASN1_EOD or OSS_BAD_ARG, got %08x\n", GetLastError());
     /* Verifying the hash of a detached message succeeds? */
     ret = CryptVerifyMessageHash(&para, detachedHashContent,
      sizeof(detachedHashContent), NULL, NULL, NULL, NULL);
@@ -358,39 +360,51 @@ static void test_verify_detached_message_signature(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, NULL, 0, 0, NULL,
      NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == OSS_BAD_ARG, /* win98 */
+     "Expected CRYPT_E_ASN1_EOD or OSS_BAD_ARG, got %08x\n", GetLastError());
     /* None of these messages contains a cert in the message itself, so the
      * default callback isn't able to verify their signature.
      */
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, signedWithCertContent,
      sizeof(signedWithCertContent), 0, NULL, NULL, NULL);
+    ok(!ret, "Expected 0, got %d\n", ret);
     todo_wine
-    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    ok(GetLastError() == CRYPT_E_NOT_FOUND ||
+     GetLastError() == OSS_DATA_ERROR, /* win98 */
+     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, signedContent,
      sizeof(signedContent), 0, NULL, NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == CRYPT_E_NOT_FOUND ||
+     GetLastError() == OSS_DATA_ERROR, /* win98 */
+     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 0, NULL, NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == CRYPT_E_NOT_FOUND ||
+     GetLastError() == OSS_DATA_ERROR, /* win98 */
+     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     pContent = msgData;
     cbContent = sizeof(msgData);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 1, &pContent, &cbContent, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == CRYPT_E_NOT_FOUND ||
+     GetLastError() == OSS_DATA_ERROR, /* win98 */
+     "Expected CRYPT_E_NOT_FOUND or OSS_DATA_ERROR, got %08x\n", GetLastError());
     /* Passing the correct callback results in success */
     para.pfnGetSignerCertificate = msg_get_signer_callback;
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 1, &pContent, &cbContent, NULL);
-    ok(ret, "CryptVerifyDetachedMessageSignature failed: %08x\n",
+    ok(ret ||
+     broken(!ret), /* win98 */
+     "CryptVerifyDetachedMessageSignature failed: %08x\n",
      GetLastError());
     /* Not passing the correct data to be signed results in the signature not
      * matching.
@@ -398,8 +412,10 @@ static void test_verify_detached_message_signature(void)
     SetLastError(0xdeadbeef);
     ret = CryptVerifyDetachedMessageSignature(&para, 0, detachedSignedContent,
      sizeof(detachedSignedContent), 0, NULL, NULL, NULL);
-    ok(!ret && GetLastError() == NTE_BAD_SIGNATURE,
-     "expected NTE_BAD_SIGNATURE, got %08x\n", GetLastError());
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == NTE_BAD_SIGNATURE ||
+     GetLastError() == OSS_DATA_ERROR, /* win98 */
+     "Expected NTE_BAD_SIGNATURE or OSS_DATA_ERROR, got %08x\n", GetLastError());
 }
 
 static const BYTE signedWithCertEmptyContent[] = {
