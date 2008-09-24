@@ -1670,9 +1670,15 @@ typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONPROC) (GLenum mode);
 typedef void (WINE_GLAPI *WINED3D_PFNGLACTIVETEXTUREARBPROC) (GLenum texture);
 typedef void (WINE_GLAPI *WINED3D_PFNGLCLIENTACTIVETEXTUREARBPROC) (GLenum texture);
 typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD1FARBPROC) (GLenum target, GLfloat s);
+typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD1FVARBPROC) (GLenum target, const GLfloat *v);
 typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD2FARBPROC) (GLenum target, GLfloat s, GLfloat t);
+typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD2FVARBPROC) (GLenum target, const GLfloat *v);
 typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD3FARBPROC) (GLenum target, GLfloat s, GLfloat t, GLfloat r);
+typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD3FVARBPROC) (GLenum target, const GLfloat *v);
 typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD4FARBPROC) (GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD4FVARBPROC) (GLenum target, const GLfloat *v);
+typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD2SVARBPROC) (GLenum target, const GLshort *v);
+typedef void (WINE_GLAPI *WINED3D_PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, const GLshort *v);
 
 /* GL_ARB_texture_cube_map */
 #ifndef GL_ARB_texture_cube_map
@@ -3413,9 +3419,15 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(WINED3D_PFNGLACTIVETEXTUREARBPROC,                  glActiveTextureARB,                         ARB_MULTITEXTURE,       NULL )\
     USE_GL_FUNC(WINED3D_PFNGLCLIENTACTIVETEXTUREARBPROC,            glClientActiveTextureARB,                   ARB_MULTITEXTURE,       NULL )\
     USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD1FARBPROC,                glMultiTexCoord1fARB,                       ARB_MULTITEXTURE,       NULL )\
+    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD1FVARBPROC,               glMultiTexCoord1fvARB,                      ARB_MULTITEXTURE,       NULL )\
     USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD2FARBPROC,                glMultiTexCoord2fARB,                       ARB_MULTITEXTURE,       NULL )\
+    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD2FVARBPROC,               glMultiTexCoord2fvARB,                      ARB_MULTITEXTURE,       NULL )\
     USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD3FARBPROC,                glMultiTexCoord3fARB,                       ARB_MULTITEXTURE,       NULL )\
+    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD3FVARBPROC,               glMultiTexCoord3fvARB,                      ARB_MULTITEXTURE,       NULL )\
     USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD4FARBPROC,                glMultiTexCoord4fARB,                       ARB_MULTITEXTURE,       NULL )\
+    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD4FVARBPROC,               glMultiTexCoord4fvARB,                      ARB_MULTITEXTURE,       NULL )\
+    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD2SVARBPROC,               glMultiTexCoord2svARB,                      ARB_MULTITEXTURE,       NULL )\
+    USE_GL_FUNC(WINED3D_PFNGLMULTITEXCOORD4SVARBPROC,               glMultiTexCoord4svARB,                      ARB_MULTITEXTURE,       NULL )\
     /* GL_ARB_occlusion_query */ \
     USE_GL_FUNC(PGLFNGENQUERIESARBPROC,                             glGenQueriesARB,                            ARB_OCCLUSION_QUERY,    NULL )\
     USE_GL_FUNC(PGLFNDELETEQUERIESARBPROC,                          glDeleteQueriesARB,                         ARB_OCCLUSION_QUERY,    NULL )\

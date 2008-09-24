@@ -537,11 +537,13 @@ void primitiveDeclarationConvertToStridedData(
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
 typedef void (WINE_GLAPI *glAttribFunc)(void *data);
-typedef void (WINE_GLAPI *glTexAttribFunc)(GLuint unit, void *data);
+typedef void (WINE_GLAPI *glMultiTexCoordFunc)(GLenum unit, void *data);
 extern glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
 extern glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
 extern glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
 extern glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
+extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3DDECLTYPE_UNUSED];
+extern glAttribFunc texcoord_funcs[WINED3DDECLTYPE_UNUSED];
 
 #define eps 1e-8
 

@@ -343,20 +343,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         position = sd->u.s.position.lpData + streamOffset[sd->u.s.position.streamNo];
     }
 
-    /* The texture coordinate types are not so easy to map into a common function signature - we're
-     * not using the vector functions here
-     */
     if(FIXME_ON(d3d_draw)) {
-        for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
-            DWORD type = sd->u.s.texCoords[textureNo].dwType;
-            if (sd->u.s.texCoords[textureNo].lpData &&
-                type != WINED3DDECLTYPE_FLOAT1 &&
-                type != WINED3DDECLTYPE_FLOAT2 &&
-                type != WINED3DDECLTYPE_FLOAT3 &&
-                type != WINED3DDECLTYPE_FLOAT4) {
-                FIXME("Implement fixed function texture coordinates from %s\n", debug_d3ddecltype(type));
-            }
-        }
         if(specular && This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
            (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position_transformed )&&
            This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
@@ -423,11 +410,9 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
             /* Query tex coords */
             if (This->stateBlock->textures[textureNo] != NULL || pixelShader) {
-
                 int    coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
                 int texture_idx = This->texUnitMap[textureNo];
-                float *ptrToCoords = NULL;
-                float  s = 0.0, t = 0.0, r = 0.0, q = 0.0;
+                void *ptrToCoords;
 
                 if (coordIdx > 7) {
                     VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
@@ -439,7 +424,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
                 if (texture_idx == -1) continue;
 
-                ptrToCoords = (float *)(texCoords[coordIdx] + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                 if (texCoords[coordIdx] == NULL) {
                     TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
                     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
@@ -448,54 +432,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                         glTexCoord4f(0, 0, 0, 1);
                     }
                     continue;
-                } else {
-                    int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == WINED3DDECLTYPE_FLOAT1 etc */
-
-                    /* The coords to supply depend completely on the fvf / vertex shader */
-                    switch (coordsToUse) {
-                    case 4: q = ptrToCoords[3]; /* drop through */
-                    case 3: r = ptrToCoords[2]; /* drop through */
-                    case 2: t = ptrToCoords[1]; /* drop through */
-                    case 1: s = ptrToCoords[0];
-                    }
-
-                    switch (coordsToUse) {   /* Supply the provided texture coords */
-                    case WINED3DTTFF_COUNT1:
-                        VTRACE(("tex:%d, s=%f\n", textureNo, s));
-                        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GL_EXTCALL(glMultiTexCoord1fARB(GL_TEXTURE0_ARB + texture_idx, s));
-                        } else {
-                            glTexCoord1f(s);
-                        }
-                        break;
-                    case WINED3DTTFF_COUNT2:
-                        VTRACE(("tex:%d, s=%f, t=%f\n", textureNo, s, t));
-                        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GL_EXTCALL(glMultiTexCoord2fARB(GL_TEXTURE0_ARB + texture_idx, s, t));
-                        } else {
-                            glTexCoord2f(s, t);
-                        }
-                        break;
-                    case WINED3DTTFF_COUNT3:
-                        VTRACE(("tex:%d, s=%f, t=%f, r=%f\n", textureNo, s, t, r));
-                        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GL_EXTCALL(glMultiTexCoord3fARB(GL_TEXTURE0_ARB + texture_idx, s, t, r));
-                        } else {
-                            glTexCoord3f(s, t, r);
-                        }
-                        break;
-                    case WINED3DTTFF_COUNT4:
-                        VTRACE(("tex:%d, s=%f, t=%f, r=%f, q=%f\n", textureNo, s, t, r, q));
-                        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, s, t, r, q));
-                        } else {
-                            glTexCoord4f(s, t, r, q);
-                        }
-                        break;
-                    default:
-                        FIXME("Should not get here as coordsToUse is two bits only (%x)!\n", coordsToUse);
-                    }
                 }
+
+                ptrToCoords = texCoords[coordIdx] + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride);
+                if (GL_SUPPORT(ARB_MULTITEXTURE))
+                    multi_texcoord_funcs[sd->u.s.texCoords[coordIdx].dwType](GL_TEXTURE0_ARB + texture_idx, ptrToCoords);
+                else
+                    texcoord_funcs[sd->u.s.texCoords[coordIdx].dwType](ptrToCoords);
             }
         } /* End of textures */
 

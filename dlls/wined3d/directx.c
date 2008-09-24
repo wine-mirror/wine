@@ -176,7 +176,8 @@ glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
 glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
 glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
 glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
-glTexAttribFunc texcoord_funcs[WINED3DDECLTYPE_UNUSED];
+glMultiTexCoordFunc multi_texcoord_funcs[WINED3DDECLTYPE_UNUSED];
+glAttribFunc texcoord_funcs[WINED3DDECLTYPE_UNUSED];
 
 /**
  * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created,
@@ -3968,6 +3969,11 @@ static void WINE_GLAPI invalid_func(void *data) {
     DebugBreak();
 }
 
+static void WINE_GLAPI invalid_texcoord_func(GLenum unit, void * data) {
+    ERR("Invalid texcoord function called\n");
+    DebugBreak();
+}
+
 #define GLINFO_LOCATION (Adapters[0].gl_info)
 
 /* Helper functions for providing vertex data to opengl. The arrays are initialized based on
@@ -4098,6 +4104,54 @@ void fillGLAttribFuncs(WineD3D_GL_Info *gl_info) {
     normal_funcs[WINED3DDECLTYPE_DEC3N]          = (void *) invalid_func;
     normal_funcs[WINED3DDECLTYPE_FLOAT16_2]      = (void *) invalid_func;
     normal_funcs[WINED3DDECLTYPE_FLOAT16_4]      = (void *) invalid_func;
+
+    multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT1]    = (void *) GL_EXTCALL(glMultiTexCoord1fvARB);
+    multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT2]    = (void *) GL_EXTCALL(glMultiTexCoord2fvARB);
+    multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT3]    = (void *) GL_EXTCALL(glMultiTexCoord3fvARB);
+    multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT4]    = (void *) GL_EXTCALL(glMultiTexCoord4fvARB);
+    multi_texcoord_funcs[WINED3DDECLTYPE_D3DCOLOR]  = (void *) invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3DDECLTYPE_UBYTE4]    = (void *) invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3DDECLTYPE_SHORT2]    = (void *) GL_EXTCALL(glMultiTexCoord2svARB);
+    multi_texcoord_funcs[WINED3DDECLTYPE_SHORT4]    = (void *) GL_EXTCALL(glMultiTexCoord4svARB);
+    multi_texcoord_funcs[WINED3DDECLTYPE_UBYTE4N]   = (void *) invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3DDECLTYPE_SHORT2N]   = (void *) invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3DDECLTYPE_SHORT4N]   = (void *) invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3DDECLTYPE_USHORT2N]  = (void *) invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3DDECLTYPE_USHORT4N]  = (void *) invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3DDECLTYPE_UDEC3]     = (void *) invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3DDECLTYPE_DEC3N]     = (void *) invalid_texcoord_func;
+    if (GL_SUPPORT(NV_HALF_FLOAT))
+    {
+        multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2] = (void *) GL_EXTCALL(glMultiTexCoord2hvNV);
+        multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4] = (void *) GL_EXTCALL(glMultiTexCoord4hvNV);
+    } else {
+        multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2] = (void *) invalid_texcoord_func;
+        multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4] = (void *) invalid_texcoord_func;
+    }
+
+    texcoord_funcs[WINED3DDECLTYPE_FLOAT1]      = (void *) glTexCoord1fv;
+    texcoord_funcs[WINED3DDECLTYPE_FLOAT2]      = (void *) glTexCoord2fv;
+    texcoord_funcs[WINED3DDECLTYPE_FLOAT3]      = (void *) glTexCoord3fv;
+    texcoord_funcs[WINED3DDECLTYPE_FLOAT4]      = (void *) glTexCoord4fv;
+    texcoord_funcs[WINED3DDECLTYPE_D3DCOLOR]    = (void *) invalid_func;
+    texcoord_funcs[WINED3DDECLTYPE_UBYTE4]      = (void *) invalid_func;
+    texcoord_funcs[WINED3DDECLTYPE_SHORT2]      = (void *) glTexCoord2sv;
+    texcoord_funcs[WINED3DDECLTYPE_SHORT4]      = (void *) glTexCoord4sv;
+    texcoord_funcs[WINED3DDECLTYPE_UBYTE4N]     = (void *) invalid_func;
+    texcoord_funcs[WINED3DDECLTYPE_SHORT2N]     = (void *) invalid_func;
+    texcoord_funcs[WINED3DDECLTYPE_SHORT4N]     = (void *) invalid_func;
+    texcoord_funcs[WINED3DDECLTYPE_USHORT2N]    = (void *) invalid_func;
+    texcoord_funcs[WINED3DDECLTYPE_USHORT4N]    = (void *) invalid_func;
+    texcoord_funcs[WINED3DDECLTYPE_UDEC3]       = (void *) invalid_func;
+    texcoord_funcs[WINED3DDECLTYPE_DEC3N]       = (void *) invalid_func;
+    if (GL_SUPPORT(NV_HALF_FLOAT))
+    {
+        texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2]   = (void *) GL_EXTCALL(glTexCoord2hvNV);
+        texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4]   = (void *) GL_EXTCALL(glTexCoord4hvNV);
+    } else {
+        texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2]   = (void *) invalid_func;
+        texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4]   = (void *) invalid_func;
+    }
 }
 
 #define PUSH1(att)        attribs[nAttribs++] = (att);
