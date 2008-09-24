@@ -27,15 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
-static const GLenum cube_targets[6] = {
-  GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
-  GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
-  GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
-  GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
-  GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
-  GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB
-};
-
 /* *******************************************
    IWineD3DCubeTexture IUnknown parts follow
    ******************************************* */
@@ -156,8 +147,7 @@ static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
                 IWineD3DSurface_AddDirtyRect(This->surfaces[j][i], NULL);
-                surface_set_texture_name(This->surfaces[j][i], This->baseTexture.textureName);
-                surface_set_texture_target(This->surfaces[j][i], cube_targets[j]);
+                surface_force_reload(This->surfaces[j][i]);
                 IWineD3DSurface_LoadTexture(This->surfaces[j][i], srgb_mode);
             }
         }
@@ -183,7 +173,6 @@ static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface) {
         for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
             IWineD3DSurface_UnLoad(This->surfaces[j][i]);
             surface_set_texture_name(This->surfaces[j][i], 0);
-            surface_set_texture_target(This->surfaces[j][i], IWineD3DTexture_GetTextureDimensions(iface));
         }
     }
 
@@ -248,7 +237,6 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *i
         for (i = 0; i < This->baseTexture.levels; ++i) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z; ++j) {
                 surface_set_texture_name(This->surfaces[j][i], This->baseTexture.textureName);
-                surface_set_texture_target(This->surfaces[j][i], cube_targets[j]);
             }
         }
     }

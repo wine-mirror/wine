@@ -887,6 +887,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
 
         IWineD3DSurface_SetContainer(object->surfaces[i], (IWineD3DBase *)object);
         TRACE("Created surface level %d @ %p\n", i, object->surfaces[i]);
+        surface_set_texture_target(object->surfaces[i], object->target);
         /* calculate the next mipmap level */
         tmpW = max(1, tmpW >> 1);
         tmpH = max(1, tmpH >> 1);
@@ -1132,6 +1133,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
 
         /* Create the 6 faces */
         for (j = 0; j < 6; j++) {
+            static const GLenum cube_targets[6] = {
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
+                GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
+                GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
+                GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB
+            };
 
             hr=D3DCB_CreateSurface(This->parent, parent, tmpW, tmpW, Format, Usage, Pool,
                                    i /* Level */, j, &object->surfaces[j][i],pSharedHandle);
@@ -1156,6 +1165,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
             }
             IWineD3DSurface_SetContainer(object->surfaces[j][i], (IWineD3DBase *)object);
             TRACE("Created surface level %d @ %p,\n", i, object->surfaces[j][i]);
+            surface_set_texture_target(object->surfaces[j][i], cube_targets[j]);
         }
         tmpW = max(1, tmpW >> 1);
     }

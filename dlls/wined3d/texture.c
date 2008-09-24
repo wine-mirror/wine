@@ -138,8 +138,7 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
 
         for (i = 0; i < This->baseTexture.levels; i++) {
             IWineD3DSurface_AddDirtyRect(This->surfaces[i], NULL);
-            surface_set_texture_name(This->surfaces[i], This->baseTexture.textureName);
-            surface_set_texture_target(This->surfaces[i], IWineD3DTexture_GetTextureDimensions(iface));
+            surface_force_reload(This->surfaces[i]);
             IWineD3DSurface_LoadTexture(This->surfaces[i], srgb_mode);
         }
     } else {
@@ -164,7 +163,6 @@ static void WINAPI IWineD3DTextureImpl_UnLoad(IWineD3DTexture *iface) {
     for (i = 0; i < This->baseTexture.levels; i++) {
         IWineD3DSurface_UnLoad(This->surfaces[i]);
         surface_set_texture_name(This->surfaces[i], 0);
-        surface_set_texture_target(This->surfaces[i], IWineD3DTexture_GetTextureDimensions(iface));
     }
 
     IWineD3DBaseTextureImpl_UnLoad((IWineD3DBaseTexture *) iface);
@@ -226,7 +224,6 @@ static HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface) {
         UINT i;
         for (i = 0; i < This->baseTexture.levels; ++i) {
             surface_set_texture_name(This->surfaces[i], This->baseTexture.textureName);
-            surface_set_texture_target(This->surfaces[i], IWineD3DTexture_GetTextureDimensions(iface));
         }
         /* Conditinal non power of two textures use a different clamping default. If we're using the GL_WINE_normalized_texrect
          * partial driver emulation, we're dealing with a GL_TEXTURE_2D texture which has the address mode set to repeat - something
