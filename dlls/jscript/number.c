@@ -133,8 +133,19 @@ static HRESULT Number_isPrototypeOf(DispatchEx *dispex, LCID lcid, WORD flags, D
 static HRESULT Number_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    NumberInstance *number = (NumberInstance*)dispex;
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        *retv = number->num;
+        break;
+
+    default:
+        FIXME("flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static const builtin_prop_t Number_props[] = {
