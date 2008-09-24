@@ -63,7 +63,7 @@ struct schan_handle
 struct schan_credentials
 {
     ULONG credential_use;
-    gnutls_certificate_credentials_t credentials;
+    gnutls_certificate_credentials credentials;
 };
 
 static struct schan_handle *schan_handle_table;
