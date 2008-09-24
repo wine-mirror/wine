@@ -366,6 +366,8 @@ ok("" + null === "null", "\"\" + null !== \"null\"");
 ok("" + undefined === "undefined", "\"\" + undefined !== \"undefined\"");
 ok("" + true === "true", "\"\" + true !== \"true\"");
 ok("" + false === "false", "\"\" + false !== \"false\"");
+ok("" + 0.5 === "0.5", "'' + 0.5 = " + 0.5);
+ok("" + (-0.5432) === "-0.5432", "'' + (-0.5432) = " + (-0.5432));
 
 ok(1 < 3.4, "1 < 3.4 failed");
 ok(!(3.4 < 1), "3.4 < 1");

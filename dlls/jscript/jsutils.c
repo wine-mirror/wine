@@ -441,6 +441,18 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
     case VT_I4:
         *str = int_to_bstr(V_I4(v));
         break;
+    case VT_R8: {
+        VARIANT strv;
+        HRESULT hres;
+
+        V_VT(&strv) = VT_EMPTY;
+        hres = VariantChangeType(&strv, v, 0, VT_BSTR);
+        if(FAILED(hres))
+            return hres;
+
+        *str = V_BSTR(&strv);
+        return S_OK;
+    }
     case VT_BSTR:
         *str = SysAllocString(V_BSTR(v));
         break;
