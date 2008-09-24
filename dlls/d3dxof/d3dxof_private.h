@@ -67,6 +67,7 @@ typedef struct {
 } xobject_member;
 
 struct _xobject {
+   struct _xobject* ptarget;
    char name[MAX_NAME_LEN];
    GUID class_id;
    GUID type;
@@ -102,6 +103,7 @@ typedef struct {
 typedef struct {
     IDirectXFileDataReference lpVtbl;
     LONG ref;
+    xobject* ptarget;
 } IDirectXFileDataReferenceImpl;
 
 typedef struct {
@@ -120,6 +122,8 @@ typedef struct {
   ULONG cur_subobject;
   LPBYTE cur_pdata;
   BYTE value[100];
+  xobject* pxo_globals;
+  ULONG nb_pxo_globals;
   xobject* pxo_tab;
   IDirectXFileImpl* pdxf;
   xobject* pxo;

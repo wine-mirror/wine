@@ -214,7 +214,7 @@ DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject)
 #define IDirectXFileDataReference_GetName(p,a,b) (p)->lpVtbl->GetName(p,a,b)
 #define IDirectXFileDataReference_GetId(p,a)     (p)->lpVtbl->GetId(p,a)
     /*** IDirectXFileDataReference methods ***/
-#define IDirectXFileDataReference_Resolve(p,a) (p)->lpVtbl->GetData(p,a)
+#define IDirectXFileDataReference_Resolve(p,a) (p)->lpVtbl->Resolve(p,a)
 #endif
 
 #define INTERFACE IDirectXFileBinary

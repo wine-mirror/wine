@@ -1403,21 +1403,37 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
 {
   HRESULT hr;
   IDirectXFileDataImpl *This = (IDirectXFileDataImpl *)iface;
-  IDirectXFileDataImpl *object;
 
   TRACE("(%p/%p)->(%p)\n", This, iface, ppChildObj);
 
   if (This->cur_enum_object >= This->pobj->nb_childs)
     return DXFILEERR_NOMOREOBJECTS;
 
-  hr = IDirectXFileDataImpl_Create(&object);
-  if (hr != S_OK)
-    return DXFILEERR_BADVALUE;
+  if (This->pobj->childs[This->cur_enum_object]->ptarget)
+  {
+    IDirectXFileDataReferenceImpl *object;
 
-  object->pobj = This->pobj->childs[This->cur_enum_object++];
-  object->cur_enum_object = 0;
+    hr = IDirectXFileDataReferenceImpl_Create(&object);
+    if (hr != S_OK)
+      return DXFILEERR_BADVALUE;
 
-  *ppChildObj = (LPDIRECTXFILEOBJECT)object;
+    object->ptarget = This->pobj->childs[This->cur_enum_object++]->ptarget;
+
+    *ppChildObj = (LPDIRECTXFILEOBJECT)object;
+  }
+  else
+  {
+    IDirectXFileDataImpl *object;
+
+    hr = IDirectXFileDataImpl_Create(&object);
+    if (hr != S_OK)
+      return DXFILEERR_BADVALUE;
+
+    object->pobj = This->pobj->childs[This->cur_enum_object++];
+    object->cur_enum_object = 0;
+
+    *ppChildObj = (LPDIRECTXFILEOBJECT)object;
+  }
 
   return DXFILE_OK;
 }
@@ -1532,7 +1548,12 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetName(IDirectXFileDataRefe
 {
   IDirectXFileDataReferenceImpl *This = (IDirectXFileDataReferenceImpl *)iface;
 
-  FIXME("(%p/%p)->(%p,%p) stub!\n", This, iface, pstrNameBuf, pdwBufLen); 
+  TRACE("(%p/%p)->(%p,%p)\n", This, iface, pstrNameBuf, pdwBufLen);
+
+  if (!pstrNameBuf)
+    return DXFILEERR_BADVALUE;
+
+  strcpy(pstrNameBuf, This->ptarget->name);
 
   return DXFILEERR_BADVALUE;
 }
@@ -1541,19 +1562,38 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetId(IDirectXFileDataRefere
 {
   IDirectXFileDataReferenceImpl *This = (IDirectXFileDataReferenceImpl *)iface;
 
-  FIXME("(%p/%p)->(%p) stub!\n", This, iface, pGuid); 
+  TRACE("(%p/%p)->(%p)\n", This, iface, pGuid);
 
-  return DXFILEERR_BADVALUE;
+  if (!pGuid)
+    return DXFILEERR_BADVALUE;
+
+  memcpy(pGuid, &This->ptarget->class_id, 16);
+
+  return DXFILE_OK;
 }
 
 /*** IDirectXFileDataReference ***/
 static HRESULT WINAPI IDirectXFileDataReferenceImpl_Resolve(IDirectXFileDataReference* iface, LPDIRECTXFILEDATA* ppDataObj)
 {
   IDirectXFileDataReferenceImpl *This = (IDirectXFileDataReferenceImpl *)iface;
+  IDirectXFileDataImpl *object;
+  HRESULT hr;
 
-  FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppDataObj); 
+  TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
 
-  return DXFILEERR_BADVALUE;
+  if (!ppDataObj)
+    return DXFILEERR_BADVALUE;
+
+  hr = IDirectXFileDataImpl_Create(&object);
+  if (hr != S_OK)
+    return DXFILEERR_BADVALUE;
+
+  object->pobj = This->ptarget;
+  object->cur_enum_object = 0;
+
+  *ppDataObj = (LPDIRECTXFILEDATA)object;
+
+  return DXFILE_OK;
 }
 
 static const IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl =
@@ -1784,11 +1824,26 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
     {
       if (check_TOKEN(buf) == TOKEN_OBRACE)
       {
+        int i;
         get_TOKEN(buf);
         if (get_TOKEN(buf) != TOKEN_NAME)
           return FALSE;
         if (get_TOKEN(buf) != TOKEN_CBRACE)
           return FALSE;
+        TRACE("Found optional reference %s\n", (char*)buf->value);
+        for (i = 0; i < buf->nb_pxo_globals; i++)
+        {
+          if (!strcmp(buf->pxo_globals[i*MAX_SUBOBJECTS].name, (char*)buf->value))
+            break;
+        }
+        if (i == buf->nb_pxo_globals)
+        {
+          ERR("Reference to unknown object %s\n", (char*)buf->value);
+          return FALSE;
+        }
+        buf->pxo->childs[buf->pxo->nb_childs] = &buf->pxo_tab[buf->cur_subobject++];
+        buf->pxo->childs[buf->pxo->nb_childs]->ptarget = &buf->pxo_globals[i*MAX_SUBOBJECTS];
+        buf->pxo->nb_childs++;
       }
       else if (check_TOKEN(buf) == TOKEN_NAME)
       {
@@ -1819,6 +1874,7 @@ static BOOL parse_object(parse_buffer * buf)
   int i;
 
   buf->pxo->pdata = buf->cur_pdata;
+  buf->pxo->ptarget = NULL;
 
   if (get_TOKEN(buf) != TOKEN_NAME)
     return FALSE;
@@ -1892,6 +1948,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   if (!SUCCEEDED(hr))
     return hr;
 
+  This->buf.pxo_globals = &This->xobjects[0][0];
+  This->buf.nb_pxo_globals = This->nb_xobjects;
   This->buf.pxo_tab = &This->xobjects[This->nb_xobjects][0];
   This->buf.cur_subobject = 0;
   This->buf.pxo = &This->buf.pxo_tab[This->buf.cur_subobject++];
@@ -1916,6 +1974,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   object->cur_enum_object = 0;
 
   *ppDataObj = (LPDIRECTXFILEDATA)object;
+
+  This->nb_xobjects++;
 
   return DXFILE_OK;
 }
