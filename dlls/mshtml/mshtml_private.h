@@ -166,6 +166,11 @@ typedef enum {
     EDITMODE        
 } USERMODE;
 
+typedef enum {
+    SCRIPTMODE_GECKO,
+    SCRIPTMODE_ACTIVESCRIPT
+} SCRIPTMODE;
+
 typedef struct {
     const IConnectionPointContainerVtbl  *lpConnectionPointContainerVtbl;
 
@@ -255,6 +260,7 @@ struct HTMLDocument {
     DOCHOSTUIINFO hostinfo;
 
     USERMODE usermode;
+    SCRIPTMODE scriptmode;
     READYSTATE readystate;
     BOOL in_place_active;
     BOOL ui_active;
@@ -572,6 +578,7 @@ void release_script_hosts(HTMLDocument*);
 void connect_scripts(HTMLDocument*);
 void doc_insert_script(HTMLDocument*,nsIDOMHTMLScriptElement*);
 IDispatch *script_parse_event(HTMLDocument*,LPCWSTR);
+void set_script_mode(HTMLDocument*,SCRIPTMODE);
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*);
 IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument*,IUnknown*,nsIDOMNodeList*);

@@ -1377,6 +1377,7 @@ interface nsIWebBrowser : nsISupports
     nsresult GetContentDOMWindow(nsIDOMWindow **aContentDOMWindow);
 }
 
+cpp_quote("#define SETUP_ALLOW_JAVASCRIPT  2")
 cpp_quote("#define SETUP_IS_CHROME_WRAPPER 7")
 
 [

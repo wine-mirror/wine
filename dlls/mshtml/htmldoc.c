@@ -1603,6 +1603,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->lpIDispatchExVtbl = &DocDispatchExVtbl;
     ret->ref = 0;
     ret->readystate = READYSTATE_UNINITIALIZED;
+    ret->scriptmode = SCRIPTMODE_GECKO;
 
     list_init(&ret->bindings);
     list_init(&ret->script_hosts);

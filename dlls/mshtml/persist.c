@@ -158,6 +158,12 @@ static nsIInputStream *get_post_data_stream(IBindCtx *bctx)
     return ret;
 }
 
+static BOOL use_gecko_script(LPCWSTR url)
+{
+    static const WCHAR fileW[] = {'f','i','l','e',':'};
+    return strncmpiW(fileW, url, sizeof(fileW)/sizeof(WCHAR));
+}
+
 void set_current_mon(HTMLDocument *This, IMoniker *mon)
 {
     HRESULT hres;
@@ -181,6 +187,8 @@ void set_current_mon(HTMLDocument *This, IMoniker *mon)
     hres = IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
     if(FAILED(hres))
         WARN("GetDisplayName failed: %08x\n", hres);
+
+    set_script_mode(This, use_gecko_script(This->url) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }
 
 static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL *bind_complete)
