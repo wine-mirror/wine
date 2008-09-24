@@ -5902,17 +5902,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     if(pSourceRect != NULL && pSourceRect->top != 0){
        offset +=  pSourceRect->top * srcSurfaceWidth * pSrcSurface->bytesPerPixel;
     }
-    TRACE("(%p) glTexSubImage2D, Level %d, left %d, top %d, width %d, height %d , ftm %d, type %d, memory %p\n"
-    ,This
-    ,glDescription->level
-    ,destLeft
-    ,destTop
-    ,srcWidth
-    ,srcHeight
-    ,glDescription->glFormat
-    ,glDescription->glType
-    ,IWineD3DSurface_GetData(pSourceSurface)
-    );
+    TRACE("(%p) glTexSubImage2D, level %d, left %d, top %d, width %d, height %d, fmt %#x, type %#x, memory %p+%#x\n",
+            This, glDescription->level, destLeft, destTop, srcWidth, srcHeight, glDescription->glFormat,
+            glDescription->glType, IWineD3DSurface_GetData(pSourceSurface), offset);
 
     /* Sanity check */
     if (IWineD3DSurface_GetData(pSourceSurface) == NULL) {
@@ -5945,6 +5937,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         }
 
     } else { /* Full width, so just write out the whole texture */
+        const unsigned char* data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
 
         if (WINED3DFMT_DXT1 == destFormat ||
             WINED3DFMT_DXT2 == destFormat ||
@@ -5958,14 +5951,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
                 } if (destFormat != srcFormat) {
                     FIXME("Updating mixed format compressed texture is not curretly support\n");
                 } else {
-                    GL_EXTCALL(glCompressedTexImage2DARB)(glDescription->target,
-                                                        glDescription->level,
-                                                        glDescription->glFormatInternal,
-                                                        srcWidth,
-                                                        srcHeight,
-                                                        0,
-                                                        destSize,
-                                                        IWineD3DSurface_GetData(pSourceSurface));
+                    GL_EXTCALL(glCompressedTexImage2DARB(glDescription->target, glDescription->level,
+                            glDescription->glFormatInternal, srcWidth, srcHeight, 0, destSize, data));
                 }
             } else {
                 FIXME("Attempting to update a DXT compressed texture without hardware support\n");
@@ -5973,17 +5960,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
 
         } else {
-            const unsigned char* data =((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
-            glTexSubImage2D(glDescription->target
-                    ,glDescription->level
-                    ,destLeft
-                    ,destTop
-                    ,srcWidth
-                    ,srcHeight
-                    ,glDescription->glFormat
-                    ,glDescription->glType
-                    ,data
-                );
+            glTexSubImage2D(glDescription->target, glDescription->level, destLeft, destTop,
+                    srcWidth, srcHeight, glDescription->glFormat, glDescription->glType, data);
         }
      }
     checkGLcall("glTexSubImage2D");
