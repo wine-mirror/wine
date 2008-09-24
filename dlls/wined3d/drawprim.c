@@ -437,6 +437,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     continue;
                 }
 
+                if (texture_idx == -1) continue;
+
                 ptrToCoords = (float *)(texCoords[coordIdx] + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                 if (texCoords[coordIdx] == NULL) {
                     TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
@@ -448,8 +450,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     continue;
                 } else {
                     int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == WINED3DDECLTYPE_FLOAT1 etc */
-
-                    if (texture_idx == -1) continue;
 
                     /* The coords to supply depend completely on the fvf / vertex shader */
                     switch (coordsToUse) {
