@@ -627,7 +627,7 @@ sub _generate_dsp($$) {
 	print OUT " /c";
 	print OUT "\r\n";
 
-	my @defines2 = qw(_CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE USE_COMPILER_EXCEPTIONS);
+	my @defines2 = qw(_CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE USE_COMPILER_EXCEPTIONS _USE_MATH_DEFINES);
 	if($debug) {
 	    if($lib) {
 		print OUT "# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od";
