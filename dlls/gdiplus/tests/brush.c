@@ -212,6 +212,14 @@ static void test_transform(void)
     status = GdipIsMatrixEqual(m, m1, &res);
     expect(Ok, status);
     expect(TRUE, res);
+    /* reset */
+    status = GdipResetTextureTransform(texture);
+    expect(Ok, status);
+    status = GdipGetTextureTransform(texture, m);
+    expect(Ok, status);
+    status = GdipIsMatrixIdentity(m, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
 
     status = GdipDeleteBrush((GpBrush*)texture);
     expect(Ok, status);

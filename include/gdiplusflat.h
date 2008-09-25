@@ -248,6 +248,7 @@ GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient*,
 GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient*,GpWrapMode);
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill*,ARGB);
 GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *,GDIPCONST GpMatrix*);
+GpStatus WINGDIPAPI GdipResetTextureTransform(GpTexture*);
 GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics*, GpCoordinateSpace, GpCoordinateSpace,
                                         GpPointF *, INT);
 GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics*, GpCoordinateSpace, GpCoordinateSpace,
