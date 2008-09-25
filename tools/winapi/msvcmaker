@@ -420,6 +420,9 @@ sub _generate_dsp($$) {
     $progress_current++;
     $output->progress("$dsp_file (file $progress_current of $progress_max)");
 
+    my $base_module = $module;
+	$base_module =~ s/\.(?:dll)$//;
+
     my @c_srcs = @{$modules{$module}{c_srcs}};
     my @source_files = @{$modules{$module}{source_files}};
     my @header_files = @{$modules{$module}{header_files}};
@@ -429,7 +432,7 @@ sub _generate_dsp($$) {
         $project !~ /^(?:gdi32)_.+?$/ &&
         $project !~ /_test$/)
     {
-	push @source_files, "$project.spec";
+	push @source_files, "$base_module.spec";
 	@source_files = sort(@source_files);
     }
 
