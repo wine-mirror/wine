@@ -41,6 +41,7 @@
 #include "Fi.rc"
 #include "Fr.rc"
 #include "Hu.rc"
+#include "Ja.rc"
 #include "Ko.rc"
 #include "Nl.rc"
 #include "No.rc"
