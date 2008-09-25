@@ -226,7 +226,7 @@ sub GenerateThunk($$$$$)
 	$ret = "$ret */\n";
     }
     $ret = $ret . ConvertType($func_ref->[1]) . " WINAPI wine_$func_ref->[0]( ";
-    for (my $i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+    for (my $i = 0; $i < @{$func_ref->[2]}; $i++) {
 	## Quick debug code :-)
 	## print $func_ref->[2]->[$i]->[1] . "\n";
 	my $type = $func_ref->[2]->[$i]->[0];
@@ -238,7 +238,7 @@ sub GenerateThunk($$$$$)
 	} else {
 	    $trace_arg = "$trace_arg$debug_conv{$type}";
 	}
-	if ($i != $#{@{$func_ref->[2]}}) {
+	if ($i+1 < @{$func_ref->[2]}) {
 	    $ret = "$ret, ";
 	    $call_arg = "$call_arg, ";
 	    $trace_arg = "$trace_arg, ";
@@ -247,7 +247,7 @@ sub GenerateThunk($$$$$)
 	    $call_arg = "$call_arg ";
 	}
     }
-    $ret .= 'void ' if ($#{@{$func_ref->[2]}} < 0);
+    $ret .= 'void ' if (!@{$func_ref->[2]});
     $ret = "$ret) {\n";
     if ($func_ref->[1] ne "void") {
 	$ret = "$ret  " . ConvertType($func_ref->[1]) . " ret_value;\n";
@@ -560,7 +560,7 @@ while (my $line = <REGISTRY>) {
 
 	# Now, build the argument reference
 	my $arg_ref = [ ];
-	for (my $i = 0; $i <= $#arg_names; $i++) {
+	for (my $i = 0; $i < @arg_names; $i++) {
 	    unless (defined($arg_types{$arg_names[$i]})) {
 		print "@arg_names\n";
 		foreach (sort keys %arg_types) {
@@ -600,7 +600,7 @@ open(SPEC, ">$spec_file");
 foreach (sort keys %norm_functions) {
     my $func_name = $norm_functions{$_}->[0];
     print SPEC "@  stdcall $func_name( ";
-    for (my $i = 0; $i <= $#{@{$norm_functions{$_}->[2]}}; $i++) {
+    for (my $i = 0; $i < @{$norm_functions{$_}->[2]}; $i++) {
 	my $type = $norm_functions{$_}->[2]->[$i]->[0];
 	if ($type =~ /\*/) {
 	    print SPEC "ptr ";
@@ -687,16 +687,16 @@ my $pos = 0;
 foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
     my $local_var = "  " . ConvertType($func_ref->[1]) . " (*$ext_prefix$func_ref->[0])( ";
-    for (my $i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+    for (my $i = 0; $i < @{$func_ref->[2]}; $i++) {
 	my $type = ConvertType($func_ref->[2]->[$i]->[0]);
 	$local_var .= "$type";
-	if ($i != $#{@{$func_ref->[2]}}) {
+	if ($i+1 < @{$func_ref->[2]}) {
 	    $local_var .= ", ";
 	} else {
 	    $local_var .= " ";
 	}
     }
-    $local_var .= 'void ' if ($#{@{$func_ref->[2]}} < 0);
+    $local_var .= 'void ' if (!@{$func_ref->[2]});
     $local_var .= ") = extension_funcs[$pos];\n";
     $pos++;
     print EXT "\nstatic ", GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe, $local_var);
