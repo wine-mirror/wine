@@ -2625,7 +2625,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     if(length == -1) length = lstrlenW(string);
 
-    stringdup = GdipAlloc(length * sizeof(WCHAR));
+    stringdup = GdipAlloc((length + 1) * sizeof(WCHAR));
     if(!stringdup) return OutOfMemory;
 
     oldfont = SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
