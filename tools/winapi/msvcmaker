@@ -170,6 +170,8 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $testdll = $1;
 	} elsif (/^IMPORTS\s*=\s*/) {
             push @imports, grep !/^ntdll$/, split /\s+/s, $';
+	} elsif (/^DELAYIMPORTS\s*=\s*/) {
+            push @imports, $;
 	} elsif (/^EXTRALIBS\s*=\s*/) {
             push @imports, map { /^-l(dxerr8|dxerr9|dxguid|strmiids|uuid)$/ ? $1 : () } split /\s+/s, $';
 	} elsif (/^CTESTS\s*=\s*/) {
@@ -288,7 +290,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $modules{$module}{source_files} = $source_files;
     $modules{$module}{header_files} = $header_files;
     $modules{$module}{resource_files} = $resource_files;
-    $modules{$module}{imports} = [];
+    $modules{$module}{imports} = [@imports];
 }
 
 $wine_test_dsp_files{"wineruntests.dsp"}{files} = ["runtests.c"];
