@@ -238,6 +238,11 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	$resource_files = [sort(@{$vars{RC_SRCS}})];
     }
 
+    my $idl_h_files = [];
+    if(exists($vars{IDL_H_SRCS})) {
+	$idl_h_files = [sort(@{$vars{IDL_H_SRCS}})];
+    }
+
     my $project = $module;
     $project =~ s/\.(?:dll|exe|lib)$//;
     $project =~ y/./_/;
@@ -271,6 +276,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    ($source_files, my $local_source_files) = filter_files($source_files, "$dir2/");
 	    ($header_files, my $local_header_files) = filter_files($header_files, "$dir2/");
 	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "$dir2/");
+	    ($idl_h_files, my $local_idl_h_files) = filter_files($idl_h_files, "$dir2/");
 
 	    $modules{$module}{wine} = 1;
 	    $modules{$module}{winetest} = 0;
@@ -282,6 +288,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $modules{$module}{header_files} = $local_header_files;
 	    $modules{$module}{resource_files} = $local_resource_files;
 	    $modules{$module}{imports} = [];
+	    $modules{$module}{idl_h_files} = $local_idl_h_files;
 	}
     }
 
@@ -295,6 +302,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $modules{$module}{header_files} = $header_files;
     $modules{$module}{resource_files} = $resource_files;
     $modules{$module}{imports} = [@imports];
+    $modules{$module}{idl_h_files} = $idl_h_files;
 }
 
 $wine_test_dsp_files{"wineruntests.dsp"}{files} = ["runtests.c"];
@@ -322,6 +330,7 @@ foreach my $dsp_file (keys(%wine_test_dsp_files)) {
     my $source_files = [];
     my $header_files = [];
     my $resource_files = [];
+    my $idl_h_files = [];
 
     my @tests = ();
 
@@ -368,6 +377,7 @@ foreach my $dsp_file (keys(%wine_test_dsp_files)) {
     $modules{$module}{header_files} = $header_files;
     $modules{$module}{resource_files} = $resource_files;
     $modules{$module}{imports} = [@imports];
+    $modules{$module}{idl_h_files} = [];
 
     $modules{$module}{tests} = [@tests];
 }
@@ -433,6 +443,7 @@ sub _generate_dsp($$) {
     my @source_files = @{$modules{$module}{source_files}};
     my @header_files = @{$modules{$module}{header_files}};
     my @resource_files = @{$modules{$module}{resource_files}};
+    my @idl_h_files = @{$modules{$module}{idl_h_files}};
 
     if ($project !~ /^wine(?:build|runtests|test)?$/ &&
         $project !~ /^(?:gdi32)_.+?$/ &&
@@ -850,6 +861,35 @@ sub _generate_dsp($$) {
 
 	print OUT "# End Source File\r\n";
     }
+
+    foreach my $idl_h_file (@idl_h_files) {
+	$idl_h_file =~ s%/%\\%g;
+	if($idl_h_file !~ /^\./) {
+	    $idl_h_file = ".\\$idl_h_file";
+	}
+
+	print OUT "# Begin Source File\r\n";
+	print OUT "\r\n";
+
+	print OUT "SOURCE=$idl_h_file\r\n";
+
+	my $basename = $idl_h_file;
+	$basename =~ s/\.idl$//;
+
+	print OUT "# PROP Ignore_Default_Tool 1\r\n";
+	print OUT "# Begin Custom Build\r\n";
+	print OUT "InputPath=$idl_h_file\r\n";
+	print OUT "\r\n";
+	print OUT "BuildCmds= \\\r\n";
+	print OUT "\tmidl /nologo /I $wine_include_dir /client none /server none /notlb $idl_h_file /h $basename.h\r\n";
+	print OUT "\r\n";
+	print OUT "\"$basename.h\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
+	print OUT "   \$(BuildCmds)\r\n";
+	print OUT "# End Custom Build\r\n";
+
+	print OUT "# End Source File\r\n";
+    }
+
     print OUT "# End Group\r\n";
 
     print OUT "# Begin Group \"Header Files\"\r\n";
