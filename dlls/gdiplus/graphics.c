@@ -2948,11 +2948,13 @@ GpStatus WINGDIPAPI GdipTranslateWorldTransform(GpGraphics *graphics, REAL dx,
     return GdipTranslateMatrix(graphics->worldtrans, dx, dy, order);
 }
 
-GpStatus WINGDIPAPI GdipSetClipRectI(GpGraphics *graphics, INT x, INT y,
-                                     INT width, INT height,
-                                     CombineMode combineMode)
+GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
+                                    REAL width, REAL height,
+                                    CombineMode mode)
 {
-    static int calls;
+    GpRectF rect;
+
+    TRACE("(%p, %.2f, %.2f, %.2f, %.2f, %d)\n", graphics, x, y, width, height, mode);
 
     if(!graphics)
         return InvalidParameter;
@@ -2960,10 +2962,27 @@ GpStatus WINGDIPAPI GdipSetClipRectI(GpGraphics *graphics, INT x, INT y,
     if(graphics->busy)
         return ObjectBusy;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    rect.X = x;
+    rect.Y = y;
+    rect.Width  = width;
+    rect.Height = height;
 
-    return NotImplemented;
+    return GdipCombineRegionRect(graphics->clip, &rect, mode);
+}
+
+GpStatus WINGDIPAPI GdipSetClipRectI(GpGraphics *graphics, INT x, INT y,
+                                     INT width, INT height,
+                                     CombineMode mode)
+{
+    TRACE("(%p, %d, %d, %d, %d, %d)\n", graphics, x, y, width, height, mode);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    return GdipSetClipRect(graphics, (REAL)x, (REAL)y, (REAL)width, (REAL)height, mode);
 }
 
 GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,

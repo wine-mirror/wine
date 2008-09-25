@@ -706,6 +706,8 @@ static void test_Get_Release_DC(void)
     expect(ObjectBusy, status); status = Ok;
     status = GdipTranslateWorldTransform(graphics, 0.0, 0.0, MatrixOrderPrepend);
     expect(ObjectBusy, status); status = Ok;
+    status = GdipSetClipRect(graphics, 0.0, 0.0, 10.0, 10.0, CombineModeReplace);
+    expect(ObjectBusy, status); status = Ok;
     status = GdipSetClipRectI(graphics, 0, 0, 10, 10, CombineModeReplace);
     expect(ObjectBusy, status); status = Ok;
     status = GdipSetClipRegion(graphics, clip, CombineModeReplace);

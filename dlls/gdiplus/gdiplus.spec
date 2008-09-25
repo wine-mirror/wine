@@ -509,7 +509,7 @@
 @ stub GdipSetClipGraphics
 @ stub GdipSetClipHrgn
 @ stub GdipSetClipPath
-@ stub GdipSetClipRect
+@ stdcall GdipSetClipRect(ptr long long long long long)
 @ stdcall GdipSetClipRectI(ptr long long long long long)
 @ stdcall GdipSetClipRegion(ptr ptr long)
 @ stdcall GdipSetCompositingMode(ptr long)
