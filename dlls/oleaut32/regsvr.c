@@ -594,11 +594,11 @@ static struct regsvr_interface const interface_list[] = {
 	&CLSID_PSFactoryBuffer
     },
     {   &IID_IFontEventsDisp,
-	"IFontEventsDisp",
+	"FontEvents",
 	NULL,
 	7,
 	NULL,
-	&CLSID_PSFactoryBuffer
+	&CLSID_PSDispatch
     },
     {   &IID_IPropertyBag,
 	"IPropertyBag",
@@ -629,11 +629,11 @@ static struct regsvr_interface const interface_list[] = {
 	&CLSID_PSFactoryBuffer
     },
     {   &IID_IPictureDisp,
-	"IPictureDisp",
+	"Picture",
 	NULL,
 	7,
 	NULL,
-	&CLSID_PSFactoryBuffer
+	&CLSID_PSDispatch
     },
     {   &IID_IPersistStreamInit,
 	"IPersistStreamInit",
@@ -783,11 +783,11 @@ static struct regsvr_interface const interface_list[] = {
 	&CLSID_PSFactoryBuffer
     },
     {   &IID_IFontDisp,
-	"IFontDisp",
+	"Font",
 	NULL,
 	7,
 	NULL,
-	&CLSID_PSFactoryBuffer
+	&CLSID_PSDispatch
     },
     {   &IID_IQuickActivate,
 	"IQuickActivate",
