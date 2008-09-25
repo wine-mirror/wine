@@ -169,6 +169,52 @@ static void test_getgamma(void)
     GdipDeleteBrush((GpBrush*)line);
 }
 
+static void test_transform(void)
+{
+    GpStatus status;
+    GpTexture *texture;
+    GpGraphics *graphics = NULL;
+    GpBitmap *bitmap;
+    HDC hdc = GetDC(0);
+    GpMatrix *m;
+    BOOL res;
+
+    status = GdipCreateMatrix2(2.0, 0.0, 0.0, 0.0, 0.0, 0.0, &m);
+    expect(Ok, status);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    status = GdipCreateBitmapFromGraphics(1, 1, graphics, &bitmap);
+    expect(Ok, status);
+
+    status = GdipCreateTexture((GpImage*)bitmap, WrapModeTile, &texture);
+    expect(Ok, status);
+
+    /* NULL */
+    status = GdipGetTextureTransform(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetTextureTransform(texture, NULL);
+    expect(InvalidParameter, status);
+
+    /* default value - identity matrix */
+    status = GdipGetTextureTransform(texture, m);
+    expect(Ok, status);
+    status = GdipIsMatrixIdentity(m, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+
+    status = GdipDeleteBrush((GpBrush*)texture);
+    expect(Ok, status);
+
+    status = GdipDeleteMatrix(m);
+    expect(Ok, status);
+    status = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, status);
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -187,6 +233,7 @@ START_TEST(brush)
     test_getblend();
     test_getbounds();
     test_getgamma();
+    test_transform();
 
     GdiplusShutdown(gdiplusToken);
 }

@@ -398,7 +398,7 @@
 @ stub GdipGetTextContrast
 @ stdcall GdipGetTextRenderingHint(ptr ptr)
 @ stub GdipGetTextureImage
-@ stub GdipGetTextureTransform
+@ stdcall GdipGetTextureTransform(ptr ptr)
 @ stub GdipGetTextureWrapMode
 @ stub GdipGetVisibleClipBounds
 @ stub GdipGetVisibleClipBoundsI

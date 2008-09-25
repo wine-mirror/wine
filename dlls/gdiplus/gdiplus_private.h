@@ -138,6 +138,7 @@ struct GpLineGradient{
 
 struct GpTexture{
     GpBrush brush;
+    GpMatrix *transform;
 };
 
 struct GpPath{

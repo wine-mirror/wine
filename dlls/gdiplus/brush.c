@@ -485,6 +485,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     INT n_x, n_y, n_width, n_height, abs_height, stride, image_stride, i, bytespp;
     BOOL bm_is_selected;
     BYTE *dibits, *buff, *textbits;
+    GpStatus status;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %p)\n", image, imageattr, x, y, width, height,
            texture);
@@ -577,6 +578,13 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     *texture = GdipAlloc(sizeof(GpTexture));
     if (!*texture) return OutOfMemory;
 
+    if((status = GdipCreateMatrix(&(*texture)->transform)) != Ok){
+        GdipFree(*texture);
+        GdipFree(dibits);
+        GdipFree(buff);
+        return status;
+    }
+
     (*texture)->brush.lb.lbStyle = BS_DIBPATTERNPT;
     (*texture)->brush.lb.lbColor = DIB_RGB_COLORS;
     (*texture)->brush.lb.lbHatch = (ULONG_PTR)buff;
@@ -642,7 +650,10 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
             break;
         case BrushTypeSolidColor:
         case BrushTypeLinearGradient:
+            break;
         case BrushTypeTextureFill:
+            GdipDeleteMatrix(((GpTexture*)brush)->transform);
+            break;
         default:
             break;
     }
@@ -868,6 +879,21 @@ GpStatus WINGDIPAPI GdipGetSolidFillColor(GpSolidFill *sf, ARGB *argb)
         return InvalidParameter;
 
     *argb = sf->color;
+
+    return Ok;
+}
+
+/******************************************************************************
+ * GdipGetTextureTransform [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetTextureTransform(GpTexture *brush, GpMatrix *matrix)
+{
+    TRACE("(%p, %p)\n", brush, matrix);
+
+    if(!brush || !matrix)
+        return InvalidParameter;
+
+    memcpy(matrix, brush->transform, sizeof(GpMatrix));
 
     return Ok;
 }
