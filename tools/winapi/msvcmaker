@@ -215,6 +215,10 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 
     close(IN);
 
+    if (!$module && $makefile_in_file eq "libs/wine/Makefile.in") {
+	$module = "wine.lib";
+    }
+
     next if !$module;
 
     my $c_srcs = [];
@@ -640,6 +644,10 @@ sub _generate_dsp($$) {
 	    push @defines2, "__WINETEST_OUTPUT_DIR=\\\"$output_dir2\\\"";
 	    push @defines2, qw(__i386__ _X86_);
 
+	    if ($project eq "wine") {
+		push @defines2, "WINE_UNICODE_API=";
+	    }
+
 	    if ($project =~ /_test$/) {
 		push @includes, "$msvc_wine_dir\\$output_dir";
 	    }
@@ -778,6 +786,10 @@ sub _generate_dsp($$) {
 	print OUT "\r\n";
 
 	print OUT "SOURCE=$source_file\r\n";
+
+	if ($project eq "wine" && $source_file eq ".\\config.c") {
+	    print OUT "# ADD CPP /D BINDIR=\\\"\\\" /D DLLDIR=\\\"\\\" /D LIB_TO_BINDIR=\\\"\\\" /D LIB_TO_DLLDIR=\\\"\\\" /D BIN_TO_DLLDIR=\\\"\\\" /D LIB_TO_DATADIR=\\\"\\\" /D BIN_TO_DATADIR=\\\"\\\"\r\n";
+	}
 
 	if($source_file =~ /^(.*?)\.spec$/) {
 	    my $basename = $1;
