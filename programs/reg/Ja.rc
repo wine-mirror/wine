@@ -1,4 +1,7 @@
 /*
+ * REG.EXE - Wine-compatible reg program.
+ * Japanese language support
+ *
  * Copyright 2008 Andrew Riedi
  *
  * This library is free software; you can redistribute it and/or
@@ -16,20 +19,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-#include "reg.h"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "Da.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Fr.rc"
-#include "Ja.rc"
-#include "Ko.rc"
-#include "Nl.rc"
-#include "No.rc"
-#include "Pl.rc"
-#include "Ru.rc"
-#include "Si.rc"
+STRINGTABLE
+{
+    STRING_USAGE, "このコマンドの構\文は次のとおりです:\n\nREG [ ADD | DELETE | QUERY ]\nREG コマンド /?\n"
+    STRING_ADD_USAGE, "REG ADD キー名 [/v 値名 | /ve] [/t type] [/s セパレータ] [/d データ] [/f]\n"
+    STRING_DELETE_USAGE, "REG DELETE キー名 [/v 値名 | /ve | /va] [/f]\n"
+    STRING_QUERY_USAGE, "REG QUERY キー名 [/v 値名 | /ve] [/s]\n"
+}
