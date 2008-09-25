@@ -383,16 +383,8 @@ static DWORD WINAPI service_thread(LPVOID arg)
         len += strlenW(&str[len]) + 1;
         argc++;
     }
+    len++;
 
-    if (!argc)
-    {
-        if (info->unicode)
-            info->proc.w(0, NULL);
-        else
-            info->proc.a(0, NULL);
-        return 0;
-    }
-    
     if (info->unicode)
     {
         LPWSTR *argv, p;
