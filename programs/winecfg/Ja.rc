@@ -34,7 +34,7 @@ END
 
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
-FONT 9, "MS UI Gothic"
+FONT 9, "MS Shell Dlg"
 BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
@@ -50,7 +50,7 @@ END
 
 IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS UI Gothic"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " アプリケーション設定 ",IDC_STATIC, 8,4,244,240
     LTEXT           "Wineはアプリケーションによって異なるWindowsのバージョンをエミュレートできます。 このタブはライブラリ及びグラフィック各タブと連動しますので、システム全体の設定や\n個別アプリケーションの設定の変更が行えます。",
@@ -65,7 +65,7 @@ END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS UI Gothic"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " ウィンドウ設定 ",IDC_STATIC,8,4,244,84
     CONTROL     "DirectX アプリケーションがマウスを確保するのを許可する(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
@@ -92,7 +92,7 @@ END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS UI Gothic"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " DLL オーバーライド ",IDC_STATIC,8,4,244,240
     LTEXT           "ダイナミック リンク ライブラリ(DLL)は個別に builtin (Wine版) または native (Windows もしくはアプリケーション提供の物)を選ぶことができます。"
@@ -109,7 +109,7 @@ END
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "オーバーライドの編集"
-FONT 9, "MS UI Gothic"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 読込順序 ",IDC_STATIC,8,4,94,66
     CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
@@ -123,7 +123,7 @@ END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS UI Gothic"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " ドライブのマッピング ",IDC_STATIC,8,4,244,240
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
@@ -160,7 +160,7 @@ END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS UI Gothic"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " ドライバの選択 ",IDC_STATIC,8,4,244,195
     LTEXT           "オーディオドライバ: ",IDC_STATIC,15,20,227,30
@@ -179,7 +179,7 @@ END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS UI Gothic"
+FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 外観 ",IDC_STATIC,8,4,244,106
     LTEXT           "テーマ(&T):",IDC_STATIC,15,16,130,8
