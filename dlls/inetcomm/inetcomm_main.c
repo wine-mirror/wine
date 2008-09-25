@@ -147,6 +147,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv );
 
+    if (IsEqualCLSID(rclsid, &CLSID_IIMAPTransport))
+        return IMAPTransportCF_Create(iid, ppv);
+
     if( IsEqualCLSID( rclsid, &CLSID_IMimeBody ))
     {
         cf = (IClassFactory*) &mime_body_cf.lpVtbl;

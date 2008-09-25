@@ -33,6 +33,7 @@ struct InternetTransport
     {
         const IInternetTransportVtbl *vtbl;
         const ISMTPTransportVtbl *vtblSMTP;
+        const IIMAPTransportVtbl *vtblIMAP;
     } u;
 
     ITransportCallback *pCallback;
@@ -73,3 +74,5 @@ HRESULT MimeBody_create(IUnknown *outer, void **obj);
 HRESULT MimeAllocator_create(IUnknown *outer, void **obj);
 
 HRESULT MimeInternational_Construct(IMimeInternational **internat);
+
+HRESULT IMAPTransportCF_Create(REFIID riid, LPVOID *ppv);
