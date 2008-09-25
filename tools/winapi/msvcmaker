@@ -576,23 +576,24 @@ sub _generate_dsp($$) {
 	print OUT "# PROP Ignore_Export_Lib 0\r\n" if $dll;
 	print OUT "# PROP Target_Dir \"\"\r\n";
 
-	my @defines;
+	print OUT "# ADD BASE CPP /nologo ";
+	my @defines = qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32);
 	if($debug) {
 	    if($lib || $exe) {
-		print OUT "# ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od";
-		@defines = (qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 _DEBUG _MBCS _LIB));
+		push @defines, qw(_DEBUG _MBCS _LIB);
 	    } else {
-		print OUT "# ADD BASE CPP /nologo /MDd /W3 /Gm /GX /Zi /Od";
-		@defines = (qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 _DEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
+		print OUT "/MDd ";
+		push @defines, (qw(_DEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
 	    }
+	    print OUT "/W3 /Gm /GX /Zi /Od";
 	} else {
 	    if($lib || $exe) {
-		print OUT "# ADD BASE CPP /nologo /W3 /GX /O2";
-		@defines = (qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 NDEBUG _MBCS _LIB));
+		push @defines, qw(NDEBUG _MBCS _LIB);
 	    } else {
-		print OUT "# ADD BASE CPP /nologo /MD /W3 /GX /O2";
-		@defines = (qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 NDEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
+		print OUT "/MD ";
+		push @defines, (qw(NDEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
 	    }
+	    print OUT "/W3 /GX /O2";
 	}
 
 	foreach my $define (@defines) {
@@ -1120,6 +1121,7 @@ if ($options->wine) {
 
 sub _generate_config_h($) {
     local *OUT = shift;
+    my @defines;
 
     print OUT "#define __WINE_CONFIG_H\n";
     print OUT "\n";
@@ -1127,8 +1129,7 @@ sub _generate_config_h($) {
     my @headers = qw(direct.h fcntl.h io.h string.h process.h);
     foreach my $header (@headers) {
 	$header =~ y/\.\//__/;
-	print OUT "#define HAVE_\U$header\E\n";
-	print OUT "\n";
+	push @defines, "HAVE_\U$header\E 1";
     }
 
     my @functions = qw(
@@ -1141,12 +1142,11 @@ sub _generate_config_h($) {
         wcslen
     );
     foreach my $function (@functions) {
-	print OUT "#define HAVE_\U$function\E 1\n";
-	print OUT "\n";
+	push @defines, "HAVE_\U$function\E 1";
     }
 
-    if(0) {
-	print OUT "#define NEED_STDCALL_DECORATION 1\n";
+    foreach my $define (sort(@defines)) {
+	print OUT "#define $define\n";
 	print OUT "\n";
     }
 
