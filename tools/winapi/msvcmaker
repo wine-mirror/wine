@@ -1133,13 +1133,9 @@ sub _generate_config_h($) {
     }
 
     my @functions = qw(
-        _alldiv _allmul _allrem _aulldiv _aullrem
-        _access _chdir _close _lseek _mkdir _open _pclose _popen _read _rmdir _write _stat
-        _snprintf _spawnvp _stricmp _strnicmp _vsnprintf _wcsicmp
-        ecvt fcvt gcvt
-        memmove spawnvp
-        strerror
-        wcslen
+        _pclose _popen _snprintf _spawnvp _stricmp _strnicmp _strdup
+        _strtoi64 _strtoui64 _vsnprintf
+        chsize memmove strdup spawnvp strerror vsnprintf
     );
     foreach my $function (@functions) {
 	push @defines, "HAVE_\U$function\E 1";
