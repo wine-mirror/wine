@@ -176,7 +176,7 @@ static void test_transform(void)
     GpGraphics *graphics = NULL;
     GpBitmap *bitmap;
     HDC hdc = GetDC(0);
-    GpMatrix *m;
+    GpMatrix *m, *m1;
     BOOL res;
 
     status = GdipCreateMatrix2(2.0, 0.0, 0.0, 0.0, 0.0, 0.0, &m);
@@ -196,16 +196,28 @@ static void test_transform(void)
     status = GdipGetTextureTransform(texture, NULL);
     expect(InvalidParameter, status);
 
-    /* default value - identity matrix */
+    /* get default value - identity matrix */
     status = GdipGetTextureTransform(texture, m);
     expect(Ok, status);
     status = GdipIsMatrixIdentity(m, &res);
+    expect(Ok, status);
+    expect(TRUE, res);
+    /* set and get then */
+    status = GdipCreateMatrix2(2.0, 0.0, 0.0, 2.0, 0.0, 0.0, &m1);
+    expect(Ok, status);
+    status = GdipSetTextureTransform(texture, m1);
+    expect(Ok, status);
+    status = GdipGetTextureTransform(texture, m);
+    expect(Ok, status);
+    status = GdipIsMatrixEqual(m, m1, &res);
     expect(Ok, status);
     expect(TRUE, res);
 
     status = GdipDeleteBrush((GpBrush*)texture);
     expect(Ok, status);
 
+    status = GdipDeleteMatrix(m1);
+    expect(Ok, status);
     status = GdipDeleteMatrix(m);
     expect(Ok, status);
     status = GdipDisposeImage((GpImage*)bitmap);

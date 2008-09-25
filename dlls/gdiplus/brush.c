@@ -1095,16 +1095,18 @@ GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
     return Ok;
 }
 
+/******************************************************************************
+ * GdipSetTextureTransform [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *texture,
     GDIPCONST GpMatrix *matrix)
 {
-    static int calls;
+    TRACE("(%p, %p)\n", texture, matrix);
 
     if(!texture || !matrix)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    memcpy(texture->transform, matrix, sizeof(GpMatrix));
 
     return Ok;
 }
