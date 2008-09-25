@@ -120,6 +120,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     my $module;
     my $testdll;
     my @imports;
+    my $type;
 
     my %vars;
 
@@ -164,8 +165,8 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 		    next MAKEFILE_IN;
 		}
 	    }
-	} elsif(/^LIBRARY\s*=\s*(\S+)\s*$/) {
-	    $module = $1  . "\.lib";
+	} elsif (/^\@MAKE_IMPLIB_RULES\@/) {
+	    $type = "lib";
 	} elsif(/^TOPOBJDIR\s*=\s*(\S+)\s*$/) {
 	    $topobjdir = $1;
 	} elsif (/^TESTDLL\s*=\s*(\S+)\s*$/) {
@@ -249,12 +250,11 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $project =~ s/\.(?:dll|exe|lib)$//;
     $project =~ y/./_/;
 
-    my $type;
     if($module =~ /\.exe$/) {
 	$type = "exe";
     } elsif($module =~ /\.lib$/) {
 	$type = "lib";
-    } else {
+    } elsif(!$type) {
 	$type = "dll";
     }
 
@@ -449,7 +449,8 @@ sub _generate_dsp($$) {
 
     if ($project !~ /^wine(?:build|runtests|test)?$/ &&
         $project !~ /^(?:gdi32)_.+?$/ &&
-        $project !~ /_test$/)
+        $project !~ /_test$/ &&
+        !$lib)
     {
 	push @source_files, "$base_module.spec";
 	@source_files = sort(@source_files);
