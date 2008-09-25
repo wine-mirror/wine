@@ -785,7 +785,7 @@ sub _generate_dsp($$) {
 	    print OUT "InputPath=$spec_file\r\n";
 	    print OUT "\r\n";
 	    print OUT "BuildCmds= \\\r\n";
-	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe --def $spec_file > $def_file\r\n";
+	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe -w --def -o $def_file --export $spec_file\r\n";
 	    print OUT "\r\n";
 	    print OUT "\"$def_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
 	    print OUT "   \$(BuildCmds)\r\n";
