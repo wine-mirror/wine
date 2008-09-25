@@ -1145,6 +1145,13 @@ sub _generate_config_h($) {
 	push @defines, "HAVE_\U$function\E 1";
     }
 
+    my @types = qw(
+        long_long off_t size_t
+    );
+    foreach my $type (@types) {
+	push @defines, "HAVE_\U$type\E 1";
+    }
+
     foreach my $define (sort(@defines)) {
 	print OUT "#define $define\n";
 	print OUT "\n";
