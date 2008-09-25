@@ -548,7 +548,7 @@
 @ stdcall GdipSetPageScale(ptr long)
 @ stdcall GdipSetPageUnit(ptr long)
 @ stdcall GdipSetPathFillMode(ptr long)
-@ stub GdipSetPathGradientBlend
+@ stdcall GdipSetPathGradientBlend(ptr ptr ptr long)
 @ stdcall GdipSetPathGradientCenterColor(ptr long)
 @ stdcall GdipSetPathGradientCenterPoint(ptr ptr)
 @ stdcall GdipSetPathGradientCenterPointI(ptr ptr)

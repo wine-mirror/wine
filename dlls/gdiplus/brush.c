@@ -926,6 +926,17 @@ GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient *line,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetPathGradientBlend(GpPathGradient *brush, GDIPCONST REAL *blend,
+    GDIPCONST REAL *pos, INT count)
+{
+    static int calls;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
     ARGB argb)
 {
