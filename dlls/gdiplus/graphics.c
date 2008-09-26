@@ -2948,6 +2948,19 @@ GpStatus WINGDIPAPI GdipTranslateWorldTransform(GpGraphics *graphics, REAL dx,
     return GdipTranslateMatrix(graphics->worldtrans, dx, dy, order);
 }
 
+GpStatus WINGDIPAPI GdipSetClipPath(GpGraphics *graphics, GpPath *path, CombineMode mode)
+{
+    TRACE("(%p, %p, %d)\n", graphics, path, mode);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    return GdipCombineRegionPath(graphics->clip, path, mode);
+}
+
 GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
                                     REAL width, REAL height,
                                     CombineMode mode)
