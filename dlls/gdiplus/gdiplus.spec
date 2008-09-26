@@ -427,8 +427,8 @@
 @ stub GdipIsVisibleClipEmpty
 @ stdcall GdipIsVisiblePathPoint(ptr long long ptr ptr)
 @ stdcall GdipIsVisiblePathPointI(ptr long long ptr ptr)
-@ stub GdipIsVisiblePoint
-@ stub GdipIsVisiblePointI
+@ stdcall GdipIsVisiblePoint(ptr long long ptr)
+@ stdcall GdipIsVisiblePointI(ptr long long ptr)
 @ stub GdipIsVisibleRect
 @ stub GdipIsVisibleRectI
 @ stub GdipIsVisibleRegionPoint

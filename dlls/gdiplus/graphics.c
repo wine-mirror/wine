@@ -2583,6 +2583,32 @@ GpStatus WINGDIPAPI GdipIsClipEmpty(GpGraphics *graphics, BOOL *res)
     return GdipIsEmptyRegion(graphics->clip, graphics, res);
 }
 
+GpStatus WINGDIPAPI GdipIsVisiblePoint(GpGraphics *graphics, REAL x, REAL y, BOOL *result)
+{
+    FIXME("(%p, %.2f, %.2f, %p) stub\n", graphics, x, y, result);
+
+    if(!graphics || !result)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipIsVisiblePointI(GpGraphics *graphics, INT x, INT y, BOOL *result)
+{
+    FIXME("(%p, %d, %d, %p) stub\n", graphics, x, y, result);
+
+    if(!graphics || !result)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
         GDIPCONST WCHAR* string, INT length, GDIPCONST GpFont* font,
         GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat *stringFormat,
