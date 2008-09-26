@@ -488,6 +488,7 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
     LONG res;
 
     /* get value name */
+    while ( isspaceW(line[line_idx]) ) line_idx++;
     if (line[line_idx] == '@' && line[line_idx + 1] == '=') {
         line[line_idx] = '\0';
         val_name = line;
@@ -509,6 +510,7 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
                 }
             }
         }
+        while ( isspaceW(line[line_idx]) ) line_idx++;
         if (line[line_idx] != '=') {
             char* lineA;
             line[line_idx] = '\"';
@@ -525,7 +527,13 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
         return;
     }
     line_idx++;                   /* skip the '=' character */
+
+    while ( isspaceW(line[line_idx]) ) line_idx++;
     val_data = line + line_idx;
+    /* trim trailing blanks */
+    line_idx = strlenW(val_data);
+    while (line_idx > 0 && isspaceW(val_data[line_idx-1])) line_idx--;
+    val_data[line_idx] = '\0';
 
     REGPROC_unescape_string(val_name);
     res = setValue(val_name, val_data, is_unicode);
