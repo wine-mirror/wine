@@ -7574,6 +7574,7 @@ static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
     char *unixname, *queue, *cmd;
     char fmt[] = "lpr -P%s %s";
     DWORD len;
+    int r;
 
     if(!(unixname = wine_get_unix_file_name(filename)))
         return FALSE;
@@ -7586,12 +7587,12 @@ static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
     sprintf(cmd, fmt, queue, unixname);
 
     TRACE("printing with: %s\n", cmd);
-    system(cmd);
+    r = system(cmd);
 
     HeapFree(GetProcessHeap(), 0, cmd);
     HeapFree(GetProcessHeap(), 0, queue);
     HeapFree(GetProcessHeap(), 0, unixname);
-    return TRUE;
+    return (r == 0);
 }
 
 /*****************************************************************************
@@ -7714,10 +7715,11 @@ static BOOL schedule_file(LPCWSTR filename)
 
     if(get_filename(&output))
     {
+        BOOL r;
         TRACE("copy to %s\n", debugstr_w(output));
-        CopyFileW(filename, output, FALSE);
+        r = CopyFileW(filename, output, FALSE);
         HeapFree(GetProcessHeap(), 0, output);
-        return TRUE;
+        return r;
     }
     return FALSE;
 }
@@ -7869,23 +7871,23 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             }
             if(output[0] == '|')
             {
-                schedule_pipe(output + 1, job->filename);
+                ret = schedule_pipe(output + 1, job->filename);
             }
             else if(output[0])
             {
-                schedule_unixfile(output, job->filename);
+                ret = schedule_unixfile(output, job->filename);
             }
             else if(!strncmpW(pi5->pPortName, LPR_Port, strlenW(LPR_Port)))
             {
-                schedule_lpr(pi5->pPortName + strlenW(LPR_Port), job->filename);
+                ret = schedule_lpr(pi5->pPortName + strlenW(LPR_Port), job->filename);
             }
             else if(!strncmpW(pi5->pPortName, CUPS_Port, strlenW(CUPS_Port)))
             {
-                schedule_cups(pi5->pPortName + strlenW(CUPS_Port), job->filename, job->document_title);
+                ret = schedule_cups(pi5->pPortName + strlenW(CUPS_Port), job->filename, job->document_title);
             }
             else if(!strncmpW(pi5->pPortName, FILE_Port, strlenW(FILE_Port)))
             {
-                schedule_file(job->filename);
+                ret = schedule_file(job->filename);
             }
             else
             {
@@ -7899,7 +7901,6 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
         HeapFree(GetProcessHeap(), 0, job->document_title);
         HeapFree(GetProcessHeap(), 0, job->filename);
         HeapFree(GetProcessHeap(), 0, job);
-        ret = TRUE;
         break;
     }
 end:
