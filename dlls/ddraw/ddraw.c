@@ -1842,7 +1842,7 @@ D3D7CB_CreateSurface(IUnknown *device,
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, device);
     IDirectDrawSurfaceImpl *surf = NULL;
-    int i = 0;
+    UINT i = 0;
     DDSCAPS2 searchcaps = This->tex_root->surface_desc.ddsCaps;
     TRACE("(%p) call back. surf=%p. Face %d level %d\n", device, This->tex_root, Face, level);
 

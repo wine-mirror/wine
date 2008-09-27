@@ -1138,7 +1138,7 @@ IDirect3DImpl_7_EnumZBufferFormats(IDirect3D7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
     HRESULT hr;
-    int i;
+    unsigned int i;
     WINED3DDISPLAYMODE d3ddm;
     WINED3DDEVTYPE type;
 

@@ -902,7 +902,7 @@ DWORD
 get_flexible_vertex_size(DWORD d3dvtVertexType)
 {
     DWORD size = 0;
-    int i;
+    DWORD i;
 
     if (d3dvtVertexType & D3DFVF_NORMAL) size += 3 * sizeof(D3DVALUE);
     if (d3dvtVertexType & D3DFVF_DIFFUSE) size += sizeof(DWORD);
