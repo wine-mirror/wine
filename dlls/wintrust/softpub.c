@@ -501,6 +501,20 @@ HRESULT WINAPI SoftpubLoadSignature(CRYPT_PROVIDER_DATA *data)
     return ret ? S_OK : S_FALSE;
 }
 
+static DWORD WINTRUST_TrustStatusToConfidence(DWORD errorStatus)
+{
+    DWORD confidence = 0;
+
+    confidence = 0;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_SIGNATURE_VALID))
+        confidence |= CERT_CONFIDENCE_SIG;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_TIME_VALID))
+        confidence |= CERT_CONFIDENCE_TIME;
+    if (!(errorStatus & CERT_TRUST_IS_NOT_TIME_NESTED))
+        confidence |= CERT_CONFIDENCE_TIMENEST;
+    return confidence;
+}
+
 BOOL WINAPI SoftpubCheckCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
  BOOL fCounterSignerChain, DWORD idxCounterSigner)
 {
@@ -524,19 +538,9 @@ BOOL WINAPI SoftpubCheckCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
         for (i = 0; i < simpleChain->cElement; i++)
         {
             /* Set confidence */
-            data->pasSigners[idxSigner].pasCertChain[i].dwConfidence = 0;
-            if (!(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
-             CERT_TRUST_IS_NOT_TIME_VALID))
-                data->pasSigners[idxSigner].pasCertChain[i].dwConfidence
-                 |= CERT_CONFIDENCE_TIME;
-            if (!(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
-             CERT_TRUST_IS_NOT_TIME_NESTED))
-                data->pasSigners[idxSigner].pasCertChain[i].dwConfidence
-                 |= CERT_CONFIDENCE_TIMENEST;
-            if (!(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
-             CERT_TRUST_IS_NOT_SIGNATURE_VALID))
-                data->pasSigners[idxSigner].pasCertChain[i].dwConfidence
-                 |= CERT_CONFIDENCE_SIG;
+            data->pasSigners[idxSigner].pasCertChain[i].dwConfidence =
+             WINTRUST_TrustStatusToConfidence(
+             simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus);
             /* Set additional flags */
             if (!(simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
              CERT_TRUST_IS_UNTRUSTED_ROOT))
@@ -550,20 +554,6 @@ BOOL WINAPI SoftpubCheckCert(CRYPT_PROVIDER_DATA *data, DWORD idxSigner,
         }
     }
     return ret;
-}
-
-static DWORD WINTRUST_TrustStatusToConfidence(DWORD errorStatus)
-{
-    DWORD confidence = 0;
-
-    confidence = 0;
-    if (!(errorStatus & CERT_TRUST_IS_NOT_SIGNATURE_VALID))
-        confidence |= CERT_CONFIDENCE_SIG;
-    if (!(errorStatus & CERT_TRUST_IS_NOT_TIME_VALID))
-        confidence |= CERT_CONFIDENCE_TIME;
-    if (!(errorStatus & CERT_TRUST_IS_NOT_TIME_NESTED))
-        confidence |= CERT_CONFIDENCE_TIMENEST;
-    return confidence;
 }
 
 static DWORD WINTRUST_TrustStatusToError(DWORD errorStatus)
