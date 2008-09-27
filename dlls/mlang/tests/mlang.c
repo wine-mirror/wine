@@ -734,10 +734,28 @@ static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
     ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
 
     ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en_them);
-    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
+    ok((ret == E_FAIL || ret == S_FALSE), "GetLcidFromRfc1766 returned: %08x\n", ret);
+    if (ret == S_FALSE)
+    {
+        BSTR rfcstr;
+        static WCHAR en[] = {'e','n',0};
+
+        ret = IMultiLanguage2_GetRfc1766FromLcid(iML2, lcid, &rfcstr);
+        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        ok_w2("Expected \"%s\",  got \"%s\"n", en, rfcstr);
+    }
 
     ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, english);
-    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
+    ok((ret == E_FAIL || ret == S_FALSE), "GetLcidFromRfc1766 returned: %08x\n", ret);
+    if (ret == S_FALSE)
+    {
+        BSTR rfcstr;
+        static WCHAR en[] = {'e','n',0};
+
+        ret = IMultiLanguage2_GetRfc1766FromLcid(iML2, lcid, &rfcstr);
+        ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
+        ok_w2("Expected \"%s\",  got \"%s\"n", en, rfcstr);
+    }
 
     lcid = 0;
 
@@ -763,12 +781,19 @@ static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
     static WCHAR kok[] = {'k','o','k',0};
 
     hr = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, kok);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    /*
+     * S_FALSE happens when 'kok' instead matches to a different Rfc1766 name
+     * for example 'ko' so it is not a failure but does not give us what 
+     * we are looking for
+     */
+    if (hr != S_FALSE)
+    {
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    hr = IMultiLanguage2_GetRfc1766FromLcid(iML2, lcid, &rfcstr);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok_w2("Expected \"%s\",  got \"%s\"n", kok, rfcstr);
-
+        hr = IMultiLanguage2_GetRfc1766FromLcid(iML2, lcid, &rfcstr);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        ok_w2("Expected \"%s\",  got \"%s\"n", kok, rfcstr);
+    }
     SysFreeString(rfcstr);
 }
 
