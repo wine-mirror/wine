@@ -566,6 +566,51 @@ static DWORD WINTRUST_TrustStatusToConfidence(DWORD errorStatus)
     return confidence;
 }
 
+static DWORD WINTRUST_TrustStatusToError(DWORD errorStatus)
+{
+    DWORD error;
+
+    if (errorStatus & CERT_TRUST_IS_NOT_SIGNATURE_VALID)
+        error = TRUST_E_CERT_SIGNATURE;
+    else if (errorStatus & CERT_TRUST_IS_UNTRUSTED_ROOT)
+        error = CERT_E_UNTRUSTEDROOT;
+    else if (errorStatus & CERT_TRUST_IS_NOT_TIME_VALID)
+        error = CERT_E_EXPIRED;
+    else if (errorStatus & CERT_TRUST_IS_NOT_TIME_NESTED)
+        error = CERT_E_VALIDITYPERIODNESTING;
+    else if (errorStatus & CERT_TRUST_IS_REVOKED)
+        error = CERT_E_REVOKED;
+    else if (errorStatus & CERT_TRUST_IS_OFFLINE_REVOCATION ||
+     errorStatus & CERT_TRUST_REVOCATION_STATUS_UNKNOWN)
+        error = CERT_E_REVOCATION_FAILURE;
+    else if (errorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE)
+        error = CERT_E_WRONG_USAGE;
+    else if (errorStatus & CERT_TRUST_IS_CYCLIC)
+        error = CERT_E_CHAINING;
+    else if (errorStatus & CERT_TRUST_INVALID_EXTENSION)
+        error = CERT_E_CRITICAL;
+    else if (errorStatus & CERT_TRUST_INVALID_POLICY_CONSTRAINTS)
+        error = CERT_E_INVALID_POLICY;
+    else if (errorStatus & CERT_TRUST_INVALID_BASIC_CONSTRAINTS)
+        error = TRUST_E_BASIC_CONSTRAINTS;
+    else if (errorStatus & CERT_TRUST_INVALID_NAME_CONSTRAINTS ||
+     errorStatus & CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT ||
+     errorStatus & CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT ||
+     errorStatus & CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT ||
+     errorStatus & CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT)
+        error = CERT_E_INVALID_NAME;
+    else if (errorStatus & CERT_TRUST_NO_ISSUANCE_CHAIN_POLICY)
+        error = CERT_E_INVALID_POLICY;
+    else if (errorStatus)
+    {
+        FIXME("unknown error status %08x\n", errorStatus);
+        error = TRUST_E_SYSTEM_ERROR;
+    }
+    else
+        error = S_OK;
+    return error;
+}
+
 static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
 {
     BOOL ret;
@@ -577,7 +622,8 @@ static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
      WINTRUST_TrustStatusToConfidence(
      simpleChain->rgpElement[0]->TrustStatus.dwErrorStatus);
     data->pasSigners[signerIdx].pasCertChain[0].dwError =
-     simpleChain->rgpElement[0]->TrustStatus.dwErrorStatus;
+     WINTRUST_TrustStatusToError(
+     simpleChain->rgpElement[0]->TrustStatus.dwErrorStatus);
     data->pasSigners[signerIdx].pasCertChain[0].pChainElement =
      simpleChain->rgpElement[0];
     ret = TRUE;
@@ -593,7 +639,8 @@ static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
              WINTRUST_TrustStatusToConfidence(
              simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus);
             data->pasSigners[signerIdx].pasCertChain[i].dwError =
-             simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus;
+             WINTRUST_TrustStatusToError(
+             simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus);
         }
     }
     return ret;
