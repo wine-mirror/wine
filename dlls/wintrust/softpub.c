@@ -611,9 +611,6 @@ static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
     data->pasSigners[signerIdx].pasCertChain[0].dwConfidence =
      WINTRUST_TrustStatusToConfidence(
      simpleChain->rgpElement[0]->TrustStatus.dwErrorStatus);
-    data->pasSigners[signerIdx].pasCertChain[0].dwError =
-     WINTRUST_TrustStatusToError(
-     simpleChain->rgpElement[0]->TrustStatus.dwErrorStatus);
     data->pasSigners[signerIdx].pasCertChain[0].pChainElement =
      simpleChain->rgpElement[0];
     ret = TRUE;
@@ -628,11 +625,12 @@ static BOOL WINTRUST_CopyChain(CRYPT_PROVIDER_DATA *data, DWORD signerIdx)
             data->pasSigners[signerIdx].pasCertChain[i].dwConfidence =
              WINTRUST_TrustStatusToConfidence(
              simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus);
-            data->pasSigners[signerIdx].pasCertChain[i].dwError =
-             WINTRUST_TrustStatusToError(
-             simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus);
         }
     }
+    data->pasSigners[signerIdx].pasCertChain[simpleChain->cElement - 1].dwError
+     = WINTRUST_TrustStatusToError(
+     simpleChain->rgpElement[simpleChain->cElement - 1]->
+     TrustStatus.dwErrorStatus);
     return ret;
 }
 
