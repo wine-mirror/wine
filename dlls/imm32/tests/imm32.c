@@ -254,11 +254,29 @@ static int test_ImmGetCompositionString(void)
     return 0;
 }
 
+static int test_ImmIME(void)
+{
+    HIMC imc;
+
+    imc = ImmGetContext(hwnd);
+    if (imc)
+    {
+        BOOL rc;
+        rc = ImmConfigureIMEA(imc, NULL, IME_CONFIG_REGISTERWORD, NULL);
+        ok (rc == 0, "ImmConfigureIMEA did not fail\n");
+        rc = ImmConfigureIMEW(imc, NULL, IME_CONFIG_REGISTERWORD, NULL);
+        ok (rc == 0, "ImmConfigureIMEW did not fail\n");
+    }
+    ImmReleaseContext(hwnd,imc);
+    return 0;
+}
+
 START_TEST(imm32) {
     if (init())
     {
         test_ImmNotifyIME();
         test_ImmGetCompositionString();
+        test_ImmIME();
     }
     cleanup();
 }

@@ -513,6 +513,9 @@ BOOL WINAPI ImmConfigureIMEA(
 
     TRACE("(%p, %p, %d, %p):\n", hKL, hWnd, dwMode, lpData);
 
+    if (dwMode == IME_CONFIG_REGISTERWORD && !lpData)
+        return FALSE;
+
     if (immHkl->hIME && immHkl->pImeConfigure)
     {
         if (dwMode != IME_CONFIG_REGISTERWORD || !is_kbd_ime_unicode(immHkl))
@@ -544,6 +547,9 @@ BOOL WINAPI ImmConfigureIMEW(
     ImmHkl *immHkl = IMM_GetImmHkl(hKL);
 
     TRACE("(%p, %p, %d, %p):\n", hKL, hWnd, dwMode, lpData);
+
+    if (dwMode == IME_CONFIG_REGISTERWORD && !lpData)
+        return FALSE;
 
     if (immHkl->hIME && immHkl->pImeConfigure)
     {
