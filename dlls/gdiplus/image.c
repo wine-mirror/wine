@@ -197,7 +197,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     HDC hdc;
     HBITMAP old = NULL;
     BOOL bm_is_selected;
-    BITMAPINFO bmi;
+    BITMAPINFO *pbmi;
 
     if(!bitmap || !lockeddata)
         return InvalidParameter;
@@ -221,24 +221,26 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     IPicture_get_CurDC(bitmap->image.picture, &hdc);
     bm_is_selected = (hdc != 0);
 
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biBitCount = 0;
+    pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    pbmi->bmiHeader.biBitCount = 0;
 
     if(!bm_is_selected){
         hdc = CreateCompatibleDC(0);
         old = SelectObject(hdc, (HBITMAP)hbm);
     }
 
-    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
-    bmi.bmiHeader.biBitCount = PIXELFORMATBPP(lockeddata->PixelFormat);
-    SetDIBits(hdc, (HBITMAP)hbm, 0, abs(bmi.bmiHeader.biHeight),
-              bitmap->bitmapbits, &bmi, DIB_RGB_COLORS);
+    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
+    pbmi->bmiHeader.biBitCount = PIXELFORMATBPP(lockeddata->PixelFormat);
+    SetDIBits(hdc, (HBITMAP)hbm, 0, abs(pbmi->bmiHeader.biHeight),
+              bitmap->bitmapbits, pbmi, DIB_RGB_COLORS);
 
     if(!bm_is_selected){
         SelectObject(hdc, old);
         DeleteDC(hdc);
     }
 
+    GdipFree(pbmi);
     GdipFree(bitmap->bitmapbits);
     bitmap->bitmapbits = NULL;
     bitmap->lockmode = 0;
