@@ -63,6 +63,12 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_CALLED_BROKEN(func) \
+    do { \
+        ok(called_ ## func || broken(!called_ ## func), "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 DEFINE_EXPECT(GetContainer);
 DEFINE_EXPECT(Site_GetWindow);
 DEFINE_EXPECT(ShowObject);
@@ -240,6 +246,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case 24:
             return E_FAIL; /* TODO */
+        case 25:
+            return E_FAIL; /* IE5 */
         case 66:
             return E_FAIL; /* TODO */
         default:
@@ -1627,13 +1635,13 @@ static void test_ie_funcs(IUnknown *unk)
 
     SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
     hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_TRUE));
-    ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
-    CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
+    ok(hres == S_OK || broken(hres == E_NOTIMPL), "put_Resizable failed: %08x\n", hres);
+    CHECK_CALLED_BROKEN(Invoke_WINDOWSETRESIZABLE);
 
     SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
     hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
-    CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
+    ok(hres == S_OK || broken(hres == E_NOTIMPL), "put_Resizable failed: %08x\n", hres);
+    CHECK_CALLED_BROKEN(Invoke_WINDOWSETRESIZABLE);
 
     hres = IWebBrowser2_get_Resizable(wb, &b);
     ok(hres == E_NOTIMPL, "get_Resizable failed: %08x\n", hres);
@@ -1953,12 +1961,12 @@ static void test_Navigate2(IUnknown *unk)
     CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
     CHECK_CALLED(Invoke_AMBIENT_PALETTE);
     CHECK_CALLED(GetOptionKeyPath);
-    CHECK_CALLED(GetOverridesKeyPath);
+    CHECK_CALLED_BROKEN(GetOverridesKeyPath);
     todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
     todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
     todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
-    todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
-    todo_wine CHECK_CALLED(Invoke_FILEDOWNLOAD);
+    todo_wine CHECK_CALLED_BROKEN(Invoke_SETSECURELOCKICON);
+    todo_wine CHECK_CALLED_BROKEN(Invoke_FILEDOWNLOAD);
     todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
     todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     CHECK_CALLED(EnableModeless_TRUE);
