@@ -4935,7 +4935,6 @@ START_TEST(win)
     test_CreateWindow();
     test_parent_owner();
     test_SetParent();
-    test_shell_window();
 
     test_mdi();
     test_icons();
@@ -4967,6 +4966,8 @@ START_TEST(win)
     test_GetUpdateRect();
     test_Expose();
     test_layered_window();
+
+    test_shell_window();
 
     /* add the tests above this line */
     UnhookWindowsHookEx(hhook);
