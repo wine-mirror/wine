@@ -257,12 +257,14 @@ static void test_gettext(void)
     GetClientRect(hwnd, &toolinfoA.rect);
     r = SendMessageA(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoA);
     ok(r, "Adding the tool to the tooltip failed\n");
-
-    toolinfoA.hwnd = NULL;
-    toolinfoA.uId = (UINT_PTR)0x1234ABCD;
-    toolinfoA.lpszText = bufA;
-    SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
-    ok(strcmp(toolinfoA.lpszText, "") == 0, "lpszText should be an empty string\n");
+    if (r)
+    {
+        toolinfoA.hwnd = NULL;
+        toolinfoA.uId = (UINT_PTR)0x1234ABCD;
+        toolinfoA.lpszText = bufA;
+        SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
+        ok(strcmp(toolinfoA.lpszText, "") == 0, "lpszText should be an empty string\n");
+    }
 
     DestroyWindow(hwnd);
 
