@@ -974,13 +974,19 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
     IPicture_get_Type(pic, &type);
 
     if(type == PICTYPE_BITMAP){
-        BITMAPINFO bmi;
+        BITMAPINFO *pbmi;
         BITMAPCOREHEADER* bmch;
         OLE_HANDLE hbm;
         HDC hdc;
 
+        pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+        if (!pbmi)
+            return OutOfMemory;
         *image = GdipAlloc(sizeof(GpBitmap));
-        if(!*image) return OutOfMemory;
+        if(!*image){
+            GdipFree(pbmi);
+            return OutOfMemory;
+        }
         (*image)->type = ImageTypeBitmap;
 
         (*((GpBitmap**) image))->width = ipicture_pixel_width(pic);
@@ -990,22 +996,22 @@ GpStatus WINGDIPAPI GdipLoadImageFromStream(IStream* stream, GpImage **image)
         IPicture_get_Handle(pic, &hbm);
         IPicture_get_CurDC(pic, &hdc);
 
-        ZeroMemory(&bmi, sizeof(bmi));
-        bmch = (BITMAPCOREHEADER*) (&bmi.bmiHeader);
+        bmch = (BITMAPCOREHEADER*) (&pbmi->bmiHeader);
         bmch->bcSize = sizeof(BITMAPCOREHEADER);
 
         if(!hdc){
             HBITMAP old;
             hdc = CreateCompatibleDC(0);
             old = SelectObject(hdc, (HBITMAP)hbm);
-            GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+            GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
             SelectObject(hdc, old);
             DeleteDC(hdc);
         }
         else
-            GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+            GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
 
         (*((GpBitmap**) image))->format = (bmch->bcBitCount << 8) | PixelFormatGDI;
+        GdipFree(pbmi);
     }
     else if(type == PICTYPE_METAFILE || type == PICTYPE_ENHMETAFILE){
         /* FIXME: missing initialization code */
