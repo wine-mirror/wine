@@ -22,6 +22,11 @@
 #include <wingdi.h>
 #include "wine/test.h"
 
+const unsigned char * WINAPI glGetString(unsigned int);
+#define GL_VENDOR 0x1F00
+#define GL_RENDERER 0x1F01
+#define GL_VERSION 0x1F02
+
 #define MAX_FORMATS 256
 typedef void* HPBUFFERARB;
 
@@ -470,6 +475,12 @@ START_TEST(opengl)
         hglrc = wglCreateContext(hdc);
         res = wglMakeCurrent(hdc, hglrc);
         ok(res, "wglMakeCurrent failed!\n");
+        if(res)
+        {
+            trace("OpenGL renderer: %s\n", glGetString(GL_RENDERER));
+            trace("OpenGL driver version: %s\n", glGetString(GL_VERSION));
+            trace("OpenGL vendor: %s\n", glGetString(GL_VENDOR));
+        }
 
         test_makecurrent(hdc);
         test_setpixelformat(hdc);
