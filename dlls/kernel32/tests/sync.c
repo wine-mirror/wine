@@ -658,8 +658,10 @@ static void test_timer_queue(void)
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, NULL);
-    ok(!ret, "DeleteTimerQueueEx\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
+    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING,
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       GetLastError());
 
     /* Test synchronous deletion of the queue and running timers. */
     q = pCreateTimerQueue();
@@ -771,32 +773,42 @@ static void test_timer_queue(void)
        even if the timer is finished.  */
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueTimer(q, t1, NULL);
-    ok(!ret, "DeleteTimerQueueTimer\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
+    ok(!ret, "DeleteTimerQueueTimer call was expected to fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING,
+       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueTimer(q, t2, NULL);
-    ok(!ret, "DeleteTimerQueueTimer\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
+    ok(!ret, "DeleteTimerQueueTimer call was expected to fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING,
+       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueTimer(q, t3, et1);
-    ok(ret, "DeleteTimerQueueTimer\n");
-    ok(GetLastError() == 0xdeadbeef, "DeleteTimerQueueTimer\n");
+    ok(ret, "DeleteTimerQueueTimer call was expected to fail\n");
+    ok(GetLastError() == 0xdeadbeef,
+       "DeleteTimerQueueTimer, GetLastError: expected 0xdeadbeef, got %d\n",
+       GetLastError());
     ok(WaitForSingleObject(et1, 250) == WAIT_OBJECT_0,
        "Timer destruction event not triggered\n");
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueTimer(q, t4, et2);
-    ok(!ret, "DeleteTimerQueueTimer\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueTimer\n");
+    ok(!ret, "DeleteTimerQueueTimer call was expected to fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING,
+       "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       GetLastError());
     ok(WaitForSingleObject(et2, 1000) == WAIT_OBJECT_0,
        "Timer destruction event not triggered\n");
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, e);
-    ok(!ret, "DeleteTimerQueueEx\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
+    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING,
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       GetLastError());
     ok(WaitForSingleObject(e, 250) == WAIT_OBJECT_0,
        "Queue destruction event not triggered\n");
     CloseHandle(e);
@@ -871,8 +883,10 @@ static void test_timer_queue(void)
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, NULL);
-    ok(!ret, "DeleteTimerQueueEx\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
+    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING,
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       GetLastError());
     ok(d1.num_calls == 1, "DeleteTimerQueueTimer\n");
 
     /* Test functions on the default timer queue.  */
@@ -922,13 +936,17 @@ static void test_timer_queue(void)
     /* Try to delete the default queue?  In any case: not allowed.  */
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(NULL, NULL);
-    ok(!ret, "DeleteTimerQueueEx\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "DeleteTimerQueueEx\n");
+    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_INVALID_HANDLE, got %d\n",
+       GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, NULL);
-    ok(!ret, "DeleteTimerQueueEx\n");
-    ok(GetLastError() == ERROR_IO_PENDING, "DeleteTimerQueueEx\n");
+    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
+    ok(GetLastError() == ERROR_IO_PENDING,
+       "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
+       GetLastError());
 }
 
 START_TEST(sync)
