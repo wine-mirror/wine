@@ -53,7 +53,7 @@ static void testQuery(void)
 {
     BOOL (WINAPI *pQuery)(BYTE, SnmpVarBindList *, AsnInteger32 *,
         AsnInteger32 *);
-    BOOL ret, moreData;
+    BOOL ret, moreData, noChange;
     SnmpVarBindList list;
     AsnInteger32 error, index;
     UINT bogus[] = { 1,2,3,4 };
@@ -157,6 +157,7 @@ static void testQuery(void)
     SnmpUtilOidCpy(&vars2[2].name, &vars[2].name);
     list.list = vars2;
     moreData = TRUE;
+    noChange = FALSE;
     entry = 0;
     do {
         SetLastError(0xdeadbeef);
@@ -180,6 +181,15 @@ static void testQuery(void)
         else if (SnmpUtilOidNCmp(&vars2[2].name, &vars[2].name,
             vars[2].name.idLength))
             moreData = FALSE;
+        else if (!SnmpUtilOidCmp(&vars[0].name, &vars2[0].name) ||
+         !SnmpUtilOidCmp(&vars[0].name, &vars2[0].name) ||
+         !SnmpUtilOidCmp(&vars[0].name, &vars2[0].name))
+        {
+            /* If the OID isn't modified, the function isn't implemented on this
+             * platform, skip the remaining tests.
+             */
+            noChange = TRUE;
+        }
         if (moreData)
         {
             UINT lastID;
@@ -224,7 +234,9 @@ static void testQuery(void)
                 "expected a value of 0, 1, or 2, got %u\n",
                 vars2[2].value.asnValue.unsigned32);
         }
-    } while (moreData);
+        else if (noChange)
+            skip("no change in OID, no MIB2 IF table implementation\n");
+    } while (moreData && !noChange);
     SnmpUtilVarBindFree(&vars2[0]);
     SnmpUtilVarBindFree(&vars2[1]);
     SnmpUtilVarBindFree(&vars2[2]);
@@ -240,6 +252,7 @@ static void testQuery(void)
     list.len = 1;
     list.list = vars2;
     moreData = TRUE;
+    noChange = FALSE;
     ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
     ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
     ok(error == SNMP_ERRORSTATUS_NOERROR,
@@ -272,6 +285,13 @@ static void testQuery(void)
         else if (SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name,
             vars[0].name.idLength))
             moreData = FALSE;
+        else if (!SnmpUtilOidCmp(&vars2[0].name, &vars[0].name))
+        {
+            /* If the OID isn't modified, the function isn't implemented on this
+             * platform, skip the remaining tests.
+             */
+            noChange = TRUE;
+        }
         if (moreData)
         {
             /* Make sure the size of the OID is right.
@@ -304,7 +324,9 @@ static void testQuery(void)
                 }
             }
         }
-    } while (moreData);
+        else if (noChange)
+            skip("no change in OID, no MIB2 IP address table implementation\n");
+    } while (moreData && !noChange);
     SnmpUtilVarBindFree(&vars2[0]);
 
     /* Check the type and OIDs of the IP route table */
@@ -315,6 +337,7 @@ static void testQuery(void)
     list.len = 1;
     list.list = vars2;
     moreData = TRUE;
+    noChange = FALSE;
     do {
         ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
         ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
@@ -328,6 +351,13 @@ static void testQuery(void)
         else if (SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name,
             vars[0].name.idLength))
             moreData = FALSE;
+        else if (!SnmpUtilOidCmp(&vars2[0].name, &vars[0].name))
+        {
+            /* If the OID isn't modified, the function isn't implemented on this
+             * platform, skip the remaining tests.
+             */
+            noChange = TRUE;
+        }
         if (moreData)
         {
             /* Make sure the size of the OID is right.
@@ -360,7 +390,9 @@ static void testQuery(void)
                 }
             }
         }
-    } while (moreData);
+        else if (noChange)
+            skip("no change in OID, no MIB2 IP route table implementation\n");
+    } while (moreData && !noChange);
     SnmpUtilVarBindFree(&vars2[0]);
 
     /* Check the type and OIDs of the UDP table */
@@ -371,6 +403,7 @@ static void testQuery(void)
     list.len = 1;
     list.list = vars2;
     moreData = TRUE;
+    noChange = FALSE;
     do {
         ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
         ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
@@ -392,6 +425,13 @@ static void testQuery(void)
         else if (SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name,
             vars[0].name.idLength))
             moreData = FALSE;
+        else if (!SnmpUtilOidCmp(&vars2[0].name, &vars[0].name))
+        {
+            /* If the OID isn't modified, the function isn't implemented on this
+             * platform, skip the remaining tests.
+             */
+            noChange = TRUE;
+        }
         if (moreData)
         {
             /* Make sure the size of the OID is right. */
@@ -422,7 +462,9 @@ static void testQuery(void)
                 }
             }
         }
-    } while (moreData);
+        else if (noChange)
+            skip("no change in OID, no MIB2 UDP table implementation\n");
+    } while (moreData && !noChange);
     SnmpUtilVarBindFree(&vars2[0]);
 }
 
