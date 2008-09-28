@@ -184,7 +184,7 @@ done:
 static UINT STORAGES_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UINT mask)
 {
     MSISTORAGESVIEW *sv = (MSISTORAGESVIEW *)view;
-    IStorage *stg, *substg;
+    IStorage *stg, *substg = NULL;
     IStream *stm;
     LPWSTR name = NULL;
     HRESULT hr;
@@ -236,7 +236,7 @@ static UINT STORAGES_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, 
 done:
     msi_free(name);
 
-    IStorage_Release(substg);
+    if (substg) IStorage_Release(substg);
     IStorage_Release(stg);
     IStream_Release(stm);
 
