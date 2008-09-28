@@ -1471,7 +1471,7 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
             device->drvcaps.dwFlags |= DSCAPS_EMULDRIVER;
         device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
         device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
-        device->drvcaps.dwPrimaryBuffers = 1;
+        ZeroMemory(&device->volpan, sizeof(device->volpan));
     }
 
     hr = DSOUND_PrimaryCreate(device);

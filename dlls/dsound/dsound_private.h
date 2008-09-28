@@ -108,6 +108,8 @@ struct DirectSoundDevice
     LPBYTE                      tmp_buffer, mix_buffer;
     DWORD                       tmp_buffer_len, mix_buffer_len;
 
+    DSVOLUMEPAN                 volpan;
+
     mixfunc mixfunction;
     normfunc normfunction;
 

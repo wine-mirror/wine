@@ -169,7 +169,10 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 				return err;
 			}
 		}
-		DSOUND_RecalcPrimary(device);
+                if (device->hwbuf)
+                    IDsDriverBuffer_SetVolumePan(device->hwbuf, &device->volpan);
+
+                DSOUND_RecalcPrimary(device);
 		device->prebuf = ds_snd_queue_max;
 		if (device->helfrags < ds_snd_queue_min)
 		{
@@ -582,7 +585,6 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 ) {
 	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	DWORD ampfactors;
-	DSVOLUMEPAN volpan;
         HRESULT hres = DS_OK;
 	TRACE("(%p,%d)\n", iface, vol);
 
@@ -600,18 +602,18 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 	EnterCriticalSection(&(device->mixlock));
 
         waveOutGetVolume(device->hwo, &ampfactors);
-        volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
-        volpan.dwTotalRightAmpFactor=ampfactors >> 16;
-        DSOUND_AmpFactorToVolPan(&volpan);
-        if (vol != volpan.lVolume) {
-            volpan.lVolume=vol;
-            DSOUND_RecalcVolPan(&volpan);
+        device->volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
+        device->volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+        DSOUND_AmpFactorToVolPan(&device->volpan);
+        if (vol != device->volpan.lVolume) {
+            device->volpan.lVolume=vol;
+            DSOUND_RecalcVolPan(&device->volpan);
             if (device->hwbuf) {
-                hres = IDsDriverBuffer_SetVolumePan(device->hwbuf, &volpan);
+                hres = IDsDriverBuffer_SetVolumePan(device->hwbuf, &device->volpan);
                 if (hres != DS_OK)
                     WARN("IDsDriverBuffer_SetVolumePan failed\n");
             } else {
-                ampfactors = (volpan.dwTotalLeftAmpFactor & 0xffff) | (volpan.dwTotalRightAmpFactor << 16);
+                ampfactors = (device->volpan.dwTotalLeftAmpFactor & 0xffff) | (device->volpan.dwTotalRightAmpFactor << 16);
                 waveOutSetVolume(device->hwo, ampfactors);
             }
         }
@@ -627,7 +629,6 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 ) {
 	DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	DWORD ampfactors;
-	DSVOLUMEPAN volpan;
 	TRACE("(%p,%p)\n", iface, vol);
 
 	if (!(device->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
@@ -640,11 +641,14 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 		return DSERR_INVALIDPARAM;
 	}
 
-	waveOutGetVolume(device->hwo, &ampfactors);
-	volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
-	volpan.dwTotalRightAmpFactor=ampfactors >> 16;
-	DSOUND_AmpFactorToVolPan(&volpan);
-	*vol = volpan.lVolume;
+        if (!device->hwbuf)
+        {
+	    waveOutGetVolume(device->hwo, &ampfactors);
+	    device->volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
+	    device->volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+	    DSOUND_AmpFactorToVolPan(&device->volpan);
+        }
+        *vol = device->volpan.lVolume;
 	return DS_OK;
 }
 
@@ -907,7 +911,6 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 ) {
         DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	DWORD ampfactors;
-	DSVOLUMEPAN volpan;
         HRESULT hres = DS_OK;
 	TRACE("(%p,%d)\n", iface, pan);
 
@@ -924,19 +927,22 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 	/* **** */
 	EnterCriticalSection(&(device->mixlock));
 
-        waveOutGetVolume(device->hwo, &ampfactors);
-        volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
-        volpan.dwTotalRightAmpFactor=ampfactors >> 16;
-        DSOUND_AmpFactorToVolPan(&volpan);
-        if (pan != volpan.lPan) {
-            volpan.lPan=pan;
-            DSOUND_RecalcVolPan(&volpan);
+        if (!device->hwbuf)
+        {
+            waveOutGetVolume(device->hwo, &ampfactors);
+            device->volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
+            device->volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+            DSOUND_AmpFactorToVolPan(&device->volpan);
+        }
+        if (pan != device->volpan.lPan) {
+            device->volpan.lPan=pan;
+            DSOUND_RecalcVolPan(&device->volpan);
             if (device->hwbuf) {
-                hres = IDsDriverBuffer_SetVolumePan(device->hwbuf, &volpan);
+                hres = IDsDriverBuffer_SetVolumePan(device->hwbuf, &device->volpan);
                 if (hres != DS_OK)
                     WARN("IDsDriverBuffer_SetVolumePan failed\n");
             } else {
-                ampfactors = (volpan.dwTotalLeftAmpFactor & 0xffff) | (volpan.dwTotalRightAmpFactor << 16);
+                ampfactors = (device->volpan.dwTotalLeftAmpFactor & 0xffff) | (device->volpan.dwTotalRightAmpFactor << 16);
                 waveOutSetVolume(device->hwo, ampfactors);
             }
         }
@@ -952,7 +958,6 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 ) {
         DirectSoundDevice *device = ((PrimaryBufferImpl *)iface)->device;
 	DWORD ampfactors;
-	DSVOLUMEPAN volpan;
 	TRACE("(%p,%p)\n", iface, pan);
 
 	if (!(device->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
@@ -965,11 +970,14 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 		return DSERR_INVALIDPARAM;
 	}
 
-	waveOutGetVolume(device->hwo, &ampfactors);
-	volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
-	volpan.dwTotalRightAmpFactor=ampfactors >> 16;
-	DSOUND_AmpFactorToVolPan(&volpan);
-	*pan = volpan.lPan;
+        if (!device->hwbuf)
+        {
+	    waveOutGetVolume(device->hwo, &ampfactors);
+	    device->volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
+	    device->volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+	    DSOUND_AmpFactorToVolPan(&device->volpan);
+        }
+	*pan = device->volpan.lPan;
 	return DS_OK;
 }
 
