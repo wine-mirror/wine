@@ -6218,21 +6218,34 @@ static void test_remote_data_replication(void)
 
 START_TEST(dplayx)
 {
+    if (!winetest_interactive)
+    {
+        skip("Run in interacive mode to run dplayx tests.\n");
+        return;
+    }
+
     CoInitialize( NULL );
+
+    trace("Running in interactive mode, tests will take a while\n");
 
     test_DirectPlayCreate();
     test_EnumConnections();
     test_InitializeConnection();
 
     test_GetCaps();
+    /* test_Open() takes almost a minute, */
     test_Open();
+    /* test_EnumSession takes three minutes */
     test_EnumSessions();
     test_SessionDesc();
 
+    /* test_CreatePlayer() takes over a minute */
     test_CreatePlayer();
     test_GetPlayerCaps();
     test_PlayerData();
     test_PlayerName();
+
+    /* test_GetPlayerAccount() takes over 30s */
     test_GetPlayerAccount();
     test_GetPlayerAddress();
     test_GetPlayerFlags();
