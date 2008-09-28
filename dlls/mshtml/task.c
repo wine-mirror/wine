@@ -261,6 +261,8 @@ static void set_parsecomplete(HTMLDocument *doc)
     call_property_onchanged(&doc->cp_propnotif, 1005);
     call_explorer_69(doc);
 
+    /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
+
     doc->readystate = READYSTATE_INTERACTIVE;
     call_property_onchanged(&doc->cp_propnotif, DISPID_READYSTATE);
 
