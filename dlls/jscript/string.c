@@ -530,7 +530,7 @@ static HRESULT rep_call(DispatchEx *func, const WCHAR *str, match_result_t *matc
 static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DWORD parens_cnt, parens_size=0, rep_len=0, length;
+    DWORD parens_cnt = 0, parens_size=0, rep_len=0, length;
     BSTR rep_str = NULL, match_str = NULL, ret_str;
     DispatchEx *rep_func = NULL, *regexp = NULL;
     match_result_t *parens = NULL, match;
