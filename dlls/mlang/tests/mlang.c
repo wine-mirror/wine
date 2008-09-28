@@ -814,9 +814,18 @@ static void test_IMultiLanguage2_ConvertStringFromUnicode(IMultiLanguage2 *iML2)
     destsz = sizeof(dest);
     hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, NULL,
                                                   &srcsz, dest, &destsz);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(srcsz == lstrlenW(src) + 1,
-       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(hr == S_OK || hr == E_FAIL,"expected S_OK or E_FAIL, got %08x\n",hr);
+    if (hr == S_OK)
+    {
+        ok(srcsz == lstrlenW(src) + 1,
+           "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    }
+    else if (hr == E_FAIL)
+    {
+        ok(srcsz == 0,
+           "Expected %u, got %u\n", 0, srcsz);
+    }
+
     ok(!memcmp(dest, invariate, sizeof(dest)),
        "Expected dest to be unchanged, got %s\n", dest);
     ok(destsz == 0, "Expected 0, got %u\n", destsz);
@@ -839,7 +848,7 @@ static void test_IMultiLanguage2_ConvertStringFromUnicode(IMultiLanguage2 *iML2)
     destsz = sizeof(dest);
     hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, NULL,
                                                   NULL, dest, &destsz);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK || hr == E_FAIL, "Expected S_OK or E_FAIL, got %08x\n", hr);
     ok(!memcmp(dest, invariate, sizeof(dest)),
        "Expected dest to be unchanged, got %s\n", dest);
     ok(destsz == 0, "Expected 0, got %u\n", destsz);
@@ -977,9 +986,13 @@ static void test_ConvertINetUnicodeToMultiByte(void)
     srcsz = lstrlenW(src) + 1;
     destsz = sizeof(dest);
     hr = pConvertINetUnicodeToMultiByte(NULL, 1252, NULL, &srcsz, dest, &destsz);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(srcsz == lstrlenW(src) + 1,
-       "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    ok(hr == S_OK || hr == E_FAIL, "Expected S_OK or E_FAIL, got %08x\n", hr);
+    if (hr == S_OK)
+        ok(srcsz == lstrlenW(src) + 1,
+           "Expected %u, got %u\n", lstrlenW(src) + 1, srcsz);
+    else if (hr == E_FAIL)
+        ok(srcsz == 0,
+           "Expected %u, got %u\n", 0, srcsz);
     ok(!memcmp(dest, invariate, sizeof(dest)),
        "Expected dest to be unchanged, got %s\n", dest);
     ok(destsz == 0, "Expected 0, got %u\n", destsz);
@@ -1000,7 +1013,7 @@ static void test_ConvertINetUnicodeToMultiByte(void)
     memset(dest, 'x', sizeof(dest));
     destsz = sizeof(dest);
     hr = pConvertINetUnicodeToMultiByte(NULL, 1252, NULL, NULL, dest, &destsz);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(hr == S_OK || hr == E_FAIL, "Expected S_OK or E_FAIL, got %08x\n", hr);
     ok(!memcmp(dest, invariate, sizeof(dest)),
        "Expected dest to be unchanged, got %s\n", dest);
     ok(destsz == 0, "Expected 0, got %u\n", destsz);
