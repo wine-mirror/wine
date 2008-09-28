@@ -3068,6 +3068,7 @@ static void test_publish_processcomponents(void)
     LPSTR usersid;
     CHAR val[MAX_PATH];
     CHAR keypath[MAX_PATH];
+    CHAR program_files_maximus[MAX_PATH];
 
     static const CHAR keyfmt[] =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
@@ -3104,8 +3105,12 @@ static void test_publish_processcomponents(void)
     res = RegQueryValueExA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB",
                            NULL, NULL, (LPBYTE)val, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    ok(!lstrcmpA(val, "C:\\Program Files\\msitest\\maximus"),
-       "Expected \"%s\", got \"%s\"\n", "C:\\Program Files\\msitest\\maximus", val);
+
+    lstrcpyA(program_files_maximus,PROG_FILES_DIR);
+    lstrcatA(program_files_maximus,"\\msitest\\maximus");
+
+    ok(!lstrcmpA(val, program_files_maximus),
+       "Expected \"%s\", got \"%s\"\n", program_files_maximus, val);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
@@ -3148,8 +3153,8 @@ static void test_publish_processcomponents(void)
     res = RegQueryValueExA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB",
                            NULL, NULL, (LPBYTE)val, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    ok(!lstrcmpA(val, "C:\\Program Files\\msitest\\maximus"),
-       "Expected \"%s\", got \"%s\"\n", "C:\\Program Files\\msitest\\maximus", val);
+    ok(!lstrcmpA(val, program_files_maximus),
+       "Expected \"%s\", got \"%s\"\n", program_files_maximus, val);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
