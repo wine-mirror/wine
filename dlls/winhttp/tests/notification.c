@@ -45,6 +45,7 @@ struct notification
     enum api function;      /* api responsible for notification */
     unsigned int status;    /* status received */
     int todo;
+    int ignore;
 };
 
 struct info
@@ -73,12 +74,12 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
 
     status_ok   = (info->test[i].status == status);
     function_ok = (info->test[i].function == info->function);
-    if (!info->test[i].todo)
+    if (!info->test[i].ignore && !info->test[i].todo)
     {
         ok(status_ok, "%u: expected status 0x%08x got 0x%08x\n", info->line, info->test[i].status, status);
         ok(function_ok, "%u: expected function %u got %u\n", info->line, info->test[i].function, info->function);
     }
-    else
+    else if (!info->test[i].ignore)
     {
         todo_wine ok(status_ok, "%u: expected status 0x%08x got 0x%08x\n", info->line, info->test[i].status, status);
         if (status_ok)
@@ -305,9 +306,9 @@ static const struct notification async_test[] =
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, 0 },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, 0 },
     { winhttp_query_data,       WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, 0 },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, 1 },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, 1 },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_READ_COMPLETE, 1 },
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, 0, 1 },
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, 0, 1 },
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_READ_COMPLETE, 0, 1 },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0 },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0 },
     { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 0 },
