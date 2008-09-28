@@ -444,7 +444,13 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id, LPSTR buffer, INT 
  */
 DWORD WINAPI GetGuiResources( HANDLE hProcess, DWORD uiFlags )
 {
-    FIXME("(%p,%x): stub\n",hProcess,uiFlags);
+    static BOOL warn = TRUE;
+
+    if (warn) {
+        FIXME("(%p,%x): stub\n",hProcess,uiFlags);
+       warn = FALSE;
+    }
+
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return 0;
 }
