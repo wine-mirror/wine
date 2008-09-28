@@ -56,6 +56,8 @@ static void testGetComputerObjectNameA(void)
            (GetLastError() == ERROR_INVALID_PARAMETER)) ||
            (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
            (GetLastError() == ERROR_NO_SUCH_DOMAIN) ||
+           (GetLastError() == ERROR_NO_SUCH_USER) ||
+           (GetLastError() == ERROR_NONE_MAPPED) ||
            (GetLastError() == ERROR_ACCESS_DENIED),
            "GetComputerObjectNameA(%d) failed: %d\n",
            formats[i], GetLastError());
@@ -79,6 +81,8 @@ static void testGetComputerObjectNameW(void)
            (GetLastError() == ERROR_INVALID_PARAMETER)) ||
            (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
            (GetLastError() == ERROR_NO_SUCH_DOMAIN) ||
+           (GetLastError() == ERROR_NO_SUCH_USER) ||
+           (GetLastError() == ERROR_NONE_MAPPED) ||
            (GetLastError() == ERROR_ACCESS_DENIED),
            "GetComputerObjectNameW(%d) failed: %d\n",
            formats[i], GetLastError());
