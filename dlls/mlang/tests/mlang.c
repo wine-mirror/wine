@@ -1197,9 +1197,8 @@ static void test_JapaneseConversion(void)
         destsz = 30;
         outlen = jis_jp[i][0];
         srcsz = unc_jp[i][0];
-        SetLastError(0xdeadbeef);
         hr = pConvertINetUnicodeToMultiByte(NULL, 50220, &unc_jp[i][1], &srcsz, output, &destsz);
-        if (hr == S_FALSE && GetLastError() == ERROR_INVALID_NAME)
+        if (hr == S_FALSE)
         {
             skip("Code page identifier 50220 is not supported\n");
             break;
@@ -1236,9 +1235,8 @@ static void test_JapaneseConversion(void)
         outlen = sjis_jp[i][0];
         srcsz = unc_jp[i][0];
 
-        SetLastError(0xdeadbeef);
         hr = pConvertINetUnicodeToMultiByte(NULL, 932, &unc_jp[i][1], &srcsz, output, &destsz);
-        if (hr == S_FALSE && GetLastError() == ERROR_INVALID_NAME)
+        if (hr == S_FALSE)
         {
             skip("Code page identifier 932 is not supported\n");
             break;
@@ -1265,9 +1263,8 @@ static void test_JapaneseConversion(void)
         outlen = euc_jp[i][0];
         srcsz = unc_jp[i][0];
 
-        SetLastError(0xdeadbeef);
         hr = pConvertINetUnicodeToMultiByte(NULL, 51932, &unc_jp[i][1], &srcsz, output, &destsz);
-        if (hr == S_FALSE && GetLastError() == ERROR_INVALID_NAME)
+        if (hr == S_FALSE)
         {
             skip("Code page identifier 51932 is not supported\n");
             break;
@@ -1291,9 +1288,8 @@ static void test_JapaneseConversion(void)
     i = 0;
     destsz = 30;
     srcsz = jis_jp[i][0];
-    SetLastError(0xdeadbeef);
     hr = pConvertINetMultiByteToUnicode(NULL, 50932, &jis_jp[i][1], &srcsz, outputW, &destsz);
-    if (hr == S_FALSE && GetLastError() == ERROR_INVALID_NAME)
+    if (hr == S_FALSE)
     {
         skip("Code page identifier 50932 is not supported\n");
         return;
