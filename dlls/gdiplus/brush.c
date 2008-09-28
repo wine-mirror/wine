@@ -586,7 +586,11 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
                abs(stride));
 
     *texture = GdipAlloc(sizeof(GpTexture));
-    if (!*texture) return OutOfMemory;
+    if (!*texture){
+        GdipFree(dibits);
+        GdipFree(buff);
+        return OutOfMemory;
+    }
 
     if((status = GdipCreateMatrix(&(*texture)->transform)) != Ok){
         GdipFree(*texture);
