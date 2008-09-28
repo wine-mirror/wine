@@ -7823,7 +7823,8 @@ static void _test_file_access(LPCSTR file, const struct access_res *ares, DWORD 
                line, idx, ares[idx].gothandle,
                (hfile != INVALID_HANDLE_VALUE));
 
-            ok(lasterr == ares[idx].lasterr,
+            ok(lasterr == ares[idx].lasterr ||
+               lasterr == 0xdeadbeef, /* win9x */
                "(%d, lasterr, %d): Expected %d, got %d\n",
                line, idx, ares[idx].lasterr, lasterr);
 
