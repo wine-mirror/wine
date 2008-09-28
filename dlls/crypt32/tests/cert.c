@@ -2535,11 +2535,15 @@ static void testComparePublicKeyInfo(void)
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(!ret, "CertComparePublicKeyInfo: as raw binary: keys should be unequal\n");
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info2);
-    ok(ret, "CertComparePublicKeyInfo: as ASN.1 encoded: keys should be equal\n");
+    ok(ret ||
+     broken(!ret), /* win9x */
+     "CertComparePublicKeyInfo: as ASN.1 encoded: keys should be equal\n");
     info1.PublicKey.cUnusedBits = 1;
     info2.PublicKey.cUnusedBits = 5;
     ret = CertComparePublicKeyInfo(X509_ASN_ENCODING, &info1, &info2);
-    ok(ret, "CertComparePublicKeyInfo: ASN.1 encoding should ignore cUnusedBits\n");
+    ok(ret ||
+     broken(!ret), /* win9x */
+     "CertComparePublicKeyInfo: ASN.1 encoding should ignore cUnusedBits\n");
     info1.PublicKey.cUnusedBits = 0;
     info2.PublicKey.cUnusedBits = 0;
     info1.PublicKey.cbData--; /* kill one byte, make ASN.1 encoded data invalid */
@@ -2592,18 +2596,23 @@ static void testHashPublicKeyInfo(void)
          "Expected STATUS_ACCESS_VIOLATION, got %08x\n", GetLastError());
     }
     ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, &info, NULL, &len);
-    ok(ret, "CryptHashPublicKeyInfo failed: %08x\n", GetLastError());
-    ok(len == 16, "Expected hash size 16, got %d\n", len);
-    if (len == 16)
+    ok(ret ||
+     broken(!ret), /* win9x */
+     "CryptHashPublicKeyInfo failed: %08x\n", GetLastError());
+    if (ret)
     {
-        static const BYTE emptyHash[] = { 0xb8,0x51,0x3a,0x31,0x0e,0x9f,0x40,
-         0x36,0x9c,0x92,0x45,0x1b,0x9d,0xc8,0xf9,0xf6 };
-        BYTE buf[16];
+        ok(len == 16, "Expected hash size 16, got %d\n", len);
+        if (len == 16)
+        {
+            static const BYTE emptyHash[] = { 0xb8,0x51,0x3a,0x31,0x0e,0x9f,0x40,
+             0x36,0x9c,0x92,0x45,0x1b,0x9d,0xc8,0xf9,0xf6 };
+            BYTE buf[16];
 
-        ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, &info, buf,
-         &len);
-        ok(ret, "CryptHashPublicKeyInfo failed: %08x\n", GetLastError());
-        ok(!memcmp(buf, emptyHash, len), "Unexpected hash\n");
+            ret = CryptHashPublicKeyInfo(0, 0, 0, X509_ASN_ENCODING, &info, buf,
+             &len);
+            ok(ret, "CryptHashPublicKeyInfo failed: %08x\n", GetLastError());
+            ok(!memcmp(buf, emptyHash, len), "Unexpected hash\n");
+        }
     }
 }
 
@@ -2651,8 +2660,14 @@ static void testHashToBeSigned(void)
     /* Signing a cert works */
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, md5SignedEmptyCert,
      sizeof(md5SignedEmptyCert), NULL, &size);
-    ok(ret, "CryptHashToBeSigned failed: %08x\n", GetLastError());
-    ok(size == sizeof(md5SignedEmptyCertHash), "unexpected size %d\n", size);
+    ok(ret ||
+     broken(!ret), /* win9x */
+     "CryptHashToBeSigned failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(md5SignedEmptyCertHash), "unexpected size %d\n", size);
+    }
+
     ret = CryptHashToBeSigned(0, X509_ASN_ENCODING, md5SignedEmptyCert,
      sizeof(md5SignedEmptyCert), hash, &size);
     ok(!memcmp(hash, md5SignedEmptyCertHash, size), "unexpected value\n");
@@ -2893,13 +2908,21 @@ static void testAcquireCertPrivateKey(void)
         /* Don't cache provider */
         ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &certCSP,
          &keySpec, &callerFree);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
+        ok(ret ||
+         broken(!ret), /* win95 */
+         "CryptAcquireCertificatePrivateKey failed: %08x\n",
          GetLastError());
-        ok(callerFree, "Expected callerFree to be TRUE\n");
-        CryptReleaseContext(certCSP, 0);
+        if (ret)
+        {
+            ok(callerFree, "Expected callerFree to be TRUE\n");
+            CryptReleaseContext(certCSP, 0);
+        }
+
         ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &certCSP,
          NULL, NULL);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
+        ok(ret ||
+         broken(!ret), /* win95 */
+         "CryptAcquireCertificatePrivateKey failed: %08x\n",
          GetLastError());
         CryptReleaseContext(certCSP, 0);
 
@@ -2907,21 +2930,30 @@ static void testAcquireCertPrivateKey(void)
         ret = pCryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_USE_PROV_INFO_FLAG, NULL, &certCSP, &keySpec,
          &callerFree);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
+        ok(ret ||
+         broken(!ret), /* win95 */
+         "CryptAcquireCertificatePrivateKey failed: %08x\n",
          GetLastError());
-        ok(callerFree, "Expected callerFree to be TRUE\n");
-        CryptReleaseContext(certCSP, 0);
+        if (ret)
+        {
+            ok(callerFree, "Expected callerFree to be TRUE\n");
+            CryptReleaseContext(certCSP, 0);
+        }
 
         /* Cache it (and check that it's cached) */
         ret = pCryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_CACHE_FLAG, NULL, &certCSP, &keySpec, &callerFree);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
+        ok(ret ||
+         broken(!ret), /* win95 */
+         "CryptAcquireCertificatePrivateKey failed: %08x\n",
          GetLastError());
         ok(!callerFree, "Expected callerFree to be FALSE\n");
         size = sizeof(keyContext);
         ret = CertGetCertificateContextProperty(cert, CERT_KEY_CONTEXT_PROP_ID,
          &keyContext, &size);
-        ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
+        ok(ret ||
+         broken(!ret), /* win95 */
+         "CertGetCertificateContextProperty failed: %08x\n",
          GetLastError());
 
         /* Remove the cached provider */
@@ -2936,13 +2968,17 @@ static void testAcquireCertPrivateKey(void)
         ret = pCryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_USE_PROV_INFO_FLAG, NULL, &certCSP, &keySpec,
          &callerFree);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08x\n",
+        ok(ret ||
+         broken(!ret), /* win95 */
+         "CryptAcquireCertificatePrivateKey failed: %08x\n",
          GetLastError());
         ok(!callerFree, "Expected callerFree to be FALSE\n");
         size = sizeof(keyContext);
         ret = CertGetCertificateContextProperty(cert, CERT_KEY_CONTEXT_PROP_ID,
          &keyContext, &size);
-        ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
+        ok(ret ||
+         broken(!ret), /* win95 */
+         "CertGetCertificateContextProperty failed: %08x\n",
          GetLastError());
         CryptReleaseContext(certCSP, 0);
 
