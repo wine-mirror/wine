@@ -480,7 +480,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     HDC hdc;
     OLE_HANDLE hbm;
     HBITMAP old = NULL;
-    BITMAPINFO bmi;
+    BITMAPINFO *pbmi;
     BITMAPINFOHEADER *bmih;
     INT n_x, n_y, n_width, n_height, abs_height, stride, image_stride, i, bytespp;
     BOOL bm_is_selected;
@@ -512,8 +512,11 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     IPicture_get_CurDC(image->picture, &hdc);
     bm_is_selected = (hdc != 0);
 
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biBitCount = 0;
+    pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    if (!pbmi)
+        return OutOfMemory;
+    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    pbmi->bmiHeader.biBitCount = 0;
 
     if(!bm_is_selected){
         hdc = CreateCompatibleDC(0);
@@ -521,32 +524,37 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     }
 
     /* fill out bmi */
-    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
 
-    bytespp = bmi.bmiHeader.biBitCount / 8;
-    abs_height = abs(bmi.bmiHeader.biHeight);
+    bytespp = pbmi->bmiHeader.biBitCount / 8;
+    abs_height = abs(pbmi->bmiHeader.biHeight);
 
-    if(n_x > bmi.bmiHeader.biWidth || n_x + n_width > bmi.bmiHeader.biWidth ||
-       n_y > abs_height || n_y + n_height > abs_height)
+    if(n_x > pbmi->bmiHeader.biWidth || n_x + n_width > pbmi->bmiHeader.biWidth ||
+       n_y > abs_height || n_y + n_height > abs_height){
+        GdipFree(pbmi);
         return InvalidParameter;
+    }
 
-    dibits = GdipAlloc(bmi.bmiHeader.biSizeImage);
+    dibits = GdipAlloc(pbmi->bmiHeader.biSizeImage);
 
     if(dibits)  /* this is not a good place to error out */
-        GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, dibits, &bmi, DIB_RGB_COLORS);
+        GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, dibits, pbmi, DIB_RGB_COLORS);
 
     if(!bm_is_selected){
         SelectObject(hdc, old);
         DeleteDC(hdc);
     }
 
-    if(!dibits)
+    if(!dibits){
+        GdipFree(pbmi);
         return OutOfMemory;
+    }
 
-    image_stride = (bmi.bmiHeader.biWidth * bytespp + 3) & ~3;
+    image_stride = (pbmi->bmiHeader.biWidth * bytespp + 3) & ~3;
     stride = (n_width * bytespp + 3) & ~3;
     buff = GdipAlloc(sizeof(BITMAPINFOHEADER) + stride * n_height);
     if(!buff){
+        GdipFree(pbmi);
         GdipFree(dibits);
         return OutOfMemory;
     }
@@ -558,17 +566,19 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     bmih->biHeight = n_height;
     bmih->biCompression = BI_RGB;
     bmih->biSizeImage = stride * n_height;
-    bmih->biBitCount = bmi.bmiHeader.biBitCount;
+    bmih->biBitCount = pbmi->bmiHeader.biBitCount;
     bmih->biClrUsed = 0;
     bmih->biPlanes = 1;
 
     /* image is flipped */
-    if(bmi.bmiHeader.biHeight > 0){
-        dibits += bmi.bmiHeader.biSizeImage;
+    if(pbmi->bmiHeader.biHeight > 0){
+        dibits += pbmi->bmiHeader.biSizeImage;
         image_stride *= -1;
         textbits += stride * (n_height - 1);
         stride *= -1;
     }
+
+    GdipFree(pbmi);
 
     for(i = 0; i < n_height; i++)
         memcpy(&textbits[i * stride],
