@@ -1557,7 +1557,6 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
     if(SUCCEEDED(hres)) {
         BYTE buf[3600];
         DWORD cb;
-        int *called = (bindf & BINDF_FROMURLMON) ? &called_Switch : &called_ReportData;
 
         test_priority(http_protocol);
 
@@ -1579,8 +1578,8 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
         expect_hrResult = S_OK;
 
         hres = IInternetProtocol_Read(http_protocol, buf, 1, &cb);
-        ok((!*called && hres == E_PENDING && cb==0) ||
-           (*called && hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
+        ok((hres == E_PENDING && cb==0) ||
+           (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
 
         WaitForSingleObject(event_complete, INFINITE);
         if(bindf & BINDF_FROMURLMON)
@@ -1596,8 +1595,8 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_first)
             hres = IInternetProtocol_Read(http_protocol, buf, sizeof(buf), &cb);
             if(hres == E_PENDING) {
                 hres = IInternetProtocol_Read(http_protocol, buf, 1, &cb);
-                ok((!*called && hres == E_PENDING && cb==0) ||
-                   (*called && hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
+                ok((hres == E_PENDING && cb==0) ||
+                   (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
                 WaitForSingleObject(event_complete, INFINITE);
                 if(bindf & BINDF_FROMURLMON)
                     CHECK_CALLED(Switch);
