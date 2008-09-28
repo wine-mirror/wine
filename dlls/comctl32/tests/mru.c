@@ -410,8 +410,7 @@ static void test_MRUListA(void)
         pFreeMRUList(hMRU);
     }
 
-    /* Free (NULL list) - Doesn't crash */
-    pFreeMRUList(NULL);
+    /* FreeMRUList(NULL) crashes on Win98 OSR0 */
 }
 
 START_TEST(mru)
