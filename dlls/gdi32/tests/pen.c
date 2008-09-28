@@ -70,7 +70,7 @@ static void test_logpen(void)
 
     for (i = 0; i < sizeof(pen)/sizeof(pen[0]); i++)
     {
-        trace("testing style %u\n", pen[i].style);
+        trace("%d: testing style %u\n", i, pen[i].style);
 
         /********************** cosmetic pens **********************/
         /* CreatePenIndirect behaviour */
@@ -144,6 +144,8 @@ static void test_logpen(void)
         /* for some reason XP differentiates PS_NULL here */
         if (pen[i].style == PS_NULL)
         {
+        todo_wine
+            ok(hpen == GetStockObject(NULL_PEN), "hpen should be a stock NULL_PEN\n");
             ok(size == sizeof(EXTLOGPEN), "GetObject returned %d, error %d\n", size, GetLastError());
             ok(elp.elpPenStyle == pen[i].ret_style, "expected %u, got %u\n", pen[i].ret_style, elp.elpPenStyle);
             ok(elp.elpWidth == 0, "expected 0, got %u\n", elp.elpWidth);
@@ -206,7 +208,11 @@ static void test_logpen(void)
         obj_type = GetObjectType(hpen);
         /* for some reason XP differentiates PS_NULL here */
         if (pen[i].style == PS_NULL)
+        {
             ok(obj_type == OBJ_PEN, "wrong object type %u\n", obj_type);
+        todo_wine
+            ok(hpen == GetStockObject(NULL_PEN), "hpen should be a stock NULL_PEN\n");
+        }
         else
             ok(obj_type == OBJ_EXTPEN, "wrong object type %u\n", obj_type);
 
