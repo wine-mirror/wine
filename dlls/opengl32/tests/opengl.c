@@ -432,6 +432,14 @@ START_TEST(opengl)
         0, 0, 0                /* layer masks */
     };
 
+    init_functions();
+    /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
+    if (!pwglGetExtensionsStringARB)
+    {
+        skip("wglGetExtensionsStringARB is not available\n");
+        return;
+    }
+
     hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "err: %d\n", GetLastError());
@@ -462,19 +470,11 @@ START_TEST(opengl)
         hglrc = wglCreateContext(hdc);
         res = wglMakeCurrent(hdc, hglrc);
         ok(res, "wglMakeCurrent failed!\n");
-        init_functions();
 
         test_makecurrent(hdc);
         test_setpixelformat(hdc);
         test_colorbits(hdc);
         test_gdi_dbuf(hdc);
-
-        if (!pwglGetExtensionsStringARB)
-        {
-            skip("wglGetExtensionsStringARB is not available\n");
-            DestroyWindow(hwnd);
-            return;
-        }
 
         wgl_extensions = pwglGetExtensionsStringARB(hdc);
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");
