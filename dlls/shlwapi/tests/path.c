@@ -271,62 +271,34 @@ static void test_PathIsValidCharA(void)
     BOOL ret;
     unsigned int c;
 
-    ret = pPathIsValidCharA( 0x7f, 0 );
-    ok ( !ret, "PathIsValidCharA succeeded: 0x%08x\n", (DWORD)ret );
-
-    ret = pPathIsValidCharA( 0x7f, 1 );
-    ok ( !ret, "PathIsValidCharA succeeded: 0x%08x\n", (DWORD)ret );
-
     for (c = 0; c < 0x7f; c++)
     {
         ret = pPathIsValidCharA( c, ~0U );
-        ok ( ret == SHELL_charclass[c] || (ret == 1 && SHELL_charclass[c] == 0xffffffff),
-             "PathIsValidCharA failed: 0x%02x got 0x%08x expected 0x%08x\n",
-             c, (DWORD)ret, SHELL_charclass[c] );
+        ok ( ret || !SHELL_charclass[c], "PathIsValidCharA failed: 0x%02x got 0x%08x\n", c, ret );
     }
 
     for (c = 0x7f; c <= 0xff; c++)
     {
         ret = pPathIsValidCharA( c, ~0U );
-        ok ( ret == 0x00000100,
-             "PathIsValidCharA failed: 0x%02x got 0x%08x expected 0x00000100\n",
-             c, (DWORD)ret );
+        ok ( ret, "PathIsValidCharA failed: 0x%02x got 0x%08x\n", c, ret );
     }
 }
 
 static void test_PathIsValidCharW(void)
 {
     BOOL ret;
-    unsigned int c, err_count = 0;
-
-    ret = pPathIsValidCharW( 0x7f, 0 );
-    ok ( !ret, "PathIsValidCharW succeeded: 0x%08x\n", (DWORD)ret );
-
-    ret = pPathIsValidCharW( 0x7f, 1 );
-    ok ( !ret, "PathIsValidCharW succeeded: 0x%08x\n", (DWORD)ret );
+    unsigned int c;
 
     for (c = 0; c < 0x7f; c++)
     {
         ret = pPathIsValidCharW( c, ~0U );
-        ok ( ret == SHELL_charclass[c] || (ret == 1 && SHELL_charclass[c] == 0xffffffff),
-             "PathIsValidCharW failed: 0x%02x got 0x%08x expected 0x%08x\n",
-             c, (DWORD)ret, SHELL_charclass[c] );
+        ok ( ret || !SHELL_charclass[c], "PathIsValidCharW failed: 0x%02x got 0x%08x\n", c, ret );
     }
 
     for (c = 0x007f; c <= 0xffff; c++)
     {
         ret = pPathIsValidCharW( c, ~0U );
-        ok ( ret == 0x00000100,
-             "PathIsValidCharW failed: 0x%02x got 0x%08x expected 0x00000100\n",
-             c, (DWORD)ret );
-        if (ret != 0x00000100)
-        {
-            if(++err_count > 100 ) {
-                trace("skipping rest of PathIsValidCharW tests "
-                      "because of the current number of errors\n");
-                break;
-            }
-        }
+        ok ( ret, "PathIsValidCharW failed: 0x%02x got 0x%08x\n", c, ret );
     }
 }
 
