@@ -70,6 +70,7 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 static IOleDocumentView *view = NULL;
 static HWND container_hwnd = NULL, hwnd = NULL, last_hwnd = NULL;
+static BOOL show_fail;
 
 DEFINE_EXPECT(LockContainer);
 DEFINE_EXPECT(SetActiveObject);
@@ -1728,6 +1729,14 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 expect_status_text = (load_state == LD_COMPLETE ? (LPCOLESTR)0xdeadbeef : NULL);
 
                 hres = IOleDocumentView_Show(view, TRUE);
+                if(FAILED(hres)) {
+                    win_skip("Show failed\n");
+                    if(activeobj)
+                        IOleInPlaceActiveObject_Release(activeobj);
+                    IOleDocument_Release(document);
+                    show_fail = TRUE;
+                    return S_OK;
+                }
                 ok(hres == S_OK, "Show failed: %08x\n", hres);
 
                 CHECK_CALLED(CanInPlaceActivate);
@@ -3777,7 +3786,7 @@ static void test_HTMLDocument(BOOL do_load)
         test_OnAmbientPropertyChange2(unk);
 
     hres = test_Activate(unk, CLIENTSITE_EXPECTPATH);
-    if(FAILED(hres)) {
+    if(FAILED(hres) || show_fail) {
         IUnknown_Release(unk);
         return;
     }
@@ -3873,6 +3882,10 @@ static void test_HTMLDocument_hlink(void)
     test_GetCurMoniker(unk, NULL, NULL);
     test_Persist(unk);
     test_Navigate(unk);
+    if(show_fail) {
+        IUnknown_Release(unk);
+        return;
+    }
 
     test_download(FALSE, TRUE, TRUE);
 
@@ -3919,6 +3932,11 @@ static void test_HTMLDocument_StreamLoad(void)
     test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
+    if(show_fail) {
+        IUnknown_Release(unk);
+        IOleObject_Release(oleobj);
+        return;
+    }
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
 
     IOleObject_Release(oleobj);
@@ -3994,6 +4012,11 @@ static void test_editing_mode(BOOL do_load)
     test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
+    if(show_fail) {
+        IOleObject_Release(oleobj);
+        IUnknown_Release(unk);
+        return;
+    }
     test_edit_uiactivate(oleobj);
 
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
