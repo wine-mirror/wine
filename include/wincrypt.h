@@ -4037,7 +4037,7 @@ BOOL WINAPI CertComparePublicKeyInfo(DWORD dwCertEncodingType,
 DWORD WINAPI CertGetPublicKeyLength(DWORD dwCertEncodingType,
  PCERT_PUBLIC_KEY_INFO pPublicKey);
 
-const void *CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
+const void * WINAPI CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCERT_CREATE_CONTEXT_PARA pCreatePara);
 
