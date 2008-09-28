@@ -98,7 +98,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     OLE_HANDLE hbm;
     HDC hdc;
     HBITMAP old = NULL;
-    BITMAPINFO bmi;
+    BITMAPINFO *pbmi;
     BYTE *buff = NULL;
     UINT abs_height;
     GpRect act_rect; /* actual rect to be used */
@@ -131,8 +131,11 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     IPicture_get_CurDC(bitmap->image.picture, &hdc);
     bm_is_selected = (hdc != 0);
 
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biBitCount = 0;
+    pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    if (!pbmi)
+        return OutOfMemory;
+    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    pbmi->bmiHeader.biBitCount = 0;
 
     if(!bm_is_selected){
         hdc = CreateCompatibleDC(0);
@@ -140,33 +143,35 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     }
 
     /* fill out bmi */
-    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+    GetDIBits(hdc, (HBITMAP)hbm, 0, 0, NULL, pbmi, DIB_RGB_COLORS);
 
-    abs_height = abs(bmi.bmiHeader.biHeight);
-    stride = bmi.bmiHeader.biWidth * bitspp / 8;
+    abs_height = abs(pbmi->bmiHeader.biHeight);
+    stride = pbmi->bmiHeader.biWidth * bitspp / 8;
     stride = (stride + 3) & ~3;
 
     buff = GdipAlloc(stride * abs_height);
 
-    bmi.bmiHeader.biBitCount = bitspp;
+    pbmi->bmiHeader.biBitCount = bitspp;
 
     if(buff)
-        GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, buff, &bmi, DIB_RGB_COLORS);
+        GetDIBits(hdc, (HBITMAP)hbm, 0, abs_height, buff, pbmi, DIB_RGB_COLORS);
 
     if(!bm_is_selected){
         SelectObject(hdc, old);
         DeleteDC(hdc);
     }
 
-    if(!buff)
+    if(!buff){
+        GdipFree(pbmi);
         return OutOfMemory;
+    }
 
     lockeddata->Width  = act_rect.Width;
     lockeddata->Height = act_rect.Height;
     lockeddata->PixelFormat = format;
     lockeddata->Reserved = flags;
 
-    if(bmi.bmiHeader.biHeight > 0){
+    if(pbmi->bmiHeader.biHeight > 0){
         lockeddata->Stride = -stride;
         lockeddata->Scan0  = buff + (bitspp / 8) * act_rect.X +
                              stride * (abs_height - 1 - act_rect.Y);
@@ -181,6 +186,7 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 
     bitmap->bitmapbits = buff;
 
+    GdipFree(pbmi);
     return Ok;
 }
 
