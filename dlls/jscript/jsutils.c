@@ -458,7 +458,7 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
         HRESULT hres;
 
         V_VT(&strv) = VT_EMPTY;
-        hres = VariantChangeType(&strv, v, 0, VT_BSTR);
+        hres = VariantChangeTypeEx(&strv, v, MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT), 0, VT_BSTR);
         if(FAILED(hres))
             return hres;
 
