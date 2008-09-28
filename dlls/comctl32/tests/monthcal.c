@@ -673,7 +673,8 @@ static void test_monthcal_firstDay(HWND hwnd)
             if (i == -1){
                 expect(MAKELONG(fday, FALSE), res);
             }else if (i >= 7){
-                expect(MAKELONG(fday, TRUE), res);
+                /* out of range sets max first day of week, locale is ignored */
+                expect(MAKELONG(6, TRUE), res);
             }else{
                 expect(MAKELONG(i, TRUE), res);
             }
