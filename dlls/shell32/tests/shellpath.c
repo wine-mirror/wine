@@ -272,10 +272,8 @@ static const char *getFolderName(int folder)
     }
 }
 
-static const char *printGUID(const GUID *guid)
+static const char *printGUID(const GUID *guid, char * guidSTR)
 {
-    static char guidSTR[39];
-
     if (!guid) return NULL;
 
     sprintf(guidSTR, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
@@ -551,10 +549,11 @@ static void matchGUID(int folder, const GUID *guid)
          pidlLast->mkid.abID[0] == PT_GUID))
         {
             GUID *shellGuid = (GUID *)(pidlLast->mkid.abID + 2);
+            char shellGuidStr[39], guidStr[39];
 
             ok(IsEqualIID(shellGuid, guid),
              "%s: got GUID %s, expected %s\n", getFolderName(folder),
-             printGUID(shellGuid), printGUID(guid));
+             printGUID(shellGuid, shellGuidStr), printGUID(guid, guidStr));
         }
         IMalloc_Free(pMalloc, pidl);
     }
