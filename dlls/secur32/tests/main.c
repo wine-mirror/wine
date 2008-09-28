@@ -143,8 +143,17 @@ static void testEnumerateSecurityPackages(void)
             "EnumerateSecurityPackages() should return %d, not %08x\n",
             SEC_E_OK, sec_status);
 
-    ok(num_packages > 0, "Number of sec packages should be > 0 ,but is %d\n",
-            num_packages);
+    if (num_packages == 0)
+    {
+        todo_wine
+        ok(num_packages > 0, "Number of sec packages should be > 0 ,but is %d\n",
+                num_packages);
+        skip("no sec packages to check\n");
+        return;
+    }
+    else
+        ok(num_packages > 0, "Number of sec packages should be > 0 ,but is %d\n",
+                num_packages);
 
     ok(pkg_info != NULL, 
             "pkg_info should not be NULL after EnumerateSecurityPackages\n");
