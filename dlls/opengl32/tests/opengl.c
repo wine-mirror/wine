@@ -274,10 +274,6 @@ static void test_makecurrent(HDC winhdc)
 {
     BOOL ret;
     HGLRC hglrc;
-    HDC hdc;
-
-    hdc = GetDC(0);
-    ok( hdc != 0, "GetDC(0) failed\n" );
 
     hglrc = wglCreateContext(winhdc);
     ok( hglrc != 0, "wglCreateContext failed\n" );
@@ -286,15 +282,6 @@ static void test_makecurrent(HDC winhdc)
     ok( ret, "wglMakeCurrent failed\n" );
 
     ok( wglGetCurrentContext() == hglrc, "wrong context\n" );
-
-    SetLastError( 0xdeadbeef );
-    ret = wglMakeCurrent( hdc, hglrc );
-    ok( !ret, "wglMakeCurrent succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PIXEL_FORMAT, "last error %u\n", GetLastError() );
-
-    ok( wglGetCurrentContext() == hglrc, "wrong context\n" );
-
-    ReleaseDC( 0, hdc );
 }
 
 static void test_colorbits(HDC hdc)
