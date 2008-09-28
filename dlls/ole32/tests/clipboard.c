@@ -359,7 +359,10 @@ static void test_get_clipboard(void)
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
     fmtetc.lindex = 256;
     hr = IDataObject_QueryGetData(data_obj, &fmtetc);
-    ok(hr == DV_E_FORMATETC, "IDataObject_QueryGetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+    ok(hr == DV_E_FORMATETC || broken(hr == S_OK),
+        "IDataObject_QueryGetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+    if (hr == S_OK)
+        ReleaseStgMedium(&stgmedium);
 
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
     fmtetc.cfFormat = CF_RIFF;
@@ -398,7 +401,13 @@ static void test_get_clipboard(void)
     fmtetc.lindex = 256;
     hr = IDataObject_GetData(data_obj, &fmtetc, &stgmedium);
     todo_wine
-    ok(hr == DV_E_FORMATETC, "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+    ok(hr == DV_E_FORMATETC || broken(hr == S_OK), "IDataObject_GetData should have failed with DV_E_FORMATETC instead of 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        /* undo the unexpected success */
+        DataObjectImpl_GetData_calls--;
+        ReleaseStgMedium(&stgmedium);
+    }
 
     InitFormatEtc(fmtetc, CF_TEXT, TYMED_HGLOBAL);
     fmtetc.cfFormat = CF_RIFF;
