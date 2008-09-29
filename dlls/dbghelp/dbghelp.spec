@@ -30,8 +30,8 @@
 @ stdcall SearchTreeForFileW(wstr wstr ptr)
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
-@ stub SymAddSymbol
-@ stub SymAddSymbolW
+@ stdcall SymAddSymbol(ptr double str double long long)
+@ stdcall SymAddSymbolW(ptr double wstr double long long)
 @ stdcall SymCleanup(long)
 @ stdcall SymEnumLines(ptr double str str ptr ptr)
 @ stub SymEnumLinesW
