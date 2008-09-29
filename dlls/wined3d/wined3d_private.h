@@ -1096,6 +1096,7 @@ typedef struct IWineD3DResourceClass
     UINT                    size;
     DWORD                   usage;
     WINED3DFORMAT           format;
+    DWORD                   priority;
     BYTE                   *allocatedMemory; /* Pointer to the real data location */
     BYTE                   *heapMemory; /* Pointer to the HeapAlloced block of memory */
     struct list             privateData;
