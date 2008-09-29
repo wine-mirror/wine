@@ -57,14 +57,20 @@ static const char* p_string(const struct p_string* s)
     return tmp;
 }
 
-static int numeric_leaf(int* value, const unsigned short int* leaf)
+union full_value
+{
+    int                 i;
+    long long unsigned  llu;
+};
+
+static int full_numeric_leaf(union full_value* fv, const unsigned short int* leaf)
 {
     unsigned short int type = *leaf++;
     int length = 2;
 
     if (type < LF_NUMERIC)
     {
-        *value = type;
+        fv->i = type;
     }
     else
     {
@@ -72,103 +78,115 @@ static int numeric_leaf(int* value, const unsigned short int* leaf)
         {
         case LF_CHAR:
             length += 1;
-            *value = *(const char*)leaf;
+            fv->i = *(const char*)leaf;
             break;
 
         case LF_SHORT:
             length += 2;
-            *value = *(const short*)leaf;
+            fv->i = *(const short*)leaf;
             break;
 
         case LF_USHORT:
             length += 2;
-            *value = *(const unsigned short*)leaf;
+            fv->i = *(const unsigned short*)leaf;
             break;
 
         case LF_LONG:
             length += 4;
-            *value = *(const int*)leaf;
+            fv->i = *(const int*)leaf;
             break;
 
         case LF_ULONG:
             length += 4;
-            *value = *(const unsigned int*)leaf;
+            fv->i = *(const unsigned int*)leaf;
             break;
 
         case LF_QUADWORD:
+            length += 8;
+            fv->llu = *(const long long int*)leaf;
+            break;
+
         case LF_UQUADWORD:
             length += 8;
-            printf(">>> unsupported leaf value\n");
-            *value = 0;    /* FIXME */
+            fv->llu = *(const long long unsigned int*)leaf;
             break;
 
         case LF_REAL32:
             length += 4;
-            printf(">>> unsupported leaf value\n");
-            *value = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
+            fv->i = 0;    /* FIXME */
             break;
 
         case LF_REAL48:
             length += 6;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         case LF_REAL64:
             length += 8;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         case LF_REAL80:
             length += 10;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         case LF_REAL128:
             length += 16;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         case LF_COMPLEX32:
             length += 4;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         case LF_COMPLEX64:
             length += 8;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         case LF_COMPLEX80:
             length += 10;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         case LF_COMPLEX128:
             length += 16;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         case LF_VARSTRING:
             length += 2 + *leaf;
-            *value = 0;    /* FIXME */
-            printf(">>> unsupported leaf value\n");
+            fv->i = 0;    /* FIXME */
+            printf(">>> unsupported leaf value %04x\n", type);
             break;
 
         default:
 	    printf(">>> Unsupported numeric leaf-id %04x\n", type);
-            *value = 0;
+            fv->i = 0;
             break;
         }
     }
     return length;
+}
+
+static int numeric_leaf(int* value, const unsigned short int* leaf)
+{
+    union full_value fv;
+    int len = len = full_numeric_leaf(&fv, leaf);
+
+    *value = fv.i;
+    return len;
 }
 
 static const char* get_attr(unsigned attr)
@@ -1149,23 +1167,25 @@ int codeview_dump_symbols(const void* root, unsigned long size)
 
         case S_CONSTANT_V2:
             {
-                int             val, vlen;
+                int             vlen;
+                union full_value fv;
 
-                vlen = numeric_leaf(&val, &sym->constant_v2.cvalue);
-                printf("\tS-Constant V2 '%s' = %u type:%x\n",
+                vlen = full_numeric_leaf(&fv, &sym->constant_v2.cvalue);
+                printf("\tS-Constant V2 '%s' = 0x%x%08x type:%x\n",
                        p_string(PSTRING(&sym->constant_v2.cvalue, vlen)),
-                       val, sym->constant_v2.type);
+                       (unsigned)(fv.llu >> 32), (unsigned)fv.llu, sym->constant_v2.type);
             }
             break;
 
         case S_CONSTANT_V3:
             {
-                int             val, vlen;
+                int             vlen;
+                union full_value fv;
 
-                vlen = numeric_leaf(&val, &sym->constant_v3.cvalue);
-                printf("\tS-Constant V3 '%s' = %u type:%x\n",
+                vlen = full_numeric_leaf(&fv, &sym->constant_v3.cvalue);
+                printf("\tS-Constant V3 '%s' =  0x%x%08x type:%x\n",
                        (const char*)&sym->constant_v3.cvalue + vlen,
-                       val, sym->constant_v3.type);
+                       (unsigned)(fv.llu >> 32), (unsigned)fv.llu, sym->constant_v3.type);
             }
             break;
 
