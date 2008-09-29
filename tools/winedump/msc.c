@@ -1231,7 +1231,7 @@ int codeview_dump_symbols(const void* root, unsigned long size)
                 const char*             x1;
                 const char*             x2 = (const char*)&ptr[9];
                 /* FIXME: what are all those values for ? */
-                printf("\tTool V3 ??? %x-%x-%x-%x-%x-%x-%x-%x-%x %s\n",
+                printf("\tTool V3 unk=%04x%04x%04x front=%d.%d.%d.0 back=%d.%d.%d.0 %s\n",
                        ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7],
                        ptr[8], x2);
                 while (*(x1 = x2 + strlen(x2) + 1))
