@@ -1628,30 +1628,18 @@ union codeview_symbol
  *          Line number information
  * ======================================== */
 
-union any_size
+struct codeview_linetab_block
 {
-    const char*                 c;
-    const unsigned char*        uc;
-    const short*                s;
-    const int*                  i;
-    const unsigned int*         ui;
+    unsigned short              seg;
+    unsigned short              num_lines;
+    unsigned int                offsets[1];     /* in fact num_lines */
+/*  unsigned short              linenos[]; */
 };
 
 struct startend
 {
     unsigned int	        start;
     unsigned int	        end;
-};
-
-struct codeview_linetab
-{
-    unsigned int		nline;
-    unsigned int		segno;
-    unsigned int		start;
-    unsigned int		end;
-    unsigned int                source;
-    const unsigned short*       linetab;
-    const unsigned int*         offtab;
 };
 
 /* there's a new line tab structure from MS Studio 2005 and after

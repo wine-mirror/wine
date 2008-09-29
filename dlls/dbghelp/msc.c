@@ -1256,108 +1256,72 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
 /*========================================================================
  * Process CodeView line number information.
  */
+static unsigned codeview_get_address(const struct msc_debug_info* msc_dbg,
+                                     unsigned seg, unsigned offset);
 
-static struct codeview_linetab* codeview_snarf_linetab(struct module* module, 
-                                                       const BYTE* linetab, int size,
-                                                       BOOL pascal_str)
+static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const BYTE* linetab,
+                                   int size, BOOL pascal_str)
 {
-    int				file_segcount;
-    char			filename[PATH_MAX];
+    const BYTE*                 ptr = linetab;
+    int				nfile, nseg;
+    int				i, j, k;
     const unsigned int*         filetab;
-    const struct p_string*      p_fn;
-    int				i;
-    int				k;
-    struct codeview_linetab*    lt_hdr;
     const unsigned int*         lt_ptr;
-    int				nfile;
-    int				nseg;
-    union any_size		pnt;
-    union any_size		pnt2;
+    const unsigned short*       linenos;
     const struct startend*      start;
-    int				this_seg;
     unsigned                    source;
+    unsigned                    addr, func_addr0;
+    struct symt_function*       func;
+    const struct codeview_linetab_block* ltb;
 
-    /*
-     * Now get the important bits.
-     */
-    pnt.uc = linetab;
-    nfile = *pnt.s++;
-    nseg = *pnt.s++;
+    nfile = *(const short*)linetab;
+    filetab = (const unsigned int*)(linetab + 2 * sizeof(short));
 
-    filetab = (const unsigned int*) pnt.c;
-
-    /*
-     * Now count up the number of segments in the file.
-     */
-    nseg = 0;
     for (i = 0; i < nfile; i++)
     {
-        pnt2.uc = linetab + filetab[i];
-        nseg += *pnt2.s;
-    }
-
-    /*
-     * Next allocate the header we will be returning.
-     * There is one header for each segment, so that we can reach in
-     * and pull bits as required.
-     */
-    lt_hdr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                (nseg + 1) * sizeof(*lt_hdr));
-    if (lt_hdr == NULL)
-    {
-        goto leave;
-    }
-
-    /*
-     * Now fill the header we will be returning, one for each segment.
-     * Note that this will basically just contain pointers into the existing
-     * line table, and we do not actually copy any additional information
-     * or allocate any additional memory.
-     */
-
-    this_seg = 0;
-    for (i = 0; i < nfile; i++)
-    {
-        /*
-         * Get the pointer into the segment information.
-         */
-        pnt2.uc = linetab + filetab[i];
-        file_segcount = *pnt2.s;
-
-        pnt2.ui++;
-        lt_ptr = (const unsigned int*) pnt2.c;
-        start = (const struct startend*)(lt_ptr + file_segcount);
+        ptr = linetab + filetab[i];
+        nseg = *(const short*)ptr;
+        lt_ptr = (const unsigned int*)(ptr + 2 * sizeof(short));
+        start = (const struct startend*)(lt_ptr + nseg);
 
         /*
          * Now snarf the filename for all of the segments for this file.
          */
         if (pascal_str)
-        {
-            p_fn = (const struct p_string*)(start + file_segcount);
-            memset(filename, 0, sizeof(filename));
-            memcpy(filename, p_fn->name, p_fn->namelen);
-            source = source_new(module, NULL, filename);
-        }
+            source = source_new(msc_dbg->module, NULL, terminate_string((const struct p_string*)(start + nseg)));
         else
-            source = source_new(module, NULL, (const char*)(start + file_segcount));
-        
-        for (k = 0; k < file_segcount; k++, this_seg++)
+            source = source_new(msc_dbg->module, NULL, (const char*)(start + nseg));
+
+        for (j = 0; j < nseg; j++)
 	{
-            pnt2.uc = linetab + lt_ptr[k];
-            lt_hdr[this_seg].start      = start[k].start;
-            lt_hdr[this_seg].end        = start[k].end;
-            lt_hdr[this_seg].source     = source;
-            lt_hdr[this_seg].segno      = *pnt2.s++;
-            lt_hdr[this_seg].nline      = *pnt2.s++;
-            lt_hdr[this_seg].offtab     = pnt2.ui;
-            lt_hdr[this_seg].linetab    = (const unsigned short*)(pnt2.ui + lt_hdr[this_seg].nline);
+            ltb = (const struct codeview_linetab_block*)(linetab + *lt_ptr++);
+            linenos = (const unsigned short*)&ltb->offsets[ltb->num_lines];
+            func_addr0 = codeview_get_address(msc_dbg, ltb->seg, start[j].start);
+            if (!func_addr0) continue;
+            for (func = NULL, k = 0; k < ltb->num_lines; k++)
+            {
+                /* now locate function (if any) */
+                addr = func_addr0 + ltb->offsets[k] - start[j].start;
+                /* unfortunetaly, we can have several functions in the same block, if there's no
+                 * gap between them... find the new function if needed
+                 */
+                if (!func || addr >= func->address + func->size)
+                {
+                    func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
+                    /* FIXME: at least labels support line numbers */
+                    if (!func || func->symt.tag != SymTagFunction)
+                    {
+                        WARN("--not a func at %04x:%08x %x tag=%d\n",
+                             ltb->seg, ltb->offsets[k], addr, func ? func->symt.tag : -1);
+                        func = NULL;
+                        break;
+                    }
+                }
+                symt_add_func_line(msc_dbg->module, func, source,
+                                   linenos[k], addr - func->address);
+            }
 	}
     }
-
-leave:
-
-  return lt_hdr;
-
 }
 
 /*========================================================================
@@ -1381,24 +1345,6 @@ static unsigned int codeview_map_offset(const struct msc_debug_info* msc_dbg,
     return 0;
 }
 
-static const struct codeview_linetab*
-codeview_get_linetab(const struct codeview_linetab* linetab,
-                     unsigned seg, unsigned offset)
-{
-    /*
-     * Check whether we have line number information
-     */
-    if (linetab)
-    {
-        for (; linetab->linetab; linetab++)
-            if (linetab->segno == seg &&
-                linetab->start <= offset && linetab->end   >  offset)
-                break;
-        if (!linetab->linetab) linetab = NULL;
-    }
-    return linetab;
-}
-
 static unsigned codeview_get_address(const struct msc_debug_info* msc_dbg, 
                                      unsigned seg, unsigned offset)
 {
@@ -1408,24 +1354,6 @@ static unsigned codeview_get_address(const struct msc_debug_info* msc_dbg,
     if (!seg || seg > nsect) return 0;
     return msc_dbg->module->module.BaseOfImage +
         codeview_map_offset(msc_dbg, sectp[seg-1].VirtualAddress + offset);
-}
-
-static void codeview_add_func_linenum(struct module* module, 
-                                      struct symt_function* func,
-                                      const struct codeview_linetab* linetab,
-                                      unsigned offset, unsigned size)
-{
-    unsigned int        i;
-
-    if (!linetab) return;
-    for (i = 0; i < linetab->nline; i++)
-    {
-        if (linetab->offtab[i] >= offset && linetab->offtab[i] < offset + size)
-        {
-            symt_add_func_line(module, func, linetab->source,
-                               linetab->linetab[i], linetab->offtab[i] - offset);
-        }
-    }
 }
 
 static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
@@ -1448,12 +1376,10 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
 }
 
 static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root, 
-                          int offset, int size,
-                          struct codeview_linetab* linetab, BOOL do_globals)
+                          int offset, int size, BOOL do_globals)
 {
     struct symt_function*               curr_func = NULL;
     int                                 i, length;
-    const struct codeview_linetab*      flt;
     struct symt_block*                  block = NULL;
     struct symt*                        symt;
     const char*                         name;
@@ -1532,15 +1458,12 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
          */
 	case S_GPROC_V1:
 	case S_LPROC_V1:
-            flt = codeview_get_linetab(linetab, sym->proc_v1.segment, sym->proc_v1.offset);
             if (curr_func) FIXME("nested function\n");
             curr_func = symt_new_function(msc_dbg->module, compiland,
                                           terminate_string(&sym->proc_v1.p_name),
                                           codeview_get_address(msc_dbg, sym->proc_v1.segment, sym->proc_v1.offset),
                                           sym->proc_v1.proc_len,
                                           codeview_get_type(sym->proc_v1.proctype, FALSE));
-            codeview_add_func_linenum(msc_dbg->module, curr_func, flt, 
-                                      sym->proc_v1.offset, sym->proc_v1.proc_len);
             loc.kind = loc_absolute;
             loc.offset = sym->proc_v1.debug_start;
             symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
@@ -1549,15 +1472,12 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	    break;
 	case S_GPROC_V2:
 	case S_LPROC_V2:
-            flt = codeview_get_linetab(linetab, sym->proc_v2.segment, sym->proc_v2.offset);
             if (curr_func) FIXME("nested function\n");
             curr_func = symt_new_function(msc_dbg->module, compiland,
                                           terminate_string(&sym->proc_v2.p_name),
                                           codeview_get_address(msc_dbg, sym->proc_v2.segment, sym->proc_v2.offset),
                                           sym->proc_v2.proc_len,
                                           codeview_get_type(sym->proc_v2.proctype, FALSE));
-            codeview_add_func_linenum(msc_dbg->module, curr_func, flt, 
-                                      sym->proc_v2.offset, sym->proc_v2.proc_len);
             loc.kind = loc_absolute;
             loc.offset = sym->proc_v2.debug_start;
             symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
@@ -1566,15 +1486,12 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 	    break;
 	case S_GPROC_V3:
 	case S_LPROC_V3:
-            flt = codeview_get_linetab(linetab, sym->proc_v3.segment, sym->proc_v3.offset);
             if (curr_func) FIXME("nested function\n");
             curr_func = symt_new_function(msc_dbg->module, compiland,
                                           sym->proc_v3.name,
                                           codeview_get_address(msc_dbg, sym->proc_v3.segment, sym->proc_v3.offset),
                                           sym->proc_v3.proc_len,
                                           codeview_get_type(sym->proc_v3.proctype, FALSE));
-            codeview_add_func_linenum(msc_dbg->module, curr_func, flt, 
-                                      sym->proc_v3.offset, sym->proc_v3.proc_len);
             loc.kind = loc_absolute;
             loc.offset = sym->proc_v3.debug_start;
             symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
@@ -1873,7 +1790,6 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 
     if (curr_func) symt_normalize_function(msc_dbg->module, curr_func);
 
-    HeapFree(GetProcessHeap(), 0, linetab);
     return TRUE;
 }
 
@@ -2477,10 +2393,10 @@ static BOOL pdb_process_internal(const struct process* pcs,
         if (globalimage)
         {
             codeview_snarf(msc_dbg, globalimage, 0,
-                           pdb_get_file_size(pdb_lookup, symbols.gsym_file), NULL, FALSE);
+                           pdb_get_file_size(pdb_lookup, symbols.gsym_file), FALSE);
         }
 
-        /* Read per-module symbol / linenumber tables */
+        /* Read per-module symbols' tables */
         file = symbols_image + header_size;
         while (file - symbols_image < header_size + symbols.module_size)
         {
@@ -2494,17 +2410,15 @@ static BOOL pdb_process_internal(const struct process* pcs,
             modimage = pdb_read_file(image, pdb_lookup, sfile.file);
             if (modimage)
             {
-                struct codeview_linetab*    linetab = NULL;
-
-                if (sfile.lineno_size)
-                    linetab = codeview_snarf_linetab(msc_dbg->module, 
-                                                     modimage + sfile.symbol_size,
-                                                     sfile.lineno_size,
-                                                     pdb_lookup->kind == PDB_JG);
-
                 if (sfile.symbol_size)
                     codeview_snarf(msc_dbg, modimage, sizeof(DWORD),
-                                   sfile.symbol_size, linetab, TRUE);
+                                   sfile.symbol_size, TRUE);
+
+                if (sfile.lineno_size)
+                    codeview_snarf_linetab(msc_dbg,
+                                           modimage + sfile.symbol_size,
+                                           sfile.lineno_size,
+                                           pdb_lookup->kind == PDB_JG);
 
                 pdb_free(modimage);
             }
@@ -2662,6 +2576,9 @@ static BOOL codeview_process_info(const struct process* pcs,
 
             if (ent->SubSection == sstAlignSym)
             {
+                codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD),
+                               ent->cb, TRUE);
+
                 /*
                  * Check the next and previous entry.  If either is a
                  * sstSrcModule, it contains the line number info for
@@ -2669,22 +2586,14 @@ static BOOL codeview_process_info(const struct process* pcs,
                  *
                  * FIXME: This is not a general solution!
                  */
-                struct codeview_linetab*        linetab = NULL;
+                if (next && next->iMod == ent->iMod && next->SubSection == sstSrcModule)
+                    codeview_snarf_linetab(msc_dbg, msc_dbg->root + next->lfo,
+                                           next->cb, TRUE);
 
-                if (next && next->iMod == ent->iMod && 
-                    next->SubSection == sstSrcModule)
-                    linetab = codeview_snarf_linetab(msc_dbg->module, 
-                                                     msc_dbg->root + next->lfo, next->cb, 
-                                                     TRUE);
+                if (prev && prev->iMod == ent->iMod && prev->SubSection == sstSrcModule)
+                    codeview_snarf_linetab(msc_dbg, msc_dbg->root + prev->lfo,
+                                           prev->cb, TRUE);
 
-                if (prev && prev->iMod == ent->iMod &&
-                    prev->SubSection == sstSrcModule)
-                    linetab = codeview_snarf_linetab(msc_dbg->module, 
-                                                     msc_dbg->root + prev->lfo, prev->cb, 
-                                                     TRUE);
-
-                codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD),
-                               ent->cb, linetab, TRUE);
             }
         }
 
