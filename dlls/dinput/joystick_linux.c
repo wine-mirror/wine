@@ -781,7 +781,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
     LPCDIPROPHEADER ph)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
-    int i;
+    DWORD i;
 
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
 

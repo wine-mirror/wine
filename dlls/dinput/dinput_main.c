@@ -213,7 +213,7 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
 }
 
 void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
-    int i;
+    unsigned int i;
 
     FIXME("diaf.dwSize = %d\n", lpdiActionFormat->dwSize);
     FIXME("diaf.dwActionSize = %d\n", lpdiActionFormat->dwActionSize);
@@ -221,7 +221,7 @@ void _dump_diactionformatA(LPDIACTIONFORMATA lpdiActionFormat) {
     FIXME("diaf.dwNumActions = %d\n", lpdiActionFormat->dwNumActions);
     FIXME("diaf.rgoAction = %p\n", lpdiActionFormat->rgoAction);
     for (i=0;i<lpdiActionFormat->dwNumActions;i++) {
-        FIXME("diaf.rgoAction[%d]:\n", i);
+        FIXME("diaf.rgoAction[%u]:\n", i);
         FIXME("\tuAppData=%lx\n", lpdiActionFormat->rgoAction[i].uAppData);
         FIXME("\tdwSemantics=%x\n", lpdiActionFormat->rgoAction[i].dwSemantics);
         FIXME("\tdwFlags=%x\n", lpdiActionFormat->rgoAction[i].dwFlags);
@@ -250,8 +250,9 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 {
     IDirectInputImpl *This = (IDirectInputImpl *)iface;
     DIDEVICEINSTANCEA devInstance;
-    int i, j, r;
-    
+    unsigned int i;
+    int j, r;
+
     TRACE("(this=%p,0x%04x '%s',%p,%p,%04x)\n",
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
@@ -261,7 +262,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
         if (!dinput_devices[i]->enum_deviceA) continue;
         for (j = 0, r = -1; r != 0; j++) {
 	    devInstance.dwSize = sizeof(devInstance);
-	    TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
+	    TRACE("  - checking device %u ('%s')\n", i, dinput_devices[i]->name);
 	    if ((r = dinput_devices[i]->enum_deviceA(dwDevType, dwFlags, &devInstance, This->dwVersion, j))) {
 	        if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
 		    return 0;
@@ -280,8 +281,9 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 {
     IDirectInputImpl *This = impl_from_IDirectInput7W( iface );
     DIDEVICEINSTANCEW devInstance;
-    int i, j, r;
-    
+    unsigned int i;
+    int j, r;
+
     TRACE("(this=%p,0x%04x '%s',%p,%p,%04x)\n",
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
@@ -291,7 +293,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
         if (!dinput_devices[i]->enum_deviceW) continue;
         for (j = 0, r = -1; r != 0; j++) {
 	    devInstance.dwSize = sizeof(devInstance);
-	    TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
+	    TRACE("  - checking device %u ('%s')\n", i, dinput_devices[i]->name);
 	    if ((r = dinput_devices[i]->enum_deviceW(dwDevType, dwFlags, &devInstance, This->dwVersion, j))) {
 	        if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
 		    return 0;
@@ -479,7 +481,7 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
 {
   IDirectInputImpl *This = (IDirectInputImpl *)iface;
   HRESULT ret_value = DIERR_DEVICENOTREG;
-  int i;
+  unsigned int i;
 
   TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
 
@@ -515,7 +517,7 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
 {
   IDirectInputImpl *This = impl_from_IDirectInput7W( iface );
   HRESULT ret_value = DIERR_DEVICENOTREG;
-  int i;
+  unsigned int i;
 
   TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
 

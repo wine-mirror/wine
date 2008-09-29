@@ -406,7 +406,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
     }
 
     if (dwFlags & DIEP_TYPESPECIFICPARAMS) {
-	int expectedsize = 0;
+	DWORD expectedsize = 0;
 	if (This->effect.type == FF_PERIODIC) {
 	    expectedsize = sizeof(DIPERIODIC);
 	} else if (This->effect.type == FF_CONSTANT) {

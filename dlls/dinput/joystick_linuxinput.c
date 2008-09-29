@@ -835,7 +835,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       LPCDIPROPRANGE pr = (LPCDIPROPRANGE)ph;
 
       if (ph->dwHow == DIPH_DEVICE) {
-        int i;
+        DWORD i;
         TRACE("proprange(%d,%d) all\n", pr->lMin, pr->lMax);
         for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++) {
           /* Scale dead-zone */
@@ -862,7 +862,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
     case (DWORD)DIPROP_DEADZONE: {
       LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
       if (ph->dwHow == DIPH_DEVICE) {
-        int i;
+        DWORD i;
         TRACE("deadzone(%d) all\n", pd->dwData);
         for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++) {
           This->props[i].lDeadZone = pd->dwData;
@@ -893,7 +893,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
 
       if (ph->dwHow == DIPH_DEVICE) {
-        int i;
+        DWORD i;
 
         TRACE("saturation(%d) all\n", pd->dwData);
         for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
