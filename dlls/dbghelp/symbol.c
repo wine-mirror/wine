@@ -1750,3 +1750,15 @@ BOOL WINAPI SymAddSymbolW(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR name,
     return FALSE;
 }
 
+/******************************************************************
+ *		SymSetScopeFromAddr (DBGHELP.@)
+ */
+BOOL WINAPI SymSetScopeFromAddr(HANDLE hProcess, ULONG64 addr)
+{
+    struct process*     pcs;
+
+    FIXME("(%p %s): stub\n", hProcess, wine_dbgstr_longlong(addr));
+
+    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
+    return TRUE;
+}

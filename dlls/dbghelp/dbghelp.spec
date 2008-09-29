@@ -157,7 +157,7 @@
 @ stub SymSetHomeDirectoryW
 @ stdcall SymSetOptions(long)
 @ stdcall SymSetParentWindow(long)
-@ stub SymSetScopeFromAddr
+@ stdcall SymSetScopeFromAddr(ptr double)
 @ stub SymSetScopeFromIndex
 @ stdcall SymSetSearchPath(long str)
 @ stdcall SymSetSearchPathW(long wstr)
