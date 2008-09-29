@@ -1033,6 +1033,19 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             nest_block++;
             break;
 
+        /* Additional function information */
+        case S_FUNCINFO_V2:
+            printf("\tFunction info V2 unk1:%x unk2:%x unk3:%x unk4:%x unk5:%x unk6:%x flags:%04x unk7:%x\n",
+                   sym->func_info_v2.unknown1,
+                   sym->func_info_v2.unknown2,
+                   sym->func_info_v2.unknown3,
+                   sym->func_info_v2.unknown4,
+                   sym->func_info_v2.unknown5,
+                   sym->func_info_v2.unknown6,
+                   sym->func_info_v2.flags,
+                   sym->func_info_v2.unknown7);
+            break;
+
         case S_SECUCOOKIE_V3:
             printf("\tSecurity Cookie V3 @%d unk:%x\n",
                    sym->security_cookie_v3.offset, sym->security_cookie_v3.unknown);
