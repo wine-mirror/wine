@@ -1619,6 +1619,7 @@ union codeview_symbol
 #define S_PUB_FUNC2_V3  0x1127
 #define S_SECTINFO_V3   0x1136
 #define S_SUBSECTINFO_V3 0x1137
+#define S_ENTRYPOINT_V3 0x1138
 #define S_SECUCOOKIE_V3 0x113A
 #define S_MSTOOLINFO_V3 0x113C
 #define S_MSTOOLENV_V3  0x113D

@@ -1299,6 +1299,11 @@ int codeview_dump_symbols(const void* root, unsigned long size)
                    (const char*)sym + 18);
             break;
 
+        case S_ENTRYPOINT_V3:
+            printf("\tSEntryPoint: id=%x '%s'\n",
+                   *(unsigned*)((const char*)sym + 4), (const char*)sym + 8);
+            break;
+
         default:
             printf(">>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
