@@ -16085,6 +16085,71 @@ interface IHTMLTableSection : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLTableRow interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f23c-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLTableRow : IDispatch
+{
+    [propput, id(DISPID_IHTMLTABLEROW_ALIGN)]
+    HRESULT align([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLEROW_ALIGN)]
+    HRESULT align([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLEROW_VALIGN)]
+    HRESULT vAlign([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLTABLEROW_VALIGN)]
+    HRESULT vAlign([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLTABLEROW_BGCOLOR)]
+    HRESULT bgColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLEROW_BGCOLOR)]
+    HRESULT bgColor([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLEROW_BORDERCOLOR)]
+    HRESULT borderColor([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLEROW_BORDERCOLOR)]
+    HRESULT borderColor([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLEROW_BORDERCOLORLIGHT)]
+    HRESULT borderColorLight([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLEROW_BORDERCOLORLIGHT)]
+    HRESULT borderColorLight([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLTABLEROW_BORDERCOLORDARK)]
+    HRESULT borderColorDark([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLTABLEROW_BORDERCOLORDARK)]
+    HRESULT borderColorDark([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLTABLEROW_ROWINDEX)]
+    HRESULT rowIndex([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLTABLEROW_SECTIONROWINDEX)]
+    HRESULT sectionRowIndex([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLTABLEROW_CELLS)]
+    HRESULT cells([out, retval] IHTMLElementCollection **p);
+
+    [id(DISPID_IHTMLTABLEROW_INSERTCELL)]
+    HRESULT insertCell(
+            [in, defaultvalue(-1)] long index,
+            [out, retval] IDispatch **row);
+
+    [id(DISPID_IHTMLTABLEROW_DELETECELL)]
+    HRESULT deleteCell([in, defaultvalue(-1)] long index);
+}
+
+/*****************************************************************************
  *    IHTMLScriptElement interface
  */
 [
