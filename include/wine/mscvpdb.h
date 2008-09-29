@@ -1654,6 +1654,37 @@ struct codeview_linetab
     const unsigned int*         offtab;
 };
 
+/* there's a new line tab structure from MS Studio 2005 and after
+ * it's made of:
+ * DWORD        000000f4
+ * DWORD        lineblk_offset (counting bytes after this field)
+ * an array of codeview_linetab2_file structures
+ * an array (starting at <lineblk_offset>) of codeview_linetab2_block structures
+ */
+
+struct codeview_linetab2_file
+{
+    DWORD       offset;         /* offset in string table for filename */
+    WORD        unk;            /* always 0x0110... type of following information ??? */
+    BYTE        md5[16];        /* MD5 signature of file (signature on file's content or name ???) */
+    WORD        pad0;           /* always 0 */
+};
+
+struct codeview_linetab2_block
+{
+    DWORD       header;         /* 0x000000f2 */
+    DWORD       size_of_block;  /* next block is at # bytes after this field */
+    DWORD       start;          /* start address of function with line numbers */
+    DWORD       seg;            /* segment of function with line numbers */
+    DWORD       size;           /* size of function with line numbers */
+    DWORD       file_offset;    /* offset for accessing corresponding codeview_linetab2_file */
+    DWORD       nlines;         /* number of lines in this block */
+    DWORD       size_lines;     /* number of bytes following for line number information */
+    struct {
+        DWORD   offset;         /* offset (from <seg>:<start>) for line number */
+        DWORD   lineno;         /* the line number (OR:ed with 0x80000000 why ???) */
+    } l[1];                     /* actually array of <nlines> */
+};
 
 /* ======================================== *
  *            PDB file information

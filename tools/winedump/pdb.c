@@ -160,6 +160,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     PDB_SYMBOLS*    symbols;
     unsigned char*  modimage;
     const char*     file;
+    char*           filesimage;
+    DWORD           filessize = 0;
 
     symbols = reader->read_file(reader, 3);
 
@@ -208,6 +210,21 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
         printf("\t----------offsets------------\n");
         src = (const BYTE*)((const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size);
         dump_data(src, symbols->offset_size, "    ");
+    }
+
+    filesimage = reader->read_file(reader, 12);   /* FIXME: really fixed ??? */
+    if (filesimage)
+    {
+        if (*(const DWORD*)filesimage == 0xeffeeffe)
+        {
+            filessize = *(const DWORD*)(filesimage + 8);
+        }
+        else
+        {
+            printf("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)filesimage);
+            free(filesimage);
+            filesimage = NULL;
+        }
     }
 
     if (symbols->srcmodule_size)
@@ -408,7 +425,12 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             /* line number info */
             if (lineno_size)
                 codeview_dump_linetab((const char*)modimage + symbol_size, lineno_size, TRUE, "        ");
-
+            /* anyway, lineno_size doesn't see to really be the size of the line number information, and
+             * it's not clear yet when to call for linetab2...
+             */
+            codeview_dump_linetab2((const char*)modimage + symbol_size + lineno_size,
+                                   total_size - (symbol_size + lineno_size),
+                                   filesimage + 12, filessize, "        ");
             /* what's that part ??? */
             if (0)
                 dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "    ");
@@ -419,6 +441,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
         file = (char*)((DWORD_PTR)(file_name + strlen(file_name) + 1 + 3) & ~3);
     }
     free(symbols);
+    free(filesimage);
 }
 
 static void pdb_dump_types(struct pdb_reader* reader)

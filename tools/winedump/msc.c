@@ -1365,3 +1365,39 @@ void codeview_dump_linetab(const char* linetab, DWORD size, BOOL pascal_str, con
 	}
     }
 }
+
+void codeview_dump_linetab2(const char* linetab, DWORD size, const char* strimage, DWORD strsize, const char* pfx)
+{
+    DWORD       offset;
+    unsigned    i;
+    const struct codeview_linetab2_block* lbh;
+    const struct codeview_linetab2_file* fd;
+
+    if (*(const DWORD*)linetab != 0x000000f4) return;
+    offset = *((const DWORD*)linetab + 1);
+    lbh = (const struct codeview_linetab2_block*)(linetab + 8 + offset);
+    while ((const char*)lbh < linetab + size)
+    {
+        if (lbh->header != 0x000000f2)
+        /* FIXME: should also check that whole lbh fits in linetab + size */
+        {
+            /* printf("%sblock end %x\n", pfx, lbh->header); */
+            break;
+        }
+        printf("%sblock from %04x:%08x #%x (%x lines)\n",
+               pfx, lbh->seg, lbh->start, lbh->size, lbh->nlines);
+        fd = (const struct codeview_linetab2_file*)(linetab + 8 + lbh->file_offset);
+        printf("%s  md5=%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+               pfx, fd->md5[ 0], fd->md5[ 1], fd->md5[ 2], fd->md5[ 3],
+               fd->md5[ 4], fd->md5[ 5], fd->md5[ 6], fd->md5[ 7],
+               fd->md5[ 8], fd->md5[ 9], fd->md5[10], fd->md5[11],
+               fd->md5[12], fd->md5[13], fd->md5[14], fd->md5[15]);
+        /* FIXME: should check that string is within strimage + strsize */
+        printf("%s  file=%s\n", pfx, strimage ? strimage + fd->offset : "--none--");
+        for (i = 0; i < lbh->nlines; i++)
+        {
+            printf("%s  offset=%08x line=%d\n", pfx, lbh->l[i].offset, lbh->l[i].lineno ^ 0x80000000);
+        }
+        lbh = (const struct codeview_linetab2_block*)((const char*)lbh + 8 + lbh->size_of_block);
+    }
+}
