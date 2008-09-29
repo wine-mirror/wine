@@ -1713,7 +1713,8 @@ static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *infoPtr)
 	if(vertInfo.nPage < infoPtr->nItemHeight)
 	  vertInfo.nPage = infoPtr->nItemHeight;
 
-	vertInfo.nPage /= infoPtr->nItemHeight;
+        if (infoPtr->nItemHeight > 0)
+            vertInfo.nPage /= infoPtr->nItemHeight;
     }
     else if (uView != LVS_LIST) /* LVS_ICON, or LVS_SMALLICON */
     {
