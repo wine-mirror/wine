@@ -1731,6 +1731,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
         case S_SECUCOOKIE_V3:
         case S_SECTINFO_V3:
         case S_SUBSECTINFO_V3:
+        case 0x1139:
             TRACE("Unsupported symbol id %x\n", sym->generic.id);
             break;
 
