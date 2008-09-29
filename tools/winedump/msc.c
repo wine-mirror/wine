@@ -1311,3 +1311,57 @@ int codeview_dump_symbols(const void* root, unsigned long size)
     }
     return 0;
 }
+
+void codeview_dump_linetab(const char* linetab, DWORD size, BOOL pascal_str, const char* pfx)
+{
+    const char*                 ptr = linetab;
+    int				nfile, nseg, nline;
+    int				i, j, k;
+    const unsigned int*         filetab;
+    const unsigned int*         lt_ptr;
+    const struct startend*      start;
+
+    nfile = *(const short*)linetab;
+    filetab = (const unsigned int*)(linetab + 2 * sizeof(short));
+    printf("%s%d files with %d ???\n", pfx, nfile, *(const short*)(linetab + sizeof(short)));
+
+    for (i = 0; i < nfile; i++)
+    {
+        ptr = linetab + filetab[i];
+        nseg = *(const short*)ptr;
+        ptr += 2 * sizeof(short);
+        lt_ptr = (const unsigned int*)ptr;
+        start = (const struct startend*)(lt_ptr + nseg);
+
+        /*
+         * Now snarf the filename for all of the segments for this file.
+         */
+        if (pascal_str)
+        {
+            char			filename[MAX_PATH];
+            const struct p_string*      p_fn;
+
+            p_fn = (const struct p_string*)(start + nseg);
+            memset(filename, 0, sizeof(filename));
+            memcpy(filename, p_fn->name, p_fn->namelen);
+            printf("%slines for file #%d/%d %s %d\n", pfx, i, nfile, filename, nseg);
+        }
+        else
+            printf("%slines for file #%d/%d %s %d\n", pfx, i, nfile, (const char*)(start + nseg), nseg);
+
+        for (j = 0; j < nseg; j++)
+	{
+            ptr = linetab + *lt_ptr++;
+            nline = *(const short*)(ptr + 2);
+            printf("%s  %04x:%08x-%08x #%d\n",
+                   pfx, *(const short*)(ptr + 0), start[j].start, start[j].end, nline);
+            ptr += 4;
+            for (k = 0; k < nline; k++)
+            {
+                printf("%s    %x %d\n",
+                       pfx, ((const unsigned int*)ptr)[k],
+                       ((const unsigned short*)((const unsigned int*)ptr + nline))[k]);
+            }
+	}
+    }
+}

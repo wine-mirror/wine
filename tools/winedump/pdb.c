@@ -405,6 +405,10 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             if (symbol_size)
                 codeview_dump_symbols((const char*)modimage + sizeof(DWORD), symbol_size);
 
+            /* line number info */
+            if (lineno_size)
+                codeview_dump_linetab((const char*)modimage + symbol_size, lineno_size, TRUE, "        ");
+
             /* what's that part ??? */
             if (0)
                 dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "    ");
