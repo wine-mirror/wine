@@ -169,6 +169,132 @@ static void codeview_init_basic_types(struct module* module)
     cv_basic_types[T_32PHRESULT]= &symt_new_pointer(module, cv_basic_types[T_HRESULT])->symt;
 }
 
+static int leaf_as_variant(VARIANT* v, const unsigned short int* leaf)
+{
+    unsigned short int type = *leaf++;
+    int length = 2;
+
+    if (type < LF_NUMERIC)
+    {
+        v->n1.n2.vt = VT_UINT;
+        v->n1.n2.n3.uintVal = type;
+    }
+    else
+    {
+        switch (type)
+        {
+        case LF_CHAR:
+            length += 1;
+            v->n1.n2.vt = VT_I1;
+            v->n1.n2.n3.cVal = *(const char*)leaf;
+            break;
+
+        case LF_SHORT:
+            length += 2;
+            v->n1.n2.vt = VT_I2;
+            v->n1.n2.n3.iVal = *(const short*)leaf;
+            break;
+
+        case LF_USHORT:
+            length += 2;
+            v->n1.n2.vt = VT_UI2;
+            v->n1.n2.n3.uiVal = *leaf;
+            break;
+
+        case LF_LONG:
+            length += 4;
+            v->n1.n2.vt = VT_I4;
+            v->n1.n2.n3.lVal = *(const int*)leaf;
+            break;
+
+        case LF_ULONG:
+            length += 4;
+            v->n1.n2.vt = VT_UI4;
+            v->n1.n2.n3.uiVal = *(const unsigned int*)leaf;
+            break;
+
+        case LF_QUADWORD:
+            length += 8;
+            v->n1.n2.vt = VT_I8;
+            v->n1.n2.n3.llVal = *(const long long int*)leaf;
+            break;
+
+        case LF_UQUADWORD:
+            length += 8;
+            v->n1.n2.vt = VT_UI8;
+            v->n1.n2.n3.ullVal = *(const long long unsigned int*)leaf;
+            break;
+
+        case LF_REAL32:
+            length += 4;
+            v->n1.n2.vt = VT_R4;
+            v->n1.n2.n3.fltVal = *(const float*)leaf;
+            break;
+
+        case LF_REAL48:
+	    FIXME("Unsupported numeric leaf type %04x\n", type);
+            length += 6;
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+
+        case LF_REAL64:
+            length += 8;
+            v->n1.n2.vt = VT_R8;
+            v->n1.n2.n3.fltVal = *(const double*)leaf;
+            break;
+
+        case LF_REAL80:
+	    FIXME("Unsupported numeric leaf type %04x\n", type);
+            length += 10;
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+
+        case LF_REAL128:
+	    FIXME("Unsupported numeric leaf type %04x\n", type);
+            length += 16;
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+
+        case LF_COMPLEX32:
+	    FIXME("Unsupported numeric leaf type %04x\n", type);
+            length += 4;
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+
+        case LF_COMPLEX64:
+	    FIXME("Unsupported numeric leaf type %04x\n", type);
+            length += 8;
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+
+        case LF_COMPLEX80:
+	    FIXME("Unsupported numeric leaf type %04x\n", type);
+            length += 10;
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+
+        case LF_COMPLEX128:
+	    FIXME("Unsupported numeric leaf type %04x\n", type);
+            length += 16;
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+
+        case LF_VARSTRING:
+	    FIXME("Unsupported numeric leaf type %04x\n", type);
+            length += 2 + *leaf;
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+
+        default:
+	    FIXME("Unknown numeric leaf type %04x\n", type);
+            v->n1.n2.vt = VT_EMPTY;     /* FIXME */
+            break;
+        }
+    }
+
+    return length;
+}
+
 static int numeric_leaf(int* value, const unsigned short int* leaf)
 {
     unsigned short int type = *leaf++;
@@ -1621,8 +1747,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 struct symt*            se;
                 VARIANT                 v;
 
-                v.n1.n2.vt = VT_I4;
-                vlen = numeric_leaf(&v.n1.n2.n3.intVal, &sym->constant_v1.cvalue);
+                vlen = leaf_as_variant(&v, &sym->constant_v1.cvalue);
                 name = (const struct p_string*)((const char*)&sym->constant_v1.cvalue + vlen);
                 se = codeview_get_type(sym->constant_v1.type, FALSE);
 
@@ -1639,8 +1764,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 struct symt*            se;
                 VARIANT                 v;
 
-                v.n1.n2.vt = VT_I4;
-                vlen = numeric_leaf(&v.n1.n2.n3.intVal, &sym->constant_v2.cvalue);
+                vlen = leaf_as_variant(&v, &sym->constant_v2.cvalue);
                 name = (const struct p_string*)((const char*)&sym->constant_v2.cvalue + vlen);
                 se = codeview_get_type(sym->constant_v2.type, FALSE);
 
@@ -1657,14 +1781,14 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 struct symt*            se;
                 VARIANT                 v;
 
-                v.n1.n2.vt = VT_I4;
-                vlen = numeric_leaf(&v.n1.n2.n3.intVal, &sym->constant_v3.cvalue);
+                vlen = leaf_as_variant(&v, &sym->constant_v3.cvalue);
                 name = (const char*)&sym->constant_v3.cvalue + vlen;
                 se = codeview_get_type(sym->constant_v3.type, FALSE);
 
                 TRACE("S-Constant-V3 %u %s %x\n",
                       v.n1.n2.n3.intVal, name, sym->constant_v3.type);
                 /* FIXME: we should add this as a constant value */
+                symt_new_constant(msc_dbg->module, compiland, name, se, &v);
             }
             break;
 
