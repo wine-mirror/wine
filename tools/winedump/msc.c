@@ -1243,6 +1243,18 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             }
             break;
 
+        case S_MSTOOLINFO_V3:
+            {
+                const unsigned short*   ptr = ((const unsigned short*)sym) + 2;
+
+                printf("\tTool info V3: unk=%04x%04x%04x front=%d.%d.%d.%d back=%d.%d.%d.%d %s\n",
+                       ptr[0], ptr[1], ptr[2],
+                       ptr[3], ptr[4], ptr[5], ptr[6],
+                       ptr[7], ptr[8], ptr[9], ptr[10],
+                       (const char*)(ptr + 11));
+            }
+            break;
+
         case S_MSTOOLENV_V3:
             {
                 const char*             x1 = (const char*)sym + 4 + 1;

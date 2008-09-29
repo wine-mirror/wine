@@ -1714,6 +1714,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             break;
 
         case S_MSTOOL_V3: /* just to silence a few warnings */
+        case S_MSTOOLINFO_V3:
         case S_MSTOOLENV_V3:
             break;
 
