@@ -1101,6 +1101,7 @@ static void test_SETPARAFORMAT(void)
   HWND hwndRichEdit = new_richedit(NULL);
   PARAFORMAT2 fmt;
   HRESULT ret;
+  LONG expectedMask = PFM_ALL2 & ~PFM_TABLEROWDELIMITER;
   fmt.cbSize = sizeof(PARAFORMAT2);
   fmt.dwMask = PFM_ALIGNMENT;
   fmt.wAlignment = PFA_LEFT;
@@ -1111,8 +1112,14 @@ static void test_SETPARAFORMAT(void)
   fmt.cbSize = sizeof(PARAFORMAT2);
   fmt.dwMask = -1;
   ret = SendMessage(hwndRichEdit, EM_GETPARAFORMAT, 0, (LPARAM) &fmt);
-  ok(ret == PFM_ALL2, "expected %x got %x\n", PFM_ALL2, ret);
-  ok(fmt.dwMask == PFM_ALL2, "expected %x got %x\n", PFM_ALL2, fmt.dwMask);
+  /* Ignore the PFM_TABLEROWDELIMITER bit because it changes
+   * between richedit different native builds of riched20.dll
+   * used on different Windows versions. */
+  ret &= ~PFM_TABLEROWDELIMITER;
+  fmt.dwMask &= ~PFM_TABLEROWDELIMITER;
+
+  ok(ret == expectedMask, "expected %x got %x\n", expectedMask, ret);
+  ok(fmt.dwMask == expectedMask, "expected %x got %x\n", expectedMask, fmt.dwMask);
 
   DestroyWindow(hwndRichEdit);
 }
