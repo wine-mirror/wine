@@ -649,7 +649,7 @@ static void test_get_displayname(void)
 
     /* Delete the service */
     ret = DeleteService(svc_handle);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success (err=%d)\n", GetLastError());
 
     CloseServiceHandle(svc_handle);
     CloseServiceHandle(scm_handle);
@@ -1985,7 +1985,7 @@ static void test_refcount(void)
 
     /* Check if we can close the handle to the Service Control Manager */
     ret = CloseServiceHandle(scm_handle);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success (err=%d)\n", GetLastError());
 
     /* Get a new handle to the Service Control Manager */
     scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
@@ -1997,7 +1997,7 @@ static void test_refcount(void)
 
     /* Delete the service */
     ret = DeleteService(svc_handle4);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success (err=%d)\n", GetLastError());
 
     /* We cannot create the same service again as it's still marked as 'being deleted'.
      * The reason is that we still have 4 open handles to this service even though we
@@ -2023,13 +2023,13 @@ static void test_refcount(void)
 
     /* Close all the handles to the service and try again */
     ret = CloseServiceHandle(svc_handle4);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success (err=%d)\n", GetLastError());
     ret = CloseServiceHandle(svc_handle3);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success (err=%d)\n", GetLastError());
     ret = CloseServiceHandle(svc_handle2);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success (err=%d)\n", GetLastError());
     ret = CloseServiceHandle(svc_handle1);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success (err=%d)\n", GetLastError());
 
     /* Wait a while. Doing a CreateService too soon will result again
      * in an ERROR_SERVICE_MARKED_FOR_DELETE error.
@@ -2044,7 +2044,7 @@ static void test_refcount(void)
 
     /* Delete the service */
     ret = DeleteService(svc_handle5);
-    ok(ret, "Expected success\n");
+    ok(ret, "Expected success (err=%d)\n", GetLastError());
 
     /* Wait a while. Just in case one of the following tests does a CreateService again */
     Sleep(1000);
