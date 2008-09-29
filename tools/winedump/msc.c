@@ -930,11 +930,14 @@ int codeview_dump_symbols(const void* root, unsigned long size)
         /* Global and static functions */
 	case S_GPROC_V1:
 	case S_LPROC_V1:
-            printf("\tS-%s-Proc V1: '%s' (%04x:%08x#%x) type:%x\n",
+            printf("\tS-%s-Proc V1: '%s' (%04x:%08x#%x) type:%x attr:%x\n",
                    sym->generic.id == S_GPROC_V1 ? "Global" : "-Local",
                    p_string(&sym->proc_v1.p_name),
                    sym->proc_v1.segment, sym->proc_v1.offset,
-                   sym->proc_v1.proc_len, sym->proc_v1.proctype);
+                   sym->proc_v1.proc_len, sym->proc_v1.proctype,
+                   sym->proc_v1.flags);
+            printf("\t  Debug: start=%08x end=%08x\n",
+                   sym->proc_v1.debug_start, sym->proc_v1.debug_end);
             if (nest_block)
             {
                 printf(">>> prev func '%s' still has nest_block %u count\n", curr_func, nest_block);
@@ -944,18 +947,18 @@ int codeview_dump_symbols(const void* root, unsigned long size)
 /* EPP 	unsigned int	pparent; */
 /* EPP 	unsigned int	pend; */
 /* EPP 	unsigned int	next; */
-/* EPP 	unsigned int	debug_start; */
-/* EPP 	unsigned int	debug_end; */
-/* EPP 	unsigned char	flags; */
 	    break;
 
 	case S_GPROC_V2:
 	case S_LPROC_V2:
-            printf("\tS-%s-Proc V2: '%s' (%04x:%08x#%x) type:%x\n",
+            printf("\tS-%s-Proc V2: '%s' (%04x:%08x#%x) type:%x attr:%x\n",
                    sym->generic.id == S_GPROC_V2 ? "Global" : "-Local",
                    p_string(&sym->proc_v2.p_name),
                    sym->proc_v2.segment, sym->proc_v2.offset,
-                   sym->proc_v2.proc_len, sym->proc_v2.proctype);
+                   sym->proc_v2.proc_len, sym->proc_v2.proctype,
+                   sym->proc_v2.flags);
+            printf("\t  Debug: start=%08x end=%08x\n",
+                   sym->proc_v2.debug_start, sym->proc_v2.debug_end);
             if (nest_block)
             {
                 printf(">>> prev func '%s' still has nest_block %u count\n", curr_func, nest_block);
@@ -965,18 +968,18 @@ int codeview_dump_symbols(const void* root, unsigned long size)
 /* EPP 	unsigned int	pparent; */
 /* EPP 	unsigned int	pend; */
 /* EPP 	unsigned int	next; */
-/* EPP 	unsigned int	debug_start; */
-/* EPP 	unsigned int	debug_end; */
-/* EPP 	unsigned char	flags; */
 	    break;
 
         case S_LPROC_V3:
         case S_GPROC_V3:
-            printf("\tS-%s-Procedure V3 '%s' (%04x:%08x#%x) type:%x\n",
+            printf("\tS-%s-Procedure V3 '%s' (%04x:%08x#%x) type:%x attr:%x\n",
                    sym->generic.id == S_GPROC_V3 ? "Global" : "Local",
                    sym->proc_v3.name,
                    sym->proc_v3.segment, sym->proc_v3.offset,
-                   sym->proc_v3.proc_len, sym->proc_v3.proctype);
+                   sym->proc_v3.proc_len, sym->proc_v3.proctype,
+                   sym->proc_v3.flags);
+            printf("\t  Debug: start=%08x end=%08x\n",
+                   sym->proc_v3.debug_start, sym->proc_v3.debug_end);
             if (nest_block)
             {
                 printf(">>> prev func '%s' still has nest_block %u count\n", curr_func, nest_block);
@@ -986,9 +989,6 @@ int codeview_dump_symbols(const void* root, unsigned long size)
 /* EPP 	unsigned int	pparent; */
 /* EPP 	unsigned int	pend; */
 /* EPP 	unsigned int	next; */
-/* EPP 	unsigned int	debug_start; */
-/* EPP 	unsigned int	debug_end; */
-/* EPP 	unsigned char	flags; */
             break;
 
         /* Function parameters and stack variables */
