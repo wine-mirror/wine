@@ -4,7 +4,7 @@
  *
  * Copyright (C) 1996,      Eric Youngdale.
  * Copyright (C) 1999-2000, Ulrich Weigand.
- * Copyright (C) 2004-2006, Eric Pouech.
+ * Copyright (C) 2004-2009, Eric Pouech.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1324,6 +1324,52 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
     }
 }
 
+static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const BYTE* linetab, DWORD size,
+                                     const char* strimage, DWORD strsize)
+{
+    DWORD       offset;
+    unsigned    i;
+    DWORD       addr;
+    const struct codeview_linetab2_block* lbh;
+    const struct codeview_linetab2_file* fd;
+    unsigned    source;
+    struct symt_function* func;
+
+    if (*(const DWORD*)linetab != 0x000000f4) return;
+    offset = *((const DWORD*)linetab + 1);
+
+    for (lbh = (const struct codeview_linetab2_block*)(linetab + 8 + offset);
+         (const BYTE*)lbh < linetab + size;
+         lbh = (const struct codeview_linetab2_block*)((const char*)lbh + 8 + lbh->size_of_block))
+    {
+        if (lbh->header != 0x000000f2)
+        /* FIXME: should also check that whole lbh fits in linetab + size */
+        {
+            TRACE("block end %x\n", lbh->header);
+            break;
+        }
+        addr = codeview_get_address(msc_dbg, lbh->seg, lbh->start);
+        TRACE("block from %04x:%08x #%x (%x lines)\n",
+               lbh->seg, lbh->start, lbh->size, lbh->nlines);
+        fd = (const struct codeview_linetab2_file*)(linetab + 8 + lbh->file_offset);
+        /* FIXME: should check that string is within strimage + strsize */
+        source = source_new(msc_dbg->module, NULL, strimage + fd->offset);
+        func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
+        /* FIXME: at least labels support line numbers */
+        if (!func || func->symt.tag != SymTagFunction)
+        {
+            WARN("--not a func at %04x:%08x %x tag=%d\n",
+                 lbh->seg, lbh->start, addr, func ? func->symt.tag : -1);
+            continue;
+        }
+        for (i = 0; i < lbh->nlines; i++)
+        {
+            symt_add_func_line(msc_dbg->module, func, source,
+                               lbh->l[i].lineno ^ 0x80000000, lbh->l[i].offset - lbh->start);
+        }
+    }
+}
+
 /*========================================================================
  * Process CodeView symbol information.
  */
@@ -2351,6 +2397,8 @@ static BOOL pdb_process_internal(const struct process* pcs,
     HANDLE      hFile, hMap = NULL;
     char*       image = NULL;
     BYTE*       symbols_image = NULL;
+    char*       files_image = NULL;
+    DWORD       files_size = 0;
 
     TRACE("Processing PDB file %s\n", pdb_lookup->filename);
 
@@ -2386,6 +2434,21 @@ static BOOL pdb_process_internal(const struct process* pcs,
                 symbols.version, symbols.version);
         }
 
+        files_image = pdb_read_file(image, pdb_lookup, 12);   /* FIXME: really fixed ??? */
+        if (files_image)
+        {
+            if (*(const DWORD*)files_image == 0xeffeeffe)
+            {
+                files_size = *(const DWORD*)(files_image + 8);
+            }
+            else
+            {
+                WARN("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)files_image);
+                free(files_image);
+                files_image = NULL;
+            }
+        }
+
         pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image, pdb_lookup, module_index);
 
         /* Read global symbol table */
@@ -2419,6 +2482,10 @@ static BOOL pdb_process_internal(const struct process* pcs,
                                            modimage + sfile.symbol_size,
                                            sfile.lineno_size,
                                            pdb_lookup->kind == PDB_JG);
+                if (files_image)
+                    codeview_snarf_linetab2(msc_dbg, modimage + sfile.symbol_size + sfile.lineno_size,
+                                   pdb_get_file_size(pdb_lookup, sfile.file) - sfile.symbol_size - sfile.lineno_size,
+                                   files_image + 12, files_size);
 
                 pdb_free(modimage);
             }
@@ -2443,6 +2510,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
  leave:
     /* Cleanup */
     pdb_free(symbols_image);
+    pdb_free(files_image);
     pdb_free_lookup(pdb_lookup);
 
     if (image) UnmapViewOfFile(image);
