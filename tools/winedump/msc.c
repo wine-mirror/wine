@@ -1033,6 +1033,11 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             nest_block++;
             break;
 
+        case S_SECUCOOKIE_V3:
+            printf("\tSecurity Cookie V3 @%d unk:%x\n",
+                   sym->security_cookie_v3.offset, sym->security_cookie_v3.unknown);
+            break;
+
         case S_END_V1:
             if (nest_block)
             {

@@ -1725,7 +1725,9 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             TRACE("S-Align V1\n");
             break;
 
+        /* the symbols we can safely ignore for now */
         case 0x112c:
+        case S_SECUCOOKIE_V3:
             TRACE("Unsupported symbol id %x\n", sym->generic.id);
             break;
 

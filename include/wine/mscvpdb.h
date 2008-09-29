@@ -1522,6 +1522,14 @@ union codeview_symbol
         unsigned int            offset;
         unsigned short          segment;
     } ssearch_v1;
+
+    struct
+    {
+        short int               len;
+        short int               id;
+        unsigned int            offset;
+        unsigned int            unknown;
+    } security_cookie_v3;
 };
 
 #define S_COMPILAND_V1  0x0001
@@ -1597,6 +1605,7 @@ union codeview_symbol
 #define S_MSTOOL_V3     0x1116  /* compiler command line options and build information */
 #define S_PUB_FUNC1_V3  0x1125  /* didn't get the difference between the two */
 #define S_PUB_FUNC2_V3  0x1127
+#define S_SECUCOOKIE_V3 0x113A
 
 /* ======================================== *
  *          Line number information
