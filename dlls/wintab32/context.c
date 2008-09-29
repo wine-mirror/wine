@@ -215,6 +215,8 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
             /* flip the Y axis */
             if (ptr->context.lcOutExtY > 0)
                 packet->pkY = ptr->context.lcOutExtY - packet->pkY;
+            else if (ptr->context.lcOutExtY < 0)
+                packet->pkY = abs(ptr->context.lcOutExtY + packet->pkY);
 
             DUMPPACKET(*packet);
 
