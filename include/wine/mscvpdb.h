@@ -1617,6 +1617,8 @@ union codeview_symbol
 #define S_MSTOOL_V3     0x1116  /* compiler command line options and build information */
 #define S_PUB_FUNC1_V3  0x1125  /* didn't get the difference between the two */
 #define S_PUB_FUNC2_V3  0x1127
+#define S_SECTINFO_V3   0x1136
+#define S_SUBSECTINFO_V3 0x1137
 #define S_SECUCOOKIE_V3 0x113A
 
 /* ======================================== *
