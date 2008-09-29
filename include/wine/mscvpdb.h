@@ -1620,6 +1620,7 @@ union codeview_symbol
 #define S_SECTINFO_V3   0x1136
 #define S_SUBSECTINFO_V3 0x1137
 #define S_SECUCOOKIE_V3 0x113A
+#define S_MSTOOLENV_V3  0x113D
 
 /* ======================================== *
  *          Line number information

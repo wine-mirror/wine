@@ -1243,6 +1243,22 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             }
             break;
 
+        case S_MSTOOLENV_V3:
+            {
+                const char*             x1 = (const char*)sym + 4 + 1;
+                const char*             x2;
+
+                printf("\tTool conf V3\n");
+                while (*x1)
+                {
+                    x2 = x1 + strlen(x1) + 1;
+                    if (!*x2) break;
+                    printf("\t\t%s: %s\n", x1, x2);
+                    x1 = x2 + strlen(x2) + 1;
+                }
+            }
+            break;
+
         case S_ALIGN_V1:
             /* simply skip it */
             break;
