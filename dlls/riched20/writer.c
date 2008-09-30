@@ -214,7 +214,7 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
         if (table[i].bCharSet == bCharSet
             && (table[i].szFaceName == face || !lstrcmpW(table[i].szFaceName, face)))
           break;
-      if (i == pStream->nFontTblLen) {
+      if (i == pStream->nFontTblLen && i < STREAMOUT_FONTTBL_SIZE) {
         table[i].bCharSet = bCharSet;
         table[i].szFaceName = face;
         pStream->nFontTblLen++;
@@ -226,7 +226,7 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
       for (i = 1; i < pStream->nColorTblLen; i++)
         if (pStream->colortbl[i] == crColor)
           break;
-      if (i == pStream->nColorTblLen) {
+      if (i == pStream->nColorTblLen && i < STREAMOUT_COLORTBL_SIZE) {
         pStream->colortbl[i] = crColor;
         pStream->nColorTblLen++;
       }
@@ -236,7 +236,7 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
       for (i = 1; i < pStream->nColorTblLen; i++)
         if (pStream->colortbl[i] == crColor)
           break;
-      if (i == pStream->nColorTblLen) {
+      if (i == pStream->nColorTblLen && i < STREAMOUT_COLORTBL_SIZE) {
         pStream->colortbl[i] = crColor;
         pStream->nColorTblLen++;
       }
