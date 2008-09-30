@@ -285,7 +285,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
         IDirectDrawSurfaceImpl *surf;
         IDirectDrawImpl *ddraw;
         IUnknown *ifaceToRelease = This->ifaceToRelease;
-        int i;
+        UINT i;
 
         /* Complex attached surfaces are destroyed implicitly when the root is released */
         EnterCriticalSection(&ddraw_cs);
