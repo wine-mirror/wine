@@ -479,17 +479,14 @@ static void test_get_known_usages(void)
     }
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(0, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(1, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(0, &usages);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     /* A value of 1 for the first parameter seems to imply the value is
@@ -498,9 +495,7 @@ static void test_get_known_usages(void)
     SetLastError(0xdeadbeef);
     usages = NULL;
     ret = pWTHelperGetKnownUsages(1, &usages);
-    todo_wine
     ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
-    todo_wine
     ok(usages != NULL, "expected a pointer\n");
     if (ret && usages)
     {
@@ -523,17 +518,14 @@ static void test_get_known_usages(void)
      */
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(2, &usages);
-    todo_wine
     ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
     ok(usages == NULL, "expected pointer to be cleared\n");
     SetLastError(0xdeadbeef);
     usages = NULL;
     ret = pWTHelperGetKnownUsages(2, &usages);
-    todo_wine
     ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pWTHelperGetKnownUsages(2, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 }

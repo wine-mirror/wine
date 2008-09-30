@@ -735,13 +735,90 @@ HANDLE WINAPI WTHelperGetFileHandle(WINTRUST_DATA *data)
         return INVALID_HANDLE_VALUE;
 }
 
+static BOOL WINAPI WINTRUST_enumUsages(PCCRYPT_OID_INFO pInfo, void *pvArg)
+{
+    PCCRYPT_OID_INFO **usages = (PCCRYPT_OID_INFO **)pvArg;
+    DWORD cUsages;
+    BOOL ret;
+
+    if (!*usages)
+    {
+        cUsages = 0;
+        *usages = WINTRUST_Alloc(2 * sizeof(PCCRYPT_OID_INFO));
+    }
+    else
+    {
+        PCCRYPT_OID_INFO *ptr;
+
+        /* Count the existing usages.
+         * FIXME: make sure the new usage doesn't duplicate any in the list?
+         */
+        for (cUsages = 0, ptr = *usages; *ptr; ptr++, cUsages++)
+            ;
+        *usages = WINTRUST_ReAlloc((CRYPT_OID_INFO *)*usages,
+         (cUsages + 1) * sizeof(PCCRYPT_OID_INFO));
+    }
+    if (*usages)
+    {
+        (*usages)[cUsages] = pInfo;
+        (*usages)[cUsages + 1] = NULL;
+        ret = TRUE;
+    }
+    else
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        ret = FALSE;
+    }
+    return ret;
+}
+
 /***********************************************************************
  *		WTHelperGetKnownUsages(WINTRUST.@)
+ *
+ * Enumerates the known enhanced key usages as an array of PCCRYPT_OID_INFOs.
+ *
+ * PARAMS
+ *  action      [In]     1 => allocate and return known usages, 2 => free previously
+ *                       allocated usages.
+ *  usages      [In/Out] If action == 1, *usages is set to an array of
+ *                       PCCRYPT_OID_INFO *.  The array is terminated with a NULL
+ *                       pointer.
+ *                       If action == 2, *usages is freed.
+ *
+ * RETURNS
+ *  TRUE on success, FALSE on failure.
  */
 BOOL WINAPI WTHelperGetKnownUsages(DWORD action, PCCRYPT_OID_INFO **usages)
 {
-    FIXME("(%d, %p): stub\n", action, usages);
-    return FALSE;
+    BOOL ret;
+
+    TRACE("(%d, %p)\n", action, usages);
+
+    if (!usages)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (action == 1)
+    {
+        *usages = NULL;
+        ret = CryptEnumOIDInfo(CRYPT_ENHKEY_USAGE_OID_GROUP_ID, 0, usages,
+         WINTRUST_enumUsages);
+    }
+    else if (action == 2)
+    {
+        WINTRUST_Free((CRYPT_OID_INFO *)*usages);
+        *usages = NULL;
+        ret = TRUE;
+    }
+    else
+    {
+        WARN("unknown action %d\n", action);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        ret = FALSE;
+    }
+    return ret;
 }
 
 static const WCHAR Software_Publishing[] = {
