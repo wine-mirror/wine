@@ -52,19 +52,18 @@ extern ATOM atDialogThemeEnabled;
 HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
 {
     static const WCHAR szTab[] = { 'T','a','b',0 };
-    HRESULT hr;
+    BOOL res;
 
     TRACE("(%p,0x%08x\n", hwnd, dwFlags);
-    hr = SetPropW (hwnd, (LPCWSTR)MAKEINTATOM(atDialogThemeEnabled), 
+    res = SetPropW (hwnd, (LPCWSTR)MAKEINTATOM(atDialogThemeEnabled), 
         (HANDLE)(dwFlags|0x80000000)); 
         /* 0x80000000 serves as a "flags set" flag */
-    if (FAILED(hr))
-          return hr;
+    if (!res)
+          return HRESULT_FROM_WIN32(GetLastError());
     if (dwFlags & ETDT_USETABTEXTURE)
         return SetWindowTheme (hwnd, NULL, szTab);
     else
         return SetWindowTheme (hwnd, NULL, NULL);
-    return S_OK;
  }
 
 /***********************************************************************
