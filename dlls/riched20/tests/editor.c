@@ -392,7 +392,6 @@ static void line_scroll(HWND hwnd, int amount)
 static void test_EM_SCROLLCARET(void)
 {
   int prevY, curY;
-  HWND hwndRichEdit = new_richedit(NULL);
   const char text[] = "aa\n"
       "this is a long line of text that should be longer than the "
       "control's width\n"
@@ -402,6 +401,14 @@ static void test_EM_SCROLLCARET(void)
       "ff\n"
       "gg\n"
       "hh\n";
+  /* The richedit window height needs to be large enough vertically to fit in
+   * more than two lines of text, so the new_richedit function can't be used
+   * since a height of 60 was not large enough on some systems.
+   */
+  HWND hwndRichEdit = CreateWindow(RICHEDIT_CLASS, NULL,
+                                   ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
+                                   0, 0, 200, 80, NULL, NULL, hmoduleRichEdit, NULL);
+  ok(hwndRichEdit != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
 
   /* Can't verify this */
   SendMessage(hwndRichEdit, EM_SCROLLCARET, 0, 0);
