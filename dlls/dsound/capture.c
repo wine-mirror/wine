@@ -386,7 +386,7 @@ DirectSoundCaptureEnumerateW(
 
 static void capture_CheckNotify(IDirectSoundCaptureBufferImpl *This, DWORD from, DWORD len)
 {
-    unsigned i;
+    int i;
     for (i = 0; i < This->nrofnotifies; ++i) {
         LPDSBPOSITIONNOTIFY event = This->notifies + i;
         DWORD offset = event->dwOffset;

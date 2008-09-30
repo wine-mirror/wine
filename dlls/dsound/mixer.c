@@ -324,7 +324,8 @@ static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
  */
 void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD len, BOOL inmixer)
 {
-	INT	i, size;
+	DWORD	i;
+	INT	size;
 	BYTE	*ibp, *obp, *obp_begin;
 	INT	iAdvance = dsb->pwfx->nBlockAlign;
 	INT	oAdvance = dsb->device->pwfx->nBlockAlign;
