@@ -31,6 +31,13 @@
 #define MINSPERHOUR        60
 #define HOURSPERDAY        24
 
+static void test_ctime(void)
+{
+    time_t badtime = -1;
+    char* ret;
+    ret = ctime(&badtime);
+    ok(ret == NULL, "expected ctime to return NULL, got %s\n", ret);
+}
 static void test_gmtime(void)
 {
     time_t gmt = (time_t)NULL;
@@ -249,6 +256,7 @@ static void test_wstrtime(void)
 
 START_TEST(time)
 {
+    test_ctime();
     test_gmtime();
     test_mktime();
     test_localtime();

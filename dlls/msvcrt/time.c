@@ -447,7 +447,10 @@ MSVCRT_wchar_t * CDECL MSVCRT__wasctime(const struct MSVCRT_tm *mstm)
  */
 char * CDECL MSVCRT_ctime(const MSVCRT_time_t *time)
 {
-    return MSVCRT_asctime( MSVCRT_localtime(time) );
+    struct MSVCRT_tm *t;
+    t = MSVCRT_localtime( time );
+    if (!t) return NULL;
+    return MSVCRT_asctime( t );
 }
 
 /*********************************************************************
