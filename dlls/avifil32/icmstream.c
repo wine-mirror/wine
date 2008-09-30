@@ -821,14 +821,14 @@ static HRESULT AVIFILE_EncodeFrame(IAVIStreamImpl *This,
 
   do {
     DWORD   idxCkid = 0;
-    HRESULT hr;
+    DWORD   res;
 
-    hr = ICCompress(This->hic,icmFlags,This->lpbiCur,This->lpCur,lpbi,lpBits,
-		    &idxCkid, &idxFlags, This->lCurrent, dwRequest, dwCurQual,
-		    noPrev ? NULL:This->lpbiPrev, noPrev ? NULL:This->lpPrev);
-    if (hr == ICERR_NEWPALETTE) {
+    res = ICCompress(This->hic,icmFlags,This->lpbiCur,This->lpCur,lpbi,lpBits,
+		     &idxCkid, &idxFlags, This->lCurrent, dwRequest, dwCurQual,
+		     noPrev ? NULL:This->lpbiPrev, noPrev ? NULL:This->lpPrev);
+    if (res == ICERR_NEWPALETTE) {
       FIXME(": codec has changed palette -- unhandled!\n");
-    } else if (hr != ICERR_OK)
+    } else if (res != ICERR_OK)
       return AVIERR_COMPRESSOR;
 
     /* need to check for framesize */
