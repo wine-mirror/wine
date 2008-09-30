@@ -279,7 +279,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"BLOCKQUOTE",elem_iids,        NULL},
     {"P",         elem_iids,        NULL},
     {"BR",        elem_iids,        NULL},
-    {"TABLE",     table_iids,       NULL},
+    {"TABLE",     table_iids,       &DIID_DispHTMLTable},
     {"TBODY",     elem_iids,        NULL},
     {"SCRIPT",    script_iids,      NULL},
     {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement},

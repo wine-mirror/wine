@@ -539,14 +539,31 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
     HTMLTable_destructor
 };
 
+static const tid_t HTMLTable_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    IHTMLTable_tid,
+    0
+};
+
+static dispex_static_data_t HTMLTable_dispex = {
+    NULL,
+    DispHTMLTable_tid,
+    NULL,
+    HTMLTable_iface_tids
+};
+
 HTMLElement *HTMLTable_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLTable *ret = heap_alloc_zero(sizeof(HTMLTable));
 
-    HTMLElement_Init(&ret->element);
-
     ret->element.node.vtbl = &HTMLTableImplVtbl;
     ret->lpHTMLTableVtbl = &HTMLTableVtbl;
+
+    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLTABLE(ret), &HTMLTable_dispex);
+    HTMLElement_Init(&ret->element);
 
     ConnectionPoint_Init(&ret->cp, &ret->element.cp_container, &DIID_HTMLTableEvents);
 
