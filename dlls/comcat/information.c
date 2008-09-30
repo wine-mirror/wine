@@ -373,7 +373,8 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Next(
     if (This == NULL || rgelt == NULL) return E_POINTER;
 
     if (This->key) while (fetched < celt) {
-	HRESULT res;
+	LSTATUS res;
+	HRESULT hr;
 	WCHAR catid[39];
 	DWORD cName = 39;
 	HKEY subkey;
@@ -383,16 +384,16 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Next(
 	if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
 	++(This->next_index);
 
-	res = CLSIDFromString(catid, &rgelt->catid);
-	if (FAILED(res)) continue;
+	hr = CLSIDFromString(catid, &rgelt->catid);
+	if (FAILED(hr)) continue;
 
 	res = RegOpenKeyExW(This->key, catid, 0, KEY_READ, &subkey);
 	if (res != ERROR_SUCCESS) continue;
 
-	res = COMCAT_GetCategoryDesc(subkey, This->lcid,
-				     rgelt->szDescription, 128);
+	hr = COMCAT_GetCategoryDesc(subkey, This->lcid,
+				    rgelt->szDescription, 128);
 	RegCloseKey(subkey);
-	if (FAILED(res)) continue;
+	if (FAILED(hr)) continue;
 
 	rgelt->lcid = This->lcid;
 	++fetched;
@@ -677,7 +678,8 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Next(
     if (This == NULL || rgelt == NULL) return E_POINTER;
 
     if (This->key) while (fetched < celt) {
-	HRESULT res;
+	LSTATUS res;
+	HRESULT hr;
 	WCHAR clsid[39];
 	DWORD cName = 39;
 	HKEY subkey;
@@ -687,15 +689,15 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Next(
 	if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
 	++(This->next_index);
 
-	res = CLSIDFromString(clsid, rgelt);
-	if (FAILED(res)) continue;
+	hr = CLSIDFromString(clsid, rgelt);
+	if (FAILED(hr)) continue;
 
 	res = RegOpenKeyExW(This->key, clsid, 0, KEY_READ, &subkey);
 	if (res != ERROR_SUCCESS) continue;
 
-	res = COMCAT_IsClassOfCategories(subkey, This->categories);
+	hr = COMCAT_IsClassOfCategories(subkey, This->categories);
 	RegCloseKey(subkey);
-	if (res != S_OK) continue;
+	if (hr != S_OK) continue;
 
 	++fetched;
 	++rgelt;
@@ -868,7 +870,8 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Next(
     if (This == NULL || rgelt == NULL) return E_POINTER;
 
     if (This->key) while (fetched < celt) {
-	HRESULT res;
+	LSTATUS res;
+	HRESULT hr;
 	WCHAR catid[39];
 	DWORD cName = 39;
 
@@ -877,8 +880,8 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Next(
 	if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
 	++(This->next_index);
 
-	res = CLSIDFromString(catid, rgelt);
-	if (FAILED(res)) continue;
+	hr = CLSIDFromString(catid, rgelt);
+	if (FAILED(hr)) continue;
 
 	++fetched;
 	++rgelt;
