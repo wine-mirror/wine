@@ -1210,48 +1210,23 @@ static HRESULT WINAPI HTMLElement_get_onfilterchange(IHTMLElement *iface, VARIAN
     return E_NOTIMPL;
 }
 
-static void create_child_list(HTMLDocument *doc, HTMLElement *elem, elem_vector *buf)
-{
-    nsIDOMNodeList *nsnode_list;
-    nsIDOMNode *iter;
-    PRUint32 list_len = 0, i;
-    nsresult nsres;
-
-    nsres = nsIDOMNode_GetChildNodes(elem->node.nsnode, &nsnode_list);
-    if(NS_FAILED(nsres)) {
-        ERR("GetChildNodes failed: %08x\n", nsres);
-        return;
-    }
-
-    nsIDOMNodeList_GetLength(nsnode_list, &list_len);
-    if(!list_len)
-        return;
-
-    buf->size = list_len;
-    buf->buf = heap_alloc(buf->size*sizeof(HTMLElement**));
-
-    for(i=0; i<list_len; i++) {
-        nsres = nsIDOMNodeList_Item(nsnode_list, i, &iter);
-        if(NS_FAILED(nsres)) {
-            ERR("Item failed: %08x\n", nsres);
-            continue;
-        }
-
-        if(is_elem_node(iter))
-            elem_vector_add(buf, HTMLELEM_NODE_THIS(get_node(doc, iter, TRUE)));
-    }
-}
-
 static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    elem_vector buf = {NULL, 0, 0};
+    nsIDOMNodeList *nsnode_list;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    create_child_list(This->node.doc, This, &buf);
+    nsres = nsIDOMNode_GetChildNodes(This->node.nsnode, &nsnode_list);
+    if(NS_FAILED(nsres)) {
+        ERR("GetChildNodes failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
-    *p = (IDispatch*)HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len);
+    *p = (IDispatch*)create_collection_from_nodelist(This->node.doc, (IUnknown*)HTMLELEM(This), nsnode_list);
+
+    nsIDOMNodeList_Release(nsnode_list);
     return S_OK;
 }
 

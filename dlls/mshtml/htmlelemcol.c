@@ -491,7 +491,8 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument *doc, IUnkn
 
         for(i=0; i<length; i++) {
             nsIDOMNodeList_Item(nslist, i, &nsnode);
-            buf.buf[i] = HTMLELEM_NODE_THIS(get_node(doc, nsnode, TRUE));
+            if(is_elem_node(nsnode))
+                buf.buf[i] = HTMLELEM_NODE_THIS(get_node(doc, nsnode, TRUE));
             nsIDOMNode_Release(nsnode);
         }
     }else {
