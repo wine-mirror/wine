@@ -450,8 +450,98 @@ static void test_wintrust(void)
      hr);
 }
 
+static BOOL (WINAPI * pWTHelperGetKnownUsages)(DWORD action, PCCRYPT_OID_INFO **usages);
+
+static void InitFunctionPtrs(void)
+{
+    HMODULE hWintrust = GetModuleHandleA("wintrust.dll");
+
+#define WINTRUST_GET_PROC(func) \
+    p ## func = (void*)GetProcAddress(hWintrust, #func); \
+    if(!p ## func) { \
+      trace("GetProcAddress(%s) failed\n", #func); \
+    }
+
+    WINTRUST_GET_PROC(WTHelperGetKnownUsages)
+
+#undef WINTRUST_GET_PROC
+}
+
+static void test_get_known_usages(void)
+{
+    BOOL ret;
+    PCCRYPT_OID_INFO *usages;
+
+    if (!pWTHelperGetKnownUsages)
+    {
+        skip("missing WTHelperGetKnownUsages\n");
+        return;
+    }
+    SetLastError(0xdeadbeef);
+    ret = pWTHelperGetKnownUsages(0, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pWTHelperGetKnownUsages(1, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pWTHelperGetKnownUsages(0, &usages);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    /* A value of 1 for the first parameter seems to imply the value is
+     * allocated
+     */
+    SetLastError(0xdeadbeef);
+    usages = NULL;
+    ret = pWTHelperGetKnownUsages(1, &usages);
+    todo_wine
+    ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
+    todo_wine
+    ok(usages != NULL, "expected a pointer\n");
+    if (ret && usages)
+    {
+        PCCRYPT_OID_INFO *ptr;
+
+        /* The returned usages are an array of PCCRYPT_OID_INFOs, terminated with a
+         * NULL pointer.
+         */
+        for (ptr = usages; *ptr; ptr++)
+        {
+            ok((*ptr)->cbSize == sizeof(CRYPT_OID_INFO),
+             "unexpected size %d\n", (*ptr)->cbSize);
+            /* Each returned usage is in the CRYPT_ENHKEY_USAGE_OID_GROUP_ID group */
+            ok((*ptr)->dwGroupId == CRYPT_ENHKEY_USAGE_OID_GROUP_ID,
+             "expected group CRYPT_ENHKEY_USAGE_OID_GROUP_ID, got %d\n",
+             (*ptr)->dwGroupId);
+        }
+    }
+    /* A value of 2 for the second parameter seems to imply the value is freed
+     */
+    SetLastError(0xdeadbeef);
+    ret = pWTHelperGetKnownUsages(2, &usages);
+    todo_wine
+    ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
+    ok(usages == NULL, "expected pointer to be cleared\n");
+    SetLastError(0xdeadbeef);
+    usages = NULL;
+    ret = pWTHelperGetKnownUsages(2, &usages);
+    todo_wine
+    ok(ret, "WTHelperGetKnownUsages failed: %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pWTHelperGetKnownUsages(2, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+}
+
 START_TEST(softpub)
 {
+    InitFunctionPtrs();
     test_provider_funcs();
     test_wintrust();
+    test_get_known_usages();
 }
