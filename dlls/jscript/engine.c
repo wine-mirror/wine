@@ -2069,6 +2069,17 @@ HRESULT delete_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags
         return hres;
 
     switch(exprval.type) {
+    case EXPRVAL_IDREF: {
+        IDispatchEx *dispex;
+
+        hres = IDispatch_QueryInterface(exprval.u.nameref.disp, &IID_IDispatchEx, (void**)&dispex);
+        if(SUCCEEDED(hres)) {
+            hres = IDispatchEx_DeleteMemberByDispID(dispex, exprval.u.idref.id);
+            b = VARIANT_TRUE;
+            IDispatchEx_Release(dispex);
+        }
+        break;
+    }
     case EXPRVAL_NAMEREF: {
         IDispatchEx *dispex;
 

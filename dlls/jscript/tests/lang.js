@@ -741,4 +741,11 @@ function varTestFunc(varTest3) {
     var varTest4;
 }
 
+deleteTest = 1;
+delete deleteTest;
+try {
+    tmp = deleteTest;
+    ok(false, "deleteTest not throwed exception?");
+}catch(ex) {}
+
 reportSuccess();
