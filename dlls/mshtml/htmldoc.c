@@ -289,7 +289,7 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
         return S_OK;
     }
 
-    *p = create_all_collection(get_node(This, (nsIDOMNode*)nselem, TRUE));
+    *p = create_all_collection(get_node(This, (nsIDOMNode*)nselem, TRUE), TRUE);
 
     nsIDOMElement_Release(nselem);
     return S_OK;

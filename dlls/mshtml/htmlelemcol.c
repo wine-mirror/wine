@@ -463,13 +463,14 @@ static void create_all_list(HTMLDocument *doc, HTMLDOMNode *elem, elem_vector_t 
     }
 }
 
-IHTMLElementCollection *create_all_collection(HTMLDOMNode *node)
+IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_root)
 {
     elem_vector_t buf = {NULL, 0, 8};
 
     buf.buf = heap_alloc(buf.size*sizeof(HTMLElement**));
 
-    elem_vector_add(&buf, HTMLELEM_NODE_THIS(node));
+    if(include_root)
+        elem_vector_add(&buf, HTMLELEM_NODE_THIS(node));
     create_all_list(node->doc, node, &buf);
     elem_vector_normalize(&buf);
 

@@ -35,43 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
-    HTMLElement **buf;
-    DWORD len;
-    DWORD size;
-} elem_vector;
-
-static void elem_vector_add(elem_vector *buf, HTMLElement *elem)
-{
-    if(buf->len == buf->size) {
-        buf->size <<= 1;
-        buf->buf = heap_realloc(buf->buf, buf->size*sizeof(HTMLElement**));
-    }
-
-    buf->buf[buf->len++] = elem;
-}
-
-static void elem_vector_normalize(elem_vector *buf)
-{
-    if(!buf->len) {
-        heap_free(buf->buf);
-        buf->buf = NULL;
-    }else if(buf->size > buf->len) {
-        buf->buf = heap_realloc(buf->buf, buf->len*sizeof(HTMLElement**));
-    }
-
-    buf->size = buf->len;
-}
-
-static BOOL is_elem_node(nsIDOMNode *node)
-{
-    PRUint16 type=0;
-
-    nsIDOMNode_GetNodeType(node, &type);
-
-    return type == ELEMENT_NODE || type == COMMENT_NODE;
-}
-
 #define HTMLELEM_THIS(iface) DEFINE_THIS(HTMLElement, HTMLElement, iface)
 
 #define HTMLELEM_NODE_THIS(iface) DEFINE_THIS2(HTMLElement, node, iface)
@@ -1230,52 +1193,13 @@ static HRESULT WINAPI HTMLElement_get_children(IHTMLElement *iface, IDispatch **
     return S_OK;
 }
 
-static void create_all_list(HTMLDocument *doc, HTMLDOMNode *elem, elem_vector *buf)
-{
-    nsIDOMNodeList *nsnode_list;
-    nsIDOMNode *iter;
-    PRUint32 list_len = 0, i;
-    nsresult nsres;
-
-    nsres = nsIDOMNode_GetChildNodes(elem->nsnode, &nsnode_list);
-    if(NS_FAILED(nsres)) {
-        ERR("GetChildNodes failed: %08x\n", nsres);
-        return;
-    }
-
-    nsIDOMNodeList_GetLength(nsnode_list, &list_len);
-    if(!list_len)
-        return;
-
-    for(i=0; i<list_len; i++) {
-        nsres = nsIDOMNodeList_Item(nsnode_list, i, &iter);
-        if(NS_FAILED(nsres)) {
-            ERR("Item failed: %08x\n", nsres);
-            continue;
-        }
-
-        if(is_elem_node(iter)) {
-            HTMLDOMNode *node = get_node(doc, iter, TRUE);
-
-            elem_vector_add(buf, HTMLELEM_NODE_THIS(node));
-            create_all_list(doc, node, buf);
-        }
-    }
-}
-
 static HRESULT WINAPI HTMLElement_get_all(IHTMLElement *iface, IDispatch **p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    elem_vector buf = {NULL, 0, 8};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    buf.buf = heap_alloc(buf.size*sizeof(HTMLElement**));
-
-    create_all_list(This->node.doc, &This->node, &buf);
-    elem_vector_normalize(&buf);
-
-    *p = (IDispatch*)HTMLElementCollection_Create((IUnknown*)HTMLELEM(This), buf.buf, buf.len);
+    *p = (IDispatch*)create_all_collection(&This->node, FALSE);
     return S_OK;
 }
 
