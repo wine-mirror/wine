@@ -810,7 +810,7 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
             }
           } else if (p->member.para.nFlags & MEPF_ROWEND) {
             pStream->nNestingLevel--;
-            if (pStream->nNestingLevel > 1) {
+            if (pStream->nNestingLevel >= 1) {
               if (!ME_StreamOutPrint(pStream, "{\\*\\nesttableprops"))
                 return FALSE;
               if (!ME_StreamOutRTFTableProps(editor, pStream, p))
