@@ -144,7 +144,6 @@ static void test_logpen(void)
         /* for some reason XP differentiates PS_NULL here */
         if (pen[i].style == PS_NULL)
         {
-        todo_wine
             ok(hpen == GetStockObject(NULL_PEN), "hpen should be a stock NULL_PEN\n");
             ok(size == sizeof(EXTLOGPEN), "GetObject returned %d, error %d\n", size, GetLastError());
             ok(elp.elpPenStyle == pen[i].ret_style, "expected %u, got %u\n", pen[i].ret_style, elp.elpPenStyle);
@@ -210,7 +209,6 @@ static void test_logpen(void)
         if (pen[i].style == PS_NULL)
         {
             ok(obj_type == OBJ_PEN, "wrong object type %u\n", obj_type);
-        todo_wine
             ok(hpen == GetStockObject(NULL_PEN), "hpen should be a stock NULL_PEN\n");
         }
         else

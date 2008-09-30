@@ -80,6 +80,12 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
     PENOBJ * penPtr;
     HPEN hpen;
 
+    if (pen->lopnStyle == PS_NULL)
+    {
+        hpen = GetStockObject(NULL_PEN);
+        if (hpen) return hpen;
+    }
+
     if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, (HGDIOBJ *)&hpen,
 				    &pen_funcs ))) return 0;
     if (pen->lopnStyle == PS_USERSTYLE || pen->lopnStyle == PS_ALTERNATE)
