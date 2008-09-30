@@ -286,7 +286,7 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
 
 static BOOL
 ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
-                          const ME_DisplayItem *para)
+                          ME_DisplayItem *para)
 {
   ME_DisplayItem *cell;
   char props[STREAMOUT_BUFFER_SIZE] = "";
@@ -294,7 +294,7 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
   if (!ME_StreamOutPrint(pStream, "\\trowd"))
     return FALSE;
   if (!editor->bEmulateVersion10) { /* v4.1 */
-    assert(para->member.para.nFlags & MEPF_ROWSTART);
+    para = ME_GetTableRowStart(para);
     cell = para->member.para.next_para->member.para.pCell;
     assert(cell);
     do {
