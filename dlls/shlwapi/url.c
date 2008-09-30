@@ -1589,7 +1589,7 @@ static HRESULT URL_GuessScheme(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
 	index++;
     }
     RegCloseKey(newkey);
-    return -1;
+    return E_FAIL;
 }
 
 static HRESULT URL_ApplyDefault(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut)
@@ -1652,7 +1652,7 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
     if (res1) {
 	/* no scheme in input, need to see if we need to guess */
 	if (dwFlags & URL_APPLY_GUESSSCHEME) {
-	    if ((ret = URL_GuessScheme(pszIn, pszOut, pcchOut)) != -1)
+	    if ((ret = URL_GuessScheme(pszIn, pszOut, pcchOut)) != E_FAIL)
 		return ret;
 	}
     }
