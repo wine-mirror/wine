@@ -517,8 +517,6 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    dispex_prop_t *prop;
-    HRESULT hres;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
@@ -527,16 +525,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         return E_NOTIMPL;
     }
 
-    hres = find_prop_name_prot(This, bstrName, (grfdex&fdexNameEnsure) != 0, &prop);
-    if(FAILED(hres))
-        return hres;
-    if(prop) {
-        *pid = prop_to_id(This, prop);
-        return S_OK;
-    }
-
-    TRACE("not found %s\n", debugstr_w(bstrName));
-    return DISP_E_UNKNOWNNAME;
+    return jsdisp_get_id(This, bstrName, grfdex, pid);
 }
 
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -798,6 +787,24 @@ DispatchEx *iface_to_jsdisp(IUnknown *iface)
         return NULL;
 
     return ret;
+}
+
+HRESULT jsdisp_get_id(DispatchEx *jsdisp, const WCHAR *name, DWORD flags, DISPID *id)
+{
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    hres = find_prop_name_prot(jsdisp, name, (flags&fdexNameEnsure) != 0, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    if(prop) {
+        *id = prop_to_id(jsdisp, prop);
+        return S_OK;
+    }
+
+    TRACE("not found %s\n", debugstr_w(name));
+    return DISP_E_UNKNOWNNAME;
 }
 
 HRESULT jsdisp_call_value(DispatchEx *disp, LCID lcid, WORD flags, DISPPARAMS *dp, VARIANT *retv,

@@ -203,13 +203,6 @@ void exec_release(exec_ctx_t *ctx)
     heap_free(ctx);
 }
 
-static HRESULT dispex_get_id(IDispatchEx *dispex, BSTR name, DWORD flags, DISPID *id)
-{
-    *id = 0;
-
-    return IDispatchEx_GetDispID(dispex, name, flags|fdexNameCaseSensitive, id);
-}
-
 static HRESULT disp_get_id(IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
 {
     IDispatchEx *dispex;
@@ -223,7 +216,8 @@ static HRESULT disp_get_id(IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
         return IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, id);
     }
 
-    hres = dispex_get_id(dispex, name, flags, id);
+    *id = 0;
+    hres = IDispatchEx_GetDispID(dispex, name, flags|fdexNameCaseSensitive, id);
     IDispatchEx_Release(dispex);
     return hres;
 }
@@ -433,7 +427,7 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
     TRACE("%s\n", debugstr_w(identifier));
 
     for(scope = ctx->scope_chain; scope; scope = scope->next) {
-        hres = dispex_get_id(_IDispatchEx_(scope->obj), identifier, 0, &id);
+        hres = jsdisp_get_id(scope->obj, identifier, 0, &id);
         if(SUCCEEDED(hres))
             break;
     }
@@ -443,7 +437,7 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
         return S_OK;
     }
 
-    hres = dispex_get_id(_IDispatchEx_(ctx->parser->script->global), identifier, 0, &id);
+    hres = jsdisp_get_id(ctx->parser->script->global, identifier, 0, &id);
     if(SUCCEEDED(hres)) {
         exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->global), id);
         return S_OK;
@@ -460,14 +454,14 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
         return S_OK;
     }
 
-    hres = dispex_get_id(_IDispatchEx_(ctx->parser->script->script_disp), identifier, 0, &id);
+    hres = jsdisp_get_id(ctx->parser->script->script_disp, identifier, 0, &id);
     if(SUCCEEDED(hres)) {
         exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->script_disp), id);
         return S_OK;
     }
 
     if(flags & EXPR_NEWREF) {
-        hres = dispex_get_id(_IDispatchEx_(ctx->var_disp), identifier, fdexNameEnsure, &id);
+        hres = jsdisp_get_id(ctx->var_disp, identifier, fdexNameEnsure, &id);
         if(FAILED(hres))
             return hres;
 
