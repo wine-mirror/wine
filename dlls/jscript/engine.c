@@ -2862,10 +2862,8 @@ HRESULT assign_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags
         hres = put_value(ctx->parser->script, &exprval, &rval, ei);
 
     exprval_release(&exprval);
-    if(FAILED(hres)) {
-        VariantClear(&rval);
+    if(FAILED(hres))
         return hres;
-    }
 
     ret->type = EXPRVAL_VARIANT;
     ret->u.var = rval;
