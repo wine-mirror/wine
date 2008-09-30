@@ -721,4 +721,22 @@ tmp.testWith = true;
 with(tmp)
     ok(testWith === true, "testWith !== true");
 
+if(false) {
+    var varTest1 = true;
+}
+
+ok(varTest1 === undefined, "varTest1 = " + varTest1);
+ok(varTest2 === undefined, "varTest2 = " + varTest1);
+
+var varTest2;
+
+function varTestFunc(varTest3) {
+    var varTest3;
+
+    ok(varTest3 === 3, "varTest3 = " + varTest3);
+    ok(varTest4 === undefined, "varTest4 = " + varTest4);
+
+    var varTest4;
+}
+
 reportSuccess();

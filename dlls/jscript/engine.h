@@ -23,6 +23,19 @@ typedef struct _obj_literal_t {
     struct _obj_literal_t *next;
 } obj_literal_t;
 
+typedef struct _var_list_t {
+    const WCHAR *identifier;
+
+    struct _var_list_t *next;
+} var_list_t;
+
+typedef struct _func_stack {
+    var_list_t *var_head;
+    var_list_t *var_tail;
+
+    struct _func_stack *next;
+} func_stack_t;
+
 typedef struct _parser_ctx_t {
     LONG ref;
 
@@ -38,6 +51,7 @@ typedef struct _parser_ctx_t {
     jsheap_t heap;
 
     obj_literal_t *obj_literals;
+    func_stack_t *func_stack;
 
     struct _parser_ctx_t *next;
 } parser_ctx_t;
@@ -289,6 +303,7 @@ struct _source_elements_t {
     statement_t *statement_tail;
     function_declaration_t *functions;
     function_declaration_t *functions_tail;
+    var_list_t *variables;
 };
 
 typedef struct {

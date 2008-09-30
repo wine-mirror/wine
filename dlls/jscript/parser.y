@@ -31,6 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 static int parser_error(const char*);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
 static void program_parsed(parser_ctx_t*,source_elements_t*);
+static source_elements_t *function_body_parsed(parser_ctx_t*,source_elements_t*);
 
 typedef struct _statement_list_t {
     statement_t *head;
@@ -119,6 +120,12 @@ typedef struct _parameter_list_t {
 
 static parameter_list_t *new_parameter_list(parser_ctx_t*,const WCHAR*);
 static parameter_list_t *parameter_list_add(parser_ctx_t*,parameter_list_t*,const WCHAR*);
+
+static void push_func(parser_ctx_t*);
+static inline void pop_func(parser_ctx_t *ctx)
+{
+    ctx->func_stack = ctx->func_stack->next;
+}
 
 static expression_t *new_function_expression(parser_ctx_t*,const WCHAR*,parameter_list_t*,
         source_elements_t*,const WCHAR*,DWORD);
@@ -244,6 +251,7 @@ static source_elements_t *source_elements_add_function(source_elements_t*,functi
 %type <property_list> PropertyNameAndValueList
 %type <literal> PropertyName
 %type <literal> BooleanLiteral
+%type <srcptr> KFunction
 
 %%
 
@@ -261,17 +269,20 @@ SourceElements
 
 /* ECMA-262 3rd Edition    13 */
 FunctionDeclaration
-        : kFUNCTION tIdentifier '(' FormalParameterList_opt ')' '{' FunctionBody '}'
+        : KFunction tIdentifier '(' FormalParameterList_opt ')' '{' FunctionBody '}'
                                 { $$ = new_function_declaration(ctx, $2, $4, $7, $1, $8-$1+1); }
 
 /* ECMA-262 3rd Edition    13 */
 FunctionExpression
-        : kFUNCTION Identifier_opt '(' FormalParameterList_opt ')' '{' FunctionBody '}'
+        : KFunction Identifier_opt '(' FormalParameterList_opt ')' '{' FunctionBody '}'
                                 { $$ = new_function_expression(ctx, $2, $4, $7, $1, $8-$1+1); }
+
+KFunction
+        : kFUNCTION             { push_func(ctx); $$ = $1; }
 
 /* ECMA-262 3rd Edition    13 */
 FunctionBody
-        : SourceElements        { $$ = $1; }
+        : SourceElements        { $$ = function_body_parsed(ctx, $1); }
 
 /* ECMA-262 3rd Edition    13 */
 FormalParameterList
@@ -1018,10 +1029,19 @@ static statement_t *new_block_statement(parser_ctx_t *ctx, statement_list_t *lis
 static variable_declaration_t *new_variable_declaration(parser_ctx_t *ctx, const WCHAR *identifier, expression_t *expr)
 {
     variable_declaration_t *ret = parser_alloc(ctx, sizeof(variable_declaration_t));
+    var_list_t *var_list = parser_alloc(ctx, sizeof(var_list_t));
 
     ret->identifier = identifier;
     ret->expr = expr;
     ret->next = NULL;
+
+    var_list->identifier = identifier;
+    var_list->next = NULL;
+
+    if(ctx->func_stack->var_tail)
+        ctx->func_stack->var_tail = ctx->func_stack->var_tail->next = var_list;
+    else
+        ctx->func_stack->var_head = ctx->func_stack->var_tail = var_list;
 
     return ret;
 }
@@ -1511,8 +1531,29 @@ statement_list_t *statement_list_add(statement_list_t *list, statement_t *statem
     return list;
 }
 
+static void push_func(parser_ctx_t *ctx)
+{
+    func_stack_t *new_func = parser_alloc_tmp(ctx, sizeof(func_stack_t));
+
+    new_func->var_head = new_func->var_tail = NULL;
+
+    new_func->next = ctx->func_stack;
+    ctx->func_stack = new_func;
+}
+
+static source_elements_t *function_body_parsed(parser_ctx_t *ctx, source_elements_t *source)
+{
+    source->variables = ctx->func_stack->var_head;
+    pop_func(ctx);
+
+    return source;
+}
+
 static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
 {
+    source->variables = ctx->func_stack->var_head;
+    pop_func(ctx);
+
     ctx->source = source;
     ctx->hres = S_OK;
 }
@@ -1552,6 +1593,8 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, parser_ctx_t **ret)
 
     mark = jsheap_mark(&ctx->tmp_heap);
     jsheap_init(&parser_ctx->heap);
+
+    push_func(parser_ctx);
 
     parser_parse(parser_ctx);
     jsheap_clear(mark);

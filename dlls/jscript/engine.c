@@ -351,6 +351,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     script_ctx_t *script = parser->script;
     function_declaration_t *func;
     parser_ctx_t *prev_parser;
+    var_list_t *var;
     VARIANT val, tmp;
     statement_t *stat;
     exec_ctx_t *prev_ctx;
@@ -369,7 +370,15 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         V_VT(&var) = VT_DISPATCH;
         V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(func_obj);
         hres = jsdisp_propput_name(ctx->var_disp, func->identifier, script->lcid, &var, ei, NULL);
-        IDispatchEx_Release(_IDispatchEx_(func_obj));
+        jsdisp_release(func_obj);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    for(var = source->variables; var; var = var->next) {
+        DISPID id = 0;
+
+        hres = jsdisp_get_id(ctx->var_disp, var->identifier, fdexNameEnsure, &id);
         if(FAILED(hres))
             return hres;
     }
