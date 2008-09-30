@@ -70,7 +70,8 @@ static HRESULT WINAPI IDirect3DVertexShader8Impl_GetDevice(IDirect3DVertexShader
     HRESULT hr = D3D_OK;
     TRACE("(%p) : Relay\n", This);
 
-    if (D3D_OK == (hr = IWineD3DVertexShader_GetDevice(This->wineD3DVertexShader, &myDevice) && myDevice != NULL)) {
+    hr = IWineD3DVertexShader_GetDevice(This->wineD3DVertexShader, &myDevice);
+    if (D3D_OK == hr && myDevice != NULL) {
         hr = IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
         IWineD3DDevice_Release(myDevice);
     } else {
