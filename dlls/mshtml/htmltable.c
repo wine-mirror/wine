@@ -274,8 +274,21 @@ static HRESULT WINAPI HTMLTable_refresh(IHTMLTable *iface)
 static HRESULT WINAPI HTMLTable_get_rows(IHTMLTable *iface, IHTMLElementCollection **p)
 {
     HTMLTable *This = HTMLTABLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMHTMLCollection *nscol;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLTableElement_GetRows(This->nstable, &nscol);
+    if(NS_FAILED(nsres)) {
+        ERR("GetRows failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = create_collection_from_htmlcol(This->element.node.doc, (IUnknown*)HTMLTABLE(This), nscol);
+
+    nsIDOMHTMLCollection_Release(nscol);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTable_put_width(IHTMLTable *iface, VARIANT v)

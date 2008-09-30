@@ -45,7 +45,7 @@ static const char elem_test_str[] =
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
-    "<table><tbody><tr></tr></tbody></table>"
+    "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"></tr></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"></script>"
     "<test />"
     "<img id=\"imgid\"/>"
@@ -2243,6 +2243,30 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_doc_title(doc, "");
 }
 
+static void test_table_elem(IHTMLElement *elem)
+{
+    IHTMLElementCollection *col;
+    IHTMLTable *table;
+    HRESULT hres;
+
+    static const elem_type_t row_types[] = {ET_TR,ET_TR};
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTable, (void**)&table);
+    ok(hres == S_OK, "Could not get IHTMLTable iface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    col = NULL;
+    hres = IHTMLTable_get_rows(table, &col);
+    ok(hres == S_OK, "get_rows failed: %08x\n", hres);
+    ok(col != NULL, "get_ros returned NULL\n");
+
+    test_elem_collection((IUnknown*)col, row_types, sizeof(row_types)/sizeof(*row_types));
+    IHTMLElementCollection_Release(col);
+
+    IHTMLTable_Release(table);
+}
+
 static void test_stylesheet(IDispatch *disp)
 {
     IHTMLStyleSheetRulesCollection *col = NULL;
@@ -2359,6 +2383,7 @@ static void test_elems(IHTMLDocument2 *doc)
     static const WCHAR sW[] = {'s',0};
     static const WCHAR scW[] = {'s','c',0};
     static const WCHAR xxxW[] = {'x','x','x',0};
+    static const WCHAR tblW[] = {'t','b','l',0};
 
     static const elem_type_t all_types[] = {
         ET_HTML,
@@ -2375,6 +2400,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TEXTAREA,
         ET_TABLE,
         ET_TBODY,
+        ET_TR,
         ET_TR,
         ET_SCRIPT,
         ET_TEST,
@@ -2534,6 +2560,13 @@ static void test_elems(IHTMLDocument2 *doc)
         test_img_set_src((IUnknown*)elem, "about:blank");
         test_img_alt((IUnknown*)elem, NULL);
         test_img_set_alt((IUnknown*)elem, "alt test");
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_doc_elem_by_id(doc, tblW);
+    ok(elem != NULL, "elem == NULL\n");
+    if(elem) {
+        test_table_elem(elem);
         IHTMLElement_Release(elem);
     }
 

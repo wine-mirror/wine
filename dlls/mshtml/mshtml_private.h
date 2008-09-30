@@ -587,6 +587,7 @@ void set_script_mode(HTMLDocument*,SCRIPTMODE);
 IHTMLElementCollection *HTMLElementCollection_Create(IUnknown*,HTMLElement**,DWORD);
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*,BOOL);
 IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument*,IUnknown*,nsIDOMNodeList*);
+IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocument*,IUnknown*,nsIDOMHTMLCollection*);
 
 /* commands */
 typedef struct {

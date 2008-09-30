@@ -115,7 +115,6 @@ typedef nsISupports nsIDOMProcessingInstruction;
 typedef nsISupports nsIDOMEntityReference;
 typedef nsISupports nsIDOMHTMLFormElement;
 typedef nsISupports nsIDOMHTMLOptionsCollection;
-typedef nsISupports nsIDOMHTMLCollection;
 typedef nsISupports nsIWebProgressListener;
 typedef nsISupports nsIDOMCSSValue;
 typedef nsISupports nsIPrintSession;
@@ -822,6 +821,19 @@ interface nsIDOMNSHTMLElement : nsISupports
     nsresult blur();
     nsresult focus();
     nsresult ScrollIntoView(PRBool top);
+}
+
+[
+    object,
+    uuid(a6cf9083-15b3-11d2-932e-00805f8add32),
+    local
+    /* FROZEN */
+]
+interface nsIDOMHTMLCollection : nsISupports
+{
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult Item(PRUint32 index, nsIDOMNode **_retval);
+    nsresult NamedItem(const nsAString *name, nsIDOMNode **_retval);
 }
 
 [
