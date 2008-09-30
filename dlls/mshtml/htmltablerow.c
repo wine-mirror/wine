@@ -35,6 +35,8 @@ typedef struct {
     HTMLElement element;
 
     const IHTMLTableRowVtbl *lpHTMLTableRowVtbl;
+
+    nsIDOMHTMLTableRowElement *nsrow;
 } HTMLTableRow;
 
 #define HTMLTABLEROW(x)  ((IHTMLTableRow*)  &(x)->lpHTMLTableRowVtbl)
@@ -194,8 +196,21 @@ static HRESULT WINAPI HTMLTableRow_get_selectionRowIndex(IHTMLTableRow *iface, l
 static HRESULT WINAPI HTMLTableRow_get_cells(IHTMLTableRow *iface, IHTMLElementCollection **p)
 {
     HTMLTableRow *This = HTMLTABLEROW_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMHTMLCollection *nscol;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLTableRowElement_GetCells(This->nsrow, &nscol);
+    if(NS_FAILED(nsres)) {
+        ERR("GetCells failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = create_collection_from_htmlcol(This->element.node.doc, (IUnknown*)HTMLTABLEROW(This), nscol);
+
+    nsIDOMHTMLCollection_Release(nscol);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTableRow_insertCell(IHTMLTableRow *iface, long index, IDispatch **row)
@@ -271,6 +286,10 @@ static HRESULT HTMLTableRow_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 static void HTMLTableRow_destructor(HTMLDOMNode *iface)
 {
     HTMLTableRow *This = HTMLTABLEROW_NODE_THIS(iface);
+
+    if(This->nsrow)
+        nsIDOMHTMLTableRowElement_Release(This->nsrow);
+
     HTMLElement_destructor(&This->element.node);
 }
 
@@ -300,12 +319,17 @@ static dispex_static_data_t HTMLTableRow_dispex = {
 HTMLElement *HTMLTableRow_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLTableRow *ret = heap_alloc_zero(sizeof(HTMLTableRow));
+    nsresult nsres;
 
     ret->lpHTMLTableRowVtbl = &HTMLTableRowVtbl;
     ret->element.node.vtbl = &HTMLTableRowImplVtbl;
 
     init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLTABLEROW(ret), &HTMLTableRow_dispex);
     HTMLElement_Init(&ret->element);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableRowElement, (void**)&ret->nsrow);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIDOMHTMLTableRowElement iface: %08x\n", nsres);
 
     return &ret->element;
 }

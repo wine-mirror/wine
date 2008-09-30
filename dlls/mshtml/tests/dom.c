@@ -45,7 +45,7 @@ static const char elem_test_str[] =
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
-    "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"></tr></tbody></table>"
+    "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td>td1 text</td><td>td2 text</td></tr></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"></script>"
     "<test />"
     "<img id=\"imgid\"/>"
@@ -85,7 +85,8 @@ typedef enum {
     ET_TESTG,
     ET_COMMENT,
     ET_IMG,
-    ET_TR
+    ET_TR,
+    ET_TD
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -247,6 +248,16 @@ static const IID * const tr_iids[] = {
     NULL
 };
 
+static const IID * const td_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IDispatchEx,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const generic_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
@@ -286,7 +297,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"TEST",      generic_iids,     &DIID_DispHTMLGenericElement},
     {"!",         comment_iids,     &DIID_DispHTMLCommentElement},
     {"IMG",       img_iids,         &DIID_DispHTMLImg},
-    {"TR",        tr_iids,          &DIID_DispHTMLTableRow}
+    {"TR",        tr_iids,          &DIID_DispHTMLTableRow},
+    {"TD",        td_iids,          NULL}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -2243,6 +2255,30 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_doc_title(doc, "");
 }
 
+static void test_tr_elem(IHTMLElement *elem)
+{
+    IHTMLElementCollection *col;
+    IHTMLTableRow *row;
+    HRESULT hres;
+
+    static const elem_type_t cell_types[] = {ET_TD,ET_TD};
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTableRow, (void**)&row);
+    ok(hres == S_OK, "Could not get IHTMLTableRow iface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    col = NULL;
+    hres = IHTMLTableRow_get_cells(row, &col);
+    ok(hres == S_OK, "get_cells failed: %08x\n", hres);
+    ok(col != NULL, "get_cells returned NULL\n");
+
+    test_elem_collection((IUnknown*)col, cell_types, sizeof(cell_types)/sizeof(*cell_types));
+    IHTMLElementCollection_Release(col);
+
+    IHTMLTable_Release(row);
+}
+
 static void test_table_elem(IHTMLElement *elem)
 {
     IHTMLElementCollection *col;
@@ -2384,6 +2420,7 @@ static void test_elems(IHTMLDocument2 *doc)
     static const WCHAR scW[] = {'s','c',0};
     static const WCHAR xxxW[] = {'x','x','x',0};
     static const WCHAR tblW[] = {'t','b','l',0};
+    static const WCHAR row2W[] = {'r','o','w','2',0};
 
     static const elem_type_t all_types[] = {
         ET_HTML,
@@ -2402,6 +2439,8 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TBODY,
         ET_TR,
         ET_TR,
+        ET_TD,
+        ET_TD,
         ET_SCRIPT,
         ET_TEST,
         ET_IMG
@@ -2567,6 +2606,13 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_table_elem(elem);
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_doc_elem_by_id(doc, row2W);
+    ok(elem != NULL, "elem == NULL\n");
+    if(elem) {
+        test_tr_elem(elem);
         IHTMLElement_Release(elem);
     }
 

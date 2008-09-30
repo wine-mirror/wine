@@ -1389,6 +1389,31 @@ interface nsIDOMHTMLTableElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf90b6-15b3-11d2-932e-00805f8add32),
+    local
+    /* FROZEN */
+]
+interface nsIDOMHTMLTableRowElement : nsIDOMHTMLElement
+{
+    nsresult GetRowIndex(PRInt32 *aRowIndex);
+    nsresult GetSectionRowIndex(PRInt32 *aSectionRowIndex);
+    nsresult GetCells(nsIDOMHTMLCollection **aCells);
+    nsresult GetAlign(nsAString *aAlign);
+    nsresult SetAlign(const nsAString *aAlign);
+    nsresult GetBgColor(nsAString *aBgColor);
+    nsresult SetBgColor(const nsAString *aBgColor);
+    nsresult GetCh(nsAString *aCh);
+    nsresult SetCh(const nsAString *aCh);
+    nsresult GetChOff(nsAString *aChOff);
+    nsresult SetChOff(const nsAString *aChOff);
+    nsresult GetVAlign(nsAString *aVAlign);
+    nsresult SetVAlign(const nsAString *aVAlign);
+    nsresult InsertCell(PRInt32 index, nsIDOMHTMLElement **_retval);
+    nsresult DeleteCell(PRInt32 index);
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
     /* FROZEN */
