@@ -286,7 +286,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"TEST",      generic_iids,     &DIID_DispHTMLGenericElement},
     {"!",         comment_iids,     &DIID_DispHTMLCommentElement},
     {"IMG",       img_iids,         &DIID_DispHTMLImg},
-    {"TR",        tr_iids,          NULL}
+    {"TR",        tr_iids,          &DIID_DispHTMLTableRow}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
