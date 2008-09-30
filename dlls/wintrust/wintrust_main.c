@@ -735,6 +735,15 @@ HANDLE WINAPI WTHelperGetFileHandle(WINTRUST_DATA *data)
         return INVALID_HANDLE_VALUE;
 }
 
+/***********************************************************************
+ *		WTHelperGetKnownUsages(WINTRUST.@)
+ */
+BOOL WINAPI WTHelperGetKnownUsages(DWORD action, PCCRYPT_OID_INFO **usages)
+{
+    FIXME("(%d, %p): stub\n", action, usages);
+    return FALSE;
+}
+
 static const WCHAR Software_Publishing[] = {
  'S','o','f','t','w','a','r','e','\\',
  'M','i','c','r','o','s','o','f','t','\\',

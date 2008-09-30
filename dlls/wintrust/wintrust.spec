@@ -79,7 +79,7 @@
 @ stub WTHelperGetAgencyInfo
 @ stdcall WTHelperGetFileHandle(ptr)
 @ stdcall WTHelperGetFileName(ptr)
-@ stub WTHelperGetKnownUsages
+@ stdcall WTHelperGetKnownUsages(long ptr)
 @ stdcall WTHelperGetProvCertFromChain(ptr long)
 @ stdcall WTHelperGetProvPrivateDataFromChain(ptr ptr)
 @ stdcall WTHelperGetProvSignerFromChain(ptr long long long)
