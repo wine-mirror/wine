@@ -37,6 +37,7 @@ typedef struct {
     const IHTMLTableVtbl  *lpHTMLTableVtbl;
 
     ConnectionPoint cp;
+    nsIDOMHTMLTableElement *nstable;
 } HTMLTable;
 
 #define HTMLTABLE(x)  ((IHTMLTable*)  &(x)->lpHTMLTableVtbl)
@@ -529,6 +530,10 @@ static HRESULT HTMLTable_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 static void HTMLTable_destructor(HTMLDOMNode *iface)
 {
     HTMLTable *This = HTMLTABLE_NODE_THIS(iface);
+
+    if(This->nstable)
+        nsIDOMHTMLTableElement_Release(This->nstable);
+
     HTMLElement_destructor(&This->element.node);
 }
 
@@ -558,6 +563,7 @@ static dispex_static_data_t HTMLTable_dispex = {
 HTMLElement *HTMLTable_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLTable *ret = heap_alloc_zero(sizeof(HTMLTable));
+    nsresult nsres;
 
     ret->element.node.vtbl = &HTMLTableImplVtbl;
     ret->lpHTMLTableVtbl = &HTMLTableVtbl;
@@ -566,6 +572,10 @@ HTMLElement *HTMLTable_Create(nsIDOMHTMLElement *nselem)
     HTMLElement_Init(&ret->element);
 
     ConnectionPoint_Init(&ret->cp, &ret->element.cp_container, &DIID_HTMLTableEvents);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableElement, (void**)&ret->nstable);
+    if(NS_FAILED(nsres))
+        ERR("Could not get nsIDOMHTMLTableElement iface: %08x\n", nsres);
 
     return &ret->element;
 }

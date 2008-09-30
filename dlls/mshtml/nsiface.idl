@@ -125,6 +125,8 @@ typedef nsISupports nsIAtom;
 typedef nsISupports nsISupportsArray;
 typedef nsISupports nsIContentFilter;
 typedef nsISupports nsIDOMMediaList;
+typedef nsISupports nsIDOMHTMLTableCaptionElement;
+typedef nsISupports nsIDOMHTMLTableSectionElement;
 
 [
     object,
@@ -1299,6 +1301,7 @@ interface nsIDOMHTMLScriptElement : nsIDOMHTMLElement
     object,
     uuid(a6cf90ab-15b3-11d2-932e-00805f8add32),
     local
+    /* FROZEN */
 ]
 interface nsIDOMHTMLImageElement : nsIDOMHTMLElement
 {
@@ -1326,6 +1329,50 @@ interface nsIDOMHTMLImageElement : nsIDOMHTMLElement
     nsresult SetVspace(PRInt32 aVspace);
     nsresult GetWidth(PRInt32 *aWidth);
     nsresult SetWidth(PRInt32 aWidth);
+}
+
+[
+    object,
+    uuid(a6cf90b2-15b3-11d2-932e-00805f8add32),
+    local
+    /* FROZEN */
+]
+interface nsIDOMHTMLTableElement : nsIDOMHTMLElement
+{
+    nsresult GetCaption(nsIDOMHTMLTableCaptionElement **aCaption);
+    nsresult SetCaption(nsIDOMHTMLTableCaptionElement *aCaption);
+    nsresult GetTHead(nsIDOMHTMLTableSectionElement **aTHead);
+    nsresult SetTHead(nsIDOMHTMLTableSectionElement *aTHead);
+    nsresult GetTFoot(nsIDOMHTMLTableSectionElement **aTFoot);
+    nsresult SetTFoot(nsIDOMHTMLTableSectionElement *aTFoot);
+    nsresult GetRows(nsIDOMHTMLCollection **aRows);
+    nsresult GetTBodies(nsIDOMHTMLCollection **aTBodies);
+    nsresult GetAlign(nsAString *aAlign);
+    nsresult SetAlign(const nsAString *aAlign);
+    nsresult GetBgColor(nsAString *aBgColor);
+    nsresult SetBgColor(const nsAString *aBgColor);
+    nsresult GetBorder(nsAString *aBorder);
+    nsresult SetBorder(const nsAString *aBorder);
+    nsresult GetCellPadding(nsAString *aCellPadding);
+    nsresult SetCellPadding(const nsAString *aCellPadding);
+    nsresult GetCellSpacing(nsAString *aCellSpacing);
+    nsresult SetCellSpacing(const nsAString *aCellSpacing);
+    nsresult GetFrame(nsAString *aFrame);
+    nsresult SetFrame(const nsAString *aFrame);
+    nsresult GetRules(nsAString *aRules);
+    nsresult SetRules(const nsAString *aRules);
+    nsresult GetSummary(nsAString *aSummary);
+    nsresult SetSummary(const nsAString *aSummary);
+    nsresult GetWidth(nsAString *aWidth);
+    nsresult SetWidth(const nsAString *aWidth);
+    nsresult CreateTHead(nsIDOMHTMLElement **_retval);
+    nsresult DeleteTHead();
+    nsresult CreateTFoot(nsIDOMHTMLElement **_retval);
+    nsresult DeleteTFoot();
+    nsresult CreateCaption(nsIDOMHTMLElement **_retval);
+    nsresult DeleteCaption();
+    nsresult InsertRow(PRInt32 index, nsIDOMHTMLElement **_retval);
+    nsresult DeleteRow(PRInt32 index);
 }
 
 [
