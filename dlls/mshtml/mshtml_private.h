@@ -80,7 +80,6 @@ typedef enum {
     IHTMLBodyElement_tid,
     IHTMLBodyElement2_tid,
     IHTMLCommentElement_tid,
-    IHTMLControlElement_tid,
     IHTMLDocument2_tid,
     IHTMLDocument3_tid,
     IHTMLDocument4_tid,

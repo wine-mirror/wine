@@ -669,7 +669,6 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
 static const tid_t HTMLBodyElement_iface_tids[] = {
     IHTMLBodyElement_tid,
     IHTMLBodyElement2_tid,
-    IHTMLControlElement_tid,
     IHTMLDOMNode_tid,
     IHTMLDOMNode2_tid,
     IHTMLElement_tid,
