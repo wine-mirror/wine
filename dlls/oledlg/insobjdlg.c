@@ -340,7 +340,7 @@ static BOOL UIINSERTOBJECTDLG_PopulateObjectTypes(InsertObjectDlgInfo* pdlgInfo)
   HKEY hkclsids;
   HKEY hkey;
   CLSID clsid;
-  HRESULT ret;
+  LSTATUS ret;
   WCHAR keydesc[MAX_PATH];
   WCHAR keyname[MAX_PATH];
   WCHAR szclsid[128];
