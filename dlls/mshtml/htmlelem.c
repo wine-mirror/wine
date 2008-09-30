@@ -1496,6 +1496,7 @@ HTMLElement *HTMLElement_Create(HTMLDocument *doc, nsIDOMNode *nsnode, BOOL use_
     static const WCHAR wszSCRIPT[]   = {'S','C','R','I','P','T',0};
     static const WCHAR wszSELECT[]   = {'S','E','L','E','C','T',0};
     static const WCHAR wszTABLE[]    = {'T','A','B','L','E',0};
+    static const WCHAR wszTR[]       = {'T','R',0};
     static const WCHAR wszTEXTAREA[] = {'T','E','X','T','A','R','E','A',0};
 
     nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMHTMLElement, (void**)&nselem);
@@ -1523,6 +1524,8 @@ HTMLElement *HTMLElement_Create(HTMLDocument *doc, nsIDOMNode *nsnode, BOOL use_
         ret = HTMLSelectElement_Create(nselem);
     else if(!strcmpW(class_name, wszTABLE))
         ret = HTMLTable_Create(nselem);
+    else if(!strcmpW(class_name, wszTR))
+        ret = HTMLTableRow_Create(nselem);
     else if(!strcmpW(class_name, wszTEXTAREA))
         ret = HTMLTextAreaElement_Create(nselem);
     else if(use_generic)

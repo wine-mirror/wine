@@ -45,7 +45,7 @@ static const char elem_test_str[] =
     "<input id=\"in\" class=\"testclass\" tabIndex=\"2\" title=\"test title\" />"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
-    "<table><tbody></tbody></table>"
+    "<table><tbody><tr></tr></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"></script>"
     "<test />"
     "<img id=\"imgid\"/>"
@@ -84,7 +84,8 @@ typedef enum {
     ET_TEST,
     ET_TESTG,
     ET_COMMENT,
-    ET_IMG
+    ET_IMG,
+    ET_TR
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -235,6 +236,17 @@ static const IID * const img_iids[] = {
     NULL
 };
 
+static const IID * const tr_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IDispatchEx,
+    &IID_IHTMLTableRow,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const generic_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
@@ -273,7 +285,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"TEST",      elem_iids,        &DIID_DispHTMLUnknownElement},
     {"TEST",      generic_iids,     &DIID_DispHTMLGenericElement},
     {"!",         comment_iids,     &DIID_DispHTMLCommentElement},
-    {"IMG",       img_iids,         &DIID_DispHTMLImg}
+    {"IMG",       img_iids,         &DIID_DispHTMLImg},
+    {"TR",        tr_iids,          NULL}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -2362,6 +2375,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TEXTAREA,
         ET_TABLE,
         ET_TBODY,
+        ET_TR,
         ET_SCRIPT,
         ET_TEST,
         ET_IMG

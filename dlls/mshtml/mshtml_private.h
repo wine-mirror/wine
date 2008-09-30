@@ -557,6 +557,7 @@ HTMLElement *HTMLOptionElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLScriptElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLSelectElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTable_Create(nsIDOMHTMLElement*);
+HTMLElement *HTMLTableRow_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement*);
 HTMLElement *HTMLGenericElement_Create(nsIDOMHTMLElement*);
 
@@ -646,6 +647,8 @@ HRESULT clear_task_timer(HTMLDocument*,BOOL,DWORD);
 HRESULT get_typeinfo(tid_t,ITypeInfo**);
 void release_typelib(void);
 void call_disp_func(HTMLDocument*,IDispatch*);
+
+const char *debugstr_variant(const VARIANT*);
 
 DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);

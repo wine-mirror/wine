@@ -32,6 +32,7 @@ C_SRCS = \
 	htmlstyle.c \
 	htmlstylesheet.c \
 	htmltable.c \
+	htmltablerow.c \
 	htmltextarea.c \
 	htmltextcont.c \
 	htmltextnode.c \
