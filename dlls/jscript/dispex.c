@@ -571,6 +571,15 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     return hres;
 }
 
+static HRESULT delete_prop(dispex_prop_t *prop)
+{
+    heap_free(prop->name);
+    prop->name = NULL;
+    prop->type = PROP_DELETED;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
@@ -590,17 +599,23 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bst
         return S_OK;
     }
 
-    heap_free(prop->name);
-    prop->name = NULL;
-    prop->type = PROP_DELETED;
-    return S_OK;
+    return delete_prop(prop);
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, id);
-    return E_NOTIMPL;
+    dispex_prop_t *prop;
+
+    TRACE("(%p)->(%x)\n", This, id);
+
+    prop = get_prop(This, id);
+    if(!prop) {
+        WARN("invalid id\n");
+        return DISP_E_MEMBERNOTFOUND;
+    }
+
+    return delete_prop(prop);
 }
 
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
