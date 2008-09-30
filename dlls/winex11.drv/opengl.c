@@ -2106,6 +2106,7 @@ void flush_gl_drawable(X11DRV_PDEVICE *physDev)
          * flush the display make sure we copy up-to-date data */
         wine_tsx11_lock();
         XFlush(gdi_display);
+        XSetFunction(gdi_display, physDev->gc, GXcopy);
         XCopyArea(gdi_display, src, physDev->drawable, physDev->gc, 0, 0, w, h,
                   physDev->dc_rect.left, physDev->dc_rect.top);
         wine_tsx11_unlock();
