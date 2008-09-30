@@ -145,7 +145,7 @@ HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
 {
   FOURCC  ckid;
   FOURCC  fccType;
-  HRESULT hr;
+  MMRESULT mmr;
 
   /* pre-conditions */
   assert(extra != NULL);
@@ -171,12 +171,13 @@ HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
   TRACE(": find ckid=0x%08X fccType=0x%08X\n", ckid, fccType);
 
   for (;;) {
-    hr = mmioDescend(hmmio, lpck, lpckParent, 0);
-    if (hr != S_OK) {
+    mmr = mmioDescend(hmmio, lpck, lpckParent, 0);
+    if (mmr != MMSYSERR_NOERROR) {
       /* No extra chunks in front of desired chunk? */
-      if (flags == 0 && hr == MMIOERR_CHUNKNOTFOUND)
-	hr = AVIERR_OK;
-      return hr;
+      if (flags == 0 && mmr == MMIOERR_CHUNKNOTFOUND)
+	return AVIERR_OK;
+      else
+        return AVIERR_FILEREAD;
     }
 
     /* Have we found what we search for? */
@@ -187,10 +188,15 @@ HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
     /* Skip padding chunks, the others put into the extrachunk-structure */
     if (lpck->ckid == ckidAVIPADDING ||
 	lpck->ckid == mmioFOURCC('p','a','d','d'))
-      hr = mmioAscend(hmmio, lpck, 0);
+    {
+      mmr = mmioAscend(hmmio, lpck, 0);
+      if (mmr != MMSYSERR_NOERROR) return AVIERR_FILEREAD;
+    }
     else
-      hr = ReadChunkIntoExtra(extra, hmmio, lpck);
-    if (FAILED(hr))
-      return hr;
+    {
+      HRESULT hr = ReadChunkIntoExtra(extra, hmmio, lpck);
+      if (FAILED(hr))
+        return hr;
+    }
   }
 }
