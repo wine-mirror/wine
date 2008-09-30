@@ -67,6 +67,7 @@ typedef enum {
     JSCLASS_NONE,
     JSCLASS_ARRAY,
     JSCLASS_BOOLEAN,
+    JSCLASS_DATE,
     JSCLASS_FUNCTION,
     JSCLASS_GLOBAL,
     JSCLASS_MATH,
@@ -170,6 +171,7 @@ struct _script_ctx_t {
     DispatchEx *function_constr;
     DispatchEx *array_constr;
     DispatchEx *bool_constr;
+    DispatchEx *date_constr;
     DispatchEx *number_constr;
     DispatchEx *object_constr;
     DispatchEx *regexp_constr;
@@ -188,6 +190,7 @@ HRESULT init_function_constr(script_ctx_t*);
 
 HRESULT create_array_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_bool_constr(script_ctx_t*,DispatchEx**);
+HRESULT create_date_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_number_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_object_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_regexp_constr(script_ctx_t*,DispatchEx**);

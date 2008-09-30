@@ -81,6 +81,8 @@ ok(Math !== undefined, "Math is undefined");
 ok(Math.prototype === undefined, "Math.prototype is not undefined");
 ok(Function.prototype !== undefined, "Function.prototype is undefined");
 ok(Function.prototype.prototype === undefined, "Function.prototype is not undefined");
+ok(Date.prototype !== undefined, "Date.prototype is undefined");
+ok(Date.prototype.prototype === undefined, "Date.prototype is not undefined");
 
 Function.prototype.test = true;
 ok(testFunc1.test === true, "testFunc1.test !== true");
