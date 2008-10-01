@@ -113,7 +113,7 @@ HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info )
     {
         num = HANDLE_CHUNK_SIZE;
         p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                   sizeof (UINT)* num);
+                   sizeof (*WININET_Handles)* num);
         if( !p )
             goto end;
         WININET_Handles = p;
@@ -123,7 +123,7 @@ HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info )
     {
         num = WININET_dwMaxHandles + HANDLE_CHUNK_SIZE;
         p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                   WININET_Handles, sizeof (UINT)* num);
+                   WININET_Handles, sizeof (*WININET_Handles)* num);
         if( !p )
             goto end;
         WININET_Handles = p;
