@@ -197,6 +197,23 @@ static BSTR QName_from_xmlChar(const xmlChar *prefix, const xmlChar *name)
     return bstr;
 }
 
+BSTR bstr_from_xmlChar_wn(const xmlChar *buf, int len)
+{
+    DWORD size;
+    LPWSTR str;
+    BSTR bstr;
+
+    if(!buf) return NULL;
+
+    size = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, NULL, 0);
+    str = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, size*sizeof(WCHAR));
+    if(!str) return NULL;
+    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, str, size);
+    bstr = SysAllocStringLen(str, size);
+    HeapFree(GetProcessHeap(), 0, str);
+    return bstr;
+}
+
 static void format_error_message_from_id(saxlocator *This, HRESULT hr)
 {
     xmlStopParser(This->pParserCtxt);
@@ -1176,8 +1193,6 @@ static void libxmlCharacters(
     chEnd = This->lastCur+len;
     while(*chEnd != '<') chEnd++;
 
-    Chars = bstr_from_xmlChar(ch);
-
     lastCurCopy = This->lastCur;
     columnCopy = This->column;
     lineCopy = This->line;
@@ -1195,7 +1210,7 @@ static void libxmlCharacters(
                 end++;
             }
 
-            Chars = bstr_from_xmlChar(This->lastCur);
+            Chars = bstr_from_xmlChar_wn(This->lastCur, end-This->lastCur+2);
 
             if(*end == '\r' && *(end+1) == '\n')
             {
