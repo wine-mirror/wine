@@ -484,14 +484,11 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
         return 0;
     }
 
-    if (dc->hFont != handle || dc->gdiFont == NULL)
+    if (GetDeviceCaps( dc->hSelf, TEXTCAPS ) & TC_VA_ABLE)
     {
-        if(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_VA_ABLE)
-        {
-            FONTOBJ *font = GDI_GetObjPtr( handle, FONT_MAGIC );  /* to grab the GDI lock (FIXME) */
-            dc->gdiFont = WineEngCreateFontInstance(dc, handle);
-            if (font) GDI_ReleaseObj( handle );
-        }
+        FONTOBJ *font = GDI_GetObjPtr( handle, FONT_MAGIC ); /* to grab the GDI lock (FIXME) */
+        dc->gdiFont = WineEngCreateFontInstance( dc, handle );
+        if (font) GDI_ReleaseObj( handle );
     }
 
     if (dc->funcs->pSelectFont) ret = dc->funcs->pSelectFont( dc->physDev, handle, dc->gdiFont );
