@@ -50,11 +50,11 @@
 #include "winhttp.h"
 #include "wincrypt.h"
 
+#include "winhttp_private.h"
+
 /* to avoid conflicts with the Unix socket headers */
 #define USE_WS_PREFIX
 #include "winsock2.h"
-
-#include "winhttp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
@@ -115,6 +115,7 @@ MAKE_FUNCPTR( ERR_error_string );
 /* translate a unix error code into a winsock error code */
 static int sock_get_error( int err )
 {
+#if !defined(__MINGW32__) && !defined (_MSC_VER)
     switch (err)
     {
         case EINTR:             return WSAEINTR;
@@ -174,6 +175,7 @@ static int sock_get_error( int err )
 #endif
     default: errno = err; perror( "sock_set_error" ); return WSAEFAULT;
     }
+#endif
     return err;
 }
 
@@ -282,7 +284,7 @@ BOOL netconn_close( netconn_t *conn )
         conn->secure = FALSE;
     }
 #endif
-    res = close( conn->socket );
+    res = closesocket( conn->socket );
     conn->socket = -1;
     if (res == -1)
     {
@@ -464,7 +466,7 @@ BOOL netconn_query_data_available( netconn_t *conn, DWORD *available )
         return TRUE;
     }
 #ifdef FIONREAD
-    if (!(ret = ioctl( conn->socket, FIONREAD, &unread ))) *available = unread;
+    if (!(ret = ioctlsocket( conn->socket, FIONREAD, &unread ))) *available = unread;
 #endif
     return TRUE;
 }
