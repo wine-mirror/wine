@@ -983,6 +983,24 @@ end:
     return r;
 }
 
+UINT WINAPI MsiDatabaseMergeA(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
+                              LPCSTR szTableName)
+{
+    FIXME("(%ld, %ld, %s): stub!\n", hDatabase, hDatabaseMerge,
+          debugstr_a(szTableName));
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiDatabaseMergeW(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
+                              LPCWSTR szTableName)
+{
+    FIXME("(%ld, %ld, %s): stub!\n", hDatabase, hDatabaseMerge,
+          debugstr_w(szTableName));
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 MSIDBSTATE WINAPI MsiGetDatabaseState( MSIHANDLE handle )
 {
     MSIDBSTATE ret = MSIDBSTATE_READ;

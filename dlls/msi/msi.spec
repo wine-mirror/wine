@@ -22,8 +22,8 @@
 26 stdcall MsiDatabaseGetPrimaryKeysW(long wstr ptr)
 27 stdcall MsiDatabaseImportA(str str long)
 28 stdcall MsiDatabaseImportW(wstr wstr long)
-29 stub MsiDatabaseMergeA
-30 stub MsiDatabaseMergeW
+29 stdcall MsiDatabaseMergeA(long long str)
+30 stdcall MsiDatabaseMergeW(long long wstr)
 31 stdcall MsiDatabaseOpenViewA(long str ptr)
 32 stdcall MsiDatabaseOpenViewW(long wstr ptr)
 33 stdcall MsiDoActionA(long str)

@@ -599,6 +599,10 @@ UINT WINAPI MsiIsProductElevatedA(LPCSTR, BOOL *);
 UINT WINAPI MsiIsProductElevatedW(LPCWSTR, BOOL *);
 #define     MsiIsProductElevated WINELIB_NAME_AW(MsiIsProductElevated)
 
+UINT WINAPI MsiDatabaseMergeA(MSIHANDLE, MSIHANDLE, LPCSTR);
+UINT WINAPI MsiDatabaseMergeW(MSIHANDLE, MSIHANDLE, LPCWSTR);
+#define     MsiDatabaseMerge WINELIB_NAME_AW(MsiDatabaseMerge)
+
 /* Non Unicode */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);
 UINT WINAPI MsiCloseAllHandles(void);
