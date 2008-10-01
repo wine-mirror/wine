@@ -861,7 +861,10 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
     if (pointer_id)
       pointer_needs_unmarshaling = 1;
     else
+    {
+      *pPointer = NULL;    
       pointer_needs_unmarshaling = 0;
+    }
     break;
   case RPC_FC_FP:
     pointer_id = NDR_LOCAL_UINT32_READ(Buffer);
