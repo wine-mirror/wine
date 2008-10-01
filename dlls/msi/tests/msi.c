@@ -435,6 +435,8 @@ static void test_MsiGetFileHash(void)
 
     for (i = 0; i < sizeof(hash_data) / sizeof(hash_data[0]); i++)
     {
+        int ret;
+
         create_file(name, hash_data[i].data, hash_data[i].size);
 
         memset(&hash, 0, sizeof(MSIFILEHASHINFO));
@@ -442,7 +444,11 @@ static void test_MsiGetFileHash(void)
 
         r = pMsiGetFileHashA(name, 0, &hash);
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!memcmp(&hash, &hash_data[i].hash, HASHSIZE), "Hash incorrect\n");
+
+        ret = memcmp(&hash, &hash_data[i].hash, HASHSIZE);
+        ok(ret == 0 ||
+           broken(ret != 0), /* win95 */
+           "Hash incorrect\n");
 
         DeleteFile(name);
     }
