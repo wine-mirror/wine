@@ -80,30 +80,30 @@ struct WS(ip_mreq_source) {
 struct WS(ip_msfilter) {
     struct WS(in_addr) imsf_multiaddr;
     struct WS(in_addr) imsf_interface;
-    u_long             imsf_fmode;
-    u_long             imsf_numsrc;
+    WS(u_long)         imsf_fmode;
+    WS(u_long)         imsf_numsrc;
     struct WS(in_addr) imsf_slist[1];
 };
 
 typedef struct WS(in_addr6)
 {
-   u_char s6_addr[16];   /* IPv6 address */
+   WS(u_char) s6_addr[16]; /* IPv6 address */
 } IN6_ADDR, *PIN6_ADDR, *LPIN6_ADDR;
 
 typedef struct WS(sockaddr_in6)
 {
    short   sin6_family;            /* AF_INET6 */
-   u_short sin6_port;              /* Transport level port number */
-   u_long  sin6_flowinfo;          /* IPv6 flow information */
+   WS(u_short) sin6_port;          /* Transport level port number */
+   WS(u_long) sin6_flowinfo;       /* IPv6 flow information */
    struct  WS(in_addr6) sin6_addr; /* IPv6 address */
-   u_long  sin6_scope_id;          /* IPv6 scope id */
+   WS(u_long) sin6_scope_id;       /* IPv6 scope id */
 } SOCKADDR_IN6,*PSOCKADDR_IN6, *LPSOCKADDR_IN6;
 
 typedef struct WS(sockaddr_in6_old)
 {
    short   sin6_family;            /* AF_INET6 */
-   u_short sin6_port;              /* Transport level port number */
-   u_long  sin6_flowinfo;          /* IPv6 flow information */
+   WS(u_short) sin6_port;              /* Transport level port number */
+   WS(u_long) sin6_flowinfo;          /* IPv6 flow information */
    struct  WS(in_addr6) sin6_addr; /* IPv6 address */
 } SOCKADDR_IN6_OLD,*PSOCKADDR_IN6_OLD, *LPSOCKADDR_IN6_OLD;
 
@@ -117,7 +117,7 @@ typedef union sockaddr_gen
 /* Structure to keep interface specific information */
 typedef struct _INTERFACE_INFO
 {
-    u_long            iiFlags;             /* Interface flags */
+    WS(u_long)        iiFlags;             /* Interface flags */
     WS(sockaddr_gen)  iiAddress;           /* Interface address */
     WS(sockaddr_gen)  iiBroadcastAddress;  /* Broadcast address */
     WS(sockaddr_gen)  iiNetmask;           /* Network mask */
