@@ -340,7 +340,7 @@ static HRESULT queryresult_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fl
             IXMLDOMNode *disp = NULL;
 
             queryresult_get_item(XMLQUERYRES(This), id - MSXML_DISPID_CUSTOM_MIN, &disp);
-            V_DISPATCH(res) = (IDispatch*)&disp;
+            V_DISPATCH(res) = (IDispatch*)disp;
             break;
         }
         default:
@@ -349,6 +349,8 @@ static HRESULT queryresult_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fl
             break;
         }
     }
+
+    TRACE("ret %p\n", V_DISPATCH(res));
 
     return S_OK;
 }
