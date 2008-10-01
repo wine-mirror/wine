@@ -1948,7 +1948,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         lpwhr->lpszPath = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
         rc = UrlEscapeW(lpszObjectName, lpwhr->lpszPath, &len,
                    URL_ESCAPE_SPACES_ONLY);
-        if (rc)
+        if (rc != S_OK)
         {
             ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(lpszObjectName),rc);
             strcpyW(lpwhr->lpszPath,lpszObjectName);
@@ -3045,7 +3045,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
         lpwhr->lpszPath = HeapAlloc(GetProcessHeap(), 0, needed*sizeof(WCHAR));
         rc = UrlEscapeW(path, lpwhr->lpszPath, &needed,
                         URL_ESCAPE_SPACES_ONLY);
-        if (rc)
+        if (rc != S_OK)
         {
             ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(path),rc);
             strcpyW(lpwhr->lpszPath,path);
