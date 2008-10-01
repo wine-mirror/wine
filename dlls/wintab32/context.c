@@ -114,7 +114,19 @@ static inline void DUMPPACKET(WTPACKET packet)
 
 static inline void DUMPCONTEXT(LOGCONTEXTW lc)
 {
-    TRACE("context: %s, %x, %x, %x, %x, %x, %x, %x%s, %x%s, %x%s, %x, %x, %i, %i, %i, %i ,%i, %i, %i, %i, %i,%i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i %i %i\n",
+    TRACE("Name: %s, Options: %x, Status: %x, Locks: %x, MsgBase: %x, "
+          "Device: %x, PktRate: %x, "
+          "%x%s, %x%s, %x%s, "
+          "BtnDnMask: %x, BtnUpMask: %x, "
+          "InOrgX: %i, InOrgY: %i, InOrgZ: %i, "
+          "InExtX: %i, InExtY: %i, InExtZ: %i, "
+          "OutOrgX: %i, OutOrgY: %i, OutOrgZ: %i, "
+          "OutExtX: %i, OutExtY: %i, OutExtZ: %i, "
+          "SensX: %i, SensY: %i, SensZ: %i, "
+          "SysMode: %i, "
+          "SysOrgX: %i, SysOrgY: %i, "
+          "SysExtX: %i, SysExtY: %i, "
+          "SysSensX: %i, SysSensY: %i\n",
           wine_dbgstr_w(lc.lcName), lc.lcOptions, lc.lcStatus, lc.lcLocks, lc.lcMsgBase,
           lc.lcDevice, lc.lcPktRate, lc.lcPktData, DUMPBITS(lc.lcPktData),
           lc.lcPktMode, DUMPBITS(lc.lcPktMode), lc.lcMoveMask,
