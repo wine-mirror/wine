@@ -986,10 +986,17 @@ end:
 UINT WINAPI MsiDatabaseMergeA(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
                               LPCSTR szTableName)
 {
-    FIXME("(%ld, %ld, %s): stub!\n", hDatabase, hDatabaseMerge,
+    UINT r;
+    LPWSTR table;
+
+    TRACE("(%ld, %ld, %s)\n", hDatabase, hDatabaseMerge,
           debugstr_a(szTableName));
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    table = strdupAtoW(szTableName);
+    r = MsiDatabaseMergeW(hDatabase, hDatabaseMerge, table);
+
+    msi_free(table);
+    return r;
 }
 
 UINT WINAPI MsiDatabaseMergeW(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
