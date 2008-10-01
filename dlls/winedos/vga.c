@@ -459,7 +459,8 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
             lpddraw=NULL;
             return;
         }
-        if ((res=IDirectDrawPalette_SetEntries(lpddpal,0,0,256,vga_def_palette))) {
+        res=IDirectDrawPalette_SetEntries(lpddpal,0,0,256,vga_def_palette);
+        if (res != S_OK) {
             ERR("Could not set default palette entries (res = 0x%x)\n", res);
         }
 
