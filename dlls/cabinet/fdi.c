@@ -911,6 +911,7 @@ static int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
 static int NONEfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state)
 {
   if (inlen != outlen) return DECR_ILLEGALDATA;
+  if (outlen > CAB_BLOCKMAX) return DECR_DATAFORMAT;
   memcpy(CAB(outbuf), CAB(inbuf), (size_t) inlen);
   return DECR_OK;
 }
