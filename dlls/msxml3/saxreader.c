@@ -55,7 +55,12 @@ typedef struct _saxreader
     struct IVBSAXContentHandler *vbcontentHandler;
     struct ISAXErrorHandler *errorHandler;
     struct IVBSAXErrorHandler *vberrorHandler;
+    struct ISAXLexicalHandler *lexicalHandler;
+    struct IVBSAXLexicalHandler *vblexicalHandler;
+    struct ISAXDeclHandler *declHandler;
+    struct IVBSAXDeclHandler *vbdeclHandler;
     xmlSAXHandler sax;
+    BOOL isParsing;
 } saxreader;
 
 typedef struct _saxlocator
@@ -1664,8 +1669,10 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     locator->pParserCtxt->sax = &locator->saxreader->sax;
     locator->pParserCtxt->userData = locator;
 
+    This->isParsing = TRUE;
     if(xmlParseDocument(locator->pParserCtxt)) hr = E_FAIL;
     else hr = locator->ret;
+    This->isParsing = FALSE;
 
     if(locator->pParserCtxt)
     {
@@ -1702,6 +1709,7 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
         return E_FAIL;
     }
 
+    This->isParsing = TRUE;
     while(1)
     {
         hr = IStream_Read(stream, data, sizeof(data), &dataRead);
@@ -1721,6 +1729,7 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
             break;
         }
     }
+    This->isParsing = FALSE;
 
     locator->pParserCtxt->sax = NULL;
     xmlFreeParserCtxt(locator->pParserCtxt);
@@ -1975,6 +1984,143 @@ static HRESULT WINAPI internal_parseURL(
     return S_OK;
 }
 
+static HRESULT WINAPI internal_putProperty(
+    saxreader* This,
+    const WCHAR *pProp,
+    VARIANT value,
+    BOOL vbInterface)
+{
+    static const WCHAR wszCharset[] = {
+        'c','h','a','r','s','e','t',0
+    };
+    static const WCHAR wszDeclarationHandler[] = {
+        'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
+        's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
+        'd','e','c','l','a','r','a','t','i','o','n',
+        '-','h','a','n','d','l','e','r',0
+    };
+    static const WCHAR wszDomNode[] = {
+        'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
+        's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
+        'd','o','m','-','n','o','d','e',0
+    };
+    static const WCHAR wszInputSource[] = {
+        'i','n','p','u','t','-','s','o','u','r','c','e',0
+    };
+    static const WCHAR wszLexicalHandler[] = {
+        'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
+        's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
+        'l','e','x','i','c','a','l','-','h','a','n','d','l','e','r',0
+    };
+    static const WCHAR wszMaxElementDepth[] = {
+        'm','a','x','-','e','l','e','m','e','n','t','-','d','e','p','t','h',0
+    };
+    static const WCHAR wszMaxXMLSize[] = {
+        'm','a','x','-','x','m','l','-','s','i','z','e',0
+    };
+    static const WCHAR wszSchemaDeclarationHandler[] = {
+        's','c','h','e','m','a','-',
+        'd','e','c','l','a','r','a','t','i','o','n','-',
+        'h','a','n','d','l','e','r',0
+    };
+    static const WCHAR wszXMLDeclEncoding[] = {
+        'x','m','l','d','e','c','l','-','e','n','c','o','d','i','n','g',0
+    };
+    static const WCHAR wszXMLDeclStandalone[] = {
+        'x','m','l','d','e','c','l',
+        '-','s','t','a','n','d','a','l','o','n','e',0
+    };
+    static const WCHAR wszXMLDeclVersion[] = {
+        'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
+    };
+
+    FIXME("(%p)->(%s): semi-stub\n", This, debugstr_w(pProp));
+
+    if(!memcmp(pProp, wszCharset, sizeof(wszCharset)))
+        return E_NOTIMPL;
+
+    if(!memcmp(pProp, wszDeclarationHandler, sizeof(wszDeclarationHandler)))
+    {
+        if(This->isParsing) return E_FAIL;
+
+        if(V_UNKNOWN(&value))
+        {
+            if(vbInterface)
+                IVBSAXDeclHandler_AddRef((IVBSAXDeclHandler*)V_UNKNOWN(&value));
+            else
+                ISAXDeclHandler_AddRef((ISAXDeclHandler*)V_UNKNOWN(&value));
+        }
+        if((vbInterface && This->vbdeclHandler)
+                || (!vbInterface && This->declHandler))
+        {
+            if(vbInterface)
+                IVBSAXDeclHandler_Release(This->vbdeclHandler);
+            else
+                ISAXDeclHandler_Release(This->declHandler);
+        }
+        if(vbInterface)
+            This->vbdeclHandler = (IVBSAXDeclHandler*)V_UNKNOWN(&value);
+        else
+            This->declHandler = (ISAXDeclHandler*)V_UNKNOWN(&value);
+        return S_OK;
+    }
+
+    if(!memcmp(pProp, wszDomNode, sizeof(wszDomNode)))
+        return E_FAIL;
+
+    if(!memcmp(pProp, wszInputSource, sizeof(wszInputSource)))
+        return E_NOTIMPL;
+
+    if(!memcmp(pProp, wszLexicalHandler, sizeof(wszLexicalHandler)))
+    {
+        if(This->isParsing) return E_FAIL;
+
+        if(V_UNKNOWN(&value))
+        {
+            if(vbInterface)
+                IVBSAXLexicalHandler_AddRef(
+                        (IVBSAXLexicalHandler*)V_UNKNOWN(&value));
+            else
+                ISAXLexicalHandler_AddRef(
+                        (ISAXLexicalHandler*)V_UNKNOWN(&value));
+        }
+        if((vbInterface && This->vblexicalHandler)
+                || (!vbInterface && This->lexicalHandler))
+        {
+            if(vbInterface)
+                IVBSAXLexicalHandler_Release(This->vblexicalHandler);
+            else
+                ISAXLexicalHandler_Release(This->lexicalHandler);
+        }
+        if(vbInterface)
+            This->vblexicalHandler = (IVBSAXLexicalHandler*)V_UNKNOWN(&value);
+        else
+            This->lexicalHandler = (ISAXLexicalHandler*)V_UNKNOWN(&value);
+        return S_OK;
+    }
+
+    if(!memcmp(pProp, wszMaxElementDepth, sizeof(wszMaxElementDepth)))
+        return E_NOTIMPL;
+
+    if(!memcmp(pProp, wszMaxXMLSize, sizeof(wszMaxXMLSize)))
+        return E_NOTIMPL;
+
+    if(!memcmp(pProp, wszSchemaDeclarationHandler,
+                sizeof(wszSchemaDeclarationHandler)))
+        return E_NOTIMPL;
+
+    if(!memcmp(pProp, wszXMLDeclEncoding, sizeof(wszXMLDeclEncoding)))
+        return E_FAIL;
+
+    if(!memcmp(pProp, wszXMLDeclStandalone, sizeof(wszXMLDeclStandalone)))
+        return E_FAIL;
+
+    if(!memcmp(pProp, wszXMLDeclVersion, sizeof(wszXMLDeclVersion)))
+        return E_FAIL;
+
+    return E_INVALIDARG;
+}
+
 /*** IVBSAXXMLReader interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI saxxmlreader_QueryInterface(IVBSAXXMLReader* iface, REFIID riid, void **ppvObject)
@@ -2035,6 +2181,18 @@ static ULONG WINAPI saxxmlreader_Release(
 
         if(This->vberrorHandler)
             IVBSAXErrorHandler_Release(This->vberrorHandler);
+
+        if(This->lexicalHandler)
+            ISAXLexicalHandler_Release(This->lexicalHandler);
+
+        if(This->vblexicalHandler)
+            IVBSAXLexicalHandler_Release(This->vblexicalHandler);
+
+        if(This->declHandler)
+            ISAXDeclHandler_Release(This->declHandler);
+
+        if(This->vbdeclHandler)
+            IVBSAXDeclHandler_Release(This->vbdeclHandler);
 
         HeapFree( GetProcessHeap(), 0, This );
     }
@@ -2164,9 +2322,7 @@ static HRESULT WINAPI saxxmlreader_putProperty(
     VARIANT value)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
-
-    FIXME("(%p)->(%s) stub\n", This, debugstr_w(pProp));
-    return E_NOTIMPL;
+    return internal_putProperty(This, pProp, value, TRUE);
 }
 
 static HRESULT WINAPI saxxmlreader_get_entityResolver(
@@ -2379,9 +2535,7 @@ static HRESULT WINAPI isaxxmlreader_putProperty(
         VARIANT value)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return IVBSAXXMLReader_putProperty(
-            (IVBSAXXMLReader*)&This->lpVBSAXXMLReaderVtbl,
-            pProp, value);
+    return internal_putProperty(This, pProp, value, FALSE);
 }
 
 static HRESULT WINAPI isaxxmlreader_getEntityResolver(
@@ -2546,6 +2700,11 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->vbcontentHandler = NULL;
     reader->errorHandler = NULL;
     reader->vberrorHandler = NULL;
+    reader->lexicalHandler = NULL;
+    reader->vblexicalHandler = NULL;
+    reader->declHandler = NULL;
+    reader->vbdeclHandler = NULL;
+    reader->isParsing = FALSE;
 
     memset(&reader->sax, 0, sizeof(xmlSAXHandler));
     reader->sax.initialized = XML_SAX2_MAGIC;
