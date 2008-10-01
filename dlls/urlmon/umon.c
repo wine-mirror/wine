@@ -237,7 +237,7 @@ static void Binding_FinishedDownload(Binding *This, HRESULT hr)
     IBindStatusCallback_OnProgress(This->pbscb, This->total_read, This->expected_size,
                                    BINDSTATUS_ENDDOWNLOADDATA, This->URLName);
     IBindStatusCallback_OnDataAvailable(This->pbscb, BSCF_LASTDATANOTIFICATION, This->total_read, &fmt, &stg);
-    if (hr)
+    if (hr != S_OK)
     {
 	WCHAR *pwchError = 0;
 
