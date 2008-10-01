@@ -2091,7 +2091,7 @@ static ULONG WINAPI MediaSeeking_Release(IMediaSeeking *iface) {
     return Filtergraph_Release(This);
 }
 
-typedef HRESULT WINAPI (*fnFoundSeek)(IFilterGraphImpl *This, IMediaSeeking*, DWORD_PTR arg);
+typedef HRESULT (WINAPI *fnFoundSeek)(IFilterGraphImpl *This, IMediaSeeking*, DWORD_PTR arg);
 
 static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek, DWORD_PTR arg) {
     BOOL allnotimpl = TRUE;
