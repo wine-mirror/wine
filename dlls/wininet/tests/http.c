@@ -789,12 +789,23 @@ static void InternetTimeFromSystemTimeA_test(void)
     static const SYSTEMTIME time = { 2005, 1, 5, 7, 12, 6, 35, 0 };
     char string[INTERNET_RFC1123_BUFSIZE];
     static const char expect[] = "Fri, 07 Jan 2005 12:06:35 GMT";
+    DWORD error;
 
     ret = pInternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string) );
     ok( ret, "InternetTimeFromSystemTimeA failed (%u)\n", GetLastError() );
 
     ok( !memcmp( string, expect, sizeof(expect) ),
         "InternetTimeFromSystemTimeA failed (%u)\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT, string, 0 );
+    error = GetLastError();
+    todo_wine {
+    ok( !ret, "InternetTimeFromSystemTimeA should have returned FALSE\n" );
+    ok( error == ERROR_INSUFFICIENT_BUFFER,
+        "InternetTimeFromSystemTimeA failed with ERROR_INSUFFICIENT_BUFFER instead of %u\n",
+        error );
+    }
 }
 
 static void InternetTimeFromSystemTimeW_test(void)
@@ -804,12 +815,22 @@ static void InternetTimeFromSystemTimeW_test(void)
     WCHAR string[INTERNET_RFC1123_BUFSIZE + 1];
     static const WCHAR expect[] = { 'F','r','i',',',' ','0','7',' ','J','a','n',' ','2','0','0','5',' ',
                                     '1','2',':','0','6',':','3','5',' ','G','M','T',0 };
+    DWORD error;
 
     ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string) );
     ok( ret, "InternetTimeFromSystemTimeW failed (%u)\n", GetLastError() );
 
     ok( !memcmp( string, expect, sizeof(expect) ),
         "InternetTimeFromSystemTimeW failed (%u)\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string)/sizeof(string[0]) );
+    error = GetLastError();
+    ok( !ret, "InternetTimeFromSystemTimeW should have returned FALSE\n" );
+    todo_wine
+    ok( error == ERROR_INSUFFICIENT_BUFFER,
+        "InternetTimeFromSystemTimeW failed with ERROR_INSUFFICIENT_BUFFER instead of %u\n",
+        error );
 }
 
 static void InternetTimeToSystemTimeA_test(void)
