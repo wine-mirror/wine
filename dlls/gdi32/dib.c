@@ -1193,8 +1193,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
 static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BITMAPINFO *info )
 {
     RGBQUAD *colorTable;
-    unsigned int colors;
-    int i;
+    unsigned int colors, i;
     BOOL core_info = info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER);
 
     if (core_info)

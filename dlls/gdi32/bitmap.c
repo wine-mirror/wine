@@ -335,7 +335,7 @@ LONG WINAPI GetBitmapBits(
         DIBSECTION *dib = bmp->dib;
         const char *src = dib->dsBm.bmBits;
         INT width_bytes = BITMAP_GetWidthBytes(dib->dsBm.bmWidth, dib->dsBm.bmBitsPixel);
-        DWORD max = width_bytes * bmp->bitmap.bmHeight;
+        LONG max = width_bytes * bmp->bitmap.bmHeight;
 
         if (!bits)
         {
@@ -451,7 +451,7 @@ LONG WINAPI SetBitmapBits(
     {
         DIBSECTION *dib = bmp->dib;
         char *dest = dib->dsBm.bmBits;
-        DWORD max = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
+        LONG max = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
         if (count > max) count = max;
         ret = count;
 
