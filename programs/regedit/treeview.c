@@ -57,7 +57,7 @@ static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pKe
 
     item.mask = TVIF_PARAM;
     item.hItem = hItem;
-    if (!TreeView_GetItem(hwndTV, &item)) return FALSE;
+    if (!TreeView_GetItemW(hwndTV, &item)) return FALSE;
 
     if (item.lParam) {
     /* found root key with valid key value */
@@ -216,7 +216,7 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, 
     item.hItem = hItem;
     item.pszText = keyname;
     item.cchTextMax = KEY_MAX_LEN;
-    if (!TreeView_GetItem(hwndTV, &item)) return FALSE;
+    if (!TreeView_GetItemW(hwndTV, &item)) return FALSE;
     if ((mode & SEARCH_KEYS) && match_string(keyname, sstring, mode)) {
         *row = -1;
         return TRUE;
