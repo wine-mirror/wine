@@ -1046,3 +1046,34 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
 
     return 0;
 }
+
+/******************************************************************
+ *		wcsncpy_s (MSVCRT.@)
+ */
+INT CDECL MSVCRT_wcsncpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, const MSVCRT_wchar_t *wcSrc,
+                            MSVCRT_size_t count )
+{
+    INT size = 0;
+
+    if (!wcDest || !numElement)
+        return MSVCRT_EINVAL;
+
+    wcDest[0] = 0;
+
+    if (!wcSrc)
+    {
+        return MSVCRT_EINVAL;
+    }
+
+    size = min(strlenW(wcSrc), count);
+
+    if (size >= numElement)
+    {
+        return MSVCRT_ERANGE;
+    }
+
+    memcpy( wcDest, wcSrc, size*sizeof(WCHAR) );
+    wcDest[size] = '\0';
+
+    return 0;
+}

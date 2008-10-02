@@ -772,6 +772,7 @@
 @ cdecl wcsncat(wstr wstr long) ntdll.wcsncat
 @ cdecl wcsncmp(wstr wstr long) ntdll.wcsncmp
 @ cdecl wcsncpy(ptr wstr long) ntdll.wcsncpy
+@ cdecl wcsncpy_s(ptr long wstr long) MSVCRT_wcsncpy_s
 @ cdecl wcspbrk(wstr wstr) MSVCRT_wcspbrk
 @ cdecl wcsrchr(wstr long) ntdll.wcsrchr
 @ cdecl wcsspn(wstr wstr) ntdll.wcsspn
