@@ -578,7 +578,7 @@ static void parse_script(BSTR script_str)
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
-    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
 
     hres = IActiveScriptParse_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
@@ -592,6 +592,56 @@ static void parse_script_a(const char *src)
     BSTR tmp = a2bstr(src);
     parse_script(tmp);
     SysFreeString(tmp);
+}
+
+static BSTR get_script_from_file(const char *filename)
+{
+    DWORD size, len;
+    HANDLE file, map;
+    const char *file_map;
+    BSTR ret;
+
+    file = CreateFileA(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+    if(file == INVALID_HANDLE_VALUE) {
+        trace("Could not open file: %u\n", GetLastError());
+        return NULL;
+    }
+
+    size = GetFileSize(file, NULL);
+
+    map = CreateFileMapping(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    CloseHandle(file);
+    if(map == INVALID_HANDLE_VALUE) {
+        trace("Could not create file mapping: %u\n", GetLastError());
+        return NULL;
+    }
+
+    file_map = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
+    CloseHandle(map);
+    if(!file_map) {
+        trace("MapViewOfFile failed: %u\n", GetLastError());
+        return NULL;
+    }
+
+    len = MultiByteToWideChar(CP_ACP, 0, file_map, size, NULL, 0);
+    ret = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, file_map, size, ret, len);
+
+    UnmapViewOfFile(file_map);
+
+    return ret;
+}
+
+static void run_from_file(const char *filename)
+{
+    BSTR script_str = get_script_from_file(filename);
+
+    strict_dispid_check = FALSE;
+
+    if(script_str)
+        parse_script(script_str);
+
+    SysFreeString(script_str);
 }
 
 static void run_from_res(const char *name)
@@ -659,9 +709,17 @@ static void run_tests(void)
 
 START_TEST(run)
 {
+    int argc;
+    char **argv;
+
+    argc = winetest_get_mainargs(&argv);
+
     CoInitialize(NULL);
 
-    run_tests();
+    if(argc > 2)
+        run_from_file(argv[2]);
+    else
+        run_tests();
 
     CoUninitialize();
 }
