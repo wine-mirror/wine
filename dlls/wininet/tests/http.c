@@ -800,12 +800,10 @@ static void InternetTimeFromSystemTimeA_test(void)
     SetLastError(0xdeadbeef);
     ret = pInternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT, string, 0 );
     error = GetLastError();
-    todo_wine {
     ok( !ret, "InternetTimeFromSystemTimeA should have returned FALSE\n" );
     ok( error == ERROR_INSUFFICIENT_BUFFER,
         "InternetTimeFromSystemTimeA failed with ERROR_INSUFFICIENT_BUFFER instead of %u\n",
         error );
-    }
 }
 
 static void InternetTimeFromSystemTimeW_test(void)
@@ -827,7 +825,6 @@ static void InternetTimeFromSystemTimeW_test(void)
     ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string)/sizeof(string[0]) );
     error = GetLastError();
     ok( !ret, "InternetTimeFromSystemTimeW should have returned FALSE\n" );
-    todo_wine
     ok( error == ERROR_INSUFFICIENT_BUFFER,
         "InternetTimeFromSystemTimeW failed with ERROR_INSUFFICIENT_BUFFER instead of %u\n",
         error );
