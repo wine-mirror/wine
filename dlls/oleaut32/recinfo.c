@@ -59,7 +59,7 @@ static HRESULT copy_to_variant(void *src, VARIANT *pvar, enum VARENUM vt)
 
 #define CASE_COPY(x) \
     case VT_ ## x: \
-        V_ ## x(pvar) = *(typeof(V_ ## x(pvar))*)src; \
+        memcpy(&V_ ## x(pvar), src, sizeof(V_ ## x(pvar))); \
         break 
 
     switch(vt) {
@@ -106,7 +106,7 @@ static HRESULT copy_from_variant(VARIANT *src, void *dest, enum VARENUM vt)
 
 #define CASE_COPY(x) \
     case VT_ ## x: \
-        *(typeof(V_ ## x(&var))*)dest = V_ ## x(&var); \
+        memcpy(dest, &V_ ## x(&var), sizeof(V_ ## x(&var))); \
         break
 
     switch(vt) {
