@@ -21,6 +21,7 @@
 */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <assert.h>
 #include <windef.h>
 #include <winbase.h>
@@ -323,11 +324,26 @@ static void test_EM_GETLINE(void)
          !strncmp(dest+2, origdest+2, nBuf-2), "buffer_len=1\n");
     else
     {
+      /* Prepare hex strings of buffers to dump on failure. */
+      char expectedbuf[1024];
+      char resultbuf[1024];
+      int j;
+      expectedbuf[0] = '\0';
+      for (j = 0; j < 32; j++)
+        sprintf(expectedbuf+strlen(expectedbuf), "%02x", dest[j] & 0xFF);
+      resultbuf[0] = '\0';
+      for (j = 0; j < expected_bytes_written; j++)
+        sprintf(resultbuf+strlen(resultbuf), "%02x", gl[i].text[j] & 0xFF);
+      for (; j < 32; j++)
+        sprintf(resultbuf+strlen(resultbuf), "%02x", origdest[j] & 0xFF);
+
       ok(!strncmp(dest, gl[i].text, expected_bytes_written),
-         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+         "%d: expected_bytes_written=%d\n" "expected=0x%s\n" "but got= 0x%s\n",
+         i, expected_bytes_written, expectedbuf, resultbuf);
       ok(!strncmp(dest + expected_bytes_written, origdest
                   + expected_bytes_written, nBuf - expected_bytes_written),
-         "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
+         "%d: expected_bytes_written=%d\n" "expected=0x%s\n" "but got= 0x%s\n",
+         i, expected_bytes_written, expectedbuf, resultbuf);
     }
   }
 
