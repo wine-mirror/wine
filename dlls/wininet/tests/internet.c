@@ -27,6 +27,11 @@
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pInternetTimeFromSystemTimeA)(CONST SYSTEMTIME *,DWORD ,LPSTR ,DWORD);
+static BOOL (WINAPI *pInternetTimeFromSystemTimeW)(CONST SYSTEMTIME *,DWORD ,LPWSTR ,DWORD);
+static BOOL (WINAPI *pInternetTimeToSystemTimeA)(LPCSTR ,SYSTEMTIME *,DWORD);
+static BOOL (WINAPI *pInternetTimeToSystemTimeW)(LPCWSTR ,SYSTEMTIME *,DWORD);
+
 /* ############################### */
 
 static void test_InternetCanonicalizeUrlA(void)
@@ -362,13 +367,133 @@ static void test_version(void)
     ok(version.dwMinorVersion == 2, "dwMinorVersion=%d, expected 2\n", version.dwMinorVersion);
 }
 
+static void InternetTimeFromSystemTimeA_test(void)
+{
+    BOOL ret;
+    static const SYSTEMTIME time = { 2005, 1, 5, 7, 12, 6, 35, 0 };
+    char string[INTERNET_RFC1123_BUFSIZE];
+    static const char expect[] = "Fri, 07 Jan 2005 12:06:35 GMT";
+    DWORD error;
+
+    ret = pInternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string) );
+    ok( ret, "InternetTimeFromSystemTimeA failed (%u)\n", GetLastError() );
+
+    ok( !memcmp( string, expect, sizeof(expect) ),
+        "InternetTimeFromSystemTimeA failed (%u)\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT, string, 0 );
+    error = GetLastError();
+    ok( !ret, "InternetTimeFromSystemTimeA should have returned FALSE\n" );
+    ok( error == ERROR_INSUFFICIENT_BUFFER,
+        "InternetTimeFromSystemTimeA failed with ERROR_INSUFFICIENT_BUFFER instead of %u\n",
+        error );
+}
+
+static void InternetTimeFromSystemTimeW_test(void)
+{
+    BOOL ret;
+    static const SYSTEMTIME time = { 2005, 1, 5, 7, 12, 6, 35, 0 };
+    WCHAR string[INTERNET_RFC1123_BUFSIZE + 1];
+    static const WCHAR expect[] = { 'F','r','i',',',' ','0','7',' ','J','a','n',' ','2','0','0','5',' ',
+                                    '1','2',':','0','6',':','3','5',' ','G','M','T',0 };
+    DWORD error;
+
+    ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string) );
+    ok( ret, "InternetTimeFromSystemTimeW failed (%u)\n", GetLastError() );
+
+    ok( !memcmp( string, expect, sizeof(expect) ),
+        "InternetTimeFromSystemTimeW failed (%u)\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string)/sizeof(string[0]) );
+    error = GetLastError();
+    ok( !ret, "InternetTimeFromSystemTimeW should have returned FALSE\n" );
+    ok( error == ERROR_INSUFFICIENT_BUFFER,
+        "InternetTimeFromSystemTimeW failed with ERROR_INSUFFICIENT_BUFFER instead of %u\n",
+        error );
+}
+
+static void InternetTimeToSystemTimeA_test(void)
+{
+    BOOL ret;
+    SYSTEMTIME time;
+    static const SYSTEMTIME expect = { 2005, 1, 5, 7, 12, 6, 35, 0 };
+    static const char string[] = "Fri, 07 Jan 2005 12:06:35 GMT";
+    static const char string2[] = " fri 7 jan 2005 12 06 35";
+
+    ret = pInternetTimeToSystemTimeA( string, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeA failed (%u)\n", GetLastError() );
+    ok( !memcmp( &time, &expect, sizeof(expect) ),
+        "InternetTimeToSystemTimeA failed (%u)\n", GetLastError() );
+
+    ret = pInternetTimeToSystemTimeA( string2, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeA failed (%u)\n", GetLastError() );
+    ok( !memcmp( &time, &expect, sizeof(expect) ),
+        "InternetTimeToSystemTimeA failed (%u)\n", GetLastError() );
+}
+
+static void InternetTimeToSystemTimeW_test(void)
+{
+    BOOL ret;
+    SYSTEMTIME time;
+    static const SYSTEMTIME expect = { 2005, 1, 5, 7, 12, 6, 35, 0 };
+    static const WCHAR string[] = { 'F','r','i',',',' ','0','7',' ','J','a','n',' ','2','0','0','5',' ',
+                                    '1','2',':','0','6',':','3','5',' ','G','M','T',0 };
+    static const WCHAR string2[] = { ' ','f','r','i',' ','7',' ','j','a','n',' ','2','0','0','5',' ',
+                                     '1','2',' ','0','6',' ','3','5',0 };
+    static const WCHAR string3[] = { 'F','r',0 };
+
+    ret = pInternetTimeToSystemTimeW( NULL, NULL, 0 );
+    ok( !ret, "InternetTimeToSystemTimeW succeeded (%u)\n", GetLastError() );
+
+    ret = pInternetTimeToSystemTimeW( NULL, &time, 0 );
+    ok( !ret, "InternetTimeToSystemTimeW succeeded (%u)\n", GetLastError() );
+
+    ret = pInternetTimeToSystemTimeW( string, NULL, 0 );
+    ok( !ret, "InternetTimeToSystemTimeW succeeded (%u)\n", GetLastError() );
+
+    ret = pInternetTimeToSystemTimeW( string, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
+
+    ret = pInternetTimeToSystemTimeW( string, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
+    ok( !memcmp( &time, &expect, sizeof(expect) ),
+        "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
+
+    ret = pInternetTimeToSystemTimeW( string2, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
+    ok( !memcmp( &time, &expect, sizeof(expect) ),
+        "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
+
+    ret = pInternetTimeToSystemTimeW( string3, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
+}
+
 /* ############################### */
 
 START_TEST(internet)
 {
-  test_InternetCanonicalizeUrlA();
-  test_InternetQueryOptionA();
-  test_get_cookie();
-  test_version();
-  test_null();
+    HMODULE hdll;
+    hdll = GetModuleHandleA("wininet.dll");
+    pInternetTimeFromSystemTimeA = (void*)GetProcAddress(hdll, "InternetTimeFromSystemTimeA");
+    pInternetTimeFromSystemTimeW = (void*)GetProcAddress(hdll, "InternetTimeFromSystemTimeW");
+    pInternetTimeToSystemTimeA = (void*)GetProcAddress(hdll, "InternetTimeToSystemTimeA");
+    pInternetTimeToSystemTimeW = (void*)GetProcAddress(hdll, "InternetTimeToSystemTimeW");
+
+    test_InternetCanonicalizeUrlA();
+    test_InternetQueryOptionA();
+    test_get_cookie();
+    test_version();
+    test_null();
+
+    if (!pInternetTimeFromSystemTimeA)
+        skip("skipping the InternetTime tests\n");
+    else
+    {
+        InternetTimeFromSystemTimeA_test();
+        InternetTimeFromSystemTimeW_test();
+        InternetTimeToSystemTimeA_test();
+        InternetTimeToSystemTimeW_test();
+    }
 }
