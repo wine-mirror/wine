@@ -517,25 +517,23 @@ HRESULT block_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t 
 static HRESULT variable_list_eval(exec_ctx_t *ctx, variable_declaration_t *var_list, jsexcept_t *ei)
 {
     variable_declaration_t *iter;
-    HRESULT hres = E_FAIL;
+    HRESULT hres = S_OK;
 
     for(iter = var_list; iter; iter = iter->next) {
+        exprval_t exprval;
         VARIANT val;
 
-        if(iter->expr) {
-            exprval_t exprval;
+        if(!iter->expr)
+            continue;
 
-            hres = expr_eval(ctx, iter->expr, 0, ei, &exprval);
-            if(FAILED(hres))
-                break;
+        hres = expr_eval(ctx, iter->expr, 0, ei, &exprval);
+        if(FAILED(hres))
+            break;
 
-            hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
-            exprval_release(&exprval);
-            if(FAILED(hres))
-                break;
-        }else {
-            V_VT(&val) = VT_EMPTY;
-        }
+        hres = exprval_to_value(ctx->parser->script, &exprval, ei, &val);
+        exprval_release(&exprval);
+        if(FAILED(hres))
+            break;
 
         hres = jsdisp_propput_name(ctx->var_disp, iter->identifier, ctx->parser->script->lcid, &val, ei, NULL/*FIXME*/);
         VariantClear(&val);

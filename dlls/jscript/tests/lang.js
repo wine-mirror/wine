@@ -741,6 +741,8 @@ function varTestFunc(varTest3) {
     var varTest4;
 }
 
+varTestFunc(3);
+
 deleteTest = 1;
 delete deleteTest;
 try {
