@@ -2148,7 +2148,7 @@ static void test_menu_resource_layout(void)
         { MF_SEPARATOR, MF_GRAYED|MF_DISABLED, 8, "" }
     };
     HMENU hmenu;
-    UINT count, i;
+    INT count, i;
     BOOL ret;
 
     hmenu = LoadMenuIndirect(&menu_template);
