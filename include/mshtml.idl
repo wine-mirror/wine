@@ -628,6 +628,214 @@ interface IHTMLStyle : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLStyle2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4a2-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLStyle2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLSTYLE2_TABLELAYOUT), displaybind, bindable]
+    HRESULT tableLayout([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TABLELAYOUT), displaybind, bindable]
+    HRESULT tableLayout([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_BORDERCOLLAPSE), displaybind, bindable]
+    HRESULT borderCollapse([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_BORDERCOLLAPSE), displaybind, bindable]
+    HRESULT borderCollapse([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_DIRECTION), displaybind, bindable]
+    HRESULT direction([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_DIRECTION), displaybind, bindable]
+    HRESULT direction([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_BEHAVIOR), displaybind, bindable]
+    HRESULT behavior([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_BEHAVIOR), displaybind, bindable]
+    HRESULT behavior([out, retval] BSTR *p);
+
+    [id(DISPID_IHTMLSTYLE2_SETEXPRESSION)]
+    HRESULT setExpression(
+            [in] BSTR propname,
+            [in] BSTR expression,
+            [in, defaultvalue("")] BSTR language);
+
+    [id(DISPID_IHTMLSTYLE2_GETEXPRESSION)]
+    HRESULT getExpression(
+            [in] BSTR propname,
+            [out, retval] VARIANT *expression);
+
+    [id(DISPID_IHTMLSTYLE2_REMOVEEXPRESSION)]
+    HRESULT removeExpression(
+            [in] BSTR propname,
+            [out, retval] VARIANT_BOOL *pfSuccess);
+
+    [propput, id(DISPID_IHTMLSTYLE2_POSITION), displaybind, bindable]
+    HRESULT position([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_POSITION), displaybind, bindable]
+    HRESULT position([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_UNICODEBIDI), displaybind, bindable]
+    HRESULT unicodeBidi([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_UNICODEBIDI), displaybind, bindable]
+    HRESULT unicodeBidi([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_BOTTOM), displaybind, bindable]
+    HRESULT bottom([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_BOTTOM), displaybind, bindable]
+    HRESULT bottom([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_RIGHT), displaybind, bindable]
+    HRESULT right([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_RIGHT), displaybind, bindable]
+    HRESULT right([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_PIXELBOTTOM), displaybind, bindable, hidden]
+    HRESULT pixelBottom([in] long v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_PIXELBOTTOM), displaybind, bindable, hidden]
+    HRESULT pixelBottom([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_PIXELRIGHT), displaybind, bindable, hidden]
+    HRESULT pixelRight([in] long v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_PIXELRIGHT), displaybind, bindable, hidden]
+    HRESULT pixelRight([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_POSBOTTOM), displaybind, bindable]
+    HRESULT posBottom([in] float v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_POSBOTTOM), displaybind, bindable]
+    HRESULT posBottom([out, retval] float *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_POSRIGHT), displaybind, bindable]
+    HRESULT posRight([in] float v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_POSRIGHT), displaybind, bindable]
+    HRESULT posRight([out, retval] float *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_IMEMODE), displaybind, bindable]
+    HRESULT imeMode([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_IMEMODE), displaybind, bindable]
+    HRESULT imeMode([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_RUBYALIGN), displaybind, bindable]
+    HRESULT rubyAlign([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_RUBYALIGN), displaybind, bindable]
+    HRESULT rubyAlign([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_RUBYPOSITION), displaybind, bindable]
+    HRESULT rubyPosition([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_RUBYPOSITION), displaybind, bindable]
+    HRESULT rubyPosition([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_RUBYOVERHANG), displaybind, bindable]
+    HRESULT rubyOverhang([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_RUBYOVERHANG), displaybind, bindable]
+    HRESULT rubyOverhang([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDCHAR), displaybind, bindable]
+    HRESULT layoutGridChar([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDCHAR), displaybind, bindable]
+    HRESULT layoutGridChar([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDLINE), displaybind, bindable]
+    HRESULT layoutGridLine([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDLINE), displaybind, bindable]
+    HRESULT layoutGridLine([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDMODE), displaybind, bindable]
+    HRESULT layoutGridMode([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDMODE), displaybind, bindable]
+    HRESULT layoutGridMode([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDTYPE), displaybind, bindable]
+    HRESULT layoutGridType([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRIDTYPE), displaybind, bindable]
+    HRESULT layoutGridType([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_LAYOUTGRID), displaybind, bindable, nonbrowsable]
+    HRESULT layoutGrid([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LAYOUTGRID), displaybind, bindable, nonbrowsable]
+    HRESULT layoutGrid([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_WORDBREAK), displaybind, bindable]
+    HRESULT wordBreak([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_WORDBREAK), displaybind, bindable]
+    HRESULT wordBreak([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_LINEBREAK), displaybind, bindable]
+    HRESULT lineBreak([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_LINEBREAK), displaybind, bindable]
+    HRESULT lineBreak([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_TEXTJUSTIFY), displaybind, bindable]
+    HRESULT textJustify([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TEXTJUSTIFY), displaybind, bindable]
+    HRESULT textJustify([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_TEXTJUSTIFYTRIM), displaybind, bindable]
+    HRESULT textJustifyTrim([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TEXTJUSTIFYTRIM), displaybind, bindable]
+    HRESULT textJustifyTrim([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_TEXTKASHIDA), displaybind, bindable]
+    HRESULT textKashida([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TEXTKASHIDA), displaybind, bindable]
+    HRESULT textKashida([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_TEXTAUTOSPACE), displaybind, bindable]
+    HRESULT textAutospace([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_TEXTAUTOSPACE), displaybind, bindable]
+    HRESULT textAutospace([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_OVERFLOWX), displaybind, bindable]
+    HRESULT overflowX([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_OVERFLOWX), displaybind, bindable]
+    HRESULT overflowX([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_OVERFLOWY), displaybind, bindable]
+    HRESULT overflowY([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_OVERFLOWY), displaybind, bindable]
+    HRESULT overflowY([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLSTYLE2_ACCELERATOR), displaybind, bindable]
+    HRESULT accelerator([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLE2_ACCELERATOR), displaybind, bindable]
+    HRESULT accelerator([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
  *    IHTMLRuleStyle interface
  */
 [
