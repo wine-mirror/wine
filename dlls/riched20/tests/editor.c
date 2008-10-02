@@ -306,7 +306,7 @@ static void test_EM_GETLINE(void)
   {
     int nCopied;
     int expected_nCopied = min(gl[i].buffer_len, strlen(gl[i].text));
-    int expected_bytes_written = min(gl[i].buffer_len, strlen(gl[i].text) + 1);
+    int expected_bytes_written = min(gl[i].buffer_len, strlen(gl[i].text));
     memset(dest, 0xBB, nBuf);
     *(WORD *) dest = gl[i].buffer_len;
 
@@ -332,16 +332,27 @@ static void test_EM_GETLINE(void)
       for (j = 0; j < 32; j++)
         sprintf(resultbuf+strlen(resultbuf), "%02x", dest[j] & 0xFF);
       expectedbuf[0] = '\0';
-      for (j = 0; j < expected_bytes_written; j++)
+      for (j = 0; j < expected_bytes_written; j++) /* Written bytes */
         sprintf(expectedbuf+strlen(expectedbuf), "%02x", gl[i].text[j] & 0xFF);
-      for (; j < 32; j++)
+      for (; j < gl[i].buffer_len; j++) /* Ignored bytes */
+        sprintf(expectedbuf+strlen(expectedbuf), "??");
+      for (; j < 32; j++) /* Bytes after declared buffer size */
         sprintf(expectedbuf+strlen(expectedbuf), "%02x", origdest[j] & 0xFF);
 
+      /* Test the part of the buffer that is expected to be written according
+       * to the MSDN documentation fo EM_GETLINE, which does not state that
+       * a NULL terminating character will be added unless no text is copied.
+       *
+       * Windows 95, 98 & NT do not append a NULL terminating character, but
+       * Windows 2000 and up do append a NULL terminating character if there
+       * is space in the buffer. The test will ignore this difference. */
       ok(!strncmp(dest, gl[i].text, expected_bytes_written),
          "%d: expected_bytes_written=%d\n" "expected=0x%s\n" "but got= 0x%s\n",
          i, expected_bytes_written, expectedbuf, resultbuf);
-      ok(!strncmp(dest + expected_bytes_written, origdest
-                  + expected_bytes_written, nBuf - expected_bytes_written),
+      /* Test the part of the buffer after the declared length to make sure
+       * there are no buffer overruns. */
+      ok(!strncmp(dest + gl[i].buffer_len, origdest + gl[i].buffer_len,
+                  nBuf - gl[i].buffer_len),
          "%d: expected_bytes_written=%d\n" "expected=0x%s\n" "but got= 0x%s\n",
          i, expected_bytes_written, expectedbuf, resultbuf);
     }
