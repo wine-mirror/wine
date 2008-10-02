@@ -390,6 +390,16 @@ typedef struct {
     ConnectionPoint cp;
 } HTMLTextContainer;
 
+typedef struct {
+    DispatchEx dispex;
+    const IHTMLStyleVtbl    *lpHTMLStyleVtbl;
+    const IHTMLStyle2Vtbl   *lpHTMLStyle2Vtbl;
+
+    LONG ref;
+
+    nsIDOMCSSStyleDeclaration *nsstyle;
+} HTMLStyle;
+
 #define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
 #define HTMLWINDOW3(x)   ((IHTMLWindow3*)                 &(x)->lpHTMLWindow3Vtbl)
 
@@ -446,6 +456,9 @@ typedef struct {
 #define HTMLOPTFACTORY(x)  ((IHTMLOptionElementFactory*)  &(x)->lpHTMLOptionElementFactoryVtbl)
 #define HTMLLOCATION(x)  ((IHTMLLocation*) &(x)->lpHTMLLocationVtbl)
 
+#define HTMLSTYLE(x)     ((IHTMLStyle*)                   &(x)->lpHTMLStyleVtbl)
+#define HTMLSTYLE2(x)    ((IHTMLStyle2*)                  &(x)->lpHTMLStyle2Vtbl)
+
 #define DISPATCHEX(x)    ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
 #define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
@@ -470,6 +483,8 @@ void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
+
+void HTMLStyle2_Init(HTMLStyle*);
 
 void ConnectionPoint_Init(ConnectionPoint*,ConnectionPointContainer*,REFIID);
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);

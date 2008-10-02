@@ -269,6 +269,15 @@ static const IID * const generic_iids[] = {
     NULL
 };
 
+static const IID * const style_iids[] = {
+    &IID_IUnknown,
+    &IID_IDispatch,
+    &IID_IDispatchEx,
+    &IID_IHTMLStyle,
+    &IID_IHTMLStyle2,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -1975,6 +1984,7 @@ static void test_default_style(IHTMLStyle *style)
     HRESULT hres;
 
     test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
+    test_ifaces((IUnknown*)style, style_iids);
 
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_fontFamily(style, &str);

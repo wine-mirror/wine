@@ -32,17 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
-    DispatchEx dispex;
-    const IHTMLStyleVtbl *lpHTMLStyleVtbl;
-
-    LONG ref;
-
-    nsIDOMCSSStyleDeclaration *nsstyle;
-} HTMLStyle;
-
-#define HTMLSTYLE(x)  ((IHTMLStyle*) &(x)->lpHTMLStyleVtbl)
-
 static const WCHAR attrBackground[] =
     {'b','a','c','k','g','r','o','u','n','d',0};
 static const WCHAR attrBackgroundColor[] =
@@ -242,6 +231,9 @@ static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, v
     }else if(IsEqualGUID(&IID_IHTMLStyle, riid)) {
         TRACE("(%p)->(IID_IHTMLStyle %p)\n", This, ppv);
         *ppv = HTMLSTYLE(This);
+    }else if(IsEqualGUID(&IID_IHTMLStyle2, riid)) {
+        TRACE("(%p)->(IID_IHTMLStyle2 %p)\n", This, ppv);
+        *ppv = HTMLSTYLE2(This);
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }
@@ -1909,11 +1901,12 @@ static dispex_static_data_t HTMLStyle_dispex = {
 
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle)
 {
-    HTMLStyle *ret = heap_alloc(sizeof(HTMLStyle));
+    HTMLStyle *ret = heap_alloc_zero(sizeof(HTMLStyle));
 
     ret->lpHTMLStyleVtbl = &HTMLStyleVtbl;
     ret->ref = 1;
     ret->nsstyle = nsstyle;
+    HTMLStyle2_Init(ret);
 
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
 
