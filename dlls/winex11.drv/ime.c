@@ -207,6 +207,12 @@ static HIMCC updateCompStr(HIMCC old, LPWSTR compstr, DWORD len)
     if (old == NULL && compstr == NULL && len == 0)
         return NULL;
 
+    if (compstr == NULL && len != 0)
+    {
+        ERR("compstr is NULL however we have a len!  Please report\n");
+        len = 0;
+    }
+
     if (old != NULL)
     {
         olddata = ImmLockIMCC(old);
@@ -342,6 +348,12 @@ static HIMCC updateResultStr(HIMCC old, LPWSTR resultstr, DWORD len)
 
     if (old == NULL && resultstr == NULL && len == 0)
         return NULL;
+
+    if (resultstr == NULL && len != 0)
+    {
+        ERR("resultstr is NULL however we have a len!  Please report\n");
+        len = 0;
+    }
 
     if (old != NULL)
     {
