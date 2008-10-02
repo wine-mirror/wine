@@ -709,8 +709,10 @@ literal_t *parse_regexp(parser_ctx_t *ctx)
     TRACE("\n");
 
     re = ctx->ptr;
-    while(ctx->ptr < ctx->end && (*ctx->ptr != '/' || *(ctx->ptr-1) == '\\'))
-        ctx->ptr++;
+    while(ctx->ptr < ctx->end && *ctx->ptr != '/') {
+        if(*ctx->ptr++ == '\\' && ctx->ptr < ctx->end)
+            ctx->ptr++;
+    }
 
     if(ctx->ptr == ctx->end) {
         WARN("unexpected end of file\n");

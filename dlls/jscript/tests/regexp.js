@@ -47,9 +47,15 @@ ok(m["1"] === "ab", "m[1] is not \"ab\"");
 
 m = "aaabcabc".match(/a+b/g);
 ok(typeof(m) === "object", "typeof m is not object");
-ok(m.length === 2, "m.length is not 1");
+ok(m.length === 2, "m.length is not 2");
 ok(m["0"] === "aaab", "m[0] is not \"ab\"");
 ok(m["1"] === "ab", "m[1] is not \"ab\"");
+
+m = "aaa\\\\cabc".match(/\\/g);
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 2, "m.length is not 2");
+ok(m["0"] === "\\", "m[0] is not \"\\\"");
+ok(m["1"] === "\\", "m[1] is not \"\\\"");
 
 m = "abcabc".match(new RegExp("ab"));
 ok(typeof(m) === "object", "typeof m is not object");
