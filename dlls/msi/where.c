@@ -585,6 +585,7 @@ static const MSIVIEWOPS where_ops =
     NULL,
     NULL,
     WHERE_sort,
+    NULL,
 };
 
 static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr *cond,

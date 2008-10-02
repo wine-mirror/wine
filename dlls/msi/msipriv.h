@@ -274,6 +274,11 @@ typedef struct tagMSIVIEWOPS
      * sort - orders the table by columns
      */
     UINT (*sort)( struct tagMSIVIEW *view, column_info *columns );
+
+    /*
+     * drop - drops the table from the database
+     */
+    UINT (*drop)( struct tagMSIVIEW *view );
 } MSIVIEWOPS;
 
 struct tagMSIVIEW
