@@ -406,16 +406,16 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
         if (memcmp(cpinfo[i].wszWebCharset, autoW, 5 * sizeof(WCHAR)))
         {
             ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08x\n", ret);
-    #ifdef DUMP_CP_INFO
+#ifdef DUMP_CP_INFO
             trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszWebCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
-    #endif
+#endif
             ok(!lstrcmpiW(cpinfo[i].wszWebCharset, mcsi.wszCharset),
-    #ifdef DUMP_CP_INFO
+#ifdef DUMP_CP_INFO
                     "%s != %s\n",
             wine_dbgstr_w(cpinfo[i].wszWebCharset), wine_dbgstr_w(mcsi.wszCharset));
-    #else
+#else
                     "wszWebCharset mismatch\n");
-    #endif
+#endif
 
         if (0)
         {
@@ -437,16 +437,16 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
         if (memcmp(cpinfo[i].wszHeaderCharset, autoW, 5 * sizeof(WCHAR)))
         {
             ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08x\n", ret);
-    #ifdef DUMP_CP_INFO
+#ifdef DUMP_CP_INFO
             trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszHeaderCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
-    #endif
+#endif
             ok(!lstrcmpiW(cpinfo[i].wszHeaderCharset, mcsi.wszCharset),
-    #ifdef DUMP_CP_INFO
+#ifdef DUMP_CP_INFO
                     "%s != %s\n",
             wine_dbgstr_w(cpinfo[i].wszHeaderCharset), wine_dbgstr_w(mcsi.wszCharset));
-    #else
+#else
                     "wszHeaderCharset mismatch\n");
-    #endif
+#endif
 
         if (0)
         {
@@ -468,16 +468,16 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
         if (memcmp(cpinfo[i].wszBodyCharset, autoW, 5 * sizeof(WCHAR)))
         {
             ok (ret == S_OK, "IMultiLanguage2_GetCharsetInfo failed: %08x\n", ret);
-    #ifdef DUMP_CP_INFO
+#ifdef DUMP_CP_INFO
             trace("%s: %u %u %s\n", wine_dbgstr_w(cpinfo[i].wszBodyCharset), mcsi.uiCodePage, mcsi.uiInternetEncoding, wine_dbgstr_w(mcsi.wszCharset));
-    #endif
+#endif
             ok(!lstrcmpiW(cpinfo[i].wszBodyCharset, mcsi.wszCharset),
-    #ifdef DUMP_CP_INFO
+#ifdef DUMP_CP_INFO
                     "%s != %s\n",
             wine_dbgstr_w(cpinfo[i].wszBodyCharset), wine_dbgstr_w(mcsi.wszCharset));
-    #else
+#else
                     "wszBodyCharset mismatch\n");
-    #endif
+#endif
 
         if (0)
         {
@@ -815,8 +815,8 @@ static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
         hr = IMultiLanguage2_GetRfc1766FromLcid(iML2, lcid, &rfcstr);
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
         ok_w2("Expected \"%s\",  got \"%s\"n", kok, rfcstr);
+        SysFreeString(rfcstr);
     }
-    SysFreeString(rfcstr);
 }
 
 static void test_IMultiLanguage2_ConvertStringFromUnicode(IMultiLanguage2 *iML2)
