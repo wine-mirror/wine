@@ -267,7 +267,10 @@ static BOOL match_item(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, 
             if ((mode & SEARCH_CONTENT) && (type == REG_EXPAND_SZ || type == REG_SZ)) {
                 LPWSTR buffer;
                 buffer = HeapAlloc(GetProcessHeap(), 0, lenValue);
-                RegEnumValueW(hKey, i, valName, &lenName, NULL, &type, (LPBYTE)buffer, &lenValue);
+                if (!buffer)
+                    break;
+                if (ERROR_SUCCESS != RegEnumValueW(hKey, i, NULL, NULL, NULL, &type, (LPBYTE)buffer, &lenValue))
+                    break;
                 if (match_string(buffer, sstring, mode)) {
                     HeapFree(GetProcessHeap(), 0, buffer);
                     RegCloseKey(hKey);
