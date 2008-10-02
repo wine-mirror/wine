@@ -4365,7 +4365,9 @@ static void test_ShowWindow(void)
     ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rc);
-    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+    ok(EqualRect(&rcMain, &rc), "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rcMain.left, rcMain.top, rcMain.right, rcMain.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     ret = ShowWindow(hwnd, SW_SHOW);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -4375,7 +4377,9 @@ static void test_ShowWindow(void)
     ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rc);
-    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+    ok(EqualRect(&rcMain, &rc), "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rcMain.left, rcMain.top, rcMain.right, rcMain.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     ret = ShowWindow(hwnd, SW_MINIMIZE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -4395,7 +4399,9 @@ static void test_ShowWindow(void)
     ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rc);
-    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+    ok(EqualRect(&rcMain, &rc), "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rcMain.left, rcMain.top, rcMain.right, rcMain.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     ret = EnableWindow(hwnd, FALSE);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -4410,7 +4416,9 @@ static void test_ShowWindow(void)
     ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rc);
-    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+    ok(EqualRect(&rcMain, &rc), "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rcMain.left, rcMain.top, rcMain.right, rcMain.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     ret = DefWindowProc(hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
     ok(!ret, "not expected ret: %lu\n", ret);
@@ -4420,7 +4428,9 @@ static void test_ShowWindow(void)
     ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rc);
-    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+    ok(EqualRect(&rcMain, &rc), "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rcMain.left, rcMain.top, rcMain.right, rcMain.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     ret = ShowWindow(hwnd, SW_MINIMIZE);
     ok(ret, "not expected ret: %lu\n", ret);
@@ -4450,7 +4460,9 @@ static void test_ShowWindow(void)
     ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rc);
-    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+    ok(EqualRect(&rcMain, &rc), "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
+       rcMain.left, rcMain.top, rcMain.right, rcMain.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     ret = DefWindowProc(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
     ok(!ret, "not expected ret: %lu\n", ret);
