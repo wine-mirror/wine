@@ -123,12 +123,6 @@ struct DefaultHandler
 
 typedef struct DefaultHandler DefaultHandler;
 
-/*
- * Here, I define utility functions to help with the casting of the
- * "This" parameter.
- * There is a version to accommodate all of the VTables implemented
- * by this object.
- */
 static inline DefaultHandler *impl_from_IOleObject( IOleObject *iface )
 {
     return (DefaultHandler *)((char*)iface - FIELD_OFFSET(DefaultHandler, lpVtbl));
@@ -186,7 +180,6 @@ static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
 {
   DefaultHandler *This = impl_from_NDIUnknown(iface);
 
-  /* Perform a sanity check on the parameters. */
   if (!ppvObject)
     return E_INVALIDARG;
 
@@ -258,7 +251,6 @@ static ULONG WINAPI DefaultHandler_NDIUnknown_Release(
   DefaultHandler *This = impl_from_NDIUnknown(iface);
   ULONG ref;
 
-  /* Decrease the reference count on this object. */
   ref = InterlockedDecrement(&This->ref);
 
   if (!ref) DefaultHandler_Destroy(This);
@@ -361,7 +353,6 @@ static HRESULT WINAPI DefaultHandler_GetClientSite(
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
 
-  /* Sanity check. */
   if (!ppClientSite)
     return E_POINTER;
 
@@ -402,7 +393,6 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
   HeapFree( GetProcessHeap(), 0, This->containerObj );
   This->containerObj = NULL;
 
-  /* Copy the string supplied. */
   if (szContainerApp)
   {
       if ((This->containerApp = HeapAlloc( GetProcessHeap(), 0,
@@ -419,8 +409,8 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
   return S_OK;
 }
 
-/* undos the work done by DefaultHandler_Run */
-static void WINAPI DefaultHandler_Stop(DefaultHandler *This)
+/* undoes the work done by DefaultHandler_Run */
+static void DefaultHandler_Stop(DefaultHandler *This)
 {
   if (!object_is_running(This))
     return;
@@ -668,7 +658,6 @@ static HRESULT WINAPI DefaultHandler_GetUserClassID(
   if (object_is_running(This))
     return IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
 
-  /* Sanity check. */
   if (!pClsid)
     return E_POINTER;
 
@@ -764,9 +753,6 @@ static HRESULT WINAPI DefaultHandler_GetExtent(
 				targetDevice,
 				psizel);
 
-  /*
-   * Cleanup
-   */
   IViewObject2_Release(cacheView);
 
   return hres;
@@ -845,7 +831,6 @@ static HRESULT WINAPI DefaultHandler_EnumAdvise(
 
   TRACE("(%p, %p)\n", iface, ppenumAdvise);
 
-  /* Sanity check */
   if (!ppenumAdvise)
     return E_POINTER;
 
@@ -1202,7 +1187,6 @@ static HRESULT WINAPI DefaultHandler_EnumDAdvise(
 
   TRACE("(%p, %p)\n", iface, ppenumAdvise);
 
-  /* Sanity check */
   if (!ppenumAdvise)
     return E_POINTER;
 
@@ -1696,9 +1680,6 @@ static DefaultHandler* DefaultHandler_Construct(
   DefaultHandler* This = NULL;
   HRESULT hr;
 
-  /*
-   * Allocate space for the object.
-   */
   This = HeapAlloc(GetProcessHeap(), 0, sizeof(DefaultHandler));
 
   if (!This)
@@ -1741,9 +1722,7 @@ static DefaultHandler* DefaultHandler_Construct(
     hr = IUnknown_QueryInterface(This->dataCache, &IID_IPersistStorage, (void**)&This->dataCache_PersistStg);
   if(FAILED(hr))
     ERR("Unexpected error creating data cache\n");
-  /*
-   * Initialize the other data members of the class.
-   */
+
   This->clsid = *clsid;
   This->clientSite = NULL;
   This->oleAdviseHolder = NULL;
@@ -1765,13 +1744,11 @@ static void DefaultHandler_Destroy(
   /* release delegates */
   DefaultHandler_Stop(This);
 
-  /* Free the strings idenfitying the object */
   HeapFree( GetProcessHeap(), 0, This->containerApp );
   This->containerApp = NULL;
   HeapFree( GetProcessHeap(), 0, This->containerObj );
   This->containerObj = NULL;
 
-  /* Release our reference to the data cache. */
   if (This->dataCache)
   {
     IPersistStorage_Release(This->dataCache_PersistStg);
@@ -1780,28 +1757,24 @@ static void DefaultHandler_Destroy(
     This->dataCache = NULL;
   }
 
-  /* Same thing for the client site. */
   if (This->clientSite)
   {
     IOleClientSite_Release(This->clientSite);
     This->clientSite = NULL;
   }
 
-  /* And the advise holder. */
   if (This->oleAdviseHolder)
   {
     IOleAdviseHolder_Release(This->oleAdviseHolder);
     This->oleAdviseHolder = NULL;
   }
 
-  /* And the data advise holder. */
   if (This->dataAdviseHolder)
   {
     IDataAdviseHolder_Release(This->dataAdviseHolder);
     This->dataAdviseHolder = NULL;
   }
 
-  /* Free the actual default handler structure. */
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -1819,9 +1792,6 @@ HRESULT WINAPI OleCreateDefaultHandler(
 
   TRACE("(%s, %p, %s, %p)\n", debugstr_guid(clsid), pUnkOuter, debugstr_guid(riid), ppvObj);
 
-  /*
-   * Sanity check
-   */
   if (!ppvObj)
     return E_POINTER;
 
