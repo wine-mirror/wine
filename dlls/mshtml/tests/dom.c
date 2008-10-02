@@ -278,6 +278,13 @@ static const IID * const style_iids[] = {
     NULL
 };
 
+static const IID * const cstyle_iids[] = {
+    &IID_IUnknown,
+    &IID_IDispatch,
+    &IID_IHTMLCurrentStyle,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -1976,6 +1983,11 @@ static void test_navigator(IHTMLDocument2 *doc)
     ok(!ref, "navigator should be destroyed here\n");
 }
 
+static void test_current_style(IHTMLCurrentStyle *current_style)
+{
+    test_ifaces((IUnknown*)current_style, cstyle_iids);
+}
+
 static void test_default_style(IHTMLStyle *style)
 {
     VARIANT_BOOL b;
@@ -2224,7 +2236,9 @@ static void test_window(IHTMLDocument2 *doc)
 static void test_defaults(IHTMLDocument2 *doc)
 {
     IHTMLStyleSheetsCollection *stylesheetcol;
+    IHTMLCurrentStyle *cstyle;
     IHTMLBodyElement *body;
+    IHTMLElement2 *elem2;
     IHTMLElement *elem;
     IHTMLStyle *style;
     long l;
@@ -2240,7 +2254,6 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLBodyElement_Release(body);
 
     hres = IHTMLElement_get_style(elem, &style);
-    IHTMLElement_Release(elem);
     ok(hres == S_OK, "get_style failed: %08x\n", hres);
 
     test_default_style(style);
@@ -2250,6 +2263,17 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_navigator(doc);
 
     IHTMLStyle_Release(style);
+
+    elem2 = get_elem2_iface((IUnknown*)elem);
+    hres = IHTMLElement2_get_currentStyle(elem2, &cstyle);
+    ok(hres == S_OK, "get_currentStyle failed: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        test_current_style(cstyle);
+        IHTMLCurrentStyle_Release(cstyle);
+    }
+    IHTMLElement2_Release(elem2);
+
+    IHTMLElement_Release(elem);
 
     hres = IHTMLDocument2_get_styleSheets(doc, &stylesheetcol);
     ok(hres == S_OK, "get_styleSheets failed: %08x\n", hres);

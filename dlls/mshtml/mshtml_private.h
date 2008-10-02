@@ -486,6 +486,7 @@ void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
 
 void HTMLStyle2_Init(HTMLStyle*);
+HRESULT HTMLCurrentStyle_Create(IHTMLCurrentStyle**);
 
 void ConnectionPoint_Init(ConnectionPoint*,ConnectionPointContainer*,REFIID);
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);

@@ -15,6 +15,7 @@ C_SRCS = \
 	htmlanchor.c \
 	htmlbody.c \
 	htmlcomment.c \
+	htmlcurstyle.c \
 	htmldoc.c \
 	htmldoc3.c \
 	htmldoc5.c \
