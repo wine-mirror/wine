@@ -99,6 +99,7 @@ typedef enum {
     IHTMLOptionElement_tid,
     IHTMLSelectElement_tid,
     IHTMLStyle_tid,
+    IHTMLStyle2_tid,
     IHTMLTable_tid,
     IHTMLTableRow_tid,
     IHTMLTextContainer_tid,

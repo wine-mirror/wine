@@ -1890,6 +1890,7 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
 
 static const tid_t HTMLStyle_iface_tids[] = {
     IHTMLStyle_tid,
+    IHTMLStyle2_tid,
     0
 };
 static dispex_static_data_t HTMLStyle_dispex = {
