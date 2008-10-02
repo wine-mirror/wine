@@ -328,14 +328,14 @@ static void test_EM_GETLINE(void)
       char expectedbuf[1024];
       char resultbuf[1024];
       int j;
-      expectedbuf[0] = '\0';
-      for (j = 0; j < 32; j++)
-        sprintf(expectedbuf+strlen(expectedbuf), "%02x", dest[j] & 0xFF);
       resultbuf[0] = '\0';
+      for (j = 0; j < 32; j++)
+        sprintf(resultbuf+strlen(resultbuf), "%02x", dest[j] & 0xFF);
+      expectedbuf[0] = '\0';
       for (j = 0; j < expected_bytes_written; j++)
-        sprintf(resultbuf+strlen(resultbuf), "%02x", gl[i].text[j] & 0xFF);
+        sprintf(expectedbuf+strlen(expectedbuf), "%02x", gl[i].text[j] & 0xFF);
       for (; j < 32; j++)
-        sprintf(resultbuf+strlen(resultbuf), "%02x", origdest[j] & 0xFF);
+        sprintf(expectedbuf+strlen(expectedbuf), "%02x", origdest[j] & 0xFF);
 
       ok(!strncmp(dest, gl[i].text, expected_bytes_written),
          "%d: expected_bytes_written=%d\n" "expected=0x%s\n" "but got= 0x%s\n",
