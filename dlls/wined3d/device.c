@@ -2996,7 +2996,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(lightInfo->glIndex));
             }
 
-            This->stateBlock->activeLights[lightInfo->glIndex] = NULL;
+            This->updateStateBlock->activeLights[lightInfo->glIndex] = NULL;
             lightInfo->glIndex = -1;
         } else {
             TRACE("Light already disabled, nothing to do\n");
@@ -3011,8 +3011,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
             int i;
             /* Find a free gl light */
             for(i = 0; i < This->maxConcurrentLights; i++) {
-                if(This->stateBlock->activeLights[i] == NULL) {
-                    This->stateBlock->activeLights[i] = lightInfo;
+                if(This->updateStateBlock->activeLights[i] == NULL) {
+                    This->updateStateBlock->activeLights[i] = lightInfo;
                     lightInfo->glIndex = i;
                     break;
                 }
