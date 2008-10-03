@@ -152,6 +152,10 @@ SRCDIR_INCLUDES = \
 	ddk/ntddk.h \
 	ddk/ntddser.h \
 	ddk/ntddtape.h \
+	ddk/usb.h \
+	ddk/usb100.h \
+	ddk/usb200.h \
+	ddk/usbdlib.h \
 	ddk/wdm.h \
 	ddk/winddiui.h \
 	ddk/winsplp.h \
