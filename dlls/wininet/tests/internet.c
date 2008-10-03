@@ -381,6 +381,37 @@ static void InternetTimeFromSystemTimeA_test(void)
     ok( !memcmp( string, expect, sizeof(expect) ),
         "InternetTimeFromSystemTimeA failed (%u)\n", GetLastError() );
 
+    /* test NULL time parameter */
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeA( NULL, INTERNET_RFC1123_FORMAT, string, sizeof(string) );
+    error = GetLastError();
+    ok( !ret, "InternetTimeFromSystemTimeA should have returned FALSE\n" );
+    todo_wine
+    ok( error == ERROR_INVALID_PARAMETER,
+        "InternetTimeFromSystemTimeA failed with ERROR_INVALID_PARAMETER instead of %u\n",
+        error );
+
+    /* test NULL string parameter */
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT, NULL, sizeof(string) );
+    error = GetLastError();
+    todo_wine
+    ok( !ret, "InternetTimeFromSystemTimeA should have returned FALSE\n" );
+    ok( error == ERROR_INVALID_PARAMETER,
+        "InternetTimeFromSystemTimeA failed with ERROR_INVALID_PARAMETER instead of %u\n",
+        error );
+
+    /* test invalid format parameter */
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT + 1, string, sizeof(string) );
+    error = GetLastError();
+    ok( !ret, "InternetTimeFromSystemTimeA should have returned FALSE\n" );
+    todo_wine
+    ok( error == ERROR_INVALID_PARAMETER,
+        "InternetTimeFromSystemTimeA failed with ERROR_INVALID_PARAMETER instead of %u\n",
+        error );
+
+    /* test too small buffer size */
     SetLastError(0xdeadbeef);
     ret = pInternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT, string, 0 );
     error = GetLastError();
@@ -405,6 +436,37 @@ static void InternetTimeFromSystemTimeW_test(void)
     ok( !memcmp( string, expect, sizeof(expect) ),
         "InternetTimeFromSystemTimeW failed (%u)\n", GetLastError() );
 
+    /* test NULL time parameter */
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeW( NULL, INTERNET_RFC1123_FORMAT, string, sizeof(string) );
+    error = GetLastError();
+    ok( !ret, "InternetTimeFromSystemTimeW should have returned FALSE\n" );
+    todo_wine
+    ok( error == ERROR_INVALID_PARAMETER,
+        "InternetTimeFromSystemTimeW failed with ERROR_INVALID_PARAMETER instead of %u\n",
+        error );
+
+    /* test NULL string parameter */
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, NULL, sizeof(string) );
+    error = GetLastError();
+    ok( !ret, "InternetTimeFromSystemTimeW should have returned FALSE\n" );
+    todo_wine
+    ok( error == ERROR_INVALID_PARAMETER,
+        "InternetTimeFromSystemTimeW failed with ERROR_INVALID_PARAMETER instead of %u\n",
+        error );
+
+    /* test invalid format parameter */
+    SetLastError(0xdeadbeef);
+    ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT + 1, string, sizeof(string) );
+    error = GetLastError();
+    ok( !ret, "InternetTimeFromSystemTimeW should have returned FALSE\n" );
+    todo_wine
+    ok( error == ERROR_INVALID_PARAMETER,
+        "InternetTimeFromSystemTimeW failed with ERROR_INVALID_PARAMETER instead of %u\n",
+        error );
+
+    /* test too small buffer size */
     SetLastError(0xdeadbeef);
     ret = pInternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string)/sizeof(string[0]) );
     error = GetLastError();
