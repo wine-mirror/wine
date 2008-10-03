@@ -112,6 +112,11 @@ static void test_GetUrlCacheEntryInfoExA(void)
 
     check_cache_entry_infoA("GetUrlCacheEntryInfoEx", lpCacheEntryInfo);
 
+    cbCacheEntryInfo = 100000;
+    ret = GetUrlCacheEntryInfoEx(TEST_URL, NULL, &cbCacheEntryInfo, NULL, NULL, NULL, 0);
+    ok(!ret, "GetUrlCacheEntryInfoEx with zero-length buffer should fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetUrlCacheEntryInfoEx should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
+
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 }
 

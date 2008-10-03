@@ -1536,6 +1536,9 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
 
     if (lpdwCacheEntryInfoBufferSize)
     {
+        if (!lpCacheEntryInfo)
+            *lpdwCacheEntryInfoBufferSize = 0;
+
         error = URLCache_CopyEntry(
             pContainer,
             pHeader,
@@ -1614,6 +1617,9 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
 
     if (lpdwCacheEntryInfoBufferSize)
     {
+        if (!lpCacheEntryInfo)
+            *lpdwCacheEntryInfoBufferSize = 0;
+
         error = URLCache_CopyEntry(
             pContainer,
             pHeader,
