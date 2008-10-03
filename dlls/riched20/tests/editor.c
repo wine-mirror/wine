@@ -3522,6 +3522,28 @@ static void test_EM_SETTEXTEX(void)
       "EM_GETTEXTEX results not what was set by EM_SETTEXTEX when"
       " using ST_SELECTION and non-Unicode\n");
 
+  /* Test setting text using rich text format */
+  setText.flags = 0;
+  setText.codepage = CP_ACP;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)"{\\rtf richtext}");
+  getText.codepage = CP_ACP;
+  getText.cb = MAX_BUF_LEN;
+  getText.flags = GT_DEFAULT;
+  getText.lpDefaultChar = NULL;
+  getText.lpUsedDefChar = NULL;
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) bufACP);
+  ok(!strcmp(bufACP, "richtext"), "expected 'richtext' but got '%s'\n", bufACP);
+
+  setText.flags = 0;
+  setText.codepage = CP_ACP;
+  SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)"{\\urtf morerichtext}");
+  getText.codepage = CP_ACP;
+  getText.cb = MAX_BUF_LEN;
+  getText.flags = GT_DEFAULT;
+  getText.lpDefaultChar = NULL;
+  getText.lpUsedDefChar = NULL;
+  SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) bufACP);
+  ok(!strcmp(bufACP, "morerichtext"), "expected 'morerichtext' but got '%s'\n", bufACP);
 
   DestroyWindow(hwndRichEdit);
 }
