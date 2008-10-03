@@ -2,7 +2,7 @@
  * Wininet - Url Cache functions
  *
  * Copyright 2001,2002 CodeWeavers
- * Copyright 2003 Robert Shearman
+ * Copyright 2003-2008 Robert Shearman
  *
  * Eric Kohl
  * Aric Stewart
@@ -178,7 +178,7 @@ typedef struct _URLCACHECONTAINER
 /* List of all containers available */
 static struct list UrlContainers = LIST_INIT(UrlContainers);
 
-static HASH_CACHEFILE_ENTRY *URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash);
+static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash, HASH_CACHEFILE_ENTRY **ppHash);
 
 /***********************************************************************
  *           URLCache_PathToObjectName (Internal)
@@ -206,11 +206,11 @@ static void URLCache_PathToObjectName(LPWSTR lpszPath, WCHAR replace)
  *  Opens the index file and saves mapping handle in hCacheIndexMapping
  *
  * RETURNS
- *    TRUE if succeeded
- *    FALSE if failed
+ *    ERROR_SUCCESS if succeeded
+ *    Any other Win32 error code if failed
  *
  */
-static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
+static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 {
     HANDLE hFile;
     WCHAR wszFilePath[MAX_PATH];
@@ -220,7 +220,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     static const WCHAR wszMappingFormat[] = {'%','s','%','s','_','%','l','u',0};
 
     if (pContainer->hMapping)
-        return TRUE;
+        return ERROR_SUCCESS;
 
     strcpyW(wszFilePath, pContainer->path);
     strcatW(wszFilePath, wszIndex);
@@ -235,7 +235,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     if (hFile == INVALID_HANDLE_VALUE)
     {
         TRACE("Could not open or create cache index file \"%s\"\n", debugstr_w(wszFilePath));
-        return FALSE;
+        return GetLastError();
     }
 
     /* At this stage we need the mutex because we may be about to create the
@@ -247,7 +247,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     if (dwFileSize == INVALID_FILE_SIZE)
     {
 	ReleaseMutex(pContainer->hMutex);
-        return FALSE;
+        return GetLastError();
     }
 
     if (dwFileSize == 0)
@@ -256,7 +256,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 	HKEY	key;
 	char	achZeroes[0x1000];
 	DWORD	dwOffset;
-	DWORD dwError = 0;
+	DWORD dwError = ERROR_SUCCESS;
 
 	/* Write zeroes to the entire file so we can safely map it without
 	 * fear of getting a SEGV because the disk is full.
@@ -282,7 +282,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 	    }
 	}
 
-	if (!dwError)
+	if (dwError == ERROR_SUCCESS)
 	{
 	    HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READWRITE, 0, NEWFILE_SIZE, NULL);
 
@@ -296,6 +296,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 		    WCHAR wszDirPath[MAX_PATH];
 		    FILETIME ft;
 		    int i, j;
+                    HASH_CACHEFILE_ENTRY *pHashEntry;
 
 		    dwFileSize = NEWFILE_SIZE;
 		
@@ -326,7 +327,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 			RegCloseKey(key);
 		    }
 		
-		    URLCache_CreateHashTable(pHeader, NULL);
+		    URLCache_CreateHashTable(pHeader, NULL, &pHashEntry);
 
 		    /* Last step - create the directories */
 	
@@ -416,8 +417,7 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 	    CloseHandle(hFile);
 	    DeleteFileW(wszFilePath);
 	    ReleaseMutex(pContainer->hMutex);
-	    SetLastError(dwError);
-	    return FALSE;
+	    return dwError;
 	}
 
     }
@@ -433,10 +433,10 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     if (!pContainer->hMapping)
     {
         ERR("Couldn't create file mapping (error is %d)\n", GetLastError());
-        return FALSE;
+        return GetLastError();
     }
 
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -579,7 +579,7 @@ void URLCacheContainers_DeleteAll(void)
         );
 }
 
-static BOOL URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAINER ** ppContainer)
+static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAINER ** ppContainer)
 {
     URLCACHECONTAINER * pContainer;
 
@@ -592,17 +592,16 @@ static BOOL URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAINE
         {
             TRACE("found container with prefx %s for URL %s\n", debugstr_w(pContainer->cache_prefix), debugstr_w(lpwszUrl));
             *ppContainer = pContainer;
-            return TRUE;
+            return ERROR_SUCCESS;
         }
     }
     ERR("no container found\n");
-    SetLastError(ERROR_FILE_NOT_FOUND);
-    return FALSE;
+    return ERROR_FILE_NOT_FOUND;
 }
 
-static BOOL URLCacheContainers_FindContainerA(LPCSTR lpszUrl, URLCACHECONTAINER ** ppContainer)
+static DWORD URLCacheContainers_FindContainerA(LPCSTR lpszUrl, URLCACHECONTAINER ** ppContainer)
 {
-    BOOL ret;
+    DWORD ret;
     LPWSTR lpwszUrl;
     int url_len = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0);
     if (url_len && (lpwszUrl = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(WCHAR))))
@@ -612,7 +611,7 @@ static BOOL URLCacheContainers_FindContainerA(LPCSTR lpszUrl, URLCACHECONTAINER 
         HeapFree(GetProcessHeap(), 0, lpwszUrl);
         return ret;
     }
-    return FALSE;
+    return GetLastError();
 }
 
 static BOOL URLCacheContainers_Enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, URLCACHECONTAINER ** ppContainer)
@@ -654,12 +653,18 @@ static BOOL URLCacheContainers_Enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, U
 /***********************************************************************
  *           URLCacheContainer_LockIndex (Internal)
  *
+ * Locks the index for system-wide exclusive access.
+ *
+ * RETURNS
+ *  Cache file header if successful
+ *  NULL if failed and calls SetLastError.
  */
 static LPURLCACHE_HEADER URLCacheContainer_LockIndex(URLCACHECONTAINER * pContainer)
 {
     BYTE index;
     LPVOID pIndexData;
     URLCACHE_HEADER * pHeader;
+    DWORD error;
 
     /* acquire mutex */
     WaitForSingleObject(pContainer->hMutex, INFINITE);
@@ -670,7 +675,7 @@ static LPURLCACHE_HEADER URLCacheContainer_LockIndex(URLCACHECONTAINER * pContai
     {
         ReleaseMutex(pContainer->hMutex);
         ERR("Couldn't MapViewOfFile. Error: %d\n", GetLastError());
-        return FALSE;
+        return NULL;
     }
     pHeader = (URLCACHE_HEADER *)pIndexData;
 
@@ -680,10 +685,12 @@ static LPURLCACHE_HEADER URLCacheContainer_LockIndex(URLCACHECONTAINER * pContai
     if (pHeader->dwFileSize != pContainer->file_size)
     {
         URLCacheContainer_CloseIndex(pContainer);
-        if (!URLCacheContainer_OpenIndex(pContainer))
+        error = URLCacheContainer_OpenIndex(pContainer);
+        if (error != ERROR_SUCCESS)
         {
             ReleaseMutex(pContainer->hMutex);
-            return FALSE;
+            SetLastError(error);
+            return NULL;
         }
         pIndexData = MapViewOfFile(pContainer->hMapping, FILE_MAP_WRITE, 0, 0, 0);
 
@@ -691,7 +698,7 @@ static LPURLCACHE_HEADER URLCacheContainer_LockIndex(URLCACHECONTAINER * pContai
         {
             ReleaseMutex(pContainer->hMutex);
             ERR("Couldn't MapViewOfFile. Error: %d\n", GetLastError());
-            return FALSE;
+            return NULL;
         }
         pHeader = (URLCACHE_HEADER *)pIndexData;
     }
@@ -931,11 +938,11 @@ static BOOL URLCache_LocalFileNameToPathA(
  *  Copies an entry from the cache index file to the Win32 structure
  *
  * RETURNS
- *    TRUE if the buffer was big enough
- *    FALSE if the buffer was too small
+ *    ERROR_SUCCESS if the buffer was big enough
+ *    ERROR_INSUFFICIENT_BUFFER if the buffer was too small
  *
  */
-static BOOL URLCache_CopyEntry(
+static DWORD URLCache_CopyEntry(
     URLCACHECONTAINER * pContainer,
     LPCURLCACHE_HEADER pHeader, 
     LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo, 
@@ -1047,11 +1054,10 @@ static BOOL URLCache_CopyEntry(
     if (dwRequiredSize > *lpdwBufferSize)
     {
         *lpdwBufferSize = dwRequiredSize;
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
+        return ERROR_INSUFFICIENT_BUFFER;
     }
     *lpdwBufferSize = dwRequiredSize;
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 
@@ -1062,11 +1068,11 @@ static BOOL URLCache_CopyEntry(
  * according to the flags set by dwFieldControl.
  *
  * RETURNS
- *    TRUE if the buffer was big enough
- *    FALSE if the buffer was too small
+ *    ERROR_SUCCESS if the buffer was big enough
+ *    ERROR_INSUFFICIENT_BUFFER if the buffer was too small
  *
  */
-static BOOL URLCache_SetEntryInfo(URL_CACHEFILE_ENTRY * pUrlEntry, const INTERNET_CACHE_ENTRY_INFOW * lpCacheEntryInfo, DWORD dwFieldControl)
+static DWORD URLCache_SetEntryInfo(URL_CACHEFILE_ENTRY * pUrlEntry, const INTERNET_CACHE_ENTRY_INFOW * lpCacheEntryInfo, DWORD dwFieldControl)
 {
     if (dwFieldControl & CACHE_ENTRY_ACCTIME_FC)
         pUrlEntry->LastAccessTime = lpCacheEntryInfo->LastAccessTime;
@@ -1085,7 +1091,7 @@ static BOOL URLCache_SetEntryInfo(URL_CACHEFILE_ENTRY * pUrlEntry, const INTERNE
     if (dwFieldControl & CACHE_ENTRY_SYNCTIME_FC)
         FileTimeToDosDateTime(&lpCacheEntryInfo->LastAccessTime, &pUrlEntry->wLastSyncDate, &pUrlEntry->wLastSyncTime);
 
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -1283,11 +1289,11 @@ static BOOL URLCache_DeleteEntryFromHash(struct _HASH_ENTRY * pHashEntry)
  * key are entered into the hash table.
  *
  * RETURNS
- *    TRUE if the entry was added
- *    FALSE if the entry could not be added
+ *    ERROR_SUCCESS if the entry was added
+ *    Any other Win32 error code if the entry could not be added
  *
  */
-static BOOL URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, DWORD dwOffsetEntry)
+static DWORD URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, DWORD dwOffsetEntry)
 {
     /* see URLCache_FindEntryInHash for structure of hash tables */
 
@@ -1295,6 +1301,7 @@ static BOOL URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, D
     DWORD offset = (key % HASHTABLE_NUM_ENTRIES) * sizeof(struct _HASH_ENTRY);
     HASH_CACHEFILE_ENTRY * pHashEntry;
     DWORD dwHashTableNumber = 0;
+    DWORD error;
 
     key = (key / HASHTABLE_NUM_ENTRIES) * HASHTABLE_NUM_ENTRIES;
 
@@ -1322,17 +1329,17 @@ static BOOL URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, D
             {
                 pHashElement->dwHashKey = key;
                 pHashElement->dwOffsetEntry = dwOffsetEntry;
-                return TRUE;
+                return ERROR_SUCCESS;
             }
         }
     }
-    pHashEntry = URLCache_CreateHashTable(pHeader, pHashEntry);
-    if (!pHashEntry)
-        return FALSE;
+    error = URLCache_CreateHashTable(pHeader, pHashEntry, &pHashEntry);
+    if (error != ERROR_SUCCESS)
+        return error;
 
     pHashEntry->HashTable[offset].dwHashKey = key;
     pHashEntry->HashTable[offset].dwOffsetEntry = dwOffsetEntry;
-    return TRUE;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -1342,38 +1349,36 @@ static BOOL URLCache_AddEntryToHash(LPURLCACHE_HEADER pHeader, LPCSTR lpszUrl, D
  * hash tables.
  *
  * RETURNS
- *    TRUE if the hash table was created
- *    FALSE if the hash table could not be created
+ *    ERROR_SUCCESS if the hash table was created
+ *    ERROR_DISK_FULL if the hash table could not be created
  *
  */
-static HASH_CACHEFILE_ENTRY *URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash)
+static DWORD URLCache_CreateHashTable(LPURLCACHE_HEADER pHeader, HASH_CACHEFILE_ENTRY *pPrevHash, HASH_CACHEFILE_ENTRY **ppHash)
 {
-    HASH_CACHEFILE_ENTRY *pHash;
     DWORD dwOffset;
     int i;
 
-    if (!URLCache_FindFirstFreeEntry(pHeader, 0x20, (CACHEFILE_ENTRY **)&pHash))
+    if (!URLCache_FindFirstFreeEntry(pHeader, 0x20, (CACHEFILE_ENTRY **)ppHash))
     {
         FIXME("no free space for hash table\n");
-        SetLastError(ERROR_DISK_FULL);
-        return NULL;
+        return ERROR_DISK_FULL;
     }
 
-    dwOffset = (BYTE *)pHash - (BYTE *)pHeader;
+    dwOffset = (BYTE *)*ppHash - (BYTE *)pHeader;
 
     if (pPrevHash)
         pPrevHash->dwAddressNext = dwOffset;
     else
         pHeader->dwOffsetFirstHashTable = dwOffset;
-    pHash->CacheFileEntry.dwSignature = HASH_SIGNATURE;
-    pHash->CacheFileEntry.dwBlocksUsed = 0x20;
-    pHash->dwHashTableNumber = pPrevHash ? pPrevHash->dwHashTableNumber + 1 : 0;
+    (*ppHash)->CacheFileEntry.dwSignature = HASH_SIGNATURE;
+    (*ppHash)->CacheFileEntry.dwBlocksUsed = 0x20;
+    (*ppHash)->dwHashTableNumber = pPrevHash ? pPrevHash->dwHashTableNumber + 1 : 0;
     for (i = 0; i < HASHTABLE_SIZE; i++)
     {
-        pHash->HashTable[i].dwOffsetEntry = 0;
-        pHash->HashTable[i].dwHashKey = HASHTABLE_FREE;
+        (*ppHash)->HashTable[i].dwOffsetEntry = 0;
+        (*ppHash)->HashTable[i].dwHashKey = HASHTABLE_FREE;
     }
-    return pHash;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -1486,14 +1491,23 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
     const CACHEFILE_ENTRY * pEntry;
     const URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, %p, %p)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo, lpdwCacheEntryInfoBufferSize);
 
-    if (!URLCacheContainers_FindContainerA(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -1522,15 +1536,17 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
 
     if (lpdwCacheEntryInfoBufferSize)
     {
-        if (!URLCache_CopyEntry(
+        error = URLCache_CopyEntry(
             pContainer,
             pHeader,
             lpCacheEntryInfo,
             lpdwCacheEntryInfoBufferSize,
             pUrlEntry,
-            FALSE /* ANSI */))
+            FALSE /* ANSI */);
+        if (error != ERROR_SUCCESS)
         {
             URLCacheContainer_UnlockIndex(pContainer, pHeader);
+            SetLastError(error);
             return FALSE;
         }
         TRACE("Local File Name: %s\n", debugstr_a(lpCacheEntryInfo->lpszLocalFileName));
@@ -1554,14 +1570,23 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     const CACHEFILE_ENTRY * pEntry;
     const URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, %p, %p)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, lpdwCacheEntryInfoBufferSize);
 
-    if (!URLCacheContainers_FindContainerW(lpszUrl, &pContainer))
+    error = URLCacheContainers_FindContainerW(lpszUrl, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -1589,15 +1614,17 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
 
     if (lpdwCacheEntryInfoBufferSize)
     {
-        if (!URLCache_CopyEntry(
+        error = URLCache_CopyEntry(
             pContainer,
             pHeader,
             (LPINTERNET_CACHE_ENTRY_INFOA)lpCacheEntryInfo,
             lpdwCacheEntryInfoBufferSize,
             pUrlEntry,
-            TRUE /* UNICODE */))
+            TRUE /* UNICODE */);
+        if (error != ERROR_SUCCESS)
         {
             URLCacheContainer_UnlockIndex(pContainer, pHeader);
+            SetLastError(error);
             return FALSE;
         }
         TRACE("Local File Name: %s\n", debugstr_w(lpCacheEntryInfo->lpszLocalFileName));
@@ -1655,14 +1682,23 @@ BOOL WINAPI SetUrlCacheEntryInfoA(
     struct _HASH_ENTRY * pHashEntry;
     CACHEFILE_ENTRY * pEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, %p, 0x%08x)\n", debugstr_a(lpszUrlName), lpCacheEntryInfo, dwFieldControl);
 
-    if (!URLCacheContainers_FindContainerA(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -1703,14 +1739,23 @@ BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrl, LPINTERNET_CACHE_ENTRY_INFOW 
     struct _HASH_ENTRY * pHashEntry;
     CACHEFILE_ENTRY * pEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, %p, 0x%08x)\n", debugstr_w(lpszUrl), lpCacheEntryInfo, dwFieldControl);
 
-    if (!URLCacheContainers_FindContainerW(lpszUrl, &pContainer))
+    error = URLCacheContainers_FindContainerW(lpszUrl, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -1758,6 +1803,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     CACHEFILE_ENTRY * pEntry;
     URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, %p, %p, 0x%08x)\n",
         debugstr_a(lpszUrlName),
@@ -1765,11 +1811,19 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
         lpdwCacheEntryInfoBufferSize,
         dwReserved);
 
-    if (!URLCacheContainers_FindContainerA(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -1799,9 +1853,13 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     pUrlEntry->dwUseCount++;
     URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
 
-    if (!URLCache_CopyEntry(pContainer, pHeader, lpCacheEntryInfo, lpdwCacheEntryInfoBufferSize, pUrlEntry, FALSE))
+    error = URLCache_CopyEntry(pContainer, pHeader, lpCacheEntryInfo,
+                               lpdwCacheEntryInfoBufferSize, pUrlEntry,
+                               FALSE);
+    if (error != ERROR_SUCCESS)
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        SetLastError(error);
         return FALSE;
     }
     TRACE("Local File Name: %s\n", lpCacheEntryInfo->lpszLocalFileName);
@@ -1827,6 +1885,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     CACHEFILE_ENTRY * pEntry;
     URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, %p, %p, 0x%08x)\n",
         debugstr_w(lpszUrlName),
@@ -1834,11 +1893,19 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
         lpdwCacheEntryInfoBufferSize,
         dwReserved);
 
-    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -1868,15 +1935,17 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     pUrlEntry->dwUseCount++;
     URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
 
-    if (!URLCache_CopyEntry(
+    error = URLCache_CopyEntry(
         pContainer,
         pHeader,
         (LPINTERNET_CACHE_ENTRY_INFOA)lpCacheEntryInfo,
         lpdwCacheEntryInfoBufferSize,
         pUrlEntry,
-        TRUE /* UNICODE */))
+        TRUE /* UNICODE */);
+    if (error != ERROR_SUCCESS)
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        SetLastError(error);
         return FALSE;
     }
     TRACE("Local File Name: %s\n", debugstr_w(lpCacheEntryInfo->lpszLocalFileName));
@@ -1900,6 +1969,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
     CACHEFILE_ENTRY * pEntry;
     URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, 0x%08x)\n", debugstr_a(lpszUrlName), dwReserved);
 
@@ -1910,11 +1980,19 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(
         return FALSE;
     }
 
-    if (!URLCacheContainers_FindContainerA(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+       SetLastError(error);
        return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -1962,6 +2040,7 @@ BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
     CACHEFILE_ENTRY * pEntry;
     URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, 0x%08x)\n", debugstr_w(lpszUrlName), dwReserved);
 
@@ -1972,11 +2051,19 @@ BOOL WINAPI UnlockUrlCacheEntryFileW( LPCWSTR lpszUrlName, DWORD dwReserved )
         return FALSE;
     }
 
-    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
-       return FALSE;
-
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
+
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
+        return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -2093,6 +2180,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
     LONG lBufferSize;
     BOOL bFound = FALSE;
     int count;
+    DWORD error;
     static const WCHAR szWWW[] = {'w','w','w',0};
 
     TRACE("(%s, 0x%08x, %s, %p, 0x%08x)\n",
@@ -2151,11 +2239,19 @@ BOOL WINAPI CreateUrlCacheEntryW(
 
     TRACE("File name: %s\n", debugstr_a(szFile));
 
-    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -2248,7 +2344,7 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     LPSTR lpszUrlNameA = NULL;
     LPSTR lpszFileExtensionA = NULL;
     char *pchLocalFileName = 0;
-    DWORD error = ERROR_SUCCESS;
+    DWORD error;
 
     TRACE("(%s, %s, ..., ..., %x, %p, %d, %s, %s)\n",
         debugstr_w(lpszUrlName),
@@ -2285,11 +2381,19 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
         CloseHandle(hFile);
     }
 
-    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -2434,13 +2538,10 @@ static BOOL WINAPI CommitUrlCacheEntryInternal(
     if (dwOffsetFileExtension)
         strcpy((LPSTR)((LPBYTE)pUrlEntry + dwOffsetFileExtension), lpszFileExtensionA);
 
-    if (!URLCache_AddEntryToHash(pHeader, lpszUrlNameA, (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader)))
-    {
+    error = URLCache_AddEntryToHash(pHeader, lpszUrlNameA,
+        (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader));
+    if (error != ERROR_SUCCESS)
         URLCache_DeleteEntry(pHeader, &pUrlEntry->CacheFileEntry);
-        URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        HeapFree(GetProcessHeap(), 0, lpszUrlNameA);
-        return FALSE;
-    }
 
 cleanup:
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -2740,14 +2841,23 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
     LPURLCACHE_HEADER pHeader;
     struct _HASH_ENTRY * pHashEntry;
     CACHEFILE_ENTRY * pEntry;
+    DWORD error;
 
     TRACE("(%s)\n", debugstr_a(lpszUrlName));
 
-    if (!URLCacheContainers_FindContainerA(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -2782,6 +2892,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     CACHEFILE_ENTRY * pEntry;
     LPSTR urlA;
     int url_len;
+    DWORD error;
 
     TRACE("(%s)\n", debugstr_w(lpszUrlName));
 
@@ -2794,16 +2905,22 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     }
     WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, urlA, url_len, NULL, NULL);
 
-    if (!URLCacheContainers_FindContainerW(lpszUrlName, &pContainer))
+    error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
+    if (error != ERROR_SUCCESS)
     {
         HeapFree(GetProcessHeap(), 0, urlA);
+        SetLastError(error);
         return FALSE;
     }
-    if (!URLCacheContainer_OpenIndex(pContainer))
+
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
     {
         HeapFree(GetProcessHeap(), 0, urlA);
+        SetLastError(error);
         return FALSE;
     }
+
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
     {
         HeapFree(GetProcessHeap(), 0, urlA);
@@ -3055,9 +3172,14 @@ BOOL WINAPI FindNextUrlCacheEntryA(
     {
         LPURLCACHE_HEADER pHeader;
         HASH_CACHEFILE_ENTRY *pHashTableEntry;
+        DWORD error;
 
-        if (!URLCacheContainer_OpenIndex(pContainer))
+        error = URLCacheContainer_OpenIndex(pContainer);
+        if (error != ERROR_SUCCESS)
+        {
+            SetLastError(error);
             return FALSE;
+        }
 
         if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
             return FALSE;
@@ -3079,15 +3201,17 @@ BOOL WINAPI FindNextUrlCacheEntryA(
                 TRACE("Found URL: %s\n", (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
                 TRACE("Header info: %s\n", (LPBYTE)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
 
-                if (!URLCache_CopyEntry(
+                error = URLCache_CopyEntry(
                     pContainer,
                     pHeader,
                     lpNextCacheEntryInfo,
                     lpdwNextCacheEntryInfoBufferSize,
                     pUrlEntry,
-                    FALSE /* not UNICODE */))
+                    FALSE /* not UNICODE */);
+                if (error != ERROR_SUCCESS)
                 {
                     URLCacheContainer_UnlockIndex(pContainer, pHeader);
+                    SetLastError(error);
                     return FALSE;
                 }
                 TRACE("Local File Name: %s\n", debugstr_a(lpNextCacheEntryInfo->lpszLocalFileName));
@@ -3338,14 +3462,23 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
     const CACHEFILE_ENTRY * pEntry;
     const URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, %08x, %p)\n", debugstr_a(url), dwFlags, pftLastModified);
 
-    if (!URLCacheContainers_FindContainerA(url, &pContainer))
+    error = URLCacheContainers_FindContainerA(url, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
@@ -3391,14 +3524,23 @@ BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLa
     const CACHEFILE_ENTRY * pEntry;
     const URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
+    DWORD error;
 
     TRACE("(%s, %08x, %p)\n", debugstr_w(url), dwFlags, pftLastModified);
 
-    if (!URLCacheContainers_FindContainerW(url, &pContainer))
+    error = URLCacheContainers_FindContainerW(url, &pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
-    if (!URLCacheContainer_OpenIndex(pContainer))
+    error = URLCacheContainer_OpenIndex(pContainer);
+    if (error != ERROR_SUCCESS)
+    {
+        SetLastError(error);
         return FALSE;
+    }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
