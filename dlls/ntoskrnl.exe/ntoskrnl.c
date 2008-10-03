@@ -34,6 +34,7 @@
 #include "ddk/ntddk.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
@@ -53,6 +54,14 @@ typedef struct _KSERVICE_TABLE_DESCRIPTOR
 KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4] = { { 0 } };
 
 typedef void (WINAPI *PCREATE_PROCESS_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
+
+static struct list Irps = LIST_INIT(Irps);
+
+struct IrpInstance
+{
+    struct list entry;
+    IRP *irp;
+};
 
 #ifdef __i386__
 #define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
@@ -253,7 +262,17 @@ NTSTATUS wine_ntoskrnl_main_loop( HANDLE stop_event )
  */
 void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
 {
-    FIXME( "%p, %u, %d\n", irp, size, stack_size );
+    TRACE( "%p, %u, %d\n", irp, size, stack_size );
+
+    RtlZeroMemory( irp, size );
+
+    irp->Type = IO_TYPE_IRP;
+    irp->Size = size;
+    InitializeListHead( &irp->ThreadListEntry );
+    irp->StackCount = stack_size;
+    irp->CurrentLocation = stack_size + 1;
+    irp->Tail.Overlay.s.u.CurrentStackLocation =
+            (PIO_STACK_LOCATION)(irp + 1) + stack_size;
 }
 
 
@@ -262,8 +281,20 @@ void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
  */
 PIRP WINAPI IoAllocateIrp( CCHAR stack_size, BOOLEAN charge_quota )
 {
-    FIXME( "%d, %d\n", stack_size, charge_quota );
-    return NULL;
+    SIZE_T size;
+    PIRP irp;
+
+    TRACE( "%d, %d\n", stack_size, charge_quota );
+
+    size = sizeof(IRP) + stack_size * sizeof(IO_STACK_LOCATION);
+    irp = ExAllocatePool( NonPagedPool, size );
+    if (irp != NULL)
+        IoInitializeIrp( irp, size, stack_size );
+    irp->AllocationFlags = IRP_ALLOCATED_FIXED_SIZE;
+    if (charge_quota)
+        irp->AllocationFlags |= IRP_LOOKASIDE_ALLOCATION;
+
+    return irp;
 }
 
 
@@ -272,7 +303,9 @@ PIRP WINAPI IoAllocateIrp( CCHAR stack_size, BOOLEAN charge_quota )
  */
 void WINAPI IoFreeIrp( IRP *irp )
 {
-    FIXME( "%p\n", irp );
+    TRACE( "%p\n", irp );
+
+    ExFreePool( irp );
 }
 
 
@@ -293,6 +326,68 @@ PIO_WORKITEM WINAPI IoAllocateWorkItem( PDEVICE_OBJECT DeviceObject )
 {
     FIXME( "stub: %p\n", DeviceObject );
     return NULL;
+}
+
+
+/***********************************************************************
+ *           IoAttachDeviceToDeviceStack  (NTOSKRNL.EXE.@)
+ */
+PDEVICE_OBJECT WINAPI IoAttachDeviceToDeviceStack( DEVICE_OBJECT *source,
+                                                   DEVICE_OBJECT *target )
+{
+    TRACE( "%p, %p\n", source, target );
+    target->AttachedDevice = source;
+    source->StackSize = target->StackSize + 1;
+    return target;
+}
+
+
+/***********************************************************************
+ *           IoBuildDeviceIoControlRequest  (NTOSKRNL.EXE.@)
+ */
+PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG IoControlCode,
+                                           PDEVICE_OBJECT DeviceObject,
+                                           PVOID InputBuffer,
+                                           ULONG InputBufferLength,
+                                           PVOID OutputBuffer,
+                                           ULONG OutputBufferLength,
+                                           BOOLEAN InternalDeviceIoControl,
+                                           PKEVENT Event,
+                                           PIO_STATUS_BLOCK IoStatusBlock )
+{
+    PIRP irp;
+    PIO_STACK_LOCATION irpsp;
+    struct IrpInstance *instance;
+
+    TRACE( "%x, %p, %p, %u, %p, %u, %u, %p, %p\n",
+           IoControlCode, DeviceObject, InputBuffer, InputBufferLength,
+           OutputBuffer, OutputBufferLength, InternalDeviceIoControl,
+           Event, IoStatusBlock );
+
+    if (DeviceObject == NULL)
+        return NULL;
+
+    irp = IoAllocateIrp( DeviceObject->StackSize, FALSE );
+    if (irp == NULL)
+        return NULL;
+
+    instance = HeapAlloc( GetProcessHeap(), 0, sizeof(struct IrpInstance) );
+    if (instance == NULL)
+    {
+        IoFreeIrp( irp );
+        return NULL;
+    }
+    instance->irp = irp;
+    list_add_tail( &Irps, &instance->entry );
+
+    irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation - 1;
+    irpsp->MajorFunction = InternalDeviceIoControl ?
+            IRP_MJ_INTERNAL_DEVICE_CONTROL : IRP_MJ_DEVICE_CONTROL;
+    irpsp->Parameters.DeviceIoControl.IoControlCode = IoControlCode;
+    irp->UserIosb = IoStatusBlock;
+    irp->UserEvent = Event;
+
+    return irp;
 }
 
 
@@ -462,6 +557,31 @@ NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK acc
 
 
 /***********************************************************************
+ *           IofCallDriver   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( IofCallDriver )
+NTSTATUS WINAPI __regs_IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
+#else
+NTSTATUS WINAPI IofCallDriver( DEVICE_OBJECT *device, IRP *irp )
+#endif
+{
+    PDRIVER_DISPATCH dispatch;
+    IO_STACK_LOCATION *irpsp;
+    NTSTATUS status;
+
+    TRACE( "%p %p\n", device, irp );
+
+    --irp->CurrentLocation;
+    irpsp = --irp->Tail.Overlay.s.u.CurrentStackLocation;
+    dispatch = device->DriverObject->MajorFunction[irpsp->MajorFunction];
+    status = dispatch( device, irp );
+
+    return status;
+}
+
+
+/***********************************************************************
  *           IoGetRelatedDeviceObject    (NTOSKRNL.EXE.@)
  */
 PDEVICE_OBJECT WINAPI IoGetRelatedDeviceObject( PFILE_OBJECT obj )
@@ -512,8 +632,57 @@ void WINAPI __regs_IofCompleteRequest( IRP *irp, UCHAR priority_boost )
 void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
 #endif
 {
+    IO_STACK_LOCATION *irpsp;
+    PIO_COMPLETION_ROUTINE routine;
+    IO_STATUS_BLOCK *iosb;
+    struct IrpInstance *instance;
+    NTSTATUS status, stat;
+    int call_flag = 0;
+
     TRACE( "%p %u\n", irp, priority_boost );
-    /* nothing to do for now */
+
+    iosb = irp->UserIosb;
+    status = irp->IoStatus.u.Status;
+    while (irp->CurrentLocation <= irp->StackCount)
+    {
+        irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation;
+        routine = irpsp->CompletionRoutine;
+        call_flag = 0;
+        /* FIXME: add SL_INVOKE_ON_CANCEL support */
+        if (routine)
+        {
+            if ((irpsp->Control & SL_INVOKE_ON_SUCCESS) && STATUS_SUCCESS == status)
+                call_flag = 1;
+            if ((irpsp->Control & SL_INVOKE_ON_ERROR) && STATUS_SUCCESS != status)
+                call_flag = 1;
+        }
+        ++irp->CurrentLocation;
+        ++irp->Tail.Overlay.s.u.CurrentStackLocation;
+        if (call_flag)
+        {
+            TRACE( "calling %p( %p, %p, %p )\n", routine,
+                    irpsp->DeviceObject, irp, irpsp->Context );
+            stat = routine( irpsp->DeviceObject, irp, irpsp->Context );
+            TRACE( "CompletionRoutine returned %x\n", status );
+            if (STATUS_MORE_PROCESSING_REQUIRED == stat)
+                return;
+        }
+    }
+    if (iosb && STATUS_SUCCESS == status)
+    {
+        iosb->u.Status = irp->IoStatus.u.Status;
+        iosb->Information = irp->IoStatus.Information;
+    }
+    LIST_FOR_EACH_ENTRY( instance, &Irps, struct IrpInstance, entry )
+    {
+        if (instance->irp == irp)
+        {
+            list_remove( &instance->entry );
+            HeapFree( GetProcessHeap(), 0, instance );
+            IoFreeIrp( irp );
+            break;
+        }
+    }
 }
 
 

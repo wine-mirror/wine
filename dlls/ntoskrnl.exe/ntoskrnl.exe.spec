@@ -39,7 +39,7 @@
 @ stub IoReadPartitionTable
 @ stub IoSetPartitionInformation
 @ stub IoWritePartitionTable
-@ stub IofCallDriver
+@ stdcall -norelay IofCallDriver(ptr ptr)
 @ stdcall -norelay IofCompleteRequest(ptr long)
 @ stub KeAcquireInStackQueuedSpinLockAtDpcLevel
 @ stub KeReleaseInStackQueuedSpinLockFromDpcLevel
@@ -317,10 +317,10 @@
 @ stub IoAssignResources
 @ stub IoAttachDevice
 @ stub IoAttachDeviceByPointer
-@ stub IoAttachDeviceToDeviceStack
+@ stdcall IoAttachDeviceToDeviceStack(ptr ptr)
 @ stub IoAttachDeviceToDeviceStackSafe
 @ stub IoBuildAsynchronousFsdRequest
-@ stub IoBuildDeviceIoControlRequest
+@ stdcall IoBuildDeviceIoControlRequest(long ptr ptr long ptr long long ptr ptr)
 @ stub IoBuildPartialMdl
 @ stub IoBuildSynchronousFsdRequest
 @ stub IoCallDriver
