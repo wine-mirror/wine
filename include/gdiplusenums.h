@@ -336,6 +336,16 @@ enum GpTestControlEnum
     TestControlGetBuildNumber = 2
 };
 
+enum MetafileFrameUnit
+{
+    MetafileFrameUnitPixel      = UnitPixel,
+    MetafileFrameUnitPoint      = UnitPoint,
+    MetafileFrameUnitInch       = UnitInch,
+    MetafileFrameUnitDocument   = UnitDocument,
+    MetafileFrameUnitMillimeter = UnitMillimeter,
+    MetafileFrameUnitGdi
+};
+
 #ifndef __cplusplus
 
 typedef enum Unit Unit;
@@ -372,6 +382,7 @@ typedef enum CombineMode CombineMode;
 typedef enum FlushIntention FlushIntention;
 typedef enum CoordinateSpace CoordinateSpace;
 typedef enum GpTestControlEnum GpTestControlEnum;
+typedef enum MetafileFrameUnit MetafileFrameUnit;
 
 #endif /* end of c typedefs */
 

@@ -467,8 +467,8 @@
 @ stdcall GdipPrivateAddFontFile(ptr wstr)
 @ stub GdipPrivateAddMemoryFont
 @ stub GdipRecordMetafile
-@ stub GdipRecordMetafileFileName
-@ stub GdipRecordMetafileFileNameI
+@ stdcall GdipRecordMetafileFileName(wstr long long ptr long wstr ptr)
+@ stdcall GdipRecordMetafileFileNameI(wstr long long ptr long wstr ptr)
 @ stub GdipRecordMetafileI
 @ stub GdipRecordMetafileStream
 @ stub GdipRecordMetafileStreamI

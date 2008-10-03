@@ -1455,3 +1455,24 @@ GpStatus WINGDIPAPI GdipTestControl(GpTestControlEnum control, void *param)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipRecordMetafileFileName(GDIPCONST WCHAR* fileName,
+                            HDC hdc, EmfType type, GDIPCONST GpRectF *pFrameRect,
+                            MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc,
+                            GpMetafile **metafile)
+{
+    FIXME("%s %p %d %p %d %s %p stub!\n", debugstr_w(fileName), hdc, type, pFrameRect,
+                                 frameUnit, debugstr_w(desc), metafile);
+
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipRecordMetafileFileNameI(GDIPCONST WCHAR* fileName, HDC hdc, EmfType type,
+                            GDIPCONST GpRect *pFrameRect, MetafileFrameUnit frameUnit,
+                            GDIPCONST WCHAR *desc, GpMetafile **metafile)
+{
+    FIXME("%s %p %d %p %d %s %p stub!\n", debugstr_w(fileName), hdc, type, pFrameRect,
+                                 frameUnit, debugstr_w(desc), metafile);
+
+    return NotImplemented;
+}
