@@ -405,52 +405,57 @@ static BOOL CRYPT_GetObjectFromCache(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
  PCRYPT_RETRIEVE_AUX_INFO pAuxInfo)
 {
     BOOL ret = FALSE;
-    INTERNET_CACHE_ENTRY_INFOW cacheInfo = { sizeof(cacheInfo), 0 };
-    DWORD size = sizeof(cacheInfo);
+    INTERNET_CACHE_ENTRY_INFOW *pCacheInfo = NULL;
+    DWORD size = 0;
 
     TRACE("(%s, %p, %p)\n", debugstr_w(pszURL), pObject, pAuxInfo);
 
-    if (GetUrlCacheEntryInfoW(pszURL, &cacheInfo, &size) ||
-     GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    ret = GetUrlCacheEntryInfoW(pszURL, NULL, &size);
+    if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        pCacheInfo = CryptMemAlloc(size);
+        if (pCacheInfo)
+            ret = TRUE;
+        else
+            SetLastError(ERROR_OUTOFMEMORY);
+    }
+    if (ret && (ret = GetUrlCacheEntryInfoW(pszURL, pCacheInfo, &size)))
     {
         FILETIME ft;
 
         GetSystemTimeAsFileTime(&ft);
-        if (CompareFileTime(&cacheInfo.ExpireTime, &ft) >= 0)
+        if (CompareFileTime(&pCacheInfo->ExpireTime, &ft) >= 0)
         {
-            LPINTERNET_CACHE_ENTRY_INFOW pCacheInfo = CryptMemAlloc(size);
+            HANDLE hFile = CreateFileW(pCacheInfo->lpszLocalFileName,
+             GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-            if (pCacheInfo)
+            if (hFile != INVALID_HANDLE_VALUE)
             {
-                if (GetUrlCacheEntryInfoW(pszURL, pCacheInfo, &size))
+                if ((ret = CRYPT_GetObjectFromFile(hFile, pObject)))
                 {
-                    HANDLE hFile = CreateFileW(pCacheInfo->lpszLocalFileName,
-                     GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                     FILE_ATTRIBUTE_NORMAL, NULL);
-
-                    if (hFile != INVALID_HANDLE_VALUE)
-                    {
-                        if ((ret = CRYPT_GetObjectFromFile(hFile, pObject)))
-                        {
-                            if (pAuxInfo && pAuxInfo->cbSize >=
-                             offsetof(CRYPT_RETRIEVE_AUX_INFO,
-                             pLastSyncTime) + sizeof(PFILETIME) &&
-                             pAuxInfo->pLastSyncTime)
-                                memcpy(pAuxInfo->pLastSyncTime,
-                                 &pCacheInfo->LastSyncTime,
-                                 sizeof(FILETIME));
-                        }
-                        CloseHandle(hFile);
-                    }
+                    if (pAuxInfo && pAuxInfo->cbSize >=
+                     offsetof(CRYPT_RETRIEVE_AUX_INFO,
+                     pLastSyncTime) + sizeof(PFILETIME) &&
+                     pAuxInfo->pLastSyncTime)
+                        memcpy(pAuxInfo->pLastSyncTime,
+                         &pCacheInfo->LastSyncTime,
+                         sizeof(FILETIME));
                 }
-                CryptMemFree(pCacheInfo);
+                CloseHandle(hFile);
             }
             else
-                SetLastError(ERROR_OUTOFMEMORY);
+            {
+                DeleteUrlCacheEntryW(pszURL);
+                ret = FALSE;
+            }
         }
         else
+        {
             DeleteUrlCacheEntryW(pszURL);
+            ret = FALSE;
+        }
     }
+    CryptMemFree(pCacheInfo);
     TRACE("returning %d\n", ret);
     return ret;
 }
