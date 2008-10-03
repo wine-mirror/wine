@@ -2478,6 +2478,12 @@ BOOL WINAPI InternetTimeFromSystemTimeA( const SYSTEMTIME* time, DWORD format, L
 
     TRACE( "%p 0x%08x %p 0x%08x\n", time, format, string, size );
 
+    if (!time || !string || format != INTERNET_RFC1123_FORMAT)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     if (size < INTERNET_RFC1123_BUFSIZE * sizeof(*string))
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -2502,7 +2508,10 @@ BOOL WINAPI InternetTimeFromSystemTimeW( const SYSTEMTIME* time, DWORD format, L
     TRACE( "%p 0x%08x %p 0x%08x\n", time, format, string, size );
 
     if (!time || !string || format != INTERNET_RFC1123_FORMAT)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
+    }
 
     if (size < INTERNET_RFC1123_BUFSIZE * sizeof(*string))
     {
