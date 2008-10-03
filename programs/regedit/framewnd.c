@@ -278,10 +278,13 @@ static UINT CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARA
         {
             case CDN_INITDONE:
             {
+                BOOL export_branch = FALSE;
                 WCHAR* path = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
                 SendDlgItemMessageW(hdlg, IDC_EXPORT_PATH, WM_SETTEXT, 0, (LPARAM)path);
+                if (path && strlenW(path) > 0)
+                    export_branch = TRUE;
                 HeapFree(GetProcessHeap(), 0, path);
-                CheckRadioButton(hdlg, IDC_EXPORT_ALL, IDC_EXPORT_SELECTED, pOpenFileName->lCustData ? IDC_EXPORT_SELECTED : IDC_EXPORT_ALL);
+                CheckRadioButton(hdlg, IDC_EXPORT_ALL, IDC_EXPORT_SELECTED, export_branch ? IDC_EXPORT_SELECTED : IDC_EXPORT_ALL);
                 break;
             }
             case CDN_FILEOK:
@@ -356,7 +359,7 @@ static BOOL ImportRegistryFile(HWND hWnd)
 }
 
 
-static BOOL ExportRegistryFile(HWND hWnd, BOOL export_branch)
+static BOOL ExportRegistryFile(HWND hWnd)
 {
     OPENFILENAMEW ofn;
     WCHAR ExportKeyPath[_MAX_PATH];
@@ -366,7 +369,6 @@ static BOOL ExportRegistryFile(HWND hWnd, BOOL export_branch)
     InitOpenFileName(hWnd, &ofn);
     LoadStringW(hInst, IDS_FILEDIALOG_EXPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
-    ofn.lCustData = export_branch;
     ofn.Flags = OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_EXPLORER | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
     ofn.lpfnHook = ExportRegistryFile_OFNHookProc;
     ofn.lpTemplateName = MAKEINTRESOURCEW(IDD_EXPORT_TEMPLATE);
@@ -665,10 +667,8 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         ImportRegistryFile(hWnd);
         break;
     case ID_EDIT_EXPORT:
-        ExportRegistryFile(hWnd, TRUE);
-        break;
     case ID_REGISTRY_EXPORTREGISTRYFILE:
-        ExportRegistryFile(hWnd, FALSE);
+        ExportRegistryFile(hWnd);
         break;
     case ID_REGISTRY_CONNECTNETWORKREGISTRY:
         break;
