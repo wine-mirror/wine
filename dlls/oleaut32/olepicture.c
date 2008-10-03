@@ -5,6 +5,7 @@
  *
  * Copyright 2000 Huw D M Davies for CodeWeavers.
  * Copyright 2001 Marcus Meissner
+ * Copyright 2008 Kirill K. Smirnov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1686,39 +1687,24 @@ static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG x
     }
 }
 
-static HRESULT OLEPictureImpl_LoadMetafile(OLEPictureImpl *This,
-                                           const BYTE *data, ULONG size)
+static HRESULT OLEPictureImpl_LoadEnhMetafile(OLEPictureImpl *This,
+                                              const BYTE *data, ULONG size)
 {
-    HMETAFILE hmf;
     HENHMETAFILE hemf;
-
-    /* SetMetaFileBitsEx performs data check on its own */
-    hmf = SetMetaFileBitsEx(size, data);
-    if (hmf)
-    {
-        This->desc.picType = PICTYPE_METAFILE;
-        This->desc.u.wmf.hmeta = hmf;
-        This->desc.u.wmf.xExt = 0;
-        This->desc.u.wmf.yExt = 0;
-
-        This->origWidth = 0;
-        This->origHeight = 0;
-        This->himetricWidth = 0;
-        This->himetricHeight = 0;
-
-        return S_OK;
-    }
+    ENHMETAHEADER hdr;
 
     hemf = SetEnhMetaFileBits(size, data);
     if (!hemf) return E_FAIL;
+
+    GetEnhMetaFileHeader(hemf, sizeof(hdr), &hdr);
 
     This->desc.picType = PICTYPE_ENHMETAFILE;
     This->desc.u.emf.hemf = hemf;
 
     This->origWidth = 0;
     This->origHeight = 0;
-    This->himetricWidth = 0;
-    This->himetricHeight = 0;
+    This->himetricWidth = hdr.rclFrame.right - hdr.rclFrame.left;
+    This->himetricHeight = hdr.rclFrame.bottom - hdr.rclFrame.top;
 
     return S_OK;
 }
@@ -1727,16 +1713,24 @@ static HRESULT OLEPictureImpl_LoadAPM(OLEPictureImpl *This,
                                       const BYTE *data, ULONG size)
 {
     APM_HEADER *header = (APM_HEADER *)data;
-    HRESULT hr;
+    HMETAFILE hmf;
 
     if (size < sizeof(APM_HEADER))
         return E_FAIL;
     if (header->key != 0x9ac6cdd7)
         return E_FAIL;
 
-    if ((hr = OLEPictureImpl_LoadMetafile(This, data + sizeof(APM_HEADER), size - sizeof(*header))) != S_OK)
-        return hr;
+    /* SetMetaFileBitsEx performs data check on its own */
+    hmf = SetMetaFileBitsEx(size - sizeof(*header), data + sizeof(*header));
+    if (!hmf) return E_FAIL;
 
+    This->desc.picType = PICTYPE_METAFILE;
+    This->desc.u.wmf.hmeta = hmf;
+    This->desc.u.wmf.xExt = 0;
+    This->desc.u.wmf.yExt = 0;
+
+    This->origWidth = 0;
+    This->origHeight = 0;
     This->himetricWidth = MulDiv((INT)header->right - header->left, 2540, header->inch);
     This->himetricHeight = MulDiv((INT)header->bottom - header->top, 2540, header->inch);
     return S_OK;
@@ -1924,8 +1918,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   {
     unsigned int i;
 
-    /* let's see if it's a metafile */
-    hr = OLEPictureImpl_LoadMetafile(This, xbuf, xread);
+    /* let's see if it's a EMF */
+    hr = OLEPictureImpl_LoadEnhMetafile(This, xbuf, xread);
     if (hr == S_OK) break;
 
     FIXME("Unknown magic %04x, %d read bytes:\n",magic,xread);
@@ -2687,8 +2681,15 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
       *ppvObj = NULL;
       return hr;
   }
-  IPersistStream_Load(ps,lpstream);
+  hr = IPersistStream_Load(ps,lpstream);
   IPersistStream_Release(ps);
+  if (FAILED(hr))
+  {
+      ERR("IPersistStream_Load failed\n");
+      IPicture_Release(newpic);
+      *ppvObj = NULL;
+      return hr;
+  }
   hr = IPicture_QueryInterface(newpic,riid,ppvObj);
   if (hr)
       FIXME("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
