@@ -1998,9 +1998,7 @@ static void test_XMLHTTP(void)
     HRESULT hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL,
                                   CLSCTX_INPROC_SERVER, &IID_IXMLHttpRequest,
                                   (void **)&pXMLHttpRequest);
-    todo_wine {
     ok(hr == S_OK, "CoCreateInstance(CLSID_XMLHTTPRequest) should have succeeded instead of failing with 0x%08x\n", hr);
-    }
     if (hr != S_OK)
         return;
 
@@ -2014,18 +2012,21 @@ static void test_XMLHTTP(void)
     V_BSTR(&varbody) = SysAllocString(wszBody);
 
     hr = IXMLHttpRequest_open(pXMLHttpRequest, wszPOST, wszUrl, varfalse, dummy, dummy);
-    ok(hr == S_OK, "IXMLHttpRequest_open should have succeeded instead of failing with 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "IXMLHttpRequest_open should have succeeded instead of failing with 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
-    ok(hr == S_OK, "IXMLHttpRequest_send should have succeeded instead of failing with 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "IXMLHttpRequest_send should have succeeded instead of failing with 0x%08x\n", hr);
     VariantClear(&varbody);
 
     hr = IXMLHttpRequest_get_responseText(pXMLHttpRequest, &bstrResponse);
-    ok(hr == S_OK, "IXMLHttpRequest_get_responseText should have succeeded instead of failing with 0x%08x\n", hr);
+    todo_wine ok(hr == S_OK, "IXMLHttpRequest_get_responseText should have succeeded instead of failing with 0x%08x\n", hr);
     /* the server currently returns "FAILED" because the Content-Type header is
      * not what the server expects */
-    ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)), "bstrResponse differs from what was expected\n");
-    SysFreeString(bstrResponse);
+    if(hr == S_OK)
+    {
+        ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)), "bstrResponse differs from what was expected\n");
+        SysFreeString(bstrResponse);
+    }
 }
 
 static void test_IXMLDOMDocument2(void)

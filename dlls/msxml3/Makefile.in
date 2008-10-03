@@ -20,6 +20,7 @@ C_SRCS = \
 	element.c \
 	entityref.c \
 	factory.c \
+	httprequest.c \
 	main.c \
 	node.c \
 	nodelist.c \

@@ -96,6 +96,7 @@ extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj );
+extern HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
 typedef struct bsc_t bsc_t;
 
@@ -122,6 +123,7 @@ typedef enum tid_t {
     IXMLDOMText_tid,
     IXMLElement_tid,
     IXMLDocument_tid,
+    IXMLHTTPRequest_tid,
     IVBSAXAttributes_tid,
     IVBSAXContentHandler_tid,
     IVBSAXDeclHandler_tid,
