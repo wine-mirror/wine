@@ -7217,6 +7217,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7231,6 +7232,7 @@ for ac_header in \
 	capi20.h \
 	curses.h \
 	direct.h \
+	dirent.h \
 	dlfcn.h \
 	elf.h \
 	float.h \
@@ -17206,6 +17208,7 @@ esac
 
 
 
+
 for ac_func in \
 	_pclose \
 	_popen \
@@ -17249,6 +17252,7 @@ for ac_func in \
 	prctl \
 	pread \
 	pwrite \
+	readdir \
 	readlink \
 	rfork \
 	sched_yield \

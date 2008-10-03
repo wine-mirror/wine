@@ -237,6 +237,7 @@ AC_CHECK_HEADERS(\
 	capi20.h \
 	curses.h \
 	direct.h \
+	dirent.h \
 	dlfcn.h \
 	elf.h \
 	float.h \
@@ -1401,6 +1402,7 @@ AC_CHECK_FUNCS(\
 	prctl \
 	pread \
 	pwrite \
+	readdir \
 	readlink \
 	rfork \
 	sched_yield \

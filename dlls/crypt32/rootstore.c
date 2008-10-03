@@ -22,7 +22,9 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif
 #include <fcntl.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -313,6 +315,7 @@ static BOOL import_certs_from_path(LPCSTR path, HCERTSTORE store,
  */
 static BOOL import_certs_from_dir(LPCSTR path, HCERTSTORE store)
 {
+#ifdef HAVE_READDIR
     BOOL ret = FALSE;
     DIR *dir;
 
@@ -341,6 +344,10 @@ static BOOL import_certs_from_dir(LPCSTR path, HCERTSTORE store)
         }
     }
     return ret;
+#else
+    FIXME("not implemented without readdir available\n");
+    return FALSE;
+#endif
 }
 
 /* Opens path, which may be a file or a directory, and imports any certificates
