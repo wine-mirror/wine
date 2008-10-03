@@ -416,9 +416,11 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     {
       if (run->nFlags & MERF_STARTWHITE)
       {
-          /* we had only spaces so far, so we must be on the first line of the
-           * paragraph, since no other lines of the paragraph start with spaces. */
-          assert(!wc->nRow);
+          /* We had only spaces so far, so we must be on the first line of the
+           * paragraph (or the first line after MERF_ENDROW forced the line
+           * break within the paragraph), since no other lines of the paragraph
+           * start with spaces. */
+
           /* The lines will only contain spaces, and the rest of the run will
            * overflow onto the next line. */
           wc->bOverflown = TRUE;
