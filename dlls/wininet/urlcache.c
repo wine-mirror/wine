@@ -590,7 +590,7 @@ static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAIN
         int prefix_len = strlenW(pContainer->cache_prefix);
         if (!strncmpW(pContainer->cache_prefix, lpwszUrl, prefix_len))
         {
-            TRACE("found container with prefx %s for URL %s\n", debugstr_w(pContainer->cache_prefix), debugstr_w(lpwszUrl));
+            TRACE("found container with prefix %s for URL %s\n", debugstr_w(pContainer->cache_prefix), debugstr_w(lpwszUrl));
             *ppContainer = pContainer;
             return ERROR_SUCCESS;
         }
