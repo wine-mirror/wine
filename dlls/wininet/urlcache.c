@@ -1005,7 +1005,7 @@ static DWORD URLCache_CopyEntry(
         lpszLocalFileName = (LPSTR)lpCacheEntryInfo + dwRequiredSize;
         nLocalFilePathSize = *lpdwBufferSize - dwRequiredSize;
         if ((bUnicode && URLCache_LocalFileNameToPathW(pContainer, pHeader, (LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName, pUrlEntry->CacheDir, (LPWSTR)lpszLocalFileName, &nLocalFilePathSize)) ||
-            URLCache_LocalFileNameToPathA(pContainer, pHeader, (LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName, pUrlEntry->CacheDir, lpszLocalFileName, &nLocalFilePathSize))
+            (!bUnicode && URLCache_LocalFileNameToPathA(pContainer, pHeader, (LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName, pUrlEntry->CacheDir, lpszLocalFileName, &nLocalFilePathSize)))
         {
             lpCacheEntryInfo->lpszLocalFileName = lpszLocalFileName;
         }
