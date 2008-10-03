@@ -28,6 +28,8 @@
 #define POINTER_ALIGNMENT
 #endif
 
+typedef LONG KPRIORITY;
+
 typedef ULONG_PTR KSPIN_LOCK, *PKSPIN_LOCK;
 
 struct _KDPC;
@@ -83,6 +85,44 @@ typedef struct _KDEVICE_QUEUE {
   KSPIN_LOCK  Lock;
   BOOLEAN  Busy;
 } KDEVICE_QUEUE, *PKDEVICE_QUEUE, *RESTRICTED_POINTER PRKDEVICE_QUEUE;
+
+typedef struct _KMUTANT {
+    DISPATCHER_HEADER Header;
+    LIST_ENTRY MutantListEntry;
+    struct _KTHREAD *RESTRICTED_POINTER OwnerThread;
+    BOOLEAN Abandoned;
+    UCHAR ApcDisable;
+} KMUTANT, *PKMUTANT, *RESTRICTED_POINTER PRKMUTANT, KMUTEX, *PKMUTEX, *RESTRICTED_POINTER PRKMUTEX;
+
+typedef enum _KWAIT_REASON
+{
+    Executive,
+    FreePage,
+    PageIn,
+    PoolAllocation,
+    DelayExecution,
+    Suspended,
+    UserRequest,
+    WrExecutive,
+    WrFreePage,
+    WrPageIn,
+    WrDelayExecution,
+    WrSuspended,
+    WrUserRequest,
+    WrQueue,
+    WrLpcReceive,
+    WrLpcReply,
+    WrVirtualMemory,
+    WrPageOut,
+    WrRendezvous,
+    Spare2,
+    Spare3,
+    Spare4,
+    Spare5,
+    Spare6,
+    WrKernel,
+    MaximumWaitReason,
+} KWAIT_REASON;
 
 typedef struct _IO_TIMER *PIO_TIMER;
 typedef struct _ETHREAD *PETHREAD;
@@ -183,10 +223,48 @@ typedef struct _WAIT_CONTEXT_BLOCK {
 #define IRP_MJ_SET_QUOTA                  0x1a
 #define IRP_MJ_PNP                        0x1b
 
+#define IRP_MN_START_DEVICE                 0x00
+#define IRP_MN_QUERY_REMOVE_DEVICE          0x01
+#define IRP_MN_REMOVE_DEVICE                0x02
+#define IRP_MN_CANCEL_REMOVE_DEVICE         0x03
+#define IRP_MN_STOP_DEVICE                  0x04
+#define IRP_MN_QUERY_STOP_DEVICE            0x05
+#define IRP_MN_CANCEL_STOP_DEVICE           0x06
+#define IRP_MN_QUERY_DEVICE_RELATIONS       0x07
+#define IRP_MN_QUERY_INTERFACE              0x08
+#define IRP_MN_QUERY_CAPABILITIES           0x09
+#define IRP_MN_QUERY_RESOURCES              0x0A
+#define IRP_MN_QUERY_RESOURCE_REQUIREMENTS  0x0B
+#define IRP_MN_QUERY_DEVICE_TEXT            0x0C
+#define IRP_MN_FILTER_RESOURCE_REQUIREMENTS 0x0D
+#define IRP_MN_READ_CONFIG                  0x0F
+#define IRP_MN_WRITE_CONFIG                 0x10
+#define IRP_MN_EJECT                        0x11
+#define IRP_MN_SET_LOCK                     0x12
+#define IRP_MN_QUERY_ID                     0x13
+#define IRP_MN_QUERY_PNP_DEVICE_STATE       0x14
+#define IRP_MN_QUERY_BUS_INFORMATION        0x15
+#define IRP_MN_DEVICE_USAGE_NOTIFICATION    0x16
+#define IRP_MN_SURPRISE_REMOVAL             0x17
+
 #define IRP_QUOTA_CHARGED               0x01
 #define IRP_ALLOCATED_MUST_SUCCEED      0x02
 #define IRP_ALLOCATED_FIXED_SIZE        0x04
 #define IRP_LOOKASIDE_ALLOCATION        0x08
+
+#define IO_TYPE_ADAPTER                 0x01
+#define IO_TYPE_CONTROLLER              0x02
+#define IO_TYPE_DEVICE                  0x03
+#define IO_TYPE_DRIVER                  0x04
+#define IO_TYPE_FILE                    0x05
+#define IO_TYPE_IRP                     0x06
+#define IO_TYPE_MASTER_ADAPTER          0x07
+#define IO_TYPE_OPEN_PACKET             0x08
+#define IO_TYPE_TIMER                   0x09
+#define IO_TYPE_VPB                     0x0a
+#define IO_TYPE_ERROR_LOG               0x0b
+#define IO_TYPE_ERROR_MESSAGE           0x0c
+#define IO_TYPE_DEVICE_OBJECT_EXTENSION 0x0d
 
 typedef struct _DEVICE_OBJECT {
   CSHORT  Type;
@@ -684,6 +762,11 @@ typedef NTSTATUS (WINAPI *PIO_COMPLETION_ROUTINE)(
   IN struct _DEVICE_OBJECT  *DeviceObject,
   IN struct _IRP  *Irp,
   IN PVOID  Context);
+
+#define SL_PENDING_RETURNED             0x01
+#define SL_INVOKE_ON_CANCEL             0x20
+#define SL_INVOKE_ON_SUCCESS            0x40
+#define SL_INVOKE_ON_ERROR              0x80
 
 #include <pshpack1.h>
 typedef struct _IO_STACK_LOCATION {
