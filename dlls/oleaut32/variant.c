@@ -2322,7 +2322,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
       whole = whole * dblMultipliers[10];
       multiplier10 -= 10;
     }
-    if (multiplier10)
+    if (multiplier10 && !bOverflow)
     {
       if (whole > dblMaximums[multiplier10])
       {
@@ -2333,9 +2333,10 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
         whole = whole * dblMultipliers[multiplier10];
     }
 
-    TRACE("Scaled double value is %16.16g\n", whole);
+    if (!bOverflow)
+        TRACE("Scaled double value is %16.16g\n", whole);
 
-    while (divisor10 > 10)
+    while (divisor10 > 10 && !bOverflow)
     {
       if (whole < dblMinimums[10] && whole != 0)
       {
@@ -2346,7 +2347,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
       whole = whole / dblMultipliers[10];
       divisor10 -= 10;
     }
-    if (divisor10)
+    if (divisor10 && !bOverflow)
     {
       if (whole < dblMinimums[divisor10] && whole != 0)
       {
