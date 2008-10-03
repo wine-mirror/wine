@@ -69,12 +69,12 @@ static ULONG WINAPI IDirect3DVertexShader9Impl_Release(LPDIRECT3DVERTEXSHADER9 i
 static HRESULT WINAPI IDirect3DVertexShader9Impl_GetDevice(LPDIRECT3DVERTEXSHADER9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DVertexShader9Impl *This = (IDirect3DVertexShader9Impl *)iface;
     IWineD3DDevice *myDevice = NULL;
-    HRESULT hr = D3D_OK;
+    HRESULT hr;
     TRACE("(%p) : Relay\n", This);
 
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DVertexShader_GetDevice(This->wineD3DVertexShader, &myDevice);
-    if (D3D_OK == hr && myDevice != NULL) {
+    if (WINED3D_OK == hr && myDevice != NULL) {
         hr = IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
         IWineD3DDevice_Release(myDevice);
     } else {
