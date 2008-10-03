@@ -1552,7 +1552,7 @@ BOOL WINAPI GetUrlCacheEntryInfoA(
             SetLastError(error);
             return FALSE;
         }
-        TRACE("Local File Name: %s\n", debugstr_a(lpCacheEntryInfo->lpszLocalFileName));
+        TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
     }
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -1633,7 +1633,7 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
             SetLastError(error);
             return FALSE;
         }
-        TRACE("Local File Name: %s\n", debugstr_w(lpCacheEntryInfo->lpszLocalFileName));
+        TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
     }
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
@@ -1875,7 +1875,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
         SetLastError(error);
         return FALSE;
     }
-    TRACE("Local File Name: %s\n", lpCacheEntryInfo->lpszLocalFileName);
+    TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -1968,7 +1968,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
         SetLastError(error);
         return FALSE;
     }
-    TRACE("Local File Name: %s\n", debugstr_w(lpCacheEntryInfo->lpszLocalFileName));
+    TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -3234,7 +3234,7 @@ BOOL WINAPI FindNextUrlCacheEntryA(
                     SetLastError(error);
                     return FALSE;
                 }
-                TRACE("Local File Name: %s\n", debugstr_a(lpNextCacheEntryInfo->lpszLocalFileName));
+                TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
 
                 /* increment the current index so that next time the function
                  * is called the next entry is returned */
