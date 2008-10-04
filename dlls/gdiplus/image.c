@@ -1389,6 +1389,9 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
         case 24:
             format = PixelFormat24bppRGB;
             break;
+        case 32:
+            format = PixelFormat32bppRGB;
+            break;
         case 48:
             format = PixelFormat48bppRGB;
             break;
