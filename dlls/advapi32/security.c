@@ -3147,7 +3147,8 @@ DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
                                PACL OldAcl, PACL* NewAcl )
 {
     FIXME("%d %p %p %p\n",count,pEntries,OldAcl,NewAcl);
-    *NewAcl = NULL;
+    if (NewAcl)
+         *NewAcl = NULL;
     return ERROR_SUCCESS;
 }
 
