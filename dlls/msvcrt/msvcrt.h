@@ -403,6 +403,11 @@ struct MSVCRT__stat64 {
 #define MSVCRT__IOLBF    0x0040
 
 #define MSVCRT_FILENAME_MAX 260
+#define MSVCRT_DRIVE_MAX    3
+#define MSVCRT_FNAME_MAX    256
+#define MSVCRT_DIR_MAX      256
+#define MSVCRT_EXT_MAX      256
+#define MSVCRT_PATH_MAX     260
 #define MSVCRT_stdin       (MSVCRT__iob+MSVCRT_STDIN_FILENO)
 #define MSVCRT_stdout      (MSVCRT__iob+MSVCRT_STDOUT_FILENO)
 #define MSVCRT_stderr      (MSVCRT__iob+MSVCRT_STDERR_FILENO)

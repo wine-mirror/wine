@@ -571,6 +571,7 @@
 @ cdecl _wspawnvp(long wstr ptr)
 @ cdecl _wspawnvpe(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr wstr wstr wstr wstr)
+@ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long) _wsplitpath_s
 @ cdecl _wstat(wstr ptr) MSVCRT__wstat
 @ cdecl _wstati64(wstr ptr) MSVCRT__wstati64
 @ cdecl _wstat64(wstr ptr) MSVCRT__wstat64
