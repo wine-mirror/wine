@@ -104,11 +104,13 @@ static BOOL wodUpdatePlayedTotal(WINE_WAVEDEV* wwo, snd_pcm_status_t* ps)
     snd_pcm_delay(wwo->pcm, &delay);
 
     /* A delay < 0 indicates an underrun; for our purposes that's 0.  */
-    if ( (state != SND_PCM_STATE_RUNNING && state != SND_PCM_STATE_PREPARED) || (delay < 0))
+    if (delay < 0)
     {
         WARN("Unexpected state (%d) or delay (%ld) while updating Total Played, resetting\n", state, delay);
         delay=0;
     }
+    if (state == SND_PCM_STATE_XRUN)
+        snd_pcm_start(wwo->pcm);
     InterlockedExchange((LONG*)&wwo->dwPlayedTotal, wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->pcm, delay));
     return TRUE;
 }
@@ -281,10 +283,14 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEDEV* wwo, BOOL force)
         if (!lpWaveHdr) {TRACE("Empty queue\n"); break;}
         if (!force)
         {
+            snd_pcm_uframes_t frames;
+            snd_pcm_hw_params_get_period_size(wwo->hw_params, &frames, NULL);
+
             if (lpWaveHdr == wwo->lpPlayPtr) {TRACE("play %p\n", lpWaveHdr); break;}
             if (lpWaveHdr == wwo->lpLoopPtr) {TRACE("loop %p\n", lpWaveHdr); break;}
-            if (lpWaveHdr->reserved > wwo->dwPlayedTotal) {TRACE("still playing %p (%u/%u)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
+            if (lpWaveHdr->reserved > wwo->dwPlayedTotal + frames) {TRACE("still playing %p (%u/%u)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
         }
+        wwo->dwPlayedTotal += lpWaveHdr->reserved - wwo->dwPlayedTotal;
 	wwo->lpQueuePtr = lpWaveHdr->lpNext;
 
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
