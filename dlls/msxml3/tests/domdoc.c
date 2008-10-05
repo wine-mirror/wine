@@ -1835,6 +1835,105 @@ static void test_removeChild(void)
     IXMLDOMDocument_Release( doc );
 }
 
+static void test_replaceChild(void)
+{
+    HRESULT r;
+    BSTR str;
+    VARIANT_BOOL b;
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *element;
+    IXMLDOMNode *fo_node, *ba_node, *removed_node, *temp_node;
+    IXMLDOMNodeList *root_list, *fo_list;
+    IUnknown * unk1, *unk2;
+    long len;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    r = IXMLDOMDocument_get_documentElement( doc, &element );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMElement_get_childNodes( element, &root_list );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNodeList_get_item( root_list, 3, &fo_node );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNode_get_childNodes( fo_node, &fo_list );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNodeList_get_item( fo_list, 0, &ba_node );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    IXMLDOMNodeList_Release( fo_list );
+
+    /* invalid parameter: NULL ptr for element to remove */
+    removed_node = (void*)0xdeadbeef;
+    r = IXMLDOMElement_replaceChild( element, ba_node, NULL, &removed_node );
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+    ok( removed_node == (void*)0xdeadbeef, "%p\n", removed_node );
+
+    /* invalid parameter: NULL for replacement element. (Sic!) */
+    removed_node = (void*)0xdeadbeef;
+    r = IXMLDOMElement_replaceChild( element, NULL, fo_node, &removed_node );
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+    ok( removed_node == (void*)0xdeadbeef, "%p\n", removed_node );
+
+    /* invalid parameter: OldNode is not a child */
+    removed_node = (void*)0xdeadbeef;
+    r = IXMLDOMElement_replaceChild( element, ba_node, ba_node, &removed_node );
+    todo_wine ok( r == E_INVALIDARG, "ret %08x\n", r );
+    if( r == E_NOTIMPL)
+    {
+        skip("replaceChild not implemented\n");
+        return;
+    }
+    ok( removed_node == NULL, "%p\n", removed_node );
+
+    r = IXMLDOMElement_replaceChild( element, ba_node, fo_node, NULL );
+    ok( r == S_OK, "ret %08x\n", r );
+
+    r = IXMLDOMNodeList_get_item( root_list, 3, &temp_node );
+    ok( r == S_OK, "ret %08x\n", r );
+
+    /* ba_node and temp_node refer to the same node, yet they
+       are different interface pointers */
+    ok( ba_node != temp_node, "ba_node %p temp_node %p\n", ba_node, temp_node);
+    r = IXMLDOMNode_QueryInterface( temp_node, &IID_IUnknown, (void**)&unk1);
+    ok( r == S_OK, "ret %08x\n", r );
+    r = IXMLDOMNode_QueryInterface( ba_node, &IID_IUnknown, (void**)&unk2);
+    ok( r == S_OK, "ret %08x\n", r );
+    ok( unk1 == unk2, "unk1 %p unk2 %p\n", unk1, unk2);
+
+    IUnknown_Release( unk1 );
+    IUnknown_Release( unk2 );
+
+    /* ba_node should have been removed from below fo_node */
+    r = IXMLDOMNode_get_childNodes( fo_node, &fo_list );
+    ok( r == S_OK, "ret %08x\n", r );
+
+    r = IXMLDOMNodeList_get_length( fo_list, &len);
+    ok( r == S_OK, "ret %08x\n", r );
+    ok( len == 0, "len %ld\n", len);
+
+    IXMLDOMNodeList_Release( fo_list );
+
+    IXMLDOMNode_Release(ba_node);
+    IXMLDOMNode_Release(fo_node);
+    IXMLDOMNode_Release(temp_node);
+    IXMLDOMNodeList_Release( root_list );
+    IXMLDOMElement_Release( element );
+    IXMLDOMDocument_Release( doc );
+}
+
 static void test_XMLHTTP(void)
 {
     static const WCHAR wszBody[] = {'m','o','d','e','=','T','e','s','t',0};
@@ -3534,6 +3633,7 @@ START_TEST(domdoc)
     test_get_text();
     test_get_childNodes();
     test_removeChild();
+    test_replaceChild();
     test_XMLHTTP();
     test_IXMLDOMDocument2();
     test_XPath();

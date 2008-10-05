@@ -609,7 +609,16 @@ static HRESULT WINAPI xmlnode_replaceChild(
     IXMLDOMNode* oldChild,
     IXMLDOMNode** outOldChild)
 {
-    FIXME("\n");
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+
+    TRACE("%p->(%p,%p,%p)\n",This,newChild,oldChild,outOldChild);
+
+    /* Do not believe any documentation telling that newChild == NULL
+       means removal. It does certainly *not* apply to msxml3! */
+    if(!newChild || !oldChild)
+        return E_INVALIDARG;
+
+    FIXME("not implemented\n");
     return E_NOTIMPL;
 }
 
