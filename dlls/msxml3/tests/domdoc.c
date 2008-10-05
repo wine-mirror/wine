@@ -1759,8 +1759,8 @@ static void test_removeChild(void)
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMElement *element;
-    IXMLDOMNode *node, *node2, *node3, *node4;
-    IXMLDOMNodeList *node_list, *node_list2;
+    IXMLDOMNode *fo_node, *ba_node, *removed_node, *temp_node, *lc_node;
+    IXMLDOMNodeList *root_list, *fo_list;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL, 
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -1776,46 +1776,61 @@ static void test_removeChild(void)
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMElement_get_childNodes( element, &node_list );
+    r = IXMLDOMElement_get_childNodes( element, &root_list );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMNodeList_get_item( node_list, 3, &node );
+    r = IXMLDOMNodeList_get_item( root_list, 3, &fo_node );
     ok( r == S_OK, "ret %08x\n", r);
  
-    r = IXMLDOMNode_get_childNodes( node, &node_list2 );
+    r = IXMLDOMNode_get_childNodes( fo_node, &fo_list );
     ok( r == S_OK, "ret %08x\n", r);
  
-    r = IXMLDOMNodeList_get_item( node_list, 0, &node4 );
+    r = IXMLDOMNodeList_get_item( fo_list, 0, &ba_node );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMElement_removeChild( element, NULL, &node2 );
+    /* invalid parameter: NULL ptr */
+    removed_node = (void*)0xdeadbeef;
+    r = IXMLDOMElement_removeChild( element, NULL, &removed_node );
     ok( r == E_INVALIDARG, "ret %08x\n", r );
+    todo_wine ok( removed_node == (void*)0xdeadbeef, "%p\n", removed_node );
 
-    r = IXMLDOMElement_removeChild( element, node4, &node2 );
+    /* ba_node is a descendant of element, but not a direct child. */
+    removed_node = (void*)0xdeadbeef;
+    r = IXMLDOMElement_removeChild( element, ba_node, &removed_node );
+    todo_wine ok( r == E_INVALIDARG, "ret %08x\n", r );
+    todo_wine ok( removed_node == NULL, "%p\n", removed_node );
+
+    r = IXMLDOMElement_removeChild( element, fo_node, &removed_node );
     ok( r == S_OK, "ret %08x\n", r);
-    ok( node4 == node2, "node %p node2 %p\n", node4, node2 );
+    ok( fo_node == removed_node, "node %p node2 %p\n", fo_node, removed_node );
 
-    r = IXMLDOMNode_get_parentNode( node4, &node3 );
+    /* try removing already removed child */
+    temp_node = (void*)0xdeadbeef;
+    r = IXMLDOMElement_removeChild( element, fo_node, &temp_node );
+    ok( r == E_INVALIDARG, "ret %08x\n", r);
+    ok( temp_node == NULL, "%p\n", temp_node );
+
+    /* the removed node has no parent anymore */
+    r = IXMLDOMNode_get_parentNode( removed_node, &temp_node );
     ok( r == S_FALSE, "ret %08x\n", r);
-    ok( node3 == NULL, "%p\n", node3 );
+    ok( temp_node == NULL, "%p\n", temp_node );
 
-    IXMLDOMNode_Release( node2 );
-    IXMLDOMNode_Release( node4 );
+    IXMLDOMNode_Release( removed_node );
+    IXMLDOMNode_Release( ba_node );
+    IXMLDOMNodeList_Release( fo_list );
 
-    r = IXMLDOMNodeList_get_item( node_list, 0, &node4 );
+    r = IXMLDOMNodeList_get_item( root_list, 0, &lc_node );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMElement_removeChild( element, node4, NULL );
+    r = IXMLDOMElement_removeChild( element, lc_node, NULL );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMNode_get_parentNode( node4, &node3 );
+    r = IXMLDOMNode_get_parentNode( lc_node, &temp_node );
     ok( r == S_FALSE, "ret %08x\n", r);
-    ok( node3 == NULL, "%p\n", node3 );
+    ok( temp_node == NULL, "%p\n", temp_node );
 
-    IXMLDOMNode_Release( node4 );
-    IXMLDOMNodeList_Release( node_list2 );
-    IXMLDOMNode_Release( node );
-    IXMLDOMNodeList_Release( node_list );
+    IXMLDOMNode_Release( lc_node );
+    IXMLDOMNodeList_Release( root_list );
     IXMLDOMElement_Release( element );
     IXMLDOMDocument_Release( doc );
 }
