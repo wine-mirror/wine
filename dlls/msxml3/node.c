@@ -625,10 +625,10 @@ static HRESULT WINAPI xmlnode_removeChild(
 
     TRACE("%p->(%p, %p)\n", This, childNode, oldChild);
 
+    if(!childNode) return E_INVALIDARG;
+
     if(oldChild)
         *oldChild = NULL;
-
-    if(!childNode) return E_INVALIDARG;
 
     hr = IXMLDOMNode_QueryInterface(childNode, &IID_IXMLDOMNode, (LPVOID)&child);
     if(FAILED(hr))

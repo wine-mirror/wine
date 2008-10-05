@@ -1792,7 +1792,7 @@ static void test_removeChild(void)
     removed_node = (void*)0xdeadbeef;
     r = IXMLDOMElement_removeChild( element, NULL, &removed_node );
     ok( r == E_INVALIDARG, "ret %08x\n", r );
-    todo_wine ok( removed_node == (void*)0xdeadbeef, "%p\n", removed_node );
+    ok( removed_node == (void*)0xdeadbeef, "%p\n", removed_node );
 
     /* ba_node is a descendant of element, but not a direct child. */
     removed_node = (void*)0xdeadbeef;
