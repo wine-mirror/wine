@@ -1288,7 +1288,7 @@ static void test_depth_stencil_reset(void)
     D3DPRESENT_PARAMETERS present_parameters;
     D3DDISPLAYMODE display_mode;
     IDirect3DSurface8 *surface;
-    IDirect3DDevice8 *device;
+    IDirect3DDevice8 *device = NULL;
     IDirect3D8 *d3d8;
     HRESULT hr;
     HWND hwnd;
