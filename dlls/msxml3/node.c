@@ -619,7 +619,7 @@ static HRESULT WINAPI xmlnode_removeChild(
     IXMLDOMNode** oldChild)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlNode *ancestor, *child_node_ptr;
+    xmlNode *child_node_ptr;
     HRESULT hr;
     IXMLDOMNode *child;
 
@@ -634,14 +634,8 @@ static HRESULT WINAPI xmlnode_removeChild(
     if(FAILED(hr))
         return hr;
 
-    child_node_ptr = ancestor = impl_from_IXMLDOMNode(child)->node;
-    while(ancestor->parent)
-    {
-        if(ancestor->parent == This->node)
-            break;
-        ancestor = ancestor->parent;
-    }
-    if(!ancestor->parent)
+    child_node_ptr = impl_from_IXMLDOMNode(child)->node;
+    if(child_node_ptr->parent != This->node)
     {
         WARN("childNode %p is not a child of %p\n", childNode, iface);
         IXMLDOMNode_Release(child);

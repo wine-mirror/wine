@@ -1797,8 +1797,8 @@ static void test_removeChild(void)
     /* ba_node is a descendant of element, but not a direct child. */
     removed_node = (void*)0xdeadbeef;
     r = IXMLDOMElement_removeChild( element, ba_node, &removed_node );
-    todo_wine ok( r == E_INVALIDARG, "ret %08x\n", r );
-    todo_wine ok( removed_node == NULL, "%p\n", removed_node );
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+    ok( removed_node == NULL, "%p\n", removed_node );
 
     r = IXMLDOMElement_removeChild( element, fo_node, &removed_node );
     ok( r == S_OK, "ret %08x\n", r);
