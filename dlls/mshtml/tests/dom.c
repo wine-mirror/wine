@@ -2097,6 +2097,27 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_border(style, str);
     ok(hres == S_OK, "get_border failed: %08x\n", hres);
     SysFreeString(str);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_left(style, &v);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("3px");
+    hres = IHTMLStyle_put_left(style, v);
+    ok(hres == S_OK, "put_left failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_left(style, &v);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
 }
 
 static void test_default_selection(IHTMLDocument2 *doc)
