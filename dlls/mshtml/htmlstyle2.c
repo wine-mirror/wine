@@ -25,10 +25,11 @@
 #include "winuser.h"
 #include "ole2.h"
 
+#include "mshtml_private.h"
+#include "htmlstyle.h"
+
 #include "wine/debug.h"
 #include "wine/unicode.h"
-
-#include "mshtml_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
