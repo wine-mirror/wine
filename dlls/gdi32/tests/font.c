@@ -1344,7 +1344,7 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
 
     for (e = 0; e < nErrors; e++)
     {
-        ok(error[e].TabbedTextOutWidth == areaWidth,
+        ok(near_match(error[e].TabbedTextOutWidth, areaWidth),
             "The output text (\"%s\") width should be %d, not %d.\n",
             error[e].extent, areaWidth, error[e].TabbedTextOutWidth);
         /* The width returned by GetTextExtentPoint32() is exactly the same
