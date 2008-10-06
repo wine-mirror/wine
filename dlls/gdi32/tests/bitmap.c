@@ -308,8 +308,11 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     buf = HeapAlloc(GetProcessHeap(), 0, bm.bmWidthBytes * bm.bmHeight + 4096);
 
     /* GetBitmapBits returns not 32-bit aligned data */
+    SetLastError(0xdeadbeef);
     ret = GetBitmapBits(hbm, 0, NULL);
-    ok(ret == bm_width_bytes * bm.bmHeight, "%d != %d\n", ret, bm_width_bytes * bm.bmHeight);
+    ok(ret == bm_width_bytes * bm.bmHeight ||
+        broken(ret == 0 && GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
+        "%d != %d\n", ret, bm_width_bytes * bm.bmHeight);
 
     memset(buf, 0xAA, bm.bmWidthBytes * bm.bmHeight + 4096);
     ret = GetBitmapBits(hbm, bm.bmWidthBytes * bm.bmHeight + 4096, buf);
