@@ -2053,7 +2053,7 @@ static void test_EnumSystemLanguageGroupsA(void)
   /* No enumeration proc */
   SetLastError(0);
   ret = pEnumSystemLanguageGroupsA(0, LGRPID_INSTALLED, 0);
-  if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  if (ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
   {
     win_skip("EnumSystemLanguageGroupsA is not implemented\n");
     return;
@@ -2179,7 +2179,7 @@ static void test_EnumUILanguageA(void)
 
   SetLastError(ERROR_SUCCESS);
   ret = pEnumUILanguagesA(luilocale_proc1A, 0, 0);
-  if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  if (ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
   {
     win_skip("EnumUILanguagesA is not implemented\n");
     return;
