@@ -281,6 +281,7 @@ static const IID * const style_iids[] = {
 static const IID * const cstyle_iids[] = {
     &IID_IUnknown,
     &IID_IDispatch,
+    &IID_IDispatchEx,
     &IID_IHTMLCurrentStyle,
     NULL
 };
@@ -1985,6 +1986,7 @@ static void test_navigator(IHTMLDocument2 *doc)
 
 static void test_current_style(IHTMLCurrentStyle *current_style)
 {
+    test_disp((IUnknown*)current_style, &DIID_DispHTMLCurrentStyle);
     test_ifaces((IUnknown*)current_style, cstyle_iids);
 }
 

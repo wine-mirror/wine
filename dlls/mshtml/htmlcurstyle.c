@@ -33,6 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    DispatchEx dispex;
     const IHTMLCurrentStyleVtbl *lpIHTMLCurrentStyleVtbl;
 
     LONG ref;
@@ -51,12 +52,11 @@ static HRESULT WINAPI HTMLCurrentStyle_QueryInterface(IHTMLCurrentStyle *iface, 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = HTMLCURSTYLE(This);
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = HTMLCURSTYLE(This);
     }else if(IsEqualGUID(&IID_IHTMLCurrentStyle, riid)) {
         TRACE("(%p)->(IID_IHTMLCurrentStyle %p)\n", This, ppv);
         *ppv = HTMLCURSTYLE(This);
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
     }
 
     if(*ppv) {
@@ -864,6 +864,17 @@ static const IHTMLCurrentStyleVtbl HTMLCurrentStyleVtbl = {
     HTMLCurrentStyle_get_textTransform
 };
 
+static const tid_t HTMLCurrentStyle_iface_tids[] = {
+    IHTMLCurrentStyle_tid,
+    0
+};
+static dispex_static_data_t HTMLCurrentStyle_dispex = {
+    NULL,
+    DispHTMLCurrentStyle_tid,
+    NULL,
+    HTMLCurrentStyle_iface_tids
+};
+
 HRESULT HTMLCurrentStyle_Create(IHTMLCurrentStyle **p)
 {
     HTMLCurrentStyle *ret;
@@ -874,6 +885,8 @@ HRESULT HTMLCurrentStyle_Create(IHTMLCurrentStyle **p)
 
     ret->lpIHTMLCurrentStyleVtbl = &HTMLCurrentStyleVtbl;
     ret->ref = 1;
+
+    init_dispex(&ret->dispex, (IUnknown*)HTMLCURSTYLE(ret),  &HTMLCurrentStyle_dispex);
 
     *p = HTMLCURSTYLE(ret);
     return S_OK;
