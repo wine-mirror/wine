@@ -290,8 +290,11 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->nsstyle)
+            nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
         heap_free(This);
+    }
 
     return ref;
 }
