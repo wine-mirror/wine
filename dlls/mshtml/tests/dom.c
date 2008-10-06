@@ -2118,6 +2118,22 @@ static void test_default_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_cursor(style, &str);
+    ok(hres == S_OK, "get_cursor failed: %08x\n", hres);
+    ok(!str, "get_cursor != NULL\n");
+    SysFreeString(str);
+
+    str = a2bstr("default");
+    hres = IHTMLStyle_put_cursor(style, str);
+    ok(hres == S_OK, "get_cursor failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle_get_cursor(style, &str);
+    ok(hres == S_OK, "get_cursor failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "default"), "get_cursor returned %s\n", dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_default_selection(IHTMLDocument2 *doc)

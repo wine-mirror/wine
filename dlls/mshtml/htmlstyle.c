@@ -45,6 +45,8 @@ static const WCHAR attrBorderLeft[] =
     {'b','o','r','d','e','r','-','l','e','f','t',0};
 static const WCHAR attrColor[] =
     {'c','o','l','o','r',0};
+static const WCHAR attrCursor[] =
+    {'c','u','r','s','o','r',0};
 static const WCHAR attrDisplay[] =
     {'d','i','s','p','l','a','y',0};
 static const WCHAR attrFontFamily[] =
@@ -79,6 +81,7 @@ static const LPCWSTR style_strings[] = {
     attrBorder,
     attrBorderLeft,
     attrColor,
+    attrCursor,
     attrDisplay,
     attrFontFamily,
     attrFontSize,
@@ -1685,15 +1688,19 @@ static HRESULT WINAPI HTMLStyle_get_posHeight(IHTMLStyle *iface, float *p)
 static HRESULT WINAPI HTMLStyle_put_cursor(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_CURSOR, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_cursor(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_CURSOR, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_clip(IHTMLStyle *iface, BSTR v)
