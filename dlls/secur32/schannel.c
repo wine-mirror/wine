@@ -46,6 +46,7 @@ MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
 MAKE_FUNCPTR(gnutls_global_set_log_level);
+MAKE_FUNCPTR(gnutls_perror);
 #undef MAKE_FUNCPTR
 
 #define SCHAN_INVALID_HANDLE ~0UL
@@ -262,6 +263,7 @@ static SECURITY_STATUS schan_CheckCreds(const SCHANNEL_CRED *schanCred)
 static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schanCred,
  PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
+    struct schan_credentials *creds;
     SECURITY_STATUS st = SEC_E_OK;
 
     TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
@@ -279,20 +281,21 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
     if (st == SEC_E_OK)
     {
         ULONG_PTR handle;
-        struct schan_credentials *creds;
+        int ret;
 
         creds = HeapAlloc(GetProcessHeap(), 0, sizeof(*creds));
         if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
 
         handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
-        if (handle == SCHAN_INVALID_HANDLE)
-        {
-            HeapFree(GetProcessHeap(), 0, creds);
-            return SEC_E_INTERNAL_ERROR;
-        }
+        if (handle == SCHAN_INVALID_HANDLE) goto fail;
 
         creds->credential_use = SECPKG_CRED_OUTBOUND;
-        pgnutls_certificate_allocate_credentials(&creds->credentials);
+        ret = pgnutls_certificate_allocate_credentials(&creds->credentials);
+        if (ret != GNUTLS_E_SUCCESS)
+        {
+            pgnutls_perror(ret);
+            goto fail;
+        }
 
         phCredential->dwLower = handle;
         phCredential->dwUpper = 0;
@@ -305,6 +308,10 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         }
     }
     return st;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, creds);
+    return SEC_E_INTERNAL_ERROR;
 }
 
 static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schanCred,
@@ -548,6 +555,7 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_global_init)
     LOAD_FUNCPTR(gnutls_global_set_log_function)
     LOAD_FUNCPTR(gnutls_global_set_log_level)
+    LOAD_FUNCPTR(gnutls_perror)
 #undef LOAD_FUNCPTR
 
     provider = SECUR32_addProvider(&schanTableA, &schanTableW, schannelDllName);
