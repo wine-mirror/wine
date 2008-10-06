@@ -2154,6 +2154,27 @@ static void test_default_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_cursor failed: %08x\n", hres);
     ok(!strcmp_wa(str, "default"), "get_cursor returned %s\n", dbgstr_w(str));
     SysFreeString(str);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_verticalAlign(style, &v);
+    ok(hres == S_OK, "get_vertivalAlign failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("middle");
+    hres = IHTMLStyle_put_verticalAlign(style, v);
+    ok(hres == S_OK, "put_vertivalAlign failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_verticalAlign(style, &v);
+    ok(hres == S_OK, "get_verticalAlign failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "middle"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
 }
 
 static void test_default_selection(IHTMLDocument2 *doc)

@@ -71,6 +71,8 @@ static const WCHAR attrTextDecoration[] =
     {'t','e','x','t','-','d','e','c','o','r','a','t','i','o','n',0};
 static const WCHAR attrTop[] =
     {'t','o','p',0};
+static const WCHAR attrVerticalAlign[] =
+    {'v','e','r','t','i','c','a','l','-','a','l','i','g','n',0};
 static const WCHAR attrVisibility[] =
     {'v','i','s','i','b','i','l','i','t','y',0};
 static const WCHAR attrWidth[] =
@@ -96,6 +98,7 @@ static const LPCWSTR style_strings[] = {
     attrPaddingLeft,
     attrTextDecoration,
     attrTop,
+    attrVerticalAlign,
     attrVisibility,
     attrWidth,
 };
@@ -728,15 +731,35 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationBlink(IHTMLStyle *iface, VARIA
 static HRESULT WINAPI HTMLStyle_put_verticalAlign(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    switch(V_VT(&v)) {
+    case VT_BSTR:
+        return set_style_attr(This, STYLEID_VERTICAL_ALIGN, V_BSTR(&v), 0);
+    default:
+        FIXME("not implemented vt %d\n", V_VT(&v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_get_verticalAlign(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    BSTR ret;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = get_style_attr(This, STYLEID_VERTICAL_ALIGN, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_put_textTransform(IHTMLStyle *iface, BSTR v)
