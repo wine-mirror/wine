@@ -359,6 +359,9 @@ static HRESULT HTMLElementCollection_get_dispid(IUnknown *iface, BSTR name, DWOR
     WCHAR *ptr;
     DWORD idx=0;
 
+    if(!*name)
+        return DISP_E_UNKNOWNNAME;
+
     for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
 
@@ -484,8 +487,9 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument *doc, IUnkn
 
     nsIDOMNodeList_GetLength(nslist, &length);
 
-    buf.len = buf.size = length;
-    if(buf.len) {
+    buf.len = 0;
+    buf.size = length;
+    if(length) {
         nsIDOMNode *nsnode;
 
         buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
@@ -493,9 +497,11 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocument *doc, IUnkn
         for(i=0; i<length; i++) {
             nsIDOMNodeList_Item(nslist, i, &nsnode);
             if(is_elem_node(nsnode))
-                buf.buf[i] = HTMLELEM_NODE_THIS(get_node(doc, nsnode, TRUE));
+                buf.buf[buf.len++] = HTMLELEM_NODE_THIS(get_node(doc, nsnode, TRUE));
             nsIDOMNode_Release(nsnode);
         }
+
+        elem_vector_normalize(&buf);
     }else {
         buf.buf = NULL;
     }
