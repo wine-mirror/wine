@@ -2241,10 +2241,18 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                 }
                 bsize = stfs.f_bsize;
 #endif
-                info->BytesPerSector = 512;
-                info->SectorsPerAllocationUnit = 8;
-                info->TotalAllocationUnits.QuadPart = bsize * stfs.f_blocks / (512 * 8);
-                info->AvailableAllocationUnits.QuadPart = bsize * stfs.f_bavail / (512 * 8);
+                if (bsize == 2048)  /* assume CD-ROM */
+                {
+                    info->BytesPerSector = 2048;
+                    info->SectorsPerAllocationUnit = 1;
+                }
+                else
+                {
+                    info->BytesPerSector = 512;
+                    info->SectorsPerAllocationUnit = 8;
+                }
+                info->TotalAllocationUnits.QuadPart = bsize * stfs.f_blocks / (info->BytesPerSector * info->SectorsPerAllocationUnit);
+                info->AvailableAllocationUnits.QuadPart = bsize * stfs.f_bavail / (info->BytesPerSector * info->SectorsPerAllocationUnit);
                 io->Information = sizeof(*info);
                 io->u.Status = STATUS_SUCCESS;
             }
