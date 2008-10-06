@@ -3033,3 +3033,12 @@ UINT WINAPI MsiSetExternalUIRecord( INSTALLUI_HANDLER_RECORD puiHandler,
                              ppuiPrevHandler);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ * MsiInstallMissingComponentW     [MSI.@]
+ */
+UINT WINAPI MsiInstallMissingComponentW(LPCWSTR szProduct, LPCWSTR szComponent, INSTALLSTATE eInstallState)
+{
+    FIXME("(%s %s %d\n", debugstr_w(szProduct), debugstr_w(szComponent), eInstallState);
+    return ERROR_SUCCESS;
+}

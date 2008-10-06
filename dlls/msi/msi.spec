@@ -77,7 +77,7 @@
 81 stdcall MsiGetUserInfoA(str ptr ptr ptr ptr ptr ptr)
 82 stdcall MsiGetUserInfoW(wstr ptr ptr ptr ptr ptr ptr)
 83 stub MsiInstallMissingComponentA
-84 stub MsiInstallMissingComponentW
+84 stdcall MsiInstallMissingComponentW(wstr wstr long)
 85 stub MsiInstallMissingFileA
 86 stub MsiInstallMissingFileW
 87 stdcall MsiInstallProductA(str str)

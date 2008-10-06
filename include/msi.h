@@ -603,6 +603,10 @@ UINT WINAPI MsiDatabaseMergeA(MSIHANDLE, MSIHANDLE, LPCSTR);
 UINT WINAPI MsiDatabaseMergeW(MSIHANDLE, MSIHANDLE, LPCWSTR);
 #define     MsiDatabaseMerge WINELIB_NAME_AW(MsiDatabaseMerge)
 
+UINT WINAPI MsiInstallMissingComponentA(LPCSTR, LPCSTR, INSTALLSTATE);
+UINT WINAPI MsiInstallMissingComponentW(LPCWSTR, LPCWSTR, INSTALLSTATE);
+#define     MsiInstallMissingComponent WINELIB_NAME_AW(MsiInstallMissingComponent)
+
 /* Non Unicode */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);
 UINT WINAPI MsiCloseAllHandles(void);
