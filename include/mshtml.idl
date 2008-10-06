@@ -2060,7 +2060,7 @@ methods:
     void textKashida(VARIANT v);
 
     [propget, id(DISPID_IHTMLSTYLE2_TEXTKASHIDA), displaybind, bindable]
-   VARIANT textKashida();
+    VARIANT textKashida();
 
     [propput, id(DISPID_IHTMLSTYLE2_TEXTAUTOSPACE), displaybind, bindable]
     void textAutospace(BSTR v);
@@ -2541,6 +2541,359 @@ interface IHTMLCurrentStyle : IDispatch
 
     [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTTRANSFORM), displaybind, bindable]
     HRESULT textTransform([retval, out] BSTR *p);
+}
+
+/*****************************************************************************
+ *    DispHTMLCurrentStyle dispinterface
+ */
+[
+    hidden,
+    uuid(3050f557-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLCurrentStyle
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_POSITION), displaybind, bindable]
+    BSTR position();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_STYLEFLOAT), displaybind, bindable]
+    BSTR styleFloat();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_COLOR), displaybind, bindable]
+    VARIANT color();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDCOLOR), displaybind, bindable]
+    VARIANT backgroundColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTFAMILY), displaybind, bindable]
+    BSTR fontFamily();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTSTYLE), displaybind, bindable]
+    BSTR fontStyle();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTVARIANT), displaybind, bindable, hidden]
+    BSTR fontVariant();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTWEIGHT), displaybind, bindable]
+    VARIANT fontWeight();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_FONTSIZE), displaybind, bindable]
+    VARIANT fontSize();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDIMAGE), displaybind, bindable]
+    BSTR backgroundImage();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDPOSITIONX), displaybind, bindable]
+    VARIANT backgroundPositionX();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDPOSITIONY), displaybind, bindable]
+    VARIANT backgroundPositionY();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDREPEAT), displaybind, bindable]
+    BSTR backgroundRepeat();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERLEFTCOLOR), displaybind, bindable]
+    VARIANT borderLeftColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERTOPCOLOR), displaybind, bindable]
+    VARIANT borderTopColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERRIGHTCOLOR), displaybind, bindable]
+    VARIANT borderRightColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERBOTTOMCOLOR), displaybind, bindable]
+    VARIANT borderBottomColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERTOPSTYLE), displaybind, bindable]
+    BSTR borderTopStyle();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERRIGHTSTYLE), displaybind, bindable]
+    BSTR borderRightStyle();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERBOTTOMSTYLE), displaybind, bindable]
+    BSTR borderBottomStyle();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERLEFTSTYLE), displaybind, bindable]
+    BSTR borderLeftStyle();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERTOPWIDTH), displaybind, bindable]
+    VARIANT borderTopWidth();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERRIGHTWIDTH), displaybind, bindable]
+    VARIANT borderRightWidth();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERBOTTOMWIDTH), displaybind, bindable]
+    VARIANT borderBottomWidth();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERLEFTWIDTH), displaybind, bindable]
+    VARIANT borderLeftWidth();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LEFT), displaybind, bindable]
+    VARIANT left();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TOP), displaybind, bindable]
+    VARIANT top();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_WIDTH), displaybind, bindable]
+    VARIANT width();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_HEIGHT), displaybind, bindable]
+    VARIANT height();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDINGLEFT), displaybind, bindable]
+    VARIANT paddingLeft();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDINGTOP), displaybind, bindable]
+    VARIANT paddingTop();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDINGRIGHT), displaybind, bindable]
+    VARIANT paddingRight();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDINGBOTTOM), displaybind, bindable]
+    VARIANT paddingBottom();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTALIGN), displaybind, bindable]
+    BSTR textAlign();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTDECORATION), displaybind, bindable]
+    BSTR textDecoration();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_DISPLAY), displaybind, bindable]
+    BSTR display();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_VISIBILITY), displaybind, bindable]
+    BSTR visibility();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_ZINDEX), displaybind, bindable]
+    VARIANT zIndex();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LETTERSPACING), displaybind, bindable]
+    VARIANT letterSpacing();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LINEHEIGHT), displaybind, bindable]
+    VARIANT lineHeight();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTINDENT), displaybind, bindable]
+    VARIANT textIndent();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_VERTICALALIGN), displaybind, bindable]
+    VARIANT verticalAlign();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BACKGROUNDATTACHMENT), displaybind, bindable]
+    BSTR backgroundAttachment();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGINTOP), displaybind, bindable]
+    VARIANT marginTop();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGINRIGHT), displaybind, bindable]
+    VARIANT marginRight();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGINBOTTOM), displaybind, bindable]
+    VARIANT marginBottom();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGINLEFT), displaybind, bindable]
+    VARIANT marginLeft();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLEAR), displaybind, bindable]
+    BSTR clear();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LISTSTYLETYPE), displaybind, bindable]
+    BSTR listStyleType();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LISTSTYLEPOSITION), displaybind, bindable]
+    BSTR listStylePosition();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LISTSTYLEIMAGE), displaybind, bindable]
+    BSTR listStyleImage();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLIPTOP), displaybind, bindable]
+    VARIANT clipTop();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLIPRIGHT), displaybind, bindable]
+    VARIANT clipRight();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLIPBOTTOM), displaybind, bindable]
+    VARIANT clipBottom();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CLIPLEFT), displaybind, bindable]
+    VARIANT clipLeft();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_OVERFLOW), displaybind, bindable]
+    BSTR overflow();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PAGEBREAKBEFORE), displaybind, bindable]
+    BSTR pageBreakBefore();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PAGEBREAKAFTER), displaybind, bindable]
+    BSTR pageBreakAfter();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_CURSOR), displaybind, bindable]
+    BSTR cursor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TABLELAYOUT), displaybind, bindable]
+    BSTR tableLayout();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERCOLLAPSE), displaybind, bindable]
+    BSTR borderCollapse();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_DIRECTION), displaybind, bindable]
+    BSTR direction();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BEHAVIOR), displaybind, bindable]
+    BSTR behavior();
+
+    [id(DISPID_IHTMLCURRENTSTYLE_GETATTRIBUTE)]
+    VARIANT getAttribute(
+            [in] BSTR strAttributeName,
+            [in, defaultvalue(0)] LONG lFlags);
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_UNICODEBIDI), displaybind, bindable]
+    BSTR unicodeBidi();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_RIGHT), displaybind, bindable]
+    VARIANT right();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BOTTOM), displaybind, bindable]
+    VARIANT bottom();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_IMEMODE), displaybind, bindable]
+    BSTR imeMode();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_RUBYALIGN), displaybind, bindable]
+    BSTR rubyAlign();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_RUBYPOSITION), displaybind, bindable]
+    BSTR rubyPosition();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_RUBYOVERHANG), displaybind, bindable]
+    BSTR rubyOverhang();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTAUTOSPACE), displaybind, bindable]
+    BSTR textAutospace();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LINEBREAK), displaybind, bindable]
+    BSTR lineBreak();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_WORDBREAK), displaybind, bindable]
+    BSTR wordBreak();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTJUSTIFY), displaybind, bindable]
+    BSTR textJustify();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTJUSTIFYTRIM), displaybind, bindable]
+    BSTR textJustifyTrim();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTKASHIDA), displaybind, bindable]
+   VARIANT textKashida();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BLOCKDIRECTION), displaybind, bindable]
+    BSTR blockDirection();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LAYOUTGRIDCHAR), displaybind, bindable]
+    VARIANT layoutGridChar();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LAYOUTGRIDLINE), displaybind, bindable]
+    VARIANT layoutGridLine();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LAYOUTGRIDMODE), displaybind, bindable]
+    BSTR layoutGridMode();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_LAYOUTGRIDTYPE), displaybind, bindable]
+    BSTR layoutGridType();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERSTYLE), displaybind, bindable]
+    BSTR borderStyle();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERCOLOR), displaybind, bindable]
+    BSTR borderColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_BORDERWIDTH), displaybind, bindable]
+    BSTR borderWidth();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_PADDING), displaybind, bindable]
+    BSTR padding();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_MARGIN), displaybind, bindable]
+    BSTR margin();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_ACCELERATOR), displaybind, bindable]
+    BSTR accelerator();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_OVERFLOWX), displaybind, bindable]
+    BSTR overflowX();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_OVERFLOWY), displaybind, bindable]
+    BSTR overflowY();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTTRANSFORM), displaybind, bindable]
+    BSTR textTransform();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_LAYOUTFLOW), displaybind, bindable]
+    BSTR layoutFlow();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_WORDWRAP), displaybind, bindable]
+    BSTR wordWrap();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_TEXTUNDERLINEPOSITION), displaybind, bindable]
+    BSTR textUnderlinePosition();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_HASLAYOUT), displaybind, bindable]
+    VARIANT_BOOL hasLayout();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARBASECOLOR), displaybind, bindable]
+    VARIANT scrollbarBaseColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARFACECOLOR), displaybind, bindable]
+    VARIANT scrollbarFaceColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBAR3DLIGHTCOLOR), displaybind, bindable]
+    VARIANT scrollbar3dLightColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARSHADOWCOLOR), displaybind, bindable]
+    VARIANT scrollbarShadowColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARHIGHLIGHTCOLOR), displaybind, bindable]
+    VARIANT scrollbarHighlightColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARDARKSHADOWCOLOR), displaybind, bindable]
+    VARIANT scrollbarDarkShadowColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARARROWCOLOR), displaybind, bindable]
+    VARIANT scrollbarArrowColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_SCROLLBARTRACKCOLOR), displaybind, bindable]
+    VARIANT scrollbarTrackColor();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_WRITINGMODE), displaybind, bindable]
+    BSTR writingMode();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_ZOOM), displaybind, bindable]
+    VARIANT zoom();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_FILTER), displaybind, bindable]
+    BSTR filter();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_TEXTALIGNLAST), displaybind, bindable]
+    BSTR textAlignLast();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_TEXTKASHIDASPACE), displaybind, bindable]
+    VARIANT textKashidaSpace();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE2_ISBLOCK), displaybind, bindable, hidden, restricted, nonbrowsable]
+    VARIANT_BOOL isBlock();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE3_TEXTOVERFLOW), displaybind, bindable]
+    BSTR textOverflow();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE3_MINHEIGHT), displaybind, bindable]
+    VARIANT minHeight();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE3_WORDSPACING), displaybind, bindable]
+    VARIANT wordSpacing();
+
+    [propget, id(DISPID_IHTMLCURRENTSTYLE3_WHITESPACE), displaybind, bindable]
+    BSTR whiteSpace();
 }
 
 /*****************************************************************************
