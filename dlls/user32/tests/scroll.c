@@ -132,11 +132,19 @@ static void scrollbar_test4(void)
     BOOL ret;
     SCROLLBARINFO sbi;
     RECT rect;
+    BOOL (WINAPI *pGetScrollBarInfo)(HWND, LONG, LPSCROLLBARINFO);
+
+    pGetScrollBarInfo = (void*)GetProcAddress(GetModuleHandleA("user32.dll"), "GetScrollBarInfo");
+    if (!pGetScrollBarInfo)
+    {
+        win_skip("GetScrollBarInfo is not available\n");
+        return;
+    }
 
     /* Test GetScrollBarInfo to make sure it returns rcScrollBar in screen
      * coordinates. */
     sbi.cbSize = sizeof(sbi);
-    ret = GetScrollBarInfo( hScroll, OBJID_CLIENT, &sbi);
+    ret = pGetScrollBarInfo( hScroll, OBJID_CLIENT, &sbi);
     ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
     GetWindowRect( hScroll, &rect );
     ok( ret, "The GetWindowRect() call should not fail.\n" );
@@ -153,7 +161,7 @@ static void scrollbar_test4(void)
      * making sure that it shifts the rcScrollBar value. */
     ShowWindow( hMainWnd, SW_SHOW );
     sbi.cbSize = sizeof(sbi);
-    ret = GetScrollBarInfo( hMainWnd, OBJID_HSCROLL, &sbi);
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_HSCROLL, &sbi);
     ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
     GetWindowRect( hMainWnd, &rect );
     ok( ret, "The GetWindowRect() call should not fail.\n" );
@@ -161,7 +169,7 @@ static void scrollbar_test4(void)
                 rect.right-rect.left, rect.bottom-rect.top, TRUE );
     rect = sbi.rcScrollBar;
     OffsetRect(&rect, 5, 5);
-    ret = GetScrollBarInfo( hMainWnd, OBJID_HSCROLL, &sbi);
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_HSCROLL, &sbi);
     ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
     ok( EqualRect(&rect, &sbi.rcScrollBar),
         "PreviousRect(%d, %d, %d, %d) != CurrentRect(%d, %d, %d, %d)\n",
@@ -170,7 +178,7 @@ static void scrollbar_test4(void)
         sbi.rcScrollBar.bottom, sbi.rcScrollBar.right );
 
     sbi.cbSize = sizeof(sbi);
-    ret = GetScrollBarInfo( hMainWnd, OBJID_VSCROLL, &sbi);
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_VSCROLL, &sbi);
     ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
     GetWindowRect( hMainWnd, &rect );
     ok( ret, "The GetWindowRect() call should not fail.\n" );
@@ -178,7 +186,7 @@ static void scrollbar_test4(void)
                 rect.right-rect.left, rect.bottom-rect.top, TRUE );
     rect = sbi.rcScrollBar;
     OffsetRect(&rect, 5, 5);
-    ret = GetScrollBarInfo( hMainWnd, OBJID_VSCROLL, &sbi);
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_VSCROLL, &sbi);
     ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
     ok( EqualRect(&rect, &sbi.rcScrollBar),
         "PreviousRect(%d, %d, %d, %d) != CurrentRect(%d, %d, %d, %d)\n",
