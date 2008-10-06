@@ -333,12 +333,10 @@ ULONG CDECL ldap_parse_sort_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
 
     TRACE( "(%p, %p, %p, %p)\n", ld, control, result, attr );
 
-    if (!ld) return ~0UL;
+    if (!ld || !control) return ~0UL;
 
-    if (control) {
-        controlU = controlarrayWtoU( control );
-        if (!controlU) return WLDAP32_LDAP_NO_MEMORY;
-    }
+    controlU = controlarrayWtoU( control );
+    if (!controlU) return WLDAP32_LDAP_NO_MEMORY;
 
 #ifdef HAVE_LDAP_PARSE_SORT_CONTROL
     if (!(ret = ldap_parse_sort_control( ld, controlU, &res, &attrU )))
@@ -439,12 +437,10 @@ INT CDECL ldap_parse_vlv_controlW( WLDAP32_LDAP *ld, PLDAPControlW *control,
     TRACE( "(%p, %p, %p, %p, %p, %p)\n", ld, control, targetpos,
            listcount, context, errcode );
 
-    if (!ld) return ~0UL;
+    if (!ld || !control) return ~0UL;
 
-    if (control) {
-        controlU = controlarrayWtoU( control );
-        if (!controlU) return WLDAP32_LDAP_NO_MEMORY;
-    }
+    controlU = controlarrayWtoU( control );
+    if (!controlU) return WLDAP32_LDAP_NO_MEMORY;
 
 #ifdef HAVE_LDAP_PARSE_VLV_CONTROL
     if (!(ret = ldap_parse_vlv_control( ld, controlU, &pos, &count,
