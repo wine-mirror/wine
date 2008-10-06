@@ -28,6 +28,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "sspi.h"
 #include "schannel.h"
 #include "secur32_priv.h"
@@ -406,38 +407,12 @@ static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
 }
 
 /***********************************************************************
- *              InitializeSecurityContextA
- */
-static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
- PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR *pszTargetName,
- ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
- PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
- PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
-{
-    SECURITY_STATUS ret;
-
-    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
-     debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
-     Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
-    if(phCredential)
-    {
-        FIXME("stub\n");
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
-    }
-    else
-    {
-        ret = SEC_E_INVALID_HANDLE;
-    }
-    return ret;
-}
-
-/***********************************************************************
  *              InitializeSecurityContextW
  */
 static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
  PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR *pszTargetName,
  ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
- PSecBufferDesc pInput,ULONG Reserved2, PCtxtHandle phNewContext,
+ PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
@@ -454,6 +429,38 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     {
         ret = SEC_E_INVALID_HANDLE;
     }
+    return ret;
+}
+
+/***********************************************************************
+ *              InitializeSecurityContextA
+ */
+static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
+ PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR *pszTargetName,
+ ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+ PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+ PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
+{
+    SECURITY_STATUS ret;
+    SEC_WCHAR *target_name = NULL;
+
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
+     debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
+     Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+    if (pszTargetName)
+    {
+        INT len = MultiByteToWideChar(CP_ACP, 0, pszTargetName, -1, NULL, 0);
+        target_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*target_name));
+        MultiByteToWideChar(CP_ACP, 0, pszTargetName, -1, target_name, len);
+    }
+
+    ret = schan_InitializeSecurityContextW(phCredential, phContext, target_name,
+            fContextReq, Reserved1, TargetDataRep, pInput, Reserved2,
+            phNewContext, pOutput, pfContextAttr, ptsExpiry);
+
+    HeapFree(GetProcessHeap(), 0, target_name);
+
     return ret;
 }
 
