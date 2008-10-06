@@ -2118,6 +2118,26 @@ static void test_default_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_top(style, &v);
+    ok(hres == S_OK, "get_top failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("3px");
+    hres = IHTMLStyle_put_top(style, v);
+    ok(hres == S_OK, "put_top failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_top(style, &v);
+    ok(hres == S_OK, "get_top failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_cursor(style, &str);
     ok(hres == S_OK, "get_cursor failed: %08x\n", hres);

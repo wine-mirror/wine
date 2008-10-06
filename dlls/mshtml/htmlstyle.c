@@ -69,6 +69,8 @@ static const WCHAR attrPaddingLeft[] =
     {'p','a','d','d','i','n','g','-','l','e','f','t',0};
 static const WCHAR attrTextDecoration[] =
     {'t','e','x','t','-','d','e','c','o','r','a','t','i','o','n',0};
+static const WCHAR attrTop[] =
+    {'t','o','p',0};
 static const WCHAR attrVisibility[] =
     {'v','i','s','i','b','i','l','i','t','y',0};
 static const WCHAR attrWidth[] =
@@ -93,6 +95,7 @@ static const LPCWSTR style_strings[] = {
     attrMarginRight,
     attrPaddingLeft,
     attrTextDecoration,
+    attrTop,
     attrVisibility,
     attrWidth,
 };
@@ -1451,15 +1454,35 @@ static HRESULT WINAPI HTMLStyle_get_whiteSpace(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_top(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    switch(V_VT(&v)) {
+    case VT_BSTR:
+        return set_style_attr(This, STYLEID_TOP, V_BSTR(&v), 0);
+    default:
+        FIXME("unimplemented vt %d\n", V_VT(&v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_get_top(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    BSTR ret;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = get_style_attr(This, STYLEID_TOP, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_put_left(IHTMLStyle *iface, VARIANT v)
