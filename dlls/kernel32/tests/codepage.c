@@ -236,21 +236,26 @@ static void test_string_conversion(LPBOOL bUsedDefaultChar)
     if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
     ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    ret = WideCharToMultiByte(1251, 0, &wc2, 1, &mbc, 1, NULL, bUsedDefaultChar);
-    ok(ret == 1, "ret is %d\n", ret);
-    ok(mbc == -16, "mbc is %d\n", mbc);
-    if(bUsedDefaultChar) ok(*bUsedDefaultChar == FALSE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
-    ok(GetLastError() == 0xdeadbeef ||
-       broken(GetLastError() == 0), /* win95 */
-       "GetLastError() is %u\n", GetLastError());
+    if (IsValidCodePage(1251))
+    {
+        SetLastError(0xdeadbeef);
+        ret = WideCharToMultiByte(1251, 0, &wc2, 1, &mbc, 1, NULL, bUsedDefaultChar);
+        ok(ret == 1, "ret is %d\n", ret);
+        ok(mbc == -16, "mbc is %d\n", mbc);
+        if(bUsedDefaultChar) ok(*bUsedDefaultChar == FALSE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
+        ok(GetLastError() == 0xdeadbeef ||
+           broken(GetLastError() == 0), /* win95 */
+           "GetLastError() is %u\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    ret = WideCharToMultiByte(1251, 0, &wc1, 1, &mbc, 1, NULL, bUsedDefaultChar);
-    ok(ret == 1, "ret is %d\n", ret);
-    ok(mbc == 97, "mbc is %d\n", mbc);
-    if(bUsedDefaultChar) ok(*bUsedDefaultChar == FALSE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
-    ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = WideCharToMultiByte(1251, 0, &wc1, 1, &mbc, 1, NULL, bUsedDefaultChar);
+        ok(ret == 1, "ret is %d\n", ret);
+        ok(mbc == 97, "mbc is %d\n", mbc);
+        if(bUsedDefaultChar) ok(*bUsedDefaultChar == FALSE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
+        ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
+    }
+    else
+        skip("Codepage 1251 not available\n");
 
     /* This call triggers the last Win32 error */
     SetLastError(0xdeadbeef);
