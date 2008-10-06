@@ -57,6 +57,8 @@ static const WCHAR attrFontStyle[] =
     {'f','o','n','t','-','s','t','y','l','e',0};
 static const WCHAR attrFontWeight[] =
     {'f','o','n','t','-','w','e','i','g','h','t',0};
+static const WCHAR attrHeight[] =
+    {'h','e','i','g','h','t',0};
 static const WCHAR attrLeft[] =
     {'l','e','f','t',0};
 static const WCHAR attrMargin[] =
@@ -91,6 +93,7 @@ static const LPCWSTR style_strings[] = {
     attrFontSize,
     attrFontStyle,
     attrFontWeight,
+    attrHeight,
     attrLeft,
     attrMargin,
     attrMarginLeft,
@@ -1329,15 +1332,35 @@ static HRESULT WINAPI HTMLStyle_get_width(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_height(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    switch(V_VT(&v)) {
+    case VT_BSTR:
+        return set_style_attr(This, STYLEID_HEIGHT, V_BSTR(&v), 0);
+    default:
+        FIXME("unimplemented vt %d\n", V_VT(&v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_get_height(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    BSTR ret;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = get_style_attr(This, STYLEID_HEIGHT, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_put_styleFloat(IHTMLStyle *iface, BSTR v)
