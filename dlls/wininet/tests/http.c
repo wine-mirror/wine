@@ -1984,7 +1984,7 @@ static void test_open_url_async(void)
 {
     BOOL ret;
     HINTERNET ses, req;
-    DWORD size;
+    DWORD size, error;
     struct context ctx;
     ULONG type;
 
@@ -1993,6 +1993,17 @@ static void test_open_url_async(void)
 
     ses = InternetOpen("AdvancedInstaller", 0, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(ses != NULL, "InternetOpen failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = InternetSetOptionA(NULL, INTERNET_OPTION_CALLBACK, &cb, sizeof(DWORD_PTR));
+    error = GetLastError();
+    ok(!ret, "InternetSetOptionA succeeded\n");
+    ok(error == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "got %u expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE\n", error);
+
+    ret = InternetSetOptionA(ses, INTERNET_OPTION_CALLBACK, &cb, sizeof(DWORD_PTR));
+    error = GetLastError();
+    ok(!ret, "InternetSetOptionA failed\n");
+    ok(error == ERROR_INTERNET_OPTION_NOT_SETTABLE, "got %u expected ERROR_INTERNET_OPTION_NOT_SETTABLE\n", error);
 
     pInternetSetStatusCallbackA(ses, cb);
     ResetEvent(ctx.event);

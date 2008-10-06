@@ -2259,9 +2259,14 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     {
     case INTERNET_OPTION_CALLBACK:
       {
-        INTERNET_STATUS_CALLBACK callback = *(INTERNET_STATUS_CALLBACK *)lpBuffer;
-        ret = (set_status_callback(lpwhh, callback, TRUE) != INTERNET_INVALID_STATUS_CALLBACK);
-        break;
+        if (!lpwhh)
+        {
+            INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+            return FALSE;
+        }
+        WININET_Release(lpwhh);
+        INTERNET_SetLastError(ERROR_INTERNET_OPTION_NOT_SETTABLE);
+        return FALSE;
       }
     case INTERNET_OPTION_HTTP_VERSION:
       {
@@ -2384,12 +2389,15 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_CALLBACK:
         {
         LPWININETHANDLEHEADER lpwh;
-        INTERNET_STATUS_CALLBACK callback = *(INTERNET_STATUS_CALLBACK *)lpBuffer;
 
-        if (!(lpwh = WININET_GetObject(hInternet))) return FALSE;
-        r = (set_status_callback(lpwh, callback, FALSE) != INTERNET_INVALID_STATUS_CALLBACK);
+        if (!(lpwh = WININET_GetObject(hInternet)))
+        {
+            INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+            return FALSE;
+        }
         WININET_Release(lpwh);
-        return r;
+        INTERNET_SetLastError(ERROR_INTERNET_OPTION_NOT_SETTABLE);
+        return FALSE;
         }
     case INTERNET_OPTION_PROXY:
         {
