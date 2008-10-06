@@ -758,6 +758,8 @@ HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUn
     lock_module();
 
     ret = heap_alloc_zero(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
 
     ret->lpIActiveScriptVtbl                 = &JScriptVtbl;
     ret->lpIActiveScriptParseVtbl            = &JScriptParseVtbl;

@@ -744,8 +744,12 @@ static HRESULT ArrayConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISP
 
 static HRESULT alloc_array(script_ctx_t *ctx, BOOL use_constr, ArrayInstance **ret)
 {
-    ArrayInstance *array = heap_alloc_zero(sizeof(ArrayInstance));
+    ArrayInstance *array;
     HRESULT hres;
+
+    array = heap_alloc_zero(sizeof(ArrayInstance));
+    if(!array)
+        return E_OUTOFMEMORY;
 
     if(use_constr)
         hres = init_dispex_from_constr(&array->dispex, ctx, &Array_info, ctx->array_constr);

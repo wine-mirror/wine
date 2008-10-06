@@ -231,8 +231,12 @@ static HRESULT NumberConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 
 static HRESULT alloc_number(script_ctx_t *ctx, BOOL use_constr, NumberInstance **ret)
 {
-    NumberInstance *number = heap_alloc_zero(sizeof(NumberInstance));
+    NumberInstance *number;
     HRESULT hres;
+
+    number = heap_alloc_zero(sizeof(NumberInstance));
+    if(!number)
+        return E_OUTOFMEMORY;
 
     if(use_constr)
         hres = init_dispex_from_constr(&number->dispex, ctx, &Number_info, ctx->number_constr);
