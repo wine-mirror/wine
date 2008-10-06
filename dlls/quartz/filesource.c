@@ -168,12 +168,10 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
     if (!(wszPatternString = strchrW(wszPatternString, ',')))
         hr = E_INVALIDARG;
 
-    wszPatternString++; /* skip ',' */
-
     if (hr == S_OK)
     {
-        for ( ; !isxdigitW(*wszPatternString) && (*wszPatternString != ','); wszPatternString++)
-            ;
+        wszPatternString++; /* skip ',' */
+        while (!isxdigitW(*wszPatternString) && (*wszPatternString != ',')) wszPatternString++;
 
         for (strpos = 0; isxdigitW(*wszPatternString) && (strpos/2 < ulBytes); wszPatternString++, strpos++)
         {
