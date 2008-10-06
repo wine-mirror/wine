@@ -115,9 +115,7 @@ static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr
 static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField, INT index, BOOL Request);
 static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
-static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD
-        dwInfoLevel, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD
-        lpdwIndex);
+static BOOL HTTP_HttpQueryInfoW(LPWININETHTTPREQW, DWORD, LPVOID, LPDWORD, LPDWORD);
 static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
 static BOOL HTTP_VerifyValidHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field);
@@ -2167,7 +2165,7 @@ static const LPCWSTR header_lookup[] = {
 /***********************************************************************
  *           HTTP_HttpQueryInfoW (internal)
  */
-static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
+static BOOL HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
 	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
     LPHTTPHEADERW lphttpHdr = NULL;
@@ -2181,6 +2179,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
     switch (level)
     {
     case HTTP_QUERY_CUSTOM:
+        if (!lpBuffer) return FALSE;
         index = HTTP_GetCustomHeaderIndex(lpwhr, lpBuffer, requested_index, request_only);
         break;
 
@@ -2226,7 +2225,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
         {
             LPWSTR * ppszRawHeaderLines = HTTP_Tokenize(lpwhr->lpszRawHeaders, szCrLf);
             DWORD i, size = 0;
-            LPWSTR pszString = (WCHAR*)lpBuffer;
+            LPWSTR pszString = lpBuffer;
 
             for (i = 0; ppszRawHeaderLines[i]; i++)
                 size += strlenW(ppszRawHeaderLines[i]) + 1;
@@ -2238,17 +2237,17 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 return FALSE;
             }
-
-            for (i = 0; ppszRawHeaderLines[i]; i++)
+            if (pszString)
             {
-                DWORD len = strlenW(ppszRawHeaderLines[i]);
-                memcpy(pszString, ppszRawHeaderLines[i], (len+1)*sizeof(WCHAR));
-                pszString += len+1;
+                for (i = 0; ppszRawHeaderLines[i]; i++)
+                {
+                    DWORD len = strlenW(ppszRawHeaderLines[i]);
+                    memcpy(pszString, ppszRawHeaderLines[i], (len+1)*sizeof(WCHAR));
+                    pszString += len+1;
+                }
+                *pszString = '\0';
+                TRACE("returning data: %s\n", debugstr_wn(lpBuffer, size));
             }
-            *pszString = '\0';
-
-            TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, size));
-
             *lpdwBufferLength = size * sizeof(WCHAR);
             HTTP_FreeTokens(ppszRawHeaderLines);
 
@@ -2264,11 +2263,12 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 return FALSE;
             }
-            memcpy(lpBuffer, lpwhr->lpszStatusText, (len+1)*sizeof(WCHAR));
+            if (lpBuffer)
+            {
+                memcpy(lpBuffer, lpwhr->lpszStatusText, (len + 1) * sizeof(WCHAR));
+                TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len));
+            }
             *lpdwBufferLength = len * sizeof(WCHAR);
-
-            TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, len));
-
             return TRUE;
         }
         break;
@@ -2282,11 +2282,12 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 return FALSE;
             }
-            memcpy(lpBuffer, lpwhr->lpszVersion, (len+1)*sizeof(WCHAR));
+            if (lpBuffer)
+            {
+                memcpy(lpBuffer, lpwhr->lpszVersion, (len + 1) * sizeof(WCHAR));
+                TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len));
+            }
             *lpdwBufferLength = len * sizeof(WCHAR);
-
-            TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, len));
-
             return TRUE;
         }
         break;
@@ -2314,14 +2315,13 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
         (*lpdwIndex)++;
 
     /* coalesce value to requested type */
-    if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER)
+    if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER && lpBuffer)
     {
-	*(int *)lpBuffer = atoiW(lphttpHdr->lpszValue);
-	bSuccess = TRUE;
-
-	TRACE(" returning number : %d\n", *(int *)lpBuffer);
+        *(int *)lpBuffer = atoiW(lphttpHdr->lpszValue);
+        TRACE(" returning number: %d\n", *(int *)lpBuffer);
+        bSuccess = TRUE;
     }
-    else if (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME)
+    else if (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME && lpBuffer)
     {
         time_t tmpTime;
         struct tm tmpTM;
@@ -2330,24 +2330,22 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
         tmpTime = ConvertTimeString(lphttpHdr->lpszValue);
 
         tmpTM = *gmtime(&tmpTime);
-        STHook = (SYSTEMTIME *) lpBuffer;
-        if(STHook==NULL)
-            return bSuccess;
+        STHook = (SYSTEMTIME *)lpBuffer;
+        if (!STHook) return bSuccess;
 
-	STHook->wDay = tmpTM.tm_mday;
-	STHook->wHour = tmpTM.tm_hour;
-	STHook->wMilliseconds = 0;
-	STHook->wMinute = tmpTM.tm_min;
-	STHook->wDayOfWeek = tmpTM.tm_wday;
-	STHook->wMonth = tmpTM.tm_mon + 1;
-	STHook->wSecond = tmpTM.tm_sec;
-	STHook->wYear = tmpTM.tm_year;
+        STHook->wDay = tmpTM.tm_mday;
+        STHook->wHour = tmpTM.tm_hour;
+        STHook->wMilliseconds = 0;
+        STHook->wMinute = tmpTM.tm_min;
+        STHook->wDayOfWeek = tmpTM.tm_wday;
+        STHook->wMonth = tmpTM.tm_mon + 1;
+        STHook->wSecond = tmpTM.tm_sec;
+        STHook->wYear = tmpTM.tm_year;
+        bSuccess = TRUE;
 	
-	bSuccess = TRUE;
-	
-	TRACE(" returning time : %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n", 
-	      STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
-	      STHook->wHour, STHook->wMinute, STHook->wSecond, STHook->wMilliseconds);
+        TRACE(" returning time: %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n",
+              STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
+              STHook->wHour, STHook->wMinute, STHook->wSecond, STHook->wMilliseconds);
     }
     else if (lphttpHdr->lpszValue)
     {
@@ -2359,12 +2357,13 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
             INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
             return bSuccess;
         }
-
-        memcpy(lpBuffer, lphttpHdr->lpszValue, len);
+        if (lpBuffer)
+        {
+            memcpy(lpBuffer, lphttpHdr->lpszValue, len);
+            TRACE(" returning string: %s\n", debugstr_w(lpBuffer));
+        }
         *lpdwBufferLength = len - sizeof(WCHAR);
         bSuccess = TRUE;
-
-	TRACE(" returning string : %s\n", debugstr_w(lpBuffer));
     }
     return bSuccess;
 }
