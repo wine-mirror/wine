@@ -179,6 +179,23 @@ ok(r === "-ret-", "r = " + r + " expected '-ret-'");
 r = "-[test]-".replace("[test]", replaceFunc3, "test");
 ok(r === "-ret-", "r = " + r + " expected '-ret-'");
 
+tmp = "abcd".indexOf("bc",0);
+ok(tmp === 1, "indexOf = " + tmp);
+tmp = "abcd".indexOf("bc",1);
+ok(tmp === 1, "indexOf = " + tmp);
+tmp = "abcd".indexOf("bc");
+ok(tmp === 1, "indexOf = " + tmp);
+tmp = "abcd".indexOf("ac");
+ok(tmp === -1, "indexOf = " + tmp);
+tmp = "abcd".indexOf("bc",2);
+ok(tmp === -1, "indexOf = " + tmp);
+tmp = "abcd".indexOf("a",0);
+ok(tmp === 0, "indexOf = " + tmp);
+tmp = "abcd".indexOf("bc",0,"test");
+ok(tmp === 1, "indexOf = " + tmp);
+tmp = "abcd".indexOf();
+ok(tmp == -1, "indexOf = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");

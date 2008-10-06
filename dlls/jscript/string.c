@@ -323,8 +323,69 @@ static HRESULT String_fontsize(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 static HRESULT String_indexOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DWORD length, pos = 0;
+    const WCHAR *str;
+    BSTR search_str;
+    INT ret = -1;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_STRING)) {
+        StringInstance *string = (StringInstance*)dispex;
+
+        str = string->str;
+        length = string->length;
+    }else {
+        FIXME("not String this\n");
+        return E_NOTIMPL;
+    }
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            V_VT(retv) = VT_I4;
+            V_I4(retv) = -1;
+        }
+        return S_OK;
+    }
+
+    hres = to_string(dispex->ctx, get_arg(dp,0), ei, &search_str);
+    if(FAILED(hres))
+        return hres;
+
+    if(arg_cnt(dp) >= 2) {
+        VARIANT ival;
+
+        hres = to_integer(dispex->ctx, get_arg(dp,1), ei, &ival);
+        if(SUCCEEDED(hres)) {
+            if(V_VT(&ival) == VT_I4)
+                pos = V_VT(&ival) > 0 ? V_I4(&ival) : 0;
+            else
+                pos = V_R8(&ival) > 0.0 ? length : 0;
+            if(pos > length)
+                pos = length;
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        const WCHAR *ptr;
+
+        ptr = strstrW(str+pos, search_str);
+        if(ptr)
+            ret = ptr - str;
+        else
+            ret = -1;
+    }
+
+    SysFreeString(search_str);
+    if(FAILED(hres))
+        return hres;
+
+    if(retv) {
+        V_VT(retv) = VT_I4;
+        V_I4(retv) = ret;
+    }
+    return S_OK;
 }
 
 static HRESULT String_italics(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
