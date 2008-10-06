@@ -29,4 +29,25 @@ typedef struct {
 #define HTMLSTYLE(x)     ((IHTMLStyle*)                   &(x)->lpHTMLStyleVtbl)
 #define HTMLSTYLE2(x)    ((IHTMLStyle2*)                  &(x)->lpHTMLStyle2Vtbl)
 
+/* NOTE: Make sure to keep in sync with stryle_strings in htmlstrle.c */
+typedef enum {
+    STYLEID_BACKGROUND,
+    STYLEID_BACKGROUND_COLOR,
+    STYLEID_BACKGROUND_IMAGE,
+    STYLEID_BORDER_LEFT,
+    STYLEID_COLOR,
+    STYLEID_DISPLAY,
+    STYLEID_FONT_FAMILY,
+    STYLEID_FONT_SIZE,
+    STYLEID_FONT_STYLE,
+    STYLEID_FONT_WEIGHT,
+    STYLEID_MARGIN,
+    STYLEID_MARGIN_LEFT,
+    STYLEID_MARGIN_RIGHT,
+    STYLEID_PADDING_LEFT,
+    STYLEID_TEXT_DECORATION,
+    STYLEID_VISIBILITY,
+    STYLEID_WIDTH
+} styleid_t;
+
 void HTMLStyle2_Init(HTMLStyle*);
