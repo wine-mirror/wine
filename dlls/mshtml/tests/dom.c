@@ -1986,8 +1986,16 @@ static void test_navigator(IHTMLDocument2 *doc)
 
 static void test_current_style(IHTMLCurrentStyle *current_style)
 {
+    BSTR str;
+    HRESULT hres;
+
     test_disp((IUnknown*)current_style, &DIID_DispHTMLCurrentStyle);
     test_ifaces((IUnknown*)current_style, cstyle_iids);
+
+    hres = IHTMLCurrentStyle_get_display(current_style, &str);
+    ok(hres == S_OK, "get_display failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "block"), "get_display returned %s\n", dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_default_style(IHTMLStyle *style)

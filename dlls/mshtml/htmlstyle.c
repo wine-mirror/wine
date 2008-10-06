@@ -185,14 +185,14 @@ static HRESULT set_style_attr(HTMLStyle *This, styleid_t sid, LPCWSTR value, DWO
     return S_OK;
 }
 
-static HRESULT get_style_attr_nsval(HTMLStyle *This, styleid_t sid, nsAString *value)
+static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, nsAString *value)
 {
     nsAString str_name;
     nsresult nsres;
 
     nsAString_Init(&str_name, style_strings[sid]);
 
-    nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(This->nsstyle, &str_name, value);
+    nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(nsstyle, &str_name, value);
     if(NS_FAILED(nsres)) {
         ERR("SetProperty failed: %08x\n", nsres);
         return E_FAIL;
@@ -203,14 +203,14 @@ static HRESULT get_style_attr_nsval(HTMLStyle *This, styleid_t sid, nsAString *v
     return NS_OK;
 }
 
-static HRESULT get_style_attr(HTMLStyle *This, styleid_t sid, BSTR *p)
+HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR *p)
 {
     nsAString str_value;
     const PRUnichar *value;
 
     nsAString_Init(&str_value, NULL);
 
-    get_style_attr_nsval(This, sid, &str_value);
+    get_nsstyle_attr_nsval(nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
     *p = *value ? SysAllocString(value) : NULL;
@@ -221,6 +221,11 @@ static HRESULT get_style_attr(HTMLStyle *This, styleid_t sid, BSTR *p)
     return S_OK;
 }
 
+static inline HRESULT get_style_attr(HTMLStyle *This, styleid_t sid, BSTR *p)
+{
+    return get_nsstyle_attr(This->nsstyle, sid, p);
+}
+
 static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR exval, VARIANT_BOOL *p)
 {
     nsAString str_value;
@@ -228,7 +233,7 @@ static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR ex
 
     nsAString_Init(&str_value, NULL);
 
-    get_style_attr_nsval(This, sid, &str_value);
+    get_nsstyle_attr_nsval(This->nsstyle, sid, &str_value);
 
     nsAString_GetData(&str_value, &value);
     *p = strcmpW(value, exval) ? VARIANT_FALSE : VARIANT_TRUE;

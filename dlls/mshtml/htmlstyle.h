@@ -51,3 +51,5 @@ typedef enum {
 } styleid_t;
 
 void HTMLStyle2_Init(HTMLStyle*);
+
+HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,BSTR*);

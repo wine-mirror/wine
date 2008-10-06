@@ -25,10 +25,10 @@
 #include "winuser.h"
 #include "ole2.h"
 
-#include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include "mshtml_private.h"
+#include "htmlstyle.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -376,8 +376,10 @@ static HRESULT WINAPI HTMLCurrentStyle_get_textDecoration(IHTMLCurrentStyle *ifa
 static HRESULT WINAPI HTMLCurrentStyle_get_display(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = HTMLCURSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_attr(This->nsstyle, STYLEID_DISPLAY, p);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_visibility(IHTMLCurrentStyle *iface, BSTR *p)
