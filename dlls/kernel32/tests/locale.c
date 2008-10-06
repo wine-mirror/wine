@@ -2042,12 +2042,22 @@ static BOOL CALLBACK langgrp_procA(LGRPID lgrpid, LPSTR lpszNum, LPSTR lpszName,
 
 static void test_EnumSystemLanguageGroupsA(void)
 {
+  BOOL ret;
+
   if (!pEnumSystemLanguageGroupsA || !pIsValidLanguageGroup)
+  {
+    win_skip("EnumSystemLanguageGroupsA and/or IsValidLanguageGroup are not available\n");
     return;
+  }
 
   /* No enumeration proc */
   SetLastError(0);
   pEnumSystemLanguageGroupsA(0, LGRPID_INSTALLED, 0);
+  if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  {
+    win_skip("EnumSystemLanguageGroupsA is not implemented\n");
+    return;
+  }
   EXPECT_INVALID;
 
   /* Invalid flags */
@@ -2083,12 +2093,22 @@ static BOOL CALLBACK lgrplocale_procA(LGRPID lgrpid, LCID lcid, LPSTR lpszNum,
 
 static void test_EnumLanguageGroupLocalesA(void)
 {
+  BOOL ret;
+
   if (!pEnumLanguageGroupLocalesA || !pIsValidLanguageGroup)
+  {
+    win_skip("EnumLanguageGroupLocalesA and/or IsValidLanguageGroup are not available\n");
     return;
+  }
 
   /* No enumeration proc */
   SetLastError(0);
-  pEnumLanguageGroupLocalesA(0, LGRPID_WESTERN_EUROPE, 0, 0);
+  ret = pEnumLanguageGroupLocalesA(0, LGRPID_WESTERN_EUROPE, 0, 0);
+  if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  {
+    win_skip("EnumLanguageGroupLocalesA is not implemented\n");
+    return;
+  }
   EXPECT_INVALID;
 
   /* lgrpid too small */
@@ -2159,6 +2179,11 @@ static void test_EnumUILanguageA(void)
 
   SetLastError(ERROR_SUCCESS);
   ret = pEnumUILanguagesA(luilocale_proc1A, 0, 0);
+  if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  {
+    win_skip("EnumUILanguagesA is not implemented\n");
+    return;
+  }
   EXPECT_TRUE; EXPECT_VALID;
 
   enumCount = 0;
