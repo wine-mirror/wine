@@ -539,6 +539,45 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         var = &This->dynamic_data->props[idx].var;
 
         switch(wFlags) {
+        case INVOKE_FUNC: {
+            DISPID named_arg = DISPID_THIS;
+            DISPPARAMS dp = {NULL, &named_arg, 0, 1};
+            IDispatchEx *dispex;
+
+            if(V_VT(var) != VT_DISPATCH) {
+                FIXME("invoke vt %d\n", V_VT(var));
+                return E_NOTIMPL;
+            }
+
+            if(pdp->cNamedArgs) {
+                FIXME("named args not supported\n");
+                return E_NOTIMPL;
+            }
+
+            dp.rgvarg = heap_alloc((pdp->cArgs+1)*sizeof(VARIANTARG));
+            if(!dp.rgvarg)
+                return E_OUTOFMEMORY;
+
+            dp.cArgs = pdp->cArgs+1;
+            memcpy(dp.rgvarg+1, pdp->rgvarg, pdp->cArgs*sizeof(VARIANTARG));
+
+            V_VT(dp.rgvarg) = VT_DISPATCH;
+            V_DISPATCH(dp.rgvarg) = (IDispatch*)DISPATCHEX(This);
+
+            hres = IDispatch_QueryInterface(V_DISPATCH(var), &IID_IDispatchEx, (void**)&dispex);
+            TRACE("%s call\n", debugstr_w(This->dynamic_data->props[idx].name));
+            if(SUCCEEDED(hres)) {
+                hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, lcid, wFlags, &dp, pvarRes, pei, pspCaller);
+                IDispatchEx_Release(dispex);
+            }else {
+                ULONG err = 0;
+                hres = IDispatch_Invoke(V_DISPATCH(var), DISPID_VALUE, &IID_NULL, lcid, wFlags, pdp, pvarRes, pei, &err);
+            }
+            TRACE("%s ret %08x\n", debugstr_w(This->dynamic_data->props[idx].name), hres);
+
+            heap_free(dp.rgvarg);
+            return hres;
+        }
         case INVOKE_PROPERTYGET:
             return VariantCopy(pvarRes, var);
         case INVOKE_PROPERTYPUT:
@@ -582,7 +621,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     hres = IUnknown_QueryInterface(This->outer, tid_ids[data->funcs[n].tid], (void**)&unk);
     if(FAILED(hres)) {
-        ERR("Could not get iface: %08x\n", hres);
+        ERR("Could not get iface %s: %08x\n", debugstr_guid(tid_ids[data->funcs[n].tid]), hres);
         return E_FAIL;
     }
 

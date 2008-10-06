@@ -84,6 +84,7 @@ DEFINE_EXPECT(SetScriptState_DISCONNECTED);
 DEFINE_EXPECT(AddNamedItem);
 DEFINE_EXPECT(ParseScriptText);
 DEFINE_EXPECT(GetScriptDispatch);
+DEFINE_EXPECT(funcDisp);
 
 #define TESTSCRIPT_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80746}"
 
@@ -169,6 +170,145 @@ static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
 };
 
 static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
+
+static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(riid, &IID_IUnknown)
+       || IsEqualGUID(riid, &IID_IDispatch)
+       || IsEqualGUID(riid, &IID_IDispatchEx))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+{
+    ok(0, "unexpected call %s %x\n", debugstr_w(bstrName), grfdex);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI funcDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(funcDisp);
+
+    ok(id == DISPID_VALUE, "id = %d\n", id);
+    ok(lcid == 0, "lcid = %x\n", lcid);
+    ok(wFlags == DISPATCH_METHOD, "wFlags = %x\n", wFlags);
+    ok(pdp != NULL, "pdp == NULL\n");
+    ok(pdp->cArgs == 2, "pdp->cArgs = %d\n", pdp->cArgs);
+    ok(pdp->cNamedArgs == 1, "pdp->cNamedArgs = %d\n", pdp->cNamedArgs);
+    ok(pdp->rgdispidNamedArgs[0] == DISPID_THIS, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+    ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
+    ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(rgvarg[1]) = %d\n", V_VT(pdp->rgvarg));
+    ok(V_BOOL(pdp->rgvarg+1) == VARIANT_TRUE, "V_BOOL(rgvarg[1]) = %x\n", V_BOOL(pdp->rgvarg));
+    ok(pvarRes != NULL, "pvarRes == NULL\n");
+    ok(pei != NULL, "pei == NULL");
+    ok(!pspCaller, "pspCaller != NULL\n");
+
+    V_VT(pvarRes) = VT_I4;
+    V_I4(pvarRes) = 100;
+    return S_OK;
+}
+
+static IDispatchExVtbl testObjVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    funcDisp_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx funcDisp = { &testObjVtbl };
 
 static IHTMLDocument2 *create_document(void)
 {
@@ -453,7 +593,7 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
 {
     IDispatchEx *document;
     IUnknown *unk;
-    VARIANT var;
+    VARIANT var, arg;
     DISPPARAMS dp;
     EXCEPINFO ei;
     DISPID id, named_arg = DISPID_PROPERTYPUT;
@@ -462,6 +602,7 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
 
     static const WCHAR documentW[] = {'d','o','c','u','m','e','n','t',0};
     static const WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR funcW[] = {'f','u','n','c',0};
 
     CHECK_EXPECT(ParseScriptText);
 
@@ -525,12 +666,45 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
     ok(V_VT(&var) == VT_I4, "V_VT(var)=%d\n", V_VT(&var));
     ok(V_I4(&var) == 100, "V_I4(&var) == NULL\n");
 
-    IDispatchEx_Release(document);
-
     unk = (void*)0xdeadbeef;
     hres = IDispatchEx_GetNameSpaceParent(window_dispex, &unk);
     ok(hres == S_OK, "GetNameSpaceParent failed: %08x\n", hres);
     ok(!unk, "unk=%p, expected NULL\n", unk);
+
+    id = 0;
+    tmp = SysAllocString(funcW);
+    hres = IDispatchEx_GetDispID(document, tmp, fdexNameCaseSensitive|fdexNameEnsure, &id);
+    SysFreeString(tmp);
+    ok(hres == S_OK, "GetDispID(func) failed: %08x\n", hres);
+    ok(id, "id == 0\n");
+
+    dp.cArgs = 1;
+    dp.rgvarg = &var;
+    dp.cNamedArgs = 0;
+    dp.rgdispidNamedArgs = NULL;
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (IDispatch*)&funcDisp;
+
+    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+
+    VariantInit(&var);
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    V_VT(&arg) = VT_BOOL;
+    V_BOOL(&arg) = VARIANT_TRUE;
+    dp.cArgs = 1;
+    dp.rgvarg = &arg;
+
+    SET_EXPECT(funcDisp);
+    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_FUNC, &dp, &var, &ei, NULL);
+    CHECK_CALLED(funcDisp);
+
+    ok(hres == S_OK, "InvokeEx(INVOKE_FUNC) failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_I4, "V_VT(var)=%d\n", V_VT(&var));
+    ok(V_I4(&var) == 100, "V_I4(&var) == NULL\n");
+
+    IDispatchEx_Release(document);
 
     return S_OK;
 }
