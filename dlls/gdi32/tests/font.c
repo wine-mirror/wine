@@ -362,9 +362,9 @@ static void test_bitmap_font(void)
 static void test_outline_font(void)
 {
     static const char test_str[11] = "Test String";
-    HDC hdc;
+    HDC hdc, hdc_2;
     LOGFONTA lf;
-    HFONT hfont, old_hfont;
+    HFONT hfont, old_hfont, old_hfont_2;
     OUTLINETEXTMETRICA otm;
     SIZE size_orig;
     INT width_orig, height_orig, lfWidth;
@@ -463,7 +463,19 @@ static void test_outline_font(void)
     ok(gm.gmCellIncX == width_orig/2, "incX %d != %d\n", gm.gmCellIncX, width_orig/2);
     ok(gm.gmCellIncY == 0, "incY %d != 0\n", gm.gmCellIncY);
 
+    /* Test that changing the DC transformation affects only the font
+     * selected on this DC and doesn't affect the same font selected on
+     * another DC.
+     */
+    hdc_2 = CreateCompatibleDC(0);
+    old_hfont_2 = SelectObject(hdc_2, hfont);
+    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+
     SetMapMode(hdc, MM_ANISOTROPIC);
+
+    /* font metrics on another DC should be unchanged */
+    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+
     /* test restrictions of compatibility mode GM_COMPATIBLE */
     /*  part 1: rescaling only X should not change font scaling on screen.
                 So compressing the X axis by 2 is not done, and this
@@ -471,6 +483,8 @@ static void test_outline_font(void)
     SetWindowExtEx(hdc, 100, 100, NULL);
     SetViewportExtEx(hdc, 50, 100, NULL);
     test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 2, 1);
+    /* font metrics on another DC should be unchanged */
+    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /*  part 2: rescaling only Y should change font scaling.
                 As also X is scaled by a factor of 2, but this is not
@@ -478,9 +492,17 @@ static void test_outline_font(void)
                 of 2 in the X coordinate. */
     SetViewportExtEx(hdc, 100, 200, NULL);
     test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 2, 1);
+    /* font metrics on another DC should be unchanged */
+    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /* restore scaling */
     SetMapMode(hdc, MM_TEXT);
+
+    /* font metrics on another DC should be unchanged */
+    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+
+    SelectObject(hdc_2, old_hfont_2);
+    DeleteDC(hdc_2);
 
     if (!SetGraphicsMode(hdc, GM_ADVANCED))
     {
