@@ -1998,8 +1998,31 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     SysFreeString(str);
 }
 
+static void test_style2(IHTMLStyle2 *style2)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle2_get_position(style2, &str);
+    ok(hres == S_OK, "get_position failed: %08x\n", hres);
+    ok(!str, "str != NULL\n");
+
+    str = a2bstr("absolute");
+    hres = IHTMLStyle2_put_position(style2, str);
+    ok(hres == S_OK, "get_position failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle2_get_position(style2, &str);
+    ok(hres == S_OK, "get_position failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "absolute"), "get_position returned %s\n", dbgstr_w(str));
+    SysFreeString(str);
+}
+
 static void test_default_style(IHTMLStyle *style)
 {
+    IHTMLStyle2 *style2;
     VARIANT_BOOL b;
     VARIANT v;
     BSTR str;
@@ -2195,6 +2218,12 @@ static void test_default_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "middle"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
+    ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        test_style2(style2);
+        IHTMLStyle2_Release(style2);
+    }
 }
 
 static void test_default_selection(IHTMLDocument2 *doc)

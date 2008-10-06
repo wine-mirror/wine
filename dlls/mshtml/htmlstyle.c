@@ -69,6 +69,8 @@ static const WCHAR attrMarginRight[] =
     {'m','a','r','g','i','n','-','r','i','g','h','t',0};
 static const WCHAR attrPaddingLeft[] =
     {'p','a','d','d','i','n','g','-','l','e','f','t',0};
+static const WCHAR attrPosition[] =
+    {'p','o','s','i','t','i','o','n',0};
 static const WCHAR attrTextDecoration[] =
     {'t','e','x','t','-','d','e','c','o','r','a','t','i','o','n',0};
 static const WCHAR attrTop[] =
@@ -99,6 +101,7 @@ static const LPCWSTR style_strings[] = {
     attrMarginLeft,
     attrMarginRight,
     attrPaddingLeft,
+    attrPosition,
     attrTextDecoration,
     attrTop,
     attrVerticalAlign,
@@ -172,15 +175,13 @@ static LPWSTR fix_url_value(LPCWSTR val)
 #define ATTR_FIX_PX  1
 #define ATTR_FIX_URL 2
 
-static HRESULT set_style_attr(HTMLStyle *This, styleid_t sid, LPCWSTR value, DWORD flags)
+HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCWSTR value, DWORD flags)
 {
     nsAString str_name, str_value, str_empty;
     LPWSTR val = NULL;
     nsresult nsres;
 
     static const PRUnichar wszEmpty[] = {0};
-
-    TRACE("(%p)->(%s %s)\n", This, debugstr_w(style_strings[sid]), debugstr_w(value));
 
     if(flags & ATTR_FIX_PX)
         val = fix_px_value(value);
@@ -192,7 +193,7 @@ static HRESULT set_style_attr(HTMLStyle *This, styleid_t sid, LPCWSTR value, DWO
     nsAString_Init(&str_empty, wszEmpty);
     heap_free(val);
 
-    nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &str_name, &str_value, &str_empty);
+    nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, &str_value, &str_empty);
     if(NS_FAILED(nsres))
         ERR("SetProperty failed: %08x\n", nsres);
 
@@ -201,6 +202,11 @@ static HRESULT set_style_attr(HTMLStyle *This, styleid_t sid, LPCWSTR value, DWO
     nsAString_Finish(&str_empty);
 
     return S_OK;
+}
+
+static inline HRESULT set_style_attr(HTMLStyle *This, styleid_t sid, LPCWSTR value, DWORD flags)
+{
+    return set_nsstyle_attr(This->nsstyle, sid, value, flags);
 }
 
 static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, nsAString *value)

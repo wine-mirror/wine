@@ -49,6 +49,7 @@ typedef enum {
     STYLEID_MARGIN_LEFT,
     STYLEID_MARGIN_RIGHT,
     STYLEID_PADDING_LEFT,
+    STYLEID_POSITION,
     STYLEID_TEXT_DECORATION,
     STYLEID_TOP,
     STYLEID_VERTICAL_ALIGN,
@@ -59,3 +60,4 @@ typedef enum {
 void HTMLStyle2_Init(HTMLStyle*);
 
 HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,BSTR*);
+HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,LPCWSTR,DWORD);
