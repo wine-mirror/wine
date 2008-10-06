@@ -2971,6 +2971,7 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     D3DLOCKED_RECT lr;
     D3DLOCKED_BOX lb;
     DWORD color;
+    UINT w, h;
     IDirect3DVertexDeclaration9 *decl, *decl2, *decl3;
     float identity[16] = {1.0, 0.0, 0.0, 0.0,
                            0.0, 1.0, 0.0, 0.0,
@@ -3032,7 +3033,9 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps returned %08x\n", hr);
-    hr = IDirect3DDevice9_CreateTexture(device, caps.MaxTextureWidth, caps.MaxTextureHeight, 1,
+    w = min(1024, caps.MaxTextureWidth);
+    h = min(1024, caps.MaxTextureHeight);
+    hr = IDirect3DDevice9_CreateTexture(device, w, h, 1,
                                         0, fmt, D3DPOOL_MANAGED, &texture, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %08x\n", hr);
     if(!texture) {
@@ -3046,10 +3049,10 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
      */
     hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
     ok(hr == D3D_OK, "IDirect3DTexture9_LockRect returned %08x\n", hr);
-    for(y = 0; y < caps.MaxTextureHeight; y++) {
-        for(x = 0; x < caps.MaxTextureWidth; x++) {
-            double r_f = (double) y / (double) caps.MaxTextureHeight;
-            double g_f = (double) x / (double) caps.MaxTextureWidth;
+    for(y = 0; y < h; y++) {
+        for(x = 0; x < w; x++) {
+            double r_f = (double) y / (double) h;
+            double g_f = (double) x / (double) w;
             if(fmt == D3DFMT_A16B16G16R16) {
                 unsigned short r, g;
                 unsigned short *dst = (unsigned short *) (((char *) lr.pBits) + y * lr.Pitch + x * 8);
