@@ -1237,6 +1237,7 @@ static BOOL SCROLL_GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO in
     INT nDummy;
     DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
     BOOL pressed;
+    RECT rect;
 
     switch (idObject)
     {
@@ -1252,6 +1253,9 @@ static BOOL SCROLL_GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO in
 
     SCROLL_GetScrollBarRect(hwnd, nBar, &info->rcScrollBar, &nDummy,
                             &info->dxyLineButton, &info->xyThumbTop);
+    /* rcScrollBar needs to be in screen coordinates */
+    GetWindowRect(hwnd, &rect);
+    OffsetRect(&info->rcScrollBar, rect.left, rect.top);
 
     info->xyThumbBottom = info->xyThumbTop + info->dxyLineButton;
 
