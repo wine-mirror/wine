@@ -2086,6 +2086,17 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_margin(style, NULL);
     ok(hres == S_OK, "get_margin failed: %08x\n", hres);
+
+    str = NULL;
+    hres = IHTMLStyle_get_border(style, &str);
+    ok(hres == S_OK, "get_border failed: %08x\n", hres);
+    ok(!str || !*str, "str is not empty\n");
+    SysFreeString(str);
+
+    str = a2bstr("1px");
+    hres = IHTMLStyle_put_border(style, str);
+    ok(hres == S_OK, "get_border failed: %08x\n", hres);
+    SysFreeString(str);
 }
 
 static void test_default_selection(IHTMLDocument2 *doc)
