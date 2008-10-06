@@ -433,9 +433,10 @@ static HRESULT Array_sort(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
 
 
         cmp_func = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
-        if(!is_class(cmp_func, JSCLASS_FUNCTION)) {
+        if(!cmp_func || !is_class(cmp_func, JSCLASS_FUNCTION)) {
             WARN("cmp_func is not a function\n");
-            jsdisp_release(cmp_func);
+            if(cmp_func)
+                jsdisp_release(cmp_func);
             return E_FAIL;
         }
     }
