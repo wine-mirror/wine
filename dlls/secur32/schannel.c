@@ -48,6 +48,8 @@ MAKE_FUNCPTR(gnutls_global_set_log_function);
 MAKE_FUNCPTR(gnutls_global_set_log_level);
 #undef MAKE_FUNCPTR
 
+#define SCHAN_INVALID_HANDLE ~0UL
+
 enum schan_handle_type
 {
     SCHAN_HANDLE_CRED,
@@ -82,7 +84,7 @@ static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
         if (handle->type != SCHAN_HANDLE_FREE)
         {
             ERR("Handle %d(%p) is in the free list, but has type %#x.\n", (handle-schan_handle_table), handle, handle->type);
-            return -1;
+            return SCHAN_INVALID_HANDLE;
         }
         schan_free_handles = (struct schan_handle *)handle->object;
         handle->object = object;
@@ -98,7 +100,7 @@ static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
         if (!new_table)
         {
             ERR("Failed to grow the handle table\n");
-            return -1;
+            return SCHAN_INVALID_HANDLE;
         }
         schan_handle_table = new_table;
         schan_handle_table_size = new_size;
@@ -116,7 +118,7 @@ static void *schan_free_handle(ULONG_PTR handle_idx, enum schan_handle_type type
     struct schan_handle *handle;
     void *object;
 
-    if (handle_idx == -1) return NULL;
+    if (handle_idx == SCHAN_INVALID_HANDLE) return NULL;
     handle = &schan_handle_table[handle_idx];
     if (handle->type != type)
     {
@@ -283,7 +285,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
 
         handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
-        if (handle == -1)
+        if (handle == SCHAN_INVALID_HANDLE)
         {
             HeapFree(GetProcessHeap(), 0, creds);
             return SEC_E_INTERNAL_ERROR;
@@ -325,7 +327,7 @@ static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schan
         creds->credential_use = SECPKG_CRED_INBOUND;
 
         handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
-        if (handle == -1)
+        if (handle == SCHAN_INVALID_HANDLE)
         {
             HeapFree(GetProcessHeap(), 0, creds);
             return SEC_E_INTERNAL_ERROR;
