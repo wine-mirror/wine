@@ -474,7 +474,7 @@ void HTMLDocument_Window_Init(HTMLDocument*);
 void HTMLDocument_Service_Init(HTMLDocument*);
 void HTMLDocument_Hlink_Init(HTMLDocument*);
 
-HRESULT HTMLCurrentStyle_Create(IHTMLCurrentStyle**);
+HRESULT HTMLCurrentStyle_Create(HTMLElement*,IHTMLCurrentStyle**);
 
 void ConnectionPoint_Init(ConnectionPoint*,ConnectionPointContainer*,REFIID);
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);

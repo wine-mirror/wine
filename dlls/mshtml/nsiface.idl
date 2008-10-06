@@ -82,6 +82,7 @@ interface nsIEditorObserver;
 interface nsIEditActionListener;
 interface nsIDocumentStateListener;
 interface nsIDOMCSSStyleSheet;
+interface nsIDOMDocumentView;
 
 interface IMoniker;
 
@@ -100,7 +101,6 @@ interface nsISupports
 /* Currently we don't need a full declaration of these interfaces */
 typedef nsISupports nsISHistory;
 typedef nsISupports nsIWidget;
-typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIHttpHeaderVisitor;
 typedef nsISupports nsIDOMBarProp;
 typedef nsISupports nsIDOMWindowCollection;
@@ -887,6 +887,28 @@ interface nsIDOMDocumentFragment : nsIDOMNode
 
 [
     object,
+    uuid(f51ebade-8b1a-11d3-aae7-0010830123b4),
+    local
+    /* FROZEN */
+]
+interface nsIDOMAbstractView : nsISupports
+{
+    nsresult GetDocument(nsIDOMDocumentView **aDocument);
+}
+
+[
+    object,
+    uuid(0b9341f3-95d4-4fa4-adcd-e119e0db2889),
+    local
+    /* NOT_FROZEN */
+]
+interface nsIDOMViewCSS : nsIDOMAbstractView
+{
+    nsresult GetComputedStyle(nsIDOMElement *elt, const nsAString *pseudoElt, nsIDOMCSSStyleDeclaration **_retval);
+}
+
+[
+    object,
     uuid(a6cf9075-15b3-11d2-932e-00805f8add32),
     local
     /* FROZEN */
@@ -999,6 +1021,17 @@ interface nsIDOMNSHTMLDocument : nsISupports
 interface nsIDOMDocumentStyle : nsISupports
 {
     nsresult GetStyleSheets(nsIDOMStyleSheetList **aStyleSheets);
+}
+
+[
+    object,
+    uuid(1acdb2ba-1dd2-11b2-95bc-9542495d2569),
+    local
+    /* FROZEN */
+]
+interface nsIDOMDocumentView : nsISupports
+{
+    nsresult GetDefaultView(nsIDOMAbstractView **aDefaultView);
 }
 
 [

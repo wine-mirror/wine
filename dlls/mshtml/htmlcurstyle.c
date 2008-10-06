@@ -37,6 +37,8 @@ typedef struct {
     const IHTMLCurrentStyleVtbl *lpIHTMLCurrentStyleVtbl;
 
     LONG ref;
+
+    nsIDOMCSSStyleDeclaration *nsstyle;
 } HTMLCurrentStyle;
 
 #define HTMLCURSTYLE(x)  ((IHTMLCurrentStyle*)  &(x)->lpIHTMLCurrentStyleVtbl)
@@ -85,8 +87,11 @@ static ULONG WINAPI HTMLCurrentStyle_Release(IHTMLCurrentStyle *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->nsstyle)
+            nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -875,16 +880,62 @@ static dispex_static_data_t HTMLCurrentStyle_dispex = {
     HTMLCurrentStyle_iface_tids
 };
 
-HRESULT HTMLCurrentStyle_Create(IHTMLCurrentStyle **p)
+HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
 {
+    nsIDOMCSSStyleDeclaration *nsstyle;
+    nsIDOMDocumentView *nsdocview;
+    nsIDOMAbstractView *nsview;
+    nsIDOMViewCSS *nsviewcss;
+    nsIDOMDocument *nsdoc;
+    nsAString nsempty_str;
     HTMLCurrentStyle *ret;
+    nsresult nsres;
+
+    nsres = nsIWebNavigation_GetDocument(elem->node.doc->nscontainer->navigation, &nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentView, (void**)&nsdocview);
+    nsIDOMDocument_Release(nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMDocumentView: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMDocumentView_GetDefaultView(nsdocview, &nsview);
+    nsIDOMDocumentView_Release(nsdocview);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDefaultView failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMAbstractView_QueryInterface(nsview, &IID_nsIDOMViewCSS, (void**)&nsviewcss);
+    nsIDOMAbstractView_Release(nsview);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMViewCSS: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_Init(&nsempty_str, NULL);
+    nsres = nsIDOMViewCSS_GetComputedStyle(nsviewcss, (nsIDOMElement*)elem->nselem, &nsempty_str, &nsstyle);
+    nsIDOMViewCSS_Release(nsviewcss);
+    nsAString_Finish(&nsempty_str);
+    if(NS_FAILED(nsres)) {
+        ERR("GetComputedStyle failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
     ret = heap_alloc_zero(sizeof(HTMLCurrentStyle));
-    if(!ret)
+    if(!ret) {
+        nsIDOMCSSStyleDeclaration_Release(nsstyle);
         return E_OUTOFMEMORY;
+    }
 
     ret->lpIHTMLCurrentStyleVtbl = &HTMLCurrentStyleVtbl;
     ret->ref = 1;
+    ret->nsstyle = nsstyle;
 
     init_dispex(&ret->dispex, (IUnknown*)HTMLCURSTYLE(ret),  &HTMLCurrentStyle_dispex);
 
