@@ -2964,7 +2964,7 @@ static BOOL CALLBACK Typelib_EnumResNameProc( HMODULE hModule, LPCWSTR lpszType,
 
     TRACE("trying %s\n", debugstr_w(tl_struct->path));
     res = LoadTypeLib(tl_struct->path,&tl_struct->ptLib);
-    if (!SUCCEEDED(res))
+    if (FAILED(res))
     {
         msi_free(tl_struct->path);
         tl_struct->path = NULL;
@@ -3046,7 +3046,7 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
             res = RegisterTypeLib(tl_struct.ptLib,tl_struct.path,help);
             msi_free(help);
 
-            if (!SUCCEEDED(res))
+            if (FAILED(res))
                 ERR("Failed to register type library %s\n",
                         debugstr_w(tl_struct.path));
             else

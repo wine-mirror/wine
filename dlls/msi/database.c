@@ -125,7 +125,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
             IStorage_SetClass( stg, &CLSID_MsiDatabase );
             /* create the _Tables stream */
             r = write_stream_data(stg, szTables, NULL, 0, TRUE);
-            if (!FAILED(r))
+            if (SUCCEEDED(r))
                 r = msi_init_string_table( stg );
         }
         created = TRUE;
