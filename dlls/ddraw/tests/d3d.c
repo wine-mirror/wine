@@ -102,7 +102,7 @@ static BOOL CreateDirect3D(void)
     ddsd.dwWidth = 256;
     ddsd.dwHeight = 256;
     rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDS, NULL);
-    if (!SUCCEEDED(rc))
+    if (FAILED(rc))
         return FALSE;
 
     memset(&ddsd, 0, sizeof(ddsd));
@@ -117,12 +117,12 @@ static BOOL CreateDirect3D(void)
     ddsd.dwHeight = 256;
     rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDSdepth, NULL);
     ok(rc==DD_OK, "CreateSurface returned: %x\n", rc);
-    if (!SUCCEEDED(rc)) {
+    if (FAILED(rc)) {
         lpDDSdepth = NULL;
     } else {
         rc = IDirectDrawSurface_AddAttachedSurface(lpDDS, lpDDSdepth);
         ok(rc == DD_OK, "IDirectDrawSurface_AddAttachedSurface returned %x\n", rc);
-        if (!SUCCEEDED(rc))
+        if (FAILED(rc))
             return FALSE;
     }
 

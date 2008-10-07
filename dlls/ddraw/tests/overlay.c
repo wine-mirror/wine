@@ -76,7 +76,7 @@ static BOOL CreateDirectDraw(void)
     ddsd.dwFlags = DDSD_CAPS;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &primary, NULL);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
         IDirectDraw7_Release(ddraw);
         trace("IDirectDraw7_CreateSurface() failed with an error %x\n", hr);
         return FALSE;
