@@ -2137,7 +2137,6 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
     return !status;
 }
 
-
 /***********************************************************************
  *           ExitProcess   (KERNEL32.@)
  *
@@ -2149,6 +2148,26 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
  * RETURNS
  *  Nothing.
  */
+#ifdef __i386__
+__ASM_GLOBAL_FUNC( ExitProcess, /* Shrinker depend on this particular ExitProcess implementation */
+                   "pushl %ebp\n\t"
+                   ".byte 0x8B, 0xEC\n\t" /* movl %esp, %ebp */
+                   ".byte 0x6A, 0x00\n\t" /* pushl $0 */
+                   ".byte 0x68, 0x00, 0x00, 0x00, 0x00\n\t" /* pushl $0 - 4 bytes immediate */
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("process_ExitProcess") "\n\t"
+                   "leave\n\t"
+                   "ret $4" )
+
+void WINAPI process_ExitProcess( DWORD status )
+{
+    LdrShutdownProcess();
+    NtTerminateProcess(GetCurrentProcess(), status);
+    exit(status);
+}
+
+#else
+
 void WINAPI ExitProcess( DWORD status )
 {
     LdrShutdownProcess();
@@ -2156,6 +2175,7 @@ void WINAPI ExitProcess( DWORD status )
     exit(status);
 }
 
+#endif
 
 /***********************************************************************
  * GetExitCodeProcess           [KERNEL32.@]
