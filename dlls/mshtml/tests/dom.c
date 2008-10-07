@@ -2250,6 +2250,26 @@ static void test_default_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "middle"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_zIndex(style, &v);
+    ok(hres == S_OK, "get_zIndex failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!V_I4(&v), "V_I4(v) != 0\n");
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("1");
+    hres = IHTMLStyle_put_zIndex(style, v);
+    ok(hres == S_OK, "put_zIndex failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_zIndex(style, &v);
+    ok(hres == S_OK, "get_zIndex failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v)=%d\n", V_VT(&v));
+    ok(V_I4(&v) == 1, "V_I4(v) = %d\n", V_I4(&v));
+    VariantClear(&v);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {

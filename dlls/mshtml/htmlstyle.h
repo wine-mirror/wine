@@ -54,7 +54,8 @@ typedef enum {
     STYLEID_TOP,
     STYLEID_VERTICAL_ALIGN,
     STYLEID_VISIBILITY,
-    STYLEID_WIDTH
+    STYLEID_WIDTH,
+    STYLEID_Z_INDEX
 } styleid_t;
 
 void HTMLStyle2_Init(HTMLStyle*);

@@ -81,6 +81,8 @@ static const WCHAR attrVisibility[] =
     {'v','i','s','i','b','i','l','i','t','y',0};
 static const WCHAR attrWidth[] =
     {'w','i','d','t','h',0};
+static const WCHAR attrZIndex[] =
+    {'z','-','i','n','d','e','x',0};
 
 static const LPCWSTR style_strings[] = {
     attrBackground,
@@ -107,6 +109,7 @@ static const LPCWSTR style_strings[] = {
     attrVerticalAlign,
     attrVisibility,
     attrWidth,
+    attrZIndex
 };
 
 static const WCHAR valLineThrough[] =
@@ -172,8 +175,9 @@ static LPWSTR fix_url_value(LPCWSTR val)
     return ret;
 }
 
-#define ATTR_FIX_PX  1
-#define ATTR_FIX_URL 2
+#define ATTR_FIX_PX      1
+#define ATTR_FIX_URL     2
+#define ATTR_STR_TO_INT  4
 
 HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCWSTR value, DWORD flags)
 {
@@ -242,6 +246,57 @@ HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR
     nsAString_Finish(&str_value);
 
     TRACE("%s -> %s\n", debugstr_w(style_strings[sid]), debugstr_w(*p));
+    return S_OK;
+}
+
+HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags)
+{
+    nsAString str_value;
+    const PRUnichar *value;
+    BOOL set = FALSE;
+
+    nsAString_Init(&str_value, NULL);
+
+    get_nsstyle_attr_nsval(nsstyle, sid, &str_value);
+
+    nsAString_GetData(&str_value, &value);
+
+    if(flags & ATTR_STR_TO_INT) {
+        const PRUnichar *ptr = value;
+        BOOL neg = FALSE;
+        INT i = 0;
+
+        if(*ptr == '-') {
+            neg = TRUE;
+            ptr++;
+        }
+
+        while(isdigitW(*ptr))
+            i = i*10 + (*ptr++ - '0');
+
+        if(!*ptr) {
+            V_VT(p) = VT_I4;
+            V_I4(p) = neg ? -i : i;
+            set = TRUE;
+        }
+    }
+
+    if(!set) {
+        BSTR str = NULL;
+
+        if(*value) {
+            str = SysAllocString(value);
+            if(!str)
+                return E_OUTOFMEMORY;
+        }
+
+        V_VT(p) = VT_BSTR;
+        V_BSTR(p) = str;
+    }
+
+    nsAString_Finish(&str_value);
+
+    TRACE("%s -> %s\n", debugstr_w(style_strings[sid]), debugstr_variant(p));
     return S_OK;
 }
 
@@ -1581,15 +1636,27 @@ static HRESULT WINAPI HTMLStyle_get_position(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_zIndex(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    switch(V_VT(&v)) {
+    case VT_BSTR:
+        return set_style_attr(This, STYLEID_Z_INDEX, V_BSTR(&v), 0);
+    default:
+        FIXME("unimplemented vt %d\n", V_VT(&v));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_get_zIndex(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_attr_var(This->nsstyle, STYLEID_Z_INDEX, p, ATTR_STR_TO_INT);
 }
 
 static HRESULT WINAPI HTMLStyle_put_overflow(IHTMLStyle *iface, BSTR v)
