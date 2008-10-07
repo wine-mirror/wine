@@ -50,6 +50,8 @@ static const WCHAR attrCursor[] =
     {'c','u','r','s','o','r',0};
 static const WCHAR attrDisplay[] =
     {'d','i','s','p','l','a','y',0};
+static const WCHAR attrFilter[] =
+    {'f','i','l','e','t','e','r',0};
 static const WCHAR attrFontFamily[] =
     {'f','o','n','t','-','f','a','m','i','l','y',0};
 static const WCHAR attrFontSize[] =
@@ -99,6 +101,7 @@ static const struct{
     {attrColor,                DISPID_IHTMLSTYLE_COLOR},
     {attrCursor,               DISPID_IHTMLSTYLE_CURSOR},
     {attrDisplay,              DISPID_IHTMLSTYLE_DISPLAY},
+    {attrFilter,               DISPID_IHTMLSTYLE_FILTER},
     {attrFontFamily,           DISPID_IHTMLSTYLE_FONTFAMILY},
     {attrFontSize,             DISPID_IHTMLSTYLE_FONTSIZE},
     {attrFontStyle,            DISPID_IHTMLSTYLE_FONTSTYLE},
@@ -1873,15 +1876,21 @@ static HRESULT WINAPI HTMLStyle_get_clip(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_filter(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    WARN("(%p)->(%s)\n", This, debugstr_w(v));
+
+    /* FIXME: Handle MS-style filters */
+    return set_style_attr(This, STYLEID_FILTER, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_filter(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    WARN("(%p)->(%p)\n", This, p);
+
+    /* FIXME: Handle MS-style filters */
+    return get_style_attr(This, STYLEID_FILTER, p);
 }
 
 static HRESULT WINAPI HTMLStyle_setAttribute(IHTMLStyle *iface, BSTR strAttributeName,

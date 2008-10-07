@@ -2266,6 +2266,16 @@ static void test_default_style(IHTMLStyle *style)
     ok(!strcmp_wa(str, "center"), "textAlign = %s\n", dbgstr_w(V_BSTR(&v)));
     SysFreeString(str);
 
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_filter(style, &str);
+    ok(hres == S_OK, "get_filter failed: %08x\n", hres);
+    ok(!str, "filter != NULL\n");
+
+    str = a2bstr("alpha(opacity=100)");
+    hres = IHTMLStyle_put_filter(style, str);
+    ok(hres == S_OK, "put_filter failed: %08x\n", hres);
+    SysFreeString(str);
+
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_zIndex(style, &v);
     ok(hres == S_OK, "get_zIndex failed: %08x\n", hres);
