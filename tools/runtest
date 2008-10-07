@@ -89,16 +89,28 @@ done
 # we must have found an input file
 if [ ! -f "$infile" ]; then usage; fi
 
-# set program to the .c file base name if not specified otherwise
 if [ -z "$program" ]; then
-    program=`basename "$infile" .c`
+    # try to autodetect the test program name based on the working directory
+    working_path=`pwd`
+    working_basename=`basename "$working_path"`
+    if [ "$working_basename" = "tests" ]; then
+        parent_path=`dirname "$working_path"`
+        parent_basename=`basename "$parent_path"`
+        program="${parent_basename}_test.exe.so"
+    elif [ -d "tests" ]; then
+        program="tests/${working_basename}_test.exe.so"
+    fi
+fi
+if [ ! -f "$program" ]; then
+    echo "Can't find the test program, use the -p argument to specify one" 1>&2
+    usage
 fi
 
 # check/detect topobjdir
 if [ -n "$topobjdir" ]; then
     if [ ! -f "$topobjdir/server/wineserver" ]
     then
-	echo "Wrong -T argument, $topobjdir/server/wineserver does not exist" 2>&1
+	echo "Wrong -T argument, $topobjdir/server/wineserver does not exist" 1>&2
 	usage
     fi
 else
@@ -107,7 +119,7 @@ else
     elif [ -f "../../server/wineserver" ]; then topobjdir="../.."
     elif [ -f "../../../server/wineserver" ]; then topobjdir="../../.."
     else
-        echo "Can't find the top of the Wine tree (use the -T argument)" 2>&1
+        echo "Can't find the top of the Wine tree (use the -T argument)" 1>&2
         usage
     fi
 fi
