@@ -26,7 +26,7 @@ usage()
 {
     cat >&2 <<EOF
 
-Usage: $0 [options] input_file
+Usage: $0 [options] [input_file]
 
 input_file:  the source code for the test program
 
@@ -48,7 +48,7 @@ platform=$WINETEST_PLATFORM
 WINETEST_DEBUG=${WINETEST_DEBUG:-1}
 
 # parse command-line options
-while [ "$#" != 0 ]; do
+while [ "$#" -gt 1 ]; do
     case "$1" in
     -h)
 	usage
@@ -79,16 +79,10 @@ while [ "$#" != 0 ]; do
     --)
 	break
     ;;
-    *)
-	infile="$1"
-    ;;
     esac
     shift
 done	    
 	
-# we must have found an input file
-if [ ! -f "$infile" ]; then usage; fi
-
 if [ -z "$program" ]; then
     # try to autodetect the test program name based on the working directory
     working_path=`pwd`
@@ -139,4 +133,4 @@ export WINETEST_PLATFORM WINETEST_DEBUG
 #  WINETEST_WRAPPER=valgrind
 # would run the tests under valgrind to look for memory errors.
 
-exec $WINETEST_WRAPPER "$topobjdir/wine" "$program" "$infile" "$@"
+exec $WINETEST_WRAPPER "$topobjdir/wine" "$program" "$@"
