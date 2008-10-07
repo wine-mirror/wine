@@ -29,7 +29,7 @@ typedef struct {
 #define HTMLSTYLE(x)     ((IHTMLStyle*)                   &(x)->lpHTMLStyleVtbl)
 #define HTMLSTYLE2(x)    ((IHTMLStyle2*)                  &(x)->lpHTMLStyle2Vtbl)
 
-/* NOTE: Make sure to keep in sync with stryle_strings in htmlstrle.c */
+/* NOTE: Make sure to keep in sync with style_tbl in htmlstyle.c */
 typedef enum {
     STYLEID_BACKGROUND,
     STYLEID_BACKGROUND_COLOR,

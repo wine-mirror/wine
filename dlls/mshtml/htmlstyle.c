@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "mshtml_private.h"
 #include "htmlstyle.h"
@@ -84,32 +85,35 @@ static const WCHAR attrWidth[] =
 static const WCHAR attrZIndex[] =
     {'z','-','i','n','d','e','x',0};
 
-static const LPCWSTR style_strings[] = {
-    attrBackground,
-    attrBackgroundColor,
-    attrBackgroundImage,
-    attrBorder,
-    attrBorderLeft,
-    attrColor,
-    attrCursor,
-    attrDisplay,
-    attrFontFamily,
-    attrFontSize,
-    attrFontStyle,
-    attrFontWeight,
-    attrHeight,
-    attrLeft,
-    attrMargin,
-    attrMarginLeft,
-    attrMarginRight,
-    attrPaddingLeft,
-    attrPosition,
-    attrTextDecoration,
-    attrTop,
-    attrVerticalAlign,
-    attrVisibility,
-    attrWidth,
-    attrZIndex
+static const struct{
+    const WCHAR *name;
+    DISPID dispid;
+} style_tbl[] = {
+    {attrBackground,           DISPID_IHTMLSTYLE_BACKGROUND},
+    {attrBackgroundColor,      DISPID_IHTMLSTYLE_BACKGROUNDCOLOR},
+    {attrBackgroundImage,      DISPID_IHTMLSTYLE_BACKGROUNDIMAGE},
+    {attrBorder,               DISPID_IHTMLSTYLE_BORDER},
+    {attrBorderLeft,           DISPID_IHTMLSTYLE_BORDERLEFT},
+    {attrColor,                DISPID_IHTMLSTYLE_COLOR},
+    {attrCursor,               DISPID_IHTMLSTYLE_CURSOR},
+    {attrDisplay,              DISPID_IHTMLSTYLE_DISPLAY},
+    {attrFontFamily,           DISPID_IHTMLSTYLE_FONTFAMILY},
+    {attrFontSize,             DISPID_IHTMLSTYLE_FONTSIZE},
+    {attrFontStyle,            DISPID_IHTMLSTYLE_FONTSTYLE},
+    {attrFontWeight,           DISPID_IHTMLSTYLE_FONTWEIGHT},
+    {attrHeight,               DISPID_IHTMLSTYLE_HEIGHT},
+    {attrLeft,                 DISPID_IHTMLSTYLE_LEFT},
+    {attrMargin,               DISPID_IHTMLSTYLE_MARGIN},
+    {attrMarginLeft,           DISPID_IHTMLSTYLE_MARGINLEFT},
+    {attrMarginRight,          DISPID_IHTMLSTYLE_MARGINRIGHT},
+    {attrPaddingLeft,          DISPID_IHTMLSTYLE_PADDINGLEFT},
+    {attrPosition,             DISPID_IHTMLSTYLE2_POSITION},
+    {attrTextDecoration,       DISPID_IHTMLSTYLE_TEXTDECORATION},
+    {attrTop,                  DISPID_IHTMLSTYLE_TOP},
+    {attrVerticalAlign,        DISPID_IHTMLSTYLE_VERTICALALIGN},
+    {attrVisibility,           DISPID_IHTMLSTYLE_VISIBILITY},
+    {attrWidth,                DISPID_IHTMLSTYLE_WIDTH},
+    {attrZIndex,               DISPID_IHTMLSTYLE_ZINDEX}
 };
 
 static const WCHAR valLineThrough[] =
@@ -192,7 +196,7 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCW
     if(flags & ATTR_FIX_URL)
         val = fix_url_value(value);
 
-    nsAString_Init(&str_name, style_strings[sid]);
+    nsAString_Init(&str_name, style_tbl[sid].name);
     nsAString_Init(&str_value, val ? val : value);
     nsAString_Init(&str_empty, wszEmpty);
     heap_free(val);
@@ -218,7 +222,7 @@ static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, stylei
     nsAString str_name;
     nsresult nsres;
 
-    nsAString_Init(&str_name, style_strings[sid]);
+    nsAString_Init(&str_name, style_tbl[sid].name);
 
     nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(nsstyle, &str_name, value);
     if(NS_FAILED(nsres)) {
@@ -245,7 +249,7 @@ HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, BSTR
 
     nsAString_Finish(&str_value);
 
-    TRACE("%s -> %s\n", debugstr_w(style_strings[sid]), debugstr_w(*p));
+    TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_w(*p));
     return S_OK;
 }
 
@@ -296,7 +300,7 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
 
     nsAString_Finish(&str_value);
 
-    TRACE("%s -> %s\n", debugstr_w(style_strings[sid]), debugstr_variant(p));
+    TRACE("%s -> %s\n", debugstr_w(style_tbl[sid].name), debugstr_variant(p));
     return S_OK;
 }
 
@@ -318,7 +322,7 @@ static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR ex
     *p = strcmpW(value, exval) ? VARIANT_FALSE : VARIANT_TRUE;
     nsAString_Finish(&str_value);
 
-    TRACE("%s -> %x\n", debugstr_w(style_strings[sid]), *p);
+    TRACE("%s -> %x\n", debugstr_w(style_tbl[sid].name), *p);
     return S_OK;
 }
 
@@ -1907,6 +1911,28 @@ static HRESULT WINAPI HTMLStyle_toString(IHTMLStyle *iface, BSTR *String)
     return E_NOTIMPL;
 }
 
+static HRESULT HTMLStyle_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+{
+    int c, i, min=0, max = sizeof(style_tbl)/sizeof(*style_tbl)-1;
+
+    while(min <= max) {
+        i = (min+max)/2;
+
+        c = strcmpW(style_tbl[i].name, name);
+        if(!c) {
+            *dispid = style_tbl[i].dispid;
+            return S_OK;
+        }
+
+        if(c > 0)
+            max = i-1;
+        else
+            min = i+1;
+    }
+
+    return DISP_E_UNKNOWNNAME;
+}
+
 static const IHTMLStyleVtbl HTMLStyleVtbl = {
     HTMLStyle_QueryInterface,
     HTMLStyle_AddRef,
@@ -2096,13 +2122,18 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
     HTMLStyle_toString
 };
 
+static const dispex_static_data_vtbl_t HTMLStyle_dispex_vtbl = {
+    HTMLStyle_get_dispid,
+    NULL
+};
+
 static const tid_t HTMLStyle_iface_tids[] = {
     IHTMLStyle_tid,
     IHTMLStyle2_tid,
     0
 };
 static dispex_static_data_t HTMLStyle_dispex = {
-    NULL,
+    &HTMLStyle_dispex_vtbl,
     DispHTMLStyle_tid,
     NULL,
     HTMLStyle_iface_tids
