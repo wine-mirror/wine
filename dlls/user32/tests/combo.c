@@ -273,22 +273,32 @@ static void test_WM_LBUTTONDOWN(void)
     LRESULT result;
     int i, idx;
     RECT rect;
-    WCHAR buffer[3];
+    CHAR buffer[3];
     static const UINT choices[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
-    static const WCHAR stringFormat[] = {'%','2','d','\0'};
+    static const CHAR stringFormat[] = "%2d";
+    BOOL ret;
+    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
+
+    pGetComboBoxInfo = (void*)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
+    if (!pGetComboBoxInfo){
+        win_skip("GetComboBoxInfo is not available\n");
+        return;
+    }
 
     hCombo = CreateWindow("ComboBox", "Combo", WS_VISIBLE|WS_CHILD|CBS_DROPDOWN,
             0, 0, 200, 150, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
 
     for (i = 0; i < sizeof(choices)/sizeof(UINT); i++){
-        wsprintfW(buffer, stringFormat, choices[i]);
-        ok(SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)&buffer) != CB_ERR,
+        sprintf(buffer, stringFormat, choices[i]);
+        result = SendMessageA(hCombo, CB_ADDSTRING, 0, (LPARAM)buffer);
+        ok(result == i,
            "Failed to add item %d\n", i);
     }
 
     cbInfo.cbSize = sizeof(COMBOBOXINFO);
-    result = SendMessage(hCombo, CB_GETCOMBOBOXINFO, 0, (LPARAM)&cbInfo);
-    ok(result, "Failed to get combobox info structure. LastError=%d\n",
+    SetLastError(0xdeadbeef);
+    ret = pGetComboBoxInfo(hCombo, &cbInfo);
+    ok(ret, "Failed to get combobox info structure. LastError=%d\n",
        GetLastError());
     hEdit = cbInfo.hwndItem;
     hList = cbInfo.hwndList;
