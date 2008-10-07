@@ -572,7 +572,7 @@ static void test_its_protocol(void)
 
     hres = CoGetClassObject(&CLSID_ITSProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
-    if(!SUCCEEDED(hres))
+    if(FAILED(hres))
         return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&info);
@@ -630,7 +630,7 @@ static void test_mk_protocol(void)
     hres = CoGetClassObject(&CLSID_MkProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory,
                             (void**)&cf);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
-    if(!SUCCEEDED(hres))
+    if(FAILED(hres))
         return;
 
     cache_file = cache_file1;
