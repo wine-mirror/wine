@@ -1843,7 +1843,7 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
     {
       if (check_TOKEN(buf) == TOKEN_OBRACE)
       {
-        int i;
+        int i, j;
         get_TOKEN(buf);
         if (get_TOKEN(buf) != TOKEN_NAME)
           return FALSE;
@@ -1852,9 +1852,13 @@ static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional)
         TRACE("Found optional reference %s\n", (char*)buf->value);
         for (i = 0; i < buf->nb_pxo_globals; i++)
         {
-          if (!strcmp(buf->pxo_globals[i*MAX_SUBOBJECTS].name, (char*)buf->value))
-            break;
+          for (j = 0; j < buf->pxo_globals[i*MAX_SUBOBJECTS].nb_subobjects; j++)
+          {
+            if (!strcmp(buf->pxo_globals[i*MAX_SUBOBJECTS+j].name, (char*)buf->value))
+              goto _exit;
+          }
         }
+_exit:
         if (i == buf->nb_pxo_globals)
         {
           ERR("Reference to unknown object %s\n", (char*)buf->value);
