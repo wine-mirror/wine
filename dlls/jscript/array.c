@@ -286,10 +286,64 @@ static HRESULT Array_join(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
 }
 
 static HRESULT Array_pop(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT val;
+    DWORD length;
+    WCHAR buf[14];
+    DISPID id;
+    HRESULT hres;
+
+    static const WCHAR formatW[] = {'%','d',0};
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_ARRAY)) {
+        ArrayInstance *array = (ArrayInstance*)dispex;
+        length = array->length;
+    }else {
+        FIXME("not Array this\n");
+        return E_NOTIMPL;
+    }
+
+    if(!length) {
+        if(retv)
+            V_VT(retv) = VT_EMPTY;
+        return S_OK;
+    }
+
+    sprintfW(buf, formatW, --length);
+    hres = jsdisp_get_id(dispex, buf, 0, &id);
+    if(SUCCEEDED(hres)) {
+        hres = jsdisp_propget(dispex, id, lcid, &val, ei, caller);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IDispatchEx_DeleteMemberByDispID(_IDispatchEx_(dispex), id);
+    }else if(hres == DISP_E_UNKNOWNNAME) {
+        V_VT(&val) = VT_EMPTY;
+        hres = S_OK;
+    }else {
+        return hres;
+    }
+
+    if(SUCCEEDED(hres)) {
+        if(is_class(dispex, JSCLASS_ARRAY)) {
+            ArrayInstance *array = (ArrayInstance*)dispex;
+            array->length = length;
+        }
+    }
+
+    if(FAILED(hres)) {
+        VariantClear(&val);
+        return hres;
+    }
+
+    if(retv)
+        *retv = val;
+    else
+        VariantClear(&val);
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.4.4.7 */

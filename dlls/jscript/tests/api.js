@@ -229,6 +229,26 @@ ok(arr.push(true, 'b', false) === 10, "arr.push(true, 'b', false) !== 10");
 ok(arr[8] === "b", "arr[8] != 'b'");
 ok(arr.length === 10, "arr.length != 10");
 
+arr = [3,4,5];
+tmp = arr.pop();
+ok(arr.length === 2, "arr.length = " + arr.length);
+ok(tmp === 5, "pop() = " + tmp);
+tmp = arr.pop(2);
+ok(arr.length === 1, "arr.length = " + arr.length);
+ok(tmp === 4, "pop() = " + tmp);
+tmp = arr.pop();
+ok(arr.length === 0, "arr.length = " + arr.length);
+ok(tmp === 3, "pop() = " + tmp);
+for(tmp in arr)
+    ok(false, "not deleted " + tmp);
+tmp = arr.pop();
+ok(arr.length === 0, "arr.length = " + arr.length);
+ok(tmp === undefined, "tmp = " + tmp);
+arr = [,,,,,];
+tmp = arr.pop();
+ok(arr.length === 5, "arr.length = " + arr.length);
+ok(tmp === undefined, "tmp = " + tmp);
+
 arr = [1,2,null,false,undefined,,"a"];
 
 tmp = arr.join();
@@ -275,7 +295,7 @@ ok(tmp[6] === num, "tmp[6] !== num");
 ok(tmp.length === 7, "tmp.length = " + tmp.length);
 
 arr = [].concat();
-ok(arr.length === 0, "arr.length = " + arr.lrngth);
+ok(arr.length === 0, "arr.length = " + arr.length);
 
 arr = [1,];
 tmp = arr.concat([2]);

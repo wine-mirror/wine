@@ -969,6 +969,20 @@ HRESULT jsdisp_propget_idx(DispatchEx *obj, DWORD idx, LCID lcid, VARIANT *var, 
     return jsdisp_propget_name(obj, buf, lcid, var, ei, caller);
 }
 
+HRESULT jsdisp_propget(DispatchEx *jsdisp, DISPID id, LCID lcid, VARIANT *val, jsexcept_t *ei,
+        IServiceProvider *caller)
+{
+    DISPPARAMS dp  = {NULL,NULL,0,0};
+    dispex_prop_t *prop;
+
+    prop = get_prop(jsdisp, id);
+    if(!prop)
+        return DISP_E_MEMBERNOTFOUND;
+
+    V_VT(val) = VT_EMPTY;
+    return prop_get(jsdisp, prop, lcid, &dp, val, ei, caller);
+}
+
 HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPPARAMS dp  = {NULL,NULL,0,0};
@@ -978,14 +992,7 @@ HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
 
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
-        dispex_prop_t *prop;
-
-        prop = get_prop(jsdisp, id);
-        if(prop)
-            hres = prop_get(jsdisp, prop, lcid, &dp, val, ei, caller);
-        else
-            hres = DISP_E_MEMBERNOTFOUND;
-
+        hres = jsdisp_propget(jsdisp, id, lcid, val, ei, caller);
         IDispatchEx_Release(_IDispatchEx_(jsdisp));
         return hres;
     }
