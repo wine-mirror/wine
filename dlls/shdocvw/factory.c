@@ -330,5 +330,5 @@ DWORD register_iexplore(BOOL doregister)
         return S_OK;
     }
     hres = reg_install(doregister ? "RegisterIE" : "UnregisterIE", NULL);
-    return !SUCCEEDED(hres);
+    return FAILED(hres);
 }
