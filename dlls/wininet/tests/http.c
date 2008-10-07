@@ -241,7 +241,6 @@ static VOID WINAPI callback(
 static void InternetReadFile_test(int flags)
 {
     BOOL res;
-    DWORD rc;
     CHAR buffer[4000];
     DWORD length;
     DWORD out;
@@ -332,12 +331,12 @@ static void InternetReadFile_test(int flags)
 
     trace("HttpSendRequestA -->\n");
     SetLastError(0xdeadbeef);
-    rc = HttpSendRequestA(hor, "", -1, NULL, 0);
+    res = HttpSendRequestA(hor, "", -1, NULL, 0);
     if (flags & INTERNET_FLAG_ASYNC)
-        ok(((rc == 0)&&(GetLastError() == ERROR_IO_PENDING)),
+        ok(!res && (GetLastError() == ERROR_IO_PENDING),
             "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
     else
-        ok((rc != 0) || GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED,
+        ok(res || (GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED),
            "Synchronous HttpSendRequest returning 0, error %u\n", GetLastError());
     trace("HttpSendRequestA <--\n");
 
@@ -368,17 +367,17 @@ static void InternetReadFile_test(int flags)
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
 
     length = 4;
-    rc = InternetQueryOptionA(hor,INTERNET_OPTION_REQUEST_FLAGS,&out,&length);
-    trace("Option 0x17 -> %i  %i\n",rc,out);
+    res = InternetQueryOptionA(hor,INTERNET_OPTION_REQUEST_FLAGS,&out,&length);
+    ok(res, "InternetQueryOptionA(INTERNET_OPTION_REQUEST) failed with error %d\n", GetLastError());
 
     length = 100;
-    rc = InternetQueryOptionA(hor,INTERNET_OPTION_URL,buffer,&length);
-    trace("Option 0x22 -> %i  %s\n",rc,buffer);
+    res = InternetQueryOptionA(hor,INTERNET_OPTION_URL,buffer,&length);
+    ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed with error %d\n", GetLastError());
 
-    length = 4000;
-    rc = HttpQueryInfoA(hor,HTTP_QUERY_RAW_HEADERS,buffer,&length,0x0);
+    length = sizeof(buffer);
+    res = HttpQueryInfoA(hor,HTTP_QUERY_RAW_HEADERS,buffer,&length,0x0);
+    ok(res, "HttpQueryInfoA(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
     buffer[length]=0;
-    trace("Option 0x16 -> %i  %s\n",rc,buffer);
 
     length = sizeof(buffer);
     res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
@@ -386,17 +385,17 @@ static void InternetReadFile_test(int flags)
     ok(!strcmp(buffer, "http://www.winehq.org/site/about"), "Wrong URL %s\n", buffer);
 
     length = 16;
-    rc = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_LENGTH,&buffer,&length,0x0);
-    trace("Option 0x5 -> %i  %s  (%u)\n",rc,buffer,GetLastError());
+    res = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_LENGTH,&buffer,&length,0x0);
+    trace("Option 0x5 -> %i  %s  (%u)\n",res,buffer,GetLastError());
 
     length = 100;
-    rc = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_TYPE,buffer,&length,0x0);
+    res = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_TYPE,buffer,&length,0x0);
     buffer[length]=0;
-    trace("Option 0x1 -> %i  %s\n",rc,buffer);
+    trace("Option 0x1 -> %i  %s\n",res,buffer);
 
     SetLastError(0xdeadbeef);
-    rc = InternetReadFile(NULL, buffer, 100, &length);
-    ok(!rc, "InternetReadFile should have failed\n");
+    res = InternetReadFile(NULL, buffer, 100, &length);
+    ok(!res, "InternetReadFile should have failed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
         "InternetReadFile should have set last error to ERROR_INVALID_HANDLE instead of %u\n",
         GetLastError());
@@ -410,13 +409,13 @@ static void InternetReadFile_test(int flags)
     {
         if (flags & INTERNET_FLAG_ASYNC)
             SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
-        rc = InternetQueryDataAvailable(hor,&length,0x0,0x0);
-        ok(!(rc == 0 && length != 0),"InternetQueryDataAvailable failed with non-zero length\n");
-        ok(rc != 0 || ((flags & INTERNET_FLAG_ASYNC) && GetLastError() == ERROR_IO_PENDING),
+        res = InternetQueryDataAvailable(hor,&length,0x0,0x0);
+        ok(!(!res && length != 0),"InternetQueryDataAvailable failed with non-zero length\n");
+        ok(res || ((flags & INTERNET_FLAG_ASYNC) && GetLastError() == ERROR_IO_PENDING),
            "InternetQueryDataAvailable failed, error %d\n", GetLastError());
         if (flags & INTERNET_FLAG_ASYNC)
         {
-            if (rc != 0)
+            if (res)
             {
                 CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
             }
@@ -432,11 +431,11 @@ static void InternetReadFile_test(int flags)
             char *buffer;
             buffer = HeapAlloc(GetProcessHeap(),0,length+1);
 
-            rc = InternetReadFile(hor,buffer,length,&length);
+            res = InternetReadFile(hor,buffer,length,&length);
 
             buffer[length]=0;
 
-            trace("ReadFile -> %i %i\n",rc,length);
+            trace("ReadFile -> %s %i\n",res?"TRUE":"FALSE",length);
 
             HeapFree(GetProcessHeap(),0,buffer);
         }
@@ -452,11 +451,11 @@ abort:
         SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
         SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
         SetLastError(0xdeadbeef);
-        rc = InternetCloseHandle(hor);
-        ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
+        res = InternetCloseHandle(hor);
+        ok (res, "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
         SetLastError(0xdeadbeef);
-        rc = InternetCloseHandle(hor);
-        ok ((rc == 0), "Double close of handle opened by HttpOpenRequestA succeeded\n");
+        res = InternetCloseHandle(hor);
+        ok (!res, "Double close of handle opened by HttpOpenRequestA succeeded\n");
         ok (GetLastError() == ERROR_INVALID_HANDLE,
             "Double close of handle should have set ERROR_INVALID_HANDLE instead of %u\n",
             GetLastError());
@@ -467,8 +466,8 @@ abort:
      * INTERNET_STATUS_HANDLE_CLOSING notifications matches the number expected. */
     if (hi != 0x0) {
       SET_WINE_ALLOW(INTERNET_STATUS_HANDLE_CLOSING);
-      rc = InternetCloseHandle(hi);
-      ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed\n");
+      res = InternetCloseHandle(hi);
+      ok (res, "InternetCloseHandle of handle opened by InternetOpenA failed\n");
       if (flags & INTERNET_FLAG_ASYNC)
           Sleep(100);
     }
