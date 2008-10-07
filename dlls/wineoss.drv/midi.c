@@ -1620,8 +1620,8 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || (lpMidiHdr->dwFlags & MHDR_INQUEUE) != 0 ||
 	lpMidiHdr->dwBufferLength >= 0x10000ul) {
-	WARN("%p %p %08x %d/%d\n", lpMidiHdr, lpMidiHdr->lpData,
-	           lpMidiHdr->dwFlags, sizeof(MIDIHDR), dwSize);
+	WARN("%p %p %08x %d/%d\n", lpMidiHdr, lpMidiHdr ? lpMidiHdr->lpData : NULL,
+	           lpMidiHdr ? lpMidiHdr->dwFlags : 0, sizeof(MIDIHDR), dwSize);
 	return MMSYSERR_INVALPARAM;
     }
 
