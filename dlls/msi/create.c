@@ -177,10 +177,7 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
             col->table = strdupW(table);
 
         if( !col->temporary )
-        {
             temp = FALSE;
-            break;
-        }
     }
 
     /* fill the structure */
