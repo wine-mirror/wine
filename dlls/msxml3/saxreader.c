@@ -1040,7 +1040,10 @@ static void libxmlStartElementNS(
     saxattributes *attr;
     int index;
 
-    update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
+    if(*(This->pParserCtxt->input->cur) == '/')
+        update_position(This, (xmlChar*)This->pParserCtxt->input->cur+2);
+    else
+        update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
 
     hr = namespacePush(This, nb_namespaces);
     if(hr==S_OK && ((This->vbInterface && This->saxreader->vbcontentHandler)
