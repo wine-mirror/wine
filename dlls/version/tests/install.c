@@ -183,23 +183,23 @@ static void test_install_file(void)
     memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, NULL, NULL, NULL, NULL, tmpname, &size);
-    memset(tmpname,0,sizeof(tmpname));
     ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, szDestFileName, NULL, NULL, NULL, tmpname, &size);
-    memset(tmpname,0,sizeof(tmpname));
     ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, szDestFileName, szSrcDir, NULL, NULL, tmpname, &size);
-    memset(tmpname,0,sizeof(tmpname));
     ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
 
     /* Source file does not exist*/
 
+    memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, szDestFileName, szSrcDir, szDestDir, NULL, tmpname, &size);
-    memset(tmpname,0,sizeof(tmpname));
     ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
+    memset(tmpname,0,sizeof(tmpname));
     size = MAX_PATH;
     rc = VerInstallFileA(0x0, szSrcFileName, szDestFileName,  szSrcDir, szDestDir, szCurDir, tmpname, &size);
     ok (rc == 0x10000 && tmpname[0]==0," expected return 0x10000 and no tempname, got %08x/\'%s\'\n",rc,tmpname);
