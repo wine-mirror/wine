@@ -106,6 +106,9 @@ else
     elif [ -f "../server/wineserver" ]; then topobjdir=".."
     elif [ -f "../../server/wineserver" ]; then topobjdir="../.."
     elif [ -f "../../../server/wineserver" ]; then topobjdir="../../.."
+    else
+        echo "Can't find the top of the Wine tree (use the -T argument)" 2>&1
+        usage
     fi
 fi
 
