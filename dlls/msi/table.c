@@ -943,7 +943,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
     UINT r, i, n=0, table_id, count, maxcount = *sz;
     MSITABLE *table = NULL;
 
-    TRACE("%s\n", debugstr_w(szTableName));
+    TRACE("%s %d\n", debugstr_w(szTableName), *sz);
 
     /* first check if there is a default table with that name */
     r = get_defaulttablecolumns( db, szTableName, colinfo, sz );
@@ -2055,11 +2055,12 @@ static UINT TABLE_drop(struct tagMSIVIEW *view)
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
     MSIVIEW *tables = NULL;
     MSIRECORD *rec = NULL;
-    UINT i, r, row;
+    UINT r, row;
+    INT i;
 
     TRACE("dropping table %s\n", debugstr_w(tv->name));
 
-    for (i = 0; i < tv->table->col_count; i++)
+    for (i = tv->table->col_count - 1; i >= 0; i--)
     {
         r = TABLE_remove_column(view, tv->table->colinfo[i].tablename,
                                 tv->table->colinfo[i].number);
