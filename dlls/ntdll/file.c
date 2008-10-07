@@ -2416,6 +2416,7 @@ NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
     NTSTATUS    ret;
     HANDLE      handle;
     BOOLEAN     async;
+    static BOOLEAN     warn = TRUE;
 
     if (apc || io_status || key)
     {
@@ -2423,7 +2424,11 @@ NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (apc_user) FIXME("I/O completion on lock not implemented yet\n");
+    if (apc_user && warn)
+    {
+        FIXME("I/O completion on lock not implemented yet\n");
+        warn = FALSE;
+    }
 
     for (;;)
     {
