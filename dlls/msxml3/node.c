@@ -613,6 +613,8 @@ static HRESULT WINAPI xmlnode_replaceChild(
     xmlNode *old_child_ptr, *new_child_ptr;
     xmlDocPtr leaving_doc;
     xmlNode *my_ancestor;
+    IXMLDOMNode *realOldChild;
+    HRESULT hr;
 
     TRACE("%p->(%p,%p,%p)\n",This,newChild,oldChild,outOldChild);
 
@@ -624,7 +626,12 @@ static HRESULT WINAPI xmlnode_replaceChild(
     if(outOldChild)
         *outOldChild = NULL;
 
-    old_child_ptr = impl_from_IXMLDOMNode(oldChild)->node;
+    hr = IXMLDOMNode_QueryInterface(oldChild,&IID_IXMLDOMNode,(LPVOID*)&realOldChild);
+    if(FAILED(hr))
+        return hr;
+
+    old_child_ptr = impl_from_IXMLDOMNode(realOldChild)->node;
+    IXMLDOMNode_Release(realOldChild);
     if(old_child_ptr->parent != This->node)
     {
         WARN("childNode %p is not a child of %p\n", oldChild, iface);

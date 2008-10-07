@@ -1842,7 +1842,7 @@ static void test_replaceChild(void)
     BSTR str;
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
-    IXMLDOMElement *element;
+    IXMLDOMElement *element, *ba_element;
     IXMLDOMNode *fo_node, *ba_node, *lc_node, *removed_node, *temp_node;
     IXMLDOMNodeList *root_list, *fo_list;
     IUnknown * unk1, *unk2;
@@ -1923,6 +1923,13 @@ static void test_replaceChild(void)
 
     /* ba_node should have been removed from below fo_node */
     r = IXMLDOMNode_get_childNodes( fo_node, &fo_list );
+    ok( r == S_OK, "ret %08x\n", r );
+
+    /* MS quirk: replaceChild also accepts elements instead of nodes */
+    r = IXMLDOMNode_QueryInterface( ba_node, &IID_IXMLDOMElement, (void**)&ba_element);
+    ok( r == S_OK, "ret %08x\n", r );
+
+    r = IXMLDOMElement_replaceChild( element, ba_node, (IXMLDOMNode*)ba_element, &removed_node );
     ok( r == S_OK, "ret %08x\n", r );
 
     r = IXMLDOMNodeList_get_length( fo_list, &len);
