@@ -243,13 +243,11 @@ static BOOL unescape(WCHAR *str)
         case 'r':
             c = '\r';
             break;
-        case '0':
-            break;
         case 'x':
             i = hex_to_int(*++p);
             if(i == -1)
                 return FALSE;
-            c = i << 16;
+            c = i << 4;
 
             i = hex_to_int(*++p);
             if(i == -1)
@@ -260,17 +258,17 @@ static BOOL unescape(WCHAR *str)
             i = hex_to_int(*++p);
             if(i == -1)
                 return FALSE;
-            c = i << 24;
+            c = i << 12;
 
             i = hex_to_int(*++p);
             if(i == -1)
                 return FALSE;
-            c += i << 16;
+            c += i << 8;
 
             i = hex_to_int(*++p);
             if(i == -1)
                 return FALSE;
-            c += 1 << 8;
+            c += 1 << 4;
 
             i = hex_to_int(*++p);
             if(i == -1)
@@ -278,6 +276,14 @@ static BOOL unescape(WCHAR *str)
             c += i;
             break;
         default:
+            if(isdigitW(*p)) {
+                c = *p++ - '0';
+                while(isdigitW(*p))
+                    c = c*10 + (*p++ - '0');
+                *pd++ = c;
+                continue;
+            }
+
             c = *p;
         }
 
