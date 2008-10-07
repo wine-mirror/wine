@@ -1565,7 +1565,8 @@ static void test_getElementsByTagName(void)
 
         r = IDispatchEx_GetMemberName(dispex, dispid, &sName);
         ok(r == E_NOTIMPL, "expected E_NOTIMPL got %08x\n", r);
-        SysFreeString(sName);
+        if( SUCCEEDED(r) )
+            SysFreeString(sName);
 
         r = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_XMLDOM_NODELIST_RESET, &dispid);
         ok(r == E_NOTIMPL, "expected E_NOTIMPL got %08x\n", r);
