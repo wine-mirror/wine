@@ -470,7 +470,6 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
 
     int i = 0;
     int nCfgs = This->adapter->nCfgs;
-    WineD3D_PixelFormat *cfgs = This->adapter->cfgs;
 
     TRACE("ColorFormat=%s, DepthStencilFormat=%s, auxBuffers=%d, numSamples=%d, pbuffer=%d, findCompatible=%d\n",
           debug_d3dformat(ColorFormat), debug_d3dformat(DepthStencilFormat), auxBuffers, numSamples, pbuffer, findCompatible);
@@ -503,64 +502,64 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
     for(matchtry = 0; matchtry < (sizeof(matches) / sizeof(matches[0])) && !iPixelFormat; matchtry++) {
         for(i=0; i<nCfgs; i++) {
             BOOL exactDepthMatch = TRUE;
-            cfgs = &This->adapter->cfgs[i];
+            WineD3D_PixelFormat *cfg = &This->adapter->cfgs[i];
 
             /* For now only accept RGBA formats. Perhaps some day we will
              * allow floating point formats for pbuffers. */
-            if(cfgs->iPixelType != WGL_TYPE_RGBA_ARB)
+            if(cfg->iPixelType != WGL_TYPE_RGBA_ARB)
                 continue;
 
             /* In window mode (!pbuffer) we need a window drawable format and double buffering. */
-            if(!pbuffer && !(cfgs->windowDrawable && cfgs->doubleBuffer))
+            if(!pbuffer && !(cfg->windowDrawable && cfg->doubleBuffer))
                 continue;
 
             /* We like to have aux buffers in backbuffer mode */
-            if(auxBuffers && !cfgs->auxBuffers && matches[matchtry].require_aux)
+            if(auxBuffers && !cfg->auxBuffers && matches[matchtry].require_aux)
                 continue;
 
             /* In pbuffer-mode we need a pbuffer-capable format but we don't want double buffering */
-            if(pbuffer && (!cfgs->pbufferDrawable || cfgs->doubleBuffer))
+            if(pbuffer && (!cfg->pbufferDrawable || cfg->doubleBuffer))
                 continue;
 
             if(matches[matchtry].exact_color) {
-                if(cfgs->redSize != redBits)
+                if(cfg->redSize != redBits)
                     continue;
-                if(cfgs->greenSize != greenBits)
+                if(cfg->greenSize != greenBits)
                     continue;
-                if(cfgs->blueSize != blueBits)
+                if(cfg->blueSize != blueBits)
                     continue;
             } else {
-                if(cfgs->redSize < redBits)
+                if(cfg->redSize < redBits)
                     continue;
-                if(cfgs->greenSize < greenBits)
+                if(cfg->greenSize < greenBits)
                     continue;
-                if(cfgs->blueSize < blueBits)
+                if(cfg->blueSize < blueBits)
                     continue;
             }
             if(matches[matchtry].exact_alpha) {
-                if(cfgs->alphaSize != alphaBits)
+                if(cfg->alphaSize != alphaBits)
                     continue;
             } else {
-                if(cfgs->alphaSize < alphaBits)
+                if(cfg->alphaSize < alphaBits)
                     continue;
             }
 
             /* We try to locate a format which matches our requirements exactly. In case of
              * depth it is no problem to emulate 16-bit using e.g. 24-bit, so accept that. */
-            if(cfgs->depthSize < depthBits)
+            if(cfg->depthSize < depthBits)
                 continue;
-            else if(cfgs->depthSize > depthBits)
+            else if(cfg->depthSize > depthBits)
                 exactDepthMatch = FALSE;
 
             /* In all cases make sure the number of stencil bits matches our requirements
              * even when we don't need stencil because it could affect performance EXCEPT
              * on cards which don't offer depth formats without stencil like the i915 drivers
              * on Linux. */
-            if(stencilBits != cfgs->stencilSize && !(This->adapter->brokenStencil && stencilBits <= cfgs->stencilSize))
+            if(stencilBits != cfg->stencilSize && !(This->adapter->brokenStencil && stencilBits <= cfg->stencilSize))
                 continue;
 
             /* Check multisampling support */
-            if(cfgs->numSamples != numSamples)
+            if(cfg->numSamples != numSamples)
                 continue;
 
             /* When we have passed all the checks then we have found a format which matches our
@@ -571,13 +570,13 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
 
             /* Exit the loop as we have found a format :) */
             if(exactDepthMatch) {
-                iPixelFormat = cfgs->iPixelFormat;
+                iPixelFormat = cfg->iPixelFormat;
                 break;
             } else if(!iPixelFormat) {
                 /* In the end we might end up with a format which doesn't exactly match our depth
                  * requirements. Accept the first format we found because formats with higher iPixelFormat
                  * values tend to have more extended capabilities (e.g. multisampling) which we don't need. */
-                iPixelFormat = cfgs->iPixelFormat;
+                iPixelFormat = cfg->iPixelFormat;
             }
         }
     }
