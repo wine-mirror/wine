@@ -384,7 +384,7 @@ static BOOL ShellView_InitList(IShellViewImpl * This)
 	{
 	  for (i=0; 1; i++)
 	  {
-	    if (!SUCCEEDED(IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd)))
+            if (FAILED(IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd)))
 	      break;
 	    lvColumn.fmt = sd.fmt;
 	    lvColumn.cx = sd.cxChar*8; /* chars->pixel */

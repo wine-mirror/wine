@@ -77,7 +77,7 @@ HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid,
     dth->ref = 0;
     dth->lpVtbl = &vt_IDropTargetHelper;
 
-    if (!SUCCEEDED (IUnknown_QueryInterface (_IUnknown_ (dth), riid, ppv))) {
+    if (FAILED (IUnknown_QueryInterface (_IUnknown_ (dth), riid, ppv))) {
 	IUnknown_Release (_IUnknown_ (dth));
 	return E_NOINTERFACE;
     }

@@ -143,7 +143,7 @@ HRESULT WINAPI IControlPanel_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOI
     sf->pidlRoot = _ILCreateControlPanel();	/* my qualified pidl */
     sf->pUnkOuter = pUnkOuter ? pUnkOuter : _IUnknown_ (sf);
 
-    if (!SUCCEEDED(IUnknown_QueryInterface(_IUnknown_(sf), riid, ppv))) {
+    if (FAILED(IUnknown_QueryInterface(_IUnknown_(sf), riid, ppv))) {
 	IUnknown_Release(_IUnknown_(sf));
 	return E_NOINTERFACE;
     }

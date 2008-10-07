@@ -140,7 +140,7 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
     lpac->txtbackup = NULL;
     lpac->quickComplete = NULL;
     
-    if (!SUCCEEDED (IUnknown_QueryInterface (_IUnknown_ (lpac), riid, ppv))) {
+    if (FAILED (IUnknown_QueryInterface (_IUnknown_ (lpac), riid, ppv))) {
 	IUnknown_Release (_IUnknown_ (lpac));
 	return E_NOINTERFACE;
     }
@@ -262,7 +262,7 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
 
     This->hwndEdit = hwndEdit;
 
-    if (!SUCCEEDED (IUnknown_QueryInterface (punkACL, &IID_IEnumString, (LPVOID*)&This->enumstr))) {
+    if (FAILED (IUnknown_QueryInterface (punkACL, &IID_IEnumString, (LPVOID*)&This->enumstr))) {
 	TRACE("No IEnumString interface\n");
 	return  E_NOINTERFACE;
     }

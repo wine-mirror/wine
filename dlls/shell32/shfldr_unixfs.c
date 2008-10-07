@@ -949,7 +949,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
     }
 
     hr = CreateUnixFolder(NULL, &IID_IPersistFolder3, (void**)&persistFolder, clsidChild);
-    if (!SUCCEEDED(hr)) return hr;
+    if (FAILED(hr)) return hr;
     hr = IPersistFolder_QueryInterface(persistFolder, riid, ppvOut);
 
     if (SUCCEEDED(hr)) {
@@ -1170,8 +1170,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
             SHITEMID emptyIDL = { 0, { 0 } };
 
             hr = IShellFolder_BindToObject(iface, pidl, NULL, &IID_IShellFolder, (void**)&pSubFolder);
-            if (!SUCCEEDED(hr)) return hr;
-       
+            if (FAILED(hr)) return hr;
+
             hr = IShellFolder_GetDisplayNameOf(pSubFolder, (LPITEMIDLIST)&emptyIDL, uFlags, lpName);
             IShellFolder_Release(pSubFolder);
         }
@@ -2081,7 +2081,7 @@ static HRESULT WINAPI UnixFolder_IDropTarget_Drop(IDropTarget *iface, IDataObjec
 
     InitFormatEtc(format, cfShellIDList, TYMED_HGLOBAL);
     hr = IDataObject_GetData(pDataObject, &format, &medium);
-    if (!SUCCEEDED(hr)) 
+    if (FAILED(hr))
         return hr;
 
     if (medium.tymed == TYMED_HGLOBAL) {

@@ -1016,7 +1016,7 @@ static HRESULT WINAPI _ILParsePathW(LPCWSTR path, LPWIN32_FIND_DATAW lpFindFile,
 
     IShellFolder_Release(pSF);
 
-    if (!SUCCEEDED(ret) && ppidl)
+    if (FAILED(ret) && ppidl)
         *ppidl = NULL;
 
     TRACE("%s %p 0x%x\n", debugstr_w(path), ppidl ? *ppidl : NULL, prgfInOut ? *prgfInOut : 0);
@@ -1461,7 +1461,7 @@ LPITEMIDLIST _ILCreateGuidFromStrA(LPCSTR szGUID)
 {
     IID iid;
 
-    if (!SUCCEEDED(SHCLSIDFromStringA(szGUID, &iid)))
+    if (FAILED(SHCLSIDFromStringA(szGUID, &iid)))
     {
         ERR("%s is not a GUID\n", szGUID);
         return NULL;
@@ -1473,7 +1473,7 @@ LPITEMIDLIST _ILCreateGuidFromStrW(LPCWSTR szGUID)
 {
     IID iid;
 
-    if (!SUCCEEDED(SHCLSIDFromStringW(szGUID, &iid)))
+    if (FAILED(SHCLSIDFromStringW(szGUID, &iid)))
     {
         ERR("%s is not a GUID\n", debugstr_w(szGUID));
         return NULL;

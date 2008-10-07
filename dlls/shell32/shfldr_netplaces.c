@@ -103,7 +103,7 @@ HRESULT WINAPI ISF_NetworkPlaces_Constructor (IUnknown * pUnkOuter, REFIID riid,
     sf->lpVtblPersistFolder2 = &vt_NP_PersistFolder2;
     sf->pidlRoot = _ILCreateNetHood();	/* my qualified pidl */
 
-    if (!SUCCEEDED (IUnknown_QueryInterface (_IUnknown_ (sf), riid, ppv)))
+    if (FAILED (IUnknown_QueryInterface (_IUnknown_ (sf), riid, ppv)))
     {
         IUnknown_Release (_IUnknown_ (sf));
         return E_NOINTERFACE;
