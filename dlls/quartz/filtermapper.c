@@ -1297,7 +1297,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
                                        NULL,
                                        &GUID_NULL);
 
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
         return hr;
     
     while(IEnumMoniker_Next(ppEnumMoniker, 1, &IMon, &nb) == S_OK)

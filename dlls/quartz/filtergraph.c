@@ -1367,7 +1367,7 @@ error:
                 IFilterGraph2_RemoveFilter(iface, pfilter);
                 IBaseFilter_Release(pfilter);
             }
-            if (!FAILED(hr)) DebugBreak();
+            if (SUCCEEDED(hr)) DebugBreak();
         }
 
         IEnumMoniker_Release(pEnumMoniker);
@@ -2140,7 +2140,7 @@ static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek,
             IMediaSeeking_Release(seek);
             if (hr_return != E_NOTIMPL)
                 allnotimpl = FALSE;
-            if (hr_return == S_OK || (FAILED(hr) && hr != E_NOTIMPL && !FAILED(hr_return)))
+            if (hr_return == S_OK || (FAILED(hr) && hr != E_NOTIMPL && SUCCEEDED(hr_return)))
                 hr_return = hr;
         }
     }
