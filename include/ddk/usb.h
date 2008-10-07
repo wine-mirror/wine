@@ -16,10 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _USB_
-#define _USB_
+#ifndef __DDK_USB_H__
+#define __DDK_USB_H__
 
-#include <usb200.h>
+#include <ddk/usb200.h>
 
 #define URB_FUNCTION_SELECT_CONFIGURATION            0x0000
 #define URB_FUNCTION_SELECT_INTERFACE                0x0001

@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __USBDLIB_H__
-#define __USBDLIB_H__
+#ifndef __DDK_USBDLIB_H__
+#define __DDK_USBDLIB_H__
 
 typedef struct _USBD_INTERFACE_LIST_ENTRY {
     PUSB_INTERFACE_DESCRIPTOR InterfaceDescriptor;

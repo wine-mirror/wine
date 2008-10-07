@@ -16,9 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _USB200_
-#define _USB200_
+#ifndef __DDK_USB200_H__
+#define __DDK_USB200_H__
 
-#include <usb100.h>
+#include <ddk/usb100.h>
 
 #endif
