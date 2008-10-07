@@ -344,7 +344,7 @@ static const elem_type_info_t elem_type_infos[] = {
     {"IMG",       img_iids,         &DIID_DispHTMLImg},
     {"TR",        tr_iids,          &DIID_DispHTMLTableRow},
     {"TD",        td_iids,          NULL},
-    {"IFRAME",    iframe_iids,      NULL}
+    {"IFRAME",    iframe_iids,      &DIID_DispHTMLIFrame}
 };
 
 static const char *dbgstr_w(LPCWSTR str)

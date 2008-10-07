@@ -209,6 +209,23 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     HTMLIFrame_destructor
 };
 
+static const tid_t HTMLIFrame_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IHTMLElement_tid,
+    IHTMLElement2_tid,
+    IHTMLElement3_tid,
+    IHTMLFrameBase2_tid,
+    0
+};
+
+static dispex_static_data_t HTMLIFrame_dispex = {
+    NULL,
+    DispHTMLIFrame_tid,
+    NULL,
+    HTMLIFrame_iface_tids
+};
+
 HTMLElement *HTMLIFrame_Create(nsIDOMHTMLElement *nselem)
 {
     HTMLIFrame *ret;
@@ -219,6 +236,7 @@ HTMLElement *HTMLIFrame_Create(nsIDOMHTMLElement *nselem)
     ret->lpIHTMLFrameBase2Vtbl = &HTMLIFrameBase2Vtbl;
     ret->element.node.vtbl = &HTMLIFrameImplVtbl;
 
+    init_dispex(&ret->element.node.dispex, (IUnknown*)HTMLFRAMEBASE2(ret), &HTMLIFrame_dispex);
     HTMLElement_Init(&ret->element);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&ret->nsiframe);
