@@ -53,6 +53,40 @@ static const WCHAR ScriptEngineBuildVersionW[] =
     {'S','c','r','i','p','t','E','n','g','i','n','e','B','u','i','l','d','V','e','r','s','i','o','n',0};
 static const WCHAR CollectGarbageW[] = {'C','o','l','l','e','c','t','G','a','r','b','a','g','e',0};
 static const WCHAR MathW[] = {'M','a','t','h',0};
+static const WCHAR encodeURIW[] = {'e','n','c','o','d','e','U','R','I',0};
+
+static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
+
+static int uri_char_table[] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 00-0f */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 10-1f */
+    0,2,0,0,1,0,1,2,2,2,2,1,1,2,2,1, /* 20-2f */
+    2,2,2,2,2,2,2,2,2,2,1,1,0,1,0,1, /* 30-3f */
+    1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 40-4f */
+    2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,2, /* 50-5f */
+    0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 60-6f */
+    2,2,2,2,2,2,2,2,2,2,2,0,0,0,2,0, /* 70-7f */
+};
+
+/* 1 - reserved */
+/* 2 - unescaped */
+
+static inline BOOL is_uri_reserved(WCHAR c)
+{
+    return c < 128 && uri_char_table[c] == 1;
+}
+
+static inline BOOL is_uri_unescaped(WCHAR c)
+{
+    return c < 128 && uri_char_table[c] == 2;
+}
+
+static WCHAR int_to_char(int i)
+{
+    if(i < 10)
+        return '0'+i;
+    return 'A'+i-10;
+}
 
 static HRESULT constructor_call(DispatchEx *constr, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
@@ -205,7 +239,7 @@ static HRESULT JSGlobal_eval(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     TRACE("parsing %s\n", debugstr_w(V_BSTR(arg)));
     hres = script_parse(dispex->ctx, V_BSTR(arg), &parser_ctx);
     if(FAILED(hres)) {
-        FIXME("parse failed: %08x\n", hres);
+        WARN("parse (%s) failed: %08x\n", debugstr_w(V_BSTR(arg)), hres);
         return hres;
     }
 
@@ -364,6 +398,76 @@ static HRESULT JSGlobal_CollectGarbage(DispatchEx *dispex, LCID lcid, WORD flags
     return E_NOTIMPL;
 }
 
+static HRESULT JSGlobal_encodeURI(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    const WCHAR *ptr;
+    DWORD len = 0, i;
+    char buf[4];
+    BSTR str, ret;
+    WCHAR *rptr;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            ret = SysAllocString(undefinedW);
+            if(!ret)
+                return E_OUTOFMEMORY;
+
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = ret;
+        }
+
+        return S_OK;
+    }
+
+    hres = to_string(dispex->ctx, get_arg(dp,0), ei, &str);
+    if(FAILED(hres))
+        return hres;
+
+    for(ptr = str; *ptr; ptr++) {
+        if(is_uri_unescaped(*ptr) || is_uri_reserved(*ptr) || *ptr == '#') {
+            len++;
+        }else {
+            i = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, NULL, 0, NULL, NULL)*3;
+            if(!i) {
+                FIXME("throw URIError\n");
+                return E_FAIL;
+            }
+
+            len += i;
+        }
+    }
+
+    rptr = ret = SysAllocStringLen(NULL, len);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    for(ptr = str; *ptr; ptr++) {
+        if(is_uri_unescaped(*ptr) || is_uri_reserved(*ptr) || *ptr == '#') {
+            *rptr++ = *ptr;
+        }else {
+            len = WideCharToMultiByte(CP_UTF8, 0, ptr, 1, buf, sizeof(buf), NULL, NULL);
+            for(i=0; i<len; i++) {
+                *rptr++ = '%';
+                *rptr++ = int_to_char((BYTE)buf[i] >> 4);
+                *rptr++ = int_to_char(buf[i] & 0x0f);
+            }
+        }
+    }
+
+    TRACE("%s -> %s\n", debugstr_w(str), debugstr_w(ret));
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }else {
+        SysFreeString(ret);
+    }
+    return S_OK;
+}
+
 static const builtin_prop_t JSGlobal_props[] = {
     {ActiveXObjectW,             JSGlobal_ActiveXObject,             PROPF_METHOD},
     {ArrayW,                     JSGlobal_Array,                     PROPF_CONSTR},
@@ -385,6 +489,7 @@ static const builtin_prop_t JSGlobal_props[] = {
     {ScriptEngineMinorVersionW,  JSGlobal_ScriptEngineMinorVersion,  PROPF_METHOD},
     {StringW,                    JSGlobal_String,                    PROPF_CONSTR},
     {VBArrayW,                   JSGlobal_VBArray,                   PROPF_METHOD},
+    {encodeURIW,                 JSGlobal_encodeURI,                 PROPF_METHOD},
     {escapeW,                    JSGlobal_escape,                    PROPF_METHOD},
     {evalW,                      JSGlobal_eval,                      PROPF_METHOD|1},
     {isFiniteW,                  JSGlobal_isFinite,                  PROPF_METHOD},

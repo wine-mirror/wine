@@ -37,6 +37,27 @@ ok(i === 123, "parseInt('123', 10, 'test') = " + i);
 i = parseInt("11", "8");
 ok(i === 9, "parseInt('11', '8') = " + i);
 
+tmp = encodeURI("abc");
+ok(tmp === "abc", "encodeURI('abc') = " + tmp);
+tmp = encodeURI("{abc}");
+ok(tmp === "%7Babc%7D", "encodeURI('{abc}') = " + tmp);
+tmp = encodeURI("");
+ok(tmp === "", "encodeURI('') = " + tmp);
+tmp = encodeURI("\01\02\03\04");
+ok(tmp === "%01%02%03%04", "encodeURI('\\01\\02\\03\\04') = " + tmp);
+tmp = encodeURI("{#@}");
+ok(tmp === "%7B#@%7D", "encodeURI('{#@}') = " + tmp);
+tmp = encodeURI("\xa1 ");
+ok(tmp === "%C2%A1%20", "encodeURI(\\xa1 ) = " + tmp);
+tmp = encodeURI("\xffff");
+ok(tmp.length === 8, "encodeURI('\\xffff').length = " + tmp.length);
+tmp = encodeURI("abcABC123;/?:@&=+$,-_.!~*'()");
+ok(tmp === "abcABC123;/?:@&=+$,-_.!~*'()", "encodeURI('abcABC123;/?:@&=+$,-_.!~*'()') = " + tmp);
+tmp = encodeURI();
+ok(tmp === "undefined", "encodeURI() = " + tmp);
+tmp = encodeURI("abc", "test");
+ok(tmp === "abc", "encodeURI('abc') = " + tmp);
+
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
 
