@@ -381,6 +381,7 @@ typedef struct {
 
     const IHTMLElementVtbl   *lpHTMLElementVtbl;
     const IHTMLElement2Vtbl  *lpHTMLElement2Vtbl;
+    const IHTMLElement3Vtbl  *lpHTMLElement3Vtbl;
 
     nsIDOMHTMLElement *nselem;
 } HTMLElement;
@@ -441,6 +442,7 @@ typedef struct {
 
 #define HTMLELEM(x)      ((IHTMLElement*)                 &(x)->lpHTMLElementVtbl)
 #define HTMLELEM2(x)     ((IHTMLElement2*)                &(x)->lpHTMLElement2Vtbl)
+#define HTMLELEM3(x)     ((IHTMLElement3*)                &(x)->lpHTMLElement3Vtbl)
 #define HTMLDOMNODE(x)   ((IHTMLDOMNode*)                 &(x)->lpHTMLDOMNodeVtbl)
 #define HTMLDOMNODE2(x)  ((IHTMLDOMNode2*)                &(x)->lpHTMLDOMNode2Vtbl)
 
@@ -572,6 +574,7 @@ HTMLElement *HTMLGenericElement_Create(nsIDOMHTMLElement*);
 void HTMLDOMNode_Init(HTMLDocument*,HTMLDOMNode*,nsIDOMNode*);
 void HTMLElement_Init(HTMLElement*);
 void HTMLElement2_Init(HTMLElement*);
+void HTMLElement3_Init(HTMLElement*);
 void HTMLTextContainer_Init(HTMLTextContainer*);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);

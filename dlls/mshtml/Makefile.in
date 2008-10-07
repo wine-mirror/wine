@@ -21,6 +21,7 @@ C_SRCS = \
 	htmldoc5.c \
 	htmlelem.c \
 	htmlelem2.c \
+	htmlelem3.c \
 	htmlelemcol.c \
 	htmlevent.c \
 	htmlgeneric.c \

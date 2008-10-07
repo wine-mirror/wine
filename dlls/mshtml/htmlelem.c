@@ -1339,6 +1339,9 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLElement2, riid)) {
         TRACE("(%p)->(IID_IHTMLElement2 %p)\n", This, ppv);
         *ppv = HTMLELEM2(This);
+    }else if(IsEqualGUID(&IID_IHTMLElement3, riid)) {
+        TRACE("(%p)->(IID_IHTMLElement3 %p)\n", This, ppv);
+        *ppv = HTMLELEM3(This);
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = CONPTCONT(&This->cp_container);
@@ -1391,6 +1394,7 @@ void HTMLElement_Init(HTMLElement *This)
     ConnectionPointContainer_Init(&This->cp_container, (IUnknown*)HTMLELEM(This));
 
     HTMLElement2_Init(This);
+    HTMLElement3_Init(This);
 
     if(!This->node.dispex.data)
         init_dispex(&This->node.dispex, (IUnknown*)HTMLELEM(This), &HTMLElement_dispex);
