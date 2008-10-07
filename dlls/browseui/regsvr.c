@@ -462,6 +462,13 @@ static struct regsvr_coclass const coclass_list[] = {
         "browseui.dll",
         "Both"
     },
+    {
+        &CLSID_ACListISF,
+        "Shell Folder AutoComplete List",
+        NULL,
+        "browseui.dll",
+        "Both"
+    },
     { NULL }			/* list terminator */
 };
 

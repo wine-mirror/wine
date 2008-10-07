@@ -487,6 +487,32 @@ DECLARE_INTERFACE_(IACList,IUnknown)
 #define IACList_Expand(p,a)             (p)->lpVtbl->Expand(p,a)
 #endif
 
+/* IACList2 interface */
+#define INTERFACE IACList2
+DECLARE_INTERFACE_(IACList2,IACList)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface) (THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS) PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+    /*** IACList methods ***/
+    STDMETHOD(Expand)(THIS_ LPCOLESTR str) PURE;
+    /*** IACList2 methods ***/
+    STDMETHOD(SetOptions)(THIS_ DWORD dwFlag) PURE;
+    STDMETHOD(GetOptions)(THIS_ DWORD* pdwFlag) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IACList2_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IACList2_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IACList2_Release(p)             (p)->lpVtbl->Release(p)
+/*** IACList2 methods ***/
+#define IACList2_GetOptions(p,a)        (p)->lpVtbl->GetOptions(p,a)
+#define IACList2_SetOptions(p,a)        (p)->lpVtbl->SetOptions(p,a)
+#endif
+
 /* IProgressDialog interface */
 #define PROGDLG_NORMAL           0x00000000
 #define PROGDLG_MODAL            0x00000001

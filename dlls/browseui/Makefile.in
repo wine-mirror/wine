@@ -8,6 +8,7 @@ EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
 	aclmulti.c \
+	aclsource.c \
 	browseui_main.c \
 	compcatcachedaemon.c \
 	progressdlg.c \

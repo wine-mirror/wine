@@ -53,6 +53,7 @@ static const struct {
     {&CLSID_ACLMulti, ACLMulti_Constructor},
     {&CLSID_ProgressDialog, ProgressDialog_Constructor},
     {&CLSID_CompCatCacheDaemon, CompCatCacheDaemon_Constructor},
+    {&CLSID_ACListISF, ACLShellSource_Constructor},
     {NULL, NULL}
 };
 

@@ -27,6 +27,7 @@ extern HINSTANCE BROWSEUI_hinstance;
 extern HRESULT ACLMulti_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
 extern HRESULT ProgressDialog_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
 extern HRESULT CompCatCacheDaemon_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
+extern HRESULT ACLShellSource_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
 
 extern const GUID CLSID_CompCatCacheDaemon;
 
