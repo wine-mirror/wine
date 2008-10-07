@@ -1334,6 +1334,82 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
     This->ret = E_FAIL;
 }
 
+static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
+{
+    saxlocator *This = ctx;
+    HRESULT hr = S_OK;
+    xmlChar *beg = (xmlChar*)This->pParserCtxt->input->cur-len;
+    xmlChar *cur, *end;
+    int realLen;
+    BSTR Chars;
+    BOOL lastEvent = FALSE, change;
+
+    while(memcmp(beg-9, "<![CDATA[", sizeof(char[9]))) beg--;
+    update_position(This, beg);
+
+    if(This->vbInterface && This->saxreader->vblexicalHandler)
+        hr = IVBSAXLexicalHandler_startCDATA(This->saxreader->vblexicalHandler);
+    if(!This->vbInterface && This->saxreader->lexicalHandler)
+        hr = ISAXLexicalHandler_startCDATA(This->saxreader->lexicalHandler);
+
+    if(FAILED(hr))
+        return format_error_message_from_id(This, hr);
+
+    realLen = This->pParserCtxt->input->cur-beg-3;
+    cur = beg;
+    end = beg;
+
+    while(1)
+    {
+        while(end-beg<realLen && *end!='\r') end++;
+        if(end-beg==realLen)
+        {
+            end--;
+            lastEvent = TRUE;
+        }
+        else if(end-beg==realLen-1 && *end=='\r' && *(end+1)=='\n')
+            lastEvent = TRUE;
+
+        if(*end == '\r') change = TRUE;
+        else change = FALSE;
+
+        if(change) *end = '\n';
+
+        if((This->vbInterface && This->saxreader->vbcontentHandler) ||
+                (!This->vbInterface && This->saxreader->contentHandler))
+        {
+            Chars = bstr_from_xmlCharN(cur, end-cur+1);
+            if(This->vbInterface)
+                hr = IVBSAXContentHandler_characters(
+                        This->saxreader->vbcontentHandler, &Chars);
+            else
+                hr = ISAXContentHandler_characters(
+                        This->saxreader->contentHandler,
+                        Chars, SysStringLen(Chars));
+            SysFreeString(Chars);
+        }
+
+        if(change) *end = '\r';
+
+        if(lastEvent)
+            break;
+
+        This->column += end-cur+2;
+        end += 2;
+        cur = end;
+    }
+
+    if(This->vbInterface && This->saxreader->vblexicalHandler)
+        hr = IVBSAXLexicalHandler_endCDATA(This->saxreader->vblexicalHandler);
+    if(!This->vbInterface && This->saxreader->lexicalHandler)
+        hr = ISAXLexicalHandler_endCDATA(This->saxreader->lexicalHandler);
+
+    if(FAILED(hr))
+        format_error_message_from_id(This, hr);
+
+    This->column += 4+end-cur;
+}
+
 /*** IVBSAXLocator interface ***/
 /*** IUnknown methods ***/
 static HRESULT WINAPI ivbsaxlocator_QueryInterface(IVBSAXLocator* iface, REFIID riid, void **ppvObject)
@@ -2753,6 +2829,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->sax.comment = libxmlComment;
     reader->sax.error = libxmlFatalError;
     reader->sax.fatalError = libxmlFatalError;
+    reader->sax.cdataBlock = libxmlCDataBlock;
 
     *ppObj = &reader->lpVBSAXXMLReaderVtbl;
 
