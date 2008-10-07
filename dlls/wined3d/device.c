@@ -1395,7 +1395,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
     HDC                     hDc;
     IWineD3DSwapChainImpl  *object; /** NOTE: impl ref allowed since this is a create function **/
-    HRESULT                 hr = WINED3D_OK;
+    HRESULT                 hr;
     IUnknown               *bufferParent;
     BOOL                    displaymode_set = FALSE;
     WINED3DDISPLAYMODE      Mode;
@@ -1501,7 +1501,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
                              TRUE /* Lockable */,
                              &object->frontBuffer,
                              NULL /* pShared (always null)*/);
-    if (object->frontBuffer != NULL) {
+    if (SUCCEEDED(hr)) {
         IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
         if(surface_type == SURFACE_OPENGL) {
             IWineD3DSurface_ModifyLocation(object->frontBuffer, SFLAG_INDRAWABLE, TRUE);
@@ -1586,7 +1586,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
                                     TRUE /* Lockable */,
                                     &object->backBuffer[i],
                                     NULL /* pShared (always null)*/);
-            if(hr == WINED3D_OK && object->backBuffer[i]) {
+            if(SUCCEEDED(hr)) {
                 IWineD3DSurface_SetContainer(object->backBuffer[i], (IWineD3DBase *)object);
             } else {
                 ERR("Cannot create new back buffer\n");
@@ -1612,7 +1612,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     }
 
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
-    if (pPresentationParameters->EnableAutoDepthStencil && hr == WINED3D_OK && surface_type == SURFACE_OPENGL) {
+    if (pPresentationParameters->EnableAutoDepthStencil && surface_type == SURFACE_OPENGL) {
         TRACE("Creating depth stencil buffer\n");
         if (This->auto_depth_stencil_buffer == NULL ) {
             hr = D3DCB_CreateDepthStencil(This->parent,
@@ -1625,8 +1625,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
                                     FALSE /* FIXME: Discard */,
                                     &This->auto_depth_stencil_buffer,
                                     NULL /* pShared (always null)*/  );
-            if (This->auto_depth_stencil_buffer != NULL)
+            if (SUCCEEDED(hr)) {
                 IWineD3DSurface_SetContainer(This->auto_depth_stencil_buffer, 0);
+            } else {
+                ERR("Failed to create the auto depth stencil\n");
+                goto error;
+            }
         }
     }
 
