@@ -98,6 +98,8 @@ typedef struct {
     LONG ref;
     xobject* pobj;
     int cur_enum_object;
+    BOOL from_ref;
+    ULONG level;
 } IDirectXFileDataImpl;
 
 typedef struct {

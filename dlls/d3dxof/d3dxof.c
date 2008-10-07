@@ -1409,6 +1409,12 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
   if (This->cur_enum_object >= This->pobj->nb_childs)
     return DXFILEERR_NOMOREOBJECTS;
 
+  if (This->from_ref && (This->level >= 1))
+  {
+    /* Only 2 levels can enumerated if the object is obtained from a reference */
+    return DXFILEERR_NOMOREOBJECTS;
+  }
+
   if (This->pobj->childs[This->cur_enum_object]->ptarget)
   {
     IDirectXFileDataReferenceImpl *object;
@@ -1431,6 +1437,8 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetNextObject(IDirectXFileData* iface
 
     object->pobj = This->pobj->childs[This->cur_enum_object++];
     object->cur_enum_object = 0;
+    object->from_ref = This->from_ref;
+    object->level = This->level + 1;
 
     *ppChildObj = (LPDIRECTXFILEOBJECT)object;
   }
@@ -1590,6 +1598,8 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_Resolve(IDirectXFileDataRefe
 
   object->pobj = This->ptarget;
   object->cur_enum_object = 0;
+  object->level = 0;
+  object->from_ref = TRUE;
 
   *ppDataObj = (LPDIRECTXFILEDATA)object;
 
@@ -1981,6 +1991,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 
   object->pobj = This->buf.pxo;
   object->cur_enum_object = 0;
+  object->level = 0;
+  object->from_ref = FALSE;
 
   *ppDataObj = (LPDIRECTXFILEDATA)object;
 
