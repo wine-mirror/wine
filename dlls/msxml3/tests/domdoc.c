@@ -1353,6 +1353,8 @@ static void test_refs(void)
 
 static void test_create(void)
 {
+    static const WCHAR szOne[] = {'1',0};
+    static const WCHAR szOneGarbage[] = {'1','G','a','r','b','a','g','e',0};
     HRESULT r;
     VARIANT var;
     BSTR str, name;
@@ -1368,6 +1370,36 @@ static void test_create(void)
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
     if( r != S_OK )
         return;
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ELEMENT;
+    str = SysAllocString( szlc );
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+    if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
+
+    V_VT(&var) = VT_R4;
+    V_R4(&var) = NODE_ELEMENT;
+    str = SysAllocString( szlc );
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+    if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString( szOne );
+    str = SysAllocString( szlc );
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == S_OK, "returns %08x\n", r );
+    if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString( szOneGarbage );
+    str = SysAllocString( szlc );
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == E_INVALIDARG, "returns %08x\n", r );
+    if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
+    VariantClear(&var);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = NODE_ELEMENT;

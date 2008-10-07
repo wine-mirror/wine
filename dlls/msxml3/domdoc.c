@@ -1110,13 +1110,19 @@ static HRESULT WINAPI domdoc_getElementsByTagName(
     return hr;
 }
 
-static DOMNodeType get_node_type(VARIANT Type)
+static HRESULT get_node_type(VARIANT Type, DOMNodeType * type)
 {
-    if(V_VT(&Type) == VT_I4)
-        return V_I4(&Type);
+    VARIANT tmp;
+    HRESULT hr;
 
-    FIXME("Unsupported variant type %x\n", V_VT(&Type));
-    return 0;
+    VariantInit(&tmp);
+    hr = VariantChangeType(&tmp, &Type, 0, VT_I4);
+    if(FAILED(hr))
+        return E_INVALIDARG;
+
+    *type = V_I4(&tmp);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI domdoc_createNode(
@@ -1130,10 +1136,14 @@ static HRESULT WINAPI domdoc_createNode(
     DOMNodeType node_type;
     xmlNodePtr xmlnode = NULL;
     xmlChar *xml_name;
+    HRESULT hr;
 
     TRACE("(%p)->(type,%s,%s,%p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
 
-    node_type = get_node_type(Type);
+    hr = get_node_type(Type, &node_type);
+    if(FAILED(hr))
+        return hr;
+
     TRACE("node_type %d\n", node_type);
 
     xml_name = xmlChar_from_wchar((WCHAR*)name);
