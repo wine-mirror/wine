@@ -1817,6 +1817,13 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
         lpdwCacheEntryInfoBufferSize,
         dwReserved);
 
+    if (!lpszUrlName || !lpdwCacheEntryInfoBufferSize ||
+        (!lpCacheEntryInfo && *lpdwCacheEntryInfoBufferSize))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     error = URLCacheContainers_FindContainerA(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
     {
@@ -1898,6 +1905,13 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
         lpCacheEntryInfo,
         lpdwCacheEntryInfoBufferSize,
         dwReserved);
+
+    if (!lpszUrlName || !lpdwCacheEntryInfoBufferSize ||
+        (!lpCacheEntryInfo && *lpdwCacheEntryInfoBufferSize))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)

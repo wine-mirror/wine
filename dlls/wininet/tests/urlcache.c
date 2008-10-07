@@ -113,11 +113,35 @@ static void test_GetUrlCacheEntryInfoExA(void)
     check_cache_entry_infoA("GetUrlCacheEntryInfoEx", lpCacheEntryInfo);
 
     cbCacheEntryInfo = 100000;
+    SetLastError(0xdeadbeef);
     ret = GetUrlCacheEntryInfoEx(TEST_URL, NULL, &cbCacheEntryInfo, NULL, NULL, NULL, 0);
     ok(!ret, "GetUrlCacheEntryInfoEx with zero-length buffer should fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetUrlCacheEntryInfoEx should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
 
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+}
+
+static void test_RetrieveUrlCacheEntryA(void)
+{
+    BOOL ret;
+    DWORD cbCacheEntryInfo;
+
+    cbCacheEntryInfo = 0;
+    SetLastError(0xdeadbeef);
+    ret = RetrieveUrlCacheEntryFile(NULL, NULL, &cbCacheEntryInfo, 0);
+    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = RetrieveUrlCacheEntryFile(TEST_URL, NULL, NULL, 0);
+    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    cbCacheEntryInfo = 100000;
+    ret = RetrieveUrlCacheEntryFile(NULL, NULL, &cbCacheEntryInfo, 0);
+    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
 }
 
 static void test_urlcacheA(void)
@@ -168,6 +192,7 @@ static void test_urlcacheA(void)
     test_find_url_cache_entriesA();
 
     test_GetUrlCacheEntryInfoExA();
+    test_RetrieveUrlCacheEntryA();
 
     if (pDeleteUrlCacheEntryA)
     {
