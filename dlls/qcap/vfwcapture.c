@@ -115,7 +115,7 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
     pVfwCapture->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter");
     hr = VfwPin_Construct((IBaseFilter *)&pVfwCapture->lpVtbl,
                    &pVfwCapture->csFilter, &pVfwCapture->pOutputPin);
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
     {
         CoTaskMemFree(pVfwCapture);
         return NULL;
