@@ -1673,13 +1673,13 @@ static void test_null_stream(void)
     }
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexDeclaration failed (0x%08x)\n", hr);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
 	skip("Vertex declaration handling not possible.\n");
 	goto cleanup;
     }
     hr = IDirect3DDevice9_CreateVertexBuffer(device, 12 * sizeof(float), 0, 0, D3DPOOL_MANAGED, &buffer, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexBuffer failed (0x%08x)\n", hr);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
 	skip("Vertex buffer handling not possible.\n");
 	goto cleanup;
     }
