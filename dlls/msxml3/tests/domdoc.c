@@ -1791,7 +1791,7 @@ static void test_removeChild(void)
     BSTR str;
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
-    IXMLDOMElement *element;
+    IXMLDOMElement *element, *lc_element;
     IXMLDOMNode *fo_node, *ba_node, *removed_node, *temp_node, *lc_node;
     IXMLDOMNodeList *root_list, *fo_list;
 
@@ -1855,7 +1855,11 @@ static void test_removeChild(void)
     r = IXMLDOMNodeList_get_item( root_list, 0, &lc_node );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMElement_removeChild( element, lc_node, NULL );
+    r = IXMLDOMElement_QueryInterface( lc_node, &IID_IXMLDOMElement, (LPVOID*)&lc_element );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    /* MS quirk: passing wrong interface pointer works, too */
+    r = IXMLDOMElement_removeChild( element, (IXMLDOMNode*)lc_element, NULL );
     ok( r == S_OK, "ret %08x\n", r);
 
     r = IXMLDOMNode_get_parentNode( lc_node, &temp_node );

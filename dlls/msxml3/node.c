@@ -671,6 +671,8 @@ static HRESULT WINAPI xmlnode_removeChild(
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlNode *child_node_ptr;
+    HRESULT hr;
+    IXMLDOMNode *child;
 
     TRACE("%p->(%p, %p)\n", This, childNode, oldChild);
 
@@ -679,14 +681,21 @@ static HRESULT WINAPI xmlnode_removeChild(
     if(oldChild)
         *oldChild = NULL;
 
-    child_node_ptr = impl_from_IXMLDOMNode(childNode)->node;
+    hr = IXMLDOMNode_QueryInterface(childNode, &IID_IXMLDOMNode, (LPVOID)&child);
+    if(FAILED(hr))
+        return hr;
+
+    child_node_ptr = impl_from_IXMLDOMNode(child)->node;
     if(child_node_ptr->parent != This->node)
     {
         WARN("childNode %p is not a child of %p\n", childNode, iface);
+        IXMLDOMNode_Release(child);
         return E_INVALIDARG;
     }
 
     xmlUnlinkNode(child_node_ptr);
+
+    IXMLDOMNode_Release(child);
 
     if(oldChild)
     {
