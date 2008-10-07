@@ -846,12 +846,13 @@ static HRESULT String_small(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
+    match_result_t *match_result = NULL;
+    DWORD match_cnt, i, match_len = 0;
     StringInstance *string;
-    match_result_t *match_result;
-    DWORD match_cnt, i, len;
-    const WCHAR *ptr;
+    const WCHAR *ptr, *ptr2;
     VARIANT *arg, var;
     DispatchEx *array;
+    BSTR match_str = NULL;
     HRESULT hres;
 
     TRACE("\n");
@@ -886,18 +887,38 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
         }
     }
     default:
-        FIXME("unsupported vt %d\n", V_VT(arg));
-        return E_NOTIMPL;
+        hres = to_string(dispex->ctx, arg, ei, &match_str);
+        if(FAILED(hres))
+            return hres;
+
+        match_len = SysStringLen(match_str);
+        if(!match_len) {
+            SysFreeString(match_str);
+            match_str = NULL;
+        }
     }
 
-    hres = create_array(dispex->ctx, match_cnt+1, &array);
+    hres = create_array(dispex->ctx, 0, &array);
 
     if(SUCCEEDED(hres)) {
         ptr = string->str;
-        for(i=0; i < match_cnt; i++) {
-            len = match_result[i].str-ptr;
+        for(i=0;; i++) {
+            if(match_result) {
+                if(i == match_cnt)
+                    break;
+                ptr2 = match_result[i].str;
+            }else if(match_str) {
+                ptr2 = strstrW(ptr, match_str);
+                if(!ptr2)
+                    break;
+            }else {
+                if(!*ptr)
+                    break;
+                ptr2 = ptr+1;
+            }
+
             V_VT(&var) = VT_BSTR;
-            V_BSTR(&var) = SysAllocStringLen(ptr, len);
+            V_BSTR(&var) = SysAllocStringLen(ptr, ptr2-ptr);
             if(!V_BSTR(&var)) {
                 hres = E_OUTOFMEMORY;
                 break;
@@ -908,20 +929,32 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
             if(FAILED(hres))
                 break;
 
-            ptr = match_result[i].str + match_result[i].len;
+            if(match_result)
+                ptr = match_result[i].str + match_result[i].len;
+            else if(match_str)
+                ptr = ptr2 + match_len;
+            else
+                ptr++;
         }
     }
 
-    if(SUCCEEDED(hres)) {
-        len = (string->str+string->length) - ptr;
+    if(SUCCEEDED(hres) && (match_str || match_result)) {
+        DWORD len = (string->str+string->length) - ptr;
 
-        V_VT(&var) = VT_BSTR;
-        V_BSTR(&var) = SysAllocStringLen(ptr, len);
+        if(len || match_str) {
+            V_VT(&var) = VT_BSTR;
+            V_BSTR(&var) = SysAllocStringLen(ptr, len);
 
-        hres = jsdisp_propput_idx(array, i, lcid, &var, ei, sp);
-        SysFreeString(V_BSTR(&var));
+            if(V_BSTR(&var)) {
+                hres = jsdisp_propput_idx(array, i, lcid, &var, ei, sp);
+                SysFreeString(V_BSTR(&var));
+            }else {
+                hres = E_OUTOFMEMORY;
+            }
+        }
     }
 
+    SysFreeString(match_str);
     heap_free(match_result);
 
     if(SUCCEEDED(hres) && retv) {

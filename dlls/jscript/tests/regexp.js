@@ -150,4 +150,21 @@ function replaceFunc2(m, subm, off, str) {
 r = "[test1] [test2]".replace(/\[([^\[]+)\]/g, replaceFunc2);
 ok(r === "r0 r1", "r = '" + r + "' expected 'r0 r1'");
 
+r = "1,,2,3".split(/,+/g);
+ok(r.length === 3, "r.length = " + r.length);
+ok(r[0] === "1", "r[0] = " + r[0]);
+ok(r[1] === "2", "r[1] = " + r[1]);
+ok(r[2] === "3", "r[2] = " + r[2]);
+
+r = "1,,2,3".split(/,+/);
+ok(r.length === 3, "r.length = " + r.length);
+ok(r[0] === "1", "r[0] = " + r[0]);
+ok(r[1] === "2", "r[1] = " + r[1]);
+ok(r[2] === "3", "r[2] = " + r[2]);
+
+r = "1,,2,".split(/,+/);
+ok(r.length === 2, "r.length = " + r.length);
+ok(r[0] === "1", "r[0] = " + r[0]);
+ok(r[1] === "2", "r[1] = " + r[1]);
+
 reportSuccess();
