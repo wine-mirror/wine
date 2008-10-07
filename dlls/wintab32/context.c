@@ -648,6 +648,10 @@ BOOL WINAPI WTEnable(HCTX hCtx, BOOL fEnable)
         context->enabled = TRUE;
         /* TODO: Add to top of overlap order */
         context->context.lcStatus = CXS_ONTOP;
+        TABLET_PostTabletMessage(context,
+            _WT_CTXOVERLAP(context->context.lcMsgBase),
+            (WPARAM)context->handle,
+            context->context.lcStatus, TRUE);
     }
     /* if we want to disable and it is not disabled then */
     else if (!fEnable && context->enabled)
@@ -656,6 +660,10 @@ BOOL WINAPI WTEnable(HCTX hCtx, BOOL fEnable)
         /* TODO: Remove from overlap order?? needs a test */
         context->context.lcStatus = CXS_DISABLED;
         TABLET_FlushQueue(context);
+        TABLET_PostTabletMessage(context,
+            _WT_CTXOVERLAP(context->context.lcMsgBase),
+            (WPARAM)context->handle,
+            context->context.lcStatus, TRUE);
     }
     LeaveCriticalSection(&csTablet);
 
@@ -677,17 +685,26 @@ BOOL WINAPI WTOverlap(HCTX hCtx, BOOL fToTop)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
-    if (fToTop)
+    /* if we want to send to top and it's not already there */
+    if (fToTop && context->context.lcStatus != CXS_ONTOP)
     {
         /* TODO: Move context to top of overlap order */
         FIXME("Not moving context to top of overlap order\n");
         context->context.lcStatus = CXS_ONTOP;
+        TABLET_PostTabletMessage(context,
+            _WT_CTXOVERLAP(context->context.lcMsgBase),
+            (WPARAM)context->handle,
+            context->context.lcStatus, TRUE);
     }
-    else
+    else if (!fToTop)
     {
         /* TODO: Move context to bottom of overlap order */
         FIXME("Not moving context to bottom of overlap order\n");
         context->context.lcStatus = CXS_OBSCURED;
+        TABLET_PostTabletMessage(context,
+            _WT_CTXOVERLAP(context->context.lcMsgBase),
+            (WPARAM)context->handle,
+            context->context.lcStatus, TRUE);
     }
     LeaveCriticalSection(&csTablet);
 
