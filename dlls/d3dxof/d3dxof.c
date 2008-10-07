@@ -245,7 +245,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   TRACE("Header is correct\n");
 
   hr = IDirectXFileEnumObjectImpl_Create(&object);
-  if (!SUCCEEDED(hr))
+  if (FAILED(hr))
     goto error;
 
   object->source = dwLoadOptions;
@@ -1968,7 +1968,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     return DXFILEERR_NOMOREOBJECTS;
 
   hr = IDirectXFileDataImpl_Create(&object);
-  if (!SUCCEEDED(hr))
+  if (FAILED(hr))
     return hr;
 
   This->buf.pxo_globals = &This->xobjects[0][0];
