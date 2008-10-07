@@ -76,6 +76,7 @@ struct _xobject {
    ULONG nb_members;
    xobject_member members[MAX_MEMBERS];
    ULONG nb_childs;
+   ULONG nb_subobjects;
    struct _xobject * childs[MAX_CHILDS];
 };
 

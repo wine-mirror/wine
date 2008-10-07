@@ -1989,6 +1989,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     return DXFILEERR_PARSEERROR;
   }
 
+  This->buf.pxo->nb_subobjects = This->buf.cur_subobject;
+
   object->pobj = This->buf.pxo;
   object->cur_enum_object = 0;
   object->level = 0;
