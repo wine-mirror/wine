@@ -296,6 +296,12 @@ static void InternetReadFile_test(int flags)
     ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
     ok(!strcmp(buffer, "http://www.winehq.org/about/"), "Wrong URL %s\n", buffer);
 
+    length = sizeof(buffer);
+    res = HttpQueryInfoA(hor, HTTP_QUERY_RAW_HEADERS, buffer, &length, 0x0);
+    ok(res, "HttpQueryInfoA(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
+    ok(length == 0, "HTTP_QUERY_RAW_HEADERS: expected length 0, but got %d\n", length);
+    ok(!strcmp(buffer, ""), "HTTP_QUERY_RAW_HEADERS: expected string \"\", but got \"%s\"\n", buffer);
+
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
     CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
     CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);

@@ -143,21 +143,26 @@ static LPWSTR * HTTP_Tokenize(LPCWSTR string, LPCWSTR token_string)
     int i;
     LPCWSTR next_token;
 
-    /* empty string has no tokens */
-    if (*string)
-        tokens++;
-    /* count tokens */
-    for (i = 0; string[i]; i++)
-        if (!strncmpW(string+i, token_string, strlenW(token_string)))
-        {
-            DWORD j;
+    if (string)
+    {
+        /* empty string has no tokens */
+        if (*string)
             tokens++;
-            /* we want to skip over separators, but not the null terminator */
-            for (j = 0; j < strlenW(token_string) - 1; j++)
-                if (!string[i+j])
-                    break;
-            i += j;
+        /* count tokens */
+        for (i = 0; string[i]; i++)
+        {
+            if (!strncmpW(string+i, token_string, strlenW(token_string)))
+            {
+                DWORD j;
+                tokens++;
+                /* we want to skip over separators, but not the null terminator */
+                for (j = 0; j < strlenW(token_string) - 1; j++)
+                    if (!string[i+j])
+                        break;
+                i += j;
+            }
         }
+    }
 
     /* add 1 for terminating NULL */
     token_array = HeapAlloc(GetProcessHeap(), 0, (tokens+1) * sizeof(*token_array));
