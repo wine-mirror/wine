@@ -1495,25 +1495,6 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
         file->IsCompressed = package->WordCount & msidbSumInfoSourceTypeCompressed;
     }
 
-    if (!file->IsCompressed)
-    {
-        LPWSTR p, path;
-
-        p = resolve_folder(package, file->Component->Directory,
-                           TRUE, FALSE, TRUE, NULL);
-        path = build_directory_name(2, p, file->ShortName);
-
-        if (file->LongName &&
-            GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES)
-        {
-            msi_free(path);
-            path = build_directory_name(2, p, file->LongName);
-        }
-
-        file->SourcePath = path;
-        msi_free(p);
-    }
-
     load_file_hash(package, file);
 
     TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
@@ -2895,6 +2876,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 LPWSTR ptr, ptr2;
                 WCHAR source[MAX_PATH];
                 WCHAR base[MAX_PATH];
+                LPWSTR sourcepath;
 
                 static const WCHAR fmt[] = {'%','0','2','d','\\',0};
                 static const WCHAR query[] = {
@@ -2917,8 +2899,10 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 ptr = strrchrW(base, '\\');
                 *(ptr + 1) = '\0';
 
-                ptr = file->SourcePath + lstrlenW(base);
+                sourcepath = resolve_file_source(package, file);
+                ptr = sourcepath + lstrlenW(base);
                 lstrcpyW(ptr2, ptr);
+                msi_free(sourcepath);
 
                 msi_reg_set_val_str(hkey, squished_pc, source);
             }
@@ -5931,7 +5915,6 @@ static UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
     struct list assemblies = LIST_INIT(assemblies);
     MSIASSEMBLY *assembly;
     MSIMEDIAINFO *mi;
-    WCHAR path[MAX_PATH];
 
     r = load_assemblies(package, &assemblies);
     if (r != ERROR_SUCCESS)
@@ -5980,11 +5963,13 @@ static UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
 
         if (!assembly->file->IsCompressed)
         {
-            lstrcpyW(path, assembly->file->SourcePath);
+            LPWSTR source = resolve_file_source(package, assembly->file);
 
-            r = install_assembly(package, assembly, path);
+            r = install_assembly(package, assembly, source);
             if (r != ERROR_SUCCESS)
                 ERR("Failed to install assembly\n");
+
+            msi_free(source);
         }
 
         /* FIXME: write Installer assembly reg values */

@@ -648,7 +648,9 @@ static const CHAR ca51_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                 "GoodSetProperty\t\t725\n"
                                                 "BadSetProperty\t\t750\n"
                                                 "CostInitialize\t\t800\n"
+                                                "ResolveSource\t\t810\n"
                                                 "FileCost\t\t900\n"
+                                                "SetSourceDir\tSRCDIR\t910\n"
                                                 "CostFinalize\t\t1000\n"
                                                 "InstallValidate\t\t1400\n"
                                                 "InstallInitialize\t\t1500\n"
@@ -659,7 +661,8 @@ static const CHAR ca51_custom_action_dat[] = "Action\tType\tSource\tTarget\n"
                                              "s72\ti2\tS64\tS0\n"
                                              "CustomAction\tAction\n"
                                              "GoodSetProperty\t51\tMYPROP\t42\n"
-                                             "BadSetProperty\t51\t\tMYPROP\n";
+                                             "BadSetProperty\t51\t\tMYPROP\n"
+                                             "SetSourceDir\t51\tSourceDir\t[SRCDIR]\n";
 
 static const CHAR is_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
@@ -5434,6 +5437,43 @@ static void test_missingcomponent(void)
     RemoveDirectoryA("msitest");
 }
 
+static void test_sourcedirprop(void)
+{
+    UINT r;
+    CHAR props[MAX_PATH];
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 500);
+
+    create_database(msifile, ca51_tables, sizeof(ca51_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File installed\n");
+
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+
+    CreateDirectoryA("altsource", NULL);
+    CreateDirectoryA("altsource\\msitest", NULL);
+    create_file("altsource\\msitest\\augustus", 500);
+
+    sprintf(props, "SRCDIR=%s\\altsource\\", CURR_DIR);
+
+    r = MsiInstallProductA(msifile, props);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
+    ok(delete_pf("msitest", FALSE), "File installed\n");
+
+    DeleteFile(msifile);
+    DeleteFile("altsource\\msitest\\augustus");
+    RemoveDirectory("altsource\\msitest");
+    RemoveDirectory("altsource");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -5504,6 +5544,7 @@ START_TEST(install)
     test_sourcepath();
     test_MsiConfigureProductEx();
     test_missingcomponent();
+    test_sourcedirprop();
 
     DeleteFileA("msitest.log");
 

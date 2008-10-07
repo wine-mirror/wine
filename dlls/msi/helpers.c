@@ -161,6 +161,25 @@ MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir )
     return NULL;
 }
 
+void msi_reset_folders( MSIPACKAGE *package, BOOL source )
+{
+    MSIFOLDER *folder;
+
+    LIST_FOR_EACH_ENTRY( folder, &package->folders, MSIFOLDER, entry )
+    {
+        if ( source )
+        {
+            msi_free( folder->ResolvedSource );
+            folder->ResolvedSource = NULL;
+        }
+        else
+        {
+            msi_free( folder->ResolvedTarget );
+            folder->ResolvedTarget = NULL;
+        }
+    }
+}
+
 static LPWSTR get_source_root( MSIPACKAGE *package )
 {
     LPWSTR path, p;
@@ -216,6 +235,34 @@ static void clean_spaces_from_path( LPWSTR p )
         else  /* copy n spaces */
             while (n && (*q++ = *p++)) n--;
     }
+}
+
+LPWSTR resolve_file_source(MSIPACKAGE *package, MSIFILE *file)
+{
+    LPWSTR p, path;
+
+    TRACE("Working to resolve source of file %s\n", debugstr_w(file->File));
+
+    if (file->IsCompressed)
+        return NULL;
+
+    p = resolve_folder(package, file->Component->Directory,
+                       TRUE, FALSE, TRUE, NULL);
+    path = build_directory_name(2, p, file->ShortName);
+
+    if (file->LongName &&
+        GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES)
+    {
+        msi_free(path);
+        path = build_directory_name(2, p, file->LongName);
+    }
+
+    msi_free(p);
+
+    TRACE("file %s source resolves to %s\n", debugstr_w(file->File),
+          debugstr_w(path));
+
+    return path;
 }
 
 LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source, 
@@ -518,7 +565,6 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         msi_free( file->LongName );
         msi_free( file->Version );
         msi_free( file->Language );
-        msi_free( file->SourcePath );
         msi_free( file->TargetPath );
         msi_free( file );
     }

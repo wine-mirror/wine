@@ -1345,6 +1345,9 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
 
     msiobj_release(&row->hdr);
 
+    if (rc == ERROR_SUCCESS && (!lstrcmpW(szName, cszSourceDir)))
+        msi_reset_folders(package, TRUE);
+
     return rc;
 }
 

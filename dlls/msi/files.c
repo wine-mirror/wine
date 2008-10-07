@@ -126,11 +126,11 @@ static void schedule_install_files(MSIPACKAGE *package)
     }
 }
 
-static UINT copy_file(MSIFILE *file)
+static UINT copy_file(MSIFILE *file, LPWSTR source)
 {
     BOOL ret;
 
-    ret = CopyFileW(file->SourcePath, file->TargetPath, FALSE);
+    ret = CopyFileW(source, file->TargetPath, FALSE);
     if (!ret)
         return GetLastError();
 
@@ -140,14 +140,14 @@ static UINT copy_file(MSIFILE *file)
     return ERROR_SUCCESS;
 }
 
-static UINT copy_install_file(MSIFILE *file)
+static UINT copy_install_file(MSIFILE *file, LPWSTR source)
 {
     UINT gle;
 
-    TRACE("Copying %s to %s\n", debugstr_w(file->SourcePath),
+    TRACE("Copying %s to %s\n", debugstr_w(source),
           debugstr_w(file->TargetPath));
 
-    gle = copy_file(file);
+    gle = copy_file(file, source);
     if (gle == ERROR_SUCCESS)
         return gle;
 
@@ -160,7 +160,7 @@ static UINT copy_install_file(MSIFILE *file)
     {
         SetFileAttributesW(file->TargetPath, FILE_ATTRIBUTE_NORMAL);
 
-        gle = copy_file(file);
+        gle = copy_file(file, source);
         TRACE("Overwriting existing file: %d\n", gle);
     }
 
@@ -291,22 +291,28 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
         if (!file->IsCompressed)
         {
-            TRACE("file paths %s to %s\n", debugstr_w(file->SourcePath),
+            LPWSTR source = resolve_file_source(package, file);
+
+            TRACE("file paths %s to %s\n", debugstr_w(source),
                   debugstr_w(file->TargetPath));
 
             msi_file_update_ui(package, file, szInstallFiles);
-            rc = copy_install_file(file);
+            rc = copy_install_file(file, source);
             if (rc != ERROR_SUCCESS)
             {
-                ERR("Failed to copy %s to %s (%d)\n", debugstr_w(file->SourcePath),
+                ERR("Failed to copy %s to %s (%d)\n", debugstr_w(source),
                     debugstr_w(file->TargetPath), rc);
                 rc = ERROR_INSTALL_FAILURE;
+                msi_free(source);
                 break;
             }
+
+            msi_free(source);
         }
         else if (file->state != msifs_installed)
         {
-            ERR("compressed file wasn't extracted (%s)\n", debugstr_w(file->TargetPath));
+            ERR("compressed file wasn't extracted (%s)\n",
+                debugstr_w(file->TargetPath));
             rc = ERROR_INSTALL_FAILURE;
             break;
         }
