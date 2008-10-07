@@ -1260,6 +1260,37 @@ static void libxmlSetDocumentLocator(
         format_error_message_from_id(This, hr);
 }
 
+static void libxmlComment(void *ctx, const xmlChar *value)
+{
+    saxlocator *This = ctx;
+    BSTR bValue;
+    HRESULT hr;
+    xmlChar *beg = (xmlChar*)This->pParserCtxt->input->cur;
+
+    while(memcmp(beg-4, "<!--", sizeof(char[4]))) beg--;
+    update_position(This, beg);
+
+    if(!This->vbInterface && !This->saxreader->lexicalHandler) return;
+    if(This->vbInterface && !This->saxreader->vblexicalHandler) return;
+
+    bValue = bstr_from_xmlChar(value);
+
+    if(This->vbInterface)
+        hr = IVBSAXLexicalHandler_comment(
+                This->saxreader->vblexicalHandler, &bValue);
+    else
+        hr = ISAXLexicalHandler_comment(
+                This->saxreader->lexicalHandler,
+                bValue, SysStringLen(bValue));
+
+    SysFreeString(bValue);
+
+    if(FAILED(hr))
+        format_error_message_from_id(This, hr);
+
+    update_position(This, NULL);
+}
+
 static void libxmlFatalError(void *ctx, const char *msg, ...)
 {
     saxlocator *This = ctx;
@@ -2719,6 +2750,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->sax.endElementNs = libxmlEndElementNS;
     reader->sax.characters = libxmlCharacters;
     reader->sax.setDocumentLocator = libxmlSetDocumentLocator;
+    reader->sax.comment = libxmlComment;
     reader->sax.error = libxmlFatalError;
     reader->sax.fatalError = libxmlFatalError;
 
