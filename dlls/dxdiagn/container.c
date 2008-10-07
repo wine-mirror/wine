@@ -150,7 +150,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER if
   while (NULL != cur) {
     *cur = '\0'; /* cut tmp string to '.' */
     hr = IDxDiagContainerImpl_GetChildContainerInternal(pContainer, tmp, &pContainer);
-    if (!SUCCEEDED(hr) || NULL == pContainer)
+    if (FAILED(hr) || NULL == pContainer)
       goto on_error;
     cur++; /* go after '.' (just replaced by \0) */
     tmp = cur;
