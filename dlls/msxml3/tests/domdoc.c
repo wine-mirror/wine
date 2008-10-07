@@ -283,7 +283,7 @@ static int get_node_position(IXMLDOMNode *node)
 
         pos++;
         r = IXMLDOMNode_get_previousSibling(node, &new_node);
-        ok(!FAILED(r), "get_previousSibling failed\n");
+        ok(SUCCEEDED(r), "get_previousSibling failed\n");
         IXMLDOMNode_Release(node);
         node = new_node;
     } while (r == S_OK);
@@ -341,7 +341,7 @@ static void node_to_string(IXMLDOMNode *node, char *buf)
             buf += strlen(buf);
         }
 
-        ok(!FAILED(r), "get_parentNode failed (%08x)\n", r);
+        ok(SUCCEEDED(r), "get_parentNode failed (%08x)\n", r);
         IXMLDOMNode_Release(node);
         node = new_node;
         if (r == S_OK)
