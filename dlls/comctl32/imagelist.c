@@ -1908,13 +1908,13 @@ static BOOL _read_bitmap(HDC hdcIml, LPSTREAM pstm)
     int                result = FALSE;
     LPBYTE             bits = NULL;
 
-    if (!SUCCEEDED(IStream_Read ( pstm, &bmfh, sizeof(bmfh), NULL)))
+    if (FAILED(IStream_Read ( pstm, &bmfh, sizeof(bmfh), NULL)))
         return FALSE;
 
     if (bmfh.bfType != (('M'<<8)|'B'))
         return FALSE;
 
-    if (!SUCCEEDED(IStream_Read ( pstm, &bmi->bmiHeader, sizeof(bmi->bmiHeader), NULL)))
+    if (FAILED(IStream_Read ( pstm, &bmi->bmiHeader, sizeof(bmi->bmiHeader), NULL)))
         return FALSE;
 
     if ((bmi->bmiHeader.biSize != sizeof(bmi->bmiHeader)))
@@ -1933,13 +1933,13 @@ static BOOL _read_bitmap(HDC hdcIml, LPSTREAM pstm)
     bmi->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, bitsperpixel);
 
     /* read the palette right after the end of the bitmapinfoheader */
-    if (palspace && !SUCCEEDED(IStream_Read(pstm, bmi->bmiColors, palspace, NULL)))
+    if (palspace && FAILED(IStream_Read(pstm, bmi->bmiColors, palspace, NULL)))
 	goto error;
 
     bits = Alloc(bmi->bmiHeader.biSizeImage);
     if (!bits)
         goto error;
-    if (!SUCCEEDED(IStream_Read(pstm, bits, bmi->bmiHeader.biSizeImage, NULL)))
+    if (FAILED(IStream_Read(pstm, bits, bmi->bmiHeader.biSizeImage, NULL)))
         goto error;
 
     if (!StretchDIBits(hdcIml, 0, 0, bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight,
@@ -1992,7 +1992,7 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 
     TRACE("%p\n", pstm);
 
-    if (!SUCCEEDED(IStream_Read (pstm, &ilHead, sizeof(ILHEAD), NULL)))
+    if (FAILED(IStream_Read (pstm, &ilHead, sizeof(ILHEAD), NULL)))
 	return NULL;
     if (ilHead.usMagic != (('L' << 8) | 'I'))
 	return NULL;
@@ -2740,7 +2740,7 @@ _write_bitmap(HBITMAP hBitmap, LPSTREAM pstm)
 	inf->bmiColors[1].rgbRed = inf->bmiColors[1].rgbGreen = inf->bmiColors[1].rgbBlue = 0xff;
     }
 
-    if(!SUCCEEDED(IStream_Write(pstm, data, totalSize, NULL)))
+    if(FAILED(IStream_Write(pstm, data, totalSize, NULL)))
 	goto failed;
 
     result = TRUE;
@@ -2796,7 +2796,7 @@ ImageList_Write (HIMAGELIST himl, LPSTREAM pstm)
     TRACE("cx %u, cy %u, flags 0x04%x, cCurImage %u, cMaxImage %u\n",
           ilHead.cx, ilHead.cy, ilHead.flags, ilHead.cCurImage, ilHead.cMaxImage);
 
-    if(!SUCCEEDED(IStream_Write(pstm, &ilHead, sizeof(ILHEAD), NULL)))
+    if(FAILED(IStream_Write(pstm, &ilHead, sizeof(ILHEAD), NULL)))
 	return FALSE;
 
     /* write the bitmap */
