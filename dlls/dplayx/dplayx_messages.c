@@ -233,7 +233,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
   }
 
   /* Need to examine the data and extract the new player id */
-  if( !FAILED(hr) )
+  if( SUCCEEDED(hr) )
   {
     LPCDPMSG_NEWPLAYERIDREPLY lpcReply;
 

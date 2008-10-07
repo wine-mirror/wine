@@ -2323,7 +2323,7 @@ static HRESULT WINAPI DP_IF_EnumSessions
       hr = NS_SendSessionRequestBroadcast( &lpsd->guidApplication,
                                            dwFlags, &This->dp2->spData );
 
-      if( !FAILED(hr) )
+      if( SUCCEEDED(hr) )
       {
         EnumSessionAsyncCallbackData* lpData
           = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpData ) );
