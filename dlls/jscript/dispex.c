@@ -994,8 +994,8 @@ HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
     if(FAILED(hres)) {
         ULONG err = 0;
 
-        TRACE("uding IDispatch\n");
-        return IDispatchEx_Invoke(dispex, id, &IID_NULL, lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, &err);
+        TRACE("using IDispatch\n");
+        return IDispatch_Invoke(disp, id, &IID_NULL, lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, &err);
     }
 
     hres = IDispatchEx_InvokeEx(dispex, id, lcid, INVOKE_PROPERTYGET, &dp, val, &ei->ei, caller);
