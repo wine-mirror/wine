@@ -2250,6 +2250,22 @@ static void test_default_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "middle"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_textAlign(style, &str);
+    ok(hres == S_OK, "get_textAlign failed: %08x\n", hres);
+    ok(!str, "textAlign != NULL\n");
+
+    str = a2bstr("center");
+    hres = IHTMLStyle_put_textAlign(style, str);
+    ok(hres == S_OK, "put_textAlign failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle_get_textAlign(style, &str);
+    ok(hres == S_OK, "get_textAlign failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "center"), "textAlign = %s\n", dbgstr_w(V_BSTR(&v)));
+    SysFreeString(str);
+
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_zIndex(style, &v);
     ok(hres == S_OK, "get_zIndex failed: %08x\n", hres);
