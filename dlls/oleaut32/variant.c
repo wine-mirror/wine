@@ -5673,14 +5673,14 @@ HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     }
 
     hr = VariantChangeType(&dl,left,0,resvt);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
         ERR("Could not change passed left argument to VT_R8, handle it differently.\n");
         hr = E_FAIL;
         goto end;
     }
 
     hr = VariantChangeType(&dr,right,0,resvt);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
         ERR("Could not change passed right argument to VT_R8, handle it differently.\n");
         hr = E_FAIL;
         goto end;

@@ -394,7 +394,7 @@ HRESULT WINAPI LoadTypeLibEx(
                 /* else fall-through */
 
             case REGKIND_REGISTER:
-                if (!SUCCEEDED(res = RegisterTypeLib(*pptLib, (LPOLESTR)szPath, NULL)))
+                if (FAILED(res = RegisterTypeLib(*pptLib, (LPOLESTR)szPath, NULL)))
                 {
                     IUnknown_Release(*pptLib);
                     *pptLib = 0;
@@ -491,7 +491,7 @@ HRESULT WINAPI RegisterTypeLib(
     if (ptlib == NULL || szFullPath == NULL)
         return E_INVALIDARG;
 
-    if (!SUCCEEDED(ITypeLib_GetLibAttr(ptlib, &attr)))
+    if (FAILED(ITypeLib_GetLibAttr(ptlib, &attr)))
         return E_FAIL;
 
     get_typelib_key( &attr->guid, attr->wMajorVerNum, attr->wMinorVerNum, keyName );
@@ -6449,7 +6449,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
                                              ref_type->pImpTLInfo->lcid,
 					     &pTLib);
 
-		    if(!SUCCEEDED(result)) {
+                    if(FAILED(result)) {
                         BSTR libnam=SysAllocString(ref_type->pImpTLInfo->name);
 			result=LoadTypeLib(libnam, &pTLib);
 			SysFreeString(libnam);
