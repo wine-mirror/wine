@@ -1703,8 +1703,17 @@ static BOOL parse_object_members_list(parse_buffer * buf)
     {
       if (k)
       {
-        if (get_TOKEN(buf) != TOKEN_COMMA)
-          return FALSE;
+        token = check_TOKEN(buf);
+        if (token == TOKEN_COMMA)
+        {
+          get_TOKEN(buf);
+        }
+        else
+        {
+          /* Allow comma omission */
+          if (!((token == TOKEN_FLOAT)))
+            return FALSE;
+        }
       }
 
       if (pt->members[i].type == TOKEN_NAME)
