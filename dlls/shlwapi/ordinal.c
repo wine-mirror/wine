@@ -1251,11 +1251,11 @@ BOOL WINAPI SHIsSameObject(IUnknown* lpInt1, IUnknown* lpInt2)
   if (lpInt1 == lpInt2)
     return TRUE;
 
-  if (!SUCCEEDED(IUnknown_QueryInterface(lpInt1, &IID_IUnknown,
+  if (FAILED(IUnknown_QueryInterface(lpInt1, &IID_IUnknown,
                                        (LPVOID *)&lpUnknown1)))
     return FALSE;
 
-  if (!SUCCEEDED(IUnknown_QueryInterface(lpInt2, &IID_IUnknown,
+  if (FAILED(IUnknown_QueryInterface(lpInt2, &IID_IUnknown,
                                        (LPVOID *)&lpUnknown2)))
     return FALSE;
 
