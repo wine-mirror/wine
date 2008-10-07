@@ -1447,6 +1447,37 @@ interface nsIDOMHTMLTableRowElement : nsIDOMHTMLElement
 
 [
     object,
+    uuid(a6cf90ba-15b3-11d2-932e-00805f8add32),
+    local
+    /* FROZEN */
+]
+interface nsIDOMHTMLIFrameElement : nsIDOMHTMLElement
+{
+    nsresult GetAlign(nsAString *aAlign);
+    nsresult SetAlign(const nsAString *aAlign);
+    nsresult GetFrameBorder(nsAString *aFrameBorder);
+    nsresult SetFrameBorder(const nsAString *aFrameBorder);
+    nsresult GetHeight(nsAString *aHeight);
+    nsresult SetHeight(const nsAString *aHeight);
+    nsresult GetLongDesc(nsAString *aLongDesc);
+    nsresult SetLongDesc(const nsAString *aLongDesc);
+    nsresult GetMarginHeight(nsAString *aMarginHeight);
+    nsresult SetMarginHeight(const nsAString *aMarginHeight);
+    nsresult GetMarginWidth(nsAString *aMarginWidth);
+    nsresult SetMarginWidth(const nsAString *aMarginWidth);
+    nsresult GetName(nsAString *aName);
+    nsresult SetName(const nsAString *aName);
+    nsresult GetScrolling(nsAString *aScrolling);
+    nsresult SetScrolling(const nsAString *aScrolling);
+    nsresult GetSrc(nsAString *aSrc);
+    nsresult SetSrc(const nsAString *aSrc);
+    nsresult GetWidth(nsAString *aWidth);
+    nsresult SetWidth(const nsAString *aWidth);
+    nsresult GetContentDocument(nsIDOMDocument **aContentDocument);
+}
+
+[
+    object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
     /* FROZEN */

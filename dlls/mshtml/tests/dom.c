@@ -49,6 +49,7 @@ static const char elem_test_str[] =
     "<script id=\"sc\" type=\"text/javascript\"></script>"
     "<test />"
     "<img id=\"imgid\"/>"
+    "<iframe src=\"about:blank\"></iframe>"
     "</body></html>";
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
@@ -86,7 +87,8 @@ typedef enum {
     ET_COMMENT,
     ET_IMG,
     ET_TR,
-    ET_TD
+    ET_TD,
+    ET_IFRAME
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -271,6 +273,18 @@ static const IID * const td_iids[] = {
     NULL
 };
 
+static const IID * const iframe_iids[] = {
+    &IID_IHTMLDOMNode,
+    &IID_IHTMLDOMNode2,
+    &IID_IHTMLElement,
+    &IID_IHTMLElement2,
+    &IID_IHTMLElement3,
+    &IID_IHTMLFrameBase2,
+    &IID_IDispatchEx,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
 static const IID * const generic_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
@@ -329,7 +343,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"!",         comment_iids,     &DIID_DispHTMLCommentElement},
     {"IMG",       img_iids,         &DIID_DispHTMLImg},
     {"TR",        tr_iids,          &DIID_DispHTMLTableRow},
-    {"TD",        td_iids,          NULL}
+    {"TD",        td_iids,          NULL},
+    {"IFRAME",    iframe_iids,      NULL}
 };
 
 static const char *dbgstr_w(LPCWSTR str)
@@ -2642,7 +2657,8 @@ static void test_elems(IHTMLDocument2 *doc)
         ET_TD,
         ET_SCRIPT,
         ET_TEST,
-        ET_IMG
+        ET_IMG,
+        ET_IFRAME
     };
 
     static const elem_type_t item_types[] = {
