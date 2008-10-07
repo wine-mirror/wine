@@ -275,7 +275,7 @@ static void test_get_file_info_iconlist(void)
     SHFILEINFOW shInfow;
 
     hr = SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidList);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
          skip("can't get desktop pidl\n");
          return;
     }

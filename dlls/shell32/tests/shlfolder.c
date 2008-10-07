@@ -1398,7 +1398,7 @@ static void testSHGetFolderPathAndSubDirA(void)
         skip("SHGetFolderPathA not present!\n");
         return;
     }
-    if(!SUCCEEDED(pSHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appdata)))
+    if(FAILED(pSHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appdata)))
     {
         skip("SHGetFolderPathA failed for CSIDL_LOCAL_APPDATA!\n");
         return;

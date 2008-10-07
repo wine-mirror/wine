@@ -1505,7 +1505,7 @@ static void init_test(void)
 
     r = CoInitialize(NULL);
     ok(SUCCEEDED(r), "CoInitialize failed (0x%08x)\n", r);
-    if (!SUCCEEDED(r))
+    if (FAILED(r))
         exit(1);
 
     rc=GetModuleFileName(NULL, argv0, sizeof(argv0));

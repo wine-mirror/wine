@@ -114,7 +114,7 @@ static void test_get_set(void)
     r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IShellLinkA, (LPVOID*)&sl);
     ok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08x)\n", r);
-    if (!SUCCEEDED(r))
+    if (FAILED(r))
         return;
 
     /* Test Getting / Setting the description */
@@ -329,7 +329,7 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
     r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IShellLinkA, (LPVOID*)&sl);
     lok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08x)\n", r);
-    if (!SUCCEEDED(r))
+    if (FAILED(r))
         return;
 
     if (desc->description)
@@ -404,12 +404,12 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
     r = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                          &IID_IShellLinkA, (LPVOID*)&sl);
     lok(SUCCEEDED(r), "no IID_IShellLinkA (0x%08x)\n", r);
-    if (!SUCCEEDED(r))
+    if (FAILED(r))
         return;
 
     r = IShellLinkA_QueryInterface(sl, &IID_IPersistFile, (LPVOID*)&pf);
     lok(SUCCEEDED(r), "no IID_IPersistFile (0x%08x)\n", r);
-    if (!SUCCEEDED(r))
+    if (FAILED(r))
     {
         IShellLinkA_Release(sl);
         return;
@@ -418,7 +418,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
     r = IPersistFile_Load(pf, path, STGM_READ);
     lok(SUCCEEDED(r), "load failed (0x%08x)\n", r);
     IPersistFile_Release(pf);
-    if (!SUCCEEDED(r))
+    if (FAILED(r))
     {
         IShellLinkA_Release(sl);
         return;
@@ -715,7 +715,7 @@ START_TEST(shelllink)
 
     r = CoInitialize(NULL);
     ok(SUCCEEDED(r), "CoInitialize failed (0x%08x)\n", r);
-    if (!SUCCEEDED(r))
+    if (FAILED(r))
         return;
 
     test_get_set();
