@@ -585,6 +585,8 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO 
     if( r != ERROR_SUCCESS )
         return r;
 
+    *pcount = column_count;
+
     /* if there's no columns, there's no table */
     if( column_count == 0 )
         return ERROR_INVALID_PARAMETER;
@@ -603,7 +605,6 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO 
     }
 
     *pcols = columns;
-    *pcount = column_count;
 
     return r;
 }
@@ -1033,6 +1034,9 @@ static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
     old_count = table->col_count;
     msi_free( table->colinfo );
     table_get_column_info( db, name, &table->colinfo, &table->col_count );
+
+    if (!table->col_count)
+        return;
 
     size = msi_table_get_row_size( db, table->colinfo, table->col_count );
     offset = table->colinfo[table->col_count - 1].offset;
