@@ -615,6 +615,9 @@ ok(tmp["6"] === true, "tmp[6] !== true");
 ok(tmp[2] === 1, "tmp[2] !== 1");
 
 ok([1,].length === 2, "[1,].length !== 2");
+ok([,,].length === 3, "[,,].length !== 3");
+ok([,].length === 2, "[].length != 2");
+ok([].length === 0, "[].length != 0");
 
 tmp = 0;
 while(tmp < 4) {
