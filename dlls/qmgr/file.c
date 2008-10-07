@@ -425,7 +425,7 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
             return FALSE;
         }
     }
-    else if (!SUCCEEDED(hr))
+    else if (FAILED(hr))
     {
         ERR("URLDownload failed: eh 0x%08x\n", hr);
         transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_ERROR);
