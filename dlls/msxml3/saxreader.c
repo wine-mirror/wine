@@ -75,7 +75,9 @@ typedef struct _saxlocator
     WCHAR *systemId;
     xmlChar *lastCur;
     int line;
+    int realLine;
     int column;
+    int realColumn;
     BOOL vbInterface;
     int nsStackSize;
     int nsStackLast;
@@ -197,23 +199,6 @@ static BSTR QName_from_xmlChar(const xmlChar *prefix, const xmlChar *name)
     return bstr;
 }
 
-BSTR bstr_from_xmlChar_wn(const xmlChar *buf, int len)
-{
-    DWORD size;
-    LPWSTR str;
-    BSTR bstr;
-
-    if(!buf) return NULL;
-
-    size = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, NULL, 0);
-    str = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, size*sizeof(WCHAR));
-    if(!str) return NULL;
-    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, str, size);
-    bstr = SysAllocStringLen(str, size);
-    HeapFree(GetProcessHeap(), 0, str);
-    return bstr;
-}
-
 static void format_error_message_from_id(saxlocator *This, HRESULT hr)
 {
     xmlStopParser(This->pParserCtxt);
@@ -247,14 +232,21 @@ static void update_position(saxlocator *This, xmlChar *end)
     if(This->lastCur == NULL)
     {
         This->lastCur = (xmlChar*)This->pParserCtxt->input->base;
-        This->line = 1;
-        This->column = 1;
+        This->realLine = 1;
+        This->realColumn = 1;
     }
     else if(This->lastCur < This->pParserCtxt->input->base)
     {
         This->lastCur = (xmlChar*)This->pParserCtxt->input->base;
-        This->line = 1;
-        This->column = 1;
+        This->realLine = 1;
+        This->realColumn = 1;
+    }
+
+    if(This->pParserCtxt->input->cur<This->lastCur)
+    {
+        This->lastCur = (xmlChar*)This->pParserCtxt->input->base;
+        This->realLine -= 1;
+        This->realColumn = 1;
     }
 
     if(!end) end = (xmlChar*)This->pParserCtxt->input->cur;
@@ -263,18 +255,26 @@ static void update_position(saxlocator *This, xmlChar *end)
     {
         if(*(This->lastCur) == '\n')
         {
-            This->line++;
-            This->column = 1;
+            This->realLine++;
+            This->realColumn = 1;
         }
-        else if(*(This->lastCur) == '\r' && (This->lastCur==This->pParserCtxt->input->end || *(This->lastCur+1)!='\n'))
+        else if(*(This->lastCur) == '\r' &&
+                (This->lastCur==This->pParserCtxt->input->end ||
+                 *(This->lastCur+1)!='\n'))
         {
-            This->line++;
-            This->column = 1;
+            This->realLine++;
+            This->realColumn = 1;
         }
-        else This->column++;
+        else This->realColumn++;
 
         This->lastCur++;
+
+        /* Count multibyte UTF8 encoded characters once */
+        while((*(This->lastCur)&0xC0) == 0x80) This->lastCur++;
     }
+
+    This->line = This->realLine;
+    This->column = This->realColumn;
 }
 
 /*** IVBSAXAttributes interface ***/
@@ -1115,9 +1115,11 @@ static void libxmlEndElementNS(
     xmlChar *end;
     int nsNr, index;
 
-    end = This->lastCur;
-    while(*end != '<' && *(end+1) != '/') end++;
-    update_position(This, end+2);
+    end = (xmlChar*)This->pParserCtxt->input->cur;
+    if(*(end-1) != '>' || *(end-2) != '/')
+        while(*(end-2)!='<' && *(end-1)!='/') end--;
+
+    update_position(This, end);
 
     nsNr = namespacePop(This);
 
@@ -1165,6 +1167,8 @@ static void libxmlEndElementNS(
             SysFreeString(Prefix);
         }
     }
+
+    update_position(This, NULL);
 }
 
 static void libxmlCharacters(
@@ -1172,82 +1176,65 @@ static void libxmlCharacters(
         const xmlChar *ch,
         int len)
 {
-    BSTR Chars;
     saxlocator *This = ctx;
+    BSTR Chars;
     HRESULT hr;
+    xmlChar *cur;
     xmlChar *end;
-    xmlChar *lastCurCopy;
-    xmlChar *chEnd;
-    int columnCopy;
-    int lineCopy;
+    BOOL lastEvent = FALSE;
 
-    if(*(This->lastCur-1) != '>' && *(This->lastCur-1) != '/') return;
+    if((This->vbInterface && !This->saxreader->vbcontentHandler)
+            || (!This->vbInterface && !This->saxreader->contentHandler))
+        return;
 
-    if(*(This->lastCur-1) != '>')
+    cur = (xmlChar*)ch;
+    if(*(ch-1)=='\r') cur--;
+    end = cur;
+
+    if(ch<This->pParserCtxt->input->base || ch>This->pParserCtxt->input->end)
+        This->column++;
+
+    while(1)
     {
-        end = (xmlChar*)This->pParserCtxt->input->cur-len;
-        while(*(end-1) != '>') end--;
-        update_position(This, end);
-    }
-
-    chEnd = This->lastCur+len;
-    while(*chEnd != '<') chEnd++;
-
-    lastCurCopy = This->lastCur;
-    columnCopy = This->column;
-    lineCopy = This->line;
-    end = This->lastCur;
-
-    if((This->vbInterface && This->saxreader->vbcontentHandler)
-            || (!This->vbInterface && This->saxreader->contentHandler))
-    {
-        while(This->lastCur < chEnd)
+        while(end-ch<len && *end!='\r') end++;
+        if(end-ch==len)
         {
-            end = This->lastCur;
-            while(end < chEnd-1)
-            {
-                if(*end == '\r') break;
-                end++;
-            }
-
-            Chars = bstr_from_xmlChar_wn(This->lastCur, end-This->lastCur+2);
-
-            if(*end == '\r' && *(end+1) == '\n')
-            {
-                memmove((WCHAR*)Chars+(end-This->lastCur),
-                        (WCHAR*)Chars+(end-This->lastCur)+1,
-                        (SysStringLen(Chars)-(end-This->lastCur))*sizeof(WCHAR));
-                SysReAllocStringLen(&Chars, Chars, SysStringLen(Chars)-1);
-            }
-            else if(*end == '\r') Chars[end-This->lastCur] = '\n';
-
-            if(This->vbInterface)
-                hr = IVBSAXContentHandler_characters(
-                        This->saxreader->vbcontentHandler, &Chars);
-            else
-                hr = ISAXContentHandler_characters(
-                        This->saxreader->contentHandler,
-                        Chars, end-This->lastCur+1);
-
-            SysFreeString(Chars);
-            if(hr != S_OK)
-            {
-                format_error_message_from_id(This, hr);
-                return;
-            }
-
-            if(*(end+1) == '\n') end++;
-            if(end < chEnd) end++;
-
-            This->column += end-This->lastCur;
-            This->lastCur = end;
+            end--;
+            lastEvent = TRUE;
         }
 
-        This->lastCur = lastCurCopy;
-        This->column = columnCopy;
-        This->line = lineCopy;
-        update_position(This, chEnd);
+        if(!lastEvent) *end = '\n';
+
+        Chars = bstr_from_xmlCharN(cur, end-cur+1);
+        if(This->vbInterface)
+            hr = IVBSAXContentHandler_characters(
+                    This->saxreader->vbcontentHandler, &Chars);
+        else
+            hr = ISAXContentHandler_characters(
+                    This->saxreader->contentHandler,
+                    Chars, SysStringLen(Chars));
+        SysFreeString(Chars);
+
+        This->column += end-cur+1;
+
+        if(lastEvent)
+            break;
+
+        *end = '\r';
+        end++;
+        if(*end == '\n')
+        {
+            end++;
+            This->column++;
+        }
+        cur = end;
+
+        if(end-ch == len) break;
     }
+
+    if(ch<This->pParserCtxt->input->base || ch>This->pParserCtxt->input->end)
+        This->column = This->realColumn
+            +This->pParserCtxt->input->cur-This->lastCur;
 }
 
 static void libxmlSetDocumentLocator(
@@ -1270,7 +1257,7 @@ static void libxmlSetDocumentLocator(
         format_error_message_from_id(This, hr);
 }
 
-void libxmlFatalError(void *ctx, const char *msg, ...)
+static void libxmlFatalError(void *ctx, const char *msg, ...)
 {
     saxlocator *This = ctx;
     char message[1024];
