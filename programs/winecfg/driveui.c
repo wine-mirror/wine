@@ -591,11 +591,11 @@ BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath)
     LoadStringW(GetModuleHandle(NULL), IDS_CHOOSE_PATH, pszChoosePath, FILENAME_MAX);
     
     hr = SHGetDesktopFolder(&pDesktop);
-    if (!SUCCEEDED(hr)) return FALSE;
+    if (FAILED(hr)) return FALSE;
 
     hr = IShellFolder_ParseDisplayName(pDesktop, NULL, NULL, wszUnixRootDisplayName, NULL, 
                                        &pidlUnixRoot, NULL);
-    if (!SUCCEEDED(hr)) {
+    if (FAILED(hr)) {
         IShellFolder_Release(pDesktop);
         return FALSE;
     }
@@ -612,14 +612,14 @@ BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath)
         hr = IShellFolder_GetDisplayNameOf(pDesktop, pidlSelectedPath, SHGDN_FORPARSING, 
                                            &strSelectedPath);
         IShellFolder_Release(pDesktop);
-        if (!SUCCEEDED(hr)) {
+        if (FAILED(hr)) {
             SHFree(pidlSelectedPath);
             return FALSE;
         }
 
         hr = StrRetToStrW(&strSelectedPath, pidlSelectedPath, &pszSelectedPath);
         SHFree(pidlSelectedPath);
-        if (!SUCCEEDED(hr)) return FALSE;
+        if (FAILED(hr)) return FALSE;
 
         lstrcpyW(pszPath, pszSelectedPath);
         
