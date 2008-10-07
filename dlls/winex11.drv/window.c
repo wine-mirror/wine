@@ -105,11 +105,17 @@ static BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
     if (style & WS_THICKFRAME) return TRUE;
     if (style & WS_POPUP)
     {
+        HMONITOR hmon;
+        MONITORINFO mi;
+
         /* popup with sysmenu == caption are managed */
         if (style & WS_SYSMENU) return TRUE;
         /* full-screen popup windows are managed */
-        if (window_rect->left <= 0 && window_rect->right >= screen_width &&
-            window_rect->top <= 0 && window_rect->bottom >= screen_height)
+        hmon = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY );
+        mi.cbSize = sizeof( mi );
+        GetMonitorInfoW( hmon, &mi );
+        if (window_rect->left <= mi.rcWork.left && window_rect->right >= mi.rcWork.right &&
+            window_rect->top <= mi.rcWork.top && window_rect->bottom >= mi.rcWork.bottom)
             return TRUE;
     }
     /* application windows are managed */
