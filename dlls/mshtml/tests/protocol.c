@@ -305,7 +305,7 @@ static void test_res_protocol(void)
 
     hres = CoGetClassObject(&CLSID_ResProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
-    if(!SUCCEEDED(hres))
+    if(FAILED(hres))
         return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
@@ -614,7 +614,7 @@ static void test_about_protocol(void)
 
     hres = CoGetClassObject(&CLSID_AboutProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
-    if(!SUCCEEDED(hres))
+    if(FAILED(hres))
         return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
