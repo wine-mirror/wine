@@ -1251,7 +1251,7 @@ static void test_Console(void)
         ok(cpOutC == 1252, "Wrong console-SB CP (expected 1252 got %d/%d)\n", cpOutC, cpOut);
     }
     else
-        win_skip("Setting the codepage is not implemented");
+        win_skip("Setting the codepage is not implemented\n");
 
     ok(modeInC == (modeIn ^ 1), "Wrong console mode\n");
     ok(modeOutC == (modeOut ^ 1), "Wrong console-SB mode\n");
