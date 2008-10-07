@@ -1843,7 +1843,7 @@ static void test_replaceChild(void)
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMElement *element;
-    IXMLDOMNode *fo_node, *ba_node, *removed_node, *temp_node;
+    IXMLDOMNode *fo_node, *ba_node, *lc_node, *removed_node, *temp_node;
     IXMLDOMNodeList *root_list, *fo_list;
     IUnknown * unk1, *unk2;
     long len;
@@ -1863,6 +1863,9 @@ static void test_replaceChild(void)
     ok( r == S_OK, "ret %08x\n", r);
 
     r = IXMLDOMElement_get_childNodes( element, &root_list );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNodeList_get_item( root_list, 0, &lc_node );
     ok( r == S_OK, "ret %08x\n", r);
 
     r = IXMLDOMNodeList_get_item( root_list, 3, &fo_node );
@@ -1890,13 +1893,14 @@ static void test_replaceChild(void)
 
     /* invalid parameter: OldNode is not a child */
     removed_node = (void*)0xdeadbeef;
-    r = IXMLDOMElement_replaceChild( element, ba_node, ba_node, &removed_node );
-    todo_wine ok( r == E_INVALIDARG, "ret %08x\n", r );
-    if( r == E_NOTIMPL)
-    {
-        skip("replaceChild not implemented\n");
-        return;
-    }
+    r = IXMLDOMElement_replaceChild( element, lc_node, ba_node, &removed_node );
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+    ok( removed_node == NULL, "%p\n", removed_node );
+
+    /* invalid parameter: would create loop */
+    removed_node = (void*)0xdeadbeef;
+    r = IXMLDOMNode_replaceChild( fo_node, fo_node, ba_node, &removed_node );
+    ok( r == E_FAIL, "ret %08x\n", r );
     ok( removed_node == NULL, "%p\n", removed_node );
 
     r = IXMLDOMElement_replaceChild( element, ba_node, fo_node, NULL );
@@ -1912,7 +1916,7 @@ static void test_replaceChild(void)
     ok( r == S_OK, "ret %08x\n", r );
     r = IXMLDOMNode_QueryInterface( ba_node, &IID_IUnknown, (void**)&unk2);
     ok( r == S_OK, "ret %08x\n", r );
-    ok( unk1 == unk2, "unk1 %p unk2 %p\n", unk1, unk2);
+    todo_wine ok( unk1 == unk2, "unk1 %p unk2 %p\n", unk1, unk2);
 
     IUnknown_Release( unk1 );
     IUnknown_Release( unk2 );

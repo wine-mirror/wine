@@ -610,6 +610,9 @@ static HRESULT WINAPI xmlnode_replaceChild(
     IXMLDOMNode** outOldChild)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
+    xmlNode *old_child_ptr, *new_child_ptr;
+    xmlDocPtr leaving_doc;
+    xmlNode *my_ancestor;
 
     TRACE("%p->(%p,%p,%p)\n",This,newChild,oldChild,outOldChild);
 
@@ -618,8 +621,40 @@ static HRESULT WINAPI xmlnode_replaceChild(
     if(!newChild || !oldChild)
         return E_INVALIDARG;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    if(outOldChild)
+        *outOldChild = NULL;
+
+    old_child_ptr = impl_from_IXMLDOMNode(oldChild)->node;
+    if(old_child_ptr->parent != This->node)
+    {
+        WARN("childNode %p is not a child of %p\n", oldChild, iface);
+        return E_INVALIDARG;
+    }
+
+    new_child_ptr = impl_from_IXMLDOMNode(newChild)->node;
+    my_ancestor = This->node;
+    while(my_ancestor)
+    {
+        if(my_ancestor == new_child_ptr)
+        {
+            WARN("tried to create loop\n");
+            return E_FAIL;
+        }
+        my_ancestor = my_ancestor->parent;
+    }
+
+    leaving_doc = new_child_ptr->doc;
+    xmldoc_add_ref(old_child_ptr->doc);
+    xmlReplaceNode(old_child_ptr, new_child_ptr);
+    xmldoc_release(leaving_doc);
+
+    if(outOldChild)
+    {
+        IXMLDOMNode_AddRef(oldChild);
+        *outOldChild = oldChild;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnode_removeChild(
