@@ -198,10 +198,25 @@ static DWORD SOFTPUB_DecodeInnerContent(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
     DWORD size;
+    LPSTR oid = NULL;
     LPBYTE buf = NULL;
 
     ret = CryptMsgGetParam(data->hMsg, CMSG_INNER_CONTENT_TYPE_PARAM, 0, NULL,
      &size);
+    if (!ret)
+        goto error;
+    oid = data->psPfns->pfnAlloc(size);
+    if (!oid)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        ret = FALSE;
+        goto error;
+    }
+    ret = CryptMsgGetParam(data->hMsg, CMSG_INNER_CONTENT_TYPE_PARAM, 0, oid,
+     &size);
+    if (!ret)
+        goto error;
+    ret = CryptMsgGetParam(data->hMsg, CMSG_CONTENT_PARAM, 0, NULL, &size);
     if (!ret)
         goto error;
     buf = data->psPfns->pfnAlloc(size);
@@ -211,51 +226,26 @@ static DWORD SOFTPUB_DecodeInnerContent(CRYPT_PROVIDER_DATA *data)
         ret = FALSE;
         goto error;
     }
-    ret = CryptMsgGetParam(data->hMsg, CMSG_INNER_CONTENT_TYPE_PARAM, 0, buf,
-     &size);
+    ret = CryptMsgGetParam(data->hMsg, CMSG_CONTENT_PARAM, 0, buf, &size);
     if (!ret)
         goto error;
-    if (!strcmp((LPCSTR)buf, SPC_INDIRECT_DATA_OBJID))
+    ret = CryptDecodeObject(data->dwEncoding, oid, buf, size, 0, NULL, &size);
+    if (!ret)
+        goto error;
+    data->u.pPDSip->psIndirectData = data->psPfns->pfnAlloc(size);
+    if (!data->u.pPDSip->psIndirectData)
     {
-        data->psPfns->pfnFree(buf);
-        buf = NULL;
-        ret = CryptMsgGetParam(data->hMsg, CMSG_CONTENT_PARAM, 0, NULL, &size);
-        if (!ret)
-            goto error;
-        buf = data->psPfns->pfnAlloc(size);
-        if (!buf)
-        {
-            SetLastError(ERROR_OUTOFMEMORY);
-            ret = FALSE;
-            goto error;
-        }
-        ret = CryptMsgGetParam(data->hMsg, CMSG_CONTENT_PARAM, 0, buf, &size);
-        if (!ret)
-            goto error;
-        ret = CryptDecodeObject(data->dwEncoding,
-         SPC_INDIRECT_DATA_CONTENT_STRUCT, buf, size, 0, NULL, &size);
-        if (!ret)
-            goto error;
-        data->u.pPDSip->psIndirectData = data->psPfns->pfnAlloc(size);
-        if (!data->u.pPDSip->psIndirectData)
-        {
-            SetLastError(ERROR_OUTOFMEMORY);
-            ret = FALSE;
-            goto error;
-        }
-        ret = CryptDecodeObject(data->dwEncoding,
-         SPC_INDIRECT_DATA_CONTENT_STRUCT, buf, size, 0,
-         data->u.pPDSip->psIndirectData, &size);
-    }
-    else
-    {
-        FIXME("unimplemented for OID %s\n", (LPCSTR)buf);
-        SetLastError(TRUST_E_SUBJECT_FORM_UNKNOWN);
+        SetLastError(ERROR_OUTOFMEMORY);
         ret = FALSE;
+        goto error;
     }
+    ret = CryptDecodeObject(data->dwEncoding, oid, buf, size, 0,
+     data->u.pPDSip->psIndirectData, &size);
 
 error:
     TRACE("returning %d\n", ret);
+    data->psPfns->pfnFree(oid);
+    data->psPfns->pfnFree(buf);
     return ret;
 }
 
