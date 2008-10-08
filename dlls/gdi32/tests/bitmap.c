@@ -1737,22 +1737,29 @@ static void test_GetDIBits_BI_BITFIELDS(void)
         memset(dibinfo, 0, sizeof(dibinfo_buf));
         dibinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
         dibinfo->bmiHeader.biSizeImage = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
         ret = GetDIBits(hdc, hbm, 0, 0, bits, dibinfo, DIB_RGB_COLORS);
+        if (ret == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+            win_skip("Win9x/WinMe doesn't handle 0 for the number of scan lines\n");
+        else
+        {
+            ok(ret == 1, "GetDIBits failed ret %u err %u\n",ret,GetLastError());
 
-        ok( !bitmasks[0], "red mask is set\n" );
-        ok( !bitmasks[1], "green mask is set\n" );
-        ok( !bitmasks[2], "blue mask is set\n" );
-        ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
+            ok( !bitmasks[0], "red mask is set\n" );
+            ok( !bitmasks[1], "green mask is set\n" );
+            ok( !bitmasks[2], "blue mask is set\n" );
+            ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
 
-        memset(bitmasks, 0, 3*sizeof(DWORD));
-        dibinfo->bmiHeader.biSizeImage = 0xdeadbeef;
-        ret = GetDIBits(hdc, hbm, 0, 0, bits, dibinfo, DIB_RGB_COLORS);
-        ok(ret == 1, "GetDIBits failed ret %u err %u\n",ret,GetLastError());
+            memset(bitmasks, 0, 3*sizeof(DWORD));
+            dibinfo->bmiHeader.biSizeImage = 0xdeadbeef;
+            ret = GetDIBits(hdc, hbm, 0, 0, bits, dibinfo, DIB_RGB_COLORS);
+            ok(ret == 1, "GetDIBits failed ret %u err %u\n",ret,GetLastError());
 
-        ok( bitmasks[0] != 0, "red mask is not set\n" );
-        ok( bitmasks[1] != 0, "green mask is not set\n" );
-        ok( bitmasks[2] != 0, "blue mask is not set\n" );
-        ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
+            ok( bitmasks[0] != 0, "red mask is not set\n" );
+            ok( bitmasks[1] != 0, "green mask is not set\n" );
+            ok( bitmasks[2] != 0, "blue mask is not set\n" );
+            ok( dibinfo->bmiHeader.biSizeImage != 0xdeadbeef, "size image not set\n" );
+        }
     }
     else skip("not in 16 bpp BI_BITFIELDS mode, skipping that test\n");
 
