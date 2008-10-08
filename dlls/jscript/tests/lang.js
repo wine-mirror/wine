@@ -248,6 +248,18 @@ tmp = 3/2;
 ok(tmp === 1.5, "3/2 !== 1.5");
 ok(getVT(tmp) === "VT_R8", "getVT(3/2) !== VT_R8");
 
+tmp = 3%2;
+ok(tmp === 1, "3%2 = " + tmp);
+
+tmp = 4%2;
+ok(tmp ===0, "4%2 = " + tmp);
+
+tmp = 3.5%1.5;
+ok(tmp === 0.5, "3.5%1.5 = " + tmp);
+
+tmp = 3%true;
+ok(tmp === 0, "3%true = " + tmp);
+
 tmp = "ab" + "cd";
 ok(tmp === "abcd", "\"ab\" + \"cd\" !== \"abcd\"");
 

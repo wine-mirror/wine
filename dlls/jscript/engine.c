@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
+
 #include "jscript.h"
 #include "engine.h"
 
@@ -2046,10 +2048,31 @@ HRESULT div_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, j
 }
 
 /* ECMA-262 3rd Edition    11.5.3 */
-HRESULT mod_expression_eval(exec_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT mod_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_t *ei, VARIANT *retv)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT lnum, rnum;
+    HRESULT hres;
+
+    hres = to_number(ctx->parser->script, lval, ei, &lnum);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_number(ctx->parser->script, rval, ei, &rnum);
+    if(FAILED(hres))
+        return hres;
+
+    num_set_val(retv, fmod(num_val(&lnum), num_val(&rnum)));
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.5.3 */
+HRESULT mod_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    binary_expression_t *expr = (binary_expression_t*)_expr;
+
+    TRACE("\n");
+
+    return binary_expr_eval(ctx, expr, mod_eval, ei, ret);
 }
 
 /* ECMA-262 3rd Edition    11.4.2 */
