@@ -265,35 +265,29 @@ static HRESULT WINAPI HTMLDocument_get_Script(IHTMLDocument2 *iface, IDispatch *
 static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCollection **p)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    nsIDOMDocument *nsdoc = NULL;
     nsIDOMElement *nselem = NULL;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nscontainer) {
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    nsres = nsIDOMHTMLDocument_GetDocumentElement(This->nsdoc, &nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocumentElement failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(nselem) {
+        *p = create_all_collection(get_node(This, (nsIDOMNode*)nselem, TRUE), TRUE);
+        nsIDOMElement_Release(nselem);
+    }else {
         *p = NULL;
-        return S_OK;
     }
 
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres))
-        ERR("GetDocument failed: %08x\n", nsres);
-
-    if(nsdoc) {
-        nsres = nsIDOMHTMLDocument_GetDocumentElement(nsdoc, &nselem);
-        if(NS_FAILED(nsres))
-            ERR("GetDocumentElement failed: %08x\n", nsres);
-    }
-
-    if(!nselem) {
-        *p = NULL;
-        return S_OK;
-    }
-
-    *p = create_all_collection(get_node(This, (nsIDOMNode*)nselem, TRUE), TRUE);
-
-    nsIDOMElement_Release(nselem);
     return S_OK;
 }
 
