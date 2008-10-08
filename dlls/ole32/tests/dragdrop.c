@@ -137,7 +137,9 @@ START_TEST(dragdrop)
         NULL, NULL, NULL);
 
     hr = RegisterDragDrop(hwnd, &DropTarget);
-    ok(hr == E_OUTOFMEMORY, "RegisterDragDrop without OLE initialized should have returned E_OUTOFMEMORY instead of 0x%08x\n", hr);
+    ok(hr == E_OUTOFMEMORY ||
+        broken(hr == CO_E_NOTINITIALIZED), /* NT4 */
+        "RegisterDragDrop without OLE initialized should have returned E_OUTOFMEMORY instead of 0x%08x\n", hr);
 
     OleInitialize(NULL);
 
@@ -164,7 +166,9 @@ START_TEST(dragdrop)
 
     hr = RevokeDragDrop(hwnd);
     ok_ole_success(hr, "RevokeDragDrop");
-    ok(droptarget_release_called == 1, "DropTarget_Release should have been called once, not %d times\n", droptarget_release_called);
+    ok(droptarget_release_called == 1 ||
+        broken(droptarget_release_called == 0), /* NT4 */
+        "DropTarget_Release should have been called once, not %d times\n", droptarget_release_called);
 
     hr = RevokeDragDrop(NULL);
     ok(hr == DRAGDROP_E_INVALIDHWND, "RevokeDragDrop with NULL hwnd should return DRAGDROP_E_INVALIDHWND instead of 0x%08x\n", hr);
