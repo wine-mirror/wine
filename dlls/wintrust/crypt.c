@@ -472,6 +472,41 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
     return TRUE;
 }
 
+static BOOL WINTRUST_GetSignedMsgFromCatFile(SIP_SUBJECTINFO *pSubjectInfo,
+ DWORD *pdwEncodingType, DWORD dwIndex, DWORD *pcbSignedDataMsg,
+ BYTE *pbSignedDataMsg)
+{
+    BOOL ret;
+
+    TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
+          pcbSignedDataMsg, pbSignedDataMsg);
+
+    if (!pbSignedDataMsg)
+    {
+        *pcbSignedDataMsg = GetFileSize(pSubjectInfo->hFile, NULL);
+         ret = TRUE;
+    }
+    else
+    {
+        DWORD len = GetFileSize(pSubjectInfo->hFile, NULL);
+
+        if (*pcbSignedDataMsg < len)
+        {
+            *pcbSignedDataMsg = len;
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            ret = FALSE;
+        }
+        else
+        {
+            ret = ReadFile(pSubjectInfo->hFile, pbSignedDataMsg, len,
+             pcbSignedDataMsg, NULL);
+            if (ret)
+                *pdwEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+        }
+    }
+    return ret;
+}
+
 /***********************************************************************
  *      CryptSIPGetSignedDataMsg  (WINTRUST.@)
  */
@@ -482,6 +517,8 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
      0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
     static const GUID cabGUID = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,
      0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
+    static const GUID catGUID = { 0xDE351A43, 0x8E59, 0x11D0, { 0x8C,0x47,
+     0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
     BOOL ret;
 
     TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
@@ -492,6 +529,9 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
          dwIndex, pcbSignedDataMsg, pbSignedDataMsg);
     else if (!memcmp(pSubjectInfo->pgSubjectType, &cabGUID, sizeof(cabGUID)))
         ret = WINTRUST_GetSignedMsgFromCabFile(pSubjectInfo, pdwEncodingType,
+         dwIndex, pcbSignedDataMsg, pbSignedDataMsg);
+    else if (!memcmp(pSubjectInfo->pgSubjectType, &catGUID, sizeof(catGUID)))
+        ret = WINTRUST_GetSignedMsgFromCatFile(pSubjectInfo, pdwEncodingType,
          dwIndex, pcbSignedDataMsg, pbSignedDataMsg);
     else
     {
