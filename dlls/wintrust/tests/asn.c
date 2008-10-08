@@ -83,7 +83,9 @@ static void test_encodeSPCLink(void)
     SetLastError(0xdeadbeef);
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT, &link,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    ok(!ret && GetLastError() == CRYPT_E_INVALID_IA5_STRING,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_INVALID_IA5_STRING ||
+     GetLastError() == OSS_BAD_PTR /* Win9x */),
      "Expected CRYPT_E_INVALID_IA5_STRING, got %08x\n", GetLastError());
     /* Unlike the crypt32 string encoding routines, size is not set to the
      * index of the first invalid character.
@@ -229,7 +231,9 @@ static void test_decodeSPCLink(void)
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_LINK_STRUCT,
      badMonikerSPCLink, sizeof(badMonikerSPCLink), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
-    ok(!ret && GetLastError() == CRYPT_E_BAD_ENCODE,
+    ok(!ret &&
+     (GetLastError() == CRYPT_E_BAD_ENCODE ||
+     GetLastError() == OSS_DATA_ERROR /* Win9x */),
      "Expected CRYPT_E_BAD_ENCODE, got %08x\n", GetLastError());
 }
 
@@ -296,6 +300,11 @@ static void test_encodeSPCPEImage(void)
     imageData.Flags.cbData = sizeof(flags);
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_PE_IMAGE_DATA_STRUCT,
      &imageData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    if (!ret && GetLastError() == OSS_TOO_LONG)
+    {
+        skip("SPC_PE_IMAGE_DATA_STRUCT not supported\n");
+        return;
+    }
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
