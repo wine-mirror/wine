@@ -215,7 +215,6 @@ static HRESULT WINAPI HTMLDocument5_get_onbeforedeactivate(IHTMLDocument5 *iface
 static HRESULT WINAPI HTMLDocument5_get_compatMode(IHTMLDocument5 *iface, BSTR *p)
 {
     HTMLDocument *This = HTMLDOC5_THIS(iface);
-    nsIDOMDocument *nsdoc;
     nsIDOMNSHTMLDocument *nshtmldoc;
     nsAString mode_str;
     const PRUnichar *mode;
@@ -223,12 +222,12 @@ static HRESULT WINAPI HTMLDocument5_get_compatMode(IHTMLDocument5 *iface, BSTR *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres))
-        ERR("GetDocument failed: %08x\n", nsres);
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
 
-    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNSHTMLDocument, (void**)&nshtmldoc);
-    nsIDOMDocument_Release(nsdoc);
+    nsres = nsIDOMHTMLDocument_QueryInterface(This->nsdoc, &IID_nsIDOMNSHTMLDocument, (void**)&nshtmldoc);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMNSHTMLDocument: %08x\n", nsres);
         return S_OK;
