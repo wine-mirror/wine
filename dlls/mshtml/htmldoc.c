@@ -897,7 +897,6 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
                                                  IHTMLElement **newElem)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    nsIDOMDocument *nsdoc;
     nsIDOMElement *nselem;
     HTMLElement *elem;
     nsAString tag_str;
@@ -905,12 +904,14 @@ static HRESULT WINAPI HTMLDocument_createElement(IHTMLDocument2 *iface, BSTR eTa
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(eTag), newElem);
 
-    nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
 
     nsAString_Init(&tag_str, eTag);
-    nsres = nsIDOMDocument_CreateElement(nsdoc, &tag_str, &nselem);
+    nsres = nsIDOMDocument_CreateElement(This->nsdoc, &tag_str, &nselem);
     nsAString_Finish(&tag_str);
-    nsIDOMDocument_Release(nsdoc);
     if(NS_FAILED(nsres)) {
         ERR("CreateElement failed: %08x\n", nsres);
         return E_FAIL;
