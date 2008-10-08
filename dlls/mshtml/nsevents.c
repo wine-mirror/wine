@@ -129,9 +129,7 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
 static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event)
 {
     NSContainer *This = NSEVENTLIST_THIS(iface)->This;
-    nsIDOMHTMLDocument *nshtmldoc;
     nsIDOMHTMLElement *nsbody = NULL;
-    nsIDOMDocument *nsdoc;
     task_t *task;
 
     TRACE("(%p)\n", This);
@@ -163,14 +161,12 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
      */
     push_task(task);
 
+    if(!This->doc->nsdoc) {
+        ERR("NULL nsdoc\n");
+        return NS_ERROR_FAILURE;
+    }
 
-    nsIWebNavigation_GetDocument(This->navigation, &nsdoc);
-    nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
-    nsIDOMDocument_Release(nsdoc);
-
-    nsIDOMHTMLDocument_GetBody(nshtmldoc, &nsbody);
-    nsIDOMHTMLDocument_Release(nshtmldoc);
-
+    nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nsbody);
     if(nsbody) {
         fire_event(This->doc, EVENTID_LOAD, (nsIDOMNode*)nsbody);
         nsIDOMHTMLElement_Release(nsbody);
