@@ -883,8 +883,10 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                 FIXME("OnStartRequest failed: %08x\n", nsres);
 
             /* events are reset when a new document URI is loaded, so re-initialise them here */
-            if(This->bsc.doc && This->bsc.doc->bscallback == This && This->bsc.doc->nscontainer)
+            if(This->bsc.doc && This->bsc.doc->bscallback == This && This->bsc.doc->nscontainer) {
+                update_nsdocument(This->bsc.doc);
                 init_nsevents(This->bsc.doc->nscontainer);
+            }
         }
 
         This->bsc.readed += This->nsstream->buf_size;

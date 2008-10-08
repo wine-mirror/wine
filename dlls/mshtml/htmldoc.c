@@ -204,6 +204,8 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 
         ConnectionPointContainer_Destroy(&This->cp_container);
 
+        if(This->nsdoc)
+            nsIDOMHTMLDocument_Release(This->nsdoc);
         if(This->nscontainer)
             NSContainer_Release(This->nscontainer);
 
@@ -1636,6 +1638,8 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     init_dispex(&ret->dispex, (IUnknown*)HTMLDOC(ret), &HTMLDocument_dispex);
 
     ret->nscontainer = NSContainer_Create(ret, NULL);
+    update_nsdocument(ret);
+
     ret->window = HTMLWindow_Create(ret);
 
     get_thread_hwnd();

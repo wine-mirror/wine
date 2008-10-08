@@ -866,6 +866,39 @@ void set_ns_editmode(NSContainer *This)
     nsIWebBrowser_SetParentURIContentListener(This->webbrowser, NSURICL(This));
 }
 
+void update_nsdocument(HTMLDocument *doc)
+{
+    nsIDOMHTMLDocument *nsdoc;
+    nsIDOMDocument *nsdomdoc;
+    nsresult nsres;
+
+    if(!doc->nscontainer || !doc->nscontainer->navigation)
+        return;
+
+    nsres = nsIWebNavigation_GetDocument(doc->nscontainer->navigation, &nsdomdoc);
+    if(NS_FAILED(nsres) || !nsdomdoc) {
+        ERR("GetDocument failed: %08x\n", nsres);
+        return;
+    }
+
+    nsres = nsIDOMDocument_QueryInterface(nsdomdoc, &IID_nsIDOMHTMLDocument, (void**)&nsdoc);
+    nsIDOMDocument_Release(nsdomdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMHTMLDocument iface: %08x\n", nsres);
+        return;
+    }
+
+    if(nsdoc == doc->nsdoc) {
+        nsIDOMHTMLDocument_Release(nsdoc);
+        return;
+    }
+
+    if(doc->nsdoc)
+        nsIDOMHTMLDocument_Release(doc->nsdoc);
+
+    doc->nsdoc = nsdoc;
+}
+
 void close_gecko(void)
 {
     TRACE("()\n");
@@ -963,8 +996,14 @@ static nsresult NSAPI nsWebBrowserChrome_SetStatus(nsIWebBrowserChrome *iface,
         PRUint32 statusType, const PRUnichar *status)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
+
     TRACE("(%p)->(%d %s)\n", This, statusType, debugstr_w(status));
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    /* FIXME: This hack should be removed when we'll load all pages by URLMoniker */
+    if(This->doc)
+        update_nsdocument(This->doc);
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsWebBrowserChrome_GetWebBrowser(nsIWebBrowserChrome *iface,

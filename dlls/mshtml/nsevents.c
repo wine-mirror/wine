@@ -139,6 +139,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(!This->doc)
         return NS_OK;
 
+    update_nsdocument(This->doc);
     connect_scripts(This->doc);
     setup_nswindow(This->doc->window);
 

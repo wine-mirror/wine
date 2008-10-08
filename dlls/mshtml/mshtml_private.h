@@ -246,6 +246,7 @@ struct HTMLDocument {
 
     NSContainer *nscontainer;
     HTMLWindow *window;
+    nsIDOMHTMLDocument *nsdoc;
 
     IOleClientSite *client;
     IDocHostUIHandler *hostui;
@@ -530,6 +531,7 @@ void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 void add_nsevent_listener(NSContainer*,LPCWSTR);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
+void update_nsdocument(HTMLDocument*);
 
 void check_event_attr(HTMLDocument*,nsIDOMElement*);
 void release_event_target(event_target_t*);
