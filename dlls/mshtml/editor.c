@@ -341,17 +341,19 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
 {
     nsISelection *nsselection;
     PRBool collapsed;
-    nsIDOMDocument *nsdoc;
     nsIDOMElement *elem;
     nsIDOMRange *range;
     PRInt32 range_cnt = 0;
     nsAString font_str;
     nsAString size_str;
     nsAString val_str;
-    nsresult nsres;
+
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return;
+    }
 
     nsselection = get_ns_selection(This);
-
     if(!nsselection)
         return;
 
@@ -364,15 +366,11 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
         }
     }
 
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres))
-        return;
-
     nsAString_Init(&font_str, wszFont);
     nsAString_Init(&size_str, wszSize);
     nsAString_Init(&val_str, size);
 
-    nsIDOMDocument_CreateElement(nsdoc, &font_str, &elem);
+    nsIDOMDocument_CreateElement(This->nsdoc, &font_str, &elem);
     nsIDOMElement_SetAttribute(elem, &size_str, &val_str);
 
     nsISelection_GetRangeAt(nsselection, 0, &range);
@@ -389,15 +387,13 @@ static void set_font_size(HTMLDocument *This, LPCWSTR size)
         nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)elem);
     }
 
+    nsISelection_Release(nsselection);
     nsIDOMRange_Release(range);
     nsIDOMElement_Release(elem);
 
     nsAString_Finish(&font_str);
     nsAString_Finish(&size_str);
     nsAString_Finish(&val_str);
-
-    nsISelection_Release(nsselection);
-    nsIDOMDocument_Release(nsdoc);
 
     set_dirty(This, VARIANT_TRUE);
 }
