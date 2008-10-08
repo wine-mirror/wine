@@ -335,25 +335,17 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
 
 static HRESULT get_doc_string(HTMLDocument *This, char **str, DWORD *len)
 {
-    nsIDOMDocument *nsdoc;
     nsIDOMNode *nsnode;
     LPCWSTR strw;
     nsAString nsstr;
     nsresult nsres;
 
-    if(!This->nscontainer) {
-        WARN("no nscontainer, returning NULL\n");
-        return S_OK;
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
-    nsIDOMDocument_Release(nsdoc);
+    nsres = nsIDOMHTMLDocument_QueryInterface(This->nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMNode failed: %08x\n", nsres);
         return E_FAIL;
@@ -601,12 +593,11 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *iface, LPCOLESTR pszFileNam
     }
 
     hres = get_doc_string(This, &str, &len);
-    if(FAILED(hres))
-        return hres;
+    if(SUCCEEDED(hres))
+        WriteFile(file, str, len, &written, NULL);
 
-    WriteFile(file, str, len, &written, NULL);
     CloseHandle(file);
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI PersistFile_SaveCompleted(IPersistFile *iface, LPCOLESTR pszFileName)
