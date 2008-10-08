@@ -1219,6 +1219,7 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, 
             break;
         default:
             sample_function->name = "";
+            sample_function->coord_mask = 0;
             FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
             break;
     }

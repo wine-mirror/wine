@@ -163,7 +163,11 @@ static GLuint register_for_arg(DWORD arg, WineD3D_GL_Info *gl_info, unsigned int
     GLenum ret;
 
     if(mod) *mod = GL_NONE;
-    if(arg == ARG_UNUSED) return -1; /* This is the marker for unused registers */
+    if(arg == ARG_UNUSED)
+    {
+        if (rep) *rep = GL_NONE;
+        return -1; /* This is the marker for unused registers */
+    }
 
     switch(arg & WINED3DTA_SELECTMASK) {
         case WINED3DTA_DIFFUSE:
