@@ -364,7 +364,7 @@ static void testQuery(void)
              * FIXME: don't know if IPv6 addrs are shared with this table.
              * Don't think so, but I'm not certain.
              */
-            ok(vars2[0].name.idLength = vars[0].name.idLength + 4,
+            ok(vars2[0].name.idLength == vars[0].name.idLength + 4,
                 "expected length %d, got %d\n", vars[0].name.idLength + 4,
                 vars2[0].name.idLength);
             /* Make sure the type is right */
