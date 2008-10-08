@@ -103,7 +103,6 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
                                                    IHTMLDOMNode **newTextNode)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    nsIDOMDocument *nsdoc;
     nsIDOMText *nstext;
     HTMLDOMNode *node;
     nsAString text_str;
@@ -111,12 +110,14 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(text), newTextNode);
 
-    nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
 
     nsAString_Init(&text_str, text);
-    nsres = nsIDOMDocument_CreateTextNode(nsdoc, &text_str, &nstext);
+    nsres = nsIDOMHTMLDocument_CreateTextNode(This->nsdoc, &text_str, &nstext);
     nsAString_Finish(&text_str);
-    nsIDOMDocument_Release(nsdoc);
     if(NS_FAILED(nsres)) {
         ERR("CreateTextNode failed: %08x\n", nsres);
         return E_FAIL;
