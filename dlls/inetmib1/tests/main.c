@@ -106,9 +106,14 @@ static void testQuery(void)
     index = 0xdeadbeef;
     ret = pQuery(SNMP_PDU_GET, &list, &error, &index);
     ok(ret, "SnmpExtensionQuery failed: %d\n", GetLastError());
-    ok(error == SNMP_ERRORSTATUS_NOERROR,
-        "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
-    ok(index == 0, "expected index 0, got %d\n", index);
+    ok(error == SNMP_ERRORSTATUS_NOERROR ||
+        error == ERROR_FILE_NOT_FOUND /* Win9x */,
+        "expected SNMP_ERRORSTATUS_NOERROR or ERROR_FILE_NOT_FOUND, got %d\n",
+        error);
+    if (error == SNMP_ERRORSTATUS_NOERROR)
+        ok(index == 0, "expected index 0, got %d\n", index);
+    else if (error == ERROR_FILE_NOT_FOUND)
+        ok(index == 1, "expected index 1, got %d\n", index);
     /* The OID isn't changed either: */
     ok(!strcmp("1.2.3.4", SnmpUtilOidToA(&vars[0].name)),
         "expected 1.2.3.4, got %s\n", SnmpUtilOidToA(&vars[0].name));
