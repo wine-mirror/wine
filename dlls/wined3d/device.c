@@ -821,8 +821,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
         object->baseTexture.pow2Matrix[15] = 1.0;
         object->target = GL_TEXTURE_2D;
         object->cond_np2 = TRUE;
-        pow2Width = Width;
-        pow2Height = Height;
         object->baseTexture.minMipLookup = &minMipLookup_noFilter;
     } else if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE) &&
        (Width != pow2Width || Height != pow2Height) &&
@@ -1058,7 +1056,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     unsigned int             i, j;
     UINT                     tmpW;
     HRESULT                  hr;
-    unsigned int pow2EdgeLength  = EdgeLength;
+    unsigned int pow2EdgeLength;
     const GlPixelFormatDesc *glDesc;
     getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
 
