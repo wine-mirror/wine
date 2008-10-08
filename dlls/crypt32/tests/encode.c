@@ -6426,6 +6426,11 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     ret = pCryptEncodeObjectEx(dwEncoding, CMS_SIGNER_INFO, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
     ok(!ret, "Expected failure, got %d\n", ret);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        skip("no CMS_SIGNER_INFO encode support\n");
+        return;
+    }
     ok(GetLastError() == E_INVALIDARG,
        "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* To be encoded, a signer must have a valid cert ID, where a valid ID may
