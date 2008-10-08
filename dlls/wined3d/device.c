@@ -962,7 +962,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
             WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
             return WINED3DERR_INVALIDCALL;
         }
-        Levels = 1;
+        object->baseTexture.levels = 1;
     } else if (Levels == 0) {
         object->baseTexture.levels++;
         tmpW = Width;
@@ -1117,7 +1117,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
 
             return WINED3DERR_INVALIDCALL;
         }
-        Levels = 1;
+        object->baseTexture.levels = 1;
     } else if (Levels == 0) {
         object->baseTexture.levels++;
         tmpW = EdgeLength;
