@@ -681,7 +681,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case ID_EDIT_DELETE:
-	if (GetFocus() == g_pChildWnd->hTreeWnd) {
+    {
+        HWND hWndDelete = GetFocus();
+        if (hWndDelete == g_pChildWnd->hTreeWnd) {
 	    WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
 	    if (keyPath == 0 || *keyPath == 0) {
 	        MessageBeep(MB_ICONHAND);
@@ -689,7 +691,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		DeleteNode(g_pChildWnd->hTreeWnd, 0);
             }
             HeapFree(GetProcessHeap(), 0, keyPath);
-	} else if (GetFocus() == g_pChildWnd->hListWnd) {
+        } else if (hWndDelete == g_pChildWnd->hListWnd) {
         WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         curIndex = ListView_GetNextItem(g_pChildWnd->hListWnd, -1, LVNI_SELECTED);
         while(curIndex != -1) {
@@ -713,8 +715,12 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
         HeapFree(GetProcessHeap(), 0, keyPath);
-	}
+        } else if (IsChild(g_pChildWnd->hTreeWnd, hWndDelete) ||
+                   IsChild(g_pChildWnd->hListWnd, hWndDelete)) {
+            SendMessage(hWndDelete, WM_KEYDOWN, VK_DELETE, 0);
+        }
         break;
+    }
     case ID_EDIT_MODIFY:
     {
         LPCWSTR valueName = GetValueName(g_pChildWnd->hListWnd);
