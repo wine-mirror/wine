@@ -564,7 +564,7 @@ static void test_get_displayname(void)
     displaysize = tempsizeW / 2;
     ret = GetServiceDisplayNameW(scm_handle, spoolerW, displaynameW, &displaysize);
     ok(!ret, "Expected failure\n");
-    ok(displaysize = tempsizeW, "Expected the needed buffersize\n");
+    ok(displaysize == tempsizeW, "Expected the needed buffersize\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
@@ -573,7 +573,7 @@ static void test_get_displayname(void)
     displaysize = tempsizeW;
     ret = GetServiceDisplayNameW(scm_handle, spoolerW, displaynameW, &displaysize);
     ok(!ret, "Expected failure\n");
-    ok(displaysize = tempsizeW, "Expected the needed buffersize\n");
+    ok(displaysize == tempsizeW, "Expected the needed buffersize\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
