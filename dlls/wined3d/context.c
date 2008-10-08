@@ -1493,12 +1493,13 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         else {
             TRACE("Switching gl ctx to %p, hdc=%p ctx=%p\n", context, context->hdc, context->glCtx);
 
-            This->frag_pipe->enable_extension((IWineD3DDevice *) This, FALSE);
             ret = pwglMakeCurrent(context->hdc, context->glCtx);
             if(ret == FALSE) {
                 ERR("Failed to activate the new context\n");
             } else if(!context->last_was_blit) {
                 This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
+            } else {
+                This->frag_pipe->enable_extension((IWineD3DDevice *) This, FALSE);
             }
         }
         if(This->activeContext->vshader_const_dirty) {
