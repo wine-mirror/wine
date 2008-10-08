@@ -2005,7 +2005,6 @@ static BOOL CheckBumpMapCapability(UINT Adapter, WINED3DDEVTYPE DeviceType, WINE
 static BOOL CheckDepthStencilCapability(UINT Adapter, WINED3DFORMAT DisplayFormat, WINED3DFORMAT DepthStencilFormat)
 {
     int it=0;
-    WineD3D_PixelFormat *cfgs = Adapters[Adapter].cfgs;
     const GlPixelFormatDesc *glDesc;
     const StaticPixelFormatDesc *desc = getFormatDescEntry(DepthStencilFormat, &GLINFO_LOCATION, &glDesc);
 
@@ -2018,10 +2017,10 @@ static BOOL CheckDepthStencilCapability(UINT Adapter, WINED3DFORMAT DisplayForma
         return FALSE;
 
     /* Walk through all WGL pixel formats to find a match */
-    cfgs = Adapters[Adapter].cfgs;
     for (it = 0; it < Adapters[Adapter].nCfgs; ++it) {
-        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], DisplayFormat)) {
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&cfgs[it], DepthStencilFormat)) {
+        WineD3D_PixelFormat *cfg = &Adapters[Adapter].cfgs[it];
+        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(cfg, DisplayFormat)) {
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(cfg, DepthStencilFormat)) {
                 return TRUE;
             }
         }
