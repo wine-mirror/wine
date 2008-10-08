@@ -1472,28 +1472,30 @@ static const SimpleChainStatusCheck iTunesSimpleStatus[] = {
 };
 static ChainCheck chainCheck[] = {
  /* Windows XP erroneously sets CERT_TRUST_HAS_PREFERRED_ISSUER on all
-  * elements, so ignore it
+  * elements, so ignore it.
+  * Windows 98/NT4 also set CERT_TRUST_IS_NOT_TIME_NESTED on chains they
+  * shouldn't, so ignore those too.
   */
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus0 }, 0 },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_SIGNATURE_VALID |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus1 }, 0 },
  { { sizeof(chain2) / sizeof(chain2[0]), chain2 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus2 }, 0 },
  { { sizeof(chain3) / sizeof(chain3[0]), chain3 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus3 }, 0 },
  { { sizeof(chain4) / sizeof(chain4[0]), chain4 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus4 }, 0 },
@@ -1509,13 +1511,13 @@ static ChainCheck chainCheck[] = {
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus7 }, 0 },
  { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus8 },
    TODO_ERROR },
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT |
        CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_CYCLIC, 0 },
      1, simpleStatus9 },
@@ -1530,7 +1532,7 @@ static ChainCheck chainCheck[] = {
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus12 }, 0 },
  { { sizeof(chain13) / sizeof(chain13[0]), chain13 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus13 },
    0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
