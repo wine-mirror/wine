@@ -770,13 +770,13 @@ static void test_LZOpenFileW(void)
   SetLastError(0xfaceabee);
   /* Check for nonexistent file. */
   file = LZOpenFileW(badfilenameW, &test, OF_READ);
-  ok(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
-     "GetLastError() returns %d\n", GetLastError());
   if(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
   {
-    trace("LZOpenFileW call not implemented, skipping rest of the test\n");
+    win_skip("LZOpenFileW call is not implemented\n");
     return;
   }
+  ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+     "GetLastError() returns %d\n", GetLastError());
   ok(file == LZERROR_BADINHANDLE, "LZOpenFileW succeeded on nonexistent file\n");
   LZClose(file);
 
