@@ -1077,19 +1077,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
 
     TRACE("(%p) Create Cube Texture\n", This);
 
-    /** Non-power2 support **/
-
     /* Find the nearest pow2 match */
     pow2EdgeLength = 1;
     while (pow2EdgeLength < EdgeLength) pow2EdgeLength <<= 1;
 
     object->edgeLength           = EdgeLength;
-    /* TODO: support for native non-power 2 */
-    /* Precalculated scaling for 'faked' non power of two texture coords */
-    object->baseTexture.pow2Matrix[ 0] = ((float)EdgeLength) / ((float)pow2EdgeLength);
-    object->baseTexture.pow2Matrix[ 5] = ((float)EdgeLength) / ((float)pow2EdgeLength);
-    object->baseTexture.pow2Matrix[10] = ((float)EdgeLength) / ((float)pow2EdgeLength);
-    object->baseTexture.pow2Matrix[15] = 1.0;
+
+    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
+        /* Precalculated scaling for 'faked' non power of two texture coords */
+        object->baseTexture.pow2Matrix[ 0] = 1.0;
+        object->baseTexture.pow2Matrix[ 5] = 1.0;
+        object->baseTexture.pow2Matrix[10] = 1.0;
+        object->baseTexture.pow2Matrix[15] = 1.0;
+    } else {
+        /* Precalculated scaling for 'faked' non power of two texture coords */
+        object->baseTexture.pow2Matrix[ 0] = ((float)EdgeLength) / ((float)pow2EdgeLength);
+        object->baseTexture.pow2Matrix[ 5] = ((float)EdgeLength) / ((float)pow2EdgeLength);
+        object->baseTexture.pow2Matrix[10] = ((float)EdgeLength) / ((float)pow2EdgeLength);
+        object->baseTexture.pow2Matrix[15] = 1.0;
+    }
 
     if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING) {
         object->baseTexture.minMipLookup = &minMipLookup;
