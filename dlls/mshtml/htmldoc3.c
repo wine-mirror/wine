@@ -134,31 +134,26 @@ static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR t
 static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, IHTMLElement **p)
 {
     HTMLDocument *This = HTMLDOC3_THIS(iface);
-    nsIDOMDocument *nsdoc;
-    HTMLDOMNode *node;
     nsIDOMElement *nselem = NULL;
+    HTMLDOMNode *node;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nscontainer) {
-        *p = NULL;
-        return S_OK;
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres))
-        ERR("GetDocument failed: %08x\n", nsres);
-
-    if(nsdoc) {
-        nsres = nsIDOMHTMLDocument_GetDocumentElement(nsdoc, &nselem);
-        if(NS_FAILED(nsres))
-            ERR("GetDocumentElement failed: %08x\n", nsres);
+    nsres = nsIDOMHTMLDocument_GetDocumentElement(This->nsdoc, &nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDocumentElement failed: %08x\n", nsres);
+        return E_FAIL;
     }
+
     if(nselem) {
         node = get_node(This, (nsIDOMNode *)nselem, TRUE);
-        nsIDOMDocument_Release(nsdoc);
-
+        nsIDOMElement_Release(nselem);
         IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
     }else {
         *p = NULL;
