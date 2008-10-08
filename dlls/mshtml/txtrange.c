@@ -1093,7 +1093,6 @@ static HRESULT WINAPI HTMLTxtRange_get_htmlText(IHTMLTxtRange *iface, BSTR *p)
 static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
 {
     HTMLTxtRange *This = HTMLTXTRANGE_THIS(iface);
-    nsIDOMDocument *nsdoc;
     nsIDOMText *text_node;
     nsAString text_str;
     nsresult nsres;
@@ -1103,15 +1102,8 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
     if(!This->doc)
         return MSHTML_E_NODOC;
 
-    nsres = nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return S_OK;
-    }
-
     nsAString_Init(&text_str, v);
-    nsres = nsIDOMDocument_CreateTextNode(nsdoc, &text_str, &text_node);
-    nsIDOMDocument_Release(nsdoc);
+    nsres = nsIDOMHTMLDocument_CreateTextNode(This->doc->nsdoc, &text_str, &text_node);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateTextNode failed: %08x\n", nsres);
