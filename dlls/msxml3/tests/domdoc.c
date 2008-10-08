@@ -995,7 +995,7 @@ todo_wine
         str = SysAllocString( szOpen );
         node = (IXMLDOMNode *) 1;
         r = IXMLDOMNamedNodeMap_getNamedItem( map, str, &node );
-        ok( r = S_FALSE, "getNamedItem found a node that wasn't there\n");
+        ok( r == S_FALSE, "getNamedItem found a node that wasn't there\n");
         ok( node == NULL, "getNamedItem should have returned NULL\n");
         SysFreeString( str );
 
