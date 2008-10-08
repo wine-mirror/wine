@@ -132,10 +132,14 @@ static void test_RetrieveUrlCacheEntryA(void)
     ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    ret = RetrieveUrlCacheEntryFile(TEST_URL, NULL, NULL, 0);
-    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
+    if (0)
+    {
+        /* Crashes on Win9x, NT4 and W2K */
+        SetLastError(0xdeadbeef);
+        ret = RetrieveUrlCacheEntryFile(TEST_URL, NULL, NULL, 0);
+        ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
+    }
 
     SetLastError(0xdeadbeef);
     cbCacheEntryInfo = 100000;
