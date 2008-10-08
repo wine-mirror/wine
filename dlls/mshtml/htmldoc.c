@@ -1188,30 +1188,24 @@ static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
     HTMLDocument *This = HTMLDOC_THIS(iface);
     nsIDOMStyleSheetList *nsstylelist;
     nsIDOMDocumentStyle *nsdocstyle;
-    nsIDOMDocument *nsdoc;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     *p = NULL;
 
-    if(!This->nscontainer)
-        return S_OK;
-
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return S_OK;
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
-    if(NS_FAILED(nsres) || !nsdoc)
-        return S_OK;
-
-    nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentStyle, (void**)&nsdocstyle);
-    nsIDOMDocument_Release(nsdoc);
-
-    nsIDOMDocumentStyle_GetStyleSheets(nsdocstyle, &nsstylelist);
+    nsIDOMHTMLDocument_QueryInterface(This->nsdoc, &IID_nsIDOMDocumentStyle, (void**)&nsdocstyle);
+    nsres = nsIDOMDocumentStyle_GetStyleSheets(nsdocstyle, &nsstylelist);
     nsIDOMDocumentStyle_Release(nsdocstyle);
+    if(NS_FAILED(nsres)) {
+        ERR("GetStyleSheets failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
     *p = HTMLStyleSheetsCollection_Create(nsstylelist);
     nsIDOMDocumentStyle_Release(nsstylelist);
