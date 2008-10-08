@@ -888,19 +888,16 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
     nsIDOMDocumentView *nsdocview;
     nsIDOMAbstractView *nsview;
     nsIDOMViewCSS *nsviewcss;
-    nsIDOMDocument *nsdoc;
     nsAString nsempty_str;
     HTMLCurrentStyle *ret;
     nsresult nsres;
 
-    nsres = nsIWebNavigation_GetDocument(elem->node.doc->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return E_FAIL;
+    if(!elem->node.doc->nsdoc)  {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentView, (void**)&nsdocview);
-    nsIDOMDocument_Release(nsdoc);
+    nsres = nsIDOMHTMLDocument_QueryInterface(elem->node.doc->nsdoc, &IID_nsIDOMDocumentView, (void**)&nsdocview);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMDocumentView: %08x\n", nsres);
         return E_FAIL;
