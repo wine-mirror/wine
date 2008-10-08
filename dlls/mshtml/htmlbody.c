@@ -544,30 +544,34 @@ static HRESULT WINAPI HTMLBodyElement_get_onbeforeunload(IHTMLBodyElement *iface
 static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, IHTMLTxtRange **range)
 {
     HTMLBodyElement *This = HTMLBODY_THIS(iface);
+    nsIDOMDocumentRange *nsdocrange;
     nsIDOMRange *nsrange = NULL;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, range);
 
-    if(This->textcont.element.node.doc->nscontainer) {
-        nsIDOMDocument *nsdoc;
-        nsIDOMDocumentRange *nsdocrange;
-        nsresult nsres;
-
-        nsIWebNavigation_GetDocument(This->textcont.element.node.doc->nscontainer->navigation, &nsdoc);
-        nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentRange, (void**)&nsdocrange);
-        nsIDOMDocument_Release(nsdoc);
-
-        nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &nsrange);
-        if(NS_SUCCEEDED(nsres)) {
-            nsres = nsIDOMRange_SelectNodeContents(nsrange, This->textcont.element.node.nsnode);
-            if(NS_FAILED(nsres))
-                ERR("SelectNodeContents failed: %08x\n", nsres);
-        }else {
-            ERR("CreateRange failed: %08x\n", nsres);
-        }
-
-        nsIDOMDocumentRange_Release(nsdocrange);
+    if(!This->textcont.element.node.doc->nsdoc) {
+        WARN("No nsdoc\n");
+        return E_UNEXPECTED;
     }
+
+    nsres = nsIDOMDocument_QueryInterface(This->textcont.element.node.doc->nsdoc, &IID_nsIDOMDocumentRange,
+            (void**)&nsdocrange);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMDocumentRabge iface: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMDocumentRange_CreateRange(nsdocrange, &nsrange);
+    if(NS_SUCCEEDED(nsres)) {
+        nsres = nsIDOMRange_SelectNodeContents(nsrange, This->textcont.element.node.nsnode);
+        if(NS_FAILED(nsres))
+            ERR("SelectNodeContents failed: %08x\n", nsres);
+    }else {
+        ERR("CreateRange failed: %08x\n", nsres);
+    }
+
+    nsIDOMDocumentRange_Release(nsdocrange);
 
     *range = HTMLTxtRange_Create(This->textcont.element.node.doc, nsrange);
     return S_OK;
