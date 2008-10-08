@@ -391,36 +391,30 @@ static HRESULT WINAPI HTMLDocument_put_title(IHTMLDocument2 *iface, BSTR v)
 static HRESULT WINAPI HTMLDocument_get_title(IHTMLDocument2 *iface, BSTR *p)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    nsIDOMHTMLDocument *nshtmldoc;
-    nsIDOMDocument *nsdoc;
     const PRUnichar *ret;
     nsAString nsstr;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nscontainer)
-        return E_FAIL;
-
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres) || !nsdoc) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return E_FAIL;
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
-    nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
-    nsIDOMDocument_Release(nsdoc);
 
     nsAString_Init(&nsstr, NULL);
-
-    nsres = nsIDOMHTMLDocument_GetTitle(nshtmldoc, &nsstr);
-    nsIDOMHTMLDocument_Release(nshtmldoc);
-    if (NS_FAILED(nsres))
-        ERR("GetTitle failed: %08x\n", nsres);
-
-    nsAString_GetData(&nsstr, &ret);
-    *p = SysAllocString(ret);
+    nsres = nsIDOMHTMLDocument_GetTitle(This->nsdoc, &nsstr);
+    if (NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&nsstr, &ret);
+        *p = SysAllocString(ret);
+    }
     nsAString_Finish(&nsstr);
+
+    if(NS_FAILED(nsres)) {
+        ERR("GetTitle failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
     return S_OK;
 }
