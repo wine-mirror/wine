@@ -251,7 +251,7 @@ static void CRYPT_CheckSimpleChainForCycles(PCERT_SIMPLE_CHAIN chain)
     if (cyclicCertIndex)
     {
         chain->rgpElement[cyclicCertIndex]->TrustStatus.dwErrorStatus
-         |= CERT_TRUST_IS_CYCLIC;
+         |= CERT_TRUST_IS_CYCLIC | CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
         /* Release remaining certs */
         for (i = cyclicCertIndex + 1; i < chain->cElement; i++)
             CRYPT_FreeChainElement(chain->rgpElement[i]);
@@ -765,6 +765,15 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
                 /* This one's valid - decrement max length */
                 constraints.dwPathLenConstraint--;
             }
+        }
+        if (CRYPT_IsSimpleChainCyclic(chain))
+        {
+            /* If the chain is cyclic, then the path length constraints
+             * are violated, because the chain is infinitely long.
+             */
+            pathLengthConstraintViolated = TRUE;
+            chain->TrustStatus.dwErrorStatus |=
+             CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
         }
         /* FIXME: check valid usages */
         CRYPT_CombineTrustStatus(&chain->TrustStatus,

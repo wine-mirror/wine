@@ -1521,7 +1521,7 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT |
        CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_CYCLIC, 0 },
      1, simpleStatus9 },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
  { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus10 }, 0 },
@@ -1743,8 +1743,7 @@ static ChainPolicyCheck basicConstraintsPolicyCheck[] = {
    { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL },
    TODO_ERROR | TODO_CHAINS | TODO_ELEMENTS },
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
-   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL },
-   TODO_ERROR | TODO_CHAINS | TODO_ELEMENTS },
+   { 0, TRUST_E_BASIC_CONSTRAINTS, 0, 1, NULL }, 0 },
  { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
    { 0, 0, -1, -1, NULL }, 0 },
  { { sizeof(chain11) / sizeof(chain11[0]), chain11 },
