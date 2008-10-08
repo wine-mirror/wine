@@ -722,9 +722,9 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, const c
                     /* Swap y and z (U and L), and do a sign conversion on x and the new y(V and U) */
                     shader_addline(buffer, "MOV TMP.g, %s.%c;\n",
                                    reg, writemask[2]);
-                    shader_addline(buffer, "MAD %s.%c%c, %s.%c%c, %s, -%s;\n",
-                                   reg, writemask[1], writemask[1],
-                                   reg, writemask[1], writemask[3],
+                    shader_addline(buffer, "MAD %s.%c%c, %s.%c%c%c%c, %s, -%s;\n",
+                                   reg, writemask[1], writemask[2],
+                                   reg, writemask[3], writemask[1], writemask[3], writemask[1],
                                    two, one);
                     shader_addline(buffer, "MOV %s.%c, TMP.g;\n", reg,
                                    writemask[3]);
@@ -2820,6 +2820,7 @@ static GLuint gen_arbfp_ffp_shader(struct ffp_settings *settings, IWineD3DStateB
     }
 
     shader_addline(&buffer, "PARAM const = {1, 2, 4, 0.5};\n");
+    shader_addline(&buffer, "TEMP TMP;\n");
     shader_addline(&buffer, "TEMP ret;\n");
     if(tempreg_used || settings->sRGB_write) shader_addline(&buffer, "TEMP tempreg;\n");
     shader_addline(&buffer, "TEMP arg0;\n");
