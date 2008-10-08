@@ -294,43 +294,31 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
 static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement **p)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    nsIDOMDocument *nsdoc;
-    nsIDOMHTMLDocument *nshtmldoc;
     nsIDOMHTMLElement *nsbody = NULL;
     HTMLDOMNode *node;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = NULL;
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
 
-    if(!This->nscontainer)
-        return S_OK;
-
-    nsres = nsIWebNavigation_GetDocument(This->nscontainer->navigation, &nsdoc);
+    nsres = nsIDOMHTMLDocument_GetBody(This->nsdoc, &nsbody);
     if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return S_OK;
-    }
-
-    if(NS_FAILED(nsres) || !nsdoc) 
-        return S_OK;
-
-    nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
-    nsIDOMDocument_Release(nsdoc);
-
-    nsres = nsIDOMHTMLDocument_GetBody(nshtmldoc, &nsbody);
-    nsIDOMHTMLDocument_Release(nshtmldoc);
-
-    if(NS_FAILED(nsres) || !nsbody) {
         TRACE("Could not get body: %08x\n", nsres);
-        return S_OK;
+        return E_UNEXPECTED;
     }
 
-    node = get_node(This, (nsIDOMNode*)nsbody, TRUE);
-    nsIDOMHTMLElement_Release(nsbody);
+    if(nsbody) {
+        node = get_node(This, (nsIDOMNode*)nsbody, TRUE);
+        nsIDOMHTMLElement_Release(nsbody);
 
-    IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
+        IHTMLDOMNode_QueryInterface(HTMLDOMNODE(node), &IID_IHTMLElement, (void**)p);
+    }else {
+        *p = NULL;
+    }
 
     TRACE("*p = %p\n", *p);
     return S_OK;
