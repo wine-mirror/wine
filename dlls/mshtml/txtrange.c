@@ -325,16 +325,9 @@ static nsIDOMNode *prev_node(HTMLTxtRange *This, nsIDOMNode *iter)
     nsresult nsres;
 
     if(!iter) {
-        nsIDOMHTMLDocument *nshtmldoc;
         nsIDOMHTMLElement *nselem;
-        nsIDOMDocument *nsdoc;
 
-        nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
-        nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
-        nsIDOMDocument_Release(nsdoc);
-        nsIDOMHTMLDocument_GetBody(nshtmldoc, &nselem);
-        nsIDOMHTMLDocument_Release(nshtmldoc);
-
+        nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nselem);
         nsIDOMElement_GetLastChild(nselem, &tmp);
         if(!tmp)
             return (nsIDOMNode*)nselem;
