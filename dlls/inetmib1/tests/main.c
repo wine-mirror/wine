@@ -66,7 +66,7 @@ static void testQuery(void)
     UINT mib2IpAddr[] = { 1,3,6,1,2,1,4,20,1,1 };
     UINT mib2IpRouteTable[] = { 1,3,6,1,2,1,4,21,1,1 };
     UINT mib2UdpTable[] = { 1,3,6,1,2,1,7,5,1,1 };
-    SnmpVarBind vars[3], vars2[3];
+    SnmpVarBind vars[3], vars2[3], vars3[3];
     UINT entry;
 
     pQuery = (void *)GetProcAddress(inetmib1, "SnmpExtensionQuery");
@@ -247,8 +247,8 @@ static void testQuery(void)
     SnmpUtilVarBindFree(&vars2[2]);
 
     /* Even though SnmpExtensionInit says this DLL supports the MIB2 system
-     * variables, the first variable it returns a value for is the first
-     * interface.
+     * variables, on recent systems (at least Win2k) the first variable it
+     * returns a value for is the first interface.
      */
     vars[0].name.idLength = sizeof(mib2System) / sizeof(mib2System[0]);
     vars[0].name.ids = mib2System;
@@ -263,10 +263,12 @@ static void testQuery(void)
     ok(error == SNMP_ERRORSTATUS_NOERROR,
         "expected SNMP_ERRORSTATUS_NOERROR, got %d\n", error);
     ok(index == 0, "expected index 0, got %d\n", index);
-    vars[0].name.idLength = sizeof(mib2If) / sizeof(mib2If[0]);
-    vars[0].name.ids = mib2If;
-    ok(!SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name, vars[0].name.idLength),
-        "expected 1.3.6.1.2.1.2, got %s\n", SnmpUtilOidToA(&vars2[0].name));
+    vars3[0].name.idLength = sizeof(mib2If) / sizeof(mib2If[0]);
+    vars3[0].name.ids = mib2If;
+    ok(!SnmpUtilOidNCmp(&vars2[0].name, &vars[0].name, vars[0].name.idLength) ||
+       !SnmpUtilOidNCmp(&vars2[0].name, &vars3[0].name, vars3[0].name.idLength),
+        "expected 1.3.6.1.2.1.1 or 1.3.6.1.2.1.2, got %s\n",
+        SnmpUtilOidToA(&vars2[0].name));
     SnmpUtilVarBindFree(&vars2[0]);
 
     /* Check the type and OIDs of the IP address table */
