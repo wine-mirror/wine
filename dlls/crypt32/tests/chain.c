@@ -1560,7 +1560,7 @@ static ChainCheck chainCheckNoStore[] = {
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_NOT_TIME_VALID | CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },
      1, selfSignedSimpleStatus },
-   TODO_ERROR },
+   0 },
  { { sizeof(chain8) / sizeof(chain8[0]), chain8 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
