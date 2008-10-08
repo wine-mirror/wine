@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "wine/debug.h"
 #include "winscard.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winscard);
 
@@ -49,6 +50,30 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+LONG WINAPI SCardAddReaderToGroupA(SCARDCONTEXT context, LPCSTR reader, LPCSTR group)
+{
+    LONG retval;
+    UNICODE_STRING readerW, groupW;
+
+    if(reader) RtlCreateUnicodeStringFromAsciiz(&readerW,reader);
+    else readerW.Buffer = NULL;
+    if(group) RtlCreateUnicodeStringFromAsciiz(&groupW,group);
+    else groupW.Buffer = NULL;
+
+    retval = SCardAddReaderToGroupW(context, readerW.Buffer, groupW.Buffer);
+
+    RtlFreeUnicodeString(&readerW);
+    RtlFreeUnicodeString(&groupW);
+
+    return retval;
+}
+
+LONG WINAPI SCardAddReaderToGroupW(SCARDCONTEXT context, LPCWSTR reader, LPCWSTR group)
+{
+    FIXME("%x %s %s\n", (unsigned int) context, debugstr_w(reader), debugstr_w(group));
+    return SCARD_S_SUCCESS;
 }
 
 LONG WINAPI SCardEstablishContext(DWORD dwScope, LPCVOID pvReserved1,
