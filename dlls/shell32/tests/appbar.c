@@ -335,7 +335,7 @@ static void test_setpos(void)
 
     do_events_until(got_expected_bottom);
 
-    ok(windows[1].allocated_rect.bottom = expected_bottom, "windows[1]'s bottom is %i, expected %i\n", windows[1].allocated_rect.bottom, expected_bottom);
+    ok(windows[1].allocated_rect.bottom == expected_bottom, "windows[1]'s bottom is %i, expected %i\n", windows[1].allocated_rect.bottom, expected_bottom);
 
     test_window_rects(1, 2);
 
