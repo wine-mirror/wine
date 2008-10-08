@@ -306,17 +306,23 @@ static void test_SHCreateStreamOnFileW(DWORD mode, DWORD stgm)
 
     /* invalid arguments */
 
-    stream = NULL;
-    ret = (*pSHCreateStreamOnFileW)(NULL, mode | stgm, &stream);
-    ok(ret == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* XP */
-       ret == E_INVALIDARG /* Vista */,
-      "SHCreateStreamOnFileW: expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) or E_INVALIDARG, got 0x%08x\n", ret);
-    ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
+    if (0)
+    {
+        /* Crashes on NT4 */
+        stream = NULL;
+        ret = (*pSHCreateStreamOnFileW)(NULL, mode | stgm, &stream);
+        ok(ret == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* XP */
+           ret == E_INVALIDARG /* Vista */,
+          "SHCreateStreamOnFileW: expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) or E_INVALIDARG, got 0x%08x\n", ret);
+        ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
+    }
 
-#if 0 /* This test crashes on WinXP SP2 */
-    ret = (*pSHCreateStreamOnFileW)(test_file, mode | stgm, NULL);
-    ok(ret == E_INVALIDARG, "SHCreateStreamOnFileW: expected E_INVALIDARG, got 0x%08x\n", ret);
-#endif
+    if (0)
+    {
+        /* This test crashes on WinXP SP2 */
+            ret = (*pSHCreateStreamOnFileW)(test_file, mode | stgm, NULL);
+            ok(ret == E_INVALIDARG, "SHCreateStreamOnFileW: expected E_INVALIDARG, got 0x%08x\n", ret);
+    }
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_CONVERT | stgm, &stream);
@@ -405,12 +411,16 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     /* invalid arguments */
 
-    stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(NULL, mode, 0, FALSE, NULL, &stream);
-    ok(ret == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* XP */
-       ret == E_INVALIDARG /* Vista */,
-      "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) or E_INVALIDARG, got 0x%08x\n", ret);
-    ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
+    if (0)
+    {
+        /* Crashes on NT4 */
+        stream = NULL;
+        ret = (*pSHCreateStreamOnFileEx)(NULL, mode, 0, FALSE, NULL, &stream);
+        ok(ret == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* XP */
+           ret == E_INVALIDARG /* Vista */,
+          "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) or E_INVALIDARG, got 0x%08x\n", ret);
+        ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
+    }
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, template, &stream);
@@ -421,10 +431,12 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 
     ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
 
-#if 0 /* This test crashes on WinXP SP2 */
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, NULL, NULL);
-    ok(ret == E_INVALIDARG, "SHCreateStreamOnFileEx: expected E_INVALIDARG, got 0x%08x\n", ret);
-#endif
+    if (0)
+    {
+        /* This test crashes on WinXP SP2 */
+        ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, NULL, NULL);
+        ok(ret == E_INVALIDARG, "SHCreateStreamOnFileEx: expected E_INVALIDARG, got 0x%08x\n", ret);
+    }
 
     /* file does not exist */
 
