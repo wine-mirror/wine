@@ -333,6 +333,70 @@ static inline BOOL is_dynamic_dispid(DISPID id)
     return DISPID_DYNPROP_0 <= id && id <= DISPID_DYNPROP_MAX;
 }
 
+static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, BOOL alloc, dynamic_prop_t **ret)
+{
+    dispex_dynamic_data_t *data = This->dynamic_data;
+
+    if(data) {
+        unsigned i;
+
+        for(i=0; i < data->prop_cnt; i++) {
+            if(!strcmpW(data->props[i].name, name)) {
+                *ret = data->props+i;
+                return S_OK;
+            }
+        }
+    }
+
+    if(alloc) {
+        TRACE("creating dynamic prop %s\n", debugstr_w(name));
+
+        if(!data) {
+            data = This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t));
+            if(!data)
+                return E_OUTOFMEMORY;
+        }
+
+        if(!data->buf_size) {
+            data->props = heap_alloc(sizeof(dynamic_prop_t)*4);
+            if(!data->props)
+                return E_OUTOFMEMORY;
+            data->buf_size = 4;
+        }else if(data->buf_size == data->prop_cnt) {
+            dynamic_prop_t *new_props;
+
+            new_props = heap_realloc(data->props, sizeof(dynamic_prop_t)*(data->buf_size<<1));
+            if(!new_props)
+                return E_OUTOFMEMORY;
+
+            data->props = new_props;
+            data->buf_size <<= 1;
+        }
+
+        data->props[data->prop_cnt].name = heap_strdupW(name);
+        VariantInit(&data->props[data->prop_cnt].var);
+        *ret = data->props + data->prop_cnt++;
+
+        return S_OK;
+    }
+
+    TRACE("not found %s\n", debugstr_w(name));
+    return DISP_E_UNKNOWNNAME;
+}
+
+HRESULT dispex_get_dprop_ref(DispatchEx *This, const WCHAR *name, BOOL alloc, VARIANT **ret)
+{
+    dynamic_prop_t *prop;
+    HRESULT hres;
+
+    hres = get_dynamic_prop(This, name, alloc, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = &prop->var;
+    return S_OK;
+}
+
 #define DISPATCHEX_THIS(iface) DEFINE_THIS(DispatchEx, IDispatchEx, iface)
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
@@ -418,8 +482,10 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     DispatchEx *This = DISPATCHEX_THIS(iface);
+    dynamic_prop_t *dprop;
     dispex_data_t *data;
     int min, max, n, c;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
@@ -451,17 +517,6 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
             min = n+1;
     }
 
-    if(This->dynamic_data) {
-        unsigned i;
-
-        for(i=0; i < This->dynamic_data->prop_cnt; i++) {
-            if(!strcmpW(This->dynamic_data->props[i].name, bstrName)) {
-                *pid = DISPID_DYNPROP_0 + i;
-                return S_OK;
-            }
-        }
-    }
-
     if(This->data->vtbl && This->data->vtbl->get_dispid) {
         HRESULT hres;
 
@@ -470,44 +525,12 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
             return hres;
     }
 
-    if(grfdex & fdexNameEnsure) {
-        dispex_dynamic_data_t *dynamic_data;
+    hres = get_dynamic_prop(This, bstrName, grfdex&fdexNameEnsure, &dprop);
+    if(FAILED(hres))
+        return hres;
 
-        TRACE("creating dynamic prop %s\n", debugstr_w(bstrName));
-
-        if(This->dynamic_data) {
-            dynamic_data = This->dynamic_data;
-        }else {
-            dynamic_data = This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t));
-            if(!dynamic_data)
-                return E_OUTOFMEMORY;
-        }
-
-        if(!dynamic_data->buf_size) {
-            dynamic_data->props = heap_alloc(sizeof(dynamic_prop_t)*4);
-            if(!dynamic_data->props)
-                return E_OUTOFMEMORY;
-            dynamic_data->buf_size = 4;
-        }else if(dynamic_data->buf_size == dynamic_data->prop_cnt) {
-            dynamic_prop_t *new_props;
-
-            new_props = heap_realloc(dynamic_data->props, sizeof(dynamic_prop_t)*(dynamic_data->buf_size<<1));
-            if(!new_props)
-                return E_OUTOFMEMORY;
-
-            dynamic_data->props = new_props;
-            dynamic_data->buf_size <<= 1;
-        }
-
-        dynamic_data->props[dynamic_data->prop_cnt].name = heap_strdupW(bstrName);
-        VariantInit(&dynamic_data->props[dynamic_data->prop_cnt].var);
-        *pid = DISPID_DYNPROP_0 + dynamic_data->prop_cnt++;
-
-        return S_OK;
-    }
-
-    TRACE("not found %s\n", debugstr_w(bstrName));
-    return DISP_E_UNKNOWNNAME;
+    *pid = DISPID_DYNPROP_0 + (dprop - This->dynamic_data->props);
+    return S_OK;
 }
 
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,

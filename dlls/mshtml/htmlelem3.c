@@ -202,30 +202,55 @@ static HRESULT WINAPI HTMLElement3_get_hideFocus(IHTMLElement3 *iface, VARIANT_B
     return E_NOTIMPL;
 }
 
+static const WCHAR disabledW[] = {'d','i','s','a','b','l','e','d',0};
+
 static HRESULT WINAPI HTMLElement3_put_disabled(IHTMLElement3 *iface, VARIANT_BOOL v)
 {
     HTMLElement *This = HTMLELEM3_THIS(iface);
+    VARIANT *var;
+    HRESULT hres;
 
     TRACE("(%p)->(%x)\n", This, v);
 
     if(This->node.vtbl->put_disabled)
         return This->node.vtbl->put_disabled(&This->node, v);
 
-    FIXME("No implementation for element\n");
-    return E_NOTIMPL;
+    hres = dispex_get_dprop_ref(&This->node.dispex, disabledW, TRUE, &var);
+    if(FAILED(hres))
+        return hres;
+
+    VariantClear(var);
+    V_VT(var) = VT_BOOL;
+    V_BOOL(var) = v;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement3_get_disabled(IHTMLElement3 *iface, VARIANT_BOOL *p)
 {
     HTMLElement *This = HTMLELEM3_THIS(iface);
+    VARIANT *var;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->node.vtbl->get_disabled)
         return This->node.vtbl->get_disabled(&This->node, p);
 
-    FIXME("No implementation for element\n");
-    return E_NOTIMPL;
+    hres = dispex_get_dprop_ref(&This->node.dispex, disabledW, FALSE, &var);
+    if(hres == DISP_E_UNKNOWNNAME) {
+        *p = VARIANT_FALSE;
+        return S_OK;
+    }
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(var) != VT_BOOL) {
+        FIXME("vt %d\n", V_VT(var));
+        return E_NOTIMPL;
+    }
+
+    *p = V_BOOL(var);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement3_get_isDisabled(IHTMLElement3 *iface, VARIANT_BOOL *p)

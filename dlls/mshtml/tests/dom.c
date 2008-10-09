@@ -2986,6 +2986,10 @@ static void test_elems(IHTMLDocument2 *doc)
         IHTMLDOMChildrenCollection_Release(child_col);
     }
 
+    test_elem3_get_disabled((IUnknown*)elem, VARIANT_FALSE);
+    test_elem3_set_disabled((IUnknown*)elem, VARIANT_TRUE);
+    test_elem3_set_disabled((IUnknown*)elem, VARIANT_FALSE);
+
     IHTMLElement_Release(elem);
 
     test_stylesheets(doc);
