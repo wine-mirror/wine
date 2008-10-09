@@ -139,11 +139,14 @@ static void test_DrawTextCalcRect(void)
         ok( (rect.left == rect.right && rect.bottom == rect.top),
             "rectangle should be empty got %d,%d-%d,%d\n",
             rect.left, rect.top, rect.right, rect.bottom );
-        SetRect( &rect, 10,10, 100, 100);
-        textheight = DrawTextExW(hdc, NULL, -1, &rect, DT_CALCRECT, NULL );
-        ok( !(rect.left == rect.right && rect.bottom == rect.top),
-            "rectangle should NOT be empty got %d,%d-%d,%d\n",
-            rect.left, rect.top, rect.right, rect.bottom );
+        if (0) {
+            SetRect( &rect, 10,10, 100, 100);
+            /* Crashes on NT4 */
+            textheight = DrawTextExW(hdc, NULL, -1, &rect, DT_CALCRECT, NULL );
+            ok( !(rect.left == rect.right && rect.bottom == rect.top),
+                "rectangle should NOT be empty got %d,%d-%d,%d\n",
+                rect.left, rect.top, rect.right, rect.bottom );
+        }
         SetRect( &rect, 10,10, 100, 100);
         textheight = DrawTextExW(hdc, NULL, 0, &rect, DT_CALCRECT, NULL );
         ok( !(rect.left == rect.right && rect.bottom == rect.top),
