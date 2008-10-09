@@ -663,7 +663,7 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
             TRACE( "calling %p( %p, %p, %p )\n", routine,
                     irpsp->DeviceObject, irp, irpsp->Context );
             stat = routine( irpsp->DeviceObject, irp, irpsp->Context );
-            TRACE( "CompletionRoutine returned %x\n", status );
+            TRACE( "CompletionRoutine returned %x\n", stat );
             if (STATUS_MORE_PROCESSING_REQUIRED == stat)
                 return;
         }
