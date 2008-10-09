@@ -557,25 +557,16 @@ static UINT msi_add_records_to_table(MSIDATABASE *db, LPWSTR *columns, LPWSTR *t
                                      int num_columns, int num_records)
 {
     UINT r;
-    DWORD i, size;
+    DWORD i;
     MSIQUERY *view;
     MSIRECORD *rec;
-    LPWSTR query;
 
     static const WCHAR select[] = {
         'S','E','L','E','C','T',' ','*',' ',
         'F','R','O','M',' ','`','%','s','`',0
     };
 
-    size = lstrlenW(select) + lstrlenW(labels[0]) - 1;
-    query = msi_alloc(size * sizeof(WCHAR));
-    if (!query)
-        return ERROR_OUTOFMEMORY;
-
-    sprintfW(query, select, labels[0]);
-
-    r = MSI_DatabaseOpenViewW(db, query, &view);
-    msi_free(query);
+    r = MSI_OpenQuery(db, &view, select, labels[0]);
     if (r != ERROR_SUCCESS)
         return r;
 
@@ -1268,29 +1259,21 @@ static UINT merge_diff_tables(MSIRECORD *rec, LPVOID param)
 {
     MERGEDATA *data = (MERGEDATA *)param;
     MERGETABLE *table;
-    MSIQUERY *dbview = NULL;
+    MSIQUERY *dbview;
     MSIQUERY *mergeview = NULL;
     LPCWSTR name;
-    LPWSTR query;
-    DWORD size;
     UINT r;
 
-    static const WCHAR fmt[] = {'S','E','L','E','C','T',' ','*',' ',
+    static const WCHAR query[] = {'S','E','L','E','C','T',' ','*',' ',
         'F','R','O','M',' ','`','%','s','`',0};
 
     name = MSI_RecordGetString(rec, 1);
-    size = lstrlenW(fmt) + lstrlenW(name) - 1;
-    query = msi_alloc(size * sizeof(WCHAR));
-    if (!query)
-        return ERROR_OUTOFMEMORY;
 
-    sprintfW(query, fmt, name);
-
-    r = MSI_DatabaseOpenViewW(data->db, query, &dbview);
+    r = MSI_OpenQuery(data->db, &dbview, query, name);
     if (r != ERROR_SUCCESS)
-        goto done;
+        return r;
 
-    r = MSI_DatabaseOpenViewW(data->merge, query, &mergeview);
+    r = MSI_OpenQuery(data->merge, &mergeview, query, name);
     if (r != ERROR_SUCCESS)
         goto done;
 
@@ -1326,7 +1309,6 @@ static UINT merge_diff_tables(MSIRECORD *rec, LPVOID param)
     list_add_tail(data->tabledata, &table->entry);
 
 done:
-    msi_free(query);
     msiobj_release(&dbview->hdr);
     msiobj_release(&mergeview->hdr);
     return r;
