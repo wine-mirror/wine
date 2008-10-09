@@ -365,6 +365,20 @@ static void process_task(task_t *task)
     }
 }
 
+static void call_timer_disp(IDispatch *disp)
+{
+    DISPPARAMS dp = {NULL, NULL, 0, 0};
+    EXCEPINFO ei;
+    VARIANT res;
+    HRESULT hres;
+
+    V_VT(&res) = VT_EMPTY;
+    memset(&ei, 0, sizeof(ei));
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, &ei, NULL);
+    TRACE("ret %08x %s\n", hres, debugstr_variant(&res));
+    VariantClear(&res);
+}
+
 static LRESULT process_timer(void)
 {
     thread_data_t *thread_data = get_thread_data(TRUE);
@@ -395,7 +409,7 @@ static LRESULT process_timer(void)
             release_task_timer(thread_data->thread_hwnd, timer);
         }
 
-        call_disp_func(doc, disp);
+        call_timer_disp(disp);
 
         IDispatch_Release(disp);
     }
