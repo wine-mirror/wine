@@ -36,6 +36,7 @@
 #include <math.h>
 #include <errno.h>
 
+#include "wine/unicode.h"
 #include "wordpad.h"
 
 #ifdef NONAMELESSUNION
@@ -1284,21 +1285,18 @@ static void append_current_units(LPWSTR buffer)
 static void number_with_units(LPWSTR buffer, int number)
 {
     float converted = (float)number / TWIPS_PER_CM;
-    char string[MAX_STRING_LEN];
+    static const WCHAR fmt[] = {'%','.','2','f',' ','%','s','\0'};
 
-    sprintf(string, "%.2f ", converted);
-    lstrcatA(string, units_cmA);
-    MultiByteToWideChar(CP_ACP, 0, string, -1, buffer, MAX_STRING_LEN);
+    sprintfW(buffer, fmt, converted, units_cmW);
 }
 
 static BOOL get_comboexlist_selection(HWND hComboEx, LPWSTR wszBuffer, UINT bufferLength)
 {
-    HANDLE hHeap;
-    COMBOBOXEXITEM cbItem;
+    COMBOBOXEXITEMW cbItem;
     COMBOBOXINFO cbInfo;
     HWND hCombo, hList;
     int idx, result;
-    char *szBuffer;
+
     hCombo = (HWND)SendMessage(hComboEx, CBEM_GETCOMBOCONTROL, 0, 0);
     if (!hCombo)
         return FALSE;
@@ -1311,22 +1309,13 @@ static BOOL get_comboexlist_selection(HWND hComboEx, LPWSTR wszBuffer, UINT buff
     if (idx < 0)
         return FALSE;
 
-    hHeap = GetProcessHeap();
-    szBuffer = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, bufferLength);
     ZeroMemory(&cbItem, sizeof(cbItem));
     cbItem.mask = CBEIF_TEXT;
     cbItem.iItem = idx;
-    cbItem.pszText = szBuffer;
+    cbItem.pszText = wszBuffer;
     cbItem.cchTextMax = bufferLength-1;
-    result = SendMessage(hComboEx, CBEM_GETITEM, 0, (LPARAM)&cbItem);
-    if (!result)
-    {
-        HeapFree(hHeap, 0, szBuffer);
-        return FALSE;
-    }
+    result = SendMessageW(hComboEx, CBEM_GETITEM, 0, (LPARAM)&cbItem);
 
-    result = MultiByteToWideChar(CP_ACP, 0, szBuffer, -1, wszBuffer, bufferLength);
-    HeapFree(hHeap, 0, szBuffer);
     return result != 0;
 }
 
