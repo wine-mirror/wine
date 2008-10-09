@@ -217,13 +217,15 @@ static void test_get_set(void)
 
     }
 
-    /* test path with quotes (Win98 IShellLinkA_SetPath returns S_FALSE, WinXP returns S_OK) */
+    /* test path with quotes (IShellLinkA_SetPath returns S_FALSE on W2K and below and S_OK on XP and above */
     r = IShellLinkA_SetPath(sl, "\"c:\\nonexistent\\file\"");
     ok(r==S_FALSE || r == S_OK, "SetPath failed (0x%08x)\n", r);
 
     r = IShellLinkA_GetPath(sl, buffer, sizeof(buffer), NULL, SLGP_RAWPATH);
     ok(r==S_OK, "GetPath failed (0x%08x)\n", r);
-    ok(!lstrcmp(buffer, "C:\\nonexistent\\file"), "case doesn't match\n");
+    ok(!lstrcmp(buffer, "C:\\nonexistent\\file") ||
+       broken(!lstrcmp(buffer, "C:\\\"c:\\nonexistent\\file\"")), /* NT4 */
+       "case doesn't match\n");
 
     r = IShellLinkA_SetPath(sl, "\"c:\\foo");
     ok(r==S_FALSE || r == S_OK || r == E_INVALIDARG /* Vista */, "SetPath failed (0x%08x)\n", r);
