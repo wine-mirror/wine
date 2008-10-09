@@ -99,7 +99,7 @@ static struct object *symlink_lookup_name( struct object *obj, struct unicode_st
     struct object *target;
 
     assert( obj->ops == &symlink_ops );
-    if (attr & OBJ_OPENLINK) return NULL;
+    if (!name->len && (attr & OBJ_OPENLINK)) return NULL;
 
     target_str.str = symlink->target;
     target_str.len = symlink->len;
