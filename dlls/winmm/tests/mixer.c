@@ -740,8 +740,9 @@ static void mixer_test_deviceW(int device)
        mmsys_error(rc));
 
     rc=mixerGetDevCapsW(device,&capsW,4);
-    ok(rc==MMSYSERR_NOERROR,
-       "mixerGetDevCapsW: MMSYSERR_NOERROR expected, got %s\n",
+    ok(rc==MMSYSERR_NOERROR ||
+       rc==MMSYSERR_INVALPARAM, /* Vista and W2K8 */
+       "mixerGetDevCapsW: MMSYSERR_NOERROR or MMSYSERR_INVALPARAM expected, got %s\n",
        mmsys_error(rc));
 
     rc=mixerGetDevCapsW(device,&capsW,sizeof(capsW));
