@@ -135,7 +135,7 @@ static LONG twips_to_centmm(int twips)
     return MulDiv(twips, 1000, TWIPS_PER_CM);
 }
 
-LONG centmm_to_twips(int mm)
+static LONG centmm_to_twips(int mm)
 {
     return MulDiv(mm, TWIPS_PER_CM, 1000);
 }
@@ -620,7 +620,7 @@ LRESULT CALLBACK ruler_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-void draw_preview_page(HDC hdc, HDC* hdcSized, FORMATRANGE* lpFr, float ratio, int bmNewWidth, int bmNewHeight, int bmWidth, int bmHeight)
+static void draw_preview_page(HDC hdc, HDC* hdcSized, FORMATRANGE* lpFr, float ratio, int bmNewWidth, int bmNewHeight, int bmWidth, int bmHeight)
 {
     HBITMAP hBitmapScaled = CreateCompatibleBitmap(hdc, bmNewWidth, bmNewHeight);
     HPEN hPen;
@@ -800,7 +800,7 @@ LRESULT print_preview(HWND hMainWnd)
     return 0;
 }
 
-void update_preview(HWND hWnd)
+static void update_preview(HWND hWnd)
 {
     RECT rc;
 

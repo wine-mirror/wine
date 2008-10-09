@@ -317,7 +317,7 @@ static void populate_size_list(HWND hSizeListWnd)
     HDC hdc = GetDC(hMainWnd);
     static const unsigned choices[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
     WCHAR buffer[3];
-    int i;
+    size_t i;
     DWORD fontStyle;
 
     ZeroMemory(&fmt, sizeof(fmt));
@@ -440,7 +440,7 @@ static void set_font(LPCWSTR wszFaceName)
 
     populate_size_list(hSizeListWnd);
 
-    SendMessageW(hFontListEditWnd, WM_SETTEXT, 0, (LPARAM)(LPWSTR)wszFaceName);
+    SendMessageW(hFontListEditWnd, WM_SETTEXT, 0, (LPARAM)wszFaceName);
 }
 
 static void set_default_font(void)
@@ -478,7 +478,7 @@ static void on_fontlist_modified(LPWSTR wszNewFaceName)
         set_font((LPCWSTR) wszNewFaceName);
 }
 
-static void add_font(LPCWSTR fontName, DWORD fontType, HWND hListWnd, NEWTEXTMETRICEXW *ntmc)
+static void add_font(LPCWSTR fontName, DWORD fontType, HWND hListWnd, const NEWTEXTMETRICEXW *ntmc)
 {
     COMBOBOXEXITEMW cbItem;
     WCHAR buffer[MAX_PATH];
@@ -557,7 +557,7 @@ static void dialog_choose_font(void)
 }
 
 
-int CALLBACK enum_font_proc(const LOGFONTW *lpelfe, const TEXTMETRICW *lpntme,
+static int CALLBACK enum_font_proc(const LOGFONTW *lpelfe, const TEXTMETRICW *lpntme,
                             DWORD FontType, LPARAM lParam)
 {
     HWND hListWnd = (HWND) lParam;
@@ -565,7 +565,7 @@ int CALLBACK enum_font_proc(const LOGFONTW *lpelfe, const TEXTMETRICW *lpntme,
     if(SendMessageW(hListWnd, CB_FINDSTRINGEXACT, -1, (LPARAM)lpelfe->lfFaceName) == CB_ERR)
     {
 
-        add_font((LPWSTR)lpelfe->lfFaceName, FontType, hListWnd, (NEWTEXTMETRICEXW*)lpntme);
+        add_font(lpelfe->lfFaceName, FontType, hListWnd, (const NEWTEXTMETRICEXW*)lpntme);
     }
 
     return 1;
@@ -1061,7 +1061,7 @@ static void dialog_viewproperties(void)
 {
     PROPSHEETPAGEW psp[2];
     PROPSHEETHEADERW psh;
-    int i;
+    size_t i;
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
     LPCPROPSHEETPAGEW ppsp = (LPCPROPSHEETPAGEW)&psp;
 
