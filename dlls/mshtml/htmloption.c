@@ -180,13 +180,17 @@ static HRESULT WINAPI HTMLOptionElement_get_index(IHTMLOptionElement *iface, LON
 static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR v)
 {
     HTMLOptionElement *This = HTMLOPTION_THIS(iface);
-    nsIDOMDocument *nsdoc;
     nsIDOMText *text_node;
     nsAString text_str;
     nsIDOMNode *tmp;
     nsresult nsres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->element.node.doc->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
 
     while(1) {
         nsIDOMNode *child;
@@ -205,19 +209,12 @@ static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR
         }
     }
 
-    nsres = nsIWebNavigation_GetDocument(This->element.node.doc->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return S_OK;
-    }
-
     nsAString_Init(&text_str, v);
-    nsres = nsIDOMDocument_CreateTextNode(nsdoc, &text_str, &text_node);
-    nsIDOMDocument_Release(nsdoc);
+    nsres = nsIDOMHTMLDocument_CreateTextNode(This->element.node.doc->nsdoc, &text_str, &text_node);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateTextNode failed: %08x\n", nsres);
-        return S_OK;
+        return E_FAIL;
     }
 
     nsres = nsIDOMHTMLOptionElement_AppendChild(This->nsoption, (nsIDOMNode*)text_node, &tmp);
