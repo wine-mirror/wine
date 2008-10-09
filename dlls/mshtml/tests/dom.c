@@ -1096,6 +1096,30 @@ static void _test_elem3_set_disabled(unsigned line, IUnknown *unk, VARIANT_BOOL 
     _test_elem3_get_disabled(line, unk, b);
 }
 
+#define test_select_get_disabled(i,b) _test_select_get_disabled(__LINE__,i,b)
+static void _test_select_get_disabled(unsigned line, IHTMLSelectElement *select, VARIANT_BOOL exb)
+{
+    VARIANT_BOOL disabled = 100;
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_get_disabled(select, &disabled);
+    ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
+    ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
+
+    _test_elem3_get_disabled(line, (IUnknown*)select, exb);
+}
+
+#define test_select_set_disabled(i,b) _test_select_set_disabled(__LINE__,i,b)
+static void _test_select_set_disabled(unsigned line, IHTMLSelectElement *select, VARIANT_BOOL b)
+{
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_put_disabled(select, b);
+    ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
+
+    _test_select_get_disabled(line, select, b);
+}
+
 #define elem_get_scroll_height(u) _elem_get_scroll_height(__LINE__,u)
 static long _elem_get_scroll_height(unsigned line, IUnknown *unk)
 {
@@ -1727,6 +1751,10 @@ static void test_select_elem(IHTMLSelectElement *select)
 
     test_select_set_value(select, "val1");
     test_select_value(select, "val1");
+
+    test_select_get_disabled(select, VARIANT_FALSE);
+    test_select_set_disabled(select, VARIANT_TRUE);
+    test_select_set_disabled(select, VARIANT_FALSE);
 }
 
 static void test_create_option_elem(IHTMLDocument2 *doc)
