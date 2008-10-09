@@ -2785,7 +2785,7 @@ methods:
     BSTR textJustifyTrim();
 
     [propget, id(DISPID_IHTMLCURRENTSTYLE_TEXTKASHIDA), displaybind, bindable]
-   VARIANT textKashida();
+    VARIANT textKashida();
 
     [propget, id(DISPID_IHTMLCURRENTSTYLE_BLOCKDIRECTION), displaybind, bindable]
     BSTR blockDirection();
@@ -12490,6 +12490,26 @@ interface IHTMLLocation : IDispatch
     HRESULT toString([retval, out] BSTR *String);
 }
 
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f4ce-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLBookmarkCollection : IDispatch
+{
+    [propget, id(DISPID_IHTMLBOOKMARKCOLLECTION_LENGTH), hidden]
+    HRESULT length([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLBOOKMARKCOLLECTION__NEWENUM), hidden, restricted]
+    HRESULT _newEnum([out, retval] IUnknown **p);
+
+    [id(DISPID_IHTMLBOOKMARKCOLLECTION_ITEM)]
+    HRESULT item(
+            [in] long index,
+            [out, retval] VARIANT *pVarBookmark);
+}
+
 /*****************************************************************************
  *    IHTMLDataTransfer interface
  */
@@ -12615,6 +12635,261 @@ interface IHTMLEventObj : IDispatch
 
     [propget, id(DISPID_IHTMLEVENTOBJ_SRCFILTER)]
     HRESULT srcFilter([retval, out] IDispatch **p);
+}
+
+/*****************************************************************************
+ *    DispCEventObj dispinterface
+ */
+[
+    hidden,
+    uuid(3050f558-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispCEventObj
+{
+properties:
+methods:
+    [propput, id(DISPID_IHTMLEVENTOBJ_RETURNVALUE)]
+    void returnValue(VARIANT v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ_RETURNVALUE)]
+    VARIANT returnValue();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ_CANCELBUBBLE)]
+    void cancelBubble(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ_CANCELBUBBLE)]
+    VARIANT_BOOL cancelBubble();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ_KEYCODE)]
+    void keyCode(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ_KEYCODE)]
+    long keyCode();
+
+    [id(DISPID_IHTMLEVENTOBJ2_SETATTRIBUTE)]
+    void setAttribute(
+            [in] BSTR strAttributeName,
+            [in] VARIANT AttributeValue,
+            [in, defaultvalue(1)] LONG lFlags);
+
+    [id(DISPID_IHTMLEVENTOBJ2_GETATTRIBUTE)]
+    VARIANT getAttribute(
+            [in] BSTR strAttributeName,
+            [in, defaultvalue(0)] LONG lFlags);
+
+    [id(DISPID_IHTMLEVENTOBJ2_REMOVEATTRIBUTE)]
+    VARIANT_BOOL removeAttribute(
+            [in] BSTR strAttributeName,
+            [in, defaultvalue(1)] LONG lFlags);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_PROPERTYNAME)]
+    void propertyName(BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_PROPERTYNAME)]
+    BSTR propertyName();
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_BOOKMARKS)]
+    void bookmarks(IHTMLBookmarkCollection *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_BOOKMARKS)]
+    IHTMLBookmarkCollection *bookmarks();
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_RECORDSET)]
+    void recordset(IDispatch *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_RECORDSET)]
+    IDispatch *recordset();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_DATAFLD)]
+    void dataFld(BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_DATAFLD)]
+    BSTR dataFld();
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_BOUNDELEMENTS)]
+    void boundElements(IHTMLElementCollection *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_BOUNDELEMENTS)]
+    IHTMLElementCollection *boundElements();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_REPEAT)]
+    void repeat(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_REPEAT)]
+    VARIANT_BOOL repeat();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_SRCURN)]
+    void srcUrn(BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SRCURN)]
+    BSTR srcUrn();
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_SRCELEMENT)]
+    void srcElement(IHTMLElement *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SRCELEMENT)]
+    IHTMLElement *srcElement();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_ALTKEY)]
+    void altKey(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_ALTKEY)]
+    VARIANT_BOOL altKey();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_CTRLKEY)]
+    void ctrlKey(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_CTRLKEY)]
+    VARIANT_BOOL ctrlKey();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_SHIFTKEY)]
+    void shiftKey(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SHIFTKEY)]
+    VARIANT_BOOL shiftKey();
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_FROMELEMENT)]
+    void fromElement(IHTMLElement *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_FROMELEMENT)]
+    IHTMLElement *fromElement();
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_TOELEMENT)]
+    void toElement(IHTMLElement *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_TOELEMENT)]
+    IHTMLElement *toElement();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_BUTTON)]
+    void button(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_BUTTON)]
+    long button();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_TYPE)]
+    void type(BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_TYPE)]
+    BSTR type();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_QUALIFIER)]
+    void qualifier(BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_QUALIFIER)]
+    BSTR qualifier();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_REASON)]
+    void reason(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_REASON)]
+    long reason();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_X)]
+    void x(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_X)]
+    long x();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_Y)]
+    void y(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_Y)]
+    long y();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_CLIENTX)]
+    void clientX(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_CLIENTX)]
+    long clientX();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_CLIENTY)]
+    void clientY(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_CLIENTY)]
+    long clientY();
+    [propput, id(DISPID_IHTMLEVENTOBJ2_OFFSETX)]
+    void offsetX(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_OFFSETX)]
+    long offsetX();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_OFFSETY)]
+    void offsetY(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_OFFSETY)]
+    long offsetY();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_SCREENX)]
+    void screenX(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SCREENX)]
+    long screenX();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_SCREENY)]
+    void screenY(long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SCREENY)]
+    long screenY();
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_SRCFILTER)]
+    void srcFilter(IDispatch *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SRCFILTER)]
+    IDispatch *srcFilter();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_DATATRANSFER)]
+    IHTMLDataTransfer *dataTransfer();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_CONTENTOVERFLOW)]
+    VARIANT_BOOL contentOverflow();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ3_SHIFTLEFT)]
+    void shiftLeft(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_SHIFTLEFT)]
+    VARIANT_BOOL shiftLeft();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ3_ALTLEFT)]
+    void altLeft(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_ALTLEFT)]
+    VARIANT_BOOL altLeft();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ3_CTRLLEFT)]
+    void ctrlLeft(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_CTRLLEFT)]
+    VARIANT_BOOL ctrlLeft();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMECOMPOSITIONCHANGE), hidden, restricted, nonbrowsable]
+    LONG_PTR imeCompositionChange();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMENOTIFYCOMMAND), hidden, restricted, nonbrowsable]
+    LONG_PTR imeNotifyCommand();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMENOTIFYDATA), hidden, restricted, nonbrowsable]
+    LONG_PTR imeNotifyData();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMEREQUEST), hidden, restricted, nonbrowsable]
+    LONG_PTR imeRequest();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMEREQUESTDATA), hidden, restricted, nonbrowsable]
+    LONG_PTR imeRequestData();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_KEYBOARDLAYOUT), hidden, restricted, nonbrowsable]
+    LONG_PTR keyboardLayout();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_BEHAVIORCOOKIE)]
+    long behaviorCookie();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_BEHAVIORPART)]
+    long behaviorPart();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_NEXTPAGE)]
+    BSTR nextPage();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ4_WHEELDELTA)]
+    long wheelDelta();
 }
 
 /*****************************************************************************
@@ -17204,7 +17479,7 @@ methods:
     void onrowsinserted(VARIANT v);
 
     [propget, id(DISPID_IHTMLELEMENT2_ONROWSINSERTED), displaybind, bindable]
-     VARIANT onrowsinserted();
+    VARIANT onrowsinserted();
 
     [propput, id(DISPID_IHTMLELEMENT2_ONCELLCHANGE), displaybind, bindable]
      void oncellchange(VARIANT v);
