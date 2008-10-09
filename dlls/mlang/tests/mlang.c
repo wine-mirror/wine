@@ -250,7 +250,7 @@ static const char *dump_mime_flags(DWORD flags)
 }
 #endif
 
-static BOOL check_convertible(IMultiLanguage2 *iML2, UINT from, UINT to)
+static HRESULT check_convertible(IMultiLanguage2 *iML2, UINT from, UINT to)
 {
     CHAR convert[MAX_PATH];
     BYTE dest[MAX_PATH];
@@ -259,21 +259,37 @@ static BOOL check_convertible(IMultiLanguage2 *iML2, UINT from, UINT to)
 
     static WCHAR strW[] = {'a','b','c',0};
 
+    /* Check to see if the target codepage has these characters or not */
+    if (from != CP_UTF8)
+    {
+        BOOL fDefaultChar;
+        char ch[10];
+        int cb;
+        cb = WideCharToMultiByte( from, WC_NO_BEST_FIT_CHARS | WC_COMPOSITECHECK | WC_DEFAULTCHAR,
+                                  strW, 3, ch, sizeof(ch), NULL, &fDefaultChar);
+
+        if(cb == 0 || fDefaultChar)
+        {
+            trace("target codepage %i does not contain 'abc'\n",from);
+            return E_FAIL;
+        }
+    }
+
     srcsz = lstrlenW(strW) + 1;
     destsz = MAX_PATH;
     hr = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, from, strW,
                                                   &srcsz, convert, &destsz);
     if (hr != S_OK)
-        return FALSE;
+        return S_FALSE;
 
     srcsz = -1;
     destsz = MAX_PATH;
     hr = IMultiLanguage2_ConvertString(iML2, NULL, from, to, (BYTE *)convert,
                                        &srcsz, dest, &destsz);
     if (hr != S_OK)
-        return FALSE;
+        return S_FALSE;
 
-    return TRUE;
+    return S_OK;
 }
 
 static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
@@ -333,8 +349,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     {
 	CHARSETINFO csi;
 	MIMECSETINFO mcsi;
-        BOOL convertible;
-        HRESULT check = S_OK;
+        HRESULT convertible = S_OK;
 	static const WCHAR autoW[] = {'_','a','u','t','o',0};
 	static const WCHAR feffW[] = {'u','n','i','c','o','d','e','F','E','F','F',0};
 
@@ -386,13 +401,13 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	    ok(ret == S_OK, "IMultiLanguage2_IsConvertible(CP_UNICODE -> %u) = %08x\n", cpinfo[i].uiCodePage, ret);
 
             convertible = check_convertible(iML2, cpinfo[i].uiCodePage, CP_UTF8);
-            if (!convertible)
-                check = S_FALSE;
-
-	    ret = IMultiLanguage2_IsConvertible(iML2, cpinfo[i].uiCodePage, CP_UTF8);
-	    ok(ret == check, "IMultiLanguage2_IsConvertible(%u -> CP_UTF8) = %08x\n", cpinfo[i].uiCodePage, ret);
-	    ret = IMultiLanguage2_IsConvertible(iML2, CP_UTF8, cpinfo[i].uiCodePage);
-	    ok(ret == check, "IMultiLanguage2_IsConvertible(CP_UTF8 -> %u) = %08x\n", cpinfo[i].uiCodePage, ret);
+            if (convertible != E_FAIL)
+            {
+                ret = IMultiLanguage2_IsConvertible(iML2, cpinfo[i].uiCodePage, CP_UTF8);
+                ok(ret == convertible, "IMultiLanguage2_IsConvertible(%u -> CP_UTF8) = %08x\n", cpinfo[i].uiCodePage, ret);
+                ret = IMultiLanguage2_IsConvertible(iML2, CP_UTF8, cpinfo[i].uiCodePage);
+                ok(ret == convertible, "IMultiLanguage2_IsConvertible(CP_UTF8 -> %u) = %08x\n", cpinfo[i].uiCodePage, ret);
+            }
 	}
 	else
 	    trace("IsValidCodePage failed for cp %u\n", cpinfo[i].uiCodePage);
