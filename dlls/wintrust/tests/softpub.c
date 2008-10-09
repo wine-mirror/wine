@@ -506,7 +506,8 @@ static void test_get_known_usages(void)
          */
         for (ptr = usages; *ptr; ptr++)
         {
-            ok((*ptr)->cbSize == sizeof(CRYPT_OID_INFO),
+            ok((*ptr)->cbSize == sizeof(CRYPT_OID_INFO) ||
+             (*ptr)->cbSize == (sizeof(CRYPT_OID_INFO) + 2 * sizeof(LPCWSTR)), /* Vista */
              "unexpected size %d\n", (*ptr)->cbSize);
             /* Each returned usage is in the CRYPT_ENHKEY_USAGE_OID_GROUP_ID group */
             ok((*ptr)->dwGroupId == CRYPT_ENHKEY_USAGE_OID_GROUP_ID,
