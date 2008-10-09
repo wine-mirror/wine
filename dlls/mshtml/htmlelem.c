@@ -979,25 +979,21 @@ static HRESULT WINAPI HTMLElement_insertAdjacentText(IHTMLElement *iface, BSTR w
                                                      BSTR text)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    nsresult nsres;
-    nsIDOMDocument *nsdoc;
     nsIDOMNode *nsnode;
     nsAString ns_text;
+    nsresult nsres;
     HRESULT hr;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(text));
 
-    nsres = nsIWebNavigation_GetDocument(This->node.doc->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres) || !nsdoc)
-    {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return E_FAIL;
+    if(!This->node.doc->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
-    nsAString_Init(&ns_text, text);
 
-    nsres = nsIDOMDocument_CreateTextNode(nsdoc, &ns_text, (nsIDOMText **)&nsnode);
-    nsIDOMDocument_Release(nsdoc);
+    nsAString_Init(&ns_text, text);
+    nsres = nsIDOMDocument_CreateTextNode(This->node.doc->nsdoc, &ns_text, (nsIDOMText **)&nsnode);
     nsAString_Finish(&ns_text);
 
     if(NS_FAILED(nsres) || !nsnode)
