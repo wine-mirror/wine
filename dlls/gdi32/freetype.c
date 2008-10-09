@@ -3286,24 +3286,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     FMAT2 dcmat;
     FontSubst *psub = NULL;
 
-    EnterCriticalSection( &freetype_cs );
-
-    LIST_FOR_EACH_ENTRY(ret, &child_font_list, struct tagGdiFont, entry)
-    {
-        struct list *first_hfont = list_head(&ret->hfontlist);
-        hflist = LIST_ENTRY(first_hfont, HFONTLIST, entry);
-        if(hflist->hfont == hfont)
-        {
-            LeaveCriticalSection( &freetype_cs );
-            return ret;
-        }
-    }
-
-    if (!GetObjectW( hfont, sizeof(lf), &lf ))
-    {
-        LeaveCriticalSection( &freetype_cs );
-        return NULL;
-    }
+    if (!GetObjectW( hfont, sizeof(lf), &lf )) return NULL;
     lf.lfWidth = abs(lf.lfWidth);
 
     can_use_bitmap = GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE;
@@ -3325,6 +3308,8 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     TRACE("DC transform %f %f %f %f\n", dcmat.eM11, dcmat.eM12,
                                         dcmat.eM21, dcmat.eM22);
+
+    EnterCriticalSection( &freetype_cs );
 
     /* check the cache first */
     if((ret = find_in_cache(hfont, &lf, &dcmat, can_use_bitmap)) != NULL) {
