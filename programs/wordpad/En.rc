@@ -238,4 +238,5 @@ BEGIN
     STRING_WRITE_ACCESS_DENIED,       "You do not have access to save the file."
     STRING_OPEN_FAILED,               "Could not open the file."
     STRING_OPEN_ACCESS_DENIED,        "You do not have access to open the file."
+    STRING_PRINTING_NOT_IMPLEMENTED, "Printing not implemented"
 END

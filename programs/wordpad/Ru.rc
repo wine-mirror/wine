@@ -234,4 +234,5 @@ BEGIN
                                  "этой операции?"
     STRING_INVALID_NUMBER,       "Неправильный числовой формат"
     STRING_OLE_STORAGE_NOT_SUPPORTED, "OLE storage документы не поддерживаются"
+    STRING_PRINTING_NOT_IMPLEMENTED, "Печать не поддерживается"
 END

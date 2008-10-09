@@ -49,11 +49,10 @@
 #endif
 
 /* use LoadString */
-static const WCHAR xszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a','d',0};
+static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a','d',0};
 
 static const WCHAR wszRichEditClass[] = {'R','I','C','H','E','D','I','T','2','0','W',0};
 static const WCHAR wszMainWndClass[] = {'W','O','R','D','P','A','D','T','O','P',0};
-static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a','d',0};
 
 static const WCHAR stringFormat[] = {'%','2','d','\0'};
 
@@ -1153,7 +1152,7 @@ static void HandleCommandLine(LPWSTR cmdline)
     }
 
     if (opt_print)
-        MessageBox(hMainWnd, "Printing not implemented", "WordPad", MB_OK);
+        MessageBoxW(hMainWnd, MAKEINTRESOURCEW(STRING_PRINTING_NOT_IMPLEMENTED), wszAppTitle, MB_OK);
 }
 
 static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
@@ -1946,8 +1945,8 @@ static LRESULT OnNotify( HWND hWnd, LPARAM lParam)
 
         sprintf( buf,"selection = %d..%d, line count=%ld",
                  pSC->chrg.cpMin, pSC->chrg.cpMax,
-        SendMessage(hwndEditor, EM_GETLINECOUNT, 0, 0));
-        SetWindowText(GetDlgItem(hWnd, IDC_STATUSBAR), buf);
+                SendMessage(hwndEditor, EM_GETLINECOUNT, 0, 0));
+        SetWindowTextA(GetDlgItem(hWnd, IDC_STATUSBAR), buf);
         SendMessage(hWnd, WM_USER, 0, 0);
         return 1;
     }
@@ -2136,7 +2135,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         TEXTRANGEW tr;
 
         GetWindowTextW(hwndEditor, data, nLen+1);
-        MessageBoxW(NULL, data, xszAppTitle, MB_OK);
+        MessageBoxW(NULL, data, wszAppTitle, MB_OK);
 
         HeapFree( GetProcessHeap(), 0, data);
         data = HeapAlloc(GetProcessHeap(), 0, (nLen+1)*sizeof(WCHAR));
@@ -2144,7 +2143,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         tr.chrg.cpMax = nLen;
         tr.lpstrText = data;
         SendMessage (hwndEditor, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
-        MessageBoxW(NULL, data, xszAppTitle, MB_OK);
+        MessageBoxW(NULL, data, wszAppTitle, MB_OK);
         HeapFree( GetProcessHeap(), 0, data );
 
         /* SendMessage(hwndEditor, EM_SETSEL, 0, -1); */
@@ -2184,7 +2183,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         SendMessage(hwndEditor, EM_GETSELTEXT, 0, (LPARAM)data);
         sprintf(buf, "Start = %d, End = %d", range.cpMin, range.cpMax);
         MessageBoxA(hWnd, buf, "Editor", MB_OK);
-        MessageBoxW(hWnd, data, xszAppTitle, MB_OK);
+        MessageBoxW(hWnd, data, wszAppTitle, MB_OK);
         HeapFree( GetProcessHeap(), 0, data);
         /* SendMessage(hwndEditor, EM_SETSEL, 0, -1); */
         return 0;
