@@ -201,6 +201,29 @@ typedef struct _MSIFILEHASHINFO {
     ULONG dwData[4];
 } MSIFILEHASHINFO, *PMSIFILEHASHINFO;
 
+typedef enum tagMSIPATCHDATATYPE
+{
+    MSIPATCH_DATATYPE_PATCHFILE = 0,
+    MSIPATCH_DATATYPE_XMLPATH = 1,
+    MSIPATCH_DATATYPE_XMLBLOB = 2,
+} MSIPATCHDATATYPE, *PMSIPATCHDATATYPE;
+
+typedef struct tagMSIPATCHSEQUENCEINFOA
+{
+    LPCSTR szPatchData;
+    MSIPATCHDATATYPE ePatchDataType;
+    DWORD dwOrder;
+    UINT uStatus;
+} MSIPATCHSEQUENCEINFOA, *PMSIPATCHSEQUENCEINFOA;
+
+typedef struct tagMSIPATCHSEQUENCEINFOW
+{
+    LPCWSTR szPatchData;
+    MSIPATCHDATATYPE ePatchDataType;
+    DWORD dwOrder;
+    UINT uStatus;
+} MSIPATCHSEQUENCEINFOW, *PMSIPATCHSEQUENCEINFOW;
+
 #define MAX_FEATURE_CHARS 38
 
 /* Strings defined in msi.h */
@@ -606,6 +629,10 @@ UINT WINAPI MsiDatabaseMergeW(MSIHANDLE, MSIHANDLE, LPCWSTR);
 UINT WINAPI MsiInstallMissingComponentA(LPCSTR, LPCSTR, INSTALLSTATE);
 UINT WINAPI MsiInstallMissingComponentW(LPCWSTR, LPCWSTR, INSTALLSTATE);
 #define     MsiInstallMissingComponent WINELIB_NAME_AW(MsiInstallMissingComponent)
+
+UINT WINAPI MsiDetermineApplicablePatchesA(LPCSTR, DWORD, PMSIPATCHSEQUENCEINFOA);
+UINT WINAPI MsiDetermineApplicablePatchesW(LPCWSTR, DWORD, PMSIPATCHSEQUENCEINFOW);
+#define     MsiDetermineApplicablePatches WINELIB_NAME_AW(MsiDetermineApplicablePatches)
 
 /* Non Unicode */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);

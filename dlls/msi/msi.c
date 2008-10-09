@@ -372,6 +372,24 @@ done:
     return r;
 }
 
+UINT WINAPI MsiDetermineApplicablePatchesA(LPCSTR szProductPackagePath,
+        DWORD cPatchInfo, PMSIPATCHSEQUENCEINFOA pPatchInfo)
+{
+    FIXME("(%s, %d, %p): stub!\n", debugstr_a(szProductPackagePath),
+          cPatchInfo, pPatchInfo);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiDetermineApplicablePatchesW(LPCWSTR szProductPackagePath,
+        DWORD cPatchInfo, PMSIPATCHSEQUENCEINFOW pPatchInfo)
+{
+    FIXME("(%s, %d, %p): stub!\n", debugstr_w(szProductPackagePath),
+          cPatchInfo, pPatchInfo);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 static UINT msi_open_package(LPCWSTR product, MSIINSTALLCONTEXT context,
                              MSIPACKAGE **package)
 {

@@ -270,8 +270,8 @@
 274 stdcall MsiSourceListAddMediaDiskW(wstr wstr long long long wstr wstr)
 275 stub MsiSourceListClearMediaDiskA
 276 stub MsiSourceListClearMediaDiskW
-277 stub MsiDetermineApplicablePatchesA
-278 stub MsiDetermineApplicablePatchesW
+277 stdcall MsiDetermineApplicablePatchesA(str long ptr)
+278 stdcall MsiDetermineApplicablePatchesW(wstr long ptr)
 279 stub MsiMessageBoxExA
 280 stub MsiMessageBoxExW
 281 stdcall MsiSetExternalUIRecord(ptr long ptr ptr)
