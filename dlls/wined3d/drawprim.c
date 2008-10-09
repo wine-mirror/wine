@@ -294,8 +294,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     LONG                       vx_index;
-    DWORD diffuseColor = 0xFFFFFFFF;       /* Diffuse Color              */
-    DWORD specularColor = 0;               /* Specular Color             */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT *streamOffset = This->stateBlock->streamOffset;
     long                      SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
@@ -382,10 +380,6 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
     /* For each primitive */
     for (vx_index = 0; vx_index < NumVertexes; ++vx_index) {
-
-        /* Initialize diffuse color */
-        diffuseColor = 0xFFFFFFFF;
-
         /* Blending data and Point sizes are not supported by this function. They are not supported by the fixed
          * function pipeline at all. A Fixme for them is printed after decoding the vertex declaration
          */
@@ -451,10 +445,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 
             diffuse_funcs[sd->u.s.diffuse.dwType]((void *) ptrToCoords);
             if(This->activeContext->num_untracked_materials) {
+                DWORD diffuseColor = ptrToCoords[0];
                 unsigned char i;
                 float color[4];
 
-                diffuseColor = ptrToCoords[0];
                 color[0] = D3DCOLOR_B_R(diffuseColor) / 255.0;
                 color[1] = D3DCOLOR_B_G(diffuseColor) / 255.0;
                 color[2] = D3DCOLOR_B_B(diffuseColor) / 255.0;
@@ -475,7 +469,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
               (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 )&&
               This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
-                    specularColor = ptrToCoords[0];
+                    DWORD specularColor = ptrToCoords[0];
                     GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));
                 } else {
                     static BOOL warned = FALSE;
