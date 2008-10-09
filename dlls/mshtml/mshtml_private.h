@@ -467,7 +467,6 @@ HTMLWindow *nswindow_to_window(const nsIDOMWindow*);
 HTMLOptionElementFactory *HTMLOptionElementFactory_Create(HTMLDocument*);
 HTMLLocation *HTMLLocation_Create(HTMLDocument*);
 IOmNavigator *OmNavigator_Create(void);
-void setup_nswindow(HTMLWindow*);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
 void HTMLDocument_HTMLDocument5_Init(HTMLDocument*);
