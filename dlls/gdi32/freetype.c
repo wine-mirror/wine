@@ -3433,7 +3433,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     /* If requested charset was DEFAULT_CHARSET then try using charset
        corresponding to the current ansi codepage */
-    if (!csi.fs.fsCsb[0] || lf.lfWeight == FW_DONTCARE)
+    if (!csi.fs.fsCsb[0])
     {
         INT acp = GetACP();
         if(!TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE)) {
