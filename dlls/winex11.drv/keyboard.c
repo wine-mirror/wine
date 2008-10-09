@@ -242,16 +242,6 @@ static const WORD main_key_vkey_dvorak[MAIN_LEN] =
 /* If Wine fails to match your new table, use WINEDEBUG=+key to find out why */
 /* Remember to also add your new table to the layout index table far below! */
 
-/*** German Logitech Desktop Pro keyboard layout */
-static const char main_key_DE_logitech[MAIN_LEN][4] =
-{
- "^\xb0","1!","2\"","3\xa7","4$","5%","6&","7/{","8([","9)]","0=}","\xdf?\\","'`",
- "qQ@","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xfc\xdc","+*~",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xd6","\xe4\xc4","#'",
- "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
- "<>|"
-};
-
 /*** United States keyboard layout (mostly contributed by Uwe Bonnes) */
 static const char main_key_US[MAIN_LEN][4] =
 {
@@ -311,10 +301,32 @@ static const char main_key_IS[MAIN_LEN][4] =
  "<>"
 };
 
+/* All german keyb layout tables have the acute/apostrophe symbol next to
+ * the BACKSPACE key removed (replaced with NULL which is ignored by the
+ * detection code).
+ * This was done because the mapping of the acute (and apostrophe) is done
+ * differently in various xkb-data/xkeyboard-config versions. Some replace
+ * the acute with a normal apostrophe, so that the apostrophe is found twice
+ * on the keyboard (one next to BACKSPACE and one next to ENTER).
+ * Others put the acute and grave accents on the key left of BACKSPACE.
+ * More information on the fd.o bugtracker:
+ * https://bugs.freedesktop.org/show_bug.cgi?id=11514
+ */
+
+/*** German Logitech Desktop Pro keyboard layout */
+static const char main_key_DE_logitech[MAIN_LEN][4] =
+{
+ "^\xb0","1!","2\"","3\xa7","4$","5%","6&","7/{","8([","9)]","0=}","\xdf?\\","\0`",
+ "qQ@","wW","eE","rR","tT","zZ","uU","iI","oO","pP","\xfc\xdc","+*~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","\xf6\xd6","\xe4\xc4","#'",
+ "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>|"
+};
+
 /*** German keyboard layout (setxkbmap de) */
 static const char main_key_DE[MAIN_LEN][4] =
 {
- "^°","1!","2\"","3§","4$","5%","6&","7/","8(","9)","0=","ß?","´`",
+ "^°","1!","2\"","3§","4$","5%","6&","7/","8(","9)","0=","ß?","\0`",
  "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#'",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
@@ -324,7 +336,7 @@ static const char main_key_DE[MAIN_LEN][4] =
 /*** German keyboard layout without dead keys */
 static const char main_key_DE_nodead[MAIN_LEN][4] =
 {
- "^°","1!","2\"","3§","4$","5%","6&","7/{","8([","9)]","0=}","ß?\\","´",
+ "^°","1!","2\"","3§","4$","5%","6&","7/{","8([","9)]","0=}","ß?\\","",
  "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*~",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#'",
  "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
@@ -334,7 +346,7 @@ static const char main_key_DE_nodead[MAIN_LEN][4] =
 /*** German keyboard layout without dead keys 105 Keys (contributed by Matthias Fechner)*/
 static const char main_key_DE_nodead_105[MAIN_LEN][4] =
 {
- "^°","1!","2\"²","3§³","4$","5%","6&","7/{","8([","9)]","0=}","ß?\\","'`",
+ "^°","1!","2\"²","3§³","4$","5%","6&","7/{","8([","9)]","0=}","ß?\\","\0`",
  "qQ@","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*~",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#'",
  "<>|","yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
