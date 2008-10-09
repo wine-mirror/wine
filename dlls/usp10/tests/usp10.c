@@ -61,12 +61,21 @@ static void test_ScriptShape(HDC hdc)
     hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, attrs, NULL);
     ok(hr == E_INVALIDARG, "ScriptShape should return E_INVALIDARG not %08x\n", hr);
 
+    hr = ScriptShape(NULL, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, attrs, &nb);
+    ok(hr == E_PENDING, "ScriptShape should return E_PENDING not %08x\n", hr);
+
     hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, attrs, &nb);
     ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
+    hr = ScriptShape(NULL, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, attrs, &nb);
+    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+
     hr = ScriptPlace(hdc, &sc, glyphs, 4, NULL, &items[0].a, widths, NULL, NULL);
     ok(hr == E_INVALIDARG, "ScriptPlace should return E_INVALIDARG not %08x\n", hr);
+
+    hr = ScriptPlace(NULL, &sc, glyphs, 4, attrs, &items[0].a, widths, NULL, NULL);
+    ok(hr == E_PENDING, "ScriptPlace should return E_PENDING not %08x\n", hr);
 
     hr = ScriptPlace(hdc, &sc, glyphs, 4, attrs, &items[0].a, widths, NULL, NULL);
     ok(!hr, "ScriptPlace should return S_OK not %08x\n", hr);
@@ -1394,7 +1403,7 @@ START_TEST(usp10)
     ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
 
     memset(&lf, 0, sizeof(LOGFONTA));
-    lstrcpyA(lf.lfFaceName, "Symbol");
+    lstrcpyA(lf.lfFaceName, "Tahoma");
     lf.lfHeight = 10;
     lf.lfWeight = 3;
     lf.lfWidth = 10;
