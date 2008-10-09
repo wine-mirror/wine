@@ -205,15 +205,26 @@ static HRESULT WINAPI HTMLElement3_get_hideFocus(IHTMLElement3 *iface, VARIANT_B
 static HRESULT WINAPI HTMLElement3_put_disabled(IHTMLElement3 *iface, VARIANT_BOOL v)
 {
     HTMLElement *This = HTMLELEM3_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return S_OK;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    if(This->node.vtbl->put_disabled)
+        return This->node.vtbl->put_disabled(&This->node, v);
+
+    FIXME("No implementation for element\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI HTMLElement3_get_disabled(IHTMLElement3 *iface, VARIANT_BOOL *p)
 {
     HTMLElement *This = HTMLELEM3_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->node.vtbl->get_disabled)
+        return This->node.vtbl->get_disabled(&This->node, p);
+
+    FIXME("No implementation for element\n");
     return E_NOTIMPL;
 }
 

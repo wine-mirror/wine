@@ -361,6 +361,8 @@ typedef struct {
 typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
     void (*destructor)(HTMLDOMNode*);
+    HRESULT (*put_disabled)(HTMLDOMNode*,VARIANT_BOOL);
+    HRESULT (*get_disabled)(HTMLDOMNode*,VARIANT_BOOL*);
 } NodeImplVtbl;
 
 struct HTMLDOMNode {

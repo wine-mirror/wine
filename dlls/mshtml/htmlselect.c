@@ -442,11 +442,25 @@ static void HTMLSelectElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static HRESULT HTMLSelectElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
+{
+    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+    return IHTMLSelectElement_put_disabled(HTMLSELECT(This), v);
+}
+
+static HRESULT HTMLSelectElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
+{
+    HTMLSelectElement *This = HTMLSELECT_NODE_THIS(iface);
+    return IHTMLSelectElement_get_disabled(HTMLSELECT(This), p);
+}
+
 #undef HTMLSELECT_NODE_THIS
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLSelectElement_QI,
-    HTMLSelectElement_destructor
+    HTMLSelectElement_destructor,
+    HTMLSelectElementImpl_put_disabled,
+    HTMLSelectElementImpl_get_disabled
 };
 
 static const tid_t HTMLSelectElement_tids[] = {

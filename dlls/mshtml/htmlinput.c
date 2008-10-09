@@ -1064,11 +1064,25 @@ static void HTMLInputElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static HRESULT HTMLInputElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
+{
+    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+    return IHTMLInputElement_put_disabled(HTMLINPUT(This), v);
+}
+
+static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
+{
+    HTMLInputElement *This = HTMLINPUT_NODE_THIS(iface);
+    return IHTMLInputElement_get_disabled(HTMLINPUT(This), p);
+}
+
 #undef HTMLINPUT_NODE_THIS
 
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_QI,
-    HTMLInputElement_destructor
+    HTMLInputElement_destructor,
+    HTMLInputElementImpl_put_disabled,
+    HTMLInputElementImpl_get_disabled,
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {

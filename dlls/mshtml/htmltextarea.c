@@ -388,11 +388,25 @@ static void HTMLTextAreaElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static HRESULT HTMLTextAreaElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
+{
+    HTMLTextAreaElement *This = HTMLTXTAREA_NODE_THIS(iface);
+    return IHTMLTextAreaElement_put_disabled(HTMLTXTAREA(This), v);
+}
+
+static HRESULT HTMLTextAreaElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
+{
+    HTMLTextAreaElement *This = HTMLTXTAREA_NODE_THIS(iface);
+    return IHTMLTextAreaElement_get_disabled(HTMLTXTAREA(This), p);
+}
+
 #undef HTMLTXTAREA_NODE_THIS
 
 static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     HTMLTextAreaElement_QI,
-    HTMLTextAreaElement_destructor
+    HTMLTextAreaElement_destructor,
+    HTMLTextAreaElementImpl_put_disabled,
+    HTMLTextAreaElementImpl_get_disabled
 };
 
 HTMLElement *HTMLTextAreaElement_Create(nsIDOMHTMLElement *nselem)

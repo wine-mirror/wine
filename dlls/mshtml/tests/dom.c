@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Jacek Caban for CodeWeavers
+ * Copyright 2007-2008 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -468,6 +468,17 @@ static IHTMLElement2 *_get_elem2_iface(unsigned line, IUnknown *unk)
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement2, (void**)&elem);
     ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement2: %08x\n", hres);
+    return elem;
+}
+
+#define get_elem3_iface(u) _get_elem3_iface(__LINE__,u)
+static IHTMLElement3 *_get_elem3_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLElement3 *elem;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement3, (void**)&elem);
+    ok_(__FILE__,line) (hres == S_OK, "Coule not get IHTMLElement3: %08x\n", hres);
     return elem;
 }
 
@@ -1059,6 +1070,32 @@ static IHTMLElement *_test_elem_get_parent(unsigned line, IUnknown *unk)
     return parent;
 }
 
+#define test_elem3_get_disabled(i,b) _test_elem3_get_disabled(__LINE__,i,b)
+static void _test_elem3_get_disabled(unsigned line, IUnknown *unk, VARIANT_BOOL exb)
+{
+    IHTMLElement3 *elem3 = _get_elem3_iface(line, unk);
+    VARIANT_BOOL disabled = 100;
+    HRESULT hres;
+
+    hres = IHTMLElement3_get_disabled(elem3, &disabled);
+    ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
+    ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
+    IHTMLElement3_Release(elem3);
+}
+
+#define test_elem3_set_disabled(i,b) _test_elem3_set_disabled(__LINE__,i,b)
+static void _test_elem3_set_disabled(unsigned line, IUnknown *unk, VARIANT_BOOL b)
+{
+    IHTMLElement3 *elem3 = _get_elem3_iface(line, unk);
+    HRESULT hres;
+
+    hres = IHTMLElement3_put_disabled(elem3, b);
+    ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
+
+    IHTMLElement3_Release(elem3);
+    _test_elem3_get_disabled(line, unk, b);
+}
+
 #define elem_get_scroll_height(u) _elem_get_scroll_height(__LINE__,u)
 static long _elem_get_scroll_height(unsigned line, IUnknown *unk)
 {
@@ -1206,6 +1243,8 @@ static void _test_input_get_disabled(unsigned line, IHTMLInputElement *input, VA
     hres = IHTMLInputElement_get_disabled(input, &disabled);
     ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
     ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
+
+    _test_elem3_get_disabled(line, (IUnknown*)input, exb);
 }
 
 #define test_input_set_disabled(i,b) _test_input_set_disabled(__LINE__,i,b)
@@ -2838,6 +2877,10 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_get_disabled(input, VARIANT_FALSE);
         test_input_set_disabled(input, VARIANT_TRUE);
         test_input_set_disabled(input, VARIANT_FALSE);
+        test_elem3_set_disabled((IUnknown*)input, VARIANT_TRUE);
+        test_input_get_disabled(input, VARIANT_TRUE);
+        test_elem3_set_disabled((IUnknown*)input, VARIANT_FALSE);
+        test_input_get_disabled(input, VARIANT_FALSE);
         test_elem_client_size((IUnknown*)elem);
 
         test_node_get_value_str((IUnknown*)elem, NULL);
