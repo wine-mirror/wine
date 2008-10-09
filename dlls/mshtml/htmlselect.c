@@ -468,6 +468,7 @@ static const tid_t HTMLSelectElement_tids[] = {
     IHTMLDOMNode2_tid,
     IHTMLElement_tid,
     IHTMLElement2_tid,
+    IHTMLElement3_tid,
     IHTMLSelectElement_tid,
     0
 };

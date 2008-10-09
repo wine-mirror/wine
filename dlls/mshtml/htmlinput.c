@@ -1090,6 +1090,7 @@ static const tid_t HTMLInputElement_iface_tids[] = {
     IHTMLDOMNode2_tid,
     IHTMLElement_tid,
     IHTMLElement2_tid,
+    IHTMLElement3_tid,
     IHTMLInputElement_tid,
     0
 };

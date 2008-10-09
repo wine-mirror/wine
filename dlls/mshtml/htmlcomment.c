@@ -180,6 +180,7 @@ static const tid_t HTMLCommentElement_iface_tids[] = {
     IHTMLDOMNode2_tid,
     IHTMLElement_tid,
     IHTMLElement2_tid,
+    IHTMLElement3_tid,
     IHTMLCommentElement_tid,
     0
 };

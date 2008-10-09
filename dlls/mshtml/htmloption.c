@@ -328,6 +328,7 @@ static const tid_t HTMLOptionElement_iface_tids[] = {
     IHTMLDOMNode2_tid,
     IHTMLElement_tid,
     IHTMLElement2_tid,
+    IHTMLElement3_tid,
     IHTMLOptionElement_tid,
     0
 };

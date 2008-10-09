@@ -567,6 +567,7 @@ static const tid_t HTMLImgElement_iface_tids[] = {
     IHTMLDOMNode2_tid,
     IHTMLElement_tid,
     IHTMLElement2_tid,
+    IHTMLElement3_tid,
     IHTMLImgElement_tid,
     0
 };

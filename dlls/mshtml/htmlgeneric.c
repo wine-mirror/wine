@@ -157,7 +157,7 @@ static const tid_t HTMLGenericElement_iface_tids[] = {
     IHTMLDOMNode2_tid,
     IHTMLElement_tid,
     IHTMLElement2_tid,
-    IHTMLElement2_tid,
+    IHTMLElement3_tid,
     IHTMLGenericElement_tid,
     0
 };
