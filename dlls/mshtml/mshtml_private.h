@@ -116,14 +116,6 @@ typedef enum {
     LAST_tid
 } tid_t;
 
-typedef enum {
-    EVENTID_CHANGE,
-    EVENTID_CLICK,
-    EVENTID_KEYUP,
-    EVENTID_LOAD,
-    EVENTID_LAST
-} eventid_t;
-
 typedef struct dispex_data_t dispex_data_t;
 typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 
@@ -340,7 +332,7 @@ struct NSContainer {
     nsChannelBSC *bscallback; /* hack */
     HWND reset_focus; /* hack */
 
-    BOOL event_vector[EVENTID_LAST];
+    BOOL *event_vector;
 };
 
 typedef struct {
@@ -536,12 +528,6 @@ void init_nsevents(NSContainer*);
 void add_nsevent_listener(NSContainer*,LPCWSTR);
 nsresult get_nsinterface(nsISupports*,REFIID,void**);
 void update_nsdocument(HTMLDocument*);
-
-void check_event_attr(HTMLDocument*,nsIDOMElement*);
-void release_event_target(event_target_t*);
-void fire_event(HTMLDocument*,eventid_t,nsIDOMNode*);
-HRESULT set_node_event(HTMLDOMNode*,eventid_t,VARIANT*);
-eventid_t str_to_eid(LPCWSTR);
 
 void set_document_bscallback(HTMLDocument*,nsChannelBSC*);
 void set_current_mon(HTMLDocument*,IMoniker*);

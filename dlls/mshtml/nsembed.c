@@ -984,6 +984,7 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        heap_free(This->event_vector);
         if(This->parent)
             nsIWebBrowserChrome_Release(NSWBCHROME(This->parent));
         heap_free(This);

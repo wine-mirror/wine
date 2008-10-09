@@ -26,6 +26,7 @@
 #include "ole2.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 #include "wine/debug.h"
 
@@ -435,9 +436,17 @@ static HRESULT set_node_event_disp(HTMLDOMNode *node, eventid_t eid, IDispatch *
     IDispatch_AddRef(disp);
     node->event_target->event_table[eid] = disp;
 
-    if((event_info[eid].flags & EVENT_DEFAULTLISTENER) && !node->doc->nscontainer->event_vector[eid]) {
-        node->doc->nscontainer->event_vector[eid] = TRUE;
-        add_nsevent_listener(node->doc->nscontainer, event_info[eid].name);
+    if(event_info[eid].flags & EVENT_DEFAULTLISTENER) {
+        if(!node->doc->nscontainer->event_vector) {
+            node->doc->nscontainer->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
+            if(!node->doc->nscontainer->event_vector)
+                return E_OUTOFMEMORY;
+        }
+
+        if(!node->doc->nscontainer->event_vector[eid]) {
+            node->doc->nscontainer->event_vector[eid] = TRUE;
+            add_nsevent_listener(node->doc->nscontainer, event_info[eid].name);
+        }
     }
 
     return S_OK;
