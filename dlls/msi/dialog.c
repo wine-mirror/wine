@@ -2247,6 +2247,7 @@ static UINT msi_listbox_add_items( struct msi_listbox_info *info, LPCWSTR proper
         return r;
 
     /* just get the number of records */
+    count = 0;
     r = MSI_IterateRecords( view, &count, NULL, NULL );
 
     info->num_items = count;
