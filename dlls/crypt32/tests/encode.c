@@ -225,18 +225,22 @@ static void test_decodeInt(DWORD dwEncoding)
     /* check with NULL integer buffer */
     ret = pCryptDecodeObjectEx(dwEncoding, X509_INTEGER, NULL, 0, 0, NULL, NULL,
      &bufSize);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == OSS_BAD_ARG /* Win9x */),
+     "Expected CRYPT_E_ASN1_EOD or OSS_BAD_ARG, got %08x\n", GetLastError());
     /* check with a valid, but too large, integer */
     ret = pCryptDecodeObjectEx(dwEncoding, X509_INTEGER, bigInt, bigInt[1] + 2,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_LARGE,
+    ok((!ret && GetLastError() == CRYPT_E_ASN1_LARGE) ||
+     broken(ret) /* Win9x */,
      "Expected CRYPT_E_ASN1_LARGE, got %d\n", GetLastError());
     /* check with a DER-encoded string */
     ret = pCryptDecodeObjectEx(dwEncoding, X509_INTEGER, testStr, testStr[1] + 2,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %d\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* Win9x */ ),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %08x\n",
+     GetLastError());
     for (i = 0; i < sizeof(ints) / sizeof(ints[0]); i++)
     {
         /* When the output buffer is NULL, this always succeeds */
@@ -525,8 +529,10 @@ static void testTimeDecoding(DWORD dwEncoding, LPCSTR structType,
         compareTime(&time->sysTime, &ft);
     }
     else
-        ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-         "Expected CRYPT_E_ASN1_BADTAG, got 0x%08x\n", GetLastError());
+        ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+         GetLastError() == OSS_PDU_MISMATCH /* Win9x */ ),
+         "Expected CRYPT_E_ASN1_BADTAG or OSS_PDU_MISMATCH, got %08x\n",
+         GetLastError());
 }
 
 static const BYTE bin20[] = {
@@ -645,8 +651,10 @@ static void test_decodeFiletime(DWORD dwEncoding)
         size = sizeof(ft1);
         ret = pCryptDecodeObjectEx(dwEncoding, X509_CHOICE_OF_TIME,
          bogusTimes[i], bogusTimes[i][1] + 2, 0, NULL, &ft1, &size);
-        ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
-         "Expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
+        ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
+         GetLastError() == OSS_DATA_ERROR /* Win9x */),
+         "Expected CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
+         GetLastError());
     }
 }
 
@@ -1487,13 +1495,17 @@ static void test_decodeAltName(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
      unimplementedType, sizeof(unimplementedType), CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &bufSize);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
-     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "Expected CRYPT_E_ASN1_BADTAG or OSS_DATA_ERROR, got %08x\n",
+     GetLastError());
     ret = pCryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME,
      bogusType, sizeof(bogusType), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
      &bufSize);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
-     "Expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
+     GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "Expected CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
+     GetLastError());
     /* Now expected cases */
     ret = pCryptDecodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, emptySequence,
      emptySequence[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
@@ -2147,8 +2159,10 @@ static void test_decodeBasicConstraints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
      inverted, inverted[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
      &bufSize);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
-     "Expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
+     GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "Expected CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
+     GetLastError());
     ok(!buf, "Expected buf to be set to NULL\n");
     /* Check with a non-DER bool */
     ret = pCryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
@@ -2167,8 +2181,10 @@ static void test_decodeBasicConstraints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
      (LPBYTE)encodedCommonName, encodedCommonName[1] + 2,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
-     "Expected CRYPT_E_ASN1_CORRUPT, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
+     GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     "Expected CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
+     GetLastError());
     /* Now check with the more complex CERT_BASIC_CONSTRAINTS_INFO */
     ret = pCryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS,
      emptyConstraint, sizeof(emptyConstraint), CRYPT_DECODE_ALLOC_FLAG, NULL,
