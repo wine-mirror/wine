@@ -1308,22 +1308,10 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
     }
 
     case RU_TEXTEDIT: {
-        nsIDOMDocument *nsdoc;
-        nsIDOMHTMLDocument *nshtmldoc;
         nsIDOMHTMLElement *nsbody = NULL;
         nsresult nsres;
 
-        nsres = nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
-        if(NS_FAILED(nsres) || !nsdoc) {
-            ERR("GetDocument failed: %08x\n", nsres);
-            break;
-        }
-
-        nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
-        nsIDOMDocument_Release(nsdoc);
-
-        nsres = nsIDOMHTMLDocument_GetBody(nshtmldoc, &nsbody);
-        nsIDOMHTMLDocument_Release(nshtmldoc);
+        nsres = nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nsbody);
         if(NS_FAILED(nsres) || !nsbody) {
             ERR("Could not get body: %08x\n", nsres);
             break;
