@@ -1102,7 +1102,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             case RTL_AUTO:
             case RTL_READDRAW:
             case RTL_READTEX:
-                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, pRect);
+                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, pass_rect);
                 break;
 
             case RTL_DISABLE:
