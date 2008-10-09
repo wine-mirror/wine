@@ -36,6 +36,22 @@ my $no_release = 1;
 
 my %modules;
 
+# These DLLs don't have a hope of compiling properly
+my @unix_dependent_dlls = qw(iphlpapi mountmgr.sys ntdll mswsock opengl32
+                             secur32 winex11 wnaspi32 ws2_32);
+
+sub is_unix_dependent_dll($) {
+    my $dll = shift;
+
+    foreach my $unix_only_dll (@unix_dependent_dlls) {
+	if($dll eq $unix_only_dll) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 sub read_spec_file($) {
     my $spec_file = shift;
 
@@ -85,7 +101,11 @@ sub read_spec_file($) {
 
 if ($options->wine || $options->winetest) {
     foreach my $spec_file (@spec_files) {
-	read_spec_file($spec_file);
+	my $dll = $spec_file;
+        $dll =~ s%dlls/([^/]+)/[^/]+\.spec%$1%;
+	if(!is_unix_dependent_dll($dll)) {
+	    read_spec_file($spec_file);
+	}
     }
 }
 
@@ -121,13 +141,18 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     my $testdll;
     my @imports;
     my $type;
+    my $dll;
 
     my %vars;
 
     my $again = 0;
     my $lookahead = 0;
 
-    if($makefile_in_file eq "loader/Makefile.in") {
+    $dll = $makefile_in_file;
+    $dll =~ s%dlls/([^/]+)/Makefile\.in%$1%;
+
+    if($makefile_in_file eq "loader/Makefile.in" ||
+       is_unix_dependent_dll($dll)) {
         next;
     }
 
