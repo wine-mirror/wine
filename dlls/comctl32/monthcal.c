@@ -913,7 +913,7 @@ MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   }
   else if(lParam >= 7)
   {
-    infoPtr->firstDay = localFirstDay;
+    infoPtr->firstDay = 6; /* max first day allowed */
     infoPtr->firstDayHighWord = TRUE;
   }
   else
