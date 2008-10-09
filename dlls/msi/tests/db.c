@@ -6972,6 +6972,7 @@ static void test_dbmerge(void)
     DeleteFileA(msifile);
     DeleteFileA("refdb.msi");
     DeleteFileA("codepage.idt");
+    DeleteFileA("binary.dat");
 }
 
 START_TEST(db)
