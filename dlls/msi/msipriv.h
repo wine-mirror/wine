@@ -703,6 +703,8 @@ extern UINT MSI_RecordSetStream( MSIRECORD *, UINT, IStream * );
 extern UINT MSI_RecordDataSize( MSIRECORD *, UINT );
 extern UINT MSI_RecordStreamToFile( MSIRECORD *, UINT, LPCWSTR );
 extern UINT MSI_RecordCopyField( MSIRECORD *, UINT, MSIRECORD *, UINT );
+extern MSIRECORD *MSI_CloneRecord( MSIRECORD * );
+extern BOOL MSI_RecordsAreEqual( MSIRECORD *, MSIRECORD * );
 
 /* stream internals */
 extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );

@@ -144,6 +144,9 @@ static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
     MSIHANDLE hview = 0;
     UINT r, ret;
 
+    if (phrec)
+        *phrec = 0;
+
     /* open a select query */
     r = MsiDatabaseOpenView(hdb, query, &hview);
     if (r != ERROR_SUCCESS)
@@ -1382,17 +1385,28 @@ static void test_longstrings(void)
     DeleteFile(msifile);
 }
 
-static void create_file(const CHAR *name)
+static void create_file_data(LPCSTR name, LPCSTR data, DWORD size)
 {
     HANDLE file;
     DWORD written;
 
     file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
-    WriteFile(file, name, strlen(name), &written, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return;
+
+    WriteFile(file, data, strlen(data), &written, NULL);
     WriteFile(file, "\n", strlen("\n"), &written, NULL);
+
+    if (size)
+    {
+        SetFilePointer(file, size, NULL, FILE_BEGIN);
+        SetEndOfFile(file);
+    }
+
     CloseHandle(file);
 }
+
+#define create_file(name) create_file_data(name, name, 0)
  
 static void test_streamtable(void)
 {
@@ -6532,6 +6546,434 @@ static void test_droptable(void)
     DeleteFileA(msifile);
 }
 
+static void test_dbmerge(void)
+{
+    MSIHANDLE hdb, href, hview, hrec;
+    CHAR buf[MAX_PATH];
+    LPCSTR query;
+    DWORD size;
+    UINT r;
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiOpenDatabase("refdb.msi", MSIDBOPEN_CREATE, &href);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* hDatabase is invalid */
+    r = MsiDatabaseMergeA(0, href, "MergeErrors");
+    ok(r == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", r);
+
+    /* hDatabaseMerge is invalid */
+    r = MsiDatabaseMergeA(hdb, 0, "MergeErrors");
+    ok(r == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", r);
+
+    /* szTableName is NULL */
+    r = MsiDatabaseMergeA(hdb, href, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* szTableName is empty */
+    r = MsiDatabaseMergeA(hdb, href, "");
+    ok(r == ERROR_INVALID_TABLE, "Expected ERROR_INVALID_TABLE, got %d\n", r);
+
+    /* both DBs empty, szTableName is valid */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` CHAR(72) PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* column types don't match */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_DATATYPE_MISMATCH,
+       "Expected ERROR_DATATYPE_MISMATCH, got %d\n", r);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `C` INT PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* column names don't match */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_DATATYPE_MISMATCH,
+       "Expected ERROR_DATATYPE_MISMATCH, got %d\n", r);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `B` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* primary keys don't match */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_DATATYPE_MISMATCH,
+       "Expected ERROR_DATATYPE_MISMATCH, got %d\n", r);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A`, `B` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* number of primary keys doesn't match */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_DATATYPE_MISMATCH,
+       "Expected ERROR_DATATYPE_MISMATCH, got %d\n", r);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT, `C` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `One` ( `A`, `B` ) VALUES ( 1, 2 )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* number of columns doesn't match */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `One`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiRecordGetInteger(hrec, 1);
+    ok(r == 1, "Expected 1, got %d\n", r);
+
+    r = MsiRecordGetInteger(hrec, 2);
+    ok(r == 2, "Expected 2, got %d\n", r);
+
+    r = MsiRecordGetInteger(hrec, 3);
+    ok(r == MSI_NULL_INTEGER, "Expected MSI_NULL_INTEGER, got %d\n", r);
+
+    MsiCloseHandle(hrec);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT, `C` INT PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `One` ( `A`, `B`, `C` ) VALUES ( 1, 2, 3 )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* number of columns doesn't match */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `One`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiRecordGetInteger(hrec, 1);
+    ok(r == 1, "Expected 1, got %d\n", r);
+
+    r = MsiRecordGetInteger(hrec, 2);
+    ok(r == 2, "Expected 2, got %d\n", r);
+
+    r = MsiRecordGetInteger(hrec, 3);
+    ok(r == MSI_NULL_INTEGER, "Expected MSI_NULL_INTEGER, got %d\n", r);
+
+    MsiCloseHandle(hrec);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `One` ( `A`, `B` ) VALUES ( 1, 1 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `One` ( `A`, `B` ) VALUES ( 2, 2 )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` INT PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `One` ( `A`, `B` ) VALUES ( 1, 2 )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `One` ( `A`, `B` ) VALUES ( 2, 3 )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* primary keys match, rows do not */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_FUNCTION_FAILED,
+       "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetStringA(hrec, 1, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "One"), "Expected \"One\", got \"%s\"\n", buf);
+
+    r = MsiRecordGetInteger(hrec, 2);
+    ok(r == 2, "Expected 2, got %d\n", r);
+
+    MsiCloseHandle(hrec);
+
+    r = MsiDatabaseOpenViewA(hdb, "SELECT * FROM `MergeErrors`", &hview);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewGetColumnInfo(hview, MSICOLINFO_NAMES, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(hrec, 1, buf, &size);
+    ok(!lstrcmpA(buf, "Table"), "Expected \"Table\", got \"%s\"\n", buf);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(hrec, 2, buf, &size);
+    ok(!lstrcmpA(buf, "NumRowMergeConflicts"),
+       "Expected \"NumRowMergeConflicts\", got \"%s\"\n", buf);
+
+    MsiCloseHandle(hrec);
+
+    r = MsiViewGetColumnInfo(hview, MSICOLINFO_TYPES, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(hrec, 1, buf, &size);
+    ok(!lstrcmpA(buf, "s255"), "Expected \"s255\", got \"%s\"\n", buf);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(hrec, 2, buf, &size);
+    ok(!lstrcmpA(buf, "i2"), "Expected \"i2\", got \"%s\"\n", buf);
+
+    MsiCloseHandle(hrec);
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
+    query = "DROP TABLE `MergeErrors`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    create_file_data("codepage.idt", "\r\n\r\n28603\t_ForceCodepage\r\n", 0);
+
+    GetCurrentDirectoryA(MAX_PATH, buf);
+    r = MsiDatabaseImportA(hdb, buf, "codepage.idt");
+    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( "
+            "`A` INT, `B` CHAR(72) LOCALIZABLE PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( "
+            "`A` INT, `B` CHAR(72) LOCALIZABLE PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `One` ( `A`, `B` ) VALUES ( 1, 'hi' )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* code page does not match */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `One`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiRecordGetInteger(hrec, 1);
+    ok(r == 1, "Expected 1, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetStringA(hrec, 2, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "hi"), "Expected \"hi\", got \"%s\"\n", buf);
+
+    MsiCloseHandle(hrec);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` OBJECT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( `A` INT, `B` OBJECT PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    create_file("binary.dat");
+    hrec = MsiCreateRecord(1);
+    MsiRecordSetStreamA(hrec, 1, "binary.dat");
+
+    query = "INSERT INTO `One` ( `A`, `B` ) VALUES ( 1, ? )";
+    r = run_query(href, hrec, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiCloseHandle(hrec);
+
+    /* binary data to merge */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `One`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiRecordGetInteger(hrec, 1);
+    ok(r == 1, "Expected 1, got %d\n", r);
+
+    size = MAX_PATH;
+    ZeroMemory(buf, MAX_PATH);
+    r = MsiRecordReadStream(hrec, 2, buf, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(buf, "binary.dat\n"),
+           "Expected \"binary.dat\\n\", got \"%s\"\n", buf);
+    }
+
+    MsiCloseHandle(hrec);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    MsiCloseHandle(hdb);
+    MsiCloseHandle(href);
+    DeleteFileA(msifile);
+    DeleteFileA("refdb.msi");
+    DeleteFileA("codepage.idt");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -6572,4 +7014,5 @@ START_TEST(db)
     test_storages_table();
     test_dbtopackage();
     test_droptable();
+    test_dbmerge();
 }
