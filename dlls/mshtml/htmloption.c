@@ -448,7 +448,6 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
         IHTMLOptionElement **optelem)
 {
     HTMLOptionElementFactory *This = HTMLOPTFACTORY_THIS(iface);
-    nsIDOMDocument *nsdoc;
     nsIDOMElement *nselem;
     nsAString option_str;
     nsresult nsres;
@@ -456,21 +455,18 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
 
     static const PRUnichar optionW[] = {'O','P','T','I','O','N',0};
 
-    TRACE("(%p)->(v v v v %p)\n", This, optelem);
+    TRACE("(%p)->(%s %s %s %s %p)\n", This, debugstr_variant(&text), debugstr_variant(&value),
+          debugstr_variant(&defaultselected), debugstr_variant(&selected), optelem);
 
-    *optelem = NULL;
-    if(!This->doc->nscontainer)
-        return E_FAIL;
-
-    nsres = nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return E_FAIL;
+    if(!This->doc->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
+    *optelem = NULL;
+
     nsAString_Init(&option_str, optionW);
-    nsres = nsIDOMDocument_CreateElement(nsdoc, &option_str, &nselem);
-    nsIDOMDocument_Release(nsdoc);
+    nsres = nsIDOMHTMLDocument_CreateElement(This->doc->nsdoc, &option_str, &nselem);
     nsAString_Finish(&option_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateElement failed: %08x\n", nsres);
