@@ -944,7 +944,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
     UINT r, i, n=0, table_id, count, maxcount = *sz;
     MSITABLE *table = NULL;
 
-    TRACE("%s %d\n", debugstr_w(szTableName), *sz);
+    TRACE("%s\n", debugstr_w(szTableName));
 
     /* first check if there is a default table with that name */
     r = get_defaulttablecolumns( db, szTableName, colinfo, sz );
