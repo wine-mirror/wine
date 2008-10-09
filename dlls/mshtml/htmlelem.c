@@ -918,26 +918,22 @@ static HRESULT WINAPI HTMLElement_insertAdjacentHTML(IHTMLElement *iface, BSTR w
                                                      BSTR html)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    nsresult nsres;
-    nsIDOMDocument *nsdoc;
     nsIDOMDocumentRange *nsdocrange;
     nsIDOMRange *range;
     nsIDOMNSRange *nsrange;
     nsIDOMNode *nsnode;
     nsAString ns_html;
+    nsresult nsres;
     HRESULT hr;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(where), debugstr_w(html));
 
-    nsres = nsIWebNavigation_GetDocument(This->node.doc->nscontainer->navigation, &nsdoc);
-    if(NS_FAILED(nsres))
-    {
-        ERR("GetDocument failed: %08x\n", nsres);
-        return E_FAIL;
+    if(!This->node.doc->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMDocumentRange, (void **)&nsdocrange);
-    nsIDOMDocument_Release(nsdoc);
+    nsres = nsIDOMDocument_QueryInterface(This->node.doc->nsdoc, &IID_nsIDOMDocumentRange, (void **)&nsdocrange);
     if(NS_FAILED(nsres))
     {
         ERR("getting nsIDOMDocumentRange failed: %08x\n", nsres);
