@@ -120,13 +120,42 @@ static void test_BuildOtherNamesFromMachineName(void)
     SetLastError(0xdeadbeef);
     res = pBuildOtherNamesFromMachineName(&buffers, &numentries);
 
-    /* An array with 3 stringpointer is returned:
+    /* An array with a number of stringpointers is returned (minimum of 3):
       entry_#0: "" (empty String)
       entry_#1: <hostname> (this is the same as the computername)
-      entry_#2: <ip-address> (string with the ip-address of <hostname>)
+      1 entry per Ethernet adapter : <ip-address> (string with a IPv4 ip-address)
+
+      As of Vista:
+
+      IPv6 fully disabled (lan interfaces, connections, tunnel interfaces and loopback interfaces)
+      entry_#0: "" (empty String)
+      entry_#1: <hostname> (this is the same as the computername)
+      1 entry per Ethernet adapter : <ip-address> (string with a IPv4 ip-address)
+      entry_#x: "::1"
+
+      IPv6 partly disabled (lan interfaces, connections):
+      entry_#0: "" (empty String)
+      entry_#1: <hostname> (this is the same as the computername)
+      entry_#2: "::1"
+      1 entry per Ethernet adapter : <ip-address> (string with a IPv4 ip-address)
+
+      IPv6 fully enabled but not on all lan interfaces:
+      entry_#0: "" (empty String)
+      entry_#1: <hostname> (this is the same as the computername)
+      1 entry per IPv6 enabled Ethernet adapter : <ip-address> (string with a Link-local IPv6 ip-address)
+      1 entry per IPv4 enabled Ethernet adapter : <ip-address> (string with a IPv4 ip-address)
+
+      IPv6 fully enabled on all lan interfaces:
+      entry_#0: "" (empty String)
+      entry_#1: <hostname> (this is the same as the computername)
+      1 entry per IPv6 enabled Ethernet adapter : <ip-address> (string with a Link-local IPv6 ip-address)
+      entry_#x: <ip-address> Tunnel adapter (string with a Link-local IPv6 ip-address)
+      1 entry per IPv4 enabled Ethernet adapter : <ip-address> (string with a IPv4 ip-address)
+      entry_#y: <ip-address> Tunnel adapter (string with a IPv6 ip-address)
     */
+
     todo_wine
-    ok( res && (buffers != NULL) && (numentries == 3) && (buffers[0] != NULL) && (buffers[0][0] == '\0'),
+    ok( res && (buffers != NULL) && (numentries >= 3) && (buffers[0] != NULL) && (buffers[0][0] == '\0'),
         "got %u with %u and %p,%u (%p:%d)\n", res, GetLastError(), buffers, numentries,
         ((numentries > 0) && buffers) ? buffers[0] : NULL,
         ((numentries > 0) && buffers && buffers[0]) ? lstrlenW(buffers[0]) : -1);
