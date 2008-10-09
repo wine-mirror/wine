@@ -1746,7 +1746,6 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
 {
     nsIDOMDocumentFragment *fragment;
     nsIDOMElement *blockquote_elem, *p_elem;
-    nsIDOMDocument *nsdoc;
     nsIDOMNode *tmp;
     nsAString tag_str;
 
@@ -1755,17 +1754,18 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
 
     TRACE("(%p)->(%p %p)\n", This, in, out);
 
-    nsIWebNavigation_GetDocument(This->doc->nscontainer->navigation, &nsdoc);
+    if(!This->doc->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_NOTIMPL;
+    }
 
     nsAString_Init(&tag_str, blockquoteW);
-    nsIDOMDocument_CreateElement(nsdoc, &tag_str, &blockquote_elem);
+    nsIDOMHTMLDocument_CreateElement(This->doc->nsdoc, &tag_str, &blockquote_elem);
     nsAString_Finish(&tag_str);
 
     nsAString_Init(&tag_str, pW);
-    nsIDOMDocument_CreateElement(nsdoc, &tag_str, &p_elem);
+    nsIDOMDocument_CreateElement(This->doc->nsdoc, &tag_str, &p_elem);
     nsAString_Finish(&tag_str);
-
-    nsIDOMDocument_Release(nsdoc);
 
     nsIDOMRange_ExtractContents(This->nsrange, &fragment);
     nsIDOMElement_AppendChild(p_elem, (nsIDOMNode*)fragment, &tmp);
