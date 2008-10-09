@@ -1204,12 +1204,15 @@ static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+/* length of 2^32 + 1 */
+#define MAX_NUM_DIGITS 11
+
 static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
     LPCWSTR prop, text;
     LPWSTR val, begin, end;
-    WCHAR num[10];
+    WCHAR num[MAX_NUM_DIGITS];
     DWORD limit;
 
     control = msi_dialog_add_control( dialog, rec, szEdit,
@@ -1222,7 +1225,9 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
         begin = strchrW( text, '{' );
         end = strchrW( text, '}' );
 
-        if ( begin && end && end > begin )
+        if ( begin && end && end > begin &&
+             begin[0] >= '0' && begin[0] <= '9' &&
+             end - begin < MAX_NUM_DIGITS)
         {
             lstrcpynW( num, begin + 1, end - begin );
             limit = atolW( num );
