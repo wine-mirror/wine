@@ -271,6 +271,11 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	$idl_h_files = [sort(@{$vars{IDL_H_SRCS}})];
     }
 
+    my $extradefs;
+    if(exists($vars{EXTRADEFS})) {
+	$extradefs = $vars{EXTRADEFS};
+    }
+
     my $project = $module;
     $project =~ s/\.(?:dll|exe|lib)$//;
     $project =~ y/./_/;
@@ -316,6 +321,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $modules{$module}{resource_files} = $local_resource_files;
 	    $modules{$module}{imports} = [];
 	    $modules{$module}{idl_h_files} = $local_idl_h_files;
+	    $modules{$module}{extradefs} = $extradefs if $extradefs;
 	}
     }
 
@@ -330,6 +336,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $modules{$module}{resource_files} = $resource_files;
     $modules{$module}{imports} = [@imports];
     $modules{$module}{idl_h_files} = $idl_h_files;
+    $modules{$module}{extradefs} = $extradefs if $extradefs;
 }
 
 $wine_test_dsp_files{"wineruntests.dsp"}{files} = ["runtests.c"];
@@ -626,7 +633,7 @@ sub _generate_dsp($$) {
 		push @defines, qw(_DEBUG _MBCS _LIB);
 	    } else {
 		print OUT "/MDd ";
-		push @defines, (qw(_DEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
+		push @defines, qw(_DEBUG _WINDOWS _MBCS _USRDLL);
 	    }
 	    print OUT "/W3 /Gm /GX /Zi /Od";
 	} else {
@@ -634,7 +641,7 @@ sub _generate_dsp($$) {
 		push @defines, qw(NDEBUG _MBCS _LIB);
 	    } else {
 		print OUT "/MD ";
-		push @defines, (qw(NDEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
+		push @defines, qw(NDEBUG _WINDOWS _MBCS _USRDLL);
 	    }
 	    print OUT "/W3 /GX /O2";
 	}
@@ -652,28 +659,29 @@ sub _generate_dsp($$) {
 	print OUT " /c";
 	print OUT "\r\n";
 
-	my @defines2 = qw(_CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE USE_COMPILER_EXCEPTIONS _USE_MATH_DEFINES);
+	my @defines2 = qw(_CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE
+                          USE_COMPILER_EXCEPTIONS _USE_MATH_DEFINES
+                          WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700);
 	if($debug) {
 	    if($lib) {
 		print OUT "# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od";
-		push @defines2, qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 _DEBUG _WINDOWS _MBCS _LIB);
+		push @defines2, qw(WIN32 _DEBUG _WINDOWS _MBCS _LIB);
 	    } else {
 		print OUT "# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od";
-		push @defines2, qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x700 _DEBUG WIN32 _WINDOWS _MBCS _USRDLL);
+		push @defines2, qw(_DEBUG WIN32 _WINDOWS _MBCS _USRDLL);
 	    }
 	} else {
 	    if($lib) {
 		print OUT "# ADD CPP /nologo /MD /W3 /GX /O2";
-		push @defines2, qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 WIN32 NDEBUG _WINDOWS _MBCS _LIB);
+		push @defines2, qw(WIN32 NDEBUG _WINDOWS _MBCS _LIB);
 	    } else {
 		print OUT "# ADD CPP /nologo /MD /W3 /GX /O2";
-		push @defines2, qw(WINVER=0x0600 _WIN32_WINNT=0x0600 _WIN32_IE=0x0700 NDEBUG WIN32 _WINDOWS _MBCS _USRDLL);
+		push @defines2, qw(NDEBUG WIN32 _WINDOWS _MBCS _USRDLL);
 	    }
 	}
 
 	my @includes = ();
 	if($wine) {
-	    push @defines2, "_\U${project}\E_";
 	    push @defines2, qw(__WINESRC__) if $project !~ /^(?:wine(?:build|test)|.*?_test)$/;
 	    if ($msvc_headers) {
 	    	push @defines2, qw(__WINE_USE_NATIVE_HEADERS);
@@ -711,6 +719,10 @@ sub _generate_dsp($$) {
 	}
 	print OUT " /D inline=__inline" if $wine;
 	print OUT " /D \"__STDC__\"" if 0 && $wine;
+
+	if(exists($modules{$module}{extradefs})) {
+	    print OUT " @{$modules{$module}{extradefs}} ";
+	}
 
 	print OUT " /YX" if $lib;
 	print OUT " /FR" if !$lib;
