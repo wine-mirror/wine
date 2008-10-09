@@ -559,6 +559,9 @@ static void test_domdoc( void )
     {
         IXMLDOMNamedNodeMap *pAttribs;
 
+        r = IXMLDOMText_QueryInterface(nodetext, &IID_IXMLDOMElement, (LPVOID*)&element);
+        ok(r == E_NOINTERFACE, "ret %08x\n", r );
+
         /* Text Last Child Checks */
         r = IXMLDOMText_get_lastChild(nodetext, NULL);
         ok(r == E_INVALIDARG, "ret %08x\n", r );

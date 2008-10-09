@@ -42,7 +42,7 @@ typedef struct _domtext
 {
     const struct IXMLDOMTextVtbl *lpVtbl;
     LONG ref;
-    IUnknown *element_unk;
+    IUnknown *node_unk;
     IXMLDOMNode *node;
 } domtext;
 
@@ -66,10 +66,9 @@ static HRESULT WINAPI domtext_QueryInterface(
     {
         *ppvObject = iface;
     }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
-              IsEqualGUID( riid, &IID_IXMLDOMElement ) )
+    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
     {
-        return IUnknown_QueryInterface(This->element_unk, riid, ppvObject);
+        return IUnknown_QueryInterface(This->node_unk, riid, ppvObject);
     }
     else
     {
@@ -98,7 +97,7 @@ static ULONG WINAPI domtext_Release(
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
-        IUnknown_Release( This->element_unk );
+        IUnknown_Release( This->node_unk );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -773,17 +772,17 @@ IUnknown* create_text( xmlNodePtr text )
     This->lpVtbl = &domtext_vtbl;
     This->ref = 1;
 
-    This->element_unk = create_element( text, (IUnknown*)&This->lpVtbl );
-    if(!This->element_unk)
+    This->node_unk = create_basic_node( text, (IUnknown*)&This->lpVtbl );
+    if(!This->node_unk)
     {
         HeapFree(GetProcessHeap(), 0, This);
         return NULL;
     }
 
-    hr = IUnknown_QueryInterface(This->element_unk, &IID_IXMLDOMNode, (LPVOID*)&This->node);
+    hr = IUnknown_QueryInterface(This->node_unk, &IID_IXMLDOMNode, (LPVOID*)&This->node);
     if(FAILED(hr))
     {
-        IUnknown_Release(This->element_unk);
+        IUnknown_Release(This->node_unk);
         HeapFree( GetProcessHeap(), 0, This );
         return NULL;
     }
