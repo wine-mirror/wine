@@ -3248,7 +3248,7 @@ IDirect3DDeviceImpl_7_SetTransform(IDirect3DDevice7 *iface,
                                    D3DMATRIX *Matrix)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    D3DTRANSFORMSTATETYPE type = TransformStateType;
+    D3DTRANSFORMSTATETYPE type;
     HRESULT hr;
     TRACE("(%p)->(%08x,%p): Relay\n", This, TransformStateType, Matrix);
 
@@ -3343,7 +3343,7 @@ IDirect3DDeviceImpl_7_GetTransform(IDirect3DDevice7 *iface,
                                    D3DMATRIX *Matrix)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    D3DTRANSFORMSTATETYPE type = TransformStateType;
+    D3DTRANSFORMSTATETYPE type;
     HRESULT hr;
     TRACE("(%p)->(%08x,%p): Relay\n", This, TransformStateType, Matrix);
 
