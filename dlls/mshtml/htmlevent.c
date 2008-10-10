@@ -84,7 +84,10 @@ eventid_t str_to_eid(LPCWSTR str)
 typedef struct {
     DispatchEx dispex;
     const IHTMLEventObjVtbl  *lpIHTMLEventObjVtbl;
+
     LONG ref;
+
+    HTMLDOMNode *target;
 } HTMLEventObj;
 
 #define HTMLEVENTOBJ(x) ((IHTMLEventObj*) &(x)->lpIHTMLEventObjVtbl)
@@ -177,8 +180,10 @@ static HRESULT WINAPI HTMLEventObj_Invoke(IHTMLEventObj *iface, DISPID dispIdMem
 static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLElement **p)
 {
     HTMLEventObj *This = HTMLEVENTOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return IHTMLDOMNode_QueryInterface(HTMLDOMNODE(This->target), &IID_IHTMLElement, (void**)p);
 }
 
 static HRESULT WINAPI HTMLEventObj_get_altKey(IHTMLEventObj *iface, VARIANT_BOOL *p)
@@ -398,13 +403,15 @@ static dispex_static_data_t HTMLEventObj_dispex = {
     HTMLEventObj_iface_tids
 };
 
-static IHTMLEventObj *create_event(void)
+static IHTMLEventObj *create_event(HTMLDOMNode *target)
 {
     HTMLEventObj *ret;
 
     ret = heap_alloc(sizeof(*ret));
     ret->lpIHTMLEventObjVtbl = &HTMLEventObjVtbl;
     ret->ref = 1;
+    ret->target = target;
+    IHTMLDOMNode_AddRef(HTMLDOMNODE(target));
 
     init_dispex(&ret->dispex, (IUnknown*)HTMLEVENTOBJ(ret), &HTMLEventObj_dispex);
 
@@ -433,7 +440,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
 
         if(node && node->event_target && node->event_target->event_table[eid]) {
             if(!event_obj)
-                event_obj = doc->window->event = create_event();
+                event_obj = doc->window->event = create_event(get_node(doc, target, TRUE));
 
             TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
             call_disp_func(doc, node->event_target->event_table[eid], (IDispatch*)HTMLDOMNODE(node));
@@ -459,7 +466,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
 
     if((event_info[eid].flags & EVENT_BUBBLE) && doc->event_target && doc->event_target->event_table[eid]) {
         if(!event_obj)
-            event_obj = doc->window->event = create_event();
+            event_obj = doc->window->event = create_event(get_node(doc, target, TRUE));
 
         TRACE("doc %s >>>\n", debugstr_w(event_info[eid].name));
         call_disp_func(doc, doc->event_target->event_table[eid], (IDispatch*)HTMLDOC(doc));
