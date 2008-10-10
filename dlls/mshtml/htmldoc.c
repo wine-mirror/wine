@@ -1551,6 +1551,7 @@ static dispex_static_data_t HTMLDocument_dispex = {
 
 HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 {
+    nsIDOMWindow *nswindow;
     HTMLDocument *ret;
     HRESULT hres;
 
@@ -1596,7 +1597,12 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->nscontainer = NSContainer_Create(ret, NULL);
     update_nsdocument(ret);
 
-    ret->window = HTMLWindow_Create(ret);
+    if(ret->nscontainer)
+        nsIWebBrowser_GetContentDOMWindow(ret->nscontainer->webbrowser, &nswindow);
+
+    HTMLWindow_Create(ret, nswindow, &ret->window);
+    if(nswindow)
+        nsIDOMWindow_Release(nswindow);
 
     get_thread_hwnd();
 
