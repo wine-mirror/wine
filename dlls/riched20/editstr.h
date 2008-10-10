@@ -401,7 +401,7 @@ typedef struct tagME_WrapContext
   int nAvailWidth;
   int nRow;
   POINT pt;
-  BOOL bOverflown;
+  BOOL bOverflown, bWordWrap;
   ME_DisplayItem *pRowStart;
   
   ME_DisplayItem *pLastSplittableRun;

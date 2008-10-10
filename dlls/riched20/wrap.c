@@ -50,8 +50,10 @@ static void ME_BeginRow(ME_WrapContext *wc, ME_DisplayItem *para)
   wc->pRowStart = NULL;
   wc->bOverflown = FALSE;
   wc->pLastSplittableRun = NULL;
+  wc->bWordWrap = wc->context->editor->bWordWrap;
   if (para->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND)) {
     wc->nAvailWidth = 0;
+    wc->bWordWrap = FALSE;
     if (para->member.para.nFlags & MEPF_ROWEND)
     {
       ME_Cell *cell = &ME_FindItemBack(para, diCell)->member.cell;
@@ -73,12 +75,11 @@ static void ME_BeginRow(ME_WrapContext *wc, ME_DisplayItem *para)
 
     wc->nAvailWidth = cell->nWidth
         - (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin;
-  } else if (wc->context->editor->bWordWrap) {
+    wc->bWordWrap = TRUE;
+  } else {
     wc->nAvailWidth = wc->context->rcView.right - wc->context->rcView.left
         - (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin
         - wc->context->editor->selofs;
-  } else {
-    wc->nAvailWidth = ~0u >> 1;
   }
   wc->pt.x = wc->context->pt.x;
   if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
@@ -149,9 +150,9 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
   assert(para->member.para.pFmt->dwMask & PFM_ALIGNMENT);
   align = para->member.para.pFmt->wAlignment;
   if (align == PFA_CENTER)
-    shift = (wc->nAvailWidth-width)/2;
+    shift = max((wc->nAvailWidth-width)/2, 0);
   if (align == PFA_RIGHT)
-    shift = wc->nAvailWidth-width;
+    shift = max(wc->nAvailWidth-width, 0);
   for (p = wc->pRowStart; p!=pEnd; p = p->next)
   {
     if (p->type==diRun) { /* FIXME add more run types */
@@ -378,7 +379,8 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
   }
 
   /* will current run fit? */
-  if (wc->pt.x + run->nWidth - wc->context->pt.x > wc->nAvailWidth)
+  if (wc->bWordWrap &&
+      wc->pt.x + run->nWidth - wc->context->pt.x > wc->nAvailWidth)
   {
     int loc = wc->context->pt.x + wc->nAvailWidth - wc->pt.x;
     /* total white run ? */
