@@ -58,13 +58,14 @@ typedef struct {
 } event_info_t;
 
 #define EVENT_DEFAULTLISTENER    0x0001
+#define EVENT_BUBBLE             0x0002
 
 static const event_info_t event_info[] = {
-    {changeW,       onchangeW,       EVENT_DEFAULTLISTENER},
-    {clickW,        onclickW,        EVENT_DEFAULTLISTENER},
-    {keyupW,        onkeyupW,        EVENT_DEFAULTLISTENER},
+    {changeW,       onchangeW,       EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {clickW,        onclickW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {keyupW,        onkeyupW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {loadW,         onloadW,         0},
-    {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER}
+    {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE}
 };
 
 eventid_t str_to_eid(LPCWSTR str)
@@ -412,21 +413,62 @@ static IHTMLEventObj *create_event(void)
 
 void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
 {
+    IHTMLEventObj *prev_event, *event_obj = NULL;
+    nsIDOMNode *parent, *nsnode;
     HTMLDOMNode *node;
+    PRUint16 node_type;
 
-    node = get_node(doc, target, FALSE);
-    if(!node)
+    nsIDOMNode_GetNodeType(target, &node_type);
+    if(node_type != ELEMENT_NODE) {
+        FIXME("node type %d node supported\n", node_type);
         return;
+    }
 
-    if(node->event_target && node->event_target->event_table[eid]) {
-        doc->window->event = create_event();
+    prev_event = doc->window->event;
+    nsnode = target;
+    nsIDOMNode_AddRef(nsnode);
 
-        TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
-        call_disp_func(doc, node->event_target->event_table[eid]);
-        TRACE("%s <<<\n", debugstr_w(event_info[eid].name));
+    while(1) {
+        node = get_node(doc, nsnode, FALSE);
 
-        IHTMLEventObj_Release(doc->window->event);
-        doc->window->event = NULL;
+        if(node && node->event_target && node->event_target->event_table[eid]) {
+            if(!event_obj)
+                event_obj = doc->window->event = create_event();
+
+            TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
+            call_disp_func(doc, node->event_target->event_table[eid]);
+            TRACE("%s <<<\n", debugstr_w(event_info[eid].name));
+        }
+
+        if(!(event_info[eid].flags & EVENT_BUBBLE))
+            break;
+
+        nsIDOMNode_GetParentNode(nsnode, &parent);
+        nsIDOMNode_Release(nsnode);
+        nsnode = parent;
+        if(!nsnode)
+            break;
+
+        nsIDOMNode_GetNodeType(nsnode, &node_type);
+        if(node_type != ELEMENT_NODE)
+            break;
+    }
+
+    if(nsnode)
+        nsIDOMNode_Release(nsnode);
+
+    if((event_info[eid].flags & EVENT_BUBBLE) && doc->event_target && doc->event_target->event_table[eid]) {
+        if(!event_obj)
+            event_obj = doc->window->event = create_event();
+
+        TRACE("doc %s >>>\n", debugstr_w(event_info[eid].name));
+        call_disp_func(doc, doc->event_target->event_table[eid]);
+        TRACE("doc %s <<<\n", debugstr_w(event_info[eid].name));
+    }
+
+    if(event_obj) {
+        IHTMLEventObj_Release(event_obj);
+        doc->window->event = prev_event;
     }
 }
 
