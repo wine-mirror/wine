@@ -531,7 +531,7 @@ static HRESULT set_event_handler_disp(event_target_t **event_target, HTMLDocumen
         return S_OK;
     IDispatch_AddRef(disp);
 
-    if(event_info[eid].flags & EVENT_DEFAULTLISTENER) {
+    if(doc->nscontainer && (event_info[eid].flags & EVENT_DEFAULTLISTENER)) {
         if(!doc->nscontainer->event_vector) {
             doc->nscontainer->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
             if(!doc->nscontainer->event_vector)
