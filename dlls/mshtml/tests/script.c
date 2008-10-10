@@ -282,7 +282,7 @@ static HRESULT WINAPI funcDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid
     ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(rgvarg[1]) = %d\n", V_VT(pdp->rgvarg));
     ok(V_BOOL(pdp->rgvarg+1) == VARIANT_TRUE, "V_BOOL(rgvarg[1]) = %x\n", V_BOOL(pdp->rgvarg));
     ok(pvarRes != NULL, "pvarRes == NULL\n");
-    ok(pei != NULL, "pei == NULL");
+    ok(pei != NULL, "pei == NULL\n");
     ok(!pspCaller, "pspCaller != NULL\n");
 
     V_VT(pvarRes) = VT_I4;
