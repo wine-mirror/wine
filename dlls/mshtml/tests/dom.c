@@ -387,6 +387,21 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
+static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+{
+    IUnknown *unk1, *unk2;
+
+    if(iface1 == iface2)
+        return TRUE;
+
+    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
+    IUnknown_Release(unk1);
+    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk2);
+    IUnknown_Release(unk2);
+
+    return unk1 == unk2;
+}
+
 static IHTMLDocument2 *create_document(void)
 {
     IHTMLDocument2 *doc;
@@ -2630,12 +2645,47 @@ static void test_table_elem(IHTMLElement *elem)
     IHTMLTable_Release(table);
 }
 
+static void doc_write(IHTMLDocument2 *doc, const char *text)
+{
+    SAFEARRAYBOUND dim;
+    SAFEARRAY *sa;
+    VARIANT *var;
+    BSTR str;
+    HRESULT hres;
+
+    dim.lLbound = 0;
+    dim.cElements = 1;
+    sa = SafeArrayCreate(VT_VARIANT, 1, &dim);
+    SafeArrayAccessData(sa, (void**)&var);
+    V_VT(var) = VT_BSTR;
+    V_BSTR(var) = str = a2bstr(text);
+    SafeArrayUnaccessData(sa);
+
+    hres = IHTMLDocument2_write(doc, sa);
+    ok(hres == S_OK, "write failed: %08x\n", hres);
+
+    SysFreeString(str);
+    SafeArrayDestroy(sa);
+}
+
 static void test_iframe_elem(IHTMLElement *elem)
 {
+    IHTMLElementCollection *col;
     IHTMLDocument2 *content_doc;
     IHTMLWindow2 *content_window;
     IHTMLFrameBase2 *base2;
+    IDispatch *disp;
+    VARIANT errv;
+    BSTR str;
     HRESULT hres;
+
+    static const elem_type_t all_types[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_BODY,
+        ET_BR
+    };
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase2, (void**)&base2);
     ok(hres == S_OK, "Could not get IHTMFrameBase2 iface: %08x\n", hres);
@@ -2651,6 +2701,26 @@ static void test_iframe_elem(IHTMLElement *elem)
     IHTMLWindow2_Release(content_window);
     ok(hres == S_OK, "get_document failed: %08x\n", hres);
     ok(content_doc != NULL, "content_doc = NULL\n");
+
+    str = a2bstr("text/html");
+    V_VT(&errv) = VT_ERROR;
+    disp = NULL;
+    hres = IHTMLDocument2_open(content_doc, str, errv, errv, errv, &disp);
+    SysFreeString(str);
+    ok(hres == S_OK, "open failed: %08x\n", hres);
+    ok(disp != NULL, "disp == NULL\n");
+    ok(iface_cmp((IUnknown*)disp, (IUnknown*)content_window), "disp != content_window\n");
+    IDispatch_Release(disp);
+
+    doc_write(content_doc, "<html><head><title>test</title></head><body><br /></body></html>");
+
+    hres = IHTMLDocument2_get_all(content_doc, &col);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    IHTMLElementCollection_Release(col);
+
+    hres = IHTMLDocument2_close(content_doc);
+    ok(hres == S_OK, "close failed: %08x\n", hres);
 
     IHTMLDocument2_Release(content_doc);
 }

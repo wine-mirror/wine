@@ -815,15 +815,52 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
                         VARIANT features, VARIANT replace, IDispatch **pomWindowResult)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(url), pomWindowResult);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
+
+    TRACE("(%p)->(%s %s %s %s %p)\n", This, debugstr_w(url), debugstr_variant(&name),
+          debugstr_variant(&features), debugstr_variant(&replace), pomWindowResult);
+
+    if(!This->nsdoc) {
+        ERR("!nsdoc\n");
+        return E_NOTIMPL;
+    }
+
+    if(!url || strcmpW(url, text_htmlW) || V_VT(&name) != VT_ERROR
+       || V_VT(&features) != VT_ERROR || V_VT(&replace) != VT_ERROR)
+        FIXME("unsupported args\n");
+
+    nsres = nsIDOMHTMLDocument_Open(This->nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Open failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *pomWindowResult = (IDispatch*)HTMLWINDOW2(This->window);
+    IHTMLWindow2_AddRef(HTMLWINDOW2(This->window));
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_close(IHTMLDocument2 *iface)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)\n", This);
+
+    if(!This->nsdoc) {
+        ERR("!nsdoc\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLDocument_Close(This->nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Close failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_clear(IHTMLDocument2 *iface)
