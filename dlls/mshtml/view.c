@@ -168,6 +168,9 @@ void notif_focus(HTMLDocument *This)
     IOleControlSite *site;
     HRESULT hres;
 
+    if(!This->client)
+        return;
+
     hres = IOleClientSite_QueryInterface(This->client, &IID_IOleControlSite, (void**)&site);
     if(FAILED(hres))
         return;
