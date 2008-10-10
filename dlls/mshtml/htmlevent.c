@@ -51,14 +51,23 @@ static const WCHAR ondragW[] = {'o','n','d','r','a','g',0};
 static const WCHAR focusW[] = {'f','o','c','u','s',0};
 static const WCHAR onfocusW[] = {'o','n','f','o','c','u','s',0};
 
+static const WCHAR keydownW[] = {'k','e','y','d','o','w','n',0};
+static const WCHAR onkeydownW[] = {'o','n','k','e','y','d','o','w','n',0};
+
 static const WCHAR keyupW[] = {'k','e','y','u','p',0};
 static const WCHAR onkeyupW[] = {'o','n','k','e','y','u','p',0};
 
 static const WCHAR loadW[] = {'l','o','a','d',0};
 static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 
+static const WCHAR mousedownW[] = {'m','o','u','s','e','d','o','w','n',0};
+static const WCHAR onmousedownW[] = {'o','n','m','o','u','s','e','d','o','w','n',0};
+
 static const WCHAR mouseoverW[] = {'m','o','u','s','e','o','v','e','r',0};
 static const WCHAR onmouseoverW[] = {'o','n','m','o','u','s','e','o','v','e','r',0};
+
+static const WCHAR mouseupW[] = {'m','o','u','s','e','u','p',0};
+static const WCHAR onmouseupW[] = {'o','n','m','o','u','s','e','u','p',0};
 
 static const WCHAR pasteW[] = {'p','a','s','t','e',0};
 static const WCHAR onpasteW[] = {'o','n','p','a','s','t','e',0};
@@ -78,9 +87,12 @@ static const event_info_t event_info[] = {
     {clickW,        onclickW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {dragW,         ondragW,         0},
     {focusW,        onfocusW,        EVENT_DEFAULTLISTENER},
+    {keydownW,      onkeydownW,      EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {keyupW,        onkeyupW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {loadW,         onloadW,         0},
+    {mousedownW,    onmousedownW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mouseupW,      onmouseupW,      EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {pasteW,        onpasteW,        0}
 };
 
