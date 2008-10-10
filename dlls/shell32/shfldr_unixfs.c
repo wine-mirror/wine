@@ -557,13 +557,13 @@ static char* UNIXFS_build_shitemid(char *pszUnixPath, void *pIDL) {
  *  ppidl       [O] The corresponding ITEMIDLIST. Release with SHFree/ILFree
  *  
  * RETURNS
- *  Success: TRUE
- *  Failure: FALSE, invalid params or out of memory
+ *  Success: S_OK
+ *  Failure: Error code, invalid params or out of memory
  *
  * NOTES
  *  pUnixFolder also carries the information if the path is expected to be unix or dos.
  */
-static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPITEMIDLIST *ppidl) {
+static HRESULT UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPITEMIDLIST *ppidl) {
     LPITEMIDLIST pidl;
     int cPidlLen, cPathLen;
     char *pSlash, *pNextSlash, szCompletePath[FILENAME_MAX], *pNextPathElement, *pszAPath;
@@ -572,7 +572,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     TRACE("pUnixFolder=%p, path=%s, ppidl=%p\n", pUnixFolder, debugstr_w(path), ppidl);
    
     if (!ppidl || !path)
-        return FALSE;
+        return E_INVALIDARG;
 
     /* Build an absolute path and let pNextPathElement point to the interesting 
      * relative sub-path. We need the absolute path to call 'stat', but the pidl
@@ -582,7 +582,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     {
         /* Absolute dos path. Convert to unix */
         if (!UNIXFS_get_unix_path(path, szCompletePath))
-            return FALSE;
+            return E_FAIL;
         pNextPathElement = szCompletePath;
     } 
     else if ((pUnixFolder->m_dwPathMode == PATHMODE_UNIX) && (path[0] == '/')) 
@@ -613,9 +613,9 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     /* Special case for the root folder. */
     if (!strcmp(szCompletePath, "/")) {
         *ppidl = pidl = (LPITEMIDLIST)SHAlloc(sizeof(USHORT));
-        if (!pidl) return FALSE;
+        if (!pidl) return E_FAIL;
         pidl->mkid.cb = 0; /* Terminate the ITEMIDLIST */
-        return TRUE;
+        return S_OK;
     }
     
     /* Remove trailing slash, if present */
@@ -625,7 +625,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
 
     if ((szCompletePath[0] != '/') || (pNextPathElement[0] != '/')) {
         ERR("szCompletePath: %s, pNextPathElment: %s\n", szCompletePath, pNextPathElement);
-        return FALSE;
+        return E_FAIL;
     }
     
     /* At this point, we have an absolute unix path in szCompletePath 
@@ -635,7 +635,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     
     /* Convert to CP_ACP and WCHAR */
     if (!UNIXFS_shitemid_len_from_filename(pNextPathElement, &pszAPath, &pwszPath))
-        return 0;
+        return E_FAIL;
 
     /* Compute the length of the complete ITEMIDLIST */
     cPidlLen = 0;
@@ -656,7 +656,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     SHFree(pwszPath);
 
     *ppidl = pidl = (LPITEMIDLIST)SHAlloc(cPidlLen);
-    if (!pidl) return FALSE;
+    if (!pidl) return E_FAIL;
 
     /* Concatenate the SHITEMIDs of the sub-directories. */
     while (*pNextPathElement) {
@@ -668,7 +668,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
         if (!pNextPathElement) {
             SHFree(*ppidl);
             *ppidl = NULL;
-            return FALSE;
+            return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
         }
         pidl = ILGetNext(pidl);
     }
@@ -677,7 +677,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     if ((char *)pidl-(char *)*ppidl+sizeof(USHORT) != cPidlLen) /* We've corrupted the heap :( */ 
         ERR("Computed length of pidl incorrect. Please report.\n");
     
-    return TRUE;
+    return S_OK;
 }
 
 /******************************************************************************
@@ -871,14 +871,14 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
     ULONG* pdwAttributes)
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
-    BOOL result;
+    HRESULT result;
 
     TRACE("(iface=%p, hwndOwner=%p, pbcReserved=%p, lpszDisplayName=%s, pchEaten=%p, ppidl=%p, "
           "pdwAttributes=%p) stub\n", iface, hwndOwner, pbcReserved, debugstr_w(lpszDisplayName), 
           pchEaten, ppidl, pdwAttributes);
 
     result = UNIXFS_path_to_pidl(This, lpszDisplayName, ppidl);
-    if (result && pdwAttributes && *pdwAttributes)
+    if (SUCCEEDED(result) && pdwAttributes && *pdwAttributes)
     {
         IShellFolder *pParentSF;
         LPCITEMIDLIST pidlLast;
@@ -896,8 +896,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
         ILFree(pidlComplete);
     }
 
-    if (!result) TRACE("FAILED!\n");
-    return result ? S_OK : E_FAIL;
+    if (FAILED(result)) TRACE("FAILED!\n");
+    return result;
 }
 
 static IUnknown *UnixSubFolderIterator_Constructor(UnixFolder *pUnixFolder, SHCONTF fFilter);
@@ -1775,7 +1775,7 @@ static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd
         LPITEMIDLIST pidlRelative;
 
         /* Inform the shell */
-        if (UNIXFS_path_to_pidl(This, pwszName, &pidlRelative)) {
+        if (SUCCEEDED(UNIXFS_path_to_pidl(This, pwszName, &pidlRelative))) {
             LPITEMIDLIST pidlAbsolute = ILCombine(This->m_pidlLocation, pidlRelative);
             if (ppidlOut)
                 *ppidlOut = pidlRelative;
