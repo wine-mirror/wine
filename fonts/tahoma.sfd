@@ -12,13 +12,13 @@ UnderlinePosition: -170
 UnderlineWidth: 130
 Ascent: 1638
 Descent: 410
-XUID: [1021 135 1692684408 1110822]
+XUID: [1021 135 1692684408 1110823]
 FSType: 0
 OS2Version: 2
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1169210120
-ModificationTime: 1208293008
+ModificationTime: 1223550020
 PfmFamily: 33
 TTFWeight: 400
 TTFWidth: 5
@@ -108,7 +108,7 @@ SnapStemV 9 [184 203]
 ExpansionFactor 4 0.06
 EndPrivate
 TeXData: 1 0 0 327680 163840 109226 571904 -1048576 109226 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65537 431
+BeginChars: 65537 432
 StartChar: .notdef
 Encoding: 0 0 0
 Width: 2048
@@ -9238,8 +9238,44 @@ Encoding: 160 160 430
 Width: 639
 Flags: W
 EndChar
+StartChar: afii61352
+Encoding: 8470 8470 431
+Width: 1366
+Flags: W
+TeX: 0 0 0 0
+HStem: 0 21G<152 337 678 900> 950 95<970 1220> 1090 75<1051.18 1158.82> 1405 85<1051.18 1158.82>
+VStem: 152 185<0 1284> 715 185<310 1489> 965 65<1198.89 1371.11> 1180 45<1198.89 1371.11>
+Fore
+970 1045 m 5
+ 1220 1045 l 5
+ 1220 950 l 5
+ 970 950 l 5
+ 970 1045 l 5
+1180 1285 m 0
+ 1180 1351.24 1146.4 1405 1105 1405 c 0
+ 1063.6 1405 1030 1351.24 1030 1285 c 0
+ 1030 1218.76 1063.6 1165 1105 1165 c 0
+ 1146.4 1165 1180 1218.76 1180 1285 c 0
+965 1290 m 0
+ 965 1400.4 1023.24 1490 1095 1490 c 0
+ 1166.76 1490 1225 1400.4 1225 1290 c 0
+ 1225 1179.6 1166.76 1090 1095 1090 c 0
+ 1023.24 1090 965 1179.6 965 1290 c 0
+152 0 m 1
+ 152 1489 l 1
+ 433 1489 l 1
+ 715 310 l 1
+ 715 1489 l 1
+ 900 1489 l 1
+ 900 0 l 1
+ 678 0 l 1
+ 337 1284 l 1
+ 337 0 l 1
+ 152 0 l 1
+EndSplineSet
+EndChar
 EndChars
-BitmapFont: 9 431 7 2 1
+BitmapFont: 9 432 7 2 1
 BDFChar: 0 0 9 1 7 0 6
 rdo`RJqEt%
 BDFChar: 1 32 3 0 0 0 0
@@ -10102,8 +10138,10 @@ BDFChar: 429 539 3 0 1 -2 5
 JA?\cJ3X*b
 BDFChar: 430 160 3 0 0 0 0
 z
+BDFChar: 431 8470 7 0 6 0 6
+QIaFVYcs2h
 EndBitmapFont
-BitmapFont: 11 431 9 2 1 FontForge
+BitmapFont: 11 432 9 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--11-80-96-96-P-62-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 11 0 -2"
@@ -11001,8 +11039,10 @@ BDFChar: 429 539 4 0 2 -3 7
 J:QR.J:N/X!'l&7
 BDFChar: 430 160 3 0 0 0 0
 z
+BDFChar: 431 8470 7 0 6 0 7
+QIaF6Yct?n
 EndBitmapFont
-BitmapFont: 12 431 10 2 1 FontForge
+BitmapFont: 12 432 10 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--12-90-96-96-P-70-ISO10646-1"
 FONTBOUNDINGBOX 1 "16 12 0 -2"
@@ -11696,8 +11736,10 @@ BDFChar: 429 539 4 0 3 -3 8
 5X=g(5X7S"0E<4\
 BDFChar: 430 160 4 0 0 0 0
 z
+BDFChar: 431 8470 8 0 7 0 8
+Mp'2BW2Q)NL]@DT
 EndBitmapFont
-BitmapFont: 13 431 10 3 1 FontForge
+BitmapFont: 13 432 10 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--13-100-96-96-P-73-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 13 0 -3"
@@ -12391,8 +12433,10 @@ BDFChar: 429 539 4 0 3 -3 8
 5X=g(5X7S"0E<4\
 BDFChar: 430 160 4 0 0 0 0
 z
+BDFChar: 431 8470 8 0 7 0 8
+Mp'2BW2Q)NL]@DT
 EndBitmapFont
-BitmapFont: 15 431 12 3 1 FontForge
+BitmapFont: 15 432 12 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--15-110-96-96-P-85-ISO10646-1"
 FONTBOUNDINGBOX 1 "19 15 0 -3"
@@ -13086,8 +13130,10 @@ BDFChar: 429 539 5 0 4 -3 9
 5X>*05X7S"5WA`T0E;(Q
 BDFChar: 430 160 5 0 0 0 0
 z
+BDFChar: 431 8470 10 0 8 0 10
+Kn.-m_uQWaU]@b%PQ6pJMu\e:KE(uP
 EndBitmapFont
-BitmapFont: 16 431 13 3 1 FontForge
+BitmapFont: 16 432 13 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--16-120-96-96-P-93-ISO10646-1"
 FONTBOUNDINGBOX 1 "21 16 0 -3"
@@ -13767,8 +13813,8 @@ BDFChar: 422 370 10 0 9 -3 11
 J3\WMJ3\WMJ3\WMJ3\WMJ3\WM5_)'!!WW?'!rr<$
 BDFChar: 423 371 9 0 7 -3 8
 JUrB'JUrA>4TY`g
-BDFChar: 424 175 9 0 8 13 14
-!!*%L
+BDFChar: 424 175 9 0 8 13 13
+s*t(L
 BDFChar: 425 806 9 2 4 -4 -2
 ?pK5B
 BDFChar: 426 536 9 0 7 -3 11
@@ -13781,5 +13827,7 @@ BDFChar: 429 539 5 0 4 -3 11
 5X7U05X7S"5X7Ro!"^ga
 BDFChar: 430 160 0 0 0 0 0
 z
+BDFChar: 431 8470 11 0 9 0 11
+KE0!,`B^98U]@7,PQ6pJPQ6XBMu\M2
 EndBitmapFont
 EndSplineFont
