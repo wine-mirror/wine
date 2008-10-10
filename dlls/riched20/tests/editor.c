@@ -5164,6 +5164,7 @@ static void test_eventMask(void)
     ok(queriedEventMask == (eventMask & ~ENM_CHANGE),
             "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
 
+    DestroyWindow(parent);
 }
 
 static int received_WM_NOTIFY = 0;
