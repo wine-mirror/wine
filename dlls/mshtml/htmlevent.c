@@ -436,7 +436,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
                 event_obj = doc->window->event = create_event();
 
             TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
-            call_disp_func(doc, node->event_target->event_table[eid]);
+            call_disp_func(doc, node->event_target->event_table[eid], (IDispatch*)HTMLDOMNODE(node));
             TRACE("%s <<<\n", debugstr_w(event_info[eid].name));
         }
 
@@ -462,7 +462,7 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
             event_obj = doc->window->event = create_event();
 
         TRACE("doc %s >>>\n", debugstr_w(event_info[eid].name));
-        call_disp_func(doc, doc->event_target->event_table[eid]);
+        call_disp_func(doc, doc->event_target->event_table[eid], (IDispatch*)HTMLDOC(doc));
         TRACE("doc %s <<<\n", debugstr_w(event_info[eid].name));
     }
 

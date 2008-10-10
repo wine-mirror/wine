@@ -655,7 +655,7 @@ HRESULT clear_task_timer(HTMLDocument*,BOOL,DWORD);
 
 HRESULT get_typeinfo(tid_t,ITypeInfo**);
 void release_typelib(void);
-void call_disp_func(HTMLDocument*,IDispatch*);
+void call_disp_func(HTMLDocument*,IDispatch*,IDispatch*);
 
 const char *debugstr_variant(const VARIANT*);
 

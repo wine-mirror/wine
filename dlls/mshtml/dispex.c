@@ -296,7 +296,7 @@ static dispex_data_t *get_dispex_data(DispatchEx *This)
     return This->data->data;
 }
 
-void call_disp_func(HTMLDocument *doc, IDispatch *disp)
+void call_disp_func(HTMLDocument *doc, IDispatch *disp, IDispatch *this_obj)
 {
     DISPID named_arg = DISPID_THIS;
     VARIANTARG arg;
@@ -313,7 +313,7 @@ void call_disp_func(HTMLDocument *doc, IDispatch *disp)
     }
 
     V_VT(&arg) = VT_DISPATCH;
-    V_DISPATCH(&arg) = (IDispatch*)HTMLWINDOW2(doc->window);
+    V_DISPATCH(&arg) = this_obj;
     VariantInit(&res);
     memset(&ei, 0, sizeof(ei));
 
