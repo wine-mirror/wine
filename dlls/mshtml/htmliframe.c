@@ -38,6 +38,7 @@ typedef struct {
     LONG ref;
 
     nsIDOMHTMLIFrameElement *nsiframe;
+    HTMLDocument *content_doc;
 } HTMLIFrame;
 
 #define HTMLFRAMEBASE2(x)  ((IHTMLFrameBase2*)  &(x)->lpIHTMLFrameBase2Vtbl)
@@ -100,8 +101,40 @@ static HRESULT WINAPI HTMLIFrameBase2_Invoke(IHTMLFrameBase2 *iface, DISPID disp
 static HRESULT WINAPI HTMLIFrameBase2_get_contentWindow(IHTMLFrameBase2 *iface, IHTMLWindow2 **p)
 {
     HTMLIFrame *This = HTMLFRAMEBASE2_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->content_doc) {
+        nsIDOMHTMLDocument *nshtmldoc;
+        nsIDOMDocument *nsdoc;
+        nsresult nsres;
+        HRESULT hres;
+
+        nsres = nsIDOMHTMLIFrameElement_GetContentDocument(This->nsiframe, &nsdoc);
+        if(NS_FAILED(nsres)) {
+            ERR("GetContentDocument failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+
+        if(!nsdoc) {
+            FIXME("NULL contentDocument\n");
+            return E_FAIL;
+        }
+
+        nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
+        nsIDOMDocument_Release(nsdoc);
+        if(NS_FAILED(nsres)) {
+            ERR("Could not get nsIDOMHTMLDocument iface: %08x\n", nsres);
+            return E_FAIL;
+        }
+
+        hres = create_doc_from_nsdoc(nshtmldoc, &This->content_doc);
+        nsIDOMHTMLDocument_Release(nshtmldoc);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return IHTMLDocument2_get_parentWindow(HTMLDOC(This->content_doc), p);
 }
 
 static HRESULT WINAPI HTMLIFrameBase2_put_onload(IHTMLFrameBase2 *iface, VARIANT v)
@@ -196,6 +229,8 @@ static void HTMLIFrame_destructor(HTMLDOMNode *iface)
 {
     HTMLIFrame *This = HTMLIFRAME_NODE_THIS(iface);
 
+    if(This->content_doc)
+        IHTMLDocument2_Release(HTMLDOC(This->content_doc));
     if(This->nsiframe)
         nsIDOMHTMLIFrameElement_Release(This->nsiframe);
 

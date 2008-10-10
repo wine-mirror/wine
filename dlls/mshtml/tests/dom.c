@@ -49,7 +49,7 @@ static const char elem_test_str[] =
     "<script id=\"sc\" type=\"text/javascript\"></script>"
     "<test />"
     "<img id=\"imgid\"/>"
-    "<iframe src=\"about:blank\"></iframe>"
+    "<iframe src=\"about:blank\" id=\"ifr\"></iframe>"
     "</body></html>";
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
@@ -2630,6 +2630,31 @@ static void test_table_elem(IHTMLElement *elem)
     IHTMLTable_Release(table);
 }
 
+static void test_iframe_elem(IHTMLElement *elem)
+{
+    IHTMLDocument2 *content_doc;
+    IHTMLWindow2 *content_window;
+    IHTMLFrameBase2 *base2;
+    HRESULT hres;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase2, (void**)&base2);
+    ok(hres == S_OK, "Could not get IHTMFrameBase2 iface: %08x\n", hres);
+
+    content_window = NULL;
+    hres = IHTMLFrameBase2_get_contentWindow(base2, &content_window);
+    IHTMLFrameBase2_Release(base2);
+    ok(hres == S_OK, "get_contentWindow failed: %08x\n", hres);
+    ok(content_window != NULL, "contentWindow = NULL\n");
+
+    content_doc = NULL;
+    hres = IHTMLWindow2_get_document(content_window, &content_doc);
+    IHTMLWindow2_Release(content_window);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+    ok(content_doc != NULL, "content_doc = NULL\n");
+
+    IHTMLDocument2_Release(content_doc);
+}
+
 static void test_stylesheet(IDispatch *disp)
 {
     IHTMLStyleSheetRulesCollection *col = NULL;
@@ -2748,6 +2773,7 @@ static void test_elems(IHTMLDocument2 *doc)
     static const WCHAR xxxW[] = {'x','x','x',0};
     static const WCHAR tblW[] = {'t','b','l',0};
     static const WCHAR row2W[] = {'r','o','w','2',0};
+    static const WCHAR ifrW[] = {'i','f','r',0};
 
     static const elem_type_t all_types[] = {
         ET_HTML,
@@ -2945,6 +2971,13 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_tr_elem(elem);
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_doc_elem_by_id(doc, ifrW);
+    ok(elem != NULL, "elem == NULL\n");
+    if(elem) {
+        test_iframe_elem(elem);
         IHTMLElement_Release(elem);
     }
 

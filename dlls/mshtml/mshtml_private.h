@@ -459,6 +459,7 @@ typedef struct {
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocument**);
 
 HRESULT HTMLWindow_Create(HTMLDocument*,nsIDOMWindow*,HTMLWindow**);
 HTMLWindow *nswindow_to_window(const nsIDOMWindow*);

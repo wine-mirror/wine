@@ -1549,62 +1549,104 @@ static dispex_static_data_t HTMLDocument_dispex = {
     HTMLDocument_iface_tids
 };
 
+static HRESULT alloc_doc(HTMLDocument **ret)
+{
+    HTMLDocument *doc;
+
+    doc = heap_alloc_zero(sizeof(HTMLDocument));
+    doc->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
+    doc->lpIDispatchExVtbl = &DocDispatchExVtbl;
+    doc->ref = 1;
+    doc->readystate = READYSTATE_UNINITIALIZED;
+    doc->scriptmode = SCRIPTMODE_GECKO;
+
+    list_init(&doc->bindings);
+    list_init(&doc->script_hosts);
+    list_init(&doc->selection_list);
+    list_init(&doc->range_list);
+
+    HTMLDocument_HTMLDocument3_Init(doc);
+    HTMLDocument_HTMLDocument5_Init(doc);
+    HTMLDocument_Persist_Init(doc);
+    HTMLDocument_OleCmd_Init(doc);
+    HTMLDocument_OleObj_Init(doc);
+    HTMLDocument_View_Init(doc);
+    HTMLDocument_Window_Init(doc);
+    HTMLDocument_Service_Init(doc);
+    HTMLDocument_Hlink_Init(doc);
+
+    ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)HTMLDOC(doc));
+    ConnectionPoint_Init(&doc->cp_propnotif, &doc->cp_container, &IID_IPropertyNotifySink);
+    ConnectionPoint_Init(&doc->cp_htmldocevents, &doc->cp_container, &DIID_HTMLDocumentEvents);
+    ConnectionPoint_Init(&doc->cp_htmldocevents2, &doc->cp_container, &DIID_HTMLDocumentEvents2);
+
+    init_dispex(&doc->dispex, (IUnknown*)HTMLDOC(doc), &HTMLDocument_dispex);
+
+    *ret = doc;
+    return S_OK;
+}
+
+HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocument **ret)
+{
+    HTMLDocument *doc;
+    HRESULT hres;
+
+    hres = alloc_doc(&doc);
+    if(FAILED(hres))
+        return hres;
+
+    nsIDOMHTMLDocument_AddRef(nsdoc);
+    doc->nsdoc = nsdoc;
+
+    hres = HTMLWindow_Create(doc, NULL, &doc->window);
+    if(FAILED(hres)) {
+        IHTMLDocument_Release(HTMLDOC(doc));
+        return hres;
+    }
+
+    *ret = doc;
+    return S_OK;
+}
+
 HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 {
+    HTMLDocument *doc;
     nsIDOMWindow *nswindow;
-    HTMLDocument *ret;
     HRESULT hres;
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppvObject);
 
-    ret = heap_alloc_zero(sizeof(HTMLDocument));
-    ret->lpHTMLDocument2Vtbl = &HTMLDocumentVtbl;
-    ret->lpIDispatchExVtbl = &DocDispatchExVtbl;
-    ret->ref = 0;
-    ret->readystate = READYSTATE_UNINITIALIZED;
-    ret->scriptmode = SCRIPTMODE_GECKO;
-
-    list_init(&ret->bindings);
-    list_init(&ret->script_hosts);
-    list_init(&ret->selection_list);
-    list_init(&ret->range_list);
-
-    hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
-    if(FAILED(hres)) {
-        heap_free(ret);
+    hres = alloc_doc(&doc);
+    if(FAILED(hres))
         return hres;
-    }
+
+    hres = IHTMLDocument_QueryInterface(HTMLDOC(doc), riid, ppvObject);
+    IHTMLDocument_Release(HTMLDOC(doc));
+    if(FAILED(hres))
+        return hres;
 
     LOCK_MODULE();
 
-    HTMLDocument_HTMLDocument3_Init(ret);
-    HTMLDocument_HTMLDocument5_Init(ret);
-    HTMLDocument_Persist_Init(ret);
-    HTMLDocument_OleCmd_Init(ret);
-    HTMLDocument_OleObj_Init(ret);
-    HTMLDocument_View_Init(ret);
-    HTMLDocument_Window_Init(ret);
-    HTMLDocument_Service_Init(ret);
-    HTMLDocument_Hlink_Init(ret);
+    doc->nscontainer = NSContainer_Create(doc, NULL);
+    update_nsdocument(doc);
 
-    ConnectionPointContainer_Init(&ret->cp_container, (IUnknown*)HTMLDOC(ret));
-    ConnectionPoint_Init(&ret->cp_propnotif, &ret->cp_container, &IID_IPropertyNotifySink);
-    ConnectionPoint_Init(&ret->cp_htmldocevents, &ret->cp_container, &DIID_HTMLDocumentEvents);
-    ConnectionPoint_Init(&ret->cp_htmldocevents2, &ret->cp_container, &DIID_HTMLDocumentEvents2);
+    if(doc->nscontainer) {
+        nsresult nsres;
 
-    init_dispex(&ret->dispex, (IUnknown*)HTMLDOC(ret), &HTMLDocument_dispex);
+        nsres = nsIWebBrowser_GetContentDOMWindow(doc->nscontainer->webbrowser, &nswindow);
+        if(NS_FAILED(nsres))
+            ERR("GetContentDOMWindow failed: %08x\n", nsres);
+    }
 
-    ret->nscontainer = NSContainer_Create(ret, NULL);
-    update_nsdocument(ret);
-
-    if(ret->nscontainer)
-        nsIWebBrowser_GetContentDOMWindow(ret->nscontainer->webbrowser, &nswindow);
-
-    HTMLWindow_Create(ret, nswindow, &ret->window);
+    hres = HTMLWindow_Create(doc, nswindow, &doc->window);
     if(nswindow)
         nsIDOMWindow_Release(nswindow);
+    if(FAILED(hres)) {
+        IHTMLDocument_Release(HTMLDOC(doc));
+        return hres;
+    }
 
     get_thread_hwnd();
 
-    return hres;
+    return S_OK;
 }
