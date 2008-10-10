@@ -48,6 +48,9 @@ static const WCHAR onkeyupW[] = {'o','n','k','e','y','u','p',0};
 static const WCHAR loadW[] = {'l','o','a','d',0};
 static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 
+static const WCHAR mouseoverW[] = {'m','o','u','s','e','o','v','e','r',0};
+static const WCHAR onmouseoverW[] = {'o','n','m','o','u','s','e','o','v','e','r',0};
+
 typedef struct {
     LPCWSTR name;
     LPCWSTR attr_name;
@@ -57,10 +60,11 @@ typedef struct {
 #define EVENT_DEFAULTLISTENER    0x0001
 
 static const event_info_t event_info[] = {
-    {changeW,   onchangeW,   EVENT_DEFAULTLISTENER},
-    {clickW,    onclickW,    EVENT_DEFAULTLISTENER},
-    {keyupW,    onkeyupW,    EVENT_DEFAULTLISTENER},
-    {loadW,     onloadW,     0}
+    {changeW,       onchangeW,       EVENT_DEFAULTLISTENER},
+    {clickW,        onclickW,        EVENT_DEFAULTLISTENER},
+    {keyupW,        onkeyupW,        EVENT_DEFAULTLISTENER},
+    {loadW,         onloadW,         0},
+    {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER}
 };
 
 eventid_t str_to_eid(LPCWSTR str)
