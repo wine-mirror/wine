@@ -605,11 +605,13 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             return hres;
         }
 
-        hres = IDocHostUIHandler_ShowUI(This->hostui,
-                This->usermode == EDITMODE ? DOCHOSTUITYPE_AUTHOR : DOCHOSTUITYPE_BROWSE,
-                ACTOBJ(This), CMDTARGET(This), This->frame, This->ip_window);
-        if(FAILED(hres))
-            IDocHostUIHandler_HideUI(This->hostui);
+        if(This->hostui) {
+            hres = IDocHostUIHandler_ShowUI(This->hostui,
+                    This->usermode == EDITMODE ? DOCHOSTUITYPE_AUTHOR : DOCHOSTUITYPE_BROWSE,
+                    ACTOBJ(This), CMDTARGET(This), This->frame, This->ip_window);
+            if(FAILED(hres))
+                IDocHostUIHandler_HideUI(This->hostui);
+        }
 
         if(This->ip_window)
             call_set_active_object(This->ip_window, ACTOBJ(This));
