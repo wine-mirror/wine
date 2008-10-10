@@ -12,13 +12,13 @@ UnderlinePosition: -170
 UnderlineWidth: 130
 Ascent: 1638
 Descent: 410
-XUID: [1021 135 1692684408 7873690]
+XUID: [1021 135 1692684408 7873691]
 FSType: 0
 OS2Version: 2
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1169210120
-ModificationTime: 1210760415
+ModificationTime: 1223550623
 PfmFamily: 33
 TTFWeight: 700
 TTFWidth: 5
@@ -107,7 +107,7 @@ SnapStemV 9 [184 203]
 ExpansionFactor 4 0.06
 EndPrivate
 TeXData: 1 0 0 327680 163840 109226 571904 -1048576 109226 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65537 410
+BeginChars: 65537 411
 StartChar: .notdef
 Encoding: 0 0 0
 Width: 2048
@@ -8352,8 +8352,44 @@ Encoding: 160 160 409
 Width: 600
 Flags: W
 EndChar
+StartChar: afii61352
+Encoding: 8470 8470 410
+Width: 1578
+Flags: W
+TeX: 0 0 0 0
+HStem: 0 21G<152 337 688 910> 1105 70<1020 1210> 1210 62.5<1074.62 1146.38> 1422.5 67.5<1074.62 1146.38>
+VStem: 152 185<0 1284> 725 185<310 1489> 1010 50.5<1293.68 1401.32> 1160.5 49.5<1293.68 1401.32>
+Fore
+1160.5 1347.5 m 0
+ 1160.5 1388.9 1138.1 1422.5 1110.5 1422.5 c 0
+ 1082.9 1422.5 1060.5 1388.9 1060.5 1347.5 c 0
+ 1060.5 1306.1 1082.9 1272.5 1110.5 1272.5 c 0
+ 1138.1 1272.5 1160.5 1306.1 1160.5 1347.5 c 0
+1010 1350 m 0
+ 1010 1427.28 1054.8 1490 1110 1490 c 0
+ 1165.2 1490 1210 1427.28 1210 1350 c 0
+ 1210 1272.72 1165.2 1210 1110 1210 c 0
+ 1054.8 1210 1010 1272.72 1010 1350 c 0
+1020 1175 m 1
+ 1210 1175 l 1
+ 1210 1105 l 1
+ 1020 1105 l 1
+ 1020 1175 l 1
+152 0 m 1
+ 152 1489 l 1
+ 433 1489 l 1
+ 725 310 l 1
+ 725 1489 l 1
+ 910 1489 l 1
+ 910 0 l 1
+ 688 0 l 1
+ 337 1284 l 1
+ 337 0 l 1
+ 152 0 l 1
+EndSplineSet
+EndChar
 EndChars
-BitmapFont: 11 410 9 2 1 FontForge
+BitmapFont: 11 411 9 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--11-80-96-96-P-62-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 11 0 -2"
@@ -9209,8 +9245,10 @@ BDFChar: 408 1031 5 0 3 0 9
 n,Vrc?smAM@.4-r
 BDFChar: 409 160 3 0 0 0 0
 z
+BDFChar: 410 8470 8 0 7 0 7
+c0alrr7p)O
 EndBitmapFont
-BitmapFont: 12 410 10 2 1 FontForge
+BitmapFont: 12 411 10 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--12-90-96-96-P-70-ISO10646-1"
 FONTBOUNDINGBOX 1 "16 12 0 -2"
@@ -9864,8 +9902,10 @@ BDFChar: 408 1031 5 0 4 0 10
 fDtDK?smAM?srI(
 BDFChar: 409 160 4 0 0 0 0
 z
+BDFChar: 410 8470 9 0 8 0 8
+c%,23li@!7quHWpg]6+0bQ%VC
 EndBitmapFont
-BitmapFont: 13 410 10 3 1 FontForge
+BitmapFont: 13 411 10 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--13-100-96-96-P-73-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 13 0 -3"
@@ -10515,8 +10555,10 @@ BDFChar: 408 1031 4 0 2 0 10
 TE*n85X7S"5X=6-
 BDFChar: 409 160 4 0 0 0 0
 z
+BDFChar: 410 8470 8 0 7 0 8
+Mp'2BW484NL]@DT
 EndBitmapFont
-BitmapFont: 15 410 12 3 1 FontForge
+BitmapFont: 15 411 12 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--15-110-96-96-P-85-ISO10646-1"
 FONTBOUNDINGBOX 1 "19 15 0 -3"
@@ -11166,8 +11208,10 @@ BDFChar: 408 1031 6 1 3 0 12
 TE*n85X7S"5X7S"huE`W
 BDFChar: 409 160 4 0 0 0 0
 z
+BDFChar: 410 8470 10 0 9 0 10
+`k^`PjoG+jp&NqLh>kh$c2c,i`W,u=
 EndBitmapFont
-BitmapFont: 16 410 13 3 1 FontForge
+BitmapFont: 16 411 13 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--16-120-96-96-P-93-ISO10646-1"
 FONTBOUNDINGBOX 1 "21 16 0 -3"
@@ -11817,5 +11861,7 @@ BDFChar: 408 1031 6 0 4 0 14
 Lkl%M+<VdL+<VdL+<YV'
 BDFChar: 409 160 5 0 0 0 0
 z
+BDFChar: 410 8470 11 0 10 0 11
+`o-!Pk2>q5p>GWEh>lC4c2c,ic2bia
 EndBitmapFont
 EndSplineFont
