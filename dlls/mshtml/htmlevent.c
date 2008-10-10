@@ -503,14 +503,22 @@ static HRESULT set_event_handler_disp(event_target_t **event_target, HTMLDocumen
 HRESULT set_event_handler(event_target_t **event_target, HTMLDocument *doc, eventid_t eid, VARIANT *var)
 {
     switch(V_VT(var)) {
+    case VT_NULL:
+        if(*event_target && (*event_target)->event_table[eid]) {
+            IDispatch_Release((*event_target)->event_table[eid]);
+            (*event_target)->event_table[eid] = NULL;
+        }
+        break;
+
     case VT_DISPATCH:
         return set_event_handler_disp(event_target, doc, eid, V_DISPATCH(var));
 
     default:
         FIXME("not supported vt=%d\n", V_VT(var));
+        return E_NOTIMPL;
     }
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 HRESULT get_event_handler(event_target_t **event_target, eventid_t eid, VARIANT *var)
