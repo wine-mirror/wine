@@ -9687,7 +9687,7 @@ static void zwriteenable_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
     if(SUCCEEDED(hr)) {
         /* The Z buffer is filled with 1.0. Draw a red quad with z = 0.1, zenable = D3DZB_FALSE, zwriteenable = TRUE.
-         * The red color is written because the z test is disabled. The question is wether the z = 0.1 values
+         * The red color is written because the z test is disabled. The question is whether the z = 0.1 values
          * are written into the Z buffer. After the draw, set zenable = TRUE and draw a green quad at z = 0.9.
          * If the values are written, the z test will fail(0.9 > 0.1) and the red color remains. If the values
          * are not written, the z test succeeds(0.9 < 1.0) and the green color is written. It turns out that

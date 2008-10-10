@@ -95,15 +95,15 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface,
 
     if (iBackBuffer > This->presentParms.BackBufferCount - 1) {
         TRACE("Back buffer count out of range\n");
-        /* Native d3d9 doesn't set NULL here, just as wine's d3d9. But set it here
-        * in wined3d to avoid problems in other libs
-        */
+        /* Native d3d9 doesn't set NULL here, just as wine's d3d9. But set it
+         * here in wined3d to avoid problems in other libs
+         */
         *ppBackBuffer = NULL;
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Return invalid if there is no backbufferarray, otherwise it will crash when ddraw is
-     * used (there This->backBuffer is allways NULL). We need this because this function have
+    /* Return invalid if there is no backbuffer array, otherwise it will crash when ddraw is
+     * used (there This->backBuffer is always NULL). We need this because this function has
      * to be called from IWineD3DStateBlockImpl_InitStartupStateBlock to get the default
      * scissorrect dimensions. */
     if( !This->backBuffer ) {
