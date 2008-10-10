@@ -48,6 +48,9 @@ static const WCHAR onclickW[] = {'o','n','c','l','i','c','k',0};
 static const WCHAR dragW[] = {'d','r','a','g',0};
 static const WCHAR ondragW[] = {'o','n','d','r','a','g',0};
 
+static const WCHAR dragstartW[] = {'d','r','a','g','s','t','a','r','t',0};
+static const WCHAR ondragstartW[] = {'o','n','d','r','a','g','s','t','a','r','t',0};
+
 static const WCHAR focusW[] = {'f','o','c','u','s',0};
 static const WCHAR onfocusW[] = {'o','n','f','o','c','u','s',0};
 
@@ -72,6 +75,9 @@ static const WCHAR onmouseupW[] = {'o','n','m','o','u','s','e','u','p',0};
 static const WCHAR pasteW[] = {'p','a','s','t','e',0};
 static const WCHAR onpasteW[] = {'o','n','p','a','s','t','e',0};
 
+static const WCHAR selectstartW[] = {'s','e','l','e','c','t','s','t','a','r','t',0};
+static const WCHAR onselectstartW[] = {'o','n','s','e','l','e','c','t','s','t','a','r','t',0};
+
 typedef struct {
     LPCWSTR name;
     LPCWSTR attr_name;
@@ -86,6 +92,7 @@ static const event_info_t event_info[] = {
     {changeW,       onchangeW,       EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {clickW,        onclickW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {dragW,         ondragW,         0},
+    {dragstartW,    ondragstartW,    0},
     {focusW,        onfocusW,        EVENT_DEFAULTLISTENER},
     {keydownW,      onkeydownW,      EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {keyupW,        onkeyupW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
@@ -93,7 +100,8 @@ static const event_info_t event_info[] = {
     {mousedownW,    onmousedownW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {mouseupW,      onmouseupW,      EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {pasteW,        onpasteW,        0}
+    {pasteW,        onpasteW,        0},
+    {selectstartW,  onselectstartW,  0}
 };
 
 eventid_t str_to_eid(LPCWSTR str)
