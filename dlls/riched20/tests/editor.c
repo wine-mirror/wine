@@ -5461,6 +5461,82 @@ static void test_EM_CHARFROMPOS(void)
     DestroyWindow(hwnd);
 }
 
+static void test_word_wrap(void)
+{
+    HWND hwnd;
+    POINTL point = {0, 60}; /* This point must be below the first line */
+    const char *text = "Must be long enough to test line wrapping";
+    DWORD dwCommonStyle = WS_VISIBLE|WS_POPUP|WS_VSCROLL|ES_MULTILINE;
+    int res, pos;
+
+    /* Test the effect of WS_HSCROLL and ES_AUTOHSCROLL styles on wrapping
+     * when specified on window creation and set later. */
+    hwnd = CreateWindow(RICHEDIT_CLASS, NULL, dwCommonStyle,
+                        0, 0, 200, 80, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "error: %d\n", (int) GetLastError());
+    res = SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) text);
+    ok(res, "WM_SETTEXT failed.\n");
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
+
+    SetWindowLongW(hwnd, GWL_STYLE, dwCommonStyle|WS_HSCROLL|ES_AUTOHSCROLL);
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindow(RICHEDIT_CLASS, NULL, dwCommonStyle|WS_HSCROLL,
+                        0, 0, 200, 80, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "error: %d\n", (int) GetLastError());
+
+    res = SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) text);
+    ok(res, "WM_SETTEXT failed.\n");
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+
+    SetWindowLongW(hwnd, GWL_STYLE, dwCommonStyle);
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindow(RICHEDIT_CLASS, NULL, dwCommonStyle|ES_AUTOHSCROLL,
+                        0, 0, 200, 80, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "error: %d\n", (int) GetLastError());
+    res = SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) text);
+    ok(res, "WM_SETTEXT failed.\n");
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+
+    SetWindowLongW(hwnd, GWL_STYLE, dwCommonStyle);
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindow(RICHEDIT_CLASS, NULL,
+                        dwCommonStyle|WS_HSCROLL|ES_AUTOHSCROLL,
+                        0, 0, 200, 80, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "error: %d\n", (int) GetLastError());
+    res = SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) text);
+    ok(res, "WM_SETTEXT failed.\n");
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+
+    SetWindowLongW(hwnd, GWL_STYLE, dwCommonStyle);
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+
+    /* Test the effect of EM_SETTARGETDEVICE on word wrap. */
+    res = SendMessage(hwnd, EM_SETTARGETDEVICE, 0, 1);
+    todo_wine ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+
+    res = SendMessage(hwnd, EM_SETTARGETDEVICE, 0, 0);
+    todo_wine ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
+    pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
+    ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -5508,6 +5584,7 @@ START_TEST( editor )
   test_word_movement();
   test_EM_CHARFROMPOS();
   test_SETPARAFORMAT();
+  test_word_wrap();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
