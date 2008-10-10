@@ -471,6 +471,19 @@ HRESULT set_event_handler(event_target_t **event_target, HTMLDocument *doc, even
     return E_NOTIMPL;
 }
 
+HRESULT get_event_handler(event_target_t **event_target, eventid_t eid, VARIANT *var)
+{
+    if(*event_target && (*event_target)->event_table[eid]) {
+        V_VT(var) = VT_DISPATCH;
+        V_DISPATCH(var) = (*event_target)->event_table[eid];
+        IDispatch_AddRef(V_DISPATCH(var));
+    }else {
+        V_VT(var) = VT_NULL;
+    }
+
+    return S_OK;
+}
+
 void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
 {
     const PRUnichar *attr_value;

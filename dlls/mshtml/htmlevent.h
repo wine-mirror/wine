@@ -30,13 +30,24 @@ void check_event_attr(HTMLDocument*,nsIDOMElement*);
 void release_event_target(event_target_t*);
 void fire_event(HTMLDocument*,eventid_t,nsIDOMNode*);
 HRESULT set_event_handler(event_target_t**,HTMLDocument*,eventid_t,VARIANT*);
+HRESULT get_event_handler(event_target_t**,eventid_t,VARIANT*);
 
 static inline HRESULT set_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
 {
     return set_event_handler(&node->event_target, node->doc, eid, var);
 }
 
+static inline HRESULT get_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
+{
+    return get_event_handler(&node->event_target, eid, var);
+}
+
 static inline HRESULT set_doc_event(HTMLDocument *doc, eventid_t eid, VARIANT *var)
 {
     return set_event_handler(&doc->event_target, doc, eid, var);
+}
+
+static inline HRESULT get_doc_event(HTMLDocument *doc, eventid_t eid, VARIANT *var)
+{
+    return get_event_handler(&doc->event_target, eid, var);
 }
