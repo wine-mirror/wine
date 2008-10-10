@@ -57,6 +57,26 @@ static HWND new_richedit(HWND parent) {
   return new_window(RICHEDIT_CLASS, ES_MULTILINE, parent);
 }
 
+/* Keeps the window reponsive for the deley_time in seconds.
+ * This is useful for debugging a test to see what is happening. */
+void keep_responsive(time_t delay_time)
+{
+    MSG msg;
+    time_t end;
+
+    /* The message pump uses PeekMessage() to empty the queue and then
+     * sleeps for 50ms before retrying the queue. */
+    end = time(NULL) + delay_time;
+    while (time(NULL) < end) {
+      if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+      } else {
+        Sleep(50);
+      }
+    }
+}
+
 static void processPendingMessages(void)
 {
     MSG msg;
@@ -5443,9 +5463,6 @@ static void test_EM_CHARFROMPOS(void)
 
 START_TEST( editor )
 {
-  MSG msg;
-  time_t end;
-
   /* Must explicitly LoadLibrary(). The test has no references to functions in
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
@@ -5494,19 +5511,9 @@ START_TEST( editor )
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
-   *
-   * The message pump uses PeekMessage() to empty the queue and then sleeps for
-   * 50ms before retrying the queue. */
-  end = time(NULL) + 30;
+   */
   if (getenv( "WINETEST_RICHED20" )) {
-    while (time(NULL) < end) {
-      if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-      } else {
-        Sleep(50);
-      }
-    }
+    keep_responsive(30);
   }
 
   OleFlushClipboard();
