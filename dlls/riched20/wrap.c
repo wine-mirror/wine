@@ -75,7 +75,8 @@ static void ME_BeginRow(ME_WrapContext *wc, ME_DisplayItem *para)
         - (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin;
   } else if (wc->context->editor->bWordWrap) {
     wc->nAvailWidth = wc->context->rcView.right - wc->context->rcView.left
-        - (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin;
+        - (wc->nRow ? wc->nLeftMargin : wc->nFirstMargin) - wc->nRightMargin
+        - wc->context->editor->selofs;
   } else {
     wc->nAvailWidth = ~0u >> 1;
   }
