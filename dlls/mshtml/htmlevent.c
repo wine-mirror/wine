@@ -66,6 +66,9 @@ static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 static const WCHAR mousedownW[] = {'m','o','u','s','e','d','o','w','n',0};
 static const WCHAR onmousedownW[] = {'o','n','m','o','u','s','e','d','o','w','n',0};
 
+static const WCHAR mouseoutW[] = {'m','o','u','s','e','o','u','t',0};
+static const WCHAR onmouseoutW[] = {'o','n','m','o','u','s','e','o','u','t',0};
+
 static const WCHAR mouseoverW[] = {'m','o','u','s','e','o','v','e','r',0};
 static const WCHAR onmouseoverW[] = {'o','n','m','o','u','s','e','o','v','e','r',0};
 
@@ -98,6 +101,7 @@ static const event_info_t event_info[] = {
     {keyupW,        onkeyupW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {loadW,         onloadW,         0},
     {mousedownW,    onmousedownW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mouseoutW,     onmouseoutW,     EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {mouseupW,      onmouseupW,      EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {pasteW,        onpasteW,        0},
