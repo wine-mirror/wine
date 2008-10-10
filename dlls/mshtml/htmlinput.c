@@ -288,8 +288,17 @@ static HRESULT WINAPI HTMLInputElement_get_maxLength(IHTMLInputElement *iface, l
 static HRESULT WINAPI HTMLInputElement_select(IHTMLInputElement *iface)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)\n", This);
+
+    nsres = nsIDOMHTMLInputElement_Select(This->nsinput);
+    if(NS_FAILED(nsres)) {
+        ERR("Select failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_onchange(IHTMLInputElement *iface, VARIANT v)
