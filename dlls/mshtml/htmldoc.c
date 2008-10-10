@@ -31,6 +31,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -196,6 +197,9 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 
         if(This->window)
             IHTMLWindow2_Release(HTMLWINDOW2(This->window));
+
+        if(This->event_target)
+            release_event_target(This->event_target);
 
         heap_free(This->mime);
         detach_selection(This);
@@ -1068,8 +1072,10 @@ static HRESULT WINAPI HTMLDocument_get_onmouseout(IHTMLDocument2 *iface, VARIANT
 static HRESULT WINAPI HTMLDocument_put_onmouseover(IHTMLDocument2 *iface, VARIANT v)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    return set_doc_event(This, EVENTID_MOUSEOVER, &v);
 }
 
 static HRESULT WINAPI HTMLDocument_get_onmouseover(IHTMLDocument2 *iface, VARIANT *p)

@@ -430,37 +430,39 @@ void fire_event(HTMLDocument *doc, eventid_t eid, nsIDOMNode *target)
     }
 }
 
-static HRESULT set_node_event_disp(HTMLDOMNode *node, eventid_t eid, IDispatch *disp)
+static HRESULT set_event_handler_disp(event_target_t **event_target, HTMLDocument *doc, eventid_t eid, IDispatch *disp)
 {
-    if(!node->event_target)
-        node->event_target = heap_alloc_zero(sizeof(event_target_t));
-    else if(node->event_target->event_table[eid])
-        IDispatch_Release(node->event_target->event_table[eid]);
+    if(!*event_target)
+        *event_target = heap_alloc_zero(sizeof(event_target_t));
+    else if((*event_target)->event_table[eid])
+        IDispatch_Release((*event_target)->event_table[eid]);
 
+    (*event_target)->event_table[eid] = disp;
+    if(!disp)
+        return S_OK;
     IDispatch_AddRef(disp);
-    node->event_target->event_table[eid] = disp;
 
     if(event_info[eid].flags & EVENT_DEFAULTLISTENER) {
-        if(!node->doc->nscontainer->event_vector) {
-            node->doc->nscontainer->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
-            if(!node->doc->nscontainer->event_vector)
+        if(!doc->nscontainer->event_vector) {
+            doc->nscontainer->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
+            if(!doc->nscontainer->event_vector)
                 return E_OUTOFMEMORY;
         }
 
-        if(!node->doc->nscontainer->event_vector[eid]) {
-            node->doc->nscontainer->event_vector[eid] = TRUE;
-            add_nsevent_listener(node->doc->nscontainer, event_info[eid].name);
+        if(!doc->nscontainer->event_vector[eid]) {
+            doc->nscontainer->event_vector[eid] = TRUE;
+            add_nsevent_listener(doc->nscontainer, event_info[eid].name);
         }
     }
 
     return S_OK;
 }
 
-HRESULT set_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
+HRESULT set_event_handler(event_target_t **event_target, HTMLDocument *doc, eventid_t eid, VARIANT *var)
 {
     switch(V_VT(var)) {
     case VT_DISPATCH:
-        return set_node_event_disp(node, eid, V_DISPATCH(var));
+        return set_event_handler_disp(event_target, doc, eid, V_DISPATCH(var));
 
     default:
         FIXME("not supported vt=%d\n", V_VT(var));
@@ -494,7 +496,7 @@ void check_event_attr(HTMLDocument *doc, nsIDOMElement *nselem)
             disp = script_parse_event(doc, attr_value);
             if(disp) {
                 node = get_node(doc, (nsIDOMNode*)nselem, TRUE);
-                set_node_event_disp(node, i, disp);
+                set_event_handler_disp(&node->event_target, node->doc, i, disp);
                 IDispatch_Release(disp);
             }
         }

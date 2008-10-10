@@ -276,6 +276,7 @@ struct HTMLDocument {
 
     DWORD update;
 
+    event_target_t *event_target;
     ConnectionPointContainer cp_container;
     ConnectionPoint cp_htmldocevents;
     ConnectionPoint cp_htmldocevents2;
