@@ -17,11 +17,15 @@
  */
 
 typedef enum {
+    EVENTID_BLUR,
     EVENTID_CHANGE,
     EVENTID_CLICK,
+    EVENTID_DRAG,
+    EVENTID_FOCUS,
     EVENTID_KEYUP,
     EVENTID_LOAD,
     EVENTID_MOUSEOVER,
+    EVENTID_PASTE,
     EVENTID_LAST
 } eventid_t;
 

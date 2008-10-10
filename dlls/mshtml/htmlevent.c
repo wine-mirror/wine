@@ -36,11 +36,20 @@ struct event_target_t {
     IDispatch *event_table[EVENTID_LAST];
 };
 
+static const WCHAR blurW[] = {'b','l','u','r',0};
+static const WCHAR onblurW[] = {'o','n','b','l','u','r',0};
+
 static const WCHAR changeW[] = {'c','h','a','n','g','e',0};
 static const WCHAR onchangeW[] = {'o','n','c','h','a','n','g','e',0};
 
 static const WCHAR clickW[] = {'c','l','i','c','k',0};
 static const WCHAR onclickW[] = {'o','n','c','l','i','c','k',0};
+
+static const WCHAR dragW[] = {'d','r','a','g',0};
+static const WCHAR ondragW[] = {'o','n','d','r','a','g',0};
+
+static const WCHAR focusW[] = {'f','o','c','u','s',0};
+static const WCHAR onfocusW[] = {'o','n','f','o','c','u','s',0};
 
 static const WCHAR keyupW[] = {'k','e','y','u','p',0};
 static const WCHAR onkeyupW[] = {'o','n','k','e','y','u','p',0};
@@ -50,6 +59,9 @@ static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 
 static const WCHAR mouseoverW[] = {'m','o','u','s','e','o','v','e','r',0};
 static const WCHAR onmouseoverW[] = {'o','n','m','o','u','s','e','o','v','e','r',0};
+
+static const WCHAR pasteW[] = {'p','a','s','t','e',0};
+static const WCHAR onpasteW[] = {'o','n','p','a','s','t','e',0};
 
 typedef struct {
     LPCWSTR name;
@@ -61,11 +73,15 @@ typedef struct {
 #define EVENT_BUBBLE             0x0002
 
 static const event_info_t event_info[] = {
+    {blurW,         onblurW,         EVENT_DEFAULTLISTENER},
     {changeW,       onchangeW,       EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {clickW,        onclickW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {dragW,         ondragW,         0},
+    {focusW,        onfocusW,        EVENT_DEFAULTLISTENER},
     {keyupW,        onkeyupW,        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {loadW,         onloadW,         0},
-    {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE}
+    {mouseoverW,    onmouseoverW,    EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {pasteW,        onpasteW,        0}
 };
 
 eventid_t str_to_eid(LPCWSTR str)
