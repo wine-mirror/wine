@@ -570,11 +570,8 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
 	wm->info.dwFlags &= ~MMIO_ALLOCBUF;
     }
 
-    wm->bBufferLoaded = FALSE;
-
     if (pchBuffer) {
         wm->info.pchBuffer = pchBuffer;
-        wm->bBufferLoaded = TRUE;
     } else if (cchBuffer) {
 	if (!(wm->info.pchBuffer = HeapAlloc(GetProcessHeap(), 0, cchBuffer)))
 	    return MMIOERR_OUTOFMEMORY;
@@ -588,6 +585,7 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     wm->info.pchEndRead = wm->info.pchBuffer;
     wm->info.pchEndWrite = wm->info.pchBuffer + cchBuffer;
     wm->info.lBufOffset = wm->info.lDiskOffset;
+    wm->bBufferLoaded = FALSE;
 
     return MMSYSERR_NOERROR;
 }
@@ -669,6 +667,8 @@ HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
         refmminfo->wErrorRet = MMIO_SetBuffer(wm, refmminfo->pchBuffer, refmminfo->cchBuffer, 0);
 	if (refmminfo->wErrorRet != MMSYSERR_NOERROR)
 	    goto error1;
+	if (wm->info.fccIOProc == FOURCC_MEM)
+	    wm->bBufferLoaded = TRUE;
     }
 
     /* see mmioDosIOProc for that one */
