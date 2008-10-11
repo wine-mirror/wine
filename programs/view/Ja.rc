@@ -20,6 +20,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 /*
@@ -30,19 +33,19 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 VIEW MENU
 BEGIN
-    POPUP "ÉtÉ@ÉCÉã(&F)"
+    POPUP "„Éï„Ç°„Ç§„É´(&F)"
     BEGIN
-	MENUITEM "äJÇ≠(&O)",			IDM_OPEN
-        MENUITEM "èIóπ(&X)",                       IDM_EXIT
+	MENUITEM "Èñã„Åè(&O)",			IDM_OPEN
+        MENUITEM "ÁµÇ‰∫Ü(&X)",                       IDM_EXIT
     END
-    POPUP "ÉpÉì(&P)"
+    POPUP "„Éë„É≥(&P)"
     BEGIN
-      MENUITEM "ÉEÉBÉìÉhÉEÇ…çáÇÌÇπÇÈ(&S)",              IDM_SET_EXT_TO_WIN
+      MENUITEM "„Ç¶„Ç£„É≥„Éâ„Ç¶„Å´Âêà„Çè„Åõ„Çã(&S)",              IDM_SET_EXT_TO_WIN
       MENUITEM SEPARATOR
-      MENUITEM "ç∂(&L)",				IDM_LEFT
-      MENUITEM "âE(&R)",			IDM_RIGHT
-      MENUITEM "è„(&U)",				IDM_UP
-      MENUITEM "â∫(&D)",				IDM_DOWN
+      MENUITEM "Â∑¶(&L)",				IDM_LEFT
+      MENUITEM "Âè≥(&R)",			IDM_RIGHT
+      MENUITEM "‰∏ä(&U)",				IDM_UP
+      MENUITEM "‰∏ã(&D)",				IDM_DOWN
     END
 END
 
@@ -67,5 +70,7 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DESCRIPTION         "ïWèÄÉÅÉ^ÉtÉ@ÉCÉã ÉrÉÖÉAÅ["
+    IDS_DESCRIPTION         "Ê®ôÊ∫ñ„É°„Çø„Éï„Ç°„Ç§„É´ „Éì„É•„Ç¢„Éº"
 END
+
+#pragma code_page(default)
