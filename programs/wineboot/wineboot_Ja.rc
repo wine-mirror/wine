@@ -19,17 +19,22 @@
  *
  */
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 276, 71
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "‘Ò‹@’†"
+CAPTION "å¾…æ©Ÿä¸­"
 FONT 9, "MS Shell Dlg"
 BEGIN
-    DEFPUSHBUTTON   "ƒLƒƒƒ“ƒZƒ‹",IDCANCEL,129,49,50,15
-    PUSHBUTTON      "ƒvƒƒZƒX‚ÌI—¹",IDOK,51,49,71,15
-    LTEXT           "ƒƒOƒIƒt‚¨‚æ‚ÑAÄ‹N“®‚ÌƒvƒƒZƒX‚ðƒVƒ~ƒ…ƒŒ[ƒg‚µ‚Ä‚¢‚Ü‚·‚ªAƒvƒƒOƒ‰ƒ€‚Í”½‰ž‚µ‚Ä‚¢‚Ü‚¹‚ñB",
+    DEFPUSHBUTTON   "ã‚­ãƒ£ãƒ³ã‚»ãƒ«",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "ãƒ—ãƒ­ã‚»ã‚¹ã®çµ‚äº†",IDOK,51,49,71,15
+    LTEXT           "ãƒ­ã‚°ã‚ªãƒ•ãŠã‚ˆã³ã€å†èµ·å‹•ã®ãƒ—ãƒ­ã‚»ã‚¹ã‚’ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ãƒˆã—ã¦ã„ã¾ã™ãŒã€ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã¯åå¿œã—ã¦ã„ã¾ã›ã‚“ã€‚",
                     IDC_STATIC,7,7,262,19
-    LTEXT           "ƒvƒƒZƒX‚ðI—¹‚³‚¹‚é‚ÆA•Û‘¶‚µ‚Ä‚¢‚È‚¢ƒf[ƒ^‚Í‘S‚ÄŽ¸‚í‚ê‚Ü‚·B",
+    LTEXT           "ãƒ—ãƒ­ã‚»ã‚¹ã‚’çµ‚äº†ã•ã›ã‚‹ã¨ã€ä¿å­˜ã—ã¦ã„ãªã„ãƒ‡ãƒ¼ã‚¿ã¯å…¨ã¦å¤±ã‚ã‚Œã¾ã™ã€‚",
                     IDC_STATIC,7,28,262,15
 END
+
+#pragma code_page(default)
