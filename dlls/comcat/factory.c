@@ -24,7 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-static ULONG WINAPI COMCAT_IClassFactory_AddRef(LPCLASSFACTORY iface);
 
 /**********************************************************************
  * COMCAT_IClassFactory_QueryInterface (also IUnknown)
@@ -42,7 +41,7 @@ static HRESULT WINAPI COMCAT_IClassFactory_QueryInterface(
 	IsEqualGUID(riid, &IID_IClassFactory))
     {
 	*ppvObj = (LPVOID)iface;
-	COMCAT_IClassFactory_AddRef(iface);
+        IUnknown_AddRef(iface);
 	return S_OK;
     }
 
@@ -54,16 +53,7 @@ static HRESULT WINAPI COMCAT_IClassFactory_QueryInterface(
  */
 static ULONG WINAPI COMCAT_IClassFactory_AddRef(LPCLASSFACTORY iface)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
-    ULONG ref;
-
-    TRACE("\n");
-
-    ref = InterlockedIncrement(&This->ref);
-    if (ref == 1) {
-	InterlockedIncrement(&dll_ref);
-    }
-    return ref;
+    return 2; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -71,16 +61,7 @@ static ULONG WINAPI COMCAT_IClassFactory_AddRef(LPCLASSFACTORY iface)
  */
 static ULONG WINAPI COMCAT_IClassFactory_Release(LPCLASSFACTORY iface)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
-    ULONG ref;
-
-    TRACE("\n");
-
-    ref = InterlockedDecrement(&This->ref);
-    if (ref == 0) {
-	InterlockedDecrement(&dll_ref);
-    }
-    return ref;
+    return 1; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -115,20 +96,14 @@ static HRESULT WINAPI COMCAT_IClassFactory_LockServer(
     LPCLASSFACTORY iface,
     BOOL fLock)
 {
-    TRACE("\n");
-
-    if (fLock != FALSE) {
-	IClassFactory_AddRef(iface);
-    } else {
-	IClassFactory_Release(iface);
-    }
+    FIXME("(%d), stub!\n",fLock);
     return S_OK;
 }
 
 /**********************************************************************
- * IClassFactory_Vtbl
+ * static ClassFactory instance
  */
-static const IClassFactoryVtbl IClassFactory_Vtbl =
+static const IClassFactoryVtbl ComCatCFVtbl =
 {
     COMCAT_IClassFactory_QueryInterface,
     COMCAT_IClassFactory_AddRef,
@@ -137,7 +112,9 @@ static const IClassFactoryVtbl IClassFactory_Vtbl =
     COMCAT_IClassFactory_LockServer
 };
 
-/**********************************************************************
- * static ClassFactory instance
- */
-ClassFactoryImpl COMCAT_ClassFactory = { &IClassFactory_Vtbl, 0 };
+static const IClassFactoryVtbl *ComCatCF = &ComCatCFVtbl;
+
+HRESULT ComCatCF_Create(REFIID riid, LPVOID *ppv)
+{
+    return IClassFactory_QueryInterface((IClassFactory *)&ComCatCF, riid, ppv);
+}

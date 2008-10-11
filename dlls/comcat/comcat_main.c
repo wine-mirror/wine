@@ -38,7 +38,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     *ppv = NULL;
     if (IsEqualGUID(rclsid, &CLSID_StdComponentCategoriesMgr)) {
-	return IClassFactory_QueryInterface((LPCLASSFACTORY)&COMCAT_ClassFactory, iid, ppv);
+        return ComCatCF_Create(iid, ppv);
     }
     FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;

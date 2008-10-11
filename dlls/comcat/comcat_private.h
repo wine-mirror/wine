@@ -39,17 +39,7 @@
  */
 extern LONG dll_ref;
 
-/**********************************************************************
- * ClassFactory declaration for comcat.dll
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IClassFactoryVtbl *lpVtbl;
-    LONG ref;
-} ClassFactoryImpl;
-
-extern ClassFactoryImpl COMCAT_ClassFactory;
+extern HRESULT ComCatCF_Create(REFIID riid, LPVOID *ppv);
 
 /**********************************************************************
  * StdComponentCategoriesMgr declaration for comcat.dll
