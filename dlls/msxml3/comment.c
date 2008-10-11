@@ -601,25 +601,17 @@ static HRESULT WINAPI domcomment_appendData(
         /* Older versions of libxml < 2.6.27 didn't correctly support
            xmlTextConcat on Comment nodes. Fallback to setting the
            contents directly if xmlTextConcat fails.
-
-           NOTE: if xmlTextConcat fails, pContent is destroyed.
          */
         if(xmlTextConcat(pDOMNode->node, pContent, SysStringLen(p) ) == 0)
             hr = S_OK;
         else
         {
             xmlChar *pNew;
-            pContent = xmlChar_from_wchar( (WCHAR*)p );
-            if(pContent)
+            pNew = xmlStrcat(xmlNodeGetContent(pDOMNode->node), pContent);
+            if(pNew)
             {
-                pNew = xmlStrcat(xmlNodeGetContent(pDOMNode->node), pContent);
-                if(pNew)
-                {
-                    xmlNodeSetContent(pDOMNode->node, pNew);
-                    hr = S_OK;
-                }
-                else
-                    hr = E_FAIL;
+                xmlNodeSetContent(pDOMNode->node, pNew);
+                hr = S_OK;
             }
             else
                 hr = E_FAIL;
