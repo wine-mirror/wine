@@ -34,10 +34,9 @@ static HRESULT WINAPI COMCAT_IClassFactory_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_IClassFactory))
@@ -60,8 +59,6 @@ static ULONG WINAPI COMCAT_IClassFactory_AddRef(LPCLASSFACTORY iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     ref = InterlockedIncrement(&This->ref);
     if (ref == 1) {
 	InterlockedIncrement(&dll_ref);
@@ -79,8 +76,6 @@ static ULONG WINAPI COMCAT_IClassFactory_Release(LPCLASSFACTORY iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
 	InterlockedDecrement(&dll_ref);
@@ -97,11 +92,10 @@ static HRESULT WINAPI COMCAT_IClassFactory_CreateInstance(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     HRESULT res;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     /* Don't support aggregation (Windows doesn't) */
     if (pUnkOuter != NULL) return CLASS_E_NOAGGREGATION;

@@ -57,7 +57,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_QueryInterface(
     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     return IUnknown_QueryInterface((LPUNKNOWN)&This->unkVtbl, riid, ppvObj);
 }
@@ -70,8 +70,6 @@ static ULONG WINAPI COMCAT_ICatRegister_AddRef(LPCATREGISTER iface)
     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     return IUnknown_AddRef((LPUNKNOWN)&This->unkVtbl);
 }
 
@@ -82,8 +80,6 @@ static ULONG WINAPI COMCAT_ICatRegister_Release(LPCATREGISTER iface)
 {
     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
     TRACE("\n");
-
-    if (This == NULL) return E_POINTER;
 
     return IUnknown_Release((LPUNKNOWN)&This->unkVtbl);
 }
@@ -102,7 +98,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterCategories(
 
     TRACE("\n");
 
-    if (iface == NULL || (cCategories && rgci == NULL))
+    if (cCategories && rgci == NULL)
 	return E_POINTER;
 
     /* Create (or open) the component categories key. */
@@ -149,7 +145,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterCategories(
 
     TRACE("\n");
 
-    if (iface == NULL || (cCategories && rgcatid == NULL))
+    if (cCategories && rgcatid == NULL)
 	return E_POINTER;
 
     /* Open the component categories key. */

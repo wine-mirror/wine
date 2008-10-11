@@ -54,7 +54,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_QueryInterface(
     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface);
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     return IUnknown_QueryInterface((LPUNKNOWN)&This->unkVtbl, riid, ppvObj);
 }
@@ -67,8 +67,6 @@ static ULONG WINAPI COMCAT_ICatInformation_AddRef(LPCATINFORMATION iface)
     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface);
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     return IUnknown_AddRef((LPUNKNOWN)&This->unkVtbl);
 }
 
@@ -79,8 +77,6 @@ static ULONG WINAPI COMCAT_ICatInformation_Release(LPCATINFORMATION iface)
 {
     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface);
     TRACE("\n");
-
-    if (This == NULL) return E_POINTER;
 
     return IUnknown_Release((LPUNKNOWN)&This->unkVtbl);
 }
@@ -96,7 +92,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumCategories(
 /*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
     TRACE("\n");
 
-    if (iface == NULL || ppenumCatInfo == NULL) return E_POINTER;
+    if (ppenumCatInfo == NULL) return E_POINTER;
 
     *ppenumCatInfo = COMCAT_IEnumCATEGORYINFO_Construct(lcid);
     if (*ppenumCatInfo == NULL) return E_OUTOFMEMORY;
@@ -168,7 +164,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumClassesOfCategories(
 	if (cRequired == (ULONG)-1) 
 		cRequired = 0;
 	
-    if (iface == NULL || ppenumCLSID == NULL ||
+    if (ppenumCLSID == NULL ||
 	(cImplemented && rgcatidImpl == NULL) ||
 	(cRequired && rgcatidReq == NULL)) return E_POINTER;
 
@@ -247,7 +243,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumImplCategoriesOfClass(
 
     TRACE("\n\tCLSID:\t%s\n",debugstr_guid(rclsid));
 
-    if (iface == NULL || rclsid == NULL || ppenumCATID == NULL)
+    if (rclsid == NULL || ppenumCATID == NULL)
 	return E_POINTER;
 
     *ppenumCATID = COMCAT_CATID_IEnumGUID_Construct(rclsid, postfix);
@@ -270,7 +266,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumReqCategoriesOfClass(
 
     TRACE("\n\tCLSID:\t%s\n",debugstr_guid(rclsid));
 
-    if (iface == NULL || rclsid == NULL || ppenumCATID == NULL)
+    if (rclsid == NULL || ppenumCATID == NULL)
 	return E_POINTER;
 
     *ppenumCATID = COMCAT_CATID_IEnumGUID_Construct(rclsid, postfix);
@@ -315,8 +311,6 @@ static ULONG WINAPI COMCAT_IEnumCATEGORYINFO_AddRef(LPENUMCATEGORYINFO iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     return InterlockedIncrement(&This->ref);
 }
 
@@ -325,10 +319,9 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    IEnumCATEGORYINFOImpl *This = (IEnumCATEGORYINFOImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_IEnumCATEGORYINFO))
@@ -347,8 +340,6 @@ static ULONG WINAPI COMCAT_IEnumCATEGORYINFO_Release(LPENUMCATEGORYINFO iface)
     ULONG ref;
 
     TRACE("\n");
-
-    if (This == NULL) return E_POINTER;
 
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
@@ -370,7 +361,7 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Next(
 
     TRACE("\n");
 
-    if (This == NULL || rgelt == NULL) return E_POINTER;
+    if (rgelt == NULL) return E_POINTER;
 
     if (This->key) while (fetched < celt) {
 	LSTATUS res;
@@ -412,7 +403,6 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Skip(
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
     This->next_index += celt;
     /* This should return S_FALSE when there aren't celt elems to skip. */
     return S_OK;
@@ -424,7 +414,6 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Reset(LPENUMCATEGORYINFO iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
     This->next_index = 0;
     return S_OK;
 }
@@ -441,7 +430,7 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Clone(
 
     TRACE("\n");
 
-    if (This == NULL || ppenum == NULL) return E_POINTER;
+    if (ppenum == NULL) return E_POINTER;
 
     new_this = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumCATEGORYINFOImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;
@@ -619,8 +608,6 @@ static ULONG WINAPI COMCAT_CLSID_IEnumGUID_AddRef(LPENUMGUID iface)
     CLSID_IEnumGUIDImpl *This = (CLSID_IEnumGUIDImpl *)iface;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     return InterlockedIncrement(&This->ref);
 }
 
@@ -629,10 +616,9 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    CLSID_IEnumGUIDImpl *This = (CLSID_IEnumGUIDImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_IEnumGUID))
@@ -651,8 +637,6 @@ static ULONG WINAPI COMCAT_CLSID_IEnumGUID_Release(LPENUMGUID iface)
     ULONG ref;
 
     TRACE("\n");
-
-    if (This == NULL) return E_POINTER;
 
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
@@ -675,7 +659,7 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Next(
 
     TRACE("\n");
 
-    if (This == NULL || rgelt == NULL) return E_POINTER;
+    if (rgelt == NULL) return E_POINTER;
 
     if (This->key) while (fetched < celt) {
 	LSTATUS res;
@@ -715,7 +699,6 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Skip(
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
     This->next_index += celt;
     FIXME("Never returns S_FALSE\n");
     return S_OK;
@@ -727,7 +710,6 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Reset(LPENUMGUID iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
     This->next_index = 0;
     return S_OK;
 }
@@ -743,7 +725,7 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Clone(
 
     TRACE("\n");
 
-    if (This == NULL || ppenum == NULL) return E_POINTER;
+    if (ppenum == NULL) return E_POINTER;
 
     new_this = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLSID_IEnumGUIDImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;
@@ -812,8 +794,6 @@ static ULONG WINAPI COMCAT_CATID_IEnumGUID_AddRef(LPENUMGUID iface)
     CATID_IEnumGUIDImpl *This = (CATID_IEnumGUIDImpl *)iface;
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     return InterlockedIncrement(&This->ref);
 }
 
@@ -822,10 +802,9 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    CATID_IEnumGUIDImpl *This = (CATID_IEnumGUIDImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
 	IsEqualGUID(riid, &IID_IEnumGUID))
@@ -844,8 +823,6 @@ static ULONG WINAPI COMCAT_CATID_IEnumGUID_Release(LPENUMGUID iface)
     ULONG ref;
 
     TRACE("\n");
-
-    if (This == NULL) return E_POINTER;
 
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
@@ -867,7 +844,7 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Next(
 
     TRACE("\n");
 
-    if (This == NULL || rgelt == NULL) return E_POINTER;
+    if (rgelt == NULL) return E_POINTER;
 
     if (This->key) while (fetched < celt) {
 	LSTATUS res;
@@ -899,7 +876,6 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Skip(
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
     This->next_index += celt;
     FIXME("Never returns S_FALSE\n");
     return S_OK;
@@ -911,7 +887,6 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Reset(LPENUMGUID iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
     This->next_index = 0;
     return S_OK;
 }
@@ -925,7 +900,7 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Clone(
 
     TRACE("\n");
 
-    if (This == NULL || ppenum == NULL) return E_POINTER;
+    if (ppenum == NULL) return E_POINTER;
 
     new_this = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;

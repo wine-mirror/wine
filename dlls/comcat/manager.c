@@ -37,7 +37,7 @@ static HRESULT WINAPI COMCAT_IUnknown_QueryInterface(
     ICOM_THIS_MULTI(ComCatMgrImpl, unkVtbl, iface);
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
-    if (This == NULL || ppvObj == NULL) return E_POINTER;
+    if (ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown)) {
 	*ppvObj = &This->unkVtbl;
@@ -70,8 +70,6 @@ static ULONG WINAPI COMCAT_IUnknown_AddRef(LPUNKNOWN iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     ref = InterlockedIncrement(&This->ref);
     if (ref == 1) {
 	InterlockedIncrement(&dll_ref);
@@ -88,8 +86,6 @@ static ULONG WINAPI COMCAT_IUnknown_Release(LPUNKNOWN iface)
     ULONG ref;
 
     TRACE("\n");
-
-    if (This == NULL) return E_POINTER;
 
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
