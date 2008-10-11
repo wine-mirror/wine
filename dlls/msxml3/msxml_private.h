@@ -65,6 +65,8 @@ extern BSTR bstr_from_xmlChar( const xmlChar *buf );
 
 extern LONG xmldoc_add_ref( xmlDocPtr doc );
 extern LONG xmldoc_release( xmlDocPtr doc );
+extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node );
+extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node );
 
 extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );
 extern HRESULT XMLElementCollection_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj );

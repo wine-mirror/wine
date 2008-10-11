@@ -39,6 +39,7 @@
 #include "dispex.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 #include "msxml_private.h"
 
@@ -81,9 +82,37 @@ typedef struct _domdoc
     DispatchEx dispex;
 } domdoc;
 
+/*
+  In native windows, the whole lifetime management of XMLDOMNodes is
+  managed automatically using reference counts. Wine emulates that by
+  maintaining a reference count to the document that is increased for
+  each IXMLDOMNode pointer passed out for this document. If all these
+  pointers are gone, the document is unreachable and gets freed, that
+  is, all nodes in the tree of the document get freed.
+
+  You are able to create nodes that are associated to a document (in
+  fact, in msxml's XMLDOM model, all nodes are associated to a document),
+  but not in the tree of that document, for example using the createFoo
+  functions from IXMLDOMDocument. These nodes do not get cleaned up
+  by libxml, so we have to do it ourselves.
+
+  To catch these nodes, a list of "orphan nodes" is introduced.
+  It contains pointers to all roots of node trees that are
+  associated with the document without being part of the document
+  tree. All nodes with parent==NULL (except for the document root nodes)
+  should be in the orphan node list of their document. All orphan nodes
+  get freed together with the document itself.
+ */
+
 typedef struct _xmldoc_priv {
     LONG refs;
+    struct list orphans;
 } xmldoc_priv;
+
+typedef struct _orphan_entry {
+    struct list entry;
+    xmlNode * node;
+} orphan_entry;
 
 static inline xmldoc_priv * priv_from_xmlDocPtr(xmlDocPtr doc)
 {
@@ -96,7 +125,10 @@ static xmldoc_priv * create_priv(void)
     priv = HeapAlloc( GetProcessHeap(), 0, sizeof (*priv) );
 
     if(priv)
+    {
         priv->refs = 0;
+        list_init( &priv->orphans );
+    }
 
     return priv;
 }
@@ -129,13 +161,52 @@ LONG xmldoc_release(xmlDocPtr doc)
     TRACE("%d\n", ref);
     if(ref == 0)
     {
+        orphan_entry *orphan, *orphan2;
         TRACE("freeing docptr %p\n", doc);
+
+        LIST_FOR_EACH_ENTRY_SAFE( orphan, orphan2, &priv->orphans, orphan_entry, entry )
+        {
+            xmlFreeNode( orphan->node );
+            HeapFree( GetProcessHeap(), 0, orphan );
+        }
         HeapFree(GetProcessHeap(), 0, doc->_private);
 
         xmlFreeDoc(doc);
     }
 
     return ref;
+}
+
+HRESULT xmldoc_add_orphan(xmlDocPtr doc, xmlNodePtr node)
+{
+    xmldoc_priv *priv = priv_from_xmlDocPtr(doc);
+    orphan_entry *entry;
+
+    entry = HeapAlloc( GetProcessHeap(), 0, sizeof (*entry) );
+    if(!entry)
+        return E_OUTOFMEMORY;
+
+    entry->node = node;
+    list_add_head( &priv->orphans, &entry->entry );
+    return S_OK;
+}
+
+HRESULT xmldoc_remove_orphan(xmlDocPtr doc, xmlNodePtr node)
+{
+    xmldoc_priv *priv = priv_from_xmlDocPtr(doc);
+    orphan_entry *entry, *entry2;
+
+    LIST_FOR_EACH_ENTRY_SAFE( entry, entry2, &priv->orphans, orphan_entry, entry )
+    {
+        if( entry->node == node )
+        {
+            list_remove( &entry->entry );
+            HeapFree( GetProcessHeap(), 0, entry );
+            return S_OK;
+        }
+    }
+
+    return S_FALSE;
 }
 
 static inline domdoc *impl_from_IXMLDOMDocument2( IXMLDOMDocument2 *iface )
