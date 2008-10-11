@@ -1410,14 +1410,12 @@ static void test_create(void)
 
     V_VT(&var) = VT_R4;
     V_R4(&var) = NODE_ELEMENT;
-    str = SysAllocString( szlc );
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
     ok( r == S_OK, "returns %08x\n", r );
     if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString( szOne );
-    str = SysAllocString( szlc );
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
     ok( r == S_OK, "returns %08x\n", r );
     if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
@@ -1425,7 +1423,6 @@ static void test_create(void)
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString( szOneGarbage );
-    str = SysAllocString( szlc );
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
     ok( r == E_INVALIDARG, "returns %08x\n", r );
     if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
@@ -1433,7 +1430,6 @@ static void test_create(void)
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = NODE_ELEMENT;
-    str = SysAllocString( szlc );
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
     ok( r == S_OK, "returns %08x\n", r );
     r = IXMLDOMDocument_appendChild( doc, node, &root );
@@ -1453,6 +1449,7 @@ static void test_create(void)
     str = SysAllocString( szbs );
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
     ok( r == S_OK, "returns %08x\n", r );
+    SysFreeString( str );
 
     ref = IXMLDOMNode_AddRef( node );
     ok(ref == 2, "ref = %d\n", ref);
@@ -2142,6 +2139,8 @@ static void test_XMLHTTP(void)
         ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)), "bstrResponse differs from what was expected\n");
         SysFreeString(bstrResponse);
     }
+
+    IXMLHttpRequest_Release(pXMLHttpRequest);
 }
 
 static void test_IXMLDOMDocument2(void)
@@ -3675,6 +3674,7 @@ static void test_testTransforms(void)
         hr = IXMLDOMDocument_transformNode(doc, pNode, &bOut);
         ok(hr == S_OK, "ret %08x\n", hr );
         ok( compareIgnoreReturns( bOut, _bstr_(szTransformOutput)), "Stylesheet output not correct\n");
+        SysFreeString(bOut);
 
         IXMLDOMNode_Release(pNode);
     }
