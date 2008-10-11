@@ -19,23 +19,26 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 IDM_MENU MENU
 {
-    POPUP "�t�@�C��(&F)"
+    POPUP "ファイル(&F)"
     {
-        MENUITEM "�t�@�C���Ƀo�C���h(&B)...",    IDM_BIND
-        MENUITEM "TypeLib �̕\\��(&V)...",    IDM_TYPELIB
+        MENUITEM "ファイルにバインド(&B)...",    IDM_BIND
+        MENUITEM "TypeLib の表示(&V)...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "�V�X�e���ݒ�(&S)...",    IDM_SYSCONF
-        MENUITEM "���W�X�g�� �G�f�B�^�̎��s(&R)",    IDM_REGEDIT
+        MENUITEM "システム設定(&S)...",    IDM_SYSCONF
+        MENUITEM "レジストリ エディタの実行(&R)",    IDM_REGEDIT
         MENUITEM SEPARATOR
-        MENUITEM "�I��(&X)",    IDM_EXIT
+        MENUITEM "終了(&X)",    IDM_EXIT
     }
-    POPUP "�I�u�W�F�N�g(&O)"
+    POPUP "オブジェクト(&O)"
     {
-        POPUP "&CoCreateInstance �t���O"
+        POPUP "&CoCreateInstance フラグ"
         {
             MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
             MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
@@ -43,47 +46,47 @@ IDM_MENU MENU
             MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
         }
         MENUITEM SEPARATOR
-        MENUITEM "�^�C�v���̕\\��(&T)",    IDM_TYPEINFO, GRAYED
+        MENUITEM "タイプ情報の表示(&T)",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "�C���X�^���X�̍쐬(&I)",    IDM_CREATEINST, GRAYED
+        MENUITEM "インスタンスの作成(&I)",    IDM_CREATEINST, GRAYED
         MENUITEM "Create Instance &On...",    IDM_CREATEINSTON, GRAYED
-        MENUITEM "�C���X�^���X�̊J��(&R)",    IDM_RELEASEINST, GRAYED
+        MENUITEM "インスタンスの開放(&R)",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "C&LSID ���N���b�v�{�[�h�ɃR�s�[",    IDM_COPYCLSID, GRAYED
-        MENUITEM "&HTML �I�u�W�F�N�g �^�O���N���b�v�{�[�h�ɃR�s�[", IDM_HTMLTAG, GRAYED
+        MENUITEM "C&LSID をクリップボードにコピー",    IDM_COPYCLSID, GRAYED
+        MENUITEM "&HTML オブジェクト タグをクリップボードにコピー", IDM_HTMLTAG, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "�\\��(&V)...",    IDM_VIEW, GRAYED
+        MENUITEM "表示(&V)...",    IDM_VIEW, GRAYED
     }
-    POPUP "�\\��(&V)"
+    POPUP "表示(&V)"
     {
-        MENUITEM "�㋉���[�h(&E)",    IDM_EXPERT,CHECKED
+        MENUITEM "上級モード(&E)",    IDM_EXPERT,CHECKED
         MENUITEM SEPARATOR
-        MENUITEM "�B���ꂽ�R���|�[�l���g�̃J�e�S��(&H)",    IDM_HIDDEN, GRAYED
+        MENUITEM "隠されたコンポーネントのカテゴリ(&H)",    IDM_HIDDEN, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "�c�[�� �o�[(&T)",    IDM_TOOLBAR,CHECKED
-        MENUITEM "�X�e�[�^�X �o�[(&S)",    IDM_STATUSBAR,CHECKED
+        MENUITEM "ツール バー(&T)",    IDM_TOOLBAR,CHECKED
+        MENUITEM "ステータス バー(&S)",    IDM_STATUSBAR,CHECKED
         MENUITEM SEPARATOR
-        MENUITEM "�X�V(&R)\tF5",    IDM_REFRESH
+        MENUITEM "更新(&R)\tF5",    IDM_REFRESH
     }
-    POPUP "�w���v(&H)"
+    POPUP "ヘルプ(&H)"
     {
-        MENUITEM "OleView �ɂ���(&A)",    IDM_ABOUT
+        MENUITEM "OleView について(&A)",    IDM_ABOUT
     }
 }
 
 IDM_TYPELIB MENU
 {
-    POPUP "�t�@�C��(&F)"
+    POPUP "ファイル(&F)"
     {
-        MENUITEM "���O��t���ĕۑ�(&S)...",    IDM_SAVEAS
-        MENUITEM "����(&C)",  IDM_CLOSE
+        MENUITEM "名前を付けて保存(&S)...",    IDM_SAVEAS
+        MENUITEM "閉じる(&C)",  IDM_CLOSE
     }
-    POPUP "�\\��(&V)"
+    POPUP "表示(&V)"
     {
-        MENUITEM "�^�C�v�̎�ނŕ���(&G)", IDM_GROUP
+        MENUITEM "タイプの種類で分類(&G)", IDM_GROUP
         MENUITEM SEPARATOR
-        MENUITEM "�c�[�� �o�[(&T)",    IDM_TOOLBAR
-        MENUITEM "�X�e�[�^�X �o�[(&S)", IDM_STATUSBAR,CHECKED
+        MENUITEM "ツール バー(&T)",    IDM_TOOLBAR
+        MENUITEM "ステータス バー(&S)", IDM_STATUSBAR,CHECKED
     }
 }
 
@@ -91,123 +94,125 @@ STRINGTABLE
 {
     IDS_APPNAME            "OleView"
     IDS_APPTITLE           "OleView"
-    IDS_READY              "�ҋ@��"
-    IDS_ABOUT              "OleView - OLE/COM �I�u�W�F�N�g �r���A�["
-    IDS_ABOUTVER           "�o�[�W���� 1.0"
-    IDS_TYPELIBTITLE       "ITypeLib �r���A�["
-    IDS_OPEN               "�J��"
-    IDS_OPEN_TYPELIB_FILTER "TypeLib �t�@�C�� (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0���ׂẴt�@�C�� (*.*)\0*.*\0\0"
+    IDS_READY              "待機中"
+    IDS_ABOUT              "OleView - OLE/COM オブジェクト ビュアー"
+    IDS_ABOUTVER           "バージョン 1.0"
+    IDS_TYPELIBTITLE       "ITypeLib ビュアー"
+    IDS_OPEN               "開く"
+    IDS_OPEN_TYPELIB_FILTER "TypeLib ファイル (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0すべてのファイル (*.*)\0*.*\0\0"
 
-    IDM_BIND,              "File Moniker ��ʂ��ăt�@�C���Ƀo�C���h���܂�"
-    IDM_TYPELIB,           "TypeLib �t�@�C�����J���Ē��g��\\�����܂�"
-    IDM_SYSCONF,           "�}�V���S�̂̕��U COM �̐ݒ��ύX���܂�"
-    IDM_REGEDIT,           "Wine ���W�X�g�� �G�f�B�^�����s���܂�"
-    IDM_EXIT,              "�A�v���P�[�V�������I�����܂��B�ύX��ۑ�����悤�ɑ����܂�"
-    IDM_CREATEINST,        "�I�����ꂽ�I�u�W�F�N�g�̃C���X�^���X���쐬���܂�"
-    IDM_CREATEINSTON,      "����̃}�V����̑I�����ꂽ�I�u�W�F�N�g�̃C���X�^���X���쐬���܂�"
-    IDM_RELEASEINST,       "���ݑI�����ꂽ�I�u�W�F�N�g�̃C���X�^���X���J�����܂�"
-    IDM_COPYCLSID,         "���ݑI�����ꂽ���ڂ� GUID ���N���b�v�{�[�h�ɃR�s�[���܂�"
-    IDM_VIEW,              "�I�����ꂽ���ڂ̃r���A�[��\\�����܂�"
-    IDM_FLAG_INSERV,       "CoGetClassObject ���ĂԂƂ��� CLSCTX_INPROC_SERVER ���g���܂�"
-    IDM_FLAG_INHANDL,      "CoGetClassObject ���ĂԂƂ��� CLSCTX_INPROC_HANDLER ���g���܂�"
-    IDM_FLAG_LOCSERV,      "CoGetClassObject ���ĂԂƂ��� CLSCTX_LOCAL_SERVER ���g���܂�"
-    IDM_FLAG_REMSERV,      "CoGetClassObject ���ĂԂƂ��� CLSCTX_REMOTE_SERVER ���g���܂�"
-    IDM_EXPERT,            "�㋉�Ə����\\�����[�h��؂�ւ��܂�"
-    IDM_HIDDEN,            "�\������悤�ɂȂ��Ă��Ȃ��R���|�[�l���g�̃J�e�S���̕\����؂�ւ��܂�"
-    IDM_TOOLBAR,           "�c�[�� �o�[�̕\\��/��\\����؂�ւ��܂�"
-    IDM_STATUSBAR,         "�X�e�[�^�X �o�[�̕\\��/��\\����؂�ւ��܂�"
-    IDM_REFRESH,           "���ׂẴ��X�g���X�V���܂�"
-    IDM_ABOUT,             "�v���O�������A�o�[�W�����ԍ��ƒ��쌠��\\�����܂�"
+    IDM_BIND,              "File Moniker を通じてファイルにバインドします"
+    IDM_TYPELIB,           "TypeLib ファイルを開いて中身を表示します"
+    IDM_SYSCONF,           "マシン全体の分散 COM の設定を変更します"
+    IDM_REGEDIT,           "Wine レジストリ エディタを実行します"
+    IDM_EXIT,              "アプリケーションを終了します。変更を保存するように促します"
+    IDM_CREATEINST,        "選択されたオブジェクトのインスタンスを作成します"
+    IDM_CREATEINSTON,      "特定のマシン上の選択されたオブジェクトのインスタンスを作成します"
+    IDM_RELEASEINST,       "現在選択されたオブジェクトのインスタンスを開放します"
+    IDM_COPYCLSID,         "現在選択された項目の GUID をクリップボードにコピーします"
+    IDM_VIEW,              "選択された項目のビュアーを表示します"
+    IDM_FLAG_INSERV,       "CoGetClassObject を呼ぶときに CLSCTX_INPROC_SERVER を使います"
+    IDM_FLAG_INHANDL,      "CoGetClassObject を呼ぶときに CLSCTX_INPROC_HANDLER を使います"
+    IDM_FLAG_LOCSERV,      "CoGetClassObject を呼ぶときに CLSCTX_LOCAL_SERVER を使います"
+    IDM_FLAG_REMSERV,      "CoGetClassObject を呼ぶときに CLSCTX_REMOTE_SERVER を使います"
+    IDM_EXPERT,            "上級と初級表示モードを切り替えます"
+    IDM_HIDDEN,            "表示するようになっていないコンポーネントのカテゴリの表示を切り替えます"
+    IDM_TOOLBAR,           "ツール バーの表示/非表示を切り替えます"
+    IDM_STATUSBAR,         "ステータス バーの表示/非表示を切り替えます"
+    IDM_REFRESH,           "すべてのリストを更新します"
+    IDM_ABOUT,             "プログラム情報、バージョン番号と著作権を表示します"
 
-    IDM_SAVEAS,            ".IDL �܂��� .H �t�@�C���Ƃ��ĕۑ����܂�"
-    IDM_CLOSE,             "�E�B���h�E����܂�"
-    IDM_GROUP,             "��ނŃ^�C�v���𕪗ނ��܂�"
+    IDM_SAVEAS,            ".IDL または .H ファイルとして保存します"
+    IDM_CLOSE,             "ウィンドウを閉じます"
+    IDM_GROUP,             "種類でタイプ情報を分類します"
 
     IDS_TREE_OC,           "ObjectClasses"
-    IDS_TREE_GBCC,         "�R���|�[�l���g�̃J�e�S���ŕ���"
-    IDS_TREE_O1O,          "OLE 1.0 �I�u�W�F�N�g"
-    IDS_TREE_CLO,          "COM ���C�u���� �I�u�W�F�N�g"
-    IDS_TREE_AO,           "���ׂẴI�u�W�F�N�g"
-    IDS_TREE_AID,          "�A�v���P�[�V���� ID"
-    IDS_TREE_TL,           "�^�C�v ���C�u����"
-    IDS_TL_VER,            "�o�[�W����"
-    IDS_TREE_I,            "�C���^�[�t�F�C�X"
+    IDS_TREE_GBCC,         "コンポーネントのカテゴリで分類"
+    IDS_TREE_O1O,          "OLE 1.0 オブジェクト"
+    IDS_TREE_CLO,          "COM ライブラリ オブジェクト"
+    IDS_TREE_AO,           "すべてのオブジェクト"
+    IDS_TREE_AID,          "アプリケーション ID"
+    IDS_TREE_TL,           "タイプ ライブラリ"
+    IDS_TL_VER,            "バージョン"
+    IDS_TREE_I,            "インターフェイス"
 
     IDS_TAB_REG,           "Registry"
     IDS_TAB_IMPL,          "Implementation"
     IDS_TAB_ACTIV,         "Activation"
 
-    IDS_CGCOFAIL,          "CoGetClassObject �����s���܂����B"
-    IDS_ERROR_UNKN,        "�s���ȃG���["
+    IDS_CGCOFAIL,          "CoGetClassObject が失敗しました。"
+    IDS_ERROR_UNKN,        "不明なエラー"
     IDS_TRUE,              "True"
     IDS_FALSE,             "False"
-    IDS_BYTES,             "�o�C�g"
+    IDS_BYTES,             "バイト"
 
-    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) �����s���܂��� ($%x)"
-    IDS_INHERITINTERFACES, "�p�����ꂽ�C���^�[�t�F�C�X"
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) が失敗しました ($%x)"
+    IDS_INHERITINTERFACES, "継承されたインターフェイス"
 }
 
 DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "���̃}�V���ɐڑ�"
+CAPTION "他のマシンに接続"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "�}�V����(&M):", IDIGNORE, 5, 6, 190, 8
+    LTEXT   "マシン名(&M):", IDIGNORE, 5, 6, 190, 8
     EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "&OK", IDOK, 200, 5, 45, 14
-    PUSHBUTTON  "�L�����Z��(&C)", IDCANCEL, 200, 22, 45, 14
+    PUSHBUTTON  "キャンセル(&C)", IDCANCEL, 200, 22, 45, 14
 }
 
 DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "�V�X�e���ݒ�"
+CAPTION "システム設定"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "�V�X�e���ݒ�", IDIGNORE, 5, 6, 160, 8
-    CHECKBOX    "���U COM ��L���ɂ���(&E)", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    CHECKBOX    "�����[�g�ڑ���L���ɂ���(Win95 �̂�)(&R)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT   "�����̐ݒ�̓��W�X�^�[�̒l�݂̂�ς��܂��B\nWine �̃p�t�H�[�}���X�ɂ͉e�����܂���B", IDIGNORE, 5, 50, 160, 40
+    LTEXT   "システム設定", IDIGNORE, 5, 6, 160, 8
+    CHECKBOX    "分散 COM を有効にする(&E)", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "リモート接続を有効にする(Win95 のみ)(&R)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "これらの設定はレジスターの値のみを変えます。\nWine のパフォーマンスには影響しません。", IDIGNORE, 5, 50, 160, 40
     DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
-    PUSHBUTTON  "�L�����Z��(&C)", IDCANCEL, 120, 80, 45, 14
+    PUSHBUTTON  "キャンセル(&C)", IDCANCEL, 120, 80, 45, 14
 }
 
 DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "����̃C���^�[�t�F�C�X �r���A�["
+CAPTION "既定のインターフェイス ビュアー"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "�C���^�[�t�F�C�X", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "インターフェイス", IDIGNORE, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
     LTEXT   "IID:", IDIGNORE, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
-    DEFPUSHBUTTON   "����(&C)", IDCANCEL, 230, 6, 45, 14
-    PUSHBUTTON  "�^�C�v����\\��(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+    DEFPUSHBUTTON   "閉じる(&C)", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "タイプ情報を表示(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
 }
 
 DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "IPersist �C���^�[�t�F�C�X �r���A�["
+CAPTION "IPersist インターフェイス ビュアー"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "�N���X��:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "クラス名:", IDIGNORE, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
     LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
-    DEFPUSHBUTTON   "����(&C)", IDCANCEL, 230, 6, 45, 14
+    DEFPUSHBUTTON   "閉じる(&C)", IDCANCEL, 230, 6, 45, 14
 }
 
 DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "IPersistStream �C���^�[�t�F�C�X �r���A�["
+CAPTION "IPersistStream インターフェイス ビュアー"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "�N���X��:", IDIGNORE, 5, 6, 50, 8
+    LTEXT   "クラス名:", IDIGNORE, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
     LTEXT   "CLSID:", IDIGNORE, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
-    DEFPUSHBUTTON   "����(&C)", IDCANCEL, 230, 6, 45, 14
+    DEFPUSHBUTTON   "閉じる(&C)", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
     LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
     PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
     LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
 }
+
+#pragma code_page(default)
