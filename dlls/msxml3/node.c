@@ -372,6 +372,7 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
       {
         str = xmlChar_from_wchar((WCHAR*)V_BSTR(&string_value));
         xmlNodeSetContent(This->node, str);
+        HeapFree(GetProcessHeap(),0,str);
         hr = S_OK;
         break;
       }
@@ -919,7 +920,7 @@ static HRESULT WINAPI xmlnode_put_text(
     BSTR text)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlChar *str = NULL;
+    xmlChar *str, *str2, *str3;
 
     TRACE("%p\n", This);
 
@@ -934,11 +935,13 @@ static HRESULT WINAPI xmlnode_put_text(
     str = xmlChar_from_wchar((WCHAR*)text);
 
     /* Escape the string. */
-    str = xmlEncodeEntitiesReentrant(This->node->doc, str);
-    str = xmlEncodeSpecialChars(This->node->doc, str);
+    str2 = xmlEncodeEntitiesReentrant(This->node->doc, str);
+    HeapFree(GetProcessHeap(), 0, str);
+    str3 = xmlEncodeSpecialChars(This->node->doc, str2);
+    xmlFree(str2);
 
-    xmlNodeSetContent(This->node, str);
-    xmlFree(str);
+    xmlNodeSetContent(This->node, str3);
+    xmlFree(str3);
 
     return S_OK;
 }
@@ -1091,6 +1094,7 @@ static HRESULT WINAPI xmlnode_put_dataType(
             else
                 ERR("Failed to Create Namepsace\n");
         }
+        HeapFree( GetProcessHeap(), 0, str );
     }
 
     return hr;

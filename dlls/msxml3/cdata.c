@@ -606,6 +606,7 @@ static HRESULT WINAPI domcdata_appendData(
     }
     else
         hr = E_FAIL;
+    HeapFree(GetProcessHeap(), 0, pContent);
 
     return hr;
 }
@@ -667,6 +668,7 @@ static HRESULT WINAPI domcdata_insertData(
                 xmlNodeSetContent(pDOMNode->node, str);
                 hr = S_OK;
             }
+            HeapFree(GetProcessHeap(), 0, str);
 
             SysFreeString(sNewString);
         }

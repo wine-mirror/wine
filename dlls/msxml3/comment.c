@@ -616,6 +616,7 @@ static HRESULT WINAPI domcomment_appendData(
             else
                 hr = E_FAIL;
         }
+        HeapFree( GetProcessHeap(), 0, pContent );
     }
     else
         hr = E_FAIL;
@@ -680,6 +681,7 @@ static HRESULT WINAPI domcomment_insertData(
                 xmlNodeSetContent(pDOMNode->node, str);
                 hr = S_OK;
             }
+            HeapFree( GetProcessHeap(), 0, str );
 
             SysFreeString(sNewString);
         }
