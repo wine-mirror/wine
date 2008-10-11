@@ -193,6 +193,7 @@ enum
     ASSOCF_REMAPRUNDLL          = 0x080, /* Get rundll args */
     ASSOCF_NOFIXUPS             = 0x100, /* Don't fixup errors */
     ASSOCF_IGNOREBASECLASS      = 0x200, /* Don't read baseclass */
+    ASSOCF_INIT_IGNOREUNKNOWN   = 0x400, /* Fail for unknown progid */
 };
 
 typedef DWORD ASSOCF;
