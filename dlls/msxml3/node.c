@@ -1303,8 +1303,13 @@ static HRESULT WINAPI xmlnode_transformNode(
                     }
                 }
             }
+            xmlFreeDoc(result);
         }
 
+        /* libxslt "helpfully" frees the XML document the stylesheet was
+           generated from, too */
+        xsltSS->doc = NULL;
+        xsltFreeStylesheet(xsltSS);
         IXMLDOMNode_Release(ssNew);
     }
 
@@ -1379,6 +1384,7 @@ static HRESULT WINAPI xmlnode_get_namespaceURI(
     {
         *namespaceURI = bstr_from_xmlChar( pNSList[0]->href );
 
+        xmlFree( pNSList );
         hr = S_OK;
     }
 
@@ -1405,6 +1411,7 @@ static HRESULT WINAPI xmlnode_get_prefix(
     {
         *prefixString = bstr_from_xmlChar( pNSList[0]->prefix );
 
+        xmlFree(pNSList);
         hr = S_OK;
     }
 
