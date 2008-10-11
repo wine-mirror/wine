@@ -1003,6 +1003,9 @@ todo_wine
         SysFreeString( str );
 
 	/* test indexed access of attributes */
+        r = IXMLDOMNamedNodeMap_get_length( map, NULL );
+        ok ( r == E_INVALIDARG, "get_length should return E_INVALIDARG\n");
+
         r = IXMLDOMNamedNodeMap_get_length( map, &count );
         ok ( r == S_OK, "get_length wrong code\n");
         ok ( count == 1, "get_length != 1\n");

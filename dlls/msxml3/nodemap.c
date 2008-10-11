@@ -364,6 +364,9 @@ static HRESULT WINAPI xmlnodemap_get_length(
 
     TRACE("%p\n", This);
 
+    if( !listLength )
+        return E_INVALIDARG;
+
     node = xmlNodePtr_from_domnode( This->node, 0 );
     if ( !node )
         return E_FAIL;
