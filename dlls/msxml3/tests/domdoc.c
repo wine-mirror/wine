@@ -724,6 +724,30 @@ static void test_domdoc( void )
         ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
         SysFreeString(str);
 
+        /* test put_data */
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = SysAllocString(szstr1);
+        r = IXMLDOMText_put_nodeValue(nodetext, var);
+        ok(r == S_OK, "ret %08x\n", r );
+        VariantClear(&var);
+
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, szstr1 ), "incorrect get_text string\n");
+        SysFreeString(str);
+
+        /* test put_data */
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = 99;
+        r = IXMLDOMText_put_nodeValue(nodetext, var);
+        ok(r == S_OK, "ret %08x\n", r );
+        VariantClear(&var);
+
+        r = IXMLDOMText_get_text(nodetext, &str);
+        ok(r == S_OK, "ret %08x\n", r );
+        ok( !lstrcmpW( str, _bstr_("99") ), "incorrect get_text string\n");
+        SysFreeString(str);
+
         IXMLDOMText_Release( nodetext );
     }
 

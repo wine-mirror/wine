@@ -344,11 +344,22 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
     VARIANT value)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    HRESULT hr = S_FALSE;
+    HRESULT hr;
     xmlChar *str = NULL;
+    VARIANT string_value;
 
     TRACE("%p type(%d)\n", This, This->node->type);
 
+    VariantInit(&string_value);
+    hr = VariantChangeType(&string_value, &value, 0, VT_BSTR);
+    if(FAILED(hr))
+    {
+        VariantClear(&string_value);
+        WARN("Couldn't convert to VT_BSTR\n");
+        return hr;
+    }
+
+    hr = S_FALSE;
     /* Document, Document Fragment, Document Type, Element,
         Entity, Entity Reference, Notation aren't supported. */
     switch ( This->node->type )
@@ -359,8 +370,7 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
     case XML_PI_NODE:
     case XML_TEXT_NODE:
       {
-        str = xmlChar_from_wchar((WCHAR*)V_BSTR(&value));
-
+        str = xmlChar_from_wchar((WCHAR*)V_BSTR(&string_value));
         xmlNodeSetContent(This->node, str);
         hr = S_OK;
         break;
@@ -369,6 +379,8 @@ static HRESULT WINAPI xmlnode_put_nodeValue(
         /* Do nothing for unsupported types. */
         break;
     }
+
+    VariantClear(&string_value);
 
     return hr;
 }
