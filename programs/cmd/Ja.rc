@@ -19,185 +19,188 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "ATTRIB�̃w���v\n"
+  WCMD_ATTRIB, "ATTRIBのヘルプ\n"
   WCMD_CALL,
-"CALL <�o�b�`�t�@�C����> �͑��̃o�b�`�t�@�C������R�}���h�����s����ꍇ\n\
-�Ƀo�b�`�t�@�C�����Ŏg�p���܂��B�o�b�`�t�@�C���I�����ɃR���g���[���͌�\n\
-�яo�����t�@�C���ɖ߂�܂��B CALL �R�}���h�͌Ăяo�����葱���Ƀp����\n\
-�[�^��n�����Ƃ��\�ł��B\n\
+"CALL <バッチファイル名> は他のバッチファイルからコマンドを実行する場合\n\
+にバッチファイル中で使用します。バッチファイル終了時にコントロールは呼\n\
+び出したファイルに戻ります。 CALL コマンドは呼び出される手続きにパラメ\n\
+ータを渡すことが可能です。\n\
 \n\
-�Ăяo���ꂽ�葱�����s�����J�����g�f�B���N�g������ϐ��̕ύX�͌Ăяo\n\
-�����Ɉ����p����܂��B\n"
+呼び出された手続きが行ったカレントディレクトリや環境変数の変更は呼び出\n\
+し元に引き継がれます。\n"
 
-  WCMD_CD,     "CD�̃w���v\n"
-  WCMD_CHDIR,  "CHDIR�̃w���v\n"
+  WCMD_CD,     "CDのヘルプ\n"
+  WCMD_CHDIR,  "CHDIRのヘルプ\n"
 
-  WCMD_CLS,    "CLS�̓R���\�[����ʂ��N���A���܂�\n"
+  WCMD_CLS,    "CLSはコンソール画面をクリアします\n"
 
-  WCMD_COPY,   "COPY�̃w���v\n"
-  WCMD_CTTY,   "CTTY�̃w���v\n"
-  WCMD_DATE,   "DATE�̃w���v\n"
-  WCMD_DEL,    "DEL�̃w���v\n"
-  WCMD_DIR,    "DIR�̃w���v\n"
+  WCMD_COPY,   "COPYのヘルプ\n"
+  WCMD_CTTY,   "CTTYのヘルプ\n"
+  WCMD_DATE,   "DATEのヘルプ\n"
+  WCMD_DEL,    "DELのヘルプ\n"
+  WCMD_DIR,    "DIRのヘルプ\n"
 
   WCMD_ECHO,
-"ECHO <������> ��<������>�����݂̃^�[�~�i���ɕ\�����܂��B\n\
+"ECHO <文字列> は<文字列>を現在のターミナルに表示します。\n\
 \n\
-ECHO ON �͈ȍ~�Ƀo�b�`�t�@�C���Ŏ��s����R�}���h�����s�O��\n\
-�^�[�~�i���ɕ\������悤�ɂ��܂��B\n\
+ECHO ON は以降にバッチファイルで実行するコマンドを実行前に\n\
+ターミナルに表示するようにします。\n\
 \n\
-ECHO OFF ��ECHO ON�̋t�̌��ʂ������܂��B (ECHO�̓f�t�H���g\n\
-�ł�OFF�ł�)�BECHO OFF �R�}���h��@�}�[�N�ɑ����Ď��s�����\n\
-�\������܂���B\n"
+ECHO OFF はECHO ONの逆の効果を持ちます。 (ECHOはデフォルト\n\
+ではOFFです)。ECHO OFF コマンドは@マークに続けて実行すれば\n\
+表示されません。\n"
 
-  WCMD_ERASE,  "ERASE�̃w���v\n"
+  WCMD_ERASE,  "ERASEのヘルプ\n"
 
   WCMD_FOR,
-"FOR �R�}���h�͂��ꂼ��̃t�@�C���ɑ΂��ăR�}���h�����s����\n\
-�ꍇ�Ɏg�p���܂��B\n\
+"FOR コマンドはそれぞれのファイルに対してコマンドを実行する\n\
+場合に使用します。\n\
 \n\
-���@: FOR %�ϐ� IN (�Z�b�g) DO �R�}���h\n\
+文法: FOR %変数 IN (セット) DO コマンド\n\
 \n\
-cmd���ɑ��݂��Ȃ��o�b�`�t�@�C������FOR���g�p����ꍇ��%�L��\n\
-���d�ɂ���K�v������܂��B\n"
+cmd内に存在しないバッチファイル中でFORを使用する場合は%記号\n\
+を二重にする必要があります。\n"
 
   WCMD_GOTO,
-"GOTO �R�}���h�̓o�b�`�t�@�C�����Ŏ��s�s�𑼂̃X�e�[�g�����g��\n\
-�ڂ��܂��B\n\
+"GOTO コマンドはバッチファイル中で実行行を他のステートメントに\n\
+移します。\n\
 \n\
-GOTO ���̃^�[�Q�b�g�ƂȂ郉�x���͔��p255�����ȓ��ł����A��\n\
-���܂�ł͂����܂���B(����͑��̃I�y���[�e�B���O�V�X�e���ł�\n\
-�قȂ�܂�)�B��ȏ㓯��̃��x�������݂���ꍇ�͏�ɍŏ��̕�\n\
-�����s����܂��BGOTO���ɑ��݂��Ȃ����x�����w�肵���ꍇ�̓o�b\n\
-�`�t�@�C���̎��s�𒆒f���܂��B\n\
+GOTO 文のターゲットとなるラベルは半角255文字以内ですが、空白\n\
+を含んではいけません。(これは他のオペレーティングシステムでは\n\
+異なります)。二つ以上同一のラベルが存在する場合は常に最初の物\n\
+が実行されます。GOTO文に存在しないラベルを指定した場合はバッ\n\
+チファイルの実行を中断します。\n\
 \n\
-GOTO �͑Θb���[�h�Ŏg�p���ꂽ�ꍇ�͈Ӗ��������܂���B\n"
+GOTO は対話モードで使用された場合は意味を持ちません。\n"
 
-  WCMD_HELP,   "HELP�̃w���v\n"
+  WCMD_HELP,   "HELPのヘルプ\n"
 
   WCMD_IF,
-"IF �͏����Ɋ�Â��ăR�}���h�����s����ꍇ�Ɏg�p���܂��B\n\
+"IF は条件に基づいてコマンドを実行する場合に使用します。\n\
 \n\
-���@:	IF [NOT] EXIST �t�@�C���� �R�}���h\n\
-	IF [NOT] ������1==������2 �R�}���h\n\
-	IF [NOT] ERRORLEVEL �ԍ� �R�}���h\n\
+文法:	IF [NOT] EXIST ファイル名 コマンド\n\
+	IF [NOT] 文字列1==文字列2 コマンド\n\
+	IF [NOT] ERRORLEVEL 番号 コマンド\n\
 \n\
-��Ԗڂ̌`���ɂ����āA������1�ƕ�����2�̓_�u���N�I�[�g�ň͂��\n\
-�Ă��Ȃ���΂Ȃ�܂���B�啶���Ə������͋�ʂ���܂���B\n"
+二番目の形式において、文字列1と文字列2はダブルクオートで囲われ\n\
+ていなければなりません。大文字と小文字は区別されません。\n"
 
-  WCMD_LABEL,  "LABEL �̓f�B�X�N�̃{�����[�����x����ݒ肷��ꍇ�Ɏg�p���܂��B\n\
+  WCMD_LABEL,  "LABEL はディスクのボリュームラベルを設定する場合に使用します。\n\
 \n\
-���@: LABEL [�h���C�u:]\n\
-�R�}���h�����s����Ǝw�肵���h���C�u�̐V�����{�����[������v�����܂��B\n\
-�f�B�X�N�̃{�����[�����x����VOL�R�}���h�ŕ\���ł��܂��B\n"
+文法: LABEL [ドライブ:]\n\
+コマンドを実行すると指定したドライブの新しいボリューム名を要求します。\n\
+ディスクのボリュームラベルはVOLコマンドで表示できます。\n"
 
-  WCMD_MD,     "MD�̃w���v\n"
-  WCMD_MKDIR,  "MKDIR�̃w���v\n"
+  WCMD_MD,     "MDのヘルプ\n"
+  WCMD_MKDIR,  "MKDIRのヘルプ\n"
   WCMD_MOVE,
-"MOVE �̓t�@�C���܂��̓f�B���N�g�����t�@�C���V�X�e�����ŐV�����ꏊ�Ɉړ����܂��B\n\
+"MOVE はファイルまたはディレクトリをファイルシステム中で新しい場所に移動します。\n\
 \n\
-�ړ�����Ώۂ��f�B���N�g���̏ꍇ�́A�f�B���N�g�����̑S�Ẵt�@\n\
-�C���ƃT�u�f�B���N�g�����ړ����܂��B\n\
+移動する対象がディレクトリの場合は、ディレクトリ内の全てのファ\n\
+イルとサブディレクトリも移動します。\n\
 \n\
-MOVE �ł͈ړ����ƈړ���̃h���C�u���^�[���قȂ�ꍇ�A�ړ��͎��s���܂��B\n"
+MOVE では移動元と移動先のドライブレターが異なる場合、移動は失敗します。\n"
 
   WCMD_PATH,
-"PATH ��cmd�̌����p�X��\���܂��͕ύX���܂��B\n\
+"PATH はcmdの検索パスを表示または変更します。\n\
 \n\
-PATH �Ɠ��͂���ƌ��݂̃p�X�ݒ��\�����܂�(������Ԃł�\n\
-wine.conf�t�@�C�����Ŏw�肳�ꂽ���ɂȂ��Ă��܂�)�B�ݒ��\n\
-�ύX����ɂ́APATH�R�}���h�ɑ����ĐV�����ݒ�l����͂���\n\
-�������B\n\
+PATH と入力すると現在のパス設定を表示します(初期状態では\n\
+wine.confファイル中で指定された物になっています)。設定を\n\
+変更するには、PATHコマンドに続けて新しい設定値を入力して\n\
+下さい。\n\
 \n\
-�p�X��ύX����Ƃ���PATH���ϐ����g�p���邱�Ƃ��\�ł��B\n\
-�Ⴆ�΁F\n\
+パスを変更するときにPATH環境変数を使用することも可能です。\n\
+例えば：\n\
 		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
-"PAUSE �͉�ʂɁu������ɂ̓��^�[���L�[�������ĉ������v��\n\
-�\�����A���[�U�����^�[���L�[�������̂�ҋ@���܂��B�����\n\
-��Ƀo�b�`�t�@�C�����Ŏ��s���ꂽ�R�}���h�̌��ʂ��X�N���[\n\
-������O�Ƀ��[�U���ǂ߂�悤�ɂ������ꍇ�ɗL�p�ł��B\n"
+"PAUSE は画面に「続けるにはリターンキーを押して下さい」と\n\
+表示し、ユーザがリターンキーを押すのを待機します。これは\n\
+主にバッチファイル中で実行されたコマンドの結果がスクロー\n\
+ルする前にユーザが読めるようにしたい場合に有用です。\n"
 
   WCMD_PROMPT,
-"PROMPT �̓R�}���h�v�����v�g��ݒ肵�܂��B\n\
+"PROMPT はコマンドプロンプトを設定します。\n\
 \n\
-PROMPT �R�}���h(�ƒ���̃X�y�[�X)�ɑ����������cmd�����͑҂��̎��A\n\
-�s�̐擪�ɕ\������܂��B\n\
+PROMPT コマンド(と直後のスペース)に続く文字列はcmdが入力待ちの時、\n\
+行の先頭に表示されます。\n\
 \n\
-�ȉ��̃L�����N�^������͓��ʂȈӖ��������܂��F\n\
+以下のキャラクタ文字列は特別な意味を持ちます：\n\
 \n\
-$$    �h���L��            $_    ���s                $b    �p�C�v�L�� (|)\n\
-$d    ���݂̓��t          $e    �G�X�P�[�v          $g    > �L��\n\
-$l    < �L��              $n    ���݂̃h���C�u      $p    ���݂̃p�X\n\
-$q    ����                $t    ���݂̎���          $v    cmd�̃o�[�W����\n\
+$$    ドル記号            $_    改行                $b    パイプ記号 (|)\n\
+$d    現在の日付          $e    エスケープ          $g    > 記号\n\
+$l    < 記号              $n    現在のドライブ      $p    現在のパス\n\
+$q    等号                $t    現在の時刻          $v    cmdのバージョン\n\
 \n\
-���ӁFPROMPT�R�}���h���v�����v�g������Ȃ��Ŏ��s����ƁA�f�t�H���g�l�Ƀ�\n\
-�Z�b�g����܂��B �f�t�H���g�l�̓J�����g�f�B���N�g��(�h���C�u�����܂݂܂�)\n\
-�ɑ����đ�Ȃ�(>)�L���ł��B\n\
-(PROMPT $p$g �����s�������Ɠ��l�ł�)\n\
+注意：PROMPTコマンドをプロンプト文字列なしで実行すると、デフォルト値にリ\n\
+セットされます。 デフォルト値はカレントディレクトリ(ドライブ名を含みます)\n\
+に続いて大なり(>)記号です。\n\
+(PROMPT $p$g を実行した時と同様です)\n\
 \n\
-�v�����v�g��PROMPT���ϐ���ҏW���邱�Ƃł��ύX�ł��܂��B\n\
-���������āA'SET PROMPT=������'��'PROMPT ������'�̌��ʂ͓����ł��B\n"
+プロンプトはPROMPT環境変数を編集することでも変更できます。\n\
+したがって、'SET PROMPT=文字列'と'PROMPT 文字列'の効果は同じです。\n"
 
   WCMD_REM,
-"REM(�ƒ���̃X�y�[�X)�Ŏn�܂�R�}���h�͎��s����܂���B\n\
-���������āA�o�b�`�t�@�C�����̃R�����g�Ƃ��Ďg�p�ł��܂��B\n"
+"REM(と直後のスペース)で始まるコマンドは実行されません。\n\
+したがって、バッチファイル中のコメントとして使用できます。\n"
 
-  WCMD_REN,    "REN�̃w���v\n"
-  WCMD_RENAME, "RENAME�̃w���v\n"
-  WCMD_RD,     "RD�̃w���v\n"
-  WCMD_RMDIR,  "RMDIR�̃w���v\n"
+  WCMD_REN,    "RENのヘルプ\n"
+  WCMD_RENAME, "RENAMEのヘルプ\n"
+  WCMD_RD,     "RDのヘルプ\n"
+  WCMD_RMDIR,  "RMDIRのヘルプ\n"
 
   WCMD_SET,
-"SET ��cmd�̊��ϐ���\���܂��͕ύX���܂��B\n\
+"SET はcmdの環境変数を表示または変更します。\n\
 \n\
-�p�����[�^�Ȃ���SET�����s����ƁA���݂̑S�Ă̊��ϐ���\�����܂��B\n\
+パラメータなしでSETを実行すると、現在の全ての環境変数を表示します。\n\
 \n\
-���ϐ��̍쐬�܂��͕ύX���s���ꍇ�͎��̂悤�ɋL�q���ĉ������F\n\
+環境変数の作成または変更を行う場合は次のように記述して下さい：\n\
 \n\
-      SET <���ϐ���>=<�l>\n\
+      SET <環境変数名>=<値>\n\
 \n\
-<���ϐ���> �� <�l> �͕�����ł��B�����̎�O�ɃX�y�[�X��\n\
-����Ȃ��ŉ������B��O�ɃX�y�[�X������Ɗ��ϐ����ɗ]��\n\
-�ȃX�y�[�X���܂܂�Ă��܂��ꍇ������܂��B\n\
+<環境変数名> と <値> は文字列です。等号の手前にスペースを\n\
+入れないで下さい。手前にスペースを入れると環境変数名に余分\n\
+なスペースが含まれてしまう場合があります。\n\
 \n\
-Wine���ł́AWine�����삵�Ă���OS�̊��ϐ���Win32���ϐ��Ɋ�\n\
-�܂�܂��B���������āA�l�C�e�B�uWin32����葽���̒l���Z�b�g��\n\
-��Ă��܂��Bcmd������OS�̊��ϐ���ύX���邱�Ƃ��ł��Ȃ�����\n\
-�ɒ��ӂ��ĉ������B\n"
+Wine環境では、Wineが動作しているOSの環境変数がWin32環境変数に含\n\
+まれます。したがって、ネイティブWin32環境より多くの値がセットさ\n\
+れています。cmd内からOSの環境変数を変更することができないこと\n\
+に注意して下さい。\n"
 
   WCMD_SHIFT,
-"SHIFT �̓o�b�`�t�@�C�����Ń��X�g�̐擪�����̃p�����[�^����菜����\n\
-�Ɏg�p���܂��B�܂�A�p�����[�^2���p�����[�^1�ɂȂ�܂��B�R�}���h���C��\n\
-����Ă΂ꂽ�Ƃ��ɂ͉����N����܂���B\n"
+"SHIFT はバッチファイル中でリストの先頭から一つのパラメータを取り除く時\n\
+に使用します。つまり、パラメータ2がパラメータ1になります。コマンドライン\n\
+から呼ばれたときには何も起こりません。\n"
 
-  WCMD_TIME,   "TIME�̃w���v\n"
+  WCMD_TIME,   "TIMEのヘルプ\n"
 
-  WCMD_TITLE,  "cmd�E�B���h�E�̃E�B���h�E�^�C�g����ݒ肵�܂��B���@ TITLE [������]\n"
+  WCMD_TITLE,  "cmdウィンドウのウィンドウタイトルを設定します。文法 TITLE [文字列]\n"
 
   WCMD_TYPE,
-"TYPE <�t�@�C����> �� <�t�@�C����> ���R���\�[���f�o�C�X(���̓��_�C���N�g\n\
-���ꂽ��)�ɃR�s�[���܂��B�t�@�C�����ǂȃe�L�X�g�t�@�C�����ǂ����`�F�b�N\n\
-����܂���B\n"
+"TYPE <ファイル名> は <ファイル名> をコンソールデバイス(又はリダイレクト\n\
+された所)にコピーします。ファイルが可読なテキストファイルかどうかチェック\n\
+されません。\n"
 
   WCMD_VERIFY,
-"VERIFY ��verify�t���O���Z�b�g�A�N���A�A���̓e�X�g���鎞�Ɏg�p���܂��B�L���ȃt�H�[����:\n\
+"VERIFY はverifyフラグをセット、クリア、又はテストする時に使用します。有効なフォームは:\n\
 \n\
-VERIFY ON	�t���O���Z�b�g\n\
-VERIFY OFF	�t���O���N���A\n\
-VERIFY		ON��OFF���\��\n\
+VERIFY ON	フラグをセット\n\
+VERIFY OFF	フラグをクリア\n\
+VERIFY		ONかOFFか表示\n\
 \n\
-Wine���ł�verify�t���O�͈Ӗ��������܂���B\n"
+Wine環境ではverifyフラグは意味を持ちません。\n"
 
   WCMD_VER,
-"VER �͓��삵�Ă���cmd�̃o�[�W������\�����܂�\n"
+"VER は動作しているcmdのバージョンを表示します\n"
 
-  WCMD_VOL,    "VOL�̃w���v\n"
+  WCMD_VOL,    "VOLのヘルプ\n"
 
   WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
 stack, and then changes the current directory to the supplied one.\n"
@@ -208,37 +211,37 @@ PUSHD.\n"
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_EXIT,
-"EXIT �͌��݂̃R�}���h�Z�b�V�������I������cmd���Ăяo����OS�܂��̓V�F���ɖ߂��܂��B\n"
+"EXIT は現在のコマンドセッションを終了してcmdを呼び出したOSまたはシェルに戻します。\n"
 
-  WCMD_ALLHELP, "CMD �����̃R�}���h:\n\
-ATTRIB\t\tDOS�t�@�C���̑�����\�����͕ύX\n\
-CALL\t\t�O���̃o�b�`�t�@�C�����Ăяo��\n\
-CD (CHDIR)\t�J�����g�f�B���N�g����ύX\n\
-CLS\t\t�R���\�[����ʂ��N���A\n\
-COPY\t\t�t�@�C�����R�s�[\n\
-CTTY\t\t����/�o�̓f�o�C�X��ύX\n\
-DATE\t\t�V�X�e���̓��t��\�����͕ύX\n\
-DEL (ERASE)\t�t�@�C�����폜\n\
-DIR\t\t�f�B���N�g���̓��e��\��\n\
-ECHO\t\t������𒼐ڃR���\�[���o�͂ɃR�s�[\n\
-HELP\t\t�g�s�b�N�̏ڍׂȃw���v��\��\n\
-MD (MKDIR)\t�T�u�f�B���N�g�����쐬\n\
+  WCMD_ALLHELP, "CMD 内蔵のコマンド:\n\
+ATTRIB\t\tDOSファイルの属性を表示又は変更\n\
+CALL\t\t外部のバッチファイルを呼び出し\n\
+CD (CHDIR)\tカレントディレクトリを変更\n\
+CLS\t\tコンソール画面をクリア\n\
+COPY\t\tファイルをコピー\n\
+CTTY\t\t入力/出力デバイスを変更\n\
+DATE\t\tシステムの日付を表示又は変更\n\
+DEL (ERASE)\tファイルを削除\n\
+DIR\t\tディレクトリの内容を表示\n\
+ECHO\t\t文字列を直接コンソール出力にコピー\n\
+HELP\t\tトピックの詳細なヘルプを表示\n\
+MD (MKDIR)\tサブディレクトリを作成\n\
 MORE\t\tDisplay output in pages\n\
-MOVE\t\t�t�@�C���܂��̓f�B���N�g���c���[���ړ�\n\
-PATH\t\t�p�X��\�����͐ݒ�\n\
+MOVE\t\tファイルまたはディレクトリツリーを移動\n\
+PATH\t\tパスを表示又は設定\n\
 POPD\t\tRestores the directory to the last one saved with PUSHD\n\
-PROMPT\t\t�R�}���h�v�����v�g��ύX\n\
+PROMPT\t\tコマンドプロンプトを変更\n\
 PUSHD\t\tChanges to a new directory, saving the current one\n\
-REN (RENAME)\t�t�@�C�������l�[��\n\
-RD (RMDIR)\t�T�u�f�B���N�g�����폜\n\
-SET\t\t���ϐ���ݒ薔�͕\��\n\
-TIME\t\t�V�X�e���̎�����ݒ薔�͕\��\n\
-TITLE\t\tCMD�Z�b�V�����̃E�B���h�E�^�C�g����ݒ�\n\
-TYPE\t\t�e�L�X�g�t�@�C���̓��e���o��\n\
-VER\t\tCMD�̃o�[�W������\��\n\
-VOL\t\t�f�B�X�N�f�o�C�X�̃{�����[�����x����\��\n\
-EXIT\t\tCMD���I��\n\n\
-��L�̃R�}���h�Ɋւ���ڍׂ�\������ɂ� HELP <�R�}���h��> �Ɠ��͂��ĉ������B\n"
+REN (RENAME)\tファイルをリネーム\n\
+RD (RMDIR)\tサブディレクトリを削除\n\
+SET\t\t環境変数を設定又は表示\n\
+TIME\t\tシステムの時刻を設定又は表示\n\
+TITLE\t\tCMDセッションのウィンドウタイトルを設定\n\
+TYPE\t\tテキストファイルの内容を出力\n\
+VER\t\tCMDのバージョンを表示\n\
+VOL\t\tディスクデバイスのボリュームラベルを表示\n\
+EXIT\t\tCMDを終了\n\n\
+上記のコマンドに関する詳細を表示するには HELP <コマンド名> と入力して下さい。\n"
 
   WCMD_CONFIRM, "Are you sure"
   WCMD_YES, "Y"
@@ -275,3 +278,5 @@ EXIT\t\tCMD���I��\n\n\
   WCMD_VERSION,"CMD Version %s\n\n"
   WCMD_MOREPROMPT, "More? "
 }
+
+#pragma code_page(default)
