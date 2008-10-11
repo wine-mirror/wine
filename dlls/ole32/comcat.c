@@ -1,5 +1,5 @@
 /*
- *	ComCatMgr ICatInformation implementation for comcat.dll
+ * Comcat implementation
  *
  * Copyright (C) 2002 John K. Hohm
  *
@@ -19,34 +19,443 @@
  */
 
 #include <string.h>
-#include "comcat_private.h"
+#include <stdarg.h>
 
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "winreg.h"
+#include "winerror.h"
+
+#include "ole2.h"
+#include "comcat.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-static LPENUMCATEGORYINFO COMCAT_IEnumCATEGORYINFO_Construct(LCID lcid);
-static HRESULT COMCAT_GetCategoryDesc(HKEY key, LCID lcid, PWCHAR pszDesc,
-				      ULONG buf_wchars);
+typedef struct
+{
+    const ICatRegisterVtbl *lpVtbl;
+    const ICatInformationVtbl *infVtbl;
+} ComCatMgrImpl;
 
 struct class_categories {
     LPCWSTR impl_strings;
     LPCWSTR req_strings;
 };
 
-static struct class_categories *COMCAT_PrepareClassCategories(
-    ULONG impl_count, const CATID *impl_catids, ULONG req_count, const CATID *req_catids);
-static HRESULT COMCAT_IsClassOfCategories(
-    HKEY key, struct class_categories const* class_categories);
-static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
-    struct class_categories *class_categories);
-static LPENUMGUID COMCAT_CATID_IEnumGUID_Construct(
-    REFCLSID rclsid, LPCWSTR impl_req);
+static LPENUMCATEGORYINFO COMCAT_IEnumCATEGORYINFO_Construct(LCID lcid);
+static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(struct class_categories *class_categories);
+static LPENUMGUID COMCAT_CATID_IEnumGUID_Construct(REFCLSID rclsid, LPCWSTR impl_req);
+
+/**********************************************************************
+ * File-scope string constants
+ */
+static const WCHAR comcat_keyname[] = {
+    'C','o','m','p','o','n','e','n','t',' ','C','a','t','e','g','o','r','i','e','s',0 };
+static const WCHAR impl_keyname[] = {
+    'I','m','p','l','e','m','e','n','t','e','d',' ','C','a','t','e','g','o','r','i','e','s',0 };
+static const WCHAR req_keyname[] = {
+    'R','e','q','u','i','r','e','d',' ','C','a','t','e','g','o','r','i','e','s',0 };
+static const WCHAR clsid_keyname[] = { 'C','L','S','I','D',0 };
 
 
 static inline ComCatMgrImpl *impl_from_ICatInformation( ICatInformation *iface )
 {
     return (ComCatMgrImpl *)((char*)iface - FIELD_OFFSET(ComCatMgrImpl, infVtbl));
+}
+
+
+/**********************************************************************
+ * COMCAT_RegisterClassCategories
+ */
+static HRESULT COMCAT_RegisterClassCategories(
+    REFCLSID rclsid,
+    LPCWSTR type,
+    ULONG cCategories,
+    const CATID *rgcatid)
+{
+    WCHAR keyname[39];
+    HRESULT res;
+    HKEY clsid_key, class_key, type_key;
+
+    if (cCategories && rgcatid == NULL) return E_POINTER;
+
+    /* Format the class key name. */
+    res = StringFromGUID2(rclsid, keyname, 39);
+    if (FAILED(res)) return res;
+
+    /* Create (or open) the CLSID key. */
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &clsid_key, NULL);
+    if (res != ERROR_SUCCESS) return E_FAIL;
+
+    /* Create (or open) the class key. */
+    res = RegCreateKeyExW(clsid_key, keyname, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &class_key, NULL);
+    if (res == ERROR_SUCCESS) {
+	/* Create (or open) the category type key. */
+	res = RegCreateKeyExW(class_key, type, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &type_key, NULL);
+	if (res == ERROR_SUCCESS) {
+	    for (; cCategories; --cCategories, ++rgcatid) {
+		HKEY key;
+
+		/* Format the category key name. */
+		res = StringFromGUID2(rgcatid, keyname, 39);
+		if (FAILED(res)) continue;
+
+		/* Do the register. */
+		res = RegCreateKeyExW(type_key, keyname, 0, NULL, 0,
+				      KEY_READ | KEY_WRITE, NULL, &key, NULL);
+		if (res == ERROR_SUCCESS) RegCloseKey(key);
+	    }
+	    res = S_OK;
+	} else res = E_FAIL;
+	RegCloseKey(class_key);
+    } else res = E_FAIL;
+    RegCloseKey(clsid_key);
+
+    return res;
+}
+
+/**********************************************************************
+ * COMCAT_UnRegisterClassCategories
+ */
+static HRESULT COMCAT_UnRegisterClassCategories(
+    REFCLSID rclsid,
+    LPCWSTR type,
+    ULONG cCategories,
+    const CATID *rgcatid)
+{
+    WCHAR keyname[68] = { 'C', 'L', 'S', 'I', 'D', '\\' };
+    HRESULT res;
+    HKEY type_key;
+
+    if (cCategories && rgcatid == NULL) return E_POINTER;
+
+    /* Format the class category type key name. */
+    res = StringFromGUID2(rclsid, keyname + 6, 39);
+    if (FAILED(res)) return res;
+    keyname[44] = '\\';
+    lstrcpyW(keyname + 45, type);
+
+    /* Open the class category type key. */
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0,
+			KEY_READ | KEY_WRITE, &type_key);
+    if (res != ERROR_SUCCESS) return E_FAIL;
+
+    for (; cCategories; --cCategories, ++rgcatid) {
+	/* Format the category key name. */
+	res = StringFromGUID2(rgcatid, keyname, 39);
+	if (FAILED(res)) continue;
+
+	/* Do the unregister. */
+	RegDeleteKeyW(type_key, keyname);
+    }
+    RegCloseKey(type_key);
+
+    return S_OK;
+}
+
+/**********************************************************************
+ * COMCAT_GetCategoryDesc
+ */
+static HRESULT COMCAT_GetCategoryDesc(HKEY key, LCID lcid, PWCHAR pszDesc,
+				      ULONG buf_wchars)
+{
+    static const WCHAR fmt[] = { '%', 'l', 'X', 0 };
+    WCHAR valname[5];
+    HRESULT res;
+    DWORD type, size = (buf_wchars - 1) * sizeof(WCHAR);
+
+    if (pszDesc == NULL) return E_INVALIDARG;
+
+    /* FIXME: lcid comparisons are more complex than this! */
+    wsprintfW(valname, fmt, lcid);
+    res = RegQueryValueExW(key, valname, 0, &type, (LPBYTE)pszDesc, &size);
+    if (res != ERROR_SUCCESS || type != REG_SZ) {
+	FIXME("Simplified lcid comparison\n");
+	return CAT_E_NODESCRIPTION;
+    }
+    pszDesc[size / sizeof(WCHAR)] = (WCHAR)0;
+
+    return S_OK;
+}
+
+/**********************************************************************
+ * COMCAT_PrepareClassCategories
+ */
+static struct class_categories *COMCAT_PrepareClassCategories(
+    ULONG impl_count, const CATID *impl_catids, ULONG req_count, const CATID *req_catids)
+{
+    struct class_categories *categories;
+    WCHAR *strings;
+
+    categories = HeapAlloc(
+	GetProcessHeap(), HEAP_ZERO_MEMORY,
+	sizeof(struct class_categories) +
+	((impl_count + req_count) * 39 + 2) * sizeof(WCHAR));
+    if (categories == NULL) return categories;
+
+    strings = (WCHAR *)(categories + 1);
+    categories->impl_strings = strings;
+    while (impl_count--) {
+	StringFromGUID2(impl_catids++, strings, 39);
+	strings += 39;
+    }
+    *strings++ = 0;
+
+    categories->req_strings = strings;
+    while (req_count--) {
+	StringFromGUID2(req_catids++, strings, 39);
+	strings += 39;
+    }
+    *strings++ = 0;
+
+    return categories;
+}
+
+/**********************************************************************
+ * COMCAT_IsClassOfCategories
+ */
+static HRESULT COMCAT_IsClassOfCategories(
+    HKEY key,
+    struct class_categories const* categories)
+{
+    static const WCHAR impl_keyname[] = { 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n',
+                                          't', 'e', 'd', ' ', 'C', 'a', 't', 'e',
+                                          'g', 'o', 'r', 'i', 'e', 's', 0 };
+    static const WCHAR req_keyname[]  = { 'R', 'e', 'q', 'u', 'i', 'r', 'e', 'd',
+                                          ' ', 'C', 'a', 't', 'e', 'g', 'o', 'r',
+                                          'i', 'e', 's', 0 };
+    HKEY subkey;
+    HRESULT res;
+    DWORD index;
+    LPCWSTR string;
+
+    /* Check that every given category is implemented by class. */
+    res = RegOpenKeyExW(key, impl_keyname, 0, KEY_READ, &subkey);
+    if (res != ERROR_SUCCESS) return S_FALSE;
+    for (string = categories->impl_strings; *string; string += 39) {
+	HKEY catkey;
+	res = RegOpenKeyExW(subkey, string, 0, 0, &catkey);
+	if (res != ERROR_SUCCESS) {
+	    RegCloseKey(subkey);
+	    return S_FALSE;
+	}
+	RegCloseKey(catkey);
+    }
+    RegCloseKey(subkey);
+
+    /* Check that all categories required by class are given. */
+    res = RegOpenKeyExW(key, req_keyname, 0, KEY_READ, &subkey);
+    if (res == ERROR_SUCCESS) {
+	for (index = 0; ; ++index) {
+	    WCHAR keyname[39];
+	    DWORD size = 39;
+
+	    res = RegEnumKeyExW(subkey, index, keyname, &size,
+				NULL, NULL, NULL, NULL);
+	    if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
+	    if (size != 38) continue; /* bogus catid in registry */
+	    for (string = categories->req_strings; *string; string += 39)
+		if (!strcmpiW(string, keyname)) break;
+	    if (!*string) {
+		RegCloseKey(subkey);
+		return S_FALSE;
+	    }
+	}
+	RegCloseKey(subkey);
+    }
+
+    return S_OK;
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_QueryInterface
+ */
+static HRESULT WINAPI COMCAT_ICatRegister_QueryInterface(
+    LPCATREGISTER iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    ComCatMgrImpl *This = (ComCatMgrImpl *)iface;
+    TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
+
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ICatRegister)) {
+	*ppvObj = iface;
+	IUnknown_AddRef(iface);
+	return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_ICatInformation)) {
+	*ppvObj = &This->infVtbl;
+	IUnknown_AddRef(iface);
+	return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_AddRef
+ */
+static ULONG WINAPI COMCAT_ICatRegister_AddRef(LPCATREGISTER iface)
+{
+    return 2; /* non-heap based object */
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_Release
+ */
+static ULONG WINAPI COMCAT_ICatRegister_Release(LPCATREGISTER iface)
+{
+    return 1; /* non-heap based object */
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_RegisterCategories
+ */
+static HRESULT WINAPI COMCAT_ICatRegister_RegisterCategories(
+    LPCATREGISTER iface,
+    ULONG cCategories,
+    CATEGORYINFO *rgci)
+{
+    HKEY comcat_key;
+    HRESULT res;
+
+    TRACE("\n");
+
+    if (cCategories && rgci == NULL)
+	return E_POINTER;
+
+    /* Create (or open) the component categories key. */
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, comcat_keyname, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &comcat_key, NULL);
+    if (res != ERROR_SUCCESS) return E_FAIL;
+
+    for (; cCategories; --cCategories, ++rgci) {
+	static const WCHAR fmt[] = { '%', 'l', 'X', 0 };
+	WCHAR keyname[39];
+	WCHAR valname[9];
+	HKEY cat_key;
+
+	/* Create (or open) the key for this category. */
+	if (!StringFromGUID2(&rgci->catid, keyname, 39)) continue;
+	res = RegCreateKeyExW(comcat_key, keyname, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &cat_key, NULL);
+	if (res != ERROR_SUCCESS) continue;
+
+	/* Set the value for this locale's description. */
+	wsprintfW(valname, fmt, rgci->lcid);
+	RegSetValueExW(cat_key, valname, 0, REG_SZ,
+		       (CONST BYTE*)(rgci->szDescription),
+		       (lstrlenW(rgci->szDescription) + 1) * sizeof(WCHAR));
+
+	RegCloseKey(cat_key);
+    }
+
+    RegCloseKey(comcat_key);
+    return S_OK;
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_UnRegisterCategories
+ */
+static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterCategories(
+    LPCATREGISTER iface,
+    ULONG cCategories,
+    CATID *rgcatid)
+{
+    HKEY comcat_key;
+    HRESULT res;
+
+    TRACE("\n");
+
+    if (cCategories && rgcatid == NULL)
+	return E_POINTER;
+
+    /* Open the component categories key. */
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, comcat_keyname, 0,
+			KEY_READ | KEY_WRITE, &comcat_key);
+    if (res != ERROR_SUCCESS) return E_FAIL;
+
+    for (; cCategories; --cCategories, ++rgcatid) {
+	WCHAR keyname[39];
+
+	/* Delete the key for this category. */
+	if (!StringFromGUID2(rgcatid, keyname, 39)) continue;
+	RegDeleteKeyW(comcat_key, keyname);
+    }
+
+    RegCloseKey(comcat_key);
+    return S_OK;
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_RegisterClassImplCategories
+ */
+static HRESULT WINAPI COMCAT_ICatRegister_RegisterClassImplCategories(
+    LPCATREGISTER iface,
+    REFCLSID rclsid,
+    ULONG cCategories,
+    CATID *rgcatid)
+{
+    TRACE("\n");
+
+    return COMCAT_RegisterClassCategories(
+	rclsid,	impl_keyname, cCategories, rgcatid);
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_UnRegisterClassImplCategories
+ */
+static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterClassImplCategories(
+    LPCATREGISTER iface,
+    REFCLSID rclsid,
+    ULONG cCategories,
+    CATID *rgcatid)
+{
+    TRACE("\n");
+
+    return COMCAT_UnRegisterClassCategories(
+	rclsid, impl_keyname, cCategories, rgcatid);
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_RegisterClassReqCategories
+ */
+static HRESULT WINAPI COMCAT_ICatRegister_RegisterClassReqCategories(
+    LPCATREGISTER iface,
+    REFCLSID rclsid,
+    ULONG cCategories,
+    CATID *rgcatid)
+{
+    TRACE("\n");
+
+    return COMCAT_RegisterClassCategories(
+	rclsid, req_keyname, cCategories, rgcatid);
+}
+
+/**********************************************************************
+ * COMCAT_ICatRegister_UnRegisterClassReqCategories
+ */
+static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterClassReqCategories(
+    LPCATREGISTER iface,
+    REFCLSID rclsid,
+    ULONG cCategories,
+    CATID *rgcatid)
+{
+    TRACE("\n");
+
+    return COMCAT_UnRegisterClassCategories(
+	rclsid, req_keyname, cCategories, rgcatid);
 }
 
 /**********************************************************************
@@ -154,11 +563,11 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumClassesOfCategories(
 
     TRACE("\n");
 
-	if (cImplemented == (ULONG)-1) 
+	if (cImplemented == (ULONG)-1)
 		cImplemented = 0;
-	if (cRequired == (ULONG)-1) 
+	if (cRequired == (ULONG)-1)
 		cRequired = 0;
-	
+
     if (ppenumCLSID == NULL ||
 	(cImplemented && rgcatidImpl == NULL) ||
 	(cRequired && rgcatidReq == NULL)) return E_POINTER;
@@ -267,9 +676,26 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumReqCategoriesOfClass(
 }
 
 /**********************************************************************
+ * COMCAT_ICatRegister_Vtbl
+ */
+static const ICatRegisterVtbl COMCAT_ICatRegister_Vtbl =
+{
+    COMCAT_ICatRegister_QueryInterface,
+    COMCAT_ICatRegister_AddRef,
+    COMCAT_ICatRegister_Release,
+    COMCAT_ICatRegister_RegisterCategories,
+    COMCAT_ICatRegister_UnRegisterCategories,
+    COMCAT_ICatRegister_RegisterClassImplCategories,
+    COMCAT_ICatRegister_UnRegisterClassImplCategories,
+    COMCAT_ICatRegister_RegisterClassReqCategories,
+    COMCAT_ICatRegister_UnRegisterClassReqCategories
+};
+
+
+/**********************************************************************
  * COMCAT_ICatInformation_Vtbl
  */
-const ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
+static const ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
 {
     COMCAT_ICatInformation_QueryInterface,
     COMCAT_ICatInformation_AddRef,
@@ -281,6 +707,109 @@ const ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
     COMCAT_ICatInformation_EnumImplCategoriesOfClass,
     COMCAT_ICatInformation_EnumReqCategoriesOfClass
 };
+
+/**********************************************************************
+ * static ComCatMgr instance
+ */
+static ComCatMgrImpl COMCAT_ComCatMgr =
+{
+    &COMCAT_ICatRegister_Vtbl,
+    &COMCAT_ICatInformation_Vtbl
+};
+
+/**********************************************************************
+ * COMCAT_IClassFactory_QueryInterface (also IUnknown)
+ */
+static HRESULT WINAPI COMCAT_IClassFactory_QueryInterface(
+    LPCLASSFACTORY iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
+
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+	IsEqualGUID(riid, &IID_IClassFactory))
+    {
+	*ppvObj = (LPVOID)iface;
+        IUnknown_AddRef(iface);
+	return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+/**********************************************************************
+ * COMCAT_IClassFactory_AddRef (also IUnknown)
+ */
+static ULONG WINAPI COMCAT_IClassFactory_AddRef(LPCLASSFACTORY iface)
+{
+    return 2; /* non-heap based object */
+}
+
+/**********************************************************************
+ * COMCAT_IClassFactory_Release (also IUnknown)
+ */
+static ULONG WINAPI COMCAT_IClassFactory_Release(LPCLASSFACTORY iface)
+{
+    return 1; /* non-heap based object */
+}
+
+/**********************************************************************
+ * COMCAT_IClassFactory_CreateInstance
+ */
+static HRESULT WINAPI COMCAT_IClassFactory_CreateInstance(
+    LPCLASSFACTORY iface,
+    LPUNKNOWN pUnkOuter,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    HRESULT res;
+    TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
+
+    if (ppvObj == NULL) return E_POINTER;
+
+    /* Don't support aggregation (Windows doesn't) */
+    if (pUnkOuter != NULL) return CLASS_E_NOAGGREGATION;
+
+    res = IUnknown_QueryInterface((LPUNKNOWN)&COMCAT_ComCatMgr, riid, ppvObj);
+    if (SUCCEEDED(res)) {
+	return res;
+    }
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/**********************************************************************
+ * COMCAT_IClassFactory_LockServer
+ */
+static HRESULT WINAPI COMCAT_IClassFactory_LockServer(
+    LPCLASSFACTORY iface,
+    BOOL fLock)
+{
+    FIXME("(%d), stub!\n",fLock);
+    return S_OK;
+}
+
+/**********************************************************************
+ * static ClassFactory instance
+ */
+static const IClassFactoryVtbl ComCatCFVtbl =
+{
+    COMCAT_IClassFactory_QueryInterface,
+    COMCAT_IClassFactory_AddRef,
+    COMCAT_IClassFactory_Release,
+    COMCAT_IClassFactory_CreateInstance,
+    COMCAT_IClassFactory_LockServer
+};
+
+static const IClassFactoryVtbl *ComCatCF = &ComCatCFVtbl;
+
+HRESULT ComCatCF_Create(REFIID riid, LPVOID *ppv)
+{
+    return IClassFactory_QueryInterface((IClassFactory *)&ComCatCF, riid, ppv);
+}
 
 /**********************************************************************
  * IEnumCATEGORYINFO implementation
@@ -464,120 +993,6 @@ static LPENUMCATEGORYINFO COMCAT_IEnumCATEGORYINFO_Construct(LCID lcid)
 	RegOpenKeyExW(HKEY_CLASSES_ROOT, keyname, 0, KEY_READ, &This->key);
     }
     return (LPENUMCATEGORYINFO)This;
-}
-
-/**********************************************************************
- * COMCAT_GetCategoryDesc
- */
-static HRESULT COMCAT_GetCategoryDesc(HKEY key, LCID lcid, PWCHAR pszDesc,
-				      ULONG buf_wchars)
-{
-    static const WCHAR fmt[] = { '%', 'l', 'X', 0 };
-    WCHAR valname[5];
-    HRESULT res;
-    DWORD type, size = (buf_wchars - 1) * sizeof(WCHAR);
-
-    if (pszDesc == NULL) return E_INVALIDARG;
-
-    /* FIXME: lcid comparisons are more complex than this! */
-    wsprintfW(valname, fmt, lcid);
-    res = RegQueryValueExW(key, valname, 0, &type, (LPBYTE)pszDesc, &size);
-    if (res != ERROR_SUCCESS || type != REG_SZ) {
-	FIXME("Simplified lcid comparison\n");
-	return CAT_E_NODESCRIPTION;
-    }
-    pszDesc[size / sizeof(WCHAR)] = (WCHAR)0;
-
-    return S_OK;
-}
-
-/**********************************************************************
- * COMCAT_PrepareClassCategories
- */
-static struct class_categories *COMCAT_PrepareClassCategories(
-    ULONG impl_count, const CATID *impl_catids, ULONG req_count, const CATID *req_catids)
-{
-    struct class_categories *categories;
-    WCHAR *strings;
-
-    categories = HeapAlloc(
-	GetProcessHeap(), HEAP_ZERO_MEMORY,
-	sizeof(struct class_categories) +
-	((impl_count + req_count) * 39 + 2) * sizeof(WCHAR));
-    if (categories == NULL) return categories;
-
-    strings = (WCHAR *)(categories + 1);
-    categories->impl_strings = strings;
-    while (impl_count--) {
-	StringFromGUID2(impl_catids++, strings, 39);
-	strings += 39;
-    }
-    *strings++ = 0;
-
-    categories->req_strings = strings;
-    while (req_count--) {
-	StringFromGUID2(req_catids++, strings, 39);
-	strings += 39;
-    }
-    *strings++ = 0;
-
-    return categories;
-}
-
-/**********************************************************************
- * COMCAT_IsClassOfCategories
- */
-static HRESULT COMCAT_IsClassOfCategories(
-    HKEY key,
-    struct class_categories const* categories)
-{
-    static const WCHAR impl_keyname[] = { 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n',
-                                          't', 'e', 'd', ' ', 'C', 'a', 't', 'e',
-                                          'g', 'o', 'r', 'i', 'e', 's', 0 };
-    static const WCHAR req_keyname[]  = { 'R', 'e', 'q', 'u', 'i', 'r', 'e', 'd',
-                                          ' ', 'C', 'a', 't', 'e', 'g', 'o', 'r',
-                                          'i', 'e', 's', 0 };
-    HKEY subkey;
-    HRESULT res;
-    DWORD index;
-    LPCWSTR string;
-
-    /* Check that every given category is implemented by class. */
-    res = RegOpenKeyExW(key, impl_keyname, 0, KEY_READ, &subkey);
-    if (res != ERROR_SUCCESS) return S_FALSE;
-    for (string = categories->impl_strings; *string; string += 39) {
-	HKEY catkey;
-	res = RegOpenKeyExW(subkey, string, 0, 0, &catkey);
-	if (res != ERROR_SUCCESS) {
-	    RegCloseKey(subkey);
-	    return S_FALSE;
-	}
-	RegCloseKey(catkey);
-    }
-    RegCloseKey(subkey);
-
-    /* Check that all categories required by class are given. */
-    res = RegOpenKeyExW(key, req_keyname, 0, KEY_READ, &subkey);
-    if (res == ERROR_SUCCESS) {
-	for (index = 0; ; ++index) {
-	    WCHAR keyname[39];
-	    DWORD size = 39;
-
-	    res = RegEnumKeyExW(subkey, index, keyname, &size,
-				NULL, NULL, NULL, NULL);
-	    if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
-	    if (size != 38) continue; /* bogus catid in registry */
-	    for (string = categories->req_strings; *string; string += 39)
-		if (!strcmpiW(string, keyname)) break;
-	    if (!*string) {
-		RegCloseKey(subkey);
-		return S_FALSE;
-	    }
-	}
-	RegCloseKey(subkey);
-    }
-
-    return S_OK;
 }
 
 /**********************************************************************

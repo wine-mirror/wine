@@ -499,7 +499,7 @@ static struct regsvr_coclass const coclass_list[] = {
     {	&CLSID_StdComponentCategoriesMgr,
 	"Component Categories Manager",
 	NULL,
-	"comcat.dll",  /* FIXME: should be in ole32.dll */
+	"ole32.dll",
 	"Both"
     },
     { NULL }			/* list terminator */

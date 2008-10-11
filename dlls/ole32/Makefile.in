@@ -12,6 +12,7 @@ C_SRCS = \
 	bindctx.c \
 	classmoniker.c \
 	clipboard.c \
+	comcat.c \
 	compobj.c \
 	compositemoniker.c \
 	datacache.c \

@@ -6,10 +6,7 @@ MODULE    = comcat.dll
 IMPORTS   = uuid ole32 user32 advapi32 kernel32
 
 C_SRCS = \
-	comcat_main.c \
-	factory.c \
-	information.c \
-	register.c
+	comcat_main.c
 
 RC_SRCS = \
 	version.rc
