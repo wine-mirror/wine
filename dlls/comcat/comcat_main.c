@@ -52,4 +52,18 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return dll_ref != 0 ? S_FALSE : S_OK;
 }
 
-/* NOTE: DllRegisterServer and DllUnregisterServer are in regsvr.c */
+/***********************************************************************
+ *		DllRegisterServer (COMCAT.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return S_OK;
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (COMCAT.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return S_OK;
+}

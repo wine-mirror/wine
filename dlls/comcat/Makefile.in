@@ -10,8 +10,7 @@ C_SRCS = \
 	factory.c \
 	information.c \
 	manager.c \
-	register.c \
-	regsvr.c
+	register.c
 
 RC_SRCS = \
 	version.rc
