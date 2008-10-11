@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include <stdarg.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -26,6 +27,7 @@
 #include "objbase.h"
 #include "shlguid.h"
 #include "shlwapi.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
@@ -562,6 +564,30 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
         return E_INVALIDARG;
 }
 
+static HRESULT ASSOC_GetValue(HKEY hkey, WCHAR ** pszText)
+{
+  DWORD len;
+  LONG ret;
+
+  assert(pszText);
+  ret = RegQueryValueExW(hkey, NULL, 0, NULL, NULL, &len);
+  if (ret != ERROR_SUCCESS)
+    return HRESULT_FROM_WIN32(ret);
+  if (!len)
+    return E_FAIL;
+  *pszText = HeapAlloc(GetProcessHeap(), 0, len);
+  if (!*pszText)
+    return E_OUTOFMEMORY;
+  ret = RegQueryValueExW(hkey, NULL, 0, NULL, (LPBYTE)*pszText,
+                         &len);
+  if (ret != ERROR_SUCCESS)
+  {
+    HeapFree(GetProcessHeap(), 0, *pszText);
+    return HRESULT_FROM_WIN32(ret);
+  }
+  return S_OK;
+}
+
 /**************************************************************************
  *  IQueryAssociations_GetString {SHLWAPI}
  *
@@ -588,10 +614,119 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
   DWORD *pcchOut)
 {
   IQueryAssociationsImpl *This = (IQueryAssociationsImpl *)iface;
+  const ASSOCF cfUnimplemented = ~(0);
+  DWORD len;
+  HKEY hkeyCommand;
+  HKEY hkeyFile;
+  HKEY hkeyShell;
+  HKEY hkeyVerb;
+  HRESULT hr;
+  LONG ret;
+  WCHAR path[MAX_PATH];
+  WCHAR * pszCommand;
+  WCHAR * pszEnd;
+  WCHAR * pszExtraFromReg;
+  WCHAR * pszFileType;
+  WCHAR * pszStart;
+  static const WCHAR commandW[] = { 'c','o','m','m','a','n','d',0 };
+  static const WCHAR shellW[] = { 's','h','e','l','l',0 };
 
-  FIXME("(%p,0x%8x,0x%8x,%s,%p,%p)-stub!\n", This, cfFlags, str,
+  TRACE("(%p,0x%8x,0x%8x,%s,%p,%p)\n", This, cfFlags, str,
         debugstr_w(pszExtra), pszOut, pcchOut);
-  return E_NOTIMPL;
+
+  if (cfFlags & cfUnimplemented)
+    FIXME("%08x: unimplemented flags!\n", cfFlags & cfUnimplemented);
+
+  if (!pcchOut)
+    return E_UNEXPECTED;
+
+  switch (str)
+  {
+    case ASSOCSTR_EXECUTABLE:
+    {
+      hr = ASSOC_GetValue(This->hkeySource, &pszFileType);
+      if (FAILED(hr))
+        return hr;
+      ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, pszFileType, 0, KEY_READ,
+                          &hkeyFile);
+      HeapFree(GetProcessHeap(), 0, pszFileType);
+      if (ret != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(ret);
+
+      ret = RegOpenKeyExW(hkeyFile, shellW, 0, KEY_READ, &hkeyShell);
+      RegCloseKey(hkeyFile);
+      if (ret != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(ret);
+
+      if (!pszExtra)
+      {
+        hr = ASSOC_GetValue(hkeyShell, &pszExtraFromReg);
+        if (FAILED(hr))
+        {
+          RegCloseKey(hkeyShell);
+          return hr;
+        }
+      }
+
+      ret = RegOpenKeyExW(hkeyShell, pszExtra ? pszExtra : pszExtraFromReg,
+                          0, KEY_READ, &hkeyVerb);
+      HeapFree(GetProcessHeap(), 0, pszExtraFromReg);
+      RegCloseKey(hkeyShell);
+      if (ret != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(ret);
+
+      ret = RegOpenKeyExW(hkeyVerb, commandW, 0, KEY_READ, &hkeyCommand);
+      RegCloseKey(hkeyVerb);
+      if (ret != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(ret);
+      hr = ASSOC_GetValue(hkeyCommand, &pszCommand);
+      RegCloseKey(hkeyCommand);
+      if (FAILED(hr))
+        return hr;
+
+      /* cleanup pszCommand */
+      if (pszCommand[0] == '"')
+      {
+        pszStart = pszCommand + 1;
+        pszEnd = strchrW(pszStart, '"');
+      }
+      else
+      {
+        pszStart = pszCommand;
+        pszEnd = strchrW(pszStart, ' ');
+      }
+      if (pszEnd)
+        *pszEnd = 0;
+
+      len = SearchPathW(NULL, pszStart, NULL, MAX_PATH, path, NULL);
+      HeapFree(GetProcessHeap(), 0, pszCommand);
+      if (!len)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+      len++;
+      if (pszOut)
+      {
+        if (*pcchOut < len)
+        {
+          *pcchOut = len;
+          return E_POINTER;
+        }
+        *pcchOut = len;
+        lstrcpynW(pszOut, path, len);
+        return S_OK;
+      }
+      else
+      {
+        *pcchOut = len;
+        return S_FALSE;
+      }
+      break;
+    }
+
+    default:
+      FIXME("assocstr %d unimplemented!\n", str);
+      return E_NOTIMPL;
+  }
 }
 
 /**************************************************************************
