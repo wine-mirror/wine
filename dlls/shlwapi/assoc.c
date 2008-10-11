@@ -491,6 +491,8 @@ static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations *iface)
   if (!refCount)
   {
     TRACE("Destroying IQueryAssociations (%p)\n", This);
+    RegCloseKey(This->hkeySource);
+    RegCloseKey(This->hkeyProgID);
     HeapFree(GetProcessHeap(), 0, This);
   }
   
