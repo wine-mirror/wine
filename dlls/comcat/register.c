@@ -54,12 +54,24 @@ static HRESULT WINAPI COMCAT_ICatRegister_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
+    ComCatMgrImpl *This = (ComCatMgrImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
     if (ppvObj == NULL) return E_POINTER;
 
-    return IUnknown_QueryInterface((LPUNKNOWN)&This->unkVtbl, riid, ppvObj);
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ICatRegister)) {
+	*ppvObj = iface;
+	IUnknown_AddRef(iface);
+	return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_ICatInformation)) {
+	*ppvObj = &This->infVtbl;
+	IUnknown_AddRef(iface);
+	return S_OK;
+    }
+
+    return E_NOINTERFACE;
 }
 
 /**********************************************************************
@@ -67,10 +79,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_QueryInterface(
  */
 static ULONG WINAPI COMCAT_ICatRegister_AddRef(LPCATREGISTER iface)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
-    TRACE("\n");
-
-    return IUnknown_AddRef((LPUNKNOWN)&This->unkVtbl);
+    return 2; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -78,10 +87,7 @@ static ULONG WINAPI COMCAT_ICatRegister_AddRef(LPCATREGISTER iface)
  */
 static ULONG WINAPI COMCAT_ICatRegister_Release(LPCATREGISTER iface)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface);
-    TRACE("\n");
-
-    return IUnknown_Release((LPUNKNOWN)&This->unkVtbl);
+    return 1; /* non-heap based object */
 }
 
 /**********************************************************************
@@ -92,7 +98,6 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterCategories(
     ULONG cCategories,
     CATEGORYINFO *rgci)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     HKEY comcat_key;
     HRESULT res;
 
@@ -139,7 +144,6 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     HKEY comcat_key;
     HRESULT res;
 
@@ -174,7 +178,6 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterClassImplCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     TRACE("\n");
 
     return COMCAT_RegisterClassCategories(
@@ -190,7 +193,6 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterClassImplCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     TRACE("\n");
 
     return COMCAT_UnRegisterClassCategories(
@@ -206,7 +208,6 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterClassReqCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     TRACE("\n");
 
     return COMCAT_RegisterClassCategories(
@@ -222,7 +223,6 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterClassReqCategories(
     ULONG cCategories,
     CATID *rgcatid)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, regVtbl, iface); */
     TRACE("\n");
 
     return COMCAT_UnRegisterClassCategories(
@@ -232,7 +232,7 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterClassReqCategories(
 /**********************************************************************
  * COMCAT_ICatRegister_Vtbl
  */
-const ICatRegisterVtbl COMCAT_ICatRegister_Vtbl =
+static const ICatRegisterVtbl COMCAT_ICatRegister_Vtbl =
 {
     COMCAT_ICatRegister_QueryInterface,
     COMCAT_ICatRegister_AddRef,
@@ -243,6 +243,16 @@ const ICatRegisterVtbl COMCAT_ICatRegister_Vtbl =
     COMCAT_ICatRegister_UnRegisterClassImplCategories,
     COMCAT_ICatRegister_RegisterClassReqCategories,
     COMCAT_ICatRegister_UnRegisterClassReqCategories
+};
+
+
+/**********************************************************************
+ * static ComCatMgr instance
+ */
+ComCatMgrImpl COMCAT_ComCatMgr =
+{
+    &COMCAT_ICatRegister_Vtbl,
+    &COMCAT_ICatInformation_Vtbl
 };
 
 /**********************************************************************

@@ -9,7 +9,6 @@ C_SRCS = \
 	comcat_main.c \
 	factory.c \
 	information.c \
-	manager.c \
 	register.c
 
 RC_SRCS = \

@@ -43,6 +43,12 @@ static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
 static LPENUMGUID COMCAT_CATID_IEnumGUID_Construct(
     REFCLSID rclsid, LPCWSTR impl_req);
 
+
+static inline ComCatMgrImpl *impl_from_ICatInformation( ICatInformation *iface )
+{
+    return (ComCatMgrImpl *)((char*)iface - FIELD_OFFSET(ComCatMgrImpl, infVtbl));
+}
+
 /**********************************************************************
  * COMCAT_ICatInformation_QueryInterface
  */
@@ -51,12 +57,8 @@ static HRESULT WINAPI COMCAT_ICatInformation_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface);
-    TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
-
-    if (ppvObj == NULL) return E_POINTER;
-
-    return IUnknown_QueryInterface((LPUNKNOWN)&This->unkVtbl, riid, ppvObj);
+    ComCatMgrImpl *This = impl_from_ICatInformation( iface );
+    return IUnknown_QueryInterface((LPUNKNOWN)This, riid, ppvObj);
 }
 
 /**********************************************************************
@@ -64,10 +66,8 @@ static HRESULT WINAPI COMCAT_ICatInformation_QueryInterface(
  */
 static ULONG WINAPI COMCAT_ICatInformation_AddRef(LPCATINFORMATION iface)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface);
-    TRACE("\n");
-
-    return IUnknown_AddRef((LPUNKNOWN)&This->unkVtbl);
+    ComCatMgrImpl *This = impl_from_ICatInformation( iface );
+    return IUnknown_AddRef((LPUNKNOWN)This);
 }
 
 /**********************************************************************
@@ -75,10 +75,8 @@ static ULONG WINAPI COMCAT_ICatInformation_AddRef(LPCATINFORMATION iface)
  */
 static ULONG WINAPI COMCAT_ICatInformation_Release(LPCATINFORMATION iface)
 {
-    ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface);
-    TRACE("\n");
-
-    return IUnknown_Release((LPUNKNOWN)&This->unkVtbl);
+    ComCatMgrImpl *This = impl_from_ICatInformation( iface );
+    return IUnknown_Release((LPUNKNOWN)This);
 }
 
 /**********************************************************************
@@ -89,7 +87,6 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumCategories(
     LCID lcid,
     LPENUMCATEGORYINFO *ppenumCatInfo)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
     TRACE("\n");
 
     if (ppenumCatInfo == NULL) return E_POINTER;
@@ -109,7 +106,6 @@ static HRESULT WINAPI COMCAT_ICatInformation_GetCategoryDesc(
     LCID lcid,
     PWCHAR *ppszDesc)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
     WCHAR keyname[60] = { 'C', 'o', 'm', 'p', 'o', 'n', 'e', 'n',
 			  't', ' ', 'C', 'a', 't', 'e', 'g', 'o',
 			  'r', 'i', 'e', 's', '\\', 0 };
@@ -154,7 +150,6 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumClassesOfCategories(
     CATID *rgcatidReq,
     LPENUMCLSID *ppenumCLSID)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
     struct class_categories *categories;
 
     TRACE("\n");
@@ -191,7 +186,6 @@ static HRESULT WINAPI COMCAT_ICatInformation_IsClassOfCategories(
     ULONG cRequired,
     CATID *rgcatidReq)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
     WCHAR keyname[45] = { 'C', 'L', 'S', 'I', 'D', '\\', 0 };
     HRESULT res;
     struct class_categories *categories;
@@ -236,7 +230,6 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumImplCategoriesOfClass(
     REFCLSID rclsid,
     LPENUMCATID *ppenumCATID)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
     static const WCHAR postfix[24] = { '\\', 'I', 'm', 'p', 'l', 'e', 'm', 'e',
 			  'n', 't', 'e', 'd', ' ', 'C', 'a', 't',
 			  'e', 'g', 'o', 'r', 'i', 'e', 's', 0 };
@@ -259,7 +252,6 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumReqCategoriesOfClass(
     REFCLSID rclsid,
     LPENUMCATID *ppenumCATID)
 {
-/*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
     static const WCHAR postfix[21] = { '\\', 'R', 'e', 'q', 'u', 'i', 'r', 'e',
 			  'd', ' ', 'C', 'a', 't', 'e', 'g', 'o',
 			  'r', 'i', 'e', 's', 0 };

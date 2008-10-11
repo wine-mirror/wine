@@ -32,7 +32,6 @@
 #include "comcat.h"
 #include "wine/unicode.h"
 
-#define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /**********************************************************************
  * Dll lifetime tracking declaration for comcat.dll
@@ -46,15 +45,11 @@ extern HRESULT ComCatCF_Create(REFIID riid, LPVOID *ppv);
  */
 typedef struct
 {
-    /* IUnknown fields */
-    const IUnknownVtbl *unkVtbl;
-    const ICatRegisterVtbl *regVtbl;
+    const ICatRegisterVtbl *lpVtbl;
     const ICatInformationVtbl *infVtbl;
-    LONG ref;
 } ComCatMgrImpl;
 
 extern ComCatMgrImpl COMCAT_ComCatMgr;
-extern const ICatRegisterVtbl COMCAT_ICatRegister_Vtbl;
 extern const ICatInformationVtbl COMCAT_ICatInformation_Vtbl;
 
 /**********************************************************************
