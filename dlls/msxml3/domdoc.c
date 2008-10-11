@@ -953,6 +953,7 @@ static HRESULT WINAPI domdoc_createElement(
 
     xml_name = xmlChar_from_wchar((WCHAR*)tagname);
     xmlnode = xmlNewDocNode(get_doc(This), NULL, xml_name, NULL);
+    xmldoc_add_orphan(xmlnode->doc, xmlnode);
 
     TRACE("created xmlptr %p\n", xmlnode);
     elem_unk = create_element(xmlnode, NULL);
@@ -984,6 +985,7 @@ static HRESULT WINAPI domdoc_createDocumentFragment(
     if(!xmlnode)
         return E_FAIL;
 
+    xmldoc_add_orphan(xmlnode->doc, xmlnode);
     *docFrag = (IXMLDOMDocumentFragment*)create_doc_fragment(xmlnode);
 
     return S_OK;
@@ -1014,6 +1016,7 @@ static HRESULT WINAPI domdoc_createTextNode(
         return E_FAIL;
 
     xmlnode->doc = get_doc( This );
+    xmldoc_add_orphan(xmlnode->doc, xmlnode);
 
     *text = (IXMLDOMText*)create_text(xmlnode);
 
@@ -1045,6 +1048,7 @@ static HRESULT WINAPI domdoc_createComment(
         return E_FAIL;
 
     xmlnode->doc = get_doc( This );
+    xmldoc_add_orphan(xmlnode->doc, xmlnode);
 
     *comment = (IXMLDOMComment*)create_comment(xmlnode);
 
@@ -1076,6 +1080,7 @@ static HRESULT WINAPI domdoc_createCDATASection(
         return E_FAIL;
 
     xmlnode->doc = get_doc( This );
+    xmldoc_add_orphan(xmlnode->doc, xmlnode);
 
     *cdata = (IXMLDOMCDATASection*)create_cdata(xmlnode);
 
@@ -1106,6 +1111,7 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
     xml_content = xmlChar_from_wchar((WCHAR*)data);
 
     xmlnode = xmlNewDocPI(get_doc(This), xml_target, xml_content);
+    xmldoc_add_orphan(xmlnode->doc, xmlnode);
     TRACE("created xmlptr %p\n", xmlnode);
     *pi = (IXMLDOMProcessingInstruction*)create_pi(xmlnode);
 
@@ -1144,6 +1150,7 @@ static HRESULT WINAPI domdoc_createAttribute(
         return E_FAIL;
 
     xmlnode->doc = get_doc( This );
+    xmldoc_add_orphan(xmlnode->doc, xmlnode);
 
     *attribute = (IXMLDOMAttribute*)create_attribute(xmlnode);
 
@@ -1175,6 +1182,7 @@ static HRESULT WINAPI domdoc_createEntityReference(
         return E_FAIL;
 
     xmlnode->doc = get_doc( This );
+    xmldoc_add_orphan(xmlnode->doc, xmlnode);
 
     *entityRef = (IXMLDOMEntityReference*)create_doc_entity_ref(xmlnode);
 
@@ -1267,7 +1275,10 @@ static HRESULT WINAPI domdoc_createNode(
     HeapFree(GetProcessHeap(), 0, xml_name);
 
     if(xmlnode && *node)
+    {
+        xmldoc_add_orphan(xmlnode->doc, xmlnode);
         return S_OK;
+    }
 
     return E_FAIL;
 }

@@ -596,6 +596,10 @@ static HRESULT WINAPI xmlnode_insertBefore(
     new_child_node = impl_from_IXMLDOMNode(new)->node;
     TRACE("new_child_node %p This->node %p\n", new_child_node, This->node);
 
+    if(!new_child_node->parent)
+        if(xmldoc_remove_orphan(new_child_node->doc, new_child_node) != S_OK)
+            WARN("%p is not an orphan of %p\n", new_child_node, new_child_node->doc);
+
     if(before)
     {
         before_node = impl_from_IXMLDOMNode(before)->node;
@@ -663,10 +667,16 @@ static HRESULT WINAPI xmlnode_replaceChild(
         my_ancestor = my_ancestor->parent;
     }
 
+    if(!new_child_ptr->parent)
+        if(xmldoc_remove_orphan(new_child_ptr->doc, new_child_ptr) != S_OK)
+            WARN("%p is not an orphan of %p\n", new_child_ptr, new_child_ptr->doc);
+
     leaving_doc = new_child_ptr->doc;
     xmldoc_add_ref(old_child_ptr->doc);
     xmlReplaceNode(old_child_ptr, new_child_ptr);
     xmldoc_release(leaving_doc);
+
+    xmldoc_add_orphan(old_child_ptr->doc, old_child_ptr);
 
     if(outOldChild)
     {
@@ -790,6 +800,7 @@ static HRESULT WINAPI xmlnode_cloneNode(
     if(pClone)
     {
         pClone->doc = This->node->doc;
+        xmldoc_add_orphan(pClone->doc, pClone);
 
         pNode = create_node(pClone);
         if(!pNode)

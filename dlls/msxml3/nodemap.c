@@ -265,6 +265,10 @@ static HRESULT WINAPI xmlnodemap_setNamedItem(
             return E_FAIL;
         }
 
+        if(!ThisNew->node->parent)
+            if(xmldoc_remove_orphan(ThisNew->node->doc, ThisNew->node) != S_OK)
+                WARN("%p is not an orphan of %p\n", ThisNew->node, ThisNew->node->doc);
+
         nodeNew = xmlAddChild(node, ThisNew->node);
 
         if(namedItem)
@@ -312,6 +316,8 @@ static HRESULT WINAPI xmlnodemap_removeNamedItem(
     {
         attr_copy = xmlCopyProp( NULL, attr );
         attr_copy->doc = node->doc;
+        /* The cast here is OK, xmlFreeNode handles xmlAttrPtr pointers */
+        xmldoc_add_orphan(attr_copy->doc, (xmlNodePtr) attr_copy);
         *namedItem = create_node( (xmlNodePtr) attr_copy );
     }
     xmlRemoveProp( attr );
