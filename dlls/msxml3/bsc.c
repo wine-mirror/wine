@@ -114,7 +114,7 @@ static HRESULT WINAPI bsc_OnStartBinding(
     TRACE("(%p)->(%x %p)\n", This, dwReserved, pib);
 
     This->binding = pib;
-    IBindStatusCallback_AddRef(pib);
+    IBinding_AddRef(pib);
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &This->memstream);
     if(FAILED(hr))
