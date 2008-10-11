@@ -38,31 +38,31 @@ static void test_getstring_bad(void)
     DWORD len;
 
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, NULL, open, NULL, &len);
-    todo_wine expect_hr(E_INVALIDARG, hr);
+    expect_hr(E_INVALIDARG, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, badBad, open, NULL, &len);
-    todo_wine expect_hr(E_FAIL, hr);
+    expect_hr(E_FAIL, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotBad, open, NULL, &len);
-    todo_wine expect_hr(E_FAIL, hr);
+    expect_hr(E_FAIL, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, invalid, NULL,
                            &len);
     todo_wine expect_hr(0x80070002, hr); /* NOT FOUND */
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, NULL);
-    todo_wine expect_hr(E_UNEXPECTED, hr);
+    expect_hr(E_UNEXPECTED, hr);
 
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, NULL, open, NULL, &len);
-    todo_wine expect_hr(E_INVALIDARG, hr);
+    expect_hr(E_INVALIDARG, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, badBad, open, NULL,
                            &len);
-    todo_wine expect_hr(E_FAIL, hr);
+    expect_hr(E_FAIL, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotBad, open, NULL,
                            &len);
-    todo_wine expect_hr(E_FAIL, hr);
+    expect_hr(E_FAIL, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, invalid, NULL,
                            &len);
     todo_wine expect_hr(0x80070002, hr); /* NOT FOUND */
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
                            NULL);
-    todo_wine expect_hr(E_UNEXPECTED, hr);
+    expect_hr(E_UNEXPECTED, hr);
 }
 
 static void test_getstring_basic(void)

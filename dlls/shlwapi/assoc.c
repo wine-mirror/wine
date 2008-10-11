@@ -244,7 +244,7 @@ HRESULT WINAPI AssocQueryStringW(ASSOCF cfFlags, ASSOCSTR str, LPCWSTR pszAssoc,
         debugstr_w(pszExtra), pszOut, pcchOut);
 
   if (!pcchOut)
-    return E_INVALIDARG;
+    return E_UNEXPECTED;
 
   lpAssoc = IQueryAssociations_Constructor();
 
@@ -290,7 +290,7 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF cfFlags, ASSOCSTR str, LPCSTR pszAssoc,
         debugstr_a(pszExtra), pszOut, pcchOut);
 
   if (!pcchOut)
-    hRet = E_INVALIDARG;
+    hRet = E_UNEXPECTED;
   else if (SHLWAPI_ParamAToW(pszAssoc, szAssocW, MAX_PATH, &lpszAssocW) &&
            SHLWAPI_ParamAToW(pszExtra, szExtraW, MAX_PATH, &lpszExtraW))
   {
@@ -520,7 +520,7 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
 {
     static const WCHAR szProgID[] = {'P','r','o','g','I','D',0};
     IQueryAssociationsImpl *This = (IQueryAssociationsImpl *)iface;
-    HRESULT hr;
+    LONG ret;
 
     TRACE("(%p)->(%d,%s,%p,%p)\n", iface,
                                     cfFlags,
@@ -533,23 +533,21 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
     	FIXME("unsupported flags: %x\n", cfFlags);
     if (pszAssoc != NULL)
     {
-        hr = RegOpenKeyExW(HKEY_CLASSES_ROOT,
-                           pszAssoc,
-                           0,
-                           KEY_READ,
-                           &This->hkeySource);
-        if (FAILED(hr))
-            return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
+        ret = RegOpenKeyExW(HKEY_CLASSES_ROOT,
+                            pszAssoc,
+                            0,
+                            KEY_READ,
+                            &This->hkeySource);
+        if (ret != ERROR_SUCCESS)
+            return E_FAIL;
         /* if this is not a prog id */
         if ((*pszAssoc == '.') || (*pszAssoc == '{'))
         {
-            hr = RegOpenKeyExW(This->hkeySource,
-                               szProgID,
-                               0,
-                               KEY_READ,
-                               &This->hkeyProgID);
-            if (FAILED(hr))
-                FIXME("Don't know what to return\n");
+            RegOpenKeyExW(This->hkeySource,
+                          szProgID,
+                          0,
+                          KEY_READ,
+                          &This->hkeyProgID);
         }
         else
             This->hkeyProgID = This->hkeySource;
@@ -561,7 +559,7 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
         return S_OK;
     }
     else
-        return E_FAIL;
+        return E_INVALIDARG;
 }
 
 /**************************************************************************
