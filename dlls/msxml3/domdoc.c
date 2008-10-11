@@ -81,6 +81,26 @@ typedef struct _domdoc
     DispatchEx dispex;
 } domdoc;
 
+typedef struct _xmldoc_priv {
+    LONG refs;
+} xmldoc_priv;
+
+static inline xmldoc_priv * priv_from_xmlDocPtr(xmlDocPtr doc)
+{
+    return doc->_private;
+}
+
+static xmldoc_priv * create_priv(void)
+{
+    xmldoc_priv *priv;
+    priv = HeapAlloc( GetProcessHeap(), 0, sizeof (*priv) );
+
+    if(priv)
+        priv->refs = 0;
+
+    return priv;
+}
+
 static xmlDocPtr doparse( char *ptr, int len )
 {
 #ifdef HAVE_XMLREADMEMORY
@@ -97,18 +117,21 @@ static xmlDocPtr doparse( char *ptr, int len )
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
 {
-    LONG ref = InterlockedIncrement((LONG*)&doc->_private);
+    LONG ref = InterlockedIncrement(&priv_from_xmlDocPtr(doc)->refs);
     TRACE("%d\n", ref);
     return ref;
 }
 
 LONG xmldoc_release(xmlDocPtr doc)
 {
-    LONG ref = InterlockedDecrement((LONG*)&doc->_private);
+    xmldoc_priv *priv = priv_from_xmlDocPtr(doc);
+    LONG ref = InterlockedDecrement(&priv->refs);
     TRACE("%d\n", ref);
     if(ref == 0)
     {
         TRACE("freeing docptr %p\n", doc);
+        HeapFree(GetProcessHeap(), 0, doc->_private);
+
         xmlFreeDoc(doc);
     }
 
@@ -1194,7 +1217,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
 
     xmldoc = doparse( ptr, len );
     if(xmldoc) {
-        xmldoc->_private = 0;
+        xmldoc->_private = create_priv();
         attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
     }
 
@@ -1310,7 +1333,7 @@ static HRESULT WINAPI domdoc_load(
 
     if(!filename || FAILED(hr)) {
         xmldoc = xmlNewDoc(NULL);
-        xmldoc->_private = 0;
+        xmldoc->_private = create_priv();
         attach_xmlnode(This->node, (xmlNodePtr) xmldoc);
         hr = S_FALSE;
     }
@@ -1442,7 +1465,7 @@ static HRESULT WINAPI domdoc_loadXML(
     if(!xmldoc)
         xmldoc = xmlNewDoc(NULL);
 
-    xmldoc->_private = 0;
+    xmldoc->_private = create_priv();
     attach_xmlnode( This->node, (xmlNodePtr) xmldoc );
 
     return hr;
@@ -2060,7 +2083,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     if(!xmldoc)
         return E_OUTOFMEMORY;
 
-    xmldoc->_private = 0;
+    xmldoc->_private = create_priv();
 
     hr = DOMDocument_create_from_xmldoc(xmldoc, (IXMLDOMDocument2**)ppObj);
     if(FAILED(hr))
