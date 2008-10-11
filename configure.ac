@@ -588,17 +588,6 @@ case $host_os in
         fi
       fi
     fi
-
-    dnl Check for cross compiler to build test programs
-    AC_SUBST(CROSSTEST,"")
-    if test "$cross_compiling" = "no"
-    then
-      WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
-      WINE_CHECK_MINGW_PROG(DLLTOOL,dlltool,false)
-      WINE_CHECK_MINGW_PROG(CROSSWINDRES,windres,false)
-      WINE_CHECK_MINGW_PROG(MINGWAR,ar,false)
-      if test "$CROSSCC" != "false"; then CROSSTEST="\$(CROSSTEST)"; fi
-    fi
     ;;
 esac
 
@@ -611,6 +600,19 @@ It is currently not possible to build Wine without shared library
 (.so) support to allow transparent switch between .so and .dll files.
 If you are using Linux, you will need a newer binutils.]
 )
+fi
+
+dnl Check for cross compiler to build test programs
+if test "$cross_compiling" = "no" -a "$LIBEXT" != "dll"
+then
+    WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
+    WINE_CHECK_MINGW_PROG(DLLTOOL,dlltool,false)
+    WINE_CHECK_MINGW_PROG(CROSSWINDRES,windres,false)
+    WINE_CHECK_MINGW_PROG(MINGWAR,ar,false)
+    if test "$CROSSCC" != "false"
+    then
+        AC_SUBST(CROSSTEST,"\$(CROSSTEST)")
+    fi
 fi
 
 dnl **** Check for X11 ****
