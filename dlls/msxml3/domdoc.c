@@ -890,8 +890,6 @@ static HRESULT WINAPI domdoc_createDocumentFragment(
     if(!xmlnode)
         return E_FAIL;
 
-    xmlnode->doc = get_doc( This );
-
     *docFrag = (IXMLDOMDocumentFragment*)create_doc_fragment(xmlnode);
 
     return S_OK;
