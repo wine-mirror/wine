@@ -19,12 +19,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "‚±‚ÌƒRƒ}ƒ“ƒh‚Ì\\•¶‚ÍŽŸ‚Ì‚Æ‚¨‚è‚Å‚·:\n\nREG [ ADD | DELETE | QUERY ]\nREG ƒRƒ}ƒ“ƒh /?\n"
-    STRING_ADD_USAGE, "REG ADD ƒL[–¼ [/v ’l–¼ | /ve] [/t type] [/s ƒZƒpƒŒ[ƒ^] [/d ƒf[ƒ^] [/f]\n"
-    STRING_DELETE_USAGE, "REG DELETE ƒL[–¼ [/v ’l–¼ | /ve | /va] [/f]\n"
-    STRING_QUERY_USAGE, "REG QUERY ƒL[–¼ [/v ’l–¼ | /ve] [/s]\n"
+    STRING_USAGE, "ã“ã®ã‚³ãƒžãƒ³ãƒ‰ã®æ§‹æ–‡ã¯æ¬¡ã®ã¨ãŠã‚Šã§ã™:\n\nREG [ ADD | DELETE | QUERY ]\nREG ã‚³ãƒžãƒ³ãƒ‰ /?\n"
+    STRING_ADD_USAGE, "REG ADD ã‚­ãƒ¼å [/v å€¤å | /ve] [/t type] [/s ã‚»ãƒ‘ãƒ¬ãƒ¼ã‚¿] [/d ãƒ‡ãƒ¼ã‚¿] [/f]\n"
+    STRING_DELETE_USAGE, "REG DELETE ã‚­ãƒ¼å [/v å€¤å | /ve | /va] [/f]\n"
+    STRING_QUERY_USAGE, "REG QUERY ã‚­ãƒ¼å [/v å€¤å | /ve] [/s]\n"
 }
+
+#pragma code_page(default)
