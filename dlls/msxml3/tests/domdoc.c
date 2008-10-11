@@ -1985,6 +1985,91 @@ static void test_replaceChild(void)
     IXMLDOMDocument_Release( doc );
 }
 
+static void test_removeNamedItem(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *element;
+    IXMLDOMNode *pr_node, *removed_node, *removed_node2;
+    IXMLDOMNodeList *root_list;
+    IXMLDOMNamedNodeMap * pr_attrs;
+    VARIANT_BOOL b;
+    BSTR str;
+    long len;
+    HRESULT r;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    r = IXMLDOMDocument_get_documentElement( doc, &element );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMElement_get_childNodes( element, &root_list );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNodeList_get_item( root_list, 1, &pr_node );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNode_get_attributes( pr_node, &pr_attrs );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
+    ok( r == S_OK, "ret %08x\n", r);
+    ok( len == 3, "length %ld\n", len);
+
+    removed_node = (void*)0xdeadbeef;
+    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, NULL, &removed_node);
+    ok ( r == E_INVALIDARG, "ret %08x\n", r);
+    ok ( removed_node == (void*)0xdeadbeef, "removed_node == %p\n", removed_node);
+
+    removed_node = (void*)0xdeadbeef;
+    str = SysAllocString(szvr);
+    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, &removed_node);
+    ok ( r == S_OK, "ret %08x\n", r);
+
+    removed_node2 = (void*)0xdeadbeef;
+    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, &removed_node2);
+    ok ( r == S_FALSE, "ret %08x\n", r);
+    ok ( removed_node2 == NULL, "removed_node == %p\n", removed_node2 );
+
+    r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
+    ok( r == S_OK, "ret %08x\n", r);
+    ok( len == 2, "length %ld\n", len);
+
+    r = IXMLDOMNamedNodeMap_setNamedItem( pr_attrs, removed_node, NULL);
+    ok ( r == S_OK, "ret %08x\n", r);
+    IXMLDOMNode_Release(removed_node);
+
+    r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
+    ok( r == S_OK, "ret %08x\n", r);
+    ok( len == 3, "length %ld\n", len);
+
+    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, NULL);
+    ok ( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
+    ok( r == S_OK, "ret %08x\n", r);
+    ok( len == 2, "length %ld\n", len);
+
+    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, NULL);
+    ok ( r == S_FALSE, "ret %08x\n", r);
+
+    SysFreeString(str);
+
+    IXMLDOMNamedNodeMap_Release( pr_attrs );
+    IXMLDOMNode_Release( pr_node );
+    IXMLDOMNodeList_Release( root_list );
+    IXMLDOMElement_Release( element );
+    IXMLDOMDocument_Release( doc );
+}
+
 static void test_XMLHTTP(void)
 {
     static const WCHAR wszBody[] = {'m','o','d','e','=','T','e','s','t',0};
@@ -3686,6 +3771,7 @@ START_TEST(domdoc)
     test_get_childNodes();
     test_removeChild();
     test_replaceChild();
+    test_removeNamedItem();
     test_XMLHTTP();
     test_IXMLDOMDocument2();
     test_XPath();

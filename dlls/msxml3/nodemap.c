@@ -283,8 +283,40 @@ static HRESULT WINAPI xmlnodemap_removeNamedItem(
     BSTR name,
     IXMLDOMNode** namedItem)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlChar *element_name;
+    xmlAttrPtr attr, attr_copy;
+    xmlNodePtr node;
+
+    TRACE("%p %s %p\n", This, debugstr_w(name), namedItem );
+
+    if ( !name)
+        return E_INVALIDARG;
+
+    node = xmlNodePtr_from_domnode( This->node, 0 );
+    if ( !node )
+        return E_FAIL;
+
+    element_name = xmlChar_from_wchar( name );
+    attr = xmlHasNsProp( node, element_name, NULL );
+    HeapFree( GetProcessHeap(), 0, element_name );
+
+    if ( !attr )
+    {
+        if( namedItem )
+            *namedItem = NULL;
+        return S_FALSE;
+    }
+
+    if ( namedItem )
+    {
+        attr_copy = xmlCopyProp( NULL, attr );
+        attr_copy->doc = node->doc;
+        *namedItem = create_node( (xmlNodePtr) attr_copy );
+    }
+    xmlRemoveProp( attr );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodemap_get_item(
