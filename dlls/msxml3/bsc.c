@@ -296,6 +296,12 @@ HRESULT bind_url(LPCWSTR url, HRESULT (*onDataAvailable)(void*,char*,DWORD), voi
         IBindCtx_Release(pbc);
     }
 
+    if(FAILED(hr))
+    {
+        IBindStatusCallback_Release((IBindStatusCallback*)&bsc->lpVtbl);
+        bsc = NULL;
+    }
+
     *ret = bsc;
     return hr;
 }
