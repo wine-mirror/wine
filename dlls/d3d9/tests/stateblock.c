@@ -62,7 +62,8 @@ static HRESULT init_d3d9(
 
     hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, window,
         D3DCREATE_SOFTWARE_VERTEXPROCESSING, device_pparams, device);
-    ok(hres == D3D_OK, "IDirect3D_CreateDevice returned: 0x%x\n", hres);
+    ok(hres == D3D_OK || hres == D3DERR_NOTAVAILABLE,
+        "IDirect3D_CreateDevice returned: 0x%x\n", hres);
     return hres;
 }
 
