@@ -16,35 +16,38 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 SYSMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
- MENUITEM "å≥ÇÃÉTÉCÉYÇ…ñﬂÇ∑(&R)", 61728
- MENUITEM "à⁄ìÆ(&M)", 61456
- MENUITEM "ÉTÉCÉYïœçX(&S)", 61440
- MENUITEM "ÉAÉCÉRÉìâª(&N)", 61472
- MENUITEM "ç≈ëÂï\\é¶(&X)", 61488
+ MENUITEM "ÂÖÉ„ÅÆ„Çµ„Ç§„Ç∫„Å´Êàª„Åô(&R)", 61728
+ MENUITEM "ÁßªÂãï(&M)", 61456
+ MENUITEM "„Çµ„Ç§„Ç∫Â§âÊõ¥(&S)", 61440
+ MENUITEM "„Ç¢„Ç§„Ç≥„É≥Âåñ(&N)", 61472
+ MENUITEM "ÊúÄÂ§ßË°®Á§∫(&X)", 61488
  MENUITEM SEPARATOR
- MENUITEM "ï¬Ç∂ÇÈ(&C)\tAlt-F4", 61536
+ MENUITEM "Èñâ„Åò„Çã(&C)\tAlt-F4", 61536
  MENUITEM SEPARATOR
- MENUITEM "ÉAÉvÉäÉPÅ[ÉVÉáÉìÇÃêÿÇËë÷Ç¶(&W)...\tCtrl-Esc", 61744
+ MENUITEM "„Ç¢„Éó„É™„Ç±„Éº„Ç∑„Éß„É≥„ÅÆÂàá„ÇäÊõø„Åà(&W)...\tCtrl-Esc", 61744
  MENUITEM SEPARATOR
- MENUITEM "WineÇ…Ç¬Ç¢Çƒ(&A)...", 61761
+ MENUITEM "Wine„Å´„Å§„ÅÑ„Å¶(&A)...", 61761
 }
 
 EDITMENU MENU LOADONCALL MOVEABLE DISCARDABLE
 {
         POPUP ""
         BEGIN
-                MENUITEM "å≥Ç…ñﬂÇ∑(&U)", EM_UNDO
+                MENUITEM "ÂÖÉ„Å´Êàª„Åô(&U)", EM_UNDO
                 MENUITEM SEPARATOR
-                MENUITEM "êÿÇËéÊÇË(&T)", WM_CUT
-                MENUITEM "ÉRÉsÅ[(&C)", WM_COPY
-                MENUITEM "ì\\ÇËïtÇØ(&P)", WM_PASTE
-                MENUITEM "çÌèú(&D)", WM_CLEAR
+                MENUITEM "Âàá„ÇäÂèñ„Çä(&T)", WM_CUT
+                MENUITEM "„Ç≥„Éî„Éº(&C)", WM_COPY
+                MENUITEM "Ë≤º„Çä‰ªò„Åë(&P)", WM_PASTE
+                MENUITEM "ÂâäÈô§(&D)", WM_CLEAR
                 MENUITEM SEPARATOR
-                MENUITEM "ëIë(&A)", EM_SETSEL
+                MENUITEM "ÈÅ∏Êäû(&A)", EM_SETSEL
         END
 }
 
@@ -55,15 +58,15 @@ BEGIN
         ICON "", 1088, 8, 20, 16, 16, WS_CHILD | WS_VISIBLE
         LTEXT "", 100, 32, 4, 176, 48, WS_CHILD | WS_VISIBLE | WS_GROUP | SS_NOPREFIX
         PUSHBUTTON "OK", 1, 16, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "ÉLÉÉÉìÉZÉã", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "íÜé~(&A)", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "çƒééçs(&R)", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "ñ≥éã(&I)", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "ÇÕÇ¢(&Y)", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "Ç¢Ç¢Ç¶(&N)", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "„Ç≠„É£„É≥„Çª„É´", 2, 64, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "‰∏≠Ê≠¢(&A)", 3, 112, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "ÂÜçË©¶Ë°å(&R)", 4, 160, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "ÁÑ°Ë¶ñ(&I)", 5, 208, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "„ÅØ„ÅÑ(&Y)", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "„ÅÑ„ÅÑ„Åà(&N)", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Try Again", 10, 352, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Continue", 11, 400, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-        PUSHBUTTON "ÉwÉãÉv", 9, 448, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+        PUSHBUTTON "„Éò„É´„Éó", 9, 448, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
 
 MDI_MOREWINDOWS DIALOG FIXED IMPURE 20, 20, 232, 122
@@ -73,12 +76,14 @@ FONT 9, "MS Shell Dlg"
 BEGIN
     LISTBOX         MDI_IDC_LISTBOX, 5, 7, 222, 90, WS_VSCROLL | WS_HSCROLL /* defined in mdi.h */
     DEFPUSHBUTTON   "OK", IDOK, 75, 100, 35, 14
-    PUSHBUTTON      "ÉLÉÉÉìÉZÉã", IDCANCEL, 120, 100, 35, 14
+    PUSHBUTTON      "„Ç≠„É£„É≥„Çª„É´", IDCANCEL, 120, 100, 35, 14
 END
 
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_ERROR "ÉGÉâÅ["
+    IDS_ERROR "„Ç®„É©„Éº"
     IDS_MDI_MOREWINDOWS "&More Windows..."
 }
+
+#pragma code_page(default)
