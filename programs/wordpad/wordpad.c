@@ -810,7 +810,10 @@ static void DoSaveFile(LPCWSTR wszSaveFileName, WPARAM format)
         WriteFile(hFile, &unicode, sizeof(unicode), &writeOut, 0);
 
         if(writeOut != sizeof(unicode))
+        {
+            CloseHandle(hFile);
             return;
+        }
     }
 
     stream.dwCookie = (DWORD_PTR)hFile;
