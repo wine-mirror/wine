@@ -122,8 +122,11 @@ static void test_mipmap_levels(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%08x)\n", hr);
-    if (FAILED(hr)) goto cleanup;
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%08x)\n", hr);
+    if (FAILED(hr)) {
+        skip("failed to create a d3d device\n");
+        goto cleanup;
+    }
 
     check_mipmap_levels(pDevice, 32, 32, 6);
     check_mipmap_levels(pDevice, 256, 1, 9);
