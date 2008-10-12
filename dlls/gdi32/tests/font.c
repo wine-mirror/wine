@@ -106,7 +106,7 @@ static void check_font(const char* test, const LOGFONTA* lf, HFONT hfont)
         minlen++;
     minlen += FIELD_OFFSET(LOGFONTA, lfFaceName) + 1;
     ok(ret == sizeof(LOGFONTA) || ret == minlen, "%s: GetObject returned %d\n", test, ret);
-    ok(!memcmp(&lf, &lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "%s: fonts don't match\n", test);
+    ok(!memcmp(lf, &getobj_lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "%s: fonts don't match\n", test);
     ok(!lstrcmpA(lf->lfFaceName, getobj_lf.lfFaceName),
        "%s: font names don't match: %s != %s\n", test, lf->lfFaceName, getobj_lf.lfFaceName);
 }
