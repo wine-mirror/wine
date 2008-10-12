@@ -19,7 +19,8 @@
 
 #define MAX_STRING_LEN 255
 
-#define TWIPS_PER_CM 567
+#define TWIPS_PER_INCH 1440
+#define CENTMM_PER_INCH 2540
 
 #define ID_FILE_EXIT 1000
 #define ID_FILE_OPEN 1001

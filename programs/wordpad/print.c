@@ -132,24 +132,22 @@ static HDC make_dc(void)
 
 static LONG twips_to_centmm(int twips)
 {
-    return MulDiv(twips, 1000, TWIPS_PER_CM);
+    return MulDiv(twips, CENTMM_PER_INCH, TWIPS_PER_INCH);
 }
 
 static LONG centmm_to_twips(int mm)
 {
-    return MulDiv(mm, TWIPS_PER_CM, 1000);
+    return MulDiv(mm, TWIPS_PER_INCH, CENTMM_PER_INCH);
 }
 
 static LONG twips_to_pixels(int twips, int dpi)
 {
-    float ret = ((float)twips / ((float)TWIPS_PER_CM * 2.54)) * (float)dpi;
-    return (LONG)ret;
+    return MulDiv(twips, dpi, TWIPS_PER_INCH);
 }
 
 static LONG devunits_to_twips(int units, int dpi)
 {
-    float ret = ((float)units / (float)dpi) * (float)TWIPS_PER_CM * 2.54;
-    return (LONG)ret;
+    return MulDiv(units, TWIPS_PER_INCH, dpi);
 }
 
 
@@ -502,7 +500,7 @@ static void add_ruler_units(HDC hdcRuler, RECT* drawRect, BOOL NewMetrics, long 
 
         hdc = CreateCompatibleDC(0);
 
-        CmPixels = twips_to_pixels(TWIPS_PER_CM, GetDeviceCaps(hdc, LOGPIXELSX));
+        CmPixels = twips_to_pixels(centmm_to_twips(1000), GetDeviceCaps(hdc, LOGPIXELSX));
         QuarterCmPixels = (int)((float)CmPixels / 4.0);
 
         hBitmap = CreateCompatibleBitmap(hdc, drawRect->right, drawRect->bottom);

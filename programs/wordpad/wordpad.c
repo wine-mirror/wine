@@ -1271,7 +1271,7 @@ static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
 
 static int current_units_to_twips(float number)
 {
-    int twips = (int)(number * TWIPS_PER_CM);
+    int twips = (int)(number * 1000.0 / (float)CENTMM_PER_INCH *  (float)TWIPS_PER_INCH);
     return twips;
 }
 
@@ -1284,10 +1284,10 @@ static void append_current_units(LPWSTR buffer)
 
 static void number_with_units(LPWSTR buffer, int number)
 {
-    float converted = (float)number / TWIPS_PER_CM;
     static const WCHAR fmt[] = {'%','.','2','f',' ','%','s','\0'};
+    float converted = (float)number / (float)TWIPS_PER_INCH *(float)CENTMM_PER_INCH / 1000.0;
 
-    sprintfW(buffer, fmt, converted, units_cmW);
+    wsprintfW(buffer, fmt, converted, units_cmW);
 }
 
 static BOOL get_comboexlist_selection(HWND hComboEx, LPWSTR wszBuffer, UINT bufferLength)
