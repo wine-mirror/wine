@@ -1190,7 +1190,8 @@ static void test_lights(void)
         hr = IDirect3DDevice8_LightEnable(device, i, TRUE);
         ok(hr == D3D_OK, "Enabling light %u failed with %08x\n", i, hr);
         hr = IDirect3DDevice8_GetLightEnable(device, i, &enabled);
-        ok(hr == D3D_OK, "GetLightEnable on light %u failed with %08x\n", i, hr);
+        ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL),
+            "GetLightEnable on light %u failed with %08x\n", i, hr);
         ok(enabled, "Light %d is %s\n", i, enabled ? "enabled" : "disabled");
     }
 
