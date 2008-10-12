@@ -2715,8 +2715,10 @@ static void test_msg_control(void)
     todo_wine
     ok(!ret &&
        (GetLastError() == NTE_BAD_HASH_STATE ||
+        GetLastError() == NTE_BAD_ALGID ||    /* Win9x */
         GetLastError() == CRYPT_E_MSG_ERROR), /* Vista */
-     "Expected NTE_BAD_HASH_STATE or CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
+     "Expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID or CRYPT_E_MSG_ERROR, "
+     "got %08x\n", GetLastError());
     CryptMsgClose(msg);
 
     /* Finally, verifying the hash of a detached message in the correct order:
@@ -2859,8 +2861,10 @@ static void test_msg_control(void)
     todo_wine
     ok(!ret &&
      (GetLastError() == NTE_BAD_HASH_STATE ||
+      GetLastError() == NTE_BAD_ALGID ||    /* Win9x */
       GetLastError() == CRYPT_E_MSG_ERROR), /* Vista */
-     "expected NTE_BAD_HASH_STATE or CRYPT_E_MSG_ERROR, got %08x\n", GetLastError());
+     "expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID or CRYPT_E_MSG_ERROR, "
+     "got %08x\n", GetLastError());
     CryptMsgClose(msg);
     /* Updating with the detached portion of the message and the data of the
      * the message allows the sig to be verified.
