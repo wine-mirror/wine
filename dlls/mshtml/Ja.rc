@@ -16,40 +16,44 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* UTF-8 */
+#pragma code_page(65001)
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_HTMLDISABLED    "HTML ƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÍŒ»ÝA–³Œø‚Å‚·B"
-    IDS_HTMLDOCUMENT    "HTML •¶‘"
-    IDS_DOWNLOADING     "ƒ_ƒEƒ“ƒ[ƒh‚µ‚Ä‚¢‚Ü‚·..."
-    IDS_INSTALLING      "ƒCƒ“ƒXƒg[ƒ‹‚µ‚Ä‚¢‚Ü‚·..."
+    IDS_HTMLDISABLED    "HTML ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ã¯ç¾åœ¨ã€ç„¡åŠ¹ã§ã™ã€‚"
+    IDS_HTMLDOCUMENT    "HTML æ–‡æ›¸"
+    IDS_DOWNLOADING     "ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã¦ã„ã¾ã™..."
+    IDS_INSTALLING      "ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã—ã¦ã„ã¾ã™..."
 }
 
 ID_DWL_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE  0, 0, 260, 85
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Gecko ƒCƒ“ƒXƒg[ƒ‰"
+CAPTION "Wine Gecko ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ©"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT "‚±‚ÌƒAƒvƒŠƒP[ƒVƒ‡ƒ“‚Í HTML ƒy[ƒW‚ð•\\Ž¦‚µ‚æ‚¤‚Æ‚µ‚Ä‚¢‚Ü‚·Bƒy[ƒW‚ð•\\Ž¦‚·‚é‚É‚Í Wine ‚É" \
-          "GeckoiMozilla ‚Ì HTML ƒGƒ“ƒWƒ“j‚ðƒCƒ“ƒXƒg[ƒ‹‚·‚é•K—v‚ª‚ ‚è‚Ü‚·BWine ‚ªŽ©“®“I‚É Gecko ‚ðƒ_ƒEƒ“ƒ[ƒh‚µƒCƒ“ƒXƒg[ƒ‹‚·‚é‚æ‚¤‚É‚µ‚½‚¢‚È‚ç‚Î" \
-          " [ƒCƒ“ƒXƒg[ƒ‹] ‚ðƒNƒŠƒbƒN‚µ‚Ä‚­‚¾‚³‚¢B", ID_DWL_STATUS, 10, 10, 240, 30, SS_LEFT
+    LTEXT "ã“ã®ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã¯ HTML ãƒšãƒ¼ã‚¸ã‚’è¡¨ç¤ºã—ã‚ˆã†ã¨ã—ã¦ã„ã¾ã™ã€‚ãƒšãƒ¼ã‚¸ã‚’è¡¨ç¤ºã™ã‚‹ã«ã¯ Wine ã«" \
+          "Geckoï¼ˆMozilla ã® HTML ã‚¨ãƒ³ã‚¸ãƒ³ï¼‰ã‚’ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã™ã‚‹å¿…è¦ãŒã‚ã‚Šã¾ã™ã€‚Wine ãŒè‡ªå‹•çš„ã« Gecko ã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã™ã‚‹ã‚ˆã†ã«ã—ãŸã„ãªã‚‰ã°" \
+          " [ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«] ã‚’ã‚¯ãƒªãƒƒã‚¯ã—ã¦ãã ã•ã„ã€‚", ID_DWL_STATUS, 10, 10, 240, 30, SS_LEFT
     CONTROL "Progress", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
-    DEFPUSHBUTTON "ƒCƒ“ƒXƒg[ƒ‹(&I)", ID_DWL_INSTALL, 200, 60, 50, 15, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "ƒLƒƒƒ“ƒZƒ‹(&C)", IDCANCEL, 140, 60, 50, 15, WS_GROUP | WS_TABSTOP
+    DEFPUSHBUTTON "ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«(&I)", ID_DWL_INSTALL, 200, 60, 50, 15, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "ã‚­ãƒ£ãƒ³ã‚»ãƒ«(&C)", IDCANCEL, 140, 60, 50, 15, WS_GROUP | WS_TABSTOP
 }
 
 IDD_HYPERLINK DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 250, 65
 STYLE DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "ƒnƒCƒp[ƒŠƒ“ƒN"
+CAPTION "ãƒã‚¤ãƒ‘ãƒ¼ãƒªãƒ³ã‚¯"
 FONT 9, "MS Shell Dlg"
 {
-    GROUPBOX "ƒnƒCƒp[ƒŠƒ“ƒN‚Ìî•ñ", IDC_STATIC, 5, 5, 190, 55
-    LTEXT "Ží—Þ(&T):", IDC_STATIC, 10, 22, 20, 10
+    GROUPBOX "ãƒã‚¤ãƒ‘ãƒ¼ãƒªãƒ³ã‚¯ã®æƒ…å ±", IDC_STATIC, 5, 5, 190, 55
+    LTEXT "ç¨®é¡ž(&T):", IDC_STATIC, 10, 22, 20, 10
     COMBOBOX IDC_TYPE, 35, 20, 45, 100, WS_TABSTOP | WS_GROUP | WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS
     LTEXT "&URL:", IDC_STATIC, 10, 42, 20, 10
     EDITTEXT IDC_URL, 35, 40, 150, 14, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
     PUSHBUTTON "OK", IDOK, 200, 10, 45, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "ƒLƒƒƒ“ƒZƒ‹", IDCANCEL, 200, 28, 45, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "ã‚­ãƒ£ãƒ³ã‚»ãƒ«", IDCANCEL, 200, 28, 45, 14, WS_GROUP | WS_TABSTOP
 }
+
+#pragma code_page(default)
