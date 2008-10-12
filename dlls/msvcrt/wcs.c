@@ -1077,3 +1077,29 @@ INT CDECL MSVCRT_wcsncpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, co
 
     return 0;
 }
+
+/******************************************************************
+ *		wcscat_s (MSVCRT.@)
+ *
+ */
+INT CDECL MSVCRT_wcscat_s(MSVCRT_wchar_t* dst, MSVCRT_size_t elem, const MSVCRT_wchar_t* src)
+{
+    MSVCRT_wchar_t* ptr = dst;
+
+    if (!dst || elem == 0) return MSVCRT_EINVAL;
+    if (!src)
+    {
+        dst[0] = '\0';
+        return MSVCRT_EINVAL;
+    }
+
+    /* seek to end of dst string (or elem if no end of string is found */
+    while (ptr < dst + elem && *ptr != '\0') ptr++;
+    while (ptr < dst + elem)
+    {
+        if ((*ptr++ = *src++) == '\0') return 0;
+    }
+    /* not enough space */
+    dst[0] = '\0';
+    return MSVCRT_ERANGE;
+}
