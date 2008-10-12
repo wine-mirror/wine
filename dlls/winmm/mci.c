@@ -1899,7 +1899,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 		if (RegQueryInfoKeyW( hKey, 0, 0, 0, &cnt, 
                                       0, 0, 0, 0, 0, 0, 0) == ERROR_SUCCESS && 
                     lpParms->dwNumber <= cnt) {
-    		    DWORD bufLen = sizeof(buf);
+		    DWORD bufLen = sizeof(buf)/sizeof(buf[0]);
 		    if (RegEnumKeyExW(hKey, lpParms->dwNumber - 1, 
                                       buf, &bufLen, 0, 0, 0, 0) == ERROR_SUCCESS)
                         s = buf;

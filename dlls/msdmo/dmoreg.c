@@ -737,7 +737,7 @@ HRESULT read_types(HKEY root, LPCWSTR key, ULONG *supplied, ULONG requested, DMO
 
           while (rc == ERROR_SUCCESS)
           {
-            len = MAX_PATH * sizeof(WCHAR);
+            len = MAX_PATH;
             rc = RegEnumKeyExW(hkey, index, szNextKey, &len, NULL, NULL, NULL, NULL);
             if (rc == ERROR_SUCCESS)
             {
@@ -749,7 +749,7 @@ HRESULT read_types(HKEY root, LPCWSTR key, ULONG *supplied, ULONG requested, DMO
               RegOpenKeyExW(hkey, szNextKey, 0, KEY_READ, &subk);
               while (rcs == ERROR_SUCCESS)
               {
-                len = MAX_PATH * sizeof(WCHAR);
+                len = MAX_PATH;
                 rcs = RegEnumKeyExW(subk, sub_index, szSubKey, &len, NULL, NULL, NULL, NULL);
                 if (rcs == ERROR_SUCCESS)
                 {

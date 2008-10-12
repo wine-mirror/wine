@@ -472,7 +472,7 @@ static UINT SHELL_FindExecutableByOperation(LPCWSTR lpOperation, LPWSTR key, LPW
 
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, filetype, 0, 0x02000000, &hkeyClass))
         return SE_ERR_NOASSOC;
-    if (!HCR_GetDefaultVerbW(hkeyClass, lpOperation, verb, sizeof(verb)))
+    if (!HCR_GetDefaultVerbW(hkeyClass, lpOperation, verb, sizeof(verb)/sizeof(verb[0])))
         return SE_ERR_NOASSOC;
     RegCloseKey(hkeyClass);
 
