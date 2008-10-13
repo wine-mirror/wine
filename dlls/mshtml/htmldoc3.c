@@ -569,8 +569,33 @@ static HRESULT WINAPI HTMLDocument4_Invoke(IHTMLDocument4 *iface, DISPID dispIdM
 static HRESULT WINAPI HTMLDocument4_focus(IHTMLDocument4 *iface)
 {
     HTMLDocument *This = HTMLDOC4_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    nsIDOMNSHTMLElement *nselem;
+    nsIDOMHTMLElement *nsbody;
+    nsresult nsres;
+
+    TRACE("(%p)->()\n", This);
+
+    nsres = nsIDOMHTMLDocument_GetBody(This->nsdoc, &nsbody);
+    if(NS_FAILED(nsres) || !nsbody) {
+        ERR("GetBody failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nsbody, &IID_nsIDOMNSHTMLElement, (void**)&nselem);
+    nsIDOMHTMLElement_Release(nsbody);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSHTMLElement: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNSHTMLElement_focus(nselem);
+    nsIDOMNSHTMLElement_Release(nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Focus failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument4_hasFocus(IHTMLDocument4 *iface, VARIANT_BOOL *pfFocus)
