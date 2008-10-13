@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <limits.h>
+#include <math.h>
+
 #include "jscript.h"
 
 #include "wine/debug.h"
@@ -24,6 +27,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
     DispatchEx dispex;
+
+    /* ECMA-262 3rd Edition    15.9.1.1 */
+    DOUBLE time;
 } DateInstance;
 
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
@@ -72,9 +78,17 @@ static const WCHAR setUTCMonthW[] = {'s','e','t','U','T','C','M','o','n','t','h'
 static const WCHAR setFullYearW[] = {'s','e','t','F','u','l','l','Y','e','a','r',0};
 static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l','Y','e','a','r',0};
 
-static inline HRESULT systime_to_time(const SYSTEMTIME *st, FILETIME *time)
+/* ECMA-262 3rd Edition    15.9.1.14 */
+static inline DOUBLE time_clip(DOUBLE time)
 {
-    return SystemTimeToFileTime(st, time) ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+    /* FIXME: Handle inf */
+
+    if(8.64e15 < time || time < -8.64e15) {
+        FIXME("return NaN\n");
+        return 0.0;
+    }
+
+    return floor(time);
 }
 
 static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -448,7 +462,7 @@ static const builtin_info_t Date_info = {
     NULL
 };
 
-static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DispatchEx **ret)
+static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, DispatchEx **ret)
 {
     DateInstance *date;
     HRESULT hres;
@@ -466,6 +480,8 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DispatchEx **ret)
         return hres;
     }
 
+    date->time = time;
+
     *ret = &date->dispex;
     return S_OK;
 }
@@ -473,8 +489,67 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DispatchEx **ret)
 static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DispatchEx *date;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT:
+        switch(arg_cnt(dp)) {
+        /* ECMA-262 3rd Edition    15.9.3.3 */
+        case 0: {
+            FILETIME time;
+
+            GetSystemTimeAsFileTime(&time);
+
+            hres = create_date(dispex->ctx, TRUE,
+                   floor((DOUBLE)(time.dwLowDateTime/1e6) + (DOUBLE)time.dwHighDateTime*((DOUBLE)UINT_MAX+1.0)/1.e6),
+                   &date);
+            if(FAILED(hres))
+                return hres;
+            break;
+        }
+
+        /* ECMA-262 3rd Edition    15.9.3.2 */
+        case 1: {
+            VARIANT prim, num;
+
+            hres = to_primitive(dispex->ctx, get_arg(dp,0), ei, &prim);
+            if(FAILED(hres))
+                return hres;
+
+            if(V_VT(&prim) == VT_BSTR) {
+                FIXME("VT_BSTR not supported\n");
+                return E_NOTIMPL;
+            }
+
+            hres = to_number(dispex->ctx, &prim, ei, &num);
+            VariantClear(&prim);
+            if(FAILED(hres))
+                return hres;
+
+            hres = create_date(dispex->ctx, TRUE, time_clip(num_val(&num)), &date);
+            if(FAILED(hres))
+                return hres;
+            break;
+        }
+
+        default:
+            FIXME("unimplemented argcnt %d\n", arg_cnt(dp));
+            return E_NOTIMPL;
+        }
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(date);
+        return S_OK;
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx **ret)
@@ -482,7 +557,7 @@ HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx **ret)
     DispatchEx *date;
     HRESULT hres;
 
-    hres = create_date(ctx, FALSE, &date);
+    hres = create_date(ctx, FALSE, 0.0, &date);
     if(FAILED(hres))
         return hres;
 
@@ -491,4 +566,3 @@ HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx **ret)
     jsdisp_release(date);
     return hres;
 }
-
