@@ -2152,6 +2152,8 @@ static void test_navigator(IHTMLDocument2 *doc)
     BSTR bstr;
     HRESULT hres;
 
+    static const WCHAR v40[] = {'4','.','0'};
+
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "parentWidnow failed: %08x\n", hres);
 
@@ -2174,8 +2176,14 @@ static void test_navigator(IHTMLDocument2 *doc)
 
     bstr = NULL;
     hres = IOmNavigator_get_platform(navigator, &bstr);
-    ok(hres == S_OK, "get_appMinorVersion failed: %08x\n", hres);
+    ok(hres == S_OK, "get_platform failed: %08x\n", hres);
     ok(!strcmp_wa(bstr, "Win32"), "unexpected platform %s\n", dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    bstr = NULL;
+    hres = IOmNavigator_get_appVersion(navigator, &bstr);
+    ok(hres == S_OK, "get_appVersion failed: %08x\n", hres);
+    ok(!memcmp(bstr, v40, sizeof(v40)), "appVersion is %s\n", dbgstr_w(bstr));
     SysFreeString(bstr);
 
     ref = IOmNavigator_Release(navigator);
