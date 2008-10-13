@@ -550,6 +550,7 @@ IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetLis
 
 void detach_selection(HTMLDocument*);
 void detach_ranges(HTMLDocument*);
+HRESULT get_node_text(HTMLDOMNode*,BSTR*);
 
 HTMLDOMNode *HTMLDOMTextNode_Create(HTMLDocument*,nsIDOMNode*);
 

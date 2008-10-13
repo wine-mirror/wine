@@ -1014,6 +1014,19 @@ static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t ty
     HeapFree(GetProcessHeap(), 0, types);
 }
 
+#define test_elem_innertext(e,t) _test_elem_innertext(__LINE__,e,t)
+static void _test_elem_innertext(unsigned line, IHTMLElement *elem, const char *extext)
+{
+    BSTR text = NULL;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_innerText(elem, &text);
+    ok_(__FILE__,line) (hres == S_OK, "get_innerText failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa(text, extext), "get_innerText returned %s expected %s\n",
+                        dbgstr_w(text), extext);
+    SysFreeString(text);
+}
+
 #define get_first_child(n) _get_first_child(__LINE__,n)
 static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
 {
@@ -2941,6 +2954,8 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_getelembytag((IUnknown*)elem, ET_OPTION, 2);
         test_elem_getelembytag((IUnknown*)elem, ET_SELECT, 0);
         test_elem_getelembytag((IUnknown*)elem, ET_HTML, 0);
+
+        test_elem_innertext(elem, "opt1opt2");
 
         IHTMLElement_Release(elem);
     }
