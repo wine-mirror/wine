@@ -739,7 +739,7 @@ PrimaryExpression
 /* ECMA-262 3rd Edition    11.1.4 */
 ArrayLiteral
         : '[' ']'               { $$ = new_array_literal_expression(ctx, NULL, 0); }
-        | '[' Elision_opt ']'   { $$ = new_array_literal_expression(ctx, NULL, $2+1); }
+        | '[' Elision ']'       { $$ = new_array_literal_expression(ctx, NULL, $2+1); }
         | '[' ElementList ']'   { $$ = new_array_literal_expression(ctx, $2, 0); }
         | '[' ElementList ',' Elision_opt ']'
                                 { $$ = new_array_literal_expression(ctx, $2, $4+1); }
