@@ -245,7 +245,6 @@ static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
  LPWSTR *appValue)
 {
     static const WCHAR dwordFmt[] = { '#','%','d','\0' };
-    static const WCHAR expandSzFmt[] = { '#','%','%','%','s','\0' };
     static const WCHAR binFmt[] = { '#','x','%','x','\0' };
     DWORD i;
 
@@ -273,9 +272,9 @@ static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
             sprintfW(*appValue, dwordFmt, *(const DWORD *)value);
             break;
         case REG_EXPAND_SZ:
-            /* space for extra #% characters in front */
-            *appValue = msi_alloc(sz + 2 * sizeof(WCHAR));
-            sprintfW(*appValue, expandSzFmt, (LPCWSTR)value);
+            sz = ExpandEnvironmentStringsW((LPCWSTR)value, NULL, 0);
+            *appValue = msi_alloc(sz * sizeof(WCHAR));
+            ExpandEnvironmentStringsW((LPCWSTR)value, *appValue, sz);
             break;
         case REG_BINARY:
             /* 3 == length of "#x<nibble>" */
