@@ -40,7 +40,9 @@
 #include <sys/ioctl.h>
 #endif
 #include <fcntl.h>
-#include <dirent.h>
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
