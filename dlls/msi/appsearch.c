@@ -225,6 +225,15 @@ static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, LPWSTR *appValue, MS
 
         *appValue = strdupW(path);
     }
+    else if (sigpresent)
+    {
+        PathAddBackslashW(path);
+        lstrcatW(path, MSI_RecordGetString(rec, 2));
+
+        attr = GetFileAttributesW(path);
+        if (attr != INVALID_FILE_ATTRIBUTES && attr != FILE_ATTRIBUTE_DIRECTORY)
+            *appValue = strdupW(path);
+    }
 
 done:
     if (rec) msiobj_release(&rec->hdr);
