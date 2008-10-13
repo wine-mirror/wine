@@ -3692,6 +3692,30 @@ DWORD WINAPI MLClearMLHInstance(DWORD x)
 }
 
 /*************************************************************************
+ * @ [SHLWAPI.432]
+ *
+ * See SHSendMessageBroadcastW
+ *
+ */
+DWORD WINAPI SHSendMessageBroadcastA(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return SendMessageTimeoutA(HWND_BROADCAST, uMsg, wParam, lParam,
+                               SMTO_ABORTIFHUNG, 2000, NULL);
+}
+
+/*************************************************************************
+ * @ [SHLWAPI.433]
+ *
+ * A wrapper for sending Broadcast Messages to all top level Windows
+ *
+ */
+DWORD WINAPI SHSendMessageBroadcastW(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    return SendMessageTimeoutW(HWND_BROADCAST, uMsg, wParam, lParam,
+                               SMTO_ABORTIFHUNG, 2000, NULL);
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.436]
  *
  * Convert an Unicode string CLSID into a CLSID.
