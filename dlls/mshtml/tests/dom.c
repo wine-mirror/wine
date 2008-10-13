@@ -2359,6 +2359,17 @@ static void test_default_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLStyle_put_top(style, v);
+    ok(hres == S_OK, "put_top failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_top(style, &v);
+    ok(hres == S_OK, "get_top failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
+    VariantClear(&v);
+
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_height(style, &v);
     ok(hres == S_OK, "get_height failed: %08x\n", hres);

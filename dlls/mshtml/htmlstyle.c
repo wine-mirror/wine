@@ -221,6 +221,24 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCW
     return S_OK;
 }
 
+static HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags)
+{
+    switch(V_VT(value)) {
+    case VT_NULL:
+        return set_nsstyle_attr(nsstyle, sid, emptyW, flags);
+
+    case VT_BSTR:
+        return set_nsstyle_attr(nsstyle, sid, V_BSTR(value), flags);
+
+    default:
+        FIXME("not implemented vt %d\n", V_VT(value));
+        return E_NOTIMPL;
+
+    }
+
+    return S_OK;
+}
+
 static inline HRESULT set_style_attr(HTMLStyle *This, styleid_t sid, LPCWSTR value, DWORD flags)
 {
     return set_nsstyle_attr(This->nsstyle, sid, value, flags);
@@ -1581,15 +1599,7 @@ static HRESULT WINAPI HTMLStyle_put_top(IHTMLStyle *iface, VARIANT v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    switch(V_VT(&v)) {
-    case VT_BSTR:
-        return set_style_attr(This, STYLEID_TOP, V_BSTR(&v), 0);
-    default:
-        FIXME("unimplemented vt %d\n", V_VT(&v));
-        return E_NOTIMPL;
-    }
-
-    return S_OK;
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_TOP, &v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_top(IHTMLStyle *iface, VARIANT *p)
