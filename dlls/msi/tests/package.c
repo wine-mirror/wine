@@ -32,6 +32,27 @@
 static const char msifile[] = "winetest.msi";
 char CURR_DIR[MAX_PATH];
 
+static void get_user_sid(LPSTR *usersid)
+{
+    HANDLE token;
+    BYTE buf[1024];
+    DWORD size;
+    PTOKEN_USER user;
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+    static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+
+    *usersid = NULL;
+    pConvertSidToStringSidA = (void *)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
+    if (!pConvertSidToStringSidA)
+        return;
+
+    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    size = sizeof(buf);
+    GetTokenInformation(token, TokenUser, (void *)buf, size, &size);
+    user = (PTOKEN_USER)buf;
+    pConvertSidToStringSidA(user->User.Sid, usersid);
+}
+
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
 LSTATUS WINAPI package_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
 {
@@ -94,6 +115,150 @@ cleanup:
     if(lpszSubKey)
         RegCloseKey(hSubKey);
     return ret;
+}
+
+static BOOL squash_guid(LPCWSTR in, LPWSTR out)
+{
+    DWORD i,n=1;
+    GUID guid;
+
+    if (FAILED(CLSIDFromString((LPOLESTR)in, &guid)))
+        return FALSE;
+
+    for(i=0; i<8; i++)
+        out[7-i] = in[n++];
+    n++;
+    for(i=0; i<4; i++)
+        out[11-i] = in[n++];
+    n++;
+    for(i=0; i<4; i++)
+        out[15-i] = in[n++];
+    n++;
+    for(i=0; i<2; i++)
+    {
+        out[17+i*2] = in[n++];
+        out[16+i*2] = in[n++];
+    }
+    n++;
+    for( ; i<8; i++)
+    {
+        out[17+i*2] = in[n++];
+        out[16+i*2] = in[n++];
+    }
+    out[32]=0;
+    return TRUE;
+}
+
+static void set_component_path(LPCSTR filename, MSIINSTALLCONTEXT context,
+                               LPCSTR guid, LPSTR usersid, BOOL dir)
+{
+    WCHAR guidW[MAX_PATH];
+    WCHAR squashedW[MAX_PATH];
+    CHAR squashed[MAX_PATH];
+    CHAR comppath[MAX_PATH];
+    CHAR prodpath[MAX_PATH];
+    CHAR path[MAX_PATH];
+    LPCSTR prod = NULL;
+    HKEY hkey;
+
+    MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
+    squash_guid(guidW, squashedW);
+    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        prod = "3D0DAE300FACA1300AD792060BCDAA92";
+        sprintf(comppath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\UserData\\S-1-5-18\\Components\\%s", squashed);
+        lstrcpyA(prodpath,
+                 "SOFTWARE\\Classes\\Installer\\"
+                 "Products\\3D0DAE300FACA1300AD792060BCDAA92");
+    }
+    else if (context == MSIINSTALLCONTEXT_USERUNMANAGED)
+    {
+        prod = "7D2F387510109040002000060BECB6AB";
+        sprintf(comppath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\UserData\\%s\\Components\\%s", usersid, squashed);
+        sprintf(prodpath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\%s\\Installer\\Products\\"
+                "7D2F387510109040002000060BECB6AB", usersid);
+    }
+    else if (context == MSIINSTALLCONTEXT_USERMANAGED)
+    {
+        prod = "7D2F387510109040002000060BECB6AB";
+        sprintf(comppath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\UserData\\%s\\Components\\%s", usersid, squashed);
+        sprintf(prodpath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\Managed\\%s\\Installer\\Products\\"
+                "7D2F387510109040002000060BECB6AB", usersid);
+    }
+
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, comppath, &hkey);
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\");
+    if (!dir) lstrcatA(path, filename);
+
+    RegSetValueExA(hkey, prod, 0, REG_SZ, (LPBYTE)path, lstrlenA(path));
+    RegCloseKey(hkey);
+
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, prodpath, &hkey);
+    RegCloseKey(hkey);
+}
+
+static void delete_component_path(LPCSTR guid, MSIINSTALLCONTEXT context, LPSTR usersid)
+{
+    WCHAR guidW[MAX_PATH];
+    WCHAR squashedW[MAX_PATH];
+    WCHAR substrW[MAX_PATH];
+    CHAR squashed[MAX_PATH];
+    CHAR comppath[MAX_PATH];
+    CHAR prodpath[MAX_PATH];
+
+    MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
+    squash_guid(guidW, squashedW);
+    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
+
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        sprintf(comppath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\UserData\\S-1-5-18\\Components\\%s", squashed);
+        lstrcpyA(prodpath,
+                 "SOFTWARE\\Classes\\Installer\\"
+                 "Products\\3D0DAE300FACA1300AD792060BCDAA92");
+    }
+    else if (context == MSIINSTALLCONTEXT_USERUNMANAGED)
+    {
+        sprintf(comppath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\UserData\\%s\\Components\\%s", usersid, squashed);
+        sprintf(prodpath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\%s\\Installer\\Products\\"
+                "7D2F387510109040002000060BECB6AB", usersid);
+    }
+    else if (context == MSIINSTALLCONTEXT_USERMANAGED)
+    {
+        sprintf(comppath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\UserData\\%s\\Components\\%s", usersid, squashed);
+        sprintf(prodpath,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                "Installer\\Managed\\%s\\Installer\\Products\\"
+                "7D2F387510109040002000060BECB6AB", usersid);
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, comppath, -1, substrW, MAX_PATH);
+    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW);
+
+    MultiByteToWideChar(CP_ACP, 0, prodpath, -1, substrW, MAX_PATH);
+    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW);
 }
 
 static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
@@ -5597,6 +5762,229 @@ static void test_appsearch(void)
     DeleteFileA(msifile);
 }
 
+static void test_appsearch_complocator(void)
+{
+    MSIHANDLE hpkg, hdb;
+    CHAR path[MAX_PATH];
+    CHAR prop[MAX_PATH];
+    LPSTR usersid;
+    DWORD size;
+    UINT r;
+
+    get_user_sid(&usersid);
+    if (!usersid)
+    {
+        skip("ConvertSidToStringSidA is not available\n");
+        return;
+    }
+
+    create_test_file("FileName1");
+    create_test_file("FileName4");
+    set_component_path("FileName1", MSIINSTALLCONTEXT_MACHINE,
+                       "{A8AE6692-96BA-4198-8399-145D7D1D0D0E}", NULL, FALSE);
+
+    create_test_file("FileName2");
+    set_component_path("FileName2", MSIINSTALLCONTEXT_USERUNMANAGED,
+                       "{1D2CE6F3-E81C-4949-AB81-78D7DAD2AF2E}", usersid, FALSE);
+
+    create_test_file("FileName3");
+    set_component_path("FileName3", MSIINSTALLCONTEXT_USERMANAGED,
+                       "{19E0B999-85F5-4973-A61B-DBE4D66ECB1D}", usersid, FALSE);
+
+    create_test_file("FileName5");
+    set_component_path("FileName5", MSIINSTALLCONTEXT_MACHINE,
+                       "{F0CCA976-27A3-4808-9DDD-1A6FD50A0D5A}", NULL, TRUE);
+
+    create_test_file("FileName6");
+    set_component_path("FileName6", MSIINSTALLCONTEXT_MACHINE,
+                       "{C0ECD96F-7898-4410-9667-194BD8C1B648}", NULL, TRUE);
+
+    create_test_file("FileName7");
+    set_component_path("FileName7", MSIINSTALLCONTEXT_MACHINE,
+                       "{DB20F535-9C26-4127-9C2B-CC45A8B51DA1}", NULL, FALSE);
+
+    /* dir is FALSE, but we're pretending it's a directory */
+    set_component_path("IDontExist\\", MSIINSTALLCONTEXT_MACHINE,
+                       "{91B7359B-07F2-4221-AA8D-DE102BB87A5F}", NULL, FALSE);
+
+    hdb = create_package_db();
+    ok(hdb, "Expected a valid database handle\n");
+
+    r = create_appsearch_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_complocator_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* published component, machine, file, signature, misdbLocatorTypeFile */
+    r = add_complocator_entry(hdb, "'NewSignature1', '{A8AE6692-96BA-4198-8399-145D7D1D0D0E}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* published component, user-unmanaged, file, signature, misdbLocatorTypeFile */
+    r = add_complocator_entry(hdb, "'NewSignature2', '{1D2CE6F3-E81C-4949-AB81-78D7DAD2AF2E}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* published component, user-managed, file, signature, misdbLocatorTypeFile */
+    r = add_complocator_entry(hdb, "'NewSignature3', '{19E0B999-85F5-4973-A61B-DBE4D66ECB1D}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* published component, machine, file, signature, misdbLocatorTypeDirectory */
+    r = add_complocator_entry(hdb, "'NewSignature4', '{A8AE6692-96BA-4198-8399-145D7D1D0D0E}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* published component, machine, dir, signature, misdbLocatorTypeDirectory */
+    r = add_complocator_entry(hdb, "'NewSignature5', '{F0CCA976-27A3-4808-9DDD-1A6FD50A0D5A}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* published component, machine, dir, no signature, misdbLocatorTypeDirectory */
+    r = add_complocator_entry(hdb, "'NewSignature6', '{C0ECD96F-7898-4410-9667-194BD8C1B648}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* published component, machine, file, no signature, misdbLocatorTypeFile */
+    r = add_complocator_entry(hdb, "'NewSignature7', '{DB20F535-9C26-4127-9C2B-CC45A8B51DA1}', 1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* unpublished component, no signature, misdbLocatorTypeDir */
+    r = add_complocator_entry(hdb, "'NewSignature8', '{FB671D5B-5083-4048-90E0-481C48D8F3A5}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* published component, no signature, dir does not exist misdbLocatorTypeDir */
+    r = add_complocator_entry(hdb, "'NewSignature9', '{91B7359B-07F2-4221-AA8D-DE102BB87A5F}', 0");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_signature_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'NewSignature1', 'FileName1', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'NewSignature2', 'FileName2', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'NewSignature3', 'FileName3', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'NewSignature4', 'FileName4', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'NewSignature5', 'FileName5', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    hpkg = package_from_db(hdb);
+    ok(hpkg, "Expected a valid package handle\n");
+
+    r = MsiSetPropertyA(hpkg, "SIGPROP8", "october");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiDoAction(hpkg, "AppSearch");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\FileName1", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP1", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\FileName2", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP2", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\FileName3", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP3", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\FileName4", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP4", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\FileName5", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP5", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP6", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP7", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+
+    r = MsiGetPropertyA(hpkg, "SIGPROP8", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, "october"), "Expected \"october\", got \"%s\"\n", prop);
+
+    r = MsiGetPropertyA(hpkg, "SIGPROP9", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+
+    delete_component_path("{A8AE6692-96BA-4198-8399-145D7D1D0D0E}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{1D2CE6F3-E81C-4949-AB81-78D7DAD2AF2E}",
+                          MSIINSTALLCONTEXT_USERUNMANAGED, usersid);
+    delete_component_path("{19E0B999-85F5-4973-A61B-DBE4D66ECB1D}",
+                          MSIINSTALLCONTEXT_USERMANAGED, usersid);
+    delete_component_path("{F0CCA976-27A3-4808-9DDD-1A6FD50A0D5A}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{C0ECD96F-7898-4410-9667-194BD8C1B648}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{DB20F535-9C26-4127-9C2B-CC45A8B51DA1}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{91B7359B-07F2-4221-AA8D-DE102BB87A5F}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+
+    DeleteFileA("FileName1");
+    DeleteFileA("FileName2");
+    DeleteFileA("FileName3");
+    DeleteFileA("FileName4");
+    DeleteFileA("FileName5");
+    DeleteFileA("FileName6");
+    DeleteFileA("FileName7");
+    MsiCloseHandle(hpkg);
+    DeleteFileA(msifile);
+}
+
 static void test_featureparents(void)
 {
     MSIHANDLE hpkg;
@@ -6214,95 +6602,6 @@ static void test_ccpsearch(void)
     DeleteFileA(msifile);
 }
 
-static BOOL squash_guid(LPCWSTR in, LPWSTR out)
-{
-    DWORD i,n=1;
-    GUID guid;
-
-    if (FAILED(CLSIDFromString((LPOLESTR)in, &guid)))
-        return FALSE;
-
-    for(i=0; i<8; i++)
-        out[7-i] = in[n++];
-    n++;
-    for(i=0; i<4; i++)
-        out[11-i] = in[n++];
-    n++;
-    for(i=0; i<4; i++)
-        out[15-i] = in[n++];
-    n++;
-    for(i=0; i<2; i++)
-    {
-        out[17+i*2] = in[n++];
-        out[16+i*2] = in[n++];
-    }
-    n++;
-    for( ; i<8; i++)
-    {
-        out[17+i*2] = in[n++];
-        out[16+i*2] = in[n++];
-    }
-    out[32]=0;
-    return TRUE;
-}
-
-static void set_component_path(LPCSTR filename, LPCSTR guid)
-{
-    WCHAR guidW[MAX_PATH];
-    WCHAR squashedW[MAX_PATH];
-    CHAR squashed[MAX_PATH];
-    CHAR substr[MAX_PATH];
-    CHAR path[MAX_PATH];
-    HKEY hkey;
-
-    MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
-    squash_guid(guidW, squashedW);
-    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
-
-    lstrcpyA(substr, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
-                    "Installer\\UserData\\S-1-5-18\\Components\\");
-    lstrcatA(substr, squashed);
-
-    RegCreateKeyA(HKEY_LOCAL_MACHINE, substr, &hkey);
-
-    lstrcpyA(path, CURR_DIR);
-    lstrcatA(path, "\\");
-    lstrcatA(path, filename);
-
-    /* just using a random squashed product code */
-    RegSetValueExA(hkey, "7D2F387510109040002000060BECB6AB", 0,
-                   REG_SZ, (LPBYTE)path, lstrlenA(path));
-
-    RegCloseKey(hkey);
-
-    lstrcpyA(substr, "SOFTWARE\\Classes\\Installer\\Products\\7D2F387510109040002000060BECB6AB");
-    RegCreateKeyA(HKEY_LOCAL_MACHINE, substr, &hkey);
-}
-
-static void delete_component_path(LPCSTR guid)
-{
-    WCHAR guidW[MAX_PATH];
-    WCHAR squashedW[MAX_PATH];
-    WCHAR substrW[MAX_PATH];
-    CHAR squashed[MAX_PATH];
-    CHAR substr[MAX_PATH];
-
-    MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
-    squash_guid(guidW, squashedW);
-    WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
-
-    lstrcpyA(substr, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
-                    "Installer\\UserData\\S-1-5-18\\Components\\");
-    lstrcatA(substr, squashed);
-
-    MultiByteToWideChar(CP_ACP, 0, substr, -1, substrW, MAX_PATH);
-    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW);
-
-    lstrcpyA(substr, "SOFTWARE\\Classes\\Installer\\Products\\7D2F387510109040002000060BECB6AB");
-    MultiByteToWideChar(CP_ACP, 0, substr, -1, substrW, MAX_PATH);
-    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW);
-}
-
 static void test_complocator(void)
 {
     MSIHANDLE hdb, hpkg;
@@ -6465,14 +6764,22 @@ static void test_complocator(void)
     CreateDirectoryA("olorotitan", NULL);
     CreateDirectoryA("pantydraco", NULL);
 
-    set_component_path("abelisaurus", "{E3619EED-305A-418C-B9C7-F7D7377F0934}");
-    set_component_path("bactrosaurus", "{D56B688D-542F-42Ef-90FD-B6DA76EE8119}");
-    set_component_path("echinodon", "{A19E16C5-C75D-4699-8111-C4338C40C3CB}");
-    set_component_path("falcarius", "{17762FA1-A7AE-4CC6-8827-62873C35361D}");
-    set_component_path("iguanodon", "{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}");
-    set_component_path("jobaria", "{243C22B1-8C51-4151-B9D1-1AE5265E079E}");
-    set_component_path("megaraptor", "{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}");
-    set_component_path("neosodon", "{0B499649-197A-48EF-93D2-AF1C17ED6E90}");
+    set_component_path("abelisaurus", MSIINSTALLCONTEXT_MACHINE,
+                       "{E3619EED-305A-418C-B9C7-F7D7377F0934}", NULL, FALSE);
+    set_component_path("bactrosaurus", MSIINSTALLCONTEXT_MACHINE,
+                       "{D56B688D-542F-42Ef-90FD-B6DA76EE8119}", NULL, FALSE);
+    set_component_path("echinodon", MSIINSTALLCONTEXT_MACHINE,
+                       "{A19E16C5-C75D-4699-8111-C4338C40C3CB}", NULL, FALSE);
+    set_component_path("falcarius", MSIINSTALLCONTEXT_MACHINE,
+                       "{17762FA1-A7AE-4CC6-8827-62873C35361D}", NULL, FALSE);
+    set_component_path("iguanodon", MSIINSTALLCONTEXT_MACHINE,
+                       "{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}", NULL, FALSE);
+    set_component_path("jobaria", MSIINSTALLCONTEXT_MACHINE,
+                       "{243C22B1-8C51-4151-B9D1-1AE5265E079E}", NULL, FALSE);
+    set_component_path("megaraptor", MSIINSTALLCONTEXT_MACHINE,
+                       "{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}", NULL, FALSE);
+    set_component_path("neosodon", MSIINSTALLCONTEXT_MACHINE,
+                       "{0B499649-197A-48EF-93D2-AF1C17ED6E90}", NULL, FALSE);
 
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -6590,14 +6897,22 @@ static void test_complocator(void)
     RemoveDirectoryA("neosodon");
     RemoveDirectoryA("olorotitan");
     RemoveDirectoryA("pantydraco");
-    delete_component_path("{E3619EED-305A-418C-B9C7-F7D7377F0934}");
-    delete_component_path("{D56B688D-542F-42Ef-90FD-B6DA76EE8119}");
-    delete_component_path("{A19E16C5-C75D-4699-8111-C4338C40C3CB}");
-    delete_component_path("{17762FA1-A7AE-4CC6-8827-62873C35361D}");
-    delete_component_path("{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}");
-    delete_component_path("{243C22B1-8C51-4151-B9D1-1AE5265E079E}");
-    delete_component_path("{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}");
-    delete_component_path("{0B499649-197A-48EF-93D2-AF1C17ED6E90}");
+    delete_component_path("{E3619EED-305A-418C-B9C7-F7D7377F0934}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{D56B688D-542F-42Ef-90FD-B6DA76EE8119}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{A19E16C5-C75D-4699-8111-C4338C40C3CB}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{17762FA1-A7AE-4CC6-8827-62873C35361D}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{8E0DA02E-F6A7-4A8F-B25D-6F564C492308}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{243C22B1-8C51-4151-B9D1-1AE5265E079E}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
+    delete_component_path("{0B499649-197A-48EF-93D2-AF1C17ED6E90}",
+                          MSIINSTALLCONTEXT_MACHINE, NULL);
     DeleteFileA(msifile);
 }
 
@@ -8050,6 +8365,7 @@ START_TEST(package)
     test_getproperty();
     test_removefiles();
     test_appsearch();
+    test_appsearch_complocator();
     test_featureparents();
     test_installprops();
     test_launchconditions();
