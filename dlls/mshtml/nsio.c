@@ -67,6 +67,23 @@ typedef struct {
 
 static nsresult create_uri(nsIURI*,NSContainer*,nsIWineURI**);
 
+HRESULT nsuri_to_url(LPCWSTR nsuri, BSTR *ret)
+{
+    const WCHAR *ptr = nsuri;
+
+    static const WCHAR wine_prefixW[] = {'w','i','n','e',':'};
+
+    if(!strncmpW(nsuri, wine_prefixW, sizeof(wine_prefixW)/sizeof(WCHAR)))
+        ptr += sizeof(wine_prefixW)/sizeof(WCHAR);
+
+    *ret = SysAllocString(ptr);
+    if(!*ret)
+        return E_OUTOFMEMORY;
+
+    TRACE("%s -> %s\n", debugstr_w(nsuri), debugstr_w(*ret));
+    return S_OK;
+}
+
 static BOOL exec_shldocvw_67(HTMLDocument *doc, LPCWSTR url)
 {
     IOleCommandTarget *cmdtrg = NULL;

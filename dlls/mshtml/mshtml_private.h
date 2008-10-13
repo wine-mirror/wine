@@ -502,6 +502,8 @@ void register_nsservice(nsIComponentRegistrar*,nsIServiceManager*);
 void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 BOOL install_wine_gecko(BOOL);
 
+HRESULT nsuri_to_url(LPCWSTR,BSTR*);
+
 void hlink_frame_navigate(HTMLDocument*,IHlinkFrame*,LPCWSTR,nsIInputStream*,DWORD);
 
 void call_property_onchanged(ConnectionPoint*,DISPID);

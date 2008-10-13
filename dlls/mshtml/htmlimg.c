@@ -280,8 +280,25 @@ static HRESULT WINAPI HTMLImgElement_put_src(IHTMLImgElement *iface, BSTR v)
 static HRESULT WINAPI HTMLImgElement_get_src(IHTMLImgElement *iface, BSTR *p)
 {
     HTMLImgElement *This = HTMLIMG_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    const PRUnichar *src;
+    nsAString src_str;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&src_str, NULL);
+    nsres = nsIDOMHTMLImageElement_GetSrc(This->nsimg, &src_str);
+    if(NS_FAILED(nsres)) {
+        ERR("GetSrc failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsAString_GetData(&src_str, &src);
+    hres = nsuri_to_url(src, p);
+    nsAString_Finish(&src_str);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLImgElement_put_lowsrc(IHTMLImgElement *iface, BSTR v)

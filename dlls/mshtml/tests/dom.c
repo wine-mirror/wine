@@ -1316,6 +1316,20 @@ static void _elem_get_scroll_left(unsigned line, IUnknown *unk)
     ok(l == l2, "unexpected left %ld, expected %ld\n", l2, l);
 }
 
+#define test_img_src(i,s) _test_img_src(__LINE__,i,s)
+static void _test_img_src(unsigned line, IUnknown *unk, const char *exsrc)
+{
+    IHTMLImgElement *img = _get_img_iface(line, unk);
+    BSTR src;
+    HRESULT hres;
+
+    hres = IHTMLImgElement_get_src(img, &src);
+    IHTMLImgElement_Release(img);
+    ok_(__FILE__,line) (hres == S_OK, "get_src failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa(src, exsrc), "get_src returned %s expected %s\n", dbgstr_w(src), exsrc);
+    SysFreeString(src);
+}
+
 #define test_img_set_src(u,s) _test_img_set_src(__LINE__,u,s)
 static void _test_img_set_src(unsigned line, IUnknown *unk, const char *src)
 {
@@ -1328,6 +1342,8 @@ static void _test_img_set_src(unsigned line, IUnknown *unk, const char *src)
     IHTMLImgElement_Release(img);
     SysFreeString(tmp);
     ok_(__FILE__,line) (hres == S_OK, "put_src failed: %08x\n", hres);
+
+    _test_img_src(line, unk, src);
 }
 
 #define test_img_alt(u,a) _test_img_alt(__LINE__,u,a)
@@ -3077,6 +3093,7 @@ static void test_elems(IHTMLDocument2 *doc)
 
     elem = get_elem_by_id(doc, imgidW, TRUE);
     if(elem) {
+        test_img_src((IUnknown*)elem, "");
         test_img_set_src((IUnknown*)elem, "about:blank");
         test_img_alt((IUnknown*)elem, NULL);
         test_img_set_alt((IUnknown*)elem, "alt test");
