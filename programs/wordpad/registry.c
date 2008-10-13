@@ -366,7 +366,7 @@ static void registry_read_formatopts(int index, LPCWSTR key, DWORD barState[], D
     if(index == reg_formatindex(SF_RTF))
         wordWrap[index] = ID_WORDWRAP_WINDOW;
     else if(index == reg_formatindex(SF_TEXT))
-        wordWrap[index] = ID_WORDWRAP_WINDOW; /* FIXME: should be ID_WORDWRAP_NONE once we support it */
+        wordWrap[index] = ID_WORDWRAP_NONE;
 
     RegCloseKey(hKey);
 }

@@ -179,25 +179,35 @@ static RECT get_print_rect(HDC hdc)
 void target_device(HWND hMainWnd, DWORD wordWrap)
 {
     HWND hEditorWnd = GetDlgItem(hMainWnd, IDC_EDITOR);
-    HDC hdc = make_dc();
-    int width = 0;
 
     if(wordWrap == ID_WORDWRAP_MARGIN)
     {
+        int width = 0;
+        LRESULT result;
+        HDC hdc = make_dc();
         RECT rc = get_print_rect(hdc);
+
         width = rc.right - rc.left;
+        if(!hdc)
+        {
+            HDC hMaindc = GetDC(hMainWnd);
+            hdc = CreateCompatibleDC(hMaindc);
+            ReleaseDC(hMainWnd, hMaindc);
+        }
+        result = SendMessageW(hEditorWnd, EM_SETTARGETDEVICE, (WPARAM)hdc, width);
+        DeleteDC(hdc);
+        if (result)
+            return;
+        /* otherwise EM_SETTARGETDEVICE failed, so fall back on wrapping
+         * to window using the NULL DC. */
     }
 
-    if(!hdc)
-    {
-        HDC hMaindc = GetDC(hMainWnd);
-        hdc = CreateCompatibleDC(hMaindc);
-        ReleaseDC(hMainWnd, hMaindc);
+    if (wordWrap != ID_WORDWRAP_NONE) {
+        SendMessageW(hEditorWnd, EM_SETTARGETDEVICE, 0, 0);
+    } else {
+        SendMessageW(hEditorWnd, EM_SETTARGETDEVICE, 0, 1);
     }
 
-    SendMessageW(hEditorWnd, EM_SETTARGETDEVICE, (WPARAM)hdc, width);
-
-    DeleteDC(hdc);
 }
 
 static LPWSTR dialog_print_to_file(HWND hMainWnd)

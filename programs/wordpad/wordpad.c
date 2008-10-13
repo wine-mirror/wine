@@ -980,13 +980,15 @@ static INT_PTR CALLBACK formatopts_proc(HWND hWnd, UINT message, WPARAM wParam, 
 
                 sprintf(id, "%d\n", (int)ps->lParam);
                 SetWindowTextA(hIdWnd, id);
-                if(wordWrap[ps->lParam] == ID_WORDWRAP_WINDOW)
+                if(wordWrap[ps->lParam] == ID_WORDWRAP_NONE)
+                    wrap = IDC_PAGEFMT_WN;
+                else if(wordWrap[ps->lParam] == ID_WORDWRAP_WINDOW)
                     wrap = IDC_PAGEFMT_WW;
                 else if(wordWrap[ps->lParam] == ID_WORDWRAP_MARGIN)
                     wrap = IDC_PAGEFMT_WM;
 
                 if(wrap != -1)
-                    CheckRadioButton(hWnd, IDC_PAGEFMT_WW,
+                    CheckRadioButton(hWnd, IDC_PAGEFMT_WN,
                                      IDC_PAGEFMT_WM, wrap);
 
                 if(barState[ps->lParam] & (1 << BANDID_TOOLBAR))
@@ -1003,9 +1005,10 @@ static INT_PTR CALLBACK formatopts_proc(HWND hWnd, UINT message, WPARAM wParam, 
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
+                case IDC_PAGEFMT_WN:
                 case IDC_PAGEFMT_WW:
                 case IDC_PAGEFMT_WM:
-                    CheckRadioButton(hWnd, IDC_PAGEFMT_WW, IDC_PAGEFMT_WM,
+                    CheckRadioButton(hWnd, IDC_PAGEFMT_WN, IDC_PAGEFMT_WM,
                                      LOWORD(wParam));
                     break;
 
@@ -1029,7 +1032,9 @@ static INT_PTR CALLBACK formatopts_proc(HWND hWnd, UINT message, WPARAM wParam, 
 
                     GetWindowTextA(hIdWnd, sid, 4);
                     id = atoi(sid);
-                    if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_WW))
+                    if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_WN))
+                        wordWrap[id] = ID_WORDWRAP_NONE;
+                    else if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_WW))
                         wordWrap[id] = ID_WORDWRAP_WINDOW;
                     else if(IsDlgButtonChecked(hWnd, IDC_PAGEFMT_WM))
                         wordWrap[id] = ID_WORDWRAP_MARGIN;
@@ -1819,7 +1824,7 @@ static LRESULT OnCreate( HWND hWnd )
 
     hEditorWnd = CreateWindowExW(WS_EX_CLIENTEDGE, wszRichEditClass, NULL,
       WS_CHILD|WS_VISIBLE|ES_SELECTIONBAR|ES_MULTILINE|ES_AUTOVSCROLL
-      |ES_WANTRETURN|WS_VSCROLL|ES_NOHIDESEL,
+      |ES_WANTRETURN|WS_VSCROLL|ES_NOHIDESEL|WS_HSCROLL,
       0, 0, 1000, 100, hWnd, (HMENU)IDC_EDITOR, hInstance, NULL);
 
     if (!hEditorWnd)
