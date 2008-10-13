@@ -101,7 +101,7 @@ static void test_world_transform(void)
 
     if (is_win9x)
     {
-        expect_viewport_ext(hdc, 96, 96);
+        expect_viewport_ext(hdc, GetDeviceCaps(hdc, LOGPIXELSX), GetDeviceCaps(hdc, LOGPIXELSY));
         expect_window_ext(hdc, 254, -254);
     }
     else
