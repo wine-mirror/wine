@@ -27,7 +27,6 @@
 #include "msg.h"
 
 #define DEFAULT_MIN_TAB_WIDTH 54
-#define TAB_DEFAULT_WIDTH 96
 #define TAB_PADDING_X 6
 #define EXTRA_ICON_PADDING 3
 #define MAX_TABLEN 32
@@ -506,12 +505,13 @@ static void test_tab(INT nMinTabWidth)
     SIZE size;
     HDC hdc;
     HFONT hOldFont;
-    INT i;
+    INT i, dpi;
 
     hwTab = create_tabcontrol(TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE);
     SendMessage(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
 
     hdc = GetDC(hwTab);
+    dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     hOldFont = SelectObject(hdc, (HFONT)SendMessage(hwTab, WM_GETFONT, 0, 0));
     GetTextExtentPoint32A(hdc, "Tab 1", strlen("Tab 1"), &size);
     trace("Tab1 text size: size.cx=%d size.cy=%d\n", size.cx, size.cy);
@@ -519,7 +519,7 @@ static void test_tab(INT nMinTabWidth)
     ReleaseDC(hwTab, hdc);
 
     trace ("  TCS_FIXEDWIDTH tabs no icon...\n");
-    CheckSize(hwTab, TAB_DEFAULT_WIDTH, -1, "default width");
+    CheckSize(hwTab, dpi, -1, "default width");
     TabCheckSetSize(hwTab, 50, 20, 50, 20, "set size");
     TabCheckSetSize(hwTab, 0, 1, 0, 1, "min size");
 
@@ -535,8 +535,11 @@ static void test_tab(INT nMinTabWidth)
     hwTab = create_tabcontrol(TCS_FIXEDWIDTH | TCS_BUTTONS, TCIF_TEXT|TCIF_IMAGE);
     SendMessage(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
 
+    hdc = GetDC(hwTab);
+    dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+    ReleaseDC(hwTab, hdc);
     trace ("  TCS_FIXEDWIDTH buttons no icon...\n");
-    CheckSize(hwTab, TAB_DEFAULT_WIDTH, -1, "default width");
+    CheckSize(hwTab, dpi, -1, "default width");
     TabCheckSetSize(hwTab, 20, 20, 20, 20, "set size 1");
     TabCheckSetSize(hwTab, 10, 50, 10, 50, "set size 2");
     TabCheckSetSize(hwTab, 0, 1, 0, 1, "min size");
@@ -555,8 +558,11 @@ static void test_tab(INT nMinTabWidth)
     hwTab = create_tabcontrol(TCS_FIXEDWIDTH | TCS_BOTTOM, TCIF_TEXT|TCIF_IMAGE);
     SendMessage(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
 
+    hdc = GetDC(hwTab);
+    dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+    ReleaseDC(hwTab, hdc);
     trace ("  TCS_FIXEDWIDTH | TCS_BOTTOM tabs...\n");
-    CheckSize(hwTab, TAB_DEFAULT_WIDTH, -1, "no icon, default width");
+    CheckSize(hwTab, dpi, -1, "no icon, default width");
 
     TabCheckSetSize(hwTab, 20, 20, 20, 20, "no icon, set size 1");
     TabCheckSetSize(hwTab, 10, 50, 10, 50, "no icon, set size 2");
@@ -633,6 +639,8 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
     RECT rTab;
     INT nTabsRetrieved;
     INT rowCount;
+    INT dpi;
+    HDC hdc;
 
     ok(parent_wnd != NULL, "no parent window!\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -678,7 +686,11 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
     /* Testing GetItemRect */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ok(SendMessage(hTab, TCM_GETITEMRECT, 0, (LPARAM) &rTab), "GetItemRect failed.\n");
-    CheckSize(hTab, TAB_DEFAULT_WIDTH, -1 , "Default Width");
+
+    hdc = GetDC(hTab);
+    dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+    ReleaseDC(hTab, hdc);
+    CheckSize(hTab, dpi, -1 , "Default Width");
     ok_sequence(sequences, TAB_SEQ_INDEX, get_item_rect_seq, "Get itemRect test sequence", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Get itemRect test parent sequence", FALSE);
 
