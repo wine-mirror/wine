@@ -193,7 +193,7 @@ static inline void wstrbuf_finish(wstrbuf_t *buf)
 static void wstrbuf_append_len(wstrbuf_t *buf, LPCWSTR str, int len)
 {
     if(buf->len+len >= buf->size) {
-        buf->size = 2*buf->len+len;
+        buf->size = 2*buf->size+len;
         buf->buf = heap_realloc(buf->buf, buf->size * sizeof(WCHAR));
     }
 
@@ -210,7 +210,7 @@ static void wstrbuf_append_nodetxt(wstrbuf_t *buf, LPCWSTR str, int len)
     TRACE("%s\n", debugstr_wn(str, len));
 
     if(buf->len+len >= buf->size) {
-        buf->size = 2*buf->len+len;
+        buf->size = 2*buf->size+len;
         buf->buf = heap_realloc(buf->buf, buf->size * sizeof(WCHAR));
     }
 
