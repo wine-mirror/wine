@@ -3833,6 +3833,7 @@ static BOOL ParseStringAclToAcl(LPCWSTR StringAcl, LPDWORD lpdwFlags,
     return TRUE;
 
 lerr:
+    SetLastError(ERROR_INVALID_ACL);
     WARN("Invalid ACE string format\n");
     return FALSE;
 }
@@ -4023,6 +4024,11 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
     if (GetVersion() & 0x80000000)
     {
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        goto lend;
+    }
+    else if (!StringSecurityDescriptor || !SecurityDescriptor)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         goto lend;
     }
     else if (StringSDRevision != SID_REVISION)
@@ -4476,7 +4482,6 @@ BOOL WINAPI ConvertStringSidToSidW(LPCWSTR StringSid, PSID* Sid)
         if (!bret)
             LocalFree(*Sid); 
     }
-    TRACE("returning %s\n", bret ? "TRUE" : "FALSE");
     return bret;
 }
 
@@ -4502,7 +4507,6 @@ BOOL WINAPI ConvertStringSidToSidA(LPCSTR StringSid, PSID* Sid)
         bret = ConvertStringSidToSidW(wStringSid, Sid);
         HeapFree(GetProcessHeap(), 0, wStringSid);
     }
-    TRACE("returning %s\n", bret ? "TRUE" : "FALSE");
     return bret;
 }
 

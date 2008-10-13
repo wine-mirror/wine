@@ -81,6 +81,8 @@ typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorA)(LPCSTR, DWORD,
                                                                             PSECURITY_DESCRIPTOR*, PULONG );
+static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorW)(LPCWSTR, DWORD,
+                                                                            PSECURITY_DESCRIPTOR*, PULONG );
 static BOOL (WINAPI *pConvertSecurityDescriptorToStringSecurityDescriptorA)(PSECURITY_DESCRIPTOR, DWORD,
                                                                             SECURITY_INFORMATION, LPSTR *, PULONG );
 typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
@@ -144,6 +146,8 @@ static void init(void)
     pAddAuditAccessAceEx = (void *)GetProcAddress(hmod, "AddAuditAccessAceEx");
     pConvertStringSecurityDescriptorToSecurityDescriptorA =
         (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorA" );
+    pConvertStringSecurityDescriptorToSecurityDescriptorW =
+        (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorW" );
     pConvertSecurityDescriptorToStringSecurityDescriptorA =
         (void *)GetProcAddress(hmod, "ConvertSecurityDescriptorToStringSecurityDescriptorA" );
     pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
@@ -2175,6 +2179,7 @@ static void test_ConvertStringSecurityDescriptor(void)
 {
     BOOL ret;
     PSECURITY_DESCRIPTOR pSD;
+    static const WCHAR Blank[] = { 0 };
 
     if (!pConvertStringSecurityDescriptorToSecurityDescriptorA)
     {
@@ -2255,10 +2260,50 @@ static void test_ConvertStringSecurityDescriptor(void)
     SetLastError(0xdeadbeef);
     ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "D:(A;;ROB;;;WD)", SDDL_REVISION_1, &pSD, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_ACL,
         "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_ACL instead of %d\n",
         GetLastError());
+
+    /* test behaviour with NULL parameters */
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        NULL, 0xdeadbeef, &pSD, NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_PARAMETER instead of %d\n",
+        GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorW(
+        NULL, 0xdeadbeef, &pSD, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_PARAMETER instead of %d\n",
+        GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "D:(A;;ROB;;;WD)", 0xdeadbeef, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_PARAMETER instead of %d\n",
+        GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "D:(A;;ROB;;;WD)", SDDL_REVISION_1, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "ConvertStringSecurityDescriptorToSecurityDescriptor should have failed with ERROR_INVALID_PARAMETER instead of %d\n",
+        GetLastError());
+
+    /* test behaviour with empty strings */
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "", SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pConvertStringSecurityDescriptorToSecurityDescriptorW(
+        Blank, SDDL_REVISION_1, &pSD, NULL);
+    ok(ret, "ConvertStringSecurityDescriptorToSecurityDescriptor failed with error %d\n", GetLastError());
 
     /* test ACE string SID */
     SetLastError(0xdeadbeef);
