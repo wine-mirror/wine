@@ -512,6 +512,7 @@ static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 
     /* FIXME: Make sure that node != newChild */
     *node = HTMLDOMNODE(get_node(This->doc, nsnode, TRUE));
+    nsIDOMNode_Release(nsnode);
     IHTMLDOMNode_AddRef(*node);
     return S_OK;
 }
@@ -572,8 +573,8 @@ static HRESULT WINAPI HTMLDOMNode_appendChild(IHTMLDOMNode *iface, IHTMLDOMNode 
 
     nsres = nsIDOMNode_AppendChild(This->nsnode, node_obj->nsnode, &nsnode);
     if(NS_FAILED(nsres)) {
-        ERR("AppendChild failed: %08x\n", nsres);
-        return E_FAIL;
+        WARN("AppendChild failed: %08x\n", nsres);
+        nsnode = node_obj->nsnode;
     }
 
     /* FIXME: Make sure that node != newChild */
