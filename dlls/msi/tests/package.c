@@ -470,6 +470,19 @@ static UINT create_complocator_table( MSIHANDLE hdb )
             "PRIMARY KEY `Signature_`)" );
 }
 
+static UINT create_inilocator_table( MSIHANDLE hdb )
+{
+    return run_query( hdb,
+            "CREATE TABLE `IniLocator` ("
+            "`Signature_` CHAR(72) NOT NULL, "
+            "`FileName` CHAR(255) NOT NULL, "
+            "`Section` CHAR(96)NOT NULL, "
+            "`Key` CHAR(128)NOT NULL, "
+            "`Field` SHORT, "
+            "`Type` SHORT "
+            "PRIMARY KEY `Signature_`)" );
+}
+
 static UINT add_component_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `Component`  "
@@ -694,6 +707,22 @@ static UINT add_complocator_entry( MSIHANDLE hdb, const char *values )
 {
     char insert[] = "INSERT INTO `CompLocator` "
             "(`Signature_`, `ComponentId`, `Type`) "
+            "VALUES( %s )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen(values) + sizeof insert;
+    query = HeapAlloc(GetProcessHeap(),0,sz);
+    sprintf(query,insert,values);
+    r = run_query( hdb, query );
+    HeapFree(GetProcessHeap(), 0, query);
+    return r;
+}
+
+static UINT add_inilocator_entry( MSIHANDLE hdb, const char *values )
+{
+    char insert[] = "INSERT INTO `IniLocator` "
+            "(`Signature_`, `FileName`, `Section`, `Key`, `Field`, `Type`) "
             "VALUES( %s )";
     char *query;
     UINT sz, r;
@@ -5985,6 +6014,210 @@ static void test_appsearch_complocator(void)
     DeleteFileA(msifile);
 }
 
+static void delete_win_ini(LPCSTR file)
+{
+    CHAR path[MAX_PATH];
+
+    GetWindowsDirectoryA(path, MAX_PATH);
+    lstrcatA(path, "\\");
+    lstrcatA(path, file);
+
+    DeleteFileA(path);
+}
+
+static void test_appsearch_inilocator(void)
+{
+    MSIHANDLE hpkg, hdb;
+    CHAR path[MAX_PATH];
+    CHAR prop[MAX_PATH];
+    LPCSTR str;
+    LPSTR ptr;
+    DWORD size;
+    UINT r;
+
+    WritePrivateProfileStringA("Section", "Key", "keydata,field2", "IniFile.ini");
+
+    create_test_file("FileName1");
+    sprintf(path, "%s\\FileName1", CURR_DIR);
+    WritePrivateProfileStringA("Section", "Key2", path, "IniFile.ini");
+
+    WritePrivateProfileStringA("Section", "Key3", CURR_DIR, "IniFile.ini");
+
+    sprintf(path, "%s\\IDontExist", CURR_DIR);
+    WritePrivateProfileStringA("Section", "Key4", path, "IniFile.ini");
+
+    hdb = create_package_db();
+    ok(hdb, "Expected a valid database handle\n");
+
+    r = create_appsearch_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP8', 'NewSignature8'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP9', 'NewSignature9'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_inilocator_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeRawValue, field 1 */
+    str = "'NewSignature1', 'IniFile.ini', 'Section', 'Key', 1, 2";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeRawValue, field 2 */
+    str = "'NewSignature2', 'IniFile.ini', 'Section', 'Key', 2, 2";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeRawValue, entire field */
+    str = "'NewSignature3', 'IniFile.ini', 'Section', 'Key', 0, 2";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeFile */
+    str = "'NewSignature4', 'IniFile.ini', 'Section', 'Key2', 1, 1";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeDirectory, file */
+    str = "'NewSignature5', 'IniFile.ini', 'Section', 'Key2', 1, 0";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeDirectory, directory */
+    str = "'NewSignature6', 'IniFile.ini', 'Section', 'Key3', 1, 0";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeFile, file, no signature */
+    str = "'NewSignature7', 'IniFile.ini', 'Section', 'Key2', 1, 1";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeFile, dir, no signature */
+    str = "'NewSignature8', 'IniFile.ini', 'Section', 'Key3', 1, 1";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* msidbLocatorTypeFile, file does not exist */
+    str = "'NewSignature9', 'IniFile.ini', 'Section', 'Key4', 1, 1";
+    r = add_inilocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_signature_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'NewSignature4', 'FileName1', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_signature_entry(hdb, "'NewSignature9', 'IDontExist', '', '', '', '', '', '', ''");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    hpkg = package_from_db(hdb);
+    ok(hpkg, "Expected a valid package handle\n");
+
+    r = MsiDoAction(hpkg, "AppSearch");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP1", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, "keydata"), "Expected \"keydata\", got \"%s\"\n", prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP2", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, "field2"), "Expected \"field2\", got \"%s\"\n", prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP3", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, "keydata,field2"),
+       "Expected \"keydata,field2\", got \"%s\"\n", prop);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\FileName1", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP4", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP5", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP6", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP7", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    lstrcpyA(path, CURR_DIR);
+    ptr = strrchr(path, '\\');
+    *(ptr + 1) = '\0';
+    r = MsiGetPropertyA(hpkg, "SIGPROP8", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP9", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+
+    delete_win_ini("IniFile.ini");
+    DeleteFileA("FileName1");
+    MsiCloseHandle(hpkg);
+    DeleteFileA(msifile);
+}
+
 static void test_featureparents(void)
 {
     MSIHANDLE hpkg;
@@ -8366,6 +8599,7 @@ START_TEST(package)
     test_removefiles();
     test_appsearch();
     test_appsearch_complocator();
+    test_appsearch_inilocator();
     test_featureparents();
     test_installprops();
     test_launchconditions();
