@@ -832,8 +832,47 @@ static HRESULT WINAPI HTMLElement_get_innerHTML(IHTMLElement *iface, BSTR *p)
 static HRESULT WINAPI HTMLElement_put_innerText(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsIDOMNode *nschild, *tmp;
+    nsIDOMText *text_node;
+    nsAString text_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    while(1) {
+        nsres = nsIDOMHTMLElement_GetLastChild(This->nselem, &nschild);
+        if(NS_FAILED(nsres)) {
+            ERR("GetLastChild failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+        if(!nschild)
+            break;
+
+        nsres = nsIDOMHTMLElement_RemoveChild(This->nselem, nschild, &tmp);
+        nsIDOMNode_Release(nschild);
+        if(NS_FAILED(nsres)) {
+            ERR("RemoveChild failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+        nsIDOMNode_Release(tmp);
+    }
+
+    nsAString_Init(&text_str, v);
+    nsres = nsIDOMHTMLDocument_CreateTextNode(This->node.doc->nsdoc, &text_str, &text_node);
+    nsAString_Finish(&text_str);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateTextNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLElement_AppendChild(This->nselem, (nsIDOMNode*)text_node, &tmp);
+    if(NS_FAILED(nsres)) {
+        ERR("AppendChild failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsIDOMNode_Release(tmp);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_get_innerText(IHTMLElement *iface, BSTR *p)

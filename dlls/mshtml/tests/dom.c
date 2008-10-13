@@ -559,6 +559,58 @@ static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
         _test_disp(line, unk, elem_type_infos[type].dispiid);
 }
 
+#define get_node_type(n) _get_node_type(__LINE__,n)
+static long _get_node_type(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    long type = -1;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_get_nodeType(node, &type);
+    ok(hres == S_OK, "get_nodeType failed: %08x\n", hres);
+
+    IHTMLDOMNode_Release(node);
+
+    return type;
+}
+
+#define get_child_nodes(u) _get_child_nodes(__LINE__,u)
+static IHTMLDOMChildrenCollection *_get_child_nodes(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    IHTMLDOMChildrenCollection *col = NULL;
+    IDispatch *disp;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_get_childNodes(node, &disp);
+    IHTMLDOMNode_Release(node);
+    ok_(__FILE__,line) (hres == S_OK, "get_childNodes failed: %08x\n", hres);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLDOMChildrenCollection, (void**)&col);
+    IDispatch_Release(disp);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMChildrenCollection: %08x\n", hres);
+
+    return col;
+}
+
+#define get_child_item(c,i) _get_child_item(__LINE__,c,i)
+static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *col, long idx)
+{
+    IHTMLDOMNode *node = NULL;
+    IDispatch *disp;
+    HRESULT hres;
+
+    hres = IHTMLDOMChildrenCollection_item(col, idx, &disp);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+
+    node = _get_node_iface(line, (IUnknown*)disp);
+    IDispatch_Release(disp);
+
+    return node;
+}
+
 #define test_elem_attr(e,n,v) _test_elem_attr(__LINE__,e,n,v)
 static void _test_elem_attr(unsigned line, IHTMLElement *elem, LPCWSTR name, LPCWSTR exval)
 {
@@ -1027,6 +1079,44 @@ static void _test_elem_innertext(unsigned line, IHTMLElement *elem, const char *
     SysFreeString(text);
 }
 
+#define test_elem_set_innertext(e,t) _test_elem_set_innertext(__LINE__,e,t)
+static void _test_elem_set_innertext(unsigned line, IHTMLElement *elem, const char *text)
+{
+    IHTMLDOMChildrenCollection *col;
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(text);
+    hres = IHTMLElement_put_innerText(elem, str);
+    ok_(__FILE__,line) (hres == S_OK, "put_innerText failed: %08x\n", hres);
+    SysFreeString(str);
+
+    _test_elem_innertext(line, elem, text);
+
+
+    col = _get_child_nodes(line, (IUnknown*)elem);
+    ok(col != NULL, "col == NULL\n");
+    if(col) {
+        long length = 0, type;
+        IHTMLDOMNode *node;
+
+        hres = IHTMLDOMChildrenCollection_get_length(col, &length);
+        ok(hres == S_OK, "get_length failed: %08x\n", hres);
+        ok(length == 1, "length = %ld\n", length);
+
+        node = _get_child_item(line, col, 0);
+        ok(node != NULL, "node == NULL\n");
+        if(node) {
+            type = _get_node_type(line, (IUnknown*)node);
+            ok(type == 3, "type=%ld\n", type);
+            IHTMLDOMNode_Release(node);
+        }
+
+        IHTMLDOMChildrenCollection_Release(col);
+    }
+
+}
+
 #define get_first_child(n) _get_first_child(__LINE__,n)
 static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
 {
@@ -1067,21 +1157,6 @@ static IHTMLDOMNode *_test_node_get_parent(unsigned line, IUnknown *unk)
     ok_(__FILE__,line) (hres == S_OK, "get_parentNode failed: %08x\n", hres);
 
     return parent;
-}
-
-#define get_node_type(n) _get_node_type(__LINE__,n)
-static long _get_node_type(unsigned line, IUnknown *unk)
-{
-    IHTMLDOMNode *node = _get_node_iface(line, unk);
-    long type = -1;
-    HRESULT hres;
-
-    hres = IHTMLDOMNode_get_nodeType(node, &type);
-    ok(hres == S_OK, "get_nodeType failed: %08x\n", hres);
-
-    IHTMLDOMNode_Release(node);
-
-    return type;
 }
 
 #define test_elem_get_parent(u) _test_elem_get_parent(__LINE__,u)
@@ -1351,27 +1426,6 @@ static void _test_input_put_value(unsigned line, IUnknown *unk, const char *val)
     IHTMLInputElement_Release(input);
 }
 
-#define get_child_nodes(u) _get_child_nodes(__LINE__,u)
-static IHTMLDOMChildrenCollection *_get_child_nodes(unsigned line, IUnknown *unk)
-{
-    IHTMLDOMNode *node = _get_node_iface(line, unk);
-    IHTMLDOMChildrenCollection *col = NULL;
-    IDispatch *disp;
-    HRESULT hres;
-
-    hres = IHTMLDOMNode_get_childNodes(node, &disp);
-    IHTMLDOMNode_Release(node);
-    ok_(__FILE__,line) (hres == S_OK, "get_childNodes failed: %08x\n", hres);
-    if(FAILED(hres))
-        return NULL;
-
-    hres = IDispatch_QueryInterface(disp, &IID_IHTMLDOMChildrenCollection, (void**)&col);
-    IDispatch_Release(disp);
-    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMChildrenCollection: %08x\n", hres);
-
-    return col;
-}
-
 #define test_elem_class(u,c) _test_elem_class(__LINE__,u,c)
 static void _test_elem_class(unsigned line, IUnknown *unk, const char *exclass)
 {
@@ -1429,22 +1483,6 @@ static void _test_elem_set_class(unsigned line, IUnknown *unk, const char *class
     SysFreeString(tmp);
 
     _test_elem_class(line, unk, class);
-}
-
-#define get_child_item(c,i) _get_child_item(__LINE__,c,i)
-static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *col, long idx)
-{
-    IHTMLDOMNode *node = NULL;
-    IDispatch *disp;
-    HRESULT hres;
-
-    hres = IHTMLDOMChildrenCollection_item(col, idx, &disp);
-    ok(hres == S_OK, "item failed: %08x\n", hres);
-
-    node = _get_node_iface(line, (IUnknown*)disp);
-    IDispatch_Release(disp);
-
-    return node;
 }
 
 #define test_elem_id(e,i) _test_elem_id(__LINE__,e,i)
@@ -3140,6 +3178,11 @@ static void test_elems(IHTMLDocument2 *doc)
 
     test_stylesheets(doc);
     test_create_option_elem(doc);
+
+    elem = get_doc_elem_by_id(doc, tblW);
+    ok(elem != NULL, "elem = NULL\n");
+    test_elem_set_innertext(elem, "inner text");
+    IHTMLElement_Release(elem);
 
     test_doc_title(doc, "test");
     test_doc_set_title(doc, "test title");
