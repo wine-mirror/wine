@@ -48,7 +48,7 @@ platform=$WINETEST_PLATFORM
 WINETEST_DEBUG=${WINETEST_DEBUG:-1}
 
 # parse command-line options
-while [ "$#" -gt 1 ]; do
+while [ "$#" -gt 0 ]; do
     case "$1" in
     -h)
 	usage
@@ -76,7 +76,7 @@ while [ "$#" -gt 1 ]; do
 	shift; topobjdir="$1"
 	if [ ! -d "$topobjdir" ]; then usage; fi
     ;;
-    --)
+    *)
 	break
     ;;
     esac
