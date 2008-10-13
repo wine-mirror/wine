@@ -449,4 +449,10 @@ ok(testFuncToString.toString() === "function testFuncToString(x,y) {\n    return
 ok("" + testFuncToString === "function testFuncToString(x,y) {\n    return x+y;\n}",
    "'' + testFuncToString = " + testFuncToString);
 
+var date = new Date();
+
+date = new Date(100);
+ok(date.getTime() === 100, "date.getTime() = " + date.getTime());
+ok(Date.prototype.getTime() === 0, "date.prototype.getTime() = " + Date.prototype.getTime());
+
 reportSuccess();

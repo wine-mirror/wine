@@ -168,11 +168,22 @@ static HRESULT Date_toLocaleTimeString(DispatchEx *dispex, LCID lcid, WORD flags
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.9 */
 static HRESULT Date_getTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, date->time);
+    }
+    return S_OK;
 }
 
 static HRESULT Date_getFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
