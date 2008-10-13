@@ -862,20 +862,8 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
    if (dtp) TRACE("Params: iTabLength=%d, iLeftMargin=%d, iRightMargin=%d\n",
           dtp->iTabLength, dtp->iLeftMargin, dtp->iRightMargin);
 
-    if (!str || count == 0) return 0;
-    if (count == -1)
-    {
-        count = strlenW(str);
-        if (count == 0)
-        {
-            if( flags & DT_CALCRECT)
-            {
-                rect->right = rect->left;
-                rect->bottom = rect->top;
-            }
-            return 0;
-        }
-    }
+    if (!str) return 0;
+
     strPtr = str;
 
     if (flags & DT_SINGLELINE)
@@ -886,6 +874,29 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	lh = tm.tmHeight + tm.tmExternalLeading;
     else
 	lh = tm.tmHeight;
+
+    if (str[0] && count == 0)
+        return lh;
+
+    if (dtp && dtp->cbSize != sizeof(DRAWTEXTPARAMS))
+        return 0;
+
+    if (count == -1)
+    {
+        count = strlenW(str);
+        if (count == 0)
+        {
+            if( flags & DT_CALCRECT)
+            {
+                rect->right = rect->left;
+                if( flags & DT_SINGLELINE)
+                    rect->bottom = rect->top + lh;
+                else
+                    rect->bottom = rect->top;
+            }
+            return lh;
+        }
+    }
 
     if (dtp)
     {
@@ -1031,14 +1042,30 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
    UINT cp;
 
    if (!count) return 0;
+   if (!str && count > 0) return 0;
    if( !str || ((count == -1) && !(count = strlen(str))))
    {
+        int lh;
+        TEXTMETRICA tm;
+
+        if (dtp && dtp->cbSize != sizeof(DRAWTEXTPARAMS))
+            return 0;
+
+        GetTextMetricsA(hdc, &tm);
+        if (flags & DT_EXTERNALLEADING)
+            lh = tm.tmHeight + tm.tmExternalLeading;
+        else
+            lh = tm.tmHeight;
+
         if( flags & DT_CALCRECT)
         {
             rect->right = rect->left;
-            rect->bottom = rect->top;
+            if( flags & DT_SINGLELINE)
+                rect->bottom = rect->top + lh;
+            else
+                rect->bottom = rect->top;
         }
-        return 0;
+        return lh;
    }
    cp = GdiGetCodePage( hdc );
    wcount = MultiByteToWideChar( cp, 0, str, count, NULL, 0 );
