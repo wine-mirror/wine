@@ -245,7 +245,9 @@ static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
  LPWSTR *appValue)
 {
     static const WCHAR dwordFmt[] = { '#','%','d','\0' };
-    static const WCHAR binFmt[] = { '#','x','%','x','\0' };
+    static const WCHAR binPre[] = { '#','x','\0' };
+    static const WCHAR binFmt[] = { '%','0','2','X','\0' };
+    LPWSTR ptr;
     DWORD i;
 
     switch (regType)
@@ -277,10 +279,12 @@ static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
             ExpandEnvironmentStringsW((LPCWSTR)value, *appValue, sz);
             break;
         case REG_BINARY:
-            /* 3 == length of "#x<nibble>" */
-            *appValue = msi_alloc((sz * 3 + 1) * sizeof(WCHAR));
-            for (i = 0; i < sz; i++)
-                sprintfW(*appValue + i * 3, binFmt, value[i]);
+            /* #x<nibbles>\0 */
+            *appValue = msi_alloc((sz * 2 + 3) * sizeof(WCHAR));
+            lstrcpyW(*appValue, binPre);
+            ptr = *appValue + lstrlenW(binPre);
+            for (i = 0; i < sz; i++, ptr += 2)
+                sprintfW(ptr, binFmt, value[i]);
             break;
         default:
             WARN("unimplemented for values of type %d\n", regType);
