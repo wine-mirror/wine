@@ -446,8 +446,48 @@ static HRESULT WINAPI HTMLDOMNode_insertBefore(IHTMLDOMNode *iface, IHTMLDOMNode
                                                VARIANT refChild, IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = HTMLDOMNODE_THIS(iface);
-    FIXME("(%p)->(%p v %p)\n", This, newChild, node);
-    return E_NOTIMPL;
+    nsIDOMNode *nsnode, *nsref = NULL;
+    HTMLDOMNode *new_child;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), node);
+
+    new_child = get_node_obj(This->doc, (IUnknown*)newChild);
+    if(!new_child) {
+        ERR("invalid newChild\n");
+        return E_INVALIDARG;
+    }
+
+    switch(V_VT(&refChild)) {
+    case VT_NULL:
+        break;
+    case VT_DISPATCH: {
+        HTMLDOMNode *ref_node;
+
+        ref_node = get_node_obj(This->doc, (IUnknown*)V_DISPATCH(&refChild));
+        if(!ref_node) {
+            ERR("unvalid node\n");
+            return E_FAIL;
+        }
+
+        nsref = ref_node->nsnode;
+        break;
+    }
+    default:
+        FIXME("unimplemented vt %d\n", V_VT(&refChild));
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMNode_InsertBefore(This->nsnode, new_child->nsnode, nsref, &nsnode);
+    if(NS_FAILED(nsres)) {
+        ERR("InsertBefore failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *node = HTMLDOMNODE(get_node(This->doc, nsnode, TRUE));
+    nsIDOMNode_Release(nsnode);
+    IHTMLDOMNode_AddRef(*node);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_removeChild(IHTMLDOMNode *iface, IHTMLDOMNode *oldChild,

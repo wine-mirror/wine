@@ -1674,6 +1674,23 @@ static IHTMLDOMNode *_test_node_append_child(unsigned line, IUnknown *node_unk, 
     return new_child;
 }
 
+#define test_node_insertbefore(n,c,v) _test_node_insertbefore(__LINE__,n,c,v)
+static IHTMLDOMNode *_test_node_insertbefore(unsigned line, IUnknown *node_unk, IHTMLDOMNode *child, VARIANT *var)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, node_unk);
+    IHTMLDOMNode *new_child = NULL;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_insertBefore(node, child, *var, &new_child);
+    ok_(__FILE__,line) (hres == S_OK, "insertBefore failed: %08x\n", hres);
+    ok_(__FILE__,line) (new_child != NULL, "new_child == NULL\n");
+    /* TODO  ok_(__FILE__,line) (new_child != child, "new_child == child\n"); */
+
+    IHTMLDOMNode_Release(node);
+
+    return new_child;
+}
+
 #define test_node_remove_child(n,c) _test_node_remove_child(__LINE__,n,c)
 static void _test_node_remove_child(unsigned line, IUnknown *unk, IHTMLDOMNode *child)
 {
@@ -1682,7 +1699,7 @@ static void _test_node_remove_child(unsigned line, IUnknown *unk, IHTMLDOMNode *
     HRESULT hres;
 
     hres = IHTMLDOMNode_removeChild(node, child, &new_node);
-    ok_(__FILE__,line) (hres == S_OK, "appendChild failed: %08x\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "removeChild failed: %08x\n", hres);
     ok_(__FILE__,line) (new_node != NULL, "new_node == NULL\n");
     /* TODO ok_(__FILE__,line) (new_node != child, "new_node == child\n"); */
 
@@ -3209,8 +3226,9 @@ static void test_elems(IHTMLDocument2 *doc)
 static void test_create_elems(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem, *body, *elem2;
-    IHTMLDOMNode *node;
+    IHTMLDOMNode *node, *node2, *node3;
     IDispatch *disp;
+    VARIANT var;
     long type;
     HRESULT hres;
 
@@ -3245,14 +3263,29 @@ static void test_create_elems(IHTMLDocument2 *doc)
     IDispatch_Release(disp);
     test_node_has_child((IUnknown*)body, VARIANT_FALSE);
 
-    IHTMLElement_Release(body);
     IHTMLElement_Release(elem);
     IHTMLDOMNode_Release(node);
 
     node = test_create_text(doc, "test");
     test_ifaces((IUnknown*)node, text_iids);
     test_disp((IUnknown*)node, &DIID_DispHTMLDOMTextNode);
+
+    V_VT(&var) = VT_NULL;
+    node2 = test_node_insertbefore((IUnknown*)body, node, &var);
     IHTMLDOMNode_Release(node);
+
+    node = test_create_text(doc, "insert ");
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (IDispatch*)node2;
+    node3 = test_node_insertbefore((IUnknown*)body, node, &var);
+    IHTMLDOMNode_Release(node);
+    IHTMLDOMNode_Release(node2);
+    IHTMLDOMNode_Release(node3);
+
+    test_elem_innertext(body, "insert test");
+
+    IHTMLElement_Release(body);
 }
 
 static void test_exec(IUnknown *unk, const GUID *grpid, DWORD cmdid, VARIANT *in, VARIANT *out)
