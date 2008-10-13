@@ -45,6 +45,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 
     if (!CreateProcessW(path, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &stinf, &info))
 	goto failed;
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
     return 0;
 
 failed:
