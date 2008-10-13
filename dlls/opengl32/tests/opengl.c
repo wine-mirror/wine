@@ -541,14 +541,6 @@ START_TEST(opengl)
         0, 0, 0                /* layer masks */
     };
 
-    init_functions();
-    /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
-    if (!pwglGetExtensionsStringARB)
-    {
-        skip("wglGetExtensionsStringARB is not available\n");
-        return;
-    }
-
     hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "err: %d\n", GetLastError());
@@ -584,6 +576,22 @@ START_TEST(opengl)
             trace("OpenGL renderer: %s\n", glGetString(GL_RENDERER));
             trace("OpenGL driver version: %s\n", glGetString(GL_VERSION));
             trace("OpenGL vendor: %s\n", glGetString(GL_VENDOR));
+        }
+        else
+        {
+            skip("Skipping OpenGL tests without a current context\n");
+            return;
+        }
+
+        /* Initialisation of WGL functions depends on an implicit WGL context. For this reason we can't load them before making
+         * any WGL call :( On Wine this would work but not on real Windows because there can be different implementations (software, ICD, MCD).
+         */
+        init_functions();
+        /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
+        if (!pwglGetExtensionsStringARB)
+        {
+            skip("wglGetExtensionsStringARB is not available\n");
+            return;
         }
 
         test_makecurrent(hdc);
