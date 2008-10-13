@@ -2349,7 +2349,7 @@ DWORD WINAPI ImmGetImeMenuItemsA( HIMC hIMC, DWORD dwFlags, DWORD dwType,
             }
             if (lpImeMenu && rc)
             {
-                int i;
+                unsigned int i;
                 for (i = 0; i < rc; i++)
                 {
                     memcpy(&lpImeMenu[i],&lpImeMenuW[1],sizeof(IMEMENUITEMINFOA));
@@ -2412,7 +2412,7 @@ DWORD WINAPI ImmGetImeMenuItemsW( HIMC hIMC, DWORD dwFlags, DWORD dwType,
             }
             if (lpImeMenu && rc)
             {
-                int i;
+                unsigned int i;
                 for (i = 0; i < rc; i++)
                 {
                     memcpy(&lpImeMenu[i],&lpImeMenuA[1],sizeof(IMEMENUITEMINFOA));
@@ -2559,7 +2559,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
     if (data->IMC.dwNumMsgBuf > 0)
     {
         LPTRANSMSG lpTransMsg;
-        INT i;
+        DWORD i;
 
         lpTransMsg = (LPTRANSMSG)ImmLockIMCC(data->IMC.hMsgBuf);
         for (i = 0; i < data->IMC.dwNumMsgBuf; i++)
@@ -2586,7 +2586,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     LPVOID list = 0;
     UINT msg_count;
     UINT uVirtKey;
-    static const int list_count = 10;
+    static const DWORD list_count = 10;
 
     TRACE("%p %x %x %x\n",hwnd, msg, (UINT)wParam, (UINT)lKeyData);
 
@@ -2621,7 +2621,7 @@ BOOL WINAPI ImmTranslateMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lKeyD
     TRACE("%i messages generated\n",msg_count);
     if (msg_count && msg_count <= list_count)
     {
-        int i;
+        UINT i;
         LPTRANSMSG msgs = (LPTRANSMSG)((LPBYTE)list + sizeof(DWORD));
 
         for (i = 0; i < msg_count; i++)
