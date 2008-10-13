@@ -664,6 +664,7 @@ static const VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( const VS_VERSION
         if (!strncmpiW( child->szKey, szKey, cbKey ) && !child->szKey[cbKey])
             return child;
 
+        if (!(child->wLength)) return NULL;
         child = VersionInfo32_Next( child );
     }
 
