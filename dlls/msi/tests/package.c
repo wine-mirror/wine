@@ -6672,6 +6672,187 @@ static void test_appsearch_inilocator(void)
     DeleteFileA(msifile);
 }
 
+static void test_appsearch_drlocator(void)
+{
+    MSIHANDLE hpkg, hdb;
+    CHAR path[MAX_PATH];
+    CHAR prop[MAX_PATH];
+    LPCSTR str;
+    DWORD size;
+    UINT r;
+
+    create_test_file("FileName1");
+    CreateDirectoryA("one", NULL);
+    CreateDirectoryA("one\\two", NULL);
+    CreateDirectoryA("one\\two\\three", NULL);
+    create_test_file("one\\two\\three\\FileName2");
+    CreateDirectoryA("another", NULL);
+
+    hdb = create_package_db();
+    ok(hdb, "Expected a valid database handle\n");
+
+    r = create_appsearch_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP1', 'NewSignature1'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP2', 'NewSignature2'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP3', 'NewSignature3'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP4', 'NewSignature4'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP5', 'NewSignature5'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP6', 'NewSignature6'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP7', 'NewSignature7'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_drlocator_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* no parent, full path, depth 0, signature */
+    sprintf(path, "'NewSignature1', '', '%s', 0", CURR_DIR);
+    r = add_drlocator_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* no parent, full path, depth 0, no signature */
+    sprintf(path, "'NewSignature2', '', '%s', 0", CURR_DIR);
+    r = add_drlocator_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* no parent, relative path, depth 0, no signature */
+    sprintf(path, "'NewSignature3', '', '%s', 0", CURR_DIR + 3);
+    r = add_drlocator_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* no parent, full path, depth 2, signature */
+    sprintf(path, "'NewSignature4', '', '%s', 2", CURR_DIR);
+    r = add_drlocator_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* no parent, full path, depth 3, signature */
+    sprintf(path, "'NewSignature5', '', '%s', 3", CURR_DIR);
+    r = add_drlocator_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* no parent, full path, depth 1, signature is dir */
+    sprintf(path, "'NewSignature6', '', '%s', 1", CURR_DIR);
+    r = add_drlocator_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* parent is in DrLocator, relative path, depth 0, signature */
+    sprintf(path, "'NewSignature7', 'NewSignature1', 'one\\two\\three', 1");
+    r = add_drlocator_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = create_signature_table(hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    str = "'NewSignature1', 'FileName1', '', '', '', '', '', '', ''";
+    r = add_signature_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    str = "'NewSignature4', 'FileName2', '', '', '', '', '', '', ''";
+    r = add_signature_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    str = "'NewSignature5', 'FileName2', '', '', '', '', '', '', ''";
+    r = add_signature_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    str = "'NewSignature6', 'another', '', '', '', '', '', '', ''";
+    r = add_signature_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    str = "'NewSignature7', 'FileName2', '', '', '', '', '', '', ''";
+    r = add_signature_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    hpkg = package_from_db(hdb);
+    ok(hpkg, "Expected a valid package handle\n");
+
+    r = MsiDoAction(hpkg, "AppSearch");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\FileName1", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP1", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP2", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP3", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP4", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+    }
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\one\\two\\three\\FileName2", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP5", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP6", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+    }
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\one\\two\\three\\FileName2", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP7", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    DeleteFileA("FileName1");
+    DeleteFileA("one\\two\\three\\FileName2");
+    RemoveDirectoryA("one\\two\\three");
+    RemoveDirectoryA("one\\two");
+    RemoveDirectoryA("one");
+    RemoveDirectoryA("another");
+    MsiCloseHandle(hpkg);
+    DeleteFileA(msifile);
+}
+
 static void test_featureparents(void)
 {
     MSIHANDLE hpkg;
@@ -9055,6 +9236,7 @@ START_TEST(package)
     test_appsearch_complocator();
     test_appsearch_reglocator();
     test_appsearch_inilocator();
+    test_appsearch_drlocator();
     test_featureparents();
     test_installprops();
     test_launchconditions();
