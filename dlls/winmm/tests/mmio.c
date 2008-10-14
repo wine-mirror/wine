@@ -59,7 +59,7 @@ static void test_mmioDescend(char *fname)
     hmmio = mmioOpen(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
-        trace("%s file is missing, skipping the test\n", fname);
+        skip("%s file is missing, skipping the test\n", fname);
         return;
     }
     ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
@@ -211,7 +211,7 @@ static void test_mmioOpen(char *fname)
     hmmio = mmioOpen(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
-        trace("%s file is missing, skipping the test\n", fname);
+        skip("%s file is missing, skipping the test\n", fname);
         return;
     }
     ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
@@ -374,7 +374,7 @@ static void test_mmioSetBuffer(char *fname)
     hmmio = mmioOpen(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
-        trace("%s file is missing, skipping the test\n", fname);
+        skip("%s file is missing, skipping the test\n", fname);
         return;
     }
     ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
