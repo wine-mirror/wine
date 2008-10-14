@@ -181,8 +181,7 @@ HFILE WINAPI LZInit( HFILE hfSrc )
 
 	struct	lzfileheader	head;
 	struct	lzstate		*lzs;
-	DWORD	ret;
-        int i;
+	int	i, ret;
 
 	TRACE("(%d)\n",hfSrc);
 	ret=read_header(hfSrc,&head);

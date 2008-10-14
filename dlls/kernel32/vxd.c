@@ -272,7 +272,7 @@ done:
  */
 void WINAPI __regs_VxDCall( DWORD service, CONTEXT86 *context )
 {
-    int i;
+    unsigned int i;
     VxDCallProc proc = NULL;
 
     RtlEnterCriticalSection( &vxd_section );

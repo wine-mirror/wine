@@ -115,7 +115,7 @@ static void PROFILE_CopyEntry( LPWSTR buffer, LPCWSTR value, int len,
     }
 
     lstrcpynW( buffer, value, len );
-    if (quote && (len >= strlenW(value))) buffer[strlenW(buffer)-1] = '\0';
+    if (quote && (len >= lstrlenW(value))) buffer[strlenW(buffer)-1] = '\0';
 }
 
 /* byte-swaps shorts in-place in a buffer. len is in WCHARs */
