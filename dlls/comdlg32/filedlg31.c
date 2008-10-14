@@ -312,8 +312,10 @@ static void FD31_UpdateResult(const FD31_DATA *lfs, const WCHAR *tmpstr)
     if (lenstr2 > 3)
         tmpstr2[lenstr2++]='\\';
     lstrcpynW(tmpstr2+lenstr2, tmpstr, BUFFILE-lenstr2);
-    if (ofnW->lpstrFile)
-        lstrcpynW(ofnW->lpstrFile, tmpstr2, ofnW->nMaxFile);
+    if (!ofnW->lpstrFile)
+        return;
+
+    lstrcpynW(ofnW->lpstrFile, tmpstr2, ofnW->nMaxFile);
 
     /* set filename offset */
     p = PathFindFileNameW(ofnW->lpstrFile);
