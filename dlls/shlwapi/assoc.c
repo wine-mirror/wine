@@ -603,7 +603,7 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   LONG ret;
   WCHAR * pszCommand;
   WCHAR * pszEnd;
-  WCHAR * pszExtraFromReg;
+  WCHAR * pszExtraFromReg = NULL;
   WCHAR * pszFileType;
   WCHAR * pszStart;
   static const WCHAR commandW[] = { 'c','o','m','m','a','n','d',0 };
