@@ -316,7 +316,12 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 	  case FVM_DETAILS: 	dwStyle |= LVS_REPORT;		break;
 	  case FVM_SMALLICON: 	dwStyle |= LVS_SMALLICON;	break;
 	  case FVM_LIST: 	dwStyle |= LVS_LIST;		break;
-	  default:		dwStyle |= LVS_LIST;		break;
+	  default:
+	  {
+		FIXME("ViewMode %d not implemented\n", This->FolderSettings.ViewMode);
+		dwStyle |= LVS_LIST;
+		break;
+	  }
 	}
 
 	if (This->FolderSettings.fFlags & FWF_AUTOARRANGE)	dwStyle |= LVS_AUTOARRANGE;
