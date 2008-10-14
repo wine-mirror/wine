@@ -59,7 +59,7 @@ static void test_getstring_bad(void)
     expect_hr(E_FAIL, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, invalid, NULL,
                            &len);
-    todo_wine expect_hr(0x80070002, hr); /* NOT FOUND */
+    expect_hr(0x80070002, hr); /* NOT FOUND */
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
                            NULL);
     expect_hr(E_UNEXPECTED, hr);
@@ -98,7 +98,7 @@ static void test_getstring_basic(void)
 
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
                            &len);
-    todo_wine expect_hr(S_FALSE, hr);
+    expect_hr(S_FALSE, hr);
     if (hr != S_FALSE)
     {
         HeapFree(GetProcessHeap(), 0, executableName);

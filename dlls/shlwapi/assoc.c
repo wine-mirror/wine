@@ -27,6 +27,7 @@
 #include "objbase.h"
 #include "shlguid.h"
 #include "shlwapi.h"
+#include "ver.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -743,6 +744,59 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       len++;
       return ASSOC_ReturnData(pszOut, pcchOut, path, len);
       break;
+    }
+
+    case ASSOCSTR_FRIENDLYAPPNAME:
+    {
+      PVOID verinfoW = NULL;
+      DWORD size, retval = 0;
+      UINT flen;
+      WCHAR *bufW;
+      static const WCHAR translationW[] = {
+        '\\','V','a','r','F','i','l','e','I','n','f','o',
+        '\\','T','r','a','n','s','l','a','t','i','o','n',0
+      };
+      static const WCHAR fileDescFmtW[] = {
+        '\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
+        '\\','%','0','4','x','%','0','4','x',
+        '\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n',0
+      };
+      WCHAR fileDescW[41];
+
+      hr = ASSOC_GetExecutable(This, pszExtra, path, MAX_PATH, &len);
+      if (FAILED(hr))
+        return hr;
+
+      retval = GetFileVersionInfoSizeW(path, &size);
+      if (!retval)
+        goto get_friendly_name_fail;
+      verinfoW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, retval);
+      if (!verinfoW)
+        return E_OUTOFMEMORY;
+      if (!GetFileVersionInfoW(path, 0, retval, verinfoW))
+        goto get_friendly_name_fail;
+      if (VerQueryValueW(verinfoW, translationW, (LPVOID *)&bufW, &flen))
+      {
+        int i;
+        DWORD *langCodeDesc = (DWORD *)bufW;
+        for (i = 0; i < flen / sizeof(DWORD); i++)
+        {
+          sprintfW(fileDescW, fileDescFmtW, LOWORD(langCodeDesc[i]),
+                   HIWORD(langCodeDesc[i]));
+          if (VerQueryValueW(verinfoW, fileDescW, (LPVOID *)&bufW, &flen))
+          {
+            /* Does strlenW(bufW) == 0 mean we use the filename? */
+            len = strlenW(bufW) + 1;
+            TRACE("found FileDescription: %s\n", debugstr_w(bufW));
+            return ASSOC_ReturnData(pszOut, pcchOut, bufW, len);
+          }
+        }
+      }
+get_friendly_name_fail:
+      PathRemoveExtensionW(path);
+      PathStripPathW(path);
+      TRACE("using filename: %s\n", debugstr_w(path));
+      return ASSOC_ReturnData(pszOut, pcchOut, path, strlenW(path) + 1);
     }
 
     default:
