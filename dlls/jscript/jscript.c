@@ -306,23 +306,24 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
 
     clear_script_queue(This);
 
-    if(This->ctx->named_items) {
-        named_item_t *iter, *iter2;
+    if(This->ctx) {
+        if(This->ctx->named_items) {
+            named_item_t *iter, *iter2;
 
-        iter = This->ctx->named_items;
-        while(iter) {
-            iter2 = iter->next;
+            iter = This->ctx->named_items;
+            while(iter) {
+                iter2 = iter->next;
 
-            IDispatch_Release(iter->disp);
-            heap_free(iter);
-            iter = iter2;
+                IDispatch_Release(iter->disp);
+                heap_free(iter);
+                iter = iter2;
+            }
+
+            This->ctx->named_items = NULL;
         }
 
-        This->ctx->named_items = NULL;
-    }
-
-    if(This->ctx) {
-        change_state(This, SCRIPTSTATE_CLOSED);
+        if (This->site)
+            change_state(This, SCRIPTSTATE_CLOSED);
 
         if(This->ctx->script_disp) {
             IDispatchEx_Release(_IDispatchEx_(This->ctx->script_disp));
