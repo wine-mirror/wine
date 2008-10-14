@@ -271,7 +271,7 @@ static void AddCOMandAll(void)
     {
         i++;
 
-        if(RegEnumKey(hKey, i, valName, -1) != ERROR_SUCCESS) break;
+        if(RegEnumKey(hKey, i, valName, sizeof(valName)/sizeof(valName[0])) != ERROR_SUCCESS) break;
 
         if(RegOpenKey(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
 
@@ -300,7 +300,7 @@ static void AddCOMandAll(void)
 
         if(RegOpenKey(hCurKey, wszImplementedCategories, &hInfo) == ERROR_SUCCESS)
         {
-            if(RegEnumKey(hInfo, 0, wszComp, -1) != ERROR_SUCCESS) break;
+            if(RegEnumKey(hInfo, 0, wszComp, sizeof(wszComp)/sizeof(wszComp[0])) != ERROR_SUCCESS) break;
 
             RegCloseKey(hInfo);
 
@@ -355,7 +355,7 @@ static void AddApplicationID(void)
     {
         i++;
 
-        if(RegEnumKey(hKey, i, valName, -1) != ERROR_SUCCESS) break;
+        if(RegEnumKey(hKey, i, valName, sizeof(valName)/sizeof(valName[0])) != ERROR_SUCCESS) break;
 
         if(RegOpenKey(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
 
@@ -400,7 +400,7 @@ static void AddTypeLib(void)
     {
         i++;
 
-        if(RegEnumKey(hKey, i, valParent, -1) != ERROR_SUCCESS) break;
+        if(RegEnumKey(hKey, i, valParent, sizeof(valParent)/sizeof(valParent[0])) != ERROR_SUCCESS) break;
 
         if(RegOpenKey(hKey, valParent, &hCurKey) != ERROR_SUCCESS) continue;
 
@@ -409,7 +409,7 @@ static void AddTypeLib(void)
         {
             j++;
 
-            if(RegEnumKey(hCurKey, j, valName, -1) != ERROR_SUCCESS) break;
+            if(RegEnumKey(hCurKey, j, valName, sizeof(valName)/sizeof(valName[0])) != ERROR_SUCCESS) break;
 
             if(RegOpenKey(hCurKey, valName, &hInfoKey) != ERROR_SUCCESS) continue;
 
@@ -466,7 +466,7 @@ static void AddInterfaces(void)
     {
         i++;
 
-        if(RegEnumKey(hKey, i, valName, -1) != ERROR_SUCCESS) break;
+        if(RegEnumKey(hKey, i, valName, sizeof(valName)/sizeof(valName[0])) != ERROR_SUCCESS) break;
 
         if(RegOpenKey(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
 
@@ -511,7 +511,7 @@ static void AddComponentCategories(void)
     {
         i++;
 
-        if(RegEnumKey(hKey, i, valName, -1) != ERROR_SUCCESS) break;
+        if(RegEnumKey(hKey, i, valName, sizeof(valName)/sizeof(valName[0])) != ERROR_SUCCESS) break;
 
         if(RegOpenKey(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
 
