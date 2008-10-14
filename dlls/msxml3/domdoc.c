@@ -330,6 +330,7 @@ static HRESULT WINAPI xmldoc_IPersistStream_Load(
         return E_FAIL;
     }
 
+    xmldoc->_private = create_priv();
     attach_xmlnode( This->node, (xmlNodePtr)xmldoc );
 
     return S_OK;
