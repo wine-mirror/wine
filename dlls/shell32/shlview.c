@@ -78,7 +78,7 @@ typedef struct
 
 typedef struct
 {
-	const IShellViewVtbl*	lpVtbl;
+	const IShellView2Vtbl*	lpVtbl;
 	LONG			ref;
 	const IOleCommandTargetVtbl* lpvtblOleCommandTarget;
 	const IDropTargetVtbl*	lpvtblDropTarget;
@@ -109,7 +109,7 @@ typedef struct
         POINT           ptLastMousePos; /* Mouse position at last DragOver call */
 } IShellViewImpl;
 
-static const IShellViewVtbl svvt;
+static const IShellView2Vtbl svvt;
 static const IOleCommandTargetVtbl ctvt;
 static const IDropTargetVtbl dtvt;
 static const IDropSourceVtbl dsvt;
@@ -1668,7 +1668,7 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 **********************************************************
 *  IShellView_QueryInterface
 */
-static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI IShellView_fnQueryInterface(IShellView2 * iface,REFIID riid, LPVOID *ppvObj)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1714,7 +1714,7 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid
 /**********************************************************
 *  IShellView_AddRef
 */
-static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
+static ULONG WINAPI IShellView_fnAddRef(IShellView2 * iface)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 	ULONG refCount = InterlockedIncrement(&This->ref);
@@ -1726,7 +1726,7 @@ static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 /**********************************************************
 *  IShellView_Release
 */
-static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
+static ULONG WINAPI IShellView_fnRelease(IShellView2 * iface)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 	ULONG refCount = InterlockedDecrement(&This->ref);
@@ -1758,7 +1758,7 @@ static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 /**********************************************************
 *  ShellView_GetWindow
 */
-static HRESULT WINAPI IShellView_fnGetWindow(IShellView * iface,HWND * phWnd)
+static HRESULT WINAPI IShellView_fnGetWindow(IShellView2 * iface,HWND * phWnd)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1769,7 +1769,7 @@ static HRESULT WINAPI IShellView_fnGetWindow(IShellView * iface,HWND * phWnd)
 	return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnContextSensitiveHelp(IShellView * iface,BOOL fEnterMode)
+static HRESULT WINAPI IShellView_fnContextSensitiveHelp(IShellView2 * iface,BOOL fEnterMode)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1784,7 +1784,7 @@ static HRESULT WINAPI IShellView_fnContextSensitiveHelp(IShellView * iface,BOOL 
 * FIXME:
 *  use the accel functions
 */
-static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG lpmsg)
+static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView2 * iface,LPMSG lpmsg)
 {
 #if 0
 	IShellViewImpl *This = (IShellViewImpl *)iface;
@@ -1799,7 +1799,7 @@ static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG
 	return S_FALSE; /* not handled */
 }
 
-static HRESULT WINAPI IShellView_fnEnableModeless(IShellView * iface,BOOL fEnable)
+static HRESULT WINAPI IShellView_fnEnableModeless(IShellView2 * iface,BOOL fEnable)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1808,7 +1808,7 @@ static HRESULT WINAPI IShellView_fnEnableModeless(IShellView * iface,BOOL fEnabl
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IShellView_fnUIActivate(IShellView * iface,UINT uState)
+static HRESULT WINAPI IShellView_fnUIActivate(IShellView2 * iface,UINT uState)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1851,7 +1851,7 @@ static HRESULT WINAPI IShellView_fnUIActivate(IShellView * iface,UINT uState)
 	return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnRefresh(IShellView * iface)
+static HRESULT WINAPI IShellView_fnRefresh(IShellView2 * iface)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1864,7 +1864,7 @@ static HRESULT WINAPI IShellView_fnRefresh(IShellView * iface)
 }
 
 static HRESULT WINAPI IShellView_fnCreateViewWindow(
-	IShellView * iface,
+	IShellView2 * iface,
 	IShellView *lpPrevView,
 	LPCFOLDERSETTINGS lpfs,
 	IShellBrowser * psb,
@@ -1938,7 +1938,7 @@ static HRESULT WINAPI IShellView_fnCreateViewWindow(
 	return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView * iface)
+static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView2 * iface)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1960,7 +1960,7 @@ static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView * iface)
 	return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnGetCurrentInfo(IShellView * iface, LPFOLDERSETTINGS lpfs)
+static HRESULT WINAPI IShellView_fnGetCurrentInfo(IShellView2 * iface, LPFOLDERSETTINGS lpfs)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1973,7 +1973,7 @@ static HRESULT WINAPI IShellView_fnGetCurrentInfo(IShellView * iface, LPFOLDERSE
 	return NOERROR;
 }
 
-static HRESULT WINAPI IShellView_fnAddPropertySheetPages(IShellView * iface, DWORD dwReserved,LPFNADDPROPSHEETPAGE lpfn, LPARAM lparam)
+static HRESULT WINAPI IShellView_fnAddPropertySheetPages(IShellView2 * iface, DWORD dwReserved,LPFNADDPROPSHEETPAGE lpfn, LPARAM lparam)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1982,7 +1982,7 @@ static HRESULT WINAPI IShellView_fnAddPropertySheetPages(IShellView * iface, DWO
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IShellView_fnSaveViewState(IShellView * iface)
+static HRESULT WINAPI IShellView_fnSaveViewState(IShellView2 * iface)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -1992,7 +1992,7 @@ static HRESULT WINAPI IShellView_fnSaveViewState(IShellView * iface)
 }
 
 static HRESULT WINAPI IShellView_fnSelectItem(
-	IShellView * iface,
+	IShellView2 * iface,
 	LPCITEMIDLIST pidl,
 	UINT uFlags)
 {
@@ -2044,7 +2044,7 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 	return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem, REFIID riid, LPVOID *ppvOut)
+static HRESULT WINAPI IShellView_fnGetItemObject(IShellView2 * iface, UINT uItem, REFIID riid, LPVOID *ppvOut)
 {
 	IShellViewImpl *This = (IShellViewImpl *)iface;
 
@@ -2070,7 +2070,31 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem,
 	return S_OK;
 }
 
-static const IShellViewVtbl svvt =
+static HRESULT WINAPI IShellView2_fnGetView(IShellView2* iface, SHELLVIEWID *view_guid, ULONG view_type)
+{
+    FIXME("(%p)->(view_guid %s, view_type %#x) stub!\n", iface, debugstr_guid(view_guid), view_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2CVW2_PARAMS view_params)
+{
+    FIXME("(%p)->(view_params %p) stub!\n", iface, view_params);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellView2_fnHandleRename(IShellView2* iface, LPCITEMIDLIST new_pidl)
+{
+    FIXME("(%p)->(new_pidl %p) stub!\n", iface, new_pidl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellView2_fnSelectAndPositionItem(IShellView2* iface, LPCITEMIDLIST item, UINT flags, POINT *point)
+{
+    FIXME("(%p)->(item %p, flags %#x, point %p) stub!\n", iface, item, flags, point);
+    return E_NOTIMPL;
+}
+
+static const IShellView2Vtbl svvt =
 {
 	IShellView_fnQueryInterface,
 	IShellView_fnAddRef,
@@ -2087,7 +2111,11 @@ static const IShellViewVtbl svvt =
 	IShellView_fnAddPropertySheetPages,
 	IShellView_fnSaveViewState,
 	IShellView_fnSelectItem,
-	IShellView_fnGetItemObject
+	IShellView_fnGetItemObject,
+	IShellView2_fnGetView,
+	IShellView2_fnCreateViewWindow2,
+	IShellView2_fnHandleRename,
+	IShellView2_fnSelectAndPositionItem,
 };
 
 
