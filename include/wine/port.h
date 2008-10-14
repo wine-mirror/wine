@@ -303,6 +303,10 @@ pid_t gettid(void);
 int isinf(double x);
 #endif
 
+#ifndef HAVE_ISNAN
+int isnan(double x);
+#endif
+
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */

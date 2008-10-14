@@ -16,6 +16,7 @@ C_SRCS = \
 	gettid.c \
 	interlocked.c \
 	isinf.c \
+	isnan.c \
 	lstat.c \
 	memcpy_unaligned.c \
 	memmove.c \

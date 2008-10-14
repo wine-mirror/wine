@@ -1663,6 +1663,14 @@ then
     AC_DEFINE(HAVE_ISINF, 1, [Define to 1 if you have the `isinf' function.])
 fi
 
+dnl Check for isnan
+AC_CACHE_CHECK([for isnan], ac_cv_have_isnan,
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; int i=isnan(f)]])],[ac_cv_have_isnan="yes"],[ac_cv_have_isnan="no"]))
+if test "$ac_cv_have_isnan" = "yes"
+then
+    AC_DEFINE(HAVE_ISNAN, 1, [Define to 1 if you have the `isnan' function.])
+fi
+
 dnl *** check for the need to define platform-specific symbols
 
 case $host_cpu in
