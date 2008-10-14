@@ -32,6 +32,19 @@ static const WCHAR dotBad[] = { '.','b','a','d',0 };
 static const WCHAR open[] = { 'o','p','e','n',0 };
 static const WCHAR invalid[] = { 'i','n','v','a','l','i','d',0 };
 
+/* copied from libs/wine/string.c */
+WCHAR *strstrW(const WCHAR *str, const WCHAR *sub)
+{
+    while (*str)
+    {
+        const WCHAR *p1 = str, *p2 = sub;
+        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
+        if (!*p2) return (WCHAR *)str;
+        str++;
+    }
+    return NULL;
+}
+
 static void test_getstring_bad(void)
 {
     HRESULT hr;
@@ -127,8 +140,67 @@ static void test_getstring_basic(void)
     HeapFree(GetProcessHeap(), 0, friendlyName);
 }
 
+static void test_getstring_no_extra(void)
+{
+    LONG ret;
+    HKEY hkey;
+    HRESULT hr;
+    static const WCHAR dotWinetest[] = {
+        '.','w','i','n','e','t','e','s','t',0
+    };
+    static const WCHAR winetestfile[] = {
+        'w','i','n','e','t','e','s','t', 'f','i','l','e',0
+    };
+    static const WCHAR winetestfileAction[] = {
+        'w','i','n','e','t','e','s','t','f','i','l','e',
+        '\\','s','h','e','l','l',
+        '\\','f','o','o',
+        '\\','c','o','m','m','a','n','d',0
+    };
+    static const WCHAR action[] = {
+        'n','o','t','e','p','a','d','.','e','x','e',0
+    };
+    WCHAR buf[MAX_PATH];
+    DWORD len = MAX_PATH;
+
+    ret = RegCreateKeyW(HKEY_CLASSES_ROOT, dotWinetest, &hkey);
+    if (ret != ERROR_SUCCESS)
+        skip("failed to create dotWinetest key\n");
+    ret = RegSetValueW(hkey, NULL, REG_SZ, winetestfile,
+                       lstrlenW(winetestfile));
+    RegCloseKey(hkey);
+    if (ret != ERROR_SUCCESS)
+    {
+        RegDeleteTreeW(HKEY_CLASSES_ROOT, dotWinetest);
+        skip("failed to set dotWinetest key\n");
+    }
+
+    ret = RegCreateKeyW(HKEY_CLASSES_ROOT, winetestfileAction, &hkey);
+    if (ret != ERROR_SUCCESS)
+    {
+        RegDeleteTreeW(HKEY_CLASSES_ROOT, dotWinetest);
+        skip("failed to create winetestfileAction key\n");
+    }
+    ret = RegSetValueW(hkey, NULL, REG_SZ, action, lstrlenW(action));
+    RegCloseKey(hkey);
+    if (ret != ERROR_SUCCESS)
+    {
+        RegDeleteTreeW(HKEY_CLASSES_ROOT, dotWinetest);
+        RegDeleteTreeW(HKEY_CLASSES_ROOT, winetestfile);
+        skip("failed to set winetestfileAction key\n");
+    }
+
+    hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotWinetest, NULL,
+                           buf, &len);
+    expect_hr(S_OK, hr);
+    ok(strstrW(buf, action) != NULL, "exe path does not contain notepad\n");
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, dotWinetest);
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, winetestfile);
+}
+
 START_TEST(assoc)
 {
     test_getstring_bad();
     test_getstring_basic();
+    test_getstring_no_extra();
 }
