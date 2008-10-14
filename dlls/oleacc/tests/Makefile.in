@@ -1,16 +1,13 @@
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
+TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = oleacc.dll
-IMPORTLIB = oleacc
-IMPORTS   = user32 kernel32
+TESTDLL   = oleacc.dll
+IMPORTS   = kernel32 oleacc
 
-C_SRCS = \
+CTESTS = \
 	main.c
 
-RC_SRCS = oleacc.rc
-
-@MAKE_DLL_RULES@
+@MAKE_TEST_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

@@ -1952,6 +1952,7 @@ WINE_CONFIG_MAKEFILE([dlls/odbccp32/tests/Makefile],[dlls/Maketest.rules],[dlls]
 WINE_CONFIG_MAKEFILE([dlls/ole32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/ole32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/oleacc/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/oleacc/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/oleaut32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/oleaut32/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/olecli32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
