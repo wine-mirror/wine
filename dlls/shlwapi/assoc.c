@@ -670,6 +670,29 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   return S_OK;
 }
 
+static HRESULT ASSOC_ReturnData(LPWSTR out, DWORD *outlen, LPCWSTR data,
+                                DWORD datalen)
+{
+  assert(outlen);
+
+  if (out)
+  {
+    if (*outlen < datalen)
+    {
+      *outlen = datalen;
+      return E_POINTER;
+    }
+    *outlen = datalen;
+    lstrcpynW(out, data, datalen);
+    return S_OK;
+  }
+  else
+  {
+    *outlen = datalen;
+    return S_FALSE;
+  }
+}
+
 /**************************************************************************
  *  IQueryAssociations_GetString {SHLWAPI}
  *
@@ -718,22 +741,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
       if (FAILED(hr))
         return hr;
       len++;
-      if (pszOut)
-      {
-        if (*pcchOut < len)
-        {
-          *pcchOut = len;
-          return E_POINTER;
-        }
-        *pcchOut = len;
-        lstrcpynW(pszOut, path, len);
-        return S_OK;
-      }
-      else
-      {
-        *pcchOut = len;
-        return S_FALSE;
-      }
+      return ASSOC_ReturnData(pszOut, pcchOut, path, len);
       break;
     }
 
