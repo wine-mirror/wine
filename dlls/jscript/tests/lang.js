@@ -773,4 +773,7 @@ try {
     ok(false, "deleteTest not throwed exception?");
 }catch(ex) {}
 
+ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
+ok(isNaN() === true, "isNaN() !== true");
+
 reportSuccess();
