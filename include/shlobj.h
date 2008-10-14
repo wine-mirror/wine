@@ -277,8 +277,6 @@ typedef struct
 * IShellView interface
 */
 
-typedef GUID SHELLVIEWID;
-
 #define FCIDM_SHVIEWFIRST       0x0000
 /* undocumented */
 #define FCIDM_SHVIEW_ARRANGE    0x7001

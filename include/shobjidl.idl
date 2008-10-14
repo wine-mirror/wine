@@ -461,6 +461,44 @@ interface IShellView : IOleWindow
         [out, iid_is(riid)] void **ppv);
 }
 
+[
+    object,
+    uuid(88e39e80-3578-11cf-ae69-08002b2e1262),
+    pointer_default(unique)
+]
+interface IShellView2 : IShellView
+{
+    typedef GUID SHELLVIEWID;
+cpp_quote("#include <pshpack8.h>")
+    typedef struct _SV2CVW2_PARAMS
+    {
+        DWORD cbSize;
+        IShellView *psvPrev;
+        LPCFOLDERSETTINGS pfs;
+        IShellBrowser *psbOwner;
+        RECT *prcView;
+        SHELLVIEWID const *pvid;
+        HWND hwndView;
+    } SV2CVW2_PARAMS, *LPSV2CVW2_PARAMS;
+cpp_quote("#include <poppack.h>")
+
+    HRESULT GetView(
+        [in, out] SHELLVIEWID *view_guid,
+        [in] ULONG view_type
+    );
+    HRESULT CreateViewWindow2(
+        [in] LPSV2CVW2_PARAMS view_params
+    );
+    HRESULT HandleRename(
+        [in] LPCITEMIDLIST new_pidl
+    );
+    HRESULT SelectAndPositionItem(
+        [in] LPCITEMIDLIST item,
+        [in] UINT flags,
+        [in] POINT *point
+    );
+}
+
 
 /*****************************************************************************
  * IShellBrowser interface
