@@ -674,13 +674,13 @@ static void test_DrawState(void)
     SetLastError(0xdeadbeef);
     ret = DrawState(hdc, GetStockObject(DKGRAY_BRUSH), NULL, 0, strlen(text),
                     0, 0, 10, 10, DST_TEXT);
-    ok(!ret, "DrawState succeeded\n");
+    ok(!ret || broken(ret) /* win98 */, "DrawState succeeded\n");
     ok(GetLastError() == 0xdeadbeef, "not expected error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = DrawState(hdc, GetStockObject(DKGRAY_BRUSH), NULL, 0, 0,
                     0, 0, 10, 10, DST_TEXT);
-    ok(!ret, "DrawState succeeded\n");
+    ok(!ret || broken(ret) /* win98 */, "DrawState succeeded\n");
     ok(GetLastError() == 0xdeadbeef, "not expected error %u\n", GetLastError());
 
     ReleaseDC(hwnd, hdc);
