@@ -627,7 +627,31 @@ static HRESULT ASSOC_GetExecutable(IQueryAssociationsImpl *This,
   if (!pszExtra)
   {
     hr = ASSOC_GetValue(hkeyShell, &pszExtraFromReg);
-    if (FAILED(hr))
+    /* if no default action */
+    if (hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+    {
+      DWORD rlen;
+      ret = RegQueryInfoKeyW(hkeyShell, 0, 0, 0, 0, &rlen, 0, 0, 0, 0, 0, 0);
+      if (ret != ERROR_SUCCESS)
+      {
+        RegCloseKey(hkeyShell);
+        return HRESULT_FROM_WIN32(ret);
+      }
+      rlen++;
+      pszExtraFromReg = HeapAlloc(GetProcessHeap(), 0, rlen * sizeof(WCHAR));
+      if (!pszExtraFromReg)
+      {
+        RegCloseKey(hkeyShell);
+        return E_OUTOFMEMORY;
+      }
+      ret = RegEnumKeyExW(hkeyShell, 0, pszExtraFromReg, &rlen, 0, NULL, NULL, NULL);
+      if (ret != ERROR_SUCCESS)
+      {
+        RegCloseKey(hkeyShell);
+        return HRESULT_FROM_WIN32(ret);
+      }
+    }
+    else if (FAILED(hr))
     {
       RegCloseKey(hkeyShell);
       return hr;
@@ -743,7 +767,6 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
         return hr;
       len++;
       return ASSOC_ReturnData(pszOut, pcchOut, path, len);
-      break;
     }
 
     case ASSOCSTR_FRIENDLYAPPNAME:
