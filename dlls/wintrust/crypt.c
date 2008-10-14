@@ -69,12 +69,12 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
 /***********************************************************************
  *             CryptCATAdminAddCatalog (WINTRUST.@)
  */
-BOOL WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
-                                    PWSTR selectBaseName, DWORD flags)
+HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
+                                        PWSTR selectBaseName, DWORD flags)
 {
     FIXME("%p %s %s %d\n", catAdmin, debugstr_w(catalogFile),
           debugstr_w(selectBaseName), flags);
-    return TRUE;
+    return (HCATINFO) 0xdeeeaaadL;
 }
 
 /***********************************************************************
