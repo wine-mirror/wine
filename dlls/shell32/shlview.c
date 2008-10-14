@@ -1684,6 +1684,10 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView2 * iface,REFIID rii
 	{
 	  *ppvObj = (IShellView*)This;
 	}
+	else if(IsEqualIID(riid, &IID_IShellView2))
+	{
+	  *ppvObj = (IShellView2*)This;
+	}
 	else if(IsEqualIID(riid, &IID_IOleCommandTarget))
 	{
 	  *ppvObj = (IOleCommandTarget*)&(This->lpvtblOleCommandTarget);
@@ -1863,79 +1867,25 @@ static HRESULT WINAPI IShellView_fnRefresh(IShellView2 * iface)
 	return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnCreateViewWindow(
-	IShellView2 * iface,
-	IShellView *lpPrevView,
-	LPCFOLDERSETTINGS lpfs,
-	IShellBrowser * psb,
-	RECT * prcView,
-	HWND  *phWnd)
+static HRESULT WINAPI IShellView_fnCreateViewWindow(IShellView2 *iface, IShellView *lpPrevView,
+        LPCFOLDERSETTINGS lpfs, IShellBrowser *psb, RECT *prcView, HWND *phWnd)
 {
-	IShellViewImpl *This = (IShellViewImpl *)iface;
+    HRESULT hr;
+    SV2CVW2_PARAMS view_params;
+    view_params.cbSize = sizeof(view_params);
+    view_params.psvPrev = lpPrevView;
+    view_params.pfs = lpfs;
+    view_params.psbOwner = psb;
+    view_params.prcView = prcView;
+    view_params.pvid = NULL;
+    view_params.hwndView = 0;
 
-	WNDCLASSW wc;
-	*phWnd = 0;
+    TRACE("(%p) Forwarding to CreateViewWindow2\n", iface);
 
+    hr = IShellView2_CreateViewWindow2(iface, &view_params);
+    *phWnd = view_params.hwndView;
 
-	TRACE("(%p)->(shlview=%p set=%p shlbrs=%p rec=%p hwnd=%p) incomplete\n",This, lpPrevView,lpfs, psb, prcView, phWnd);
-	TRACE("-- vmode=%x flags=%x left=%i top=%i right=%i bottom=%i\n",lpfs->ViewMode, lpfs->fFlags ,prcView->left,prcView->top, prcView->right, prcView->bottom);
-
-	/*set up the member variables*/
-	This->pShellBrowser = psb;
-	This->FolderSettings = *lpfs;
-
-	/*get our parent window*/
-	IShellBrowser_AddRef(This->pShellBrowser);
-	IShellBrowser_GetWindow(This->pShellBrowser, &(This->hWndParent));
-
-	/* try to get the ICommDlgBrowserInterface, adds a reference !!! */
-	This->pCommDlgBrowser=NULL;
-	if ( SUCCEEDED (IShellBrowser_QueryInterface( This->pShellBrowser,
-			(REFIID)&IID_ICommDlgBrowser, (LPVOID*) &This->pCommDlgBrowser)))
-	{
-	  TRACE("-- CommDlgBrowser\n");
-	}
-
-	/*if our window class has not been registered, then do so*/
-	if(!GetClassInfoW(shell32_hInstance, SV_CLASS_NAME, &wc))
-	{
-	  ZeroMemory(&wc, sizeof(wc));
-	  wc.style		= CS_HREDRAW | CS_VREDRAW;
-	  wc.lpfnWndProc	= ShellView_WndProc;
-	  wc.cbClsExtra		= 0;
-	  wc.cbWndExtra		= 0;
-	  wc.hInstance		= shell32_hInstance;
-	  wc.hIcon		= 0;
-	  wc.hCursor		= LoadCursorW(0, (LPWSTR)IDC_ARROW);
-	  wc.hbrBackground	= (HBRUSH) (COLOR_WINDOW + 1);
-	  wc.lpszMenuName	= NULL;
-	  wc.lpszClassName	= SV_CLASS_NAME;
-
-	  if(!RegisterClassW(&wc))
-	    return E_FAIL;
-	}
-
-	*phWnd = CreateWindowExW(0,
-				SV_CLASS_NAME,
-				NULL,
-				WS_CHILD | WS_TABSTOP,
-				prcView->left,
-				prcView->top,
-				prcView->right - prcView->left,
-				prcView->bottom - prcView->top,
-				This->hWndParent,
-				0,
-				shell32_hInstance,
-				(LPVOID)This);
-
-	CheckToolbar(This);
-
-	if(!*phWnd) return E_FAIL;
-
-	SetWindowPos(*phWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-	UpdateWindow(*phWnd);
-
-	return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView2 * iface)
@@ -2078,8 +2028,100 @@ static HRESULT WINAPI IShellView2_fnGetView(IShellView2* iface, SHELLVIEWID *vie
 
 static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2* iface, LPSV2CVW2_PARAMS view_params)
 {
-    FIXME("(%p)->(view_params %p) stub!\n", iface, view_params);
-    return E_NOTIMPL;
+    IShellViewImpl *This = (IShellViewImpl *)iface;
+    WNDCLASSW wc;
+    HWND wnd;
+
+    TRACE("(%p)->(view_params %p)\n", iface, view_params);
+
+    if (view_params->cbSize != sizeof(*view_params))
+    {
+        FIXME("Got unexpected cbSize %#x\n", view_params->cbSize);
+        return E_FAIL;
+    }
+
+    TRACE("-- psvPrev %p, pfs %p, psbOwner %p, prcView %p\n",
+            view_params->psvPrev, view_params->pfs, view_params->psbOwner, view_params->prcView);
+    TRACE("-- vmode %#x, flags %#x, left %d, top %d, right %d, bottom %d\n",
+            view_params->pfs->ViewMode, view_params->pfs->fFlags, view_params->prcView->left,
+            view_params->prcView->top, view_params->prcView->right, view_params->prcView->bottom);
+
+    /* Set up the member variables */
+    This->pShellBrowser = view_params->psbOwner;
+    This->FolderSettings = *view_params->pfs;
+
+    if (view_params->pvid)
+    {
+        if (IsEqualGUID(view_params->pvid, &VID_LargeIcons))
+            This->FolderSettings.ViewMode = FVM_ICON;
+        else if (IsEqualGUID(view_params->pvid, &VID_SmallIcons))
+            This->FolderSettings.ViewMode = FVM_SMALLICON;
+        else if (IsEqualGUID(view_params->pvid, &VID_List))
+            This->FolderSettings.ViewMode = FVM_LIST;
+        else if (IsEqualGUID(view_params->pvid, &VID_Details))
+            This->FolderSettings.ViewMode = FVM_DETAILS;
+        else if (IsEqualGUID(view_params->pvid, &VID_Thumbnails))
+            This->FolderSettings.ViewMode = FVM_THUMBNAIL;
+        else if (IsEqualGUID(view_params->pvid, &VID_Tile))
+            This->FolderSettings.ViewMode = FVM_TILE;
+        else if (IsEqualGUID(view_params->pvid, &VID_ThumbStrip))
+            This->FolderSettings.ViewMode = FVM_THUMBSTRIP;
+        else
+            FIXME("Ignoring unrecognized VID %s\n", debugstr_guid(view_params->pvid));
+    }
+
+    /* Get our parent window */
+    IShellBrowser_AddRef(This->pShellBrowser);
+    IShellBrowser_GetWindow(This->pShellBrowser, &(This->hWndParent));
+
+    /* Try to get the ICommDlgBrowserInterface, adds a reference !!! */
+    This->pCommDlgBrowser = NULL;
+    if (SUCCEEDED(IShellBrowser_QueryInterface(This->pShellBrowser, &IID_ICommDlgBrowser, (void **)&This->pCommDlgBrowser)))
+    {
+        TRACE("-- CommDlgBrowser %p\n", This->pCommDlgBrowser);
+    }
+
+    /* If our window class has not been registered, then do so */
+    if (!GetClassInfoW(shell32_hInstance, SV_CLASS_NAME, &wc))
+    {
+        ZeroMemory(&wc, sizeof(wc));
+        wc.style            = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc      = ShellView_WndProc;
+        wc.cbClsExtra       = 0;
+        wc.cbWndExtra       = 0;
+        wc.hInstance        = shell32_hInstance;
+        wc.hIcon            = 0;
+        wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
+        wc.hbrBackground    = (HBRUSH)(COLOR_WINDOW + 1);
+        wc.lpszMenuName     = NULL;
+        wc.lpszClassName    = SV_CLASS_NAME;
+
+        if (!RegisterClassW(&wc)) return E_FAIL;
+    }
+
+    wnd = CreateWindowExW(0,
+            SV_CLASS_NAME,
+            NULL,
+            WS_CHILD | WS_TABSTOP,
+            view_params->prcView->left,
+            view_params->prcView->top,
+            view_params->prcView->right - view_params->prcView->left,
+            view_params->prcView->bottom - view_params->prcView->top,
+            This->hWndParent,
+            0,
+            shell32_hInstance,
+            (LPVOID)This);
+
+    CheckToolbar(This);
+
+    if (!wnd) return E_FAIL;
+
+    SetWindowPos(wnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+    UpdateWindow(wnd);
+
+    view_params->hwndView = wnd;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellView2_fnHandleRename(IShellView2* iface, LPCITEMIDLIST new_pidl)
