@@ -785,7 +785,10 @@ if (true)
     else
         ok(true, "else should be associated with nearest if statement");
 
+ok(isNaN(NaN) === true, "isNaN(NaN) !== true");
 ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
 ok(isNaN() === true, "isNaN() !== true");
+ok(isNaN(NaN, 0) === true, "isNaN(NaN, 0) !== true");
+ok(isNaN(0.5, NaN) === false, "isNaN(0.5, NaN) !== false");
 
 reportSuccess();
