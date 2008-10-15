@@ -420,8 +420,10 @@ static void test_data_msg_update(void)
      &streamInfo);
     SetLastError(0xdeadbeef);
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+     GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
+     "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
     /* Calling update with a valid output function succeeds, even if the data
      * exceeds the size specified in the stream info.
@@ -2028,8 +2030,10 @@ static void test_decode_msg_update(void)
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
      FALSE);
     todo_wine
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+     GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
+     "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
+     GetLastError());
     /* Changing the callback pointer after the fact yields the same error (so
      * the message must copy the stream info, not just store a pointer to it)
      */
@@ -2038,8 +2042,10 @@ static void test_decode_msg_update(void)
     ret = CryptMsgUpdate(msg, dataEmptyContent, sizeof(dataEmptyContent),
      FALSE);
     todo_wine
-    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
-     "Expected STATUS_ACCESS_VIOLATION, got %x\n", GetLastError());
+    ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
+     GetLastError() == STATUS_ILLEGAL_INSTRUCTION /* WinME */),
+     "Expected STATUS_ACCESS_VIOLATION or STATUS_ILLEGAL_INSTRUCTION, got %x\n",
+     GetLastError());
     CryptMsgClose(msg);
 
     /* Empty non-final updates are allowed when streaming.. */
