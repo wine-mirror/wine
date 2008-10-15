@@ -2315,9 +2315,13 @@ BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
     NTSTATUS Status;
     HANDLE ImpersonationToken;
     TOKEN_TYPE Type;
+    static BOOL warn = TRUE;
 
-    FIXME( "(%p)\n", hToken );
-
+    if (warn)
+    {
+        FIXME( "(%p)\n", hToken );
+        warn = FALSE;
+    }
     if (!GetTokenInformation( hToken, TokenType, &Type,
                               sizeof(TOKEN_TYPE), &size ))
         return FALSE;
