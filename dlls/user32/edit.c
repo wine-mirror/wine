@@ -4103,19 +4103,19 @@ static void EDIT_WM_Command(EDITSTATE *es, INT code, INT id, HWND control)
 
 	switch (id) {
 		case EM_UNDO:
-			EDIT_EM_Undo(es);
+                        SendMessageW(es->hwndSelf, WM_UNDO, 0, 0);
 			break;
 		case WM_CUT:
-			EDIT_WM_Cut(es);
+                        SendMessageW(es->hwndSelf, WM_CUT, 0, 0);
 			break;
 		case WM_COPY:
-			EDIT_WM_Copy(es);
+                        SendMessageW(es->hwndSelf, WM_COPY, 0, 0);
 			break;
 		case WM_PASTE:
-			EDIT_WM_Paste(es);
+                        SendMessageW(es->hwndSelf, WM_PASTE, 0, 0);
 			break;
 		case WM_CLEAR:
-			EDIT_WM_Clear(es);
+                        SendMessageW(es->hwndSelf, WM_CLEAR, 0, 0);
 			break;
 		case EM_SETSEL:
 			EDIT_EM_SetSel(es, 0, (UINT)-1, FALSE);
