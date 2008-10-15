@@ -1155,7 +1155,7 @@ UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
     {
         if (drives & (1 << drive))
         {
-            *buffer++ = 'a' + drive;
+            *buffer++ = 'A' + drive;
             *buffer++ = ':';
             *buffer++ = '\\';
             *buffer++ = 0;
@@ -1181,7 +1181,7 @@ UINT WINAPI GetLogicalDriveStringsW( UINT len, LPWSTR buffer )
     {
         if (drives & (1 << drive))
         {
-            *buffer++ = 'a' + drive;
+            *buffer++ = 'A' + drive;
             *buffer++ = ':';
             *buffer++ = '\\';
             *buffer++ = 0;
