@@ -20,7 +20,6 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <wine/test.h>
 
 #define COBJMACROS
 
