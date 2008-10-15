@@ -2024,6 +2024,8 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
 
 DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
+    static BOOL warn = TRUE;
+
     switch(option) {
     case INTERNET_OPTION_REQUEST_FLAGS:
         TRACE("INTERNET_OPTION_REQUEST_FLAGS\n");
@@ -2050,8 +2052,11 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_CONNECTED_STATE:
-        FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
 
+        if (warn) {
+            FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
+            warn = FALSE;
+        }
         if (*size < sizeof(ULONG))
             return ERROR_INSUFFICIENT_BUFFER;
 
