@@ -291,6 +291,8 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
         if (!matching_mount_point( &mount_points[i], input )) continue;
         size += get_device_name(mount_points[i].device)->Length;
         size += mount_points[i].link.Length;
+        size += strlen(mount_points[i].id) + 1;
+        size = (size + sizeof(WCHAR) - 1) & ~(sizeof(WCHAR) - 1);
         j++;
     }
     pos = FIELD_OFFSET( MOUNTMGR_MOUNT_POINTS, MountPoints[j] );
@@ -308,8 +310,6 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
     {
         if (!mount_points[i].device) continue;
         if (!matching_mount_point( &mount_points[i], input )) continue;
-        info->MountPoints[j].UniqueIdOffset = 0;  /* FIXME */
-        info->MountPoints[j].UniqueIdLength = 0;
 
         dev_name = get_device_name( mount_points[i].device );
         info->MountPoints[j].DeviceNameOffset = pos;
@@ -321,6 +321,12 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
         info->MountPoints[j].SymbolicLinkNameLength = mount_points[i].link.Length;
         memcpy( (char *)out_buff + pos, mount_points[i].link.Buffer, mount_points[i].link.Length );
         pos += mount_points[i].link.Length;
+
+        info->MountPoints[j].UniqueIdOffset = pos;
+        info->MountPoints[j].UniqueIdLength = strlen(mount_points[i].id) + 1;
+        memcpy( (char *)out_buff + pos, mount_points[i].id, strlen(mount_points[i].id) + 1 );
+        pos += strlen(mount_points[i].id) + 1;
+        pos = (pos + sizeof(WCHAR) - 1) & ~(sizeof(WCHAR) - 1);
         j++;
     }
     info->Size = pos;
