@@ -514,6 +514,12 @@ sub _generate_dsp($$) {
 	    push @_cfgs, "$cfg Release";
 	}
 	@cfgs = @_cfgs;
+    } else {
+	my @_cfgs;
+	foreach my $cfg (@cfgs) {
+	    push @_cfgs, "$cfg Debug";
+	}
+	@cfgs = @_cfgs;
     }
 
     if (!$no_msvc_headers) {
