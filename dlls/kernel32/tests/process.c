@@ -128,7 +128,6 @@ static char*    decodeA(const char* str)
     return ptr;
 }
 
-#if 0
 /* This will be needed to decode Unicode strings saved by the child process
  * when we test Unicode functions.
  */
@@ -149,7 +148,6 @@ static WCHAR*   decodeW(const char* str)
     ptr[len] = '\0';
     return ptr;
 }
-#endif
 
 /******************************************************************
  *		init
@@ -411,6 +409,18 @@ static char* getChildString(const char* sect, const char* key)
     return ret;
 }
 
+static WCHAR* getChildStringW(const char* sect, const char* key)
+{
+    char        buf[1024+4*MAX_LISTED_ENV_VAR];
+    WCHAR*       ret;
+
+    GetPrivateProfileStringA(sect, key, "-", buf, sizeof(buf), resfile);
+    if (buf[0] == '\0' || (buf[0] == '-' && buf[1] == '\0')) return NULL;
+    assert(!(strlen(buf) & 1));
+    ret = decodeW(buf);
+    return ret;
+}
+
 /* FIXME: this may be moved to the wtmain.c file, because it may be needed by
  * others... (windows uses stricmp while Un*x uses strcasecmp...)
  */
@@ -446,8 +456,35 @@ static void ok_child_string( int line, const char *sect, const char *key,
                          sect, key, expect ? expect : "(null)", result );
 }
 
+static void ok_child_stringWA( int line, const char *sect, const char *key,
+                             const char *expect, int sensitive )
+{
+    WCHAR* expectW;
+    CHAR* resultA;
+    DWORD len;
+    WCHAR* result = getChildStringW( sect, key );
+
+    len = MultiByteToWideChar( CP_ACP, 0, expect, -1, NULL, 0);
+    expectW = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+    MultiByteToWideChar( CP_ACP, 0, expect, -1, expectW, len);
+
+    len = WideCharToMultiByte( CP_ACP, 0, result, -1, NULL, 0, NULL, NULL);
+    resultA = HeapAlloc(GetProcessHeap(),0,len*sizeof(CHAR));
+    WideCharToMultiByte( CP_ACP, 0, result, -1, resultA, len, NULL, NULL);
+
+    if (sensitive)
+        ok_(__FILE__, line)( lstrcmpW(result, expectW) == 0, "%s:%s expected '%s', got '%s'\n",
+                         sect, key, expect ? expect : "(null)", resultA );
+    else
+        ok_(__FILE__, line)( lstrcmpiW(result, expectW) == 0, "%s:%s expected '%s', got '%s'\n",
+                         sect, key, expect ? expect : "(null)", resultA );
+    HeapFree(GetProcessHeap(),0,expectW);
+    HeapFree(GetProcessHeap(),0,resultA);
+}
+
 #define okChildString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 1 )
 #define okChildIString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 0 )
+#define okChildStringWA(sect, key, expect) ok_child_stringWA(__LINE__, (sect), (key), (expect), 1 )
 
 /* using !expect ensures that the test will fail if the sect/key isn't present
  * in result file
@@ -852,6 +889,7 @@ static void test_CommandLine(void)
     sprintf(buffer, "tests/process.c %s", resfile);
     okChildString("Arguments", "argvA0", "dummy");
     okChildString("Arguments", "CommandLineA", buffer2);
+    okChildStringWA("Arguments", "CommandLineW", buffer2);
     release_memory();
     assert(DeleteFileA(resfile) != 0);
 }
