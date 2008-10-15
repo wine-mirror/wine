@@ -1677,7 +1677,7 @@ error:
         HeapFree(GetProcessHeap(), 0, object->backBuffer);
         object->backBuffer = NULL;
     }
-    if(object->context[0])
+    if(object->context && object->context[0])
         DestroyContext(This, object->context[0]);
     if(object->frontBuffer) {
         IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
