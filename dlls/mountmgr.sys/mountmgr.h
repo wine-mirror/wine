@@ -21,5 +21,5 @@
 extern void initialize_hal(void);
 extern void initialize_diskarbitration(void);
 extern BOOL add_dos_device( const char *udi, const char *device,
-                            const char *mount_point, const char *type );
+                            const char *mount_point, DWORD type );
 extern BOOL remove_dos_device( const char *udi );

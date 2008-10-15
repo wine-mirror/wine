@@ -35,9 +35,21 @@
 
 #include "wine/library.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
+
+static const WCHAR drive_types[][8] =
+{
+    { 0 }, /* DRIVE_UNKNOWN */
+    { 0 }, /* DRIVE_NO_ROOT_DIR */
+    {'f','l','o','p','p','y',0}, /* DRIVE_REMOVABLE */
+    {'h','d',0}, /* DRIVE_FIXED */
+    {'n','e','t','w','o','r','k',0}, /* DRIVE_REMOTE */
+    {'c','d','r','o','m',0}, /* DRIVE_CDROM */
+    {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
+};
 
 struct dos_drive
 {
@@ -87,7 +99,7 @@ static inline int is_valid_device( struct stat *st )
 }
 
 /* find or create a DOS drive for the corresponding device */
-static int add_drive( const char *device, const char *type )
+static int add_drive( const char *device, DWORD type )
 {
     char *path, *p;
     char in_use[26];
@@ -103,7 +115,7 @@ static int add_drive( const char *device, const char *type )
 
     first = 2;
     last = 26;
-    if (type && !strcmp( type, "floppy" ))
+    if (type == DRIVE_REMOVABLE)
     {
         first = 0;
         last = 2;
@@ -186,7 +198,7 @@ static BOOL set_mount_point( struct dos_drive *drive, const char *mount_point )
 }
 
 BOOL add_dos_device( const char *udi, const char *device,
-                     const char *mount_point, const char *type )
+                     const char *mount_point, DWORD type )
 {
     struct dos_drive *drive;
 
@@ -213,17 +225,22 @@ found:
 
         set_mount_point( drive, mount_point );
 
-        TRACE( "added device %c: udi %s for %s on %s type %s\n",
+        TRACE( "added device %c: udi %s for %s on %s type %u\n",
                     'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),
-                    wine_dbgstr_a(mount_point), wine_dbgstr_a(type) );
+                    wine_dbgstr_a(mount_point), type );
 
         /* hack: force the drive type in the registry */
         if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
         {
-            char name[3] = "a:";
+            const WCHAR *type_name = drive_types[type];
+            WCHAR name[3] = {'a',':',0};
+
             name[0] += drive->drive;
-            if (!type || strcmp( type, "cdrom" )) type = "floppy";  /* FIXME: default to floppy */
-            RegSetValueExA( hkey, name, 0, REG_SZ, (const BYTE *)type, strlen(type) + 1 );
+            if (type_name[0])
+                RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)type_name,
+                                (strlenW(type_name) + 1) * sizeof(WCHAR) );
+            else
+                RegDeleteValueW( hkey, name );
             RegCloseKey( hkey );
         }
 
@@ -248,9 +265,9 @@ BOOL remove_dos_device( const char *udi )
             /* clear the registry key too */
             if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
             {
-                char name[3] = "a:";
+                WCHAR name[3] = {'a',':',0};
                 name[0] += drive->drive;
-                RegDeleteValueA( hkey, name );
+                RegDeleteValueW( hkey, name );
                 RegCloseKey( hkey );
             }
 

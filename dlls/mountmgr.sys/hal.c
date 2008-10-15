@@ -117,6 +117,7 @@ static void new_device( LibHalContext *ctx, const char *udi )
     char *mount_point = NULL;
     char *device = NULL;
     char *type = NULL;
+    DWORD drive_type;
 
     p_dbus_error_init( &error );
 
@@ -135,7 +136,10 @@ static void new_device( LibHalContext *ctx, const char *udi )
     if (!(type = p_libhal_device_get_property_string( ctx, parent, "storage.drive_type", &error )))
         p_dbus_error_free( &error );  /* ignore error */
 
-    add_dos_device( udi, device, mount_point, type );
+    if (type && !strcmp( type, "cdrom" )) drive_type = DRIVE_CDROM;
+    else drive_type = DRIVE_REMOVABLE;  /* FIXME: default to removable */
+
+    add_dos_device( udi, device, mount_point, drive_type );
 
     /* add property watch for mount point */
     p_libhal_device_add_property_watch( ctx, udi, &error );
