@@ -731,6 +731,7 @@ static void test_Startup(void)
 static void test_CommandLine(void)
 {
     char                buffer[MAX_PATH], fullpath[MAX_PATH], *lpFilePart, *p;
+    char                buffer2[MAX_PATH];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     DWORD               len;
@@ -830,7 +831,29 @@ static void test_CommandLine(void)
     okChildString("Arguments", "argvA0", buffer);
     release_memory();
     assert(DeleteFileA(resfile) != 0);
-    
+
+    /* Using AppName */
+    get_file_name(resfile);
+    len = GetFullPathNameA(selfname, MAX_PATH, fullpath, &lpFilePart);
+    assert ( lpFilePart != 0);
+    *(lpFilePart -1 ) = 0;
+    p = strrchr(fullpath, '\\');
+    assert (p);
+    /* Use exename to avoid buffer containing things like 'C:' */
+    sprintf(buffer, "..%s/%s", p, exename);
+    sprintf(buffer2, "dummy tests/process.c %s \"a\\\"b\\\\\" c\\\" d", resfile);
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(buffer, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
+    /* wait for child to terminate */
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    /* child process has changed result file, so let profile functions know about it */
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    sprintf(buffer, "tests/process.c %s", resfile);
+    okChildString("Arguments", "argvA0", "dummy");
+    okChildString("Arguments", "CommandLineA", buffer2);
+    release_memory();
+    assert(DeleteFileA(resfile) != 0);
 }
 
 static void test_Directory(void)
