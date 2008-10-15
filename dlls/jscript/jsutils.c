@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <math.h>
 
 #include "jscript.h"
@@ -325,6 +328,9 @@ static HRESULT str_to_number(BSTR str, VARIANT *ret)
 HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
 {
     switch(V_VT(v)) {
+    case VT_EMPTY:
+        num_set_nan(ret);
+        break;
     case VT_NULL:
         V_VT(ret) = VT_I4;
         V_I4(ret) = 0;

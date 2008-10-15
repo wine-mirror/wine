@@ -790,5 +790,6 @@ ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
 ok(isNaN() === true, "isNaN() !== true");
 ok(isNaN(NaN, 0) === true, "isNaN(NaN, 0) !== true");
 ok(isNaN(0.5, NaN) === false, "isNaN(0.5, NaN) !== false");
+ok(isNaN(+undefined) === true, "isNaN(+undefined) !== true");
 
 reportSuccess();
