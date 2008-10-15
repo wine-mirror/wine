@@ -295,8 +295,27 @@ static HRESULT JSGlobal_isNaN(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 static HRESULT JSGlobal_isFinite(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT_BOOL ret = VARIANT_FALSE;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(arg_cnt(dp)) {
+        VARIANT num;
+
+        hres = to_number(dispex->ctx, get_arg(dp,0), ei, &num);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&num) != VT_R8 || (!isinf(V_R8(&num)) && !isnan(V_R8(&num))))
+            ret = VARIANT_TRUE;
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_BOOL;
+        V_BOOL(retv) = ret;
+    }
+    return S_OK;
 }
 
 static INT char_to_int(WCHAR c)
