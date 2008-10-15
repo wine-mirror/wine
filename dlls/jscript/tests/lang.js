@@ -773,6 +773,18 @@ try {
     ok(false, "deleteTest not throwed exception?");
 }catch(ex) {}
 
+if (false)
+    if (true)
+        ok(false, "if evaluated");
+    else
+        ok(false, "else should be associated with nearest if statement");
+
+if (true)
+    if (false)
+        ok(false, "if evaluated");
+    else
+        ok(true, "else should be associated with nearest if statement");
+
 ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
 ok(isNaN() === true, "isNaN() !== true");
 

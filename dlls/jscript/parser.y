@@ -253,6 +253,9 @@ static source_elements_t *source_elements_add_function(source_elements_t*,functi
 %type <literal> BooleanLiteral
 %type <srcptr> KFunction
 
+%nonassoc LOWER_THAN_ELSE
+%nonassoc kELSE
+
 %%
 
 /* ECMA-262 3rd Edition    14 */
@@ -389,7 +392,7 @@ ExpressionStatement
 IfStatement
         : kIF '(' Expression ')' Statement kELSE Statement
                                 { $$ = new_if_statement(ctx, $3, $5, $7); }
-        | kIF '(' Expression ')' Statement
+        | kIF '(' Expression ')' Statement %prec LOWER_THAN_ELSE
                                 { $$ = new_if_statement(ctx, $3, $5, NULL); }
 
 /* ECMA-262 3rd Edition    12.6 */
