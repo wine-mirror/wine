@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Jacek Caban for CodeWeavers
+ * Copyright 2007-2008 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -175,11 +175,149 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     return NS_OK;
 }
 
+#define IE_MAJOR_VERSION 7
+#define IE_MINOR_VERSION 0
+
+static BOOL handle_insert_comment(HTMLDocument *doc, const PRUnichar *comment)
+{
+    DWORD len;
+    int majorv = 0, minorv = 0;
+    const PRUnichar *ptr, *end;
+    nsAString nsstr;
+    PRUnichar *buf;
+    nsresult nsres;
+
+    enum {
+        CMP_EQ,
+        CMP_LT,
+        CMP_LTE,
+        CMP_GT,
+        CMP_GTE
+    } cmpt = CMP_EQ;
+
+    static const PRUnichar endifW[] = {'<','!','[','e','n','d','i','f',']'};
+
+    if(comment[0] != '[' || comment[1] != 'i' || comment[2] != 'f')
+        return FALSE;
+
+    ptr = comment+3;
+    while(isspaceW(*ptr))
+        ptr++;
+
+    if(ptr[0] == 'l' && ptr[1] == 't') {
+        ptr += 2;
+        if(*ptr == 'e') {
+            cmpt = CMP_LTE;
+            ptr++;
+        }else {
+            cmpt = CMP_LT;
+        }
+    }else if(ptr[0] == 'g' && ptr[1] == 't') {
+        ptr += 2;
+        if(*ptr == 'e') {
+            cmpt = CMP_GTE;
+            ptr++;
+        }else {
+            cmpt = CMP_GT;
+        }
+    }
+
+    if(!isspaceW(*ptr++))
+        return FALSE;
+    while(isspaceW(*ptr))
+        ptr++;
+
+    if(ptr[0] != 'I' || ptr[1] != 'E')
+        return FALSE;
+
+    ptr +=2;
+    if(!isspaceW(*ptr++))
+        return FALSE;
+    while(isspaceW(*ptr))
+        ptr++;
+
+    if(!isdigitW(*ptr))
+        return FALSE;
+    while(isdigitW(*ptr))
+        majorv = majorv*10 + (*ptr++ - '0');
+
+    if(*ptr == '.') {
+        if(!isdigitW(*ptr))
+            return FALSE;
+        while(isdigitW(*ptr))
+            minorv = minorv*10 + (*ptr++ - '0');
+    }
+
+    while(isspaceW(*ptr))
+        ptr++;
+    if(ptr[0] != ']' || ptr[1] != '>')
+        return FALSE;
+    ptr += 2;
+
+    len = strlenW(ptr);
+    if(len < sizeof(endifW)/sizeof(WCHAR))
+        return FALSE;
+
+    end = ptr + len-sizeof(endifW)/sizeof(WCHAR);
+    if(memcmp(end, endifW, sizeof(endifW)))
+        return FALSE;
+
+    switch(cmpt) {
+    case CMP_EQ:
+        if(majorv == IE_MAJOR_VERSION && minorv == IE_MINOR_VERSION)
+            break;
+        return FALSE;
+    case CMP_LT:
+        if(majorv > IE_MAJOR_VERSION)
+            break;
+        if(majorv == IE_MAJOR_VERSION && minorv > IE_MINOR_VERSION)
+            break;
+        return FALSE;
+    case CMP_LTE:
+        if(majorv > IE_MAJOR_VERSION)
+            break;
+        if(majorv == IE_MAJOR_VERSION && minorv >= IE_MINOR_VERSION)
+            break;
+        return FALSE;
+    case CMP_GT:
+        if(majorv < IE_MAJOR_VERSION)
+            break;
+        if(majorv == IE_MAJOR_VERSION && minorv < IE_MINOR_VERSION)
+            break;
+        return FALSE;
+    case CMP_GTE:
+        if(majorv < IE_MAJOR_VERSION)
+            break;
+        if(majorv == IE_MAJOR_VERSION && minorv <= IE_MINOR_VERSION)
+            break;
+        return FALSE;
+    }
+
+    buf = heap_alloc((end-ptr+1)*sizeof(WCHAR));
+    if(!buf)
+        return FALSE;
+
+    memcpy(buf, ptr, (end-ptr)*sizeof(WCHAR));
+    buf[end-ptr] = 0;
+    nsAString_Init(&nsstr, buf);
+    heap_free(buf);
+
+    /* FIXME: Find better way to insert HTML to document. */
+    nsres = nsIDOMHTMLDocument_Write(doc->nsdoc, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        ERR("Write failed: %08x\n", nsres);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static nsresult NSAPI handle_node_insert(nsIDOMEventListener *iface, nsIDOMEvent *event)
 {
     NSContainer *This = NSEVENTLIST_THIS(iface)->This;
-    nsIDOMHTMLScriptElement *script;
     nsIDOMEventTarget *target;
+    nsIDOMComment *nscomment;
     nsIDOMElement *elem;
     nsresult nsres;
 
@@ -192,19 +330,50 @@ static nsresult NSAPI handle_node_insert(nsIDOMEventListener *iface, nsIDOMEvent
     }
 
     nsres = nsIDOMEventTarget_QueryInterface(target, &IID_nsIDOMElement, (void**)&elem);
-    nsIDOMEventTarget_Release(target);
-    if(NS_FAILED(nsres))
-        return NS_OK;
+    if(NS_SUCCEEDED(nsres)) {
+        nsIDOMHTMLScriptElement *script;
 
-    nsres = nsIDOMElement_QueryInterface(elem, &IID_nsIDOMHTMLScriptElement, (void**)&script);
-    if(SUCCEEDED(nsres)) {
-        doc_insert_script(This->doc, script);
-        nsIDOMHTMLScriptElement_Release(script);
+        nsres = nsIDOMElement_QueryInterface(elem, &IID_nsIDOMHTMLScriptElement, (void**)&script);
+        if(NS_SUCCEEDED(nsres)) {
+            doc_insert_script(This->doc, script);
+            nsIDOMHTMLScriptElement_Release(script);
+        }
+
+        check_event_attr(This->doc, elem);
+
+        nsIDOMEventTarget_Release(target);
+        nsIDOMNode_Release(elem);
+        return NS_OK;
     }
 
-    check_event_attr(This->doc, elem);
+    nsres = nsIDOMEventTarget_QueryInterface(target, &IID_nsIDOMComment, (void**)&nscomment);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString comment_str;
+        BOOL remove_comment = FALSE;
 
-    nsIDOMNode_Release(elem);
+        nsAString_Init(&comment_str, NULL);
+        nsres = nsIDOMComment_GetData(nscomment, &comment_str);
+        if(NS_SUCCEEDED(nsres)) {
+            const PRUnichar *comment;
+
+            nsAString_GetData(&comment_str, &comment);
+            remove_comment = handle_insert_comment(This->doc, comment);
+        }
+
+        nsAString_Finish(&comment_str);
+
+        if(remove_comment) {
+            nsIDOMNode *nsparent, *tmp;
+
+            nsIDOMComment_GetParentNode(nscomment, &nsparent);
+            nsIDOMNode_RemoveChild(nsparent, (nsIDOMNode*)nscomment, &tmp);
+            nsIDOMNode_Release(nsparent);
+            nsIDOMNode_Release(tmp);
+        }
+
+        nsIDOMComment_Release(nscomment);
+    }
+
     return NS_OK;
 }
 

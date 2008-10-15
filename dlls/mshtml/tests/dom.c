@@ -53,6 +53,10 @@ static const char elem_test_str[] =
     "</body></html>";
 static const char indent_test_str[] =
     "<html><head><title>test</title></head><body>abc<br /><a href=\"about:blank\">123</a></body></html>";
+static const char cond_comment_str[] =
+    "<html><head><title>test</title></head><body>"
+    "<!--[if gte IE 4]> <br> <![endif]-->"
+    "</body></html>";
 
 static const WCHAR noneW[] = {'N','o','n','e',0};
 
@@ -3373,6 +3377,25 @@ static void test_indent(IHTMLDocument2 *doc)
     IHTMLElementCollection_Release(col);
 }
 
+static void test_cond_comment(IHTMLDocument2 *doc)
+{
+    IHTMLElementCollection *col;
+    HRESULT hres;
+
+    static const elem_type_t all_types[] = {
+        ET_HTML,
+        ET_HEAD,
+        ET_TITLE,
+        ET_BODY,
+        ET_BR
+    };
+
+    hres = IHTMLDocument2_get_all(doc, &col);
+    ok(hres == S_OK, "get_all failed: %08x\n", hres);
+    test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
+    IHTMLElementCollection_Release(col);
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -3556,6 +3579,7 @@ START_TEST(dom)
     run_domtest(doc_blank, test_create_elems);
     run_domtest(doc_blank, test_defaults);
     run_domtest(indent_test_str, test_indent);
+    run_domtest(cond_comment_str, test_cond_comment);
 
     CoUninitialize();
     gecko_installer_workaround(FALSE);
