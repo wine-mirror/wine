@@ -4132,6 +4132,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     IWineD3DBaseTexture *texture = NULL;
     HRESULT hr;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    GLenum bind_target;
 
     if(rect_in) {
         rect = *rect_in;
@@ -4142,121 +4143,100 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         rect.bottom = This->currentDesc.Height;
     }
 
+    switch(This->glDescription.target)
+    {
+        case GL_TEXTURE_2D:
+            bind_target = GL_TEXTURE_2D;
+
+            coords[0].x = (float)rect.left / This->pow2Width;
+            coords[0].y = (float)rect.top / This->pow2Height;
+            coords[0].z = 0;
+
+            coords[1].x = (float)rect.left / This->pow2Width;
+            coords[1].y = (float)rect.bottom / This->pow2Height;
+            coords[1].z = 0;
+
+            coords[2].x = (float)rect.right / This->pow2Width;
+            coords[2].y = (float)rect.bottom / This->pow2Height;
+            coords[2].z = 0;
+
+            coords[3].x = (float)rect.right / This->pow2Width;
+            coords[3].y = (float)rect.top / This->pow2Height;
+            coords[3].z = 0;
+            break;
+
+        case GL_TEXTURE_RECTANGLE_ARB:
+            bind_target = GL_TEXTURE_RECTANGLE_ARB;
+            coords[0].x = rect.left;    coords[0].y = rect.top;     coords[0].z = 0;
+            coords[1].x = rect.left;    coords[1].y = rect.bottom;  coords[1].z = 0;
+            coords[2].x = rect.right;   coords[2].y = rect.bottom;  coords[2].z = 0;
+            coords[3].x = rect.right;   coords[3].y = rect.top;     coords[3].z = 0;
+            break;
+
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+            bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            coords[0].x =  1;   coords[0].y = -1;   coords[0].z =  1;
+            coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
+            coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
+            coords[3].x =  1;   coords[3].y = -1;   coords[3].z = -1;
+            break;
+
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+            bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+            coords[1].x = -1;   coords[1].y =  1;   coords[1].z =  1;
+            coords[2].x = -1;   coords[2].y =  1;   coords[2].z = -1;
+            coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+            break;
+
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+            bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            coords[0].x = -1;   coords[0].y =  1;   coords[0].z =  1;
+            coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
+            coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
+            coords[3].x = -1;   coords[3].y =  1;   coords[3].z = -1;
+            break;
+
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+            bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+            coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
+            coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
+            coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+            break;
+
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+            bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
+            coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
+            coords[2].x =  1;   coords[2].y = -1;   coords[2].z =  1;
+            coords[3].x = -1;   coords[3].y = -1;   coords[3].z =  1;
+            break;
+
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+            bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            coords[0].x = -1;   coords[0].y = -1;   coords[0].z = -1;
+            coords[1].x =  1;   coords[1].y = -1;   coords[1].z = -1;
+            coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
+            coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+            break;
+
+        default:
+            ERR("Unexpected texture target %#x\n", This->glDescription.target);
+            return;
+    }
+
     ActivateContext(device, (IWineD3DSurface*)This, CTXUSAGE_BLIT);
     ENTER_GL();
 
-    if(This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB) {
-        glEnable(GL_TEXTURE_RECTANGLE_ARB);
-        checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, This->glDescription.textureName);
-        checkGLcall("GL_TEXTURE_RECTANGLE_ARB, This->glDescription.textureName)");
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        checkGLcall("glTexParameteri");
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        checkGLcall("glTexParameteri");
-
-        coords[0].x = rect.left;
-        coords[0].z = 0;
-
-        coords[1].x = rect.left;
-        coords[1].z = 0;
-
-        coords[2].x = rect.right;
-        coords[2].z = 0;
-
-        coords[3].x = rect.right;
-        coords[3].z = 0;
-
-        coords[0].y = rect.top;
-        coords[1].y = rect.bottom;
-        coords[2].y = rect.bottom;
-        coords[3].y = rect.top;
-    } else if(This->glDescription.target == GL_TEXTURE_2D) {
-        glEnable(GL_TEXTURE_2D);
-        checkGLcall("glEnable(GL_TEXTURE_2D)");
-        glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
-        checkGLcall("GL_TEXTURE_2D, This->glDescription.textureName)");
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        checkGLcall("glTexParameteri");
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        checkGLcall("glTexParameteri");
-
-        coords[0].x = (float)rect.left   / This->pow2Width;
-        coords[0].z = 0;
-
-        coords[1].x = (float)rect.left   / This->pow2Width;
-        coords[1].z = 0;
-
-        coords[2].x = (float)rect.right  / This->pow2Width;
-        coords[2].z = 0;
-
-        coords[3].x = (float)rect.right  / This->pow2Width;
-        coords[3].z = 0;
-
-        coords[0].y = (float)rect.top    / This->pow2Height;
-        coords[1].y = (float)rect.bottom / This->pow2Height;
-        coords[2].y = (float)rect.bottom / This->pow2Height;
-        coords[3].y = (float)rect.top    / This->pow2Height;
-    } else {
-        /* Must be a cube map */
-        glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-        checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
-        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->glDescription.textureName);
-        checkGLcall("GL_TEXTURE_CUBE_MAP_ARB, This->glDescription.textureName)");
-        glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        checkGLcall("glTexParameteri");
-        glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        checkGLcall("glTexParameteri");
-
-        switch(This->glDescription.target) {
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-                coords[0].x =  1;   coords[0].y = -1;   coords[0].z =  1;
-                coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
-                coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
-                coords[3].x =  1;   coords[3].y = -1;   coords[3].z = -1;
-                break;
-
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
-                coords[1].x = -1;   coords[1].y =  1;   coords[1].z =  1;
-                coords[2].x = -1;   coords[2].y =  1;   coords[2].z = -1;
-                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
-                break;
-
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-                coords[0].x = -1;   coords[0].y =  1;   coords[0].z =  1;
-                coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
-                coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
-                coords[3].x = -1;   coords[3].y =  1;   coords[3].z = -1;
-                break;
-
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
-                coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
-                coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
-                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
-                break;
-
-            case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-                coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
-                coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
-                coords[2].x =  1;   coords[2].y = -1;   coords[2].z =  1;
-                coords[3].x = -1;   coords[3].y = -1;   coords[3].z =  1;
-                break;
-
-            case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-                coords[0].x = -1;   coords[0].y = -1;   coords[0].z = -1;
-                coords[1].x =  1;   coords[1].y = -1;   coords[1].z = -1;
-                coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
-                coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
-                break;
-
-            default:
-                ERR("Unexpected texture target\n");
-                LEAVE_GL();
-                return;
-        }
-    }
+    glEnable(bind_target);
+    checkGLcall("glEnable(bind_target)");
+    glBindTexture(bind_target, This->glDescription.textureName);
+    checkGLcall("bind_target, This->glDescription.textureName)");
+    glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    checkGLcall("glTexParameteri");
+    glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    checkGLcall("glTexParameteri");
 
     glBegin(GL_QUADS);
     glTexCoord3fv(&coords[0].x);
@@ -4273,13 +4253,9 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     glEnd();
     checkGLcall("glEnd");
 
-    if(This->glDescription.target != GL_TEXTURE_2D) {
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-    } else {
-        glDisable(GL_TEXTURE_2D);
-        checkGLcall("glDisable(GL_TEXTURE_2D)");
-    }
+    glDisable(bind_target);
+    checkGLcall("glDisable(bind_target)");
+
     LEAVE_GL();
 
     hr = IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain);
