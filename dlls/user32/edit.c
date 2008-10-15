@@ -430,6 +430,12 @@ static inline LRESULT DefWindowProcT(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 		return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
+static inline INT get_vertical_line_count(EDITSTATE *es)
+{
+	INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+	return max(1,vlc);
+}
+
 /*********************************************************************
  *
  *	EditWndProc_common
@@ -1807,7 +1813,7 @@ static void EDIT_SL_InvalidateText(EDITSTATE *es, INT start, INT end)
  */
 static void EDIT_ML_InvalidateText(EDITSTATE *es, INT start, INT end)
 {
-	INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+	INT vlc = get_vertical_line_count(es);
 	INT sl = EDIT_EM_LineFromChar(es, start);
 	INT el = EDIT_EM_LineFromChar(es, end);
 	INT sc;
@@ -2234,7 +2240,8 @@ static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 	LRESULT pos;
 
 	if (es->style & ES_MULTILINE) {
-		INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		INT vlc = get_vertical_line_count(es);
+
 		if ((line < es->y_offset) || (line > es->y_offset + vlc) || (line >= es->line_count))
 			return;
 	} else if (line)
@@ -2361,8 +2368,8 @@ static void EDIT_AdjustFormatRect(EDITSTATE *es)
 	{
 	    INT fw, vlc, max_x_offset, max_y_offset;
 
-	    vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
-	    es->format_rect.bottom = es->format_rect.top + max(1, vlc) * es->line_height;
+	    vlc = get_vertical_line_count(es);
+	    es->format_rect.bottom = es->format_rect.top + vlc * es->line_height;
 
 	    /* correct es->x_offset */
 	    fw = es->format_rect.right - es->format_rect.left;
@@ -3256,7 +3263,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	if (es->style & ES_MULTILINE)
 	{
 		INT st = min(es->selection_start, es->selection_end);
-		INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		INT vlc = get_vertical_line_count(es);
 
 		hrgn = CreateRectRgn(0, 0, 0, 0);
 		EDIT_BuildLineDefs_ML(es, st, st + strl,
@@ -3420,7 +3427,7 @@ static LRESULT EDIT_EM_Scroll(EDITSTATE *es, INT action)
 		return (LRESULT)FALSE;
 	}
 	if (dy) {
-	    INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+	    INT vlc = get_vertical_line_count(es);
 	    /* check if we are going to move too far */
 	    if(es->y_offset + dy > es->line_count - vlc)
 		dy = es->line_count - vlc - es->y_offset;
@@ -3451,7 +3458,7 @@ static void EDIT_EM_ScrollCaret(EDITSTATE *es)
 
 		l = EDIT_EM_LineFromChar(es, es->selection_end);
 		x = (short)LOWORD(EDIT_EM_PosFromChar(es, es->selection_end, es->flags & EF_AFTER_WRAP));
-		vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		vlc = get_vertical_line_count(es);
 		if (l >= es->y_offset + vlc)
 			dy = l - vlc + 1 - es->y_offset;
 		if (l < es->y_offset)
@@ -4956,7 +4963,7 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 		SetTextColor(dc, GetSysColor(COLOR_GRAYTEXT));
 	GetClipBox(dc, &rcRgn);
 	if (es->style & ES_MULTILINE) {
-		INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		INT vlc = get_vertical_line_count(es);
 		for (i = es->y_offset ; i <= min(es->y_offset + vlc, es->y_offset + es->line_count - 1) ; i++) {
 			EDIT_GetLineRect(es, i, 0, -1, &rcLine);
 			if (IntersectRect(&rc, &rcRgn, &rcLine))
@@ -5301,7 +5308,7 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
 		    INT vlc, new_y;
 		    /* Sanity check */
 		    if(pos < 0 || pos > 100) return 0;
-		    vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		    vlc = get_vertical_line_count(es);
 		    new_y = pos * (es->line_count - vlc) / 100;
 		    dy = es->line_count ? (new_y - es->y_offset) : 0;
 		    TRACE("line_count=%d, y_offset=%d, pos=%d, dy = %d\n",
@@ -5319,7 +5326,7 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
 		    INT vlc, new_y;
 		    /* Sanity check */
 		    if(pos < 0 || pos > 100) return 0;
-		    vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		    vlc = get_vertical_line_count(es);
 		    new_y = pos * (es->line_count - vlc) / 100;
 		    dy = es->line_count ? (new_y - es->y_offset) : 0;
 		    TRACE("line_count=%d, y_offset=%d, pos=%d, dy = %d\n",
@@ -5350,7 +5357,7 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
 		else
 		{
 		    /* Assume default scroll range 0-100 */
-		    INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		    INT vlc = get_vertical_line_count(es);
 		    ret = es->line_count ? es->y_offset * 100 / (es->line_count - vlc) : 0;
 		}
 		TRACE("EM_GETTHUMB: returning %ld\n", ret);

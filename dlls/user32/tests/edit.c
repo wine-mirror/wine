@@ -1989,6 +1989,53 @@ static void UnregisterWindowClasses (void)
     UnregisterClassA(szEditTextPositionClass, hinst);
 }
 
+void test_fontsize(void)
+{
+    HWND hwEdit;
+    HFONT hfont;
+    LOGFONT lf;
+    LONG r;
+    char szLocalString[MAXLEN];
+
+    memset(&lf,0,sizeof(LOGFONTA));
+    strcpy(lf.lfFaceName,"Arial");
+    lf.lfHeight = -300; /* taller than the edit box */
+    lf.lfWeight = 500;
+    hfont = CreateFontIndirect(&lf);
+
+    trace("EDIT: Oversized font (Multi line)\n");
+    hwEdit= CreateWindow("EDIT", NULL, ES_MULTILINE|ES_AUTOHSCROLL,
+                           0, 0, 150, 50, NULL, NULL, hinst, NULL);
+
+    SendMessage(hwEdit,WM_SETFONT,(WPARAM)hfont,0);
+
+    if (winetest_interactive)
+        ShowWindow (hwEdit, SW_SHOW);
+
+    r = SendMessage(hwEdit, WM_CHAR, 'A', 1);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    r = SendMessage(hwEdit, WM_CHAR, 'B', 1);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+    r = SendMessage(hwEdit, WM_CHAR, 'C', 1);
+    ok(1 == r, "Expected: %d, got: %d\n", 1, r);
+
+    GetWindowText(hwEdit, szLocalString, MAXLEN);
+    ok(lstrcmp(szLocalString, "ABC")==0,
+       "Wrong contents of edit: %s\n", szLocalString);
+
+    r = SendMessage(hwEdit, EM_POSFROMCHAR,0,0);
+    ok(r != -1,"EM_POSFROMCHAR failed index 0\n");
+    r = SendMessage(hwEdit, EM_POSFROMCHAR,1,0);
+    ok(r != -1,"EM_POSFROMCHAR failed index 1\n");
+    r = SendMessage(hwEdit, EM_POSFROMCHAR,2,0);
+    ok(r != -1,"EM_POSFROMCHAR failed index 2\n");
+    r = SendMessage(hwEdit, EM_POSFROMCHAR,3,0);
+    ok(r == -1,"EM_POSFROMCHAR succeeded index 3\n");
+
+    DestroyWindow (hwEdit);
+    DeleteObject(hfont);
+}
+
 START_TEST(edit)
 {
     hinst = GetModuleHandleA(NULL);
@@ -2012,6 +2059,7 @@ START_TEST(edit)
     test_wantreturn_edit_dialog();
     test_singleline_wantreturn_edit_dialog();
     test_child_edit_wmkeydown();
+    test_fontsize();
 
     UnregisterWindowClasses();
 }
