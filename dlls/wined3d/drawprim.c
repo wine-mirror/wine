@@ -673,7 +673,6 @@ void depth_blt(IWineD3DDevice *iface, GLuint texture, GLsizei w, GLsizei h) {
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glEnable(GL_TEXTURE_2D);
 
     This->shader_backend->shader_select_depth_blt(iface);
 

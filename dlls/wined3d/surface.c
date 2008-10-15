@@ -2217,7 +2217,6 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, device->paletteConversionShader));
 
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE1));
-        glEnable(GL_TEXTURE_1D);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -2379,8 +2378,6 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface) {
 
         ENTER_GL();
 
-        glEnable(This->glDescription.target);
-
         if (!This->glDescription.level) {
             if (!This->glDescription.textureName) {
                 glGenTextures(1, &This->glDescription.textureName);
@@ -2452,7 +2449,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
         GLint prevRead;
         ENTER_GL();
         TRACE("(%p) Reading render target into texture\n", This);
-        glEnable(GL_TEXTURE_2D);
 
         glGenTextures(1, &tmpTexture);
         glBindTexture(GL_TEXTURE_2D, tmpTexture);
@@ -2818,10 +2814,6 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
     ENTER_GL();
 
-    /* TODO: Do we need GL_TEXTURE_2D enabled fpr copyteximage? */
-    glEnable(This->glDescription.target);
-    checkGLcall("glEnable(This->glDescription.target)");
-
     /* Bind the target texture */
     glBindTexture(This->glDescription.target, This->glDescription.textureName);
     checkGLcall("glBindTexture");
@@ -2890,10 +2882,6 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
         }
     }
     vcheckGLcall("glCopyTexSubImage2D");
-
-    /* Leave the opengl state valid for blitting */
-    glDisable(This->glDescription.target);
-    checkGLcall("glDisable(This->glDescription.target)");
 
     LEAVE_GL();
 }
