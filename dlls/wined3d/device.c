@@ -1550,8 +1550,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     /** FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat **/
 
     object->context = HeapAlloc(GetProcessHeap(), 0, sizeof(object->context));
-    if(!object->context)
-        return E_OUTOFMEMORY;
+    if(!object->context) {
+        ERR("Failed to create the context array\n");
+        hr = E_OUTOFMEMORY;
+        goto error;
+    }
     object->num_contexts = 1;
 
     if(surface_type == SURFACE_OPENGL) {
