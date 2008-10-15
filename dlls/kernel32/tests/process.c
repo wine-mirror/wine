@@ -24,12 +24,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "wine/test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wincon.h"
 #include "winnls.h"
+#include "winternl.h"
+
+#include "wine/test.h"
 
 static HINSTANCE hkernel32;
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
@@ -1419,6 +1423,41 @@ static void test_OpenProcess(void)
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
 }
 
+static void test_GetProcessVersion(void)
+{
+    static char cmdline[] = "winver.exe";
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si;
+    DWORD ret;
+
+    SetLastError(0xdeadbeef);
+    ret = GetProcessVersion(0);
+    ok(ret, "GetProcessVersion error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetProcessVersion(GetCurrentProcessId());
+    ok(ret, "GetProcessVersion error %u\n", GetLastError());
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    SetLastError(0xdeadbeef);
+    ok(ret, "CreateProcess error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetProcessVersion(pi.dwProcessId);
+    ok(ret, "GetProcessVersion error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = TerminateProcess(pi.hProcess, 0);
+    ok(ret, "TerminateProcess error %u\n", GetLastError());
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
 START_TEST(process)
 {
     int b = init();
@@ -1439,6 +1478,7 @@ START_TEST(process)
     test_Console();
     test_ExitCode();
     test_OpenProcess();
+    test_GetProcessVersion();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)
