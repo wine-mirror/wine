@@ -4578,26 +4578,26 @@ static void test_EM_STREAMIN(void)
   const char * streamText0b = "{\\rtf1 TestSomeText\\par\\par}";
 
   const char * streamText1 =
-  "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang12298{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 System;}}\r\n" \
-  "\\viewkind4\\uc1\\pard\\f0\\fs17 TestSomeText\\par\r\n" \
+  "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang12298{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 System;}}\r\n"
+  "\\viewkind4\\uc1\\pard\\f0\\fs17 TestSomeText\\par\r\n"
   "}\r\n";
 
   /* In richedit 2.0 mode, this should NOT be accepted, unlike 1.0 */
   const char * streamText2 =
-    "{{\\colortbl;\\red0\\green255\\blue102;\\red255\\green255\\blue255;" \
-    "\\red170\\green255\\blue255;\\red255\\green238\\blue0;\\red51\\green255" \
-    "\\blue221;\\red238\\green238\\blue238;}\\tx0 \\tx424 \\tx848 \\tx1272 " \
-    "\\tx1696 \\tx2120 \\tx2544 \\tx2968 \\tx3392 \\tx3816 \\tx4240 \\tx4664 " \
-    "\\tx5088 \\tx5512 \\tx5936 \\tx6360 \\tx6784 \\tx7208 \\tx7632 \\tx8056 " \
-    "\\tx8480 \\tx8904 \\tx9328 \\tx9752 \\tx10176 \\tx10600 \\tx11024 " \
+    "{{\\colortbl;\\red0\\green255\\blue102;\\red255\\green255\\blue255;"
+    "\\red170\\green255\\blue255;\\red255\\green238\\blue0;\\red51\\green255"
+    "\\blue221;\\red238\\green238\\blue238;}\\tx0 \\tx424 \\tx848 \\tx1272 "
+    "\\tx1696 \\tx2120 \\tx2544 \\tx2968 \\tx3392 \\tx3816 \\tx4240 \\tx4664 "
+    "\\tx5088 \\tx5512 \\tx5936 \\tx6360 \\tx6784 \\tx7208 \\tx7632 \\tx8056 "
+    "\\tx8480 \\tx8904 \\tx9328 \\tx9752 \\tx10176 \\tx10600 \\tx11024 "
     "\\tx11448 \\tx11872 \\tx12296 \\tx12720 \\tx13144 \\cf2 RichEdit1\\line }";
 
   const char * streamText3 = "RichEdit1";
 
   struct StringWithLength cookieForStream4;
   const char * streamText4 =
-      "This text just needs to be long enough to cause run to be split onto "\
-      "two separate lines and make sure the null terminating character is "\
+      "This text just needs to be long enough to cause run to be split onto "
+      "two separate lines and make sure the null terminating character is "
       "handled properly.\0";
   int length4 = strlen(streamText4) + 1;
   cookieForStream4.buffer = (char *)streamText4;
