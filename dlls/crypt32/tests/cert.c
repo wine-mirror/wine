@@ -1694,8 +1694,10 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
         ret = pCryptVerifyCertificateSignatureEx(csp, X509_ASN_ENCODING,
          CRYPT_VERIFY_CERT_SIGN_SUBJECT_BLOB, &certBlob, 0, NULL, 0, NULL);
         ok(!ret && (GetLastError() == STATUS_ACCESS_VIOLATION ||
-                    GetLastError() == CRYPT_E_ASN1_EOD /* Win9x */),
-         "Expected STATUS_ACCESS_VIOLATION or CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+                    GetLastError() == CRYPT_E_ASN1_EOD /* Win9x */ ||
+                    GetLastError() == CRYPT_E_ASN1_BADTAG /* Win98 */),
+         "Expected STATUS_ACCESS_VIOLATION, CRYPT_E_ASN1_EOD, OR CRYPT_E_ASN1_BADTAG, got %08x\n",
+         GetLastError());
 
         certBlob.cbData = size;
         certBlob.pbData = cert;
