@@ -1962,7 +1962,7 @@ static void test_impersonation_level(void)
     ret = GetTokenInformation(Token, TokenUser, NULL, 0, &Size);
     error = GetLastError();
     ok(!ret && error == ERROR_INSUFFICIENT_BUFFER, "GetTokenInformation(TokenUser) should have failed with ERROR_INSUFFICIENT_BUFFER instead of %d\n", error);
-    User = (TOKEN_USER *)HeapAlloc(GetProcessHeap(), 0, Size);
+    User = HeapAlloc(GetProcessHeap(), 0, Size);
     ret = GetTokenInformation(Token, TokenUser, User, Size, &Size);
     ok(ret, "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, User);
@@ -1971,11 +1971,11 @@ static void test_impersonation_level(void)
     ret = GetTokenInformation(Token, TokenPrivileges, NULL, 0, &Size);
     error = GetLastError();
     ok(!ret && error == ERROR_INSUFFICIENT_BUFFER, "GetTokenInformation(TokenPrivileges) should have failed with ERROR_INSUFFICIENT_BUFFER instead of %d\n", error);
-    Privileges = (TOKEN_PRIVILEGES *)HeapAlloc(GetProcessHeap(), 0, Size);
+    Privileges = HeapAlloc(GetProcessHeap(), 0, Size);
     ret = GetTokenInformation(Token, TokenPrivileges, Privileges, Size, &Size);
     ok(ret, "GetTokenInformation(TokenPrivileges) failed with error %d\n", GetLastError());
 
-    PrivilegeSet = (PRIVILEGE_SET *)HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(PRIVILEGE_SET, Privilege[Privileges->PrivilegeCount]));
+    PrivilegeSet = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(PRIVILEGE_SET, Privilege[Privileges->PrivilegeCount]));
     PrivilegeSet->PrivilegeCount = Privileges->PrivilegeCount;
     memcpy(PrivilegeSet->Privilege, Privileges->Privileges, PrivilegeSet->PrivilegeCount * sizeof(PrivilegeSet->Privilege[0]));
     PrivilegeSet->Control = PRIVILEGE_SET_ALL_NECESSARY;
