@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "winsvc.h"
 #include "setupapi.h"
+#include "shlobj.h"
 
 #include "wine/test.h"
 
@@ -382,6 +383,71 @@ static void test_driver_install(void)
     DeleteFile(driver);
 }
 
+static void test_profile_items(void)
+{
+    char path[MAX_PATH], commonprogs[MAX_PATH];
+    HMODULE hShell32;
+    BOOL (WINAPI *pSHGetFolderPathA)(HWND hwnd, int nFolder, HANDLE hToken, DWORD dwFlags, LPSTR pszPath);
+
+    static const char *inf =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "[DefaultInstall]\n"
+        "ProfileItems=TestItem,TestItem2\n"
+        "[TestItem]\n"
+        "Name=TestItem\n"
+        "CmdLine=11,,notepad.exe\n"
+        "[TestItem2]\n"
+        "Name=TestItem2\n"
+        "CmdLine=11,,notepad.exe\n"
+        "SubDir=TestDir\n"
+        ;
+
+    hShell32 = LoadLibraryA("shell32");
+    pSHGetFolderPathA = (void*)GetProcAddress(hShell32, "SHGetFolderPathA");
+    if (!pSHGetFolderPathA)
+    {
+        skip("SHGetFolderPathA is not available\n");
+        goto cleanup;
+    }
+
+    if (S_OK != pSHGetFolderPathA(NULL, CSIDL_COMMON_PROGRAMS, NULL, SHGFP_TYPE_CURRENT, commonprogs))
+    {
+        skip("No common program files directory exists\n");
+        goto cleanup;
+    }
+
+    create_inf_file(inffile, inf);
+    sprintf(path, "%s\\%s", CURR_DIR, inffile);
+    run_cmdline("DefaultInstall", 128, path);
+
+    snprintf(path, MAX_PATH, "%s\\TestItem.lnk", commonprogs);
+    if (INVALID_FILE_ATTRIBUTES == GetFileAttributes(path))
+    {
+        todo_wine win_skip("ProfileItems not implemented on this system\n");
+    }
+    else
+    {
+        snprintf(path, MAX_PATH, "%s\\TestDir", commonprogs);
+        todo_wine ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "directory not created\n");
+        snprintf(path, MAX_PATH, "%s\\TestDir\\TestItem2.lnk", commonprogs);
+        todo_wine ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "link not created\n");
+    }
+
+    snprintf(path, MAX_PATH, "%s\\TestItem.lnk", commonprogs);
+    DeleteFile(path);
+    snprintf(path, MAX_PATH, "%s\\TestDir\\TestItem2.lnk", commonprogs);
+    DeleteFile(path);
+    snprintf(path, MAX_PATH, "%s\\TestItem2.lnk", commonprogs);
+    DeleteFile(path);
+    snprintf(path, MAX_PATH, "%s\\TestDir", commonprogs);
+    RemoveDirectory(path);
+
+cleanup:
+    if (hShell32) FreeLibrary(hShell32);
+    DeleteFile(inffile);
+}
+
 START_TEST(install)
 {
     HMODULE hsetupapi = GetModuleHandle("setupapi.dll");
@@ -429,6 +495,10 @@ START_TEST(install)
         test_driver_install();
 
         UnhookWindowsHookEx(hhook);
+
+        /* We have to run this test after the CBT hook is disabled because
+            ProfileItems needs to create a window on Windows XP. */
+        test_profile_items();
     }
 
     SetCurrentDirectory(prev_path);
