@@ -415,8 +415,17 @@ static HRESULT WINAPI HTMLInputElement_get_defaultChecked(IHTMLInputElement *ifa
 static HRESULT WINAPI HTMLInputElement_put_checked(IHTMLInputElement *iface, VARIANT_BOOL v)
 {
     HTMLInputElement *This = HTMLINPUT_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    nsres = nsIDOMHTMLInputElement_SetChecked(This->nsinput, v != VARIANT_FALSE);
+    if(NS_FAILED(nsres)) {
+        ERR("SetChecked failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_checked(IHTMLInputElement *iface, VARIANT_BOOL *p)

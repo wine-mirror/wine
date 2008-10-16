@@ -1427,6 +1427,28 @@ static void _test_input_set_defaultchecked(unsigned line, IHTMLInputElement *inp
     _test_input_get_defaultchecked(line, input, b);
 }
 
+#define test_input_get_checked(i,b) _test_input_get_checked(__LINE__,i,b)
+static void _test_input_get_checked(unsigned line, IHTMLInputElement *input, VARIANT_BOOL exb)
+{
+    VARIANT_BOOL checked = 100;
+    HRESULT hres;
+
+    hres = IHTMLInputElement_get_checked(input, &checked);
+    ok_(__FILE__,line) (hres == S_OK, "get_checked failed: %08x\n", hres);
+    ok_(__FILE__,line) (checked == exb, "checked=%x, expected %x\n", checked, exb);
+}
+
+#define test_input_set_checked(i,b) _test_input_set_checked(__LINE__,i,b)
+static void _test_input_set_checked(unsigned line, IHTMLInputElement *input, VARIANT_BOOL b)
+{
+    HRESULT hres;
+
+    hres = IHTMLInputElement_put_checked(input, b);
+    ok_(__FILE__,line) (hres == S_OK, "get_checked failed: %08x\n", hres);
+
+    _test_input_get_checked(line, input, b);
+}
+
 #define test_input_value(o,t) _test_input_value(__LINE__,o,t)
 static void _test_input_value(unsigned line, IUnknown *unk, const char *exval)
 {
@@ -3163,6 +3185,10 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_get_defaultchecked(input, VARIANT_FALSE);
         test_input_set_defaultchecked(input, VARIANT_TRUE);
         test_input_set_defaultchecked(input, VARIANT_FALSE);
+
+        test_input_get_checked(input, VARIANT_FALSE);
+        test_input_set_checked(input, VARIANT_TRUE);
+        test_input_set_checked(input, VARIANT_FALSE);
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);
