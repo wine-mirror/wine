@@ -1605,6 +1605,74 @@ static void cleanup_test(void)
     CoUninitialize();
 }
 
+static void test_commandline(void)
+{
+    static const WCHAR one[] = {'o','n','e',0};
+    static const WCHAR two[] = {'t','w','o',0};
+    static const WCHAR three[] = {'t','h','r','e','e',0};
+    static const WCHAR four[] = {'f','o','u','r',0};
+
+    static const WCHAR fmt1[] = {'%','s',' ','%','s',' ','%','s',' ','%','s',0};
+    static const WCHAR fmt2[] = {' ','%','s',' ','%','s',' ','%','s',' ','%','s',0};
+    static const WCHAR fmt3[] = {'%','s','=','%','s',' ','%','s','=','\"','%','s','\"',0};
+    static const WCHAR fmt4[] = {'\"','%','s','\"',' ','\"','%','s',' ','%','s','\"',' ','%','s',0};
+    static const WCHAR fmt5[] = {'\\','\"','%','s','\"',' ','%','s','=','\"','%','s','\\','\"',' ','\"','%','s','\\','\"',0};
+
+    static const WCHAR chkfmt1[] = {'%','s','=','%','s',0};
+    static const WCHAR chkfmt2[] = {'%','s',' ','%','s',0};
+    static const WCHAR chkfmt3[] = {'\\','\"','%','s','\"',0};
+    static const WCHAR chkfmt4[] = {'%','s','=','%','s','\"',' ','%','s','\"',0};
+    WCHAR cmdline[255];
+    LPWSTR *args = (LPWSTR*)0xdeadcafe;
+    INT numargs = -1;
+
+    wsprintfW(cmdline,fmt1,one,two,three,four);
+    args=CommandLineToArgvW(cmdline,&numargs);
+    if (args == NULL && numargs == -1)
+    {
+        win_skip("CommandLineToArgvW not implemented, skipping\n");
+        return;
+    }
+    ok(numargs == 4, "expected 4 args, got %i\n",numargs);
+    ok(lstrcmpW(args[0],one)==0,"arg0 is not as expected\n");
+    ok(lstrcmpW(args[1],two)==0,"arg1 is not as expected\n");
+    ok(lstrcmpW(args[2],three)==0,"arg2 is not as expected\n");
+    ok(lstrcmpW(args[3],four)==0,"arg3 is not as expected\n");
+
+    wsprintfW(cmdline,fmt2,one,two,three,four);
+    args=CommandLineToArgvW(cmdline,&numargs);
+    ok(numargs == 5, "expected 5 args, got %i\n",numargs);
+    ok(args[0][0]==0,"arg0 is not as expected\n");
+    ok(lstrcmpW(args[1],one)==0,"arg1 is not as expected\n");
+    ok(lstrcmpW(args[2],two)==0,"arg2 is not as expected\n");
+    ok(lstrcmpW(args[3],three)==0,"arg3 is not as expected\n");
+    ok(lstrcmpW(args[4],four)==0,"arg4 is not as expected\n");
+
+    wsprintfW(cmdline,fmt3,one,two,three,four);
+    args=CommandLineToArgvW(cmdline,&numargs);
+    ok(numargs == 2, "expected 2 args, got %i\n",numargs);
+    wsprintfW(cmdline,chkfmt1,one,two);
+    ok(lstrcmpW(args[0],cmdline)==0,"arg0 is not as expected\n");
+    wsprintfW(cmdline,chkfmt1,three,four);
+    ok(lstrcmpW(args[1],cmdline)==0,"arg1 is not as expected\n");
+
+    wsprintfW(cmdline,fmt4,one,two,three,four);
+    args=CommandLineToArgvW(cmdline,&numargs);
+    ok(numargs == 3, "expected 3 args, got %i\n",numargs);
+    ok(lstrcmpW(args[0],one)==0,"arg0 is not as expected\n");
+    wsprintfW(cmdline,chkfmt2,two,three);
+    ok(lstrcmpW(args[1],cmdline)==0,"arg1 is not as expected\n");
+    ok(lstrcmpW(args[2],four)==0,"arg2 is not as expected\n");
+
+    wsprintfW(cmdline,fmt5,one,two,three,four);
+    args=CommandLineToArgvW(cmdline,&numargs);
+    ok(numargs == 2, "expected 2 args, got %i\n",numargs);
+    wsprintfW(cmdline,chkfmt3,one);
+    todo_wine ok(lstrcmpW(args[0],cmdline)==0,"arg0 is not as expected\n");
+    wsprintfW(cmdline,chkfmt4,two,three,four);
+    todo_wine ok(lstrcmpW(args[1],cmdline)==0,"arg1 is not as expected\n");
+}
+
 START_TEST(shlexec)
 {
 
@@ -1624,6 +1692,7 @@ START_TEST(shlexec)
     test_exes_long();
     test_dde();
     test_dde_default_app();
+    test_commandline();
 
     cleanup_test();
 }
