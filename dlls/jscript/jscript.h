@@ -252,6 +252,18 @@ static inline void num_set_nan(VARIANT *v)
 #endif
 }
 
+static inline void num_set_inf(VARIANT *v, BOOL positive)
+{
+    V_VT(v) = VT_R8;
+#ifdef INFINITY
+    V_R8(v) = positive ? INFINITY : -INFINITY;
+#else
+    V_UI8(v) = (ULONGLONG)0x7ff00000<<32;
+    if(!positive)
+        V_R8(v) = -V_R8(v);
+#endif
+}
+
 const char *debugstr_variant(const VARIANT*);
 
 HRESULT WINAPI JScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);

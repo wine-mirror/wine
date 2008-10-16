@@ -787,9 +787,18 @@ if (true)
 
 ok(isNaN(NaN) === true, "isNaN(NaN) !== true");
 ok(isNaN(0.5) === false, "isNaN(0.5) !== false");
+ok(isNaN(Infinity) === false, "isNaN(Infinity) !== false");
 ok(isNaN() === true, "isNaN() !== true");
 ok(isNaN(NaN, 0) === true, "isNaN(NaN, 0) !== true");
 ok(isNaN(0.5, NaN) === false, "isNaN(0.5, NaN) !== false");
 ok(isNaN(+undefined) === true, "isNaN(+undefined) !== true");
+
+ok(isFinite(0.5) === true, "isFinite(0.5) !== true");
+ok(isFinite(Infinity) === false, "isFinite(Infinity) !== fals");
+ok(isFinite(-Infinity) === false, "isFinite(Infinity) !== fals");
+ok(isFinite(NaN) === false, "isFinite(NaN) !== false");
+ok(isFinite(0.5, NaN) === true, "isFinite(0.5, NaN) !== true");
+ok(isFinite(NaN, 0.5) === false, "isFinite(NaN, 0.5) !== false");
+ok(isFinite() === false, "isFinite() !== false");
 
 reportSuccess();
