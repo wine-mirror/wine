@@ -1775,7 +1775,9 @@ static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
          &policyStatus);
 
         if (check->todo & TODO_POLICY)
-            todo_wine ok(ret, "%d: CertVerifyCertificateChainPolicy failed: %08x\n",
+            todo_wine ok(ret,
+             "%s[%d]: CertVerifyCertificateChainPolicy failed: %08x\n",
+             HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
              testIndex, GetLastError());
         else
         {
@@ -1786,36 +1788,46 @@ static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
                 pCertFreeCertificateChain(chain);
                 return;
             }
-            ok(ret, "%d: CertVerifyCertificateChainPolicy failed: %08x\n",
-             testIndex, GetLastError());
+            ok(ret, "%s[%d]: CertVerifyCertificateChainPolicy failed: %08x\n",
+             HIWORD(policy) ? policy : num_to_str(LOWORD(policy)), testIndex,
+             GetLastError());
         }
         if (ret)
         {
             if (check->todo & TODO_ERROR)
                 todo_wine ok(policyStatus.dwError == check->status.dwError,
-                 "%d: expected %08x, got %08x\n", testIndex,
-                 check->status.dwError, policyStatus.dwError);
+                 "%s[%d]: expected %08x, got %08x\n",
+                 HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
+                 testIndex, check->status.dwError, policyStatus.dwError);
             else
                 ok(policyStatus.dwError == check->status.dwError,
-                 "%d: expected %08x, got %08x\n", testIndex,
-                 check->status.dwError, policyStatus.dwError);
+                 "%s[%d]: expected %08x, got %08x\n",
+                 HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
+                 testIndex, check->status.dwError, policyStatus.dwError);
             if (check->todo & TODO_CHAINS)
                 todo_wine ok(policyStatus.lChainIndex ==
-                 check->status.lChainIndex, "%d: expected %d, got %d\n",
+                 check->status.lChainIndex, "%s[%d]: expected %d, got %d\n",
+                 HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex, check->status.lChainIndex,
                  policyStatus.lChainIndex);
             else
                 ok(policyStatus.lChainIndex == check->status.lChainIndex,
-                 "%d: expected %d, got %d\n", testIndex,
+                 "%s[%d]: expected %d, got %d\n",
+                 HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
+                 testIndex,
                  check->status.lChainIndex, policyStatus.lChainIndex);
             if (check->todo & TODO_ELEMENTS)
                 todo_wine ok(policyStatus.lElementIndex ==
                  check->status.lElementIndex,
-                 "%d: expected %d, got %d\n", testIndex,
+                 "%s[%d]: expected %d, got %d\n",
+                 HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
+                 testIndex,
                  check->status.lElementIndex, policyStatus.lElementIndex);
             else
                 ok(policyStatus.lElementIndex == check->status.lElementIndex,
-                 "%d: expected %d, got %d\n", testIndex,
+                 "%s[%d]: expected %d, got %d\n",
+                 HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
+                 testIndex,
                  check->status.lElementIndex, policyStatus.lElementIndex);
         }
         pCertFreeCertificateChain(chain);
