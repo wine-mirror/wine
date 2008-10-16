@@ -450,7 +450,9 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
 
     TRACE("%d %d %d %d %p %p\n", width, height, stride, format, scan0, bitmap);
 
-    if(!bitmap || width <= 0 || height <= 0 || (scan0 && (stride % 4))){
+    if (!bitmap) return InvalidParameter;
+
+    if(width <= 0 || height <= 0 || (scan0 && (stride % 4))){
         *bitmap = NULL;
         return InvalidParameter;
     }
