@@ -820,4 +820,16 @@ ok(+"Infinity" === Infinity, "+'Infinity' !== Infinity");
 ok(+" Infinity " === Infinity, "+' Infinity ' !== Infinity");
 ok(+"-Infinity" === -Infinity, "+'-Infinity' !== -Infinity");
 
+ok((NaN !== NaN) === true, "(NaN !== NaN) !== true");
+ok((NaN === NaN) === false, "(NaN === NaN) !== false");
+ok((Infinity !== NaN) === true, "(Infinity !== NaN) !== true");
+ok((Infinity !== NaN) === true, "(Infinity !== NaN) !== true");
+ok((0 === NaN) === false, "(0 === NaN) !== false");
+
+ok((NaN != NaN) === true, "(NaN !== NaN) != true");
+ok((NaN == NaN) === false, "(NaN === NaN) != false");
+ok((Infinity != NaN) === true, "(Infinity != NaN) !== true");
+ok((Infinity != NaN) === true, "(Infinity != NaN) !== true");
+ok((0 == NaN) === false, "(0 === NaN) != false");
+
 reportSuccess();
