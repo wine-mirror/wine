@@ -270,7 +270,7 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenPar
     DWORD               ret = MCIERR_HARDWARE;
     WINE_MCICDAUDIO* 	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
     WCHAR               root[7], drive = 0;
-    int                 count;
+    unsigned int        count;
 
     TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpOpenParms);
 
