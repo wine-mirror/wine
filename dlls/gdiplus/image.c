@@ -253,6 +253,7 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
     IStream* stream;
     HRESULT hr;
     INT size;
+    LARGE_INTEGER move;
 
     TRACE("%p, %p\n", image, cloneImage);
 
@@ -278,6 +279,12 @@ GpStatus WINGDIPAPI GdipCloneImage(GpImage *image, GpImage **cloneImage)
         WARN("Failed to save image on stream\n");
         goto out;
     }
+
+    /* Set seek pointer back to the beginning of the picture */
+    move.QuadPart = 0;
+    hr = IStream_Seek(stream, move, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr))
+        goto out;
 
     hr = OleLoadPicture(stream, size, FALSE, &IID_IPicture,
             (LPVOID*) &(*cloneImage)->picture);
