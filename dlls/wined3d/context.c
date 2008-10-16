@@ -1409,11 +1409,9 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
 
 static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target, BOOL blit)
 {
-    HRESULT hr;
     IWineD3DSwapChain *swapchain;
 
-    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain)))
     {
         IWineD3DSwapChain_Release((IUnknown *)swapchain);
         glDrawBuffer(surface_get_gl_buffer(target, swapchain));
