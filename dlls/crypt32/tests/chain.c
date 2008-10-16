@@ -1530,7 +1530,7 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT |
        CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_CYCLIC, 0 },
      1, simpleStatus9 },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
  { { sizeof(chain10) / sizeof(chain10[0]), chain10 },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus10 }, 0 },
