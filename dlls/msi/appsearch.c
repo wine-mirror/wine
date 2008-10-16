@@ -799,10 +799,12 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
         'D','r','L','o','c','a','t','o','r',' ',
         'w','h','e','r','e',' ',
         'S','i','g','n','a','t','u','r','e','_',' ','=',' ', '\'','%','s','\'',0};
-    LPWSTR parentName = NULL, path = NULL, parent = NULL;
+    LPWSTR parentName = NULL, parent = NULL;
+    WCHAR path[MAX_PATH];
     WCHAR expanded[MAX_PATH];
     MSIRECORD *row;
     int depth;
+    DWORD sz;
     UINT rc;
 
     TRACE("%s\n", debugstr_w(sig->Name));
@@ -829,33 +831,29 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
         ACTION_FreeSignature(&parentSig);
         msi_free(parentName);
     }
-    /* now look for path */
-    path = msi_dup_record_field(row,3);
+
+    sz = MAX_PATH;
+    MSI_RecordGetStringW(row, 3, path, &sz);
+
     if (MSI_RecordIsNull(row,4))
         depth = 0;
     else
         depth = MSI_RecordGetInteger(row,4);
+
     ACTION_ExpandAnyPath(package, path, expanded, MAX_PATH);
-    msi_free(path);
+
     if (parent)
     {
-        path = msi_alloc((strlenW(parent) + strlenW(expanded) + 1) * sizeof(WCHAR));
-        if (!path)
-        {
-            rc = ERROR_OUTOFMEMORY;
-            goto end;
-        }
         strcpyW(path, parent);
         strcatW(path, expanded);
     }
     else
-        path = expanded;
+        strcpyW(path, expanded);
+
+    PathAddBackslashW(path);
 
     rc = ACTION_SearchDirectory(package, sig, path, depth, appValue);
 
-end:
-    if (path != expanded)
-        msi_free(path);
     msi_free(parent);
     msiobj_release(&row->hdr);
 
