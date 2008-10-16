@@ -639,6 +639,43 @@ static BOOL is_integer(parse_buffer* buf)
   return TRUE;
 }
 
+static BOOL is_string(parse_buffer* buf)
+{
+  char tmp[32];
+  DWORD pos = 1;
+  char c;
+  BOOL ok = 0;
+
+  if (*buf->buffer != '"')
+    return FALSE;
+  tmp[0] = '"';
+
+  while (!is_separator(c = *(buf->buffer+pos)) && (pos < 32))
+  {
+    tmp[pos++] = c;
+    if (c == '"')
+    {
+      ok = 1;
+      break;
+    }
+  }
+  tmp[pos] = 0;
+
+  if (!ok)
+  {
+    TRACE("Wrong string %s\n", tmp);
+    return FALSE;
+  }
+
+  buf->buffer += pos;
+  buf->rem_bytes -= pos;
+
+  TRACE("Found string %s\n", tmp);
+  strcpy((char*)buf->value, tmp);
+
+  return TRUE;
+}
+
 static WORD parse_TOKEN(parse_buffer * buf)
 {
   WORD token;
@@ -702,6 +739,11 @@ static WORD parse_TOKEN(parse_buffer * buf)
         if (is_float(buf))
         {
           token = TOKEN_FLOAT;
+          break;
+        }
+        if (is_string(buf))
+        {
+          token = TOKEN_LPSTR;
           break;
         }
         if (is_name(buf))
@@ -1811,8 +1853,34 @@ static BOOL parse_object_members_list(parse_buffer * buf)
             return FALSE;
           }
         }
+        else if (token == TOKEN_LPSTR)
+        {
+          static char fake_string[] = "Fake string";
+          get_TOKEN(buf);
+          TRACE("%s = %s\n", pt->members[i].name, (char*)buf->value);
+          /* Assume larger size */
+          if ((buf->cur_pdata - buf->pxo->pdata + 4) > MAX_DATA_SIZE)
+          {
+            WARN("Buffer too small\n");
+            return FALSE;
+          }
+          if (pt->members[i].type == TOKEN_LPSTR)
+          {
+            /* Use a fake string for now */
+            *(((LPCSTR*)(buf->cur_pdata))) = fake_string;
+            buf->cur_pdata += 4;
+          }
+          else
+          {
+            FIXME("Token %d not supported\n", pt->members[i].type);
+            return FALSE;
+          }
+        }
         else
+	{
+          FIXME("Unexpected token %d\n", token);
           return FALSE;
+        }
       }
     }
 
