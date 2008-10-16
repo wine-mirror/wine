@@ -654,8 +654,8 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     MINMAXINFO MinMax;
     HMONITOR monitor;
     INT xinc, yinc;
-    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
-    LONG exstyle = GetWindowLongA( hwnd, GWL_EXSTYLE );
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    LONG exstyle = GetWindowLongW( hwnd, GWL_EXSTYLE );
     RECT rc;
     WND *win;
 
@@ -725,21 +725,30 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 
     if ((monitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY )))
     {
+        RECT rc_work;
         MONITORINFO mon_info;
 
         mon_info.cbSize = sizeof(mon_info);
         GetMonitorInfoW( monitor, &mon_info );
 
+        rc_work = mon_info.rcMonitor;
+
+        if (style & WS_MAXIMIZEBOX)
+        {
+            if ((style & WS_CAPTION) == WS_CAPTION || !(style & (WS_CHILD | WS_POPUP)))
+                rc_work = mon_info.rcWork;
+        }
+
         if (MinMax.ptMaxSize.x == GetSystemMetrics(SM_CXSCREEN) + 2 * xinc &&
             MinMax.ptMaxSize.y == GetSystemMetrics(SM_CYSCREEN) + 2 * yinc)
         {
-            MinMax.ptMaxSize.x = (mon_info.rcWork.right - mon_info.rcWork.left) + 2 * xinc;
-            MinMax.ptMaxSize.y = (mon_info.rcWork.bottom - mon_info.rcWork.top) + 2 * yinc;
+            MinMax.ptMaxSize.x = (rc_work.right - rc_work.left) + 2 * xinc;
+            MinMax.ptMaxSize.y = (rc_work.bottom - rc_work.top) + 2 * yinc;
         }
         if (MinMax.ptMaxPosition.x == -xinc && MinMax.ptMaxPosition.y == -yinc)
         {
-            MinMax.ptMaxPosition.x = mon_info.rcWork.left - xinc;
-            MinMax.ptMaxPosition.y = mon_info.rcWork.top - yinc;
+            MinMax.ptMaxPosition.x = rc_work.left - xinc;
+            MinMax.ptMaxPosition.y = rc_work.top - yinc;
         }
     }
 

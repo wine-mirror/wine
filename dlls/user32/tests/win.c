@@ -49,6 +49,8 @@ static BOOL (WINAPI *pGetWindowInfo)(HWND,WINDOWINFO*);
 static UINT (WINAPI *pGetWindowModuleFileNameA)(HWND,LPSTR,UINT);
 static BOOL (WINAPI *pGetLayeredWindowAttributes)(HWND,COLORREF*,BYTE*,DWORD*);
 static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
+static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
+static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 
 static BOOL test_lbuttondown_flag;
 static HWND hwndMessage;
@@ -4906,6 +4908,192 @@ static void test_layered_window(void)
     DestroyWindow( hwnd );
 }
 
+static MONITORINFO mi;
+
+static LRESULT CALLBACK fullscreen_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    switch (msg)
+    {
+        case WM_NCCREATE:
+        {
+            CREATESTRUCTA *cs = (CREATESTRUCTA *)lp;
+            trace("WM_NCCREATE: rect %d,%d-%d,%d\n", cs->x, cs->y, cs->cx, cs->cy);
+            ok(cs->x == mi.rcMonitor.left && cs->y == mi.rcMonitor.top &&
+               cs->cx == mi.rcMonitor.right && cs->cy == mi.rcMonitor.bottom,
+               "expected %d,%d-%d,%d, got %d,%d-%d,%d\n",
+               mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+               cs->x, cs->y, cs->cx, cs->cy);
+            break;
+        }
+        case WM_GETMINMAXINFO:
+        {
+            MINMAXINFO *minmax = (MINMAXINFO *)lp;
+            dump_minmax_info(minmax);
+            ok(minmax->ptMaxPosition.x <= mi.rcMonitor.left, "%d <= %d\n", minmax->ptMaxPosition.x, mi.rcMonitor.left);
+            ok(minmax->ptMaxPosition.y <= mi.rcMonitor.top, "%d <= %d\n", minmax->ptMaxPosition.y, mi.rcMonitor.top);
+            ok(minmax->ptMaxSize.x >= mi.rcMonitor.right, "%d >= %d\n", minmax->ptMaxSize.x, mi.rcMonitor.right);
+            ok(minmax->ptMaxSize.y >= mi.rcMonitor.bottom, "%d >= %d\n", minmax->ptMaxSize.y, mi.rcMonitor.bottom);
+            break;
+        }
+    }
+    return DefWindowProc(hwnd, msg, wp, lp);
+}
+
+static void test_fullscreen(void)
+{
+    static const DWORD t_style[] = {
+        WS_OVERLAPPED, WS_POPUP, WS_CHILD, WS_THICKFRAME, WS_DLGFRAME
+    };
+    static const DWORD t_ex_style[] = {
+        0, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW
+    };
+    WNDCLASS cls;
+    HWND hwnd;
+    int i, j;
+    POINT pt;
+    RECT rc;
+    HMONITOR hmon;
+    LRESULT ret;
+
+    if (!pGetMonitorInfoA || !pMonitorFromPoint)
+    {
+        win_skip("GetMonitorInfoA or MonitorFromPoint are not available on this platform\n");
+        return;
+    }
+
+    pt.x = pt.y = 0;
+    SetLastError(0xdeadbeef);
+    hmon = pMonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+    ok(hmon != 0, "MonitorFromPoint error %u\n", GetLastError());
+
+    mi.cbSize = sizeof(mi);
+    SetLastError(0xdeadbeef);
+    ret = pGetMonitorInfoA(hmon, &mi);
+    ok(ret, "GetMonitorInfo error %u\n", GetLastError());
+    trace("monitor (%d,%d-%d,%d), work (%d,%d-%d,%d)\n",
+        mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+        mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
+
+    cls.style = 0;
+    cls.lpfnWndProc = fullscreen_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandle(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "fullscreen_class";
+    RegisterClass(&cls);
+
+    for (i = 0; i < sizeof(t_style)/sizeof(t_style[0]); i++)
+    {
+        DWORD style, ex_style;
+
+        /* avoid a WM interaction */
+        assert(!(t_style[i] & WS_VISIBLE));
+
+        for (j = 0; j < sizeof(t_ex_style)/sizeof(t_ex_style[0]); j++)
+        {
+            int fixup;
+
+            style = t_style[i];
+            ex_style = t_ex_style[j];
+
+            hwnd = CreateWindowExA(ex_style, "fullscreen_class", NULL, style,
+                                   mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+                                   GetDesktopWindow(), 0, GetModuleHandle(0), NULL);
+            ok(hwnd != 0, "%d: CreateWindowExA(%#x/%#x) failed\n", i, ex_style, style);
+            GetWindowRect(hwnd, &rc);
+            trace("%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            ok(rc.left <= mi.rcMonitor.left && rc.top <= mi.rcMonitor.top &&
+               rc.right >= mi.rcMonitor.right && rc.bottom >= mi.rcMonitor.bottom,
+               "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            DestroyWindow(hwnd);
+
+            style = t_style[i] | WS_MAXIMIZE;
+            hwnd = CreateWindowExA(ex_style, "fullscreen_class", NULL, style,
+                                   mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+                                   GetDesktopWindow(), 0, GetModuleHandle(0), NULL);
+            ok(hwnd != 0, "%d: CreateWindowExA(%#x/%#x) failed\n", i, ex_style, style);
+            GetWindowRect(hwnd, &rc);
+            trace("%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            ok(rc.left <= mi.rcMonitor.left && rc.top <= mi.rcMonitor.top &&
+               rc.right >= mi.rcMonitor.right && rc.bottom >= mi.rcMonitor.bottom,
+               "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            DestroyWindow(hwnd);
+
+            style = t_style[i] | WS_MAXIMIZE | WS_CAPTION;
+            hwnd = CreateWindowExA(ex_style, "fullscreen_class", NULL, style,
+                                   mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+                                   GetDesktopWindow(), 0, GetModuleHandle(0), NULL);
+            ok(hwnd != 0, "%d: CreateWindowExA(%#x/%#x) failed\n", i, ex_style, style);
+            GetWindowRect(hwnd, &rc);
+            trace("%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            ok(rc.left <= mi.rcMonitor.left && rc.top <= mi.rcMonitor.top &&
+               rc.right >= mi.rcMonitor.right && rc.bottom >= mi.rcMonitor.bottom,
+               "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            DestroyWindow(hwnd);
+
+            style = t_style[i] | WS_CAPTION | WS_MAXIMIZEBOX;
+            hwnd = CreateWindowExA(ex_style, "fullscreen_class", NULL, style,
+                                   mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+                                   GetDesktopWindow(), 0, GetModuleHandle(0), NULL);
+            ok(hwnd != 0, "%d: CreateWindowExA(%#x/%#x) failed\n", i, ex_style, style);
+            GetWindowRect(hwnd, &rc);
+            trace("%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            ok(rc.left <= mi.rcMonitor.left && rc.top <= mi.rcMonitor.top &&
+               rc.right >= mi.rcMonitor.right && rc.bottom >= mi.rcMonitor.bottom,
+               "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            DestroyWindow(hwnd);
+
+            style = t_style[i] | WS_MAXIMIZE | WS_CAPTION | WS_MAXIMIZEBOX;
+            hwnd = CreateWindowExA(ex_style, "fullscreen_class", NULL, style,
+                                   mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+                                   GetDesktopWindow(), 0, GetModuleHandle(0), NULL);
+            ok(hwnd != 0, "%d: CreateWindowExA(%#x/%#x) failed\n", i, ex_style, style);
+            GetWindowRect(hwnd, &rc);
+            trace("%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            /* Windows makes a maximized window slightly larger (to hide the borders?) */
+            fixup = min(abs(rc.left), abs(rc.top));
+            InflateRect(&rc, -fixup, -fixup);
+            /* FIXME: this doesn't work correctly in Wine for child windows yet */
+            if (style & WS_CHILD)
+            todo_wine
+            ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
+               rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
+               "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            else
+            ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
+               rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
+               "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            DestroyWindow(hwnd);
+
+            style = t_style[i] | WS_MAXIMIZE | WS_MAXIMIZEBOX;
+            hwnd = CreateWindowExA(ex_style, "fullscreen_class", NULL, style,
+                                   mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+                                   GetDesktopWindow(), 0, GetModuleHandle(0), NULL);
+            ok(hwnd != 0, "%d: CreateWindowExA(%#x/%#x) failed\n", i, ex_style, style);
+            GetWindowRect(hwnd, &rc);
+            trace("%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            /* Windows makes a maximized window slightly larger (to hide the borders?) */
+            fixup = min(abs(rc.left), abs(rc.top));
+            InflateRect(&rc, -fixup, -fixup);
+            if (style & (WS_CHILD | WS_POPUP))
+                ok(rc.left <= mi.rcMonitor.left && rc.top <= mi.rcMonitor.top &&
+                   rc.right >= mi.rcMonitor.right && rc.bottom >= mi.rcMonitor.bottom,
+                   "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            else
+                ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
+                   rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
+                   "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
+            DestroyWindow(hwnd);
+        }
+    }
+
+    UnregisterClass("MinMax_WndClass", GetModuleHandle(0));
+}
+
 START_TEST(win)
 {
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
@@ -4914,6 +5102,8 @@ START_TEST(win)
     pGetWindowModuleFileNameA = (void *)GetProcAddress( user32, "GetWindowModuleFileNameA" );
     pGetLayeredWindowAttributes = (void *)GetProcAddress( user32, "GetLayeredWindowAttributes" );
     pSetLayeredWindowAttributes = (void *)GetProcAddress( user32, "SetLayeredWindowAttributes" );
+    pGetMonitorInfoA = (void *)GetProcAddress( user32,  "GetMonitorInfoA" );
+    pMonitorFromPoint = (void *)GetProcAddress( user32,  "MonitorFromPoint" );
 
     if (!RegisterWindowClasses()) assert(0);
 
@@ -4936,6 +5126,7 @@ START_TEST(win)
     our_pid = GetWindowThreadProcessId(hwndMain, NULL);
 
     /* Add the tests below this line */
+    test_fullscreen();
     test_hwnd_message();
     test_nonclient_area(hwndMain);
     test_params();
