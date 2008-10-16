@@ -813,4 +813,11 @@ ok((Infinity < 2) === false, "(Infinity < 2) !== false");
 ok((Infinity > 2) === true, "(Infinity > 2) !== true");
 ok((-Infinity < 2) === true, "(-Infinity < 2) !== true");
 
+ok(isNaN(+"test") === true, "isNaN(+'test') !== true");
+ok(isNaN(+"123t") === true, "isNaN(+'123t') !== true");
+ok(isNaN(+"Infinity x") === true, "isNaN(+'Infinity x') !== true");
+ok(+"Infinity" === Infinity, "+'Infinity' !== Infinity");
+ok(+" Infinity " === Infinity, "+' Infinity ' !== Infinity");
+ok(+"-Infinity" === -Infinity, "+'-Infinity' !== -Infinity");
+
 reportSuccess();

@@ -246,26 +246,26 @@ static HRESULT str_to_number(BSTR str, VARIANT *ret)
     while(isspaceW(*ptr))
         ptr++;
 
-    if(!strncmpW(ptr, infinityW, sizeof(infinityW)/sizeof(WCHAR))) {
-        ptr += sizeof(infinityW)/sizeof(WCHAR);
-        while(*ptr && isspaceW(*ptr))
-            ptr++;
-
-        if(*ptr) {
-            FIXME("NaN\n");
-            return E_NOTIMPL;
-        }
-
-        FIXME("inf\n");
-        return E_NOTIMPL;
-    }
-
     if(*ptr == '-') {
         neg = TRUE;
         ptr++;
     }else if(*ptr == '+') {
         ptr++;
-    }else if(*ptr == '0' && ptr[1] == 'x') {
+    }
+
+    if(!strncmpW(ptr, infinityW, sizeof(infinityW)/sizeof(WCHAR))) {
+        ptr += sizeof(infinityW)/sizeof(WCHAR);
+        while(*ptr && isspaceW(*ptr))
+            ptr++;
+
+        if(*ptr)
+            num_set_nan(ret);
+        else
+            num_set_inf(ret, !neg);
+        return S_OK;
+    }
+
+    if(*ptr == '0' && ptr[1] == 'x') {
         DWORD l = 0;
 
         ptr += 2;
@@ -313,8 +313,8 @@ static HRESULT str_to_number(BSTR str, VARIANT *ret)
         ptr++;
 
     if(*ptr) {
-        FIXME("NaN\n");
-        return E_NOTIMPL;
+        num_set_nan(ret);
+        return S_OK;
     }
 
     if(neg)
