@@ -6379,10 +6379,7 @@ static void test_appsearch_reglocator(void)
     sprintf(path, "%s\\", CURR_DIR);
     r = MsiGetPropertyA(hpkg, "SIGPROP13", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP14", prop, &size);

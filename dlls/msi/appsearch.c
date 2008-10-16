@@ -743,20 +743,21 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
  LPCWSTR path, int depth, LPWSTR *appValue)
 {
     UINT rc;
+    LPWSTR val = NULL;
 
     TRACE("%p, %p, %s, %d, %p\n", package, sig, debugstr_w(path), depth,
      appValue);
+
     if (ACTION_IsFullPath(path))
     {
         if (sig->File)
-            rc = ACTION_RecurseSearchDirectory(package, appValue, sig,
-             path, depth);
+            rc = ACTION_RecurseSearchDirectory(package, &val, sig, path, depth);
         else
         {
             /* Recursively searching a directory makes no sense when the
              * directory to search is the thing you're trying to find.
              */
-            rc = ACTION_CheckDirectory(package, path, appValue);
+            rc = ACTION_CheckDirectory(package, path, &val);
         }
     }
     else
@@ -766,24 +767,37 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
         int i;
 
         rc = ERROR_SUCCESS;
-        *appValue = NULL;
-        for (i = 0; rc == ERROR_SUCCESS && !*appValue && i < 26; i++)
-            if (drives & (1 << i))
-            {
-                pathWithDrive[0] = 'A' + i;
-                if (GetDriveTypeW(pathWithDrive) == DRIVE_FIXED)
-                {
-                    lstrcpynW(pathWithDrive + 3, path,
-                              sizeof(pathWithDrive) / sizeof(pathWithDrive[0]) - 3);
-                    if (sig->File)
-                        rc = ACTION_RecurseSearchDirectory(package, appValue,
-                         sig, pathWithDrive, depth);
-                    else
-                        rc = ACTION_CheckDirectory(package, pathWithDrive,
-                         appValue);
-                }
-            }
+        for (i = 0; rc == ERROR_SUCCESS && !val && i < 26; i++)
+        {
+            if (!(drives & (1 << i)))
+                continue;
+
+            pathWithDrive[0] = 'A' + i;
+            if (GetDriveTypeW(pathWithDrive) != DRIVE_FIXED)
+                continue;
+
+            lstrcpynW(pathWithDrive + 3, path,
+                      sizeof(pathWithDrive) / sizeof(pathWithDrive[0]) - 3);
+
+            if (sig->File)
+                rc = ACTION_RecurseSearchDirectory(package, &val, sig,
+                                                   pathWithDrive, depth);
+            else
+                rc = ACTION_CheckDirectory(package, pathWithDrive, &val);
+        }
     }
+
+    if (val && val[lstrlenW(val) - 1] != '\\')
+    {
+        val = msi_realloc(val, (lstrlenW(val) + 2) * sizeof(WCHAR));
+        if (!val)
+            rc = ERROR_OUTOFMEMORY;
+        else
+            PathAddBackslashW(val);
+    }
+
+    *appValue = val;
+
     TRACE("returning %d\n", rc);
     return rc;
 }
