@@ -509,7 +509,6 @@ static void OLEPicture_SendNotify(OLEPictureImpl* this, DISPID dispID)
     IUnknown_Release(CD.pUnk);
   }
   IEnumConnections_Release(pEnum);
-  return;
 }
 
 /************************************************************************
