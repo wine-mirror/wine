@@ -1231,7 +1231,6 @@ static WineD3DContext *findThreadContextForSwapChain(IWineD3DSwapChain *swapchai
  *****************************************************************************/
 static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid) {
     IWineD3DSwapChain *swapchain = NULL;
-    HRESULT hr;
     BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
     WineD3DContext *context = This->activeContext;
     BOOL oldRenderOffscreen = This->render_offscreen;
@@ -1253,8 +1252,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         }
     }
 
-    hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **) &swapchain);
-    if(hr == WINED3D_OK && swapchain) {
+    if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
         TRACE("Rendering onscreen\n");
 
         context = findThreadContextForSwapChain(swapchain, tid);

@@ -712,7 +712,6 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         return;
     }
 
-    IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
     /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
      * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
      * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
@@ -725,14 +724,8 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
      * There is no need to keep track of the current read buffer or reset it, every part of the code
      * that reads sets the read buffer as desired.
      */
-    if(!swapchain) {
-        /* Locking the primary render target which is not on a swapchain(=offscreen render target).
-         * Read from the back buffer
-         */
-        TRACE("Locking offscreen render target\n");
-        glReadBuffer(myDevice->offscreenBuffer);
-        srcIsUpsideDown = TRUE;
-    } else {
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    {
         GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
         TRACE("Locking %#x buffer\n", buffer);
         glReadBuffer(buffer);
@@ -740,6 +733,13 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
 
         IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
         srcIsUpsideDown = FALSE;
+    } else {
+        /* Locking the primary render target which is not on a swapchain(=offscreen render target).
+         * Read from the back buffer
+         */
+        TRACE("Locking offscreen render target\n");
+        glReadBuffer(myDevice->offscreenBuffer);
+        srcIsUpsideDown = TRUE;
     }
 
     /* TODO: Get rid of the extra rectangle comparison and construction of a full surface rectangle */
@@ -910,7 +910,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
 
     d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp, This->srgb);
 
-    IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
     /* Activate the surface to read from. In some situations it isn't the currently active target(e.g. backbuffer
      * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
      * states in the stateblock, and no driver was found yet that had bugs in that regard.
@@ -925,19 +924,20 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
      * There is no need to keep track of the current read buffer or reset it, every part of the code
      * that reads sets the read buffer as desired.
      */
-    if(!swapchain) {
-        /* Locking the primary render target which is not on a swapchain(=offscreen render target).
-         * Read from the back buffer
-         */
-        TRACE("Locking offscreen render target\n");
-        glReadBuffer(device->offscreenBuffer);
-    } else {
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)This, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    {
         GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
         TRACE("Locking %#x buffer\n", buffer);
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer");
 
         IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+    } else {
+        /* Locking the primary render target which is not on a swapchain(=offscreen render target).
+         * Read from the back buffer
+         */
+        TRACE("Locking offscreen render target\n");
+        glReadBuffer(device->offscreenBuffer);
     }
 
     if(!(This->Flags & SFLAG_ALLOCATED)) {
@@ -1170,7 +1170,7 @@ lock_end:
         IWineD3DSurface_AddDirtyRect(iface, pRect);
 
         /** Dirtify Container if needed */
-        if (WINED3D_OK == IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&pBaseTexture) && pBaseTexture != NULL) {
+        if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&pBaseTexture))) {
             TRACE("Making container dirty\n");
             IWineD3DBaseTexture_SetDirty(pBaseTexture, TRUE);
             IWineD3DBaseTexture_Release(pBaseTexture);
@@ -1194,19 +1194,18 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
     ENTER_GL();
 
-    IWineD3DSurface_GetContainer((IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if(!swapchain) {
-        /* Primary offscreen render target */
-        TRACE("Offscreen render target\n");
-        glDrawBuffer(myDevice->offscreenBuffer);
-        checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
-    } else {
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)This, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
         GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
         TRACE("Unlocking %#x buffer\n", buffer);
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer");
 
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+    } else {
+        /* Primary offscreen render target */
+        TRACE("Offscreen render target\n");
+        glDrawBuffer(myDevice->offscreenBuffer);
+        checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
     }
 
     glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
@@ -4128,9 +4127,8 @@ struct coords {
 static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in) {
     struct coords coords[4];
     RECT rect;
-    IWineD3DSwapChain *swapchain = NULL;
-    IWineD3DBaseTexture *texture = NULL;
-    HRESULT hr;
+    IWineD3DSwapChain *swapchain;
+    IWineD3DBaseTexture *texture;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     GLenum bind_target;
 
@@ -4265,8 +4263,8 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     LEAVE_GL();
 
-    hr = IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain);
-    if(hr == WINED3D_OK && swapchain) {
+    if(SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DSwapChain, (void **) &swapchain)))
+    {
         /* Make sure to flush the buffers. This is needed in apps like Red Alert II and Tiberian SUN that use multiple WGL contexts. */
         if(((IWineD3DSwapChainImpl*)swapchain)->frontBuffer == (IWineD3DSurface*)This ||
            ((IWineD3DSwapChainImpl*)swapchain)->num_contexts >= 2)
@@ -4277,8 +4275,8 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         /* We changed the filtering settings on the texture. Inform the container about this to get the filters
          * reset properly next draw
          */
-        hr = IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DBaseTexture, (void **) &texture);
-        if(hr == WINED3D_OK && texture) {
+        if(SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface*)This, &IID_IWineD3DBaseTexture, (void **) &texture)))
+        {
             ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
             ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
             ((IWineD3DBaseTextureImpl *) texture)->baseTexture.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;

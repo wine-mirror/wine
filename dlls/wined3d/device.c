@@ -5179,8 +5179,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
 
     LEAVE_GL();
 
-    IWineD3DSurface_GetContainer( (IWineD3DSurface *) target, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if (swapchain) {
+    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)target, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
         if (target == (IWineD3DSurfaceImpl*) swapchain->frontBuffer) {
             glFlush();
         }

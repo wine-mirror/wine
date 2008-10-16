@@ -192,8 +192,8 @@ IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
 #endif
 
     /* Tell the swapchain to update the screen */
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **) &swapchain);
-    if(swapchain) {
+    if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    {
         x11_copy_to_screen(swapchain, &This->lockedRect);
         IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     }
@@ -225,8 +225,8 @@ IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface,
     IWineD3DSwapChainImpl *swapchain = NULL;
     HRESULT hr;
 
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **) &swapchain);
-    if(!swapchain) {
+    if(FAILED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    {
         ERR("Flipped surface is not on a swapchain\n");
         return WINEDDERR_NOTFLIPPABLE;
     }
@@ -481,8 +481,8 @@ HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
     /* Update the image because of the palette change. Some games like e.g Red Alert
        call SetEntries a lot to implement fading. */
     /* Tell the swapchain to update the screen */
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **) &swapchain);
-    if(swapchain) {
+    if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    {
         x11_copy_to_screen(swapchain, NULL);
         IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     }
