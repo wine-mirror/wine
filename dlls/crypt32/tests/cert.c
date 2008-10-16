@@ -2636,7 +2636,6 @@ static void testHashToBeSigned(void)
     }
     SetLastError(0xdeadbeef);
     ret = CryptHashToBeSigned(0, 0, NULL, 0, NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
