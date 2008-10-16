@@ -922,6 +922,7 @@ static HRESULT WINAPI domdoc_put_documentElement(
 {
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
     IXMLDOMNode *elementNode;
+    xmlNodePtr oldRoot;
     xmlnode *xmlNode;
     HRESULT hr;
 
@@ -932,8 +933,16 @@ static HRESULT WINAPI domdoc_put_documentElement(
         return hr;
 
     xmlNode = impl_from_IXMLDOMNode( elementNode );
-    xmlDocSetRootElement( get_doc(This), xmlNode->node);
+
+    if(!xmlNode->node->parent)
+        if(xmldoc_remove_orphan(xmlNode->node->doc, xmlNode->node) != S_OK)
+            WARN("%p is not an orphan of %p\n", xmlNode->node->doc, xmlNode->node);
+
+    oldRoot = xmlDocSetRootElement( get_doc(This), xmlNode->node);
     IXMLDOMNode_Release( elementNode );
+
+    if(oldRoot)
+        xmldoc_add_orphan(oldRoot->doc, oldRoot);
 
     return S_OK;
 }
