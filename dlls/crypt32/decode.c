@@ -3454,7 +3454,7 @@ static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
 
         if (!cbEncoded)
         {
-            SetLastError(CRYPT_E_ASN1_CORRUPT);
+            SetLastError(CRYPT_E_ASN1_EOD);
             ret = FALSE;
         }
         else if (pbEncoded[0] != ASN_INTEGER)
