@@ -560,14 +560,13 @@ static void CRYPT_FindMatchingNameEntry(const CERT_ALT_NAME_ENTRY *constraint,
  DWORD errorIfFound, DWORD errorIfNotFound)
 {
     DWORD i;
-    BOOL defined = FALSE, match = FALSE;
+    BOOL match = FALSE;
 
     for (i = 0; i < subjectName->cAltEntry; i++)
     {
         if (subjectName->rgAltEntry[i].dwAltNameChoice ==
          constraint->dwAltNameChoice)
         {
-            defined = TRUE;
             switch (constraint->dwAltNameChoice)
             {
             case CERT_ALT_NAME_RFC822_NAME:
@@ -595,16 +594,6 @@ static void CRYPT_FindMatchingNameEntry(const CERT_ALT_NAME_ENTRY *constraint,
             }
         }
     }
-    /* Microsoft's implementation of name constraint checking appears at odds
-     * with RFC 3280:
-     * According to MSDN, CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT is set
-     * when a name constraint is present, but that name form is not defined in
-     * the end certificate.  According to RFC 3280, "if no name of the type is
-     * in the certificate, the name is acceptable."
-     * I follow Microsoft here.
-     */
-    if (!defined)
-        *trustErrorStatus |= CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT;
     *trustErrorStatus |= match ? errorIfFound : errorIfNotFound;
 }
 
@@ -645,10 +634,6 @@ static void CRYPT_CheckNameConstraints(
         }
         else
         {
-            /* See above comment on CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT.
-             * I match Microsoft's implementation here as well.
-             */
-            *trustErrorStatus |= CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT;
             if (nameConstraints->cPermittedSubtree)
                 *trustErrorStatus |=
                  CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT;
