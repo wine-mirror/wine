@@ -469,7 +469,7 @@ static void testTimeEncoding(DWORD dwEncoding, LPCSTR structType,
         }
     }
     else
-        ok(!ret && GetLastError() == CRYPT_E_BAD_ENCODE,
+        ok((!ret && GetLastError() == CRYPT_E_BAD_ENCODE) || broken(ret),
          "Expected CRYPT_E_BAD_ENCODE, got 0x%08x\n", GetLastError());
 }
 
@@ -526,7 +526,8 @@ static void testTimeDecoding(DWORD dwEncoding, LPCSTR structType,
     {
         ok(ret, "CryptDecodeObjectEx failed: %d (0x%08x)\n", GetLastError(),
          GetLastError());
-        compareTime(&time->sysTime, &ft);
+        if (ret)
+            compareTime(&time->sysTime, &ft);
     }
     else
         ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
@@ -5698,8 +5699,8 @@ static void test_decodePKCSContentInfo(DWORD dwEncoding)
     /* Native fails with CRYPT_E_ASN1_EOD, accept also CRYPT_E_ASN1_CORRUPT as
      * I doubt an app depends on that.
      */
-    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
-     GetLastError() == CRYPT_E_ASN1_CORRUPT),
+    ok((!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == CRYPT_E_ASN1_CORRUPT)) || broken(ret),
      "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %x\n",
      GetLastError());
     ret = pCryptDecodeObjectEx(dwEncoding, PKCS_CONTENT_INFO,
