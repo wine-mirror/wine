@@ -4238,18 +4238,25 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     checkGLcall("glTexParameteri");
 
+    if (device->render_offscreen)
+    {
+        LONG tmp = rect.top;
+        rect.top = rect.bottom;
+        rect.bottom = tmp;
+    }
+
     glBegin(GL_QUADS);
     glTexCoord3fv(&coords[0].x);
-    glVertex2i(rect.left, device->render_offscreen ? rect.bottom : rect.top);
+    glVertex2i(rect.left, rect.top);
 
     glTexCoord3fv(&coords[1].x);
-    glVertex2i(rect.left, device->render_offscreen ? rect.top : rect.bottom);
+    glVertex2i(rect.left, rect.bottom);
 
     glTexCoord3fv(&coords[2].x);
-    glVertex2i(rect.right, device->render_offscreen ? rect.top : rect.bottom);
+    glVertex2i(rect.right, rect.bottom);
 
     glTexCoord3fv(&coords[3].x);
-    glVertex2i(rect.right, device->render_offscreen ? rect.bottom : rect.top);
+    glVertex2i(rect.right, rect.top);
     glEnd();
     checkGLcall("glEnd");
 
