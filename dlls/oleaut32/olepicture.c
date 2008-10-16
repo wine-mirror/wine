@@ -1802,7 +1802,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       hr=IStream_Read(pStm,header,8,&xread);
       if (hr || xread!=8) {
           ERR("Failure while reading picture header (hr is %x, nread is %d).\n",hr,xread);
-          return hr;
+          return (hr?hr:E_FAIL);
       }
       headerread += xread;
       xread = 0;
