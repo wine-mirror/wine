@@ -1660,7 +1660,7 @@ typedef struct _ChainPolicyCheck
     DWORD                    todo;
 } ChainPolicyCheck;
 
-static ChainPolicyCheck basePolicyCheck[] = {
+static const ChainPolicyCheck basePolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
    { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
@@ -1691,7 +1691,7 @@ static ChainPolicyCheck basePolicyCheck[] = {
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, 0 },
 };
 
-static ChainPolicyCheck authenticodePolicyCheck[] = {
+static const ChainPolicyCheck authenticodePolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
    { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, 0 },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
@@ -1722,7 +1722,7 @@ static ChainPolicyCheck authenticodePolicyCheck[] = {
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, 0 },
 };
 
-static ChainPolicyCheck basicConstraintsPolicyCheck[] = {
+static const ChainPolicyCheck basicConstraintsPolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
    { 0, 0, -1, -1, NULL }, 0 },
  { { sizeof(chain1) / sizeof(chain1[0]), chain1 },
@@ -1762,7 +1762,7 @@ static const char *num_to_str(WORD num)
     return buf;
 }
 
-static void checkChainPolicyStatus(LPCSTR policy, ChainPolicyCheck *check,
+static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
  DWORD testIndex)
 {
     PCCERT_CHAIN_CONTEXT chain = getChain(&check->certs, 0, TRUE, &oct2007,
