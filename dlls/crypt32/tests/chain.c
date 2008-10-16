@@ -1163,6 +1163,38 @@ typedef struct _SimpleChainStatusCheck
     const CERT_TRUST_STATUS *rgElementStatus;
 } SimpleChainStatusCheck;
 
+static void checkElementStatus(const CERT_TRUST_STATUS *expected,
+ const CERT_TRUST_STATUS *got, const CERT_TRUST_STATUS *ignore,
+ DWORD todo, DWORD testIndex, DWORD chainIndex, DWORD elementIndex)
+{
+    if (todo & TODO_ERROR && got->dwErrorStatus != expected->dwErrorStatus)
+        todo_wine
+        ok(got->dwErrorStatus == expected->dwErrorStatus,
+         "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
+         testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
+         got->dwErrorStatus);
+    else
+        ok(got->dwErrorStatus == expected->dwErrorStatus ||
+         broken((got->dwErrorStatus & ~ignore->dwErrorStatus) ==
+         expected->dwErrorStatus),
+         "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
+         testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
+         got->dwErrorStatus);
+    if (todo & TODO_INFO && got->dwInfoStatus != expected->dwInfoStatus)
+        todo_wine
+        ok(got->dwInfoStatus == expected->dwInfoStatus,
+         "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
+         testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
+         got->dwInfoStatus);
+    else
+        ok(got->dwInfoStatus == expected->dwInfoStatus ||
+         broken((got->dwInfoStatus & ~ignore->dwInfoStatus) ==
+         expected->dwInfoStatus),
+         "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
+         testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
+         got->dwInfoStatus);
+}
+
 static void checkSimpleChainStatus(const CERT_SIMPLE_CHAIN *simpleChain,
  const SimpleChainStatusCheck *simpleChainStatus,
  const CERT_TRUST_STATUS *ignore, DWORD todo, DWORD testIndex, DWORD chainIndex)
@@ -1180,41 +1212,9 @@ static void checkSimpleChainStatus(const CERT_SIMPLE_CHAIN *simpleChain,
         DWORD i;
 
         for (i = 0; i < simpleChain->cElement; i++)
-        {
-            DWORD error =
-             simpleChain->rgpElement[i]->TrustStatus.dwErrorStatus &
-             ~ignore->dwErrorStatus;
-            DWORD info =
-             simpleChain->rgpElement[i]->TrustStatus.dwInfoStatus &
-             ~ignore->dwInfoStatus;
-
-            if (todo & TODO_ERROR && error !=
-             simpleChainStatus->rgElementStatus[i].dwErrorStatus)
-                todo_wine ok(error ==
-                 simpleChainStatus->rgElementStatus[i].dwErrorStatus,
-                 "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
-                 testIndex, chainIndex, i,
-                 simpleChainStatus->rgElementStatus[i].dwErrorStatus, error);
-            else
-                ok(error ==
-                 simpleChainStatus->rgElementStatus[i].dwErrorStatus,
-                 "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
-                 testIndex, chainIndex, i,
-                 simpleChainStatus->rgElementStatus[i].dwErrorStatus, error);
-            if (todo & TODO_INFO && info !=
-             simpleChainStatus->rgElementStatus[i].dwInfoStatus)
-                todo_wine ok(info ==
-                 simpleChainStatus->rgElementStatus[i].dwInfoStatus,
-                 "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
-                 testIndex, chainIndex, i,
-                 simpleChainStatus->rgElementStatus[i].dwInfoStatus, info);
-            else
-                ok(info ==
-                 simpleChainStatus->rgElementStatus[i].dwInfoStatus,
-                 "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
-                 testIndex, chainIndex, i,
-                 simpleChainStatus->rgElementStatus[i].dwInfoStatus, info);
-        }
+            checkElementStatus(&simpleChain->rgpElement[i]->TrustStatus,
+             &simpleChainStatus->rgElementStatus[i], ignore, todo, testIndex,
+             chainIndex, i);
     }
 }
 
