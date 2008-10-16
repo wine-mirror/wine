@@ -210,7 +210,6 @@ static void run_querydisplayinformation1_tests(void)
                 ok(!hasGuest, "One guest record\n");
                 ok(rec->usri1_flags & UF_SCRIPT, "UF_SCRIPT flag is set\n");
                 ok(rec->usri1_flags & UF_NORMAL_ACCOUNT, "UF_NORMAL_ACCOUNT flag is set\n");
-                todo_wine
                 ok(rec->usri1_user_id == DOMAIN_USER_RID_GUEST,
                    "Expected DOMAIN_USER_RID_GUEST, got %u\n",
                    rec->usri1_user_id);

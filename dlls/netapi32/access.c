@@ -514,7 +514,7 @@ static void ACCESS_QueryAdminDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD p
     usr->usri1_comment[0] = 0;
     usr->usri1_flags = UF_SCRIPT | UF_NORMAL_ACCOUNT | UF_DONT_EXPIRE_PASSWD;
     usr->usri1_full_name[0] = 0;
-    usr->usri1_user_id = 500;
+    usr->usri1_user_id = DOMAIN_USER_RID_ADMIN;
     usr->usri1_next_index = 0;
 }
 
@@ -554,7 +554,7 @@ static void ACCESS_QueryGuestDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD p
     usr->usri1_flags = UF_ACCOUNTDISABLE | UF_SCRIPT | UF_NORMAL_ACCOUNT |
         UF_DONT_EXPIRE_PASSWD;
     usr->usri1_full_name[0] = 0;
-    usr->usri1_user_id = 500;
+    usr->usri1_user_id = DOMAIN_USER_RID_GUEST;
     usr->usri1_next_index = 0;
 }
 
