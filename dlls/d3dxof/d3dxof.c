@@ -1868,7 +1868,7 @@ _exit:
           return FALSE;
         }
         buf->pxo->childs[buf->pxo->nb_childs] = &buf->pxo_tab[buf->cur_subobject++];
-        buf->pxo->childs[buf->pxo->nb_childs]->ptarget = &buf->pxo_globals[i*MAX_SUBOBJECTS];
+        buf->pxo->childs[buf->pxo->nb_childs]->ptarget = &buf->pxo_globals[i*MAX_SUBOBJECTS+j];
         buf->pxo->nb_childs++;
       }
       else if (check_TOKEN(buf) == TOKEN_NAME)
@@ -1964,7 +1964,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   IDirectXFileDataImpl* object;
   HRESULT hr;
   LPBYTE pdata;
-  
+
   TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
 
   if (!This->buf.rem_bytes)
