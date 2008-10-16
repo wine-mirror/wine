@@ -92,6 +92,48 @@ static const struct IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl;
 
 static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional);
 static BOOL parse_object(parse_buffer * buf);
+static const char* get_primitive_string(WORD token);
+
+static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
+{
+  int j, k;
+  GUID* clsid;
+
+  clsid = &ptemplate->class_id;
+
+  DPRINTF("template %s\n", ptemplate->name);
+  DPRINTF("{\n");
+  DPRINTF(CLSIDFMT "\n", clsid->Data1, clsid->Data2, clsid->Data3, clsid->Data4[0],
+  clsid->Data4[1], clsid->Data4[2], clsid->Data4[3], clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7]);
+  for (j = 0; j < ptemplate->nb_members; j++)
+  {
+    if (ptemplate->members[j].nb_dims)
+      DPRINTF("array ");
+    if (ptemplate->members[j].type == TOKEN_NAME)
+      DPRINTF("%s ", templates_array[ptemplate->members[j].idx_template].name);
+    else
+      DPRINTF("%s ", get_primitive_string(ptemplate->members[j].type));
+    DPRINTF("%s", ptemplate->members[j].name);
+    for (k = 0; k < ptemplate->members[j].nb_dims; k++)
+    {
+      if (ptemplate->members[j].dim_fixed[k])
+        DPRINTF("[%d]", ptemplate->members[j].dim_value[k]);
+      else
+        DPRINTF("[%s]", ptemplate->members[ptemplate->members[j].dim_value[k]].name);
+    }
+    DPRINTF(";\n");
+  }
+  if (ptemplate->open)
+    DPRINTF("[...]\n");
+  else if (ptemplate->nb_childs)
+  {
+    DPRINTF("[%s", ptemplate->childs[0]);
+    for (j = 1; j < ptemplate->nb_childs; j++)
+      DPRINTF(",%s", ptemplate->childs[j]);
+    DPRINTF("]\n");
+  }
+  DPRINTF("}\n");
+}
 
 HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
 {
@@ -1081,46 +1123,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
     {
       TRACE("Template successfully parsed:\n");
       if (TRACE_ON(d3dxof))
-      {
-        int i,j,k;
-        GUID* clsid;
-
-        i = This->nb_xtemplates - 1;
-        clsid = &This->xtemplates[i].class_id;
-
-        DPRINTF("template %s\n", This->xtemplates[i].name);
-        DPRINTF("{\n");
-        DPRINTF(CLSIDFMT "\n", clsid->Data1, clsid->Data2, clsid->Data3, clsid->Data4[0],
-          clsid->Data4[1], clsid->Data4[2], clsid->Data4[3], clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7]);
-        for (j = 0; j < This->xtemplates[i].nb_members; j++)
-        {
-          if (This->xtemplates[i].members[j].nb_dims)
-            DPRINTF("array ");
-          if (This->xtemplates[i].members[j].type == TOKEN_NAME)
-            DPRINTF("%s ", This->xtemplates[This->xtemplates[i].members[j].idx_template].name);
-          else
-            DPRINTF("%s ", get_primitive_string(This->xtemplates[i].members[j].type));
-          DPRINTF("%s", This->xtemplates[i].members[j].name);
-          for (k = 0; k < This->xtemplates[i].members[j].nb_dims; k++)
-          {
-            if (This->xtemplates[i].members[j].dim_fixed[k])
-              DPRINTF("[%d]", This->xtemplates[i].members[j].dim_value[k]);
-            else
-              DPRINTF("[%s]", This->xtemplates[i].members[This->xtemplates[i].members[j].dim_value[k]].name);
-          }
-          DPRINTF(";\n");
-        }
-        if (This->xtemplates[i].open)
-          DPRINTF("[...]\n");
-        else if (This->xtemplates[i].nb_childs)
-        {
-          DPRINTF("[%s", This->xtemplates[i].childs[0]);
-          for (j = 1; j < This->xtemplates[i].nb_childs; j++)
-            DPRINTF(",%s", This->xtemplates[i].childs[j]);
-          DPRINTF("]\n");
-        }
-        DPRINTF("}\n");
-      }
+        dump_template(This->xtemplates, &This->xtemplates[This->nb_xtemplates - 1]);
     }
   }
 
