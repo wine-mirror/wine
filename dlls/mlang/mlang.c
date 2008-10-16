@@ -503,7 +503,7 @@ static LONG dll_count;
 static UINT DetectJapaneseCode(LPCSTR input, DWORD count)
 {
     UINT code = 0;
-    int i = 0;
+    DWORD i = 0;
     unsigned char c1,c2;
 
     while ((code == 0 || code == 51932) && i < count)
@@ -615,7 +615,7 @@ static int han2zen(unsigned char *p1, unsigned char *p2)
 
 static UINT ConvertJIS2SJIS(LPCSTR input, DWORD count, LPSTR output)
 {
-    int i = 0;
+    DWORD i = 0;
     int j = 0;
     unsigned char p2,p;
     int shifted = FALSE;
@@ -683,7 +683,7 @@ static inline int enter_shift(LPSTR out, int c)
 
 static UINT ConvertSJIS2JIS(LPCSTR input, DWORD count, LPSTR output)
 {
-    int i = 0;
+    DWORD i = 0;
     int j = 0;
     unsigned char p2,p;
     int shifted = FALSE;
@@ -1343,7 +1343,7 @@ static const IClassFactoryVtbl MLANGCF_Vtbl =
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
-    int i;
+    unsigned int i;
     IClassFactoryImpl *factory;
 
     TRACE("%s %s %p\n",debugstr_guid(rclsid), debugstr_guid(iid), ppv);
