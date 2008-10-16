@@ -459,8 +459,6 @@ static void test_nextsubpath(void)
     INT start, end, result;
     BOOL closed;
 
-    GdipCreatePath(FillModeAlternate, &path);
-
     /* empty path */
     GdipCreatePath(FillModeAlternate, &path);
     GdipCreatePathIter(&iter, path);
@@ -471,8 +469,8 @@ static void test_nextsubpath(void)
     expect(Ok, stat);
     expect(0, result);
     expect(TRUE, closed);
-    GdipCreatePathIter(&iter, path);
 
+    GdipDeletePathIter(iter);
     GdipDeletePath(path);
 }
 
@@ -500,6 +498,55 @@ static void test_nextpathtype(void)
     expect(InvalidParameter, stat);
     stat = GdipPathIterNextPathType(iter, NULL, &type, &start, &end);
     expect(InvalidParameter, stat);
+    stat = GdipPathIterNextPathType(iter, &result, &type, NULL, NULL);
+    expect(InvalidParameter, stat);
+
+    /* empty path */
+    start = end = result = (INT)0xdeadbeef;
+    stat = GdipPathIterNextPathType(iter, &result, &type, &start, &end);
+    todo_wine expect(Ok, stat);
+    expect((INT)0xdeadbeef, start);
+    expect((INT)0xdeadbeef, end);
+    todo_wine expect(0, result);
+    GdipDeletePathIter(iter);
+
+    /* single figure */
+    GdipAddPathLine(path, 0.0, 0.0, 10.0, 30.0);
+    GdipCreatePathIter(&iter, path);
+    start = end = result = (INT)0xdeadbeef;
+    type = 255; /* out of range */
+    stat = GdipPathIterNextPathType(iter, &result, &type, &start, &end);
+    todo_wine expect(Ok, stat);
+    expect((INT)0xdeadbeef, start);
+    expect((INT)0xdeadbeef, end);
+    expect(255, type);
+    todo_wine expect(0, result);
+    GdipDeletePathIter(iter);
+
+    GdipAddPathEllipse(path, 0.0, 0.0, 35.0, 70.0);
+    GdipCreatePathIter(&iter, path);
+    start = end = result = (INT)0xdeadbeef;
+    type = 255; /* out of range */
+    stat = GdipPathIterNextPathType(iter, &result, &type, &start, &end);
+    todo_wine expect(Ok, stat);
+    expect((INT)0xdeadbeef, start);
+    expect((INT)0xdeadbeef, end);
+    expect(255, type);
+    todo_wine expect(0, result);
+    GdipDeletePathIter(iter);
+
+    /* closed */
+    GdipClosePathFigure(path);
+    GdipCreatePathIter(&iter, path);
+    start = end = result = (INT)0xdeadbeef;
+    type = 255; /* out of range */
+    stat = GdipPathIterNextPathType(iter, &result, &type, &start, &end);
+    todo_wine expect(Ok, stat);
+    expect((INT)0xdeadbeef, start);
+    expect((INT)0xdeadbeef, end);
+    expect(255, type);
+    todo_wine expect(0, result);
+    GdipDeletePathIter(iter);
 
     GdipDeletePath(path);
 }
