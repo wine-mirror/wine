@@ -285,6 +285,12 @@ static void test_retrieveObjectByUrl(void)
     pBlobArray = (CRYPT_BLOB_ARRAY *)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, NULL, 0, 0, (void **)&pBlobArray,
      NULL, NULL, NULL, NULL);
+    if (!ret && GetLastError() == ERROR_NOT_SUPPORTED)
+    {
+        /* File URL support was apparently removed in Vista/Windows 2008 */
+        skip("File URLs not supported\n");
+        return;
+    }
     ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
     ok(pBlobArray && pBlobArray != (CRYPT_BLOB_ARRAY *)0xdeadbeef,
      "Expected a valid pointer\n");
@@ -306,10 +312,8 @@ static void test_retrieveObjectByUrl(void)
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CRL, 0, 0, (void **)&crl,
      NULL, NULL, NULL, NULL);
-    /* vista: ERROR_NOT_SUPPORTED, w2k3,XP, newer w2k: CRYPT_E_NO_MATCH,
-       95: OSS_DATA_ERROR */
-    ok(!ret && (GetLastError() == ERROR_NOT_SUPPORTED ||
-                GetLastError() == CRYPT_E_NO_MATCH ||
+    /* w2k3,XP, newer w2k: CRYPT_E_NO_MATCH, 95: OSS_DATA_ERROR */
+    ok(!ret && (GetLastError() == CRYPT_E_NO_MATCH ||
                 GetLastError() == CRYPT_E_ASN1_BADTAG ||
                 GetLastError() == OSS_DATA_ERROR),
        "got 0x%x/%u (expected CRYPT_E_NO_MATCH or CRYPT_E_ASN1_BADTAG or "
