@@ -368,6 +368,12 @@ ok(tmp === 1, "Math.min(1) = " + tmp);
 tmp = Math.min(1, false);
 ok(tmp === 0, "Math.min(1, false) = " + tmp);
 
+tmp = Math.min();
+ok(tmp === Infinity, "Math.min() = " + tmp);
+
+tmp = Math.min(1, NaN, -Infinity, false);
+ok(isNaN(tmp), "Math.min(1, NaN, -Infinity, false) is not NaN");
+
 tmp = Math.min(1, false, true, null, -3);
 ok(tmp === -3, "Math.min(1, false, true, null, -3) = " + tmp);
 
@@ -379,6 +385,12 @@ ok(tmp === 1, "Math.max(true, 0) = " + tmp);
 
 tmp = Math.max(-2, false, true, null, 1);
 ok(tmp === 1, "Math.max(-2, false, true, null, 1) = " + tmp);
+
+tmp = Math.max();
+ok(tmp === -Infinity, "Math.max() = " + tmp);
+
+tmp = Math.max(true, NaN, 0);
+ok(isNaN(tmp), "Math.max(true, NaN, 0) is not NaN");
 
 tmp = Math.round(0.5);
 ok(tmp === 1, "Math.round(0.5) = " + tmp);
