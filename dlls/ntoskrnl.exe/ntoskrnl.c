@@ -153,6 +153,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     irp.UserBuffer = out_buff;
     irp.MdlAddress = &mdl;
     irp.Tail.Overlay.s.u.CurrentStackLocation = &irpsp;
+    irp.UserIosb = NULL;
 
     irpsp.MajorFunction = IRP_MJ_DEVICE_CONTROL;
     irpsp.Parameters.DeviceIoControl.OutputBufferLength = *out_size;
@@ -160,6 +161,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     irpsp.Parameters.DeviceIoControl.IoControlCode = code;
     irpsp.Parameters.DeviceIoControl.Type3InputBuffer = in_buff;
     irpsp.DeviceObject = device;
+    irpsp.CompletionRoutine = NULL;
 
     mdl.Next = NULL;
     mdl.Size = 0;
