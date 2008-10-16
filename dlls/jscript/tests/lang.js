@@ -801,4 +801,16 @@ ok(isFinite(0.5, NaN) === true, "isFinite(0.5, NaN) !== true");
 ok(isFinite(NaN, 0.5) === false, "isFinite(NaN, 0.5) !== false");
 ok(isFinite() === false, "isFinite() !== false");
 
+ok((1 < NaN) === false, "(1 < NaN) !== false");
+ok((1 > NaN) === false, "(1 > NaN) !== false");
+ok((1 <= NaN) === false, "(1 <= NaN) !== false");
+ok((1 >= NaN) === false, "(1 >= NaN) !== false");
+ok((NaN < 1) === false, "(NaN < 1) !== false");
+ok((NaN > 1) === false, "(NaN > 1) !== false");
+ok((NaN <= 1) === false, "(NaN <= 1) !== false");
+ok((NaN >= 1) === false, "(NaN >= 1) !== false");
+ok((Infinity < 2) === false, "(Infinity < 2) !== false");
+ok((Infinity > 2) === true, "(Infinity > 2) !== true");
+ok((-Infinity < 2) === true, "(-Infinity < 2) !== true");
+
 reportSuccess();
