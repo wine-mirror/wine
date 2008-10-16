@@ -431,6 +431,15 @@ ok(tmp === 3, "Math.abs(-3) = " + tmp);
 tmp = Math.abs(true);
 ok(tmp === 1, "Math.abs(true) = " + tmp);
 
+tmp = Math.abs();
+ok(isNaN(tmp), "Math.abs() is not NaN");
+
+tmp = Math.abs(NaN);
+ok(isNaN(tmp), "Math.abs() is not NaN");
+
+tmp = Math.abs(-Infinity);
+ok(tmp === Infinity, "Math.abs(-Infinite) = " + tmp);
+
 tmp = Math.abs(-3, 2);
 ok(tmp === 3, "Math.abs(-3, 2) = " + tmp);
 
