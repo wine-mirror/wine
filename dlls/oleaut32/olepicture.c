@@ -1036,7 +1036,7 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     struct gifdata *gd = (struct gifdata*)gif->UserData;
 
     if (len+gd->curoff > gd->len) {
-        FIXME("Trying to read %d bytes, but only %d available.\n",len, gd->len-gd->curoff);
+        ERR("Trying to read %d bytes, but only %d available.\n",len, gd->len-gd->curoff);
         len = gd->len - gd->curoff;
     }
     memcpy(data, gd->data+gd->curoff, len);
@@ -1066,14 +1066,14 @@ static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
     gif = DGifOpen((void*)&gd, _gif_inputfunc);
     ret = DGifSlurp(gif);
     if (ret == GIF_ERROR) {
-      FIXME("Failed reading GIF using libgif.\n");
+      ERR("Failed reading GIF using libgif.\n");
       return E_FAIL;
     }
     TRACE("screen height %d, width %d\n", gif->SWidth, gif->SHeight);
     TRACE("color res %d, backgcolor %d\n", gif->SColorResolution, gif->SBackGroundColor);
     TRACE("imgcnt %d\n", gif->ImageCount);
     if (gif->ImageCount<1) {
-      FIXME("GIF stream does not have images inside?\n");
+      ERR("GIF stream does not have images inside?\n");
       return E_FAIL;
     }
     TRACE("curimage: %d x %d, on %dx%d, interlace %d\n",
@@ -1259,7 +1259,7 @@ static HRESULT OLEPictureImpl_LoadJpeg(OLEPictureImpl *This, BYTE *xbuf, ULONG x
 
     if(!libjpeg_handle) {
         if(!load_libjpeg()) {
-            FIXME("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
+            ERR("Failed reading JPEG because unable to find %s\n", SONAME_LIBJPEG);
             return E_FAIL;
         }
     }
@@ -1298,7 +1298,7 @@ static HRESULT OLEPictureImpl_LoadJpeg(OLEPictureImpl *This, BYTE *xbuf, ULONG x
     while ( jd.output_scanline<jd.output_height ) {
       x = pjpeg_read_scanlines(&jd,&samprow,1);
       if (x != 1) {
-	FIXME("failed to read current scanline?\n");
+	ERR("failed to read current scanline?\n");
 	break;
       }
       /* We have to convert from RGB to BGR, see MSDN/ BITMAPINFOHEADER */
@@ -1672,7 +1672,7 @@ static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG x
 		0
     );
     if (!hicon) {
-	FIXME("CreateIcon failed.\n");
+	ERR("CreateIcon failed.\n");
 	return E_FAIL;
     } else {
 	This->desc.picType = PICTYPE_ICON;
@@ -1801,7 +1801,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   do {
       hr=IStream_Read(pStm,header,8,&xread);
       if (hr || xread!=8) {
-          FIXME("Failure while reading picture header (hr is %x, nread is %d).\n",hr,xread);
+          ERR("Failure while reading picture header (hr is %x, nread is %d).\n",hr,xread);
           return hr;
       }
       headerread += xread;
@@ -1879,7 +1879,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
               break;
       }
       if (xread != This->datalen)
-          FIXME("Could only read %d of %d bytes out of stream?\n",xread,This->datalen);
+          ERR("Could only read %d of %d bytes out of stream?\n",xread,This->datalen);
   }
   if (This->datalen == 0) { /* Marks the "NONE" picture */
       This->desc.picType = PICTYPE_NONE;
@@ -2637,7 +2637,7 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
     return hr;
   hr = IPicture_QueryInterface(newpic,&IID_IPersistStream, (LPVOID*)&ps);
   if (hr) {
-      FIXME("Could not get IPersistStream iface from Ole Picture?\n");
+      ERR("Could not get IPersistStream iface from Ole Picture?\n");
       IPicture_Release(newpic);
       *ppvObj = NULL;
       return hr;
@@ -2653,7 +2653,7 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
   }
   hr = IPicture_QueryInterface(newpic,riid,ppvObj);
   if (hr)
-      FIXME("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
+      ERR("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
   IPicture_Release(newpic);
   return hr;
 }
@@ -2676,7 +2676,7 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
     return hr;
   hr = IPicture_QueryInterface(newpic,&IID_IPersistStream, (LPVOID*)&ps);
   if (hr) {
-      FIXME("Could not get IPersistStream iface from Ole Picture?\n");
+      ERR("Could not get IPersistStream iface from Ole Picture?\n");
       IPicture_Release(newpic);
       *ppvObj = NULL;
       return hr;
@@ -2692,7 +2692,7 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
   }
   hr = IPicture_QueryInterface(newpic,riid,ppvObj);
   if (hr)
-      FIXME("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
+      ERR("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
   IPicture_Release(newpic);
   return hr;
 }
@@ -2798,7 +2798,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 
   hRes = IPicture_QueryInterface(ipicture,riid,ppvRet);
   if (hRes)
-      FIXME("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
+      ERR("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
   
   IPicture_Release(ipicture);
   return hRes;
