@@ -170,9 +170,7 @@ static void run_usergetinfo_tests(void)
         trace("Deleting the test user failed. You might have to manually delete it.\n");
 }
 
-/* checks Level 1 of NetQueryDisplayInformation
- * FIXME: Needs to be rewritten to not depend on the spelling of the users,
- * ideally based on the admin and guest user SIDs/RIDs.*/
+/* Checks Level 1 of NetQueryDisplayInformation */
 static void run_querydisplayinformation1_tests(void)
 {
     PNET_DISPLAY_USER Buffer, rec;
@@ -180,9 +178,6 @@ static void run_querydisplayinformation1_tests(void)
     DWORD i = 0;
     BOOL hasAdmin = FALSE;
     BOOL hasGuest = FALSE;
-    static const WCHAR sAdminUserName[] = {'A','d','m','i','n','i','s','t','r','a',
-        't','o','r',0};
-    static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
 
     do
     {
@@ -195,24 +190,18 @@ static void run_querydisplayinformation1_tests(void)
         rec = Buffer;
         for(; EntryCount > 0; EntryCount--)
         {
-            if (!lstrcmpW(rec->usri1_name, sAdminUserName))
+            if (rec->usri1_user_id == DOMAIN_USER_RID_ADMIN)
             {
                 ok(!hasAdmin, "One admin user\n");
                 ok(rec->usri1_flags & UF_SCRIPT, "UF_SCRIPT flag is set\n");
                 ok(rec->usri1_flags & UF_NORMAL_ACCOUNT, "UF_NORMAL_ACCOUNT flag is set\n");
-                ok(rec->usri1_user_id == DOMAIN_USER_RID_ADMIN,
-                   "Expected DOMAIN_USER_RID_ADMIN, got %u\n",
-                   rec->usri1_user_id);
                 hasAdmin = TRUE;
             }
-            else if (!lstrcmpW(rec->usri1_name, sGuestUserName))
+            else if (rec->usri1_user_id == DOMAIN_USER_RID_GUEST)
             {
                 ok(!hasGuest, "One guest record\n");
                 ok(rec->usri1_flags & UF_SCRIPT, "UF_SCRIPT flag is set\n");
                 ok(rec->usri1_flags & UF_NORMAL_ACCOUNT, "UF_NORMAL_ACCOUNT flag is set\n");
-                ok(rec->usri1_user_id == DOMAIN_USER_RID_GUEST,
-                   "Expected DOMAIN_USER_RID_GUEST, got %u\n",
-                   rec->usri1_user_id);
                 hasGuest = TRUE;
             }
 
