@@ -18,6 +18,18 @@
 
 import "dxgitype.idl";
 
+typedef struct DXGI_SURFACE_DESC {
+    UINT Width;
+    UINT Height;
+    DXGI_FORMAT Format;
+    DXGI_SAMPLE_DESC SampleDesc;
+} DXGI_SURFACE_DESC;
+
+typedef struct DXGI_MAPPED_RECT {
+    INT Pitch;
+    BYTE *pBits;
+} DXGI_MAPPED_RECT;
+
 [
     object,
     local,
@@ -55,5 +67,23 @@ interface IDXGIDeviceSubObject : IDXGIObject
     HRESULT GetDevice(
         [in] REFIID riid,
         [out] void **device
+    );
+}
+
+[
+    object,
+    local,
+    uuid(cafcb56c-6ac3-4889-bf47-9e23bbd260ec)
+]
+interface IDXGISurface : IDXGIDeviceSubObject
+{
+    HRESULT GetDesc(
+        [out] DXGI_SURFACE_DESC *desc
+    );
+    HRESULT Map(
+        [out] DXGI_MAPPED_RECT *mapped_rect,
+        [in] UINT flags
+    );
+    HRESULT Unmap(
     );
 }
