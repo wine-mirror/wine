@@ -37,6 +37,12 @@
 #include "ntdll_misc.h"
 #include "wine/server.h"
 
+#ifdef __APPLE__
+#include <mach/mach_init.h>
+#include <mach/mach_host.h>
+#include <mach/vm_map.h>
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /*
@@ -900,18 +906,122 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         break;
     case SystemProcessorPerformanceInformation:
         {
-            SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION sppi;
+            SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+            unsigned int cpus = 0;
+            int out_cpus = Length / sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
 
-            memset(&sppi, 0 , sizeof(sppi)); /* FIXME */
-            len = sizeof(sppi);
+            if (out_cpus == 0)
+            {
+                len = 0;
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+                break;
+            }
+            else
+#ifdef __APPLE__
+            {
+                processor_cpu_load_info_data_t *pinfo;
+                mach_msg_type_number_t info_count;
+
+                if (host_processor_info (mach_host_self (),
+                                         PROCESSOR_CPU_LOAD_INFO,
+                                         &cpus,
+                                         (processor_info_array_t*)&pinfo,
+                                         &info_count) == 0)
+                {
+                    int i;
+                    cpus = min(cpus,out_cpus);
+                    len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * cpus;
+                    sppi = RtlAllocateHeap(GetProcessHeap(), 0,len);
+                    for (i = 0; i < cpus; i++)
+                    {
+                        sppi[i].liIdleTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_IDLE];
+                        sppi[i].liKernelTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_SYSTEM];
+                        sppi[i].liUserTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_USER];
+                    }
+                    vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count);
+                }
+            }
+#else
+            {
+                FILE *cpuinfo = fopen("/proc/stat","r");
+                if (cpuinfo)
+                {
+                    unsigned usr,nice,sys;
+                    unsigned long idle;
+                    int count;
+                    char name[10];
+
+                    /* first line is combined usage */
+                    count = fscanf(cpuinfo,"%s %u %u %u %lu",name, &usr, &nice,
+                                   &sys, &idle);
+                    /* we set this up in the for older non-smp enabled kernels */
+                    if (count == 5 && strcmp(name,"cpu")==0)
+                    {
+                        sppi = RtlAllocateHeap(GetProcessHeap(), 0,
+                                               sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+                        sppi->liIdleTime.QuadPart = idle;
+                        sppi->liKernelTime.QuadPart = sys;
+                        sppi->liUserTime.QuadPart = usr;
+                        cpus = 1;
+                        len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+                    }
+
+                    do
+                    {
+                        count = fscanf(cpuinfo,"%s %u %u %u %lu",name, &usr,
+                                       &nice, &sys, &idle);
+                        if (count == 5 && strncmp(name,"cpu",3)==0)
+                        {
+                            out_cpus --;
+                            if (name[3]=='0') /* first cpu */
+                            {
+                                sppi->liIdleTime.QuadPart = idle;
+                                sppi->liKernelTime.QuadPart = sys;
+                                sppi->liUserTime.QuadPart = usr;
+                            }
+                            else /* new cpu */
+                            {
+                                len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * (cpus+1);
+                                sppi = RtlReAllocateHeap(GetProcessHeap(), 0, sppi, len);
+                                sppi[cpus].liIdleTime.QuadPart = idle;
+                                sppi[cpus].liKernelTime.QuadPart = sys;
+                                sppi[cpus].liUserTime.QuadPart = usr;
+                                cpus++;
+                            }
+                        }
+                        else
+                            break;
+                    } while (out_cpus > 0);
+                    fclose(cpuinfo);
+                }
+            }
+#endif
+
+            if (cpus == 0)
+            {
+                static int i = 1;
+
+                sppi = RtlAllocateHeap(GetProcessHeap(),0,sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+
+                memset(sppi, 0 , sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+                FIXME("stub info_class SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION\n");
+
+                /* many programs expect these values to change so fake change */
+                len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+                sppi->liKernelTime.QuadPart = 1 * i;
+                sppi->liUserTime.QuadPart = 2 * i;
+                sppi->liIdleTime.QuadPart = 3 * i;
+                i++;
+            }
 
             if (Length >= len)
             {
                 if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
-                else memcpy( SystemInformation, &sppi, len);
+                else memcpy( SystemInformation, sppi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
-            FIXME("info_class SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION\n");
+
+            RtlFreeHeap(GetProcessHeap(),0,sppi);
         }
         break;
     case SystemModuleInformation:

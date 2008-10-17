@@ -344,23 +344,41 @@ static void test_query_procperf(void)
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     /* Try it for 1 processor */
+    sppi->KernelTime.QuadPart = 0xdeaddead;
+    sppi->UserTime.QuadPart = 0xdeaddead;
+    sppi->IdleTime.QuadPart = 0xdeaddead;
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi,
                                        sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) == ReturnLength,
         "Inconsistent length %d\n", ReturnLength);
- 
+    ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
+    ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
+    ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
+
     /* Try it for all processors */
+    sppi->KernelTime.QuadPart = 0xdeaddead;
+    sppi->UserTime.QuadPart = 0xdeaddead;
+    sppi->IdleTime.QuadPart = 0xdeaddead;
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, NeededLength, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( NeededLength == ReturnLength, "Inconsistent length (%d) <-> (%d)\n", NeededLength, ReturnLength);
+    ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
+    ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
+    ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
 
     /* A too large given buffer size */
     sppi = HeapReAlloc(GetProcessHeap(), 0, sppi , NeededLength + 2);
+    sppi->KernelTime.QuadPart = 0xdeaddead;
+    sppi->UserTime.QuadPart = 0xdeaddead;
+    sppi->IdleTime.QuadPart = 0xdeaddead;
     status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, NeededLength + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS || status == STATUS_INFO_LENGTH_MISMATCH /* vista */,
         "Expected STATUS_SUCCESS or STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
     ok( NeededLength == ReturnLength, "Inconsistent length (%d) <-> (%d)\n", NeededLength, ReturnLength);
+    ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
+    ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
+    ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
 
     HeapFree( GetProcessHeap(), 0, sppi);
 }
