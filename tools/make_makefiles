@@ -491,11 +491,14 @@ sub update_includes()
     {
         if ($incl =~ /(.*)\//) { $subdirs{$1} = 1; }
         next if ($incl =~ /^wine\// && !$exported_wine_headers{$incl});
+        next if ($incl =~ /\.in$/);
         if ($incl =~ /stdole2\.idl$/) { push @tlb_srcs, $incl; }
         elsif ($private_idl_headers{$incl}) { push @h_srcs, $incl; }
         elsif ($incl =~ /\.h$/) { push @h_srcs, $incl; }
+        elsif ($incl =~ /\.rh$/) { push @h_srcs, $incl; }
         elsif ($incl =~ /\.inl$/) { push @h_srcs, $incl; }
         elsif ($incl =~ /\.idl$/) { push @idl_srcs, $incl; }
+        else { die "unknown file $incl in include dir"; }
     }
     replace_in_file( "include/Makefile.in", '^IDL_H_SRCS\s*=', '^INSTALLDIRS',
                      "IDL_H_SRCS = \\\n\t",
