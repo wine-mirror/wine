@@ -626,6 +626,9 @@ static const struct message WmCreateMaxPopupSeq[] = {
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOCLIENTMOVE|SWP_NOCLIENTSIZE|SWP_NOMOVE|SWP_NOSIZE },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_ACTIVATE, sent|wparam, 1 },
@@ -5620,7 +5623,9 @@ static void test_paint_messages(void)
     trace("testing ValidateRgn(0, NULL)\n");
     SetLastError(0xdeadbeef);
     ok(!ValidateRgn(0, NULL), "ValidateRgn(0, NULL) should fail\n");
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error code %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
+       broken( GetLastError() == 0xdeadbeef ) /* win9x */,
+       "wrong error code %d\n", GetLastError());
     check_update_rgn( hwnd, 0 );
     flush_events();
     ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
@@ -8907,10 +8912,12 @@ static void test_PeekMessage(void)
     /* pass invalid QS_xxxx flags */
     SetLastError(0xdeadbeef);
     qstatus = GetQueueStatus(0xffffffff);
-    ok(qstatus == 0, "GetQueueStatus should fail: %08x\n", qstatus);
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "wrong error %d\n", GetLastError());
-
-    qstatus = GetQueueStatus(qs_all_input);
+    ok(qstatus == 0 || broken(qstatus)  /* win9x */, "GetQueueStatus should fail: %08x\n", qstatus);
+    if (!qstatus)
+    {
+        ok(GetLastError() == ERROR_INVALID_FLAGS, "wrong error %d\n", GetLastError());
+        qstatus = GetQueueStatus(qs_all_input);
+    }
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE),
        "wrong qstatus %08x\n", qstatus);
 
@@ -8950,6 +8957,11 @@ static void test_PeekMessage(void)
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (qs_input << 16));
+    if (ret && msg.message == WM_CHAR)
+    {
+        win_skip( "PM_QS_* flags not supported in PeekMessage\n" );
+        goto done;
+    }
     ok(!ret,
        "PeekMessageA should have returned FALSE instead of msg %04x\n",
         msg.message);
@@ -9200,6 +9212,7 @@ todo_wine {
     ok(qstatus == 0,
        "wrong qstatus %08x\n", qstatus);
 
+done:
     trace("signalling to exit\n");
     SetEvent(info.hevent[EV_STOP]);
 
