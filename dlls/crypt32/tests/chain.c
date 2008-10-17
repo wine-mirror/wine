@@ -1212,8 +1212,8 @@ static void checkSimpleChainStatus(const CERT_SIMPLE_CHAIN *simpleChain,
         DWORD i;
 
         for (i = 0; i < simpleChain->cElement; i++)
-            checkElementStatus(&simpleChain->rgpElement[i]->TrustStatus,
-             &simpleChainStatus->rgElementStatus[i], ignore, todo, testIndex,
+            checkElementStatus(&simpleChainStatus->rgElementStatus[i],
+             &simpleChain->rgpElement[i]->TrustStatus, ignore, todo, testIndex,
              chainIndex, i);
     }
 }
