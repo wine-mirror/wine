@@ -271,6 +271,26 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	$idl_h_files = [sort(@{$vars{IDL_H_SRCS}})];
     }
 
+    my $idl_c_files = [];
+    if(exists($vars{IDL_C_SRCS})) {
+	$idl_c_files = [sort(@{$vars{IDL_C_SRCS}})];
+    }
+
+    my $idl_s_files = [];
+    if(exists($vars{IDL_S_SRCS})) {
+	$idl_s_files = [sort(@{$vars{IDL_S_SRCS}})];
+    }
+
+    my $idl_p_files = [];
+    if(exists($vars{IDL_P_SRCS})) {
+	$idl_p_files = [sort(@{$vars{IDL_P_SRCS}})];
+    }
+
+    my $idl_tlb_files = [];
+    if(exists($vars{IDL_TLB_SRCS})) {
+	$idl_tlb_files = [sort(@{$vars{IDL_TLB_SRCS}})];
+    }
+
     my $extradefs;
     if(exists($vars{EXTRADEFS})) {
 	$extradefs = $vars{EXTRADEFS};
@@ -321,6 +341,10 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $modules{$module}{resource_files} = $local_resource_files;
 	    $modules{$module}{imports} = [];
 	    $modules{$module}{idl_h_files} = $local_idl_h_files;
+	    $modules{$module}{idl_c_files} = [];
+	    $modules{$module}{idl_s_files} = [];
+	    $modules{$module}{idl_p_files} = [];
+	    $modules{$module}{idl_tlb_files} = [];
 	    $modules{$module}{extradefs} = $extradefs if $extradefs;
 	}
     }
@@ -336,6 +360,10 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $modules{$module}{resource_files} = $resource_files;
     $modules{$module}{imports} = [@imports];
     $modules{$module}{idl_h_files} = $idl_h_files;
+    $modules{$module}{idl_c_files} = $idl_c_files;
+    $modules{$module}{idl_s_files} = $idl_s_files;
+    $modules{$module}{idl_p_files} = $idl_p_files;
+    $modules{$module}{idl_tlb_files} = $idl_tlb_files;
     $modules{$module}{extradefs} = $extradefs if $extradefs;
 }
 
@@ -412,6 +440,10 @@ foreach my $dsp_file (keys(%wine_test_dsp_files)) {
     $modules{$module}{resource_files} = $resource_files;
     $modules{$module}{imports} = [@imports];
     $modules{$module}{idl_h_files} = [];
+    $modules{$module}{idl_c_files} = [];
+    $modules{$module}{idl_s_files} = [];
+    $modules{$module}{idl_p_files} = [];
+    $modules{$module}{idl_tlb_files} = [];
 
     $modules{$module}{tests} = [@tests];
 }
@@ -438,6 +470,52 @@ my $progress_max = scalar(@modules);
 foreach my $module (@modules) {
     my $dsp_file = $modules{$module}{dsp_file};
     replace_file("$wine_dir/$dsp_file", \&_generate_dsp, $module);
+}
+
+sub output_dsp_idl_rules($$$) {
+    my $wine_include_dir = shift;
+    my $ext = shift;
+    my @idl_src_files = @{(shift)};
+
+    foreach my $idl_src_file (@idl_src_files) {
+	$idl_src_file =~ s%/%\\%g;
+	if($idl_src_file !~ /^\./) {
+	    $idl_src_file = ".\\$idl_src_file";
+	}
+
+	print OUT "# Begin Source File\r\n";
+	print OUT "\r\n";
+
+	print OUT "SOURCE=$idl_src_file\r\n";
+
+	my $basename = $idl_src_file;
+	$basename =~ s/\.idl$//;
+
+	print OUT "# PROP Ignore_Default_Tool 1\r\n";
+	print OUT "# Begin Custom Build\r\n";
+	print OUT "InputPath=$idl_src_file\r\n";
+	print OUT "\r\n";
+	print OUT "BuildCmds= \\\r\n";
+	print OUT "\tmidl /nologo /I $wine_include_dir $idl_src_file ";
+	if ($ext eq ".h") {
+	    print OUT "/client none /server none /notlb /h ";
+	} elsif ($ext eq "_c.c") {
+	    print OUT "/server none /notlb /cstub ";
+	} elsif ($ext eq "_s.c") {
+	    print OUT "/client none /notlb /sstub ";
+	} elsif ($ext eq "_p.c") {
+	    print OUT "/client none /server none /notlb /proxy ";
+	} elsif ($ext eq ".tlb") {
+	    print OUT "/client none /server none /tlb ";
+	}
+        print OUT "$basename$ext\r\n";
+	print OUT "\r\n";
+	print OUT "\"$basename$ext\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
+	print OUT "   \$(BuildCmds)\r\n";
+	print OUT "# End Custom Build\r\n";
+
+	print OUT "# End Source File\r\n";
+    }
 }
 
 sub _generate_dsp($$) {
@@ -478,6 +556,10 @@ sub _generate_dsp($$) {
     my @header_files = @{$modules{$module}{header_files}};
     my @resource_files = @{$modules{$module}{resource_files}};
     my @idl_h_files = @{$modules{$module}{idl_h_files}};
+    my @idl_c_files = @{$modules{$module}{idl_c_files}};
+    my @idl_s_files = @{$modules{$module}{idl_s_files}};
+    my @idl_p_files = @{$modules{$module}{idl_p_files}};
+    my @idl_tlb_files = @{$modules{$module}{idl_tlb_files}};
 
     if ($project !~ /^wine(?:build|runtests|test)?$/ &&
         $project !~ /^(?:gdi32)_.+?$/ &&
@@ -908,32 +990,13 @@ sub _generate_dsp($$) {
 	print OUT "# End Source File\r\n";
     }
 
-    foreach my $idl_h_file (@idl_h_files) {
-	$idl_h_file =~ s%/%\\%g;
-	if($idl_h_file !~ /^\./) {
-	    $idl_h_file = ".\\$idl_h_file";
-	}
-
-	print OUT "# Begin Source File\r\n";
-	print OUT "\r\n";
-
-	print OUT "SOURCE=$idl_h_file\r\n";
-
-	my $basename = $idl_h_file;
-	$basename =~ s/\.idl$//;
-
-	print OUT "# PROP Ignore_Default_Tool 1\r\n";
-	print OUT "# Begin Custom Build\r\n";
-	print OUT "InputPath=$idl_h_file\r\n";
-	print OUT "\r\n";
-	print OUT "BuildCmds= \\\r\n";
-	print OUT "\tmidl /nologo /I $wine_include_dir /client none /server none /notlb $idl_h_file /h $basename.h\r\n";
-	print OUT "\r\n";
-	print OUT "\"$basename.h\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
-	print OUT "   \$(BuildCmds)\r\n";
-	print OUT "# End Custom Build\r\n";
-
-	print OUT "# End Source File\r\n";
+    output_dsp_idl_rules $wine_include_dir, ".h", \@idl_h_files;
+    output_dsp_idl_rules $wine_include_dir, "_c.c", \@idl_c_files;
+    output_dsp_idl_rules $wine_include_dir, "_s.c", \@idl_s_files;
+    output_dsp_idl_rules $wine_include_dir, "_p.c", \@idl_p_files;
+    # Hack - stdole2.idl cannot be compiled with midl
+    if($project ne "include") {
+	output_dsp_idl_rules $wine_include_dir, ".tlb", \@idl_tlb_files;
     }
 
     print OUT "# End Group\r\n";
