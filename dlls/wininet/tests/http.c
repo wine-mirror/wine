@@ -1287,6 +1287,8 @@ static const char notokmsg[] =
 static const char noauthmsg[] =
 "HTTP/1.1 401 Unauthorized\r\n"
 "Server: winetest\r\n"
+"Connection: close\r\n"
+"WWW-Authenticate: Basic realm=\"placebo\"\r\n"
 "\r\n";
 
 static const char proxymsg[] =
@@ -1838,6 +1840,35 @@ static void test_cookie_header(int port)
     InternetCloseHandle(ses);
 }
 
+static void test_basic_authentication(int port)
+{
+    HINTERNET session, connect, request;
+    DWORD size, status;
+    BOOL ret;
+
+    session = InternetOpen("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(session != NULL, "InternetOpen failed\n");
+
+    connect = InternetConnect(session, "localhost", port, "user", "pwd", INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "InternetConnect failed\n");
+
+    request = HttpOpenRequest(connect, NULL, "/test3", NULL, NULL, NULL, 0, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed %u\n", GetLastError());
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfo( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(status == 200, "request failed with status %u\n", status);
+
+    InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+    InternetCloseHandle(session);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -1864,6 +1895,7 @@ static void test_http_connection(void)
     test_connection_header(si.port);
     test_http1_1(si.port);
     test_cookie_header(si.port);
+    test_basic_authentication(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
