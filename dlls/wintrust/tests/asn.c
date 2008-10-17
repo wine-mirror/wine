@@ -585,6 +585,78 @@ static void test_decodeCatMemberInfo(void)
     }
 }
 
+static const BYTE emptyCatNameValue[] = {
+0x30,0x07,0x1e,0x00,0x02,0x01,0x00,0x04,0x00 };
+static const BYTE catNameValueWithTag[] = {
+0x30,0x0d,0x1e,0x06,0x00,0x66,0x00,0x6f,0x00,0x6f,0x02,0x01,0x00,0x04,0x00 };
+static const BYTE catNameValueWithFlags[] = {
+0x30,0x0a,0x1e,0x00,0x02,0x04,0xf0,0x0d,0xd0,0x0d,0x04,0x00 };
+static const BYTE catNameValueWithValue[] = {
+0x30,0x0b,0x1e,0x00,0x02,0x01,0x00,0x04,0x04,0x01,0x02,0x03,0x04 };
+
+static BYTE aVal[] = { 1,2,3,4 };
+
+static void test_encodeCatNameValue(void)
+{
+    static WCHAR foo[] = { 'f','o','o',0 };
+    BOOL ret;
+    LPBYTE buf;
+    DWORD size;
+    CAT_NAMEVALUE value;
+
+    memset(&value, 0, sizeof(value));
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
+     (LPBYTE)&value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(emptyCatNameValue), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, emptyCatNameValue, sizeof(emptyCatNameValue)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    value.pwszTag = foo;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
+     (LPBYTE)&value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(catNameValueWithTag), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, catNameValueWithTag, sizeof(catNameValueWithTag)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    value.pwszTag = NULL;
+    value.fdwFlags = 0xf00dd00d;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
+     (LPBYTE)&value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(catNameValueWithFlags), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, catNameValueWithFlags, sizeof(catNameValueWithFlags)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    value.fdwFlags = 0;
+    value.Value.cbData = sizeof(aVal);
+    value.Value.pbData = aVal;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
+     (LPBYTE)&value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(catNameValueWithValue), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, catNameValueWithValue, sizeof(catNameValueWithValue)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
 START_TEST(asn)
 {
     HMODULE hCrypt32 = LoadLibraryA("crypt32.dll");
@@ -597,6 +669,7 @@ START_TEST(asn)
     test_decodeSPCPEImage();
     test_encodeCatMemberInfo();
     test_decodeCatMemberInfo();
+    test_encodeCatNameValue();
 
     FreeLibrary(hCrypt32);
 }
