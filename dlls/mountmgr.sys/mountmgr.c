@@ -42,6 +42,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
+#define MIN_ID_LEN     4
 #define MAX_DOS_DRIVES 26
 #define MAX_MOUNT_POINTS (2 * MAX_DOS_DRIVES)
 
@@ -167,6 +168,18 @@ static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OB
 }
 
 
+static void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len )
+{
+    RtlFreeHeap( GetProcessHeap(), 0, mount->id );
+    mount->id_len = max( MIN_ID_LEN, id_len );
+    if ((mount->id = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, mount->id_len )))
+    {
+        memcpy( mount->id, id, id_len );
+        RegSetValueExW( mount_key, mount->link.Buffer, 0, REG_BINARY, mount->id, mount->id_len );
+    }
+    else mount->id_len = 0;
+}
+
 static NTSTATUS add_mount_point( DRIVER_OBJECT *driver, DWORD type, int drive,
                                  const void *id, unsigned int id_len )
 {
@@ -219,23 +232,14 @@ static NTSTATUS add_mount_point( DRIVER_OBJECT *driver, DWORD type, int drive,
     }
 
     mount_volume->device = mount_drive->device;  /* FIXME: incr ref count */
-    mount_drive->id = RtlAllocateHeap( GetProcessHeap(), 0, id_len );
-    mount_drive->id_len = id_len;
-    memcpy( mount_drive->id, id, id_len );
-    mount_volume->id = RtlAllocateHeap( GetProcessHeap(), 0, id_len );
-    mount_volume->id_len = id_len;
-    memcpy( mount_volume->id, id, id_len );
+    set_mount_point_id( mount_drive, id, id_len );
+    set_mount_point_id( mount_volume, id, id_len );
 
     IoCreateSymbolicLink( &mount_drive->link, get_device_name(mount_drive->device) );
     IoCreateSymbolicLink( &mount_volume->link, get_device_name(mount_volume->device) );
 
     TRACE( "created device %s symlinks %s %s\n", debugstr_w(get_device_name(mount_drive->device)->Buffer),
            debugstr_w(mount_drive->link.Buffer), debugstr_w(mount_volume->link.Buffer) );
-
-    RegSetValueExW( mount_key, mount_drive->link.Buffer, 0, REG_BINARY,
-                    mount_drive->id, mount_drive->id_len );
-    RegSetValueExW( mount_key, mount_volume->link.Buffer, 0, REG_BINARY,
-                    mount_volume->id, mount_volume->id_len );
 
     return STATUS_SUCCESS;
 }
@@ -291,7 +295,7 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
         if (!matching_mount_point( &mount_points[i], input )) continue;
         size += get_device_name(mount_points[i].device)->Length;
         size += mount_points[i].link.Length;
-        size += strlen(mount_points[i].id) + 1;
+        size += mount_points[i].id_len;
         size = (size + sizeof(WCHAR) - 1) & ~(sizeof(WCHAR) - 1);
         j++;
     }
@@ -323,9 +327,9 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
         pos += mount_points[i].link.Length;
 
         info->MountPoints[j].UniqueIdOffset = pos;
-        info->MountPoints[j].UniqueIdLength = strlen(mount_points[i].id) + 1;
+        info->MountPoints[j].UniqueIdLength = mount_points[i].id_len;
         memcpy( (char *)out_buff + pos, mount_points[i].id, strlen(mount_points[i].id) + 1 );
-        pos += strlen(mount_points[i].id) + 1;
+        pos += mount_points[i].id_len;
         pos = (pos + sizeof(WCHAR) - 1) & ~(sizeof(WCHAR) - 1);
         j++;
     }
