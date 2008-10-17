@@ -18,6 +18,10 @@
 
 import "dxgitype.idl";
 
+cpp_quote("#if 0")
+typedef HANDLE HMONITOR;
+cpp_quote("#endif")
+
 typedef struct DXGI_SURFACE_DESC {
     UINT Width;
     UINT Height;
@@ -29,6 +33,22 @@ typedef struct DXGI_MAPPED_RECT {
     INT Pitch;
     BYTE *pBits;
 } DXGI_MAPPED_RECT;
+
+typedef struct DXGI_OUTPUT_DESC {
+    WCHAR DeviceName[32];
+    RECT DesktopCoordinates;
+    BOOL AttachedToDesktop;
+    DXGI_MODE_ROTATION Rotation;
+    HMONITOR Monitor;
+} DXGI_OUTPUT_DESC;
+
+typedef struct DXGI_FRAME_STATISTICS {
+    UINT PresentCount;
+    UINT PresentRefreshCount;
+    UINT SyncRefreshCount;
+    LARGE_INTEGER SyncQPCTime;
+    LARGE_INTEGER SyncGPUTime;
+} DXGI_FRAME_STATISTICS;
 
 [
     object,
@@ -85,5 +105,54 @@ interface IDXGISurface : IDXGIDeviceSubObject
         [in] UINT flags
     );
     HRESULT Unmap(
+    );
+}
+
+[
+    object,
+    local,
+    uuid(ae02eedb-c735-4690-8d52-5a8dc20213aa)
+]
+interface IDXGIOutput : IDXGIObject
+{
+    HRESULT GetDesc(
+        [out] DXGI_OUTPUT_DESC *desc
+    );
+    HRESULT GetDisplayModeList(
+        [in] DXGI_FORMAT format,
+        [in] UINT flags,
+        [in, out] UINT *mode_count,
+        [out] DXGI_MODE_DESC *desc
+    );
+    HRESULT FindClosestMatchingMode(
+        [in] const DXGI_MODE_DESC *mode,
+        [out] DXGI_MODE_DESC *closest_match,
+        [in] IUnknown *device
+    );
+    HRESULT WaitForVBlank(
+    );
+    HRESULT TakeOwnership(
+        [in] IUnknown *device,
+        [in] BOOL exclusive
+    );
+    void ReleaseOwnership(
+    );
+    HRESULT GetGammaControlCapabilities(
+        [out] DXGI_GAMMA_CONTROL_CAPABILITIES *gamma_caps
+    );
+    HRESULT SetGammaControl(
+        [in] const DXGI_GAMMA_CONTROL *gamma_control
+    );
+    HRESULT GetGammaControl(
+        [out] DXGI_GAMMA_CONTROL *gamma_control
+    );
+    HRESULT SetDisplaySurface(
+        [in] IDXGISurface *surface
+    );
+    HRESULT GetDisplaySurfaceData(
+        [in] IDXGISurface *surface
+    );
+    HRESULT GetFrameStatistics(
+        [out] DXGI_FRAME_STATISTICS *stats
     );
 }
