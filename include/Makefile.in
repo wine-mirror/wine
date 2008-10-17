@@ -447,6 +447,7 @@ SRCDIR_INCLUDES = \
 	winternl.h \
 	wintrust.h \
 	winuser.h \
+	winuser.rh \
 	winver.h \
 	wmistr.h \
 	wnaspi32.h \

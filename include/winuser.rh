@@ -1,0 +1,210 @@
+/*
+ * Copyright (C) the Wine project
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/* Window Styles */
+#define WS_OVERLAPPED    0x00000000L
+#define WS_POPUP         0x80000000L
+#define WS_CHILD         0x40000000L
+#define WS_MINIMIZE      0x20000000L
+#define WS_VISIBLE       0x10000000L
+#define WS_DISABLED      0x08000000L
+#define WS_CLIPSIBLINGS  0x04000000L
+#define WS_CLIPCHILDREN  0x02000000L
+#define WS_MAXIMIZE      0x01000000L
+#define WS_CAPTION       0x00C00000L
+#define WS_BORDER        0x00800000L
+#define WS_DLGFRAME      0x00400000L
+#define WS_VSCROLL       0x00200000L
+#define WS_HSCROLL       0x00100000L
+#define WS_SYSMENU       0x00080000L
+#define WS_THICKFRAME    0x00040000L
+#define WS_GROUP         0x00020000L
+#define WS_TABSTOP       0x00010000L
+#define WS_MINIMIZEBOX   0x00020000L
+#define WS_MAXIMIZEBOX   0x00010000L
+#define WS_TILED         WS_OVERLAPPED
+#define WS_ICONIC        WS_MINIMIZE
+#define WS_SIZEBOX       WS_THICKFRAME
+#define WS_OVERLAPPEDWINDOW (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME| WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
+#define WS_POPUPWINDOW (WS_POPUP | WS_BORDER | WS_SYSMENU)
+#define WS_CHILDWINDOW (WS_CHILD)
+#define WS_TILEDWINDOW (WS_OVERLAPPEDWINDOW)
+
+/* Window extended styles */
+#define WS_EX_DLGMODALFRAME    0x00000001L
+#define WS_EX_DRAGDETECT       0x00000002L
+#define WS_EX_NOPARENTNOTIFY   0x00000004L
+#define WS_EX_TOPMOST          0x00000008L
+#define WS_EX_ACCEPTFILES      0x00000010L
+#define WS_EX_TRANSPARENT      0x00000020L
+#define WS_EX_MDICHILD         0x00000040L
+#define WS_EX_TOOLWINDOW       0x00000080L
+#define WS_EX_WINDOWEDGE       0x00000100L
+#define WS_EX_CLIENTEDGE       0x00000200L
+#define WS_EX_CONTEXTHELP      0x00000400L
+#define WS_EX_RIGHT            0x00001000L
+#define WS_EX_LEFT             0x00000000L
+#define WS_EX_RTLREADING       0x00002000L
+#define WS_EX_LTRREADING       0x00000000L
+#define WS_EX_LEFTSCROLLBAR    0x00004000L
+#define WS_EX_RIGHTSCROLLBAR   0x00000000L
+#define WS_EX_CONTROLPARENT    0x00010000L
+#define WS_EX_STATICEDGE       0x00020000L
+#define WS_EX_APPWINDOW        0x00040000L
+#define WS_EX_LAYERED          0x00080000L
+#define WS_EX_NOINHERITLAYOUT  0x00100000L
+#define WS_EX_LAYOUTRTL        0x00400000L
+#define WS_EX_COMPOSITED       0x02000000L
+#define WS_EX_NOACTIVATE       0x08000000L
+
+#define WS_EX_OVERLAPPEDWINDOW (WS_EX_WINDOWEDGE|WS_EX_CLIENTEDGE)
+#define WS_EX_PALETTEWINDOW    (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW|WS_EX_TOPMOST)
+
+/* Button control styles */
+#define BS_PUSHBUTTON          0x00000000L
+#define BS_DEFPUSHBUTTON       0x00000001L
+#define BS_CHECKBOX            0x00000002L
+#define BS_AUTOCHECKBOX        0x00000003L
+#define BS_RADIOBUTTON         0x00000004L
+#define BS_3STATE              0x00000005L
+#define BS_AUTO3STATE          0x00000006L
+#define BS_GROUPBOX            0x00000007L
+#define BS_USERBUTTON          0x00000008L
+#define BS_AUTORADIOBUTTON     0x00000009L
+#define BS_OWNERDRAW           0x0000000BL
+#define BS_LEFTTEXT            0x00000020L
+#define BS_RIGHTBUTTON         BS_LEFTTEXT
+
+#define BS_TEXT                0x00000000L
+#define BS_ICON                0x00000040L
+#define BS_BITMAP              0x00000080L
+#define BS_LEFT                0x00000100L
+#define BS_RIGHT               0x00000200L
+#define BS_CENTER              0x00000300L
+#define BS_TOP                 0x00000400L
+#define BS_BOTTOM              0x00000800L
+#define BS_VCENTER             0x00000C00L
+#define BS_PUSHLIKE            0x00001000L
+#define BS_MULTILINE           0x00002000L
+#define BS_NOTIFY              0x00004000L
+#define BS_FLAT                0x00008000L
+
+/* Combo box styles */
+#define CBS_SIMPLE            0x0001L
+#define CBS_DROPDOWN          0x0002L
+#define CBS_DROPDOWNLIST      0x0003L
+#define CBS_OWNERDRAWFIXED    0x0010L
+#define CBS_OWNERDRAWVARIABLE 0x0020L
+#define CBS_AUTOHSCROLL       0x0040L
+#define CBS_OEMCONVERT        0x0080L
+#define CBS_SORT              0x0100L
+#define CBS_HASSTRINGS        0x0200L
+#define CBS_NOINTEGRALHEIGHT  0x0400L
+#define CBS_DISABLENOSCROLL   0x0800L
+
+#define CBS_UPPERCASE	      0x2000L
+#define CBS_LOWERCASE	      0x4000L
+
+/* Dialog styles */
+#define DS_ABSALIGN		0x0001
+#define DS_SYSMODAL		0x0002
+#define DS_3DLOOK		0x0004	/* win95 */
+#define DS_FIXEDSYS		0x0008	/* win95 */
+#define DS_NOFAILCREATE		0x0010	/* win95 */
+#define DS_LOCALEDIT		0x0020
+#define DS_SETFONT		0x0040
+#define DS_MODALFRAME		0x0080
+#define DS_NOIDLEMSG		0x0100
+#define DS_SETFOREGROUND	0x0200	/* win95 */
+#define DS_CONTROL		0x0400	/* win95 */
+#define DS_CENTER		0x0800	/* win95 */
+#define DS_CENTERMOUSE		0x1000	/* win95 */
+#define DS_CONTEXTHELP		0x2000	/* win95 */
+#define DS_USEPIXELS		0x8000
+#define DS_SHELLFONT		(DS_SETFONT | DS_FIXEDSYS)
+
+/* Edit control styles */
+#define ES_LEFT         0x00000000
+#define ES_CENTER       0x00000001
+#define ES_RIGHT        0x00000002
+#define ES_MULTILINE    0x00000004
+#define ES_UPPERCASE    0x00000008
+#define ES_LOWERCASE    0x00000010
+#define ES_PASSWORD     0x00000020
+#define ES_AUTOVSCROLL  0x00000040
+#define ES_AUTOHSCROLL  0x00000080
+#define ES_NOHIDESEL    0x00000100
+#define ES_COMBO        0x00000200   /* Undocumented. Parent is a combobox */
+#define ES_OEMCONVERT   0x00000400
+#define ES_READONLY     0x00000800
+#define ES_WANTRETURN   0x00001000
+#define ES_NUMBER       0x00002000
+
+/* Listbox styles */
+#define LBS_NOTIFY               0x0001
+#define LBS_SORT                 0x0002
+#define LBS_NOREDRAW             0x0004
+#define LBS_MULTIPLESEL          0x0008
+#define LBS_OWNERDRAWFIXED       0x0010
+#define LBS_OWNERDRAWVARIABLE    0x0020
+#define LBS_HASSTRINGS           0x0040
+#define LBS_USETABSTOPS          0x0080
+#define LBS_NOINTEGRALHEIGHT     0x0100
+#define LBS_MULTICOLUMN          0x0200
+#define LBS_WANTKEYBOARDINPUT    0x0400
+#define LBS_EXTENDEDSEL          0x0800
+#define LBS_DISABLENOSCROLL      0x1000
+#define LBS_NODATA               0x2000
+#define LBS_NOSEL                0x4000
+#define LBS_COMBOBOX             0x8000
+#define LBS_STANDARD  (LBS_NOTIFY | LBS_SORT | WS_VSCROLL | WS_BORDER)
+
+/* Static Control Styles */
+#define SS_LEFT             0x00000000L
+#define SS_CENTER           0x00000001L
+#define SS_RIGHT            0x00000002L
+#define SS_ICON             0x00000003L
+#define SS_BLACKRECT        0x00000004L
+#define SS_GRAYRECT         0x00000005L
+#define SS_WHITERECT        0x00000006L
+#define SS_BLACKFRAME       0x00000007L
+#define SS_GRAYFRAME        0x00000008L
+#define SS_WHITEFRAME       0x00000009L
+#define SS_USERITEM         0x0000000AL
+#define SS_SIMPLE           0x0000000BL
+#define SS_LEFTNOWORDWRAP   0x0000000CL
+#define SS_OWNERDRAW        0x0000000DL
+#define SS_BITMAP           0x0000000EL
+#define SS_ENHMETAFILE      0x0000000FL
+#define SS_ETCHEDHORZ       0x00000010L
+#define SS_ETCHEDVERT       0x00000011L
+#define SS_ETCHEDFRAME      0x00000012L
+#define SS_TYPEMASK         0x0000001FL
+
+#define SS_REALSIZECONTROL  0x00000040L
+#define SS_NOPREFIX         0x00000080L
+#define SS_NOTIFY           0x00000100L
+#define SS_CENTERIMAGE      0x00000200L
+#define SS_RIGHTJUST        0x00000400L
+#define SS_REALSIZEIMAGE    0x00000800L
+#define SS_SUNKEN           0x00001000L
+#define SS_EDITCONTROL      0x00002000L
+#define SS_ENDELLIPSIS      0x00004000L
+#define SS_PATHELLIPSIS     0x00008000L
+#define SS_WORDELLIPSIS     0x0000C000L
+#define SS_ELLIPSISMASK     0x0000C000L

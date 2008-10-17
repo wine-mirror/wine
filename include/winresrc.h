@@ -35,7 +35,7 @@
 #define _WIN32_WINNT 0x0500
 #endif
 
-/* FIXME: #include <winuser.rh> */
+#include <winuser.rh>
 /* FIXME: #include <commctrl.rh> */
 /* FIXME: #include <dde.rh> */
 /* FIXME: #include <winnt.rh> */
