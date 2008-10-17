@@ -50,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(cryptasn);
 #endif
 
 #define ASN_BITSTRING       (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x03)
+#define ASN_BMPSTRING       (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x1e)
 
 static BOOL CRYPT_EncodeLen(DWORD len, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
@@ -738,13 +739,172 @@ BOOL WINAPI WVTAsn1SpcIndirectDataContentEncode(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeBMPString(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret = TRUE;
+    LPCWSTR str = (LPCWSTR)pvStructInfo;
+    DWORD bytesNeeded, lenBytes, strLen;
+
+    if (str)
+        strLen = lstrlenW(str);
+    else
+        strLen = 0;
+    CRYPT_EncodeLen(strLen * 2, NULL, &lenBytes);
+    bytesNeeded = 1 + lenBytes + strLen * 2;
+    if (!pbEncoded)
+        *pcbEncoded = bytesNeeded;
+    else if (*pcbEncoded < bytesNeeded)
+    {
+        *pcbEncoded = bytesNeeded;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        DWORD i;
+
+        *pcbEncoded = bytesNeeded;
+        *pbEncoded++ = ASN_BMPSTRING;
+        CRYPT_EncodeLen(strLen * 2, pbEncoded, &lenBytes);
+        pbEncoded += lenBytes;
+        for (i = 0; i < strLen; i++)
+        {
+            *pbEncoded++ = (str[i] & 0xff00) >> 8;
+            *pbEncoded++ = str[i] & 0x00ff;
+        }
+    }
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeInteger(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret;
+
+    __TRY
+    {
+        DWORD significantBytes, lenBytes, bytesNeeded;
+        BYTE padByte = 0;
+        BOOL pad = FALSE;
+        const CRYPT_INTEGER_BLOB *blob =
+         (const CRYPT_INTEGER_BLOB *)pvStructInfo;
+
+        significantBytes = blob->cbData;
+        if (significantBytes)
+        {
+            if (blob->pbData[significantBytes - 1] & 0x80)
+            {
+                /* negative, lop off leading (little-endian) 0xffs */
+                for (; significantBytes > 0 &&
+                 blob->pbData[significantBytes - 1] == 0xff; significantBytes--)
+                    ;
+                if (blob->pbData[significantBytes - 1] < 0x80)
+                {
+                    padByte = 0xff;
+                    pad = TRUE;
+                }
+            }
+            else
+            {
+                /* positive, lop off leading (little-endian) zeroes */
+                for (; significantBytes > 0 &&
+                 !blob->pbData[significantBytes - 1]; significantBytes--)
+                    ;
+                if (significantBytes == 0)
+                    significantBytes = 1;
+                if (blob->pbData[significantBytes - 1] > 0x7f)
+                {
+                    padByte = 0;
+                    pad = TRUE;
+                }
+            }
+        }
+        if (pad)
+            CRYPT_EncodeLen(significantBytes + 1, NULL, &lenBytes);
+        else
+            CRYPT_EncodeLen(significantBytes, NULL, &lenBytes);
+        bytesNeeded = 1 + lenBytes + significantBytes;
+        if (pad)
+            bytesNeeded++;
+        if (!pbEncoded)
+        {
+            *pcbEncoded = bytesNeeded;
+            ret = TRUE;
+        }
+        else if (*pcbEncoded < bytesNeeded)
+        {
+            *pcbEncoded = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            *pcbEncoded = bytesNeeded;
+            *pbEncoded++ = ASN_INTEGER;
+            if (pad)
+            {
+                CRYPT_EncodeLen(significantBytes + 1, pbEncoded, &lenBytes);
+                pbEncoded += lenBytes;
+                *pbEncoded++ = padByte;
+            }
+            else
+            {
+                CRYPT_EncodeLen(significantBytes, pbEncoded, &lenBytes);
+                pbEncoded += lenBytes;
+            }
+            for (; significantBytes > 0; significantBytes--)
+                *(pbEncoded++) = blob->pbData[significantBytes - 1];
+            ret = TRUE;
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
+BOOL WINAPI CRYPT_AsnEncodeInt(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    CRYPT_INTEGER_BLOB blob = { sizeof(INT), (BYTE *)pvStructInfo };
+
+    return CRYPT_AsnEncodeInteger(dwCertEncodingType, X509_MULTI_BYTE_INTEGER,
+     &blob, pbEncoded, pcbEncoded);
+}
+
 BOOL WINAPI WVTAsn1CatMemberInfoEncode(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
-    FIXME("(0x%08x, %s, %p, %p, %p): stub\n", dwCertEncodingType,
+    BOOL ret = FALSE;
+
+    TRACE("(0x%08x, %s, %p, %p, %p)\n", dwCertEncodingType,
      debugstr_a(lpszStructType), pvStructInfo, pbEncoded, pcbEncoded);
-    return FALSE;
+
+    __TRY
+    {
+        const CAT_MEMBERINFO *info = (const CAT_MEMBERINFO *)pvStructInfo;
+        struct AsnEncodeSequenceItem items[] = {
+         { info->pwszSubjGuid, CRYPT_AsnEncodeBMPString, 0 },
+         { &info->dwCertVersion, CRYPT_AsnEncodeInt, 0 },
+        };
+
+        ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING,
+         items, sizeof(items) / sizeof(items[0]), pbEncoded, pcbEncoded);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
 }
 
 /* Gets the number of length bytes from the given (leading) length byte */

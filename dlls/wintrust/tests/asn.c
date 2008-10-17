@@ -497,7 +497,6 @@ static void test_encodeCatMemberInfo(void)
 
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
      &info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -509,7 +508,6 @@ static void test_encodeCatMemberInfo(void)
     info.pwszSubjGuid = foo;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
      (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -522,7 +520,6 @@ static void test_encodeCatMemberInfo(void)
     info.pwszSubjGuid = guidStr;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
      (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
