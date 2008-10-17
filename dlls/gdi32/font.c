@@ -1648,14 +1648,17 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     DWORD type;
     DC * dc = get_dc_ptr( hdc );
     INT breakRem;
+    static int quietfixme = 0;
 
     if (!dc) return FALSE;
 
     breakRem = dc->breakRem;
 
-    if (flags & (ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY))
+    if (quietfixme == 0 && flags & (ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY))
+    {
         FIXME("flags ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY unimplemented\n");
-
+        quietfixme = 1;
+    }
     if (!dc->funcs->pExtTextOut && !PATH_IsPathOpen(dc->path))
     {
         release_dc_ptr( dc );
