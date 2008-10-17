@@ -911,9 +911,29 @@ BOOL WINAPI WVTAsn1CatNameValueEncode(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
-    FIXME("(0x%08x, %s, %p, %p, %p): stub\n", dwCertEncodingType,
+    BOOL ret = FALSE;
+
+    TRACE("(0x%08x, %s, %p, %p, %p)\n", dwCertEncodingType,
      debugstr_a(lpszStructType), pvStructInfo, pbEncoded, pcbEncoded);
-    return FALSE;
+
+    __TRY
+    {
+        const CAT_NAMEVALUE *value = (const CAT_NAMEVALUE *)pvStructInfo;
+        struct AsnEncodeSequenceItem items[] = {
+         { value->pwszTag,   CRYPT_AsnEncodeBMPString, 0 },
+         { &value->fdwFlags, CRYPT_AsnEncodeInt, 0 },
+         { &value->Value,    CRYPT_AsnEncodeOctets, 0 },
+        };
+
+        ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING,
+         items, sizeof(items) / sizeof(items[0]), pbEncoded, pcbEncoded);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
 }
 
 /* Gets the number of length bytes from the given (leading) length byte */

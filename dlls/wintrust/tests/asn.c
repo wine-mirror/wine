@@ -607,7 +607,6 @@ static void test_encodeCatNameValue(void)
     memset(&value, 0, sizeof(value));
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
      (LPBYTE)&value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -619,7 +618,6 @@ static void test_encodeCatNameValue(void)
     value.pwszTag = foo;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
      (LPBYTE)&value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -632,7 +630,6 @@ static void test_encodeCatNameValue(void)
     value.fdwFlags = 0xf00dd00d;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
      (LPBYTE)&value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -646,7 +643,6 @@ static void test_encodeCatNameValue(void)
     value.Value.pbData = aVal;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
      (LPBYTE)&value, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
