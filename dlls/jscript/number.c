@@ -105,8 +105,18 @@ static HRESULT Number_toPrecision(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 static HRESULT Number_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_NUMBER)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        NumberInstance *number = (NumberInstance*)dispex;
+        *retv = number->num;
+    }
+    return S_OK;
 }
 
 static HRESULT Number_hasOwnProperty(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -198,19 +208,13 @@ static HRESULT NumberConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DIS
     case DISPATCH_CONSTRUCT: {
         DispatchEx *obj;
 
-        switch(arg_cnt(dp)) {
-        case 0:
-            V_VT(&num) = VT_I4;
-            V_I4(&num) = 0;
-            break;
-        case 1:
+        if(arg_cnt(dp)) {
             hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &num);
             if(FAILED(hres))
                 return hres;
-            break;
-        default:
-            FIXME("unimplemented args\n");
-            return E_NOTIMPL;
+        }else {
+            V_VT(&num) = VT_I4;
+            V_I4(&num) = 0;
         }
 
         hres = create_number(dispex->ctx, &num, &obj);
@@ -258,6 +262,7 @@ HRESULT create_number_constr(script_ctx_t *ctx, DispatchEx **ret)
     if(FAILED(hres))
         return hres;
 
+    V_VT(&number->num) = VT_I4;
     hres = create_builtin_function(ctx, NumberConstr_value, PROPF_CONSTR, &number->dispex, ret);
 
     jsdisp_release(&number->dispex);

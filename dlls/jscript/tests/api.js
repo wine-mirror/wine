@@ -362,6 +362,15 @@ ok(Number() === 0, "Number() = " + Number());
 ok(Number(false) === 0, "Number(false) = " + Number(false));
 ok(Number("43") === 43, "Number('43') = " + Number("43"));
 
+tmp = (new Number(1)).valueOf();
+ok(tmp === 1, "(new Number(1)).valueOf = " + tmp);
+tmp = (new Number(1,2)).valueOf();
+ok(tmp === 1, "(new Number(1,2)).valueOf = " + tmp);
+tmp = (new Number()).valueOf();
+ok(tmp === 0, "(new Number()).valueOf = " + tmp);
+tmp = Number.prototype.valueOf();
+ok(tmp === 0, "Number.prototype.valueOf = " + tmp);
+
 tmp = Math.min(1);
 ok(tmp === 1, "Math.min(1) = " + tmp);
 
