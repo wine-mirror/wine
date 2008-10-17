@@ -1541,8 +1541,7 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
     if (ySrc + height > srcDib.dsBm.bmHeight)
       height = srcDib.dsBm.bmHeight - ySrc;
 
-    if (GetRgnBox(physDevSrc->region, &unusedRect) == COMPLEXREGION ||
-        GetRgnBox(physDevDst->region, &unusedRect) == COMPLEXREGION)
+    if (GetRgnBox(physDevDst->region, &unusedRect) == COMPLEXREGION)
     {
       /* for simple regions, the clipping was already done by BITBLT_GetVisRectangles */
       FIXME("potential optimization: client-side complex region clipping\n");
