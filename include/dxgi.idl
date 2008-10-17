@@ -22,6 +22,18 @@ cpp_quote("#if 0")
 typedef HANDLE HMONITOR;
 cpp_quote("#endif")
 
+typedef UINT DXGI_USAGE;
+const DXGI_USAGE DXGI_USAGE_SHADER_INPUT            = 0x10L;
+const DXGI_USAGE DXGI_USAGE_RENDER_TARGET_OUTPUT    = 0x20L;
+const DXGI_USAGE DXGI_USAGE_BACK_BUFFER             = 0x40L;
+const DXGI_USAGE DXGI_USAGE_SHARED                  = 0x80L;
+const DXGI_USAGE DXGI_USAGE_READ_ONLY               = 0x100L;
+
+typedef enum DXGI_SWAP_EFFECT {
+    DXGI_SWAP_EFFECT_DISCARD    = 0,
+    DXGI_SWAP_EFFECT_SEQUENTIAL = 1,
+} DXGI_SWAP_EFFECT;
+
 typedef struct DXGI_SURFACE_DESC {
     UINT Width;
     UINT Height;
@@ -49,6 +61,17 @@ typedef struct DXGI_FRAME_STATISTICS {
     LARGE_INTEGER SyncQPCTime;
     LARGE_INTEGER SyncGPUTime;
 } DXGI_FRAME_STATISTICS;
+
+typedef struct DXGI_SWAP_CHAIN_DESC {
+    DXGI_MODE_DESC BufferDesc;
+    DXGI_SAMPLE_DESC SampleDesc;
+    DXGI_USAGE BufferUsage;
+    UINT BufferCount;
+    HWND OutputWindow;
+    BOOL Windowed;
+    DXGI_SWAP_EFFECT SwapEffect;
+    UINT Flags;
+} DXGI_SWAP_CHAIN_DESC;
 
 [
     object,
@@ -154,5 +177,53 @@ interface IDXGIOutput : IDXGIObject
     );
     HRESULT GetFrameStatistics(
         [out] DXGI_FRAME_STATISTICS *stats
+    );
+}
+
+[
+    object,
+    local,
+    uuid(310d36a0-d2e7-4c0a-aa04-6a9d23b8886a)
+]
+interface IDXGISwapChain : IDXGIDeviceSubObject
+{
+    HRESULT Present(
+        [in] UINT sync_interval,
+        [in] UINT flags
+    );
+    HRESULT GetBuffer(
+        [in] UINT buffer_idx,
+        [in] REFIID riid,
+        [in, out] void **surface
+    );
+    HRESULT SetFullscreenState(
+        [in] BOOL fullscreen,
+        [in] IDXGIOutput *target
+    );
+    HRESULT GetFullscreenState(
+        [out] BOOL *fullscreen,
+        [out] IDXGIOutput **target
+    );
+    HRESULT GetDesc(
+        [out] DXGI_SWAP_CHAIN_DESC *desc
+    );
+    HRESULT ResizeBuffers(
+        [in] UINT buffer_count,
+        [in] UINT width,
+        [in] UINT height,
+        [in] DXGI_FORMAT format,
+        [in] UINT flags
+    );
+    HRESULT ResizeTarget(
+        [in] const DXGI_MODE_DESC target_mode_desc
+    );
+    HRESULT GetContainingOutput(
+        [out] IDXGIOutput **output
+    );
+    HRESULT GetFrameStatistics(
+        [out] DXGI_FRAME_STATISTICS *stats
+    );
+    HRESULT GetLastPresentCount(
+        [out] UINT *last_present_count
     );
 }
