@@ -87,20 +87,20 @@ long drive_available_mask(char letter)
   return result;
 }
 
-BOOL add_drive(const char letter, const char *targetpath, const char *label, const char *serial, unsigned int type)
+BOOL add_drive(const char letter, const char *targetpath, const char *label, DWORD serial, unsigned int type)
 {
     int driveIndex = letter_to_index(letter);
 
     if(drives[driveIndex].in_use)
         return FALSE;
 
-    WINE_TRACE("letter == '%c', unixpath == '%s', label == '%s', serial == '%s', type == %d\n",
+    WINE_TRACE("letter == '%c', unixpath == '%s', label == '%s', serial == %08x, type == %d\n",
                letter, targetpath, label, serial, type);
 
     drives[driveIndex].letter   = toupper(letter);
     drives[driveIndex].unixpath = strdupA(targetpath);
     drives[driveIndex].label    = strdupA(label);
-    drives[driveIndex].serial   = strdupA(serial);
+    drives[driveIndex].serial   = serial;
     drives[driveIndex].type     = type;
     drives[driveIndex].in_use   = TRUE;
 
@@ -114,9 +114,7 @@ void delete_drive(struct drive *d)
     d->unixpath = NULL;
     HeapFree(GetProcessHeap(), 0, d->label);
     d->label = NULL;
-    HeapFree(GetProcessHeap(), 0, d->serial);
-    d->serial = NULL;
-
+    d->serial = 0;
     d->in_use = FALSE;
 }
 
@@ -198,20 +196,22 @@ static void set_drive_label( char letter, const char *label )
 }
 
 /* set the drive serial number via a .windows-serial file */
-static void set_drive_serial( char letter, const char *serial )
+static void set_drive_serial( char letter, DWORD serial )
 {
     char filename[] = "a:\\.windows-serial";
     HANDLE hFile;
 
     filename[0] = letter;
-    WINE_TRACE("Putting serial number of '%s' into file '%s'\n", serial, filename);
+    WINE_TRACE("Putting serial number of %08x into file '%s'\n", serial, filename);
     hFile = CreateFile(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE)
     {
         DWORD w;
-        WriteFile(hFile, serial, strlen(serial), &w, NULL);
-        WriteFile(hFile, "\n", 1, &w, NULL);
+        char buffer[16];
+
+        sprintf( buffer, "%X\n", serial );
+        WriteFile(hFile, buffer, strlen(buffer), &w, NULL);
         CloseHandle(hFile);
     }
 }
@@ -281,15 +281,13 @@ void load_drives(void)
     {
         drives[i].letter = 'A' + i;
         drives[i].in_use = FALSE;
+        drives[i].serial = 0;
 
         HeapFree(GetProcessHeap(), 0, drives[i].unixpath);
         drives[i].unixpath = NULL;
 
         HeapFree(GetProcessHeap(), 0, drives[i].label);
         drives[i].label = NULL;
-
-        HeapFree(GetProcessHeap(), 0, drives[i].serial);
-        drives[i].serial = NULL;
     }
 
     /* work backwards through the result of GetLogicalDriveStrings  */
@@ -297,7 +295,6 @@ void load_drives(void)
     {
         char volname[512]; /* volume name  */
         DWORD serial;
-        char serialstr[256];
         char rootpath[256];
         char simplepath[3];
         int pathlen;
@@ -346,9 +343,7 @@ void load_drives(void)
         c = targetpath;
         do if (*c == '\\') *c = '/'; while (*c++);
 
-        snprintf(serialstr, sizeof(serialstr), "%X", serial);
-        WINE_TRACE("serialstr: '%s'\n", serialstr);
-        add_drive(*devices, targetpath, volname, serialstr, get_drive_type(devices[0]) );
+        add_drive(*devices, targetpath, volname, serial, get_drive_type(devices[0]) );
 
         len -= strlen(devices);
         devices += strlen(devices);
@@ -386,7 +381,7 @@ void load_drives(void)
         buff[cnt] = '\0';
 
         WINE_TRACE("found broken symlink %s -> %s\n", path, buff);
-        add_drive('A' + i, buff, "", "0", DRIVE_UNKNOWN);
+        add_drive('A' + i, buff, "", 0, DRIVE_UNKNOWN);
 
         drivecount++;
     }
@@ -410,7 +405,6 @@ void apply_drive_changes(void)
     DWORD maxComponentLength;
     DWORD fileSystemFlags;
     CHAR fileSystemName[128];
-    char newSerialNumberText[32];
     int retval;
     BOOL defineDevice;
 
@@ -517,8 +511,7 @@ void apply_drive_changes(void)
         if (drives[i].label && strcmp(drives[i].label, volumeNameBuffer))
             set_drive_label( drives[i].letter, drives[i].label );
 
-        snprintf(newSerialNumberText, sizeof(newSerialNumberText), "%X", serialNumber);
-        if (drives[i].serial && drives[i].serial[0] && strcmp(drives[i].serial, newSerialNumberText))
+        if (drives[i].serial != serialNumber)
             set_drive_serial( drives[i].letter, drives[i].serial );
 
         set_drive_type( drives[i].letter, drives[i].type );

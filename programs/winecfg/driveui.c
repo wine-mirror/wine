@@ -314,9 +314,9 @@ static void on_add_click(HWND dialog)
         char label[64];
         LoadStringA (GetModuleHandle (NULL), IDS_SYSTEM_DRIVE_LABEL, label,
             sizeof(label)/sizeof(label[0])); 
-        add_drive(new, "../drive_c", label, "", DRIVE_FIXED);
+        add_drive(new, "../drive_c", label, 0, DRIVE_FIXED);
     }
-    else add_drive(new, "/", "", "", DRIVE_UNKNOWN);
+    else add_drive(new, "/", "", 0, DRIVE_UNKNOWN);
 
     fill_drives_list(dialog);
 
@@ -378,7 +378,7 @@ static void update_controls(HWND dialog)
     char *path;
     unsigned int type;
     char *label;
-    char *serial;
+    char serial[16];
     const char *device;
     int i, selection = -1;
     LVITEM item;
@@ -437,7 +437,7 @@ static void update_controls(HWND dialog)
     set_text(dialog, IDC_EDIT_LABEL, label);
 
     /* set serial edit text */
-    serial = current_drive->serial;
+    sprintf( serial, "%X", current_drive->serial );
     set_text(dialog, IDC_EDIT_SERIAL, serial);
 
     /* TODO: get the device here to put into the edit box */
@@ -518,10 +518,9 @@ static void on_edit_changed(HWND dialog, WORD id)
             char *serial;
 
             serial = get_text(dialog, id);
-            HeapFree(GetProcessHeap(), 0, current_drive->serial);
-            current_drive->serial = serial ? serial : strdupA("");
+            current_drive->serial = strtoul( serial, NULL, 16 );
 
-            WINE_TRACE("set serial to %s\n", current_drive->serial);
+            WINE_TRACE("set serial to %08x\n", current_drive->serial);
 
             /* enable the apply button  */
             SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
@@ -760,8 +759,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     current_drive->label = str ? str : strdupA("");
 
                     str = get_text(dialog, IDC_EDIT_SERIAL);
-                    HeapFree(GetProcessHeap(), 0, current_drive->serial);
-                    current_drive->serial = str ? str : strdupA("");
+                    current_drive->serial = strtoul( str, NULL, 16 );
 
                     /* TODO: we don't have a device at this point */
 

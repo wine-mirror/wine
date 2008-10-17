@@ -233,7 +233,7 @@ static void ensure_root_is_mapped(void)
         {
             if (!drives[letter - 'A'].in_use) 
             {
-                add_drive(letter, "/", "System", "0", DRIVE_FIXED);
+                add_drive(letter, "/", "System", 0, DRIVE_FIXED);
                 WINE_TRACE("allocated drive %c as the root drive\n", letter);
                 break;
             }
@@ -262,7 +262,7 @@ static void ensure_home_is_mapped(void)
         {
             if (!drives[letter - 'A'].in_use)
             {
-                add_drive(letter, home, "Home", "0", DRIVE_FIXED);
+                add_drive(letter, home, "Home", 0, DRIVE_FIXED);
                 WINE_TRACE("allocated drive %c as the user's home directory\n", letter);
                 break;
             }
@@ -287,7 +287,7 @@ static void ensure_drive_c_is_mapped(void)
 
     if (stat(drive_c_dir, &buf) == 0)
     {
-        add_drive('C', "../drive_c", "Virtual Windows Drive", "0", DRIVE_FIXED);
+        add_drive('C', "../drive_c", "Virtual Windows Drive", 0, DRIVE_FIXED);
     }
     else
     {
@@ -356,7 +356,7 @@ int autodetect_drives(void)
         
         WINE_TRACE("adding drive %c for %s, type %s with label %s\n", letter, ent->mnt_dir, ent->mnt_type,label);
 
-        add_drive(letter, ent->mnt_dir, label, "0", type);
+        add_drive(letter, ent->mnt_dir, label, 0, type);
         
         /* working_mask is a map of the drive letters still available. */
         working_mask &= ~DRIVE_MASK_BIT(letter);
