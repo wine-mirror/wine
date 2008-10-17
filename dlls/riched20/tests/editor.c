@@ -5537,6 +5537,37 @@ static void test_word_wrap(void)
     DestroyWindow(hwnd);
 }
 
+static void test_auto_yscroll(void)
+{
+    HWND hwnd = new_richedit(NULL);
+    int lines, ret, redraw;
+    POINT pt;
+
+    for (redraw = 0; redraw <= 1; redraw++) {
+        trace("testing with WM_SETREDRAW=%d\n", redraw);
+        SendMessage(hwnd, WM_SETREDRAW, redraw, 0);
+        SendMessage(hwnd, EM_REPLACESEL, 0, (LPARAM)"1\n2\n3\n4\n5\n6\n7\n8");
+        lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+        ok(lines == 8, "%d lines instead of 8\n", lines);
+        ret = SendMessage(hwnd, EM_GETSCROLLPOS, 0, (LPARAM)&pt);
+        ok(ret == 1, "EM_GETSCROLLPOS returned %d instead of 1\n", ret);
+        if (!redraw)
+            todo_wine ok(pt.y != 0, "Didn't scroll down after replacing text.\n");
+        else
+            ok(pt.y != 0, "Didn't scroll down after replacing text.\n");
+
+        SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)NULL);
+        lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+        ok(lines == 1, "%d lines instead of 1\n", lines);
+        ret = SendMessage(hwnd, EM_GETSCROLLPOS, 0, (LPARAM)&pt);
+        ok(ret == 1, "EM_GETSCROLLPOS returned %d instead of 1\n", ret);
+        ok(pt.y == 0, "y scroll position is %d after clearing text.\n", pt.y);
+    }
+
+    SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+    DestroyWindow(hwnd);
+}
+
 START_TEST( editor )
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -5585,6 +5616,7 @@ START_TEST( editor )
   test_EM_CHARFROMPOS();
   test_SETPARAFORMAT();
   test_word_wrap();
+  test_auto_yscroll();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
