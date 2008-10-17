@@ -20,6 +20,10 @@ import "dxgitype.idl";
 
 cpp_quote("#if 0")
 typedef HANDLE HMONITOR;
+typedef struct _LUID {
+    DWORD LowPart;
+    LONG HighPart;
+} LUID, *PLUID;
 cpp_quote("#endif")
 
 typedef UINT DXGI_USAGE;
@@ -61,6 +65,18 @@ typedef struct DXGI_FRAME_STATISTICS {
     LARGE_INTEGER SyncQPCTime;
     LARGE_INTEGER SyncGPUTime;
 } DXGI_FRAME_STATISTICS;
+
+typedef struct DXGI_ADAPTER_DESC {
+    WCHAR Description[128];
+    UINT VendorId;
+    UINT DeviceId;
+    UINT SubSysId;
+    UINT Revision;
+    SIZE_T DedicatedVideoMemory;
+    SIZE_T DedicatedSystemMemory;
+    SIZE_T SharedSystemMemory;
+    LUID AdapterLuid;
+} DXGI_ADAPTER_DESC;
 
 typedef struct DXGI_SWAP_CHAIN_DESC {
     DXGI_MODE_DESC BufferDesc;
@@ -177,6 +193,26 @@ interface IDXGIOutput : IDXGIObject
     );
     HRESULT GetFrameStatistics(
         [out] DXGI_FRAME_STATISTICS *stats
+    );
+}
+
+[
+    object,
+    local,
+    uuid(2411e7e1-12ac-4ccf-bd14-9798e8534dc0)
+]
+interface IDXGIAdapter : IDXGIObject
+{
+    HRESULT EnumOutputs(
+        [in] UINT output_idx,
+        [in, out] IDXGIOutput **output
+    );
+    HRESULT GetDesc(
+        [out] DXGI_ADAPTER_DESC *desc
+    );
+    HRESULT CheckInterfaceSupport(
+        [in] REFGUID guid,
+        [out] LARGE_INTEGER umd_version
     );
 }
 
