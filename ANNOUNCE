@@ -1,16 +1,12 @@
-The Wine team is proud to announce that Wine 1.0 is now available.
-This is the first stable release of Wine after 15 years of development
-and beta testing. Many thanks to everybody who helped us along that
-long road!
+The Wine maintenance release 1.0.1 is now available.
 
-While compatibility is not perfect yet, thousands of applications have
-been reported to work very well. Check http://appdb.winehq.org to see
-the details for your favorite applications.
+This is a maintenance release from the 1.0 stable branch. It contains
+only translation updates and small bug fixes.
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.0.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.0.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.0.1.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.0.1.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -26,46 +22,218 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.0:
+Bugs fixed in 1.0.1:
 
-   3838  The Punisher demo crashes after the introduction movies
-   3898  Counter-Strike 1.6 performance issue
-   4755  X Error of failed request:  BadDrawable (X_PolyFillRectangle) when switching to Virtual Desktop
-   6315  Starlancer draws ships as white when direct3d is enabled
-   7268  Oni not opening after install
-   8185  can't login in Skype 3.1 on wine/kubuntu 7
-   8634  antialiasing disabled in gtasa menu
-   9555  Wine crash when I click help in Stata 10
-   9589  Static / Scratchy Sound with OSS in Call of Duty
-   9903  WinRAR with NXServer  - black icons
-  10009  QIP: window z-order is still wrong
-  10268  Robot Wars: Arena of Destruction crashes while quitting (causing resolution to stay 640 x 480)
-  10322  Eve-online (video memory misaddressed?)
-  10700  Dragon Naturally Speaking 9 needs gdiplus.GdipDrawArcI, gdiplus.GdipCreatePen2, ...
-  11011  Call of Duty 1.0 doesn't run after install.
-  11104  Dance Praise 2: Does not respond to input
-  12415  Can not leave fullscreen Warcraft 3x (Regression)
-  12963  Moto Racer 2 works with wine 0.9.60 and crashes with wine 0.9.61
-  13271  The demo of the punisher fails to install
-  13740  winebrowser gets wrong URL, problem with unicode
+   5031  First Encounter Assault Recon (FEAR) SP Demo Crashes on Start
+   6650  MSTSC (Remote Desktop) crashes
+   9775  Syberia 2, Max Payne 1 & 2 - Screenshots and thumbnails broken
+   9777  Silencer doesn't fully connect to lobby server.
+  10132  bad cyrillic font rendering
+  10229  Serious Sam TSE 1.07 - network connection fails
+  11198  C & C Tiberian Sun reporsts comctl32.dll is an older version on winver higher then 98
+  11494  Speed Commander 12 does not install
+  11640  Unable to use multiplayer in Sins of a Solar Empire: unknown address family
+  11766  Heap corruption in crypt32 during Sandra benchmark?
+  11936  window size is too small in the "vc2008 redist installer" and "Firefox 3" [dogfood]
+  11950  TheBat! 3.99.1 show white squares not icons under wine after 0.9.56
+  12005  Regression in pressure sensitivity with wizardpen tablet driver and Photoshop 7
+  12302  Lord of the Rings:  Shadows of Angmar unplayable due to high lag
+  12305  Firefox 3 beta 4 font problem: colon displayed as 0038 unicode glyph-missing glyph [dogfood]
+  12740  Wine tries to execute non-executable data (regression against 0.9.59)
+  12879  Cluster size not supported for large NFS mounts?
+  13227  100% CPU Usage with notepad - with dtrace output
+  13599  Can't install Autocad 2005
+  13601  can't compile wine with Xcode 3.1 or iPhone SDK
+  13713  Hema Album Software Advanced won't start, it crashes and has to be killed.
+  13748  Last Chaos aborts after clicking 'start' in 0.9.57 and later
+  13765  ZENcast 2.01.01 Installer Fails to Start
+  13882  psiops crashes while starting (XStreamlok)
+  14006  at least one locale missing: eo - (breaks .NET internationalization)
+  14019  systray icon not displayed in dual screen
+  14040  Microsoft Virtual Earth 3D beta inner installer aborts when reading registry
+  14053  Winamp 5.53 fails to start due to a loader crash
+  14188  utorrent - it disconnects fast leaching peers with Error 10022
+  14356  alt.binz does not run anymore
 
 ----------------------------------------------------------------
 
-Changes since 1.0-rc5:
+Changes since 1.0:
 
-Alexandre Julliard (1):
-      Updated the authors list.
+Alexander Nicolaysen Sørnes (2):
+      Updated Norwegian Bokmål Readme file.
+      kernel32/winerr: Add Norwegian Bokmål translation.
 
-Francois Gouget (3):
-      Remove spaces before '...' in the Danish resources.
-      regedit: Remove spaces before '...'.
-      winecfg: Remove spaces before '...'.
+Alexandre Julliard (16):
+      winex11: Only register an XIM callback if we can't open the XIM right away.
+      server: Move the process pipe hangup handling into kill_process.
+      winex11: Check for matching pixel format in wglMakeCurrent.
+      ntdll: Force execute permission again on the stack after clearing it.
+      ntdll: Add some sanity checks for invalid relocation blocks.
+      winex11: Check for XKB extension on the GDI display too.
+      user32: Fix MapWindowPoints behavior in the process that owns the desktop window.
+      libwine: Add support for relocating MS-style imports that use OriginalFirstThunk.
+      ntdll: Hardcode the filesystem cluster size to avoid trouble on NFS.
+      ntdll: Preserve the 2K block size returned for CDROMs.
+      comdlg32: Merge Chinese resources into a single file.
+      comctl32: Rename the Chinese resources to comctl_Zh.rc.
+      ws2_32: Allow arbitrary-sized iovecs again in WSASendTo and WSARecvFrom.
+      Avoid exporting common symbols since that's broken on Mac OS X.
+      dnsapi: Fix compile without the resolv library.
+      services.exe: Pass the service name as first argument when auto-starting services.
 
-Jaime Rave (1):
-      wineconsole: Update Spanish translation.
+Alistair Leslie-Hughes (1):
+      oleview: Fixed crash with loading typelib information.
 
-Matthias Kupfer (1):
-      wordpad: Small typo fix for German translation.
+Aric Stewart (1):
+      coreaudio: Make sure Port_SendToMessageThread is not NULL before calling CFMessagePortSendRequest.
+
+Damjan Jovanovic (1):
+      ws2_32: Only enable FD_WRITE on short sends.
+
+Daniel Santos (1):
+      ws2_32: WSASendTo() should clear last error on success.
+
+Dmitry Timoshkov (3):
+      gdi32: Extend the font substitution test, make it pass under Wine.
+      gdi32: Use 0xffff as a default character as Vista does.
+      wine.inf: Add Baltic font substitutions.
+
+Francois Gouget (1):
+      notepad: Remove spaces before '\n' in the Chinese resources.
+
+Hans Leidekker (1):
+      wininet: Clear last error upon successful return from HttpSendRequest.
+
+Henri Verbeet (1):
+      msvcrt: Don't depend on the system's implementation of acos() & asin().
+
+Hongbo Ni (41):
+      notepad: Update simplified Chinese resource.
+      clock: Update simplified Chinese resource.
+      winefile: Update simplified Chinese resource.
+      winconsole: Update simplified Chinese resource.
+      progman: Update simplified Chinese resource.
+      user32: Update simplified Chinese resource.
+      comdlg32: Update simplified Chinese resource.
+      comctl32: Update simplified Chinese resource.
+      wineconsole: Convert simplified Chinese resource to utf8.
+      winefile: Convert simplified Chinese resource to utf8.
+      progman: Convert simplified Chinese resource to utf8.
+      comctl32: Convert simplified Chinese resource to utf8.
+      notepad: Convert simplified Chinese resource to utf8.
+      comdlg32: Convert traditional Chinese resource to utf8.
+      comdlg32: Convert simplified Chinese resource to utf8.
+      user32: Convert Chinese resource to utf8.
+      clock: Convert simplified Chinese resource to utf8.
+      clock: Add traditional Chinese resource.
+      progman: Add traditional Chinese resource.
+      winefile: Add traditional Chinese resource.
+      wineconsole: Add traditional Chinese resource.
+      notepad: Add traditional Chinese resource.
+      user32: Update traditional Chinese resource.
+      comdlg32: Update traditional Chinese resource.
+      comdlg32: Update simplified Chinese resource.
+      comdlg32: Update simplified Chinese resource.
+      notepad: Update Chinese resources - dialog font.
+      wineboot: Add simplified and traditional Chinese resources.
+      view: Add simplified and traditional Chinese resources.
+      credui: Add simplified and traditional Chinese resources.
+      htctrl: Add simplified and traditional Chinese resources.
+      localspl: Add simplified and traditional Chinese resources.
+      localui: Add simplified and traditional Chinese resources.
+      mpr: Add simplified and traditional Chinese resources.
+      msacm32: Add simplified and traditional Chinese resources.
+      msi: Add simplified and traditional Chinese resources.
+      oleaut32: Add simplified and traditional Chinese resources.
+      serialui: Add simplified and traditional Chinese resources.
+      setupapi: Add simplified and traditional Chinese resources.
+      shlwapi: Add simplified and traditional Chinese resources.
+      winspool: Add simplified and traditional Chinese resources.
+
+Jeff Zaroyko (1):
+      ws2_32: Ignore lpFrom for connected sockets.
+
+Jim Cameron (1):
+      user32: Fixed bug in loading .cur files.
+
+John Klehm (4):
+      winex11: Add comments explaining wintab cursor slotting, type, and clarify x11 config.
+      winex11: Always assign a tablet cursor type.
+      winex11: Cursor iteration is now done by checking ACTIVE cursors.
+      winex11: Place tablet cursors in slots based on type.
+
+Juan Lang (2):
+      crypt32: Fix length calculation for decoding CRL_DIST_POINT_NAME.
+      crypt32: Free memory using the correct function on failure.
+
+Kirill K. Smirnov (1):
+      shell32: Avoid usage of undefined xdg_results variable, since XDG_UserDirLookup() always corrupts it.
+
+Lei Zhang (3):
+      user32: Clamp newly created windows to the minimum window size.
+      sane.ds: Replace wsprintfW with sprintfW.
+      version: Prevent infinite looping in VersionInfo32_FindChild.
+
+Massimo Del Fedele (1):
+      opengl32: glGetString() should return NULL on NULL context.
+
+Mathias Kosch (1):
+      winex11: Fix typo in X11DRV_SetDIBits optimization.
+
+Michael Karcher (1):
+      kernel32: Fix profile sharing mode.
+
+Mikołaj Zalewski (6):
+      kernel32: Improve Esperanto locale definition.
+      shell32: autocomplete: Don't pass NULL pceltFetched to IEnumString_Next.
+      comctl32: Fix the file version string declaration.
+      oleaut32: Use custom file version in VERSIONINFO.
+      advapi32: Remove access checks from advapi32 (makes KEY_WOW64_* work).
+      winhlp32: Update Polish translation.
+
+Muneyuki Noguchi (21):
+      notepad: Update Japanese translation.
+      comdlg32: Update Japanese translation.
+      user32: Update Japanese translation.
+      comdlg32: Update Japanese translation.
+      notepad: Update Japanese translation.
+      wininet: Update Japanese translation.
+      view: Add Japanese resources.
+      cmdlgtst: Add Japanese resources.
+      comdlg32: Update Japanese translation.
+      wineboot: Use "MS Shell Dlg" 9 in Japanese resources.
+      notepad: Use "MS Shell Dlg" 9 in Japanese resources.
+      avifil32: Use "MS Shell Dlg" 9 in Japanese resources.
+      setupapi: Use "MS Shell Dlg" 9 in Japanese resources.
+      user32: Use "MS Shell Dlg" 9 in Japanese resources.
+      wineps.drv: Use "MS Shell Dlg" 9 in Japanese resources.
+      wininet: Use "MS Shell Dlg" 9 in Japanese resources.
+      comctl32: Use "MS Shell Dlg" 9 in Japanese resources.
+      msacm32: Use "MS Shell Dlg" 9 in Japanese resources.
+      oledlg: Use "MS Shell Dlg" 9 in Japanese resources.
+      serialui: Use "MS Shell Dlg" 9 in Japanese resources.
+      shlwapi: Use "MS Shell Dlg" 9 in Japanese resources.
+
+Rob Shearman (1):
+      shell32: Free the correct pointer in XDG_UserDirLookup.
+
+Scott Ritchie (1):
+      wine.desktop: Add application/x-msi and change "emulator" to "program loader".
+
+Tobias Jakobi (1):
+      d3d8: Fix IDirect3DDevice8::CreateImageSurface pool type.
+
+Vitaly Lipatov (1):
+      wineboot: Do registry update with wineboot --update in any case.
+
+Vladimir Pankratov (7):
+      README: Add Russian translation.
+      shell32: Update Russian translation.
+      mshtml: Update Russian translation.
+      regedit: Update Russian translation.
+      oleview: Add Russian translation.
+      hhctrl.ocx: Update Russian translation.
+      taskmgr: Add Russian translation.
 
 --
 Alexandre Julliard
