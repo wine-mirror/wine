@@ -414,29 +414,32 @@ DWORD WINAPI DOSVM_inport( int port, int size )
     case 0x22e:
         res = (DWORD)SB_ioport_in( port );
 	break;
-    case 0x3ba:
-    case 0x3c0:
-    case 0x3c1:
-    case 0x3c2:
-    case 0x3c3:
-    case 0x3c4:
-    case 0x3c5:
+    /* VGA read registers */
+    case 0x3b4:  /* CRT Controller Register - Index (MDA) */
+    case 0x3b5:  /* CRT Controller Register - Other (MDA) */
+    case 0x3ba:  /* General Register - Input status 1 (MDA) */
+    case 0x3c0:  /* Attribute Controller - Address */
+    case 0x3c1:  /* Attribute Controller - Other */
+    case 0x3c2:  /* General Register - Input status 0 */
+    case 0x3c3:  /* General Register - Video subsystem enable */
+    case 0x3c4:  /* Sequencer Register - Address */
+    case 0x3c5:  /* Sequencer Register - Other */
     case 0x3c6:
-    case 0x3c7:
+    case 0x3c7:  /* General Register -  DAC State */
     case 0x3c8:
     case 0x3c9:
-    case 0x3ca:
+    case 0x3ca:  /* General Register - Feature control */
     case 0x3cb:
-    case 0x3cc:
+    case 0x3cc:  /* General Register - Misc output */
     case 0x3cd:
-    case 0x3ce:
-    case 0x3cf:
+    case 0x3ce:  /* Graphics Controller Register - Address */
+    case 0x3cf:  /* Graphics Controller Register - Other */
     case 0x3d0:
     case 0x3d1:
     case 0x3d2:
     case 0x3d3:
-    case 0x3d4:
-    case 0x3d5:
+    case 0x3d4:  /* CRT Controller Register - Index (CGA) */
+    case 0x3d5:  /* CRT Controller Register - Other (CGA) */
     case 0x3d6:
     case 0x3d7:
     case 0x3d8:
@@ -624,12 +627,16 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
     case 0x22c:
         SB_ioport_out( port, (BYTE)value );
         break;
-    case 0x3c0:
+    /* VGA Write registers */
+    case 0x3b4:  /* CRT Controller Register - Index (MDA) */
+    case 0x3b5:  /* CRT Controller Register - Other (MDA) */
+    case 0x3ba:  /* General Register - Feature Control */
+    case 0x3c0:  /* Attribute Controller - Address/Other */
     case 0x3c1:
-    case 0x3c2:
-    case 0x3c3:
-    case 0x3c4:
-    case 0x3c5:
+    case 0x3c2:  /* General Register - Misc output */
+    case 0x3c3:  /* General Register - Video subsystem enable */
+    case 0x3c4:  /* Sequencer Register - Address */
+    case 0x3c5:  /* Sequencer Register - Other */
     case 0x3c6:
     case 0x3c7:
     case 0x3c8:
@@ -638,14 +645,14 @@ void WINAPI DOSVM_outport( int port, int size, DWORD value )
     case 0x3cb:
     case 0x3cc:
     case 0x3cd:
-    case 0x3ce:
-    case 0x3cf:
+    case 0x3ce:  /* Graphics Controller Register - Address */
+    case 0x3cf:  /* Graphics Controller Register - Other */
     case 0x3d0:
     case 0x3d1:
     case 0x3d2:
     case 0x3d3:
-    case 0x3d4:
-    case 0x3d5:
+    case 0x3d4:  /* CRT Controller Register - Index (CGA) */
+    case 0x3d5:  /* CRT Controller Register - Other (CGA) */
     case 0x3d6:
     case 0x3d7:
     case 0x3d8:

@@ -1338,17 +1338,32 @@ static PALETTEENTRY paldat;
 void VGA_ioport_out( WORD port, BYTE val )
 {
     switch (port) {
+        /* General Register - Feature Control */
+        case 0x3ba:
+           FIXME("Unsupported VGA register: general register - feature control 0x%04x (value 0x%02x)\n", port, val);
+           break;
+        /* Attribute Controller - Address/Other */
         case 0x3c0:
            if (vga_address_3c0)
                vga_index_3c0 = val;
            else
-               FIXME("Unsupported index, register 0x3c0: 0x%02x (value 0x%02x)\n",
+               FIXME("Unsupported index, VGA attribute controller register 0x3c0: 0x%02x (value 0x%02x)\n",
                      vga_index_3c0, val);
            vga_address_3c0 = !vga_address_3c0;
            break;
+        /* General Register - Misc output */
+        case 0x3c2:
+           FIXME("Unsupported VGA register: general register - misc output 0x%04x (value 0x%02x)\n", port, val);
+           break;
+        /* General Register - Video subsystem enable */
+        case 0x3c3:
+           FIXME("Unsupported VGA register: general register - video subsystem enable 0x%04x (value 0x%02x)\n", port, val);
+           break;
+        /* Sequencer Register - Address */
         case 0x3c4:
            vga_index_3c4 = val;
            break;
+        /* Sequencer Register - Other */
         case 0x3c5:
           switch(vga_index_3c4) {
                case 0x04: /* Sequencer: Memory Mode Register */
@@ -1356,9 +1371,9 @@ void VGA_ioport_out( WORD port, BYTE val )
                       VGA_SetWindowStart((val & 8) ? 0 : -1);
                   else
                       FIXME("Memory Mode Register not supported in this mode.\n");
-               break;
+                  break;
                default:
-                  FIXME("Unsupported index, register 0x3c4: 0x%02x (value 0x%02x)\n",
+                  FIXME("Unsupported index, VGA sequencer register 0x3c4: 0x%02x (value 0x%02x)\n",
                         vga_index_3c4, val);
            }
            break;
@@ -1371,18 +1386,26 @@ void VGA_ioport_out( WORD port, BYTE val )
                 palcnt=0;
             }
             break;
+        /* Graphics Controller Register - Address */
         case 0x3ce:
             vga_index_3ce = val;
            break;
+        /* Graphics Controller Register - Other */
         case 0x3cf:
-           FIXME("Unsupported index, register 0x3ce: 0x%02x (value 0x%02x)\n",
+           FIXME("Unsupported index, VGA graphics controller register - other 0x3ce: 0x%02x (value 0x%02x)\n",
                  vga_index_3ce, val);
            break;
+        /* CRT Controller Register - Index (MDA) */
+        case 0x3b4:
+        /* CRT Controller Register - Index (CGA) */
         case 0x3d4:
            vga_index_3d4 = val;
            break;
+        /* CRT Controller Register - Other (MDA) */
+        case 0x3b5:
+        /* CRT Controller Register - Other (CGA) */
         case 0x3d5:
-           FIXME("Unsupported index, register 0x3d4: 0x%02x (value 0x%02x)\n",
+           FIXME("Unsupported index, VGA crt controller register 0x3b4/0x3d4: 0x%02x (value 0x%02x)\n",
                  vga_index_3d4, val);
            break;
         default:
@@ -1395,10 +1418,22 @@ BYTE VGA_ioport_in( WORD port )
     BYTE ret;
 
     switch (port) {
+        /* Attribute Controller - Other */
         case 0x3c1:
-           FIXME("Unsupported index, register 0x3c0: 0x%02x\n",
+           FIXME("Unsupported index, VGA attribute controller register 0x3c0: 0x%02x\n",
                  vga_index_3c0);
            return 0xff;
+        /* General Register - Input status 0 */
+        case 0x3c2:
+           ret=0xff;
+           FIXME("Unsupported VGA register: general register - input status 0 0x%04x\n", port);
+           break;
+        /* General Register - Video subsystem enable */
+        case 0x3c3:
+           ret=0xff;
+           FIXME("Unsupported VGA register: general register - video subsystem enable 0x%04x\n", port);
+           break;
+        /* Sequencer Register - Other */
         case 0x3c5:
            switch(vga_index_3c4) {
                case 0x04: /* Sequencer: Memory Mode Register */
@@ -1408,15 +1443,36 @@ BYTE VGA_ioport_in( WORD port )
                          vga_index_3c4);
                    return 0xff;
            }
+        /* General Register -  DAC State */
+        case 0x3c7:
+           ret=0xff;
+           FIXME("Unsupported VGA register: general register - DAC State 0x%04x\n", port);
+           break;
+        /* General Register - Feature control */
+        case 0x3ca:
+           ret=0xff;
+           FIXME("Unsupported VGA register: general register - Feature control 0x%04x\n", port);
+           break;
+        /* General Register - Misc output */
+        case 0x3cc:
+           ret=0xff;
+           FIXME("Unsupported VGA register: general register - Feature control 0x%04x\n", port);
+           break;
+        /* Graphics Controller Register - Other */
         case 0x3cf:
            FIXME("Unsupported index, register 0x3ce: 0x%02x\n",
                  vga_index_3ce);
            return 0xff;
+        /* CRT Controller Register - Other (MDA) */
+        case 0x3b5:
+        /* CRT Controller Register - Other (CGA) */
         case 0x3d5:
-           FIXME("Unsupported index, register 0x3d4: 0x%02x\n",
+           FIXME("Unsupported index, VGA crt controller register 0x3b4/0x3d4: 0x%02x\n",
                  vga_index_3d4);
            return 0xff;
-
+        /* General Register - Input status 1 (MDA) */
+        case 0x3ba:
+        /* General Register - Input status 1 (CGA) */
         case 0x3da:
             /*
              * Read from this register resets register 0x3c0 address flip-flop.
