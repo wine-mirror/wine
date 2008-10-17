@@ -303,6 +303,8 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF cfFlags, ASSOCSTR str, LPCSTR pszAssoc,
     if (dwLenOut >= MAX_PATH)
       lpszReturnW = HeapAlloc(GetProcessHeap(), 0,
                                       (dwLenOut + 1) * sizeof(WCHAR));
+    else
+      dwLenOut = sizeof(szReturnW) / sizeof(szReturnW[0]);
 
     if (!lpszReturnW)
       hRet = E_OUTOFMEMORY;
@@ -312,9 +314,10 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF cfFlags, ASSOCSTR str, LPCSTR pszAssoc,
                                lpszReturnW, &dwLenOut);
 
       if (SUCCEEDED(hRet))
-        WideCharToMultiByte(CP_ACP,0,szReturnW,-1,pszOut,dwLenOut,0,0);
-      *pcchOut = dwLenOut;
+        dwLenOut = WideCharToMultiByte(CP_ACP, 0, lpszReturnW, -1,
+                                       pszOut, *pcchOut, NULL, NULL);
 
+      *pcchOut = dwLenOut;
       if (lpszReturnW != szReturnW)
         HeapFree(GetProcessHeap(), 0, lpszReturnW);
     }
