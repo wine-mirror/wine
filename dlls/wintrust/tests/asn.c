@@ -547,7 +547,6 @@ static void test_decodeCatMemberInfo(void)
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
      emptyCatMemberInfo, sizeof(emptyCatMemberInfo),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -561,7 +560,6 @@ static void test_decodeCatMemberInfo(void)
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
      catMemberInfoWithSillyGuid, sizeof(catMemberInfoWithSillyGuid),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -575,7 +573,6 @@ static void test_decodeCatMemberInfo(void)
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
      catMemberInfoWithGuid, sizeof(catMemberInfoWithGuid),
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
