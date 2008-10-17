@@ -379,8 +379,9 @@ static void mixer_test_deviceA(int device)
        "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         rc=mixerOpen(&mix, device, 0, 0, CALLBACK_FUNCTION);
-        ok(rc==MMSYSERR_INVALFLAG,
-           "mixerOpen: MMSYSERR_INVALFLAG expected, got %s\n", mmsys_error(rc));
+        ok(rc==MMSYSERR_INVALFLAG
+           || rc==MMSYSERR_NOTSUPPORTED, /* 98/ME */
+           "mixerOpen: MMSYSERR_INVALFLAG or MMSYSERR_NOTSUPPORTED expected, got %s\n", mmsys_error(rc));
 
         for (d=0;d<capsA.cDestinations;d++) {
             MIXERLINEA mixerlineA;
