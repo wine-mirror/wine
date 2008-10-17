@@ -87,7 +87,7 @@
 @ stub WTHelperOpenKnownStores
 @ stdcall WTHelperProvDataFromStateData(ptr)
 @ stub WVTAsn1CatMemberInfoDecode
-@ stub WVTAsn1CatMemberInfoEncode
+@ stdcall WVTAsn1CatMemberInfoEncode(long str ptr ptr ptr)
 @ stub WVTAsn1CatNameValueDecode
 @ stub WVTAsn1CatNameValueEncode
 @ stub WVTAsn1SpcFinancialCriteriaInfoDecode
