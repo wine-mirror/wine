@@ -531,6 +531,63 @@ static void test_encodeCatMemberInfo(void)
     }
 }
 
+static void test_decodeCatMemberInfo(void)
+{
+   BOOL ret;
+   LPBYTE buf;
+   DWORD size;
+   CAT_MEMBERINFO *info;
+
+    if (!pCryptDecodeObjectEx)
+    {
+        skip("CryptDecodeObjectEx() is not available. Skipping the decodeCatMemberInfo tests\n");
+        return;
+    }
+
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
+     emptyCatMemberInfo, sizeof(emptyCatMemberInfo),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        info = (CAT_MEMBERINFO *)buf;
+        ok(!info->pwszSubjGuid || !info->pwszSubjGuid[0],
+         "expected empty pwszSubjGuid\n");
+        ok(info->dwCertVersion == 0, "expected dwCertVersion == 0, got %d\n",
+         info->dwCertVersion);
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
+     catMemberInfoWithSillyGuid, sizeof(catMemberInfoWithSillyGuid),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        info = (CAT_MEMBERINFO *)buf;
+        ok(info->pwszSubjGuid && !lstrcmpW(info->pwszSubjGuid, foo),
+         "unexpected pwszSubjGuid\n");
+        ok(info->dwCertVersion == 0, "expected dwCertVersion == 0, got %d\n",
+         info->dwCertVersion);
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
+     catMemberInfoWithGuid, sizeof(catMemberInfoWithGuid),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        info = (CAT_MEMBERINFO *)buf;
+        ok(info->pwszSubjGuid && !lstrcmpW(info->pwszSubjGuid, guidStr),
+         "unexpected pwszSubjGuid\n");
+        ok(info->dwCertVersion == 0, "expected dwCertVersion == 0, got %d\n",
+         info->dwCertVersion);
+        LocalFree(buf);
+    }
+}
+
 START_TEST(asn)
 {
     HMODULE hCrypt32 = LoadLibraryA("crypt32.dll");
@@ -542,6 +599,7 @@ START_TEST(asn)
     test_encodeSPCPEImage();
     test_decodeSPCPEImage();
     test_encodeCatMemberInfo();
+    test_decodeCatMemberInfo();
 
     FreeLibrary(hCrypt32);
 }
