@@ -49,7 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 /* extra info for disk devices, stored in DeviceExtension */
 struct disk_device_info
 {
-    UNICODE_STRING        name;     /* device name */
     STORAGE_DEVICE_NUMBER devnum;   /* device number info */
 };
 
@@ -57,6 +56,7 @@ struct mount_point
 {
     struct list    entry;   /* entry in mount points list */
     DEVICE_OBJECT *device;  /* disk device */
+    UNICODE_STRING name;    /* device name */
     UNICODE_STRING link;    /* DOS device symlink */
     void          *id;      /* device unique id */
     unsigned int   id_len;
@@ -64,11 +64,6 @@ struct mount_point
 
 static struct list mount_points_list = LIST_INIT(mount_points_list);
 static HKEY mount_key;
-
-static inline UNICODE_STRING *get_device_name( DEVICE_OBJECT *dev )
-{
-    return &((struct disk_device_info *)dev->DeviceExtension)->name;
-}
 
 /* read a Unix symlink; returned buffer must be freed by caller */
 static char *read_symlink( const char *path )
@@ -99,7 +94,8 @@ static char *read_symlink( const char *path )
     }
 }
 
-static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OBJECT **dev_obj )
+static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OBJECT **dev_obj,
+                                    UNICODE_STRING *device_name )
 {
     static const WCHAR harddiskW[] = {'\\','D','e','v','i','c','e',
                                       '\\','H','a','r','d','d','i','s','k','V','o','l','u','m','e','%','u',0};
@@ -139,7 +135,7 @@ static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OB
     if (!status)
     {
         info = (*dev_obj)->DeviceExtension;
-        info->name = name;
+        *device_name = name;
         switch(type)
         {
         case DRIVE_REMOVABLE:
@@ -186,13 +182,19 @@ static struct mount_point *add_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
 {
     struct mount_point *mount;
     WCHAR *str;
-    UINT len = (strlenW(link) + 1) * sizeof(WCHAR);
+    UINT len = (strlenW(link) + 1) * sizeof(WCHAR) + device_name->Length + sizeof(WCHAR);
 
     if (!(mount = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*mount) + len ))) return NULL;
 
     str = (WCHAR *)(mount + 1);
     strcpyW( str, link );
     RtlInitUnicodeString( &mount->link, str );
+    str += strlenW(str) + 1;
+    memcpy( str, device_name->Buffer, device_name->Length );
+    str[device_name->Length / sizeof(WCHAR)] = 0;
+    mount->name.Buffer = str;
+    mount->name.Length = device_name->Length;
+    mount->name.MaximumLength = device_name->Length + sizeof(WCHAR);
     mount->device = device;
     mount->id = NULL;
     list_add_tail( &mount_points_list, &mount->entry );
@@ -201,7 +203,7 @@ static struct mount_point *add_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
     set_mount_point_id( mount, id, id_len );
 
     TRACE( "created %s id %s for %s\n", debugstr_w(mount->link.Buffer),
-           debugstr_a(mount->id), debugstr_w(device_name->Buffer) );
+           debugstr_a(mount->id), debugstr_w(mount->name.Buffer) );
     return mount;
 }
 
@@ -248,9 +250,8 @@ static BOOL matching_mount_point( const struct mount_point *mount, const MOUNTMG
     if (spec->DeviceNameOffset)
     {
         const WCHAR *name = (const WCHAR *)((const char *)spec + spec->DeviceNameOffset);
-        const UNICODE_STRING *dev_name = get_device_name( mount->device );
-        if (spec->DeviceNameLength != dev_name->Length) return FALSE;
-        if (memicmpW( name, dev_name->Buffer, dev_name->Length/sizeof(WCHAR)))
+        if (spec->DeviceNameLength != mount->name.Length) return FALSE;
+        if (memicmpW( name, mount->name.Buffer, mount->name.Length/sizeof(WCHAR)))
             return FALSE;
     }
     if (spec->UniqueIdOffset)
@@ -269,7 +270,6 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
     UINT count, pos, size;
     const MOUNTMGR_MOUNT_POINT *input = in_buff;
     MOUNTMGR_MOUNT_POINTS *info = out_buff;
-    UNICODE_STRING *dev_name;
     struct mount_point *mount;
 
     /* sanity checks */
@@ -285,7 +285,7 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
     LIST_FOR_EACH_ENTRY( mount, &mount_points_list, struct mount_point, entry )
     {
         if (!matching_mount_point( mount, input )) continue;
-        size += get_device_name(mount->device)->Length;
+        size += mount->name.Length;
         size += mount->link.Length;
         size += mount->id_len;
         size = (size + sizeof(WCHAR) - 1) & ~(sizeof(WCHAR) - 1);
@@ -307,11 +307,10 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
     {
         if (!matching_mount_point( mount, input )) continue;
 
-        dev_name = get_device_name( mount->device );
         info->MountPoints[count].DeviceNameOffset = pos;
-        info->MountPoints[count].DeviceNameLength = dev_name->Length;
-        memcpy( (char *)out_buff + pos, dev_name->Buffer, dev_name->Length );
-        pos += dev_name->Length;
+        info->MountPoints[count].DeviceNameLength = mount->name.Length;
+        memcpy( (char *)out_buff + pos, mount->name.Buffer, mount->name.Length );
+        pos += mount->name.Length;
 
         info->MountPoints[count].SymbolicLinkNameOffset = pos;
         info->MountPoints[count].SymbolicLinkNameLength = mount->link.Length;
@@ -414,6 +413,7 @@ static void create_drive_mount_points( DRIVER_OBJECT *driver )
     char *buffer, *p, *link;
     unsigned int i;
     DEVICE_OBJECT *device;
+    UNICODE_STRING device_name;
 
     if ((buffer = RtlAllocateHeap( GetProcessHeap(), 0,
                                    strlen(config_dir) + sizeof("/dosdevices/a:") )))
@@ -426,10 +426,11 @@ static void create_drive_mount_points( DRIVER_OBJECT *driver )
         {
             *p = 'a' + i;
             if (!(link = read_symlink( buffer ))) continue;
-            if (!create_disk_device( driver, DRIVE_FIXED, &device ))
+            if (!create_disk_device( driver, DRIVE_FIXED, &device, &device_name ))
             {
-                add_dosdev_mount_point( device, get_device_name(device), i, link, strlen(link) + 1 );
-                add_volume_mount_point( device, get_device_name(device), i, link, strlen(link) + 1 );
+                add_dosdev_mount_point( device, &device_name, i, link, strlen(link) + 1 );
+                add_volume_mount_point( device, &device_name, i, link, strlen(link) + 1 );
+                RtlFreeUnicodeString( &device_name );
             }
             RtlFreeHeap( GetProcessHeap(), 0, link );
         }
@@ -466,7 +467,6 @@ static NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STR
         return status;
     }
     info = device->DeviceExtension;
-    info->name = nameW;
     info->devnum.DeviceType = FILE_DEVICE_DISK;
     info->devnum.DeviceNumber = 0;
     info->devnum.PartitionNumber = 0;
