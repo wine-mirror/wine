@@ -768,6 +768,17 @@ static const CHAR mcomp_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVers
                                      "lithium\tlithium\tlithium\t0\t\t\t8192\t1\n"
                                      "beryllium\tmissingcomp\tberyllium\t0\t\t\t8192\t1";
 
+static const CHAR ai_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "five.txt\tFive\tfive.txt\t1000\t\t\t16384\t5\n"
+                                  "four.txt\tFour\tfour.txt\t1000\t\t\t16384\t4\n"
+                                  "one.txt\tOne\tone.txt\t1000\t\t\t16384\t1\n"
+                                  "three.txt\tThree\tthree.txt\t1000\t\t\t16384\t3\n"
+                                  "two.txt\tTwo\ttwo.txt\t1000\t\t\t16384\t2\n"
+                                  "file\tcomponent\tfilename\t100\t\t\t8192\t1\n"
+                                  "service_file\tservice_comp\tservice.exe\t100\t\t\t8192\t1";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1166,6 +1177,18 @@ static const msi_table mcomp_tables[] =
     ADD_TABLE(property),
 };
 
+static const msi_table ai_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(ai_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
 /* cabinet definitions */
 
 /* make the max size large so there is only one cab file */
@@ -1552,7 +1575,7 @@ static void write_file(const CHAR *filename, const char *data, int data_size)
     CloseHandle(hf);
 }
 
-static void write_msi_summary_info(MSIHANDLE db)
+static void write_msi_summary_info(MSIHANDLE db, INT wordcount)
 {
     MSIHANDLE summary;
     UINT r;
@@ -1570,7 +1593,7 @@ static void write_msi_summary_info(MSIHANDLE db)
     r = MsiSummaryInfoSetPropertyA(summary, PID_PAGECOUNT, VT_I4, 100, NULL, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    r = MsiSummaryInfoSetPropertyA(summary, PID_WORDCOUNT, VT_I4, 0, NULL, NULL);
+    r = MsiSummaryInfoSetPropertyA(summary, PID_WORDCOUNT, VT_I4, wordcount, NULL, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSummaryInfoSetPropertyA(summary, PID_TITLE, VT_LPSTR, 0, NULL, "MSITEST");
@@ -1583,7 +1606,11 @@ static void write_msi_summary_info(MSIHANDLE db)
     MsiCloseHandle(summary);
 }
 
-static void create_database(const CHAR *name, const msi_table *tables, int num_tables)
+#define create_database(name, tables, num_tables) \
+    create_database_wordcount(name, tables, num_tables, 0);
+
+static void create_database_wordcount(const CHAR *name, const msi_table *tables,
+                                      int num_tables, INT wordcount)
 {
     MSIHANDLE db;
     UINT r;
@@ -1605,7 +1632,7 @@ static void create_database(const CHAR *name, const msi_table *tables, int num_t
         DeleteFileA(table->filename);
     }
 
-    write_msi_summary_info(db);
+    write_msi_summary_info(db, wordcount);
 
     r = MsiDatabaseCommit(db);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -5474,6 +5501,58 @@ static void test_sourcedirprop(void)
     RemoveDirectory("altsource");
 }
 
+static void test_adminimage(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    CreateDirectoryA("msitest\\first", NULL);
+    CreateDirectoryA("msitest\\second", NULL);
+    CreateDirectoryA("msitest\\cabout", NULL);
+    CreateDirectoryA("msitest\\cabout\\new", NULL);
+    create_file("msitest\\one.txt", 100);
+    create_file("msitest\\first\\two.txt", 100);
+    create_file("msitest\\second\\three.txt", 100);
+    create_file("msitest\\cabout\\four.txt", 100);
+    create_file("msitest\\cabout\\new\\five.txt", 100);
+    create_file("msitest\\filename", 100);
+    create_file("msitest\\service.exe", 100);
+
+    create_database_wordcount(msifile, ai_tables,
+                              sizeof(ai_tables) / sizeof(msi_table),
+                              msidbSumInfoSourceTypeAdminImage);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    DeleteFileA("msitest.msi");
+    DeleteFileA("msitest\\cabout\\new\\five.txt");
+    DeleteFileA("msitest\\cabout\\four.txt");
+    DeleteFileA("msitest\\second\\three.txt");
+    DeleteFileA("msitest\\first\\two.txt");
+    DeleteFileA("msitest\\one.txt");
+    DeleteFileA("msitest\\service.exe");
+    DeleteFileA("msitest\\filename");
+    RemoveDirectoryA("msitest\\cabout\\new");
+    RemoveDirectoryA("msitest\\cabout");
+    RemoveDirectoryA("msitest\\second");
+    RemoveDirectoryA("msitest\\first");
+    RemoveDirectoryA("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -5545,6 +5624,7 @@ START_TEST(install)
     test_MsiConfigureProductEx();
     test_missingcomponent();
     test_sourcedirprop();
+    test_adminimage();
 
     DeleteFileA("msitest.log");
 
