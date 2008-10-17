@@ -2095,7 +2095,33 @@ BOOL WINAPI WVTAsn1CatNameValueDecode(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    FIXME("(%p, %d, %08x, %p, %d): stub\n", pbEncoded, cbEncoded, dwFlags,
+    BOOL ret = FALSE;
+
+    TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo);
-    return FALSE;
+
+    __TRY
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { ASN_BMPSTRING, offsetof(CAT_NAMEVALUE, pwszTag),
+           CRYPT_AsnDecodeBMPString, sizeof(LPWSTR), FALSE, TRUE,
+           offsetof(CAT_NAMEVALUE, pwszTag), 0 },
+         { ASN_INTEGER, offsetof(CAT_NAMEVALUE, fdwFlags),
+           CRYPT_AsnDecodeInt, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+         { ASN_OCTETSTRING, offsetof(CAT_NAMEVALUE, Value),
+           CRYPT_AsnDecodeOctets, sizeof(CRYPT_DER_BLOB), FALSE, TRUE,
+           offsetof(CAT_NAMEVALUE, Value.pbData), 0 },
+        };
+
+        ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+         sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
+         pvStructInfo, pcbStructInfo, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    TRACE("returning %d\n", ret);
+    return ret;
 }
