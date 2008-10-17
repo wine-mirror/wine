@@ -87,19 +87,19 @@ long drive_available_mask(char letter)
   return result;
 }
 
-BOOL add_drive(const char letter, const char *targetpath, const char *label, DWORD serial, unsigned int type)
+BOOL add_drive(char letter, const char *targetpath, const WCHAR *label, DWORD serial, DWORD type)
 {
     int driveIndex = letter_to_index(letter);
 
     if(drives[driveIndex].in_use)
         return FALSE;
 
-    WINE_TRACE("letter == '%c', unixpath == '%s', label == '%s', serial == %08x, type == %d\n",
-               letter, targetpath, label, serial, type);
+    WINE_TRACE("letter == '%c', unixpath == '%s', label == %s, serial == %08x, type == %d\n",
+               letter, targetpath, wine_dbgstr_w(label), serial, type);
 
     drives[driveIndex].letter   = toupper(letter);
     drives[driveIndex].unixpath = strdupA(targetpath);
-    drives[driveIndex].label    = strdupA(label);
+    drives[driveIndex].label    = strdupW(label);
     drives[driveIndex].serial   = serial;
     drives[driveIndex].type     = type;
     drives[driveIndex].in_use   = TRUE;
@@ -177,21 +177,23 @@ static DWORD get_drive_type( char letter )
 }
 
 
-static void set_drive_label( char letter, const char *label )
+static void set_drive_label( char letter, const WCHAR *label )
 {
-    char device[] = "a:\\";  /* SetVolumeLabel() requires a trailing slash */
+    static const WCHAR emptyW[1];
+    WCHAR device[] = {'a',':','\\',0};  /* SetVolumeLabel() requires a trailing slash */
     device[0] = letter;
 
-    if(!SetVolumeLabel(device, label))
+    if (!label) label = emptyW;
+    if(!SetVolumeLabelW(device, label))
     {
-        WINE_WARN("unable to set volume label for devicename of '%s', label of '%s'\n",
-                  device, label);
+        WINE_WARN("unable to set volume label for devicename of %s, label of %s\n",
+                  wine_dbgstr_w(device), wine_dbgstr_w(label));
         PRINTERROR();
     }
     else
     {
-        WINE_TRACE("  set volume label for devicename of '%s', label of '%s'\n",
-                   device, label);
+        WINE_TRACE("  set volume label for devicename of %s, label of %s\n",
+                  wine_dbgstr_w(device), wine_dbgstr_w(label));
     }
 }
 
@@ -262,7 +264,7 @@ BOOL moveDrive(struct drive *pSrc, struct drive *pDst)
 /* Load currently defined drives into the drives array  */
 void load_drives(void)
 {
-    char *devices, *dev;
+    WCHAR *devices, *dev;
     int len;
     int drivecount = 0, i;
     int retval;
@@ -273,8 +275,8 @@ void load_drives(void)
     WINE_TRACE("\n");
 
     /* setup the drives array */
-    dev = devices = HeapAlloc(GetProcessHeap(), 0, arraysize);
-    len = GetLogicalDriveStrings(arraysize, devices);
+    dev = devices = HeapAlloc(GetProcessHeap(), 0, arraysize * sizeof(WCHAR));
+    len = GetLogicalDriveStringsW(arraysize, devices);
 
     /* make all devices unused */
     for (i = 0; i < 26; i++)
@@ -293,50 +295,32 @@ void load_drives(void)
     /* work backwards through the result of GetLogicalDriveStrings  */
     while (len)
     {
-        char volname[512]; /* volume name  */
+        WCHAR volname[512]; /* volume name  */
         DWORD serial;
-        char rootpath[256];
         char simplepath[3];
-        int pathlen;
         char targetpath[256];
         char *c;
 
-        *devices = toupper(*devices);
-
-        WINE_TRACE("devices == '%s'\n", devices);
+        WINE_TRACE("devices == %s\n", wine_dbgstr_w(devices));
 
         volname[0] = 0;
 
-        retval = GetVolumeInformation(devices,
-                                      volname,
-                                      sizeof(volname),
-                                      &serial,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      0);
+        retval = GetVolumeInformationW(devices, volname, sizeof(volname)/sizeof(WCHAR),
+                                       &serial, NULL, NULL, NULL, 0);
         if(!retval)
         {
-            WINE_ERR("GetVolumeInformation() for '%s' failed, setting serial to 0\n", devices);
+            WINE_ERR("GetVolumeInformation() for %s failed, setting serial to 0\n",
+                     wine_dbgstr_w(devices));
             PRINTERROR();
             serial = 0;
         }
 
         WINE_TRACE("serial: '0x%X'\n", serial);
 
-        /* build rootpath for GetDriveType() */
-        lstrcpynA(rootpath, devices, sizeof(rootpath));
-        pathlen = strlen(rootpath);
-
-        /* ensure that we have a backslash on the root path */
-        if ((rootpath[pathlen - 1] != '\\') && (pathlen < sizeof(rootpath)))
-        {
-            rootpath[pathlen] = '\\';
-            rootpath[pathlen + 1] = 0;
-        }
-
 	/* QueryDosDevice() requires no trailing backslash */
-        lstrcpynA(simplepath, devices, 3);
+        simplepath[0] = devices[0];
+        simplepath[1] = ':';
+        simplepath[2] = 0;
         QueryDosDevice(simplepath, targetpath, sizeof(targetpath));
 
         /* targetpath may have forward slashes rather than backslashes, so correct */
@@ -345,8 +329,8 @@ void load_drives(void)
 
         add_drive(*devices, targetpath, volname, serial, get_drive_type(devices[0]) );
 
-        len -= strlen(devices);
-        devices += strlen(devices);
+        len -= lstrlenW(devices);
+        devices += lstrlenW(devices);
 
         /* skip over any nulls */
         while ((*devices == 0) && (len))
@@ -381,7 +365,7 @@ void load_drives(void)
         buff[cnt] = '\0';
 
         WINE_TRACE("found broken symlink %s -> %s\n", path, buff);
-        add_drive('A' + i, buff, "", 0, DRIVE_UNKNOWN);
+        add_drive('A' + i, buff, NULL, 0, DRIVE_UNKNOWN);
 
         drivecount++;
     }
@@ -400,11 +384,8 @@ void apply_drive_changes(void)
     CHAR devicename[4];
     CHAR targetpath[256];
     BOOL foundDrive;
-    CHAR volumeNameBuffer[512];
+    WCHAR volumeNameBuffer[512];
     DWORD serialNumber;
-    DWORD maxComponentLength;
-    DWORD fileSystemFlags;
-    CHAR fileSystemName[128];
     int retval;
     BOOL defineDevice;
 
@@ -433,17 +414,12 @@ void apply_drive_changes(void)
         /* if we found a drive and have a drive then compare things */
         if(foundDrive && drives[i].in_use)
         {
+            WCHAR deviceW[4] = {'a',':','\\',0};
             WINE_TRACE("drives[i].letter: '%c'\n", drives[i].letter);
 
-            snprintf(devicename, sizeof(devicename), "%c:\\", 'A' + i);
-            retval = GetVolumeInformation(devicename,
-                         volumeNameBuffer,
-                         sizeof(volumeNameBuffer),
-                         &serialNumber,
-                         &maxComponentLength,
-                         &fileSystemFlags,
-                         fileSystemName,
-                         sizeof(fileSystemName));
+            deviceW[0] = 'A' + i;
+            retval = GetVolumeInformationW(deviceW, volumeNameBuffer, sizeof(volumeNameBuffer)/sizeof(WCHAR),
+                                           &serialNumber, NULL, NULL, NULL, 0 );
             if(!retval)
             {
                 WINE_TRACE("  GetVolumeInformation() for '%s' failed\n", devicename);
@@ -508,7 +484,7 @@ void apply_drive_changes(void)
             }
         }
 
-        if (drives[i].label && strcmp(drives[i].label, volumeNameBuffer))
+        if (!drives[i].label || lstrcmpW(drives[i].label, volumeNameBuffer))
             set_drive_label( drives[i].letter, drives[i].label );
 
         if (drives[i].serial != serialNumber)

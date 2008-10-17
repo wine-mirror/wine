@@ -33,6 +33,7 @@
 #include <shlwapi.h>
 #include <shlobj.h>
 
+#include <wine/unicode.h>
 #include <wine/debug.h>
 
 #include "winecfg.h"
@@ -311,12 +312,12 @@ static void on_add_click(HWND dialog)
 
     if (new == 'C')
     {
-        char label[64];
-        LoadStringA (GetModuleHandle (NULL), IDS_SYSTEM_DRIVE_LABEL, label,
-            sizeof(label)/sizeof(label[0])); 
+        WCHAR label[64];
+        LoadStringW (GetModuleHandle (NULL), IDS_SYSTEM_DRIVE_LABEL, label,
+                     sizeof(label)/sizeof(label[0]));
         add_drive(new, "../drive_c", label, 0, DRIVE_FIXED);
     }
-    else add_drive(new, "/", "", 0, DRIVE_UNKNOWN);
+    else add_drive(new, "/", NULL, 0, DRIVE_UNKNOWN);
 
     fill_drives_list(dialog);
 
@@ -375,9 +376,9 @@ static void on_remove_click(HWND dialog)
 
 static void update_controls(HWND dialog)
 {
+    static const WCHAR emptyW[1];
     char *path;
     unsigned int type;
-    char *label;
     char serial[16];
     const char *device;
     int i, selection = -1;
@@ -433,8 +434,7 @@ static void update_controls(HWND dialog)
     EnableWindow( GetDlgItem( dialog, IDC_COMBO_TYPE ), (current_drive->letter != 'C') );
 
     /* removeable media properties */
-    label = current_drive->label;
-    set_text(dialog, IDC_EDIT_LABEL, label);
+    set_textW(dialog, IDC_EDIT_LABEL, current_drive->label ? current_drive->label : emptyW);
 
     /* set serial edit text */
     sprintf( serial, "%X", current_drive->serial );
@@ -482,13 +482,11 @@ static void on_edit_changed(HWND dialog, WORD id)
     {
         case IDC_EDIT_LABEL:
         {
-            char *label;
-
-            label = get_text(dialog, id);
+            WCHAR *label = get_textW(dialog, id);
             HeapFree(GetProcessHeap(), 0, current_drive->label);
-            current_drive->label = label ? label :  strdupA("");
+            current_drive->label = label;
 
-            WINE_TRACE("set label to %s\n", current_drive->label);
+            WINE_TRACE("set label to %s\n", wine_dbgstr_w(current_drive->label));
 
             /* enable the apply button  */
             SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
@@ -752,14 +750,12 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 
                 case IDC_RADIO_ASSIGN:
                 {
-                    char *str;
-
-                    str = get_text(dialog, IDC_EDIT_LABEL);
+                    WCHAR *str = get_textW(dialog, IDC_EDIT_LABEL);
                     HeapFree(GetProcessHeap(), 0, current_drive->label);
-                    current_drive->label = str ? str : strdupA("");
+                    current_drive->label = str;
 
-                    str = get_text(dialog, IDC_EDIT_SERIAL);
-                    current_drive->serial = strtoul( str, NULL, 16 );
+                    str = get_textW(dialog, IDC_EDIT_SERIAL);
+                    current_drive->serial = strtoulW( str, NULL, 16 );
 
                     /* TODO: we don't have a device at this point */
 

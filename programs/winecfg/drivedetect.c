@@ -22,21 +22,22 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <wine/debug.h>
-#include <wine/library.h>
-
-#include "winecfg.h"
-
 #include <stdio.h>
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
 #endif
 #include <stdlib.h>
 #include <errno.h>
-
 #include <sys/stat.h>
 
+#include <windef.h>
 #include <winbase.h>
+#include <wine/debug.h>
+#include <wine/library.h>
+
+#include "winecfg.h"
+#include "resource.h"
+
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
@@ -233,7 +234,7 @@ static void ensure_root_is_mapped(void)
         {
             if (!drives[letter - 'A'].in_use) 
             {
-                add_drive(letter, "/", "System", 0, DRIVE_FIXED);
+                add_drive(letter, "/", NULL, 0, DRIVE_FIXED);
                 WINE_TRACE("allocated drive %c as the root drive\n", letter);
                 break;
             }
@@ -262,7 +263,7 @@ static void ensure_home_is_mapped(void)
         {
             if (!drives[letter - 'A'].in_use)
             {
-                add_drive(letter, home, "Home", 0, DRIVE_FIXED);
+                add_drive(letter, home, NULL, 0, DRIVE_FIXED);
                 WINE_TRACE("allocated drive %c as the user's home directory\n", letter);
                 break;
             }
@@ -287,7 +288,10 @@ static void ensure_drive_c_is_mapped(void)
 
     if (stat(drive_c_dir, &buf) == 0)
     {
-        add_drive('C', "../drive_c", "Virtual Windows Drive", 0, DRIVE_FIXED);
+        WCHAR label[64];
+        LoadStringW (GetModuleHandle (NULL), IDS_SYSTEM_DRIVE_LABEL, label,
+                     sizeof(label)/sizeof(label[0]));
+        add_drive('C', "../drive_c", label, 0, DRIVE_FIXED);
     }
     else
     {
@@ -324,7 +328,6 @@ int autodetect_drives(void)
     while ((ent = getmntent(fstab)))
     {
         char letter;
-        char label[256];
         int type;
         
         WINE_TRACE("ent->mnt_dir=%s\n", ent->mnt_dir);
@@ -350,14 +353,10 @@ int autodetect_drives(void)
             fclose(fstab);
             return FALSE;
         }
-        
-        strcpy(label, "Drive X");
-        label[6] = letter;
-        
-        WINE_TRACE("adding drive %c for %s, type %s with label %s\n", letter, ent->mnt_dir, ent->mnt_type,label);
 
-        add_drive(letter, ent->mnt_dir, label, 0, type);
-        
+        WINE_TRACE("adding drive %c for %s, type %s\n", letter, ent->mnt_dir, ent->mnt_type);
+        add_drive(letter, ent->mnt_dir, NULL, 0, type);
+
         /* working_mask is a map of the drive letters still available. */
         working_mask &= ~DRIVE_MASK_BIT(letter);
     }
