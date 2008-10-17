@@ -464,6 +464,76 @@ static void test_decodeSPCPEImage(void)
     }
 }
 
+static WCHAR foo[] = { 'f','o','o',0 };
+static WCHAR guidStr[] = { '{','8','b','c','9','6','b','0','0','-',
+ '8','d','a','1','-','1','1','c','f','-','8','7','3','6','-','0','0',
+ 'a','a','0','0','a','4','8','5','e','b','}',0 };
+
+static const BYTE emptyCatMemberInfo[] = { 0x30,0x05,0x1e,0x00,0x02,0x01,0x00 };
+static const BYTE catMemberInfoWithSillyGuid[] = {
+0x30,0x0b,0x1e,0x06,0x00,0x66,0x00,0x6f,0x00,0x6f,0x02,0x01,0x00 };
+static const BYTE catMemberInfoWithGuid[] = {
+0x30,0x51,0x1e,0x4c,0x00,0x7b,0x00,0x38,0x00,0x62,0x00,0x63,0x00,0x39,0x00,0x36,
+0x00,0x62,0x00,0x30,0x00,0x30,0x00,0x2d,0x00,0x38,0x00,0x64,0x00,0x61,0x00,0x31,
+0x00,0x2d,0x00,0x31,0x00,0x31,0x00,0x63,0x00,0x66,0x00,0x2d,0x00,0x38,0x00,0x37,
+0x00,0x33,0x00,0x36,0x00,0x2d,0x00,0x30,0x00,0x30,0x00,0x61,0x00,0x61,0x00,0x30,
+0x00,0x30,0x00,0x61,0x00,0x34,0x00,0x38,0x00,0x35,0x00,0x65,0x00,0x62,0x00,0x7d,
+0x02,0x01,0x00 };
+
+static void test_encodeCatMemberInfo(void)
+{
+    CAT_MEMBERINFO info;
+    BOOL ret;
+    DWORD size = 0;
+    LPBYTE buf;
+
+    memset(&info, 0, sizeof(info));
+
+    if (!pCryptEncodeObjectEx)
+    {
+        skip("CryptEncodeObjectEx() is not available. Skipping the encodeCatMemberInfo tests\n");
+        return;
+    }
+
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
+     &info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(emptyCatMemberInfo), "Unexpected size %d\n", size);
+        ok(!memcmp(buf, emptyCatMemberInfo, sizeof(emptyCatMemberInfo)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+    info.pwszSubjGuid = foo;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
+     (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(catMemberInfoWithSillyGuid), "Unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, catMemberInfoWithSillyGuid,
+         sizeof(catMemberInfoWithSillyGuid)), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    info.pwszSubjGuid = guidStr;
+    ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, CAT_MEMBERINFO_STRUCT,
+     (LPBYTE)&info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(catMemberInfoWithGuid), "Unexpected size %d\n",
+         size);
+        ok(!memcmp(buf, catMemberInfoWithGuid, sizeof(catMemberInfoWithGuid)),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
 START_TEST(asn)
 {
     HMODULE hCrypt32 = LoadLibraryA("crypt32.dll");
@@ -474,6 +544,7 @@ START_TEST(asn)
     test_decodeSPCLink();
     test_encodeSPCPEImage();
     test_decodeSPCPEImage();
+    test_encodeCatMemberInfo();
 
     FreeLibrary(hCrypt32);
 }
