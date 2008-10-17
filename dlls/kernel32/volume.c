@@ -723,6 +723,10 @@ BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
             WCHAR labelW[] = {'A',':','\\','.','w','i','n','d','o','w','s','-','l','a','b','e','l',0};
 
             labelW[0] = device[4];
+
+            if (!label[0])  /* delete label file when setting an empty label */
+                return DeleteFileW( labelW ) || GetLastError() == ERROR_FILE_NOT_FOUND;
+
             handle = CreateFileW( labelW, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
                                   CREATE_ALWAYS, 0, 0 );
             if (handle != INVALID_HANDLE_VALUE)
@@ -730,8 +734,9 @@ BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
                 char buffer[64];
                 DWORD size;
 
-                if (!WideCharToMultiByte( CP_UNIXCP, 0, label, -1, buffer, sizeof(buffer), NULL, NULL ))
-                    buffer[sizeof(buffer)-1] = 0;
+                if (!WideCharToMultiByte( CP_UNIXCP, 0, label, -1, buffer, sizeof(buffer)-1, NULL, NULL ))
+                    buffer[sizeof(buffer)-2] = 0;
+                strcat( buffer, "\n" );
                 WriteFile( handle, buffer, strlen(buffer), &size, NULL );
                 CloseHandle( handle );
                 return TRUE;
