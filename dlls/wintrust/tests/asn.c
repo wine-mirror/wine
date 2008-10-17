@@ -653,6 +653,78 @@ static void test_encodeCatNameValue(void)
     }
 }
 
+static void test_decodeCatNameValue(void)
+{
+    BOOL ret;
+    LPBYTE buf;
+    DWORD size;
+    CAT_NAMEVALUE *value;
+
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
+     emptyCatNameValue, sizeof(emptyCatNameValue),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        value = (CAT_NAMEVALUE *)buf;
+        ok(!value->pwszTag || !value->pwszTag[0], "expected empty pwszTag\n");
+        ok(value->fdwFlags == 0, "expected fdwFlags == 0, got %08x\n",
+         value->fdwFlags);
+        ok(value->Value.cbData == 0, "expected 0-length value, got %d\n",
+         value->Value.cbData);
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
+     catNameValueWithTag, sizeof(catNameValueWithTag),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        value = (CAT_NAMEVALUE *)buf;
+        ok(value->pwszTag && !lstrcmpW(value->pwszTag, foo),
+         "unexpected pwszTag\n");
+        ok(value->fdwFlags == 0, "expected fdwFlags == 0, got %08x\n",
+         value->fdwFlags);
+        ok(value->Value.cbData == 0, "expected 0-length value, got %d\n",
+         value->Value.cbData);
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
+     catNameValueWithFlags, sizeof(catNameValueWithFlags),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        value = (CAT_NAMEVALUE *)buf;
+        ok(!value->pwszTag || !value->pwszTag[0], "expected empty pwszTag\n");
+        ok(value->fdwFlags == 0xf00dd00d,
+         "expected fdwFlags == 0xf00dd00d, got %08x\n", value->fdwFlags);
+        ok(value->Value.cbData == 0, "expected 0-length value, got %d\n",
+         value->Value.cbData);
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
+     catNameValueWithValue, sizeof(catNameValueWithValue),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        value = (CAT_NAMEVALUE *)buf;
+        ok(!value->pwszTag || !value->pwszTag[0], "expected empty pwszTag\n");
+        ok(value->fdwFlags == 0, "expected fdwFlags == 0, got %08x\n",
+         value->fdwFlags);
+        ok(value->Value.cbData == sizeof(aVal), "unexpected size %d\n",
+         value->Value.cbData);
+        ok(!memcmp(value->Value.pbData, aVal, value->Value.cbData),
+         "unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
 START_TEST(asn)
 {
     HMODULE hCrypt32 = LoadLibraryA("crypt32.dll");
@@ -666,6 +738,7 @@ START_TEST(asn)
     test_encodeCatMemberInfo();
     test_decodeCatMemberInfo();
     test_encodeCatNameValue();
+    test_decodeCatNameValue();
 
     FreeLibrary(hCrypt32);
 }
