@@ -1418,7 +1418,7 @@ DWORD WINAPI WNetGetResourceInformationW( LPNETRESOURCEW lpNetResource,
 
     if (!(lpBuffer))
         ret = WN_OUT_OF_MEMORY;
-    else
+    else if (providerTable != NULL)
     {
         /* FIXME: For function value of a variable is indifferent, it does
          * search of all providers in a network.
