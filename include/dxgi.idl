@@ -17,3 +17,30 @@
  */
 
 import "dxgitype.idl";
+
+[
+    object,
+    local,
+    uuid(aec22fb8-76f3-4639-9be0-28eb43a67a2e)
+]
+interface IDXGIObject : IUnknown
+{
+    HRESULT SetPrivateData(
+        [in] REFGUID guid,
+        [in] UINT data_size,
+        [in] const void *data
+    );
+    HRESULT SetPrivateDataInterface(
+        [in] REFGUID guid,
+        [in] const IUnknown *object
+    );
+    HRESULT GetPrivateData(
+        [in] REFGUID guid,
+        [in, out] UINT data_size,
+        [out] void *data
+    );
+    HRESULT GetParent(
+        [in] REFIID riid,
+        [out] void **parent
+    );
+}
