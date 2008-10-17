@@ -107,7 +107,7 @@ interface IDXGIObject : IUnknown
     );
     HRESULT GetPrivateData(
         [in] REFGUID guid,
-        [in, out] UINT data_size,
+        [in, out] UINT *data_size,
         [out] void *data
     );
     HRESULT GetParent(
