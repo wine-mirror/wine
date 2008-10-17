@@ -36,7 +36,7 @@
 #endif
 
 #include <winuser.rh>
-/* FIXME: #include <commctrl.rh> */
+#include <commctrl.rh>
 /* FIXME: #include <dde.rh> */
 /* FIXME: #include <winnt.rh> */
 #include <dlgs.h>
