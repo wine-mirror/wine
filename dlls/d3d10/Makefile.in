@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3d10.dll
+IMPORTLIB = d3d10
 IMPORTS   = dxguid uuid wined3d kernel32
 
 C_SRCS = \
