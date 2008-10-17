@@ -2431,6 +2431,95 @@ static void test_ConvertSecurityDescriptorToString()
     }
 }
 
+static void test_SetSecurityDescriptorControl (PSECURITY_DESCRIPTOR sec)
+{
+    SECURITY_DESCRIPTOR_CONTROL ref;
+    SECURITY_DESCRIPTOR_CONTROL test;
+
+    SECURITY_DESCRIPTOR_CONTROL const mutable
+        = SE_DACL_AUTO_INHERIT_REQ | SE_SACL_AUTO_INHERIT_REQ
+        | SE_DACL_AUTO_INHERITED   | SE_SACL_AUTO_INHERITED
+        | SE_DACL_PROTECTED        | SE_SACL_PROTECTED
+        | 0x00000040               | 0x00000080        /* not defined in winnt.h */
+        ;
+    SECURITY_DESCRIPTOR_CONTROL const immutable
+        = SE_OWNER_DEFAULTED       | SE_GROUP_DEFAULTED
+        | SE_DACL_PRESENT          | SE_DACL_DEFAULTED
+        | SE_SACL_PRESENT          | SE_SACL_DEFAULTED
+        | SE_RM_CONTROL_VALID      | SE_SELF_RELATIVE
+        ;
+
+    int     bit;
+    DWORD   dwRevision;
+    LPCSTR  fmt = "Expected error %s, got %u\n";
+
+    GetSecurityDescriptorControl (sec, &ref, &dwRevision);
+
+    /* The mutable bits are mutable regardless of the truth of
+       SE_DACL_PRESENT and/or SE_SACL_PRESENT */
+
+    /* Check call barfs if any bit-of-interest is immutable */
+    for (bit = 0; bit < 16; ++bit)
+    {
+        SECURITY_DESCRIPTOR_CONTROL const bitOfInterest = 1 << bit;
+        SECURITY_DESCRIPTOR_CONTROL setOrClear = ref & bitOfInterest;
+
+        SECURITY_DESCRIPTOR_CONTROL ctrl;
+
+        DWORD   dwExpect  = (bitOfInterest & immutable)
+                          ?  ERROR_INVALID_PARAMETER  :  0xbebecaca;
+        LPCSTR  strExpect = (bitOfInterest & immutable)
+                          ? "ERROR_INVALID_PARAMETER" : "0xbebecaca";
+
+        ctrl = (bitOfInterest & mutable) ? ref + bitOfInterest : ref;
+        setOrClear ^= bitOfInterest;
+        SetLastError (0xbebecaca);
+        pSetSecurityDescriptorControl (sec, bitOfInterest, setOrClear);
+        ok (GetLastError () == dwExpect, fmt, strExpect, GetLastError ());
+        GetSecurityDescriptorControl(sec, &test, &dwRevision);
+        expect_eq(test, ctrl, int, "%x");
+
+        ctrl = ref;
+        setOrClear ^= bitOfInterest;
+        SetLastError (0xbebecaca);
+        pSetSecurityDescriptorControl (sec, bitOfInterest, setOrClear);
+        ok (GetLastError () == dwExpect, fmt, strExpect, GetLastError ());
+        GetSecurityDescriptorControl (sec, &test, &dwRevision);
+        expect_eq(test, ref, int, "%x");
+    }
+
+    /* Check call barfs if any bit-to-set is immutable
+       even when not a bit-of-interest */
+    for (bit = 0; bit < 16; ++bit)
+    {
+        SECURITY_DESCRIPTOR_CONTROL const bitsOfInterest = mutable;
+        SECURITY_DESCRIPTOR_CONTROL setOrClear = ref & bitsOfInterest;
+
+        SECURITY_DESCRIPTOR_CONTROL ctrl;
+
+        DWORD   dwExpect  = ((1 << bit) & immutable)
+                          ?  ERROR_INVALID_PARAMETER  :  0xbebecaca;
+        LPCSTR  strExpect = ((1 << bit) & immutable)
+                          ? "ERROR_INVALID_PARAMETER" : "0xbebecaca";
+
+        ctrl = ((1 << bit) & immutable) ? test : ref | mutable;
+        setOrClear ^= bitsOfInterest;
+        SetLastError (0xbebecaca);
+        pSetSecurityDescriptorControl (sec, bitsOfInterest, setOrClear | (1 << bit));
+        ok (GetLastError () == dwExpect, fmt, strExpect, GetLastError ());
+        GetSecurityDescriptorControl(sec, &test, &dwRevision);
+        expect_eq(test, ctrl, int, "%x");
+
+        ctrl = ((1 << bit) & immutable) ? test : ref | (1 << bit);
+        setOrClear ^= bitsOfInterest;
+        SetLastError (0xbebecaca);
+        pSetSecurityDescriptorControl (sec, bitsOfInterest, setOrClear | (1 << bit));
+        ok (GetLastError () == dwExpect, fmt, strExpect, GetLastError ());
+        GetSecurityDescriptorControl(sec, &test, &dwRevision);
+        expect_eq(test, ctrl, int, "%x");
+    }
+}
+
 static void test_PrivateObjectSecurity(void)
 {
     SECURITY_INFORMATION sec_info = OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION|SACL_SECURITY_INFORMATION;
@@ -2452,12 +2541,33 @@ static void test_PrivateObjectSecurity(void)
     ok(pConvertStringSecurityDescriptorToSecurityDescriptorA(
         "O:SY"
         "G:S-1-5-21-93476-23408-4576"
+        "D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)"
+          "(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)"
+        "S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)",
+        SDDL_REVISION_1, &sec, &dwDescSize), "Creating descriptor failed\n");
+
+    test_SetSecurityDescriptorControl(sec);
+
+    LocalFree(sec);
+
+    ok(pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "O:SY"
+        "G:S-1-5-21-93476-23408-4576",
+        SDDL_REVISION_1, &sec, &dwDescSize), "Creating descriptor failed\n");
+
+    test_SetSecurityDescriptorControl(sec);
+
+    LocalFree(sec);
+
+    ok(pConvertStringSecurityDescriptorToSecurityDescriptorA(
+        "O:SY"
+        "G:S-1-5-21-93476-23408-4576"
         "D:(A;NP;GAGXGWGR;;;SU)(A;IOID;CCDC;;;SU)(D;OICI;0xffffffff;;;S-1-5-21-93476-23408-4576)"
         "S:(AU;OICINPIOIDSAFA;CCDCLCSWRPRC;;;SU)(AU;NPSA;0x12019f;;;SU)", SDDL_REVISION_1, &sec, &dwDescSize), "Creating descriptor failed\n");
     buf = HeapAlloc(GetProcessHeap(), 0, dwDescSize);
     pSetSecurityDescriptorControl(sec, SE_DACL_PROTECTED, SE_DACL_PROTECTED);
     GetSecurityDescriptorControl(sec, &ctrl, &dwRevision);
-    todo_wine expect_eq(ctrl, 0x9014, int, "%x");
+    expect_eq(ctrl, 0x9014, int, "%x");
 
     ok(GetPrivateObjectSecurity(sec, GROUP_SECURITY_INFORMATION, buf, dwDescSize, &retSize),
         "GetPrivateObjectSecurity failed (err=%u)\n", GetLastError());

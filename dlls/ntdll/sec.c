@@ -1052,8 +1052,24 @@ NTSTATUS WINAPI RtlSetControlSecurityDescriptor(
     SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
     SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet)
 {
-    FIXME("(%p 0x%08x 0x%08x): stub\n", SecurityDescriptor, ControlBitsOfInterest,
-          ControlBitsToSet);
+    SECURITY_DESCRIPTOR_CONTROL const immutable
+       = SE_OWNER_DEFAULTED  | SE_GROUP_DEFAULTED
+       | SE_DACL_PRESENT     | SE_DACL_DEFAULTED
+       | SE_SACL_PRESENT     | SE_SACL_DEFAULTED
+       | SE_RM_CONTROL_VALID | SE_SELF_RELATIVE
+       ;
+
+    SECURITY_DESCRIPTOR *lpsd = SecurityDescriptor;
+
+    TRACE("(%p 0x%04x 0x%04x)\n", SecurityDescriptor,
+          ControlBitsOfInterest, ControlBitsToSet);
+
+    if ((ControlBitsOfInterest | ControlBitsToSet) & immutable)
+        return STATUS_INVALID_PARAMETER;
+
+    lpsd->Control |=  (ControlBitsOfInterest &  ControlBitsToSet);
+    lpsd->Control &= ~(ControlBitsOfInterest & ~ControlBitsToSet);
+
     return STATUS_SUCCESS;
 }
 
