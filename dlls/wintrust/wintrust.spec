@@ -86,7 +86,7 @@
 @ stub WTHelperIsInRootStore
 @ stub WTHelperOpenKnownStores
 @ stdcall WTHelperProvDataFromStateData(ptr)
-@ stub WVTAsn1CatMemberInfoDecode
+@ stdcall WVTAsn1CatMemberInfoDecode(long str ptr long long ptr ptr)
 @ stdcall WVTAsn1CatMemberInfoEncode(long str ptr ptr ptr)
 @ stub WVTAsn1CatNameValueDecode
 @ stub WVTAsn1CatNameValueEncode

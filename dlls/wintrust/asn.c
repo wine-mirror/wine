@@ -1902,3 +1902,12 @@ BOOL WINAPI WVTAsn1SpcSpOpusInfoDecode(DWORD dwCertEncodingType,
      pvStructInfo, *pcbStructInfo);
     return FALSE;
 }
+
+BOOL WINAPI WVTAsn1CatMemberInfoDecode(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    FIXME("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, *pcbStructInfo);
+    return FALSE;
+}
