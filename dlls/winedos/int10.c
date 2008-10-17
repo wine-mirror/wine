@@ -133,64 +133,88 @@ struct _ModeInfoBlock {
 
 #include "poppack.h"
 
+/* VGA VESA definitions */
+enum modetype {TEXT=0, GRAPHIC=1};
 /*
  * Wine internal information about video modes.
- * If depth is zero, the mode is considered to
- * be a text mode.
  */
 typedef struct {
     WORD Mode;
-    WORD Width;
-    WORD Height;
-    WORD Depth;
+    BOOL ModeType;
+    WORD TextCols;  /* columns of text in display */
+    WORD TextRows;  /* rows of text in display */
+    WORD CharWidth;
+    WORD CharHeight;
+    WORD Width;  /* width of display in pixels */
+    WORD Height; /* height of display in pixels */
+    WORD Depth;  /* bits per pixel */
+    WORD Colors; /* total available colors */
+    WORD ScreenPages;
+    BOOL Supported;
 } INT10_MODE;
 
 
 /*
  * List of supported video modes.
+ *
+ * should be expanded to contain most or all information
+ * as required for SVGA VESA mode info block for VESA BIOS subsystem 1 (see _ModeInfoBlock)
+ * this will allow proper support for FIXME items in VGA/VESA mode configuration
+ *
+ * FIXME - verify and define support for VESA modes
+ * FIXME - add # bit planes, # video memory banks, & memory model
  */
 static const INT10_MODE INT10_modelist[] =
 {
-    {0x0000,   40,   25,  0},
-    {0x0001,   40,   25,  0},
-    {0x0002,   80,   25,  0},
-    {0x0003,   80,   25,  0},
-    {0x0007,   80,   25,  0},
-    {0x000d,  320,  200,  4},
-    {0x000e,  640,  200,  4},
-    {0x0010,  640,  350,  4},
-    {0x0012,  640,  480,  4},
-    {0x0013,  320,  200,  8},
-    {0x006a,  800,  600,  4},   /* VESA mode, same as 0x102 */
-    {0x0100,  640,  400,  8},
-    {0x0101,  640,  480,  8},
-    {0x0102,  800,  600,  4},
-    {0x0103,  800,  600,  8},
-    {0x0104, 1024,  768,  4},
-    {0x0105, 1024,  768,  8},
-    {0x0106, 1280, 1024,  4},
-    {0x0107, 1280, 1024,  8},
-    {0x0108,   80,   60,  0},
-    {0x0109,  132,   25,  0},
-    {0x010a,  132,   43,  0},
-    {0x010b,  132,   50,  0},
-    {0x010c,  132,   60,  0},
-    {0x010d,  320,  200, 15},
-    {0x010e,  320,  200, 16},
-    {0x010f,  320,  200, 24},
-    {0x0110,  640,  480, 15},
-    {0x0111,  640,  480, 16},
-    {0x0112,  640,  480, 24},
-    {0x0113,  800,  600, 15},
-    {0x0114,  800,  600, 16},
-    {0x0115,  800,  600, 24},
-    {0x0116, 1024,  768, 15},
-    {0x0117, 1024,  768, 16},
-    {0x0118, 1024,  768, 24},
-    {0x0119, 1280, 1024, 15},
-    {0x011a, 1280, 1024, 16},
-    {0x011b, 1280, 1024, 24},
-    {0xffff,    0,    0,  0}
+    /* VGA modes */
+    {0x0000,    TEXT, 40, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 0 */
+    {0x0001,    TEXT, 40, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 1 */
+    {0x0002,    TEXT, 80, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 2 */
+    {0x0003,    TEXT, 80, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 3 */
+    {0x0004, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, FALSE},   /* VGA graphics mode 4 */
+    {0x0005, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, FALSE},   /* VGA graphics mode 5 */
+    {0x0006, GRAPHIC, 80, 25,  8,  8,  640,  200,  1,   2, 1, FALSE},   /* VGA graphics mode 6 */
+    {0x0007,    TEXT, 80, 25,  9, 16,  720,  400,  0,   0, 8, FALSE},   /* VGA text mode 7 - FIXME bad default address */
+    {0x000d, GRAPHIC, 40, 25,  8,  8,  320,  200,  4,  16, 8, FALSE},   /* VGA graphics mode 13 */
+    {0x000e, GRAPHIC, 80, 25,  8,  8,  640,  200,  4,  16, 4, FALSE},   /* VGA graphics mode 14 */
+    {0x000f, GRAPHIC, 80, 25,  8, 14,  640,  350,  0,   0, 2, FALSE},   /* VGA graphics mode 15 */
+    {0x0010, GRAPHIC, 80, 25,  8, 14,  640,  350,  4,  16, 2, FALSE},   /* VGA graphics mode 16 */
+    {0x0012, GRAPHIC, 80, 30,  8, 16,  640,  480,  1,   2, 1, FALSE},   /* VGA graphics mode 17 */
+    {0x0012, GRAPHIC, 80, 30,  8, 16,  640,  480,  4,  16, 1, FALSE},   /* VGA graphics mode 18 */
+    {0x0013, GRAPHIC, 40, 25,  8,  8,  320,  200,  8, 256, 1, TRUE},   /* VGA graphics mode 19 */
+    /* VESA 7-bit modes */
+    {0x006a, GRAPHIC,  0,  0,  0,  0,  800,  600,  4,  16, 1, TRUE},   /* VESA graphics mode, same as 0x102 */
+    /* VESA 15-bit modes */
+    {0x0100, GRAPHIC,  0,  0,  0,  0,  640,  400,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0101, GRAPHIC,  0,  0,  0,  0,  640,  480,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0102, GRAPHIC,  0,  0,  0,  0,  800,  600,  4,  16, 1, TRUE},   /* VESA graphics mode */
+    {0x0103, GRAPHIC,  0,  0,  0,  0,  800,  600,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0104, GRAPHIC,  0,  0,  0,  0, 1024,  768,  4,  16, 1, TRUE},   /* VESA graphics mode */
+    {0x0105, GRAPHIC,  0,  0,  0,  0, 1024,  768,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0106, GRAPHIC,  0,  0,  0,  0, 1280, 1024,  4,  16, 1, TRUE},   /* VESA graphics mode */
+    {0x0107, GRAPHIC,  0,  0,  0,  0, 1280, 1024,  8, 256, 1, TRUE},   /* VESA graphics mode */
+    {0x0108,    TEXT,  0,  0,  0,  0,   80,   60,  0,   0, 1, TRUE},   /* VESA text mode */
+    {0x0109,    TEXT,  0,  0,  0,  0,  132,   25,  0,   0, 1, TRUE},   /* VESA text mode */
+    {0x010a,    TEXT,  0,  0,  0,  0,  132,   43,  0,   0, 1, TRUE},   /* VESA text mode */
+    {0x010b,    TEXT,  0,  0,  0,  0,  132,   50,  0,   0, 1, TRUE},   /* VESA text mode */
+    {0x010c,    TEXT,  0,  0,  0,  0,  132,   60,  0,   0, 1, TRUE},   /* VESA text mode */
+    /* VESA 1.2 modes */
+    {0x010d, GRAPHIC,  0,  0,  0,  0,  320,  200, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x010e, GRAPHIC,  0,  0,  0,  0,  320,  200, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x010f, GRAPHIC,  0,  0,  0,  0,  320,  200, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0x0110, GRAPHIC,  0,  0,  0,  0,  640,  480, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x0111, GRAPHIC,  0,  0,  0,  0,  640,  480, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x0112, GRAPHIC,  0,  0,  0,  0,  640,  480, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0x0113, GRAPHIC,  0,  0,  0,  0,  800,  600, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x0114, GRAPHIC,  0,  0,  0,  0,  800,  600, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x0115, GRAPHIC,  0,  0,  0,  0,  800,  600, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0x0116, GRAPHIC,  0,  0,  0,  0, 1024,  768, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x0117, GRAPHIC,  0,  0,  0,  0, 1024,  768, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x0118, GRAPHIC,  0,  0,  0,  0, 1024,  768, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0x0119, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 15,   0, 1, TRUE},   /* VESA graphics mode, 32K colors */
+    {0x011a, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 16,   0, 1, TRUE},   /* VESA graphics mode, 64K colors */
+    {0x011b, GRAPHIC,  0,  0,  0,  0, 1280, 1024, 24,   0, 1, TRUE},   /* VESA graphics mode, 16.8 Million colors */
+    {0xffff,    TEXT,  0,  0,  0,  0,    0,    0,  0,   0, 1, FALSE}
 };
 
 /* True if video mode is a vesa mode, false otherwise.
@@ -343,22 +367,32 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
      * 13-15 - Reserved.
      */
     {
-        WORD attr = 0x000a; /* color mode, optional info */
+        WORD attr = 0x0002; /* set optional info available */
+        /* Enable color mode - if both Colors & Depth are 0, then assume monochrome*/
+        if (ptr->Colors || ptr->Depth)
+        {
+            attr |= 0x0008;
+        }
 
         /*
          * FIXME: Attribute handling is incomplete.
          */
 
-        /* Mode supported? FIXME: correct value */
-        attr |= 0x0001;
+        /* Mode supported? */
+        if (ptr->Supported)
+        {
+            attr |= 0x0001;  /* set display mode supported */
+        }
 
         /* Graphical mode? */
-        if (ptr->Depth) 
-            attr |= 0x0010;
+        if (ptr->ModeType != TEXT)
+        {
+            attr |= 0x0010;  /* set graphics mode on (text mode off) */
+        }
 
         /* Not VGA-compatible? */
         if (IS_VESA_MODE(mode))
-            attr |= 0x0020;
+            attr |= 0x0020;    /* disable VGA ports */
 
         mib->ModeAttributes = attr;
     }
@@ -392,16 +426,30 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
     mib->BytesPerScanLine = ptr->Width * (ptr->Depth ? (ptr->Depth + 7) / 8 : 1);
 
     /* 18 - WORD: width in pixels (graphics) or characters (text) */
-    mib->XResolution = ptr->Width;
+    if (ptr->ModeType == TEXT)
+    {
+        mib->XResolution = ptr->TextCols;
+    }
+    else
+    {
+        mib->XResolution = ptr->Width;
+    }
 
     /* 20 - WORD: height in pixels (graphics) or characters (text) */
-    mib->YResolution = ptr->Height;
+    if (ptr->ModeType == TEXT)
+    {
+        mib->YResolution = ptr->TextRows;
+    }
+    else
+    {
+        mib->YResolution = ptr->Height;
+    }
 
     /* 22 - BYTE: width of character cell in pixels */
-    mib->XCharSize = 0; /* FIXME */
+    mib->XCharSize = ptr->CharWidth;
 
     /* 23 - BYTE: height of character cell in pixels */
-    mib->YCharSize = 0; /* FIXME */
+    mib->YCharSize = ptr->CharHeight;
 
     /* 24 - BYTE: number of memory planes */
     mib->NumberOfPlanes = 1; /* FIXME */
@@ -426,7 +474,7 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
      * 08-0F - Reserved for VESA.
      * 10-FF - OEM memory models.
      */
-    if (!ptr->Depth)
+    if (ptr->ModeType == TEXT)
         mib->MemoryModel = 0; /* text mode */
     else
         mib->MemoryModel = 3; /* FIXME */
@@ -435,7 +483,7 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
     mib->BankSize = 0; /* FIXME */
 
     /* 29 - BYTE: number of image pages (less one) in video RAM */
-    mib->NumberOfImagePages = 0; /* FIXME */
+    mib->NumberOfImagePages = (ptr->ScreenPages)-1;
 
     /* 30 - BYTE: reserved (0x00 for VBE 1.0-2.0, 0x01 for VBE 3.0) */
     mib->Reserved1 = 0x01;
@@ -714,7 +762,7 @@ INT10_HEAP *INT10_GetHeap( void )
         strcpy( heap_pointer->VesaOEMName, "WINE SVGA BOARD" );
         strcpy( heap_pointer->VesaVendorName, "WINE" );
         strcpy( heap_pointer->VesaProductName, "WINE SVGA" );
-        strcpy( heap_pointer->VesaProductRev, "2003" );
+        strcpy( heap_pointer->VesaProductRev, "2008" );
         
         heap_pointer->VesaCurrentMode = 0; /* Initialized later. */
         heap_pointer->WineHeapSegment = segment;
@@ -758,6 +806,8 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
 
     /*
      * Linear framebuffer is not supported.
+     * FIXME - not sure this is valid since mode 19 is 256 color & linear
+     *   of course only 1 window is addressable.
      */
     if (mode & 0x4000)
         return FALSE;
@@ -777,25 +827,25 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
     else
         data->VideoMode = 0;
 
-    if (ptr->Depth == 0)
+    if (ptr->ModeType == TEXT)
     {
         /* Text mode. */
         TRACE( "Setting %s %dx%d text mode (screen %s)\n", 
                IS_VESA_MODE(mode) ? "VESA" : "VGA", 
-               ptr->Width, ptr->Height, 
+               ptr->TextCols, ptr->TextRows,
                clearScreen ? "cleared" : "preserved" );
 
         /*
          * FIXME: We should check here if alpha mode could be set.
          */
-        VGA_SetAlphaMode( ptr->Width, ptr->Height );
+        VGA_SetAlphaMode( ptr->TextCols, ptr->TextRows );
 
-        data->VideoColumns = ptr->Width;
-        data->RowsOnScreenMinus1 = ptr->Height - 1;
+        data->VideoColumns = ptr->TextCols;
+        data->RowsOnScreenMinus1 = ptr->TextRows - 1;
 
         if (clearScreen)
         {            
-            VGA_ClearText( 0, 0, ptr->Height-1, ptr->Width-1, 0x07 );
+            VGA_ClearText( 0, 0, ptr->TextCols-1, ptr->TextRows-1, 0x07 );
             INT10_SetCursorPos( data, 0, 0, 0 );
             VGA_SetCursorPos( 0, 0 );            
         }
