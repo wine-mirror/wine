@@ -392,6 +392,7 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define R2_MERGEPENNOT  14
 #define R2_MERGEPEN     15
 #define R2_WHITE        16
+#define R2_LAST         16
 
 #define MAKEROP4(fore,back) (DWORD)((((back)<<8)&0xFF000000)|(fore))
 
