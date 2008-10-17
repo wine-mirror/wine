@@ -1380,6 +1380,32 @@ static void HTTPREQ_Destroy(WININETHANDLEHEADER *hdr)
 
     WININET_Release(&lpwhr->lpHttpSession->hdr);
 
+    if (lpwhr->pAuthInfo)
+    {
+        if (SecIsValidHandle(&lpwhr->pAuthInfo->ctx))
+            DeleteSecurityContext(&lpwhr->pAuthInfo->ctx);
+        if (SecIsValidHandle(&lpwhr->pAuthInfo->cred))
+            FreeCredentialsHandle(&lpwhr->pAuthInfo->cred);
+
+        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->auth_data);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->scheme);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo);
+        lpwhr->pAuthInfo = NULL;
+    }
+
+    if (lpwhr->pProxyAuthInfo)
+    {
+        if (SecIsValidHandle(&lpwhr->pProxyAuthInfo->ctx))
+            DeleteSecurityContext(&lpwhr->pProxyAuthInfo->ctx);
+        if (SecIsValidHandle(&lpwhr->pProxyAuthInfo->cred))
+            FreeCredentialsHandle(&lpwhr->pProxyAuthInfo->cred);
+
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->auth_data);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->scheme);
+        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo);
+        lpwhr->pProxyAuthInfo = NULL;
+    }
+
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
@@ -1404,31 +1430,6 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
 
     if (!NETCON_connected(&lpwhr->netConnection))
         return;
-
-    if (lpwhr->pAuthInfo)
-    {
-        if (SecIsValidHandle(&lpwhr->pAuthInfo->ctx))
-            DeleteSecurityContext(&lpwhr->pAuthInfo->ctx);
-        if (SecIsValidHandle(&lpwhr->pAuthInfo->cred))
-            FreeCredentialsHandle(&lpwhr->pAuthInfo->cred);
-
-        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->auth_data);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo->scheme);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pAuthInfo);
-        lpwhr->pAuthInfo = NULL;
-    }
-    if (lpwhr->pProxyAuthInfo)
-    {
-        if (SecIsValidHandle(&lpwhr->pProxyAuthInfo->ctx))
-            DeleteSecurityContext(&lpwhr->pProxyAuthInfo->ctx);
-        if (SecIsValidHandle(&lpwhr->pProxyAuthInfo->cred))
-            FreeCredentialsHandle(&lpwhr->pProxyAuthInfo->cred);
-
-        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->auth_data);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo->scheme);
-        HeapFree(GetProcessHeap(), 0, lpwhr->pProxyAuthInfo);
-        lpwhr->pProxyAuthInfo = NULL;
-    }
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
