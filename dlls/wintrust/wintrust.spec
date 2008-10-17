@@ -88,7 +88,7 @@
 @ stdcall WTHelperProvDataFromStateData(ptr)
 @ stdcall WVTAsn1CatMemberInfoDecode(long str ptr long long ptr ptr)
 @ stdcall WVTAsn1CatMemberInfoEncode(long str ptr ptr ptr)
-@ stub WVTAsn1CatNameValueDecode
+@ stdcall WVTAsn1CatNameValueDecode(long str ptr long long ptr ptr)
 @ stdcall WVTAsn1CatNameValueEncode(long str ptr ptr ptr)
 @ stub WVTAsn1SpcFinancialCriteriaInfoDecode
 @ stub WVTAsn1SpcFinancialCriteriaInfoEncode
