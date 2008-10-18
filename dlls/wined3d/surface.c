@@ -3556,8 +3556,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
         glBindTexture(Src->glDescription.target, 0);
         checkGLcall("glBindTexture(Src->glDescription.target, 0)");
-        /* Leave the opengl state valid for blitting */
-        myDevice->blitter->unset_shader((IWineD3DDevice *) myDevice);
 
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;
@@ -3568,6 +3566,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             Src->palette = NULL;
 
         LEAVE_GL();
+
+        /* Leave the opengl state valid for blitting */
+        myDevice->blitter->unset_shader((IWineD3DDevice *) myDevice);
 
         /* Flush in case the drawable is used by multiple GL contexts */
         if(dstSwapchain && (This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer || dstSwapchain->num_contexts >= 2))

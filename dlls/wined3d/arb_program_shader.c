@@ -3707,6 +3707,8 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
 
 static void arbfp_blit_unset(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+
+    ENTER_GL();
     glDisable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     glDisable(GL_TEXTURE_2D);
@@ -3719,6 +3721,7 @@ static void arbfp_blit_unset(IWineD3DDevice *iface) {
         glDisable(GL_TEXTURE_RECTANGLE_ARB);
         checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
     }
+    LEAVE_GL();
 }
 
 static BOOL arbfp_blit_conv_supported(WINED3DFORMAT fmt) {
