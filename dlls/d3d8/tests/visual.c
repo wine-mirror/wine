@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2005 Henri Verbeet
- * Copyright (C) 2007 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2007 Stefan DÃ¶singer(for CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

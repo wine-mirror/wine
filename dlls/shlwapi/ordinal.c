@@ -2,7 +2,7 @@
  * SHLWAPI ordinal functions
  *
  * Copyright 1997 Marcus Meissner
- *           1998 Jürgen Schmied
+ *           1998 JÃ¼rgen Schmied
  *           2001-2003 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or

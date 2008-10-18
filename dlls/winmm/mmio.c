@@ -2,7 +2,7 @@
  * MMIO functions
  *
  * Copyright 1998 Andrew Taylor
- * Copyright 1998 Ove Kåven
+ * Copyright 1998 Ove KÃ¥ven
  * Copyright 2000,2002 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or

@@ -1,7 +1,7 @@
 /*
  * Copyright 1998 Marcus Meissner
  * Copyright 2000 Bradley Baetz
- * Copyright 2003 Michael Günnewig
+ * Copyright 2003 Michael GÃ¼nnewig
  * Copyright 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or

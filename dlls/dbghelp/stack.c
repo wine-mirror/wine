@@ -3,7 +3,7 @@
  *
  * Copyright 1995 Alexandre Julliard
  * Copyright 1996 Eric Youngdale
- * Copyright 1999 Ove Kåven
+ * Copyright 1999 Ove KÃ¥ven
  * Copyright 2004 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or

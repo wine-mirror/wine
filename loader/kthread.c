@@ -4,7 +4,7 @@
  * We can't use pthreads directly, so why not let libcs
  * that want pthreads use Wine's own threading instead...
  *
- * Copyright 1999 Ove Kåven
+ * Copyright 1999 Ove KÃ¥ven
  * Copyright 2003 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or

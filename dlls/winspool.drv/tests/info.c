@@ -342,7 +342,7 @@ static void test_AddMonitor(void)
     {
     /* The Test is deactivated, because when mi2a.pName is NULL, the subkey
        HKLM\System\CurrentControlSet\Control\Print\Monitors\C:\WINDOWS\SYSTEM
-       or HKLM\System\CurrentControlSet\Control\Print\Monitors\ì
+       or HKLM\System\CurrentControlSet\Control\Print\Monitors\Ã¬
        is created on win9x and we do not want to hit this bug here. */
 
     mi2a.pEnvironment = entry->env;

@@ -1,7 +1,7 @@
 /*
  * MSWSOCK specific functions
  *
- * Copyright (C) 2003 André Johansen
+ * Copyright (C) 2003 AndrÃ© Johansen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
