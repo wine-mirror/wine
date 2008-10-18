@@ -435,6 +435,19 @@ BOOL dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod)
     return imh_mod->BaseOfImage != 0;
 }
 
+BOOL dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD base, DWORD size)
+{
+    BOOL ret = SymLoadModuleExW(hProc, NULL, name, NULL, base, size, NULL, 0);
+    if (ret)
+    {
+        IMAGEHLP_MODULEW64      ihm;
+        ihm.SizeOfStruct = sizeof(ihm);
+        if (SymGetModuleInfoW64(hProc, base, &ihm) && (ihm.PdbUnmatched || ihm.DbgUnmatched))
+            dbg_printf("Loaded unmatched debug information for %s\n", wine_dbgstr_w(name));
+    }
+    return ret;
+}
+
 struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid)
 {
     struct dbg_thread*	t;
@@ -486,6 +499,18 @@ void dbg_del_thread(struct dbg_thread* t)
     if (t == t->process->threads) t->process->threads = t->next;
     if (t == dbg_curr_thread) dbg_curr_thread = NULL;
     HeapFree(GetProcessHeap(), 0, t);
+}
+
+void dbg_set_option(const char* option, BOOL enable)
+{
+    if (!strcmp(option, "module"))
+    {
+        DWORD   opt = SymGetOptions();
+        if (enable) opt |= SYMOPT_LOAD_ANYTHING;
+        else opt &= ~SYMOPT_LOAD_ANYTHING;
+        SymSetOptions(opt);
+    }
+    else dbg_printf("Unknown option '%s'\n", option);
 }
 
 BOOL dbg_interrupt_debuggee(void)

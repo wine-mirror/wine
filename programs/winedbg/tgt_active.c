@@ -519,8 +519,8 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
 
         if (!dbg_init(dbg_curr_process->handle, u.buffer, FALSE))
             dbg_printf("Couldn't initiate DbgHelp\n");
-        if (!SymLoadModuleExW(dbg_curr_process->handle, de->u.CreateProcessInfo.hFile, u.buffer, NULL,
-                              (unsigned long)de->u.CreateProcessInfo.lpBaseOfImage, 0, NULL, 0))
+        if (!dbg_load_module(dbg_curr_process->handle, de->u.CreateProcessInfo.hFile, u.buffer,
+                             (DWORD_PTR)de->u.CreateProcessInfo.lpBaseOfImage, 0))
             dbg_printf("couldn't load main module (%u)\n", GetLastError());
 
         WINE_TRACE("%04x:%04x: create thread I @%p\n",
@@ -608,8 +608,8 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
                    wine_dbgstr_w(u.buffer), de->u.LoadDll.lpBaseOfDll,
                    de->u.LoadDll.dwDebugInfoFileOffset,
                    de->u.LoadDll.nDebugInfoSize);
-        SymLoadModuleExW(dbg_curr_process->handle, de->u.LoadDll.hFile, u.buffer, NULL,
-                         (unsigned long)de->u.LoadDll.lpBaseOfDll, 0, NULL, 0);
+        dbg_load_module(dbg_curr_process->handle, de->u.LoadDll.hFile, u.buffer,
+                        (DWORD_PTR)de->u.LoadDll.lpBaseOfDll, 0);
         break_set_xpoints(FALSE);
         break_check_delayed_bp();
         break_set_xpoints(TRUE);

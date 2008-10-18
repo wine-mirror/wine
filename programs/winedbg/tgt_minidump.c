@@ -331,8 +331,8 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             nameW[mds->Length / sizeof(WCHAR)] = 0;
             if (SymFindFileInPathW(hProc, NULL, nameW, (void*)(DWORD_PTR)mm->CheckSum,
                                    0, 0, SSRVOPT_DWORD, buffer, validate_file, NULL))
-                SymLoadModuleExW(hProc, NULL, buffer, NULL, get_addr64(mm->BaseOfImage),
-                                 mm->SizeOfImage, NULL, 0);
+                dbg_load_module(hProc, NULL, buffer, get_addr64(mm->BaseOfImage),
+                                 mm->SizeOfImage);
             else
                 SymLoadModuleExW(hProc, NULL, nameW, NULL, get_addr64(mm->BaseOfImage),
                                  mm->SizeOfImage, NULL, SLMFLAG_VIRTUAL);
@@ -350,11 +350,11 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             nameW[mds->Length / sizeof(WCHAR)] = 0;
             if (SymFindFileInPathW(hProc, NULL, nameW, (void*)(DWORD_PTR)mm->TimeDateStamp,
                                    mm->SizeOfImage, 0, SSRVOPT_DWORD, buffer, validate_file, NULL))
-                SymLoadModuleExW(hProc, NULL, buffer, NULL, get_addr64(mm->BaseOfImage),
-                                 mm->SizeOfImage, NULL, 0);
+                dbg_load_module(hProc, NULL, buffer, get_addr64(mm->BaseOfImage),
+                                 mm->SizeOfImage);
             else if (is_pe_module_embedded(data, mm))
-                SymLoadModuleExW(hProc, NULL, nameW, NULL, get_addr64(mm->BaseOfImage),
-                                 mm->SizeOfImage, NULL, 0);
+                dbg_load_module(hProc, NULL, nameW, get_addr64(mm->BaseOfImage),
+                                 mm->SizeOfImage);
             else
                 SymLoadModuleExW(hProc, NULL, nameW, NULL, get_addr64(mm->BaseOfImage),
                                  mm->SizeOfImage, NULL, SLMFLAG_VIRTUAL);

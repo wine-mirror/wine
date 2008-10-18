@@ -63,7 +63,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "tlhelp32.h"
-#include "wine/debug.h"
 
 #define GDBPXY_TRC_LOWLEVEL             0x01
 #define GDBPXY_TRC_PACKET               0x02
@@ -537,16 +536,16 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                     de->u.LoadDll.lpBaseOfDll,
                     de->u.LoadDll.dwDebugInfoFileOffset,
                     de->u.LoadDll.nDebugInfoSize);
-        SymLoadModuleExW(gdbctx->process->handle, de->u.LoadDll.hFile, u.buffer, NULL,
-                         (unsigned long)de->u.LoadDll.lpBaseOfDll, 0, NULL, 0);
+        dbg_load_module(gdbctx->process->handle, de->u.LoadDll.hFile, u.buffer,
+                        (DWORD_PTR)de->u.LoadDll.lpBaseOfDll, 0);
         break;
 
     case UNLOAD_DLL_DEBUG_EVENT:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
             fprintf(stderr, "%08x:%08x: unload DLL @%p\n",
                     de->dwProcessId, de->dwThreadId, de->u.UnloadDll.lpBaseOfDll);
-        SymUnloadModule(gdbctx->process->handle, 
-                        (unsigned long)de->u.UnloadDll.lpBaseOfDll);
+        SymUnloadModule(gdbctx->process->handle,
+                        (DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
         break;
 
     case EXCEPTION_DEBUG_EVENT:
