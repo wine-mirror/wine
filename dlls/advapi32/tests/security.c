@@ -1555,8 +1555,8 @@ static void test_LookupAccountName(void)
         ok(!lstrcmp(account, user_name), "Expected %s, got %s\n", user_name, account);
         ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
         ok(domain_size == domain_save - 1, "Expected %d, got %d\n", domain_save - 1, domain_size);
-        ok(lstrlen(domain) == domain_size, "Expected %d\n", lstrlen(domain));
-        ok(sid_use == SidTypeUser, "Expected SidTypeUser, got %d\n", sid_use);
+        ok(lstrlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
+        ok(sid_use == SidTypeUser, "Expected SidTypeUser (%d), got %d\n", SidTypeUser, sid_use);
     }
     domain_size = domain_save;
     sid_size = sid_save;
@@ -1577,7 +1577,7 @@ static void test_LookupAccountName(void)
         ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
         todo_wine
         ok(lstrlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
-        ok(sid_use == SidTypeWellKnownGroup, "Expected SidTypeUser, got %d\n", sid_use);
+        ok(sid_use == SidTypeWellKnownGroup, "Expected SidTypeWellKnownGroup (%d), got %d\n", SidTypeWellKnownGroup, sid_use);
         domain_size = domain_save;
     }
 
@@ -1640,7 +1640,7 @@ static void test_LookupAccountName(void)
         ok(!lstrcmp(account, domain),
            "Got %s for account and %s for domain, these should be the same\n",
            account, domain);
-        ok(sid_use == SidTypeDomain, "Expected SidTypeDomain, got %d\n", SidTypeDomain);
+        ok(sid_use == SidTypeDomain, "Expected SidTypeDomain (%d), got %d\n", SidTypeDomain, sid_use);
     }
 
     /* try an invalid account name */
