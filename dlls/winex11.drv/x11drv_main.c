@@ -562,6 +562,7 @@ static void thread_detach(void)
         X11DRV_ResetSelectionOwner();
         wine_tsx11_lock();
         if (data->xim) XCloseIM( data->xim );
+        if (data->font_set) XFreeFontSet( data->display, data->font_set );
         XCloseDisplay( data->display );
         wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, data );

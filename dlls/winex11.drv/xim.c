@@ -477,6 +477,26 @@ static BOOL open_xim( Display *display )
 
     thread_data->xim = xim;
 
+    if ((ximStyle & (XIMPreeditNothing | XIMPreeditNone)) == 0 ||
+        (ximStyle & (XIMStatusNothing | XIMStatusNone)) == 0)
+    {
+        char **list;
+        int count;
+        thread_data->font_set = XCreateFontSet(display, "fixed",
+                          &list, &count, NULL);
+        TRACE("ximFontSet = %p\n", thread_data->font_set);
+        TRACE("list = %p, count = %d\n", list, count);
+        if (list != NULL)
+        {
+            int i;
+            for (i = 0; i < count; ++i)
+                TRACE("list[%d] = %s\n", i, list[i]);
+            XFreeStringList(list);
+        }
+    }
+    else
+        thread_data->font_set = NULL;
+
     wine_tsx11_unlock();
     IME_UpdateAssociation(NULL);
     wine_tsx11_lock();
@@ -518,6 +538,7 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     XICCallback P_StartCB, P_DoneCB, P_DrawCB, P_CaretCB;
     LANGID langid = PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale()));
     Window win = data->whole_window;
+    XFontSet fontSet = x11drv_thread_data()->font_set;
 
     TRACE("xim = %p\n", xim);
 
@@ -552,6 +573,7 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     if ((ximStyle & (XIMPreeditNothing | XIMPreeditNone)) == 0)
     {
         preedit = XVaCreateNestedList(0,
+                        XNFontSet, fontSet,
                         XNSpotLocation, &spot,
                         XNPreeditStartCallback, &P_StartCB,
                         XNPreeditDoneCallback, &P_DoneCB,
@@ -575,6 +597,7 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     if ((ximStyle & (XIMStatusNothing | XIMStatusNone)) == 0)
     {
         status = XVaCreateNestedList(0,
+            XNFontSet, fontSet,
             NULL);
         TRACE("status = %p\n", status);
      }
