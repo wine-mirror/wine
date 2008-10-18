@@ -2,7 +2,7 @@
  * Copyright 1997-2000 Marcus Meissner
  * Copyright 1998-2000 Lionel Ulmer
  * Copyright 2000-2001 TransGaming Technologies Inc.
- * Copyright 2006 Stefan Dösinger
+ * Copyright 2006 Stefan DÃ¶singer
  * Copyright 2008 Denver Gingerich
  *
  * This library is free software; you can redistribute it and/or

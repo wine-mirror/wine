@@ -1,6 +1,6 @@
 /* Direct3D Texture
  * Copyright (c) 1998 Lionel ULMER
- * Copyright (c) 2006 Stefan DÖSINGER
+ * Copyright (c) 2006 Stefan DÃ–SINGER
  *
  * This file contains the implementation of interface Direct3DTexture2.
  *

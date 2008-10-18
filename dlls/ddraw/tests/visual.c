@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2007 Stefan DÃ¶singer(for CodeWeavers)
  * Copyright (C) 2008 Alexander Dorofeyev
  *
  * This library is free software; you can redistribute it and/or

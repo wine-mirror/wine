@@ -1,7 +1,7 @@
 /*
  * Unit tests for DirectDraw overlay functions
  *
- * Copyright (C) 2008 Stefan Dösinger for CodeWeavers
+ * Copyright (C) 2008 Stefan DÃ¶singer for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

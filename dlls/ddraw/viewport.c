@@ -1,6 +1,6 @@
 /* Direct3D Viewport
  * Copyright (c) 1998 Lionel ULMER
- * Copyright (c) 2006-2007 Stefan DÖSINGER
+ * Copyright (c) 2006-2007 Stefan DÃ–SINGER
  *
  * This file contains the implementation of Direct3DViewport2.
  *

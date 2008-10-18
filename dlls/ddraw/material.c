@@ -1,6 +1,6 @@
 /* Direct3D Material
  * Copyright (c) 2002 Lionel ULMER
- * Copyright (c) 2006 Stefan DÖSINGER
+ * Copyright (c) 2006 Stefan DÃ–SINGER
  *
  * This file contains the implementation of Direct3DMaterial.
  *

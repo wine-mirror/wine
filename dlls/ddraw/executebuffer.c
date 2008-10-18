@@ -1,7 +1,7 @@
 /* Direct3D ExecuteBuffer
  * Copyright (c) 1998-2004 Lionel ULMER
  * Copyright (c) 2002-2004 Christian Costa
- * Copyright (c) 2006      Stefan Dösinger
+ * Copyright (c) 2006      Stefan DÃ¶singer
  *
  * This file contains the implementation of IDirect3DExecuteBuffer.
  *

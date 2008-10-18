@@ -4,7 +4,7 @@
  * Copyright (C) 2005 Antoine Chavasse (a.chavasse@gmail.com)
  * Copyright (C) 2005 Christian Costa
  * Copyright 2005 Ivan Leo Puoti
- * Copyright (C) 2007 Stefan Dösinger
+ * Copyright (C) 2007 Stefan DÃ¶singer
  * Copyright (C) 2008 Alexander Dorofeyev
  *
  * This library is free software; you can redistribute it and/or

@@ -4,7 +4,7 @@
  * Copyright (c) 1997-2000 Marcus Meissner
  * Copyright (c) 1998 Lionel Ulmer
  * Copyright (c) 2000 TransGaming Technologies Inc.
- * Copyright (c) 2006 Stefan Dösinger
+ * Copyright (c) 2006 Stefan DÃ¶singer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

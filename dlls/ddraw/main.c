@@ -3,7 +3,7 @@
  * Copyright 1997-1999 Marcus Meissner
  * Copyright 1998 Lionel Ulmer
  * Copyright 2000-2001 TransGaming Technologies Inc.
- * Copyright 2006 Stefan Dösinger
+ * Copyright 2006 Stefan DÃ¶singer
  * Copyright 2008 Denver Gingerich
  *
  * This file contains the (internal) driver registration functions,

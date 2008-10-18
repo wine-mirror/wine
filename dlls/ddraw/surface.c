@@ -3,7 +3,7 @@
  * Copyright (c) 1997-2000 Marcus Meissner
  * Copyright (c) 1998-2000 Lionel Ulmer
  * Copyright (c) 2000-2001 TransGaming Technologies Inc.
- * Copyright (c) 2006 Stefan Dösinger
+ * Copyright (c) 2006 Stefan DÃ¶singer
  *
  * This file contains the (internal) driver registration functions,
  * driver enumeration APIs and DirectDraw creation functions.
@@ -1036,7 +1036,7 @@ IDirectDrawSurfaceImpl_AddOverlayDirtyRect(IDirectDrawSurface7 *iface,
 
     /* MSDN says it's not implemented. I could forward it to WineD3D, 
      * then we'd implement it, but I don't think that's a good idea
-     * (Stefan Dösinger)
+     * (Stefan DÃ¶singer)
      */
 #if 0
     return IWineD3DSurface_AddOverlayDirtyRect(This->WineD3DSurface, pRect);

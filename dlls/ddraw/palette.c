@@ -1,6 +1,6 @@
 /*		DirectDraw - IDirectPalette base interface
  *
- * Copyright 2006 Stefan Dösinger
+ * Copyright 2006 Stefan DÃ¶singer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
