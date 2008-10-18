@@ -2134,7 +2134,8 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
 }
 
 static HANDLE open_pdb_file(const struct process* pcs,
-                            const struct pdb_lookup* lookup)
+                            const struct pdb_lookup* lookup,
+                            struct module* module)
 {
     HANDLE      h;
     char        dbg_file_path[MAX_PATH];
@@ -2144,11 +2145,11 @@ static HANDLE open_pdb_file(const struct process* pcs,
     {
     case PDB_JG:
         ret = path_find_symbol_file(pcs, lookup->filename, NULL, lookup->u.jg.timestamp,
-                                    lookup->age, dbg_file_path);
+                                    lookup->age, dbg_file_path, &module->module.PdbUnmatched);
         break;
     case PDB_DS:
         ret = path_find_symbol_file(pcs, lookup->filename, &lookup->u.ds.guid, 0,
-                                    lookup->age, dbg_file_path);
+                                    lookup->age, dbg_file_path, &module->module.PdbUnmatched);
         break;
     }
     if (!ret)
@@ -2403,7 +2404,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
     TRACE("Processing PDB file %s\n", pdb_lookup->filename);
 
     /* Open and map() .PDB file */
-    if ((hFile = open_pdb_file(pcs, pdb_lookup)) == NULL ||
+    if ((hFile = open_pdb_file(pcs, pdb_lookup, msc_dbg->module)) == NULL ||
         ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
         ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) == NULL))
     {

@@ -476,7 +476,8 @@ extern BOOL         pdb_fetch_file_info(struct pdb_lookup* pdb_lookup);
 
 /* path.c */
 extern BOOL         path_find_symbol_file(const struct process* pcs, PCSTR full_path,
-                                          const GUID* guid, DWORD dw1, DWORD dw2, PSTR buffer);
+                                          const GUID* guid, DWORD dw1, DWORD dw2, PSTR buffer,
+                                          BOOL* is_unmatched);
 
 /* pe_module.c */
 extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth);

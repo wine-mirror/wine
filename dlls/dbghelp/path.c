@@ -612,7 +612,8 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
 }
 
 BOOL path_find_symbol_file(const struct process* pcs, PCSTR full_path,
-                           const GUID* guid, DWORD dw1, DWORD dw2, PSTR buffer)
+                           const GUID* guid, DWORD dw1, DWORD dw2, PSTR buffer,
+                           BOOL* is_unmatched)
 {
     struct module_find  mf;
     WCHAR               full_pathW[MAX_PATH];
@@ -632,6 +633,7 @@ BOOL path_find_symbol_file(const struct process* pcs, PCSTR full_path,
     MultiByteToWideChar(CP_ACP, 0, full_path, -1, full_pathW, MAX_PATH);
     filename = file_nameW(full_pathW);
     mf.kind = module_get_type_by_name(filename);
+    *is_unmatched = FALSE;
 
     /* first check full path to file */
     if (module_find_cb(full_pathW, &mf))
@@ -665,6 +667,7 @@ BOOL path_find_symbol_file(const struct process* pcs, PCSTR full_path,
     if ((dbghelp_options & SYMOPT_LOAD_ANYTHING) && mf.matched)
     {
         WideCharToMultiByte(CP_ACP, 0, mf.filename, -1, buffer, MAX_PATH, NULL, NULL);
+        *is_unmatched = TRUE;
         return TRUE;
     }
     return FALSE;
