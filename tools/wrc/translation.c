@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Vincent Béron
+ * Copyright 2003 Vincent BÃ©ron
  * Copyright 2007, 2008 Mikolaj Zalewski
  *
  * This library is free software; you can redistribute it and/or
