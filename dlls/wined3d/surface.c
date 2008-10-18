@@ -916,9 +916,10 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
      */
     ActivateContext(device, (IWineD3DSurface *) This, CTXUSAGE_RESOURCELOAD);
     surface_bind_and_dirtify(This);
-    ENTER_GL();
 
+    ENTER_GL();
     glGetIntegerv(GL_READ_BUFFER, &prevRead);
+    LEAVE_GL();
 
     /* Select the correct read buffer, and give some debug output.
      * There is no need to keep track of the current read buffer or reset it, every part of the code
@@ -928,8 +929,11 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
     {
         GLenum buffer = surface_get_gl_buffer((IWineD3DSurface *) This, (IWineD3DSwapChain *)swapchain);
         TRACE("Locking %#x buffer\n", buffer);
+
+        ENTER_GL();
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer");
+        LEAVE_GL();
 
         IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     } else {
@@ -937,7 +941,9 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
          * Read from the back buffer
          */
         TRACE("Locking offscreen render target\n");
+        ENTER_GL();
         glReadBuffer(device->offscreenBuffer);
+        LEAVE_GL();
     }
 
     if(!(This->Flags & SFLAG_ALLOCATED)) {
@@ -947,6 +953,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This)
 
     clear_unused_channels(This);
 
+    ENTER_GL();
     /* If !SrcIsUpsideDown we should flip the surface.
      * This can be done using glCopyTexSubImage2D but this
      * is VERY slow, so don't do that. We should prevent
