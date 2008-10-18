@@ -2536,11 +2536,30 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
     {
         if (!strcmpW(lpAccountName, ACCOUNT_SIDS[i].account))
         {
-            if (*cchReferencedDomainName)
-                *ReferencedDomainName = '\0';
-            *cchReferencedDomainName = 0;
-            *peUse = SidTypeWellKnownGroup;
-            return CreateWellKnownSid(ACCOUNT_SIDS[i].type, NULL, Sid, cbSid);
+            ret = CreateWellKnownSid(ACCOUNT_SIDS[i].type, NULL, Sid, cbSid);
+
+            domainName = ACCOUNT_SIDS[i].domain;
+            nameLen = strlenW(domainName);
+
+            if (*cchReferencedDomainName <= nameLen && ReferencedDomainName)
+            {
+                SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                nameLen += 1;
+                ret = FALSE;
+            }
+            else if (ReferencedDomainName && domainName)
+            {
+                strcpyW(ReferencedDomainName, domainName);
+            }
+
+            *cchReferencedDomainName = nameLen;
+
+            if (ret)
+            {
+                *peUse = ACCOUNT_SIDS[i].name_use;
+            }
+
+            return ret;
         }
     }
 
