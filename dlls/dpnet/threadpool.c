@@ -2,7 +2,7 @@
  * DirectPlay8 ThreadPool
  *
  * Copyright 2004 Raphael Junqueira
- * Copyright 2008 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2008 Alexander N. SÃ¸rnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
