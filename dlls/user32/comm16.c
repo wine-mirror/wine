@@ -21,13 +21,13 @@
  *
  * History:
  *
- * Mar 31, 1999. Ove Kåven <ovek@arcticnet.no>
+ * Mar 31, 1999. Ove KÃ¥ven <ovek@arcticnet.no>
  * - Implemented buffers and EnableCommNotification.
  *
  * Apr 3, 1999.  Lawson Whitney <lawson_whitney@juno.com>
  * - Fixed the modem control part of EscapeCommFunction16.
  *
- * Mar 3, 1999. Ove Kåven <ovek@arcticnet.no>
+ * Mar 3, 1999. Ove KÃ¥ven <ovek@arcticnet.no>
  * - Use port indices instead of unixfds for win16
  * - Moved things around (separated win16 and win32 routines)
  * - Added some hints on how to implement buffers and EnableCommNotification.

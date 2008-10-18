@@ -4,7 +4,7 @@
  * Copyright 1993 Martin Ayotte
  * Copyright 1994 Alexandre Julliard
  * Copyright 1997 Morten Welinder
- * Copyright 2005 Maxime Bellengé
+ * Copyright 2005 Maxime BellengÃ©
  * Copyright 2006 Phil Krylov
  *
  * This library is free software; you can redistribute it and/or
