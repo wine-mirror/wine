@@ -2536,7 +2536,26 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
     {
         if (!strcmpW(lpAccountName, ACCOUNT_SIDS[i].account))
         {
-            ret = CreateWellKnownSid(ACCOUNT_SIDS[i].type, NULL, Sid, cbSid);
+            DWORD sidLen = SECURITY_MAX_SID_SIZE;
+
+            pSid = HeapAlloc(GetProcessHeap(), 0, sidLen);
+
+            ret = CreateWellKnownSid(ACCOUNT_SIDS[i].type, NULL, pSid, &sidLen);
+
+            if (ret)
+            {
+                if (*cbSid < sidLen)
+                {
+                    SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                    ret = FALSE;
+                }
+                else if (Sid)
+                {
+                    CopySid(*cbSid, Sid, pSid);
+                }
+
+                *cbSid = sidLen;
+            }
 
             domainName = ACCOUNT_SIDS[i].domain;
             nameLen = strlenW(domainName);
@@ -2558,6 +2577,8 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
             {
                 *peUse = ACCOUNT_SIDS[i].name_use;
             }
+
+            HeapFree(GetProcessHeap(), 0, pSid);
 
             return ret;
         }
