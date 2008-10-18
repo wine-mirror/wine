@@ -1,7 +1,7 @@
 /*
  * DOS virtual machine
  *
- * Copyright 2000 Ove Kåven
+ * Copyright 2000 Ove KÃ¥ven
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

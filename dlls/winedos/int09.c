@@ -1,7 +1,7 @@
 /*
  * DOS interrupt 09h handler (IRQ1 - KEYBOARD)
  *
- * Copyright 1999 Ove Kåven
+ * Copyright 1999 Ove KÃ¥ven
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

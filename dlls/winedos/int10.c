@@ -1,7 +1,7 @@
 /*
  * BIOS interrupt 10h handler
  *
- * Copyright 1998 Ove Kåven
+ * Copyright 1998 Ove KÃ¥ven
  * Copyright 1998 Joseph Pranevich
  *
  * This library is free software; you can redistribute it and/or
