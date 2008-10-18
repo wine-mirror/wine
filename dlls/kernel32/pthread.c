@@ -1,7 +1,7 @@
 /*
  * pthread emulation for re-entrant libcs
  *
- * Copyright 1999 Ove Kåven
+ * Copyright 1999 Ove KÃ¥ven
  * Copyright 2003 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or

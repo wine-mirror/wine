@@ -3,7 +3,7 @@
  *
  * Copyright 1995 Martin von Loewis
  * Copyright 1998 David Lee Lambert
- * Copyright 2000 Julio César Gázquez
+ * Copyright 2000 Julio CÃ©sar GÃ¡zquez
  * Copyright 2002 Alexandre Julliard for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
