@@ -5592,6 +5592,11 @@ static void test_auto_yscroll(void)
             todo_wine ok(pt.y != 0, "Didn't scroll down after replacing text.\n");
         else
             ok(pt.y != 0, "Didn't scroll down after replacing text.\n");
+        ret = GetWindowLong(hwnd, GWL_STYLE);
+        if (!redraw)
+            todo_wine ok(ret & WS_VSCROLL, "Scrollbar was not shown yet (style=%x).\n", (UINT)ret);
+        else
+            ok(ret & WS_VSCROLL, "Scrollbar was not shown yet (style=%x).\n", (UINT)ret);
 
         SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)NULL);
         lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
@@ -5599,6 +5604,8 @@ static void test_auto_yscroll(void)
         ret = SendMessage(hwnd, EM_GETSCROLLPOS, 0, (LPARAM)&pt);
         ok(ret == 1, "EM_GETSCROLLPOS returned %d instead of 1\n", ret);
         ok(pt.y == 0, "y scroll position is %d after clearing text.\n", pt.y);
+        ret = GetWindowLong(hwnd, GWL_STYLE);
+        ok(!(ret & WS_VSCROLL), "Scrollbar is still shown (style=%x).\n", (UINT)ret);
     }
 
     SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
