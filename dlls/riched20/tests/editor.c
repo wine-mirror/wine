@@ -5484,7 +5484,7 @@ static void test_word_wrap(void)
     POINTL point = {0, 60}; /* This point must be below the first line */
     const char *text = "Must be long enough to test line wrapping";
     DWORD dwCommonStyle = WS_VISIBLE|WS_POPUP|WS_VSCROLL|ES_MULTILINE;
-    int res, pos;
+    int res, pos, lines;
 
     /* Test the effect of WS_HSCROLL and ES_AUTOHSCROLL styles on wrapping
      * when specified on window creation and set later. */
@@ -5495,6 +5495,8 @@ static void test_word_wrap(void)
     ok(res, "WM_SETTEXT failed.\n");
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
     ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(lines > 1, "Line was expected to wrap (lines=%d).\n", lines);
 
     SetWindowLongW(hwnd, GWL_STYLE, dwCommonStyle|WS_HSCROLL|ES_AUTOHSCROLL);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
@@ -5509,6 +5511,8 @@ static void test_word_wrap(void)
     ok(res, "WM_SETTEXT failed.\n");
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
     ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(lines == 1, "Line wasn't expected to wrap (lines=%d).", lines);
 
     SetWindowLongW(hwnd, GWL_STYLE, dwCommonStyle);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
@@ -5551,6 +5555,22 @@ static void test_word_wrap(void)
     todo_wine ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
     ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
+    DestroyWindow(hwnd);
+
+    /* Test to see if wrapping happens with redraw disabled. */
+    hwnd = CreateWindow(RICHEDIT_CLASS, NULL, dwCommonStyle,
+                        0, 0, 400, 80, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "error: %d\n", (int) GetLastError());
+    SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
+    res = SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM) text);
+    ok(res, "EM_REPLACESEL failed.\n");
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(lines == 1, "Line wasn't expected to wrap (lines=%d).\n", lines);
+    MoveWindow(hwnd, 0, 0, 200, 80, FALSE);
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    todo_wine ok(lines > 1, "Line was expected to wrap (lines=%d).\n", lines);
+
+    SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
     DestroyWindow(hwnd);
 }
 
