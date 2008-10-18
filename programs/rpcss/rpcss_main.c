@@ -1,5 +1,5 @@
 /*
- * Copyright 2001, Ove Kåven, TransGaming Technologies Inc.
+ * Copyright 2001, Ove KÃ¥ven, TransGaming Technologies Inc.
  * Copyright 2002 Greg Turner
  *
  * This library is free software; you can redistribute it and/or

@@ -1,7 +1,7 @@
 /*
  * msiexec.exe implementation
  *
- * Copyright 2004 Vincent Béron
+ * Copyright 2004 Vincent BÃ©ron
  * Copyright 2005 Mike McCormack
  *
  * This library is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ static const char UsageStr[] =
 "    msiexec {/h|/?}\n"
 "NOTE: Product code on commandline unimplemented as of yet\n"
 "\n"
-"Copyright 2004 Vincent Béron\n";
+"Copyright 2004 Vincent BÃ©ron\n";
 
 static const WCHAR ActionAdmin[] = {
    'A','C','T','I','O','N','=','A','D','M','I','N',0 };

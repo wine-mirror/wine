@@ -1,7 +1,7 @@
 /*
  * Debugger Alpha specific functions
  *
- * Copyright 2004 Vincent Béron
+ * Copyright 2004 Vincent BÃ©ron
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
