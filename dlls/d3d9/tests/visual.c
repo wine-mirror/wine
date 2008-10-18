@@ -1,6 +1,6 @@
 /*
  * Copyright 2005, 2007-2008 Henri Verbeet
- * Copyright (C) 2007-2008 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2007-2008 Stefan DÃ¶singer(for CodeWeavers)
  * Copyright (C) 2008 Jason Green(for TransGaming)
  *
  * This library is free software; you can redistribute it and/or

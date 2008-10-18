@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Stefan Dösinger(For CodeWeavers)
+ * Copyright (C) 2006-2007 Stefan DÃ¶singer(For CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

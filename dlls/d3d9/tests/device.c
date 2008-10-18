@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2006 Vitaliy Margolen
  * Copyright (C) 2006 Chris Robinson
- * Copyright (C) 2006-2007 Stefan Dösinger(For CodeWeavers)
+ * Copyright (C) 2006-2007 Stefan DÃ¶singer(For CodeWeavers)
  * Copyright 2007 Henri Verbeet
- * Copyright (C) 2008 Rico Schüller
+ * Copyright (C) 2008 Rico SchÃ¼ller
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
