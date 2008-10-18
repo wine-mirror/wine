@@ -2,7 +2,7 @@
  *	OLE32 proxy/stub handler
  *
  *  Copyright 2002  Marcus Meissner
- *  Copyright 2001  Ove Kåven, TransGaming Technologies
+ *  Copyright 2001  Ove KÃ¥ven, TransGaming Technologies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
