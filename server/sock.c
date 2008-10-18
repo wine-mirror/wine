@@ -1,7 +1,7 @@
 /*
  * Server-side socket management
  *
- * Copyright (C) 1999 Marcus Meissner, Ove Kåven
+ * Copyright (C) 1999 Marcus Meissner, Ove KÃ¥ven
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
