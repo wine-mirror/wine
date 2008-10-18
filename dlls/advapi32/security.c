@@ -2578,6 +2578,11 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
 
     *cchReferencedDomainName = strlenW(dm)+1;
 
+    if (ret)
+    {
+        *peUse = SidTypeUser;
+    }
+
     FreeSid(pSid);
 
     return ret;
