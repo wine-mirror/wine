@@ -1056,6 +1056,13 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     Context_MarkStateDirty(context, STATE_VSHADER, StateTable);
     Context_MarkStateDirty(context, STATE_PIXELSHADER, StateTable);
 
+    /* Call ENTER_GL() once for all gl calls below. In theory we should not call
+     * helper functions in between gl calls. This function is full of Context_MarkStateDirty
+     * which can safely be called from here, we only lock once instead locking/unlocking
+     * after each GL call.
+     */
+    ENTER_GL();
+
     /* Disable all textures. The caller can then bind a texture it wants to blit
      * from
      */
@@ -1188,6 +1195,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)");
     glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPING), StateTable);
+    LEAVE_GL();
 
     set_blit_dimension(width, height);
     context->blit_w = width; context->blit_h = height;
@@ -1416,11 +1424,14 @@ static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target,
     if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain)))
     {
         IWineD3DSwapChain_Release((IUnknown *)swapchain);
+        ENTER_GL();
         glDrawBuffer(surface_get_gl_buffer(target, swapchain));
         checkGLcall("glDrawBuffers()");
+        LEAVE_GL();
     }
     else
     {
+        ENTER_GL();
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
             if (!blit)
@@ -1445,6 +1456,7 @@ static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target,
             glDrawBuffer(This->offscreenBuffer);
             checkGLcall("glDrawBuffer()");
         }
+        LEAVE_GL();
     }
 }
 
@@ -1512,9 +1524,6 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         last_device = This;
     }
 
-    /* We only need ENTER_GL for the gl calls made below and for the helper functions which make GL calls */
-    ENTER_GL();
-
     switch (usage) {
         case CTXUSAGE_CLEAR:
         case CTXUSAGE_DRAWPRIM:
@@ -1533,11 +1542,16 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                     FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
                     context_bind_fbo((IWineD3DDevice *)This, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
                     context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, target);
+
+                    ENTER_GL();
                     GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
                     checkGLcall("glFramebufferRenderbufferEXT");
+                    LEAVE_GL();
                 } else {
+                    ENTER_GL();
                     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
                     checkGLcall("glFramebufferRenderbufferEXT");
+                    LEAVE_GL();
                 }
                 context->draw_buffer_dirty = TRUE;
             }
@@ -1566,11 +1580,15 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             /* Blending and clearing should be orthogonal, but tests on the nvidia driver show that disabling
              * blending when clearing improves the clearing performance incredibly.
              */
+            ENTER_GL();
             glDisable(GL_BLEND);
+            LEAVE_GL();
             Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
 
+            ENTER_GL();
             glEnable(GL_SCISSOR_TEST);
             checkGLcall("glEnable GL_SCISSOR_TEST");
+            LEAVE_GL();
             context->last_was_blit = FALSE;
             Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), StateTable);
             Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
@@ -1604,5 +1622,4 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         default:
             FIXME("Unexpected context usage requested\n");
     }
-    LEAVE_GL();
 }
