@@ -1,7 +1,7 @@
 /*
  *	AutoComplete interfaces implementation.
  *
- *	Copyright 2004	Maxime Bellengé <maxime.bellenge@laposte.net>
+ *	Copyright 2004	Maxime BellengÃ© <maxime.bellenge@laposte.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

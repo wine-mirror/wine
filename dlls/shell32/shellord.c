@@ -3,7 +3,7 @@
  * (NT uses Unicode strings, 95 uses ASCII strings)
  *
  * Copyright 1997 Marcus Meissner
- *           1998 Jürgen Schmied
+ *           1998 JÃ¼rgen Schmied
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
