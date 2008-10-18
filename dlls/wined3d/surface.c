@@ -4420,7 +4420,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
             if(!device->isInDraw) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             surface_bind_and_dirtify(This);
-            ENTER_GL();
 
             /* The only place where LoadTexture() might get called when isInDraw=1
              * is ActivateContext where lastActiveRenderTarget is preloaded.
@@ -4472,7 +4471,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             }
 
             /* Make sure the correct pitch is used */
+            ENTER_GL();
             glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+            LEAVE_GL();
 
             if ((This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
                 TRACE("non power of two support\n");
@@ -4495,6 +4496,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
             }
 
             /* Restore the default pitch */
+            ENTER_GL();
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
             LEAVE_GL();
 
