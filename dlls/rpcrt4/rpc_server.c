@@ -1,7 +1,7 @@
 /*
  * RPC server API
  *
- * Copyright 2001 Ove Kåven, TransGaming Technologies
+ * Copyright 2001 Ove KÃ¥ven, TransGaming Technologies
  * Copyright 2004 Filip Navara
  * Copyright 2006-2008 Robert Shearman (for CodeWeavers)
  *

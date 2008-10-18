@@ -1,7 +1,7 @@
 /*
  * RPC transport layer
  *
- * Copyright 2001 Ove Kåven, TransGaming Technologies
+ * Copyright 2001 Ove KÃ¥ven, TransGaming Technologies
  * Copyright 2003 Mike Hearn
  * Copyright 2004 Filip Navara
  * Copyright 2006 Mike McCormack

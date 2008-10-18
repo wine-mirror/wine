@@ -2,7 +2,7 @@
  * RPC endpoint mapper
  *
  * Copyright 2002 Greg Turner
- * Copyright 2001 Ove Kåven, TransGaming Technologies
+ * Copyright 2001 Ove KÃ¥ven, TransGaming Technologies
  * Copyright 2008 Robert Shearman (for CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or

@@ -1,7 +1,7 @@
 /*
  * RPC messages
  *
- * Copyright 2001-2002 Ove Kåven, TransGaming Technologies
+ * Copyright 2001-2002 Ove KÃ¥ven, TransGaming Technologies
  * Copyright 2004 Filip Navara
  * Copyright 2006 CodeWeavers
  *
