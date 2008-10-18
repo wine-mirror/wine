@@ -38,6 +38,7 @@
 #include "objbase.h"
 #include "iads.h"
 #include "advapi32_misc.h"
+#include "lmcons.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -1953,12 +1954,6 @@ LookupAccountSidA(
     DWORD accountSizeW = *accountSize;
     DWORD domainSizeW = *domainSize;
 
-    TRACE("(%s,sid=%s,%p,%p(%u),%p,%p(%u),%p)\n",
-          debugstr_a(system),debugstr_sid(sid),
-          account,accountSize,accountSize?*accountSize:0,
-          domain,domainSize,domainSize?*domainSize:0,
-          name_use);
-
     if (system) {
         len = MultiByteToWideChar( CP_ACP, 0, system, -1, NULL, 0 );
         systemW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
@@ -2022,6 +2017,7 @@ LookupAccountSidW(
     const WCHAR * dm = NULL;
     SID_NAME_USE use = 0;
     LPWSTR computer_name = NULL;
+    LPWSTR account_name = NULL;
 
     TRACE("(%s,sid=%s,%p,%p(%u),%p,%p(%u),%p)\n",
 	  debugstr_w(system),debugstr_sid(sid),
@@ -2108,6 +2104,16 @@ LookupAccountSidW(
                         case DOMAIN_ALIAS_RID_RAS_SERVERS:
                             ac = RAS_and_IAS_Servers;
                             break;
+                        case 1000:	/* first user account */
+                            size = UNLEN + 1;
+                            account_name = HeapAlloc(
+                                GetProcessHeap(), 0, size * sizeof(WCHAR));
+                            if (GetUserNameW(account_name, &size))
+                                ac = account_name;
+                            else
+                                dm = NULL;
+
+                            break;
                         default:
                             dm = NULL;
                             break;
@@ -2145,10 +2151,12 @@ LookupAccountSidW(
         else
             *accountSize = ac_len + 1;
         *name_use = use;
+        HeapFree(GetProcessHeap(), 0, account_name);
         HeapFree(GetProcessHeap(), 0, computer_name);
         return status;
     }
 
+    HeapFree(GetProcessHeap(), 0, account_name);
     HeapFree(GetProcessHeap(), 0, computer_name);
     SetLastError(ERROR_NONE_MAPPED);
     return FALSE;
