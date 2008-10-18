@@ -2027,7 +2027,7 @@ LookupAccountSidW(
 
     if (!ADVAPI_IsLocalComputer(system)) {
         FIXME("Only local computer supported!\n");
-        SetLastError(ERROR_NONE_MAPPED);
+        SetLastError(RPC_S_SERVER_UNAVAILABLE);
         return FALSE;
     }
 
@@ -2535,15 +2535,24 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
     static const WCHAR dm[] = {'D','O','M','A','I','N',0};
     unsigned int i;
     DWORD nameLen;
+    LPWSTR userName = NULL;
     LPCWSTR domainName;
 
     FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
           Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
 
+    if (!ADVAPI_IsLocalComputer(lpSystemName))
+    {
+        SetLastError(RPC_S_SERVER_UNAVAILABLE);
+        return FALSE;
+    }
+
     if (!lpAccountName || !strcmpW(lpAccountName, Blank))
     {
         lpAccountName = BUILTIN;
     }
+
+    /* Check well known SIDs first */
 
     for (i = 0; i < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); i++)
     {
@@ -2595,6 +2604,27 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
 
             return ret;
         }
+    }
+
+    /* Let the current Unix user id masquerade as first Windows user account */
+
+    nameLen = UNLEN + 1;
+
+    userName = HeapAlloc(GetProcessHeap(), 0, nameLen);
+
+    ret = GetUserNameW(userName, &nameLen);
+
+    if (ret && strcmpW(lpAccountName, userName) != 0)
+    {
+        SetLastError(ERROR_NONE_MAPPED);
+        ret = FALSE;
+    }
+
+    HeapFree(GetProcessHeap(), 0, userName);
+
+    if (!ret)
+    {
+        return ret;
     }
 
     ret = AllocateAndInitializeSid(&identifierAuthority,

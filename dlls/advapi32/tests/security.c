@@ -1314,6 +1314,14 @@ static void test_LookupAccountSid(void)
     ret = LookupAccountSidW(NULL, pUsersSid, accountW, &real_acc_sizeW, domainW, &real_dom_sizeW, &use);
     ok(ret, "LookupAccountSidW() Expected TRUE, got FALSE\n");
 
+    /* try an invalid system name */
+    real_acc_sizeA = MAX_PATH;
+    real_dom_sizeA = MAX_PATH;
+    ret = LookupAccountSidA("deepthought", pUsersSid, accountA, &real_acc_sizeA, domainA, &real_dom_sizeA, &use);
+    ok(!ret, "LookupAccountSidA() Expected FALSE got TRUE\n");
+    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE,
+       "LookupAccountSidA() Expected RPC_S_SERVER_UNAVAILABLE, got %u\n", GetLastError());
+
     /* native windows crashes if domainW or accountW is NULL */
 
     /* try a small account buffer */
@@ -1644,14 +1652,22 @@ static void test_LookupAccountName(void)
     domain_size = 0;
     ret = LookupAccountNameA(NULL, "oogabooga", NULL, &sid_size, NULL, &domain_size, &sid_use);
     ok(!ret, "Expected 0, got %d\n", ret);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_NONE_MAPPED ||
-           broken(GetLastError() == ERROR_TRUSTED_RELATIONSHIP_FAILURE),
-           "Expected ERROR_NONE_MAPPED, got %d\n", GetLastError());
-        ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
-        ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
-    }
+    ok(GetLastError() == ERROR_NONE_MAPPED ||
+       broken(GetLastError() == ERROR_TRUSTED_RELATIONSHIP_FAILURE),
+       "Expected ERROR_NONE_MAPPED, got %d\n", GetLastError());
+    ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
+    ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
+
+    /* try an invalid system name */
+    SetLastError(0xdeadbeef);
+    sid_size = 0;
+    domain_size = 0;
+    ret = LookupAccountNameA("deepthought", NULL, NULL, &sid_size, NULL, &domain_size, &sid_use);
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE,
+       "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
+    ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
+    ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
 
     HeapFree(GetProcessHeap(), 0, psid);
     HeapFree(GetProcessHeap(), 0, domain);
