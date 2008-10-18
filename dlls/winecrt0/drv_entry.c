@@ -27,7 +27,7 @@
 struct _DRIVER_OBJECT;
 extern NTSTATUS WINAPI DriverEntry( struct _DRIVER_OBJECT *obj, UNICODE_STRING *path );
 
-NTSTATUS DECLSPEC_HIDDEN __wine_spec_drv_entry( struct _DRIVER_OBJECT *obj, UNICODE_STRING *path )
+NTSTATUS DECLSPEC_HIDDEN WINAPI __wine_spec_drv_entry( struct _DRIVER_OBJECT *obj, UNICODE_STRING *path )
 {
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
 
