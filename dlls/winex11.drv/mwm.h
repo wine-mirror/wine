@@ -1,7 +1,7 @@
 /*
  * Motif Window Manager definitions
  *
- * Copyright 2001 Ove Kåven, TransGaming Technologies Inc.
+ * Copyright 2001 Ove KÃ¥ven, TransGaming Technologies Inc.
  * (these definitions were found in GTK+ 1.2, gdk/MwmUtil.h)
  *
  * This library is free software; you can redistribute it and/or

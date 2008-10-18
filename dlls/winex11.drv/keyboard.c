@@ -6,7 +6,7 @@
  * Copyright 1997 David Faure
  * Copyright 1998 Morten Welinder
  * Copyright 1998 Ulrich Weigand
- * Copyright 1999 Ove Kåven
+ * Copyright 1999 Ove KÃ¥ven
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1549,7 +1549,7 @@ X11DRV_KEYBOARD_DetectLayout( Display *display )
 	/* search for a match in layout table */
 	/* right now, we just find an absolute match for defined positions */
 	/* (undefined positions are ignored, so if it's defined as "3#" in */
-	/* the table, it's okay that the X server has "3#£", for example) */
+	/* the table, it's okay that the X server has "3#Â£", for example) */
 	/* however, the score will be higher for longer matches */
 	for (key = 0; key < MAIN_LEN; key++) {
 	  for (ok = 0, i = 0; (ok >= 0) && (i < syms); i++) {
