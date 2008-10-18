@@ -7015,10 +7015,13 @@ void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain_
         This->depth_blt_rb_w = 0;
         This->depth_blt_rb_h = 0;
     }
+    LEAVE_GL();
+
     This->blitter->free_private(iface);
     This->frag_pipe->free_private(iface);
     This->shader_backend->shader_free_private(iface);
 
+    ENTER_GL();
     for (i = 0; i < GL_LIMITS(textures); i++) {
         /* Textures are recreated below */
         glDeleteTextures(1, &This->dummyTextureName[i]);
