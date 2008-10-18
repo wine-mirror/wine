@@ -136,10 +136,10 @@ typedef struct _DVD_LAYER_DESCRIPTOR
 
     UCHAR Reserved1 : 1;
 
-    /* 0:0.74 µm/track, 1:0.80 µm/track, 2:0.615 µm/track */
+    /* 0:0.74 Âµm/track, 1:0.80 Âµm/track, 2:0.615 Âµm/track */
     UCHAR TrackDensity : 4;
 
-    /* 0:0.267 µm/bit, 1:0.293 µm/bit, 2:0.409 to 0.435 µm/bit, 4:0.280 to 0.291 µm/bit, 8:0.353 µm/bit */
+    /* 0:0.267 Âµm/bit, 1:0.293 Âµm/bit, 2:0.409 to 0.435 Âµm/bit, 4:0.280 to 0.291 Âµm/bit, 8:0.353 Âµm/bit */
     UCHAR LinearDensity : 4;
 
     /* Must be either 0x30000:DVD-ROM or DVD-R/-RW or 0x31000:DVD-RAM or DVD+RW */

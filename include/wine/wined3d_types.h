@@ -5,7 +5,7 @@
  * Copyright 2002-2003 Jason Edmeades
  *                     Raphael Junqueira
  * Copyright 2005 Oliver Stieber
- * Copyright 2006 Stefan Dösinger
+ * Copyright 2006 Stefan DÃ¶singer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
