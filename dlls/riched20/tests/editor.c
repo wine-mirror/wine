@@ -5184,6 +5184,15 @@ static void test_eventMask(void)
     ok(queriedEventMask == (eventMask & ~ENM_CHANGE),
             "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
 
+    /* check to see if EN_CHANGE is sent when redraw is turned off */
+    SendMessage(eventMaskEditHwnd, WM_CLEAR, 0, 0);
+    SendMessage(eventMaskEditHwnd, WM_SETREDRAW, FALSE, 0);
+    queriedEventMask = 0;  /* initialize to something other than we expect */
+    SendMessage(eventMaskEditHwnd, EM_REPLACESEL, 0, (LPARAM) text);
+    todo_wine ok(queriedEventMask == (eventMask & ~ENM_CHANGE),
+            "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
+    SendMessage(eventMaskEditHwnd, WM_SETREDRAW, TRUE, 0);
+
     DestroyWindow(parent);
 }
 
@@ -5259,6 +5268,14 @@ static void test_WM_NOTIFY(void)
     SendMessage(hwndRichedit_WM_NOTIFY, WM_SETTEXT, 0, (LPARAM)"sometext");
     ok(received_WM_NOTIFY == 1, "Expected WM_NOTIFY was NOT sent!\n");
     ok(modify_at_WM_NOTIFY == 0, "WM_NOTIFY callback saw text flagged as modified!\n");
+
+    /* Test for WM_NOTIFY messages with redraw disabled. */
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_SETSEL, 0, 0);
+    SendMessage(hwndRichedit_WM_NOTIFY, WM_SETREDRAW, FALSE, 0);
+    received_WM_NOTIFY = 0;
+    SendMessage(hwndRichedit_WM_NOTIFY, EM_REPLACESEL, FALSE, (LPARAM)"inserted");
+    ok(received_WM_NOTIFY == 1, "Expected WM_NOTIFY was NOT sent!\n");
+    SendMessage(hwndRichedit_WM_NOTIFY, WM_SETREDRAW, TRUE, 0);
 
     DestroyWindow(hwndRichedit_WM_NOTIFY);
     DestroyWindow(parent);
