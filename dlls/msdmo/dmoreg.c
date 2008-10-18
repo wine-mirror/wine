@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003 Michael Günnewig
+ * Copyright (C) 2003 Michael GÃ¼nnewig
  * Copyright (C) 2003 CodeWeavers Inc. (Ulrich Czekalla)
  *
  * This library is free software; you can redistribute it and/or
