@@ -125,22 +125,33 @@ void	dbg_outputA(const char* buffer, int len)
     }
 }
 
+const char* dbg_W2A(const WCHAR* buffer, unsigned len)
+{
+    static unsigned ansilen;
+    static char* ansi;
+    unsigned newlen;
+
+    newlen = WideCharToMultiByte(CP_ACP, 0, buffer, len, NULL, 0, NULL, NULL);
+    if (newlen > ansilen)
+    {
+        static char* newansi;
+        if (ansi)
+            newansi = HeapReAlloc(GetProcessHeap(), 0, ansi, newlen);
+        else
+            newansi = HeapAlloc(GetProcessHeap(), 0, newlen);
+        if (!newansi) return NULL;
+        ansilen = newlen;
+        ansi = newansi;
+    }
+    WideCharToMultiByte(CP_ACP, 0, buffer, len, ansi, newlen, NULL, NULL);
+    return ansi;
+}
+
 void	dbg_outputW(const WCHAR* buffer, int len)
 {
-    char* ansi = NULL;
-    int newlen;
-	
-    /* do a serious Unicode to ANSI conversion
-     * FIXME: should CP_ACP be GetConsoleCP()?
-     */
-    newlen = WideCharToMultiByte(CP_ACP, 0, buffer, len, NULL, 0, NULL, NULL);
-    if (newlen)
-    {
-        if (!(ansi = HeapAlloc(GetProcessHeap(), 0, newlen))) return;
-        WideCharToMultiByte(CP_ACP, 0, buffer, len, ansi, newlen, NULL, NULL);
-        dbg_outputA(ansi, newlen);
-        HeapFree(GetProcessHeap(), 0, ansi);
-    }
+    const char* ansi = dbg_W2A(buffer, len);
+    if (ansi) dbg_outputA(ansi, strlen(ansi));
+    /* FIXME: should CP_ACP be GetConsoleCP()? */
 }
 
 int	dbg_printf(const char* format, ...)
@@ -315,13 +326,13 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     return p;
 }
 
-void dbg_set_process_name(struct dbg_process* p, const char* imageName)
+void dbg_set_process_name(struct dbg_process* p, const WCHAR* imageName)
 {
     assert(p->imageName == NULL);
     if (imageName)
     {
-        char* tmp = HeapAlloc(GetProcessHeap(), 0, strlen(imageName) + 1);
-        if (tmp) p->imageName = strcpy(tmp, imageName);
+        WCHAR* tmp = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(imageName) + 1) * sizeof(WCHAR));
+        if (tmp) p->imageName = lstrcpyW(tmp, imageName);
     }
 }
 
@@ -352,29 +363,29 @@ void dbg_del_process(struct dbg_process* p)
  * Initializes the dbghelp library, and also sets the application directory
  * as a place holder for symbol searches.
  */
-BOOL dbg_init(HANDLE hProc, const char* in, BOOL invade)
+BOOL dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade)
 {
     BOOL        ret;
 
     ret = SymInitialize(hProc, NULL, invade);
     if (ret && in)
     {
-        const char*     last;
+        const WCHAR*    last;
 
-        for (last = in + strlen(in) - 1; last >= in; last--)
+        for (last = in + lstrlenW(in) - 1; last >= in; last--)
         {
             if (*last == '/' || *last == '\\')
             {
-                char*       tmp;
-                tmp = HeapAlloc(GetProcessHeap(), 0, 1024 + 1 + (last - in) + 1);
-                if (tmp && SymGetSearchPath(hProc, tmp, 1024))
+                WCHAR*  tmp;
+                tmp = HeapAlloc(GetProcessHeap(), 0, (1024 + 1 + (last - in) + 1) * sizeof(WCHAR));
+                if (tmp && SymGetSearchPathW(hProc, tmp, 1024))
                 {
-                    char*       x = tmp + strlen(tmp);
+                    WCHAR*      x = tmp + lstrlenW(tmp);
 
                     *x++ = ';';
-                    memcpy(x, in, last - in);
+                    memcpy(x, in, (last - in) * sizeof(WCHAR));
                     x[last - in] = '\0';
-                    ret = SymSetSearchPath(hProc, tmp);
+                    ret = SymSetSearchPathW(hProc, tmp);
                 }
                 else ret = FALSE;
                 HeapFree(GetProcessHeap(), 0, tmp);

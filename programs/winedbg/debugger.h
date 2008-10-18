@@ -216,7 +216,7 @@ struct dbg_process
     DWORD			pid;
     const struct be_process_io* process_io;
     void*                       pio_data;
-    const char*			imageName;
+    const WCHAR*		imageName;
     struct dbg_thread*  	threads;
     unsigned			continue_on_first_exception : 1,
                                 active_debuggee : 1;
@@ -359,7 +359,7 @@ extern BOOL             memory_get_current_pc(ADDRESS64* address);
 extern BOOL             memory_get_current_stack(ADDRESS64* address);
 extern BOOL             memory_get_current_frame(ADDRESS64* address);
 extern BOOL             memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee, BOOL unicode, char* buffer, int size);
-extern BOOL             memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, char* buffer, int size);
+extern BOOL             memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, WCHAR* buffer, int size);
 extern BOOL             memory_get_register(DWORD regno, DWORD** value, char* buffer, int len);
 extern void             memory_disassemble(const struct dbg_lvalue*, const struct dbg_lvalue*, int instruction_count);
 extern BOOL             memory_disasm_one_insn(ADDRESS64* addr);
@@ -430,6 +430,7 @@ extern struct dbg_type  types_find_type(unsigned long linear, const char* name, 
   /* winedbg.c */
 extern void	        dbg_outputA(const char* buffer, int len);
 extern void	        dbg_outputW(const WCHAR* buffer, int len);
+extern const char*      dbg_W2A(const WCHAR* buffer, unsigned len);
 #ifdef __GNUC__
 extern int	        dbg_printf(const char* format, ...) __attribute__((format (printf,1,2)));
 #else
@@ -439,14 +440,14 @@ extern const struct dbg_internal_var* dbg_get_internal_var(const char*);
 extern BOOL             dbg_interrupt_debuggee(void);
 extern unsigned         dbg_num_processes(void);
 extern struct dbg_process* dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h);
-extern void             dbg_set_process_name(struct dbg_process* p, const char* name);
+extern void             dbg_set_process_name(struct dbg_process* p, const WCHAR* name);
 extern struct dbg_process* dbg_get_process(DWORD pid);
 extern struct dbg_process* dbg_get_process_h(HANDLE handle);
 extern void             dbg_del_process(struct dbg_process* p);
 struct dbg_thread*	dbg_add_thread(struct dbg_process* p, DWORD tid, HANDLE h, void* teb);
 extern struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid);
 extern void             dbg_del_thread(struct dbg_thread* t);
-extern BOOL             dbg_init(HANDLE hProc, const char* in, BOOL invade);
+extern BOOL             dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade);
 extern BOOL             dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod);
 
   /* gdbproxy.c */

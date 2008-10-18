@@ -63,6 +63,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "tlhelp32.h"
+#include "wine/debug.h"
 
 #define GDBPXY_TRC_LOWLEVEL             0x01
 #define GDBPXY_TRC_PACKET               0x02
@@ -480,7 +481,10 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
 
 static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 {
-    char                buffer[256];
+    union {
+        char                bufferA[256];
+        WCHAR               buffer[256];
+    } u;
 
     dbg_curr_thread = dbg_get_thread(gdbctx->process, de->dwThreadId);
 
@@ -493,19 +497,20 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         memory_get_string_indirect(gdbctx->process,
                                    de->u.CreateProcessInfo.lpImageName,
                                    de->u.CreateProcessInfo.fUnicode,
-                                   buffer, sizeof(buffer));
-        dbg_set_process_name(gdbctx->process, buffer);
+                                   u.buffer, sizeof(u.buffer) / sizeof(WCHAR));
+        dbg_set_process_name(gdbctx->process, u.buffer);
 
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
             fprintf(stderr, "%04x:%04x: create process '%s'/%p @%p (%u<%u>)\n",
                     de->dwProcessId, de->dwThreadId,
-                    buffer, de->u.CreateProcessInfo.lpImageName,
+                    dbg_W2A(u.buffer, -1),
+                    de->u.CreateProcessInfo.lpImageName,
                     de->u.CreateProcessInfo.lpStartAddress,
                     de->u.CreateProcessInfo.dwDebugInfoFileOffset,
                     de->u.CreateProcessInfo.nDebugInfoSize);
 
         /* de->u.CreateProcessInfo.lpStartAddress; */
-        if (!dbg_init(gdbctx->process->handle, buffer, TRUE))
+        if (!dbg_init(gdbctx->process->handle, u.buffer, TRUE))
             fprintf(stderr, "Couldn't initiate DbgHelp\n");
 
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
@@ -524,15 +529,16 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         memory_get_string_indirect(gdbctx->process,
                                    de->u.LoadDll.lpImageName,
                                    de->u.LoadDll.fUnicode,
-                                   buffer, sizeof(buffer));
+                                   u.buffer, sizeof(u.buffer) / sizeof(WCHAR));
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
             fprintf(stderr, "%04x:%04x: loads DLL %s @%p (%u<%u>)\n",
                     de->dwProcessId, de->dwThreadId,
-                    buffer, de->u.LoadDll.lpBaseOfDll,
+                    dbg_W2A(u.buffer, -1),
+                    de->u.LoadDll.lpBaseOfDll,
                     de->u.LoadDll.dwDebugInfoFileOffset,
                     de->u.LoadDll.nDebugInfoSize);
-        SymLoadModule(gdbctx->process->handle, de->u.LoadDll.hFile, buffer, NULL,
-                      (unsigned long)de->u.LoadDll.lpBaseOfDll, 0);
+        SymLoadModuleExW(gdbctx->process->handle, de->u.LoadDll.hFile, u.buffer, NULL,
+                         (unsigned long)de->u.LoadDll.lpBaseOfDll, 0, NULL, 0);
         break;
 
     case UNLOAD_DLL_DEBUG_EVENT:
@@ -594,10 +600,10 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         assert(dbg_curr_thread);
         memory_get_string(gdbctx->process,
                           de->u.DebugString.lpDebugStringData, TRUE,
-                          de->u.DebugString.fUnicode, buffer, sizeof(buffer));
+                          de->u.DebugString.fUnicode, u.bufferA, sizeof(u.bufferA));
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
             fprintf(stderr, "%08x:%08x: output debug string (%s)\n",
-                    de->dwProcessId, de->dwThreadId, buffer);
+                    de->dwProcessId, de->dwThreadId, u.bufferA);
         break;
 
     case RIP_EVENT:

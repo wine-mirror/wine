@@ -172,9 +172,10 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     MINIDUMP_MODULE_LIST*       mml;
     MINIDUMP_MODULE*            mm;
     MINIDUMP_STRING*            mds;
-    char                        exec_name[1024];
+    WCHAR                       exec_name[1024];
     WCHAR                       nameW[1024];
     unsigned                    len;
+    static WCHAR                default_exec_name[] = {'<','m','i','n','i','d','u','m','p','-','e','x','e','c','>',0};
 
     /* fetch PID */
     if (MiniDumpReadDumpStream(data->mapping, MiscInfoStream, &dir, &stream, &size))
@@ -185,25 +186,24 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     }
 
     /* fetch executable name (it's normally the first one in module list) */
-    strcpy(exec_name, "<minidump-exec>"); /* default */
+    lstrcpyW(exec_name, default_exec_name);
     if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, &dir, &stream, &size))
     {
         mml = (MINIDUMP_MODULE_LIST*)stream;
         if (mml->NumberOfModules)
         {
-            char*               ptr;
+            WCHAR*      ptr;
 
             mm = &mml->Modules[0];
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
-            len = WideCharToMultiByte(CP_ACP, 0, mds->Buffer,
-                                      mds->Length / sizeof(WCHAR),
-                                      exec_name, sizeof(exec_name) - 1, NULL, NULL);
+            len = mds->Length / 2;
+            memcpy(exec_name, mds->Buffer, mds->Length);
             exec_name[len] = 0;
             for (ptr = exec_name + len - 1; ptr >= exec_name; ptr--)
             {
                 if (*ptr == '/' || *ptr == '\\')
                 {
-                    memmove(exec_name, ptr + 1, strlen(ptr + 1) + 1);
+                    memmove(exec_name, ptr + 1, (lstrlenW(ptr + 1) + 1) * sizeof(WCHAR));
                     break;
                 }
             }
@@ -264,7 +264,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             break;
         }
         dbg_printf("  %s was running on #%d %s CPU%s",
-                   exec_name, msi->u.s.NumberOfProcessors, str,
+                   dbg_W2A(exec_name, -1), msi->u.s.NumberOfProcessors, str,
                    msi->u.s.NumberOfProcessors < 2 ? "" : "s");
         switch (msi->MajorVersion)
         {

@@ -259,16 +259,32 @@ BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
     return TRUE;
 }
 
-BOOL memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, char* buffer, int size)
+BOOL memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, WCHAR* buffer, int size)
 {
     void*       ad;
     SIZE_T	sz;
 
     buffer[0] = 0;
-    if (addr && 
+    if (addr &&
         pcs->process_io->read(pcs->handle, addr, &ad, sizeof(ad), &sz) && sz == sizeof(ad) && ad)
     {
-        return memory_get_string(pcs, ad, TRUE, unicode, buffer, size);
+        LPSTR buff;
+        BOOL ret;
+
+        if (unicode)
+            ret = pcs->process_io->read(pcs->handle, ad, buffer, size * sizeof(WCHAR), &sz) && sz != 0;
+        else
+        {
+            if ((buff = HeapAlloc(GetProcessHeap(), 0, size)))
+            {
+                ret = pcs->process_io->read(pcs->handle, ad, buff, size, &sz) && sz != 0;
+                MultiByteToWideChar(CP_ACP, 0, buff, sz, buffer, size);
+                HeapFree(GetProcessHeap(), 0, buff);
+            }
+            else ret = FALSE;
+        }
+        if (size) buffer[size-1] = 0;
+        return ret;
     }
     return FALSE;
 }

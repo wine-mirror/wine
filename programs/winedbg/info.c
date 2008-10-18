@@ -501,7 +501,8 @@ void info_win32_threads(void)
 		    struct dbg_process*	p = dbg_get_process(entry.th32OwnerProcessID);
 
 		    dbg_printf("%08x%s %s\n",
-                               entry.th32OwnerProcessID, p ? " (D)" : "", p ? p->imageName : "");
+                               entry.th32OwnerProcessID, p ? " (D)" : "",
+                               p ? dbg_W2A(p->imageName, -1) : "");
 		    lastProcessId = entry.th32OwnerProcessID;
 		}
                 dbg_printf("\t%08x %4d%s\n",

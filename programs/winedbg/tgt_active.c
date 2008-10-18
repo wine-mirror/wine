@@ -30,6 +30,7 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
@@ -418,16 +419,19 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
 static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill);
 
 static void fetch_module_name(void* name_addr, BOOL unicode, void* mod_addr,
-                              char* buffer, size_t bufsz, BOOL is_pcs)
+                              WCHAR* buffer, size_t bufsz, BOOL is_pcs)
 {
+    static WCHAR        pcspid[] = {'P','r','o','c','e','s','s','_','%','0','8','x',0};
+    static WCHAR        dlladdr[] = {'D','L','L','_','%','0','8','l','x',0};
+
     memory_get_string_indirect(dbg_curr_process, name_addr, unicode, buffer, bufsz);
     if (!buffer[0] &&
-        !GetModuleFileNameExA(dbg_curr_process->handle, mod_addr, buffer, bufsz))
+        !GetModuleFileNameExW(dbg_curr_process->handle, mod_addr, buffer, bufsz))
     {
         if (is_pcs)
         {
             HMODULE h;
-            WORD (WINAPI *gpif)(HANDLE, LPSTR, DWORD);
+            WORD (WINAPI *gpif)(HANDLE, LPWSTR, DWORD);
 
             /* On Windows, when we get the process creation debug event for a process
              * created by winedbg, the modules' list is not initialized yet. Hence,
@@ -436,18 +440,21 @@ static void fetch_module_name(void* name_addr, BOOL unicode, void* mod_addr,
              * give us the expected result
              */
             if (!(h = GetModuleHandleA("psapi")) ||
-                !(gpif = (void*)GetProcAddress(h, "GetProcessImageFileName")) ||
+                !(gpif = (void*)GetProcAddress(h, "GetProcessImageFileNameW")) ||
                 !(gpif)(dbg_curr_process->handle, buffer, bufsz))
-                snprintf(buffer, bufsz, "Process_%08x", dbg_curr_pid);
+                snprintfW(buffer, bufsz, pcspid, dbg_curr_pid);
         }
         else
-            snprintf(buffer, bufsz, "DLL_%p", mod_addr);
+            snprintfW(buffer, bufsz, dlladdr, (unsigned long)mod_addr);
     }
 }
 
 static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
 {
-    char	buffer[256];
+    union {
+        char	bufferA[256];
+        WCHAR	buffer[256];
+    } u;
     DWORD       cont = DBG_CONTINUE;
 
     dbg_curr_pid = de->dwProcessId;
@@ -499,20 +506,21 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         fetch_module_name(de->u.CreateProcessInfo.lpImageName,
                           de->u.CreateProcessInfo.fUnicode,
                           de->u.CreateProcessInfo.lpBaseOfImage,
-                          buffer, sizeof(buffer), TRUE);
+                          u.buffer, sizeof(u.buffer) / sizeof(WCHAR), TRUE);
 
         WINE_TRACE("%04x:%04x: create process '%s'/%p @%p (%u<%u>)\n",
                    de->dwProcessId, de->dwThreadId,
-                   buffer, de->u.CreateProcessInfo.lpImageName,
+                   wine_dbgstr_w(u.buffer),
+                   de->u.CreateProcessInfo.lpImageName,
                    de->u.CreateProcessInfo.lpStartAddress,
                    de->u.CreateProcessInfo.dwDebugInfoFileOffset,
                    de->u.CreateProcessInfo.nDebugInfoSize);
-        dbg_set_process_name(dbg_curr_process, buffer);
+        dbg_set_process_name(dbg_curr_process, u.buffer);
 
-        if (!dbg_init(dbg_curr_process->handle, buffer, FALSE))
+        if (!dbg_init(dbg_curr_process->handle, u.buffer, FALSE))
             dbg_printf("Couldn't initiate DbgHelp\n");
-        if (!SymLoadModule(dbg_curr_process->handle, de->u.CreateProcessInfo.hFile, buffer, NULL,
-                           (unsigned long)de->u.CreateProcessInfo.lpBaseOfImage, 0))
+        if (!SymLoadModuleExW(dbg_curr_process->handle, de->u.CreateProcessInfo.hFile, u.buffer, NULL,
+                              (unsigned long)de->u.CreateProcessInfo.lpBaseOfImage, 0, NULL, 0))
             dbg_printf("couldn't load main module (%u)\n", GetLastError());
 
         WINE_TRACE("%04x:%04x: create thread I @%p\n",
@@ -593,22 +601,22 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         fetch_module_name(de->u.LoadDll.lpImageName,
                           de->u.LoadDll.fUnicode,
                           de->u.LoadDll.lpBaseOfDll,
-                          buffer, sizeof(buffer), FALSE);
+                          u.buffer, sizeof(u.buffer) / sizeof(WCHAR), FALSE);
 
         WINE_TRACE("%04x:%04x: loads DLL %s @%p (%u<%u>)\n",
                    de->dwProcessId, de->dwThreadId,
-                   buffer, de->u.LoadDll.lpBaseOfDll,
+                   wine_dbgstr_w(u.buffer), de->u.LoadDll.lpBaseOfDll,
                    de->u.LoadDll.dwDebugInfoFileOffset,
                    de->u.LoadDll.nDebugInfoSize);
-        SymLoadModule(dbg_curr_process->handle, de->u.LoadDll.hFile, buffer, NULL,
-                      (unsigned long)de->u.LoadDll.lpBaseOfDll, 0);
+        SymLoadModuleExW(dbg_curr_process->handle, de->u.LoadDll.hFile, u.buffer, NULL,
+                         (unsigned long)de->u.LoadDll.lpBaseOfDll, 0, NULL, 0);
         break_set_xpoints(FALSE);
         break_check_delayed_bp();
         break_set_xpoints(TRUE);
         if (DBG_IVAR(BreakOnDllLoad))
         {
             dbg_printf("Stopping on DLL %s loading at 0x%08lx\n",
-                       buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll);
+                       dbg_W2A(u.buffer, -1), (unsigned long)de->u.LoadDll.lpBaseOfDll);
             if (dbg_fetch_context()) cont = 0;
         }
         break;
@@ -631,9 +639,9 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
 
         memory_get_string(dbg_curr_process,
                           de->u.DebugString.lpDebugStringData, TRUE,
-                          de->u.DebugString.fUnicode, buffer, sizeof(buffer));
+                          de->u.DebugString.fUnicode, u.bufferA, sizeof(u.bufferA));
         WINE_TRACE("%04x:%04x: output debug string (%s)\n",
-                   de->dwProcessId, de->dwThreadId, buffer);
+                   de->dwProcessId, de->dwThreadId, u.bufferA);
         break;
 
     case RIP_EVENT:
