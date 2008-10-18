@@ -3539,10 +3539,12 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLen
     buffer.newline = TRUE;
     buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
 
+    ENTER_GL();
     GL_EXTCALL(glGenProgramsARB(1, &shader));
     checkGLcall("GL_EXTCALL(glGenProgramsARB(1, &shader))");
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
     checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
+    LEAVE_GL();
     if(!shader) {
         HeapFree(GetProcessHeap(), 0, buffer.buffer);
         return 0;
@@ -3617,6 +3619,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLen
     shader_addline(&buffer, "MAD result.color.b, chroma.g, yuv_coef.w, luminance.%c;\n", luminance_component);
     shader_addline(&buffer, "END\n");
 
+    ENTER_GL();
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(buffer.buffer), buffer.buffer));
 
     if (glGetError() == GL_INVALID_OPERATION) {
@@ -3626,6 +3629,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, WINED3DFORMAT fmt, GLen
               debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
     }
     HeapFree(GetProcessHeap(), 0, buffer.buffer);
+    LEAVE_GL();
 
     if(fmt == WINED3DFMT_YUY2) {
         if(textype == GL_TEXTURE_RECTANGLE_ARB) {
