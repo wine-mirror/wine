@@ -5189,7 +5189,7 @@ static void test_eventMask(void)
     SendMessage(eventMaskEditHwnd, WM_SETREDRAW, FALSE, 0);
     queriedEventMask = 0;  /* initialize to something other than we expect */
     SendMessage(eventMaskEditHwnd, EM_REPLACESEL, 0, (LPARAM) text);
-    todo_wine ok(queriedEventMask == (eventMask & ~ENM_CHANGE),
+    ok(queriedEventMask == (eventMask & ~ENM_CHANGE),
             "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
     SendMessage(eventMaskEditHwnd, WM_SETREDRAW, TRUE, 0);
 
@@ -5568,7 +5568,7 @@ static void test_word_wrap(void)
     ok(lines == 1, "Line wasn't expected to wrap (lines=%d).\n", lines);
     MoveWindow(hwnd, 0, 0, 200, 80, FALSE);
     lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
-    todo_wine ok(lines > 1, "Line was expected to wrap (lines=%d).\n", lines);
+    ok(lines > 1, "Line was expected to wrap (lines=%d).\n", lines);
 
     SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
     DestroyWindow(hwnd);
@@ -5588,15 +5588,9 @@ static void test_auto_yscroll(void)
         ok(lines == 8, "%d lines instead of 8\n", lines);
         ret = SendMessage(hwnd, EM_GETSCROLLPOS, 0, (LPARAM)&pt);
         ok(ret == 1, "EM_GETSCROLLPOS returned %d instead of 1\n", ret);
-        if (!redraw)
-            todo_wine ok(pt.y != 0, "Didn't scroll down after replacing text.\n");
-        else
-            ok(pt.y != 0, "Didn't scroll down after replacing text.\n");
+        ok(pt.y != 0, "Didn't scroll down after replacing text.\n");
         ret = GetWindowLong(hwnd, GWL_STYLE);
-        if (!redraw)
-            todo_wine ok(ret & WS_VSCROLL, "Scrollbar was not shown yet (style=%x).\n", (UINT)ret);
-        else
-            ok(ret & WS_VSCROLL, "Scrollbar was not shown yet (style=%x).\n", (UINT)ret);
+        ok(ret & WS_VSCROLL, "Scrollbar was not shown yet (style=%x).\n", (UINT)ret);
 
         SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)NULL);
         lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);

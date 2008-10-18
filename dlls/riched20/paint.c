@@ -159,7 +159,6 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
   BOOL wrappedParagraphs;
 
   wrappedParagraphs = ME_WrapMarkedParagraphs(editor);
-  if (!editor->bRedraw) return;
   if (wrappedParagraphs)
     ME_UpdateScrollBar(editor);
   
@@ -174,7 +173,8 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
     ME_SendOldNotify(editor, EN_CHANGE);
     editor->nEventMask |= ENM_CHANGE;
   }
-  ME_Repaint(editor);
+  if (editor->bRedraw)
+    ME_Repaint(editor);
   ME_SendSelChange(editor);
 }
 
@@ -185,10 +185,10 @@ ME_RewrapRepaint(ME_TextEditor *editor)
    * looks, but not content. Like resizing. */
   
   ME_MarkAllForWrapping(editor);
+  ME_WrapMarkedParagraphs(editor);
+  ME_UpdateScrollBar(editor);
   if (editor->bRedraw)
   {
-    ME_WrapMarkedParagraphs(editor);
-    ME_UpdateScrollBar(editor);
     ME_Repaint(editor);
   }
 }
@@ -1093,6 +1093,7 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
                             || (winStyle & ES_DISABLENOSCROLL);
   if (bScrollBarIsVisible != bScrollBarWillBeVisible)
   {
+    /* FIXME: ShowScrollBar will redraw the scrollbar when editor->bRedraw is FALSE */
     ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
   }
   ME_UpdateScrollBar(editor);
@@ -1126,6 +1127,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
   if (bScrollBarWasVisible != bScrollBarWillBeVisible)
   {
+    /* FIXME: ShowScrollBar will redraw the scrollbar when editor->bRedraw is FALSE */
     ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
     ME_MarkAllForWrapping(editor);
     ME_WrapMarkedParagraphs(editor);
@@ -1144,13 +1146,14 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     editor->vert_si.nPage = si.nPage;
     if (bScrollBarWillBeVisible)
     {
-      SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+      SetScrollInfo(hWnd, SB_VERT, &si, editor->bRedraw);
     }
     else
     {
       if (bScrollBarWasVisible && !(si.fMask & SIF_DISABLENOSCROLL))
       {
-        SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+        SetScrollInfo(hWnd, SB_VERT, &si, editor->bRedraw);
+        /* FIXME: ShowScrollBar will redraw the scrollbar when editor->bRedraw is FALSE */
         ShowScrollBar(hWnd, SB_VERT, FALSE);
         ME_ScrollAbs(editor, 0);
       }
