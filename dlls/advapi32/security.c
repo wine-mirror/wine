@@ -2541,7 +2541,7 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
             domainName = ACCOUNT_SIDS[i].domain;
             nameLen = strlenW(domainName);
 
-            if (*cchReferencedDomainName <= nameLen && ReferencedDomainName)
+            if (*cchReferencedDomainName <= nameLen || !ret)
             {
                 SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 nameLen += 1;
@@ -3244,7 +3244,7 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
         case TRUSTEE_IS_NAME:
         {
             DWORD sid_size = FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES]);
-            DWORD domain_size = 0;
+            DWORD domain_size = MAX_COMPUTERNAME_LENGTH + 1;
             SID_NAME_USE use;
             if (!LookupAccountNameW(NULL, pEntries[i].Trustee.ptstrName, ppsid[i], &sid_size, NULL, &domain_size, &use))
             {
