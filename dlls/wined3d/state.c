@@ -8,7 +8,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Henri Verbeet
- * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2006-2008 Stefan DÃ¶singer for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

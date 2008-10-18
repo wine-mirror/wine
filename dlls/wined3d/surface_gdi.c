@@ -8,7 +8,7 @@
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2006-2008 Stefan Dösinger
+ * Copyright 2006-2008 Stefan DÃ¶singer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
