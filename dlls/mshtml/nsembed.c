@@ -497,7 +497,7 @@ BOOL load_gecko(BOOL silent)
     PRUnichar gre_path[MAX_PATH];
     BOOL ret = FALSE;
 
-    static LONG loading_thread;
+    static DWORD loading_thread;
 
     TRACE("()\n");
 

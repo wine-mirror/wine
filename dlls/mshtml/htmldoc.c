@@ -763,7 +763,7 @@ static HRESULT WINAPI HTMLDocument_write(IHTMLDocument2 *iface, SAFEARRAY *psarr
     HTMLDocument *This = HTMLDOC_THIS(iface);
     nsAString nsstr;
     VARIANT *var;
-    int i;
+    ULONG i;
     nsresult nsres;
     HRESULT hres;
 

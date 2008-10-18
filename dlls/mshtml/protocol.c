@@ -424,7 +424,7 @@ static HRESULT WINAPI AboutProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, L
             dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
 
     if(ParseAction == PARSE_SECURITY_URL) {
-        int len = lstrlenW(pwzUrl);
+        unsigned int len = strlenW(pwzUrl);
 
         if(len >= cchResult)
             return S_FALSE;
