@@ -1632,14 +1632,11 @@ static void test_LookupAccountName(void)
     ret = LookupAccountNameA(NULL, NULL, psid, &sid_size, domain, &domain_size, &sid_use);
     get_sid_info(psid, &account, &sid_dom);
     ok(ret, "Failed to lookup account name\n");
-    todo_wine
-    {
-        /* Using a fixed string will not work on different locales */
-        ok(!lstrcmp(account, domain),
-           "Got %s for account and %s for domain, these should be the same\n",
-           account, domain);
-        ok(sid_use == SidTypeDomain, "Expected SidTypeDomain (%d), got %d\n", SidTypeDomain, sid_use);
-    }
+    /* Using a fixed string will not work on different locales */
+    ok(!lstrcmp(account, domain),
+       "Got %s for account and %s for domain, these should be the same\n",
+       account, domain);
+    ok(sid_use == SidTypeDomain, "Expected SidTypeDomain (%d), got %d\n", SidTypeDomain, sid_use);
 
     /* try an invalid account name */
     SetLastError(0xdeadbeef);

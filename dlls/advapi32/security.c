@@ -2532,6 +2532,11 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
     FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
           Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
 
+    if (!lpAccountName || !strcmpW(lpAccountName, Blank))
+    {
+        lpAccountName = BUILTIN;
+    }
+
     for (i = 0; i < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); i++)
     {
         if (!strcmpW(lpAccountName, ACCOUNT_SIDS[i].account))
