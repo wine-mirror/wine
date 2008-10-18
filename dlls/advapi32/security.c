@@ -2502,8 +2502,8 @@ LookupAccountNameA(
 
     if (ret && lpReferencedDomainNameW)
     {
-        WideCharToMultiByte(CP_ACP, 0, lpReferencedDomainNameW, *cbReferencedDomainName,
-            ReferencedDomainName, *cbReferencedDomainName, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, lpReferencedDomainNameW, -1,
+            ReferencedDomainName, *cbReferencedDomainName+1, NULL, NULL);
     }
 
     RtlFreeUnicodeString(&lpSystemW);
@@ -2526,6 +2526,8 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
     PSID pSid;
     static const WCHAR dm[] = {'D','O','M','A','I','N',0};
     unsigned int i;
+    DWORD nameLen;
+    LPCWSTR domainName;
 
     FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
           Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
@@ -2566,17 +2568,22 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
        ret = FALSE;
     }
     *cbSid = GetLengthSid(pSid);
-    
-    if (ReferencedDomainName != NULL && (*cchReferencedDomainName > strlenW(dm)))
-      strcpyW(ReferencedDomainName, dm);
 
-    if (*cchReferencedDomainName <= strlenW(dm))
+    domainName = dm;
+    nameLen = strlenW(domainName);
+
+    if (*cchReferencedDomainName <= nameLen || !ret)
     {
-       SetLastError(ERROR_INSUFFICIENT_BUFFER);
-       ret = FALSE;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        nameLen += 1;
+        ret = FALSE;
+    }
+    else if (ReferencedDomainName && domainName)
+    {
+        strcpyW(ReferencedDomainName, domainName);
     }
 
-    *cchReferencedDomainName = strlenW(dm)+1;
+    *cchReferencedDomainName = nameLen;
 
     if (ret)
     {
