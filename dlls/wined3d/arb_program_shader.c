@@ -3662,8 +3662,10 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
        glDesc->conversion_group != WINED3DFMT_YV12) {
         TRACE("Format: %s\n", debug_d3dformat(glDesc->conversion_group));
         /* Don't bother setting up a shader for unconverted formats */
+        ENTER_GL();
         glEnable(textype);
         checkGLcall("glEnable(textype)");
+        LEAVE_GL();
         return WINED3D_OK;
     }
 
@@ -3691,12 +3693,14 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
         shader = gen_yuv_shader(device, glDesc->conversion_group, textype);
     }
 
+    ENTER_GL();
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
     checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
     GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, size));
     checkGLcall("glProgramLocalParameter4fvARB");
+    LEAVE_GL();
 
     return WINED3D_OK;
 }

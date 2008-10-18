@@ -3485,9 +3485,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             rect.y1 += This->currentDesc.Height - h; rect.y2 += This->currentDesc.Height - h;
         }
 
-        ENTER_GL();
         myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format,
                                        Src->glDescription.target, Src->pow2Width, Src->pow2Height);
+
+        ENTER_GL();
 
         /* Bind the texture */
         glBindTexture(Src->glDescription.target, Src->glDescription.textureName);
