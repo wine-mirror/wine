@@ -690,6 +690,7 @@ typedef void            GLvoid;
 #define GL_UNSIGNED_INT_10_10_10_2        0x8036
 #define GL_UNSIGNED_INT_2_10_10_10_REV    0x8368
 #define GL_RESCALE_NORMAL                 0x803A
+#define GL_TEXTURE_BINDING_3D             0x806A
 #define GL_LIGHT_MODEL_COLOR_CONTROL      0x81F8
 #define GL_SINGLE_COLOR                   0x81F9
 #define GL_SEPARATE_SPECULAR_COLOR        0x81FA
