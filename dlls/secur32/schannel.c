@@ -137,7 +137,7 @@ static void *schan_free_handle(ULONG_PTR handle_idx, enum schan_handle_type type
 }
 
 static SECURITY_STATUS schan_QueryCredentialsAttributes(
- PCredHandle phCredential, ULONG ulAttribute, const VOID *pBuffer)
+ PCredHandle phCredential, ULONG ulAttribute, VOID *pBuffer)
 {
     SECURITY_STATUS ret;
 
