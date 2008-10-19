@@ -538,8 +538,30 @@ static const WCHAR schannelDllName[] = { 's','c','h','a','n','n','e','l','.','d'
 
 void SECUR32_initSchannelSP(void)
 {
+    /* This is what Windows reports.  This shouldn't break any applications
+     * even though the functions are missing, because the wrapper will
+     * return SEC_E_UNSUPPORTED_FUNCTION if our function is NULL.
+     */
+    static const long caps =
+        SECPKG_FLAG_INTEGRITY |
+        SECPKG_FLAG_PRIVACY |
+        SECPKG_FLAG_CONNECTION |
+        SECPKG_FLAG_MULTI_REQUIRED |
+        SECPKG_FLAG_EXTENDED_ERROR |
+        SECPKG_FLAG_IMPERSONATION |
+        SECPKG_FLAG_ACCEPT_WIN32_NAME |
+        SECPKG_FLAG_STREAM;
+    static const short version = 1;
+    static const long maxToken = 16384;
+    SEC_WCHAR *uniSPName = (SEC_WCHAR *)UNISP_NAME_W,
+              *schannel = (SEC_WCHAR *)SCHANNEL_NAME_W;
+    const SecPkgInfoW info[] = {
+        { caps, version, UNISP_RPC_ID, maxToken, uniSPName, uniSPName },
+        { caps, version, UNISP_RPC_ID, maxToken, schannel,
+            (SEC_WCHAR *)schannelComment },
+    };
     SecureProvider *provider;
-
+    int ret;
 
     libgnutls_handle = wine_dlopen(SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0);
     if (!libgnutls_handle)
@@ -552,9 +574,7 @@ void SECUR32_initSchannelSP(void)
     if (!(p##f = wine_dlsym(libgnutls_handle, #f, NULL, 0))) \
     { \
         ERR("Failed to load %s\n", #f); \
-        wine_dlclose(libgnutls_handle, NULL, 0); \
-        libgnutls_handle = NULL; \
-        return; \
+        goto fail; \
     }
 
     LOAD_FUNCPTR(gnutls_certificate_allocate_credentials)
@@ -566,53 +586,52 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_perror)
 #undef LOAD_FUNCPTR
 
-    provider = SECUR32_addProvider(&schanTableA, &schanTableW, schannelDllName);
-
-    if (provider)
+    ret = pgnutls_global_init();
+    if (ret != GNUTLS_E_SUCCESS)
     {
-        /* This is what Windows reports.  This shouldn't break any applications
-         * even though the functions are missing, because the wrapper will
-         * return SEC_E_UNSUPPORTED_FUNCTION if our function is NULL.
-         */
-        static const long caps =
-         SECPKG_FLAG_INTEGRITY |
-         SECPKG_FLAG_PRIVACY |
-         SECPKG_FLAG_CONNECTION |
-         SECPKG_FLAG_MULTI_REQUIRED |
-         SECPKG_FLAG_EXTENDED_ERROR |
-         SECPKG_FLAG_IMPERSONATION |
-         SECPKG_FLAG_ACCEPT_WIN32_NAME |
-         SECPKG_FLAG_STREAM;
-        static const short version = 1;
-        static const long maxToken = 16384;
-        SEC_WCHAR *uniSPName = (SEC_WCHAR *)UNISP_NAME_W,
-         *schannel = (SEC_WCHAR *)SCHANNEL_NAME_W;
-
-        const SecPkgInfoW info[] = {
-         { caps, version, UNISP_RPC_ID, maxToken, uniSPName, uniSPName },
-         { caps, version, UNISP_RPC_ID, maxToken, schannel,
-          (SEC_WCHAR *)schannelComment },
-        };
-
-        SECUR32_addPackages(provider, sizeof(info) / sizeof(info[0]), NULL,
-         info);
-
-        schan_handle_table = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 64 * sizeof(*schan_handle_table));
-        schan_handle_table_size = 64;
-
-        pgnutls_global_init();
-        if (TRACE_ON(secur32))
-        {
-            pgnutls_global_set_log_level(4);
-            pgnutls_global_set_log_function(schan_gnutls_log);
-        }
+        pgnutls_perror(ret);
+        goto fail;
     }
+
+    if (TRACE_ON(secur32))
+    {
+        pgnutls_global_set_log_level(4);
+        pgnutls_global_set_log_function(schan_gnutls_log);
+    }
+
+    schan_handle_table = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 64 * sizeof(*schan_handle_table));
+    if (!schan_handle_table)
+    {
+        ERR("Failed to allocate schannel handle table.\n");
+        goto fail;
+    }
+    schan_handle_table_size = 64;
+
+    provider = SECUR32_addProvider(&schanTableA, &schanTableW, schannelDllName);
+    if (!provider)
+    {
+        ERR("Failed to add schannel provider.\n");
+        goto fail;
+    }
+
+    SECUR32_addPackages(provider, sizeof(info) / sizeof(info[0]), NULL, info);
+
+    return;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, schan_handle_table);
+    schan_handle_table = NULL;
+    wine_dlclose(libgnutls_handle, NULL, 0);
+    libgnutls_handle = NULL;
+    return;
 }
 
 void SECUR32_deinitSchannelSP(void)
 {
+    if (!libgnutls_handle) return;
+
     pgnutls_global_deinit();
-    if (libgnutls_handle) wine_dlclose(libgnutls_handle, NULL, 0);
+    wine_dlclose(libgnutls_handle, NULL, 0);
 }
 
 #else /* SONAME_LIBGNUTLS */
