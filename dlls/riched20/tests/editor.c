@@ -5534,7 +5534,7 @@ static void test_word_wrap(void)
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
     ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
     lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
-    ok(lines == 1, "Line wasn't expected to wrap (lines=%d).", lines);
+    ok(lines == 1, "Line wasn't expected to wrap (lines=%d).\n", lines);
 
     SetWindowLongW(hwnd, GWL_STYLE, dwCommonStyle);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
