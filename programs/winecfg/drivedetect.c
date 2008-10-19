@@ -22,6 +22,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_MNTENT_H
 #include <mntent.h>
