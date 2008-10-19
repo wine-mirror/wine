@@ -5205,7 +5205,7 @@ static void test_eventMask(void)
     watchForEventMask = EN_UPDATE;
     queriedEventMask = 0;  /* initialize to something other than we expect */
     SendMessage(eventMaskEditHwnd, EM_REPLACESEL, 0, (LPARAM) text);
-    todo_wine ok(queriedEventMask == 0,
+    ok(queriedEventMask == 0,
             "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
     SetWindowLong(eventMaskEditHwnd, GWL_STYLE, style);
     ok(IsWindowVisible(eventMaskEditHwnd), "Window should be visible.\n");
