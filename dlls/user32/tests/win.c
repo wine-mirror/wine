@@ -5091,7 +5091,7 @@ static void test_fullscreen(void)
         }
     }
 
-    UnregisterClass("MinMax_WndClass", GetModuleHandle(0));
+    UnregisterClass("fullscreen_class", GetModuleHandle(0));
 }
 
 START_TEST(win)
