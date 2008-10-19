@@ -5143,7 +5143,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
 static void test_eventMask(void)
 {
     HWND parent;
-    int ret;
+    int ret, style;
     WNDCLASSA cls;
     const char text[] = "foo bar\n";
     int eventMask;
@@ -5192,6 +5192,25 @@ static void test_eventMask(void)
     ok(queriedEventMask == (eventMask & ~ENM_CHANGE),
             "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
     SendMessage(eventMaskEditHwnd, WM_SETREDRAW, TRUE, 0);
+    ok(IsWindowVisible(eventMaskEditHwnd), "Window should be visible.\n");
+
+    /* check to see if EN_UPDATE is sent when the editor isn't visible */
+    SendMessage(eventMaskEditHwnd, WM_CLEAR, 0, 0);
+    style = GetWindowLong(eventMaskEditHwnd, GWL_STYLE);
+    SetWindowLong(eventMaskEditHwnd, GWL_STYLE, style & ~WS_VISIBLE);
+    ok(!IsWindowVisible(eventMaskEditHwnd), "Window shouldn't be visible.\n");
+    watchForEventMask = EN_UPDATE;
+    queriedEventMask = 0;  /* initialize to something other than we expect */
+    SendMessage(eventMaskEditHwnd, EM_REPLACESEL, 0, (LPARAM) text);
+    todo_wine ok(queriedEventMask == 0,
+            "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
+    SetWindowLong(eventMaskEditHwnd, GWL_STYLE, style);
+    ok(IsWindowVisible(eventMaskEditHwnd), "Window should be visible.\n");
+    queriedEventMask = 0;  /* initialize to something other than we expect */
+    SendMessage(eventMaskEditHwnd, EM_REPLACESEL, 0, (LPARAM) text);
+    ok(queriedEventMask == eventMask,
+            "wrong event mask (0x%x) during WM_COMMAND\n", queriedEventMask);
+
 
     DestroyWindow(parent);
 }
