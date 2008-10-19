@@ -295,6 +295,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         if (ret != GNUTLS_E_SUCCESS)
         {
             pgnutls_perror(ret);
+            schan_free_handle(handle, SCHAN_HANDLE_CRED);
             goto fail;
         }
 
