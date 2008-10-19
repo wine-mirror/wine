@@ -212,7 +212,7 @@ interface IDXGIAdapter : IDXGIObject
     );
     HRESULT CheckInterfaceSupport(
         [in] REFGUID guid,
-        [out] LARGE_INTEGER umd_version
+        [out] LARGE_INTEGER *umd_version
     );
 }
 
