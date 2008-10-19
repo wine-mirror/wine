@@ -573,6 +573,9 @@ GpStatus WINGDIPAPI GdipCreateRegionHrgn(HRGN hrgn, GpRegion **region)
 {
     FIXME("(%p, %p): stub\n", hrgn, region);
 
+    if(!hrgn || !region)
+        return InvalidParameter;
+
     *region = NULL;
     return NotImplemented;
 }
