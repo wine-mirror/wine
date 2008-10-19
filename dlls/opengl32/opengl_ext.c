@@ -729,35 +729,35 @@ static void WINAPI wine_glClampColorARB( GLenum target, GLenum clamp ) {
   LEAVE_GL();
 }
 
-static void WINAPI wine_glClearBufferfi( GLenum buffer, GLfloat depth, GLint stencil ) {
-  void (*func_glClearBufferfi)( GLenum, GLfloat, GLint ) = extension_funcs[87];
-  TRACE("(%d, %f, %d)\n", buffer, depth, stencil );
+static void WINAPI wine_glClearBufferfi( GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil ) {
+  void (*func_glClearBufferfi)( GLenum, GLint, GLfloat, GLint ) = extension_funcs[87];
+  TRACE("(%d, %d, %f, %d)\n", buffer, drawbuffer, depth, stencil );
   ENTER_GL();
-  func_glClearBufferfi( buffer, depth, stencil );
+  func_glClearBufferfi( buffer, drawbuffer, depth, stencil );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glClearBufferfv( GLenum buffer, GLfloat* value ) {
-  void (*func_glClearBufferfv)( GLenum, GLfloat* ) = extension_funcs[88];
-  TRACE("(%d, %p)\n", buffer, value );
+static void WINAPI wine_glClearBufferfv( GLenum buffer, GLint drawbuffer, GLfloat* value ) {
+  void (*func_glClearBufferfv)( GLenum, GLint, GLfloat* ) = extension_funcs[88];
+  TRACE("(%d, %d, %p)\n", buffer, drawbuffer, value );
   ENTER_GL();
-  func_glClearBufferfv( buffer, value );
+  func_glClearBufferfv( buffer, drawbuffer, value );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glClearBufferiv( GLenum buffer, GLint* value ) {
-  void (*func_glClearBufferiv)( GLenum, GLint* ) = extension_funcs[89];
-  TRACE("(%d, %p)\n", buffer, value );
+static void WINAPI wine_glClearBufferiv( GLenum buffer, GLint drawbuffer, GLint* value ) {
+  void (*func_glClearBufferiv)( GLenum, GLint, GLint* ) = extension_funcs[89];
+  TRACE("(%d, %d, %p)\n", buffer, drawbuffer, value );
   ENTER_GL();
-  func_glClearBufferiv( buffer, value );
+  func_glClearBufferiv( buffer, drawbuffer, value );
   LEAVE_GL();
 }
 
-static void WINAPI wine_glClearBufferuiv( GLenum buffer, GLuint* value ) {
-  void (*func_glClearBufferuiv)( GLenum, GLuint* ) = extension_funcs[90];
-  TRACE("(%d, %p)\n", buffer, value );
+static void WINAPI wine_glClearBufferuiv( GLenum buffer, GLint drawbuffer, GLuint* value ) {
+  void (*func_glClearBufferuiv)( GLenum, GLint, GLuint* ) = extension_funcs[90];
+  TRACE("(%d, %d, %p)\n", buffer, drawbuffer, value );
   ENTER_GL();
-  func_glClearBufferuiv( buffer, value );
+  func_glClearBufferuiv( buffer, drawbuffer, value );
   LEAVE_GL();
 }
 
