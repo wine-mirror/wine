@@ -23,7 +23,9 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <dirent.h>
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>

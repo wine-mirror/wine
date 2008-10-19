@@ -128,7 +128,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <limits.h>
-#include <dirent.h>
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

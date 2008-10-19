@@ -32,7 +32,9 @@
 # include <sys/stat.h>
 #endif
 #include <fcntl.h>
-#include <dirent.h>
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif

@@ -32,7 +32,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <dirent.h>
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
 #include <errno.h>
 #include <ctype.h>
 #include <limits.h> 	    /* INT_MIN */

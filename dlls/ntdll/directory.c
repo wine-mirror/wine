@@ -24,7 +24,9 @@
 #include "wine/port.h"
 
 #include <sys/types.h>
-#include <dirent.h>
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>

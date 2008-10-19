@@ -33,7 +33,9 @@
 # include <sys/mman.h>
 #endif
 #include <string.h>
-#include <dirent.h>
+#ifdef HAVE_DIRENT_H
+# include <dirent.h>
+#endif
 #include <stdio.h>
 #include <assert.h>
 
