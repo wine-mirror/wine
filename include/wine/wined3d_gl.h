@@ -1819,7 +1819,6 @@ typedef void (WINE_GLAPI * PGLFNGLVERTEXBLENDARB) (GLint count);
 #define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT                0x8CDA
 #define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT            0x8CDB
 #define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT            0x8CDC
-#define GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT            0x8D56
 #define GL_FRAMEBUFFER_UNSUPPORTED_EXT                       0x8CDD
 #define GL_FRAMEBUFFER_BINDING_EXT             0x8CA6
 #define GL_RENDERBUFFER_BINDING_EXT            0x8CA7
@@ -1854,6 +1853,16 @@ typedef void (WINE_GLAPI * PGLFNGLGENERATEMIPMAPEXTPROC)(GLenum target);
 #define GL_READ_FRAMEBUFFER_BINDING_EXT        0x8CAA
 #endif
 typedef void (WINE_GLAPI * PGLFNGLBLITFRAMEBUFFEREXTPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+
+/* GL_EXT_framebuffer_multisample */
+#ifndef GL_EXT_framebuffer_multisample
+#define GL_EXT_framebuffer_multisample 1
+#define GL_RENDERBUFFER_SAMPLES_EXT                 0x8cab
+#define GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT   0x8d56
+#define GL_MAX_SAMPLES_EXT                          0x8d57
+#endif
+typedef void (WINE_GLAPI * PGLFNRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
+
 /* GL_EXT_secondary_color */
 #ifndef GL_EXT_secondary_color
 #define GL_EXT_secondary_color 1
@@ -3336,6 +3345,7 @@ typedef enum _GL_SupportedExt {
   EXT_FOG_COORD,
   EXT_FRAMEBUFFER_OBJECT,
   EXT_FRAMEBUFFER_BLIT,
+  EXT_FRAMEBUFFER_MULTISAMPLE,
   EXT_PALETTED_TEXTURE,
   EXT_PIXEL_BUFFER_OBJECT,
   EXT_POINT_PARAMETERS,
@@ -3499,6 +3509,8 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC,  glGetFramebufferAttachmentParameterivEXT,   EXT_FRAMEBUFFER_OBJECT, NULL )\
     /* GL_EXT_framebuffer_blit */ \
     USE_GL_FUNC(PGLFNGLBLITFRAMEBUFFEREXTPROC,                      glBlitFramebufferEXT,                       EXT_FRAMEBUFFER_BLIT,   NULL )\
+    /* GL_EXT_framebuffer_multisample */ \
+    USE_GL_FUNC(PGLFNRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC,         glRenderbufferStorageMultisampleEXT,        EXT_FRAMEBUFFER_MULTISAMPLE, NULL )\
     /* GL_EXT_paletted_texture */ \
     USE_GL_FUNC(PGLFNGLCOLORTABLEEXTPROC,                           glColorTableEXT,                            EXT_PALETTED_TEXTURE,   NULL )\
     /* GL_EXT_point_parameters */ \
