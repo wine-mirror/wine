@@ -351,7 +351,6 @@ typedef struct tagME_TextEditor
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
   int nZoomNumerator, nZoomDenominator;
   RECT rcFormat;
-  BOOL bRedraw;
   BOOL bWordWrap;
   int nInvalidOfs;
   int nTextLimit;

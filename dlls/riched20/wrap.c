@@ -735,30 +735,31 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) {
   return bModified;
 }
 
-void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor) {
+void ME_InvalidateMarkedParagraphs(ME_TextEditor *editor)
+{
   ME_Context c;
+  RECT rc;
+  int ofs;
+  ME_DisplayItem *item;
 
   ME_InitContext(&c, editor, GetDC(editor->hWnd));
-  if (editor->bRedraw)
-  {
-    RECT rc = c.rcView;
-    int ofs = ME_GetYScrollPos(editor); 
-     
-    ME_DisplayItem *item = editor->pBuffer->pFirst;
-    while(item != editor->pBuffer->pLast) {
-      if (item->member.para.nFlags & MEPF_REPAINT) { 
-        rc.top = item->member.para.pt.y - ofs;
-        rc.bottom = item->member.para.pt.y + item->member.para.nHeight - ofs;
-        InvalidateRect(editor->hWnd, &rc, TRUE);
-      }
-      item = item->member.para.next_para;
-    }
-    if (editor->nTotalLength < editor->nLastTotalLength)
-    {
-      rc.top = editor->nTotalLength - ofs;
-      rc.bottom = editor->nLastTotalLength - ofs;
+  rc = c.rcView;
+  ofs = ME_GetYScrollPos(editor);
+
+  item = editor->pBuffer->pFirst;
+  while(item != editor->pBuffer->pLast) {
+    if (item->member.para.nFlags & MEPF_REPAINT) {
+      rc.top = item->member.para.pt.y - ofs;
+      rc.bottom = item->member.para.pt.y + item->member.para.nHeight - ofs;
       InvalidateRect(editor->hWnd, &rc, TRUE);
     }
+    item = item->member.para.next_para;
+  }
+  if (editor->nTotalLength < editor->nLastTotalLength)
+  {
+    rc.top = editor->nTotalLength - ofs;
+    rc.bottom = editor->nLastTotalLength - ofs;
+    InvalidateRect(editor->hWnd, &rc, TRUE);
   }
   ME_DestroyContext(&c, editor->hWnd);
 }

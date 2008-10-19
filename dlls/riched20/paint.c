@@ -175,8 +175,7 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
     ME_SendOldNotify(editor, EN_CHANGE);
     editor->nEventMask |= ENM_CHANGE;
   }
-  if (editor->bRedraw)
-    ME_Repaint(editor);
+  ME_Repaint(editor);
   ME_SendSelChange(editor);
 }
 
@@ -189,10 +188,7 @@ ME_RewrapRepaint(ME_TextEditor *editor)
   ME_MarkAllForWrapping(editor);
   ME_WrapMarkedParagraphs(editor);
   ME_UpdateScrollBar(editor);
-  if (editor->bRedraw)
-  {
-    ME_Repaint(editor);
-  }
+  ME_Repaint(editor);
 }
 
 int ME_twips2pointsX(ME_Context *c, int x)
@@ -1076,17 +1072,14 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
       si.nPos = 0;
   }
   
-  nNewPos = SetScrollInfo(editor->hWnd, SB_VERT, &si, editor->bRedraw);
+  nNewPos = SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
   editor->vert_si.nPos = nNewPos;
   nActualScroll = nOrigPos - nNewPos;
-  if (editor->bRedraw)
-  {
-    if (abs(nActualScroll) > editor->sizeWindow.cy)
-      InvalidateRect(editor->hWnd, NULL, TRUE);
-    else
-      ScrollWindowEx(editor->hWnd, 0, nActualScroll, NULL, NULL, NULL, NULL, SW_INVALIDATE);
-    ME_Repaint(editor);
-  }
+  if (abs(nActualScroll) > editor->sizeWindow.cy)
+    InvalidateRect(editor->hWnd, NULL, TRUE);
+  else
+    ScrollWindowEx(editor->hWnd, 0, nActualScroll, NULL, NULL, NULL, NULL, SW_INVALIDATE);
+  ME_Repaint(editor);
   
   hWnd = editor->hWnd;
   winStyle = GetWindowLongW(hWnd, GWL_STYLE);
@@ -1095,7 +1088,6 @@ void ME_Scroll(ME_TextEditor *editor, int value, int type)
                             || (winStyle & ES_DISABLENOSCROLL);
   if (bScrollBarIsVisible != bScrollBarWillBeVisible)
   {
-    /* FIXME: ShowScrollBar will redraw the scrollbar when editor->bRedraw is FALSE */
     ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
   }
   ME_UpdateScrollBar(editor);
@@ -1129,7 +1121,6 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
   if (bScrollBarWasVisible != bScrollBarWillBeVisible)
   {
-    /* FIXME: ShowScrollBar will redraw the scrollbar when editor->bRedraw is FALSE */
     ShowScrollBar(hWnd, SB_VERT, bScrollBarWillBeVisible);
     ME_MarkAllForWrapping(editor);
     ME_WrapMarkedParagraphs(editor);
@@ -1148,14 +1139,13 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     editor->vert_si.nPage = si.nPage;
     if (bScrollBarWillBeVisible)
     {
-      SetScrollInfo(hWnd, SB_VERT, &si, editor->bRedraw);
+      SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
     }
     else
     {
       if (bScrollBarWasVisible && !(si.fMask & SIF_DISABLENOSCROLL))
       {
-        SetScrollInfo(hWnd, SB_VERT, &si, editor->bRedraw);
-        /* FIXME: ShowScrollBar will redraw the scrollbar when editor->bRedraw is FALSE */
+        SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
         ShowScrollBar(hWnd, SB_VERT, FALSE);
         ME_ScrollAbs(editor, 0);
       }

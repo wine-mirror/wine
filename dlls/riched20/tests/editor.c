@@ -5189,7 +5189,7 @@ static void test_eventMask(void)
     ok(IsWindowVisible(eventMaskEditHwnd), "Window should be visible.\n");
     SendMessage(eventMaskEditHwnd, WM_SETREDRAW, FALSE, 0);
     /* redraw is disabled by making the window invisible. */
-    todo_wine ok(!IsWindowVisible(eventMaskEditHwnd), "Window shouldn't be visible.\n");
+    ok(!IsWindowVisible(eventMaskEditHwnd), "Window shouldn't be visible.\n");
     queriedEventMask = 0;  /* initialize to something other than we expect */
     SendMessage(eventMaskEditHwnd, EM_REPLACESEL, 0, (LPARAM) text);
     ok(queriedEventMask == (eventMask & ~ENM_CHANGE),

@@ -2229,7 +2229,6 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
-  ed->bRedraw = TRUE;
   ed->bWordWrap = (GetWindowLongW(hWnd, GWL_STYLE) & (WS_HSCROLL|ES_AUTOHSCROLL)) ? FALSE : TRUE;
   ed->bHideSelection = FALSE;
   ed->nInvalidOfs = -1;
@@ -2808,11 +2807,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       editor->rgbBackColor = lParam;
       editor->hbrBackground = CreateSolidBrush(editor->rgbBackColor);
     }
-    if (editor->bRedraw)
-    {
-      InvalidateRect(hWnd, NULL, TRUE);
-      UpdateWindow(hWnd);
-    }
+    InvalidateRect(hWnd, NULL, TRUE);
+    UpdateWindow(hWnd);
     return lColor;
   }
   case EM_GETMODIFY:
@@ -3604,7 +3600,6 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       goto do_default;
     break;
   case WM_PAINT:
-    if (editor->bRedraw)
     {
       HDC hDC;
       PAINTSTRUCT ps;
@@ -3627,14 +3622,11 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     return 0;
   case WM_ERASEBKGND:
   {
-    if (editor->bRedraw)
+    HDC hDC = (HDC)wParam;
+    RECT rc;
+    if (GetUpdateRect(hWnd,&rc,TRUE))
     {
-      HDC hDC = (HDC)wParam;
-      RECT rc;
-      if (GetUpdateRect(hWnd,&rc,TRUE))
-      {
-        FillRect(hDC, &rc, editor->hbrBackground);
-      }
+      FillRect(hDC, &rc, editor->hbrBackground);
     }
     return 1;
   }
@@ -3953,9 +3945,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     ME_SendRequestResize(editor, TRUE);
     return 0;
   case WM_SETREDRAW:
-    if ((editor->bRedraw = wParam))
-      ME_RewrapRepaint(editor);
-    return 0;
+    return DefWindowProcW(hWnd, msg, wParam, lParam);
   case WM_SIZE:
   {
     GetClientRect(hWnd, &editor->rcFormat);
