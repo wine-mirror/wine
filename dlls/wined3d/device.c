@@ -5880,11 +5880,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
 
-    ENTER_GL();
-
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        ENTER_GL();
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
         checkGLcall("glActiveTextureARB");
+        LEAVE_GL();
     }
 
     /* Make sure the surface is loaded and up to date */
@@ -5923,6 +5923,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         /* need to lock the surface to get the data */
         FIXME("Surfaces has no allocated memory, but should be an in memory only surface\n");
     }
+
+    ENTER_GL();
 
     /* TODO: Cube and volume support */
     if(rowoffset != 0){
