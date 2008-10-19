@@ -117,7 +117,7 @@ static void test_DrawTextCalcRect(void)
         "rectangle should NOT be empty got %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
     if (textheight != 0)  /* Windows 98 */
     {
-        win_skip("XP conformity failed, skipping XP tests. Probibly win9x\n");
+        win_skip("XP conformity failed, skipping XP tests. Probably win9x\n");
         conform_xp = FALSE;
     }
     else
@@ -155,7 +155,7 @@ static void test_DrawTextCalcRect(void)
     if (!textheight) /* Windows NT 4 */
     {
         if (conform_xp)
-            win_skip("XP conformity failed, skipping XP tests. Probibly winNT\n");
+            win_skip("XP conformity failed, skipping XP tests. Probably winNT\n");
         conform_xp = FALSE;
     }
     else
@@ -357,7 +357,7 @@ static void test_DrawTextCalcRect(void)
         if (textheight) /* windows 2000 */
         {
             if (conform_xp)
-                win_skip("XP conformity failed, skipping XP tests. probibly win 2000\n");
+                win_skip("XP conformity failed, skipping XP tests. Probably win 2000\n");
             conform_xp = FALSE;
         }
         else
