@@ -405,6 +405,32 @@ end:
     return ERROR_SUCCESS;
 }
 
+static LPWSTR get_ini_field(LPWSTR buf, int field)
+{
+    LPWSTR beg, end;
+    int i = 1;
+
+    if (field == 0)
+        return strdupW(buf);
+
+    beg = buf;
+    while ((end = strchrW(beg, ',')) && i < field)
+    {
+        beg = end + 1;
+        while (*beg && *beg == ' ')
+            beg++;
+
+        i++;
+    }
+
+    end = strchrW(beg, ',');
+    if (!end)
+        end = beg + lstrlenW(beg);
+
+    *end = '\0';
+    return strdupW(beg);
+}
+
 static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
  MSISIGNATURE *sig)
 {
@@ -452,7 +478,7 @@ static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
             FIXME("unimplemented for File (%s)\n", debugstr_w(buf));
             break;
         case msidbLocatorTypeRawValue:
-            *appValue = strdupW(buf);
+            *appValue = get_ini_field(buf, field);
             break;
         }
     }

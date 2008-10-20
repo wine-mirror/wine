@@ -6584,18 +6584,12 @@ static void test_appsearch_inilocator(void)
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP1", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, "keydata"), "Expected \"keydata\", got \"%s\"\n", prop);
-    }
+    ok(!lstrcmpA(prop, "keydata"), "Expected \"keydata\", got \"%s\"\n", prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP2", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, "field2"), "Expected \"field2\", got \"%s\"\n", prop);
-    }
+    ok(!lstrcmpA(prop, "field2"), "Expected \"field2\", got \"%s\"\n", prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP3", prop, &size);
