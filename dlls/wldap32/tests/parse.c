@@ -49,6 +49,11 @@ static void test_ldap_parse_sort_control( LDAP *ld )
     timeout.tv_usec = 0;
     ret = ldap_search_ext_sA( ld, (char *)"", LDAP_SCOPE_SUBTREE, (char *)"(cn=Verisign*)", NULL, 0, ctrls, NULL, &timeout, 10, &res );
     ok( !ret, "ldap_search_ext_sA failed 0x%x\n", ret );
+    if (ret)
+    {
+        ldap_control_free( sort );
+        return;
+    }
     ok( res != NULL, "expected res != NULL\n" );
 
     ret = ldap_parse_resultA( NULL, res, &result, NULL, NULL, NULL, &server_ctrls, 1 );
