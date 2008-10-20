@@ -47,6 +47,7 @@ double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 
 #ifdef HAVE_UNISTD_H
