@@ -1327,8 +1327,8 @@ static void test_sh_create_dir(void)
 
     if(!pSHCreateDirectoryExA)
     {
-	trace("skipping SHCreateDirectoryExA tests\n");
-	return;
+        win_skip("skipping SHCreateDirectoryExA tests\n");
+        return;
     }
 
     set_curr_dir_path(path, "testdir2\\test4.txt\0");
@@ -1351,8 +1351,8 @@ static void test_sh_path_prepare(void)
 
     if(!pSHPathPrepareForWriteA)
     {
-	trace("skipping SHPathPrepareForWriteA tests\n");
-	    return;
+	win_skip("skipping SHPathPrepareForWriteA tests\n");
+	return;
     }
 
     /* directory exists, SHPPFW_NONE */
