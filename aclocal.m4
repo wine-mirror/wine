@@ -215,16 +215,19 @@ Use the --without-$1 option if you really want this.]) ;;
 esac])])
 
 AC_DEFUN([WINE_PRINT_MESSAGES],[ac_save_IFS="$IFS"
-IFS="|"
 if test "x$wine_notices != "x; then
     echo >&AS_MESSAGE_FD
+    IFS="|"
     for msg in $wine_notices; do
+        IFS="$ac_save_IFS"
         if test -n "$msg"; then
             AC_MSG_NOTICE([$msg])
         fi
     done
 fi
+IFS="|"
 for msg in $wine_warnings; do
+    IFS="$ac_save_IFS"
     if test -n "$msg"; then
         echo >&2
         AC_MSG_WARN([$msg])

@@ -27744,17 +27744,20 @@ then
 fi
 
 ac_save_IFS="$IFS"
-IFS="|"
 if test "x$wine_notices != "x; then
     echo >&6
+    IFS="|"
     for msg in $wine_notices; do
+        IFS="$ac_save_IFS"
         if test -n "$msg"; then
             { echo "$as_me:$LINENO: $msg" >&5
 echo "$as_me: $msg" >&6;}
         fi
     done
 fi
+IFS="|"
 for msg in $wine_warnings; do
+    IFS="$ac_save_IFS"
     if test -n "$msg"; then
         echo >&2
         { echo "$as_me:$LINENO: WARNING: $msg" >&5
