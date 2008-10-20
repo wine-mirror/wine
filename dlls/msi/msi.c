@@ -827,7 +827,7 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
     {
         save = *pcchValueBuf;
 
-        if (lstrlenW(val) < *pcchValueBuf)
+        if (strlenW(val) < *pcchValueBuf)
             r = msi_strcpy_to_awstring(val, szValue, pcchValueBuf);
         else if (szValue->str.a || szValue->str.w)
             r = ERROR_MORE_DATA;
@@ -973,7 +973,7 @@ static UINT msi_copy_outval(LPWSTR val, LPWSTR out, LPDWORD size)
 
     if (out)
     {
-        if (lstrlenW(val) >= *size)
+        if (strlenW(val) >= *size)
         {
             r = ERROR_MORE_DATA;
             if (*size > 0)
@@ -1591,7 +1591,7 @@ LANGID WINAPI MsiLoadStringA( MSIHANDLE handle, UINT id, LPSTR lpBuffer,
 {
     LPWSTR bufW;
     LANGID r;
-    DWORD len;
+    INT len;
 
     bufW = msi_alloc(nBufferMax*sizeof(WCHAR));
     r = MsiLoadStringW(handle, id, bufW, nBufferMax, lang);
@@ -2135,7 +2135,7 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
                   HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS));
             if (lpVersionBuf) lstrcpynW(lpVersionBuf, tmp, *pcchVersionBuf);
 
-            if (lstrlenW(tmp) >= *pcchVersionBuf)
+            if (strlenW(tmp) >= *pcchVersionBuf)
                 ret = ERROR_MORE_DATA;
 
             *pcchVersionBuf = lstrlenW(tmp);
@@ -2155,7 +2155,7 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
             wsprintfW(tmp, szLangFormat, *lang);
             if (lpLangBuf) lstrcpynW(lpLangBuf, tmp, *pcchLangBuf);
 
-            if (lstrlenW(tmp) >= *pcchLangBuf)
+            if (strlenW(tmp) >= *pcchLangBuf)
                 ret = ERROR_MORE_DATA;
 
             *pcchLangBuf = lstrlenW(tmp);

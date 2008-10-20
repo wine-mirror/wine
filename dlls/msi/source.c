@@ -218,7 +218,7 @@ UINT WINAPI MsiSourceListEnumMediaDisksW(LPCWSTR szProductCodeOrPatchCode,
     DWORD numvals, size;
     LONG res;
     UINT r;
-    static int index = 0;
+    static DWORD index = 0;
 
     static const WCHAR fmt[] = {'#','%','d',0};
 
@@ -360,7 +360,7 @@ UINT WINAPI MsiSourceListEnumSourcesA(LPCSTR szProductCodeOrPatch, LPCSTR szUser
     LPWSTR source = NULL;
     DWORD len = 0;
     UINT r = ERROR_INVALID_PARAMETER;
-    static int index = 0;
+    static DWORD index = 0;
 
     TRACE("(%s, %s, %d, %d, %d, %p, %p)\n", debugstr_a(szProductCodeOrPatch),
           debugstr_a(szUserSid), dwContext, dwOptions, dwIndex, szSource, pcchSource);
@@ -433,7 +433,7 @@ UINT WINAPI MsiSourceListEnumSourcesW(LPCWSTR szProductCodeOrPatch, LPCWSTR szUs
     HKEY subkey = NULL;
     LONG res;
     UINT r = ERROR_INVALID_PARAMETER;
-    static int index = 0;
+    static DWORD index = 0;
 
     static const WCHAR format[] = {'%','d',0};
 
@@ -654,7 +654,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
 
         if (szValue)
         {
-            if (lstrlenW(ptr) < *pcchValue)
+            if (strlenW(ptr) < *pcchValue)
                 lstrcpyW(szValue, ptr);
             else
                 rc = ERROR_MORE_DATA;
