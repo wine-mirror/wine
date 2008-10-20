@@ -167,7 +167,7 @@ static void test_info_size(void)
 	}
     }
     else
-	trace("skipping GetModuleFileNameA(NULL,..) failed\n");
+	trace("skipping GetSystemDirectoryA(mypath,..) failed\n");
 
     create_file("test.txt");
 
