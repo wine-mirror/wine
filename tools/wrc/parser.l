@@ -103,6 +103,7 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 
 #ifndef HAVE_UNISTD_H
