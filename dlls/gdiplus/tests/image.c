@@ -514,6 +514,10 @@ static void test_GdipCloneImage(void)
     stat = GdipGetImageBounds(image_dest, &rectF, &unit);
     expect(Ok, stat);
 
+    /* Treat FP values carefully */
+    ok(fabsf(rectF.Width-WIDTH)<1e-5, "Expected: %d, got %.05f\n", WIDTH, rectF.Width);
+    ok(fabsf(rectF.Height-HEIGHT)<1e-5, "Expected: %d, got %.05f\n", HEIGHT, rectF.Height);
+
     stat = GdipDisposeImage(image_dest);
     expect(Ok, stat);
 }
