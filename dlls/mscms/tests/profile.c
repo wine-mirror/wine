@@ -1423,7 +1423,7 @@ static void test_AssociateColorProfileWithDeviceA(void)
         ok( ret, "DisassociateColorProfileFromDeviceA() failed (%u)\n", GetLastError() );
 
         ret = pUninstallColorProfileA( NULL, profile, TRUE );
-        ok( ret, "UninstallColorProfileW() failed (%d)\n", GetLastError() );
+        ok( ret, "UninstallColorProfileA() failed (%d)\n", GetLastError() );
     }
 }
 
