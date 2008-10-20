@@ -1572,11 +1572,18 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_Load(
 static HRESULT WINAPI DefaultHandler_IPersistStorage_Save(
            IPersistStorage*     iface,
            IStorage*            pStgSave,
-           BOOL                 fSaveAsLoad)
+           BOOL                 fSameAsLoad)
 {
-  DefaultHandler *This = impl_from_IPersistStorage(iface);
+    DefaultHandler *This = impl_from_IPersistStorage(iface);
+    HRESULT hr;
 
-  return IPersistStorage_Save(This->dataCache_PersistStg, pStgSave, fSaveAsLoad);
+    TRACE("(%p)->(%p, %d)\n", iface, pStgSave, fSameAsLoad);
+
+    hr = IPersistStorage_Save(This->dataCache_PersistStg, pStgSave, fSameAsLoad);
+    if(SUCCEEDED(hr) && object_is_running(This))
+        hr = IPersistStorage_Save(This->pPSDelegate, pStgSave, fSameAsLoad);
+
+    return hr;
 }
 
 
