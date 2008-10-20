@@ -642,9 +642,13 @@ static HRESULT WINAPI DefaultHandler_Update(
 static HRESULT WINAPI DefaultHandler_IsUpToDate(
 	    IOleObject*        iface)
 {
-  TRACE("(%p)\n", iface);
+    DefaultHandler *This = impl_from_IOleObject(iface);
+    TRACE("(%p)\n", iface);
 
-  return OLE_E_NOTRUNNING;
+    if (object_is_running(This))
+        return IOleObject_IsUpToDate(This->pOleDelegate);
+
+    return OLE_E_NOTRUNNING;
 }
 
 /************************************************************************
