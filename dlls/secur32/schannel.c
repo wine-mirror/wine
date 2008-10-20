@@ -1,4 +1,5 @@
 /* Copyright (C) 2005 Juan Lang
+ * Copyright 2008 Henri Verbeet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,8 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <errno.h>
+#include <limits.h>
 #ifdef SONAME_LIBGNUTLS
 #include <gnutls/gnutls.h>
 #endif
@@ -41,13 +44,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(gnutls_alert_get);
+MAKE_FUNCPTR(gnutls_alert_get_name);
 MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
 MAKE_FUNCPTR(gnutls_certificate_free_credentials);
+MAKE_FUNCPTR(gnutls_credentials_set);
+MAKE_FUNCPTR(gnutls_deinit);
 MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
 MAKE_FUNCPTR(gnutls_global_set_log_level);
+MAKE_FUNCPTR(gnutls_handshake);
+MAKE_FUNCPTR(gnutls_init);
 MAKE_FUNCPTR(gnutls_perror);
+MAKE_FUNCPTR(gnutls_set_default_priority);
+MAKE_FUNCPTR(gnutls_transport_set_errno);
+MAKE_FUNCPTR(gnutls_transport_set_ptr);
+MAKE_FUNCPTR(gnutls_transport_set_pull_function);
+MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
 #define SCHAN_INVALID_HANDLE ~0UL
@@ -55,6 +69,7 @@ MAKE_FUNCPTR(gnutls_perror);
 enum schan_handle_type
 {
     SCHAN_HANDLE_CRED,
+    SCHAN_HANDLE_CTX,
     SCHAN_HANDLE_FREE
 };
 
@@ -68,6 +83,30 @@ struct schan_credentials
 {
     ULONG credential_use;
     gnutls_certificate_credentials credentials;
+};
+
+struct schan_context
+{
+    gnutls_session_t session;
+    ULONG req_ctx_attr;
+};
+
+struct schan_transport;
+
+struct schan_buffers
+{
+    SIZE_T offset;
+    const SecBufferDesc *desc;
+    int current_buffer_idx;
+    BOOL allow_buffer_resize;
+    int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *);
+};
+
+struct schan_transport
+{
+    struct schan_context *ctx;
+    struct schan_buffers in;
+    struct schan_buffers out;
 };
 
 static struct schan_handle *schan_handle_table;
@@ -134,6 +173,21 @@ static void *schan_free_handle(ULONG_PTR handle_idx, enum schan_handle_type type
     schan_free_handles = handle;
 
     return object;
+}
+
+static void *schan_get_object(ULONG_PTR handle_idx, enum schan_handle_type type)
+{
+    struct schan_handle *handle;
+
+    if (handle_idx == SCHAN_INVALID_HANDLE) return NULL;
+    handle = &schan_handle_table[handle_idx];
+    if (handle->type != type)
+    {
+        ERR("Handle %ld(%p) is not of type %#x\n", handle_idx, handle, type);
+        return NULL;
+    }
+
+    return handle->object;
 }
 
 static SECURITY_STATUS schan_QueryCredentialsAttributes(
@@ -407,6 +461,161 @@ static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
     return SEC_E_OK;
 }
 
+static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc desc,
+        int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *))
+{
+    s->offset = 0;
+    s->desc = desc;
+    s->current_buffer_idx = -1;
+    s->allow_buffer_resize = FALSE;
+    s->get_next_buffer = get_next_buffer;
+}
+
+static int schan_find_sec_buffer_idx(const SecBufferDesc *desc, unsigned int start_idx, ULONG buffer_type)
+{
+    unsigned int i;
+    PSecBuffer buffer;
+
+    for (i = start_idx; i < desc->cBuffers; ++i)
+    {
+        buffer = &desc->pBuffers[i];
+        if (buffer->BufferType == buffer_type) return i;
+    }
+
+    return -1;
+}
+
+static void schan_resize_current_buffer(const struct schan_buffers *s, SIZE_T min_size)
+{
+    SecBuffer *b = &s->desc->pBuffers[s->current_buffer_idx];
+    SIZE_T new_size = b->cbBuffer ? b->cbBuffer * 2 : 128;
+    void *new_data;
+
+    if (b->cbBuffer >= min_size || !s->allow_buffer_resize || min_size > UINT_MAX / 2) return;
+
+    while (new_size < min_size) new_size *= 2;
+
+    if (b->pvBuffer)
+        new_data = HeapReAlloc(GetProcessHeap(), 0, b->pvBuffer, new_size);
+    else
+        new_data = HeapAlloc(GetProcessHeap(), 0, new_size);
+
+    if (!new_data)
+    {
+        TRACE("Failed to resize %p from %ld to %ld\n", b->pvBuffer, b->cbBuffer, new_size);
+        return;
+    }
+
+    b->cbBuffer = new_size;
+    b->pvBuffer = new_data;
+}
+
+static char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, size_t *count)
+{
+    SIZE_T max_count;
+    PSecBuffer buffer;
+
+    if (!s->desc)
+    {
+        TRACE("No desc\n");
+        return NULL;
+    }
+
+    if (s->current_buffer_idx == -1)
+    {
+        /* Initial buffer */
+        int buffer_idx = s->get_next_buffer(t, s);
+        if (buffer_idx == -1)
+        {
+            TRACE("No next buffer\n");
+            return NULL;
+        }
+        s->current_buffer_idx = buffer_idx;
+    }
+
+    buffer = &s->desc->pBuffers[s->current_buffer_idx];
+    TRACE("Using buffer %d: cbBuffer %ld, BufferType %#lx, pvBuffer %p\n", s->current_buffer_idx, buffer->cbBuffer, buffer->BufferType, buffer->pvBuffer);
+
+    schan_resize_current_buffer(s, s->offset + *count);
+    max_count = buffer->cbBuffer - s->offset;
+    if (!max_count)
+    {
+        int buffer_idx;
+
+        s->allow_buffer_resize = FALSE;
+        buffer_idx = s->get_next_buffer(t, s);
+        if (buffer_idx == -1)
+        {
+            TRACE("No next buffer\n");
+            return NULL;
+        }
+        s->current_buffer_idx = buffer_idx;
+        s->offset = 0;
+        return schan_get_buffer(t, s, count);
+    }
+
+    if (*count > max_count) *count = max_count;
+    return (char *)buffer->pvBuffer + s->offset;
+}
+
+static ssize_t schan_pull(gnutls_transport_ptr_t transport, void *buff, size_t buff_len)
+{
+    struct schan_transport *t = (struct schan_transport *)transport;
+    char *b;
+
+    TRACE("Pull %zu bytes\n", buff_len);
+
+    b = schan_get_buffer(t, &t->in, &buff_len);
+    if (!b)
+    {
+        pgnutls_transport_set_errno(t->ctx->session, EAGAIN);
+        return -1;
+    }
+
+    memcpy(buff, b, buff_len);
+    t->in.offset += buff_len;
+
+    TRACE("Read %zu bytes\n", buff_len);
+
+    return buff_len;
+}
+
+static ssize_t schan_push(gnutls_transport_ptr_t transport, const void *buff, size_t buff_len)
+{
+    struct schan_transport *t = (struct schan_transport *)transport;
+    char *b;
+
+    TRACE("Push %zu bytes\n", buff_len);
+
+    b = schan_get_buffer(t, &t->out, &buff_len);
+    if (!b)
+    {
+        pgnutls_transport_set_errno(t->ctx->session, EAGAIN);
+        return -1;
+    }
+
+    memcpy(b, buff, buff_len);
+    t->out.offset += buff_len;
+
+    TRACE("Wrote %zu bytes\n", buff_len);
+
+    return buff_len;
+}
+
+static int schan_init_sec_ctx_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
+{
+    if (s->current_buffer_idx == -1)
+    {
+        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
+        if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer
+                && (t->ctx->req_ctx_attr & ISC_REQ_ALLOCATE_MEMORY))
+            s->allow_buffer_resize = TRUE;
+        return idx;
+    }
+
+    return -1;
+}
+
 /***********************************************************************
  *              InitializeSecurityContextW
  */
@@ -416,21 +625,125 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
  PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
  PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
-    SECURITY_STATUS ret;
+    struct schan_context *ctx;
+    struct schan_buffers *out_buffers;
+    struct schan_credentials *cred;
+    struct schan_transport transport;
+    int err;
 
     TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
-    if (phCredential)
+
+    if (!phContext)
     {
-        FIXME("stub\n");
-        ret = SEC_E_UNSUPPORTED_FUNCTION;
+        ULONG_PTR handle;
+
+        if (!phCredential) return SEC_E_INVALID_HANDLE;
+
+        cred = schan_get_object(phCredential->dwLower, SCHAN_HANDLE_CRED);
+        if (!cred) return SEC_E_INVALID_HANDLE;
+
+        if (!(cred->credential_use & SECPKG_CRED_OUTBOUND))
+        {
+            WARN("Invalid credential use %#x\n", cred->credential_use);
+            return SEC_E_INVALID_HANDLE;
+        }
+
+        ctx = HeapAlloc(GetProcessHeap(), 0, sizeof(*ctx));
+        if (!ctx) return SEC_E_INSUFFICIENT_MEMORY;
+
+        handle = schan_alloc_handle(ctx, SCHAN_HANDLE_CTX);
+        if (handle == SCHAN_INVALID_HANDLE)
+        {
+            HeapFree(GetProcessHeap(), 0, ctx);
+            return SEC_E_INTERNAL_ERROR;
+        }
+
+        err = pgnutls_init(&ctx->session, GNUTLS_CLIENT);
+        if (err != GNUTLS_E_SUCCESS)
+        {
+            pgnutls_perror(err);
+            schan_free_handle(handle, SCHAN_HANDLE_CTX);
+            HeapFree(GetProcessHeap(), 0, ctx);
+            return SEC_E_INTERNAL_ERROR;
+        }
+
+        /* FIXME: We should be using the information from the credentials here. */
+        FIXME("Using hardcoded \"NORMAL\" priority\n");
+        err = pgnutls_set_default_priority(ctx->session);
+        if (err != GNUTLS_E_SUCCESS)
+        {
+            pgnutls_perror(err);
+            pgnutls_deinit(ctx->session);
+            schan_free_handle(handle, SCHAN_HANDLE_CTX);
+            HeapFree(GetProcessHeap(), 0, ctx);
+        }
+
+        err = pgnutls_credentials_set(ctx->session, GNUTLS_CRD_CERTIFICATE, cred->credentials);
+        if (err != GNUTLS_E_SUCCESS)
+        {
+            pgnutls_perror(err);
+            pgnutls_deinit(ctx->session);
+            schan_free_handle(handle, SCHAN_HANDLE_CTX);
+            HeapFree(GetProcessHeap(), 0, ctx);
+        }
+
+        pgnutls_transport_set_pull_function(ctx->session, schan_pull);
+        pgnutls_transport_set_push_function(ctx->session, schan_push);
+
+        phNewContext->dwLower = handle;
+        phNewContext->dwUpper = 0;
     }
     else
     {
-        ret = SEC_E_INVALID_HANDLE;
+        ctx = schan_get_object(phContext->dwLower, SCHAN_HANDLE_CTX);
     }
-    return ret;
+
+    ctx->req_ctx_attr = fContextReq;
+
+    transport.ctx = ctx;
+    init_schan_buffers(&transport.in, pInput, schan_init_sec_ctx_get_next_buffer);
+    init_schan_buffers(&transport.out, pOutput, schan_init_sec_ctx_get_next_buffer);
+    pgnutls_transport_set_ptr(ctx->session, &transport);
+
+    /* Perform the TLS handshake */
+    err = pgnutls_handshake(ctx->session);
+
+    out_buffers = &transport.out;
+    if (out_buffers->current_buffer_idx != -1)
+    {
+        SecBuffer *buffer = &out_buffers->desc->pBuffers[out_buffers->current_buffer_idx];
+        buffer->cbBuffer = out_buffers->offset;
+    }
+
+    *pfContextAttr = 0;
+    if (ctx->req_ctx_attr & ISC_REQ_ALLOCATE_MEMORY)
+        *pfContextAttr |= ISC_RET_ALLOCATED_MEMORY;
+
+    switch(err)
+    {
+        case GNUTLS_E_SUCCESS:
+            TRACE("Handshake completed\n");
+            return SEC_E_OK;
+
+        case GNUTLS_E_AGAIN:
+            TRACE("Continue...\n");
+            return SEC_I_CONTINUE_NEEDED;
+
+        case GNUTLS_E_WARNING_ALERT_RECEIVED:
+        case GNUTLS_E_FATAL_ALERT_RECEIVED:
+        {
+            gnutls_alert_description_t alert = pgnutls_alert_get(ctx->session);
+            const char *alert_name = pgnutls_alert_get_name(alert);
+            WARN("ALERT: %d %s\n", alert, alert_name);
+            return SEC_E_INTERNAL_ERROR;
+        }
+
+        default:
+            pgnutls_perror(err);
+            return SEC_E_INTERNAL_ERROR;
+    }
 }
 
 /***********************************************************************
@@ -465,6 +778,23 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
     return ret;
 }
 
+static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context_handle)
+{
+    struct schan_context *ctx;
+
+    TRACE("context_handle %p\n", context_handle);
+
+    if (!context_handle) return SEC_E_INVALID_HANDLE;
+
+    ctx = schan_free_handle(context_handle->dwLower, SCHAN_HANDLE_CTX);
+    if (!ctx) return SEC_E_INVALID_HANDLE;
+
+    pgnutls_deinit(ctx->session);
+    HeapFree(GetProcessHeap(), 0, ctx);
+
+    return SEC_E_OK;
+}
+
 static void schan_gnutls_log(int level, const char *msg)
 {
     TRACE("<%d> %s", level, msg);
@@ -480,7 +810,7 @@ static const SecurityFunctionTableA schanTableA = {
     schan_InitializeSecurityContextA, 
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
-    NULL, /* DeleteSecurityContext */
+    schan_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
     NULL, /* QueryContextAttributesA */
     NULL, /* ImpersonateSecurityContext */
@@ -511,7 +841,7 @@ static const SecurityFunctionTableW schanTableW = {
     schan_InitializeSecurityContextW, 
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
-    NULL, /* DeleteSecurityContext */
+    schan_DeleteSecurityContext,
     NULL, /* ApplyControlToken */
     NULL, /* QueryContextAttributesW */
     NULL, /* ImpersonateSecurityContext */
@@ -577,13 +907,24 @@ void SECUR32_initSchannelSP(void)
         goto fail; \
     }
 
+    LOAD_FUNCPTR(gnutls_alert_get)
+    LOAD_FUNCPTR(gnutls_alert_get_name)
     LOAD_FUNCPTR(gnutls_certificate_allocate_credentials)
     LOAD_FUNCPTR(gnutls_certificate_free_credentials)
+    LOAD_FUNCPTR(gnutls_credentials_set)
+    LOAD_FUNCPTR(gnutls_deinit)
     LOAD_FUNCPTR(gnutls_global_deinit)
     LOAD_FUNCPTR(gnutls_global_init)
     LOAD_FUNCPTR(gnutls_global_set_log_function)
     LOAD_FUNCPTR(gnutls_global_set_log_level)
+    LOAD_FUNCPTR(gnutls_handshake)
+    LOAD_FUNCPTR(gnutls_init)
     LOAD_FUNCPTR(gnutls_perror)
+    LOAD_FUNCPTR(gnutls_set_default_priority)
+    LOAD_FUNCPTR(gnutls_transport_set_errno)
+    LOAD_FUNCPTR(gnutls_transport_set_ptr)
+    LOAD_FUNCPTR(gnutls_transport_set_pull_function)
+    LOAD_FUNCPTR(gnutls_transport_set_push_function)
 #undef LOAD_FUNCPTR
 
     ret = pgnutls_global_init();
