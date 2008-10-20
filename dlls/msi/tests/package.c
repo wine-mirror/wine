@@ -7180,10 +7180,7 @@ static void test_appsearch_drlocator(void)
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP9", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
-    }
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP10", prop, &size);
