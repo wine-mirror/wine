@@ -164,6 +164,19 @@ static LPWSTR app_search_file(LPWSTR path, MSISIGNATURE *sig)
 
     static const WCHAR root[] = {'\\',0};
 
+    if (!sig->File)
+    {
+        PathRemoveFileSpecW(path);
+        PathAddBackslashW(path);
+
+        attr = GetFileAttributesW(path);
+        if (attr != INVALID_FILE_ATTRIBUTES &&
+            (attr & FILE_ATTRIBUTE_DIRECTORY))
+            return strdupW(path);
+
+        return NULL;
+    }
+
     attr = GetFileAttributesW(path);
     if (attr == INVALID_FILE_ATTRIBUTES || attr == FILE_ATTRIBUTE_DIRECTORY)
         return NULL;

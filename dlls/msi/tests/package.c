@@ -6594,10 +6594,7 @@ static void test_appsearch_reglocator(void)
     sprintf(path, "%s\\", CURR_DIR);
     r = MsiGetPropertyA(hpkg, "SIGPROP11", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP12", prop, &size);
@@ -6672,19 +6669,13 @@ static void test_appsearch_reglocator(void)
     *ptr = '\0';
     r = MsiGetPropertyA(hpkg, "SIGPROP24", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     sprintf(path, "%s\\", CURR_DIR);
     r = MsiGetPropertyA(hpkg, "SIGPROP25", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP26", prop, &size);
@@ -6953,10 +6944,7 @@ static void test_appsearch_inilocator(void)
     sprintf(path, "%s\\", CURR_DIR);
     r = MsiGetPropertyA(hpkg, "SIGPROP7", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     lstrcpyA(path, CURR_DIR);
@@ -6964,10 +6952,7 @@ static void test_appsearch_inilocator(void)
     *(ptr + 1) = '\0';
     r = MsiGetPropertyA(hpkg, "SIGPROP8", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP9", prop, &size);
