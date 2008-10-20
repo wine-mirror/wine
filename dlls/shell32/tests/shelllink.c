@@ -70,7 +70,7 @@ static LPITEMIDLIST path_to_pidl(const char* path)
         HMODULE hdll=GetModuleHandleA("shell32.dll");
         pSHSimpleIDListFromPathAW=(void*)GetProcAddress(hdll, (char*)162);
         if (!pSHSimpleIDListFromPathAW)
-            trace("SHSimpleIDListFromPathAW not found in shell32.dll\n");
+            win_skip("SHSimpleIDListFromPathAW not found in shell32.dll\n");
     }
 
     pidl=NULL;
