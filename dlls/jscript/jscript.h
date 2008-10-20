@@ -128,6 +128,7 @@ HRESULT disp_propput(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvide
 HRESULT jsdisp_propget(DispatchEx*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propput_name(DispatchEx*,const WCHAR*,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propput_idx(DispatchEx*,DWORD,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_propget_name(DispatchEx*,LPCWSTR,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propget_idx(DispatchEx*,DWORD,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_get_id(DispatchEx*,const WCHAR*,DWORD,DISPID*);
 

@@ -832,4 +832,43 @@ ok((Infinity != NaN) === true, "(Infinity != NaN) !== true");
 ok((Infinity != NaN) === true, "(Infinity != NaN) !== true");
 ok((0 == NaN) === false, "(0 === NaN) != false");
 
+
+ok(typeof(testFunc2) === "function", "typeof(testFunc2) = " + typeof(testFunc2));
+tmp = testFunc2(1);
+ok(tmp === 2, "testFunc2(1) = " + tmp);
+function testFunc2(x) { return x+1; }
+
+ok(typeof(testFunc3) === "function", "typeof(testFunc3) = " + typeof(testFunc3));
+tmp = testFunc3(1);
+ok(tmp === 3, "testFunc3(1) = " + tmp);
+tmp = function testFunc3(x) { return x+2; };
+
+tmp = testFunc4(1);
+ok(tmp === 5, "testFunc4(1) = " + tmp);
+tmp = function testFunc4(x) { return x+3; };
+tmp = testFunc4(1);
+testFunc4 = 1;
+ok(testFunc4 === 1, "testFunc4 = " + testFunc4);
+ok(tmp === 5, "testFunc4(1) = " + tmp);
+tmp = function testFunc4(x) { return x+4; };
+ok(testFunc4 === 1, "testFunc4 = " + testFunc4);
+
+function testEmbededFunctions() {
+    ok(typeof(testFunc5) === "function", "typeof(testFunc5) = " + typeof(testFunc5));
+    tmp = testFunc5(1);
+    ok(tmp === 3, "testFunc5(1) = " + tmp);
+    tmp = function testFunc5(x) { return x+2; };
+
+    tmp = testFunc6(1);
+    ok(tmp === 5, "testFunc6(1) = " + tmp);
+    tmp = function testFunc6(x) { return x+3; };
+    tmp = testFunc6(1);
+    ok(tmp === 5, "testFunc6(1) = " + tmp);
+    tmp = function testFunc6(x) { return x+4; };
+    testFunc6 = 1;
+    ok(testFunc6 === 1, "testFunc4 = " + testFunc6);
+}
+
+testEmbededFunctions();
+
 reportSuccess();

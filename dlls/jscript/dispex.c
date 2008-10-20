@@ -941,7 +941,7 @@ HRESULT disp_propput(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
     return hres;
 }
 
-static HRESULT jsdisp_propget_name(DispatchEx *obj, const WCHAR *name, LCID lcid, VARIANT *var,
+HRESULT jsdisp_propget_name(DispatchEx *obj, const WCHAR *name, LCID lcid, VARIANT *var,
         jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPPARAMS dp = {NULL, NULL, 0, 0};
