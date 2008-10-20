@@ -964,6 +964,12 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
 
     if (parent)
     {
+        if (!(GetFileAttributesW(parent) & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            PathRemoveFileSpecW(parent);
+            PathAddBackslashW(parent);
+        }
+
         strcpyW(path, parent);
         strcatW(path, expanded);
     }
