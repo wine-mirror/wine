@@ -1352,7 +1352,7 @@ static void test_digit_substitution(void)
 
     if (!pEnumLanguageGroupLocalesA)
     {
-        trace("EnumLanguageGroupLocalesA not available on this platform\n");
+        win_skip("EnumLanguageGroupLocalesA not available on this platform\n");
         return;
     }
 
