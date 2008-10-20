@@ -454,5 +454,5 @@ START_TEST(dpa)
     if(InitFunctionPtrs(hcomctl32))
         test_dpa();
     else
-        trace("skipping tests\n");
+        win_skip("Needed functions are not available\n");
 }
