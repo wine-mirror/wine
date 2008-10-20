@@ -264,7 +264,7 @@ static void translateinfstring_test(void)
 
     if(hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND))
     {
-        trace("WinNT 3.51 detected. Skipping tests for TranslateInfString()\n");
+        win_skip("WinNT 3.51 detected. Skipping tests for TranslateInfString()\n");
         return;
     }
 
