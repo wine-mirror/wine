@@ -1543,9 +1543,17 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_Load(
            IPersistStorage*     iface,
            IStorage*            pStg)
 {
-  DefaultHandler *This = impl_from_IPersistStorage(iface);
+    DefaultHandler *This = impl_from_IPersistStorage(iface);
+    HRESULT hr;
 
-  return IPersistStorage_Load(This->dataCache_PersistStg, pStg);
+    TRACE("(%p)->(%p)\n", iface, pStg);
+
+    hr = IPersistStorage_Load(This->dataCache_PersistStg, pStg);
+
+    if(SUCCEEDED(hr) && object_is_running(This))
+        hr = IPersistStorage_Load(This->pPSDelegate, pStg);
+
+    return hr;
 }
 
 
