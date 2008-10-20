@@ -34,7 +34,7 @@
 34 stub CryptUIWizExport
 35 stub CryptUIWizFreeCertRequestNoDS
 36 stub CryptUIWizFreeDigitalSignContext
-37 stub CryptUIWizImport
+37 stdcall CryptUIWizImport(long ptr wstr ptr ptr)
 38 stub CryptUIWizQueryCertRequestNoDS
 39 stub CryptUIWizSubmitCertRequestNoDS
 40 stub DllRegisterServer

@@ -98,3 +98,76 @@ BOOL WINAPI CryptUIDlgViewCertificateW(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertVi
     if (pfPropertiesChanged) *pfPropertiesChanged = FALSE;
     return TRUE;
 }
+
+BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
+                             PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
+{
+    static const WCHAR Root[] = {'R','o','o','t',0};
+    BOOL ret;
+    HANDLE file;
+    HCERTSTORE store;
+    BYTE *buffer;
+    DWORD size, encoding = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+    const CERT_CONTEXT *cert;
+
+    TRACE("(0x%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent, debugstr_w(pwszWizardTitle),
+          pImportSrc, hDestCertStore);
+
+    FIXME("only certificate files are supported\n");
+
+    if (!(dwFlags & CRYPTUI_WIZ_NO_UI)) FIXME("UI not implemented\n");
+
+    if (pImportSrc->dwSubjectChoice != CRYPTUI_WIZ_IMPORT_SUBJECT_FILE)
+    {
+        FIXME("source type not implemented: %u\n", pImportSrc->dwSubjectChoice);
+        return FALSE;
+    }
+    file = CreateFileW(pImportSrc->pwszFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        WARN("can't open certificate file %s\n", debugstr_w(pImportSrc->pwszFileName));
+        return FALSE;
+    }
+    if ((size = GetFileSize(file, NULL)))
+    {
+        if ((buffer = HeapAlloc(GetProcessHeap(), 0, size)))
+        {
+            DWORD read;
+            if (!ReadFile(file, buffer, size, &read, NULL) || read != size)
+            {
+                WARN("can't read certificate file %s\n", debugstr_w(pImportSrc->pwszFileName));
+                HeapFree(GetProcessHeap(), 0, buffer);
+                CloseHandle(file);
+                return FALSE;
+            }
+        }
+    }
+    else
+    {
+        WARN("empty file %s\n", debugstr_w(pImportSrc->pwszFileName));
+        CloseHandle(file);
+        return FALSE;
+    }
+    CloseHandle(file);
+    if (!(cert = CertCreateCertificateContext(encoding, buffer, size)))
+    {
+        WARN("unable to create certificate context\n");
+        HeapFree(GetProcessHeap(), 0, buffer);
+        return FALSE;
+    }
+    /* FIXME: verify certificate and determine store name dynamically */
+    if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, Root)))
+    {
+        WARN("unable to open certificate store\n");
+        CertFreeCertificateContext(cert);
+        HeapFree(GetProcessHeap(), 0, buffer);
+        return FALSE;
+    }
+    ret = CertAddCertificateContextToStore(store, cert, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
+
+    CertCloseStore(store, 0);
+    CertFreeCertificateContext(cert);
+    HeapFree(GetProcessHeap(), 0, buffer);
+    return ret;
+}
