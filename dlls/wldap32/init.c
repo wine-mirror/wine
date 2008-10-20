@@ -646,7 +646,7 @@ ULONG CDECL ldap_start_tls_sW( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMess
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_start_tls_s( ld, serverctrlsU, clientctrlsU );
+    ret = map_error( ldap_start_tls_s( ld, serverctrlsU, clientctrlsU ));
 
 exit:
     controlarrayfreeU( serverctrlsU );

@@ -289,7 +289,7 @@ ULONG CDECL ldap_modrdn2_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn, INT dele
     newdnU = strWtoU( newdn );
     if (!newdnU) goto exit;
 
-    ret = ldap_rename_s( ld, dn ? dnU : "", newdnU, NULL, delete, NULL, NULL );
+    ret = map_error( ldap_rename_s( ld, dn ? dnU : "", newdnU, NULL, delete, NULL, NULL ));
 
 exit:
     strfreeU( dnU );
@@ -368,7 +368,7 @@ ULONG CDECL ldap_modrdn_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR newdn )
     newdnU = strWtoU( newdn );
     if (!newdnU) goto exit;
 
-    ret = ldap_rename_s( ld, dn ? dnU : "", newdnU, NULL, 1, NULL, NULL );
+    ret = map_error( ldap_rename_s( ld, dn ? dnU : "", newdnU, NULL, 1, NULL, NULL ));
 
 exit:
     strfreeU( dnU );

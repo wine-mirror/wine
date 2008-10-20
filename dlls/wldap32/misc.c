@@ -60,7 +60,7 @@ ULONG CDECL WLDAP32_ldap_abandon( WLDAP32_LDAP *ld, ULONG msgid )
     TRACE( "(%p, 0x%08x)\n", ld, msgid );
 
     if (!ld) return ~0UL;
-    ret = ldap_abandon_ext( ld, msgid, NULL, NULL );
+    ret = map_error( ldap_abandon_ext( ld, msgid, NULL, NULL ));
 
 #endif
     return ret;

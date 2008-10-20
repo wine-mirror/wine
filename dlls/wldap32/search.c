@@ -277,8 +277,8 @@ ULONG CDECL ldap_search_extW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
     tv.tv_sec = timelimit;
     tv.tv_usec = 0;
 
-    ret = ldap_search_ext( ld, baseU, scope, filterU, attrsU, attrsonly,
-                           serverctrlsU, clientctrlsU, &tv, sizelimit, (int *)message );
+    ret = map_error( ldap_search_ext( ld, baseU, scope, filterU, attrsU, attrsonly,
+                                      serverctrlsU, clientctrlsU, &tv, sizelimit, (int *)message ));
 
 exit:
     strfreeU( baseU );
@@ -412,8 +412,9 @@ ULONG CDECL ldap_search_ext_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
         if (!clientctrlsU) goto exit;
     }
 
-    ret = ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
-                             serverctrlsU, clientctrlsU, (struct timeval *)timeout, sizelimit, res );
+    ret = map_error( ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+                                        serverctrlsU, clientctrlsU, (struct timeval *)timeout,
+                                        sizelimit, res ));
 
 exit:
     strfreeU( baseU );
@@ -518,8 +519,8 @@ ULONG CDECL ldap_search_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR f
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
-                             NULL, NULL, NULL, 0, res );
+    ret = map_error( ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+                                        NULL, NULL, NULL, 0, res ));
 
 exit:
     strfreeU( baseU );
@@ -628,8 +629,8 @@ ULONG CDECL ldap_search_stW( WLDAP32_LDAP *ld, const PWCHAR base, ULONG scope,
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
-                             NULL, NULL, (struct timeval *)timeout, 0, res );
+    ret = map_error( ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+                                        NULL, NULL, (struct timeval *)timeout, 0, res ));
 
 exit:
     strfreeU( baseU );
