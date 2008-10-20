@@ -689,6 +689,8 @@ static HRESULT WINAPI DefaultHandler_GetUserType(
   DefaultHandler *This = impl_from_IOleObject(iface);
 
   TRACE("(%p, %d, %p)\n", iface, dwFormOfType, pszUserType);
+  if (object_is_running(This))
+    return IOleObject_GetUserType(This->pOleDelegate, dwFormOfType, pszUserType);
 
   return OleRegGetUserType(&This->clsid, dwFormOfType, pszUserType);
 }
