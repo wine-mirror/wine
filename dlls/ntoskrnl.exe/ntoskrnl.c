@@ -543,8 +543,28 @@ NTSTATUS WINAPI IoCreateSymbolicLink( UNICODE_STRING *name, UNICODE_STRING *targ
  */
 NTSTATUS WINAPI IoDeleteSymbolicLink( UNICODE_STRING *name )
 {
-    FIXME( "%s\n", debugstr_us(name) );
-    return STATUS_SUCCESS;
+    HANDLE handle;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = name;
+    attr.Attributes               = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (!(status = NtOpenSymbolicLinkObject( &handle, 0, &attr )))
+    {
+        SERVER_START_REQ( unlink_object )
+        {
+            req->handle = handle;
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        NtClose( handle );
+    }
+    return status;
 }
 
 
