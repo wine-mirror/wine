@@ -21,6 +21,7 @@
 
 #include "wine/debug.h"
 
+#define COBJMACROS
 #include "winbase.h"
 #include "winuser.h"
 #include "objbase.h"
@@ -31,5 +32,13 @@
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type);
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology);
 const char *debug_dxgi_format(DXGI_FORMAT format);
+
+/* IDirect3D10Device */
+extern const struct ID3D10DeviceVtbl d3d10_device_vtbl;
+struct d3d10_device
+{
+    const struct ID3D10DeviceVtbl *vtbl;
+    LONG refcount;
+};
 
 #endif /* __WINE_D3D10_PRIVATE_H */
