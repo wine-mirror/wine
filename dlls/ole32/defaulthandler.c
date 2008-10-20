@@ -1516,9 +1516,18 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_GetClassID(
 static HRESULT WINAPI DefaultHandler_IPersistStorage_IsDirty(
             IPersistStorage*     iface)
 {
-  DefaultHandler *This = impl_from_IPersistStorage(iface);
+    DefaultHandler *This = impl_from_IPersistStorage(iface);
+    HRESULT hr;
 
-  return IPersistStorage_IsDirty(This->dataCache_PersistStg);
+    TRACE("(%p)\n", iface);
+
+    hr = IPersistStorage_IsDirty(This->dataCache_PersistStg);
+    if(hr != S_FALSE) return hr;
+
+    if(object_is_running(This))
+        hr = IPersistStorage_IsDirty(This->pPSDelegate);
+
+    return hr;
 }
 
 /************************************************************************
