@@ -1644,6 +1644,7 @@ static void test_async_file_errors(void)
     }
     ok(completion_count == 0, "completion routine should only be called when ReadFileEx succeeds (this rule was violated %d times)\n", completion_count);
     /*printf("Error = %ld\n", GetLastError());*/
+    HeapFree(GetProcessHeap(), 0, lpBuffer);
 }
 
 static void test_read_write(void)
