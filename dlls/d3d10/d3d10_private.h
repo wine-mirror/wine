@@ -1,7 +1,5 @@
 /*
- * Direct3D 10
- *
- * Copyright 2007 Andras Kovacs
+ * Copyright 2008 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,27 +14,20 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
  */
 
-#include "config.h"
-#include "wine/port.h"
+#ifndef __WINE_D3D10_PRIVATE_H
+#define __WINE_D3D10_PRIVATE_H
 
-#include "d3d10_private.h"
+#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
+#include "winbase.h"
+#include "winuser.h"
+#include "objbase.h"
 
-/* At process attach */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    TRACE("fdwReason=%d\n", fdwReason);
-    switch(fdwReason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hInstDLL );
-        break;
-    }
-    return TRUE;
-}
+#include "d3d10.h"
+
+/* TRACE helper functions */
+const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type);
+
+#endif /* __WINE_D3D10_PRIVATE_H */

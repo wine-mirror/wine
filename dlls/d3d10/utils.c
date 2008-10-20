@@ -1,7 +1,5 @@
 /*
- * Direct3D 10
- *
- * Copyright 2007 Andras Kovacs
+ * Copyright 2008 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,17 +24,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
-/* At process attach */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+#define WINE_D3D10_TO_STR(x) case x: return #x
+
+const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type)
 {
-    TRACE("fdwReason=%d\n", fdwReason);
-    switch(fdwReason)
+    switch(driver_type)
     {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hInstDLL );
-        break;
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_HARDWARE);
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_REFERENCE);
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_NULL);
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_SOFTWARE);
+        default:
+            FIXME("Unrecognized D3D10_DRIVER_TYPE %#x\n", driver_type);
+            return "unrecognized";
     }
-    return TRUE;
 }
+
+#undef WINE_D3D10_TO_STR

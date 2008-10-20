@@ -7,7 +7,8 @@ IMPORTLIB = d3d10
 IMPORTS   = dxguid uuid wined3d kernel32
 
 C_SRCS = \
-	d3d10_main.c
+	d3d10_main.c \
+	utils.c
 
 RC_SRCS = version.rc
 

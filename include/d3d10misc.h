@@ -1,7 +1,5 @@
 /*
- * Direct3D 10
- *
- * Copyright 2007 Andras Kovacs
+ * Copyright 2008 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,27 +14,26 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
  */
 
-#include "config.h"
-#include "wine/port.h"
+#ifndef __D3D10MISC_H__
+#define __D3D10MISC_H__
 
-#include "d3d10_private.h"
+#include "d3d10.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* At process attach */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    TRACE("fdwReason=%d\n", fdwReason);
-    switch(fdwReason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hInstDLL );
-        break;
-    }
-    return TRUE;
+typedef enum D3D10_DRIVER_TYPE {
+    D3D10_DRIVER_TYPE_HARDWARE  = 0,
+    D3D10_DRIVER_TYPE_REFERENCE = 1,
+    D3D10_DRIVER_TYPE_NULL      = 2,
+    D3D10_DRIVER_TYPE_SOFTWARE  = 3,
+} D3D10_DRIVER_TYPE;
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* __D3D10MISC_H__ */
