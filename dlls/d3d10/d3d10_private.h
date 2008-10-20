@@ -29,5 +29,6 @@
 
 /* TRACE helper functions */
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type);
+const char *debug_dxgi_format(DXGI_FORMAT format);
 
 #endif /* __WINE_D3D10_PRIVATE_H */
