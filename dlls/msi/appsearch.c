@@ -155,6 +155,60 @@ static void ACTION_FreeSignature(MSISIGNATURE *sig)
     msi_free(sig->Languages);
 }
 
+static LPWSTR app_search_file(LPWSTR path, MSISIGNATURE *sig)
+{
+    VS_FIXEDFILEINFO *info;
+    DWORD attr, handle, size;
+    LPWSTR val = NULL;
+    LPBYTE buffer;
+
+    static const WCHAR root[] = {'\\',0};
+
+    attr = GetFileAttributesW(path);
+    if (attr == INVALID_FILE_ATTRIBUTES || attr == FILE_ATTRIBUTE_DIRECTORY)
+        return NULL;
+
+    size = GetFileVersionInfoSizeW(path, &handle);
+    if (!size)
+        return strdupW(path);
+
+    buffer = msi_alloc(size);
+    if (!buffer)
+        return NULL;
+
+    if (!GetFileVersionInfoW(path, 0, size, buffer))
+        goto done;
+
+    if (!VerQueryValueW(buffer, root, (LPVOID)&info, &size) || !info)
+        goto done;
+
+    if (sig->MinVersionLS || sig->MinVersionMS)
+    {
+        if (info->dwFileVersionMS < sig->MinVersionMS)
+            goto done;
+
+        if (info->dwFileVersionMS == sig->MinVersionMS &&
+            info->dwFileVersionLS < sig->MinVersionLS)
+            goto done;
+    }
+
+    if (sig->MaxVersionLS || sig->MaxVersionMS)
+    {
+        if (info->dwFileVersionMS > sig->MaxVersionMS)
+            goto done;
+
+        if (info->dwFileVersionMS == sig->MaxVersionMS &&
+            info->dwFileVersionLS > sig->MaxVersionLS)
+            goto done;
+    }
+
+    val = strdupW(path);
+
+done:
+    msi_free(buffer);
+    return val;
+}
+
 static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATURE *sig)
 {
     static const WCHAR query[] =  {
@@ -211,7 +265,7 @@ static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, LPWSTR *appValue, MS
 
     if (type != msidbLocatorTypeDirectory && sigpresent && !isdir)
     {
-        *appValue = strdupW(path);
+        *appValue = app_search_file(path, sig);
     }
     else if (!sigpresent && (type != msidbLocatorTypeDirectory || isdir))
     {
@@ -383,7 +437,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
         rc = ACTION_SearchDirectory(package, sig, (LPWSTR)value, 0, appValue);
         break;
     case msidbLocatorTypeFileName:
-        *appValue = strdupW((LPWSTR)value);
+        *appValue = app_search_file((LPWSTR)value, sig);
         break;
     case msidbLocatorTypeRawValue:
         ACTION_ConvertRegValue(regType, value, sz, appValue);
@@ -475,7 +529,7 @@ static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
             FIXME("unimplemented for Directory (%s)\n", debugstr_w(buf));
             break;
         case msidbLocatorTypeFileName:
-            FIXME("unimplemented for File (%s)\n", debugstr_w(buf));
+            *appValue = app_search_file(buf, sig);
             break;
         case msidbLocatorTypeRawValue:
             *appValue = get_ini_field(buf, field);
