@@ -433,7 +433,7 @@ static BOOL DoTest3(void)
 
     if (!pImageList_DrawIndirect)
     {
-        trace("ImageList_DrawIndirect not available, skipping test\n");
+        win_skip("ImageList_DrawIndirect not available, skipping test\n");
         return TRUE;
     }
 
