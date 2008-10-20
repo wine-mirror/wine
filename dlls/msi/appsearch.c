@@ -539,7 +539,7 @@ static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
         switch (type & 0x0f)
         {
         case msidbLocatorTypeDirectory:
-            FIXME("unimplemented for Directory (%s)\n", debugstr_w(buf));
+            ACTION_SearchDirectory(package, sig, buf, 0, appValue);
             break;
         case msidbLocatorTypeFileName:
             *appValue = app_search_file(buf, sig);

@@ -6935,10 +6935,7 @@ static void test_appsearch_inilocator(void)
     sprintf(path, "%s\\", CURR_DIR);
     r = MsiGetPropertyA(hpkg, "SIGPROP6", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     sprintf(path, "%s\\", CURR_DIR);
