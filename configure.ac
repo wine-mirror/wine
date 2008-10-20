@@ -84,10 +84,10 @@ case $host in
   x86_64*linux*)
     if test "x$enable_win64" != "xyes"
     then
-      test -n "$CC" || CC="gcc -m32"
-      test -n "$CXX"|| CXX="g++ -m32"
-      test -n "$LD" || LD="ld -m elf_i386"
-      test -n "$AS" || AS="as --32"
+      CC="${CC:-gcc} -m32"
+      CXX="${CXX:-g++} -m32"
+      LD="${LD:-ld} -m elf_i386"
+      AS="${AS:-as} --32"
       host_cpu="i386"
     fi
     ;;
