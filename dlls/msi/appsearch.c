@@ -727,13 +727,16 @@ static UINT ACTION_FileMatchesSig(const MSISIGNATURE *sig,
 static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
  MSISIGNATURE *sig, LPCWSTR dir, int depth)
 {
-    static const WCHAR starDotStarW[] = { '*','.','*',0 };
+    HANDLE hFind;
+    WIN32_FIND_DATAW findData;
     UINT rc = ERROR_SUCCESS;
     size_t dirLen = lstrlenW(dir), fileLen = lstrlenW(sig->File);
     WCHAR *buf;
 
+    static const WCHAR starDotStarW[] = { '*','.','*',0 };
+
     TRACE("Searching directory %s for file %s, depth %d\n", debugstr_w(dir),
-     debugstr_w(sig->File), depth);
+          debugstr_w(sig->File), depth);
 
     if (depth < 0)
         return ERROR_INVALID_PARAMETER;
@@ -744,62 +747,60 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
      * isn't backslash-terminated.
      */
     buf = msi_alloc( (dirLen + max(fileLen, lstrlenW(starDotStarW)) + 2) * sizeof(WCHAR));
-    if (buf)
-    {
-        /* a depth of 0 implies we should search dir, so go ahead and search */
-        HANDLE hFind;
-        WIN32_FIND_DATAW findData;
+    if (!buf)
+        return ERROR_OUTOFMEMORY;
 
-        memcpy(buf, dir, dirLen * sizeof(WCHAR));
-        if (buf[dirLen - 1] != '\\')
-            buf[dirLen++ - 1] = '\\';
-        memcpy(buf + dirLen, sig->File, (fileLen + 1) * sizeof(WCHAR));
+    lstrcpyW(buf, dir);
+    PathAddBackslashW(buf);
+    lstrcatW(buf, sig->File);
+
+    hFind = FindFirstFileW(buf, &findData);
+    if (hFind != INVALID_HANDLE_VALUE)
+    {
+        BOOL matches;
+
+        /* assuming Signature can't contain wildcards for the file name,
+         * so don't bother with FindNextFileW here.
+         */
+        rc = ACTION_FileMatchesSig(sig, &findData, buf, &matches);
+        if (rc == ERROR_SUCCESS && matches)
+        {
+            TRACE("found file, returning %s\n", debugstr_w(buf));
+            *appValue = buf;
+        }
+
+        FindClose(hFind);
+    }
+
+    if (rc == ERROR_SUCCESS && !*appValue && depth > 0)
+    {
+        lstrcpyW(buf, dir);
+        PathAddBackslashW(buf);
+        lstrcatW(buf, starDotStarW);
+
         hFind = FindFirstFileW(buf, &findData);
         if (hFind != INVALID_HANDLE_VALUE)
         {
-            BOOL matches;
+            if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                rc = ACTION_RecurseSearchDirectory(package, appValue, sig,
+                                                   findData.cFileName,
+                                                   depth - 1);
 
-            /* assuming Signature can't contain wildcards for the file name,
-             * so don't bother with FindNextFileW here.
-             */
-            if (!(rc = ACTION_FileMatchesSig(sig, &findData, buf, &matches))
-             && matches)
-            {
-                TRACE("found file, returning %s\n", debugstr_w(buf));
-                *appValue = buf;
-            }
-            FindClose(hFind);
-        }
-        if (rc == ERROR_SUCCESS && !*appValue && depth > 0)
-        {
-            HANDLE hFind;
-            WIN32_FIND_DATAW findData;
-
-            memcpy(buf, dir, dirLen * sizeof(WCHAR));
-            if (buf[dirLen - 1] != '\\')
-                buf[dirLen++ - 1] = '\\';
-            lstrcpyW(buf + dirLen, starDotStarW);
-            hFind = FindFirstFileW(buf, &findData);
-            if (hFind != INVALID_HANDLE_VALUE)
+            while (rc == ERROR_SUCCESS && !*appValue &&
+                   FindNextFileW(hFind, &findData) != 0)
             {
                 if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                    rc = ACTION_RecurseSearchDirectory(package, appValue, sig,
-                     findData.cFileName, depth - 1);
-                while (rc == ERROR_SUCCESS && !*appValue &&
-                 FindNextFileW(hFind, &findData) != 0)
-                {
-                    if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                        rc = ACTION_RecurseSearchDirectory(package, appValue,
-                         sig, findData.cFileName, depth - 1);
-                }
-                FindClose(hFind);
+                    rc = ACTION_RecurseSearchDirectory(package, appValue,
+                                                       sig, findData.cFileName,
+                                                       depth - 1);
             }
+
+            FindClose(hFind);
         }
-        if (!*appValue)
-            msi_free(buf);
     }
-    else
-        rc = ERROR_OUTOFMEMORY;
+
+    if (!*appValue)
+        msi_free(buf);
 
     return rc;
 }
