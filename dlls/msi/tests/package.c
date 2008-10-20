@@ -6254,6 +6254,14 @@ static void test_appsearch_reglocator(void)
                          (const BYTE *)path, lstrlenA(path) + 1);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    sprintf(path, "\"%s\\FileName1\" -option", CURR_DIR);
+    res = RegSetValueExA(hklm, "value16", 0, REG_SZ,
+                         (const BYTE *)path, lstrlenA(path) + 1);
+
+    sprintf(path, "%s\\FileName1 -option", CURR_DIR);
+    res = RegSetValueExA(hklm, "value17", 0, REG_SZ,
+                         (const BYTE *)path, lstrlenA(path) + 1);
+
     hdb = create_package_db();
     ok(hdb, "Expected a valid database handle\n");
 
@@ -6342,6 +6350,12 @@ static void test_appsearch_reglocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = add_appsearch_entry(hdb, "'SIGPROP28', 'NewSignature28'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP29', 'NewSignature29'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP30', 'NewSignature30'");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = create_reglocator_table(hdb);
@@ -6487,6 +6501,16 @@ static void test_appsearch_reglocator(void)
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    /* HKLM, msidbLocatorTypeFile, file exists, in quotes */
+    str = "'NewSignature29', 2, 'Software\\Wine', 'Value16', 1";
+    r = add_reglocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* HKLM, msidbLocatorTypeFile, file exists, no quotes */
+    str = "'NewSignature30', 2, 'Software\\Wine', 'Value17', 1";
+    r = add_reglocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     r = create_signature_table(hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -6520,6 +6544,14 @@ static void test_appsearch_reglocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     str = "'NewSignature27', 'FileName2', '', '', '', '', '', '', ''";
+    r = add_signature_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    str = "'NewSignature29', 'FileName1', '', '', '', '', '', '', ''";
+    r = add_signature_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    str = "'NewSignature30', 'FileName1', '', '', '', '', '', '', ''";
     r = add_signature_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -6692,6 +6724,17 @@ static void test_appsearch_reglocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
 
+    size = MAX_PATH;
+    sprintf(path, "%s\\FileName1", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP29", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP30", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+
     RegSetValueA(hklm, NULL, REG_SZ, "", 0);
     RegDeleteValueA(hklm, "Value1");
     RegDeleteValueA(hklm, "Value2");
@@ -6708,6 +6751,8 @@ static void test_appsearch_reglocator(void)
     RegDeleteValueA(hklm, "Value13");
     RegDeleteValueA(hklm, "Value14");
     RegDeleteValueA(hklm, "Value15");
+    RegDeleteValueA(hklm, "Value16");
+    RegDeleteValueA(hklm, "Value17");
     RegDeleteKeyA(hklm, "");
     RegCloseKey(hklm);
 

@@ -372,6 +372,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
         'S','i','g','n','a','t','u','r','e','_',' ','=',' ', '\'','%','s','\'',0};
     LPWSTR keyPath = NULL, valueName = NULL;
     LPWSTR deformatted = NULL;
+    LPWSTR ptr = NULL, end;
     int root, type;
     HKEY rootKey, key = NULL;
     DWORD sz = 0, regType;
@@ -444,13 +445,18 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
     if (sz == 0)
         goto end;
 
+    if ((ptr = strchrW((LPWSTR)value, '"')) && (end = strchrW(++ptr, '"')))
+        *end = '\0';
+    else
+        ptr = (LPWSTR)value;
+
     switch (type & 0x0f)
     {
     case msidbLocatorTypeDirectory:
-        rc = ACTION_SearchDirectory(package, sig, (LPWSTR)value, 0, appValue);
+        rc = ACTION_SearchDirectory(package, sig, ptr, 0, appValue);
         break;
     case msidbLocatorTypeFileName:
-        *appValue = app_search_file((LPWSTR)value, sig);
+        *appValue = app_search_file(ptr, sig);
         break;
     case msidbLocatorTypeRawValue:
         ACTION_ConvertRegValue(regType, value, sz, appValue);
