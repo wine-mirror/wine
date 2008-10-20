@@ -760,18 +760,17 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
     hFind = FindFirstFileW(buf, &findData);
     if (hFind != INVALID_HANDLE_VALUE)
     {
-        BOOL matches;
-
-        /* assuming Signature can't contain wildcards for the file name,
-         * so don't bother with FindNextFileW here.
-         */
-        rc = ACTION_FileMatchesSig(sig, &findData, buf, &matches);
-        if (rc == ERROR_SUCCESS && matches)
+        if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
-            TRACE("found file, returning %s\n", debugstr_w(buf));
-            *appValue = buf;
-        }
+            BOOL matches;
 
+            rc = ACTION_FileMatchesSig(sig, &findData, buf, &matches);
+            if (rc == ERROR_SUCCESS && matches)
+            {
+                TRACE("found file, returning %s\n", debugstr_w(buf));
+                *appValue = buf;
+            }
+        }
         FindClose(hFind);
     }
 
