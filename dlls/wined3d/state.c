@@ -3434,7 +3434,7 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, W
      * IWineD3DBaseTexture::ApplyStateChanges multiplies the set matrix with a fixup matrix. Before the
      * scaling is reapplied or removed, the texture matrix has to be reapplied
      *
-     * The mapped stage is alrady active because the sampler() function below, which is part of the
+     * The mapped stage is already active because the sampler() function below, which is part of the
      * misc pipeline
      */
     if(sampler < MAX_TEXTURES) {
@@ -3681,7 +3681,7 @@ static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     }
 
     /* GL_MODELVIEW0_ARB:  0x1700
-     * GL_MODELVIEW1_ARB:  0x0x850a
+     * GL_MODELVIEW1_ARB:  0x850a
      * GL_MODELVIEW2_ARB:  0x8722
      * GL_MODELVIEW3_ARB:  0x8723
      * etc

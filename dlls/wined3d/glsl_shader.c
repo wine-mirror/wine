@@ -2564,7 +2564,7 @@ static void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg) {
 }
 
 /** Process the WINED3DSIO_TEXM3X3SPEC instruction in GLSL 
- * Peform the final texture lookup based on the previous 2 3x3 matrix multiplies */
+ * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 static void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
@@ -2598,7 +2598,7 @@ static void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 }
 
 /** Process the WINED3DSIO_TEXM3X3VSPEC instruction in GLSL 
- * Peform the final texture lookup based on the previous 2 3x3 matrix multiplies */
+ * Perform the final texture lookup based on the previous 2 3x3 matrix multiplies */
 static void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
