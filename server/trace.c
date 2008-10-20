@@ -3595,6 +3595,11 @@ static void dump_get_object_info_reply( const struct get_object_info_reply *req 
     fprintf( stderr, " ref_count=%08x", req->ref_count );
 }
 
+static void dump_unlink_object_request( const struct unlink_object_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
 static void dump_get_token_impersonation_level_request( const struct get_token_impersonation_level_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -4011,6 +4016,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_symlink_request,
     (dump_func)dump_query_symlink_request,
     (dump_func)dump_get_object_info_request,
+    (dump_func)dump_unlink_object_request,
     (dump_func)dump_get_token_impersonation_level_request,
     (dump_func)dump_allocate_locally_unique_id_request,
     (dump_func)dump_create_device_manager_request,
@@ -4248,6 +4254,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_symlink_reply,
     (dump_func)dump_query_symlink_reply,
     (dump_func)dump_get_object_info_reply,
+    (dump_func)0,
     (dump_func)dump_get_token_impersonation_level_reply,
     (dump_func)dump_allocate_locally_unique_id_reply,
     (dump_func)dump_create_device_manager_reply,
@@ -4485,6 +4492,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_symlink",
     "query_symlink",
     "get_object_info",
+    "unlink_object",
     "get_token_impersonation_level",
     "allocate_locally_unique_id",
     "create_device_manager",
