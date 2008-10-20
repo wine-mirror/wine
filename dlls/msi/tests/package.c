@@ -6149,6 +6149,7 @@ static void test_appsearch_reglocator(void)
     HKEY hklm, classes;
     HKEY hkcu, users;
     LPCSTR str;
+    LPSTR ptr;
     LONG res;
     UINT r;
 
@@ -6328,6 +6329,21 @@ static void test_appsearch_reglocator(void)
     r = add_appsearch_entry(hdb, "'SIGPROP23', 'NewSignature23'");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    r = add_appsearch_entry(hdb, "'SIGPROP24', 'NewSignature24'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP25', 'NewSignature25'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP26', 'NewSignature26'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP27', 'NewSignature27'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_appsearch_entry(hdb, "'SIGPROP28', 'NewSignature28'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     r = create_reglocator_table(hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -6371,12 +6387,12 @@ static void test_appsearch_reglocator(void)
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    /* HKLM, msidbLocatorTypeFileName, file exists */
+    /* HKLM, msidbLocatorTypeFileName, signature, file exists */
     str = "'NewSignature9', 2, 'Software\\Wine', 'Value9', 1";
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    /* HKLM, msidbLocatorTypeFileName, file does not exist */
+    /* HKLM, msidbLocatorTypeFileName, signature, file does not exist */
     str = "'NewSignature10', 2, 'Software\\Wine', 'Value10', 1";
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -6386,17 +6402,17 @@ static void test_appsearch_reglocator(void)
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    /* HKLM, msidbLocatorTypeDirectory, file exists */
+    /* HKLM, msidbLocatorTypeDirectory, no signature, file exists */
     str = "'NewSignature12', 2, 'Software\\Wine', 'Value9', 0";
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    /* HKLM, msidbLocatorTypeDirectory, directory */
+    /* HKLM, msidbLocatorTypeDirectory, no signature, directory exists */
     str = "'NewSignature13', 2, 'Software\\Wine', 'Value11', 0";
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    /* HKLM, msidbLocatorTypeDirectory, file exists, with signature */
+    /* HKLM, msidbLocatorTypeDirectory, signature, file exists */
     str = "'NewSignature14', 2, 'Software\\Wine', 'Value9', 0";
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -6431,7 +6447,7 @@ static void test_appsearch_reglocator(void)
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    /* HKLM, msidbLocatorTypeFileName, file exists w/ version, signature */
+    /* HKLM, msidbLocatorTypeFileName, signature, file exists w/ version */
     str = "'NewSignature21', 2, 'Software\\Wine', 'Value13', 1";
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -6443,6 +6459,31 @@ static void test_appsearch_reglocator(void)
 
     /* HKLM, msidbLocatorTypeFileName, file exists w/ version, sig->name ignored */
     str = "'NewSignature23', 2, 'Software\\Wine', 'Value15', 1";
+    r = add_reglocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* HKLM, msidbLocatorTypeFileName, no signature, directory exists */
+    str = "'NewSignature24', 2, 'Software\\Wine', 'Value11', 1";
+    r = add_reglocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* HKLM, msidbLocatorTypeFileName, no signature, file does not exist */
+    str = "'NewSignature25', 2, 'Software\\Wine', 'Value10', 1";
+    r = add_reglocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* HKLM, msidbLocatorTypeDirectory, signature, directory exists */
+    str = "'NewSignature26', 2, 'Software\\Wine', 'Value11', 0";
+    r = add_reglocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* HKLM, msidbLocatorTypeDirectory, signature, file does not exist */
+    str = "'NewSignature27', 2, 'Software\\Wine', 'Value10', 0";
+    r = add_reglocator_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* HKLM, msidbLocatorTypeDirectory, no signature, file does not exist */
+    str = "'NewSignature28', 2, 'Software\\Wine', 'Value10', 0";
     r = add_reglocator_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -6470,6 +6511,15 @@ static void test_appsearch_reglocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     str = "'NewSignature23', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''";
+    r = add_signature_entry(hdb, str);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    ptr = strrchr(CURR_DIR, '\\') + 1;
+    sprintf(path, "'NewSignature26', '%s', '', '', '', '', '', '', ''", ptr);
+    r = add_signature_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    str = "'NewSignature27', 'FileName2', '', '', '', '', '', '', ''";
     r = add_signature_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -6615,6 +6665,41 @@ static void test_appsearch_reglocator(void)
     r = MsiGetPropertyA(hpkg, "SIGPROP23", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+
+    size = MAX_PATH;
+    lstrcpyA(path, CURR_DIR);
+    ptr = strrchr(path, '\\') + 1;
+    *ptr = '\0';
+    r = MsiGetPropertyA(hpkg, "SIGPROP24", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    sprintf(path, "%s\\", CURR_DIR);
+    r = MsiGetPropertyA(hpkg, "SIGPROP25", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP26", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP27", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "SIGPROP28", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
 
     RegSetValueA(hklm, NULL, REG_SZ, "", 0);
     RegDeleteValueA(hklm, "Value1");
