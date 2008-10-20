@@ -324,7 +324,7 @@ static void test_32bit_win(void)
     GetModuleFileNameW(NULL, mypathW, MAX_PATH);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        trace("GetModuleFileNameW not existing on this platform, skipping comparison between A- and W-calls\n");
+        win_skip("GetModuleFileNameW not existing on this platform, skipping comparison between A- and W-calls\n");
         is_unicode_enabled = FALSE;
     }
 
