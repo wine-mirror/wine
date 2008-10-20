@@ -731,15 +731,18 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
     WIN32_FIND_DATAW findData;
     UINT rc = ERROR_SUCCESS;
     size_t dirLen = lstrlenW(dir), fileLen = lstrlenW(sig->File);
+    WCHAR subpath[MAX_PATH];
     WCHAR *buf;
 
+    static const WCHAR dot[] = {'.',0};
+    static const WCHAR dotdot[] = {'.','.',0};
     static const WCHAR starDotStarW[] = { '*','.','*',0 };
 
     TRACE("Searching directory %s for file %s, depth %d\n", debugstr_w(dir),
           debugstr_w(sig->File), depth);
 
     if (depth < 0)
-        return ERROR_INVALID_PARAMETER;
+        return ERROR_SUCCESS;
 
     *appValue = NULL;
     /* We need the buffer in both paths below, so go ahead and allocate it
@@ -772,7 +775,7 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
         FindClose(hFind);
     }
 
-    if (rc == ERROR_SUCCESS && !*appValue && depth > 0)
+    if (rc == ERROR_SUCCESS && !*appValue)
     {
         lstrcpyW(buf, dir);
         PathAddBackslashW(buf);
@@ -781,18 +784,28 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
         hFind = FindFirstFileW(buf, &findData);
         if (hFind != INVALID_HANDLE_VALUE)
         {
-            if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
+                lstrcmpW(findData.cFileName, dot) &&
+                lstrcmpW(findData.cFileName, dotdot))
+            {
+                lstrcpyW(subpath, dir);
+                PathAppendW(subpath, findData.cFileName);
                 rc = ACTION_RecurseSearchDirectory(package, appValue, sig,
-                                                   findData.cFileName,
-                                                   depth - 1);
+                                                   subpath, depth - 1);
+            }
 
             while (rc == ERROR_SUCCESS && !*appValue &&
                    FindNextFileW(hFind, &findData) != 0)
             {
+                if (!lstrcmpW(findData.cFileName, dot) ||
+                    !lstrcmpW(findData.cFileName, dotdot))
+                    continue;
+
+                lstrcpyW(subpath, dir);
+                PathAppendW(subpath, findData.cFileName);
                 if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                     rc = ACTION_RecurseSearchDirectory(package, appValue,
-                                                       sig, findData.cFileName,
-                                                       depth - 1);
+                                                       sig, subpath, depth - 1);
             }
 
             FindClose(hFind);
