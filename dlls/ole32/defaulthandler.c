@@ -621,8 +621,15 @@ static HRESULT WINAPI DefaultHandler_EnumVerbs(
 static HRESULT WINAPI DefaultHandler_Update(
 	    IOleObject*        iface)
 {
-  FIXME(": Stub\n");
-  return E_NOTIMPL;
+    DefaultHandler *This = impl_from_IOleObject(iface);
+    TRACE("(%p)\n", iface);
+
+    if (!object_is_running(This))
+    {
+        FIXME("Should run object\n");
+        return E_NOTIMPL;
+    }
+    return IOleObject_Update(This->pOleDelegate);
 }
 
 /************************************************************************
