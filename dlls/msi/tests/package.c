@@ -7135,10 +7135,7 @@ static void test_appsearch_drlocator(void)
     sprintf(path, "%s\\FileName1", CURR_DIR);
     r = MsiGetPropertyA(hpkg, "SIGPROP1", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     sprintf(path, "%s\\", CURR_DIR);
@@ -7187,10 +7184,7 @@ static void test_appsearch_drlocator(void)
     sprintf(path, "%s\\FileName3.dll", CURR_DIR);
     r = MsiGetPropertyA(hpkg, "SIGPROP8", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
-    }
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP9", prop, &size);

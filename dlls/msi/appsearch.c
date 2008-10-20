@@ -837,6 +837,7 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
  LPCWSTR path, int depth, LPWSTR *appValue)
 {
     UINT rc;
+    DWORD attr;
     LPWSTR val = NULL;
 
     TRACE("%p, %p, %s, %d, %p\n", package, sig, debugstr_w(path), depth,
@@ -881,7 +882,9 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
         }
     }
 
-    if (val && val[lstrlenW(val) - 1] != '\\')
+    attr = GetFileAttributesW(val);
+    if ((attr & FILE_ATTRIBUTE_DIRECTORY) &&
+        val && val[lstrlenW(val) - 1] != '\\')
     {
         val = msi_realloc(val, (lstrlenW(val) + 2) * sizeof(WCHAR));
         if (!val)
