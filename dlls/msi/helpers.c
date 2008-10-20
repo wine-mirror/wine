@@ -436,7 +436,7 @@ UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action)
 
 void msi_free_action_script(MSIPACKAGE *package, UINT script)
 {
-    int i;
+    UINT i;
     for (i = 0; i < package->script->ActionCount[script]; i++)
         msi_free(package->script->Actions[script][i]);
 
@@ -1009,7 +1009,7 @@ UINT register_unique_action(MSIPACKAGE *package, LPCWSTR action)
 
 BOOL check_unique_action(const MSIPACKAGE *package, LPCWSTR action)
 {
-    INT i;
+    UINT i;
 
     if (!package->script)
         return FALSE;

@@ -336,7 +336,7 @@ static HRESULT WINAPI AutomationObject_GetIDsOfNames(
     hr = ITypeInfo_GetIDsOfNames(This->iTypeInfo, rgszNames, cNames, rgDispId);
     if (hr == DISP_E_UNKNOWNNAME)
     {
-        int idx;
+        UINT idx;
         for (idx=0; idx<cNames; idx++)
         {
             if (rgDispId[idx] == DISPID_UNKNOWN)

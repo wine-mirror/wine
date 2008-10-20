@@ -557,7 +557,7 @@ static UINT msi_add_records_to_table(MSIDATABASE *db, LPWSTR *columns, LPWSTR *t
                                      int num_columns, int num_records)
 {
     UINT r;
-    DWORD i;
+    int i;
     MSIQUERY *view;
     MSIRECORD *rec;
 

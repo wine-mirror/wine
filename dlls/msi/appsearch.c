@@ -594,7 +594,7 @@ static void ACTION_ExpandAnyPath(MSIPACKAGE *package, WCHAR *src, WCHAR *dst,
         ptr = src;
 
     deformat_string(package, ptr, &deformatted);
-    if (!deformatted || lstrlenW(deformatted) > len - 1)
+    if (!deformatted || strlenW(deformatted) > len - 1)
     {
         msi_free(deformatted);
         return;
@@ -755,7 +755,7 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, LPWSTR *appValue,
      * here.  Add two because we might need to add a backslash if the dir name
      * isn't backslash-terminated.
      */
-    buf = msi_alloc( (dirLen + max(fileLen, lstrlenW(starDotStarW)) + 2) * sizeof(WCHAR));
+    buf = msi_alloc( (dirLen + max(fileLen, strlenW(starDotStarW)) + 2) * sizeof(WCHAR));
     if (!buf)
         return ERROR_OUTOFMEMORY;
 

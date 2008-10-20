@@ -1388,7 +1388,7 @@ msi_maskedit_set_text( struct msi_maskedit_info *info, LPCWSTR text )
     p = text;
     for( i = 0; i < info->num_groups; i++ )
     {
-        if( info->group[i].len < lstrlenW( p ) )
+        if( info->group[i].len < strlenW( p ) )
         {
             LPWSTR chunk = strdupW( p );
             chunk[ info->group[i].len ] = 0;
