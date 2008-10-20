@@ -2,7 +2,7 @@
 @ stub SCardAccessNewReaderEvent
 @ stub SCardReleaseAllEvents
 @ stub SCardReleaseNewReaderEvent
-@ stub SCardAccessStartedEvent
+@ stdcall SCardAccessStartedEvent()
 @ stdcall SCardAddReaderToGroupA(long str str)
 @ stdcall SCardAddReaderToGroupW(long wstr wstr)
 @ stub SCardBeginTransaction
