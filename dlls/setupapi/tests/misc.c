@@ -203,8 +203,9 @@ static void test_SetupCopyOEMInf(void)
     SetLastError(0xdeadbeef);
     res = pSetupCopyOEMInfA(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(res == FALSE, "Expected FALSE, got %d\n", res);
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_FILE_EXISTS, /* Win98 */
+       "Expected ERROR_FILE_NOT_FOUND or ERROR_FILE_EXISTS, got %d\n", GetLastError());
     ok(file_exists(tmpfile), "Expected tmpfile to exist\n");
 
     /* try SP_COPY_REPLACEONLY, dest does not exist */
