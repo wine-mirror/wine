@@ -2028,12 +2028,14 @@ static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
 }
 
 /* find the appropriate activation context for RtlQueryInformationActivationContext */
-static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags )
+static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags, ULONG class )
 {
     NTSTATUS status = STATUS_SUCCESS;
 
     if (flags & QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX)
     {
+        if (*handle) return STATUS_INVALID_PARAMETER;
+
         if (NtCurrentTeb()->ActivationContextStack.ActiveFrame)
             *handle = NtCurrentTeb()->ActivationContextStack.ActiveFrame->ActivationContext;
     }
@@ -2041,6 +2043,8 @@ static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags )
     {
         ULONG magic;
         LDR_MODULE *pldr;
+
+        if (!*handle) return STATUS_INVALID_PARAMETER;
 
         LdrLockLoaderLock( 0, NULL, &magic );
         if (!LdrFindEntryForAddress( *handle, &pldr ))
@@ -2053,7 +2057,8 @@ static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags )
         else status = STATUS_DLL_NOT_FOUND;
         LdrUnlockLoaderLock( 0, magic );
     }
-    else if (!*handle) *handle = process_actctx;
+    else if (!*handle && (class != ActivationContextBasicInformation))
+        *handle = process_actctx;
 
     return status;
 }
@@ -2430,7 +2435,8 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
     TRACE("%08x %p %p %u %p %ld %p\n", flags, handle,
           subinst, class, buffer, bufsize, retlen);
 
-    if ((status = find_query_actctx( &handle, flags ))) return status;
+    if (retlen) *retlen = 0;
+    if ((status = find_query_actctx( &handle, flags, class ))) return status;
 
     switch (class)
     {
