@@ -36,5 +36,19 @@
 
 extern void initialize_hal(void);
 extern void initialize_diskarbitration(void);
+
+/* device functions */
+
 extern BOOL add_dos_device( const char *udi, const char *device, const char *mount_point, DWORD type );
 extern BOOL remove_dos_device( const char *udi );
+extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path );
+
+/* mount point functions */
+
+struct mount_point;
+
+extern struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
+                                                   int drive, const void *id, unsigned int id_len );
+extern struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
+                                                   int drive, const void *id, unsigned int id_len );
+extern void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len );
