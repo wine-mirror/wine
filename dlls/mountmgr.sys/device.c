@@ -70,7 +70,7 @@ static struct list drives_list = LIST_INIT(drives_list);
 
 static DRIVER_OBJECT *harddisk_driver;
 
-static char *get_dosdevices_path(void)
+static char *get_dosdevices_path( char **drive )
 {
     const char *config_dir = wine_get_config_dir();
     size_t len = strlen(config_dir) + sizeof("/dosdevices/a::");
@@ -79,6 +79,7 @@ static char *get_dosdevices_path(void)
     {
         strcpy( path, config_dir );
         strcat( path, "/dosdevices/a::" );
+        *drive = path + len - 4;
     }
     return path;
 }
@@ -270,8 +271,7 @@ static int add_drive( const char *device, DWORD type )
 
     if (stat( device, &dev_st ) == -1 || !is_valid_device( &dev_st )) return -1;
 
-    if (!(path = get_dosdevices_path())) return -1;
-    p = path + strlen(path) - 3;
+    if (!(path = get_dosdevices_path( &p ))) return -1;
 
     memset( in_use, 0, sizeof(in_use) );
 
@@ -332,8 +332,7 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
     char *path, *p;
     BOOL modified = FALSE;
 
-    if (!(path = get_dosdevices_path())) return FALSE;
-    p = path + strlen(path) - 3;
+    if (!(path = get_dosdevices_path( &p ))) return FALSE;
     p[0] = 'a' + drive->drive;
     p[2] = 0;
 
@@ -372,8 +371,7 @@ static void create_drive_devices(void)
     struct dos_drive *drive;
     unsigned int i;
 
-    if (!(path = get_dosdevices_path())) return;
-    p = path + strlen(path) - 3;
+    if (!(path = get_dosdevices_path( &p ))) return;
 
     for (i = 0; i < MAX_DOS_DRIVES; i++)
     {
