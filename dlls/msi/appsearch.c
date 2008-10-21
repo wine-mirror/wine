@@ -657,9 +657,10 @@ static UINT ACTION_FileVersionMatches(const MSISIGNATURE *sig, LPCWSTR filePath,
                          HIWORD(sig->MinVersionLS),
                          LOWORD(sig->MinVersionLS));
                     }
-                    else if (info->dwFileVersionMS > sig->MaxVersionMS
-                     || (info->dwFileVersionMS == sig->MaxVersionMS &&
-                     info->dwFileVersionLS > sig->MaxVersionLS))
+                    else if ((sig->MaxVersionMS || sig->MaxVersionLS) &&
+                             (info->dwFileVersionMS > sig->MaxVersionMS ||
+                              (info->dwFileVersionMS == sig->MaxVersionMS &&
+                               info->dwFileVersionLS > sig->MaxVersionLS)))
                     {
                         TRACE("Greater than maximum version %d.%d.%d.%d\n",
                          HIWORD(sig->MaxVersionMS),
