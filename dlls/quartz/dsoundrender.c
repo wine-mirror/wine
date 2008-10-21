@@ -238,6 +238,7 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
     HRESULT hr;
+    AM_MEDIA_TYPE *amt;
 
     TRACE("%p %p\n", iface, pSample);
 
@@ -257,6 +258,39 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     {
         LeaveCriticalSection(&This->csFilter);
         return VFW_E_WRONG_STATE;
+    }
+
+    if (IMediaSample_GetMediaType(pSample, &amt) == S_OK)
+    {
+        AM_MEDIA_TYPE *orig = &This->pInputPin->pin.mtCurrent;
+        WAVEFORMATEX *origfmt = (WAVEFORMATEX *)orig->pbFormat;
+        WAVEFORMATEX *newfmt = (WAVEFORMATEX *)amt->pbFormat;
+
+        if (origfmt->wFormatTag == newfmt->wFormatTag &&
+            origfmt->nChannels == newfmt->nChannels &&
+            origfmt->nBlockAlign == newfmt->nBlockAlign &&
+            origfmt->wBitsPerSample == newfmt->wBitsPerSample &&
+            origfmt->cbSize ==  newfmt->cbSize)
+        {
+            if (origfmt->nSamplesPerSec != newfmt->nSamplesPerSec)
+            {
+                hr = IDirectSoundBuffer_SetFrequency(This->dsbuffer,
+                                                     newfmt->nSamplesPerSec);
+                if (FAILED(hr))
+                {
+                    LeaveCriticalSection(&This->csFilter);
+                    return VFW_E_TYPE_NOT_ACCEPTED;
+                }
+                FreeMediaType(orig);
+                CopyMediaType(orig, amt);
+                IMediaSample_SetMediaType(pSample, NULL);
+            }
+        }
+        else
+        {
+            LeaveCriticalSection(&This->csFilter);
+            return VFW_E_TYPE_NOT_ACCEPTED;
+        }
     }
 
     SetEvent(This->state_change);
