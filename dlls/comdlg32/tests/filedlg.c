@@ -205,6 +205,16 @@ cleanup:
     return 0;
 }
 
+static LONG_PTR WINAPI template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == WM_NOTIFY)
+    {
+        if (((LPNMHDR)lParam)->code == CDN_FOLDERCHANGE)
+            PostMessage(GetParent(dlg), WM_COMMAND, IDCANCEL, 0);
+    }
+    return 0;
+}
+
 static void test_create_view_window2(void)
 {
     OPENFILENAMEA ofn = {0};
@@ -222,8 +232,28 @@ static void test_create_view_window2(void)
     ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
 }
 
+static void test_create_view_template(void)
+{
+    OPENFILENAMEA ofn = {0};
+    char filename[1024] = {0};
+    DWORD ret;
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = 1042;
+    ofn.lpfnHook = (LPOFNHOOKPROC)template_hook;
+    ofn.Flags = OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE;
+    ofn.hInstance = GetModuleHandleW(NULL);
+    ofn.lpTemplateName = "template1";
+    ret = GetOpenFileNameA(&ofn);
+    ok(!ret, "GetOpenFileNameA returned %#x\n", ret);
+    ret = CommDlgExtendedError();
+    ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+}
+
 START_TEST(filedlg)
 {
     test_DialogCancel();
     test_create_view_window2();
+    test_create_view_template();
 }
