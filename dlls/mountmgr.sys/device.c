@@ -134,8 +134,9 @@ static void send_notify( int drive, int code )
 /* create the disk device for a given drive */
 static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_drive **drive_ret )
 {
-    static const WCHAR harddiskW[] = {'\\','D','e','v','i','c','e',
-                                      '\\','H','a','r','d','d','i','s','k','V','o','l','u','m','e','%','u',0};
+    static const WCHAR harddiskvolW[] = {'\\','D','e','v','i','c','e',
+                                         '\\','H','a','r','d','d','i','s','k','V','o','l','u','m','e','%','u',0};
+    static const WCHAR harddiskW[] = {'\\','D','e','v','i','c','e','\\','H','a','r','d','d','i','s','k','%','u',0};
     static const WCHAR cdromW[] = {'\\','D','e','v','i','c','e','\\','C','d','R','o','m','%','u',0};
     static const WCHAR floppyW[] = {'\\','D','e','v','i','c','e','\\','F','l','o','p','p','y','%','u',0};
 
@@ -156,8 +157,12 @@ static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_driv
         break;
     case DRIVE_FIXED:
     default:  /* FIXME */
-        format = harddiskW;
-        first = 1;  /* harddisk volumes start counting from 1 */
+        if (udi) format = harddiskW;
+        else
+        {
+            format = harddiskvolW;
+            first = 1;  /* harddisk volumes start counting from 1 */
+        }
         break;
     }
 
@@ -205,8 +210,16 @@ static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_driv
         case DRIVE_FIXED:
         default:  /* FIXME */
             drive->devnum.DeviceType = FILE_DEVICE_DISK;
-            drive->devnum.DeviceNumber = 0;
-            drive->devnum.PartitionNumber = i;
+            if (udi)
+            {
+                drive->devnum.DeviceNumber = i;
+                drive->devnum.PartitionNumber = 0;
+            }
+            else
+            {
+                drive->devnum.DeviceNumber = 0;
+                drive->devnum.PartitionNumber = i;
+            }
             break;
         }
         list_add_tail( &drives_list, &drive->entry );
