@@ -23400,6 +23400,14 @@ dlls/dxerr9/Makefile: dlls/dxerr9/Makefile.in dlls/Makeimplib.rules"
 ac_config_files="$ac_config_files dlls/dxerr9/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/dxgi/Makefile"
+test "x$enable_dxgi" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	dxgi"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dxgi/Makefile: dlls/dxgi/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/dxgi/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxguid/Makefile"
 test "x$enable_dxguid" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
 	dxguid"
@@ -26672,6 +26680,7 @@ do
     "dlls/dxdiagn/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxdiagn/Makefile" ;;
     "dlls/dxerr8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxerr8/Makefile" ;;
     "dlls/dxerr9/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxerr9/Makefile" ;;
+    "dlls/dxgi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxgi/Makefile" ;;
     "dlls/dxguid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxguid/Makefile" ;;
     "dlls/faultrep/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/faultrep/Makefile" ;;
     "dlls/fusion/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/Makefile" ;;

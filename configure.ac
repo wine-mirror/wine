@@ -1834,6 +1834,7 @@ WINE_CONFIG_MAKEFILE([dlls/dwmapi/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL
 WINE_CONFIG_MAKEFILE([dlls/dxdiagn/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/dxerr8/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/dxerr9/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/dxgi/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/dxguid/Makefile],[dlls/Makeimplib.rules],[dlls],[ALL_IMPLIB_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/faultrep/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/fusion/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
