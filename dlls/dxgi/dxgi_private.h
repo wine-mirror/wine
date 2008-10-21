@@ -28,4 +28,12 @@
 
 #include "dxgi.h"
 
+/* IDXGIFactory */
+extern const struct IDXGIFactoryVtbl dxgi_factory_vtbl;
+struct dxgi_factory
+{
+    const struct IDXGIFactoryVtbl *vtbl;
+    LONG refcount;
+};
+
 #endif /* __WINE_DXGI_PRIVATE_H */

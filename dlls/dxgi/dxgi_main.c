@@ -37,3 +37,28 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 
     return TRUE;
 }
+
+HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
+{
+    struct dxgi_factory *object;
+    HRESULT hr;
+
+    FIXME("riid %s, factory %p partial stub!\n", debugstr_guid(riid), factory);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate DXGI factory object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &dxgi_factory_vtbl;
+    object->refcount = 1;
+
+    TRACE("Created IDXGIFactory %p\n", object);
+
+    hr = IDXGIFactory_QueryInterface((IDXGIFactory *)object, riid, factory);
+    IDXGIFactory_Release((IDXGIFactory *)object);
+
+    return hr;
+}

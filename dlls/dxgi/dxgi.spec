@@ -1,1 +1,1 @@
-@ stub CreateDXGIFactory
+@ stdcall CreateDXGIFactory(ptr ptr)

@@ -4,10 +4,11 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dxgi.dll
 IMPORTLIB = dxgi
-IMPORTS   = kernel32
+IMPORTS   = dxguid uuid kernel32
 
 C_SRCS = \
-	dxgi_main.c
+	dxgi_main.c \
+	factory.c
 
 RC_SRCS = version.rc
 
