@@ -157,7 +157,7 @@ static void test_create_env(void)
 {
     BOOL r;
     HANDLE htok;
-    WCHAR * env1, * env2, * env3, * env4;
+    WCHAR * env[4];
     char * st;
     int i, j;
 
@@ -175,15 +175,13 @@ static void test_create_env(void)
         { "SystemDrive", { 1, 1, 0, 0 } },
         { "SystemRoot", { 1, 1, 0, 0 } },
         { "windir", { 1, 1, 0, 0 } },
-        { "ProgramFiles", { 1, 1, 0, 0 } },
-        { 0, { 0, 0, 0, 0 } }
+        { "ProgramFiles", { 1, 1, 0, 0 } }
     };
     static const struct profile_item htok_vars[] = {
         { "PATH", { 1, 1, 0, 0 } },
         { "TEMP", { 1, 1, 0, 0 } },
         { "TMP", { 1, 1, 0, 0 } },
-        { "USERPROFILE", { 1, 1, 0, 0 } },
-        { 0, { 0, 0, 0, 0 } }
+        { "USERPROFILE", { 1, 1, 0, 0 } }
     };
 
     r = SetEnvironmentVariableA("WINE_XYZZY", "ZZYZX");
@@ -206,87 +204,51 @@ static void test_create_env(void)
         expect(FALSE, r);
     }
 
-    r = CreateEnvironmentBlock((LPVOID) &env1, NULL, FALSE);
+    r = CreateEnvironmentBlock((LPVOID) &env[0], NULL, FALSE);
     expect(TRUE, r);
 
-    r = CreateEnvironmentBlock((LPVOID) &env2, htok, FALSE);
+    r = CreateEnvironmentBlock((LPVOID) &env[1], htok, FALSE);
     expect(TRUE, r);
 
-    r = CreateEnvironmentBlock((LPVOID) &env3, NULL, TRUE);
+    r = CreateEnvironmentBlock((LPVOID) &env[2], NULL, TRUE);
     expect(TRUE, r);
 
-    r = CreateEnvironmentBlock((LPVOID) &env4, htok, TRUE);
+    r = CreateEnvironmentBlock((LPVOID) &env[3], htok, TRUE);
     expect(TRUE, r);
 
     /* Test for common environment variables */
-    i = 0;
-    while (common_vars[i].name)
+    for (i = 0; i < sizeof(common_vars)/sizeof(common_vars[0]); i++)
     {
-        j = 0;
-        r = get_env(env1, common_vars[i].name, &st);
-        if (common_vars[i].todo[j])
-            todo_wine expect_env(TRUE, r, common_vars[i].name);
-        else
-            expect_env(TRUE, r, common_vars[i].name);
-        j++;
-        r = get_env(env2, common_vars[i].name, &st);
-        if (common_vars[i].todo[j])
-            todo_wine expect_env(TRUE, r, common_vars[i].name);
-        else
-            expect_env(TRUE, r, common_vars[i].name);
-        j++;
-        r = get_env(env3, common_vars[i].name, &st);
-        if (common_vars[i].todo[j])
-            todo_wine expect_env(TRUE, r, common_vars[i].name);
-        else
-            expect_env(TRUE, r, common_vars[i].name);
-        j++;
-        r = get_env(env4, common_vars[i].name, &st);
-        if (common_vars[i].todo[j])
-            todo_wine expect_env(TRUE, r, common_vars[i].name);
-        else
-            expect_env(TRUE, r, common_vars[i].name);
-        i++;
+        for (j = 0; j < 4; j++)
+        {
+            r = get_env(env[j], common_vars[i].name, &st);
+            if (common_vars[i].todo[j])
+                todo_wine expect_env(TRUE, r, common_vars[i].name);
+            else
+                expect_env(TRUE, r, common_vars[i].name);
+        }
     }
 
     /* Test for environment variables with values that depends on htok */
-    i = 0;
-    while (htok_vars[i].name)
+    for (i = 0; i < sizeof(htok_vars)/sizeof(htok_vars[0]); i++)
     {
-        j = 0;
-        r = get_env(env1, htok_vars[i].name, &st);
-        if (htok_vars[i].todo[j])
-            todo_wine expect_env(TRUE, r, htok_vars[i].name);
-        else
-            expect_env(TRUE, r, htok_vars[i].name);
-        j++;
-        r = get_env(env2, htok_vars[i].name, &st);
-        if (htok_vars[i].todo[j])
-            todo_wine expect_env(TRUE, r, htok_vars[i].name);
-        else
-            expect_env(TRUE, r, htok_vars[i].name);
-        j++;
-        r = get_env(env3, htok_vars[i].name, &st);
-        if (htok_vars[i].todo[j])
-            todo_wine expect_env(TRUE, r, htok_vars[i].name);
-        else
-            expect_env(TRUE, r, htok_vars[i].name);
-        j++;
-        r = get_env(env4, htok_vars[i].name, &st);
-        if (htok_vars[i].todo[j])
-            todo_wine expect_env(TRUE, r, htok_vars[i].name);
-        else
-            expect_env(TRUE, r, htok_vars[i].name);
-        i++;
+        for (j = 0; j < 4; j++)
+        {
+            r = get_env(env[j], htok_vars[i].name, &st);
+            if (htok_vars[i].todo[j])
+                todo_wine expect_env(TRUE, r, htok_vars[i].name);
+            else
+                expect_env(TRUE, r, htok_vars[i].name);
+        }
     }
 
-    r = get_env(env1, "WINE_XYZZY", &st);
+    r = get_env(env[0], "WINE_XYZZY", &st);
     expect(FALSE, r);
-    r = get_env(env2, "WINE_XYZZY", &st);
+    r = get_env(env[1], "WINE_XYZZY", &st);
     expect(FALSE, r);
-    r = get_env(env3, "WINE_XYZZY", &st);
+    r = get_env(env[2], "WINE_XYZZY", &st);
     expect(TRUE, r);
-    r = get_env(env4, "WINE_XYZZY", &st);
+    r = get_env(env[3], "WINE_XYZZY", &st);
     expect(TRUE, r);
 }
 
