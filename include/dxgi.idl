@@ -263,3 +263,34 @@ interface IDXGISwapChain : IDXGIDeviceSubObject
         [out] UINT *last_present_count
     );
 }
+
+[
+    object,
+    local,
+    uuid(7b7166ec-21c7-44ae-b21a-c9ae321ae369)
+]
+interface IDXGIFactory : IDXGIObject
+{
+    HRESULT EnumAdapters(
+        [in] UINT adapter_idx,
+        [out] IDXGIAdapter **adapter
+    );
+    HRESULT MakeWindowAssociation(
+        [in] HWND window,
+        [in] UINT flags
+    );
+    HRESULT GetWindowAssociation(
+        [in] HWND *window
+    );
+    HRESULT CreateSwapChain(
+        [in] IUnknown *device,
+        [in] DXGI_SWAP_CHAIN_DESC *desc,
+        [out] IDXGISwapChain **swapchain
+    );
+    HRESULT CreateSoftwareAdapter(
+        [in] HMODULE swrast,
+        [out] IDXGIAdapter **adapter
+    );
+}
+
+[local] HRESULT CreateDXGIFactory(REFIID riid, void **factory);
