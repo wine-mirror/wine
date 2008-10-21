@@ -162,8 +162,6 @@ static void test_create_env(void)
     int i, j;
 
     static const struct profile_item common_vars[] = {
-        { "ALLUSERSPROFILE", { 1, 1, 0, 0 } },
-        { "CommonProgramFiles", { 1, 1, 1, 1 } },
         { "ComSpec", { 1, 1, 0, 0 } },
         { "COMPUTERNAME", { 1, 1, 1, 1 } },
         { "NUMBER_OF_PROCESSORS", { 1, 1, 0, 0 } },
@@ -174,7 +172,11 @@ static void test_create_env(void)
         { "PROCESSOR_REVISION", { 1, 1, 0, 0 } },
         { "SystemDrive", { 1, 1, 0, 0 } },
         { "SystemRoot", { 1, 1, 0, 0 } },
-        { "windir", { 1, 1, 0, 0 } },
+        { "windir", { 1, 1, 0, 0 } }
+    };
+    static const struct profile_item common_post_nt4_vars[] = {
+        { "ALLUSERSPROFILE", { 1, 1, 0, 0 } },
+        { "CommonProgramFiles", { 1, 1, 1, 1 } },
         { "ProgramFiles", { 1, 1, 0, 0 } }
     };
     static const struct profile_item htok_vars[] = {
@@ -216,7 +218,7 @@ static void test_create_env(void)
     r = CreateEnvironmentBlock((LPVOID) &env[3], htok, TRUE);
     expect(TRUE, r);
 
-    /* Test for common environment variables */
+    /* Test for common environment variables (NT4 and higher) */
     for (i = 0; i < sizeof(common_vars)/sizeof(common_vars[0]); i++)
     {
         for (j = 0; j < 4; j++)
@@ -226,6 +228,26 @@ static void test_create_env(void)
                 todo_wine expect_env(TRUE, r, common_vars[i].name);
             else
                 expect_env(TRUE, r, common_vars[i].name);
+        }
+    }
+
+    /* Test for common environment variables (post NT4) */
+    if (!GetEnvironmentVariableA("ALLUSERSPROFILE", NULL, 0))
+    {
+        win_skip("Some environment variables are not present on NT4\n");
+    }
+    else
+    {
+        for (i = 0; i < sizeof(common_post_nt4_vars)/sizeof(common_post_nt4_vars[0]); i++)
+        {
+            for (j = 0; j < 4; j++)
+            {
+                r = get_env(env[j], common_post_nt4_vars[i].name, &st);
+                if (common_post_nt4_vars[i].todo[j])
+                    todo_wine expect_env(TRUE, r, common_post_nt4_vars[i].name);
+                else
+                    expect_env(TRUE, r, common_post_nt4_vars[i].name);
+            }
         }
     }
 
