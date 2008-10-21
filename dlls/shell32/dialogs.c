@@ -113,6 +113,58 @@ void WINAPI RunFileDlgW(
 
 }
 
+/* find the directory that contains the file being run */
+static LPWSTR RunDlg_GetParentDir(LPCWSTR cmdline)
+{
+    const WCHAR *src;
+    WCHAR *dest, *result, *result_end=NULL;
+    static WCHAR dotexeW[] = {'.','e','x','e',0};
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(strlenW(cmdline)+5));
+
+    src = cmdline;
+    dest = result;
+
+    if (*src == '"')
+    {
+        src++;
+        while (*src && *src != '"')
+        {
+            if (*src == '\\')
+                result_end = dest;
+            *dest++ = *src++;
+        }
+    }
+    else {
+        while (*src)
+        {
+            if (isspaceW(*src))
+            {
+                *dest = 0;
+                if (INVALID_FILE_ATTRIBUTES != GetFileAttributesW(result))
+                    break;
+                strcatW(dest, dotexeW);
+                if (INVALID_FILE_ATTRIBUTES != GetFileAttributesW(result))
+                    break;
+            }
+            else if (*src == '\\')
+                result_end = dest;
+            *dest++ = *src++;
+        }
+    }
+
+    if (result_end)
+    {
+        *result_end = 0;
+        return result;
+    }
+    else
+    {
+        HeapFree(GetProcessHeap(), 0, result);
+        return NULL;
+    }
+}
+
 /* Dialog procedure for RunFileDlg */
 static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
@@ -158,14 +210,20 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     HWND htxt = GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH);
                     if ((ic = GetWindowTextLengthW (htxt)))
                         {
-                        WCHAR *psz ;
+                        WCHAR *psz, *parent=NULL ;
+                        LPCWSTR working_dir ;
                         psz = HeapAlloc( GetProcessHeap(), 0, (ic + 1)*sizeof(WCHAR) );
                         GetWindowTextW (htxt, psz, ic + 1) ;
 
                         /* according to http://www.codeproject.com/KB/shell/runfiledlg.aspx we should send a
                          * WM_NOTIFY before execution */
 
-                        if (ShellExecuteW(hwnd, NULL, psz, NULL, prfdp->lpstrDirectory, SW_SHOWNORMAL) < (HINSTANCE)33)
+                        if (prfdp->lpstrDirectory)
+                            working_dir = prfdp->lpstrDirectory;
+                        else
+                            working_dir = parent = RunDlg_GetParentDir(psz);
+
+                        if (ShellExecuteW(hwnd, NULL, psz, NULL, working_dir, SW_SHOWNORMAL) < (HINSTANCE)33)
                             {
                             char *pszSysMsg = NULL ;
                             char szMsg[256];
@@ -191,6 +249,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         FillList (htxt, (LPSTR)psz, FALSE) ;
 
                         HeapFree(GetProcessHeap(), 0, psz);
+                        HeapFree(GetProcessHeap(), 0, parent);
                         EndDialog (hwnd, 0) ;
                         }
                     }
