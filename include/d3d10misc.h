@@ -32,6 +32,9 @@ typedef enum D3D10_DRIVER_TYPE {
     D3D10_DRIVER_TYPE_SOFTWARE  = 3,
 } D3D10_DRIVER_TYPE;
 
+HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
+        HMODULE swrast, UINT flags, UINT sdk_version, ID3D10Device **device);
+
 #ifdef __cplusplus
 }
 #endif
