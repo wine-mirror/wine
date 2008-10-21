@@ -1388,6 +1388,10 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
       LoadStringW(COMDLG32_hInstance, IDS_SAVE_IN, buf, sizeof(buf)/sizeof(WCHAR));
       SetDlgItemTextW(hwnd, IDC_LOOKINSTATIC, buf);
   }
+
+  /* Initialize the filter combo box */
+  FILEDLG95_FILETYPE_Init(hwnd);
+
   return 0;
 }
 
@@ -1475,9 +1479,6 @@ static LRESULT FILEDLG95_FillControls(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   /* Initialize the Look In combo box */
   FILEDLG95_LOOKIN_Init(fodInfos->DlgInfos.hwndLookInCB);
-
-  /* Initialize the filter combo box */
-  FILEDLG95_FILETYPE_Init(hwnd);
 
   /* Browse to the initial directory */
   IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser,pidlItemId, SBSP_ABSOLUTE);

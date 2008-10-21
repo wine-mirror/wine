@@ -207,6 +207,17 @@ cleanup:
 
 static LONG_PTR WINAPI template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if (msg == WM_INITDIALOG)
+    {
+        HWND p,cb;
+        INT sel;
+        p = GetParent(dlg);
+        ok(p!=(HWND)NULL, "Failed to get parent of template\n");
+        cb = GetDlgItem(p,0x470);
+        ok(cb!=(HWND)NULL, "Failed to get filter combobox\n");
+        sel = SendMessage(cb, CB_GETCURSEL, 0, 0);
+        ok (sel != -1, "Failed to get selection from filter listbox\n");
+    }
     if (msg == WM_NOTIFY)
     {
         if (((LPNMHDR)lParam)->code == CDN_FOLDERCHANGE)
@@ -245,6 +256,7 @@ static void test_create_view_template(void)
     ofn.Flags = OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE;
     ofn.hInstance = GetModuleHandleW(NULL);
     ofn.lpTemplateName = "template1";
+    ofn.lpstrFilter="text\0*.txt\0All\0*\0\0";
     ret = GetOpenFileNameA(&ofn);
     ok(!ret, "GetOpenFileNameA returned %#x\n", ret);
     ret = CommDlgExtendedError();
