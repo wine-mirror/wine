@@ -27,16 +27,12 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "winreg.h"
-#include "winuser.h"
+#include "mountmgr.h"
 #include "excpt.h"
 
 #include "wine/library.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "mountmgr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 

@@ -27,8 +27,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-#include "windef.h"
-#include "winbase.h"
+#include "mountmgr.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "dbt.h"

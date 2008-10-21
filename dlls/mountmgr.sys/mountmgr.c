@@ -24,22 +24,12 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "winternl.h"
-#include "winioctl.h"
-#include "winreg.h"
-#include "ntddstor.h"
-#include "ntddcdrm.h"
-#include "ddk/wdm.h"
-#include "ddk/mountmgr.h"
-#include "wine/library.h"
-#include "wine/unicode.h"
-#include "wine/list.h"
-#include "wine/debug.h"
 #include "mountmgr.h"
+#include "winreg.h"
+#include "wine/library.h"
+#include "wine/list.h"
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 

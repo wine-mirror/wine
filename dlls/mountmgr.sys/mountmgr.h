@@ -18,8 +18,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+#include "winioctl.h"
+#include "ntddstor.h"
+#include "ntddcdrm.h"
+#include "ddk/wdm.h"
+#include "ddk/mountmgr.h"
+
 extern void initialize_hal(void);
 extern void initialize_diskarbitration(void);
-extern BOOL add_dos_device( const char *udi, const char *device,
-                            const char *mount_point, DWORD type );
+extern BOOL add_dos_device( const char *udi, const char *device, const char *mount_point, DWORD type );
 extern BOOL remove_dos_device( const char *udi );

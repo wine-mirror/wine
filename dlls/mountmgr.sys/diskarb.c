@@ -27,13 +27,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "winreg.h"
-#include "winuser.h"
-
-#include "wine/debug.h"
 #include "mountmgr.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
