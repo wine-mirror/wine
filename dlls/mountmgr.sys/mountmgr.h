@@ -51,4 +51,5 @@ extern struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICOD
                                                    int drive, const void *id, unsigned int id_len );
 extern struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
                                                    int drive, const void *id, unsigned int id_len );
+extern void delete_mount_point( struct mount_point *mount );
 extern void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len );

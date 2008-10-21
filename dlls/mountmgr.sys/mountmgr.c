@@ -120,6 +120,17 @@ struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
     return add_mount_point( device, device_name, link, id, id_len );
 }
 
+/* delete the mount point symlinks when a device goes away */
+void delete_mount_point( struct mount_point *mount )
+{
+    TRACE( "deleting %s\n", debugstr_w(mount->link.Buffer) );
+    list_remove( &mount->entry );
+    RegDeleteValueW( mount_key, mount->link.Buffer );
+    IoDeleteSymbolicLink( &mount->link );
+    RtlFreeHeap( GetProcessHeap(), 0, mount->id );
+    RtlFreeHeap( GetProcessHeap(), 0, mount );
+}
+
 /* check if a given mount point matches the requested specs */
 static BOOL matching_mount_point( const struct mount_point *mount, const MOUNTMGR_MOUNT_POINT *spec )
 {

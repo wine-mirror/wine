@@ -52,20 +52,23 @@ static const WCHAR drive_types[][8] =
     {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
 };
 
-/* extra info for disk devices, stored in DeviceExtension */
-struct disk_device_info
-{
-    STORAGE_DEVICE_NUMBER devnum;   /* device number info */
-};
-
 struct dos_drive
 {
-    struct list entry;
-    char *udi;
-    int   drive;
+    struct list           entry;       /* entry in drives list */
+    char                 *udi;         /* unique identifier for dynamic drives */
+    int                   drive;       /* drive letter (0 = A: etc.) */
+    DWORD                 type;        /* drive type */
+    DEVICE_OBJECT        *device;      /* disk device allocated for this drive */
+    UNICODE_STRING        name;        /* device name */
+    STORAGE_DEVICE_NUMBER devnum;      /* device number info */
+    struct mount_point   *dosdev;      /* DosDevices mount point */
+    struct mount_point   *volume;      /* Volume{xxx} mount point */
+    char                 *unix_mount;  /* unix mount point path */
 };
 
 static struct list drives_list = LIST_INIT(drives_list);
+
+static DRIVER_OBJECT *harddisk_driver;
 
 static char *get_dosdevices_path(void)
 {
@@ -124,8 +127,8 @@ static void send_notify( int drive, int code )
                                       WM_DEVICECHANGE, code, (LPARAM)&info );
 }
 
-static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OBJECT **dev_obj,
-                                    UNICODE_STRING *device_name )
+/* create the disk device for a given drive */
+static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_drive **drive_ret )
 {
     static const WCHAR harddiskW[] = {'\\','D','e','v','i','c','e',
                                       '\\','H','a','r','d','d','i','s','k','V','o','l','u','m','e','%','u',0};
@@ -136,7 +139,8 @@ static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OB
     NTSTATUS status = 0;
     const WCHAR *format;
     UNICODE_STRING name;
-    struct disk_device_info *info;
+    DEVICE_OBJECT *dev_obj;
+    struct dos_drive *drive;
 
     switch(type)
     {
@@ -159,32 +163,51 @@ static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OB
     {
         sprintfW( name.Buffer, format, i );
         name.Length = strlenW(name.Buffer) * sizeof(WCHAR);
-        status = IoCreateDevice( driver, sizeof(*info), &name, 0, 0, FALSE, dev_obj );
+        status = IoCreateDevice( harddisk_driver, sizeof(*drive), &name, 0, 0, FALSE, &dev_obj );
         if (status != STATUS_OBJECT_NAME_COLLISION) break;
     }
     if (!status)
     {
-        info = (*dev_obj)->DeviceExtension;
-        *device_name = name;
-        switch(type)
+        drive = dev_obj->DeviceExtension;
+        drive->drive  = -1;
+        drive->device = dev_obj;
+        drive->name   = name;
+        drive->type   = type;
+        drive->dosdev = NULL;
+        drive->volume = NULL;
+        drive->unix_mount = NULL;
+        if (udi)
+        {
+            if (!(drive->udi = HeapAlloc( GetProcessHeap(), 0, strlen(udi)+1 )))
+            {
+                RtlFreeUnicodeString( &name );
+                IoDeleteDevice( drive->device );
+                return STATUS_NO_MEMORY;
+            }
+            strcpy( drive->udi, udi );
+        }
+        switch (type)
         {
         case DRIVE_REMOVABLE:
-            info->devnum.DeviceType = FILE_DEVICE_DISK;
-            info->devnum.DeviceNumber = i;
-            info->devnum.PartitionNumber = ~0u;
+            drive->devnum.DeviceType = FILE_DEVICE_DISK;
+            drive->devnum.DeviceNumber = i;
+            drive->devnum.PartitionNumber = ~0u;
             break;
         case DRIVE_CDROM:
-            info->devnum.DeviceType = FILE_DEVICE_CD_ROM;
-            info->devnum.DeviceNumber = i;
-            info->devnum.PartitionNumber = ~0u;
+            drive->devnum.DeviceType = FILE_DEVICE_CD_ROM;
+            drive->devnum.DeviceNumber = i;
+            drive->devnum.PartitionNumber = ~0u;
             break;
         case DRIVE_FIXED:
         default:  /* FIXME */
-            info->devnum.DeviceType = FILE_DEVICE_DISK;
-            info->devnum.DeviceNumber = 0;
-            info->devnum.PartitionNumber = i;
+            drive->devnum.DeviceType = FILE_DEVICE_DISK;
+            drive->devnum.DeviceNumber = 0;
+            drive->devnum.PartitionNumber = i;
             break;
         }
+        list_add_tail( &drives_list, &drive->entry );
+        *drive_ret = drive;
+        TRACE( "created device %s\n", debugstr_w(name.Buffer) );
     }
     else
     {
@@ -194,6 +217,38 @@ static NTSTATUS create_disk_device( DRIVER_OBJECT *driver, DWORD type, DEVICE_OB
     return status;
 }
 
+/* delete the disk device for a given drive */
+static void delete_disk_device( struct dos_drive *drive )
+{
+    TRACE( "deleting device %s\n", debugstr_w(drive->name.Buffer) );
+    list_remove( &drive->entry );
+    if (drive->dosdev) delete_mount_point( drive->dosdev );
+    if (drive->volume) delete_mount_point( drive->volume );
+    RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
+    RtlFreeHeap( GetProcessHeap(), 0, drive->udi );
+    RtlFreeUnicodeString( &drive->name );
+    IoDeleteDevice( drive->device );
+}
+
+/* set or change the drive letter for an existing drive */
+static void set_drive_letter( struct dos_drive *drive, int letter )
+{
+    void *id = NULL;
+    unsigned int id_len = 0;
+
+    if (drive->drive == letter) return;
+    if (drive->dosdev) delete_mount_point( drive->dosdev );
+    if (drive->volume) delete_mount_point( drive->volume );
+    drive->drive = letter;
+    if (letter == -1) return;
+    if (drive->unix_mount)
+    {
+        id = drive->unix_mount;
+        id_len = strlen( drive->unix_mount ) + 1;
+    }
+    drive->dosdev = add_dosdev_mount_point( drive->device, &drive->name, letter, id, id_len );
+    drive->volume = add_volume_mount_point( drive->device, &drive->name, letter, id, id_len );
+}
 
 static inline int is_valid_device( struct stat *st )
 {
@@ -272,97 +327,96 @@ done:
     return drive;
 }
 
-static BOOL set_mount_point( struct dos_drive *drive, const char *mount_point )
+static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_point )
 {
     char *path, *p;
-    struct stat path_st, mnt_st;
     BOOL modified = FALSE;
 
-    if (drive->drive == -1) return FALSE;
     if (!(path = get_dosdevices_path())) return FALSE;
     p = path + strlen(path) - 3;
-    *p = 'a' + drive->drive;
+    p[0] = 'a' + drive->drive;
     p[2] = 0;
 
-    if (mount_point[0])
+    if (mount_point && mount_point[0])
     {
         /* try to avoid unlinking if already set correctly */
-        if (stat( path, &path_st ) == -1 || stat( mount_point, &mnt_st ) == -1 ||
-            path_st.st_dev != mnt_st.st_dev || path_st.st_ino != mnt_st.st_ino)
+        if (!drive->unix_mount || strcmp( drive->unix_mount, mount_point ))
         {
             unlink( path );
             symlink( mount_point, path );
             modified = TRUE;
         }
+        RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
+        if ((drive->unix_mount = RtlAllocateHeap( GetProcessHeap(), 0, strlen(mount_point) + 1 )))
+            strcpy( drive->unix_mount, mount_point );
+        if (drive->dosdev) set_mount_point_id( drive->dosdev, mount_point, strlen(mount_point) + 1 );
+        if (drive->volume) set_mount_point_id( drive->volume, mount_point, strlen(mount_point) + 1 );
     }
     else
     {
         if (unlink( path ) != -1) modified = TRUE;
+        RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
+        drive->unix_mount = NULL;
+        if (drive->dosdev) set_mount_point_id( drive->dosdev, NULL, 0 );
+        if (drive->volume) set_mount_point_id( drive->volume, NULL, 0 );
     }
 
     HeapFree( GetProcessHeap(), 0, path );
     return modified;
 }
 
-/* create mount points for mapped drives */
-static void create_drive_mount_points( DRIVER_OBJECT *driver )
+/* create devices for mapped drives */
+static void create_drive_devices(void)
 {
-    const char *config_dir = wine_get_config_dir();
-    char *buffer, *p, *link;
+    char *path, *p, *link;
+    struct dos_drive *drive;
     unsigned int i;
-    DEVICE_OBJECT *device;
-    UNICODE_STRING device_name;
 
-    if ((buffer = RtlAllocateHeap( GetProcessHeap(), 0,
-                                   strlen(config_dir) + sizeof("/dosdevices/a:") )))
+    if (!(path = get_dosdevices_path())) return;
+    p = path + strlen(path) - 3;
+
+    for (i = 0; i < MAX_DOS_DRIVES; i++)
     {
-        strcpy( buffer, config_dir );
-        strcat( buffer, "/dosdevices/a:" );
-        p = buffer + strlen(buffer) - 2;
-
-        for (i = 0; i < MAX_DOS_DRIVES; i++)
+        p[0] = 'a' + i;
+        p[2] = 0;
+        if (!(link = read_symlink( path ))) continue;
+        if (!create_disk_device( NULL, i < 2 ? DRIVE_REMOVABLE : DRIVE_FIXED, &drive ))
         {
-            *p = 'a' + i;
-            if (!(link = read_symlink( buffer ))) continue;
-            if (!create_disk_device( driver, DRIVE_FIXED, &device, &device_name ))
-            {
-                add_dosdev_mount_point( device, &device_name, i, link, strlen(link) + 1 );
-                add_volume_mount_point( device, &device_name, i, link, strlen(link) + 1 );
-                RtlFreeUnicodeString( &device_name );
-            }
-            RtlFreeHeap( GetProcessHeap(), 0, link );
+            drive->unix_mount = link;
+            set_drive_letter( drive, i );
         }
-        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        else RtlFreeHeap( GetProcessHeap(), 0, link );
     }
+    RtlFreeHeap( GetProcessHeap(), 0, path );
 }
 
-BOOL add_dos_device( const char *udi, const char *device,
-                     const char *mount_point, DWORD type )
+BOOL add_dos_device( const char *udi, const char *device, const char *mount_point, DWORD type )
 {
-    struct dos_drive *drive;
+    struct dos_drive *drive, *next;
+    int letter = add_drive( device, type );
 
-    /* first check if it already exists */
-    LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
+    if (letter == -1) return FALSE;
+
+    LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
     {
-        if (!strcmp( udi, drive->udi )) goto found;
+        if (drive->udi && !strcmp( udi, drive->udi ))
+        {
+            if (type == drive->type) goto found;
+            delete_disk_device( drive );
+            continue;
+        }
+        if (drive->drive == letter) delete_disk_device( drive );
     }
 
-    if (!(drive = HeapAlloc( GetProcessHeap(), 0, sizeof(*drive) ))) return FALSE;
-    if (!(drive->udi = HeapAlloc( GetProcessHeap(), 0, strlen(udi)+1 )))
-    {
-        HeapFree( GetProcessHeap(), 0, drive );
-        return FALSE;
-    }
-    strcpy( drive->udi, udi );
-    list_add_tail( &drives_list, &drive->entry );
+    if (create_disk_device( udi, type, &drive )) return FALSE;
 
 found:
-    drive->drive = add_drive( device, type );
+    set_drive_letter( drive, letter );
+    set_unix_mount_point( drive, mount_point );
+
     if (drive->drive != -1)
     {
         HKEY hkey;
-
-        set_mount_point( drive, mount_point );
 
         TRACE( "added device %c: udi %s for %s on %s type %u\n",
                     'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),
@@ -395,11 +449,11 @@ BOOL remove_dos_device( const char *udi )
 
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
-        if (strcmp( udi, drive->udi )) continue;
+        if (!drive->udi || strcmp( udi, drive->udi )) continue;
 
         if (drive->drive != -1)
         {
-            BOOL modified = set_mount_point( drive, "" );
+            BOOL modified = set_unix_mount_point( drive, NULL );
 
             /* clear the registry key too */
             if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
@@ -412,10 +466,7 @@ BOOL remove_dos_device( const char *udi )
 
             if (modified) send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
         }
-
-        list_remove( &drive->entry );
-        HeapFree( GetProcessHeap(), 0, drive->udi );
-        HeapFree( GetProcessHeap(), 0, drive );
+        delete_disk_device( drive );
         return TRUE;
     }
     return FALSE;
@@ -425,7 +476,7 @@ BOOL remove_dos_device( const char *udi )
 static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation;
-    struct disk_device_info *disk_info = device->DeviceExtension;
+    struct dos_drive *drive = device->DeviceExtension;
 
     TRACE( "ioctl %x insize %u outsize %u\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -440,7 +491,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         DWORD len = min( sizeof(info), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
 
         info.Cylinders.QuadPart = 10000;
-        info.MediaType = (disk_info->devnum.DeviceType == FILE_DEVICE_DISK) ? FixedMedia : RemovableMedia;
+        info.MediaType = (drive->devnum.DeviceType == FILE_DEVICE_DISK) ? FixedMedia : RemovableMedia;
         info.TracksPerCylinder = 255;
         info.SectorsPerTrack = 63;
         info.BytesPerSector = 512;
@@ -451,9 +502,9 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     }
     case IOCTL_STORAGE_GET_DEVICE_NUMBER:
     {
-        DWORD len = min( sizeof(disk_info->devnum), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+        DWORD len = min( sizeof(drive->devnum), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
 
-        memcpy( irp->MdlAddress->StartVa, &disk_info->devnum, len );
+        memcpy( irp->MdlAddress->StartVa, &drive->devnum, len );
         irp->IoStatus.Information = len;
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
@@ -479,25 +530,31 @@ NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *pa
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
     NTSTATUS status;
-    struct disk_device_info *info;
+    struct dos_drive *drive;
 
+    harddisk_driver = driver;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = harddisk_ioctl;
 
     RtlInitUnicodeString( &nameW, harddisk0W );
     RtlInitUnicodeString( &linkW, physdrive0W );
-    if (!(status = IoCreateDevice( driver, sizeof(*info), &nameW, 0, 0, FALSE, &device )))
+    if (!(status = IoCreateDevice( driver, sizeof(*drive), &nameW, 0, 0, FALSE, &device )))
         status = IoCreateSymbolicLink( &linkW, &nameW );
     if (status)
     {
         FIXME( "failed to create device error %x\n", status );
         return status;
     }
-    info = device->DeviceExtension;
-    info->devnum.DeviceType = FILE_DEVICE_DISK;
-    info->devnum.DeviceNumber = 0;
-    info->devnum.PartitionNumber = 0;
+    drive = device->DeviceExtension;
+    drive->drive  = -1;
+    drive->udi    = NULL;
+    drive->type   = DRIVE_FIXED;
+    drive->name   = nameW;
+    drive->device = device;
+    drive->devnum.DeviceType = FILE_DEVICE_DISK;
+    drive->devnum.DeviceNumber = 0;
+    drive->devnum.PartitionNumber = 0;
 
-    create_drive_mount_points( driver );
+    create_drive_devices();
 
     return status;
 }
