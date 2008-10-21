@@ -605,6 +605,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
 
     (*texture)->brush.gdibrush = CreateBrushIndirect(&(*texture)->brush.lb);
     (*texture)->brush.bt = BrushTypeTextureFill;
+    (*texture)->wrap = imageattr->wrap;
 
     GdipFree(dibits);
     GdipFree(buff);
@@ -913,6 +914,21 @@ GpStatus WINGDIPAPI GdipGetTextureTransform(GpTexture *brush, GpMatrix *matrix)
 }
 
 /******************************************************************************
+ * GdipGetTextureWrapMode [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetTextureWrapMode(GpTexture *brush, GpWrapMode *wrapmode)
+{
+    TRACE("(%p, %p)\n", brush, wrapmode);
+
+    if(!brush || !wrapmode)
+        return InvalidParameter;
+
+    *wrapmode = brush->wrap;
+
+    return Ok;
+}
+
+/******************************************************************************
  * GdipResetTextureTransform [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipResetTextureTransform(GpTexture* brush)
@@ -1134,6 +1150,23 @@ GpStatus WINGDIPAPI GdipSetTextureTransform(GpTexture *texture,
         return InvalidParameter;
 
     memcpy(texture->transform, matrix, sizeof(GpMatrix));
+
+    return Ok;
+}
+
+/******************************************************************************
+ * GdipSetTextureWrapMode [GDIPLUS.@]
+ *
+ * WrapMode not used, only stored
+ */
+GpStatus WINGDIPAPI GdipSetTextureWrapMode(GpTexture *brush, GpWrapMode wrapmode)
+{
+    TRACE("(%p, %d)\n", brush, wrapmode);
+
+    if(!brush)
+        return InvalidParameter;
+
+    brush->wrap = wrapmode;
 
     return Ok;
 }

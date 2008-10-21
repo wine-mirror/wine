@@ -235,6 +235,54 @@ static void test_transform(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_texturewrap(void)
+{
+    GpStatus status;
+    GpTexture *texture;
+    GpGraphics *graphics = NULL;
+    GpBitmap *bitmap;
+    HDC hdc = GetDC(0);
+    GpWrapMode wrap;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    status = GdipCreateBitmapFromGraphics(1, 1, graphics, &bitmap);
+    expect(Ok, status);
+
+    status = GdipCreateTexture((GpImage*)bitmap, WrapModeTile, &texture);
+    expect(Ok, status);
+
+    /* NULL */
+    status = GdipGetTextureWrapMode(NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetTextureWrapMode(texture, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetTextureWrapMode(NULL, &wrap);
+    expect(InvalidParameter, status);
+
+    /* get */
+    wrap = WrapModeClamp;
+    status = GdipGetTextureWrapMode(texture, &wrap);
+    expect(Ok, status);
+    expect(WrapModeTile, wrap);
+    /* set, then get */
+    wrap = WrapModeClamp;
+    status = GdipSetTextureWrapMode(texture, wrap);
+    expect(Ok, status);
+    wrap = WrapModeTile;
+    status = GdipGetTextureWrapMode(texture, &wrap);
+    expect(Ok, status);
+    expect(WrapModeClamp, wrap);
+
+    status = GdipDeleteBrush((GpBrush*)texture);
+    expect(Ok, status);
+    status = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, status);
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -254,6 +302,7 @@ START_TEST(brush)
     test_getbounds();
     test_getgamma();
     test_transform();
+    test_texturewrap();
 
     GdiplusShutdown(gdiplusToken);
 }

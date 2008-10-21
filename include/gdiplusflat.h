@@ -208,6 +208,8 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage*,GDIPCONST GpImageAttributes*,
     REAL,REAL,REAL,REAL,GpTexture**);
 GpStatus WINGDIPAPI GdipCreateTextureIAI(GpImage*,GDIPCONST GpImageAttributes*,
     INT,INT,INT,INT,GpTexture**);
+GpStatus WINGDIPAPI GdipGetTextureWrapMode(GpTexture*, GpWrapMode*);
+GpStatus WINGDIPAPI GdipSetTextureWrapMode(GpTexture*, GpWrapMode);
 GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush*);
 GpStatus WINGDIPAPI GdipGetBrushType(GpBrush*,GpBrushType*);
 GpStatus WINGDIPAPI GdipGetLineGammaCorrection(GpLineGradient*,BOOL*);
