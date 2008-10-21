@@ -121,7 +121,7 @@ int CDECL _getch(void)
     do {
       if (ReadConsoleInputA(MSVCRT_console_in, &ir, 1, &count))
       {
-          int i;
+          unsigned int i;
         /* Only interested in ASCII chars */
         if (ir.EventType == KEY_EVENT &&
             ir.Event.KeyEvent.bKeyDown)

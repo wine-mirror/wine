@@ -348,7 +348,7 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
     struct datatype_t   ct;
     struct array        arg_collect;
     char*               args_str = NULL;
-    int                 i;
+    unsigned int        i;
 
     str_array_init(&arg_collect);
 

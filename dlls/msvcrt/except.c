@@ -478,7 +478,8 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
         {
             if (handler != MSVCRT_SIG_IGN)
             {
-                int i, float_signal = _FPE_INVALID;
+                unsigned int i;
+                int float_signal = _FPE_INVALID;
 
                 sighandlers[MSVCRT_SIGFPE] = MSVCRT_SIG_DFL;
                 for (i = 0; i < sizeof(float_exception_map) /

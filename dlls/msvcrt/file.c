@@ -1686,7 +1686,7 @@ static int read_i(int fd, void *buf, unsigned int count)
     {
         if (MSVCRT_fdesc[fd].wxflag & WX_TEXT)
         {
-            int i;
+            DWORD i;
             /* in text mode, a ctrl-z signals EOF */
             for (i=0; i<num_read; i++)
             {
@@ -2281,7 +2281,8 @@ MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
   if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
     {
       MSVCRT_wchar_t wc;
-      int i,j;
+      unsigned int i;
+      int j;
       char *chp, *wcp;
       wcp = (char *)&wc;
       for(i=0; i<sizeof(wc); i++)
@@ -2324,7 +2325,8 @@ MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
 int CDECL MSVCRT__getw(MSVCRT_FILE* file)
 {
   char *ch;
-  int i, j, k;
+  int i, k;
+  unsigned int j;
   ch = (char *)&i;
   for (j=0; j<sizeof(int); j++) {
     k = MSVCRT_fgetc(file);

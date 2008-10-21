@@ -1034,7 +1034,7 @@ INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
  */
 INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, const  MSVCRT_wchar_t *wcSrc)
 {
-    INT size = 0;
+    MSVCRT_size_t size = 0;
 
     if(!wcDest || !numElement)
         return MSVCRT_EINVAL;
@@ -1067,7 +1067,7 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
 INT CDECL MSVCRT_wcsncpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, const MSVCRT_wchar_t *wcSrc,
                             MSVCRT_size_t count )
 {
-    INT size = 0;
+    MSVCRT_size_t size = 0;
 
     if (!wcDest || !numElement)
         return MSVCRT_EINVAL;
