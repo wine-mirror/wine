@@ -579,38 +579,15 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 /* driver entry point for the harddisk driver */
 NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
-    static const WCHAR harddisk0W[] = {'\\','D','e','v','i','c','e',
-                                       '\\','H','a','r','d','d','i','s','k','0',0};
-    static const WCHAR physdrive0W[] = {'\\','?','?','\\','P','h','y','s','i','c','a','l','D','r','i','v','e','0',0};
-
-    UNICODE_STRING nameW, linkW;
-    DEVICE_OBJECT *device;
-    NTSTATUS status;
     struct dos_drive *drive;
 
     harddisk_driver = driver;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = harddisk_ioctl;
 
-    RtlInitUnicodeString( &nameW, harddisk0W );
-    RtlInitUnicodeString( &linkW, physdrive0W );
-    if (!(status = IoCreateDevice( driver, sizeof(*drive), &nameW, 0, 0, FALSE, &device )))
-        status = IoCreateSymbolicLink( &linkW, &nameW );
-    if (status)
-    {
-        FIXME( "failed to create device error %x\n", status );
-        return status;
-    }
-    drive = device->DeviceExtension;
-    drive->drive  = -1;
-    drive->udi    = NULL;
-    drive->type   = DRIVE_FIXED;
-    drive->name   = nameW;
-    drive->device = device;
-    drive->devnum.DeviceType = FILE_DEVICE_DISK;
-    drive->devnum.DeviceNumber = 0;
-    drive->devnum.PartitionNumber = 0;
+    /* create a harddisk0 device that isn't assigned to any drive */
+    create_disk_device( "harddisk0 placeholder", DRIVE_FIXED, &drive );
 
     create_drive_devices();
 
-    return status;
+    return STATUS_SUCCESS;
 }
