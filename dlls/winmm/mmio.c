@@ -667,9 +667,10 @@ HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
         refmminfo->wErrorRet = MMIO_SetBuffer(wm, refmminfo->pchBuffer, refmminfo->cchBuffer, 0);
 	if (refmminfo->wErrorRet != MMSYSERR_NOERROR)
 	    goto error1;
-	if (wm->info.fccIOProc == FOURCC_MEM)
-	    wm->bBufferLoaded = TRUE;
     }
+
+    if (wm->info.fccIOProc == FOURCC_MEM && !(wm->info.dwFlags & MMIO_ALLOCBUF))
+        wm->bBufferLoaded = TRUE;
 
     /* see mmioDosIOProc for that one */
     wm->info.adwInfo[0] = refmminfo->adwInfo[0];
