@@ -96,7 +96,7 @@
 @ stub DevQueryPrint
 @ stdcall DeviceCapabilities(str str long ptr ptr) DeviceCapabilitiesA
 @ stdcall DeviceCapabilitiesA(str str long ptr ptr)
-@ stdcall DeviceCapabilitiesW(wstr wstr long wstr ptr)
+@ stdcall DeviceCapabilitiesW(wstr wstr long ptr ptr)
 @ stub DeviceMode
 @ stub DocumentEvent
 @ stdcall DocumentPropertiesA(long long ptr ptr ptr long)
