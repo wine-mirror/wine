@@ -431,6 +431,9 @@ ok(tmp === 1, "Math.ceil(true) = " + tmp);
 tmp = Math.ceil(1.1, 3, 4);
 ok(tmp === 2, "Math.ceil(1.1, 3, 4) = " + tmp);
 
+tmp = Math.ceil();
+ok(isNaN(tmp), "ceil() is not NaN");
+
 tmp = Math.floor(0.5);
 ok(tmp === 0, "Math.floor(0.5) = " + tmp);
 
