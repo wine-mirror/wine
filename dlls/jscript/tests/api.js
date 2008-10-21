@@ -431,6 +431,24 @@ ok(tmp === 1, "Math.ceil(true) = " + tmp);
 tmp = Math.ceil(1.1, 3, 4);
 ok(tmp === 2, "Math.ceil(1.1, 3, 4) = " + tmp);
 
+tmp = Math.floor(0.5);
+ok(tmp === 0, "Math.floor(0.5) = " + tmp);
+
+tmp = Math.floor(-0.5);
+ok(tmp === -1, "Math.floor(-0.5) = " + tmp);
+
+tmp = Math.floor(1.1);
+ok(tmp === 1, "Math.floor(1.1) = " + tmp);
+
+tmp = Math.floor(true);
+ok(tmp === 1, "Math.floor(true) = " + tmp);
+
+tmp = Math.floor(1.1, 3, 4);
+ok(tmp === 1, "Math.floor(1.1, 3, 4) = " + tmp);
+
+tmp = Math.floor();
+ok(isNaN(tmp), "floor is not NaN");
+
 tmp = Math.abs(3);
 ok(tmp === 3, "Math.abs(3) = " + tmp);
 
