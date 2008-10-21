@@ -52,6 +52,9 @@ static const WCHAR drive_types[][8] =
     {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
 };
 
+static const WCHAR drives_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+                                    'W','i','n','e','\\','D','r','i','v','e','s',0};
+
 struct dos_drive
 {
     struct list           entry;       /* entry in drives list */
@@ -421,7 +424,7 @@ found:
                     wine_dbgstr_a(mount_point), type );
 
         /* hack: force the drive type in the registry */
-        if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
+        if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
         {
             const WCHAR *type_name = drive_types[type];
             WCHAR name[3] = {'a',':',0};
@@ -454,7 +457,7 @@ BOOL remove_dos_device( const char *udi )
             BOOL modified = set_unix_mount_point( drive, NULL );
 
             /* clear the registry key too */
-            if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hkey ))
+            if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
             {
                 WCHAR name[3] = {'a',':',0};
                 name[0] += drive->drive;
