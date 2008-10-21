@@ -373,21 +373,46 @@ static void create_drive_devices(void)
     char *path, *p, *link;
     struct dos_drive *drive;
     unsigned int i;
+    HKEY drives_key;
+    DWORD drive_type;
+    WCHAR driveW[] = {'a',':',0};
 
     if (!(path = get_dosdevices_path( &p ))) return;
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &drives_key )) drives_key = 0;
 
     for (i = 0; i < MAX_DOS_DRIVES; i++)
     {
         p[0] = 'a' + i;
         p[2] = 0;
         if (!(link = read_symlink( path ))) continue;
-        if (!create_disk_device( NULL, i < 2 ? DRIVE_REMOVABLE : DRIVE_FIXED, &drive ))
+
+        drive_type = i < 2 ? DRIVE_REMOVABLE : DRIVE_FIXED;
+        if (drives_key)
+        {
+            WCHAR buffer[32];
+            DWORD j, type, size = sizeof(buffer);
+
+            driveW[0] = 'a' + i;
+            if (!RegQueryValueExW( drives_key, driveW, NULL, &type, (BYTE *)buffer, &size ) &&
+                type == REG_SZ)
+            {
+                for (j = 0; j < sizeof(drive_types)/sizeof(drive_types[0]); j++)
+                    if (drive_types[j][0] && !strcmpiW( buffer, drive_types[j] ))
+                    {
+                        drive_type = j;
+                        break;
+                    }
+            }
+        }
+
+        if (!create_disk_device( NULL, drive_type, &drive ))
         {
             drive->unix_mount = link;
             set_drive_letter( drive, i );
         }
         else RtlFreeHeap( GetProcessHeap(), 0, link );
     }
+    RegCloseKey( drives_key );
     RtlFreeHeap( GetProcessHeap(), 0, path );
 }
 
