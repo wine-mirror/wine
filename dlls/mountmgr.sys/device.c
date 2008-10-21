@@ -63,6 +63,7 @@ struct dos_drive
     DWORD                 type;        /* drive type */
     DEVICE_OBJECT        *device;      /* disk device allocated for this drive */
     UNICODE_STRING        name;        /* device name */
+    UNICODE_STRING        symlink;     /* device symlink if any */
     STORAGE_DEVICE_NUMBER devnum;      /* device number info */
     struct mount_point   *dosdev;      /* DosDevices mount point */
     struct mount_point   *volume;      /* Volume{xxx} mount point */
@@ -139,6 +140,7 @@ static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_driv
     static const WCHAR harddiskW[] = {'\\','D','e','v','i','c','e','\\','H','a','r','d','d','i','s','k','%','u',0};
     static const WCHAR cdromW[] = {'\\','D','e','v','i','c','e','\\','C','d','R','o','m','%','u',0};
     static const WCHAR floppyW[] = {'\\','D','e','v','i','c','e','\\','F','l','o','p','p','y','%','u',0};
+    static const WCHAR physdriveW[] = {'\\','?','?','\\','P','h','y','s','i','c','a','l','D','r','i','v','e','%','u',0};
 
     UINT i, first = 0;
     NTSTATUS status = 0;
@@ -185,6 +187,7 @@ static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_driv
         drive->dosdev = NULL;
         drive->volume = NULL;
         drive->unix_mount = NULL;
+        drive->symlink.Buffer = NULL;
         if (udi)
         {
             if (!(drive->udi = HeapAlloc( GetProcessHeap(), 0, strlen(udi)+1 )))
@@ -212,6 +215,15 @@ static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_driv
             drive->devnum.DeviceType = FILE_DEVICE_DISK;
             if (udi)
             {
+                UNICODE_STRING symlink;
+
+                symlink.MaximumLength = sizeof(physdriveW) + 10 * sizeof(WCHAR);
+                if ((symlink.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, symlink.MaximumLength)))
+                {
+                    sprintfW( symlink.Buffer, physdriveW, i );
+                    symlink.Length = strlenW(symlink.Buffer) * sizeof(WCHAR);
+                    if (!IoCreateSymbolicLink( &symlink, &name )) drive->symlink = symlink;
+                }
                 drive->devnum.DeviceNumber = i;
                 drive->devnum.PartitionNumber = 0;
             }
@@ -241,6 +253,11 @@ static void delete_disk_device( struct dos_drive *drive )
     list_remove( &drive->entry );
     if (drive->dosdev) delete_mount_point( drive->dosdev );
     if (drive->volume) delete_mount_point( drive->volume );
+    if (drive->symlink.Buffer)
+    {
+        IoDeleteSymbolicLink( &drive->symlink );
+        RtlFreeUnicodeString( &drive->symlink );
+    }
     RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
     RtlFreeHeap( GetProcessHeap(), 0, drive->udi );
     RtlFreeUnicodeString( &drive->name );
