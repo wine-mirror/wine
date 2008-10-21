@@ -163,6 +163,16 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <errno.h>
+#include <limits.h>
+
+#ifndef LLONG_MAX
+# define LLONG_MAX  ((long long)0x7fffffff << 32 | 0xffffffff)
+# define LLONG_MIN  (-LLONG_MAX - 1)
+#endif
+#ifndef ULLONG_MAX
+# define ULLONG_MAX ((long long)0xffffffff << 32 | 0xffffffff)
+#endif
 
 #ifndef HAVE_UNISTD_H
 #define YY_NO_UNISTD_H
@@ -790,6 +800,7 @@ static int make_number(int radix, YYSTYPE *val, const char *str, int len)
 	int is_ll = 0;
 	int is_u  = 0;
 	char ext[4];
+	long l;
 
 	ext[3] = '\0';
 	ext[2] = toupper(str[len-1]);
@@ -827,12 +838,18 @@ static int make_number(int radix, YYSTYPE *val, const char *str, int len)
 #ifdef HAVE_LONG_LONG
 		if (is_u)
 		{
+			errno = 0;
 			val->ull = strtoull(str, NULL, radix);
+			if (val->ull == ULLONG_MAX && errno == ERANGE)
+				ppy_error("integer constant %s is too large\n", str);
 			return tULONGLONG;
 		}
 		else
 		{
+			errno = 0;
 			val->sll = strtoll(str, NULL, radix);
+			if ((val->sll == LLONG_MIN || val->sll == LLONG_MAX) && errno == ERANGE)
+				ppy_error("integer constant %s is too large\n", str);
 			return tSLONGLONG;
 		}
 #else
@@ -841,22 +858,38 @@ static int make_number(int radix, YYSTYPE *val, const char *str, int len)
 	}
 	else if(is_u && is_l)
 	{
+		errno = 0;
 		val->ulong = strtoul(str, NULL, radix);
+		if (val->ulong == ULONG_MAX && errno == ERANGE)
+			ppy_error("integer constant %s is too large\n", str);
 		return tULONG;
 	}
 	else if(!is_u && is_l)
 	{
+		errno = 0;
 		val->slong = strtol(str, NULL, radix);
+		if ((val->slong == LONG_MIN || val->slong == LONG_MAX) && errno == ERANGE)
+			ppy_error("integer constant %s is too large\n", str);
 		return tSLONG;
 	}
 	else if(is_u && !is_l)
 	{
-		val->uint = (unsigned int)strtoul(str, NULL, radix);
+		unsigned long ul;
+		errno = 0;
+		ul = strtoul(str, NULL, radix);
+		if ((ul == ULONG_MAX && errno == ERANGE) || (ul > UINT_MAX))
+			ppy_error("integer constant %s is too large\n", str);
+		val->uint = (unsigned int)ul;
 		return tUINT;
 	}
 
 	/* Else it must be an int... */
-	val->sint = (int)strtol(str, NULL, radix);
+	errno = 0;
+	l = strtol(str, NULL, radix);
+	if (((l == LONG_MIN || l == LONG_MAX) && errno == ERANGE) ||
+		(l > INT_MAX) || (l < INT_MIN))
+		ppy_error("integer constant %s is too large\n", str);
+	val->sint = (int)l;
 	return tSINT;
 }
 
