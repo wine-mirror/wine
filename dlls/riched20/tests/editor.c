@@ -116,11 +116,11 @@ static BOOL hold_key(int vk)
   BYTE key_state[256];
   BOOL result;
 
-  result = GetKeyboardState((LPBYTE)&key_state);
+  result = GetKeyboardState(key_state);
   ok(result, "GetKeyboardState failed.\n");
   if (!result) return FALSE;
   key_state[vk] |= 0x80;
-  result = SetKeyboardState((LPBYTE)&key_state);
+  result = SetKeyboardState(key_state);
   ok(result, "SetKeyboardState failed.\n");
   return result != 0;
 }
@@ -130,11 +130,11 @@ static BOOL release_key(int vk)
   BYTE key_state[256];
   BOOL result;
 
-  result = GetKeyboardState((LPBYTE)&key_state);
+  result = GetKeyboardState(key_state);
   ok(result, "GetKeyboardState failed.\n");
   if (!result) return FALSE;
   key_state[vk] &= ~0x80;
-  result = SetKeyboardState((LPBYTE)&key_state);
+  result = SetKeyboardState(key_state);
   ok(result, "SetKeyboardState failed.\n");
   return result != 0;
 }
