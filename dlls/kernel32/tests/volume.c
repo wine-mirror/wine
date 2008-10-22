@@ -187,7 +187,12 @@ static void test_GetLogicalDriveStringsW(void)
         return;
     }
 
+    SetLastError(0xdeadbeef);
     size = pGetLogicalDriveStringsW(0, NULL);
+    if (size == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+        win_skip("GetLogicalDriveStringsW not implemented\n");
+        return;
+    }
     ok(size%4 == 1, "size = %d\n", size);
 
     buf = HeapAlloc(GetProcessHeap(), 0, size*sizeof(WCHAR));
