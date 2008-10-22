@@ -2818,6 +2818,17 @@ GpStatus WINGDIPAPI GdipScaleWorldTransform(GpGraphics *graphics, REAL sx,
     return GdipScaleMatrix(graphics->worldtrans, sx, sy, order);
 }
 
+GpStatus WINGDIPAPI GdipSetClipGraphics(GpGraphics *graphics, GpGraphics *srcgraphics,
+    CombineMode mode)
+{
+    TRACE("(%p, %p, %d)\n", graphics, srcgraphics, mode);
+
+    if(!graphics || !srcgraphics)
+        return InvalidParameter;
+
+    return GdipCombineRegionRegion(graphics->clip, srcgraphics->clip, mode);
+}
+
 GpStatus WINGDIPAPI GdipSetCompositingMode(GpGraphics *graphics,
     CompositingMode mode)
 {
