@@ -529,6 +529,7 @@ static void test_EM_POSFROMCHAR(void)
   LRESULT result;
   unsigned int height = 0;
   int xpos = 0;
+  POINTL pt;
   static const char text[] = "aa\n"
       "this is a long line of text that should be longer than the "
       "control's width\n"
@@ -636,6 +637,22 @@ static void test_EM_POSFROMCHAR(void)
         "EM_POSFROMCHAR reports x=%hd, expected value less than %d\n",
         (signed short)(LOWORD(result)), xpos);
   }
+  SendMessage(hwndRichEdit, WM_HSCROLL, SB_LINELEFT, 0);
+
+  /* Test around end of text that doesn't end in a newline. */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "12345678901234");
+  SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt,
+              SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0)-1);
+  ok(pt.x > 1, "pt.x = %d\n", pt.x);
+  xpos = pt.x;
+  SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt,
+              SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0));
+  todo_wine ok(pt.x > xpos, "pt.x = %d\n", pt.x);
+  xpos = pt.x;
+  SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt,
+              SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0)+1);
+  ok(pt.x == xpos, "pt.x = %d\n", pt.x);
+
   DestroyWindow(hwndRichEdit);
 }
 
