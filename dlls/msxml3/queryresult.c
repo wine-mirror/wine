@@ -308,7 +308,7 @@ static HRESULT queryresult_get_dispid(IUnknown *iface, BSTR name, DWORD flags, D
 {
     queryresult *This = impl_from_IXMLDOMNodeList( (IXMLDOMNodeList*)iface );
     WCHAR *ptr;
-    DWORD idx=0;
+    int idx = 0;
 
     for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
