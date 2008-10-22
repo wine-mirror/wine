@@ -165,7 +165,9 @@ static void test_GetLogicalDriveStringsA(void)
     ok(size2 == size-1, "size2 = %d\n", size2);
 
     for(ptr = buf; ptr < buf+size2; ptr += 4) {
-        ok('A' <= *ptr && *ptr <= 'Z', "device name '%c' is not uppercase\n", *ptr);
+        ok(('A' <= *ptr && *ptr <= 'Z') ||
+           (broken('a' <= *ptr && *ptr <= 'z')), /* Win9x and WinMe */
+           "device name '%c' is not uppercase\n", *ptr);
         ok(ptr[1] == ':', "ptr[1] = %c, expected ':'\n", ptr[1]);
         ok(ptr[2] == '\\', "ptr[2] = %c expected '\\'\n", ptr[2]);
         ok(!ptr[3], "ptr[3] = %c expected nullbyte\n", ptr[3]);
