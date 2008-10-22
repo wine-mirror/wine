@@ -1321,7 +1321,7 @@ BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
             rc = RegEnumKeyExW(key, index++, name, &size, NULL, NULL, NULL,
                 NULL);
             if (!rc)
-                ret = pfnEnum(name, 0, &info, NULL, pvArg);
+                ret = pfnEnum(name, dwFlags, &info, NULL, pvArg);
         } while (ret && !rc);
         if (ret && rc != ERROR_NO_MORE_ITEMS)
             SetLastError(rc);
