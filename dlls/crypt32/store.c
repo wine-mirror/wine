@@ -1330,3 +1330,16 @@ BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
         SetLastError(rc);
     return ret;
 }
+
+BOOL WINAPI CertEnumPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
+ void *pvArg, PFN_CERT_ENUM_PHYSICAL_STORE pfnEnum)
+{
+    if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG)
+        FIXME("(%p, %08x, %p, %p): stub\n", pvSystemStore, dwFlags, pvArg,
+         pfnEnum);
+    else
+        FIXME("(%s, %08x, %p, %p): stub\n", debugstr_w((LPCWSTR)pvSystemStore),
+         dwFlags, pvArg,
+         pfnEnum);
+    return FALSE;
+}
