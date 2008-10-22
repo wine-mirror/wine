@@ -754,13 +754,11 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
         if (CRYPT_IsSimpleChainCyclic(chain))
         {
             /* If the chain is cyclic, then the path length constraints
-             * are violated, because the chain is infinitely long.  MS
-             * misleadingly also sets the not supported name constraint bit,
-             * whether or not name constraints were present.
+             * are violated, because the chain is infinitely long.
              */
             pathLengthConstraintViolated = TRUE;
             chain->TrustStatus.dwErrorStatus |=
-             CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT |
+             CERT_TRUST_IS_PARTIAL_CHAIN |
              CERT_TRUST_INVALID_BASIC_CONSTRAINTS;
         }
         /* FIXME: check valid usages */

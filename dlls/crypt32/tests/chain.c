@@ -1527,7 +1527,7 @@ static ChainCheck chainCheck[] = {
    TODO_ERROR },
  { { sizeof(chain9) / sizeof(chain9[0]), chain9 },
    { { CERT_TRUST_IS_NOT_TIME_NESTED, CERT_TRUST_HAS_PREFERRED_ISSUER },
-     { CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT |
+     { CERT_TRUST_IS_PARTIAL_CHAIN |
        CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_CYCLIC, 0 },
      1, simpleStatus9 },
    TODO_INFO },
