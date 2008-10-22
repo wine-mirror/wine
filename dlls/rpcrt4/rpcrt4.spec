@@ -99,7 +99,7 @@
 @ stub MesBufferHandleReset
 @ stdcall MesDecodeBufferHandleCreate(ptr long ptr)
 @ stdcall MesDecodeIncrementalHandleCreate(ptr ptr ptr)
-@ stub MesEncodeDynBufferHandleCreate
+@ stdcall MesEncodeDynBufferHandleCreate(ptr ptr ptr)
 @ stdcall MesEncodeFixedBufferHandleCreate(ptr long ptr ptr)
 @ stdcall MesEncodeIncrementalHandleCreate(ptr ptr ptr ptr)
 @ stdcall MesHandleFree(ptr)
