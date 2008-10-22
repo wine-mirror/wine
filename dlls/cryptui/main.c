@@ -156,17 +156,21 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
         HeapFree(GetProcessHeap(), 0, buffer);
         return FALSE;
     }
-    /* FIXME: verify certificate and determine store name dynamically */
-    if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, Root)))
+    if (hDestCertStore) store = hDestCertStore;
+    else
     {
-        WARN("unable to open certificate store\n");
-        CertFreeCertificateContext(cert);
-        HeapFree(GetProcessHeap(), 0, buffer);
-        return FALSE;
+        FIXME("certificate store should be determined dynamically, picking Root store\n");
+        if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, Root)))
+        {
+            WARN("unable to open certificate store\n");
+            CertFreeCertificateContext(cert);
+            HeapFree(GetProcessHeap(), 0, buffer);
+            return FALSE;
+        }
     }
     ret = CertAddCertificateContextToStore(store, cert, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
 
-    CertCloseStore(store, 0);
+    if (!hDestCertStore) CertCloseStore(store, 0);
     CertFreeCertificateContext(cert);
     HeapFree(GetProcessHeap(), 0, buffer);
     return ret;
