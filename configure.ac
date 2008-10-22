@@ -89,6 +89,7 @@ case $host in
       LD="${LD:-ld} -m elf_i386"
       AS="${AS:-as} --32"
       host_cpu="i386"
+      notice_platform="32-bit "
     fi
     ;;
 esac
@@ -660,7 +661,7 @@ then
             WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
         fi
         WINE_NOTICE_WITH(xcursor,[test "x$ac_cv_lib_soname_Xcursor" = "x"],
-                         [libxcursor development files not found, the Xcursor extension won't be supported.])
+                         [libxcursor ${notice_platform}development files not found, the Xcursor extension won't be supported.])
 
         dnl *** Check for X input extension
         if test "$ac_cv_header_X11_extensions_XInput_h" = "yes"
@@ -668,7 +669,7 @@ then
             WINE_CHECK_SONAME(Xi,XOpenDevice,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
         fi
         WINE_NOTICE_WITH(xinput,[test "x$ac_cv_lib_soname_Xi" = "x"],
-                         [libxi development files not found, the Xinput extension won't be supported.])
+                         [libxi ${notice_platform}development files not found, the Xinput extension won't be supported.])
 
         dnl *** Check for X Shm extension
         if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
@@ -678,7 +679,7 @@ then
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
         WINE_NOTICE_WITH(xshm,[test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"],
-                         [XShm development files not found, X Shared Memory won't be supported.])
+                         [XShm ${notice_platform}development files not found, X Shared Memory won't be supported.])
 
         dnl *** Check for X shape extension
         if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
@@ -688,7 +689,7 @@ then
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
         WINE_NOTICE_WITH(xshape,[test "$ac_cv_lib_Xext_XShapeQueryExtension" != "yes"],
-                         [XShape development files not found, XShape won't be supported.])
+                         [XShape ${notice_platform}development files not found, XShape won't be supported.])
 
         dnl *** Check for XFree86 VMODE extension
         if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
@@ -696,7 +697,7 @@ then
             WINE_CHECK_SONAME(Xxf86vm,XF86VidModeQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
         fi
         WINE_NOTICE_WITH(xxf86vm,[test "x$ac_cv_lib_soname_Xxf86vm" = "x"],
-                         [libXxf86vm development files not found, XFree86 Vidmode won't be supported.])
+                         [libXxf86vm ${notice_platform}development files not found, XFree86 Vidmode won't be supported.])
 
         dnl *** Check for Transform functions in Xrender
         if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x" -a "x$ac_cv_lib_soname_Xext" != "x"
@@ -709,7 +710,7 @@ then
 
         fi
         WINE_WARNING_WITH(xrender,[test "x$ac_cv_lib_soname_Xrender" = "x"],
-                         [libxrender development files not found, XRender won't be supported.])
+                         [libxrender ${notice_platform}development files not found, XRender won't be supported.])
 
         dnl *** Check for X RandR extension
         if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes" -a "x$ac_cv_lib_soname_Xrender" != "x"
@@ -719,7 +720,7 @@ then
                   [WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
         fi
         WINE_NOTICE_WITH(xrandr,[test "x$ac_cv_lib_soname_Xrandr" = "x"],
-                         [libxrandr development files not found, XRandr won't be supported.])
+                         [libxrandr ${notice_platform}development files not found, XRandr won't be supported.])
 
         dnl *** Check for Xinerama extension
         if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
@@ -729,7 +730,7 @@ then
                   [WINE_CHECK_SONAME(Xinerama,XineramaQueryScreens,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
         fi
         WINE_NOTICE_WITH(xinerama,[test "x$ac_cv_lib_soname_Xinerama" = "x"],
-                         [libxinerama development files not found, multi-monitor setups won't be supported.])
+                         [libxinerama ${notice_platform}development files not found, multi-monitor setups won't be supported.])
 
         dnl *** Check for X Composite extension
         if test "$ac_cv_header_X11_extensions_Xcomposite_h" = "yes"
@@ -737,7 +738,7 @@ then
             WINE_CHECK_SONAME(Xcomposite,XCompositeRedirectWindow,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
         fi
         WINE_NOTICE_WITH(xcomposite,[test "x$ac_cv_lib_soname_Xcomposite" = "x"],
-                         [libxcomposite development files not found, Xcomposite won't be supported.])
+                         [libxcomposite ${notice_platform}development files not found, Xcomposite won't be supported.])
 
         dnl *** Check for XICCallback struct
         AC_CHECK_MEMBERS([XICCallback.callback],,,
@@ -786,7 +787,7 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
                     WINE_CHECK_SONAME(GLU,gluLookAt,,,[$OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS])
                  fi
                  WINE_NOTICE_WITH(glu,[test "x$ac_cv_lib_soname_GLU" = "x"],
-                                 [libGLU development files not found, GLU won't be supported.])
+                                 [libGLU ${notice_platform}development files not found, GLU won't be supported.])
              else
                  opengl_msg="Old Mesa headers detected. Consider upgrading your Mesa libraries."
 	     fi
@@ -859,7 +860,7 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_WARNING_WITH(xml,[test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"],
-                 [libxml2 development files not found, XML won't be supported.])
+                 [libxml2 ${notice_platform}development files not found, XML won't be supported.])
 
 if test "x$with_xslt" != "xno"
 then
@@ -891,7 +892,7 @@ then
     fi
 fi
 WINE_WARNING_WITH(xslt,[test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"],
-                 [libxslt development files not found, xslt won't be supported.])
+                 [libxslt ${notice_platform}development files not found, xslt won't be supported.])
 
 dnl **** Check for libhal ****
 AC_SUBST(HALINCL,"")
@@ -911,7 +912,7 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x"],
-                 [libhal development files not found, no dynamic device support.])
+                 [libhal ${notice_platform}development files not found, no dynamic device support.])
 
 dnl **** Check for libgnutls ****
 if test "x$with_gnutls" != "xno" -a "$PKG_CONFIG" != "false"
@@ -926,7 +927,7 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],
-                 [libgnutls development files not found, no schannel support.])
+                 [libgnutls ${notice_platform}development files not found, no schannel support.])
 
 dnl **** Check which curses lib to use ***
 CURSESLIBS=""
@@ -942,7 +943,7 @@ LIBS="$LIBS $CURSESLIBS"
 AC_CHECK_FUNCS(mousemask)
 LIBS="$ac_save_LIBS"
 WINE_NOTICE_WITH(curses,[test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurses" = "x"],
-                 [lib(n)curses development files not found, curses won't be supported.])
+                 [lib(n)curses ${notice_platform}development files not found, curses won't be supported.])
 
 dnl **** Check for SANE ****
 AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
@@ -957,7 +958,7 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(sane,[test "x$ac_cv_lib_soname_sane" = "x"],
-                 [libsane development files not found, scanners won't be supported.])
+                 [libsane ${notice_platform}development files not found, scanners won't be supported.])
 
 dnl **** Check for libgphoto2 ****
 AC_CHECK_PROG(gphoto2_devel,gphoto2-config,gphoto2-config,no)
@@ -984,7 +985,7 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(gphoto,[test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"],
-                 [libgphoto2 development files not found, digital cameras won't be supported.])
+                 [libgphoto2 ${notice_platform}development files not found, digital cameras won't be supported.])
 
 
 dnl **** Check for resolver library ***
@@ -1005,7 +1006,7 @@ then
          LCMSLIBS="-llcms"])
 fi
 WINE_NOTICE_WITH(cms,[test "$ac_cv_lib_lcms_cmsOpenProfileFromFile" != "yes"],
-                 [liblcms development files not found, Color Management won't be supported.])
+                 [liblcms ${notice_platform}development files not found, Color Management won't be supported.])
 
 dnl **** Check for FreeType 2 ****
 AC_CHECK_PROGS(ft_devel,[freetype-config freetype2-config],false)
@@ -1147,7 +1148,7 @@ then
     WINE_CHECK_SONAME(capi20,capi20_register)
 fi
 WINE_NOTICE_WITH(capi,[test "x$ac_cv_lib_soname_capi20" = "x"],
-                 [libcapi20 development files not found, ISDN won't be supported.])
+                 [libcapi20 ${notice_platform}development files not found, ISDN won't be supported.])
 
 dnl **** Check for cups ****
 AC_SUBST(CUPSINCL,"")
@@ -1164,7 +1165,7 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(cups,[test "x$ac_cv_lib_soname_cups" = "x"],
-                 [libcups development files not found, CUPS won't be supported.])
+                 [libcups ${notice_platform}development files not found, CUPS won't be supported.])
 
 dnl **** Check for jack ****
 if test "$ac_cv_header_jack_jack_h" = "yes"
@@ -1191,7 +1192,7 @@ then
     fi
 fi
 WINE_NOTICE_WITH(fontconfig,[test "x$ac_cv_lib_soname_fontconfig" = "x"],
-                 [fontconfig development files not found, fontconfig won't be supported.])
+                 [fontconfig ${notice_platform}development files not found, fontconfig won't be supported.])
 
 dnl **** Check for SSL ****
 if test "$ac_cv_header_openssl_err_h" = "yes" -a "$ac_cv_header_openssl_ssl_h" = "yes"
@@ -1200,7 +1201,7 @@ then
     WINE_CHECK_SONAME(crypto,BIO_new_socket)
 fi
 WINE_WARNING_WITH(openssl,[test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"],
-                 [OpenSSL development files not found, SSL won't be supported.])
+                 [OpenSSL ${notice_platform}development files not found, SSL won't be supported.])
 
 dnl **** Check for libjpeg ****
 if test "$ac_cv_header_jpeglib_h" = "yes"
@@ -1208,7 +1209,7 @@ then
     WINE_CHECK_SONAME(jpeg,jpeg_start_decompress)
 fi
 WINE_WARNING_WITH(jpeg,[test "x$ac_cv_lib_soname_jpeg" = "x"],
-                 [libjpeg development files not found, JPEG won't be supported.])
+                 [libjpeg ${notice_platform}development files not found, JPEG won't be supported.])
 
 dnl **** Check for libpng ****
 if test "$ac_cv_header_png_h" = "yes"
@@ -1216,7 +1217,7 @@ then
     WINE_CHECK_SONAME(png,png_create_read_struct,,,-lm,[[libpng[[0-9]]*]])
 fi
 WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
-                 [libpng development files not found, PNG won't be supported.])
+                 [libpng ${notice_platform}development files not found, PNG won't be supported.])
 
 dnl **** Check for libodbc ****
 WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.$LIBEXT"])])
@@ -1492,7 +1493,7 @@ then
         [$LDAPLIBS $LIBPTHREAD])
 fi
 WINE_NOTICE_WITH(ldap,[test "x$LDAPLIBS" = "x"],
-                 [libldap (OpenLDAP) development files not found, LDAP won't be supported.])
+                 [libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported.])
 
 dnl **** Check for types ****
 
