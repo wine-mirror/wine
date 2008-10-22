@@ -4495,7 +4495,7 @@ static void test_WM_PASTE(void)
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Shouldn't paste because pasting is handled by WM_KEYDOWN */
     result = strcmp(buffer,"");
-    todo_wine ok(result == 0,
+    ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
 
     /* Send keystrokes with WM_KEYDOWN after setting the modifiers
@@ -4509,7 +4509,7 @@ static void test_WM_PASTE(void)
     release_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"paste");
-    todo_wine ok(result == 0,
+    ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text1);
@@ -4523,7 +4523,7 @@ static void test_WM_PASTE(void)
     SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"testing");
-    todo_wine ok(result == 0,
+    ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
 
     /* Cut with WM_KEYDOWN to simulate Ctrl-X */
@@ -4538,7 +4538,7 @@ static void test_WM_PASTE(void)
     release_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"");
-    todo_wine ok(result == 0,
+    ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
     SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
@@ -4552,7 +4552,7 @@ static void test_WM_PASTE(void)
                 (MapVirtualKey('Z', MAPVK_VK_TO_VSC) << 16) & 1);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"");
-    todo_wine ok(result == 0,
+    ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
     /* Simulates redo (Ctrl-Y) */
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'Y',
