@@ -38,6 +38,12 @@ typedef enum DXGI_SWAP_EFFECT {
     DXGI_SWAP_EFFECT_SEQUENTIAL = 1,
 } DXGI_SWAP_EFFECT;
 
+typedef enum DXGI_RESIDENCY {
+    DXGI_RESIDENCY_FULLY_RESIDENT               = 1,
+    DXGI_RESIDENCY_RESIDENT_IN_SHARED_MEMORY    = 2,
+    DXGI_RESIDENCY_EVICTED_TO_DISK              = 3,
+} DXGI_RESIDENCY;
+
 typedef struct DXGI_SURFACE_DESC {
     UINT Width;
     UINT Height;
@@ -88,6 +94,10 @@ typedef struct DXGI_SWAP_CHAIN_DESC {
     DXGI_SWAP_EFFECT SwapEffect;
     UINT Flags;
 } DXGI_SWAP_CHAIN_DESC;
+
+typedef struct DXGI_SHARED_RESOURCE {
+    HANDLE Handle;
+} DXGI_SHARED_RESOURCE;
 
 [
     object,
@@ -294,3 +304,33 @@ interface IDXGIFactory : IDXGIObject
 }
 
 [local] HRESULT CreateDXGIFactory(REFIID riid, void **factory);
+
+[
+    object,
+    local,
+    uuid(54ec77fa-1377-44e6-8c32-88fd5f44c84c)
+]
+interface IDXGIDevice : IDXGIObject
+{
+    HRESULT GetAdapter(
+        [out] IDXGIAdapter **adapter
+    );
+    HRESULT CreateSurface(
+        [in] const DXGI_SURFACE_DESC *desc,
+        [in] UINT surface_count,
+        [in] DXGI_USAGE usage,
+        [in] const DXGI_SHARED_RESOURCE *shared_resource,
+        [out] IDXGISurface **surface
+    );
+    HRESULT QueryResourceResidency(
+        [in] IUnknown *const *resources,
+        [out] DXGI_RESIDENCY *residency,
+        [in] UINT resource_count
+    );
+    HRESULT SetGPUThreadPriority(
+        [in] INT priority
+    );
+    HRESULT GetGPUThreadPriority(
+        [out] INT *priority
+    );
+}
