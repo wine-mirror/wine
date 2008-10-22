@@ -567,9 +567,7 @@ static void test_EM_POSFROMCHAR(void)
     if (i == 0)
     {
       ok(HIWORD(result) == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", HIWORD(result));
-      todo_wine {
       ok(LOWORD(result) == 1, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
-      }
       xpos = LOWORD(result);
     }
     else if (i == 1)
@@ -623,9 +621,7 @@ static void test_EM_POSFROMCHAR(void)
 
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 0, 0);
   ok(HIWORD(result) == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", HIWORD(result));
-  todo_wine {
   ok(LOWORD(result) == 1, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
-  }
   xpos = LOWORD(result);
 
   SendMessage(hwndRichEdit, WM_HSCROLL, SB_LINERIGHT, 0);
@@ -647,7 +643,7 @@ static void test_EM_POSFROMCHAR(void)
   xpos = pt.x;
   SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt,
               SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0));
-  todo_wine ok(pt.x > xpos, "pt.x = %d\n", pt.x);
+  ok(pt.x > xpos, "pt.x = %d\n", pt.x);
   xpos = pt.x;
   SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt,
               SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0)+1);

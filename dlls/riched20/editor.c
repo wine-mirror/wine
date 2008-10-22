@@ -3543,18 +3543,15 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (wParam >= 0x40000)
         nCharOfs = lParam;
     nLength = ME_GetTextLength(editor);
-    
-    if (nCharOfs < nLength) { 
-        ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
-        assert(pRun->type == diRun);
-        pt.y = pRun->member.run.pt.y;
-        pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset);
-        pt.y += ME_GetParagraph(pRun)->member.para.pt.y;
-    } else {
-        pt.x = 0;
-        pt.y = editor->pBuffer->pLast->member.para.pt.y;
-    }
+    nCharOfs = min(nCharOfs, nLength);
+
+    ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
+    assert(pRun->type == diRun);
+    pt.y = pRun->member.run.pt.y;
+    pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset);
+    pt.y += ME_GetParagraph(pRun)->member.para.pt.y;
     pt.x += editor->selofs;
+    pt.x++; /* for some reason native offsets x by one */
 
     si.cbSize = sizeof(si);
     si.fMask = SIF_POS;

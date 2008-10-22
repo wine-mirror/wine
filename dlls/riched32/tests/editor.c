@@ -742,9 +742,7 @@ static void test_EM_POSFROMCHAR(void)
     if (i == 0)
     {
       ok(pl.y == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", pl.y);
-      todo_wine {
       ok(pl.x == 1, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
-      }
       xpos = pl.x;
     }
     else if (i == 1)
@@ -805,9 +803,7 @@ static void test_EM_POSFROMCHAR(void)
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pl, 0);
   ok(result == 0, "EM_POSFROMCHAR returned %ld, expected 0\n", result);
   ok(pl.y == 0, "EM_POSFROMCHAR reports y=%d, expected 0\n", pl.y);
-  todo_wine {
   ok(pl.x == 1, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
-  }
   xpos = pl.x;
 
   SendMessage(hwndRichEdit, WM_HSCROLL, SB_LINERIGHT, 0);
