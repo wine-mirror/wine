@@ -111,6 +111,34 @@ static void simulate_typing_characters(HWND hwnd, const char* szChars)
     }
 }
 
+static BOOL hold_key(int vk)
+{
+  BYTE key_state[256];
+  BOOL result;
+
+  result = GetKeyboardState((LPBYTE)&key_state);
+  ok(result, "GetKeyboardState failed.\n");
+  if (!result) return FALSE;
+  key_state[vk] |= 0x80;
+  result = SetKeyboardState((LPBYTE)&key_state);
+  ok(result, "SetKeyboardState failed.\n");
+  return result != 0;
+}
+
+static BOOL release_key(int vk)
+{
+  BYTE key_state[256];
+  BOOL result;
+
+  result = GetKeyboardState((LPBYTE)&key_state);
+  ok(result, "GetKeyboardState failed.\n");
+  if (!result) return FALSE;
+  key_state[vk] &= ~0x80;
+  result = SetKeyboardState((LPBYTE)&key_state);
+  ok(result, "SetKeyboardState failed.\n");
+  return result != 0;
+}
+
 static const char haystack[] = "WINEWine wineWine wine WineWine";
                              /* ^0        ^10       ^20       ^30 */
 
@@ -4397,11 +4425,15 @@ static void test_WM_PASTE(void)
     const char* text3 = "testing paste\r\npaste\r\ntesting paste";
     HWND hwndRichEdit = new_richedit(NULL);
 
-    /* Native riched20 won't obey WM_CHAR messages or WM_KEYDOWN/WM_KEYUP
-       messages, probably because it inspects the keyboard state itself.
-       Therefore, native requires this in order to obey Ctrl-<key> keystrokes.
+    /* Native riched20 inspects the keyboard state (e.g. GetKeyState)
+     * to test the state of the modifiers (Ctrl/Alt/Shift).
+     *
+     * Therefore Ctrl-<key> keystrokes need to be simulated with
+     * keybd_event or by using SetKeyboardState to set the modifiers
+     * and SendMessage to simulate the keystrokes.
      */
 
+    /* Sent keystrokes with keybd_event */
 #define SEND_CTRL_C(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'C')
 #define SEND_CTRL_X(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'X')
 #define SEND_CTRL_V(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'V')
@@ -4418,13 +4450,14 @@ static void test_WM_PASTE(void)
     /* Pasted text should be visible at this step */
     result = strcmp(text1_step1, buffer);
     ok(result == 0,
-        "test paste: strcmp = %i\n", result);
+        "test paste: strcmp = %i, text='%s'\n", result, buffer);
+
     SEND_CTRL_Z(hwndRichEdit);   /* Undo */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Text should be the same as before (except for \r -> \r\n conversion) */
     result = strcmp(text1_after, buffer);
     ok(result == 0,
-        "test paste: strcmp = %i\n", result);
+        "test paste: strcmp = %i, text='%s'\n", result, buffer);
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text2);
     SendMessage(hwndRichEdit, EM_SETSEL, 8, 13);
@@ -4448,6 +4481,87 @@ static void test_WM_PASTE(void)
     result = strcmp(buffer,text3);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
+
+#undef SEND_CTRL_C
+#undef SEND_CTRL_X
+#undef SEND_CTRL_V
+#undef SEND_CTRL_Z
+#undef SEND_CTRL_Y
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
+    /* Send WM_CHAR to simulates Ctrl-V */
+    SendMessage(hwndRichEdit, WM_CHAR, 22,
+                (MapVirtualKey('V', MAPVK_VK_TO_VSC) << 16) & 1);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    /* Shouldn't paste because pasting is handled by WM_KEYDOWN */
+    result = strcmp(buffer,"");
+    todo_wine ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+
+    /* Send keystrokes with WM_KEYDOWN after setting the modifiers
+     * with SetKeyboard state. */
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
+    /* Simulates paste (Ctrl-V) */
+    hold_key(VK_CONTROL);
+    SendMessage(hwndRichEdit, WM_KEYDOWN, 'V',
+                (MapVirtualKey('V', MAPVK_VK_TO_VSC) << 16) & 1);
+    release_key(VK_CONTROL);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(buffer,"paste");
+    todo_wine ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text1);
+    SendMessage(hwndRichEdit, EM_SETSEL, 0, 7);
+    /* Simulates copy (Ctrl-C) */
+    hold_key(VK_CONTROL);
+    SendMessage(hwndRichEdit, WM_KEYDOWN, 'C',
+                (MapVirtualKey('C', MAPVK_VK_TO_VSC) << 16) & 1);
+    release_key(VK_CONTROL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
+    SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(buffer,"testing");
+    todo_wine ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+
+    /* Cut with WM_KEYDOWN to simulate Ctrl-X */
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "cut");
+    /* Simulates select all (Ctrl-A) */
+    hold_key(VK_CONTROL);
+    SendMessage(hwndRichEdit, WM_KEYDOWN, 'A',
+                (MapVirtualKey('A', MAPVK_VK_TO_VSC) << 16) & 1);
+    /* Simulates select cut (Ctrl-X) */
+    SendMessage(hwndRichEdit, WM_KEYDOWN, 'X',
+                (MapVirtualKey('X', MAPVK_VK_TO_VSC) << 16) & 1);
+    release_key(VK_CONTROL);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(buffer,"");
+    todo_wine ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
+    SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(buffer,"cut\r\n");
+    todo_wine ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    /* Simulates undo (Ctrl-Z) */
+    hold_key(VK_CONTROL);
+    SendMessage(hwndRichEdit, WM_KEYDOWN, 'Z',
+                (MapVirtualKey('Z', MAPVK_VK_TO_VSC) << 16) & 1);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(buffer,"");
+    todo_wine ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    /* Simulates redo (Ctrl-Y) */
+    SendMessage(hwndRichEdit, WM_KEYDOWN, 'Y',
+                (MapVirtualKey('Y', MAPVK_VK_TO_VSC) << 16) & 1);
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(buffer,"cut\r\n");
+    todo_wine ok(result == 0,
+        "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
+    release_key(VK_CONTROL);
 
     DestroyWindow(hwndRichEdit);
 }
