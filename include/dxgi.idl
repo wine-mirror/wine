@@ -251,7 +251,7 @@ interface IDXGISwapChain : IDXGIDeviceSubObject
         [in] UINT flags
     );
     HRESULT ResizeTarget(
-        [in] const DXGI_MODE_DESC target_mode_desc
+        [in] const DXGI_MODE_DESC *target_mode_desc
     );
     HRESULT GetContainingOutput(
         [out] IDXGIOutput **output
