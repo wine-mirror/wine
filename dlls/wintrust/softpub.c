@@ -249,6 +249,55 @@ error:
     return ret;
 }
 
+static BOOL SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
+{
+    BOOL ret;
+
+    if (data->pWintrustData->u.pCert &&
+     data->pWintrustData->u.pCert->cbStruct == sizeof(WINTRUST_CERT_INFO))
+    {
+        if (data->psPfns)
+        {
+            CRYPT_PROVIDER_SGNR signer = { sizeof(signer), { 0 } };
+            DWORD i;
+
+            /* Add a signer with nothing but the time to verify, so we can
+             * add a cert to it
+             */
+            if (data->pWintrustData->u.pCert->psftVerifyAsOf)
+                data->sftSystemTime = signer.sftVerifyAsOf;
+            else
+            {
+                SYSTEMTIME sysTime;
+
+                GetSystemTime(&sysTime);
+                SystemTimeToFileTime(&sysTime, &signer.sftVerifyAsOf);
+            }
+            ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, 0, &signer);
+            if (ret)
+            {
+                ret = data->psPfns->pfnAddCert2Chain(data, 0, FALSE, 0,
+                 data->pWintrustData->u.pCert->psCertContext);
+                for (i = 0; ret && i < data->pWintrustData->u.pCert->chStores;
+                 i++)
+                    ret = data->psPfns->pfnAddStore2Chain(data,
+                     data->pWintrustData->u.pCert->pahStores[i]);
+            }
+        }
+        else
+        {
+            /* Do nothing!?  See the tests */
+            ret = TRUE;
+        }
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        ret = FALSE;
+    }
+    return ret;
+}
+
 HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
@@ -261,49 +310,7 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
     switch (data->pWintrustData->dwUnionChoice)
     {
     case WTD_CHOICE_CERT:
-        if (data->pWintrustData->u.pCert &&
-         data->pWintrustData->u.pCert->cbStruct == sizeof(WINTRUST_CERT_INFO))
-        {
-            if (data->psPfns)
-            {
-                CRYPT_PROVIDER_SGNR signer = { sizeof(signer), { 0 } };
-                DWORD i;
-
-                /* Add a signer with nothing but the time to verify, so we can
-                 * add a cert to it
-                 */
-                if (data->pWintrustData->u.pCert->psftVerifyAsOf)
-                    data->sftSystemTime = signer.sftVerifyAsOf;
-                else
-                {
-                    SYSTEMTIME sysTime;
-
-                    GetSystemTime(&sysTime);
-                    SystemTimeToFileTime(&sysTime, &signer.sftVerifyAsOf);
-                }
-                ret = data->psPfns->pfnAddSgnr2Chain(data, FALSE, 0, &signer);
-                if (!ret)
-                    goto error;
-                ret = data->psPfns->pfnAddCert2Chain(data, 0, FALSE, 0,
-                 data->pWintrustData->u.pCert->psCertContext);
-                if (!ret)
-                    goto error;
-                for (i = 0; ret && i < data->pWintrustData->u.pCert->chStores;
-                 i++)
-                    ret = data->psPfns->pfnAddStore2Chain(data,
-                     data->pWintrustData->u.pCert->pahStores[i]);
-            }
-            else
-            {
-                /* Do nothing!?  See the tests */
-                ret = TRUE;
-            }
-        }
-        else
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            ret = FALSE;
-        }
+        ret = SOFTPUB_LoadCertMessage(data);
         break;
     case WTD_CHOICE_FILE:
         if (!data->pWintrustData->u.pFile)
