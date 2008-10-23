@@ -334,6 +334,7 @@ static void on_add_click(HWND dialog)
     SetFocus(GetDlgItem(dialog, IDC_LIST_DRIVES));
 
     update_controls(dialog);
+    SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
 }
 
 static void on_remove_click(HWND dialog)
@@ -372,6 +373,7 @@ static void on_remove_click(HWND dialog)
     SetFocus(GetDlgItem(dialog, IDC_LIST_DRIVES));
 
     update_controls(dialog);
+    SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
 }
 
 static void update_controls(HWND dialog)
@@ -485,6 +487,7 @@ static void on_edit_changed(HWND dialog, WORD id)
             WCHAR *label = get_textW(dialog, id);
             HeapFree(GetProcessHeap(), 0, current_drive->label);
             current_drive->label = label;
+            current_drive->modified = TRUE;
 
             WINE_TRACE("set label to %s\n", wine_dbgstr_w(current_drive->label));
 
@@ -500,6 +503,7 @@ static void on_edit_changed(HWND dialog, WORD id)
             path = get_text(dialog, id);
             HeapFree(GetProcessHeap(), 0, current_drive->unixpath);
             current_drive->unixpath = path ? path : strdupA("drive_c");
+            current_drive->modified = TRUE;
 
             WINE_TRACE("set path to %s\n", current_drive->unixpath);
 
@@ -517,6 +521,7 @@ static void on_edit_changed(HWND dialog, WORD id)
 
             serial = get_text(dialog, id);
             current_drive->serial = strtoul( serial, NULL, 16 );
+            current_drive->modified = TRUE;
 
             WINE_TRACE("set serial to %08x\n", current_drive->serial);
 
@@ -756,6 +761,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 
                     str = get_textW(dialog, IDC_EDIT_SERIAL);
                     current_drive->serial = strtoulW( str, NULL, 16 );
+                    current_drive->modified = TRUE;
 
                     /* TODO: we don't have a device at this point */
 
@@ -787,6 +793,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     enable_labelserial_box(dialog, mode);
 
                     current_drive->type = type_pairs[selection].sCode;
+                    current_drive->modified = TRUE;
                     break;
                 }
 

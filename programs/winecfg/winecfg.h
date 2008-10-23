@@ -102,6 +102,7 @@ struct drive
     DWORD type; /* one of the DRIVE_ constants from winbase.h  */
 
     BOOL in_use;
+    BOOL modified;
 };
 
 #define DRIVE_MASK_BIT(B) (1 << (toupper(B) - 'A'))

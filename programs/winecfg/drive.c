@@ -103,6 +103,7 @@ BOOL add_drive(char letter, const char *targetpath, const WCHAR *label, DWORD se
     drives[driveIndex].serial   = serial;
     drives[driveIndex].type     = type;
     drives[driveIndex].in_use   = TRUE;
+    drives[driveIndex].modified = TRUE;
 
     return TRUE;
 }
@@ -116,6 +117,7 @@ void delete_drive(struct drive *d)
     d->label = NULL;
     d->serial = 0;
     d->in_use = FALSE;
+    d->modified = TRUE;
 }
 
 static void set_drive_type( char letter, DWORD type )
@@ -370,6 +372,9 @@ void load_drives(void)
         drivecount++;
     }
 
+    /* reset modified flags */
+    for (i = 0; i < 26; i++) drives[i].modified = FALSE;
+
     WINE_TRACE("found %d drives\n", drivecount);
 
     HeapFree(GetProcessHeap(), 0, path);
@@ -383,66 +388,37 @@ void apply_drive_changes(void)
     int i;
     CHAR devicename[4];
     CHAR targetpath[256];
-    BOOL foundDrive;
-    WCHAR volumeNameBuffer[512];
-    DWORD serialNumber;
-    int retval;
-    BOOL defineDevice;
 
     WINE_TRACE("\n");
 
     /* add each drive and remove as we go */
     for(i = 0; i < 26; i++)
     {
-        defineDevice = FALSE;
-        foundDrive = FALSE;
-        volumeNameBuffer[0] = 0;
-        serialNumber = 0;
+        if (!drives[i].modified) continue;
+        drives[i].modified = FALSE;
+
         snprintf(devicename, sizeof(devicename), "%c:", 'A' + i);
 
-        /* get a drive */
-        if(QueryDosDevice(devicename, targetpath, sizeof(targetpath)))
+        if (drives[i].in_use)
         {
-            char *cursor;
-            
-            /* correct the slashes in the path to be UNIX style */
-            while ((cursor = strchr(targetpath, '\\'))) *cursor = '/';
-
-            foundDrive = TRUE;
-        }
-
-        /* if we found a drive and have a drive then compare things */
-        if(foundDrive && drives[i].in_use)
-        {
-            WCHAR deviceW[4] = {'a',':','\\',0};
-            WINE_TRACE("drives[i].letter: '%c'\n", drives[i].letter);
-
-            deviceW[0] = 'A' + i;
-            retval = GetVolumeInformationW(deviceW, volumeNameBuffer, sizeof(volumeNameBuffer)/sizeof(WCHAR),
-                                           &serialNumber, NULL, NULL, NULL, 0 );
-            if(!retval)
+            /* define this drive */
+            /* DefineDosDevice() requires that NO trailing slash be present */
+            if(!DefineDosDevice(DDD_RAW_TARGET_PATH, devicename, drives[i].unixpath))
             {
-                WINE_TRACE("  GetVolumeInformation() for '%s' failed\n", devicename);
+                WINE_ERR("  unable to define devicename of '%s', targetpath of '%s'\n",
+                    devicename, drives[i].unixpath);
                 PRINTERROR();
-                volumeNameBuffer[0] = '\0';
-            }
-
-            WINE_TRACE("  current path:   '%s', new path:   '%s'\n",
-                       targetpath, drives[i].unixpath);
-
-            /* compare to what we have */
-            /* do we have the same targetpath? */
-            if(strcmp(drives[i].unixpath, targetpath))
-            {
-                defineDevice = TRUE;
-                WINE_TRACE("  making changes to drive '%s'\n", devicename);
             }
             else
             {
-                WINE_TRACE("  no changes to drive '%s'\n", devicename);
+                WINE_TRACE("  added devicename of '%s', targetpath of '%s'\n",
+                           devicename, drives[i].unixpath);
             }
+            set_drive_label( drives[i].letter, drives[i].label );
+            set_drive_serial( drives[i].letter, drives[i].serial );
+            set_drive_type( drives[i].letter, drives[i].type );
         }
-        else if(foundDrive && !drives[i].in_use)
+        else if (QueryDosDevice(devicename, targetpath, sizeof(targetpath)))
         {
             /* remove this drive */
             if(!DefineDosDevice(DDD_REMOVE_DEFINITION, devicename, drives[i].unixpath))
@@ -460,36 +436,5 @@ void apply_drive_changes(void)
             set_drive_type( drives[i].letter, DRIVE_UNKNOWN );
             continue;
         }
-        else if(drives[i].in_use) /* foundDrive must be false from the above check */
-        {
-            defineDevice = TRUE;
-        }
-
-        /* adding and modifying are the same steps */
-        if(defineDevice)
-        {
-            /* define this drive */
-            /* DefineDosDevice() requires that NO trailing slash be present */
-            snprintf(devicename, sizeof(devicename), "%c:", 'A' + i);
-            if(!DefineDosDevice(DDD_RAW_TARGET_PATH, devicename, drives[i].unixpath))
-            {
-                WINE_ERR("  unable to define devicename of '%s', targetpath of '%s'\n",
-                    devicename, drives[i].unixpath);
-                PRINTERROR();
-            }
-            else
-            {
-                WINE_TRACE("  added devicename of '%s', targetpath of '%s'\n",
-                           devicename, drives[i].unixpath);
-            }
-        }
-
-        if (!drives[i].label || lstrcmpW(drives[i].label, volumeNameBuffer))
-            set_drive_label( drives[i].letter, drives[i].label );
-
-        if (drives[i].serial != serialNumber)
-            set_drive_serial( drives[i].letter, drives[i].serial );
-
-        set_drive_type( drives[i].letter, drives[i].type );
     }
 }
