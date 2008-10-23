@@ -692,6 +692,7 @@ static BOOL emr_produces_output(int type)
     case EMR_LINETO:
     case EMR_ARCTO:
     case EMR_POLYDRAW:
+    case EMR_GDICOMMENT:
     case EMR_FILLRGN:
     case EMR_FRAMERGN:
     case EMR_INVERTRGN:
