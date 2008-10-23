@@ -223,6 +223,48 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
     return STATUS_SUCCESS;
 }
 
+/* implementation of IOCTL_MOUNTMGR_DEFINE_UNIX_DRIVE */
+static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
+{
+    const struct mountmgr_unix_drive *input = in_buff;
+    const char *mount_point = NULL, *device = NULL;
+    unsigned int i;
+    WCHAR letter = tolowerW( input->letter );
+
+    if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
+    if (input->type > DRIVE_RAMDISK) return STATUS_INVALID_PARAMETER;
+    if (input->mount_point_offset > insize || input->device_offset > insize)
+        return STATUS_INVALID_PARAMETER;
+
+    /* make sure string are null-terminated */
+    if (input->mount_point_offset)
+    {
+        mount_point = (const char *)in_buff + input->mount_point_offset;
+        for (i = input->mount_point_offset; i < insize; i++)
+            if (!*((const char *)in_buff + i)) break;
+        if (i >= insize) return STATUS_INVALID_PARAMETER;
+    }
+    if (input->device_offset)
+    {
+        device = (const char *)in_buff + input->device_offset;
+        for (i = input->device_offset; i < insize; i++)
+            if (!*((const char *)in_buff + i)) break;
+        if (i >= insize) return STATUS_INVALID_PARAMETER;
+    }
+
+    if (input->type != DRIVE_NO_ROOT_DIR)
+    {
+        TRACE( "defining %c: dev %s mount %s type %u\n",
+               letter, debugstr_a(device), debugstr_a(mount_point), input->type );
+        return add_dos_device( letter - 'a', NULL, device, mount_point, input->type );
+    }
+    else
+    {
+        TRACE( "removing %c:\n", letter );
+        return remove_dos_device( letter - 'a', NULL );
+    }
+}
+
 /* handler for ioctls on the mount manager device */
 static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -243,6 +285,13 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
                                                      irp->MdlAddress->StartVa,
                                                      irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                      &irp->IoStatus );
+        break;
+    case IOCTL_MOUNTMGR_DEFINE_UNIX_DRIVE:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_unix_drive))
+            return STATUS_INVALID_PARAMETER;
+        irp->IoStatus.Information = 0;
+        irp->IoStatus.u.Status = define_unix_drive( irpsp->Parameters.DeviceIoControl.Type3InputBuffer,
+                                                    irpsp->Parameters.DeviceIoControl.InputBufferLength );
         break;
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );

@@ -32,6 +32,7 @@
 #include "ntddstor.h"
 #include "ntddcdrm.h"
 #include "ddk/wdm.h"
+#define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
 
 extern void initialize_hal(void);
