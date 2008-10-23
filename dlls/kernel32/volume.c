@@ -46,6 +46,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(volume);
 
 #define SUPERBLOCK_SIZE 2048
+#define SYMBOLIC_LINK_QUERY 0x0001
 
 #define CDFRAMES_PERSEC         75
 #define CDFRAMES_PERMIN         (CDFRAMES_PERSEC * 60)
@@ -128,6 +129,33 @@ static char *get_dos_device_path( LPCWSTR name )
     return buffer;
 }
 
+/* read the contents of an NT symlink object */
+static NTSTATUS read_nt_symlink( const WCHAR *name, WCHAR *target, DWORD size )
+{
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HANDLE handle;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, name );
+
+    if (!(status = NtOpenSymbolicLinkObject( &handle, SYMBOLIC_LINK_QUERY, &attr )))
+    {
+        UNICODE_STRING targetW;
+        targetW.Buffer = target;
+        targetW.MaximumLength = (size - 1) * sizeof(WCHAR);
+        status = NtQuerySymbolicLinkObject( handle, &targetW, NULL );
+        if (!status) target[targetW.Length / sizeof(WCHAR)] = 0;
+        NtClose( handle );
+    }
+    return status;
+}
 
 /* open a handle to a device root */
 static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
@@ -916,6 +944,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
     static const WCHAR com0W[] = {'\\','?','?','\\','C','O','M','0',0};
     static const WCHAR com1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','C','O','M','1',0,0};
     static const WCHAR lpt1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','L','P','T','1',0,0};
+    static const WCHAR driveW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','A',':',0};
 
     UNICODE_STRING nt_name;
     ANSI_STRING unix_name;
@@ -941,7 +970,19 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         }
         else if (devname[0] && devname[1] == ':' && !devname[2])
         {
-            memcpy( name, devname, 3 * sizeof(WCHAR) );
+            /* FIXME: should do this for all devices, not just drives */
+            NTSTATUS status;
+            WCHAR buffer[sizeof(driveW)/sizeof(WCHAR)];
+
+            memcpy( buffer, driveW, sizeof(driveW) );
+            buffer[12] = devname[0];
+            if ((status = read_nt_symlink( buffer, target, bufsize )))
+            {
+                SetLastError( RtlNtStatusToDosError(status) );
+                return 0;
+            }
+            ret = strlenW( target ) + 1;
+            goto done;
         }
         else
         {
@@ -995,7 +1036,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
                 RtlFreeAnsiString( &unix_name );
             }
         }
-
+    done:
         if (ret)
         {
             if (ret < bufsize) target[ret++] = 0;  /* add an extra null */
@@ -1064,12 +1105,17 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         strcpyW( nt_buffer + 4, rootW );
         RtlInitUnicodeString( &nt_name, nt_buffer );
 
+        /* FIXME: should simply enumerate the DosDevices directory instead */
         for (i = 0; i < 26; i++)
         {
-            nt_buffer[4] = 'a' + i;
-            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, TRUE ))
+            WCHAR buffer[sizeof(driveW)/sizeof(WCHAR)], dummy[8];
+            NTSTATUS status;
+
+            memcpy( buffer, driveW, sizeof(driveW) );
+            buffer[12] = 'A' + i;
+            status = read_nt_symlink( buffer, dummy, sizeof(dummy)/sizeof(WCHAR) );
+            if (status == STATUS_SUCCESS || status == STATUS_BUFFER_TOO_SMALL)
             {
-                RtlFreeAnsiString( &unix_name );
                 if (p + 3 >= target + bufsize)
                 {
                     SetLastError( ERROR_INSUFFICIENT_BUFFER );

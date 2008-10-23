@@ -51,7 +51,7 @@ static void test_query_dos_deviceA(void)
             if (strstr(buffer, "HARDDISK") || strstr(buffer, "RAMDISK")) found = TRUE;
         }
     }
-    todo_wine ok(found, "expected at least one devicename to contain HARDDISK or RAMDISK\n");
+    ok(found, "expected at least one devicename to contain HARDDISK or RAMDISK\n");
 }
 
 static void test_FindFirstVolume(void)
