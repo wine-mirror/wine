@@ -5652,7 +5652,7 @@ static void test_word_movement(void)
     /* one twoX|three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
-    todo_wine ok(sel_start == 8, "Cursor is at %d instead of %d\n", sel_start, 8);
+    ok(sel_start == 8, "Cursor is at %d instead of %d\n", sel_start, 8);
 
     DestroyWindow(hwnd);
 
@@ -5671,7 +5671,7 @@ static void test_word_movement(void)
     /* one twoX|three */
     SendMessageW(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
-    todo_wine ok(sel_start == 8, "Cursor is at %d instead of %d\n", sel_start, 8);
+    ok(sel_start == 8, "Cursor is at %d instead of %d\n", sel_start, 8);
 
     DestroyWindow(hwnd);
 }
