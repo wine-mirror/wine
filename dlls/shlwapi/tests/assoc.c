@@ -40,29 +40,46 @@ static void test_getstring_bad(void)
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, NULL, open, NULL, &len);
     expect_hr(E_INVALIDARG, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, badBad, open, NULL, &len);
-    expect_hr(E_FAIL, hr);
+    ok(hr == E_FAIL ||
+       hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
+       "Unexpected result : %08x\n", hr);
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotBad, open, NULL, &len);
-    expect_hr(E_FAIL, hr);
+    ok(hr == E_FAIL ||
+       hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
+       "Unexpected result : %08x\n", hr);
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, invalid, NULL,
                            &len);
-    expect_hr(0x80070002, hr); /* NOT FOUND */
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
+       hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
+       "Unexpected result : %08x\n", hr);
     hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, NULL);
-    expect_hr(E_UNEXPECTED, hr);
+    ok(hr == E_UNEXPECTED ||
+       hr == E_INVALIDARG, /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
+       "Unexpected result : %08x\n", hr);
 
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, NULL, open, NULL, &len);
     expect_hr(E_INVALIDARG, hr);
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, badBad, open, NULL,
                            &len);
-    expect_hr(E_FAIL, hr);
+    ok(hr == E_FAIL ||
+       hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
+       "Unexpected result : %08x\n", hr);
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotBad, open, NULL,
                            &len);
-    expect_hr(E_FAIL, hr);
+    ok(hr == E_FAIL ||
+       hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
+       "Unexpected result : %08x\n", hr);
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, invalid, NULL,
                            &len);
-    expect_hr(0x80070002, hr); /* NOT FOUND */
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
+       hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) || /* W2K/Vista/W2K8 */
+       hr == E_FAIL, /* Win9x/WinMe/NT4 */
+       "Unexpected result : %08x\n", hr);
     hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
                            NULL);
-    expect_hr(E_UNEXPECTED, hr);
+    ok(hr == E_UNEXPECTED ||
+       hr == E_INVALIDARG, /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
+       "Unexpected result : %08x\n", hr);
 }
 
 static void test_getstring_basic(void)
