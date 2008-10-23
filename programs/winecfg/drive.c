@@ -256,121 +256,57 @@ static HANDLE open_mountmgr(void)
 }
 
 /* Load currently defined drives into the drives array  */
-void load_drives(void)
+BOOL load_drives(void)
 {
-    WCHAR *devices, *dev;
-    int len;
-    int drivecount = 0, i;
-    int retval;
-    static const int arraysize = 512;
-    const char *config_dir = wine_get_config_dir();
-    char *path;
+    DWORD i, size = 1024;
+    HANDLE mgr;
+    WCHAR root[] = {'A',':',0};
 
-    WINE_TRACE("\n");
+    if ((mgr = open_mountmgr()) == INVALID_HANDLE_VALUE) return FALSE;
 
-    /* setup the drives array */
-    dev = devices = HeapAlloc(GetProcessHeap(), 0, arraysize * sizeof(WCHAR));
-    len = GetLogicalDriveStringsW(arraysize, devices);
-
-    /* make all devices unused */
-    for (i = 0; i < 26; i++)
+    while (root[0] <= 'Z')
     {
-        drives[i].letter = 'A' + i;
-        drives[i].in_use = FALSE;
-        drives[i].serial = 0;
+        struct mountmgr_unix_drive input;
+        struct mountmgr_unix_drive *data;
 
-        HeapFree(GetProcessHeap(), 0, drives[i].unixpath);
-        drives[i].unixpath = NULL;
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) break;
 
-        HeapFree(GetProcessHeap(), 0, drives[i].label);
-        drives[i].label = NULL;
-    }
+        memset( &input, 0, sizeof(input) );
+        input.letter = root[0];
 
-    /* work backwards through the result of GetLogicalDriveStrings  */
-    while (len)
-    {
-        WCHAR volname[512]; /* volume name  */
-        DWORD serial;
-        char simplepath[3];
-        char targetpath[256];
-        char *c;
-
-        WINE_TRACE("devices == %s\n", wine_dbgstr_w(devices));
-
-        volname[0] = 0;
-
-        retval = GetVolumeInformationW(devices, volname, sizeof(volname)/sizeof(WCHAR),
-                                       &serial, NULL, NULL, NULL, 0);
-        if(!retval)
+        if (DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE, &input, sizeof(input),
+                             data, size, NULL, NULL ))
         {
-            WINE_ERR("GetVolumeInformation() for %s failed, setting serial to 0\n",
-                     wine_dbgstr_w(devices));
-            PRINTERROR();
-            serial = 0;
+            char *unixpath = NULL, *device = NULL;
+            WCHAR volname[MAX_PATH];
+            DWORD serial;
+
+            if (data->mount_point_offset) unixpath = (char *)data + data->mount_point_offset;
+            if (data->device_offset) device = (char *)data + data->device_offset;
+
+            if (!GetVolumeInformationW( root, volname, sizeof(volname)/sizeof(WCHAR),
+                                        &serial, NULL, NULL, NULL, 0 ))
+            {
+                volname[0] = 0;
+                serial = 0;
+            }
+            if (unixpath)  /* FIXME: handle unmounted drives too */
+                add_drive( root[0], unixpath, device, volname, serial, get_drive_type(root[0]) );
+            root[0]++;
         }
-
-        WINE_TRACE("serial: '0x%X'\n", serial);
-
-	/* QueryDosDevice() requires no trailing backslash */
-        simplepath[0] = devices[0];
-        simplepath[1] = ':';
-        simplepath[2] = 0;
-        QueryDosDevice(simplepath, targetpath, sizeof(targetpath));
-
-        /* targetpath may have forward slashes rather than backslashes, so correct */
-        c = targetpath;
-        do if (*c == '\\') *c = '/'; while (*c++);
-
-        add_drive(*devices, targetpath, NULL, volname, serial, get_drive_type(devices[0]) );
-
-        len -= lstrlenW(devices);
-        devices += lstrlenW(devices);
-
-        /* skip over any nulls */
-        while ((*devices == 0) && (len))
+        else
         {
-            len--;
-            devices++;
+            if (GetLastError() == ERROR_MORE_DATA) size = data->size;
+            else root[0]++;  /* skip this drive */
         }
-
-        drivecount++;
-    }
-
-    /* Find all the broken symlinks we might have and add them as well. */
-
-    len = strlen(config_dir) + sizeof("/dosdevices/a:");
-    if (!(path = HeapAlloc(GetProcessHeap(), 0, len)))
-        return;
-
-    strcpy(path, config_dir);
-    strcat(path, "/dosdevices/a:");
-
-    for (i = 0; i < 26; i++)
-    {
-        char buff[MAX_PATH];
-        struct stat st;
-        int cnt;
-
-        if (drives[i].in_use) continue;
-        path[len - 3] = 'a' + i;
-
-        if (lstat(path, &st) == -1 || !S_ISLNK(st.st_mode)) continue;
-        if ((cnt = readlink(path, buff, sizeof(buff))) == -1) continue;
-        buff[cnt] = '\0';
-
-        WINE_TRACE("found broken symlink %s -> %s\n", path, buff);
-        add_drive('A' + i, buff, NULL, NULL, 0, DRIVE_UNKNOWN);
-
-        drivecount++;
+        HeapFree( GetProcessHeap(), 0, data );
     }
 
     /* reset modified flags */
     for (i = 0; i < 26; i++) drives[i].modified = FALSE;
 
-    WINE_TRACE("found %d drives\n", drivecount);
-
-    HeapFree(GetProcessHeap(), 0, path);
-    HeapFree(GetProcessHeap(), 0, dev);
+    CloseHandle( mgr );
+    return TRUE;
 }
 
 /* some of this code appears to be broken by bugs in Wine: the label

@@ -90,7 +90,7 @@ INT_PTR CALLBACK AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 INT_PTR CALLBACK ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /* Drive management  */
-void load_drives(void);
+BOOL load_drives(void);
 int autodetect_drives(void);
 
 struct drive
