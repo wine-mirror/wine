@@ -64,6 +64,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+enum storage_state
+{
+    storage_state_uninitialised,
+    storage_state_initialised,
+    storage_state_loaded
+};
+
 /****************************************************************************
  * DefaultHandler
  *
@@ -119,6 +126,10 @@ struct DefaultHandler
 
   /* connection cookie for the advise on the delegate OLE object */
   DWORD dwAdvConn;
+
+  /* storage passed to Load or InitNew */
+  IStorage *storage;
+  enum storage_state storage_state;
 };
 
 typedef struct DefaultHandler DefaultHandler;
@@ -1302,7 +1313,12 @@ static HRESULT WINAPI DefaultHandler_Run(
     IOleObject_QueryInterface(This->pOleDelegate, &IID_IPersistStorage,
                               (void **)&This->pPSDelegate);
     if (This->pPSDelegate)
-      hr = IPersistStorage_InitNew(This->pPSDelegate, NULL);
+    {
+      if(This->storage_state == storage_state_initialised)
+        hr = IPersistStorage_InitNew(This->pPSDelegate, This->storage);
+      else if(This->storage_state == storage_state_loaded)
+        hr = IPersistStorage_Load(This->pPSDelegate, This->storage);
+    }
   }
 
   if (SUCCEEDED(hr) && This->containerApp)
@@ -1548,6 +1564,13 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_InitNew(
     if(SUCCEEDED(hr) && object_is_running(This))
         hr = IPersistStorage_InitNew(This->pPSDelegate, pStg);
 
+    if(SUCCEEDED(hr))
+    {
+        IStorage_AddRef(pStg);
+        This->storage = pStg;
+        This->storage_state = storage_state_initialised;
+    }
+
     return hr;
 }
 
@@ -1570,6 +1593,12 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_Load(
     if(SUCCEEDED(hr) && object_is_running(This))
         hr = IPersistStorage_Load(This->pPSDelegate, pStg);
 
+    if(SUCCEEDED(hr))
+    {
+        IStorage_AddRef(pStg);
+        This->storage = pStg;
+        This->storage_state = storage_state_loaded;
+    }
     return hr;
 }
 
@@ -1614,6 +1643,14 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_SaveCompleted(
     if(SUCCEEDED(hr) && object_is_running(This))
         hr = IPersistStorage_SaveCompleted(This->pPSDelegate, pStgNew);
 
+    if(pStgNew)
+    {
+        IStorage_AddRef(pStgNew);
+        if(This->storage) IStorage_Release(This->storage);
+        This->storage = pStgNew;
+        This->storage_state = storage_state_loaded;
+    }
+
     return hr;
 }
 
@@ -1634,6 +1671,10 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_HandsOffStorage(
 
     if(SUCCEEDED(hr) && object_is_running(This))
         hr = IPersistStorage_HandsOffStorage(This->pPSDelegate);
+
+    if(This->storage) IStorage_Release(This->storage);
+    This->storage = NULL;
+    This->storage_state = storage_state_uninitialised;
 
     return hr;
 }
@@ -1795,6 +1836,8 @@ static DefaultHandler* DefaultHandler_Construct(
   This->pDataDelegate = NULL;
 
   This->dwAdvConn = 0;
+  This->storage = NULL;
+  This->storage_state = storage_state_uninitialised;
 
   return This;
 }
@@ -1834,6 +1877,12 @@ static void DefaultHandler_Destroy(
   {
     IDataAdviseHolder_Release(This->dataAdviseHolder);
     This->dataAdviseHolder = NULL;
+  }
+
+  if (This->storage)
+  {
+    IStorage_Release(This->storage);
+    This->storage = NULL;
   }
 
   HeapFree(GetProcessHeap(), 0, This);
