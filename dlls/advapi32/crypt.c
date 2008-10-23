@@ -2281,11 +2281,6 @@ BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
 {
     int dev_random;
 
-    /* FIXME: /dev/urandom does not provide random numbers of a sufficient
-     * quality for cryptographic applications. /dev/random is much better,  
-     * but it blocks if the kernel has not yet collected enough entropy for
-     * the request, which will suspend the calling thread for an indefinite
-     * amount of time. */
     dev_random = open("/dev/urandom", O_RDONLY);
     if (dev_random != -1)
     {
@@ -2296,6 +2291,8 @@ BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
         }
         close(dev_random);
     }
+    else
+        FIXME("couldn't open /dev/urandom\n");
     SetLastError(NTE_FAIL);
     return FALSE;
 }    
