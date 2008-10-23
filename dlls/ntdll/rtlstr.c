@@ -1511,8 +1511,7 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
     const UNICODE_STRING *search_chars, /* [I] Unicode string which contains the characters to search for */
     USHORT *pos)                        /* [O] Position of the first character found + 2 */
 {
-    int main_idx;
-    unsigned int search_idx;
+    unsigned int main_idx, search_idx;
 
     switch (flags) {
         case 0:
@@ -1527,7 +1526,8 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
             *pos = 0;
             return STATUS_NOT_FOUND;
         case 1:
-            for (main_idx = main_str->Length / sizeof(WCHAR) - 1; main_idx >= 0; main_idx--) {
+            main_idx = main_str->Length / sizeof(WCHAR);
+            while (main_idx-- > 0) {
                 for (search_idx = 0; search_idx < search_chars->Length / sizeof(WCHAR); search_idx++) {
                     if (main_str->Buffer[main_idx] == search_chars->Buffer[search_idx]) {
                         *pos = main_idx * sizeof(WCHAR);
@@ -1552,7 +1552,8 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
             *pos = 0;
             return STATUS_NOT_FOUND;
         case 3:
-            for (main_idx = main_str->Length / sizeof(WCHAR) - 1; main_idx >= 0; main_idx--) {
+            main_idx = main_str->Length / sizeof(WCHAR);
+            while (main_idx-- > 0) {
                 search_idx = 0;
                 while (search_idx < search_chars->Length / sizeof(WCHAR) &&
                          main_str->Buffer[main_idx] != search_chars->Buffer[search_idx]) {

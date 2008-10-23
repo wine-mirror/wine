@@ -274,8 +274,8 @@ HANDLE thread_init(void)
     /* allocate and initialize the initial TEB */
 
     sigstack_total_size = get_signal_stack_total_size();
-    while (1 << sigstack_zero_bits < sigstack_total_size) sigstack_zero_bits++;
-    assert( 1 << sigstack_zero_bits == sigstack_total_size );  /* must be a power of 2 */
+    while (1U << sigstack_zero_bits < sigstack_total_size) sigstack_zero_bits++;
+    assert( 1U << sigstack_zero_bits == sigstack_total_size );  /* must be a power of 2 */
     assert( sigstack_total_size >= sizeof(TEB) + sizeof(struct startup_info) );
     thread_info.teb_size = sigstack_total_size;
 

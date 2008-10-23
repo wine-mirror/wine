@@ -899,7 +899,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
     NTSTATUS status = STATUS_SUCCESS;
     ULONG len;
     LPWSTR String;
-    INT count = 0;
+    ULONG count = 0;
 
     if (pInfo == NULL)
     {

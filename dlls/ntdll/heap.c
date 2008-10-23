@@ -256,7 +256,7 @@ static RTL_CRITICAL_SECTION_DEBUG process_heap_critsect_debug =
  */
 static void HEAP_Dump( HEAP *heap )
 {
-    int i;
+    unsigned int i;
     SUBHEAP *subheap;
     char *ptr;
 
@@ -620,7 +620,7 @@ static SUBHEAP *HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 {
     SUBHEAP *subheap;
     FREE_LIST_ENTRY *pEntry;
-    int i;
+    unsigned int i;
 
     /* Commit memory */
 
@@ -819,7 +819,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
  */
 static BOOL HEAP_IsValidArenaPtr( const HEAP *heap, const ARENA_FREE *ptr )
 {
-    int i;
+    unsigned int i;
     const SUBHEAP *subheap = HEAP_FindSubHeap( heap, ptr );
     if (!subheap) return FALSE;
     if ((const char *)ptr >= (const char *)subheap->base + subheap->headerSize) return TRUE;
