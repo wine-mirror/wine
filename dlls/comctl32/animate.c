@@ -817,7 +817,7 @@ static BOOL ANIMATE_Create(HWND hWnd, const CREATESTRUCTW *lpcs)
     }
 
     /* allocate memory for info structure */
-    infoPtr = (ANIMATE_INFO *)Alloc(sizeof(ANIMATE_INFO));
+    infoPtr = Alloc(sizeof(ANIMATE_INFO));
     if (!infoPtr) return FALSE;
 
     /* store crossref hWnd <-> info structure */

@@ -2351,7 +2351,7 @@ TOOLTIPS_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     TOOLTIPS_INFO *infoPtr;
 
     /* allocate memory for info structure */
-    infoPtr = (TOOLTIPS_INFO *)Alloc (sizeof(TOOLTIPS_INFO));
+    infoPtr = Alloc (sizeof(TOOLTIPS_INFO));
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
     /* initialize info structure */

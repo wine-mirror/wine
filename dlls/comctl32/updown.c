@@ -828,7 +828,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
     switch(message)
     {
         case WM_CREATE:
-            infoPtr = (UPDOWN_INFO*)Alloc (sizeof(UPDOWN_INFO));
+            infoPtr = Alloc (sizeof(UPDOWN_INFO));
 	    SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
 	    /* initialize the info struct */

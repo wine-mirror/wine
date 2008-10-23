@@ -1397,7 +1397,7 @@ TRACKBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     TRACKBAR_INFO *infoPtr;
     DWORD dwStyle;
 
-    infoPtr = (TRACKBAR_INFO *)Alloc (sizeof(TRACKBAR_INFO));
+    infoPtr = Alloc (sizeof(TRACKBAR_INFO));
     if (!infoPtr) return -1;
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 

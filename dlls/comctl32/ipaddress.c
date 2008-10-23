@@ -178,7 +178,7 @@ static LRESULT IPADDRESS_Create (HWND hwnd, const CREATESTRUCTA *lpCreate)
     SetWindowLongW (hwnd, GWL_STYLE,
 		    GetWindowLongW(hwnd, GWL_STYLE) & ~WS_BORDER);
 
-    infoPtr = (IPADDRESS_INFO *)Alloc (sizeof(IPADDRESS_INFO));
+    infoPtr = Alloc (sizeof(IPADDRESS_INFO));
     if (!infoPtr) return -1;
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 

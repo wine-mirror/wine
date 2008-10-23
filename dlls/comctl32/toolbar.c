@@ -2085,7 +2085,7 @@ static void TOOLBAR_Cust_AddButton(const CUSTDLG_INFO *custInfo, HWND hwnd, INT 
             PCUSTOMBUTTON btnNew;
 
             /* duplicate 'separator' button */
-            btnNew = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
+            btnNew = Alloc(sizeof(CUSTOMBUTTON));
             *btnNew = *btnInfo;
             btnInfo = btnNew;
         }
@@ -2308,7 +2308,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		/* add items to 'toolbar buttons' list and check if removable */
 		for (i = 0; i < custInfo->tbInfo->nNumButtons; i++)
                 {
-		    btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
+                    btnInfo = Alloc(sizeof(CUSTOMBUTTON));
                     memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
                     btnInfo->btn.fsStyle = BTNS_SEP;
                     btnInfo->bVirtual = FALSE;
@@ -2324,7 +2324,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMHEIGHT, 0, infoPtr->nBitmapHeight + 8);
 
 		/* insert separator button into 'available buttons' list */
-		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
+                btnInfo = Alloc(sizeof(CUSTOMBUTTON));
 		memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
 		btnInfo->btn.fsStyle = BTNS_SEP;
 		btnInfo->bVirtual = FALSE;
@@ -2359,7 +2359,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    index = TOOLBAR_GetButtonIndex (custInfo->tbInfo, nmtb.tbButton.idCommand, FALSE);
 		    if (index == -1)
 		    {
-			btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
+                        btnInfo = Alloc(sizeof(CUSTOMBUTTON));
 			btnInfo->bVirtual = FALSE;
 			btnInfo->bRemovable = TRUE;
 		    }
@@ -2392,7 +2392,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_SETCURSEL, 0, 0);
 
 		/* append 'virtual' separator button to the 'toolbar buttons' list */
-		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
+                btnInfo = Alloc(sizeof(CUSTOMBUTTON));
 		memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
 		btnInfo->btn.fsStyle = BTNS_SEP;
 		btnInfo->bVirtual = TRUE;
@@ -6157,7 +6157,7 @@ TOOLBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     DWORD styleadd = 0;
 
     /* allocate memory for info structure */
-    infoPtr = (TOOLBAR_INFO *)Alloc (sizeof(TOOLBAR_INFO));
+    infoPtr = Alloc (sizeof(TOOLBAR_INFO));
     SetWindowLongPtrW (hwnd, 0, (LONG_PTR)infoPtr);
 
     /* paranoid!! */
@@ -7103,7 +7103,7 @@ static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIS
     {
         PIMLENTRY *pnies;
 
-	c = (PIMLENTRY) Alloc(sizeof(IMLENTRY));
+        c = Alloc(sizeof(IMLENTRY));
 	c->id = id;
 
 	pnies = Alloc((*cies + 1) * sizeof(PIMLENTRY));

@@ -907,7 +907,7 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     int	len;
 
     TRACE("\n");
-    infoPtr = (STATUS_INFO*)Alloc (sizeof(STATUS_INFO));
+    infoPtr = Alloc (sizeof(STATUS_INFO));
     if (!infoPtr) goto create_fail;
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 

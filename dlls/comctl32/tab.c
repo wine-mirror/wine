@@ -2939,7 +2939,7 @@ static LRESULT TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   HFONT hOldFont;
   DWORD dwStyle;
 
-  infoPtr = (TAB_INFO *)Alloc (sizeof(TAB_INFO));
+  infoPtr = Alloc (sizeof(TAB_INFO));
 
   SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 

@@ -1225,7 +1225,7 @@ static LRESULT
 DATETIME_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 {
     static const WCHAR SysMonthCal32W[] = { 'S', 'y', 's', 'M', 'o', 'n', 't', 'h', 'C', 'a', 'l', '3', '2', 0 };
-    DATETIME_INFO *infoPtr = (DATETIME_INFO *)Alloc (sizeof(DATETIME_INFO));
+    DATETIME_INFO *infoPtr = Alloc (sizeof(DATETIME_INFO));
     STYLESTRUCT ss = { 0, lpcs->style };
 
     if (!infoPtr) return -1;
@@ -1234,9 +1234,9 @@ DATETIME_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->dwStyle = lpcs->style;
 
     infoPtr->nrFieldsAllocated = 32;
-    infoPtr->fieldspec = (int *) Alloc (infoPtr->nrFieldsAllocated * sizeof(int));
-    infoPtr->fieldRect = (RECT *) Alloc (infoPtr->nrFieldsAllocated * sizeof(RECT));
-    infoPtr->buflen = (int *) Alloc (infoPtr->nrFieldsAllocated * sizeof(int));
+    infoPtr->fieldspec = Alloc (infoPtr->nrFieldsAllocated * sizeof(int));
+    infoPtr->fieldRect = Alloc (infoPtr->nrFieldsAllocated * sizeof(RECT));
+    infoPtr->buflen = Alloc (infoPtr->nrFieldsAllocated * sizeof(int));
     infoPtr->hwndNotify = lpcs->hwndParent;
     infoPtr->select = -1; /* initially, nothing is selected */
     infoPtr->bDropdownEnabled = TRUE;

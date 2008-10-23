@@ -1896,7 +1896,7 @@ MONTHCAL_Create(HWND hwnd, LPARAM lParam)
   MONTHCAL_INFO *infoPtr;
 
   /* allocate memory for info structure */
-  infoPtr =(MONTHCAL_INFO*)Alloc(sizeof(MONTHCAL_INFO));
+  infoPtr = Alloc(sizeof(MONTHCAL_INFO));
   SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 
   if(infoPtr == NULL) {

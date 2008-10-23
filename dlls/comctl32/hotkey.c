@@ -411,7 +411,7 @@ HOTKEY_NCCreate (HWND hwnd, const CREATESTRUCTW *lpcs)
                     dwExStyle | WS_EX_CLIENTEDGE);
 
     /* allocate memory for info structure */
-    infoPtr = (HOTKEY_INFO *)Alloc (sizeof(HOTKEY_INFO));
+    infoPtr = Alloc (sizeof(HOTKEY_INFO));
     SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 
     /* initialize info structure */

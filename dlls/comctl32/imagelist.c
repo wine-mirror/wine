@@ -598,7 +598,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     TRACE("(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
 
-    himl = (HIMAGELIST)Alloc (sizeof(struct _IMAGELIST));
+    himl = Alloc (sizeof(struct _IMAGELIST));
     if (!himl)
         return NULL;
 

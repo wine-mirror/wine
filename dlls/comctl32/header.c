@@ -1454,7 +1454,7 @@ HEADER_Create (HWND hwnd, LPARAM lParam)
     HFONT hOldFont;
     HDC   hdc;
 
-    infoPtr = (HEADER_INFO *)Alloc (sizeof(HEADER_INFO));
+    infoPtr = Alloc (sizeof(HEADER_INFO));
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
     infoPtr->hwndNotify = ((LPCREATESTRUCTA)lParam)->hwndParent;

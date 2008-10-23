@@ -211,7 +211,7 @@ COMBOEX_NotifyItem (COMBOEX_INFO *infoPtr, UINT code, NMCOMBOBOXEXW *hdr)
 	if ((hdr->ceItem.mask & CBEIF_TEXT) && is_textW(wstr)) {
 	    len = WideCharToMultiByte (CP_ACP, 0, wstr, -1, 0, 0, NULL, NULL);
 	    if (len > 0) {
-		astr = (LPSTR)Alloc ((len + 1)*sizeof(CHAR));
+                astr = Alloc ((len + 1)*sizeof(CHAR));
 		if (!astr) return 0;
 		WideCharToMultiByte (CP_ACP, 0, wstr, -1, astr, len, 0, 0);
 		hdr->ceItem.pszText = (LPWSTR)astr;
@@ -320,7 +320,7 @@ static LPCWSTR COMBOEX_GetText(COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item)
 
     if (is_textW(nmce.ceItem.pszText)) {
 	len = MultiByteToWideChar (CP_ACP, 0, (LPSTR)nmce.ceItem.pszText, -1, NULL, 0);
-	buf = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
+        buf = Alloc ((len + 1)*sizeof(WCHAR));
 	if (buf)
 	    MultiByteToWideChar (CP_ACP, 0, (LPSTR)nmce.ceItem.pszText, -1, buf, len);
 	if (nmce.ceItem.mask & CBEIF_DI_SETITEM) {
@@ -622,7 +622,7 @@ static INT COMBOEX_InsertItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW const *ci
     if (index > infoPtr->nb_items) return -1;
 
     /* get zero-filled space and chain it in */
-    if(!(item = (CBE_ITEMDATA *)Alloc (sizeof(*item)))) return -1;
+    if(!(item = Alloc (sizeof(*item)))) return -1;
 
     /* locate position to insert new item in */
     if (index == infoPtr->nb_items) {
@@ -654,7 +654,7 @@ static INT COMBOEX_InsertItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW const *ci
 
         if (is_textW(cit->pszText)) len = strlenW (cit->pszText);
 	if (len > 0) {
-	    item->pszText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
+            item->pszText = Alloc ((len + 1)*sizeof(WCHAR));
 	    if (!item->pszText) {
 		Free(item);
 		return -1;
@@ -700,7 +700,7 @@ static INT COMBOEX_InsertItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA const *ci
     memcpy(&citW,cit,sizeof(COMBOBOXEXITEMA));
     if (cit->mask & CBEIF_TEXT && is_textA(cit->pszText)) {
 	INT len = MultiByteToWideChar (CP_ACP, 0, cit->pszText, -1, NULL, 0);
-	wstr = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
+        wstr = Alloc ((len + 1)*sizeof(WCHAR));
 	if (!wstr) return -1;
 	MultiByteToWideChar (CP_ACP, 0, cit->pszText, -1, wstr, len);
 	citW.pszText = wstr;
@@ -787,7 +787,7 @@ static BOOL COMBOEX_SetItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
 	COMBOEX_FreeText(item);
         if (is_textW(cit->pszText)) len = strlenW(cit->pszText);
 	if (len > 0) {
-	    item->pszText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
+            item->pszText = Alloc ((len + 1)*sizeof(WCHAR));
 	    if (!item->pszText) return FALSE;
 	    strcpyW(item->pszText, cit->pszText);
 	} else if (cit->pszText == LPSTR_TEXTCALLBACKW)
@@ -824,7 +824,7 @@ static BOOL COMBOEX_SetItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA const *cit)
     memcpy(&citW, cit, sizeof(COMBOBOXEXITEMA));
     if ((cit->mask & CBEIF_TEXT) && is_textA(cit->pszText)) {
 	INT len = MultiByteToWideChar (CP_ACP, 0, cit->pszText, -1, NULL, 0);
-	wstr = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
+        wstr = Alloc ((len + 1)*sizeof(WCHAR));
 	if (!wstr) return FALSE;
 	MultiByteToWideChar (CP_ACP, 0, cit->pszText, -1, wstr, len);
 	citW.pszText = wstr;
@@ -976,7 +976,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
     INT i;
 
     /* allocate memory for info structure */
-    infoPtr = (COMBOEX_INFO *)Alloc (sizeof(COMBOEX_INFO));
+    infoPtr = Alloc (sizeof(COMBOEX_INFO));
     if (!infoPtr) return -1;
 
     /* initialize info structure */
@@ -1109,7 +1109,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
      * Create an item structure to represent the data in the
      * EDIT control. It is allocated zero-filled.
      */
-    infoPtr->edit = (CBE_ITEMDATA *)Alloc (sizeof (CBE_ITEMDATA));
+    infoPtr->edit = Alloc (sizeof (CBE_ITEMDATA));
     if (!infoPtr->edit) {
 	COMBOEX_Destroy(infoPtr);
 	return -1;
@@ -1408,7 +1408,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT const *di
 	    item->mask &= ~CBEIF_TEXT;
 	    if( (len = GetWindowTextLengthW(infoPtr->hwndEdit)) ) {
 		item->mask |= CBEIF_TEXT;
-		item->pszText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
+                item->pszText = Alloc ((len + 1)*sizeof(WCHAR));
 		if (item->pszText)
 		    GetWindowTextW(infoPtr->hwndEdit, item->pszText, len+1);
 

@@ -2595,8 +2595,7 @@ REBAR_MoveBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     }
 
     /* allocate new space and copy rest of bands into it */
-    infoPtr->bands =
-	(REBAR_BAND *)Alloc ((infoPtr->uNumBands)*sizeof(REBAR_BAND));
+    infoPtr->bands = Alloc ((infoPtr->uNumBands)*sizeof(REBAR_BAND));
 
     /* pre insert copy */
     if (uTo > 0) {
@@ -3185,7 +3184,7 @@ REBAR_NCCreate (HWND hwnd, LPARAM lParam)
     }
 
     /* allocate memory for info structure */
-    infoPtr = (REBAR_INFO *)Alloc (sizeof(REBAR_INFO));
+    infoPtr = Alloc (sizeof(REBAR_INFO));
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
     /* initialize info structure - initial values are 0 */

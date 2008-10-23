@@ -2277,9 +2277,7 @@ static BOOL PROPSHEET_AddPage(HWND hwndDlg,
   /*
    * Allocate and fill in a new PropPageInfo entry.
    */
-  ppi = (PropPageInfo*) ReAlloc(psInfo->proppage,
-                                sizeof(PropPageInfo) *
-                                (psInfo->nPages + 1));
+  ppi = ReAlloc(psInfo->proppage, sizeof(PropPageInfo) * (psInfo->nPages + 1));
   if (!ppi)
       return FALSE;
 
@@ -2829,8 +2827,7 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 
   PROPSHEET_CollectSheetInfoA(lppsh, psInfo);
 
-  psInfo->proppage = (PropPageInfo*) Alloc(sizeof(PropPageInfo) *
-                                                    lppsh->nPages);
+  psInfo->proppage = Alloc(sizeof(PropPageInfo) * lppsh->nPages);
   pByte = (const BYTE*) psInfo->ppshheader.u3.ppsp;
 
   for (n = i = 0; i < lppsh->nPages; i++, n++)
@@ -2872,8 +2869,7 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 
   PROPSHEET_CollectSheetInfoW(lppsh, psInfo);
 
-  psInfo->proppage = (PropPageInfo*) Alloc(sizeof(PropPageInfo) *
-                                                    lppsh->nPages);
+  psInfo->proppage = Alloc(sizeof(PropPageInfo) * lppsh->nPages);
   pByte = (const BYTE*) psInfo->ppshheader.u3.ppsp;
 
   for (n = i = 0; i < lppsh->nPages; i++, n++)
@@ -3414,7 +3410,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_INITDIALOG:
     {
       PropSheetInfo* psInfo = (PropSheetInfo*) lParam;
-      WCHAR* strCaption = (WCHAR*)Alloc(MAX_CAPTION_LENGTH*sizeof(WCHAR));
+      WCHAR* strCaption = Alloc(MAX_CAPTION_LENGTH*sizeof(WCHAR));
       HWND hwndTabCtrl = GetDlgItem(hwnd, IDC_TABCONTROL);
       int idx;
       LOGFONTW logFont;
