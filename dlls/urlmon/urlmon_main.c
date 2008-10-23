@@ -767,3 +767,21 @@ HRESULT WINAPI Extract(void *dest, LPCSTR szCabName)
 
     return pExtract(dest, szCabName);
 }
+
+/***********************************************************************
+ *           IsLoggingEnabledA (URLMON.@)
+ */
+BOOL WINAPI IsLoggingEnabledA(LPCSTR url)
+{
+    FIXME("(%s)\n", debugstr_a(url));
+    return FALSE;
+}
+
+/***********************************************************************
+ *           IsLoggingEnabledW (URLMON.@)
+ */
+BOOL WINAPI IsLoggingEnabledW(LPCWSTR url)
+{
+    FIXME("(%s)\n", debugstr_w(url));
+    return FALSE;
+}
