@@ -878,7 +878,7 @@ CreateMappedBitmap (HINSTANCE hInstance, INT_PTR idBitmap, UINT wFlags,
     hglb = LoadResource (hInstance, hRsrc);
     if (hglb == 0)
 	return 0;
-    lpBitmap = (LPBITMAPINFOHEADER)LockResource (hglb);
+    lpBitmap = LockResource (hglb);
     if (lpBitmap == NULL)
 	return 0;
 

@@ -441,7 +441,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
                                     (LPWSTR)RT_DIALOG);
     HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
                                      hResource);
-    pTemplate = (LPDLGTEMPLATEW)LockResource(hTemplate);
+    pTemplate = LockResource(hTemplate);
   }
   else
   {
@@ -450,7 +450,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
                                     (LPSTR)RT_DIALOG);
     HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
                                      hResource);
-    pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
+    pTemplate = LockResource(hTemplate);
   }
 
   /*
@@ -1412,7 +1412,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     if(!hTemplate)
 	return FALSE;
 
-    pTemplate = (LPDLGTEMPLATEW)LockResource(hTemplate);
+    pTemplate = LockResource(hTemplate);
     /*
      * Make a copy of the dialog template to make it writable
      */
@@ -1434,7 +1434,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
     if(!hTemplate)
 	return FALSE;
 
-    pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
+    pTemplate = LockResource(hTemplate);
     /*
      * Make a copy of the dialog template to make it writable
      */
