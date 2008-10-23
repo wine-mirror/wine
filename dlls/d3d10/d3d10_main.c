@@ -64,3 +64,52 @@ HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver
 
     return S_OK;
 }
+
+HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
+        HMODULE swrast, UINT flags, UINT sdk_version, DXGI_SWAP_CHAIN_DESC *swapchain_desc,
+        IDXGISwapChain **swapchain, ID3D10Device **device)
+{
+    IDXGIFactory *factory;
+    HRESULT hr;
+
+    TRACE("adapter %p, driver_type %s, swrast %p, flags %#x, sdk_version %d,\n"
+            "\tswapchain_desc %p, swapchain %p, device %p\n",
+            adapter, debug_d3d10_driver_type(driver_type), swrast, flags, sdk_version,
+            swapchain_desc, swapchain, device);
+
+    hr = D3D10CreateDevice(adapter, driver_type, swrast, flags, sdk_version, device);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create a device, returning %#x\n", hr);
+        return hr;
+    }
+
+    TRACE("Created ID3D10Device %p\n", *device);
+
+    hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
+    if (FAILED(hr))
+    {
+        ID3D10Device_Release(*device);
+        *device = NULL;
+
+        WARN("Failed to create a DXGI factory, returning %#x\n", hr);
+        return hr;
+    }
+
+    TRACE("Created IDXGIFactory %p\n", factory);
+
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)*device, swapchain_desc, swapchain);
+    IDXGIFactory_Release(factory);
+    if (FAILED(hr))
+    {
+        ID3D10Device_Release(*device);
+        *device = NULL;
+
+        WARN("Failed to create a swapchain, returning %#x\n", hr);
+        return hr;
+    }
+
+    TRACE("Created IDXGISwapChain %p\n", *swapchain);
+
+    return S_OK;
+}

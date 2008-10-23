@@ -2,7 +2,7 @@
 @ stub D3D10CompileShader
 @ stub D3D10CreateBlob
 @ stdcall D3D10CreateDevice(ptr long ptr long long ptr)
-@ stub D3D10CreateDeviceAndSwapChain
+@ stdcall D3D10CreateDeviceAndSwapChain(ptr long ptr long long ptr ptr ptr)
 @ stub D3D10CreateEffectFromMemory
 @ stub D3D10CreateEffectPoolFromMemory
 @ stub D3D10CreateStateBlock
