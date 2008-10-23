@@ -464,16 +464,30 @@ static void create_drive_devices(void)
     RtlFreeHeap( GetProcessHeap(), 0, path );
 }
 
-BOOL add_dos_device( const char *udi, const char *device, const char *mount_point, DWORD type )
+/* create a new dos drive */
+NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
+                         const char *mount_point, DWORD type )
 {
     struct dos_drive *drive, *next;
-    int letter = add_drive( device, type );
 
-    if (letter == -1) return FALSE;
+    if (letter == -1)  /* auto-assign a letter */
+    {
+        letter = add_drive( device, type );
+        if (letter == -1) return STATUS_OBJECT_NAME_COLLISION;
+    }
+    else  /* simply reset the device symlink */
+    {
+        char *path, *p;
+
+        if (!(path = get_dosdevices_path( &p ))) return STATUS_NO_MEMORY;
+        *p = 'a' + letter;
+        unlink( path );
+        if (device) symlink( device, path );
+    }
 
     LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
     {
-        if (drive->udi && !strcmp( udi, drive->udi ))
+        if (udi && drive->udi && !strcmp( udi, drive->udi ))
         {
             if (type == drive->type) goto found;
             delete_disk_device( drive );
@@ -482,7 +496,7 @@ BOOL add_dos_device( const char *udi, const char *device, const char *mount_poin
         if (drive->drive == letter) delete_disk_device( drive );
     }
 
-    if (create_disk_device( udi, type, &drive )) return FALSE;
+    if (create_disk_device( udi, type, &drive )) return STATUS_NO_MEMORY;
 
 found:
     RtlFreeHeap( GetProcessHeap(), 0, drive->unix_device );
@@ -513,19 +527,25 @@ found:
             RegCloseKey( hkey );
         }
 
-        send_notify( drive->drive, DBT_DEVICEARRIVAL );
+        if (udi) send_notify( drive->drive, DBT_DEVICEARRIVAL );
     }
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
-BOOL remove_dos_device( const char *udi )
+/* remove an existing dos drive, by letter or udi */
+NTSTATUS remove_dos_device( int letter, const char *udi )
 {
     HKEY hkey;
     struct dos_drive *drive;
 
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
-        if (!drive->udi || strcmp( udi, drive->udi )) continue;
+        if (letter != -1 && drive->drive != letter) continue;
+        if (udi)
+        {
+            if (!drive->udi) continue;
+            if (strcmp( udi, drive->udi )) continue;
+        }
 
         if (drive->drive != -1)
         {
@@ -540,12 +560,12 @@ BOOL remove_dos_device( const char *udi )
                 RegCloseKey( hkey );
             }
 
-            if (modified) send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
+            if (modified && udi) send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
         }
         delete_disk_device( drive );
-        return TRUE;
+        return STATUS_SUCCESS;
     }
-    return FALSE;
+    return STATUS_NO_SUCH_DEVICE;
 }
 
 /* handler for ioctls on the harddisk device */

@@ -39,8 +39,9 @@ extern void initialize_diskarbitration(void);
 
 /* device functions */
 
-extern BOOL add_dos_device( const char *udi, const char *device, const char *mount_point, DWORD type );
-extern BOOL remove_dos_device( const char *udi );
+extern NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
+                                const char *mount_point, DWORD type );
+extern NTSTATUS remove_dos_device( int letter, const char *udi );
 extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path );
 
 /* mount point functions */

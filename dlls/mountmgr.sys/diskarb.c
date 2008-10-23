@@ -69,7 +69,7 @@ static void appeared_callback( DADiskRef disk, void *context )
 
     TRACE( "got mount notification for '%s' on '%s'\n", device, mount_point );
 
-    add_dos_device( device, device, mount_point, type );
+    add_dos_device( -1, device, device, mount_point, type );
 done:
     CFRelease( dict );
 }
@@ -98,7 +98,7 @@ static void disappeared_callback( DADiskRef disk, void *context )
 
     TRACE( "got unmount notification for '%s'\n", device );
 
-    remove_dos_device( device );
+    remove_dos_device( -1, device );
 done:
     CFRelease( dict );
 }

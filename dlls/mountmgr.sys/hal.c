@@ -135,7 +135,7 @@ static void new_device( LibHalContext *ctx, const char *udi )
     if (type && !strcmp( type, "cdrom" )) drive_type = DRIVE_CDROM;
     else drive_type = DRIVE_REMOVABLE;  /* FIXME: default to removable */
 
-    add_dos_device( udi, device, mount_point, drive_type );
+    add_dos_device( -1, udi, device, mount_point, drive_type );
 
     /* add property watch for mount point */
     p_libhal_device_add_property_watch( ctx, udi, &error );
@@ -155,7 +155,7 @@ static void removed_device( LibHalContext *ctx, const char *udi )
 
     TRACE( "removed %s\n", wine_dbgstr_a(udi) );
 
-    if (remove_dos_device( udi ))
+    if (!remove_dos_device( -1, udi ))
     {
         p_dbus_error_init( &error );
         p_libhal_device_remove_property_watch( ctx, udi, &error );
