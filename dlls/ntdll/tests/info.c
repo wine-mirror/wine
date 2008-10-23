@@ -376,9 +376,18 @@ static void test_query_procperf(void)
     ok( status == STATUS_SUCCESS || status == STATUS_INFO_LENGTH_MISMATCH /* vista */,
         "Expected STATUS_SUCCESS or STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
     ok( NeededLength == ReturnLength, "Inconsistent length (%d) <-> (%d)\n", NeededLength, ReturnLength);
-    ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
-    ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
-    ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
+    if (status == STATUS_SUCCESS)
+    {
+        ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
+        ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
+        ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
+    }
+    else /* vista and 2008 */
+    {
+        ok (sppi->KernelTime.QuadPart == 0xdeaddead, "KernelTime changed\n");
+        ok (sppi->UserTime.QuadPart == 0xdeaddead, "UserTime changed\n");
+        ok (sppi->IdleTime.QuadPart == 0xdeaddead, "IdleTime changed\n");
+    }
 
     HeapFree( GetProcessHeap(), 0, sppi);
 }
