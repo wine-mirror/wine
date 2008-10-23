@@ -2126,7 +2126,7 @@ NTSTATUS WINAPI RtlStringFromGUID(const GUID* guid, UNICODE_STRING *str)
 
   str->Length = GUID_STRING_LENGTH * sizeof(WCHAR);
   str->MaximumLength = str->Length + sizeof(WCHAR);
-  str->Buffer = (WCHAR*)RtlAllocateHeap(GetProcessHeap(), 0, str->MaximumLength);
+  str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, str->MaximumLength);
   if (!str->Buffer)
   {
     str->Length = str->MaximumLength = 0;

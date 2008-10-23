@@ -599,7 +599,7 @@ static void wine_sigacthandler( int signal, siginfo_t *siginfo, void *sigcontext
 
     __asm__ __volatile__("mov %ss,%ax; mov %ax,%ds; mov %ax,%es");
 
-    thread_data = (struct ntdll_thread_data *)get_current_teb()->SystemReserved2;
+    thread_data = get_current_teb()->SystemReserved2;
     wine_set_fs( thread_data->fs );
     wine_set_gs( thread_data->gs );
 

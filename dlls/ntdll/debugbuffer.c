@@ -96,7 +96,7 @@ PDEBUG_BUFFER WINAPI RtlCreateQueryDebugBuffer(IN ULONG iSize, IN BOOLEAN iEvent
    if (iSize < sizeof(DEBUG_BUFFER)) {
      iSize = sizeof(DEBUG_BUFFER);
    }
-   oBuf = (PDEBUG_BUFFER) RtlAllocateHeap(GetProcessHeap(), 0, iSize);
+   oBuf = RtlAllocateHeap(GetProcessHeap(), 0, iSize);
    memset(oBuf, 0, iSize);
    FIXME("(%d, %d): returning %p\n", iSize, iEventPair, oBuf);
    return oBuf;

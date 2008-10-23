@@ -325,7 +325,7 @@ NTSTATUS WINAPI RtlpNtEnumerateSubKey( HANDLE handle, UNICODE_STRING *out, ULONG
   if (out->Length)
   {
     dwLen = out->Length + sizeof(KEY_BASIC_INFORMATION);
-    info = (KEY_BASIC_INFORMATION*)RtlAllocateHeap( GetProcessHeap(), 0, dwLen );
+    info = RtlAllocateHeap( GetProcessHeap(), 0, dwLen );
     if (!info)
       return STATUS_NO_MEMORY;
   }
@@ -543,7 +543,7 @@ NTSTATUS WINAPI RtlpNtQueryValueKey( HANDLE handle, ULONG *result_type, PBYTE de
     DWORD dwResultLen;
     DWORD dwLen = sizeof (KEY_VALUE_PARTIAL_INFORMATION) + (result_len ? *result_len : 0);
 
-    info = (KEY_VALUE_PARTIAL_INFORMATION*)RtlAllocateHeap( GetProcessHeap(), 0, dwLen );
+    info = RtlAllocateHeap( GetProcessHeap(), 0, dwLen );
     if (!info)
       return STATUS_NO_MEMORY;
 
@@ -1220,8 +1220,7 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
                 {
                     buflen = len;
                     RtlFreeHeap(GetProcessHeap(), 0, pInfo);
-                    pInfo = (KEY_VALUE_FULL_INFORMATION*)RtlAllocateHeap(
-                        GetProcessHeap(), 0, buflen);
+                    pInfo = RtlAllocateHeap(GetProcessHeap(), 0, buflen);
                     NtEnumerateValueKey(handle, i, KeyValueFullInformation,
                         pInfo, buflen, &len);
                 }
@@ -1255,8 +1254,7 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
             {
                 buflen = len;
                 RtlFreeHeap(GetProcessHeap(), 0, pInfo);
-                pInfo = (KEY_VALUE_FULL_INFORMATION*)RtlAllocateHeap(
-                    GetProcessHeap(), 0, buflen);
+                pInfo = RtlAllocateHeap(GetProcessHeap(), 0, buflen);
                 status = NtQueryValueKey(handle, &Value,
                     KeyValueFullInformation, pInfo, buflen, &len);
             }
