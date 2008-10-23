@@ -24,8 +24,8 @@
 static void test_getroletext(void)
 {
     INT ret, role;
-    CHAR buf[2], *buff, buff2[100];
-    WCHAR bufW[2], *buffW, buff2W[100];
+    CHAR buf[2], *buff;
+    WCHAR bufW[2], *buffW;
 
     /* wrong role number */
     ret = GetRoleTextA(-1, NULL, 0);
@@ -103,10 +103,25 @@ static void test_getroletext(void)
 
     /* check returned length for all roles */
     for(role = 0; role <= ROLE_SYSTEM_OUTLINEBUTTON; role++){
+        CHAR buff2[100];
+        WCHAR buff2W[100];
+
+        /* NT4 and W2K don't clear the buffer on a non existing role in the A-call */
+        memset(buff2, 0, sizeof(buff2));
+
         ret = GetRoleTextA(role, NULL, 0);
+        /* Win98 up to W2K miss some of the roles */
+        if (role >= ROLE_SYSTEM_SPLITBUTTON)
+          ok(ret > 0 || broken(ret == 0), "Expected the role %d to be present\n", role);
+        else
+          ok(ret > 0, "Expected the role to be present\n");
+
         GetRoleTextA(role, buff2, sizeof(buff2));
         ok(ret == lstrlenA(buff2),
            "GetRoleTextA: returned length doesn't match returned buffer for role %d\n", role);
+
+        /* Win98 and WinMe don't clear the buffer on a non existing role in the W-call */
+        memset(buff2W, 0, sizeof(buff2W));
 
         ret = GetRoleTextW(role, NULL, 0);
         GetRoleTextW(role, buff2W, sizeof(buff2W)/sizeof(WCHAR));
