@@ -67,6 +67,7 @@ struct dos_drive
     STORAGE_DEVICE_NUMBER devnum;      /* device number info */
     struct mount_point   *dosdev;      /* DosDevices mount point */
     struct mount_point   *volume;      /* Volume{xxx} mount point */
+    char                 *unix_device; /* unix device path */
     char                 *unix_mount;  /* unix mount point path */
 };
 
@@ -86,6 +87,15 @@ static char *get_dosdevices_path( char **drive )
         *drive = path + len - 4;
     }
     return path;
+}
+
+static char *strdupA( const char *str )
+{
+    char *ret;
+
+    if (!str) return NULL;
+    if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(str) + 1 ))) strcpy( ret, str );
+    return ret;
 }
 
 /* read a Unix symlink; returned buffer must be freed by caller */
@@ -186,7 +196,8 @@ static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_driv
         drive->type   = type;
         drive->dosdev = NULL;
         drive->volume = NULL;
-        drive->unix_mount = NULL;
+        drive->unix_device = NULL;
+        drive->unix_mount  = NULL;
         drive->symlink.Buffer = NULL;
         if (udi)
         {
@@ -258,6 +269,7 @@ static void delete_disk_device( struct dos_drive *drive )
         IoDeleteSymbolicLink( &drive->symlink );
         RtlFreeUnicodeString( &drive->symlink );
     }
+    RtlFreeHeap( GetProcessHeap(), 0, drive->unix_device );
     RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
     RtlFreeHeap( GetProcessHeap(), 0, drive->udi );
     RtlFreeUnicodeString( &drive->name );
@@ -379,8 +391,7 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
             modified = TRUE;
         }
         RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
-        if ((drive->unix_mount = RtlAllocateHeap( GetProcessHeap(), 0, strlen(mount_point) + 1 )))
-            strcpy( drive->unix_mount, mount_point );
+        drive->unix_mount = strdupA( mount_point );
         if (drive->dosdev) set_mount_point_id( drive->dosdev, mount_point, strlen(mount_point) + 1 );
         if (drive->volume) set_mount_point_id( drive->volume, mount_point, strlen(mount_point) + 1 );
     }
@@ -400,7 +411,7 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
 /* create devices for mapped drives */
 static void create_drive_devices(void)
 {
-    char *path, *p, *link;
+    char *path, *p, *link, *device;
     struct dos_drive *drive;
     unsigned int i;
     HKEY drives_key;
@@ -415,6 +426,8 @@ static void create_drive_devices(void)
         p[0] = 'a' + i;
         p[2] = 0;
         if (!(link = read_symlink( path ))) continue;
+        p[2] = ':';
+        device = read_symlink( path );
 
         drive_type = i < 2 ? DRIVE_REMOVABLE : DRIVE_FIXED;
         if (drives_key)
@@ -438,9 +451,14 @@ static void create_drive_devices(void)
         if (!create_disk_device( NULL, drive_type, &drive ))
         {
             drive->unix_mount = link;
+            drive->unix_device = device;
             set_drive_letter( drive, i );
         }
-        else RtlFreeHeap( GetProcessHeap(), 0, link );
+        else
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, link );
+            RtlFreeHeap( GetProcessHeap(), 0, device );
+        }
     }
     RegCloseKey( drives_key );
     RtlFreeHeap( GetProcessHeap(), 0, path );
@@ -467,6 +485,8 @@ BOOL add_dos_device( const char *udi, const char *device, const char *mount_poin
     if (create_disk_device( udi, type, &drive )) return FALSE;
 
 found:
+    RtlFreeHeap( GetProcessHeap(), 0, drive->unix_device );
+    drive->unix_device = strdupA( device );
     set_drive_letter( drive, letter );
     set_unix_mount_point( drive, mount_point );
 
