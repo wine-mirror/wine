@@ -126,7 +126,7 @@ HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 static METAHEADER *MF_GetMetaHeader( HMETAFILE hmf )
 {
     METAHEADER *ret = NULL;
-    METAFILEOBJ * metaObj = (METAFILEOBJ *)GDI_GetObjPtr( hmf, METAFILE_MAGIC );
+    METAFILEOBJ * metaObj = GDI_GetObjPtr( hmf, METAFILE_MAGIC );
     if (metaObj)
     {
         ret = metaObj->mh;
@@ -164,7 +164,7 @@ static POINT *convert_points( UINT count, POINT16 *pt16 )
 
 BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
 {
-    METAFILEOBJ * metaObj = (METAFILEOBJ *)GDI_GetObjPtr( hmf, METAFILE_MAGIC );
+    METAFILEOBJ * metaObj = GDI_GetObjPtr( hmf, METAFILE_MAGIC );
     if (!metaObj) return FALSE;
     HeapFree( GetProcessHeap(), 0, metaObj->mh );
     GDI_FreeObject( hmf, metaObj );

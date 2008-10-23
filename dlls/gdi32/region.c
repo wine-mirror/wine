@@ -603,7 +603,7 @@ static void REGION_OffsetRegion( WINEREGION *rgn, WINEREGION *srcrgn,
  */
 INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 {
-    RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
+    RGNOBJ * obj = GDI_GetObjPtr( hrgn, REGION_MAGIC );
     INT ret;
 
     TRACE("%p %d,%d\n", hrgn, x, y);
@@ -638,7 +638,7 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
  */
 INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 {
-    RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
+    RGNOBJ * obj = GDI_GetObjPtr( hrgn, REGION_MAGIC );
     if (obj)
     {
 	INT ret;
@@ -729,7 +729,7 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 
     TRACE("%p %d,%d-%d,%d\n", hrgn, left, top, right, bottom );
 
-    if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
+    if (!(obj = GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
 
     if (left > right) { INT tmp = left; left = right; right = tmp; }
     if (top > bottom) { INT tmp = top; top = bottom; bottom = tmp; }
@@ -953,7 +953,7 @@ HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
 DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
 {
     DWORD size;
-    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
+    RGNOBJ *obj = GDI_GetObjPtr( hrgn, REGION_MAGIC );
 
     TRACE(" %p count = %d, rgndata = %p\n", hrgn, count, rgndata);
 
@@ -1067,7 +1067,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
     if( (hrgn = REGION_CreateRegion( rgndata->rdh.nCount )) )
     {
 	RECT *pCurRect, *pEndRect;
-	RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
+        RGNOBJ *obj = GDI_GetObjPtr( hrgn, REGION_MAGIC );
 
 	if (obj) {
             pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
@@ -1106,7 +1106,7 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
     RGNOBJ * obj;
     BOOL ret = FALSE;
 
-    if ((obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC )))
+    if ((obj = GDI_GetObjPtr( hrgn, REGION_MAGIC )))
     {
 	int i;
 
@@ -1141,7 +1141,7 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
     RGNOBJ * obj;
     BOOL ret = FALSE;
 
-    if ((obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC )))
+    if ((obj = GDI_GetObjPtr( hrgn, REGION_MAGIC )))
     {
 	RECT *pCurRect, *pRectEnd;
 
@@ -1191,9 +1191,9 @@ BOOL WINAPI EqualRgn( HRGN hrgn1, HRGN hrgn2 )
     RGNOBJ *obj1, *obj2;
     BOOL ret = FALSE;
 
-    if ((obj1 = (RGNOBJ *) GDI_GetObjPtr( hrgn1, REGION_MAGIC )))
+    if ((obj1 = GDI_GetObjPtr( hrgn1, REGION_MAGIC )))
     {
-	if ((obj2 = (RGNOBJ *) GDI_GetObjPtr( hrgn2, REGION_MAGIC )))
+        if ((obj2 = GDI_GetObjPtr( hrgn2, REGION_MAGIC )))
 	{
 	    int i;
 
@@ -1251,12 +1251,12 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
 BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 {
     BOOL bRet;
-    RGNOBJ *srcObj = (RGNOBJ*) GDI_GetObjPtr( hSrc, REGION_MAGIC );
+    RGNOBJ *srcObj = GDI_GetObjPtr( hSrc, REGION_MAGIC );
 
     if (!srcObj) return FALSE;
     if (srcObj->rgn->numRects != 0)
     {
-        RGNOBJ* destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
+        RGNOBJ* destObj = GDI_GetObjPtr( hDest, REGION_MAGIC );
         WINEREGION *tmprgn = REGION_AllocWineRegion( srcObj->rgn->numRects);
 
         REGION_OffsetRegion( destObj->rgn, srcObj->rgn, -x, 0);
@@ -1309,13 +1309,13 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
  */
 INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 {
-    RGNOBJ *destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC);
+    RGNOBJ *destObj = GDI_GetObjPtr( hDest, REGION_MAGIC);
     INT result = ERROR;
 
     TRACE(" %p,%p -> %p mode=%x\n", hSrc1, hSrc2, hDest, mode );
     if (destObj)
     {
-	RGNOBJ *src1Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc1, REGION_MAGIC);
+        RGNOBJ *src1Obj = GDI_GetObjPtr( hSrc1, REGION_MAGIC);
 
 	if (src1Obj)
 	{
@@ -1329,7 +1329,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	    }
 	    else
 	    {
-		RGNOBJ *src2Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc2, REGION_MAGIC);
+                RGNOBJ *src2Obj = GDI_GetObjPtr( hSrc2, REGION_MAGIC);
 
 		if (src2Obj)
 		{
@@ -2790,7 +2790,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 
     if(!(hrgn = REGION_CreateRegion(nbpolygons)))
         return 0;
-    obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
+    obj = GDI_GetObjPtr( hrgn, REGION_MAGIC );
     region = obj->rgn;
 
     /* special case a rectangle */

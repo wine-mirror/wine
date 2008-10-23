@@ -235,7 +235,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
             dwRop == SRCCOPY)
         {
             BITMAPOBJ *bmp;
-            if ((bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBitmap, BITMAP_MAGIC )))
+            if ((bmp = GDI_GetObjPtr( hBitmap, BITMAP_MAGIC )))
             {
                 if (bmp->bitmap.bmBitsPixel == bpp &&
                     bmp->bitmap.bmWidth == widthSrc &&
@@ -609,7 +609,7 @@ INT WINAPI GetDIBits(
         return 0;
     }
     update_dc( dc );
-    if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+    if (!(bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
         release_dc_ptr( dc );
 	return 0;
@@ -1153,7 +1153,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
     hbitmap = CreateDIBSection( HDC_32(hdc), bmi, usage, &bits32, section, offset );
     if (hbitmap)
     {
-        BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(hbitmap, BITMAP_MAGIC);
+        BITMAPOBJ *bmp = GDI_GetObjPtr(hbitmap, BITMAP_MAGIC);
         if (bmp && bmp->dib && bits32)
         {
             const BITMAPINFOHEADER *bi = &bmi->bmiHeader;

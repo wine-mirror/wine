@@ -144,8 +144,7 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
  */
 SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
-    BITMAPOBJ* bmp = (BITMAPOBJ *) GDI_GetObjPtr( HBITMAP_32(hWinGBitmap),
-						  BITMAP_MAGIC );
+    BITMAPOBJ* bmp = GDI_GetObjPtr( HBITMAP_32(hWinGBitmap), BITMAP_MAGIC );
     SEGPTR res = 0;
 
     TRACE("(%d,%p)\n", hWinGBitmap, bmpi);

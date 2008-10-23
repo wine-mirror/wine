@@ -828,7 +828,7 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
 
     if(dc->gdiFont)
         ret = WineEngGetTextFace(dc->gdiFont, count, name);
-    else if ((font = (FONTOBJ *) GDI_GetObjPtr( dc->hFont, FONT_MAGIC )))
+    else if ((font = GDI_GetObjPtr( dc->hFont, FONT_MAGIC )))
     {
         INT n = strlenW(font->logfont.lfFaceName) + 1;
         if (name)

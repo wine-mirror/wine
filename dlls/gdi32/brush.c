@@ -461,7 +461,7 @@ BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
     BOOL16 res = FALSE;
 
     TRACE("(hBrush %04x, newColor %08x)\n", hBrush, newColor);
-    if (!(brushPtr = (BRUSHOBJ *) GDI_GetObjPtr( HBRUSH_32(hBrush), BRUSH_MAGIC )))
+    if (!(brushPtr = GDI_GetObjPtr( HBRUSH_32(hBrush), BRUSH_MAGIC )))
 	return FALSE;
 
     if (brushPtr->logbrush.lbStyle == BS_SOLID)
