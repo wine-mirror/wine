@@ -596,9 +596,13 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	    bufdesc1.lpwfxFormat=&wfx;
 	    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,
                 (DSCBUFFERDESC*)&bufdesc1,&dscbo,NULL);
-	    ok(rc==DS_OK || broken(rc==E_INVALIDARG),
+            ok(rc==DS_OK || broken(rc==DSERR_INVALIDPARAM),
                "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
                "%s capture buffer: %08x\n",format_string(&wfx), rc);
+            if (rc==DSERR_INVALIDPARAM) {
+                skip("broken driver\n");
+                goto EXIT;
+            }
             if (rc==DS_OK) {
 	        test_capture_buffer(dsco, dscbo, winetest_interactive);
 	        ref=IDirectSoundCaptureBuffer_Release(dscbo);

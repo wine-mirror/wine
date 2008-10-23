@@ -591,8 +591,14 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER|DSBCAPS_LOCHARDWARE|DSBCAPS_CTRL3D;
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
-    ok(rc==DS_OK&&primary!=NULL,"IDirectSound_CreateSoundBuffer() failed to "
+    ok((rc==DS_OK&&primary!=NULL)
+       || broken(rc==DSERR_INVALIDPARAM),
+       "IDirectSound_CreateSoundBuffer() failed to "
        "create a hardware 3D primary buffer: %08x\n",rc);
+    if(rc==DSERR_INVALIDPARAM) {
+       skip("broken driver\n");
+       goto EXIT;
+    }
     if (rc==DS_OK&&primary!=NULL) {
         ZeroMemory(&wfx, sizeof(wfx));
         wfx.wFormatTag=WAVE_FORMAT_PCM;
