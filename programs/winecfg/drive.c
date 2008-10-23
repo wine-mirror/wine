@@ -29,8 +29,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windef.h>
 #include <winbase.h>
+#include <winternl.h>
+#include <winioctl.h>
 #include <winreg.h>
 #include <wine/debug.h>
 #include <shellapi.h>
@@ -38,6 +42,8 @@
 #include <shlguid.h>
 #include <shlwapi.h>
 #include <shlobj.h>
+#define WINE_MOUNTMGR_EXTENSIONS
+#include <ddk/mountmgr.h>
 #include <wine/library.h>
 
 #include "winecfg.h"
@@ -118,36 +124,6 @@ void delete_drive(struct drive *d)
     d->serial = 0;
     d->in_use = FALSE;
     d->modified = TRUE;
-}
-
-static void set_drive_type( char letter, DWORD type )
-{
-    HKEY hKey;
-    char driveValue[4];
-    const char *typeText = NULL;
-
-    sprintf(driveValue, "%c:", letter);
-
-    /* Set the drive type in the registry */
-    if (type == DRIVE_FIXED)
-        typeText = "hd";
-    else if (type == DRIVE_REMOTE)
-        typeText = "network";
-    else if (type == DRIVE_REMOVABLE)
-        typeText = "floppy";
-    else if (type == DRIVE_CDROM)
-        typeText = "cdrom";
-
-    if (RegCreateKey(HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hKey) != ERROR_SUCCESS)
-        WINE_TRACE("  Unable to open '%s'\n", "Software\\Wine\\Drives");
-    else
-    {
-        if (typeText)
-            RegSetValueEx( hKey, driveValue, 0, REG_SZ, (const BYTE *)typeText, strlen(typeText) + 1 );
-        else
-            RegDeleteValue( hKey, driveValue );
-        RegCloseKey(hKey);
-    }
 }
 
 static DWORD get_drive_type( char letter )
@@ -262,6 +238,17 @@ BOOL moveDrive(struct drive *pSrc, struct drive *pDst)
 }
 
 #endif
+
+static HANDLE open_mountmgr(void)
+{
+    HANDLE ret;
+
+    if ((ret = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ|GENERIC_WRITE,
+                            FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                            0, 0 )) == INVALID_HANDLE_VALUE)
+        WINE_ERR( "failed to open mount manager err %u\n", GetLastError() );
+    return ret;
+}
 
 /* Load currently defined drives into the drives array  */
 void load_drives(void)
@@ -386,10 +373,13 @@ void load_drives(void)
 void apply_drive_changes(void)
 {
     int i;
-    CHAR devicename[4];
-    CHAR targetpath[256];
+    HANDLE mgr;
+    DWORD len;
+    struct mountmgr_unix_drive *ioctl;
 
     WINE_TRACE("\n");
+
+    if ((mgr = open_mountmgr()) == INVALID_HANDLE_VALUE) return;
 
     /* add each drive and remove as we go */
     for(i = 0; i < 26; i++)
@@ -397,44 +387,33 @@ void apply_drive_changes(void)
         if (!drives[i].modified) continue;
         drives[i].modified = FALSE;
 
-        snprintf(devicename, sizeof(devicename), "%c:", 'A' + i);
-
+        len = sizeof(*ioctl);
+        if (drives[i].in_use) len += strlen(drives[i].unixpath) + 1;
+        if (!(ioctl = HeapAlloc( GetProcessHeap(), 0, len ))) continue;
+        ioctl->size = len;
+        ioctl->letter = 'a' + i;
+        ioctl->device_offset = 0;
         if (drives[i].in_use)
         {
-            /* define this drive */
-            /* DefineDosDevice() requires that NO trailing slash be present */
-            if(!DefineDosDevice(DDD_RAW_TARGET_PATH, devicename, drives[i].unixpath))
-            {
-                WINE_ERR("  unable to define devicename of '%s', targetpath of '%s'\n",
-                    devicename, drives[i].unixpath);
-                PRINTERROR();
-            }
-            else
-            {
-                WINE_TRACE("  added devicename of '%s', targetpath of '%s'\n",
-                           devicename, drives[i].unixpath);
-            }
-            set_drive_label( drives[i].letter, drives[i].label );
-            set_drive_serial( drives[i].letter, drives[i].serial );
-            set_drive_type( drives[i].letter, drives[i].type );
+            ioctl->type = drives[i].type;
+            ioctl->mount_point_offset = sizeof(*ioctl);
+            strcpy( (char *)(ioctl + 1), drives[i].unixpath );
         }
-        else if (QueryDosDevice(devicename, targetpath, sizeof(targetpath)))
+        else
         {
-            /* remove this drive */
-            if(!DefineDosDevice(DDD_REMOVE_DEFINITION, devicename, drives[i].unixpath))
-            {
-                WINE_ERR("unable to remove devicename of '%s', targetpath of '%s'\n",
-                    devicename, drives[i].unixpath);
-                PRINTERROR();
-            }
-            else
-            {
-                WINE_TRACE("removed devicename of '%s', targetpath of '%s'\n",
-                           devicename, drives[i].unixpath);
-            }
-
-            set_drive_type( drives[i].letter, DRIVE_UNKNOWN );
-            continue;
+            ioctl->type = DRIVE_NO_ROOT_DIR;
+            ioctl->mount_point_offset = 0;
         }
+
+        if (DeviceIoControl( mgr, IOCTL_MOUNTMGR_DEFINE_UNIX_DRIVE, ioctl, len, NULL, 0, NULL, NULL ))
+        {
+            set_drive_label( drives[i].letter, drives[i].label );
+            if (drives[i].in_use) set_drive_serial( drives[i].letter, drives[i].serial );
+            WINE_TRACE( "set drive %c: to %s type %u\n", 'a' + i,
+                        wine_dbgstr_a(drives[i].unixpath), drives[i].type );
+        }
+        else WINE_WARN( "failed to set drive %c: to %s type %u err %u\n", 'a' + i,
+                       wine_dbgstr_a(drives[i].unixpath), drives[i].type, GetLastError() );
     }
+    CloseHandle( mgr );
 }
