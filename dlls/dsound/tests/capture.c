@@ -567,8 +567,9 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         if (winetest_interactive)
 	    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
 	rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
-	ok(((rc==DS_OK)&&(dscbo!=NULL))||(rc==DSERR_BADFORMAT)||
-           ((rc==DSERR_NODRIVER))||(rc==DSERR_ALLOCATED)||(rc==E_INVALIDARG)||(rc==E_FAIL),
+	ok(((rc==DS_OK)&&(dscbo!=NULL))
+           || rc==DSERR_BADFORMAT || rc==DSERR_INVALIDCALL || rc==DSERR_NODRIVER
+           || rc==DSERR_ALLOCATED || rc==E_INVALIDARG || rc==E_FAIL,
            "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
            "%s capture buffer: %08x\n",format_string(&wfx),rc);
 	if (rc==DS_OK) {
