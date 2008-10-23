@@ -97,6 +97,7 @@ struct drive
 {
     char letter;
     char *unixpath;
+    char *device;
     WCHAR *label;
     DWORD serial;
     DWORD type; /* one of the DRIVE_ constants from winbase.h  */
@@ -108,7 +109,8 @@ struct drive
 #define DRIVE_MASK_BIT(B) (1 << (toupper(B) - 'A'))
 
 long drive_available_mask(char letter);
-BOOL add_drive(char letter, const char *targetpath, const WCHAR *label, DWORD serial, DWORD type);
+BOOL add_drive(char letter, const char *targetpath, const char *device,
+               const WCHAR *label, DWORD serial, DWORD type);
 void delete_drive(struct drive *pDrive);
 void apply_drive_changes(void);
 BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath);

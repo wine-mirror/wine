@@ -93,19 +93,22 @@ long drive_available_mask(char letter)
   return result;
 }
 
-BOOL add_drive(char letter, const char *targetpath, const WCHAR *label, DWORD serial, DWORD type)
+BOOL add_drive(char letter, const char *targetpath, const char *device, const WCHAR *label,
+               DWORD serial, DWORD type)
 {
     int driveIndex = letter_to_index(letter);
 
     if(drives[driveIndex].in_use)
         return FALSE;
 
-    WINE_TRACE("letter == '%c', unixpath == '%s', label == %s, serial == %08x, type == %d\n",
-               letter, targetpath, wine_dbgstr_w(label), serial, type);
+    WINE_TRACE("letter == '%c', unixpath == %s, device == %s, label == %s, serial == %08x, type == %d\n",
+               letter, wine_dbgstr_a(targetpath), wine_dbgstr_a(device),
+               wine_dbgstr_w(label), serial, type);
 
     drives[driveIndex].letter   = toupper(letter);
     drives[driveIndex].unixpath = strdupA(targetpath);
-    drives[driveIndex].label    = strdupW(label);
+    drives[driveIndex].device   = device ? strdupA(device) : NULL;
+    drives[driveIndex].label    = label ? strdupW(label) : NULL;
     drives[driveIndex].serial   = serial;
     drives[driveIndex].type     = type;
     drives[driveIndex].in_use   = TRUE;
@@ -119,6 +122,8 @@ void delete_drive(struct drive *d)
 {
     HeapFree(GetProcessHeap(), 0, d->unixpath);
     d->unixpath = NULL;
+    HeapFree(GetProcessHeap(), 0, d->device);
+    d->device = NULL;
     HeapFree(GetProcessHeap(), 0, d->label);
     d->label = NULL;
     d->serial = 0;
@@ -316,7 +321,7 @@ void load_drives(void)
         c = targetpath;
         do if (*c == '\\') *c = '/'; while (*c++);
 
-        add_drive(*devices, targetpath, volname, serial, get_drive_type(devices[0]) );
+        add_drive(*devices, targetpath, NULL, volname, serial, get_drive_type(devices[0]) );
 
         len -= lstrlenW(devices);
         devices += lstrlenW(devices);
@@ -354,7 +359,7 @@ void load_drives(void)
         buff[cnt] = '\0';
 
         WINE_TRACE("found broken symlink %s -> %s\n", path, buff);
-        add_drive('A' + i, buff, NULL, 0, DRIVE_UNKNOWN);
+        add_drive('A' + i, buff, NULL, NULL, 0, DRIVE_UNKNOWN);
 
         drivecount++;
     }
@@ -388,16 +393,28 @@ void apply_drive_changes(void)
         drives[i].modified = FALSE;
 
         len = sizeof(*ioctl);
-        if (drives[i].in_use) len += strlen(drives[i].unixpath) + 1;
+        if (drives[i].in_use)
+        {
+            len += strlen(drives[i].unixpath) + 1;
+            if (drives[i].device) len += strlen(drives[i].device) + 1;
+        }
         if (!(ioctl = HeapAlloc( GetProcessHeap(), 0, len ))) continue;
         ioctl->size = len;
         ioctl->letter = 'a' + i;
         ioctl->device_offset = 0;
         if (drives[i].in_use)
         {
+            char *ptr = (char *)(ioctl + 1);
+
             ioctl->type = drives[i].type;
-            ioctl->mount_point_offset = sizeof(*ioctl);
-            strcpy( (char *)(ioctl + 1), drives[i].unixpath );
+            strcpy( ptr, drives[i].unixpath );
+            ioctl->mount_point_offset = ptr - (char *)ioctl;
+            if (drives[i].device)
+            {
+                ptr += strlen(ptr) + 1;
+                strcpy( ptr, drives[i].device );
+                ioctl->device_offset = ptr - (char *)ioctl;
+            }
         }
         else
         {

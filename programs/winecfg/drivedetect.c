@@ -235,7 +235,7 @@ static void ensure_root_is_mapped(void)
         {
             if (!drives[letter - 'A'].in_use) 
             {
-                add_drive(letter, "/", NULL, 0, DRIVE_FIXED);
+                add_drive(letter, "/", NULL, NULL, 0, DRIVE_FIXED);
                 WINE_TRACE("allocated drive %c as the root drive\n", letter);
                 break;
             }
@@ -264,7 +264,7 @@ static void ensure_home_is_mapped(void)
         {
             if (!drives[letter - 'A'].in_use)
             {
-                add_drive(letter, home, NULL, 0, DRIVE_FIXED);
+                add_drive(letter, home, NULL, NULL, 0, DRIVE_FIXED);
                 WINE_TRACE("allocated drive %c as the user's home directory\n", letter);
                 break;
             }
@@ -292,7 +292,7 @@ static void ensure_drive_c_is_mapped(void)
         WCHAR label[64];
         LoadStringW (GetModuleHandle (NULL), IDS_SYSTEM_DRIVE_LABEL, label,
                      sizeof(label)/sizeof(label[0]));
-        add_drive('C', "../drive_c", label, 0, DRIVE_FIXED);
+        add_drive('C', "../drive_c", NULL, label, 0, DRIVE_FIXED);
     }
     else
     {
@@ -330,7 +330,8 @@ int autodetect_drives(void)
     {
         char letter;
         int type;
-        
+        char *device = NULL;
+
         WINE_TRACE("ent->mnt_dir=%s\n", ent->mnt_dir);
 
         if (should_ignore_fstype(ent->mnt_type)) continue;
@@ -355,8 +356,11 @@ int autodetect_drives(void)
             return FALSE;
         }
 
-        WINE_TRACE("adding drive %c for %s, type %s\n", letter, ent->mnt_dir, ent->mnt_type);
-        add_drive(letter, ent->mnt_dir, NULL, 0, type);
+        if (type == DRIVE_CDROM) device = ent->mnt_fsname;
+
+        WINE_TRACE("adding drive %c for %s, device %s, type %s\n",
+                   letter, ent->mnt_dir, device, ent->mnt_type);
+        add_drive(letter, ent->mnt_dir, device, NULL, 0, type);
 
         /* working_mask is a map of the drive letters still available. */
         working_mask &= ~DRIVE_MASK_BIT(letter);

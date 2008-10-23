@@ -315,9 +315,9 @@ static void on_add_click(HWND dialog)
         WCHAR label[64];
         LoadStringW (GetModuleHandle (NULL), IDS_SYSTEM_DRIVE_LABEL, label,
                      sizeof(label)/sizeof(label[0]));
-        add_drive(new, "../drive_c", label, 0, DRIVE_FIXED);
+        add_drive(new, "../drive_c", NULL, label, 0, DRIVE_FIXED);
     }
-    else add_drive(new, "/", NULL, 0, DRIVE_UNKNOWN);
+    else add_drive(new, "/", NULL, NULL, 0, DRIVE_UNKNOWN);
 
     fill_drives_list(dialog);
 
