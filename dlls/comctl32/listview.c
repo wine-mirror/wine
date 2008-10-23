@@ -2422,7 +2422,7 @@ static SUBITEM_INFO* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems, INT nSubItem)
     /* we should binary search here if need be */
     for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
     {
-	lpSubItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, i);
+        lpSubItem = DPA_GetPtr(hdpaSubItems, i);
 	if (lpSubItem->iSubItem == nSubItem)
 	    return lpSubItem;
     }
@@ -2607,12 +2607,12 @@ static void ranges_assert(RANGES ranges, LPCSTR desc, const char *func, int line
     assert (ranges);
     assert (DPA_GetPtrCount(ranges->hdpa) >= 0);
     ranges_dump(ranges);
-    prev = (RANGE *)DPA_GetPtr(ranges->hdpa, 0);
+    prev = DPA_GetPtr(ranges->hdpa, 0);
     if (DPA_GetPtrCount(ranges->hdpa) > 0)
 	assert (prev->lower >= 0 && prev->lower < prev->upper);
     for (i = 1; i < DPA_GetPtrCount(ranges->hdpa); i++)
     {
-	curr = (RANGE *)DPA_GetPtr(ranges->hdpa, i);
+        curr = DPA_GetPtr(ranges->hdpa, i);
 	assert (prev->upper <= curr->lower);
 	assert (curr->lower < curr->upper);
 	prev = curr;
@@ -3433,8 +3433,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     }
     else
     {
-	HDPA hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-	lpItem = (ITEM_INFO *)DPA_GetPtr(hdpaSubItems, 0);
+        HDPA hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
+        lpItem = DPA_GetPtr(hdpaSubItems, 0);
 	assert (lpItem);
     }
 
@@ -3574,7 +3574,7 @@ static BOOL set_sub_item(const LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, 
     if (!(lpLVItem->mask & (LVIF_TEXT | LVIF_IMAGE | LVIF_STATE))) return TRUE;
    
     /* get the subitem structure, and create it if not there */
-    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
+    hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
     assert (hdpaSubItems);
     
     lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, lpLVItem->iSubItem);
@@ -3588,7 +3588,7 @@ static BOOL set_sub_item(const LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, 
 	/* we could binary search here, if need be...*/
   	for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
   	{
-	    tmpSubItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, i);
+            tmpSubItem = DPA_GetPtr(hdpaSubItems, i);
 	    if (tmpSubItem->iSubItem > lpLVItem->iSubItem) break;
   	}
 	if (DPA_InsertPtr(hdpaSubItems, i, lpSubItem) == -1)
@@ -4506,10 +4506,10 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr, BOOL destroy)
 	if (!bSuppress) notify_deleteitem(infoPtr, i);
 	if (!(infoPtr->dwStyle & LVS_OWNERDATA))
 	{
-	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
+            hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, i);
 	    for (j = 0; j < DPA_GetPtrCount(hdpaSubItems); j++)
 	    {
-		hdrItem = (ITEMHDR *)DPA_GetPtr(hdpaSubItems, j);
+                hdrItem = DPA_GetPtr(hdpaSubItems, j);
 		if (is_textW(hdrItem->pszText)) Free(hdrItem->pszText);
 		Free(hdrItem);
 	    }
@@ -4627,12 +4627,12 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 	
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
-	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
+            hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, nItem);
 	    nSubItem = 0;
 	    lpDelItem = 0;
 	    for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
 	    {
-		lpSubItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, i);
+                lpSubItem = DPA_GetPtr(hdpaSubItems, i);
 		if (lpSubItem->iSubItem == nColumn)
 		{
 		    nSubItem = i;
@@ -4789,7 +4789,7 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 	hdpaSubItems = (HDPA)DPA_DeletePtr(infoPtr->hdpaItems, nItem);	
 	for (i = 0; i < DPA_GetPtrCount(hdpaSubItems); i++)
     	{
-            hdrItem = (ITEMHDR *)DPA_GetPtr(hdpaSubItems, i);
+            hdrItem = DPA_GetPtr(hdpaSubItems, i);
 	    if (is_textW(hdrItem->pszText)) Free(hdrItem->pszText);
             Free(hdrItem);
         }
@@ -4851,8 +4851,8 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
 
     if (!(infoPtr->dwStyle & LVS_OWNERDATA))
     {
-        HDPA hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nEditLabelItem);
-        ITEM_INFO* lpItem = (ITEM_INFO *)DPA_GetPtr(hdpaSubItems, 0);
+        HDPA hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nEditLabelItem);
+        ITEM_INFO* lpItem = DPA_GetPtr(hdpaSubItems, 0);
         if (lpItem && lpItem->hdr.pszText == LPSTR_TEXTCALLBACKW)
         {
             LISTVIEW_InvalidateItem(infoPtr, infoPtr->nEditLabelItem);
@@ -5506,8 +5506,8 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     }
 
     /* find the item and subitem structures before we proceed */
-    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-    lpItem = (ITEM_INFO *)DPA_GetPtr(hdpaSubItems, 0);
+    hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
+    lpItem = DPA_GetPtr(hdpaSubItems, 0);
     assert (lpItem);
 
     if (isubitem)
@@ -6449,8 +6449,8 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 */
 static INT WINAPI LISTVIEW_InsertCompare(  LPVOID first, LPVOID second,  LPARAM lParam)
 {
-    ITEM_INFO* lv_first = (ITEM_INFO*) DPA_GetPtr( (HDPA)first, 0 );
-    ITEM_INFO* lv_second = (ITEM_INFO*) DPA_GetPtr( (HDPA)second, 0 );
+    ITEM_INFO* lv_first = DPA_GetPtr( (HDPA)first, 0 );
+    ITEM_INFO* lv_second = DPA_GetPtr( (HDPA)second, 0 );
     INT cmpv = textcmpWT(lv_first->hdr.pszText, lv_second->hdr.pszText, TRUE); 
 
     /* if we're sorting descending, negate the return value */
@@ -6849,10 +6849,10 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 	
 	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
 	{
-	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
+            hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, nItem);
 	    for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
 	    {
-		lpSubItem = (SUBITEM_INFO *)DPA_GetPtr(hdpaSubItems, i);
+                lpSubItem = DPA_GetPtr(hdpaSubItems, i);
 		if (lpSubItem->iSubItem >= nNewColumn)
 		    lpSubItem->iSubItem++;
 	    }
@@ -7731,8 +7731,8 @@ static BOOL LISTVIEW_SetUnicodeFormat( LISTVIEW_INFO *infoPtr, BOOL fUnicode)
 static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM lParam)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)lParam;
-  ITEM_INFO* lv_first = (ITEM_INFO*) DPA_GetPtr( (HDPA)first, 0 );
-  ITEM_INFO* lv_second = (ITEM_INFO*) DPA_GetPtr( (HDPA)second, 0 );
+  ITEM_INFO* lv_first = DPA_GetPtr( (HDPA)first, 0 );
+  ITEM_INFO* lv_second = DPA_GetPtr( (HDPA)second, 0 );
 
   /* Forward the call to the client defined callback */
   return (infoPtr->pfnCompare)( lv_first->lParam , lv_second->lParam, infoPtr->lParamSort );
@@ -7772,8 +7772,8 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
 
     if (infoPtr->nFocusedItem >= 0)
     {
-	hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nFocusedItem);
-	lpItem = (ITEM_INFO *)DPA_GetPtr(hdpaSubItems, 0);
+        hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nFocusedItem);
+        lpItem = DPA_GetPtr(hdpaSubItems, 0);
 	if (lpItem) lpItem->state |= LVIS_FOCUSED;
     }
     /* FIXME: go thorugh selected items and mark them so in lpItem->state */
@@ -7792,8 +7792,8 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
     selectionMarkItem=(infoPtr->nSelectionMark>=0)?DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nSelectionMark):NULL;
     for (i=0; i < infoPtr->nItemCount; i++)
     {
-	hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
-	lpItem = (ITEM_INFO *)DPA_GetPtr(hdpaSubItems, 0);
+        hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, i);
+        lpItem = DPA_GetPtr(hdpaSubItems, 0);
 
 	if (lpItem->state & LVIS_SELECTED)
 	{

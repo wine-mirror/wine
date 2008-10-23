@@ -3010,8 +3010,8 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, HTREEITEM parent,
 	/* The order of DPA entries has been changed, so fixup the
 	 * nextSibling and prevSibling pointers. */
 
-	item = (HTREEITEM)DPA_GetPtr(sortList, count++);
-	while ((nextItem = (HTREEITEM)DPA_GetPtr(sortList, count++)) != NULL)
+        item = DPA_GetPtr(sortList, count++);
+        while ((nextItem = DPA_GetPtr(sortList, count++)) != NULL)
 	{
 	    /* link the two current item together */
 	    item->nextSibling = nextItem;
