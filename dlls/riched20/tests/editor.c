@@ -5548,6 +5548,43 @@ static void test_undo_coalescing(void)
     DestroyWindow(hwnd);
 }
 
+LONG CALLBACK customWordBreakProc(WCHAR *text, int pos, int bytes, int code)
+{
+    int length;
+
+    /* MSDN lied, length is actually the number of bytes. */
+    length = bytes / sizeof(WCHAR);
+    switch(code)
+    {
+        case WB_ISDELIMITER:
+            return text[pos] == 'X';
+        case WB_LEFT:
+        case WB_MOVEWORDLEFT:
+            if (customWordBreakProc(text, pos, bytes, WB_ISDELIMITER))
+                return pos-1;
+            return min(customWordBreakProc(text, pos, bytes, WB_LEFTBREAK)-1, 0);
+        case WB_LEFTBREAK:
+            pos--;
+            while (pos > 0 && !customWordBreakProc(text, pos, bytes, WB_ISDELIMITER))
+                pos--;
+            return pos;
+        case WB_RIGHT:
+        case WB_MOVEWORDRIGHT:
+            if (customWordBreakProc(text, pos, bytes, WB_ISDELIMITER))
+                return pos+1;
+            return min(customWordBreakProc(text, pos, bytes, WB_RIGHTBREAK)+1, length);
+        case WB_RIGHTBREAK:
+            pos++;
+            while (pos < length && !customWordBreakProc(text, pos, bytes, WB_ISDELIMITER))
+                pos++;
+            return pos;
+        default:
+            ok(FALSE, "Unexpected code %d\n", code);
+            break;
+    }
+    return 0;
+}
+
 #define SEND_CTRL_LEFT(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, VK_LEFT)
 #define SEND_CTRL_RIGHT(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, VK_RIGHT)
 
@@ -5556,6 +5593,7 @@ static void test_word_movement(void)
     HWND hwnd;
     int result;
     int sel_start, sel_end;
+    const WCHAR textW[] = {'o','n','e',' ','t','w','o','X','t','h','r','e','e',0};
 
     /* multi-line control inserts CR normally */
     hwnd = new_richedit(NULL);
@@ -5604,6 +5642,36 @@ static void test_word_movement(void)
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
     ok(sel_start == 9, "Cursor is at %d instead of %d\n", sel_start, 9);
+
+    /* Test with a custom word break procedure that uses X as the delimiter. */
+    result = SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"one twoXthree");
+    ok (result == TRUE, "Failed to clear the text.\n");
+    SendMessage(hwnd, EM_SETWORDBREAKPROC, 0, (LPARAM)customWordBreakProc);
+    /* |one twoXthree */
+    SEND_CTRL_RIGHT(hwnd);
+    /* one twoX|three */
+    SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "Selection should be empty\n");
+    todo_wine ok(sel_start == 8, "Cursor is at %d instead of %d\n", sel_start, 8);
+
+    DestroyWindow(hwnd);
+
+    /* Make sure the behaviour is the same with a unicode richedit window,
+     * and using unicode functions. */
+    hwnd = CreateWindowW(RICHEDIT_CLASS20W, NULL,
+                        ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
+                        0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+
+    /* Test with a custom word break procedure that uses X as the delimiter. */
+    result = SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW);
+    ok (result == TRUE, "Failed to clear the text.\n");
+    SendMessageW(hwnd, EM_SETWORDBREAKPROC, 0, (LPARAM)customWordBreakProc);
+    /* |one twoXthree */
+    SEND_CTRL_RIGHT(hwnd);
+    /* one twoX|three */
+    SendMessageW(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+    ok(sel_start == sel_end, "Selection should be empty\n");
+    todo_wine ok(sel_start == 8, "Cursor is at %d instead of %d\n", sel_start, 8);
 
     DestroyWindow(hwnd);
 }
