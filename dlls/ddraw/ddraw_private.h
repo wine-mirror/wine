@@ -414,8 +414,7 @@ struct IDirectDrawClipperImpl
 
 const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl;
 
-typedef IWineD3DClipper* (WINAPI *fnWineDirect3DCreateClipper)(IUnknown *);
-fnWineDirect3DCreateClipper pWineDirect3DCreateClipper;
+typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper;
 
 /*****************************************************************************
  * IDirectDrawPalette implementation structure

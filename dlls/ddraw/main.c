@@ -47,9 +47,7 @@
 
 #include "ddraw_private.h"
 
-typedef IWineD3D* (WINAPI *fnWineDirect3DCreate)(UINT, UINT, IUnknown *);
-
-static fnWineDirect3DCreate pWineDirect3DCreate;
+static typeof(WineDirect3DCreate) *pWineDirect3DCreate;
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
@@ -88,8 +86,8 @@ BOOL LoadWineD3D(void)
         hWineD3D = LoadLibraryA("wined3d");
         if (hWineD3D)
         {
-            pWineDirect3DCreate = (fnWineDirect3DCreate) GetProcAddress(hWineD3D, "WineDirect3DCreate");
-            pWineDirect3DCreateClipper = (fnWineDirect3DCreateClipper) GetProcAddress(hWineD3D, "WineDirect3DCreateClipper");
+            pWineDirect3DCreate = (typeof(WineDirect3DCreate) *)GetProcAddress(hWineD3D, "WineDirect3DCreate");
+            pWineDirect3DCreateClipper = (typeof(WineDirect3DCreateClipper) *) GetProcAddress(hWineD3D, "WineDirect3DCreateClipper");
             return TRUE;
         }
     }
