@@ -298,6 +298,36 @@ static BOOL SOFTPUB_LoadCertMessage(CRYPT_PROVIDER_DATA *data)
     return ret;
 }
 
+static BOOL SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
+{
+    BOOL ret;
+
+    if (!data->pWintrustData->u.pFile)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        ret = FALSE;
+        goto error;
+    }
+    ret = SOFTPUB_OpenFile(data);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_GetFileSubject(data);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_GetSIP(data);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_GetMessageFromFile(data);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_CreateStoreFromMessage(data);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_DecodeInnerContent(data);
+error:
+    return ret;
+}
+
 HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
@@ -313,28 +343,7 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
         ret = SOFTPUB_LoadCertMessage(data);
         break;
     case WTD_CHOICE_FILE:
-        if (!data->pWintrustData->u.pFile)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            ret = FALSE;
-            goto error;
-        }
-        ret = SOFTPUB_OpenFile(data);
-        if (!ret)
-            goto error;
-        ret = SOFTPUB_GetFileSubject(data);
-        if (!ret)
-            goto error;
-        ret = SOFTPUB_GetSIP(data);
-        if (!ret)
-            goto error;
-        ret = SOFTPUB_GetMessageFromFile(data);
-        if (!ret)
-            goto error;
-        ret = SOFTPUB_CreateStoreFromMessage(data);
-        if (!ret)
-            goto error;
-        ret = SOFTPUB_DecodeInnerContent(data);
+        ret = SOFTPUB_LoadFileMessage(data);
         break;
     default:
         FIXME("unimplemented for %d\n", data->pWintrustData->dwUnionChoice);
@@ -342,7 +351,6 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
         ret = FALSE;
     }
 
-error:
     if (!ret)
         data->padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] =
          GetLastError();
