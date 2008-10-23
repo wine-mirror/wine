@@ -128,7 +128,8 @@ static BOOL SOFTPUB_GetSIP(CRYPT_PROVIDER_DATA *data)
 /* Assumes data->u.pPDSip has been loaded, and data->u.pPDSip->pSip allocated.
  * Calls data->u.pPDSip->pSip->pfGet to construct data->hMsg.
  */
-static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data)
+static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data, HANDLE file,
+ LPCWSTR filePath)
 {
     BOOL ret;
     LPBYTE buf = NULL;
@@ -144,9 +145,8 @@ static BOOL SOFTPUB_GetMessageFromFile(CRYPT_PROVIDER_DATA *data)
 
     data->u.pPDSip->psSipSubjectInfo->cbSize = sizeof(SIP_SUBJECTINFO);
     data->u.pPDSip->psSipSubjectInfo->pgSubjectType = &data->u.pPDSip->gSubject;
-    data->u.pPDSip->psSipSubjectInfo->hFile = data->pWintrustData->u.pFile->hFile;
-    data->u.pPDSip->psSipSubjectInfo->pwsFileName =
-     data->pWintrustData->u.pFile->pcwszFilePath;
+    data->u.pPDSip->psSipSubjectInfo->hFile = file;
+    data->u.pPDSip->psSipSubjectInfo->pwsFileName = filePath;
     data->u.pPDSip->psSipSubjectInfo->hProv = data->hProv;
     ret = data->u.pPDSip->pSip->pfGet(data->u.pPDSip->psSipSubjectInfo,
      &data->dwEncoding, 0, &size, 0);
@@ -317,7 +317,8 @@ static BOOL SOFTPUB_LoadFileMessage(CRYPT_PROVIDER_DATA *data)
     ret = SOFTPUB_GetSIP(data);
     if (!ret)
         goto error;
-    ret = SOFTPUB_GetMessageFromFile(data);
+    ret = SOFTPUB_GetMessageFromFile(data, data->pWintrustData->u.pFile->hFile,
+     data->pWintrustData->u.pFile->pcwszFilePath);
     if (!ret)
         goto error;
     ret = SOFTPUB_CreateStoreFromMessage(data);
