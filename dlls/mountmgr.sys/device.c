@@ -568,6 +568,22 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
     return STATUS_NO_SUCH_DEVICE;
 }
 
+/* query information about an existing dos drive, by letter or udi */
+NTSTATUS query_dos_device( int letter, DWORD *type, const char **device, const char **mount_point )
+{
+    struct dos_drive *drive;
+
+    LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
+    {
+        if (drive->drive != letter) continue;
+        if (type) *type = drive->type;
+        if (device) *device = drive->unix_device;
+        if (mount_point) *mount_point = drive->unix_mount;
+        return STATUS_SUCCESS;
+    }
+    return STATUS_NO_SUCH_DEVICE;
+}
+
 /* handler for ioctls on the harddisk device */
 static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {

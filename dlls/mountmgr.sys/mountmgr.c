@@ -265,6 +265,61 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
     }
 }
 
+/* implementation of IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE */
+static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
+                                  void *out_buff, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+{
+    const struct mountmgr_unix_drive *input = in_buff;
+    struct mountmgr_unix_drive *output = out_buff;
+    const char *device, *mount_point;
+    int letter = tolowerW( input->letter );
+    NTSTATUS status;
+    DWORD size, type;
+    char *ptr;
+
+    if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
+
+    if ((status = query_dos_device( letter - 'a', &type, &device, &mount_point ))) return status;
+
+    size = sizeof(*output);
+    if (device) size += strlen(device) + 1;
+    if (mount_point) size += strlen(mount_point) + 1;
+
+    if (size > outsize)
+    {
+        if (size >= FIELD_OFFSET( struct mountmgr_unix_drive, size ) + sizeof(output->size))
+            output->size = size;
+        iosb->Information = FIELD_OFFSET( struct mountmgr_unix_drive, size ) + sizeof(output->size);
+        return STATUS_MORE_ENTRIES;
+    }
+    output->size = size;
+    output->letter = letter;
+    output->type = type;
+    ptr = (char *)(output + 1);
+
+    if (mount_point)
+    {
+        output->mount_point_offset = ptr - (char *)output;
+        strcpy( ptr, mount_point );
+        ptr += strlen(ptr) + 1;
+    }
+    else output->mount_point_offset = 0;
+
+    if (device)
+    {
+        output->device_offset = ptr - (char *)output;
+        strcpy( ptr, device );
+        ptr += strlen(ptr) + 1;
+    }
+    else output->device_offset = 0;
+
+    TRACE( "returning %c: dev %s mount %s type %u\n",
+           letter, debugstr_a(device), debugstr_a(mount_point), type );
+
+    iosb->Information = ptr - (char *)output;
+    return STATUS_SUCCESS;
+}
+
 /* handler for ioctls on the mount manager device */
 static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -292,6 +347,15 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         irp->IoStatus.Information = 0;
         irp->IoStatus.u.Status = define_unix_drive( irpsp->Parameters.DeviceIoControl.Type3InputBuffer,
                                                     irpsp->Parameters.DeviceIoControl.InputBufferLength );
+        break;
+    case IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_unix_drive))
+            return STATUS_INVALID_PARAMETER;
+        irp->IoStatus.u.Status = query_unix_drive( irpsp->Parameters.DeviceIoControl.Type3InputBuffer,
+                                                   irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                                   irp->MdlAddress->StartVa,
+                                                   irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                                   &irp->IoStatus );
         break;
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
