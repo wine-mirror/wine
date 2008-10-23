@@ -388,9 +388,9 @@ enum chomp_state
 
 static int chomp( WCHAR *str )
 {
-	enum chomp_state state = cs_whitespace;
+	enum chomp_state state = cs_token;
 	WCHAR *p, *out;
-	int count = 0, ignore;
+	int count = 1, ignore;
 
 	for( p = str, out = str; *p; p++ )
 	{
