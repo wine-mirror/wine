@@ -9,7 +9,8 @@ IMPORTS   = dxguid uuid kernel32
 C_SRCS = \
 	device.c \
 	dxgi_main.c \
-	factory.c
+	factory.c \
+	utils.c
 
 RC_SRCS = version.rc
 

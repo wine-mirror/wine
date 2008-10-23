@@ -28,6 +28,9 @@
 
 #include "dxgi.h"
 
+/* TRACE helper functions */
+const char *debug_dxgi_format(DXGI_FORMAT format);
+
 /* IDXGIFactory */
 extern const struct IDXGIFactoryVtbl dxgi_factory_vtbl;
 struct dxgi_factory
