@@ -37,7 +37,7 @@
 148 stub -noname IEGetDisplayName
 149 stub -noname IEBindToObjectEx
 150 stub -noname _GetStdLocation
-151 stub -noname URLSubRegQueryA
+151 stdcall -noname URLSubRegQueryA(str str long ptr long long)
 152 stub -noname CShellUIHelper_CreateInstance2
 153 stub -noname IsURLChild
 158 stub -noname SHRestricted2A

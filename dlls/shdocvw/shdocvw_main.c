@@ -3,6 +3,7 @@
  *
  * Copyright 2001 John R. Sheets (for CodeWeavers)
  * Copyright 2004 Mike McCormack (for CodeWeavers)
+ * Copyright 2008 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +32,7 @@
 
 #include "winreg.h"
 #include "shlwapi.h"
+#include "wininet.h"
 
 #include "initguid.h"
 
@@ -267,4 +269,29 @@ DWORD WINAPI StopWatchAFORWARD(DWORD dwClass, LPCSTR lpszStr, DWORD dwUnknown,
     if (p || (p = fetch_shlwapi_ordinal(244)))
         return p(dwClass, lpszStr, dwUnknown, dwMode, dwTimeStamp);
     return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************
+ *  URLSubRegQueryA (SHDOCVW.151)
+ */
+HRESULT WINAPI URLSubRegQueryA(LPCSTR regpath, LPCSTR name, DWORD type,
+                               LPSTR out, DWORD outlen, DWORD unknown)
+{
+    CHAR buffer[INTERNET_MAX_URL_LENGTH];
+    DWORD len;
+    LONG res;
+
+    TRACE("(%s, %s, %d, %p, %d, %d)\n", debugstr_a(regpath), debugstr_a(name),
+            type, out, outlen, unknown);
+
+    if (!out) return S_OK;
+
+    len = sizeof(buffer);
+    res = SHRegGetUSValueA(regpath, name, NULL, buffer,  &len, FALSE, NULL, 0);
+    if (!res) {
+        lstrcpynA(out, buffer, outlen);
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
