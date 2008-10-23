@@ -48,7 +48,7 @@ wined3d_settings_t wined3d_settings =
     FALSE           /* Disable multisampling for now due to Nvidia driver bugs which happens for some users */
 };
 
-IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *parent) {
+IWineD3D* WINAPI WineDirect3DCreate(UINT dxVersion, IUnknown *parent) {
     IWineD3DImpl* object;
 
     if (!InitAdapters()) {

@@ -206,7 +206,7 @@ DDRAW_Create(const GUID *guid,
      * but DirectDraw specific management, like DDSURFACEDESC and DDPIXELFORMAT
      * structure handling is handled in this lib.
      */
-    wineD3D = pWineDirect3DCreate(0 /* SDKVersion */, 7 /* DXVersion */, (IUnknown *) This /* Parent */);
+    wineD3D = pWineDirect3DCreate(7 /* DXVersion */, (IUnknown *) This /* Parent */);
     if(!wineD3D)
     {
         ERR("Failed to initialise WineD3D\n");

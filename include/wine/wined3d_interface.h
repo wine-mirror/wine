@@ -343,7 +343,7 @@ DECLARE_INTERFACE_(IWineD3D, IWineD3DBase)
 #endif
 
 /* Define the main WineD3D entrypoint */
-IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *parent);
+IWineD3D* WINAPI WineDirect3DCreate(UINT dxVersion, IUnknown *parent);
 
 /*****************************************************************************
  * IWineD3DDevice interface 
