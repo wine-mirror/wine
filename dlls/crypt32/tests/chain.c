@@ -1509,8 +1509,12 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_UNTRUSTED_ROOT |
        CERT_TRUST_IS_NOT_TIME_VALID, 0 },
      1, simpleStatus4 }, 0 },
+ /* Windows versions prior to Vista/2008 incorrectly set
+  * CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT on this chain, so ignore it.
+  */
  { { sizeof(chain5) / sizeof(chain5[0]), chain5 },
-   { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT,
+       CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT |
        CERT_TRUST_IS_UNTRUSTED_ROOT, 0 }, 1, simpleStatus5 }, 0 },
  { { sizeof(chain6) / sizeof(chain6[0]), chain6 },
