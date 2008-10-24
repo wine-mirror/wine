@@ -117,6 +117,12 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
 
     if (!(dwFlags & CRYPTUI_WIZ_NO_UI)) FIXME("UI not implemented\n");
 
+    if (!pImportSrc)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+
     if (pImportSrc->dwSubjectChoice != CRYPTUI_WIZ_IMPORT_SUBJECT_FILE)
     {
         FIXME("source type not implemented: %u\n", pImportSrc->dwSubjectChoice);
