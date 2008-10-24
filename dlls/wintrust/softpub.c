@@ -329,6 +329,43 @@ error:
     return ret;
 }
 
+static BOOL SOFTPUB_LoadCatalogMessage(CRYPT_PROVIDER_DATA *data)
+{
+    BOOL ret;
+    HANDLE catalog = INVALID_HANDLE_VALUE;
+
+    if (!data->pWintrustData->u.pCatalog)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    catalog = CreateFileW(data->pWintrustData->u.pCatalog->pcwszCatalogFilePath,
+     GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+     NULL);
+    if (catalog == INVALID_HANDLE_VALUE)
+        return FALSE;
+    ret = CryptSIPRetrieveSubjectGuid(
+     data->pWintrustData->u.pCatalog->pcwszCatalogFilePath, catalog,
+     &data->u.pPDSip->gSubject);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_GetSIP(data);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_GetMessageFromFile(data, catalog,
+     data->pWintrustData->u.pCatalog->pcwszCatalogFilePath);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_CreateStoreFromMessage(data);
+    if (!ret)
+        goto error;
+    ret = SOFTPUB_DecodeInnerContent(data);
+    /* FIXME: this loads the catalog file, but doesn't validate the member. */
+error:
+    CloseHandle(catalog);
+    return ret;
+}
+
 HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
@@ -345,6 +382,9 @@ HRESULT WINAPI SoftpubLoadMessage(CRYPT_PROVIDER_DATA *data)
         break;
     case WTD_CHOICE_FILE:
         ret = SOFTPUB_LoadFileMessage(data);
+        break;
+    case WTD_CHOICE_CATALOG:
+        ret = SOFTPUB_LoadCatalogMessage(data);
         break;
     default:
         FIXME("unimplemented for %d\n", data->pWintrustData->dwUnionChoice);
