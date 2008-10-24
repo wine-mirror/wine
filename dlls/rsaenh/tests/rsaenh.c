@@ -248,7 +248,7 @@ static BOOL derive_key(ALG_ID aiAlgid, HCRYPTKEY *phKey, DWORD len)
     unsigned char pbData[2000];
     int i;
 
-    *phKey = (HCRYPTKEY)NULL;
+    *phKey = 0;
     for (i=0; i<2000; i++) pbData[i] = (unsigned char)i;
     result = CryptCreateHash(hProv, CALG_MD2, 0, 0, &hHash);
     if (!result) {
@@ -451,17 +451,17 @@ static void test_block_cipher_modes(void)
     ok(result, "%08x\n", GetLastError());
 
     dwLen = 23;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, NULL, &dwLen, 24);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, NULL, &dwLen, 24);
     ok(result, "CryptEncrypt failed: %08x\n", GetLastError());
     ok(dwLen == 24, "Unexpected length %d\n", dwLen);
 
     SetLastError(ERROR_SUCCESS);
     dwLen = 23;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData, &dwLen, 24);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, abData, &dwLen, 24);
     ok(result && dwLen == 24 && !memcmp(ecb, abData, sizeof(ecb)), 
        "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
-    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData, &dwLen);
+    result = CryptDecrypt(hKey, 0, TRUE, 0, abData, &dwLen);
     ok(result && dwLen == 23 && !memcmp(plain, abData, sizeof(plain)), 
        "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
@@ -470,16 +470,16 @@ static void test_block_cipher_modes(void)
     ok(result, "%08x\n", GetLastError());
     
     dwLen = 23;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, NULL, &dwLen, 24);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, NULL, &dwLen, 24);
     ok(result, "CryptEncrypt failed: %08x\n", GetLastError());
     ok(dwLen == 24, "Unexpected length %d\n", dwLen);
 
     dwLen = 23;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData, &dwLen, 24);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, abData, &dwLen, 24);
     ok(result && dwLen == 24 && !memcmp(cbc, abData, sizeof(cbc)), 
        "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
-    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData, &dwLen);
+    result = CryptDecrypt(hKey, 0, TRUE, 0, abData, &dwLen);
     ok(result && dwLen == 23 && !memcmp(plain, abData, sizeof(plain)), 
        "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
@@ -488,20 +488,20 @@ static void test_block_cipher_modes(void)
     ok(result, "%08x\n", GetLastError());
     
     dwLen = 16;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, FALSE, 0, abData, &dwLen, 24);
+    result = CryptEncrypt(hKey, 0, FALSE, 0, abData, &dwLen, 24);
     ok(result && dwLen == 16, "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
     dwLen = 7;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData+16, &dwLen, 8);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, abData+16, &dwLen, 8);
     ok(result && dwLen == 8 && !memcmp(cfb, abData, sizeof(cfb)), 
        "%08x, dwLen: %d\n", GetLastError(), dwLen);
     
     dwLen = 8;
-    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, FALSE, 0, abData, &dwLen);
+    result = CryptDecrypt(hKey, 0, FALSE, 0, abData, &dwLen);
     ok(result && dwLen == 8, "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
     dwLen = 16;
-    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData+8, &dwLen);
+    result = CryptDecrypt(hKey, 0, TRUE, 0, abData+8, &dwLen);
     ok(result && dwLen == 15 && !memcmp(plain, abData, sizeof(plain)), 
        "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
@@ -510,7 +510,7 @@ static void test_block_cipher_modes(void)
     ok(result, "%08x\n", GetLastError());
     
     dwLen = 23;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abData, &dwLen, 24);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, abData, &dwLen, 24);
     ok(!result && GetLastError() == NTE_BAD_ALGID, "%08x\n", GetLastError());
 
     CryptDestroyKey(hKey);
@@ -534,10 +534,10 @@ static void test_3des112(void)
     for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
     
     dwLen = 13;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, 16);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
     ok(result, "%08x\n", GetLastError());
     
-    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+    result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
     for (i=0; i<4; i++)
@@ -545,11 +545,11 @@ static void test_3des112(void)
       memcpy(pbData,cTestData[i].origstr,cTestData[i].strlen);
 
       dwLen = cTestData[i].enclen;
-      result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
+      result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
 
-      result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+      result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
       ok(memcmp(pbData,cTestData[i].decstr,cTestData[1].enclen)==0,"decryption incorrect %d\n",i);
@@ -590,10 +590,10 @@ static void test_des(void)
     for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
     
     dwLen = 13;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, 16);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
     ok(result, "%08x\n", GetLastError());
     
-    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+    result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
     for (i=0; i<4; i++)
@@ -601,11 +601,11 @@ static void test_des(void)
       memcpy(pbData,cTestData[i].origstr,cTestData[i].strlen);
 
       dwLen = cTestData[i].enclen;
-      result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
+      result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
 
-      result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+      result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
       ok(memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen)==0,"decryption incorrect %d\n",i);
@@ -638,12 +638,12 @@ static void test_3des(void)
     for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
     
     dwLen = 13;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, 16);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
     ok(result, "%08x\n", GetLastError());
-    
+
     ok(!memcmp(pbData, des3, sizeof(des3)), "3DES encryption failed!\n");
-    
-    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+
+    result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
     for (i=0; i<4; i++)
@@ -651,11 +651,11 @@ static void test_3des(void)
       memcpy(pbData,cTestData[i].origstr,cTestData[i].strlen);
 
       dwLen = cTestData[i].enclen;
-      result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
+      result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
 
-      result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+      result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
       ok(memcmp(pbData,cTestData[i].decstr,cTestData[i].enclen)==0,"decryption incorrect %d\n",i);
@@ -696,10 +696,10 @@ static void test_aes(int keylen)
     for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
 
     dwLen = 13;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, 16);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
     ok(result, "%08x\n", GetLastError());
 
-    result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+    result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
     for (i=0; i<4; i++)
@@ -707,11 +707,11 @@ static void test_aes(int keylen)
       memcpy(pbData,cTestData[i].origstr,cTestData[i].strlen);
 
       dwLen = cTestData[i].enclen;
-      result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
+      result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, cTestData[i].buflen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].buflen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].buflen);
 
-      result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwLen);
+      result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
       ok(result, "%08x\n", GetLastError());
       ok(dwLen==cTestData[i].enclen,"length incorrect, got %d, expected %d\n",dwLen,cTestData[i].enclen);
       ok(memcmp(pbData,cTestData[i].decstr,cTestData[1].enclen)==0,"decryption incorrect %d\n",i);
@@ -800,7 +800,7 @@ static void test_rc2(void)
         ok(result, "%08x\n", GetLastError());
 
         dwDataLen = 13;
-        result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen, 24);
+        result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
         ok(result, "%08x\n", GetLastError());
 
         ok(!memcmp(pbData, rc2encrypted, 8), "RC2 encryption failed!\n");
@@ -811,7 +811,7 @@ static void test_rc2(void)
         CryptGetKeyParam(hKey, KP_IV, pbTemp, &dwLen, 0);
         HeapFree(GetProcessHeap(), 0, pbTemp);
 
-        result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen);
+        result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen);
         ok(result, "%08x\n", GetLastError());
 
         /* What sizes salt can I set? */
@@ -879,7 +879,7 @@ static void test_rc2(void)
         ok(result, "%08x\n", GetLastError());
 
         dwDataLen = 13;
-        result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen, 24);
+        result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
         ok(result, "%08x\n", GetLastError());
 
         ok(!memcmp(pbData, rc2_128_encrypted, sizeof(rc2_128_encrypted)),
@@ -955,15 +955,15 @@ static void test_rc4(void)
         ok(result, "%08x\n", GetLastError());
 
         dwDataLen = 16;
-        result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, NULL, &dwDataLen, 24);
+        result = CryptEncrypt(hKey, 0, TRUE, 0, NULL, &dwDataLen, 24);
         ok(result, "%08x\n", GetLastError());
         dwDataLen = 16;
-        result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen, 24);
+        result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
         ok(result, "%08x\n", GetLastError());
 
         ok(!memcmp(pbData, rc4, dwDataLen), "RC4 encryption failed!\n");
 
-        result = CryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, pbData, &dwDataLen);
+        result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen);
         ok(result, "%08x\n", GetLastError());
 
         /* What sizes salt can I set? */
@@ -1043,7 +1043,7 @@ static void test_mac(void) {
     if (!derive_key(CALG_RC2, &hKey, 56)) return;
 
     dwLen = 256;
-    result = CryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, abEnc, &dwLen, 264);
+    result = CryptEncrypt(hKey, 0, TRUE, 0, abEnc, &dwLen, 264);
     ok (result && dwLen == 264, "%08x, dwLen: %d\n", GetLastError(), dwLen);
     
     result = CryptCreateHash(hProv, CALG_MAC, hKey, 0, &hHash);

@@ -657,7 +657,7 @@ static inline void update_hash(CRYPTHASH *pCryptHash, CONST BYTE *pbData, DWORD 
             pbTemp = HeapAlloc(GetProcessHeap(), 0, dwDataLen);
             if (!pbTemp) return;
             memcpy(pbTemp, pbData, dwDataLen);
-            RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, (HCRYPTHASH)NULL, FALSE, 0, 
+            RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, FALSE, 0,
                              pbTemp, &dwDataLen, dwDataLen);
             HeapFree(GetProcessHeap(), 0, pbTemp);
             break;
@@ -701,7 +701,7 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash) {
 
         case CALG_MAC:
             dwDataLen = 0;
-            RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, (HCRYPTHASH)NULL, TRUE, 0, 
+            RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, TRUE, 0,
                              pCryptHash->abHashValue, &dwDataLen, pCryptHash->dwHashSize);
             break;
 
