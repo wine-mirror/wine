@@ -55,6 +55,8 @@ C_SRCS = \
 
 RC_SRCS = shres.rc
 
+SVG_SRCS = folder_open.svg
+
 C_SRCS16  = shell.c
 RC_SRCS16 = version16.rc
 SPEC_SRCS16 = shell.spec
