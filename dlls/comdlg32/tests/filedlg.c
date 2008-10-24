@@ -212,9 +212,9 @@ static LONG_PTR WINAPI template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM l
         HWND p,cb;
         INT sel;
         p = GetParent(dlg);
-        ok(p!=(HWND)NULL, "Failed to get parent of template\n");
+        ok(p!=NULL, "Failed to get parent of template\n");
         cb = GetDlgItem(p,0x470);
-        ok(cb!=(HWND)NULL, "Failed to get filter combobox\n");
+        ok(cb!=NULL, "Failed to get filter combobox\n");
         sel = SendMessage(cb, CB_GETCURSEL, 0, 0);
         ok (sel != -1, "Failed to get selection from filter listbox\n");
     }
