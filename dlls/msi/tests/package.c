@@ -854,7 +854,7 @@ typedef struct _tagVS_VERSIONINFO
 #define roundoffs(a, b, r) (((BYTE *)(b) - (BYTE *)(a) + ((r) - 1)) & ~((r) - 1))
 #define roundpos(a, b, r) (((BYTE *)(a)) + roundoffs(a, b, r))
 
-static void create_file_with_version(const CHAR *name, LONG ms, LONG ls)
+static BOOL create_file_with_version(const CHAR *name, LONG ms, LONG ls)
 {
     VS_VERSIONINFO *pVerInfo;
     VS_FIXEDFILEINFO *pFixedInfo;
@@ -862,6 +862,7 @@ static void create_file_with_version(const CHAR *name, LONG ms, LONG ls)
     CHAR path[MAX_PATH];
     DWORD handle, size;
     HANDLE resource;
+    BOOL ret = FALSE;
 
     GetSystemDirectory(path, MAX_PATH);
     lstrcatA(path, "\\kernel32.dll");
@@ -886,12 +887,18 @@ static void create_file_with_version(const CHAR *name, LONG ms, LONG ls)
     if (!resource)
         goto done;
 
-    UpdateResource(resource, RT_VERSION, MAKEINTRESOURCE(VS_VERSION_INFO),
-                   MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), buffer, size);
-    EndUpdateResource(resource, FALSE);
+    if (!UpdateResource(resource, RT_VERSION, MAKEINTRESOURCE(VS_VERSION_INFO),
+                   MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), buffer, size))
+        goto done;
+
+    if (!EndUpdateResource(resource, FALSE))
+        goto done;
+
+    ret = TRUE;
 
 done:
     HeapFree(GetProcessHeap(), 0, buffer);
+    return ret;
 }
 
 static void test_createpackage(void)
@@ -6146,12 +6153,19 @@ static void test_appsearch_reglocator(void)
     CHAR prop[MAX_PATH];
     DWORD binary[2];
     DWORD size, val;
+    BOOL space, version;
     HKEY hklm, classes;
     HKEY hkcu, users;
     LPCSTR str;
     LPSTR ptr;
     LONG res;
     UINT r;
+
+    version = TRUE;
+    if (!create_file_with_version("test.dll", MAKELONG(2, 1), MAKELONG(4, 3)))
+        version = FALSE;
+
+    DeleteFileA("test.dll");
 
     res = RegCreateKeyA(HKEY_CLASSES_ROOT, "Software\\Wine", &classes);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -6167,12 +6181,18 @@ static void test_appsearch_reglocator(void)
                          (const BYTE *)"regszdata", 10);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    users = 0;
     res = RegCreateKeyA(HKEY_USERS, "S-1-5-18\\Software\\Wine", &users);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    ok(res == ERROR_SUCCESS ||
+       broken(res == ERROR_INVALID_PARAMETER),
+       "Expected ERROR_SUCCESS, got %d\n", res);
 
-    res = RegSetValueExA(users, "Value1", 0, REG_SZ,
-                         (const BYTE *)"regszdata", 10);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegSetValueExA(users, "Value1", 0, REG_SZ,
+                             (const BYTE *)"regszdata", 10);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     res = RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine", &hklm);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -6258,6 +6278,7 @@ static void test_appsearch_reglocator(void)
     res = RegSetValueExA(hklm, "value16", 0, REG_SZ,
                          (const BYTE *)path, lstrlenA(path) + 1);
 
+    space = (strchr(CURR_DIR, ' ')) ? TRUE : FALSE;
     sprintf(path, "%s\\FileName1 -option", CURR_DIR);
     res = RegSetValueExA(hklm, "value17", 0, REG_SZ,
                          (const BYTE *)path, lstrlenA(path) + 1);
@@ -6656,11 +6677,14 @@ static void test_appsearch_reglocator(void)
     ok(!lstrcmpA(prop, "regszdata"),
        "Expected \"regszdata\", got \"%s\"\n", prop);
 
-    size = MAX_PATH;
-    r = MsiGetPropertyA(hpkg, "SIGPROP17", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, "regszdata"),
-       "Expected \"regszdata\", got \"%s\"\n", prop);
+    if (users)
+    {
+        size = MAX_PATH;
+        r = MsiGetPropertyA(hpkg, "SIGPROP17", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, "regszdata"),
+           "Expected \"regszdata\", got \"%s\"\n", prop);
+    }
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP18", prop, &size);
@@ -6678,22 +6702,25 @@ static void test_appsearch_reglocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
 
-    size = MAX_PATH;
-    sprintf(path, "%s\\FileName3.dll", CURR_DIR);
-    r = MsiGetPropertyA(hpkg, "SIGPROP21", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    if (version)
+    {
+        size = MAX_PATH;
+        sprintf(path, "%s\\FileName3.dll", CURR_DIR);
+        r = MsiGetPropertyA(hpkg, "SIGPROP21", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
-    size = MAX_PATH;
-    r = MsiGetPropertyA(hpkg, "SIGPROP22", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+        size = MAX_PATH;
+        r = MsiGetPropertyA(hpkg, "SIGPROP22", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
 
-    size = MAX_PATH;
-    sprintf(path, "%s\\FileName5.dll", CURR_DIR);
-    r = MsiGetPropertyA(hpkg, "SIGPROP23", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+        size = MAX_PATH;
+        sprintf(path, "%s\\FileName5.dll", CURR_DIR);
+        r = MsiGetPropertyA(hpkg, "SIGPROP23", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
 
     size = MAX_PATH;
     lstrcpyA(path, CURR_DIR);
@@ -6731,9 +6758,13 @@ static void test_appsearch_reglocator(void)
     ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
+    sprintf(path, "%s\\FileName1", CURR_DIR);
     r = MsiGetPropertyA(hpkg, "SIGPROP30", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+    if (space)
+        ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+    else
+        todo_wine ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     RegSetValueA(hklm, NULL, REG_SZ, "", 0);
     RegDeleteValueA(hklm, "Value1");
@@ -6792,10 +6823,17 @@ static void test_appsearch_inilocator(void)
     MSIHANDLE hpkg, hdb;
     CHAR path[MAX_PATH];
     CHAR prop[MAX_PATH];
+    BOOL version;
     LPCSTR str;
     LPSTR ptr;
     DWORD size;
     UINT r;
+
+    version = TRUE;
+    if (!create_file_with_version("test.dll", MAKELONG(2, 1), MAKELONG(4, 3)))
+        version = FALSE;
+
+    DeleteFileA("test.dll");
 
     WritePrivateProfileStringA("Section", "Key", "keydata,field2", "IniFile.ini");
 
@@ -7001,22 +7039,25 @@ static void test_appsearch_inilocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
 
-    size = MAX_PATH;
-    sprintf(path, "%s\\FileName2.dll", CURR_DIR);
-    r = MsiGetPropertyA(hpkg, "SIGPROP10", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    if (version)
+    {
+        size = MAX_PATH;
+        sprintf(path, "%s\\FileName2.dll", CURR_DIR);
+        r = MsiGetPropertyA(hpkg, "SIGPROP10", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
-    size = MAX_PATH;
-    r = MsiGetPropertyA(hpkg, "SIGPROP11", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+        size = MAX_PATH;
+        r = MsiGetPropertyA(hpkg, "SIGPROP11", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
 
-    size = MAX_PATH;
-    sprintf(path, "%s\\FileName4.dll", CURR_DIR);
-    r = MsiGetPropertyA(hpkg, "SIGPROP12", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+        size = MAX_PATH;
+        sprintf(path, "%s\\FileName4.dll", CURR_DIR);
+        r = MsiGetPropertyA(hpkg, "SIGPROP12", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    }
 
     delete_win_ini("IniFile.ini");
     DeleteFileA("FileName1");
@@ -7032,9 +7073,16 @@ static void test_appsearch_drlocator(void)
     MSIHANDLE hpkg, hdb;
     CHAR path[MAX_PATH];
     CHAR prop[MAX_PATH];
+    BOOL version;
     LPCSTR str;
     DWORD size;
     UINT r;
+
+    version = TRUE;
+    if (!create_file_with_version("test.dll", MAKELONG(2, 1), MAKELONG(4, 3)))
+        version = FALSE;
+
+    DeleteFileA("test.dll");
 
     create_test_file("FileName1");
     CreateDirectoryA("one", NULL);
@@ -7216,21 +7264,24 @@ static void test_appsearch_drlocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
-    size = MAX_PATH;
-    sprintf(path, "%s\\FileName3.dll", CURR_DIR);
-    r = MsiGetPropertyA(hpkg, "SIGPROP8", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    if (version)
+    {
+        size = MAX_PATH;
+        sprintf(path, "%s\\FileName3.dll", CURR_DIR);
+        r = MsiGetPropertyA(hpkg, "SIGPROP8", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
-    size = MAX_PATH;
-    r = MsiGetPropertyA(hpkg, "SIGPROP9", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+        size = MAX_PATH;
+        r = MsiGetPropertyA(hpkg, "SIGPROP9", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
 
-    size = MAX_PATH;
-    r = MsiGetPropertyA(hpkg, "SIGPROP10", prop, &size);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+        size = MAX_PATH;
+        r = MsiGetPropertyA(hpkg, "SIGPROP10", prop, &size);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
+    }
 
     DeleteFileA("FileName1");
     DeleteFileA("FileName3.dll");
