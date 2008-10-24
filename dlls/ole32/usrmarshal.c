@@ -2398,8 +2398,9 @@ HRESULT CALLBACK IEnumFORMATETC_Next_Proxy(
     FORMATETC *rgelt,
     ULONG *pceltFetched)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    ULONG fetched;
+    if (!pceltFetched) pceltFetched = &fetched;
+    return IEnumFORMATETC_RemoteNext_Proxy(This, celt, rgelt, pceltFetched);
 }
 
 HRESULT __RPC_STUB IEnumFORMATETC_Next_Stub(
@@ -2408,8 +2409,11 @@ HRESULT __RPC_STUB IEnumFORMATETC_Next_Stub(
     FORMATETC *rgelt,
     ULONG *pceltFetched)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+    *pceltFetched = 0;
+    hr = IEnumFORMATETC_Next(This, celt, rgelt, pceltFetched);
+    if (hr == S_OK) *pceltFetched = celt;
+    return hr;
 }
 
 HRESULT CALLBACK IEnumSTATDATA_Next_Proxy(
