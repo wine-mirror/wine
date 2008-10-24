@@ -99,15 +99,52 @@ BOOL WINAPI CryptUIDlgViewCertificateW(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertVi
     return TRUE;
 }
 
+static PCCERT_CONTEXT make_cert_from_file(LPCWSTR fileName)
+{
+    HANDLE file;
+    DWORD size, encoding = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+    BYTE *buffer;
+    PCCERT_CONTEXT cert;
+
+    file = CreateFileW(fileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+     OPEN_EXISTING, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        WARN("can't open certificate file %s\n", debugstr_w(fileName));
+        return NULL;
+    }
+    if ((size = GetFileSize(file, NULL)))
+    {
+        if ((buffer = HeapAlloc(GetProcessHeap(), 0, size)))
+        {
+            DWORD read;
+            if (!ReadFile(file, buffer, size, &read, NULL) || read != size)
+            {
+                WARN("can't read certificate file %s\n", debugstr_w(fileName));
+                HeapFree(GetProcessHeap(), 0, buffer);
+                CloseHandle(file);
+                return NULL;
+            }
+        }
+    }
+    else
+    {
+        WARN("empty file %s\n", debugstr_w(fileName));
+        CloseHandle(file);
+        return NULL;
+    }
+    CloseHandle(file);
+    cert = CertCreateCertificateContext(encoding, buffer, size);
+    HeapFree(GetProcessHeap(), 0, buffer);
+    return cert;
+}
+
 BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
                              PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
 {
     static const WCHAR Root[] = {'R','o','o','t',0};
     BOOL ret;
-    HANDLE file;
     HCERTSTORE store;
-    BYTE *buffer;
-    DWORD size, encoding = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
     const CERT_CONTEXT *cert;
 
     TRACE("(0x%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent, debugstr_w(pwszWizardTitle),
@@ -129,38 +166,9 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
         FIXME("source type not implemented: %u\n", pImportSrc->dwSubjectChoice);
         return FALSE;
     }
-    file = CreateFileW(pImportSrc->pwszFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
-                       OPEN_EXISTING, 0, NULL);
-    if (file == INVALID_HANDLE_VALUE)
-    {
-        WARN("can't open certificate file %s\n", debugstr_w(pImportSrc->pwszFileName));
-        return FALSE;
-    }
-    if ((size = GetFileSize(file, NULL)))
-    {
-        if ((buffer = HeapAlloc(GetProcessHeap(), 0, size)))
-        {
-            DWORD read;
-            if (!ReadFile(file, buffer, size, &read, NULL) || read != size)
-            {
-                WARN("can't read certificate file %s\n", debugstr_w(pImportSrc->pwszFileName));
-                HeapFree(GetProcessHeap(), 0, buffer);
-                CloseHandle(file);
-                return FALSE;
-            }
-        }
-    }
-    else
-    {
-        WARN("empty file %s\n", debugstr_w(pImportSrc->pwszFileName));
-        CloseHandle(file);
-        return FALSE;
-    }
-    CloseHandle(file);
-    if (!(cert = CertCreateCertificateContext(encoding, buffer, size)))
+    if (!(cert = make_cert_from_file(pImportSrc->pwszFileName)))
     {
         WARN("unable to create certificate context\n");
-        HeapFree(GetProcessHeap(), 0, buffer);
         return FALSE;
     }
     if (hDestCertStore) store = hDestCertStore;
@@ -171,7 +179,6 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
         {
             WARN("unable to open certificate store\n");
             CertFreeCertificateContext(cert);
-            HeapFree(GetProcessHeap(), 0, buffer);
             return FALSE;
         }
     }
@@ -179,6 +186,5 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
 
     if (!hDestCertStore) CertCloseStore(store, 0);
     CertFreeCertificateContext(cert);
-    HeapFree(GetProcessHeap(), 0, buffer);
     return ret;
 }
