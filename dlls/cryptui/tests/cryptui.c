@@ -197,7 +197,6 @@ static void test_crypt_ui_wiz_import(void)
     memset(&info, 0, sizeof(info));
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     info.dwSize = sizeof(info);

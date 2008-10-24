@@ -117,7 +117,8 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
 
     if (!(dwFlags & CRYPTUI_WIZ_NO_UI)) FIXME("UI not implemented\n");
 
-    if (!pImportSrc)
+    if (!pImportSrc ||
+     pImportSrc->dwSize != sizeof(CRYPTUI_WIZ_IMPORT_SRC_INFO))
     {
         SetLastError(E_INVALIDARG);
         return FALSE;
