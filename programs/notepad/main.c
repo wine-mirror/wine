@@ -119,8 +119,11 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
                 REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, &disp) == ERROR_SUCCESS)
     {
         DWORD data;
+        WINDOWPLACEMENT wndpl;
 
-        GetWindowRect(Globals.hMainWnd, &main_rect);
+        wndpl.length = sizeof(WINDOWPLACEMENT);
+        GetWindowPlacement(Globals.hMainWnd, &wndpl);
+        main_rect = wndpl.rcNormalPosition;
 
 #define SET_NOTEPAD_REG(hkey, value_name, value_data) do { DWORD data = (DWORD)(value_data); RegSetValueEx(hkey, value_name, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD)); }while(0)
         SET_NOTEPAD_REG(hkey, value_fWrap,            Globals.bWrapLongLines);
