@@ -1964,7 +1964,7 @@ static void test_user_agent_header(void)
 static void test_bogus_accept_types_array(void)
 {
     HINTERNET ses, con, req;
-    static const char *types[] = { (const char *)6240, "*/*", "%p", "", "*/*", NULL };
+    static const char *types[] = { (const char *)6240, "*/*", "%p", "", (const char *)0xffffffff, "*/*", NULL };
     DWORD size;
     char buffer[32];
     BOOL ret;

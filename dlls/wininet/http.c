@@ -59,6 +59,7 @@
 
 #include "internet.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
@@ -1020,12 +1021,20 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
         types = lpszAcceptTypes;
         while (*types)
         {
-            /* find out how many there are */
-            if (((ULONG_PTR)*types >> 16) && **types)
+            __TRY
             {
-                TRACE("accept type: %s\n", debugstr_a(*types));
-                acceptTypesCount++;
+                /* find out how many there are */
+                if (*types && **types)
+                {
+                    TRACE("accept type: %s\n", debugstr_a(*types));
+                    acceptTypesCount++;
+                }
             }
+            __EXCEPT_PAGE_FAULT
+            {
+                WARN("invalid accept type pointer\n");
+            }
+            __ENDTRY;
             types++;
         }
         szAcceptTypes = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *) * (acceptTypesCount+1));
@@ -1035,20 +1044,26 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
         types = lpszAcceptTypes;
         while (*types)
         {
-            if (((ULONG_PTR)*types >> 16) && **types)
+            __TRY
             {
-                len = MultiByteToWideChar(CP_ACP, 0, *types, -1, NULL, 0 );
-                szAcceptTypes[acceptTypesCount] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                if (!szAcceptTypes[acceptTypesCount]) goto end;
+                if (*types && **types)
+                {
+                    len = MultiByteToWideChar(CP_ACP, 0, *types, -1, NULL, 0 );
+                    szAcceptTypes[acceptTypesCount] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
-                MultiByteToWideChar(CP_ACP, 0, *types, -1, szAcceptTypes[acceptTypesCount], len);
-                acceptTypesCount++;
+                    MultiByteToWideChar(CP_ACP, 0, *types, -1, szAcceptTypes[acceptTypesCount], len);
+                    acceptTypesCount++;
+                }
             }
+            __EXCEPT_PAGE_FAULT
+            {
+                /* ignore invalid pointer */
+            }
+            __ENDTRY;
             types++;
         }
         szAcceptTypes[acceptTypesCount] = NULL;
     }
-    else szAcceptTypes = 0;
 
     rc = HttpOpenRequestW(hHttpSession, szVerb, szObjectName,
                           szVersion, szReferrer,
