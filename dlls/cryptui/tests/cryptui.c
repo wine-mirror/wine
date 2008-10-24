@@ -396,7 +396,6 @@ static void test_crypt_ui_wiz_import(void)
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert3, sizeof(iTunesCert3));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    todo_wine
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -408,7 +407,7 @@ static void test_crypt_ui_wiz_import(void)
         if (addressBook)
         {
             find_and_delete_cert_in_store(addressBook, "AddressBook",
-             info.u.pCertContext, "iTunesCert3", TRUE);
+             info.u.pCertContext, "iTunesCert3", FALSE);
             CertCloseStore(addressBook, 0);
         }
     }
@@ -446,7 +445,6 @@ static void test_crypt_ui_wiz_import(void)
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert1, sizeof(iTunesCert1));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    todo_wine
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -458,7 +456,7 @@ static void test_crypt_ui_wiz_import(void)
         if (addressBook)
         {
             find_and_delete_cert_in_store(addressBook, "AddressBook",
-             info.u.pCertContext, "iTunesCert1", TRUE);
+             info.u.pCertContext, "iTunesCert1", FALSE);
             CertCloseStore(addressBook, 0);
         }
     }
@@ -467,7 +465,6 @@ static void test_crypt_ui_wiz_import(void)
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      iTunesCert2, sizeof(iTunesCert2));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    todo_wine
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -478,7 +475,7 @@ static void test_crypt_ui_wiz_import(void)
         if (ca)
         {
             find_and_delete_cert_in_store(ca, "CA",
-             info.u.pCertContext, "iTunesCert2", TRUE);
+             info.u.pCertContext, "iTunesCert2", FALSE);
             CertCloseStore(ca, 0);
         }
     }

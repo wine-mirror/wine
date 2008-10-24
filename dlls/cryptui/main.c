@@ -139,10 +139,79 @@ static PCCERT_CONTEXT make_cert_from_file(LPCWSTR fileName)
     return cert;
 }
 
+/* Decodes a cert's basic constraints extension (either szOID_BASIC_CONSTRAINTS
+ * or szOID_BASIC_CONSTRAINTS2, whichever is present) to determine if it
+ * should be a CA.  If neither extension is present, returns
+ * defaultIfNotSpecified.
+ */
+static BOOL is_ca_cert(PCCERT_CONTEXT cert, BOOL defaultIfNotSpecified)
+{
+    BOOL isCA = defaultIfNotSpecified;
+    PCERT_EXTENSION ext = CertFindExtension(szOID_BASIC_CONSTRAINTS,
+     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+
+    if (ext)
+    {
+        CERT_BASIC_CONSTRAINTS_INFO *info;
+        DWORD size = 0;
+
+        if (CryptDecodeObjectEx(X509_ASN_ENCODING, szOID_BASIC_CONSTRAINTS,
+         ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG,
+         NULL, (LPBYTE)&info, &size))
+        {
+            if (info->SubjectType.cbData == 1)
+                isCA = info->SubjectType.pbData[0] & CERT_CA_SUBJECT_FLAG;
+            LocalFree(info);
+        }
+    }
+    else
+    {
+        ext = CertFindExtension(szOID_BASIC_CONSTRAINTS2,
+         cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+        if (ext)
+        {
+            CERT_BASIC_CONSTRAINTS2_INFO info;
+            DWORD size = sizeof(CERT_BASIC_CONSTRAINTS2_INFO);
+
+            if (CryptDecodeObjectEx(X509_ASN_ENCODING,
+             szOID_BASIC_CONSTRAINTS2, ext->Value.pbData, ext->Value.cbData,
+             0, NULL, &info, &size))
+                isCA = info.fCA;
+        }
+    }
+    return isCA;
+}
+
+static inline BOOL is_cert_self_signed(PCCERT_CONTEXT cert)
+{
+    return CertCompareCertificateName(cert->dwCertEncodingType,
+     &cert->pCertInfo->Subject, &cert->pCertInfo->Issuer);
+}
+
+static HCERTSTORE choose_store_for_cert(PCCERT_CONTEXT cert)
+{
+    static const WCHAR Root[] = {'R','o','o','t',0};
+    static const WCHAR AddressBook[] = { 'A','d','d','r','e','s','s',
+     'B','o','o','k',0 };
+    static const WCHAR CA[] = { 'C','A',0 };
+    LPCWSTR storeName;
+
+    if (is_ca_cert(cert, TRUE))
+    {
+        if (is_cert_self_signed(cert))
+            storeName = Root;
+        else
+            storeName = CA;
+    }
+    else
+        storeName = AddressBook;
+    return CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER, storeName);
+}
+
 BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardTitle,
                              PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc, HCERTSTORE hDestCertStore)
 {
-    static const WCHAR Root[] = {'R','o','o','t',0};
     BOOL ret;
     HCERTSTORE store;
     const CERT_CONTEXT *cert;
@@ -187,8 +256,7 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     if (hDestCertStore) store = hDestCertStore;
     else
     {
-        FIXME("certificate store should be determined dynamically, picking Root store\n");
-        if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, Root)))
+        if (!(store = choose_store_for_cert(cert)))
         {
             WARN("unable to open certificate store\n");
             CertFreeCertificateContext(cert);
