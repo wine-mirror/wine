@@ -1220,7 +1220,7 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
 	if (!TREEVIEW_ValidItem(infoPtr, parentItem))
 	{
 	    WARN("invalid parent %p\n", parentItem);
-	    return (LRESULT)(HTREEITEM)NULL;
+            return 0;
 	}
     }
 
@@ -1251,13 +1251,13 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
 
     newItem = TREEVIEW_AllocateItem(infoPtr);
     if (newItem == NULL)
-	return (LRESULT)(HTREEITEM)NULL;
+        return 0;
 
     newItem->parent = parentItem;
     newItem->iIntegral = 1;
 
     if (!TREEVIEW_DoSetItemT(infoPtr, newItem, tvItem, isW))
-	return (LRESULT)(HTREEITEM)NULL;
+        return 0;
 
     /* After this point, nothing can fail. (Except for TVI_SORT.) */
 
@@ -3461,14 +3461,14 @@ TREEVIEW_HitTest(const TREEVIEW_INFO *infoPtr, LPTVHITTESTINFO lpht)
     if (status)
     {
 	lpht->flags = status;
-	return (LRESULT)(HTREEITEM)NULL;
+        return 0;
     }
 
     wineItem = TREEVIEW_HitTestPoint(infoPtr, lpht->pt);
     if (!wineItem)
     {
 	lpht->flags = TVHT_NOWHERE;
-	return (LRESULT)(HTREEITEM)NULL;
+        return 0;
     }
 
     if (x >= wineItem->textOffset + wineItem->textWidth)
