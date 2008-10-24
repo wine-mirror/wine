@@ -202,19 +202,16 @@ static void test_crypt_ui_wiz_import(void)
     info.dwSize = sizeof(info);
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT;
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI | CRYPTUI_WIZ_IMPORT_ALLOW_CERT,
      0, NULL, &info, NULL);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Imports the following cert--self-signed, with no basic constraints set--
@@ -287,10 +284,9 @@ static void test_crypt_ui_wiz_import(void)
     }
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI |
      CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE, 0, NULL, &info, store);
-    todo_wine
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     find_and_delete_cert_in_store(store, "memory", info.u.pCertContext,
-     "iTunesCert3", TRUE);
+     "iTunesCert3", FALSE);
     CertFreeCertificateContext(info.u.pCertContext);
     CertCloseStore(store, 0);
 

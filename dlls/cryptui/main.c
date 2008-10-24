@@ -146,11 +146,10 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     BOOL ret;
     HCERTSTORE store;
     const CERT_CONTEXT *cert;
+    BOOL freeCert = FALSE;
 
     TRACE("(0x%08x, %p, %s, %p, %p)\n", dwFlags, hwndParent, debugstr_w(pwszWizardTitle),
           pImportSrc, hDestCertStore);
-
-    FIXME("only certificate files are supported\n");
 
     if (!(dwFlags & CRYPTUI_WIZ_NO_UI)) FIXME("UI not implemented\n");
 
@@ -161,14 +160,28 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
         return FALSE;
     }
 
-    if (pImportSrc->dwSubjectChoice != CRYPTUI_WIZ_IMPORT_SUBJECT_FILE)
+    switch (pImportSrc->dwSubjectChoice)
     {
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_FILE:
+        if (!(cert = make_cert_from_file(pImportSrc->pwszFileName)))
+        {
+            WARN("unable to create certificate context\n");
+            return FALSE;
+        }
+        else
+            freeCert = TRUE;
+        break;
+    case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
+        cert = pImportSrc->pCertContext;
+        if (!cert)
+        {
+            SetLastError(E_INVALIDARG);
+            return FALSE;
+        }
+        break;
+    default:
         FIXME("source type not implemented: %u\n", pImportSrc->dwSubjectChoice);
-        return FALSE;
-    }
-    if (!(cert = make_cert_from_file(pImportSrc->pwszFileName)))
-    {
-        WARN("unable to create certificate context\n");
+        SetLastError(E_INVALIDARG);
         return FALSE;
     }
     if (hDestCertStore) store = hDestCertStore;
@@ -185,6 +198,7 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     ret = CertAddCertificateContextToStore(store, cert, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
 
     if (!hDestCertStore) CertCloseStore(store, 0);
-    CertFreeCertificateContext(cert);
+    if (freeCert)
+        CertFreeCertificateContext(cert);
     return ret;
 }
