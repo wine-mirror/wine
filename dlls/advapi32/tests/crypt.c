@@ -274,11 +274,11 @@ static void test_incorrect_api_usage(void)
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
     dwLen = 1;
-    result = pCryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, &temp, &dwLen);
+    result = pCryptDecrypt(hKey, 0, TRUE, 0, &temp, &dwLen);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
     dwLen = 1;
-    result = pCryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, &temp, &dwLen, 1);
+    result = pCryptEncrypt(hKey, 0, TRUE, 0, &temp, &dwLen, 1);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
     result = pCryptDeriveKey(hProv, CALG_RC4, hHash, 0, &hKey2);
@@ -293,7 +293,7 @@ static void test_incorrect_api_usage(void)
 #endif
 
     dwLen = 1;
-    result = pCryptExportKey(hKey, (HCRYPTPROV)NULL, 0, 0, &temp, &dwLen);
+    result = pCryptExportKey(hKey, 0, 0, 0, &temp, &dwLen);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
     result = pCryptGenKey(hProv, CALG_RC4, 0, &hKey2);
@@ -320,7 +320,7 @@ static void test_incorrect_api_usage(void)
     result = pCryptHashSessionKey(hHash, hKey, 0);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
-    result = pCryptImportKey(hProv, &temp, 1, (HCRYPTKEY)NULL, 0, &hKey2);
+    result = pCryptImportKey(hProv, &temp, 1, 0, 0, &hKey2);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
     if (pCryptSignHashW)
