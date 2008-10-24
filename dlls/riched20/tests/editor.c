@@ -5658,9 +5658,15 @@ static void test_word_movement(void)
 
     /* Make sure the behaviour is the same with a unicode richedit window,
      * and using unicode functions. */
+    SetLastError(0xdeadbeef);
     hwnd = CreateWindowW(RICHEDIT_CLASS20W, NULL,
                         ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
                         0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    if (!hwnd && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("Needed unicode functions are not implemented\n");
+        return;
+    }
 
     /* Test with a custom word break procedure that uses X as the delimiter. */
     result = SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW);
