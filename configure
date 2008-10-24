@@ -22921,6 +22921,14 @@ dlls/cryptui/Makefile: dlls/cryptui/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/cryptui/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/cryptui/tests/Makefile"
+test "x$enable_cryptui_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+	cryptui/tests"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/cryptui/tests/Makefile: dlls/cryptui/tests/Makefile.in dlls/Maketest.rules"
+ac_config_files="$ac_config_files dlls/cryptui/tests/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ctapi32/Makefile"
 test "x$enable_ctapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ctapi32"
@@ -26656,6 +26664,7 @@ do
     "dlls/cryptnet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptnet/Makefile" ;;
     "dlls/cryptnet/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptnet/tests/Makefile" ;;
     "dlls/cryptui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptui/Makefile" ;;
+    "dlls/cryptui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptui/tests/Makefile" ;;
     "dlls/ctapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctapi32/Makefile" ;;
     "dlls/ctl3d32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3d32/Makefile" ;;
     "dlls/d3d10/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10/Makefile" ;;
