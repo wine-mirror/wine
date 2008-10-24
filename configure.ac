@@ -922,8 +922,9 @@ then
     ac_gnutls_cflags="`$PKG_CONFIG --cflags gnutls 2>/dev/null`"
     CPPFLAGS="$CPPFLAGS $ac_gnutls_cflags"
     AC_CHECK_HEADER(gnutls/gnutls.h,
-        [WINE_CHECK_SONAME(gnutls,gnutls_global_init,
-            [AC_SUBST(GNUTLSINCL,"$ac_gnutls_cflags")],,[$ac_gnutls_libs])])
+        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>]], [[typeof(gnutls_transport_set_errno) *pfunc;]])],
+            [WINE_CHECK_SONAME(gnutls,gnutls_global_init,
+                [AC_SUBST(GNUTLSINCL,"$ac_gnutls_cflags")],,[$ac_gnutls_libs])])])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],
