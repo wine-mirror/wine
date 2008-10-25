@@ -5059,7 +5059,7 @@ static void test_button_messages(void)
     ok_sequence(WmLButtonUpSeq, "WM_LBUTTONUP on a button", FALSE);
 
     flush_sequence();
-    zfont = (HFONT)GetStockObject(SYSTEM_FONT);
+    zfont = GetStockObject(SYSTEM_FONT);
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)zfont, TRUE);
     UpdateWindow(hwnd);
     ok_sequence(WmSetFontButtonSeq, "WM_SETFONT on a button", FALSE);

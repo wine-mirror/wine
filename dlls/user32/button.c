@@ -812,8 +812,8 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     setup_clipping( hwnd, hDC );
 
-    hOldPen = (HPEN)SelectObject(hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
-    hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
+    hOldPen = SelectObject(hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
+    hOldBrush = SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
     oldBkMode = SetBkMode(hDC, TRANSPARENT);
 
     if (get_button_type(style) == BS_DEFPUSHBUTTON)

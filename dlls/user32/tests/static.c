@@ -112,7 +112,7 @@ START_TEST(static)
     wndclass.hIcon          = LoadIcon(NULL, IDI_APPLICATION);
     wndclass.hIconSm        = LoadIcon(NULL, IDI_APPLICATION);
     wndclass.hCursor        = LoadCursor(NULL, IDC_ARROW);
-    wndclass.hbrBackground  = (HBRUSH) GetStockObject(WHITE_BRUSH);
+    wndclass.hbrBackground  = GetStockObject(WHITE_BRUSH);
     wndclass.lpszClassName  = szClassName;
     wndclass.lpszMenuName   = NULL;
     RegisterClassEx(&wndclass);

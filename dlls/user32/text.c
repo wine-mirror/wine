@@ -1169,13 +1169,13 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     if (!(memdc = CreateCompatibleDC(hdc))) return FALSE;
 
     hbm = CreateBitmap(cx, cy, 1, 1, NULL);
-    hbmsave = (HBITMAP)SelectObject(memdc, hbm);
+    hbmsave = SelectObject(memdc, hbm);
     hbsave = SelectObject( memdc, GetStockObject(BLACK_BRUSH) );
     PatBlt( memdc, 0, 0, cx, cy, PATCOPY );
     SelectObject( memdc, hbsave );
     SetTextColor(memdc, RGB(255, 255, 255));
     SetBkColor(memdc, RGB(0, 0, 0));
-    hfsave = (HFONT)SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
+    hfsave = SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
 
     retval = fn(memdc, lp, slen);
     SelectObject(memdc, hfsave);
@@ -1189,12 +1189,12 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     if(retval || len != -1)
 #endif
     {
-        hbsave = (HBRUSH)SelectObject(memdc, SYSCOLOR_55AABrush);
+        hbsave = SelectObject(memdc, SYSCOLOR_55AABrush);
         PatBlt(memdc, 0, 0, cx, cy, 0x000A0329);
         SelectObject(memdc, hbsave);
     }
 
-    if(hb) hbsave = (HBRUSH)SelectObject(hdc, hb);
+    if(hb) hbsave = SelectObject(hdc, hb);
     fg = SetTextColor(hdc, RGB(0, 0, 0));
     bg = SetBkColor(hdc, RGB(255, 255, 255));
     BitBlt(hdc, x, y, cx, cy, memdc, 0, 0, 0x00E20746);

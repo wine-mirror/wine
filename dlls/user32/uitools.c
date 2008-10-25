@@ -141,8 +141,8 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
             + (LTRBOuterMono[uType & (BDR_INNER|BDR_OUTER)] != -1 ? 1 : 0);
 
     /* Init some vars */
-    OuterPen = InnerPen = (HPEN)GetStockObject(NULL_PEN);
-    SavePen = (HPEN)SelectObject(hdc, InnerPen);
+    OuterPen = InnerPen = GetStockObject(NULL_PEN);
+    SavePen = SelectObject(hdc, InnerPen);
     spx = spy = epx = epy = 0; /* Satisfy the compiler... */
 
     /* Determine the colors of the edges */
@@ -337,8 +337,8 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
         HPEN hpsave;
         HPEN hp = SYSCOLOR_GetPen(uFlags & BF_MONO ? COLOR_WINDOW
 				     : COLOR_BTNFACE);
-        hbsave = (HBRUSH)SelectObject(hdc, hb);
-        hpsave = (HPEN)SelectObject(hdc, hp);
+        hbsave = SelectObject(hdc, hb);
+        hpsave = SelectObject(hdc, hp);
         Polygon(hdc, Points, 4);
         SelectObject(hdc, hbsave);
         SelectObject(hdc, hpsave);
@@ -453,8 +453,8 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
                       && !(uFlags & (BF_FLAT|BF_MONO)) );
 
     /* Init some vars */
-    LTInnerPen = LTOuterPen = RBInnerPen = RBOuterPen = (HPEN)GetStockObject(NULL_PEN);
-    SavePen = (HPEN)SelectObject(hdc, LTInnerPen);
+    LTInnerPen = LTOuterPen = RBInnerPen = RBOuterPen = GetStockObject(NULL_PEN);
+    SavePen = SelectObject(hdc, LTInnerPen);
 
     /* Determine the colors of the edges */
     if(uFlags & BF_MONO)
@@ -778,7 +778,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
 
     if((uFlags & 0xff) == DFCS_BUTTONRADIOMASK)
     {
-        hbsave = (HBRUSH)SelectObject(dc, GetStockObject(BLACK_BRUSH));
+        hbsave = SelectObject(dc, GetStockObject(BLACK_BRUSH));
         Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
         SelectObject(dc, hbsave);
     }
@@ -786,16 +786,16 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
     {
         if(uFlags & (DFCS_FLAT|DFCS_MONO))
         {
-            hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
-            hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_WINDOWFRAME));
+            hpsave = SelectObject(dc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
+            hbsave = SelectObject(dc, GetSysColorBrush(COLOR_WINDOWFRAME));
             Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
             SelectObject(dc, hbsave);
             SelectObject(dc, hpsave);
         }
         else
         {
-            hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNHIGHLIGHT));
-            hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
+            hpsave = SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNHIGHLIGHT));
+            hbsave = SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
             Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.left-1, myr.bottom, myr.right+1, myr.top);
 
             SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNSHADOW));
@@ -824,8 +824,8 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         myr.top    = yc - i+i/2;
         myr.bottom = yc + i/2;
         i= !(uFlags & (DFCS_INACTIVE|DFCS_PUSHED)) ? COLOR_WINDOW : COLOR_BTNFACE;
-        hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(i));
-        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
+        hpsave = SelectObject(dc, SYSCOLOR_GetPen(i));
+        hbsave = SelectObject(dc, GetSysColorBrush(i));
         Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
         SelectObject(dc, hbsave);
         SelectObject(dc, hpsave);
@@ -841,8 +841,8 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         myr.bottom = yc + i/2;
 
         i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
-        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
-        hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(i));
+        hbsave = SelectObject(dc, GetSysColorBrush(i));
+        hpsave = SelectObject(dc, SYSCOLOR_GetPen(i));
         Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
         SelectObject(dc, hpsave);
         SelectObject(dc, hbsave);
@@ -930,7 +930,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     alignsave = SetTextAlign(dc, TA_TOP|TA_LEFT);
     bksave = SetBkMode(dc, TRANSPARENT);
     clrsave = GetTextColor(dc);
-    hfsave = (HFONT)SelectObject(dc, hf);
+    hfsave = SelectObject(dc, hf);
     GetTextExtentPoint32W(dc, str, 1, &size);
 
     if(uFlags & DFCS_INACTIVE)
@@ -1013,8 +1013,8 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
     case DFCS_SCROLLSIZEGRIP:
         /* This one breaks the flow... */
         UITOOLS95_DrawRectEdge(dc, r, EDGE_BUMP, BF_MIDDLE | ((uFlags&(DFCS_MONO|DFCS_FLAT)) ? BF_MONO : 0));
-        hpsave = (HPEN)SelectObject(dc, GetStockObject(NULL_PEN));
-        hbsave = (HBRUSH)SelectObject(dc, GetStockObject(NULL_BRUSH));
+        hpsave = SelectObject(dc, GetStockObject(NULL_PEN));
+        hbsave = SelectObject(dc, GetStockObject(NULL_BRUSH));
         if(uFlags & (DFCS_MONO|DFCS_FLAT))
         {
             hp = hp2 = SYSCOLOR_GetPen(COLOR_WINDOWFRAME);
@@ -1099,8 +1099,8 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
 
     if(uFlags & DFCS_INACTIVE)
     {
-        hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
-        hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNHIGHLIGHT));
+        hbsave = SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
+        hpsave = SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNHIGHLIGHT));
         Polygon(dc, Line, 3);
         SelectObject(dc, hpsave);
         SelectObject(dc, hbsave);
@@ -1114,8 +1114,8 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
       }
 
     i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
-    hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
-    hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(i));
+    hbsave = SelectObject(dc, GetSysColorBrush(i));
+    hpsave = SelectObject(dc, SYSCOLOR_GetPen(i));
     Polygon(dc, Line, 3);
     SelectObject(dc, hpsave);
     SelectObject(dc, hbsave);
@@ -1147,8 +1147,8 @@ static BOOL UITOOLS95_DrawFrameMenu(HDC dc, LPRECT r, UINT uFlags)
 
     FillRect(dc, r, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
-    hbsave = (HBRUSH)SelectObject(dc, GetStockObject(BLACK_BRUSH));
-    hpsave = (HPEN)SelectObject(dc, GetStockObject(BLACK_PEN));
+    hbsave = SelectObject(dc, GetStockObject(BLACK_BRUSH));
+    hpsave = SelectObject(dc, GetStockObject(BLACK_PEN));
 
     switch(uFlags & 0xff)
     {
@@ -1539,7 +1539,7 @@ static BOOL UITOOLS_DrawStateJam( HDC hdc, UINT opcode, DRAWSTATEPROC func, LPAR
     case DST_BITMAP:
         memdc = CreateCompatibleDC(hdc);
         if(!memdc) return FALSE;
-        hbmsave = (HBITMAP)SelectObject(memdc, (HBITMAP)lp);
+        hbmsave = SelectObject(memdc, (HBITMAP)lp);
         if(!hbmsave)
         {
             DeleteDC(memdc);
@@ -1662,7 +1662,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     if(!hbm) goto cleanup;
     memdc   = CreateCompatibleDC(hdc);
     if(!memdc) goto cleanup;
-    hbmsave = (HBITMAP)SelectObject(memdc, hbm);
+    hbmsave = SelectObject(memdc, hbm);
     if(!hbmsave) goto cleanup;
     rc.left = rc.top = 0;
     rc.right = cx;
@@ -1670,7 +1670,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     if(!FillRect(memdc, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH))) goto cleanup;
     SetBkColor(memdc, RGB(255, 255, 255));
     SetTextColor(memdc, RGB(0, 0, 0));
-    hfsave  = (HFONT)SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
+    hfsave  = SelectObject(memdc, GetCurrentObject(hdc, OBJ_FONT));
 
     /* DST_COMPLEX may draw text as well,
      * so we must be sure that correct font is selected
@@ -1683,7 +1683,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     /* This state cause the image to be dithered */
     if(flags & DSS_UNION)
     {
-        hbsave = (HBRUSH)SelectObject(memdc, SYSCOLOR_55AABrush);
+        hbsave = SelectObject(memdc, SYSCOLOR_55AABrush);
         if(!hbsave) goto cleanup;
         tmp = PatBlt(memdc, 0, 0, cx, cy, 0x00FA0089);
         SelectObject(memdc, hbsave);
@@ -1699,7 +1699,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     if (flags & (DSS_DISABLED|DSS_DEFAULT))
     {
        if(!hbrtmp) goto cleanup;
-       hbsave = (HBRUSH)SelectObject(hdc, hbrtmp);
+       hbsave = SelectObject(hdc, hbrtmp);
        if(!hbsave) goto cleanup;
        if(!BitBlt(hdc, x+1, y+1, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
        SelectObject(hdc, hbsave);
@@ -1714,10 +1714,10 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     }
     else if (!hbr)
     {
-       hbr = (HBRUSH)GetStockObject(BLACK_BRUSH);
+       hbr = GetStockObject(BLACK_BRUSH);
     }
 
-    hbsave = (HBRUSH)SelectObject(hdc, hbr);
+    hbsave = SelectObject(hdc, hbr);
 
     if(!BitBlt(hdc, x, y, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
 

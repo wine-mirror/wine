@@ -709,7 +709,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
     }
 
     if ((hFont = (HFONT)GetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET )))
-        hOldFont = (HFONT)SelectObject( hdc, hFont );
+        hOldFont = SelectObject( hdc, hFont );
 
     /* SS_SIMPLE controls: WM_CTLCOLORSTATIC is sent, but the returned
                            brush is not used */

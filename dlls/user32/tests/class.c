@@ -797,7 +797,7 @@ static BOOL RegisterTestDialog(HINSTANCE hInstance)
     wcx.hInstance = hInstance;
     wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcx.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    wcx.hbrBackground = GetStockObject(WHITE_BRUSH);
     wcx.lpszClassName = "TestDialog";
     wcx.lpszMenuName =  "TestDialog";
     wcx.hIconSm = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(5),
