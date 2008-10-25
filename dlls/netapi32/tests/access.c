@@ -70,7 +70,7 @@ static int init_access_tests(void)
     BOOL rc;
 
     user_name[0] = 0;
-    dwSize = sizeof(user_name);
+    dwSize = sizeof(user_name)/sizeof(WCHAR);
     rc=GetUserNameW(user_name, &dwSize);
     if (rc==FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
@@ -80,7 +80,7 @@ static int init_access_tests(void)
     ok(rc, "User Name Retrieved\n");
 
     computer_name[0] = 0;
-    dwSize = sizeof(computer_name);
+    dwSize = sizeof(computer_name)/sizeof(WCHAR);
     ok(GetComputerNameW(computer_name, &dwSize), "Computer Name Retrieved\n");
     return 1;
 }
