@@ -1158,7 +1158,7 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
 
     /* Select the DIB into a DC */
     dib_dc = CreateCompatibleDC(NULL);
-    old_bmp = (HBITMAP) SelectObject(dib_dc, dib);
+    old_bmp = SelectObject(dib_dc, dib);
     dc = CreateCompatibleDC(NULL);
     bits2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dib_size);
     assert(bits2);
@@ -1239,7 +1239,7 @@ static void test_GetDIBits_selected_DDB(BOOL monochrome)
 
     /* Set the pixels */
     ddb_dc = CreateCompatibleDC(NULL);
-    old_bmp = (HBITMAP) SelectObject(ddb_dc, ddb);
+    old_bmp = SelectObject(ddb_dc, ddb);
     for (i = 0; i < width; i++)
     {
         for (j=0; j < height; j++)
@@ -1281,7 +1281,7 @@ static void test_GetDIBits_selected_DDB(BOOL monochrome)
     memcpy(info2, info, sizeof(BITMAPINFOHEADER));
 
     /* Select the DDB into another DC */
-    old_bmp = (HBITMAP) SelectObject(ddb_dc, ddb);
+    old_bmp = SelectObject(ddb_dc, ddb);
 
     /* Get the bits */
     res = GetDIBits(dc, ddb, 0, height, bits2, info2, DIB_RGB_COLORS);
@@ -1894,15 +1894,15 @@ static void test_CreateBitmap(void)
     HBITMAP bm1 = CreateCompatibleBitmap(screenDC, 0, 0);
     HBITMAP bm4 = CreateBitmap(0, 1, 0, 0, 0);
     HBITMAP bm5 = CreateDiscardableBitmap(hdc, 0, 0);
-    HBITMAP curObj1 = (HBITMAP)GetCurrentObject(hdc, OBJ_BITMAP);
-    HBITMAP curObj2 = (HBITMAP)GetCurrentObject(screenDC, OBJ_BITMAP);
+    HBITMAP curObj1 = GetCurrentObject(hdc, OBJ_BITMAP);
+    HBITMAP curObj2 = GetCurrentObject(screenDC, OBJ_BITMAP);
 
     /* these 2 are not the stock monochrome bitmap */
     HBITMAP bm2 = CreateCompatibleBitmap(hdc, 1, 1);
     HBITMAP bm3 = CreateBitmap(1, 1, 1, 1, 0);
 
-    HBITMAP old1 = (HBITMAP)SelectObject(hdc, bm2);
-    HBITMAP old2 = (HBITMAP)SelectObject(screenDC, bm3);
+    HBITMAP old1 = SelectObject(hdc, bm2);
+    HBITMAP old2 = SelectObject(screenDC, bm3);
     SelectObject(hdc, old1);
     SelectObject(screenDC, old2);
 
@@ -2153,8 +2153,8 @@ void test_GdiAlphaBlend()
     bmpSrc = CreateDIBSection(hdcDst, &bmi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
 
-    oldDst = (HBITMAP)SelectObject(hdcDst, bmpDst);
-    oldSrc = (HBITMAP)SelectObject(hdcSrc, bmpSrc);
+    oldDst = SelectObject(hdcDst, bmpDst);
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
 
     blend.BlendOp = AC_SRC_OVER;
     blend.BlendFlags = 0;

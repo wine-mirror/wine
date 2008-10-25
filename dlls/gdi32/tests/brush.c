@@ -51,7 +51,7 @@ static void test_solidbrush(void)
         solidBrush = CreateSolidBrush(stock[i].color);
         
         if(stock[i].stockobj != -1) {
-            stockBrush = (HBRUSH)GetStockObject(stock[i].stockobj);
+            stockBrush = GetStockObject(stock[i].stockobj);
             ok(stockBrush!=solidBrush ||
                broken(stockBrush==solidBrush), /* win9x does return stock object */
                "Stock %s brush equals solid %s brush\n", stock[i].name, stock[i].name);
