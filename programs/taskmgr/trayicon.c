@@ -78,7 +78,7 @@ HICON TrayIcon_GetProcessorUsageIcon(void)
      * Select the bitmap into our device context
      * so we can draw on it.
      */
-    hOldBitmap = (HBITMAP) SelectObject(hDC, hBitmap);
+    hOldBitmap = SelectObject(hDC, hBitmap);
 
     /*
      * Get the cpu usage

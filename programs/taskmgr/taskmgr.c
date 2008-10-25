@@ -97,7 +97,7 @@ void Font_DrawText(HDC hDC, LPWSTR lpwszText, int x, int y)
 
     hFontDC = CreateCompatibleDC(hDC);
     hFontBitmap = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_FONT));
-    hOldBitmap = (HBITMAP)SelectObject(hFontDC, hFontBitmap);
+    hOldBitmap = SelectObject(hFontDC, hFontBitmap);
 
     for (i = 0; lpwszText[i]; i++) {
         if ((lpwszText[i] >= '0') && (lpwszText[i] <= '9')) {

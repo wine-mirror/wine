@@ -210,7 +210,7 @@ void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
     {
         this->m_dcGrid = CreateCompatibleDC(dc);
         this->m_bitmapGrid = CreateCompatibleBitmap(dc, this->m_nClientWidth, this->m_nClientHeight);
-        this->m_bitmapOldGrid = (HBITMAP)SelectObject(this->m_dcGrid, this->m_bitmapGrid);
+        this->m_bitmapOldGrid = SelectObject(this->m_dcGrid, this->m_bitmapGrid);
     }
   
     SetBkColor(this->m_dcGrid, this->m_crBackColor);
@@ -234,7 +234,7 @@ void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
     this->m_nPlotWidth    = this->m_rectPlot.right - this->m_rectPlot.left;/* m_rectPlot.Width(); */
 
     /*  draw the plot rectangle */
-    oldPen = (HPEN)SelectObject(this->m_dcGrid, solidPen); 
+    oldPen = SelectObject(this->m_dcGrid, solidPen);
     MoveToEx(this->m_dcGrid, this->m_rectPlot.left, this->m_rectPlot.top, NULL);
     LineTo(this->m_dcGrid, this->m_rectPlot.right+1, this->m_rectPlot.top);
     LineTo(this->m_dcGrid, this->m_rectPlot.right+1, this->m_rectPlot.bottom+1);
@@ -286,7 +286,7 @@ void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
                             DEFAULT_PITCH|FF_SWISS, "Arial");
   
     /*  grab the horizontal font */
-    oldFont = (HFONT)SelectObject(m_dcGrid, axisFont);
+    oldFont = SelectObject(m_dcGrid, axisFont);
   
     /*  y max */
     SetTextColor(m_dcGrid, m_crGridColor);
@@ -317,7 +317,7 @@ void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
     SelectObject(m_dcGrid, oldFont);
 
     /*  y units */
-    oldFont = (HFONT)SelectObject(m_dcGrid, yUnitFont);
+    oldFont = SelectObject(m_dcGrid, yUnitFont);
     SetTextAlign(m_dcGrid, TA_CENTER|TA_BASELINE);
     TextOut(m_dcGrid, (m_rectClient.left+m_rectPlot.left)/2, 
             (m_rectPlot.bottom+m_rectPlot.top)/2, m_strYUnitsString, _tcslen(m_strYUnitsString));
@@ -331,7 +331,7 @@ void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
     {
         this->m_dcPlot = CreateCompatibleDC(dc);
         this->m_bitmapPlot = CreateCompatibleBitmap(dc, this->m_nClientWidth, this->m_nClientHeight);
-        this->m_bitmapOldPlot = (HBITMAP)SelectObject(this->m_dcPlot, this->m_bitmapPlot);
+        this->m_bitmapOldPlot = SelectObject(this->m_dcPlot, this->m_bitmapPlot);
     }
 
     /*  make sure the plot bitmap is cleared */
@@ -379,7 +379,7 @@ void GraphCtrl_Paint(TGraphCtrl* this, HWND hWnd, HDC dc)
     /*  and then BitBlt it to the client */
     memDC = CreateCompatibleDC(dc);
     memBitmap = (HBITMAP)CreateCompatibleBitmap(dc, this->m_nClientWidth, this->m_nClientHeight);
-    oldBitmap = (HBITMAP)SelectObject(memDC, memBitmap);
+    oldBitmap = SelectObject(memDC, memBitmap);
 
     if (memDC != NULL) 
     {
@@ -434,7 +434,7 @@ void GraphCtrl_DrawPoint(TGraphCtrl* this)
         for (i = 0; i < MAX_PLOTS; i++) 
         {
             /*  grab the plotting pen */
-            oldPen = (HPEN)SelectObject(this->m_dcPlot, this->m_penPlot[i]);
+            oldPen = SelectObject(this->m_dcPlot, this->m_penPlot[i]);
 
             /*  move to the previous point */
             prevX = this->m_rectPlot.right-this->m_nPlotShiftPixels;
