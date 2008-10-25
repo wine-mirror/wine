@@ -979,7 +979,14 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
             SetThreadContext(dbg_curr_thread->handle, &dbg_context);
             ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, DBG_CONTINUE);
         }
-        if (!kill && !DebugActiveProcessStop(dbg_curr_pid)) return FALSE;
+    }
+    if (kill)
+    {
+        TerminateProcess(pcs->handle, 0);
+    }
+    else
+    {
+        if (!DebugActiveProcessStop(pcs->pid)) return FALSE;
     }
     SymCleanup(pcs->handle);
     dbg_del_process(pcs);
