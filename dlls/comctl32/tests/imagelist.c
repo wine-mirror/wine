@@ -138,7 +138,7 @@ static HWND create_a_window(void)
         cls.hInstance     = 0;
         cls.hIcon         = LoadIconA (0, (LPSTR)IDI_APPLICATION);
         cls.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
-        cls.hbrBackground = (HBRUSH) GetStockObject (WHITE_BRUSH);
+        cls.hbrBackground = GetStockObject (WHITE_BRUSH);
         cls.lpszMenuName  = 0;
         cls.lpszClassName = className;
 

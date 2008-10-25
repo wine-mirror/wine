@@ -1212,7 +1212,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 	/* Create the blend Mask */
     	hOldBitmap = SelectObject(hBlendMaskDC, hBlendMaskBmp);
 	hBlendBrush = fStyle & ILD_BLEND50 ? himl->hbrBlend50 : himl->hbrBlend25;
-    	hOldBrush = (HBRUSH) SelectObject(hBlendMaskDC, hBlendBrush);
+        hOldBrush = SelectObject(hBlendMaskDC, hBlendBrush);
     	PatBlt(hBlendMaskDC, 0, 0, cx, cy, PATCOPY);
     	SelectObject(hBlendMaskDC, hOldBrush);
 
@@ -1225,7 +1225,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 	/* now apply blend to the current image given the BlendMask */
         if (clrBlend == CLR_DEFAULT) clrBlend = GetSysColor (COLOR_HIGHLIGHT);
         else if (clrBlend == CLR_NONE) clrBlend = GetTextColor (pimldp->hdcDst);
-	hOldBrush = (HBRUSH) SelectObject (hImageDC, CreateSolidBrush(clrBlend));
+	hOldBrush = SelectObject (hImageDC, CreateSolidBrush(clrBlend));
 	BitBlt (hImageDC, 0, 0, cx, cy, hBlendMaskDC, 0, 0, 0xB8074A); /* PSDPxax */
 	DeleteObject(SelectObject(hImageDC, hOldBrush));
 	SelectObject(hBlendMaskDC, hOldBitmap);

@@ -193,7 +193,7 @@ static LRESULT IPADDRESS_Create (HWND hwnd, const CREATESTRUCTA *lpCreate)
     infoPtr->Enabled = TRUE;
     infoPtr->Notify = lpCreate->hwndParent;
 
-    hSysFont = (HFONT) GetStockObject(ANSI_VAR_FONT);
+    hSysFont = GetStockObject(ANSI_VAR_FONT);
     GetObjectW(hSysFont, sizeof(LOGFONTW), &logSysFont);
     SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
     strcpyW(logFont.lfFaceName, logSysFont.lfFaceName);

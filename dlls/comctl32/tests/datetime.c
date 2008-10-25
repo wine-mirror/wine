@@ -256,7 +256,7 @@ static void test_dtm_set_and_get_mcfont(HWND hWndDateTime)
 {
     HFONT hFontOrig, hFontNew;
 
-    hFontOrig = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+    hFontOrig = GetStockObject(DEFAULT_GUI_FONT);
     SendMessage(hWndDateTime, DTM_SETMCFONT, (WPARAM)hFontOrig, TRUE);
     hFontNew = (HFONT)SendMessage(hWndDateTime, DTM_GETMCFONT, 0, 0);
     ok(hFontOrig == hFontNew, "Expected hFontOrig==hFontNew, hFontOrig=%p, hFontNew=%p\n", hFontOrig, hFontNew);

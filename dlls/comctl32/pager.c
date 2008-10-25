@@ -237,7 +237,7 @@ PAGER_DrawButton(HDC hdc, COLORREF clrBk, RECT arrowRect,
         return;
 
     hBrush = CreateSolidBrush(clrBk);
-    hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+    hOldBrush = SelectObject(hdc, hBrush);
 
     FillRect(hdc, &rc, hBrush);
 

@@ -348,7 +348,7 @@ static void COMBOEX_GetComboFontSize (COMBOEX_INFO *infoPtr, SIZE *size)
 
     mydc = GetDC (0); /* why the entire screen???? */
     nfont = (HFONT)SendMessageW (infoPtr->hwndCombo, WM_GETFONT, 0, 0);
-    ofont = (HFONT) SelectObject (mydc, nfont);
+    ofont = SelectObject (mydc, nfont);
     GetTextExtentPointW (mydc, strA, 1, size);
     SelectObject (mydc, ofont);
     ReleaseDC (0, mydc);
