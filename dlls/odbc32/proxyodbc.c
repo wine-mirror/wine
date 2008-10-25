@@ -211,7 +211,7 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
             {
                 /* FIXME Do some proper handling of the SUCCESS_WITH_INFO */
                 dirn = SQL_FETCH_NEXT;
-                if (sizedesc == strlen(desc))
+                if (sizedesc == lstrlenA(desc))
                 {
                     HKEY hThis;
                     if ((reg_ret = RegQueryValueExA (hDrivers, desc, NULL,
@@ -339,7 +339,7 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
         {
             /* FIXME Do some proper handling of the SUCCESS_WITH_INFO */
             dirn = SQL_FETCH_NEXT;
-            if (sizedsn == strlen(dsn) && sizedesc == strlen(desc))
+            if (sizedsn == lstrlenA(dsn) && sizedesc == lstrlenA(desc))
             {
                 HKEY hDSN;
                 if ((reg_ret = RegCreateKeyExA (hODBC, dsn, 0,
@@ -2155,9 +2155,9 @@ SQLRETURN WINAPI SQLColAttributesW(
             TRACE("    Attribute name : %s\n", debugstr_w(rgbDesc));
             TRACE("    Declared length: %d\n", *pcbDesc);
         */
-            if (*pcbDesc != strlenW(rgbDesc) * 2) {
+            if (*pcbDesc != lstrlenW(rgbDesc) * 2) {
                 TRACE("CHEAT: resetting name length for ADO\n");
-                *pcbDesc = strlenW(rgbDesc) * 2;
+                *pcbDesc = lstrlenW(rgbDesc) * 2;
             }
         }
         return iResult;
@@ -2331,9 +2331,9 @@ SQLRETURN WINAPI SQLColAttributeW (SQLHSTMT StatementHandle,
             TRACE("    Attribute name : %s\n", debugstr_w(rgbDesc));
             TRACE("    Declared length: %d\n", *pcbDesc);
         */
-            if (*StringLength != strlenW(CharacterAttribute) * 2) {
+            if (*StringLength != lstrlenW(CharacterAttribute) * 2) {
                 TRACE("CHEAT: resetting name length for ADO\n");
-                *StringLength = strlenW(CharacterAttribute) * 2;
+                *StringLength = lstrlenW(CharacterAttribute) * 2;
             }
         }
         return iResult;
