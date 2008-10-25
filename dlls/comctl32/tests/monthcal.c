@@ -1112,6 +1112,34 @@ static void test_monthcal_MaxSelDay(HWND hwnd)
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_max_sel_day_seq, "monthcal MaxSelDay", FALSE);
 }
 
+static void test_monthcal_size(HWND hwnd)
+{
+    int res;
+    RECT r1, r2;
+    HFONT hFont1, hFont2;
+    LOGFONTA logfont;
+
+    lstrcpyA(logfont.lfFaceName, "Arial");
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    hFont1 = CreateFontIndirectA(&logfont);
+
+    logfont.lfHeight = 24;
+    hFont2 = CreateFontIndirectA(&logfont);
+
+    /* initialize to a font we can compare against */
+    SendMessage(hwnd, WM_SETFONT, (WPARAM)hFont1, 0);
+    res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r1);
+
+    /* check that setting a larger font results in an larger rect */
+    SendMessage(hwnd, WM_SETFONT, (WPARAM)hFont2, 0);
+    res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r2);
+
+    OffsetRect(&r1, -r1.left, -r1.top);
+    OffsetRect(&r2, -r2.left, -r2.top);
+
+    ok(r1.bottom < r2.bottom, "Failed to get larger rect with larger font\n");
+}
 
 START_TEST(monthcal)
 {
@@ -1153,6 +1181,7 @@ START_TEST(monthcal)
     test_monthcal_monthrange(hwnd);
     test_monthcal_HitTest(hwnd);
     test_monthcal_todaylink(hwnd);
+    test_monthcal_size(hwnd);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     DestroyWindow(hwnd);

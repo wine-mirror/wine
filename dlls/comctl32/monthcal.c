@@ -1874,6 +1874,8 @@ static LRESULT MONTHCAL_SetFont(MONTHCAL_INFO *infoPtr, HFONT hFont, BOOL redraw
     lf.lfWeight = FW_BOLD;
     infoPtr->hBoldFont = CreateFontIndirectW(&lf);
 
+    MONTHCAL_UpdateSize(infoPtr);
+
     if (redraw)
         InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
