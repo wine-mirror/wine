@@ -290,9 +290,9 @@ static void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lPar
 	BeginPaint(hWnd, &ps);
 	GetClientRect(hWnd, (LPRECT) &rect);
 
-	pen = (HPEN) SelectObject(ps.hdc, CreatePen(0, 0, fgColor));
-	brush = (HBRUSH) SelectObject(ps.hdc, CreateSolidBrush(bgColor));
-	font = (HFONT) SelectObject(ps.hdc, CreateFontIndirect(&cf_lf));
+	pen = SelectObject(ps.hdc, CreatePen(0, 0, fgColor));
+	brush = SelectObject(ps.hdc, CreateSolidBrush(bgColor));
+	font = SelectObject(ps.hdc, CreateFontIndirect(&cf_lf));
 
 	/*
 	 * Ideally, we'd only need to draw the exposed bit.
@@ -324,11 +324,11 @@ static void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lPar
 	 * and delete the newly created objects.
 	 */
 
-	pen = (HPEN) SelectObject(ps.hdc, pen);
+	pen = SelectObject(ps.hdc, pen);
 	DeleteObject(pen);
-	brush = (HBRUSH) SelectObject(ps.hdc, brush);
+	brush = SelectObject(ps.hdc, brush);
 	DeleteObject(brush);
-	font = (HFONT) SelectObject(ps.hdc, font);
+	font = SelectObject(ps.hdc, font);
 	DeleteObject(font);
 
 	EndPaint(hWnd, &ps);
@@ -999,7 +999,7 @@ static int registerMainWindowClass(HINSTANCE hInstance)
 #endif
 	wndClass.hIcon         = 0;
 	wndClass.hCursor       = 0;
-	wndClass.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
+	wndClass.hbrBackground = GetStockObject(WHITE_BRUSH);
 	wndClass.lpszMenuName  = menuName;
 	wndClass.lpszClassName = className;
 
