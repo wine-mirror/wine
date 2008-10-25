@@ -1013,6 +1013,18 @@ static inline void sync_context(Wine_GLContext *context)
 }
 
 
+static GLXContext create_glxcontext(Display *display, Wine_GLContext *context, GLXContext shareList, BOOL direct)
+{
+    GLXContext ctx;
+    if(context->vis)
+        ctx = pglXCreateContext(gdi_display, context->vis, shareList, direct);
+    else /* Create a GLX Context for a pbuffer */
+        ctx = pglXCreateNewContext(gdi_display, context->fmt->fbconfig, context->fmt->render_type, shareList, direct);
+
+    return ctx;
+}
+
+
 Drawable create_glxpixmap(Display *display, XVisualInfo *vis, Pixmap parent)
 {
     return pglXCreateGLXPixmap(display, vis, parent);
@@ -1581,19 +1593,13 @@ BOOL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
         if (!src->ctx) {
             DWORD type = GetObjectType(src->hdc);
             wine_tsx11_lock();
-            if(src->vis)
-                src->ctx = pglXCreateContext(gdi_display, src->vis, NULL, type == OBJ_MEMDC ? False : True);
-            else /* Create a GLX Context for a pbuffer */
-                src->ctx = pglXCreateNewContext(gdi_display, src->fmt->fbconfig, src->fmt->render_type, NULL, True);
+            src->ctx = create_glxcontext(gdi_display, src, NULL, type == OBJ_MEMDC ? False : True);
             TRACE(" created a delayed OpenGL context (%p)\n", src->ctx);
         }
         else if (!dst->ctx) {
             DWORD type = GetObjectType(dst->hdc);
             wine_tsx11_lock();
-            if(dst->vis)
-                dst->ctx = pglXCreateContext(gdi_display, dst->vis, NULL, type == OBJ_MEMDC ? False : True);
-            else /* Create a GLX Context for a pbuffer */
-                dst->ctx = pglXCreateNewContext(gdi_display, dst->fmt->fbconfig, dst->fmt->render_type, NULL, True);
+            dst->ctx = create_glxcontext(gdi_display, dst, NULL, type == OBJ_MEMDC ? False : True);
             TRACE(" created a delayed OpenGL context (%p)\n", dst->ctx);
         }
     }
@@ -1772,11 +1778,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
              * We are certain that the drawable and context are compatible as we only allow compatible formats.
              */
             TRACE(" Creating GLX Context\n");
-            if(ctx->vis)
-                ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
-            else /* Create a GLX Context for a pbuffer */
-                ctx->ctx = pglXCreateNewContext(gdi_display, ctx->fmt->fbconfig, ctx->fmt->render_type, NULL, True);
-
+            ctx->ctx = create_glxcontext(gdi_display, ctx, NULL, type == OBJ_MEMDC ? False : True);
             TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
         }
         TRACE(" make current for dis %p, drawable %p, ctx %p\n", gdi_display, (void*) drawable, ctx->ctx);
@@ -1829,7 +1831,7 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEVICE* p
             Drawable d_read = get_glxdrawable(pReadDev);
 
             if (ctx->ctx == NULL) {
-                ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, !indirect);
+                ctx->ctx = create_glxcontext(gdi_display, ctx, NULL, !indirect);
                 TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
             }
             ctx->hdc = pDrawDev->hdc;
@@ -1869,10 +1871,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
             wine_tsx11_lock();
             describeContext(org);
 
-            if(org->vis)
-                org->ctx = pglXCreateContext(gdi_display, org->vis, NULL, !indirect);
-            else /* Create a GLX Context for a pbuffer */
-                org->ctx = pglXCreateNewContext(gdi_display, org->fmt->fbconfig, org->fmt->render_type, NULL, True);
+            org->ctx = create_glxcontext(gdi_display, org, NULL, !indirect);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
         }
@@ -1880,11 +1879,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
             int indirect = (GetObjectType(dest->hdc) == OBJ_MEMDC);
             wine_tsx11_lock();
             describeContext(dest);
-            /* Create the destination context with display lists shared */
-            if(dest->vis)
-                dest->ctx = pglXCreateContext(gdi_display, dest->vis, org->ctx, !indirect);
-            else /* Create a GLX Context for a pbuffer */
-                dest->ctx = pglXCreateNewContext(gdi_display, dest->fmt->fbconfig, dest->fmt->render_type, org->ctx, True);
+            dest->ctx = create_glxcontext(gdi_display, dest, org->ctx, !indirect);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
             return TRUE;
