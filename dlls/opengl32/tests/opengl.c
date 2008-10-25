@@ -446,7 +446,7 @@ static void test_opengl3(HDC hdc)
         gl3Ctx = pwglCreateContextAttribsARB((HDC)0xdeadbeef, 0, 0);
         ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid HDC passed\n");
         error = GetLastError();
-        ok(error == ERROR_DC_NOT_FOUND, "Expected ERROR_DC_NOT_FOUND, got error=%x\n", error);
+        todo_wine ok(error == ERROR_DC_NOT_FOUND, "Expected ERROR_DC_NOT_FOUND, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);
     }
 
@@ -457,7 +457,7 @@ static void test_opengl3(HDC hdc)
         gl3Ctx = pwglCreateContextAttribsARB(hdc, (HGLRC)0xdeadbeef, 0);
         ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid shareList passed\n");
         error = GetLastError();
-        ok(error == ERROR_INVALID_OPERATION, "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
+        todo_wine ok(error == ERROR_INVALID_OPERATION, "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);
     }
 
@@ -508,7 +508,7 @@ static void test_opengl3(HDC hdc)
         /* OpenGL 3.0 allows offscreen rendering WITHOUT a drawable */
         /* NOTE: Nvidia's 177.89 beta drivers don't allow this yet */
         res = wglMakeCurrent(0, gl3Ctx);
-        ok(res == TRUE, "OpenGL 3.0 should allow windowless rendering, but the test failed!\n");
+        todo_wine ok(res == TRUE, "OpenGL 3.0 should allow windowless rendering, but the test failed!\n");
         if(res)
             wglMakeCurrent(0, 0);
 
