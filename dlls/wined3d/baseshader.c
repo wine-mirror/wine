@@ -937,7 +937,7 @@ void shader_trace_init(
     unsigned int len = 0;
     DWORD i;
 
-    TRACE("(%p) : Parsing programme\n", This);
+    TRACE("(%p) : Parsing program\n", This);
 
     if (NULL != pToken) {
         while (WINED3DVS_END() != *pToken) {
