@@ -48,7 +48,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
-#define MAXJOYSTICK	(JOYSTICKID2 + 1)
+#define MAXJOYSTICK (JOYSTICKID2 + 30)
 #define JOY_PERIOD_MIN	(10)	/* min Capture time period */
 #define JOY_PERIOD_MAX	(1000)	/* max Capture time period */
 

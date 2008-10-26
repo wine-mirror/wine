@@ -78,7 +78,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(joystick);
 
 #ifdef HAVE_LINUX_JOYSTICK_H
 
-#define MAXJOYSTICK	(JOYSTICKID2 + 1)
+#define MAXJOYSTICK (JOYSTICKID2 + 30)
 
 typedef struct tagWINE_JSTCK {
     int		joyIntf;
