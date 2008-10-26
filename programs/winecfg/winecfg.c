@@ -491,7 +491,7 @@ WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
         while (TRUE)
         {
             WCHAR name[1024];
-            DWORD namesize = sizeof(name);
+            DWORD namesize = sizeof(name)/sizeof(name[0]);
             BOOL removed = FALSE;
 
             /* find out the needed size, allocate a buffer, read the value  */

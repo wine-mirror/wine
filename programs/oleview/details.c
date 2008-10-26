@@ -51,7 +51,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
     while(TRUE)
     {
-        lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
+        lenName = sizeof(WCHAR[MAX_LOAD_STRING])/sizeof(WCHAR);
         lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
 
         retEnum = RegEnumValue(hKey, i, wszName, &lenName,
