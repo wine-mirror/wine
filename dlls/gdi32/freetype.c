@@ -4373,6 +4373,11 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         original_index = glyph_index;
     }
 
+    if(format & GGO_UNHINTED) {
+        load_flags |= FT_LOAD_NO_HINTING;
+        format &= ~GGO_UNHINTED;
+    }
+
     /* tategaki never appears to happen to lower glyph index */
     if (glyph_index < TATEGAKI_LOWER_BOUND )
         tategaki = FALSE;

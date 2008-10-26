@@ -1294,6 +1294,7 @@ typedef struct
 #define GGO_GRAY4_BITMAP    5
 #define GGO_GRAY8_BITMAP    6
 #define GGO_GLYPH_INDEX     0x80
+#define GGO_UNHINTED        0x100
 
 #ifdef __WINESRC__
 #define WINE_GGO_GRAY16_BITMAP 0x7f
