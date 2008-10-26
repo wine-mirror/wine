@@ -4768,14 +4768,20 @@ static void test_GetWindowModuleFileName(void)
 
 static void test_hwnd_message(void)
 {
+    static const WCHAR mainwindowclassW[] = {'M','a','i','n','W','i','n','d','o','w','C','l','a','s','s',0};
+    static const WCHAR message_windowW[] = {'m','e','s','s','a','g','e',' ','w','i','n','d','o','w',0};
+
     HWND parent = 0, hwnd, found;
     RECT rect;
 
-    hwnd = CreateWindowExA(0, "MainWindowClass", "message window", WS_CAPTION | WS_VISIBLE,
+    /* HWND_MESSAGE is not supported below w2k, but win9x return != 0
+       on CreateWindowExA and crash later in the test.
+       Use UNICODE here to fail on win9x */
+    hwnd = CreateWindowExW(0, mainwindowclassW, message_windowW, WS_CAPTION | WS_VISIBLE,
                            100, 100, 200, 200, HWND_MESSAGE, 0, 0, NULL);
     if (!hwnd)
     {
-        win_skip("CreateWindowExA with parent HWND_MESSAGE failed\n");
+        win_skip("CreateWindowExW with parent HWND_MESSAGE failed\n");
         return;
     }
 
