@@ -2210,12 +2210,11 @@ HRESULT typeof_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags
     }
     default:
         FIXME("unhandled vt %d\n", V_VT(&val));
-        hres = E_NOTIMPL;
+        VariantClear(&val);
+        return E_NOTIMPL;
     }
 
     VariantClear(&val);
-    if(FAILED(hres))
-        return hres;
 
     ret->type = EXPRVAL_VARIANT;
     V_VT(&ret->u.var) = VT_BSTR;
