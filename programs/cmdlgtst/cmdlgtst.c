@@ -304,9 +304,9 @@ static void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lPar
 
 	/* now draw a couple of lines, just for giggles. */
 
-	MoveToEx(ps.hdc, rect.left, rect.top, (POINT *) 0);
+	MoveToEx(ps.hdc, rect.left, rect.top, NULL);
 	LineTo(ps.hdc, rect.right, rect.bottom);
-	MoveToEx(ps.hdc, rect.left, rect.bottom, (POINT *) 0);
+	MoveToEx(ps.hdc, rect.left, rect.bottom, NULL);
 	LineTo(ps.hdc, rect.right, rect.top);
 
 	/* draw some text */
