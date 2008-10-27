@@ -653,43 +653,6 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
     glEnd();
 }
 
-void depth_blt(IWineD3DDevice *iface, GLuint texture, GLsizei w, GLsizei h) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    GLint old_binding = 0;
-
-    glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT);
-
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glDisable(GL_ALPHA_TEST);
-    glDisable(GL_SCISSOR_TEST);
-    glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_ALWAYS);
-    glDepthMask(GL_TRUE);
-    glBlendFunc(GL_ZERO, GL_ONE);
-    glViewport(0, 0, w, h);
-
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    This->shader_backend->shader_select_depth_blt(iface);
-
-    glBegin(GL_TRIANGLE_STRIP);
-    glVertex2f(-1.0f, -1.0f);
-    glVertex2f(1.0f, -1.0f);
-    glVertex2f(-1.0f, 1.0f);
-    glVertex2f(1.0f, 1.0f);
-    glEnd();
-
-    glBindTexture(GL_TEXTURE_2D, old_binding);
-
-    glPopAttrib();
-
-    This->shader_backend->shader_deselect_depth_blt(iface);
-}
-
 static inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, UINT numberOfVertices,
                                  GLenum glPrimitiveType, const void *idxData, short idxSize, ULONG minIndex,
                                  ULONG startIdx, ULONG startVertex) {

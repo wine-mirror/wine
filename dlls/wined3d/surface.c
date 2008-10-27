@@ -3954,6 +3954,44 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
+static void surface_depth_blt(IWineD3DSurfaceImpl *This, GLuint texture, GLsizei w, GLsizei h)
+{
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    GLint old_binding = 0;
+
+    glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT);
+
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_ALWAYS);
+    glDepthMask(GL_TRUE);
+    glBlendFunc(GL_ZERO, GL_ONE);
+    glViewport(0, 0, w, h);
+
+    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    device->shader_backend->shader_select_depth_blt((IWineD3DDevice *)device);
+
+    glBegin(GL_TRIANGLE_STRIP);
+    glVertex2f(-1.0f, -1.0f);
+    glVertex2f(1.0f, -1.0f);
+    glVertex2f(-1.0f, 1.0f);
+    glVertex2f(1.0f, 1.0f);
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, old_binding);
+
+    glPopAttrib();
+
+    device->shader_backend->shader_deselect_depth_blt((IWineD3DDevice *)device);
+}
+
 void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
@@ -4037,7 +4075,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             context_attach_depth_stencil_fbo(device, GL_FRAMEBUFFER_EXT, iface, FALSE);
 
             /* Do the actual blit */
-            depth_blt((IWineD3DDevice *)device, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height);
+            surface_depth_blt(This, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height);
             checkGLcall("depth_blt");
 
             if (device->activeContext->current_fbo) {
@@ -4059,7 +4097,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
 
             GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
             checkGLcall("glBindFramebuffer()");
-            depth_blt((IWineD3DDevice *)device, This->glDescription.textureName, This->currentDesc.Width, This->currentDesc.Height);
+            surface_depth_blt(This, This->glDescription.textureName, This->currentDesc.Width, This->currentDesc.Height);
             checkGLcall("depth_blt");
 
             if (device->activeContext->current_fbo) {
