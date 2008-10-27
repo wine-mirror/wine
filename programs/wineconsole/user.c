@@ -1035,26 +1035,23 @@ static void    WCUSER_GenerateKeyInputRecord(struct inner_data* data, BOOL down,
     if (lParam & (1L << 24))		ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
     if (sys)				ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED; /* FIXME: gotta choose one */
 
-    if (!(ir.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
+    if (down)
     {
-	if (down)
-	{
-	    switch (ToUnicode(wParam, HIWORD(lParam), keyState, buf, 2, 0))
-	    {
-	    case 2:
-		/* FIXME... should generate two events... */
-		/* fall thru */
-	    case 1:
-		last = buf[0];
-		break;
-	    default:
-		last = 0;
-		break;
-	    }
-	}
-	ir.Event.KeyEvent.uChar.UnicodeChar = last; /* FIXME: HACKY... and buggy because it should be a stack, not a single value */
-	if (!down) last = 0;
+        switch (ToUnicode(wParam, HIWORD(lParam), keyState, buf, 2, 0))
+        {
+        case 2:
+            /* FIXME... should generate two events... */
+            /* fall thru */
+        case 1:
+            last = buf[0];
+            break;
+        default:
+            last = 0;
+            break;
+        }
     }
+    ir.Event.KeyEvent.uChar.UnicodeChar = last; /* FIXME: HACKY... and buggy because it should be a stack, not a single value */
+    if (!down) last = 0;
 
     WriteConsoleInput(data->hConIn, &ir, 1, &n);
 }
