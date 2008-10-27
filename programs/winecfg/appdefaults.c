@@ -133,7 +133,7 @@ static void update_comboboxes(HWND dialog)
             return;
         }
         if (ver != -1) winver = strdupA( win_versions[ver].szVersion );
-        else winver = strdupA("win2k");
+        else winver = strdupA("winxp");
     }
     WINE_TRACE("winver is %s\n", winver);
 
