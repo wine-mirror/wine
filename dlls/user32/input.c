@@ -729,7 +729,7 @@ INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 /****************************************************************************
  *		ToUnicode (USER32.@)
  */
-INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 		     LPWSTR lpwStr, int size, UINT flags)
 {
     return ToUnicodeEx(virtKey, scanCode, lpKeyState, lpwStr, size, flags, GetKeyboardLayout(0));
@@ -738,7 +738,7 @@ INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 /****************************************************************************
  *		ToUnicodeEx (USER32.@)
  */
-INT WINAPI ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+INT WINAPI ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 		       LPWSTR lpwStr, int size, UINT flags, HKL hkl)
 {
     return USER_Driver->pToUnicodeEx(virtKey, scanCode, lpKeyState, lpwStr, size, flags, hkl);
@@ -747,7 +747,7 @@ INT WINAPI ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 /****************************************************************************
  *		ToAscii (USER32.@)
  */
-INT WINAPI ToAscii( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+INT WINAPI ToAscii( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
                     LPWORD lpChar, UINT flags )
 {
     return ToAsciiEx(virtKey, scanCode, lpKeyState, lpChar, flags, GetKeyboardLayout(0));
@@ -756,7 +756,7 @@ INT WINAPI ToAscii( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 /****************************************************************************
  *		ToAsciiEx (USER32.@)
  */
-INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
                       LPWORD lpChar, UINT flags, HKL dwhkl )
 {
     WCHAR uni_chars[2];

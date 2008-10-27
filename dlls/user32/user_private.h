@@ -114,7 +114,7 @@ typedef struct tagUSER_DRIVER {
     HKL    (*pLoadKeyboardLayout)(LPCWSTR, UINT);
     UINT   (*pMapVirtualKeyEx)(UINT, UINT, HKL);
     UINT   (*pSendInput)(UINT, LPINPUT, int);
-    INT    (*pToUnicodeEx)(UINT, UINT, LPBYTE, LPWSTR, int, UINT, HKL);
+    INT    (*pToUnicodeEx)(UINT, UINT, const BYTE *, LPWSTR, int, UINT, HKL);
     BOOL   (*pUnloadKeyboardLayout)(HKL);
     SHORT  (*pVkKeyScanEx)(WCHAR, HKL);
     /* mouse functions */

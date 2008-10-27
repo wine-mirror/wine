@@ -202,7 +202,7 @@ static UINT nulldrv_SendInput( UINT count, LPINPUT inputs, int size )
     return 0;
 }
 
-static INT nulldrv_ToUnicodeEx( UINT virt, UINT scan, LPBYTE state, LPWSTR str,
+static INT nulldrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
                                 int size, UINT flags, HKL layout )
 {
     return 0;
@@ -549,7 +549,7 @@ static UINT loaderdrv_SendInput( UINT count, LPINPUT inputs, int size )
     return load_driver()->pSendInput( count, inputs, size );
 }
 
-static INT loaderdrv_ToUnicodeEx( UINT virt, UINT scan, LPBYTE state, LPWSTR str,
+static INT loaderdrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
                                   int size, UINT flags, HKL layout )
 {
     return load_driver()->pToUnicodeEx( virt, scan, state, str, size, flags, layout );
