@@ -27,7 +27,7 @@
 #include "gdi_private.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(gdi);
+WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
 
 /***********************************************************************
