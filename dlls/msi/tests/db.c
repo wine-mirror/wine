@@ -6860,15 +6860,13 @@ static void test_dbmerge(void)
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    create_file_data("codepage.idt", "\r\n\r\n28603\t_ForceCodepage\r\n", 0);
+    create_file_data("codepage.idt", "\r\n\r\n850\t_ForceCodepage\r\n", 0);
 
     GetCurrentDirectoryA(MAX_PATH, buf);
     r = MsiDatabaseImportA(hdb, buf, "codepage.idt");
     todo_wine
     {
-        ok(r == ERROR_SUCCESS ||
-           broken(r == ERROR_FUNCTION_FAILED), /* win9x */
-           "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     }
 
     query = "DROP TABLE `One`";
