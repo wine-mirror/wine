@@ -1319,8 +1319,8 @@ static void test_LookupAccountSid(void)
     real_dom_sizeA = MAX_PATH;
     ret = LookupAccountSidA("deepthought", pUsersSid, accountA, &real_acc_sizeA, domainA, &real_dom_sizeA, &use);
     ok(!ret, "LookupAccountSidA() Expected FALSE got TRUE\n");
-    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE,
-       "LookupAccountSidA() Expected RPC_S_SERVER_UNAVAILABLE, got %u\n", GetLastError());
+    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE || GetLastError() == RPC_S_INVALID_NET_ADDR /* Vista */,
+       "LookupAccountSidA() Expected RPC_S_SERVER_UNAVAILABLE or RPC_S_INVALID_NET_ADDR, got %u\n", GetLastError());
 
     /* native windows crashes if domainW or accountW is NULL */
 
@@ -1664,8 +1664,8 @@ static void test_LookupAccountName(void)
     domain_size = 0;
     ret = LookupAccountNameA("deepthought", NULL, NULL, &sid_size, NULL, &domain_size, &sid_use);
     ok(!ret, "Expected 0, got %d\n", ret);
-    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE,
-       "Expected RPC_S_SERVER_UNAVAILABLE, got %d\n", GetLastError());
+    ok(GetLastError() == RPC_S_SERVER_UNAVAILABLE || GetLastError() == RPC_S_INVALID_NET_ADDR /* Vista */,
+       "Expected RPC_S_SERVER_UNAVAILABLE or RPC_S_INVALID_NET_ADDR, got %d\n", GetLastError());
     ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
     ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
 
