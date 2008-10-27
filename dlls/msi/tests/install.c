@@ -5086,6 +5086,12 @@ static void test_sourcepath(void)
 {
     UINT r, i;
 
+    if (!winetest_interactive)
+    {
+        skip("Run in interactive mode to run source path tests.\n");
+        return;
+    }
+
     create_database(msifile, sp_tables, sizeof(sp_tables) / sizeof(msi_table));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
