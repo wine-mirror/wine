@@ -849,13 +849,13 @@ static void test_word_wrap(void)
     res = SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) text);
     ok(res, "WM_SETTEXT failed.\n");
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
-    todo_wine ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
+    ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
     lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
-    todo_wine ok(lines > 1, "Line was expected to wrap (lines=%d).\n", lines);
+    ok(lines > 1, "Line was expected to wrap (lines=%d).\n", lines);
 
     SetWindowLong(hwnd, GWL_STYLE, dwCommonStyle|WS_HSCROLL|ES_AUTOHSCROLL);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
-    todo_wine ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
+    ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
     DestroyWindow(hwnd);
 
     hwnd = CreateWindow(RICHEDIT_CLASS10A, NULL, dwCommonStyle|ES_AUTOHSCROLL,
