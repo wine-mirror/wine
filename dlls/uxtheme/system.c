@@ -566,6 +566,7 @@ BOOL WINAPI IsAppThemed(void)
 BOOL WINAPI IsThemeActive(void)
 {
     TRACE("\n");
+    SetLastError(ERROR_SUCCESS);
     return bThemeActive;
 }
 
