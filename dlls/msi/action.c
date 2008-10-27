@@ -3622,9 +3622,10 @@ end:
 static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = (MSIPACKAGE*)param;
-    LPCWSTR component,section,key,value,identifier,filename,dirproperty;
+    LPCWSTR component, section, key, value, identifier, dirproperty;
     LPWSTR deformated_section, deformated_key, deformated_value;
-    LPWSTR folder, fullname = NULL;
+    LPWSTR folder, filename, fullname = NULL;
+    LPCWSTR filenameptr;
     MSIRECORD * uirow;
     INT action;
     MSICOMPONENT *comp;
@@ -3647,7 +3648,6 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     comp->Action = INSTALLSTATE_LOCAL;
 
     identifier = MSI_RecordGetString(row,1); 
-    filename = MSI_RecordGetString(row,2);
     dirproperty = MSI_RecordGetString(row,3);
     section = MSI_RecordGetString(row,4);
     key = MSI_RecordGetString(row,5);
@@ -3657,6 +3657,12 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     deformat_string(package,section,&deformated_section);
     deformat_string(package,key,&deformated_key);
     deformat_string(package,value,&deformated_value);
+
+    filename = msi_dup_record_field(row, 2);
+    if (filename && (filenameptr = strchrW(filename, '|')))
+        filenameptr++;
+    else
+        filenameptr = filename;
 
     if (dirproperty)
     {
@@ -3673,7 +3679,7 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
         goto cleanup;
     }
 
-    fullname = build_directory_name(2, folder, filename);
+    fullname = build_directory_name(2, folder, filenameptr);
 
     if (action == 0)
     {
@@ -3708,7 +3714,9 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     MSI_RecordSetStringW(uirow,4,deformated_value);
     ui_actiondata(package,szWriteIniValues,uirow);
     msiobj_release( &uirow->hdr );
+
 cleanup:
+    msi_free(filename);
     msi_free(fullname);
     msi_free(folder);
     msi_free(deformated_key);
