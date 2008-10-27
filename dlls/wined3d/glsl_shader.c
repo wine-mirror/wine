@@ -57,7 +57,7 @@ typedef struct {
 struct shader_glsl_priv {
     struct hash_table_t *glsl_program_lookup;
     struct glsl_shader_prog_link *glsl_program;
-    GLhandleARB             depth_blt_glsl_program_id;
+    GLhandleARB depth_blt_program[tex_type_count];
 };
 
 /* Struct to maintain data about a linked GLSL program */
@@ -3379,7 +3379,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     }
 }
 
-static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
+static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info, enum tex_types tex_type) {
     GLhandleARB program_id;
     GLhandleARB vshader_id, pshader_id;
     const char *blt_vshader[] = {
@@ -3392,21 +3392,47 @@ static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
         "}\n"
     };
 
-    const char *blt_pshader[] = {
+    const char *blt_pshaders[tex_type_count] = {
+        /* tex_1d */
+        NULL,
+        /* tex_2d */
         "#version 120\n"
         "uniform sampler2D sampler;\n"
         "void main(void)\n"
         "{\n"
         "    gl_FragDepth = texture2D(sampler, gl_TexCoord[0].xy).x;\n"
-        "}\n"
+        "}\n",
+        /* tex_3d */
+        NULL,
+        /* tex_cube */
+        "#version 120\n"
+        "uniform samplerCube sampler;\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_FragDepth = textureCube(sampler, gl_TexCoord[0].xyz).x;\n"
+        "}\n",
+        /* tex_rect */
+        "#version 120\n"
+        "#extension GL_ARB_texture_rectangle : enable\n"
+        "uniform sampler2DRect sampler;\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_FragDepth = texture2DRect(sampler, gl_TexCoord[0].xy).x;\n"
+        "}\n",
     };
+
+    if (!blt_pshaders[tex_type])
+    {
+        FIXME("tex_type %#x not supported\n", tex_type);
+        tex_type = tex_2d;
+    }
 
     vshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
     GL_EXTCALL(glShaderSourceARB(vshader_id, 1, blt_vshader, NULL));
     GL_EXTCALL(glCompileShaderARB(vshader_id));
 
     pshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
-    GL_EXTCALL(glShaderSourceARB(pshader_id, 1, blt_pshader, NULL));
+    GL_EXTCALL(glShaderSourceARB(pshader_id, 1, &blt_pshaders[tex_type], NULL));
     GL_EXTCALL(glCompileShaderARB(pshader_id));
 
     program_id = GL_EXTCALL(glCreateProgramObjectARB());
@@ -3457,17 +3483,16 @@ static void shader_glsl_select_depth_blt(IWineD3DDevice *iface, enum tex_types t
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     struct shader_glsl_priv *priv = (struct shader_glsl_priv *) This->shader_priv;
+    GLhandleARB *blt_program = &priv->depth_blt_program[tex_type];
 
-    if (tex_type != tex_2d) FIXME("Unsupported tex_type %#x\n", tex_type);
-
-    if (!priv->depth_blt_glsl_program_id) {
+    if (!*blt_program) {
         GLhandleARB loc;
-        priv->depth_blt_glsl_program_id = create_glsl_blt_shader(gl_info);
-        loc = GL_EXTCALL(glGetUniformLocationARB(priv->depth_blt_glsl_program_id, "sampler"));
-        GL_EXTCALL(glUseProgramObjectARB(priv->depth_blt_glsl_program_id));
+        *blt_program = create_glsl_blt_shader(gl_info, tex_type);
+        loc = GL_EXTCALL(glGetUniformLocationARB(*blt_program, "sampler"));
+        GL_EXTCALL(glUseProgramObjectARB(*blt_program));
         GL_EXTCALL(glUniform1iARB(loc, 0));
     } else {
-        GL_EXTCALL(glUseProgramObjectARB(priv->depth_blt_glsl_program_id));
+        GL_EXTCALL(glUseProgramObjectARB(*blt_program));
     }
 }
 
@@ -3560,9 +3585,14 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     struct shader_glsl_priv *priv = (struct shader_glsl_priv *)This->shader_priv;
+    int i;
 
-    if(priv->depth_blt_glsl_program_id) {
-        GL_EXTCALL(glDeleteObjectARB(priv->depth_blt_glsl_program_id));
+    for (i = 0; i < tex_type_count; ++i)
+    {
+        if (priv->depth_blt_program[i])
+        {
+            GL_EXTCALL(glDeleteObjectARB(priv->depth_blt_program[i]));
+        }
     }
 
     hash_table_destroy(priv->glsl_program_lookup, NULL, NULL);
