@@ -1598,6 +1598,42 @@ static void init_ole_stream(IStorage *storage)
     return;
 }
 
+static HRESULT load_ole_stream(DefaultHandler *This, IStorage *storage)
+{
+    IStream *stream;
+    HRESULT hr;
+
+    hr = IStorage_OpenStream(storage, OleStream, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
+
+    if(SUCCEEDED(hr))
+    {
+        DWORD read;
+        ole_stream_header_t header;
+
+        hr = IStream_Read(stream, &header, sizeof(header), &read);
+        if(hr == S_OK && read == sizeof(header) && header.version == ole_stream_version)
+        {
+            if(header.flags & 1)
+            {
+                /* FIXME: Read the moniker and deal with the link */
+                FIXME("Linked objects are not supported yet\n");
+            }
+        }
+        else
+        {
+            WARN("Incorrect OleStream header\n");
+            hr = DV_E_CLIPFORMAT;
+        }
+        IStream_Release(stream);
+    }
+    else
+    {
+        init_ole_stream(storage);
+        hr = S_OK;
+    }
+    return hr;
+}
+
 /************************************************************************
  * DefaultHandler_IPersistStorage_InitNew
  *
@@ -1641,7 +1677,10 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_Load(
 
     TRACE("(%p)->(%p)\n", iface, pStg);
 
-    hr = IPersistStorage_Load(This->dataCache_PersistStg, pStg);
+    hr = load_ole_stream(This, pStg);
+
+    if(SUCCEEDED(hr))
+        hr = IPersistStorage_Load(This->dataCache_PersistStg, pStg);
 
     if(SUCCEEDED(hr) && object_is_running(This))
         hr = IPersistStorage_Load(This->pPSDelegate, pStg);
