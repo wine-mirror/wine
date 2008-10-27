@@ -1713,7 +1713,7 @@ static LRESULT COMBOEX_WindowPosChanging (COMBOEX_INFO *infoPtr, WINDOWPOS *wp)
 static LRESULT WINAPI
 COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    HWND hwndComboex = (HWND)GetPropW(hwnd, COMBOEX_SUBCLASS_PROP);
+    HWND hwndComboex = GetPropW(hwnd, COMBOEX_SUBCLASS_PROP);
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwndComboex);
     NMCBEENDEDITW cbeend;
     WCHAR edit_text[260];
@@ -1911,7 +1911,7 @@ COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    HWND hwndComboex = (HWND)GetPropW(hwnd, COMBOEX_SUBCLASS_PROP);
+    HWND hwndComboex = GetPropW(hwnd, COMBOEX_SUBCLASS_PROP);
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwndComboex);
     NMCBEENDEDITW cbeend;
     NMMOUSE nmmse;
