@@ -3114,6 +3114,19 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pma
     fd.can_use_bitmap = can_use_bitmap;
     calc_hash(&fd);
 
+    /* try the child list */
+    LIST_FOR_EACH(font_elem_ptr, &child_font_list) {
+        ret = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
+        if(!fontcmp(ret, &fd)) {
+            if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
+            LIST_FOR_EACH(hfontlist_elem_ptr, &ret->hfontlist) {
+                hflist = LIST_ENTRY(hfontlist_elem_ptr, struct tagHFONTLIST, entry);
+                if(hflist->hfont == hfont)
+                    return ret;
+            }
+        }
+    }
+
     /* try the in-use list */
     LIST_FOR_EACH(font_elem_ptr, &gdi_font_list) {
         ret = LIST_ENTRY(font_elem_ptr, struct tagGdiFont, entry);
@@ -5340,6 +5353,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
         return FALSE;
     }
 
+    child->font->font_desc = font->font_desc;
     child->font->ntmFlags = child->face->ntmFlags;
     child->font->orientation = font->orientation;
     child->font->scale_y = font->scale_y;
