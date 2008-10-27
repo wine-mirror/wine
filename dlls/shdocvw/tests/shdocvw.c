@@ -117,8 +117,7 @@ static void test_URLSubRegQueryA(void)
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, 0, -1);
     used = lstrlenA(buffer);
-    ok((hr == S_OK) && (used == INTERNET_MAX_URL_LENGTH - 1),
-        "got 0x%x and %d (expected S_OK and %d)\n", hr, used, INTERNET_MAX_URL_LENGTH-1);
+    ok((hr == S_OK) && (used == INTERNET_MAX_URL_LENGTH - 1), "got 0x%x and %d\n", hr, used);
 
     /* still succeed without a buffer for the result */
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, NULL, 0, -1);
