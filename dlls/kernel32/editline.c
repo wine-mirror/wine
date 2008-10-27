@@ -818,7 +818,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
 /* EPP  	WCEL_Dump(&ctx, "before func"); */
 	ofs = ctx.ofs;
         /* mask out some bits which don't interest us */
-        ks = ir.Event.KeyEvent.dwControlKeyState & ~(NUMLOCK_ON|SCROLLLOCK_ON|CAPSLOCK_ON);
+        ks = ir.Event.KeyEvent.dwControlKeyState & ~(NUMLOCK_ON|SCROLLLOCK_ON|CAPSLOCK_ON|ENHANCED_KEY);
 
 	func = NULL;
 	for (km = (use_emacs) ? EmacsKeyMap : Win32KeyMap; km->entries != NULL; km++)
@@ -845,7 +845,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
 
 	if (func)
 	    (func)(&ctx);
-	else if (!(ir.Event.KeyEvent.dwControlKeyState & (ENHANCED_KEY|LEFT_ALT_PRESSED)))
+	else if (!(ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED))
 	    WCEL_InsertChar(&ctx, ir.Event.KeyEvent.uChar.UnicodeChar);
 	else TRACE("Dropped event\n");
 

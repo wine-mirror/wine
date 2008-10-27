@@ -1377,8 +1377,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 	{
 	    if (read_console_input(hConsoleInput, &ir, timeout) != rci_gotone) break;
 	    if (ir.EventType == KEY_EVENT && ir.Event.KeyEvent.bKeyDown &&
-		ir.Event.KeyEvent.uChar.UnicodeChar &&
-		!(ir.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
+		ir.Event.KeyEvent.uChar.UnicodeChar)
 	    {
 		xbuf[charsread++] = ir.Event.KeyEvent.uChar.UnicodeChar;
 		timeout = 0;
