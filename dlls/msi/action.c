@@ -323,6 +323,7 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
         prop = msi_alloc((len+1)*sizeof(WCHAR));
         memcpy(prop,ptr,len*sizeof(WCHAR));
         prop[len]=0;
+        struprW(prop);
         ptr2++;
        
         len = 0; 

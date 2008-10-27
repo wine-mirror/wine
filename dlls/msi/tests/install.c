@@ -1189,6 +1189,18 @@ static const msi_table ai_tables[] =
     ADD_TABLE(property)
 };
 
+static const msi_table pc_tables[] =
+{
+    ADD_TABLE(ca51_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(ci2_feature_comp),
+    ADD_TABLE(ci2_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property)
+};
+
 /* cabinet definitions */
 
 /* make the max size large so there is only one cab file */
@@ -5559,6 +5571,27 @@ static void test_adminimage(void)
     RemoveDirectoryA("msitest");
 }
 
+static void test_propcase(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\augustus", 500);
+
+    create_database(msifile, pc_tables, sizeof(pc_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, "MyProp=42");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    DeleteFile(msifile);
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -5631,6 +5664,7 @@ START_TEST(install)
     test_missingcomponent();
     test_sourcedirprop();
     test_adminimage();
+    test_propcase();
 
     DeleteFileA("msitest.log");
 
