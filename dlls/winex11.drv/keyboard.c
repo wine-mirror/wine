@@ -2703,8 +2703,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 found:
     if (buf != lpChar)
         HeapFree(GetProcessHeap(), 0, lpChar);
-    TRACE_(key)("ToUnicode about to return %d with char %x %s\n",
-		ret, (ret && bufW) ? bufW[0] : 0, bufW ? "" : "(no buffer)");
+    TRACE_(key)("returning %d with %s\n", ret, debugstr_wn(bufW, ret));
     return ret;
 }
 
