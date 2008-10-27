@@ -1788,8 +1788,7 @@ static GLuint create_arb_blt_vertex_program(WineD3D_GL_Info *gl_info) {
         "PARAM c[1] = { { 1, 0.5 } };\n"
         "MOV result.position, vertex.position;\n"
         "MOV result.color, c[0].x;\n"
-        "MAD result.texcoord[0].y, -vertex.position, c[0], c[0];\n"
-        "MAD result.texcoord[0].x, vertex.position, c[0].y, c[0].y;\n"
+        "MOV result.texcoord[0], vertex.texcoord[0];\n"
         "END\n";
 
     GL_EXTCALL(glGenProgramsARB(1, &program_id));

@@ -3388,8 +3388,7 @@ static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
         "{\n"
         "    gl_Position = gl_Vertex;\n"
         "    gl_FrontColor = vec4(1.0);\n"
-        "    gl_TexCoord[0].x = (gl_Vertex.x * 0.5) + 0.5;\n"
-        "    gl_TexCoord[0].y = (-gl_Vertex.y * 0.5) + 0.5;\n"
+        "    gl_TexCoord[0] = gl_MultiTexCoord0;\n"
         "}\n"
     };
 

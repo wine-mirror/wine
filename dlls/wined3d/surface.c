@@ -3979,9 +3979,13 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, GLuint texture, GLsizei
     device->shader_backend->shader_select_depth_blt((IWineD3DDevice *)device, tex_2d);
 
     glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex2f(-1.0f, -1.0f);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex2f(1.0f, -1.0f);
+    glTexCoord2f(0.0f, 0.0f);
     glVertex2f(-1.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex2f(1.0f, 1.0f);
     glEnd();
 
