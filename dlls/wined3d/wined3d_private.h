@@ -323,10 +323,20 @@ struct shader_caps {
     DWORD               MaxPixelShader30InstructionSlots;
 };
 
+enum tex_types
+{
+    tex_1d       = 0,
+    tex_2d       = 1,
+    tex_3d       = 2,
+    tex_cube     = 3,
+    tex_rect     = 4,
+    tex_type_count = 5,
+};
+
 typedef struct {
     const SHADER_HANDLER *shader_instruction_handler_table;
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
-    void (*shader_select_depth_blt)(IWineD3DDevice *iface);
+    void (*shader_select_depth_blt)(IWineD3DDevice *iface, enum tex_types tex_type);
     void (*shader_deselect_depth_blt)(IWineD3DDevice *iface);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
     void (*shader_cleanup)(IWineD3DDevice *iface);
@@ -819,15 +829,6 @@ enum projection_types
     proj_none    = 0,
     proj_count3  = 1,
     proj_count4  = 2
-};
-
-enum tex_types
-{
-    tex_1d       = 0,
-    tex_2d       = 1,
-    tex_3d       = 2,
-    tex_cube     = 3,
-    tex_rect     = 4
 };
 
 enum dst_arg

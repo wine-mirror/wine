@@ -3454,10 +3454,12 @@ static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     checkGLcall("glUseProgramObjectARB");
 }
 
-static void shader_glsl_select_depth_blt(IWineD3DDevice *iface) {
+static void shader_glsl_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     struct shader_glsl_priv *priv = (struct shader_glsl_priv *) This->shader_priv;
+
+    if (tex_type != tex_2d) FIXME("Unsupported tex_type %#x\n", tex_type);
 
     if (!priv->depth_blt_glsl_program_id) {
         GLhandleARB loc;
