@@ -63,13 +63,13 @@ static void test_URLSubRegQueryA(void)
         return;
     }
 
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     /* called by inetcpl.cpl */
     hr = pURLSubRegQueryA(regpath_iemain, default_page_url, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
     ok(hr == E_FAIL || hr == S_OK, "got 0x%x (expected E_FAIL or S_OK)\n", hr);
 
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     /* called by inetcpl.cpl */
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
@@ -78,7 +78,7 @@ static void test_URLSubRegQueryA(void)
     ok(hr == S_OK, "got 0x%x and %d (expected S_OK)\n", hr, len);
 
     /* test buffer length: just large enough */
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, len+1, -1);
     used = lstrlenA(buffer);
@@ -87,7 +87,7 @@ static void test_URLSubRegQueryA(void)
         "got 0x%x and %d (expected S_OK and %d)\n", hr, used, len);
 
     /* no space for terminating 0: result is truncated */
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, len, -1);
     used = lstrlenA(buffer);
@@ -96,7 +96,7 @@ static void test_URLSubRegQueryA(void)
 
     /* no space for the complete result: truncate another char */
     if (len > 1) {
-        memset(buffer, '#', sizeof(buffer)-2);
+        memset(buffer, '#', sizeof(buffer)-1);
         buffer[sizeof(buffer)-1] = '\0';
         hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, len-1, -1);
         used = lstrlenA(buffer);
@@ -105,7 +105,7 @@ static void test_URLSubRegQueryA(void)
     }
 
     /* only space for the terminating 0: function still succeded */
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, 1, -1);
     used = lstrlenA(buffer);
@@ -113,7 +113,7 @@ static void test_URLSubRegQueryA(void)
         "got 0x%x and %d (expected S_OK and 0)\n", hr, used);
 
     /* size of buffer is 0, but the function still succeed */
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_SZ, buffer, 0, -1);
     used = lstrlenA(buffer);
@@ -128,14 +128,14 @@ static void test_URLSubRegQueryA(void)
     ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
 
     /* this value does not exist */
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, does_not_exist, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
     /* random bytes are copied to the buffer */
     ok((hr == E_FAIL), "got 0x%x (expected E_FAIL)\n", hr);
 
     /* the third parameter is ignored. Is it really a type? (data is REG_SZ) */
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_iemain, start_page, REG_DWORD, buffer, INTERNET_MAX_URL_LENGTH, -1);
     used = lstrlenA(buffer);
@@ -143,13 +143,13 @@ static void test_URLSubRegQueryA(void)
         "got 0x%x and %d (expected S_OK and %d)\n", hr, used, len);
 
     /* the function works for HKCU and HKLM */
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_shellfolders, appdata, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
     used = lstrlenA(buffer);
     ok(hr == S_OK, "got 0x%x and %d (expected S_OK)\n", hr, used);
 
-    memset(buffer, '#', sizeof(buffer)-2);
+    memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
     hr = pURLSubRegQueryA(regpath_shellfolders, common_appdata, REG_SZ, buffer, INTERNET_MAX_URL_LENGTH, -1);
     used = lstrlenA(buffer);
