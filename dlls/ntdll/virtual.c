@@ -1108,7 +1108,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         end = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress + relocs->Size);
         delta = ptr - base;
 
-        while (rel <= end - 1 && rel->SizeOfBlock)
+        while (rel < end - 1 && rel->SizeOfBlock)
         {
             if (rel->VirtualAddress >= total_size)
             {
