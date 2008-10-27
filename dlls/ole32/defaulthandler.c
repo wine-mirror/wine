@@ -1546,6 +1546,58 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_IsDirty(
     return hr;
 }
 
+/***********************************************************************
+ *   init_ole_stream
+ *
+ * Creates the '\1Ole' stream.
+ * The format of this stream is as follows:
+ *
+ * DWORD Version == 0x02000001
+ * DWORD Flags - low bit set indicates the object is a link otherwise it's embedded.
+ * DWORD LinkupdateOption - [MS-OLEDS describes this as an implementation specific hint
+ *                           supplied by the app that creates the data structure.  May be
+ *                           ignored on processing].
+ *
+ * DWORD Reserved == 0
+ * DWORD MonikerStreamSize - size of the rest of the data (ie CLSID + moniker stream data).
+ * CLSID clsid - class id of object capable of processing the moniker
+ * BYTE  data[] - moniker data for a link
+ */
+
+static const WCHAR OleStream[] = {1,'O','l','e',0};
+typedef struct
+{
+    DWORD version;
+    DWORD flags;
+    DWORD link_update_opt;
+    DWORD res;
+    DWORD moniker_size;
+} ole_stream_header_t;
+static const DWORD ole_stream_version = 0x02000001;
+
+static void init_ole_stream(IStorage *storage)
+{
+    HRESULT hr;
+    IStream *stream;
+
+    hr = IStorage_CreateStream(storage, OleStream, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stream);
+    if(SUCCEEDED(hr))
+    {
+        DWORD written;
+        ole_stream_header_t header;
+
+        header.version         = ole_stream_version;
+        header.flags           = 0;
+        header.link_update_opt = 0;
+        header.res             = 0;
+        header.moniker_size    = 0;
+
+        IStream_Write(stream, &header, sizeof(header), &written);
+        IStream_Release(stream);
+    }
+    return;
+}
+
 /************************************************************************
  * DefaultHandler_IPersistStorage_InitNew
  *
@@ -1558,6 +1610,7 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_InitNew(
     HRESULT hr;
 
     TRACE("(%p)->(%p)\n", iface, pStg);
+    init_ole_stream(pStg);
 
     hr = IPersistStorage_InitNew(This->dataCache_PersistStg, pStg);
 
