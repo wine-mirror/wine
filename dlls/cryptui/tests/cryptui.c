@@ -368,7 +368,7 @@ static void test_crypt_ui_wiz_import(void)
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     /* Imports the following cert--self-signed, with no basic constraints set--
-     * to the root store.  Puts up a dialog at the end if it succeeds or fails.
+     * to the CA store.  Puts up a dialog at the end if it succeeds or fails.
      */
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey));
@@ -377,15 +377,15 @@ static void test_crypt_ui_wiz_import(void)
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
-        static const WCHAR Root[] = { 'R','o','o','t',0 };
-        HCERTSTORE root = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-         CERT_SYSTEM_STORE_CURRENT_USER, Root);
+        static const WCHAR CA[] = { 'C','A',0 };
+        HCERTSTORE ca = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
+         CERT_SYSTEM_STORE_CURRENT_USER, CA);
 
-        if (root)
+        if (ca)
         {
-            find_and_delete_cert_in_store(root, "root", info.u.pCertContext,
-             "v1CertWithValidPubKey", FALSE);
-            CertCloseStore(root, 0);
+            find_and_delete_cert_in_store(ca, "CA",
+             info.u.pCertContext, "v1CertWithValidPubKey", FALSE);
+            CertCloseStore(ca, 0);
         }
     }
     CertFreeCertificateContext(info.u.pCertContext);
