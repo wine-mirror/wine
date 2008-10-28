@@ -50,7 +50,7 @@ struct shader_arb_priv {
     GLuint                  current_vprogram_id;
     GLuint                  current_fprogram_id;
     GLuint                  depth_blt_vprogram_id;
-    GLuint                  depth_blt_fprogram_id;
+    GLuint                  depth_blt_fprogram_id[tex_type_count];
     BOOL                    use_arbfp_fixed_func;
     struct hash_table_t     *fragment_shaders;
 };
@@ -1805,18 +1805,44 @@ static GLuint create_arb_blt_vertex_program(WineD3D_GL_Info *gl_info) {
     return program_id;
 }
 
-static GLuint create_arb_blt_fragment_program(WineD3D_GL_Info *gl_info) {
+static GLuint create_arb_blt_fragment_program(WineD3D_GL_Info *gl_info, enum tex_types tex_type)
+{
     GLuint program_id = 0;
-    const char *blt_fprogram =
+    const char *blt_fprograms[tex_type_count] =
+    {
+        /* tex_1d */
+        NULL,
+        /* tex_2d */
         "!!ARBfp1.0\n"
         "TEMP R0;\n"
         "TEX R0.x, fragment.texcoord[0], texture[0], 2D;\n"
         "MOV result.depth.z, R0.x;\n"
-        "END\n";
+        "END\n",
+        /* tex_3d */
+        NULL,
+        /* tex_cube */
+        "!!ARBfp1.0\n"
+        "TEMP R0;\n"
+        "TEX R0.x, fragment.texcoord[0], texture[0], CUBE;\n"
+        "MOV result.depth.z, R0.x;\n"
+        "END\n",
+        /* tex_rect */
+        "!!ARBfp1.0\n"
+        "TEMP R0;\n"
+        "TEX R0.x, fragment.texcoord[0], texture[0], RECT;\n"
+        "MOV result.depth.z, R0.x;\n"
+        "END\n",
+    };
+
+    if (!blt_fprograms[tex_type])
+    {
+        FIXME("tex_type %#x not supported\n", tex_type);
+        tex_type = tex_2d;
+    }
 
     GL_EXTCALL(glGenProgramsARB(1, &program_id));
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, program_id));
-    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(blt_fprogram), blt_fprogram));
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(blt_fprograms[tex_type]), blt_fprograms[tex_type]));
 
     if (glGetError() == GL_INVALID_OPERATION) {
         GLint pos;
@@ -1882,6 +1908,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
+    GLuint *blt_fprogram = &priv->depth_blt_fprogram_id[tex_type];
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
     if (tex_type != tex_2d) FIXME("Unsupported tex_type %#x\n", tex_type);
@@ -1890,8 +1917,8 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types te
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->depth_blt_vprogram_id));
     glEnable(GL_VERTEX_PROGRAM_ARB);
 
-    if (!priv->depth_blt_fprogram_id) priv->depth_blt_fprogram_id = create_arb_blt_fragment_program(gl_info);
-    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->depth_blt_fprogram_id));
+    if (!*blt_fprogram) *blt_fprogram = create_arb_blt_fragment_program(gl_info, tex_type);
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, *blt_fprogram));
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
@@ -1956,12 +1983,15 @@ static void shader_arb_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
+    int i;
 
     if(priv->depth_blt_vprogram_id) {
         GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
     }
-    if(priv->depth_blt_fprogram_id) {
-        GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id));
+    for (i = 0; i < tex_type_count; ++i) {
+        if (priv->depth_blt_fprogram_id[i]) {
+            GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id[i]));
+        }
     }
 
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
