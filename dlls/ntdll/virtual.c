@@ -122,14 +122,14 @@ static RTL_CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 # define page_shift 12
 # define page_size  0x1000
 /* Note: these are Windows limits, you cannot change them. */
-# define ADDRESS_SPACE_LIMIT  ((void *)0xc0000000)  /* top of the total available address space */
-# define USER_SPACE_LIMIT     ((void *)0x7fff0000)  /* top of the user address space */
+static void *address_space_limit = (void *)0xc0000000;  /* top of the total available address space */
+static void *user_space_limit    = (void *)0x7fff0000;  /* top of the user address space */
 #else
 static UINT page_shift;
 static UINT page_size;
 static UINT_PTR page_mask;
-# define ADDRESS_SPACE_LIMIT  0   /* no limit needed on other platforms */
-# define USER_SPACE_LIMIT     0   /* no limit needed on other platforms */
+static void * const address_space_limit = 0;  /* no limit needed on other platforms */
+static void * const user_space_limit    = 0;  /* no limit needed on other platforms */
 #endif  /* __i386__ */
 
 #define ROUND_ADDR(addr,mask) \
@@ -141,7 +141,6 @@ static UINT_PTR page_mask;
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
     do { if (TRACE_ON(virtual)) VIRTUAL_DumpView(view); } while (0)
 
-static void *user_space_limit = USER_SPACE_LIMIT;
 static void *preload_reserve_start;
 static void *preload_reserve_end;
 static int use_locks;
@@ -685,7 +684,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
 
     if (base)
     {
-        if (is_beyond_limit( base, size, ADDRESS_SPACE_LIMIT ))
+        if (is_beyond_limit( base, size, address_space_limit ))
             return STATUS_WORKING_SET_LIMIT_RANGE;
 
         switch (wine_mmap_is_in_reserved_area( base, size ))
@@ -1168,6 +1167,13 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 }
 
 
+static int get_address_space_limit( void *base, size_t size, void *arg )
+{
+    void **limit = arg;
+    if ((char *)base + size > (char *)*limit) *limit = (char *)base + size;
+    return 1;
+}
+
 /***********************************************************************
  *           virtual_init
  */
@@ -1191,6 +1197,8 @@ void virtual_init(void)
             preload_reserve_end = (void *)end;
         }
     }
+    if (address_space_limit)
+        wine_mmap_enum_reserved_areas( get_address_space_limit, &address_space_limit, 1 );
 }
 
 
@@ -1387,7 +1395,7 @@ void VIRTUAL_UseLargeAddressSpace(void)
 {
     /* no large address space on win9x */
     if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
-    user_space_limit = ADDRESS_SPACE_LIMIT;
+    user_space_limit = address_space_limit;
 }
 
 
@@ -1449,7 +1457,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         /* disallow low 64k, wrap-around and kernel space */
         if (((char *)base < (char *)0x10000) ||
             ((char *)base + size < (char *)base) ||
-            is_beyond_limit( base, size, ADDRESS_SPACE_LIMIT ))
+            is_beyond_limit( base, size, address_space_limit ))
             return STATUS_INVALID_PARAMETER;
     }
     else
@@ -1730,7 +1738,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
                 return STATUS_INVALID_INFO_CLASS;
         }
     }
-    if (ADDRESS_SPACE_LIMIT && addr >= ADDRESS_SPACE_LIMIT)
+    if (address_space_limit && addr >= address_space_limit)
         return STATUS_WORKING_SET_LIMIT_RANGE;
 
     if (process != NtCurrentProcess())
@@ -1781,7 +1789,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
                 }
                 size = (char *)user_space_limit - alloc_base;
             }
-            else size = (char *)ADDRESS_SPACE_LIMIT - alloc_base;
+            else size = (char *)address_space_limit - alloc_base;
             view = NULL;
             break;
         }
