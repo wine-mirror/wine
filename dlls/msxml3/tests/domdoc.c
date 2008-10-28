@@ -146,6 +146,10 @@ static  const CHAR szTransformOutput[] =
 "Hello World"
 "</h1></body></html>";
 
+static const CHAR szTypeValueXML[] =
+"<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+"<string>Wine</string>";
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -3782,6 +3786,64 @@ static void test_FormattingXML(void)
     free_bstrs();
 }
 
+static void test_NodeTypeValue(void)
+{
+    IXMLDOMDocument2 *doc = NULL;
+    IXMLDOMNode *pNode;
+    VARIANT_BOOL bSucc;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (LPVOID*)&doc );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szTypeValueXML), &bSucc);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
+    if(bSucc == VARIANT_TRUE)
+    {
+        hr = IXMLDOMDocument2_get_nodeValue(doc, NULL);
+        ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = NULL;
+        hr = IXMLDOMDocument2_get_nodeValue(doc, &v);
+        ok(hr == S_FALSE, "ret %08x\n", hr );
+        ok(V_VT(&v) == VT_NULL, "expect VT_NULL got %d\n", V_VT(&v));
+
+        hr = IXMLDOMDocument2_get_nodeTypedValue(doc, NULL);
+        ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+        hr = IXMLDOMDocument2_get_nodeTypedValue(doc, &v);
+        ok(hr == S_FALSE, "ret %08x\n", hr );
+
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("string"), &pNode);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        if(hr == S_OK)
+        {
+            V_VT(&v) = VT_BSTR;
+            V_BSTR(&v) = NULL;
+            hr = IXMLDOMNode_get_nodeValue(pNode, &v);
+            ok(hr == S_FALSE, "ret %08x\n", hr );
+            ok(V_VT(&v) == VT_NULL, "expect VT_NULL got %d\n", V_VT(&v));
+
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, NULL);
+            ok(hr == E_INVALIDARG, "ret %08x\n", hr );
+
+            hr = IXMLDOMNode_get_nodeTypedValue(pNode, &v);
+            ok(hr == S_OK, "ret %08x\n", hr );
+            ok(!lstrcmpW( V_BSTR(&v), _bstr_("Wine") ), "incorrect value\n");
+
+            IXMLDOMNode_Release(pNode);
+        }
+    }
+
+    IXMLDOMDocument2_Release(doc);
+
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -3810,6 +3872,7 @@ START_TEST(domdoc)
     test_testTransforms();
     test_Namespaces();
     test_FormattingXML();
+    test_NodeTypeValue();
 
     CoUninitialize();
 }

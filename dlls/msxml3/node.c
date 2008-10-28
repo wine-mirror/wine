@@ -977,8 +977,32 @@ static HRESULT WINAPI xmlnode_get_nodeTypedValue(
     IXMLDOMNode *iface,
     VARIANT* typedValue)
 {
-    FIXME("ignoring data type\n");
-    return xmlnode_get_nodeValue(iface, typedValue);
+    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    HRESULT r = S_FALSE;
+
+    FIXME("ignoring data type %p %p\n", This, typedValue);
+
+    if(!typedValue)
+        return E_INVALIDARG;
+
+    V_VT(typedValue) = VT_NULL;
+
+    switch ( This->node->type )
+    {
+    case XML_ELEMENT_NODE:
+    {
+        xmlChar *content = xmlNodeGetContent(This->node);
+        V_VT(typedValue) = VT_BSTR;
+        V_BSTR(typedValue) = bstr_from_xmlChar( content );
+        xmlFree(content);
+        r = S_OK;
+        break;
+    }
+    default:
+        r = xmlnode_get_nodeValue(iface, typedValue);
+    }
+
+    return r;
 }
 
 static HRESULT WINAPI xmlnode_put_nodeTypedValue(
