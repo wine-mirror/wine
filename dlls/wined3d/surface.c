@@ -4126,6 +4126,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
     if (location == SFLAG_DS_OFFSCREEN) {
         if (This->Flags & SFLAG_DS_ONSCREEN) {
             GLint old_binding = 0;
+            GLenum bind_target;
 
             TRACE("(%p) Copying onscreen depth buffer to depth texture\n", This);
 
@@ -4138,9 +4139,15 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
              * directly on the FBO texture. That's because we need to flip. */
             GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-            glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-            glBindTexture(GL_TEXTURE_2D, device->depth_blt_texture);
-            glCopyTexImage2D(This->glDescription.target,
+            if (This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB) {
+                glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
+                bind_target = GL_TEXTURE_RECTANGLE_ARB;
+            } else {
+                glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
+                bind_target = GL_TEXTURE_2D;
+            }
+            glBindTexture(bind_target, device->depth_blt_texture);
+            glCopyTexImage2D(bind_target,
                     This->glDescription.level,
                     This->glDescription.glFormatInternal,
                     0,
@@ -4148,10 +4155,10 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
                     This->currentDesc.Width,
                     This->currentDesc.Height,
                     0);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-            glBindTexture(GL_TEXTURE_2D, old_binding);
+            glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(bind_target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+            glBindTexture(bind_target, old_binding);
 
             /* Setup the destination */
             if (!device->depth_blt_rb) {
@@ -4174,7 +4181,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             context_attach_depth_stencil_fbo(device, GL_FRAMEBUFFER_EXT, iface, FALSE);
 
             /* Do the actual blit */
-            surface_depth_blt(This, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height, GL_TEXTURE_2D);
+            surface_depth_blt(This, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height, bind_target);
             checkGLcall("depth_blt");
 
             if (device->activeContext->current_fbo) {
