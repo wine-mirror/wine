@@ -2213,13 +2213,18 @@ static void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
 
     /* 1.0-1.4: Use destination register as sampler source.
      * 2.0+: Use provided sampler source. */
-    if (hex_version < WINED3DPS_VERSION(1,4)) {
-        DWORD flags;
-
+    if (hex_version < WINED3DPS_VERSION(2,0)) {
         sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
-        flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+    } else {
+        sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
+    }
+    sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
 
-        if (flags & WINED3DTTFF_PROJECTED) {
+    if (hex_version < WINED3DPS_VERSION(1,4)) {
+        DWORD flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+
+        /* Projected cube textures don't make a lot of sense, the resulting coordinates stay the same. */
+        if (flags & WINED3DTTFF_PROJECTED && sampler_type != WINED3DSTT_CUBE) {
             projected = TRUE;
             switch (flags & ~WINED3DTTFF_PROJECTED) {
                 case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
@@ -2233,7 +2238,6 @@ static void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
         }
     } else if (hex_version < WINED3DPS_VERSION(2,0)) {
         DWORD src_mod = arg->src[0] & WINED3DSP_SRCMOD_MASK;
-        sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
 
         if (src_mod == WINED3DSPSM_DZ) {
             projected = TRUE;
@@ -2245,7 +2249,6 @@ static void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
             projected = FALSE;
         }
     } else {
-        sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
         if(arg->opcode_token & WINED3DSI_TEXLD_PROJECT) {
                 /* ps 2.0 texldp instruction always divides by the fourth component. */
                 projected = TRUE;
@@ -2260,7 +2263,6 @@ static void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
         texrect = TRUE;
     }
 
-    sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     shader_glsl_get_sample_function(sampler_type, projected, texrect, &sample_function);
     mask |= sample_function.coord_mask;
 
