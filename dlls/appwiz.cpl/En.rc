@@ -40,7 +40,7 @@ STRINGTABLE
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Install/Uninstall"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  CONTROL "To install a new program from a floppy disk, CD-ROM drive, or your hard drive, click Install.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "&Install...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
@@ -56,7 +56,7 @@ FONT 8, "MS Sans Serif"
 IDD_INFO DIALOG 0, 0, 256, 138
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Support Information"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
  CONTROL "The following information can be used to get technical support for %s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19

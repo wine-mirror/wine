@@ -40,7 +40,7 @@ STRINGTABLE
 IDD_MAIN DIALOG 0, 0, 320, 220
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Installation/Désinstallation"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
 CONTROL "Pour installer un nouveau programme à partir d'une disquette, d'un cdrom ou de votre disque dur, cliquer sur Installer.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "&Installer", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
@@ -56,7 +56,7 @@ CONTROL "Pour installer un nouveau programme à partir d'une disquette, d'un cdro
 IDD_INFO DIALOG 0, 0, 256, 138
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Information pour support"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
  CONTROL "Les informations suivantes peuvent être utilisées pour obtenir un support technique pour %s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19

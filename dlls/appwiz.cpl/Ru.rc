@@ -40,7 +40,7 @@ STRINGTABLE
 IDD_MAIN DIALOG 0, 0, 320, 235
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Установка/Удаление"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
 CONTROL "Чтобы установить программу с CD-ROM, дискеты или жёсткого диска, нажмите Установить.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "Ус&тановить...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
@@ -56,7 +56,7 @@ CONTROL "Чтобы установить программу с CD-ROM, дискеты или жёсткого диска, нажмит
 IDD_INFO DIALOG 0, 0, 256, 138
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Сведения о поддержке"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 {
  CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
  CONTROL "Перечисленная информация может быть использована для получения технической поддержки приложения %s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 23
