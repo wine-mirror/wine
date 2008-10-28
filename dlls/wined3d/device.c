@@ -1391,11 +1391,11 @@ static void WINAPI IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND 
 }
 
 /* example at http://www.fairyengine.com/articles/dxmultiviews.htm */
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS*  pPresentationParameters,                                                                   IWineD3DSwapChain** ppSwapChain,
-                                                            IUnknown* parent,
-                                                            D3DCB_CREATERENDERTARGETFN D3DCB_CreateRenderTarget,
-                                                            D3DCB_CREATEDEPTHSTENCILSURFACEFN D3DCB_CreateDepthStencil,
-                                                            WINED3DSURFTYPE surface_type) {
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
+        WINED3DPRESENT_PARAMETERS* pPresentationParameters, IWineD3DSwapChain** ppSwapChain,
+        IUnknown* parent, D3DCB_CREATERENDERTARGETFN D3DCB_CreateRenderTarget,
+        D3DCB_CREATEDEPTHSTENCILSURFACEFN D3DCB_CreateDepthStencil, WINED3DSURFTYPE surface_type)
+{
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
 
     HDC                     hDc;
