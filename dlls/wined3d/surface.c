@@ -3954,9 +3954,103 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
-static void surface_depth_blt(IWineD3DSurfaceImpl *This, GLuint texture, GLsizei w, GLsizei h)
+struct depth_blt_info
+{
+    GLenum binding;
+    GLenum bind_target;
+    enum tex_types tex_type;
+    GLfloat coords[4][3];
+};
+
+static void surface_get_depth_blt_info(GLenum target, GLsizei w, GLsizei h, struct depth_blt_info *info)
+{
+    GLfloat (*coords)[3] = info->coords;
+
+    switch (target)
+    {
+        default:
+            FIXME("Unsupported texture target %#x\n", target);
+            /* Fall back to GL_TEXTURE_2D */
+        case GL_TEXTURE_2D:
+            info->binding = GL_TEXTURE_BINDING_2D;
+            info->bind_target = GL_TEXTURE_2D;
+            info->tex_type = tex_2d;
+            coords[0][0] = 0.0f;    coords[0][1] = 1.0f;    coords[0][2] = 0.0f;
+            coords[1][0] = 1.0f;    coords[1][1] = 1.0f;    coords[1][2] = 0.0f;
+            coords[2][0] = 0.0f;    coords[2][1] = 0.0f;    coords[2][2] = 0.0f;
+            coords[3][0] = 1.0f;    coords[3][1] = 0.0f;    coords[3][2] = 0.0f;
+            break;
+
+        case GL_TEXTURE_RECTANGLE_ARB:
+            info->binding = GL_TEXTURE_BINDING_RECTANGLE_ARB;
+            info->bind_target = GL_TEXTURE_RECTANGLE_ARB;
+            info->tex_type = tex_rect;
+            coords[0][0] = 0.0f;    coords[0][1] = h;       coords[0][2] = 0.0f;
+            coords[1][0] = w;       coords[1][1] = h;       coords[1][2] = 0.0f;
+            coords[2][0] = 0.0f;    coords[2][1] = 0.0f;    coords[2][2] = 0.0f;
+            coords[3][0] = w;       coords[3][1] = 0.0f;    coords[3][2] = 0.0f;
+            break;
+
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+            info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
+            info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            info->tex_type = tex_cube;
+            coords[0][0] =  1.0f;   coords[0][1] = -1.0f;   coords[0][2] =  1.0f;
+            coords[1][0] =  1.0f;   coords[1][1] = -1.0f;   coords[1][2] = -1.0f;
+            coords[2][0] =  1.0f;   coords[2][1] =  1.0f;   coords[2][2] =  1.0f;
+            coords[3][0] =  1.0f;   coords[3][1] =  1.0f;   coords[3][2] = -1.0f;
+
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+            info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
+            info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            info->tex_type = tex_cube;
+            coords[0][0] = -1.0f;   coords[0][1] = -1.0f;   coords[0][2] = -1.0f;
+            coords[1][0] = -1.0f;   coords[1][1] = -1.0f;   coords[1][2] =  1.0f;
+            coords[2][0] = -1.0f;   coords[2][1] =  1.0f;   coords[2][2] = -1.0f;
+            coords[3][0] = -1.0f;   coords[3][1] =  1.0f;   coords[3][2] =  1.0f;
+
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+            info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
+            info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            info->tex_type = tex_cube;
+            coords[0][0] = -1.0f;   coords[0][1] =  1.0f;   coords[0][2] =  1.0f;
+            coords[1][0] =  1.0f;   coords[1][1] =  1.0f;   coords[1][2] =  1.0f;
+            coords[2][0] = -1.0f;   coords[2][1] =  1.0f;   coords[2][2] = -1.0f;
+            coords[3][0] =  1.0f;   coords[3][1] =  1.0f;   coords[3][2] = -1.0f;
+
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+            info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
+            info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            info->tex_type = tex_cube;
+            coords[0][0] = -1.0f;   coords[0][1] = -1.0f;   coords[0][2] = -1.0f;
+            coords[1][0] =  1.0f;   coords[1][1] = -1.0f;   coords[1][2] = -1.0f;
+            coords[2][0] = -1.0f;   coords[2][1] = -1.0f;   coords[2][2] =  1.0f;
+            coords[3][0] =  1.0f;   coords[3][1] = -1.0f;   coords[3][2] =  1.0f;
+
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+            info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
+            info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            info->tex_type = tex_cube;
+            coords[0][0] = -1.0f;   coords[0][1] = -1.0f;   coords[0][2] =  1.0f;
+            coords[1][0] =  1.0f;   coords[1][1] = -1.0f;   coords[1][2] =  1.0f;
+            coords[2][0] = -1.0f;   coords[2][1] =  1.0f;   coords[2][2] =  1.0f;
+            coords[3][0] =  1.0f;   coords[3][1] =  1.0f;   coords[3][2] =  1.0f;
+
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+            info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
+            info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
+            info->tex_type = tex_cube;
+            coords[0][0] =  1.0f;   coords[0][1] = -1.0f;   coords[0][2] = -1.0f;
+            coords[1][0] = -1.0f;   coords[1][1] = -1.0f;   coords[1][2] = -1.0f;
+            coords[2][0] =  1.0f;   coords[2][1] =  1.0f;   coords[2][2] = -1.0f;
+            coords[3][0] = -1.0f;   coords[3][1] =  1.0f;   coords[3][2] = -1.0f;
+    }
+}
+
+static void surface_depth_blt(IWineD3DSurfaceImpl *This, GLuint texture, GLsizei w, GLsizei h, GLenum target)
 {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    struct depth_blt_info info;
     GLint old_binding = 0;
 
     glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT);
@@ -3972,24 +4066,25 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, GLuint texture, GLsizei
     glBlendFunc(GL_ZERO, GL_ONE);
     glViewport(0, 0, w, h);
 
+    surface_get_depth_blt_info(target, w, h, &info);
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGetIntegerv(info.binding, &old_binding);
+    glBindTexture(info.bind_target, texture);
 
-    device->shader_backend->shader_select_depth_blt((IWineD3DDevice *)device, tex_2d);
+    device->shader_backend->shader_select_depth_blt((IWineD3DDevice *)device, info.tex_type);
 
     glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(0.0f, 1.0f);
+    glTexCoord3fv(info.coords[0]);
     glVertex2f(-1.0f, -1.0f);
-    glTexCoord2f(1.0f, 1.0f);
+    glTexCoord3fv(info.coords[1]);
     glVertex2f(1.0f, -1.0f);
-    glTexCoord2f(0.0f, 0.0f);
+    glTexCoord3fv(info.coords[2]);
     glVertex2f(-1.0f, 1.0f);
-    glTexCoord2f(1.0f, 0.0f);
+    glTexCoord3fv(info.coords[3]);
     glVertex2f(1.0f, 1.0f);
     glEnd();
 
-    glBindTexture(GL_TEXTURE_2D, old_binding);
+    glBindTexture(info.bind_target, old_binding);
 
     glPopAttrib();
 
@@ -4079,7 +4174,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             context_attach_depth_stencil_fbo(device, GL_FRAMEBUFFER_EXT, iface, FALSE);
 
             /* Do the actual blit */
-            surface_depth_blt(This, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height);
+            surface_depth_blt(This, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height, GL_TEXTURE_2D);
             checkGLcall("depth_blt");
 
             if (device->activeContext->current_fbo) {
@@ -4101,7 +4196,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
 
             GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
             checkGLcall("glBindFramebuffer()");
-            surface_depth_blt(This, This->glDescription.textureName, This->currentDesc.Width, This->currentDesc.Height);
+            surface_depth_blt(This, This->glDescription.textureName, This->currentDesc.Width, This->currentDesc.Height, This->glDescription.target);
             checkGLcall("depth_blt");
 
             if (device->activeContext->current_fbo) {
