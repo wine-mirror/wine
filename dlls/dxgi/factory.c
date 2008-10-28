@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
 /* IUnknown methods */
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IDXGIFactory* iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IDXGIFactory *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
@@ -45,7 +45,7 @@ HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IDXGIFactory* iface, REFII
     return E_NOINTERFACE;
 }
 
-ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IDXGIFactory* iface)
+static ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IDXGIFactory *iface)
 {
     struct dxgi_factory *This = (struct dxgi_factory *)iface;
     ULONG refcount = InterlockedIncrement(&This->refcount);
@@ -55,7 +55,7 @@ ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IDXGIFactory* iface)
     return refcount;
 }
 
-ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory* iface)
+static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory *iface)
 {
     struct dxgi_factory *This = (struct dxgi_factory *)iface;
     ULONG refcount = InterlockedDecrement(&This->refcount);
@@ -72,7 +72,7 @@ ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory* iface)
 
 /* IDXGIObject methods */
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IDXGIFactory* iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IDXGIFactory *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
@@ -80,7 +80,7 @@ HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IDXGIFactory* iface,
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IDXGIFactory* iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IDXGIFactory *iface,
         REFGUID guid, const IUnknown *object)
 {
     FIXME("iface %p, guid %s, object %p stub!\n", iface, debugstr_guid(guid), object);
@@ -88,7 +88,7 @@ HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IDXGIFactory* ifa
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IDXGIFactory* iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IDXGIFactory *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
     FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
@@ -96,7 +96,7 @@ HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IDXGIFactory* iface,
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IDXGIFactory* iface, REFIID riid, void **parent)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IDXGIFactory *iface, REFIID riid, void **parent)
 {
     FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
 
@@ -105,28 +105,28 @@ HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IDXGIFactory* iface, REFIID rii
 
 /* IDXGIFactory methods */
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IDXGIFactory* iface, UINT adapter_idx, IDXGIAdapter **adapter)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IDXGIFactory *iface, UINT adapter_idx, IDXGIAdapter **adapter)
 {
     FIXME("iface %p, adapter_idx %u, adapter %p stub!\n", iface, adapter_idx, adapter);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IDXGIFactory* iface, HWND window, UINT flags)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IDXGIFactory *iface, HWND window, UINT flags)
 {
     FIXME("iface %p, window %p, flags %#x stub!\n\n", iface, window, flags);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IDXGIFactory* iface, HWND *window)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IDXGIFactory *iface, HWND *window)
 {
     FIXME("iface %p, window %p stub!\n", iface, window);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory* iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory *iface,
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
     FIXME("iface %p, device %p, desc %p, swapchain %p stub!\n", iface, device, desc, swapchain);
@@ -134,7 +134,7 @@ HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory* iface,
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IDXGIFactory* iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IDXGIFactory *iface,
         HMODULE swrast, IDXGIAdapter **adapter)
 {
     FIXME("iface %p, swrast %p, adapter %p stub!\n", iface, swrast, adapter);

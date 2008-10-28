@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
 /* IUnknown methods */
 
-HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IDXGIDevice* iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IDXGIDevice *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
@@ -45,7 +45,7 @@ HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IDXGIDevice* iface, REFIID 
     return E_NOINTERFACE;
 }
 
-ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IDXGIDevice* iface)
+static ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IDXGIDevice *iface)
 {
     struct dxgi_device *This = (struct dxgi_device *)iface;
     ULONG refcount = InterlockedIncrement(&This->refcount);
@@ -55,7 +55,7 @@ ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IDXGIDevice* iface)
     return refcount;
 }
 
-ULONG STDMETHODCALLTYPE dxgi_device_Release(IDXGIDevice* iface)
+static ULONG STDMETHODCALLTYPE dxgi_device_Release(IDXGIDevice *iface)
 {
     struct dxgi_device *This = (struct dxgi_device *)iface;
     ULONG refcount = InterlockedDecrement(&This->refcount);
@@ -72,28 +72,28 @@ ULONG STDMETHODCALLTYPE dxgi_device_Release(IDXGIDevice* iface)
 
 /* IDXGIObject methods */
 
-HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateData(IDXGIDevice* iface, REFGUID guid, UINT data_size, const void *data)
+static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateData(IDXGIDevice *iface, REFGUID guid, UINT data_size, const void *data)
 {
     FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateDataInterface(IDXGIDevice* iface, REFGUID guid, const IUnknown *object)
+static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateDataInterface(IDXGIDevice *iface, REFGUID guid, const IUnknown *object)
 {
     FIXME("iface %p, guid %s, object %p stub!\n", iface, debugstr_guid(guid), object);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_device_GetPrivateData(IDXGIDevice* iface, REFGUID guid, UINT *data_size, void *data)
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetPrivateData(IDXGIDevice *iface, REFGUID guid, UINT *data_size, void *data)
 {
     FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IDXGIDevice* iface, REFIID riid, void **parent)
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IDXGIDevice *iface, REFIID riid, void **parent)
 {
     FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
 
@@ -102,14 +102,14 @@ HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IDXGIDevice* iface, REFIID riid,
 
 /* IDXGIDevice methods */
 
-HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IDXGIDevice* iface, IDXGIAdapter **adapter)
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IDXGIDevice *iface, IDXGIAdapter **adapter)
 {
     FIXME("iface %p, adapter %p stub!\n", iface, adapter);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IDXGIDevice* iface,
+static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IDXGIDevice *iface,
         const DXGI_SURFACE_DESC *desc, UINT surface_count, DXGI_USAGE usage,
         const DXGI_SHARED_RESOURCE *shared_resource, IDXGISurface **surface)
 {
@@ -119,7 +119,7 @@ HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IDXGIDevice* iface,
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_device_QueryResourceResidency(IDXGIDevice* iface,
+static HRESULT STDMETHODCALLTYPE dxgi_device_QueryResourceResidency(IDXGIDevice *iface,
         IUnknown *const *resources, DXGI_RESIDENCY *residency, UINT resource_count)
 {
     FIXME("iface %p, resources %p, residency %p, resource_count %u stub!\n",
@@ -128,14 +128,14 @@ HRESULT STDMETHODCALLTYPE dxgi_device_QueryResourceResidency(IDXGIDevice* iface,
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_device_SetGPUThreadPriority(IDXGIDevice* iface, INT priority)
+static HRESULT STDMETHODCALLTYPE dxgi_device_SetGPUThreadPriority(IDXGIDevice *iface, INT priority)
 {
     FIXME("iface %p, priority %d stub!\n", iface, priority);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IDXGIDevice* iface, INT *priority)
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IDXGIDevice *iface, INT *priority)
 {
     FIXME("iface %p, priority %p stub!\n", iface, priority);
 
