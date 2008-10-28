@@ -3184,7 +3184,7 @@ D3D7CB_CreateAdditionalSwapChain(IUnknown *device,
     ICOM_INIT_INTERFACE(object, IParent, IParent_Vtbl);
     object->ref = 1;
 
-    res = IWineD3DDevice_CreateAdditionalSwapChain(This->wineD3DDevice,
+    res = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice,
                                                    pPresentationParameters, 
                                                    &swapchain, 
                                                    (IUnknown*) ICOM_INTERFACE(object, IParent),
@@ -3193,7 +3193,7 @@ D3D7CB_CreateAdditionalSwapChain(IUnknown *device,
                                                    This->ImplType);
     if (res != D3D_OK)
     {
-        FIXME("(%p) call to IWineD3DDevice_CreateAdditionalSwapChain failed\n", This);
+        FIXME("(%p) call to IWineD3DDevice_CreateSwapChain failed\n", This);
         HeapFree(GetProcessHeap(), 0 , object);
         *ppSwapChain = NULL;
     }
@@ -3248,7 +3248,7 @@ static HRESULT WINAPI IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This,
 
     if (hr != D3D_OK)
     {
-        FIXME("(%p) call to IWineD3DDevice_CreateAdditionalSwapChain failed\n", This);
+        FIXME("(%p) call to IWineD3DDevice_InitGDI failed\n", This);
         primary->wineD3DSwapChain = NULL;
     }
     return hr;
