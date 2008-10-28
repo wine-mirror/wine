@@ -889,7 +889,7 @@ CreateMappedBitmap (HINSTANCE hInstance, INT_PTR idBitmap, UINT wFlags,
     else
         nColorTableSize = 0;
     nSize = lpBitmap->biSize + nColorTableSize * sizeof(RGBQUAD);
-    lpBitmapInfo = (LPBITMAPINFOHEADER)GlobalAlloc (GMEM_FIXED, nSize);
+    lpBitmapInfo = GlobalAlloc (GMEM_FIXED, nSize);
     if (lpBitmapInfo == NULL)
 	return 0;
     RtlMoveMemory (lpBitmapInfo, lpBitmap, nSize);
@@ -1117,7 +1117,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
     * from there. */
 
    /* See if we have been called for this window */
-   stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
+   stack = GetPropW (hWnd, COMCTL32_wSubclass);
    if (!stack) {
       /* allocate stack */
       stack = Alloc (sizeof(SUBCLASS_INFO));
@@ -1196,7 +1196,7 @@ BOOL WINAPI GetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    TRACE ("(%p, %p, %lx, %p)\n", hWnd, pfnSubclass, uID, pdwRef);
 
    /* See if we have been called for this window */
-   stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
+   stack = GetPropW (hWnd, COMCTL32_wSubclass);
    if (!stack)
       return FALSE;
 
@@ -1239,7 +1239,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
    TRACE ("(%p, %p, %lx)\n", hWnd, pfnSubclass, uID);
 
    /* Find the Subclass to remove */
-   stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
+   stack = GetPropW (hWnd, COMCTL32_wSubclass);
    if (!stack)
       return FALSE;
 
@@ -1292,7 +1292,7 @@ LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
     
    TRACE ("(%p, 0x%08x, 0x%08lx, 0x%08lx)\n", hWnd, uMsg, wParam, lParam);
 
-   stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
+   stack = GetPropW (hWnd, COMCTL32_wSubclass);
    if (!stack) {
       ERR ("Our sub classing stack got erased for %p!! Nothing we can do\n", hWnd);
       return 0;
@@ -1343,7 +1343,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
    TRACE ("(%p, 0x%08x, 0x%08lx, 0x%08lx)\n", hWnd, uMsg, wParam, lParam);
 
    /* retrieve our little stack from the Properties */
-   stack = (LPSUBCLASS_INFO)GetPropW (hWnd, COMCTL32_wSubclass);
+   stack = GetPropW (hWnd, COMCTL32_wSubclass);
    if (!stack) {
       ERR ("Our sub classing stack got erased for %p!! Nothing we can do\n", hWnd);
       return 0;
