@@ -23,6 +23,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <sys/types.h>
 #ifdef HAVE_DIRENT_H
 # include <dirent.h>
@@ -136,6 +137,15 @@ static inline int getdents64( int fd, char *de, unsigned int size )
 
 #define MAX_DIR_ENTRY_LEN 255  /* max length of a directory entry in chars */
 
+#define MAX_IGNORED_FILES 4
+
+static struct
+{
+    dev_t dev;
+    ino_t ino;
+} ignored_files[MAX_IGNORED_FILES];
+static int ignored_files_count;
+
 static const unsigned int max_dir_info_size = FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName[MAX_DIR_ENTRY_LEN] );
 
 static int show_dot_files = -1;
@@ -170,6 +180,28 @@ static inline int is_valid_mounted_device( const struct stat *st )
     /* disks are char devices on *BSD */
     return S_ISCHR( st->st_mode );
 #endif
+}
+
+static inline void ignore_file( const char *name )
+{
+    struct stat st;
+    assert( ignored_files_count < MAX_IGNORED_FILES );
+    if (!stat( name, &st ))
+    {
+        ignored_files[ignored_files_count].dev = st.st_dev;
+        ignored_files[ignored_files_count].ino = st.st_ino;
+        ignored_files_count++;
+    }
+}
+
+static inline BOOL is_ignored_file( const struct stat *st )
+{
+    unsigned int i;
+
+    for (i = 0; i < ignored_files_count; i++)
+        if (ignored_files[i].dev == st->st_dev && ignored_files[i].ino == st->st_ino)
+            return TRUE;
+    return FALSE;
 }
 
 /***********************************************************************
@@ -694,6 +726,14 @@ static void init_options(void)
         NtClose( hkey );
     }
     NtClose( root );
+
+    /* a couple of directories that we don't want to return in directory searches */
+    ignore_file( wine_get_config_dir() );
+    ignore_file( "/dev" );
+    ignore_file( "/proc" );
+#ifdef linux
+    ignore_file( "/sys" );
+#endif
 }
 
 
@@ -928,6 +968,11 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
     {
         if (stat( long_name, &st ) == -1) return NULL;
         if (S_ISDIR( st.st_mode )) info->FileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
+    }
+    if (is_ignored_file( &st ))
+    {
+        TRACE( "ignoring file %s\n", long_name );
+        return NULL;
     }
 
     info->NextEntryOffset = total_len;
