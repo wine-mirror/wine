@@ -3544,6 +3544,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
         nCharOfs = lParam;
     nLength = ME_GetTextLength(editor);
     nCharOfs = min(nCharOfs, nLength);
+    nCharOfs = max(nCharOfs, 0);
 
     ME_RunOfsFromCharOfs(editor, nCharOfs, &pRun, &nOffset);
     assert(pRun->type == diRun);

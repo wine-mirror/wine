@@ -649,6 +649,10 @@ static void test_EM_POSFROMCHAR(void)
               SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0)+1);
   ok(pt.x == xpos, "pt.x = %d\n", pt.x);
 
+  /* Try a negative position. */
+  SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt, -1);
+  ok(pt.x == 1, "pt.x = %d\n", pt.x);
+
   DestroyWindow(hwndRichEdit);
 }
 
