@@ -254,7 +254,7 @@ static void test_create_view_template(void)
     ofn.nMaxFile = 1042;
     ofn.lpfnHook = (LPOFNHOOKPROC)template_hook;
     ofn.Flags = OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE;
-    ofn.hInstance = GetModuleHandleW(NULL);
+    ofn.hInstance = GetModuleHandleA(NULL);
     ofn.lpTemplateName = "template1";
     ofn.lpstrFilter="text\0*.txt\0All\0*\0\0";
     ret = GetOpenFileNameA(&ofn);
