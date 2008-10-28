@@ -182,27 +182,15 @@ static BOOL is_ca_cert(PCCERT_CONTEXT cert, BOOL defaultIfNotSpecified)
     return isCA;
 }
 
-static inline BOOL is_cert_self_signed(PCCERT_CONTEXT cert)
-{
-    return CertCompareCertificateName(cert->dwCertEncodingType,
-     &cert->pCertInfo->Subject, &cert->pCertInfo->Issuer);
-}
-
 static HCERTSTORE choose_store_for_cert(PCCERT_CONTEXT cert)
 {
-    static const WCHAR Root[] = {'R','o','o','t',0};
     static const WCHAR AddressBook[] = { 'A','d','d','r','e','s','s',
      'B','o','o','k',0 };
     static const WCHAR CA[] = { 'C','A',0 };
     LPCWSTR storeName;
 
     if (is_ca_cert(cert, TRUE))
-    {
-        if (is_cert_self_signed(cert))
-            storeName = Root;
-        else
-            storeName = CA;
-    }
+        storeName = CA;
     else
         storeName = AddressBook;
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,

@@ -373,7 +373,6 @@ static void test_crypt_ui_wiz_import(void)
     info.u.pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey));
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, &info, NULL);
-    todo_wine
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
