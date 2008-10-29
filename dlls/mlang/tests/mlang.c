@@ -647,6 +647,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
 static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
 {
     DWORD dwCodePages, dwManyCodePages;
+    DWORD dwCmpCodePages;
     UINT CodePage;
     HRESULT ret;
 
@@ -685,6 +686,28 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ret = IMLangFontLink_CodePagesToCodePage(iMLFL, dwManyCodePages, 936, &CodePage);
     ok(ret == S_OK, "IMLangFontLink_CodePagesToCodePage error %x\n", ret);
     ok(CodePage == 1252, "Incorrect CodePage Returned (%i)\n",CodePage);
+
+    /* Tests for GetCharCodePages */
+
+    /* Latin 1 */
+    dwCmpCodePages = FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC | FS_GREEK | FS_TURKISH
+        | FS_HEBREW | FS_ARABIC | FS_BALTIC | FS_VIETNAMESE | FS_THAI
+        | FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG | FS_CHINESETRAD;
+    ok(IMLangFontLink_GetCharCodePages(iMLFL, 'd', &dwCodePages) == S_OK,
+        "IMLangFontLink_GetCharCodePages failed\n");
+    ok(dwCodePages == dwCmpCodePages, "Incorrect CodePages returned (%i)\n", dwCodePages);
+
+    /* Cyrillic */
+    dwCmpCodePages = FS_CYRILLIC | FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG;
+    ok(IMLangFontLink_GetCharCodePages(iMLFL, 0x0436, &dwCodePages) == S_OK,
+        "IMLangFontLink_GetCharCodePages failed\n");
+    ok(dwCodePages == dwCmpCodePages, "Incorrect CodePages returned (%i)\n", dwCodePages);
+
+    /* Japanese */
+    dwCmpCodePages =  FS_JISJAPAN;
+    ok(IMLangFontLink_GetCharCodePages(iMLFL, 0xff90, &dwCodePages) == S_OK,
+        "IMLangFontLink_GetCharCodePages failed\n");
+    ok(dwCodePages == dwCmpCodePages, "Incorrect CodePages returned (%i)\n", dwCodePages);
 }
 
 /* copied from libs/wine/string.c */
