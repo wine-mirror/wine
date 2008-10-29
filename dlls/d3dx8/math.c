@@ -691,15 +691,56 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *ifa
 static HRESULT WINAPI ID3DXMatrixStackImpl_Pop(ID3DXMatrixStack *iface)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
-    FIXME("(%p) : stub\n",This);
-    return E_NOTIMPL;
+
+    TRACE("iface %p\n", iface);
+
+    /* Popping the last element on the stack returns D3D_OK, but does nothing. */
+    if (!This->current) return D3D_OK;
+
+    if (This->current <= This->stack_size / 4 && This->stack_size >= INITIAL_STACK_SIZE * 2)
+    {
+        unsigned int new_size;
+        D3DXMATRIX *new_stack;
+
+        new_size = This->stack_size / 2;
+        new_stack = HeapReAlloc(GetProcessHeap(), 0, This->stack, new_size * sizeof(D3DXMATRIX));
+        if (new_stack)
+        {
+            This->stack_size = new_size;
+            This->stack = new_stack;
+        }
+    }
+
+    --This->current;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_Push(ID3DXMatrixStack *iface)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
-    FIXME("(%p) : stub\n",This);
-    return E_NOTIMPL;
+
+    TRACE("iface %p\n", iface);
+
+    if (This->current == This->stack_size - 1)
+    {
+        unsigned int new_size;
+        D3DXMATRIX *new_stack;
+
+        if (This->stack_size > UINT_MAX / 2) return E_OUTOFMEMORY;
+
+        new_size = This->stack_size * 2;
+        new_stack = HeapReAlloc(GetProcessHeap(), 0, This->stack, new_size * sizeof(D3DXMATRIX));
+        if (!new_stack) return E_OUTOFMEMORY;
+
+        This->stack_size = new_size;
+        This->stack = new_stack;
+    }
+
+    ++This->current;
+    This->stack[This->current] = This->stack[This->current - 1];
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, CONST D3DXVECTOR3 *pv, FLOAT angle)
