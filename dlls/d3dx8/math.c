@@ -643,21 +643,21 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_LoadIdentity(ID3DXMatrixStack *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, LPD3DXMATRIX pm)
+static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrix(ID3DXMatrixStack *iface, LPD3DXMATRIX pm)
+static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrix(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *iface, LPD3DXMATRIX pm)
+static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
@@ -678,14 +678,14 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Push(ID3DXMatrixStack *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, LPD3DXVECTOR3 pv, FLOAT angle)
+static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, CONST D3DXVECTOR3 *pv, FLOAT angle)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxisLocal(ID3DXMatrixStack *iface, LPD3DXVECTOR3 pv, FLOAT angle)
+static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxisLocal(ID3DXMatrixStack *iface, CONST D3DXVECTOR3 *pv, FLOAT angle)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
