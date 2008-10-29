@@ -46,13 +46,26 @@ static void test_create(void)
     hr = MimeOleGetInternat(&internat2);
     ok(hr == S_OK, "ret %08x\n", hr);
 
-    /* test to show that the object is a singleton with
-       a reference held by the dll. */
-    ok(internat == internat2, "instances differ\n");
-    ref = IMimeInternational_Release(internat2);
-    ok(ref == 2, "got %d\n", ref);
+    /* Under w2k8 it's no longer a singleton */
+    if(internat == internat2)
+    {
+        /* test to show that the object is a singleton with
+           a reference held by the dll. */
+        ref = IMimeInternational_Release(internat2);
+        ok(ref == 2, "got %d\n", ref);
 
-    IMimeInternational_Release(internat);
+        ref = IMimeInternational_Release(internat);
+        ok(ref == 1, "got %d\n", ref);
+    }
+    else
+    {
+        ref = IMimeInternational_Release(internat2);
+        ok(ref == 0, "got %d\n", ref);
+
+        ref = IMimeInternational_Release(internat);
+        ok(ref == 0, "got %d\n", ref);
+    }
+
 }
 
 static inline HRESULT get_mlang(IMultiLanguage **ml)
