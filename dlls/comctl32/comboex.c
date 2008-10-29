@@ -808,7 +808,7 @@ static BOOL COMBOEX_SetItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
     if (TRACE_ON(comboex)) COMBOEX_DumpItem (item);
 
     /* if original request was to update edit control, do some fast foot work */
-    if (cit->iItem == -1) {
+    if (cit->iItem == -1 && cit->mask & CBEIF_TEXT) {
 	COMBOEX_SetEditText (infoPtr, item);
 	RedrawWindow (infoPtr->hwndCombo, 0, 0, RDW_ERASE | RDW_INVALIDATE);
     }
