@@ -4833,15 +4833,28 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
 {
     HWND hwndSelf = infoPtr->hwndSelf;
     NMLVDISPINFOW dispInfo;
+    BOOL bSame;
 
     TRACE("(pszText=%s, isW=%d)\n", debugtext_t(pszText, isW), isW);
 
     ZeroMemory(&dispInfo, sizeof(dispInfo));
-    dispInfo.item.mask = LVIF_PARAM | LVIF_STATE;
+    dispInfo.item.mask = LVIF_PARAM | LVIF_STATE | LVIF_TEXT;
     dispInfo.item.iItem = infoPtr->nEditLabelItem;
     dispInfo.item.iSubItem = 0;
     dispInfo.item.stateMask = ~0;
     if (!LISTVIEW_GetItemW(infoPtr, &dispInfo.item)) return FALSE;
+
+    /* Don't bother continuing if text has not changed */
+    if (isW)
+        bSame = (lstrcmpW(dispInfo.item.pszText, pszText) == 0);
+    else
+    {
+        LPWSTR tmp = textdupTtoW(pszText, FALSE);
+        bSame = (lstrcmpW(dispInfo.item.pszText, tmp) == 0);
+        textfreeT(tmp, FALSE);
+    }
+    if (bSame) return TRUE;
+
     /* add the text from the edit in */
     dispInfo.item.mask |= LVIF_TEXT;
     dispInfo.item.pszText = pszText;
