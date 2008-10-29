@@ -2022,18 +2022,15 @@ static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UIN
  * Peek for a message matching the given parameters. Return FALSE if none available.
  * All pending sent messages are processed before returning.
  */
-static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags )
+static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags, UINT changed_mask )
 {
     LRESULT result;
     ULONG_PTR extra_info = 0;
     struct user_thread_info *thread_info = get_user_thread_info();
     struct received_message_info info, *old_info;
-    unsigned int wake_mask, changed_mask = HIWORD(flags);
     unsigned int hw_id = 0;  /* id of previous hardware message */
 
     if (!first && !last) last = ~0;
-    if (!changed_mask) changed_mask = QS_ALLINPUT;
-    wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
 
     for (;;)
     {
@@ -2052,7 +2049,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 req->get_first = first;
                 req->get_last  = last;
                 req->hw_id     = hw_id;
-                req->wake_mask = wake_mask;
+                req->wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
                 req->changed_mask = changed_mask;
                 if (buffer_size) wine_server_set_reply( req, buffer, buffer_size );
                 if (!(res = wine_server_call( req )))
@@ -2171,7 +2168,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                                              info.msg.wParam, info.msg.lParam );
                 else
                     peek_message( msg, info.msg.hwnd, info.msg.message,
-                                  info.msg.message, flags | PM_REMOVE );
+                                  info.msg.message, flags | PM_REMOVE, changed_mask );
                 goto next;
             }
 	    if (info.msg.message >= WM_DDE_FIRST && info.msg.message <= WM_DDE_LAST)
@@ -2200,7 +2197,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
         thread_info->receive_info = old_info;
 
         /* if some PM_QS* flags were specified, only handle sent messages from now on */
-        if (HIWORD(flags)) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
+        if (HIWORD(flags) && !changed_mask) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
     next:
         HeapFree( GetProcessHeap(), 0, buffer );
     }
@@ -2215,7 +2212,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
 static inline void process_sent_messages(void)
 {
     MSG msg;
-    peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
+    peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE, 0 );
 }
 
 
@@ -2881,7 +2878,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     /* check for graphics events */
     USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 
-    if (!peek_message( &msg, hwnd, first, last, flags ))
+    if (!peek_message( &msg, hwnd, first, last, flags, 0 ))
     {
         if (!(flags & PM_NOYIELD))
         {
@@ -2925,7 +2922,12 @@ BOOL WINAPI PeekMessageA( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
 BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
 {
     HANDLE server_queue = get_server_queue_handle();
-    int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
+    unsigned int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
+
+    USER_CheckNotLock();
+
+    /* check for graphics events */
+    USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 
     if (first || last)
     {
@@ -2938,7 +2940,7 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
     }
     else mask = QS_ALLINPUT;
 
-    while (!PeekMessageW( msg, hwnd, first, last, PM_REMOVE | PM_NOYIELD | (mask << 16) ))
+    while (!peek_message( msg, hwnd, first, last, PM_REMOVE | (mask << 16), mask ))
     {
         DWORD dwlc;
 
