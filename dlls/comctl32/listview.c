@@ -4833,18 +4833,20 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
 {
     HWND hwndSelf = infoPtr->hwndSelf;
     NMLVDISPINFOW dispInfo;
+    INT editedItem = infoPtr->nEditLabelItem;
     BOOL bSame;
 
     TRACE("(pszText=%s, isW=%d)\n", debugtext_t(pszText, isW), isW);
 
+    infoPtr->nEditLabelItem = -1;
+
     ZeroMemory(&dispInfo, sizeof(dispInfo));
     dispInfo.item.mask = LVIF_PARAM | LVIF_STATE | LVIF_TEXT;
-    dispInfo.item.iItem = infoPtr->nEditLabelItem;
+    dispInfo.item.iItem = editedItem;
     dispInfo.item.iSubItem = 0;
     dispInfo.item.stateMask = ~0;
     if (!LISTVIEW_GetItemW(infoPtr, &dispInfo.item)) return FALSE;
 
-    /* Don't bother continuing if text has not changed */
     if (isW)
         bSame = (lstrcmpW(dispInfo.item.pszText, pszText) == 0);
     else
@@ -4868,18 +4870,18 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
 
     if (!(infoPtr->dwStyle & LVS_OWNERDATA))
     {
-        HDPA hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nEditLabelItem);
+        HDPA hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, editedItem);
         ITEM_INFO* lpItem = DPA_GetPtr(hdpaSubItems, 0);
         if (lpItem && lpItem->hdr.pszText == LPSTR_TEXTCALLBACKW)
         {
-            LISTVIEW_InvalidateItem(infoPtr, infoPtr->nEditLabelItem);
+            LISTVIEW_InvalidateItem(infoPtr, editedItem);
             return TRUE;
         }
     }
 
     ZeroMemory(&dispInfo, sizeof(dispInfo));
     dispInfo.item.mask = LVIF_TEXT;
-    dispInfo.item.iItem = infoPtr->nEditLabelItem;
+    dispInfo.item.iItem = editedItem;
     dispInfo.item.iSubItem = 0;
     dispInfo.item.pszText = pszText;
     dispInfo.item.cchTextMax = textlenT(pszText, isW);
@@ -8614,7 +8616,6 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
 {
   LVHITTESTINFO lvHitTestInfo;
   static BOOL bGroupSelect = TRUE;
-  BOOL bReceivedFocus = FALSE;
   POINT pt = { x, y };
   INT nItem;
 
@@ -8622,9 +8623,6 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
 
   /* send NM_RELEASEDCAPTURE notification */
   if (!notify(infoPtr, NM_RELEASEDCAPTURE)) return 0;
-
-  if (!infoPtr->bFocus)
-    bReceivedFocus = TRUE;
 
   /* set left button down flag and record the click position */
   infoPtr->bLButtonDown = TRUE;
@@ -8636,7 +8634,6 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
 
   nItem = LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
   TRACE("at %s, nItem=%d\n", wine_dbgstr_point(&pt), nItem);
-  infoPtr->nEditLabelItem = -1;
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
     if ((infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) && (lvHitTestInfo.flags & LVHT_ONITEMSTATEICON))
@@ -8705,9 +8702,6 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
     ReleaseCapture();
   }
   
-  if (bReceivedFocus)
-    infoPtr->nEditLabelItem = -1;
-
   return 0;
 }
 
