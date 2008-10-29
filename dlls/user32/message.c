@@ -2164,6 +2164,16 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
             /* fall through */
         case MSG_POSTED:
+            if (info.msg.message & 0x80000000)  /* internal message */
+            {
+                if (flags & PM_REMOVE)
+                    handle_internal_message( info.msg.hwnd, info.msg.message,
+                                             info.msg.wParam, info.msg.lParam );
+                else
+                    peek_message( msg, info.msg.hwnd, info.msg.message,
+                                  info.msg.message, flags | PM_REMOVE );
+                goto next;
+            }
             thread_info->GetMessageExtraInfoVal = extra_info;
 	    if (info.msg.message >= WM_DDE_FIRST && info.msg.message <= WM_DDE_LAST)
 	    {
@@ -2868,33 +2878,16 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     /* check for graphics events */
     USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 
-    hwnd = WIN_GetFullHandle( hwnd );
-
-    for (;;)
+    if (!peek_message( &msg, hwnd, first, last, flags ))
     {
-        if (!peek_message( &msg, hwnd, first, last, flags ))
+        if (!(flags & PM_NOYIELD))
         {
-            if (!(flags & PM_NOYIELD))
-            {
-                DWORD count;
-                ReleaseThunkLock(&count);
-                NtYieldExecution();
-                if (count) RestoreThunkLock(count);
-            }
-            return FALSE;
+            DWORD count;
+            ReleaseThunkLock(&count);
+            NtYieldExecution();
+            if (count) RestoreThunkLock(count);
         }
-        if (msg.message & 0x80000000)
-        {
-            if (!(flags & PM_REMOVE))
-            {
-                /* Have to remove the message explicitly.
-                   Do this before handling it, because the message handler may
-                   call PeekMessage again */
-                peek_message( &msg, msg.hwnd, msg.message, msg.message, flags | PM_REMOVE );
-            }
-            handle_internal_message( msg.hwnd, msg.message, msg.wParam, msg.lParam );
-        }
-        else break;
+        return FALSE;
     }
 
     thread_info->GetMessageTimeVal = msg.time;
