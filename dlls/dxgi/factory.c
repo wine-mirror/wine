@@ -129,9 +129,24 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IDXGIFactory 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory *iface,
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
-    FIXME("iface %p, device %p, desc %p, swapchain %p stub!\n", iface, device, desc, swapchain);
+    struct dxgi_swapchain *object;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, device %p, desc %p, swapchain %p partial stub!\n", iface, device, desc, swapchain);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate DXGI swapchain object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &dxgi_swapchain_vtbl;
+    object->refcount = 1;
+    *swapchain = (IDXGISwapChain *)object;
+
+    TRACE("Created IDXGISwapChain %p\n", object);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IDXGIFactory *iface,

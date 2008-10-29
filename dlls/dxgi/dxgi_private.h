@@ -55,4 +55,12 @@ struct dxgi_adapter
     LONG refcount;
 };
 
+/* IDXGISwapChain */
+extern const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl;
+struct dxgi_swapchain
+{
+    const struct IDXGISwapChainVtbl *vtbl;
+    LONG refcount;
+};
+
 #endif /* __WINE_DXGI_PRIVATE_H */
