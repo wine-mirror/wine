@@ -91,6 +91,7 @@ static void test_RtlIsDosDeviceName(void)
         const char *path;
         WORD pos;
         WORD len;
+        BOOL fails;
     };
 
     static const struct test tests[] =
@@ -101,22 +102,26 @@ static void test_RtlIsDosDeviceName(void)
         { "",              0, 0 },
         { "\\\\foo\\nul",  0, 0 },
         { "c:\\nul:",      6, 6 },
-        { "c:\\nul::",     6, 6 },
-        { "c:\\nul::::::", 6, 6 },
+        { "c:\\nul\\",     0, 0 },
+        { "c:\\nul\\foo",  0, 0 },
+        { "c:\\nul::",     6, 6, TRUE },  /* fails on nt4 */
+        { "c:\\nul::::::", 6, 6, TRUE },  /* fails on nt4 */
         { "c:prn     ",    4, 6 },
         { "c:prn.......",  4, 6 },
         { "c:prn... ...",  4, 6 },
-        { "c:NUL  ....  ", 4, 6 },
+        { "c:NUL  ....  ", 4, 6, TRUE },  /* fails on nt4 */
         { "c: . . .",      0, 0 },
         { "c:",            0, 0 },
         { " . . . :",      0, 0 },
         { ":",             0, 0 },
         { "c:nul. . . :",  4, 6 },
-        { "c:nul . . :",   4, 6 },
+        { "c:nul . . :",   4, 6, TRUE },  /* fails on nt4 */
         { "c:nul0",        0, 0 },
+        { "c:prn:aaa",     4, 6, TRUE },  /* fails on win9x */
         { "c:PRN:.txt",    4, 6 },
         { "c:aux:.txt...", 4, 6 },
         { "c:prn:.txt:",   4, 6 },
+        { "c:nul:aaa",     4, 6, TRUE },  /* fails on win9x */
         { "con:",          0, 6 },
         { "lpt1:",         0, 8 },
         { "c:com5:",       4, 8 },
@@ -141,22 +146,11 @@ static void test_RtlIsDosDeviceName(void)
     {
         pRtlMultiByteToUnicodeN( buffer, sizeof(buffer), NULL, test->path, strlen(test->path)+1 );
         ret = pRtlIsDosDeviceName_U( buffer );
-        ok( ret == MAKELONG( test->len, test->pos ),
+        ok( ret == MAKELONG( test->len, test->pos ) ||
+            (test->fails && broken( ret == 0 )),
             "Wrong result (%d,%d)/(%d,%d) for %s\n",
             HIWORD(ret), LOWORD(ret), test->pos, test->len, test->path );
     }
-
-    pRtlMultiByteToUnicodeN( buffer, sizeof(buffer), NULL, "c:prn:aaa", strlen("c:prn:aaa")+1 );
-    ret = pRtlIsDosDeviceName_U( buffer );
-    ok( ret == MAKELONG( 6, 4 ) || /* NT */
-        ret == MAKELONG( 0, 0), /* win9x */
-        "Wrong result (%d,%d)/(4,6) or (0,0) for c:prn:aaa\n", HIWORD(ret), LOWORD(ret) );
-
-    pRtlMultiByteToUnicodeN( buffer, sizeof(buffer), NULL, "c:nul:aaa", strlen("c:nul:aaa")+1 );
-    ret = pRtlIsDosDeviceName_U( buffer );
-    ok( ret == MAKELONG( 6, 4 ) || /* NT */
-        ret == MAKELONG( 0, 0), /* win9x */
-        "Wrong result (%d,%d)/(4,6) or (0,0) for c:nul:aaa\n", HIWORD(ret), LOWORD(ret) );
 }
 
 static void test_RtlIsNameLegalDOS8Dot3(void)
