@@ -917,6 +917,7 @@ static BOOL CRYPT_BuildSimpleChain(PCertificateChainEngine engine,
         else
         {
             TRACE("Couldn't find issuer, halting chain creation\n");
+            chain->TrustStatus.dwErrorStatus |= CERT_TRUST_IS_PARTIAL_CHAIN;
             break;
         }
     }

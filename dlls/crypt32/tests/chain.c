@@ -1595,7 +1595,7 @@ static ChainCheck chainCheckNoStore[] = {
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_PARTIAL_CHAIN, 0 },
      1, simpleStatus8NoStore },
-   TODO_ERROR | TODO_INFO },
+   TODO_INFO },
 };
 
 /* Wednesday, Oct 1, 2007 */
