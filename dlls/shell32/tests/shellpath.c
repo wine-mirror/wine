@@ -338,7 +338,9 @@ static void testSHGetFolderPathInvalidArgs(void)
     /* expect 2's a bogus handle, especially since we didn't open it */
     hr = pSHGetFolderPathA(NULL, CSIDL_DESKTOP, (HANDLE)2,
      SHGFP_TYPE_DEFAULT, path);
-    ok(hr == E_FAIL,
+    ok(hr == E_FAIL ||
+       hr == E_HANDLE ||   /* Windows Vista and 2008 */
+       broken(hr == S_OK), /* Windows 2000 and Me */
      "SHGetFolderPathA(NULL, CSIDL_DESKTOP, 2, SHGFP_TYPE_DEFAULT, path) returned 0x%08x, expected E_FAIL\n", hr);
     hr = pSHGetFolderPathA(NULL, 0xeeee, NULL, SHGFP_TYPE_DEFAULT, path);
     ok(hr == E_INVALIDARG,
