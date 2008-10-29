@@ -3326,16 +3326,20 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
 
     if (infoPtr->bLButtonDown)
     {
-        MSG msg;
-        BOOL skip = FALSE;
-        /* Check to see if we got a WM_LBUTTONUP, and skip the DragDetect.
-         * Otherwise, DragDetect will eat it.
-         */
-        if (PeekMessageW(&msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_NOREMOVE))
-            if (msg.message == WM_LBUTTONUP)
-                skip = TRUE;
+        POINT tmp;
+        RECT rect;
+        WORD wDragWidth = GetSystemMetrics(SM_CXDRAG);
+        WORD wDragHeight= GetSystemMetrics(SM_CYDRAG);
 
-        if (!skip && DragDetect(infoPtr->hwndSelf, infoPtr->ptClickPos))
+        rect.left = infoPtr->ptClickPos.x - wDragWidth;
+        rect.right = infoPtr->ptClickPos.x + wDragWidth;
+        rect.top = infoPtr->ptClickPos.y - wDragHeight;
+        rect.bottom = infoPtr->ptClickPos.y + wDragHeight;
+
+        tmp.x = x;
+        tmp.y = y;
+
+        if (!PtInRect(&rect, tmp))
         {
             LVHITTESTINFO lvHitTestInfo;
             NMLISTVIEW nmlv;
