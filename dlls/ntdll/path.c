@@ -287,30 +287,24 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
         if (!strcmpiW( dos_name, consoleW ))
             return MAKELONG( sizeof(conW), 4 * sizeof(WCHAR) );  /* 4 is length of \\.\ prefix */
         return 0;
+    case ABSOLUTE_DRIVE_PATH:
+    case RELATIVE_DRIVE_PATH:
+        start = dos_name + 2;  /* skip drive letter */
+        break;
     default:
+        start = dos_name;
         break;
     }
 
-    end = dos_name + strlenW(dos_name) - 1;
-    while (end >= dos_name && *end == ':') end--;  /* remove all trailing ':' */
-
     /* find start of file name */
-    for (start = end; start >= dos_name; start--)
-    {
-        if (IS_SEPARATOR(start[0])) break;
-        /* check for ':' but ignore if before extension (for things like NUL:.txt) */
-        if (start[0] == ':' && start[1] != '.') break;
-    }
-    start++;
+    for (p = start; *p; p++) if (IS_SEPARATOR(*p)) start = p + 1;
 
-    /* remove extension */
-    if ((p = strchrW( start, '.' )))
-    {
-        end = p - 1;
-        if (end >= dos_name && *end == ':') end--;  /* remove trailing ':' before extension */
-    }
+    /* truncate at extension and ':' */
+    for (end = start; *end; end++) if (*end == '.' || *end == ':') break;
+    end--;
+
     /* remove trailing spaces */
-    while (end >= dos_name && *end == ' ') end--;
+    while (end >= start && *end == ' ') end--;
 
     /* now we have a potential device name between start and end, check it */
     switch(end - start + 1)
