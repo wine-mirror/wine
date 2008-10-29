@@ -86,7 +86,8 @@ struct ID3DXMatrixStackImpl
   LONG                   ref;
 
   /* ID3DXMatrixStack fields */
-  int current;
+  unsigned int current;
+  unsigned int stack_size;
   D3DXMATRIX *stack;
 };
 

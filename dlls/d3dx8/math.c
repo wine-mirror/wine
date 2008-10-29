@@ -581,9 +581,13 @@ D3DXMATRIX* WINAPI D3DXMatrixTranspose(D3DXMATRIX *pout, CONST D3DXMATRIX *pm)
 
 /*_________________D3DXMatrixStack____________________*/
 
+static const unsigned int INITIAL_STACK_SIZE = 32;
+
 HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK* ppstack)
 {
     ID3DXMatrixStackImpl* object;
+
+    TRACE("flags %#x, ppstack %p\n", flags, ppstack);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXMatrixStackImpl));
     if ( object == NULL )
@@ -593,7 +597,21 @@ HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, LPD3DXMATRIXSTACK* ppstack)
     }
     object->lpVtbl = &ID3DXMatrixStack_Vtbl;
     object->ref = 1;
+
+    object->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_STACK_SIZE * sizeof(D3DXMATRIX));
+    if (!object->stack)
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppstack = NULL;
+        return E_OUTOFMEMORY;
+    }
+
     object->current = 0;
+    object->stack_size = INITIAL_STACK_SIZE;
+    D3DXMatrixIdentity(&object->stack[0]);
+
+    TRACE("Created matrix stack %p\n", object);
+
     *ppstack = (LPD3DXMATRIXSTACK)object;
     return D3D_OK;
 }
@@ -624,7 +642,11 @@ static ULONG WINAPI ID3DXMatrixStackImpl_Release(ID3DXMatrixStack* iface)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
-    if ( !ref ) HeapFree(GetProcessHeap(), 0, This);
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This->stack);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
     return ref;
 }
