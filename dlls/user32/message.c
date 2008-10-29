@@ -2174,7 +2174,6 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                                   info.msg.message, flags | PM_REMOVE );
                 goto next;
             }
-            thread_info->GetMessageExtraInfoVal = extra_info;
 	    if (info.msg.message >= WM_DDE_FIRST && info.msg.message <= WM_DDE_LAST)
 	    {
 		if (!unpack_dde_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
@@ -2182,7 +2181,12 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                     goto next;  /* ignore it */
 	    }
             *msg = info.msg;
+            msg->pt.x = (short)LOWORD( thread_info->GetMessagePosVal );
+            msg->pt.y = (short)HIWORD( thread_info->GetMessagePosVal );
+            thread_info->GetMessageTimeVal = info.msg.time;
+            thread_info->GetMessageExtraInfoVal = extra_info;
             HeapFree( GetProcessHeap(), 0, buffer );
+            HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
             return TRUE;
         }
 
@@ -2870,7 +2874,6 @@ void WINAPI PostQuitMessage( INT exit_code )
  */
 BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
     MSG msg;
 
     USER_CheckNotLock();
@@ -2889,12 +2892,6 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
         }
         return FALSE;
     }
-
-    thread_info->GetMessageTimeVal = msg.time;
-    msg.pt.x = (short)LOWORD( thread_info->GetMessagePosVal );
-    msg.pt.y = (short)HIWORD( thread_info->GetMessagePosVal );
-
-    HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg, TRUE );
 
     /* copy back our internal safe copy of message data to msg_out.
      * msg_out is a variable from the *program*, so it can't be used
