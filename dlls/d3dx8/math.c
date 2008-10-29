@@ -654,8 +654,10 @@ static ULONG WINAPI ID3DXMatrixStackImpl_Release(ID3DXMatrixStack* iface)
 static D3DXMATRIX* WINAPI ID3DXMatrixStackImpl_GetTop(ID3DXMatrixStack *iface)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
-    FIXME("(%p) : stub\n",This);
-    return NULL;
+
+    TRACE("iface %p\n", iface);
+
+    return &This->stack[This->current];
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_LoadIdentity(ID3DXMatrixStack *iface)
