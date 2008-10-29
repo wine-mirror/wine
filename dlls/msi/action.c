@@ -5771,9 +5771,6 @@ static UINT install_assembly(MSIPACKAGE *package, MSIASSEMBLY *assembly,
         return ERROR_SUCCESS;
     }
 
-    if (!init_functionpointers() || !pCreateAssemblyCache)
-        return ERROR_FUNCTION_FAILED;
-
     hr = pCreateAssemblyCache(&cache, 0);
     if (FAILED(hr))
         goto done;
@@ -5792,8 +5789,137 @@ done:
 typedef struct tagASSEMBLY_LIST
 {
     MSIPACKAGE *package;
+    IAssemblyCache *cache;
     struct list *assemblies;
 } ASSEMBLY_LIST;
+
+typedef struct tagASSEMBLY_NAME
+{
+    LPWSTR name;
+    LPWSTR version;
+    LPWSTR culture;
+    LPWSTR pubkeytoken;
+} ASSEMBLY_NAME;
+
+static UINT parse_assembly_name(MSIRECORD *rec, LPVOID param)
+{
+    ASSEMBLY_NAME *asmname = (ASSEMBLY_NAME *)param;
+    LPCWSTR name = MSI_RecordGetString(rec, 2);
+    LPWSTR val = msi_dup_record_field(rec, 3);
+
+    static const WCHAR Name[] = {'N','a','m','e',0};
+    static const WCHAR Version[] = {'V','e','r','s','i','o','n',0};
+    static const WCHAR Culture[] = {'C','u','l','t','u','r','e',0};
+    static const WCHAR PublicKeyToken[] = {
+        'P','u','b','l','i','c','K','e','y','T','o','k','e','n',0};
+
+    if (!lstrcmpW(name, Name))
+        asmname->name = val;
+    else if (!lstrcmpW(name, Version))
+        asmname->version = val;
+    else if (!lstrcmpW(name, Culture))
+        asmname->culture = val;
+    else if (!lstrcmpW(name, PublicKeyToken))
+        asmname->pubkeytoken = val;
+    else
+        msi_free(val);
+
+    return ERROR_SUCCESS;
+}
+
+static void append_str(LPWSTR *str, DWORD *size, LPCWSTR append)
+{
+    if (!*str)
+    {
+        *size = lstrlenW(append) + 1;
+        *str = msi_alloc((*size) * sizeof(WCHAR));
+        lstrcpyW(*str, append);
+        return;
+    }
+
+    (*size) += lstrlenW(append);
+    *str = msi_realloc(*str, (*size) * sizeof(WCHAR));
+    lstrcatW(*str, append);
+}
+
+static BOOL check_assembly_installed(MSIDATABASE *db, IAssemblyCache *cache,
+                                     MSICOMPONENT *comp)
+{
+    ASSEMBLY_INFO asminfo;
+    ASSEMBLY_NAME name;
+    MSIQUERY *view;
+    LPWSTR disp;
+    DWORD size;
+    BOOL found;
+    UINT r;
+
+    static const WCHAR separator[] = {',',' ',0};
+    static const WCHAR Version[] = {'V','e','r','s','i','o','n','=',0};
+    static const WCHAR Culture[] = {'C','u','l','t','u','r','e','=',0};
+    static const WCHAR PublicKeyToken[] = {
+        'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=',0};
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','M','s','i','A','s','s','e','m','b','l','y','N','a','m','e','`',' ',
+        'W','H','E','R','E',' ','`','C','o','m','p','o','n','e','n','t','_','`',
+        '=','\'','%','s','\'',0};
+
+    disp = NULL;
+    found = FALSE;
+    ZeroMemory(&name, sizeof(ASSEMBLY_NAME));
+    ZeroMemory(&asminfo, sizeof(ASSEMBLY_INFO));
+
+    r = MSI_OpenQuery(db, &view, query, comp->Component);
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    MSI_IterateRecords(view, NULL, parse_assembly_name, &name);
+    msiobj_release(&view->hdr);
+
+    if (!name.name)
+    {
+        ERR("No assembly name specified!\n");
+        goto done;
+    }
+
+    append_str(&disp, &size, name.name);
+
+    if (name.version)
+    {
+        append_str(&disp, &size, separator);
+        append_str(&disp, &size, Version);
+        append_str(&disp, &size, name.version);
+    }
+
+    if (name.culture)
+    {
+        append_str(&disp, &size, separator);
+        append_str(&disp, &size, Culture);
+        append_str(&disp, &size, name.culture);
+    }
+
+    if (name.pubkeytoken)
+    {
+        append_str(&disp, &size, separator);
+        append_str(&disp, &size, PublicKeyToken);
+        append_str(&disp, &size, name.pubkeytoken);
+    }
+
+    asminfo.cbAssemblyInfo = sizeof(ASSEMBLY_INFO);
+    IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
+                                     disp, &asminfo);
+    found = (asminfo.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
+
+done:
+    msiobj_release(&view->hdr);
+    msi_free(disp);
+    msi_free(name.name);
+    msi_free(name.version);
+    msi_free(name.culture);
+    msi_free(name.pubkeytoken);
+
+    return found;
+}
 
 static UINT load_assembly(MSIRECORD *rec, LPVOID param)
 {
@@ -5826,17 +5952,20 @@ static UINT load_assembly(MSIRECORD *rec, LPVOID param)
     assembly->manifest = strdupW(MSI_RecordGetString(rec, 3));
     assembly->application = strdupW(MSI_RecordGetString(rec, 4));
     assembly->attributes = MSI_RecordGetInteger(rec, 5);
-    assembly->installed = FALSE;
+    assembly->installed = check_assembly_installed(list->package->db,
+                                                   list->cache,
+                                                   assembly->component);
 
     list_add_head(list->assemblies, &assembly->entry);
-
     return ERROR_SUCCESS;
 }
 
 static UINT load_assemblies(MSIPACKAGE *package, struct list *assemblies)
 {
-    MSIQUERY *view;
+    IAssemblyCache *cache = NULL;
     ASSEMBLY_LIST list;
+    MSIQUERY *view;
+    HRESULT hr;
     UINT r;
 
     static const WCHAR query[] =
@@ -5847,11 +5976,18 @@ static UINT load_assemblies(MSIPACKAGE *package, struct list *assemblies)
     if (r != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
+    hr = pCreateAssemblyCache(&cache, 0);
+    if (FAILED(hr))
+        return ERROR_FUNCTION_FAILED;
+
     list.package = package;
+    list.cache = cache;
     list.assemblies = assemblies;
 
     r = MSI_IterateRecords(view, NULL, load_assembly, &list);
     msiobj_release(&view->hdr);
+
+    IAssemblyCache_Release(cache);
 
     return r;
 }
@@ -5928,6 +6064,9 @@ static UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
     struct list assemblies = LIST_INIT(assemblies);
     MSIASSEMBLY *assembly;
     MSIMEDIAINFO *mi;
+
+    if (!init_functionpointers() || !pCreateAssemblyCache)
+        return ERROR_FUNCTION_FAILED;
 
     r = load_assemblies(package, &assemblies);
     if (r != ERROR_SUCCESS)
