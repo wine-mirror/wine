@@ -3195,7 +3195,7 @@ MMRESULT16 WINAPI joyReleaseCapture16(UINT16 wID)
  */
 MMRESULT16 WINAPI joySetCapture16(HWND16 hWnd, UINT16 wID, UINT16 wPeriod, BOOL16 bChanged)
 {
-    return joySetCapture16(hWnd, wID, wPeriod, bChanged);
+    return joySetCapture(HWND_32(hWnd), wID, wPeriod, bChanged);
 }
 
 /**************************************************************************
@@ -3203,7 +3203,7 @@ MMRESULT16 WINAPI joySetCapture16(HWND16 hWnd, UINT16 wID, UINT16 wPeriod, BOOL1
  */
 MMRESULT16 WINAPI joySetThreshold16(UINT16 wID, UINT16 wThreshold)
 {
-    return joySetThreshold16(wID,wThreshold);
+    return joySetThreshold(wID,wThreshold);
 }
 
 /**************************************************************************
