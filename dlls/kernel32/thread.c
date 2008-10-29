@@ -152,27 +152,8 @@ HANDLE WINAPI OpenThread( DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwTh
  */
 void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
 {
-    BOOL last;
-    SERVER_START_REQ( terminate_thread )
-    {
-        /* send the exit code to the server */
-        req->handle    = GetCurrentThread();
-        req->exit_code = code;
-        wine_server_call( req );
-        last = reply->last;
-    }
-    SERVER_END_REQ;
-
-    if (last)
-    {
-        LdrShutdownProcess();
-        exit( code );
-    }
-    else
-    {
-        RtlFreeThreadActivationContextStack();
-        RtlExitUserThread( code );
-    }
+    RtlFreeThreadActivationContextStack();
+    RtlExitUserThread( code );
 }
 
 
