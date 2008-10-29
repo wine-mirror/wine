@@ -640,98 +640,98 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_LoadIdentity(ID3DXMatrixStack *iface)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, LPD3DXMATRIX pm)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrix(ID3DXMatrixStack *iface, LPD3DXMATRIX pm)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *iface, LPD3DXMATRIX pm)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_Pop(ID3DXMatrixStack *iface)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_Push(ID3DXMatrixStack *iface)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, LPD3DXVECTOR3 pv, FLOAT angle)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxisLocal(ID3DXMatrixStack *iface, LPD3DXVECTOR3 pv, FLOAT angle)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateYawPitchRoll(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateYawPitchRollLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_Scale(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_ScaleLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_Translate(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_TranslateLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
     FIXME("(%p) : stub\n",This);
-    return D3D_OK;
+    return E_NOTIMPL;
 }
 
 static const ID3DXMatrixStackVtbl ID3DXMatrixStack_Vtbl =
