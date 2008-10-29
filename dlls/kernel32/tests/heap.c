@@ -72,6 +72,12 @@ START_TEST(heap)
     mem = HeapAlloc(GetProcessHeap(), 0, ~0UL);
     ok(mem == NULL, "memory allocated for size ~0UL\n");
 
+    /* large blocks must be 16-byte aligned */
+    mem = HeapAlloc(GetProcessHeap(), 0, 512 * 1024);
+    ok( mem != NULL, "failed for size 512K\n" );
+    ok( (ULONG_PTR)mem % 16 == 0, "512K block not 16-byte aligned\n" );
+    HeapFree(GetProcessHeap(), 0, mem);
+
     /* Global*() functions */
     gbl = GlobalAlloc(GMEM_MOVEABLE, 0);
     ok(gbl != NULL, "global memory not allocated for size 0\n");

@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -66,16 +67,32 @@ typedef struct tagARENA_FREE
     struct list           entry;    /* Entry in free list */
 } ARENA_FREE;
 
+typedef struct
+{
+    struct list           entry;      /* entry in heap large blocks list */
+    SIZE_T                data_size;  /* size of user data */
+    SIZE_T                block_size; /* total size of virtual memory block */
+    DWORD                 pad[2];     /* padding to ensure 16-byte alignment of data */
+    DWORD                 size;       /* fields for compatibility with normal arenas */
+    DWORD                 magic;      /* these must remain at the end of the structure */
+} ARENA_LARGE;
+
 #define ARENA_FLAG_FREE        0x00000001  /* flags OR'ed with arena size */
 #define ARENA_FLAG_PREV_FREE   0x00000002
 #define ARENA_SIZE_MASK        (~3)
-#define ARENA_INUSE_MAGIC      0x455355        /* Value for arena 'magic' field */
-#define ARENA_FREE_MAGIC       0x45455246      /* Value for arena 'magic' field */
+#define ARENA_LARGE_SIZE       0xfedcba90  /* magic value for 'size' field in large blocks */
+
+/* Value for arena 'magic' field */
+#define ARENA_INUSE_MAGIC      0x455355
+#define ARENA_FREE_MAGIC       0x45455246
+#define ARENA_LARGE_MAGIC      0x6752614c
 
 #define ARENA_INUSE_FILLER     0x55
 #define ARENA_FREE_FILLER      0xaa
 
 #define ALIGNMENT              8   /* everything is aligned on 8 byte boundaries */
+#define LARGE_ALIGNMENT        16  /* large blocks have stricter alignment */
+
 #define ROUND_SIZE(size)       (((size) + ALIGNMENT - 1) & ~(ALIGNMENT-1))
 
 #define QUIET                  1           /* Suppress messages  */
@@ -86,6 +103,8 @@ typedef struct tagARENA_FREE
 #define HEAP_MIN_DATA_SIZE    (2 * sizeof(struct list))
 /* minimum size that must remain to shrink an allocated block */
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
+/* minimum size to start allocating large blocks */
+#define HEAP_MIN_LARGE_BLOCK_SIZE  0x7f000
 
 /* Max size of the blocks on the free lists */
 static const SIZE_T HEAP_freeListSizes[] =
@@ -122,6 +141,7 @@ typedef struct tagHEAP
     SUBHEAP          subheap;       /* First sub-heap */
     struct list      entry;         /* Entry in process heap list */
     struct list      subheap_list;  /* Sub-heap list */
+    struct list      large_list;    /* Large blocks list */
     DWORD            magic;         /* Magic number */
     RTL_CRITICAL_SECTION critSection; /* Critical section for serialization */
     FREE_LIST_ENTRY  freeList[HEAP_NB_FREE_LISTS];  /* Free lists */
@@ -612,6 +632,128 @@ static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, SIZE_T size)
     }
 }
 
+
+/***********************************************************************
+ *           allocate_large_block
+ */
+static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
+{
+    ARENA_LARGE *arena;
+    SIZE_T block_size = sizeof(*arena) + ROUND_SIZE(size);
+    LPVOID address = NULL;
+
+    if (block_size < size) return NULL;  /* overflow */
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0,
+                                 &block_size, MEM_COMMIT, get_protection_type( flags ) ))
+    {
+        WARN("Could not allocate block for %08lx bytes\n", size );
+        return NULL;
+    }
+    arena = address;
+    arena->data_size = size;
+    arena->block_size = block_size;
+    arena->size = ARENA_LARGE_SIZE;
+    arena->magic = ARENA_LARGE_MAGIC;
+    list_add_tail( &heap->large_list, &arena->entry );
+    return arena + 1;
+}
+
+
+/***********************************************************************
+ *           free_large_block
+ */
+static void free_large_block( HEAP *heap, DWORD flags, void *ptr )
+{
+    ARENA_LARGE *arena = (ARENA_LARGE *)ptr - 1;
+    LPVOID address = arena;
+    SIZE_T size = 0;
+
+    list_remove( &arena->entry );
+    NtFreeVirtualMemory( NtCurrentProcess(), &address, &size, MEM_RELEASE );
+}
+
+
+/***********************************************************************
+ *           realloc_large_block
+ */
+static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T size )
+{
+    ARENA_LARGE *arena = (ARENA_LARGE *)ptr - 1;
+    void *new_ptr;
+
+    if (arena->block_size - sizeof(*arena) >= size)
+    {
+        /* FIXME: we could remap zero-pages instead */
+        if ((flags & HEAP_ZERO_MEMORY) && size > arena->data_size)
+            memset( (char *)ptr + arena->data_size, 0, size - arena->data_size );
+        arena->data_size = size;
+        return ptr;
+    }
+    if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return NULL;
+    if (!(new_ptr = allocate_large_block( heap, flags, size )))
+    {
+        WARN("Could not allocate block for %08lx bytes\n", size );
+        return NULL;
+    }
+    memcpy( new_ptr, ptr, arena->data_size );
+    free_large_block( heap, flags, ptr );
+    return new_ptr;
+}
+
+
+/***********************************************************************
+ *           find_large_block
+ */
+static ARENA_LARGE *find_large_block( HEAP *heap, const void *ptr )
+{
+    ARENA_LARGE *arena;
+
+    LIST_FOR_EACH_ENTRY( arena, &heap->large_list, ARENA_LARGE, entry )
+        if (ptr == (const void *)(arena + 1)) return arena;
+
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           validate_large_arena
+ */
+static BOOL validate_large_arena( HEAP *heap, const ARENA_LARGE *arena, BOOL quiet )
+{
+    if ((ULONG_PTR)arena % getpagesize())
+    {
+        if (quiet == NOISY)
+        {
+            ERR( "Heap %p: invalid large arena pointer %p\n", heap, arena );
+            if (TRACE_ON(heap)) HEAP_Dump( heap );
+        }
+        else if (WARN_ON(heap))
+        {
+            WARN( "Heap %p: unaligned arena pointer %p\n", heap, arena );
+            if (TRACE_ON(heap)) HEAP_Dump( heap );
+        }
+        return FALSE;
+    }
+    if (arena->size != ARENA_LARGE_SIZE || arena->magic != ARENA_LARGE_MAGIC)
+    {
+        if (quiet == NOISY)
+        {
+            ERR( "Heap %p: invalid large arena %p values %x/%x\n",
+                 heap, arena, arena->size, arena->magic );
+            if (TRACE_ON(heap)) HEAP_Dump( heap );
+        }
+        else if (WARN_ON(heap))
+        {
+            WARN( "Heap %p: invalid large arena %p values %x/%x\n",
+                  heap, arena, arena->size, arena->magic );
+            if (TRACE_ON(heap)) HEAP_Dump( heap );
+        }
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           HEAP_InitSubHeap
  */
@@ -654,6 +796,7 @@ static SUBHEAP *HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         heap->flags         = flags;
         heap->magic         = HEAP_MAGIC;
         list_init( &heap->subheap_list );
+        list_init( &heap->large_list );
 
         subheap = &heap->subheap;
         subheap->base       = address;
@@ -1030,6 +1173,7 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
 {
     SUBHEAP *subheap;
     BOOL ret = TRUE;
+    const ARENA_LARGE *large_arena;
 
     flags &= HEAP_NO_SERIALIZE;
     flags |= heapPtr->flags;
@@ -1044,11 +1188,16 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
         if (!(subheap = HEAP_FindSubHeap( heapPtr, arena )) ||
             ((const char *)arena < (char *)subheap->base + subheap->headerSize))
         {
-            if (quiet == NOISY)
-                ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
-            else if (WARN_ON(heap))
-                WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
-            ret = FALSE;
+            if (!(large_arena = find_large_block( heapPtr, block )))
+            {
+                if (quiet == NOISY)
+                    ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
+                else if (WARN_ON(heap))
+                    WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
+                ret = FALSE;
+            }
+            else
+                ret = validate_large_arena( heapPtr, large_arena, quiet );
         } else
             ret = HEAP_ValidateInUseArena( subheap, arena, quiet );
 
@@ -1081,6 +1230,9 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
         }
         if (!ret) break;
     }
+
+    LIST_FOR_EACH_ENTRY( large_arena, &heapPtr->large_list, ARENA_LARGE, entry )
+        if (!(ret = validate_large_arena( heapPtr, large_arena, quiet ))) break;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
     return ret;
@@ -1133,6 +1285,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
         list_init( &processHeap->entry );
         /* make sure structure alignment is correct */
         assert( (ULONG_PTR)processHeap->freeList % ALIGNMENT == 0 );
+        assert( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
     }
 
     return (HANDLE)subheap->heap;
@@ -1155,6 +1308,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap, *next;
+    ARENA_LARGE *arena, *arena_next;
     SIZE_T size;
     void *addr;
 
@@ -1171,6 +1325,13 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     heapPtr->critSection.DebugInfo->Spare[0] = 0;
     RtlDeleteCriticalSection( &heapPtr->critSection );
 
+    LIST_FOR_EACH_ENTRY_SAFE( arena, arena_next, &heapPtr->large_list, ARENA_LARGE, entry )
+    {
+        list_remove( &arena->entry );
+        size = 0;
+        addr = arena;
+        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
+    }
     LIST_FOR_EACH_ENTRY_SAFE( subheap, next, &heapPtr->subheap_list, SUBHEAP, entry )
     {
         if (subheap == &heapPtr->subheap) continue;  /* do this one last */
@@ -1227,6 +1388,16 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
     if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
+
+    if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE && (flags & HEAP_GROWABLE))
+    {
+        void *ret = allocate_large_block( heap, flags, size );
+        if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
+        if (!ret && (flags & HEAP_GENERATE_EXCEPTIONS)) RtlRaiseStatus( STATUS_NO_MEMORY );
+        TRACE("(%p,%08x,%08lx): returning %p\n", heap, flags, size, ret );
+        return ret;
+    }
+
     /* Locate a suitable free block */
 
     if (!(pArena = HEAP_FindFreeBlock( heapPtr, rounded_size, &subheap )))
@@ -1313,7 +1484,12 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
     /* Some sanity checks */
     pInUse  = (ARENA_INUSE *)ptr - 1;
-    if (!(subheap = HEAP_FindSubHeap( heapPtr, pInUse ))) goto error;
+    if (!(subheap = HEAP_FindSubHeap( heapPtr, pInUse )))
+    {
+        if (!find_large_block( heapPtr, ptr )) goto error;
+        free_large_block( heapPtr, flags, ptr );
+        goto done;
+    }
     if ((char *)pInUse < (char *)subheap->base + subheap->headerSize) goto error;
     if (!HEAP_ValidateInUseArena( subheap, pInUse, QUIET )) goto error;
 
@@ -1321,8 +1497,8 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
     HEAP_MakeInUseBlockFree( subheap, pInUse );
 
+done:
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
-
     TRACE("(%p,%08x,%p): returning TRUE\n", heap, flags, ptr );
     return TRUE;
 
@@ -1355,6 +1531,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     HEAP *heapPtr;
     SUBHEAP *subheap;
     SIZE_T oldBlockSize, oldActualSize, rounded_size;
+    void *ret;
 
     if (!ptr) return NULL;
     if (!(heapPtr = HEAP_GetPtr( heap )))
@@ -1368,19 +1545,19 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY |
              HEAP_REALLOC_IN_PLACE_ONLY;
     flags |= heapPtr->flags;
-    rounded_size = ROUND_SIZE(size);
-    if (rounded_size < size)  /* overflow */
-    {
-        if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
-        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
-        return NULL;
-    }
-    if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
-
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
 
+    rounded_size = ROUND_SIZE(size);
+    if (rounded_size < size) goto oom;  /* overflow */
+    if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
+
     pArena = (ARENA_INUSE *)ptr - 1;
-    if (!(subheap = HEAP_FindSubHeap( heapPtr, pArena ))) goto error;
+    if (!(subheap = HEAP_FindSubHeap( heapPtr, pArena )))
+    {
+        if (!find_large_block( heapPtr, ptr )) goto error;
+        if (!(ret = realloc_large_block( heapPtr, flags, ptr, size ))) goto oom;
+        goto done;
+    }
     if ((char *)pArena < (char *)subheap->base + subheap->headerSize) goto error;
     if (!HEAP_ValidateInUseArena( subheap, pArena, QUIET )) goto error;
 
@@ -1391,6 +1568,13 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     if (rounded_size > oldBlockSize)
     {
         char *pNext = (char *)(pArena + 1) + oldBlockSize;
+
+        if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE && (flags & HEAP_GROWABLE))
+        {
+            if (!(ret = allocate_large_block( heapPtr, flags, size ))) goto oom;
+            memcpy( ret, pArena + 1, oldActualSize );
+            goto done;
+        }
         if ((pNext < (char *)subheap->base + subheap->size) &&
             (*(DWORD *)pNext & ARENA_FLAG_FREE) &&
             (oldBlockSize + (*(DWORD *)pNext & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) >= rounded_size))
@@ -1399,13 +1583,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
             ARENA_FREE *pFree = (ARENA_FREE *)pNext;
             list_remove( &pFree->entry );
             pArena->size += (pFree->size & ARENA_SIZE_MASK) + sizeof(*pFree);
-            if (!HEAP_Commit( subheap, pArena, rounded_size ))
-            {
-                if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
-                if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
-                RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
-                return NULL;
-            }
+            if (!HEAP_Commit( subheap, pArena, rounded_size )) goto oom;
             notify_free( pArena + 1 );
             HEAP_ShrinkBlock( subheap, pArena, rounded_size );
             notify_alloc( pArena + 1, size, FALSE );
@@ -1420,12 +1598,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
             if ((flags & HEAP_REALLOC_IN_PLACE_ONLY) ||
                 !(pNew = HEAP_FindFreeBlock( heapPtr, rounded_size, &newsubheap )))
-            {
-                if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
-                if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
-                RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
-                return NULL;
-            }
+                goto oom;
 
             /* Build the in-use arena */
 
@@ -1476,10 +1649,18 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
     /* Return the new arena */
 
+    ret = pArena + 1;
+done:
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
+    TRACE("(%p,%08x,%p,%08lx): returning %p\n", heap, flags, ptr, size, ret );
+    return ret;
 
-    TRACE("(%p,%08x,%p,%08lx): returning %p\n", heap, flags, ptr, size, pArena + 1 );
-    return (LPVOID)(pArena + 1);
+oom:
+    if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
+    if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
+    RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
+    TRACE("(%p,%08x,%p,%08lx): returning NULL\n", heap, flags, ptr, size );
+    return NULL;
 
 error:
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
@@ -1592,7 +1773,12 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
     else
     {
         const ARENA_INUSE *pArena = (const ARENA_INUSE *)ptr - 1;
-        ret = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
+        if (pArena->size == ARENA_LARGE_SIZE)
+        {
+            const ARENA_LARGE *large_arena = (const ARENA_LARGE *)ptr - 1;
+            ret = large_arena->data_size;
+        }
+        else ret = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
     }
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
@@ -1642,6 +1828,8 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
     if (!heapPtr || !entry) return STATUS_INVALID_PARAMETER;
 
     if (!(heapPtr->flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
+
+    /* FIXME: enumerate large blocks too */
 
     /* set ptr to the next arena to be examined */
 
