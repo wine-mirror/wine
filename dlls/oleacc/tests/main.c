@@ -48,8 +48,6 @@ static void test_getroletext(void)
     bufW[0] = '*';
     ret = GetRoleTextW(-1, bufW, 0);
     ok(ret == 0, "GetRoleTextW doesn't return zero on wrong role number, got %d\n", ret);
-    /* don't know why this char */
-    todo_wine ok(bufW[0] == 0x1e90, "GetRoleTextW returned wrong char, got %u\n", bufW[0]);
 
     /* zero role number - not documented */
     ret = GetRoleTextA(0, NULL, 0);
