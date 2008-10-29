@@ -1167,9 +1167,16 @@ static void checkElementStatus(const CERT_TRUST_STATUS *expected,
  const CERT_TRUST_STATUS *got, const CERT_TRUST_STATUS *ignore,
  DWORD todo, DWORD testIndex, DWORD chainIndex, DWORD elementIndex)
 {
-    if (todo & TODO_ERROR && got->dwErrorStatus != expected->dwErrorStatus)
-        todo_wine
+    if (got->dwErrorStatus == expected->dwErrorStatus)
         ok(got->dwErrorStatus == expected->dwErrorStatus,
+         "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
+         testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
+         got->dwErrorStatus);
+    else if (todo & TODO_ERROR)
+        todo_wine
+        ok(got->dwErrorStatus == expected->dwErrorStatus ||
+         broken((got->dwErrorStatus & ~ignore->dwErrorStatus) ==
+         expected->dwErrorStatus),
          "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
          testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
          got->dwErrorStatus);
@@ -1180,9 +1187,16 @@ static void checkElementStatus(const CERT_TRUST_STATUS *expected,
          "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
          testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
          got->dwErrorStatus);
-    if (todo & TODO_INFO && got->dwInfoStatus != expected->dwInfoStatus)
-        todo_wine
+    if (got->dwInfoStatus == expected->dwInfoStatus)
         ok(got->dwInfoStatus == expected->dwInfoStatus,
+         "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
+         testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
+         got->dwInfoStatus);
+    else if (todo & TODO_INFO)
+        todo_wine
+        ok(got->dwInfoStatus == expected->dwInfoStatus ||
+         broken((got->dwInfoStatus & ~ignore->dwInfoStatus) ==
+         expected->dwInfoStatus),
          "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
          testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
          got->dwInfoStatus);
