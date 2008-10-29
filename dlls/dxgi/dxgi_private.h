@@ -47,4 +47,12 @@ struct dxgi_device
     LONG refcount;
 };
 
+/* IDXGIAdapter */
+extern const struct IDXGIAdapterVtbl dxgi_adapter_vtbl;
+struct dxgi_adapter
+{
+    const struct IDXGIAdapterVtbl *vtbl;
+    LONG refcount;
+};
+
 #endif /* __WINE_DXGI_PRIVATE_H */
