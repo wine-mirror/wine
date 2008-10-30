@@ -663,8 +663,12 @@ static D3DXMATRIX* WINAPI ID3DXMatrixStackImpl_GetTop(ID3DXMatrixStack *iface)
 static HRESULT WINAPI ID3DXMatrixStackImpl_LoadIdentity(ID3DXMatrixStack *iface)
 {
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
-    FIXME("(%p) : stub\n",This);
-    return E_NOTIMPL;
+
+    TRACE("iface %p\n", iface);
+
+    D3DXMatrixIdentity(&This->stack[This->current]);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, CONST D3DXMATRIX *pm)
