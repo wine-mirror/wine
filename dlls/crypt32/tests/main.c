@@ -366,6 +366,120 @@ static void test_CryptInstallOssGlobal(void)
     }
 }
 
+static BOOL (WINAPI *pCryptFormatObject)(DWORD dwEncoding, DWORD dwFormatType,
+ DWORD dwFormatStrType, void *pFormatStruct, LPCSTR lpszStructType,
+ const BYTE *pbEncoded, DWORD dwEncoded, void *pbFormat, DWORD *pcbFormat);
+
+static const BYTE encodedInt[] = { 0x02,0x01,0x01 };
+static const WCHAR encodedIntStr[] = { '0','2',' ','0','1',' ','0','1',0 };
+static const BYTE encodedBigInt[] = { 0x02,0x1f,0x01,0x02,0x03,0x04,0x05,0x06,
+ 0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,
+ 0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f };
+static const WCHAR encodedBigIntStr[] = { '0','2',' ','1','f',' ','0','1',' ',
+ '0','2',' ','0','3',' ','0','4',' ','0','5',' ','0','6',' ','0','7',' ','0',
+ '8',' ','0','9',' ','0','a',' ','0','b',' ','0','c',' ','0','d',' ','0','e',
+ ' ','0','f',' ','1','0',' ','1','1',' ','1','2',' ','1','3',' ','1','4',' ',
+ '1','5',' ','1','6',' ','1','7',' ','1','8',' ','1','9',' ','1','a',' ','1',
+ 'b',' ','1','c',' ','1','d',' ','1','e',' ','1','f',0 };
+
+static void test_format_object(void)
+{
+    BOOL ret;
+    DWORD size;
+    LPWSTR str;
+
+    pCryptFormatObject = (void *)GetProcAddress(hCrypt, "CryptFormatObject");
+    if (!pCryptFormatObject)
+    {
+        skip("No CryptFormatObject\n");
+        return;
+    }
+    /* Crash */
+    if (0)
+    {
+        ret = pCryptFormatObject(0, 0, 0, NULL, NULL, NULL, 0, NULL, NULL);
+    }
+    /* When called with any but the default encoding, it fails to find a
+     * formatting function.
+     */
+    SetLastError(0xdeadbeef);
+    ret = pCryptFormatObject(0, 0, 0, NULL, NULL, NULL, 0, NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    /* When called with the default encoding type for any undefined struct type
+     * (including none), it succeeds:  the default encoding is a hex string
+     * encoding.
+     */
+    SetLastError(0xdeadbeef);
+    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0,
+     NULL, &size);
+    todo_wine
+    ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
+    if (ret)
+    {
+        ok(size == sizeof(WCHAR), "unexpected size %d\n", size);
+        str = HeapAlloc(GetProcessHeap(), 0, size);
+        SetLastError(0xdeadbeef);
+        size = 0;
+        ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0,
+         str, &size);
+        ok(!ret && GetLastError() == ERROR_MORE_DATA,
+         "expected ERROR_MORE_DATA, got %d\n", GetLastError());
+        size = sizeof(WCHAR);
+        ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0,
+         str, &size);
+        ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
+        ok(!str[0], "expected empty string\n");
+        HeapFree(GetProcessHeap(), 0, str);
+    }
+    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, encodedInt,
+     sizeof(encodedInt), NULL, &size);
+    todo_wine
+    ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
+    if (ret)
+    {
+        str = HeapAlloc(GetProcessHeap(), 0, size);
+        ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
+         encodedInt, sizeof(encodedInt), str, &size);
+        ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
+        ok(!lstrcmpW(str, encodedIntStr), "unexpected format string\n");
+        HeapFree(GetProcessHeap(), 0, str);
+    }
+    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
+     encodedBigInt, sizeof(encodedBigInt), NULL, &size);
+    todo_wine
+    ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
+    if (ret)
+    {
+        str = HeapAlloc(GetProcessHeap(), 0, size);
+        ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
+         encodedBigInt, sizeof(encodedBigInt), str, &size);
+        ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
+        ok(!lstrcmpW(str, encodedBigIntStr), "unexpected format string\n");
+        HeapFree(GetProcessHeap(), 0, str);
+    }
+    /* When called with the default encoding type for any undefined struct
+     * type but CRYPT_FORMAT_STR_NO_HEX specified, it fails to find a
+     * formatting function.
+     */
+    SetLastError(0xdeadbeef);
+    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, CRYPT_FORMAT_STR_NO_HEX,
+     NULL, NULL, NULL, 0, NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    /* When called to format an AUTHORITY_KEY_ID2_INFO, it fails when no
+     * data are given.
+     */
+    SetLastError(0xdeadbeef);
+    ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL,
+     szOID_AUTHORITY_KEY_IDENTIFIER2, NULL, 0, NULL, &size);
+    todo_wine
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %d\n", GetLastError());
+}
+
 START_TEST(main)
 {
     hCrypt = GetModuleHandleA("crypt32.dll");
@@ -379,4 +493,5 @@ START_TEST(main)
     test_readTrustedPublisherDWORD();
     test_getDefaultCryptProv();
     test_CryptInstallOssGlobal();
+    test_format_object();
 }
