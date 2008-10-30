@@ -78,28 +78,39 @@ struct pthread_thread_init
     void* arg;
 };
 
-static DWORD CALLBACK pthread_thread_start(LPVOID data)
+static void wine_pthread_exit(void *retval, char *currentframe)
+{
+    RtlFreeThreadActivationContextStack();
+    RtlExitUserThread( PtrToUlong(retval) );
+}
+
+static void CALLBACK pthread_thread_start(LPVOID data)
 {
   struct pthread_thread_init init = *(struct pthread_thread_init*)data;
-  HeapFree(GetProcessHeap(),0,data);
-  return (DWORD_PTR)init.start_routine(init.arg);
+  RtlFreeHeap(GetProcessHeap(),0,data);
+  wine_pthread_exit( init.start_routine(init.arg), NULL );
 }
 
 static int wine_pthread_create(pthread_t* thread, const pthread_attr_t* attr, void*
                                (*start_routine)(void *), void* arg)
 {
-  HANDLE hThread;
-  struct pthread_thread_init* idata = HeapAlloc(GetProcessHeap(), 0, sizeof(struct pthread_thread_init));
+  HANDLE handle;
+  CLIENT_ID client_id;
+  struct pthread_thread_init* idata;
+
+  if (!(idata = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*idata)))) return ENOMEM;
 
   idata->start_routine = start_routine;
   idata->arg = arg;
-  hThread = CreateThread( NULL, 0, pthread_thread_start, idata, 0, (LPDWORD)thread);
-
-  if(hThread)
-    CloseHandle(hThread);
+  if (!RtlCreateUserThread( NtCurrentProcess(), NULL, FALSE, NULL, 0, 0,
+                            pthread_thread_start, idata, &handle, &client_id ))
+  {
+    NtClose( handle );
+    *thread = (pthread_t)client_id.UniqueThread;
+  }
   else
   {
-    HeapFree(GetProcessHeap(),0,idata); /* free idata struct on failure */
+    RtlFreeHeap( GetProcessHeap(), 0, idata );
     return EAGAIN;
   }
 
@@ -108,31 +119,40 @@ static int wine_pthread_create(pthread_t* thread, const pthread_attr_t* attr, vo
 
 static int wine_pthread_cancel(pthread_t thread)
 {
-  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD)thread);
+  CLIENT_ID cid;
+  NTSTATUS status;
+  HANDLE handle;
 
-  if(!TerminateThread(hThread, 0))
+  cid.UniqueProcess = 0;
+  cid.UniqueThread = (HANDLE)thread;
+  status = NtOpenThread( &handle, THREAD_TERMINATE, NULL, &cid );
+  if (!status)
   {
-    CloseHandle(hThread);
-    return EINVAL;      /* return error */
+    status = NtTerminateThread( handle, 0 );
+    NtClose( handle );
   }
-
-  CloseHandle(hThread);
-
-  return 0;             /* return success */
+  if (status) return EINVAL;
+  return 0;
 }
 
 static int wine_pthread_join(pthread_t thread, void **value_ptr)
 {
-  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD)thread);
+  THREAD_BASIC_INFORMATION info;
+  CLIENT_ID cid;
+  NTSTATUS status;
+  HANDLE handle;
 
-  WaitForSingleObject(hThread, INFINITE);
-  if(!GetExitCodeThread(hThread, (LPDWORD)value_ptr))
+  cid.UniqueProcess = 0;
+  cid.UniqueThread = (HANDLE)thread;
+  status = NtOpenThread( &handle, THREAD_QUERY_INFORMATION|SYNCHRONIZE, NULL, &cid );
+  if (!status)
   {
-    CloseHandle(hThread);
-    return EINVAL; /* FIXME: make this more correctly match */
-  }                /* windows errors */
-
-  CloseHandle(hThread);
+    NtWaitForMultipleObjects( 1, &handle, FALSE, FALSE, NULL );
+    status = NtQueryInformationThread( handle, ThreadBasicInformation, &info, sizeof(info), NULL );
+    NtClose( handle );
+    if (!status) *value_ptr = UlongToPtr(info.ExitStatus);
+  }
+  if (status) return EINVAL; /* FIXME: make this more correctly match windows errors */
   return 0;
 }
 
@@ -160,13 +180,13 @@ static int wine_pthread_mutex_init(pthread_mutex_t *mutex,
 
 static void mutex_real_init( pthread_mutex_t *mutex )
 {
-  CRITICAL_SECTION *critsect = HeapAlloc(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION));
+  CRITICAL_SECTION *critsect = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION));
   RtlInitializeCriticalSection(critsect);
 
   if (InterlockedCompareExchangePointer((void**)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
     /* too late, some other thread already did it */
     RtlDeleteCriticalSection(critsect);
-    HeapFree(GetProcessHeap(), 0, critsect);
+    RtlFreeHeap(GetProcessHeap(), 0, critsect);
   }
 }
 
@@ -210,7 +230,7 @@ static int wine_pthread_mutex_destroy(pthread_mutex_t *mutex)
 #endif
   }
   RtlDeleteCriticalSection(((wine_mutex)mutex)->critsect);
-  HeapFree(GetProcessHeap(), 0, ((wine_mutex)mutex)->critsect);
+  RtlFreeHeap(GetProcessHeap(), 0, ((wine_mutex)mutex)->critsect);
   ((wine_mutex)mutex)->critsect = NULL;
   return 0;
 }
@@ -219,13 +239,13 @@ static int wine_pthread_mutex_destroy(pthread_mutex_t *mutex)
 
 static void rwlock_real_init(pthread_rwlock_t *rwlock)
 {
-  RTL_RWLOCK *lock = HeapAlloc(GetProcessHeap(), 0, sizeof(RTL_RWLOCK));
+  RTL_RWLOCK *lock = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_RWLOCK));
   RtlInitializeResource(lock);
 
   if (InterlockedCompareExchangePointer((void**)&(((wine_rwlock)rwlock)->lock),lock,NULL) != NULL) {
     /* too late, some other thread already did it */
     RtlDeleteResource(lock);
-    HeapFree(GetProcessHeap(), 0, lock);
+    RtlFreeHeap(GetProcessHeap(), 0, lock);
   }
 }
 
@@ -239,7 +259,7 @@ static int wine_pthread_rwlock_destroy(pthread_rwlock_t *rwlock)
 {
   if (!((wine_rwlock)rwlock)->lock) return 0;
   RtlDeleteResource(((wine_rwlock)rwlock)->lock);
-  HeapFree(GetProcessHeap(), 0, ((wine_rwlock)rwlock)->lock);
+  RtlFreeHeap(GetProcessHeap(), 0, ((wine_rwlock)rwlock)->lock);
   return 0;
 }
 
@@ -336,21 +356,21 @@ typedef struct {
 
 static void wine_cond_real_init(pthread_cond_t *cond)
 {
-  wine_cond_detail *detail = HeapAlloc(GetProcessHeap(), 0, sizeof(wine_cond_detail));
+  wine_cond_detail *detail = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(wine_cond_detail));
   detail->waiters_count = 0;
   detail->was_broadcast = 0;
-  detail->sema = CreateSemaphoreW( NULL, 0, 0x7fffffff, NULL );
-  detail->waiters_done = CreateEventW( NULL, FALSE, FALSE, NULL );
+  NtCreateSemaphore( &detail->sema, SEMAPHORE_ALL_ACCESS, NULL, 0, 0x7fffffff );
+  NtCreateEvent( &detail->waiters_done, EVENT_ALL_ACCESS, NULL, FALSE, FALSE );
   RtlInitializeCriticalSection (&detail->waiters_count_lock);
 
   if (InterlockedCompareExchangePointer((void**)&(((wine_cond)cond)->cond), detail, NULL) != NULL)
   {
     /* too late, some other thread already did it */
     P_OUTPUT("FIXME:pthread_cond_init:expect troubles...\n");
-    CloseHandle(detail->sema);
+    NtClose(detail->sema);
     RtlDeleteCriticalSection(&detail->waiters_count_lock);
-    CloseHandle(detail->waiters_done);
-    HeapFree(GetProcessHeap(), 0, detail);
+    NtClose(detail->waiters_done);
+    RtlFreeHeap(GetProcessHeap(), 0, detail);
   }
 }
 
@@ -367,10 +387,10 @@ static int wine_pthread_cond_destroy(pthread_cond_t *cond)
   wine_cond_detail *detail = ((wine_cond)cond)->cond;
 
   if (!detail) return 0;
-  CloseHandle(detail->sema);
+  NtClose(detail->sema);
   RtlDeleteCriticalSection(&detail->waiters_count_lock);
-  CloseHandle(detail->waiters_done);
-  HeapFree(GetProcessHeap(), 0, detail);
+  NtClose(detail->waiters_done);
+  RtlFreeHeap(GetProcessHeap(), 0, detail);
   ((wine_cond)cond)->cond = NULL;
   return 0;
 }
@@ -389,7 +409,7 @@ static int wine_pthread_cond_signal(pthread_cond_t *cond)
 
   /* If there aren't any waiters, then this is a no-op. */
   if (have_waiters)
-    ReleaseSemaphore(detail->sema, 1, NULL);
+    NtReleaseSemaphore(detail->sema, 1, NULL);
 
   return 0;
 }
@@ -420,12 +440,12 @@ static int wine_pthread_cond_broadcast(pthread_cond_t *cond)
 
   if (have_waiters) {
     /* Wake up all the waiters atomically. */
-    ReleaseSemaphore(detail->sema, detail->waiters_count, NULL);
+    NtReleaseSemaphore(detail->sema, detail->waiters_count, NULL);
 
     RtlLeaveCriticalSection (&detail->waiters_count_lock);
 
     /* Wait for all the awakened threads to acquire the counting semaphore. */
-    WaitForSingleObject (detail->waiters_done, INFINITE);
+    NtWaitForMultipleObjects( 1, &detail->waiters_done, FALSE, FALSE, NULL );
 
     /*
      * This assignment is okay, even without the <waiters_count_lock> held
@@ -452,7 +472,7 @@ static int wine_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
   RtlLeaveCriticalSection (&detail->waiters_count_lock);
 
   RtlLeaveCriticalSection ( ((wine_mutex)mutex)->critsect );
-  WaitForSingleObject(detail->sema, INFINITE);
+  NtWaitForMultipleObjects( 1, &detail->sema, FALSE, FALSE, NULL );
 
   /* Reacquire lock to avoid race conditions. */
   RtlEnterCriticalSection (&detail->waiters_count_lock);
@@ -469,7 +489,7 @@ static int wine_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
    * If we're the last waiter thread during this particular broadcast
    * then let all the other threads proceed.
    */
-  if (last_waiter) SetEvent(detail->waiters_done);
+  if (last_waiter) NtSetEvent( detail->waiters_done, NULL );
   RtlEnterCriticalSection (((wine_mutex)mutex)->critsect);
   return 0;
 }
@@ -477,7 +497,7 @@ static int wine_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 static int wine_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
                                        const struct timespec *abstime)
 {
-  DWORD ms = abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000;
+  LARGE_INTEGER time;
   int last_waiter;
   wine_cond_detail *detail;
 
@@ -490,7 +510,10 @@ static int wine_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mu
   RtlLeaveCriticalSection (&detail->waiters_count_lock);
 
   RtlLeaveCriticalSection (((wine_mutex)mutex)->critsect);
-  WaitForSingleObject (detail->sema, ms);
+
+  time.QuadPart = (ULONGLONG)abstime->tv_sec * 10000000 + abstime->tv_nsec / 100;
+  time.QuadPart = -time.QuadPart;
+  NtWaitForMultipleObjects( 1, &detail->sema, FALSE, FALSE, &time );
 
   /* Reacquire lock to avoid race conditions. */
   RtlEnterCriticalSection (&detail->waiters_count_lock);
@@ -507,7 +530,7 @@ static int wine_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mu
    * If we're the last waiter thread during this particular broadcast
    * then let all the other threads proceed.
    */
-  if (last_waiter) SetEvent (detail->waiters_done);
+  if (last_waiter) NtSetEvent( detail->waiters_done, NULL );
   RtlEnterCriticalSection (((wine_mutex)mutex)->critsect);
   return 0;
 }
@@ -522,11 +545,6 @@ static pthread_t wine_pthread_self(void)
 static int wine_pthread_equal(pthread_t thread1, pthread_t thread2)
 {
   return (DWORD)thread1 == (DWORD)thread2;
-}
-
-static void wine_pthread_exit(void *retval, char *currentframe)
-{
-    ExitThread((DWORD_PTR)retval);
 }
 
 static void *wine_get_thread_data(void)
