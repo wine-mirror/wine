@@ -1310,12 +1310,8 @@ static HRESULT WINAPI xmlnode_transformNode(
                     if(pOutput)
                     {
                         htmlDocContentDumpOutput(pOutput, result->doc, NULL);
-                        if(pOutput)
-                        {
-                            pContent = xmlBufferContent(pOutput->buffer);
-                            *xmlString = bstr_from_xmlChar(pContent);
-                        }
-
+                        pContent = xmlBufferContent(pOutput->buffer);
+                        *xmlString = bstr_from_xmlChar(pContent);
                         xmlOutputBufferClose(pOutput);
                     }
                 }
@@ -1332,13 +1328,12 @@ static HRESULT WINAPI xmlnode_transformNode(
                         {
                             pContent = xmlBufferContent(pXmlBuf);
                             *xmlString = bstr_from_xmlChar(pContent);
-
-                            xmlBufferFree(pXmlBuf);
                         }
+                        xmlBufferFree(pXmlBuf);
                     }
                 }
+                xmlFreeDoc(result);
             }
-            xmlFreeDoc(result);
             /* libxslt "helpfully" frees the XML document the stylesheet was
                generated from, too */
             xsltSS->doc = NULL;
