@@ -32,7 +32,7 @@ struct InternetTransport
     union
     {
         const IInternetTransportVtbl *vtbl;
-        const ISMTPTransportVtbl *vtblSMTP;
+        const ISMTPTransport2Vtbl *vtblSMTP2;
         const IIMAPTransportVtbl *vtblIMAP;
         const IPOP3TransportVtbl *vtblPOP3;
     } u;

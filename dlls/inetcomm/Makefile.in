@@ -13,7 +13,8 @@ C_SRCS = \
 	mimeintl.c \
 	mimeole.c \
 	pop3transport.c \
-	regsvr.c
+	regsvr.c \
+	smtptransport.c
 
 @MAKE_DLL_RULES@
 
