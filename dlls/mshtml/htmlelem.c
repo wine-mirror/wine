@@ -579,8 +579,16 @@ static HRESULT WINAPI HTMLElement_get_onmouseup(IHTMLElement *iface, VARIANT *p)
 static HRESULT WINAPI HTMLElement_get_document(IHTMLElement *iface, IDispatch **p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    *p = (IDispatch*)This->node.doc;
+    IDispatch_AddRef(*p);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
