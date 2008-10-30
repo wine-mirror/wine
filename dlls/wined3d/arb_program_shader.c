@@ -2611,7 +2611,10 @@ static const char *get_argreg(SHADER_BUFFER *buffer, DWORD argnum, unsigned int 
                 case 5: ret = "const5"; break;
                 case 6: ret = "const6"; break;
                 case 7: ret = "const7"; break;
+                default: ret = "unknown constant";
             }
+            break;
+
         default:
             return "unknown";
     }
