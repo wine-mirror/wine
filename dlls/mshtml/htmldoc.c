@@ -440,8 +440,15 @@ static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
 static HRESULT WINAPI HTMLDocument_get_designMode(IHTMLDocument2 *iface, BSTR *p)
 {
     HTMLDocument *This = HTMLDOC_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    static WCHAR szOff[] = {'O','f','f',0};
+    FIXME("(%p)->(%p) always returning Off\n", This, p);
+
+    if(!p)
+        return E_INVALIDARG;
+
+    *p = SysAllocString(szOff);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_selection(IHTMLDocument2 *iface, IHTMLSelectionObject **p)
