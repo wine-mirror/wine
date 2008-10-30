@@ -34,6 +34,7 @@ struct InternetTransport
         const IInternetTransportVtbl *vtbl;
         const ISMTPTransportVtbl *vtblSMTP;
         const IIMAPTransportVtbl *vtblIMAP;
+        const IPOP3TransportVtbl *vtblPOP3;
     } u;
 
     ITransportCallback *pCallback;
