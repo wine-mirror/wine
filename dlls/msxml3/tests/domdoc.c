@@ -2907,6 +2907,9 @@ static void test_xmlTypes(void)
                 IXMLDOMNode *pNextChild = (IXMLDOMNode *)0x1;
                 VARIANT var;
 
+                hr = IXMLDOMCDATASection_QueryInterface(pCDataSec, &IID_IXMLDOMElement, (LPVOID*)&pElement);
+                ok(hr == E_NOINTERFACE, "ret %08x\n", hr);
+
                 hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pCDataSec, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
 
