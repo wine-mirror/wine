@@ -1403,6 +1403,86 @@ static void D3X8Vector4Test(void)
     expect_vec4(expectedtrans,gottrans);
 }
 
+static void test_matrix_stack(void)
+{
+    ID3DXMatrixStack *stack;
+    ULONG refcount;
+    HRESULT hr;
+
+    const D3DXMATRIX mat1 = {{{
+         1.0f,  2.0f,  3.0f,  4.0f,
+         5.0f,  6.0f,  7.0f,  8.0f,
+         9.0f, 10.0f, 11.0f, 12.0f,
+        13.0f, 14.0f, 15.0f, 16.0f
+    }}};
+
+    const D3DXMATRIX mat2 = {{{
+        17.0f, 18.0f, 19.0f, 20.0f,
+        21.0f, 22.0f, 23.0f, 24.0f,
+        25.0f, 26.0f, 27.0f, 28.0f,
+        29.0f, 30.0f, 31.0f, 32.0f
+    }}};
+
+    hr = D3DXCreateMatrixStack(0, &stack);
+    ok(SUCCEEDED(hr), "Failed to create a matrix stack, hr %#x\n", hr);
+    if (FAILED(hr)) return;
+
+    ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)),
+            "The top of an empty matrix stack should be an identity matrix\n");
+
+    hr = ID3DXMatrixStack_Pop(stack);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+
+    hr = ID3DXMatrixStack_Push(stack);
+    ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
+    ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
+
+    hr = ID3DXMatrixStack_Push(stack);
+    ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
+
+    hr = ID3DXMatrixStack_LoadMatrix(stack, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "LoadMatrix returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+
+    hr = ID3DXMatrixStack_LoadMatrix(stack, &mat1);
+    ok(SUCCEEDED(hr), "LoadMatrix failed, hr %#x\n", hr);
+    expect_mat(&mat1, ID3DXMatrixStack_GetTop(stack));
+
+    hr = ID3DXMatrixStack_Push(stack);
+    ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
+    expect_mat(&mat1, ID3DXMatrixStack_GetTop(stack));
+
+    hr = ID3DXMatrixStack_LoadMatrix(stack, &mat2);
+    ok(SUCCEEDED(hr), "LoadMatrix failed, hr %#x\n", hr);
+    expect_mat(&mat2, ID3DXMatrixStack_GetTop(stack));
+
+    hr = ID3DXMatrixStack_Push(stack);
+    ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
+    expect_mat(&mat2, ID3DXMatrixStack_GetTop(stack));
+
+    hr = ID3DXMatrixStack_LoadIdentity(stack);
+    ok(SUCCEEDED(hr), "LoadIdentity failed, hr %#x\n", hr);
+    ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
+
+    hr = ID3DXMatrixStack_Pop(stack);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    expect_mat(&mat2, ID3DXMatrixStack_GetTop(stack));
+
+    hr = ID3DXMatrixStack_Pop(stack);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    expect_mat(&mat1, ID3DXMatrixStack_GetTop(stack));
+
+    hr = ID3DXMatrixStack_Pop(stack);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
+
+    hr = ID3DXMatrixStack_Pop(stack);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
+
+    refcount = ID3DXMatrixStack_Release(stack);
+    ok(!refcount, "Matrix stack has %u references left.\n", refcount);
+}
+
 START_TEST(math)
 {
     D3DXColorTest();
@@ -1412,4 +1492,5 @@ START_TEST(math)
     D3X8Vector2Test();
     D3X8Vector3Test();
     D3X8Vector4Test();
+    test_matrix_stack();
 }
