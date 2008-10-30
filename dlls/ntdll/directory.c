@@ -1236,7 +1236,8 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     while (res > 0)
     {
         res -= de->d_reclen;
-        if (!(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
+        if (de->d_ino &&
+            !(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
             (info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask )))
         {
             last_info = info;
