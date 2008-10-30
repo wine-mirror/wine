@@ -1316,6 +1316,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     IO_STATUS_BLOCK io;
     HANDLE ret;
     DWORD dosdev;
+    const WCHAR *vxd_name = NULL;
     static const WCHAR bkslashes_with_dotW[] = {'\\','\\','.','\\',0};
     static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
     static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
@@ -1371,19 +1372,9 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         {
             dosdev += MAKELONG( 0, 4*sizeof(WCHAR) );  /* adjust position to start of filename */
         }
-        else if (!(GetVersion() & 0x80000000))
+        else if (GetVersion() & 0x80000000)
         {
-            dosdev = 0;
-        }
-        else if (filename[4])
-        {
-            ret = VXD_Open( filename+4, access, sa );
-            goto done;
-        }
-        else
-        {
-            SetLastError( ERROR_INVALID_NAME );
-            return INVALID_HANDLE_VALUE;
+            vxd_name = filename + 4;
         }
     }
     else dosdev = RtlIsDosDeviceName_U( filename );
@@ -1465,6 +1456,8 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                            options, NULL, 0 );
     if (status)
     {
+        if (vxd_name && vxd_name[0] && (ret = VXD_Open( vxd_name, access, sa ))) goto done;
+
         WARN("Unable to create file %s (status %x)\n", debugstr_w(filename), status);
         ret = INVALID_HANDLE_VALUE;
 
