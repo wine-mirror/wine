@@ -1339,12 +1339,12 @@ static HRESULT WINAPI xmlnode_transformNode(
                 }
             }
             xmlFreeDoc(result);
+            /* libxslt "helpfully" frees the XML document the stylesheet was
+               generated from, too */
+            xsltSS->doc = NULL;
+            xsltFreeStylesheet(xsltSS);
         }
 
-        /* libxslt "helpfully" frees the XML document the stylesheet was
-           generated from, too */
-        xsltSS->doc = NULL;
-        xsltFreeStylesheet(xsltSS);
         IXMLDOMNode_Release(ssNew);
     }
 
