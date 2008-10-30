@@ -619,6 +619,9 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, WineDirect3DVertexStridedDa
 
         if (idxSize == 2) pIdxBufS = (const WORD *) idxData;
         else pIdxBufL = (const DWORD *) idxData;
+    } else if (idxData) {
+        ERR("non-NULL idxData with 0 idxSize, this should never happen\n");
+        return;
     }
 
     /* Start drawing in GL */
