@@ -46,7 +46,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "kernel_private.h"
+#include "ntdll_misc.h"
 #include "wine/pthread.h"
 
 #define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
@@ -183,7 +183,7 @@ static void mutex_real_init( pthread_mutex_t *mutex )
   CRITICAL_SECTION *critsect = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION));
   RtlInitializeCriticalSection(critsect);
 
-  if (InterlockedCompareExchangePointer((void**)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
+  if (interlocked_cmpxchg_ptr((void**)&(((wine_mutex)mutex)->critsect),critsect,NULL) != NULL) {
     /* too late, some other thread already did it */
     RtlDeleteCriticalSection(critsect);
     RtlFreeHeap(GetProcessHeap(), 0, critsect);
@@ -242,7 +242,7 @@ static void rwlock_real_init(pthread_rwlock_t *rwlock)
   RTL_RWLOCK *lock = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_RWLOCK));
   RtlInitializeResource(lock);
 
-  if (InterlockedCompareExchangePointer((void**)&(((wine_rwlock)rwlock)->lock),lock,NULL) != NULL) {
+  if (interlocked_cmpxchg_ptr((void**)&(((wine_rwlock)rwlock)->lock),lock,NULL) != NULL) {
     /* too late, some other thread already did it */
     RtlDeleteResource(lock);
     RtlFreeHeap(GetProcessHeap(), 0, lock);
@@ -363,7 +363,7 @@ static void wine_cond_real_init(pthread_cond_t *cond)
   NtCreateEvent( &detail->waiters_done, EVENT_ALL_ACCESS, NULL, FALSE, FALSE );
   RtlInitializeCriticalSection (&detail->waiters_count_lock);
 
-  if (InterlockedCompareExchangePointer((void**)&(((wine_cond)cond)->cond), detail, NULL) != NULL)
+  if (interlocked_cmpxchg_ptr((void**)&(((wine_cond)cond)->cond), detail, NULL) != NULL)
   {
     /* too late, some other thread already did it */
     P_OUTPUT("FIXME:pthread_cond_init:expect troubles...\n");
@@ -549,12 +549,12 @@ static int wine_pthread_equal(pthread_t thread1, pthread_t thread2)
 
 static void *wine_get_thread_data(void)
 {
-    return kernel_get_thread_data()->pthread_data;
+    return ntdll_get_thread_data()->pthread_data;
 }
 
 static void wine_set_thread_data( void *data )
 {
-    kernel_get_thread_data()->pthread_data = data;
+    ntdll_get_thread_data()->pthread_data = data;
 }
 
 static const struct wine_pthread_callbacks callbacks =
@@ -590,7 +590,7 @@ static const struct wine_pthread_callbacks callbacks =
 
 static struct wine_pthread_functions pthread_functions;
 
-void PTHREAD_Init(void)
+void pthread_init(void)
 {
     wine_pthread_get_functions( &pthread_functions, sizeof(pthread_functions) );
     pthread_functions.init_process( &callbacks, sizeof(callbacks) );

@@ -30,6 +30,7 @@ C_SRCS = \
 	om.c \
 	path.c \
 	process.c \
+	pthread.c \
 	reg.c \
 	relay.c \
 	resource.c \

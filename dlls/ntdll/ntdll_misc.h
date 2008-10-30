@@ -59,6 +59,7 @@ extern size_t get_signal_stack_total_size(void);
 extern void version_init( const WCHAR *appname );
 extern void debug_init(void);
 extern HANDLE thread_init(void);
+extern void pthread_init(void);
 extern void actctx_init(void);
 extern void virtual_init(void);
 extern void virtual_init_threading(void);
@@ -180,8 +181,9 @@ struct ntdll_thread_data
     int                reply_fd;      /* 1e4 fd for receiving server replies */
     int                wait_fd[2];    /* 1e8 fd for sleeping server requests */
     void              *vm86_ptr;      /* 1f0 data for vm86 mode */
+    void              *pthread_data;  /* 1f4 private data for pthread emulation */
 
-    void              *pad[2];        /* 1f4 change this if you add fields! */
+    void              *pad[1];        /* 1f8 change this if you add fields! */
 };
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)

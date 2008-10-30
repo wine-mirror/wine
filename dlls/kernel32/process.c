@@ -970,8 +970,6 @@ void __wine_kernel_init(void)
 
     /* Initialize everything */
 
-    PTHREAD_Init();
-
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
     kernel32_handle = GetModuleHandleW(kernel32W);
