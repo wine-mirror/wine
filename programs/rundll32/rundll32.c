@@ -211,7 +211,7 @@ static LPWSTR GetNextArg(LPWSTR *cmdline)
     return arg;
 }
 
-int main(int argc, char* argv[])
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPSTR szCmdArgs, int nCmdShow)
 {
     HWND hWnd;
     LPWSTR szCmdLine;
@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
     void *entry_point;
     BOOL unicode, win16;
     STARTUPINFOW info;
-    HMODULE hDll, instance;
+    HMODULE hDll;
 
     hWnd=NULL;
     hDll=NULL;
@@ -281,7 +281,6 @@ int main(int argc, char* argv[])
 
     GetStartupInfoW( &info );
     if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = SW_SHOWDEFAULT;
-    instance = GetModuleHandleW(NULL);  /* Windows always uses that, not hDll */
 
     if (unicode)
     {
