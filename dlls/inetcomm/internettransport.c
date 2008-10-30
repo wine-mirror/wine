@@ -274,6 +274,23 @@ HRESULT InternetTransport_Write(InternetTransport *This, const char *pvData,
     return S_OK;
 }
 
+HRESULT InternetTransport_DoCommand(InternetTransport *This,
+    LPSTR pszCommand, INETXPORT_COMPLETION_FUNCTION fnCompletion)
+{
+    if (This->Status == IXP_DISCONNECTED)
+        return IXP_E_NOT_CONNECTED;
+
+    if (This->fnCompletion)
+        return IXP_E_BUSY;
+
+    if (This->pCallback && This->fCommandLogging)
+    {
+        ITransportCallback_OnCommand(This->pCallback, CMD_SEND, pszCommand, 0,
+            (IInternetTransport *)&This->u.vtbl);
+    }
+    return InternetTransport_Write(This, pszCommand, strlen(pszCommand), fnCompletion);
+}
+
 static LRESULT CALLBACK InternetTransport_WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (uMsg == IX_READ)

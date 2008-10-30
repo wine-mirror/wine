@@ -1,6 +1,7 @@
 /*
  * SMTP Transport
  *
+ * Copyright 2006 Robert Shearman for CodeWeavers
  * Copyright 2008 Hans Leidekker for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +41,173 @@ typedef struct
 {
     InternetTransport InetTransport;
     ULONG refs;
+    BOOL fESMTP;
 } SMTPTransport;
+
+static HRESULT SMTPTransport_ParseResponse(SMTPTransport *This, char *pszResponse, SMTPRESPONSE *pResponse)
+{
+    HRESULT hrServerError;
+
+    TRACE("response: %s\n", debugstr_a(pszResponse));
+
+    if (!isdigit(*pszResponse))
+        return IXP_E_SMTP_RESPONSE_ERROR;
+    pResponse->pTransport = (ISMTPTransport *)&This->InetTransport.u.vtblSMTP2;
+    pResponse->rIxpResult.pszResponse = pszResponse;
+    pResponse->rIxpResult.dwSocketError = 0;
+    pResponse->rIxpResult.uiServerError = strtol(pszResponse, &pszResponse, 10);
+    if (*pszResponse == '-')
+    {
+        pResponse->fDone = FALSE;
+        pszResponse++;
+    }
+    else
+        pResponse->fDone = TRUE;
+
+    switch (pResponse->rIxpResult.uiServerError)
+    {
+    case 211: hrServerError = IXP_E_SMTP_211_SYSTEM_STATUS; break;
+    case 214: hrServerError = IXP_E_SMTP_214_HELP_MESSAGE; break;
+    case 220: hrServerError = IXP_E_SMTP_220_READY; break;
+    case 221: hrServerError = IXP_E_SMTP_221_CLOSING; break;
+    case 245: hrServerError = IXP_E_SMTP_245_AUTH_SUCCESS; break;
+    case 250: hrServerError = IXP_E_SMTP_250_MAIL_ACTION_OKAY; break;
+    case 251: hrServerError = IXP_E_SMTP_251_FORWARDING_MAIL; break;
+    case 334: hrServerError = IXP_E_SMTP_334_AUTH_READY_RESPONSE; break;
+    case 354: hrServerError = IXP_E_SMTP_354_START_MAIL_INPUT; break;
+    case 421: hrServerError = IXP_E_SMTP_421_NOT_AVAILABLE; break;
+    case 450: hrServerError = IXP_E_SMTP_450_MAILBOX_BUSY; break;
+    case 451: hrServerError = IXP_E_SMTP_451_ERROR_PROCESSING; break;
+    case 452: hrServerError = IXP_E_SMTP_452_NO_SYSTEM_STORAGE; break;
+    case 454: hrServerError = IXP_E_SMTP_454_STARTTLS_FAILED; break;
+    case 500: hrServerError = IXP_E_SMTP_500_SYNTAX_ERROR; break;
+    case 501: hrServerError = IXP_E_SMTP_501_PARAM_SYNTAX; break;
+    case 502: hrServerError = IXP_E_SMTP_502_COMMAND_NOTIMPL; break;
+    case 503: hrServerError = IXP_E_SMTP_503_COMMAND_SEQ; break;
+    case 504: hrServerError = IXP_E_SMTP_504_COMMAND_PARAM_NOTIMPL; break;
+    case 530: hrServerError = IXP_E_SMTP_530_STARTTLS_REQUIRED; break;
+    case 550: hrServerError = IXP_E_SMTP_550_MAILBOX_NOT_FOUND; break;
+    case 551: hrServerError = IXP_E_SMTP_551_USER_NOT_LOCAL; break;
+    case 552: hrServerError = IXP_E_SMTP_552_STORAGE_OVERFLOW; break;
+    case 553: hrServerError = IXP_E_SMTP_553_MAILBOX_NAME_SYNTAX; break;
+    case 554: hrServerError = IXP_E_SMTP_554_TRANSACT_FAILED; break;
+    default:
+        hrServerError = IXP_E_SMTP_RESPONSE_ERROR;
+        break;
+    }
+    pResponse->rIxpResult.hrResult = hrServerError;
+    pResponse->rIxpResult.hrServerError = hrServerError;
+
+    if (This->InetTransport.pCallback && This->InetTransport.fCommandLogging)
+    {
+        ITransportCallback_OnCommand(This->InetTransport.pCallback, CMD_RESP,
+            pResponse->rIxpResult.pszResponse, hrServerError,
+            (IInternetTransport *)&This->InetTransport.u.vtbl);
+    }
+    return S_OK;
+}
+
+static void SMTPTransport_CallbackProcessHelloResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response = { 0 };
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    response.command = This->fESMTP ? SMTP_EHLO : SMTP_HELO;
+    ISMTPCallback_OnResponse((ISMTPCallback *)This->InetTransport.pCallback, &response);
+
+    if (FAILED(response.rIxpResult.hrServerError))
+    {
+        ERR("server error: %s\n", debugstr_a(pBuffer));
+        /* FIXME: handle error */
+        return;
+    }
+
+    if (!response.fDone)
+    {
+        InternetTransport_ReadLine(&This->InetTransport,
+            SMTPTransport_CallbackProcessHelloResp);
+        return;
+    }
+
+    /* FIXME: try to authorize */
+
+    /* always changed to this status, even if authorization not support on server */
+    InternetTransport_ChangeStatus(&This->InetTransport, IXP_AUTHORIZED);
+    InternetTransport_ChangeStatus(&This->InetTransport, IXP_CONNECTED);
+
+    memset(&response, 0, sizeof(response));
+    response.command = SMTP_CONNECTED;
+    response.fDone = TRUE;
+    ISMTPCallback_OnResponse((ISMTPCallback *)This->InetTransport.pCallback, &response);
+}
+
+static void SMTPTransport_CallbackRecvHelloResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackProcessHelloResp);
+}
+
+static void SMTPTransport_CallbackSendHello(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response = { 0 };
+    HRESULT hr;
+    const char *pszHello;
+    char *pszCommand;
+    const char szHostName[] = "localhost"; /* FIXME */
+
+    TRACE("\n");
+
+    hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    response.command = SMTP_BANNER;
+    ISMTPCallback_OnResponse((ISMTPCallback *)This->InetTransport.pCallback, &response);
+
+    if (FAILED(response.rIxpResult.hrServerError))
+    {
+        ERR("server error: %s\n", debugstr_a(pBuffer));
+        /* FIXME: handle error */
+        return;
+    }
+
+    TRACE("(%s)\n", pBuffer);
+
+    This->fESMTP = strstr(response.rIxpResult.pszResponse, "ESMTP") &&
+        This->InetTransport.ServerInfo.dwFlags & (ISF_SSLONSAMEPORT|ISF_QUERYDSNSUPPORT|ISF_QUERYAUTHSUPPORT);
+
+    if (This->fESMTP)
+        pszHello = "EHLO ";
+    else
+        pszHello = "HELO ";
+
+    pszCommand = HeapAlloc(GetProcessHeap(), 0, strlen(pszHello) + strlen(szHostName) + 2);
+    strcpy(pszCommand, pszHello);
+    strcat(pszCommand, szHostName);
+    pszCommand[strlen(pszCommand)+1] = '\0';
+    pszCommand[strlen(pszCommand)] = '\n';
+
+    InternetTransport_DoCommand(&This->InetTransport, pszCommand,
+        SMTPTransport_CallbackRecvHelloResp);
+
+    HeapFree(GetProcessHeap(), 0, pszCommand);
+}
 
 static HRESULT WINAPI SMTPTransport_QueryInterface(ISMTPTransport2 *iface, REFIID riid, void **ppv)
 {
@@ -123,8 +290,8 @@ static HRESULT WINAPI SMTPTransport_Connect(ISMTPTransport2 *iface,
 
     hr = InternetTransport_Connect(&This->InetTransport, pInetServer, fAuthenticate, fCommandLogging);
 
-    FIXME("continue state machine here\n");
-    return hr;
+    /* this starts the state machine, which continues in SMTPTransport_CallbackSendHELO */
+    return InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackSendHello);
 }
 
 static HRESULT WINAPI SMTPTransport_HandsOffCallback(ISMTPTransport2 *iface)
@@ -314,6 +481,7 @@ HRESULT WINAPI CreateSMTPTransport(ISMTPTransport **ppTransport)
 
     This->InetTransport.u.vtblSMTP2 = &SMTPTransport2Vtbl;
     This->refs = 0;
+    This->fESMTP = FALSE;
     hr = InternetTransport_Init(&This->InetTransport);
     if (FAILED(hr))
     {

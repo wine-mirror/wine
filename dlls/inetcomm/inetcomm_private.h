@@ -67,6 +67,8 @@ HRESULT InternetTransport_ReadLine(InternetTransport *This,
     INETXPORT_COMPLETION_FUNCTION fnCompletion);
 HRESULT InternetTransport_Write(InternetTransport *This, const char *pvData,
     int cbSize, INETXPORT_COMPLETION_FUNCTION fnCompletion);
+HRESULT InternetTransport_DoCommand(InternetTransport *This,
+    LPSTR pszCommand, INETXPORT_COMPLETION_FUNCTION fnCompletion);
 
 BOOL InternetTransport_RegisterClass(HINSTANCE hInstance);
 void InternetTransport_UnregisterClass(HINSTANCE hInstance);
