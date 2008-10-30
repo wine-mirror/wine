@@ -469,7 +469,8 @@ static void testTimeEncoding(DWORD dwEncoding, LPCSTR structType,
         }
     }
     else
-        ok((!ret && GetLastError() == CRYPT_E_BAD_ENCODE) || broken(ret),
+        ok((!ret && GetLastError() == CRYPT_E_BAD_ENCODE) ||
+         broken(GetLastError() == ERROR_SUCCESS),
          "Expected CRYPT_E_BAD_ENCODE, got 0x%08x\n", GetLastError());
 }
 
@@ -498,13 +499,20 @@ static void compareTime(const SYSTEMTIME *expected, const FILETIME *got)
     SYSTEMTIME st;
 
     FileTimeToSystemTime(got, &st);
-    ok(expected->wYear == st.wYear &&
+    ok((expected->wYear == st.wYear &&
      expected->wMonth == st.wMonth &&
      expected->wDay == st.wDay &&
      expected->wHour == st.wHour &&
      expected->wMinute == st.wMinute &&
      expected->wSecond == st.wSecond &&
-     abs(expected->wMilliseconds - st.wMilliseconds) <= 1,
+     abs(expected->wMilliseconds - st.wMilliseconds) <= 1) ||
+     /* Some Windows systems only seem to be accurate in their time decoding to
+      * within about an hour.
+      */
+     broken(expected->wYear == st.wYear &&
+     expected->wMonth == st.wMonth &&
+     expected->wDay == st.wDay &&
+     abs(expected->wHour - st.wHour) <= 1),
      "Got unexpected value for time decoding:\nexpected %s, got %s\n",
      printSystemTime(expected), printFileTime(got));
 }
@@ -524,7 +532,8 @@ static void testTimeDecoding(DWORD dwEncoding, LPCSTR structType,
     if (structType == X509_CHOICE_OF_TIME ||
      (time->sysTime.wYear >= 1950 && time->sysTime.wYear <= 2050))
     {
-        ok(ret, "CryptDecodeObjectEx failed: %d (0x%08x)\n", GetLastError(),
+        ok(ret || broken(GetLastError() == OSS_DATA_ERROR),
+         "CryptDecodeObjectEx failed: %d (0x%08x)\n", GetLastError(),
          GetLastError());
         if (ret)
             compareTime(&time->sysTime, &ft);
