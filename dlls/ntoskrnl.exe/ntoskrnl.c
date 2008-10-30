@@ -290,12 +290,12 @@ PIRP WINAPI IoAllocateIrp( CCHAR stack_size, BOOLEAN charge_quota )
 
     size = sizeof(IRP) + stack_size * sizeof(IO_STACK_LOCATION);
     irp = ExAllocatePool( NonPagedPool, size );
-    if (irp != NULL)
-        IoInitializeIrp( irp, size, stack_size );
+    if (irp == NULL)
+        return NULL;
+    IoInitializeIrp( irp, size, stack_size );
     irp->AllocationFlags = IRP_ALLOCATED_FIXED_SIZE;
     if (charge_quota)
         irp->AllocationFlags |= IRP_LOOKASIDE_ALLOCATION;
-
     return irp;
 }
 
