@@ -1854,7 +1854,7 @@ static INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-        PrintStructures = (PRINT_PTRA*)GetPropA(hDlg,"__WINE_PRINTDLGDATA");
+        PrintStructures = GetPropA(hDlg,"__WINE_PRINTDLGDATA");
 	if (!PrintStructures)
 	    return FALSE;
     } else {
@@ -1903,7 +1903,7 @@ static INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-	PrintStructures = (PRINT_PTRW*) GetPropW(hDlg, propW);
+        PrintStructures = GetPropW(hDlg, propW);
 	if (!PrintStructures)
 	    return FALSE;
     } else {
@@ -3215,7 +3215,7 @@ PRINTDLG_PagePaintProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return CallWindowProcA(lpfnStaticWndProc, hWnd, uMsg, wParam, lParam);
 
     /* Processing WM_PAINT message */
-    pda = (PageSetupDataA*)GetPropA(hWnd, "__WINE_PAGESETUPDLGDATA");
+    pda = GetPropA(hWnd, "__WINE_PAGESETUPDLGDATA");
     if (!pda) {
         WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
         return FALSE;
@@ -3404,7 +3404,7 @@ PRINTDLG_PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	PRINTDLG_PS_ChangePaperPrev(pda);
 	return TRUE;
     } else {
-	pda = (PageSetupDataA*)GetPropA(hDlg,"__WINE_PAGESETUPDLGDATA");
+        pda = GetPropA(hDlg,"__WINE_PAGESETUPDLGDATA");
 	if (!pda) {
 	    WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
 	    return FALSE;
@@ -3490,7 +3490,7 @@ PageDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	return TRUE;
     } else {
-	pdw = (PageSetupDataW*)GetPropW(hDlg, __WINE_PAGESETUPDLGDATA);
+        pdw = GetPropW(hDlg, __WINE_PAGESETUPDLGDATA);
 	if (!pdw) {
 	    WARN("__WINE_PAGESETUPDLGDATA prop not set?\n");
 	    return FALSE;

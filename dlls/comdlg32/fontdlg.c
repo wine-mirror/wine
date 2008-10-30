@@ -1146,7 +1146,7 @@ INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     int len;
 
     if (uMsg!=WM_INITDIALOG) {
-        lpcfw = (LPCHOOSEFONTW)GetPropW(hDlg, strWineFontData);
+        lpcfw = GetPropW(hDlg, strWineFontData);
         if (!lpcfw)
             return FALSE;
         if (CFn_HookCallChk32(lpcfw))
@@ -1209,7 +1209,7 @@ INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
 
     if (uMsg!=WM_INITDIALOG)
     {
-        lpcf=(LPCHOOSEFONTW)GetPropW(hDlg, strWineFontData);
+        lpcf= GetPropW(hDlg, strWineFontData);
         if (!lpcf)
             return FALSE;
         if (CFn_HookCallChk32(lpcf))

@@ -175,7 +175,7 @@ Replace:
  */
 static INT_PTR CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
-	COMDLG32_FR_Data *pdata = (COMDLG32_FR_Data *)GetPropA(hDlgWnd, (LPSTR)COMDLG32_Atom);
+	COMDLG32_FR_Data *pdata = GetPropA(hDlgWnd, (LPSTR)COMDLG32_Atom);
 	INT_PTR retval = TRUE;
 
 	if(iMsg == WM_INITDIALOG)
