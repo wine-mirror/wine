@@ -288,7 +288,8 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
     msiobj_release(&row->hdr);
 }
 
-UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
+UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
+                             BOOL preserve_case )
 {
     LPCWSTR ptr,ptr2;
     BOOL quote;
@@ -323,7 +324,10 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine )
         prop = msi_alloc((len+1)*sizeof(WCHAR));
         memcpy(prop,ptr,len*sizeof(WCHAR));
         prop[len]=0;
-        struprW(prop);
+
+        if (!preserve_case)
+            struprW(prop);
+
         ptr2++;
        
         len = 0; 
@@ -728,7 +732,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         msi_set_sourcedir_props(package, FALSE);
     }
 
-    msi_parse_command_line( package, szCommandLine );
+    msi_parse_command_line( package, szCommandLine, FALSE );
 
     msi_apply_transforms( package );
     msi_apply_patches( package );

@@ -504,7 +504,7 @@ static const CHAR adm_admin_exec_seq_dat[] = "Action\tCondition\tSequence\n"
 static const CHAR amp_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
                                         "Component\tComponent\n"
-                                        "augustus\t\tMSITESTDIR\t0\tMYPROP=2718\taugustus\n";
+                                        "augustus\t\tMSITESTDIR\t0\tMYPROP=2718 and MyProp=42\taugustus\n";
 
 static const CHAR rem_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
@@ -4240,7 +4240,8 @@ static void set_admin_property_stream(LPCSTR file)
 
     /* AdminProperties */
     static const WCHAR stmname[] = {0x41ca,0x4330,0x3e71,0x44b5,0x4233,0x45f5,0x422c,0x4836,0};
-    static const WCHAR data[] = {'M','Y','P','R','O','P','=','2','7','1','8',0};
+    static const WCHAR data[] = {'M','Y','P','R','O','P','=','2','7','1','8',' ',
+        'M','y','P','r','o','p','=','4','2',0};
 
     MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, MAX_PATH);
 

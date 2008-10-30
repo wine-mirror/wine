@@ -754,7 +754,7 @@ static UINT msi_load_admin_properties(MSIPACKAGE *package)
     if (r != ERROR_SUCCESS)
         return r;
 
-    r = msi_parse_command_line(package, (WCHAR *)data);
+    r = msi_parse_command_line(package, (WCHAR *)data, TRUE);
 
     msi_free(data);
     return r;

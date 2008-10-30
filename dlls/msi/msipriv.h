@@ -683,7 +683,8 @@ extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR);
 extern UINT ACTION_ForceReboot(MSIPACKAGE *package);
 extern UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR szTable, INT iSequenceMode );
 extern UINT MSI_SetFeatureStates( MSIPACKAGE *package );
-extern UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine );
+extern UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
+                                    BOOL preserve_case );
 
 /* record internals */
 extern UINT MSI_RecordSetIStream( MSIRECORD *, UINT, IStream *);
