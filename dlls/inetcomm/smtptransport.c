@@ -110,6 +110,40 @@ static HRESULT SMTPTransport_ParseResponse(SMTPTransport *This, char *pszRespons
     return S_OK;
 }
 
+static void SMTPTransport_CallbackProcessMAILResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response = { 0 };
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    response.command = SMTP_MAIL;
+    ISMTPCallback_OnResponse((ISMTPCallback *)This->InetTransport.pCallback, &response);
+
+    if (FAILED(response.rIxpResult.hrServerError))
+    {
+        ERR("server error: %s\n", debugstr_a(pBuffer));
+        /* FIXME: handle error */
+        return;
+    }
+}
+
+static void SMTPTransport_CallbackReadMAILResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackProcessMAILResponse);
+}
+
 static void SMTPTransport_CallbackProcessHelloResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     SMTPTransport *This = (SMTPTransport *)iface;
@@ -485,6 +519,8 @@ static HRESULT WINAPI SMTPTransport_Connect(ISMTPTransport2 *iface,
     TRACE("(%p, %s, %s)\n", pInetServer, fAuthenticate ? "TRUE" : "FALSE", fCommandLogging ? "TRUE" : "FALSE");
 
     hr = InternetTransport_Connect(&This->InetTransport, pInetServer, fAuthenticate, fCommandLogging);
+    if (FAILED(hr))
+        return hr;
 
     /* this starts the state machine, which continues in SMTPTransport_CallbackSendHELO */
     return InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackSendHello);
@@ -609,8 +645,28 @@ static HRESULT WINAPI SMTPTransport_SendMessage(ISMTPTransport2 *iface,
 
 static HRESULT WINAPI SMTPTransport_CommandMAIL(ISMTPTransport2 *iface, LPSTR pszEmailFrom)
 {
-    FIXME("(%s)\n", pszEmailFrom);
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+    const char szCommandFormat[] = "MAIL FROM: <%s>\n";
+    char *szCommand;
+    int len = sizeof(szCommandFormat) - 2 /* "%s" */ + strlen(pszEmailFrom);
+    HRESULT hr;
+
+    TRACE("(%s)\n", pszEmailFrom);
+
+    if (!pszEmailFrom)
+        return E_INVALIDARG;
+
+    szCommand = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!szCommand)
+        return E_OUTOFMEMORY;
+
+    sprintf(szCommand, szCommandFormat, pszEmailFrom);
+
+    hr = InternetTransport_DoCommand(&This->InetTransport, szCommand,
+        SMTPTransport_CallbackReadMAILResponse);
+
+    HeapFree(GetProcessHeap(), 0, szCommand);
+    return hr;
 }
 
 static HRESULT WINAPI SMTPTransport_CommandRCPT(ISMTPTransport2 *iface, LPSTR pszEmailTo)
