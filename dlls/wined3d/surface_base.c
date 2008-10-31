@@ -1539,7 +1539,7 @@ IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface,
     }
 
     if ((This->Flags & SFLAG_LOCKED) ||
-         ((Src != NULL) && (Src->Flags & SFLAG_LOCKED)))
+            (Src->Flags & SFLAG_LOCKED))
     {
         WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
         return WINEDDERR_SURFACEBUSY;
