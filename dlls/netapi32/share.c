@@ -103,3 +103,13 @@ NET_API_STATUS WINAPI NetShareGetInfo(LMSTR servername, LMSTR netname,
         debugstr_w(netname),level, bufptr);
     return NERR_NetNameNotFound;
 }
+
+/************************************************************
+ * NetShareAdd  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetShareAdd(LMSTR servername,
+    DWORD level, LPBYTE buf, LPDWORD parm_err)
+{
+    FIXME("Stub (%s %d %p %p)\n", debugstr_w(servername), level, buf, parm_err);
+    return ERROR_NOT_SUPPORTED;
+}
