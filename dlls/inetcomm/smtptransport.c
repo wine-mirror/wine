@@ -110,6 +110,19 @@ static HRESULT SMTPTransport_ParseResponse(SMTPTransport *This, char *pszRespons
     return S_OK;
 }
 
+static void SMTPTransport_CallbackDoNothing(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    TRACE("\n");
+}
+
+static void SMTPTransport_CallbackReadResponseDoNothing(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackDoNothing);
+}
+
 static void SMTPTransport_CallbackProcessMAILResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     SMTPTransport *This = (SMTPTransport *)iface;
@@ -734,8 +747,26 @@ static HRESULT WINAPI SMTPTransport_CommandRCPT(ISMTPTransport2 *iface, LPSTR ps
 
 static HRESULT WINAPI SMTPTransport_CommandEHLO(ISMTPTransport2 *iface)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+    const char szCommandFormat[] = "EHLO %s\n";
+    const char szHostname[] = "localhost"; /* FIXME */
+    char *szCommand;
+    int len = sizeof(szCommandFormat) - 2 /* "%s" */ + sizeof(szHostname);
+    HRESULT hr;
+
+    TRACE("\n");
+
+    szCommand = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!szCommand)
+        return E_OUTOFMEMORY;
+
+    sprintf(szCommand, szCommandFormat, szHostname);
+
+    hr = InternetTransport_DoCommand(&This->InetTransport, szCommand,
+        SMTPTransport_CallbackReadResponseDoNothing);
+
+    HeapFree(GetProcessHeap(), 0, szCommand);
+    return hr;
 }
 
 static HRESULT WINAPI SMTPTransport_CommandHELO(ISMTPTransport2 *iface)
