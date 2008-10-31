@@ -212,6 +212,33 @@ static void SMTPTransport_CallbackSendHello(IInternetTransport *iface, char *pBu
     HeapFree(GetProcessHeap(), 0, pszCommand);
 }
 
+static void SMTPTransport_CallbackDisconnect(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    if (pBuffer)
+    {
+        hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+        if (FAILED(hr))
+        {
+            /* FIXME: handle error */
+            return;
+        }
+
+        if (FAILED(response.rIxpResult.hrServerError))
+        {
+            ERR("server error: %s\n", debugstr_a(pBuffer));
+            /* FIXME: handle error */
+            return;
+        }
+    }
+    InternetTransport_DropConnection(&This->InetTransport);
+}
+
 static void SMTPTransport_CallbackMessageProcessResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     SMTPTransport *This = (SMTPTransport *)iface;
@@ -473,8 +500,8 @@ static HRESULT WINAPI SMTPTransport_HandsOffCallback(ISMTPTransport2 *iface)
 
 static HRESULT WINAPI SMTPTransport_Disconnect(ISMTPTransport2 *iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    TRACE("()\n");
+    return ISMTPTransport2_CommandQUIT(iface);
 }
 
 static HRESULT WINAPI SMTPTransport_DropConnection(ISMTPTransport2 *iface)
@@ -613,8 +640,13 @@ static HRESULT WINAPI SMTPTransport_CommandAUTH(ISMTPTransport2 *iface,
 
 static HRESULT WINAPI SMTPTransport_CommandQUIT(ISMTPTransport2 *iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("()\n");
+
+    InternetTransport_ChangeStatus(&This->InetTransport, IXP_DISCONNECTING);
+    return InternetTransport_DoCommand(&This->InetTransport, "QUIT\n",
+        SMTPTransport_CallbackDisconnect);
 }
 
 static HRESULT WINAPI SMTPTransport_CommandRSET(ISMTPTransport2 *iface)
