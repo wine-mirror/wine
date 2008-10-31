@@ -629,7 +629,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    hr = pGetCursorInfo(&info);
+    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
     cur = info.hCursor;
 
     pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
@@ -674,8 +674,7 @@ static void test_cursor(void)
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    hr = pGetCursorInfo(&info);
-    ok(hr != 0, "GetCursorInfo returned %#08x\n", hr);
+    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
     ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
@@ -690,8 +689,7 @@ static void test_cursor(void)
     /* GDI cursor unchanged */
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-    hr = pGetCursorInfo(&info);
-    ok(hr != 0, "GetCursorInfo returned %#08x\n", hr);
+    ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
     ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
