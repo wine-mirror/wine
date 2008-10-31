@@ -141,6 +141,9 @@ static void * const user_space_limit    = 0;  /* no limit needed on other platfo
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
     do { if (TRACE_ON(virtual)) VIRTUAL_DumpView(view); } while (0)
 
+#define VIRTUAL_HEAP_SIZE (4*1024*1024)
+
+static HANDLE virtual_heap;
 static void *preload_reserve_start;
 static void *preload_reserve_end;
 static int use_locks;
@@ -401,7 +404,7 @@ static void delete_view( struct file_view *view ) /* [in] View */
     if (!(view->flags & VFLAG_SYSTEM)) unmap_area( view->base, view->size );
     list_remove( &view->entry );
     if (view->mapping) NtClose( view->mapping );
-    free( view );
+    RtlFreeHeap( virtual_heap, 0, view );
 }
 
 
@@ -421,7 +424,11 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
 
     /* Create the view structure */
 
-    if (!(view = malloc( sizeof(*view) + (size >> page_shift) - 1 ))) return STATUS_NO_MEMORY;
+    if (!(view = RtlAllocateHeap( virtual_heap, 0, sizeof(*view) + (size >> page_shift) - 1 )))
+    {
+        FIXME( "out of memory in virtual heap for %p-%p\n", base, (char *)base + size );
+        return STATUS_NO_MEMORY;
+    }
 
     view->base    = base;
     view->size    = size;
@@ -1167,11 +1174,16 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 }
 
 
-static int get_address_space_limit( void *base, size_t size, void *arg )
+/* callback for wine_mmap_enum_reserved_areas to allocate space for the virtual heap */
+static int alloc_virtual_heap( void *base, size_t size, void *arg )
 {
-    void **limit = arg;
-    if ((char *)base + size > (char *)*limit) *limit = (char *)base + size;
-    return 1;
+    void **heap_base = arg;
+
+    if (address_space_limit) address_space_limit = max( (char *)address_space_limit, (char *)base + size );
+    if (size < VIRTUAL_HEAP_SIZE) return 0;
+    *heap_base = wine_anon_mmap( (char *)base + size - VIRTUAL_HEAP_SIZE,
+                                 VIRTUAL_HEAP_SIZE, PROT_READ|PROT_WRITE, MAP_FIXED );
+    return (*heap_base != (void *)-1);
 }
 
 /***********************************************************************
@@ -1180,6 +1192,9 @@ static int get_address_space_limit( void *base, size_t size, void *arg )
 void virtual_init(void)
 {
     const char *preload;
+    void *heap_base;
+    struct file_view *heap_view;
+
 #ifndef page_mask
     page_size = getpagesize();
     page_mask = page_size - 1;
@@ -1197,8 +1212,15 @@ void virtual_init(void)
             preload_reserve_end = (void *)end;
         }
     }
-    if (address_space_limit)
-        wine_mmap_enum_reserved_areas( get_address_space_limit, &address_space_limit, 1 );
+
+    /* try to find space in a reserved area for the virtual heap */
+    if (!wine_mmap_enum_reserved_areas( alloc_virtual_heap, &heap_base, 1 ))
+        heap_base = wine_anon_mmap( NULL, VIRTUAL_HEAP_SIZE, PROT_READ|PROT_WRITE, 0 );
+
+    assert( heap_base != (void *)-1 );
+    virtual_heap = RtlCreateHeap( HEAP_NO_SERIALIZE, heap_base, VIRTUAL_HEAP_SIZE,
+                                  VIRTUAL_HEAP_SIZE, NULL, NULL );
+    create_view( &heap_view, heap_base, VIRTUAL_HEAP_SIZE, VPROT_COMMITTED | VPROT_READ | VPROT_WRITE );
 }
 
 

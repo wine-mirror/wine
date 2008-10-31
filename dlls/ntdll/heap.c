@@ -1253,7 +1253,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
         list_add_head( &processHeap->entry, &heapPtr->entry );
         RtlLeaveCriticalSection( &processHeap->critSection );
     }
-    else
+    else if (!addr)
     {
         processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
         list_init( &processHeap->entry );
