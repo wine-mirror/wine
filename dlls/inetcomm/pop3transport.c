@@ -185,6 +185,33 @@ static void POP3Transport_CallbackSendUSERCmd(IInternetTransport *iface, char *p
     HeapFree(GetProcessHeap(), 0, command);
 }
 
+static void POP3Transport_CallbackProcessQUITResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+    POP3RESPONSE response;
+    HRESULT hr;
+
+    TRACE("%s\n", debugstr_an(pBuffer, cbBuffer));
+
+    hr = POP3Transport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+    InternetTransport_DropConnection(&This->InetTransport);
+}
+
+static void POP3Transport_CallbackRecvQUITResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessQUITResponse);
+}
+
 static HRESULT WINAPI POP3Transport_QueryInterface(IPOP3Transport *iface, REFIID riid, void **ppv)
 {
     TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
@@ -369,8 +396,13 @@ static HRESULT WINAPI POP3Transport_CommandTOP(
 
 static HRESULT WINAPI POP3Transport_CommandQUIT(IPOP3Transport *iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    static char command[] = "QUIT\r\n";
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("()\n");
+
+    This->command = POP3_QUIT;
+    return InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvQUITResp);
 }
 
 static HRESULT WINAPI POP3Transport_CommandSTAT(IPOP3Transport *iface)
