@@ -461,6 +461,7 @@ SRCDIR_INCLUDES = \
 	wsnwlink.h \
 	wtsapi32.h \
 	xcmc.h \
+	xinput.h \
 	xmldomdid.h \
 	xmldsodid.h \
 	zmouse.h
