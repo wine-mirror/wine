@@ -33,14 +33,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 static HCRYPTPROV hDefProv;
+HINSTANCE hInstance;
 
-BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
+BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, PVOID pvReserved)
 {
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hInstance);
-            crypt_oid_init(hInstance);
+            hInstance = hInst;
+            DisableThreadLibraryCalls(hInst);
+            crypt_oid_init();
             break;
         case DLL_PROCESS_DETACH:
             crypt_oid_free();

@@ -37,13 +37,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 static const WCHAR DllW[] = { 'D','l','l',0 };
 
-static void init_oid_info(HINSTANCE hinst);
+static void init_oid_info(void);
 static void free_function_sets(void);
 static void free_oid_info(void);
 
-void crypt_oid_init(HINSTANCE hinst)
+void crypt_oid_init(void)
 {
-    init_oid_info(hinst);
+    init_oid_info();
 }
 
 void crypt_oid_free(void)
@@ -993,7 +993,7 @@ BOOL WINAPI CryptUnregisterDefaultOIDFunction(DWORD dwEncodingType,
     return ret;
 }
 
-static void oid_init_localizednames(HINSTANCE hInstance)
+static void oid_init_localizednames(void)
 {
     unsigned int i;
 
@@ -1367,11 +1367,11 @@ struct OIDInfo {
     struct list entry;
 };
 
-static void init_oid_info(HINSTANCE hinst)
+static void init_oid_info(void)
 {
     DWORD i;
 
-    oid_init_localizednames(hinst);
+    oid_init_localizednames();
     for (i = 0; i < sizeof(oidInfoConstructors) /
      sizeof(oidInfoConstructors[0]); i++)
     {
@@ -1402,7 +1402,8 @@ static void init_oid_info(HINSTANCE hinst)
         else
         {
             LPCWSTR stringresource;
-            int len = LoadStringW(hinst, (UINT_PTR)oidInfoConstructors[i].pwszName,
+            int len = LoadStringW(hInstance,
+             (UINT_PTR)oidInfoConstructors[i].pwszName,
              (LPWSTR)&stringresource, 0);
 
             if (len)
