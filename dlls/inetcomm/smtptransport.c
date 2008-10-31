@@ -796,8 +796,28 @@ static HRESULT WINAPI SMTPTransport_CommandHELO(ISMTPTransport2 *iface)
 static HRESULT WINAPI SMTPTransport_CommandAUTH(ISMTPTransport2 *iface,
     LPSTR pszAuthType)
 {
-    FIXME("(%s)\n", pszAuthType);
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+    const char szCommandFormat[] = "AUTH %s\n";
+    char *szCommand;
+    int len = sizeof(szCommandFormat) - 2 /* "%s" */ + strlen(pszAuthType);
+    HRESULT hr;
+
+    TRACE("(%s)\n", pszAuthType);
+
+    if (!pszAuthType)
+        return E_INVALIDARG;
+
+    szCommand = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!szCommand)
+        return E_OUTOFMEMORY;
+
+    sprintf(szCommand, szCommandFormat, pszAuthType);
+
+    hr = InternetTransport_DoCommand(&This->InetTransport, szCommand,
+        SMTPTransport_CallbackReadResponseDoNothing);
+
+    HeapFree(GetProcessHeap(), 0, szCommand);
+    return hr;
 }
 
 static HRESULT WINAPI SMTPTransport_CommandQUIT(ISMTPTransport2 *iface)
