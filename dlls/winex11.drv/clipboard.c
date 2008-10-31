@@ -325,7 +325,7 @@ static Window thread_selection_wnd(void)
         XSetWindowAttributes attr;
 
         attr.event_mask = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
-                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
+                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask | PropertyChangeMask);
 
         wine_tsx11_lock();
         w = XCreateWindow(thread_data->display, root_window, 0, 0, 1, 1, 0, screen_depth,
@@ -1231,15 +1231,17 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
     HANDLE hUnicodeText;
     XTextProperty txtprop;
 
-    wine_tsx11_lock();
-    if (!XGetTextProperty(display, w, &txtprop, prop))
+    if (!X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &txtprop.value, &txtprop.nitems))
     {
-        wine_tsx11_unlock();
         return 0;
     }
 
+    txtprop.encoding = x11drv_atom(COMPOUND_TEXT);
+    txtprop.format = 8;
+    wine_tsx11_lock();
     XmbTextPropertyToTextList(display, &txtprop, &srcstr, &count);
     wine_tsx11_unlock();
+    HeapFree(GetProcessHeap(), 0, txtprop.value);
 
     TRACE("Importing %d line(s)\n", count);
 
@@ -1276,7 +1278,6 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
 
     wine_tsx11_lock();
     XFreeStringList(srcstr);
-    XFree(txtprop.value);
     wine_tsx11_unlock();
 
     return hUnicodeText;
@@ -2017,19 +2018,15 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ReadProperty
- *  Reads the contents of the X selection property.
+ *		X11DRV_CLIPBOARD_GetProperty
+ *  Gets type, data and size.
  */
-static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
-    unsigned char** data, unsigned long* datasize)
+static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
+    Atom *atype, unsigned char** data, unsigned long* datasize)
 {
-    Atom atype = AnyPropertyType;
     int aformat;
     unsigned long pos = 0, nitems, remain, count;
     unsigned char *val = NULL, *buffer;
-
-    if (prop == None)
-        return FALSE;
 
     TRACE("Reading property %lu from X window %lx\n", prop, w);
 
@@ -2037,7 +2034,7 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
     {
         wine_tsx11_lock();
         if (XGetWindowProperty(display, w, prop, pos, INT_MAX / 4, False,
-                               AnyPropertyType, &atype, &aformat, &nitems, &remain, &buffer) != Success)
+                               AnyPropertyType, atype, &aformat, &nitems, &remain, &buffer) != Success)
         {
             wine_tsx11_unlock();
             WARN("Failed to read property\n");
@@ -2074,6 +2071,86 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
     wine_tsx11_lock();
     XDeleteProperty(display, w, prop);
     wine_tsx11_unlock();
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ReadProperty
+ *  Reads the contents of the X selection property.
+ */
+static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
+    unsigned char** data, unsigned long* datasize)
+{
+    Atom atype;
+    XEvent xe;
+
+    if (prop == None)
+        return FALSE;
+
+    if (!X11DRV_CLIPBOARD_GetProperty(display, w, prop, &atype, data, datasize))
+        return FALSE;
+
+    wine_tsx11_lock();
+    while (XCheckTypedWindowEvent(display, w, PropertyNotify, &xe))
+        ;
+    wine_tsx11_unlock();
+
+    if (atype == x11drv_atom(INCR))
+    {
+        unsigned char *buf = *data;
+        unsigned long bufsize = 0;
+
+        for (;;)
+        {
+            int i;
+            unsigned char *prop_data, *tmp;
+            unsigned long prop_size;
+
+            /* Wait until PropertyNotify is received */
+            for (i = 0; i < SELECTION_RETRIES; i++)
+            {
+                Bool res;
+
+                wine_tsx11_lock();
+                res = XCheckTypedWindowEvent(display, w, PropertyNotify, &xe);
+                wine_tsx11_unlock();
+                if (res && xe.xproperty.atom == prop &&
+                    xe.xproperty.state == PropertyNewValue)
+                    break;
+                usleep(SELECTION_WAIT);
+            }
+
+            if (i >= SELECTION_RETRIES ||
+                !X11DRV_CLIPBOARD_GetProperty(display, w, prop, &atype, &prop_data, &prop_size))
+            {
+                HeapFree(GetProcessHeap(), 0, buf);
+                return FALSE;
+            }
+
+            /* Retrieved entire data. */
+            if (prop_size == 0)
+            {
+                HeapFree(GetProcessHeap(), 0, prop_data);
+                *data = buf;
+                *datasize = bufsize;
+                return TRUE;
+            }
+
+            tmp = HeapReAlloc(GetProcessHeap(), 0, buf, bufsize + prop_size + 1);
+            if (!tmp)
+            {
+                HeapFree(GetProcessHeap(), 0, buf);
+                return FALSE;
+            }
+
+            buf = tmp;
+            memcpy(buf + bufsize, prop_data, prop_size + 1);
+            bufsize += prop_size;
+            HeapFree(GetProcessHeap(), 0, prop_data);
+        }
+    }
+
     return TRUE;
 }
 

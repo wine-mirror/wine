@@ -115,6 +115,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
 {
     "CLIPBOARD",
     "COMPOUND_TEXT",
+    "INCR",
     "MULTIPLE",
     "SELECTION_DATA",
     "TARGETS",
