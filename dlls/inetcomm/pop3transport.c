@@ -39,7 +39,125 @@ typedef struct
 {
     InternetTransport InetTransport;
     ULONG refs;
+    INETSERVER server;
+    POP3COMMAND command;
 } POP3Transport;
+
+static HRESULT POP3Transport_ParseResponse(POP3Transport *This, char *pszResponse, POP3RESPONSE *pResponse)
+{
+    TRACE("response: %s\n", debugstr_a(pszResponse));
+
+    pResponse->command = This->command;
+    pResponse->fDone = TRUE; /* FIXME */
+
+    if (!memcmp(pszResponse, "+OK", 3))
+        pResponse->rIxpResult.hrResult = S_OK;
+    else
+        pResponse->rIxpResult.hrResult = S_FALSE;
+
+    pResponse->rIxpResult.pszResponse = pszResponse;
+    pResponse->rIxpResult.uiServerError = 0;
+    pResponse->rIxpResult.hrServerError = pResponse->rIxpResult.hrResult;
+    pResponse->rIxpResult.dwSocketError = 0;
+    pResponse->pTransport = (IPOP3Transport *)&This->InetTransport.u.vtblPOP3;
+    pResponse->fValidInfo = FALSE; /* FIXME */
+
+    if (This->InetTransport.pCallback && This->InetTransport.fCommandLogging)
+    {
+        ITransportCallback_OnCommand(This->InetTransport.pCallback, CMD_RESP,
+            pResponse->rIxpResult.pszResponse, pResponse->rIxpResult.hrServerError,
+            (IInternetTransport *)&This->InetTransport.u.vtbl);
+    }
+    return S_OK;
+}
+
+static void POP3Transport_CallbackProcessPASSResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+    POP3RESPONSE response;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = POP3Transport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    InternetTransport_ChangeStatus(&This->InetTransport, IXP_AUTHORIZED);
+    InternetTransport_ChangeStatus(&This->InetTransport, IXP_CONNECTED);
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+}
+
+static void POP3Transport_CallbackRecvPASSResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessPASSResp);
+}
+
+static void POP3Transport_CallbackProcessUSERResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    static char pass[] = "PASS ";
+    POP3Transport *This = (POP3Transport *)iface;
+    POP3RESPONSE response;
+    char *command;
+    int len;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = POP3Transport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+
+    len = sizeof(pass) + strlen(This->server.szPassword) + 2; /* "\r\n" */
+    command = HeapAlloc(GetProcessHeap(), 0, len);
+
+    strcpy(command, pass);
+    strcat(command, This->server.szPassword);
+    strcat(command, "\r\n");
+
+    InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvPASSResp);
+    HeapFree(GetProcessHeap(), 0, command);
+}
+
+static void POP3Transport_CallbackRecvUSERResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessUSERResp);
+}
+
+static void POP3Transport_CallbackSendUSERCmd(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    static char user[] = "USER ";
+    POP3Transport *This = (POP3Transport *)iface;
+    char *command;
+    int len;
+
+    TRACE("\n");
+
+    len = sizeof(user) + strlen(This->server.szUserName) + 2; /* "\r\n" */
+    command = HeapAlloc(GetProcessHeap(), 0, len);
+
+    strcpy(command, user);
+    strcat(command, This->server.szUserName);
+    strcat(command, "\r\n");
+    InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvUSERResp);
+
+    HeapFree(GetProcessHeap(), 0, command);
+}
 
 static HRESULT WINAPI POP3Transport_QueryInterface(IPOP3Transport *iface, REFIID riid, void **ppv)
 {
@@ -118,9 +236,12 @@ static HRESULT WINAPI POP3Transport_Connect(IPOP3Transport *iface,
     TRACE("(%p, %s, %s)\n", pInetServer, fAuthenticate ? "TRUE" : "FALSE", fCommandLogging ? "TRUE" : "FALSE");
 
     hr = InternetTransport_Connect(&This->InetTransport, pInetServer, fAuthenticate, fCommandLogging);
+    if (FAILED(hr))
+        return hr;
 
-    FIXME("continue state machine here\n");
-    return hr;
+    This->command = POP3_USER;
+    This->server = *pInetServer;
+    return InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackSendUSERCmd);
 }
 
 static HRESULT WINAPI POP3Transport_HandsOffCallback(IPOP3Transport *iface)
