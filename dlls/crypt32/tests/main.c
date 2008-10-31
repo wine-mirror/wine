@@ -414,7 +414,6 @@ static void test_format_object(void)
     SetLastError(0xdeadbeef);
     ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, NULL, 0,
      NULL, &size);
-    todo_wine
     ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
     if (ret)
     {
@@ -435,7 +434,6 @@ static void test_format_object(void)
     }
     ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL, encodedInt,
      sizeof(encodedInt), NULL, &size);
-    todo_wine
     ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
     if (ret)
     {
@@ -448,7 +446,6 @@ static void test_format_object(void)
     }
     ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
      encodedBigInt, sizeof(encodedBigInt), NULL, &size);
-    todo_wine
     ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
     if (ret)
     {
@@ -466,7 +463,6 @@ static void test_format_object(void)
     SetLastError(0xdeadbeef);
     ret = pCryptFormatObject(X509_ASN_ENCODING, 0, CRYPT_FORMAT_STR_NO_HEX,
      NULL, NULL, NULL, 0, NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     /* When called to format an AUTHORITY_KEY_ID2_INFO, it fails when no

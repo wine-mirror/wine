@@ -243,13 +243,3 @@ ASN1encoding_t WINAPI I_CryptGetAsn1Encoder(HCRYPTASN1MODULE x)
     FIXME("(%08x): stub\n", x);
     return NULL;
 }
-
-BOOL WINAPI CryptFormatObject(DWORD dwCertEncodingType, DWORD dwFormatType,
- DWORD dwFormatStrType, void *pFormatStruct, LPCSTR lpszStructType,
- const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat, DWORD *pcbFormat)
-{
-    FIXME("(%08x, %d, %d, %p, %s, %p, %d, %p, %p): stub\n",
-     dwCertEncodingType, dwFormatType, dwFormatStrType, pFormatStruct,
-     debugstr_a(lpszStructType), pbEncoded, cbEncoded, pbFormat, pcbFormat);
-    return FALSE;
-}

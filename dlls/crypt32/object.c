@@ -23,6 +23,7 @@
 #include "wincrypt.h"
 #include "mssip.h"
 #include "crypt32_private.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -546,5 +547,84 @@ BOOL WINAPI CryptQueryObject(DWORD dwObjectType, const void *pvObject,
          phCertStore, phMsg);
     }
     TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_FormatHexString(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    BOOL ret;
+    DWORD bytesNeeded;
+
+    if (cbEncoded)
+        bytesNeeded = (cbEncoded * 3) * sizeof(WCHAR);
+    else
+        bytesNeeded = sizeof(WCHAR);
+    if (!pbFormat)
+    {
+        *pcbFormat = bytesNeeded;
+        ret = TRUE;
+    }
+    else if (*pcbFormat < bytesNeeded)
+    {
+        *pcbFormat = bytesNeeded;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        static const WCHAR fmt[] = { '%','0','2','x',' ',0 };
+        static const WCHAR endFmt[] = { '%','0','2','x',0 };
+        DWORD i;
+        LPWSTR ptr = pbFormat;
+
+        *pcbFormat = bytesNeeded;
+        if (cbEncoded)
+        {
+            for (i = 0; i < cbEncoded; i++)
+            {
+                if (i < cbEncoded - 1)
+                    ptr += sprintfW(ptr, fmt, pbEncoded[i]);
+                else
+                    ptr += sprintfW(ptr, endFmt, pbEncoded[i]);
+            }
+        }
+        else
+            *ptr = 0;
+        ret = TRUE;
+    }
+    return ret;
+}
+
+typedef BOOL (WINAPI *CryptFormatObjectFunc)(DWORD, DWORD, DWORD, void *,
+ LPCSTR, const BYTE *, DWORD, void *, DWORD *);
+
+BOOL WINAPI CryptFormatObject(DWORD dwCertEncodingType, DWORD dwFormatType,
+ DWORD dwFormatStrType, void *pFormatStruct, LPCSTR lpszStructType,
+ const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat, DWORD *pcbFormat)
+{
+    static HCRYPTOIDFUNCSET set = NULL;
+    CryptFormatObjectFunc format = NULL;
+    HCRYPTOIDFUNCADDR hFunc = NULL;
+    BOOL ret = FALSE;
+
+    TRACE("(%08x, %d, %08x, %p, %s, %p, %d, %p, %p)\n", dwCertEncodingType,
+     dwFormatType, dwFormatStrType, pFormatStruct, debugstr_a(lpszStructType),
+     pbEncoded, cbEncoded, pbFormat, pcbFormat);
+
+    if (!set)
+        set = CryptInitOIDFunctionSet(CRYPT_OID_FORMAT_OBJECT_FUNC, 0);
+    CryptGetOIDFunctionAddress(set, dwCertEncodingType, lpszStructType, 0,
+     (void **)&format, &hFunc);
+    if (!format && !(dwFormatStrType & CRYPT_FORMAT_STR_NO_HEX))
+        format = CRYPT_FormatHexString;
+    if (format)
+        ret = format(dwCertEncodingType, dwFormatType, dwFormatStrType,
+         pFormatStruct, lpszStructType, pbEncoded, cbEncoded, pbFormat,
+         pcbFormat);
+    if (hFunc)
+        CryptFreeOIDFunctionAddress(hFunc, 0);
     return ret;
 }
