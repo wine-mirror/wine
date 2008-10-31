@@ -938,7 +938,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                         sppi[i].liKernelTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_SYSTEM];
                         sppi[i].liUserTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_USER];
                     }
-                    vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count);
+                    vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count * sizeof(natural_t));
                 }
             }
 #else
@@ -950,10 +950,14 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     unsigned long idle;
                     int count;
                     char name[10];
+                    char line[255];
 
                     /* first line is combined usage */
-                    count = fscanf(cpuinfo,"%s %u %u %u %lu",name, &usr, &nice,
+                    if (fgets(line,255,cpuinfo))
+                        count = sscanf(line,"%s %u %u %u %lu",name, &usr, &nice,
                                    &sys, &idle);
+                    else
+                        count = 0;
                     /* we set this up in the for older non-smp enabled kernels */
                     if (count == 5 && strcmp(name,"cpu")==0)
                     {
@@ -968,8 +972,11 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
                     do
                     {
-                        count = fscanf(cpuinfo,"%s %u %u %u %lu",name, &usr,
+                        if (fgets(line,255,cpuinfo))
+                            count = sscanf(line,"%s %u %u %u %lu",name, &usr,
                                        &nice, &sys, &idle);
+                        else
+                            count = 0;
                         if (count == 5 && strncmp(name,"cpu",3)==0)
                         {
                             out_cpus --;
