@@ -22,3 +22,4 @@
 #include "oleacc.h"
 
 #include "oleacc_En.rc"
+#include "oleacc_Nl.rc"
