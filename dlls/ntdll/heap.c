@@ -755,24 +755,37 @@ static BOOL validate_large_arena( HEAP *heap, const ARENA_LARGE *arena, BOOL qui
 
 
 /***********************************************************************
- *           HEAP_InitSubHeap
+ *           HEAP_CreateSubHeap
  */
-static SUBHEAP *HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
-                                  SIZE_T commitSize, SIZE_T totalSize )
+static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
+                                    SIZE_T commitSize, SIZE_T totalSize )
 {
     SUBHEAP *subheap;
     FREE_LIST_ENTRY *pEntry;
     unsigned int i;
 
-    /* Commit memory */
-
-    if (flags & HEAP_SHARED)
-        commitSize = totalSize;  /* always commit everything in a shared heap */
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0,
-                                 &commitSize, MEM_COMMIT, get_protection_type( flags ) ))
+    if (!address)
     {
-        WARN("Could not commit %08lx bytes for sub-heap %p\n", commitSize, address );
-        return NULL;
+        /* round-up sizes on a 64K boundary */
+        totalSize  = (totalSize + 0xffff) & 0xffff0000;
+        commitSize = (commitSize + 0xffff) & 0xffff0000;
+        if (!commitSize) commitSize = 0x10000;
+        if (totalSize < commitSize) totalSize = commitSize;
+        if (flags & HEAP_SHARED) commitSize = totalSize;  /* always commit everything in a shared heap */
+
+        /* allocate the memory block */
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
+                                     MEM_RESERVE, get_protection_type( flags ) ))
+        {
+            WARN("Could not allocate %08lx bytes\n", totalSize );
+            return NULL;
+        }
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0,
+                                     &commitSize, MEM_COMMIT, get_protection_type( flags ) ))
+        {
+            WARN("Could not commit %08lx bytes for sub-heap %p\n", commitSize, address );
+            return NULL;
+        }
     }
 
     if (heap)
@@ -855,45 +868,6 @@ static SUBHEAP *HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
                           subheap->size - subheap->headerSize );
 
     return subheap;
-}
-
-/***********************************************************************
- *           HEAP_CreateSubHeap
- *
- * Create a sub-heap of the given size.
- * If heap == NULL, creates a main heap.
- */
-static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
-                                    SIZE_T commitSize, SIZE_T totalSize )
-{
-    LPVOID address = base;
-    SUBHEAP *ret;
-
-    /* round-up sizes on a 64K boundary */
-    totalSize  = (totalSize + 0xffff) & 0xffff0000;
-    commitSize = (commitSize + 0xffff) & 0xffff0000;
-    if (!commitSize) commitSize = 0x10000;
-    if (totalSize < commitSize) totalSize = commitSize;
-
-    if (!address)
-    {
-        /* allocate the memory block */
-        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
-                                     MEM_RESERVE, get_protection_type( flags ) ))
-        {
-            WARN("Could not allocate %08lx bytes\n", totalSize );
-            return NULL;
-        }
-    }
-
-    /* Initialize subheap */
-
-    if (!(ret = HEAP_InitSubHeap( heap, address, flags, commitSize, totalSize )))
-    {
-        SIZE_T size = 0;
-        if (!base) NtFreeVirtualMemory( NtCurrentProcess(), &address, &size, MEM_RELEASE );
-    }
-    return ret;
 }
 
 
