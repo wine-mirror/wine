@@ -1824,15 +1824,23 @@ static void checkChainPolicyStatus(LPCSTR policy, const ChainPolicyCheck *check,
         if (ret)
         {
             if (check->todo & TODO_ERROR)
-                todo_wine ok(policyStatus.dwError == check->status.dwError,
+                todo_wine ok(policyStatus.dwError == check->status.dwError ||
+                 broken(policyStatus.dwError == CERT_TRUST_NO_ERROR),
                  "%s[%d]: expected %08x, got %08x\n",
                  HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex, check->status.dwError, policyStatus.dwError);
             else
-                ok(policyStatus.dwError == check->status.dwError,
+                ok(policyStatus.dwError == check->status.dwError ||
+                 broken(policyStatus.dwError == CERT_TRUST_NO_ERROR),
                  "%s[%d]: expected %08x, got %08x\n",
                  HIWORD(policy) ? policy : num_to_str(LOWORD(policy)),
                  testIndex, check->status.dwError, policyStatus.dwError);
+            if (policyStatus.dwError != check->status.dwError)
+            {
+                skip("error doesn't match, not checking indexes\n");
+                pCertFreeCertificateChain(chain);
+                return;
+            }
             if (check->todo & TODO_CHAINS)
                 todo_wine ok(policyStatus.lChainIndex ==
                  check->status.lChainIndex, "%s[%d]: expected %d, got %d\n",
