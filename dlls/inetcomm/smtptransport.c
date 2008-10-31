@@ -771,8 +771,26 @@ static HRESULT WINAPI SMTPTransport_CommandEHLO(ISMTPTransport2 *iface)
 
 static HRESULT WINAPI SMTPTransport_CommandHELO(ISMTPTransport2 *iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+    const char szCommandFormat[] = "HELO %s\n";
+    const char szHostname[] = "localhost"; /* FIXME */
+    char *szCommand;
+    int len = sizeof(szCommandFormat) - 2 /* "%s" */ + sizeof(szHostname);
+    HRESULT hr;
+
+    TRACE("()\n");
+
+    szCommand = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!szCommand)
+        return E_OUTOFMEMORY;
+
+    sprintf(szCommand, szCommandFormat, szHostname);
+
+    hr = InternetTransport_DoCommand(&This->InetTransport, szCommand,
+        SMTPTransport_CallbackReadResponseDoNothing);
+
+    HeapFree(GetProcessHeap(), 0, szCommand);
+    return hr;
 }
 
 static HRESULT WINAPI SMTPTransport_CommandAUTH(ISMTPTransport2 *iface,
