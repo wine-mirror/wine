@@ -113,12 +113,15 @@ static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
     if (((sel >> __AHSHIFT) + selcount) > globalArenaSize)
     {
         int newsize = ((sel >> __AHSHIFT) + selcount + 0xff) & ~0xff;
-        GLOBALARENA *pNewArena = realloc( pGlobalArena,
-                                          newsize * sizeof(GLOBALARENA) );
+        GLOBALARENA *pNewArena;
+
+        if (pGlobalArena)
+            pNewArena = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     pGlobalArena, newsize * sizeof(GLOBALARENA) );
+        else
+            pNewArena = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, newsize * sizeof(GLOBALARENA) );
         if (!pNewArena) return 0;
         pGlobalArena = pNewArena;
-        memset( pGlobalArena + globalArenaSize, 0,
-                (newsize - globalArenaSize) * sizeof(GLOBALARENA) );
         globalArenaSize = newsize;
     }
     return pGlobalArena + (sel >> __AHSHIFT);
