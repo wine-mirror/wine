@@ -2407,14 +2407,14 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
 		return;
 	    }
             (*SLLBlock)->next = tmpSLLBlock;
-            tmpSLLBlock->next = (ScanLineListBlock *)NULL;
+            tmpSLLBlock->next = NULL;
             *SLLBlock = tmpSLLBlock;
             *iSLLBlock = 0;
         }
         pSLL = &((*SLLBlock)->SLLs[(*iSLLBlock)++]);
 
         pSLL->next = pPrevSLL->next;
-        pSLL->edgelist = (EdgeTableEntry *)NULL;
+        pSLL->edgelist = NULL;
         pPrevSLL->next = pSLL;
     }
     pSLL->scanline = scanline;
@@ -2422,7 +2422,7 @@ static void REGION_InsertEdgeInET(EdgeTable *ET, EdgeTableEntry *ETE,
     /*
      * now insert the edge in the right bucket
      */
-    prev = (EdgeTableEntry *)NULL;
+    prev = NULL;
     start = pSLL->edgelist;
     while (start && (start->bres.minor_axis < ETE->bres.minor_axis))
     {
@@ -2475,18 +2475,18 @@ static void REGION_CreateETandAET(const INT *Count, INT nbpolygons,
     /*
      *  initialize the Active Edge Table
      */
-    AET->next = (EdgeTableEntry *)NULL;
-    AET->back = (EdgeTableEntry *)NULL;
-    AET->nextWETE = (EdgeTableEntry *)NULL;
+    AET->next = NULL;
+    AET->back = NULL;
+    AET->nextWETE = NULL;
     AET->bres.minor_axis = SMALL_COORDINATE;
 
     /*
      *  initialize the Edge Table.
      */
-    ET->scanlines.next = (ScanLineList *)NULL;
+    ET->scanlines.next = NULL;
     ET->ymax = SMALL_COORDINATE;
     ET->ymin = LARGE_COORDINATE;
-    pSLLBlock->next = (ScanLineListBlock *)NULL;
+    pSLLBlock->next = NULL;
 
     EndPt = pts - 1;
     for(poly = 0; poly < nbpolygons; poly++)
@@ -2610,7 +2610,7 @@ static void REGION_computeWAET(EdgeTableEntry *AET)
     register int inside = 1;
     register int isInside = 0;
 
-    AET->nextWETE = (EdgeTableEntry *)NULL;
+    AET->nextWETE = NULL;
     pWETE = AET;
     AET = AET->next;
     while (AET)
@@ -2629,7 +2629,7 @@ static void REGION_computeWAET(EdgeTableEntry *AET)
         }
         AET = AET->next;
     }
-    pWETE->nextWETE = (EdgeTableEntry *)NULL;
+    pWETE->nextWETE = NULL;
 }
 
 /***********************************************************************
