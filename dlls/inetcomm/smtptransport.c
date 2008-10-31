@@ -833,8 +833,12 @@ static HRESULT WINAPI SMTPTransport_CommandQUIT(ISMTPTransport2 *iface)
 
 static HRESULT WINAPI SMTPTransport_CommandRSET(ISMTPTransport2 *iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("()\n");
+
+    return InternetTransport_DoCommand(&This->InetTransport, "RSET\n",
+        SMTPTransport_CallbackReadResponseDoNothing);
 }
 
 static HRESULT WINAPI SMTPTransport_CommandDATA(ISMTPTransport2 *iface)
