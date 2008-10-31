@@ -222,6 +222,8 @@ static void lighting_test(IDirect3DDevice9 *device)
     DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
     DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
     DWORD color;
+    D3DMATERIAL9 material, old_material;
+    DWORD cop, carg;
 
     float mat[16] = { 1.0f, 0.0f, 0.0f, 0.0f,
                       0.0f, 1.0f, 0.0f, 0.0f,
@@ -337,8 +339,77 @@ static void lighting_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 480, 120); /* upper left quad - lit with normals */
     ok(color == 0x00000000, "Lit quad with normals has color %08x\n", color);
 
+    hr = IDirect3DDevice9_GetMaterial(device, &old_material);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetMaterial returned %08x\n", hr);
+    memset(&material, 0, sizeof(material));
+    material.Diffuse.r = 0.0;
+    material.Diffuse.g = 0.0;
+    material.Diffuse.b = 0.0;
+    material.Diffuse.a = 1.0;
+    material.Ambient.r = 0.0;
+    material.Ambient.g = 0.0;
+    material.Ambient.b = 0.0;
+    material.Ambient.a = 0.0;
+    material.Specular.r = 0.0;
+    material.Specular.g = 0.0;
+    material.Specular.b = 0.0;
+    material.Specular.a = 0.0;
+    material.Emissive.r = 0.0;
+    material.Emissive.g = 0.0;
+    material.Emissive.b = 0.0;
+    material.Emissive.a = 0.0;
+    material.Power = 0.0;
+    IDirect3DDevice9_SetMaterial(device, &material);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetMaterial returned %08x\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DIFFUSEMATERIALSOURCE, D3DMCS_MATERIAL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SPECULARMATERIALSOURCE, D3DMCS_MATERIAL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+
+    hr = IDirect3DDevice9_GetTextureStageState(device, 0, D3DTSS_COLOROP, &cop);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetTextureStageState returned %08x\n", hr);
+    hr = IDirect3DDevice9_GetTextureStageState(device, 0, D3DTSS_COLORARG1, &carg);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetTextureStageState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE | D3DTA_ALPHAREPLICATE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState returned %08x\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
+    if(SUCCEEDED(hr)) {
+        struct vertex lighting_test[] = {
+            {-1.0,   -1.0,   0.1,    0x8000ff00},
+            { 1.0,   -1.0,   0.1,    0x80000000},
+            {-1.0,    1.0,   0.1,    0x8000ff00},
+            { 1.0,    1.0,   0.1,    0x80000000}
+        };
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed, hr=%08x\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, lighting_test, sizeof(lighting_test[0]));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
+    }
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 320, 240);
+    ok(color == 0x00ffffff, "Lit vertex alpha test returned color %08x, expected 0x00ffffff\n", color);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, cop);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DIFFUSEMATERIALSOURCE, D3DMCS_COLOR1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SPECULARMATERIALSOURCE, D3DMCS_COLOR2);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, carg);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetMaterial(device, &old_material);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetMaterial returned %08x\n", hr);
 }
 
 static void clear_test(IDirect3DDevice9 *device)
