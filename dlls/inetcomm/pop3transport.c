@@ -97,6 +97,32 @@ static void POP3Transport_CallbackRecvLISTResp(IInternetTransport *iface, char *
     InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessLISTResp);
 }
 
+static void POP3Transport_CallbackProcessUIDLResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+    POP3RESPONSE response;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = POP3Transport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+}
+
+static void POP3Transport_CallbackRecvUIDLResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessUIDLResp);
+}
+
 static void POP3Transport_CallbackProcessSTATResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     POP3Transport *This = (POP3Transport *)iface;
@@ -458,8 +484,14 @@ static HRESULT WINAPI POP3Transport_CommandRSET(IPOP3Transport *iface)
 static HRESULT WINAPI POP3Transport_CommandUIDL(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    FIXME("(%u, %u)\n", cmdtype, dwPopId);
-    return E_NOTIMPL;
+    static char uidl[] = "UIDL\r\n";
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("(%u, %u)\n", cmdtype, dwPopId);
+
+    This->command = POP3_UIDL;
+    InternetTransport_DoCommand(&This->InetTransport, uidl, POP3Transport_CallbackRecvUIDLResp);
+    return S_OK;
 }
 
 static HRESULT WINAPI POP3Transport_CommandDELE(
