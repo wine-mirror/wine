@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
  * CertGetCertificateContextProperty, and are particular to the store in which
  * the property exists (which is separate from the context.)
  */
-static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
+static BOOL CertContext_GetProperty(void *context, DWORD dwPropId,
  void *pvData, DWORD *pcbData);
 
 /* Internal version of CertSetCertificateContextProperty that sets properties
@@ -45,7 +45,7 @@ static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
  * type.) Doesn't handle special cases, since they're handled by
  * CertSetCertificateContextProperty anyway.
  */
-static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
+static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
  DWORD dwFlags, const void *pvData);
 
 BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
@@ -188,7 +188,7 @@ static BOOL CertContext_CopyParam(void *pvData, DWORD *pcbData, const void *pb,
     return ret;
 }
 
-static BOOL WINAPI CertContext_GetProperty(void *context, DWORD dwPropId,
+static BOOL CertContext_GetProperty(void *context, DWORD dwPropId,
  void *pvData, DWORD *pcbData)
 {
     PCCERT_CONTEXT pCertContext = (PCCERT_CONTEXT)context;
@@ -440,7 +440,7 @@ static BOOL CertContext_SetKeyProvInfoProperty(PCONTEXT_PROPERTY_LIST properties
     return ret;
 }
 
-static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
+static BOOL CertContext_SetProperty(void *context, DWORD dwPropId,
  DWORD dwFlags, const void *pvData)
 {
     PCONTEXT_PROPERTY_LIST properties =
