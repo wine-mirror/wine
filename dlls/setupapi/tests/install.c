@@ -424,14 +424,14 @@ static void test_profile_items(void)
     snprintf(path, MAX_PATH, "%s\\TestItem.lnk", commonprogs);
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributes(path))
     {
-        todo_wine win_skip("ProfileItems not implemented on this system\n");
+        win_skip("ProfileItems not implemented on this system\n");
     }
     else
     {
         snprintf(path, MAX_PATH, "%s\\TestDir", commonprogs);
-        todo_wine ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "directory not created\n");
+        ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "directory not created\n");
         snprintf(path, MAX_PATH, "%s\\TestDir\\TestItem2.lnk", commonprogs);
-        todo_wine ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "link not created\n");
+        ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "link not created\n");
     }
 
     snprintf(path, MAX_PATH, "%s\\TestItem.lnk", commonprogs);

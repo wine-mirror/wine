@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -29,6 +31,9 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "winsvc.h"
+#include "shlobj.h"
+#include "objidl.h"
+#include "objbase.h"
 #include "setupapi.h"
 #include "setupapi_private.h"
 #include "wine/unicode.h"
@@ -79,6 +84,9 @@ static const WCHAR UpdateIniFields[] = {'U','p','d','a','t','e','I','n','i','F',
 static const WCHAR RegisterDlls[]    = {'R','e','g','i','s','t','e','r','D','l','l','s',0};
 static const WCHAR UnregisterDlls[]  = {'U','n','r','e','g','i','s','t','e','r','D','l','l','s',0};
 static const WCHAR ProfileItems[]    = {'P','r','o','f','i','l','e','I','t','e','m','s',0};
+static const WCHAR Name[]            = {'N','a','m','e',0};
+static const WCHAR CmdLine[]         = {'C','m','d','L','i','n','e',0};
+static const WCHAR SubDir[]          = {'S','u','b','D','i','r',0};
 static const WCHAR WineFakeDlls[]    = {'W','i','n','e','F','a','k','e','D','l','l','s',0};
 static const WCHAR DisplayName[]     = {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR Description[]     = {'D','e','s','c','r','i','p','t','i','o','n',0};
@@ -775,7 +783,105 @@ static BOOL bitreg_callback( HINF hinf, PCWSTR field, void *arg )
 
 static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
 {
-    FIXME( "should do profile items %s\n", debugstr_w(field) );
+    WCHAR lnkpath[MAX_PATH];
+    LPWSTR cmdline=NULL, lnkpath_end;
+    unsigned int name_size;
+    INFCONTEXT name_context, context;
+    IShellLinkW* shelllink=NULL;
+    IPersistFile* persistfile=NULL;
+    int attrs=0;
+
+    static const WCHAR dotlnk[] = {'.','l','n','k',0};
+
+    TRACE( "(%s)\n", debugstr_w(field) );
+
+    if (SetupFindFirstLineW( hinf, field, Name, &name_context ))
+    {
+        SetupGetIntField( &name_context, 2, &attrs );
+        if (attrs) FIXME( "unhandled attributes: %x\n", attrs );
+    }
+    else return TRUE;
+
+    /* calculate filename */
+    SHGetFolderPathW( NULL, CSIDL_COMMON_PROGRAMS, NULL, SHGFP_TYPE_CURRENT, lnkpath );
+    lnkpath_end = lnkpath + strlenW(lnkpath);
+    if (lnkpath_end[-1] != '\\') *lnkpath_end++ = '\\';
+
+    if (SetupFindFirstLineW( hinf, field, SubDir, &context ))
+    {
+        unsigned int subdir_size;
+
+        if (!SetupGetStringFieldW( &context, 1, lnkpath_end, (lnkpath+MAX_PATH)-lnkpath_end, &subdir_size ))
+            return TRUE;
+
+        lnkpath_end += subdir_size - 1;
+        if (lnkpath_end[-1] != '\\') *lnkpath_end++ = '\\';
+    }
+
+    if (!SetupGetStringFieldW( &name_context, 1, lnkpath_end, (lnkpath+MAX_PATH)-lnkpath_end, &name_size ))
+        return TRUE;
+
+    lnkpath_end += name_size - 1;
+    if (lnkpath+MAX_PATH < lnkpath_end + 5) return TRUE;
+    strcpyW( lnkpath_end, dotlnk );
+
+    TRACE( "link path: %s\n", debugstr_w(lnkpath) );
+
+    /* calculate command line */
+    if (SetupFindFirstLineW( hinf, field, CmdLine, &context ))
+    {
+        unsigned int dir_len=0, subdir_size=0, filename_size=0;
+        int dirid=0;
+        LPCWSTR dir;
+        LPWSTR cmdline_end;
+
+        SetupGetIntField( &context, 1, &dirid );
+        dir = DIRID_get_string( dirid );
+
+        if (dir) dir_len = strlenW(dir);
+
+        SetupGetStringFieldW( &context, 2, NULL, 0, &subdir_size );
+        SetupGetStringFieldW( &context, 3, NULL, 0, &filename_size );
+
+        if (dir_len && filename_size)
+        {
+            cmdline = cmdline_end = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * (dir_len+subdir_size+filename_size+1) );
+
+            strcpyW( cmdline_end, dir );
+            cmdline_end += dir_len;
+            if (cmdline_end[-1] != '\\') *cmdline_end++ = '\\';
+
+            if (subdir_size)
+            {
+                SetupGetStringFieldW( &context, 2, cmdline_end, subdir_size, NULL );
+                cmdline_end += subdir_size-1;
+                if (cmdline_end[-1] != '\\') *cmdline_end++ = '\\';
+            }
+            SetupGetStringFieldW( &context, 3, cmdline_end, filename_size, NULL );
+            TRACE( "cmdline: %s\n", debugstr_w(cmdline));
+        }
+    }
+
+    if (!cmdline) return TRUE;
+
+    CoInitialize(NULL);
+
+    if (!SUCCEEDED(CoCreateInstance( &CLSID_ShellLink, NULL,
+                                     CLSCTX_INPROC_SERVER, &IID_IShellLinkW, (LPVOID*)&shelllink)))
+        goto done;
+
+    IShellLinkW_SetPath( shelllink, cmdline );
+    SHPathPrepareForWriteW( NULL, NULL, lnkpath, SHPPFW_DIRCREATE|SHPPFW_IGNOREFILENAME );
+    if (SUCCEEDED(IShellLinkW_QueryInterface( shelllink, &IID_IPersistFile, (LPVOID*)&persistfile)))
+    {
+        TRACE( "writing link: %s\n", debugstr_w(lnkpath) );
+        IPersistFile_Save( persistfile, lnkpath, FALSE );
+        IPersistFile_Release( persistfile );
+    }
+    IShellLinkW_Release( shelllink );
+
+done:
+    HeapFree( GetProcessHeap(), 0, cmdline );
     return TRUE;
 }
 
