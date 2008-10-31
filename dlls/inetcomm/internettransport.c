@@ -275,7 +275,7 @@ HRESULT InternetTransport_Write(InternetTransport *This, const char *pvData,
 }
 
 HRESULT InternetTransport_DoCommand(InternetTransport *This,
-    LPSTR pszCommand, INETXPORT_COMPLETION_FUNCTION fnCompletion)
+    LPCSTR pszCommand, INETXPORT_COMPLETION_FUNCTION fnCompletion)
 {
     if (This->Status == IXP_DISCONNECTED)
         return IXP_E_NOT_CONNECTED;
@@ -285,7 +285,7 @@ HRESULT InternetTransport_DoCommand(InternetTransport *This,
 
     if (This->pCallback && This->fCommandLogging)
     {
-        ITransportCallback_OnCommand(This->pCallback, CMD_SEND, pszCommand, 0,
+        ITransportCallback_OnCommand(This->pCallback, CMD_SEND, (LPSTR)pszCommand, 0,
             (IInternetTransport *)&This->u.vtbl);
     }
     return InternetTransport_Write(This, pszCommand, strlen(pszCommand), fnCompletion);

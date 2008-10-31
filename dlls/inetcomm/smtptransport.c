@@ -42,6 +42,9 @@ typedef struct
     InternetTransport InetTransport;
     ULONG refs;
     BOOL fESMTP;
+    SMTPMESSAGE pending_message;
+    INETADDR *addrlist;
+    ULONG ulCurrentAddressIndex;
 } SMTPTransport;
 
 static HRESULT SMTPTransport_ParseResponse(SMTPTransport *This, char *pszResponse, SMTPRESPONSE *pResponse)
@@ -209,6 +212,171 @@ static void SMTPTransport_CallbackSendHello(IInternetTransport *iface, char *pBu
     HeapFree(GetProcessHeap(), 0, pszCommand);
 }
 
+static void SMTPTransport_CallbackMessageProcessResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response = { 0 };
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    if (FAILED(response.rIxpResult.hrServerError))
+    {
+        ERR("server error: %s\n", debugstr_a(pBuffer));
+        /* FIXME: handle error */
+        return;
+    }
+
+    response.command = SMTP_SEND_MESSAGE;
+    response.rIxpResult.hrResult = S_OK;
+    ISMTPCallback_OnResponse((ISMTPCallback *)This->InetTransport.pCallback, &response);
+}
+
+static void SMTPTransport_CallbackMessageReadResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackMessageProcessResponse);
+}
+
+static void SMTPTransport_CallbackMessageSendDOT(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    IStream_Release(This->pending_message.pstmMsg);
+    InternetTransport_DoCommand(&This->InetTransport, "\n.\n",
+        SMTPTransport_CallbackMessageReadResponse);
+}
+
+static void SMTPTransport_CallbackMessageSendDataStream(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response;
+    HRESULT hr;
+    char *pszBuffer;
+    ULONG cbSize;
+
+    TRACE("\n");
+
+    hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    if (FAILED(response.rIxpResult.hrServerError))
+    {
+        ERR("server error: %s\n", debugstr_a(pBuffer));
+        /* FIXME: handle error */
+        return;
+    }
+
+    pszBuffer = HeapAlloc(GetProcessHeap(), 0, This->pending_message.cbSize);
+    hr = IStream_Read(This->pending_message.pstmMsg, pszBuffer, This->pending_message.cbSize, NULL);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+    cbSize = This->pending_message.cbSize;
+
+    /* FIXME: map "\n.\n" to "\n..\n", reallocate memory, update cbSize */
+
+    /* FIXME: properly stream the message rather than writing it all at once */
+
+    hr = InternetTransport_Write(&This->InetTransport, pszBuffer, cbSize,
+        SMTPTransport_CallbackMessageSendDOT);
+
+    HeapFree(GetProcessHeap(), 0, pszBuffer);
+}
+
+static void SMTPTransport_CallbackMessageReadDataResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackMessageSendDataStream);
+}
+
+static void SMTPTransport_CallbackMessageSendTo(IInternetTransport *iface, char *pBuffer, int cbBuffer);
+
+static void SMTPTransport_CallbackMessageReadToResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackMessageSendTo);
+}
+
+static void SMTPTransport_CallbackMessageSendTo(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    if (FAILED(response.rIxpResult.hrServerError))
+    {
+        ERR("server error: %s\n", debugstr_a(pBuffer));
+        /* FIXME: handle error */
+        return;
+    }
+
+    for (; This->ulCurrentAddressIndex < This->pending_message.rAddressList.cAddress; This->ulCurrentAddressIndex++)
+    {
+        TRACE("address[%d]: %s\n", This->ulCurrentAddressIndex,
+            This->pending_message.rAddressList.prgAddress[This->ulCurrentAddressIndex].szEmail);
+
+        if ((This->pending_message.rAddressList.prgAddress[This->ulCurrentAddressIndex].addrtype & ADDR_TOFROM_MASK) == ADDR_TO)
+        {
+            const char szCommandFormat[] = "RCPT TO: <%s>\n";
+            char *szCommand;
+            int len = sizeof(szCommandFormat) - 2 /* "%s" */ +
+                strlen(This->pending_message.rAddressList.prgAddress[This->ulCurrentAddressIndex].szEmail);
+
+            szCommand = HeapAlloc(GetProcessHeap(), 0, len);
+            if (!szCommand)
+                return;
+
+            sprintf(szCommand, szCommandFormat,
+                This->pending_message.rAddressList.prgAddress[This->ulCurrentAddressIndex].szEmail);
+
+            This->ulCurrentAddressIndex++;
+            hr = InternetTransport_DoCommand(&This->InetTransport, szCommand,
+                SMTPTransport_CallbackMessageReadToResponse);
+
+            HeapFree(GetProcessHeap(), 0, szCommand);
+            return;
+        }
+    }
+
+    hr = InternetTransport_DoCommand(&This->InetTransport, "DATA\n",
+        SMTPTransport_CallbackMessageReadDataResponse);
+}
+
+static void SMTPTransport_CallbackMessageReadFromResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackMessageSendTo);
+}
+
 static HRESULT WINAPI SMTPTransport_QueryInterface(ISMTPTransport2 *iface, REFIID riid, void **ppv)
 {
     TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
@@ -244,6 +412,7 @@ static ULONG WINAPI SMTPTransport_Release(ISMTPTransport2 *iface)
             InternetTransport_DropConnection(&This->InetTransport);
 
         if (This->InetTransport.pCallback) ITransportCallback_Release(This->InetTransport.pCallback);
+        HeapFree(GetProcessHeap(), 0, This->addrlist);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return refs;
@@ -349,8 +518,66 @@ static HRESULT WINAPI SMTPTransport_InitNew(ISMTPTransport2 *iface,
 static HRESULT WINAPI SMTPTransport_SendMessage(ISMTPTransport2 *iface,
     LPSMTPMESSAGE pMessage)
 {
-    FIXME("(%p)\n", pMessage);
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+    ULONG i, size;
+    LPSTR pszFromAddress = NULL;
+    const char szCommandFormat[] = "MAIL FROM: <%s>\n";
+    char *szCommand;
+    int len;
+    HRESULT hr;
+
+    TRACE("(%p)\n", pMessage);
+
+    This->pending_message = *pMessage;
+    IStream_AddRef(pMessage->pstmMsg);
+
+    size = pMessage->rAddressList.cAddress * sizeof(INETADDR);
+    This->addrlist = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!This->addrlist)
+        return E_OUTOFMEMORY;
+
+    memcpy(This->addrlist, pMessage->rAddressList.prgAddress, size);
+    This->pending_message.rAddressList.prgAddress = This->addrlist;
+    This->ulCurrentAddressIndex = 0;
+
+    for (i = 0; i < pMessage->rAddressList.cAddress; i++)
+    {
+        if ((pMessage->rAddressList.prgAddress[i].addrtype & ADDR_TOFROM_MASK) == ADDR_FROM)
+        {
+            TRACE("address[%d]: ADDR_FROM, %s\n", i,
+                pMessage->rAddressList.prgAddress[i].szEmail);
+            pszFromAddress = pMessage->rAddressList.prgAddress[i].szEmail;
+        }
+        else if ((pMessage->rAddressList.prgAddress[i].addrtype & ADDR_TOFROM_MASK) == ADDR_TO)
+        {
+            TRACE("address[%d]: ADDR_TO, %s\n", i,
+                pMessage->rAddressList.prgAddress[i].szEmail);
+        }
+    }
+
+    if (!pszFromAddress)
+    {
+        SMTPRESPONSE response;
+        memset(&response, 0, sizeof(response));
+        response.command = SMTP_SEND_MESSAGE;
+        response.fDone = TRUE;
+        response.pTransport = (ISMTPTransport *)&This->InetTransport.u.vtblSMTP2;
+        response.rIxpResult.hrResult = IXP_E_SMTP_NO_SENDER;
+        ISMTPCallback_OnResponse((ISMTPCallback *)This->InetTransport.pCallback, &response);
+        return S_OK;
+    }
+    len = sizeof(szCommandFormat) - 2 /* "%s" */ + strlen(pszFromAddress);
+
+    szCommand = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!szCommand)
+        return E_OUTOFMEMORY;
+
+    sprintf(szCommand, szCommandFormat, pszFromAddress);
+
+    hr = InternetTransport_DoCommand(&This->InetTransport, szCommand,
+        SMTPTransport_CallbackMessageReadFromResponse);
+
+    return hr;
 }
 
 static HRESULT WINAPI SMTPTransport_CommandMAIL(ISMTPTransport2 *iface, LPSTR pszEmailFrom)
