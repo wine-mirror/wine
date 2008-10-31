@@ -1520,9 +1520,17 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_GetClassID(
             IPersistStorage*     iface,
             CLSID*               clsid)
 {
-  DefaultHandler *This = impl_from_IPersistStorage(iface);
+    DefaultHandler *This = impl_from_IPersistStorage(iface);
+    HRESULT hr;
 
-  return IPersistStorage_GetClassID(This->dataCache_PersistStg, clsid);
+    TRACE("(%p)->(%p)\n", iface, clsid);
+
+    if(object_is_running(This))
+        hr = IPersistStorage_GetClassID(This->pPSDelegate, clsid);
+    else
+        hr = IPersistStorage_GetClassID(This->dataCache_PersistStg, clsid);
+
+    return hr;
 }
 
 /************************************************************************
