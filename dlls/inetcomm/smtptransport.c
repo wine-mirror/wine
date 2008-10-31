@@ -144,6 +144,43 @@ static void SMTPTransport_CallbackReadMAILResponse(IInternetTransport *iface, ch
     InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackProcessMAILResponse);
 }
 
+static void SMTPTransport_CallbackProcessRCPTResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response = { 0 };
+    HRESULT hr;
+
+    TRACE("\n");
+
+    HeapFree(GetProcessHeap(), 0, This->addrlist);
+    This->addrlist = NULL;
+
+    hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    response.command = SMTP_RCPT;
+    ISMTPCallback_OnResponse((ISMTPCallback *)This->InetTransport.pCallback, &response);
+
+    if (FAILED(response.rIxpResult.hrServerError))
+    {
+        ERR("server error: %s\n", debugstr_a(pBuffer));
+        /* FIXME: handle error */
+        return;
+    }
+}
+
+static void SMTPTransport_CallbackReadRCPTResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackProcessRCPTResponse);
+}
+
 static void SMTPTransport_CallbackProcessHelloResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     SMTPTransport *This = (SMTPTransport *)iface;
@@ -671,8 +708,28 @@ static HRESULT WINAPI SMTPTransport_CommandMAIL(ISMTPTransport2 *iface, LPSTR ps
 
 static HRESULT WINAPI SMTPTransport_CommandRCPT(ISMTPTransport2 *iface, LPSTR pszEmailTo)
 {
-    FIXME("(%s)\n", pszEmailTo);
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+    const char szCommandFormat[] = "RCPT TO: <%s>\n";
+    char *szCommand;
+    int len = sizeof(szCommandFormat) - 2 /* "%s" */ + strlen(pszEmailTo);
+    HRESULT hr;
+
+    TRACE("(%s)\n", pszEmailTo);
+
+    if (!pszEmailTo)
+        return E_INVALIDARG;
+
+    szCommand = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!szCommand)
+        return E_OUTOFMEMORY;
+
+    sprintf(szCommand, szCommandFormat, pszEmailTo);
+
+    hr = InternetTransport_DoCommand(&This->InetTransport, szCommand,
+        SMTPTransport_CallbackReadRCPTResponse);
+
+    HeapFree(GetProcessHeap(), 0, szCommand);
+    return hr;
 }
 
 static HRESULT WINAPI SMTPTransport_CommandEHLO(ISMTPTransport2 *iface)
