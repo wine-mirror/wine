@@ -359,8 +359,8 @@ static HRESULT WINAPI POP3Transport_HandsOffCallback(IPOP3Transport *iface)
 
 static HRESULT WINAPI POP3Transport_Disconnect(IPOP3Transport *iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    TRACE("()\n");
+    return IPOP3Transport_CommandQUIT(iface);
 }
 
 static HRESULT WINAPI POP3Transport_DropConnection(IPOP3Transport *iface)
