@@ -925,7 +925,7 @@ static void fdi_Ziphuft_free(HFDI hfdi, struct Ziphuft *t)
 
   /* Go through linked list, freeing from the allocated (t[-1]) address. */
   p = t;
-  while (p != (struct Ziphuft *)NULL)
+  while (p != NULL)
   {
     q = (--p)->v.t;
     PFDI_FREE(hfdi, p);
@@ -970,7 +970,7 @@ struct Ziphuft **t, cab_LONG *m, fdi_decomp_state *decomp_state)
   } while (--i);
   if (ZIP(c)[0] == n)                /* null input--all zero length codes */
   {
-    *t = (struct Ziphuft *)NULL;
+    *t = NULL;
     *m = 0;
     return 0;
   }
@@ -1018,8 +1018,8 @@ struct Ziphuft **t, cab_LONG *m, fdi_decomp_state *decomp_state)
   p = ZIP(v);                        /* grab values in bit order */
   h = -1;                       /* no tables yet--level -1 */
   w = l[-1] = 0;                /* no bits decoded yet */
-  ZIP(u)[0] = (struct Ziphuft *)NULL;   /* just to keep compilers happy */
-  q = (struct Ziphuft *)NULL;      /* ditto */
+  ZIP(u)[0] = NULL;             /* just to keep compilers happy */
+  q = NULL;                     /* ditto */
   z = 0;                        /* ditto */
 
   /* go through the bit lengths (k already is bits in shortest code) */
@@ -1061,7 +1061,7 @@ struct Ziphuft **t, cab_LONG *m, fdi_decomp_state *decomp_state)
           return 3;             /* not enough memory */
         }
         *t = q + 1;             /* link to list for Ziphuft_free() */
-        *(t = &(q->v.t)) = (struct Ziphuft *)NULL;
+        *(t = &(q->v.t)) = NULL;
         ZIP(u)[h] = ++q;             /* table starts after link */
 
         /* connect to last table, if there is one */
