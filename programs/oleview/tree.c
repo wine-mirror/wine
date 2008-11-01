@@ -566,7 +566,7 @@ static void AddBaseEntries(void)
 
     LoadString(globals.hMainInst, IDS_TREE_OC, U(tvis).item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = (LPARAM)NULL;
+    U(tvis).item.lParam = 0;
     tree.hOC = TreeView_InsertItem(globals.hTree, &tvis);
 
 
@@ -582,7 +582,7 @@ static void AddBaseEntries(void)
 
     LoadString(globals.hMainInst, IDS_TREE_O1O, U(tvis).item.pszText,
             MAX_LOAD_STRING);
-    U(tvis).item.lParam = (LPARAM)NULL;
+    U(tvis).item.lParam = 0;
     tree.hO1O = TreeView_InsertItem(globals.hTree, &tvis);
 
     LoadString(globals.hMainInst, IDS_TREE_GBCC, U(tvis).item.pszText,
