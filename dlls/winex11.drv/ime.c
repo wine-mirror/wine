@@ -164,7 +164,7 @@ static HIMCC ImeCreateBlankCompStr(void)
     HIMCC rc;
     LPCOMPOSITIONSTRING ptr;
     rc = ImmCreateIMCC(sizeof(COMPOSITIONSTRING));
-    ptr = (LPCOMPOSITIONSTRING)ImmLockIMCC(rc);
+    ptr = ImmLockIMCC(rc);
     memset(ptr,0,sizeof(COMPOSITIONSTRING));
     ptr->dwSize = sizeof(COMPOSITIONSTRING);
     ImmUnlockIMCC(rc);
@@ -485,7 +485,7 @@ static void GenerateIMEMessage(HIMC hIMC, UINT msg, WPARAM wParam,
     if (!lpIMC->hMsgBuf)
         return;
 
-    lpTransMsg = (LPTRANSMSG)ImmLockIMCC(lpIMC->hMsgBuf);
+    lpTransMsg = ImmLockIMCC(lpIMC->hMsgBuf);
     if (!lpTransMsg)
         return;
 
@@ -520,7 +520,7 @@ static void GenerateIMECHARMessages(HIMC hIMC, LPWSTR String, DWORD length)
     if (!lpIMC->hMsgBuf)
         return;
 
-    lpTransMsg = (LPTRANSMSG)ImmLockIMCC(lpIMC->hMsgBuf);
+    lpTransMsg = ImmLockIMCC(lpIMC->hMsgBuf);
     if (!lpTransMsg)
         return;
 
@@ -649,7 +649,7 @@ BOOL WINAPI ImeSelect(HIMC hIMC, BOOL fSelect)
     if (lpIMC != NULL)
     {
         LPIMEPRIVATE myPrivate;
-        myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+        myPrivate = ImmLockIMCC(lpIMC->hPrivate);
         myPrivate->bInComposition = FALSE;
         myPrivate->bInternalState = FALSE;
         myPrivate->textfont = NULL;
@@ -707,7 +707,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                         LPIMEPRIVATE myPrivate;
                         TRACE("IMC_SETCOMPOSITIONFONT\n");
 
-                        myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+                        myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                         if (myPrivate->textfont)
                         {
                             DeleteObject(myPrivate->textfont);
@@ -722,7 +722,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     LPIMEPRIVATE myPrivate;
                     TRACE("IMC_SETOPENSTATUS\n");
 
-                    myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+                    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                     if (lpIMC->fOpen != myPrivate->bInternalState &&
                         myPrivate->bInComposition)
                     {
@@ -793,7 +793,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 
                     GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION, 0, 0);
 
-                    myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+                    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                     myPrivate->bInComposition = FALSE;
                     ImmUnlockIMCC(lpIMC->hPrivate);
 
@@ -814,7 +814,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                         ImmDestroyIMCC(lpIMC->hCompStr);
                     lpIMC->hCompStr = ImeCreateBlankCompStr();
 
-                    myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+                    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                     if (myPrivate->bInComposition)
                     {
                         GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
@@ -902,7 +902,7 @@ BOOL WINAPI ImeSetCompositionString(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp,
     if (lpIMC == NULL)
         return FALSE;
 
-    myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
 
     if (dwIndex == SCS_SETSTR)
     {
@@ -963,7 +963,7 @@ void IME_SetOpenStatus(BOOL fOpen)
     if (lpIMC == NULL)
         return;
 
-    myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
 
     if (myPrivate->bInternalState && fOpen == FALSE)
     {
@@ -1013,7 +1013,7 @@ INT IME_GetCursorPos(void)
     lpIMC = LockRealIMC(FROM_X11);
     if (lpIMC)
     {
-        compstr = (LPCOMPOSITIONSTRING)ImmLockIMCC(lpIMC->hCompStr);
+        compstr = ImmLockIMCC(lpIMC->hCompStr);
         rc = compstr->dwCursorPos;
         ImmUnlockIMCC(lpIMC->hCompStr);
     }
@@ -1033,7 +1033,7 @@ void IME_SetCursorPos(DWORD pos)
     if (!lpIMC)
         return;
 
-    compstr = (LPCOMPOSITIONSTRING)ImmLockIMCC(lpIMC->hCompStr);
+    compstr = ImmLockIMCC(lpIMC->hCompStr);
     if (!compstr)
     {
         UnlockRealIMC(FROM_X11);
@@ -1106,7 +1106,7 @@ static void PaintDefaultIMEWnd(HIMC hIMC, HWND hwnd)
         LPIMEPRIVATE myPrivate;
 
         CompString = (LPWSTR)(compdata + compstr->dwCompStrOffset);
-        myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+        myPrivate = ImmLockIMCC(lpIMC->hPrivate);
 
         if (myPrivate->textfont)
             oldfont = SelectObject(hdc,myPrivate->textfont);
@@ -1376,7 +1376,7 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
             lpIMC = LockRealIMC(hIMC);
             if (lpIMC)
             {
-                myPrivate = (LPIMEPRIVATE)ImmLockIMCC(lpIMC->hPrivate);
+                myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                 myPrivate->hwndDefault = hwnd;
                 ImmUnlockIMCC(lpIMC->hPrivate);
             }
