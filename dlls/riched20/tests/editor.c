@@ -3821,7 +3821,7 @@ static void test_WM_SETFONT(void)
   returnedCF2A.cbSize = sizeof(returnedCF2A);
   
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "x");
-  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont1,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont1, MAKELPARAM(TRUE, 0));
   SendMessage(hwndRichEdit, EM_GETCHARFORMAT,   SCF_DEFAULT,  (LPARAM) &returnedCF2A);
 
   GetObjectA(testFont1, sizeof(LOGFONTA), &sentLogFont);
@@ -3829,14 +3829,14 @@ static void test_WM_SETFONT(void)
     "EM_GETCHARFORMAT: Returned wrong font on test 1. Sent: %s, Returned: %s\n",
     sentLogFont.lfFaceName,returnedCF2A.szFaceName);
 
-  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont2,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont2, MAKELPARAM(TRUE, 0));
   SendMessage(hwndRichEdit, EM_GETCHARFORMAT,   SCF_DEFAULT,  (LPARAM) &returnedCF2A);
   GetObjectA(testFont2, sizeof(LOGFONTA), &sentLogFont);
   ok (!strcmp(sentLogFont.lfFaceName,returnedCF2A.szFaceName),
     "EM_GETCHARFORMAT: Returned wrong font on test 2. Sent: %s, Returned: %s\n",
     sentLogFont.lfFaceName,returnedCF2A.szFaceName);
     
-  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont3,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont3, MAKELPARAM(TRUE, 0));
   SendMessage(hwndRichEdit, EM_GETCHARFORMAT,   SCF_DEFAULT,  (LPARAM) &returnedCF2A);
   GetObjectA(testFont3, sizeof(LOGFONTA), &sentLogFont);
   ok (!strcmp(sentLogFont.lfFaceName,returnedCF2A.szFaceName),
@@ -3923,7 +3923,7 @@ static void test_EM_GETMODIFY(void)
  
   /* setting font doesn't change modify flag */
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
-  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont, MAKELPARAM(TRUE, 0));
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok (result == 0,
       "EM_GETMODIFY returned non-zero, instead of zero on setting font\n");
