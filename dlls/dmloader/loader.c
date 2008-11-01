@@ -798,7 +798,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl (LPCGUID lpcGUID, LPVOID *ppob
 	TRACE("(%s, %p, %p)\n", debugstr_dmguid(lpcGUID), ppobj, pUnkOuter);
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderImpl));
 	if (NULL == obj) {
-		*ppobj = (LPDIRECTMUSICLOADER8)NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->LoaderVtbl = &DirectMusicLoader_Loader_Vtbl;

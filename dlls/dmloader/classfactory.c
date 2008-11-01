@@ -98,7 +98,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderCF (LPCGUID lpcGUID, LPVOID *ppobj,
 	TRACE("(%s, %p, %p)\n", debugstr_dmguid(lpcGUID), ppobj, pUnkOuter);
 	obj = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderCF));
 	if (NULL == obj) {
-		*ppobj = (LPCLASSFACTORY)NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->lpVtbl = &DirectMusicLoaderCF_Vtbl;
@@ -187,7 +187,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicContainerCF (LPCGUID lpcGUID, LPVOID *ppo
 	TRACE("(%s, %p, %p)\n", debugstr_dmguid(lpcGUID), ppobj, pUnkOuter);
 	obj = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicContainerCF));
 	if (NULL == obj) {
-		*ppobj = (LPCLASSFACTORY)NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->lpVtbl = &DirectMusicContainerCF_Vtbl;
