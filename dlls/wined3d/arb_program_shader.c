@@ -1887,21 +1887,20 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
 
-        /* Enable OpenGL fragment programs */
-        glEnable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
-    } else {
-        priv->current_fprogram_id = 0;
-
-        if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
-            /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
-             * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
-             * replacement shader
-             */
-            glDisable(GL_FRAGMENT_PROGRAM_ARB);
-            checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+        if(!priv->use_arbfp_fixed_func) {
+            /* Enable OpenGL fragment programs */
+            glEnable(GL_FRAGMENT_PROGRAM_ARB);
+            checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
         }
+        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
+    } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
+        /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
+         * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
+         * replacement shader
+         */
+        glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+        priv->current_fprogram_id = 0;
     }
 }
 
@@ -1946,7 +1945,7 @@ static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
 
         TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
-    } else if(!priv->use_arbfp_fixed_func) {
+    } else {
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }
@@ -3087,6 +3086,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
          */
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader));
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader)");
+        priv->current_fprogram_id = desc->shader;
 
         if(device->shader_backend == &arb_program_shader_backend && context->last_was_pshader) {
             /* Reload fixed function constants since they collide with the pixel shader constants */
