@@ -239,7 +239,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj
 	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSynth8Impl));
 	if (NULL == obj) {
-		*ppobj = (LPDIRECTMUSICSYNTH8) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->lpVtbl = &DirectMusicSynth8_Vtbl;
