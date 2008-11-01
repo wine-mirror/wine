@@ -319,7 +319,7 @@ SEGPTR WINAPI FindEnvironmentString16(LPCSTR str)
 
     if( lpString )		/*  offset should be small enough */
 	return spEnv + (lpString - lpEnv);
-    return (SEGPTR)NULL;
+    return 0;
 }
 
 /*************************************************************************

@@ -533,7 +533,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 				WCHAR *msg;
 				int len;
 				
-				len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, (LPARAM)NULL);
+				len = SendMessageW(This->hwndListBox, LB_GETTEXTLEN, sel, 0);
 				msg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (len+1)*sizeof(WCHAR));
 				SendMessageW(This->hwndListBox, LB_GETTEXT, sel, (LPARAM)msg);
 				SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)msg);
@@ -555,7 +555,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 		    }
 		    if (This->options & ACO_AUTOAPPEND) {
 			DWORD b;
-			SendMessageW(hwnd, EM_GETSEL, (WPARAM)&b, (LPARAM)NULL);
+                        SendMessageW(hwnd, EM_GETSEL, (WPARAM)&b, 0);
 			if (b>1) {
 			    hwndText[b-1] = '\0';
 			} else {
