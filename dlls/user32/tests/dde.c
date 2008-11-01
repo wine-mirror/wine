@@ -1726,7 +1726,7 @@ static void test_FreeDDElParam(void)
     HGLOBAL val, hglobal;
     BOOL ret;
 
-    ret = FreeDDElParam(WM_DDE_INITIATE, (LPARAM)NULL);
+    ret = FreeDDElParam(WM_DDE_INITIATE, 0);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     hglobal = GlobalAlloc(GMEM_DDESHARE, 100);
@@ -1975,7 +1975,7 @@ static void test_UnpackDDElParam(void)
     /* NULL lParam */
     lo = 0xdead;
     hi = 0xbeef;
-    ret = UnpackDDElParam(WM_DDE_INITIATE, (LPARAM)NULL, &lo, &hi);
+    ret = UnpackDDElParam(WM_DDE_INITIATE, 0, &lo, &hi);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     ok(lo == 0, "Expected 0, got %08lx\n", lo);
     ok(hi == 0, "Expected 0, got %08lx\n", hi);
@@ -2012,7 +2012,7 @@ static void test_UnpackDDElParam(void)
 
     lo = 0xdead;
     hi = 0xbeef;
-    ret = UnpackDDElParam(WM_DDE_ADVISE, (LPARAM)NULL, &lo, &hi);
+    ret = UnpackDDElParam(WM_DDE_ADVISE, 0, &lo, &hi);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
     ok(lo == 0 ||
        broken(lo == 0xdead), /* win2k */
