@@ -1610,9 +1610,7 @@ succ:
 
 end:
     if(png_ptr)
-        ppng_destroy_read_struct(&png_ptr,
-                                (info_ptr ? &info_ptr : (png_infopp) NULL),
-                                (png_infopp)NULL);
+        ppng_destroy_read_struct(&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
     HeapFree(GetProcessHeap(), 0, row_pointers);
     HeapFree(GetProcessHeap(), 0, pngdata);
     return ret;
