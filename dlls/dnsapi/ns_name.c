@@ -103,7 +103,7 @@ dns_ns_name_ntop(const u_char *src, char *dst, size_t dstsiz) {
 		if (dn + n >= eom) {
 			return (-1);
 		}
-		for ((void)NULL; n > 0; n--) {
+		while (n-- > 0) {
 			c = *cp++;
 			if (special(c)) {
 				if (dn + 1 >= eom) {

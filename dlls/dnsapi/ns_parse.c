@@ -74,7 +74,7 @@ static int
 dns_ns_skiprr(const u_char *ptr, const u_char *eom, ns_sect section, int count) {
 	const u_char *optr = ptr;
 
-	for ((void)NULL; count > 0; count--) {
+	while (count-- > 0) {
 		int b, rdlength;
 
 		b = dn_skipname(ptr, eom);
