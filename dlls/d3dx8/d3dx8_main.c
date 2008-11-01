@@ -39,7 +39,7 @@ HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer) {
 
   object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXBufferImpl));
   if (NULL == object) {
-    *ppBuffer = (LPD3DXBUFFER)NULL;
+    *ppBuffer = NULL;
     return E_OUTOFMEMORY;
   }
   object->lpVtbl = &D3DXBuffer_Vtbl;
@@ -48,7 +48,7 @@ HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer) {
   object->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, NumBytes);
   if (NULL == object->buffer) {
     HeapFree(GetProcessHeap(), 0, object);
-    *ppBuffer = (LPD3DXBUFFER)NULL;
+    *ppBuffer = NULL;
     return E_OUTOFMEMORY;
   }
   *ppBuffer = (LPD3DXBUFFER)object;
