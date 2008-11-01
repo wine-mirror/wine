@@ -767,7 +767,7 @@ static void test_EM_SETCHARFORMAT(void)
   cf2.dwEffects = CFE_ITALIC ^ cf2.dwEffects;
 
   /* wParam==0 is default char format, does not set modify */
-  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
   rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok(rc == 0, "Text marked as modified, expected not modified!\n");
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, 0, (LPARAM) &cf2);
@@ -776,7 +776,7 @@ static void test_EM_SETCHARFORMAT(void)
   ok(rc == 0, "Text marked as modified, expected not modified!\n");
 
   /* wParam==SCF_SELECTION sets modify if nonempty selection */
-  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
   rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok(rc == 0, "Text marked as modified, expected not modified!\n");
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf2);
@@ -798,7 +798,7 @@ static void test_EM_SETCHARFORMAT(void)
   ok(rc == -1, "Text not marked as modified, expected modified! (%d)\n", rc);
 
   /* wParam==SCF_ALL sets modify regardless of whether text is present */
-  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
   rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok(rc == 0, "Text marked as modified, expected not modified!\n");
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, (WPARAM) SCF_ALL, (LPARAM) &cf2);
@@ -3458,8 +3458,7 @@ static void test_EM_SETTEXTEX(void)
       "EM_SETTEXTEX did not convert properly\n");
 
   /* !ST_SELECTION && Unicode && !\rtf */
-  result = SendMessage(hwndRichEdit, EM_SETTEXTEX, 
-                       (WPARAM)&setText, (LPARAM) NULL);
+  result = SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, 0);
   SendMessage(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM) buf);
   
   ok (result == 1, 
@@ -3476,8 +3475,7 @@ static void test_EM_SETTEXTEX(void)
   SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
   /* replace current selection: ST_SELECTION && Unicode && !\rtf */
   setText.flags = ST_SELECTION;
-  result = SendMessage(hwndRichEdit, EM_SETTEXTEX, 
-                       (WPARAM)&setText, (LPARAM) NULL);
+  result = SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, 0);
   ok(result == 0,
       "EM_SETTEXTEX with NULL lParam to replace selection"
       " with no text should return 0. Got %i\n",
@@ -3851,7 +3849,7 @@ static void test_WM_SETFONT(void)
   ZeroMemory(&sentLogFont,sizeof(sentLogFont));
   returnedCF2A.cbSize = sizeof(returnedCF2A);
   
-  SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)NULL,(LPARAM) MAKELONG((WORD) TRUE, 0));
+  SendMessage(hwndRichEdit, WM_SETFONT, 0, MAKELPARAM((WORD) TRUE, 0));
   SendMessage(hwndRichEdit, EM_GETCHARFORMAT,   SCF_DEFAULT,  (LPARAM) &returnedCF2A);
   GetObjectA(NULL, sizeof(LOGFONTA), &sentLogFont);
   ok (!strcmp("System",returnedCF2A.szFaceName),
@@ -4144,7 +4142,7 @@ static void test_EM_REPLACESEL(int redraw)
 
     /* FIXME add more tests */
     SendMessage(hwndRichEdit, EM_SETSEL, 7, 17);
-    r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) NULL);
+    r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, 0);
     ok(0 == r, "EM_REPLACESEL returned %d, expected 0\n", r);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     r = strcmp(buffer, "testing");
@@ -4158,7 +4156,7 @@ static void test_EM_REPLACESEL(int redraw)
     SendMessage(hwndRichEdit, WM_SETREDRAW, redraw, 0);
 
     /* Test behavior with carriage returns and newlines */
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "RichEdit1");
     ok(9 == r, "EM_REPLACESEL returned %d, expected 9\n", r);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
@@ -4177,7 +4175,7 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 1, "EM_GETLINECOUNT returned %d, expected 1\n", r);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "RichEdit1\r");
     ok(10 == r, "EM_REPLACESEL returned %d, expected 10\n", r);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
@@ -4203,7 +4201,7 @@ static void test_EM_REPLACESEL(int redraw)
        characters interpreted from the original lParam. Wine's builtin riched20
        implements the WinXP behavior.
      */
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "RichEdit1\r\n");
     ok(11 == r /* WinXP */ || 10 == r /* Win98 */,
         "EM_REPLACESEL returned %d, expected 11 or 10\n", r);
@@ -4240,7 +4238,7 @@ static void test_EM_REPLACESEL(int redraw)
        string.
      */
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r");
     ok(2 == r, "EM_REPLACESEL returned %d, expected 4\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
@@ -4262,7 +4260,7 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 3, "EM_GETLINECOUNT returned %d, expected 3\n", r);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n");
     ok(3 == r /* WinXP */ || 1 == r /* Win98 */,
         "EM_REPLACESEL returned %d, expected 3 or 1\n", r);
@@ -4285,7 +4283,7 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 1, "EM_GETLINECOUNT returned %d, expected 1\n", r);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\r\r\r\n\r\r\r");
     ok(9 == r /* WinXP */ || 7 == r /* Win98 */,
         "EM_REPLACESEL returned %d, expected 9 or 7\n", r);
@@ -4308,7 +4306,7 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 7, "EM_GETLINECOUNT returned %d, expected 7\n", r);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n\r\n");
     ok(5 == r /* WinXP */ || 2 == r /* Win98 */,
         "EM_REPLACESEL returned %d, expected 5 or 2\n", r);
@@ -4331,7 +4329,7 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 2, "EM_GETLINECOUNT returned %d, expected 2\n", r);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n\r\r");
     ok(5 == r /* WinXP */ || 3 == r /* Win98 */,
         "EM_REPLACESEL returned %d, expected 5 or 3\n", r);
@@ -4354,7 +4352,7 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 3, "EM_GETLINECOUNT returned %d, expected 3\n", r);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\rX\r\n\r\r");
     ok(6 == r /* WinXP */ || 5 == r /* Win98 */,
         "EM_REPLACESEL returned %d, expected 6 or 5\n", r);
@@ -4377,7 +4375,7 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 5, "EM_GETLINECOUNT returned %d, expected 5\n", r);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\n\n");
     ok(2 == r, "EM_REPLACESEL returned %d, expected 2\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
@@ -4399,7 +4397,7 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 3, "EM_GETLINECOUNT returned %d, expected 3\n", r);
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\n\n\n\n\r\r\r\r\n");
     ok(9 == r /* WinXP */ || 7 == r /* Win98 */,
         "EM_REPLACESEL returned %d, expected 9 or 7\n", r);
@@ -4505,7 +4503,7 @@ static void test_WM_PASTE(void)
 #undef SEND_CTRL_Z
 #undef SEND_CTRL_Y
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     /* Send WM_CHAR to simulates Ctrl-V */
     SendMessage(hwndRichEdit, WM_CHAR, 22,
                 (MapVirtualKey('V', MAPVK_VK_TO_VSC) << 16) & 1);
@@ -4518,7 +4516,7 @@ static void test_WM_PASTE(void)
     /* Send keystrokes with WM_KEYDOWN after setting the modifiers
      * with SetKeyboard state. */
 
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     /* Simulates paste (Ctrl-V) */
     hold_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'V',
@@ -4536,7 +4534,7 @@ static void test_WM_PASTE(void)
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'C',
                 (MapVirtualKey('C', MAPVK_VK_TO_VSC) << 16) & 1);
     release_key(VK_CONTROL);
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"testing");
@@ -4557,7 +4555,7 @@ static void test_WM_PASTE(void)
     result = strcmp(buffer,"");
     ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
-    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) NULL);
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"cut\r\n");
@@ -4602,7 +4600,7 @@ static void test_EM_FORMATRANGE(void)
   fr.chrg.cpMin = 0;
   fr.chrg.cpMax = 20;
 
-  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) NULL);
+  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, 0);
   todo_wine {
     ok(r == 31, "EM_FORMATRANGE expect %d, got %d\n", 31, r);
   }
@@ -4620,7 +4618,7 @@ static void test_EM_FORMATRANGE(void)
     ok(r == 10, "EM_FORMATRANGE expect %d, got %d\n", 10, r);
   }
 
-  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) NULL);
+  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, 0);
   todo_wine {
     ok(r == 31, "EM_FORMATRANGE expect %d, got %d\n", 31, r);
   }
@@ -5484,8 +5482,8 @@ static void test_undo_coalescing(void)
     simulate_typing_characters(hwnd, "one two three");
     result = SendMessage(hwnd, EM_CANREDO, 0, 0);
     ok (result == FALSE, "Redo buffer should have been cleared by typing.\n");
-    SendMessage(hwnd, WM_KILLFOCUS, (WPARAM)NULL, 0);
-    SendMessage(hwnd, WM_SETFOCUS, (WPARAM)NULL, 0);
+    SendMessage(hwnd, WM_KILLFOCUS, 0, 0);
+    SendMessage(hwnd, WM_SETFOCUS, 0, 0);
     simulate_typing_characters(hwnd, " four five six");
     result = SendMessage(hwnd, EM_UNDO, 0, 0);
     ok (result == TRUE, "Failed to undo typed characters.\n");
@@ -5819,7 +5817,7 @@ static void test_auto_yscroll(void)
         ret = GetWindowLong(hwnd, GWL_STYLE);
         ok(ret & WS_VSCROLL, "Scrollbar was not shown yet (style=%x).\n", (UINT)ret);
 
-        SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)NULL);
+        SendMessage(hwnd, WM_SETTEXT, 0, 0);
         lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
         ok(lines == 1, "%d lines instead of 1\n", lines);
         ret = SendMessage(hwnd, EM_GETSCROLLPOS, 0, (LPARAM)&pt);
