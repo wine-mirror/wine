@@ -8056,7 +8056,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   if (!infoPtr->hwndHeader) return -1;
 
   /* set header unicode format */
-  SendMessageW(infoPtr->hwndHeader, HDM_SETUNICODEFORMAT, (WPARAM)TRUE, (LPARAM)NULL);
+  SendMessageW(infoPtr->hwndHeader, HDM_SETUNICODEFORMAT, TRUE, 0);
 
   /* set header font */
   SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, (LPARAM)TRUE);

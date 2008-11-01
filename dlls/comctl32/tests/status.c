@@ -318,7 +318,7 @@ static void test_status_control(void)
 
     /* Add an icon to the status bar */
     hIcon = LoadIcon(NULL, IDI_QUESTION);
-    r = SendMessage(hWndStatus, SB_SETICON, 1, (LPARAM) NULL);
+    r = SendMessage(hWndStatus, SB_SETICON, 1, 0);
     ok(r != 0 ||
        broken(r == 0), /* win95 */
        "Expected non-zero, got %d\n", r);
@@ -326,7 +326,7 @@ static void test_status_control(void)
     ok(r != 0 ||
        broken(r == 0), /* win95 */
        "Expected non-zero, got %d\n", r);
-    r = SendMessage(hWndStatus, SB_SETICON, 1, (LPARAM) NULL);
+    r = SendMessage(hWndStatus, SB_SETICON, 1, 0);
     ok(r != 0 ||
        broken(r == 0), /* win95 */
        "Expected non-zero, got %d\n", r);

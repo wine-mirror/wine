@@ -197,7 +197,7 @@ static void test_dtm_set_format(HWND hWndDateTime)
     SYSTEMTIME systime;
     LRESULT r;
 
-    r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0, (LPARAM)NULL);
+    r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0, 0);
     expect(1, r);
 
     r = SendMessage(hWndDateTime, DTM_SETFORMAT, 0,
@@ -271,7 +271,7 @@ static void test_dtm_get_monthcal(HWND hWndDateTime)
 
     todo_wine {
         r = SendMessage(hWndDateTime, DTM_GETMONTHCAL, 0, 0);
-        ok(r == (LPARAM)NULL, "Expected NULL(no child month calendar control), got %ld\n", r);
+        ok(r == 0, "Expected NULL(no child month calendar control), got %ld\n", r);
     }
 
     ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_get_monthcal_seq, "test_dtm_get_monthcal", FALSE);

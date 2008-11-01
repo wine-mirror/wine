@@ -5019,7 +5019,7 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
     CloseThemeData (GetWindowTheme (infoPtr->hwnd));
 
     /* Deassociate treeview from the window before doing anything drastic. */
-    SetWindowLongPtrW(infoPtr->hwnd, 0, (DWORD_PTR)NULL);
+    SetWindowLongPtrW(infoPtr->hwnd, 0, 0);
 
 
     DeleteObject(infoPtr->hDefaultFont);

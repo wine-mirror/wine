@@ -846,7 +846,7 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
         SendMessage(hTab, TCM_SETTOOLTIPS, (LPARAM) toolTip, 0);
         ok (toolTip == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.\n");
 
-        SendMessage(hTab, TCM_SETTOOLTIPS, (LPARAM) NULL, 0);
+        SendMessage(hTab, TCM_SETTOOLTIPS, 0, 0);
         ok (NULL  == (HWND) SendMessage(hTab,TCM_GETTOOLTIPS,0,0), "ToolTip was set incorrectly.\n");
 
         ok_sequence(sequences, TAB_SEQ_INDEX, getset_tooltip_seq, "Getset tooltip test sequence", TRUE);

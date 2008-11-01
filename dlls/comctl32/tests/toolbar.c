@@ -1121,15 +1121,15 @@ static void test_getstring(void)
     hToolbar = CreateWindowExA(0, TOOLBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, hMainWnd, (HMENU)5, GetModuleHandle(NULL), NULL);
     ok(hToolbar != NULL, "Toolbar creation problem\n");
 
-    r = SendMessage(hToolbar, TB_GETSTRING, MAKEWPARAM(0, 0), (LPARAM)NULL);
+    r = SendMessage(hToolbar, TB_GETSTRING, MAKEWPARAM(0, 0), 0);
     expect(-1, r);
-    r = SendMessage(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), (LPARAM)NULL);
+    r = SendMessage(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), 0);
     expect(-1, r);
     r = SendMessage(hToolbar, TB_ADDSTRING, 0, (LPARAM)answer);
     expect(0, r);
-    r = SendMessage(hToolbar, TB_GETSTRING, MAKEWPARAM(0, 0), (LPARAM)NULL);
+    r = SendMessage(hToolbar, TB_GETSTRING, MAKEWPARAM(0, 0), 0);
     expect(lstrlenA(answer), r);
-    r = SendMessage(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), (LPARAM)NULL);
+    r = SendMessage(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), 0);
     expect(lstrlenA(answer), r);
     r = SendMessage(hToolbar, TB_GETSTRING, MAKEWPARAM(sizeof(str), 0), (LPARAM)str);
     expect(lstrlenA(answer), r);

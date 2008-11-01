@@ -639,7 +639,7 @@ static void test_monthcal_currDate(HWND hwnd)
     expect(st_original.wSecond, st_new.wSecond);
 
     /* lparam cannot be NULL */
-    res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM) NULL);
+    res = SendMessage(hwnd, MCM_GETCURSEL, 0, 0);
     expect(0, res);
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_curr_date_seq, "monthcal currDate", TRUE);

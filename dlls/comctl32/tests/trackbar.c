@@ -871,7 +871,7 @@ static void test_tool_tips(HWND hWndTrackbar){
         SendMessage(hWndTrackbar, TBM_SETTOOLTIPS, (LPARAM) hWndTooltip, 0);
         rTest = (HWND) SendMessage(hWndTrackbar, TBM_GETTOOLTIPS, 0,0);
         ok(rTest == hWndTooltip, "Expected hWndToolTip, got\n");
-        SendMessage(hWndTrackbar, TBM_SETTOOLTIPS, (LPARAM) NULL, 0);
+        SendMessage(hWndTrackbar, TBM_SETTOOLTIPS, 0, 0);
         rTest = (HWND) SendMessage(hWndTrackbar, TBM_GETTOOLTIPS, 0,0);
         ok(rTest == NULL, "Expected NULL\n");
         SendMessage(hWndTrackbar, TBM_SETTOOLTIPS, (LPARAM) hWndTooltip, 5);

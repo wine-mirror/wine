@@ -459,7 +459,7 @@ static BOOL TAB_InternalGetItemRect(
 static inline BOOL
 TAB_GetItemRect(const TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-  return TAB_InternalGetItemRect(infoPtr, (INT)wParam, (LPRECT)lParam, (LPRECT)NULL);
+  return TAB_InternalGetItemRect(infoPtr, wParam, (LPRECT)lParam, NULL);
 }
 
 /******************************************************************************
