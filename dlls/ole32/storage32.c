@@ -5895,7 +5895,7 @@ HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD stgf
         return STG_E_INVALIDPARAMETER;
     }
 
-    return StgOpenStorage(pwcsName, NULL, grfMode, (SNB)NULL, 0, (IStorage **)ppObjectOpen); 
+    return StgOpenStorage(pwcsName, NULL, grfMode, NULL, 0, (IStorage **)ppObjectOpen);
 }
 
 
@@ -6583,7 +6583,7 @@ static HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM
 	int max_try = 6;
 
 	pData->pData = NULL;
-	pData->pstrOleObjFileName = (CHAR *) NULL;
+	pData->pstrOleObjFileName = NULL;
 
 	for( nTryCnt=0;nTryCnt < max_try; nTryCnt++)
 	{
