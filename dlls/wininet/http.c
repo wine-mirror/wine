@@ -2354,8 +2354,6 @@ static BOOL HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
 
         tmpTM = *gmtime(&tmpTime);
         STHook = (SYSTEMTIME *)lpBuffer;
-        if (!STHook) return bSuccess;
-
         STHook->wDay = tmpTM.tm_mday;
         STHook->wHour = tmpTM.tm_hour;
         STHook->wMilliseconds = 0;
