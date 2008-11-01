@@ -139,7 +139,7 @@ char IO_pp_init(void)
 	      ERR("Is the ppdev module loaded?\n");
 	    continue;
 	  }
-	userbase = strtol(name,(char **)NULL, 16);
+        userbase = strtol(name, NULL, 16);
 	if ( errno == ERANGE)
 	  {
 	    WARN("Configuration: Invalid base %s for %s\n",name,buffer);
@@ -193,7 +193,7 @@ char IO_pp_init(void)
 	PPDeviceList[nports].lastaccess=GetTickCount();
 	if (timeout)
 	  {
-	    PPDeviceList[nports].timeout = strtol(timeout,(char **)NULL, 10);
+            PPDeviceList[nports].timeout = strtol(timeout, NULL, 10);
 	    if (errno == ERANGE)
 	      {
 		WARN("Configuration: Invalid timeout %s in configuration for %s, Setting to 0\n",

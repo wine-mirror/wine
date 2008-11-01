@@ -187,7 +187,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
   DOS_DATASEG *dataseg = (DOS_DATASEG *)lol;
   BYTE *linebuffer = dataseg->buffer;
   BYTE *curbuffer = (lol->offs_unread_CON) ?
-    (((BYTE*)dataseg) + lol->offs_unread_CON) : (BYTE*)NULL;
+    (((BYTE*)dataseg) + lol->offs_unread_CON) : NULL;
   DOS_DEVICE_HEADER *con = dataseg->dev;
   DWORD w;
 
