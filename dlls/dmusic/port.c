@@ -243,8 +243,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj,
 	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
 
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPortImpl));
-	if (NULL == obj) 	{
-		*ppobj = (LPDIRECTMUSICPORT) NULL;
+	if (NULL == obj) {
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->lpVtbl = &DirectMusicPort_Vtbl;

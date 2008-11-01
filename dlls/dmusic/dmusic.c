@@ -127,7 +127,7 @@ static HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLS
 		if (IsEqualCLSID (rclsidPort, &PortCaps.guidPort)) {
 			hr = DMUSIC_CreateDirectMusicPortImpl(&IID_IDirectMusicPort, (LPVOID*) &pNewPort, (LPUNKNOWN) This, pPortParams, &PortCaps);
 			if (FAILED(hr)) {
-			  *ppPort = (LPDIRECTMUSICPORT) NULL;
+                          *ppPort = NULL;
 			  return hr;
 			}
 			This->nrofports++;
@@ -255,7 +255,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPU
 
 	dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
 	if (NULL == dmusic) {
-		*ppobj = (LPDIRECTMUSIC8) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	dmusic->lpVtbl = &DirectMusic8_Vtbl;
