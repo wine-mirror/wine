@@ -1020,7 +1020,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPerformanceImpl (LPCGUID lpcGUID, LPVOID 
 
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformance8Impl));
 	if (NULL == obj) 	{
-		*ppobj = (LPDIRECTMUSICPERFORMANCE8)NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->lpVtbl = &DirectMusicPerformance8_Vtbl;

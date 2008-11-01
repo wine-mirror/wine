@@ -1952,7 +1952,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 ifac
         IWineD3DPixelShader_Release(object);
         *ppShader = d3d8_shader->handle;
     } else {
-        *ppShader = (DWORD)NULL;
+        *ppShader = 0;
     }
 
     TRACE("(%p) : returning %#x\n", This, *ppShader);

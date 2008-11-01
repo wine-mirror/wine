@@ -40,7 +40,7 @@ static void test_ctime(void)
 }
 static void test_gmtime(void)
 {
-    time_t gmt = (time_t)NULL;
+    time_t gmt = 0;
     struct tm* gmt_tm = gmtime(&gmt);
     if(gmt_tm == 0)
 	{

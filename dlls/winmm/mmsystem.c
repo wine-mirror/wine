@@ -2834,7 +2834,7 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
  */
 MMRESULT16 WINAPI mmioClose16(HMMIO16 hmmio, UINT16 uFlags)
 {
-    MMIO_SetSegmentedBuffer(HMMIO_32(hmmio), (SEGPTR)NULL, TRUE);
+    MMIO_SetSegmentedBuffer(HMMIO_32(hmmio), 0, TRUE);
     return mmioClose(HMMIO_32(hmmio), uFlags);
 }
 

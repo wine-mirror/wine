@@ -1849,7 +1849,7 @@ static void test_Installer_RegistryValue(void)
         "RegSetValueExW failed\n");
     ok(!RegSetValueExW(hkey,szSix,0,REG_QWORD, (const BYTE *)qw, 8),
         "RegSetValueExW failed\n");
-    ok(!RegSetValueExW(hkey,szSeven,0,REG_NONE, (const BYTE *)NULL, 0),
+    ok(!RegSetValueExW(hkey,szSeven,0,REG_NONE, NULL, 0),
         "RegSetValueExW failed\n");
 
     ok(!RegSetValueExW(hkey,NULL,0,REG_SZ, (const BYTE *)szOne, sizeof(szOne)),

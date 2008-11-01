@@ -45,7 +45,7 @@ void WINAPI BootTask16(void)
 SEGPTR WINAPI StackLinearToSegmented16(WORD w1, WORD w2)
 {
 	FIXME("(%d,%d):stub.\n",w1,w2);
-	return (SEGPTR)NULL;
+	return 0;
 }
 
 

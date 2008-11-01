@@ -9603,7 +9603,7 @@ static void texop_range_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
     hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
     ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 1, (IDirect3DBaseTexture9 *)NULL);
+    hr = IDirect3DDevice9_SetTexture(device, 1, NULL);
     ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x\n", hr);
     IDirect3DTexture9_Release(texture);
 }

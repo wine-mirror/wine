@@ -752,7 +752,7 @@ static HRESULT IOCS_Detach( IOCS *This ) /* remove subclassing */
     if ( This->hWnd )
     {
         SetWindowLongPtrW( This->hWnd, GWLP_WNDPROC, (ULONG_PTR) This->OrigWndProc );
-        SetWindowLongPtrW( This->hWnd, GWLP_USERDATA, (LONG_PTR) NULL );
+        SetWindowLongPtrW( This->hWnd, GWLP_USERDATA, 0 );
         This->hWnd = NULL;
     }
     if ( This->control )

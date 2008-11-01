@@ -2147,7 +2147,7 @@ DWORD WINAPI WNetGetNetworkInformationW( LPCWSTR lpProvider,
                  providerTable->table[providerIndex].dwSpecVersion;
                 lpNetInfoStruct->dwStatus = NO_ERROR;
                 lpNetInfoStruct->dwCharacteristics = 0;
-                lpNetInfoStruct->dwHandle = (ULONG_PTR)NULL;
+                lpNetInfoStruct->dwHandle = 0;
                 lpNetInfoStruct->wNetType =
                  HIWORD(providerTable->table[providerIndex].dwNetType);
                 lpNetInfoStruct->dwPrinters = -1;

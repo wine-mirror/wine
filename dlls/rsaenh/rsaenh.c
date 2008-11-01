@@ -1677,7 +1677,7 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
     pCryptHash->hKey = hKey;
     pCryptHash->hProv = hProv;
     pCryptHash->dwState = RSAENH_HASHSTATE_HASHING;
-    pCryptHash->pHMACInfo = (PHMAC_INFO)NULL;
+    pCryptHash->pHMACInfo = NULL;
     pCryptHash->dwHashSize = peaAlgidInfo->dwDefaultLen >> 3;
     init_data_blob(&pCryptHash->tpPRFParams.blobLabel);
     init_data_blob(&pCryptHash->tpPRFParams.blobSeed);

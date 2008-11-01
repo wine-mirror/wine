@@ -4390,7 +4390,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        CallerId.len = sizeof(src_addr);
 
        CallerData.buf = NULL;
-       CallerData.len = (ULONG)NULL;
+       CallerData.len = 0;
 
        WS_getsockname(cs, &dst_addr, &size);
 

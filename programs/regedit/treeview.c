@@ -532,7 +532,7 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPWSTR pHostName)
     tvins.u.item.iSelectedImage = Image_Root;
     tvins.u.item.cChildren = 5;
     /* Save the heading level in the item's application-defined data area.  */
-    tvins.u.item.lParam = (LPARAM)NULL;
+    tvins.u.item.lParam = 0;
     tvins.hInsertAfter = (HTREEITEM)TVI_FIRST;
     tvins.hParent = TVI_ROOT;
     /* Add the item to the tree view control.  */

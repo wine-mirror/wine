@@ -117,7 +117,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicComposerImpl (LPCGUID lpcGUID, LPVOID* pp
 	
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicComposerImpl));
 	if (NULL == obj) {
-		*ppobj = (LPDIRECTMUSICCOMPOSER) NULL;
+		*ppobj = NULL;
 		return E_OUTOFMEMORY;
 	}
 	obj->lpVtbl = &DirectMusicComposer_Vtbl;
