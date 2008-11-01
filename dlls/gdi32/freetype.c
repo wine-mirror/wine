@@ -3321,6 +3321,14 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
         dcmat.eM21 = dcmat.eM12 = 0;
     }
 
+    /* Try to avoid not necessary glyph transformations */
+    if (dcmat.eM21 == 0.0 && dcmat.eM12 == 0.0 && dcmat.eM11 == dcmat.eM22)
+    {
+        lf.lfHeight *= fabs(dcmat.eM11);
+        lf.lfWidth *= fabs(dcmat.eM11);
+        dcmat.eM11 = dcmat.eM22 = 1.0;
+    }
+
     TRACE("DC transform %f %f %f %f\n", dcmat.eM11, dcmat.eM12,
                                         dcmat.eM21, dcmat.eM22);
 
@@ -4606,9 +4614,8 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 	    ft_bitmap.pixel_mode = ft_pixel_mode_mono;
 	    ft_bitmap.buffer = buf;
 
-		if(needsTransform) {
-			pFT_Outline_Transform(&ft_face->glyph->outline, &transMat);
-	    }
+	    if(needsTransform)
+		pFT_Outline_Transform(&ft_face->glyph->outline, &transMat);
 
 	    pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
