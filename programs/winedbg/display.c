@@ -40,8 +40,6 @@ struct display
 static struct display *displaypoints = NULL;
 static unsigned int maxdisplays = 0, ndisplays = 0;
 
-#define OFFSET_OF(_f,_s)        ((unsigned)(&(((_s*)NULL)->_f)))
-
 static inline BOOL cmp_symbol(const SYMBOL_INFO* si1, const SYMBOL_INFO* si2)
 {
     /* FIXME: !memcmp(si1, si2, sizeof(SYMBOL_INFO) + si1->NameLen)
@@ -50,7 +48,7 @@ static inline BOOL cmp_symbol(const SYMBOL_INFO* si1, const SYMBOL_INFO* si2)
      * stack_get_frame, so that un-touched fields by stack_get_frame
      * get the same value!!
      */
-    return !memcmp(si1, si2, OFFSET_OF(Name, SYMBOL_INFO)) &&
+    return !memcmp(si1, si2, FIELD_OFFSET(SYMBOL_INFO, Name)) &&
         !memcmp(si1->Name, si2->Name, si1->NameLen);
 }
 
