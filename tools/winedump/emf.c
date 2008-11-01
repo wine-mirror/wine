@@ -115,7 +115,7 @@ static int dump_emfrecord(void)
 
     case EMR_INTERSECTCLIPRECT:
     {
-        const EMRINTERSECTCLIPRECT *clip = (const EMRINTERSECTCLIPRECT *)PRD(offset, sizeof(*clip));
+        const EMRINTERSECTCLIPRECT *clip = PRD(offset, sizeof(*clip));
 
         printf("%-20s %08x\n", "EMR_INTERSECTCLIPRECT", length);
         printf("rect %d,%d - %d, %d\n",
@@ -170,7 +170,7 @@ static int dump_emfrecord(void)
 
     case EMR_EXTSELECTCLIPRGN:
     {
-        const EMREXTSELECTCLIPRGN *clip = (const EMREXTSELECTCLIPRGN *)PRD(offset, sizeof(*clip));
+        const EMREXTSELECTCLIPRGN *clip = PRD(offset, sizeof(*clip));
         const RGNDATA *data = (RGNDATA *)clip->RgnData;
         DWORD i, rc_count = 0;
         RECT *rc;
@@ -195,7 +195,7 @@ static int dump_emfrecord(void)
 
     case EMR_EXTCREATEFONTINDIRECTW:
     {
-        const EMREXTCREATEFONTINDIRECTW *pf = (const EMREXTCREATEFONTINDIRECTW *)PRD(offset, sizeof(*pf));
+        const EMREXTCREATEFONTINDIRECTW *pf = PRD(offset, sizeof(*pf));
         const LOGFONTW *plf = &pf->elfw.elfLogFont;
 
         printf("%-20s %08x\n", "EMR_EXTCREATEFONTINDIRECTW", length);
@@ -216,7 +216,7 @@ static int dump_emfrecord(void)
 
     case EMR_EXTTEXTOUTW:
     {
-	const EMREXTTEXTOUTW *etoW = (const EMREXTTEXTOUTW *)PRD(offset, sizeof(*etoW));
+        const EMREXTTEXTOUTW *etoW = PRD(offset, sizeof(*etoW));
 
         printf("%-20s %08x\n", "EMR_EXTTEXTOUTW", length);
         printf("pt (%d,%d) rect (%d,%d - %d,%d) flags %#x, %s\n",

@@ -664,7 +664,7 @@ static void dump_dir_delay_imported_functions(void)
 
         printf("  Ordn  Name\n");
 
-        il = (const IMAGE_THUNK_DATA32 *)RVA(importDesc->pINT - offset, sizeof(DWORD));
+        il = RVA(importDesc->pINT - offset, sizeof(DWORD));
 
         if (!il)
             printf("Can't grab thunk data, going to next imported DLL\n");
@@ -1321,8 +1321,7 @@ static	void	do_grab_sym( void )
 
     /* dll_close(); */
 
-    if (!(dll_symbols = (dll_symbol *) malloc((exportDir->NumberOfFunctions + 1) *
-					      sizeof (dll_symbol))))
+    if (!(dll_symbols = malloc((exportDir->NumberOfFunctions + 1) * sizeof(dll_symbol))))
 	fatal ("Out of memory");
     if (exportDir->AddressOfFunctions != exportDir->NumberOfNames || exportDir->Base > 1)
 	globals.do_ordinals = 1;

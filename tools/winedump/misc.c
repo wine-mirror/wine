@@ -41,7 +41,7 @@ char *str_create(size_t num_str, ...)
       len += strlen (t);
   va_end (args);
 
-  if (!(tmp = (char *) malloc (len)))
+  if (!(tmp = malloc (len)))
     fatal ("Out of memory");
 
   tmp[0] = '\0';
@@ -72,7 +72,7 @@ char *str_create_num(size_t num_str, int num, ...)
       len += strlen (t);
   va_end (args);
 
-  if (!(tmp = (char *) malloc (len)))
+  if (!(tmp = malloc (len)))
     fatal ("Out of memory");
 
   tmp[0] = '\0';
@@ -98,7 +98,7 @@ char *str_substring(const char *start, const char *end)
 
   assert (start && end && end > start);
 
-  if (!(newstr = (char *) malloc (end - start + 1)))
+  if (!(newstr = malloc (end - start + 1)))
     fatal ("Out of memory");
 
   memcpy (newstr, start, end - start);

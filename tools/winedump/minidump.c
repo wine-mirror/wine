@@ -72,7 +72,7 @@ enum FileSig get_kind_mdmp(void)
 
 void mdmp_dump(void)
 {
-    const MINIDUMP_HEADER*      hdr = (const MINIDUMP_HEADER*)PRD(0, sizeof(MINIDUMP_HEADER));
+    const MINIDUMP_HEADER*      hdr = PRD(0, sizeof(MINIDUMP_HEADER));
     ULONG                       idx, ndir = 0;
     const MINIDUMP_DIRECTORY*   dir;
     const void*                 stream;

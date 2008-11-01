@@ -50,10 +50,10 @@ int symbol_search (parsed_symbol *sym)
     return - 1;
 
   if (!grep_buff)
-    grep_buff = (char *) malloc (MAX_RESULT_LEN);
+    grep_buff = malloc (MAX_RESULT_LEN);
 
   if (!fgrep_buff)
-    fgrep_buff = (char *) malloc (MAX_RESULT_LEN);
+    fgrep_buff = malloc (MAX_RESULT_LEN);
 
   if (!grep_buff || !fgrep_buff)
     fatal ("Out of Memory");

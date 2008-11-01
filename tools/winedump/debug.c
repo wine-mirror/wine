@@ -514,7 +514,7 @@ static const char *get_coff_name( const IMAGE_SYMBOL *coff_sym, const char *coff
 
 void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
 {
-    const IMAGE_COFF_SYMBOLS_HEADER *coff = (const IMAGE_COFF_SYMBOLS_HEADER *)PRD(coffbase, len);
+    const IMAGE_COFF_SYMBOLS_HEADER *coff = PRD(coffbase, len);
     const IMAGE_SYMBOL              *coff_sym;
     const IMAGE_SYMBOL              *coff_symbols =
                                         (const IMAGE_SYMBOL *) ((const char *)coff + coff->LvaToFirstSymbol);
@@ -592,7 +592,7 @@ void	dump_frame_pointer_omission(unsigned long base, unsigned long len)
     printf("Range             #loc #pmt Prlg #reg Info\n"
            "-----------------+----+----+----+----+------------\n");
 
-    fpo = (const FPO_DATA*)PRD(base, len);
+    fpo = PRD(base, len);
     if (!fpo) {printf("Couldn't get FPO blob\n"); return;}
     last = (const FPO_DATA*)((const char*)fpo + len);
 
