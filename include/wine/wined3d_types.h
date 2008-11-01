@@ -886,6 +886,7 @@ typedef struct _WINED3DPRESENT_PARAMETERS {
     DWORD                   Flags;
     UINT                    FullScreen_RefreshRateInHz;
     UINT                    PresentationInterval;
+    BOOL                    AutoRestoreDisplayMode;
 } WINED3DPRESENT_PARAMETERS;
 
 #define WINED3DPRESENTFLAG_LOCKABLE_BACKBUFFER  0x00000001
