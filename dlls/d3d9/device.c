@@ -266,6 +266,7 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
     WINED3DINDEXBUFFER_DESC index_desc;
     WINED3DVERTEXBUFFER_DESC vertex_desc;
     WINED3DFORMAT dummy_format;
+    WINED3DMULTISAMPLE_TYPE dummy_multisampletype;
     DWORD dummy_dword;
     WINED3DPOOL pool = WINED3DPOOL_SCRATCH; /* a harmless pool */
     IUnknown *parent;
@@ -278,7 +279,7 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
             surface_desc.Usage = &dummy_dword;
             surface_desc.Pool = &pool;
             surface_desc.Size = &dummy_dword;
-            surface_desc.MultiSampleType = &dummy_dword;
+            surface_desc.MultiSampleType = &dummy_multisampletype;
             surface_desc.MultiSampleQuality = &dummy_dword;
             surface_desc.Width = &dummy_dword;
             surface_desc.Height = &dummy_dword;
