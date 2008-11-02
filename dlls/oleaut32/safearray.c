@@ -207,7 +207,7 @@ static void SAFEARRAY_SetFeatures(VARTYPE vt, SAFEARRAY *psa)
 static SAFEARRAY* SAFEARRAY_Create(VARTYPE vt, UINT cDims, const SAFEARRAYBOUND *rgsabound, ULONG ulSize)
 {
   SAFEARRAY *psa = NULL;
-  int i;
+  unsigned int i;
 
   if (!rgsabound)
     return NULL;

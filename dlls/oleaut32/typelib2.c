@@ -1708,7 +1708,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
 
-    int i;
+    UINT i;
     int offset;
     char *namedata;
 

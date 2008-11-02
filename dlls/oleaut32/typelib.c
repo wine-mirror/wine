@@ -1294,7 +1294,7 @@ static void dump_Variant(const VARIANT * pvar)
 
 static void dump_DispParms(const DISPPARAMS * pdp)
 {
-    int index;
+    unsigned int index;
 
     TRACE("args=%u named args=%u\n", pdp->cArgs, pdp->cNamedArgs);
 
@@ -2973,7 +2973,7 @@ static WORD *SLTG_DoElem(WORD *pType, char *pBlk,
 static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 			char *pNameTable)
 {
-    int ref;
+    unsigned int ref;
     char *name;
     TLBRefType *ref_type;
     sltg_ref_lookup_t *table;
@@ -3904,7 +3904,7 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
     UINT index,
     ITypeInfo **ppTInfo)
 {
-    int i;
+    UINT i;
 
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
     ITypeInfoImpl *pTypeInfo = This->pTypeInfo;
@@ -3942,9 +3942,9 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
     TYPEKIND *pTKind)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
-    int i;
+    UINT i;
     ITypeInfoImpl *pTInfo = This->pTypeInfo;
-    
+
     if (ITypeLib2_fnGetTypeInfoCount(iface) < index + 1)
     	 return TYPE_E_ELEMENTNOTFOUND;
 
@@ -4678,7 +4678,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
 
       for (pFInfo = This->funclist; pFInfo; pFInfo = pFInfoNext)
       {
-          UINT i;
+          INT i;
           for(i = 0;i < pFInfo->funcdesc.cParams; i++)
           {
               ELEMDESC *elemdesc = &pFInfo->funcdesc.lprgelemdescParam[i];
@@ -4913,7 +4913,7 @@ HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const F
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     const TLBFuncDesc *pFDesc;
-    int i;
+    UINT i;
 
     for(i=0, pFDesc=This->funclist; i!=index && pFDesc; i++, pFDesc=pFDesc->next)
         ;
@@ -5106,7 +5106,7 @@ static HRESULT WINAPI ITypeInfo_fnGetVarDesc( ITypeInfo2 *iface, UINT index,
         LPVARDESC  *ppVarDesc)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    int i;
+    UINT i;
     const TLBVarDesc *pVDesc;
 
     TRACE("(%p) index %d\n", This, index);
@@ -5198,7 +5198,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
 	HREFTYPE  *pRefType)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    int i;
+    UINT i;
     HRESULT hr = S_OK;
     const TLBImplType *pImpl = This->impltypelist;
 
@@ -5261,7 +5261,7 @@ static HRESULT WINAPI ITypeInfo_fnGetImplTypeFlags( ITypeInfo2 *iface,
         UINT index, INT  *pImplTypeFlags)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    int i;
+    UINT i;
     TLBImplType *pImpl;
 
     TRACE("(%p) index %d\n", This, index);
@@ -5287,7 +5287,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
     const TLBFuncDesc *pFDesc;
     const TLBVarDesc *pVDesc;
     HRESULT ret=S_OK;
-    int i;
+    UINT i;
 
     TRACE("(%p) Name %s cNames %d\n", This, debugstr_w(*rgszNames),
             cNames);
@@ -5663,7 +5663,8 @@ DispCallFunc(
     void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VARTYPE vtReturn, UINT cActuals,
     VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult)
 {
-    int i, argsize, argspos;
+    int argsize, argspos;
+    UINT i;
     DWORD *args;
     HRESULT hres;
 
@@ -5677,7 +5678,7 @@ DispCallFunc(
 
     for (i=0;i<cActuals;i++)
     {
-        TRACE("arg %d: type %d, size %d\n",i,prgvt[i],_dispargsize(prgvt[i]));
+        TRACE("arg %u: type %d, size %d\n",i,prgvt[i],_dispargsize(prgvt[i]));
         dump_Variant(prgpvarg[i]);
         argsize += _dispargsize(prgvt[i]);
     }
@@ -5693,7 +5694,7 @@ DispCallFunc(
     for (i=0;i<cActuals;i++)
     {
         VARIANT *arg = prgpvarg[i];
-        TRACE("Storing arg %d (%d as %d)\n",i,V_VT(arg),prgvt[i]);
+        TRACE("Storing arg %u (%d as %d)\n",i,V_VT(arg),prgvt[i]);
         if (prgvt[i] == VT_VARIANT)
             memcpy(&args[argspos], arg, _dispargsize(prgvt[i]) * sizeof(DWORD));
         else
@@ -6802,7 +6803,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncCustData(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData=NULL;
     TLBFuncDesc * pFDesc;
-    int i;
+    UINT i;
     for(i=0, pFDesc=This->funclist; i!=index && pFDesc; i++,
             pFDesc=pFDesc->next);
 
@@ -6834,7 +6835,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetParamCustData(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData=NULL;
     TLBFuncDesc * pFDesc;
-    int i;
+    UINT i;
 
     for(i=0, pFDesc=This->funclist; i!=indexFunc && pFDesc; i++,pFDesc=pFDesc->next);
 
@@ -6867,7 +6868,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetVarCustData(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData=NULL;
     TLBVarDesc * pVDesc;
-    int i;
+    UINT i;
 
     for(i=0, pVDesc=This->varlist; i!=index && pVDesc; i++, pVDesc=pVDesc->next);
 
@@ -6903,7 +6904,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetImplTypeCustData(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData=NULL;
     TLBImplType * pRDesc;
-    int i;
+    UINT i;
 
     for(i=0, pRDesc=This->impltypelist; i!=index && pRDesc; i++, pRDesc=pRDesc->next);
 
@@ -7030,7 +7031,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllFuncCustData(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData;
     TLBFuncDesc * pFDesc;
-    int i;
+    UINT i;
     TRACE("(%p) index %d\n", This, index);
     for(i=0, pFDesc=This->funclist; i!=index && pFDesc; i++,
             pFDesc=pFDesc->next)
@@ -7066,7 +7067,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllParamCustData( ITypeInfo2 * iface,
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData=NULL;
     TLBFuncDesc * pFDesc;
-    int i;
+    UINT i;
     TRACE("(%p) index %d\n", This, indexFunc);
     for(i=0, pFDesc=This->funclist; i!=indexFunc && pFDesc; i++,
             pFDesc=pFDesc->next)
@@ -7103,7 +7104,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllVarCustData( ITypeInfo2 * iface,
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData;
     TLBVarDesc * pVDesc;
-    int i;
+    UINT i;
     TRACE("(%p) index %d\n", This, index);
     for(i=0, pVDesc=This->varlist; i!=index && pVDesc; i++,
             pVDesc=pVDesc->next)
@@ -7141,7 +7142,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData;
     TLBImplType * pRDesc;
-    int i;
+    UINT i;
     TRACE("(%p) index %d\n", This, index);
     for(i=0, pRDesc=This->impltypelist; i!=index && pRDesc; i++,
             pRDesc=pRDesc->next)
@@ -7231,7 +7232,7 @@ HRESULT WINAPI CreateDispTypeInfo(
 {
     ITypeInfoImpl *pTIClass, *pTIIface;
     ITypeLibImpl *pTypeLibImpl;
-    int param, func;
+    unsigned int param, func;
     TLBFuncDesc **ppFuncDesc;
     TLBRefType *ref;
 

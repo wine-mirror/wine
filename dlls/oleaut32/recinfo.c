@@ -412,8 +412,7 @@ static HRESULT WINAPI IRecordInfoImpl_GetFieldNames(IRecordInfo *iface, ULONG *p
                                                 BSTR *rgBstrNames)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    ULONG n = This->n_vars;
-    int i;
+    ULONG n = This->n_vars, i;
 
     TRACE("(%p)->(%p %p)\n", This, pcNames, rgBstrNames);
 
