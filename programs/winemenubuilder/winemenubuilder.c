@@ -6,6 +6,7 @@
  * Copyright 2003 Mike McCormack for CodeWeavers
  * Copyright 2004 Dmitry Timoshkov
  * Copyright 2005 Bill Medland
+ * Copyright 2008 Damjan Jovanovic
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -168,6 +169,9 @@ MAKE_FUNCPTR(png_write_end);
 MAKE_FUNCPTR(png_write_info);
 MAKE_FUNCPTR(png_write_row);
 #undef MAKE_FUNCPTR
+
+static char *xdg_config_dir;
+static char *xdg_data_dir;
 
 static void *load_libpng(void)
 {
@@ -665,60 +669,77 @@ static unsigned short crc16(const char* string)
     return crc;
 }
 
+static char* heap_printf(const char *format, ...)
+{
+    va_list args;
+    int size = 4096;
+    char *buffer;
+    int n;
+
+    va_start(args, format);
+    while (1)
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        if (buffer == NULL)
+            break;
+        n = vsnprintf(buffer, size, format, args);
+        if (n == -1)
+            size *= 2;
+        else if (n >= size)
+            size = n + 1;
+        else
+            break;
+        HeapFree(GetProcessHeap(), 0, buffer);
+    }
+    va_end(args);
+    return buffer;
+}
+
+static BOOL create_directories(char *directory)
+{
+    BOOL ret = TRUE;
+    int i;
+
+    for (i = 0; directory[i]; i++)
+    {
+        if (i > 0 && directory[i] == '/')
+        {
+            directory[i] = 0;
+            mkdir(directory, 0777);
+            directory[i] = '/';
+        }
+    }
+    if (mkdir(directory, 0777) && errno != EEXIST)
+       ret = FALSE;
+
+    return ret;
+}
+
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
 static char *extract_icon( LPCWSTR path, int index, BOOL bWait )
 {
     unsigned short crc;
-    char *iconsdir, *ico_path, *ico_name, *xpm_path;
+    char *iconsdir = NULL, *ico_path = NULL, *ico_name, *xpm_path = NULL;
     char* s;
-    HKEY hkey;
     int n;
 
     /* Where should we save the icon? */
     WINE_TRACE("path=[%s] index=%d\n", wine_dbgstr_w(path), index);
-    iconsdir=NULL;  /* Default is no icon */
-    /* @@ Wine registry key: HKCU\Software\Wine\WineMenuBuilder */
-    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\WineMenuBuilder", &hkey ))
+    iconsdir = heap_printf("%s/icons", xdg_data_dir);
+    if (iconsdir)
     {
-        static const WCHAR IconsDirW[] = {'I','c','o','n','s','D','i','r',0};
-        LPWSTR iconsdirW;
-        DWORD size = 0;
-
-        if (!RegQueryValueExW(hkey, IconsDirW, 0, NULL, NULL, &size))
+        if (mkdir(iconsdir, 0777) && errno != EEXIST)
         {
-            iconsdirW = HeapAlloc(GetProcessHeap(), 0, size);
-            RegQueryValueExW(hkey, IconsDirW, 0, NULL, (LPBYTE)iconsdirW, &size);
-
-            if (!(iconsdir = wine_get_unix_file_name(iconsdirW)))
-            {
-                int n = WideCharToMultiByte(CP_UNIXCP, 0, iconsdirW, -1, NULL, 0, NULL, NULL);
-                iconsdir = HeapAlloc(GetProcessHeap(), 0, n);
-                WideCharToMultiByte(CP_UNIXCP, 0, iconsdirW, -1, iconsdir, n, NULL, NULL);
-            }
-            HeapFree(GetProcessHeap(), 0, iconsdirW);
+            WINE_WARN("couldn't make icons directory %s\n", wine_dbgstr_a(iconsdir));
+            goto end;
         }
-        RegCloseKey( hkey );
     }
-
-    if (!iconsdir)
+    else
     {
-        WCHAR path[MAX_PATH];
-        if (GetTempPathW(MAX_PATH, path))
-            iconsdir = wine_get_unix_file_name(path);
-        if (!iconsdir)
-        {
-            WINE_TRACE("no IconsDir\n");
-            return NULL;  /* No icon created */
-        }
+        WINE_TRACE("no icon created\n");
+        return NULL;
     }
     
-    if (!*iconsdir)
-    {
-        WINE_TRACE("icon generation disabled\n");
-        HeapFree(GetProcessHeap(), 0, iconsdir);
-        return NULL;  /* No icon created */
-    }
-
     /* Determine the icon base name */
     n = WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL);
     ico_path = HeapAlloc(GetProcessHeap(), 0, n);
@@ -1364,6 +1385,35 @@ static CHAR *next_token( LPSTR *p )
     return token;
 }
 
+static BOOL init_xdg(void)
+{
+    if (getenv("XDG_CONFIG_HOME"))
+        xdg_config_dir = heap_printf("%s/menus/applications-merged", getenv("XDG_CONFIG_HOME"));
+    else
+        xdg_config_dir = heap_printf("%s/.config/menus/applications-merged", getenv("HOME"));
+    if (xdg_config_dir)
+    {
+        if (getenv("XDG_DATA_HOME"))
+            xdg_data_dir = heap_printf("%s", getenv("XDG_DATA_HOME"));
+        else
+            xdg_data_dir = heap_printf("%s/.local/share", getenv("HOME"));
+        if (xdg_data_dir)
+        {
+            char *buffer;
+            create_directories(xdg_data_dir);
+            buffer = heap_printf("%s/desktop-directories", xdg_data_dir);
+            if (buffer)
+            {
+                mkdir(buffer, 0777);
+                HeapFree(GetProcessHeap(), 0, buffer);
+            }
+            return TRUE;
+        }
+        HeapFree(GetProcessHeap(), 0, xdg_config_dir);
+    }
+    return FALSE;
+}
+
 /***********************************************************************
  *
  *           WinMain
@@ -1373,6 +1423,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     LPSTR token = NULL, p;
     BOOL bWait = FALSE;
     int ret = 0;
+
+    init_xdg();
 
     for( p = cmdline; p && *p; )
     {

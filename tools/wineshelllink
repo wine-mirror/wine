@@ -93,7 +93,7 @@ StartupWMClass=Wine
 EOF
     [ -z "$descr"   ] || echo "Comment=$descr"
     [ -z "$workdir" ] || echo "Path=$workdir"
-    [ -z "$xpmicon" ] || echo "Icon=$xpmicon"
+    [ -z "$icon" ] || echo "Icon=$icon"
 }
 
 directory_entry()
@@ -108,21 +108,6 @@ EOF
     else
         echo "Name=$1"
         echo "Icon=folder"
-    fi
-}
-
-# copy the icon file to a specified dir and set xpmicon to the resulting path
-copy_icon()
-{
-    if [ -f "$icon" ]
-    then
-        xpmicon=`basename "$icon"`
-        xpmicon=${xpmicon%.*}
-
-        mkdir -p "$1"
-        cp "$icon" "$1"
-    else
-        xpmicon=""
     fi
 }
 
@@ -206,8 +191,6 @@ write_menu_file()
     mv -f $tmpfile "$xdg_config_dir/$menu.menu"
 }
 
-
-copy_icon "$xdg_data_dir/icons"
 
 linkname=`basename "$link"`
 
