@@ -106,8 +106,16 @@ HRESULT vdecl_convert_fvf(
     if (has_blend && (num_blends > 0)) {
         if (((fvf & D3DFVF_XYZB5) == D3DFVF_XYZB2) && (fvf & D3DFVF_LASTBETA_D3DCOLOR))
             elements[idx].Type = D3DDECLTYPE_D3DCOLOR;
-        else
-            elements[idx].Type = D3DDECLTYPE_FLOAT1 + num_blends - 1;
+        else {
+            switch(num_blends) {
+                case 1: elements[idx].Type = D3DDECLTYPE_FLOAT1; break;
+                case 2: elements[idx].Type = D3DDECLTYPE_FLOAT2; break;
+                case 3: elements[idx].Type = D3DDECLTYPE_FLOAT3; break;
+                case 4: elements[idx].Type = D3DDECLTYPE_FLOAT4; break;
+                default:
+                    ERR("Unexpected amount of blend values: %u\n", num_blends);
+            }
+        }
         elements[idx].Usage = D3DDECLUSAGE_BLENDWEIGHT;
         elements[idx].UsageIndex = 0;
         idx++;
