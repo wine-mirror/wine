@@ -289,7 +289,7 @@ static HRESULT WINAPI xmlnodemap_removeNamedItem(
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
     xmlChar *element_name;
-    xmlAttrPtr attr, attr_copy;
+    xmlAttrPtr attr;
     xmlNodePtr node;
 
     TRACE("%p %s %p\n", This, debugstr_w(name), namedItem );
@@ -314,13 +314,15 @@ static HRESULT WINAPI xmlnodemap_removeNamedItem(
 
     if ( namedItem )
     {
-        attr_copy = xmlCopyProp( NULL, attr );
-        attr_copy->doc = node->doc;
-        /* The cast here is OK, xmlFreeNode handles xmlAttrPtr pointers */
-        xmldoc_add_orphan(attr_copy->doc, (xmlNodePtr) attr_copy);
-        *namedItem = create_node( (xmlNodePtr) attr_copy );
+        xmlUnlinkNode( (xmlNodePtr) attr );
+        xmldoc_add_orphan( attr->doc, (xmlNodePtr) attr );
+        *namedItem = create_node( (xmlNodePtr) attr );
     }
-    xmlRemoveProp( attr );
+    else
+    {
+        if( xmlRemoveProp( attr ) == -1 )
+            ERR("xmlRemoveProp failed\n");
+    }
 
     return S_OK;
 }
