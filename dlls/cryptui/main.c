@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -220,7 +222,7 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
     switch (pImportSrc->dwSubjectChoice)
     {
     case CRYPTUI_WIZ_IMPORT_SUBJECT_FILE:
-        if (!(cert = make_cert_from_file(pImportSrc->pwszFileName)))
+        if (!(cert = make_cert_from_file(pImportSrc->u.pwszFileName)))
         {
             WARN("unable to create certificate context\n");
             return FALSE;
@@ -229,7 +231,7 @@ BOOL WINAPI CryptUIWizImport(DWORD dwFlags, HWND hwndParent, LPCWSTR pwszWizardT
             freeCert = TRUE;
         break;
     case CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT:
-        cert = pImportSrc->pCertContext;
+        cert = pImportSrc->u.pCertContext;
         if (!cert)
         {
             SetLastError(E_INVALIDARG);
