@@ -25,6 +25,9 @@
 #define expect(expected, got) ok ( expected == got, "Expected %d, got %d\n", expected, got)
 #define expect_hr(expected, got) ok ( expected == got, "Expected %08x, got %08x\n", expected, got)
 
+static HRESULT (WINAPI *pAssocQueryStringA)(ASSOCF,ASSOCSTR,LPCSTR,LPCSTR,LPSTR,LPDWORD) = NULL;
+static HRESULT (WINAPI *pAssocQueryStringW)(ASSOCF,ASSOCSTR,LPCWSTR,LPCWSTR,LPWSTR,LPDWORD) = NULL;
+
 /* Every version of Windows with IE should have this association? */
 static const WCHAR dotHtml[] = { '.','h','t','m','l',0 };
 static const WCHAR badBad[] = { 'b','a','d','b','a','d',0 };
@@ -37,45 +40,51 @@ static void test_getstring_bad(void)
     HRESULT hr;
     DWORD len;
 
-    hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, NULL, open, NULL, &len);
+    if (!pAssocQueryStringW)
+    {
+        win_skip("AssocQueryStringW() is missing\n");
+        return;
+    }
+
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, NULL, open, NULL, &len);
     expect_hr(E_INVALIDARG, hr);
-    hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, badBad, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, badBad, open, NULL, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08x\n", hr);
-    hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotBad, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotBad, open, NULL, &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08x\n", hr);
-    hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, invalid, NULL,
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, invalid, NULL,
                            &len);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08x\n", hr);
-    hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, NULL);
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, NULL);
     ok(hr == E_UNEXPECTED ||
        hr == E_INVALIDARG, /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08x\n", hr);
 
-    hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, NULL, open, NULL, &len);
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, NULL, open, NULL, &len);
     expect_hr(E_INVALIDARG, hr);
-    hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, badBad, open, NULL,
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, badBad, open, NULL,
                            &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08x\n", hr);
-    hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotBad, open, NULL,
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotBad, open, NULL,
                            &len);
     ok(hr == E_FAIL ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
        "Unexpected result : %08x\n", hr);
-    hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, invalid, NULL,
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, invalid, NULL,
                            &len);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
        hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) || /* W2K/Vista/W2K8 */
        hr == E_FAIL, /* Win9x/WinMe/NT4 */
        "Unexpected result : %08x\n", hr);
-    hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
                            NULL);
     ok(hr == E_UNEXPECTED ||
        hr == E_INVALIDARG, /* Win9x/WinMe/NT4/W2K/Vista/W2K8 */
@@ -89,7 +98,13 @@ static void test_getstring_basic(void)
     WCHAR * executableName;
     DWORD len, len2, slen;
 
-    hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, &len);
+    if (!pAssocQueryStringW)
+    {
+        win_skip("AssocQueryStringW() is missing\n");
+        return;
+    }
+
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open, NULL, &len);
     expect_hr(S_FALSE, hr);
     if (hr != S_FALSE)
     {
@@ -106,14 +121,14 @@ static void test_getstring_basic(void)
     }
 
     len2 = len;
-    hr = AssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open,
+    hr = pAssocQueryStringW(0, ASSOCSTR_EXECUTABLE, dotHtml, open,
                            executableName, &len2);
     expect_hr(S_OK, hr);
     slen = lstrlenW(executableName) + 1;
     expect(len, len2);
     expect(len, slen);
 
-    hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
                            &len);
     expect_hr(S_FALSE, hr);
     if (hr != S_FALSE)
@@ -133,7 +148,7 @@ static void test_getstring_basic(void)
     }
 
     len2 = len;
-    hr = AssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open,
+    hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open,
                            friendlyName, &len2);
     expect_hr(S_OK, hr);
     slen = lstrlenW(friendlyName) + 1;
@@ -167,6 +182,12 @@ static void test_getstring_no_extra(void)
     CHAR buf[MAX_PATH];
     DWORD len = MAX_PATH;
 
+    if (!pAssocQueryStringA)
+    {
+        win_skip("AssocQueryStringA() is missing\n");
+        return;
+    }
+
     buf[0] = '\0';
     ret = RegCreateKeyA(HKEY_CLASSES_ROOT, dotWinetest, &hkey);
     if (ret != ERROR_SUCCESS) {
@@ -197,7 +218,7 @@ static void test_getstring_no_extra(void)
         goto cleanup;
     }
 
-    hr = AssocQueryStringA(0, ASSOCSTR_EXECUTABLE, dotWinetest, NULL, buf, &len);
+    hr = pAssocQueryStringA(0, ASSOCSTR_EXECUTABLE, dotWinetest, NULL, buf, &len);
     expect_hr(S_OK, hr);
     ok(strstr(buf, action) != NULL,
         "got '%s' (Expected result to include 'notepad.exe')\n", buf);
@@ -210,6 +231,11 @@ cleanup:
 
 START_TEST(assoc)
 {
+    HMODULE hshlwapi;
+    hshlwapi = GetModuleHandleA("shlwapi.dll");
+    pAssocQueryStringA = (void*)GetProcAddress(hshlwapi, "AssocQueryStringA");
+    pAssocQueryStringW = (void*)GetProcAddress(hshlwapi, "AssocQueryStringW");
+
     test_getstring_bad();
     test_getstring_basic();
     test_getstring_no_extra();
