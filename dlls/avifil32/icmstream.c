@@ -393,7 +393,7 @@ static HRESULT WINAPI ICMStream_fnReadFormat(IAVIStream *iface, LONG pos,
       return hr;
   }
 
-  lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(This->pg, pos);
+  lpbi = AVIStreamGetFrame(This->pg, pos);
   if (lpbi == NULL)
     return AVIERR_MEMORY;
 
@@ -611,7 +611,7 @@ static HRESULT WINAPI ICMStream_fnRead(IAVIStream *iface, LONG start,
   /* compress or decompress? */
   if (This->hic == NULL) {
     /* decompress */
-    lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(This->pg, start);
+    lpbi = AVIStreamGetFrame(This->pg, start);
     if (lpbi == NULL)
       return AVIERR_MEMORY;
 
@@ -634,7 +634,7 @@ static HRESULT WINAPI ICMStream_fnRead(IAVIStream *iface, LONG start,
     while (start > This->lCurrent) {
       HRESULT hr;
 
-      lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(This->pg, ++This->lCurrent);
+      lpbi = AVIStreamGetFrame(This->pg, ++This->lCurrent);
       if (lpbi == NULL) {
 	AVIFILE_Reset(This);
 	return AVIERR_MEMORY;
@@ -902,7 +902,7 @@ static HRESULT AVIFILE_OpenGetFrame(IAVIStreamImpl *This)
   assert(This->lpbiOutput == NULL);
 
   /* get input format */
-  lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(This->pg, This->sInfo.dwStart);
+  lpbi = AVIStreamGetFrame(This->pg, This->sInfo.dwStart);
   if (lpbi == NULL)
     return AVIERR_MEMORY;
 

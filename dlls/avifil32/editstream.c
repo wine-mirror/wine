@@ -935,7 +935,7 @@ static HRESULT WINAPI IEditAVIStream_fnReadFormat(IAVIStream*iface,LONG pos,
   if (! This->bDecompress)
     return IAVIStream_ReadFormat(stream, n, format, fmtsize);
 
-  lp = (LPBITMAPINFOHEADER)AVIFILE_ReadFrame(This, stream, n);
+  lp = AVIFILE_ReadFrame(This, stream, n);
   if (lp == NULL)
     return AVIERR_ERROR;
   if (lp->biBitCount <= 8) {
