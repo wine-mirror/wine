@@ -34,7 +34,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(LPDIRECT3DDEVICE9EX if
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DDevice9)) {
-        IUnknown_AddRef(iface);
+        IDirect3DDevice9Ex_AddRef(iface);
         *ppobj = This;
         TRACE("Returning IDirect3DDevice9 interface at %p\n", *ppobj);
         return S_OK;
@@ -514,7 +514,7 @@ static HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX if
         FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
     } else {
-        IUnknown_AddRef(iface);
+        IDirect3DDevice9Ex_AddRef(iface);
         object->parentDevice = iface;
         TRACE("(%p) : Created surface %p\n", This, object);
         *ppSurface = (LPDIRECT3DSURFACE9) object;
@@ -1721,7 +1721,7 @@ HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT 
     if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
         d3dSurface->container = pSuperior;
-        IUnknown_Release(d3dSurface->parentDevice);
+        IDirect3DDevice9Ex_Release(d3dSurface->parentDevice);
         d3dSurface->parentDevice = NULL;
         d3dSurface->forwardReference = pSuperior;
     } else {
