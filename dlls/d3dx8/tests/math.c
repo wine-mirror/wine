@@ -33,7 +33,7 @@ static inline BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2)
     {
         for (j = 0; j < 4; ++j)
         {
-            if (fabs(U(m1)->m[i][j] - U(m2)->m[i][j]) > admitted_error)
+            if (fabs(U(*m1).m[i][j] - U(*m2).m[i][j]) > admitted_error)
                 return FALSE;
         }
     }
@@ -47,14 +47,14 @@ do { \
     const D3DXMATRIX *__m2 = (gotmat); \
     ok(compare_matrix(__m1, __m2), "Expected matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n)\n\n" \
             "Got matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f)\n", \
-            U(__m1)->m[0][0], U(__m1)->m[0][1], U(__m1)->m[0][2], U(__m1)->m[0][3], \
-            U(__m1)->m[1][0], U(__m1)->m[1][1], U(__m1)->m[1][2], U(__m1)->m[1][3], \
-            U(__m1)->m[2][0], U(__m1)->m[2][1], U(__m1)->m[2][2], U(__m1)->m[2][3], \
-            U(__m1)->m[3][0], U(__m1)->m[3][1], U(__m1)->m[3][2], U(__m1)->m[3][3], \
-            U(__m2)->m[0][0], U(__m2)->m[0][1], U(__m2)->m[0][2], U(__m2)->m[0][3], \
-            U(__m2)->m[1][0], U(__m2)->m[1][1], U(__m2)->m[1][2], U(__m2)->m[1][3], \
-            U(__m2)->m[2][0], U(__m2)->m[2][1], U(__m2)->m[2][2], U(__m2)->m[2][3], \
-            U(__m2)->m[3][0], U(__m2)->m[3][1], U(__m2)->m[3][2], U(__m2)->m[3][3]); \
+            U(*__m1).m[0][0], U(*__m1).m[0][1], U(*__m1).m[0][2], U(*__m1).m[0][3], \
+            U(*__m1).m[1][0], U(*__m1).m[1][1], U(*__m1).m[1][2], U(*__m1).m[1][3], \
+            U(*__m1).m[2][0], U(*__m1).m[2][1], U(*__m1).m[2][2], U(*__m1).m[2][3], \
+            U(*__m1).m[3][0], U(*__m1).m[3][1], U(*__m1).m[3][2], U(*__m1).m[3][3], \
+            U(*__m2).m[0][0], U(*__m2).m[0][1], U(*__m2).m[0][2], U(*__m2).m[0][3], \
+            U(*__m2).m[1][0], U(*__m2).m[1][1], U(*__m2).m[1][2], U(*__m2).m[1][3], \
+            U(*__m2).m[2][0], U(*__m2).m[2][1], U(*__m2).m[2][2], U(*__m2).m[2][3], \
+            U(*__m2).m[3][0], U(*__m2).m[3][1], U(*__m2).m[3][2], U(*__m2).m[3][3]); \
 } while(0)
 
 #define expect_plane(expectedplane,gotplane) ok((fabs(expectedplane.a-gotplane.a)<admitted_error)&&(fabs(expectedplane.b-gotplane.b)<admitted_error)&&(fabs(expectedplane.c-gotplane.c)<admitted_error)&&(fabs(expectedplane.d-gotplane.d)<admitted_error),"Expected Plane= (%f, %f, %f, %f)\n , Got Plane= (%f, %f, %f, %f)\n", expectedplane.a, expectedplane.b, expectedplane.c, expectedplane.d, gotplane.a, gotplane.b, gotplane.c, gotplane.d);
