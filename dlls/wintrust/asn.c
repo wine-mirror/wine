@@ -936,6 +936,15 @@ BOOL WINAPI WVTAsn1CatNameValueEncode(DWORD dwCertEncodingType,
     return ret;
 }
 
+BOOL WINAPI WVTAsn1SpcFinancialCriteriaInfoEncode(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    FIXME("(0x%08x, %s, %p, %p, %p): stub\n", dwCertEncodingType,
+     debugstr_a(lpszStructType), pvStructInfo, pbEncoded, pcbEncoded);
+    return FALSE;
+}
+
 /* Gets the number of length bytes from the given (leading) length byte */
 #define GET_LEN_BYTES(b) ((b) <= 0x7f ? 1 : 1 + ((b) & 0x7f))
 
