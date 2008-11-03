@@ -2186,11 +2186,75 @@ BOOL WINAPI WVTAsn1CatNameValueDecode(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnDecodeBool(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+
+    if (cbEncoded < 3)
+    {
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        return FALSE;
+    }
+    if (GET_LEN_BYTES(pbEncoded[1]) > 1)
+    {
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        return FALSE;
+    }
+    if (pbEncoded[1] > 1)
+    {
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        return FALSE;
+    }
+    if (!pvStructInfo)
+    {
+        *pcbStructInfo = sizeof(BOOL);
+        ret = TRUE;
+    }
+    else if (*pcbStructInfo < sizeof(BOOL))
+    {
+        *pcbStructInfo = sizeof(BOOL);
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        *pcbStructInfo = sizeof(BOOL);
+        *(BOOL *)pvStructInfo = pbEncoded[2] ? TRUE : FALSE;
+        ret = TRUE;
+    }
+    TRACE("returning %d (%08x)\n", ret, GetLastError());
+    return ret;
+}
+
 BOOL WINAPI WVTAsn1SpcFinancialCriteriaInfoDecode(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    FIXME("(%p, %d, %08x, %p, %d): stub\n", pbEncoded, cbEncoded, dwFlags,
+    BOOL ret = FALSE;
+
+    TRACE("(%p, %d, %08x, %p, %d)\n", pbEncoded, cbEncoded, dwFlags,
      pvStructInfo, *pcbStructInfo);
-    return FALSE;
+
+    __TRY
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { ASN_BOOL, offsetof(SPC_FINANCIAL_CRITERIA, fFinancialInfoAvailable),
+           CRYPT_AsnDecodeBool, sizeof(BOOL), FALSE, FALSE, 0, 0 },
+         { ASN_BOOL, offsetof(SPC_FINANCIAL_CRITERIA, fMeetsCriteria),
+           CRYPT_AsnDecodeBool, sizeof(BOOL), FALSE, FALSE, 0, 0 },
+        };
+
+        ret = CRYPT_AsnDecodeSequence(dwCertEncodingType, items,
+         sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
+         pvStructInfo, pcbStructInfo, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    TRACE("returning %d\n", ret);
+    return ret;
 }

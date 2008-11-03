@@ -79,7 +79,6 @@ static void test_decodeSPCFinancialCriteria(void)
 
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_FINANCIAL_CRITERIA_STRUCT,
      falseCriteria, sizeof(falseCriteria), 0, NULL, &criteria, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -88,7 +87,6 @@ static void test_decodeSPCFinancialCriteria(void)
     }
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_FINANCIAL_CRITERIA_STRUCT,
      trueCriteria, sizeof(trueCriteria), 0, NULL, &criteria, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
