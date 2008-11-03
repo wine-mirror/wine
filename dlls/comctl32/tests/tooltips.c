@@ -213,7 +213,7 @@ static void test_customdraw(void) {
        ok(lResult, "Adding the tool to the tooltip failed\n");
 
        /* Make tooltip appear quickly */
-       SendMessage(hwndTip, TTM_SETDELAYTIME, (WPARAM)TTDT_INITIAL, (LPARAM)MAKELONG(1,0));
+       SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(1,0));
 
        /* Put cursor inside window, tooltip will appear immediately */
        SetCursorPos(100, 100);

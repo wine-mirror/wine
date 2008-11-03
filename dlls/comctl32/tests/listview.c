@@ -78,9 +78,9 @@ static const struct message redraw_listview_seq[] = {
 };
 
 static const struct message listview_icon_spacing_seq[] = {
-    { LVM_SETICONSPACING, sent|lparam, 0, (LPARAM) MAKELONG(20, 30) },
-    { LVM_SETICONSPACING, sent|lparam, 0, (LPARAM) MAKELONG(25, 35) },
-    { LVM_SETICONSPACING, sent|lparam, 0, (LPARAM) MAKELONG(-1, -1) },
+    { LVM_SETICONSPACING, sent|lparam, 0, MAKELPARAM(20, 30) },
+    { LVM_SETICONSPACING, sent|lparam, 0, MAKELPARAM(25, 35) },
+    { LVM_SETICONSPACING, sent|lparam, 0, MAKELPARAM(-1, -1) },
     { 0 }
 };
 
@@ -866,10 +866,10 @@ static void test_icon_spacing(void)
     expect(NFR_ANSI, r);
 
     /* reset the icon spacing to defaults */
-    SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1, -1));
+    SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(-1, -1));
 
     /* now we can request what the defaults are */
-    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1, -1));
+    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(-1, -1));
     w = LOWORD(r);
     h = HIWORD(r);
 
@@ -877,15 +877,15 @@ static void test_icon_spacing(void)
 
     trace("test icon spacing\n");
 
-    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(20, 30));
+    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(20, 30));
     ok(r == MAKELONG(w, h) ||
        broken(r == MAKELONG(w, w)), /* win98 */
        "Expected %d, got %d\n", MAKELONG(w, h), r);
 
-    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(25, 35));
+    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(25, 35));
     expect(MAKELONG(20,30), r);
 
-    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, (LPARAM) MAKELONG(-1,-1));
+    r = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(-1,-1));
     expect(MAKELONG(25,35), r);
 
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_icon_spacing_seq, "test icon spacing seq", FALSE);
