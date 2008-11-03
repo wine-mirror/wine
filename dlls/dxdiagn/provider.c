@@ -270,14 +270,14 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   static const WCHAR ullUsedPageFile[]   = {'u','l','l','U','s','e','d','P','a','g','e','F','i','l','e',0};
   static const WCHAR ullAvailPageFile[]  = {'u','l','l','A','v','a','i','l','P','a','g','e','F','i','l','e',0};
   /*static const WCHAR szDxDiagVersion[] = {'s','z','D','x','D','i','a','g','V','e','r','s','i','o','n',0};*/
-  /*szWindowsDir*/
-  /*szWindowsDir*/
+  static const WCHAR szWindowsDir[] = {'s','z','W','i','n','d','o','w','s','D','i','r',0};
   static const WCHAR dwOSMajorVersion[] = {'d','w','O','S','M','a','j','o','r','V','e','r','s','i','o','n',0};
   static const WCHAR dwOSMinorVersion[] = {'d','w','O','S','M','i','n','o','r','V','e','r','s','i','o','n',0};
   static const WCHAR dwOSBuildNumber[] = {'d','w','O','S','B','u','i','l','d','N','u','m','b','e','r',0};
   static const WCHAR dwOSPlatformID[] = {'d','w','O','S','P','l','a','t','f','o','r','m','I','D',0};
   MEMORYSTATUSEX msex;
   OSVERSIONINFOW info;
+  WCHAR buffer[MAX_PATH];
 
   add_prop_ui4(pSubCont, dwDirectXVersionMajor, 9);
   add_prop_ui4(pSubCont, dwDirectXVersionMinor, 0);
@@ -298,6 +298,9 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   add_prop_ui4(pSubCont, dwOSMinorVersion, info.dwMinorVersion);
   add_prop_ui4(pSubCont, dwOSBuildNumber,  info.dwBuildNumber);
   add_prop_ui4(pSubCont, dwOSPlatformID,   info.dwPlatformId);
+
+  GetWindowsDirectoryW(buffer, MAX_PATH);
+  add_prop_str(pSubCont, szWindowsDir, buffer);
 
   return S_OK;
 }
