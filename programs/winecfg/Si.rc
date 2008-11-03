@@ -126,6 +126,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Preslikave &pogonov ",IDC_STATIC,8,4,244,240
+    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Dodaj ...",IDC_BUTTON_ADD,15,98,37,14
@@ -133,7 +134,7 @@ BEGIN
     PUSHBUTTON      "&Samozaznaj ...",IDC_BUTTON_AUTODETECT,187,98,59,14
 
     /* editing drive details */
-    LTEXT           "&Pot:",IDC_STATIC,15,123,20,9
+    LTEXT           "&Pot:",IDC_STATIC_PATH,15,123,20,9
     EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Brskaj ...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
 

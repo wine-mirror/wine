@@ -675,7 +675,22 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         case WM_INITDIALOG:
             init_listview_columns(dialog);
-            load_drives();
+            if (!load_drives())
+            {
+                ShowWindow( GetDlgItem( dialog, IDC_STATIC_MOUNTMGR_ERROR ), SW_SHOW );
+                ShowWindow( GetDlgItem( dialog, IDC_LIST_DRIVES ), SW_HIDE );
+                ShowWindow( GetDlgItem( dialog, IDC_BUTTON_ADD ), SW_HIDE );
+                ShowWindow( GetDlgItem( dialog, IDC_BUTTON_REMOVE ), SW_HIDE );
+                ShowWindow( GetDlgItem( dialog, IDC_BUTTON_AUTODETECT ), SW_HIDE );
+                ShowWindow( GetDlgItem( dialog, IDC_STATIC_PATH ), SW_HIDE );
+                ShowWindow( GetDlgItem( dialog, IDC_EDIT_PATH ), SW_HIDE );
+                ShowWindow( GetDlgItem( dialog, IDC_BUTTON_BROWSE_PATH ), SW_HIDE );
+                ShowWindow( GetDlgItem( dialog, IDC_COMBO_TYPE ), SW_HIDE );
+                ShowWindow( GetDlgItem( dialog, IDC_BUTTON_SHOW_HIDE_ADVANCED ), SW_HIDE );
+                set_advanced(dialog);
+                break;
+            }
+            ShowWindow( GetDlgItem( dialog, IDC_STATIC_MOUNTMGR_ERROR ), SW_HIDE );
             load_drive_options(dialog);
 
             if (!drives[2].in_use)

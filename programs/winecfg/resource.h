@@ -90,6 +90,7 @@
 #define IDS_SELECT_EXECUTABLE           8020
 
 /* drive editing */
+#define IDC_STATIC_MOUNTMGR_ERROR       1041
 #define IDC_LIST_DRIVES                 1042
 #define IDC_BUTTON_ADD                  1043
 #define IDC_BUTTON_REMOVE               1044
@@ -112,6 +113,7 @@
 #define IDC_EDIT_LABEL                  1060
 #define IDC_EDIT_PATH                   1061
 #define IDC_EDIT_SERIAL                 1062
+#define IDC_STATIC_PATH                 1063
 #define IDC_COMBO_TYPE                  1065
 #define IDC_EDIT_DEVICE                 1066
 #define IDC_BUTTON_BROWSE_PATH          1067
