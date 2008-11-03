@@ -1296,8 +1296,7 @@ static void shader_glsl_color_correction(SHADER_OPCODE_ARG* arg) {
     switch(fmt) {
         case WINED3DFMT_V8U8:
         case WINED3DFMT_V16U16:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER) ||
-              (GL_SUPPORT(ATI_ENVMAP_BUMPMAP) && fmt == WINED3DFMT_V8U8)) {
+            if(GL_SUPPORT(NV_TEXTURE_SHADER) && fmt == WINED3DFMT_V8U8) {
                 /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-) */
                 mask = shader_glsl_add_dst_param(arg, arg->dst, WINED3DSP_WRITEMASK_2, &dst_param);
                 mask_size = shader_glsl_get_write_mask_size(mask);

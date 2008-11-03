@@ -56,7 +56,6 @@ static const struct {
     {"GL_ATI_separate_stencil",             ATI_SEPARATE_STENCIL,           0                           },
     {"GL_ATI_texture_env_combine3",         ATI_TEXTURE_ENV_COMBINE3,       0                           },
     {"GL_ATI_texture_mirror_once",          ATI_TEXTURE_MIRROR_ONCE,        0                           },
-    {"GL_ATI_envmap_bumpmap",               ATI_ENVMAP_BUMPMAP,             0                           },
     {"GL_ATI_fragment_shader",              ATI_FRAGMENT_SHADER,            0                           },
     {"GL_ATI_texture_compression_3dc",      ATI_TEXTURE_COMPRESSION_3DC,    0                           },
 
@@ -837,10 +836,6 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             gl_info->supported[NV_TEXGEN_REFLECTION] = TRUE;
         }
         if (gl_info->supported[NV_TEXTURE_SHADER2]) {
-            /* GL_ATI_envmap_bumpmap won't play nice with texture shaders, so disable it
-             * Won't occur in any real world situation though
-             */
-            gl_info->supported[ATI_ENVMAP_BUMPMAP] = FALSE;
             if(gl_info->supported[NV_REGISTER_COMBINERS]) {
                 /* Also disable ATI_FRAGMENT_SHADER if register combiners and texture_shader2
                  * are supported. The nv extensions provide the same functionality as the
@@ -2915,7 +2910,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             break;
 
             case WINED3DFMT_V8U8:
-            if(!GL_SUPPORT(NV_TEXTURE_SHADER) || !GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
+            if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
                 TRACE_(d3d_caps)("[FAILED] - No converted formats on volumes\n");
                 return WINED3DERR_NOTAVAILABLE;
             }

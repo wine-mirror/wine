@@ -372,16 +372,12 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
      * an application that needs this because it causes performance problems due to
      * shader recompiling in some games.
      */
-    if(!GL_SUPPORT(ATI_ENVMAP_BUMPMAP) && !GL_SUPPORT(NV_TEXTURE_SHADER2)) {
+    if(!GL_SUPPORT(NV_TEXTURE_SHADER2)) {
         /* signed -> unsigned fixup */
         dst = getFmtIdx(WINED3DFMT_V8U8);
         gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
         dst = getFmtIdx(WINED3DFMT_V16U16);
         gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-    } else if(GL_SUPPORT(ATI_ENVMAP_BUMPMAP)) {
-        /* signed -> unsigned fixup */
-        dst = getFmtIdx(WINED3DFMT_V16U16);
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V16U16;
     } else {
         /* Blue = 1.0 fixup, disabled for now */
         if(0) {

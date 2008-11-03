@@ -659,8 +659,7 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, const c
     switch(fmt) {
         case WINED3DFMT_V8U8:
         case WINED3DFMT_V16U16:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER) ||
-              (GL_SUPPORT(ATI_ENVMAP_BUMPMAP) && fmt == WINED3DFMT_V8U8)) {
+            if(GL_SUPPORT(NV_TEXTURE_SHADER) && fmt == WINED3DFMT_V8U8) {
                 if(0) {
                     /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-)
                      * disabled until an application that needs it is found because it causes unneeded

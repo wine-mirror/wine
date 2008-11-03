@@ -2843,23 +2843,6 @@ typedef void (WINE_GLAPI * PGLFNFINISHOBJECTAPPLEPROC) (GLenum, GLuint);
 #define GL_APPLE_client_storage 1
 #define GL_UNPACK_CLIENT_STORAGE_APPLE      0x85B2
 #endif
-/* GL_ATI_envmap_bumpmap */
-#ifndef GL_ATI_envmap_bumpmap
-#define GL_ATI_envmap_bumpmap 1
-#define GL_BUMP_ROT_MATRIX_ATI              0x8775
-#define GL_BUMP_ROT_MATRIX_SIZE_ATI         0x8776
-#define GL_BUMP_NUM_TEX_UNITS_ATI           0x8777
-#define GL_BUMP_TEX_UNITS_ATI               0x8778
-#define GL_DUDV_ATI                         0x8779
-#define GL_DU8DV8_ATI                       0x877A
-#define GL_BUMP_ENVMAP_ATI                  0x877B
-#define GL_BUMP_TARGET_ATI                  0x877C
-#endif
-typedef void (WINE_GLAPI * PGLFNTEXBUMPPARAMETERIVATIPROC) (GLenum, GLint *);
-typedef void (WINE_GLAPI * PGLFNTEXBUMPPARAMETERFVATIPROC) (GLenum, GLfloat *);
-typedef void (WINE_GLAPI * PGLFNGETTEXBUMPPARAMETERIVATIPROC) (GLenum, GLint *);
-typedef void (WINE_GLAPI * PGLFNGETTEXBUMPPARAMETERFVATIPROC) (GLenum, GLfloat *);
-
 /* GLX_SGI_video_sync */
 typedef int (WINE_GLAPI * PGLXFNGETVIDEOSYNCSGIPROC) (unsigned int *);
 typedef int (WINE_GLAPI * PGLXFNWAITVIDEOSYNCSGIPROC) (int, int, unsigned int *);
@@ -3389,7 +3372,6 @@ typedef enum _GL_SupportedExt {
   ATI_TEXTURE_ENV_COMBINE3,
   ATI_TEXTURE_MIRROR_ONCE,
   EXT_VERTEX_SHADER,
-  ATI_ENVMAP_BUMPMAP,
   ATI_FRAGMENT_SHADER,
   ATI_TEXTURE_COMPRESSION_3DC,
   /* APPLE */
@@ -3691,11 +3673,6 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNISFENCEAPPLEPROC,                              glIsFenceAPPLE,                             APPLE_FENCE,            NULL )\
     USE_GL_FUNC(PGLFNTESTOBJECTAPPLEPROC,                           glTestObjectAPPLE,                          APPLE_FENCE,            NULL )\
     USE_GL_FUNC(PGLFNFINISHOBJECTAPPLEPROC,                         glFinishObjectAPPLE,                        APPLE_FENCE,            NULL )\
-    /* GL_ATI_envmap_bumpmap */ \
-    USE_GL_FUNC(PGLFNTEXBUMPPARAMETERIVATIPROC,                     glTexBumpParameterivATI,                    ATI_ENVMAP_BUMPMAP,     NULL )\
-    USE_GL_FUNC(PGLFNTEXBUMPPARAMETERFVATIPROC,                     glTexBumpParameterfvATI,                    ATI_ENVMAP_BUMPMAP,     NULL )\
-    USE_GL_FUNC(PGLFNGETTEXBUMPPARAMETERIVATIPROC,                  glGetTexBumpParameterivATI,                 ATI_ENVMAP_BUMPMAP,     NULL )\
-    USE_GL_FUNC(PGLFNGETTEXBUMPPARAMETERFVATIPROC,                  glGetTexBumpParameterfvATI,                 ATI_ENVMAP_BUMPMAP,     NULL )\
     /* GLX_SGI_video_sync */ \
     USE_GL_FUNC(PGLXFNGETVIDEOSYNCSGIPROC,                          glXGetVideoSyncSGI,                         SGI_VIDEO_SYNC,         NULL )\
     USE_GL_FUNC(PGLXFNWAITVIDEOSYNCSGIPROC,                         glXWaitVideoSyncSGI,                        SGI_VIDEO_SYNC,         NULL )\
