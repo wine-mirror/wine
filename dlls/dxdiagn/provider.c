@@ -203,8 +203,8 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
   UINT uiLength;
   VS_FIXEDFILEINFO* pFileInfo;
 
-  FIXME("(%p,%s)\n", pSubCont, debugstr_w(szFileName));
-  
+  TRACE("(%p,%s)\n", pSubCont, debugstr_w(szFileName));
+
   lstrcpyW(szFile, szFilePath);
   lstrcatW(szFile, szSlashSep);
   lstrcatW(szFile, szFileName);
@@ -598,13 +598,13 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	IEnumMoniker* pEnum = NULL;
 	IMoniker* pMoniker = NULL;
         hr = ICreateDevEnum_CreateClassEnumerator(pCreateDevEnum, &clsidCat, &pEnum, 0);        
-        FIXME("\tClassEnumerator for clsid(%s) pEnum(%p)\n", debugstr_guid(&clsidCat), pEnum);
+        TRACE("\tClassEnumerator for clsid(%s) pEnum(%p)\n", debugstr_guid(&clsidCat), pEnum);
         if (FAILED(hr) || pEnum == NULL) {
           goto class_enum_failed;
         }
         while (NULL != pEnum && S_OK == IEnumMoniker_Next(pEnum, 1, &pMoniker, NULL)) {          
 	  IPropertyBag* pPropFilterBag = NULL;
-          FIXME("\tIEnumMoniker_Next(%p, 1, %p)\n", pEnum, pMoniker);
+          TRACE("\tIEnumMoniker_Next(%p, 1, %p)\n", pEnum, pMoniker);
 	  hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (void**) &pPropFilterBag);
 	  if (SUCCEEDED(hr)) {
 	    LPBYTE pData = NULL;
@@ -619,11 +619,11 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 
 	    hr = IPropertyBag_Read(pPropFilterBag, wszFriendlyName, &v, 0);
 	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szName, &v);
-	    FIXME("\tName:%s\n", debugstr_w(V_BSTR(&v)));
+            TRACE("\tName:%s\n", debugstr_w(V_BSTR(&v)));
 	    VariantClear(&v);
 
 	    hr = IPropertyBag_Read(pPropFilterBag, wszClsidName, &v, 0);
-	    FIXME("\tClsid:%s\n", debugstr_w(V_BSTR(&v)));
+            TRACE("\tClsid:%s\n", debugstr_w(V_BSTR(&v)));
 	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szClsidFilter, &v);
 	    VariantClear(&v);
 
