@@ -403,7 +403,7 @@ static HRESULT AVISplitter_first_request(LPVOID iface)
 {
     AVISplitterImpl *This = (AVISplitterImpl *)iface;
     HRESULT hr = S_OK;
-    int x;
+    DWORD x;
     IMediaSample *sample = NULL;
     BOOL have_sample = FALSE;
 
@@ -519,7 +519,8 @@ static HRESULT AVISplitter_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **index, LONGLONG qwOffset, DWORD cb)
 {
     AVISTDINDEX *pIndex;
-    int x, rest;
+    DWORD x;
+    int rest;
 
     *index = NULL;
     if (cb < sizeof(AVISTDINDEX))
@@ -575,7 +576,7 @@ static HRESULT AVISplitter_ProcessOldIndex(AVISplitterImpl *This)
     ULONGLONG mov_pos = BYTES_FROM_MEDIATIME(This->CurrentChunkOffset) - sizeof(DWORD);
     AVIOLDINDEX *pAviOldIndex = This->oldindex;
     int relative = -1;
-    int x;
+    DWORD x;
 
     for (x = 0; x < pAviOldIndex->cb / sizeof(pAviOldIndex->aIndex[0]); ++x)
     {
@@ -771,7 +772,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
         case ckidAVISUPERINDEX:
         {
             const AVISUPERINDEX *pIndex = (const AVISUPERINDEX *)pChunk;
-            int x;
+            DWORD x;
             long rest = pIndex->cb - sizeof(AVISUPERINDEX) + sizeof(RIFFCHUNK) + sizeof(pIndex->aIndex[0]) * ANYSIZE_ARRAY;
 
             if (pIndex->cb < sizeof(AVISUPERINDEX) - sizeof(RIFFCHUNK))
@@ -886,7 +887,7 @@ static HRESULT AVISplitter_ProcessODML(AVISplitterImpl * This, const BYTE * pDat
 
 static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
 {
-    int x;
+    unsigned int x;
 
     if (This->oldindex)
     {
@@ -910,7 +911,7 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
                 FIXME("Stream id %s ignored\n", debugstr_an((char*)&This->oldindex->aIndex[n].dwChunkId, 4));
                 continue;
             }
-            if (This->streams[streamId].pos == ~0)
+            if (This->streams[streamId].pos == ~0U)
                 This->streams[streamId].pos = n;
 
             if (This->streams[streamId].streamheader.dwSampleSize)
@@ -943,7 +944,7 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
     for (x = 0; x < This->Parser.cStreams; ++x)
     {
         StreamData *stream = This->streams + x;
-        int y;
+        DWORD y;
         DWORD64 frames = 0;
 
         stream->seek = 1;
@@ -956,7 +957,7 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
             {
                 if (stream->streamheader.dwSampleSize)
                 {
-                    int z;
+                    DWORD z;
 
                     for (z = 0; z < stream->stdindex[y]->nEntriesInUse; ++z)
                     {
@@ -999,7 +1000,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin,
     BYTE * pBuffer;
     RIFFCHUNK * pCurrentChunk;
     LONGLONG total, avail;
-    int x;
+    ULONG x;
     DWORD indexes;
 
     AVISplitterImpl * pAviSplit = (AVISplitterImpl *)This->pin.pinInfo.pFilter;
@@ -1213,7 +1214,7 @@ static HRESULT AVISplitter_Flush(LPVOID iface)
 static HRESULT AVISplitter_Disconnect(LPVOID iface)
 {
     AVISplitterImpl *This = iface;
-    int x;
+    ULONG x;
 
     /* TODO: Remove other memory that's allocated during connect */
     CoTaskMemFree(This->oldindex);
@@ -1221,7 +1222,7 @@ static HRESULT AVISplitter_Disconnect(LPVOID iface)
 
     for (x = 0; x < This->Parser.cStreams; ++x)
     {
-        int i;
+        DWORD i;
 
         StreamData *stream = &This->streams[x];
 
