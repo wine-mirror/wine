@@ -275,6 +275,7 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   static const WCHAR dwOSMinorVersion[] = {'d','w','O','S','M','i','n','o','r','V','e','r','s','i','o','n',0};
   static const WCHAR dwOSBuildNumber[] = {'d','w','O','S','B','u','i','l','d','N','u','m','b','e','r',0};
   static const WCHAR dwOSPlatformID[] = {'d','w','O','S','P','l','a','t','f','o','r','m','I','D',0};
+  static const WCHAR szCSDVersion[] = {'s','z','C','S','D','V','e','r','s','i','o','n',0};
   MEMORYSTATUSEX msex;
   OSVERSIONINFOW info;
   WCHAR buffer[MAX_PATH];
@@ -298,6 +299,7 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   add_prop_ui4(pSubCont, dwOSMinorVersion, info.dwMinorVersion);
   add_prop_ui4(pSubCont, dwOSBuildNumber,  info.dwBuildNumber);
   add_prop_ui4(pSubCont, dwOSPlatformID,   info.dwPlatformId);
+  add_prop_str(pSubCont, szCSDVersion,     info.szCSDVersion);
 
   GetWindowsDirectoryW(buffer, MAX_PATH);
   add_prop_str(pSubCont, szWindowsDir, buffer);
