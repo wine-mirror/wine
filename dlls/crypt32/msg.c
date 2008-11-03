@@ -1341,7 +1341,7 @@ static HCRYPTMSG CSignedEncodeMsg_Open(DWORD dwFlags,
         return NULL;
     }
     if (info->cbSize == sizeof(CMSG_SIGNED_ENCODE_INFO_WITH_CMS) &&
-     info->rgAttrCertEncoded)
+     info->cAttrCertEncoded)
     {
         FIXME("CMSG_SIGNED_ENCODE_INFO with CMS fields unsupported\n");
         return NULL;
