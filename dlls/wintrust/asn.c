@@ -2185,3 +2185,12 @@ BOOL WINAPI WVTAsn1CatNameValueDecode(DWORD dwCertEncodingType,
     TRACE("returning %d\n", ret);
     return ret;
 }
+
+BOOL WINAPI WVTAsn1SpcFinancialCriteriaInfoDecode(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    FIXME("(%p, %d, %08x, %p, %d): stub\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, *pcbStructInfo);
+    return FALSE;
+}

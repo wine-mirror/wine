@@ -90,7 +90,7 @@
 @ stdcall WVTAsn1CatMemberInfoEncode(long str ptr ptr ptr)
 @ stdcall WVTAsn1CatNameValueDecode(long str ptr long long ptr ptr)
 @ stdcall WVTAsn1CatNameValueEncode(long str ptr ptr ptr)
-@ stub WVTAsn1SpcFinancialCriteriaInfoDecode
+@ stdcall WVTAsn1SpcFinancialCriteriaInfoDecode(long str ptr long long ptr ptr)
 @ stdcall WVTAsn1SpcFinancialCriteriaInfoEncode(long str ptr ptr ptr)
 @ stdcall WVTAsn1SpcIndirectDataContentDecode(long str ptr long long ptr ptr)
 @ stdcall WVTAsn1SpcIndirectDataContentEncode(long str ptr ptr ptr)
