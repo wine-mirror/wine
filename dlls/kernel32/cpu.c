@@ -367,6 +367,7 @@ VOID WINAPI GetSystemInfo(
 {
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;
+        SYSTEM_BASIC_INFORMATION sbi;
 
 	TRACE("si=0x%p\n", si);
 	if (cache) {
@@ -375,19 +376,19 @@ VOID WINAPI GetSystemInfo(
 	}
 	memset(PF,0,sizeof(PF));
 
+        NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL );
+        cachedsi.dwPageSize                  = sbi.uPageSize;
+        cachedsi.lpMinimumApplicationAddress = sbi.pLowestUserAddress;
+        cachedsi.lpMaximumApplicationAddress = sbi.pMmHighestUserAddress;
+        cachedsi.dwNumberOfProcessors        = sbi.uKeActiveProcessors;
+        cachedsi.dwAllocationGranularity     = sbi.uAllocationGranularity;
+
 	/* choose sensible defaults ...
 	 * FIXME: perhaps overridable with precompiler flags?
 	 */
 	cachedsi.u.s.wProcessorArchitecture     = PROCESSOR_ARCHITECTURE_INTEL;
-	cachedsi.dwPageSize 			= getpagesize();
-
-	/* FIXME: the two entries below should be computed somehow... */
-	cachedsi.lpMinimumApplicationAddress	= (void *)0x00010000;
-	cachedsi.lpMaximumApplicationAddress	= (void *)0x7FFEFFFF;
 	cachedsi.dwActiveProcessorMask		= 0;
-	cachedsi.dwNumberOfProcessors		= 1;
 	cachedsi.dwProcessorType		= PROCESSOR_INTEL_PENTIUM;
-	cachedsi.dwAllocationGranularity	= 0x10000;
 	cachedsi.wProcessorLevel		= 5; /* 586 */
 	cachedsi.wProcessorRevision		= 0;
 

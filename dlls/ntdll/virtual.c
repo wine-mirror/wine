@@ -1234,6 +1234,25 @@ void virtual_init_threading(void)
 
 
 /***********************************************************************
+ *           virtual_get_system_info
+ */
+void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
+{
+    info->dwUnknown1 = 0;
+    info->uKeMaximumIncrement = 0;  /* FIXME */
+    info->uPageSize = page_size;
+    info->uMmLowestPhysicalPage = 1;
+    info->uMmHighestPhysicalPage = 0x7fffffff / page_size;
+    info->uMmNumberOfPhysicalPages = info->uMmHighestPhysicalPage - info->uMmLowestPhysicalPage;
+    info->uAllocationGranularity = get_mask(0) + 1;
+    info->pLowestUserAddress = (void *)0x10000;
+    info->pMmHighestUserAddress = (char *)user_space_limit - 1;
+    info->uKeActiveProcessors = NtCurrentTeb()->Peb->NumberOfProcessors;
+    info->bKeNumberProcessors = info->uKeActiveProcessors;
+}
+
+
+/***********************************************************************
  *           virtual_alloc_thread_stack
  */
 NTSTATUS virtual_alloc_thread_stack( void *base, SIZE_T size )

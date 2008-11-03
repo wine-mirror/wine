@@ -708,17 +708,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         {
             SYSTEM_BASIC_INFORMATION sbi;
 
-            sbi.dwUnknown1 = 0;
-            sbi.uKeMaximumIncrement = 0;
-            sbi.uPageSize = 1024; /* FIXME */
-            sbi.uMmNumberOfPhysicalPages = 12345; /* FIXME */
-            sbi.uMmLowestPhysicalPage = 0; /* FIXME */
-            sbi.uMmHighestPhysicalPage = 12345; /* FIXME */
-            sbi.uAllocationGranularity = 65536; /* FIXME */
-            sbi.pLowestUserAddress = 0; /* FIXME */
-            sbi.pMmHighestUserAddress = (void*)~0; /* FIXME */
-            sbi.uKeActiveProcessors = 1; /* FIXME */
-            sbi.bKeNumberProcessors = 1; /* FIXME */
+            virtual_get_system_info( &sbi );
             len = sizeof(sbi);
 
             if ( Length == len)
