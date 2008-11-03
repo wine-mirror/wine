@@ -65,6 +65,38 @@ static void test_encodeSPCFinancialCriteria(void)
     }
 }
 
+static void test_decodeSPCFinancialCriteria(void)
+{
+    BOOL ret;
+    SPC_FINANCIAL_CRITERIA criteria;
+    DWORD size = sizeof(criteria);
+
+    if (!pCryptDecodeObjectEx)
+    {
+        skip("CryptDecodeObjectEx() is not available. Skipping the decodeSPCFinancialCriteria tests\n");
+        return;
+    }
+
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_FINANCIAL_CRITERIA_STRUCT,
+     falseCriteria, sizeof(falseCriteria), 0, NULL, &criteria, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!criteria.fFinancialInfoAvailable, "expected FALSE\n");
+        ok(!criteria.fMeetsCriteria, "expected FALSE\n");
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_FINANCIAL_CRITERIA_STRUCT,
+     trueCriteria, sizeof(trueCriteria), 0, NULL, &criteria, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(criteria.fFinancialInfoAvailable, "expected TRUE\n");
+        ok(criteria.fMeetsCriteria, "expected TRUE\n");
+    }
+}
+
 static WCHAR url[] = { 'h','t','t','p',':','/','/','w','i','n','e','h','q','.',
  'o','r','g',0 };
 static const WCHAR nihongoURL[] = { 'h','t','t','p',':','/','/',0x226f,
@@ -763,6 +795,7 @@ START_TEST(asn)
     pCryptEncodeObjectEx = (void*)GetProcAddress(hCrypt32, "CryptEncodeObjectEx");
 
     test_encodeSPCFinancialCriteria();
+    test_decodeSPCFinancialCriteria();
     test_encodeSPCLink();
     test_decodeSPCLink();
     test_encodeSPCPEImage();
