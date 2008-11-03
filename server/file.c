@@ -75,7 +75,6 @@ static void file_destroy( struct object *obj );
 static int file_get_poll_events( struct fd *fd );
 static void file_flush( struct fd *fd, struct event **event );
 static enum server_fd_type file_get_fd_type( struct fd *fd );
-static mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner );
 
 static const struct object_ops file_ops =
 {
@@ -291,14 +290,9 @@ static unsigned int generic_file_map_access( unsigned int access )
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
-static struct security_descriptor *file_get_sd( struct object *obj )
+struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID *group )
 {
-    struct file *file = (struct file *)obj;
-    struct stat st;
-    int unix_fd;
     struct security_descriptor *sd;
-    const SID *user;
-    const SID *group;
     size_t dacl_size;
     ACE_HEADER *current_ace;
     ACCESS_ALLOWED_ACE *aaa;
@@ -308,34 +302,17 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     const SID *world_sid = security_world_sid;
     const SID *local_system_sid = security_local_system_sid;
 
-    assert( obj->ops == &file_ops );
-
-    unix_fd = get_file_unix_fd( file );
-
-    if (unix_fd == -1) return obj->sd;
-
-    if (fstat( unix_fd, &st ) == -1)
-        return obj->sd;
-
-    /* mode and uid the same? if so, no need to re-generate security descriptor */
-    if (obj->sd && (st.st_mode & (S_IRWXU|S_IRWXO)) == (file->mode & (S_IRWXU|S_IRWXO)) &&
-        (st.st_uid == file->uid))
-        return obj->sd;
-
-    user = security_unix_uid_to_sid( st.st_uid );
-    group = token_get_primary_group( current->process->token );
-
     dacl_size = sizeof(ACL) + FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
         FIELD_OFFSET(SID, SubAuthority[local_system_sid->SubAuthorityCount]);
-    if (st.st_mode & S_IRWXU)
+    if (mode & S_IRWXU)
         dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
             FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
-    if ((!(st.st_mode & S_IRUSR) && (st.st_mode & (S_IRGRP|S_IROTH))) ||
-        (!(st.st_mode & S_IWUSR) && (st.st_mode & (S_IWGRP|S_IWOTH))) ||
-        (!(st.st_mode & S_IXUSR) && (st.st_mode & (S_IXGRP|S_IXOTH))))
+    if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
+        (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||
+        (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH))))
         dacl_size += FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) +
             FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
-    if (st.st_mode & S_IRWXO)
+    if (mode & S_IRWXO)
         dacl_size += FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
             FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]);
 
@@ -343,7 +320,7 @@ static struct security_descriptor *file_get_sd( struct object *obj )
                     FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) +
                     FIELD_OFFSET(SID, SubAuthority[group->SubAuthorityCount]) +
                     dacl_size );
-    if (!sd) return obj->sd;
+    if (!sd) return sd;
 
     sd->control = SE_DACL_PRESENT;
     sd->owner_len = FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
@@ -361,10 +338,10 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     dacl->AclRevision = ACL_REVISION;
     dacl->Sbz1 = 0;
     dacl->AclSize = dacl_size;
-    dacl->AceCount = 1 + (st.st_mode & S_IRWXU ? 1 : 0) + (st.st_mode & S_IRWXO ? 1 : 0);
-    if ((!(st.st_mode & S_IRUSR) && (st.st_mode & (S_IRGRP|S_IROTH))) ||
-        (!(st.st_mode & S_IWUSR) && (st.st_mode & (S_IWGRP|S_IWOTH))) ||
-        (!(st.st_mode & S_IXUSR) && (st.st_mode & (S_IXGRP|S_IXOTH))))
+    dacl->AceCount = 1 + (mode & S_IRWXU ? 1 : 0) + (mode & S_IRWXO ? 1 : 0);
+    if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
+        (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||
+        (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH))))
         dacl->AceCount++;
     dacl->Sbz2 = 0;
 
@@ -379,7 +356,7 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     sid = (SID *)&aaa->SidStart;
     memcpy( sid, local_system_sid, FIELD_OFFSET(SID, SubAuthority[local_system_sid->SubAuthorityCount]) );
 
-    if (st.st_mode & S_IRWXU)
+    if (mode & S_IRWXU)
     {
         /* appropriate access rights for the user */
         aaa = (ACCESS_ALLOWED_ACE *)ace_next( current_ace );
@@ -389,18 +366,18 @@ static struct security_descriptor *file_get_sd( struct object *obj )
         aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
                               FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
         aaa->Mask = WRITE_DAC | WRITE_OWNER;
-        if (st.st_mode & S_IRUSR)
+        if (mode & S_IRUSR)
             aaa->Mask |= FILE_GENERIC_READ;
-        if (st.st_mode & S_IWUSR)
+        if (mode & S_IWUSR)
             aaa->Mask |= FILE_GENERIC_WRITE | DELETE;
-        if (st.st_mode & S_IXUSR)
+        if (mode & S_IXUSR)
             aaa->Mask |= FILE_GENERIC_EXECUTE;
         sid = (SID *)&aaa->SidStart;
         memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
     }
-    if ((!(st.st_mode & S_IRUSR) && (st.st_mode & (S_IRGRP|S_IROTH))) ||
-        (!(st.st_mode & S_IWUSR) && (st.st_mode & (S_IWGRP|S_IWOTH))) ||
-        (!(st.st_mode & S_IXUSR) && (st.st_mode & (S_IXGRP|S_IXOTH))))
+    if ((!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH))) ||
+        (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IWOTH))) ||
+        (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH))))
     {
         /* deny just in case the user is a member of the group */
         ACCESS_DENIED_ACE *ada = (ACCESS_DENIED_ACE *)ace_next( current_ace );
@@ -410,17 +387,17 @@ static struct security_descriptor *file_get_sd( struct object *obj )
         ada->Header.AceSize = FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) +
                               FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
         ada->Mask = 0;
-        if (!(st.st_mode & S_IRUSR) && (st.st_mode & (S_IRGRP|S_IROTH)))
+        if (!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH)))
             ada->Mask |= FILE_GENERIC_READ;
-        if (!(st.st_mode & S_IWUSR) && (st.st_mode & (S_IWGRP|S_IROTH)))
+        if (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IROTH)))
             ada->Mask |= FILE_GENERIC_WRITE | DELETE;
-        if (!(st.st_mode & S_IXUSR) && (st.st_mode & (S_IXGRP|S_IXOTH)))
+        if (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH)))
             ada->Mask |= FILE_GENERIC_EXECUTE;
         ada->Mask &= ~STANDARD_RIGHTS_ALL; /* never deny standard rights */
         sid = (SID *)&ada->SidStart;
         memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
     }
-    if (st.st_mode & S_IRWXO)
+    if (mode & S_IRWXO)
     {
         /* appropriate access rights for Everyone */
         aaa = (ACCESS_ALLOWED_ACE *)ace_next( current_ace );
@@ -430,15 +407,42 @@ static struct security_descriptor *file_get_sd( struct object *obj )
         aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
                              FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]);
         aaa->Mask = 0;
-        if (st.st_mode & S_IROTH)
+        if (mode & S_IROTH)
             aaa->Mask |= FILE_GENERIC_READ;
-        if (st.st_mode & S_IWOTH)
+        if (mode & S_IWOTH)
             aaa->Mask |= FILE_GENERIC_WRITE | DELETE;
-        if (st.st_mode & S_IXOTH)
+        if (mode & S_IXOTH)
             aaa->Mask |= FILE_GENERIC_EXECUTE;
         sid = (SID *)&aaa->SidStart;
         memcpy( sid, world_sid, FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]) );
     }
+
+    return sd;
+}
+
+static struct security_descriptor *file_get_sd( struct object *obj )
+{
+    struct file *file = (struct file *)obj;
+    struct stat st;
+    int unix_fd;
+    struct security_descriptor *sd;
+
+    assert( obj->ops == &file_ops );
+
+    unix_fd = get_file_unix_fd( file );
+
+    if (unix_fd == -1 || fstat( unix_fd, &st ) == -1)
+        return obj->sd;
+
+    /* mode and uid the same? if so, no need to re-generate security descriptor */
+    if (obj->sd && (st.st_mode & (S_IRWXU|S_IRWXO)) == (file->mode & (S_IRWXU|S_IRWXO)) &&
+        (st.st_uid == file->uid))
+        return obj->sd;
+
+    sd = mode_to_sd( st.st_mode,
+                     security_unix_uid_to_sid( st.st_uid ),
+                     token_get_primary_group( current->process->token ));
+    if (!sd) return obj->sd;
 
     file->mode = st.st_mode;
     file->uid = st.st_uid;
@@ -447,7 +451,7 @@ static struct security_descriptor *file_get_sd( struct object *obj )
     return sd;
 }
 
-static mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
+mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
 {
     mode_t new_mode = 0;
     mode_t denied_mode = 0;

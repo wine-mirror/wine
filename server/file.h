@@ -112,6 +112,8 @@ extern struct file *grab_file_unless_removable( struct file *file );
 extern int grow_file( struct file *file, file_pos_t size );
 extern struct file *create_temp_file( int access );
 extern void file_set_error(void);
+extern struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID *group );
+extern mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner );
 
 /* change notification functions */
 
