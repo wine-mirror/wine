@@ -422,7 +422,7 @@ DWORD WINAPI CreateIpForwardEntry(PMIB_IPFORWARDROW pRoute)
 {
   FIXME("(pRoute %p): stub\n", pRoute);
   /* could use SIOCADDRT, not sure I want to */
-  return (DWORD) 0;
+  return 0;
 }
 
 
@@ -445,7 +445,7 @@ DWORD WINAPI CreateIpNetEntry(PMIB_IPNETROW pArpEntry)
 {
   FIXME("(pArpEntry %p)\n", pArpEntry);
   /* could use SIOCSARP on systems that support it, not sure I want to */
-  return (DWORD) 0;
+  return 0;
 }
 
 
@@ -515,7 +515,7 @@ DWORD WINAPI DeleteIpForwardEntry(PMIB_IPFORWARDROW pRoute)
 {
   FIXME("(pRoute %p): stub\n", pRoute);
   /* could use SIOCDELRT, not sure I want to */
-  return (DWORD) 0;
+  return 0;
 }
 
 
@@ -538,7 +538,7 @@ DWORD WINAPI DeleteIpNetEntry(PMIB_IPNETROW pArpEntry)
 {
   FIXME("(pArpEntry %p): stub\n", pArpEntry);
   /* could use SIOCDARP on systems that support it, not sure I want to */
-  return (DWORD) 0;
+  return 0;
 }
 
 
@@ -1933,7 +1933,7 @@ DWORD WINAPI SetIpForwardEntry(PMIB_IPFORWARDROW pRoute)
   /* this is to add a route entry, how's it distinguishable from
      CreateIpForwardEntry?
      could use SIOCADDRT, not sure I want to */
-  return (DWORD) 0;
+  return 0;
 }
 
 
@@ -1956,7 +1956,7 @@ DWORD WINAPI SetIpNetEntry(PMIB_IPNETROW pArpEntry)
 {
   FIXME("(pArpEntry %p): stub\n", pArpEntry);
   /* same as CreateIpNetEntry here, could use SIOCSARP, not sure I want to */
-  return (DWORD) 0;
+  return 0;
 }
 
 
@@ -1978,7 +1978,7 @@ DWORD WINAPI SetIpNetEntry(PMIB_IPNETROW pArpEntry)
 DWORD WINAPI SetIpStatistics(PMIB_IPSTATS pIpStats)
 {
   FIXME("(pIpStats %p): stub\n", pIpStats);
-  return (DWORD) 0;
+  return 0;
 }
 
 
@@ -2002,7 +2002,7 @@ DWORD WINAPI SetIpTTL(UINT nTTL)
   FIXME("(nTTL %d): stub\n", nTTL);
   /* could echo nTTL > /proc/net/sys/net/ipv4/ip_default_ttl, not sure I
      want to.  Could map EACCESS to ERROR_ACCESS_DENIED, I suppose */
-  return (DWORD) 0;
+  return 0;
 }
 
 
@@ -2024,7 +2024,7 @@ DWORD WINAPI SetIpTTL(UINT nTTL)
 DWORD WINAPI SetTcpEntry(PMIB_TCPROW pTcpRow)
 {
   FIXME("(pTcpRow %p): stub\n", pTcpRow);
-  return (DWORD) 0;
+  return 0;
 }
 
 
