@@ -114,7 +114,7 @@ static void basic_test(void)
         WS_VISIBLE | WS_CLIPCHILDREN | CCS_TOP |
         WS_CHILD | TBSTYLE_LIST,
         100,
-        0, NULL, (UINT)0,
+        0, NULL, 0,
         buttons, sizeof(buttons)/sizeof(buttons[0]),
         0, 0, 20, 16, sizeof(TBBUTTON));
     ok(hToolbar != NULL, "Toolbar creation\n");
@@ -1084,7 +1084,7 @@ static void test_setrows(void)
         WS_VISIBLE | WS_CLIPCHILDREN | WS_CHILD | CCS_NORESIZE | CCS_NOPARENTALIGN
         | CCS_NOMOVEY | CCS_TOP,
         0,
-        0, NULL, (UINT)0,
+        0, NULL, 0,
         buttons, sizeof(buttons)/sizeof(buttons[0]),
         20, 20, 0, 0, sizeof(TBBUTTON));
     ok(hToolbar != NULL, "Toolbar creation\n");

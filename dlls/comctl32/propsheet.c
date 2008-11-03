@@ -3479,8 +3479,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
       if (psInfo->useCallback)
-             (*(psInfo->ppshheader.pfnCallback))(hwnd,
-					      PSCB_INITIALIZED, (LPARAM)0);
+             (*(psInfo->ppshheader.pfnCallback))(hwnd, PSCB_INITIALIZED, 0);
 
       idx = psInfo->active_page;
       psInfo->active_page = -1;

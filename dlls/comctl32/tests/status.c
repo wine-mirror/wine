@@ -347,8 +347,8 @@ static void test_status_control(void)
     expect(TRUE,r);
 
     /* Set the minimum height and get rectangle information again */
-    SendMessage(hWndStatus, SB_SETMINHEIGHT, 50, (LPARAM) 0);
-    r = SendMessage(hWndStatus, WM_SIZE, 0, (LPARAM) 0);
+    SendMessage(hWndStatus, SB_SETMINHEIGHT, 50, 0);
+    r = SendMessage(hWndStatus, WM_SIZE, 0, 0);
     expect(0,r);
     r = SendMessage(hWndStatus, SB_GETRECT, 0, (LPARAM)&rc);
     expect(TRUE,r);

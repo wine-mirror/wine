@@ -304,11 +304,11 @@ static LONG getItem(HWND hdex, int idx, LPSTR textBuffer)
 
 static void addReadDelItem(HWND hdex, HDITEMA *phdiCreate, int maskRead, HDITEMA *phdiRead)
 {
-    ok(SendMessage(hdex, HDM_INSERTITEMA, (WPARAM)0, (LPARAM)phdiCreate)!=-1, "Adding item failed\n");
+    ok(SendMessage(hdex, HDM_INSERTITEMA, 0, (LPARAM)phdiCreate)!=-1, "Adding item failed\n");
     ZeroMemory(phdiRead, sizeof(HDITEMA));
     phdiRead->mask = maskRead;
-    ok(SendMessage(hdex, HDM_GETITEMA, (WPARAM)0, (LPARAM)phdiRead)!=0, "Getting item data failed\n");
-    ok(SendMessage(hdex, HDM_DELETEITEM, (WPARAM)0, (LPARAM)0)!=0, "Deleting item failed\n");
+    ok(SendMessage(hdex, HDM_GETITEMA, 0, (LPARAM)phdiRead)!=0, "Getting item data failed\n");
+    ok(SendMessage(hdex, HDM_DELETEITEM, 0, 0)!=0, "Deleting item failed\n");
 }
 
 static HWND create_header_control (void)
@@ -661,24 +661,24 @@ static void check_mask(void)
     hdi.iOrder = 0;
     hdi.lParam = 17;
     hdi.cchTextMax = 260;
-    ret = SendMessage(hWndHeader, HDM_INSERTITEM, (WPARAM)0, (LPARAM)&hdi);
+    ret = SendMessage(hWndHeader, HDM_INSERTITEM, 0, (LPARAM)&hdi);
     ok(ret == -1, "Creating an item with a zero mask should have failed\n");
-    if (ret != -1) SendMessage(hWndHeader, HDM_DELETEITEM, (WPARAM)0, (LPARAM)0);
+    if (ret != -1) SendMessage(hWndHeader, HDM_DELETEITEM, 0, 0);
 
     /* with a non-zero mask creation will succeed */
     ZeroMemory(&hdi, sizeof(hdi));
     hdi.mask = HDI_LPARAM;
-    ret = SendMessage(hWndHeader, HDM_INSERTITEM, (WPARAM)0, (LPARAM)&hdi);
+    ret = SendMessage(hWndHeader, HDM_INSERTITEM, 0, (LPARAM)&hdi);
     ok(ret != -1, "Adding item with non-zero mask failed\n");
     if (ret != -1)
-        SendMessage(hWndHeader, HDM_DELETEITEM, (WPARAM)0, (LPARAM)0);
+        SendMessage(hWndHeader, HDM_DELETEITEM, 0, 0);
 
     /* in SETITEM if the mask contains a unknown bit, it is ignored */
     ZeroMemory(&hdi, sizeof(hdi));
     hdi.mask = 0x08000000 | HDI_LPARAM | HDI_IMAGE;
     hdi.lParam = 133;
     hdi.iImage = 17;
-    ret = SendMessage(hWndHeader, HDM_INSERTITEM, (WPARAM)0, (LPARAM)&hdi);
+    ret = SendMessage(hWndHeader, HDM_INSERTITEM, 0, (LPARAM)&hdi);
     ok(ret != -1, "Adding item failed\n");
 
     if (ret != -1)
@@ -686,18 +686,18 @@ static void check_mask(void)
         /* check result */
         ZeroMemory(&hdi, sizeof(hdi));
         hdi.mask = HDI_LPARAM | HDI_IMAGE;
-        SendMessage(hWndHeader, HDM_GETITEM, (WPARAM)0, (LPARAM)&hdi);
+        SendMessage(hWndHeader, HDM_GETITEM, 0, (LPARAM)&hdi);
         ok(hdi.lParam == 133, "comctl32 4.0 field not set\n");
         ok(hdi.iImage == 17, "comctl32 >4.0 field not set\n");
 
         /* but in GETITEM if an unknown bit is set, comctl32 uses only version 4.0 fields */
         ZeroMemory(&hdi, sizeof(hdi));
         hdi.mask = 0x08000000 | HDI_LPARAM | HDI_IMAGE;
-        SendMessage(hWndHeader, HDM_GETITEM, (WPARAM)0, (LPARAM)&hdi);
+        SendMessage(hWndHeader, HDM_GETITEM, 0, (LPARAM)&hdi);
         ok(hdi.lParam == 133, "comctl32 4.0 field not read\n");
         ok(hdi.iImage == 0, "comctl32 >4.0 field shouldn't be read\n");
 
-        SendMessage(hWndHeader, HDM_DELETEITEM, (WPARAM)0, (LPARAM)0);
+        SendMessage(hWndHeader, HDM_DELETEITEM, 0, 0);
     }
 }
 

@@ -5177,7 +5177,7 @@ TOOLBAR_SetVersion (HWND hwnd, INT iVersion)
     infoPtr->iVersion = iVersion;
 
     if (infoPtr->iVersion >= 5)
-        TOOLBAR_SetUnicodeFormat(hwnd, (WPARAM)TRUE, (LPARAM)0);
+        TOOLBAR_SetUnicodeFormat(hwnd, TRUE, 0);
 
     return iOldVersion;
 }

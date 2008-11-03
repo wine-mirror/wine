@@ -431,10 +431,9 @@ static void COMBOEX_ReSize (COMBOEX_INFO *infoPtr)
 	cy = max (iinfo.rcImage.bottom - iinfo.rcImage.top, cy);
 	TRACE("upgraded height due to image:  height=%d\n", cy);
     }
-    SendMessageW (infoPtr->hwndSelf, CB_SETITEMHEIGHT, (WPARAM)-1, (LPARAM)cy);
+    SendMessageW (infoPtr->hwndSelf, CB_SETITEMHEIGHT, -1, cy);
     if (infoPtr->hwndCombo) {
-        SendMessageW (infoPtr->hwndCombo, CB_SETITEMHEIGHT,
-		      (WPARAM) 0, (LPARAM) cy);
+        SendMessageW (infoPtr->hwndCombo, CB_SETITEMHEIGHT, 0, cy);
 	if ( !(infoPtr->flags & CBES_EX_NOSIZELIMIT)) {
 	    RECT comboRect;
 	    if (GetWindowRect(infoPtr->hwndCombo, &comboRect)) {
