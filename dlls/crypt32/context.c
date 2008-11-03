@@ -207,7 +207,7 @@ static inline struct list *ContextList_ContextToEntry(struct ContextList *list,
     struct list *ret;
 
     if (context)
-        ret = (struct list *)Context_GetExtra(context, list->contextSize);
+        ret = Context_GetExtra(context, list->contextSize);
     else
         ret = NULL;
     return ret;

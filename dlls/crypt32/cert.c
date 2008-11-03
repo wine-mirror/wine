@@ -88,7 +88,7 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
     {
         BYTE *data = NULL;
 
-        cert = (PCERT_CONTEXT)Context_CreateDataContext(sizeof(CERT_CONTEXT));
+        cert = Context_CreateDataContext(sizeof(CERT_CONTEXT));
         if (!cert)
             goto end;
         data = CryptMemAlloc(cbCertEncoded);
@@ -601,7 +601,7 @@ static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert,
          CERT_KEY_PROV_INFO_PROP_ID, 0, &size);
         if (ret)
         {
-            info = (PCRYPT_KEY_PROV_INFO)HeapAlloc(GetProcessHeap(), 0, size);
+            info = HeapAlloc(GetProcessHeap(), 0, size);
             if (info)
             {
                 ret = CertGetCertificateContextProperty(pCert,
@@ -661,8 +661,7 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
          CERT_KEY_PROV_INFO_PROP_ID, 0, &size);
         if (ret)
         {
-            info = (PCRYPT_KEY_PROV_INFO)HeapAlloc(
-             GetProcessHeap(), 0, size);
+            info = HeapAlloc(GetProcessHeap(), 0, size);
             ret = CertGetCertificateContextProperty(pCert,
              CERT_KEY_PROV_INFO_PROP_ID, info, &size);
             if (ret)

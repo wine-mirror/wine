@@ -156,7 +156,7 @@ static BOOL CRYPT_MemAddCert(PWINECRYPT_CERTSTORE store, void *cert,
 
     TRACE("(%p, %p, %p, %p)\n", store, cert, toReplace, ppStoreContext);
 
-    context = (PCERT_CONTEXT)ContextList_Add(ms->certs, cert, toReplace);
+    context = ContextList_Add(ms->certs, cert, toReplace);
     if (context)
     {
         context->hCertStore = store;
@@ -197,7 +197,7 @@ static BOOL CRYPT_MemAddCrl(PWINECRYPT_CERTSTORE store, void *crl,
 
     TRACE("(%p, %p, %p, %p)\n", store, crl, toReplace, ppStoreContext);
 
-    context = (PCRL_CONTEXT)ContextList_Add(ms->crls, crl, toReplace);
+    context = ContextList_Add(ms->crls, crl, toReplace);
     if (context)
     {
         context->hCertStore = store;
@@ -238,7 +238,7 @@ static BOOL CRYPT_MemAddCtl(PWINECRYPT_CERTSTORE store, void *ctl,
 
     TRACE("(%p, %p, %p, %p)\n", store, ctl, toReplace, ppStoreContext);
 
-    context = (PCTL_CONTEXT)ContextList_Add(ms->ctls, ctl, toReplace);
+    context = ContextList_Add(ms->ctls, ctl, toReplace);
     if (context)
     {
         context->hCertStore = store;
