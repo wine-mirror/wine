@@ -174,7 +174,7 @@ NtQuerySecurityObject(
     PISECURITY_DESCRIPTOR_RELATIVE psd = pSecurityDescriptor;
     NTSTATUS status;
     unsigned int buffer_size = 512;
-    BOOLEAN need_more_memory = FALSE;
+    BOOLEAN need_more_memory;
 
     TRACE("(%p,0x%08x,%p,0x%08x,%p)\n",
 	Object, RequestedInformation, pSecurityDescriptor, Length, ResultLength);
@@ -184,6 +184,8 @@ NtQuerySecurityObject(
         char *buffer = RtlAllocateHeap(GetProcessHeap(), 0, buffer_size);
         if (!buffer)
             return STATUS_NO_MEMORY;
+
+        need_more_memory = FALSE;
 
         SERVER_START_REQ( get_security_object )
         {
