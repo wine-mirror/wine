@@ -172,6 +172,20 @@ static inline HRESULT add_prop_bool( IDxDiagContainer* cont, LPCWSTR prop, BOOL 
     return IDxDiagContainerImpl_AddProp( cont, prop, &var );
 }
 
+static inline HRESULT add_prop_ull_as_str( IDxDiagContainer* cont, LPCWSTR prop, ULONGLONG data )
+{
+    HRESULT hr;
+    VARIANT var;
+
+    V_VT( &var ) = VT_UI8;
+    V_UI8( &var ) = data;
+    VariantChangeType( &var, &var, 0, VT_BSTR );
+    hr = IDxDiagContainerImpl_AddProp( cont, prop, &var );
+    VariantClear( &var );
+
+    return hr;
+}
+
 /**
  * @param szFilePath: usually GetSystemDirectoryW
  * @param szFileName: name of the dll without path
@@ -253,6 +267,8 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   static const WCHAR szDirectXVersionLongEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','o','n','g','E','n','g','l','i','s','h',0};
   static const WCHAR szDirectXVersionLongEnglish_v[] = {'=',' ','"','D','i','r','e','c','t','X',' ','9','.','0','c',' ','(','4','.','0','9','.','0','0','0','0','.','0','9','0','4',')',0};
   static const WCHAR ullPhysicalMemory[] = {'u','l','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
+  static const WCHAR ullUsedPageFile[]   = {'u','l','l','U','s','e','d','P','a','g','e','F','i','l','e',0};
+  static const WCHAR ullAvailPageFile[]  = {'u','l','l','A','v','a','i','l','P','a','g','e','F','i','l','e',0};
   /*static const WCHAR szDxDiagVersion[] = {'s','z','D','x','D','i','a','g','V','e','r','s','i','o','n',0};*/
   /*szWindowsDir*/
   /*szWindowsDir*/
@@ -262,7 +278,6 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   static const WCHAR dwOSPlatformID[] = {'d','w','O','S','P','l','a','t','f','o','r','m','I','D',0};
   MEMORYSTATUSEX msex;
   OSVERSIONINFOW info;
-  VARIANT v;
 
   add_prop_ui4(pSubCont, dwDirectXVersionMajor, 9);
   add_prop_ui4(pSubCont, dwDirectXVersionMinor, 0);
@@ -273,11 +288,9 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
 
   msex.dwLength = sizeof(msex);
   GlobalMemoryStatusEx( &msex );
-  V_VT(&v) = VT_UI8;
-  V_UI8(&v) = msex.ullTotalPhys;
-  VariantChangeType(&v, &v, 0, VT_BSTR);
-  IDxDiagContainerImpl_AddProp(pSubCont, ullPhysicalMemory, &v);
-  VariantClear(&v);
+  add_prop_ull_as_str(pSubCont, ullPhysicalMemory, msex.ullTotalPhys);
+  add_prop_ull_as_str(pSubCont, ullUsedPageFile, msex.ullTotalPageFile - msex.ullAvailPageFile);
+  add_prop_ull_as_str(pSubCont, ullAvailPageFile, msex.ullAvailPageFile);
 
   info.dwOSVersionInfoSize = sizeof(info);
   GetVersionExW( &info );
