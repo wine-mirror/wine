@@ -1915,6 +1915,10 @@ GetFileSecurityW( LPCWSTR lpFileName,
     NTSTATUS status;
     DWORD access = 0;
 
+    TRACE("(%s,%d,%p,%d,%p)\n", debugstr_w(lpFileName),
+          RequestedInformation, pSecurityDescriptor,
+          nLength, lpnLengthNeeded);
+
     if (RequestedInformation & (OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|
                                 DACL_SECURITY_INFORMATION))
         access |= READ_CONTROL;
