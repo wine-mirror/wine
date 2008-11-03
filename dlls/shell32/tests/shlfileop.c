@@ -193,7 +193,7 @@ static void test_get_file_info(void)
     rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
                       &shfi, sizeof(shfi),
                       SHGFI_ATTRIBUTES | SHGFI_USEFILEATTRIBUTES);
-    todo_wine ok(rc, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) failed\n");
+    ok(rc, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) failed\n");
     if (rc)
         ok(shfi.dwAttributes != 0xcfcfcfcf, "dwFileAttributes is not set\n");
     todo_wine ok(shfi.hIcon == 0, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) did not clear hIcon\n");
@@ -295,6 +295,7 @@ static void test_get_file_info_iconlist(void)
     {
         win_skip("SHGetFileInfoW is not available\n");
         ILFree(pidList);
+        return;
     }
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
@@ -307,6 +308,119 @@ static void test_get_file_info_iconlist(void)
     ok(shInfow.iIcon != 0xcfcfcfcf, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should set iIcon\n");
     ok(shInfow.dwAttributes == 0xcfcfcfcf, "SHGetFileInfoW(CSIDL_DESKTOP, SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_PIDL) should not change dwAttributes\n");
     CloseHandle(hSysImageList);
+
+    /* Various suposidly invalid flag testing */
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr =  pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
+    ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
+    ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing \n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
+    ok(hr != 0, " SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
+    ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing \n");
+    ok(shInfow.hIcon!=(HICON)0xcfcfcfcf && shInfow.hIcon!=0,"hIcon invalid\n");
+    if (shInfow.hIcon!=(HICON)0xcfcfcfcf) DestroyIcon(shInfow.hIcon);
+    todo_wine ok(shInfow.dwAttributes==0,"dwAttributes not set\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON);
+    ok(hr != 0, "SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON Failed\n");
+    ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing \n");
+    ok(shInfow.hIcon!=(HICON)0xcfcfcfcf && shInfow.hIcon!=0,"hIcon invalid\n");
+    if (shInfow.hIcon != (HICON)0xcfcfcfcf) DestroyIcon(shInfow.hIcon);
+    todo_wine ok(shInfow.dwAttributes==0,"dwAttributes not set\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON);
+    ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON Failed\n");
+    ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing \n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_OPENICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
+    ok(hr != 0, "SHGFI_OPENICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
+    todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_SHELLICONSIZE|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
+    ok(hr != 0, "SHGFI_SHELLICONSIZE|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
+    todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_SHELLICONSIZE|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
+    ok(hr != 0, "SHGFI_SHELLICONSIZE|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
+    todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|
+        SHGFI_ATTRIBUTES);
+    ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_ATTRIBUTES Failed\n");
+    ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing \n");
+    ok(shInfow.dwAttributes!=0xcfcfcfcf,"dwAttributes not set\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|
+        SHGFI_EXETYPE);
+    todo_wine ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_EXETYPE Failed\n");
+    ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing \n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+        SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_EXETYPE);
+    todo_wine ok(hr != 0, "SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_EXETYPE Failed\n");
+    todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+        SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_ATTRIBUTES);
+    ok(hr != 0, "SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_ATTRIBUTES Failed\n");
+    todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
+    ok(shInfow.dwAttributes!=0xcfcfcfcf,"dwAttributes not set\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+	    SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|
+        SHGFI_ATTRIBUTES);
+    ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_ATTRIBUTES Failed\n");
+    ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing \n");
+    ok(shInfow.dwAttributes!=0xcfcfcfcf,"dwAttributes not set\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+        SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE);
+    todo_wine ok(hr != 0, "SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE Failed\n");
+    ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing \n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+        SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE);
+    todo_wine ok(hr != 0, "SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_EXETYPE Failed\n");
+    todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
+    ok(shInfow.dwAttributes==0xcfcfcfcf,"dwAttributes modified\n");
+
+    memset(&shInfow, 0xcf, sizeof(shInfow));
+    hr = pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
+        SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_ATTRIBUTES);
+    ok(hr != 0, "SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_ATTRIBUTES Failed\n");
+    todo_wine ok(shInfow.iIcon==0xcfcfcfcf, "Icon Index Modified\n");
+    ok(shInfow.dwAttributes!=0xcfcfcfcf,"dwAttributes not set\n");
 
     ILFree(pidList);
 }

@@ -350,10 +350,6 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
           (flags & SHGFI_PIDL)? "pidl" : debugstr_w(path), dwFileAttributes,
           psfi, psfi->dwAttributes, sizeofpsfi, flags);
 
-    if ( (flags & SHGFI_USEFILEATTRIBUTES) && 
-         (flags & (SHGFI_ATTRIBUTES|SHGFI_EXETYPE|SHGFI_PIDL)))
-        return FALSE;
-
     /* windows initializes these values regardless of the flags */
     if (psfi != NULL)
     {
@@ -430,7 +426,8 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         {
             psfi->dwAttributes = 0xffffffff;
         }
-        IShellFolder_GetAttributesOf( psfParent, 1, (LPCITEMIDLIST*)&pidlLast,
+        if (psfParent)
+            IShellFolder_GetAttributesOf( psfParent, 1, (LPCITEMIDLIST*)&pidlLast,
                                       &(psfi->dwAttributes) );
     }
 
