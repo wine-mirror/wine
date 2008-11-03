@@ -740,8 +740,7 @@ static void test_timer_queue(void)
 
     /* Run once and finish quickly (should be done when we delete it).  */
     t1 = NULL;
-    ret = pCreateTimerQueueTimer(&t1, q, timer_queue_cb5, (PVOID) 0, 0,
-                                 0, 0);
+    ret = pCreateTimerQueueTimer(&t1, q, timer_queue_cb5, NULL, 0, 0, 0);
     ok(ret, "CreateTimerQueueTimer\n");
     ok(t1 != NULL, "CreateTimerQueueTimer\n");
 
@@ -754,8 +753,7 @@ static void test_timer_queue(void)
 
     /* Run once and finish quickly (should be done when we delete it).  */
     t3 = NULL;
-    ret = pCreateTimerQueueTimer(&t3, q, timer_queue_cb5, (PVOID) 0, 0,
-                                 0, 0);
+    ret = pCreateTimerQueueTimer(&t3, q, timer_queue_cb5, NULL, 0, 0, 0);
     ok(ret, "CreateTimerQueueTimer\n");
     ok(t3 != NULL, "CreateTimerQueueTimer\n");
 

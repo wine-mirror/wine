@@ -1750,7 +1750,7 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, LPCSTR name )
         ordinal = LOWORD(name);
         TRACE("%04x %04x\n", hModule, ordinal );
     }
-    if (!ordinal) return (FARPROC16)0;
+    if (!ordinal) return NULL;
 
     ret = NE_GetEntryPoint( hModule, ordinal );
 

@@ -205,7 +205,7 @@ static SEGPTR TASK_AllocThunk(void)
         {
             sel = GLOBAL_Alloc( GMEM_FIXED, sizeof(THUNKS) + (MIN_THUNKS-1)*8,
                                 pTask->hPDB, WINE_LDT_FLAGS_CODE );
-            if (!sel) return (SEGPTR)0;
+            if (!sel) return 0;
             TASK_CreateThunks( sel, 0, MIN_THUNKS );
             pThunk->next = sel;
         }
@@ -860,7 +860,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     if (!HIWORD(func)) {
       /* Win95 actually protects via SEH, but this is better for debugging */
       WARN("Ouch ! Called with invalid func %p !\n", func);
-      return (FARPROC16)0;
+      return NULL;
     }
 
     if ( (GlobalHandleToSel16(CURRENT_DS) != hInstanceSelector)
@@ -884,7 +884,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 	return func;
 
     thunkaddr = TASK_AllocThunk();
-    if (!thunkaddr) return (FARPROC16)0;
+    if (!thunkaddr) return NULL;
     thunk = MapSL( thunkaddr );
     lfunc = MapSL( (SEGPTR)func );
 
@@ -990,7 +990,7 @@ HANDLE16 WINAPI GetCodeHandle16( FARPROC16 proc )
     SEGTABLEENTRY *pSeg;
 
     if ( !TASK_GetCodeSegment( proc, NULL, &pSeg, NULL ) )
-        return (HANDLE16)0;
+        return 0;
 
     return pSeg->hSeg;
 }
