@@ -36,13 +36,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msimtf);
 
-static HINSTANCE msimtf_instance;
+extern HRESULT ActiveIMMApp_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
 
-static HRESULT CActiveIMM_Create(IUnknown *outer, REFIID riid, void **ppv)
-{
-    FIXME("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
-}
+static HINSTANCE msimtf_instance;
 
 /******************************************************************
  *              DllMain (msimtf.@)
@@ -66,7 +62,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 typedef struct {
     const IClassFactoryVtbl *lpClassFactoryVtbl;
 
-    HRESULT (*cf)(IUnknown*,REFIID,void**);
+    HRESULT (*cf)(IUnknown*,IUnknown**);
 } ClassFactory;
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface,
@@ -105,7 +101,17 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface,
         IUnknown *pOuter, REFIID riid, void **ppv)
 {
     ClassFactory *This = (ClassFactory*)iface;
-    return This->cf(pOuter, riid, ppv);
+    HRESULT ret;
+    IUnknown *obj;
+    TRACE("(%p, %p, %s, %p)\n", iface, pOuter, debugstr_guid(riid), ppv);
+
+    ret = This->cf(pOuter, &obj);
+    if (FAILED(ret))
+        return ret;
+
+    ret = IUnknown_QueryInterface(obj,riid,ppv);
+    IUnknown_Release(obj);
+    return ret;
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
@@ -130,10 +136,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     if(IsEqualGUID(&CLSID_CActiveIMM, rclsid)) {
         static ClassFactory cf = {
             &ClassFactoryVtbl,
-            CActiveIMM_Create
+            ActiveIMMApp_Constructor,
         };
-
-        TRACE("CLSID_CActiveIMM\n");
 
         return IClassFactory_QueryInterface((IClassFactory*)&cf, riid, ppv);
     }
