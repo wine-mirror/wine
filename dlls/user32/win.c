@@ -3144,7 +3144,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         else wparam = (hWnd == GetForegroundWindow());
 
         WIN_ReleasePtr( wndPtr );
-        SendMessageW( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
+        SendMessageW( hWnd, WM_NCACTIVATE, wparam, 0 );
         return wparam;
     }
 }

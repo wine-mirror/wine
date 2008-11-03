@@ -1667,7 +1667,7 @@ HGLOBAL16 WINAPI LoadCursorIconHandler16( HGLOBAL16 hResource, HMODULE16 hModule
 {
     FIXME_(cursor)("(%04x,%04x,%04x): old 2.x resources are not supported!\n",
           hResource, hModule, hRsrc);
-    return (HGLOBAL16)0;
+    return 0;
 }
 
 /**********************************************************************

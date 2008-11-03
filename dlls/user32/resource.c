@@ -396,10 +396,10 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     i = min(buflen - 1, *p);
     if (i > 0) {
 	memcpy(buffer, p + 1, i * sizeof (WCHAR));
-	buffer[i] = (WCHAR) 0;
+        buffer[i] = 0;
     } else {
 	if (buflen > 1) {
-	    buffer[0] = (WCHAR) 0;
+            buffer[0] = 0;
 	    return 0;
 	}
     }

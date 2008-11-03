@@ -918,8 +918,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 	    }
 
 	    SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-			    SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-			    (TIMERPROC)0 );
+                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -936,8 +935,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                                 SB_PAGEUP, (LPARAM)hwndCtl );
             }
             SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                              SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                              (TIMERPROC)0 );
+                              SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -1005,8 +1003,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                                 SB_PAGEDOWN, (LPARAM)hwndCtl );
             }
             SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                              SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                              (TIMERPROC)0 );
+                              SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -1023,8 +1020,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 	    }
 
 	    SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-			    SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-			    (TIMERPROC)0 );
+                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -1791,7 +1787,7 @@ BOOL WINAPI GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
     /* Refer SB_CTL requests to the window */
     if (nBar == SB_CTL)
     {
-        SendMessageW(hwnd, SBM_GETSCROLLINFO, (WPARAM)0, (LPARAM)info);
+        SendMessageW(hwnd, SBM_GETSCROLLINFO, 0, (LPARAM)info);
         return TRUE;
     }
     return SCROLL_GetScrollInfo(hwnd, nBar, info);
@@ -1818,7 +1814,7 @@ BOOL WINAPI GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO info)
 
     /* Refer OBJID_CLIENT requests to the window */
     if (idObject == OBJID_CLIENT)
-        return SendMessageW(hwnd, SBM_GETSCROLLBARINFO, (WPARAM)0, (LPARAM)info);
+        return SendMessageW(hwnd, SBM_GETSCROLLBARINFO, 0, (LPARAM)info);
     else
         return SCROLL_GetScrollBarInfo(hwnd, idObject, info);
 }
@@ -1882,7 +1878,7 @@ INT WINAPI GetScrollPos(HWND hwnd, INT nBar)
 
     /* Refer SB_CTL requests to the window */
     if (nBar == SB_CTL)
-        return SendMessageW(hwnd, SBM_GETPOS, (WPARAM)0, (LPARAM)0);
+        return SendMessageW(hwnd, SBM_GETPOS, 0, 0);
     else
         return SCROLL_GetScrollPos(hwnd, nBar);
 }

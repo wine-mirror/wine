@@ -103,8 +103,8 @@ buttonpress (HWND handle, WORD x, WORD y)
   LPARAM lp=x+(y<<16);
 
   WAIT;
-  SendMessage (handle, WM_LBUTTONDOWN, (WPARAM) MK_LBUTTON, lp);
-  SendMessage (handle, WM_LBUTTONUP  , (WPARAM) 0         , lp);
+  SendMessage (handle, WM_LBUTTONDOWN, MK_LBUTTON, lp);
+  SendMessage (handle, WM_LBUTTONUP, 0, lp);
   REDRAW;
 }
 

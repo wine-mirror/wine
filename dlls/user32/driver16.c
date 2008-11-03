@@ -434,7 +434,7 @@ HDRVR16 WINAPI GetNextDriver16(HDRVR16 hDrvr, DWORD dwFlags)
 	}
     }
 
-    hRetDrv = (lpDrv) ? lpDrv->hDriver16 : (HDRVR16)0;
+    hRetDrv = (lpDrv) ? lpDrv->hDriver16 : 0;
     TRACE("return %04x !\n", hRetDrv);
     return hRetDrv;
 }
