@@ -777,6 +777,43 @@ static void test_FileSecurity(void)
 
     HeapFree (GetProcessHeap (), 0, sd);
 
+    /* Repeat for the temporary directory ... */
+
+    /* Get size needed */
+    retSize = 0;
+    SetLastError (NO_ERROR);
+    rc = pGetFileSecurityA (path, request, NULL, 0, &retSize);
+    ok (!rc, "GetFileSecurityA "
+        "was expected to fail for '%s'\n", path);
+    ok (GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetFileSecurityA "
+        "returned %d; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+    ok (retSize > sizeof (SECURITY_DESCRIPTOR), "GetFileSecurityA "
+        "returned size %d; expected > %d\n", retSize, sizeof (SECURITY_DESCRIPTOR));
+
+    sdSize = retSize;
+    sd = HeapAlloc (GetProcessHeap (), 0, sdSize);
+
+    /* Get security descriptor for real */
+    retSize = 0;
+    SetLastError (NO_ERROR);
+    rc = pGetFileSecurityA (path, request, sd, sdSize, &retSize);
+    ok (rc, "GetFileSecurityA "
+        "was not expected to fail '%s'\n", path);
+    ok (GetLastError () == NO_ERROR, "GetFileSecurityA "
+        "returned %d; expected NO_ERROR\n", GetLastError ());
+    ok (retSize == sdSize, "GetFileSecurityA "
+        "returned size %d; expected %d\n", retSize, sdSize);
+
+    /* Use it to set security descriptor */
+    SetLastError (NO_ERROR);
+    rc = pSetFileSecurityA (path, request, sd);
+    ok (rc, "SetFileSecurityA "
+        "was not expected to fail '%s'\n", path);
+    ok (GetLastError () == NO_ERROR, "SetFileSecurityA "
+        "returned %d; expected NO_ERROR\n", GetLastError ());
+
+    HeapFree (GetProcessHeap (), 0, sd);
+
     /* Remove temporary file and directory */
     DeleteFileA (file);
     RemoveDirectoryA (path);
