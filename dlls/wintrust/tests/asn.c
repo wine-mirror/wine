@@ -46,7 +46,6 @@ static void test_encodeSPCFinancialCriteria(void)
     }
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_FINANCIAL_CRITERIA_STRUCT,
      &criteria, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -57,7 +56,6 @@ static void test_encodeSPCFinancialCriteria(void)
     criteria.fFinancialInfoAvailable = criteria.fMeetsCriteria = TRUE;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_FINANCIAL_CRITERIA_STRUCT,
      &criteria, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {

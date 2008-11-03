@@ -49,6 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(cryptasn);
 
 #endif
 
+#define ASN_BOOL            (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x01)
 #define ASN_BITSTRING       (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x03)
 #define ASN_BMPSTRING       (ASN_UNIVERSAL | ASN_PRIMITIVE | 0x1e)
 
@@ -936,13 +937,63 @@ BOOL WINAPI WVTAsn1CatNameValueEncode(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeBool(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL val = *(const BOOL *)pvStructInfo, ret;
+
+    TRACE("%d\n", val);
+
+    if (!pbEncoded)
+    {
+        *pcbEncoded = 3;
+        ret = TRUE;
+    }
+    else if (*pcbEncoded < 3)
+    {
+        *pcbEncoded = 3;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        *pcbEncoded = 3;
+        *pbEncoded++ = ASN_BOOL;
+        *pbEncoded++ = 1;
+        *pbEncoded++ = val ? 0xff : 0;
+        ret = TRUE;
+    }
+    TRACE("returning %d (%08x)\n", ret, GetLastError());
+    return ret;
+}
+
 BOOL WINAPI WVTAsn1SpcFinancialCriteriaInfoEncode(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
-    FIXME("(0x%08x, %s, %p, %p, %p): stub\n", dwCertEncodingType,
+    BOOL ret = FALSE;
+
+    TRACE("(0x%08x, %s, %p, %p, %p)\n", dwCertEncodingType,
      debugstr_a(lpszStructType), pvStructInfo, pbEncoded, pcbEncoded);
-    return FALSE;
+
+    __TRY
+    {
+        const SPC_FINANCIAL_CRITERIA *criteria = pvStructInfo;
+        struct AsnEncodeSequenceItem items[] = {
+         { &criteria->fFinancialInfoAvailable, CRYPT_AsnEncodeBool, 0 },
+         { &criteria->fMeetsCriteria,          CRYPT_AsnEncodeBool, 0 },
+        };
+
+        ret = CRYPT_AsnEncodeSequence(X509_ASN_ENCODING,
+         items, sizeof(items) / sizeof(items[0]), pbEncoded, pcbEncoded);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
 }
 
 /* Gets the number of length bytes from the given (leading) length byte */
