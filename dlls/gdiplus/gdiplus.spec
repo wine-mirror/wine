@@ -448,7 +448,7 @@
 @ stub GdipMultiplyPenTransform
 @ stub GdipMultiplyTextureTransform
 @ stdcall GdipMultiplyWorldTransform(ptr ptr long)
-@ stub GdipNewInstalledFontCollection
+@ stdcall GdipNewInstalledFontCollection(ptr)
 @ stdcall GdipNewPrivateFontCollection(ptr)
 @ stdcall GdipPathIterCopyData(ptr ptr ptr ptr long long)
 @ stdcall GdipPathIterEnumerate(ptr ptr ptr ptr long)

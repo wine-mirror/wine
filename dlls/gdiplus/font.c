@@ -849,3 +849,14 @@ GpStatus WINGDIPAPI GdipGetFontCollectionFamilyList(
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipNewInstalledFontCollection(
+        GpFontCollection** fontCollection)
+{
+    FIXME("stub: %p\n",fontCollection);
+
+    if (!fontCollection)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
