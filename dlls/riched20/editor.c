@@ -1952,7 +1952,7 @@ static DWORD CALLBACK ME_ReadFromHGLOBALUnicode(DWORD_PTR dwCookie, LPBYTE lpBuf
 
   cb = cb >> 1;
   pDest = (WORD *)lpBuff;
-  pSrc = (WORD *)GlobalLock(pData->hData);
+  pSrc = GlobalLock(pData->hData);
   for (i = 0; i<cb && pSrc[pData->nLength+i]; i++) {
     pDest[i] = pSrc[pData->nLength+i];
   }
@@ -1969,7 +1969,7 @@ static DWORD CALLBACK ME_ReadFromHGLOBALRTF(DWORD_PTR dwCookie, LPBYTE lpBuff, L
   BYTE *pSrc, *pDest;
 
   pDest = lpBuff;
-  pSrc = (BYTE *)GlobalLock(pData->hData);
+  pSrc = GlobalLock(pData->hData);
   for (i = 0; i<cb && pSrc[pData->nLength+i]; i++) {
     pDest[i] = pSrc[pData->nLength+i];
   }
@@ -4332,7 +4332,7 @@ static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
   wcW.hInstance = NULL; /* hInstance would register DLL-local class */
   wcW.hIcon = NULL;
   wcW.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
-  wcW.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+  wcW.hbrBackground = GetStockObject(NULL_BRUSH);
   wcW.lpszMenuName = NULL;
 
   if (is_version_nt())
@@ -4358,7 +4358,7 @@ static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
   wcA.hInstance = NULL; /* hInstance would register DLL-local class */
   wcA.hIcon = NULL;
   wcA.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
-  wcA.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+  wcA.hbrBackground = GetStockObject(NULL_BRUSH);
   wcA.lpszMenuName = NULL;
   wcA.lpszClassName = "RichEdit20A";
   if (!RegisterClassA(&wcA)) return FALSE;
@@ -4658,7 +4658,7 @@ BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
   {
     if (sel_max - sel_min < prefixes[i].length) continue;
     if (bufferW == NULL) {
-      bufferW = (LPWSTR)heap_alloc((sel_max - sel_min + 1) * sizeof(WCHAR));
+      bufferW = heap_alloc((sel_max - sel_min + 1) * sizeof(WCHAR));
     }
     ME_GetTextW(editor, bufferW, sel_min, min(sel_max - sel_min, strlen(prefixes[i].text)), 0);
     MultiByteToWideChar(CP_ACP, 0, prefixes[i].text, -1, bufW, 32);
