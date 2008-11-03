@@ -144,6 +144,8 @@ typedef struct
         int   nIndex;
 } ENUMRESSTRUCT;
 
+static char *xdg_config_dir;
+static char *xdg_data_dir;
 
 /* Icon extraction routines
  *
@@ -169,9 +171,6 @@ MAKE_FUNCPTR(png_write_end);
 MAKE_FUNCPTR(png_write_info);
 MAKE_FUNCPTR(png_write_row);
 #undef MAKE_FUNCPTR
-
-static char *xdg_config_dir;
-static char *xdg_data_dir;
 
 static void *load_libpng(void)
 {
