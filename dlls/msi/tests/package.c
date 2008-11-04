@@ -483,257 +483,88 @@ static UINT create_inilocator_table( MSIHANDLE hdb )
             "PRIMARY KEY `Signature_`)" );
 }
 
-static UINT add_component_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `Component`  "
-            "(`Component`, `ComponentId`, `Directory_`, `Attributes`, `Condition`, `KeyPath`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
+#define make_add_entry(type, qtext) \
+    static UINT add##_##type##_##entry( MSIHANDLE hdb, const char *values ) \
+    { \
+        char insert[] = qtext; \
+        char *query; \
+        UINT sz, r; \
+        sz = strlen(values) + sizeof insert; \
+        query = HeapAlloc(GetProcessHeap(),0,sz); \
+        sprintf(query,insert,values); \
+        r = run_query( hdb, query ); \
+        HeapFree(GetProcessHeap(), 0, query); \
+        return r; \
+    }
 
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(component,
+               "INSERT INTO `Component`  "
+               "(`Component`, `ComponentId`, `Directory_`, "
+               "`Attributes`, `Condition`, `KeyPath`) VALUES( %s )")
 
-static UINT add_directory_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `Directory` (`Directory`,`Directory_Parent`,`DefaultDir`) VALUES( %s )";
-    char *query;
-    UINT sz, r;
+make_add_entry(directory,
+               "INSERT INTO `Directory` "
+               "(`Directory`,`Directory_Parent`,`DefaultDir`) VALUES( %s )")
 
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(feature,
+               "INSERT INTO `Feature` "
+               "(`Feature`, `Feature_Parent`, `Title`, `Description`, "
+               "`Display`, `Level`, `Directory_`, `Attributes`) VALUES( %s )")
 
-static UINT add_feature_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `Feature` (`Feature`, `Feature_Parent`, "
-                    "`Title`, `Description`, `Display`, `Level`, `Directory_`, `Attributes`) VALUES( %s )";
-    char *query;
-    UINT sz, r;
+make_add_entry(feature_components,
+               "INSERT INTO `FeatureComponents` "
+               "(`Feature_`, `Component_`) VALUES( %s )")
 
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(file,
+               "INSERT INTO `File` "
+               "(`File`, `Component_`, `FileName`, `FileSize`, "
+               "`Version`, `Language`, `Attributes`, `Sequence`) VALUES( %s )")
 
-static UINT add_feature_components_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `FeatureComponents` "
-            "(`Feature_`, `Component_`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
+make_add_entry(appsearch,
+               "INSERT INTO `AppSearch` "
+               "(`Property`, `Signature_`) VALUES( %s )")
 
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(reglocator,
+               "INSERT INTO `RegLocator` "
+               "(`Signature_`, `Root`, `Key`, `Name`, `Type`) VALUES( %s )")
 
-static UINT add_file_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `File` "
-            "(`File`, `Component_`, `FileName`, `FileSize`, `Version`, `Language`, `Attributes`, `Sequence`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
+make_add_entry(signature,
+               "INSERT INTO `Signature` "
+               "(`Signature`, `FileName`, `MinVersion`, `MaxVersion`,"
+               " `MinSize`, `MaxSize`, `MinDate`, `MaxDate`, `Languages`) "
+               "VALUES( %s )")
 
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(launchcondition,
+               "INSERT INTO `LaunchCondition` "
+               "(`Condition`, `Description`) VALUES( %s )")
 
-static UINT add_appsearch_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `AppSearch` "
-            "(`Property`, `Signature_`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
+make_add_entry(property,
+               "INSERT INTO `Property` (`Property`, `Value`) VALUES( %s )")
 
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(install_execute_sequence,
+               "INSERT INTO `InstallExecuteSequence` "
+               "(`Action`, `Condition`, `Sequence`) VALUES( %s )")
 
-static UINT add_reglocator_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `RegLocator` "
-            "(`Signature_`, `Root`, `Key`, `Name`, `Type`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
+make_add_entry(media,
+               "INSERT INTO `Media` "
+               "(`DiskId`, `LastSequence`, `DiskPrompt`, "
+               "`Cabinet`, `VolumeLabel`, `Source`) VALUES( %s )")
 
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(ccpsearch,
+               "INSERT INTO `CCPSearch` (`Signature_`) VALUES( %s )")
 
-static UINT add_signature_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `Signature` "
-            "(`Signature`, `FileName`, `MinVersion`, `MaxVersion`,"
-            " `MinSize`, `MaxSize`, `MinDate`, `MaxDate`, `Languages`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
+make_add_entry(drlocator,
+               "INSERT INTO `DrLocator` "
+               "(`Signature_`, `Parent`, `Path`, `Depth`) VALUES( %s )")
 
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(complocator,
+               "INSERT INTO `CompLocator` "
+               "(`Signature_`, `ComponentId`, `Type`) VALUES( %s )")
 
-static UINT add_launchcondition_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `LaunchCondition` "
-            "(`Condition`, `Description`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
-
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
-
-static UINT add_property_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `Property` "
-            "(`Property`, `Value`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
-
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
-
-static UINT add_install_execute_sequence_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `InstallExecuteSequence` "
-            "(`Action`, `Condition`, `Sequence`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
-
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
-
-static UINT add_media_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `Media` "
-            "(`DiskId`, `LastSequence`, `DiskPrompt`, `Cabinet`, `VolumeLabel`, `Source`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
-
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
-
-static UINT add_ccpsearch_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `CCPSearch` (`Signature_`) VALUES( %s )";
-    char *query;
-    UINT sz, r;
-
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
-
-static UINT add_drlocator_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `DrLocator` "
-            "(`Signature_`, `Parent`, `Path`, `Depth`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
-
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
-
-static UINT add_complocator_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `CompLocator` "
-            "(`Signature_`, `ComponentId`, `Type`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
-
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
-
-static UINT add_inilocator_entry( MSIHANDLE hdb, const char *values )
-{
-    char insert[] = "INSERT INTO `IniLocator` "
-            "(`Signature_`, `FileName`, `Section`, `Key`, `Field`, `Type`) "
-            "VALUES( %s )";
-    char *query;
-    UINT sz, r;
-
-    sz = strlen(values) + sizeof insert;
-    query = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintf(query,insert,values);
-    r = run_query( hdb, query );
-    HeapFree(GetProcessHeap(), 0, query);
-    return r;
-}
+make_add_entry(inilocator,
+               "INSERT INTO `IniLocator` "
+               "(`Signature_`, `FileName`, `Section`, `Key`, `Field`, `Type`) "
+               "VALUES( %s )")
 
 static UINT set_summary_info(MSIHANDLE hdb)
 {
