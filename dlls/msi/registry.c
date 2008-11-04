@@ -950,27 +950,6 @@ UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
-UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
-{
-    UINT rc;
-    WCHAR squished_pc[GUID_SIZE];
-    WCHAR keypath[0x200];
-
-    TRACE("%s\n",debugstr_w(szProduct));
-    if (!squash_guid(szProduct,squished_pc))
-        return ERROR_FUNCTION_FAILED;
-    TRACE("squished (%s)\n", debugstr_w(squished_pc));
-
-    sprintfW(keypath,szInstaller_Products_fmt,squished_pc);
-
-    if (create)
-        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,keypath,key);
-    else
-        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,keypath,key);
-
-    return rc;
-}
-
 UINT MSIREG_DeleteProductKey(LPCWSTR szProduct)
 {
     WCHAR squished_pc[GUID_SIZE];
