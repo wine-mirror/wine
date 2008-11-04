@@ -1686,7 +1686,10 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
       if (!BITBLT_GetVisRectangles( physDevDst, xDst, yDst, width, height,
                                     physDevSrc, xSrc, ySrc, width, height,
                                     &visRectSrc, &visRectDst ))
+      {
+        result = TRUE;
         goto END;
+      }
 
       xSrc = visRectSrc.left;
       ySrc = visRectSrc.top;

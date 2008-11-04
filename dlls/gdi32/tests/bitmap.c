@@ -2189,6 +2189,51 @@ void test_GdiAlphaBlend()
 
 }
 
+static void test_clipping(void)
+{
+    HBITMAP bmpDst;
+    HBITMAP oldDst;
+    HBITMAP bmpSrc;
+    HBITMAP oldSrc;
+    HRGN hRgn;
+    LPVOID bits;
+    BOOL result;
+
+    HDC hdcDst = CreateCompatibleDC( NULL );
+    HDC hdcSrc = CreateCompatibleDC( NULL );
+
+    BITMAPINFO bmpinfo={{0}};
+    bmpinfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmpinfo.bmiHeader.biWidth = 100;
+    bmpinfo.bmiHeader.biHeight = 100;
+    bmpinfo.bmiHeader.biPlanes = 1;
+    bmpinfo.bmiHeader.biBitCount = GetDeviceCaps( hdcDst, BITSPIXEL );
+    bmpinfo.bmiHeader.biCompression = BI_RGB;
+
+    bmpDst = CreateDIBSection( hdcDst, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    ok(bmpDst != NULL, "Couldn't create destination bitmap\n");
+    oldDst = (HBITMAP)SelectObject( hdcDst, bmpDst );
+
+    bmpSrc = CreateDIBSection( hdcSrc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
+    ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
+    oldSrc = (HBITMAP)SelectObject( hdcSrc, bmpSrc );
+
+    result = BitBlt( hdcDst, 0, 0, 100, 100, hdcSrc, 100, 100, SRCCOPY );
+    ok(result, "BitBlt failed\n");
+
+    hRgn = CreateRectRgn( 0,0,0,0 );
+    SelectClipRgn( hdcDst, hRgn );
+
+    result = BitBlt( hdcDst, 0, 0, 100, 100, hdcSrc, 0, 0, SRCCOPY );
+    ok(result, "BitBlt failed\n");
+
+    DeleteObject( bmpDst );
+    DeleteObject( bmpSrc );
+    DeleteObject( hRgn );
+    DeleteDC( hdcDst );
+    DeleteDC( hdcSrc );
+}
+
 START_TEST(bitmap)
 {
     HMODULE hdll;
@@ -2214,4 +2259,5 @@ START_TEST(bitmap)
     test_GdiAlphaBlend();
     test_bitmapinfoheadersize();
     test_get16dibits();
+    test_clipping();
 }
