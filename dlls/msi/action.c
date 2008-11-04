@@ -3841,13 +3841,13 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
 
+    rc = MSIREG_OpenFeaturesKey(package->ProductCode, package->Context,
+                                &hkey, TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
     if (package->Context == MSIINSTALLCONTEXT_MACHINE)
     {
-        rc = MSIREG_OpenLocalClassesFeaturesKey(package->ProductCode,
-                                                &hkey, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-
         rc = MSIREG_OpenLocalUserDataFeaturesKey(package->ProductCode,
                                                  &userdata, TRUE);
         if (rc != ERROR_SUCCESS)
@@ -3855,10 +3855,6 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     }
     else
     {
-        rc = MSIREG_OpenUserFeaturesKey(package->ProductCode, &hkey, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-
         rc = MSIREG_OpenUserDataFeaturesKey(package->ProductCode,
                                             &userdata, TRUE);
         if (rc != ERROR_SUCCESS)
@@ -3961,7 +3957,8 @@ static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
 
     TRACE("unpublishing feature %s\n", debugstr_w(feature->Feature));
 
-    r = MSIREG_OpenUserFeaturesKey(package->ProductCode, &hkey, FALSE);
+    r = MSIREG_OpenFeaturesKey(package->ProductCode, package->Context,
+                               &hkey, FALSE);
     if (r == ERROR_SUCCESS)
     {
         RegDeleteValueW(hkey, feature->Feature);

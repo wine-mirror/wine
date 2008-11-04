@@ -1933,10 +1933,13 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     if (!squash_guid( szProduct, squishProduct ))
         return INSTALLSTATE_INVALIDARG;
 
-    if (MSIREG_OpenManagedFeaturesKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenUserFeaturesKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS)
+    if (MSIREG_OpenFeaturesKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
+                               &hkey, FALSE) != ERROR_SUCCESS &&
+        MSIREG_OpenFeaturesKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               &hkey, FALSE) != ERROR_SUCCESS)
     {
-        rc = MSIREG_OpenLocalClassesFeaturesKey(szProduct, &hkey, FALSE);
+        rc = MSIREG_OpenFeaturesKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
+                                    &hkey, FALSE);
         if (rc != ERROR_SUCCESS)
             return INSTALLSTATE_UNKNOWN;
 
