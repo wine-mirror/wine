@@ -718,6 +718,9 @@ static tbsize_result_t tbsize_results[] =
     {  0,   0, 163,  38}, {163,   0, 326,  38}, {326,   0, 489,  38},
     {489,   0, 652,  38}, {652,   0, 819,  38}, {819,   0, 850,  38},
   }, },
+  { {0, 0, 672, 100}, {239, 102}, 3, {
+    {  0,   2, 100,  102}, {100,   2, 139,  102}, {139, 2, 239,  102},
+  }, },
 };
 
 static int tbsize_numtests = 0;
@@ -942,6 +945,16 @@ static void test_sizes(void)
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 39), "Unexpected button size\n");
     SendMessageA(hToolbar, TB_DELETEBUTTON, 0, 0);
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 39), "Unexpected button size\n");
+
+    rebuild_toolbar(&hToolbar);
+
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, (WPARAM)0, (LPARAM) MAKELONG (32, 32) ) == 1, "TB_SETBITMAPSIZE failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(100, 100)) == 1, "TB_SETBUTTONSIZE failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons2[0]) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[2]) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[0]) == 1, "TB_ADDBUTTONS failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, (WPARAM)0, (LPARAM)0 );
+    check_sizes();
 
     DestroyWindow(hToolbar);
 }

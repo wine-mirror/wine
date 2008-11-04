@@ -1598,8 +1598,8 @@ static inline SIZE TOOLBAR_MeasureButton(const TOOLBAR_INFO *infoPtr, SIZE sizeS
         {
             sizeButton.cy = sizeString.cy + infoPtr->szPadding.cy +
                 NONLIST_NOTEXT_OFFSET;
-            sizeButton.cx = 2*GetSystemMetrics(SM_CXEDGE) +
-                infoPtr->szPadding.cx + sizeString.cx;
+            sizeButton.cx = infoPtr->szPadding.cx +
+                max(2*GetSystemMetrics(SM_CXEDGE) + sizeString.cx, infoPtr->nBitmapWidth);
         }
     }
     return sizeButton;
