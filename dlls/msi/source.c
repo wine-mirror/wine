@@ -64,21 +64,21 @@ static UINT OpenSourceKey(LPCWSTR szProduct, HKEY* key, DWORD dwOptions,
         if (dwOptions & MSICODE_PATCH)
             rc = MSIREG_OpenUserPatchesKey(szProduct, &rootkey, create);
         else
-            rc = MSIREG_OpenUserProductsKey(szProduct, &rootkey, create);
+            rc = MSIREG_OpenProductKey(szProduct, context, &rootkey, create);
     }
     else if (context == MSIINSTALLCONTEXT_USERMANAGED)
     {
         if (dwOptions & MSICODE_PATCH)
             rc = MSIREG_OpenUserPatchesKey(szProduct, &rootkey, create);
         else
-            rc = MSIREG_OpenLocalManagedProductKey(szProduct, &rootkey, create);
+            rc = MSIREG_OpenProductKey(szProduct, context, &rootkey, create);
     }
     else if (context == MSIINSTALLCONTEXT_MACHINE)
     {
         if (dwOptions & MSICODE_PATCH)
             rc = MSIREG_OpenPatchesKey(szProduct, &rootkey, create);
         else
-            rc = MSIREG_OpenLocalClassesProductKey(szProduct, &rootkey, create);
+            rc = MSIREG_OpenProductKey(szProduct, context, &rootkey, create);
     }
 
     if (rc != ERROR_SUCCESS)
@@ -903,12 +903,14 @@ UINT WINAPI MsiSourceListAddSourceW( LPCWSTR szProduct, LPCWSTR szUserName,
             msi_free(psid);
         }
 
-        r = MSIREG_OpenLocalManagedProductKey(szProduct, &hkey, FALSE);
+        r = MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
+                                  &hkey, FALSE);
         if (r == ERROR_SUCCESS)
             context = MSIINSTALLCONTEXT_USERMANAGED;
         else
         {
-            r = MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE);
+            r = MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                      &hkey, FALSE);
             if (r != ERROR_SUCCESS)
                 return ERROR_UNKNOWN_PRODUCT;
 

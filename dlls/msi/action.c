@@ -3582,22 +3582,19 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
 
+    rc = MSIREG_OpenProductKey(package->ProductCode, package->Context,
+                               &hukey, TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
     if (package->Context == MSIINSTALLCONTEXT_MACHINE)
     {
-        rc = MSIREG_OpenLocalClassesProductKey(package->ProductCode, &hukey, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-
         rc = MSIREG_OpenLocalUserDataProductKey(package->ProductCode, &hudkey, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;
     }
     else
     {
-        rc = MSIREG_OpenUserProductsKey(package->ProductCode, &hukey, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-
         rc = MSIREG_OpenUserDataProductKey(package->ProductCode, &hudkey, TRUE);
         if (rc != ERROR_SUCCESS)
             goto end;

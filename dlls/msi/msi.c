@@ -51,11 +51,14 @@ static UINT msi_locate_product(LPCWSTR szProduct, MSIINSTALLCONTEXT *context)
 
     *context = MSIINSTALLCONTEXT_NONE;
 
-    if (MSIREG_OpenLocalManagedProductKey(szProduct, &hkey, FALSE) == ERROR_SUCCESS)
+    if (MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
+                              &hkey, FALSE) == ERROR_SUCCESS)
         *context = MSIINSTALLCONTEXT_USERMANAGED;
-    else if (MSIREG_OpenLocalClassesProductKey(szProduct, &hkey, FALSE) == ERROR_SUCCESS)
+    else if (MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
+                                   &hkey, FALSE) == ERROR_SUCCESS)
         *context = MSIINSTALLCONTEXT_MACHINE;
-    else if (MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE) == ERROR_SUCCESS)
+    else if (MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   &hkey, FALSE) == ERROR_SUCCESS)
         *context = MSIINSTALLCONTEXT_USERUNMANAGED;
 
     RegCloseKey(hkey);
@@ -644,9 +647,12 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
         sz = GUID_SIZE;
         unsquash_guid(squished_prod, szBuffer);
 
-        if (MSIREG_OpenLocalManagedProductKey(szBuffer, &prodkey, FALSE) == ERROR_SUCCESS ||
-            MSIREG_OpenUserProductsKey(szBuffer, &prodkey, FALSE) == ERROR_SUCCESS ||
-            MSIREG_OpenLocalClassesProductKey(szBuffer, &prodkey, FALSE) == ERROR_SUCCESS)
+        if (MSIREG_OpenProductKey(szBuffer, MSIINSTALLCONTEXT_USERMANAGED,
+                                  &prodkey, FALSE) == ERROR_SUCCESS ||
+            MSIREG_OpenProductKey(szBuffer, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                  &prodkey, FALSE) == ERROR_SUCCESS ||
+            MSIREG_OpenProductKey(szBuffer, MSIINSTALLCONTEXT_MACHINE,
+                                  &prodkey, FALSE) == ERROR_SUCCESS)
         {
             RegCloseKey(prodkey);
             rc = ERROR_SUCCESS;
@@ -716,16 +722,14 @@ static UINT WINAPI MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
     if (!squash_guid(szProduct, squished_pc))
         return ERROR_INVALID_PARAMETER;
 
-    r = MSIREG_OpenLocalManagedProductKey(szProduct, &prodkey, FALSE);
-    if (r != ERROR_SUCCESS)
+    if ((r = MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
+                                   &prodkey, FALSE)) != ERROR_SUCCESS &&
+        (r = MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                                   &prodkey, FALSE)) != ERROR_SUCCESS &&
+        (r = MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
+                                      &prodkey, FALSE)) == ERROR_SUCCESS)
     {
-        r = MSIREG_OpenUserProductsKey(szProduct, &prodkey, FALSE);
-        if (r != ERROR_SUCCESS)
-        {
-            r = MSIREG_OpenLocalClassesProductKey(szProduct, &prodkey, FALSE);
-            if (r == ERROR_SUCCESS)
-                classes = TRUE;
-        }
+        classes = TRUE;
     }
 
     if (classes)
@@ -1034,8 +1038,10 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     if (dwContext == MSIINSTALLCONTEXT_MACHINE && szUserSid)
         return ERROR_INVALID_PARAMETER;
 
-    MSIREG_OpenLocalManagedProductKey(szProductCode, &managed, FALSE);
-    MSIREG_OpenUserProductsKey(szProductCode, &prod, FALSE);
+    MSIREG_OpenProductKey(szProductCode, MSIINSTALLCONTEXT_USERMANAGED,
+                          &managed, FALSE);
+    MSIREG_OpenProductKey(szProductCode, MSIINSTALLCONTEXT_USERUNMANAGED,
+                          &prod, FALSE);
 
     if (dwContext == MSIINSTALLCONTEXT_USERUNMANAGED)
     {
@@ -1057,7 +1063,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     {
         package = INSTALLPROPERTY_LOCALPACKAGEW;
         MSIREG_OpenLocalSystemProductKey(szProductCode, &props, FALSE);
-        MSIREG_OpenLocalClassesProductKey(szProductCode, &classes, FALSE);
+        MSIREG_OpenProductKey(szProductCode, dwContext, &classes, FALSE);
 
         if (!props && !classes)
             goto done;
@@ -1271,13 +1277,7 @@ static BOOL msi_comp_find_prod_key(LPCWSTR prodcode, MSIINSTALLCONTEXT context)
     UINT r;
     HKEY hkey;
 
-    if (context == MSIINSTALLCONTEXT_MACHINE)
-        r = MSIREG_OpenLocalClassesProductKey(prodcode, &hkey, FALSE);
-    else if (context == MSIINSTALLCONTEXT_USERUNMANAGED)
-        r = MSIREG_OpenUserProductsKey(prodcode, &hkey, FALSE);
-    else
-        r = MSIREG_OpenLocalManagedProductKey(prodcode, &hkey, FALSE);
-
+    r = MSIREG_OpenProductKey(prodcode, context, &hkey, FALSE);
     RegCloseKey(hkey);
     return (r == ERROR_SUCCESS);
 }
@@ -1430,16 +1430,14 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     if (lstrlenW(szProduct) != GUID_SIZE - 1)
         return INSTALLSTATE_INVALIDARG;
 
-    r = MSIREG_OpenLocalManagedProductKey(szProduct, &prodkey, FALSE);
-    if (r != ERROR_SUCCESS)
+    if (MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
+                              &prodkey, FALSE) != ERROR_SUCCESS &&
+        MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              &prodkey, FALSE) != ERROR_SUCCESS &&
+        MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
+                              &prodkey, FALSE) == ERROR_SUCCESS)
     {
-        r = MSIREG_OpenUserProductsKey(szProduct, &prodkey, FALSE);
-        if (r != ERROR_SUCCESS)
-        {
-            r = MSIREG_OpenLocalClassesProductKey(szProduct, &prodkey, FALSE);
-            if (r == ERROR_SUCCESS)
-               user = FALSE;
-        }
+        user = FALSE;
     }
 
     if (user)
@@ -1797,8 +1795,10 @@ static INSTALLSTATE WINAPI MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szCom
     }
 
     if (state != INSTALLSTATE_LOCAL &&
-        (MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE) == ERROR_SUCCESS ||
-         MSIREG_OpenLocalClassesProductKey(szProduct, &hkey, FALSE) == ERROR_SUCCESS))
+        (MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                               &hkey, FALSE) == ERROR_SUCCESS ||
+         MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
+                               &hkey, FALSE) == ERROR_SUCCESS))
     {
         RegCloseKey(hkey);
 
@@ -2431,9 +2431,12 @@ static USERINFOSTATE WINAPI MSI_GetUserInfo(LPCWSTR szProduct,
     if (!szProduct || !squash_guid(szProduct, squished_pc))
         return USERINFOSTATE_INVALIDARG;
 
-    if (MSIREG_OpenLocalManagedProductKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenLocalClassesProductKey(szProduct, &hkey, FALSE) != ERROR_SUCCESS)
+    if (MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
+                              &hkey, FALSE) != ERROR_SUCCESS &&
+        MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+                              &hkey, FALSE) != ERROR_SUCCESS &&
+        MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
+                              &hkey, FALSE) != ERROR_SUCCESS)
     {
         return USERINFOSTATE_UNKNOWN;
     }
