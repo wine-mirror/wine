@@ -874,7 +874,7 @@ static void InitialFocusTest (void)
 
         hResource = FindResourceA(g_hinst,"FOCUS_TEST_DIALOG", (LPSTR)RT_DIALOG);
         hTemplate = LoadResource(g_hinst, hResource);
-        pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
+        pTemplate = LockResource(hTemplate);
 
         g_hwndInitialFocusT1 = 0;
         hDlg = CreateDialogIndirectParamA(g_hinst, pTemplate, NULL, focusDlgWinProc, 0);

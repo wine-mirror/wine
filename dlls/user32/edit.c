@@ -4998,7 +4998,7 @@ static void EDIT_WM_Paste(EDITSTATE *es)
 
 	OpenClipboard(es->hwndSelf);
 	if ((hsrc = GetClipboardData(CF_UNICODETEXT))) {
-		src = (LPWSTR)GlobalLock(hsrc);
+		src = GlobalLock(hsrc);
 		EDIT_EM_ReplaceSel(es, TRUE, src, TRUE, TRUE);
 		GlobalUnlock(hsrc);
 	}

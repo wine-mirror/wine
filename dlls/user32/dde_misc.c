@@ -1295,7 +1295,7 @@ HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD c
 	return 0;
     }
 
-    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock(hMem);
+    pDdh = GlobalLock(hMem);
     if (!pDdh)
     {
         GlobalFree(hMem);
@@ -1409,7 +1409,7 @@ LPBYTE WINAPI DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
 
     TRACE("(%p,%p)\n", hData, pcbDataSize);
 
-    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock(hMem);
+    pDdh = GlobalLock(hMem);
     if (pDdh == NULL)
     {
 	ERR("Failed on GlobalLock(%p)\n", hMem);
@@ -1457,7 +1457,7 @@ BOOL WDML_IsAppOwned(HDDEDATA hData)
     DDE_DATAHANDLE_HEAD*	pDdh;
     BOOL                        ret = FALSE;
 
-    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock(hData);
+    pDdh = GlobalLock(hData);
     if (pDdh != NULL)
     {
         ret = pDdh->bAppOwned;
@@ -1546,7 +1546,7 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
     HGLOBAL                     hMem = 0;
 
     dwSize = GlobalSize((HGLOBAL)hDdeData) - sizeof(DDE_DATAHANDLE_HEAD);
-    pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock((HGLOBAL)hDdeData);
+    pDdh = GlobalLock((HGLOBAL)hDdeData);
     if (dwSize && pDdh)
     {
         WINE_DDEHEAD*    wdh = NULL;

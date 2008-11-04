@@ -828,7 +828,7 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
     {
         CURSORICONINFO *info;
 
-        info = (CURSORICONINFO *)GlobalLock16( hObj );
+        info = GlobalLock16( hObj );
         info->ptHotSpot.x   = hotspot.x;
         info->ptHotSpot.y   = hotspot.y;
         info->nWidth        = bmpXor.bmWidth;
@@ -992,7 +992,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     /* Find the best entry in the directory */
 
     if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
-    if (!(dir = (CURSORICONDIR*)LockResource( handle ))) return 0;
+    if (!(dir = LockResource( handle ))) return 0;
     if (fCursor)
         dirEntry = CURSORICON_FindBestCursorRes( dir, width, height, 1);
     else
@@ -1013,7 +1013,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         return hIcon;
 
     if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
-    bits = (LPBYTE)LockResource( handle );
+    bits = LockResource( handle );
     hIcon = CreateIconFromResourceEx( bits, dwBytesInRes,
                                       !fCursor, 0x00030000, width, height, loadflags);
     FreeResource( handle );
@@ -1038,12 +1038,12 @@ static HICON CURSORICON_Copy( HINSTANCE16 hInst16, HICON hIcon )
     HICON16 hOld = HICON_16(hIcon);
     HICON16 hNew;
 
-    if (!(ptrOld = (char *)GlobalLock16( hOld ))) return 0;
+    if (!(ptrOld = GlobalLock16( hOld ))) return 0;
     if (hInst16 && !(hInst16 = GetExePtr( hInst16 ))) return 0;
     size = GlobalSize16( hOld );
     hNew = GlobalAlloc16( GMEM_MOVEABLE, size );
     FarSetOwner16( hNew, hInst16 );
-    ptrNew = (char *)GlobalLock16( hNew );
+    ptrNew = GlobalLock16( hNew );
     memcpy( ptrNew, ptrOld, size );
     GlobalUnlock16( hOld );
     GlobalUnlock16( hNew );
@@ -1134,7 +1134,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
             {
                 return 0;
             }
-            if (!(pDir = (CURSORICONDIR*)LockResource( hMem )))
+            if (!(pDir = LockResource( hMem )))
             {
                 return 0;
             }
@@ -1172,7 +1172,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
                 return 0;
             }
 
-            pBits = (LPBYTE)LockResource( hMem );
+            pBits = LockResource( hMem );
 
             if(nFlags & LR_DEFAULTSIZE)
             {
@@ -1311,7 +1311,7 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
         return 0;
     FarSetOwner16( handle, hInstance );
-    ptr = (char *)GlobalLock16( handle );
+    ptr = GlobalLock16( handle );
     memcpy( ptr, info, sizeof(*info) );
     memcpy( ptr + sizeof(CURSORICONINFO), lpANDbits, sizeAnd );
     memcpy( ptr + sizeof(CURSORICONINFO) + sizeAnd, lpXORbits, sizeXor );
@@ -1419,7 +1419,7 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 
     TRACE("%p, (%d,%d), %p\n", hdc, x, y, hIcon);
 
-    if (!(ptr = (CURSORICONINFO *)GlobalLock16(HICON_16(hIcon)))) return FALSE;
+    if (!(ptr = GlobalLock16(HICON_16(hIcon)))) return FALSE;
     if (!(hMemDC = CreateCompatibleDC( hdc ))) return FALSE;
     hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1,
                                (char *)(ptr+1) );
@@ -1639,7 +1639,7 @@ INT WINAPI LookupIconIdFromDirectory( LPBYTE dir, BOOL bIcon )
  */
 WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
 {
-    LPBYTE lpDir = (LPBYTE)GlobalLock16(hResource);
+    LPBYTE lpDir = GlobalLock16(hResource);
 
     TRACE_(cursor)("hRes=%04x, entries=%i\n",
                     hResource, lpDir ? ((CURSORICONDIR*)lpDir)->idCount : 0);
@@ -1675,7 +1675,7 @@ HGLOBAL16 WINAPI LoadCursorIconHandler16( HGLOBAL16 hResource, HMODULE16 hModule
  */
 HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
 {
-    LPBYTE bits = (LPBYTE)LockResource16( hResource );
+    LPBYTE bits = LockResource16( hResource );
 
     TRACE_(cursor)("hRes=%04x\n",hResource);
 
@@ -1844,7 +1844,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     {
         CURSORICONINFO *info;
 
-        info = (CURSORICONINFO *)GlobalLock16( hObj );
+        info = GlobalLock16( hObj );
 
         /* If we are creating an icon, the hotspot is unused */
         if (iconinfo->fIcon)
@@ -1983,7 +1983,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                             INT cxWidth, INT cyWidth, UINT istep,
                             HBRUSH hbr, UINT flags )
 {
-    CURSORICONINFO *ptr = (CURSORICONINFO *)GlobalLock16(HICON_16(hIcon));
+    CURSORICONINFO *ptr = GlobalLock16(HICON_16(hIcon));
     HDC hDC_off = 0, hMemDC;
     BOOL result = FALSE, DoOffscreen;
     HBITMAP hB_off = 0, hOld = 0;
@@ -2213,7 +2213,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
         if (!(hRsrc = FindResourceW( instance, name, (LPWSTR)RT_BITMAP ))) return 0;
         if (!(handle = LoadResource( instance, hRsrc ))) return 0;
 
-        if ((info = (BITMAPINFO *)LockResource( handle )) == NULL) return 0;
+        if ((info = LockResource( handle )) == NULL) return 0;
     }
     else
     {

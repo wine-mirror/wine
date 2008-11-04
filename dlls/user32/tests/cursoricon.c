@@ -232,7 +232,7 @@ static void test_CopyImage_Check(HBITMAP bitmap, UINT flags, INT copyWidth, INT 
     BOOL orig_is_dib;
     BOOL copy_is_dib;
 
-    copy = (HBITMAP) CopyImage(bitmap, IMAGE_BITMAP, copyWidth, copyHeight, flags);
+    copy = CopyImage(bitmap, IMAGE_BITMAP, copyWidth, copyHeight, flags);
     ok(copy != NULL, "CopyImage() failed\n");
     if (copy != NULL)
     {

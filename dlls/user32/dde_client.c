@@ -320,7 +320,7 @@ static WDML_XACT*	WDML_ClientQueueAdvise(WDML_CONV* pConv, UINT wType, UINT wFmt
     /* FIXME: hMem is unfreed for now... should be deleted in server */
 
     /* pack DdeAdvise	*/
-    pDdeAdvise = (DDEADVISE*)GlobalLock(pXAct->hMem);
+    pDdeAdvise = GlobalLock(pXAct->hMem);
     pDdeAdvise->fAckReq   = (wType & XTYPF_ACKREQ) ? TRUE : FALSE;
     pDdeAdvise->fDeferUpd = (wType & XTYPF_NODATA) ? TRUE : FALSE;
     pDdeAdvise->cfFormat  = wFmt;
@@ -719,7 +719,7 @@ static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPVOID pData, DWORD cbD
     if (cbData == (DWORD)-1)
     {
         hglobal = pData;
-        dh = (DDE_DATAHANDLE_HEAD *)GlobalLock(hglobal);
+        dh = GlobalLock(hglobal);
         cbData = GlobalSize(hglobal) - sizeof(DDE_DATAHANDLE_HEAD);
         pData = (LPVOID)(dh + 1);
         GlobalUnlock(hglobal);

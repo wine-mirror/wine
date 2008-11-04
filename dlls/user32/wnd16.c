@@ -1575,7 +1575,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 
     case WM_GETMINMAXINFO:
         {
-            MINMAXINFO16 *mmi16 = (MINMAXINFO16 *)MapSL(lParam);
+            MINMAXINFO16 *mmi16 = MapSL(lParam);
             MINMAXINFO mmi;
 
             mmi.ptReserved.x     = mmi16->ptReserved.x;

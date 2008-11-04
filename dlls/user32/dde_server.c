@@ -625,7 +625,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleAdvise(WDML_CONV* pConv, WDML_XACT* pXA
     HDDEDATA		hDdeData = 0;
     BOOL		fAck = TRUE;
 
-    pDdeAdvise = (DDEADVISE*)GlobalLock(pXAct->hMem);
+    pDdeAdvise = GlobalLock(pXAct->hMem);
     uType = XTYP_ADVSTART |
 	    (pDdeAdvise->fDeferUpd ? XTYPF_NODATA : 0) |
 	    (pDdeAdvise->fAckReq ? XTYPF_ACKREQ : 0);
@@ -835,7 +835,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandlePoke(WDML_CONV* pConv, WDML_XACT* pXAct
     HDDEDATA		hDdeData;
     BOOL		fBusy = FALSE, fAck = FALSE;
 
-    pDdePoke = (DDEPOKE*)GlobalLock(pXAct->hMem);
+    pDdePoke = GlobalLock(pXAct->hMem);
     if (!pDdePoke)
     {
 	return WDML_QS_ERROR;

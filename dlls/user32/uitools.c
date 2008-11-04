@@ -1612,7 +1612,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
             break;
 
         case DST_ICON:
-            ici = (CURSORICONINFO *)GlobalLock16((HGLOBAL16)lp);
+            ici = GlobalLock16((HGLOBAL16)lp);
             if(!ici) return FALSE;
             s.cx = ici->nWidth;
             s.cy = ici->nHeight;
