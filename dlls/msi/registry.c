@@ -684,47 +684,37 @@ UINT MSIREG_OpenInstallerFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     return rc;
 }
 
-UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
+UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,
+                                    HKEY *key, BOOL create)
 {
-    UINT rc;
-    WCHAR squished_pc[GUID_SIZE];
-    WCHAR keypath[0x200];
+    UINT r;
     LPWSTR usersid;
-
-    TRACE("%s\n", debugstr_w(szProduct));
-    if (!squash_guid(szProduct, squished_pc))
-        return ERROR_FUNCTION_FAILED;
-    TRACE("squished (%s)\n", debugstr_w(squished_pc));
-
-    rc = get_user_sid(&usersid);
-    if (rc != ERROR_SUCCESS || !usersid)
-    {
-        ERR("Failed to retrieve user SID: %d\n", rc);
-        return rc;
-    }
-
-    sprintfW(keypath, szUserDataFeatures_fmt, usersid, squished_pc);
-
-    if (create)
-        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);
-    else
-        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, keypath, key);
-
-    LocalFree(usersid);
-    return rc;
-}
-
-UINT MSIREG_OpenLocalUserDataFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL create)
-{
     WCHAR squished_pc[GUID_SIZE];
     WCHAR keypath[0x200];
 
-    TRACE("%s\n", debugstr_w(szProduct));
+    TRACE("(%s, %d, %d)\n", debugstr_w(szProduct), context, create);
+
     if (!squash_guid(szProduct, squished_pc))
         return ERROR_FUNCTION_FAILED;
+
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
-    sprintfW(keypath, szUserDataFeatures_fmt, localsid, squished_pc);
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        sprintfW(keypath, szUserDataFeatures_fmt, localsid, squished_pc);
+    }
+    else
+    {
+        r = get_user_sid(&usersid);
+        if (r != ERROR_SUCCESS || !usersid)
+        {
+            ERR("Failed to retrieve user SID: %d\n", r);
+            return r;
+        }
+
+        sprintfW(keypath, szUserDataFeatures_fmt, usersid, squished_pc);
+        LocalFree(usersid);
+    }
 
     if (create)
         return RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, key);

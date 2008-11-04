@@ -1958,9 +1958,13 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
         return r;
 
     if (machine)
-        rc = MSIREG_OpenLocalUserDataFeaturesKey(szProduct, &hkey, FALSE);
+        rc = MSIREG_OpenUserDataFeaturesKey(szProduct,
+                                            MSIINSTALLCONTEXT_MACHINE,
+                                            &hkey, FALSE);
     else
-        rc = MSIREG_OpenUserDataFeaturesKey(szProduct, &hkey, FALSE);
+        rc = MSIREG_OpenUserDataFeaturesKey(szProduct,
+                                            MSIINSTALLCONTEXT_USERUNMANAGED,
+                                            &hkey, FALSE);
 
     if (rc != ERROR_SUCCESS)
         return INSTALLSTATE_ADVERTISED;

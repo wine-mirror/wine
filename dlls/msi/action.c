@@ -3846,20 +3846,10 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-    {
-        rc = MSIREG_OpenLocalUserDataFeaturesKey(package->ProductCode,
-                                                 &userdata, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-    }
-    else
-    {
-        rc = MSIREG_OpenUserDataFeaturesKey(package->ProductCode,
-                                            &userdata, TRUE);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-    }
+    rc = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, package->Context,
+                                        &userdata, TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
 
     /* here the guids are base 85 encoded */
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
@@ -3965,7 +3955,8 @@ static UINT msi_unpublish_feature(MSIPACKAGE *package, MSIFEATURE *feature)
         RegCloseKey(hkey);
     }
 
-    r = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, &hkey, FALSE);
+    r = MSIREG_OpenUserDataFeaturesKey(package->ProductCode, package->Context,
+                                       &hkey, FALSE);
     if (r == ERROR_SUCCESS)
     {
         RegDeleteValueW(hkey, feature->Feature);
