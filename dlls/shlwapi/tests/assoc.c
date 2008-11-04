@@ -130,7 +130,9 @@ static void test_getstring_basic(void)
 
     hr = pAssocQueryStringW(0, ASSOCSTR_FRIENDLYAPPNAME, dotHtml, open, NULL,
                            &len);
-    expect_hr(S_FALSE, hr);
+    ok(hr == S_FALSE ||
+       hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), /* Win9x/NT4 */
+       "Unexpected result : %08x\n", hr);
     if (hr != S_FALSE)
     {
         HeapFree(GetProcessHeap(), 0, executableName);
