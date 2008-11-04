@@ -59,6 +59,9 @@ BOOL WINAPI CryptUIDlgCertMgr(PCCRYPTUI_CERT_MGR_STRUCT pCryptUICertMgr)
     return FALSE;
 }
 
+/***********************************************************************
+ *		CryptUIDlgViewCertificateA (CRYPTUI.@)
+ */
 BOOL WINAPI CryptUIDlgViewCertificateA(
  PCCRYPTUI_VIEWCERTIFICATE_STRUCTA pCertViewInfo, BOOL *pfPropertiesChanged)
 {
@@ -86,6 +89,11 @@ BOOL WINAPI CryptUIDlgViewCertificateA(
             ret = FALSE;
             goto error;
         }
+    }
+    if (pCertViewInfo->cPropSheetPages)
+    {
+        FIXME("ignoring additional prop sheet pages\n");
+        viewInfo.cPropSheetPages = 0;
     }
     ret = CryptUIDlgViewCertificateW(&viewInfo, pfPropertiesChanged);
     HeapFree(GetProcessHeap(), 0, title);
