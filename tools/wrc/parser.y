@@ -417,7 +417,8 @@ resources
 					if(rsc->type == head->type
 					&& rsc->lan->id == head->lan->id
 					&& rsc->lan->sub == head->lan->sub
-					&& !compare_name_id(rsc->name, head->name))
+					&& !compare_name_id(rsc->name, head->name)
+					&& (rsc->type != res_usr || !compare_name_id(rsc->res.usr->type,head->res.usr->type)))
 					{
 						yyerror("Duplicate resource name '%s'", get_nameid_str(rsc->name));
 					}
