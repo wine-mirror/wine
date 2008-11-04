@@ -219,6 +219,10 @@ static void test_getstring_no_extra(void)
     }
 
     hr = pAssocQueryStringA(0, ASSOCSTR_EXECUTABLE, dotWinetest, NULL, buf, &len);
+    ok(hr == S_OK ||
+       hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), /* XP and W2K3 */
+       "Unexpected result : %08x\n", hr);
+    hr = pAssocQueryStringA(0, ASSOCSTR_EXECUTABLE, dotWinetest, "foo", buf, &len);
     expect_hr(S_OK, hr);
     ok(strstr(buf, action) != NULL,
         "got '%s' (Expected result to include 'notepad.exe')\n", buf);
