@@ -1,10 +1,10 @@
 @ stub CreateIMAPTransport2
-@ stub CreateIMAPTransport
+@ stdcall CreateIMAPTransport(ptr)
 @ stub CreateNNTPTransport
-@ stub CreatePOP3Transport
+@ stdcall CreatePOP3Transport(ptr)
 @ stub CreateRASTransport
 @ stub CreateRangeList
-@ stub CreateSMTPTransport
+@ stdcall CreateSMTPTransport(ptr)
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
