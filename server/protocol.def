@@ -1334,6 +1334,7 @@ enum char_info_mode
 #define VPROT_IMAGE      0x0100  /* mapping for an exe image */
 #define VPROT_SYSTEM     0x0200  /* system view (underlying mmap not under our control) */
 #define VPROT_VALLOC     0x0400  /* allocated by VirtualAlloc */
+#define VPROT_NOEXEC     0x0800  /* don't force exec permission */
 
 
 /* Open a mapping */

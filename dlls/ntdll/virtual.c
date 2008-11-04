@@ -473,7 +473,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     *view_ret = view;
     VIRTUAL_DEBUG_DUMP_VIEW( view );
 
-    if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
+    if (force_exec_prot && !(vprot & VPROT_NOEXEC) && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
     {
         TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
         mprotect( base, size, unix_prot | PROT_EXEC );
@@ -585,7 +585,8 @@ static BOOL VIRTUAL_SetProt( FILE_VIEW *view, /* [in] Pointer to view */
         return TRUE;
     }
 
-    if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
+    if (force_exec_prot && !(view->protect & VPROT_NOEXEC) &&
+        (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
     {
         TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
         if (!mprotect( base, size, unix_prot | PROT_EXEC )) goto done;
@@ -1386,6 +1387,7 @@ void VIRTUAL_SetForceExec( BOOL enable )
             char *addr = view->base;
             BYTE prot = view->prot[0];
 
+            if (view->protect & VPROT_NOEXEC) continue;
             for (count = i = 1; i < view->size >> page_shift; i++, count++)
             {
                 if (view->prot[i] == prot) continue;
@@ -1525,7 +1527,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     if (type & MEM_SYSTEM)
     {
-        if (type & MEM_IMAGE) vprot |= VPROT_IMAGE;
+        if (type & MEM_IMAGE) vprot |= VPROT_IMAGE | VPROT_NOEXEC;
         status = create_view( &view, base, size, vprot | VPROT_COMMITTED | VPROT_SYSTEM );
         if (status == STATUS_SUCCESS) base = view->base;
     }
