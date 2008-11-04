@@ -912,8 +912,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc, DWORD dwBaseCustDr
         rcText.right -= GetSystemMetrics(SM_CXEDGE);
         if (dwStyle & TBSTYLE_LIST)
         {
-            if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
-                rcText.left += infoPtr->nBitmapWidth + infoPtr->iListGap + 2;
+            rcText.left += infoPtr->nBitmapWidth + infoPtr->iListGap + 2;
         }
         else
         {
@@ -1574,15 +1573,11 @@ static inline SIZE TOOLBAR_MeasureButton(const TOOLBAR_INFO *infoPtr, SIZE sizeS
             sizeButton.cy += infoPtr->szPadding.cy;
 
         /* calculate button width */
-        if (bHasBitmap)
-        {
-            sizeButton.cx = 2*GetSystemMetrics(SM_CXEDGE) +
-                infoPtr->nBitmapWidth + infoPtr->iListGap;
-            if (sizeString.cx > 0)
-                sizeButton.cx += sizeString.cx + infoPtr->szPadding.cx;
-        }
-        else
-            sizeButton.cx = sizeString.cx + infoPtr->szPadding.cx;
+        sizeButton.cx = 2*GetSystemMetrics(SM_CXEDGE) +
+            infoPtr->nBitmapWidth + infoPtr->iListGap;
+        if (sizeString.cx > 0)
+            sizeButton.cx += sizeString.cx + infoPtr->szPadding.cx;
+
     }
     else
     {
