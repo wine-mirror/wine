@@ -604,44 +604,6 @@ nsIInputStream *create_nsstream(const char *data, PRInt32 data_len)
     return (nsIInputStream*)ret;
 }
 
-nsIMutableArray *create_nsarray(void)
-{
-    nsIMutableArray *ret;
-    nsresult nsres;
-
-    if(!pCompMgr)
-        return NULL;
-
-    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
-            NS_ARRAY_CONTRACTID, NULL, &IID_nsIMutableArray,
-            (void**)&ret);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIArray: %08x\n", nsres);
-        return NULL;
-    }
-
-    return ret;
-}
-
-nsIWritableVariant *create_nsvariant(void)
-{
-    nsIWritableVariant *ret;
-    nsresult nsres;
-
-    if(!pCompMgr)
-        return NULL;
-
-    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
-            NS_VARIANT_CONTRACTID, NULL, &IID_nsIWritableVariant,
-            (void**)&ret);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIWritableVariant: %08x\n", nsres);
-        return NULL;
-    }
-
-    return ret;
-}
-
 nsICommandParams *create_nscommand_params(void)
 {
     nsICommandParams *ret = NULL;
