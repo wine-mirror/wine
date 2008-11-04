@@ -416,8 +416,25 @@ static HRESULT WINAPI POP3Transport_CommandAUTH(IPOP3Transport *iface, LPSTR psz
 
 static HRESULT WINAPI POP3Transport_CommandUSER(IPOP3Transport *iface, LPSTR username)
 {
-    FIXME("(%s)\n", username);
-    return E_NOTIMPL;
+    static char user[] = "USER ";
+    POP3Transport *This = (POP3Transport *)iface;
+    char *command;
+    int len;
+
+    TRACE("(%s)\n", username);
+
+    len = sizeof(user) + strlen(username) + 2; /* "\r\n" */
+    command = HeapAlloc(GetProcessHeap(), 0, len);
+
+    strcpy(command, user);
+    strcat(command, username);
+    strcat(command, "\r\n");
+
+    This->command = POP3_USER;
+    InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvUSERResp);
+
+    HeapFree(GetProcessHeap(), 0, command);
+    return S_OK;
 }
 
 static HRESULT WINAPI POP3Transport_CommandPASS(IPOP3Transport *iface, LPSTR password)
