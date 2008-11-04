@@ -286,7 +286,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample,
 
     if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile || This->position >= This->Parser.mediaSeeking.llStop)
     {
-        int i;
+        unsigned int i;
 
         TRACE("End of file reached\n");
 
@@ -301,7 +301,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample,
                 IPin_Release(ppin);
             }
             if (FAILED(hr))
-                WARN("Error sending EndOfStream to pin %d (%x)\n", i, hr);
+                WARN("Error sending EndOfStream to pin %u (%x)\n", i, hr);
         }
 
         /* Force the pullpin thread to stop */

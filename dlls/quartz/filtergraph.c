@@ -1025,7 +1025,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         hr = GetInternalConnections(pfilter, ppinfilter, &ppins, &nb);
 
         if (SUCCEEDED(hr)) {
-            int i;
+            unsigned int i;
             if (nb == 0) {
                 IPin_Disconnect(ppinfilter);
                 IPin_Disconnect(ppinOut);
@@ -1036,7 +1036,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
             {
                 LPWSTR pinname = NULL;
 
-                TRACE("Processing pin %d\n", i);
+                TRACE("Processing pin %u\n", i);
 
                 hr = IPin_QueryId(ppins[i], &pinname);
                 if (SUCCEEDED(hr))

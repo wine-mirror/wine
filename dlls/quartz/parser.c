@@ -219,7 +219,7 @@ HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
 {
     ParserImpl *This = (ParserImpl *)iface;
     PullPin *pin = (PullPin *)This->ppPins[0];
-    int i;
+    ULONG i;
 
     TRACE("()\n");
 
@@ -293,7 +293,7 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     ParserImpl *This = (ParserImpl *)iface;
     PullPin *pin = (PullPin *)This->ppPins[0];
 
-    int i;
+    ULONG i;
 
     TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
 

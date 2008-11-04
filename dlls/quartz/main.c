@@ -24,6 +24,7 @@
 #include "wine/debug.h"
 
 #include "quartz_private.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
@@ -280,7 +281,7 @@ LONG WINAPI DBToAmpFactor(LONG db)
  */
 DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
 {
-    int len;
+    unsigned int len;
     static const char format[] = "Error: 0x%x";
     char error[MAX_ERROR_TEXT_LEN];
 
@@ -288,7 +289,7 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
 
     if (!buffer) return 0;
     wsprintfA(error, format, hr);
-    if ((len = lstrlenA(error)) >= maxlen) return 0; 
+    if ((len = strlen(error)) >= maxlen) return 0;
     lstrcpyA(buffer, error);
     return len;
 }
@@ -298,7 +299,7 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
  */
 DWORD WINAPI AMGetErrorTextW(HRESULT hr, LPWSTR buffer, DWORD maxlen)
 {
-    int len;
+    unsigned int len;
     static const WCHAR format[] = {'E','r','r','o','r',':',' ','0','x','%','l','x',0};
     WCHAR error[MAX_ERROR_TEXT_LEN];
 
@@ -306,7 +307,7 @@ DWORD WINAPI AMGetErrorTextW(HRESULT hr, LPWSTR buffer, DWORD maxlen)
 
     if (!buffer) return 0;
     wsprintfW(error, format, hr);
-    if ((len = lstrlenW(error)) >= maxlen) return 0; 
+    if ((len = strlenW(error)) >= maxlen) return 0;
     lstrcpyW(buffer, error);
     return len;
 }

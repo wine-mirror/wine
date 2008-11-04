@@ -142,7 +142,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
 
     if (tStop >= This->EndOfFile || (bytepos_to_duration(This, tStop) >= This->Parser.mediaSeeking.llStop) || hr == VFW_E_NOT_CONNECTED)
     {
-        int i;
+        unsigned int i;
 
         TRACE("End of file reached\n");
 
@@ -151,7 +151,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
             IPin* ppin;
             HRESULT hr;
 
-            TRACE("Send End Of Stream to output pin %d\n", i);
+            TRACE("Send End Of Stream to output pin %u\n", i);
 
             hr = IPin_ConnectedTo(This->Parser.ppPins[i+1], &ppin);
             if (SUCCEEDED(hr))
