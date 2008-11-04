@@ -1316,13 +1316,13 @@ enum char_info_mode
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
     file_pos_t   size;          /* mapping size */
-    int          protect;       /* protection flags (see below) */
+    unsigned int protect;       /* protection flags (see below) */
     obj_handle_t file_handle;   /* file handle */
     VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;        /* handle to the mapping */
 @END
-/* protection flags */
+/* per-page protection flags */
 #define VPROT_READ       0x01
 #define VPROT_WRITE      0x02
 #define VPROT_EXEC       0x04
@@ -1330,7 +1330,10 @@ enum char_info_mode
 #define VPROT_GUARD      0x10
 #define VPROT_NOCACHE    0x20
 #define VPROT_COMMITTED  0x40
-#define VPROT_IMAGE      0x80
+/* per-mapping protection flags */
+#define VPROT_IMAGE      0x0100  /* mapping for an exe image */
+#define VPROT_SYSTEM     0x0200  /* system view (underlying mmap not under our control) */
+#define VPROT_VALLOC     0x0400  /* allocated by VirtualAlloc */
 
 
 /* Open a mapping */

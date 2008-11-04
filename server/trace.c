@@ -1742,7 +1742,7 @@ static void dump_create_mapping_request( const struct create_mapping_request *re
     fprintf( stderr, " size=" );
     dump_file_pos( &req->size );
     fprintf( stderr, "," );
-    fprintf( stderr, " protect=%d,", req->protect );
+    fprintf( stderr, " protect=%08x,", req->protect );
     fprintf( stderr, " file_handle=%p,", req->file_handle );
     fprintf( stderr, " objattr=" );
     dump_varargs_object_attributes( cur_size );

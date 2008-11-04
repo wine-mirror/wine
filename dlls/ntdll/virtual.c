@@ -75,14 +75,10 @@ typedef struct file_view
     void         *base;        /* Base address */
     size_t        size;        /* Size in bytes */
     HANDLE        mapping;     /* Handle to the file mapping */
-    BYTE          flags;       /* Allocation flags (VFLAG_*) */
-    BYTE          protect;     /* Protection for all pages at allocation time */
+    unsigned int  protect;     /* Protection for all pages at allocation time */
     BYTE          prot[1];     /* Protection byte for each page */
 } FILE_VIEW;
 
-/* Per-view flags */
-#define VFLAG_SYSTEM     0x01  /* system view (underlying mmap not under our control) */
-#define VFLAG_VALLOC     0x02  /* allocated by VirtualAlloc */
 
 /* Conversion from VPROT_* to Win32 flags */
 static const BYTE VIRTUAL_Win32Flags[16] =
@@ -196,9 +192,9 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     BYTE prot = view->prot[0];
 
     TRACE( "View: %p - %p", addr, addr + view->size - 1 );
-    if (view->flags & VFLAG_SYSTEM)
+    if (view->protect & VPROT_SYSTEM)
         TRACE( " (system)\n" );
-    else if (view->flags & VFLAG_VALLOC)
+    else if (view->protect & VPROT_VALLOC)
         TRACE( " (valloc)\n" );
     else if (view->mapping)
         TRACE( " %p\n", view->mapping );
@@ -401,7 +397,7 @@ static inline void unmap_area( void *addr, size_t size )
  */
 static void delete_view( struct file_view *view ) /* [in] View */
 {
-    if (!(view->flags & VFLAG_SYSTEM)) unmap_area( view->base, view->size );
+    if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
     list_remove( &view->entry );
     if (view->mapping) NtClose( view->mapping );
     RtlFreeHeap( virtual_heap, 0, view );
@@ -413,7 +409,7 @@ static void delete_view( struct file_view *view ) /* [in] View */
  *
  * Create a view. The csVirtual section must be held by caller.
  */
-static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t size, BYTE vprot )
+static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t size, unsigned int vprot )
 {
     struct file_view *view;
     struct list *ptr;
@@ -432,10 +428,9 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
 
     view->base    = base;
     view->size    = size;
-    view->flags   = 0;
     view->mapping = 0;
     view->protect = vprot;
-    memset( view->prot, vprot & ~VPROT_IMAGE, size >> page_shift );
+    memset( view->prot, vprot, size >> page_shift );
 
     /* Insert it in the linked list */
 
@@ -458,7 +453,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
             TRACE( "overlapping prev view %p-%p for %p-%p\n",
                    prev->base, (char *)prev->base + prev->size,
                    base, (char *)base + view->size );
-            assert( prev->flags & VFLAG_SYSTEM );
+            assert( prev->protect & VPROT_SYSTEM );
             delete_view( prev );
         }
     }
@@ -470,7 +465,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
             TRACE( "overlapping next view %p-%p for %p-%p\n",
                    next->base, (char *)next->base + next->size,
                    base, (char *)base + view->size );
-            assert( next->flags & VFLAG_SYSTEM );
+            assert( next->protect & VPROT_SYSTEM );
             delete_view( next );
         }
     }
@@ -684,7 +679,7 @@ static int alloc_reserved_area_callback( void *start, size_t size, void *arg )
  * The csVirtual section must be held by caller.
  */
 static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, size_t mask,
-                          int top_down, BYTE vprot )
+                          int top_down, unsigned int vprot )
 {
     void *ptr;
     NTSTATUS status;
@@ -825,7 +820,7 @@ static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
  * The csVirtual section must be held by caller.
  */
 static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start, size_t size,
-                                    off_t offset, BYTE vprot, BOOL removable )
+                                    off_t offset, unsigned int vprot, BOOL removable )
 {
     void *ptr;
     int prot = VIRTUAL_GetUnixProt( vprot );
@@ -1268,17 +1263,15 @@ NTSTATUS virtual_alloc_thread_stack( void *base, SIZE_T size )
         size = ROUND_SIZE( base, size );
         base = ROUND_ADDR( base, page_mask );
         if ((status = create_view( &view, base, size,
-                                   VPROT_READ | VPROT_WRITE | VPROT_COMMITTED )) != STATUS_SUCCESS)
+            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_VALLOC | VPROT_SYSTEM )) != STATUS_SUCCESS)
             goto done;
-        view->flags |= VFLAG_VALLOC | VFLAG_SYSTEM;
     }
     else
     {
         size = (size + 0xffff) & ~0xffff;  /* round to 64K boundary */
         if ((status = map_view( &view, NULL, size, 0xffff, 0,
-                                VPROT_READ | VPROT_WRITE | VPROT_COMMITTED )) != STATUS_SUCCESS)
+                           VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_VALLOC )) != STATUS_SUCCESS)
             goto done;
-        view->flags |= VFLAG_VALLOC;
 #ifdef VALGRIND_STACK_REGISTER
     /* no need to de-register the stack as it's the one of the main thread */
         VALGRIND_STACK_REGISTER( view->base, (char *)view->base + view->size );
@@ -1448,7 +1441,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
                                          SIZE_T *size_ptr, ULONG type, ULONG protect )
 {
     void *base;
-    BYTE vprot;
+    unsigned int vprot;
     SIZE_T size = *size_ptr;
     SIZE_T mask = get_mask( zero_bits );
     NTSTATUS status = STATUS_SUCCESS;
@@ -1523,7 +1516,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
             return STATUS_NOT_SUPPORTED;
         }
     }
-    vprot = VIRTUAL_GetProt( protect );
+    vprot = VIRTUAL_GetProt( protect ) | VPROT_VALLOC;
     if (type & MEM_COMMIT) vprot |= VPROT_COMMITTED;
 
     /* Reserve the memory */
@@ -1533,21 +1526,13 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     if (type & MEM_SYSTEM)
     {
         if (type & MEM_IMAGE) vprot |= VPROT_IMAGE;
-        status = create_view( &view, base, size, vprot | VPROT_COMMITTED );
-        if (status == STATUS_SUCCESS)
-        {
-            view->flags |= VFLAG_VALLOC | VFLAG_SYSTEM;
-            base = view->base;
-        }
+        status = create_view( &view, base, size, vprot | VPROT_COMMITTED | VPROT_SYSTEM );
+        if (status == STATUS_SUCCESS) base = view->base;
     }
     else if ((type & MEM_RESERVE) || !base)
     {
         status = map_view( &view, base, size, mask, type & MEM_TOP_DOWN, vprot );
-        if (status == STATUS_SUCCESS)
-        {
-            view->flags |= VFLAG_VALLOC;
-            base = view->base;
-        }
+        if (status == STATUS_SUCCESS) base = view->base;
     }
     else  /* commit the pages */
     {
@@ -1616,7 +1601,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
 
     if (!(view = VIRTUAL_FindView( base )) ||
         (base + size > (char *)view->base + view->size) ||
-        !(view->flags & VFLAG_VALLOC))
+        !(view->protect & VPROT_VALLOC))
     {
         status = STATUS_INVALID_PARAMETER;
     }
@@ -1626,7 +1611,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
         *addr_ptr = view->base;
         if (!wine_mmap_is_in_reserved_area( view->base, view->size )) *size_ptr = view->size;
         else *size_ptr = 0;  /* make sure we don't munmap anything from a reserved area */
-        view->flags |= VFLAG_SYSTEM;
+        view->protect |= VPROT_SYSTEM;
         delete_view( view );
     }
     else if (type == MEM_RELEASE)
@@ -1869,7 +1854,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         info->AllocationBase = alloc_base;
         info->AllocationProtect = VIRTUAL_GetWin32Prot( view->protect );
         if (view->protect & VPROT_IMAGE) info->Type = MEM_IMAGE;
-        else if (view->flags & VFLAG_VALLOC) info->Type = MEM_PRIVATE;
+        else if (view->protect & VPROT_VALLOC) info->Type = MEM_PRIVATE;
         else info->Type = MEM_MAPPED;
         for (size = base - alloc_base; size < view->size; size += page_size)
             if (view->prot[size >> page_shift] != vprot) break;
@@ -1966,7 +1951,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
                                  ULONG sec_flags, HANDLE file )
 {
     NTSTATUS ret;
-    BYTE vprot;
+    unsigned int vprot;
     DWORD len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
     struct security_descriptor *sd = NULL;
     struct object_attributes objattr;
@@ -2053,7 +2038,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     SIZE_T size = 0;
     SIZE_T mask = get_mask( zero_bits );
     int unix_handle = -1, needs_close;
-    int prot;
+    unsigned int prot;
     void *base;
     struct file_view *view;
     DWORD header_size;

@@ -1671,7 +1671,7 @@ struct create_mapping_request
     unsigned int access;
     unsigned int attributes;
     file_pos_t   size;
-    int          protect;
+    unsigned int protect;
     obj_handle_t file_handle;
     /* VARARG(objattr,object_attributes); */
 };
@@ -1688,7 +1688,10 @@ struct create_mapping_reply
 #define VPROT_GUARD      0x10
 #define VPROT_NOCACHE    0x20
 #define VPROT_COMMITTED  0x40
-#define VPROT_IMAGE      0x80
+
+#define VPROT_IMAGE      0x0100
+#define VPROT_SYSTEM     0x0200
+#define VPROT_VALLOC     0x0400
 
 
 
@@ -5031,6 +5034,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 343
+#define SERVER_PROTOCOL_VERSION 344
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
