@@ -95,10 +95,8 @@
  *   -- LVS_EX_INFOTIP
  *   -- LVS_EX_LABELTIP
  *   -- LVS_EX_MULTIWORKAREAS
- *   -- LVS_EX_ONECLICKACTIVATE
  *   -- LVS_EX_REGIONAL
  *   -- LVS_EX_SIMPLESELECT
- *   -- LVS_EX_TRACKSELECT
  *   -- LVS_EX_TWOCLICKACTIVATE
  *   -- LVS_EX_UNDERLINECOLD
  *   -- LVS_EX_UNDERLINEHOT
@@ -3270,6 +3268,13 @@ static BOOL LISTVIEW_GetItemAtPt(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVIte
     return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
 }
 
+static inline BOOL LISTVIEW_isHotTracking(const LISTVIEW_INFO *infoPtr)
+{
+    return ((infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT) ||
+            (infoPtr->dwLvExStyle & LVS_EX_ONECLICKACTIVATE) ||
+            (infoPtr->dwLvExStyle & LVS_EX_TWOCLICKACTIVATE));
+}
+
 /***
  * DESCRIPTION:
  * Called when the mouse is being actively tracked and has hovered for a specified
@@ -3290,7 +3295,7 @@ static BOOL LISTVIEW_GetItemAtPt(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVIte
  */
 static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
 {
-    if (infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT)
+    if (LISTVIEW_isHotTracking(infoPtr))
     {
         LVITEMW item;
         POINT pt;
@@ -3364,7 +3369,7 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
         infoPtr->bLButtonDown = FALSE;
 
     /* see if we are supposed to be tracking mouse hovering */
-    if(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT) {
+    if (LISTVIEW_isHotTracking(infoPtr)) {
         /* fill in the trackinfo struct */
         trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
         trackinfo.dwFlags = TME_QUERY;
@@ -8694,6 +8699,9 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
         LISTVIEW_SetSelection(infoPtr, nItem);
       }
     }
+
+    if (infoPtr->dwLvExStyle & LVS_EX_ONECLICKACTIVATE)
+        if(lvHitTestInfo.iItem != -1) notify_itemactivate(infoPtr,&lvHitTestInfo);
   }
   else
   {
@@ -9235,7 +9243,7 @@ static BOOL LISTVIEW_SetCursor(const LISTVIEW_INFO *infoPtr, HWND hwnd, UINT nHi
 {
     LVHITTESTINFO lvHitTestInfo;
 
-    if(!(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT)) return FALSE;
+    if(!(LISTVIEW_isHotTracking(infoPtr))) return FALSE;
 
     if(!infoPtr->hHotCursor)  return FALSE;
 
