@@ -75,7 +75,11 @@ void InternetTransport_UnregisterClass(HINSTANCE hInstance);
 
 HRESULT MimeBody_create(IUnknown *outer, void **obj);
 HRESULT MimeAllocator_create(IUnknown *outer, void **obj);
+HRESULT MimeMessage_create(IUnknown *outer, void **obj);
+HRESULT MimeSecurity_create(IUnknown *outer, void **obj);
 
 HRESULT MimeInternational_Construct(IMimeInternational **internat);
 
+HRESULT SMTPTransportCF_Create(REFIID riid, LPVOID *ppv);
 HRESULT IMAPTransportCF_Create(REFIID riid, LPVOID *ppv);
+HRESULT POP3TransportCF_Create(REFIID riid, LPVOID *ppv);

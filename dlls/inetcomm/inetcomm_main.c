@@ -137,6 +137,8 @@ static const struct IClassFactoryVtbl cf_vtbl =
 
 static cf mime_body_cf      = { &cf_vtbl, MimeBody_create };
 static cf mime_allocator_cf = { &cf_vtbl, MimeAllocator_create };
+static cf mime_message_cf   = { &cf_vtbl, MimeMessage_create };
+static cf mime_security_cf  = { &cf_vtbl, MimeSecurity_create };
 
 /***********************************************************************
  *              DllGetClassObject (INETCOMM.@)
@@ -147,10 +149,27 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv );
 
+    if (IsEqualCLSID(rclsid, &CLSID_ISMTPTransport))
+        return SMTPTransportCF_Create(iid, ppv);
+
+    if (IsEqualCLSID(rclsid, &CLSID_ISMTPTransport2))
+        return SMTPTransportCF_Create(iid, ppv);
+
     if (IsEqualCLSID(rclsid, &CLSID_IIMAPTransport))
         return IMAPTransportCF_Create(iid, ppv);
 
-    if( IsEqualCLSID( rclsid, &CLSID_IMimeBody ))
+    if (IsEqualCLSID(rclsid, &CLSID_IPOP3Transport))
+        return POP3TransportCF_Create(iid, ppv);
+
+    if ( IsEqualCLSID( rclsid, &CLSID_IMimeSecurity ))
+    {
+        cf = (IClassFactory*) &mime_security_cf.lpVtbl;
+    }
+    else if( IsEqualCLSID( rclsid, &CLSID_IMimeMessage ))
+    {
+        cf = (IClassFactory*) &mime_message_cf.lpVtbl;
+    }
+    else if( IsEqualCLSID( rclsid, &CLSID_IMimeBody ))
     {
         cf = (IClassFactory*) &mime_body_cf.lpVtbl;
     }

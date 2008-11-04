@@ -2540,22 +2540,19 @@ static const IMimeMessageVtbl MimeMessageVtbl =
     MimeMessage_GetRootMoniker,
 };
 
-/***********************************************************************
- *              MimeOleCreateMessage (INETCOMM.@)
- */
-HRESULT WINAPI MimeOleCreateMessage(IUnknown *pUnkOuter, IMimeMessage **ppMessage)
+HRESULT MimeMessage_create(IUnknown *outer, void **obj)
 {
     MimeMessage *This;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppMessage);
+    TRACE("(%p, %p)\n", outer, obj);
 
-    if (pUnkOuter)
+    if (outer)
     {
         FIXME("outer unknown not supported yet\n");
         return E_NOTIMPL;
     }
 
-    *ppMessage = NULL;
+    *obj = NULL;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
@@ -2566,8 +2563,17 @@ HRESULT WINAPI MimeOleCreateMessage(IUnknown *pUnkOuter, IMimeMessage **ppMessag
     list_init(&This->body_tree);
     This->next_hbody = (HBODY)1;
 
-    *ppMessage = (IMimeMessage *)&This->lpVtbl;
+    *obj = (IMimeMessage *)&This->lpVtbl;
     return S_OK;
+}
+
+/***********************************************************************
+ *              MimeOleCreateMessage (INETCOMM.@)
+ */
+HRESULT WINAPI MimeOleCreateMessage(IUnknown *pUnkOuter, IMimeMessage **ppMessage)
+{
+    TRACE("(%p, %p)\n", pUnkOuter, ppMessage);
+    return MimeMessage_create(NULL, (void **)ppMessage);
 }
 
 /***********************************************************************
@@ -2754,16 +2760,13 @@ static const IMimeSecurityVtbl MimeSecurityVtbl =
     MimeSecurity_GetCertData
 };
 
-/***********************************************************************
- *              MimeOleCreateSecurity (INETCOMM.@)
- */
-HRESULT WINAPI MimeOleCreateSecurity(IMimeSecurity **ppSecurity)
+HRESULT MimeSecurity_create(IUnknown *outer, void **obj)
 {
     MimeSecurity *This;
 
-    TRACE("(%p)\n", ppSecurity);
+    *obj = NULL;
 
-    *ppSecurity = NULL;
+    if (outer) return CLASS_E_NOAGGREGATION;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
@@ -2771,10 +2774,17 @@ HRESULT WINAPI MimeOleCreateSecurity(IMimeSecurity **ppSecurity)
     This->lpVtbl = &MimeSecurityVtbl;
     This->refs = 1;
 
-    *ppSecurity = (IMimeSecurity *)&This->lpVtbl;
+    *obj = (IMimeSecurity *)&This->lpVtbl;
     return S_OK;
 }
 
+/***********************************************************************
+ *              MimeOleCreateSecurity (INETCOMM.@)
+ */
+HRESULT WINAPI MimeOleCreateSecurity(IMimeSecurity **ppSecurity)
+{
+    return MimeSecurity_create(NULL, (void **)ppSecurity);
+}
 
 typedef struct
 {
