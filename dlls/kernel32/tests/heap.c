@@ -75,7 +75,8 @@ START_TEST(heap)
     /* large blocks must be 16-byte aligned */
     mem = HeapAlloc(GetProcessHeap(), 0, 512 * 1024);
     ok( mem != NULL, "failed for size 512K\n" );
-    ok( (ULONG_PTR)mem % 16 == 0, "512K block not 16-byte aligned\n" );
+    ok( (ULONG_PTR)mem % 16 == 0 || broken((ULONG_PTR)mem % 16) /* win9x */,
+        "512K block not 16-byte aligned\n" );
     HeapFree(GetProcessHeap(), 0, mem);
 
     /* Global*() functions */
@@ -191,10 +192,11 @@ START_TEST(heap)
     /* invalid free */
     SetLastError(MAGIC_DEAD);
     mem = GlobalFree(gbl);
-    ok(mem == gbl, "Expected gbl, got %p\n", mem);
-    ok(GetLastError() == ERROR_INVALID_HANDLE ||
-       GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
-       "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(mem == gbl || broken(mem == NULL) /* nt4 */, "Expected gbl, got %p\n", mem);
+    if (mem == gbl)
+        ok(GetLastError() == ERROR_INVALID_HANDLE ||
+           GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
+           "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     gbl = GlobalAlloc(GMEM_DDESHARE, 100);
 
