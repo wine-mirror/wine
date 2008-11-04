@@ -123,6 +123,40 @@ static void SMTPTransport_CallbackReadResponseDoNothing(IInternetTransport *ifac
     InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackDoNothing);
 }
 
+static void SMTPTransport_CallbackProcessDATAResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+    SMTPRESPONSE response = { 0 };
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = SMTPTransport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    response.command = SMTP_DATA;
+    ISMTPCallback_OnResponse((ISMTPCallback *)This->InetTransport.pCallback, &response);
+
+    if (FAILED(response.rIxpResult.hrServerError))
+    {
+        ERR("server error: %s\n", debugstr_a(pBuffer));
+        /* FIXME: handle error */
+        return;
+    }
+}
+
+static void SMTPTransport_CallbackReadDATAResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, SMTPTransport_CallbackProcessDATAResponse);
+}
+
 static void SMTPTransport_CallbackProcessMAILResponse(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     SMTPTransport *This = (SMTPTransport *)iface;
@@ -843,8 +877,12 @@ static HRESULT WINAPI SMTPTransport_CommandRSET(ISMTPTransport2 *iface)
 
 static HRESULT WINAPI SMTPTransport_CommandDATA(ISMTPTransport2 *iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    SMTPTransport *This = (SMTPTransport *)iface;
+
+    TRACE("()\n");
+
+    return InternetTransport_DoCommand(&This->InetTransport, "DATA\n",
+        SMTPTransport_CallbackReadDATAResponse);
 }
 
 static HRESULT WINAPI SMTPTransport_CommandDOT(ISMTPTransport2 *iface)
