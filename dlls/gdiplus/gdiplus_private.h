@@ -195,6 +195,10 @@ struct GpBitmap{
     BYTE *bitmapbits;   /* pointer to the buffer we passed in BitmapLockBits */
 };
 
+struct GpCachedBitmap{
+    GpBitmap *bmp;
+};
+
 struct GpImageAttributes{
     WrapMode wrap;
 };

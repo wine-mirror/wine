@@ -81,7 +81,7 @@
 @ stdcall GdipCreateBitmapFromScan0(long long long long ptr ptr)
 @ stdcall GdipCreateBitmapFromStream(ptr ptr)
 @ stdcall GdipCreateBitmapFromStreamICM(ptr ptr)
-@ stub GdipCreateCachedBitmap
+@ stdcall GdipCreateCachedBitmap(ptr ptr ptr)
 @ stdcall GdipCreateCustomLineCap(ptr ptr long long ptr)
 @ stub GdipCreateEffect
 @ stdcall GdipCreateFont(ptr long long long ptr)
@@ -137,7 +137,7 @@
 @ stdcall GdipCreateTextureIA(ptr ptr long long long long ptr)
 @ stdcall GdipCreateTextureIAI(ptr ptr long long long long ptr)
 @ stdcall GdipDeleteBrush(ptr)
-@ stub GdipDeleteCachedBitmap
+@ stdcall GdipDeleteCachedBitmap(ptr)
 @ stdcall GdipDeleteCustomLineCap(ptr)
 @ stub GdipDeleteEffect
 @ stdcall GdipDeleteFont(ptr)
@@ -158,7 +158,7 @@
 @ stdcall GdipDrawBezierI(ptr ptr long long long long long long long long)
 @ stdcall GdipDrawBeziers(ptr ptr ptr long)
 @ stdcall GdipDrawBeziersI(ptr ptr ptr long)
-@ stub GdipDrawCachedBitmap
+@ stdcall GdipDrawCachedBitmap(ptr ptr long long)
 @ stdcall GdipDrawClosedCurve2(ptr ptr ptr long long)
 @ stdcall GdipDrawClosedCurve2I(ptr ptr ptr long long)
 @ stdcall GdipDrawClosedCurve(ptr ptr ptr long)
