@@ -170,7 +170,8 @@ static void offscreen_test(void) {
     ok(hr == DD_OK, "IDirectDraw7_CreateSurface failed with hr=0x%08x\n", hr);
 
     hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, offscreen, NULL, DDOVER_SHOW, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
+    ok(hr == DD_OK || broken(hr == E_NOTIMPL),
+       "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
 
     /* Try to overlay the primary with a non-overlay surface */
     hr = IDirectDrawSurface7_UpdateOverlay(offscreen, NULL, primary, NULL, DDOVER_SHOW, NULL);
