@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winuser.h"
+#include "softpub.h"
 #include "cryptuiapi.h"
 #include "wine/debug.h"
 
@@ -101,12 +102,79 @@ error:
     return ret;
 }
 
-BOOL WINAPI CryptUIDlgViewCertificateW(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
-                                       BOOL *pfPropertiesChanged)
+/***********************************************************************
+ *		CryptUIDlgViewCertificateW (CRYPTUI.@)
+ */
+BOOL WINAPI CryptUIDlgViewCertificateW(
+ PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo, BOOL *pfPropertiesChanged)
 {
-    FIXME("(%p, %p): stub\n", pCertViewInfo, pfPropertiesChanged);
-    if (pfPropertiesChanged) *pfPropertiesChanged = FALSE;
-    return TRUE;
+    static GUID generic_cert_verify = WINTRUST_ACTION_GENERIC_CERT_VERIFY;
+    CRYPTUI_VIEWCERTIFICATE_STRUCTW viewInfo;
+    WINTRUST_DATA wvt;
+    WINTRUST_CERT_INFO cert;
+    BOOL ret = FALSE;
+    CRYPT_PROVIDER_SGNR *signer;
+    CRYPT_PROVIDER_CERT *provCert = NULL;
+
+    TRACE("(%p, %p)\n", pCertViewInfo, pfPropertiesChanged);
+
+    if (pCertViewInfo->dwSize != sizeof(CRYPTUI_VIEWCERTIFICATE_STRUCTW))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    /* Make a local copy in case we have to call WinVerifyTrust ourselves */
+    memcpy(&viewInfo, pCertViewInfo, sizeof(viewInfo));
+    if (!viewInfo.u.hWVTStateData)
+    {
+        memset(&wvt, 0, sizeof(wvt));
+        wvt.cbStruct = sizeof(wvt);
+        wvt.dwUIChoice = WTD_UI_NONE;
+        if (viewInfo.dwFlags &
+         CRYPTUI_ENABLE_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT)
+            wvt.fdwRevocationChecks |= WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
+        if (viewInfo.dwFlags & CRYPTUI_ENABLE_REVOCATION_CHECK_END_CERT)
+            wvt.fdwRevocationChecks |= WTD_REVOCATION_CHECK_END_CERT;
+        if (viewInfo.dwFlags & CRYPTUI_ENABLE_REVOCATION_CHECK_CHAIN)
+            wvt.fdwRevocationChecks |= WTD_REVOCATION_CHECK_CHAIN;
+        wvt.dwUnionChoice = WTD_CHOICE_CERT;
+        memset(&cert, 0, sizeof(cert));
+        cert.cbStruct = sizeof(cert);
+        cert.psCertContext = (CERT_CONTEXT *)viewInfo.pCertContext;
+        cert.chStores = viewInfo.cStores;
+        cert.pahStores = viewInfo.rghStores;
+        wvt.u.pCert = &cert;
+        wvt.dwStateAction = WTD_STATEACTION_VERIFY;
+        WinVerifyTrust(NULL, &generic_cert_verify, &wvt);
+        viewInfo.u.pCryptProviderData =
+         WTHelperProvDataFromStateData(wvt.hWVTStateData);
+        signer = WTHelperGetProvSignerFromChain(
+         (CRYPT_PROVIDER_DATA *)viewInfo.u.pCryptProviderData, 0, FALSE, 0);
+        provCert = WTHelperGetProvCertFromChain(signer, 0);
+        ret = TRUE;
+    }
+    else
+    {
+        viewInfo.u.pCryptProviderData =
+         WTHelperProvDataFromStateData(viewInfo.u.hWVTStateData);
+        signer = WTHelperGetProvSignerFromChain(
+         (CRYPT_PROVIDER_DATA *)viewInfo.u.pCryptProviderData,
+         viewInfo.idxSigner, viewInfo.fCounterSigner,
+         viewInfo.idxCounterSigner);
+        provCert = WTHelperGetProvCertFromChain(signer, viewInfo.idxCert);
+        ret = TRUE;
+    }
+    if (ret)
+    {
+        FIXME("show cert dialog\n");
+        ret = FALSE;
+        if (!viewInfo.u.hWVTStateData)
+        {
+            wvt.dwStateAction = WTD_STATEACTION_CLOSE;
+            WinVerifyTrust(NULL, &generic_cert_verify, &wvt);
+        }
+    }
+    return ret;
 }
 
 static PCCERT_CONTEXT make_cert_from_file(LPCWSTR fileName)
