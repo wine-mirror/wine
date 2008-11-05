@@ -338,7 +338,7 @@ push @trace_lines, "};\n\n";
 push @trace_lines, "static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {\n";
 foreach my $req (@requests)
 {
-    push @trace_lines, "    (dump_func)", $replies{$req} ? "dump_${req}_reply,\n" : "0,\n";
+    push @trace_lines, "    ", $replies{$req} ? "(dump_func)dump_${req}_reply,\n" : "NULL,\n";
 }
 push @trace_lines, "};\n\n";
 
