@@ -61,6 +61,8 @@ static const CLSID CLSID_JScript =
 
 DEFINE_EXPECT(GetLCID);
 DEFINE_EXPECT(OnStateChange_STARTED);
+DEFINE_EXPECT(OnStateChange_CONNECTED);
+DEFINE_EXPECT(OnStateChange_DISCONNECTED);
 DEFINE_EXPECT(OnStateChange_CLOSED);
 DEFINE_EXPECT(OnStateChange_INITIALIZED);
 DEFINE_EXPECT(OnEnterScript);
@@ -133,6 +135,12 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
     switch(ssScriptState) {
     case SCRIPTSTATE_STARTED:
         CHECK_EXPECT(OnStateChange_STARTED);
+        return S_OK;
+    case SCRIPTSTATE_CONNECTED:
+        CHECK_EXPECT(OnStateChange_CONNECTED);
+        return S_OK;
+    case SCRIPTSTATE_DISCONNECTED:
+        CHECK_EXPECT(OnStateChange_DISCONNECTED);
         return S_OK;
     case SCRIPTSTATE_CLOSED:
         CHECK_EXPECT(OnStateChange_CLOSED);
@@ -376,9 +384,20 @@ static void test_jscript2(void)
     hres = IActiveScriptParse_InitNew(parse);
     ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
 
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    test_state(script, SCRIPTSTATE_CONNECTED);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
     SET_EXPECT(OnStateChange_CLOSED);
     hres = IActiveScript_Close(script);
     ok(hres == S_OK, "Close failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
     CHECK_CALLED(OnStateChange_CLOSED);
 
     test_state(script, SCRIPTSTATE_CLOSED);

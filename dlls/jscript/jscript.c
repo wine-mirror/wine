@@ -264,6 +264,7 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
 
     switch(ss) {
     case SCRIPTSTATE_STARTED:
+    case SCRIPTSTATE_CONNECTED: /* FIXME */
         if(This->ctx->state == SCRIPTSTATE_CLOSED)
             return E_UNEXPECTED;
 
@@ -308,9 +309,15 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
     if(This->thread_id != GetCurrentThreadId())
         return E_UNEXPECTED;
 
-    clear_script_queue(This);
-
     if(This->ctx) {
+        if(This->ctx->state == SCRIPTSTATE_CONNECTED)
+            change_state(This, SCRIPTSTATE_DISCONNECTED);
+
+        clear_script_queue(This);
+
+        if(This->ctx->state == SCRIPTSTATE_DISCONNECTED)
+            change_state(This, SCRIPTSTATE_INITIALIZED);
+
         if(This->ctx->named_items) {
             named_item_t *iter, *iter2;
 
