@@ -2326,7 +2326,7 @@ void LookupInit(void)
 
 void LookupCleanup(void)
 {
-	int i;
+	unsigned int i;
 
 	for (i=0; i<RTF_KEY_COUNT*2; i++)
 	{

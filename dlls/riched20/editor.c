@@ -3203,7 +3203,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     if (unicode)
     {
         memcpy((LPWSTR)lParam, bufferW, wParam * sizeof(WCHAR));
-        if (lstrlenW(bufferW) >= wParam) rc = 0;
+        if (strlenW(bufferW) >= wParam) rc = 0;
     }
     else
     {
@@ -3338,7 +3338,7 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
     {
       if (run && (run->member.run.nFlags & MERF_ENDPARA))
       {
-        unsigned int i;
+        int i;
         /* Write as many \r as encoded in end-of-paragraph, space allowing */
         for (i = 0; i < run->member.run.nCR && nCharsLeft > 0; i++, nCharsLeft--)
         {
@@ -4650,7 +4650,7 @@ BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
   };
   LPWSTR bufferW = NULL;
   WCHAR bufW[32];
-  int i;
+  unsigned int i;
 
   if (sel_max == -1) sel_max = ME_GetTextLength(editor);
   assert(sel_min <= sel_max);
@@ -4660,7 +4660,7 @@ BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
     if (bufferW == NULL) {
       bufferW = heap_alloc((sel_max - sel_min + 1) * sizeof(WCHAR));
     }
-    ME_GetTextW(editor, bufferW, sel_min, min(sel_max - sel_min, strlen(prefixes[i].text)), 0);
+    ME_GetTextW(editor, bufferW, sel_min, min(sel_max - sel_min, lstrlenA(prefixes[i].text)), 0);
     MultiByteToWideChar(CP_ACP, 0, prefixes[i].text, -1, bufW, 32);
     if (!lstrcmpW(bufW, bufferW))
     {
