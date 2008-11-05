@@ -4335,7 +4335,7 @@ INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
     va_end(args);
 
     ret = MessageBoxW(hWnd, pszTemp, pszTitle, uType);
-    LocalFree((HLOCAL)pszTemp);
+    LocalFree(pszTemp);
     return ret;
 }
 

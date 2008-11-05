@@ -486,7 +486,7 @@ static void test_StrDupA(void)
     if (lpszStr)
     {
       ok(!strcmp(result->byte_size_64, lpszStr), "Copied string wrong\n");
-      LocalFree((HLOCAL)lpszStr);
+      LocalFree(lpszStr);
     }
     result++;
   }
@@ -496,7 +496,7 @@ static void test_StrDupA(void)
    */
   lpszStr = StrDupA(NULL);
   ok(lpszStr == NULL || *lpszStr == '\0', "NULL string returned %p\n", lpszStr);
-  LocalFree((HLOCAL)lpszStr);
+  LocalFree(lpszStr);
 }
 
 static void test_StrFormatByteSize64A(void)
