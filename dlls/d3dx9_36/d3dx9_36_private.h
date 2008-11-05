@@ -68,7 +68,8 @@ typedef struct ID3DXSpriteImpl
     DWORD alphacmp_caps;
 
     SPRITE *sprites;
-    int sprite_count;
+    int sprite_count;      /* number of sprites to be drawn */
+    int allocated_sprites; /* number of (pre-)allocated sprites */
 } ID3DXSpriteImpl;
 
 
