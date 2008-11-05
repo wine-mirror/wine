@@ -124,6 +124,59 @@ static void PB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
 
+static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags)
+{
+    static const int cb_states[3][5] =
+    {
+        { CBS_UNCHECKEDNORMAL, CBS_UNCHECKEDDISABLED, CBS_UNCHECKEDHOT, CBS_UNCHECKEDPRESSED, CBS_UNCHECKEDNORMAL },
+        { CBS_CHECKEDNORMAL, CBS_CHECKEDDISABLED, CBS_CHECKEDHOT, CBS_CHECKEDPRESSED, CBS_CHECKEDNORMAL },
+        { CBS_MIXEDNORMAL, CBS_MIXEDDISABLED, CBS_MIXEDHOT, CBS_MIXEDPRESSED, CBS_MIXEDNORMAL }
+    };
+
+    static const int rb_states[2][5] =
+    {
+        { RBS_UNCHECKEDNORMAL, RBS_UNCHECKEDDISABLED, RBS_UNCHECKEDHOT, RBS_UNCHECKEDPRESSED, RBS_UNCHECKEDNORMAL },
+        { RBS_CHECKEDNORMAL, RBS_CHECKEDDISABLED, RBS_CHECKEDHOT, RBS_CHECKEDPRESSED, RBS_CHECKEDNORMAL }
+    };
+
+    static const int cb_size = 13;
+
+    RECT bgRect, textRect;
+    HFONT font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
+    HFONT hPrevFont = font ? SelectObject(hDC, font) : NULL;
+    LRESULT checkState = SendMessageW(hwnd, BM_GETCHECK, 0, 0);
+    DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
+    int part = ((dwStyle & BUTTON_TYPE) == BS_RADIOBUTTON) || ((dwStyle & BUTTON_TYPE) == BS_AUTORADIOBUTTON)
+             ? BP_RADIOBUTTON
+             : BP_CHECKBOX;
+    int state = (part == BP_CHECKBOX)
+              ? cb_states[ checkState ][ drawState ]
+              : rb_states[ checkState ][ drawState ];
+    WCHAR *text = get_button_text(hwnd);
+
+    GetClientRect(hwnd, &bgRect);
+    GetThemeBackgroundContentRect(theme, hDC, part, state, &bgRect, &textRect);
+
+    if (dtFlags & DT_SINGLELINE) /* Center the checkbox / radio button to the text. */
+        bgRect.top = bgRect.top + (textRect.bottom - textRect.top - cb_size) / 2;
+
+    /* adjust for the check/radio marker */
+    bgRect.bottom = bgRect.top + cb_size;
+    bgRect.right = bgRect.left + cb_size;
+    textRect.left = bgRect.right + 6;
+
+    if (IsThemeBackgroundPartiallyTransparent(theme, part, state))
+        DrawThemeParentBackground(hwnd, hDC, NULL);
+    DrawThemeBackground(theme, hDC, part, state, &bgRect, NULL);
+    if (text)
+    {
+        DrawThemeText(theme, hDC, part, state, text, lstrlenW(text), dtFlags, 0, &textRect);
+        HeapFree(GetProcessHeap(), 0, text);
+    }
+
+    if (hPrevFont) SelectObject(hDC, hPrevFont);
+}
+
 static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags)
 {
     static const int states[] = { GBS_NORMAL, GBS_DISABLED, GBS_NORMAL, GBS_NORMAL, GBS_NORMAL };
@@ -170,14 +223,14 @@ static const pfThemedPaint btnThemedPaintFunc[BUTTON_TYPE + 1] =
 {
     PB_draw, /* BS_PUSHBUTTON */
     PB_draw, /* BS_DEFPUSHBUTTON */
-    NULL, /* BS_CHECKBOX */
-    NULL, /* BS_AUTOCHECKBOX */
-    NULL, /* BS_RADIOBUTTON */
-    NULL, /* BS_3STATE */
-    NULL, /* BS_AUTO3STATE */
+    CB_draw, /* BS_CHECKBOX */
+    CB_draw, /* BS_AUTOCHECKBOX */
+    CB_draw, /* BS_RADIOBUTTON */
+    CB_draw, /* BS_3STATE */
+    CB_draw, /* BS_AUTO3STATE */
     GB_draw, /* BS_GROUPBOX */
     NULL, /* BS_USERBUTTON */
-    NULL, /* BS_AUTORADIOBUTTON */
+    CB_draw, /* BS_AUTORADIOBUTTON */
     NULL, /* Not defined */
     NULL, /* BS_OWNERDRAW */
     NULL, /* Not defined */
