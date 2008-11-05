@@ -231,6 +231,8 @@ static void test_RtlGetFullPathName_U(void)
         const char *path;
         const char *rname;
         const char *rfile;
+        const char *alt_rname;
+        const char *alt_rfile;
     };
 
     static const struct test tests[] =
@@ -251,8 +253,11 @@ static void test_RtlGetFullPathName_U(void)
             { "c:/test/\\.\\.\\file",        "c:\\test\\file",   "file"},
             { "c:/test\\\\.\\.\\file",       "c:\\test\\file",   "file"},
             { "c:/test\\test1\\..\\.\\file", "c:\\test\\file",   "file"},
-            { "c:///test\\.\\.\\file//",     "c:\\test\\file\\", NULL},
+            { "c:///test\\.\\.\\file//",     "c:\\test\\file\\", NULL,
+                                             "c:\\test\\file",   "file"},  /* nt4 */
             { "c:///test\\..\\file\\..\\//", "c:\\",             NULL},
+            { "c:/test../file",              "c:\\test.\\file",  "file",
+                                             "c:\\test..\\file", "file"},  /* vista */
             { NULL, NULL, NULL}
         };
 
@@ -260,7 +265,6 @@ static void test_RtlGetFullPathName_U(void)
     WCHAR pathbufW[2*MAX_PATH], rbufferW[MAX_PATH];
     CHAR  rbufferA[MAX_PATH], rfileA[MAX_PATH];
     ULONG ret;
-    NTSTATUS status;
     WCHAR *file_part;
     DWORD reslen;
     UINT len;
@@ -270,39 +274,25 @@ static void test_RtlGetFullPathName_U(void)
         len= strlen(test->rname) * sizeof(WCHAR);
         pRtlMultiByteToUnicodeN(pathbufW , sizeof(pathbufW), NULL, test->path, strlen(test->path)+1 );
         ret = pRtlGetFullPathName_U( pathbufW,MAX_PATH, rbufferW, &file_part);
-        ok( ret == len, "Wrong result %d/%d for \"%s\"\n", ret, len, test->path );
+        ok( ret == len || (test->alt_rname && ret == strlen(test->alt_rname)*sizeof(WCHAR)),
+            "Wrong result %d/%d for \"%s\"\n", ret, len, test->path );
         ok(pRtlUnicodeToMultiByteN(rbufferA,MAX_PATH,&reslen,rbufferW,(lstrlenW(rbufferW) + 1) * sizeof(WCHAR)) == STATUS_SUCCESS,
            "RtlUnicodeToMultiByteN failed\n");
-        ok(lstrcmpiA(rbufferA,test->rname) == 0, "Got \"%s\" expected \"%s\"\n",rbufferA,test->rname);
+        ok(!lstrcmpiA(rbufferA,test->rname) || (test->alt_rname && !lstrcmpiA(rbufferA,test->alt_rname)),
+           "Got \"%s\" expected \"%s\"\n",rbufferA,test->rname);
         if (file_part)
         {
             ok(pRtlUnicodeToMultiByteN(rfileA,MAX_PATH,&reslen,file_part,(lstrlenW(file_part) + 1) * sizeof(WCHAR)) == STATUS_SUCCESS,
                "RtlUnicodeToMultiByteN failed\n");
-            ok(test->rfile && !lstrcmpiA(rfileA,test->rfile), "Got \"%s\" expected \"%s\"\n",rfileA,test->rfile);
+            ok((test->rfile && !lstrcmpiA(rfileA,test->rfile)) ||
+               (test->alt_rfile && !lstrcmpiA(rfileA,test->alt_rfile)),
+               "Got \"%s\" expected \"%s\"\n",rfileA,test->rfile);
         }
         else
         {
             ok( !test->rfile, "Got NULL expected \"%s\"\n", test->rfile );
         }
     }
-
-    /* "c:/test../file",              "c:\\test.\\file",  "file"}, */
-    pRtlMultiByteToUnicodeN(pathbufW, sizeof(pathbufW), NULL,
-                            "c:/test../file", strlen("c:/test../file") + 1);
-    ret = pRtlGetFullPathName_U(pathbufW, MAX_PATH, rbufferW, &file_part);
-    ok(ret == strlen("c:\\test.\\file") * sizeof(WCHAR) ||
-       ret == strlen("c:\\test..\\file") * sizeof(WCHAR), /* Vista */
-       "Expected 26 or 28, got %d\n", ret);
-    status = pRtlUnicodeToMultiByteN(rbufferA, MAX_PATH, &reslen, rbufferW,
-                                     (lstrlenW(rbufferW) + 1) * sizeof(WCHAR));
-    ok(status == STATUS_SUCCESS, "RtlUnicodeToMultiByteN failed\n");
-    ok(!lstrcmpiA(rbufferA, "c:\\test.\\file") ||
-       !lstrcmpiA(rbufferA, "c:\\test..\\file"),
-       "Expected \"c:\\test.\\file\" or \"c:\\test..\\file\", got \"%s\"\n", rbufferA);
-    status = pRtlUnicodeToMultiByteN(rfileA, MAX_PATH, &reslen, file_part,
-                                     (lstrlenW(file_part) + 1) * sizeof(WCHAR));
-    ok(status == STATUS_SUCCESS, "RtlUnicodeToMultiByteN failed\n");
-    ok(!lstrcmpiA(rfileA, "file"), "Got \"%s\" expected \"file\"\n", rfileA);
 }
 
 START_TEST(path)
