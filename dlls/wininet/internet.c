@@ -863,7 +863,7 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
     TRACE("(%p, 0x%08x)\n", lpdwStatus, dwReserved);
 
     if (lpdwStatus) {
-	FIXME("always returning LAN connection.\n");
+	WARN("always returning LAN connection.\n");
 	*lpdwStatus = INTERNET_CONNECTION_LAN;
     }
     return TRUE;
@@ -907,7 +907,7 @@ BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnecti
 	return FALSE;
 
     if (lpdwStatus) {
-        FIXME("always returning LAN connection.\n");
+        WARN("always returning LAN connection.\n");
         *lpdwStatus = INTERNET_CONNECTION_LAN;
     }
     return LoadStringW(WININET_hModule, IDS_LANCONNECTION, lpszConnectionName, dwNameLen);
