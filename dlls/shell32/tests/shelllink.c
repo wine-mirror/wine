@@ -650,7 +650,9 @@ static void test_datalink(void)
 
     r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                             &IID_IShellLinkW, (LPVOID*)&sl );
-    ok( r == S_OK || r == E_NOINTERFACE, "CoCreateInstance failed (0x%08x)\n", r);
+    ok( r == S_OK ||
+        broken(r == E_NOINTERFACE), /* Win9x */
+        "CoCreateInstance failed (0x%08x)\n", r);
     if (!sl)
     {
         skip("no shelllink\n");
@@ -658,11 +660,14 @@ static void test_datalink(void)
     }
 
     r = IShellLinkW_QueryInterface( sl, &_IID_IShellLinkDataList, (LPVOID*) &dl );
-    ok(r == S_OK, "IShellLinkW_QueryInterface failed (0x%08x)\n", r);
+    ok( r == S_OK ||
+        broken(r == E_NOINTERFACE), /* NT4 */
+        "IShellLinkW_QueryInterface failed (0x%08x)\n", r);
 
     if (!dl)
     {
         skip("no datalink interface\n");
+        IShellLinkW_Release( sl );
         return;
     }
 
