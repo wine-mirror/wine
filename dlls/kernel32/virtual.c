@@ -353,20 +353,20 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
         /* fall through */
     case PAGE_READONLY:
     case PAGE_WRITECOPY:
-        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ;
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE;
         break;
     case PAGE_READWRITE:
-        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE;
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE;
         break;
     case PAGE_EXECUTE:
-        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_EXECUTE;
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_EXECUTE | SECTION_MAP_EXECUTE_EXPLICIT;
         break;
     case PAGE_EXECUTE_READ:
     case PAGE_EXECUTE_WRITECOPY:
-        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE;
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_MAP_EXECUTE_EXPLICIT;
         break;
     case PAGE_EXECUTE_READWRITE:
-        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE;
+        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE | SECTION_MAP_EXECUTE_EXPLICIT;
         break;
     default:
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -469,7 +469,14 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, name );
 
-    if (access == FILE_MAP_COPY) access = FILE_MAP_READ;
+    if (access & FILE_MAP_COPY) access |= SECTION_MAP_READ;
+    access |= STANDARD_RIGHTS_REQUIRED | SECTION_QUERY;
+
+    if (GetVersion() & 0x80000000)
+    {
+        /* win9x doesn't do access checks, so try with full access first */
+        if (!NtOpenSection( &ret, access | SECTION_MAP_READ | SECTION_MAP_WRITE, &attr )) return ret;
+    }
 
     if ((status = NtOpenSection( &ret, access, &attr )))
     {

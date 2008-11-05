@@ -1716,6 +1716,7 @@ struct get_mapping_info_request
 {
     struct request_header __header;
     obj_handle_t handle;
+    unsigned int access;
 };
 struct get_mapping_info_reply
 {
@@ -5070,6 +5071,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 345
+#define SERVER_PROTOCOL_VERSION 346
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

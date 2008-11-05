@@ -482,7 +482,7 @@ static void test_MapViewOfFile(void)
         ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
         ok( info.Protect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.Protect );
     }
-    else todo_wine win_skip( "no access checks on win9x\n" );
+    else win_skip( "no access checks on win9x\n" );
     UnmapViewOfFile( ptr );
     CloseHandle( mapping );
 
@@ -507,7 +507,7 @@ static void test_MapViewOfFile(void)
         ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
         ok( info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect );
     }
-    else todo_wine win_skip( "no access checks on win9x\n" );
+    else win_skip( "no access checks on win9x\n" );
     UnmapViewOfFile( ptr );
     CloseHandle( mapping );
 

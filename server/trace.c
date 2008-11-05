@@ -1769,7 +1769,8 @@ static void dump_open_mapping_reply( const struct open_mapping_reply *req )
 
 static void dump_get_mapping_info_request( const struct get_mapping_info_request *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " access=%08x", req->access );
 }
 
 static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *req )

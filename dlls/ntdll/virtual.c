@@ -520,13 +520,6 @@ static BYTE VIRTUAL_GetProt( DWORD protect )
         vprot = VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_WRITECOPY:
-        /* MSDN CreateFileMapping() states that if PAGE_WRITECOPY is given,
-	 * that the hFile must have been opened with GENERIC_READ and
-	 * GENERIC_WRITE access.  This is WRONG as tests show that you
-	 * only need GENERIC_READ access (at least for Win9x,
-	 * FIXME: what about NT?).  Thus, we don't put VPROT_WRITE in
-	 * PAGE_WRITECOPY and PAGE_EXECUTE_WRITECOPY.
-	 */
         vprot = VPROT_READ | VPROT_WRITECOPY;
         break;
     case PAGE_EXECUTE:
@@ -539,7 +532,6 @@ static BYTE VIRTUAL_GetProt( DWORD protect )
         vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_EXECUTE_WRITECOPY:
-        /* See comment for PAGE_WRITECOPY above */
         vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITECOPY;
         break;
     case PAGE_NOACCESS:
@@ -2072,10 +2064,11 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 {
     NTSTATUS res;
     ULONGLONG full_size;
+    ACCESS_MASK access;
     SIZE_T size = 0;
     SIZE_T mask = get_mask( zero_bits );
     int unix_handle = -1, needs_close;
-    unsigned int prot;
+    unsigned int map_vprot, vprot;
     void *base;
     struct file_view *view;
     DWORD header_size;
@@ -2119,11 +2112,32 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         return result.map_view.status;
     }
 
+    switch(protect)
+    {
+    case PAGE_NOACCESS:
+        access = SECTION_QUERY;
+        break;
+    case PAGE_READWRITE:
+    case PAGE_EXECUTE_READWRITE:
+        access = SECTION_QUERY | SECTION_MAP_WRITE;
+        break;
+    case PAGE_READONLY:
+    case PAGE_WRITECOPY:
+    case PAGE_EXECUTE:
+    case PAGE_EXECUTE_READ:
+    case PAGE_EXECUTE_WRITECOPY:
+        access = SECTION_QUERY | SECTION_MAP_READ;
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
     SERVER_START_REQ( get_mapping_info )
     {
         req->handle = handle;
+        req->access = access;
         res = wine_server_call( req );
-        prot        = reply->protect;
+        map_vprot   = reply->protect;
         base        = reply->base;
         full_size   = reply->size;
         header_size = reply->header_size;
@@ -2140,7 +2154,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 
-    if (prot & VPROT_IMAGE)
+    if (map_vprot & VPROT_IMAGE)
     {
         if (shared_file)
         {
@@ -2171,35 +2185,12 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     if (*size_ptr) size = ROUND_SIZE( offset.u.LowPart, *size_ptr );
     else size = size - offset.QuadPart;
 
-    switch(protect)
-    {
-    case PAGE_NOACCESS:
-        break;
-    case PAGE_READWRITE:
-    case PAGE_EXECUTE_READWRITE:
-        if (!(prot & VPROT_WRITE))
-        {
-            res = STATUS_INVALID_PARAMETER;
-            goto done;
-        }
-        /* fall through */
-    case PAGE_READONLY:
-    case PAGE_WRITECOPY:
-    case PAGE_EXECUTE:
-    case PAGE_EXECUTE_READ:
-    case PAGE_EXECUTE_WRITECOPY:
-        if (prot & VPROT_READ) break;
-        /* fall through */
-    default:
-        res = STATUS_INVALID_PARAMETER;
-        goto done;
-    }
-
     /* Reserve a properly aligned area */
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    res = map_view( &view, *addr_ptr, size, mask, FALSE, prot );
+    vprot = VIRTUAL_GetProt( protect ) | (map_vprot & VPROT_COMMITTED);
+    res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot );
     if (res)
     {
         server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -2211,7 +2202,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     TRACE("handle=%p size=%lx offset=%x%08x\n",
           handle, size, offset.u.HighPart, offset.u.LowPart );
 
-    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, prot, !dup_mapping );
+    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, !dup_mapping );
     if (res == STATUS_SUCCESS)
     {
         *addr_ptr = view->base;

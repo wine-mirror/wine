@@ -1351,6 +1351,7 @@ enum char_info_mode
 /* Get information about a file mapping */
 @REQ(get_mapping_info)
     obj_handle_t handle;        /* handle to the mapping */
+    unsigned int access;        /* wanted access rights */
 @REPLY
     file_pos_t   size;          /* mapping size */
     int          protect;       /* protection flags */
