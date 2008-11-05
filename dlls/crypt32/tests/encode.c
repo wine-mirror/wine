@@ -3323,7 +3323,6 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS,
      distPointWithReason, distPointWithReason[1] + 2, CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
