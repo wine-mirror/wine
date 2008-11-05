@@ -1055,9 +1055,14 @@ static void test_msg_client()
 
     /* WM_DDE_POKE, no ddepoke */
     lparam = PackDDElParam(WM_DDE_POKE, 0, item);
-    PostMessageA(server_hwnd, WM_DDE_POKE, (WPARAM)client_hwnd, lparam);
+    /* win9x returns 0 here and crashes in PostMessageA */
+    if (lparam) {
+        PostMessageA(server_hwnd, WM_DDE_POKE, (WPARAM)client_hwnd, lparam);
+        flush_events();
+    }
+    else
+        win_skip("no lparam for WM_DDE_POKE\n");
 
-    flush_events();
 
     /* WM_DDE_POKE, no item */
     lparam = PackDDElParam(WM_DDE_POKE, (UINT_PTR)hglobal, 0);
@@ -1522,15 +1527,9 @@ static void test_DdeCreateDataHandle(void)
     item = DdeCreateStringHandleA(dde_inst, "item", CP_WINANSI);
     ok(item != NULL, "Expected non-NULL hsz\n");
 
-    /* invalid instance id */
-    DdeGetLastError(dde_inst);
-    hdata = DdeCreateDataHandle(0xdeadbeef, (LPBYTE)"data", MAX_PATH, 0, item, CF_TEXT, 0);
-    err = DdeGetLastError(dde_inst);
-    todo_wine
-    {
-        ok(hdata == NULL, "Expected NULL, got %p\n", hdata);
-        ok(err == DMLERR_INVALIDPARAMETER,
-           "Expected DMLERR_INVALIDPARAMETER, got %d\n", err);
+    if (0) {
+        /* do not test with an invalid instance id: that crashes on win9x */
+        hdata = DdeCreateDataHandle(0xdeadbeef, (LPBYTE)"data", MAX_PATH, 0, item, CF_TEXT, 0);
     }
 
     /* 0 instance id */
@@ -1826,19 +1825,24 @@ static void test_PackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     lparam = PackDDElParam(WM_DDE_ADVISE, 0xcafe, 0xbeef);
-    ptr = GlobalLock((HGLOBAL)lparam);
-    ok(ptr != NULL, "Expected non-NULL ptr\n");
-    ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
-    ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
+    /* win9x returns 0 here */
+    if (lparam) {
+        ptr = GlobalLock((HGLOBAL)lparam);
+        ok(ptr != NULL, "Expected non-NULL ptr\n");
+        ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
+        ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
 
-    ret = GlobalUnlock((HGLOBAL)lparam);
-    ok(ret == 1, "Expected 1, got %d\n", ret);
+        ret = GlobalUnlock((HGLOBAL)lparam);
+        ok(ret == 1, "Expected 1, got %d\n", ret);
 
-    lo = hi = 0;
-    ret = UnpackDDElParam(WM_DDE_ADVISE, lparam, &lo, &hi);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    ok(lo == 0xcafe, "Expected 0xcafe, got %08lx\n", lo);
-    ok(hi == 0xbeef, "Expected 0xbeef, got %08lx\n", hi);
+        lo = hi = 0;
+        ret = UnpackDDElParam(WM_DDE_ADVISE, lparam, &lo, &hi);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ok(lo == 0xcafe, "Expected 0xcafe, got %08lx\n", lo);
+        ok(hi == 0xbeef, "Expected 0xbeef, got %08lx\n", hi);
+    }
+    else
+        win_skip("no lparam for WM_DDE_ADVISE\n");
 
     ret = FreeDDElParam(WM_DDE_ADVISE, lparam);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -1865,42 +1869,52 @@ static void test_PackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     lparam = PackDDElParam(WM_DDE_ACK, 0xcafe, 0xbeef);
-    ptr = GlobalLock((HGLOBAL)lparam);
-    ok(ptr != NULL, "Expected non-NULL ptr\n");
-    ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
-    ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
+    /* win9x returns the input (0xbeef<<16 | 0xcafe) here */
+    if (lparam != 0xbeefcafe) {
+        ptr = GlobalLock((HGLOBAL)lparam);
+        ok(ptr != NULL, "Expected non-NULL ptr\n");
+        ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
+        ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
 
-    ret = GlobalUnlock((HGLOBAL)lparam);
-    ok(ret == 1, "Expected 1, got %d\n", ret);
+        ret = GlobalUnlock((HGLOBAL)lparam);
+        ok(ret == 1, "Expected 1, got %d\n", ret);
 
-    lo = hi = 0;
-    ret = UnpackDDElParam(WM_DDE_ACK, lparam, &lo, &hi);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    ok(lo == 0xcafe, "Expected 0xcafe, got %08lx\n", lo);
-    ok(hi == 0xbeef, "Expected 0xbeef, got %08lx\n", hi);
+        lo = hi = 0;
+        ret = UnpackDDElParam(WM_DDE_ACK, lparam, &lo, &hi);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ok(lo == 0xcafe, "Expected 0xcafe, got %08lx\n", lo);
+        ok(hi == 0xbeef, "Expected 0xbeef, got %08lx\n", hi);
 
-    ret = FreeDDElParam(WM_DDE_ACK, lparam);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ret = FreeDDElParam(WM_DDE_ACK, lparam);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
-    hglobal = GlobalFree((HGLOBAL)lparam);
-    ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE,
-       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+        hglobal = GlobalFree((HGLOBAL)lparam);
+        ok(hglobal == (HGLOBAL)lparam, "Expected lparam, got %d\n", ret);
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
+           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    }
+    else
+        win_skip("got lparam 0x%lx for WM_DDE_ACK\n", lparam);
 
     lparam = PackDDElParam(WM_DDE_DATA, 0xcafe, 0xbeef);
-    ptr = GlobalLock((HGLOBAL)lparam);
-    ok(ptr != NULL, "Expected non-NULL ptr\n");
-    ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
-    ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
+    /* win9x returns 0 here */
+    if (lparam) {
+        ptr = GlobalLock((HGLOBAL)lparam);
+        ok(ptr != NULL, "Expected non-NULL ptr\n");
+        ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
+        ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
 
-    ret = GlobalUnlock((HGLOBAL)lparam);
-    ok(ret == 1, "Expected 1, got %d\n", ret);
+        ret = GlobalUnlock((HGLOBAL)lparam);
+        ok(ret == 1, "Expected 1, got %d\n", ret);
 
-    lo = hi = 0;
-    ret = UnpackDDElParam(WM_DDE_DATA, lparam, &lo, &hi);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    ok(lo == 0xcafe, "Expected 0xcafe, got %08lx\n", lo);
-    ok(hi == 0xbeef, "Expected 0xbeef, got %08lx\n", hi);
+        lo = hi = 0;
+        ret = UnpackDDElParam(WM_DDE_DATA, lparam, &lo, &hi);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ok(lo == 0xcafe, "Expected 0xcafe, got %08lx\n", lo);
+        ok(hi == 0xbeef, "Expected 0xbeef, got %08lx\n", hi);
+    }
+    else
+        win_skip("no lparam for WM_DDE_DATA\n");
 
     ret = FreeDDElParam(WM_DDE_DATA, lparam);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -1927,19 +1941,24 @@ static void test_PackDDElParam(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
 
     lparam = PackDDElParam(WM_DDE_POKE, 0xcafe, 0xbeef);
-    ptr = GlobalLock((HGLOBAL)lparam);
-    ok(ptr != NULL, "Expected non-NULL ptr\n");
-    ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
-    ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
+    /* win9x returns 0 here */
+    if (lparam) {
+        ptr = GlobalLock((HGLOBAL)lparam);
+        ok(ptr != NULL, "Expected non-NULL ptr\n");
+        ok(ptr[0] == 0xcafe, "Expected 0xcafe, got %08lx\n", ptr[0]);
+        ok(ptr[1] == 0xbeef, "Expected 0xbeef, got %08lx\n", ptr[1]);
 
-    ret = GlobalUnlock((HGLOBAL)lparam);
-    ok(ret == 1, "Expected 1, got %d\n", ret);
+        ret = GlobalUnlock((HGLOBAL)lparam);
+        ok(ret == 1, "Expected 1, got %d\n", ret);
 
-    lo = hi = 0;
-    ret = UnpackDDElParam(WM_DDE_POKE, lparam, &lo, &hi);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    ok(lo == 0xcafe, "Expected 0xcafe, got %08lx\n", lo);
-    ok(hi == 0xbeef, "Expected 0xbeef, got %08lx\n", hi);
+        lo = hi = 0;
+        ret = UnpackDDElParam(WM_DDE_POKE, lparam, &lo, &hi);
+        ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+        ok(lo == 0xcafe, "Expected 0xcafe, got %08lx\n", lo);
+        ok(hi == 0xbeef, "Expected 0xbeef, got %08lx\n", hi);
+    }
+    else
+        win_skip("no lparam for WM_DDE_POKE\n");
 
     ret = FreeDDElParam(WM_DDE_POKE, lparam);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
