@@ -339,11 +339,64 @@ static void test_jscript(void)
     ok(!ref, "ref = %d\n", ref);
 }
 
+static void test_jscript2(void)
+{
+    IActiveScriptParse *parse;
+    IActiveScript *script;
+    IUnknown *unk;
+    ULONG ref;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_JScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IActiveScript, (void**)&script);
+    ok(hres == S_OK, "Could not get IActiveScript: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IActiveScriptParse, (void**)&parse);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
+
+    SET_EXPECT(GetLCID);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScriptParse_InitNew(parse);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    hres = IActiveScriptParse_InitNew(parse);
+    ok(hres == E_UNEXPECTED, "InitNew failed: %08x, expected E_UNEXPECTED\n", hres);
+
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    test_state(script, SCRIPTSTATE_CLOSED);
+    test_script_dispatch(script, FALSE);
+
+    IActiveScriptParse_Release(parse);
+    IActiveScript_Release(script);
+
+    ref = IUnknown_Release(unk);
+    ok(!ref, "ref = %d\n", ref);
+}
+
 START_TEST(jscript)
 {
     CoInitialize(NULL);
 
     test_jscript();
+    test_jscript2();
 
     CoUninitialize();
 }
