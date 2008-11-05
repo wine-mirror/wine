@@ -3193,6 +3193,7 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
     info.rgDistPoint = &point;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         ok(size == sizeof(emptyDistPoint), "Wrong size %d\n", size);
@@ -3217,6 +3218,7 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
     U(entry).pwszURL = (LPWSTR)url;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         ok(size == sizeof(distPointWithUrl), "Wrong size %d\n", size);
@@ -3229,6 +3231,7 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
     point.ReasonFlags.pbData = (LPBYTE)&crlReason;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         ok(size == sizeof(distPointWithReason), "Wrong size %d\n", size);
@@ -3241,6 +3244,7 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
     point.CRLIssuer.rgAltEntry = &entry;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         ok(size == sizeof(distPointWithIssuer), "Wrong size %d\n", size);
@@ -3251,6 +3255,7 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
     point.DistPointName.dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (buf)
     {
         ok(size == sizeof(distPointWithUrlAndIssuer),
@@ -3272,6 +3277,7 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS,
      emptyDistPoint, emptyDistPoint[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
         info = (PCRL_DIST_POINTS_INFO)buf;
@@ -3290,6 +3296,7 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS,
      distPointWithUrl, distPointWithUrl[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
      (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
         info = (PCRL_DIST_POINTS_INFO)buf;
@@ -3316,6 +3323,8 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS,
      distPointWithReason, distPointWithReason[1] + 2, CRYPT_DECODE_ALLOC_FLAG,
      NULL, (BYTE *)&buf, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
         info = (PCRL_DIST_POINTS_INFO)buf;
@@ -3338,6 +3347,7 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS,
      distPointWithUrlAndIssuer, distPointWithUrlAndIssuer[1] + 2,
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
         info = (PCRL_DIST_POINTS_INFO)buf;
