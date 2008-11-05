@@ -824,7 +824,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
                                     off_t offset, unsigned int vprot, BOOL removable )
 {
     void *ptr;
-    int prot = VIRTUAL_GetUnixProt( vprot );
+    int prot = VIRTUAL_GetUnixProt( vprot | VPROT_COMMITTED /* make sure it is accessible */ );
     BOOL shared_write = (vprot & VPROT_WRITE) != 0;
 
     assert( start < view->size );
@@ -1422,15 +1422,15 @@ void VIRTUAL_SetForceExec( BOOL enable )
         LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
         {
             UINT i, count;
-            int unix_prot;
             char *addr = view->base;
-            BYTE prot = view->prot[0];
+            BYTE commit = view->mapping ? VPROT_COMMITTED : 0;  /* file mappings are always accessible */
+            int unix_prot = VIRTUAL_GetUnixProt( view->prot[0] | commit );
 
             if (view->protect & VPROT_NOEXEC) continue;
             for (count = i = 1; i < view->size >> page_shift; i++, count++)
             {
-                if (view->prot[i] == prot) continue;
-                unix_prot = VIRTUAL_GetUnixProt( prot );
+                int prot = VIRTUAL_GetUnixProt( view->prot[i] | commit );
+                if (prot == unix_prot) continue;
                 if ((unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
                 {
                     TRACE( "%s exec prot for %p-%p\n",
@@ -1440,12 +1440,11 @@ void VIRTUAL_SetForceExec( BOOL enable )
                               unix_prot | (force_exec_prot ? PROT_EXEC : 0) );
                 }
                 addr += (count << page_shift);
-                prot = view->prot[i];
+                unix_prot = prot;
                 count = 0;
             }
             if (count)
             {
-                unix_prot = VIRTUAL_GetUnixProt( prot );
                 if ((unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
                 {
                     TRACE( "%s exec prot for %p-%p\n",
@@ -2012,11 +2011,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
     }
 
     vprot = VIRTUAL_GetProt( protect );
-    if (sec_flags & SEC_RESERVE)
-    {
-        if (file) return STATUS_INVALID_PARAMETER;
-    }
-    else vprot |= VPROT_COMMITTED;
+    if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
     if (sec_flags & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
     if (sec_flags & SEC_IMAGE) vprot |= VPROT_IMAGE;
 
@@ -2199,14 +2194,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         res = STATUS_INVALID_PARAMETER;
         goto done;
     }
-
-    /* FIXME: If a mapping is created with SEC_RESERVE and a process,
-     * which has a view of this mapping commits some pages, they will
-     * appear committed in all other processes, which have the same
-     * view created. Since we don't support this yet, we create the
-     * whole mapping committed.
-     */
-    prot |= VPROT_COMMITTED;
 
     /* Reserve a properly aligned area */
 

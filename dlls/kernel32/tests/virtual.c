@@ -531,9 +531,7 @@ static void test_MapViewOfFile(void)
     ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
     ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
     ok(info.RegionSize == MAPPING_SIZE, "RegionSize should have been 0x%x but was 0x%x\n", MAPPING_SIZE, (unsigned int)info.RegionSize);
-todo_wine
     ok(info.State == MEM_RESERVE, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
-todo_wine
     ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
     ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
 
@@ -543,9 +541,7 @@ todo_wine
     ok(info.AllocationBase == ptr2, "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
     ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
     ok(info.RegionSize == MAPPING_SIZE, "RegionSize should have been 0x%x but was 0x%x\n", MAPPING_SIZE, (unsigned int)info.RegionSize);
-todo_wine
     ok(info.State == MEM_RESERVE, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
-todo_wine
     ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
     ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
 
@@ -570,7 +566,6 @@ todo_wine
     ok(info.BaseAddress == ptr2, "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
     ok(info.AllocationBase == ptr2, "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
     ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
-todo_wine
     ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%x\n", (unsigned int)info.RegionSize);
     ok(info.State == MEM_COMMIT, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
     ok(info.Protect == PAGE_READWRITE, "Protect should have been 0 instead of 0x%x\n", info.Protect);
