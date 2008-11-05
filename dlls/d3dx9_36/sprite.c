@@ -51,6 +51,9 @@ static ULONG WINAPI ID3DXSpriteImpl_Release(LPD3DXSPRITE iface)
     TRACE("(%p): ReleaseRef to %d\n", This, ref);
 
     if(ref==0) {
+        if(This->stateblock) IDirect3DStateBlock9_Release(This->stateblock);
+        if(This->vdecl) IDirect3DVertexDeclaration9_Release(This->vdecl);
+        if(This->device) IDirect3DDevice9_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -157,8 +160,16 @@ static const ID3DXSpriteVtbl D3DXSprite_Vtbl =
 HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
 {
     ID3DXSpriteImpl *object;
+    D3DCAPS9 caps;
+    static const D3DVERTEXELEMENT9 elements[] =
+        {
+            { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
+            { 0, 16, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+            D3DDECL_END()
+        };
 
-    FIXME("stub\n");
+    TRACE("(void): relay\n");
 
     if(device==NULL || sprite==NULL) return D3DERR_INVALIDCALL;
 
@@ -169,6 +180,24 @@ HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
     }
     object->lpVtbl=&D3DXSprite_Vtbl;
     object->ref=1;
+    object->device=device;
+    IUnknown_AddRef(device);
+
+    IDirect3DDevice9_CreateVertexDeclaration(object->device, elements, &object->vdecl);
+    object->stateblock=NULL;
+
+    D3DXMatrixIdentity(&object->transform);
+    D3DXMatrixIdentity(&object->view);
+
+    object->flags=0;
+
+    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    object->texfilter_caps=caps.TextureFilterCaps;
+    object->maxanisotropy=caps.MaxAnisotropy;
+    object->alphacmp_caps=caps.AlphaCmpCaps;
+
+    object->sprites=NULL;
+    object->sprite_count=0;
 
     *sprite=(ID3DXSprite*)object;
 

@@ -27,6 +27,7 @@
 #include "d3dx9.h"
 
 
+/* ID3DXFont */
 typedef struct ID3DXFontImpl
 {
     /* IUnknown fields */
@@ -36,6 +37,17 @@ typedef struct ID3DXFontImpl
     /* ID3DXFont fields */
 } ID3DXFontImpl;
 
+
+/*ID3DXSprite */
+typedef struct _SPRITE {
+    LPDIRECT3DTEXTURE9 texture;
+    UINT texw, texh;
+    RECT rect;
+    D3DXVECTOR3 center;
+    D3DXVECTOR3 pos;
+    D3DCOLOR color;
+} SPRITE;
+
 typedef struct ID3DXSpriteImpl
 {
     /* IUnknown fields */
@@ -43,6 +55,20 @@ typedef struct ID3DXSpriteImpl
     LONG ref;
 
     /* ID3DXSprite fields */
+    IDirect3DDevice9 *device;
+    IDirect3DVertexDeclaration9 *vdecl;
+    IDirect3DStateBlock9 *stateblock;
+    D3DXMATRIX transform;
+    D3DXMATRIX view;
+    DWORD flags;
+
+    /* Store the relevant caps to prevent multiple GetDeviceCaps calls */
+    DWORD texfilter_caps;
+    DWORD maxanisotropy;
+    DWORD alphacmp_caps;
+
+    SPRITE *sprites;
+    int sprite_count;
 } ID3DXSpriteImpl;
 
 
