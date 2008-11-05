@@ -131,7 +131,7 @@ HRESULT WINAPI IControlPanel_Constructor(IUnknown* pUnkOuter, REFIID riid, LPVOI
     if (pUnkOuter && !IsEqualIID (riid, &IID_IUnknown))
 	return CLASS_E_NOAGGREGATION;
 
-    sf = (ICPanelImpl *) LocalAlloc(LMEM_ZEROINIT, sizeof(ICPanelImpl));
+    sf = LocalAlloc(LMEM_ZEROINIT, sizeof(ICPanelImpl));
     if (!sf)
 	return E_OUTOFMEMORY;
 

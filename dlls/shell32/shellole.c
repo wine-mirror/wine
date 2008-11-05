@@ -548,7 +548,7 @@ BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 
 	TRACE("\n");
 
-	lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
+	lpDropFileStruct = GlobalLock(hDrop);
 
         *p = lpDropFileStruct->pt;
 	bRet = lpDropFileStruct->fNC;
@@ -569,7 +569,7 @@ UINT WINAPI DragQueryFileA(
 {
 	LPSTR lpDrop;
 	UINT i = 0;
-	DROPFILES *lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
+	DROPFILES *lpDropFileStruct = GlobalLock(hDrop);
 
 	TRACE("(%p, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
 
@@ -624,7 +624,7 @@ UINT WINAPI DragQueryFileW(
 {
 	LPWSTR lpwDrop;
 	UINT i = 0;
-	DROPFILES *lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
+	DROPFILES *lpDropFileStruct = GlobalLock(hDrop);
 
 	TRACE("(%p, %x, %p, %u)\n", hDrop,lFile,lpszwFile,lLength);
 

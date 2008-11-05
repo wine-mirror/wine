@@ -292,7 +292,7 @@ static BOOL DoPaste(
 
 	if(hMem)
 	{
-	  char * pDropFiles = (char *)GlobalLock(hMem);
+          char * pDropFiles = GlobalLock(hMem);
 	  if(pDropFiles)
 	  {
 	    int len, offset = sizeof(DROPFILESTRUCT);

@@ -242,7 +242,7 @@ DWORD WINAPI CheckEscapesA(
 	DWORD ret = 0;
 
 	TRACE("(%s %d)\n", debugstr_a(string), len);
-	wString = (LPWSTR)LocalAlloc(LPTR, len * sizeof(WCHAR));
+	wString = LocalAlloc(LPTR, len * sizeof(WCHAR));
 	if (wString)
 	{
 	  MultiByteToWideChar(CP_ACP, 0, string, len, wString, len);

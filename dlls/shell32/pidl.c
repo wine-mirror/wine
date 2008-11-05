@@ -232,7 +232,7 @@ LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
         return NULL;
 
     len = ILGetSize(pidl);
-    newpidl = (LPITEMIDLIST)SHAlloc(len);
+    newpidl = SHAlloc(len);
     if (newpidl)
         memcpy(newpidl,pidl,len);
 
@@ -259,7 +259,7 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
     if (pidl)
     {
         len = pidl->mkid.cb;
-        pidlNew = (LPITEMIDLIST) SHAlloc (len+2);
+        pidlNew = SHAlloc(len+2);
         if (pidlNew)
         {
             memcpy(pidlNew,pidl,len+2);        /* 2 -> mind a desktop pidl */
@@ -464,7 +464,7 @@ LPITEMIDLIST WINAPI ILGlobalClone(LPCITEMIDLIST pidl)
         return NULL;
 
     len = ILGetSize(pidl);
-    newpidl = (LPITEMIDLIST)Alloc(len);
+    newpidl = Alloc(len);
     if (newpidl)
         memcpy(newpidl,pidl,len);
 
@@ -725,7 +725,7 @@ HRESULT WINAPI SHGetRealIDL(LPSHELLFOLDER lpsf, LPCITEMIDLIST pidlSimple, LPITEM
         if (SUCCEEDED(hr))
         {
             /*assert(pida->cidl==1);*/
-            LPIDA pida = (LPIDA)GlobalLock(medium.u.hGlobal);
+            LPIDA pida = GlobalLock(medium.u.hGlobal);
 
             LPCITEMIDLIST pidl_folder = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[0]);
             LPCITEMIDLIST pidl_child = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[1]);

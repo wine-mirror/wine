@@ -71,7 +71,7 @@ BOOL AddToEnumList(
     if (!iface || !pidl)
         return FALSE;
 
-	pNew = (LPENUMLIST)SHAlloc(sizeof(ENUMLIST));
+        pNew = SHAlloc(sizeof(ENUMLIST));
 	if(pNew)
 	{
 	  /*set the next pointer */

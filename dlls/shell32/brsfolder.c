@@ -813,7 +813,7 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
     if (msg == WM_INITDIALOG)
         return BrsFolder_OnCreate( hWnd, (browse_info*) lParam );
 
-    info = (browse_info*) GetPropW( hWnd, szBrowseFolderInfo );
+    info = GetPropW( hWnd, szBrowseFolderInfo );
 
     switch (msg)
     {

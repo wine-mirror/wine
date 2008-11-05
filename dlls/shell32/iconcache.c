@@ -260,7 +260,7 @@ static INT SIC_IconAppend (LPCWSTR sSourceFile, INT dwSourceIndex, HICON hSmallI
 	WCHAR path[MAX_PATH];
 	TRACE("%s %i %p %p\n", debugstr_w(sSourceFile), dwSourceIndex, hSmallIcon ,hBigIcon);
 
-	lpsice = (LPSIC_ENTRY) SHAlloc (sizeof (SIC_ENTRY));
+	lpsice = SHAlloc(sizeof(SIC_ENTRY));
 
 	GetFullPathNameW(sSourceFile, MAX_PATH, path, NULL);
 	lpsice->sSourceFile = HeapAlloc( GetProcessHeap(), 0, (strlenW(path)+1)*sizeof(WCHAR) );
@@ -413,9 +413,9 @@ BOOL SIC_Initialize(void)
         ImageList_SetBkColor(ShellBigIconList, CLR_NONE);
 
         /* Load the document icon, which is used as the default if an icon isn't found. */
-        hSm = (HICON)LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT), 
+        hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT),
                                 IMAGE_ICON, cx_small, cy_small, LR_SHARED);
-        hLg = (HICON)LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT), 
+        hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(IDI_SHELL_DOCUMENT),
                                 IMAGE_ICON, cx_large, cy_large, LR_SHARED);
 
         if (!hSm || !hLg) 

@@ -94,7 +94,7 @@ HRESULT WINAPI ISF_NetworkPlaces_Constructor (IUnknown * pUnkOuter, REFIID riid,
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    sf = (IGenericSFImpl *) HeapAlloc ( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (IGenericSFImpl));
+    sf = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (IGenericSFImpl));
     if (!sf)
         return E_OUTOFMEMORY;
 

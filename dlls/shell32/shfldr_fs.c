@@ -235,7 +235,7 @@ IFSFolder_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
 
     if (pUnkOuter && !IsEqualIID (riid, &IID_IUnknown))
         return CLASS_E_NOAGGREGATION;
-    sf = (IGenericSFImpl *) LocalAlloc (LMEM_ZEROINIT, sizeof (IGenericSFImpl));
+    sf = LocalAlloc (LMEM_ZEROINIT, sizeof (IGenericSFImpl));
     if (!sf)
         return E_OUTOFMEMORY;
 

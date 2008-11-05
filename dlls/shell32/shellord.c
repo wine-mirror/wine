@@ -1641,7 +1641,7 @@ HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_
     if (lRet == ERROR_SUCCESS)
     {
         /* Create and initialize the Property Sheet Extensions Array */
-        psxa = (PPSXA)LocalAlloc(LMEM_FIXED, FIELD_OFFSET(PSXA, pspsx[max_iface]));
+        psxa = LocalAlloc(LMEM_FIXED, FIELD_OFFSET(PSXA, pspsx[max_iface]));
         if (psxa)
         {
             ZeroMemory(psxa, FIELD_OFFSET(PSXA, pspsx[max_iface]));

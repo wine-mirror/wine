@@ -638,7 +638,7 @@ static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     switch (uMsg) {
 	case WM_MOUSEMOVE:
 	    sel = SendMessageW(hwnd, LB_ITEMFROMPOINT, 0, lParam);
-	    SendMessageW(hwnd, LB_SETCURSEL, (WPARAM)sel, (LPARAM)0);
+            SendMessageW(hwnd, LB_SETCURSEL, sel, 0);
 	    break;
 	case WM_LBUTTONDOWN:
 	    sel = SendMessageW(hwnd, LB_GETCURSEL, 0, 0);

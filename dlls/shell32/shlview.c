@@ -837,7 +837,7 @@ static UINT ShellView_GetSelections(IShellViewImpl * This)
 	SHFree(This->apidl);
 
 	This->cidl = ListView_GetSelectedCount(This->hWndList);
-	This->apidl = (LPITEMIDLIST*)SHAlloc(This->cidl * sizeof(LPITEMIDLIST));
+	This->apidl = SHAlloc(This->cidl * sizeof(LPITEMIDLIST));
 
 	TRACE("selected=%i\n", This->cidl);
 

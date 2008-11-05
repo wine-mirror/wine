@@ -88,7 +88,7 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
 	if(!hGlobal) return hGlobal;
 
-        pDropFiles = (DROPFILES *)GlobalLock(hGlobal);
+        pDropFiles = GlobalLock(hGlobal);
 	offset = (sizeof(DROPFILES) + sizeof(WCHAR) - 1) / sizeof(WCHAR);
         pDropFiles->pFiles = offset * sizeof(WCHAR);
         pDropFiles->fWide = TRUE;
@@ -194,7 +194,7 @@ HGLOBAL RenderFILENAMEA (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	/* fill the structure */
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
 	if(!hGlobal) return hGlobal;
-	szFileName = (char *)GlobalLock(hGlobal);
+	szFileName = GlobalLock(hGlobal);
 	memcpy(szFileName, szTemp, size);
 	GlobalUnlock(hGlobal);
 
@@ -226,7 +226,7 @@ HGLOBAL RenderFILENAMEW (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	/* fill the structure */
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
 	if(!hGlobal) return hGlobal;
-	szFileName = (WCHAR *)GlobalLock(hGlobal);
+	szFileName = GlobalLock(hGlobal);
 	memcpy(szFileName, szTemp, size);
 	GlobalUnlock(hGlobal);
 
@@ -242,7 +242,7 @@ HGLOBAL RenderPREFEREDDROPEFFECT (DWORD dwFlags)
 
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, sizeof(DWORD));
 	if(!hGlobal) return hGlobal;
-        pdwFlag = (DWORD*)GlobalLock(hGlobal);
+	pdwFlag = GlobalLock(hGlobal);
 	*pdwFlag = dwFlags;
 	GlobalUnlock(hGlobal);
 	return hGlobal;

@@ -614,7 +614,7 @@ static HRESULT UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, L
 
     /* Special case for the root folder. */
     if (!strcmp(szCompletePath, "/")) {
-        *ppidl = pidl = (LPITEMIDLIST)SHAlloc(sizeof(USHORT));
+        *ppidl = pidl = SHAlloc(sizeof(USHORT));
         if (!pidl) return E_FAIL;
         pidl->mkid.cb = 0; /* Terminate the ITEMIDLIST */
         return S_OK;
@@ -657,7 +657,7 @@ static HRESULT UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, L
     SHFree(pszAPath);
     SHFree(pwszPath);
 
-    *ppidl = pidl = (LPITEMIDLIST)SHAlloc(cPidlLen);
+    *ppidl = pidl = SHAlloc(cPidlLen);
     if (!pidl) return E_FAIL;
 
     /* Concatenate the SHITEMIDs of the sub-directories. */
@@ -2342,7 +2342,7 @@ static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Skip(IEnumIDList* iface,
     TRACE("(iface=%p, celt=%d)\n", iface, celt);
 
     /* Call IEnumIDList::Next and delete the resulting pidls. */
-    apidl = (LPITEMIDLIST*)SHAlloc(celt * sizeof(LPITEMIDLIST));
+    apidl = SHAlloc(celt * sizeof(LPITEMIDLIST));
     hr = IEnumIDList_Next(iface, celt, apidl, &cFetched);
     if (SUCCEEDED(hr))
         while (cFetched--) 
