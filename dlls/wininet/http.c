@@ -874,7 +874,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     {
         DWORD dwCode,dwCodeLength=sizeof(DWORD);
         if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,NULL) &&
-            (dwCode==302 || dwCode==301))
+            (dwCode==302 || dwCode==301 || dwCode==303))
         {
             WCHAR szNewLocation[INTERNET_MAX_URL_LENGTH];
             dwBufferSize=sizeof(szNewLocation);
