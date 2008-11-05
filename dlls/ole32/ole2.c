@@ -1405,7 +1405,7 @@ static LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lPar
     goto NEXTHOOK;
 
   /* Get the menu descriptor */
-  pOleMenuDescriptor = (OleMenuDescriptor *) GlobalLock( hOleMenu );
+  pOleMenuDescriptor = GlobalLock( hOleMenu );
   if ( !pOleMenuDescriptor ) /* Bad descriptor! */
     goto NEXTHOOK;
 
@@ -1524,7 +1524,7 @@ static LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lPara
   }
 
   /* Get the menu descriptor */
-  pOleMenuDescriptor = (OleMenuDescriptor *) GlobalLock( hOleMenu );
+  pOleMenuDescriptor = GlobalLock( hOleMenu );
   if ( !pOleMenuDescriptor ) /* Bad descriptor! */
     goto NEXTHOOK;
 
@@ -1579,7 +1579,7 @@ HOLEMENU WINAPI OleCreateMenuDescriptor(
                                 sizeof(OleMenuDescriptor) ) ) )
   return 0;
 
-  pOleMenuDescriptor = (OleMenuDescriptor *) GlobalLock( hOleMenu );
+  pOleMenuDescriptor = GlobalLock( hOleMenu );
   if ( !pOleMenuDescriptor )
     return 0;
 
@@ -1664,7 +1664,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
   return E_FAIL;
 
     /* Get the menu descriptor */
-    pOleMenuDescriptor = (OleMenuDescriptor *) GlobalLock( hOleMenu );
+    pOleMenuDescriptor = GlobalLock( hOleMenu );
     if ( !pOleMenuDescriptor )
       return E_UNEXPECTED;
 

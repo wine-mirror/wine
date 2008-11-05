@@ -414,7 +414,7 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
    if (hDataObject==0)
      HANDLE_ERROR( E_OUTOFMEMORY );
 
-   ppDataObject = (OLEClipbrd**)GlobalLock(hDataObject);
+   ppDataObject = GlobalLock(hDataObject);
    *ppDataObject = theOleClipboard;
    GlobalUnlock(hDataObject);
 
@@ -958,7 +958,7 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
 
       if (SUCCEEDED(hr = IDataObject_GetData(theOleClipboard->pIDataObjectSrc, &fmt2, &std2)))
       {
-        mfp = (METAFILEPICT *)GlobalLock(std2.u.hGlobal);
+        mfp = GlobalLock(std2.u.hGlobal);
       }
 
       if (mfp)
