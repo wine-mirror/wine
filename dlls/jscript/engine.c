@@ -458,6 +458,16 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
     }
 
     for(item = ctx->parser->script->named_items; item; item = item->next) {
+        if((item->flags & SCRIPTITEM_ISVISIBLE) && !strcmpW(item->name, identifier)) {
+            ret->type = EXPRVAL_VARIANT;
+            V_VT(&ret->u.var) = VT_DISPATCH;
+            V_DISPATCH(&ret->u.var) = item->disp;
+            IDispatch_AddRef(item->disp);
+            return S_OK;
+        }
+    }
+
+    for(item = ctx->parser->script->named_items; item; item = item->next) {
         hres = disp_get_id(item->disp, identifier, 0, &id);
         if(SUCCEEDED(hres))
             break;

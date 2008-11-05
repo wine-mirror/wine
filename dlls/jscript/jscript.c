@@ -326,6 +326,7 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
                 iter2 = iter->next;
 
                 IDispatch_Release(iter->disp);
+                heap_free(iter->name);
                 heap_free(iter);
                 iter = iter2;
             }
@@ -390,6 +391,13 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
 
     item->disp = disp;
     item->flags = dwFlags;
+    item->name = heap_strdupW(pstrName);
+    if(!item->name) {
+        IDispatch_Release(disp);
+        heap_free(item);
+        return E_OUTOFMEMORY;
+    }
+
     item->next = This->ctx->named_items;
     This->ctx->named_items = item;
 

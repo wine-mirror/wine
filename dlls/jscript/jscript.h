@@ -154,6 +154,7 @@ HRESULT to_object(exec_ctx_t*,VARIANT*,IDispatch**);
 typedef struct named_item_t {
     IDispatch *disp;
     DWORD flags;
+    LPWSTR name;
 
     struct named_item_t *next;
 } named_item_t;
