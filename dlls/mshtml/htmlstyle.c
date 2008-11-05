@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #define COBJMACROS
 
@@ -351,6 +352,57 @@ static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR ex
 
     TRACE("%s -> %x\n", debugstr_w(style_tbl[sid].name), *p);
     return S_OK;
+}
+
+static inline HRESULT set_style_pos(HTMLStyle *This, styleid_t sid, float value)
+{
+    WCHAR szValue[25];
+    WCHAR szFormat[] = {'%','.','0','f','p','x',0};
+
+    value = floor(value);
+
+    sprintfW(szValue, szFormat, value);
+
+    return set_style_attr(This, sid, szValue, 0);
+}
+
+HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
+{
+    nsAString str_value;
+    HRESULT hres;
+    WCHAR pxW[] = {'p','x',0};
+
+    TRACE("%p %d %p\n", This, sid, p);
+
+    *p = 0.0f;
+
+    nsAString_Init(&str_value, NULL);
+
+    hres = get_nsstyle_attr_nsval(This->nsstyle, sid, &str_value);
+    if(hres == S_OK)
+    {
+        WCHAR *ptr;
+        const PRUnichar *value;
+
+        nsAString_GetData(&str_value, &value);
+        if(value)
+        {
+            *p = strtolW(value, &ptr, 10);
+
+            if(*ptr && strcmpW(ptr, pxW))
+            {
+                nsAString_Finish(&str_value);
+                FIXME("only px values are currently supported\n");
+                return E_FAIL;
+            }
+        }
+    }
+
+    TRACE("ret %f\n", *p);
+
+    nsAString_Finish(&str_value);
+
+    return hres;
 }
 
 #define HTMLSTYLE_THIS(iface) DEFINE_THIS(HTMLStyle, HTMLStyle, iface)
@@ -1807,15 +1859,22 @@ static HRESULT WINAPI HTMLStyle_get_posTop(IHTMLStyle *iface, float *p)
 static HRESULT WINAPI HTMLStyle_put_posLeft(IHTMLStyle *iface, float v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%f)\n", This, v);
+
+    return set_style_pos(This, STYLEID_LEFT, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_posLeft(IHTMLStyle *iface, float *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    return get_nsstyle_pos(This, STYLEID_LEFT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_posWidth(IHTMLStyle *iface, float v)

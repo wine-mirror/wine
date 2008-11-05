@@ -2281,6 +2281,7 @@ static void test_default_style(IHTMLStyle *style)
     VARIANT v;
     BSTR str;
     HRESULT hres;
+    float f;
 
     test_disp((IUnknown*)style, &DIID_DispHTMLStyle);
     test_ifaces((IUnknown*)style, style_iids);
@@ -2382,11 +2383,40 @@ static void test_default_style(IHTMLStyle *style)
     ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
     VariantClear(&v);
 
+    /* Test posLeft */
+    hres = IHTMLStyle_get_posLeft(style, NULL);
+    ok(hres == E_POINTER, "get_left failed: %08x\n", hres);
+
+    f = 1.0f;
+    hres = IHTMLStyle_get_posLeft(style, &f);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(f == 0.0, "expected 0.0 got %f\n", f);
+
+    hres = IHTMLStyle_put_posLeft(style, 4.9f);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+
+    hres = IHTMLStyle_get_posLeft(style, &f);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(f == 4.0, "expected 4.0 got %f\n", f);
+
+    /* Ensure left is updated correctly. */
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLStyle_get_left(style, &v);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "4px"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    /* Test left */
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("3px");
     hres = IHTMLStyle_put_left(style, v);
     ok(hres == S_OK, "put_left failed: %08x\n", hres);
     VariantClear(&v);
+
+    hres = IHTMLStyle_get_posLeft(style, &f);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(f == 3.0, "expected 3.0 got %f\n", f);
 
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_left(style, &v);
