@@ -1729,6 +1729,35 @@ struct get_mapping_info_reply
 };
 
 
+
+struct get_mapping_committed_range_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    file_pos_t   offset;
+};
+struct get_mapping_committed_range_reply
+{
+    struct reply_header __header;
+    file_pos_t   size;
+    int          committed;
+};
+
+
+
+struct add_mapping_committed_range_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    file_pos_t   offset;
+    file_pos_t   size;
+};
+struct add_mapping_committed_range_reply
+{
+    struct reply_header __header;
+};
+
+
 #define SNAP_HEAPLIST   0x00000001
 #define SNAP_PROCESS    0x00000002
 #define SNAP_THREAD     0x00000004
@@ -4389,6 +4418,8 @@ enum request
     REQ_create_mapping,
     REQ_open_mapping,
     REQ_get_mapping_info,
+    REQ_get_mapping_committed_range,
+    REQ_add_mapping_committed_range,
     REQ_create_snapshot,
     REQ_next_process,
     REQ_next_thread,
@@ -4631,6 +4662,8 @@ union generic_request
     struct create_mapping_request create_mapping_request;
     struct open_mapping_request open_mapping_request;
     struct get_mapping_info_request get_mapping_info_request;
+    struct get_mapping_committed_range_request get_mapping_committed_range_request;
+    struct add_mapping_committed_range_request add_mapping_committed_range_request;
     struct create_snapshot_request create_snapshot_request;
     struct next_process_request next_process_request;
     struct next_thread_request next_thread_request;
@@ -4871,6 +4904,8 @@ union generic_reply
     struct create_mapping_reply create_mapping_reply;
     struct open_mapping_reply open_mapping_reply;
     struct get_mapping_info_reply get_mapping_info_reply;
+    struct get_mapping_committed_range_reply get_mapping_committed_range_reply;
+    struct add_mapping_committed_range_reply add_mapping_committed_range_reply;
     struct create_snapshot_reply create_snapshot_reply;
     struct next_process_reply next_process_reply;
     struct next_thread_reply next_thread_reply;
@@ -5035,6 +5070,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 344
+#define SERVER_PROTOCOL_VERSION 345
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

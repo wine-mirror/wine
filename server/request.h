@@ -184,6 +184,8 @@ DECL_HANDLER(read_change);
 DECL_HANDLER(create_mapping);
 DECL_HANDLER(open_mapping);
 DECL_HANDLER(get_mapping_info);
+DECL_HANDLER(get_mapping_committed_range);
+DECL_HANDLER(add_mapping_committed_range);
 DECL_HANDLER(create_snapshot);
 DECL_HANDLER(next_process);
 DECL_HANDLER(next_thread);
@@ -425,6 +427,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_mapping,
     (req_handler)req_open_mapping,
     (req_handler)req_get_mapping_info,
+    (req_handler)req_get_mapping_committed_range,
+    (req_handler)req_add_mapping_committed_range,
     (req_handler)req_create_snapshot,
     (req_handler)req_next_process,
     (req_handler)req_next_thread,

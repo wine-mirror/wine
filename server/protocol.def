@@ -1361,6 +1361,24 @@ enum char_info_mode
 @END
 
 
+/* Get a range of committed pages in a file mapping */
+@REQ(get_mapping_committed_range)
+    obj_handle_t handle;        /* handle to the mapping */
+    file_pos_t   offset;        /* starting offset (page-aligned, in bytes) */
+@REPLY
+    file_pos_t   size;          /* size of range starting at offset (page-aligned, in bytes) */
+    int          committed;     /* whether it is a committed range */
+@END
+
+
+/* Add a range to the committed pages in a file mapping */
+@REQ(add_mapping_committed_range)
+    obj_handle_t handle;        /* handle to the mapping */
+    file_pos_t   offset;        /* starting offset (page-aligned, in bytes) */
+    file_pos_t   size;          /* size to set (page-aligned, in bytes) or 0 if only retrieving */
+@END
+
+
 #define SNAP_HEAPLIST   0x00000001
 #define SNAP_PROCESS    0x00000002
 #define SNAP_THREAD     0x00000004

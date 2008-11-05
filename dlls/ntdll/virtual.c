@@ -863,6 +863,45 @@ done:
 
 
 /***********************************************************************
+ *           get_committed_size
+ *
+ * Get the size of the committed range starting at base.
+ * Also return the protections for the first page.
+ */
+static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vprot )
+{
+    SIZE_T i, start;
+
+    start = ((char *)base - (char *)view->base) >> page_shift;
+    *vprot = view->prot[start];
+
+    if (view->mapping && !(view->protect & VPROT_COMMITTED))
+    {
+        SIZE_T ret = 0;
+        SERVER_START_REQ( get_mapping_committed_range )
+        {
+            req->handle = view->mapping;
+            req->offset = start << page_shift;
+            if (!wine_server_call( req ))
+            {
+                ret = reply->size;
+                if (reply->committed)
+                {
+                    *vprot |= VPROT_COMMITTED;
+                    for (i = 0; i < ret >> page_shift; i++) view->prot[start+i] |= VPROT_COMMITTED;
+                }
+            }
+        }
+        SERVER_END_REQ;
+        return ret;
+    }
+    for (i = start + 1; i < view->size >> page_shift; i++)
+        if ((*vprot ^ view->prot[i]) & VPROT_COMMITTED) break;
+    return (i - start) << page_shift;
+}
+
+
+/***********************************************************************
  *           decommit_view
  *
  * Decommit some pages of a given view.
@@ -1541,6 +1580,17 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         if (!(view = VIRTUAL_FindView( base )) ||
             ((char *)base + size > (char *)view->base + view->size)) status = STATUS_NOT_MAPPED_VIEW;
         else if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
+        else if (view->mapping && !(view->protect & VPROT_COMMITTED))
+        {
+            SERVER_START_REQ( add_mapping_committed_range )
+            {
+                req->handle = view->mapping;
+                req->offset = (char *)base - (char *)view->base;
+                req->size   = size;
+                wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
     }
 
     if (use_locks) server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -1659,9 +1709,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
     sigset_t sigset;
     NTSTATUS status = STATUS_SUCCESS;
     char *base;
-    UINT i;
-    BYTE vprot, *p;
-    ULONG prot;
+    BYTE vprot;
     SIZE_T size = *size_ptr;
     LPVOID addr = *addr_ptr;
 
@@ -1704,23 +1752,13 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
     else
     {
         /* Make sure all the pages are committed */
-
-        p = view->prot + ((base - (char *)view->base) >> page_shift);
-        prot = VIRTUAL_GetWin32Prot( *p );
-        for (i = size >> page_shift; i; i--, p++)
+        if (get_committed_size( view, base, &vprot ) >= size && (vprot & VPROT_COMMITTED))
         {
-            if (!(*p & VPROT_COMMITTED))
-            {
-                status = STATUS_NOT_COMMITTED;
-                break;
-            }
-        }
-        if (!i)
-        {
-            if (old_prot) *old_prot = prot;
+            if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot );
             vprot = VIRTUAL_GetProt( new_prot ) | VPROT_COMMITTED;
             if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
         }
+        else status = STATUS_NOT_COMMITTED;
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
@@ -1850,15 +1888,17 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     }
     else
     {
-        BYTE vprot = view->prot[(base - alloc_base) >> page_shift];
+        BYTE vprot;
+        SIZE_T range_size = get_committed_size( view, base, &vprot );
+
         info->State = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;
-        info->Protect = VIRTUAL_GetWin32Prot( vprot );
+        info->Protect = (vprot & VPROT_COMMITTED) ? VIRTUAL_GetWin32Prot( vprot ) : 0;
         info->AllocationBase = alloc_base;
         info->AllocationProtect = VIRTUAL_GetWin32Prot( view->protect );
         if (view->protect & VPROT_IMAGE) info->Type = MEM_IMAGE;
         else if (view->protect & VPROT_VALLOC) info->Type = MEM_PRIVATE;
         else info->Type = MEM_MAPPED;
-        for (size = base - alloc_base; size < view->size; size += page_size)
+        for (size = base - alloc_base; size < base + range_size - alloc_base; size += page_size)
             if (view->prot[size >> page_shift] != vprot) break;
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
