@@ -122,7 +122,7 @@ int ASPI_GetNumControllers(void)
 {
     HKEY hkeyScsi, hkeyPort;
     DWORD i = 0, numPorts, num_ha = 0;
-    WCHAR wPortName[11];
+    WCHAR wPortName[15];
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, wDevicemapScsi, 0,
         KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &hkeyScsi) != ERROR_SUCCESS )
