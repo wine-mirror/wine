@@ -1329,7 +1329,7 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 	    cx = (btnPtr[i].iBitmap > 0) ?
 			btnPtr[i].iBitmap : SEPARATOR_WIDTH;
 	else
-	    cx = infoPtr->nButtonWidth;
+	    cx = (btnPtr[i].cx) ? btnPtr[i].cx : infoPtr->nButtonWidth;
 
 	/* Two or more adjacent separators form a separator group.   */
 	/* The first separator in a group should be wrapped to the   */
