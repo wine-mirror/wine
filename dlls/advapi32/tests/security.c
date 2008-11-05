@@ -87,6 +87,8 @@ static BOOL (WINAPI *pConvertSecurityDescriptorToStringSecurityDescriptorA)(PSEC
                                                                             SECURITY_INFORMATION, LPSTR *, PULONG );
 typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
+typedef BOOL (WINAPI *fnSetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
+                                          PSECURITY_DESCRIPTOR);
 static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                               PSID*, PSID*, PACL*, PACL*,
                                               PSECURITY_DESCRIPTOR*);
@@ -119,6 +121,7 @@ fnMakeSelfRelativeSD pMakeSelfRelativeSD;
 fnConvertSidToStringSidA pConvertSidToStringSidA;
 fnConvertStringSidToSidA pConvertStringSidToSidA;
 fnGetFileSecurityA pGetFileSecurityA;
+fnSetFileSecurityA pSetFileSecurityA;
 fnRtlAdjustPrivilege pRtlAdjustPrivilege;
 fnCreateWellKnownSid pCreateWellKnownSid;
 fnDuplicateTokenEx pDuplicateTokenEx;
@@ -150,6 +153,8 @@ static void init(void)
         (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorW" );
     pConvertSecurityDescriptorToStringSecurityDescriptorA =
         (void *)GetProcAddress(hmod, "ConvertSecurityDescriptorToStringSecurityDescriptorA" );
+    pGetFileSecurityA = (fnGetFileSecurityA)GetProcAddress(hmod, "GetFileSecurityA" );
+    pSetFileSecurityA = (fnSetFileSecurityA)GetProcAddress(hmod, "SetFileSecurityA" );
     pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
     pGetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "GetNamedSecurityInfoA");
     pMakeSelfRelativeSD = (void *)GetProcAddress(hmod, "MakeSelfRelativeSD");
@@ -694,29 +699,95 @@ static void test_luid(void)
 
 static void test_FileSecurity(void)
 {
-    char directory[MAX_PATH];
-    DWORD retval, outSize;
-    BOOL result;
-    BYTE buffer[0x40];
+    char wintmpdir [MAX_PATH];
+    char path [MAX_PATH];
+    char file [MAX_PATH];
+    BOOL rc;
+    HANDLE fh;
+    DWORD sdSize;
+    DWORD retSize;
+    BYTE *sd;
+    SECURITY_INFORMATION const request = OWNER_SECURITY_INFORMATION
+                                       | GROUP_SECURITY_INFORMATION
+                                       | DACL_SECURITY_INFORMATION;
 
-    pGetFileSecurityA = (fnGetFileSecurityA)
-                    GetProcAddress( hmod, "GetFileSecurityA" );
-    if( !pGetFileSecurityA )
-        return;
-
-    retval = GetTempPathA(sizeof(directory), directory);
-    if (!retval) {
-        trace("GetTempPathA failed\n");
+    if (!pGetFileSecurityA) {
+        win_skip ("GetFileSecurity is not available\n");
         return;
     }
 
-    strcpy(directory, "\\Should not exist");
+    if (!pSetFileSecurityA) {
+        win_skip ("SetFileSecurity is not available\n");
+        return;
+    }
 
-    SetLastError(NO_ERROR);
-    result = pGetFileSecurityA( directory,OWNER_SECURITY_INFORMATION,buffer,0x40,&outSize);
-    ok(!result, "GetFileSecurityA should fail for not existing directories/files\n"); 
-    ok( (GetLastError() == ERROR_FILE_NOT_FOUND ) ||
-        (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) , 
+    if (!GetTempPathA (sizeof (wintmpdir), wintmpdir)) {
+        win_skip ("GetTempPathA failed\n");
+        return;
+    }
+
+    /* Create a temporary directory and in it a temporary file */
+    strcat (strcpy (path, wintmpdir), "rary");
+    SetLastError (NO_ERROR);
+    rc = CreateDirectoryA (path, NULL);
+    ok (rc || GetLastError() == ERROR_ALREADY_EXISTS, "CreateDirectoryA "
+        "failed for '%s' with %d\n", path, GetLastError());
+
+    strcat (strcpy (file, path), "\\ess");
+    SetLastError (NO_ERROR);
+    fh = CreateFileA (file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok (fh != INVALID_HANDLE_VALUE, "CreateFileA "
+        "failed for '%s' with %d\n", file, GetLastError());
+    CloseHandle (fh);
+
+    /* For the temporary file ... */
+
+    /* Get size needed */
+    retSize = 0;
+    SetLastError (NO_ERROR);
+    rc = pGetFileSecurityA (file, request, NULL, 0, &retSize);
+    ok (!rc, "GetFileSecurityA "
+        "was expected to fail for '%s'\n", file);
+    ok (GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetFileSecurityA "
+        "returned %d; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+    ok (retSize > sizeof (SECURITY_DESCRIPTOR), "GetFileSecurityA "
+        "returned size %d; expected > %d\n", retSize, sizeof (SECURITY_DESCRIPTOR));
+
+    sdSize = retSize;
+    sd = HeapAlloc (GetProcessHeap (), 0, sdSize);
+
+    /* Get security descriptor for real */
+    retSize = 0;
+    SetLastError (NO_ERROR);
+    rc = pGetFileSecurityA (file, request, sd, sdSize, &retSize);
+    ok (rc, "GetFileSecurityA "
+        "was not expected to fail '%s'\n", file);
+    ok (GetLastError () == NO_ERROR, "GetFileSecurityA "
+        "returned %d; expected NO_ERROR\n", GetLastError ());
+    ok (retSize == sdSize, "GetFileSecurityA "
+        "returned size %d; expected %d\n", retSize, sdSize);
+
+    /* Use it to set security descriptor */
+    SetLastError (NO_ERROR);
+    rc = pSetFileSecurityA (file, request, sd);
+    ok (rc, "SetFileSecurityA "
+        "was not expected to fail '%s'\n", file);
+    ok (GetLastError () == NO_ERROR, "SetFileSecurityA "
+        "returned %d; expected NO_ERROR\n", GetLastError ());
+
+    HeapFree (GetProcessHeap (), 0, sd);
+
+    /* Remove temporary file and directory */
+    DeleteFileA (file);
+    RemoveDirectoryA (path);
+
+    /* Old test */
+    strcpy (wintmpdir, "\\Should not exist");
+    SetLastError (NO_ERROR);
+    rc = pGetFileSecurityA (wintmpdir, OWNER_SECURITY_INFORMATION, NULL, 0, &sdSize);
+    ok (!rc, "GetFileSecurityA should fail for not existing directories/files\n");
+    ok ((GetLastError() == ERROR_FILE_NOT_FOUND ) ||
+        (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED),
         "last error ERROR_FILE_NOT_FOUND / ERROR_CALL_NOT_IMPLEMENTED (98) "
         "expected, got %d\n", GetLastError());
 }
