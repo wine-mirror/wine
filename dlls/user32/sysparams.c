@@ -83,6 +83,7 @@ enum spi_index
     SPI_USERPREFERENCEMASK_IDX,
     SPI_NONCLIENTMETRICS_IDX,
     SPI_MINIMIZEDMETRICS_IDX,
+    SPI_SETFOREGROUNDLOCKTIMEOUT_IDX,
     SPI_CARETWIDTH_IDX,
     SPI_INDEX_COUNT
 };
@@ -216,6 +217,8 @@ static const WCHAR SPI_SETMOUSESCROLLLINES_REGKEY[]=          {'C','o','n','t','
 static const WCHAR SPI_SETMOUSESCROLLLINES_VALNAME[]=         {'W','h','e','e','l','S','c','r','o','l','l','L','i','n','e','s',0};
 static const WCHAR SPI_SETMENUSHOWDELAY_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETMENUSHOWDELAY_VALNAME[]=            {'M','e','n','u','S','h','o','w','D','e','l','a','y',0};
+static const WCHAR SPI_SETFOREGROUNDLOCKTIMEOUT_REGKEY[]=     {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETFOREGROUNDLOCKTIMEOUT_VALNAME[]=    {'F','o','r','e','g','r','o','u','n','d','L','o','c','k','T','i','m','e','o','u','t',0};
 static const WCHAR SPI_CARETWIDTH_REGKEY[]=                   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_CARETWIDTH_VALNAME[]=                  {'C','a','r','e','t','W','i','d','t','h',0};
 
@@ -307,6 +310,7 @@ static BOOL poweroffactive = FALSE;
 static BOOL show_sounds = FALSE;
 static BOOL snap_to_default_button = FALSE;
 static BOOL swap_buttons = FALSE;
+static UINT foreground_lock_timeout = 0;
 static UINT caret_width = 1;
 static BYTE user_prefs[4];
 
@@ -2307,8 +2311,22 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         ret = set_user_pref_param( 3, 0x80, PtrToUlong(pvParam), fWinIni );
         break;
 
-    WINE_SPI_FIXME(SPI_GETFOREGROUNDLOCKTIMEOUT);/* 0x2000  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_SETFOREGROUNDLOCKTIMEOUT);/* 0x2001  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETFOREGROUNDLOCKTIMEOUT:          /* 0x2000  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        ret = get_uint_param( SPI_SETFOREGROUNDLOCKTIMEOUT_IDX,
+                              SPI_SETFOREGROUNDLOCKTIMEOUT_REGKEY,
+                              SPI_SETFOREGROUNDLOCKTIMEOUT_VALNAME,
+                              &foreground_lock_timeout, pvParam );
+        break;
+
+    case SPI_SETFOREGROUNDLOCKTIMEOUT:          /* 0x2001  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        /* FIXME: this should check that the calling thread
+         * is able to change the foreground window */
+        ret = set_uint_param( SPI_SETFOREGROUNDLOCKTIMEOUT_IDX,
+                              SPI_SETFOREGROUNDLOCKTIMEOUT_REGKEY,
+                              SPI_SETFOREGROUNDLOCKTIMEOUT_VALNAME,
+                              &foreground_lock_timeout, PtrToUlong(pvParam), fWinIni );
+        break;
+
     WINE_SPI_FIXME(SPI_GETACTIVEWNDTRKTIMEOUT); /* 0x2002  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETACTIVEWNDTRKTIMEOUT); /* 0x2003  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETFOREGROUNDFLASHCOUNT);/* 0x2004  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
