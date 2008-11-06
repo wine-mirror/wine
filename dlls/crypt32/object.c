@@ -749,7 +749,9 @@ static BOOL CRYPT_FormatCertSerialNumber(CRYPT_DATA_BLOB *serialNum, LPWSTR str,
      str, pcbStr);
 }
 
-static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType,
+static const WCHAR indent[] = { ' ',' ',' ',' ',' ',0 };
+
+static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
  CERT_ALT_NAME_ENTRY *entry, LPWSTR str, DWORD *pcbStr)
 {
     BOOL ret;
@@ -759,6 +761,8 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType,
     WCHAR maskBuf[16];
     DWORD bytesNeeded = sizeof(WCHAR);
 
+    if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+        bytesNeeded += indentLevel * strlenW(indent) * sizeof(WCHAR);
     switch (entry->dwAltNameChoice)
     {
     case CERT_ALT_NAME_RFC822_NAME:
@@ -802,6 +806,8 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType,
                  entry->u.IPAddress.pbData[2],
                  entry->u.IPAddress.pbData[3]);
                 bytesNeeded += strlenW(ipAddrBuf) * sizeof(WCHAR);
+                /* indent again, for the mask line */
+                bytesNeeded += indentLevel * strlenW(indent) * sizeof(WCHAR);
                 sprintfW(maskBuf, ipAddrFmt,
                  entry->u.IPAddress.pbData[4],
                  entry->u.IPAddress.pbData[5],
@@ -850,7 +856,17 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType,
         }
         else
         {
+            DWORD i;
+
             *pcbStr = bytesNeeded;
+            if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+            {
+                for (i = 0; i < indentLevel; i++)
+                {
+                    strcpyW(str, indent);
+                    str += strlenW(indent);
+                }
+            }
             strcpyW(str, buf);
             str += strlenW(str);
             switch (entry->dwAltNameChoice)
@@ -867,6 +883,14 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType,
                     str += strlenW(ipAddrBuf);
                     strcpyW(str, crlf);
                     str += strlenW(crlf);
+                    if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                    {
+                        for (i = 0; i < indentLevel; i++)
+                        {
+                            strcpyW(str, indent);
+                            str += strlenW(indent);
+                        }
+                    }
                     strcpyW(str, mask);
                     str += strlenW(mask);
                     strcpyW(str, maskBuf);
@@ -901,7 +925,7 @@ static BOOL CRYPT_FormatAltNameInfo(DWORD dwFormatStrType,
 
     for (i = 0; ret && i < name->cAltEntry; i++)
     {
-        ret = CRYPT_FormatAltNameEntry(dwFormatStrType, &name->rgAltEntry[i],
+        ret = CRYPT_FormatAltNameEntry(dwFormatStrType, 0, &name->rgAltEntry[i],
          NULL, &size);
         if (ret)
         {
@@ -926,7 +950,7 @@ static BOOL CRYPT_FormatAltNameInfo(DWORD dwFormatStrType,
             *pcbStr = bytesNeeded;
             for (i = 0; ret && i < name->cAltEntry; i++)
             {
-                ret = CRYPT_FormatAltNameEntry(dwFormatStrType,
+                ret = CRYPT_FormatAltNameEntry(dwFormatStrType, 0,
                  &name->rgAltEntry[i], str, &size);
                 if (ret)
                 {
@@ -1097,6 +1121,228 @@ static BOOL WINAPI CRYPT_FormatAuthorityKeyId2(DWORD dwCertEncodingType,
     return ret;
 }
 
+static WCHAR aia[MAX_STRING_RESOURCE_LEN];
+static WCHAR accessMethod[MAX_STRING_RESOURCE_LEN];
+static WCHAR ocsp[MAX_STRING_RESOURCE_LEN];
+static WCHAR caIssuers[MAX_STRING_RESOURCE_LEN];
+static WCHAR unknown[MAX_STRING_RESOURCE_LEN];
+static WCHAR accessLocation[MAX_STRING_RESOURCE_LEN];
+static BOOL WINAPI CRYPT_FormatAuthorityInfoAccess(DWORD dwCertEncodingType,
+
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    CERT_AUTHORITY_INFO_ACCESS *info;
+    DWORD size;
+    BOOL ret = FALSE;
+
+    if (!cbEncoded)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType,
+     X509_AUTHORITY_INFO_ACCESS, pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG,
+     NULL, &info, &size)))
+    {
+        DWORD bytesNeeded = sizeof(WCHAR);
+
+        if (!info->cAccDescr)
+        {
+            WCHAR infoNotAvailable[MAX_STRING_RESOURCE_LEN];
+
+            LoadStringW(hInstance, IDS_INFO_NOT_AVAILABLE, infoNotAvailable,
+             sizeof(infoNotAvailable) / sizeof(infoNotAvailable[0]));
+            bytesNeeded += strlenW(infoNotAvailable) * sizeof(WCHAR);
+            if (!pbFormat)
+                *pcbFormat = bytesNeeded;
+            else if (*pcbFormat < bytesNeeded)
+            {
+                *pcbFormat = bytesNeeded;
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+            {
+                *pcbFormat = bytesNeeded;
+                strcpyW((LPWSTR)pbFormat, infoNotAvailable);
+            }
+        }
+        else
+        {
+            static const WCHAR colonSep[] = { ':',' ',0 };
+            static const WCHAR numFmt[] = { '%','d',0 };
+            static const WCHAR equal[] = { '=',0 };
+            static const WCHAR colonCrlfSep[] = { ':','\r','\n',0 };
+            static BOOL stringsLoaded = FALSE;
+            DWORD i;
+            LPCWSTR headingSep, accessMethodSep, locationSep;
+            WCHAR accessDescrNum[11];
+
+            if (!stringsLoaded)
+            {
+                LoadStringW(hInstance, IDS_AIA, aia,
+                 sizeof(aia) / sizeof(aia[0]));
+                LoadStringW(hInstance, IDS_ACCESS_METHOD, accessMethod,
+                 sizeof(accessMethod) / sizeof(accessMethod[0]));
+                LoadStringW(hInstance, IDS_ACCESS_METHOD_OCSP, ocsp,
+                 sizeof(ocsp) / sizeof(ocsp[0]));
+                LoadStringW(hInstance, IDS_ACCESS_METHOD_CA_ISSUERS, caIssuers,
+                 sizeof(caIssuers) / sizeof(caIssuers[0]));
+                LoadStringW(hInstance, IDS_ACCESS_METHOD_UNKNOWN, unknown,
+                 sizeof(unknown) / sizeof(unknown[0]));
+                LoadStringW(hInstance, IDS_ACCESS_LOCATION, accessLocation,
+                 sizeof(accessLocation) / sizeof(accessLocation[0]));
+                stringsLoaded = TRUE;
+            }
+            if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+            {
+                headingSep = crlf;
+                accessMethodSep = crlf;
+                locationSep = colonCrlfSep;
+            }
+            else
+            {
+                headingSep = colonSep;
+                accessMethodSep = commaSpace;
+                locationSep = equal;
+            }
+
+            for (i = 0; ret && i < info->cAccDescr; i++)
+            {
+                /* Heading */
+                bytesNeeded += sizeof(WCHAR); /* left bracket */
+                sprintfW(accessDescrNum, numFmt, i + 1);
+                bytesNeeded += strlenW(accessDescrNum) * sizeof(WCHAR);
+                bytesNeeded += sizeof(WCHAR); /* right bracket */
+                bytesNeeded += strlenW(aia) * sizeof(WCHAR);
+                bytesNeeded += strlenW(headingSep) * sizeof(WCHAR);
+                /* Access method */
+                bytesNeeded += strlenW(accessMethod) * sizeof(WCHAR);
+                if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                    bytesNeeded += strlenW(indent) * sizeof(WCHAR);
+                if (!strcmp(info->rgAccDescr[i].pszAccessMethod,
+                 szOID_PKIX_OCSP))
+                    bytesNeeded += strlenW(ocsp) * sizeof(WCHAR);
+                else if (!strcmp(info->rgAccDescr[i].pszAccessMethod,
+                 szOID_PKIX_CA_ISSUERS))
+                    bytesNeeded += strlenW(caIssuers) * sizeof(caIssuers);
+                else
+                    bytesNeeded += strlenW(unknown) * sizeof(WCHAR);
+                bytesNeeded += sizeof(WCHAR); /* space */
+                bytesNeeded += sizeof(WCHAR); /* left paren */
+                bytesNeeded += strlen(info->rgAccDescr[i].pszAccessMethod)
+                 * sizeof(WCHAR);
+                bytesNeeded += sizeof(WCHAR); /* right paren */
+                /* Delimiter between access method and location */
+                bytesNeeded += strlenW(accessMethodSep) * sizeof(WCHAR);
+                if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                    bytesNeeded += strlenW(indent) * sizeof(WCHAR);
+                bytesNeeded += strlenW(accessLocation) * sizeof(WCHAR);
+                bytesNeeded += strlenW(locationSep) * sizeof(WCHAR);
+                ret = CRYPT_FormatAltNameEntry(dwFormatStrType, 2,
+                 &info->rgAccDescr[i].AccessLocation, NULL, &size);
+                if (ret)
+                    bytesNeeded += size - sizeof(WCHAR);
+                /* Need extra delimiter between access method entries */
+                if (i < info->cAccDescr - 1)
+                    bytesNeeded += strlenW(accessMethodSep) * sizeof(WCHAR);
+            }
+            if (ret)
+            {
+                if (!pbFormat)
+                    *pcbFormat = bytesNeeded;
+                else if (*pcbFormat < bytesNeeded)
+                {
+                    *pcbFormat = bytesNeeded;
+                    SetLastError(ERROR_MORE_DATA);
+                    ret = FALSE;
+                }
+                else
+                {
+                    LPWSTR str = pbFormat;
+                    DWORD altNameEntrySize;
+
+                    *pcbFormat = bytesNeeded;
+                    for (i = 0; ret && i < info->cAccDescr; i++)
+                    {
+                        LPCSTR oidPtr;
+
+                        *str++ = '[';
+                        sprintfW(accessDescrNum, numFmt, i + 1);
+                        strcpyW(str, accessDescrNum);
+                        str += strlenW(accessDescrNum);
+                        *str++ = ']';
+                        strcpyW(str, aia);
+                        str += strlenW(aia);
+                        strcpyW(str, headingSep);
+                        str += strlenW(headingSep);
+                        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                        {
+                            strcpyW(str, indent);
+                            str += strlenW(indent);
+                        }
+                        strcpyW(str, accessMethod);
+                        str += strlenW(accessMethod);
+                        if (!strcmp(info->rgAccDescr[i].pszAccessMethod,
+                         szOID_PKIX_OCSP))
+                        {
+                            strcpyW(str, ocsp);
+                            str += strlenW(ocsp);
+                        }
+                        else if (!strcmp(info->rgAccDescr[i].pszAccessMethod,
+                         szOID_PKIX_CA_ISSUERS))
+                        {
+                            strcpyW(str, caIssuers);
+                            str += strlenW(caIssuers);
+                        }
+                        else
+                        {
+                            strcpyW(str, unknown);
+                            str += strlenW(unknown);
+                        }
+                        *str++ = ' ';
+                        *str++ = '(';
+                        for (oidPtr = info->rgAccDescr[i].pszAccessMethod;
+                         *oidPtr; oidPtr++, str++)
+                            *str = *oidPtr;
+                        *str++ = ')';
+                        strcpyW(str, accessMethodSep);
+                        str += strlenW(accessMethodSep);
+                        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                        {
+                            strcpyW(str, indent);
+                            str += strlenW(indent);
+                        }
+                        strcpyW(str, accessLocation);
+                        str += strlenW(accessLocation);
+                        strcpyW(str, locationSep);
+                        str += strlenW(locationSep);
+                        /* This overestimates the size available, but that
+                         * won't matter since we checked earlier whether enough
+                         * space for the entire string was available.
+                         */
+                        altNameEntrySize = bytesNeeded;
+                        ret = CRYPT_FormatAltNameEntry(dwFormatStrType, 2,
+                         &info->rgAccDescr[i].AccessLocation, str,
+                         &altNameEntrySize);
+                        if (ret)
+                            str += altNameEntrySize / sizeof(WCHAR) - 1;
+                        if (i < info->cAccDescr - 1)
+                        {
+                            strcpyW(str, accessMethodSep);
+                            str += strlenW(accessMethodSep);
+                        }
+                    }
+                }
+            }
+        }
+        LocalFree(info);
+    }
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_FormatEnhancedKeyUsage(DWORD dwCertEncodingType,
  DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
@@ -1221,6 +1467,9 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
         case LOWORD(X509_AUTHORITY_KEY_ID2):
             format = CRYPT_FormatAuthorityKeyId2;
             break;
+        case LOWORD(X509_AUTHORITY_INFO_ACCESS):
+            format = CRYPT_FormatAuthorityInfoAccess;
+            break;
         case LOWORD(X509_ENHANCED_KEY_USAGE):
             format = CRYPT_FormatEnhancedKeyUsage;
             break;
@@ -1228,6 +1477,8 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
     }
     else if (!strcmp(lpszStructType, szOID_BASIC_CONSTRAINTS2))
         format = CRYPT_FormatBasicConstraints2;
+    else if (!strcmp(lpszStructType, szOID_AUTHORITY_INFO_ACCESS))
+        format = CRYPT_FormatAuthorityInfoAccess;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER2))
         format = CRYPT_FormatAuthorityKeyId2;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
