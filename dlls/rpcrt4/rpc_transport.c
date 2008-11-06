@@ -1326,7 +1326,8 @@ static void rpcrt4_protseq_sock_free_wait_array(RpcServerProtseq *protseq, void 
 static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq, unsigned int count, void *wait_array)
 {
     struct pollfd *poll_info = wait_array;
-    int ret, i;
+    int ret;
+    unsigned int i;
     RpcConnection *cconn;
     RpcConnection_tcp *conn;
     
@@ -1451,7 +1452,7 @@ static const struct protseq_ops protseq_list[] =
 
 const struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
 {
-  int i;
+  unsigned int i;
   for(i=0; i<ARRAYSIZE(protseq_list); i++)
     if (!strcmp(protseq_list[i].name, protseq))
       return &protseq_list[i];
@@ -1460,7 +1461,7 @@ const struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
 
 static const struct connection_ops *rpcrt4_get_conn_protseq_ops(const char *protseq)
 {
-    int i;
+    unsigned int i;
     for(i=0; i<ARRAYSIZE(conn_protseq_list); i++)
         if (!strcmp(conn_protseq_list[i].name, protseq))
             return &conn_protseq_list[i];
@@ -1614,7 +1615,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
     const twr_empty_floor_t *floor4;
     const struct connection_ops *protseq_ops = NULL;
     RPC_STATUS status;
-    int i;
+    unsigned int i;
 
     if (tower_size < sizeof(*protocol_floor))
         return EPT_S_NOT_REGISTERED;

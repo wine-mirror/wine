@@ -147,7 +147,7 @@ HRESULT WINAPI NdrDllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv,
   *ppv = NULL;
   if (!pPSFactoryBuffer->lpVtbl) {
     const ProxyFileInfo **pProxyFileList2;
-    int max_delegating_vtbl_size = 0;
+    DWORD max_delegating_vtbl_size = 0;
     pPSFactoryBuffer->lpVtbl = &CStdPSFactory_Vtbl;
     pPSFactoryBuffer->RefCount = 0;
     pPSFactoryBuffer->pProxyFileList = pProxyFileList;
@@ -158,7 +158,7 @@ HRESULT WINAPI NdrDllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv,
          * async interfaces */
         void * const *pSrcRpcStubVtbl = (void * const *)&CStdStubBuffer_Vtbl;
         void **pRpcStubVtbl = (void **)&(*pProxyFileList2)->pStubVtblList[i]->Vtbl;
-        int j;
+        unsigned int j;
 
         if ((*pProxyFileList2)->pDelegatedIIDs && (*pProxyFileList2)->pDelegatedIIDs[i]) {
           pSrcRpcStubVtbl = (void * const *)&CStdStubBuffer_Delegating_Vtbl;
