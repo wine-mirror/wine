@@ -4386,6 +4386,8 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
 
        if (cs == SOCKET_ERROR) return SOCKET_ERROR;
 
+       if (!lpfnCondition) return cs;
+
        CallerId.buf = (char *)&src_addr;
        CallerId.len = sizeof(src_addr);
 
@@ -4428,7 +4430,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
                        FIXME("Unknown return type from Condition function\n");
                        SetLastError(WSAENOTSOCK);
                        return SOCKET_ERROR;
-               }
+       }
 }
 
 /***********************************************************************
