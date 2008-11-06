@@ -2076,9 +2076,11 @@ static void test_gdiis(void)
     pGdiIsMetaFileDC = (void*) GetProcAddress(hgdi32, "GdiIsMetaFileDC");
     pGdiIsPlayMetafileDC = (void*) GetProcAddress(hgdi32, "GdiIsPlayMetafileDC");
 
-    /* they should all exist or none should exist */
-    if(!pGdiIsMetaPrintDC)
+    if(!pGdiIsMetaPrintDC || !pGdiIsMetaFileDC || !pGdiIsPlayMetafileDC)
+    {
+        win_skip("Needed GdiIs* functions are not available\n");
         return;
+    }
 
     /* try with nothing */
     ok(!pGdiIsMetaPrintDC(NULL), "ismetaprint with NULL parameter\n");
