@@ -187,4 +187,9 @@ STRINGTABLE DISCARDABLE
     IDS_ALT_NAME_MASK "Mask="
     IDS_ALT_NAME_REGISTERED_ID "Registered ID="
     IDS_USAGE_UNKNOWN "Unknown Key Usage"
+    IDS_SUBJECT_TYPE "Subject Type="
+    IDS_SUBJECT_TYPE_CA "CA"
+    IDS_SUBJECT_TYPE_END_CERT "End Entity"
+    IDS_PATH_LENGTH "Path Length Constraint="
+    IDS_PATH_LENGTH_NONE "None"
 }

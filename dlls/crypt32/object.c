@@ -603,6 +603,105 @@ static BOOL WINAPI CRYPT_FormatHexString(DWORD dwCertEncodingType,
 
 #define MAX_STRING_RESOURCE_LEN 128
 
+static const WCHAR crlf[] = { '\r','\n',0 };
+static const WCHAR commaSpace[] = { ',',' ',0 };
+
+static WCHAR subjectTypeHeader[MAX_STRING_RESOURCE_LEN];
+static WCHAR subjectTypeCA[MAX_STRING_RESOURCE_LEN];
+static WCHAR subjectTypeEndCert[MAX_STRING_RESOURCE_LEN];
+static WCHAR pathLengthHeader[MAX_STRING_RESOURCE_LEN];
+
+static BOOL WINAPI CRYPT_FormatBasicConstraints2(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    DWORD size;
+    CERT_BASIC_CONSTRAINTS2_INFO *info;
+    BOOL ret;
+
+    if (!cbEncoded)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType, X509_BASIC_CONSTRAINTS2,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size)))
+    {
+        static const WCHAR pathFmt[] = { '%','d',0 };
+        static BOOL stringsLoaded = FALSE;
+        DWORD bytesNeeded = sizeof(WCHAR); /* space for the NULL terminator */
+        WCHAR pathLength[MAX_STRING_RESOURCE_LEN];
+        LPCWSTR sep, subjectType;
+        DWORD sepLen;
+
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+        {
+            sep = crlf;
+            sepLen = strlenW(crlf) * sizeof(WCHAR);
+        }
+        else
+        {
+            sep = commaSpace;
+            sepLen = strlenW(commaSpace) * sizeof(WCHAR);
+        }
+
+        if (!stringsLoaded)
+        {
+            LoadStringW(hInstance, IDS_SUBJECT_TYPE, subjectTypeHeader,
+             sizeof(subjectTypeHeader) / sizeof(subjectTypeHeader[0]));
+            LoadStringW(hInstance, IDS_SUBJECT_TYPE_CA, subjectTypeCA,
+             sizeof(subjectTypeCA) / sizeof(subjectTypeCA[0]));
+            LoadStringW(hInstance, IDS_SUBJECT_TYPE_END_CERT,
+             subjectTypeEndCert,
+             sizeof(subjectTypeEndCert) / sizeof(subjectTypeEndCert[0]));
+            LoadStringW(hInstance, IDS_PATH_LENGTH, pathLengthHeader,
+             sizeof(pathLengthHeader) / sizeof(pathLengthHeader[0]));
+            stringsLoaded = TRUE;
+        }
+        bytesNeeded += strlenW(subjectTypeHeader) * sizeof(WCHAR);
+        if (info->fCA)
+            subjectType = subjectTypeCA;
+        else
+            subjectType = subjectTypeEndCert;
+        bytesNeeded += strlenW(subjectType) * sizeof(WCHAR);
+        bytesNeeded += sepLen;
+        bytesNeeded += strlenW(pathLengthHeader) * sizeof(WCHAR);
+        if (info->fPathLenConstraint)
+            sprintfW(pathLength, pathFmt, info->dwPathLenConstraint);
+        else
+            LoadStringW(hInstance, IDS_PATH_LENGTH_NONE, pathLength,
+             sizeof(pathLength) / sizeof(pathLength[0]));
+        bytesNeeded += strlenW(pathLength) * sizeof(WCHAR);
+        if (!pbFormat)
+            *pcbFormat = bytesNeeded;
+        else if (*pcbFormat < bytesNeeded)
+        {
+            *pcbFormat = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            LPWSTR str = pbFormat;
+
+            *pcbFormat = bytesNeeded;
+            strcpyW(str, subjectTypeHeader);
+            str += strlenW(subjectTypeHeader);
+            strcpyW(str, subjectType);
+            str += strlenW(subjectType);
+            strcpyW(str, sep);
+            str += sepLen / sizeof(WCHAR);
+            strcpyW(str, pathLengthHeader);
+            str += strlenW(pathLengthHeader);
+            strcpyW(str, pathLength);
+            str += strlenW(pathLength);
+        }
+        LocalFree(info);
+    }
+    return ret;
+}
+
 static BOOL CRYPT_FormatHexStringWithPrefix(CRYPT_DATA_BLOB *blob, int id,
  LPWSTR str, DWORD *pcbStr)
 {
@@ -649,8 +748,6 @@ static BOOL CRYPT_FormatCertSerialNumber(CRYPT_DATA_BLOB *serialNum, LPWSTR str,
     return CRYPT_FormatHexStringWithPrefix(serialNum, IDS_CERT_SERIAL_NUMBER,
      str, pcbStr);
 }
-
-static const WCHAR crlf[] = { '\r','\n',0 };
 
 static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType,
  CERT_ALT_NAME_ENTRY *entry, LPWSTR str, DWORD *pcbStr)
@@ -782,8 +879,6 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType,
     }
     return ret;
 }
-
-static const WCHAR commaSpace[] = { ',',' ',0 };
 
 static BOOL CRYPT_FormatAltNameInfo(DWORD dwFormatStrType,
  CERT_ALT_NAME_INFO *name, LPWSTR str, DWORD *pcbStr)
@@ -1120,6 +1215,9 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
     {
         switch (LOWORD(lpszStructType))
         {
+        case LOWORD(X509_BASIC_CONSTRAINTS2):
+            format = CRYPT_FormatBasicConstraints2;
+            break;
         case LOWORD(X509_AUTHORITY_KEY_ID2):
             format = CRYPT_FormatAuthorityKeyId2;
             break;
@@ -1128,6 +1226,8 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
             break;
         }
     }
+    else if (!strcmp(lpszStructType, szOID_BASIC_CONSTRAINTS2))
+        format = CRYPT_FormatBasicConstraints2;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER2))
         format = CRYPT_FormatAuthorityKeyId2;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
