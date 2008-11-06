@@ -1764,6 +1764,43 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
     return status;
 }
 
+
+/* retrieve state for a free memory area; callback for wine_mmap_enum_reserved_areas */
+static int get_free_mem_state_callback( void *start, size_t size, void *arg )
+{
+    MEMORY_BASIC_INFORMATION *info = arg;
+    void *end = (char *)start + size;
+
+    if ((char *)info->BaseAddress + info->RegionSize < (char *)start) return 0;
+
+    if (info->BaseAddress >= end)
+    {
+        if (info->AllocationBase < end) info->AllocationBase = end;
+        return 0;
+    }
+
+    if (info->BaseAddress >= start)
+    {
+        /* it's a real free area */
+        info->State             = MEM_FREE;
+        info->Protect           = PAGE_NOACCESS;
+        info->AllocationBase    = 0;
+        info->AllocationProtect = 0;
+        info->Type              = 0;
+        if ((char *)info->BaseAddress + info->RegionSize > (char *)end)
+            info->RegionSize = (char *)end - (char *)info->BaseAddress;
+    }
+    else /* outside of the reserved area, pretend it's allocated */
+    {
+        info->RegionSize        = (char *)start - (char *)info->BaseAddress;
+        info->State             = MEM_RESERVE;
+        info->Protect           = PAGE_NOACCESS;
+        info->AllocationProtect = PAGE_NOACCESS;
+        info->Type              = MEM_PRIVATE;
+    }
+    return 1;
+}
+
 #define UNIMPLEMENTED_INFO_CLASS(c) \
     case c: \
         FIXME("(process=%p,addr=%p) Unimplemented information class: " #c "\n", process, addr); \
@@ -1861,13 +1898,20 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
     /* Fill the info structure */
 
+    info->AllocationBase = alloc_base;
+    info->BaseAddress    = base;
+    info->RegionSize     = size - (base - alloc_base);
+
     if (!view)
     {
-        info->State             = MEM_FREE;
-        info->Protect           = PAGE_NOACCESS;
-        info->AllocationBase    = 0;
-        info->AllocationProtect = 0;
-        info->Type              = 0;
+        if (!wine_mmap_enum_reserved_areas( get_free_mem_state_callback, info, 0 ))
+        {
+            /* not in a reserved area at all, pretend it's allocated */
+            info->State             = MEM_RESERVE;
+            info->Protect           = PAGE_NOACCESS;
+            info->AllocationProtect = PAGE_NOACCESS;
+            info->Type              = MEM_PRIVATE;
+        }
     }
     else
     {
@@ -1883,11 +1927,10 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         else info->Type = MEM_MAPPED;
         for (size = base - alloc_base; size < base + range_size - alloc_base; size += page_size)
             if (view->prot[size >> page_shift] != vprot) break;
+        info->RegionSize = size - (base - alloc_base);
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
-    info->BaseAddress    = base;
-    info->RegionSize     = size - (base - alloc_base);
     if (res_len) *res_len = sizeof(*info);
     return STATUS_SUCCESS;
 }
