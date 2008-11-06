@@ -120,12 +120,14 @@ static RTL_CRITICAL_SECTION csVirtual = { &critsect_debug, -1, 0, 0, 0, 0 };
 /* Note: these are Windows limits, you cannot change them. */
 static void *address_space_limit = (void *)0xc0000000;  /* top of the total available address space */
 static void *user_space_limit    = (void *)0x7fff0000;  /* top of the user address space */
+static void *working_set_limit   = (void *)0x7fff0000;  /* top of the current working set */
 #else
 static UINT page_shift;
 static UINT page_size;
 static UINT_PTR page_mask;
 static void * const address_space_limit = 0;  /* no limit needed on other platforms */
 static void * const user_space_limit    = 0;  /* no limit needed on other platforms */
+static void * const working_set_limit   = 0;  /* no limit needed on other platforms */
 #endif  /* __i386__ */
 
 #define ROUND_ADDR(addr,mask) \
@@ -710,6 +712,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
                 return STATUS_INVALID_PARAMETER;
             break;
         }
+        if (is_beyond_limit( ptr, size, working_set_limit )) working_set_limit = address_space_limit;
     }
     else
     {
@@ -1461,7 +1464,7 @@ void VIRTUAL_UseLargeAddressSpace(void)
 {
     /* no large address space on win9x */
     if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
-    user_space_limit = address_space_limit;
+    user_space_limit = working_set_limit = address_space_limit;
 }
 
 
@@ -1510,7 +1513,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     /* Round parameters to a page boundary */
 
-    if (size > 0x7fc00000) return STATUS_WORKING_SET_LIMIT_RANGE; /* 2Gb - 4Mb */
+    if (is_beyond_limit( 0, size, working_set_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
 
     if (*ret)
     {
@@ -1795,8 +1798,6 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
                 return STATUS_INVALID_INFO_CLASS;
         }
     }
-    if (address_space_limit && addr >= address_space_limit)
-        return STATUS_WORKING_SET_LIMIT_RANGE;
 
     if (process != NtCurrentProcess())
     {
@@ -1827,6 +1828,8 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
     base = ROUND_ADDR( addr, page_mask );
 
+    if (is_beyond_limit( base, 1, working_set_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
+
     /* Find the view containing the address */
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
@@ -1835,18 +1838,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     {
         if (!ptr)
         {
-            /* make the address space end at the user limit, except if
-             * the last view was mapped beyond that */
-            if (alloc_base <= (char *)user_space_limit)
-            {
-                if (user_space_limit && base >= (char *)user_space_limit)
-                {
-                    server_leave_uninterrupted_section( &csVirtual, &sigset );
-                    return STATUS_WORKING_SET_LIMIT_RANGE;
-                }
-                size = (char *)user_space_limit - alloc_base;
-            }
-            else size = (char *)address_space_limit - alloc_base;
+            size = (char *)working_set_limit - alloc_base;
             view = NULL;
             break;
         }
