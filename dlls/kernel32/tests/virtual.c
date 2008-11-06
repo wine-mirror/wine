@@ -529,21 +529,42 @@ static void test_MapViewOfFile(void)
     ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
     ok(info.BaseAddress == ptr, "BaseAddress should have been %p but was %p instead\n", ptr, info.BaseAddress);
     ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
     ok(info.RegionSize == MAPPING_SIZE, "RegionSize should have been 0x%x but was 0x%x\n", MAPPING_SIZE, (unsigned int)info.RegionSize);
     ok(info.State == MEM_RESERVE, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
-    ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
-    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+    if (info.Type == MEM_PRIVATE)  /* win9x is different for uncommitted mappings */
+    {
+        ok(info.AllocationProtect == PAGE_NOACCESS,
+           "AllocationProtect should have been PAGE_NOACCESS but was 0x%x\n", info.AllocationProtect);
+        ok(info.Protect == PAGE_NOACCESS,
+           "Protect should have been PAGE_NOACCESS instead of 0x%x\n", info.Protect);
+    }
+    else
+    {
+        ok(info.AllocationProtect == PAGE_READWRITE,
+           "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+        ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
+        ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+    }
 
-    ret = VirtualQuery(ptr2, &info, sizeof(info));
-    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
-    ok(info.BaseAddress == ptr2, "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
-    ok(info.AllocationBase == ptr2, "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
-    ok(info.RegionSize == MAPPING_SIZE, "RegionSize should have been 0x%x but was 0x%x\n", MAPPING_SIZE, (unsigned int)info.RegionSize);
-    ok(info.State == MEM_RESERVE, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
-    ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
-    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+    if (ptr != ptr2)
+    {
+        ret = VirtualQuery(ptr2, &info, sizeof(info));
+        ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+        ok(info.BaseAddress == ptr2,
+           "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
+        ok(info.AllocationBase == ptr2,
+           "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
+        ok(info.AllocationProtect == PAGE_READWRITE,
+           "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+        ok(info.RegionSize == MAPPING_SIZE,
+           "RegionSize should have been 0x%x but was 0x%x\n", MAPPING_SIZE, (unsigned int)info.RegionSize);
+        ok(info.State == MEM_RESERVE,
+           "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
+        ok(info.Protect == 0,
+           "Protect should have been 0 instead of 0x%x\n", info.Protect);
+        ok(info.Type == MEM_MAPPED,
+           "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+    }
 
     ptr = VirtualAlloc(ptr, 0x10000, MEM_COMMIT, PAGE_READONLY);
     ok(ptr != NULL, "VirtualAlloc failed with error %d\n", GetLastError());
@@ -552,28 +573,47 @@ static void test_MapViewOfFile(void)
     ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
     ok(info.BaseAddress == ptr, "BaseAddress should have been %p but was %p instead\n", ptr, info.BaseAddress);
     ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
     ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%x\n", (unsigned int)info.RegionSize);
     ok(info.State == MEM_COMMIT, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
     ok(info.Protect == PAGE_READONLY, "Protect should have been 0 instead of 0x%x\n", info.Protect);
-    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+    if (info.Type == MEM_PRIVATE)  /* win9x is different for uncommitted mappings */
+    {
+        ok(info.AllocationProtect == PAGE_NOACCESS,
+           "AllocationProtect should have been PAGE_NOACCESS but was 0x%x\n", info.AllocationProtect);
+    }
+    else
+    {
+        ok(info.AllocationProtect == PAGE_READWRITE,
+           "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+        ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+    }
 
     /* shows that the VirtualAlloc above affects the mapping, not just the
      * virtual memory in this process - it also affects all other processes
      * with a view of the mapping, but that isn't tested here */
-    ret = VirtualQuery(ptr2, &info, sizeof(info));
-    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
-    ok(info.BaseAddress == ptr2, "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
-    ok(info.AllocationBase == ptr2, "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
-    ok(info.AllocationProtect == PAGE_READWRITE, "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
-    ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%x\n", (unsigned int)info.RegionSize);
-    ok(info.State == MEM_COMMIT, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
-    ok(info.Protect == PAGE_READWRITE, "Protect should have been 0 instead of 0x%x\n", info.Protect);
-    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+    if (ptr != ptr2)
+    {
+        ret = VirtualQuery(ptr2, &info, sizeof(info));
+        ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+        ok(info.BaseAddress == ptr2,
+           "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
+        ok(info.AllocationBase == ptr2,
+           "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
+        ok(info.AllocationProtect == PAGE_READWRITE,
+           "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+        ok(info.RegionSize == 0x10000,
+           "RegionSize should have been 0x10000 but was 0x%x\n", (unsigned int)info.RegionSize);
+        ok(info.State == MEM_COMMIT,
+           "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
+        ok(info.Protect == PAGE_READWRITE,
+           "Protect should have been 0 instead of 0x%x\n", info.Protect);
+        ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
+    }
 
     ret = VirtualFree( ptr, 0x10000, MEM_DECOMMIT );
-    ok( !ret, "VirtualFree succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "VirtualFree failed with %u\n", GetLastError() );
+    ok( !ret || broken(ret) /* win9x */, "VirtualFree succeeded\n" );
+    if (!ret)
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "VirtualFree failed with %u\n", GetLastError() );
 
     ret = UnmapViewOfFile(ptr2);
     ok(ret, "UnmapViewOfFile failed with error %d\n", GetLastError());
