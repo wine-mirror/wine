@@ -560,7 +560,7 @@ static void test_enum_providers(void)
 	LocalFree(provider);
 }
 
-static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTypeName, 
+static BOOL FindProvTypesRegVals(DWORD *pdwIndex, DWORD *pdwProvType, LPSTR *pszTypeName,
 				 DWORD *pcbTypeName, DWORD *pdwTypeCount)
 {
 	HKEY hKey;
@@ -581,33 +581,43 @@ static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTy
 	if (!(szName = LocalAlloc(LMEM_ZEROINIT, cbName)))
 		goto cleanup;
 
-	if (RegEnumKeyEx(hKey, dwIndex, szName, &cbName, NULL, NULL, NULL, NULL))
-		goto cleanup;
-	cbName++;
-	ch = szName + strlen(szName);
-	/* Convert "Type 000" to 0, etc/ */
-	*pdwProvType = *(--ch) - '0';
-	*pdwProvType += (*(--ch) - '0') * 10;
-	*pdwProvType += (*(--ch) - '0') * 100;
+	while (!RegEnumKeyEx(hKey, *pdwIndex, szName, &cbName, NULL, NULL, NULL, NULL))
+	{
+		cbName++;
+		ch = szName + strlen(szName);
+		/* Convert "Type 000" to 0, etc/ */
+		*pdwProvType = *(--ch) - '0';
+		*pdwProvType += (*(--ch) - '0') * 10;
+		*pdwProvType += (*(--ch) - '0') * 100;
 
-	if (RegOpenKey(hKey, szName, &hSubKey))
-		goto cleanup;
+		if (RegOpenKey(hKey, szName, &hSubKey))
+			break;
 
-	if (RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, NULL, pcbTypeName))
-		goto cleanup;
+		if (!RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, NULL, pcbTypeName))
+		{
+			if (!(*pszTypeName = LocalAlloc(LMEM_ZEROINIT, *pcbTypeName)))
+				break;
 
-	if (!(*pszTypeName = LocalAlloc(LMEM_ZEROINIT, *pcbTypeName)))
-		goto cleanup;
+			if (!RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, (LPBYTE)*pszTypeName, pcbTypeName))
+			{
+				ret = TRUE;
+				break;
+			}
 
-	if (!RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, (LPBYTE)*pszTypeName, pcbTypeName))
-		ret = TRUE;
+			LocalFree(*pszTypeName);
+		}
 
-cleanup:
+		RegCloseKey(hSubKey);
+
+		(*pdwIndex)++;
+	}
+
 	if (!ret)
 		LocalFree(*pszTypeName);
+	RegCloseKey(hSubKey);
 	LocalFree(szName);
 
-	RegCloseKey(hSubKey);
+cleanup:
 	RegCloseKey(hKey);
 
 	return ret;
@@ -616,7 +626,7 @@ cleanup:
 static void test_enum_provider_types(void)
 {
 	/* expected values */
-	DWORD dwProvType;
+	DWORD dwProvType = 0;
 	LPSTR pszTypeName = NULL;
 	DWORD cbTypeName;
 	DWORD dwTypeCount;
@@ -637,7 +647,7 @@ static void test_enum_provider_types(void)
 		return;
 	}
 
-	if (!FindProvTypesRegVals(index, &dwProvType, &pszTypeName, &cbTypeName, &dwTypeCount))
+	if (!FindProvTypesRegVals(&index, &dwProvType, &pszTypeName, &cbTypeName, &dwTypeCount))
 	{
 		skip("Could not find provider types in registry\n");
 		return;
