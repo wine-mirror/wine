@@ -566,43 +566,51 @@ static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTy
 	HKEY hKey;
 	HKEY hSubKey;
 	PSTR ch;
-	
+	LPSTR szName;
+	DWORD cbName;
+	BOOL ret = FALSE;
+
 	if (RegOpenKey(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\Defaults\\Provider Types", &hKey))
 		return FALSE;
-	
-	if (RegQueryInfoKey(hKey, NULL, NULL, NULL, pdwTypeCount, pcbTypeName, NULL,
+
+	if (RegQueryInfoKey(hKey, NULL, NULL, NULL, pdwTypeCount, &cbName, NULL,
 			NULL, NULL, NULL, NULL, NULL))
-	    return FALSE;
-	(*pcbTypeName)++;
-	
-	if (!(*pszTypeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, *pcbTypeName))))
-		return FALSE;
-	
-	if (RegEnumKeyEx(hKey, dwIndex, *pszTypeName, pcbTypeName, NULL, NULL, NULL, NULL))
-	    return FALSE;
-	(*pcbTypeName)++;
-	ch = *pszTypeName + strlen(*pszTypeName);
+		goto cleanup;
+	cbName++;
+
+	if (!(szName = LocalAlloc(LMEM_ZEROINIT, cbName)))
+		goto cleanup;
+
+	if (RegEnumKeyEx(hKey, dwIndex, szName, &cbName, NULL, NULL, NULL, NULL))
+		goto cleanup;
+	cbName++;
+	ch = szName + strlen(szName);
 	/* Convert "Type 000" to 0, etc/ */
 	*pdwProvType = *(--ch) - '0';
 	*pdwProvType += (*(--ch) - '0') * 10;
 	*pdwProvType += (*(--ch) - '0') * 100;
-	
-	if (RegOpenKey(hKey, *pszTypeName, &hSubKey))
-	    return FALSE;
-	
-	if (RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, NULL, pcbTypeName))
-            return FALSE;
 
-	if (!(*pszTypeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, *pcbTypeName))))
-		return FALSE;
-	
-	if (RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, (LPBYTE)*pszTypeName, pcbTypeName))
-	    return FALSE;
-	
+	if (RegOpenKey(hKey, szName, &hSubKey))
+		goto cleanup;
+
+	if (RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, NULL, pcbTypeName))
+		goto cleanup;
+
+	if (!(*pszTypeName = LocalAlloc(LMEM_ZEROINIT, *pcbTypeName)))
+		goto cleanup;
+
+	if (!RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, (LPBYTE)*pszTypeName, pcbTypeName))
+		ret = TRUE;
+
+cleanup:
+	if (!ret)
+		LocalFree(*pszTypeName);
+	LocalFree(szName);
+
 	RegCloseKey(hSubKey);
 	RegCloseKey(hKey);
-	
-	return TRUE;
+
+	return ret;
 }
 
 static void test_enum_provider_types(void)
@@ -612,7 +620,7 @@ static void test_enum_provider_types(void)
 	LPSTR pszTypeName = NULL;
 	DWORD cbTypeName;
 	DWORD dwTypeCount;
-	
+
 	/* actual values */
 	DWORD index = 0;
 	DWORD provType;
@@ -622,45 +630,47 @@ static void test_enum_provider_types(void)
 	DWORD result;
 	DWORD notNull = 5;
 	DWORD notZeroFlags = 5;
-	
+
 	if(!pCryptEnumProviderTypesA)
 	{
-	    skip("CryptEnumProviderTypesA is not available\n");
-	    return;
+		skip("CryptEnumProviderTypesA is not available\n");
+		return;
 	}
-	
+
 	if (!FindProvTypesRegVals(index, &dwProvType, &pszTypeName, &cbTypeName, &dwTypeCount))
 	{
-	    skip("Could not find provider types in registry\n");
-	    return;
+		skip("Could not find provider types in registry\n");
+		return;
 	}
-	
+
 	/* check pdwReserved for NULL */
 	result = pCryptEnumProviderTypesA(index, &notNull, 0, &provType, typeName, &typeNameSize);
-	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "expected %i, got %d\n", 
-		ERROR_INVALID_PARAMETER, GetLastError());
-	
+	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n",
+		GetLastError());
+
 	/* check dwFlags == zero */
 	result = pCryptEnumProviderTypesA(index, NULL, notZeroFlags, &provType, typeName, &typeNameSize);
-	ok(!result && GetLastError()==NTE_BAD_FLAGS, "expected %i, got %d\n",
-		ERROR_INVALID_PARAMETER, GetLastError());
-	
-	/* alloc provider type to half the size required
-	 * cbTypeName holds the size required */
-	typeNameSize = cbTypeName / 2;
-	if (!(typeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, typeNameSize))))
-		return;
+	ok(!result && GetLastError()==NTE_BAD_FLAGS, "expected ERROR_INVALID_PARAMETER, got %d\n",
+		GetLastError());
 
 	/* This test fails under Win2k SP4:
-	   result = TRUE, GetLastError() == 0xdeadbeef
-	SetLastError(0xdeadbeef);
-	result = pCryptEnumProviderTypesA(index, NULL, 0, &provType, typeName, &typeNameSize);
-	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected 0/ERROR_MORE_DATA, got %d/%08lx\n",
-		result, GetLastError());
-	*/
-	
-	LocalFree(typeName);
-	
+	 * result = TRUE, GetLastError() == 0xdeadbeef */
+	if (0)
+	{
+		/* alloc provider type to half the size required
+		 * cbTypeName holds the size required */
+		typeNameSize = cbTypeName / 2;
+		if (!(typeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, typeNameSize))))
+			goto cleanup;
+
+		SetLastError(0xdeadbeef);
+		result = pCryptEnumProviderTypesA(index, NULL, 0, &provType, typeName, &typeNameSize);
+		ok(!result && GetLastError()==ERROR_MORE_DATA, "expected 0/ERROR_MORE_DATA, got %d/%d\n",
+			result, GetLastError());
+
+		LocalFree(typeName);
+	}
+
 	/* loop through the provider types to get the number of provider types 
 	 * after loop ends, count should be dwTypeCount + 1 so subtract 1
 	 * to get actual number of provider types */
@@ -669,30 +679,31 @@ static void test_enum_provider_types(void)
 		;
 	typeCount--;
 	ok(typeCount==dwTypeCount, "expected %d, got %d\n", dwTypeCount, typeCount);
-	
+
 	/* loop past the actual number of provider types to get the error
 	 * ERROR_NO_MORE_ITEMS */
 	for (typeCount = 0; typeCount < dwTypeCount + 1; typeCount++)
 		result = pCryptEnumProviderTypesA(typeCount, NULL, 0, &provType, NULL, &typeNameSize);
-	ok(!result && GetLastError()==ERROR_NO_MORE_ITEMS, "expected %i, got %d\n", 
-			ERROR_NO_MORE_ITEMS, GetLastError());
-	
+	ok(!result && GetLastError()==ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %d\n",
+		GetLastError());
 
 	/* check expected versus actual values returned */
 	result = pCryptEnumProviderTypesA(index, NULL, 0, &provType, NULL, &typeNameSize);
 	ok(result && typeNameSize==cbTypeName, "expected %d, got %d\n", cbTypeName, typeNameSize);
 	if (!(typeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, typeNameSize))))
-		return;
-		
+		goto cleanup;
+
 	typeNameSize = 0xdeadbeef;
 	result = pCryptEnumProviderTypesA(index, NULL, 0, &provType, typeName, &typeNameSize);
 	ok(result, "expected TRUE, got %d\n", result);
 	ok(provType==dwProvType, "expected %d, got %d\n", dwProvType, provType);
 	if (pszTypeName)
-	    ok(!strcmp(pszTypeName, typeName), "expected %s, got %s\n", pszTypeName, typeName);
+		ok(!strcmp(pszTypeName, typeName), "expected %s, got %s\n", pszTypeName, typeName);
 	ok(typeNameSize==cbTypeName, "expected %d, got %d\n", cbTypeName, typeNameSize);
-	
+
 	LocalFree(typeName);
+cleanup:
+	LocalFree(pszTypeName);
 }
 
 static BOOL FindDfltProvRegVals(DWORD dwProvType, DWORD dwFlags, LPSTR *pszProvName, DWORD *pcbProvName)
