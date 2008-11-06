@@ -2363,7 +2363,9 @@ static void test_DeviceCapabilities(void)
 
     fields = DeviceCapabilities(device, port, DC_FIELDS, NULL, NULL);
     ok(fields != (DWORD)-1, "DeviceCapabilities DC_FIELDS failed\n");
-    ok(fields == dm->dmFields, "fields %x != dm->dmFields %x\n", fields, dm->dmFields);
+    todo_wine
+    ok(fields == (dm->dmFields | DM_FORMNAME),
+        "fields %x != (dm->dmFields | DM_FORMNAME) %x\n", fields, dm->dmFields);
 
     GlobalUnlock(prn_dlg.hDevMode);
     GlobalFree(prn_dlg.hDevMode);
