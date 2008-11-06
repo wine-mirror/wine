@@ -24,6 +24,7 @@
 #include "wincrypt.h"
 #include "mssip.h"
 #include "winuser.h"
+#include "wintrust.h"
 #include "crypt32_private.h"
 #include "cryptres.h"
 #include "wine/unicode.h"
@@ -1768,6 +1769,111 @@ static BOOL WINAPI CRYPT_FormatEnhancedKeyUsage(DWORD dwCertEncodingType,
     return ret;
 }
 
+static WCHAR financialCriteria[MAX_STRING_RESOURCE_LEN];
+static WCHAR available[MAX_STRING_RESOURCE_LEN];
+static WCHAR notAvailable[MAX_STRING_RESOURCE_LEN];
+static WCHAR meetsCriteria[MAX_STRING_RESOURCE_LEN];
+static WCHAR yes[MAX_STRING_RESOURCE_LEN];
+static WCHAR no[MAX_STRING_RESOURCE_LEN];
+
+static BOOL WINAPI CRYPT_FormatSpcFinancialCriteria(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    SPC_FINANCIAL_CRITERIA criteria;
+    DWORD size = sizeof(criteria);
+    BOOL ret = FALSE;
+
+    if (!cbEncoded)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType,
+     SPC_FINANCIAL_CRITERIA_STRUCT, pbEncoded, cbEncoded, 0, NULL, &criteria,
+     &size)))
+    {
+        static BOOL stringsLoaded = FALSE;
+        DWORD bytesNeeded = sizeof(WCHAR);
+        LPCWSTR sep;
+        DWORD sepLen;
+
+        if (!stringsLoaded)
+        {
+            LoadStringW(hInstance, IDS_FINANCIAL_CRITERIA, financialCriteria,
+             sizeof(financialCriteria) / sizeof(financialCriteria[0]));
+            LoadStringW(hInstance, IDS_FINANCIAL_CRITERIA_AVAILABLE, available,
+             sizeof(available) / sizeof(available[0]));
+            LoadStringW(hInstance, IDS_FINANCIAL_CRITERIA_NOT_AVAILABLE,
+             notAvailable, sizeof(notAvailable) / sizeof(notAvailable[0]));
+            LoadStringW(hInstance, IDS_FINANCIAL_CRITERIA_MEETS_CRITERIA,
+             meetsCriteria, sizeof(meetsCriteria) / sizeof(meetsCriteria[0]));
+            LoadStringW(hInstance, IDS_YES, yes, sizeof(yes) / sizeof(yes[0]));
+            LoadStringW(hInstance, IDS_NO, no, sizeof(no) / sizeof(no[0]));
+            stringsLoaded = TRUE;
+        }
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+        {
+            sep = crlf;
+            sepLen = strlenW(crlf) * sizeof(WCHAR);
+        }
+        else
+        {
+            sep = commaSpace;
+            sepLen = strlenW(commaSpace) * sizeof(WCHAR);
+        }
+        bytesNeeded += strlenW(financialCriteria) * sizeof(WCHAR);
+        if (criteria.fFinancialInfoAvailable)
+        {
+            bytesNeeded += strlenW(available) * sizeof(WCHAR);
+            bytesNeeded += sepLen;
+            bytesNeeded += strlenW(meetsCriteria) * sizeof(WCHAR);
+            if (criteria.fMeetsCriteria)
+                bytesNeeded += strlenW(yes) * sizeof(WCHAR);
+            else
+                bytesNeeded += strlenW(no) * sizeof(WCHAR);
+        }
+        else
+            bytesNeeded += strlenW(notAvailable) * sizeof(WCHAR);
+        if (!pbFormat)
+            *pcbFormat = bytesNeeded;
+        else if (*pcbFormat < bytesNeeded)
+        {
+            *pcbFormat = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            LPWSTR str = pbFormat;
+
+            *pcbFormat = bytesNeeded;
+            strcpyW(str, financialCriteria);
+            str += strlenW(financialCriteria);
+            if (criteria.fFinancialInfoAvailable)
+            {
+                strcpyW(str, available);
+                str += strlenW(available);
+                strcpyW(str, sep);
+                str += sepLen / sizeof(WCHAR);
+                strcpyW(str, meetsCriteria);
+                str += strlenW(meetsCriteria);
+                if (criteria.fMeetsCriteria)
+                    strcpyW(str, yes);
+                else
+                    strcpyW(str, no);
+            }
+            else
+            {
+                strcpyW(str, notAvailable);
+                str += strlenW(notAvailable);
+            }
+        }
+    }
+    return ret;
+}
+
 typedef BOOL (WINAPI *CryptFormatObjectFunc)(DWORD, DWORD, DWORD, void *,
  LPCSTR, const BYTE *, DWORD, void *, DWORD *);
 
@@ -1800,6 +1906,9 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
         case LOWORD(X509_ENHANCED_KEY_USAGE):
             format = CRYPT_FormatEnhancedKeyUsage;
             break;
+        case LOWORD(SPC_FINANCIAL_CRITERIA_STRUCT):
+            format = CRYPT_FormatSpcFinancialCriteria;
+            break;
         }
     }
     else if (!strcmp(lpszStructType, szOID_BASIC_CONSTRAINTS2))
@@ -1812,6 +1921,8 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
         format = CRYPT_FormatCRLDistPoints;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         format = CRYPT_FormatEnhancedKeyUsage;
+    else if (!strcmp(lpszStructType, SPC_FINANCIAL_CRITERIA_OBJID))
+        format = CRYPT_FormatSpcFinancialCriteria;
     if (!format && !(formatStrType & CRYPT_FORMAT_STR_NO_HEX))
         format = CRYPT_FormatHexString;
     return format;
