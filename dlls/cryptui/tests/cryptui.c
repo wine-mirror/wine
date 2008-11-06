@@ -295,8 +295,7 @@ static BOOL (WINAPI *pCryptUIWizImport)(DWORD dwFlags, HWND hwndParent,
  LPCWSTR pwszWizardTitle, PCCRYPTUI_WIZ_IMPORT_SRC_INFO pImportSrc,
  HCERTSTORE hDestCertStore);
 
-static void find_and_delete_cert_in_store(HCERTSTORE store, LPCSTR storeName,
- PCCERT_CONTEXT cert, LPCSTR certName, BOOL todo)
+static BOOL find_and_delete_cert_in_store(HCERTSTORE store, PCCERT_CONTEXT cert)
 {
     CERT_ID id;
     PCCERT_CONTEXT found;
@@ -308,17 +307,13 @@ static void find_and_delete_cert_in_store(HCERTSTORE store, LPCSTR storeName,
      &cert->pCertInfo->SerialNumber, sizeof(CRYPT_INTEGER_BLOB));
     found = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
      CERT_FIND_CERT_ID, &id, NULL);
-    if (todo)
-        todo_wine ok(found != NULL, "expected to find %s in %s store\n",
-         certName, storeName);
-    else
-        ok(found != NULL, "expected to find %s in %s store\n", certName,
-         storeName);
-    if (found)
-    {
-        CertDeleteCertificateFromStore(found);
-        CertFreeCertificateContext(found);
-    }
+    if (!found)
+        return FALSE;
+
+    CertDeleteCertificateFromStore(found);
+    CertFreeCertificateContext(found);
+
+    return TRUE;
 }
 
 static void test_crypt_ui_wiz_import(void)
@@ -382,8 +377,8 @@ static void test_crypt_ui_wiz_import(void)
 
         if (ca)
         {
-            find_and_delete_cert_in_store(ca, "CA",
-             info.u.pCertContext, "v1CertWithValidPubKey", FALSE);
+            ret = find_and_delete_cert_in_store(ca, info.u.pCertContext);
+            ok(ret, "expected to find v1CertWithValidPubKey in CA store\n");
             CertCloseStore(ca, 0);
         }
     }
@@ -405,8 +400,11 @@ static void test_crypt_ui_wiz_import(void)
 
         if (addressBook)
         {
-            find_and_delete_cert_in_store(addressBook, "AddressBook",
-             info.u.pCertContext, "iTunesCert3", FALSE);
+            ret = find_and_delete_cert_in_store(addressBook,
+             info.u.pCertContext);
+            ok(ret ||
+             broken(!ret),  /* Windows 2000 and earlier */
+             "expected to find iTunesCert3 in AddressBook store\n");
             CertCloseStore(addressBook, 0);
         }
     }
@@ -436,8 +434,8 @@ static void test_crypt_ui_wiz_import(void)
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI |
      CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE, 0, NULL, &info, store);
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
-    find_and_delete_cert_in_store(store, "memory", info.u.pCertContext,
-     "iTunesCert3", FALSE);
+    ret = find_and_delete_cert_in_store(store, info.u.pCertContext);
+    ok(ret, "expected to find iTunesCert3 in memory store\n");
     CertFreeCertificateContext(info.u.pCertContext);
     CertCloseStore(store, 0);
 
@@ -454,8 +452,11 @@ static void test_crypt_ui_wiz_import(void)
 
         if (addressBook)
         {
-            find_and_delete_cert_in_store(addressBook, "AddressBook",
-             info.u.pCertContext, "iTunesCert1", FALSE);
+            ret = find_and_delete_cert_in_store(addressBook,
+             info.u.pCertContext);
+            ok(ret ||
+             broken(!ret),  /* Windows 2000 and earlier */
+             "expected to find iTunesCert1 in AddressBook store\n");
             CertCloseStore(addressBook, 0);
         }
     }
@@ -473,8 +474,8 @@ static void test_crypt_ui_wiz_import(void)
 
         if (ca)
         {
-            find_and_delete_cert_in_store(ca, "CA",
-             info.u.pCertContext, "iTunesCert2", FALSE);
+            ret = find_and_delete_cert_in_store(ca, info.u.pCertContext);
+            ok(ret, "expected to find iTunesCert2 in CA store\n");
             CertCloseStore(ca, 0);
         }
     }
