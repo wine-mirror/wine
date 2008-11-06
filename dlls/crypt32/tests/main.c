@@ -404,7 +404,6 @@ static void test_format_object(void)
      */
     SetLastError(0xdeadbeef);
     ret = pCryptFormatObject(0, 0, 0, NULL, NULL, NULL, 0, NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     /* When called with the default encoding type for any undefined struct type
@@ -471,7 +470,6 @@ static void test_format_object(void)
     SetLastError(0xdeadbeef);
     ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL,
      szOID_AUTHORITY_KEY_IDENTIFIER2, NULL, 0, NULL, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %d\n", GetLastError());
 }

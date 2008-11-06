@@ -172,3 +172,18 @@ STRINGTABLE DISCARDABLE
     IDS_LOCALIZEDNAME_CA "Intermediate Certification Authorities"
     IDS_LOCALIZEDNAME_ADDRESSBOOK "Other People"
 }
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_KEY_ID "KeyID="
+    IDS_CERT_ISSUER "Certificate Issuer: "
+    IDS_CERT_SERIAL_NUMBER "Certificate Serial Number="
+    IDS_ALT_NAME_OTHER_NAME "Other Name="
+    IDS_ALT_NAME_RFC822_NAME "Email Address="
+    IDS_ALT_NAME_DNS_NAME "DNS Name="
+    IDS_ALT_NAME_DIRECTORY_NAME "Directory Name="
+    IDS_ALT_NAME_URL "URL="
+    IDS_ALT_NAME_IP_ADDRESS "IP Address="
+    IDS_ALT_NAME_MASK "Mask="
+    IDS_ALT_NAME_REGISTERED_ID "Registered ID="
+}
