@@ -33,7 +33,7 @@ START_TEST(mci)
     char buf[1024];
     HWND hwnd;
 
-    hwnd = CreateWindowExA(0, "winmm test", "", WS_POPUP, 0,0,100,100,
+    hwnd = CreateWindowExA(0, "static", "winmm test", WS_POPUP, 0,0,100,100,
                            0, 0, 0, NULL);
 
     err = mciSendString(command_open, NULL, 0, NULL);
