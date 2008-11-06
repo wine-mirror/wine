@@ -736,7 +736,9 @@ static void test_LoadImageFile(const unsigned char * image_data,
     handle = LoadImageA(NULL, filename, IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
     ok(handle == NULL, "LoadImage(%s) as IMAGE_CURSOR succeeded incorrectly.\n", ext);
     error = GetLastError();
-    ok(error == 0, "Last error: %u\n", error);
+    ok(error == 0 ||
+        broken(error == ERROR_BAD_PATHNAME), /* Win9x, WinMe */
+        "Last error: %u\n", error);
     if (handle != NULL) DestroyCursor(handle);
 
     /* Load as icon. For all tested formats, this should fail */
@@ -744,7 +746,9 @@ static void test_LoadImageFile(const unsigned char * image_data,
     handle = LoadImageA(NULL, filename, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
     ok(handle == NULL, "LoadImage(%s) as IMAGE_ICON succeeded incorrectly.\n", ext);
     error = GetLastError();
-    ok(error == 0, "Last error: %u\n", error);
+    ok(error == 0 ||
+        broken(error == ERROR_BAD_PATHNAME), /* Win9x, WinMe */
+        "Last error: %u\n", error);
     if (handle != NULL) DestroyIcon(handle);
 
     /* Load as bitmap. Should succeed if bmp, fail for everything else */
@@ -754,7 +758,9 @@ static void test_LoadImageFile(const unsigned char * image_data,
 	ok(handle != NULL, "LoadImage(%s) as IMAGE_BITMAP failed.\n", ext);
     else ok(handle == NULL, "LoadImage(%s) as IMAGE_BITMAP succeeded incorrectly.\n", ext);
     error = GetLastError();
-    ok(error == 0, "Last error: %u\n", error);
+    ok(error == 0 ||
+        error == 0xdeadbeef, /* Win9x, WinMe */
+        "Last error: %u\n", error);
     if (handle != NULL) DeleteObject(handle);
 
     DeleteFileA(filename);
@@ -815,7 +821,9 @@ static void test_LoadImage(void)
     handle = LoadImageA(NULL, "icon.ico", IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
     ok(handle != NULL, "LoadImage() failed.\n");
     error = GetLastError();
-    ok(error == 0, "Last error: %u\n", error);
+    ok(error == 0 ||
+        broken(error == ERROR_BAD_PATHNAME), /* Win9x, WinMe */
+        "Last error: %u\n", error);
 
     /* Test the icon information. */
     SetLastError(0xdeadbeef);
