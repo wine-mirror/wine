@@ -789,6 +789,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
     INFCONTEXT name_context, context;
     IShellLinkW* shelllink=NULL;
     IPersistFile* persistfile=NULL;
+    HRESULT initresult=E_FAIL;
     int attrs=0;
 
     static const WCHAR dotlnk[] = {'.','l','n','k',0};
@@ -864,7 +865,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
 
     if (!cmdline) return TRUE;
 
-    CoInitialize(NULL);
+    initresult = CoInitialize(NULL);
 
     if (!SUCCEEDED(CoCreateInstance( &CLSID_ShellLink, NULL,
                                      CLSCTX_INPROC_SERVER, &IID_IShellLinkW, (LPVOID*)&shelllink)))
@@ -881,6 +882,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
     IShellLinkW_Release( shelllink );
 
 done:
+    if (SUCCEEDED(initresult)) CoUninitialize();
     HeapFree( GetProcessHeap(), 0, cmdline );
     return TRUE;
 }
