@@ -932,7 +932,7 @@ CreateMappedBitmap (HINSTANCE hInstance, INT_PTR idBitmap, UINT wFlags,
 	DeleteDC (hdcDst);
     }
     ReleaseDC (NULL, hdcScreen);
-    GlobalFree ((HGLOBAL)lpBitmapInfo);
+    GlobalFree (lpBitmapInfo);
     FreeResource (hglb);
 
     return hbm;

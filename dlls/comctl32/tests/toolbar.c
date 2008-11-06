@@ -168,7 +168,7 @@ static void rebuild_toolbar(HWND *hToolbar)
     *hToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
         hMainWnd, (HMENU)5, GetModuleHandle(NULL), NULL);
     ok(*hToolbar != NULL, "Toolbar creation problem\n");
-    ok(SendMessage(*hToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0) == 0, "TB_BUTTONSTRUCTSIZE failed\n");
+    ok(SendMessage(*hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0) == 0, "TB_BUTTONSTRUCTSIZE failed\n");
     ok(SendMessage(*hToolbar, TB_AUTOSIZE, 0, 0) == 0, "TB_AUTOSIZE failed\n");
     ok(SendMessage(*hToolbar, WM_SETFONT, (WPARAM)GetStockObject(SYSTEM_FONT), 0)==1, "WM_SETFONT\n");
 }
@@ -958,42 +958,42 @@ static void test_sizes(void)
 
     rebuild_toolbar(&hToolbar);
 
-    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, (WPARAM)0, (LPARAM) MAKELONG (32, 32) ) == 1, "TB_SETBITMAPSIZE failed\n");
-    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(100, 100)) == 1, "TB_SETBUTTONSIZE failed\n");
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons2[0]) == 1, "TB_ADDBUTTONS failed\n");
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[2]) == 1, "TB_ADDBUTTONS failed\n");
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[0]) == 1, "TB_ADDBUTTONS failed\n");
-    SendMessageA(hToolbar, TB_AUTOSIZE, (WPARAM)0, (LPARAM)0 );
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELPARAM(32, 32)) == 1, "TB_SETBITMAPSIZE failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(100, 100)) == 1, "TB_SETBUTTONSIZE failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons2[0]) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[2]) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[0]) == 1, "TB_ADDBUTTONS failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0 );
     check_sizes();
 
     rebuild_toolbar(&hToolbar);
     SetWindowLong(hToolbar, GWL_STYLE, TBSTYLE_LIST | GetWindowLong(hToolbar, GWL_STYLE));
-    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, (WPARAM)0, (LPARAM) MAKELONG (32, 32) ) == 1, "TB_SETBITMAPSIZE failed\n");
-    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(100, 100)) == 1, "TB_SETBUTTONSIZE failed\n");
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons2[0]) == 1, "TB_ADDBUTTONS failed\n");
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[2]) == 1, "TB_ADDBUTTONS failed\n");
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[3]) == 1, "TB_ADDBUTTONS failed\n");
-    SendMessageA(hToolbar, TB_AUTOSIZE, (WPARAM)0, (LPARAM)0 );
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELPARAM(32, 32)) == 1, "TB_SETBITMAPSIZE failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(100, 100)) == 1, "TB_SETBUTTONSIZE failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons2[0]) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[2]) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]) == 1, "TB_ADDBUTTONS failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0 );
     check_sizes_todo(0xff);
 
     rebuild_toolbar(&hToolbar);
     SetWindowLong(hToolbar, GWL_STYLE, TBSTYLE_LIST | GetWindowLong(hToolbar, GWL_STYLE));
-    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, (WPARAM)0, (LPARAM) MAKELONG (32, 32) ) == 1, "TB_SETBITMAPSIZE failed\n");
-    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(100, 100)) == 1, "TB_SETBUTTONSIZE failed\n");
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[3]) == 1, "TB_ADDBUTTONS failed\n");
-    SendMessageA(hToolbar, TB_AUTOSIZE, (WPARAM)0, (LPARAM)0 );
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELPARAM(32, 32)) == 1, "TB_SETBITMAPSIZE failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(100, 100)) == 1, "TB_SETBUTTONSIZE failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]) == 1, "TB_ADDBUTTONS failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0 );
     check_sizes();
 
     rebuild_toolbar(&hToolbar);
     SetWindowLong(hToolbar, GWL_STYLE, TBSTYLE_WRAPABLE | GetWindowLong(hToolbar, GWL_STYLE));
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[3]) == 1, "TB_ADDBUTTONS failed\n");
-    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, (WPARAM)1, (LPARAM)&buttons3[3]) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]) == 1, "TB_ADDBUTTONS failed\n");
     tbinfo.cx = 672;
     tbinfo.cbSize = sizeof(TBBUTTONINFO);
     tbinfo.dwMask = TBIF_SIZE | TBIF_BYINDEX;
-    ok(SendMessageA(hToolbar, TB_SETBUTTONINFO, (WPARAM)0, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFO failed\n");
-    ok(SendMessageA(hToolbar, TB_SETBUTTONINFO, (WPARAM)1, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFO failed\n");
-    SendMessageA(hToolbar, TB_AUTOSIZE, (WPARAM)0, (LPARAM)0);
+    ok(SendMessageA(hToolbar, TB_SETBUTTONINFO, 0, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFO failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONINFO, 1, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFO failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0);
     check_sizes();
 
     DestroyWindow(hToolbar);

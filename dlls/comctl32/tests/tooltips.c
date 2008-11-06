@@ -205,7 +205,7 @@ static void test_customdraw(void) {
        toolInfo.hwnd = parent;
        toolInfo.hinst = GetModuleHandleA(NULL);
        toolInfo.uFlags = TTF_SUBCLASS;
-       toolInfo.uId = (UINT_PTR)0x1234ABCD;
+       toolInfo.uId = 0x1234ABCD;
        toolInfo.lpszText = (LPSTR)"This is a test tooltip";
        toolInfo.lParam = 0xdeadbeef;
        GetClientRect (parent, &toolInfo.rect);
@@ -251,7 +251,7 @@ static void test_gettext(void)
     toolinfoA.hwnd = NULL;
     toolinfoA.hinst = GetModuleHandleA(NULL);
     toolinfoA.uFlags = 0;
-    toolinfoA.uId = (UINT_PTR)0x1234ABCD;
+    toolinfoA.uId = 0x1234ABCD;
     toolinfoA.lpszText = NULL;
     toolinfoA.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoA.rect);
@@ -260,7 +260,7 @@ static void test_gettext(void)
     if (r)
     {
         toolinfoA.hwnd = NULL;
-        toolinfoA.uId = (UINT_PTR)0x1234ABCD;
+        toolinfoA.uId = 0x1234ABCD;
         toolinfoA.lpszText = bufA;
         SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
         ok(strcmp(toolinfoA.lpszText, "") == 0, "lpszText should be an empty string\n");
@@ -284,7 +284,7 @@ static void test_gettext(void)
     toolinfoW.hwnd = NULL;
     toolinfoW.hinst = GetModuleHandleA(NULL);
     toolinfoW.uFlags = 0;
-    toolinfoW.uId = (UINT_PTR)0x1234ABCD;
+    toolinfoW.uId = 0x1234ABCD;
     toolinfoW.lpszText = NULL;
     toolinfoW.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoW.rect);
@@ -292,7 +292,7 @@ static void test_gettext(void)
     ok(r, "Adding the tool to the tooltip failed\n");
 
     toolinfoW.hwnd = NULL;
-    toolinfoW.uId = (UINT_PTR)0x1234ABCD;
+    toolinfoW.uId = 0x1234ABCD;
     toolinfoW.lpszText = bufW;
     SendMessageW(hwnd, TTM_GETTEXTW, 0, (LPARAM)&toolinfoW);
     ok(toolinfoW.lpszText[0] == 0, "lpszText should be an empty string\n");

@@ -4795,7 +4795,7 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 	ITEMHDR *hdrItem;
 	INT i;
 
-	hdpaSubItems = (HDPA)DPA_DeletePtr(infoPtr->hdpaItems, nItem);	
+	hdpaSubItems = DPA_DeletePtr(infoPtr->hdpaItems, nItem);
 	for (i = 0; i < DPA_GetPtrCount(hdpaSubItems); i++)
     	{
             hdrItem = DPA_GetPtr(hdpaSubItems, i);

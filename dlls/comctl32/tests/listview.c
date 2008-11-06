@@ -989,7 +989,7 @@ static void test_item_count(void)
     expect(3, r);
 
     /* [item0, item1] */
-    r = SendMessage(hwnd, LVM_DELETEITEM, (WPARAM) 2, 0);
+    r = SendMessage(hwnd, LVM_DELETEITEM, 2, 0);
     expect(TRUE, r);
 
     r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
