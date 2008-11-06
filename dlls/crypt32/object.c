@@ -1002,6 +1002,107 @@ static BOOL WINAPI CRYPT_FormatAuthorityKeyId2(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_FormatEnhancedKeyUsage(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    CERT_ENHKEY_USAGE *usage;
+    DWORD size;
+    BOOL ret = FALSE;
+
+    if (!cbEncoded)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType, X509_ENHANCED_KEY_USAGE,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &usage, &size)))
+    {
+        WCHAR unknown[MAX_STRING_RESOURCE_LEN];
+        DWORD i;
+        DWORD bytesNeeded = sizeof(WCHAR); /* space for the NULL terminator */
+        LPCWSTR sep;
+        DWORD sepLen;
+
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+        {
+            sep = crlf;
+            sepLen = strlenW(crlf) * sizeof(WCHAR);
+        }
+        else
+        {
+            sep = commaSpace;
+            sepLen = strlenW(commaSpace) * sizeof(WCHAR);
+        }
+
+        LoadStringW(hInstance, IDS_USAGE_UNKNOWN, unknown,
+         sizeof(unknown) / sizeof(unknown[0]));
+        for (i = 0; i < usage->cUsageIdentifier; i++)
+        {
+            PCCRYPT_OID_INFO info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+             usage->rgpszUsageIdentifier[i], CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
+
+            if (info)
+                bytesNeeded += strlenW(info->pwszName) * sizeof(WCHAR);
+            else
+                bytesNeeded += strlenW(unknown) * sizeof(WCHAR);
+            bytesNeeded += sizeof(WCHAR); /* space */
+            bytesNeeded += sizeof(WCHAR); /* left paren */
+            bytesNeeded += strlen(usage->rgpszUsageIdentifier[i]) *
+             sizeof(WCHAR);
+            bytesNeeded += sizeof(WCHAR); /* right paren */
+            if (i < usage->cUsageIdentifier - 1)
+                bytesNeeded += sepLen;
+        }
+        if (!pbFormat)
+            *pcbFormat = bytesNeeded;
+        else if (*pcbFormat < bytesNeeded)
+        {
+            *pcbFormat = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            LPWSTR str = pbFormat;
+
+            *pcbFormat = bytesNeeded;
+            for (i = 0; i < usage->cUsageIdentifier; i++)
+            {
+                PCCRYPT_OID_INFO info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY,
+                 usage->rgpszUsageIdentifier[i],
+                 CRYPT_ENHKEY_USAGE_OID_GROUP_ID);
+                LPCSTR oidPtr;
+
+                if (info)
+                {
+                    strcpyW(str, info->pwszName);
+                    str += strlenW(info->pwszName);
+                }
+                else
+                {
+                    strcpyW(str, unknown);
+                    str += strlenW(unknown);
+                }
+                *str++ = ' ';
+                *str++ = '(';
+                for (oidPtr = usage->rgpszUsageIdentifier[i]; *oidPtr; oidPtr++)
+                    *str++ = *oidPtr;
+                *str++ = ')';
+                *str = 0;
+                if (i < usage->cUsageIdentifier - 1)
+                {
+                    strcpyW(str, sep);
+                    str += sepLen / sizeof(WCHAR);
+                }
+            }
+        }
+        LocalFree(usage);
+    }
+    return ret;
+}
+
 typedef BOOL (WINAPI *CryptFormatObjectFunc)(DWORD, DWORD, DWORD, void *,
  LPCSTR, const BYTE *, DWORD, void *, DWORD *);
 
@@ -1022,10 +1123,15 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
         case LOWORD(X509_AUTHORITY_KEY_ID2):
             format = CRYPT_FormatAuthorityKeyId2;
             break;
+        case LOWORD(X509_ENHANCED_KEY_USAGE):
+            format = CRYPT_FormatEnhancedKeyUsage;
+            break;
         }
     }
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_KEY_IDENTIFIER2))
         format = CRYPT_FormatAuthorityKeyId2;
+    else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
+        format = CRYPT_FormatEnhancedKeyUsage;
     if (!format && !(formatStrType & CRYPT_FORMAT_STR_NO_HEX))
         format = CRYPT_FormatHexString;
     return format;
