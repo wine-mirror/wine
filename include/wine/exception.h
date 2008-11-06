@@ -25,6 +25,10 @@
 #include <windef.h>
 #include <excpt.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The following definitions allow using exceptions in Wine and Winelib code
  *
  * They should be used like this:
@@ -328,5 +332,9 @@ static inline DWORD __wine_finally_handler( EXCEPTION_RECORD *record,
 }
 
 #endif /* USE_COMPILER_EXCEPTIONS */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_WINE_EXCEPTION_H */

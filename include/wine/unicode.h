@@ -31,6 +31,10 @@
 #error This file should not be used in Wine tests
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef WINE_UNICODE_API
 # if defined(_MSC_VER) || defined(__MINGW32__)
 #  define WINE_UNICODE_API DECLSPEC_IMPORT
@@ -330,5 +334,9 @@ WINE_UNICODE_INLINE int atoiW( const WCHAR *str )
 }
 
 #undef WINE_UNICODE_INLINE
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_WINE_UNICODE_H */

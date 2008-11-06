@@ -31,6 +31,10 @@
 #error This file should not be used in Wine tests
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* configuration */
 
 extern const char *wine_get_build_dir(void);
@@ -211,5 +215,9 @@ __DEFINE_SET_SEG(fs)
 __DEFINE_SET_SEG(gs)
 #undef __DEFINE_GET_SEG
 #undef __DEFINE_SET_SEG
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_WINE_LIBRARY_H */
