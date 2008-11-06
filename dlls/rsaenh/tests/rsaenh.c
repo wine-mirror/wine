@@ -379,7 +379,10 @@ static void test_hashes(void)
     /* Can't add data after the hash been retrieved */
     SetLastError(0xdeadbeef);
     result = CryptHashData(hHash, (BYTE*)pbData, sizeof(pbData), 0);
-    ok(!result && GetLastError() == NTE_BAD_HASH_STATE, "%08x\n", GetLastError());
+    ok(!result, "Expected failure\n");
+    ok(GetLastError() == NTE_BAD_HASH_STATE ||
+       GetLastError() == NTE_BAD_ALGID, /* Win9x, WinMe, NT4 */
+       "Expected NTE_BAD_HASH_STATE or NTE_BAD_ALGID, got %08x\n", GetLastError());
 
     /* You can still retrieve the hash, its value just hasn't changed */
     result = CryptGetHashParam(hHash, HP_HASHVAL, pbHashValue, &len, 0);
