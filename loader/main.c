@@ -106,7 +106,7 @@ int main( int argc, char *argv[] )
             reserve_area( wine_main_preload_info[i].addr, wine_main_preload_info[i].size );
     }
 
-    wine_pthread_set_functions( &pthread_functions, sizeof(pthread_functions) );
+    init_pthread_functions();
     wine_init( argc, argv, error, sizeof(error) );
     fprintf( stderr, "wine: failed to initialize: %s\n", error );
     exit(1);

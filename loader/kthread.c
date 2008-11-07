@@ -324,7 +324,7 @@ static void DECLSPEC_NORETURN abort_thread( long status )
 /***********************************************************************
  *           pthread_functions
  */
-const struct wine_pthread_functions pthread_functions =
+static const struct wine_pthread_functions pthread_functions =
 {
     init_process,
     init_thread,
@@ -336,6 +336,10 @@ const struct wine_pthread_functions pthread_functions =
     sigprocmask
 };
 
+void init_pthread_functions(void)
+{
+    wine_pthread_set_functions( &pthread_functions, sizeof(pthread_functions) );
+}
 
 /* Currently this probably works only for glibc2,
  * which checks for the presence of double-underscore-prepended

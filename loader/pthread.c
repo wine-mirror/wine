@@ -246,7 +246,7 @@ static int pthread_sigmask( int how, const sigset_t *newset, sigset_t *oldset )
 /***********************************************************************
  *           pthread_functions
  */
-const struct wine_pthread_functions pthread_functions =
+static const struct wine_pthread_functions pthread_functions =
 {
     init_process,
     init_thread,
@@ -257,3 +257,8 @@ const struct wine_pthread_functions pthread_functions =
     abort_thread,
     pthread_sigmask
 };
+
+void init_pthread_functions(void)
+{
+    wine_pthread_set_functions( &pthread_functions, sizeof(pthread_functions) );
+}

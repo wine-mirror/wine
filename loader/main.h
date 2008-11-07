@@ -30,6 +30,10 @@ struct wine_preload_info
     size_t size;
 };
 
-extern const struct wine_pthread_functions pthread_functions;
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+extern void init_pthread_functions(void) __attribute__((visibility ("hidden")));
+#else
+extern void init_pthread_functions(void);
+#endif
 
 #endif /* __WINE_LOADER_MAIN_H */
