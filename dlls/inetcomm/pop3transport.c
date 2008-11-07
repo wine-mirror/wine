@@ -460,6 +460,40 @@ static void POP3Transport_CallbackRecvRSETResp(IInternetTransport *iface, char *
     InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessRSETResp);
 }
 
+void POP3Transport_CallbackProcessRETRResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+    POP3RESPONSE response;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = POP3Transport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+
+    if (!response.fDone)
+    {
+        InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessRETRResp);
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+}
+
+static void POP3Transport_CallbackRecvRETRResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessRETRResp);
+}
+
 static void POP3Transport_CallbackProcessLISTResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     POP3Transport *This = (POP3Transport *)iface;
@@ -956,8 +990,22 @@ static HRESULT WINAPI POP3Transport_CommandDELE(
 static HRESULT WINAPI POP3Transport_CommandRETR(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    FIXME("(%u, %u)\n", cmdtype, dwPopId);
-    return E_NOTIMPL;
+    static char retr[] = "RETR %u\r\n";
+    POP3Transport *This = (POP3Transport *)iface;
+    char *command;
+    int len;
+
+    TRACE("(%u, %u)\n", cmdtype, dwPopId);
+
+    len = sizeof(retr) + 10 + 2; /* "4294967296" + "\r\n" */
+    if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
+    sprintf(command, retr, dwPopId);
+
+    init_parser(This, POP3_RETR, cmdtype);
+    InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvRETRResp);
+
+    HeapFree(GetProcessHeap(), 0, command);
+    return S_OK;
 }
 
 static const IPOP3TransportVtbl POP3TransportVtbl =
