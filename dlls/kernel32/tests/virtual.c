@@ -720,7 +720,8 @@ static void test_CreateFileMapping(void)
     SetLastError(0xdeadbeef);
     handle2 = OpenFileMappingA( FILE_MAP_ALL_ACCESS, FALSE, "WINE TEST MAPPING");
     ok( !handle2, "OpenFileMapping succeeded\n");
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_NAME /* win9x */,
+        "wrong error %u\n", GetLastError());
 
     CloseHandle( handle );
 }
