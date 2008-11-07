@@ -1186,7 +1186,14 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 {
 #define WINE_SPI_FIXME(x) \
     case x: \
-        FIXME( "Unimplemented action: %u (%s)\n", x, #x ); \
+        { \
+            static BOOL warn = TRUE; \
+            if (warn) \
+            { \
+                warn = FALSE; \
+                FIXME( "Unimplemented action: %u (%s)\n", x, #x ); \
+            } \
+        } \
         SetLastError( ERROR_INVALID_SPI_VALUE ); \
         ret = FALSE; \
         break
