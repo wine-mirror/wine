@@ -79,8 +79,13 @@ static ULONG WINAPI ID3DXSpriteImpl_Release(LPD3DXSPRITE iface)
 static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(LPD3DXSPRITE iface, LPDIRECT3DDEVICE9 *device)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p): relay\n", This);
+
+    if(device==NULL) return D3DERR_INVALIDCALL;
+    *device=This->device;
+    IDirect3DDevice9_AddRef(This->device);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXSpriteImpl_GetTransform(LPD3DXSPRITE iface, D3DXMATRIX *transform)
