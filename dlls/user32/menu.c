@@ -4423,8 +4423,10 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
 
     debug_print_menuitem("GetMenuItemInfo_common: ", menu, "");
 
-    if (!menu)
-	return FALSE;
+    if (!menu) {
+        SetLastError( ERROR_MENU_ITEM_NOT_FOUND);
+        return FALSE;
+    }
     
     if( lpmii->fMask & MIIM_TYPE) {
         if( lpmii->fMask & ( MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP)) {
