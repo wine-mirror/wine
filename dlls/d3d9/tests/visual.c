@@ -8324,7 +8324,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
     D3DCAPS9 caps;
     D3DMATRIX matrix;
     D3DMATRIX identity;
-    float ptsize, ptsize_orig;
+    float ptsize, ptsize_orig, ptsizemax_orig, ptsizemin_orig;
     DWORD color;
 
     const float vertices[] = {
@@ -8333,7 +8333,10 @@ static void pointsize_test(IDirect3DDevice9 *device)
         192,    64,     0.1,
         256,    64,     0.1,
         320,    64,     0.1,
-        384,    64,     0.1
+        384,    64,     0.1,
+        448,    64,     0.1,
+        512,    64,     0.1,
+        576,    64,     0.1,
     };
 
     /* Transforms the coordinate system [-1.0;1.0]x[-1.0;1.0] to [0.0;0.0]x[640.0;480.0]. Z is untouched */
@@ -8404,6 +8407,51 @@ static void pointsize_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[12], sizeof(float) * 3);
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
+
+        hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSIZE_MAX, (DWORD *) (&ptsizemax_orig));
+        ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed, hr=%08x\n", hr);
+        hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSIZE_MAX, (DWORD *) (&ptsizemin_orig));
+        ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed, hr=%08x\n", hr);
+
+        /* What happens if point scaling is disabled, and POINTSIZE_MAX < POINTSIZE? */
+        ptsize = 16.0;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
+        ptsize = 1.0;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MAX, *((DWORD *) (&ptsize)));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[18], sizeof(float) * 3);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
+
+        /* What happens if POINTSIZE_MAX < POINTSIZE_MIN?
+         * ptsize = 4.0, ptsize_max = 1.0, ptsize_min = 16.0
+         */
+        ptsize = 4.0;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
+        ptsize = 16.0;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *((DWORD *) (&ptsize)));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[21], sizeof(float) * 3);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MAX, *((DWORD *) (&ptsizemax_orig)));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
+
+        /* pointsize < pointsize_min < pointsize_max?
+         * pointsize = 1.0, pointsize_min = 16.0, pointsize_max = default(usually 64.0)
+         */
+        ptsize = 1.0;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
+        ptsize = 16.0;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *((DWORD *) (&ptsize)));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[24], sizeof(float) * 3);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *((DWORD *) (&ptsizemin_orig)));
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
 
         hr = IDirect3DDevice9_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed hr=%08x\n", hr);
@@ -8482,6 +8530,26 @@ static void pointsize_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffffff, "pSize: Pixel (320-0),(64-0) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 320+1, 64+1);
     ok(color == 0x000000ff, "pSize: Pixel (320+1),(64+1) has color 0x%08x, expected 0x000000ff\n", color);
+
+    /* ptsize = 16, ptsize_max = 1 --> point has size 1 */
+    color = getPixelColor(device, 448-4, 64-4);
+    ok(color == 0x000000ff, "pSize: Pixel (448-4),(64-4) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 448+4, 64+4);
+    ok(color == 0x000000ff, "pSize: Pixel (448+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
+
+    /* ptsize = 4, ptsize_max = 1, ptsize_min = 16 --> point has size 1 */
+    color = getPixelColor(device, 512-4, 64-4);
+    ok(color == 0x000000ff, "pSize: Pixel (448-4),(64-4) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 512+4, 64+4);
+    ok(color == 0x000000ff, "pSize: Pixel (448+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
+
+    /* ptsize = 1, ptsize_max = default(64), ptsize_min = 16 --> point has size 16
+     * Don't be overly picky - just show that the point is bigger than 1 pixel
+     */
+    color = getPixelColor(device, 576-4, 64-4);
+    ok(color == 0x00ffffff, "pSize: Pixel (448-4),(64-4) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 576+4, 64+4);
+    ok(color == 0x00ffffff, "pSize: Pixel (448+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize_orig)));
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed hr=%08x\n", hr);
