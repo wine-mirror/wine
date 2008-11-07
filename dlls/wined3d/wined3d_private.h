@@ -853,7 +853,7 @@ struct texture_stage_op
     WINED3DFORMAT           color_correction;
 };
 
-struct ffp_settings {
+struct ffp_frag_settings {
     struct texture_stage_op     op[MAX_TEXTURES];
     enum {
         FOG_OFF,
@@ -865,16 +865,16 @@ struct ffp_settings {
     unsigned int sRGB_write;
 };
 
-struct ffp_desc
+struct ffp_frag_desc
 {
-    struct ffp_settings         settings;
+    struct ffp_frag_settings    settings;
 };
 
-void gen_ffp_op(IWineD3DStateBlockImpl *stateblock, struct ffp_settings *settings, BOOL ignore_textype);
-struct ffp_desc *find_ffp_shader(struct hash_table_t *fragment_shaders, struct ffp_settings *settings);
-void add_ffp_shader(struct hash_table_t *shaders, struct ffp_desc *desc);
-BOOL ffp_program_key_compare(void *keya, void *keyb);
-unsigned int ffp_program_key_hash(void *key);
+void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype);
+struct ffp_frag_desc *find_ffp_frag_shader(struct hash_table_t *fragment_shaders, struct ffp_frag_settings *settings);
+void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *desc);
+BOOL ffp_frag_program_key_compare(void *keya, void *keyb);
+unsigned int ffp_frag_program_key_hash(void *key);
 
 /*****************************************************************************
  * IWineD3D implementation structure
