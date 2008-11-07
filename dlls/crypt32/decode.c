@@ -362,9 +362,7 @@ static BOOL CRYPT_AsnDecodeSequenceItems(struct AsnDecodeSequenceItem items[],
                         if (ret)
                         {
                             /* Account for alignment padding */
-                            if (items[i].size % sizeof(DWORD_PTR))
-                                items[i].size += sizeof(DWORD_PTR) -
-                                 items[i].size % sizeof(DWORD_PTR);
+                            items[i].size = ALIGN_DWORD_PTR(items[i].size);
                             TRACE("item %d size: %d\n", i, items[i].size);
                             if (nextData && items[i].hasPointer &&
                              items[i].size > items[i].minSize)
