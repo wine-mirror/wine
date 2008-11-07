@@ -57,6 +57,33 @@ static void init_function_pointers(void)
 #undef GET_PROC
 }
 
+static BOOL correct_behavior(void)
+{
+    HMENU hmenu;
+    MENUITEMINFO info;
+    BOOL rc;
+
+    hmenu = CreateMenu();
+
+    memset(&info, 0, sizeof(MENUITEMINFO));
+    info.cbSize= sizeof(MENUITEMINFO);
+    SetLastError(0xdeadbeef);
+    rc = GetMenuItemInfo(hmenu, 0, TRUE, &info);
+    /* Win9x  : 0xdeadbeef
+     * NT4    : ERROR_INVALID_PARAMETER
+     * >= W2K : ERROR_MENU_ITEM_NOT_FOUND
+     */
+    if (!rc && GetLastError() != ERROR_MENU_ITEM_NOT_FOUND)
+    {
+        win_skip("NT4 and below can't handle a bigger MENUITEMINFO struct\n");
+        DestroyMenu(hmenu);
+        return FALSE;
+    }
+
+    DestroyMenu(hmenu);
+    return TRUE;
+}
+
 static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -2351,13 +2378,23 @@ START_TEST(menu)
 {
     init_function_pointers();
 
+    /* Wine defines MENUITEMINFO for W2K and above. NT4 and below can't
+     * handle that.
+     */
+    if (correct_behavior())
+    {
+        test_menu_add_string();
+        test_menu_iteminfo();
+        test_menu_search_bycommand();
+        test_CheckMenuRadioItem();
+        test_menu_resource_layout();
+        test_InsertMenu();
+    }
+
     register_menu_check_class();
 
     test_menu_locked_by_window();
     test_menu_ownerdraw();
-    test_menu_add_string();
-    test_menu_iteminfo();
-    test_menu_search_bycommand();
     test_menu_bmp_and_string();
 
     if( !pSendInput)
@@ -2367,7 +2404,4 @@ START_TEST(menu)
     test_menu_flags();
 
     test_menu_hilitemenuitem();
-    test_CheckMenuRadioItem();
-    test_menu_resource_layout();
-    test_InsertMenu();
 }
