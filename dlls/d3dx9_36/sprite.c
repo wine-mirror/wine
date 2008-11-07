@@ -22,6 +22,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+/* the combination of all possible D3DXSPRITE flags */
+#define D3DXSPRITE_FLAGLIMIT 511
+
+typedef struct _SPRITEVERTEX {
+    D3DXVECTOR3 pos;
+    DWORD col;
+    D3DXVECTOR2 tex;
+} SPRITEVERTEX;
+
 static HRESULT WINAPI ID3DXSpriteImpl_QueryInterface(LPD3DXSPRITE iface, REFIID riid, LPVOID *object)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
@@ -102,11 +111,134 @@ static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewLH(LPD3DXSPRITE iface, CONST D
     return E_NOTIMPL;
 }
 
+/* Helper function */
+void set_states(ID3DXSpriteImpl *object)
+{
+    D3DXMATRIX mat;
+    D3DVIEWPORT9 vp;
+
+    /* Miscelaneous stuff */
+    IDirect3DDevice9_SetVertexShader(object->device, NULL);
+    IDirect3DDevice9_SetPixelShader(object->device, NULL);
+    IDirect3DDevice9_SetNPatchMode(object->device, 0.0f);
+
+    /* Render states */
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_ALPHABLENDENABLE, TRUE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_ALPHAREF, 0x00);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_ALPHATESTENABLE, object->alphacmp_caps);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_BLENDOP, D3DBLENDOP_ADD);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_CLIPPING, TRUE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_CLIPPLANEENABLE, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_ALPHA | D3DCOLORWRITEENABLE_BLUE |
+                                    D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_RED);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_CULLMODE, D3DCULL_NONE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_DIFFUSEMATERIALSOURCE, D3DMCS_COLOR1);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_ENABLEADAPTIVETESSELLATION, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_FILLMODE, D3DFILL_SOLID);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_FOGENABLE, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_LIGHTING, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_RANGEFOGENABLE, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_SPECULARENABLE, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_SRGBWRITEENABLE, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_STENCILENABLE, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_VERTEXBLEND, FALSE);
+    IDirect3DDevice9_SetRenderState(object->device, D3DRS_WRAP0, 0);
+
+    /* Texture stage states */
+    IDirect3DDevice9_SetTextureStageState(object->device, 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    IDirect3DDevice9_SetTextureStageState(object->device, 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+    IDirect3DDevice9_SetTextureStageState(object->device, 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+    IDirect3DDevice9_SetTextureStageState(object->device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    IDirect3DDevice9_SetTextureStageState(object->device, 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    IDirect3DDevice9_SetTextureStageState(object->device, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    IDirect3DDevice9_SetTextureStageState(object->device, 0, D3DTSS_TEXCOORDINDEX, 0);
+    IDirect3DDevice9_SetTextureStageState(object->device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+    IDirect3DDevice9_SetTextureStageState(object->device, 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+    IDirect3DDevice9_SetTextureStageState(object->device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+
+    /* Sampler states */
+    IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+
+    if(object->texfilter_caps & D3DPTFILTERCAPS_MAGFANISOTROPIC)
+        IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MAGFILTER, D3DTEXF_ANISOTROPIC);
+    else IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+
+    IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MAXMIPLEVEL, 0);
+    IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MAXANISOTROPY, object->maxanisotropy);
+
+    if(object->texfilter_caps & D3DPTFILTERCAPS_MINFANISOTROPIC)
+        IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
+    else IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+
+    if(object->texfilter_caps & D3DPTFILTERCAPS_MIPFLINEAR)
+        IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
+    else IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+
+    IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_MIPMAPLODBIAS, 0);
+    IDirect3DDevice9_SetSamplerState(object->device, 0, D3DSAMP_SRGBTEXTURE, 0);
+
+    /* Matrices */
+    D3DXMatrixIdentity(&mat);
+    IDirect3DDevice9_SetTransform(object->device, D3DTS_WORLD, &mat);
+    IDirect3DDevice9_SetTransform(object->device, D3DTS_VIEW, &mat);
+    IDirect3DDevice9_GetViewport(object->device, &vp);
+    D3DXMatrixOrthoOffCenterLH(&mat, vp.X+0.5f, (float)vp.Width+vp.X+0.5f, (float)vp.Height+vp.Y+0.5f, vp.Y+0.5f, vp.MinZ, vp.MaxZ);
+    IDirect3DDevice9_SetTransform(object->device, D3DTS_PROJECTION, &mat);
+}
+
 static HRESULT WINAPI ID3DXSpriteImpl_Begin(LPD3DXSPRITE iface, DWORD flags)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+    TRACE("(%p): relay\n", This);
+
+    if(flags>D3DXSPRITE_FLAGLIMIT || This->ready) return D3DERR_INVALIDCALL;
+
+/* TODO: Implement flags:
+D3DXSPRITE_ALPHABLEND: enables alpha blending
+D3DXSPRITE_BILLBOARD: makes the sprite always face the camera
+D3DXSPRITE_DONOTMODIFY_RENDERSTATE: name says it all
+D3DXSPRITE_OBJECTSPACE: do not change device transforms
+D3DXSPRITE_SORT_DEPTH_BACKTOFRONT: sort by position
+D3DXSPRITE_SORT_DEPTH_FRONTTOBACK: sort by position
+D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
+D3DXSPRITE_DO_NOT_ADDREF_TEXTURE: don't call AddRef/Release on every Draw/Flush call
+D3DXSPRITE_DONOTSAVESTATE: don't restore the current device state on ID3DXSprite_End
+*/
+    if(This->stateblock==NULL) {
+        /* Tell our state block what it must store */
+        hr=IDirect3DDevice9_BeginStateBlock(This->device);
+        if(hr!=D3D_OK) return hr;
+
+        set_states(This);
+
+        IDirect3DDevice9_SetVertexDeclaration(This->device, This->vdecl);
+        IDirect3DDevice9_SetStreamSource(This->device, 0, NULL, 0, sizeof(SPRITEVERTEX));
+        IDirect3DDevice9_SetIndices(This->device, NULL);
+        IDirect3DDevice9_SetTexture(This->device, 0, NULL);
+
+        IDirect3DDevice9_EndStateBlock(This->device, &This->stateblock);
+    }
+    /* Save current state */
+    IDirect3DStateBlock9_Capture(This->stateblock);
+
+    /* Apply device state */
+    set_states(This);
+
+    D3DXMatrixIdentity(&This->transform);
+    D3DXMatrixIdentity(&This->view);
+
+    This->flags=flags;
+    This->ready=TRUE;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXSpriteImpl_Draw(LPD3DXSPRITE iface, LPDIRECT3DTEXTURE9 texture, CONST RECT *rect, CONST D3DXVECTOR3 *center,
@@ -117,6 +249,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_Draw(LPD3DXSPRITE iface, LPDIRECT3DTEXTURE
     TRACE("(%p): relay\n", This);
 
     if(texture==NULL) return D3DERR_INVALIDCALL;
+    if(!This->ready) return D3DERR_INVALIDCALL;
 
     if(This->allocated_sprites==0) {
         This->sprites=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 32*sizeof(SPRITE));
@@ -172,11 +305,15 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
     int i;
     FIXME("(%p): stub\n", This);
 
+    if(!This->ready) return D3DERR_INVALIDCALL;
+
     for(i=0;i<This->sprite_count;i++)
         if(This->sprites[i].texture)
             IDirect3DTexture9_Release(This->sprites[i].texture);
 
     This->sprite_count=0;
+
+    /* Flush may be called more than once, so we don't reset This->ready here */
 
     return E_NOTIMPL;
 }
@@ -184,11 +321,16 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
 static HRESULT WINAPI ID3DXSpriteImpl_End(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p): relay\n", This);
+
+    if(!This->ready) return D3DERR_INVALIDCALL;
 
     ID3DXSprite_Flush(iface);
+    if(This->stateblock) IDirect3DStateBlock9_Apply(This->stateblock); /* Restore old state */
 
-    return E_NOTIMPL;
+    This->ready=FALSE;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXSpriteImpl_OnLostDevice(LPD3DXSPRITE iface)
@@ -258,6 +400,7 @@ HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
     D3DXMatrixIdentity(&object->view);
 
     object->flags=0;
+    object->ready=FALSE;
 
     IDirect3DDevice9_GetDeviceCaps(device, &caps);
     object->texfilter_caps=caps.TextureFilterCaps;

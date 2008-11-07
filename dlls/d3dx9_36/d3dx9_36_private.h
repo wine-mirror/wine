@@ -61,6 +61,7 @@ typedef struct ID3DXSpriteImpl
     D3DXMATRIX transform;
     D3DXMATRIX view;
     DWORD flags;
+    BOOL ready;
 
     /* Store the relevant caps to prevent multiple GetDeviceCaps calls */
     DWORD texfilter_caps;
