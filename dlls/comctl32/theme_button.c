@@ -181,7 +181,7 @@ static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
 {
     static const int states[] = { GBS_NORMAL, GBS_DISABLED, GBS_NORMAL, GBS_NORMAL, GBS_NORMAL };
 
-    RECT bgRect, textRect;
+    RECT bgRect, textRect, contentRect;
     HFONT font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
     HFONT hPrevFont = font ? SelectObject(hDC, font) : NULL;
     int state = states[ drawState ];
@@ -198,9 +198,12 @@ static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
         textRect.left += 10;
         textRect.bottom = textRect.top + textExtent.cy;
         textRect.right = textRect.left + textExtent.cx + 4;
+
+        ExcludeClipRect(hDC, textRect.left, textRect.top, textRect.right, textRect.bottom);
     }
 
-    ExcludeClipRect(hDC, textRect.left, textRect.top, textRect.right, textRect.bottom);
+    GetThemeBackgroundContentRect(theme, hDC, BP_GROUPBOX, state, &bgRect, &contentRect);
+    ExcludeClipRect(hDC, contentRect.left, contentRect.top, contentRect.right, contentRect.bottom);
 
     if (IsThemeBackgroundPartiallyTransparent(theme, BP_GROUPBOX, state))
         DrawThemeParentBackground(hwnd, hDC, NULL);
