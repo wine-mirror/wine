@@ -125,9 +125,9 @@ static void *working_set_limit   = (void *)0x7fff0000;  /* top of the current wo
 static UINT page_shift;
 static UINT page_size;
 static UINT_PTR page_mask;
-static void * const address_space_limit = 0;  /* no limit needed on other platforms */
-static void * const user_space_limit    = 0;  /* no limit needed on other platforms */
-static void * const working_set_limit   = 0;  /* no limit needed on other platforms */
+static void *address_space_limit;
+static void *user_space_limit;
+static void *working_set_limit;
 #endif  /* __i386__ */
 
 #define ROUND_ADDR(addr,mask) \
@@ -371,7 +371,7 @@ static void add_reserved_area( void *addr, size_t size )
  */
 static inline int is_beyond_limit( const void *addr, size_t size, const void *limit )
 {
-    return (limit && (addr >= limit || (const char *)addr + size > (const char *)limit));
+    return (addr >= limit || (const char *)addr + size > (const char *)limit);
 }
 
 
@@ -623,6 +623,7 @@ struct alloc_area
     size_t size;
     size_t mask;
     int    top_down;
+    void  *limit;
     void  *result;
 };
 
@@ -638,7 +639,7 @@ static int alloc_reserved_area_callback( void *start, size_t size, void *arg )
     void *end = (char *)start + size;
 
     if (start < address_space_start) start = address_space_start;
-    if (user_space_limit && end > user_space_limit) end = user_space_limit;
+    if (is_beyond_limit( start, size, alloc->limit )) end = alloc->limit;
     if (start >= end) return 0;
 
     /* make sure we don't touch the preloader reserved range */
@@ -722,6 +723,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
         alloc.size = size;
         alloc.mask = mask;
         alloc.top_down = top_down;
+        alloc.limit = user_space_limit;
         if (wine_mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
         {
             ptr = alloc.result;
@@ -1209,7 +1211,7 @@ static int alloc_virtual_heap( void *base, size_t size, void *arg )
 {
     void **heap_base = arg;
 
-    if (address_space_limit) address_space_limit = max( (char *)address_space_limit, (char *)base + size );
+    if (is_beyond_limit( base, size, address_space_limit )) address_space_limit = (char *)base + size;
     if (size < VIRTUAL_HEAP_SIZE) return 0;
     *heap_base = wine_anon_mmap( (char *)base + size - VIRTUAL_HEAP_SIZE,
                                  VIRTUAL_HEAP_SIZE, PROT_READ|PROT_WRITE, MAP_FIXED );
@@ -1232,6 +1234,7 @@ void virtual_init(void)
     assert( !(page_size & page_mask) );
     page_shift = 0;
     while ((1 << page_shift) != page_size) page_shift++;
+    user_space_limit = working_set_limit = address_space_limit = (void *)~page_mask;
 #endif  /* page_mask */
     if ((preload = getenv("WINEPRELOADRESERVE")))
     {
