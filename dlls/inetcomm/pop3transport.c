@@ -408,6 +408,32 @@ static void POP3Transport_CallbackRecvDELEResp(IInternetTransport *iface, char *
     InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessDELEResp);
 }
 
+static void POP3Transport_CallbackProcessNOOPResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+    POP3RESPONSE response;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = POP3Transport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+}
+
+static void POP3Transport_CallbackRecvNOOPResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessNOOPResp);
+}
+
 static void POP3Transport_CallbackProcessLISTResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     POP3Transport *This = (POP3Transport *)iface;
@@ -845,8 +871,14 @@ static HRESULT WINAPI POP3Transport_CommandSTAT(IPOP3Transport *iface)
 
 static HRESULT WINAPI POP3Transport_CommandNOOP(IPOP3Transport *iface)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    static char noop[] = "NOOP\r\n";
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("\n");
+
+    init_parser(This, POP3_NOOP, POP3_NONE);
+    InternetTransport_DoCommand(&This->InetTransport, noop, POP3Transport_CallbackRecvNOOPResp);
+    return S_OK;
 }
 
 static HRESULT WINAPI POP3Transport_CommandRSET(IPOP3Transport *iface)
