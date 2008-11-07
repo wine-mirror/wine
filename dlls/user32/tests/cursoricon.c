@@ -737,7 +737,8 @@ static void test_LoadImageFile(const unsigned char * image_data,
     ok(handle == NULL, "LoadImage(%s) as IMAGE_CURSOR succeeded incorrectly.\n", ext);
     error = GetLastError();
     ok(error == 0 ||
-        broken(error == ERROR_BAD_PATHNAME), /* Win9x, WinMe */
+        broken(error == 0xdeadbeef) || /* Win9x */
+        broken(error == ERROR_BAD_PATHNAME), /* Win98, WinMe */
         "Last error: %u\n", error);
     if (handle != NULL) DestroyCursor(handle);
 
@@ -747,7 +748,8 @@ static void test_LoadImageFile(const unsigned char * image_data,
     ok(handle == NULL, "LoadImage(%s) as IMAGE_ICON succeeded incorrectly.\n", ext);
     error = GetLastError();
     ok(error == 0 ||
-        broken(error == ERROR_BAD_PATHNAME), /* Win9x, WinMe */
+        broken(error == 0xdeadbeef) || /* Win9x */
+        broken(error == ERROR_BAD_PATHNAME), /* Win98, WinMe */
         "Last error: %u\n", error);
     if (handle != NULL) DestroyIcon(handle);
 
@@ -822,7 +824,8 @@ static void test_LoadImage(void)
     ok(handle != NULL, "LoadImage() failed.\n");
     error = GetLastError();
     ok(error == 0 ||
-        broken(error == ERROR_BAD_PATHNAME), /* Win9x, WinMe */
+        broken(error == 0xdeadbeef) || /* Win9x */
+        broken(error == ERROR_BAD_PATHNAME), /* Win98, WinMe */
         "Last error: %u\n", error);
 
     /* Test the icon information. */
