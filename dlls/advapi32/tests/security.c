@@ -750,8 +750,7 @@ static void test_FileSecurity(void)
         "was expected to fail for '%s'\n", file);
     ok (GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetFileSecurityA "
         "returned %d; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
-    ok (retSize > sizeof (SECURITY_DESCRIPTOR), "GetFileSecurityA "
-        "returned size %d; expected > %d\n", retSize, sizeof (SECURITY_DESCRIPTOR));
+    ok (retSize > sizeof (SECURITY_DESCRIPTOR), "GetFileSecurityA returned size %d\n", retSize);
 
     sdSize = retSize;
     sd = HeapAlloc (GetProcessHeap (), 0, sdSize);
@@ -787,8 +786,7 @@ static void test_FileSecurity(void)
         "was expected to fail for '%s'\n", path);
     ok (GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetFileSecurityA "
         "returned %d; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
-    ok (retSize > sizeof (SECURITY_DESCRIPTOR), "GetFileSecurityA "
-        "returned size %d; expected > %d\n", retSize, sizeof (SECURITY_DESCRIPTOR));
+    ok (retSize > sizeof (SECURITY_DESCRIPTOR), "GetFileSecurityA returned size %d\n", retSize);
 
     sdSize = retSize;
     sd = HeapAlloc (GetProcessHeap (), 0, sdSize);
