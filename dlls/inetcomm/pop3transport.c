@@ -382,6 +382,32 @@ static HRESULT POP3Transport_ParseResponse(POP3Transport *This, char *pszRespons
     return S_OK;
 }
 
+static void POP3Transport_CallbackProcessDELEResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+    POP3RESPONSE response;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = POP3Transport_ParseResponse(This, pBuffer, &response);
+    if (FAILED(hr))
+    {
+        /* FIXME: handle error */
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+}
+
+static void POP3Transport_CallbackRecvDELEResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
+{
+    POP3Transport *This = (POP3Transport *)iface;
+
+    TRACE("\n");
+    InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessDELEResp);
+}
+
 static void POP3Transport_CallbackProcessLISTResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
 {
     POP3Transport *This = (POP3Transport *)iface;
@@ -845,8 +871,22 @@ static HRESULT WINAPI POP3Transport_CommandUIDL(
 static HRESULT WINAPI POP3Transport_CommandDELE(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    FIXME("(%u, %u)\n", cmdtype, dwPopId);
-    return E_NOTIMPL;
+    static char dele[] = "DELE %u\r\n";
+    POP3Transport *This = (POP3Transport *)iface;
+    char *command;
+    int len;
+
+    TRACE("(%u, %u)\n", cmdtype, dwPopId);
+
+    len = sizeof(dele) + 10 + 2; /* "4294967296" + "\r\n" */
+    if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
+    sprintf(command, dele, dwPopId);
+
+    init_parser(This, POP3_DELE, cmdtype);
+    InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvDELEResp);
+
+    HeapFree(GetProcessHeap(), 0, command);
+    return S_OK;
 }
 
 static HRESULT WINAPI POP3Transport_CommandRETR(
