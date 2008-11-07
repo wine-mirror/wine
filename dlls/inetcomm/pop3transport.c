@@ -991,6 +991,8 @@ static HRESULT WINAPI POP3Transport_CommandQUIT(IPOP3Transport *iface)
 
     TRACE("()\n");
 
+    InternetTransport_ChangeStatus(&This->InetTransport, IXP_DISCONNECTING);
+
     init_parser(This, POP3_QUIT, POP3_NONE);
     return InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvQUITResp);
 }
