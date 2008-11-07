@@ -544,6 +544,14 @@ static void POP3Transport_CallbackProcessLISTResp(IInternetTransport *iface, cha
     }
 
     IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+
+    if (!response.fDone)
+    {
+        InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessLISTResp);
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
 }
 
 static void POP3Transport_CallbackRecvLISTResp(IInternetTransport *iface, char *pBuffer, int cbBuffer)
@@ -566,6 +574,14 @@ static void POP3Transport_CallbackProcessUIDLResp(IInternetTransport *iface, cha
     if (FAILED(hr))
     {
         /* FIXME: handle error */
+        return;
+    }
+
+    IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
+
+    if (!response.fDone)
+    {
+        InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackProcessUIDLResp);
         return;
     }
 
@@ -884,7 +900,7 @@ static HRESULT WINAPI POP3Transport_CommandUSER(IPOP3Transport *iface, LPSTR use
     TRACE("(%s)\n", username);
 
     len = sizeof(user) + strlen(username) + 2; /* "\r\n" */
-    command = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
 
     strcpy(command, user);
     strcat(command, username);
@@ -907,7 +923,7 @@ static HRESULT WINAPI POP3Transport_CommandPASS(IPOP3Transport *iface, LPSTR pas
     TRACE("(%p)\n", password);
 
     len = sizeof(pass) + strlen(password) + 2; /* "\r\n" */
-    command = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
 
     strcpy(command, pass);
     strcat(command, password);
@@ -923,13 +939,26 @@ static HRESULT WINAPI POP3Transport_CommandPASS(IPOP3Transport *iface, LPSTR pas
 static HRESULT WINAPI POP3Transport_CommandLIST(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    static char list[] = "LIST\r\n";
+    static char list[] = "LIST %u\r\n";
+    static char list_all[] = "LIST\r\n";
     POP3Transport *This = (POP3Transport *)iface;
+    char *command;
+    int len;
 
     TRACE("(%u, %u)\n", cmdtype, dwPopId);
 
+    if (dwPopId)
+    {
+        len = sizeof(list) + 10 + 2; /* "4294967296" + "\r\n" */
+        if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
+        sprintf(command, list, dwPopId);
+    }
+    else command = list_all;
+
     init_parser(This, POP3_LIST, cmdtype);
-    InternetTransport_DoCommand(&This->InetTransport, list, POP3Transport_CallbackRecvLISTResp);
+    InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvLISTResp);
+
+    if (dwPopId) HeapFree(GetProcessHeap(), 0, command);
     return S_OK;
 }
 
@@ -1005,13 +1034,26 @@ static HRESULT WINAPI POP3Transport_CommandRSET(IPOP3Transport *iface)
 static HRESULT WINAPI POP3Transport_CommandUIDL(
     IPOP3Transport *iface, POP3CMDTYPE cmdtype, DWORD dwPopId)
 {
-    static char uidl[] = "UIDL\r\n";
+    static char uidl[] = "UIDL %u\r\n";
+    static char uidl_all[] = "UIDL\r\n";
     POP3Transport *This = (POP3Transport *)iface;
+    char *command;
+    int len;
 
     TRACE("(%u, %u)\n", cmdtype, dwPopId);
 
+    if (dwPopId)
+    {
+        len = sizeof(uidl) + 10 + 2; /* "4294967296" + "\r\n" */
+        if (!(command = HeapAlloc(GetProcessHeap(), 0, len))) return S_FALSE;
+        sprintf(command, uidl, dwPopId);
+    }
+    else command = uidl_all;
+
     init_parser(This, POP3_UIDL, cmdtype);
-    InternetTransport_DoCommand(&This->InetTransport, uidl, POP3Transport_CallbackRecvUIDLResp);
+    InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvUIDLResp);
+
+    if (dwPopId) HeapFree(GetProcessHeap(), 0, command);
     return S_OK;
 }
 
