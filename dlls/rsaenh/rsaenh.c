@@ -3557,7 +3557,7 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
 {
     CRYPTHASH *pCryptHash;
     CRYPTKEY *pCryptKey;
-    int i;
+    DWORD i;
 
     TRACE("(hProv=%08lx, hHash=%08lx, dwParam=%08x, pbData=%p, dwFlags=%08x)\n",
            hProv, hHash, dwParam, pbData, dwFlags);
