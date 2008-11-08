@@ -54,6 +54,12 @@ static BOOL vga_retrace_horizontal;
 #define VGA_WINDOW_START ((char *)0xa0000)
 
 /*
+ * Size and location of CGA controller window to framebuffer.
+ */
+#define CGA_WINDOW_SIZE  (32 * 1024)
+#define CGA_WINDOW_START ((char *)0xb8000)
+
+/*
  * VGA controller memory is emulated using linear framebuffer.
  * This frambuffer also acts as an interface
  * between VGA controller emulation and DirectDraw.
@@ -91,6 +97,8 @@ static int   vga_fb_offset;
 static int   vga_fb_size = 0;
 static char *vga_fb_data = 0;
 static int   vga_fb_window = 0;
+static int   vga_fb_window_size;
+static char *vga_fb_window_data;
 
 /*
  * VGA text mode data.
@@ -157,6 +165,16 @@ static DirectDrawCreateProc pDirectDrawCreate;
 static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high );
 
 static HWND vga_hwnd = NULL;
+
+/*
+ * CGA palette 1
+ */
+static PALETTEENTRY cga_palette1[] = {
+  {0x00, 0x00, 0x00}, /* 0 - Black */
+  {0x00, 0x80, 0x80}, /* 1 - Cyan */
+  {0x80, 0x00, 0x80}, /* 2 - Magenta */
+  {0xFF, 0xFF, 0xFF}  /* 3 - White */
+};
 
 /*
  *  VGA Palette Registers, in actual 18 bit color
@@ -627,20 +645,20 @@ typedef struct {
  */
 static void VGA_SyncWindow( BOOL target_is_fb )
 {
-    int size = VGA_WINDOW_SIZE;
+    int size = vga_fb_window_size;
 
     /* Window does not overlap framebuffer. */
     if (vga_fb_window >= vga_fb_size)
         return;
 
     /* Check if window overlaps framebuffer only partially. */
-    if (vga_fb_size - vga_fb_window < VGA_WINDOW_SIZE)
+    if (vga_fb_size - vga_fb_window < vga_fb_window_size)
         size = vga_fb_size - vga_fb_window;
 
     if (target_is_fb)
-        memmove( vga_fb_data + vga_fb_window, VGA_WINDOW_START, size );
+        memmove( vga_fb_data + vga_fb_window, vga_fb_window_data, size );
     else
-        memmove( VGA_WINDOW_START, vga_fb_data + vga_fb_window, size );
+        memmove( vga_fb_window_data, vga_fb_data + vga_fb_window, size );
 }
 
 
@@ -712,9 +730,15 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
             lpddraw=NULL;
             return;
         }
-        res=IDirectDrawPalette_SetEntries(lpddpal,0,0,256,vga_def_palette);
+
+        if(vga_fb_depth == 2){
+          res=IDirectDrawPalette_SetEntries(lpddpal,0,0,4,cga_palette1);
+        }
+        else{
+          res=IDirectDrawPalette_SetEntries(lpddpal,0,0,256,vga_def_palette);
+        }
         if (res != S_OK) {
-            ERR("Could not set default palette entries (res = 0x%x)\n", res);
+           ERR("Could not set default palette entries (res = 0x%x)\n", res);
         }
 
         memset(&sdesc,0,sizeof(sdesc));
@@ -766,7 +790,23 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
       par.Yres = 480;
     }
 
-    VGA_SetWindowStart((Depth < 8) ? -1 : 0);
+    /* Setup window */
+    if(vga_fb_depth >= 8)
+    {
+      vga_fb_window_data = VGA_WINDOW_START;
+      vga_fb_window_size = VGA_WINDOW_SIZE;
+    }
+    else
+    {
+      vga_fb_window_data = CGA_WINDOW_START;
+      vga_fb_window_size = CGA_WINDOW_SIZE;
+    }
+
+    /* Clean the HW buffer */
+    memset(vga_fb_window_data, 0x00, vga_fb_window_size);
+
+    /* Reset window start */
+    VGA_SetWindowStart(0);
 
     par.Depth = (Depth < 8) ? 8 : Depth;
 
@@ -1252,9 +1292,33 @@ static void VGA_Poll_Graphics(void)
       VGA_SyncWindow( TRUE );
 
   /*
+   * CGA framebuffer
+   */
+  if(vga_fb_depth == 2 && vga_fb_width == 320 && vga_fb_height == 200){
+    WORD off = 0;
+    BYTE bits = 6;
+    BYTE value;
+    /* Go thru rows */
+    for(Y=0; Y<vga_fb_height; Y++, surf+=(Pitch*2)){
+      for(X=0; X<vga_fb_width; X++){
+        off = Y & 1 ? (8 * 1024) : 0;
+        off += (80 * (Y/2));
+        off += X/4;
+        value = (dat[off] >> bits) & 0x3;
+        surf[(X*2)] = value;
+        surf[(X*2)+1] = value;
+        surf[(X*2)+Pitch] = value;
+        surf[(X*2)+Pitch+1] = value;
+        bits -= 2;
+        bits &= 7;
+      }
+    }
+  }
+
+  /*
    * Double VGA framebuffer (320x200 -> 640x400), if needed.
    */
-  if(Height >= 2 * vga_fb_height && Width >= 2 * vga_fb_width && bpp == 1)
+  else if(Height >= 2 * vga_fb_height && Width >= 2 * vga_fb_width && bpp == 1)
     for (Y=0; Y<vga_fb_height; Y++,surf+=Pitch*2,dat+=vga_fb_pitch)
       for (X=0; X<vga_fb_width; X++) {
        BYTE value = dat[X];

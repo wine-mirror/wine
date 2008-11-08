@@ -171,7 +171,7 @@ static const INT10_MODE INT10_modelist[] =
     {0x0001,    TEXT, 40, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 1 */
     {0x0002,    TEXT, 80, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 2 */
     {0x0003,    TEXT, 80, 25,  9, 16,  360,  400,  0,  16, 8, TRUE},   /* VGA text mode 3 */
-    {0x0004, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, FALSE},   /* VGA graphics mode 4 */
+    {0x0004, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, TRUE},   /* VGA graphics mode 4 */
     {0x0005, GRAPHIC, 40, 25,  8,  8,  320,  200,  2,   4, 1, FALSE},   /* VGA graphics mode 5 */
     {0x0006, GRAPHIC, 80, 25,  8,  8,  640,  200,  1,   2, 1, FALSE},   /* VGA graphics mode 6 */
     {0x0007,    TEXT, 80, 25,  9, 16,  720,  400,  0,   0, 8, FALSE},   /* VGA text mode 7 - FIXME bad default address */
