@@ -786,6 +786,37 @@ static char *extract_icon( LPCWSTR path, int index, BOOL bWait )
     return xpm_path;
 }
 
+static BOOL write_desktop_entry(const char *location, const char *linkname, const char *path,
+                                const char *args, const char *descr, const char *workdir,
+                                const char *icon)
+{
+    FILE *file;
+
+    WINE_TRACE("(%s,%s,%s,%s,%s,%s,%s)\n", wine_dbgstr_a(location),
+               wine_dbgstr_a(linkname), wine_dbgstr_a(path), wine_dbgstr_a(args),
+               wine_dbgstr_a(descr), wine_dbgstr_a(workdir), wine_dbgstr_a(icon));
+
+    file = fopen(location, "w");
+    if (file == NULL)
+        return FALSE;
+
+    fprintf(file, "[Desktop Entry]\n");
+    fprintf(file, "Name=%s\n", linkname);
+    fprintf(file, "Exec=env WINEPREFIX=\"%s\" wine \"%s\" %s\n",
+            wine_get_config_dir(), path, args);
+    fprintf(file, "Type=Application\n");
+    fprintf(file, "StartupWMClass=Wine\n");
+    if (descr && lstrlenA(descr))
+        fprintf(file, "Comment=%s\n", descr);
+    if (workdir && lstrlenA(workdir))
+        fprintf(file, "Path=%s\n", workdir);
+    if (icon && lstrlenA(icon))
+        fprintf(file, "Icon=%s\n", icon);
+
+    fclose(file);
+    return TRUE;
+}
+
 /* This escapes \ in filenames */
 static LPSTR escape(LPCWSTR arg)
 {
@@ -1204,8 +1235,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     escaped_args = escape(szArgs);
     escaped_description = escape(szDescription);
 
-    /* running multiple instances of wineshelllink
-       at the same time may be dangerous */
+    /* building multiple menus concurrently has race conditions */
     hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
     if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hsem, FALSE, INFINITE, QS_ALLINPUT ) )
     {
@@ -1213,9 +1243,26 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         goto cleanup;
     }
 
-    r = fork_and_wait("wineshelllink", link_name, escaped_path,
-                      in_desktop_dir(csidl), escaped_args, icon_name,
-                      work_dir ? work_dir : "", escaped_description);
+    if (in_desktop_dir(csidl))
+    {
+        char *location;
+        const char *lastEntry;
+        lastEntry = strrchr(link_name, '/');
+        if (lastEntry == NULL)
+            lastEntry = link_name;
+        else
+            ++lastEntry;
+        location = heap_printf("%s/Desktop/%s.desktop", getenv("HOME"), lastEntry);
+        if (location)
+        {
+            r = !write_desktop_entry(location, lastEntry, escaped_path, escaped_args, escaped_description, work_dir, icon_name);
+            HeapFree(GetProcessHeap(), 0, location);
+        }
+    }
+    else
+        r = fork_and_wait("wineshelllink", link_name, escaped_path,
+                          0, escaped_args, icon_name,
+                          work_dir ? work_dir : "", escaped_description);
 
     ReleaseSemaphore( hsem, 1, NULL );
 
@@ -1229,7 +1276,7 @@ cleanup:
     HeapFree( GetProcessHeap(), 0, escaped_description );
 
     if (r && !bWait)
-        WINE_ERR("failed to fork and exec wineshelllink\n" );
+        WINE_ERR("failed to build the menu\n" );
 
     return ( r == 0 );
 }
