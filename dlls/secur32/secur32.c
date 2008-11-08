@@ -987,7 +987,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
                 DWORD size = sizeof(name)/sizeof(name[0]);
                 if (GetComputerNameW(name, &size))
                 {
-                    int len = domainInfo->Name.Length + size + 3;
+                    DWORD len = domainInfo->Name.Length + size + 3;
                     if (lpNameBuffer)
                     {
                         if (*nSize < len)
