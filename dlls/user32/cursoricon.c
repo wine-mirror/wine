@@ -5,6 +5,7 @@
  *           1996 Martin Von Loewis
  *           1997 Alex Korobka
  *           1998 Turchanov Sergey
+ *           2007 Henri Verbeet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -851,6 +852,189 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
 
 
 /**********************************************************************
+ *          .ANI cursor support
+ */
+#define RIFF_FOURCC( c0, c1, c2, c3 ) \
+        ( (DWORD)(BYTE)(c0) | ( (DWORD)(BYTE)(c1) << 8 ) | \
+        ( (DWORD)(BYTE)(c2) << 16 ) | ( (DWORD)(BYTE)(c3) << 24 ) )
+
+#define ANI_RIFF_ID RIFF_FOURCC('R', 'I', 'F', 'F')
+#define ANI_LIST_ID RIFF_FOURCC('L', 'I', 'S', 'T')
+#define ANI_ACON_ID RIFF_FOURCC('A', 'C', 'O', 'N')
+#define ANI_anih_ID RIFF_FOURCC('a', 'n', 'i', 'h')
+#define ANI_seq__ID RIFF_FOURCC('s', 'e', 'q', ' ')
+#define ANI_fram_ID RIFF_FOURCC('f', 'r', 'a', 'm')
+
+#define ANI_FLAG_ICON       0x1
+#define ANI_FLAG_SEQUENCE   0x2
+
+typedef struct {
+    DWORD header_size;
+    DWORD num_frames;
+    DWORD num_steps;
+    DWORD width;
+    DWORD height;
+    DWORD bpp;
+    DWORD num_planes;
+    DWORD display_rate;
+    DWORD flags;
+} ani_header;
+
+typedef struct {
+    DWORD           data_size;
+    const unsigned char   *data;
+} riff_chunk_t;
+
+static void dump_ani_header( const ani_header *header )
+{
+    TRACE("     header size: %d\n", header->header_size);
+    TRACE("          frames: %d\n", header->num_frames);
+    TRACE("           steps: %d\n", header->num_steps);
+    TRACE("           width: %d\n", header->width);
+    TRACE("          height: %d\n", header->height);
+    TRACE("             bpp: %d\n", header->bpp);
+    TRACE("          planes: %d\n", header->num_planes);
+    TRACE("    display rate: %d\n", header->display_rate);
+    TRACE("           flags: 0x%08x\n", header->flags);
+}
+
+
+/*
+ * RIFF:
+ * DWORD "RIFF"
+ * DWORD size
+ * DWORD riff_id
+ * BYTE[] data
+ *
+ * LIST:
+ * DWORD "LIST"
+ * DWORD size
+ * DWORD list_id
+ * BYTE[] data
+ *
+ * CHUNK:
+ * DWORD chunk_id
+ * DWORD size
+ * BYTE[] data
+ */
+static void riff_find_chunk( DWORD chunk_id, DWORD chunk_type, const riff_chunk_t *parent_chunk, riff_chunk_t *chunk )
+{
+    const unsigned char *ptr = parent_chunk->data;
+    const unsigned char *end = parent_chunk->data + (parent_chunk->data_size - (2 * sizeof(DWORD)));
+
+    if (chunk_type == ANI_LIST_ID || chunk_type == ANI_RIFF_ID) end -= sizeof(DWORD);
+
+    while (ptr < end)
+    {
+        if ((!chunk_type && *(DWORD *)ptr == chunk_id )
+                || (chunk_type && *(DWORD *)ptr == chunk_type && *((DWORD *)ptr + 2) == chunk_id ))
+        {
+            ptr += sizeof(DWORD);
+            chunk->data_size = *(DWORD *)ptr;
+            ptr += sizeof(DWORD);
+            if (chunk_type == ANI_LIST_ID || chunk_type == ANI_RIFF_ID) ptr += sizeof(DWORD);
+            chunk->data = ptr;
+
+            return;
+        }
+
+        ptr += sizeof(DWORD);
+        ptr += *(DWORD *)ptr;
+        ptr += sizeof(DWORD);
+    }
+}
+
+
+/*
+ * .ANI layout:
+ *
+ * RIFF:'ACON'                  RIFF chunk
+ *     |- CHUNK:'anih'          Header
+ *     |- CHUNK:'seq '          Sequence information (optional)
+ *     \- LIST:'fram'           Frame list
+ *            |- CHUNK:icon     Cursor frames
+ *            |- CHUNK:icon
+ *            |- ...
+ *            \- CHUNK:icon
+ */
+static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
+    INT width, INT height )
+{
+    HCURSOR cursor;
+    ani_header header = {0};
+    LPBYTE frame_bits = 0;
+    POINT16 hotspot;
+    CURSORICONFILEDIRENTRY *entry;
+
+    riff_chunk_t root_chunk = { bits_size, bits };
+    riff_chunk_t ACON_chunk = {0};
+    riff_chunk_t anih_chunk = {0};
+    riff_chunk_t fram_chunk = {0};
+    const unsigned char *icon_data;
+
+    TRACE("bits %p, bits_size %d\n", bits, bits_size);
+
+    if (!bits) return 0;
+
+    riff_find_chunk( ANI_ACON_ID, ANI_RIFF_ID, &root_chunk, &ACON_chunk );
+    if (!ACON_chunk.data)
+    {
+        ERR("Failed to get root chunk.\n");
+        return 0;
+    }
+
+    riff_find_chunk( ANI_anih_ID, 0, &ACON_chunk, &anih_chunk );
+    if (!anih_chunk.data)
+    {
+        ERR("Failed to get 'anih' chunk.\n");
+        return 0;
+    }
+    memcpy( &header, anih_chunk.data, sizeof(header) );
+    dump_ani_header( &header );
+
+    riff_find_chunk( ANI_fram_ID, ANI_LIST_ID, &ACON_chunk, &fram_chunk );
+    if (!fram_chunk.data)
+    {
+        ERR("Failed to get icon list.\n");
+        return 0;
+    }
+
+    /* FIXME: For now, just load the first frame.  Before we can load all the
+     * frames, we need to write the needed code in wineserver, etc. to handle
+     * cursors.  Once this code is written, we can extend it to support .ani
+     * cursors and then update user32 and winex11.drv to load all frames.
+     *
+     * Hopefully this will at least make some games (C&C3, etc.) more playable
+     * in the mean time.
+     */
+    FIXME("Loading all frames for .ani cursors not implemented.\n");
+    icon_data = fram_chunk.data + (2 * sizeof(DWORD));
+
+    entry = CURSORICON_FindBestCursorFile( (CURSORICONFILEDIR *) icon_data,
+        width, height, 1 );
+
+    frame_bits = HeapAlloc( GetProcessHeap(), 0, entry->dwDIBSize );
+    memcpy( frame_bits, icon_data + entry->dwDIBOffset, entry->dwDIBSize );
+
+    if (!header.width || !header.height)
+    {
+        header.width = entry->bWidth;
+        header.height = entry->bHeight;
+    }
+
+    hotspot.x = entry->xHotspot;
+    hotspot.y = entry->yHotspot;
+
+    cursor = CURSORICON_CreateIconFromBMI( (BITMAPINFO *) frame_bits, hotspot,
+        FALSE, 0x00030000, header.width, header.height, 0 );
+
+    HeapFree( GetProcessHeap(), 0, frame_bits );
+
+    return cursor;
+}
+
+
+/**********************************************************************
  *		CreateIconFromResourceEx (USER32.@)
  *
  * FIXME: Convert to mono when cFlag is LR_MONOCHROME. Do something
@@ -915,7 +1099,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     /* Check for .ani. */
     if (memcmp( bits, "RIFF", 4 ) == 0)
     {
-        FIXME("No support for .ani cursors.\n");
+        hIcon = CURSORICON_CreateIconFromANI( bits, filesize, width, height );
         goto end;
     }
 
