@@ -1989,6 +1989,12 @@ _exit:
     }
   }
 
+  if (buf->pxo->nb_childs > MAX_CHILDS)
+  {
+    FIXME("Too many childs %d\n", buf->pxo->nb_childs);
+    return FALSE;
+  }
+
   return TRUE;
 }
 
@@ -2094,6 +2100,11 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   }
 
   This->buf.pxo->nb_subobjects = This->buf.cur_subobject;
+  if (This->buf.cur_subobject > MAX_SUBOBJECTS)
+  {
+    FIXME("Too many suobjects %d\n", This->buf.cur_subobject);
+    return DXFILEERR_BADALLOC;
+  }
 
   object->pobj = This->buf.pxo;
   object->cur_enum_object = 0;
