@@ -93,6 +93,8 @@ static const struct IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl;
 static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional);
 static BOOL parse_object(parse_buffer * buf);
 static const char* get_primitive_string(WORD token);
+static WORD check_TOKEN(parse_buffer * buf);
+static BOOL parse_template(parse_buffer * buf);
 
 static void dump_template(xtemplate* templates_array, xtemplate* ptemplate)
 {
@@ -317,6 +319,30 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   TRACE("Read %d bytes\n", object->buf.rem_bytes);
 
   *ppEnumObj = (LPDIRECTXFILEENUMOBJECT)object;
+
+  while (object->buf.rem_bytes && (check_TOKEN(&object->buf) == TOKEN_TEMPLATE))
+  {
+    if (!parse_template(&object->buf))
+    {
+      TRACE("Template is not correct\n");
+      hr = DXFILEERR_BADVALUE;
+      goto error;
+    }
+    else
+    {
+      TRACE("Template successfully parsed:\n");
+      if (TRACE_ON(d3dxof))
+        dump_template(This->xtemplates, &This->xtemplates[This->nb_xtemplates - 1]);
+    }
+  }
+
+  if (TRACE_ON(d3dxof))
+  {
+    int i;
+    TRACE("Registered templates (%d):\n", This->nb_xtemplates);
+    for (i = 0; i < This->nb_xtemplates; i++)
+      DPRINTF("%s - %s\n", This->xtemplates[i].name, debugstr_guid(&This->xtemplates[i].class_id));
+  }
 
   return DXFILE_OK;
 
