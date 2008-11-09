@@ -82,7 +82,26 @@ static struct {
     {"foo.bar", FALSE},
     {"bogusscheme:", TRUE},
     {"http:partial", TRUE},
-    {"www.winehq.org", FALSE}
+    {"www.winehq.org", FALSE},
+    /* More examples that the user might enter as the browser start page */
+    {"winehq.org", FALSE},
+    {"ftp.winehq.org", FALSE},
+    {"http://winehq.org", TRUE},
+    {"http://www.winehq.org", TRUE},
+    {"https://winehq.org", TRUE},
+    {"https://www.winehq.org", TRUE},
+    {"ftp://winehq.org", TRUE},
+    {"ftp://ftp.winehq.org", TRUE},
+    {"file://does_not_exist.txt", TRUE},
+    {"about:blank", TRUE},
+    {"about:home", TRUE},
+    {"about:mozilla", TRUE},
+    /* scheme is case independent */
+    {"HTTP://www.winehq.org", TRUE},
+    /* a space at the start is not allowed */
+    {" http://www.winehq.org", FALSE},
+    {"", FALSE},
+    {NULL, FALSE}
 };
 
 struct {
