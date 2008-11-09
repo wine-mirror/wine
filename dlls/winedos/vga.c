@@ -99,6 +99,7 @@ static char *vga_fb_data = 0;
 static int   vga_fb_window = 0;
 static int   vga_fb_window_size;
 static char *vga_fb_window_data;
+static PALETTEENTRY *vga_fb_palette;
 
 /*
  * VGA text mode data.
@@ -171,9 +172,43 @@ static HWND vga_hwnd = NULL;
  */
 static PALETTEENTRY cga_palette1[] = {
   {0x00, 0x00, 0x00}, /* 0 - Black */
-  {0x00, 0x80, 0x80}, /* 1 - Cyan */
-  {0x80, 0x00, 0x80}, /* 2 - Magenta */
-  {0xFF, 0xFF, 0xFF}  /* 3 - White */
+  {0x00, 0xAA, 0xAA}, /* 1 - Cyan */
+  {0xAA, 0x00, 0xAA}, /* 2 - Magenta */
+  {0xAA, 0xAA, 0xAA}  /* 3 - White */
+};
+
+/*
+ * CGA palette 1 in the bright variant
+ * intensities, when signalled to do so
+ * in register 0x3d9
+ */
+static PALETTEENTRY cga_palette1_bright[] = {
+  {0x00, 0x00, 0x00}, /* 0 - Black */
+  {0x55, 0xFF, 0xFF}, /* 1 - Light cyan */
+  {0xFF, 0x55, 0xFF}, /* 2 - Light magenta */
+  {0xFF, 0xFF, 0xFF}, /* 3 - Bright White */
+};
+
+/*
+ * CGA palette 2
+ */
+static PALETTEENTRY cga_palette2[] = {
+  {0x00, 0x00, 0x00}, /* 0 - Black */
+  {0x00, 0xAA, 0x00}, /* 1 - Green */
+  {0xAA, 0x00, 0x00}, /* 2 - Red */
+  {0xAA, 0x55, 0xFF}  /* 3 - Brown */
+};
+
+/*
+ * CGA palette 2 in the bright variant
+ * intensities, when signalled to do so
+ * in register 0x3d9
+ */
+static PALETTEENTRY cga_palette2_bright[] = {
+  {0x00, 0x00, 0x00}, /* 0 - Black */
+  {0x55, 0xFF, 0x55}, /* 1 - Light green */
+  {0xFF, 0x55, 0x55}, /* 2 - Light red */
+  {0xFF, 0xFF, 0x55}, /* 3 - Yellow */
 };
 
 /*
@@ -731,12 +766,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
             return;
         }
 
-        if(vga_fb_depth == 2){
-          res=IDirectDrawPalette_SetEntries(lpddpal,0,0,4,cga_palette1);
-        }
-        else{
-          res=IDirectDrawPalette_SetEntries(lpddpal,0,0,256,vga_def_palette);
-        }
+        res=IDirectDrawPalette_SetEntries(lpddpal,0,0,4,vga_fb_palette);
         if (res != S_OK) {
            ERR("Could not set default palette entries (res = 0x%x)\n", res);
         }
@@ -795,11 +825,13 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
     {
       vga_fb_window_data = VGA_WINDOW_START;
       vga_fb_window_size = VGA_WINDOW_SIZE;
+      vga_fb_palette = vga_def_palette;
     }
     else
     {
       vga_fb_window_data = CGA_WINDOW_START;
       vga_fb_window_size = CGA_WINDOW_SIZE;
+      vga_fb_palette = cga_palette1;
     }
 
     /* Clean the HW buffer */
@@ -979,7 +1011,6 @@ void VGA_ShowMouse( BOOL show )
     if (lpddraw)
         MZ_RunInThread( VGA_DoShowMouse, (ULONG_PTR)show );
 }
-
 
 /*** TEXT MODE ***/
 
@@ -1471,6 +1502,35 @@ void VGA_ioport_out( WORD port, BYTE val )
         case 0x3d5:
            FIXME("Unsupported index, VGA crt controller register 0x3b4/0x3d4: 0x%02x (value 0x%02x)\n",
                  vga_index_3d4, val);
+           break;
+        /* Colour control register (CGA) */
+        case 0x3d9:
+           /* Check for "switch to bright" */
+           if(val & 0x10)
+	   {
+             if(vga_fb_palette == cga_palette1)
+             {
+               /* Switch to palette 1 bright version */
+               VGA_SetPalette(cga_palette1_bright,0,4);
+               vga_fb_palette = cga_palette1_bright;
+             }
+             else if(vga_fb_palette == cga_palette2)
+	     {
+               /* Switch to palette 2 bright version */
+               VGA_SetPalette(cga_palette2_bright,0,4);
+               vga_fb_palette = cga_palette2_bright;
+             }
+           }
+
+           /* Check for "deselect palette1" */
+           if(val & 0x20)
+	   {
+             if(vga_fb_palette == cga_palette1)
+             {
+               VGA_SetPalette(cga_palette2,0,4);
+               vga_fb_palette = cga_palette2;
+             }
+           }
            break;
         default:
             FIXME("Unsupported VGA register: 0x%04x (value 0x%02x)\n", port, val);
