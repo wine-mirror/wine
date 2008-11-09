@@ -668,22 +668,21 @@ static BOOL is_integer(parse_buffer* buf)
 static BOOL is_string(parse_buffer* buf)
 {
   char tmp[32];
-  DWORD pos = 1;
+  DWORD pos = 0;
   char c;
   BOOL ok = 0;
 
   if (*buf->buffer != '"')
     return FALSE;
-  tmp[0] = '"';
 
-  while (!is_separator(c = *(buf->buffer+pos)) && (pos < 32))
+  while (!is_separator(c = *(buf->buffer+pos+1)) && (pos < 31))
   {
-    tmp[pos++] = c;
     if (c == '"')
     {
       ok = 1;
       break;
     }
+    tmp[pos++] = c;
   }
   tmp[pos] = 0;
 
@@ -693,8 +692,8 @@ static BOOL is_string(parse_buffer* buf)
     return FALSE;
   }
 
-  buf->buffer += pos;
-  buf->rem_bytes -= pos;
+  buf->buffer += pos + 2;
+  buf->rem_bytes -= pos + 2;
 
   TRACE("Found string %s\n", tmp);
   strcpy((char*)buf->value, tmp);
@@ -1884,7 +1883,6 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         }
         else if (token == TOKEN_LPSTR)
         {
-          static char fake_string[] = "Fake string";
           get_TOKEN(buf);
           TRACE("%s = %s\n", pt->members[i].name, (char*)buf->value);
           /* Assume larger size */
@@ -1895,8 +1893,15 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           }
           if (pt->members[i].type == TOKEN_LPSTR)
           {
-            /* Use a fake string for now */
-            *(((LPCSTR*)(buf->cur_pdata))) = fake_string;
+            int len = strlen((char*)buf->value) + 1;
+            if ((buf->cur_pstrings - buf->pstrings + len) > MAX_STRINGS_BUFFER)
+            {
+              WARN("Buffer too small %p %p %d\n", buf->cur_pstrings, buf->pstrings, len);
+              return FALSE;
+            }
+            strcpy((char*)buf->cur_pstrings, (char*)buf->value);
+            *(((LPCSTR*)(buf->cur_pdata))) = (char*)buf->cur_pstrings;
+            buf->cur_pstrings += len;
             buf->cur_pdata += 4;
           }
           else
@@ -2067,6 +2072,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   IDirectXFileDataImpl* object;
   HRESULT hr;
   LPBYTE pdata;
+  LPBYTE pstrings;
 
   TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
 
@@ -2082,6 +2088,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   This->buf.pxo_tab = &This->xobjects[This->nb_xobjects][0];
   This->buf.cur_subobject = 0;
   This->buf.pxo = &This->buf.pxo_tab[This->buf.cur_subobject++];
+  This->buf.level = 0;
 
   pdata = HeapAlloc(GetProcessHeap(), 0, MAX_DATA_SIZE);
   if (!pdata)
@@ -2090,12 +2097,21 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     return DXFILEERR_BADALLOC;
   }
   This->buf.cur_pdata = pdata;
-  This->buf.level = 0;
+
+  pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
+  if (!pstrings)
+  {
+    WARN("Out of memory\n");
+    HeapFree(GetProcessHeap(), 0, This->buf.pxo->pdata);
+    return DXFILEERR_BADALLOC;
+  }
+  This->buf.cur_pstrings = This->buf.pstrings = pstrings;
 
   if (!parse_object(&This->buf))
   {
     TRACE("Object is not correct\n");
     HeapFree(GetProcessHeap(), 0, This->buf.pxo->pdata);
+    HeapFree(GetProcessHeap(), 0, This->buf.pstrings);
     return DXFILEERR_PARSEERROR;
   }
 
@@ -2106,6 +2122,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     return DXFILEERR_BADALLOC;
   }
 
+  object->pstrings = pstrings;
   object->pobj = This->buf.pxo;
   object->cur_enum_object = 0;
   object->level = 0;
