@@ -1740,7 +1740,10 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
   TRACE("(%p/%p): ReleaseRef to %d\n", iface, This, ref);
 
   if (!ref)
+  {
+    CloseHandle(This->hFile);
     HeapFree(GetProcessHeap(), 0, This);
+  }
 
   return ref;
 }
