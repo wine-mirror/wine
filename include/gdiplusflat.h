@@ -200,6 +200,7 @@ GpStatus WINGDIPAPI GdipGetPageScale(GpGraphics*,REAL*);
 GpStatus WINGDIPAPI GdipGetPageUnit(GpGraphics*,GpUnit*);
 GpStatus WINGDIPAPI GdipGetPixelOffsetMode(GpGraphics*,PixelOffsetMode*);
 GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics*,SmoothingMode*);
+GpStatus WINGDIPAPI GdipGetTextContrast(GpGraphics*,UINT*);
 GpStatus WINGDIPAPI GdipGetTextRenderingHint(GpGraphics*,TextRenderingHint*);
 GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics*,GpMatrix*);
 GpStatus WINGDIPAPI GdipGraphicsClear(GpGraphics*,ARGB);

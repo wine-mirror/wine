@@ -763,6 +763,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     (*graphics)->unit = UnitDisplay;
     (*graphics)->scale = 1.0;
     (*graphics)->busy = FALSE;
+    (*graphics)->textcontrast = 4;
 
     return Ok;
 }
@@ -2503,6 +2504,18 @@ GpStatus WINGDIPAPI GdipGetSmoothingMode(GpGraphics *graphics, SmoothingMode *mo
         return ObjectBusy;
 
     *mode = graphics->smoothing;
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetTextContrast(GpGraphics *graphics, UINT *contrast)
+{
+    TRACE("(%p, %p)\n", graphics, contrast);
+
+    if(!graphics || !contrast)
+        return InvalidParameter;
+
+    *contrast = graphics->textcontrast;
 
     return Ok;
 }

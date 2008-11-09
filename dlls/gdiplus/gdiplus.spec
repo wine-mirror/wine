@@ -395,7 +395,7 @@
 @ stdcall GdipGetStringFormatTabStopCount(ptr ptr)
 @ stdcall GdipGetStringFormatTabStops(ptr long ptr ptr)
 @ stdcall GdipGetStringFormatTrimming(ptr ptr)
-@ stub GdipGetTextContrast
+@ stdcall GdipGetTextContrast(ptr ptr)
 @ stdcall GdipGetTextRenderingHint(ptr ptr)
 @ stub GdipGetTextureImage
 @ stdcall GdipGetTextureTransform(ptr ptr)

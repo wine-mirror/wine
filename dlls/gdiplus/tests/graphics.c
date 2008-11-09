@@ -902,6 +902,28 @@ static void test_clear(void)
     expect(InvalidParameter, status);
 }
 
+static void test_textcontrast(void)
+{
+    GpStatus status;
+    HDC hdc = GetDC(0);
+    GpGraphics *graphics;
+    UINT contrast;
+
+    status = GdipGetTextContrast(NULL, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = GdipGetTextContrast(graphics, NULL);
+    expect(InvalidParameter, status);
+    status = GdipGetTextContrast(graphics, &contrast);
+    expect(4, contrast);
+
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -926,6 +948,7 @@ START_TEST(graphics)
     test_get_set_clip();
     test_isempty();
     test_clear();
+    test_textcontrast();
 
     GdiplusShutdown(gdiplusToken);
 }

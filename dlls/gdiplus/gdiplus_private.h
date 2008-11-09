@@ -100,6 +100,7 @@ struct GpGraphics{
     GpMatrix * worldtrans; /* world transform */
     BOOL busy;      /* hdc handle obtained by GdipGetDC */
     GpRegion *clip;
+    UINT textcontrast; /* not used yet. get/set only */
 };
 
 struct GpBrush{
