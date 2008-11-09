@@ -746,6 +746,10 @@ static void test_FileSecurity(void)
     retSize = 0;
     SetLastError (NO_ERROR);
     rc = pGetFileSecurityA (file, request, NULL, 0, &retSize);
+    if (!rc && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)) {
+        win_skip("GetFileSecurityA is not implemented\n");
+        goto cleanup;
+    }
     ok (!rc, "GetFileSecurityA "
         "was expected to fail for '%s'\n", file);
     ok (GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetFileSecurityA "
@@ -812,19 +816,18 @@ static void test_FileSecurity(void)
 
     HeapFree (GetProcessHeap (), 0, sd);
 
-    /* Remove temporary file and directory */
-    DeleteFileA (file);
-    RemoveDirectoryA (path);
-
     /* Old test */
     strcpy (wintmpdir, "\\Should not exist");
     SetLastError (NO_ERROR);
     rc = pGetFileSecurityA (wintmpdir, OWNER_SECURITY_INFORMATION, NULL, 0, &sdSize);
     ok (!rc, "GetFileSecurityA should fail for not existing directories/files\n");
-    ok ((GetLastError() == ERROR_FILE_NOT_FOUND ) ||
-        (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED),
-        "last error ERROR_FILE_NOT_FOUND / ERROR_CALL_NOT_IMPLEMENTED (98) "
-        "expected, got %d\n", GetLastError());
+    ok (GetLastError() == ERROR_FILE_NOT_FOUND,
+        "last error ERROR_FILE_NOT_FOUND expected, got %d\n", GetLastError());
+
+cleanup:
+    /* Remove temporary file and directory */
+    DeleteFileA(file);
+    RemoveDirectoryA(path);
 }
 
 static void test_AccessCheck(void)
