@@ -2954,6 +2954,18 @@ GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics *graphics, SmoothingMode mod
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetTextContrast(GpGraphics *graphics, UINT contrast)
+{
+    TRACE("(%p, %d)\n", graphics, contrast);
+
+    if(!graphics)
+        return InvalidParameter;
+
+    graphics->textcontrast = contrast;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetTextRenderingHint(GpGraphics *graphics,
     TextRenderingHint hint)
 {

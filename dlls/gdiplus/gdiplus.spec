@@ -593,7 +593,7 @@
 @ stdcall GdipSetStringFormatMeasurableCharacterRanges(ptr long ptr)
 @ stdcall GdipSetStringFormatTabStops(ptr long long ptr)
 @ stdcall GdipSetStringFormatTrimming(ptr long)
-@ stub GdipSetTextContrast
+@ stdcall GdipSetTextContrast(ptr long)
 @ stdcall GdipSetTextRenderingHint(ptr long)
 @ stdcall GdipSetTextureTransform(ptr ptr)
 @ stdcall GdipSetTextureWrapMode(ptr long)
