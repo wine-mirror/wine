@@ -287,9 +287,17 @@ static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
 
     if (size > outsize)
     {
+        iosb->Information = 0;
         if (size >= FIELD_OFFSET( struct mountmgr_unix_drive, size ) + sizeof(output->size))
+        {
             output->size = size;
-        iosb->Information = FIELD_OFFSET( struct mountmgr_unix_drive, size ) + sizeof(output->size);
+            iosb->Information = FIELD_OFFSET( struct mountmgr_unix_drive, size ) + sizeof(output->size);
+        }
+        if (size >= FIELD_OFFSET( struct mountmgr_unix_drive, type ) + sizeof(output->type))
+        {
+            output->type = type;
+            iosb->Information = FIELD_OFFSET( struct mountmgr_unix_drive, type ) + sizeof(output->type);
+        }
         return STATUS_MORE_ENTRIES;
     }
     output->size = size;
