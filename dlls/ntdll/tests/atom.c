@@ -54,6 +54,7 @@ static NTSTATUS (WINAPI *pRtlPinAtomInAtomTable)(RTL_ATOM_TABLE,RTL_ATOM);
 static NTSTATUS (WINAPI *pRtlQueryAtomInAtomTable)(RTL_ATOM_TABLE,RTL_ATOM,PULONG,PULONG,PWSTR,PULONG);
 
 static NTSTATUS (WINAPI* pNtAddAtom)(LPCWSTR,ULONG,RTL_ATOM*);
+static NTSTATUS (WINAPI* pNtAddAtomNT4)(LPCWSTR,RTL_ATOM*);
 static NTSTATUS (WINAPI* pNtQueryInformationAtom)(RTL_ATOM,DWORD,void*,ULONG,PULONG);
 
 static const WCHAR EmptyAtom[] = {0};
@@ -266,7 +267,8 @@ static void test_NtAtom(void)
         Len = 0;
         res = pRtlQueryAtomInAtomTable(AtomTable, Atom1, NULL, NULL, Name, &Len);
         ok(res == STATUS_BUFFER_TOO_SMALL, "Got wrong retval, retval: %x\n", res);
-        ok((lstrlenW(testAtom1) * sizeof(WCHAR)) == Len, "Got wrong length %x\n", Len);
+        ok((lstrlenW(testAtom1) * sizeof(WCHAR)) == Len || broken(!Len) /* nt4 */, "Got wrong length %x\n", Len);
+        if (!Len) pNtAddAtomNT4 = (void *)pNtAddAtom;
 
         res = pRtlPinAtomInAtomTable(AtomTable, Atom1);
         ok(!res, "Unable to pin atom in atom table, retval: %x\n", res);
@@ -433,7 +435,11 @@ static void test_Global(void)
     ATOM_BASIC_INFORMATION*     abi = (ATOM_BASIC_INFORMATION*)ptr;
     ULONG       ptr_size = sizeof(ATOM_BASIC_INFORMATION) + 255 * sizeof(WCHAR);
 
-    res = pNtAddAtom(testAtom1, lstrlenW(testAtom1) * sizeof(WCHAR), &atom);
+    if (pNtAddAtomNT4)
+        res = pNtAddAtomNT4(testAtom1, &atom);
+    else
+        res = pNtAddAtom(testAtom1, lstrlenW(testAtom1) * sizeof(WCHAR), &atom);
+
     ok(!res, "Added atom (%x)\n", res);
 
     memset(abi->Name, 0xcc, 255 * sizeof(WCHAR));
@@ -447,7 +453,8 @@ static void test_Global(void)
     ptr_size = sizeof(ATOM_BASIC_INFORMATION);
     res = pNtQueryInformationAtom( atom, AtomBasicInformation, (void*)ptr, ptr_size, NULL );
     ok(res == STATUS_BUFFER_TOO_SMALL, "wrong return status (%x)\n", res);
-    ok(abi->NameLength == lstrlenW(testAtom1) * sizeof(WCHAR), "ok string length\n");
+    ok(abi->NameLength == lstrlenW(testAtom1) * sizeof(WCHAR) || broken(abi->NameLength == sizeof(WCHAR)), /* nt4 */
+       "string length %u\n",abi->NameLength);
 
     memset(abi->Name, 0xcc, lstrlenW(testAtom1) * sizeof(WCHAR));
     ptr_size = sizeof(ATOM_BASIC_INFORMATION) + lstrlenW(testAtom1) * sizeof(WCHAR);
