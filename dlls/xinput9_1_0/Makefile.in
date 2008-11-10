@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = xinput9_1_0.dll
+IMPORTS   = kernel32
+
+C_SRCS = \
+	xinput9_1_0_main.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
