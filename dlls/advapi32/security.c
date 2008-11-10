@@ -1679,7 +1679,7 @@ LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid )
         SetLastError(ERROR_NO_SUCH_PRIVILEGE);
         return FALSE;
     }
-    for( i=SE_MIN_WELL_KNOWN_PRIVILEGE; i<SE_MAX_WELL_KNOWN_PRIVILEGE; i++ )
+    for( i=SE_MIN_WELL_KNOWN_PRIVILEGE; i<=SE_MAX_WELL_KNOWN_PRIVILEGE; i++ )
     {
         if( !WellKnownPrivNames[i] )
             continue;
