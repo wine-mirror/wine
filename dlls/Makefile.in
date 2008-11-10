@@ -165,7 +165,8 @@ STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 
 IMPORT_SYMLINKS = \
 	libd3dx9.$(IMPLIBEXT) \
-	libwinspool.$(IMPLIBEXT)
+	libwinspool.$(IMPLIBEXT) \
+	libxinput.$(IMPLIBEXT)
 
 IMPORT_LIBS = \
 	$(IMPORT_SYMLINKS) \
@@ -311,11 +312,13 @@ IMPORT_LIBS = \
 	wow32/libwow32.$(IMPLIBEXT) \
 	ws2_32/libws2_32.$(IMPLIBEXT) \
 	wsock32/libwsock32.$(IMPLIBEXT) \
-	wtsapi32/libwtsapi32.$(IMPLIBEXT)
+	wtsapi32/libwtsapi32.$(IMPLIBEXT) \
+	xinput1_3/libxinput.$(IMPLIBEXT)
 
 CROSS_IMPLIBS = \
 	libd3dx9.a \
 	libwinspool.a \
+	libxinput.a \
 	activeds/libactiveds.a \
 	advapi32/libadvapi32.a \
 	advpack/libadvpack.a \
@@ -449,7 +452,8 @@ CROSS_IMPLIBS = \
 	wow32/libwow32.a \
 	ws2_32/libws2_32.a \
 	wsock32/libwsock32.a \
-	wtsapi32/libwtsapi32.a
+	wtsapi32/libwtsapi32.a \
+	xinput1_3/libxinput.a
 
 $(TESTSUBDIRS:%=%/__crosstest__): $(CROSS_IMPLIBS)
 
@@ -865,6 +869,9 @@ wsock32/libwsock32.def wsock32/libwsock32.a: wsock32/wsock32.spec $(WINEBUILD)
 wtsapi32/libwtsapi32.def wtsapi32/libwtsapi32.a: wtsapi32/wtsapi32.spec $(WINEBUILD)
 	@cd wtsapi32 && $(MAKE) `basename $@`
 
+xinput1_3/libxinput.def xinput1_3/libxinput.a: xinput1_3/xinput1_3.spec $(WINEBUILD)
+	@cd xinput1_3 && $(MAKE) `basename $@`
+
 libd3dx9.a: d3dx9_36/libd3dx9.a
 	$(RM) $@ && $(LN_S) d3dx9_36/libd3dx9.a $@
 
@@ -876,6 +883,12 @@ libwinspool.a: winspool.drv/libwinspool.a
 
 libwinspool.def: winspool.drv/libwinspool.def
 	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.def $@
+
+libxinput.a: xinput1_3/libxinput.a
+	$(RM) $@ && $(LN_S) xinput1_3/libxinput.a $@
+
+libxinput.def: xinput1_3/libxinput.def
+	$(RM) $@ && $(LN_S) xinput1_3/libxinput.def $@
 
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
 $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPORT_LIBS)

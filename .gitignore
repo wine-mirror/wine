@@ -48,6 +48,7 @@ dlls/keyboard.drv16
 dlls/krnl386.exe16
 dlls/libd3dx9.def
 dlls/libwinspool.def
+dlls/libxinput.def
 dlls/lzexpand.dll16
 dlls/mmsystem.dll16
 dlls/mouse.drv16
