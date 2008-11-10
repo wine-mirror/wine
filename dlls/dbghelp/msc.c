@@ -914,17 +914,46 @@ static struct symt* codeview_add_type_enum(struct codeview_type_parse* ctp,
 
 static struct symt* codeview_add_type_struct(struct codeview_type_parse* ctp,
                                              struct symt* existing,
-                                             const char* name, int structlen, 
-                                             enum UdtKind kind)
+                                             const char* name, int structlen,
+                                             enum UdtKind kind, unsigned property)
 {
     struct symt_udt*    symt;
 
+    /* if we don't have an existing type, try to find one with same name
+     * FIXME: what to do when several types in different CUs have same name ?
+     */
+    if (!existing)
+    {
+        void*                       ptr;
+        struct symt_ht*             type;
+        struct hash_table_iter      hti;
+
+        hash_table_iter_init(&ctp->module->ht_types, &hti, name);
+        while ((ptr = hash_table_iter_up(&hti)))
+        {
+            type = GET_ENTRY(ptr, struct symt_ht, hash_elt);
+
+            if (type->symt.tag == SymTagUDT &&
+                type->hash_elt.name && !strcmp(type->hash_elt.name, name))
+            {
+                existing = &type->symt;
+                break;
+            }
+        }
+    }
     if (existing)
     {
         if (!(symt = codeview_cast_symt(existing, SymTagUDT))) return NULL;
         /* should also check that all fields are the same */
+        if (!(property & 0x80)) /* 0x80 = forward declaration */
+        {
+            if (!symt->size) /* likely prior forward declaration, set UDT size */
+                symt_set_udt_size(ctp->module, symt, structlen);
+            else /* different UDT with same name, create a new type */
+                existing = NULL;
+        }
     }
-    else symt = symt_new_udt(ctp->module, name, structlen, kind);
+    if (!existing) symt = symt_new_udt(ctp->module, name, structlen, kind);
 
     return &symt->symt;
 }
@@ -1061,7 +1090,8 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
         p_name = (const struct p_string*)((const unsigned char*)&type->struct_v1.structlen + leaf_len);
         symt = codeview_add_type_struct(ctp, existing, terminate_string(p_name), value,
-                                        type->generic.id == LF_CLASS_V1 ? UdtClass : UdtStruct);
+                                        type->generic.id == LF_CLASS_V1 ? UdtClass : UdtStruct,
+                                        type->struct_v1.property);
         if (details)
         {
             codeview_add_type(curr_type, symt);
@@ -1075,7 +1105,8 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
         p_name = (const struct p_string*)((const unsigned char*)&type->struct_v2.structlen + leaf_len);
         symt = codeview_add_type_struct(ctp, existing, terminate_string(p_name), value,
-                                        type->generic.id == LF_CLASS_V2 ? UdtClass : UdtStruct);
+                                        type->generic.id == LF_CLASS_V2 ? UdtClass : UdtStruct,
+                                        type->struct_v2.property);
         if (details)
         {
             codeview_add_type(curr_type, symt);
@@ -1089,7 +1120,8 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
         c_name = (const char*)&type->struct_v3.structlen + leaf_len;
         symt = codeview_add_type_struct(ctp, existing, c_name, value,
-                                        type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct);
+                                        type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct,
+                                        type->struct_v3.property);
         if (details)
         {
             codeview_add_type(curr_type, symt);
@@ -1102,7 +1134,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
         p_name = (const struct p_string*)((const unsigned char*)&type->union_v1.un_len + leaf_len);
         symt = codeview_add_type_struct(ctp, existing, terminate_string(p_name),
-                                        value, UdtUnion);
+                                        value, UdtUnion, type->union_v1.property);
         if (details)
         {
             codeview_add_type(curr_type, symt);
@@ -1115,7 +1147,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
         p_name = (const struct p_string*)((const unsigned char*)&type->union_v2.un_len + leaf_len);
         symt = codeview_add_type_struct(ctp, existing, terminate_string(p_name),
-                                        value, UdtUnion);
+                                        value, UdtUnion, type->union_v2.property);
         if (details)
         {
             codeview_add_type(curr_type, symt);
@@ -1128,7 +1160,7 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
         c_name = (const char*)&type->union_v3.un_len + leaf_len;
         symt = codeview_add_type_struct(ctp, existing, c_name,
-                                        value, UdtUnion);
+                                        value, UdtUnion, type->union_v3.property);
         if (details)
         {
             codeview_add_type(curr_type, symt);
