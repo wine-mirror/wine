@@ -715,7 +715,8 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     else p = wm->ldr.FullDllName.Buffer;
     RtlInitUnicodeString( &wm->ldr.BaseDllName, p );
 
-    if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
+    if (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_NATIVE &&
+        (nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
         wm->ldr.Flags |= LDR_IMAGE_IS_DLL;
         if (nt->OptionalHeader.AddressOfEntryPoint)
