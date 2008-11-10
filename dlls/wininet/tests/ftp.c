@@ -385,7 +385,9 @@ static void test_openfile(HINTERNET hFtp, HINTERNET hConnect)
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
     ok ( hOpenFile != NULL, "Expected FtpOpenFileA to succeed\n");
-    ok ( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", GetLastError());
+    ok ( GetLastError() == ERROR_SUCCESS ||
+        broken(GetLastError() == ERROR_FILE_NOT_FOUND), /* Win98 */
+        "Expected ERROR_SUCCESS, got %u\n", GetLastError());
 
     if (hOpenFile)
     {
