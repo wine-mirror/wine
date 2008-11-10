@@ -504,7 +504,7 @@ static void test_trustee(void)
 #define SE_DEBUG_PRIVILEGE               20L
 #define SE_AUDIT_PRIVILEGE               21L
 #define SE_SYSTEM_ENVIRONMENT_PRIVILEGE  22L
-#define SE_CHANGE_NOTIFY_PRIVILLEGE      23L
+#define SE_CHANGE_NOTIFY_PRIVILEGE       23L
 #define SE_REMOTE_SHUTDOWN_PRIVILEGE     24L
 #define SE_UNDOCK_PRIVILEGE              25L
 #define SE_SYNC_AGENT_PRIVILEGE          26L
@@ -634,7 +634,7 @@ static void test_lookupPrivilegeValue(void)
      { "SeDebugPrivilege", SE_DEBUG_PRIVILEGE },
      { "SeAuditPrivilege", SE_AUDIT_PRIVILEGE },
      { "SeSystemEnvironmentPrivilege", SE_SYSTEM_ENVIRONMENT_PRIVILEGE },
-     { "SeChangeNotifyPrivilege", SE_CHANGE_NOTIFY_PRIVILLEGE },
+     { "SeChangeNotifyPrivilege", SE_CHANGE_NOTIFY_PRIVILEGE },
      { "SeRemoteShutdownPrivilege", SE_REMOTE_SHUTDOWN_PRIVILEGE },
      { "SeUndockPrivilege", SE_UNDOCK_PRIVILEGE },
      { "SeSyncAgentPrivilege", SE_SYNC_AGENT_PRIVILEGE },
