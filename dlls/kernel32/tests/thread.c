@@ -1188,7 +1188,7 @@ static void test_TLS(void)
   }
 
   ret = WaitForMultipleObjects(2, threads, TRUE, 60000);
-  ok(ret == WAIT_OBJECT_0, "WaitForMultipleObjects failed\n");
+  ok(ret == WAIT_OBJECT_0 || ret == WAIT_OBJECT_0+1 /* nt4 */, "WaitForMultipleObjects failed %u\n",ret);
 
   for (i = 0; i < 2; ++i)
     CloseHandle(threads[i]);
