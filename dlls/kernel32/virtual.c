@@ -543,6 +543,8 @@ LPVOID WINAPI MapViewOfFileEx( HANDLE handle, DWORD access,
     else if (access & FILE_MAP_COPY) protect = PAGE_WRITECOPY;
     else protect = PAGE_NOACCESS;
 
+    if (access & FILE_MAP_EXECUTE) protect <<= 4;
+
     if ((status = NtMapViewOfSection( handle, GetCurrentProcess(), &addr, 0, 0, &offset,
                                       &count, ViewShare, 0, protect )))
     {
