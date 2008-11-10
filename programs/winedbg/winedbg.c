@@ -501,13 +501,20 @@ void dbg_del_thread(struct dbg_thread* t)
     HeapFree(GetProcessHeap(), 0, t);
 }
 
-void dbg_set_option(const char* option, BOOL enable)
+void dbg_set_option(const char* option, const char* val)
 {
-    if (!strcmp(option, "module"))
+    if (!strcasecmp(option, "module_load_mismatched"))
     {
         DWORD   opt = SymGetOptions();
-        if (enable) opt |= SYMOPT_LOAD_ANYTHING;
-        else opt &= ~SYMOPT_LOAD_ANYTHING;
+        if (!val)
+            dbg_printf("Option: module_load_mismatched %s\n", opt & SYMOPT_LOAD_ANYTHING ? "true" : "false");
+        else if (!strcasecmp(val, "true"))      opt |= SYMOPT_LOAD_ANYTHING;
+        else if (!strcasecmp(val, "false"))     opt &= ~SYMOPT_LOAD_ANYTHING;
+        else
+        {
+            dbg_printf("Syntax: module_load_mismatched [true|false]\n");
+            return;
+        }
         SymSetOptions(opt);
     }
     else dbg_printf("Unknown option '%s'\n", option);

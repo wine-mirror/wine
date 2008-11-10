@@ -456,7 +456,7 @@ extern void             dbg_del_thread(struct dbg_thread* t);
 extern BOOL             dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade);
 extern BOOL             dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD base, DWORD size);
 extern BOOL             dbg_get_debuggee_info(HANDLE hProcess, IMAGEHLP_MODULE* imh_mod);
-extern void             dbg_set_option(const char*, BOOL);
+extern void             dbg_set_option(const char*, const char*);
 
   /* gdbproxy.c */
 extern int              gdb_main(int argc, char* argv[]);

@@ -210,8 +210,8 @@ set_command:
     | tSET '-' tIDENTIFIER      { info_wine_dbg_channel(FALSE, NULL, $3); }
     | tSET tIDENTIFIER '+' tIDENTIFIER { info_wine_dbg_channel(TRUE, $2, $4); }
     | tSET tIDENTIFIER '-' tIDENTIFIER { info_wine_dbg_channel(FALSE, $2, $4); }
-    | tSET '!' tIDENTIFIER '+'  { dbg_set_option($3, TRUE); }
-    | tSET '!' tIDENTIFIER '-'  { dbg_set_option($3, FALSE); }
+    | tSET '!' tIDENTIFIER tIDENTIFIER  { dbg_set_option($3, $4); }
+    | tSET '!' tIDENTIFIER      { dbg_set_option($3, NULL); }
     ;
 
 x_command:
