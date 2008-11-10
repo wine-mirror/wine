@@ -199,7 +199,7 @@ static struct line *find_line( struct inf_file *file, int section_index, const W
 {
     struct section *section;
     struct line *line;
-    int i;
+    unsigned int i;
 
     if (section_index < 0 || section_index >= file->nb_sections) return NULL;
     section = file->sections[section_index];

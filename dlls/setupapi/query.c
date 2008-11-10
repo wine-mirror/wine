@@ -580,7 +580,7 @@ BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section,
 
     INFCONTEXT ctx;
     WCHAR *dir;
-    INT size;
+    unsigned int size;
 
     TRACE("%p, %p, %s, %p, 0x%08x, %p\n", hinf, context, debugstr_w(section), buffer,
           buffer_size, required_size);
@@ -591,7 +591,7 @@ BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section,
 
     if (!(dir = PARSER_get_dest_dir( context ? context : &ctx ))) return FALSE;
 
-    size = lstrlenW( dir ) + 1;
+    size = strlenW( dir ) + 1;
     if (required_size) *required_size = size;
 
     if (buffer)

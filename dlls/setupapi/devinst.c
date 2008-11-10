@@ -1349,7 +1349,8 @@ BOOL WINAPI SetupDiCreateDeviceInfoA(
 static DWORD SETUPDI_DevNameToDevID(LPCWSTR devName)
 {
     LPCWSTR ptr;
-    DWORD devNameLen = lstrlenW(devName), devInst = 0;
+    int devNameLen = lstrlenW(devName);
+    DWORD devInst = 0;
     BOOL valid = TRUE;
 
     TRACE("%s\n", debugstr_w(devName));
@@ -1704,7 +1705,7 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdW(
         return FALSE;
     }
     TRACE("instance ID: %s\n", debugstr_w(devInfo->instanceId));
-    if (DeviceInstanceIdSize < lstrlenW(devInfo->instanceId) + 1)
+    if (DeviceInstanceIdSize < strlenW(devInfo->instanceId) + 1)
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         if (RequiredSize)
