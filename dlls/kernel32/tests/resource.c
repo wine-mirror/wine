@@ -252,7 +252,8 @@ static void check_exe( res_check_func fn )
     dir = (void*) ((BYTE*) dos + sec[1].VirtualAddress);
 
     ok( dir->Characteristics == 0, "Characteristics wrong\n");
-    ok( dir->TimeDateStamp == 0, "TimeDateStamp wrong\n");
+    ok( dir->TimeDateStamp == 0 || abs( dir->TimeDateStamp - GetTickCount() ) < 1000 /* nt4 */,
+        "TimeDateStamp wrong %u\n", dir->TimeDateStamp);
     ok( dir->MajorVersion == 4, "MajorVersion wrong\n");
     ok( dir->MinorVersion == 0, "MinorVersion wrong\n");
 
