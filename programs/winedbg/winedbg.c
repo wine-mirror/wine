@@ -517,6 +517,21 @@ void dbg_set_option(const char* option, const char* val)
         }
         SymSetOptions(opt);
     }
+    else if (!strcasecmp(option, "symbol_picker"))
+    {
+        if (!val)
+            dbg_printf("Option: symbol_picker %s\n",
+                       symbol_current_picker == symbol_picker_interactive ? "interactive" : "scoped");
+        else if (!strcasecmp(val, "interactive"))
+            symbol_current_picker = symbol_picker_interactive;
+        else if (!strcasecmp(val, "scoped"))
+            symbol_current_picker = symbol_picker_scoped;
+        else
+        {
+            dbg_printf("Syntax: symbol_picker [interactive|scoped]\n");
+            return;
+        }
+    }
     else dbg_printf("Unknown option '%s'\n", option);
 }
 

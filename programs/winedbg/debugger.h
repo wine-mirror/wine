@@ -401,6 +401,8 @@ typedef enum sym_get_lval (*symbol_picker_t)(const char* name, const struct sgv_
 extern symbol_picker_t symbol_current_picker;
 extern enum sym_get_lval symbol_picker_interactive(const char* name, const struct sgv_data* sgv,
                                                    struct dbg_lvalue* rtn);
+extern enum sym_get_lval symbol_picker_scoped(const char* name, const struct sgv_data* sgv,
+                                              struct dbg_lvalue* rtn);
 
   /* tgt_active.c */
 extern void             dbg_run_debuggee(const char* args);

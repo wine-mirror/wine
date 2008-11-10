@@ -251,6 +251,38 @@ enum sym_get_lval symbol_picker_interactive(const char* name, const struct sgv_d
     return sglv_found;
 }
 
+enum sym_get_lval symbol_picker_scoped(const char* name, const struct sgv_data* sgv,
+                                       struct dbg_lvalue* rtn)
+{
+    unsigned i;
+    int local = -1;
+
+    for (i = 0; i < sgv->num; i++)
+    {
+        if (sgv->num - sgv->num_thunks > 1 && (sgv->syms[i].flags & SYMFLAG_THUNK) && !DBG_IVAR(AlwaysShowThunks))
+            continue;
+        if (sgv->syms[i].flags & SYMFLAG_LOCAL)
+        {
+            if (local == -1)
+                local = i;
+            else
+            {
+                /* FIXME: several locals with same name... which one to pick ?? */
+                dbg_printf("Several local variables/parameters for %s, aborting\n", name);
+                return sglv_aborted;
+            }
+        }
+    }
+    if (local != -1)
+    {
+        *rtn = sgv->syms[local].lvalue;
+        return sglv_found;
+    }
+    /* no locals found, multiple globals... abort for now */
+    dbg_printf("Several global variables for %s, aborting\n", name);
+    return sglv_aborted;
+}
+
 symbol_picker_t symbol_current_picker = symbol_picker_interactive;
 
 /***********************************************************************
