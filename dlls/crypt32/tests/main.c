@@ -452,7 +452,7 @@ static void test_format_object(void)
         ret = pCryptFormatObject(X509_ASN_ENCODING, 0, 0, NULL, NULL,
          encodedBigInt, sizeof(encodedBigInt), str, &size);
         ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
-        ok(!lstrcmpW(str, encodedBigIntStr), "unexpected format string\n");
+        ok(!lstrcmpiW(str, encodedBigIntStr), "unexpected format string\n");
         HeapFree(GetProcessHeap(), 0, str);
     }
     /* When called with the default encoding type for any undefined struct
