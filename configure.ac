@@ -2095,6 +2095,7 @@ WINE_CONFIG_MAKEFILE([dlls/ws2_32/tests/Makefile],[dlls/Maketest.rules],[dlls],[
 WINE_CONFIG_MAKEFILE([dlls/wsock32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wtsapi32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/xinput1_1/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/xinput1_2/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/xinput1_3/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/xinput9_1_0/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([documentation/Makefile],[Make.rules],[],[ALL_TOP_DIRS])
