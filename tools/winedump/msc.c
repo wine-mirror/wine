@@ -217,6 +217,31 @@ static const char* get_attr(unsigned attr)
     return tmp;
 }
 
+static const char* get_property(unsigned prop)
+{
+    static char tmp[1024];
+    unsigned    pos = 0;
+
+    if (!prop) return "none";
+#define X(s) {if (pos) tmp[pos++] = ';'; strcpy(tmp + pos, s); pos += strlen(s);}
+    if (prop & 0x0001) X("packed");
+    if (prop & 0x0002) X("w/{cd}tor");
+    if (prop & 0x0004) X("w/overloaded-ops");
+    if (prop & 0x0008) X("nested-class");
+    if (prop & 0x0010) X("has-nested-classes");
+    if (prop & 0x0020) X("w/overloaded-assign");
+    if (prop & 0x0040) X("w/casting-methods");
+    if (prop & 0x0080) X("forward");
+    if (prop & 0x0100) X("scoped");
+#undef X
+
+    if (prop & ~0x01FF) pos += sprintf(tmp, "unk%x", prop & ~0x01FF);
+    else tmp[pos] = '\0';
+    assert(pos < sizeof(tmp));
+
+    return tmp;
+}
+
 static void do_field(const unsigned char* start, const unsigned char* end)
 {
     /*
@@ -587,10 +612,10 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
     case LF_STRUCTURE_V1:
     case LF_CLASS_V1:
         leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
-        printf("\t%x => %s V1 '%s' elts:%u prop:%u fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
+        printf("\t%x => %s V1 '%s' elts:%u property:%s fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
                curr_type, type->generic.id == LF_CLASS_V1 ? "Class" : "Struct",
                p_string(PSTRING(&type->struct_v1.structlen, leaf_len)),
-               type->struct_v1.n_element, type->struct_v1.property,
+               type->struct_v1.n_element, get_property(type->struct_v1.property),
                type->struct_v1.fieldlist, type->struct_v1.derived,
                type->struct_v1.vshape, value);
         break;
@@ -598,11 +623,11 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
     case LF_STRUCTURE_V2:
     case LF_CLASS_V2:
         leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
-        printf("\t%x => %s V2 '%s' elts:%u prop:%u\n"
+        printf("\t%x => %s V2 '%s' elts:%u property:%s\n"
                "                fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
                curr_type, type->generic.id == LF_CLASS_V2 ? "Class" : "Struct",
                p_string(PSTRING(&type->struct_v2.structlen, leaf_len)),
-               type->struct_v2.n_element, type->struct_v2.property,
+               type->struct_v2.n_element, get_property(type->struct_v2.property),
                type->struct_v2.fieldlist, type->struct_v2.derived,
                type->struct_v2.vshape, value);
         break;
@@ -611,63 +636,64 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
     case LF_CLASS_V3:
         leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
         str = (const char*)&type->struct_v3.structlen + leaf_len;
-        printf("\t%x => %s V3 '%s' elts:%u prop:%u\n"
+        printf("\t%x => %s V3 '%s' elts:%u property:%s\n"
                "                fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
                curr_type, type->generic.id == LF_CLASS_V3 ? "Class" : "Struct",
-               str, type->struct_v3.n_element, type->struct_v3.property,
+               str, type->struct_v3.n_element, get_property(type->struct_v3.property),
                type->struct_v3.fieldlist, type->struct_v3.derived,
                type->struct_v3.vshape, value);
         break;
 
     case LF_UNION_V1:
         leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
-        printf("\t%x => Union V1 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
+        printf("\t%x => Union V1 '%s' count:%u property:%s fieldlist-type:%x size:%u\n",
                curr_type, p_string(PSTRING(&type->union_v1.un_len, leaf_len)),
-               type->union_v1.count, type->union_v1.property,
+               type->union_v1.count, get_property(type->union_v1.property),
                type->union_v1.fieldlist, value);
         break;
 
     case LF_UNION_V2:
         leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
-        printf("\t%x => Union V2 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
+        printf("\t%x => Union V2 '%s' count:%u property:%s fieldlist-type:%x size:%u\n",
                curr_type, p_string(PSTRING(&type->union_v2.un_len, leaf_len)),
-               type->union_v2.count, type->union_v2.property,
+               type->union_v2.count, get_property(type->union_v2.property),
                type->union_v2.fieldlist, value);
         break;
 
     case LF_UNION_V3:
         leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
         str = (const char*)&type->union_v3.un_len + leaf_len;
-        printf("\t%x => Union V3 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
+        printf("\t%x => Union V3 '%s' count:%u property:%s fieldlist-type:%x size:%u\n",
                curr_type, str, type->union_v3.count,
-               type->union_v3.property, type->union_v3.fieldlist, value);
+               get_property(type->union_v3.property),
+               type->union_v3.fieldlist, value);
         break;
 
     case LF_ENUM_V1:
-        printf("\t%x => Enum V1 '%s' type:%x field-type:%x count:%u property:%x\n",
+        printf("\t%x => Enum V1 '%s' type:%x field-type:%x count:%u property:%s\n",
                curr_type, p_string(&type->enumeration_v1.p_name),
                type->enumeration_v1.type,
                type->enumeration_v1.fieldlist,
                type->enumeration_v1.count,
-               type->enumeration_v1.property);
+               get_property(type->enumeration_v1.property));
         break;
 
     case LF_ENUM_V2:
-        printf("\t%x => Enum V2 '%s' type:%x field-type:%x count:%u property:%x\n",
+        printf("\t%x => Enum V2 '%s' type:%x field-type:%x count:%u property:%s\n",
                curr_type, p_string(&type->enumeration_v2.p_name),
                type->enumeration_v2.type,
                type->enumeration_v2.fieldlist,
                type->enumeration_v2.count,
-               type->enumeration_v2.property);
+               get_property(type->enumeration_v2.property));
         break;
 
     case LF_ENUM_V3:
-        printf("\t%x => Enum V3 '%s' type:%x field-type:%x count:%u property:%x\n",
+        printf("\t%x => Enum V3 '%s' type:%x field-type:%x count:%u property:%s\n",
                curr_type, type->enumeration_v3.name,
                type->enumeration_v3.type,
                type->enumeration_v3.fieldlist,
                type->enumeration_v3.count,
-               type->enumeration_v3.property);
+               get_property(type->enumeration_v3.property));
         break;
 
     case LF_ARGLIST_V1:
