@@ -1272,8 +1272,13 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         break;
 
     case 0x0c: /* WRITE GRAPHICS PIXEL */
-        /* Not in graphics mode, can ignore w/o error */
-        FIXME("Write Graphics Pixel - Not Supported\n");
+
+        /* Only supported in CGA mode for now */
+        if(data->VideoMode >= 4 && data->VideoMode <= 6)
+        {
+          VGA_WritePixel(AL_reg(context), BH_reg(context), CX_reg(context), DX_reg(context));
+        }
+        else FIXME("Write pixel not implemented for current mode\n");
         break;
 
     case 0x0d: /* READ GRAPHICS PIXEL */

@@ -1083,6 +1083,37 @@ void VGA_SetPaletteIndex(unsigned index)
   vga_fb_palette_index = index;
 }
 
+/**********************************************************************
+ *         VGA_WritePixel
+ *
+ * Write data to the framebuffer
+ * This is a property of the CGA controller, but might be supported
+ * later by other framebuffer types
+ */
+void VGA_WritePixel(unsigned color, unsigned page, unsigned col, unsigned row)
+{
+  int off;
+  int bits;
+  int pos;
+
+  /* Calculate CGA byte offset */
+  char *data = vga_fb_window_data;
+  off = row & 1 ? (8 * 1024) : 0;
+  off += (80 * (row/2));
+  off += col/4;
+
+  /* Calculate bits offset */
+  pos = 6 - (col%4 * 2);
+
+  /* Clear current data */
+  bits = 0x03 << pos;
+  data[off] &= ~bits;
+
+  /* Set new data */
+  bits = color << pos;
+  data[off] |= bits;
+}
+
 /*** TEXT MODE ***/
 
 /* prepare the text mode video memory copy that is used to only
