@@ -100,6 +100,8 @@ static int   vga_fb_window = 0;
 static int   vga_fb_window_size;
 static char *vga_fb_window_data;
 static PALETTEENTRY *vga_fb_palette;
+static unsigned vga_fb_palette_index;
+static BOOL  vga_fb_bright;
 
 /*
  * VGA text mode data.
@@ -196,7 +198,7 @@ static PALETTEENTRY cga_palette2[] = {
   {0x00, 0x00, 0x00}, /* 0 - Black */
   {0x00, 0xAA, 0x00}, /* 1 - Green */
   {0xAA, 0x00, 0x00}, /* 2 - Red */
-  {0xAA, 0x55, 0xFF}  /* 3 - Brown */
+  {0xAA, 0x55, 0x00}  /* 3 - Brown */
 };
 
 /*
@@ -832,6 +834,8 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
       vga_fb_window_data = CGA_WINDOW_START;
       vga_fb_window_size = CGA_WINDOW_SIZE;
       vga_fb_palette = cga_palette1;
+      vga_fb_palette_index = 0;
+      vga_fb_bright = 0;
     }
 
     /* Clean the HW buffer */
@@ -1010,6 +1014,73 @@ void VGA_ShowMouse( BOOL show )
 {
     if (lpddraw)
         MZ_RunInThread( VGA_DoShowMouse, (ULONG_PTR)show );
+}
+
+
+/**********************************************************************
+ *         VGA_UpdatePalette
+ *
+ * Update the current palette
+ *
+ * Note: When updating the current CGA palette, palette index 0
+ * refers to palette2, and index 1 is palette1 (default palette)
+ */
+void VGA_UpdatePalette(void)
+{
+  /* Figure out which palette is used now */
+  if(vga_fb_bright == TRUE)
+  {
+    if(vga_fb_palette_index == 0)
+    {
+      vga_fb_palette = cga_palette2_bright;
+    }
+    else if(vga_fb_palette_index == 1)
+    {
+      vga_fb_palette = cga_palette1_bright;
+    }
+  }
+  else
+  {
+    if(vga_fb_palette_index == 0)
+    {
+      vga_fb_palette = cga_palette2;
+    }
+    else if(vga_fb_palette_index == 1)
+    {
+      vga_fb_palette = cga_palette1;
+    }
+  }
+
+  /* Now update the palette */
+  VGA_SetPalette(vga_fb_palette,0,4);
+}
+
+/**********************************************************************
+ *         VGA_SetBright
+ *
+ * Select if using a "bright" palette or not.
+ * This is a property of the CGA controller
+ */
+void VGA_SetBright(BOOL bright)
+{
+  TRACE("%i\n", bright);
+
+  /* Remember the "bright" value used by the CGA controller */
+  vga_fb_bright = bright;
+}
+
+/**********************************************************************
+ *         VGA_SetPaletteIndex
+ *
+ * Select the index of the palette which is currently in use
+ * This is a property of the CGA controller
+ */
+void VGA_SetPaletteIndex(unsigned index)
+{
+  TRACE("%i\n", index);
+
+  /* Remember the palette index, which is only used by CGA for now */
+  vga_fb_palette_index = index;
 }
 
 /*** TEXT MODE ***/
@@ -1505,32 +1576,14 @@ void VGA_ioport_out( WORD port, BYTE val )
            break;
         /* Colour control register (CGA) */
         case 0x3d9:
-           /* Check for "switch to bright" */
-           if(val & 0x10)
-	   {
-             if(vga_fb_palette == cga_palette1)
-             {
-               /* Switch to palette 1 bright version */
-               VGA_SetPalette(cga_palette1_bright,0,4);
-               vga_fb_palette = cga_palette1_bright;
-             }
-             else if(vga_fb_palette == cga_palette2)
-	     {
-               /* Switch to palette 2 bright version */
-               VGA_SetPalette(cga_palette2_bright,0,4);
-               vga_fb_palette = cga_palette2_bright;
-             }
-           }
+           /* Set bright */
+           VGA_SetBright((val & 0x10) && 1);
 
-           /* Check for "deselect palette1" */
-           if(val & 0x20)
-	   {
-             if(vga_fb_palette == cga_palette1)
-             {
-               VGA_SetPalette(cga_palette2,0,4);
-               vga_fb_palette = cga_palette2;
-             }
-           }
+           /* Set palette index */
+           VGA_SetPaletteIndex((val & 0x20) && 1);
+
+           /* Now update the palette */
+           VGA_UpdatePalette();
            break;
         default:
             FIXME("Unsupported VGA register: 0x%04x (value 0x%02x)\n", port, val);

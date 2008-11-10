@@ -1242,11 +1242,27 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                apparently, the foreground or attribute of the background
                with this call, so we should check first to see what the
                foreground already is... FIXME */
-            FIXME("Set Background/Border Color: %d/%d\n",
-               BH_reg(context), BL_reg(context));
+
+            /* For CGA modes, background color change is the same as writing
+               to I/O address 0x3d9 bit 4  */
+            if(data->VideoMode >= 4 && data->VideoMode <= 6)
+            {
+              VGA_SetBright((BL_reg(context) & 0x10) && 1);
+              VGA_UpdatePalette();
+            }
+            else FIXME("Set Background/Border Color: %d/%d\n",
+              BH_reg(context), BL_reg(context));
             break;
         case 0x01: /* SET PALETTE */
-            FIXME("Set Palette - Not Supported\n");
+
+            /* For CGA modes, palette color change is the same as writing
+               to I/O address 0x3d9 bit 5 */
+            if(data->VideoMode >= 4 && data->VideoMode <= 6)
+	    {
+              VGA_SetPaletteIndex(BL_reg(context) & 1);
+              VGA_UpdatePalette();
+            }
+            else FIXME("Set Palette - Not Supported: %02X\n", BL_reg(context));
             break;
         default:
             FIXME("INT 10 AH = 0x0b BH = 0x%x - Unknown\n",

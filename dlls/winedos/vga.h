@@ -39,6 +39,9 @@ void VGA_SetQuadPalette(RGBQUAD*color,int start,int len);
 void VGA_SetWindowStart(int start);
 int  VGA_GetWindowStart(void);
 void VGA_ShowMouse(BOOL show);
+void VGA_UpdatePalette(void);
+void VGA_SetPaletteIndex(unsigned index);
+void VGA_SetBright(BOOL bright);
 
 /* text mode */
 void VGA_InitAlphaMode(unsigned*Xres,unsigned*Yres);
