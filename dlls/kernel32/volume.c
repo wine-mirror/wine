@@ -37,6 +37,7 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "ntddcdrm.h"
+#define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
 #include "kernel_private.h"
 #include "wine/library.h"
@@ -63,17 +64,6 @@ enum fs_type
     FS_FAT1216,
     FS_FAT32,
     FS_ISO9660
-};
-
-static const WCHAR drive_types[][8] =
-{
-    { 0 }, /* DRIVE_UNKNOWN */
-    { 0 }, /* DRIVE_NO_ROOT_DIR */
-    {'f','l','o','p','p','y',0}, /* DRIVE_REMOVABLE */
-    {'h','d',0}, /* DRIVE_FIXED */
-    {'n','e','t','w','o','r','k',0}, /* DRIVE_REMOTE */
-    {'c','d','r','o','m',0}, /* DRIVE_CDROM */
-    {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
 };
 
 /* read a Unix symlink; returned buffer must be freed by caller */
@@ -190,6 +180,34 @@ static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
     return TRUE;
 }
 
+/* query the type of a drive from the mount manager */
+static DWORD get_mountmgr_drive_type( LPCWSTR root )
+{
+    HANDLE mgr;
+    struct mountmgr_unix_drive data;
+
+    memset( &data, 0, sizeof(data) );
+    if (root) data.letter = root[0];
+    else
+    {
+        WCHAR curdir[MAX_PATH];
+        GetCurrentDirectoryW( MAX_PATH, curdir );
+        if (curdir[1] != ':' || curdir[2] != '\\') return DRIVE_UNKNOWN;
+        data.letter = curdir[0];
+    }
+
+    mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ,
+                       FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (mgr == INVALID_HANDLE_VALUE) return DRIVE_UNKNOWN;
+
+    if (!DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE, &data, sizeof(data), &data,
+                          sizeof(data), NULL, NULL ) && GetLastError() != ERROR_MORE_DATA)
+        data.type = DRIVE_UNKNOWN;
+
+    CloseHandle( mgr );
+    return data.type;
+}
+
 /* get the label by reading it from a file at the root of the filesystem */
 static void get_filesystem_label( const WCHAR *device, WCHAR *label, DWORD len )
 {
@@ -235,58 +253,6 @@ static DWORD get_filesystem_serial( const WCHAR *device )
         return strtoul( buffer, NULL, 16 );
     }
     else return 0;
-}
-
-/* fetch the type of a drive from the registry */
-static UINT get_registry_drive_type( const WCHAR *root )
-{
-    static const WCHAR drive_types_keyW[] = {'M','a','c','h','i','n','e','\\',
-                                             'S','o','f','t','w','a','r','e','\\',
-                                             'W','i','n','e','\\',
-                                             'D','r','i','v','e','s',0 };
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    HANDLE hkey;
-    DWORD dummy;
-    UINT ret = DRIVE_UNKNOWN;
-    char tmp[32 + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
-    WCHAR driveW[] = {'A',':',0};
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, drive_types_keyW );
-    /* @@ Wine registry key: HKLM\Software\Wine\Drives */
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return DRIVE_UNKNOWN;
-
-    if (root) driveW[0] = root[0];
-    else
-    {
-        WCHAR path[MAX_PATH];
-        GetCurrentDirectoryW( MAX_PATH, path );
-        driveW[0] = path[0];
-    }
-
-    RtlInitUnicodeString( &nameW, driveW );
-    if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-    {
-        unsigned int i;
-        WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-
-        for (i = 0; i < sizeof(drive_types)/sizeof(drive_types[0]); i++)
-        {
-            if (!strcmpiW( data, drive_types[i] ))
-            {
-                ret = i;
-                break;
-            }
-        }
-    }
-    NtClose( hkey );
-    return ret;
 }
 
 
@@ -1278,7 +1244,7 @@ UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
         SetLastError( RtlNtStatusToDosError(status) );
         ret = DRIVE_UNKNOWN;
     }
-    else if ((ret = get_registry_drive_type( root )) == DRIVE_UNKNOWN)
+    else
     {
         switch (info.DeviceType)
         {
@@ -1288,7 +1254,7 @@ UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
         case FILE_DEVICE_DISK_FILE_SYSTEM:
             if (info.Characteristics & FILE_REMOTE_DEVICE) ret = DRIVE_REMOTE;
             else if (info.Characteristics & FILE_REMOVABLE_MEDIA) ret = DRIVE_REMOVABLE;
-            else ret = DRIVE_FIXED;
+            else if ((ret = get_mountmgr_drive_type( root )) == DRIVE_UNKNOWN) ret = DRIVE_FIXED;
             break;
         default:
             ret = DRIVE_UNKNOWN;
