@@ -317,7 +317,7 @@ StatementList_opt
 /* ECMA-262 3rd Edition    12.1 */
 Block
         : '{' StatementList '}' { $$ = new_block_statement(ctx, $2); }
-        | '{' '}'               { $$ = new_block_statement(ctx, NULL) }
+        | '{' '}'               { $$ = new_block_statement(ctx, NULL); }
 
 /* ECMA-262 3rd Edition    12.2 */
 VariableStatement
