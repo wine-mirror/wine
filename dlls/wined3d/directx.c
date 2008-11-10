@@ -3062,7 +3062,11 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     if(GL_SUPPORT(SGIS_GENERATE_MIPMAP)) {
         pCaps->Caps2 |= WINED3DCAPS2_CANAUTOGENMIPMAP;
     }
-    pCaps->Caps3                   = WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD;
+
+    pCaps->Caps3                   = WINED3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD |
+                                     WINED3DCAPS3_COPY_TO_VIDMEM                   |
+                                     WINED3DCAPS3_COPY_TO_SYSTEMMEM;
+
     pCaps->PresentationIntervals   = WINED3DPRESENT_INTERVAL_IMMEDIATE  |
                                      WINED3DPRESENT_INTERVAL_ONE;
 
