@@ -172,4 +172,32 @@ void WINAPI SetThemeAppProperties(DWORD);
 HRESULT WINAPI SetWindowTheme(HWND,LPCWSTR,LPCWSTR);
 
 
+/* Double-buffered Drawing API */
+
+typedef HANDLE HPAINTBUFFER;
+
+HRESULT WINAPI BufferedPaintInit(VOID);
+HRESULT WINAPI BufferedPaintUnInit(VOID);
+
+typedef enum _BP_BUFFERFORMAT
+{
+	BPBF_COMPATIBLEBITMAP,
+	BPBF_DIB,
+	BPBF_TOPDOWNDIB,
+	BPBF_TOPDOWNMONODIB
+} BP_BUFFERFORMAT;
+
+typedef struct _BP_PAINTPARAMS
+{
+	DWORD cbSize;
+	DWORD dwFlags;
+	const RECT *prcExclude;
+	const BLENDFUNCTION *pBlendFunction;
+} BP_PAINTPARAMS, *PBP_PAINTPARAMS;
+
+HPAINTBUFFER WINAPI BeginBufferedPaint(HDC, const RECT *, BP_BUFFERFORMAT,
+                                       BP_PAINTPARAMS *,HDC *);
+
+HRESULT WINAPI EndBufferedPaint(HPAINTBUFFER, BOOL);
+
 #endif
