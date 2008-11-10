@@ -24,6 +24,7 @@
 #include "wine/test.h"
 
 static DWORD (WINAPI *pXInputGetState)(DWORD, XINPUT_STATE*);
+static DWORD (WINAPI *pXInputGetCapabilities)(DWORD,DWORD,XINPUT_CAPABILITIES*);
 
 static void test_get_state(void)
 {
@@ -64,6 +65,30 @@ static void test_get_state(void)
     ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
 }
 
+static void test_get_capabilities(void)
+{
+    XINPUT_CAPABILITIES capabilities;
+    DWORD controllerNum;
+    DWORD result;
+
+    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    {
+        ZeroMemory(&capabilities, sizeof(XINPUT_CAPABILITIES));
+
+        result = pXInputGetCapabilities(controllerNum, XINPUT_FLAG_GAMEPAD, &capabilities);
+        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetCapabilities failed with (%d)\n", result);
+
+        if (ERROR_DEVICE_NOT_CONNECTED == result)
+        {
+            skip("Controller %d is not connected\n", controllerNum);
+        }
+    }
+
+    ZeroMemory(&capabilities, sizeof(XINPUT_CAPABILITIES));
+    result = pXInputGetCapabilities(XUSER_MAX_COUNT+1, XINPUT_FLAG_GAMEPAD, &capabilities);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetCapabilities returned (%d)\n", result);
+}
+
 START_TEST(xinput)
 {
     HMODULE hXinput;
@@ -72,7 +97,9 @@ START_TEST(xinput)
     if (hXinput)
     {
         pXInputGetState = (void*)GetProcAddress(hXinput, "XInputGetState");
+        pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
         test_get_state();
+        test_get_capabilities();
     }
     else
     {
