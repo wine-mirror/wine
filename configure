@@ -26858,6 +26858,14 @@ dlls/xinput1_3/Makefile: dlls/xinput1_3/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/xinput1_3/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/xinput1_3/tests/Makefile"
+test "x$enable_xinput1_3_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+	xinput1_3/tests"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/xinput1_3/tests/Makefile: dlls/xinput1_3/tests/Makefile.in dlls/Maketest.rules"
+ac_config_files="$ac_config_files dlls/xinput1_3/tests/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/xinput9_1_0/Makefile"
 test "x$enable_xinput9_1_0" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	xinput9_1_0"
@@ -28400,6 +28408,7 @@ do
     "dlls/xinput1_1/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_1/Makefile" ;;
     "dlls/xinput1_2/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_2/Makefile" ;;
     "dlls/xinput1_3/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_3/Makefile" ;;
+    "dlls/xinput1_3/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput1_3/tests/Makefile" ;;
     "dlls/xinput9_1_0/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/xinput9_1_0/Makefile" ;;
     "documentation/Makefile") CONFIG_FILES="$CONFIG_FILES documentation/Makefile" ;;
     "fonts/Makefile") CONFIG_FILES="$CONFIG_FILES fonts/Makefile" ;;

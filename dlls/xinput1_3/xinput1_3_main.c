@@ -27,6 +27,8 @@
 #include "winbase.h"
 #include "winerror.h"
 
+#include "xinput.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(xinput);
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
@@ -42,4 +44,16 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
         break;
     }
     return TRUE;
+}
+
+DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
+{
+    FIXME("(%u %p)\n", dwUserIndex, pState);
+
+    if (dwUserIndex < XUSER_MAX_COUNT)
+    {
+        return ERROR_DEVICE_NOT_CONNECTED;
+        /* If controller exists then return ERROR_SUCCESS */
+    }
+    return ERROR_BAD_ARGUMENTS;
 }
