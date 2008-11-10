@@ -817,7 +817,7 @@ static WORD parse_TOKEN(parse_buffer * buf)
         break;
       case TOKEN_GUID:
         {
-          char strguid[38];
+          char strguid[39];
           GUID class_id;
 
           if (!read_bytes(buf, &class_id, 16))
