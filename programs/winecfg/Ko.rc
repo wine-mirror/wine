@@ -41,13 +41,14 @@ BEGIN
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
     LTEXT           "이 라이브러리는 자유 소프트웨어입니다. 당신은 자유 소프트웨어 재단(Free Software Foundation)에서 만든 GNU LGPL(Lesser General Public License) 아래에서 이 프로그램을 재배포 또는 수정할 수 있습니다. 라이센스의 버전은 2.1 또는 (선택적으로) 그 이후 버전을 따르면 됩니다.",
-                    IDC_STATIC,119,44,124,72
+                    IDC_STATIC,119,44,131,66
     GROUPBOX        " 윈도우즈 등록 정보 ", IDC_STATIC, 15, 110, 230, 55
     LTEXT           "소유자:", IDC_STATIC, 22, 126, 40, 20
     LTEXT           "단체:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
+
 
 IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
@@ -103,7 +104,7 @@ BEGIN
     PUSHBUTTON      "더하기(&A)",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
     LTEXT           "현재 오버라이드 목록(&O):",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
-    PUSHBUTTON      "고치기(&E)",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "고치기(&E)...",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "지우기(&R)",IDC_DLLS_REMOVEDLL,164,114,82,14 
 END
 
@@ -127,7 +128,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 드라이브 연결(&M) ",IDC_STATIC,8,4,244,240
-    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    LTEXT           "연결 관리자가 연결하는 데 실패함, 이 드라이브 설정을 수정될 수 없습니다.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
     CONTROL         "목록보기",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "추가(&A)...",IDC_BUTTON_ADD,15,98,37,14
@@ -198,13 +199,13 @@ BEGIN
     LTEXT           "크기(&Z):",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "글꼴(&F)",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " 쉘 폴더(&H) ",IDC_STATIC,8,114,244,100
+    PUSHBUTTON      "글꼴(&F)...",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " 폴더(&D) ",IDC_STATIC,8,114,244,100
     CONTROL         "목록보기",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
     CONTROL         "연결 위치(&L):",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,55,13
     EDITTEXT         IDC_EDIT_SFPATH,75,195,135,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "찾기(&R)",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "찾기(&R)...",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -225,7 +226,7 @@ BEGIN
     IDS_THEMEFILE           "테마 파일"
     IDS_THEMEFILE_SELECT    "테마 파일 선택"
     IDS_AUDIO_MISSING       "현재 레지스트리에 오디오 드라이버가 지정되어 있지 않습니다.\n\n추천 드라이버가 선택었습니다.\n이 드라이버를 사용하거나 가능한 다른 드라이버를 선택할 수 있습니다.\n\n선택 사항이 효과를 나타내기 위해서는 적용 버튼을 눌러야 합니다."
-    IDS_SHELL_FOLDER        "쉘 폴더"
+    IDS_SHELL_FOLDER        "폴더"
     IDS_LINKS_TO            "연결 위치"
 END
 
