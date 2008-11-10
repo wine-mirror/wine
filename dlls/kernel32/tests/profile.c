@@ -279,6 +279,7 @@ static void test_profile_existing(void)
         DWORD dwShareMode;
         DWORD write_error;
         BOOL read_error;
+        DWORD broken_error;
     } pe[] = {
         {GENERIC_READ,  FILE_SHARE_READ,  ERROR_SHARING_VIOLATION, FALSE },
         {GENERIC_READ,  FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION, TRUE },
@@ -286,10 +287,10 @@ static void test_profile_existing(void)
         {GENERIC_WRITE, FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION, TRUE },
         {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ,  ERROR_SHARING_VIOLATION, FALSE },
         {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_WRITE, ERROR_SHARING_VIOLATION, TRUE },
-        {GENERIC_READ,  FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE },
-        {GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE },
+        {GENERIC_READ,  FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE, ERROR_SHARING_VIOLATION /* nt4 */},
+        {GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE, ERROR_SHARING_VIOLATION /* nt4 */},
         /*Thief demo (bug 5024) opens .ini file like this*/
-        {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE }
+        {GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, FALSE, ERROR_SHARING_VIOLATION /* nt4 */}
     };
 
     int i;
@@ -308,10 +309,15 @@ static void test_profile_existing(void)
         ret = WritePrivateProfileString(SECTION, KEY, "12345", testfile1);
         if (!pe[i].write_error)
         {
-            ok( ret, "%d: WritePrivateProfileString failed with error %u\n", i, GetLastError() );
+            if (!ret)
+                ok( broken(GetLastError() == pe[i].broken_error),
+                    "%d: WritePrivateProfileString failed with error %u\n", i, GetLastError() );
             CloseHandle(h);
             size = GetPrivateProfileString(SECTION, KEY, 0, buffer, MAX_PATH, testfile1);
-            ok( size == 5, "%d: test failed, number of characters copied: %d instead of 5\n", i, size );
+            if (ret)
+                ok( size == 5, "%d: test failed, number of characters copied: %d instead of 5\n", i, size );
+            else
+                ok( !size, "%d: test failed, number of characters copied: %d instead of 0\n", i, size );
         }
         else
         {
