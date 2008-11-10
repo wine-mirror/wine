@@ -395,6 +395,12 @@ extern void             symbol_info(const char* str);
 extern void             symbol_print_local(const SYMBOL_INFO* sym, ULONG base, BOOL detailed);
 extern int              symbol_info_locals(void);
 extern BOOL             symbol_is_local(const char* name);
+struct sgv_data;
+typedef enum sym_get_lval (*symbol_picker_t)(const char* name, const struct sgv_data* sgv,
+                                             struct dbg_lvalue* rtn);
+extern symbol_picker_t symbol_current_picker;
+extern enum sym_get_lval symbol_picker_interactive(const char* name, const struct sgv_data* sgv,
+                                                   struct dbg_lvalue* rtn);
 
   /* tgt_active.c */
 extern void             dbg_run_debuggee(const char* args);
