@@ -37,6 +37,7 @@
 @ stdcall ChangeDisplaySettingsW(ptr long)
 @ stdcall ChangeMenuA(long long ptr long long)
 @ stdcall ChangeMenuW(long long ptr long long)
+@ stdcall ChangeWindowMessageFilter(long long)
 @ stdcall CharLowerA(str)
 @ stdcall CharLowerBuffA(str long)
 @ stdcall CharLowerBuffW(wstr long)

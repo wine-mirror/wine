@@ -3701,3 +3701,12 @@ BOOL WINAPI IsHungAppWindow( HWND hWnd )
     SERVER_END_REQ;
     return ret;
 }
+
+/******************************************************************
+ *      ChangeWindowMessageFilter (USER32.@)
+ */
+BOOL WINAPI ChangeWindowMessageFilter( UINT message, DWORD flag )
+{
+    FIXME( "%x %08x\n", message, flag );
+    return TRUE;
+}
