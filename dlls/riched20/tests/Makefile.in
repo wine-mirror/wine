@@ -7,7 +7,8 @@ IMPORTS   = ole32 user32 gdi32 kernel32
 
 CTESTS = \
 	editor.c \
-	richole.c
+	richole.c \
+	txtsrv.c
 
 @MAKE_TEST_RULES@
 
