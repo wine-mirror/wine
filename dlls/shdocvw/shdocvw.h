@@ -115,7 +115,7 @@ struct WebBrowser {
     const IPersistMemoryVtbl            *lpPersistMemoryVtbl;
     const IPersistStreamInitVtbl        *lpPersistStreamInitVtbl;
     const IProvideClassInfo2Vtbl        *lpProvideClassInfoVtbl;
-    const IViewObjectExVtbl             *lpViewObjectVtbl;
+    const IViewObject2Vtbl              *lpViewObjectVtbl;
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpOleCommandTargetVtbl;
     const IHlinkFrameVtbl               *lpHlinkFrameVtbl;
@@ -173,7 +173,6 @@ struct InternetExplorer {
 #define CONPTCONT(x)    ((IConnectionPointContainer*)   &(x)->lpConnectionPointContainerVtbl)
 #define VIEWOBJ(x)      ((IViewObject*)                 &(x)->lpViewObjectVtbl);
 #define VIEWOBJ2(x)     ((IViewObject2*)                &(x)->lpViewObjectVtbl);
-#define VIEWOBJEX(x)    ((IViewObjectEx*)               &(x)->lpViewObjectVtbl);
 #define ACTIVEOBJ(x)    ((IOleInPlaceActiveObject*)     &(x)->lpOleInPlaceActiveObjectVtbl)
 #define OLECMD(x)       ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
 #define HLINKFRAME(x)   ((IHlinkFrame*)                 &(x)->lpHlinkFrameVtbl)

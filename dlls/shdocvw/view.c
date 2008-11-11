@@ -23,25 +23,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 #define VIEWOBJ_THIS(iface) DEFINE_THIS(WebBrowser, ViewObject, iface)
 
-static HRESULT WINAPI ViewObject_QueryInterface(IViewObjectEx *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI ViewObject_QueryInterface(IViewObject2 *iface, REFIID riid, void **ppv)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
     return IWebBrowser2_QueryInterface(WEBBROWSER(This), riid, ppv);
 }
 
-static ULONG WINAPI ViewObject_AddRef(IViewObjectEx *iface)
+static ULONG WINAPI ViewObject_AddRef(IViewObject2 *iface)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
     return IWebBrowser2_AddRef(WEBBROWSER(This));
 }
 
-static ULONG WINAPI ViewObject_Release(IViewObjectEx *iface)
+static ULONG WINAPI ViewObject_Release(IViewObject2 *iface)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
     return IWebBrowser2_Release(WEBBROWSER(This));
 }
 
-static HRESULT WINAPI ViewObject_Draw(IViewObjectEx *iface, DWORD dwDrawAspect,
+static HRESULT WINAPI ViewObject_Draw(IViewObject2 *iface, DWORD dwDrawAspect,
         LONG lindex, void *pvAspect, DVTARGETDEVICE *ptd, HDC hdcTargetDev,
         HDC hdcDraw, LPCRECTL lprcBounds, LPCRECTL lprcWBounds,
         BOOL (STDMETHODCALLTYPE *pfnContinue)(ULONG_PTR),
@@ -54,7 +54,7 @@ static HRESULT WINAPI ViewObject_Draw(IViewObjectEx *iface, DWORD dwDrawAspect,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ViewObject_GetColorSet(IViewObjectEx *iface, DWORD dwAspect,
+static HRESULT WINAPI ViewObject_GetColorSet(IViewObject2 *iface, DWORD dwAspect,
         LONG lindex, void *pvAspect, DVTARGETDEVICE *ptd, HDC hicTargetDev,
         LOGPALETTE **ppColorSet)
 {
@@ -64,7 +64,7 @@ static HRESULT WINAPI ViewObject_GetColorSet(IViewObjectEx *iface, DWORD dwAspec
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ViewObject_Freeze(IViewObjectEx *iface, DWORD dwDrawAspect, LONG lindex,
+static HRESULT WINAPI ViewObject_Freeze(IViewObject2 *iface, DWORD dwDrawAspect, LONG lindex,
                                         void *pvAspect, DWORD *pdwFreeze)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
@@ -72,14 +72,14 @@ static HRESULT WINAPI ViewObject_Freeze(IViewObjectEx *iface, DWORD dwDrawAspect
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ViewObject_Unfreeze(IViewObjectEx *iface, DWORD dwFreeze)
+static HRESULT WINAPI ViewObject_Unfreeze(IViewObject2 *iface, DWORD dwFreeze)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
     FIXME("(%p)->(%d)\n", This, dwFreeze);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ViewObject_SetAdvise(IViewObjectEx *iface, DWORD aspects, DWORD advf,
+static HRESULT WINAPI ViewObject_SetAdvise(IViewObject2 *iface, DWORD aspects, DWORD advf,
         IAdviseSink *pAdvSink)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
@@ -87,7 +87,7 @@ static HRESULT WINAPI ViewObject_SetAdvise(IViewObjectEx *iface, DWORD aspects, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ViewObject_GetAdvise(IViewObjectEx *iface, DWORD *pAspects,
+static HRESULT WINAPI ViewObject_GetAdvise(IViewObject2 *iface, DWORD *pAspects,
         DWORD *pAdvf, IAdviseSink **ppAdvSink)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
@@ -95,7 +95,7 @@ static HRESULT WINAPI ViewObject_GetAdvise(IViewObjectEx *iface, DWORD *pAspects
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ViewObject_GetExtent(IViewObjectEx *iface, DWORD dwAspect, LONG lindex,
+static HRESULT WINAPI ViewObject_GetExtent(IViewObject2 *iface, DWORD dwAspect, LONG lindex,
         DVTARGETDEVICE *ptd, LPSIZEL lpsizel)
 {
     WebBrowser *This = VIEWOBJ_THIS(iface);
@@ -103,45 +103,7 @@ static HRESULT WINAPI ViewObject_GetExtent(IViewObjectEx *iface, DWORD dwAspect,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ViewObject_GetRect(IViewObjectEx *iface, DWORD dwAspect, LPRECTL pRect)
-{
-    WebBrowser *This = VIEWOBJ_THIS(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwAspect, pRect);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ViewObject_GetViewStatus(IViewObjectEx *iface, DWORD *pdwStatus)
-{
-    WebBrowser *This = VIEWOBJ_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pdwStatus);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ViewObject_QueryHitPoint(IViewObjectEx *iface, DWORD dwAspect, LPCRECT pRectBounds,
-        POINT ptlLoc, LONG lCloseHint, DWORD *pHitResult)
-{
-    WebBrowser *This = VIEWOBJ_THIS(iface);
-    FIXME("(%p)->(%d %p %p %d %p)\n", This, dwAspect, pRectBounds, pRectBounds, lCloseHint, pHitResult);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ViewObject_QueryHitRect(IViewObjectEx * iface, DWORD dwAspect, LPCRECT pRectBounds,
-        LPCRECT pRectLoc, LONG lCloseHint, DWORD *pHitResult)
-{
-    WebBrowser *This = VIEWOBJ_THIS(iface);
-    FIXME("(%p)->(%d %p %p %p %d %p)\n", This, dwAspect, pRectBounds, pRectLoc, pRectBounds, lCloseHint, pHitResult);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ViewObject_GetNaturalExtent(IViewObjectEx *iface, DWORD dwAspect, LONG lindex,
-        DVTARGETDEVICE *ptd, HDC hicTargetDev, DVEXTENTINFO *pExtentInfo, LPSIZEL pSizel)
-{
-    WebBrowser *This = VIEWOBJ_THIS(iface);
-    FIXME("(%p)->(%d %d %p %p %p)\n", This, dwAspect, lindex, ptd, pExtentInfo, pSizel);
-    return E_NOTIMPL;
-}
-
-static const IViewObjectExVtbl ViewObjectVtbl = {
+static const IViewObject2Vtbl ViewObjectVtbl = {
     ViewObject_QueryInterface,
     ViewObject_AddRef,
     ViewObject_Release,
@@ -151,12 +113,7 @@ static const IViewObjectExVtbl ViewObjectVtbl = {
     ViewObject_Unfreeze,
     ViewObject_SetAdvise,
     ViewObject_GetAdvise,
-    ViewObject_GetExtent,
-    ViewObject_GetRect,
-    ViewObject_GetViewStatus,
-    ViewObject_QueryHitPoint,
-    ViewObject_QueryHitRect,
-    ViewObject_GetNaturalExtent
+    ViewObject_GetExtent
 };
 
 #undef VIEWOBJ_THIS

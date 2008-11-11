@@ -1983,6 +1983,7 @@ static void test_QueryInterface(IUnknown *unk)
     IOleInPlaceSite *inplace = (void*)0xdeadbeef;
     IOleCache *cache = (void*)0xdeadbeef;
     IObjectWithSite *site = (void*)0xdeadbeef;
+    IViewObjectEx *viewex = (void*)0xdeadbeef;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
@@ -2008,6 +2009,11 @@ static void test_QueryInterface(IUnknown *unk)
     hres = IUnknown_QueryInterface(unk, &IID_IObjectWithSite, (void**)&site);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(site == NULL, "inplace=%p, ezpected NULL\n", runnable);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IViewObjectEx, (void**)&viewex);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(viewex == NULL, "viewex=%p, ezpected NULL\n", runnable);
+
 }
 
 static void test_WebBrowser(void)
