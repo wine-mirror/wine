@@ -397,7 +397,7 @@
 @ stdcall LsaSetInformationPolicy(long long ptr)
 @ stub LsaSetInformationTrustedDomain
 # @ stub LsaSetQuotasForAccount
-@ stub LsaSetSecret
+@ stdcall LsaSetSecret(ptr ptr ptr)
 # @ stub LsaSetSecurityObject
 @ stub LsaSetSystemAccessAccount
 @ stdcall LsaSetTrustedDomainInfoByName(ptr ptr long ptr)

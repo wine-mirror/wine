@@ -624,6 +624,30 @@ NTSTATUS WINAPI LsaSetInformationPolicy(
 }
 
 /******************************************************************************
+ * LsaSetSecret [ADVAPI32.@]
+ *
+ * Set old and new values on a secret handle
+ *
+ * PARAMS
+ *  SecretHandle          [I] Handle to a secret object.
+ *  EncryptedCurrentValue [I] Pointer to encrypted new value, can be NULL
+ *  EncryptedOldValue     [I] Pointer to encrypted old value, can be NULL
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: NTSTATUS code.
+ */
+NTSTATUS WINAPI LsaSetSecret(
+    IN LSA_HANDLE SecretHandle,
+    IN PLSA_UNICODE_STRING EncryptedCurrentValue,
+    IN PLSA_UNICODE_STRING EncryptedOldValue)
+{
+    FIXME("(%p,%p,%p) stub\n", SecretHandle, EncryptedCurrentValue,
+            EncryptedOldValue);
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
  * LsaSetTrustedDomainInfoByName [ADVAPI32.@]
  *
  */
