@@ -8874,7 +8874,6 @@ static void test_PeekMessage(void)
     DWORD tid, qstatus;
     UINT qs_all_input = QS_ALLINPUT;
     UINT qs_input = QS_INPUT;
-    UINT qs_sendmessage = 0;
     BOOL ret;
     struct peekmsg_info info;
 
@@ -8965,11 +8964,10 @@ static void test_PeekMessage(void)
     ok(!ret,
        "PeekMessageA should have returned FALSE instead of msg %04x\n",
         msg.message);
-    if (!sequence_cnt)  /* nt4 needs explicit PM_QS_SENDMESSAGE to process sent messages */
+    if (!sequence_cnt)  /* nt4 doesn't fetch anything with PM_QS_* flags */
     {
-        qs_sendmessage = QS_SENDMESSAGE;
-        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | ((qs_input|qs_sendmessage) << 16));
-        ok(!ret, "PeekMessageA should have returned FALSE instead of msg %04x\n", msg.message);
+        win_skip( "PM_QS_* flags not supported in PeekMessage\n" );
+        goto done;
     }
     ok_sequence(WmUser, "WmUser", FALSE);
 
@@ -8986,7 +8984,7 @@ static void test_PeekMessage(void)
        "wrong qstatus %08x\n", qstatus);
 
     msg.message = 0;
-    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_POSTMESSAGE | (qs_sendmessage << 16) );
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_POSTMESSAGE );
     ok(!ret,
        "PeekMessageA should have returned FALSE instead of msg %04x\n",
         msg.message);
