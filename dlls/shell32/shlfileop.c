@@ -1717,7 +1717,7 @@ HRESULT WINAPI SHPathPrepareForWriteA(HWND hwnd, IUnknown *modless, LPCSTR path,
  */
 HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path, DWORD flags)
 {
-    HRESULT res;
+    DWORD res;
     DWORD err;
     LPCWSTR realpath;
     int len;

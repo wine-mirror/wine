@@ -890,7 +890,8 @@ HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_d
     char **out;
     char *home_dir, *config_file;
     char buffer[512];
-    int i, len;
+    int len;
+    unsigned int i;
     HRESULT hr;
 
     *out_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, num_dirs * sizeof(char *));

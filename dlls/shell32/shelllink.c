@@ -686,7 +686,7 @@ static HRESULT Stream_LoadLocation( IStream *stm,
     char *p = NULL;
     LOCATION_INFO *loc;
     HRESULT r;
-    int n;
+    DWORD n;
 
     r = Stream_ReadChunk( stm, (LPVOID*) &p );
     if( FAILED(r) )

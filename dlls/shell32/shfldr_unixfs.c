@@ -1204,7 +1204,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     static const WCHAR awcInvalidChars[] = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
     char szSrc[FILENAME_MAX], szDest[FILENAME_MAX];
     WCHAR wszSrcRelative[MAX_PATH];
-    int cBasePathLen = lstrlenA(This->m_pszPath), i;
+    unsigned int i;
+    int cBasePathLen = lstrlenA(This->m_pszPath);
     struct stat statDest;
     LPITEMIDLIST pidlSrc, pidlDest, pidlRelativeDest;
     LPOLESTR lpwszName;
@@ -1802,7 +1803,7 @@ static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, const LP
     LPWSTR wszPathsList, wszListPos;
     SHFILEOPSTRUCTW op;
     HRESULT ret;
-    int i;
+    UINT i;
     
     lstrcpyA(szAbsolute, This->m_pszPath);
     pszRelative = szAbsolute + lstrlenA(szAbsolute);
@@ -1854,7 +1855,7 @@ static HRESULT UNIXFS_delete_with_syscalls(UnixFolder *This, UINT cidl, const LP
 {
     char szAbsolute[FILENAME_MAX], *pszRelative;
     static const WCHAR empty[] = {0};
-    int i;
+    UINT i;
     
     if (!SHELL_ConfirmYesNoW(GetActiveWindow(), ASK_DELETE_SELECTED, empty))
         return S_OK;

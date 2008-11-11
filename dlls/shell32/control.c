@@ -248,7 +248,8 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTW* cs)
    HMENU hMenu, hSubMenu;
    CPlApplet*	applet;
    MENUITEMINFOW mii;
-   int menucount, i, index;
+   unsigned int i;
+   int menucount, index;
    CPlItem *item;
    LVITEMW lvItem;
    INITCOMMONCONTROLSEX icex;
@@ -340,7 +341,7 @@ static void Control_FreeCPlItems(HWND hWnd, CPanel *panel)
 {
     HMENU hMenu, hSubMenu;
     MENUITEMINFOW mii;
-    int i;
+    unsigned int i;
 
     /* get the File menu */
     hMenu = GetMenu(hWnd);

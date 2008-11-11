@@ -1327,11 +1327,11 @@ static BOOL SHELL_translate_idlist( LPSHELLEXECUTEINFOW sei, LPWSTR wszParameter
     if (SUCCEEDED(SHELL_GetPathFromIDListForExecuteW(sei->lpIDList, buffer, sizeof(buffer)))) {
         if (buffer[0]==':' && buffer[1]==':') {
             /* open shell folder for the specified class GUID */
-            if (lstrlenW(buffer) + 1 > parametersLen)
+            if (strlenW(buffer) + 1 > parametersLen)
                 ERR("parameters len exceeds buffer size (%i > %i), truncating\n",
                     lstrlenW(buffer) + 1, parametersLen);
             lstrcpynW(wszParameters, buffer, parametersLen);
-            if (lstrlenW(wExplorer) > dwApplicationNameLen)
+            if (strlenW(wExplorer) > dwApplicationNameLen)
                 ERR("application len exceeds buffer size (%i > %i), truncating\n",
                     lstrlenW(wExplorer) + 1, dwApplicationNameLen);
             lstrcpynW(wszApplicationName, wExplorer, dwApplicationNameLen);
