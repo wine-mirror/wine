@@ -40,8 +40,12 @@ BOOL WINAPI InternetCrackUrlW( LPCWSTR, DWORD, DWORD, LPURL_COMPONENTSW );
 BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW components )
 {
     BOOL ret;
+    INT upLen;
+    INT exLen;
 
     TRACE("%s, %d, %x, %p\n", debugstr_w(url), len, flags, components);
+    upLen = components->dwUrlPathLength;
+    exLen = components->dwExtraInfoLength;
 
     if ((ret = InternetCrackUrlW( url, len, flags, components )))
     {
@@ -53,6 +57,14 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
             set_last_error( ERROR_WINHTTP_UNRECOGNIZED_SCHEME );
             return FALSE;
         }
+        if (!len)
+            len = lstrlenW(url);
+        /* WinHttpCrackUrl actually returns pointers to the end of the string for components,
+           other than UserName and Password, that are missing */
+        if (upLen && components->lpszUrlPath == NULL)
+            components->lpszUrlPath = (LPWSTR)&url[len];
+        if (exLen && components->lpszExtraInfo == NULL)
+            components->lpszExtraInfo = (LPWSTR)&url[len];
     }
     return ret;
 }

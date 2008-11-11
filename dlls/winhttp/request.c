@@ -1104,7 +1104,7 @@ static BOOL handle_redirect( request_t *request )
 
         heap_free( request->path );
         request->path = NULL;
-        if (uc.lpszUrlPath)
+        if (uc.dwUrlPathLength)
         {
             len = uc.dwUrlPathLength + uc.dwExtraInfoLength;
             if (!(request->path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;

@@ -60,6 +60,13 @@ static const WCHAR url9[] =
     {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
      '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g',':','0','/','s','i','t','e','/','a','b','o','u','t','?','q','u','e','r','y',0};
 
+static const WCHAR url_k1[]  =
+    {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
+     '@','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
+
+static const WCHAR url_k2[]  =
+    {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
+
 static void fill_url_components( URL_COMPONENTS *uc )
 {
     uc->dwStructSize = sizeof(URL_COMPONENTS);
@@ -269,7 +276,77 @@ static void WinHttpCreateUrl_test( void )
     HeapFree( GetProcessHeap(), 0, url );
 }
 
+static void WinHttpCrackUrl_test( void )
+{
+    URL_COMPONENTSW uc;
+    DWORD Len = 0;
+    BOOL ret;
+
+    /* NULL components */
+    SetLastError( 0xdeadbeef );
+    memset(&uc,0,sizeof(uc));
+    uc.dwStructSize = sizeof(URL_COMPONENTSW);
+    uc.dwSchemeLength    = -1;
+    uc.dwHostNameLength  = -1;
+    uc.dwUserNameLength  = -1;
+    uc.dwPasswordLength  = -1;
+    uc.dwUrlPathLength   = -1;
+    uc.dwExtraInfoLength = -1;
+
+    ret = WinHttpCrackUrl( url_k1, 0, 0,&uc);
+
+    Len = 0;
+    ok (ret!=0,"WinHttpCrackUrl failed\n");
+    ok (uc.lpszScheme == url_k1,"Failed to get uc.lpszScheme\n");
+    ok (uc.dwSchemeLength == 4, "Unexpected dwSchemeLength\n");
+    Len += uc.dwSchemeLength + 3;
+    ok (uc.lpszUserName== &url_k1[Len],"Failed to get uc.lpszUserName\n");
+    ok (uc.dwUserNameLength == 8, "Unexpected dwUserNameLength\n");
+    Len +=uc.dwUserNameLength + 1;
+    ok (uc.lpszPassword==&url_k1[Len],"Failed to get uc.lpszPassword\n");
+    ok (uc.dwPasswordLength == 8, "Unexpected dwPasswordLength\n");
+    Len +=uc.dwPasswordLength + 1;
+    ok (uc.lpszHostName == &url_k1[Len],"Failed to get uc.lpszHostName\n");
+    ok (uc.dwHostNameLength == 14, "Unexpected dwHostNameLength\n");
+    Len += uc.dwHostNameLength;
+    ok (uc.lpszUrlPath == &url_k1[Len],"Failed to get uc.lpszUrlPath\n");
+    ok (uc.dwUrlPathLength == 11, "Unexpected dwUrlPathLength\n");
+    Len += uc.dwUrlPathLength;
+    ok (uc.lpszExtraInfo == &url_k1[Len],"Failed to get uc.lpszExtraInfo\n");
+    ok (uc.dwExtraInfoLength == 0, "Unexpected dwExtraInfoLength\n");
+
+    memset(&uc,0,sizeof(uc));
+    uc.dwStructSize = sizeof(URL_COMPONENTSW);
+    uc.dwSchemeLength    = -1;
+    uc.dwHostNameLength  = -1;
+    uc.dwUserNameLength  = -1;
+    uc.dwPasswordLength  = -1;
+    uc.dwUrlPathLength   = -1;
+    uc.dwExtraInfoLength = -1;
+
+    ret = WinHttpCrackUrl( url_k2, 0, 0,&uc);
+
+    Len = 0;
+    ok (ret!=0,"WinHttpCrackUrl failed\n");
+    ok (uc.lpszScheme == url_k2,"Failed to get uc.lpszScheme\n");
+    ok (uc.dwSchemeLength == 4, "Unexpected dwSchemeLength\n");
+    Len += uc.dwSchemeLength + 3;
+    ok (uc.lpszUserName == NULL ,"Got uc.lpszUserName\n");
+    ok (uc.dwUserNameLength == 0, "Unexpected dwUserNameLength\n");
+    ok (uc.lpszPassword == NULL,"Got uc.lpszPassword\n");
+    ok (uc.dwPasswordLength == 0, "Unexpected dwPasswordLength\n");
+    ok (uc.lpszHostName == &url_k2[Len],"Failed to get uc.lpszHostName\n");
+    ok (uc.dwHostNameLength == 14, "Unexpected dwHostNameLength\n");
+    Len += uc.dwHostNameLength;
+    ok (uc.lpszUrlPath == &url_k2[Len],"Failed to get uc.lpszUrlPath\n");
+    ok (uc.dwUrlPathLength == 0, "Unexpected dwUrlPathLength\n");
+    Len += uc.dwUrlPathLength;
+    ok (uc.lpszExtraInfo == &url_k2[Len],"Failed to get uc.lpszExtraInfo\n");
+    ok (uc.dwExtraInfoLength == 0, "Unexpected dwExtraInfoLength\n");
+}
+
 START_TEST(url)
 {
     WinHttpCreateUrl_test();
+    WinHttpCrackUrl_test();
 }
