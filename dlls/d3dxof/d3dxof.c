@@ -205,6 +205,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   DWORD header[4];
   DWORD size;
   HANDLE hFile = INVALID_HANDLE_VALUE;
+  LPDXFILELOADMEMORY lpdxflm = NULL;
 
   TRACE("(%p/%p)->(%p,%x,%p)\n", This, iface, pvSource, dwLoadOptions, ppEnumObj);
 
@@ -233,20 +234,28 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
       hr = DXFILEERR_BADFILETYPE;
       goto error;
     }
+  }
+  else if (dwLoadOptions == DXFILELOAD_FROMMEMORY)
+  {
+    lpdxflm = (LPDXFILELOADMEMORY)pvSource;
 
-    if (TRACE_ON(d3dxof))
-    {
-      char string[17];
-      memcpy(string, header, 16);
-      string[16] = 0;
-      TRACE("header = '%s'\n", string);
-    }
+    FIXME("Source in memory at %p with size %d\n", lpdxflm->lpMemory, lpdxflm->dSize);
+
+    memcpy(header, (char*)lpdxflm->lpMemory, 16);
   }
   else
   {
     FIXME("Source type %d is not handled yet\n", dwLoadOptions);
     hr = DXFILEERR_NOTDONEYET;
     goto error;
+  }
+
+  if (TRACE_ON(d3dxof))
+  {
+    char string[17];
+    memcpy(string, header, 16);
+    string[16] = 0;
+    TRACE("header = '%s'\n", string);
   }
 
   if (header[0] != XOFFILE_FORMAT_MAGIC)
@@ -301,22 +310,31 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   object->buf.token_present = FALSE;
   object->buf.cur_subobject = 0;
 
-  object->buf.buffer = HeapAlloc(GetProcessHeap(), 0, MAX_INPUT_SIZE+1);
-  if (!object->buf.buffer)
+  if (dwLoadOptions == DXFILELOAD_FROMFILE)
   {
-    WARN("Out of memory\n");
-    hr = DXFILEERR_BADALLOC;
-    goto error;
+    object->buf.buffer = HeapAlloc(GetProcessHeap(), 0, MAX_INPUT_SIZE+1);
+    if (!object->buf.buffer)
+    {
+      WARN("Out of memory\n");
+      hr = DXFILEERR_BADALLOC;
+      goto error;
+    }
+
+    ReadFile(hFile, object->buf.buffer, MAX_INPUT_SIZE+1, &object->buf.rem_bytes, NULL);
+    if (object->buf.rem_bytes > MAX_INPUT_SIZE)
+    {
+      FIXME("File size > %d not supported yet\n", MAX_INPUT_SIZE);
+      HeapFree(GetProcessHeap(), 0, object->buf.buffer);
+      hr = DXFILEERR_PARSEERROR;
+      goto error;
+    }
+  }
+  else
+  {
+    object->buf.buffer = ((LPBYTE)lpdxflm->lpMemory) + 16;
+    object->buf.rem_bytes = lpdxflm->dSize;
   }
 
-  ReadFile(hFile, object->buf.buffer, MAX_INPUT_SIZE+1, &object->buf.rem_bytes, NULL);
-  if (object->buf.rem_bytes > MAX_INPUT_SIZE)
-  {
-    FIXME("File size > %d not supported yet\n", MAX_INPUT_SIZE);
-    HeapFree(GetProcessHeap(), 0, object->buf.buffer);
-    hr = DXFILEERR_PARSEERROR;
-    goto error;
-  }
   TRACE("Read %d bytes\n", object->buf.rem_bytes);
 
   *ppEnumObj = (LPDIRECTXFILEENUMOBJECT)object;
