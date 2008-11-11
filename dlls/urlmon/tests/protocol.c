@@ -1423,8 +1423,14 @@ static void test_file_protocol(void) {
     trace("Testing file protocol...\n");
     tested_protocol = FILE_TEST;
 
+    SetLastError(0xdeadbeef);
     file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
+    if(!file && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("Detected Win9x or WinMe\n");
+        return;
+    }
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
     if(file == INVALID_HANDLE_VALUE)
         return;
