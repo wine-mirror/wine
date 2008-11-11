@@ -882,7 +882,7 @@ static void test_query_svc(void)
     /* Only info level is correct. It looks like the buffer/size is checked second */
     SetLastError(0xdeadbeef);
     ret = pQueryServiceStatusEx(NULL, 0, NULL, 0, &needed);
-    /* NT4 checks the handle first */
+    /* NT4 and Wine check the handle first */
     if (GetLastError() != ERROR_INVALID_HANDLE)
     {
         ok(!ret, "Expected failure\n");
@@ -893,7 +893,7 @@ static void test_query_svc(void)
     }
 
     /* Pass a correct buffer and buffersize but a NULL handle */
-    statusproc = HeapAlloc(GetProcessHeap(), 0, needed);
+    statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
     bufsize = needed;
     SetLastError(0xdeadbeef);
     ret = pQueryServiceStatusEx(NULL, 0, (BYTE*)statusproc, bufsize, &needed);
