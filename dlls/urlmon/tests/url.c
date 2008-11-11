@@ -147,8 +147,10 @@ static const WCHAR wszWineHQSite[] =
     {'w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
 static const WCHAR wszWineHQIP[] =
     {'2','0','9','.','3','2','.','1','4','1','.','3',0};
+static const CHAR wszIndexHtmlA[] = "index.html";
 static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 static const WCHAR cache_fileW[] = {'c',':','\\','c','a','c','h','e','.','h','t','m',0};
+static const CHAR dwl_htmlA[] = "dwl.html";
 static const WCHAR dwl_htmlW[] = {'d','w','l','.','h','t','m','l',0};
 static const WCHAR emptyW[] = {0};
 
@@ -2401,7 +2403,7 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
         CHECK_CALLED(OnStopBinding);
     }
 
-    res = DeleteFileW(dwl_htmlW);
+    res = DeleteFileA(dwl_htmlA);
     ok(res, "DeleteFile failed: %u\n", GetLastError());
 
     if(prot != FILE_TEST || emul)
@@ -2410,35 +2412,33 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
     hres = URLDownloadToFileW(NULL, urls[test_protocol], dwl_htmlW, 0, NULL);
     ok(hres == S_OK, "URLDownloadToFile failed: %08x\n", hres);
 
-    res = DeleteFileW(dwl_htmlW);
+    res = DeleteFileA(dwl_htmlA);
     ok(res, "DeleteFile failed: %u\n", GetLastError());
 }
 
-static void set_file_url(void)
+static void set_file_url(char *path)
 {
-    int len;
+    CHAR file_urlA[INTERNET_MAX_URL_LENGTH];
+    CHAR INDEX_HTMLA[MAX_PATH];
 
-    static const WCHAR wszFile[] = {'f','i','l','e',':','/','/'};
+    lstrcpyA(file_urlA, "file:///");
+    lstrcatA(file_urlA, path);
+    MultiByteToWideChar(CP_ACP, 0, file_urlA, -1, file_url, INTERNET_MAX_URL_LENGTH);
 
-    memcpy(file_url, wszFile, sizeof(wszFile));
-    len = sizeof(wszFile)/sizeof(WCHAR);
-    file_url[len++] = '/';
-    len += GetCurrentDirectoryW(sizeof(file_url)/sizeof(WCHAR)-len, file_url+len);
-    file_url[len++] = '\\';
-    memcpy(file_url+len, wszIndexHtml, sizeof(wszIndexHtml));
-
-    memcpy(INDEX_HTML, wszFile, sizeof(wszIndexHtml));
-    memmove(INDEX_HTML+7, file_url+8, (lstrlenW(file_url+8)+1)*sizeof(WCHAR));
+    lstrcpyA(INDEX_HTMLA, "file://");
+    lstrcatA(INDEX_HTMLA, path);
+    MultiByteToWideChar(CP_ACP, 0, INDEX_HTMLA, -1, INDEX_HTML, MAX_PATH);
 }
 
 static void create_file(void)
 {
     HANDLE file;
     DWORD size;
+    CHAR path[MAX_PATH];
 
     static const char html_doc[] = "<HTML></HTML>";
 
-    file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+    file = CreateFileA(wszIndexHtmlA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
     if(file == INVALID_HANDLE_VALUE)
@@ -2447,7 +2447,10 @@ static void create_file(void)
     WriteFile(file, html_doc, sizeof(html_doc)-1, &size, NULL);
     CloseHandle(file);
 
-    set_file_url();
+    GetCurrentDirectoryA(MAX_PATH, path);
+    lstrcatA(path, "\\");
+    lstrcatA(path, wszIndexHtmlA);
+    set_file_url(path);
 }
 
 static void test_ReportResult(HRESULT exhres)
@@ -2665,7 +2668,7 @@ START_TEST(url)
     trace("test failures...\n");
     test_BindToStorage_fail();
 
-    DeleteFileW(wszIndexHtml);
+    DeleteFileA(wszIndexHtmlA);
     CloseHandle(complete_event);
     CloseHandle(complete_event2);
     CoUninitialize();
