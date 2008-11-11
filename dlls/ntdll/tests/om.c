@@ -130,9 +130,9 @@ static void test_namespace_pipe(void)
     ok(status == STATUS_INSTANCE_NOT_AVAILABLE,
         "NtCreateNamedPipeFile should have failed with STATUS_INSTANCE_NOT_AVAILABLE got(%08x)\n", status);
 
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
-    ok(status == STATUS_SUCCESS, "Failed to open NamedPipe(%08x)\n", status);
+    h = CreateFileA("\\\\.\\pipe\\test\\pipe", GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                    OPEN_EXISTING, 0, 0 );
+    ok(h != INVALID_HANDLE_VALUE, "Failed to open NamedPipe (%u)\n", GetLastError());
     pNtClose(h);
 
     pRtlInitUnicodeString(&str, buffer3);
@@ -178,6 +178,64 @@ static void test_namespace_pipe(void)
     DIR_TEST_CREATE_SUCCESS(&h) pNtClose(h); DIR_TEST_OPEN_SUCCESS(&h) pNtClose(h); \
     pRtlFreeUnicodeString(&str);
 
+static BOOL is_correct_dir( HANDLE dir, const char *name )
+{
+    NTSTATUS status;
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE h = 0;
+
+    pRtlCreateUnicodeStringFromAsciiz(&str, name);
+    InitializeObjectAttributes(&attr, &str, OBJ_OPENIF, dir, NULL);
+    status = pNtCreateMutant(&h, GENERIC_ALL, &attr, FALSE);
+    pRtlFreeUnicodeString(&str);
+    if (h) pNtClose( h );
+    return (status == STATUS_OBJECT_NAME_EXISTS);
+}
+
+/* return a handle to the BaseNamedObjects dir where kernel32 objects get created */
+static HANDLE get_base_dir(void)
+{
+    static const char objname[] = "om.c_get_base_dir_obj";
+    NTSTATUS status;
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE dir, h;
+    unsigned int i;
+
+    h = CreateMutexA(NULL, FALSE, objname);
+    ok(h != 0, "CreateMutexA failed got ret=%p (%d)\n", h, GetLastError());
+    InitializeObjectAttributes(&attr, &str, OBJ_OPENIF, 0, NULL);
+
+    pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Local");
+    status = pNtOpenDirectoryObject(&dir, DIRECTORY_QUERY, &attr);
+    pRtlFreeUnicodeString(&str);
+    if (!status && is_correct_dir( dir, objname )) goto done;
+    if (!status) pNtClose( dir );
+
+    pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects");
+    status = pNtOpenDirectoryObject(&dir, DIRECTORY_QUERY, &attr);
+    pRtlFreeUnicodeString(&str);
+    if (!status && is_correct_dir( dir, objname )) goto done;
+    if (!status) pNtClose( dir );
+
+    for (i = 0; i < 20; i++)
+    {
+        char name[40];
+        sprintf( name, "\\BaseNamedObjects\\Session\\%u", i );
+        pRtlCreateUnicodeStringFromAsciiz(&str, name );
+        status = pNtOpenDirectoryObject(&dir, DIRECTORY_QUERY, &attr);
+        pRtlFreeUnicodeString(&str);
+        if (!status && is_correct_dir( dir, objname )) goto done;
+        if (!status) pNtClose( dir );
+    }
+    dir = 0;
+
+done:
+    pNtClose( h );
+    return dir;
+}
+
 static void test_name_collisions(void)
 {
     NTSTATUS status;
@@ -205,12 +263,13 @@ static void test_name_collisions(void)
         "NtCreateMutant should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
-
-    pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects");
-    DIR_TEST_OPEN_SUCCESS(&dir)
+    if (!(dir = get_base_dir()))
+    {
+        win_skip( "couldn't find the BaseNamedObjects dir\n" );
+        return;
+    }
     pRtlCreateUnicodeStringFromAsciiz(&str, "om.c-test");
     InitializeObjectAttributes(&attr, &str, OBJ_OPENIF, dir, NULL);
-    
     h = CreateMutexA(NULL, FALSE, "om.c-test");
     ok(h != 0, "CreateMutexA failed got ret=%p (%d)\n", h, GetLastError());
     status = pNtCreateMutant(&h1, GENERIC_ALL, &attr, FALSE);
@@ -532,16 +591,12 @@ static void test_symboliclink(void)
                                      STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_PATH_NOT_FOUND)
 
 
-    /* Compaund test */
-    pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Local");
-    status = pNtOpenDirectoryObject(&dir, DIRECTORY_QUERY, &attr);
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND)  /* nt4 doesn't have Local\\ */
+    /* Compound test */
+    if (!(dir = get_base_dir()))
     {
-        pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects");
-        status = pNtOpenDirectoryObject(&dir, DIRECTORY_QUERY, &attr);
+        win_skip( "couldn't find the BaseNamedObjects dir\n" );
+        return;
     }
-    ok(status == STATUS_SUCCESS, "Failed to open Directory(%08x)\n", status);
-    pRtlFreeUnicodeString(&str);
 
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "test-link");
@@ -551,9 +606,9 @@ static void test_symboliclink(void)
     pRtlFreeUnicodeString(&str);
     pRtlFreeUnicodeString(&target);
 
-    pRtlCreateUnicodeStringFromAsciiz(&str, "test-link\\PIPE");
+    pRtlCreateUnicodeStringFromAsciiz(&str, "test-link\\NUL");
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
-    ok(status == STATUS_SUCCESS, "Failed to open NamedPipe(%08x)\n", status);
+    todo_wine ok(status == STATUS_SUCCESS, "Failed to open NUL device(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pNtClose(h);
