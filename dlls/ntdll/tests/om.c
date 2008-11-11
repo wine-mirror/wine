@@ -553,7 +553,7 @@ static void test_symboliclink(void)
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "test-link\\PIPE");
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
-    todo_wine ok(status == STATUS_SUCCESS, "Failed to open NamedPipe(%08x)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to open NamedPipe(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pNtClose(h);

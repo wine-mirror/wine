@@ -158,16 +158,9 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
 
     if (alloc_size) FIXME( "alloc_size not supported\n" );
 
-    if (attr->RootDirectory)
-    {
-        FIXME( "RootDirectory %p not supported\n", attr->RootDirectory );
-        return STATUS_OBJECT_NAME_NOT_FOUND;
-    }
-
-    io->u.Status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, disposition,
-                                              !(attr->Attributes & OBJ_CASE_INSENSITIVE) );
-
-    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
+    if (attr->RootDirectory ||
+        (io->u.Status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, disposition,
+                                 !(attr->Attributes & OBJ_CASE_INSENSITIVE) )) == STATUS_BAD_DEVICE_TYPE)
     {
         SERVER_START_REQ( open_file_object )
         {
