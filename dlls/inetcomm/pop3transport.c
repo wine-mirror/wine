@@ -47,7 +47,6 @@ typedef struct
 {
     InternetTransport InetTransport;
     ULONG refs;
-    INETSERVER server;
     POP3COMMAND command;
     POP3CMDTYPE type;
     char *response;
@@ -671,11 +670,11 @@ static void POP3Transport_CallbackProcessUSERResp(IInternetTransport *iface, cha
 
     IPOP3Callback_OnResponse((IPOP3Callback *)This->InetTransport.pCallback, &response);
 
-    len = sizeof(pass) + strlen(This->server.szPassword) + 2; /* "\r\n" */
+    len = sizeof(pass) + strlen(This->InetTransport.ServerInfo.szPassword) + 2; /* "\r\n" */
     command = HeapAlloc(GetProcessHeap(), 0, len);
 
     strcpy(command, pass);
-    strcat(command, This->server.szPassword);
+    strcat(command, This->InetTransport.ServerInfo.szPassword);
     strcat(command, "\r\n");
 
     init_parser(This, POP3_PASS, POP3_NONE);
@@ -701,11 +700,11 @@ static void POP3Transport_CallbackSendUSERCmd(IInternetTransport *iface, char *p
 
     TRACE("\n");
 
-    len = sizeof(user) + strlen(This->server.szUserName) + 2; /* "\r\n" */
+    len = sizeof(user) + strlen(This->InetTransport.ServerInfo.szUserName) + 2; /* "\r\n" */
     command = HeapAlloc(GetProcessHeap(), 0, len);
 
     strcpy(command, user);
-    strcat(command, This->server.szUserName);
+    strcat(command, This->InetTransport.ServerInfo.szUserName);
     strcat(command, "\r\n");
     InternetTransport_DoCommand(&This->InetTransport, command, POP3Transport_CallbackRecvUSERResp);
 
@@ -820,8 +819,6 @@ static HRESULT WINAPI POP3Transport_Connect(IPOP3Transport *iface,
         return hr;
 
     init_parser(This, POP3_USER, POP3_NONE);
-
-    This->server = *pInetServer;
     return InternetTransport_ReadLine(&This->InetTransport, POP3Transport_CallbackSendUSERCmd);
 }
 
