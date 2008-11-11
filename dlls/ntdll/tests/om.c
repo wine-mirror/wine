@@ -138,13 +138,16 @@ static void test_namespace_pipe(void)
     pRtlInitUnicodeString(&str, buffer3);
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
-    ok(status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_PIPE_NOT_AVAILABLE,
+    ok(status == STATUS_OBJECT_PATH_NOT_FOUND ||
+       status == STATUS_PIPE_NOT_AVAILABLE ||
+       status == STATUS_OBJECT_NAME_INVALID, /* vista */
         "NtOpenFile should have failed with STATUS_OBJECT_PATH_NOT_FOUND got(%08x)\n", status);
 
     pRtlInitUnicodeString(&str, buffer4);
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN);
-    ok(status == STATUS_OBJECT_NAME_NOT_FOUND,
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND ||
+       status == STATUS_OBJECT_NAME_INVALID, /* vista */
         "NtOpenFile should have failed with STATUS_OBJECT_NAME_NOT_FOUND got(%08x)\n", status);
 
     pNtClose(pipe);
@@ -289,10 +292,10 @@ static void test_directory(void)
 
     /* No name and/or no attributes */
     status = pNtCreateDirectoryObject(NULL, DIRECTORY_QUERY, &attr);
-    ok(status == STATUS_ACCESS_VIOLATION,
+    ok(status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_PARAMETER,
         "NtCreateDirectoryObject should have failed with STATUS_ACCESS_VIOLATION got(%08x)\n", status);
     status = pNtOpenDirectoryObject(NULL, DIRECTORY_QUERY, &attr);
-    ok(status == STATUS_ACCESS_VIOLATION,
+    ok(status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_PARAMETER,
         "NtOpenDirectoryObject should have failed with STATUS_ACCESS_VIOLATION got(%08x)\n", status);
 
     status = pNtCreateDirectoryObject(&h, DIRECTORY_QUERY, NULL);
@@ -474,7 +477,7 @@ static void test_symboliclink(void)
     IO_STATUS_BLOCK iosb;
 
     /* No name and/or no attributes */
-    SYMLNK_TEST_CREATE_OPEN_FAILURE(NULL, "", "", STATUS_ACCESS_VIOLATION)
+    SYMLNK_TEST_CREATE_OPEN_FAILURE2(NULL, "", "", STATUS_ACCESS_VIOLATION, STATUS_INVALID_PARAMETER)
 
     status = pNtCreateSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, NULL, NULL);
     ok(status == STATUS_ACCESS_VIOLATION,
