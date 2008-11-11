@@ -1816,9 +1816,18 @@ static void test_Installer_RegistryValue(void)
     HKEY curr_user = (HKEY)1;
     HRESULT hr;
     BOOL bRet;
+    LONG lRet;
 
     /* Delete keys */
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, szKey, &hkey )) delete_key( hkey );
+    SetLastError(0xdeadbeef);
+    lRet = RegOpenKeyW( HKEY_CURRENT_USER, szKey, &hkey );
+    if (!lRet && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("Needed W-functions are not implemented\n");
+        return;
+    }
+    if (!lRet)
+        delete_key( hkey );
 
     /* Does our key exist? Shouldn't; check with all three possible value parameter types */
     hr = Installer_RegistryValueE(curr_user, szKey, &bRet);
