@@ -106,7 +106,7 @@ GpStatus WINGDIPAPI GdipCreatePen2(GpBrush *brush, REAL width, GpUnit unit,
     GpPen *gp_pen;
     GpBrush *clone_brush;
 
-    TRACE("(%p, %.2f, %d, %p)", brush, width, unit, pen);
+    TRACE("(%p, %.2f, %d, %p)\n", brush, width, unit, pen);
 
     if(!pen || !brush)
         return InvalidParameter;
