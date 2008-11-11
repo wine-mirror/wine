@@ -2077,6 +2077,12 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 
   TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
 
+  if (This->nb_xobjects >= MAX_OBJECTS)
+  {
+    ERR("Too many objects\n");
+    return DXFILEERR_NOMOREOBJECTS;
+  }
+
   if (!This->buf.rem_bytes)
     return DXFILEERR_NOMOREOBJECTS;
 
