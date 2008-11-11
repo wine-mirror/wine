@@ -863,6 +863,8 @@ static LRESULT TAB_AdjustRect(const TAB_INFO *infoPtr, WPARAM fLarger, LPRECT pr
     TRACE ("hwnd=%p fLarger=%ld (%s)\n", infoPtr->hwnd, fLarger,
            wine_dbgstr_rect(prc));
 
+    if (!prc) return -1;
+
     if(lStyle & TCS_VERTICAL)
     {
 	iRightBottom = &(prc->right);

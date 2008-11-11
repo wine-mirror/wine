@@ -856,6 +856,22 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
     DestroyWindow(hTab);
 }
 
+static void test_adjustrect(HWND parent_wnd)
+{
+    HWND hTab;
+    INT r;
+
+    ok(parent_wnd != NULL, "no parent window!\n");
+
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, 0, 0);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    r = SendMessage(hTab, TCM_ADJUSTRECT, FALSE, 0);
+    expect(-1, r);
+
+    r = SendMessage(hTab, TCM_ADJUSTRECT, TRUE, 0);
+    expect(-1, r);
+}
 static void test_insert_focus(HWND parent_wnd)
 {
     HWND hTab;
@@ -1000,6 +1016,8 @@ START_TEST(tab)
 
     /* Testing getters and setters with 5 tabs */
     test_getters_setters(parent_wnd, 5);
+
+    test_adjustrect(parent_wnd);
 
     test_insert_focus(parent_wnd);
     test_delete_focus(parent_wnd);
