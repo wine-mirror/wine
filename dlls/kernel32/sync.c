@@ -458,16 +458,11 @@ void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCSTR name )
 {
-    WCHAR buffer[MAX_PATH];
+    DWORD flags = 0;
 
-    if (!name) return CreateEventW( sa, manual_reset, initial_state, NULL );
-
-    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    return CreateEventW( sa, manual_reset, initial_state, buffer );
+    if (manual_reset) flags |= CREATE_EVENT_MANUAL_RESET;
+    if (initial_state) flags |= CREATE_EVENT_INITIAL_SET;
+    return CreateEventExA( sa, name, flags, EVENT_ALL_ACCESS );
 }
 
 
@@ -476,6 +471,37 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
  */
 HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCWSTR name )
+{
+    DWORD flags = 0;
+
+    if (manual_reset) flags |= CREATE_EVENT_MANUAL_RESET;
+    if (initial_state) flags |= CREATE_EVENT_INITIAL_SET;
+    return CreateEventExW( sa, name, flags, EVENT_ALL_ACCESS );
+}
+
+
+/***********************************************************************
+ *           CreateEventExA    (KERNEL32.@)
+ */
+HANDLE WINAPI CreateEventExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
+{
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return CreateEventExW( sa, NULL, flags, access );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return CreateEventExW( sa, buffer, flags, access );
+}
+
+
+/***********************************************************************
+ *           CreateEventExW    (KERNEL32.@)
+ */
+HANDLE WINAPI CreateEventExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -505,7 +531,8 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
         attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
-    status = NtCreateEvent( &ret, EVENT_ALL_ACCESS, &attr, manual_reset, initial_state );
+    status = NtCreateEvent( &ret, access, &attr, (flags & CREATE_EVENT_MANUAL_RESET) != 0,
+                            (flags & CREATE_EVENT_INITIAL_SET) != 0 );
     if (status == STATUS_OBJECT_NAME_EXISTS)
         SetLastError( ERROR_ALREADY_EXISTS );
     else
@@ -668,16 +695,7 @@ VOID WINAPI VWin32_EventSet(HANDLE event)
  */
 HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
-    WCHAR buffer[MAX_PATH];
-
-    if (!name) return CreateMutexW( sa, owner, NULL );
-
-    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    return CreateMutexW( sa, owner, buffer );
+    return CreateMutexExA( sa, name, owner ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS );
 }
 
 
@@ -685,6 +703,33 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
  *           CreateMutexW   (KERNEL32.@)
  */
 HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
+{
+    return CreateMutexExW( sa, name, owner ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS );
+}
+
+
+/***********************************************************************
+ *           CreateMutexExA   (KERNEL32.@)
+ */
+HANDLE WINAPI CreateMutexExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
+{
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return CreateMutexExW( sa, NULL, flags, access );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return CreateMutexExW( sa, buffer, flags, access );
+}
+
+
+/***********************************************************************
+ *           CreateMutexExW   (KERNEL32.@)
+ */
+HANDLE WINAPI CreateMutexExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -704,7 +749,7 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
         attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
-    status = NtCreateMutant( &ret, MUTEX_ALL_ACCESS, &attr, owner );
+    status = NtCreateMutant( &ret, access, &attr, (flags & CREATE_MUTEX_INITIAL_OWNER) != 0 );
     if (status == STATUS_OBJECT_NAME_EXISTS)
         SetLastError( ERROR_ALREADY_EXISTS );
     else
@@ -793,16 +838,7 @@ BOOL WINAPI ReleaseMutex( HANDLE handle )
  */
 HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name )
 {
-    WCHAR buffer[MAX_PATH];
-
-    if (!name) return CreateSemaphoreW( sa, initial, max, NULL );
-
-    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    return CreateSemaphoreW( sa, initial, max, buffer );
+    return CreateSemaphoreExA( sa, initial, max, name, 0, SEMAPHORE_ALL_ACCESS );
 }
 
 
@@ -811,6 +847,35 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
  */
 HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
                                 LONG max, LPCWSTR name )
+{
+    return CreateSemaphoreExW( sa, initial, max, name, 0, SEMAPHORE_ALL_ACCESS );
+}
+
+
+/***********************************************************************
+ *           CreateSemaphoreExA   (KERNEL32.@)
+ */
+HANDLE WINAPI CreateSemaphoreExA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCSTR name,
+                                  DWORD flags, DWORD access )
+{
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return CreateSemaphoreExW( sa, initial, max, NULL, flags, access );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return CreateSemaphoreExW( sa, initial, max, buffer, flags, access );
+}
+
+
+/***********************************************************************
+ *           CreateSemaphoreExW   (KERNEL32.@)
+ */
+HANDLE WINAPI CreateSemaphoreExW( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max, LPCWSTR name,
+                                  DWORD flags, DWORD access )
 {
     HANDLE ret;
     UNICODE_STRING nameW;
@@ -830,7 +895,7 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
         attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
-    status = NtCreateSemaphore( &ret, SEMAPHORE_ALL_ACCESS, &attr, initial, max );
+    status = NtCreateSemaphore( &ret, access, &attr, initial, max );
     if (status == STATUS_OBJECT_NAME_EXISTS)
         SetLastError( ERROR_ALREADY_EXISTS );
     else
@@ -1076,16 +1141,8 @@ BOOL WINAPI IsProcessInJob( HANDLE process, HANDLE job, PBOOL result )
  */
 HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR name )
 {
-    WCHAR buffer[MAX_PATH];
-
-    if (!name) return CreateWaitableTimerW( sa, manual, NULL );
-
-    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-    return CreateWaitableTimerW( sa, manual, buffer );
+    return CreateWaitableTimerExA( sa, name, manual ? CREATE_WAITABLE_TIMER_MANUAL_RESET : 0,
+                                   TIMER_ALL_ACCESS );
 }
 
 
@@ -1093,6 +1150,34 @@ HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR
  *           CreateWaitableTimerW    (KERNEL32.@)
  */
 HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWSTR name )
+{
+    return CreateWaitableTimerExW( sa, name, manual ? CREATE_WAITABLE_TIMER_MANUAL_RESET : 0,
+                                   TIMER_ALL_ACCESS );
+}
+
+
+/***********************************************************************
+ *           CreateWaitableTimerExA    (KERNEL32.@)
+ */
+HANDLE WINAPI CreateWaitableTimerExA( SECURITY_ATTRIBUTES *sa, LPCSTR name, DWORD flags, DWORD access )
+{
+    WCHAR buffer[MAX_PATH];
+
+    if (!name) return CreateWaitableTimerExW( sa, NULL, flags, access );
+
+    if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return 0;
+    }
+    return CreateWaitableTimerExW( sa, buffer, flags, access );
+}
+
+
+/***********************************************************************
+ *           CreateWaitableTimerExW    (KERNEL32.@)
+ */
+HANDLE WINAPI CreateWaitableTimerExW( SECURITY_ATTRIBUTES *sa, LPCWSTR name, DWORD flags, DWORD access )
 {
     HANDLE handle;
     NTSTATUS status;
@@ -1112,8 +1197,8 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
         attr.RootDirectory = get_BaseNamedObjects_handle();
     }
 
-    status = NtCreateTimer(&handle, TIMER_ALL_ACCESS, &attr,
-                           manual ? NotificationTimer : SynchronizationTimer);
+    status = NtCreateTimer( &handle, access, &attr,
+                 (flags & CREATE_WAITABLE_TIMER_MANUAL_RESET) ? NotificationTimer : SynchronizationTimer );
     if (status == STATUS_OBJECT_NAME_EXISTS)
         SetLastError( ERROR_ALREADY_EXISTS );
     else
