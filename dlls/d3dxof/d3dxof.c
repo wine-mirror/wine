@@ -306,7 +306,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   object->hFile = hFile;
   object->pDirectXFile = This;
   object->buf.pdxf = This;
-  object->buf.txt = TRUE;
+  object->buf.txt = (header[2] == XOFFILE_FORMAT_TEXT);
   object->buf.token_present = FALSE;
   object->buf.cur_subobject = 0;
 
@@ -1803,7 +1803,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
 
     for (k = 0; k < nb_elems; k++)
     {
-      if (k)
+      if (buf->txt && k)
       {
         token = check_TOKEN(buf);
         if (token == TOKEN_COMMA)
@@ -1937,13 +1937,16 @@ static BOOL parse_object_members_list(parse_buffer * buf)
       }
     }
 
-    token = get_TOKEN(buf);
-    if (token != TOKEN_SEMICOLON)
+    if (buf->txt)
     {
-      /* Allow comma instead of semicolon in some specific cases */
-      if (!((token == TOKEN_COMMA) && ((i+1) < pt->nb_members) && (pt->members[i].type == pt->members[i+1].type)
-        && (!pt->members[i].nb_dims) && (!pt->members[i+1].nb_dims)))
-        return FALSE;
+      token = get_TOKEN(buf);
+      if (token != TOKEN_SEMICOLON)
+      {
+        /* Allow comma instead of semicolon in some specific cases */
+        if (!((token == TOKEN_COMMA) && ((i+1) < pt->nb_members) && (pt->members[i].type == pt->members[i+1].type)
+          && (!pt->members[i].nb_dims) && (!pt->members[i+1].nb_dims)))
+          return FALSE;
+      }
     }
   }
 
