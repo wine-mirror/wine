@@ -2445,6 +2445,22 @@ static void test_default_style(IHTMLStyle *style)
     ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
     VariantClear(&v);
 
+    /* Test posTop */
+    hres = IHTMLStyle_get_posTop(style, NULL);
+    ok(hres == E_POINTER, "get_left failed: %08x\n", hres);
+
+    f = 1.0f;
+    hres = IHTMLStyle_get_posTop(style, &f);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(f == 0.0, "expected 0.0 got %f\n", f);
+
+    hres = IHTMLStyle_put_posTop(style, 4.9f);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+
+    hres = IHTMLStyle_get_posTop(style, &f);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(f == 4.0, "expected 4.0 got %f\n", f);
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("3px");
     hres = IHTMLStyle_put_top(style, v);
@@ -2457,6 +2473,10 @@ static void test_default_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
     ok(!strcmp_wa(V_BSTR(&v), "3px"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    hres = IHTMLStyle_get_posTop(style, &f);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(f == 3.0, "expected 3.0 got %f\n", f);
 
     V_VT(&v) = VT_NULL;
     hres = IHTMLStyle_put_top(style, v);

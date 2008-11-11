@@ -1845,15 +1845,22 @@ static HRESULT WINAPI HTMLStyle_get_pixelHeight(IHTMLStyle *iface, long *p)
 static HRESULT WINAPI HTMLStyle_put_posTop(IHTMLStyle *iface, float v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%f)\n", This, v);
+
+    return set_style_pos(This, STYLEID_TOP, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_posTop(IHTMLStyle *iface, float *p)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    return get_nsstyle_pos(This, STYLEID_TOP, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_posLeft(IHTMLStyle *iface, float v)
