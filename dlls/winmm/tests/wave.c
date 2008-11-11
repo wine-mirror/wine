@@ -891,9 +891,10 @@ static void wave_out_test_device(int device)
        "expected, got %s\n", dev_name(device),wave_out_error(rc));
 
     rc=waveOutGetDevCapsW(device,&capsW,4);
-    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
-       "waveOutGetDevCapsW(%s): MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED "
-       "expected, got %s\n",dev_name(device),wave_out_error(rc));
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED ||
+       rc==MMSYSERR_INVALPARAM, /* Vista, W2K8 */
+       "waveOutGetDevCapsW(%s): unexpected return value %s\n",
+       dev_name(device),wave_out_error(rc));
 
     nameA=NULL;
     rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACESIZE,
