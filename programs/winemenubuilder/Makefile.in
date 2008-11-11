@@ -12,10 +12,4 @@ C_SRCS = \
 
 @MAKE_PROG_RULES@
 
-install install-lib:: $(DESTDIR)$(bindir)
-	$(INSTALL_SCRIPT) $(TOPSRCDIR)/tools/wineshelllink $(DESTDIR)$(bindir)/wineshelllink
-
-uninstall::
-	$(RM) $(DESTDIR)$(bindir)/wineshelllink
-
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

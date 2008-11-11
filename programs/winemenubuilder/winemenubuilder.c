@@ -31,8 +31,7 @@
  * between the user's desktop/start menu and the "All Users" copies.
  *
  *  This program will read a Windows shortcut file using the IShellLink
- * interface, then invoke wineshelllink with the appropriate arguments
- * to create a KDE/Gnome menu entry for the shortcut.
+ * interface, then create a KDE/Gnome menu entry for the shortcut.
  *
  *  winemenubuilder [ -w ] <shortcut.lnk>
  *
@@ -817,6 +816,184 @@ static BOOL write_desktop_entry(const char *location, const char *linkname, cons
     return TRUE;
 }
 
+static BOOL write_directory_entry(const char *directory, const char *location)
+{
+    FILE *file;
+
+    WINE_TRACE("(%s,%s)\n", wine_dbgstr_a(directory), wine_dbgstr_a(location));
+
+    file = fopen(location, "w");
+    if (file == NULL)
+        return FALSE;
+
+    fprintf(file, "[Desktop Entry]\n");
+    fprintf(file, "Type=Directory\n");
+    if (strcmp(directory, "wine") == 0)
+    {
+        fprintf(file, "Name=Wine\n");
+        fprintf(file, "Icon=wine\n");
+    }
+    else
+    {
+        fprintf(file, "Name=%s\n", directory);
+        fprintf(file, "Icon=folder\n");
+    }
+
+    fclose(file);
+    return TRUE;
+}
+
+static BOOL write_menu_file(const char *filename)
+{
+    char *tempfilename;
+    FILE *tempfile = NULL;
+    char *lastEntry;
+    char *name = NULL;
+    char *menuPath = NULL;
+    int i;
+    int count = 0;
+    BOOL ret = FALSE;
+
+    WINE_TRACE("(%s)\n", wine_dbgstr_a(filename));
+
+    while (1)
+    {
+        tempfilename = tempnam(xdg_config_dir, "_wine");
+        if (tempfilename)
+        {
+            int tempfd = open(tempfilename, O_EXCL | O_CREAT | O_WRONLY, 0666);
+            if (tempfd >= 0)
+            {
+                tempfile = fdopen(tempfd, "w");
+                if (tempfile)
+                    break;
+                close(tempfd);
+                goto end;
+            }
+            else if (errno == EEXIST)
+            {
+                free(tempfilename);
+                continue;
+            }
+            free(tempfilename);
+        }
+        return FALSE;
+    }
+
+    fprintf(tempfile, "<!DOCTYPE Menu PUBLIC \"-//freedesktop//DTD Menu 1.0//EN\"\n");
+    fprintf(tempfile, "\"http://www.freedesktop.org/standards/menu-spec/menu-1.0.dtd\">\n");
+    fprintf(tempfile, "<Menu>\n");
+    fprintf(tempfile, "  <Name>Applications</Name>\n");
+
+    name = HeapAlloc(GetProcessHeap(), 0, lstrlenA(filename) + 1);
+    if (name == NULL) goto end;
+    lastEntry = name;
+    for (i = 0; filename[i]; i++)
+    {
+        name[i] = filename[i];
+        if (filename[i] == '/')
+        {
+            char *dir_file_name;
+            struct stat st;
+            name[i] = 0;
+            fprintf(tempfile, "  <Menu>\n");
+            fprintf(tempfile, "    <Name>%s%s</Name>\n", count ? "" : "wine-", name);
+            fprintf(tempfile, "    <Directory>%s%s.directory</Directory>\n", count ? "" : "wine-", name);
+            dir_file_name = heap_printf("%s/desktop-directories/%s%s.directory",
+                xdg_data_dir, count ? "" : "wine-", name);
+            if (dir_file_name)
+            {
+                if (stat(dir_file_name, &st) != 0 && errno == ENOENT)
+                    write_directory_entry(lastEntry, dir_file_name);
+                HeapFree(GetProcessHeap(), 0, dir_file_name);
+            }
+            name[i] = '-';
+            lastEntry = &name[i+1];
+            ++count;
+        }
+    }
+    name[i] = 0;
+
+    fprintf(tempfile, "    <Include>\n");
+    fprintf(tempfile, "      <Filename>%s</Filename>\n", name);
+    fprintf(tempfile, "    </Include>\n");
+    for (i = 0; i < count; i++)
+         fprintf(tempfile, "  </Menu>\n");
+    fprintf(tempfile, "</Menu>\n");
+
+    menuPath = heap_printf("%s/%s", xdg_config_dir, name);
+    if (menuPath == NULL) goto end;
+    strcpy(menuPath + strlen(menuPath) - strlen(".desktop"), ".menu");
+    ret = TRUE;
+
+end:
+    if (tempfile)
+        fclose(tempfile);
+    if (ret)
+        ret = (rename(tempfilename, menuPath) == 0);
+    if (!ret && tempfilename)
+        remove(tempfilename);
+    free(tempfilename);
+    HeapFree(GetProcessHeap(), 0, name);
+    HeapFree(GetProcessHeap(), 0, menuPath);
+    return ret;
+}
+
+static BOOL write_menu_entry(const char *link, const char *path, const char *args,
+                             const char *descr, const char *workdir, const char *icon)
+{
+    const char *linkname;
+    char *desktopPath = NULL;
+    char *desktopDir;
+    char *filename = NULL;
+    BOOL ret = TRUE;
+
+    WINE_TRACE("(%s, %s, %s, %s, %s, %s)\n", wine_dbgstr_a(link), wine_dbgstr_a(path),
+               wine_dbgstr_a(args), wine_dbgstr_a(descr), wine_dbgstr_a(workdir),
+               wine_dbgstr_a(icon));
+
+    linkname = strrchr(link, '/');
+    if (linkname == NULL)
+        linkname = link;
+    else
+        ++linkname;
+
+    desktopPath = heap_printf("%s/applications/wine/%s.desktop", xdg_data_dir, link);
+    if (!desktopPath)
+    {
+        WINE_WARN("out of memory creating menu entry\n");
+        ret = FALSE;
+        goto end;
+    }
+    desktopDir = strrchr(desktopPath, '/');
+    *desktopDir = 0;
+    if (!create_directories(desktopPath))
+    {
+        WINE_WARN("couldn't make parent directories for %s\n", wine_dbgstr_a(desktopPath));
+        ret = FALSE;
+        goto end;
+    }
+    *desktopDir = '/';
+    if (!write_desktop_entry(desktopPath, linkname, path, args, descr, workdir, icon))
+    {
+        WINE_WARN("couldn't make desktop entry %s\n", wine_dbgstr_a(desktopPath));
+        ret = FALSE;
+        goto end;
+    }
+
+    filename = heap_printf("wine/%s.desktop", link);
+    if (!filename || !write_menu_file(filename))
+    {
+        WINE_WARN("couldn't make menu file %s\n", wine_dbgstr_a(filename));
+        ret = FALSE;
+    }
+
+end:
+    HeapFree(GetProcessHeap(), 0, desktopPath);
+    HeapFree(GetProcessHeap(), 0, filename);
+    return ret;
+}
+
 /* This escapes \ in filenames */
 static LPSTR escape(LPCWSTR arg)
 {
@@ -846,53 +1023,6 @@ static LPSTR escape(LPCWSTR arg)
     }
     *x = 0;
     return narg;
-}
-
-static int fork_and_wait( const char *linker, const char *link_name, const char *path,
-                          int desktop, const char *args, const char *icon_name,
-                          const char *workdir, const char *description )
-{
-    int pos = 0;
-    const char *argv[20];
-    int retcode;
-
-    WINE_TRACE( "linker app='%s' link='%s' mode=%s "
-        "path='%s' args='%s' icon='%s' workdir='%s' descr='%s'\n",
-        linker, link_name, desktop ? "desktop" : "menu",
-        path, args, icon_name, workdir, description  );
-
-    argv[pos++] = linker ;
-    argv[pos++] = "--link";
-    argv[pos++] = link_name;
-    argv[pos++] = "--path";
-    argv[pos++] = path;
-    argv[pos++] = desktop ? "--desktop" : "--menu";
-    if (args && strlen(args))
-    {
-        argv[pos++] = "--args";
-        argv[pos++] = args;
-    }
-    if (icon_name)
-    {
-        argv[pos++] = "--icon";
-        argv[pos++] = icon_name;
-    }
-    if (workdir && strlen(workdir))
-    {
-        argv[pos++] = "--workdir";
-        argv[pos++] = workdir;
-    }
-    if (description && strlen(description))
-    {
-        argv[pos++] = "--descr";
-        argv[pos++] = description;
-    }
-    argv[pos] = NULL;
-
-    retcode=spawnvp( _P_WAIT, linker, argv );
-    if (retcode!=0)
-        WINE_ERR("%s returned %d\n",linker,retcode);
-    return retcode;
 }
 
 /* Return a heap-allocated copy of the unix format difference between the two
@@ -1260,9 +1390,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         }
     }
     else
-        r = fork_and_wait("wineshelllink", link_name, escaped_path,
-                          0, escaped_args, icon_name,
-                          work_dir ? work_dir : "", escaped_description);
+        r = !write_menu_entry(link_name, escaped_path, escaped_args, escaped_description, work_dir, icon_name);
 
     ReleaseSemaphore( hsem, 1, NULL );
 
