@@ -38,7 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 
 #define MAKEFOUR(a,b,c,d) ((DWORD)a + ((DWORD)b << 8) + ((DWORD)c << 16) + ((DWORD)d << 24))
 #define XOFFILE_FORMAT_MAGIC         MAKEFOUR('x','o','f',' ')
-#define XOFFILE_FORMAT_VERSION       MAKEFOUR('0','3','0','2')
+#define XOFFILE_FORMAT_VERSION_302   MAKEFOUR('0','3','0','2')
+#define XOFFILE_FORMAT_VERSION_303   MAKEFOUR('0','3','0','3')
 #define XOFFILE_FORMAT_BINARY        MAKEFOUR('b','i','n',' ')
 #define XOFFILE_FORMAT_TEXT          MAKEFOUR('t','x','t',' ')
 #define XOFFILE_FORMAT_COMPRESSED    MAKEFOUR('c','m','p',' ')
@@ -254,7 +255,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     goto error;
   }
 
-  if (header[1] != XOFFILE_FORMAT_VERSION)
+  if ((header[1] != XOFFILE_FORMAT_VERSION_302) && (header[1] != XOFFILE_FORMAT_VERSION_303))
   {
     hr = DXFILEERR_BADFILEVERSION;
     goto error;
@@ -1153,7 +1154,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
 
   read_bytes(&buf, &token_header, 4);
 
-  if (token_header != XOFFILE_FORMAT_VERSION)
+  if ((token_header != XOFFILE_FORMAT_VERSION_302) && (token_header != XOFFILE_FORMAT_VERSION_303))
     return DXFILEERR_BADFILEVERSION;
 
   read_bytes(&buf, &token_header, 4);
