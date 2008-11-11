@@ -963,12 +963,14 @@ static void test_shell_window(void)
         DWORD pid;
         HANDLE hProcess;
 
+        SetLastError(0xdeadbeef);
         ret = DestroyWindow(shellWindow);
         error = GetLastError();
 
         ok(!ret, "DestroyWindow(shellWindow)\n");
         /* passes on Win XP, but not on Win98 */
-        ok(error==ERROR_ACCESS_DENIED, "ERROR_ACCESS_DENIED after DestroyWindow(shellWindow)\n");
+        ok(error==ERROR_ACCESS_DENIED || error == 0xdeadbeef,
+           "got %u after DestroyWindow(shellWindow)\n", error);
 
         /* close old shell instance */
         GetWindowThreadProcessId(shellWindow, &pid);
@@ -2558,7 +2560,7 @@ static void test_keyboard_input(HWND hwnd)
     BOOL ret;
 
     flush_events( TRUE );
-    ShowWindow(hwnd, SW_SHOW);
+    SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
     UpdateWindow(hwnd);
     flush_events( TRUE );
 
@@ -2680,13 +2682,17 @@ static void test_mouse_input(HWND hwnd)
 
     mouse_event(MOUSEEVENTF_MOVE, -1, -1, 0, 0);
     ShowWindow(popup, SW_HIDE);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    do
+        ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    while (msg.message >= 0xc000);  /* skip registered messages */
     ok(msg.hwnd == hwnd && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
     flush_events( TRUE );
 
     mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
     ShowWindow(hwnd, SW_HIDE);
-    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    do
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    while (ret && msg.message >= 0xc000);  /* skip registered messages */
     ok( !ret, "message %04x available\n", msg.message);
     flush_events( TRUE );
 
@@ -2752,7 +2758,9 @@ static void test_mouse_input(HWND hwnd)
     SendMessageA(hwnd, WM_COMMAND, (WPARAM)popup, 0);
     test_lbuttondown_flag = FALSE;
 
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    do
+        ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    while (msg.message >= 0xc000);  /* skip registered messages */
     ok(msg.hwnd == popup && msg.message == WM_LBUTTONDOWN, "hwnd %p/%p message %04x\n",
        msg.hwnd, popup, msg.message);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
@@ -4753,11 +4761,12 @@ static void test_GetWindowModuleFileName(void)
     ok(!ret1, "expected 0, got %u\n", ret1);
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "expected ERROR_INVALID_WINDOW_HANDLE, got %u\n", GetLastError());
 
+    ret1 = GetModuleFileName(0, buf1, sizeof(buf1));
     hwnd = GetDesktopWindow();
     ok(IsWindow(hwnd), "got invalid desktop window %p\n", hwnd);
     SetLastError(0xdeadbeef);
-    ret1 = pGetWindowModuleFileNameA(hwnd, buf1, sizeof(buf1));
-    ok(!ret1, "expected 0, got %u\n", ret1);
+    ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
+    ok(!ret2 || ret1 == ret2 /* vista */, "expected 0, got %u\n", ret2);
 
     hwnd = FindWindow("Shell_TrayWnd", NULL);
     ok(IsWindow(hwnd), "got invalid tray window %p\n", hwnd);
@@ -5151,7 +5160,6 @@ START_TEST(win)
     test_SetMenu(hwndMain);
     test_SetFocus(hwndMain);
     test_SetActiveWindow(hwndMain);
-    test_SetForegroundWindow(hwndMain);
 
     test_children_zorder(hwndMain);
     test_popup_zorder(hwndMain2, hwndMain);
@@ -5171,11 +5179,12 @@ START_TEST(win)
     test_csparentdc();
     test_SetWindowLong();
     test_ShowWindow();
-    test_gettext();
+    if (0) test_gettext(); /* crashes on NT4 */
     test_GetUpdateRect();
     test_Expose();
     test_layered_window();
 
+    test_SetForegroundWindow(hwndMain);
     test_shell_window();
 
     /* add the tests above this line */
