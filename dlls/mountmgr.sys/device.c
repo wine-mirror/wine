@@ -43,13 +43,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
 
 static const WCHAR drive_types[][8] =
 {
-    { 0 }, /* DRIVE_UNKNOWN */
-    { 0 }, /* DRIVE_NO_ROOT_DIR */
-    {'f','l','o','p','p','y',0}, /* DRIVE_REMOVABLE */
-    {'h','d',0}, /* DRIVE_FIXED */
-    {'n','e','t','w','o','r','k',0}, /* DRIVE_REMOTE */
-    {'c','d','r','o','m',0}, /* DRIVE_CDROM */
-    {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
+    { 0 },                           /* DEVICE_UNKNOWN */
+    { 0 },                           /* DEVICE_HARDDISK */
+    {'h','d',0},                     /* DEVICE_HARDDISK_VOL */
+    {'f','l','o','p','p','y',0},     /* DEVICE_FLOPPY */
+    {'c','d','r','o','m',0},         /* DEVICE_CDROM */
+    {'n','e','t','w','o','r','k',0}, /* DEVICE_NETWORK */
+    {'r','a','m','d','i','s','k',0}  /* DEVICE_RAMDISK */
 };
 
 static const WCHAR drives_keyW[] = {'S','o','f','t','w','a','r','e','\\',
@@ -60,7 +60,7 @@ struct dos_drive
     struct list           entry;       /* entry in drives list */
     char                 *udi;         /* unique identifier for dynamic drives */
     int                   drive;       /* drive letter (0 = A: etc.) */
-    DWORD                 type;        /* drive type */
+    enum device_type      type;        /* drive type */
     DEVICE_OBJECT        *device;      /* disk device allocated for this drive */
     UNICODE_STRING        name;        /* device name */
     UNICODE_STRING        symlink;     /* device symlink if any */
@@ -143,38 +143,42 @@ static void send_notify( int drive, int code )
 }
 
 /* create the disk device for a given drive */
-static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_drive **drive_ret )
+static NTSTATUS create_disk_device( const char *udi, enum device_type type, struct dos_drive **drive_ret )
 {
     static const WCHAR harddiskvolW[] = {'\\','D','e','v','i','c','e',
                                          '\\','H','a','r','d','d','i','s','k','V','o','l','u','m','e','%','u',0};
     static const WCHAR harddiskW[] = {'\\','D','e','v','i','c','e','\\','H','a','r','d','d','i','s','k','%','u',0};
     static const WCHAR cdromW[] = {'\\','D','e','v','i','c','e','\\','C','d','R','o','m','%','u',0};
     static const WCHAR floppyW[] = {'\\','D','e','v','i','c','e','\\','F','l','o','p','p','y','%','u',0};
+    static const WCHAR ramdiskW[] = {'\\','D','e','v','i','c','e','\\','R','a','m','d','i','s','k','%','u',0};
     static const WCHAR physdriveW[] = {'\\','?','?','\\','P','h','y','s','i','c','a','l','D','r','i','v','e','%','u',0};
 
     UINT i, first = 0;
     NTSTATUS status = 0;
-    const WCHAR *format;
+    const WCHAR *format = NULL;
     UNICODE_STRING name;
     DEVICE_OBJECT *dev_obj;
     struct dos_drive *drive;
 
     switch(type)
     {
-    case DRIVE_REMOVABLE:
+    case DEVICE_UNKNOWN:
+    case DEVICE_HARDDISK:
+    case DEVICE_NETWORK:  /* FIXME */
+        format = harddiskW;
+        break;
+    case DEVICE_HARDDISK_VOL:
+        format = harddiskvolW;
+        first = 1;  /* harddisk volumes start counting from 1 */
+        break;
+    case DEVICE_FLOPPY:
         format = floppyW;
         break;
-    case DRIVE_CDROM:
+    case DEVICE_CDROM:
         format = cdromW;
         break;
-    case DRIVE_FIXED:
-    default:  /* FIXME */
-        if (udi) format = harddiskW;
-        else
-        {
-            format = harddiskvolW;
-            first = 1;  /* harddisk volumes start counting from 1 */
-        }
+    case DEVICE_RAMDISK:
+        format = ramdiskW;
         break;
     }
 
@@ -211,20 +215,20 @@ static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_driv
         }
         switch (type)
         {
-        case DRIVE_REMOVABLE:
+        case DEVICE_FLOPPY:
+        case DEVICE_RAMDISK:
             drive->devnum.DeviceType = FILE_DEVICE_DISK;
             drive->devnum.DeviceNumber = i;
             drive->devnum.PartitionNumber = ~0u;
             break;
-        case DRIVE_CDROM:
+        case DEVICE_CDROM:
             drive->devnum.DeviceType = FILE_DEVICE_CD_ROM;
             drive->devnum.DeviceNumber = i;
             drive->devnum.PartitionNumber = ~0u;
             break;
-        case DRIVE_FIXED:
-        default:  /* FIXME */
-            drive->devnum.DeviceType = FILE_DEVICE_DISK;
-            if (udi)
+        case DEVICE_UNKNOWN:
+        case DEVICE_HARDDISK:
+        case DEVICE_NETWORK:  /* FIXME */
             {
                 UNICODE_STRING symlink;
 
@@ -235,14 +239,15 @@ static NTSTATUS create_disk_device( const char *udi, DWORD type, struct dos_driv
                     symlink.Length = strlenW(symlink.Buffer) * sizeof(WCHAR);
                     if (!IoCreateSymbolicLink( &symlink, &name )) drive->symlink = symlink;
                 }
+                drive->devnum.DeviceType = FILE_DEVICE_DISK;
                 drive->devnum.DeviceNumber = i;
                 drive->devnum.PartitionNumber = 0;
             }
-            else
-            {
-                drive->devnum.DeviceNumber = 0;
-                drive->devnum.PartitionNumber = i;
-            }
+            break;
+        case DEVICE_HARDDISK_VOL:
+            drive->devnum.DeviceType = FILE_DEVICE_DISK;
+            drive->devnum.DeviceNumber = 0;
+            drive->devnum.PartitionNumber = i;
             break;
         }
         list_add_tail( &drives_list, &drive->entry );
@@ -307,7 +312,7 @@ static inline int is_valid_device( struct stat *st )
 }
 
 /* find or create a DOS drive for the corresponding device */
-static int add_drive( const char *device, DWORD type )
+static int add_drive( const char *device, enum device_type type )
 {
     char *path, *p;
     char in_use[26];
@@ -320,12 +325,20 @@ static int add_drive( const char *device, DWORD type )
 
     memset( in_use, 0, sizeof(in_use) );
 
-    first = 2;
-    last = 26;
-    if (type == DRIVE_REMOVABLE)
+    switch (type)
     {
+    case DEVICE_FLOPPY:
         first = 0;
         last = 2;
+        break;
+    case DEVICE_CDROM:
+        first = 3;
+        last = 26;
+        break;
+    default:
+        first = 2;
+        last = 26;
+        break;
     }
 
     while (avail != -1)
@@ -415,7 +428,7 @@ static void create_drive_devices(void)
     struct dos_drive *drive;
     unsigned int i;
     HKEY drives_key;
-    DWORD drive_type;
+    enum device_type drive_type;
     WCHAR driveW[] = {'a',':',0};
 
     if (!(path = get_dosdevices_path( &p ))) return;
@@ -429,7 +442,7 @@ static void create_drive_devices(void)
         p[2] = ':';
         device = read_symlink( path );
 
-        drive_type = i < 2 ? DRIVE_REMOVABLE : DRIVE_FIXED;
+        drive_type = i < 2 ? DEVICE_FLOPPY : DEVICE_HARDDISK_VOL;
         if (drives_key)
         {
             WCHAR buffer[32];
@@ -445,6 +458,7 @@ static void create_drive_devices(void)
                         drive_type = j;
                         break;
                     }
+                if (drive_type == DEVICE_FLOPPY && i >= 2) drive_type = DEVICE_HARDDISK;
             }
         }
 
@@ -466,7 +480,7 @@ static void create_drive_devices(void)
 
 /* create a new dos drive */
 NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
-                         const char *mount_point, DWORD type )
+                         const char *mount_point, enum device_type type )
 {
     struct dos_drive *drive, *next;
 
@@ -519,6 +533,7 @@ found:
             WCHAR name[3] = {'a',':',0};
 
             name[0] += drive->drive;
+            if (!type_name[0] && type == DEVICE_HARDDISK) type_name = drive_types[DEVICE_FLOPPY];
             if (type_name[0])
                 RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)type_name,
                                 (strlenW(type_name) + 1) * sizeof(WCHAR) );
@@ -569,7 +584,8 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
 }
 
 /* query information about an existing dos drive, by letter or udi */
-NTSTATUS query_dos_device( int letter, DWORD *type, const char **device, const char **mount_point )
+NTSTATUS query_dos_device( int letter, enum device_type *type,
+                           const char **device, const char **mount_point )
 {
     struct dos_drive *drive;
 
@@ -641,7 +657,7 @@ NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *pa
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = harddisk_ioctl;
 
     /* create a harddisk0 device that isn't assigned to any drive */
-    create_disk_device( "harddisk0 placeholder", DRIVE_FIXED, &drive );
+    create_disk_device( "harddisk0 placeholder", DEVICE_HARDDISK, &drive );
 
     create_drive_devices();
 

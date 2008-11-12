@@ -254,9 +254,18 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
 
     if (input->type != DRIVE_NO_ROOT_DIR)
     {
+        enum device_type type = DEVICE_UNKNOWN;
+
         TRACE( "defining %c: dev %s mount %s type %u\n",
                letter, debugstr_a(device), debugstr_a(mount_point), input->type );
-        return add_dos_device( letter - 'a', NULL, device, mount_point, input->type );
+        switch (input->type)
+        {
+        case DRIVE_REMOVABLE: type = (letter >= 'c') ? DEVICE_HARDDISK : DEVICE_FLOPPY; break;
+        case DRIVE_REMOTE:    type = DEVICE_NETWORK; break;
+        case DRIVE_CDROM:     type = DEVICE_CDROM; break;
+        case DRIVE_RAMDISK:   type = DEVICE_RAMDISK; break;
+        }
+        return add_dos_device( letter - 'a', NULL, device, mount_point, type );
     }
     else
     {
@@ -275,11 +284,22 @@ static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
     int letter = tolowerW( input->letter );
     NTSTATUS status;
     DWORD size, type;
+    enum device_type device_type;
     char *ptr;
 
     if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
 
-    if ((status = query_dos_device( letter - 'a', &type, &device, &mount_point ))) return status;
+    if ((status = query_dos_device( letter - 'a', &device_type, &device, &mount_point ))) return status;
+    switch (device_type)
+    {
+    case DEVICE_UNKNOWN:      type = DRIVE_UNKNOWN; break;
+    case DEVICE_HARDDISK:     type = DRIVE_REMOVABLE; break;
+    case DEVICE_HARDDISK_VOL: type = DRIVE_FIXED; break;
+    case DEVICE_FLOPPY:       type = DRIVE_REMOVABLE; break;
+    case DEVICE_CDROM:        type = DRIVE_CDROM; break;
+    case DEVICE_NETWORK:      type = DRIVE_REMOTE; break;
+    case DEVICE_RAMDISK:      type = DRIVE_RAMDISK; break;
+    }
 
     size = sizeof(*output);
     if (device) size += strlen(device) + 1;

@@ -40,10 +40,22 @@ extern void initialize_diskarbitration(void);
 
 /* device functions */
 
+enum device_type
+{
+    DEVICE_UNKNOWN,
+    DEVICE_HARDDISK,
+    DEVICE_HARDDISK_VOL,
+    DEVICE_FLOPPY,
+    DEVICE_CDROM,
+    DEVICE_NETWORK,
+    DEVICE_RAMDISK
+};
+
 extern NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
-                                const char *mount_point, DWORD type );
+                                const char *mount_point, enum device_type type );
 extern NTSTATUS remove_dos_device( int letter, const char *udi );
-extern NTSTATUS query_dos_device( int letter, DWORD *type, const char **device, const char **mount_point );
+extern NTSTATUS query_dos_device( int letter, enum device_type *type,
+                                  const char **device, const char **mount_point );
 extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path );
 
 /* mount point functions */

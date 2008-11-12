@@ -42,7 +42,7 @@ static void appeared_callback( DADiskRef disk, void *context )
     const void *ref;
     char device[64];
     char mount_point[PATH_MAX];
-    DWORD type = DRIVE_UNKNOWN;
+    enum device_type type = DEVICE_UNKNOWN;
 
     if (!dict) return;
 
@@ -64,7 +64,7 @@ static void appeared_callback( DADiskRef disk, void *context )
     {
         if (!CFStringCompare( ref, CFSTR("cd9660"), 0 ) ||
             !CFStringCompare( ref, CFSTR("udf"), 0 ))
-            type = DRIVE_CDROM;
+            type = DEVICE_CDROM;
     }
 
     TRACE( "got mount notification for '%s' on '%s'\n", device, mount_point );
