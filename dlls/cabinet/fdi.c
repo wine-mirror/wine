@@ -2830,7 +2830,7 @@ BOOL __cdecl FDICopy(
 
       if (file->offset > CAB(offset)) {
         /* decode bytes and send them to /dev/null */
-        switch ((err = fdi_decomp(file, 0, decomp_state, pszCabPath, pfnfdin, pvUser))) {
+        switch (fdi_decomp(file, 0, decomp_state, pszCabPath, pfnfdin, pvUser)) {
           case DECR_OK:
             break;
           case DECR_USERABORT:
