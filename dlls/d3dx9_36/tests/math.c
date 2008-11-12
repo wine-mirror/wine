@@ -17,13 +17,45 @@
  */
 
 #include "wine/test.h"
-#include "d3dx9math.h"
+#include "d3dx9.h"
 
 #define ARRAY_SIZE 5
 
 #define admitted_error 0.0001f
 
 #define relative_error(exp, out) ((exp == out) ? 0.0f : (fabs(out - exp) / fabs(exp)))
+
+static inline BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2)
+{
+    int i, j;
+
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            if (fabs(U(*m1).m[i][j] - U(*m2).m[i][j]) > admitted_error)
+                return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+#define expect_mat(expectedmat, gotmat) \
+do { \
+    const D3DXMATRIX *__m1 = (expectedmat); \
+    const D3DXMATRIX *__m2 = (gotmat); \
+    ok(compare_matrix(__m1, __m2), "Expected matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n)\n\n" \
+            "Got matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f)\n", \
+            U(*__m1).m[0][0], U(*__m1).m[0][1], U(*__m1).m[0][2], U(*__m1).m[0][3], \
+            U(*__m1).m[1][0], U(*__m1).m[1][1], U(*__m1).m[1][2], U(*__m1).m[1][3], \
+            U(*__m1).m[2][0], U(*__m1).m[2][1], U(*__m1).m[2][2], U(*__m1).m[2][3], \
+            U(*__m1).m[3][0], U(*__m1).m[3][1], U(*__m1).m[3][2], U(*__m1).m[3][3], \
+            U(*__m2).m[0][0], U(*__m2).m[0][1], U(*__m2).m[0][2], U(*__m2).m[0][3], \
+            U(*__m2).m[1][0], U(*__m2).m[1][1], U(*__m2).m[1][2], U(*__m2).m[1][3], \
+            U(*__m2).m[2][0], U(*__m2).m[2][1], U(*__m2).m[2][2], U(*__m2).m[2][3], \
+            U(*__m2).m[3][0], U(*__m2).m[3][1], U(*__m2).m[3][2], U(*__m2).m[3][3]); \
+} while(0)
 
 #define compare_rotation(exp, got) \
     ok(fabs(exp.w - got.w) < admitted_error && \
@@ -87,6 +119,131 @@
  *     says they can, and some testing with a native DLL
  *     says so too).
  */
+
+static void test_Matrix_AffineTransformation2D(void)
+{
+    D3DXMATRIX exp_mat, got_mat;
+    D3DXVECTOR2 center, position;
+    FLOAT angle, scale;
+
+    center.x = 3.0f;
+    center.y = 4.0f;
+
+    position.x = -6.0f;
+    position.y = 7.0f;
+
+    angle = D3DX_PI/3.0f;
+
+    scale = 20.0f;
+
+    exp_mat.m[0][0] = 10.0f;
+    exp_mat.m[1][0] = -17.320507f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = -1.035898f;
+    exp_mat.m[0][1] = 17.320507f;
+    exp_mat.m[1][1] = 10.0f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 6.401924f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 20.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
+
+    D3DXMatrixAffineTransformation2D(&got_mat, scale, &center, angle, &position);
+
+    expect_mat(&exp_mat, &got_mat);
+
+/*______________*/
+
+    center.x = 3.0f;
+    center.y = 4.0f;
+
+    angle = D3DX_PI/3.0f;
+
+    scale = 20.0f;
+
+    exp_mat.m[0][0] = 10.0f;
+    exp_mat.m[1][0] = -17.320507f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = 4.964102f;
+    exp_mat.m[0][1] = 17.320507f;
+    exp_mat.m[1][1] = 10.0f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = -0.598076f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 20.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
+
+    D3DXMatrixAffineTransformation2D(&got_mat, scale, &center, angle, NULL);
+
+    expect_mat(&exp_mat, &got_mat);
+
+/*______________*/
+
+    position.x = -6.0f;
+    position.y = 7.0f;
+
+    angle = D3DX_PI/3.0f;
+
+    scale = 20.0f;
+
+    exp_mat.m[0][0] = 10.0f;
+    exp_mat.m[1][0] = -17.320507f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = -6.0f;
+    exp_mat.m[0][1] = 17.320507f;
+    exp_mat.m[1][1] = 10.0f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 7.0f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 20.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
+
+    D3DXMatrixAffineTransformation2D(&got_mat, scale, NULL, angle, &position);
+
+    expect_mat(&exp_mat, &got_mat);
+
+/*______________*/
+
+    angle = 5.0f * D3DX_PI/4.0f;
+
+    scale = -20.0f;
+
+    exp_mat.m[0][0] = 14.142133f;
+    exp_mat.m[1][0] = -14.142133f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = 0.0f;
+    exp_mat.m[0][1] = 14.142133;
+    exp_mat.m[1][1] = 14.142133f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 0.0f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = -20.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
+
+    D3DXMatrixAffineTransformation2D(&got_mat, scale, NULL, angle, NULL);
+
+    expect_mat(&exp_mat, &got_mat);
+}
 
 static void test_Matrix_Decompose(void)
 {
@@ -566,6 +723,7 @@ static void test_D3DXVec_Array(void)
 
 START_TEST(math)
 {
+    test_Matrix_AffineTransformation2D();
     test_Matrix_Decompose();
     test_D3DXVec_Array();
 }

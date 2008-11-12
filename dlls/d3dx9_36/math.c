@@ -29,6 +29,53 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 /*************************************************************************
+ * D3DXMatrixAffineTransformation2D
+ */
+D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation2D(
+    D3DXMATRIX *pout, FLOAT scaling,
+    CONST D3DXVECTOR2 *protationcenter, FLOAT rotation,
+    CONST D3DXVECTOR2 *ptranslation)
+{
+    D3DXQUATERNION rot;
+    D3DXVECTOR3 rot_center, trans;
+
+    rot.w=cos(rotation/2.0f);
+    rot.x=0.0f;
+    rot.y=0.0f;
+    rot.z=sin(rotation/2.0f);
+
+    if ( protationcenter )
+    {
+        rot_center.x=protationcenter->x;
+        rot_center.y=protationcenter->y;
+        rot_center.z=0.0f;
+    }
+    else
+    {
+        rot_center.x=0.0f;
+        rot_center.y=0.0f;
+        rot_center.z=0.0f;
+    }
+
+    if ( ptranslation )
+    {
+        trans.x=ptranslation->x;
+        trans.y=ptranslation->y;
+        trans.z=0.0f;
+    }
+    else
+    {
+        trans.x=0.0f;
+        trans.y=0.0f;
+        trans.z=0.0f;
+    }
+
+    D3DXMatrixAffineTransformation(pout, scaling, &rot_center, &rot, &trans);
+
+    return pout;
+}
+
+/*************************************************************************
  * D3DXMatrixDecompose
  */
 HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutrotation, D3DXVECTOR3 *pouttranslation, D3DXMATRIX *pm)
