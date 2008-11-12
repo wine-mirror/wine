@@ -42,25 +42,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
         HMODULE swrast, UINT flags, UINT sdk_version, ID3D10Device **device)
 {
-    struct d3d10_device *object;
-
-    FIXME("adapter %p, driver_type %s, swrast %p, flags %#x, sdk_version %d, device %p partial stub!\n",
+    FIXME("adapter %p, driver_type %s, swrast %p, flags %#x, sdk_version %d, device %p stub!\n",
             adapter, debug_d3d10_driver_type(driver_type), swrast, flags, sdk_version, device);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        ERR("Failed to allocate D3D device object memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    object->vtbl = &d3d10_device_vtbl;
-    object->refcount = 1;
-    *device = (ID3D10Device *)object;
-
-    TRACE("Created ID3D10Device %p\n", object);
-
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,

@@ -20,9 +20,9 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "d3d10_private.h"
+#include "d3d10core_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
 /* IUnknown methods */
 
@@ -60,11 +60,6 @@ static ULONG STDMETHODCALLTYPE d3d10_device_Release(ID3D10Device *iface)
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
-
-    if (!refcount)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
 
     return refcount;
 }

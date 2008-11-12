@@ -3,10 +3,12 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3d10core.dll
-IMPORTS   = kernel32
+IMPORTS   = dxguid uuid kernel32
 
 C_SRCS = \
-	d3d10core_main.c
+	d3d10core_main.c \
+	device.c \
+	utils.c
 
 RC_SRCS = version.rc
 
