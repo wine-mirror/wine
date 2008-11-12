@@ -223,6 +223,9 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSiteDebug32, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSiteDebug32 %p)\n", This, ppv);
         *ppv = ACTSCPDBG32(This);
+    }else if(IsEqualGUID(&IID_ICanHandleException, riid)) {
+        TRACE("(%p)->(IID_ICanHandleException not supported %p)\n", This, ppv);
+        return E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         return E_NOINTERFACE;
