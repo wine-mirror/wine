@@ -744,6 +744,9 @@ static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface, IPin *ppin)
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppin);
 
+    if (!ppin)
+       return E_POINTER;
+
     return IPin_Disconnect(ppin);
 }
 

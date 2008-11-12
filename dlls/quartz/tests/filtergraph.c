@@ -1593,6 +1593,9 @@ static void test_render_filter_priority(void)
     hr = IFilterGraph2_Render(pgraph2, ((TestFilterImpl*)ptestfilter)->ppPins[0]);
     ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
 
+    hr = IFilterGraph2_Disconnect(pgraph2, NULL);
+    ok(hr == E_POINTER, "IFilterGraph2_Disconnect failed. Expected E_POINTER, received %08x\n", hr);
+
     get_connected_filter_name((TestFilterImpl*)ptestfilter, ConnectedFilterName2);
     ok(lstrcmp(ConnectedFilterName1, ConnectedFilterName2),
         "expected connected filters to be different but got %s both times\n", ConnectedFilterName1);
