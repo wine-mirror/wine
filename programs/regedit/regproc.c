@@ -961,17 +961,17 @@ static void REGPROC_write_line(FILE *file, const WCHAR* str, BOOL unicode)
  * key - registry branch to export.
  * reg_key_name_buf - name of the key with registry class.
  *      Is resized if necessary.
- * reg_key_name_len - length of the buffer for the registry class in characters.
+ * reg_key_name_size - length of the buffer for the registry class in characters.
  * val_name_buf - buffer for storing value name.
  *      Is resized if necessary.
- * val_name_len - length of the buffer for storing value names in characters.
+ * val_name_size - length of the buffer for storing value names in characters.
  * val_buf - buffer for storing values while extracting.
  *      Is resized if necessary.
  * val_size - size of the buffer for storing values in bytes.
  */
 static void export_hkey(FILE *file, HKEY key,
-                 WCHAR **reg_key_name_buf, DWORD *reg_key_name_len,
-                 WCHAR **val_name_buf, DWORD *val_name_len,
+                 WCHAR **reg_key_name_buf, DWORD *reg_key_name_size,
+                 WCHAR **val_name_buf, DWORD *val_name_size,
                  BYTE **val_buf, DWORD *val_size,
                  WCHAR **line_buf, DWORD *line_buf_size,
                  BOOL unicode)
@@ -994,9 +994,9 @@ static void export_hkey(FILE *file, HKEY key,
         REGPROC_print_error();
     }
     curr_len = strlenW(*reg_key_name_buf);
-    REGPROC_resize_char_buffer(reg_key_name_buf, reg_key_name_len,
+    REGPROC_resize_char_buffer(reg_key_name_buf, reg_key_name_size,
                                max_sub_key_len + curr_len + 1);
-    REGPROC_resize_char_buffer(val_name_buf, val_name_len,
+    REGPROC_resize_char_buffer(val_name_buf, val_name_size,
                                max_val_name_len);
     if (max_val_size > *val_size) {
         *val_size = max_val_size;
@@ -1015,10 +1015,10 @@ static void export_hkey(FILE *file, HKEY key,
     more_data = TRUE;
     while(more_data) {
         DWORD value_type;
-        DWORD val_name_len1 = *val_name_len;
+        DWORD val_name_size1 = *val_name_size;
         DWORD val_size1 = *val_size;
         DWORD line_len = 0;
-        ret = RegEnumValueW(key, i, *val_name_buf, &val_name_len1, NULL,
+        ret = RegEnumValueW(key, i, *val_name_buf, &val_name_size1, NULL,
                            &value_type, *val_buf, &val_size1);
         if (ret != ERROR_SUCCESS) {
             more_data = FALSE;
@@ -1149,9 +1149,9 @@ static void export_hkey(FILE *file, HKEY key,
     more_data = TRUE;
     (*reg_key_name_buf)[curr_len] = '\\';
     while(more_data) {
-        DWORD buf_len = *reg_key_name_len - curr_len;
+        DWORD buf_size = *reg_key_name_size - curr_len - 1;
 
-        ret = RegEnumKeyExW(key, i, *reg_key_name_buf + curr_len + 1, &buf_len,
+        ret = RegEnumKeyExW(key, i, *reg_key_name_buf + curr_len + 1, &buf_size,
                            NULL, NULL, NULL, NULL);
         if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA) {
             more_data = FALSE;
@@ -1164,8 +1164,8 @@ static void export_hkey(FILE *file, HKEY key,
             i++;
             if (RegOpenKeyW(key, *reg_key_name_buf + curr_len + 1,
                            &subkey) == ERROR_SUCCESS) {
-                export_hkey(file, subkey, reg_key_name_buf, reg_key_name_len,
-                            val_name_buf, val_name_len, val_buf, val_size,
+                export_hkey(file, subkey, reg_key_name_buf, reg_key_name_size,
+                            val_name_buf, val_name_size, val_buf, val_size,
                             line_buf, line_buf_size, unicode);
                 RegCloseKey(subkey);
             } else {
@@ -1226,17 +1226,17 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
     WCHAR *val_name_buf;
     BYTE *val_buf;
     WCHAR *line_buf;
-    DWORD reg_key_name_len = KEY_MAX_LEN;
-    DWORD val_name_len = KEY_MAX_LEN;
+    DWORD reg_key_name_size = KEY_MAX_LEN;
+    DWORD val_name_size = KEY_MAX_LEN;
     DWORD val_size = REG_VAL_BUF_SIZE;
     DWORD line_buf_size = KEY_MAX_LEN + REG_VAL_BUF_SIZE;
     FILE *file = NULL;
     BOOL unicode = (format == REG_FORMAT_5);
 
     reg_key_name_buf = HeapAlloc(GetProcessHeap(), 0,
-                                 reg_key_name_len  * sizeof(*reg_key_name_buf));
+                                 reg_key_name_size  * sizeof(*reg_key_name_buf));
     val_name_buf = HeapAlloc(GetProcessHeap(), 0,
-                             val_name_len * sizeof(*val_name_buf));
+                             val_name_size * sizeof(*val_name_buf));
     val_buf = HeapAlloc(GetProcessHeap(), 0, val_size);
     line_buf = HeapAlloc(GetProcessHeap(), 0, line_buf_size);
     CHECK_ENOUGH_MEMORY(reg_key_name_buf && val_name_buf && val_buf && line_buf);
@@ -1246,7 +1246,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
         WCHAR *branch_name = NULL;
         HKEY key;
 
-        REGPROC_resize_char_buffer(&reg_key_name_buf, &reg_key_name_len,
+        REGPROC_resize_char_buffer(&reg_key_name_buf, &reg_key_name_size,
                                    lstrlenW(reg_key_name));
         lstrcpyW(reg_key_name_buf, reg_key_name);
 
@@ -1262,15 +1262,15 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
             /* no branch - registry class is specified */
             file = REGPROC_open_export_file(file_name, unicode);
             export_hkey(file, reg_key_class,
-                        &reg_key_name_buf, &reg_key_name_len,
-                        &val_name_buf, &val_name_len,
+                        &reg_key_name_buf, &reg_key_name_size,
+                        &val_name_buf, &val_name_size,
                         &val_buf, &val_size, &line_buf,
                         &line_buf_size, unicode);
         } else if (RegOpenKeyW(reg_key_class, branch_name, &key) == ERROR_SUCCESS) {
             file = REGPROC_open_export_file(file_name, unicode);
             export_hkey(file, key,
-                        &reg_key_name_buf, &reg_key_name_len,
-                        &val_name_buf, &val_name_len,
+                        &reg_key_name_buf, &reg_key_name_size,
+                        &val_name_buf, &val_name_size,
                         &val_buf, &val_size, &line_buf,
                         &line_buf_size, unicode);
             RegCloseKey(key);
@@ -1294,8 +1294,8 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
                     reg_class_keys[i] != HKEY_DYN_DATA) {
                 lstrcpyW(reg_key_name_buf, reg_class_namesW[i]);
                 export_hkey(file, reg_class_keys[i],
-                            &reg_key_name_buf, &reg_key_name_len,
-                            &val_name_buf, &val_name_len,
+                            &reg_key_name_buf, &reg_key_name_size,
+                            &val_name_buf, &val_name_size,
                             &val_buf, &val_size, &line_buf,
                             &line_buf_size, unicode);
             }
