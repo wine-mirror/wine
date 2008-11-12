@@ -467,8 +467,10 @@ static void test_format_object(void)
     SetLastError(0xdeadbeef);
     ret = pCryptFormatObject(X509_ASN_ENCODING, 0, CRYPT_FORMAT_STR_NO_HEX,
      NULL, NULL, NULL, 0, NULL, &size);
-    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
-     "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(!ret, "CryptFormatObject succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+     GetLastError() == 0xdeadbeef, /* Vista, W2K8 */
+     "expected ERROR_FILE_NOT_FOUND or no change, got %d\n", GetLastError());
     /* When called to format an AUTHORITY_KEY_ID2_INFO, it fails when no
      * data are given.
      */
