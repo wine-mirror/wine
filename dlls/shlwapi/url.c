@@ -118,7 +118,7 @@ static const unsigned char HashDataLookup[256] = {
 
 static DWORD get_scheme_code(LPCWSTR scheme, DWORD scheme_len)
 {
-    int i;
+    unsigned int i;
 
     for(i=0; i < sizeof(shlwapi_schemes)/sizeof(shlwapi_schemes[0]); i++) {
         if(scheme_len == strlenW(shlwapi_schemes[i].scheme_name)
@@ -314,8 +314,8 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     HRESULT hr = S_OK;
     DWORD EscapeFlags;
     LPWSTR lpszUrlCpy, wk1, wk2, mp, mp2, root;
-    INT nByteLen, state;
-    DWORD nLen, nWkLen;
+    INT state;
+    DWORD nByteLen, nLen, nWkLen;
     WCHAR slash = '/';
 
     static const WCHAR wszFile[] = {'f','i','l','e',':'};
@@ -332,7 +332,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
         return S_OK;
     }
 
-    nByteLen = (lstrlenW(pszUrl) + 1) * sizeof(WCHAR); /* length in bytes */
+    nByteLen = (strlenW(pszUrl) + 1) * sizeof(WCHAR); /* length in bytes */
     lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0,
                            INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
 

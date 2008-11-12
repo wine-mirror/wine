@@ -803,7 +803,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetString(
         goto get_friendly_name_fail;
       if (VerQueryValueW(verinfoW, translationW, (LPVOID *)&bufW, &flen))
       {
-        int i;
+        UINT i;
         DWORD *langCodeDesc = (DWORD *)bufW;
         for (i = 0; i < flen / sizeof(DWORD); i++)
         {
