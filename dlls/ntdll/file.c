@@ -612,6 +612,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                     goto done;
                 }
             }
+            else if (type == FD_TYPE_FILE) continue;  /* no async I/O on regular files */
         }
         else
         {
@@ -940,6 +941,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                 status = STATUS_SUCCESS;
                 goto done;
             }
+            if (type == FD_TYPE_FILE) continue;  /* no async I/O on regular files */
         }
         else
         {
