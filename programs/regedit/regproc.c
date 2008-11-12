@@ -73,7 +73,7 @@ WCHAR* GetWideString(const char* strA)
 {
     if(strA)
     {
-        WCHAR* strW = NULL;
+        WCHAR* strW;
         int len = MultiByteToWideChar(CP_ACP, 0, strA, -1, NULL, 0);
 
         strW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
@@ -92,7 +92,7 @@ WCHAR* GetWideStringN(const char* strA, int chars, DWORD *len)
 {
     if(strA)
     {
-        WCHAR* strW = NULL;
+        WCHAR* strW;
         *len = MultiByteToWideChar(CP_ACP, 0, strA, chars, NULL, 0);
 
         strW = HeapAlloc(GetProcessHeap(), 0, *len * sizeof(WCHAR));
@@ -112,7 +112,7 @@ char* GetMultiByteString(const WCHAR* strW)
 {
     if(strW)
     {
-        char* strA = NULL;
+        char* strA;
         int len = WideCharToMultiByte(CP_ACP, 0, strW, -1, NULL, 0, NULL, NULL);
 
         strA = HeapAlloc(GetProcessHeap(), 0, len);
@@ -131,7 +131,7 @@ char* GetMultiByteStringN(const WCHAR* strW, int chars, DWORD* len)
 {
     if(strW)
     {
-        char* strA = NULL;
+        char* strA;
         *len = WideCharToMultiByte(CP_ACP, 0, strW, chars, NULL, 0, NULL, NULL);
 
         strA = HeapAlloc(GetProcessHeap(), 0, *len);
