@@ -339,7 +339,7 @@ DWORD WINAPI IcmpSendEcho(
 
     /* Get the reply */
     ip_header_len=0; /* because gcc was complaining */
-    while ((res=poll(&fdr,1,Timeout))>0) {
+    while (poll(&fdr,1,Timeout)>0) {
         recv_time = GetTickCount();
         res=recvfrom(icp->sid, (char*)ip_header, maxlen, 0, (struct sockaddr*)&addr,&addrlen);
         TRACE("received %d bytes from %s\n",res, inet_ntoa(addr.sin_addr));
