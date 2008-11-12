@@ -13,8 +13,8 @@
 @ stdcall GetImageUnusedHeaderBytes(ptr ptr)
 @ stdcall GetTimestampForLoadedLibrary(long) dbghelp.GetTimestampForLoadedLibrary
 @ stdcall ImageAddCertificate(long ptr ptr)
-@ stdcall ImageDirectoryEntryToData(ptr long long ptr) ntdll.RtlImageDirectoryEntryToData
-@ stub ImageDirectoryEntryToDataEx
+@ stdcall ImageDirectoryEntryToData(ptr long long ptr) dbghelp.ImageDirectoryEntryToData
+@ stdcall ImageDirectoryEntryToDataEx(ptr long long ptr ptr) dbghelp.ImageDirectoryEntryToDataEx
 @ stdcall ImageEnumerateCertificates(long long ptr ptr long)
 @ stdcall ImageGetCertificateData(long long ptr ptr)
 @ stdcall ImageGetCertificateHeader(long long ptr)
