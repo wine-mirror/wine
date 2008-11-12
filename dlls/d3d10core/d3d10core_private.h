@@ -34,9 +34,12 @@ const char *debug_dxgi_format(DXGI_FORMAT format);
 
 /* IDirect3D10Device */
 extern const struct ID3D10DeviceVtbl d3d10_device_vtbl;
+extern const struct IUnknownVtbl d3d10_device_inner_unkown_vtbl;
 struct d3d10_device
 {
     const struct ID3D10DeviceVtbl *vtbl;
+    const struct IUnknownVtbl *inner_unknown_vtbl;
+    IUnknown *outer_unknown;
     LONG refcount;
 };
 

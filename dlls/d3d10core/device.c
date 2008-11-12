@@ -24,17 +24,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-/* IUnknown methods */
+/* Inner IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device *iface, REFIID riid, void **object)
+static inline struct d3d10_device *d3d10_device_from_inner_unknown(IUnknown *iface)
 {
+    return (struct d3d10_device *)((char*)iface - FIELD_OFFSET(struct d3d10_device, inner_unknown_vtbl));
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *iface, REFIID riid, void **object)
+{
+    struct d3d10_device *This = d3d10_device_from_inner_unknown(iface);
+
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
             || IsEqualGUID(riid, &IID_ID3D10Device))
     {
-        IUnknown_AddRef(iface);
-        *object = iface;
+        IUnknown_AddRef((IUnknown *)This);
+        *object = This;
         return S_OK;
     }
 
@@ -44,9 +51,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device *iface
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_device_AddRef(ID3D10Device *iface)
+static ULONG STDMETHODCALLTYPE d3d10_device_inner_AddRef(IUnknown *iface)
 {
-    struct d3d10_device *This = (struct d3d10_device *)iface;
+    struct d3d10_device *This = d3d10_device_from_inner_unknown(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -54,14 +61,37 @@ static ULONG STDMETHODCALLTYPE d3d10_device_AddRef(ID3D10Device *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_device_Release(ID3D10Device *iface)
+static ULONG STDMETHODCALLTYPE d3d10_device_inner_Release(IUnknown *iface)
 {
-    struct d3d10_device *This = (struct d3d10_device *)iface;
+    struct d3d10_device *This = d3d10_device_from_inner_unknown(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
     return refcount;
+}
+
+/* IUnknown methods */
+
+static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device *iface, REFIID riid, void **object)
+{
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+    TRACE("Forwarding to outer IUnknown\n");
+    return IUnknown_QueryInterface(This->outer_unknown, riid, object);
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_device_AddRef(ID3D10Device *iface)
+{
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+    TRACE("Forwarding to outer IUnknown\n");
+    return IUnknown_AddRef(This->outer_unknown);
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_device_Release(ID3D10Device *iface)
+{
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+    TRACE("Forwarding to outer IUnknown\n");
+    return IUnknown_Release(This->outer_unknown);
 }
 
 /* ID3D10Device methods */
@@ -844,4 +874,12 @@ const struct ID3D10DeviceVtbl d3d10_device_vtbl =
     d3d10_device_OpenSharedResource,
     d3d10_device_SetTextFilterSize,
     d3d10_device_GetTextFilterSize,
+};
+
+const struct IUnknownVtbl d3d10_device_inner_unkown_vtbl =
+{
+    /* IUnknown methods */
+    d3d10_device_inner_QueryInterface,
+    d3d10_device_inner_AddRef,
+    d3d10_device_inner_Release,
 };
