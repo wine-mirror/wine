@@ -1,4 +1,5 @@
 /*
+ * Copyright 2008 David Adam
  * Copyright 2008 Philip Nilsson
  *
  * This library is free software; you can redistribute it and/or
@@ -584,6 +585,83 @@ static void test_Matrix_Decompose(void)
     ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %x\n", hr);
 }
 
+static void test_Matrix_Transformation2D(void)
+{
+    D3DXMATRIX exp_mat, got_mat;
+    D3DXVECTOR2 rot_center, sca, sca_center, trans;
+    FLOAT rot, sca_rot;
+
+    rot_center.x = 3.0f;
+    rot_center.y = 4.0f;
+
+    sca.x = 12.0f;
+    sca.y = -3.0f;
+
+    sca_center.x = 9.0f;
+    sca_center.y = -5.0f;
+
+    trans.x = -6.0f;
+    trans.y = 7.0f;
+
+    rot = D3DX_PI/3.0f;
+
+    sca_rot = 5.0f*D3DX_PI/4.0f;
+
+    exp_mat.m[0][0] = -4.245192f;
+    exp_mat.m[1][0] = -0.147116f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = 45.265373f;
+    exp_mat.m[0][1] = 7.647113f;
+    exp_mat.m[1][1] = 8.745192f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = -13.401899f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 0.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
+
+    D3DXMatrixTransformation2D(&got_mat, &sca_center, sca_rot, &sca, &rot_center, rot, &trans);
+
+    expect_mat(&exp_mat, &got_mat);
+
+/*_________*/
+
+    sca_center.x = 9.0f;
+    sca_center.y = -5.0f;
+
+    trans.x = -6.0f;
+    trans.y = 7.0f;
+
+    rot = D3DX_PI/3.0f;
+
+    sca_rot = 5.0f*D3DX_PI/4.0f;
+
+    exp_mat.m[0][0] = 0.0f;
+    exp_mat.m[1][0] = 0.0f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = 2.830127f;
+    exp_mat.m[0][1] = 0.0f;
+    exp_mat.m[1][1] = 0.0f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 12.294229f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 0.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
+
+    D3DXMatrixTransformation2D(&got_mat, &sca_center, sca_rot, NULL, NULL, rot, &trans);
+
+    expect_mat(&exp_mat, &got_mat);
+}
+
 static void test_D3DXVec_Array(void)
 {
     unsigned int i;
@@ -725,5 +803,6 @@ START_TEST(math)
 {
     test_Matrix_AffineTransformation2D();
     test_Matrix_Decompose();
+    test_Matrix_Transformation2D();
     test_D3DXVec_Array();
 }

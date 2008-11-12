@@ -225,7 +225,7 @@
 @ stdcall D3DXMatrixScaling(ptr long long long) d3dx8.D3DXMatrixScaling
 @ stdcall D3DXMatrixShadow(ptr ptr ptr) d3dx8.D3DXMatrixShadow
 @ stdcall D3DXMatrixTransformation(ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXMatrixTransformation
-@ stub D3DXMatrixTransformation2D
+@ stdcall D3DXMatrixTransformation2D(ptr ptr long ptr ptr long ptr)
 @ stdcall D3DXMatrixTranslation(ptr long long long) d3dx8.D3DXMatrixTranslation
 @ stdcall D3DXMatrixTranspose(ptr ptr) d3dx8.D3DXMatrixTranspose
 @ stub D3DXOptimizeFaces
