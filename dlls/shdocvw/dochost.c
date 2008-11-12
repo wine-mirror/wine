@@ -149,7 +149,7 @@ void create_doc_view_hwnd(DocHost *This)
             CS_PARENTDC,
             doc_view_proc,
             0, 0 /* native uses 4*/, NULL, NULL, NULL,
-            (HBRUSH)COLOR_WINDOWFRAME, NULL,
+            (HBRUSH)(COLOR_WINDOW + 1), NULL,
             wszShell_DocObject_View,
             NULL
         };

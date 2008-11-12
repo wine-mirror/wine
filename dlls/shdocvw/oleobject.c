@@ -83,7 +83,7 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
             CS_DBLCLKS,
             shell_embedding_proc,
             0, 0 /* native uses 8 */, NULL, NULL, NULL,
-            (HBRUSH)COLOR_WINDOWFRAME, NULL,
+            (HBRUSH)(COLOR_WINDOW + 1), NULL,
             wszShellEmbedding,
             NULL
         };
