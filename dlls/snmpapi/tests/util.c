@@ -71,6 +71,7 @@ static void test_SnmpUtilOidToA(void)
     static AsnObjectIdentifier oid4 = { 258, ids2 };
     static AsnObjectIdentifier oid5 = { 1, ids3 };
     static const char expect0[] = "<null oid>";
+    static const char expect0_alt[] = "NUL";
     static const char expect1[] = "1.3.6.1.4.1.311";
     static const char expect2[] =
         "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
@@ -90,6 +91,15 @@ static void test_SnmpUtilOidToA(void)
         "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
         "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
         "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1";
+    static const char expect3_alt[] =
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1";
     static const char expect4[] = "-1";
 
     /* This crashes under win98 */
@@ -103,7 +113,9 @@ static void test_SnmpUtilOidToA(void)
 
     ret = SnmpUtilOidToA(&oid0);
     ok(ret != NULL, "SnmpUtilOidToA failed\n");
-    ok(!strcmp(ret, expect0), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n",
+    ok(!strcmp(ret, expect0) ||
+       broken(!strcmp(ret, expect0_alt)), /* Win98, WinMe, NT4 */
+       "SnmpUtilOidToA failed got \n%s\n expected \n%s\n",
        ret, expect0);
 
     ret = SnmpUtilOidToA(&oid1);
@@ -123,7 +135,9 @@ static void test_SnmpUtilOidToA(void)
 
     ret = SnmpUtilOidToA(&oid4);
     ok(ret != NULL, "SnmpUtilOidToA failed\n");
-    ok(!strcmp(ret, expect3), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n",
+    ok(!strcmp(ret, expect3) ||
+       broken(!strcmp(ret, expect3_alt)), /* Win98, WinMe, NT4 */
+       "SnmpUtilOidToA failed got \n%s\n expected \n%s\n",
        ret, expect3);
 
     ret = SnmpUtilOidToA(&oid5);
