@@ -2163,8 +2163,12 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             if (info.msg.message & 0x80000000)  /* internal message */
             {
                 if (flags & PM_REMOVE)
+                {
                     handle_internal_message( info.msg.hwnd, info.msg.message,
                                              info.msg.wParam, info.msg.lParam );
+                    /* if this is a nested call return right away */
+                    if (first == info.msg.message && last == info.msg.message) return FALSE;
+                }
                 else
                     peek_message( msg, info.msg.hwnd, info.msg.message,
                                   info.msg.message, flags | PM_REMOVE, changed_mask );
