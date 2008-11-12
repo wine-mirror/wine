@@ -37,3 +37,70 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 
     return TRUE;
 }
+
+static HRESULT WINAPI layer_init(enum dxgi_device_layer_id id, DWORD *count, DWORD *values)
+{
+    TRACE("id %#x, count %p, values %p\n", id, count, values);
+
+    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
+    {
+        WARN("Unknown layer id %#x\n", id);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static UINT WINAPI layer_get_size(enum dxgi_device_layer_id id, struct layer_get_size_args *args, DWORD unknown0)
+{
+    TRACE("id %#x, args %p, unknown0 %#x\n", id, args, unknown0);
+
+    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
+    {
+        WARN("Unknown layer id %#x\n", id);
+        return 0;
+    }
+
+    return sizeof(struct d3d10_device);
+}
+
+static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_base, DWORD unknown0,
+        void *device_object, REFIID riid, void **device_layer)
+{
+    struct d3d10_device *object;
+
+    TRACE("id %#x, layer_base %p, unknown0 %#x, device_object %p, riid %s, device_layer %p\n",
+            id, layer_base, unknown0, device_object, debugstr_guid(riid), device_layer);
+
+    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
+    {
+        WARN("Unknown layer id %#x\n", id);
+        *device_layer = NULL;
+        return E_NOTIMPL;
+    }
+
+    object = (struct d3d10_device *)*layer_base;
+
+    object->vtbl = &d3d10_device_vtbl;
+    object->inner_unknown_vtbl = &d3d10_device_inner_unkown_vtbl;
+    object->refcount = 1;
+
+    object->outer_unknown = device_object;
+    *device_layer = &object->inner_unknown_vtbl;
+
+    TRACE("Created d3d10 device at %p\n", object);
+
+    return S_OK;
+}
+
+HRESULT WINAPI D3D10CoreRegisterLayers(void)
+{
+    const struct dxgi_device_layer layers[] =
+    {
+        {DXGI_DEVICE_LAYER_D3D10_DEVICE, layer_init, layer_get_size, layer_create},
+    };
+
+    DXGID3D10RegisterLayers(layers, sizeof(layers)/sizeof(*layers));
+
+    return S_OK;
+}

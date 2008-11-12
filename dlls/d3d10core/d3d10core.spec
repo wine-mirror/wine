@@ -1,1 +1,1 @@
-@ stub D3D10CoreRegisterLayers
+@ stdcall D3D10CoreRegisterLayers()
