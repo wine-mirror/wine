@@ -578,7 +578,7 @@ typedef struct AppWizColumn {
    int title;
 } AppWizColumn;
 
-AppWizColumn columns[] = {
+static const AppWizColumn columns[] = {
     {200, LVCFMT_LEFT, IDS_COLUMN_NAME},
     {150, LVCFMT_LEFT, IDS_COLUMN_PUBLISHER},
     {100, LVCFMT_LEFT, IDS_COLUMN_VERSION},
