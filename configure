@@ -24290,6 +24290,14 @@ dlls/d3d10/tests/Makefile: dlls/d3d10/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/d3d10/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/d3d10core/Makefile"
+test "x$enable_d3d10core" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	d3d10core"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/d3d10core/Makefile: dlls/d3d10core/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/d3d10core/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d8/Makefile"
 test "x$enable_d3d8" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	d3d8"
@@ -28087,6 +28095,7 @@ do
     "dlls/ctl3d32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3d32/Makefile" ;;
     "dlls/d3d10/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10/Makefile" ;;
     "dlls/d3d10/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10/tests/Makefile" ;;
+    "dlls/d3d10core/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10core/Makefile" ;;
     "dlls/d3d8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d8/Makefile" ;;
     "dlls/d3d8/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d8/tests/Makefile" ;;
     "dlls/d3d9/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d9/Makefile" ;;
