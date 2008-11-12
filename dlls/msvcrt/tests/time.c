@@ -20,6 +20,7 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "time.h"
 
 #include <stdlib.h> /*setenv*/
@@ -63,9 +64,13 @@ static void test_mktime(void)
     struct tm my_tm, sav_tm;
     time_t nulltime, local_time;
     char TZ_env[256];
+    char buffer[64];
     int secs;
 
     ok (res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
+    WideCharToMultiByte( CP_ACP, 0, tzinfo.StandardName, -1, buffer, sizeof(buffer), NULL, NULL );
+    trace( "bias %d std %d dst %d zone %s\n",
+           tzinfo.Bias, tzinfo.StandardBias, tzinfo.DaylightBias, buffer );
     /* Bias may be positive or negative, to use offset of one day */
     secs= SECSPERDAY - tzinfo.Bias * SECSPERMIN;
     my_tm.tm_mday = 1 + secs/SECSPERDAY;
