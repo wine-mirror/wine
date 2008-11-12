@@ -2258,13 +2258,15 @@ todo_wine
     DestroyWindow( child );
 }
 
-static void check_wnd_state(HWND active, HWND foreground, HWND focus, HWND capture)
+#define check_wnd_state(a,b,c,d) check_wnd_state_(__FILE__,__LINE__,a,b,c,d)
+static void check_wnd_state_(const char *file, int line,
+                             HWND active, HWND foreground, HWND focus, HWND capture)
 {
-    ok(active == GetActiveWindow(), "GetActiveWindow() = %p\n", GetActiveWindow());
+    ok_(file, line)(active == GetActiveWindow(), "GetActiveWindow() = %p\n", GetActiveWindow());
     if (foreground)
-	ok(foreground == GetForegroundWindow(), "GetForegroundWindow() = %p\n", GetForegroundWindow());
-    ok(focus == GetFocus(), "GetFocus() = %p\n", GetFocus());
-    ok(capture == GetCapture(), "GetCapture() = %p\n", GetCapture());
+        ok_(file, line)(foreground == GetForegroundWindow(), "GetForegroundWindow() = %p\n", GetForegroundWindow());
+    ok_(file, line)(focus == GetFocus(), "GetFocus() = %p\n", GetFocus());
+    ok_(file, line)(capture == GetCapture(), "GetCapture() = %p\n", GetCapture());
 }
 
 static void test_SetActiveWindow(HWND hwnd)
