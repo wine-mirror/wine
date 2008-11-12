@@ -118,7 +118,7 @@ static LPWSTR RunDlg_GetParentDir(LPCWSTR cmdline)
 {
     const WCHAR *src;
     WCHAR *dest, *result, *result_end=NULL;
-    static WCHAR dotexeW[] = {'.','e','x','e',0};
+    static const WCHAR dotexeW[] = {'.','e','x','e',0};
 
     result = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(strlenW(cmdline)+5));
 

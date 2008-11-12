@@ -2127,7 +2127,8 @@ static void _SHCreateSymbolicLinks(void)
 {
     UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEO, IDS_MYMUSIC }, i;
     int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };
-    static const char * xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DESKTOP" };
+    static const char * const xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DESKTOP" };
+    static const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
     WCHAR wszTempPath[MAX_PATH];
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
     char szMyStuffTarget[FILENAME_MAX], *pszMyStuff;
@@ -2135,7 +2136,6 @@ static void _SHCreateSymbolicLinks(void)
     struct stat statFolder;
     const char *pszHome;
     HRESULT hr;
-    const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
     char ** xdg_results;
     char * xdg_desktop_dir;
 

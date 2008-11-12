@@ -781,7 +781,7 @@ static HRESULT get_xdg_config_file(char * home_dir, char ** config_file)
  * [in/out] p_ptr - pointer to where we are in the buffer
  * Returns the index to xdg_dirs if we find the key, or -1 on error.
  */
-static int parse_config1(const char ** xdg_dirs, const unsigned int num_dirs, char ** p_ptr)
+static int parse_config1(const char * const *xdg_dirs, const unsigned int num_dirs, char ** p_ptr)
 {
     char *p;
     int i;
@@ -884,7 +884,7 @@ static HRESULT parse_config2(char * p, const char * home_dir, char ** out_ptr)
  * [in] num_dirs - number of elements in xdg_dirs
  * [out] out_ptr - an array of the xdg directories names
  */
-HRESULT XDG_UserDirLookup(const char ** xdg_dirs, const unsigned int num_dirs, char *** out_ptr)
+HRESULT XDG_UserDirLookup(const char * const *xdg_dirs, const unsigned int num_dirs, char *** out_ptr)
 {
     FILE *file;
     char **out;
