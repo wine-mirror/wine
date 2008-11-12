@@ -34,6 +34,35 @@
 
 static HMODULE hmoduleRichEdit;
 
+/* Define C Macros for ITextServices calls. */
+
+/* Use a special table for x86 machines to convert the thiscall
+ * calling convention.  This isn't needed on other platforms. */
+#ifdef __i386__
+#define TXTSERV_VTABLE(This) (&itextServicesStdcallVtbl)
+#else /* __i386__ */
+#define TXTSERV_VTABLE(This) (This)->lpVtbl
+#endif /* __i386__ */
+
+#define ITextServices_TxSendMessage(This,a,b,c,d) TXTSERV_VTABLE(This)->TxSendMessage(This,a,b,c,d)
+#define ITextServices_TxDraw(This,a,b,c,d,e,f,g,h,i,j,k,l) TXTSERV_VTABLE(This)->TxDraw(This,a,b,c,d,e,f,g,h,i,j,k,l)
+#define ITextServices_TxGetHScroll(This,a,b,c,d,e) TXTSERV_VTABLE(This)->TxGetHScroll(This,a,b,c,d,e)
+#define ITextServices_TxGetVScroll(This,a,b,c,d,e) TXTSERV_VTABLE(This)->TxGetVScroll(This,a,b,c,d,e)
+#define ITextServices_OnTxSetCursor(This,a,b,c,d,e,f,g,h,i) TXTSERV_VTABLE(This)->OnTxSetCursor(This,a,b,c,d,e,f,g,h,i)
+#define ITextServices_TxQueryHitPoint(This,a,b,c,d,e,f,g,h,i,j) TXTSERV_VTABLE(This)->TxQueryHitPoint(This,a,b,c,d,e,f,g,h,i,j)
+#define ITextServices_OnTxInplaceActivate(This,a) TXTSERV_VTABLE(This)->OnTxInplaceActivate(This,a)
+#define ITextServices_OnTxInplaceDeactivate(This) TXTSERV_VTABLE(This)->OnTxInplaceDeactivate(This)
+#define ITextServices_OnTxUIActivate(This) TXTSERV_VTABLE(This)->OnTxUIActivate(This)
+#define ITextServices_OnTxUIDeactivate(This) TXTSERV_VTABLE(This)->OnTxUIDeactivate(This)
+#define ITextServices_TxGetText(This,a) TXTSERV_VTABLE(This)->TxGetText(This,a)
+#define ITextServices_TxSetText(This,a) TXTSERV_VTABLE(This)->TxSetText(This,a)
+#define ITextServices_TxGetCurrentTargetX(This,a) TXTSERV_VTABLE(This)->TxGetCurrentTargetX(This,a)
+#define ITextServices_TxGetBaseLinePos(This,a) TXTSERV_VTABLE(This)->TxGetBaseLinePos(This,a)
+#define ITextServices_TxGetNaturalSize(This,a,b,c,d,e,f,g,h) TXTSERV_VTABLE(This)->TxGetNaturalSize(This,a,b,c,d,e,f,g,h)
+#define ITextServices_TxGetDropTarget(This,a) TXTSERV_VTABLE(This)->TxGetDropTarget(This,a)
+#define ITextServices_OnTxPropertyBitsChange(This,a,b) TXTSERV_VTABLE(This)->OnTxPropertyBitsChange(This,a,b)
+#define ITextServices_TxGetCachedSize(This,a,b) TXTSERV_VTABLE(This)->TxGetCachedSize(This,a,b)
+
 /* Set the WINETEST_DEBUG environment variable to be greater than 1 for verbose
  * function call traces of ITextHost. */
 #define TRACECALL if(winetest_debug > 1) trace
@@ -412,6 +441,8 @@ static HRESULT WINAPI ITextHostImpl_TxGetSelectionBarWidth(ITextHost *iface,
     return E_NOTIMPL;
 }
 
+static ITextServicesVtbl itextServicesStdcallVtbl;
+
 static ITextHostVtbl itextHostVtbl = {
     ITextHostImpl_QueryInterface,
     ITextHostImpl_AddRef,
@@ -461,6 +492,8 @@ static ITextServices *txtserv = NULL;
 static ITextHostTestImpl *dummyTextHost;
 static void *wrapperCodeMem = NULL;
 
+#include "pshpack1.h"
+
 /* Code structure for x86 byte code */
 typedef struct
 {
@@ -471,6 +504,17 @@ typedef struct
     DWORD func;
 } THISCALL_TO_STDCALL_THUNK;
 
+typedef struct
+{
+    BYTE pop_eax;               /* popl  %eax */
+    BYTE pop_ecx;               /* popl  %ecx */
+    BYTE push_eax;              /* pushl %eax */
+    BYTE mov_vtable_eax[2];     /* movl (%ecx), %eax */
+    BYTE jmp_eax[2];            /* jmp *$vtablefunc_offset(%eax) */
+    int  vtablefunc_offset;
+} STDCALL_TO_THISCALL_THUNK;
+
+#include "poppack.h"
 
 static void setup_thiscall_wrappers(void)
 {
@@ -478,10 +522,13 @@ static void setup_thiscall_wrappers(void)
     void** pVtable;
     void** pVtableEnd;
     THISCALL_TO_STDCALL_THUNK *thunk;
+    STDCALL_TO_THISCALL_THUNK *thunk2;
 
     wrapperCodeMem = VirtualAlloc(NULL,
                                   (sizeof(ITextHostVtbl)/sizeof(void*) - 3)
-                                    * sizeof(THISCALL_TO_STDCALL_THUNK),
+                                    * sizeof(THISCALL_TO_STDCALL_THUNK)
+                                  +(sizeof(ITextServicesVtbl)/sizeof(void*) - 3)
+                                    * sizeof(STDCALL_TO_THISCALL_THUNK),
                                   MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     thunk = wrapperCodeMem;
 
@@ -498,7 +545,7 @@ static void setup_thiscall_wrappers(void)
     /* Skip QueryInterface, AddRef, and Release native actually
      * defined them with the stdcall calling convention. */
     pVtable = (void**)&itextHostVtbl + 3;
-    pVtableEnd = (void**)((char*)&itextHostVtbl + sizeof(ITextHostVtbl));
+    pVtableEnd = (void**)(&itextHostVtbl + 1);
     while (pVtable != pVtableEnd) {
         /* write byte code to executable memory */
         thunk->pop_eax = 0x58;  /* popl  %eax  */
@@ -510,6 +557,29 @@ static void setup_thiscall_wrappers(void)
         *pVtable = thunk;
         pVtable++;
         thunk++;
+    }
+
+    /* Setup an ITextServices standard call vtable that will call the
+     * native thiscall vtable when the methods are called. */
+
+    /* QueryInterface, AddRef, and Release should be called directly on the
+     * real vtable since they use the stdcall calling convention. */
+    thunk2 = (STDCALL_TO_THISCALL_THUNK *)thunk;
+    pVtable = (void**)&itextServicesStdcallVtbl + 3;
+    pVtableEnd = (void**)(&itextServicesStdcallVtbl + 1);
+    while (pVtable != pVtableEnd) {
+        /* write byte code to executable memory */
+        thunk2->pop_eax = 0x58;               /* popl  %eax */
+        thunk2->pop_ecx = 0x59;               /* popl  %ecx */
+        thunk2->push_eax = 0x50;              /* pushl %eax */
+        thunk2->mov_vtable_eax[0] = 0x8b;     /* movl (%ecx), %eax */
+        thunk2->mov_vtable_eax[1] = 0x01;
+        thunk2->jmp_eax[0] = 0xff;            /* jmp *$vtablefunc_offset(%eax) */
+        thunk2->jmp_eax[1] = 0xa0;
+        thunk2->vtablefunc_offset = (char*)pVtable - (char*)&itextServicesStdcallVtbl;
+        *pVtable = thunk2;
+        pVtable++;
+        thunk2++;
     }
 #endif /* __i386__ */
 }
@@ -557,6 +627,21 @@ static BOOL init_texthost(void)
     return TRUE;
 }
 
+static void test_TxGetText(void)
+{
+    HRESULT hres;
+    BSTR rettext;
+
+    if (!init_texthost())
+        return;
+
+    hres = ITextServices_TxGetText(txtserv, &rettext);
+    todo_wine ok(hres == S_OK, "ITextServices_TxGetText failed\n");
+
+    IUnknown_Release(txtserv);
+    CoTaskMemFree(dummyTextHost);
+}
+
 START_TEST( txtsrv )
 {
     setup_thiscall_wrappers();
@@ -570,6 +655,8 @@ START_TEST( txtsrv )
     {
         IUnknown_Release(txtserv);
         CoTaskMemFree(dummyTextHost);
+
+        test_TxGetText();
     }
     if (wrapperCodeMem) VirtualFree(wrapperCodeMem, 0, MEM_RELEASE);
 }
