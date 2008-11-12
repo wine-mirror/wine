@@ -792,9 +792,15 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxisLocal(ID3DXMatrixStack *ifa
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateYawPitchRoll(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
 {
+    D3DXMATRIX temp;
     ID3DXMatrixStackImpl *This = (ID3DXMatrixStackImpl *)iface;
-    FIXME("(%p) : stub\n",This);
-    return E_NOTIMPL;
+
+    TRACE("iface %p\n", iface);
+
+    D3DXMatrixRotationYawPitchRoll(&temp, x, y, z);
+    D3DXMatrixMultiply(&This->stack[This->current], &This->stack[This->current], &temp);
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXMatrixStackImpl_RotateYawPitchRollLocal(ID3DXMatrixStack *iface, FLOAT x, FLOAT y, FLOAT z)
