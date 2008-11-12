@@ -1052,7 +1052,7 @@ static void export_hkey(FILE *file, HKEY key,
             {
                 WCHAR format[] = {'d','w','o','r','d',':','%','0','8','x','\n',0};
 
-                line_len += 20;
+                line_len += 15;
                 REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len);
                 wsprintfW(*line_buf + line_pos, format, *((DWORD *)*val_buf));
                 break;
