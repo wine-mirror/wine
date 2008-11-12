@@ -33,8 +33,9 @@
 #define REG_VAL_BUF_SIZE        4096
 
 /* maximal number of characters in hexadecimal data line,
-   not including '\' character */
-#define REG_FILE_HEX_LINE_LEN   76
+ * including the indentation, but not including the '\' character
+ */
+#define REG_FILE_HEX_LINE_LEN   (2 + 25 * 3)
 
 static const CHAR *reg_class_names[] = {
                                      "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CLASSES_ROOT",
@@ -1082,6 +1083,7 @@ static void export_hkey(FILE *file, HKEY key,
                     const WCHAR format[] = {'%','0','2','x',0};
                     const WCHAR comma[] = {',',0};
                     const WCHAR concat[] = {'\\','\n',' ',' ',0};
+                    int concat_prefix, concat_len;
                     const WCHAR newline[] = {'\n',0};
                     BYTE* val_buf1 = *val_buf;
                     DWORD val_buf1_size = val_size1;
@@ -1096,10 +1098,22 @@ static void export_hkey(FILE *file, HKEY key,
                             val_buf1 = (BYTE*)GetMultiByteStringN((WCHAR*)*val_buf, val_size1 / sizeof(WCHAR), &val_buf1_size);
                     }
 
+                    concat_len=lstrlenW(concat);
+                    concat_prefix=2;
+
                     hex_pos = line_len;
                     line_len += lstrlenW(hex_prefix);
                     data_pos = line_len;
-                    line_len += val_buf1_size * 3 + lstrlenW(concat) * ((int)((float)val_buf1_size * 3.0 / (float)REG_FILE_HEX_LINE_LEN) + 1 ) + 1;
+                    line_len += val_buf1_size * 3;
+                    /* - The 2 spaces that concat places at the start of the
+                     *   line effectively reduce the space available for data.
+                     * - If the value name and hex prefix are very long
+                     *   ( > REG_FILE_HEX_LINE_LEN) then we may overestimate
+                     *   the needed number of lines by one. But that's ok.
+                     * - The trailing linefeed takes the place of a comma so
+                     *   it's accounted for already.
+                     */
+                    line_len += line_len / (REG_FILE_HEX_LINE_LEN - concat_prefix) * concat_len;
                     REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len);
                     lstrcpyW(*line_buf + hex_pos, hex_prefix);
                     column = data_pos; /* no line wrap yet */
@@ -1115,8 +1129,8 @@ static void export_hkey(FILE *file, HKEY key,
                         /* wrap the line */
                         if (column > REG_FILE_HEX_LINE_LEN) {
                             lstrcpyW(*line_buf + data_pos, concat);
-                            data_pos += lstrlenW(concat);
-                            column = 2;
+                            data_pos += concat_len;
+                            column = concat_prefix;
                         }
                     }
                     lstrcpyW(*line_buf + data_pos, newline);
