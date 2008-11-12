@@ -1089,7 +1089,7 @@ BOOL BIDI_Reorder(
     if (WINE_GCPW_FORCE_RTL == (dwWineGCP_Flags&WINE_GCPW_DIR_MASK))
         baselevel = 1;
 
-    i = done = 0;
+    done = 0;
     while (done < uCount)
     {
         unsigned j;
