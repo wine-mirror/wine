@@ -1117,17 +1117,20 @@ static void export_hkey(FILE *file, HKEY key,
                     REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len);
                     lstrcpyW(*line_buf + hex_pos, hex_prefix);
                     column = data_pos; /* no line wrap yet */
-                    for (i1 = 0; i1 < val_buf1_size; i1++) {
+                    i1 = 0;
+                    while (1)
+                    {
                         wsprintfW(*line_buf + data_pos, format, (unsigned int)(val_buf1)[i1]);
                         data_pos += 2;
-                        if (i1 + 1 < val_buf1_size) {
-                            lstrcpyW(*line_buf + data_pos, comma);
-                            data_pos++;
-                        }
+                        if (++i1 == val_buf1_size)
+                            break;
+
+                        lstrcpyW(*line_buf + data_pos, comma);
+                        data_pos++;
                         column += 3;
 
                         /* wrap the line */
-                        if (column > REG_FILE_HEX_LINE_LEN) {
+                        if (column >= REG_FILE_HEX_LINE_LEN) {
                             lstrcpyW(*line_buf + data_pos, concat);
                             data_pos += concat_len;
                             column = concat_prefix;
