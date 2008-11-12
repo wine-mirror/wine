@@ -493,7 +493,7 @@ static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
 	return ret;
 }
 
-int main(int argc, char **argv)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	int i;
 	BOOL FunctionInstall = FALSE;
@@ -529,9 +529,10 @@ int main(int argc, char **argv)
 
 	LPWSTR DllName = NULL;
 	DWORD ReturnCode;
+	int argc;
 	LPWSTR *argvW = NULL;
 
-	/* overwrite the command line */
+	/* parse the command line */
 	process_args( GetCommandLineW(), &argc, &argvW );
 
 	/*
