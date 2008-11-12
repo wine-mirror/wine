@@ -892,49 +892,37 @@ static void REGPROC_resize_char_buffer(WCHAR **buffer, DWORD *len, DWORD require
 static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD *line_len, WCHAR *str)
 {
     DWORD len = lstrlenW(str);
-    DWORD i;
+    DWORD i, pos;
     DWORD extra = 0;
 
     REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + 10);
 
     /* escaping characters */
+    pos = *line_len;
     for (i = 0; i < len; i++) {
         WCHAR c = str[i];
         switch (c) {
-        case '\\':
-        {
-            const WCHAR escape[] = {'\\','\\'};
-
-            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + extra + 1);
-            memcpy(*line_buf + *line_len + i + extra, escape, 2 * sizeof(WCHAR));
-            extra++;
-            break;
-        }
-        case '"':
-        {
-            const WCHAR escape[] = {'\\','"'};
-
-            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + extra + 1);
-            memcpy(*line_buf + *line_len + i + extra, escape, 2 * sizeof(WCHAR));
-            extra++;
-            break;
-        }
         case '\n':
-        {
-            const WCHAR escape[] = {'\\','n'};
-
-            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + extra + 1);
-            memcpy(*line_buf + *line_len + i + extra, escape, 2 * sizeof(WCHAR));
             extra++;
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + extra);
+            (*line_buf)[pos++] = '\\';
+            (*line_buf)[pos++] = 'n';
             break;
-        }
+
+        case '\\':
+        case '"':
+            extra++;
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + extra);
+            (*line_buf)[pos++] = '\\';
+            /* Fall through */
+
         default:
-            memcpy(*line_buf + *line_len + i + extra, &c, sizeof(WCHAR));
+            (*line_buf)[pos++] = c;
             break;
         }
     }
-    *line_len += len + extra;
-    *(*line_buf + *line_len) = 0;
+    (*line_buf)[pos] = '\0';
+    *line_len = pos;
 }
 
 /******************************************************************************
