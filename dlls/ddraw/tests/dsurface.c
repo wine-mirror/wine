@@ -2249,7 +2249,7 @@ static void PrivateDataTest(void)
     }
     hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface7, (void **) &surface7);
     ok(hr == DD_OK, "IDirectDrawSurface_QueryInterface failed with %08x\n", hr);
-    if(!surface)
+    if(!surface7)
     {
         IDirectDrawSurface_Release(surface);
         return;
