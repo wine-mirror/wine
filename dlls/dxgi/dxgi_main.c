@@ -62,3 +62,10 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
 
     return hr;
 }
+
+HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, UINT layer_count)
+{
+    FIXME("layers %p, layer_count %u stub!\n", layers, layer_count);
+
+    return E_NOTIMPL;
+}
