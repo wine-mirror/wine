@@ -416,6 +416,11 @@ static void test_format_object(void)
     ok(ret, "CryptFormatObject failed: %d\n", GetLastError());
     if (ret)
     {
+        if (size == 0 && GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            win_skip("CryptFormatObject has no default implementation\n");
+            return;
+        }
         ok(size == sizeof(WCHAR), "unexpected size %d\n", size);
         str = HeapAlloc(GetProcessHeap(), 0, size);
         SetLastError(0xdeadbeef);
