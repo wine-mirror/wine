@@ -1168,6 +1168,13 @@ static void libxmlEndElementNS(
                         Prefix, SysStringLen(Prefix));
 
             SysFreeString(Prefix);
+
+            if(hr != S_OK)
+            {
+                format_error_message_from_id(This, hr);
+                return;
+            }
+
         }
     }
 
@@ -1217,6 +1224,12 @@ static void libxmlCharacters(
                     This->saxreader->contentHandler,
                     Chars, SysStringLen(Chars));
         SysFreeString(Chars);
+
+        if(hr != S_OK)
+        {
+            format_error_message_from_id(This, hr);
+            return;
+        }
 
         This->column += end-cur+1;
 
@@ -1772,7 +1785,7 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
 
     hr = SAXLocator_create(This, &locator, vbInterface);
     if(FAILED(hr))
-        return E_FAIL;
+        return hr;
 
     locator->pParserCtxt = xmlCreateMemoryParserCtxt(buffer, size);
     if(!locator->pParserCtxt)
@@ -1797,7 +1810,7 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     }
 
     ISAXLocator_Release((ISAXLocator*)&locator->lpSAXLocatorVtbl);
-    return S_OK;
+    return hr;
 }
 
 static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInterface)
@@ -1813,7 +1826,7 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
 
     hr = SAXLocator_create(This, &locator, vbInterface);
     if(FAILED(hr))
-        return E_FAIL;
+        return hr;
 
     locator->pParserCtxt = xmlCreatePushParserCtxt(
             &locator->saxreader->sax, locator,
