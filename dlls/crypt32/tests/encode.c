@@ -7037,6 +7037,131 @@ static void test_decodeNameConstraints(DWORD dwEncoding)
     }
 }
 
+static WCHAR noticeText[] = { 'T','h','i','s',' ','i','s',' ','a',' ',
+ 'n','o','t','i','c','e',0 };
+static const BYTE noticeWithDisplayText[] = {
+ 0x30,0x22,0x1e,0x20,0x00,0x54,0x00,0x68,0x00,0x69,0x00,0x73,0x00,0x20,0x00,
+ 0x69,0x00,0x73,0x00,0x20,0x00,0x61,0x00,0x20,0x00,0x6e,0x00,0x6f,0x00,0x74,
+ 0x00,0x69,0x00,0x63,0x00,0x65
+};
+static char org[] = "Wine";
+static int noticeNumbers[] = { 2,3 };
+static BYTE noticeWithReference[] = {
+ 0x30,0x32,0x30,0x0e,0x16,0x04,0x57,0x69,0x6e,0x65,0x30,0x06,0x02,0x01,0x02,
+ 0x02,0x01,0x03,0x1e,0x20,0x00,0x54,0x00,0x68,0x00,0x69,0x00,0x73,0x00,0x20,
+ 0x00,0x69,0x00,0x73,0x00,0x20,0x00,0x61,0x00,0x20,0x00,0x6e,0x00,0x6f,0x00,
+ 0x74,0x00,0x69,0x00,0x63,0x00,0x65
+};
+
+static void test_encodePolicyQualifierUserNotice(DWORD dwEncoding)
+{
+    BOOL ret;
+    LPBYTE buf;
+    DWORD size;
+    CERT_POLICY_QUALIFIER_USER_NOTICE notice;
+    CERT_POLICY_QUALIFIER_NOTICE_REFERENCE reference;
+
+    memset(&notice, 0, sizeof(notice));
+    ret = pCryptEncodeObjectEx(dwEncoding,
+     X509_PKIX_POLICY_QUALIFIER_USERNOTICE, &notice, CRYPT_ENCODE_ALLOC_FLAG,
+     NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(sizeof(emptySequence) == size, "unexpected size %d\n", size);
+        ok(!memcmp(buf, emptySequence, size), "unexpected value\n");
+        LocalFree(buf);
+    }
+    notice.pszDisplayText = noticeText;
+    ret = pCryptEncodeObjectEx(dwEncoding,
+     X509_PKIX_POLICY_QUALIFIER_USERNOTICE, &notice, CRYPT_ENCODE_ALLOC_FLAG,
+     NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(sizeof(noticeWithDisplayText) == size, "unexpected size %d\n", size);
+        ok(!memcmp(buf, noticeWithDisplayText, size), "unexpected value\n");
+        LocalFree(buf);
+    }
+    reference.pszOrganization = org;
+    reference.cNoticeNumbers = 2;
+    reference.rgNoticeNumbers = noticeNumbers;
+    notice.pNoticeReference = &reference;
+    ret = pCryptEncodeObjectEx(dwEncoding,
+     X509_PKIX_POLICY_QUALIFIER_USERNOTICE, &notice, CRYPT_ENCODE_ALLOC_FLAG,
+     NULL, &buf, &size);
+    todo_wine
+    ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(sizeof(noticeWithReference) == size, "unexpected size %d\n", size);
+        ok(!memcmp(buf, noticeWithReference, size), "unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodePolicyQualifierUserNotice(DWORD dwEncoding)
+{
+    BOOL ret;
+    CERT_POLICY_QUALIFIER_USER_NOTICE *notice;
+    DWORD size;
+
+    ret = pCryptDecodeObjectEx(dwEncoding,
+     X509_PKIX_POLICY_QUALIFIER_USERNOTICE,
+     emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
+     &notice, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(notice->pszDisplayText == NULL, "unexpected display text\n");
+        ok(notice->pNoticeReference == NULL, "unexpected notice reference\n");
+        LocalFree(notice);
+    }
+    ret = pCryptDecodeObjectEx(dwEncoding,
+     X509_PKIX_POLICY_QUALIFIER_USERNOTICE,
+     noticeWithDisplayText, sizeof(noticeWithDisplayText),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &notice, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!lstrcmpW(notice->pszDisplayText, noticeText),
+         "unexpected display text\n");
+        ok(notice->pNoticeReference == NULL, "unexpected notice reference\n");
+        LocalFree(notice);
+    }
+    ret = pCryptDecodeObjectEx(dwEncoding,
+     X509_PKIX_POLICY_QUALIFIER_USERNOTICE,
+     noticeWithReference, sizeof(noticeWithReference),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &notice, &size);
+    todo_wine
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        ok(!lstrcmpW(notice->pszDisplayText, noticeText),
+         "unexpected display text\n");
+        ok(notice->pNoticeReference != NULL, "expected a notice reference\n");
+        if (notice->pNoticeReference)
+        {
+            ok(!strcmp(notice->pNoticeReference->pszOrganization, org),
+             "unexpected organization\n");
+            ok(notice->pNoticeReference->cNoticeNumbers == 2,
+             "expected 2 notice numbers, got %d\n",
+             notice->pNoticeReference->cNoticeNumbers);
+            ok(notice->pNoticeReference->rgNoticeNumbers[0] == noticeNumbers[0],
+             "unexpected notice number %d\n",
+             notice->pNoticeReference->rgNoticeNumbers[0]);
+            ok(notice->pNoticeReference->rgNoticeNumbers[1] == noticeNumbers[1],
+             "unexpected notice number %d\n",
+             notice->pNoticeReference->rgNoticeNumbers[1]);
+        }
+        LocalFree(notice);
+    }
+}
+
 /* Free *pInfo with HeapFree */
 static void testExportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO *pInfo)
 {
@@ -7303,6 +7428,8 @@ START_TEST(encode)
         test_decodeCMSSignerInfo(encodings[i]);
         test_encodeNameConstraints(encodings[i]);
         test_decodeNameConstraints(encodings[i]);
+        test_encodePolicyQualifierUserNotice(encodings[i]);
+        test_decodePolicyQualifierUserNotice(encodings[i]);
     }
     testPortPublicKeyInfo();
 }
