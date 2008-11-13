@@ -95,7 +95,17 @@ static void test_aggregation(const CLSID clsidOuter, const CLSID clsidInner,
     /* these QueryInterface calls should work */
     QI_SUCCEED(pUnkOuter, iidOuter, pUnkAggregator);
     QI_SUCCEED(pUnkOuter, IID_IUnknown, pUnkOuterTest);
-    QI_SUCCEED(pUnkInner, iidInner, pUnkAggregatee);
+    /* IGraphConfig interface comes with DirectShow 9 */
+    if(IsEqualGUID(&IID_IGraphConfig, &iidInner))
+    {
+        hr = IUnknown_QueryInterface(pUnkInner, &iidInner, (LPVOID*)&pUnkAggregatee);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE), "IUnknown_QueryInterface returned %x\n", hr);
+        ok(pUnkAggregatee != NULL || broken(!pUnkAggregatee), "Pointer is NULL\n");
+    }
+    else
+    {
+        QI_SUCCEED(pUnkInner, iidInner, pUnkAggregatee);
+    }
     QI_SUCCEED(pUnkInner, IID_IUnknown, pUnkInnerTest);
 
     if (!pUnkAggregator || !pUnkOuterTest || !pUnkAggregatee
