@@ -778,6 +778,19 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
         bytesNeeded += strlenW(entry->u.pwszDNSName) * sizeof(WCHAR);
         ret = TRUE;
         break;
+    case CERT_ALT_NAME_DIRECTORY_NAME:
+    {
+        DWORD strType = dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE
+         ? CERT_NAME_STR_CRLF_FLAG : 0;
+        DWORD directoryNameLen = CertNameToStrW(X509_ASN_ENCODING,
+         &entry->u.DirectoryName, strType, NULL, 0);
+
+        LoadStringW(hInstance, IDS_ALT_NAME_OTHER_NAME, buf,
+         sizeof(buf) / sizeof(buf[0]));
+        bytesNeeded += (directoryNameLen - 1) * sizeof(WCHAR);
+        ret = TRUE;
+        break;
+    }
     case CERT_ALT_NAME_URL:
         LoadStringW(hInstance, IDS_ALT_NAME_URL, buf,
          sizeof(buf) / sizeof(buf[0]));
@@ -877,6 +890,15 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
             case CERT_ALT_NAME_URL:
                 strcpyW(str, entry->u.pwszURL);
                 break;
+            case CERT_ALT_NAME_DIRECTORY_NAME:
+            {
+                DWORD strType = dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE
+                 ? CERT_NAME_STR_CRLF_FLAG : 0;
+
+                CertNameToStrW(X509_ASN_ENCODING, &entry->u.DirectoryName,
+                 strType, str, bytesNeeded / sizeof(WCHAR));
+                break;
+            }
             case CERT_ALT_NAME_IP_ADDRESS:
                 if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
                 {
