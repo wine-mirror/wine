@@ -32,6 +32,19 @@
 #define MINSPERHOUR        60
 #define HOURSPERDAY        24
 
+static int get_test_year(time_t *start)
+{
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+
+    /* compute start of year in seconds */
+    *start = SECSPERDAY * ((tm->tm_year - 70) * 365 +
+                           (tm->tm_year - 69) / 4 -
+                           (tm->tm_year - 1) / 100 +
+                           (tm->tm_year + 299) / 400);
+    return tm->tm_year;
+}
+
 static void test_ctime(void)
 {
     time_t badtime = -1;
@@ -65,14 +78,20 @@ static void test_mktime(void)
     time_t nulltime, local_time;
     char TZ_env[256];
     char buffer[64];
-    int secs;
+    int year;
+    time_t ref, secs;
+
+    year = get_test_year( &ref );
+    ref += SECSPERDAY;
 
     ok (res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
     WideCharToMultiByte( CP_ACP, 0, tzinfo.StandardName, -1, buffer, sizeof(buffer), NULL, NULL );
     trace( "bias %d std %d dst %d zone %s\n",
            tzinfo.Bias, tzinfo.StandardBias, tzinfo.DaylightBias, buffer );
     /* Bias may be positive or negative, to use offset of one day */
-    secs= SECSPERDAY - tzinfo.Bias * SECSPERMIN;
+    my_tm = *localtime(&ref);  /* retrieve current dst flag */
+    secs = SECSPERDAY - tzinfo.Bias * SECSPERMIN;
+    secs -= (my_tm.tm_isdst ? tzinfo.DaylightBias : tzinfo.StandardBias) * SECSPERMIN;
     my_tm.tm_mday = 1 + secs/SECSPERDAY;
     secs = secs % SECSPERDAY;
     my_tm.tm_hour = secs / SECSPERHOUR;
@@ -81,22 +100,21 @@ static void test_mktime(void)
     secs = secs % SECSPERMIN;
     my_tm.tm_sec = secs;
 
-    my_tm.tm_year = 70;
+    my_tm.tm_year = year;
     my_tm.tm_mon  =  0;
-    my_tm.tm_isdst=  0;
 
     sav_tm = my_tm;
-  
+
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "mktime returned %u, expected %u\n",
-        (DWORD)local_time, SECSPERDAY);
+    ok(local_time == ref, "mktime returned %u, expected %u\n",
+       (DWORD)local_time, (DWORD)ref);
     /* now test some unnormalized struct tm's */
     my_tm = sav_tm;
     my_tm.tm_sec += 60;
     my_tm.tm_min -= 1;
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned %u, expected %u\n",
-        (DWORD)local_time, SECSPERDAY);
+    ok(local_time == ref, "Unnormalized mktime returned %u, expected %u\n",
+        (DWORD)local_time, (DWORD)ref);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
         my_tm.tm_sec == sav_tm.tm_sec,
@@ -109,8 +127,8 @@ static void test_mktime(void)
     my_tm.tm_min -= 60;
     my_tm.tm_hour += 1;
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned %u, expected %u\n",
-        (DWORD)local_time, SECSPERDAY);
+    ok(local_time == ref, "Unnormalized mktime returned %u, expected %u\n",
+       (DWORD)local_time, (DWORD)ref);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
         my_tm.tm_sec == sav_tm.tm_sec,
@@ -123,8 +141,8 @@ static void test_mktime(void)
     my_tm.tm_mon -= 12;
     my_tm.tm_year += 1;
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned %u, expected %u\n",
-        (DWORD)local_time, SECSPERDAY);
+    ok(local_time == ref, "Unnormalized mktime returned %u, expected %u\n",
+       (DWORD)local_time, (DWORD)ref);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
         my_tm.tm_sec == sav_tm.tm_sec,
@@ -137,8 +155,8 @@ static void test_mktime(void)
     my_tm.tm_mon += 12;
     my_tm.tm_year -= 1;
     local_time = mktime(&my_tm);
-    ok(((DWORD)local_time == SECSPERDAY), "Unnormalized mktime returned %u, expected %u\n",
-        (DWORD)local_time, SECSPERDAY);
+    ok(local_time == ref, "Unnormalized mktime returned %u, expected %u\n",
+       (DWORD)local_time, (DWORD)ref);
     ok( my_tm.tm_year == sav_tm.tm_year && my_tm.tm_mon == sav_tm.tm_mon &&
         my_tm.tm_mday == sav_tm.tm_mday && my_tm.tm_hour == sav_tm.tm_hour &&
         my_tm.tm_sec == sav_tm.tm_sec,
@@ -149,7 +167,7 @@ static void test_mktime(void)
             sav_tm.tm_hour,sav_tm.tm_sec);
     /* now a bad time example */
     my_tm = sav_tm;
-    my_tm.tm_year -= 1;
+    my_tm.tm_year = 69;
     local_time = mktime(&my_tm);
     ok((local_time == -1), "(bad time) mktime returned %d, expected -1\n", (int)local_time);
 
@@ -159,7 +177,7 @@ static void test_mktime(void)
     _snprintf(TZ_env,255,"TZ=%s",(getenv("TZ")?getenv("TZ"):""));
     putenv("TZ=GMT");
     nulltime = mktime(&my_tm);
-    ok(((DWORD)nulltime == SECSPERDAY),"mktime returned 0x%08x\n",(DWORD)nulltime);
+    ok(nulltime == ref,"mktime returned 0x%08x\n",(DWORD)nulltime);
     putenv(TZ_env);
 }
 
@@ -167,16 +185,21 @@ static void test_localtime(void)
 {
     TIME_ZONE_INFORMATION tzinfo;
     DWORD res =  GetTimeZoneInformation(&tzinfo);
-    time_t gmt = (time_t)(SECSPERDAY + tzinfo.Bias * SECSPERMIN);
+    time_t gmt, ref;
 
     char TZ_env[256];
     struct tm* lt;
-    
+    int year = get_test_year( &ref );
+    int is_leap = !(year % 4) && ((year % 100) || !((year + 300) % 400));
+
+    gmt = ref + SECSPERDAY + tzinfo.Bias * SECSPERMIN;
     ok (res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
     lt = localtime(&gmt);
-    ok(((lt->tm_year == 70) && (lt->tm_mon  == 0) && (lt->tm_yday  == 1) &&
-	(lt->tm_mday ==  2) && (lt->tm_wday == 5) && (lt->tm_hour  == 0) &&
-	(lt->tm_min  ==  0) && (lt->tm_sec  == 0) && (lt->tm_isdst == 0)),
+    gmt += (lt->tm_isdst ? tzinfo.DaylightBias : tzinfo.StandardBias) * SECSPERMIN;
+    lt = localtime(&gmt);
+    ok(((lt->tm_year == year) && (lt->tm_mon  == 0) && (lt->tm_yday  == 1) &&
+	(lt->tm_mday ==  2) && (lt->tm_hour  == 0) &&
+	(lt->tm_min  ==  0) && (lt->tm_sec  == 0)),
        "Wrong date:Year %d mon %d yday %d mday %d wday %d hour %d min %d sec %d dst %d\n",
        lt->tm_year, lt->tm_mon, lt->tm_yday, lt->tm_mday, lt->tm_wday, lt->tm_hour, 
        lt->tm_min, lt->tm_sec, lt->tm_isdst); 
@@ -184,21 +207,21 @@ static void test_localtime(void)
     _snprintf(TZ_env,255,"TZ=%s",(getenv("TZ")?getenv("TZ"):""));
     putenv("TZ=GMT");
     lt = localtime(&gmt);
-    ok(((lt->tm_year == 70) && (lt->tm_mon  == 0) && (lt->tm_yday  == 1) &&
-	(lt->tm_mday ==  2) && (lt->tm_wday == 5) && (lt->tm_hour  == 0) &&
-	(lt->tm_min  ==  0) && (lt->tm_sec  == 0) && (lt->tm_isdst == 0)),
+    ok(((lt->tm_year == year) && (lt->tm_mon  == 0) && (lt->tm_yday  == 1) &&
+	(lt->tm_mday ==  2) && (lt->tm_hour  == 0) &&
+	(lt->tm_min  ==  0) && (lt->tm_sec  == 0)),
        "Wrong date:Year %d mon %d yday %d mday %d wday %d hour %d min %d sec %d dst %d\n",
        lt->tm_year, lt->tm_mon, lt->tm_yday, lt->tm_mday, lt->tm_wday, lt->tm_hour, 
        lt->tm_min, lt->tm_sec, lt->tm_isdst); 
     putenv(TZ_env);
 
     /* June 22 */
-    gmt += 201 * SECSPERDAY;
+    gmt = ref + 202 * SECSPERDAY + tzinfo.Bias * SECSPERMIN;
     lt = localtime(&gmt);
     gmt += (lt->tm_isdst ? tzinfo.DaylightBias : tzinfo.StandardBias) * SECSPERMIN;
     lt = localtime(&gmt);
-    ok(((lt->tm_year == 70) && (lt->tm_mon  == 6) && (lt->tm_yday  == 202) &&
-	(lt->tm_mday == 22) && (lt->tm_wday == 3) && (lt->tm_hour  == 0) &&
+    ok(((lt->tm_year == year) && (lt->tm_mon  == 6) && (lt->tm_yday  == 202) &&
+	(lt->tm_mday == 22 - is_leap) && (lt->tm_hour  == 0) &&
 	(lt->tm_min  ==  0) && (lt->tm_sec  == 0)),
        "Wrong date:Year %d mon %d yday %d mday %d wday %d hour %d min %d sec %d dst %d\n",
        lt->tm_year, lt->tm_mon, lt->tm_yday, lt->tm_mday, lt->tm_wday, lt->tm_hour, 
