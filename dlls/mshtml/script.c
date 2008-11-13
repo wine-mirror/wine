@@ -640,7 +640,7 @@ static BOOL get_guid_from_type(LPCWSTR type, GUID *guid)
         {'t','e','x','t','/','j','a','v','a','s','c','r','i','p','t',0};
 
     /* FIXME: Handle more types */
-    if(!strcmpW(type, text_javascriptW)) {
+    if(!strcmpiW(type, text_javascriptW)) {
         *guid = CLSID_JScript;
     }else {
         FIXME("Unknown type %s\n", debugstr_w(type));
