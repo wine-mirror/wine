@@ -1353,7 +1353,10 @@ static void libxmlCDataBlock(void *ctx, const xmlChar *value, int len)
         hr = ISAXLexicalHandler_startCDATA(This->saxreader->lexicalHandler);
 
     if(FAILED(hr))
-        return format_error_message_from_id(This, hr);
+    {
+        format_error_message_from_id(This, hr);
+        return;
+    }
 
     realLen = This->pParserCtxt->input->cur-beg-3;
     cur = beg;
