@@ -479,7 +479,6 @@ static size_t rpcrt4_ncacn_np_get_top_of_tower(unsigned char *tower_data,
         memcpy(tower_data, networkaddr, networkaddr_size);
     else
         tower_data[0] = 0;
-    tower_data += networkaddr_size;
 
     return size;
 }
@@ -692,7 +691,6 @@ static size_t rpcrt4_ncalrpc_get_top_of_tower(unsigned char *tower_data,
     pipe_floor->count_rhs = endpoint_size;
 
     memcpy(tower_data, endpoint, endpoint_size);
-    tower_data += endpoint_size;
 
     return size;
 }
