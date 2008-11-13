@@ -999,7 +999,6 @@ HRESULT WINAPI ConvertINetUnicodeToMultiByte(
 
         if (pDstStr)
         {
-            size = min(size, destsz);
             size = ConvertJapaneseUnicodeToJIS(pSrcStr, *pcSrcSize, pDstStr,
                                                destsz);
             if (!size)
@@ -1016,7 +1015,6 @@ HRESULT WINAPI ConvertINetUnicodeToMultiByte(
 
         if (pDstStr)
         {
-            size = min(size, destsz);
             size = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize,
                                        pDstStr, destsz, NULL, NULL);
             if (!size)
