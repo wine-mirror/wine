@@ -339,12 +339,11 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 
     /* Check if this is a user defined control code for a VxD */
 
-    if( HIWORD( dwIoControlCode ) == 0 )
+    if (HIWORD( dwIoControlCode ) == 0 && (GetVersion() & 0x80000000))
     {
         DeviceIoProc proc = get_vxd_proc( hDevice );
         if (proc) return proc( dwIoControlCode, lpvInBuffer, cbInBuffer,
                                lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpOverlapped );
-        return FALSE;
     }
 
     /* Not a VxD, let ntdll handle it */
