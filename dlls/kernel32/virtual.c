@@ -469,8 +469,8 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, name );
 
-    if (access & FILE_MAP_COPY) access |= SECTION_MAP_READ;
-    access |= STANDARD_RIGHTS_REQUIRED | SECTION_QUERY;
+    if (access == FILE_MAP_COPY) access = SECTION_MAP_READ;
+    access |= SECTION_QUERY;
 
     if (GetVersion() & 0x80000000)
     {
