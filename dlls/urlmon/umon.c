@@ -1273,7 +1273,7 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
                               header, sizeof(header), NULL, NULL))
         return E_FAIL;
 
-    if (lstrlenW(cache_path) > dwBufLength)
+    if (strlenW(cache_path) > dwBufLength)
         return E_OUTOFMEMORY;
 
     lstrcpyW(szFileName, cache_path);

@@ -330,7 +330,7 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         goto done;
     }
 
-    if (lstrlenW(szUrl) < sizeof(wszHttp)/sizeof(WCHAR)
+    if (strlenW(szUrl) < sizeof(wszHttp)/sizeof(WCHAR)
         || memcmp(szUrl, wszHttp, sizeof(wszHttp)))
     {
         hres = MK_E_SYNTAX;
