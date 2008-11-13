@@ -1988,31 +1988,31 @@ static void test_QueryInterface(IUnknown *unk)
 
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(qa == NULL, "qa=%p, ezpected NULL\n", qa);
+    ok(qa == NULL, "qa=%p, expected NULL\n", qa);
 
     hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&runnable);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(runnable == NULL, "runnable=%p, ezpected NULL\n", runnable);
+    ok(runnable == NULL, "runnable=%p, expected NULL\n", runnable);
 
     hres = IUnknown_QueryInterface(unk, &IID_IPerPropertyBrowsing, (void**)&propbrowse);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(propbrowse == NULL, "propbrowse=%p, ezpected NULL\n", runnable);
+    ok(propbrowse == NULL, "propbrowse=%p, expected NULL\n", propbrowse);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleCache, (void**)&cache);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(cache == NULL, "cache=%p, ezpected NULL\n", runnable);
+    ok(cache == NULL, "cache=%p, expected NULL\n", cache);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleInPlaceSite, (void**)&inplace);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(inplace == NULL, "inplace=%p, ezpected NULL\n", runnable);
+    ok(inplace == NULL, "inplace=%p, expected NULL\n", inplace);
 
     hres = IUnknown_QueryInterface(unk, &IID_IObjectWithSite, (void**)&site);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(site == NULL, "inplace=%p, ezpected NULL\n", runnable);
+    ok(site == NULL, "site=%p, expected NULL\n", site);
 
     hres = IUnknown_QueryInterface(unk, &IID_IViewObjectEx, (void**)&viewex);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(viewex == NULL, "viewex=%p, ezpected NULL\n", runnable);
+    ok(viewex == NULL, "viewex=%p, expected NULL\n", viewex);
 
 }
 
