@@ -787,9 +787,6 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
     LPWSTR cmdline=NULL, lnkpath_end;
     unsigned int name_size;
     INFCONTEXT name_context, context;
-    IShellLinkW* shelllink=NULL;
-    IPersistFile* persistfile=NULL;
-    HRESULT initresult=E_FAIL;
     int attrs=0;
 
     static const WCHAR dotlnk[] = {'.','l','n','k',0};
@@ -799,7 +796,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
     if (SetupFindFirstLineW( hinf, field, Name, &name_context ))
     {
         SetupGetIntField( &name_context, 2, &attrs );
-        if (attrs) FIXME( "unhandled attributes: %x\n", attrs );
+        if (attrs & ~FLG_PROFITEM_GROUP) FIXME( "unhandled attributes: %x\n", attrs );
     }
     else return TRUE;
 
@@ -808,7 +805,7 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
     lnkpath_end = lnkpath + strlenW(lnkpath);
     if (lnkpath_end[-1] != '\\') *lnkpath_end++ = '\\';
 
-    if (SetupFindFirstLineW( hinf, field, SubDir, &context ))
+    if (!(attrs & FLG_PROFITEM_GROUP) && SetupFindFirstLineW( hinf, field, SubDir, &context ))
     {
         unsigned int subdir_size;
 
@@ -823,67 +820,80 @@ static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
         return TRUE;
 
     lnkpath_end += name_size - 1;
-    if (lnkpath+MAX_PATH < lnkpath_end + 5) return TRUE;
-    strcpyW( lnkpath_end, dotlnk );
 
-    TRACE( "link path: %s\n", debugstr_w(lnkpath) );
-
-    /* calculate command line */
-    if (SetupFindFirstLineW( hinf, field, CmdLine, &context ))
+    if (attrs & FLG_PROFITEM_GROUP)
     {
-        unsigned int dir_len=0, subdir_size=0, filename_size=0;
-        int dirid=0;
-        LPCWSTR dir;
-        LPWSTR cmdline_end;
+        SHPathPrepareForWriteW( NULL, NULL, lnkpath, SHPPFW_DIRCREATE );
+    }
+    else
+    {
+        IShellLinkW* shelllink=NULL;
+        IPersistFile* persistfile=NULL;
+        HRESULT initresult=E_FAIL;
 
-        SetupGetIntField( &context, 1, &dirid );
-        dir = DIRID_get_string( dirid );
+        if (lnkpath+MAX_PATH < lnkpath_end + 5) return TRUE;
+        strcpyW( lnkpath_end, dotlnk );
 
-        if (dir) dir_len = strlenW(dir);
+        TRACE( "link path: %s\n", debugstr_w(lnkpath) );
 
-        SetupGetStringFieldW( &context, 2, NULL, 0, &subdir_size );
-        SetupGetStringFieldW( &context, 3, NULL, 0, &filename_size );
-
-        if (dir_len && filename_size)
+        /* calculate command line */
+        if (SetupFindFirstLineW( hinf, field, CmdLine, &context ))
         {
-            cmdline = cmdline_end = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * (dir_len+subdir_size+filename_size+1) );
+            unsigned int dir_len=0, subdir_size=0, filename_size=0;
+            int dirid=0;
+            LPCWSTR dir;
+            LPWSTR cmdline_end;
 
-            strcpyW( cmdline_end, dir );
-            cmdline_end += dir_len;
-            if (cmdline_end[-1] != '\\') *cmdline_end++ = '\\';
+            SetupGetIntField( &context, 1, &dirid );
+            dir = DIRID_get_string( dirid );
 
-            if (subdir_size)
+            if (dir) dir_len = strlenW(dir);
+
+            SetupGetStringFieldW( &context, 2, NULL, 0, &subdir_size );
+            SetupGetStringFieldW( &context, 3, NULL, 0, &filename_size );
+
+            if (dir_len && filename_size)
             {
-                SetupGetStringFieldW( &context, 2, cmdline_end, subdir_size, NULL );
-                cmdline_end += subdir_size-1;
+                cmdline = cmdline_end = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * (dir_len+subdir_size+filename_size+1) );
+
+                strcpyW( cmdline_end, dir );
+                cmdline_end += dir_len;
                 if (cmdline_end[-1] != '\\') *cmdline_end++ = '\\';
+
+                if (subdir_size)
+                {
+                    SetupGetStringFieldW( &context, 2, cmdline_end, subdir_size, NULL );
+                    cmdline_end += subdir_size-1;
+                    if (cmdline_end[-1] != '\\') *cmdline_end++ = '\\';
+                }
+                SetupGetStringFieldW( &context, 3, cmdline_end, filename_size, NULL );
+                TRACE( "cmdline: %s\n", debugstr_w(cmdline));
             }
-            SetupGetStringFieldW( &context, 3, cmdline_end, filename_size, NULL );
-            TRACE( "cmdline: %s\n", debugstr_w(cmdline));
         }
+
+        if (!cmdline) return TRUE;
+
+        initresult = CoInitialize(NULL);
+
+        if (!SUCCEEDED(CoCreateInstance( &CLSID_ShellLink, NULL,
+                                         CLSCTX_INPROC_SERVER, &IID_IShellLinkW, (LPVOID*)&shelllink)))
+            goto done;
+
+        IShellLinkW_SetPath( shelllink, cmdline );
+        SHPathPrepareForWriteW( NULL, NULL, lnkpath, SHPPFW_DIRCREATE|SHPPFW_IGNOREFILENAME );
+        if (SUCCEEDED(IShellLinkW_QueryInterface( shelllink, &IID_IPersistFile, (LPVOID*)&persistfile)))
+        {
+            TRACE( "writing link: %s\n", debugstr_w(lnkpath) );
+            IPersistFile_Save( persistfile, lnkpath, FALSE );
+            IPersistFile_Release( persistfile );
+        }
+        IShellLinkW_Release( shelllink );
+
+    done:
+        if (SUCCEEDED(initresult)) CoUninitialize();
+        HeapFree( GetProcessHeap(), 0, cmdline );
     }
 
-    if (!cmdline) return TRUE;
-
-    initresult = CoInitialize(NULL);
-
-    if (!SUCCEEDED(CoCreateInstance( &CLSID_ShellLink, NULL,
-                                     CLSCTX_INPROC_SERVER, &IID_IShellLinkW, (LPVOID*)&shelllink)))
-        goto done;
-
-    IShellLinkW_SetPath( shelllink, cmdline );
-    SHPathPrepareForWriteW( NULL, NULL, lnkpath, SHPPFW_DIRCREATE|SHPPFW_IGNOREFILENAME );
-    if (SUCCEEDED(IShellLinkW_QueryInterface( shelllink, &IID_IPersistFile, (LPVOID*)&persistfile)))
-    {
-        TRACE( "writing link: %s\n", debugstr_w(lnkpath) );
-        IPersistFile_Save( persistfile, lnkpath, FALSE );
-        IPersistFile_Release( persistfile );
-    }
-    IShellLinkW_Release( shelllink );
-
-done:
-    if (SUCCEEDED(initresult)) CoUninitialize();
-    HeapFree( GetProcessHeap(), 0, cmdline );
     return TRUE;
 }
 

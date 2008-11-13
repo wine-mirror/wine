@@ -393,7 +393,7 @@ static void test_profile_items(void)
         "[Version]\n"
         "Signature=\"$Chicago$\"\n"
         "[DefaultInstall]\n"
-        "ProfileItems=TestItem,TestItem2\n"
+        "ProfileItems=TestItem,TestItem2,TestGroup\n"
         "[TestItem]\n"
         "Name=TestItem\n"
         "CmdLine=11,,notepad.exe\n"
@@ -401,6 +401,8 @@ static void test_profile_items(void)
         "Name=TestItem2\n"
         "CmdLine=11,,notepad.exe\n"
         "SubDir=TestDir\n"
+        "[TestGroup]\n"
+        "Name=TestGroup,4\n"
         ;
 
     hShell32 = LoadLibraryA("shell32");
@@ -432,6 +434,8 @@ static void test_profile_items(void)
         ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "directory not created\n");
         snprintf(path, MAX_PATH, "%s\\TestDir\\TestItem2.lnk", commonprogs);
         ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "link not created\n");
+        snprintf(path, MAX_PATH, "%s\\TestGroup", commonprogs);
+        ok(INVALID_FILE_ATTRIBUTES != GetFileAttributes(path), "group not created\n");
     }
 
     snprintf(path, MAX_PATH, "%s\\TestItem.lnk", commonprogs);
@@ -441,6 +445,8 @@ static void test_profile_items(void)
     snprintf(path, MAX_PATH, "%s\\TestItem2.lnk", commonprogs);
     DeleteFile(path);
     snprintf(path, MAX_PATH, "%s\\TestDir", commonprogs);
+    RemoveDirectory(path);
+    snprintf(path, MAX_PATH, "%s\\TestGroup", commonprogs);
     RemoveDirectory(path);
 
 cleanup:
