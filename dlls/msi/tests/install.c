@@ -5185,6 +5185,17 @@ static void test_MsiConfigureProductEx(void)
     CHAR keypath[MAX_PATH * 2];
     CHAR localpack[MAX_PATH];
 
+    /* skip these tests if we are on Win9x or WinMe */
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
+    lstrcatA(keypath, "Installer\\UserData");
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &props);
+    if (res == ERROR_FILE_NOT_FOUND)
+    {
+        win_skip("Different registry keys on Win9x and WinMe\n");
+        return;
+    }
+    RegCloseKey(props);
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\hydrogen", 500);
     create_file("msitest\\helium", 500);
