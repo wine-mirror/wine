@@ -237,7 +237,6 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
         RtlDestroyEnvironment(env);
         if (!penv) NtCurrentTeb()->Peb->ProcessParameters->Environment = new_env;
         else *penv = new_env;
-        env = new_env;
     }
     else
     {
