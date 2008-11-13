@@ -73,6 +73,7 @@
 #include <shlguid.h>
 #include <appmgmt.h>
 #include <tlhelp32.h>
+#include <intshcut.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -1409,6 +1410,82 @@ cleanup:
     return ( r == 0 );
 }
 
+static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link, BOOL bWait )
+{
+    char *link_name = NULL;
+    DWORD csidl = -1;
+    LPWSTR urlPath;
+    char *escaped_urlPath = NULL;
+    HRESULT hr;
+    HANDLE hSem = NULL;
+    BOOL ret = TRUE;
+    int r = -1;
+
+    if ( !link )
+    {
+        WINE_ERR("Link name is null\n");
+        return TRUE;
+    }
+
+    if( !GetLinkLocation( link, &csidl, &link_name ) )
+    {
+        WINE_WARN("Unknown link location %s. Ignoring.\n",wine_dbgstr_w(link));
+        return TRUE;
+    }
+    if (!in_desktop_dir(csidl) && !in_startmenu(csidl))
+    {
+        WINE_WARN("Not under desktop or start menu. Ignoring.\n");
+        ret = TRUE;
+        goto cleanup;
+    }
+    WINE_TRACE("Link       : %s\n", wine_dbgstr_a(link_name));
+
+    hr = url->lpVtbl->GetURL(url, &urlPath);
+    if (FAILED(hr))
+    {
+        ret = TRUE;
+        goto cleanup;
+    }
+    WINE_TRACE("path       : %s\n", wine_dbgstr_w(urlPath));
+
+    escaped_urlPath = escape(urlPath);
+
+    hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
+    if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hSem, FALSE, INFINITE, QS_ALLINPUT ) )
+    {
+        WINE_ERR("failed wait for semaphore\n");
+        goto cleanup;
+    }
+    if (in_desktop_dir(csidl))
+    {
+        char *location;
+        const char *lastEntry;
+        lastEntry = strrchr(link_name, '/');
+        if (lastEntry == NULL)
+            lastEntry = link_name;
+        else
+            ++lastEntry;
+        location = heap_printf("%s/Desktop/%s.desktop", getenv("HOME"), lastEntry);
+        if (location)
+        {
+            r = !write_desktop_entry(location, lastEntry, "winebrowser", escaped_urlPath, NULL, NULL, NULL);
+            HeapFree(GetProcessHeap(), 0, location);
+        }
+    }
+    else
+        r = !write_menu_entry(link_name, "winebrowser", escaped_urlPath, NULL, NULL, NULL);
+    ret = (r != 0);
+    ReleaseSemaphore(hSem, 1, NULL);
+
+cleanup:
+    if (hSem)
+        CloseHandle(hSem);
+    HeapFree(GetProcessHeap(), 0, link_name);
+    CoTaskMemFree( urlPath );
+    HeapFree(GetProcessHeap(), 0, escaped_urlPath);
+    return ret;
+}
+
 static BOOL WaitForParentProcess( void )
 {
     PROCESSENTRY32 procentry;
@@ -1522,6 +1599,70 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bWait )
     return !r;
 }
 
+static BOOL Process_URL( LPCWSTR urlname, BOOL bWait )
+{
+    IUniformResourceLocatorW *url;
+    IPersistFile *pf;
+    HRESULT r;
+    WCHAR fullname[MAX_PATH];
+    DWORD len;
+
+    WINE_TRACE("%s, wait %d\n", wine_dbgstr_w(urlname), bWait);
+
+    if( !urlname[0] )
+    {
+        WINE_ERR("URL name missing\n");
+        return 1;
+    }
+
+    len=GetFullPathNameW( urlname, MAX_PATH, fullname, NULL );
+    if (len==0 || len>MAX_PATH)
+    {
+        WINE_ERR("couldn't get full path of URL file\n");
+        return 1;
+    }
+
+    r = CoInitialize( NULL );
+    if( FAILED( r ) )
+    {
+        WINE_ERR("CoInitialize failed\n");
+        return 1;
+    }
+
+    r = CoCreateInstance( &CLSID_InternetShortcut, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IUniformResourceLocatorW, (LPVOID *) &url );
+    if( FAILED( r ) )
+    {
+        WINE_ERR("No IID_IUniformResourceLocatorW\n");
+        return 1;
+    }
+
+    r = url->lpVtbl->QueryInterface( url, &IID_IPersistFile, (LPVOID*) &pf );
+    if( FAILED( r ) )
+    {
+        WINE_ERR("No IID_IPersistFile\n");
+        return 1;
+    }
+    r = IPersistFile_Load( pf, fullname, STGM_READ );
+    if( SUCCEEDED( r ) )
+    {
+        /* If something fails (eg. Couldn't extract icon)
+         * wait for parent process and try again
+         */
+        if( ! InvokeShellLinkerForURL( url, fullname, bWait ) && bWait )
+        {
+            WaitForParentProcess();
+            InvokeShellLinkerForURL( url, fullname, FALSE );
+        }
+    }
+
+    IPersistFile_Release( pf );
+    url->lpVtbl->Release( url );
+
+    CoUninitialize();
+
+    return !r;
+}
 
 static CHAR *next_token( LPSTR *p )
 {
@@ -1596,6 +1737,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
     LPSTR token = NULL, p;
     BOOL bWait = FALSE;
+    BOOL bURL = FALSE;
     int ret = 0;
 
     init_xdg();
@@ -1607,6 +1749,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 	    break;
         if( !lstrcmpA( token, "-w" ) )
             bWait = TRUE;
+        else if ( !lstrcmpA( token, "-u" ) )
+            bURL = TRUE;
 	else if( token[0] == '-' )
 	{
 	    WINE_ERR( "unknown option %s\n",token);
@@ -1614,12 +1758,17 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         else
         {
             WCHAR link[MAX_PATH];
+            BOOL bRet;
 
             MultiByteToWideChar( CP_ACP, 0, token, -1, link, sizeof(link)/sizeof(WCHAR) );
-            if( !Process_Link( link, bWait ) )
+            if (bURL)
+                bRet = Process_URL( link, bWait );
+            else
+                bRet = Process_Link( link, bWait );
+            if (!bRet)
             {
-	        WINE_ERR( "failed to build menu item for %s\n",token);
-	        ret = 1;
+                WINE_ERR( "failed to build menu item for %s\n",token);
+                ret = 1;
             }
         }
     }

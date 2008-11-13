@@ -20,10 +20,8 @@
 
 /*
  * TODO:
- * fd.o desktop and menu integration
  * Implement the IShellLinkA/W interfaces
  * Handle the SetURL flags
- * Loading .url files
  * Implement any other interfaces? Does any software actually use them?
  *
  * The installer for the Zuma Deluxe Popcap game is good for testing.
@@ -65,6 +63,42 @@ static inline InternetShortcut* impl_from_IUniformResourceLocatorW(IUniformResou
 static inline InternetShortcut* impl_from_IPersistFile(IPersistFile *iface)
 {
     return (InternetShortcut*)((char*)iface - FIELD_OFFSET(InternetShortcut, persistFile));
+}
+
+static BOOL StartLinkProcessor(LPCOLESTR szLink)
+{
+    static const WCHAR szFormat[] = {
+        'w','i','n','e','m','e','n','u','b','u','i','l','d','e','r','.','e','x','e',
+        ' ','-','w',' ','-','u',' ','"','%','s','"',0 };
+    LONG len;
+    LPWSTR buffer;
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    BOOL ret;
+
+    len = sizeof(szFormat) + lstrlenW( szLink ) * sizeof(WCHAR);
+    buffer = heap_alloc( len );
+    if( !buffer )
+        return FALSE;
+
+    wsprintfW( buffer, szFormat, szLink );
+
+    TRACE("starting %s\n",debugstr_w(buffer));
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+
+    ret = CreateProcessW( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+
+    HeapFree( GetProcessHeap(), 0, buffer );
+
+    if (ret)
+    {
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+    }
+
+    return ret;
 }
 
 /* interface functions */
@@ -282,8 +316,54 @@ static HRESULT WINAPI PersistFile_IsDirty(IPersistFile *pFile)
 
 static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileName, DWORD dwMode)
 {
-    FIXME("(%p, %p, 0x%x): stub\n", pFile, pszFileName, dwMode);
-    return E_NOTIMPL;
+    WCHAR str_header[] = {'I','n','t','e','r','n','e','t','S','h','o','r','t','c','u','t',0};
+    WCHAR str_URL[] = {'U','R','L',0};
+    WCHAR *filename = NULL;
+    HRESULT hr;
+    InternetShortcut *This = impl_from_IPersistFile(pFile);
+    TRACE("(%p, %s, 0x%x)\n", pFile, debugstr_w(pszFileName), dwMode);
+    if (dwMode != 0)
+        FIXME("ignoring unimplemented mode 0x%x\n", dwMode);
+    filename = co_strdupW(pszFileName);
+    if (filename != NULL)
+    {
+        DWORD len = 128;
+        DWORD r;
+        WCHAR *url = CoTaskMemAlloc(len);
+        if (url != NULL)
+        {
+            r = GetPrivateProfileStringW(str_header, str_URL, NULL, url, len, pszFileName);
+            while (r == len-1)
+            {
+                CoTaskMemFree(url);
+                len *= 2;
+                url = CoTaskMemAlloc(len);
+                if (url == NULL)
+                    break;
+                r = GetPrivateProfileStringW(str_header, str_URL, NULL, url, len, pszFileName);
+            }
+            if (r == 0)
+                hr = E_FAIL;
+            else if (url != NULL)
+            {
+                CoTaskMemFree(This->currentFile);
+                This->currentFile = filename;
+                CoTaskMemFree(This->url);
+                This->url = url;
+                This->isDirty = FALSE;
+                return S_OK;
+            }
+            else
+                hr = E_OUTOFMEMORY;
+            CoTaskMemFree(url);
+        }
+        else
+            hr = E_OUTOFMEMORY;
+        CoTaskMemFree(filename);
+    }
+    else
+        hr = E_OUTOFMEMORY;
+    return hr;
 }
 
 static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileName, BOOL fRemember)
@@ -336,6 +416,7 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
             CloseHandle(file);
             if (pszFileName == NULL || fRemember)
                 This->isDirty = FALSE;
+            StartLinkProcessor(pszFileName);
         }
         else
             hr = E_FAIL;
