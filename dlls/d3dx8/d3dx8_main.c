@@ -32,7 +32,7 @@
 #include "wine/unicode.h"
 #include "d3dx8_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer) {
   ID3DXBufferImpl *object;
