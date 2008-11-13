@@ -262,7 +262,8 @@ static void test_storage_stream(void)
     r = IStorage_CreateStream(stg, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
     ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error\n");
     r = IStorage_CreateStream(stg, longname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
-    ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error, got %d GetLastError()=%d\n", r, GetLastError());
+    ok(r==STG_E_INVALIDNAME || broken(r==S_OK) /* nt4 */,
+       "IStorage->CreateStream wrong error, got %d GetLastError()=%d\n", r, GetLastError());
     r = IStorage_CreateStream(stg, stmname, STGM_READWRITE, 0, 0, &stm );
     ok(r==STG_E_INVALIDFLAG, "IStorage->CreateStream wrong error\n");
     r = IStorage_CreateStream(stg, stmname, STGM_READ, 0, 0, &stm );
@@ -1100,7 +1101,8 @@ static void _test_file_access(LPCSTR file, const struct access_res *ares, DWORD 
                line, idx, ares[idx].gothandle,
                (hfile != INVALID_HANDLE_VALUE));
 
-            ok(lasterr == ares[idx].lasterr,
+            ok(lasterr == ares[idx].lasterr ||
+               broken(lasterr == 0xdeadbeef) /* win9x */,
                "(%d, lasterr, %d): Expected %d, got %d\n",
                line, idx, ares[idx].lasterr, lasterr);
 
