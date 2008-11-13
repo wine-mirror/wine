@@ -101,7 +101,9 @@ static int   vga_fb_window_size;
 static char *vga_fb_window_data;
 static PALETTEENTRY *vga_fb_palette;
 static unsigned vga_fb_palette_index;
+static unsigned vga_fb_palette_size;
 static BOOL  vga_fb_bright;
+static BOOL  vga_fb_enabled;
 
 /*
  * VGA text mode data.
@@ -768,7 +770,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
             return;
         }
 
-        res=IDirectDrawPalette_SetEntries(lpddpal,0,0,4,vga_fb_palette);
+        res=IDirectDrawPalette_SetEntries(lpddpal,0,0,vga_fb_palette_size,vga_fb_palette);
         if (res != S_OK) {
            ERR("Could not set default palette entries (res = 0x%x)\n", res);
         }
@@ -828,12 +830,25 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
       vga_fb_window_data = VGA_WINDOW_START;
       vga_fb_window_size = VGA_WINDOW_SIZE;
       vga_fb_palette = vga_def_palette;
+      vga_fb_palette_size = 256;
     }
     else
     {
       vga_fb_window_data = CGA_WINDOW_START;
       vga_fb_window_size = CGA_WINDOW_SIZE;
-      vga_fb_palette = cga_palette1;
+      if(Depth == 2)
+      {
+        /* Select default 2 bit CGA palette */
+        vga_fb_palette = cga_palette1;
+        vga_fb_palette_size = 4;
+      }
+      else
+      {
+        /* Top of VGA palette is same as 4 bit CGA palette */
+        vga_fb_palette = vga_def_palette;
+        vga_fb_palette_size = 16;
+      }
+
       vga_fb_palette_index = 0;
       vga_fb_bright = 0;
     }
@@ -1067,6 +1082,27 @@ void VGA_SetBright(BOOL bright)
 
   /* Remember the "bright" value used by the CGA controller */
   vga_fb_bright = bright;
+}
+
+/**********************************************************************
+ *         VGA_SetEnabled
+ *
+ * Select if output is enabled or disabled
+ * This is a property of the CGA controller
+ */
+void VGA_SetEnabled(BOOL enabled)
+{
+  TRACE("%i\n", enabled);
+
+  /* Check if going from enabled to disabled */
+  if(vga_fb_enabled == TRUE && enabled == FALSE)
+  {
+    /* Clear frame buffer */
+    memset(vga_fb_window_data, 0x00, vga_fb_window_size);
+  }
+
+  /* Remember the "enabled" value */
+  vga_fb_enabled = enabled;
 }
 
 /**********************************************************************
@@ -1425,9 +1461,44 @@ static void VGA_Poll_Graphics(void)
       VGA_SyncWindow( TRUE );
 
   /*
-   * CGA framebuffer
+   * CGA framebuffer (160x200)
+   * This buffer is encoded as following:
+   * - 4 bit pr. pixel, 2 pixels per byte
+   * - 80 bytes per row
+   * - Every second line has an offset of 8096
    */
-  if(vga_fb_depth == 2 && vga_fb_width == 320 && vga_fb_height == 200){
+  if(vga_fb_depth == 4 && vga_fb_width == 160 && vga_fb_height == 200){
+    WORD off = 0;
+    BYTE bits = 4;
+    BYTE value;
+    for(Y=0; Y<vga_fb_height; Y++, surf+=(Pitch*2)){
+      for(X=0; X<vga_fb_width; X++){
+        off = Y & 1 ? (8 * 1024) : 0;
+        off += (80 * (Y/2));
+        off += X/2;
+        value = (dat[off] >> bits) & 0xF;
+        surf[(X*4)+0] = value;
+        surf[(X*4)+1] = value;
+        surf[(X*4)+2] = value;
+        surf[(X*4)+3] = value;
+        surf[(X*4)+Pitch+0] = value;
+        surf[(X*4)+Pitch+1] = value;
+        surf[(X*4)+Pitch+2] = value;
+        surf[(X*4)+Pitch+3] = value;
+        bits -= 4;
+        bits &= 7;
+      }
+    }
+  }
+
+  /*
+   * CGA framebuffer (320x200)
+   * This buffer is encoded as following:
+   * - 2 bits per color, 4 pixels per byte
+   * - 80 bytes per row
+   * - Every second line has an offset of 8096
+   */
+  else if(vga_fb_depth == 2 && vga_fb_width == 320 && vga_fb_height == 200){
     WORD off = 0;
     BYTE bits = 6;
     BYTE value;
@@ -1605,6 +1676,21 @@ void VGA_ioport_out( WORD port, BYTE val )
            FIXME("Unsupported index, VGA crt controller register 0x3b4/0x3d4: 0x%02x (value 0x%02x)\n",
                  vga_index_3d4, val);
            break;
+
+        /* Mode control register (CGA) */
+        case 0x3d8:
+
+           /* Detect 160x200, 16 color mode (composite) */
+           if((val & 0x02) && (val & 0x10))
+           {
+             /* Switch to 160x200x4 composite mode */
+             VGA_SetMode(160, 200, 4);
+           }
+
+           /* Set the enabled bit */
+           VGA_SetEnabled((val & 0x08) && 1);
+           break;
+
         /* Colour control register (CGA) */
         case 0x3d9:
            /* Set bright */
