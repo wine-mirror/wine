@@ -1547,7 +1547,7 @@ static BOOL WINAPI CRYPT_FormatCRLDistPoints(DWORD dwCertEncodingType,
                     bytesNeeded += strlenW(rdnName) * sizeof(WCHAR);
                 bytesNeeded += strlenW(nameSep) * sizeof(WCHAR);
                 /* The indent level (3) is higher than when used as the issuer,
-                 * because the name is suppordinate to the name type (full vs.
+                 * because the name is subordinate to the name type (full vs.
                  * RDN.)
                  */
                 ret = CRYPT_FormatAltNameInfo(dwFormatStrType, 3,
