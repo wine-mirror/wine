@@ -1697,6 +1697,114 @@ static BOOL WINAPI CRYPT_AsnEncodeSMIMECapabilities(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnEncodeNoticeNumbers(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    const CERT_POLICY_QUALIFIER_NOTICE_REFERENCE *noticeRef = pvStructInfo;
+    DWORD bytesNeeded, dataLen, lenBytes, i;
+    BOOL ret = TRUE;
+
+    for (i = 0, dataLen = 0; ret && i < noticeRef->cNoticeNumbers; i++)
+    {
+        DWORD size;
+
+        ret = CRYPT_AsnEncodeInt(dwCertEncodingType, X509_INTEGER,
+         &noticeRef->rgNoticeNumbers[i], 0, NULL, NULL, &size);
+        if (ret)
+            dataLen += size;
+    }
+    if (ret)
+    {
+        CRYPT_EncodeLen(dataLen, NULL, &lenBytes);
+        bytesNeeded = 1 + lenBytes + dataLen;
+        if (!pbEncoded)
+            *pcbEncoded = bytesNeeded;
+        else
+        {
+            if ((ret = CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded,
+             pcbEncoded, bytesNeeded)))
+            {
+                if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+                    pbEncoded = *(BYTE **)pbEncoded;
+                *pbEncoded++ = ASN_SEQUENCE;
+                CRYPT_EncodeLen(dataLen, pbEncoded, &lenBytes);
+                pbEncoded += lenBytes;
+                for (i = 0; i < noticeRef->cNoticeNumbers; i++)
+                {
+                    DWORD size = dataLen;
+
+                    ret = CRYPT_AsnEncodeInt(dwCertEncodingType, X509_INTEGER,
+                     &noticeRef->rgNoticeNumbers[i], 0, NULL, pbEncoded, &size);
+                    pbEncoded += size;
+                    dataLen -= size;
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeNoticeReference(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    const CERT_POLICY_QUALIFIER_NOTICE_REFERENCE *noticeRef = pvStructInfo;
+    BOOL ret;
+    CERT_NAME_VALUE orgValue = { CERT_RDN_IA5_STRING,
+     { 0, (LPBYTE)noticeRef->pszOrganization } };
+    struct AsnEncodeSequenceItem items[] = {
+     { &orgValue, CRYPT_AsnEncodeNameValue, 0 },
+     { noticeRef, CRYPT_AsnEncodeNoticeNumbers, 0 },
+    };
+
+    ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items,
+     sizeof(items) / sizeof(items[0]), dwFlags, pEncodePara, pbEncoded,
+     pcbEncoded);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodePolicyQualifierUserNotice(
+ DWORD dwCertEncodingType, LPCSTR lpszStructType, const void *pvStructInfo,
+ DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    BOOL ret = FALSE;
+
+    __TRY
+    {
+        const CERT_POLICY_QUALIFIER_USER_NOTICE *notice = pvStructInfo;
+        struct AsnEncodeSequenceItem items[2];
+        CERT_NAME_VALUE displayTextValue;
+        DWORD cItem = 0;
+
+        ret = TRUE;
+        if (notice->pNoticeReference)
+        {
+            items[cItem].encodeFunc = CRYPT_AsnEncodeNoticeReference;
+            items[cItem].pvStructInfo = notice->pNoticeReference;
+            cItem++;
+        }
+        if (notice->pszDisplayText)
+        {
+            displayTextValue.dwValueType = CERT_RDN_BMP_STRING;
+            displayTextValue.Value.cbData = 0;
+            displayTextValue.Value.pbData = (LPBYTE)notice->pszDisplayText;
+            items[cItem].encodeFunc = CRYPT_AsnEncodeNameValue;
+            items[cItem].pvStructInfo = &displayTextValue;
+            cItem++;
+        }
+        ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
+         dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL WINAPI CRYPT_AsnEncodePKCSAttribute(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -4063,6 +4171,9 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         case LOWORD(PKCS_SMIME_CAPABILITIES):
             encodeFunc = CRYPT_AsnEncodeSMIMECapabilities;
             break;
+        case LOWORD(X509_PKIX_POLICY_QUALIFIER_USERNOTICE):
+            encodeFunc = CRYPT_AsnEncodePolicyQualifierUserNotice;
+            break;
         case LOWORD(PKCS_ATTRIBUTES):
             encodeFunc = CRYPT_AsnEncodePKCSAttributes;
             break;
@@ -4120,6 +4231,8 @@ static CryptEncodeObjectExFunc CRYPT_GetBuiltinEncoder(DWORD dwCertEncodingType,
         encodeFunc = CRYPT_AsnEncodeNameConstraints;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_INFO_ACCESS))
         encodeFunc = CRYPT_AsnEncodeAuthorityInfoAccess;
+    else if (!strcmp(lpszStructType, szOID_PKIX_POLICY_QUALIFIER_USERNOTICE))
+        encodeFunc = CRYPT_AsnEncodePolicyQualifierUserNotice;
     else if (!strcmp(lpszStructType, szOID_CTL))
         encodeFunc = CRYPT_AsnEncodeCTL;
     return encodeFunc;
