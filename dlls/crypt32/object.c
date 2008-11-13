@@ -1539,13 +1539,15 @@ static BOOL WINAPI CRYPT_FormatCRLDistPoints(DWORD dwCertEncodingType,
              CRL_DIST_POINT_NO_NAME)
             {
                 bytesNeeded += strlenW(distPointName) * sizeof(WCHAR);
-                bytesNeeded += strlenW(colon) * sizeof(WCHAR);
+                bytesNeeded += strlenW(nameSep) * sizeof(WCHAR);
                 if (distPoint->DistPointName.dwDistPointNameChoice ==
                  CRL_DIST_POINT_FULL_NAME)
                     bytesNeeded += strlenW(fullName) * sizeof(WCHAR);
                 else
                     bytesNeeded += strlenW(rdnName) * sizeof(WCHAR);
                 bytesNeeded += strlenW(nameSep) * sizeof(WCHAR);
+                if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                    bytesNeeded += 2 * strlenW(indent) * sizeof(WCHAR);
                 /* The indent level (3) is higher than when used as the issuer,
                  * because the name is subordinate to the name type (full vs.
                  * RDN.)
@@ -1648,8 +1650,15 @@ static BOOL WINAPI CRYPT_FormatCRLDistPoints(DWORD dwCertEncodingType,
 
                         strcpyW(str, distPointName);
                         str += strlenW(distPointName);
-                        strcpyW(str, colon);
-                        str += strlenW(colon);
+                        strcpyW(str, nameSep);
+                        str += strlenW(nameSep);
+                        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                        {
+                            strcpyW(str, indent);
+                            str += strlenW(indent);
+                            strcpyW(str, indent);
+                            str += strlenW(indent);
+                        }
                         if (distPoint->DistPointName.dwDistPointNameChoice ==
                          CRL_DIST_POINT_FULL_NAME)
                         {
