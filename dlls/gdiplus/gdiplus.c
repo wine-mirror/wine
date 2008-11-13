@@ -93,6 +93,8 @@ Status WINAPI GdiplusStartup(ULONG_PTR *token, const struct GdiplusStartupInput 
         output->NotificationUnhook = NotificationUnhook;
     }
 
+    *token = 0xdeadbeef;
+
     /* FIXME: DebugEventCallback ignored */
 
     return Ok;
