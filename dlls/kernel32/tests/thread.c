@@ -105,23 +105,22 @@ CreateThread
    it.  It basically makes multithreaded execution linear, which defeats
    the purpose of multiple threads, but makes testing easy.  */
 static HANDLE start_event, stop_event;
-static LONG num_syncing_threads, num_synced;
+static LONG num_synced;
 
-static void init_thread_sync_helpers(LONG num_threads)
+static void init_thread_sync_helpers(void)
 {
   start_event = CreateEvent(NULL, TRUE, FALSE, NULL);
   ok(start_event != NULL, "CreateEvent failed\n");
   stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
   ok(stop_event != NULL, "CreateEvent failed\n");
-  num_syncing_threads = num_threads;
-  num_synced = 0;
+  num_synced = -1;
 }
 
 static BOOL sync_threads_and_run_one(DWORD sync_id, DWORD my_id)
 {
   LONG num = InterlockedIncrement(&num_synced);
-  assert(0 < num && num <= num_syncing_threads);
-  if (num == num_syncing_threads)
+  assert(-1 <= num && num <= 1);
+  if (num == 1)
   {
       ResetEvent( stop_event );
       SetEvent( start_event );
@@ -129,7 +128,7 @@ static BOOL sync_threads_and_run_one(DWORD sync_id, DWORD my_id)
   else
   {
     DWORD ret = WaitForSingleObject(start_event, 10000);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed %x\n",ret);
   }
   return sync_id == my_id;
 }
@@ -137,8 +136,8 @@ static BOOL sync_threads_and_run_one(DWORD sync_id, DWORD my_id)
 static void resync_after_run(void)
 {
   LONG num = InterlockedDecrement(&num_synced);
-  assert(0 <= num && num < num_syncing_threads);
-  if (num == 0)
+  assert(-1 <= num && num <= 1);
+  if (num == -1)
   {
       ResetEvent( start_event );
       SetEvent( stop_event );
@@ -1171,7 +1170,7 @@ static void test_TLS(void)
   DWORD ret;
   BOOL suc;
 
-  init_thread_sync_helpers(2);
+  init_thread_sync_helpers();
 
   /* Allocate a TLS slot in the main thread to test for inheritance.  */
   TLS_main = TlsAlloc();
