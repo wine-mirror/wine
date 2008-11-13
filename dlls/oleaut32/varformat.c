@@ -1532,7 +1532,6 @@ VARIANT_FormatNumber_Bool:
           }
         }
         count = min(count_max, pad);
-        count_max -= count;
         pad -= count;
         TRACE("write %d whole trailing 0's\n", count);
         while (count--)
