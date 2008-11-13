@@ -2119,7 +2119,9 @@ static void test_SetEnhMetaFileBits(void)
     SetLastError(0xdeadbeef);
     hemf = SetEnhMetaFileBits(sizeof(data), data);
     ok(!hemf, "SetEnhMetaFileBits should fail\n");
-    ok(GetLastError() == ERROR_INVALID_DATA, "expected ERROR_INVALID_DATA, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA ||
+       GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x, WinMe */
+       "expected ERROR_INVALID_DATA or ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     emh = (ENHMETAHEADER *)data;
     memset(emh, 0, sizeof(*emh));
@@ -2141,15 +2143,23 @@ static void test_SetEnhMetaFileBits(void)
     emh->nBytes++;
     SetLastError(0xdeadbeef);
     hemf = SetEnhMetaFileBits(emh->nBytes, data);
-    ok(!hemf, "SetEnhMetaFileBits should fail\n");
-    /* XP doesn't set error in this case */
+    ok(!hemf ||
+       broken(hemf != NULL), /* Win9x, WinMe */
+       "SetEnhMetaFileBits should fail\n");
+    todo_wine
+    ok(GetLastError() == 0xdeadbeef, "Expected deadbeef, got %u\n", GetLastError());
+    DeleteEnhMetaFile(hemf);
 
     emh->dSignature = 0;
     emh->nBytes--;
     SetLastError(0xdeadbeef);
     hemf = SetEnhMetaFileBits(emh->nBytes, data);
-    ok(!hemf, "SetEnhMetaFileBits should fail\n");
-    /* XP doesn't set error in this case */
+    ok(!hemf ||
+       broken(hemf != NULL), /* Win9x, WinMe */
+       "SetEnhMetaFileBits should fail\n");
+    todo_wine
+    ok(GetLastError() == 0xdeadbeef, "Expected deadbeef, got %u\n", GetLastError());
+    DeleteEnhMetaFile(hemf);
 }
 
 START_TEST(metafile)
