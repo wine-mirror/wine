@@ -1095,7 +1095,7 @@ static BOOL WINAPI CRYPT_FormatAuthorityKeyId2(DWORD dwCertEncodingType,
                     size = bytesNeeded;
                     ret = CRYPT_FormatKeyId(&info->KeyId, str, &size);
                     if (ret)
-                        str += size / sizeof(WCHAR);
+                        str += size / sizeof(WCHAR) - 1;
                 }
                 if (info->AuthorityCertIssuer.cAltEntry)
                 {
@@ -1112,7 +1112,7 @@ static BOOL WINAPI CRYPT_FormatAuthorityKeyId2(DWORD dwCertEncodingType,
                     ret = CRYPT_FormatCertIssuer(dwFormatStrType,
                      &info->AuthorityCertIssuer, str, &size);
                     if (ret)
-                        str += size / sizeof(WCHAR);
+                        str += size / sizeof(WCHAR) - 1;
                 }
                 if (info->AuthorityCertSerialNumber.cbData)
                 {
