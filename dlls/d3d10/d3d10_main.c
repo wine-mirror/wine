@@ -141,6 +141,7 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER
         HMODULE swrast, UINT flags, UINT sdk_version, DXGI_SWAP_CHAIN_DESC *swapchain_desc,
         IDXGISwapChain **swapchain, ID3D10Device **device)
 {
+    IDXGIDevice *dxgi_device;
     IDXGIFactory *factory;
     HRESULT hr;
 
@@ -153,22 +154,40 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER
     if (FAILED(hr))
     {
         WARN("Failed to create a device, returning %#x\n", hr);
+        *device = NULL;
         return hr;
     }
 
     TRACE("Created ID3D10Device %p\n", *device);
 
-    hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
+    hr = ID3D10Device_QueryInterface(*device, &IID_IDXGIDevice, (void **)&dxgi_device);
     if (FAILED(hr))
     {
+        ERR("Failed to get a dxgi device from the d3d10 device, returning %#x\n", hr);
         ID3D10Device_Release(*device);
         *device = NULL;
-
-        WARN("Failed to create a DXGI factory, returning %#x\n", hr);
         return hr;
     }
 
-    TRACE("Created IDXGIFactory %p\n", factory);
+    hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
+    IDXGIDevice_Release(dxgi_device);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get the device adapter, returning %#x\n", hr);
+        ID3D10Device_Release(*device);
+        *device = NULL;
+        return hr;
+    }
+
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    IDXGIAdapter_Release(adapter);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get the adapter factory, returning %#x\n", hr);
+        ID3D10Device_Release(*device);
+        *device = NULL;
+        return hr;
+    }
 
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)*device, swapchain_desc, swapchain);
     IDXGIFactory_Release(factory);
