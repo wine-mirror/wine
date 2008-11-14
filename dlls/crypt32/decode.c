@@ -2241,6 +2241,267 @@ static BOOL WINAPI CRYPT_AsnDecodeSMIMECapabilities(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeIA5String(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret = TRUE;
+    DWORD dataLen;
+    LPSTR *pStr = pvStructInfo;
+
+    if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
+    {
+        BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+        DWORD bytesNeeded = sizeof(LPSTR) + sizeof(char);
+
+        if (pbEncoded[0] != ASN_IA5STRING)
+        {
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+            ret = FALSE;
+        }
+        else
+        {
+            bytesNeeded += dataLen;
+            if (pcbDecoded)
+                *pcbDecoded = 1 + lenBytes + dataLen;
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if (*pcbStructInfo < bytesNeeded)
+            {
+                *pcbStructInfo = bytesNeeded;
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+            {
+                *pcbStructInfo = bytesNeeded;
+                if (dataLen)
+                {
+                    LPSTR str = *pStr;
+
+                    assert(str);
+                    memcpy(str, pbEncoded + 1 + lenBytes, dataLen);
+                    str[dataLen] = 0;
+                }
+                else
+                    *pStr = NULL;
+            }
+        }
+    }
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodeIntArray(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+     CRYPT_AsnDecodeIntInternal, sizeof(int), FALSE, 0 };
+    struct GenericArray *array = pvStructInfo;
+    BOOL ret;
+
+    TRACE("(%p, %d, %08x, %p, %d)\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbDecoded : 0);
+
+    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
+     array ? array->rgItems : NULL);
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodeNoticeReference(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    struct AsnDecodeSequenceItem items[] = {
+     { ASN_IA5STRING, offsetof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE,
+       pszOrganization), CRYPT_AsnDecodeIA5String, sizeof(LPSTR), FALSE, TRUE,
+       offsetof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE, pszOrganization), 0 },
+     { ASN_SEQUENCEOF, offsetof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE,
+       cNoticeNumbers), CRYPT_AsnDecodeIntArray, sizeof(struct GenericArray),
+       FALSE, TRUE, offsetof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE,
+       rgNoticeNumbers), 0 },
+    };
+    DWORD bytesNeeded;
+
+    TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
+    ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
+     pbEncoded, cbEncoded, dwFlags, NULL, NULL, &bytesNeeded, pcbDecoded,
+     NULL);
+    if (ret)
+    {
+        /* The caller is expecting a pointer to a
+         * CERT_POLICY_QUALIFIER_NOTICE_REFERENCE to be decoded, whereas
+         * CRYPT_AsnDecodeSequence is decoding a
+         * CERT_POLICY_QUALIFIER_NOTICE_REFERENCE.  Increment the bytes
+         * needed, and decode again if the requisite space is available.
+         */
+        bytesNeeded += sizeof(PCERT_POLICY_QUALIFIER_NOTICE_REFERENCE);
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if (*pcbStructInfo < bytesNeeded)
+        {
+            *pcbStructInfo = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            PCERT_POLICY_QUALIFIER_NOTICE_REFERENCE noticeRef;
+
+            *pcbStructInfo = bytesNeeded;
+            /* The pointer (pvStructInfo) passed in points to the first dynamic
+             * pointer, so use it as the pointer to the
+             * CERT_POLICY_QUALIFIER_NOTICE_REFERENCE, and create the
+             * appropriate offset for the first dynamic pointer within the
+             * notice reference by pointing to the first memory location past
+             * the CERT_POLICY_QUALIFIER_NOTICE_REFERENCE.
+             */
+            noticeRef =
+             *(PCERT_POLICY_QUALIFIER_NOTICE_REFERENCE *)pvStructInfo;
+            noticeRef->pszOrganization = (LPSTR)((LPBYTE)noticeRef +
+             sizeof(CERT_POLICY_QUALIFIER_NOTICE_REFERENCE));
+            ret = CRYPT_AsnDecodeSequence(items,
+             sizeof(items) / sizeof(items[0]), pbEncoded, cbEncoded, dwFlags,
+             NULL, noticeRef, &bytesNeeded, pcbDecoded,
+             noticeRef->pszOrganization);
+        }
+    }
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodeBMPString(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret = TRUE;
+    DWORD dataLen;
+    LPWSTR *pStr = pvStructInfo;
+
+    if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
+    {
+        BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+        DWORD bytesNeeded = sizeof(LPWSTR) + sizeof(WCHAR);
+
+        if (pbEncoded[0] != ASN_BMPSTRING)
+        {
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+            ret = FALSE;
+        }
+        else
+        {
+            bytesNeeded += dataLen;
+            if (pcbDecoded)
+                *pcbDecoded = 1 + lenBytes + dataLen;
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if (*pcbStructInfo < bytesNeeded)
+            {
+                *pcbStructInfo = bytesNeeded;
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+            {
+                *pcbStructInfo = bytesNeeded;
+                if (dataLen)
+                {
+                    DWORD i;
+                    LPWSTR str = *pStr;
+
+                    assert(str);
+                    for (i = 0; i < dataLen / 2; i++)
+                        str[i] = (pbEncoded[1 + lenBytes + 2 * i] << 8) |
+                         pbEncoded[1 + lenBytes + 2 * i + 1];
+                    str[i] = 0;
+                }
+                else
+                    *pStr = NULL;
+            }
+        }
+    }
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodePolicyQualifierUserNoticeInternal(
+ const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo,
+ DWORD *pcbStructInfo, DWORD *pcbDecoded)
+{
+    BOOL ret;
+    struct AsnDecodeSequenceItem items[] = {
+     { ASN_SEQUENCE, offsetof(CERT_POLICY_QUALIFIER_USER_NOTICE,
+       pNoticeReference), CRYPT_AsnDecodeNoticeReference,
+       sizeof(PCERT_POLICY_QUALIFIER_NOTICE_REFERENCE), TRUE, TRUE,
+       offsetof(CERT_POLICY_QUALIFIER_USER_NOTICE, pNoticeReference), 0 },
+     { ASN_BMPSTRING, offsetof(CERT_POLICY_QUALIFIER_USER_NOTICE,
+       pszDisplayText), CRYPT_AsnDecodeBMPString, sizeof(LPWSTR), TRUE, TRUE,
+       offsetof(CERT_POLICY_QUALIFIER_USER_NOTICE, pszDisplayText), 0 },
+    };
+    PCERT_POLICY_QUALIFIER_USER_NOTICE notice = pvStructInfo;
+
+    TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, *pcbStructInfo);
+
+    ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
+     pbEncoded, cbEncoded, dwFlags, NULL, pvStructInfo, pcbStructInfo,
+     pcbDecoded, notice ? notice->pNoticeReference : NULL);
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodePolicyQualifierUserNotice(
+ DWORD dwCertEncodingType, LPCSTR lpszStructType, const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara,
+ void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret = FALSE;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, *pcbStructInfo);
+
+    __TRY
+    {
+        DWORD bytesNeeded;
+
+        ret = CRYPT_AsnDecodePolicyQualifierUserNoticeInternal(pbEncoded,
+         cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG, NULL, &bytesNeeded,
+         NULL);
+        if (ret)
+        {
+            if (!pvStructInfo)
+                *pcbStructInfo = bytesNeeded;
+            else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+             pvStructInfo, pcbStructInfo, bytesNeeded)))
+            {
+                PCERT_POLICY_QUALIFIER_USER_NOTICE notice;
+
+                if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                    pvStructInfo = *(BYTE **)pvStructInfo;
+                notice = pvStructInfo;
+                notice->pNoticeReference =
+                 (PCERT_POLICY_QUALIFIER_NOTICE_REFERENCE)
+                 ((BYTE *)pvStructInfo +
+                 sizeof(CERT_POLICY_QUALIFIER_USER_NOTICE));
+                ret = CRYPT_AsnDecodePolicyQualifierUserNoticeInternal(
+                 pbEncoded, cbEncoded, dwFlags & ~CRYPT_DECODE_ALLOC_FLAG,
+                 pvStructInfo, &bytesNeeded, NULL);
+            }
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    TRACE("returning %d\n", ret);
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodePKCSAttributeInternal(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
@@ -4872,6 +5133,9 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         case LOWORD(PKCS_SMIME_CAPABILITIES):
             decodeFunc = CRYPT_AsnDecodeSMIMECapabilities;
             break;
+        case LOWORD(X509_PKIX_POLICY_QUALIFIER_USERNOTICE):
+            decodeFunc = CRYPT_AsnDecodePolicyQualifierUserNotice;
+            break;
         case LOWORD(PKCS_ATTRIBUTES):
             decodeFunc = CRYPT_AsnDecodePKCSAttributes;
             break;
@@ -4929,6 +5193,8 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         decodeFunc = CRYPT_AsnDecodeNameConstraints;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_INFO_ACCESS))
         decodeFunc = CRYPT_AsnDecodeAuthorityInfoAccess;
+    else if (!strcmp(lpszStructType, szOID_PKIX_POLICY_QUALIFIER_USERNOTICE))
+        decodeFunc = CRYPT_AsnDecodePolicyQualifierUserNotice;
     else if (!strcmp(lpszStructType, szOID_CTL))
         decodeFunc = CRYPT_AsnDecodeCTL;
     return decodeFunc;

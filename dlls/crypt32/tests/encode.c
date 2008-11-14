@@ -7109,7 +7109,6 @@ static void test_decodePolicyQualifierUserNotice(DWORD dwEncoding)
      X509_PKIX_POLICY_QUALIFIER_USERNOTICE,
      emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      &notice, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7121,7 +7120,6 @@ static void test_decodePolicyQualifierUserNotice(DWORD dwEncoding)
      X509_PKIX_POLICY_QUALIFIER_USERNOTICE,
      noticeWithDisplayText, sizeof(noticeWithDisplayText),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &notice, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7134,7 +7132,6 @@ static void test_decodePolicyQualifierUserNotice(DWORD dwEncoding)
      X509_PKIX_POLICY_QUALIFIER_USERNOTICE,
      noticeWithReference, sizeof(noticeWithReference),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &notice, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7144,7 +7141,8 @@ static void test_decodePolicyQualifierUserNotice(DWORD dwEncoding)
         if (notice->pNoticeReference)
         {
             ok(!strcmp(notice->pNoticeReference->pszOrganization, org),
-             "unexpected organization\n");
+             "unexpected organization %s\n",
+             notice->pNoticeReference->pszOrganization);
             ok(notice->pNoticeReference->cNoticeNumbers == 2,
              "expected 2 notice numbers, got %d\n",
              notice->pNoticeReference->cNoticeNumbers);
