@@ -178,7 +178,7 @@
 # @ stub NtGetDevicePowerState
 @ stub NtGetPlugPlayEvent
 @ stdcall NtGetTickCount()
-# @ stub NtGetWriteWatch
+@ stdcall NtGetWriteWatch(long long ptr long ptr ptr ptr)
 @ stub NtImpersonateAnonymousToken
 @ stub NtImpersonateClientOfPort
 @ stub NtImpersonateThread
@@ -298,7 +298,7 @@
 @ stdcall NtRequestWaitReplyPort(ptr ptr ptr)
 # @ stub NtRequestWakeupLatency
 @ stdcall NtResetEvent(long ptr)
-# @ stub NtResetWriteWatch
+@ stdcall NtResetWriteWatch(long ptr long)
 @ stdcall NtRestoreKey(long long long)
 # @ stub NtResumeProcess
 @ stdcall NtResumeThread(long long)
@@ -1022,7 +1022,7 @@
 # @ stub ZwGetDevicePowerState
 @ stub ZwGetPlugPlayEvent
 @ stdcall ZwGetTickCount() NtGetTickCount
-# @ stub ZwGetWriteWatch
+@ stdcall ZwGetWriteWatch(long long ptr long ptr ptr ptr) NtGetWriteWatch
 # @ stub ZwImpersonateAnonymousToken
 @ stub ZwImpersonateClientOfPort
 @ stub ZwImpersonateThread
@@ -1142,7 +1142,7 @@
 @ stdcall ZwRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
 # @ stub ZwRequestWakeupLatency
 @ stdcall ZwResetEvent(long ptr) NtResetEvent
-# @ stub ZwResetWriteWatch
+@ stdcall ZwResetWriteWatch(long ptr long) NtResetWriteWatch
 @ stdcall ZwRestoreKey(long long long) NtRestoreKey
 # @ stub ZwResumeProcess
 @ stdcall ZwResumeThread(long long) NtResumeThread

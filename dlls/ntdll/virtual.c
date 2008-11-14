@@ -1551,7 +1551,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         if (type & MEM_WRITE_WATCH)
         {
             FIXME("MEM_WRITE_WATCH type not supported\n");
-            return STATUS_NOT_SUPPORTED;
+            return STATUS_INVALID_PARAMETER;
         }
     }
     vprot = VIRTUAL_GetProt( protect ) | VPROT_VALLOC;
@@ -2343,6 +2343,29 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
+}
+
+
+/***********************************************************************
+ *             NtGetWriteWatch   (NTDLL.@)
+ *             ZwGetWriteWatch   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T size, PVOID *addresses,
+                                 ULONG_PTR *count, ULONG *granularity )
+{
+    FIXME( "%p %x %p-%p %p %lu\n", process, flags, base, (char *)base + size, addresses, *count );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtResetWriteWatch   (NTDLL.@)
+ *             ZwResetWriteWatch   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtResetWriteWatch( HANDLE process, PVOID base, SIZE_T size )
+{
+    FIXME( "%p %p-%p\n", process, base, (char *)base + size );
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 
