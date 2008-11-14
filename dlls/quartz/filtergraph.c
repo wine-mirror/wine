@@ -1030,8 +1030,9 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         if (SUCCEEDED(hr)) {
             unsigned int i;
             if (nb == 0) {
-                TRACE("Reached a renderer\n");
-                break;
+                IPin_Disconnect(ppinfilter);
+                IPin_Disconnect(ppinOut);
+                goto error;
             }
             TRACE("pins to consider: %d\n", nb);
             for(i = 0; i < nb; i++)
