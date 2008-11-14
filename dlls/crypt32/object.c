@@ -785,7 +785,7 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
         DWORD directoryNameLen = CertNameToStrW(X509_ASN_ENCODING,
          &entry->u.DirectoryName, strType, NULL, 0);
 
-        LoadStringW(hInstance, IDS_ALT_NAME_OTHER_NAME, buf,
+        LoadStringW(hInstance, IDS_ALT_NAME_DIRECTORY_NAME, buf,
          sizeof(buf) / sizeof(buf[0]));
         bytesNeeded += (directoryNameLen - 1) * sizeof(WCHAR);
         ret = TRUE;
