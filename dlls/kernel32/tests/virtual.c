@@ -754,7 +754,8 @@ static void test_write_watch(void)
 
     size = 0x10000;
     base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE );
-    if (!base && GetLastError() == ERROR_INVALID_PARAMETER)
+    if (!base &&
+        (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_NOT_SUPPORTED))
     {
         todo_wine win_skip( "MEM_WRITE_WATCH not supported\n" );
         return;
@@ -770,13 +771,24 @@ static void test_write_watch(void)
     ok( info.Type == MEM_PRIVATE, "wrong Type 0x%x\n", info.Type );
 
     count = 64;
+    SetLastError( 0xdeadbeef );
     ret = pGetWriteWatch( 0, NULL, size, results, &count, &pagesize );
     ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        broken( GetLastError() == 0xdeadbeef ), /* win98 */
+        "wrong error %u\n", GetLastError() );
 
+    SetLastError( 0xdeadbeef );
     ret = pGetWriteWatch( 0, GetModuleHandle(0), size, results, &count, &pagesize );
-    ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    if (ret)
+    {
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    }
+    else  /* win98 */
+    {
+        ok( count == 0, "wrong count %lu\n", count );
+    }
 
     ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
@@ -882,47 +894,85 @@ static void test_write_watch(void)
 
     /* some invalid parameter tests */
 
+    SetLastError( 0xdeadbeef );
     count = 0;
     ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
-    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    if (ret)
+    {
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
 
-    ret = pGetWriteWatch( 0, base, size, results, NULL, &pagesize );
-    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pGetWriteWatch( 0, base, size, results, NULL, &pagesize );
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
 
-    count = 64;
-    ret = pGetWriteWatch( 0, base, size, results, &count, NULL );
-    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        count = 64;
+        ret = pGetWriteWatch( 0, base, size, results, &count, NULL );
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
 
-    count = 64;
-    ret = pGetWriteWatch( 0, base, size, NULL, &count, &pagesize );
-    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        count = 64;
+        ret = pGetWriteWatch( 0, base, size, NULL, &count, &pagesize );
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
 
-    count = 0;
-    ret = pGetWriteWatch( 0, base, size, NULL, &count, &pagesize );
-    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        count = 0;
+        ret = pGetWriteWatch( 0, base, size, NULL, &count, &pagesize );
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
 
-    count = 64;
-    ret = pGetWriteWatch( 0xdeadbeef, base, size, results, &count, &pagesize );
-    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        count = 64;
+        ret = pGetWriteWatch( 0xdeadbeef, base, size, results, &count, &pagesize );
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
 
-    count = 64;
-    ret = pGetWriteWatch( 0, base, 0, results, &count, &pagesize );
-    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        count = 64;
+        ret = pGetWriteWatch( 0, base, 0, results, &count, &pagesize );
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
 
-    ret = pResetWriteWatch( base, 0 );
-    ok( ret == ~0u, "ResetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pResetWriteWatch( base, 0 );
+        ok( ret == ~0u, "ResetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
 
-    ret = pResetWriteWatch( GetModuleHandle(0), size );
-    ok( ret == ~0u, "ResetWriteWatch failed %u\n", ret );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pResetWriteWatch( GetModuleHandle(0), size );
+        ok( ret == ~0u, "ResetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    }
+    else  /* win98 is completely different */
+    {
+        SetLastError( 0xdeadbeef );
+        count = 64;
+        ret = pGetWriteWatch( 0, base, size, NULL, &count, &pagesize );
+        ok( ret == ERROR_INVALID_PARAMETER, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        count = 0;
+        ret = pGetWriteWatch( 0, base, size, NULL, &count, &pagesize );
+        ok( !ret, "GetWriteWatch failed %u\n", ret );
+
+        count = 64;
+        ret = pGetWriteWatch( 0xdeadbeef, base, size, results, &count, &pagesize );
+        ok( !ret, "GetWriteWatch failed %u\n", ret );
+
+        count = 64;
+        ret = pGetWriteWatch( 0, base, 0, results, &count, &pagesize );
+        ok( !ret, "GetWriteWatch failed %u\n", ret );
+
+        ret = pResetWriteWatch( base, 0 );
+        ok( !ret, "ResetWriteWatch failed %u\n", ret );
+
+        ret = pResetWriteWatch( GetModuleHandle(0), size );
+        ok( !ret, "ResetWriteWatch failed %u\n", ret );
+    }
 
     VirtualFree( base, 0, MEM_FREE );
 
@@ -968,8 +1018,9 @@ static void test_write_watch(void)
     count = 64;
     ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
-    ok( count == 1, "wrong count %lu\n", count );
-    ok( results[0] == base + 5*pagesize, "wrong result %p\n", results[0] );
+    ok( count == 1 || broken(count == 0), /* win98 */
+        "wrong count %lu\n", count );
+    if (count) ok( results[0] == base + 5*pagesize, "wrong result %p\n", results[0] );
 
     VirtualFree( base, 0, MEM_FREE );
 }
