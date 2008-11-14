@@ -188,9 +188,8 @@ static void loadShell32(void)
     {
         shellVersion.cbSize = sizeof(shellVersion);
         pDllGetVersion(&shellVersion);
-        if (winetest_interactive)
-            printf("shell32 version is %d.%d\n",
-             shellVersion.dwMajorVersion, shellVersion.dwMinorVersion);
+        trace("shell32 version is %d.%d\n",
+              shellVersion.dwMajorVersion, shellVersion.dwMinorVersion);
     }
 #undef GET_PROC
 }
@@ -730,7 +729,7 @@ static void testNonExistentPath1(void)
 {
     HRESULT hr;
     LPITEMIDLIST pidl;
-    char path[MAX_PATH];
+    char *p, path[MAX_PATH];
 
     /* test some failure cases first: */
     hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES, NULL,
@@ -740,16 +739,16 @@ static void testNonExistentPath1(void)
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, CSIDL_FAVORITES, NULL, 0,
      &pidl);
-    ok(hr == E_FAIL,
-     "SHGetFolderLocation returned 0x%08x, expected E_FAIL\n", hr);
+    ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+     "SHGetFolderLocation returned 0x%08x\n", hr);
     if (SUCCEEDED(hr) && pidl)
         IMalloc_Free(pMalloc, pidl);
     ok(!pSHGetSpecialFolderPathA(NULL, path, CSIDL_FAVORITES, FALSE),
      "SHGetSpecialFolderPath succeeded, expected failure\n");
     pidl = NULL;
     hr = pSHGetSpecialFolderLocation(NULL, CSIDL_FAVORITES, &pidl);
-    ok(hr == E_FAIL, "SHGetFolderLocation returned 0x%08x, expected E_FAIL\n",
-     hr);
+    ok(hr == E_FAIL || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+       "SHGetFolderLocation returned 0x%08x\n", hr);
     if (SUCCEEDED(hr) && pidl)
         IMalloc_Free(pMalloc, pidl);
     /* now test success: */
@@ -759,8 +758,7 @@ static void testNonExistentPath1(void)
     {
         BOOL ret;
 
-        if (winetest_interactive)
-            printf("CSIDL_FAVORITES was changed to %s\n", path);
+        trace("CSIDL_FAVORITES was changed to %s\n", path);
         ret = CreateDirectoryA(path, NULL);
         ok(!ret,
          "CreateDirectoryA succeeded but should have failed "
@@ -770,6 +768,13 @@ static void testNonExistentPath1(void)
              "CreateDirectoryA failed with %d, "
              "expected ERROR_ALREADY_EXISTS\n",
              GetLastError());
+        p = path + strlen(path);
+        strcpy(p, "\\desktop.ini");
+        DeleteFileA(path);
+        *p = 0;
+        SetFileAttributesA( path, FILE_ATTRIBUTE_NORMAL );
+        ret = RemoveDirectoryA(path);
+        ok( ret, "failed to remove %s error %u\n", path, GetLastError() );
     }
     ok(SUCCEEDED(hr),
      "SHGetFolderPath(NULL, CSIDL_FAVORITES | CSIDL_FLAG_CREATE, "
@@ -838,15 +843,13 @@ static void testNonExistentPath(void)
             memcpy(modifiedPath, originalPath, len);
             modifiedPath[len++] = '2';
             modifiedPath[len++] = '\0';
-            if (winetest_interactive)
-                printf("Changing CSIDL_FAVORITES to %s\n", modifiedPath);
+            trace("Changing CSIDL_FAVORITES to %s\n", modifiedPath);
             if (!RegSetValueExA(key, "Favorites", 0, type,
              (LPBYTE)modifiedPath, len))
             {
                 char buffer[MAX_PATH+20];
                 STARTUPINFOA startup;
                 PROCESS_INFORMATION info;
-                HRESULT hr;
 
                 sprintf(buffer, "%s tests/shellpath.c 1", selfname);
                 memset(&startup, 0, sizeof(startup));
@@ -857,14 +860,8 @@ static void testNonExistentPath(void)
                  &startup, &info);
                 winetest_wait_child_process( info.hProcess );
 
-                /* Query the path to be able to delete it below */
-                hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES, NULL,
-                 SHGFP_TYPE_CURRENT, modifiedPath);
-                ok(SUCCEEDED(hr), "SHGetFolderPathA failed: 0x%08x\n", hr);
-
                 /* restore original values: */
-                if (winetest_interactive)
-                    printf("Restoring CSIDL_FAVORITES to %s\n", originalPath);
+                trace("Restoring CSIDL_FAVORITES to %s\n", originalPath);
                 RegSetValueExA(key, "Favorites", 0, type, (LPBYTE) originalPath,
                  strlen(originalPath) + 1);
                 RegFlushKey(key);
@@ -878,21 +875,13 @@ static void testNonExistentPath(void)
                  &startup, &info);
                 ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0,
                  "child process termination\n");
-
-                strcpy(buffer, modifiedPath);
-                strcat(buffer, "\\desktop.ini");
-                DeleteFileA(buffer);
-                RemoveDirectoryA(modifiedPath);
             }
         }
-        else if (winetest_interactive)
-            printf("RegQueryValueExA(key, Favorites, ...) failed\n");
+        else skip("RegQueryValueExA(key, Favorites, ...) failed\n");
         if (key)
             RegCloseKey(key);
     }
-    else if (winetest_interactive)
-        printf("RegOpenKeyExA(HKEY_CURRENT_USER, %s, ...) failed\n",
-         userShellFolders);
+    else skip("RegOpenKeyExA(HKEY_CURRENT_USER, %s, ...) failed\n", userShellFolders);
 }
 
 START_TEST(shellpath)
