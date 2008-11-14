@@ -1072,6 +1072,7 @@ static void test_LockFile(void)
     OVERLAPPED overlapped;
     int limited_LockFile;
     int limited_UnLockFile;
+    BOOL ret;
 
     handle = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
@@ -1131,10 +1132,15 @@ static void test_LockFile(void)
             "UnlockFileEx 150,100 again succeeded\n" );
     }
 
-    ok( LockFile( handle, 0, 0x10000000, 0, 0xf0000000 ), "LockFile failed\n" );
-    ok( !LockFile( handle, ~0, ~0, 1, 0 ), "LockFile ~0,1 succeeded\n" );
-    ok( !LockFile( handle, 0, 0x20000000, 20, 0 ), "LockFile 0x20000000,20 succeeded\n" );
-    ok( UnlockFile( handle, 0, 0x10000000, 0, 0xf0000000 ), "UnlockFile failed\n" );
+    ret = LockFile( handle, 0, 0x10000000, 0, 0xf0000000 );
+    if (ret)
+    {
+        ok( !LockFile( handle, ~0, ~0, 1, 0 ), "LockFile ~0,1 succeeded\n" );
+        ok( !LockFile( handle, 0, 0x20000000, 20, 0 ), "LockFile 0x20000000,20 succeeded\n" );
+        ok( UnlockFile( handle, 0, 0x10000000, 0, 0xf0000000 ), "UnlockFile failed\n" );
+    }
+    else  /* win9x */
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong LockFile error %u\n", GetLastError() );
 
     /* wrap-around lock should not do anything */
     /* (but still succeeds on NT4 so we don't check result) */
@@ -1385,11 +1391,14 @@ static void test_FindFirstFileA(void)
     err = GetLastError();
     ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s failed\n", buffer2 );
     ok( 0 == lstrcmpiA(data.cFileName, "nul"), "wrong name %s\n", data.cFileName );
-    ok( 0 == data.nFileSizeHigh, "wrong size %d\n", data.nFileSizeHigh );
-    ok( 0 == data.nFileSizeLow, "wrong size %d\n", data.nFileSizeLow );
     ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes ||
         FILE_ATTRIBUTE_DEVICE == data.dwFileAttributes /* Win9x */,
         "wrong attributes %x\n", data.dwFileAttributes );
+    if (data.dwFileAttributes == FILE_ATTRIBUTE_ARCHIVE)
+    {
+        ok( 0 == data.nFileSizeHigh, "wrong size %d\n", data.nFileSizeHigh );
+        ok( 0 == data.nFileSizeLow, "wrong size %d\n", data.nFileSizeLow );
+    }
     SetLastError( 0xdeadbeaf );
     ok( !FindNextFileA( handle, &data ), "FindNextFileA succeeded\n" );
     ok( GetLastError() == ERROR_NO_MORE_FILES, "bad error %d\n", GetLastError() );
@@ -1402,11 +1411,14 @@ static void test_FindFirstFileA(void)
     err = GetLastError();
     ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s failed\n", buffer2 );
     ok( 0 == lstrcmpiA(data.cFileName, "lpt1"), "wrong name %s\n", data.cFileName );
-    ok( 0 == data.nFileSizeHigh, "wrong size %d\n", data.nFileSizeHigh );
-    ok( 0 == data.nFileSizeLow, "wrong size %d\n", data.nFileSizeLow );
     ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes ||
         FILE_ATTRIBUTE_DEVICE == data.dwFileAttributes /* Win9x */,
         "wrong attributes %x\n", data.dwFileAttributes );
+    if (data.dwFileAttributes == FILE_ATTRIBUTE_ARCHIVE)
+    {
+        ok( 0 == data.nFileSizeHigh, "wrong size %d\n", data.nFileSizeHigh );
+        ok( 0 == data.nFileSizeLow, "wrong size %d\n", data.nFileSizeLow );
+    }
     SetLastError( 0xdeadbeaf );
     ok( !FindNextFileA( handle, &data ), "FindNextFileA succeeded\n" );
     ok( GetLastError() == ERROR_NO_MORE_FILES, "bad error %d\n", GetLastError() );
@@ -1715,26 +1727,28 @@ static void test_OpenFile(void)
     BOOL ret;
     DWORD retval;
     
-    static const char *file = "\\regedit.exe";
-    static const char *foo = ".\\foo-bar-foo.baz";
+    static const char file[] = "regedit.exe";
+    static const char foo[] = ".\\foo-bar-foo.baz";
     static const char *foo_too_long = ".\\foo-bar-foo.baz+++++++++++++++"
         "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
         "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
         "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
         "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
         "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    static const char *backslash = "\\";
     char buff[MAX_PATH];
     char buff_long[4*MAX_PATH];
     char filled_0xA5[OFS_MAXPATHNAME];
+    char *p;
     UINT length;
     
     /* Check for existing file */
     length = GetWindowsDirectoryA(buff, MAX_PATH);
 
-    if (length + lstrlen(file) < MAX_PATH)
+    if (length + sizeof(file) < MAX_PATH)
     {
-        lstrcatA(buff, file);
+        p = buff + strlen(buff);
+        if (p > buff && p[-1] != '\\') *p++ = '\\';
+        strcpy( p, file );
         memset(&ofs, 0xA5, sizeof(ofs));
         SetLastError(0xfaceabee);
 
@@ -1753,9 +1767,11 @@ static void test_OpenFile(void)
     length = GetCurrentDirectoryA(MAX_PATH, buff);
 
     /* Check for nonexistent file */
-    if (length + lstrlenA(foo + 1) < MAX_PATH)
+    if (length + sizeof(foo) < MAX_PATH)
     {
-        lstrcatA(buff, foo + 1); /* Avoid '.' during concatenation */
+        p = buff + strlen(buff);
+        if (p > buff && p[-1] != '\\') *p++ = '\\';
+        strcpy( p, foo + 2 );
         memset(&ofs, 0xA5, sizeof(ofs));
         SetLastError(0xfaceabee);
 
@@ -1793,17 +1809,16 @@ static void test_OpenFile(void)
             ofs.szPathName );
     }
 
-    length = GetCurrentDirectoryA(MAX_PATH, buff);
-    length += lstrlenA(backslash);
-    length += lstrlenA(filename);
+    length = GetCurrentDirectoryA(MAX_PATH, buff) + sizeof(filename);
 
     if (length >= MAX_PATH) 
     {
         trace("Buffer too small, requested length = %d, but MAX_PATH = %d.  Skipping test.\n", length, MAX_PATH);
         return;
     }
-    lstrcatA(buff, backslash);
-    lstrcatA(buff, filename);
+    p = buff + strlen(buff);
+    if (p > buff && p[-1] != '\\') *p++ = '\\';
+    strcpy( p, filename );
 
     memset(&ofs, 0xA5, sizeof(ofs));
     SetLastError(0xfaceabee);
@@ -1813,7 +1828,8 @@ static void test_OpenFile(void)
     ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
         "GetLastError() returns %d\n", GetLastError() );
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
-    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
+        "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ret = CloseHandle((HANDLE)hFile);
     ok( ret == TRUE, "CloseHandle() returns %d\n", ret );
     retval = GetFileAttributesA(filename);
@@ -1828,7 +1844,8 @@ static void test_OpenFile(void)
     ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
         "GetLastError() returns %d\n", GetLastError() );
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
-    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
+        "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ok( lstrcmpiA(ofs.szPathName, buff) == 0,
         "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
     ret = CloseHandle((HANDLE)hFile);
@@ -1842,7 +1859,8 @@ static void test_OpenFile(void)
     ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
         "GetLastError() returns %d\n", GetLastError() );
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
-    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
+        "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ok( lstrcmpiA(ofs.szPathName, buff) == 0,
         "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
     ret = CloseHandle((HANDLE)hFile);
@@ -1856,7 +1874,8 @@ static void test_OpenFile(void)
     ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
         "GetLastError() returns %d\n", GetLastError() );
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
-    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
+        "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ok( lstrcmpiA(ofs.szPathName, buff) == 0,
         "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
     ret = CloseHandle((HANDLE)hFile);
@@ -1870,7 +1889,8 @@ static void test_OpenFile(void)
     ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
         "GetLastError() returns %d\n", GetLastError() );
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
-    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
+        "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ok( lstrcmpiA(ofs.szPathName, buff) == 0,
         "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
 
@@ -1882,7 +1902,8 @@ static void test_OpenFile(void)
     ok( GetLastError() == 0xfaceabee || GetLastError() == ERROR_SUCCESS, 
         "GetLastError() returns %d\n", GetLastError() );
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
-    ok( ofs.nErrCode == ERROR_SUCCESS, "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
+    ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
+        "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
     ok( lstrcmpiA(ofs.szPathName, buff) == 0,
         "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
 
@@ -1900,15 +1921,19 @@ static void test_overlapped(void)
     memset( &ov, 0,  sizeof ov );
     result = 1;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok( r == TRUE, "should return true\n");
-    ok( result == 0, "wrong result %u\n", result );
+    if (r)
+        ok( result == 0, "wrong result %u\n", result );
+    else  /* win9x */
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
 
     result = 0;
     ov.Internal = 0;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok( r == TRUE, "should return true\n");
-    ok( result == 0xabcd, "wrong result %u\n", result );
+    if (r)
+        ok( result == 0xabcd, "wrong result %u\n", result );
+    else  /* win9x */
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xb00 );
     result = 0;
@@ -1917,14 +1942,15 @@ static void test_overlapped(void)
     r = GetOverlappedResult(0, &ov, &result, 0);
     ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
-    ok( result == 0xabcd, "wrong result %u\n", result );
+    ok( result == 0xabcd || result == 0 /* win9x */, "wrong result %u\n", result );
 
     SetLastError( 0xb00 );
     result = 0;
     ov.Internal = STATUS_PENDING;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok( GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_IO_INCOMPLETE || GetLastError() == ERROR_INVALID_HANDLE /* win9x */,
+        "wrong error %u\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
     ok( result == 0, "wrong result %u\n", result );
 
@@ -1933,7 +1959,8 @@ static void test_overlapped(void)
     ov.Internal = STATUS_PENDING;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok( GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_IO_INCOMPLETE || GetLastError() == ERROR_INVALID_HANDLE /* win9x */,
+        "wrong error %u\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
 
     ResetEvent( ov.hEvent );
@@ -1942,7 +1969,8 @@ static void test_overlapped(void)
     ov.Internal = STATUS_PENDING;
     ov.InternalHigh = 0;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok( GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_IO_INCOMPLETE || GetLastError() == ERROR_INVALID_HANDLE /* win9x */,
+        "wrong error %u\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
 
     r = CloseHandle( ov.hEvent );
@@ -1961,17 +1989,21 @@ static void test_RemoveDirectory(void)
     ok( rc, "SetCurrentDirectory failed, gle=%d\n", GetLastError() );
 
     rc = RemoveDirectory(".");
-    todo_wine {
-    ok( !rc, "RemoveDirectory unexpectedly worked\n" );
-    }
+    if (!rc)
+    {
+        rc = SetCurrentDirectory("..");
+        ok( rc, "SetCurrentDirectory failed, gle=%d\n", GetLastError() );
 
-    rc = SetCurrentDirectory("..");
-    ok( rc, "SetCurrentDirectory failed, gle=%d\n", GetLastError() );
-
-    rc = RemoveDirectory(directory);
-    todo_wine {
-    ok( rc, "RemoveDirectory failed, gle=%d\n", GetLastError() );
+        rc = RemoveDirectory(directory);
+        ok( rc, "RemoveDirectory failed, gle=%d\n", GetLastError() );
     }
+}
+
+static BOOL check_file_time( const FILETIME *ft1, const FILETIME *ft2, UINT tolerance )
+{
+    ULONGLONG t1 = ((ULONGLONG)ft1->dwHighDateTime << 32) | ft1->dwLowDateTime;
+    ULONGLONG t2 = ((ULONGLONG)ft2->dwHighDateTime << 32) | ft2->dwLowDateTime;
+    return abs(t1 - t2) <= tolerance;
 }
 
 static void test_ReplaceFileA(void)
@@ -2081,13 +2113,12 @@ static void test_ReplaceFileA(void)
     /* make sure that the backup has the old "replaced" filetime */
     ret = GetFileTime(hBackupFile, NULL, NULL, &ftBackup);
     ok( ret, "GetFileTime error (backup %d\n", GetLastError());
-    ok(CompareFileTime(&ftBackup, &ftReplaced) == 0,
-        "backup file has wrong filetime\n");
+    ok(check_file_time(&ftBackup, &ftReplaced, 1000000), "backup file has wrong filetime\n");
     CloseHandle(hBackupFile);
     /* make sure that the "replaced" has the old replacement filetime */
     ret = GetFileTime(hReplacedFile, NULL, NULL, &ftReplaced);
     ok( ret, "GetFileTime error (backup %d\n", GetLastError());
-    ok(CompareFileTime(&ftReplaced, &ftReplacement) == 0,
+    ok(check_file_time(&ftReplaced, &ftReplacement, 1000000),
        "replaced file has wrong filetime %x%08x / %x%08x\n",
        ftReplaced.dwHighDateTime, ftReplaced.dwLowDateTime,
        ftReplacement.dwHighDateTime, ftReplacement.dwLowDateTime );
