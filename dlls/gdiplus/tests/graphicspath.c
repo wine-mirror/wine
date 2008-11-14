@@ -914,6 +914,11 @@ static path_test_t flattenellipse_path[] = {
     {100.0,25.0, PathPointTypeLine | PathPointTypeCloseSubpath,  0, 1}  /*24*/
     };
 
+static path_test_t flattenline_path[] = {
+    {5.0, 10.0,PathPointTypeStart, 0, 0}, /*0*/
+    {50.0, 100.0, PathPointTypeLine,  0, 0} /*1*/
+    };
+
 static path_test_t flattenarc_path[] = {
     {100.0, 25.0,PathPointTypeStart, 0, 0}, /*0*/
     {99.0, 30.0, PathPointTypeLine,  0, 0}, /*1*/
@@ -963,6 +968,14 @@ static void test_flatten(void)
     status = GdipFlattenPath(path, NULL, 1.0);
     expect(Ok, status);
     ok_path(path, flattenellipse_path, sizeof(flattenellipse_path)/sizeof(path_test_t), TRUE);
+
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 100.0);
+    expect(Ok, status);
+    status = GdipFlattenPath(path, NULL, 1.0);
+    expect(Ok, status);
+    ok_path(path, flattenline_path, sizeof(flattenline_path)/sizeof(path_test_t), FALSE);
 
     status = GdipResetPath(path);
     expect(Ok, status);
