@@ -39,6 +39,7 @@ static CUSTOMDRAWPROC g_CustomDrawProc;
 static int g_CustomDrawCount;
 static DRAWITEMSTRUCT g_DrawItem;
 static BOOL g_DrawItemReceived;
+static DWORD g_customheight;
 
 static EXPECTEDNOTIFY expectedNotify[10];
 static INT nExpectedNotify = 0;
@@ -821,7 +822,7 @@ static void test_hdm_getitemrect(HWND hParent)
     expect(160, rect.right);
     todo_wine
     {
-      expect(18, rect.bottom);
+      expect(g_customheight, rect.bottom);
     }
     retVal = SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM) &rect);
 
@@ -833,7 +834,7 @@ static void test_hdm_getitemrect(HWND hParent)
     expect(80, rect.right);
     todo_wine
     {
-      expect(18, rect.bottom);
+      expect(g_customheight, rect.bottom);
     }
     retVal = SendMessage(hChild, HDM_GETITEMRECT, 10, (LPARAM) &rect);
     ok(retVal == 0, "Getting rect of nonexistent item should return 0, got %d\n", retVal);
@@ -892,7 +893,7 @@ static void test_hdm_hittest(HWND hParent)
     HDHITTESTINFO hdHitTestInfo;
     const int firstItemRightBoundary = 80;
     const int secondItemRightBoundary = 160;
-    const int bottomBoundary = 18;
+    const int bottomBoundary = g_customheight;
 
     pt.x = firstItemRightBoundary - 1;
     pt.y = bottomBoundary - 1;
@@ -1206,7 +1207,7 @@ static LRESULT customdraw_1(int n, NMCUSTOMDRAW *nm)
     {
     case 0:
         /* don't test dwItemSpec - it's 0 no comctl5 but 1308756 on comctl6 */
-        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, 18);
+        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, g_customheight);
         return 0;
     }
 
@@ -1224,16 +1225,16 @@ static LRESULT customdraw_2(int n, NMCUSTOMDRAW *nm)
     switch (n)
     {
     case 0:
-        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, 18);
+        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, g_customheight);
         return CDRF_NOTIFYITEMDRAW;
     case 1:
-        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, 18);
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, g_customheight);
         return 0;
     case 2:
-        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 1, 5, 50, 0, 150, 18);
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 1, 5, 50, 0, 150, g_customheight);
         return 0;
     case 3:
-        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, 18);
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, g_customheight);
         return 0;
     }
 
@@ -1251,19 +1252,19 @@ static LRESULT customdraw_3(int n, NMCUSTOMDRAW *nm)
     switch (n)
     {
     case 0:
-        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, 18);
+        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, g_customheight);
         return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYPOSTERASE|CDRF_NOTIFYPOSTPAINT|CDRF_SKIPDEFAULT;
     case 1:
-        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, 18);
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, g_customheight);
         return 0;
     case 2:
-        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 1, 5, 50, 0, 150, 18);
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 1, 5, 50, 0, 150, g_customheight);
         return 0;
     case 3:
-        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, 18);
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, g_customheight);
         return 0;
     case 4:
-        TEST_NMCUSTOMDRAW(CDDS_POSTPAINT, -1, 0, 0, 0, 670, 18);
+        TEST_NMCUSTOMDRAW(CDDS_POSTPAINT, -1, 0, 0, 0, 670, g_customheight);
         return 0;
     }
 
@@ -1282,16 +1283,16 @@ static LRESULT customdraw_4(int n, NMCUSTOMDRAW *nm)
     switch (n)
     {
     case 0:
-        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, 18);
+        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, g_customheight);
         return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYPOSTPAINT;
     case 1:
-        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, 18);
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, g_customheight);
         return 0;
     case 2:
-        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, 18);
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, g_customheight);
         return 0;
     case 3:
-        TEST_NMCUSTOMDRAW(CDDS_POSTPAINT, -1, 0, 0, 0, 670, 18);
+        TEST_NMCUSTOMDRAW(CDDS_POSTPAINT, -1, 0, 0, 0, 670, g_customheight);
         return 0;
     }
 
@@ -1317,9 +1318,9 @@ static void test_customdraw(void)
     CHAR name[] = "Test";
     hWndHeader = create_header_control();
     GetClientRect(hWndHeader, &rect);
-    ok(rect.right - rect.left == 670 && rect.bottom - rect.top == 18,
-        "Tests will fail as header size is %dx%d instead of 670x18\n",
-        rect.right - rect.left, rect.bottom - rect.top);
+    ok(rect.right - rect.left == 670 && rect.bottom - rect.top == g_customheight,
+        "Tests will fail as header size is %dx%d instead of 670x%d\n",
+        rect.right - rect.left, rect.bottom - rect.top, g_customheight);
 
     for (i = 0; i < 3; i++)
     {
@@ -1496,6 +1497,9 @@ static int init(void)
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     WNDCLASSA wc;
     INITCOMMONCONTROLSEX iccex;
+    TEXTMETRICA tm;
+    HFONT hOldFont;
+    HDC hdc;
 
     hComctl32 = GetModuleHandleA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
@@ -1520,6 +1524,17 @@ static int init(void)
     wc.lpszClassName = "HeaderTestClass";
     wc.lpfnWndProc = HeaderTestWndProc;
     RegisterClassA(&wc);
+
+    /* The height of the header control depends on the height of the system font.
+       The height of the system font is dpi dependent */
+    hdc = GetDC(0);
+    hOldFont = SelectObject(hdc, GetStockObject(SYSTEM_FONT));
+    GetTextMetricsA(hdc, &tm);
+    /* 2 dot extra space are needed for the border */
+    g_customheight = tm.tmHeight + 2;
+    trace("customdraw height: %d (dpi: %d)\n", g_customheight, GetDeviceCaps(hdc, LOGPIXELSY));
+    SelectObject(hdc, hOldFont);
+    ReleaseDC(0, hdc);
 
     hHeaderParentWnd = CreateWindowExA(0, "HeaderTestClass", "Header test", WS_OVERLAPPEDWINDOW, 
       CW_USEDEFAULT, CW_USEDEFAULT, 672+2*GetSystemMetrics(SM_CXSIZEFRAME),
