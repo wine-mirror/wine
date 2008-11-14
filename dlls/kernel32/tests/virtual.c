@@ -32,6 +32,8 @@
 static HINSTANCE hkernel32;
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
 static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
+static UINT   (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
+static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
 
 /* ############################### */
 
@@ -735,6 +737,243 @@ static void test_BadPtr(void)
     ok(IsBadCodePtr(ptr),"IsBadCodePtr(1) failed.\n");
 }
 
+static void test_write_watch(void)
+{
+    char *base;
+    DWORD ret, size, old_prot;
+    MEMORY_BASIC_INFORMATION info;
+    void *results[64];
+    ULONG_PTR count;
+    ULONG pagesize;
+
+    if (!pGetWriteWatch || !pResetWriteWatch)
+    {
+        win_skip( "GetWriteWatch not supported\n" );
+        return;
+    }
+
+    size = 0x10000;
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE );
+    if (!base && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        todo_wine win_skip( "MEM_WRITE_WATCH not supported\n" );
+        return;
+    }
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+    ret = VirtualQuery( base, &info, sizeof(info) );
+    ok(ret, "VirtualQuery failed %u\n", GetLastError());
+    ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
+    ok( info.AllocationProtect == PAGE_READWRITE, "wrong AllocationProtect %x\n", info.AllocationProtect );
+    ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State );
+    ok( info.Protect == PAGE_READWRITE, "wrong Protect 0x%x\n", info.Protect );
+    ok( info.Type == MEM_PRIVATE, "wrong Type 0x%x\n", info.Type );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, NULL, size, results, &count, &pagesize );
+    ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    ret = pGetWriteWatch( 0, GetModuleHandle(0), size, results, &count, &pagesize );
+    ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    base[pagesize + 1] = 0x44;
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base + pagesize, "wrong result %p\n", results[0] );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base + pagesize, "wrong result %p\n", results[0] );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    base[2*pagesize + 3] = 0x11;
+    base[4*pagesize + 8] = 0x11;
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 2, "wrong count %lu\n", count );
+    ok( results[0] == base + 2*pagesize, "wrong result %p\n", results[0] );
+    ok( results[1] == base + 4*pagesize, "wrong result %p\n", results[1] );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base + 3*pagesize, 2*pagesize, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base + 4*pagesize, "wrong result %p\n", results[0] );
+
+    ret = pResetWriteWatch( base, 3*pagesize );
+    ok( !ret, "pResetWriteWatch failed %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base + 4*pagesize, "wrong result %p\n", results[0] );
+
+    *(DWORD *)(base + 2*pagesize - 2) = 0xdeadbeef;
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 3, "wrong count %lu\n", count );
+    ok( results[0] == base + pagesize, "wrong result %p\n", results[0] );
+    ok( results[1] == base + 2*pagesize, "wrong result %p\n", results[1] );
+    ok( results[2] == base + 4*pagesize, "wrong result %p\n", results[2] );
+
+    count = 1;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base + pagesize, "wrong result %p\n", results[0] );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 2, "wrong count %lu\n", count );
+    ok( results[0] == base + 2*pagesize, "wrong result %p\n", results[0] );
+    ok( results[1] == base + 4*pagesize, "wrong result %p\n", results[1] );
+
+    /* changing protections doesn't affect watches */
+
+    ret = VirtualProtect( base, 3*pagesize, PAGE_READONLY, &old_prot );
+    ok( ret, "VirtualProtect failed error %u\n", GetLastError() );
+    ok( old_prot == PAGE_READWRITE, "wrong old prot %x\n", old_prot );
+
+    ret = VirtualQuery( base, &info, sizeof(info) );
+    ok(ret, "VirtualQuery failed %u\n", GetLastError());
+    ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
+    ok( info.RegionSize == 3*pagesize, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State );
+    ok( info.Protect == PAGE_READONLY, "wrong Protect 0x%x\n", info.Protect );
+
+    ret = VirtualProtect( base, 3*pagesize, PAGE_READWRITE, &old_prot );
+    ok( ret, "VirtualProtect failed error %u\n", GetLastError() );
+    ok( old_prot == PAGE_READONLY, "wrong old prot %x\n", old_prot );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 2, "wrong count %lu\n", count );
+    ok( results[0] == base + 2*pagesize, "wrong result %p\n", results[0] );
+    ok( results[1] == base + 4*pagesize, "wrong result %p\n", results[1] );
+
+    ret = VirtualQuery( base, &info, sizeof(info) );
+    ok(ret, "VirtualQuery failed %u\n", GetLastError());
+    ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
+    ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State );
+    ok( info.Protect == PAGE_READWRITE, "wrong Protect 0x%x\n", info.Protect );
+
+    /* some invalid parameter tests */
+
+    count = 0;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    ret = pGetWriteWatch( 0, base, size, results, NULL, &pagesize );
+    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, NULL );
+    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, NULL, &count, &pagesize );
+    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+
+    count = 0;
+    ret = pGetWriteWatch( 0, base, size, NULL, &count, &pagesize );
+    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0xdeadbeef, base, size, results, &count, &pagesize );
+    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, 0, results, &count, &pagesize );
+    ok( ret == ~0u, "GetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    ret = pResetWriteWatch( base, 0 );
+    ok( ret == ~0u, "ResetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    ret = pResetWriteWatch( GetModuleHandle(0), size );
+    ok( ret == ~0u, "ResetWriteWatch failed %u\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    VirtualFree( base, 0, MEM_FREE );
+
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_WRITE_WATCH, PAGE_READWRITE );
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+    VirtualFree( base, 0, MEM_FREE );
+
+    base = VirtualAlloc( 0, size, MEM_WRITE_WATCH, PAGE_READWRITE );
+    ok( !base, "VirtualAlloc succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    /* initial protect doesn't matter */
+
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_WRITE_WATCH, PAGE_NOACCESS );
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+    base = VirtualAlloc( base, size, MEM_COMMIT, PAGE_NOACCESS );
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    ret = VirtualProtect( base, 6*pagesize, PAGE_READWRITE, &old_prot );
+    ok( ret, "VirtualProtect failed error %u\n", GetLastError() );
+    ok( old_prot == PAGE_NOACCESS, "wrong old prot %x\n", old_prot );
+
+    base[5*pagesize + 200] = 3;
+
+    ret = VirtualProtect( base, 6*pagesize, PAGE_NOACCESS, &old_prot );
+    ok( ret, "VirtualProtect failed error %u\n", GetLastError() );
+    ok( old_prot == PAGE_READWRITE, "wrong old prot %x\n", old_prot );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base + 5*pagesize, "wrong result %p\n", results[0] );
+
+    ret = VirtualFree( base, size, MEM_DECOMMIT );
+    ok( ret, "VirtualFree failed %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base + 5*pagesize, "wrong result %p\n", results[0] );
+
+    VirtualFree( base, 0, MEM_FREE );
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -766,6 +1005,8 @@ START_TEST(virtual)
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pVirtualAllocEx = (void *) GetProcAddress(hkernel32, "VirtualAllocEx");
     pVirtualFreeEx = (void *) GetProcAddress(hkernel32, "VirtualFreeEx");
+    pGetWriteWatch = (void *) GetProcAddress(hkernel32, "GetWriteWatch");
+    pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
 
     test_VirtualAllocEx();
     test_VirtualAlloc();
@@ -773,4 +1014,5 @@ START_TEST(virtual)
     test_NtMapViewOfSection();
     test_CreateFileMapping();
     test_BadPtr();
+    test_write_watch();
 }
