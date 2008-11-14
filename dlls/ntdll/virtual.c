@@ -134,7 +134,7 @@ static void *working_set_limit;
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 
 #define ROUND_SIZE(addr,size) \
-   (((UINT)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
+   (((SIZE_T)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
     do { if (TRACE_ON(virtual)) VIRTUAL_DumpView(view); } while (0)
@@ -1282,6 +1282,51 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
     info->pMmHighestUserAddress = (char *)user_space_limit - 1;
     info->uKeActiveProcessors = NtCurrentTeb()->Peb->NumberOfProcessors;
     info->bKeNumberProcessors = info->uKeActiveProcessors;
+}
+
+
+/***********************************************************************
+ *           virtual_create_system_view
+ */
+NTSTATUS virtual_create_system_view( void *base, SIZE_T size, DWORD vprot )
+{
+    FILE_VIEW *view;
+    NTSTATUS status;
+    sigset_t sigset;
+
+    size = ROUND_SIZE( base, size );
+    base = ROUND_ADDR( base, page_mask );
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    status = create_view( &view, base, size, vprot );
+    if (!status) TRACE( "created %p-%p\n", base, (char *)base + size );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    return status;
+}
+
+
+/***********************************************************************
+ *           virtual_free_system_view
+ */
+SIZE_T virtual_free_system_view( PVOID *addr_ptr )
+{
+    FILE_VIEW *view;
+    sigset_t sigset;
+    SIZE_T size = 0;
+    char *base = ROUND_ADDR( *addr_ptr, page_mask );
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    if ((view = VIRTUAL_FindView( base )))
+    {
+        TRACE( "freeing %p-%p\n", view->base, (char *)view->base + view->size );
+        /* return the values that the caller should use to unmap the area */
+        *addr_ptr = view->base;
+        /* make sure we don't munmap anything from a reserved area */
+        if (!wine_mmap_is_in_reserved_area( view->base, view->size )) size = view->size;
+        view->protect |= VPROT_SYSTEM;
+        delete_view( view );
+    }
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    return size;
 }
 
 

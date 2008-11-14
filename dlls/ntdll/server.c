@@ -142,7 +142,6 @@ static void fatal_perror( const char *err, ... )
 void server_exit_thread( int status )
 {
     struct wine_pthread_thread_info info;
-    SIZE_T size;
     int fds[4];
 
     RtlAcquirePebLock();
@@ -162,13 +161,8 @@ void server_exit_thread( int status )
     fds[3] = ntdll_get_thread_data()->request_fd;
     pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, NULL );
 
-    size = 0;
-    NtFreeVirtualMemory( GetCurrentProcess(), &info.stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
-    info.stack_size = size;
-
-    size = 0;
-    NtFreeVirtualMemory( GetCurrentProcess(), &info.teb_base, &size, MEM_RELEASE | MEM_SYSTEM );
-    info.teb_size = size;
+    info.stack_size = virtual_free_system_view( &info.stack_base );
+    info.teb_size = virtual_free_system_view( &info.teb_base );
 
     close( fds[0] );
     close( fds[1] );
