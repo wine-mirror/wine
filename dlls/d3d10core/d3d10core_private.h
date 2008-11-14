@@ -75,6 +75,8 @@ struct dxgi_device_layer
             void *device_object, REFIID riid, void **device_layer);
 };
 
+HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, IDXGIAdapter *adapter,
+        UINT flags, DWORD unknown0, void **device);
 HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, UINT layer_count);
 
 #endif /* __WINE_D3D10CORE_PRIVATE_H */
