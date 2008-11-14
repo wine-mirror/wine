@@ -204,6 +204,7 @@ typedef struct _IFilterGraphImpl {
     LONGLONG start_time;
     LONGLONG position;
     LONGLONG stop_position;
+    LONG recursioncount;
 } IFilterGraphImpl;
 
 static HRESULT WINAPI Filtergraph_QueryInterface(IFilterGraphImpl *This,
@@ -898,9 +899,18 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         IBaseFilter_Release(PinInfo.pFilter);
     }
 
+    EnterCriticalSection(&This->cs);
+    ++This->recursioncount;
+    if (This->recursioncount >= 5)
+    {
+        WARN("Recursion count has reached %d\n", This->recursioncount);
+        hr = VFW_E_CANNOT_CONNECT;
+        goto out;
+    }
+
     hr = IPin_QueryDirection(ppinOut, &dir);
     if (FAILED(hr))
-        return hr;
+        goto out;
 
     if (dir == PINDIR_INPUT)
     {
@@ -913,42 +923,44 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
 
     hr = CheckCircularConnection(This, ppinOut, ppinIn);
     if (FAILED(hr))
-        return hr;
+        goto out;
 
     /* Try direct connection first */
     hr = IPin_Connect(ppinOut, ppinIn, NULL);
-    if (SUCCEEDED(hr)) {
-        return S_OK;
-    }
+    if (SUCCEEDED(hr))
+        goto out;
+
     TRACE("Direct connection failed, trying to render using extra filters\n");
 
     hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
     if (FAILED(hr))
-       return hr;
+        goto out;
 
     hr = IBaseFilter_GetClassID(PinInfo.pFilter, &FilterCLSID);
     IBaseFilter_Release(PinInfo.pFilter);
     if (FAILED(hr))
-       return hr;
+        goto out;
 
     /* Find the appropriate transform filter than can transform the minor media type of output pin of the upstream 
      * filter to the minor mediatype of input pin of the renderer */
     hr = IPin_EnumMediaTypes(ppinOut, &penummt);
-    if (FAILED(hr)) {
+    if (FAILED(hr))
+    {
         WARN("EnumMediaTypes (%x)\n", hr);
-        return hr;
+        goto out;
     }
 
     hr = IEnumMediaTypes_Next(penummt, 1, &mt, &nbmt);
     if (FAILED(hr)) {
         WARN("IEnumMediaTypes_Next (%x)\n", hr);
-        return hr;
+        goto out;
     }
 
     if (!nbmt)
     {
         WARN("No media type found!\n");
-        return S_OK;
+        hr = VFW_E_INVALIDMEDIATYPE;
+        goto out;
     }
     TRACE("MajorType %s\n", debugstr_guid(&mt->majortype));
     TRACE("SubType %s\n", debugstr_guid(&mt->subtype));
@@ -959,7 +971,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
     hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
     if (FAILED(hr)) {
         WARN("Unable to enum filters (%x)\n", hr);
-        return hr;
+        goto out;
     }
 
     hr = VFW_E_CANNOT_RENDER;
@@ -1086,6 +1098,9 @@ error:
     IEnumMediaTypes_Release(penummt);
     DeleteMediaType(mt);
 
+out:
+    --This->recursioncount;
+    LeaveCriticalSection(&This->cs);
     TRACE("--> %08x\n", hr);
     return SUCCEEDED(hr) ? S_OK : hr;
 }
@@ -5432,6 +5447,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->start_time = fimpl->position = 0;
     fimpl->stop_position = -1;
     fimpl->punkFilterMapper2 = NULL;
+    fimpl->recursioncount = 0;
 
     /* create Filtermapper aggregated. */
     hr = CoCreateInstance(&CLSID_FilterMapper2, pUnkOuter ? pUnkOuter : (IUnknown*)&fimpl->IInner_vtbl, CLSCTX_INPROC_SERVER,
