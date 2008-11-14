@@ -24,6 +24,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static CRITICAL_SECTION dxgi_cs;
+static CRITICAL_SECTION_DEBUG dxgi_cs_debug =
+{
+    0, 0, &dxgi_cs,
+    {&dxgi_cs_debug.ProcessLocksList,
+    &dxgi_cs_debug.ProcessLocksList},
+    0, 0, {(DWORD_PTR)(__FILE__ ": dxgi_cs")}
+};
+static CRITICAL_SECTION dxgi_cs = {&dxgi_cs_debug, -1, 0, 0, 0, 0};
+
+struct dxgi_main
+{
+    struct dxgi_device_layer *device_layers;
+    UINT layer_count;
+    LONG refcount;
+};
+static struct dxgi_main dxgi_main;
+
+static void dxgi_main_cleanup(void)
+{
+    EnterCriticalSection(&dxgi_cs);
+
+    HeapFree(GetProcessHeap(), 0, dxgi_main.device_layers);
+    dxgi_main.device_layers = NULL;
+    dxgi_main.layer_count = 0;
+
+    LeaveCriticalSection(&dxgi_cs);
+}
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     TRACE("fdwReason %u\n", fdwReason);
@@ -32,6 +61,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hInstDLL);
+            ++dxgi_main.refcount;
+            break;
+
+        case DLL_PROCESS_DETACH:
+            if (!--dxgi_main.refcount) dxgi_main_cleanup();
             break;
     }
 
@@ -65,7 +99,40 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
 
 HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, UINT layer_count)
 {
-    FIXME("layers %p, layer_count %u stub!\n", layers, layer_count);
+    UINT i;
+    struct dxgi_device_layer *new_layers;
 
-    return E_NOTIMPL;
+    TRACE("layers %p, layer_count %u\n", layers, layer_count);
+
+    EnterCriticalSection(&dxgi_cs);
+
+    if (!dxgi_main.layer_count)
+        new_layers = HeapAlloc(GetProcessHeap(), 0, layer_count * sizeof(*new_layers));
+    else
+        new_layers = HeapReAlloc(GetProcessHeap(), 0, dxgi_main.device_layers,
+                (dxgi_main.layer_count + layer_count) * sizeof(*new_layers));
+
+    if (!new_layers)
+    {
+        LeaveCriticalSection(&dxgi_cs);
+        ERR("Failed to allocate layer memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < layer_count; ++i)
+    {
+        const struct dxgi_device_layer *layer = &layers[i];
+
+        TRACE("layer %d: id %#x, init %p, get_size %p, create %p\n",
+                i, layer->id, layer->init, layer->get_size, layer->create);
+
+        new_layers[dxgi_main.layer_count + i] = *layer;
+    }
+
+    dxgi_main.device_layers = new_layers;
+    dxgi_main.layer_count += layer_count;
+
+    LeaveCriticalSection(&dxgi_cs);
+
+    return S_OK;
 }
