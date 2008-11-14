@@ -28,6 +28,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IDXGIDevice *iface, REFIID riid, void **object)
 {
+    struct dxgi_device *This = (struct dxgi_device *)iface;
+
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -37,6 +39,12 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IDXGIDevice *iface, 
         IUnknown_AddRef(iface);
         *object = iface;
         return S_OK;
+    }
+
+    if (This->child_layer)
+    {
+        TRACE("forwarding to child layer %p\n", This->child_layer);
+        return IUnknown_QueryInterface(This->child_layer, riid, object);
     }
 
     WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
@@ -64,6 +72,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IDXGIDevice *iface)
 
     if (!refcount)
     {
+        if (This->child_layer) IUnknown_Release(This->child_layer);
         HeapFree(GetProcessHeap(), 0, This);
     }
 

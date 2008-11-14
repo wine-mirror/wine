@@ -44,6 +44,7 @@ extern const struct IDXGIDeviceVtbl dxgi_device_vtbl;
 struct dxgi_device
 {
     const struct IDXGIDeviceVtbl *vtbl;
+    IUnknown *child_layer;
     LONG refcount;
 };
 
