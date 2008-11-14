@@ -1002,6 +1002,24 @@ static BOOL CRYPT_FormatAltNameInfo(DWORD dwFormatStrType, DWORD indentLevel,
 
 static const WCHAR colonSep[] = { ':',' ',0 };
 
+static BOOL WINAPI CRYPT_FormatAltName(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    BOOL ret;
+    CERT_ALT_NAME_INFO *info;
+    DWORD size;
+
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType, X509_ALTERNATE_NAME,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size)))
+    {
+        ret = CRYPT_FormatAltNameInfo(dwFormatStrType, 0, info, pbFormat, pcbFormat);
+        LocalFree(info);
+    }
+    return ret;
+}
+
 static BOOL CRYPT_FormatCertIssuer(DWORD dwFormatStrType,
  CERT_ALT_NAME_INFO *issuer, LPWSTR str, DWORD *pcbStr)
 {
@@ -1956,6 +1974,9 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
     {
         switch (LOWORD(lpszStructType))
         {
+        case LOWORD(X509_ALTERNATE_NAME):
+            format = CRYPT_FormatAltName;
+            break;
         case LOWORD(X509_BASIC_CONSTRAINTS2):
             format = CRYPT_FormatBasicConstraints2;
             break;
@@ -1976,6 +1997,14 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
             break;
         }
     }
+    else if (!strcmp(lpszStructType, szOID_SUBJECT_ALT_NAME))
+        format = CRYPT_FormatAltName;
+    else if (!strcmp(lpszStructType, szOID_ISSUER_ALT_NAME))
+        format = CRYPT_FormatAltName;
+    else if (!strcmp(lpszStructType, szOID_SUBJECT_ALT_NAME2))
+        format = CRYPT_FormatAltName;
+    else if (!strcmp(lpszStructType, szOID_ISSUER_ALT_NAME2))
+        format = CRYPT_FormatAltName;
     else if (!strcmp(lpszStructType, szOID_BASIC_CONSTRAINTS2))
         format = CRYPT_FormatBasicConstraints2;
     else if (!strcmp(lpszStructType, szOID_AUTHORITY_INFO_ACCESS))
