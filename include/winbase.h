@@ -1759,6 +1759,7 @@ WINBASEAPI BOOL        WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR,LPWSTR,DW
 WINBASEAPI UINT        WINAPI GetWindowsDirectoryA(LPSTR,UINT);
 WINBASEAPI UINT        WINAPI GetWindowsDirectoryW(LPWSTR,UINT);
 #define                       GetWindowsDirectory WINELIB_NAME_AW(GetWindowsDirectory)
+WINBASEAPI UINT        WINAPI GetWriteWatch(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
 WINBASEAPI ATOM        WINAPI GlobalAddAtomA(LPCSTR);
 WINBASEAPI ATOM        WINAPI GlobalAddAtomW(LPCWSTR);
 #define                       GlobalAddAtom WINELIB_NAME_AW(GlobalAddAtom)
@@ -1989,6 +1990,7 @@ WINADVAPI  BOOL        WINAPI ReportEventW(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWOR
 WINBASEAPI BOOL        WINAPI RequestWakeupLatency(LATENCY_TIME latency);
 #define                       ReportEvent WINELIB_NAME_AW(ReportEvent)
 WINBASEAPI BOOL        WINAPI ResetEvent(HANDLE);
+WINBASEAPI UINT        WINAPI ResetWriteWatch(LPVOID,SIZE_T);
 WINBASEAPI DWORD       WINAPI ResumeThread(HANDLE);
 WINADVAPI  BOOL        WINAPI RevertToSelf(void);
 WINBASEAPI DWORD       WINAPI SearchPathA(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);

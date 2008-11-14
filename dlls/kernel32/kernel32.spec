@@ -671,7 +671,7 @@
 # @ stub GetVolumePathNamesForVolumeNameW
 @ stdcall GetWindowsDirectoryA(ptr long)
 @ stdcall GetWindowsDirectoryW(ptr long)
-@ stub GetWriteWatch
+@ stdcall GetWriteWatch(long ptr long ptr ptr ptr)
 @ stdcall GlobalAddAtomA(str)
 @ stdcall GlobalAddAtomW(wstr)
 @ stdcall GlobalAlloc(long long)
@@ -917,7 +917,7 @@
 @ stub RequestDeviceWakeup
 @ stdcall RequestWakeupLatency(long)
 @ stdcall ResetEvent(long)
-@ stub ResetWriteWatch
+@ stdcall ResetWriteWatch(ptr long)
 @ stdcall RestoreLastError(long) ntdll.RtlRestoreLastWin32Error
 @ stdcall ResumeThread(long)
 # @ stub RtlCaptureContext ( -> ntdll.RtlCaptureContext)

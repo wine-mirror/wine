@@ -602,6 +602,33 @@ BOOL WINAPI FlushViewOfFile( LPCVOID base, SIZE_T size )
 
 
 /***********************************************************************
+ *             GetWriteWatch   (KERNEL32.@)
+ */
+UINT WINAPI GetWriteWatch( DWORD flags, LPVOID base, SIZE_T size, LPVOID *addresses,
+                           ULONG_PTR *count, ULONG *granularity )
+{
+    NTSTATUS status;
+
+    status = NtGetWriteWatch( GetCurrentProcess(), flags, base, size, addresses, count, granularity );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return status ? ~0u : 0;
+}
+
+
+/***********************************************************************
+ *             ResetWriteWatch   (KERNEL32.@)
+ */
+UINT WINAPI ResetWriteWatch( LPVOID base, SIZE_T size )
+{
+    NTSTATUS status;
+
+    status = NtResetWriteWatch( GetCurrentProcess(), base, size );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return status ? ~0u : 0;
+}
+
+
+/***********************************************************************
  *             IsBadReadPtr   (KERNEL32.@)
  *
  * Check for read access on a memory block.
