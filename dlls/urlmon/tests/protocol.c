@@ -755,6 +755,12 @@ static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID r
         return S_OK;
     }
 
+    if(IsEqualGUID(&IID_IInternetProtocolEx, riid)) {
+        trace("IID_IInternetProtocolEx not supported\n");
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
     if(IsEqualGUID(&IID_IInternetPriority, riid)) {
         *ppv = &InternetPriority;
         return S_OK;
