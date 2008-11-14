@@ -761,6 +761,7 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
     WCHAR ipAddrBuf[32];
     WCHAR maskBuf[16];
     DWORD bytesNeeded = sizeof(WCHAR);
+    DWORD strType = CERT_X500_NAME_STR | CERT_NAME_STR_REVERSE_FLAG;
 
     if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
         bytesNeeded += indentLevel * strlenW(indent) * sizeof(WCHAR);
@@ -780,11 +781,12 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
         break;
     case CERT_ALT_NAME_DIRECTORY_NAME:
     {
-        DWORD strType = dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE
-         ? CERT_NAME_STR_CRLF_FLAG : 0;
-        DWORD directoryNameLen = CertNameToStrW(X509_ASN_ENCODING,
-         &entry->u.DirectoryName, strType, NULL, 0);
+        DWORD directoryNameLen;
 
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+            strType |= CERT_NAME_STR_CRLF_FLAG;
+        directoryNameLen = cert_name_to_str_with_indent(X509_ASN_ENCODING,
+         indentLevel + 1, &entry->u.DirectoryName, strType, NULL, 0);
         LoadStringW(hInstance, IDS_ALT_NAME_DIRECTORY_NAME, buf,
          sizeof(buf) / sizeof(buf[0]));
         bytesNeeded += (directoryNameLen - 1) * sizeof(WCHAR);
@@ -891,14 +893,10 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
                 strcpyW(str, entry->u.pwszURL);
                 break;
             case CERT_ALT_NAME_DIRECTORY_NAME:
-            {
-                DWORD strType = dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE
-                 ? CERT_NAME_STR_CRLF_FLAG : 0;
-
-                CertNameToStrW(X509_ASN_ENCODING, &entry->u.DirectoryName,
-                 strType, str, bytesNeeded / sizeof(WCHAR));
+                cert_name_to_str_with_indent(X509_ASN_ENCODING,
+                 indentLevel + 1, &entry->u.DirectoryName, strType, str,
+                 bytesNeeded / sizeof(WCHAR));
                 break;
-            }
             case CERT_ALT_NAME_IP_ADDRESS:
                 if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
                 {
