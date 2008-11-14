@@ -751,6 +751,7 @@ static BOOL CRYPT_FormatCertSerialNumber(CRYPT_DATA_BLOB *serialNum, LPWSTR str,
 }
 
 static const WCHAR indent[] = { ' ',' ',' ',' ',' ',0 };
+static const WCHAR colonCrlf[] = { ':','\r','\n',0 };
 
 static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
  CERT_ALT_NAME_ENTRY *entry, LPWSTR str, DWORD *pcbStr)
@@ -790,6 +791,10 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
         LoadStringW(hInstance, IDS_ALT_NAME_DIRECTORY_NAME, buf,
          sizeof(buf) / sizeof(buf[0]));
         bytesNeeded += (directoryNameLen - 1) * sizeof(WCHAR);
+        if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+            bytesNeeded += strlenW(colonCrlf) * sizeof(WCHAR);
+        else
+            bytesNeeded += sizeof(WCHAR); /* '=' */
         ret = TRUE;
         break;
     }
@@ -893,6 +898,13 @@ static BOOL CRYPT_FormatAltNameEntry(DWORD dwFormatStrType, DWORD indentLevel,
                 strcpyW(str, entry->u.pwszURL);
                 break;
             case CERT_ALT_NAME_DIRECTORY_NAME:
+                if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+                {
+                    strcpyW(str, colonCrlf);
+                    str += strlenW(colonCrlf);
+                }
+                else
+                    *str++ = '=';
                 cert_name_to_str_with_indent(X509_ASN_ENCODING,
                  indentLevel + 1, &entry->u.DirectoryName, strType, str,
                  bytesNeeded / sizeof(WCHAR));
@@ -988,7 +1000,6 @@ static BOOL CRYPT_FormatAltNameInfo(DWORD dwFormatStrType, DWORD indentLevel,
     return ret;
 }
 
-static const WCHAR colonCrlf[] = { ':','\r','\n',0 };
 static const WCHAR colonSep[] = { ':',' ',0 };
 
 static BOOL CRYPT_FormatCertIssuer(DWORD dwFormatStrType,
