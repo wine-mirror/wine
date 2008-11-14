@@ -382,6 +382,7 @@ static void test_SetupGetSourceInfo(void)
 static void test_SetupGetTargetPath(void)
 {
     char buffer[MAX_PATH], inf_filename[MAX_PATH];
+    char destfile[MAX_PATH];
     DWORD required;
     HINF hinf;
     INFCONTEXT ctx;
@@ -405,9 +406,14 @@ static void test_SetupGetTargetPath(void)
 
     ret = SetupGetTargetPathA(hinf, &ctx, NULL, buffer, sizeof(buffer), &required);
     ok(ret, "SetupGetTargetPathA failed\n");
-
     ok(required == 10, "unexpected required size: %d\n", required);
-    ok(!lstrcmpiA("C:\\LANCOM", buffer), "unexpected result string: %s\n", buffer);
+    /* Retrieve the system drive from the windows directory.
+     * (%SystemDrive% is not available on Win9x)
+     */
+    lstrcpyA(destfile, WIN_DIR);
+    destfile[3] = '\0';
+    lstrcatA(destfile, "LANCOM");
+    ok(!lstrcmpiA(destfile, buffer), "unexpected result string: %s\n", buffer);
 
     SetupCloseInfFile(hinf);
     DeleteFileA(inf_filename);
