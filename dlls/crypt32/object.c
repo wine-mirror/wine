@@ -990,17 +990,32 @@ static BOOL CRYPT_FormatAltNameInfo(DWORD dwFormatStrType, DWORD indentLevel,
     return ret;
 }
 
+static const WCHAR colonCrlf[] = { ':','\r','\n',0 };
+static const WCHAR colonSep[] = { ':',' ',0 };
+
 static BOOL CRYPT_FormatCertIssuer(DWORD dwFormatStrType,
  CERT_ALT_NAME_INFO *issuer, LPWSTR str, DWORD *pcbStr)
 {
     WCHAR buf[MAX_STRING_RESOURCE_LEN];
-    DWORD bytesNeeded;
+    DWORD bytesNeeded, sepLen;
+    LPCWSTR sep;
     BOOL ret;
 
     LoadStringW(hInstance, IDS_CERT_ISSUER, buf, sizeof(buf) / sizeof(buf[0]));
-    ret = CRYPT_FormatAltNameInfo(dwFormatStrType, 0, issuer, NULL,
+    ret = CRYPT_FormatAltNameInfo(dwFormatStrType, 1, issuer, NULL,
      &bytesNeeded);
     bytesNeeded += strlenW(buf) * sizeof(WCHAR);
+    if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+    {
+        sep = colonCrlf;
+        sepLen = strlenW(colonCrlf) * sizeof(WCHAR);
+    }
+    else
+    {
+        sep = colonSep;
+        sepLen = strlenW(colonSep) * sizeof(WCHAR);
+    }
+    bytesNeeded += sepLen;
     if (ret)
     {
         if (!str)
@@ -1015,9 +1030,11 @@ static BOOL CRYPT_FormatCertIssuer(DWORD dwFormatStrType,
         {
             *pcbStr = bytesNeeded;
             strcpyW(str, buf);
-            str += strlenW(str);
             bytesNeeded -= strlenW(str) * sizeof(WCHAR);
-            ret = CRYPT_FormatAltNameInfo(dwFormatStrType, 0, issuer, str,
+            str += strlenW(str);
+            strcpyW(str, sep);
+            str += sepLen / sizeof(WCHAR);
+            ret = CRYPT_FormatAltNameInfo(dwFormatStrType, 1, issuer, str,
              &bytesNeeded);
         }
     }
@@ -1157,16 +1174,14 @@ static BOOL WINAPI CRYPT_FormatAuthorityKeyId2(DWORD dwCertEncodingType,
     return ret;
 }
 
-static const WCHAR colonCrlf[] = { ':','\r','\n',0 };
-
 static WCHAR aia[MAX_STRING_RESOURCE_LEN];
 static WCHAR accessMethod[MAX_STRING_RESOURCE_LEN];
 static WCHAR ocsp[MAX_STRING_RESOURCE_LEN];
 static WCHAR caIssuers[MAX_STRING_RESOURCE_LEN];
 static WCHAR unknown[MAX_STRING_RESOURCE_LEN];
 static WCHAR accessLocation[MAX_STRING_RESOURCE_LEN];
-static BOOL WINAPI CRYPT_FormatAuthorityInfoAccess(DWORD dwCertEncodingType,
 
+static BOOL WINAPI CRYPT_FormatAuthorityInfoAccess(DWORD dwCertEncodingType,
  DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
  DWORD *pcbFormat)
@@ -1209,7 +1224,6 @@ static BOOL WINAPI CRYPT_FormatAuthorityInfoAccess(DWORD dwCertEncodingType,
         }
         else
         {
-            static const WCHAR colonSep[] = { ':',' ',0 };
             static const WCHAR numFmt[] = { '%','d',0 };
             static const WCHAR equal[] = { '=',0 };
             static BOOL stringsLoaded = FALSE;
@@ -1492,7 +1506,6 @@ static BOOL WINAPI CRYPT_FormatCRLDistPoints(DWORD dwCertEncodingType,
      pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size)))
     {
         static const WCHAR numFmt[] = { '%','d',0 };
-        static const WCHAR colonSep[] = { ':',' ',0 };
         static const WCHAR commaSep[] = { ',',' ',0 };
         static const WCHAR colon[] = { ':',0 };
         static BOOL stringsLoaded = FALSE;

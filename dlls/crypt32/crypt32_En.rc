@@ -176,7 +176,7 @@ STRINGTABLE DISCARDABLE
 STRINGTABLE DISCARDABLE
 {
     IDS_KEY_ID "KeyID="
-    IDS_CERT_ISSUER "Certificate Issuer: "
+    IDS_CERT_ISSUER "Certificate Issuer"
     IDS_CERT_SERIAL_NUMBER "Certificate Serial Number="
     IDS_ALT_NAME_OTHER_NAME "Other Name="
     IDS_ALT_NAME_RFC822_NAME "Email Address="
