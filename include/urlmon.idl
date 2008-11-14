@@ -22,6 +22,10 @@ import "oleidl.idl";
 import "servprov.idl";
 import "msxml.idl";
 
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef GetUserName")
+cpp_quote("#endif")
+
 interface IInternetProtocolSink;
 
 /*****************************************************************************
@@ -1362,6 +1366,147 @@ typedef enum _tagINTERNETFEATURELIST
     FEATURE_AJAX_CONNECTIONSERVICES,
     FEATURE_ENTRY_COUNT
 } INTERNETFEATURELIST;
+
+/*****************************************************************************
+ * IUri interface
+ */
+[
+    local,
+    object,
+    uuid(a39ee748-6a27-4817-a6f2-13914bef5890),
+    pointer_default(unique)
+]
+interface IUri : IUnknown
+{
+    typedef enum
+    {
+        Uri_PROPERTY_ABSOLUTE_URI = 0,
+        Uri_PROPERTY_STRING_START = Uri_PROPERTY_ABSOLUTE_URI,
+        Uri_PROPERTY_AUTHORITY = 1,
+        Uri_PROPERTY_DISPLAY_URI = 2,
+        Uri_PROPERTY_DOMAIN = 3,
+        Uri_PROPERTY_EXTENSION = 4,
+        Uri_PROPERTY_FRAGMENT = 5,
+        Uri_PROPERTY_HOST = 6,
+        Uri_PROPERTY_PASSWORD = 7,
+        Uri_PROPERTY_PATH = 8,
+        Uri_PROPERTY_PATH_AND_QUERY = 9,
+        Uri_PROPERTY_QUERY = 10,
+        Uri_PROPERTY_RAW_URI = 11,
+        Uri_PROPERTY_SCHEME_NAME = 12,
+        Uri_PROPERTY_USER_INFO = 13,
+        Uri_PROPERTY_USER_NAME = 14,
+        Uri_PROPERTY_STRING_LAST = Uri_PROPERTY_USER_NAME,
+        Uri_PROPERTY_HOST_TYPE = 15,
+        Uri_PROPERTY_DWORD_START = Uri_PROPERTY_HOST_TYPE,
+        Uri_PROPERTY_PORT = 16,
+        Uri_PROPERTY_SCHEME = 17,
+        Uri_PROPERTY_ZONE = 18,
+        Uri_PROPERTY_DWORD_LAST = Uri_PROPERTY_ZONE
+    } Uri_PROPERTY;
+
+    HRESULT GetPropertyBSTR(
+        [in]  Uri_PROPERTY uriProp,
+        [out] BSTR *pbstrProperty,
+        [in]  DWORD dwFlags);
+
+    HRESULT GetPropertyLength(
+        [in]  Uri_PROPERTY uriProp,
+        [out] DWORD *pcchProperty,
+        [in]  DWORD dwFlags);
+
+    HRESULT GetPropertyDWORD(
+        [in]  Uri_PROPERTY uriProp,
+        [out] DWORD *pdwProperty,
+        [in]  DWORD dwFlags);
+
+    HRESULT HasProperty(
+        [in] Uri_PROPERTY uriProp,
+        [out] BOOL *pfHasProperty);
+
+    HRESULT GetAbsoluteUri(
+        [out] BSTR *pbstrAbsoluteUri);
+
+    HRESULT GetAuthority(
+        [out] BSTR *pbstrAuthority);
+
+    HRESULT GetDisplayUri(
+        [out] BSTR *pbstrDisplayString);
+
+    HRESULT GetDomain(
+        [out] BSTR *pbstrDomain);
+
+    HRESULT GetExtension(
+        [out] BSTR *pbstrExtension);
+
+    HRESULT GetFragment(
+        [out] BSTR *pbstrFragment);
+
+    HRESULT GetHost(
+        [out] BSTR *pbstrHost);
+
+    HRESULT GetPassword(
+        [out] BSTR *pbstrPassword);
+
+    HRESULT GetPath(
+        [out] BSTR *pbstrPath);
+
+    HRESULT GetPathAndQuery(
+        [out] BSTR *pbstrPathAndQuery);
+
+    HRESULT GetQuery(
+        [out] BSTR *pbstrQuery);
+
+    HRESULT GetRawUri(
+        [out] BSTR *pbstrRawUri);
+
+    HRESULT GetSchemeName(
+        [out] BSTR *pbstrSchemeName);
+
+    HRESULT GetUserInfo(
+        [out] BSTR *pbstrUserInfo);
+
+    HRESULT GetUserName(
+        [out] BSTR *pbstrUserName);
+
+    HRESULT GetHostType(
+        [out] DWORD *pdwHostType);
+
+    HRESULT GetPort(
+        [out] DWORD *pdwPort);
+
+    HRESULT GetScheme(
+        [out] DWORD *pdwScheme);
+
+    HRESULT GetZone(
+        [out] DWORD *pdwZone);
+
+    HRESULT GetProperties(
+        [out] LPDWORD pdwFlags);
+
+    HRESULT IsEqual(
+        [in]  IUri *pUri,
+        [out] BOOL *pfEqual);
+}
+
+/*****************************************************************************
+ * IInternetProtocolEx interface
+ */
+[
+    local,
+    object,
+    uuid(c7a98e66-1010-492c-a1c8-c809e1f75905),
+    pointer_default(unique)
+]
+interface IInternetProtocolEx : IInternetProtocol
+{
+    HRESULT StartEx(
+        [in] IUri *pUri,
+        [in] IInternetProtocolSink *pOIProtSink,
+        [in] IInternetBindInfo *pOIBindInfo,
+        [in] DWORD grfPI,
+        [in] HANDLE *dwReserved);
+}
 
 cpp_quote("DEFINE_GUID(CLSID_InternetSecurityManager, 0x7b8a2d94, 0x0ac9, 0x11d1, 0x89, 0x6c, 0x00, 0xc0, 0x4f, 0xB6, 0xbf, 0xc4);")
 cpp_quote("DEFINE_GUID(CLSID_InternetZoneManager, 0x7B8A2D95, 0x0AC9, 0x11D1, 0x89, 0x6C, 0x00, 0xC0, 0x4F, 0xB6, 0xBF, 0xC4);")
