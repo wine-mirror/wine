@@ -69,7 +69,7 @@ static int reg_message(int msg, ...)
 static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     WCHAR *type, WCHAR separator, WCHAR *data, BOOL force)
 {
-    const WCHAR stubW[] = {'S','T','U','B',' ','A','D','D',' ','-',' ','%','s',
+    static const WCHAR stubW[] = {'S','T','U','B',' ','A','D','D',' ','-',' ','%','s',
         ' ','%','s',' ','%','d',' ','%','s',' ','%','s',' ','%','d','\n',0};
     reg_printfW(stubW, key_name, value_name, value_empty, type, data, force);
 
@@ -79,8 +79,9 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     BOOL value_all, BOOL force)
 {
-    const WCHAR stubW[] = {'S','T','U','B',' ','D','E','L','E','T','E',' ','-',
-        ' ','%','s',' ','%','s',' ','%','d',' ','%','d',' ','%','d','\n',0};
+    static const WCHAR stubW[] = {'S','T','U','B',' ','D','E','L','E','T','E',
+        ' ','-',' ','%','s',' ','%','s',' ','%','d',' ','%','d',' ','%','d','\n'
+        ,0};
     reg_printfW(stubW, key_name, value_name, value_empty, value_all, force);
 
     return 1;
@@ -89,8 +90,8 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     BOOL subkey)
 {
-    const WCHAR stubW[] = {'S','T','U','B',' ','Q','U','E','R','Y',' ','-',' ',
-        '%','s',' ','%','s',' ','%','d',' ','%','d','\n',0};
+    static const WCHAR stubW[] = {'S','T','U','B',' ','Q','U','E','R','Y',' ',
+        '-',' ','%','s',' ','%','s',' ','%','d',' ','%','d','\n',0};
     reg_printfW(stubW, key_name, value_name, value_empty, subkey);
 
     return 1;
@@ -100,16 +101,16 @@ int wmain(int argc, WCHAR *argvW[])
 {
     int i;
 
-    const WCHAR addW[] = {'a','d','d',0};
-    const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
-    const WCHAR queryW[] = {'q','u','e','r','y',0};
-    const WCHAR slashDW[] = {'/','d',0};
-    const WCHAR slashFW[] = {'/','f',0};
-    const WCHAR slashSW[] = {'/','s',0};
-    const WCHAR slashTW[] = {'/','t',0};
-    const WCHAR slashVW[] = {'/','v',0};
-    const WCHAR slashVAW[] = {'/','v','a',0};
-    const WCHAR slashVEW[] = {'/','v','e',0};
+    static const WCHAR addW[] = {'a','d','d',0};
+    static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
+    static const WCHAR queryW[] = {'q','u','e','r','y',0};
+    static const WCHAR slashDW[] = {'/','d',0};
+    static const WCHAR slashFW[] = {'/','f',0};
+    static const WCHAR slashSW[] = {'/','s',0};
+    static const WCHAR slashTW[] = {'/','t',0};
+    static const WCHAR slashVW[] = {'/','v',0};
+    static const WCHAR slashVAW[] = {'/','v','a',0};
+    static const WCHAR slashVEW[] = {'/','v','e',0};
 
     if (argc < 2)
     {
