@@ -7184,7 +7184,6 @@ static void test_encodeCertPolicies(DWORD dwEncoding)
     memset(&info, 0, sizeof(info));
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_POLICIES, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7197,13 +7196,11 @@ static void test_encodeCertPolicies(DWORD dwEncoding)
     info.rgPolicyInfo = policy;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_POLICIES, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
     policy[0].pszPolicyIdentifier = oid_any_policy;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_POLICIES, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7221,7 +7218,6 @@ static void test_encodeCertPolicies(DWORD dwEncoding)
     info.cPolicyInfo = 2;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_POLICIES, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
