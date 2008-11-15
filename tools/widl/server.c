@@ -383,7 +383,7 @@ static void init_server(void)
     print_server("\n");
     print_server("struct __server_frame\n");
     print_server("{\n");
-    print_server("    __DECL_EXCEPTION_FRAME;\n");
+    print_server("    __DECL_EXCEPTION_FRAME\n");
     print_server("    MIDL_STUB_MESSAGE _StubMsg;\n");
     print_server("};\n");
     print_server("\n");

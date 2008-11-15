@@ -113,7 +113,7 @@ static void init_proxy(const statement_list_t *stmts)
   print_proxy( "\n");
   print_proxy( "struct __proxy_frame\n");
   print_proxy( "{\n");
-  print_proxy( "    __DECL_EXCEPTION_FRAME;\n");
+  print_proxy( "    __DECL_EXCEPTION_FRAME\n");
   print_proxy( "    MIDL_STUB_MESSAGE _StubMsg;\n");
   print_proxy( "    void             *This;\n");
   print_proxy( "};\n");

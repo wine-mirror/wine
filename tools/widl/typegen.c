@@ -3405,7 +3405,7 @@ void write_exceptions( FILE *file )
     fprintf( file, "    unsigned char                 finally_level;\n");
     fprintf( file, "\n");
     fprintf( file, "struct __exception_frame\n{\n");
-    fprintf( file, "    __DECL_EXCEPTION_FRAME;\n");
+    fprintf( file, "    __DECL_EXCEPTION_FRAME\n");
     fprintf( file, "};\n");
     fprintf( file, "\n");
     fprintf( file, "static DWORD __widl_exception_handler( EXCEPTION_RECORD *record,\n");
