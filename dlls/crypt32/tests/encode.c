@@ -7236,7 +7236,6 @@ static void test_decodeCertPolicies(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_CERT_POLICIES,
      emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      &info, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7247,7 +7246,6 @@ static void test_decodeCertPolicies(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_CERT_POLICIES,
      policiesWithAnyPolicy, sizeof(policiesWithAnyPolicy),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7264,7 +7262,6 @@ static void test_decodeCertPolicies(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, X509_CERT_POLICIES,
      twoPolicies, sizeof(twoPolicies),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {

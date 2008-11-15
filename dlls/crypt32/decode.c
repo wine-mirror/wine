@@ -3379,6 +3379,100 @@ static BOOL WINAPI CRYPT_AsnDecodeBasicConstraints2(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodePolicyQualifier(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    struct AsnDecodeSequenceItem items[] = {
+     { ASN_OBJECTIDENTIFIER, offsetof(CERT_POLICY_QUALIFIER_INFO,
+       pszPolicyQualifierId), CRYPT_AsnDecodeOidInternal, sizeof(LPSTR),
+       FALSE, TRUE, offsetof(CERT_POLICY_QUALIFIER_INFO, pszPolicyQualifierId),
+       0 },
+     { 0, offsetof(CERT_POLICY_QUALIFIER_INFO, Qualifier),
+       CRYPT_AsnDecodeDerBlob, sizeof(CRYPT_OBJID_BLOB), TRUE, TRUE,
+       offsetof(CERT_POLICY_QUALIFIER_INFO, Qualifier.pbData), 0 },
+    };
+    BOOL ret;
+    CERT_POLICY_QUALIFIER_INFO *qualifier = pvStructInfo;
+
+    TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
+    ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
+     pbEncoded, cbEncoded, dwFlags, NULL, pvStructInfo, pcbStructInfo,
+     pcbDecoded, qualifier ? qualifier->pszPolicyQualifierId : NULL);
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodePolicyQualifiers(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret;
+    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+     CRYPT_AsnDecodePolicyQualifier, sizeof(CERT_POLICY_QUALIFIER_INFO), TRUE,
+     offsetof(CERT_POLICY_QUALIFIER_INFO, pszPolicyQualifierId) };
+    struct GenericArray *entries = pvStructInfo;
+
+    TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
+    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+     NULL, pvStructInfo, pcbStructInfo, pcbDecoded,
+     entries ? entries->rgItems : NULL);
+    TRACE("Returning %d (%08x)\n", ret, GetLastError());
+    return ret;
+}
+
+static BOOL CRYPT_AsnDecodeCertPolicy(const BYTE *pbEncoded, DWORD cbEncoded,
+ DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
+{
+    struct AsnDecodeSequenceItem items[] = {
+     { ASN_OBJECTIDENTIFIER, offsetof(CERT_POLICY_INFO, pszPolicyIdentifier),
+       CRYPT_AsnDecodeOidInternal, sizeof(LPSTR), FALSE, TRUE,
+       offsetof(CERT_POLICY_INFO, pszPolicyIdentifier), 0 },
+     { ASN_SEQUENCEOF, offsetof(CERT_POLICY_INFO, cPolicyQualifier),
+       CRYPT_AsnDecodePolicyQualifiers, sizeof(struct GenericArray), TRUE,
+       TRUE, offsetof(CERT_POLICY_INFO, rgPolicyQualifier), 0 },
+    };
+    CERT_POLICY_INFO *info = pvStructInfo;
+    BOOL ret;
+
+    TRACE("%p, %d, %08x, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
+    ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
+     pbEncoded, cbEncoded, dwFlags, NULL, pvStructInfo, pcbStructInfo,
+     pcbDecoded, info ? info->pszPolicyIdentifier : NULL);
+    return ret;
+}
+
+static BOOL WINAPI CRYPT_AsnDecodeCertPolicies(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret = FALSE;
+
+    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, pvStructInfo, pvStructInfo ? *pcbStructInfo : 0);
+
+    __TRY
+    {
+        struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCEOF,
+         CRYPT_AsnDecodeCertPolicy, sizeof(CERT_POLICY_INFO), TRUE,
+         offsetof(CERT_POLICY_INFO, pszPolicyIdentifier) };
+
+        ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded, dwFlags,
+         pDecodePara, pvStructInfo, pcbStructInfo, NULL, NULL);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+    }
+    __ENDTRY
+    return ret;
+}
+
 #define RSA1_MAGIC 0x31415352
 
 struct DECODED_RSA_PUB_KEY
@@ -5072,6 +5166,9 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         case LOWORD(X509_BASIC_CONSTRAINTS2):
             decodeFunc = CRYPT_AsnDecodeBasicConstraints2;
             break;
+        case LOWORD(X509_CERT_POLICIES):
+            decodeFunc = CRYPT_AsnDecodeCertPolicies;
+            break;
         case LOWORD(RSA_CSP_PUBLICKEYBLOB):
             decodeFunc = CRYPT_AsnDecodeRsaPubKey;
             break;
@@ -5185,6 +5282,8 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
         decodeFunc = CRYPT_AsnDecodeAltName;
     else if (!strcmp(lpszStructType, szOID_CRL_DIST_POINTS))
         decodeFunc = CRYPT_AsnDecodeCRLDistPoints;
+    else if (!strcmp(lpszStructType, szOID_CERT_POLICIES))
+        decodeFunc = CRYPT_AsnDecodeCertPolicies;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         decodeFunc = CRYPT_AsnDecodeEnhancedKeyUsage;
     else if (!strcmp(lpszStructType, szOID_ISSUING_DIST_POINT))
