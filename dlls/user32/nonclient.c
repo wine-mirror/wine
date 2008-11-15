@@ -417,6 +417,9 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     LONG exStyle = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
+    if (winRect == NULL)
+        return 0;
+
     if (cls_style & CS_VREDRAW) result |= WVR_VREDRAW;
     if (cls_style & CS_HREDRAW) result |= WVR_HREDRAW;
 

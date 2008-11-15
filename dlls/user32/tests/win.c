@@ -781,6 +781,7 @@ static void test_nonclient_area(HWND hwnd)
     RECT rc_window, rc_client, rc;
     BOOL menu;
     BOOL is_win9x = GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == 0;
+    LRESULT ret;
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
@@ -808,6 +809,10 @@ static void test_nonclient_area(HWND hwnd)
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     trace("calc client: (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
     ok(EqualRect(&rc, &rc_client), "client rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d\n", style, exstyle, menu);
+
+    /* NULL rectangle shouldn't crash */
+    ret = DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, 0);
+    ok(ret == 0, "NULL rectangle returned %ld instead of 0\n", ret);
 
     /* Win9x doesn't like WM_NCCALCSIZE with synthetic data and crashes */;
     if (is_win9x)
