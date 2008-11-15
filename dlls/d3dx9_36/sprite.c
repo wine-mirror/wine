@@ -225,6 +225,17 @@ D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
 D3DXSPRITE_DO_NOT_ADDREF_TEXTURE: don't call AddRef/Release on every Draw/Flush call
 D3DXSPRITE_DONOTSAVESTATE: don't restore the current device state on ID3DXSprite_End
 */
+    if(This->vdecl==NULL) {
+        static const D3DVERTEXELEMENT9 elements[] =
+        {
+            { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+            { 0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
+            { 0, 16, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+            D3DDECL_END()
+        };
+        IDirect3DDevice9_CreateVertexDeclaration(This->device, elements, &This->vdecl);
+    }
+
     if(This->stateblock==NULL) {
         /* Tell our state block what it must store */
         hr=IDirect3DDevice9_BeginStateBlock(This->device);
@@ -434,14 +445,6 @@ HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
 {
     ID3DXSpriteImpl *object;
     D3DCAPS9 caps;
-    static const D3DVERTEXELEMENT9 elements[] =
-        {
-            { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-            { 0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
-            { 0, 16, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
-            D3DDECL_END()
-        };
-
     TRACE("(void): relay\n");
 
     if(device==NULL || sprite==NULL) return D3DERR_INVALIDCALL;
@@ -456,7 +459,7 @@ HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
     object->device=device;
     IUnknown_AddRef(device);
 
-    IDirect3DDevice9_CreateVertexDeclaration(object->device, elements, &object->vdecl);
+    object->vdecl=NULL;
     object->stateblock=NULL;
 
     D3DXMatrixIdentity(&object->transform);
