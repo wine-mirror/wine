@@ -465,6 +465,8 @@ BOOL WINAPI CertViewPropertiesW(CERT_VIEWPROPERTIES_STRUCT_W *info)
     return ret;
 }
 
+#define szOID_MICROSOFT_Encryption_Key_Preference "1.3.6.1.4.1.311.16.4"
+
 /***********************************************************************
  *		DllRegisterServer (CRYPTDLG.@)
  */
@@ -484,6 +486,8 @@ HRESULT WINAPI DllRegisterServer(void)
      'F','i','n','a','l','P','o','l','i','c','y',0 };
     static WCHAR certTrustCleanup[] = { 'C','e','r','t','T','r','u','s','t',
      'C','l','e','a','n','u','p',0 };
+    static const WCHAR cryptDlg[] = { 'c','r','y','p','t','d','l','g','.',
+       'd','l','l',0 };
     CRYPT_REGISTER_ACTIONID reg;
     GUID guid = CERT_CERTIFICATE_ACTION_VERIFY;
     HRESULT hr = S_OK;
@@ -507,6 +511,18 @@ HRESULT WINAPI DllRegisterServer(void)
     reg.sCleanupProvider.pwszFunctionName = certTrustCleanup;
     if (!WintrustAddActionID(&guid, WT_ADD_ACTION_ID_RET_RESULT_FLAG, &reg))
         hr = GetLastError();
+    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_ENCODE_OBJECT_FUNC,
+     "1.3.6.1.4.1.311.16.1.1", cryptDlg, "EncodeAttrSequence");
+    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_ENCODE_OBJECT_FUNC,
+     szOID_MICROSOFT_Encryption_Key_Preference, cryptDlg, "EncodeRecipientID");
+    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_DECODE_OBJECT_FUNC,
+     "1.3.6.1.4.1.311.16.1.1", cryptDlg, "DecodeAttrSequence");
+    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_DECODE_OBJECT_FUNC,
+     szOID_MICROSOFT_Encryption_Key_Preference, cryptDlg, "DecodeRecipientID");
+    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_FORMAT_OBJECT_FUNC,
+     szOID_PKIX_KP_EMAIL_PROTECTION, cryptDlg, "FormatPKIXEmailProtection");
+    CryptRegisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_FORMAT_OBJECT_FUNC,
+     szOID_CERT_POLICIES, cryptDlg, "FormatVerisignExtension");
     return hr;
 }
 
@@ -518,5 +534,17 @@ HRESULT WINAPI DllUnregisterServer(void)
     GUID guid = CERT_CERTIFICATE_ACTION_VERIFY;
 
     WintrustRemoveActionID(&guid);
+    CryptUnregisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_ENCODE_OBJECT_FUNC,
+     "1.3.6.1.4.1.311.16.1.1");
+    CryptUnregisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_ENCODE_OBJECT_FUNC,
+     szOID_MICROSOFT_Encryption_Key_Preference);
+    CryptUnregisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_DECODE_OBJECT_FUNC,
+     "1.3.6.1.4.1.311.16.1.1");
+    CryptUnregisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_DECODE_OBJECT_FUNC,
+     szOID_MICROSOFT_Encryption_Key_Preference);
+    CryptUnregisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_FORMAT_OBJECT_FUNC,
+     szOID_PKIX_KP_EMAIL_PROTECTION);
+    CryptUnregisterOIDFunction(X509_ASN_ENCODING, CRYPT_OID_FORMAT_OBJECT_FUNC,
+     szOID_CERT_POLICIES);
     return S_OK;
 }
