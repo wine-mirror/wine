@@ -239,7 +239,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   {
     lpdxflm = (LPDXFILELOADMEMORY)pvSource;
 
-    FIXME("Source in memory at %p with size %d\n", lpdxflm->lpMemory, lpdxflm->dSize);
+    TRACE("Source in memory at %p with size %d\n", lpdxflm->lpMemory, lpdxflm->dSize);
 
     memcpy(header, (char*)lpdxflm->lpMemory, 16);
   }
@@ -606,7 +606,7 @@ static BOOL is_name(parse_buffer* buf)
   BOOL error = 0;
   while (!is_separator(c = *(buf->buffer+pos)))
   {
-    if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9')) || (c == '_')))
+    if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9')) || (c == '_') || (c == '-')))
       error = 1;
     tmp[pos++] = c;
   }
