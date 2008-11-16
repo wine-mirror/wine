@@ -1479,6 +1479,18 @@ static void test_matrix_stack(void)
     ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
     ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
 
+    hr = ID3DXMatrixStack_MultMatrix(stack, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = ID3DXMatrixStack_MultMatrixLocal(stack, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = ID3DXMatrixStack_RotateAxis(stack, NULL, 2.0f);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
+    hr = ID3DXMatrixStack_RotateAxisLocal(stack, NULL, 2.0f);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+
     refcount = ID3DXMatrixStack_Release(stack);
     ok(!refcount, "Matrix stack has %u references left.\n", refcount);
 }
