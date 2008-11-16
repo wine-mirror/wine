@@ -236,7 +236,9 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "EM_GETLIMITTEXT",          /* 0x00d5 */
     "EM_POSFROMCHAR",           /* 0x00d6 */
     "EM_CHARFROMPOS",           /* 0x00d7 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "EM_SETIMESTATUS",          /* 0x00d8 */
+    "EM_GETIMESTATUS",          /* 0x00d9 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00E0 - Win32 Scrollbars */
     "SBM_SETPOS",               /* 0x00e0 */
