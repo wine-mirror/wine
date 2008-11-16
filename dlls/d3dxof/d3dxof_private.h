@@ -135,6 +135,7 @@ typedef struct {
   xobject* pxo;
   xtemplate* pxt[MAX_SUBOBJECTS];
   ULONG level;
+  LPBYTE pdata;
   LPBYTE pstrings;
 } parse_buffer;
 

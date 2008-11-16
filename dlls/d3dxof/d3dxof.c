@@ -80,8 +80,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 
 #define CLSIDFMT "<%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X>"
 
-#define MAX_INPUT_SIZE 1000000
-#define MAX_DATA_SIZE 100000
+#define MAX_INPUT_SIZE 2000000
+#define MAX_DATA_SIZE 200000
 
 static const struct IDirectXFileVtbl IDirectXFile_Vtbl;
 static const struct IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl;
@@ -1858,9 +1858,9 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           last_dword = *(DWORD*)buf->value;
           TRACE("%s = %d\n", pt->members[i].name, *(DWORD*)buf->value);
           /* Assume larger size */
-          if ((buf->cur_pdata - buf->pxo->pdata + 4) > MAX_DATA_SIZE)
+          if ((buf->cur_pdata - buf->pdata + 4) > MAX_DATA_SIZE)
           {
-            WARN("Buffer too small\n");
+            FIXME("Buffer too small\n");
             return FALSE;
           }
           if (pt->members[i].type == TOKEN_WORD)
@@ -1884,9 +1884,9 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           get_TOKEN(buf);
           TRACE("%s = %f\n", pt->members[i].name, *(float*)buf->value);
           /* Assume larger size */
-          if ((buf->cur_pdata - buf->pxo->pdata + 4) > MAX_DATA_SIZE)
+          if ((buf->cur_pdata - buf->pdata + 4) > MAX_DATA_SIZE)
           {
-            WARN("Buffer too small\n");
+            FIXME("Buffer too small\n");
             return FALSE;
           }
           if (pt->members[i].type == TOKEN_FLOAT)
@@ -1905,9 +1905,9 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           get_TOKEN(buf);
           TRACE("%s = %s\n", pt->members[i].name, (char*)buf->value);
           /* Assume larger size */
-          if ((buf->cur_pdata - buf->pxo->pdata + 4) > MAX_DATA_SIZE)
+          if ((buf->cur_pdata - buf->pdata + 4) > MAX_DATA_SIZE)
           {
-            WARN("Buffer too small\n");
+            FIXME("Buffer too small\n");
             return FALSE;
           }
           if (pt->members[i].type == TOKEN_LPSTR)
@@ -1915,7 +1915,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
             int len = strlen((char*)buf->value) + 1;
             if ((buf->cur_pstrings - buf->pstrings + len) > MAX_STRINGS_BUFFER)
             {
-              WARN("Buffer too small %p %p %d\n", buf->cur_pstrings, buf->pstrings, len);
+              FIXME("Buffer too small %p %p %d\n", buf->cur_pstrings, buf->pstrings, len);
               return FALSE;
             }
             strcpy((char*)buf->cur_pstrings, (char*)buf->value);
@@ -2124,7 +2124,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
     WARN("Out of memory\n");
     return DXFILEERR_BADALLOC;
   }
-  This->buf.cur_pdata = pdata;
+  This->buf.cur_pdata = This->buf.pdata = pdata;
 
   pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
   if (!pstrings)
