@@ -44,6 +44,8 @@ static HMODULE hsrclient = 0;
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
 
+static BOOL on_win9x = FALSE;
+
 static const char *msifile = "msitest.msi";
 static const char *msifile2 = "winetest2.msi";
 static const char *mstfile = "winetest.mst";
@@ -1331,6 +1333,19 @@ static void init_functionpointers(void)
 #undef GET_PROC
 }
 
+static BOOL check_win9x(void)
+{
+    SC_HANDLE scm;
+
+    scm = OpenSCManager(NULL, NULL, GENERIC_ALL);
+    if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+        return TRUE;
+
+    CloseServiceHandle(scm);
+
+    return FALSE;
+}
+
 static void get_user_sid(LPSTR *usersid)
 {
     HANDLE token;
@@ -1698,15 +1713,12 @@ static void test_MsiInstallProduct(void)
     LONG res;
     HKEY hkey;
     DWORD num, size, type;
-    SC_HANDLE scm;
 
-    scm = OpenSCManager(NULL, NULL, GENERIC_ALL);
-    if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    if (on_win9x)
     {
-        skip("Services are not implemented, we are most likely on win9x\n");
+        win_skip("Services are not implemented on Win9x and WinMe\n");
         return;
     }
-    CloseServiceHandle(scm);
 
     create_test_files();
     create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
@@ -5185,16 +5197,11 @@ static void test_MsiConfigureProductEx(void)
     CHAR keypath[MAX_PATH * 2];
     CHAR localpack[MAX_PATH];
 
-    /* skip these tests if we are on Win9x or WinMe */
-    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
-    lstrcatA(keypath, "Installer\\UserData");
-    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &props);
-    if (res == ERROR_FILE_NOT_FOUND)
+    if (on_win9x)
     {
         win_skip("Different registry keys on Win9x and WinMe\n");
         return;
     }
-    RegCloseKey(props);
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\hydrogen", 500);
@@ -5612,6 +5619,8 @@ START_TEST(install)
     BOOL ret = FALSE;
 
     init_functionpointers();
+
+    on_win9x = check_win9x();
 
     GetCurrentDirectoryA(MAX_PATH, prev_path);
     GetTempPath(MAX_PATH, temp_path);
