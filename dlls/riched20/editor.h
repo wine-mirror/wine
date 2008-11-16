@@ -268,8 +268,6 @@ void ME_GetOLEObjectSize(ME_Context *c, ME_Run *run, SIZE *pSize);
 void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src);
 void ME_DeleteReObject(REOBJECT* reo);
 
-/* wintest.c */
-
 /* editor.c */
 ME_TextEditor *ME_MakeEditor(HWND hWnd);
 void ME_DestroyEditor(ME_TextEditor *editor);
