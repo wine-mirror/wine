@@ -141,11 +141,13 @@ static const struct message position_test_seq[] = {
     { TBM_SETPOS, sent|wparam|lparam, TRUE, 5},
     { WM_PAINT, sent|defwinproc},
     { TBM_GETPOS, sent},
+    { TBM_SETPOS, sent|wparam|lparam, TRUE, 5},
     { TBM_SETPOS, sent|wparam|lparam, TRUE, 1000},
     { WM_PAINT, sent|defwinproc},
     { TBM_GETPOS, sent},
     { TBM_SETPOS, sent|wparam|lparam, FALSE, 20},
     { TBM_GETPOS, sent},
+    { TBM_SETPOS, sent|wparam|lparam, TRUE, 20},
     { TBM_GETPOS, sent},
     {0}
 };
@@ -605,12 +607,14 @@ static void test_position(HWND hWndTrackbar){
     SendMessage(hWndTrackbar, TBM_SETPOS, TRUE, 5);
     r = SendMessage(hWndTrackbar, TBM_GETPOS, 0,0);
     expect(5, r);
+    SendMessage(hWndTrackbar, TBM_SETPOS, TRUE, 5);
     SendMessage(hWndTrackbar, TBM_SETPOS, TRUE, 1000);
     r = SendMessage(hWndTrackbar, TBM_GETPOS, 0,0);
     expect(100, r);
     SendMessage(hWndTrackbar, TBM_SETPOS, FALSE, 20);
     r = SendMessage(hWndTrackbar, TBM_GETPOS, 0,0);
     expect(20, r);
+    SendMessage(hWndTrackbar, TBM_SETPOS, TRUE, 20);
 
     /* test TBM_GETPOS */
     r = SendMessage(hWndTrackbar, TBM_GETPOS, 0,0);
