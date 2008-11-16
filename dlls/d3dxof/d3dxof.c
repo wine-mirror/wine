@@ -276,13 +276,6 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     goto error;
   }
 
-  if (header[2] == XOFFILE_FORMAT_BINARY)
-  {
-    FIXME("Binary format not supported yet\n");
-    hr = DXFILEERR_NOTDONEYET;
-    goto error;
-  }
-
   if (header[2] == XOFFILE_FORMAT_COMPRESSED)
   {
     FIXME("Compressed formats not supported yet\n");
@@ -803,10 +796,50 @@ static WORD parse_TOKEN(parse_buffer * buf)
   }
   else
   {
-    if (!read_bytes(buf, &token, 2))
-      return 0;
+    static int nb_elem;
+    static int is_float;
 
-    switch(token)
+    if (!nb_elem)
+    {
+      if (!read_bytes(buf, &token, 2))
+        return 0;
+
+      /* Convert integer and float list into sereparate elements */
+      if (token == TOKEN_INTEGER_LIST)
+      {
+        if (!read_bytes(buf, &nb_elem, 4))
+          return 0;
+        token = TOKEN_INTEGER;
+        is_float = FALSE;
+        TRACE("Integer list (TOKEN_INTEGER_LIST) of size %d\n", nb_elem);
+      }
+      else if (token == TOKEN_FLOAT_LIST)
+      {
+        if (!read_bytes(buf, &nb_elem, 4))
+          return 0;
+        token = TOKEN_FLOAT;
+        is_float = TRUE;
+        TRACE("Float list (TOKEN_FLOAT_LIST) of size %d\n", nb_elem);
+      }
+    }
+
+    if (nb_elem)
+    {
+      token = is_float ? TOKEN_FLOAT : TOKEN_INTEGER;
+      nb_elem--;
+        {
+          DWORD integer;
+
+          if (!read_bytes(buf, &integer, 4))
+            return 0;
+
+          *(DWORD*)buf->value = integer;
+        }
+      dump_TOKEN(token);
+      return token;
+    }
+
+    switch (token)
     {
       case TOKEN_NAME:
         {
@@ -850,8 +883,25 @@ static WORD parse_TOKEN(parse_buffer * buf)
         }
         break;
       case TOKEN_STRING:
-      case TOKEN_INTEGER_LIST:
-      case TOKEN_FLOAT_LIST:
+        {
+          DWORD count;
+          WORD tmp_token;
+          char strname[100];
+          if (!read_bytes(buf, &count, 4))
+            return 0;
+          if (!read_bytes(buf, strname, count))
+            return 0;
+          strname[count] = 0;
+          if (!read_bytes(buf, &tmp_token, 2))
+            return 0;
+          if ((tmp_token != TOKEN_COMMA) && (tmp_token != TOKEN_SEMICOLON))
+            ERR("No comma or semicolon (got %d)\n", tmp_token);
+          /*TRACE("name = %s\n", strname);*/
+
+          strcpy((char*)buf->value, strname);
+          token = TOKEN_LPSTR;
+        }
+        break;
       case TOKEN_OBRACE:
       case TOKEN_CBRACE:
       case TOKEN_OPAREN:
