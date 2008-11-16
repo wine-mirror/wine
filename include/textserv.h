@@ -252,7 +252,7 @@ DECLARE_INTERFACE_(ITextHost,IUnknown)
     STDMETHOD_(BOOL,TxShowCaret)( THIS_
         BOOL fShow) PURE;
 
-    STDMETHOD_(BOOL,TxSetCarentPos)( THIS_
+    STDMETHOD_(BOOL,TxSetCaretPos)( THIS_
         INT x,
         INT y) PURE;
 
