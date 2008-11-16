@@ -44,6 +44,7 @@
 #include "Ro.rc"
 #include "Ru.rc"
 #include "Si.rc"
+#include "Sk.rc"
 #include "Sv.rc"
 #include "Tr.rc"
 #include "Zh.rc"
