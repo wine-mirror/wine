@@ -329,7 +329,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
     {
         DWORD len = 128;
         DWORD r;
-        WCHAR *url = CoTaskMemAlloc(len);
+        WCHAR *url = CoTaskMemAlloc(len*sizeof(WCHAR));
         if (url != NULL)
         {
             r = GetPrivateProfileStringW(str_header, str_URL, NULL, url, len, pszFileName);
