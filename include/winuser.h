@@ -965,6 +965,8 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define EM_GETLIMITTEXT          0x00d5
 #define EM_POSFROMCHAR           0x00d6
 #define EM_CHARFROMPOS           0x00d7
+#define EM_SETIMESTATUS          0x00d8
+#define EM_GETIMESTATUS          0x00d9
 /* a name change since win95 */
 #define EM_SETLIMITTEXT          EM_LIMITTEXT
 
