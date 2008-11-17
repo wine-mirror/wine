@@ -213,8 +213,10 @@ static void test_ChangeDisplaySettingsEx(void)
     dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
     dm.dmPelsWidth = width;
     res = pChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_TEST, NULL);
-    ok(res == DISP_CHANGE_SUCCESSFUL,
-       "ChangeDisplaySettingsExA returned %d, expected DISP_CHANGE_SUCCESSFUL\n", res);
+    ok(res == DISP_CHANGE_SUCCESSFUL ||
+       res == DISP_CHANGE_BADMODE || /* Win98, WinMe */
+       res == DISP_CHANGE_FAILED, /* NT4 */
+       "ChangeDisplaySettingsExA returned unexpected %d\n", res);
 
     memset(&dmW, 0, sizeof(dmW));
     dmW.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
