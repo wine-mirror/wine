@@ -73,6 +73,10 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IDXGIDevice *iface)
     if (!refcount)
     {
         if (This->child_layer) IUnknown_Release(This->child_layer);
+        EnterCriticalSection(&dxgi_cs);
+        IWineD3DDevice_Release(This->wined3d_device);
+        LeaveCriticalSection(&dxgi_cs);
+        IWineDXGIFactory_Release(This->factory);
         HeapFree(GetProcessHeap(), 0, This);
     }
 

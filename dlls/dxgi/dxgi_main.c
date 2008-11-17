@@ -166,6 +166,9 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     struct layer_get_size_args get_size_args;
     struct dxgi_device *dxgi_device;
     struct dxgi_device_layer d3d10_layer;
+    IWineDXGIAdapter *wine_adapter;
+    UINT adapter_ordinal;
+    IWineD3D *wined3d;
     void *layer_base;
     UINT device_size;
     DWORD count;
@@ -217,6 +220,39 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
 
     dxgi_device->vtbl = &dxgi_device_vtbl;
     dxgi_device->refcount = 1;
+
+    hr = IDXGIFactory_QueryInterface(factory, &IID_IWineDXGIFactory, (void **)&dxgi_device->factory);
+    if (FAILED(hr))
+    {
+        WARN("This is not the factory we're looking for, returning %#x\n", hr);
+        goto fail;
+    }
+    wined3d = IWineDXGIFactory_get_wined3d(dxgi_device->factory);
+
+    hr = IDXGIAdapter_QueryInterface(adapter, &IID_IWineDXGIAdapter, (void **)&wine_adapter);
+    if (FAILED(hr))
+    {
+        WARN("This is not the adapter we're looking for, returning %#x\n", hr);
+        EnterCriticalSection(&dxgi_cs);
+        IWineD3D_Release(wined3d);
+        LeaveCriticalSection(&dxgi_cs);
+        goto fail;
+    }
+    adapter_ordinal = IWineDXGIAdapter_get_ordinal(wine_adapter);
+    IWineDXGIAdapter_Release(wine_adapter);
+
+    FIXME("Ignoring adapter type\n");
+    EnterCriticalSection(&dxgi_cs);
+    hr = IWineD3D_CreateDevice(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL,
+            0, &dxgi_device->wined3d_device, (IUnknown *)dxgi_device);
+    IWineD3D_Release(wined3d);
+    LeaveCriticalSection(&dxgi_cs);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create a WineD3D device, returning %#x\n", hr);
+        goto fail;
+    }
+
     layer_base = dxgi_device + 1;
 
     hr = d3d10_layer.create(d3d10_layer.id, &layer_base, 0,
@@ -224,13 +260,23 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     if (FAILED(hr))
     {
         WARN("Failed to create device, returning %#x\n", hr);
-        HeapFree(GetProcessHeap(), 0, dxgi_device);
-        *device = NULL;
-        return hr;
+        goto fail;
     }
 
     *device = (IUnknown *)dxgi_device;
 
+    return hr;
+
+fail:
+    if (dxgi_device->wined3d_device)
+    {
+        EnterCriticalSection(&dxgi_cs);
+        IWineD3DDevice_Release(dxgi_device->wined3d_device);
+        LeaveCriticalSection(&dxgi_cs);
+    }
+    if (dxgi_device->factory) IWineDXGIFactory_Release(dxgi_device->factory);
+    HeapFree(GetProcessHeap(), 0, dxgi_device);
+    *device = NULL;
     return hr;
 }
 

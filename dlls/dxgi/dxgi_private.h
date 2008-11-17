@@ -55,6 +55,8 @@ struct dxgi_device
     const struct IDXGIDeviceVtbl *vtbl;
     IUnknown *child_layer;
     LONG refcount;
+    IWineD3DDevice *wined3d_device;
+    IWineDXGIFactory *factory;
 };
 
 /* IDXGIAdapter */
