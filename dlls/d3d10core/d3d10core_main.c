@@ -112,6 +112,9 @@ HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
     HMODULE d3d10core;
     HRESULT hr;
 
+    TRACE("factory %p, adapter %p, flags %#x, unknown0 %#x, device %p\n",
+            factory, adapter, flags, unknown0, device);
+
     d3d10core = GetModuleHandleA("d3d10core.dll");
     hr = DXGID3D10CreateDevice(d3d10core, factory, adapter, flags, unknown0, (void **)&dxgi_device);
     if (FAILED(hr))
