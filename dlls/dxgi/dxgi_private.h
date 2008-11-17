@@ -58,11 +58,12 @@ struct dxgi_device
 };
 
 /* IDXGIAdapter */
-extern const struct IDXGIAdapterVtbl dxgi_adapter_vtbl;
+extern const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl;
 struct dxgi_adapter
 {
-    const struct IDXGIAdapterVtbl *vtbl;
+    const struct IWineDXGIAdapterVtbl *vtbl;
     LONG refcount;
+    UINT ordinal;
 };
 
 /* IDXGISwapChain */

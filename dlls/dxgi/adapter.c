@@ -26,13 +26,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IDXGIAdapter *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IWineDXGIAdapter *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
             || IsEqualGUID(riid, &IID_IDXGIObject)
-            || IsEqualGUID(riid, &IID_IDXGIAdapter))
+            || IsEqualGUID(riid, &IID_IDXGIAdapter)
+            || IsEqualGUID(riid, &IID_IWineDXGIAdapter))
     {
         IUnknown_AddRef(iface);
         *object = iface;
@@ -45,7 +46,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryInterface(IDXGIAdapter *iface
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_adapter_AddRef(IDXGIAdapter *iface)
+static ULONG STDMETHODCALLTYPE dxgi_adapter_AddRef(IWineDXGIAdapter *iface)
 {
     struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
     ULONG refcount = InterlockedIncrement(&This->refcount);
@@ -55,7 +56,7 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_AddRef(IDXGIAdapter *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IDXGIAdapter *iface)
+static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IWineDXGIAdapter *iface)
 {
     struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
     ULONG refcount = InterlockedDecrement(&This->refcount);
@@ -72,7 +73,7 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IDXGIAdapter *iface)
 
 /* IDXGIObject methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetPrivateData(IDXGIAdapter *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetPrivateData(IWineDXGIAdapter *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
@@ -80,7 +81,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetPrivateData(IDXGIAdapter *iface
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetPrivateDataInterface(IDXGIAdapter *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetPrivateDataInterface(IWineDXGIAdapter *iface,
         REFGUID guid, const IUnknown *object)
 {
     FIXME("iface %p, guid %s, object %p stub!\n", iface, debugstr_guid(guid), object);
@@ -88,7 +89,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetPrivateDataInterface(IDXGIAdapt
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetPrivateData(IDXGIAdapter *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetPrivateData(IWineDXGIAdapter *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
     FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
@@ -96,7 +97,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetPrivateData(IDXGIAdapter *iface
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IDXGIAdapter *iface, REFIID riid, void **parent)
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IWineDXGIAdapter *iface, REFIID riid, void **parent)
 {
     FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
 
@@ -105,21 +106,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IDXGIAdapter *iface, REF
 
 /* IDXGIAdapter methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IDXGIAdapter *iface, UINT output_idx, IDXGIOutput **output)
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *iface,
+        UINT output_idx, IDXGIOutput **output)
 {
     FIXME("iface %p, output_idx %u, output %p stub!\n", iface, output_idx, output);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IDXGIAdapter *iface, DXGI_ADAPTER_DESC *desc)
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IWineDXGIAdapter *iface, DXGI_ADAPTER_DESC *desc)
 {
     FIXME("iface %p, desc %p stub!\n", iface, desc);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IDXGIAdapter *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAdapter *iface,
         REFGUID guid, LARGE_INTEGER *umd_version)
 {
     FIXME("iface %p, guid %s, umd_version %p stub!\n", iface, debugstr_guid(guid), umd_version);
@@ -127,7 +129,18 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IDXGIAdapter
     return E_NOTIMPL;
 }
 
-const struct IDXGIAdapterVtbl dxgi_adapter_vtbl =
+/* IWineDXGIAdapter methods */
+
+static UINT STDMETHODCALLTYPE dxgi_adapter_get_ordinal(IWineDXGIAdapter *iface)
+{
+    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
+
+    TRACE("iface %p, returning %u\n", iface, This->ordinal);
+
+    return This->ordinal;
+}
+
+const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl =
 {
     /* IUnknown methods */
     dxgi_adapter_QueryInterface,
@@ -142,4 +155,6 @@ const struct IDXGIAdapterVtbl dxgi_adapter_vtbl =
     dxgi_adapter_EnumOutputs,
     dxgi_adapter_GetDesc,
     dxgi_adapter_CheckInterfaceSupport,
+    /* IWineDXGIAdapter methods */
+    dxgi_adapter_get_ordinal,
 };
