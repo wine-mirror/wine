@@ -757,7 +757,7 @@ static BOOL WINAPI WINTRUST_enumUsages(PCCRYPT_OID_INFO pInfo, void *pvArg)
         for (cUsages = 0, ptr = *usages; *ptr; ptr++, cUsages++)
             ;
         *usages = WINTRUST_ReAlloc((CRYPT_OID_INFO *)*usages,
-         (cUsages + 1) * sizeof(PCCRYPT_OID_INFO));
+         (cUsages + 2) * sizeof(PCCRYPT_OID_INFO));
     }
     if (*usages)
     {
