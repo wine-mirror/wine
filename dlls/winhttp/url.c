@@ -23,54 +23,165 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winhttp.h"
+#include "shlwapi.h"
 
 #include "winhttp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
-#define SCHEME_HTTP  3
-#define SCHEME_HTTPS 4
+static const WCHAR scheme_http[] = {'h','t','t','p',0};
+static const WCHAR scheme_https[] = {'h','t','t','p','s',0};
 
-BOOL WINAPI InternetCrackUrlW( LPCWSTR, DWORD, DWORD, LPURL_COMPONENTSW );
+static BOOL set_component( WCHAR **str, DWORD *str_len, WCHAR *value, DWORD len )
+{
+    if (!*str)
+    {
+        *str = value;
+        *str_len = len;
+    }
+    else
+    {
+        if (len > (*str_len) - 1)
+        {
+            *str_len = len + 1;
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+        memcpy( *str, value, len * sizeof(WCHAR) );
+        (*str)[len] = 0;
+        *str_len = len;
+    }
+    return TRUE;
+}
+
+static BOOL decode_url( LPCWSTR url, LPWSTR buffer, LPDWORD buflen )
+{
+    HRESULT hr = UrlCanonicalizeW( url, buffer, buflen, URL_WININET_COMPATIBILITY | URL_UNESCAPE );
+    if (hr == E_POINTER) set_last_error( ERROR_INSUFFICIENT_BUFFER );
+    if (hr == E_INVALIDARG) set_last_error( ERROR_INVALID_PARAMETER );
+    return (SUCCEEDED(hr)) ? TRUE : FALSE;
+}
 
 /***********************************************************************
  *          WinHttpCrackUrl (winhttp.@)
  */
-BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW components )
+BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW uc )
 {
-    BOOL ret;
-    INT upLen;
-    INT exLen;
+    BOOL ret = FALSE;
+    WCHAR *p, *q, *r;
+    WCHAR *url_decoded = NULL;
 
-    TRACE("%s, %d, %x, %p\n", debugstr_w(url), len, flags, components);
-    upLen = components->dwUrlPathLength;
-    exLen = components->dwExtraInfoLength;
+    TRACE("%s, %d, %x, %p\n", debugstr_w(url), len, flags, uc);
 
-    if ((ret = InternetCrackUrlW( url, len, flags, components )))
+    if (flags & ICU_ESCAPE) FIXME("flag ICU_ESCAPE not supported\n");
+
+    if (!url || !url[0] || !uc || uc->dwStructSize != sizeof(URL_COMPONENTS))
     {
-        /* fix up an incompatibility between wininet and winhttp */
-        if (components->nScheme == SCHEME_HTTP) components->nScheme = INTERNET_SCHEME_HTTP;
-        else if (components->nScheme == SCHEME_HTTPS) components->nScheme = INTERNET_SCHEME_HTTPS;
-        else
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!len) len = strlenW( url );
+
+    if (flags & ICU_DECODE)
+    {
+        WCHAR *url_tmp;
+        DWORD url_len = len + 1;
+
+        if (!uc->lpszScheme || !uc->lpszUserName || !uc->lpszPassword ||
+            !uc->lpszHostName || !uc->lpszUrlPath || !uc-> lpszExtraInfo)
         {
-            set_last_error( ERROR_WINHTTP_UNRECOGNIZED_SCHEME );
+            set_last_error( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
-        if (!len)
-            len = lstrlenW(url);
-        /* WinHttpCrackUrl actually returns pointers to the end of the string for components,
-           other than UserName and Password, that are missing */
-        if (upLen && components->lpszUrlPath == NULL)
-            components->lpszUrlPath = (LPWSTR)&url[len];
-        if (exLen && components->lpszExtraInfo == NULL)
-            components->lpszExtraInfo = (LPWSTR)&url[len];
+        if (!(url_tmp = HeapAlloc( GetProcessHeap(), 0, url_len * sizeof(WCHAR) )))
+        {
+            set_last_error( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
+        memcpy( url_tmp, url, len * sizeof(WCHAR) );
+        url_tmp[len] = 0;
+        if (!(url_decoded = HeapAlloc( GetProcessHeap(), 0, url_len * sizeof(WCHAR) )))
+        {
+            HeapFree( GetProcessHeap(), 0, url_tmp );
+            set_last_error( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
+        if (decode_url( url_tmp, url_decoded, &url_len ))
+        {
+            len = url_len;
+            url = url_decoded;
+        }
+        HeapFree( GetProcessHeap(), 0, url_tmp );
     }
+    if (!(p = strchrW( url, ':' ))) return FALSE;
+
+    if (p - url == 4 && !strncmpiW( url, scheme_http, 4 )) uc->nScheme = INTERNET_SCHEME_HTTP;
+    else if (p - url == 5 && !strncmpiW( url, scheme_https, 5 )) uc->nScheme = INTERNET_SCHEME_HTTPS;
+    else goto exit;
+
+    if (!(set_component( &uc->lpszScheme, &uc->dwSchemeLength, (WCHAR *)url, p - url ))) goto exit;
+
+    p++; /* skip ':' */
+    if (!p[0] || p[0] != '/' || p[1] != '/') goto exit;
+    p += 2;
+
+    if (!p[0]) goto exit;
+    if ((q = memchrW( p, '@', len - (p - url) )))
+    {
+        if ((r = memchrW( p, ':', q - p )))
+        {
+            if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, p, r - p ))) goto exit;
+            r++;
+            if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, r, q - r ))) goto exit;
+        }
+        else
+        {
+            if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, p, q - p ))) goto exit;
+            if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, NULL, 0 ))) goto exit;
+        }
+        p = q + 1;
+    }
+    else
+    {
+        if (!(set_component( &uc->lpszUserName, &uc->dwUserNameLength, NULL, 0 ))) goto exit;
+        if (!(set_component( &uc->lpszPassword, &uc->dwPasswordLength, NULL, 0 ))) goto exit;
+    }
+    if ((q = memchrW( p, '/', len - (p - url) )))
+    {
+        if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, q - p ))) goto exit;
+
+        if ((r = memchrW( q, '?', len - (q - url) )))
+        {
+            if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, r - q ))) goto exit;
+            if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, r, len - (r - url) ))) goto exit;
+        }
+        else
+        {
+            if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, q, len - (q - url) ))) goto exit;
+            if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, (WCHAR *)url + len, 0 ))) goto exit;
+        }
+    }
+    else
+    {
+        if (!(set_component( &uc->lpszHostName, &uc->dwHostNameLength, p, len - (p - url) ))) goto exit;
+        if (!(set_component( &uc->lpszUrlPath, &uc->dwUrlPathLength, (WCHAR *)url + len, 0 ))) goto exit;
+        if (!(set_component( &uc->lpszExtraInfo, &uc->dwExtraInfoLength, (WCHAR *)url + len, 0 ))) goto exit;
+    }
+
+    ret = TRUE;
+
+    TRACE("scheme(%s) host(%s) path(%s) extra(%s)\n",
+          debugstr_wn( uc->lpszScheme, uc->dwSchemeLength ),
+          debugstr_wn( uc->lpszHostName, uc->dwHostNameLength ),
+          debugstr_wn( uc->lpszUrlPath, uc->dwUrlPathLength ),
+          debugstr_wn( uc->lpszExtraInfo, uc->dwExtraInfoLength ));
+
+exit:
+    HeapFree( GetProcessHeap(), 0, url_decoded );
     return ret;
 }
-
-static const WCHAR scheme_http[] = {'h','t','t','p',0};
-static const WCHAR scheme_https[] = {'h','t','t','p','s',0};
 
 static INTERNET_SCHEME get_scheme( const WCHAR *scheme, DWORD len )
 {
