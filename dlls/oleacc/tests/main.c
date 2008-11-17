@@ -104,7 +104,7 @@ static void test_getroletext(void)
         CHAR buff2[100];
         WCHAR buff2W[100];
 
-        /* NT4 and W2K don't clear the buffer on a non existing role in the A-call */
+        /* NT4 and W2K don't clear the buffer on a nonexistent role in the A-call */
         memset(buff2, 0, sizeof(buff2));
 
         ret = GetRoleTextA(role, NULL, 0);
@@ -118,7 +118,7 @@ static void test_getroletext(void)
         ok(ret == lstrlenA(buff2),
            "GetRoleTextA: returned length doesn't match returned buffer for role %d\n", role);
 
-        /* Win98 and WinMe don't clear the buffer on a non existing role in the W-call */
+        /* Win98 and WinMe don't clear the buffer on a nonexistent role in the W-call */
         memset(buff2W, 0, sizeof(buff2W));
 
         ret = GetRoleTextW(role, NULL, 0);

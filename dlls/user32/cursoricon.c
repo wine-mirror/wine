@@ -1005,7 +1005,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
      * cursors and then update user32 and winex11.drv to load all frames.
      *
      * Hopefully this will at least make some games (C&C3, etc.) more playable
-     * in the mean time.
+     * in the meantime.
      */
     FIXME("Loading all frames for .ani cursors not implemented.\n");
     icon_data = fram_chunk.data + (2 * sizeof(DWORD));

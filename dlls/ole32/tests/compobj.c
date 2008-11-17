@@ -199,12 +199,12 @@ static void test_StringFromGUID2(void)
   /* Test corner cases for buffer size */
   len = StringFromGUID2(&CLSID_StdFont,str,50);
   ok(len == 39, "len: %d (expected 39)\n", len);
-  ok(!lstrcmpiW(str, wszCLSID_StdFont),"string wan't equal for CLSID_StdFont\n");
+  ok(!lstrcmpiW(str, wszCLSID_StdFont),"string wasn't equal for CLSID_StdFont\n");
 
   memset(str,0,sizeof str);
   len = StringFromGUID2(&CLSID_StdFont,str,39);
   ok(len == 39, "len: %d (expected 39)\n", len);
-  ok(!lstrcmpiW(str, wszCLSID_StdFont),"string wan't equal for CLSID_StdFont\n");
+  ok(!lstrcmpiW(str, wszCLSID_StdFont),"string wasn't equal for CLSID_StdFont\n");
 
   len = StringFromGUID2(&CLSID_StdFont,str,38);
   ok(len == 0, "len: %d (expected 0)\n", len);

@@ -368,7 +368,7 @@ static void test_res_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == 1, "size=%u, ezpected 1\n", size);
+        ok(size == 1, "size=%u, expected 1\n", size);
 
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_DOMAIN, 0, buf,
@@ -664,7 +664,7 @@ static void test_about_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == 1, "size=%u, ezpected 1\n", size);
+        ok(size == 1, "size=%u, expected 1\n", size);
 
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_DOMAIN, 0, buf,

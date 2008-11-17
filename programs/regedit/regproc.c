@@ -67,7 +67,7 @@ if (!(p)) \
 }
 
 /******************************************************************************
- * Allocates memory and convers input from multibyte to wide chars
+ * Allocates memory and converts input from multibyte to wide chars
  * Returned string must be freed by the caller
  */
 WCHAR* GetWideString(const char* strA)
@@ -86,7 +86,7 @@ WCHAR* GetWideString(const char* strA)
 }
 
 /******************************************************************************
- * Allocates memory and convers input from multibyte to wide chars
+ * Allocates memory and converts input from multibyte to wide chars
  * Returned string must be freed by the caller
  */
 WCHAR* GetWideStringN(const char* strA, int chars, DWORD *len)
@@ -106,7 +106,7 @@ WCHAR* GetWideStringN(const char* strA, int chars, DWORD *len)
 }
 
 /******************************************************************************
- * Allocates memory and convers input from wide chars to multibyte
+ * Allocates memory and converts input from wide chars to multibyte
  * Returned string must be freed by the caller
  */
 char* GetMultiByteString(const WCHAR* strW)
@@ -125,7 +125,7 @@ char* GetMultiByteString(const WCHAR* strW)
 }
 
 /******************************************************************************
- * Allocates memory and convers input from wide chars to multibyte
+ * Allocates memory and converts input from wide chars to multibyte
  * Returned string must be freed by the caller
  */
 char* GetMultiByteStringN(const WCHAR* strW, int chars, DWORD* len)

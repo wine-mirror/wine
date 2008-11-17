@@ -164,7 +164,7 @@
 #define ACS_AUTOPLAY        0x0004
 #define ACS_TIMER           0x0008
 
-/* Month Calender Control */
+/* Month Calendar Control */
 #define MCS_DAYSTATE        0x0001
 #define MCS_MULTISELECT     0x0002
 #define MCS_WEEKNUMBERS     0x0004

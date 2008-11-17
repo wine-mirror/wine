@@ -3746,27 +3746,27 @@ static void test_QueryInterface(IUnknown *unk)
     qi = (void*)0xdeadbeef;
     hres = IUnknown_QueryInterface(unk, &IID_IRunnableObject, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(qi == NULL, "qirunnable=%p, ezpected NULL\n", qi);
+    ok(qi == NULL, "qirunnable=%p, expected NULL\n", qi);
 
     qi = (void*)0xdeadbeef;
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(qi == NULL, "qi=%p, ezpected NULL\n", qi);
+    ok(qi == NULL, "qi=%p, expected NULL\n", qi);
 
     qi = (void*)0xdeadbeef;
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMNode2, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(qi == NULL, "qi=%p, ezpected NULL\n", qi);
+    ok(qi == NULL, "qi=%p, expected NULL\n", qi);
 
     qi = (void*)0xdeadbeef;
     hres = IUnknown_QueryInterface(unk, &IID_IPersistPropertyBag, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(qi == NULL, "qi=%p, ezpected NULL\n", qi);
+    ok(qi == NULL, "qi=%p, expected NULL\n", qi);
 
     qi = (void*)0xdeadbeef;
     hres = IUnknown_QueryInterface(unk, &IID_UndocumentedScriptIface, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
-    ok(qi == NULL, "qi=%p, ezpected NULL\n", qi);
+    ok(qi == NULL, "qi=%p, expected NULL\n", qi);
 }
 
 static void init_test(enum load_state_t ls) {
