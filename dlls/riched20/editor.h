@@ -280,7 +280,6 @@ void ME_RTFParAttrHook(struct _RTF_Info *info);
 void ME_RTFTblAttrHook(struct _RTF_Info *info);
 void ME_RTFSpecialCharHook(struct _RTF_Info *info);
 void ME_StreamInFill(ME_InStream *stream);
-int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar);
 extern int me_debug;
 extern void DoWrap(ME_TextEditor *editor);
 extern BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_max,
