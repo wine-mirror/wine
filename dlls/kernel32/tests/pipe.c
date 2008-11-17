@@ -955,10 +955,7 @@ static void test_ImpersonateNamedPipeClient(HANDLE hClientToken, DWORD security_
     SetLastError(0xdeadbeef);
     ret = ImpersonateNamedPipeClient(hPipeServer);
     error = GetLastError();
-    todo_wine
-    ok(!ret &&
-       (error == ERROR_CANNOT_IMPERSONATE ||
-        error == 0xdeadbeef), /* win2k3 */
+    ok(ret /* win2k3 */ || (error == ERROR_CANNOT_IMPERSONATE),
        "ImpersonateNamedPipeClient should have failed with ERROR_CANNOT_IMPERSONATE instead of %d\n", GetLastError());
 
     ret = ConnectNamedPipe(hPipeServer, NULL);
