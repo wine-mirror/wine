@@ -137,22 +137,22 @@ static void test_Matrix_AffineTransformation2D(void)
 
     scale = 20.0f;
 
-    exp_mat.m[0][0] = 10.0f;
-    exp_mat.m[1][0] = -17.320507f;
-    exp_mat.m[2][0] = 0.0f;
-    exp_mat.m[3][0] = -1.035898f;
-    exp_mat.m[0][1] = 17.320507f;
-    exp_mat.m[1][1] = 10.0f;
-    exp_mat.m[2][1] = 0.0f;
-    exp_mat.m[3][1] = 6.401924f;
-    exp_mat.m[0][2] = 0.0f;
-    exp_mat.m[1][2] = 0.0f;
-    exp_mat.m[2][2] = 20.0f;
-    exp_mat.m[3][2] = 0.0f;
-    exp_mat.m[0][3] = 0.0f;
-    exp_mat.m[1][3] = 0.0f;
-    exp_mat.m[2][3] = 0.0f;
-    exp_mat.m[3][3] = 1.0f;
+    U(exp_mat).m[0][0] = 10.0f;
+    U(exp_mat).m[1][0] = -17.320507f;
+    U(exp_mat).m[2][0] = 0.0f;
+    U(exp_mat).m[3][0] = -1.035898f;
+    U(exp_mat).m[0][1] = 17.320507f;
+    U(exp_mat).m[1][1] = 10.0f;
+    U(exp_mat).m[2][1] = 0.0f;
+    U(exp_mat).m[3][1] = 6.401924f;
+    U(exp_mat).m[0][2] = 0.0f;
+    U(exp_mat).m[1][2] = 0.0f;
+    U(exp_mat).m[2][2] = 20.0f;
+    U(exp_mat).m[3][2] = 0.0f;
+    U(exp_mat).m[0][3] = 0.0f;
+    U(exp_mat).m[1][3] = 0.0f;
+    U(exp_mat).m[2][3] = 0.0f;
+    U(exp_mat).m[3][3] = 1.0f;
 
     D3DXMatrixAffineTransformation2D(&got_mat, scale, &center, angle, &position);
 
@@ -167,22 +167,22 @@ static void test_Matrix_AffineTransformation2D(void)
 
     scale = 20.0f;
 
-    exp_mat.m[0][0] = 10.0f;
-    exp_mat.m[1][0] = -17.320507f;
-    exp_mat.m[2][0] = 0.0f;
-    exp_mat.m[3][0] = 4.964102f;
-    exp_mat.m[0][1] = 17.320507f;
-    exp_mat.m[1][1] = 10.0f;
-    exp_mat.m[2][1] = 0.0f;
-    exp_mat.m[3][1] = -0.598076f;
-    exp_mat.m[0][2] = 0.0f;
-    exp_mat.m[1][2] = 0.0f;
-    exp_mat.m[2][2] = 20.0f;
-    exp_mat.m[3][2] = 0.0f;
-    exp_mat.m[0][3] = 0.0f;
-    exp_mat.m[1][3] = 0.0f;
-    exp_mat.m[2][3] = 0.0f;
-    exp_mat.m[3][3] = 1.0f;
+    U(exp_mat).m[0][0] = 10.0f;
+    U(exp_mat).m[1][0] = -17.320507f;
+    U(exp_mat).m[2][0] = 0.0f;
+    U(exp_mat).m[3][0] = 4.964102f;
+    U(exp_mat).m[0][1] = 17.320507f;
+    U(exp_mat).m[1][1] = 10.0f;
+    U(exp_mat).m[2][1] = 0.0f;
+    U(exp_mat).m[3][1] = -0.598076f;
+    U(exp_mat).m[0][2] = 0.0f;
+    U(exp_mat).m[1][2] = 0.0f;
+    U(exp_mat).m[2][2] = 20.0f;
+    U(exp_mat).m[3][2] = 0.0f;
+    U(exp_mat).m[0][3] = 0.0f;
+    U(exp_mat).m[1][3] = 0.0f;
+    U(exp_mat).m[2][3] = 0.0f;
+    U(exp_mat).m[3][3] = 1.0f;
 
     D3DXMatrixAffineTransformation2D(&got_mat, scale, &center, angle, NULL);
 
@@ -197,22 +197,22 @@ static void test_Matrix_AffineTransformation2D(void)
 
     scale = 20.0f;
 
-    exp_mat.m[0][0] = 10.0f;
-    exp_mat.m[1][0] = -17.320507f;
-    exp_mat.m[2][0] = 0.0f;
-    exp_mat.m[3][0] = -6.0f;
-    exp_mat.m[0][1] = 17.320507f;
-    exp_mat.m[1][1] = 10.0f;
-    exp_mat.m[2][1] = 0.0f;
-    exp_mat.m[3][1] = 7.0f;
-    exp_mat.m[0][2] = 0.0f;
-    exp_mat.m[1][2] = 0.0f;
-    exp_mat.m[2][2] = 20.0f;
-    exp_mat.m[3][2] = 0.0f;
-    exp_mat.m[0][3] = 0.0f;
-    exp_mat.m[1][3] = 0.0f;
-    exp_mat.m[2][3] = 0.0f;
-    exp_mat.m[3][3] = 1.0f;
+    U(exp_mat).m[0][0] = 10.0f;
+    U(exp_mat).m[1][0] = -17.320507f;
+    U(exp_mat).m[2][0] = 0.0f;
+    U(exp_mat).m[3][0] = -6.0f;
+    U(exp_mat).m[0][1] = 17.320507f;
+    U(exp_mat).m[1][1] = 10.0f;
+    U(exp_mat).m[2][1] = 0.0f;
+    U(exp_mat).m[3][1] = 7.0f;
+    U(exp_mat).m[0][2] = 0.0f;
+    U(exp_mat).m[1][2] = 0.0f;
+    U(exp_mat).m[2][2] = 20.0f;
+    U(exp_mat).m[3][2] = 0.0f;
+    U(exp_mat).m[0][3] = 0.0f;
+    U(exp_mat).m[1][3] = 0.0f;
+    U(exp_mat).m[2][3] = 0.0f;
+    U(exp_mat).m[3][3] = 1.0f;
 
     D3DXMatrixAffineTransformation2D(&got_mat, scale, NULL, angle, &position);
 
@@ -224,22 +224,22 @@ static void test_Matrix_AffineTransformation2D(void)
 
     scale = -20.0f;
 
-    exp_mat.m[0][0] = 14.142133f;
-    exp_mat.m[1][0] = -14.142133f;
-    exp_mat.m[2][0] = 0.0f;
-    exp_mat.m[3][0] = 0.0f;
-    exp_mat.m[0][1] = 14.142133;
-    exp_mat.m[1][1] = 14.142133f;
-    exp_mat.m[2][1] = 0.0f;
-    exp_mat.m[3][1] = 0.0f;
-    exp_mat.m[0][2] = 0.0f;
-    exp_mat.m[1][2] = 0.0f;
-    exp_mat.m[2][2] = -20.0f;
-    exp_mat.m[3][2] = 0.0f;
-    exp_mat.m[0][3] = 0.0f;
-    exp_mat.m[1][3] = 0.0f;
-    exp_mat.m[2][3] = 0.0f;
-    exp_mat.m[3][3] = 1.0f;
+    U(exp_mat).m[0][0] = 14.142133f;
+    U(exp_mat).m[1][0] = -14.142133f;
+    U(exp_mat).m[2][0] = 0.0f;
+    U(exp_mat).m[3][0] = 0.0f;
+    U(exp_mat).m[0][1] = 14.142133;
+    U(exp_mat).m[1][1] = 14.142133f;
+    U(exp_mat).m[2][1] = 0.0f;
+    U(exp_mat).m[3][1] = 0.0f;
+    U(exp_mat).m[0][2] = 0.0f;
+    U(exp_mat).m[1][2] = 0.0f;
+    U(exp_mat).m[2][2] = -20.0f;
+    U(exp_mat).m[3][2] = 0.0f;
+    U(exp_mat).m[0][3] = 0.0f;
+    U(exp_mat).m[1][3] = 0.0f;
+    U(exp_mat).m[2][3] = 0.0f;
+    U(exp_mat).m[3][3] = 1.0f;
 
     D3DXMatrixAffineTransformation2D(&got_mat, scale, NULL, angle, NULL);
 
@@ -607,22 +607,22 @@ static void test_Matrix_Transformation2D(void)
 
     sca_rot = 5.0f*D3DX_PI/4.0f;
 
-    exp_mat.m[0][0] = -4.245192f;
-    exp_mat.m[1][0] = -0.147116f;
-    exp_mat.m[2][0] = 0.0f;
-    exp_mat.m[3][0] = 45.265373f;
-    exp_mat.m[0][1] = 7.647113f;
-    exp_mat.m[1][1] = 8.745192f;
-    exp_mat.m[2][1] = 0.0f;
-    exp_mat.m[3][1] = -13.401899f;
-    exp_mat.m[0][2] = 0.0f;
-    exp_mat.m[1][2] = 0.0f;
-    exp_mat.m[2][2] = 0.0f;
-    exp_mat.m[3][2] = 0.0f;
-    exp_mat.m[0][3] = 0.0f;
-    exp_mat.m[1][3] = 0.0f;
-    exp_mat.m[2][3] = 0.0f;
-    exp_mat.m[3][3] = 1.0f;
+    U(exp_mat).m[0][0] = -4.245192f;
+    U(exp_mat).m[1][0] = -0.147116f;
+    U(exp_mat).m[2][0] = 0.0f;
+    U(exp_mat).m[3][0] = 45.265373f;
+    U(exp_mat).m[0][1] = 7.647113f;
+    U(exp_mat).m[1][1] = 8.745192f;
+    U(exp_mat).m[2][1] = 0.0f;
+    U(exp_mat).m[3][1] = -13.401899f;
+    U(exp_mat).m[0][2] = 0.0f;
+    U(exp_mat).m[1][2] = 0.0f;
+    U(exp_mat).m[2][2] = 0.0f;
+    U(exp_mat).m[3][2] = 0.0f;
+    U(exp_mat).m[0][3] = 0.0f;
+    U(exp_mat).m[1][3] = 0.0f;
+    U(exp_mat).m[2][3] = 0.0f;
+    U(exp_mat).m[3][3] = 1.0f;
 
     D3DXMatrixTransformation2D(&got_mat, &sca_center, sca_rot, &sca, &rot_center, rot, &trans);
 
@@ -640,22 +640,22 @@ static void test_Matrix_Transformation2D(void)
 
     sca_rot = 5.0f*D3DX_PI/4.0f;
 
-    exp_mat.m[0][0] = 0.0f;
-    exp_mat.m[1][0] = 0.0f;
-    exp_mat.m[2][0] = 0.0f;
-    exp_mat.m[3][0] = 2.830127f;
-    exp_mat.m[0][1] = 0.0f;
-    exp_mat.m[1][1] = 0.0f;
-    exp_mat.m[2][1] = 0.0f;
-    exp_mat.m[3][1] = 12.294229f;
-    exp_mat.m[0][2] = 0.0f;
-    exp_mat.m[1][2] = 0.0f;
-    exp_mat.m[2][2] = 0.0f;
-    exp_mat.m[3][2] = 0.0f;
-    exp_mat.m[0][3] = 0.0f;
-    exp_mat.m[1][3] = 0.0f;
-    exp_mat.m[2][3] = 0.0f;
-    exp_mat.m[3][3] = 1.0f;
+    U(exp_mat).m[0][0] = 0.0f;
+    U(exp_mat).m[1][0] = 0.0f;
+    U(exp_mat).m[2][0] = 0.0f;
+    U(exp_mat).m[3][0] = 2.830127f;
+    U(exp_mat).m[0][1] = 0.0f;
+    U(exp_mat).m[1][1] = 0.0f;
+    U(exp_mat).m[2][1] = 0.0f;
+    U(exp_mat).m[3][1] = 12.294229f;
+    U(exp_mat).m[0][2] = 0.0f;
+    U(exp_mat).m[1][2] = 0.0f;
+    U(exp_mat).m[2][2] = 0.0f;
+    U(exp_mat).m[3][2] = 0.0f;
+    U(exp_mat).m[0][3] = 0.0f;
+    U(exp_mat).m[1][3] = 0.0f;
+    U(exp_mat).m[2][3] = 0.0f;
+    U(exp_mat).m[3][3] = 1.0f;
 
     D3DXMatrixTransformation2D(&got_mat, &sca_center, sca_rot, NULL, NULL, rot, &trans);
 
