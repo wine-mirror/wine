@@ -755,63 +755,6 @@ done:
 
 
 /***********************************************************************
- *           unaligned_mmap
- *
- * Linux kernels before 2.4.x can support non page-aligned offsets, as
- * long as the offset is aligned to the filesystem block size. This is
- * a big performance gain so we want to take advantage of it.
- *
- * However, when we use 64-bit file support this doesn't work because
- * glibc rejects unaligned offsets. Also glibc 2.1.3 mmap64 is broken
- * in that it rounds unaligned offsets down to a page boundary. For
- * these reasons we do a direct system call here.
- */
-static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
-                             unsigned int flags, int fd, off_t offset )
-{
-#if defined(linux) && defined(__i386__) && defined(__GNUC__)
-    if (!(offset >> 32) && (offset & page_mask))
-    {
-        int ret;
-
-        struct
-        {
-            void        *addr;
-            unsigned int length;
-            unsigned int prot;
-            unsigned int flags;
-            unsigned int fd;
-            unsigned int offset;
-        } args;
-
-        args.addr   = addr;
-        args.length = length;
-        args.prot   = prot;
-        args.flags  = flags;
-        args.fd     = fd;
-        args.offset = offset;
-
-        __asm__ __volatile__("push %%ebx\n\t"
-                             "movl %2,%%ebx\n\t"
-                             "int $0x80\n\t"
-                             "popl %%ebx"
-                             : "=a" (ret)
-                             : "0" (90), /* SYS_mmap */
-                               "q" (&args)
-                             : "memory" );
-        if (ret < 0 && ret > -4096)
-        {
-            errno = -ret;
-            ret = -1;
-        }
-        return (void *)ret;
-    }
-#endif
-    return mmap( addr, length, prot, flags, fd, offset );
-}
-
-
-/***********************************************************************
  *           map_file_into_view
  *
  * Wrapper for mmap() to map a file into a view, falling back to read if mmap fails.
@@ -832,7 +775,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
     {
         int flags = MAP_FIXED | (shared_write ? MAP_SHARED : MAP_PRIVATE);
 
-        if (unaligned_mmap( (char *)view->base + start, size, prot, flags, fd, offset ) != (void *)-1)
+        if (mmap( (char *)view->base + start, size, prot, flags, fd, offset ) != (void *)-1)
             goto done;
 
         /* mmap() failed; if this is because the file offset is not    */
