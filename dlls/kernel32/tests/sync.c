@@ -658,8 +658,7 @@ static void test_timer_queue(void)
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, NULL);
-    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING,
+    ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
        "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
        GetLastError());
 
@@ -771,8 +770,7 @@ static void test_timer_queue(void)
        even if the timer is finished.  */
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueTimer(q, t1, NULL);
-    ok(!ret, "DeleteTimerQueueTimer call was expected to fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING,
+    ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
        "DeleteTimerQueueTimer, GetLastError: expected ERROR_IO_PENDING, got %d\n",
        GetLastError());
 
@@ -803,8 +801,7 @@ static void test_timer_queue(void)
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, e);
-    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING,
+    ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
        "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
        GetLastError());
     ok(WaitForSingleObject(e, 250) == WAIT_OBJECT_0,
@@ -854,7 +851,7 @@ static void test_timer_queue(void)
     ok(ret, "CreateTimerQueueTimer\n");
     ok(t4 != NULL, "CreateTimerQueueTimer\n");
 
-    Sleep(200);
+    Sleep(500);
 
     ret = pDeleteTimerQueueEx(q, INVALID_HANDLE_VALUE);
     ok(ret, "DeleteTimerQueueEx\n");
@@ -881,8 +878,7 @@ static void test_timer_queue(void)
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, NULL);
-    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING,
+    ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
        "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
        GetLastError());
     ok(d1.num_calls == 1, "DeleteTimerQueueTimer\n");
@@ -941,8 +937,7 @@ static void test_timer_queue(void)
 
     SetLastError(0xdeadbeef);
     ret = pDeleteTimerQueueEx(q, NULL);
-    ok(!ret, "DeleteTimerQueueEx call was expected to fail\n");
-    ok(GetLastError() == ERROR_IO_PENDING,
+    ok(ret /* vista */ || GetLastError() == ERROR_IO_PENDING,
        "DeleteTimerQueueEx, GetLastError: expected ERROR_IO_PENDING, got %d\n",
        GetLastError());
 }
