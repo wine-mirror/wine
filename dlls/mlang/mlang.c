@@ -2772,8 +2772,42 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringInIStream(
     IStream* pstmIn,
     IStream* pstmOut)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    char *src, *dst = NULL;
+    INT srclen, dstlen;
+    STATSTG stat;
+    HRESULT hr;
+
+    TRACE("%p %0x8 %s %u %u %p %p\n",
+          pdwMode, dwFlag, debugstr_w(lpFallBack), dwSrcEncoding, dwDstEncoding, pstmIn, pstmOut);
+
+    FIXME("dwFlag and lpFallBack not handled\n");
+
+    hr = IStream_Stat(pstmIn, &stat, STATFLAG_NONAME);
+    if (FAILED(hr)) return hr;
+
+    if (stat.cbSize.QuadPart > MAXLONG) return E_INVALIDARG;
+    if (!(src = HeapAlloc(GetProcessHeap(), 0, stat.cbSize.QuadPart))) return E_OUTOFMEMORY;
+
+    hr = IStream_Read(pstmIn, src, stat.cbSize.QuadPart, (ULONG *)&srclen);
+    if (FAILED(hr)) goto exit;
+
+    hr = ConvertINetString(pdwMode, dwSrcEncoding, dwDstEncoding, src, &srclen, NULL, &dstlen);
+    if (FAILED(hr)) goto exit;
+
+    if (!(dst = HeapAlloc(GetProcessHeap(), 0, dstlen)))
+    {
+        hr = E_OUTOFMEMORY;
+        goto exit;
+    }
+    hr = ConvertINetString(pdwMode, dwSrcEncoding, dwDstEncoding, src, &srclen, dst, &dstlen);
+    if (FAILED(hr)) goto exit;
+
+    hr = IStream_Write(pstmOut, dst, dstlen, NULL);
+
+exit:
+    HeapFree(GetProcessHeap(), 0, src);
+    HeapFree(GetProcessHeap(), 0, dst);
+    return hr;
 }
 
 /*
