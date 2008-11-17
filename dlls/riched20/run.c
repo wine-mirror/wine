@@ -872,8 +872,6 @@ static void ME_GetRunCharFormat(ME_TextEditor *editor, ME_DisplayItem *run, CHAR
  */     
 void ME_GetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
 {
-  int nFrom, nTo;
-  ME_GetSelection(editor, &nFrom, &nTo);
   ME_CopyCharFormat(pFmt, &editor->pBuffer->pDefaultStyle->fmt);
 }
 
