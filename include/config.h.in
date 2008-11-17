@@ -333,9 +333,6 @@
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
 
-/* Define if you have the libxslt library */
-#undef HAVE_LIBXSLT
-
 /* Define to 1 if you have the <libxslt/pattern.h> header file. */
 #undef HAVE_LIBXSLT_PATTERN_H
 
@@ -1002,9 +999,6 @@
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
 
-/* Define to 1 if you have the `xsltInit' function. */
-#undef HAVE_XSLTINIT
-
 /* Define to 1 if you have the `_pclose' function. */
 #undef HAVE__PCLOSE
 
@@ -1127,6 +1121,9 @@
 
 /* Define to the soname of the libXrender library. */
 #undef SONAME_LIBXRENDER
+
+/* Define to the soname of the libxslt library. */
+#undef SONAME_LIBXSLT
 
 /* Define to the soname of the libXxf86vm library. */
 #undef SONAME_LIBXXF86VM

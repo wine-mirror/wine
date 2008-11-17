@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #define COBJMACROS
 
@@ -32,12 +33,9 @@
 #include "msxml2.h"
 
 #include "wine/debug.h"
+#include "wine/library.h"
 
 #include "msxml_private.h"
-
-#ifdef HAVE_LIBXSLT
-#include <libxslt/xslt.h>
-#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -46,6 +44,44 @@ HRESULT WINAPI DllCanUnloadNow(void)
     FIXME("\n");
     return S_FALSE;
 }
+
+
+void* libxslt_handle = NULL;
+#ifdef SONAME_LIBXSLT
+# define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
+DECL_FUNCPTR(xsltInit);
+DECL_FUNCPTR(xsltApplyStylesheet);
+DECL_FUNCPTR(xsltCleanupGlobals);
+DECL_FUNCPTR(xsltFreeStylesheet);
+DECL_FUNCPTR(xsltParseStylesheetDoc);
+# undef MAKE_FUNCPTR
+#endif
+
+static void init_libxslt(void)
+{
+#ifdef SONAME_LIBXSLT
+    libxslt_handle = wine_dlopen(SONAME_LIBXSLT, RTLD_NOW, NULL, 0);
+    if (!libxslt_handle)
+        return;
+
+#define LOAD_FUNCPTR(f, needed) if ((p##f = wine_dlsym(libxslt_handle, #f, NULL, 0)) == NULL && needed) { WARN("Can't find symbol %s\n", #f); goto sym_not_found; }
+    LOAD_FUNCPTR(xsltInit, 0);
+    LOAD_FUNCPTR(xsltApplyStylesheet, 1);
+    LOAD_FUNCPTR(xsltCleanupGlobals, 1);
+    LOAD_FUNCPTR(xsltFreeStylesheet, 1);
+    LOAD_FUNCPTR(xsltParseStylesheetDoc, 1);
+#undef LOAD_FUNCPTR
+
+    if (pxsltInit)
+        pxsltInit();
+    return;
+
+ sym_not_found:
+    wine_dlclose(libxslt_handle, NULL, 0);
+    libxslt_handle = NULL;
+#endif
+}
+
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
@@ -60,14 +96,17 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         xmlTreeIndentString = "\t";
         xmlThrDefTreeIndentString("\t");
 #endif
-#ifdef HAVE_XSLTINIT
-        xsltInit();
-#endif
+        init_libxslt();
         DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
-#ifdef HAVE_LIBXSLT
-        xsltCleanupGlobals();
+#ifdef SONAME_LIBXSLT
+        if (libxslt_handle)
+        {
+            pxsltCleanupGlobals();
+            wine_dlclose(libxslt_handle, NULL, 0);
+            libxslt_handle = NULL;
+        }
 #endif
 #ifdef HAVE_LIBXML2
         xmlCleanupParser();

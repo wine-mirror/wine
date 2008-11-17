@@ -33,17 +33,6 @@
 
 #include "msxml_private.h"
 
-#ifdef HAVE_LIBXSLT
-# ifdef HAVE_LIBXSLT_PATTERN_H
-#  include <libxslt/pattern.h>
-# endif
-# ifdef HAVE_LIBXSLT_TRANSFORM_H
-#  include <libxslt/transform.h>
-# endif
-# include <libxslt/xsltutils.h>
-# include <libxslt/xsltInternals.h>
-#endif
-
 #ifdef HAVE_LIBXML2
 # include <libxml/HTMLtree.h>
 #endif
@@ -1278,7 +1267,7 @@ static HRESULT WINAPI xmlnode_transformNode(
     IXMLDOMNode* styleSheet,
     BSTR* xmlString)
 {
-#ifdef HAVE_LIBXSLT
+#ifdef SONAME_LIBXSLT
     xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlnode *pStyleSheet = NULL;
     xsltStylesheetPtr xsltSS = NULL;
@@ -1287,6 +1276,8 @@ static HRESULT WINAPI xmlnode_transformNode(
 
     TRACE("%p %p %p\n", This, styleSheet, xmlString);
 
+    if (!libxslt_handle)
+        return E_NOTIMPL;
     if(!styleSheet || !xmlString)
         return E_INVALIDARG;
 
@@ -1296,10 +1287,10 @@ static HRESULT WINAPI xmlnode_transformNode(
     {
         pStyleSheet = impl_from_IXMLDOMNode( ssNew );
 
-        xsltSS = xsltParseStylesheetDoc( pStyleSheet->node->doc);
+        xsltSS = pxsltParseStylesheetDoc( pStyleSheet->node->doc);
         if(xsltSS)
         {
-            result = xsltApplyStylesheet(xsltSS, This->node->doc, NULL);
+            result = pxsltApplyStylesheet(xsltSS, This->node->doc, NULL);
             if(result)
             {
                 const xmlChar *pContent;
@@ -1337,7 +1328,7 @@ static HRESULT WINAPI xmlnode_transformNode(
             /* libxslt "helpfully" frees the XML document the stylesheet was
                generated from, too */
             xsltSS->doc = NULL;
-            xsltFreeStylesheet(xsltSS);
+            pxsltFreeStylesheet(xsltSS);
         }
 
         IXMLDOMNode_Release(ssNew);

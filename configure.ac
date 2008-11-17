@@ -833,7 +833,6 @@ dnl **** Check for libxml2 ****
 
 AC_SUBST(XML2LIBS,"")
 AC_SUBST(XML2INCL,"")
-AC_SUBST(XSLTLIBS,"")
 AC_SUBST(XSLTINCL,"")
 if test "x$with_xml" != "xno"
 then
@@ -881,17 +880,11 @@ then
     CPPFLAGS="$ac_save_CPPFLAGS"
     if test "$ac_cv_header_libxslt_transform_h" = "yes"
     then
-        AC_CHECK_LIB(xslt, xsltCompilePattern,
-            [AC_DEFINE(HAVE_LIBXSLT, 1, [Define if you have the libxslt library])
-             XSLTLIBS="$ac_xslt_libs"
-             XSLTINCL="$ac_xslt_cflags"
-             ac_save_LIBS="$LIBS"
-             LIBS="$LIBS $ac_xslt_libs"
-             AC_CHECK_FUNCS(xsltInit)
-             LIBS="$ac_save_LIBS"],,$ac_xslt_libs)
+        WINE_CHECK_SONAME(xslt,xsltCompilePattern,
+                         [XSLTINCL="$ac_xslt_cflags"],,[$ac_xslt_libs])
     fi
 fi
-WINE_WARNING_WITH(xslt,[test "$ac_cv_lib_xslt_xsltCompilePattern" != "yes"],
+WINE_WARNING_WITH(xslt,[test "x$ac_cv_lib_soname_xslt" = "x"],
                  [libxslt ${notice_platform}development files not found, xslt won't be supported.])
 
 dnl **** Check for libhal ****

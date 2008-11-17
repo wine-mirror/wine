@@ -92,6 +92,27 @@ extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2
 
 #endif
 
+void* libxslt_handle;
+#ifdef SONAME_LIBXSLT
+# ifdef HAVE_LIBXSLT_PATTERN_H
+#  include <libxslt/pattern.h>
+# endif
+# ifdef HAVE_LIBXSLT_TRANSFORM_H
+#  include <libxslt/transform.h>
+# endif
+# include <libxslt/xsltutils.h>
+# include <libxslt/xsltInternals.h>
+# include <libxslt/xslt.h>
+
+# define MAKE_FUNCPTR(f) extern typeof(f) * p##f
+MAKE_FUNCPTR(xsltInit);
+MAKE_FUNCPTR(xsltApplyStylesheet);
+MAKE_FUNCPTR(xsltCleanupGlobals);
+MAKE_FUNCPTR(xsltFreeStylesheet);
+MAKE_FUNCPTR(xsltParseStylesheetDoc);
+# undef MAKE_FUNCPTR
+#endif
+
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                              LONG line, LONG linepos, LONG filepos );
 extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
