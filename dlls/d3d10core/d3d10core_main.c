@@ -82,7 +82,7 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
     object = (struct d3d10_device *)*layer_base;
 
     object->vtbl = &d3d10_device_vtbl;
-    object->inner_unknown_vtbl = &d3d10_device_inner_unkown_vtbl;
+    object->inner_unknown_vtbl = &d3d10_device_inner_unknown_vtbl;
     object->refcount = 1;
 
     object->outer_unknown = device_object;

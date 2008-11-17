@@ -876,7 +876,7 @@ const struct ID3D10DeviceVtbl d3d10_device_vtbl =
     d3d10_device_GetTextFilterSize,
 };
 
-const struct IUnknownVtbl d3d10_device_inner_unkown_vtbl =
+const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl =
 {
     /* IUnknown methods */
     d3d10_device_inner_QueryInterface,
