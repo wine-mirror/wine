@@ -1333,7 +1333,7 @@ static void load_builtin_callback( void *module, const char *filename )
         return;
     }
     virtual_create_system_view( module, nt->OptionalHeader.SizeOfImage,
-                                VPROT_SYSTEM | VPROT_IMAGE | VPROT_NOEXEC | VPROT_COMMITTED |
+                                VPROT_SYSTEM | VPROT_IMAGE | VPROT_COMMITTED |
                                 VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
 
     /* create the MODREF */
