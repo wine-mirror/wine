@@ -223,6 +223,10 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWOR
 {
     HWND *list;
     int size = 128;
+    ATOM atom = get_int_atom_value( class );
+
+    /* empty class is not the same as NULL class */
+    if (!atom && class && !class[0]) return NULL;
 
     for (;;)
     {
@@ -235,8 +239,8 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWOR
             req->desktop = desktop;
             req->parent = hwnd;
             req->tid = tid;
-            if (!(req->atom = get_int_atom_value( class )) && class)
-                wine_server_add_data( req, class, strlenW(class)*sizeof(WCHAR) );
+            req->atom = atom;
+            if (!atom && class) wine_server_add_data( req, class, strlenW(class)*sizeof(WCHAR) );
             wine_server_set_reply( req, list, (size-1) * sizeof(HWND) );
             if (!wine_server_call( req )) count = reply->count;
         }
