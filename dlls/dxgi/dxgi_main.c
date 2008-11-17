@@ -20,11 +20,11 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define DXGI_INIT_GUID
 #include "dxgi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
-static CRITICAL_SECTION dxgi_cs;
 static CRITICAL_SECTION_DEBUG dxgi_cs_debug =
 {
     0, 0, &dxgi_cs,
@@ -32,7 +32,7 @@ static CRITICAL_SECTION_DEBUG dxgi_cs_debug =
     &dxgi_cs_debug.ProcessLocksList},
     0, 0, {(DWORD_PTR)(__FILE__ ": dxgi_cs")}
 };
-static CRITICAL_SECTION dxgi_cs = {&dxgi_cs_debug, -1, 0, 0, 0, 0};
+CRITICAL_SECTION dxgi_cs = {&dxgi_cs_debug, -1, 0, 0, 0, 0};
 
 struct dxgi_main
 {
@@ -81,7 +81,7 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
     struct dxgi_factory *object;
     HRESULT hr;
 
-    FIXME("riid %s, factory %p partial stub!\n", debugstr_guid(riid), factory);
+    TRACE("riid %s, factory %p\n", debugstr_guid(riid), factory);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -92,6 +92,10 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
 
     object->vtbl = &dxgi_factory_vtbl;
     object->refcount = 1;
+
+    EnterCriticalSection(&dxgi_cs);
+    object->wined3d = WineDirect3DCreate(10, (IUnknown *)object);
+    LeaveCriticalSection(&dxgi_cs);
 
     TRACE("Created IDXGIFactory %p\n", object);
 

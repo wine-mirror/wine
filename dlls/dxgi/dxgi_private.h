@@ -23,20 +23,29 @@
 
 #define COBJMACROS
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "objbase.h"
 
 #include "dxgi.h"
+#include "wine/wined3d_interface.h"
+#ifdef DXGI_INIT_GUID
+#include "initguid.h"
+#endif
+#include "dxgi_private_interface.h"
+
+extern CRITICAL_SECTION dxgi_cs;
 
 /* TRACE helper functions */
 const char *debug_dxgi_format(DXGI_FORMAT format);
 
 /* IDXGIFactory */
-extern const struct IDXGIFactoryVtbl dxgi_factory_vtbl;
+extern const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl;
 struct dxgi_factory
 {
-    const struct IDXGIFactoryVtbl *vtbl;
+    const struct IWineDXGIFactoryVtbl *vtbl;
     LONG refcount;
+    IWineD3D *wined3d;
 };
 
 /* IDXGIDevice */

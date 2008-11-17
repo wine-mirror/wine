@@ -34,6 +34,7 @@ dlls/ctl3dv2.dll16
 dlls/ddeml.dll16
 dlls/dispdib.dll16
 dlls/display.drv16
+dlls/dxgi/dxgi_private_interface.h
 dlls/gdi.exe16
 dlls/imm.dll16
 dlls/jscript/jsglobal.tlb
