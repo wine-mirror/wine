@@ -675,7 +675,7 @@
 @ stub MmFreePagesFromMdl
 @ stub MmGetPhysicalAddress
 @ stub MmGetPhysicalMemoryRanges
-@ stub MmGetSystemRoutineAddress
+@ stdcall MmGetSystemRoutineAddress(ptr)
 @ stub MmGetVirtualForPhysical
 @ stub MmGrowKernelStack
 @ stub MmHighestUserAddress

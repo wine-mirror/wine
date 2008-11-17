@@ -1071,6 +1071,36 @@ NTSTATUS WINAPI PsSetCreateProcessNotifyRoutine( PCREATE_PROCESS_NOTIFY_ROUTINE 
     return STATUS_SUCCESS;
 }
 
+/***********************************************************************
+ *           MmGetSystemRoutineAddress   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
+{
+    HMODULE hMod;
+    STRING routineNameA;
+    PVOID pFunc = NULL;
+
+    static const WCHAR ntoskrnlW[] = {'n','t','o','s','k','r','n','l','.','e','x','e',0};
+    static const WCHAR halW[] = {'h','a','l','.','d','l','l',0};
+
+    if (!SystemRoutineName) return NULL;
+
+    if (RtlUnicodeStringToAnsiString( &routineNameA, SystemRoutineName, TRUE ) == STATUS_SUCCESS)
+    {
+        /* We only support functions exported from ntoskrnl.exe or hal.dll */
+        hMod = GetModuleHandleW( ntoskrnlW );
+        pFunc = GetProcAddress( hMod, routineNameA.Buffer );
+        if (!pFunc)
+        {
+           hMod = GetModuleHandleW( halW );
+           if (hMod) pFunc = GetProcAddress( hMod, routineNameA.Buffer );
+        }
+        RtlFreeAnsiString( &routineNameA );
+    }
+
+    TRACE( "%s -> %p\n", debugstr_us(SystemRoutineName), pFunc );
+    return pFunc;
+}
 
 /*****************************************************
  *           DllMain
