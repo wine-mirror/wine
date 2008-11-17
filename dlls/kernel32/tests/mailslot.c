@@ -90,9 +90,9 @@ static int mailslot_test(void)
     /* now try and openthe client, but with the wrong sharing mode */
     hWriter = CreateFile(szmspath, GENERIC_READ|GENERIC_WRITE,
                              0, NULL, OPEN_EXISTING, 0, NULL);
-    ok( hWriter == INVALID_HANDLE_VALUE, "bad sharing mode\n");
-    ok( GetLastError() == ERROR_SHARING_VIOLATION,
+    ok( hWriter != INVALID_HANDLE_VALUE /* vista */ || GetLastError() == ERROR_SHARING_VIOLATION,
             "error should be ERROR_SHARING_VIOLATION\n");
+    if (hWriter != INVALID_HANDLE_VALUE) CloseHandle( hWriter );
 
     /* now open the client with the correct sharing mode */
     hWriter = CreateFile(szmspath, GENERIC_READ|GENERIC_WRITE,
@@ -139,17 +139,20 @@ static int mailslot_test(void)
     /* now try open another writer... should fail */
     hWriter2 = CreateFile(szmspath, GENERIC_READ|GENERIC_WRITE,
                      FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    ok( hWriter2 == INVALID_HANDLE_VALUE, "two writers\n");
+    /* succeeds on vista, don't test */
+    if (hWriter2 != INVALID_HANDLE_VALUE) CloseHandle( hWriter2 );
 
     /* now try open another as a reader ... also fails */
     hWriter2 = CreateFile(szmspath, GENERIC_READ,
                      FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    ok( hWriter2 == INVALID_HANDLE_VALUE, "writer + reader\n");
+    /* succeeds on vista, don't test */
+    if (hWriter2 != INVALID_HANDLE_VALUE) CloseHandle( hWriter2 );
 
     /* now try open another as a writer ... still fails */
     hWriter2 = CreateFile(szmspath, GENERIC_WRITE,
                      FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    ok( hWriter2 == INVALID_HANDLE_VALUE, "writer\n");
+    /* succeeds on vista, don't test */
+    if (hWriter2 != INVALID_HANDLE_VALUE) CloseHandle( hWriter2 );
 
     /* now open another one */
     hSlot2 = CreateMailslot( szmspath, 0, 0, NULL );
@@ -172,7 +175,8 @@ static int mailslot_test(void)
      */
     hWriter2 = CreateFile(szmspath, GENERIC_WRITE,
                      FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    ok( hWriter2 == INVALID_HANDLE_VALUE, "greedy writer succeeded\n");
+    /* succeeds on vista, don't test */
+    if (hWriter2 != INVALID_HANDLE_VALUE) CloseHandle( hWriter2 );
 
     /* now try open another as a writer ... and share with the first */
     hWriter2 = CreateFile(szmspath, GENERIC_WRITE,
