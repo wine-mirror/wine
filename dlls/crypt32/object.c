@@ -1424,7 +1424,7 @@ static BOOL WINAPI CRYPT_FormatAuthorityInfoAccess(DWORD dwCertEncodingType,
 static WCHAR keyCompromise[MAX_STRING_RESOURCE_LEN];
 static WCHAR caCompromise[MAX_STRING_RESOURCE_LEN];
 static WCHAR affiliationChanged[MAX_STRING_RESOURCE_LEN];
-static WCHAR superceded[MAX_STRING_RESOURCE_LEN];
+static WCHAR superseded[MAX_STRING_RESOURCE_LEN];
 static WCHAR operationCeased[MAX_STRING_RESOURCE_LEN];
 static WCHAR certificateHold[MAX_STRING_RESOURCE_LEN];
 
@@ -1439,7 +1439,7 @@ static struct reason_map_entry reason_map[] = {
  { CRL_REASON_CA_COMPROMISE_FLAG, caCompromise, IDS_REASON_CA_COMPROMISE },
  { CRL_REASON_AFFILIATION_CHANGED_FLAG, affiliationChanged,
    IDS_REASON_AFFILIATION_CHANGED },
- { CRL_REASON_SUPERSEDED_FLAG, superceded, IDS_REASON_SUPERCEDED },
+ { CRL_REASON_SUPERSEDED_FLAG, superseded, IDS_REASON_SUPERSEDED },
  { CRL_REASON_CESSATION_OF_OPERATION_FLAG, operationCeased,
    IDS_REASON_CESSATION_OF_OPERATION },
  { CRL_REASON_CERTIFICATE_HOLD_FLAG, certificateHold,
