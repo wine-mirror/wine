@@ -994,6 +994,7 @@ GpStatus WINGDIPAPI GdipFlattenPath(GpPath *path, GpMatrix* matrix, REAL flatnes
 
         /* Bezier curve always stored as 4 points */
         if((path->pathdata.Types[i-1] & PathPointTypePathTypeMask) != PathPointTypeStart){
+            type = (path->pathdata.Types[i] & ~PathPointTypePathTypeMask) | PathPointTypeLine;
             if(!add_path_list_node(node, pt.X, pt.Y, type))
                 goto memout;
 
@@ -1013,7 +1014,7 @@ GpStatus WINGDIPAPI GdipFlattenPath(GpPath *path, GpMatrix* matrix, REAL flatnes
 
         start = node;
         /* add Bezier end point */
-        type = (path->pathdata.Types[i] & ~PathPointTypeBezier) | PathPointTypeLine;
+        type = (path->pathdata.Types[i] & ~PathPointTypePathTypeMask) | PathPointTypeLine;
         if(!add_path_list_node(node, pt.X, pt.Y, type))
             goto memout;
         node = node->next;
