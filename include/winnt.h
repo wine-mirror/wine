@@ -575,9 +575,6 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define MEM_PHYSICAL            0x00400000
 #define MEM_LARGE_PAGES         0x20000000
 #define MEM_4MB_PAGES           0x80000000
-#ifdef __WINESRC__
-#define MEM_SYSTEM              0x80000000
-#endif
 
 #define SEC_FILE                0x00800000
 #define SEC_IMAGE               0x01000000

@@ -1605,32 +1605,23 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     /* Compute the alloc type flags */
 
-    if (!(type & MEM_SYSTEM))
+    if (!(type & (MEM_COMMIT | MEM_RESERVE)) ||
+        (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN | MEM_WRITE_WATCH | MEM_RESET)))
     {
-        if (!(type & (MEM_COMMIT | MEM_RESERVE)) ||
-            (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN | MEM_WRITE_WATCH | MEM_RESET)))
-        {
-            WARN("called with wrong alloc type flags (%08x) !\n", type);
-            return STATUS_INVALID_PARAMETER;
-        }
-        if (type & MEM_WRITE_WATCH)
-        {
-            FIXME("MEM_WRITE_WATCH type not supported\n");
-            return STATUS_INVALID_PARAMETER;
-        }
+        WARN("called with wrong alloc type flags (%08x) !\n", type);
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (type & MEM_WRITE_WATCH)
+    {
+        FIXME("MEM_WRITE_WATCH type not supported\n");
+        return STATUS_INVALID_PARAMETER;
     }
 
     /* Reserve the memory */
 
     if (use_locks) server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if (type & MEM_SYSTEM)
-    {
-        if (type & MEM_IMAGE) vprot |= VPROT_IMAGE | VPROT_NOEXEC;
-        status = create_view( &view, base, size, vprot | VPROT_COMMITTED | VPROT_SYSTEM );
-        if (status == STATUS_SUCCESS) base = view->base;
-    }
-    else if ((type & MEM_RESERVE) || !base)
+    if ((type & MEM_RESERVE) || !base)
     {
         status = map_view( &view, base, size, mask, type & MEM_TOP_DOWN, vprot );
         if (status == STATUS_SUCCESS) base = view->base;
@@ -1707,7 +1698,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     base = ROUND_ADDR( addr, page_mask );
 
     /* avoid freeing the DOS area when a broken app passes a NULL pointer */
-    if (!base && !(type & MEM_SYSTEM)) return STATUS_INVALID_PARAMETER;
+    if (!base) return STATUS_INVALID_PARAMETER;
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
@@ -1716,15 +1707,6 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
         !(view->protect & VPROT_VALLOC))
     {
         status = STATUS_INVALID_PARAMETER;
-    }
-    else if (type & MEM_SYSTEM)
-    {
-        /* return the values that the caller should use to unmap the area */
-        *addr_ptr = view->base;
-        if (!wine_mmap_is_in_reserved_area( view->base, view->size )) *size_ptr = view->size;
-        else *size_ptr = 0;  /* make sure we don't munmap anything from a reserved area */
-        view->protect |= VPROT_SYSTEM;
-        delete_view( view );
     }
     else if (type == MEM_RELEASE)
     {
