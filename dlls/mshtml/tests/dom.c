@@ -2765,9 +2765,21 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLStyle *style;
     long l;
     HRESULT hres;
+    IHTMLElementCollection *colimages;
 
     hres = IHTMLDocument2_get_body(doc, &elem);
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_get_images(doc, NULL);
+    ok(hres == E_INVALIDARG, "hres %08x\n", hres);
+
+    hres = IHTMLDocument2_get_images(doc, &colimages);
+    ok(hres == S_OK, "get_images failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        test_elem_collection((IUnknown*)colimages, NULL, 0);
+        IHTMLElementCollection_Release(colimages);
+    }
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
     ok(hres == S_OK, "Could not get IHTMBodyElement: %08x\n", hres);
@@ -3049,6 +3061,7 @@ static void test_elems(IHTMLDocument2 *doc)
     IDispatch *disp;
     long type;
     HRESULT hres;
+    IHTMLElementCollection *colimages;
 
     static const WCHAR imgidW[] = {'i','m','g','i','d',0};
     static const WCHAR inW[] = {'i','n',0};
@@ -3096,6 +3109,16 @@ static void test_elems(IHTMLDocument2 *doc)
     test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
     test_elem_col_item(col, xW, item_types, sizeof(item_types)/sizeof(item_types[0]));
     IHTMLElementCollection_Release(col);
+
+    hres = IHTMLDocument2_get_images(doc, &colimages);
+    ok(hres == S_OK, "get_images failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        static const elem_type_t images_types[] = {ET_IMG};
+        test_elem_collection((IUnknown*)colimages, images_types, 1);
+
+        IHTMLElementCollection_Release(colimages);
+    }
 
     elem = get_doc_elem(doc);
     ok(hres == S_OK, "get_documentElement failed: %08x\n", hres);
