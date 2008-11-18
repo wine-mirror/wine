@@ -29,6 +29,11 @@
 #include "winnls.h"
 #include "stdlib.h"
 
+/* A test string */
+static const WCHAR stringW[] = {'s', 't', 'r', 'i', 'n', 'g', 'W', 0};
+/* A size, in bytes, short enough to cause truncation of the above */
+#define STR_TRUNC_SIZE (sizeof(stringW)-2*sizeof(*stringW))
+
 #ifndef __WINE_WINTERNL_H
 
 /* RtlQueryRegistryValues structs and defines */
@@ -413,16 +418,20 @@ static void test_NtSetValueKey(void)
     UNICODE_STRING ValName;
     DWORD data = 711;
 
-    pRtlCreateUnicodeStringFromAsciiz(&ValName, "deletetest");
-
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&key, am, &attr);
     ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
+    pRtlCreateUnicodeStringFromAsciiz(&ValName, "deletetest");
     status = pNtSetValueKey(key, &ValName, 0, REG_DWORD, &data, sizeof(data));
     ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08x\n", status);
-
     pRtlFreeUnicodeString(&ValName);
+
+    pRtlCreateUnicodeStringFromAsciiz(&ValName, "stringtest");
+    status = pNtSetValueKey(key, &ValName, 0, REG_SZ, (VOID*)stringW, STR_TRUNC_SIZE);
+    ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08x\n", status);
+    pRtlFreeUnicodeString(&ValName);
+
     pNtClose(key);
 }
 
@@ -543,6 +552,22 @@ static void test_NtQueryValueKey(void)
     ok(*(DWORD *)((char *)full_info + full_info->DataOffset) == 711, "incorrect Data returned: 0x%x\n",
         *(DWORD *)((char *)full_info + full_info->DataOffset));
     HeapFree(GetProcessHeap(), 0, full_info);
+
+    pRtlFreeUnicodeString(&ValName);
+    pRtlCreateUnicodeStringFromAsciiz(&ValName, "stringtest");
+
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, NULL, 0, &len);
+    todo_wine ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey should have returned STATUS_BUFFER_TOO_SMALL instead of 0x%08x\n", status);
+    partial_info = HeapAlloc(GetProcessHeap(), 0, len+1);
+    memset((BYTE*)partial_info, 0xbd, len+1);
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
+    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->TitleIndex);
+    ok(partial_info->Type == REG_SZ, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
+    ok(partial_info->DataLength == STR_TRUNC_SIZE, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
+    ok(!memcmp(partial_info->Data, stringW, STR_TRUNC_SIZE), "incorrect Data returned\n");
+    ok(*(partial_info->Data+STR_TRUNC_SIZE) == 0xbd, "string overflowed %02x\n", *(partial_info->Data+STR_TRUNC_SIZE));
+    HeapFree(GetProcessHeap(), 0, partial_info);
 
     pRtlFreeUnicodeString(&ValName);
     pNtClose(key);
