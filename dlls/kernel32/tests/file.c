@@ -2113,12 +2113,12 @@ static void test_ReplaceFileA(void)
     /* make sure that the backup has the old "replaced" filetime */
     ret = GetFileTime(hBackupFile, NULL, NULL, &ftBackup);
     ok( ret, "GetFileTime error (backup %d\n", GetLastError());
-    ok(check_file_time(&ftBackup, &ftReplaced, 1000000), "backup file has wrong filetime\n");
+    ok(check_file_time(&ftBackup, &ftReplaced, 20000000), "backup file has wrong filetime\n");
     CloseHandle(hBackupFile);
     /* make sure that the "replaced" has the old replacement filetime */
     ret = GetFileTime(hReplacedFile, NULL, NULL, &ftReplaced);
     ok( ret, "GetFileTime error (backup %d\n", GetLastError());
-    ok(check_file_time(&ftReplaced, &ftReplacement, 1000000),
+    ok(check_file_time(&ftReplaced, &ftReplacement, 20000000),
        "replaced file has wrong filetime %x%08x / %x%08x\n",
        ftReplaced.dwHighDateTime, ftReplaced.dwLowDateTime,
        ftReplacement.dwHighDateTime, ftReplacement.dwLowDateTime );
