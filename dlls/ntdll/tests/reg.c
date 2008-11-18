@@ -486,7 +486,7 @@ static void test_NtQueryValueKey(void)
     basic_info = HeapAlloc(GetProcessHeap(), 0, len);
     status = pNtQueryValueKey(key, &ValName, KeyValueBasicInformation, basic_info, len, &len);
     ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
-    ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", basic_info->Type);
+    ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", basic_info->TitleIndex);
     ok(basic_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", basic_info->Type);
     ok(basic_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", basic_info->NameLength);
     ok(len == FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[basic_info->NameLength/sizeof(WCHAR)]), "NtQueryValueKey returned wrong len %d\n", len);
@@ -494,7 +494,7 @@ static void test_NtQueryValueKey(void)
     basic_info = HeapReAlloc(GetProcessHeap(), 0, basic_info, len);
     status = pNtQueryValueKey(key, &ValName, KeyValueBasicInformation, basic_info, len, &len);
     ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
-    ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", basic_info->Type);
+    ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", basic_info->TitleIndex);
     ok(basic_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", basic_info->Type);
     ok(basic_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", basic_info->NameLength);
     ok(len == FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[basic_info->NameLength/sizeof(WCHAR)]), "NtQueryValueKey returned wrong len %d\n", len);
@@ -505,7 +505,7 @@ static void test_NtQueryValueKey(void)
     partial_info = HeapAlloc(GetProcessHeap(), 0, len);
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
     ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
-    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->Type);
+    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->TitleIndex);
     ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
     ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
     ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %d\n", len);
@@ -513,7 +513,7 @@ static void test_NtQueryValueKey(void)
     partial_info = HeapReAlloc(GetProcessHeap(), 0, partial_info, len);
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
     ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
-    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->Type);
+    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->TitleIndex);
     ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
     ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
     ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %d\n", len);
@@ -524,7 +524,7 @@ static void test_NtQueryValueKey(void)
     full_info = HeapAlloc(GetProcessHeap(), 0, len);
     status = pNtQueryValueKey(key, &ValName, KeyValueFullInformation, full_info, len, &len);
     ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
-    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->Type);
+    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->TitleIndex);
     ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", full_info->Type);
     ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", full_info->DataLength);
     ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", full_info->NameLength);
@@ -535,7 +535,7 @@ static void test_NtQueryValueKey(void)
     full_info = HeapReAlloc(GetProcessHeap(), 0, full_info, len);
     status = pNtQueryValueKey(key, &ValName, KeyValueFullInformation, full_info, len, &len);
     ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
-    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->Type);
+    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->TitleIndex);
     ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", full_info->Type);
     ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", full_info->DataLength);
     ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", full_info->NameLength);
