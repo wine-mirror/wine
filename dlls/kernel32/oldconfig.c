@@ -105,7 +105,7 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uD
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     WCHAR dataW[50];
-    DWORD lenW;
+    DWORD sizeW;
     char buffer[40];
     DWORD value;
     const char *data;
@@ -145,8 +145,8 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uD
     RtlFreeUnicodeString( &nameW );
 
     RtlCreateUnicodeStringFromAsciiz( &nameW, "Driver" );
-    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &lenW, lpDriver, strlen(lpDriver));
-    NtSetValueKey( portKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, lpDriver, strlen(lpDriver)+1);
+    NtSetValueKey( portKey, &nameW, 0, REG_SZ, (BYTE*)dataW, sizeW );
     RtlFreeUnicodeString( &nameW );
     value = 10;
     RtlCreateUnicodeStringFromAsciiz( &nameW, "FirstBusTimeScanInMs" );
@@ -233,26 +233,26 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uD
             break;
     }
     RtlCreateUnicodeStringFromAsciiz( &nameW, "Type" );
-    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &lenW, data, strlen(data));
-    NtSetValueKey( lunKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, data, strlen(data)+1);
+    NtSetValueKey( lunKey, &nameW, 0, REG_SZ, (BYTE*)dataW, sizeW );
     RtlFreeUnicodeString( &nameW );
 
     RtlCreateUnicodeStringFromAsciiz( &nameW, "Identifier" );
-    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &lenW, lpDriveName, strlen(lpDriveName));
-    NtSetValueKey( lunKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, lpDriveName, strlen(lpDriveName)+1);
+    NtSetValueKey( lunKey, &nameW, 0, REG_SZ, (BYTE*)dataW, sizeW );
     RtlFreeUnicodeString( &nameW );
 
     if (uDriveType == DRIVE_CDROM || uDriveType == DRIVE_REMOVABLE)
     {
         RtlCreateUnicodeStringFromAsciiz( &nameW, "DeviceName" );
-        RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &lenW, buffer, strlen(buffer));
-        NtSetValueKey( lunKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+        RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, buffer, strlen(buffer)+1);
+        NtSetValueKey( lunKey, &nameW, 0, REG_SZ, (BYTE*)dataW, sizeW );
         RtlFreeUnicodeString( &nameW );
     }
 
     RtlCreateUnicodeStringFromAsciiz( &nameW, "UnixDeviceName" );
-    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &lenW, lpUnixDeviceName, strlen(lpUnixDeviceName));
-    NtSetValueKey( lunKey, &nameW, 0, REG_SZ, (BYTE*)dataW, lenW );
+    RtlMultiByteToUnicodeN( dataW, sizeof(dataW), &sizeW, lpUnixDeviceName, strlen(lpUnixDeviceName)+1);
+    NtSetValueKey( lunKey, &nameW, 0, REG_SZ, (BYTE*)dataW, sizeW );
     RtlFreeUnicodeString( &nameW );
 
     NtClose( lunKey );
