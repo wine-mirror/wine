@@ -49,9 +49,9 @@ BEGIN
     LTEXT   "Extracting:",       IDC_ST0,        10,   5, 140, 10
     CONTROL "PB0", IDC_PB0, PROGRESS_CLASS, 0,    5,  15, 150, 10
     LTEXT   "Running:",          IDC_ST1,        10,  30, 140, 10
-    CONTROL "PB1", IDC_PB1, PROGRESS_CLASS, 0,    5,  40, 150, 15
-    LTEXT   "Network transfer:", IDC_ST2,        10,  60, 140, 10
-    CONTROL "PB2", IDC_PB2, PROGRESS_CLASS, 0,    5,  70, 150, 10
+    CONTROL "PB1", IDC_PB1, PROGRESS_CLASS, 0,    5,  40, 150, 10
+    LTEXT   "Network transfer:", IDC_ST2,        10,  55, 140, 10
+    CONTROL "PB2", IDC_PB2, PROGRESS_CLASS, 0,    5,  65, 150, 10
                                                
     LTEXT   "Tag:",               IDC_STATIC,    10,  89, 100, 10
     EDITTEXT                      IDC_TAG,       25,  88, 125, 10,
