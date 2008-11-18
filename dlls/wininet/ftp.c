@@ -2256,7 +2256,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
     assert( hIC->hdr.htype == WH_HINIT );
 
-    if (NULL == lpszUserName && NULL != lpszPassword)
+    if ((!lpszUserName || !strlenW(lpszUserName)) && lpszPassword)
     {
 	INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         goto lerror;
@@ -2302,7 +2302,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
         if(hIC->lpszProxyBypass)
             FIXME("Proxy bypass is ignored.\n");
     }
-    if ( !lpszUserName) {
+    if (!lpszUserName || !strlenW(lpszUserName)) {
         HKEY key;
         WCHAR szPassword[MAX_PATH];
         DWORD len = sizeof(szPassword);
