@@ -119,9 +119,24 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IWineDXGIFactory *iface,
 static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *iface,
         UINT adapter_idx, IDXGIAdapter **adapter)
 {
-    FIXME("iface %p, adapter_idx %u, adapter %p stub!\n", iface, adapter_idx, adapter);
+    struct dxgi_factory *This = (struct dxgi_factory *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, adapter_idx %u, adapter %p\n", iface, adapter_idx, adapter);
+
+    if (!adapter) return DXGI_ERROR_INVALID_CALL;
+
+    if (adapter_idx >= This->adapter_count)
+    {
+        *adapter = NULL;
+        return DXGI_ERROR_NOT_FOUND;
+    }
+
+    *adapter = (IDXGIAdapter *)This->adapters[adapter_idx];
+    IDXGIAdapter_AddRef(*adapter);
+
+    TRACE("Returning adapter %p\n", *adapter);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IWineDXGIFactory *iface, HWND window, UINT flags)

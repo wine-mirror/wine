@@ -57,11 +57,11 @@ static void test_device_interfaces(ID3D10Device *device)
 
     if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IDXGIObject, (void **)&obj)))
         IUnknown_Release(obj);
-    todo_wine ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIObject (%#x)\n", hr);
+    ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIObject (%#x)\n", hr);
 
     if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&obj)))
         IUnknown_Release(obj);
-    todo_wine ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIDevice (%#x)\n", hr);
+    ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIDevice (%#x)\n", hr);
 }
 
 START_TEST(device)
