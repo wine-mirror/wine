@@ -142,9 +142,10 @@ typedef struct tagHEAP
     struct list      entry;         /* Entry in process heap list */
     struct list      subheap_list;  /* Sub-heap list */
     struct list      large_list;    /* Large blocks list */
+    SIZE_T           grow_size;     /* Size of next subheap for growing heap */
     DWORD            magic;         /* Magic number */
     RTL_CRITICAL_SECTION critSection; /* Critical section for serialization */
-    FREE_LIST_ENTRY  freeList[HEAP_NB_FREE_LISTS];  /* Free lists */
+    FREE_LIST_ENTRY  freeList[HEAP_NB_FREE_LISTS] DECLSPEC_ALIGN(8);  /* Free lists */
 } HEAP;
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
@@ -808,6 +809,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         heap = (HEAP *)address;
         heap->flags         = flags;
         heap->magic         = HEAP_MAGIC;
+        heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
         list_init( &heap->subheap_list );
         list_init( &heap->large_list );
 
@@ -918,11 +920,13 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
     if (total_size < size) return NULL;  /* overflow */
 
     if (!(subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
-                                        max( HEAP_DEF_SIZE, total_size ) )))
+                                        max( heap->grow_size, total_size ) )))
         return NULL;
 
+    if (heap->grow_size < 128 * 1024 * 1024) heap->grow_size *= 2;
+
     TRACE("created new sub-heap %p of %08lx bytes for heap %p\n",
-            subheap, total_size, heap );
+          subheap, subheap->size, heap );
 
     *ppSubHeap = subheap;
     return (ARENA_FREE *)((char *)subheap->base + subheap->headerSize);
