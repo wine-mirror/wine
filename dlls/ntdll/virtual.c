@@ -861,6 +861,66 @@ static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t siz
 
 
 /***********************************************************************
+ *           allocate_dos_memory
+ *
+ * Allocate the DOS memory range.
+ */
+static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot )
+{
+    size_t size;
+    void *addr = NULL;
+    void * const low_64k = (void *)0x10000;
+    const size_t dosmem_size = 0x110000;
+    int unix_prot = VIRTUAL_GetUnixProt( vprot );
+    struct list *ptr;
+
+    /* check for existing view */
+
+    if ((ptr = list_head( &views_list )))
+    {
+        struct file_view *first_view = LIST_ENTRY( ptr, struct file_view, entry );
+        if (first_view->base < (void *)dosmem_size) return STATUS_CONFLICTING_ADDRESSES;
+    }
+
+    /* check without the first 64K */
+
+    if (wine_mmap_is_in_reserved_area( low_64k, dosmem_size - 0x10000 ) != 1)
+    {
+        addr = wine_anon_mmap( low_64k, dosmem_size - 0x10000, unix_prot, 0 );
+        if (addr != low_64k)
+        {
+            if (addr != (void *)-1) munmap( addr, dosmem_size - 0x10000 );
+            return map_view( view, NULL, dosmem_size, 0xffff, 0, vprot );
+        }
+    }
+
+    /* now try to allocate the low 64K too */
+
+    if (wine_mmap_is_in_reserved_area( NULL, 0x10000 ) != 1)
+    {
+        addr = wine_anon_mmap( (void *)page_size, 0x10000 - page_size, unix_prot, 0 );
+        if (addr == (void *)page_size)
+        {
+            addr = NULL;
+            TRACE( "successfully mapped low 64K range\n" );
+        }
+        else
+        {
+            if (addr != (void *)-1) munmap( addr, 0x10000 - page_size );
+            addr = low_64k;
+            TRACE( "failed to map low 64K range\n" );
+        }
+    }
+
+    /* now reserve the whole range */
+
+    size = (char *)dosmem_size - (char *)addr;
+    wine_anon_mmap( addr, size, unix_prot, MAP_FIXED );
+    return create_view( view, addr, size, vprot );
+}
+
+
+/***********************************************************************
  *           map_image
  *
  * Map an executable (PE format) image into memory.
@@ -1506,6 +1566,9 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     if (is_beyond_limit( 0, size, working_set_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
 
+    vprot = VIRTUAL_GetProt( protect ) | VPROT_VALLOC;
+    if (type & MEM_COMMIT) vprot |= VPROT_COMMITTED;
+
     if (*ret)
     {
         if (type & MEM_RESERVE) /* Round down to 64k boundary */
@@ -1513,6 +1576,20 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         else
             base = ROUND_ADDR( *ret, page_mask );
         size = (((UINT_PTR)*ret + size + page_mask) & ~page_mask) - (UINT_PTR)base;
+
+        /* address 1 is magic to mean DOS area */
+        if (!base && *ret == (void *)1 && size == 0x110000)
+        {
+            server_enter_uninterrupted_section( &csVirtual, &sigset );
+            status = allocate_dos_memory( &view, vprot );
+            if (status == STATUS_SUCCESS)
+            {
+                *ret = view->base;
+                *size_ptr = view->size;
+            }
+            server_leave_uninterrupted_section( &csVirtual, &sigset );
+            return status;
+        }
 
         /* disallow low 64k, wrap-around and kernel space */
         if (((char *)base < (char *)0x10000) ||
@@ -1542,8 +1619,6 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
             return STATUS_INVALID_PARAMETER;
         }
     }
-    vprot = VIRTUAL_GetProt( protect ) | VPROT_VALLOC;
-    if (type & MEM_COMMIT) vprot |= VPROT_COMMITTED;
 
     /* Reserve the memory */
 

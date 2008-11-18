@@ -151,68 +151,6 @@ static LONG WINAPI dosmem_handler(EXCEPTION_POINTERS* except)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-/**********************************************************************
- *		setup_dos_mem
- *
- * Setup the first megabyte for DOS memory access
- */
-static char* setup_dos_mem(void)
-{
-    size_t size;
-    int page_size = getpagesize();
-    void *addr = NULL;
-    void * const low_64k = (void *)DOSMEM_64KB;
-
-    /* check without the first 64K */
-
-    if (wine_mmap_is_in_reserved_area( low_64k, DOSMEM_SIZE - DOSMEM_64KB ) != 1)
-    {
-        addr = wine_anon_mmap( low_64k, DOSMEM_SIZE - DOSMEM_64KB, PROT_READ | PROT_WRITE, 0 );
-        if (addr != low_64k)
-        {
-            if (addr != MAP_FAILED) munmap( addr, DOSMEM_SIZE - DOSMEM_64KB );
-            ERR("Cannot use first megabyte for DOS address space, please report\n" );
-            /* allocate the DOS area somewhere else */
-            if (!(DOSMEM_dosmem = VirtualAlloc( NULL, DOSMEM_SIZE, MEM_RESERVE, PAGE_NOACCESS )))
-            {
-                ERR( "Cannot allocate DOS memory\n" );
-                ExitProcess(1);
-            }
-            return DOSMEM_dosmem;
-        }
-    }
-
-    /* now try to allocate the low 64K too */
-
-    if (wine_mmap_is_in_reserved_area( NULL, DOSMEM_64KB ) != 1)
-    {
-        addr = wine_anon_mmap( (void *)page_size, DOSMEM_64KB - page_size, PROT_READ | PROT_WRITE, 0 );
-        if (addr == (void *)page_size)
-        {
-            addr = NULL;
-            TRACE( "successfully mapped low 64K range\n" );
-        }
-        else
-        {
-            if (addr != MAP_FAILED) munmap( addr, DOSMEM_64KB - page_size );
-            addr = low_64k;
-            TRACE( "failed to map low 64K range\n" );
-        }
-    }
-    else addr = NULL;
-
-    /* now reserve the whole range */
-    size = (char *)DOSMEM_SIZE - (char *)addr;
-    wine_anon_mmap( addr, size, PROT_NONE, MAP_FIXED );
-
-    /* inform the memory manager that there is a mapping here, but don't commit yet */
-    VirtualAlloc( addr, size, MEM_RESERVE | MEM_SYSTEM, PAGE_NOACCESS );
-    DOSMEM_protect = DOSMEM_64KB;
-    DOSMEM_dosmem = NULL;
-    return (char *)0xf0000;  /* store sysmem in high addresses for now */
-}
-
-
 /***********************************************************************
  *           DOSMEM_Init
  *
@@ -221,7 +159,29 @@ static char* setup_dos_mem(void)
  */
 BOOL DOSMEM_Init(void)
 {
-    char*       sysmem = setup_dos_mem();
+    char *sysmem;
+    void *addr = (void *)1;
+    SIZE_T size = DOSMEM_SIZE - 1;
+
+    if (NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size,
+                                 MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS ))
+    {
+        ERR( "Cannot allocate DOS memory\n" );
+        ExitProcess(1);
+    }
+
+    DOSMEM_dosmem = addr;
+    if (!addr)
+    {
+        DOSMEM_protect = DOSMEM_64KB;
+        sysmem = (char *)0xf0000;  /* store sysmem in high addresses for now */
+    }
+    else
+    {
+        WARN( "First megabyte not available for DOS address space.\n" );
+        DOSMEM_protect = 0;
+        sysmem = DOSMEM_dosmem;
+    }
 
     RtlAddVectoredExceptionHandler(FALSE, dosmem_handler);
     DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, sysmem,
