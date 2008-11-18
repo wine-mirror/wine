@@ -46,6 +46,8 @@ struct dxgi_factory
     const struct IWineDXGIFactoryVtbl *vtbl;
     LONG refcount;
     IWineD3D *wined3d;
+    UINT adapter_count;
+    IDXGIAdapter **adapters;
 };
 
 /* IDXGIDevice */

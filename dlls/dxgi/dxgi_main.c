@@ -80,6 +80,7 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
 {
     struct dxgi_factory *object;
     HRESULT hr;
+    UINT i;
 
     TRACE("riid %s, factory %p\n", debugstr_guid(riid), factory);
 
@@ -87,6 +88,7 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
     if (!object)
     {
         ERR("Failed to allocate DXGI factory object memory\n");
+        *factory = NULL;
         return E_OUTOFMEMORY;
     }
 
@@ -95,7 +97,37 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
 
     EnterCriticalSection(&dxgi_cs);
     object->wined3d = WineDirect3DCreate(10, (IUnknown *)object);
+
+    object->adapter_count = IWineD3D_GetAdapterCount(object->wined3d);
     LeaveCriticalSection(&dxgi_cs);
+    object->adapters = HeapAlloc(GetProcessHeap(), 0, object->adapter_count * sizeof(*object->adapters));
+    if (!object->adapters)
+    {
+        ERR("Failed to allocate DXGI adapter array memory\n");
+        hr = E_OUTOFMEMORY;
+        goto fail;
+    }
+
+    for (i = 0; i < object->adapter_count; ++i)
+    {
+        struct dxgi_adapter *adapter = HeapAlloc(GetProcessHeap(), 0, sizeof(**object->adapters));
+        if (!adapter)
+        {
+            UINT j;
+            ERR("Failed to allocate DXGI adapter memory\n");
+            for (j = 0; j < i; ++j)
+            {
+                HeapFree(GetProcessHeap(), 0, object->adapters[j]);
+            }
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        adapter->vtbl = &dxgi_adapter_vtbl;
+        adapter->refcount = 1;
+        adapter->ordinal = i;
+        object->adapters[i] = (IDXGIAdapter *)adapter;
+    }
 
     TRACE("Created IDXGIFactory %p\n", object);
 
@@ -103,6 +135,19 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
     IDXGIFactory_Release((IDXGIFactory *)object);
 
     return hr;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, object->adapters);
+    if (object->wined3d)
+    {
+        EnterCriticalSection(&dxgi_cs);
+        IWineD3D_Release(object->wined3d);
+        LeaveCriticalSection(&dxgi_cs);
+    }
+    HeapFree(GetProcessHeap(), 0, object);
+    *factory = NULL;
+    return hr;
+
 }
 
 static BOOL get_layer(enum dxgi_device_layer_id id, struct dxgi_device_layer *layer)

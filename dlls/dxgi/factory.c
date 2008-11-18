@@ -65,6 +65,13 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IWineDXGIFactory *iface)
 
     if (!refcount)
     {
+        UINT i;
+
+        for (i = 0; i < This->adapter_count; ++i)
+        {
+            IDXGIAdapter_Release(This->adapters[i]);
+        }
+
         EnterCriticalSection(&dxgi_cs);
         IWineD3D_Release(This->wined3d);
         LeaveCriticalSection(&dxgi_cs);
