@@ -24802,6 +24802,14 @@ dlls/dxgi/Makefile: dlls/dxgi/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dxgi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/dxgi/tests/Makefile"
+test "x$enable_dxgi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+	dxgi/tests"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/dxgi/tests/Makefile: dlls/dxgi/tests/Makefile.in dlls/Maketest.rules"
+ac_config_files="$ac_config_files dlls/dxgi/tests/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxguid/Makefile"
 test "x$enable_dxguid" != xno && ALL_IMPLIB_DIRS="$ALL_IMPLIB_DIRS \\
 	dxguid"
@@ -28159,6 +28167,7 @@ do
     "dlls/dxerr8/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxerr8/Makefile" ;;
     "dlls/dxerr9/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxerr9/Makefile" ;;
     "dlls/dxgi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxgi/Makefile" ;;
+    "dlls/dxgi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxgi/tests/Makefile" ;;
     "dlls/dxguid/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dxguid/Makefile" ;;
     "dlls/faultrep/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/faultrep/Makefile" ;;
     "dlls/fusion/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/fusion/Makefile" ;;
