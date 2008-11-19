@@ -1816,6 +1816,17 @@ static void test_Extent(IUnknown *unk)
     IOleObject *oleobj;
     SIZE size;
     HRESULT hres;
+    DWORD dpi_x;
+    DWORD dpi_y;
+    HDC hdc;
+
+    /* default aspect ratio is 96dpi / 96dpi */
+    hdc = GetDC(0);
+    dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+    if (dpi_x != 96 || dpi_y != 96)
+        trace("dpi: %d / %d\n", dpi_y, dpi_y);
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "Could not get IOleObkect: %08x\n", hres);
@@ -1825,7 +1836,10 @@ static void test_Extent(IUnknown *unk)
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
     ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
-    ok(size.cx == 1323 && size.cy == 529, "size = {%d %d}\n", size.cx, size.cy);
+    /* The default size is dpi dependent (96:1323x529 / 120:1058x423) */
+    ok(size.cx == (127000 / dpi_x) &&
+        size.cy == (50800 / dpi_y), "size = {%d %d} (expected %d %d)\n",
+        size.cx, size.cy, 127000 / dpi_x, 50800 / dpi_y);
 
     size.cx = 800;
     size.cy = 700;
