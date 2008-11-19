@@ -168,10 +168,7 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
         ret = RegQueryValueExW(hkey, wszUserNameValue, 0, &type, (LPVOID)credential->UserName,
                                &count);
         if (ret == ERROR_FILE_NOT_FOUND)
-        {
             credential->UserName = NULL;
-            ret = ERROR_SUCCESS;
-        }
         else if (ret != ERROR_SUCCESS)
             return ret;
         else if (type != REG_SZ)
@@ -189,10 +186,7 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
         credential->CredentialBlob = (LPBYTE)buffer;
         ret = read_credential_blob(hkey, key_data, credential->CredentialBlob, &count);
         if (ret == ERROR_FILE_NOT_FOUND)
-        {
             credential->CredentialBlob = NULL;
-            ret = ERROR_SUCCESS;
-        }
         else if (ret != ERROR_SUCCESS)
             return ret;
         credential->CredentialBlobSize = count;
