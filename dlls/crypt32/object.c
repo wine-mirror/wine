@@ -607,6 +607,211 @@ static BOOL WINAPI CRYPT_FormatHexString(DWORD dwCertEncodingType,
 static const WCHAR crlf[] = { '\r','\n',0 };
 static const WCHAR commaSpace[] = { ',',' ',0 };
 
+struct BitToString
+{
+    BYTE bit;
+    int id;
+    WCHAR str[MAX_STRING_RESOURCE_LEN];
+};
+
+static BOOL CRYPT_FormatBits(DWORD dwFormatStrType, BYTE bits,
+ const struct BitToString *map, DWORD mapEntries, void *pbFormat,
+ DWORD *pcbFormat, BOOL *first)
+{
+    LPCWSTR sep;
+    DWORD sepLen, bytesNeeded = sizeof(WCHAR);
+    int i;
+    BOOL ret = TRUE, localFirst = *first;
+
+    if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
+    {
+        sep = crlf;
+        sepLen = strlenW(crlf) * sizeof(WCHAR);
+    }
+    else
+    {
+        sep = commaSpace;
+        sepLen = strlenW(commaSpace) * sizeof(WCHAR);
+    }
+    for (i = 0; i < mapEntries; i++)
+        if (bits & map[i].bit)
+        {
+            if (!localFirst)
+                bytesNeeded += sepLen;
+            localFirst = FALSE;
+            bytesNeeded += strlenW(map[i].str) * sizeof(WCHAR);
+        }
+    if (!pbFormat)
+    {
+        *first = localFirst;
+        *pcbFormat = bytesNeeded;
+    }
+    else if (*pcbFormat < bytesNeeded)
+    {
+        *first = localFirst;
+        *pcbFormat = bytesNeeded;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        LPWSTR str = pbFormat;
+
+        localFirst = *first;
+        *pcbFormat = bytesNeeded;
+        for (i = 0; i < mapEntries; i++)
+            if (bits & map[i].bit)
+            {
+                if (!localFirst)
+                {
+                    strcpyW(str, sep);
+                    str += sepLen / sizeof(WCHAR);
+                }
+                localFirst = FALSE;
+                strcpyW(str, map[i].str);
+                str += strlenW(map[i].str);
+            }
+        *first = localFirst;
+    }
+    return ret;
+}
+
+static struct BitToString keyUsageByte0Map[] = {
+ { CERT_DIGITAL_SIGNATURE_KEY_USAGE, IDS_DIGITAL_SIGNATURE, { 0 } },
+ { CERT_NON_REPUDIATION_KEY_USAGE, IDS_NON_REPUDIATION, { 0 } },
+ { CERT_KEY_ENCIPHERMENT_KEY_USAGE, IDS_KEY_ENCIPHERMENT, { 0 } },
+ { CERT_DATA_ENCIPHERMENT_KEY_USAGE, IDS_DATA_ENCIPHERMENT, { 0 } },
+ { CERT_KEY_AGREEMENT_KEY_USAGE, IDS_KEY_AGREEMENT, { 0 } },
+ { CERT_KEY_CERT_SIGN_KEY_USAGE, IDS_CERT_SIGN, { 0 } },
+ { CERT_OFFLINE_CRL_SIGN_KEY_USAGE, IDS_OFFLINE_CRL_SIGN, { 0 } },
+ { CERT_CRL_SIGN_KEY_USAGE, IDS_CRL_SIGN, { 0 } },
+ { CERT_ENCIPHER_ONLY_KEY_USAGE, IDS_ENCIPHER_ONLY, { 0 } },
+};
+static struct BitToString keyUsageByte1Map[] = {
+ { CERT_DECIPHER_ONLY_KEY_USAGE, IDS_DECIPHER_ONLY, { 0 } },
+};
+
+static BOOL WINAPI CRYPT_FormatKeyUsage(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    DWORD size;
+    CRYPT_BIT_BLOB *bits;
+    BOOL ret;
+
+    if (!cbEncoded)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType, X509_KEY_USAGE,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &bits, &size)))
+    {
+        WCHAR infoNotAvailable[MAX_STRING_RESOURCE_LEN];
+        DWORD bytesNeeded = sizeof(WCHAR);
+
+        LoadStringW(hInstance, IDS_INFO_NOT_AVAILABLE, infoNotAvailable,
+         sizeof(infoNotAvailable) / sizeof(infoNotAvailable[0]));
+        if (!bits->cbData || bits->cbData > 2)
+        {
+            bytesNeeded += strlenW(infoNotAvailable) * sizeof(WCHAR);
+            if (!pbFormat)
+                *pcbFormat = bytesNeeded;
+            else if (*pcbFormat < bytesNeeded)
+            {
+                *pcbFormat = bytesNeeded;
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+            {
+                LPWSTR str = pbFormat;
+
+                *pcbFormat = bytesNeeded;
+                strcpyW(str, infoNotAvailable);
+            }
+        }
+        else
+        {
+            static BOOL stringsLoaded = FALSE;
+            int i;
+            DWORD bitStringLen;
+            BOOL first = TRUE;
+
+            if (!stringsLoaded)
+            {
+                for (i = 0;
+                 i < sizeof(keyUsageByte0Map) / sizeof(keyUsageByte0Map[0]);
+                 i++)
+                    LoadStringW(hInstance, keyUsageByte0Map[i].id,
+                     keyUsageByte0Map[i].str, MAX_STRING_RESOURCE_LEN);
+                for (i = 0;
+                 i < sizeof(keyUsageByte1Map) / sizeof(keyUsageByte1Map[0]);
+                 i++)
+                    LoadStringW(hInstance, keyUsageByte1Map[i].id,
+                     keyUsageByte1Map[i].str, MAX_STRING_RESOURCE_LEN);
+                stringsLoaded = TRUE;
+            }
+            CRYPT_FormatBits(dwFormatStrType, bits->pbData[0],
+             keyUsageByte0Map,
+             sizeof(keyUsageByte0Map) / sizeof(keyUsageByte0Map[0]),
+             NULL, &bitStringLen, &first);
+            bytesNeeded += bitStringLen;
+            if (bits->cbData == 2)
+            {
+                CRYPT_FormatBits(dwFormatStrType, bits->pbData[1],
+                 keyUsageByte1Map,
+                 sizeof(keyUsageByte1Map) / sizeof(keyUsageByte1Map[0]),
+                 NULL, &bitStringLen, &first);
+                bytesNeeded += bitStringLen;
+            }
+            bytesNeeded += 3 * sizeof(WCHAR); /* " (" + ")" */
+            CRYPT_FormatHexString(0, 0, 0, NULL, NULL, bits->pbData,
+             bits->cbData, NULL, &size);
+            bytesNeeded += size;
+            if (!pbFormat)
+                *pcbFormat = bytesNeeded;
+            else if (*pcbFormat < bytesNeeded)
+            {
+                *pcbFormat = bytesNeeded;
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+            {
+                LPWSTR str = pbFormat;
+
+                bitStringLen = bytesNeeded;
+                first = TRUE;
+                CRYPT_FormatBits(dwFormatStrType, bits->pbData[0],
+                 keyUsageByte0Map,
+                 sizeof(keyUsageByte0Map) / sizeof(keyUsageByte0Map[0]),
+                 str, &bitStringLen, &first);
+                str += bitStringLen / sizeof(WCHAR) - 1;
+                if (bits->cbData == 2)
+                {
+                    bitStringLen = bytesNeeded;
+                    CRYPT_FormatBits(dwFormatStrType, bits->pbData[1],
+                     keyUsageByte1Map,
+                     sizeof(keyUsageByte1Map) / sizeof(keyUsageByte1Map[0]),
+                     str, &bitStringLen, &first);
+                    str += bitStringLen / sizeof(WCHAR) - 1;
+                }
+                *str++ = ' ';
+                *str++ = '(';
+                CRYPT_FormatHexString(0, 0, 0, NULL, NULL, bits->pbData,
+                 bits->cbData, str, &size);
+                str += size / sizeof(WCHAR) - 1;
+                *str++ = ')';
+                *str = 0;
+            }
+        }
+        LocalFree(bits);
+    }
+    return ret;
+}
+
 static WCHAR subjectTypeHeader[MAX_STRING_RESOURCE_LEN];
 static WCHAR subjectTypeCA[MAX_STRING_RESOURCE_LEN];
 static WCHAR subjectTypeEndCert[MAX_STRING_RESOURCE_LEN];
@@ -1974,6 +2179,9 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
     {
         switch (LOWORD(lpszStructType))
         {
+        case LOWORD(X509_KEY_USAGE):
+            format = CRYPT_FormatKeyUsage;
+            break;
         case LOWORD(X509_ALTERNATE_NAME):
             format = CRYPT_FormatAltName;
             break;
@@ -2001,6 +2209,8 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
         format = CRYPT_FormatAltName;
     else if (!strcmp(lpszStructType, szOID_ISSUER_ALT_NAME))
         format = CRYPT_FormatAltName;
+    else if (!strcmp(lpszStructType, szOID_KEY_USAGE))
+        format = CRYPT_FormatKeyUsage;
     else if (!strcmp(lpszStructType, szOID_SUBJECT_ALT_NAME2))
         format = CRYPT_FormatAltName;
     else if (!strcmp(lpszStructType, szOID_ISSUER_ALT_NAME2))
