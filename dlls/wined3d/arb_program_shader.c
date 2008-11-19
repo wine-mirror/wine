@@ -1095,10 +1095,20 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
 
     if (shader_is_pshader_version(shader->baseShader.hex_version))
     {
+        /* Output token related */
+        char output_rname[256];
+        char output_wmask[20];
+        char operands[4][100];
         BOOL saturate = FALSE;
         BOOL centroid = FALSE;
         BOOL partialprecision = FALSE;
         DWORD shift;
+
+        if (!curOpcode->num_params)
+        {
+            ERR("Opcode \"%s\" has no parameters\n", curOpcode->name);
+            return;
+        }
 
         strcpy(tmpLine, curOpcode->glname);
 
@@ -1119,40 +1129,30 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
         }
         shift = (dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
 
-        /* Generate input and output registers */
-        if (curOpcode->num_params > 0)
+        /* Generate input register names (with modifiers) */
+        for (i = 1; i < curOpcode->num_params; ++i)
+            pshader_gen_input_modifier_line(arg->shader, buffer, src[i-1], i-1, operands[i]);
+
+        /* Handle output register */
+        pshader_get_register_name(arg->shader, dst, output_rname);
+        strcpy(operands[0], output_rname);
+        shader_arb_get_write_mask(arg, dst, output_wmask);
+        strcat(operands[0], output_wmask);
+
+        if (saturate && (shift == 0))
+            strcat(tmpLine, "_SAT");
+        strcat(tmpLine, " ");
+        strcat(tmpLine, operands[0]);
+        for (i = 1; i < curOpcode->num_params; i++)
         {
-            /* Output token related */
-            char output_rname[256];
-            char output_wmask[20];
-            char operands[4][100];
-
-            /* Generate input register names (with modifiers) */
-            for (i = 1; i < curOpcode->num_params; ++i)
-                pshader_gen_input_modifier_line(arg->shader, buffer, src[i-1], i-1, operands[i]);
-
-            /* Handle output register */
-            pshader_get_register_name(arg->shader, dst, output_rname);
-            strcpy(operands[0], output_rname);
-            shader_arb_get_write_mask(arg, dst, output_wmask);
-            strcat(operands[0], output_wmask);
-
-            if (saturate && (shift == 0))
-                strcat(tmpLine, "_SAT");
-            strcat(tmpLine, " ");
-            strcat(tmpLine, operands[0]);
-            for (i = 1; i < curOpcode->num_params; i++)
-            {
-                strcat(tmpLine, ", ");
-                strcat(tmpLine, operands[i]);
-            }
-            strcat(tmpLine,";\n");
-            shader_addline(buffer, tmpLine);
-
-            /* A shift requires another line. */
-            if (shift != 0)
-                pshader_gen_output_modifier_line(buffer, saturate, output_wmask, shift, output_rname);
+            strcat(tmpLine, ", ");
+            strcat(tmpLine, operands[i]);
         }
+        strcat(tmpLine,";\n");
+        shader_addline(buffer, tmpLine);
+
+        /* A shift requires another line. */
+        if (shift) pshader_gen_output_modifier_line(buffer, saturate, output_wmask, shift, output_rname);
     } else {
         if ((curOpcode->opcode == WINED3DSIO_MOV && shader_get_regtype(dst) == WINED3DSPR_ADDR)
                 || curOpcode->opcode == WINED3DSIO_MOVA) {
