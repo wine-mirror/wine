@@ -2458,7 +2458,10 @@ static LRESULT WINAPI button_hook_proc(HWND button, UINT msg, WPARAM wparam, LPA
 
 static void test_capture_1(void)
 {
-    HWND button, capture;
+    HWND button, capture, oldFocus, oldActive;
+
+    oldFocus = GetFocus();
+    oldActive = GetActiveWindow();
 
     capture = GetCapture();
     ok(capture == 0, "GetCapture() = %p\n", capture);
@@ -2476,14 +2479,16 @@ static void test_capture_1(void)
     check_wnd_state(button, 0, button, button);
 
     DestroyWindow(button);
-    check_wnd_state(0, 0, 0, 0);
+    check_wnd_state(oldActive, 0, oldFocus, 0);
 }
 
 static void test_capture_2(void)
 {
-    HWND button, hwnd, capture;
+    HWND button, hwnd, capture, oldFocus, oldActive;
 
-    check_wnd_state(0, 0, 0, 0);
+    oldFocus = GetFocus();
+    oldActive = GetActiveWindow();
+    check_wnd_state(oldActive, 0, oldFocus, 0);
 
     button = CreateWindowExA(0, "button", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 10, 10, 0, 0, 0, NULL);
     assert(button);
@@ -2533,7 +2538,7 @@ static void test_capture_2(void)
     check_wnd_state(button, button, button, 0);
 
     DestroyWindow(button);
-    check_wnd_state(0, 0, 0, 0);
+    check_wnd_state(oldActive, 0, oldFocus, 0);
 }
 
 static void test_capture_3(HWND hwnd1, HWND hwnd2)
