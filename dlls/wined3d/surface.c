@@ -4265,6 +4265,22 @@ struct coords {
     GLfloat x, y, z;
 };
 
+struct float_rect
+{
+    float l;
+    float t;
+    float r;
+    float b;
+};
+
+static inline void cube_coords_float(const RECT *r, UINT w, UINT h, struct float_rect *f)
+{
+    f->l = ((r->left * 2.0f) / w) - 1.0f;
+    f->t = ((r->top * 2.0f) / h) - 1.0f;
+    f->r = ((r->right * 2.0f) / w) - 1.0f;
+    f->b = ((r->bottom * 2.0f) / h) - 1.0f;
+}
+
 static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in) {
     struct coords coords[4];
     RECT rect;
@@ -4272,6 +4288,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     IWineD3DBaseTexture *texture;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     GLenum bind_target;
+    struct float_rect f;
 
     if(rect_in) {
         rect = *rect_in;
@@ -4314,50 +4331,56 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
         case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
             bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            coords[0].x =  1;   coords[0].y = -1;   coords[0].z =  1;
-            coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
-            coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
-            coords[3].x =  1;   coords[3].y = -1;   coords[3].z = -1;
+            cube_coords_float(&rect, This->pow2Width, This->pow2Height, &f);
+            coords[0].x =    1; coords[0].y = -f.t; coords[0].z = -f.l;
+            coords[1].x =    1; coords[1].y = -f.b; coords[1].z = -f.l;
+            coords[2].x =    1; coords[2].y = -f.b; coords[2].z = -f.r;
+            coords[3].x =    1; coords[3].y = -f.t; coords[3].z = -f.r;
             break;
 
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
             bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
-            coords[1].x = -1;   coords[1].y =  1;   coords[1].z =  1;
-            coords[2].x = -1;   coords[2].y =  1;   coords[2].z = -1;
-            coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+            cube_coords_float(&rect, This->pow2Width, This->pow2Height, &f);
+            coords[0].x =   -1; coords[0].y = -f.t; coords[0].z =  f.l;
+            coords[1].x =   -1; coords[1].y = -f.b; coords[1].z =  f.l;
+            coords[2].x =   -1; coords[2].y = -f.b; coords[2].z =  f.r;
+            coords[3].x =   -1; coords[3].y = -f.t; coords[3].z =  f.r;
             break;
 
         case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
             bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            coords[0].x = -1;   coords[0].y =  1;   coords[0].z =  1;
-            coords[1].x =  1;   coords[1].y =  1;   coords[1].z =  1;
-            coords[2].x =  1;   coords[2].y =  1;   coords[2].z = -1;
-            coords[3].x = -1;   coords[3].y =  1;   coords[3].z = -1;
+            cube_coords_float(&rect, This->pow2Width, This->pow2Height, &f);
+            coords[0].x =  f.l; coords[0].y =    1; coords[0].z =  f.t;
+            coords[1].x =  f.l; coords[1].y =    1; coords[1].z =  f.b;
+            coords[2].x =  f.r; coords[2].y =    1; coords[2].z =  f.b;
+            coords[3].x =  f.r; coords[3].y =    1; coords[3].z =  f.t;
             break;
 
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
             bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
-            coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
-            coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
-            coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+            cube_coords_float(&rect, This->pow2Width, This->pow2Height, &f);
+            coords[0].x =  f.l; coords[0].y =   -1; coords[0].z = -f.t;
+            coords[1].x =  f.l; coords[1].y =   -1; coords[1].z = -f.b;
+            coords[2].x =  f.r; coords[2].y =   -1; coords[2].z = -f.b;
+            coords[3].x =  f.r; coords[3].y =   -1; coords[3].z = -f.t;
             break;
 
         case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
             bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            coords[0].x = -1;   coords[0].y = -1;   coords[0].z =  1;
-            coords[1].x =  1;   coords[1].y = -1;   coords[1].z =  1;
-            coords[2].x =  1;   coords[2].y = -1;   coords[2].z =  1;
-            coords[3].x = -1;   coords[3].y = -1;   coords[3].z =  1;
+            cube_coords_float(&rect, This->pow2Width, This->pow2Height, &f);
+            coords[0].x =  f.l; coords[0].y = -f.t; coords[0].z =    1;
+            coords[1].x =  f.l; coords[1].y = -f.b; coords[1].z =    1;
+            coords[2].x =  f.r; coords[2].y = -f.b; coords[2].z =    1;
+            coords[3].x =  f.r; coords[3].y = -f.t; coords[3].z =    1;
             break;
 
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
             bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            coords[0].x = -1;   coords[0].y = -1;   coords[0].z = -1;
-            coords[1].x =  1;   coords[1].y = -1;   coords[1].z = -1;
-            coords[2].x =  1;   coords[2].y = -1;   coords[2].z = -1;
-            coords[3].x = -1;   coords[3].y = -1;   coords[3].z = -1;
+            cube_coords_float(&rect, This->pow2Width, This->pow2Height, &f);
+            coords[0].x = -f.l; coords[0].y = -f.t; coords[0].z =   -1;
+            coords[1].x = -f.l; coords[1].y = -f.b; coords[1].z =   -1;
+            coords[2].x = -f.r; coords[2].y = -f.b; coords[2].z =   -1;
+            coords[3].x = -f.r; coords[3].y = -f.t; coords[3].z =   -1;
             break;
 
         default:
