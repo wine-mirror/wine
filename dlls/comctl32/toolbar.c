@@ -542,7 +542,7 @@ TOOLBAR_DrawArrow (HDC hdc, INT left, INT top, COLORREF clr)
     MoveToEx (hdc, x, y, NULL);
     LineTo (hdc, x+3, y++); x++;
     MoveToEx (hdc, x, y, NULL);
-    LineTo (hdc, x+1, y++);
+    LineTo (hdc, x+1, y);
     SelectObject( hdc, hOldPen );
     DeleteObject( hPen );
 }
@@ -1151,7 +1151,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, const PAINTSTRUCT *ps)
 	tbcd.nmcd.dwDrawStage = CDDS_POSTPAINT;
 	tbcd.nmcd.hdc = hdc;
 	tbcd.nmcd.rc = ps->rcPaint;
-	ntfret = TOOLBAR_SendNotify(&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
+	TOOLBAR_SendNotify(&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
     }
 }
 
@@ -1426,7 +1426,6 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 		TRACE("wrap point 5 btn %d style %02x, x=%d, cx=%d\n",
 		      i, btnPtr[i].fsStyle, x, cx);
 		btnPtr[i].fsState |= TBSTATE_WRAP;
-		bFound = TRUE;
 		x = infoPtr->nIndent;
 		if (btnPtr[i].fsStyle & BTNS_SEP )
 		    bButtonWrap = FALSE;
