@@ -106,6 +106,11 @@ static UINT WM_MSIME_DOCUMENTFEED;
 
 static const WCHAR szwWineIMCProperty[] = {'W','i','n','e','I','m','m','H','I','M','C','P','r','o','p','e','r','t','y',0};
 
+static const WCHAR szImeFileW[] = {'I','m','e',' ','F','i','l','e',0};
+static const WCHAR szLayoutTextW[] = {'L','a','y','o','u','t',' ','T','e','x','t',0};
+static const WCHAR szImeRegFmt[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s','\\','%','0','8','x',0};
+
+
 #define is_himc_ime_unicode(p)  (p->immKbd->imeInfo.fdwProperty & IME_PROP_UNICODE)
 #define is_kbd_ime_unicode(p)  (p->imeInfo.fdwProperty & IME_PROP_UNICODE)
 
@@ -1523,15 +1528,12 @@ UINT WINAPI ImmGetIMEFileNameA( HKL hKL, LPSTR lpszFileName, UINT uBufLen)
  */
 UINT WINAPI ImmGetIMEFileNameW(HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
 {
-    static const WCHAR szImeFileW[] = {'I','m','e',' ','F','i','l','e',0};
-    static const WCHAR fmt[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s','\\','%','0','8','x',0};
-
     HKEY hkey;
     DWORD length;
     DWORD rc;
-    WCHAR regKey[sizeof(fmt)/sizeof(WCHAR)+8];
+    WCHAR regKey[sizeof(szImeRegFmt)/sizeof(WCHAR)+8];
 
-    wsprintfW( regKey, fmt, (unsigned)hKL );
+    wsprintfW( regKey, szImeRegFmt, (unsigned)hKL );
     rc = RegOpenKeyW( HKEY_LOCAL_MACHINE, regKey, &hkey);
     if (rc != ERROR_SUCCESS)
     {
@@ -1713,11 +1715,21 @@ UINT WINAPI ImmGetVirtualKey(HWND hWnd)
 HKL WINAPI ImmInstallIMEA(
   LPCSTR lpszIMEFileName, LPCSTR lpszLayoutText)
 {
-  FIXME("(%s, %s): stub\n",
-    debugstr_a(lpszIMEFileName), debugstr_a(lpszLayoutText)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return NULL;
+    LPWSTR lpszwIMEFileName;
+    LPWSTR lpszwLayoutText;
+    HKL hkl;
+
+    TRACE ("(%s, %s)\n", debugstr_a(lpszIMEFileName),
+                         debugstr_a(lpszLayoutText));
+
+    lpszwIMEFileName = strdupAtoW(lpszIMEFileName);
+    lpszwLayoutText = strdupAtoW(lpszLayoutText);
+
+    hkl = ImmInstallIMEW(lpszwIMEFileName, lpszwLayoutText);
+
+    HeapFree(GetProcessHeap(),0,lpszwIMEFileName);
+    HeapFree(GetProcessHeap(),0,lpszwLayoutText);
+    return hkl;
 }
 
 /***********************************************************************
@@ -1726,11 +1738,56 @@ HKL WINAPI ImmInstallIMEA(
 HKL WINAPI ImmInstallIMEW(
   LPCWSTR lpszIMEFileName, LPCWSTR lpszLayoutText)
 {
-  FIXME("(%s, %s): stub\n",
-    debugstr_w(lpszIMEFileName), debugstr_w(lpszLayoutText)
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return NULL;
+    INT lcid = GetUserDefaultLCID();
+    INT count;
+    HKL hkl;
+    DWORD rc;
+    HKEY hkey;
+    WCHAR regKey[sizeof(szImeRegFmt)/sizeof(WCHAR)+8];
+
+    TRACE ("(%s, %s):\n", debugstr_w(lpszIMEFileName),
+                          debugstr_w(lpszLayoutText));
+
+    /* Start with 2.  e001 will be blank and so default to the wine internal IME */
+    count = 2;
+
+    while (count < 0xfff)
+    {
+        DWORD disposition = 0;
+
+        hkl = (HKL)(((0xe000|count)<<16) | lcid);
+        wsprintfW( regKey, szImeRegFmt, (unsigned)hkl);
+
+        rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, regKey, 0, NULL, 0, KEY_WRITE, NULL, &hkey, &disposition);
+        if (rc == ERROR_SUCCESS && disposition == REG_CREATED_NEW_KEY)
+            break;
+        else if (rc == ERROR_SUCCESS)
+            RegCloseKey(hkey);
+
+        count++;
+    }
+
+    if (count == 0xfff)
+    {
+        WARN("Unable to find slot to install IME\n");
+        return 0;
+    }
+
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = RegSetValueExW(hkey, szImeFileW, 0, REG_SZ, (LPBYTE)lpszIMEFileName,
+                            (lstrlenW(lpszIMEFileName) + 1) * sizeof(WCHAR));
+        if (rc == ERROR_SUCCESS)
+            rc = RegSetValueExW(hkey, szLayoutTextW, 0, REG_SZ, (LPBYTE)lpszLayoutText,
+                                (lstrlenW(lpszLayoutText) + 1) * sizeof(WCHAR));
+        RegCloseKey(hkey);
+        return hkl;
+    }
+    else
+    {
+        WARN("Unable to set IME registry values\n");
+        return 0;
+    }
 }
 
 /***********************************************************************
