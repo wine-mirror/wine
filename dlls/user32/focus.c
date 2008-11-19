@@ -276,6 +276,9 @@ HWND WINAPI SetFocus( HWND hwnd )
         {
             if (!set_active_window( hwndTop, NULL, FALSE, FALSE )) return 0;
             if (!IsWindow( hwnd )) return 0;  /* Abort if window destroyed */
+
+            /* Do not change focus if the window is no longer active */
+            if (hwndTop != GetActiveWindow()) return 0;
         }
     }
     else /* NULL hwnd passed in */
