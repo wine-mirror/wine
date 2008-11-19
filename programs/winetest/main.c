@@ -349,15 +349,15 @@ run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms)
     return status;
 }
 
-static void
+static DWORD
 get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
 {
     char *cmd;
     HANDLE subfile;
-    DWORD total;
+    DWORD err, total;
     char buffer[8192], *index;
     static const char header[] = "Valid test names:";
-    int allocated;
+    int status, allocated;
     char tmpdir[MAX_PATH], subname[MAX_PATH];
     SECURITY_ATTRIBUTES sa;
 
@@ -384,6 +384,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
                            &sa, CREATE_ALWAYS, 0, NULL );
     }
     if (subfile == INVALID_HANDLE_VALUE) {
+        err = GetLastError();
         report (R_ERROR, "Can't open subtests output of %s: %u",
                 test->name, GetLastError());
         goto quit;
@@ -391,8 +392,15 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
 
     extract_test (test, tempdir, res_name);
     cmd = strmake (NULL, "%s --list", test->exename);
-    run_ex (cmd, subfile, tempdir, 5000);
+    status = run_ex (cmd, subfile, tempdir, 5000);
+    err = GetLastError();
     free (cmd);
+
+    if (status == -2)
+    {
+        report (R_ERROR, "Cannot run %s error %u", test->exename, err);
+        goto quit;
+    }
 
     SetFilePointer( subfile, 0, NULL, FILE_BEGIN );
     ReadFile( subfile, buffer, sizeof(buffer), &total, NULL );
@@ -400,6 +408,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
     if (sizeof buffer == total) {
         report (R_ERROR, "Subtest list of %s too big.",
                 test->name, sizeof buffer);
+        err = ERROR_OUTOFMEMORY;
         goto quit;
     }
     buffer[total] = 0;
@@ -408,6 +417,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
     if (!index) {
         report (R_ERROR, "Can't parse subtests output of %s",
                 test->name);
+        err = ERROR_INTERNAL_ERROR;
         goto quit;
     }
     index += sizeof header;
@@ -427,10 +437,12 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
     }
     test->subtests = xrealloc (test->subtests,
                                test->subtest_count * sizeof(char*));
+    err = 0;
 
  quit:
     if (!DeleteFileA (subname))
         report (R_WARNING, "Can't delete file '%s': %u", subname, GetLastError());
+    return err;
 }
 
 static void
@@ -461,6 +473,7 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     const char *tempdir = (const char *)lParam;
     char dllname[MAX_PATH];
     HMODULE dll;
+    DWORD err;
 
     if (test_filtered_out( lpszName, NULL )) return TRUE;
 
@@ -476,11 +489,16 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     }
     FreeLibrary(dll);
 
-    xprintf ("    %s=%s\n", dllname, get_file_version(dllname));
-
-    get_subtests( tempdir, &wine_tests[nr_of_files], lpszName );
-    nr_of_tests += wine_tests[nr_of_files].subtest_count;
-    nr_of_files++;
+    if (!(err = get_subtests( tempdir, &wine_tests[nr_of_files], lpszName )))
+    {
+        xprintf ("    %s=%s\n", dllname, get_file_version(dllname));
+        nr_of_tests += wine_tests[nr_of_files].subtest_count;
+        nr_of_files++;
+    }
+    else
+    {
+        xprintf ("    %s=load error %u\n", dllname, err);
+    }
     return TRUE;
 }
 
