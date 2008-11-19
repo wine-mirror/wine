@@ -484,7 +484,7 @@ REBAR_DrawChevron (HDC hdc, INT left, INT top, INT colorRef)
     MoveToEx (hdc, x, y, NULL);
     LineTo (hdc, x+3, y++); x++;
     MoveToEx (hdc, x, y, NULL);
-    LineTo (hdc, x+1, y++);
+    LineTo (hdc, x+1, y);
     SelectObject( hdc, hOldPen );
     DeleteObject( hPen );
 }
