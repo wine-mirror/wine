@@ -1172,7 +1172,6 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
   x = lpht->pt.x;
   y = lpht->pt.y;
-  retval = MCHT_NOWHERE;
 
   ZeroMemory(&lpht->st, sizeof(lpht->st));
 
@@ -1887,7 +1886,7 @@ static LRESULT theme_changed (const MONTHCAL_INFO* infoPtr)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     CloseThemeData (theme);
-    theme = OpenThemeData (infoPtr->hwndSelf, themeClass);
+    OpenThemeData (infoPtr->hwndSelf, themeClass);
     return 0;
 }
 
