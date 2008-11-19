@@ -2470,26 +2470,37 @@ static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *statebloc
     float col[4];
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
-    /* Do not overwrite pixel shader constants if a pshader is in use */
-    if(use_ps(device)) return;
+    /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
+     * application provided constants
+     */
+    if(device->shader_backend == &arb_program_shader_backend) {
+        if(use_ps(device)) return;
+
+        device = stateblock->wineD3DDevice;
+        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
+        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
+    }
 
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col)");
 
-    if(device->shader_backend == &arb_program_shader_backend) {
-        device = stateblock->wineD3DDevice;
-        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
-        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
-    }
 }
 
 static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     float col[4];
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
-    /* Do not overwrite pixel shader constants if a pshader is in use */
-    if(use_ps(device)) return;
+    /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
+     * application provided constants
+     */
+    if(device->shader_backend == &arb_program_shader_backend) {
+        if(use_ps(device)) return;
+
+        device = stateblock->wineD3DDevice;
+        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
+        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
+    }
 
     if(stateblock->renderState[WINED3DRS_SPECULARENABLE]) {
         /* The specular color has no alpha */
@@ -2501,12 +2512,6 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
     }
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col)");
-
-    if(device->shader_backend == &arb_program_shader_backend) {
-        device = stateblock->wineD3DDevice;
-        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
-        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
-    }
 }
 
 static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -2524,8 +2529,14 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, W
                 device->StateTable[STATE_PIXELSHADERCONSTANT].apply(STATE_PIXELSHADERCONSTANT, stateblock, context);
             }
         }
-        /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
-        return;
+
+        if(device->shader_backend == &arb_program_shader_backend) {
+            /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
+            return;
+        }
+    } else if(device->shader_backend == &arb_program_shader_backend) {
+        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_BUMPMAT(stage)] = 1;
+        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
     }
 
     mat[0][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]);
@@ -2535,11 +2546,6 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0]));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0])");
-
-    if(device->shader_backend == &arb_program_shader_backend) {
-        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_BUMPMAT(stage)] = 1;
-        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
-    }
 }
 
 static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -2557,8 +2563,14 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
                 device->StateTable[STATE_PIXELSHADERCONSTANT].apply(STATE_PIXELSHADERCONSTANT, stateblock, context);
             }
         }
-        /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
-        return;
+
+        if(device->shader_backend == &arb_program_shader_backend) {
+            /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
+            return;
+        }
+    } else if(device->shader_backend == &arb_program_shader_backend) {
+        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_LUMINANCE(stage)] = 1;
+        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
     }
 
     param[0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVLSCALE]);
@@ -2568,11 +2580,6 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
 
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_LUMINANCE(stage), param));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_LUMINANCE(stage), param)");
-
-    if(device->shader_backend == &arb_program_shader_backend) {
-        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_LUMINANCE(stage)] = 1;
-        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
-    }
 }
 
 static const char *get_argreg(SHADER_BUFFER *buffer, DWORD argnum, unsigned int stage, DWORD arg) {
