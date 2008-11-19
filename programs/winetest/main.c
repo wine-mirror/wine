@@ -51,6 +51,35 @@ static const char whitespace[] = " \t\r\n";
 static const char testexe[] = "_test.exe";
 static char build_id[64];
 
+/* filters for running only specific tests */
+static char *filters[64];
+static unsigned int nb_filters = 0;
+
+/* check if test is being filtered out */
+static BOOL test_filtered_out( LPCSTR module, LPCSTR testname )
+{
+    char *p, dllname[MAX_PATH];
+    unsigned int i, len;
+
+    strcpy( dllname, module );
+    CharLowerA( dllname );
+    p = strstr( dllname, testexe );
+    if (p) *p = 0;
+    len = strlen(dllname);
+
+    if (!nb_filters) return FALSE;
+    for (i = 0; i < nb_filters; i++)
+    {
+        if (!strncmp( dllname, filters[i], len ))
+        {
+            if (!filters[i][len]) return FALSE;
+            if (filters[i][len] != ':') continue;
+            if (!testname || !strcmp( testname, &filters[i][len+1] )) return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 static char * get_file_version(char * file_name)
 {
     static char version[32];
@@ -392,7 +421,8 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
             test->subtests = xrealloc (test->subtests,
                                        allocated * sizeof(char*));
         }
-        test->subtests[test->subtest_count++] = strdup (index);
+        if (!test_filtered_out( test->name, index ))
+            test->subtests[test->subtest_count++] = xstrdup(index);
         index = strtok (NULL, whitespace);
     }
     test->subtests = xrealloc (test->subtests,
@@ -420,7 +450,7 @@ static BOOL CALLBACK
 EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
                   LPTSTR lpszName, LONG_PTR lParam)
 {
-    (*(int*)lParam)++;
+    if (!test_filtered_out( lpszName, NULL )) (*(int*)lParam)++;
     return TRUE;
 }
 
@@ -431,6 +461,8 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     const char *tempdir = (const char *)lParam;
     char dllname[MAX_PATH];
     HMODULE dll;
+
+    if (test_filtered_out( lpszName, NULL )) return TRUE;
 
     /* Check if the main dll is present on this system */
     CharLowerA(lpszName);
@@ -582,7 +614,7 @@ static void
 usage (void)
 {
     fprintf (stderr,
-"Usage: winetest [OPTION]...\n\n"
+"Usage: winetest [OPTION]... [TESTS]\n\n"
 "  -c       console mode, no GUI\n"
 "  -e       preserve the environment\n"
 "  -h       print this message and exit\n"
@@ -607,11 +639,14 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     cmdLine = strtok (cmdLine, whitespace);
     while (cmdLine) {
         if (cmdLine[0] != '-' || cmdLine[2]) {
-            report (R_ERROR, "Not a single letter option: %s", cmdLine);
-            usage ();
-            exit (2);
+            if (nb_filters == sizeof(filters)/sizeof(filters[0]))
+            {
+                report (R_ERROR, "Too many test filters specified");
+                exit (2);
+            }
+            filters[nb_filters++] = xstrdup( cmdLine );
         }
-        switch (cmdLine[1]) {
+        else switch (cmdLine[1]) {
         case 'c':
             report (R_TEXTMODE);
             interactive = 0;
@@ -672,21 +707,24 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             SetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", "0" );
         }
 
-        while (!tag) {
-            if (!interactive)
-                report (R_FATAL, "Please specify a tag (-t option) if "
-                        "running noninteractive!");
-            if (guiAskTag () == IDABORT) exit (1);
-        }
-        report (R_TAG);
+        if (!nb_filters)  /* don't submit results when filtering */
+        {
+            while (!tag) {
+                if (!interactive)
+                    report (R_FATAL, "Please specify a tag (-t option) if "
+                            "running noninteractive!");
+                if (guiAskTag () == IDABORT) exit (1);
+            }
+            report (R_TAG);
 
-        if (!build_id[0])
-            report( R_WARNING, "You won't be able to submit results without a valid build id.\n"
-                    "To submit results, winetest needs to be built from a git checkout." );
+            if (!build_id[0])
+                report( R_WARNING, "You won't be able to submit results without a valid build id.\n"
+                        "To submit results, winetest needs to be built from a git checkout." );
+        }
 
         if (!logname) {
             logname = run_tests (NULL);
-            if (build_id[0] &&
+            if (build_id[0] && !nb_filters &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
                 if (!send_file (logname) && !DeleteFileA(logname))
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
