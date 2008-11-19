@@ -5121,6 +5121,139 @@ static void test_fullscreen(void)
     UnregisterClass("fullscreen_class", GetModuleHandle(0));
 }
 
+static BOOL test_thick_child_got_minmax;
+
+static int getExpectedThickChildInc(void)
+{
+    const int outer = 2;
+    int resizeBorder = GetSystemMetrics(SM_CXFRAME) - GetSystemMetrics(SM_CXDLGFRAME);
+    return (outer + resizeBorder);
+}
+
+static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    MINMAXINFO* minmax;
+    int expectedMinTrack;
+    int actualMinTrackX;
+    int actualMinTrackY;
+    int expectedMaxTrackX;
+    int expectedMaxTrackY;
+    int actualMaxTrackX;
+    int actualMaxTrackY;
+    int expectedMaxSizeX;
+    int expectedMaxSizeY;
+    int actualMaxSizeX;
+    int actualMaxSizeY;
+    int expectedPosX;
+    int expectedPosY;
+    int actualPosX;
+    int actualPosY;
+    RECT rect;
+    switch (msg)
+    {
+        case WM_GETMINMAXINFO:
+        {
+            minmax = (MINMAXINFO *)lparam;
+            trace("hwnd %p, WM_GETMINMAXINFO, %08lx, %08lx\n", hwnd, wparam, lparam);
+            dump_minmax_info( minmax );
+
+            test_thick_child_got_minmax = TRUE;
+
+            expectedMinTrack = 2* getExpectedThickChildInc();
+            actualMinTrackX =  minmax->ptMinTrackSize.x;
+            actualMinTrackY =  minmax->ptMinTrackSize.y;
+            todo_wine
+                ok(actualMinTrackX == expectedMinTrack && actualMinTrackY == expectedMinTrack,
+                    "expected minTrack %dx%d, actual minTrack %dx%d\n",
+                    expectedMinTrack, expectedMinTrack, actualMinTrackX, actualMinTrackY);
+
+            actualMaxTrackX = minmax->ptMaxTrackSize.x;
+            actualMaxTrackY = minmax->ptMaxTrackSize.y;
+            expectedMaxTrackX = GetSystemMetrics(SM_CXMAXTRACK);
+            expectedMaxTrackY = GetSystemMetrics(SM_CYMAXTRACK);
+            ok(actualMaxTrackX == expectedMaxTrackX &&  actualMaxTrackY == expectedMaxTrackY,
+                "expected maxTrack %dx%d, actual maxTrack %dx%d\n",
+                 expectedMaxTrackX, expectedMaxTrackY, actualMaxTrackX, actualMaxTrackY);
+
+            GetClientRect(GetAncestor(hwnd, GA_PARENT), &rect);
+            AdjustWindowRectEx(&rect, WS_CHILD | WS_VISIBLE | WS_THICKFRAME, FALSE, 0);
+            expectedMaxSizeX = rect.right - rect.left;
+            expectedMaxSizeY = rect.bottom - rect.top;
+            actualMaxSizeX = minmax->ptMaxSize.x;
+            actualMaxSizeY = minmax->ptMaxSize.y;
+            ok(actualMaxSizeX == expectedMaxSizeX &&  actualMaxSizeY == expectedMaxSizeY,
+                "expected maxTrack %dx%d, actual maxTrack %dx%d\n",
+                expectedMaxSizeX, expectedMaxSizeY, actualMaxSizeX, actualMaxSizeY);
+
+            expectedPosX = - getExpectedThickChildInc();
+            expectedPosY = expectedPosX;
+            actualPosX = minmax->ptMaxPosition.x;
+            actualPosY = minmax->ptMaxPosition.y;
+            todo_wine
+                ok(actualPosX == expectedPosX && actualPosY == expectedPosY,
+                    "expected maxPosition (%d/%d), actual maxPosition (%d/%d)\n",
+                    expectedPosX, expectedPosY, actualPosX, actualPosY);
+            break;
+        }
+    }
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static void test_thick_child_size(HWND parentWindow)
+{
+    BOOL success;
+    RECT childRect;
+    HWND childWindow;
+    LONG childWidth;
+    LONG childHeight;
+    WNDCLASSA cls;
+    LPCTSTR className = "THICK_CHILD_CLASS";
+    LONG style = WS_CHILD | WS_VISIBLE | WS_THICKFRAME;
+    LONG exStyle = 0;
+    int expectedSize = 2*getExpectedThickChildInc();
+
+
+    cls.style = 0;
+    cls.lpfnWndProc = test_thick_child_size_winproc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = className;
+    SetLastError(0xdeadbeef);
+    ok(RegisterClassA(&cls),"RegisterClassA failed, error: %u\n", GetLastError());
+
+    test_thick_child_got_minmax = FALSE;
+
+    SetLastError(0xdeadbeef);
+    childWindow = CreateWindowEx( exStyle, className, "", style,  0, 0, 0, 0, parentWindow, 0,  GetModuleHandleA(0),  NULL );
+    ok(childWindow != NULL, "Failed to create child window, error: %u\n", GetLastError());
+
+    ok(test_thick_child_got_minmax, "Got no WM_GETMINMAXINFO\n");
+
+    SetLastError(0xdeadbeef);
+    success = GetWindowRect(childWindow, &childRect);
+    ok(success,"GetWindowRect call failed, error: %u\n", GetLastError());
+    childWidth = childRect.right - childRect.left;
+    childHeight = childRect.bottom - childRect.top;
+
+    todo_wine
+        ok( (childWidth == expectedSize) && (childHeight == expectedSize),
+            "size of window with style WS_CHILD | WS_VISIBLE | WS_THICKFRAME  is wrong: expected size %dx%d != actual size %dx%d\n",
+            expectedSize, expectedSize, childWidth, childHeight);
+
+
+    SetLastError(0xdeadbeef);
+    success = DestroyWindow(childWindow);
+    ok(success,"DestroyWindow call failed, error: %u\n", GetLastError());
+    ok(UnregisterClass(className, GetModuleHandleA(0)),"UnregisterClass call failed\n");
+}
+
+
 START_TEST(win)
 {
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
@@ -5153,6 +5286,7 @@ START_TEST(win)
     our_pid = GetWindowThreadProcessId(hwndMain, NULL);
 
     /* Add the tests below this line */
+    test_thick_child_size(hwndMain);
     test_fullscreen();
     test_hwnd_message();
     test_nonclient_area(hwndMain);
