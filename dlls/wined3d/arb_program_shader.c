@@ -1089,8 +1089,7 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD dst = arg->dst;
     DWORD* src = arg->src;
-
-    char tmpLine[256];
+    char arguments[256];
     unsigned int i;
 
     if (shader_is_pshader_version(shader->baseShader.hex_version))
@@ -1102,6 +1101,7 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
         BOOL saturate = FALSE;
         BOOL centroid = FALSE;
         BOOL partialprecision = FALSE;
+        const char *modifier;
         DWORD shift;
 
         if (!curOpcode->num_params)
@@ -1109,8 +1109,6 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
             ERR("Opcode \"%s\" has no parameters\n", curOpcode->name);
             return;
         }
-
-        strcpy(tmpLine, curOpcode->glname);
 
         /* Process modifiers */
         if (dst & WINED3DSP_DSTMOD_MASK)
@@ -1128,6 +1126,7 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
                 FIXME("Unhandled modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
         }
         shift = (dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+        modifier = (saturate && !shift) ? "_SAT" : "";
 
         /* Generate input register names (with modifiers) */
         for (i = 1; i < curOpcode->num_params; ++i)
@@ -1139,33 +1138,31 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
         shader_arb_get_write_mask(arg, dst, output_wmask);
         strcat(operands[0], output_wmask);
 
-        if (saturate && (shift == 0))
-            strcat(tmpLine, "_SAT");
-        strcat(tmpLine, " ");
-        strcat(tmpLine, operands[0]);
+        arguments[0] = '\0';
+        strcat(arguments, operands[0]);
         for (i = 1; i < curOpcode->num_params; i++)
         {
-            strcat(tmpLine, ", ");
-            strcat(tmpLine, operands[i]);
+            strcat(arguments, ", ");
+            strcat(arguments, operands[i]);
         }
-        strcat(tmpLine,";\n");
-        shader_addline(buffer, tmpLine);
+        shader_addline(buffer, "%s%s %s;\n", curOpcode->glname, modifier, arguments);
 
         /* A shift requires another line. */
         if (shift) pshader_gen_output_modifier_line(buffer, saturate, output_wmask, shift, output_rname);
     } else {
-        strcpy(tmpLine, curOpcode->glname);
+        /* Note that vshader_program_add_param() adds spaces. */
 
+        arguments[0] = '\0';
         if (curOpcode->num_params > 0)
         {
-            vshader_program_add_param(arg, dst, FALSE, tmpLine);
+            vshader_program_add_param(arg, dst, FALSE, arguments);
             for (i = 1; i < curOpcode->num_params; ++i)
             {
-                strcat(tmpLine, ",");
-                vshader_program_add_param(arg, src[i-1], TRUE, tmpLine);
+                strcat(arguments, ",");
+                vshader_program_add_param(arg, src[i-1], TRUE, arguments);
             }
         }
-        shader_addline(buffer, "%s;\n", tmpLine);
+        shader_addline(buffer, "%s%s;\n", curOpcode->glname, arguments);
     }
 }
 
