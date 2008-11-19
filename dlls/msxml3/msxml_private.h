@@ -102,10 +102,8 @@ void* libxslt_handle;
 # endif
 # include <libxslt/xsltutils.h>
 # include <libxslt/xsltInternals.h>
-# include <libxslt/xslt.h>
 
 # define MAKE_FUNCPTR(f) extern typeof(f) * p##f
-MAKE_FUNCPTR(xsltInit);
 MAKE_FUNCPTR(xsltApplyStylesheet);
 MAKE_FUNCPTR(xsltCleanupGlobals);
 MAKE_FUNCPTR(xsltFreeStylesheet);

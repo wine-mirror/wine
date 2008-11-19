@@ -49,7 +49,6 @@ HRESULT WINAPI DllCanUnloadNow(void)
 void* libxslt_handle = NULL;
 #ifdef SONAME_LIBXSLT
 # define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
-DECL_FUNCPTR(xsltInit);
 DECL_FUNCPTR(xsltApplyStylesheet);
 DECL_FUNCPTR(xsltCleanupGlobals);
 DECL_FUNCPTR(xsltFreeStylesheet);
@@ -60,6 +59,8 @@ DECL_FUNCPTR(xsltParseStylesheetDoc);
 static void init_libxslt(void)
 {
 #ifdef SONAME_LIBXSLT
+    void (*pxsltInit)(void); /* Missing in libxslt <= 1.1.14 */
+
     libxslt_handle = wine_dlopen(SONAME_LIBXSLT, RTLD_NOW, NULL, 0);
     if (!libxslt_handle)
         return;
