@@ -271,7 +271,7 @@ run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms)
     si.dwFlags    = STARTF_USESTDHANDLES;
     si.hStdInput  = GetStdHandle( STD_INPUT_HANDLE );
     si.hStdOutput = out_file ? out_file : GetStdHandle( STD_OUTPUT_HANDLE );
-    si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
+    si.hStdError  = out_file ? out_file : GetStdHandle( STD_ERROR_HANDLE );
 
     if (!CreateProcessA (NULL, cmd, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
                          NULL, tempdir, &si, &pi)) {
