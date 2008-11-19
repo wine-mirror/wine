@@ -286,8 +286,6 @@ CheckParameter:
                             ValidLink = TRUE;
                             taglen++;
                         }
-                        else
-                            tmp++;
                     }
                 }
                 
