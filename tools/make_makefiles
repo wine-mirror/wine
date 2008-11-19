@@ -413,7 +413,8 @@ sub update_dlls(@)
     $text .= "\n\n";
     $text .= "\$(TESTSUBDIRS:%=%/__crosstest__): \$(CROSS_IMPLIBS)\n\n";
     $text .= "implib: \$(IMPORT_LIBS)\n\n";
-    $text .= ".PHONY: implib\n\n";
+    $text .= "testsubdirs: \$(TESTSUBDIRS)\n\n";
+    $text .= ".PHONY: implib testsubdirs\n\n";
 
     foreach my $mod (sort keys %importlibs)
     {

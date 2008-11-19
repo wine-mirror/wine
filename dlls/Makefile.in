@@ -461,7 +461,9 @@ $(TESTSUBDIRS:%=%/__crosstest__): $(CROSS_IMPLIBS)
 
 implib: $(IMPORT_LIBS)
 
-.PHONY: implib
+testsubdirs: $(TESTSUBDIRS)
+
+.PHONY: implib testsubdirs
 
 activeds/libactiveds.def activeds/libactiveds.a: activeds/activeds.spec $(WINEBUILD)
 	@cd activeds && $(MAKE) `basename $@`
