@@ -1877,8 +1877,8 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
             dev[2] = 0;  /* remove last ':' to get the drive mount point symlink */
             new_name = get_default_drive_device( unix_name );
         }
-        else if (!strncmp( dev, "com", 3 )) new_name = get_default_com_device( dev[3] - '0' );
-        else if (!strncmp( dev, "lpt", 3 )) new_name = get_default_lpt_device( dev[3] - '0' );
+        else if (!strncmp( dev, "com", 3 )) new_name = get_default_com_device( atoi(dev + 3 ));
+        else if (!strncmp( dev, "lpt", 3 )) new_name = get_default_lpt_device( atoi(dev + 3 ));
 
         if (!new_name) break;
 
