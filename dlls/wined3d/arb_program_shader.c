@@ -1154,35 +1154,7 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
         /* A shift requires another line. */
         if (shift) pshader_gen_output_modifier_line(buffer, saturate, output_wmask, shift, output_rname);
     } else {
-        if ((curOpcode->opcode == WINED3DSIO_MOV && shader_get_regtype(dst) == WINED3DSPR_ADDR)
-                || curOpcode->opcode == WINED3DSIO_MOVA) {
-            memset(tmpLine, 0, sizeof(tmpLine));
-            if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
-            {
-                vshader_program_add_param(arg, src[0], TRUE, tmpLine);
-                shader_addline(buffer, "ADD TMP.x, %s, helper_const.z;\n", tmpLine);
-                shader_addline(buffer, "ARL A0.x, TMP.x;\n");
-            } else {
-                /* Apple's ARB_vertex_program implementation does not accept an ARL source argument
-                 * with more than one component. Thus replicate the first source argument over all
-                 * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc)
-                 */
-                DWORD parm = src[0] & ~(WINED3DVS_SWIZZLE_MASK);
-                if((src[0] & WINED3DVS_X_W) == WINED3DVS_X_W) {
-                    parm |= WINED3DVS_X_W | WINED3DVS_Y_W | WINED3DVS_Z_W | WINED3DVS_W_W;
-                } else if((src[0] & WINED3DVS_X_Z) == WINED3DVS_X_Z) {
-                    parm |= WINED3DVS_X_Z | WINED3DVS_Y_Z | WINED3DVS_Z_Z | WINED3DVS_W_Z;
-                } else if((src[0] & WINED3DVS_X_Y) == WINED3DVS_X_Y) {
-                    parm |= WINED3DVS_X_Y | WINED3DVS_Y_Y | WINED3DVS_Z_Y | WINED3DVS_W_Y;
-                } else if((src[0] & WINED3DVS_X_X) == WINED3DVS_X_X) {
-                    parm |= WINED3DVS_X_X | WINED3DVS_Y_X | WINED3DVS_Z_X | WINED3DVS_W_X;
-                }
-                vshader_program_add_param(arg, parm, TRUE, tmpLine);
-                shader_addline(buffer, "ARL A0.x, %s;\n", tmpLine);
-            }
-            return;
-        } else
-            strcpy(tmpLine, curOpcode->glname);
+        strcpy(tmpLine, curOpcode->glname);
 
         if (curOpcode->num_params > 0)
         {
@@ -1194,6 +1166,53 @@ static void shader_hw_map2gl(SHADER_OPCODE_ARG* arg)
             }
         }
         shader_addline(buffer, "%s;\n", tmpLine);
+    }
+}
+
+static void shader_hw_mov(SHADER_OPCODE_ARG *arg)
+{
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl*)arg->shader;
+
+    if ((WINED3DSHADER_VERSION_MAJOR(shader->baseShader.hex_version) == 1
+            && !shader_is_pshader_version(shader->baseShader.hex_version)
+            && shader_get_regtype(arg->dst) == WINED3DSPR_ADDR)
+            || arg->opcode->opcode == WINED3DSIO_MOVA)
+    {
+        SHADER_BUFFER *buffer = arg->buffer;
+        char src0_param[256];
+
+        if (arg->opcode->opcode == WINED3DSIO_MOVA)
+            FIXME("mova should round\n");
+
+        src0_param[0] = '\0';
+        if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
+        {
+            vshader_program_add_param(arg, arg->src[0], TRUE, src0_param);
+            shader_addline(buffer, "ADD TMP.x, %s, helper_const.z;\n", src0_param);
+            shader_addline(buffer, "ARL A0.x, TMP.x;\n");
+        }
+        else
+        {
+            /* Apple's ARB_vertex_program implementation does not accept an ARL source argument
+             * with more than one component. Thus replicate the first source argument over all
+             * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc)
+             */
+            DWORD parm = arg->src[0] & ~(WINED3DVS_SWIZZLE_MASK);
+            if((arg->src[0] & WINED3DVS_X_W) == WINED3DVS_X_W)
+                parm |= WINED3DVS_X_W | WINED3DVS_Y_W | WINED3DVS_Z_W | WINED3DVS_W_W;
+            else if((arg->src[0] & WINED3DVS_X_Z) == WINED3DVS_X_Z)
+                parm |= WINED3DVS_X_Z | WINED3DVS_Y_Z | WINED3DVS_Z_Z | WINED3DVS_W_Z;
+            else if((arg->src[0] & WINED3DVS_X_Y) == WINED3DVS_X_Y)
+                parm |= WINED3DVS_X_Y | WINED3DVS_Y_Y | WINED3DVS_Z_Y | WINED3DVS_W_Y;
+            else if((arg->src[0] & WINED3DVS_X_X) == WINED3DVS_X_X)
+                parm |= WINED3DVS_X_X | WINED3DVS_Y_X | WINED3DVS_Z_X | WINED3DVS_W_X;
+            vshader_program_add_param(arg, parm, TRUE, src0_param);
+            shader_addline(buffer, "ARL A0.x, %s;\n", src0_param);
+        }
+    }
+    else
+    {
+        shader_hw_map2gl(arg);
     }
 }
 
@@ -2288,8 +2307,8 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_MAD           */ shader_hw_map2gl,
     /* WINED3DSIH_MAX           */ shader_hw_map2gl,
     /* WINED3DSIH_MIN           */ shader_hw_map2gl,
-    /* WINED3DSIH_MOV           */ shader_hw_map2gl,
-    /* WINED3DSIH_MOVA          */ shader_hw_map2gl,
+    /* WINED3DSIH_MOV           */ shader_hw_mov,
+    /* WINED3DSIH_MOVA          */ shader_hw_mov,
     /* WINED3DSIH_MUL           */ shader_hw_map2gl,
     /* WINED3DSIH_NOP           */ shader_hw_map2gl,
     /* WINED3DSIH_NRM           */ shader_hw_nrm,
