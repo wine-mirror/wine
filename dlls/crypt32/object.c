@@ -2057,6 +2057,114 @@ static BOOL WINAPI CRYPT_FormatEnhancedKeyUsage(DWORD dwCertEncodingType,
     return ret;
 }
 
+static struct BitToString netscapeCertTypeMap[] = {
+ { NETSCAPE_SSL_CLIENT_AUTH_CERT_TYPE, IDS_NETSCAPE_SSL_CLIENT, { 0 } },
+ { NETSCAPE_SSL_SERVER_AUTH_CERT_TYPE, IDS_NETSCAPE_SSL_SERVER, { 0 } },
+ { NETSCAPE_SMIME_CERT_TYPE, IDS_NETSCAPE_SMIME, { 0 } },
+ { NETSCAPE_SIGN_CERT_TYPE, IDS_NETSCAPE_SIGN, { 0 } },
+ { NETSCAPE_SSL_CA_CERT_TYPE, IDS_NETSCAPE_SSL_CA, { 0 } },
+ { NETSCAPE_SMIME_CA_CERT_TYPE, IDS_NETSCAPE_SMIME_CA, { 0 } },
+ { NETSCAPE_SIGN_CA_CERT_TYPE, IDS_NETSCAPE_SIGN_CA, { 0 } },
+};
+
+static BOOL WINAPI CRYPT_FormatNetscapeCertType(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    DWORD size;
+    CRYPT_BIT_BLOB *bits;
+    BOOL ret;
+
+    if (!cbEncoded)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType, X509_BITS,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &bits, &size)))
+    {
+        WCHAR infoNotAvailable[MAX_STRING_RESOURCE_LEN];
+        DWORD bytesNeeded = sizeof(WCHAR);
+
+        LoadStringW(hInstance, IDS_INFO_NOT_AVAILABLE, infoNotAvailable,
+         sizeof(infoNotAvailable) / sizeof(infoNotAvailable[0]));
+        if (!bits->cbData || bits->cbData > 1)
+        {
+            bytesNeeded += strlenW(infoNotAvailable) * sizeof(WCHAR);
+            if (!pbFormat)
+                *pcbFormat = bytesNeeded;
+            else if (*pcbFormat < bytesNeeded)
+            {
+                *pcbFormat = bytesNeeded;
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+            {
+                LPWSTR str = pbFormat;
+
+                *pcbFormat = bytesNeeded;
+                strcpyW(str, infoNotAvailable);
+            }
+        }
+        else
+        {
+            static BOOL stringsLoaded = FALSE;
+            int i;
+            DWORD bitStringLen;
+            BOOL first = TRUE;
+
+            if (!stringsLoaded)
+            {
+                for (i = 0; i < sizeof(netscapeCertTypeMap) /
+                 sizeof(netscapeCertTypeMap[0]); i++)
+                    LoadStringW(hInstance, netscapeCertTypeMap[i].id,
+                     netscapeCertTypeMap[i].str, MAX_STRING_RESOURCE_LEN);
+                stringsLoaded = TRUE;
+            }
+            CRYPT_FormatBits(dwFormatStrType, bits->pbData[0],
+             netscapeCertTypeMap,
+             sizeof(netscapeCertTypeMap) / sizeof(netscapeCertTypeMap[0]),
+             NULL, &bitStringLen, &first);
+            bytesNeeded += bitStringLen;
+            bytesNeeded += 3 * sizeof(WCHAR); /* " (" + ")" */
+            CRYPT_FormatHexString(0, 0, 0, NULL, NULL, bits->pbData,
+             bits->cbData, NULL, &size);
+            bytesNeeded += size;
+            if (!pbFormat)
+                *pcbFormat = bytesNeeded;
+            else if (*pcbFormat < bytesNeeded)
+            {
+                *pcbFormat = bytesNeeded;
+                SetLastError(ERROR_MORE_DATA);
+                ret = FALSE;
+            }
+            else
+            {
+                LPWSTR str = pbFormat;
+
+                bitStringLen = bytesNeeded;
+                first = TRUE;
+                CRYPT_FormatBits(dwFormatStrType, bits->pbData[0],
+                 netscapeCertTypeMap,
+                 sizeof(netscapeCertTypeMap) / sizeof(netscapeCertTypeMap[0]),
+                 str, &bitStringLen, &first);
+                str += bitStringLen / sizeof(WCHAR) - 1;
+                *str++ = ' ';
+                *str++ = '(';
+                CRYPT_FormatHexString(0, 0, 0, NULL, NULL, bits->pbData,
+                 bits->cbData, str, &size);
+                str += size / sizeof(WCHAR) - 1;
+                *str++ = ')';
+                *str = 0;
+            }
+        }
+        LocalFree(bits);
+    }
+    return ret;
+}
+
 static WCHAR financialCriteria[MAX_STRING_RESOURCE_LEN];
 static WCHAR available[MAX_STRING_RESOURCE_LEN];
 static WCHAR notAvailable[MAX_STRING_RESOURCE_LEN];
@@ -2225,6 +2333,8 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
         format = CRYPT_FormatCRLDistPoints;
     else if (!strcmp(lpszStructType, szOID_ENHANCED_KEY_USAGE))
         format = CRYPT_FormatEnhancedKeyUsage;
+    else if (!strcmp(lpszStructType, szOID_NETSCAPE_CERT_TYPE))
+        format = CRYPT_FormatNetscapeCertType;
     else if (!strcmp(lpszStructType, SPC_FINANCIAL_CRITERIA_OBJID))
         format = CRYPT_FormatSpcFinancialCriteria;
     if (!format && !(formatStrType & CRYPT_FORMAT_STR_NO_HEX))
