@@ -100,8 +100,15 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
         {
             /* return general image description information about the image about to be transferred */
             status = psane_get_parameters (activeDS.deviceHandle, &activeDS.sane_param);
-            activeDS.sane_param_valid = TRUE;
             TRACE("Getting parameters\n");
+            if (status != SANE_STATUS_GOOD)
+            {
+                WARN("psane_get_parameters: %s\n", psane_strstatus (status));
+                psane_cancel (activeDS.deviceHandle);
+                activeDS.twCC = TWCC_OPERATIONERROR;
+                return TWRC_FAILURE;
+            }
+            activeDS.sane_param_valid = TRUE;
         }
 
         pImageInfo->XResolution.Whole = -1;
