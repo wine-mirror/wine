@@ -1030,7 +1030,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
  */
 HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT_LOGATTR *la)
 {
-    unsigned int i;
+    int i;
 
     TRACE("(%s, %d, %p, %p)\n", debugstr_wn(chars, count), count, sa, la);
 
@@ -1220,7 +1220,8 @@ complex_ranges[] =
  */
 HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
 {
-    unsigned int i, j;
+    int i;
+    unsigned int j;
 
     TRACE("(%s,%d,0x%x)\n", debugstr_wn(chars, len), len, flag);
 
@@ -1336,7 +1337,7 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
                            SCRIPT_ANALYSIS *psa, int *piAdvance, GOFFSET *pGoffset, ABC *pABC )
 {
     HRESULT hr;
-    unsigned int i;
+    int i;
 
     TRACE("(%p, %p, %p, %s, %d, %p, %p, %p)\n",  hdc, psc, pwGlyphs,
           debugstr_wn(pwGlyphs, cGlyphs), cGlyphs, psva, psa, piAdvance);
@@ -1400,7 +1401,7 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
                              int cChars, DWORD dwFlags, WORD *pwOutGlyphs)
 {
     HRESULT hr;
-    unsigned int i;
+    int i;
 
     TRACE("(%p,%p,%s,%d,0x%x,%p)\n", hdc, psc, debugstr_wn(pwcInChars, cChars),
           cChars, dwFlags, pwOutGlyphs);
@@ -1642,7 +1643,7 @@ HRESULT WINAPI ScriptStringValidate(SCRIPT_STRING_ANALYSIS ssa)
  */
 const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
 {
-    unsigned int i, j;
+    int i, j;
     StringAnalysis *analysis = ssa;
 
     TRACE("(%p)\n", ssa);
@@ -1721,7 +1722,8 @@ const int * WINAPI ScriptString_pcOutChars(SCRIPT_STRING_ANALYSIS ssa)
  */
 HRESULT WINAPI ScriptStringGetOrder(SCRIPT_STRING_ANALYSIS ssa, UINT *order)
 {
-    unsigned int i, j, k;
+    int i, j;
+    unsigned int k;
     StringAnalysis *analysis = ssa;
 
     TRACE("(%p)\n", ssa);
