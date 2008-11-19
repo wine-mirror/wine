@@ -1318,9 +1318,10 @@ static void test_encodeNameValue(DWORD dwEncoding)
         ret = pCryptEncodeObjectEx(dwEncoding, X509_NAME_VALUE,
          &nameValues[i].value, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
          &size);
-        ok(ret, "Type %d: CryptEncodeObjectEx failed: %08x\n",
+        ok(ret || broken(GetLastError() == OSS_PDU_MISMATCH) /* NT4/Win9x */,
+         "Type %d: CryptEncodeObjectEx failed: %08x\n",
          nameValues[i].value.dwValueType, GetLastError());
-        if (buf)
+        if (ret)
         {
             ok(size == nameValues[i].encodedSize,
              "Expected size %d, got %d\n", nameValues[i].encodedSize, size);
@@ -1346,7 +1347,7 @@ static void test_decodeNameValue(DWORD dwEncoding)
          (BYTE *)&buf, &bufSize);
         ok(ret, "Value type %d: CryptDecodeObjectEx failed: %08x\n",
          nameValues[i].value.dwValueType, GetLastError());
-        if (buf)
+        if (ret)
         {
             compareNameValues(&nameValues[i].value,
              (const CERT_NAME_VALUE *)buf);
@@ -2367,8 +2368,10 @@ static void test_decodeRsaPublicKey(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, RSA_CSP_PUBLICKEYBLOB,
      rsaPubKeys[0].encoded, rsaPubKeys[0].encoded[1],
      CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
-    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
-     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == OSS_MORE_INPUT /* Win9x/NT4 */),
+     "Expected CRYPT_E_ASN1_EOD or OSS_MORE_INPUT, got %08x\n",
+     GetLastError());
     /* Try with a couple of RSA-related OIDs */
     ret = pCryptDecodeObjectEx(dwEncoding, szOID_RSA_RSA,
      rsaPubKeys[0].encoded, rsaPubKeys[0].encoded[1] + 2,
@@ -7065,6 +7068,11 @@ static void test_encodePolicyQualifierUserNotice(DWORD dwEncoding)
     ret = pCryptEncodeObjectEx(dwEncoding,
      X509_PKIX_POLICY_QUALIFIER_USERNOTICE, &notice, CRYPT_ENCODE_ALLOC_FLAG,
      NULL, &buf, &size);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        skip("no X509_PKIX_POLICY_QUALIFIER_USERNOTICE encode support\n");
+        return;
+    }
     ok(ret, "CryptEncodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7109,6 +7117,11 @@ static void test_decodePolicyQualifierUserNotice(DWORD dwEncoding)
      X509_PKIX_POLICY_QUALIFIER_USERNOTICE,
      emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      &notice, &size);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        skip("no X509_PKIX_POLICY_QUALIFIER_USERNOTICE decode support\n");
+        return;
+    }
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -7196,8 +7209,9 @@ static void test_encodeCertPolicies(DWORD dwEncoding)
     info.rgPolicyInfo = policy;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_POLICIES, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    ok(!ret && (GetLastError() == E_INVALIDARG ||
+     GetLastError() == OSS_LIMITED /* Win9x/NT4 */),
+     "expected E_INVALIDARG or OSS_LIMITED, got %08x\n", GetLastError());
     policy[0].pszPolicyIdentifier = oid_any_policy;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CERT_POLICIES, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
