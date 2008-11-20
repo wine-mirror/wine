@@ -1878,7 +1878,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         TRACE("Using vertex shader\n");
         IWineD3DVertexShaderImpl_CompileShader(This->stateBlock->vertexShader);
 
-        priv->current_vprogram_id = ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId;
+        priv->current_vprogram_id = ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->prgId;
 
         /* Bind the vertex program */
         GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
@@ -1900,7 +1900,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         find_ps_compile_args((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader, This->stateBlock, &compile_args);
         pixelshader_compile(This->stateBlock->pixelShader, &compile_args);
 
-        priv->current_fprogram_id = ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId;
+        priv->current_fprogram_id = ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->prgId;
 
         /* Bind the fragment program */
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
@@ -1980,12 +1980,21 @@ static void shader_arb_cleanup(IWineD3DDevice *iface) {
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
     WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *) This->baseShader.device)->adapter->gl_info;
+    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
-    ENTER_GL();
-    GL_EXTCALL(glDeleteProgramsARB(1, &This->baseShader.prgId));
-    checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->baseShader.prgId))");
-    LEAVE_GL();
-    This->baseShader.prgId = 0;
+    if(pshader) {
+        ENTER_GL();
+        GL_EXTCALL(glDeleteProgramsARB(1, &((IWineD3DPixelShaderImpl *) This)->prgId));
+        checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &((IWineD3DPixelShaderImpl *) This)->prgId))");
+        ((IWineD3DPixelShaderImpl *) This)->prgId = 0;
+        LEAVE_GL();
+    } else {
+        ENTER_GL();
+        GL_EXTCALL(glDeleteProgramsARB(1, &((IWineD3DVertexShaderImpl *) This)->prgId));
+        checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &((IWineD3DPixelShaderImpl *) This)->prgId))");
+        ((IWineD3DVertexShaderImpl *) This)->prgId = 0;
+        LEAVE_GL();
+    }
     This->baseShader.is_compiled = FALSE;
 }
 
@@ -2093,12 +2102,12 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
     shader_addline(buffer, "END\n");
 
     /* TODO: change to resource.glObjectHandle or something like that */
-    GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
+    GL_EXTCALL(glGenProgramsARB(1, &This->prgId));
 
-    TRACE("Creating a hw pixel shader, prg=%d\n", This->baseShader.prgId);
-    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->baseShader.prgId));
+    TRACE("Creating a hw pixel shader, prg=%d\n", This->prgId);
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->prgId));
 
-    TRACE("Created hw pixel shader, prg=%d\n", This->baseShader.prgId);
+    TRACE("Created hw pixel shader, prg=%d\n", This->prgId);
     /* Create the program and check for errors */
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                buffer->bsize, buffer->buffer));
@@ -2108,7 +2117,7 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
         glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
         FIXME("HW PixelShader Error at position %d: %s\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-        This->baseShader.prgId = -1;
+        This->prgId = -1;
     }
 
     /* Load immediate constants */
@@ -2199,12 +2208,12 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
     shader_addline(buffer, "END\n");
 
     /* TODO: change to resource.glObjectHandle or something like that */
-    GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
+    GL_EXTCALL(glGenProgramsARB(1, &This->prgId));
 
-    TRACE("Creating a hw vertex shader, prg=%d\n", This->baseShader.prgId);
-    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->baseShader.prgId));
+    TRACE("Creating a hw vertex shader, prg=%d\n", This->prgId);
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, This->prgId));
 
-    TRACE("Created hw vertex shader, prg=%d\n", This->baseShader.prgId);
+    TRACE("Created hw vertex shader, prg=%d\n", This->prgId);
     /* Create the program and check for errors */
     GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                buffer->bsize, buffer->buffer));
@@ -2214,7 +2223,7 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
         glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
         FIXME("HW VertexShader Error at position %d: %s\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-        This->baseShader.prgId = -1;
+        This->prgId = -1;
     }
 
     /* Load immediate constants */

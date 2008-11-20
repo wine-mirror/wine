@@ -3229,7 +3229,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
 
     if(use_vs) {
         IWineD3DVertexShaderImpl_CompileShader(vshader);
-        vshader_id = ((IWineD3DBaseShaderImpl*)vshader)->baseShader.prgId;
+        vshader_id = ((IWineD3DVertexShaderImpl*)vshader)->prgId;
     } else {
         vshader_id = 0;
     }
@@ -3237,7 +3237,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         struct ps_compile_args compile_args;
         find_ps_compile_args((IWineD3DPixelShaderImpl*)This->stateBlock->pixelShader, This->stateBlock, &compile_args);
         pixelshader_compile(pshader, &compile_args);
-        pshader_id = ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId;
+        pshader_id = ((IWineD3DPixelShaderImpl*)pshader)->prgId;
     } else {
         pshader_id = 0;
     }
@@ -3535,13 +3535,19 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
     struct shader_glsl_priv *priv = (struct shader_glsl_priv *)device->shader_priv;
     WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
+    GLuint *prog;
 
     /* Note: Do not use QueryInterface here to find out which shader type this is because this code
      * can be called from IWineD3DBaseShader::Release
      */
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
-    if(This->baseShader.prgId == 0) return;
+    if(pshader) {
+        prog = &((IWineD3DPixelShaderImpl *) This)->prgId;
+    } else {
+        prog = &((IWineD3DVertexShaderImpl *) This)->prgId;
+    }
+    if(*prog == 0) return;
     linked_programs = &This->baseShader.linked_programs;
 
     TRACE("Deleting linked programs\n");
@@ -3559,10 +3565,10 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         }
     }
 
-    TRACE("Deleting shader object %u\n", This->baseShader.prgId);
-    GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
+    TRACE("Deleting shader object %u\n", *prog);
+    GL_EXTCALL(glDeleteObjectARB(*prog));
     checkGLcall("glDeleteObjectARB");
-    This->baseShader.prgId = 0;
+    *prog = 0;
     This->baseShader.is_compiled = FALSE;
 }
 
@@ -3627,7 +3633,7 @@ static void shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFF
     const char *fragcolor;
     WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
 
-    /* Create the hw GLSL shader object and assign it as the baseShader.prgId */
+    /* Create the hw GLSL shader object and assign it as the shader->prgId */
     GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
 
     shader_addline(buffer, "#version 120\n");
@@ -3705,7 +3711,7 @@ static void shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFF
     print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
 
     /* Store the shader object */
-    This->baseShader.prgId = shader_obj;
+    This->prgId = shader_obj;
 }
 
 static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
@@ -3714,7 +3720,7 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
     CONST DWORD *function = This->baseShader.function;
     WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
 
-    /* Create the hw GLSL shader program and assign it as the baseShader.prgId */
+    /* Create the hw GLSL shader program and assign it as the shader->prgId */
     GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
 
     shader_addline(buffer, "#version 120\n");
@@ -3762,7 +3768,7 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
     print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
 
     /* Store the shader object */
-    This->baseShader.prgId = shader_obj;
+    This->prgId = shader_obj;
 }
 
 static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {

@@ -2138,7 +2138,6 @@ typedef struct IWineD3DBaseShaderClass
     CONST SHADER_OPCODE             *shader_ins;
     DWORD                          *function;
     UINT                            functionLength;
-    GLuint                          prgId;
     BOOL                            is_compiled;
     UINT                            cur_loop_depth, cur_loop_regno;
     BOOL                            load_local_constsF;
@@ -2305,6 +2304,9 @@ typedef struct IWineD3DVertexShaderImpl {
 
     DWORD                       usage;
 
+    /* The GL shader */
+    GLuint                          prgId;
+
     /* Vertex shader input and output semantics */
     semantic semantics_in [MAX_ATTRIBS];
     semantic semantics_out [MAX_REG_OUTPUT];
@@ -2361,6 +2363,9 @@ typedef struct IWineD3DPixelShaderImpl {
     DWORD                 input_reg_map[MAX_REG_INPUT];
     BOOL                  input_reg_used[MAX_REG_INPUT];
     int                         declared_in_count;
+
+    /* The GL shader */
+    GLuint                          prgId;
 
     /* Some information about the shader behavior */
     struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];
