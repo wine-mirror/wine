@@ -262,7 +262,8 @@ todo_wine {
 
     status = RpcBindingSetAuthInfo(IFoo_IfHandle, NULL, RPC_C_AUTHN_LEVEL_NONE,
                                    RPC_C_AUTHN_WINNT, NULL, RPC_C_AUTHZ_NAME);
-    ok(status == RPC_S_OK, "RpcBindingSetAuthInfo failed (%lu)\n", status);
+    ok(status == RPC_S_OK || broken(status == RPC_S_UNKNOWN_AUTHN_SERVICE), /* win9x */
+       "RpcBindingSetAuthInfo failed (%lu)\n", status);
 
     status = RpcMgmtStopServerListening(NULL);
     ok(status == RPC_S_OK, "RpcMgmtStopServerListening failed (%lu)\n",
@@ -689,7 +690,8 @@ static void test_endpoint_mapper(RPC_CSTR protseq, RPC_CSTR address,
     unsigned char *binding;
 
     status = RpcServerUseProtseqEp(protseq, 20, endpoint, NULL);
-    ok(status == RPC_S_OK, "%s: RpcServerUseProtseqEp failed (%lu)\n", protseq, status);
+    ok(status == RPC_S_OK || broken(status == RPC_S_PROTSEQ_NOT_SUPPORTED), /* win9x */
+       "%s: RpcServerUseProtseqEp failed (%lu)\n", protseq, status);
 
     status = RpcServerRegisterIf(IFoo_v0_0_s_ifspec, NULL, NULL);
     ok(status == RPC_S_OK, "%s: RpcServerRegisterIf failed (%lu)\n", protseq, status);
@@ -715,7 +717,8 @@ static void test_endpoint_mapper(RPC_CSTR protseq, RPC_CSTR address,
     RpcStringFree(&binding);
 
     status = RpcEpResolveBinding(handle, IFoo_v0_0_s_ifspec);
-    ok(status == RPC_S_OK, "%s: RpcEpResolveBinding failed with error %lu\n", protseq, status);
+    ok(status == RPC_S_OK || broken(status == RPC_S_SERVER_UNAVAILABLE), /* win9x */
+       "%s: RpcEpResolveBinding failed with error %lu\n", protseq, status);
 
     status = RpcBindingReset(handle);
     ok(status == RPC_S_OK, "%s: RpcBindingReset failed with error %lu\n", protseq, status);
