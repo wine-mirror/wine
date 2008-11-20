@@ -2337,8 +2337,6 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
         format = CRYPT_FormatNetscapeCertType;
     else if (!strcmp(lpszStructType, SPC_FINANCIAL_CRITERIA_OBJID))
         format = CRYPT_FormatSpcFinancialCriteria;
-    if (!format && !(formatStrType & CRYPT_FORMAT_STR_NO_HEX))
-        format = CRYPT_FormatHexString;
     return format;
 }
 
@@ -2364,6 +2362,9 @@ BOOL WINAPI CryptFormatObject(DWORD dwCertEncodingType, DWORD dwFormatType,
         CryptGetOIDFunctionAddress(set, dwCertEncodingType, lpszStructType, 0,
          (void **)&format, &hFunc);
     }
+    if (!format && (dwCertEncodingType & CERT_ENCODING_TYPE_MASK) ==
+     X509_ASN_ENCODING && !(dwFormatStrType & CRYPT_FORMAT_STR_NO_HEX))
+        format = CRYPT_FormatHexString;
     if (format)
         ret = format(dwCertEncodingType, dwFormatType, dwFormatStrType,
          pFormatStruct, lpszStructType, pbEncoded, cbEncoded, pbFormat,
