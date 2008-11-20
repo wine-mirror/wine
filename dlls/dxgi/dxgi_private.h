@@ -66,6 +66,7 @@ extern const struct IWineDXGIAdapterVtbl dxgi_adapter_vtbl;
 struct dxgi_adapter
 {
     const struct IWineDXGIAdapterVtbl *vtbl;
+    IDXGIFactory *parent;
     LONG refcount;
     UINT ordinal;
 };

@@ -99,9 +99,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetPrivateData(IWineDXGIAdapter *i
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IWineDXGIAdapter *iface, REFIID riid, void **parent)
 {
-    FIXME("iface %p, riid %s, parent %p stub!\n", iface, debugstr_guid(riid), parent);
+    struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, riid %s, parent %p\n", iface, debugstr_guid(riid), parent);
+
+    return IDXGIFactory_QueryInterface(This->parent, riid, parent);
 }
 
 /* IDXGIAdapter methods */

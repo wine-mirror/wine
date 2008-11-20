@@ -126,6 +126,7 @@ HRESULT WINAPI CreateDXGIFactory(REFIID riid, void **factory)
         adapter->vtbl = &dxgi_adapter_vtbl;
         adapter->refcount = 1;
         adapter->ordinal = i;
+        adapter->parent = (IDXGIFactory *)object;
         object->adapters[i] = (IDXGIAdapter *)adapter;
     }
 
