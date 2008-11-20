@@ -1184,6 +1184,7 @@ static void _test_elem3_get_disabled(unsigned line, IUnknown *unk, VARIANT_BOOL 
     VARIANT_BOOL disabled = 100;
     HRESULT hres;
 
+    if (!elem3) return;
     hres = IHTMLElement3_get_disabled(elem3, &disabled);
     ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
     ok_(__FILE__,line) (disabled == exb, "disabled=%x, expected %x\n", disabled, exb);
@@ -1196,6 +1197,7 @@ static void _test_elem3_set_disabled(unsigned line, IUnknown *unk, VARIANT_BOOL 
     IHTMLElement3 *elem3 = _get_elem3_iface(line, unk);
     HRESULT hres;
 
+    if (!elem3) return;
     hres = IHTMLElement3_put_disabled(elem3, b);
     ok_(__FILE__,line) (hres == S_OK, "get_disabled failed: %08x\n", hres);
 
@@ -2881,6 +2883,7 @@ static void test_iframe_elem(IHTMLElement *elem)
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase2, (void**)&base2);
     ok(hres == S_OK, "Could not get IHTMFrameBase2 iface: %08x\n", hres);
+    if (!base2) return;
 
     content_window = NULL;
     hres = IHTMLFrameBase2_get_contentWindow(base2, &content_window);
@@ -3112,12 +3115,15 @@ static void test_elems(IHTMLDocument2 *doc)
         node = test_node_get_parent((IUnknown*)node2);
         IHTMLDOMNode_Release(node2);
         ok(node != NULL, "node == NULL\n");
-        test_node_name((IUnknown*)node, "#document");
-        type = get_node_type((IUnknown*)node);
-        ok(type == 9, "type=%ld, expected 9\n", type);
-        node2 = test_node_get_parent((IUnknown*)node);
-        IHTMLDOMNode_Release(node);
-        ok(node2 == NULL, "node != NULL\n");
+        if (node)
+        {
+            test_node_name((IUnknown*)node, "#document");
+            type = get_node_type((IUnknown*)node);
+            ok(type == 9, "type=%ld, expected 9\n", type);
+            node2 = test_node_get_parent((IUnknown*)node);
+            IHTMLDOMNode_Release(node);
+            ok(node2 == NULL, "node != NULL\n");
+        }
 
         elem2 = test_elem_get_parent((IUnknown*)elem);
         ok(elem2 != NULL, "elem2 == NULL\n");
