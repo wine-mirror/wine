@@ -365,28 +365,17 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 
     /* V8U8 is supported natively by GL_ATI_envmap_bumpmap and GL_NV_texture_shader.
      * V16U16 is only supported by GL_NV_texture_shader. The formats need fixup if
-     * their extensions are not available.
+     * their extensions are not available. GL_ATI_envmap_bumpmap is not used because
+     * the only driver that implements it(fglrx) has a buggy implementation.
      *
-     * In theory, V8U8 and V16U16 need a fixup of the undefined blue channel. OpenGL
-     * returns 0.0 when sampling from it, DirectX 1.0. This is disabled until we find
-     * an application that needs this because it causes performance problems due to
-     * shader recompiling in some games.
+     * V8U8 and V16U16 need a fixup of the undefined blue channel. OpenGL
+     * returns 0.0 when sampling from it, DirectX 1.0. So we always have in-shader
+     * conversion for this format.
      */
-    if(!GL_SUPPORT(NV_TEXTURE_SHADER2)) {
-        /* signed -> unsigned fixup */
-        dst = getFmtIdx(WINED3DFMT_V8U8);
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-        dst = getFmtIdx(WINED3DFMT_V16U16);
-        gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-    } else {
-        /* Blue = 1.0 fixup, disabled for now */
-        if(0) {
-            dst = getFmtIdx(WINED3DFMT_V8U8);
-            gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-            dst = getFmtIdx(WINED3DFMT_V16U16);
-            gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
-        }
-    }
+    dst = getFmtIdx(WINED3DFMT_V8U8);
+    gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
+    dst = getFmtIdx(WINED3DFMT_V16U16);
+    gl_info->gl_formats[dst].conversion_group = WINED3DFMT_V8U8;
 
     if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
         /* If GL_NV_texture_shader is not supported, those formats are converted, incompatibly

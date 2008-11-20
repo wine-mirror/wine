@@ -601,14 +601,13 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, const c
         case WINED3DFMT_V8U8:
         case WINED3DFMT_V16U16:
             if(GL_SUPPORT(NV_TEXTURE_SHADER) && fmt == WINED3DFMT_V8U8) {
-                if(0) {
-                    /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-)
-                     * disabled until an application that needs it is found because it causes unneeded
-                     * shader recompilation in some game
-                     */
-                    if(strlen(writemask) >= 4) {
-                        shader_addline(buffer, "MOV %s.%c, %s;\n", reg, writemask[3], one);
-                    }
+                /* The 3rd channel returns 1.0 in d3d, but 0.0 in gl. Fix this while we're at it :-)
+                 * The dx7 sdk BumpEarth demo needs it because it uses BUMPENVMAPLUMINANCE with V8U8.
+                 * With the luminance(b) value = 1.0, BUMPENVMAPLUMINANCE == BUMPENVMAP, but if b is
+                 * 0.0(without this fixup), the rendering breaks.
+                 */
+                if(strlen(writemask) >= 4) {
+                    shader_addline(buffer, "MOV %s.%c, %s;\n", reg, writemask[3], one);
                 }
             } else {
                 /* Correct the sign, but leave the blue as it is - it was loaded correctly already
