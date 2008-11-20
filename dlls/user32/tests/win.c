@@ -740,8 +740,8 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info)
     ok((info->dwExStyle & ~0xe0000800) == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE),
        "wrong dwExStyle: %08x != %08x\n", info->dwExStyle, GetWindowLongA(hwnd, GWL_EXSTYLE));
     status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
-    ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x\n",
-       info->dwWindowStatus, status);
+    ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x active %p fg %p\n",
+       info->dwWindowStatus, status, GetActiveWindow(), GetForegroundWindow());
 
     /* win2k and XP return broken border info in GetWindowInfo most of
      * the time, so there is no point in testing it.
@@ -1877,7 +1877,8 @@ static void test_SetMenu(HWND parent)
     /* test whether we can destroy a menu assigned to a window */
     retok = DestroyMenu(hMenu);
     ok( retok, "DestroyMenu error %d\n", GetLastError());
-    ok(!IsMenu(hMenu), "menu handle should be not valid after DestroyMenu\n");
+    retok = IsMenu(hMenu);
+    ok(!retok || broken(retok) /* nt4 */, "menu handle should be not valid after DestroyMenu\n");
     ret = GetMenu(parent);
     /* This test fails on Win9x */
     if (!is_win9x)
@@ -2669,12 +2670,19 @@ static void test_mouse_input(HWND hwnd)
 
     flush_events( TRUE );
 
-    /* Check that setting the same position will generate WM_MOUSEMOVE */
+    /* Check that setting the same position may generate WM_MOUSEMOVE */
     SetCursorPos(x, y);
     msg.message = 0;
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
-    ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ok(msg.pt.x == x && msg.pt.y == y, "wrong message coords (%d,%d)/(%d,%d)\n", x, y, msg.pt.x, msg.pt.y);
+    do
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    while (ret && msg.message >= 0xc000);  /* skip registered messages */
+    if (ret)
+    {
+        ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n",
+           msg.hwnd, msg.message);
+        ok(msg.pt.x == x && msg.pt.y == y, "wrong message coords (%d,%d)/(%d,%d)\n",
+           x, y, msg.pt.x, msg.pt.y);
+    }
 
     /* force the system to update its internal queue mouse position,
      * otherwise it won't generate relative mouse movements below.
@@ -2684,11 +2692,13 @@ static void test_mouse_input(HWND hwnd)
 
     msg.message = 0;
     mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
-    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
-    ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
     /* FIXME: SetCursorPos in Wine generates additional WM_MOUSEMOVE message */
-    if (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
-        ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        if (msg.message >= 0xc000) continue;  /* skip registered messages */
+        ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE,
+           "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    }
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
     ok( !ret, "message %04x available\n", msg.message);
 
@@ -4246,7 +4256,7 @@ static void test_CreateWindow(void)
 
     expected_cx = expected_cy = -10;
     SetRect( &expected_rect, 0, 0, 0, 0 );
-    broken_rect = expected_rect;
+    SetRect( &broken_rect, 0, 0, -10, -10 );
     hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, -20, -20, -10, -10, parent, 0, 0, NULL);
     ok( hwnd != 0, "creation failed err %u\n", GetLastError());
     GetClientRect( hwnd, &rc );
@@ -4256,7 +4266,7 @@ static void test_CreateWindow(void)
 
     expected_cx = expected_cy = -200000;
     SetRect( &expected_rect, 0, 0, 0, 0 );
-    broken_rect = expected_rect;
+    SetRect( &broken_rect, 0, 0, -200000, -200000 );
     hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, -300000, -300000, -200000, -200000, parent, 0, 0, NULL);
     ok( hwnd != 0, "creation failed err %u\n", GetLastError());
     GetClientRect( hwnd, &rc );
@@ -5175,7 +5185,7 @@ static LRESULT WINAPI test_thick_child_size_winproc(HWND hwnd, UINT msg, WPARAM 
                 "expected maxTrack %dx%d, actual maxTrack %dx%d\n",
                  expectedMaxTrackX, expectedMaxTrackY, actualMaxTrackX, actualMaxTrackY);
 
-            GetClientRect(GetAncestor(hwnd, GA_PARENT), &rect);
+            GetClientRect(GetParent(hwnd), &rect);
             AdjustWindowRectEx(&rect, WS_CHILD | WS_VISIBLE | WS_THICKFRAME, FALSE, 0);
             expectedMaxSizeX = rect.right - rect.left;
             expectedMaxSizeY = rect.bottom - rect.top;
