@@ -117,9 +117,24 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IDXGIDevice *iface, REFII
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IDXGIDevice *iface, IDXGIAdapter **adapter)
 {
-    FIXME("iface %p, adapter %p stub!\n", iface, adapter);
+    struct dxgi_device *This = (struct dxgi_device *)iface;
+    WINED3DDEVICE_CREATION_PARAMETERS create_parameters;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, adapter %p\n", iface, adapter);
+
+    EnterCriticalSection(&dxgi_cs);
+
+    hr = IWineD3DDevice_GetCreationParameters(This->wined3d_device, &create_parameters);
+    if (FAILED(hr))
+    {
+        LeaveCriticalSection(&dxgi_cs);
+        return hr;
+    }
+
+    LeaveCriticalSection(&dxgi_cs);
+
+    return IWineDXGIFactory_EnumAdapters(This->factory, create_parameters.AdapterOrdinal, adapter);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IDXGIDevice *iface,
