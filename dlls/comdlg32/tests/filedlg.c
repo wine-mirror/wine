@@ -187,6 +187,11 @@ static UINT CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wParam,
             hr = IShellView2_DestroyViewWindow(shell_view2);
             ok(SUCCEEDED(hr), "DestroyViewWindow returned %#x\n", hr);
 
+            /* XP and W2K3 need this. On Win9x and W2K the call to DestroyWindow() fails and has
+             * no side effects. NT4 doesn't get here. (FIXME: Vista doesn't get here yet).
+             */
+            DestroyWindow(view_params.hwndView);
+
             view_params.pvid = &VID_Details;
             hr = IShellView2_CreateViewWindow2(shell_view2, &view_params);
             ok(SUCCEEDED(hr), "CreateViewWindow2 returned %#x\n", hr);
