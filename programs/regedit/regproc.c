@@ -1239,7 +1239,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
     val_name_buf = HeapAlloc(GetProcessHeap(), 0,
                              val_name_size * sizeof(*val_name_buf));
     val_buf = HeapAlloc(GetProcessHeap(), 0, val_size);
-    line_buf = HeapAlloc(GetProcessHeap(), 0, line_buf_size);
+    line_buf = HeapAlloc(GetProcessHeap(), 0, line_buf_size * sizeof(*line_buf));
     CHECK_ENOUGH_MEMORY(reg_key_name_buf && val_name_buf && val_buf && line_buf);
 
     if (reg_key_name && reg_key_name[0]) {
