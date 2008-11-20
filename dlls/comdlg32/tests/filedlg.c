@@ -199,7 +199,9 @@ static UINT CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wParam,
 
             hr = IShellView2_GetCurrentInfo(shell_view2, &folder_settings);
             ok(SUCCEEDED(hr), "GetCurrentInfo returned %#x\n", hr);
-            ok(folder_settings.ViewMode == FVM_DETAILS, "view mode is %d, expected %d\n", folder_settings.ViewMode, FVM_DETAILS);
+            ok(folder_settings.ViewMode == FVM_DETAILS ||
+               broken(folder_settings.ViewMode == FVM_LIST), /* Win9x */
+               "view mode is %d, expected %d\n", folder_settings.ViewMode, FVM_DETAILS);
 
 cleanup:
             if (shell_view2) IShellView2_Release(shell_view2);
