@@ -1965,8 +1965,8 @@ typedef void (WINE_GLAPI * PGLFNGLTEXSUBIMAGE3DEXTPROC) (GLenum target, GLint le
 /* GL_EXT_texture_env_dot3 */
 #ifndef GL_EXT_texture_env_dot3
 #define GL_EXT_texture_env_dot3 1
-#define GL_DOT3_RGB_EXT			  0x8740
-#define GL_DOT3_RGBA_EXT		  0x8741
+#define GL_DOT3_RGB_EXT                   0x8740
+#define GL_DOT3_RGBA_EXT                  0x8741
 #endif
 /* GL_EXT_texture_lod_bias */
 #ifndef GL_EXT_texture_lod_bias
@@ -2740,7 +2740,7 @@ typedef void (WINE_GLAPI * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage
 #endif
 
 /**
- * Point sprites 
+ * Point sprites
  */
 /* GL_ARB_point_sprite */
 #ifndef GL_ARB_point_sprite
@@ -2749,11 +2749,11 @@ typedef void (WINE_GLAPI * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage
 #define GL_COORD_REPLACE_ARB              0x8862
 #endif
 /**
- * @TODO: GL_NV_point_sprite 
+ * @TODO: GL_NV_point_sprite
  */
 
 /**
- * Occlusion Queries 
+ * Occlusion Queries
  */
 /* GL_ARB_occlusion_query */
 #ifndef GL_ARB_occlusion_query
@@ -3192,8 +3192,8 @@ typedef void (WINE_GLAPI * PGLFNVERTEXATTRIBPOINTERPROC) (GLuint index, GLint si
 
 
 /****************************************************
- * OpenGL Official Version 
- *  defines 
+ * OpenGL Official Version
+ *  defines
  ****************************************************/
 /* GL_VERSION_1_3 */
 #if !defined(GL_DOT3_RGBA)
@@ -3396,7 +3396,7 @@ typedef enum _GL_SupportedExt {
 
 
 /****************************************************
- * #Defines       
+ * #Defines
  ****************************************************/
 #define GL_EXT_FUNCS_GEN \
     /** ARB Extensions **/ \
@@ -3809,7 +3809,7 @@ typedef BOOL (WINAPI * WINED3D_PFNWGLSETPIXELFORMATWINE) (HDC hdc, int iPixelFor
 
 
 /****************************************************
- * Structures       
+ * Structures
  ****************************************************/
 
 typedef struct {
@@ -3840,7 +3840,7 @@ typedef struct _WineD3D_GL_Info {
   DWORD  driver_version_hipart;
   CHAR   gl_renderer[255];
   /**
-   * CAPS Constants 
+   * CAPS Constants
    */
   UINT   max_buffers;
   UINT   max_lights;
