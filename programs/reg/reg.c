@@ -17,6 +17,7 @@
  */
 
 #include <windows.h>
+#include <wine/unicode.h>
 #include "reg.h"
 
 static int reg_printfW(const WCHAR *msg, ...)
@@ -27,7 +28,7 @@ static int reg_printfW(const WCHAR *msg, ...)
     WCHAR msg_buffer[8192];
 
     va_start(va_args, msg);
-    wvsprintfW(msg_buffer, msg, va_args);
+    vsprintfW(msg_buffer, msg, va_args);
     va_end(va_args);
 
     wlen = lstrlenW(msg_buffer);
