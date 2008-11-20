@@ -890,22 +890,21 @@ static void REGPROC_resize_char_buffer(WCHAR **buffer, DWORD *len, DWORD require
 /******************************************************************************
  * Prints string str to file
  */
-static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD *line_len, WCHAR *str)
+static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD *line_len, WCHAR *str, DWORD str_len)
 {
-    DWORD len = lstrlenW(str);
     DWORD i, pos;
     DWORD extra = 0;
 
-    REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + 10);
+    REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + str_len + 10);
 
     /* escaping characters */
     pos = *line_len;
-    for (i = 0; i < len; i++) {
+    for (i = 0; i < str_len; i++) {
         WCHAR c = str[i];
         switch (c) {
         case '\n':
             extra++;
-            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + extra);
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + str_len + extra);
             (*line_buf)[pos++] = '\\';
             (*line_buf)[pos++] = 'n';
             break;
@@ -913,7 +912,7 @@ static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
         case '\\':
         case '"':
             extra++;
-            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + len + extra);
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + str_len + extra);
             (*line_buf)[pos++] = '\\';
             /* Fall through */
 
@@ -1043,7 +1042,7 @@ static void export_hkey(FILE *file, HKEY key,
                 line_len += len;
 
                 if (val_size1)
-                    REGPROC_export_string(line_buf, line_buf_size, &line_len, (WCHAR*) *val_buf);
+                    REGPROC_export_string(line_buf, line_buf_size, &line_len, (WCHAR*)*val_buf, val_size1 / sizeof(WCHAR) - 1);
 
                 REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len + lstrlenW(end));
                 lstrcpyW(*line_buf + line_len, end);
