@@ -88,7 +88,6 @@ static void test_enumdisplaydevices(void)
         BOOL ret;
         HDC dc;
         ret = pEnumDisplayDevicesA(NULL, num, &dd, 0);
-        ok(ret || num != 0, "EnumDisplayDevices fails with num == 0\n");
         if(!ret) break;
         if(dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
         {
@@ -104,11 +103,10 @@ static void test_enumdisplaydevices(void)
         }
         num++;
     }
-    ok(primary_num != -1, "Didn't get the primary device\n");
 
-    if (!pEnumDisplayMonitors || !pGetMonitorInfoA)
+    if (primary_num == -1 || !pEnumDisplayMonitors || !pGetMonitorInfoA)
     {
-        skip("EnumDisplayMonitors or GetMonitorInfoA are not available\n");
+        win_skip("EnumDisplayMonitors or GetMonitorInfoA are not available\n");
         return;
     }
 
@@ -172,7 +170,8 @@ static void test_ChangeDisplaySettingsEx(void)
     res = ChangeDisplaySettingsA(&dm, CDS_TEST);
     ok(res == DISP_CHANGE_SUCCESSFUL,
        "ChangeDisplaySettingsA returned %d, expected DISP_CHANGE_SUCCESSFUL\n", res);
-    ok(dm.dmDriverExtra == 0, "ChangeDisplaySettingsA didn't reset dmDriverExtra to 0\n");
+    ok(dm.dmDriverExtra == 0 || broken(dm.dmDriverExtra == 1) /* win9x */,
+       "ChangeDisplaySettingsA didn't reset dmDriverExtra to 0\n");
 
     /* crashes under XP SP3 for large dmDriverExtra values */
     dm.dmDriverExtra = 1;
@@ -225,8 +224,9 @@ static void test_ChangeDisplaySettingsEx(void)
     res = pChangeDisplaySettingsExW(NULL, &dmW, NULL, CDS_TEST, NULL);
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
         ok(res == DISP_CHANGE_FAILED ||
+           res == DISP_CHANGE_BADPARAM ||  /* NT4 */
            res == DISP_CHANGE_BADMODE /* XP SP3 */,
-           "ChangeDisplaySettingsExW returned %d, expected DISP_CHANGE_FAILED or DISP_CHANGE_BADMODE\n", res);
+           "ChangeDisplaySettingsExW returned %d\n", res);
 
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
@@ -249,6 +249,8 @@ static void test_ChangeDisplaySettingsEx(void)
             RECT r, r1, virt;
 
             SetRect(&virt, 0, 0, GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN));
+            if (IsRectEmpty(&virt))  /* NT4 doesn't have SM_CX/YVIRTUALSCREEN */
+                SetRect(&virt, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
             OffsetRect(&virt, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN));
 
             /* Resolution change resets clip rect */
