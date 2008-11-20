@@ -739,7 +739,7 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info)
      */
     ok((info->dwExStyle & ~0xe0000800) == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE),
        "wrong dwExStyle: %08x != %08x\n", info->dwExStyle, GetWindowLongA(hwnd, GWL_EXSTYLE));
-    status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
+    status = (GetForegroundWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
     ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x active %p fg %p\n",
        info->dwWindowStatus, status, GetActiveWindow(), GetForegroundWindow());
 
@@ -2269,7 +2269,7 @@ static void check_wnd_state_(const char *file, int line,
                              HWND active, HWND foreground, HWND focus, HWND capture)
 {
     ok_(file, line)(active == GetActiveWindow(), "GetActiveWindow() = %p\n", GetActiveWindow());
-    if (foreground)
+    if (foreground && GetForegroundWindow())
         ok_(file, line)(foreground == GetForegroundWindow(), "GetForegroundWindow() = %p\n", GetForegroundWindow());
     ok_(file, line)(focus == GetFocus(), "GetFocus() = %p\n", GetFocus());
     ok_(file, line)(capture == GetCapture(), "GetCapture() = %p\n", GetCapture());
