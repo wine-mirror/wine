@@ -384,13 +384,12 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     return WINED3D_OK;
 }
 
-HRESULT pixelshader_compile(IWineD3DPixelShader *iface) {
+HRESULT pixelshader_compile(IWineD3DPixelShader *iface, struct ps_compile_args *args) {
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     CONST DWORD *function = This->baseShader.function;
     UINT i, sampler;
-    IWineD3DBaseTextureImpl *texture;
     HRESULT hr;
 
     TRACE("(%p) : function %p\n", iface, function);
@@ -399,15 +398,13 @@ HRESULT pixelshader_compile(IWineD3DPixelShader *iface) {
      * changed.
      */
     if (This->baseShader.is_compiled) {
-        char srgbenabled = deviceImpl->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE] ? 1 : 0;
         for(i = 0; i < This->baseShader.num_sampled_samplers; i++) {
             sampler = This->baseShader.sampled_samplers[i];
-            texture = (IWineD3DBaseTextureImpl *) deviceImpl->stateBlock->textures[sampler];
-            if(texture && texture->baseTexture.shader_conversion_group != This->baseShader.sampled_format[sampler]) {
+            if(args->format_conversion[sampler] != This->baseShader.sampled_format[sampler]) {
                 WARN("Recompiling shader %p due to format change on sampler %d\n", This, sampler);
                 WARN("Old format group %s, new is %s\n",
                      debug_d3dformat(This->baseShader.sampled_format[sampler]),
-                     debug_d3dformat(texture->baseTexture.shader_conversion_group));
+                     debug_d3dformat(args->format_conversion[sampler]));
                 goto recompile;
             }
         }
@@ -415,7 +412,7 @@ HRESULT pixelshader_compile(IWineD3DPixelShader *iface) {
         /* TODO: Check projected textures */
         /* TODO: Check texture types(2D, Cube, 3D) */
 
-        if(srgbenabled != This->srgb_enabled && This->srgb_mode_hardcoded) {
+        if(args->srgb_correction != This->srgb_enabled && This->srgb_mode_hardcoded) {
             WARN("Recompiling shader because srgb correction is different and hardcoded\n");
             goto recompile;
         }
@@ -433,17 +430,8 @@ HRESULT pixelshader_compile(IWineD3DPixelShader *iface) {
             }
         }
         if(This->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
-            if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed) {
-                if(This->vertexprocessing != pretransformed) {
-                    WARN("Recompiling shader because pretransformed vertices are provided, which wasn't the case before\n");
-                    goto recompile;
-                }
-            } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device) &&
-                       This->vertexprocessing != fixedfunction) {
-                WARN("Recompiling shader because fixed function vp is in use, which wasn't the case before\n");
-                goto recompile;
-            } else if(This->vertexprocessing != vertexshader) {
-                WARN("Recompiling shader because vertex shaders are in use, which wasn't the case before\n");
+            if(args->vp_mode != This->vertexprocessing) {
+                WARN("Recompiling shader because the vertex processing mode changed\n");
                 goto recompile;
             }
         }
@@ -515,3 +503,32 @@ const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     IWineD3DPixelShaderImpl_GetDevice,
     IWineD3DPixelShaderImpl_GetFunction
 };
+
+void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args) {
+    UINT i, sampler;
+    IWineD3DBaseTextureImpl *tex;
+
+    args->srgb_correction = stateblock->renderState[WINED3DRS_SRGBWRITEENABLE] ? 1 : 0;
+
+    memset(args->format_conversion, 0, sizeof(args->format_conversion));
+    for(i = 0; i < shader->baseShader.num_sampled_samplers; i++) {
+        sampler = shader->baseShader.sampled_samplers[i];
+        tex = (IWineD3DBaseTextureImpl *) stateblock->textures[sampler];
+        if(!tex) {
+            args->format_conversion[sampler] = WINED3DFMT_UNKNOWN;
+            continue;
+        }
+        args->format_conversion[sampler] = tex->baseTexture.shader_conversion_group;
+    }
+    if(shader->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
+        if(((IWineD3DDeviceImpl *) shader->baseShader.device)->strided_streams.u.s.position_transformed) {
+            args->vp_mode = pretransformed;
+        } else if(use_vs((IWineD3DDeviceImpl *) shader->baseShader.device)) {
+            args->vp_mode = vertexshader;
+        } else {
+            args->vp_mode = fixedfunction;
+        }
+    } else {
+        args->vp_mode = vertexshader;
+    }
+}

@@ -1895,8 +1895,10 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     }
 
     if (usePS) {
+        struct ps_compile_args compile_args;
         TRACE("Using pixel shader\n");
-        pixelshader_compile(This->stateBlock->pixelShader);
+        find_ps_compile_args((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader, This->stateBlock, &compile_args);
+        pixelshader_compile(This->stateBlock->pixelShader, &compile_args);
 
         priv->current_fprogram_id = ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId;
 

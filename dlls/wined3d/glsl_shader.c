@@ -3234,7 +3234,9 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         vshader_id = 0;
     }
     if(use_ps) {
-        pixelshader_compile(pshader);
+        struct ps_compile_args compile_args;
+        find_ps_compile_args((IWineD3DPixelShaderImpl*)This->stateBlock->pixelShader, This->stateBlock, &compile_args);
+        pixelshader_compile(pshader, &compile_args);
         pshader_id = ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId;
     } else {
         pshader_id = 0;

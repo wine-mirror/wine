@@ -2337,6 +2337,15 @@ struct stb_const_desc {
     UINT                    const_num;
 };
 
+/* Stateblock dependent parameters which have to be hardcoded
+ * into the shader code
+ */
+struct ps_compile_args {
+    BOOL                        srgb_correction;
+    WINED3DFORMAT               format_conversion[MAX_FRAGMENT_SAMPLERS];
+    enum vertexprocessing_mode  vp_mode;
+};
+
 typedef struct IWineD3DPixelShaderImpl {
     /* IUnknown parts */
     const IWineD3DPixelShaderVtbl *lpVtbl;
@@ -2369,7 +2378,8 @@ typedef struct IWineD3DPixelShaderImpl {
 
 extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
-HRESULT pixelshader_compile(IWineD3DPixelShader *iface);
+HRESULT pixelshader_compile(IWineD3DPixelShader *iface, struct ps_compile_args *args);
+void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args);
 
 /* sRGB correction constants */
 static const float srgb_cmp = 0.0031308;
