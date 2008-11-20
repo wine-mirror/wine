@@ -76,7 +76,7 @@ static LRESULT CALLBACK callback_child(HWND hwnd, UINT msg, WPARAM wParam, LPARA
             SetLastError(0xdeadbeef);
             ret = DestroyCursor((HCURSOR) lParam);
             error = GetLastError();
-            todo_wine ok(!ret, "DestroyCursor on the active cursor succeeded.\n");
+            todo_wine ok(!ret || broken(ret) /* win9x */, "DestroyCursor on the active cursor succeeded.\n");
             ok(error == ERROR_DESTROY_OBJECT_OF_OTHER_THREAD ||
                error == 0xdeadbeef,  /* vista */
                 "Last error: %u\n", error);
@@ -983,25 +983,26 @@ static void test_DestroyCursor(void)
 
     SetLastError(0xdeadbeef);
     ret = DestroyCursor(cursor);
-    ok(!ret, "DestroyCursor on the active cursor succeeded\n");
+    ok(!ret || broken(ret)  /* succeeds on win9x */, "DestroyCursor on the active cursor succeeded\n");
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
+    if (!ret)
+    {
+        cursor2 = GetCursor();
+        ok(cursor2 == cursor, "Active was set to %p when trying to destroy it\n", cursor2);
+        SetCursor(NULL);
 
-    cursor2 = GetCursor();
-    ok(cursor2 == cursor, "Active was set to %p when trying to destroy it\n", cursor2);
-
-    SetCursor(NULL);
-
-    /* Trying to destroy the cursor properly fails now with
-     * ERROR_INVALID_CURSOR_HANDLE.  This happens because we called
-     * DestroyCursor() 2+ times after calling SetCursor().  The calls to
-     * GetCursor() and SetCursor(NULL) in between make no difference. */
-    ret = DestroyCursor(cursor);
-    todo_wine {
-        ok(!ret, "DestroyCursor succeeded.\n");
-        error = GetLastError();
-        ok(error == ERROR_INVALID_CURSOR_HANDLE || error == 0xdeadbeef, /* vista */
-           "Last error: 0x%08x\n", error);
+        /* Trying to destroy the cursor properly fails now with
+         * ERROR_INVALID_CURSOR_HANDLE.  This happens because we called
+         * DestroyCursor() 2+ times after calling SetCursor().  The calls to
+         * GetCursor() and SetCursor(NULL) in between make no difference. */
+        ret = DestroyCursor(cursor);
+        todo_wine {
+            ok(!ret, "DestroyCursor succeeded.\n");
+            error = GetLastError();
+            ok(error == ERROR_INVALID_CURSOR_HANDLE || error == 0xdeadbeef, /* vista */
+               "Last error: 0x%08x\n", error);
+        }
     }
 
     DeleteObject(cursorInfo.hbmMask);
@@ -1012,7 +1013,7 @@ static void test_DestroyCursor(void)
 
     SetLastError(0xdeadbeef);
     ret = DestroyCursor(cursor);
-    ok(ret, "DestroyCursor on the active cursor failed.\n");
+    ok(ret || broken(!ret) /* fails on win9x */, "DestroyCursor on the active cursor failed.\n");
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: 0x%08x\n", error);
 
