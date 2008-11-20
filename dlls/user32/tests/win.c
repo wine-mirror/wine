@@ -3361,9 +3361,17 @@ static void test_params(void)
     INT rc;
 
     /* Just a param check */
-    SetLastError(0xdeadbeef);
-    rc = GetWindowText(hwndMain2, NULL, 1024);
-    ok( rc==0, "GetWindowText: rc=%d err=%d\n",rc,GetLastError());
+    if (pGetMonitorInfoA)
+    {
+        SetLastError(0xdeadbeef);
+        rc = GetWindowText(hwndMain2, NULL, 1024);
+        ok( rc==0, "GetWindowText: rc=%d err=%d\n",rc,GetLastError());
+    }
+    else
+    {
+        /* Skips actually on Win95 and NT4 */
+        win_skip("Test would crash on Win95\n");
+    }
 
     SetLastError(0xdeadbeef);
     hwnd=CreateWindow("LISTBOX", "TestList",
