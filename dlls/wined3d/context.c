@@ -191,7 +191,7 @@ static void context_check_fbo_status(IWineD3DDevice *iface)
         TRACE("FBO complete\n");
     } else {
         IWineD3DSurfaceImpl *attachment;
-        int i;
+        unsigned int i;
         FIXME("FBO status %s (%#x)\n", debug_fbostatus(status), status);
 
         /* Dump the FBO attachments */
@@ -446,7 +446,8 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_hand
 /* This function takes care of WineD3D pixel format selection. */
 static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DFORMAT ColorFormat, WINED3DFORMAT DepthStencilFormat, BOOL auxBuffers, int numSamples, BOOL pbuffer, BOOL findCompatible)
 {
-    int iPixelFormat=0, matchtry;
+    int iPixelFormat=0;
+    unsigned int matchtry;
     short redBits, greenBits, blueBits, alphaBits, colorBits;
     short depthBits=0, stencilBits=0;
 
@@ -1214,7 +1215,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
  *
  *****************************************************************************/
 static WineD3DContext *findThreadContextForSwapChain(IWineD3DSwapChain *swapchain, DWORD tid) {
-    int i;
+    unsigned int i;
 
     for(i = 0; i < ((IWineD3DSwapChainImpl *) swapchain)->num_contexts; i++) {
         if(((IWineD3DSwapChainImpl *) swapchain)->context[i]->tid == tid) {
@@ -1475,8 +1476,7 @@ static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target,
  *****************************************************************************/
 void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextUsage usage) {
     DWORD                         tid = GetCurrentThreadId();
-    int                           i;
-    DWORD                         dirtyState, idx;
+    DWORD                         i, dirtyState, idx;
     BYTE                          shift;
     WineD3DContext                *context;
     const struct StateEntry       *StateTable = This->StateTable;

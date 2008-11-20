@@ -1152,8 +1152,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
 
             if(hr!= WINED3D_OK) {
                 /* clean up */
-                int k;
-                int l;
+                unsigned int k;
+                unsigned int l;
                 for (l = 0; l < j; l++) {
                     IWineD3DSurface_Release(object->surfaces[l][i]);
                 }
@@ -1573,7 +1573,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice* iface,
    * Create the back, front and stencil buffers
    *******************/
     if(object->presentParms.BackBufferCount > 0) {
-        int i;
+        UINT i;
 
         object->backBuffer = HeapAlloc(GetProcessHeap(), 0, sizeof(IWineD3DSurface *) * object->presentParms.BackBufferCount);
         if(!object->backBuffer) {
@@ -1667,7 +1667,7 @@ error:
     }
 
     if (object->backBuffer) {
-        int i;
+        UINT i;
         for(i = 0; i < object->presentParms.BackBufferCount; i++) {
             if(object->backBuffer[i]) {
                 IWineD3DSurface_GetParent(object->backBuffer[i], &bufferParent);
@@ -3623,7 +3623,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
+    UINT i;
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -3663,7 +3663,7 @@ CONST float *srcData,
 UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
+    UINT i;
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4052,7 +4052,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
+    UINT i;
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4092,7 +4092,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF_DirtyConst(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
+    UINT i;
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
@@ -4148,7 +4148,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     WINED3DVIEWPORT vp;
     WINED3DMATRIX mat, proj_mat, view_mat, world_mat;
     BOOL doClip;
-    int numTextures;
+    DWORD numTextures;
 
     if (lpStrideData->u.s.normal.lpData) {
         WARN(" lighting state not saved yet... Some strange stuff may happen !\n");
@@ -7187,7 +7187,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         pPresentationParameters->BackBufferHeight != swapchain->presentParms.BackBufferHeight))
     {
         WINED3DVIEWPORT vp;
-        int i;
+        UINT i;
 
         vp.X = 0;
         vp.Y = 0;
