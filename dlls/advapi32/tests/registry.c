@@ -204,8 +204,7 @@ static void test_hkey_main_Value_A(LPCSTR name, LPCSTR string,
 {
     DWORD ret, type, cbData;
     DWORD str_byte_len;
-    LPSTR value;
-    static const char nA[]={'N', 0};
+    BYTE* value;
 
     type=0xdeadbeef;
     cbData=0xdeadbeef;
@@ -225,23 +224,24 @@ static void test_hkey_main_Value_A(LPCSTR name, LPCSTR string,
     ok(cbData == full_byte_len || cbData == str_byte_len /* Win9x */,
         "cbData=%d instead of %d or %d\n", cbData, full_byte_len, str_byte_len);
 
-    value = HeapAlloc(GetProcessHeap(), 0, (cbData+2)*sizeof(*value));
-    strcpy(value, nA);
+    value = HeapAlloc(GetProcessHeap(), 0, cbData+1);
+    memset(value, 0xbd, cbData+1);
     type=0xdeadbeef;
-    ret = RegQueryValueExA(hkey_main, name, NULL, &type, (BYTE*)value, &cbData);
+    ret = RegQueryValueExA(hkey_main, name, NULL, &type, value, &cbData);
     GLE = GetLastError();
     ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%d\n", ret, GLE);
     if (!string)
     {
         /* When cbData == 0, RegQueryValueExA() should not modify the buffer */
-        ok(strcmp(value, nA) == 0 || (cbData == 1 && *value == '\0') /* Win9x */,
-           "RegQueryValueExA failed: '%s' != '%s'\n", value, string);
+        ok(*value == 0xbd || (cbData == 1 && *value == '\0') /* Win9x */,
+           "RegQueryValueExA overflowed: cbData=%u *value=%02x\n", cbData, *value);
     }
     else
     {
         ok(memcmp(value, string, cbData) == 0, "RegQueryValueExA failed: %s/%d != %s/%d\n",
-           wine_debugstr_an(value, cbData), cbData,
+           wine_debugstr_an((char*)value, cbData), cbData,
            wine_debugstr_an(string, full_byte_len), full_byte_len);
+        ok(*(value+cbData) == 0xbd, "RegQueryValueExA overflowed at %u: %02x != bd\n", cbData, *(value+cbData));
     }
     HeapFree(GetProcessHeap(), 0, value);
 }
@@ -250,8 +250,7 @@ static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string,
                                    DWORD full_byte_len)
 {
     DWORD ret, type, cbData;
-    LPWSTR value;
-    static const WCHAR nW[]={'N', 0};
+    BYTE* value;
 
     type=0xdeadbeef;
     cbData=0xdeadbeef;
@@ -272,20 +271,22 @@ static void test_hkey_main_Value_W(LPCWSTR name, LPCWSTR string,
     ok(cbData == full_byte_len,
         "cbData=%d instead of %d\n", cbData, full_byte_len);
 
-    value = HeapAlloc(GetProcessHeap(), 0, (cbData+2)*sizeof(*value));
-    lstrcpyW(value, nW);
+    /* Give enough space to overflow by one WCHAR */
+    value = HeapAlloc(GetProcessHeap(), 0, cbData+2);
+    memset(value, 0xbd, cbData+2);
     type=0xdeadbeef;
-    ret = RegQueryValueExW(hkey_main, name, NULL, &type, (BYTE*)value, &cbData);
+    ret = RegQueryValueExW(hkey_main, name, NULL, &type, value, &cbData);
     GLE = GetLastError();
     ok(ret == ERROR_SUCCESS, "RegQueryValueExW failed: %d, GLE=%d\n", ret, GLE);
-    if (!string)
+    if (string)
     {
-        /* When cbData == 0, RegQueryValueExW() should not modify the buffer */
-        string=nW;
+        ok(memcmp(value, string, cbData) == 0, "RegQueryValueExW failed: %s/%d != %s/%d\n",
+           wine_debugstr_wn((WCHAR*)value, cbData / sizeof(WCHAR)), cbData,
+           wine_debugstr_wn(string, full_byte_len / sizeof(WCHAR)), full_byte_len);
     }
-    ok(memcmp(value, string, cbData) == 0, "RegQueryValueExW failed: %s/%d != %s/%d\n",
-       wine_debugstr_wn(value, cbData / sizeof(WCHAR)), cbData,
-       wine_debugstr_wn(string, full_byte_len / sizeof(WCHAR)), full_byte_len);
+    /* This implies that when cbData == 0, RegQueryValueExW() should not modify the buffer */
+    ok(*(value+cbData) == 0xbd, "RegQueryValueExW overflowed at %u: %02x != bd\n", cbData, *(value+cbData));
+    ok(*(value+cbData+1) == 0xbd, "RegQueryValueExW overflowed at %u+1: %02x != bd\n", cbData, *(value+cbData+1));
     HeapFree(GetProcessHeap(), 0, value);
 }
 
