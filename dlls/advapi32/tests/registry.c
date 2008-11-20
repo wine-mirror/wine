@@ -1312,6 +1312,87 @@ cleanup:
     RegCloseKey(subkey);
 }
 
+static void test_string_termination(void)
+{
+    HKEY subkey;
+    LSTATUS ret;
+    static const char string[] = "FullString";
+    char name[11];
+    BYTE buffer[11];
+    DWORD insize, outsize, nsize;
+
+    ret = RegCreateKeyA(hkey_main, "string_termination", &subkey);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+
+    /* Off-by-one RegSetValueExA -> adds a trailing '\0'! */
+    insize=sizeof(string)-1;
+    ret = RegSetValueExA(subkey, "stringtest", 0, REG_SZ, (BYTE*)string, insize);
+    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", ret);
+    outsize=insize;
+    ret = RegQueryValueExA(subkey, "stringtest", NULL, NULL, buffer, &outsize);
+    ok(ret == ERROR_MORE_DATA, "RegQueryValueExA returned: %d\n", ret);
+
+    /* Off-by-two RegSetValueExA -> no trailing '\0', except on Win9x */
+    insize=sizeof(string)-2;
+    ret = RegSetValueExA(subkey, "stringtest", 0, REG_SZ, (BYTE*)string, insize);
+    ok(ret == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", ret);
+    outsize=0;
+    ret = RegQueryValueExA(subkey, "stringtest", NULL, NULL, NULL, &outsize);
+    ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", ret);
+    ok(outsize == insize || broken(outsize == sizeof(string)) /* Win9x */,
+       "wrong size %u != %u\n", outsize, insize);
+
+    if (outsize == insize)
+    {
+        /* RegQueryValueExA may return a string with no trailing '\0' */
+        outsize=insize;
+        memset(buffer, 0xbd, sizeof(buffer));
+        ret = RegQueryValueExA(subkey, "stringtest", NULL, NULL, buffer, &outsize);
+        ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", ret);
+        ok(outsize == insize, "wrong size: %u != %u\n", outsize, insize);
+        ok(memcmp(buffer, string, outsize) == 0, "bad string: %s/%u != %s\n",
+           wine_debugstr_an((char*)buffer, outsize), outsize, string);
+        ok(buffer[insize] == 0xbd, "buffer overflow at %u %02x\n", insize, buffer[insize]);
+
+        /* RegQueryValueExA adds a trailing '\0' if there is room */
+        outsize=insize+1;
+        memset(buffer, 0xbd, sizeof(buffer));
+        ret = RegQueryValueExA(subkey, "stringtest", NULL, NULL, buffer, &outsize);
+        ok(ret == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", ret);
+        ok(outsize == insize, "wrong size: %u != %u\n", outsize, insize);
+        ok(memcmp(buffer, string, outsize) == 0, "bad string: %s/%u != %s\n",
+           wine_debugstr_an((char*)buffer, outsize), outsize, string);
+        ok(buffer[insize] == 0, "buffer overflow at %u %02x\n", insize, buffer[insize]);
+
+        /* RegEnumValueA may return a string with no trailing '\0' */
+        outsize=insize;
+        memset(buffer, 0xbd, sizeof(buffer));
+        nsize=sizeof(name);
+        ret = RegEnumValueA(subkey, 0, name, &nsize, NULL, NULL, buffer, &outsize);
+        ok(ret == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", ret);
+        ok(strcmp(name, "stringtest") == 0, "wrong name: %s\n", name);
+        ok(outsize == insize, "wrong size: %u != %u\n", outsize, insize);
+        ok(memcmp(buffer, string, outsize) == 0, "bad string: %s/%u != %s\n",
+           wine_debugstr_an((char*)buffer, outsize), outsize, string);
+        ok(buffer[insize] == 0xbd, "buffer overflow at %u %02x\n", insize, buffer[insize]);
+
+        /* RegEnumValueA adds a trailing '\0' if there is room */
+        outsize=insize+1;
+        memset(buffer, 0xbd, sizeof(buffer));
+        nsize=sizeof(name);
+        ret = RegEnumValueA(subkey, 0, name, &nsize, NULL, NULL, buffer, &outsize);
+        ok(ret == ERROR_SUCCESS, "RegEnumValueA failed: %d\n", ret);
+        ok(strcmp(name, "stringtest") == 0, "wrong name: %s\n", name);
+        ok(outsize == insize, "wrong size: %u != %u\n", outsize, insize);
+        ok(memcmp(buffer, string, outsize) == 0, "bad string: %s/%u != %s\n",
+           wine_debugstr_an((char*)buffer, outsize), outsize, string);
+        ok(buffer[insize] == 0, "buffer overflow at %u %02x\n", insize, buffer[insize]);
+    }
+
+    RegDeleteKeyA(subkey, "");
+    RegCloseKey(subkey);
+}
+
 static void test_reg_delete_tree(void)
 {
     CHAR buffer[MAX_PATH];
@@ -1402,6 +1483,7 @@ START_TEST(registry)
     test_reg_close_key();
     test_reg_delete_key();
     test_reg_query_value();
+    test_string_termination();
 
     /* SaveKey/LoadKey require the SE_BACKUP_NAME privilege to be set */
     if (set_privileges(SE_BACKUP_NAME, TRUE) &&
