@@ -4620,11 +4620,12 @@ static BOOL CRYPT_AsnDecodeDistPoint(const BYTE *pbEncoded, DWORD cbEncoded,
        CRYPT_AsnDecodeAltNameInternal, sizeof(CERT_ALT_NAME_INFO), TRUE, TRUE,
        offsetof(CRL_DIST_POINT, CRLIssuer.rgAltEntry), 0 },
     };
+    CRL_DIST_POINT *point = (CRL_DIST_POINT *)pvStructInfo;
     BOOL ret;
 
     ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
      pbEncoded, cbEncoded, dwFlags, NULL, pvStructInfo, pcbStructInfo,
-     pcbDecoded, NULL);
+     pcbDecoded, point ? point->DistPointName.u.FullName.rgAltEntry : NULL);
     return ret;
 }
 
