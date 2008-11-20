@@ -943,7 +943,7 @@ static void REGPROC_export_binary(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
     } else {
         const WCHAR hex_format[] = {'h','e','x','(','%','u',')',':',0};
         hex_prefix = hex_buf;
-        wsprintfW(hex_buf, hex_format, type);
+        sprintfW(hex_buf, hex_format, type);
         if ((type == REG_SZ || type == REG_EXPAND_SZ || type == REG_MULTI_SZ) && !unicode)
         {
             value_multibyte = GetMultiByteStringN((WCHAR*)value, value_size / sizeof(WCHAR), &value_size);
@@ -973,7 +973,7 @@ static void REGPROC_export_binary(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
     i = 0;
     while (1)
     {
-        wsprintfW(*line_buf + data_pos, format, (unsigned int)value[i]);
+        sprintfW(*line_buf + data_pos, format, (unsigned int)value[i]);
         data_pos += 2;
         if (++i == value_size)
             break;
@@ -1063,7 +1063,7 @@ static void export_hkey(FILE *file, HKEY key,
 
     REGPROC_resize_char_buffer(line_buf, line_buf_size, lstrlenW(*reg_key_name_buf) + 4);
     /* output data for the current key */
-    wsprintfW(*line_buf, key_format, *reg_key_name_buf);
+    sprintfW(*line_buf, key_format, *reg_key_name_buf);
     REGPROC_write_line(file, *line_buf, unicode);
 
     /* print all the values */
@@ -1089,7 +1089,7 @@ static void export_hkey(FILE *file, HKEY key,
 
                 line_len = 3 + lstrlenW(*val_name_buf);
                 REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len);
-                wsprintfW(*line_buf, val_start, *val_name_buf);
+                sprintfW(*line_buf, val_start, *val_name_buf);
             } else {
                 const WCHAR std_val[] = {'@','=',0};
                 line_len = 2;
@@ -1131,7 +1131,7 @@ static void export_hkey(FILE *file, HKEY key,
                 WCHAR format[] = {'d','w','o','r','d',':','%','0','8','x','\n',0};
 
                 REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len + 15);
-                wsprintfW(*line_buf + line_len, format, *((DWORD *)*val_buf));
+                sprintfW(*line_buf + line_len, format, *((DWORD *)*val_buf));
                 break;
             }
 
