@@ -698,6 +698,13 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
     DoStretch = (bmi->bmiHeader.biHeight/2 != height) ||
       (bmi->bmiHeader.biWidth != width);
 
+    /* Scale the hotspot */
+    if (DoStretch && hotspot.x != ICON_HOTSPOT && hotspot.y != ICON_HOTSPOT)
+    {
+        hotspot.x = (hotspot.x * width) / bmi->bmiHeader.biWidth;
+        hotspot.y = (hotspot.y * height) / (bmi->bmiHeader.biHeight / 2);
+    }
+
     if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
     if (screen_dc)
     {
@@ -723,14 +730,7 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
             /* Create the XOR bitmap */
 
             if (DoStretch) {
-                if(bIcon)
-                {
-                    hXorBits = CreateCompatibleBitmap(screen_dc, width, height);
-                }
-                else
-                {
-                    hXorBits = CreateBitmap(width, height, 1, 1, NULL);
-                }
+                hXorBits = CreateCompatibleBitmap(screen_dc, width, height);
                 if(hXorBits)
                 {
                 HBITMAP hOld;
