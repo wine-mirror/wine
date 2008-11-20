@@ -938,6 +938,18 @@ static void test_write_watch(void)
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
 
         SetLastError( 0xdeadbeef );
+        count = 64;
+        ret = pGetWriteWatch( 0, base, size * 2, results, &count, &pagesize );
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        count = 64;
+        ret = pGetWriteWatch( 0, base + size - pagesize, pagesize + 1, results, &count, &pagesize );
+        ok( ret == ~0u, "GetWriteWatch succeeded %u\n", ret );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
         ret = pResetWriteWatch( base, 0 );
         ok( ret == ~0u, "ResetWriteWatch succeeded %u\n", ret );
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
