@@ -161,6 +161,7 @@ static CHAR mime_type[512];
 static IInternetProtocolSink *protocol_sink = NULL;
 static HANDLE complete_event, complete_event2;
 static HRESULT binding_hres;
+static BOOL have_IHttpNegotiate2;
 
 static LPCWSTR urls[] = {
     WINE_ABOUT_URL,
@@ -1826,6 +1827,7 @@ static void test_bscholder(IBindStatusCallback *holder)
 
     hres = IBindStatusCallback_QueryInterface(holder, &IID_IHttpNegotiate2, (void**)&http_negotiate2);
     if(SUCCEEDED(hres)) {
+        have_IHttpNegotiate2 = TRUE;
         hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
         ok(hres == E_FAIL, "GetRootSecurityId failed: %08x\n", hres);
 
@@ -2115,10 +2117,11 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
             CLEAR_CALLED(QueryService_IInternetBindInfo);
             CHECK_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(BeginningTransaction);
-            /* QueryInterface_IHttpNegotiate2 and GetRootSecurityId
-             * called on WinXP but not on Win98 */
-            CLEAR_CALLED(QueryInterface_IHttpNegotiate2);
-            CLEAR_CALLED(GetRootSecurityId);
+            if (have_IHttpNegotiate2)
+            {
+                CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+                CHECK_CALLED(GetRootSecurityId);
+            }
             if(http_is_first) {
                 CHECK_CALLED(OnProgress_FINDINGRESOURCE);
                 CHECK_CALLED(OnProgress_CONNECTING);
@@ -2275,10 +2278,11 @@ static void test_BindToObject(int protocol, BOOL emul)
         if(test_protocol == HTTP_TEST) {
             CHECK_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(BeginningTransaction);
-            /* QueryInterface_IHttpNegotiate2 and GetRootSecurityId
-             * called on WinXP but not on Win98 */
-            CLEAR_CALLED(QueryInterface_IHttpNegotiate2);
-            CLEAR_CALLED(GetRootSecurityId);
+            if (have_IHttpNegotiate2)
+            {
+                CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+                CHECK_CALLED(GetRootSecurityId);
+            }
             if(http_is_first) {
                 CHECK_CALLED(Obj_OnProgress_FINDINGRESOURCE);
                 CHECK_CALLED(Obj_OnProgress_CONNECTING);
@@ -2384,8 +2388,11 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
         if(test_protocol == HTTP_TEST) {
             CHECK_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(BeginningTransaction);
-            CHECK_CALLED(QueryInterface_IHttpNegotiate2);
-            CHECK_CALLED(GetRootSecurityId);
+            if (have_IHttpNegotiate2)
+            {
+                CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+                CHECK_CALLED(GetRootSecurityId);
+            }
         }
         if(test_protocol == FILE_TEST)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
