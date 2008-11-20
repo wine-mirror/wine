@@ -1629,48 +1629,59 @@ static BOOL CRYPT_AsnDecodeUnicodeNameValueInternal(const BYTE *pbEncoded,
         {
         case ASN_NUMERICSTRING:
             valueType = CERT_RDN_NUMERIC_STRING;
-            bytesNeeded += dataLen * 2;
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
             break;
         case ASN_PRINTABLESTRING:
             valueType = CERT_RDN_PRINTABLE_STRING;
-            bytesNeeded += dataLen * 2;
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
             break;
         case ASN_IA5STRING:
             valueType = CERT_RDN_IA5_STRING;
-            bytesNeeded += dataLen * 2;
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
             break;
         case ASN_T61STRING:
             valueType = CERT_RDN_T61_STRING;
-            bytesNeeded += dataLen * 2;
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
             break;
         case ASN_VIDEOTEXSTRING:
             valueType = CERT_RDN_VIDEOTEX_STRING;
-            bytesNeeded += dataLen * 2;
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
             break;
         case ASN_GRAPHICSTRING:
             valueType = CERT_RDN_GRAPHIC_STRING;
-            bytesNeeded += dataLen * 2;
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
             break;
         case ASN_VISIBLESTRING:
             valueType = CERT_RDN_VISIBLE_STRING;
-            bytesNeeded += dataLen * 2;
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
             break;
         case ASN_GENERALSTRING:
             valueType = CERT_RDN_GENERAL_STRING;
-            bytesNeeded += dataLen * 2;
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
             break;
         case ASN_UNIVERSALSTRING:
             valueType = CERT_RDN_UNIVERSAL_STRING;
-            bytesNeeded += dataLen / 2;
+            if (dataLen)
+                bytesNeeded += dataLen / 2 + sizeof(WCHAR);
             break;
         case ASN_BMPSTRING:
             valueType = CERT_RDN_BMP_STRING;
-            bytesNeeded += dataLen;
+            if (dataLen)
+                bytesNeeded += dataLen + sizeof(WCHAR);
             break;
         case ASN_UTF8STRING:
             valueType = CERT_RDN_UTF8_STRING;
-            bytesNeeded += MultiByteToWideChar(CP_UTF8, 0,
-             (LPCSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) * 2;
+            if (dataLen)
+                bytesNeeded += (MultiByteToWideChar(CP_UTF8, 0,
+                 (LPCSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) + 1) * 2;
             break;
         default:
             SetLastError(CRYPT_E_ASN1_BADTAG);
@@ -1710,23 +1721,29 @@ static BOOL CRYPT_AsnDecodeUnicodeNameValueInternal(const BYTE *pbEncoded,
                     value->Value.cbData = dataLen * 2;
                     for (i = 0; i < dataLen; i++)
                         str[i] = pbEncoded[1 + lenBytes + i];
+                    str[i] = 0;
                     break;
                 case ASN_UNIVERSALSTRING:
                     value->Value.cbData = dataLen / 2;
                     for (i = 0; i < dataLen / 4; i++)
                         str[i] = (pbEncoded[1 + lenBytes + 2 * i + 2] << 8)
                          | pbEncoded[1 + lenBytes + 2 * i + 3];
+                    str[i] = 0;
                     break;
                 case ASN_BMPSTRING:
                     value->Value.cbData = dataLen;
                     for (i = 0; i < dataLen / 2; i++)
                         str[i] = (pbEncoded[1 + lenBytes + 2 * i] << 8) |
                          pbEncoded[1 + lenBytes + 2 * i + 1];
+                    str[i] = 0;
                     break;
                 case ASN_UTF8STRING:
                     value->Value.cbData = MultiByteToWideChar(CP_UTF8, 0,
                      (LPCSTR)pbEncoded + 1 + lenBytes, dataLen,
                      str, bytesNeeded - sizeof(CERT_NAME_VALUE)) * 2;
+                    value->Value.pbData[value->Value.cbData / sizeof(WCHAR)]
+                     = 0;
+                    value->Value.cbData += sizeof(WCHAR);
                     break;
                 }
             }
