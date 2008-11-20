@@ -604,7 +604,6 @@ static BOOL WINAPI CRYPT_FormatHexString(DWORD dwCertEncodingType,
 
 #define MAX_STRING_RESOURCE_LEN 128
 
-static const WCHAR crlf[] = { '\r','\n',0 };
 static const WCHAR commaSpace[] = { ',',' ',0 };
 
 struct BitToString
@@ -614,30 +613,18 @@ struct BitToString
     WCHAR str[MAX_STRING_RESOURCE_LEN];
 };
 
-static BOOL CRYPT_FormatBits(DWORD dwFormatStrType, BYTE bits,
- const struct BitToString *map, DWORD mapEntries, void *pbFormat,
- DWORD *pcbFormat, BOOL *first)
+static BOOL CRYPT_FormatBits(BYTE bits, const struct BitToString *map,
+ DWORD mapEntries, void *pbFormat, DWORD *pcbFormat, BOOL *first)
 {
-    LPCWSTR sep;
-    DWORD sepLen, bytesNeeded = sizeof(WCHAR);
+    DWORD bytesNeeded = sizeof(WCHAR);
     int i;
     BOOL ret = TRUE, localFirst = *first;
 
-    if (dwFormatStrType & CRYPT_FORMAT_STR_MULTI_LINE)
-    {
-        sep = crlf;
-        sepLen = strlenW(crlf) * sizeof(WCHAR);
-    }
-    else
-    {
-        sep = commaSpace;
-        sepLen = strlenW(commaSpace) * sizeof(WCHAR);
-    }
     for (i = 0; i < mapEntries; i++)
         if (bits & map[i].bit)
         {
             if (!localFirst)
-                bytesNeeded += sepLen;
+                bytesNeeded += strlenW(commaSpace) * sizeof(WCHAR);
             localFirst = FALSE;
             bytesNeeded += strlenW(map[i].str) * sizeof(WCHAR);
         }
@@ -664,8 +651,8 @@ static BOOL CRYPT_FormatBits(DWORD dwFormatStrType, BYTE bits,
             {
                 if (!localFirst)
                 {
-                    strcpyW(str, sep);
-                    str += sepLen / sizeof(WCHAR);
+                    strcpyW(str, commaSpace);
+                    str += strlenW(commaSpace);
                 }
                 localFirst = FALSE;
                 strcpyW(str, map[i].str);
@@ -753,15 +740,13 @@ static BOOL WINAPI CRYPT_FormatKeyUsage(DWORD dwCertEncodingType,
                      keyUsageByte1Map[i].str, MAX_STRING_RESOURCE_LEN);
                 stringsLoaded = TRUE;
             }
-            CRYPT_FormatBits(dwFormatStrType, bits->pbData[0],
-             keyUsageByte0Map,
+            CRYPT_FormatBits(bits->pbData[0], keyUsageByte0Map,
              sizeof(keyUsageByte0Map) / sizeof(keyUsageByte0Map[0]),
              NULL, &bitStringLen, &first);
             bytesNeeded += bitStringLen;
             if (bits->cbData == 2)
             {
-                CRYPT_FormatBits(dwFormatStrType, bits->pbData[1],
-                 keyUsageByte1Map,
+                CRYPT_FormatBits(bits->pbData[1], keyUsageByte1Map,
                  sizeof(keyUsageByte1Map) / sizeof(keyUsageByte1Map[0]),
                  NULL, &bitStringLen, &first);
                 bytesNeeded += bitStringLen;
@@ -784,16 +769,14 @@ static BOOL WINAPI CRYPT_FormatKeyUsage(DWORD dwCertEncodingType,
 
                 bitStringLen = bytesNeeded;
                 first = TRUE;
-                CRYPT_FormatBits(dwFormatStrType, bits->pbData[0],
-                 keyUsageByte0Map,
+                CRYPT_FormatBits(bits->pbData[0], keyUsageByte0Map,
                  sizeof(keyUsageByte0Map) / sizeof(keyUsageByte0Map[0]),
                  str, &bitStringLen, &first);
                 str += bitStringLen / sizeof(WCHAR) - 1;
                 if (bits->cbData == 2)
                 {
                     bitStringLen = bytesNeeded;
-                    CRYPT_FormatBits(dwFormatStrType, bits->pbData[1],
-                     keyUsageByte1Map,
+                    CRYPT_FormatBits(bits->pbData[1], keyUsageByte1Map,
                      sizeof(keyUsageByte1Map) / sizeof(keyUsageByte1Map[0]),
                      str, &bitStringLen, &first);
                     str += bitStringLen / sizeof(WCHAR) - 1;
@@ -811,6 +794,8 @@ static BOOL WINAPI CRYPT_FormatKeyUsage(DWORD dwCertEncodingType,
     }
     return ret;
 }
+
+static const WCHAR crlf[] = { '\r','\n',0 };
 
 static WCHAR subjectTypeHeader[MAX_STRING_RESOURCE_LEN];
 static WCHAR subjectTypeCA[MAX_STRING_RESOURCE_LEN];
@@ -2123,8 +2108,7 @@ static BOOL WINAPI CRYPT_FormatNetscapeCertType(DWORD dwCertEncodingType,
                      netscapeCertTypeMap[i].str, MAX_STRING_RESOURCE_LEN);
                 stringsLoaded = TRUE;
             }
-            CRYPT_FormatBits(dwFormatStrType, bits->pbData[0],
-             netscapeCertTypeMap,
+            CRYPT_FormatBits(bits->pbData[0], netscapeCertTypeMap,
              sizeof(netscapeCertTypeMap) / sizeof(netscapeCertTypeMap[0]),
              NULL, &bitStringLen, &first);
             bytesNeeded += bitStringLen;
@@ -2146,8 +2130,7 @@ static BOOL WINAPI CRYPT_FormatNetscapeCertType(DWORD dwCertEncodingType,
 
                 bitStringLen = bytesNeeded;
                 first = TRUE;
-                CRYPT_FormatBits(dwFormatStrType, bits->pbData[0],
-                 netscapeCertTypeMap,
+                CRYPT_FormatBits(bits->pbData[0], netscapeCertTypeMap,
                  sizeof(netscapeCertTypeMap) / sizeof(netscapeCertTypeMap[0]),
                  str, &bitStringLen, &first);
                 str += bitStringLen / sizeof(WCHAR) - 1;
