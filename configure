@@ -815,6 +815,7 @@ ac_user_opts='
 enable_option_checking
 enable_win16
 enable_win64
+enable_tests
 enable_maintainer_mode
 with_alsa
 with_audioio
@@ -1498,6 +1499,7 @@ Optional Features:
   --disable-win16         do not include Win16 support
   --enable-win64          build a Win64 emulator on AMD64 (won't run Win32
                           binaries)
+  --disable-tests         do not build the regression tests
   --enable-maintainer-mode
                           enable maintainer-specific build rules
 
@@ -2046,6 +2048,11 @@ fi
 # Check whether --enable-win64 was given.
 if test "${enable_win64+set}" = set; then
   enableval=$enable_win64;
+fi
+
+# Check whether --enable-tests was given.
+if test "${enable_tests+set}" = set; then
+  enableval=$enable_tests;
 fi
 
 # Check whether --enable-maintainer-mode was given.
@@ -23887,7 +23894,7 @@ ac_config_files="$ac_config_files dlls/advapi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/advapi32/tests/Makefile"
-test "x$enable_advapi32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	advapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/advapi32/tests/Makefile: dlls/advapi32/tests/Makefile.in dlls/Maketest.rules"
@@ -23903,7 +23910,7 @@ ac_config_files="$ac_config_files dlls/advpack/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/advpack/tests/Makefile"
-test "x$enable_advpack_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	advpack/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/advpack/tests/Makefile: dlls/advpack/tests/Makefile.in dlls/Maketest.rules"
@@ -23959,7 +23966,7 @@ ac_config_files="$ac_config_files dlls/browseui/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/browseui/tests/Makefile"
-test "x$enable_browseui_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	browseui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/browseui/tests/Makefile: dlls/browseui/tests/Makefile.in dlls/Maketest.rules"
@@ -23975,7 +23982,7 @@ ac_config_files="$ac_config_files dlls/cabinet/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cabinet/tests/Makefile"
-test "x$enable_cabinet_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	cabinet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cabinet/tests/Makefile: dlls/cabinet/tests/Makefile.in dlls/Maketest.rules"
@@ -24023,7 +24030,7 @@ ac_config_files="$ac_config_files dlls/comcat/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comcat/tests/Makefile"
-test "x$enable_comcat_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	comcat/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comcat/tests/Makefile: dlls/comcat/tests/Makefile.in dlls/Maketest.rules"
@@ -24039,7 +24046,7 @@ ac_config_files="$ac_config_files dlls/comctl32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comctl32/tests/Makefile"
-test "x$enable_comctl32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	comctl32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comctl32/tests/Makefile: dlls/comctl32/tests/Makefile.in dlls/Maketest.rules"
@@ -24055,7 +24062,7 @@ ac_config_files="$ac_config_files dlls/comdlg32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comdlg32/tests/Makefile"
-test "x$enable_comdlg32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	comdlg32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comdlg32/tests/Makefile: dlls/comdlg32/tests/Makefile.in dlls/Maketest.rules"
@@ -24079,7 +24086,7 @@ ac_config_files="$ac_config_files dlls/credui/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/credui/tests/Makefile"
-test "x$enable_credui_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	credui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/credui/tests/Makefile: dlls/credui/tests/Makefile.in dlls/Maketest.rules"
@@ -24103,7 +24110,7 @@ ac_config_files="$ac_config_files dlls/crypt32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/crypt32/tests/Makefile"
-test "x$enable_crypt32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	crypt32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/crypt32/tests/Makefile: dlls/crypt32/tests/Makefile.in dlls/Maketest.rules"
@@ -24135,7 +24142,7 @@ ac_config_files="$ac_config_files dlls/cryptnet/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cryptnet/tests/Makefile"
-test "x$enable_cryptnet_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	cryptnet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptnet/tests/Makefile: dlls/cryptnet/tests/Makefile.in dlls/Maketest.rules"
@@ -24151,7 +24158,7 @@ ac_config_files="$ac_config_files dlls/cryptui/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/cryptui/tests/Makefile"
-test "x$enable_cryptui_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	cryptui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/cryptui/tests/Makefile: dlls/cryptui/tests/Makefile.in dlls/Maketest.rules"
@@ -24183,7 +24190,7 @@ ac_config_files="$ac_config_files dlls/d3d10/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d10/tests/Makefile"
-test "x$enable_d3d10_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	d3d10/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d10/tests/Makefile: dlls/d3d10/tests/Makefile.in dlls/Maketest.rules"
@@ -24199,7 +24206,7 @@ ac_config_files="$ac_config_files dlls/d3d10core/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d10core/tests/Makefile"
-test "x$enable_d3d10core_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	d3d10core/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d10core/tests/Makefile: dlls/d3d10core/tests/Makefile.in dlls/Maketest.rules"
@@ -24215,7 +24222,7 @@ ac_config_files="$ac_config_files dlls/d3d8/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d8/tests/Makefile"
-test "x$enable_d3d8_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	d3d8/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d8/tests/Makefile: dlls/d3d8/tests/Makefile.in dlls/Maketest.rules"
@@ -24231,7 +24238,7 @@ ac_config_files="$ac_config_files dlls/d3d9/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d9/tests/Makefile"
-test "x$enable_d3d9_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	d3d9/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3d9/tests/Makefile: dlls/d3d9/tests/Makefile.in dlls/Maketest.rules"
@@ -24255,7 +24262,7 @@ ac_config_files="$ac_config_files dlls/d3drm/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3drm/tests/Makefile"
-test "x$enable_d3drm_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	d3drm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3drm/tests/Makefile: dlls/d3drm/tests/Makefile.in dlls/Maketest.rules"
@@ -24271,7 +24278,7 @@ ac_config_files="$ac_config_files dlls/d3dx8/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3dx8/tests/Makefile"
-test "x$enable_d3dx8_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	d3dx8/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dx8/tests/Makefile: dlls/d3dx8/tests/Makefile.in dlls/Maketest.rules"
@@ -24383,7 +24390,7 @@ ac_config_files="$ac_config_files dlls/d3dx9_36/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3dx9_36/tests/Makefile"
-test "x$enable_d3dx9_36_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	d3dx9_36/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dx9_36/tests/Makefile: dlls/d3dx9_36/tests/Makefile.in dlls/Maketest.rules"
@@ -24407,7 +24414,7 @@ ac_config_files="$ac_config_files dlls/d3dxof/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3dxof/tests/Makefile"
-test "x$enable_d3dxof_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	d3dxof/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/d3dxof/tests/Makefile: dlls/d3dxof/tests/Makefile.in dlls/Maketest.rules"
@@ -24439,7 +24446,7 @@ ac_config_files="$ac_config_files dlls/ddraw/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ddraw/tests/Makefile"
-test "x$enable_ddraw_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	ddraw/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ddraw/tests/Makefile: dlls/ddraw/tests/Makefile.in dlls/Maketest.rules"
@@ -24471,7 +24478,7 @@ ac_config_files="$ac_config_files dlls/dinput/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dinput/tests/Makefile"
-test "x$enable_dinput_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dinput/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dinput/tests/Makefile: dlls/dinput/tests/Makefile.in dlls/Maketest.rules"
@@ -24567,7 +24574,7 @@ ac_config_files="$ac_config_files dlls/dnsapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dnsapi/tests/Makefile"
-test "x$enable_dnsapi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dnsapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dnsapi/tests/Makefile: dlls/dnsapi/tests/Makefile.in dlls/Maketest.rules"
@@ -24591,7 +24598,7 @@ ac_config_files="$ac_config_files dlls/dplayx/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dplayx/tests/Makefile"
-test "x$enable_dplayx_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dplayx/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dplayx/tests/Makefile: dlls/dplayx/tests/Makefile.in dlls/Maketest.rules"
@@ -24647,7 +24654,7 @@ ac_config_files="$ac_config_files dlls/dsound/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dsound/tests/Makefile"
-test "x$enable_dsound_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dsound/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dsound/tests/Makefile: dlls/dsound/tests/Makefile.in dlls/Maketest.rules"
@@ -24711,7 +24718,7 @@ ac_config_files="$ac_config_files dlls/dxgi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dxgi/tests/Makefile"
-test "x$enable_dxgi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	dxgi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dxgi/tests/Makefile: dlls/dxgi/tests/Makefile.in dlls/Maketest.rules"
@@ -24743,7 +24750,7 @@ ac_config_files="$ac_config_files dlls/fusion/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/fusion/tests/Makefile"
-test "x$enable_fusion_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	fusion/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/fusion/tests/Makefile: dlls/fusion/tests/Makefile.in dlls/Maketest.rules"
@@ -24759,7 +24766,7 @@ ac_config_files="$ac_config_files dlls/gdi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/gdi32/tests/Makefile"
-test "x$enable_gdi32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	gdi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdi32/tests/Makefile: dlls/gdi32/tests/Makefile.in dlls/Maketest.rules"
@@ -24775,7 +24782,7 @@ ac_config_files="$ac_config_files dlls/gdiplus/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/gdiplus/tests/Makefile"
-test "x$enable_gdiplus_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	gdiplus/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/gdiplus/tests/Makefile: dlls/gdiplus/tests/Makefile.in dlls/Maketest.rules"
@@ -24839,7 +24846,7 @@ ac_config_files="$ac_config_files dlls/hlink/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/hlink/tests/Makefile"
-test "x$enable_hlink_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	hlink/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/hlink/tests/Makefile: dlls/hlink/tests/Makefile.in dlls/Maketest.rules"
@@ -24903,7 +24910,7 @@ ac_config_files="$ac_config_files dlls/imm32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/imm32/tests/Makefile"
-test "x$enable_imm32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	imm32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/imm32/tests/Makefile: dlls/imm32/tests/Makefile.in dlls/Maketest.rules"
@@ -24919,7 +24926,7 @@ ac_config_files="$ac_config_files dlls/inetcomm/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/inetcomm/tests/Makefile"
-test "x$enable_inetcomm_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	inetcomm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/inetcomm/tests/Makefile: dlls/inetcomm/tests/Makefile.in dlls/Maketest.rules"
@@ -24935,7 +24942,7 @@ ac_config_files="$ac_config_files dlls/inetmib1/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/inetmib1/tests/Makefile"
-test "x$enable_inetmib1_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	inetmib1/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/inetmib1/tests/Makefile: dlls/inetmib1/tests/Makefile.in dlls/Maketest.rules"
@@ -24951,7 +24958,7 @@ ac_config_files="$ac_config_files dlls/infosoft/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/infosoft/tests/Makefile"
-test "x$enable_infosoft_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	infosoft/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/infosoft/tests/Makefile: dlls/infosoft/tests/Makefile.in dlls/Maketest.rules"
@@ -24991,7 +24998,7 @@ ac_config_files="$ac_config_files dlls/iphlpapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/iphlpapi/tests/Makefile"
-test "x$enable_iphlpapi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	iphlpapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/iphlpapi/tests/Makefile: dlls/iphlpapi/tests/Makefile.in dlls/Maketest.rules"
@@ -25015,7 +25022,7 @@ ac_config_files="$ac_config_files dlls/itss/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/itss/tests/Makefile"
-test "x$enable_itss_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	itss/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/itss/tests/Makefile: dlls/itss/tests/Makefile.in dlls/Maketest.rules"
@@ -25031,7 +25038,7 @@ ac_config_files="$ac_config_files dlls/jscript/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/jscript/tests/Makefile"
-test "x$enable_jscript_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	jscript/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/jscript/tests/Makefile: dlls/jscript/tests/Makefile.in dlls/Maketest.rules"
@@ -25047,7 +25054,7 @@ ac_config_files="$ac_config_files dlls/kernel32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/kernel32/tests/Makefile"
-test "x$enable_kernel32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	kernel32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in dlls/Maketest.rules"
@@ -25063,7 +25070,7 @@ ac_config_files="$ac_config_files dlls/localspl/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/localspl/tests/Makefile"
-test "x$enable_localspl_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	localspl/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/localspl/tests/Makefile: dlls/localspl/tests/Makefile.in dlls/Maketest.rules"
@@ -25079,7 +25086,7 @@ ac_config_files="$ac_config_files dlls/localui/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/localui/tests/Makefile"
-test "x$enable_localui_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	localui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/localui/tests/Makefile: dlls/localui/tests/Makefile.in dlls/Maketest.rules"
@@ -25095,7 +25102,7 @@ ac_config_files="$ac_config_files dlls/lz32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/lz32/tests/Makefile"
-test "x$enable_lz32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	lz32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/lz32/tests/Makefile: dlls/lz32/tests/Makefile.in dlls/Maketest.rules"
@@ -25111,7 +25118,7 @@ ac_config_files="$ac_config_files dlls/mapi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mapi32/tests/Makefile"
-test "x$enable_mapi32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	mapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mapi32/tests/Makefile: dlls/mapi32/tests/Makefile.in dlls/Maketest.rules"
@@ -25167,7 +25174,7 @@ ac_config_files="$ac_config_files dlls/mlang/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mlang/tests/Makefile"
-test "x$enable_mlang_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	mlang/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mlang/tests/Makefile: dlls/mlang/tests/Makefile.in dlls/Maketest.rules"
@@ -25231,7 +25238,7 @@ ac_config_files="$ac_config_files dlls/msacm32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msacm32/tests/Makefile"
-test "x$enable_msacm32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	msacm32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msacm32/tests/Makefile: dlls/msacm32/tests/Makefile.in dlls/Maketest.rules"
@@ -25263,7 +25270,7 @@ ac_config_files="$ac_config_files dlls/mscms/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mscms/tests/Makefile"
-test "x$enable_mscms_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	mscms/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mscms/tests/Makefile: dlls/mscms/tests/Makefile.in dlls/Maketest.rules"
@@ -25319,7 +25326,7 @@ ac_config_files="$ac_config_files dlls/mshtml/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mshtml/tests/Makefile"
-test "x$enable_mshtml_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	mshtml/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mshtml/tests/Makefile: dlls/mshtml/tests/Makefile.in dlls/Maketest.rules"
@@ -25335,7 +25342,7 @@ ac_config_files="$ac_config_files dlls/msi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msi/tests/Makefile"
-test "x$enable_msi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	msi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msi/tests/Makefile: dlls/msi/tests/Makefile.in dlls/Maketest.rules"
@@ -25407,7 +25414,7 @@ ac_config_files="$ac_config_files dlls/mstask/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mstask/tests/Makefile"
-test "x$enable_mstask_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	mstask/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mstask/tests/Makefile: dlls/mstask/tests/Makefile.in dlls/Maketest.rules"
@@ -25439,7 +25446,7 @@ ac_config_files="$ac_config_files dlls/msvcrt/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcrt/tests/Makefile"
-test "x$enable_msvcrt_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	msvcrt/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrt/tests/Makefile: dlls/msvcrt/tests/Makefile.in dlls/Maketest.rules"
@@ -25471,7 +25478,7 @@ ac_config_files="$ac_config_files dlls/msvcrtd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msvcrtd/tests/Makefile"
-test "x$enable_msvcrtd_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	msvcrtd/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msvcrtd/tests/Makefile: dlls/msvcrtd/tests/Makefile.in dlls/Maketest.rules"
@@ -25511,7 +25518,7 @@ ac_config_files="$ac_config_files dlls/msxml3/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msxml3/tests/Makefile"
-test "x$enable_msxml3_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	msxml3/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msxml3/tests/Makefile: dlls/msxml3/tests/Makefile.in dlls/Maketest.rules"
@@ -25535,7 +25542,7 @@ ac_config_files="$ac_config_files dlls/netapi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/netapi32/tests/Makefile"
-test "x$enable_netapi32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	netapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/netapi32/tests/Makefile: dlls/netapi32/tests/Makefile.in dlls/Maketest.rules"
@@ -25559,7 +25566,7 @@ ac_config_files="$ac_config_files dlls/ntdll/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntdll/tests/Makefile"
-test "x$enable_ntdll_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	ntdll/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntdll/tests/Makefile: dlls/ntdll/tests/Makefile.in dlls/Maketest.rules"
@@ -25575,7 +25582,7 @@ ac_config_files="$ac_config_files dlls/ntdsapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntdsapi/tests/Makefile"
-test "x$enable_ntdsapi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	ntdsapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntdsapi/tests/Makefile: dlls/ntdsapi/tests/Makefile.in dlls/Maketest.rules"
@@ -25599,7 +25606,7 @@ ac_config_files="$ac_config_files dlls/ntprint/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ntprint/tests/Makefile"
-test "x$enable_ntprint_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	ntprint/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ntprint/tests/Makefile: dlls/ntprint/tests/Makefile.in dlls/Maketest.rules"
@@ -25631,7 +25638,7 @@ ac_config_files="$ac_config_files dlls/odbccp32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/odbccp32/tests/Makefile"
-test "x$enable_odbccp32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	odbccp32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/odbccp32/tests/Makefile: dlls/odbccp32/tests/Makefile.in dlls/Maketest.rules"
@@ -25647,7 +25654,7 @@ ac_config_files="$ac_config_files dlls/ole32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole32/tests/Makefile"
-test "x$enable_ole32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	ole32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole32/tests/Makefile: dlls/ole32/tests/Makefile.in dlls/Maketest.rules"
@@ -25663,7 +25670,7 @@ ac_config_files="$ac_config_files dlls/oleacc/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oleacc/tests/Makefile"
-test "x$enable_oleacc_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	oleacc/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oleacc/tests/Makefile: dlls/oleacc/tests/Makefile.in dlls/Maketest.rules"
@@ -25679,7 +25686,7 @@ ac_config_files="$ac_config_files dlls/oleaut32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/oleaut32/tests/Makefile"
-test "x$enable_oleaut32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	oleaut32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/oleaut32/tests/Makefile: dlls/oleaut32/tests/Makefile.in dlls/Maketest.rules"
@@ -25735,7 +25742,7 @@ ac_config_files="$ac_config_files dlls/opengl32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/opengl32/tests/Makefile"
-test "x$enable_opengl32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	opengl32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/opengl32/tests/Makefile: dlls/opengl32/tests/Makefile.in dlls/Maketest.rules"
@@ -25751,7 +25758,7 @@ ac_config_files="$ac_config_files dlls/pdh/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/pdh/tests/Makefile"
-test "x$enable_pdh_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	pdh/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/pdh/tests/Makefile: dlls/pdh/tests/Makefile.in dlls/Maketest.rules"
@@ -25791,7 +25798,7 @@ ac_config_files="$ac_config_files dlls/psapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/psapi/tests/Makefile"
-test "x$enable_psapi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	psapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/psapi/tests/Makefile: dlls/psapi/tests/Makefile.in dlls/Maketest.rules"
@@ -25823,7 +25830,7 @@ ac_config_files="$ac_config_files dlls/qedit/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/qedit/tests/Makefile"
-test "x$enable_qedit_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	qedit/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/qedit/tests/Makefile: dlls/qedit/tests/Makefile.in dlls/Maketest.rules"
@@ -25839,7 +25846,7 @@ ac_config_files="$ac_config_files dlls/qmgr/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/qmgr/tests/Makefile"
-test "x$enable_qmgr_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	qmgr/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/qmgr/tests/Makefile: dlls/qmgr/tests/Makefile.in dlls/Maketest.rules"
@@ -25863,7 +25870,7 @@ ac_config_files="$ac_config_files dlls/quartz/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/quartz/tests/Makefile"
-test "x$enable_quartz_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	quartz/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/quartz/tests/Makefile: dlls/quartz/tests/Makefile.in dlls/Maketest.rules"
@@ -25887,7 +25894,7 @@ ac_config_files="$ac_config_files dlls/rasapi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rasapi32/tests/Makefile"
-test "x$enable_rasapi32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	rasapi32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rasapi32/tests/Makefile: dlls/rasapi32/tests/Makefile.in dlls/Maketest.rules"
@@ -25911,7 +25918,7 @@ ac_config_files="$ac_config_files dlls/riched20/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/riched20/tests/Makefile"
-test "x$enable_riched20_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	riched20/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/riched20/tests/Makefile: dlls/riched20/tests/Makefile.in dlls/Maketest.rules"
@@ -25927,7 +25934,7 @@ ac_config_files="$ac_config_files dlls/riched32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/riched32/tests/Makefile"
-test "x$enable_riched32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	riched32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/riched32/tests/Makefile: dlls/riched32/tests/Makefile.in dlls/Maketest.rules"
@@ -25943,7 +25950,7 @@ ac_config_files="$ac_config_files dlls/rpcrt4/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rpcrt4/tests/Makefile"
-test "x$enable_rpcrt4_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	rpcrt4/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rpcrt4/tests/Makefile: dlls/rpcrt4/tests/Makefile.in dlls/Maketest.rules"
@@ -25967,7 +25974,7 @@ ac_config_files="$ac_config_files dlls/rsaenh/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rsaenh/tests/Makefile"
-test "x$enable_rsaenh_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	rsaenh/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/rsaenh/tests/Makefile: dlls/rsaenh/tests/Makefile.in dlls/Maketest.rules"
@@ -25999,7 +26006,7 @@ ac_config_files="$ac_config_files dlls/schannel/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/schannel/tests/Makefile"
-test "x$enable_schannel_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	schannel/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/schannel/tests/Makefile: dlls/schannel/tests/Makefile.in dlls/Maketest.rules"
@@ -26015,7 +26022,7 @@ ac_config_files="$ac_config_files dlls/secur32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/secur32/tests/Makefile"
-test "x$enable_secur32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	secur32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/secur32/tests/Makefile: dlls/secur32/tests/Makefile.in dlls/Maketest.rules"
@@ -26047,7 +26054,7 @@ ac_config_files="$ac_config_files dlls/serialui/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/serialui/tests/Makefile"
-test "x$enable_serialui_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	serialui/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/serialui/tests/Makefile: dlls/serialui/tests/Makefile.in dlls/Maketest.rules"
@@ -26063,7 +26070,7 @@ ac_config_files="$ac_config_files dlls/setupapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/setupapi/tests/Makefile"
-test "x$enable_setupapi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	setupapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/setupapi/tests/Makefile: dlls/setupapi/tests/Makefile.in dlls/Maketest.rules"
@@ -26103,7 +26110,7 @@ ac_config_files="$ac_config_files dlls/shdocvw/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shdocvw/tests/Makefile"
-test "x$enable_shdocvw_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	shdocvw/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shdocvw/tests/Makefile: dlls/shdocvw/tests/Makefile.in dlls/Maketest.rules"
@@ -26119,7 +26126,7 @@ ac_config_files="$ac_config_files dlls/shell32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shell32/tests/Makefile"
-test "x$enable_shell32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	shell32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shell32/tests/Makefile: dlls/shell32/tests/Makefile.in dlls/Maketest.rules"
@@ -26143,7 +26150,7 @@ ac_config_files="$ac_config_files dlls/shlwapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shlwapi/tests/Makefile"
-test "x$enable_shlwapi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	shlwapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/shlwapi/tests/Makefile: dlls/shlwapi/tests/Makefile.in dlls/Maketest.rules"
@@ -26175,7 +26182,7 @@ ac_config_files="$ac_config_files dlls/snmpapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/snmpapi/tests/Makefile"
-test "x$enable_snmpapi_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	snmpapi/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/snmpapi/tests/Makefile: dlls/snmpapi/tests/Makefile.in dlls/Maketest.rules"
@@ -26199,7 +26206,7 @@ ac_config_files="$ac_config_files dlls/spoolss/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/spoolss/tests/Makefile"
-test "x$enable_spoolss_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	spoolss/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/spoolss/tests/Makefile: dlls/spoolss/tests/Makefile.in dlls/Maketest.rules"
@@ -26295,7 +26302,7 @@ ac_config_files="$ac_config_files dlls/urlmon/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/urlmon/tests/Makefile"
-test "x$enable_urlmon_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	urlmon/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/urlmon/tests/Makefile: dlls/urlmon/tests/Makefile.in dlls/Maketest.rules"
@@ -26311,7 +26318,7 @@ ac_config_files="$ac_config_files dlls/user32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/user32/tests/Makefile"
-test "x$enable_user32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	user32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/user32/tests/Makefile: dlls/user32/tests/Makefile.in dlls/Maketest.rules"
@@ -26327,7 +26334,7 @@ ac_config_files="$ac_config_files dlls/userenv/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/userenv/tests/Makefile"
-test "x$enable_userenv_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	userenv/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/userenv/tests/Makefile: dlls/userenv/tests/Makefile.in dlls/Maketest.rules"
@@ -26343,7 +26350,7 @@ ac_config_files="$ac_config_files dlls/usp10/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/usp10/tests/Makefile"
-test "x$enable_usp10_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	usp10/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/usp10/tests/Makefile: dlls/usp10/tests/Makefile.in dlls/Maketest.rules"
@@ -26367,7 +26374,7 @@ ac_config_files="$ac_config_files dlls/uxtheme/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/uxtheme/tests/Makefile"
-test "x$enable_uxtheme_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	uxtheme/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/uxtheme/tests/Makefile: dlls/uxtheme/tests/Makefile.in dlls/Maketest.rules"
@@ -26399,7 +26406,7 @@ ac_config_files="$ac_config_files dlls/version/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/version/tests/Makefile"
-test "x$enable_version_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	version/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/version/tests/Makefile: dlls/version/tests/Makefile.in dlls/Maketest.rules"
@@ -26591,7 +26598,7 @@ ac_config_files="$ac_config_files dlls/winhttp/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winhttp/tests/Makefile"
-test "x$enable_winhttp_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	winhttp/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winhttp/tests/Makefile: dlls/winhttp/tests/Makefile.in dlls/Maketest.rules"
@@ -26607,7 +26614,7 @@ ac_config_files="$ac_config_files dlls/wininet/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wininet/tests/Makefile"
-test "x$enable_wininet_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	wininet/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in dlls/Maketest.rules"
@@ -26623,7 +26630,7 @@ ac_config_files="$ac_config_files dlls/winmm/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winmm/tests/Makefile"
-test "x$enable_winmm_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	winmm/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winmm/tests/Makefile: dlls/winmm/tests/Makefile.in dlls/Maketest.rules"
@@ -26655,7 +26662,7 @@ ac_config_files="$ac_config_files dlls/winspool.drv/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winspool.drv/tests/Makefile"
-test "x$enable_winspool_drv_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	winspool.drv/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/winspool.drv/tests/Makefile: dlls/winspool.drv/tests/Makefile.in dlls/Maketest.rules"
@@ -26679,7 +26686,7 @@ ac_config_files="$ac_config_files dlls/wintrust/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wintrust/tests/Makefile"
-test "x$enable_wintrust_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	wintrust/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wintrust/tests/Makefile: dlls/wintrust/tests/Makefile.in dlls/Maketest.rules"
@@ -26695,7 +26702,7 @@ ac_config_files="$ac_config_files dlls/wldap32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wldap32/tests/Makefile"
-test "x$enable_wldap32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	wldap32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/wldap32/tests/Makefile: dlls/wldap32/tests/Makefile.in dlls/Maketest.rules"
@@ -26735,7 +26742,7 @@ ac_config_files="$ac_config_files dlls/ws2_32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ws2_32/tests/Makefile"
-test "x$enable_ws2_32_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	ws2_32/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ws2_32/tests/Makefile: dlls/ws2_32/tests/Makefile.in dlls/Maketest.rules"
@@ -26783,7 +26790,7 @@ ac_config_files="$ac_config_files dlls/xinput1_3/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/xinput1_3/tests/Makefile"
-test "x$enable_xinput1_3_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
 	xinput1_3/tests"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/xinput1_3/tests/Makefile: dlls/xinput1_3/tests/Makefile.in dlls/Maketest.rules"
