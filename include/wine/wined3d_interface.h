@@ -35,6 +35,7 @@
 struct IWineD3DSurface;
 
 #include "wined3d_types.h"
+#include "wined3d_caps.h"
 /*****************************************************************
  * THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES 
  * PLEASE USE wine/wined3d_gl.h INSTEAD

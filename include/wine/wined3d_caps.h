@@ -169,6 +169,140 @@
 
 #define WINED3DVS20CAPS_PREDICATION                         0x00000001
 
+#define WINED3DCAPS2_NO2DDURING3DSCENE                      0x00000002
+#define WINED3DCAPS2_FULLSCREENGAMMA                        0x00020000
+#define WINED3DCAPS2_CANRENDERWINDOWED                      0x00080000
+#define WINED3DCAPS2_CANCALIBRATEGAMMA                      0x00100000
+#define WINED3DCAPS2_RESERVED                               0x02000000
+#define WINED3DCAPS2_CANMANAGERESOURCE                      0x10000000
+#define WINED3DCAPS2_DYNAMICTEXTURES                        0x20000000
+#define WINED3DCAPS2_CANAUTOGENMIPMAP                       0x40000000
+
+#define WINED3DPRASTERCAPS_DITHER                           0x00000001
+#define WINED3DPRASTERCAPS_ROP2                             0x00000002
+#define WINED3DPRASTERCAPS_XOR                              0x00000004
+#define WINED3DPRASTERCAPS_PAT                              0x00000008
+#define WINED3DPRASTERCAPS_ZTEST                            0x00000010
+#define WINED3DPRASTERCAPS_SUBPIXEL                         0x00000020
+#define WINED3DPRASTERCAPS_SUBPIXELX                        0x00000040
+#define WINED3DPRASTERCAPS_FOGVERTEX                        0x00000080
+#define WINED3DPRASTERCAPS_FOGTABLE                         0x00000100
+#define WINED3DPRASTERCAPS_STIPPLE                          0x00000200
+#define WINED3DPRASTERCAPS_ANTIALIASSORTDEPENDENT           0x00000400
+#define WINED3DPRASTERCAPS_ANTIALIASSORTINDEPENDENT         0x00000800
+#define WINED3DPRASTERCAPS_ANTIALIASEDGES                   0x00001000
+#define WINED3DPRASTERCAPS_MIPMAPLODBIAS                    0x00002000
+#define WINED3DPRASTERCAPS_ZBIAS                            0x00004000
+#define WINED3DPRASTERCAPS_ZBUFFERLESSHSR                   0x00008000
+#define WINED3DPRASTERCAPS_FOGRANGE                         0x00010000
+#define WINED3DPRASTERCAPS_ANISOTROPY                       0x00020000
+#define WINED3DPRASTERCAPS_WBUFFER                          0x00040000
+#define WINED3DPRASTERCAPS_TRANSLUCENTSORTINDEPENDENT       0x00080000
+#define WINED3DPRASTERCAPS_WFOG                             0x00100000
+#define WINED3DPRASTERCAPS_ZFOG                             0x00200000
+#define WINED3DPRASTERCAPS_COLORPERSPECTIVE                 0x00400000
+#define WINED3DPRASTERCAPS_SCISSORTEST                      0x01000000
+#define WINED3DPRASTERCAPS_SLOPESCALEDEPTHBIAS              0x02000000
+#define WINED3DPRASTERCAPS_DEPTHBIAS                        0x04000000
+#define WINED3DPRASTERCAPS_MULTISAMPLE_TOGGLE               0x08000000
+
+#define WINED3DPSHADECAPS_COLORFLATMONO                     0x00000001
+#define WINED3DPSHADECAPS_COLORFLATRGB                      0x00000002
+#define WINED3DPSHADECAPS_COLORGOURAUDMONO                  0x00000004
+#define WINED3DPSHADECAPS_COLORGOURAUDRGB                   0x00000008
+#define WINED3DPSHADECAPS_COLORPHONGMONO                    0x00000010
+#define WINED3DPSHADECAPS_COLORPHONGRGB                     0x00000020
+#define WINED3DPSHADECAPS_SPECULARFLATMONO                  0x00000040
+#define WINED3DPSHADECAPS_SPECULARFLATRGB                   0x00000080
+#define WINED3DPSHADECAPS_SPECULARGOURAUDMONO               0x00000100
+#define WINED3DPSHADECAPS_SPECULARGOURAUDRGB                0x00000200
+#define WINED3DPSHADECAPS_SPECULARPHONGMONO                 0x00000400
+#define WINED3DPSHADECAPS_SPECULARPHONGRGB                  0x00000800
+#define WINED3DPSHADECAPS_ALPHAFLATBLEND                    0x00001000
+#define WINED3DPSHADECAPS_ALPHAFLATSTIPPLED                 0x00002000
+#define WINED3DPSHADECAPS_ALPHAGOURAUDBLEND                 0x00004000
+#define WINED3DPSHADECAPS_ALPHAGOURAUDSTIPPLED              0x00008000
+#define WINED3DPSHADECAPS_ALPHAPHONGBLEND                   0x00010000
+#define WINED3DPSHADECAPS_ALPHAPHONGSTIPPLED                0x00020000
+#define WINED3DPSHADECAPS_FOGFLAT                           0x00040000
+#define WINED3DPSHADECAPS_FOGGOURAUD                        0x00080000
+#define WINED3DPSHADECAPS_FOGPHONG                          0x00100000
+
+#define WINED3DPTEXTURECAPS_PERSPECTIVE                     0x00000001
+#define WINED3DPTEXTURECAPS_POW2                            0x00000002
+#define WINED3DPTEXTURECAPS_ALPHA                           0x00000004
+#define WINED3DPTEXTURECAPS_TRANSPARENCY                    0x00000008
+#define WINED3DPTEXTURECAPS_BORDER                          0x00000010
+#define WINED3DPTEXTURECAPS_SQUAREONLY                      0x00000020
+#define WINED3DPTEXTURECAPS_TEXREPEATNOTSCALEDBYSIZE        0x00000040
+#define WINED3DPTEXTURECAPS_ALPHAPALETTE                    0x00000080
+#define WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL              0x00000100
+#define WINED3DPTEXTURECAPS_PROJECTED                       0x00000400
+#define WINED3DPTEXTURECAPS_CUBEMAP                         0x00000800
+#define WINED3DPTEXTURECAPS_COLORKEYBLEND                   0x00001000
+#define WINED3DPTEXTURECAPS_VOLUMEMAP                       0x00002000
+#define WINED3DPTEXTURECAPS_MIPMAP                          0x00004000
+#define WINED3DPTEXTURECAPS_MIPVOLUMEMAP                    0x00008000
+#define WINED3DPTEXTURECAPS_MIPCUBEMAP                      0x00010000
+#define WINED3DPTEXTURECAPS_CUBEMAP_POW2                    0x00020000
+#define WINED3DPTEXTURECAPS_VOLUMEMAP_POW2                  0x00040000
+#define WINED3DPTEXTURECAPS_NOPROJECTEDBUMPENV              0x00200000
+
+#define WINED3DPTFILTERCAPS_NEAREST                         0x00000001
+#define WINED3DPTFILTERCAPS_LINEAR                          0x00000002
+#define WINED3DPTFILTERCAPS_MIPNEAREST                      0x00000004
+#define WINED3DPTFILTERCAPS_MIPLINEAR                       0x00000008
+#define WINED3DPTFILTERCAPS_LINEARMIPNEAREST                0x00000010
+#define WINED3DPTFILTERCAPS_LINEARMIPLINEAR                 0x00000020
+#define WINED3DPTFILTERCAPS_MINFPOINT                       0x00000100
+#define WINED3DPTFILTERCAPS_MINFLINEAR                      0x00000200
+#define WINED3DPTFILTERCAPS_MINFANISOTROPIC                 0x00000400
+#define WINED3DPTFILTERCAPS_MIPFPOINT                       0x00010000
+#define WINED3DPTFILTERCAPS_MIPFLINEAR                      0x00020000
+#define WINED3DPTFILTERCAPS_MAGFPOINT                       0x01000000
+#define WINED3DPTFILTERCAPS_MAGFLINEAR                      0x02000000
+#define WINED3DPTFILTERCAPS_MAGFANISOTROPIC                 0x04000000
+#define WINED3DPTFILTERCAPS_MAGFPYRAMIDALQUAD               0x08000000
+#define WINED3DPTFILTERCAPS_MAGFGAUSSIANQUAD                0x10000000
+
+#define WINED3DVTXPCAPS_TEXGEN                              0x00000001
+#define WINED3DVTXPCAPS_MATERIALSOURCE7                     0x00000002
+#define WINED3DVTXPCAPS_VERTEXFOG                           0x00000004
+#define WINED3DVTXPCAPS_DIRECTIONALLIGHTS                   0x00000008
+#define WINED3DVTXPCAPS_POSITIONALLIGHTS                    0x00000010
+#define WINED3DVTXPCAPS_LOCALVIEWER                         0x00000020
+#define WINED3DVTXPCAPS_TWEENING                            0x00000040
+#define WINED3DVTXPCAPS_TEXGEN_SPHEREMAP                    0x00000100
+#define WINED3DVTXPCAPS_NO_TEXGEN_NONLOCALVIEWER            0x00000200
+
+#define WINED3DCURSORCAPS_COLOR                             0x00000001
+#define WINED3DCURSORCAPS_LOWRES                            0x00000002
+
+#define WINED3DDEVCAPS_FLOATTLVERTEX                        0x00000001
+#define WINED3DDEVCAPS_SORTINCREASINGZ                      0x00000002
+#define WINED3DDEVCAPS_SORTDECREASINGZ                      0X00000004
+#define WINED3DDEVCAPS_SORTEXACT                            0x00000008
+#define WINED3DDEVCAPS_EXECUTESYSTEMMEMORY                  0x00000010
+#define WINED3DDEVCAPS_EXECUTEVIDEOMEMORY                   0x00000020
+#define WINED3DDEVCAPS_TLVERTEXSYSTEMMEMORY                 0x00000040
+#define WINED3DDEVCAPS_TLVERTEXVIDEOMEMORY                  0x00000080
+#define WINED3DDEVCAPS_TEXTURESYSTEMMEMORY                  0x00000100
+#define WINED3DDEVCAPS_TEXTUREVIDEOMEMORY                   0x00000200
+#define WINED3DDEVCAPS_DRAWPRIMTLVERTEX                     0x00000400
+#define WINED3DDEVCAPS_CANRENDERAFTERFLIP                   0x00000800
+#define WINED3DDEVCAPS_TEXTURENONLOCALVIDMEM                0x00001000
+#define WINED3DDEVCAPS_DRAWPRIMITIVES2                      0x00002000
+#define WINED3DDEVCAPS_SEPARATETEXTUREMEMORIES              0x00004000
+#define WINED3DDEVCAPS_DRAWPRIMITIVES2EX                    0x00008000
+#define WINED3DDEVCAPS_HWTRANSFORMANDLIGHT                  0x00010000
+#define WINED3DDEVCAPS_CANBLTSYSTONONLOCAL                  0x00020000
+#define WINED3DDEVCAPS_HWRASTERIZATION                      0x00080000
+#define WINED3DDEVCAPS_PUREDEVICE                           0x00100000
+#define WINED3DDEVCAPS_QUINTICRTPATCHES                     0x00200000
+#define WINED3DDEVCAPS_RTPATCHES                            0x00400000
+#define WINED3DDEVCAPS_RTPATCHHANDLEZERO                    0x00800000
+#define WINED3DDEVCAPS_NPATCHES                             0x01000000
+
 /* DirectDraw Caps */
 #define WINEDDSCAPS_RESERVED1               0x00000001
 #define WINEDDSCAPS_ALPHA                   0x00000002
@@ -308,5 +442,149 @@
 #define WINEDDCAPS2_TEXMANINNONLOCALVIDMEM  0x01000000
 #define WINEDDCAPS2_STEREO                  0x02000000
 #define WINEDDCAPS2_SYSTONONLOCAL_AS_SYSTOLOCAL   0x04000000
+
+/* DDCAPS.dwPalCaps */
+#define WINEDDPCAPS_4BIT                        0x00000001
+#define WINEDDPCAPS_8BITENTRIES                 0x00000002
+#define WINEDDPCAPS_8BIT                        0x00000004
+#define WINEDDPCAPS_INITIALIZE                  0x00000008
+#define WINEDDPCAPS_PRIMARYSURFACE              0x00000010
+#define WINEDDPCAPS_PRIMARYSURFACELEFT          0x00000020
+#define WINEDDPCAPS_ALLOW256                    0x00000040
+#define WINEDDPCAPS_VSYNC                       0x00000080
+#define WINEDDPCAPS_1BIT                        0x00000100
+#define WINEDDPCAPS_2BIT                        0x00000200
+#define WINEDDPCAPS_ALPHA                       0x00000400
+
+typedef struct _WINED3DVSHADERCAPS2_0
+{
+    DWORD Caps;
+    INT DynamicFlowControlDepth;
+    INT NumTemps;
+    INT StaticFlowControlDepth;
+} WINED3DVSHADERCAPS2_0;
+
+typedef struct _WINED3DPSHADERCAPS2_0
+{
+    DWORD Caps;
+    INT DynamicFlowControlDepth;
+    INT NumTemps;
+    INT StaticFlowControlDepth;
+    INT NumInstructionSlots;
+} WINED3DPSHADERCAPS2_0;
+
+typedef struct _WINEDDCAPS
+{
+    DWORD Caps;
+    DWORD Caps2;
+    DWORD CKeyCaps;
+    DWORD FXCaps;
+    DWORD FXAlphaCaps;
+    DWORD PalCaps;
+    DWORD SVCaps;
+    DWORD SVBCaps;
+    DWORD SVBCKeyCaps;
+    DWORD SVBFXCaps;
+    DWORD VSBCaps;
+    DWORD VSBCKeyCaps;
+    DWORD VSBFXCaps;
+    DWORD SSBCaps;
+    DWORD SSBCKeyCaps;
+    DWORD SSBFXCaps;
+    DWORD ddsCaps;
+    DWORD StrideAlign;
+} WINEDDCAPS;
+
+typedef struct _WINED3DCAPS
+{
+    WINED3DDEVTYPE DeviceType;
+    UINT AdapterOrdinal;
+
+    DWORD Caps;
+    DWORD Caps2;
+    DWORD Caps3;
+    DWORD PresentationIntervals;
+
+    DWORD CursorCaps;
+    DWORD DevCaps;
+    DWORD PrimitiveMiscCaps;
+    DWORD RasterCaps;
+    DWORD ZCmpCaps;
+    DWORD SrcBlendCaps;
+    DWORD DestBlendCaps;
+    DWORD AlphaCmpCaps;
+    DWORD ShadeCaps;
+    DWORD TextureCaps;
+    DWORD TextureFilterCaps;
+    DWORD CubeTextureFilterCaps;
+    DWORD VolumeTextureFilterCaps;
+    DWORD TextureAddressCaps;
+    DWORD VolumeTextureAddressCaps;
+    DWORD LineCaps;
+
+    DWORD MaxTextureWidth;
+    DWORD MaxTextureHeight;
+    DWORD MaxVolumeExtent;
+    DWORD MaxTextureRepeat;
+    DWORD MaxTextureAspectRatio;
+    DWORD MaxAnisotropy;
+    float MaxVertexW;
+
+    float GuardBandLeft;
+    float GuardBandTop;
+    float GuardBandRight;
+    float GuardBandBottom;
+
+    float ExtentsAdjust;
+    DWORD StencilCaps;
+
+    DWORD FVFCaps;
+    DWORD TextureOpCaps;
+    DWORD MaxTextureBlendStages;
+    DWORD MaxSimultaneousTextures;
+
+    DWORD VertexProcessingCaps;
+    DWORD MaxActiveLights;
+    DWORD MaxUserClipPlanes;
+    DWORD MaxVertexBlendMatrices;
+    DWORD MaxVertexBlendMatrixIndex;
+
+    float MaxPointSize;
+
+    DWORD MaxPrimitiveCount;
+    DWORD MaxVertexIndex;
+    DWORD MaxStreams;
+    DWORD MaxStreamStride;
+
+    DWORD VertexShaderVersion;
+    DWORD MaxVertexShaderConst;
+
+    DWORD PixelShaderVersion;
+    float PixelShader1xMaxValue;
+
+    /* DX 9 */
+    DWORD DevCaps2;
+
+    float MaxNpatchTessellationLevel;
+    DWORD Reserved5; /*undocumented*/
+
+    UINT MasterAdapterOrdinal;
+    UINT AdapterOrdinalInGroup;
+    UINT NumberOfAdaptersInGroup;
+    DWORD DeclTypes;
+    DWORD NumSimultaneousRTs;
+    DWORD StretchRectFilterCaps;
+    WINED3DVSHADERCAPS2_0 VS20Caps;
+    WINED3DPSHADERCAPS2_0 PS20Caps;
+    DWORD VertexTextureFilterCaps;
+    DWORD MaxVShaderInstructionsExecuted;
+    DWORD MaxPShaderInstructionsExecuted;
+    DWORD MaxVertexShader30InstructionSlots;
+    DWORD MaxPixelShader30InstructionSlots;
+    DWORD Reserved2;/* Not in the microsoft headers but documented */
+    DWORD Reserved3;
+
+    WINEDDCAPS DirectDrawCaps;
+} WINED3DCAPS;
 
 #endif /* __WINE_WINED3D_CAPS_H */
