@@ -1074,8 +1074,13 @@ BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
              */
             if(WINE_D3D9_CAPABLE(gl_info) && (gl_info->vs_nv_version == VS_VERSION_30)) {
+                /* Geforce GTX - highend */
+                if(strstr(gl_info->gl_renderer, "GTX 280")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX280;
+                    vidmem = 1024;
+                }
                 /* Geforce9 - highend */
-                if(strstr(gl_info->gl_renderer, "9800")) {
+                else if(strstr(gl_info->gl_renderer, "9800")) {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_9800GT;
                     vidmem = 512;
                 }
@@ -3847,6 +3852,7 @@ static const struct driver_version_information driver_version_table[] = {
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    7,  15, 11, 7341   },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     7,  15, 11, 7341    },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     7,  15, 11, 7341    },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     7,  15, 11, 7341    },
 
     /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode */
     {VENDOR_ATI,        CARD_ATI_RADEON_9500,           6,  14, 10, 6764    },
