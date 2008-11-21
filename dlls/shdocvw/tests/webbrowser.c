@@ -1814,7 +1814,7 @@ static void test_GetControlInfo(IUnknown *unk)
 static void test_Extent(IUnknown *unk)
 {
     IOleObject *oleobj;
-    SIZE size;
+    SIZE size, expected;
     HRESULT hres;
     DWORD dpi_x;
     DWORD dpi_y;
@@ -1836,10 +1836,11 @@ static void test_Extent(IUnknown *unk)
     size.cx = size.cy = 0xdeadbeef;
     hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &size);
     ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
-    /* The default size is dpi dependent (96:1323x529 / 120:1058x423) */
-    ok(size.cx == (127000 / dpi_x) &&
-        size.cy == (50800 / dpi_y), "size = {%d %d} (expected %d %d)\n",
-        size.cx, size.cy, 127000 / dpi_x, 50800 / dpi_y);
+    /* Default size is 50x20 pixels, in himetric units */
+    expected.cx = MulDiv( 50, 2540, dpi_x );
+    expected.cy = MulDiv( 20, 2540, dpi_y );
+    ok(size.cx == expected.cx && size.cy == expected.cy, "size = {%d %d} (expected %d %d)\n",
+       size.cx, size.cy, expected.cx, expected.cy );
 
     size.cx = 800;
     size.cy = 700;

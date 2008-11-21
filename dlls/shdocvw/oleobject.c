@@ -917,9 +917,9 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     memset(&This->clip_rect, 0, sizeof(RECT));
     memset(&This->frameinfo, 0, sizeof(OLEINPLACEFRAMEINFO));
 
-    /* The size is dpi dependent */
-    This->extent.cx = 127000 / dpi_x;
-    This->extent.cy =  50800 / dpi_y;
+    /* Default size is 50x20 pixels, in himetric units */
+    This->extent.cx = MulDiv( 50, 2540, dpi_x );
+    This->extent.cy = MulDiv( 20, 2540, dpi_y );
 }
 
 void WebBrowser_OleObject_Destroy(WebBrowser *This)
