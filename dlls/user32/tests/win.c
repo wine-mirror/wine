@@ -4011,6 +4011,11 @@ static void test_CreateWindow(void)
 #define expect_ex_style(window, ex_style)\
     ok(GetWindowLong(window, GWL_EXSTYLE) == (ex_style), "expected ex_style %x != %x\n", (LONG)(ex_style), GetWindowLong(window, GWL_EXSTYLE))
 
+#define expect_gle_broken_9x(gle)\
+    ok(GetLastError() == gle ||\
+       broken(GetLastError() == 0xdeadbeef),\
+       "IsMenu set error %d\n", GetLastError())
+
     hmenu = CreateMenu();
     assert(hmenu != 0);
     parent = GetDesktopWindow();
@@ -4067,7 +4072,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -4081,7 +4086,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -4095,7 +4100,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -4109,14 +4114,16 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
 
     /* WS_CHILD | WS_POPUP */
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_CHILD | WS_POPUP,
                            0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
-    ok(!hwnd, "CreateWindowEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    ok(!hwnd || broken(hwnd != 0 /* Win9x */), "CreateWindowEx should fail\n");
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    if (hwnd)
+        DestroyWindow(hwnd);
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -4130,13 +4137,15 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
 
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_CHILD | WS_POPUP | WS_CAPTION,
                            0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
-    ok(!hwnd, "CreateWindowEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    ok(!hwnd || broken(hwnd != 0 /* Win9x */), "CreateWindowEx should fail\n");
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    if (hwnd)
+        DestroyWindow(hwnd);
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -4150,13 +4159,15 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
 
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowEx(0, "static", NULL, WS_CHILD | WS_POPUP,
                            0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
-    ok(!hwnd, "CreateWindowEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    ok(!hwnd || broken(hwnd != 0 /* Win9x */), "CreateWindowEx should fail\n");
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    if (hwnd)
+        DestroyWindow(hwnd);
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -4170,13 +4181,15 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
 
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowEx(0, "static", NULL, WS_CHILD | WS_POPUP | WS_CAPTION,
                            0, 0, 100, 100, parent, (HMENU)1, 0, NULL);
-    ok(!hwnd, "CreateWindowEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    ok(!hwnd || broken(hwnd != 0 /* Win9x */), "CreateWindowEx should fail\n");
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
+    if (hwnd)
+        DestroyWindow(hwnd);
 
     hmenu = CreateMenu();
     assert(hmenu != 0);
@@ -4190,7 +4203,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
-    ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+    expect_gle_broken_9x(ERROR_INVALID_MENU_HANDLE);
 
     /* test child window sizing */
     cls.style = 0;
@@ -4324,6 +4337,7 @@ static void test_CreateWindow(void)
     UnregisterClass("MinMax_WndClass", GetModuleHandle(0));
     UnregisterClass("Sizes_WndClass", GetModuleHandle(0));
 
+#undef expect_gle_broken_9x
 #undef expect_menu
 #undef expect_style
 #undef expect_ex_style
