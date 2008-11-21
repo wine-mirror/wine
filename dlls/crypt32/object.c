@@ -2253,6 +2253,42 @@ static BOOL WINAPI CRYPT_FormatSpcFinancialCriteria(DWORD dwCertEncodingType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_FormatUnicodeString(DWORD dwCertEncodingType,
+ DWORD dwFormatType, DWORD dwFormatStrType, void *pFormatStruct,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, void *pbFormat,
+ DWORD *pcbFormat)
+{
+    CERT_NAME_VALUE *value;
+    DWORD size;
+    BOOL ret;
+
+    if (!cbEncoded)
+    {
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if ((ret = CryptDecodeObjectEx(dwCertEncodingType, X509_UNICODE_ANY_STRING,
+     pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &value, &size)))
+    {
+        if (!pbFormat)
+            *pcbFormat = value->Value.cbData;
+        else if (*pcbFormat < value->Value.cbData)
+        {
+            *pcbFormat = value->Value.cbData;
+            SetLastError(ERROR_MORE_DATA);
+            ret = FALSE;
+        }
+        else
+        {
+            LPWSTR str = pbFormat;
+
+            *pcbFormat = value->Value.cbData;
+            strcpyW(str, (LPWSTR)value->Value.pbData);
+        }
+    }
+    return ret;
+}
+
 typedef BOOL (WINAPI *CryptFormatObjectFunc)(DWORD, DWORD, DWORD, void *,
  LPCSTR, const BYTE *, DWORD, void *, DWORD *);
 
@@ -2318,6 +2354,14 @@ static CryptFormatObjectFunc CRYPT_GetBuiltinFormatFunction(DWORD encodingType,
         format = CRYPT_FormatEnhancedKeyUsage;
     else if (!strcmp(lpszStructType, szOID_NETSCAPE_CERT_TYPE))
         format = CRYPT_FormatNetscapeCertType;
+    else if (!strcmp(lpszStructType, szOID_NETSCAPE_BASE_URL) ||
+     !strcmp(lpszStructType, szOID_NETSCAPE_REVOCATION_URL) ||
+     !strcmp(lpszStructType, szOID_NETSCAPE_CA_REVOCATION_URL) ||
+     !strcmp(lpszStructType, szOID_NETSCAPE_CERT_RENEWAL_URL) ||
+     !strcmp(lpszStructType, szOID_NETSCAPE_CA_POLICY_URL) ||
+     !strcmp(lpszStructType, szOID_NETSCAPE_SSL_SERVER_NAME) ||
+     !strcmp(lpszStructType, szOID_NETSCAPE_COMMENT))
+        format = CRYPT_FormatUnicodeString;
     else if (!strcmp(lpszStructType, SPC_FINANCIAL_CRITERIA_OBJID))
         format = CRYPT_FormatSpcFinancialCriteria;
     return format;
