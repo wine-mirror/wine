@@ -98,19 +98,29 @@ static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD dwParam1, DWORD
 static BOOL wodUpdatePlayedTotal(WINE_WAVEDEV* wwo, snd_pcm_status_t* ps)
 {
     snd_pcm_sframes_t delay = 0;
+    snd_pcm_sframes_t avail = 0;
+    snd_pcm_uframes_t buf_size = 0;
     snd_pcm_state_t state;
+    int err;
 
     state = snd_pcm_state(wwo->pcm);
-    snd_pcm_delay(wwo->pcm, &delay);
+    avail = snd_pcm_avail_update(wwo->pcm);
+    err = snd_pcm_hw_params_get_buffer_size(wwo->hw_params, &buf_size);
+    delay = buf_size - avail;
+
+    if (state != SND_PCM_STATE_RUNNING && state != SND_PCM_STATE_PREPARED)
+    {
+        WARN("Unexpected state (%d) while updating Total Played, resetting\n", state);
+        delay=0;
+    }
 
     /* A delay < 0 indicates an underrun; for our purposes that's 0.  */
     if (delay < 0)
     {
-        WARN("Unexpected state (%d) or delay (%ld) while updating Total Played, resetting\n", state, delay);
+        WARN("Unexpected delay (%ld) while updating Total Played, resetting\n", delay);
         delay=0;
     }
-    if (state == SND_PCM_STATE_XRUN)
-        snd_pcm_start(wwo->pcm);
+
     InterlockedExchange((LONG*)&wwo->dwPlayedTotal, wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->pcm, delay));
     return TRUE;
 }
