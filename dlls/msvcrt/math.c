@@ -420,8 +420,8 @@ int CDECL _fpclass(double num)
 #ifdef FP_PNORM
   case FP_PNORM: return MSVCRT__FPCLASS_PN;
 #endif
+  default: return MSVCRT__FPCLASS_PN;
   }
-  return MSVCRT__FPCLASS_PN;
 #elif defined (fpclassify)
   switch (fpclassify( num ))
   {
