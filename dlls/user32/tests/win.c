@@ -739,9 +739,10 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info)
      */
     ok((info->dwExStyle & ~0xe0000800) == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE),
        "wrong dwExStyle: %08x != %08x\n", info->dwExStyle, GetWindowLongA(hwnd, GWL_EXSTYLE));
-    status = (GetForegroundWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
-    ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x active %p fg %p\n",
-       info->dwWindowStatus, status, GetActiveWindow(), GetForegroundWindow());
+    status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
+    if (GetForegroundWindow())
+        ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x active %p fg %p\n",
+           info->dwWindowStatus, status, GetActiveWindow(), GetForegroundWindow());
 
     /* win2k and XP return broken border info in GetWindowInfo most of
      * the time, so there is no point in testing it.
