@@ -248,6 +248,13 @@ static void test_info(void)
     if (!boolret)
         goto cleanup;
 
+    boolret = VerQueryValueA( pVersionInfo, NULL, (LPVOID *)&pFixedVersionInfo, &uiLength );
+    ok (boolret || GetLastError() == NO_ERROR /* Win98 */,
+       "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
+
+    boolret = VerQueryValueA( pVersionInfo, "", (LPVOID *)&pFixedVersionInfo, &uiLength );
+    ok (boolret, "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
+
     boolret = VerQueryValueA( pVersionInfo, backslash, (LPVOID *)&pFixedVersionInfo, &uiLength );
     ok (boolret, "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
     if (!boolret)
@@ -286,6 +293,7 @@ static void test_32bit_win(void)
     WCHAR mypathW[MAX_PATH];
     char rootA[] = "\\";
     WCHAR rootW[] = { '\\', 0 };
+    WCHAR emptyW[] = { 0 };
     char varfileinfoA[] = "\\VarFileInfo\\Translation";
     WCHAR varfileinfoW[]    = { '\\','V','a','r','F','i','l','e','I','n','f','o',
                                 '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
@@ -392,6 +400,12 @@ static void test_32bit_win(void)
 
     if (is_unicode_enabled)
     { 
+        retW = VerQueryValueW( pVersionInfoW, NULL, (LPVOID *)&pBufW, &uiLengthW );
+        ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
+
+        retW = VerQueryValueW( pVersionInfoW, emptyW, (LPVOID *)&pBufW, &uiLengthW );
+        ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
+
         retW = VerQueryValueW( pVersionInfoW, rootW, (LPVOID *)&pBufW, &uiLengthW );
         ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
         ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct\n", uiLengthA);
