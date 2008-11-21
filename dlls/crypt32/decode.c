@@ -2392,54 +2392,129 @@ static BOOL CRYPT_AsnDecodeNoticeReference(const BYTE *pbEncoded,
     return ret;
 }
 
-static BOOL CRYPT_AsnDecodeBMPString(const BYTE *pbEncoded,
+static BOOL CRYPT_AsnDecodeUnicodeString(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
     BOOL ret = TRUE;
     DWORD dataLen;
-    LPWSTR *pStr = pvStructInfo;
 
     if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
     {
         BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
-        DWORD bytesNeeded = sizeof(LPWSTR) + sizeof(WCHAR);
+        DWORD bytesNeeded = sizeof(LPWSTR);
 
-        if (pbEncoded[0] != ASN_BMPSTRING)
+        switch (pbEncoded[0])
         {
-            SetLastError(CRYPT_E_ASN1_CORRUPT);
+        case ASN_NUMERICSTRING:
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
+            break;
+        case ASN_PRINTABLESTRING:
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
+            break;
+        case ASN_IA5STRING:
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
+            break;
+        case ASN_T61STRING:
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
+            break;
+        case ASN_VIDEOTEXSTRING:
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
+            break;
+        case ASN_GRAPHICSTRING:
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
+            break;
+        case ASN_VISIBLESTRING:
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
+            break;
+        case ASN_GENERALSTRING:
+            if (dataLen)
+                bytesNeeded += (dataLen + 1) * 2;
+            break;
+        case ASN_UNIVERSALSTRING:
+            if (dataLen)
+                bytesNeeded += dataLen / 2 + sizeof(WCHAR);
+            break;
+        case ASN_BMPSTRING:
+            if (dataLen)
+                bytesNeeded += dataLen + sizeof(WCHAR);
+            break;
+        case ASN_UTF8STRING:
+            if (dataLen)
+                bytesNeeded += (MultiByteToWideChar(CP_UTF8, 0,
+                 (LPCSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) + 1) * 2;
+            break;
+        default:
+            SetLastError(CRYPT_E_ASN1_BADTAG);
+            return FALSE;
+        }
+
+        if (pcbDecoded)
+            *pcbDecoded = 1 + lenBytes + dataLen;
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if (*pcbStructInfo < bytesNeeded)
+        {
+            *pcbStructInfo = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
             ret = FALSE;
         }
         else
         {
-            bytesNeeded += dataLen;
-            if (pcbDecoded)
-                *pcbDecoded = 1 + lenBytes + dataLen;
-            if (!pvStructInfo)
-                *pcbStructInfo = bytesNeeded;
-            else if (*pcbStructInfo < bytesNeeded)
-            {
-                *pcbStructInfo = bytesNeeded;
-                SetLastError(ERROR_MORE_DATA);
-                ret = FALSE;
-            }
-            else
-            {
-                *pcbStructInfo = bytesNeeded;
-                if (dataLen)
-                {
-                    DWORD i;
-                    LPWSTR str = *pStr;
+            LPWSTR *pStr = pvStructInfo;
 
-                    assert(str);
+            *pcbStructInfo = bytesNeeded;
+            if (dataLen)
+            {
+                DWORD i;
+                LPWSTR str = *(LPWSTR *)pStr;
+
+                assert(str);
+                switch (pbEncoded[0])
+                {
+                case ASN_NUMERICSTRING:
+                case ASN_PRINTABLESTRING:
+                case ASN_IA5STRING:
+                case ASN_T61STRING:
+                case ASN_VIDEOTEXSTRING:
+                case ASN_GRAPHICSTRING:
+                case ASN_VISIBLESTRING:
+                case ASN_GENERALSTRING:
+                    for (i = 0; i < dataLen; i++)
+                        str[i] = pbEncoded[1 + lenBytes + i];
+                    str[i] = 0;
+                    break;
+                case ASN_UNIVERSALSTRING:
+                    for (i = 0; i < dataLen / 4; i++)
+                        str[i] = (pbEncoded[1 + lenBytes + 2 * i + 2] << 8)
+                         | pbEncoded[1 + lenBytes + 2 * i + 3];
+                    str[i] = 0;
+                    break;
+                case ASN_BMPSTRING:
                     for (i = 0; i < dataLen / 2; i++)
                         str[i] = (pbEncoded[1 + lenBytes + 2 * i] << 8) |
                          pbEncoded[1 + lenBytes + 2 * i + 1];
                     str[i] = 0;
+                    break;
+                case ASN_UTF8STRING:
+                {
+                    int len = MultiByteToWideChar(CP_UTF8, 0,
+                     (LPCSTR)pbEncoded + 1 + lenBytes, dataLen,
+                     str, bytesNeeded - sizeof(CERT_NAME_VALUE)) * 2;
+                    str[len] = 0;
+                    break;
                 }
-                else
-                    *pStr = NULL;
+                }
             }
+            else
+                *pStr = NULL;
         }
     }
     return ret;
@@ -2455,8 +2530,8 @@ static BOOL CRYPT_AsnDecodePolicyQualifierUserNoticeInternal(
        pNoticeReference), CRYPT_AsnDecodeNoticeReference,
        sizeof(PCERT_POLICY_QUALIFIER_NOTICE_REFERENCE), TRUE, TRUE,
        offsetof(CERT_POLICY_QUALIFIER_USER_NOTICE, pNoticeReference), 0 },
-     { ASN_BMPSTRING, offsetof(CERT_POLICY_QUALIFIER_USER_NOTICE,
-       pszDisplayText), CRYPT_AsnDecodeBMPString, sizeof(LPWSTR), TRUE, TRUE,
+     { 0, offsetof(CERT_POLICY_QUALIFIER_USER_NOTICE, pszDisplayText),
+       CRYPT_AsnDecodeUnicodeString, sizeof(LPWSTR), TRUE, TRUE,
        offsetof(CERT_POLICY_QUALIFIER_USER_NOTICE, pszDisplayText), 0 },
     };
     PCERT_POLICY_QUALIFIER_USER_NOTICE notice = pvStructInfo;
