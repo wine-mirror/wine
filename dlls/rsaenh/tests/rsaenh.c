@@ -167,6 +167,11 @@ static int init_aes_environment(void)
      * This provider is available on Windows XP, Windows 2003 and Vista.      */
 
     result = CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
+    if (!result && GetLastError() == NTE_PROV_TYPE_NOT_DEF)
+    {
+        win_skip("RSA_ASE provider not supported\n");
+        return 0;
+    }
     ok(!result && GetLastError()==NTE_BAD_FLAGS, "%d, %08x\n", result, GetLastError());
 
     if (!CryptAcquireContext(&hProv, szContainer, NULL, PROV_RSA_AES, 0))
@@ -826,9 +831,8 @@ static void test_rc2(void)
             ok(result, "setting salt failed for size %d: %08x\n", i, GetLastError());
         }
         salt.cbData = 25;
-        SetLastError(0xdeadbeef);
         result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
-        ok(!result && GetLastError() == NTE_BAD_DATA, "%08x\n", GetLastError());
+        ok(!result, "%08x\n", GetLastError());
 
         result = CryptDestroyKey(hKey);
         ok(result, "%08x\n", GetLastError());
@@ -866,7 +870,7 @@ static void test_rc2(void)
         CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
         ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
         CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
-        ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
+        ok(dwKeyLen == 56 || broken(dwKeyLen == 40), "%d (%08x)\n", dwKeyLen, GetLastError());
 
         dwKeyLen = 128;
         result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
@@ -978,9 +982,8 @@ static void test_rc4(void)
             ok(result, "setting salt failed for size %d: %08x\n", i, GetLastError());
         }
         salt.cbData = 25;
-        SetLastError(0xdeadbeef);
         result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
-        ok(!result && GetLastError() == NTE_BAD_DATA, "%08x\n", GetLastError());
+        ok(!result, "%08x\n", GetLastError());
 
         result = CryptDestroyKey(hKey);
         ok(result, "%08x\n", GetLastError());
@@ -1072,7 +1075,8 @@ static void test_mac(void) {
     if (!derive_key(CALG_RC4, &hKey, 56)) return;
 
     result = CryptCreateHash(hProv, CALG_MAC, hKey, 0, &hHash);
-    ok(!result && GetLastError() == NTE_BAD_KEY, "%08x\n", GetLastError());
+    ok(!result && (GetLastError() == NTE_BAD_KEY || GetLastError() == NTE_FAIL),
+            "%08x\n", GetLastError());
 
     result = CryptDestroyKey(hKey);
     ok(result, "%08x\n", GetLastError());
@@ -1421,8 +1425,11 @@ static void test_verify_signature(void) {
 
     /* check that we get a bad signature error when the signature is too short*/
     result = CryptVerifySignature(hHash, abSignatureMD2, 64, hPubSignKey, NULL, 0);
-    ok(!result && NTE_BAD_SIGNATURE == GetLastError(),
-     "Expected NTE_BAD_SIGNATURE error, got %08x\n", GetLastError());
+    ok(!result &&
+     (NTE_BAD_SIGNATURE == GetLastError() ||
+     ERROR_INVALID_PARAMETER == GetLastError()),
+     "Expected NTE_BAD_SIGNATURE or ERROR_INVALID_PARAMETER, got %08x\n",
+     GetLastError());
     if (result) return;
 
     result = CryptVerifySignature(hHash, abSignatureMD2, 128, hPubSignKey, NULL, 0);
@@ -1623,6 +1630,11 @@ static void test_schannel_provider(void)
     };
     
     result = CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_SCHANNEL, CRYPT_VERIFYCONTEXT|CRYPT_NEWKEYSET);
+    if (!result)
+    {
+        win_skip("no PROV_RSA_SCHANNEL support\n");
+        return;
+    }
     ok (result, "%08x\n", GetLastError());
     if (result)
         CryptReleaseContext(hProv, 0);
