@@ -62,26 +62,28 @@ struct shader_glsl_priv {
 
 /* Struct to maintain data about a linked GLSL program */
 struct glsl_shader_prog_link {
-    struct list             vshader_entry;
-    struct list             pshader_entry;
-    GLhandleARB             programId;
-    GLhandleARB             *vuniformF_locations;
-    GLhandleARB             *puniformF_locations;
-    GLhandleARB             vuniformI_locations[MAX_CONST_I];
-    GLhandleARB             puniformI_locations[MAX_CONST_I];
-    GLhandleARB             posFixup_location;
-    GLhandleARB             bumpenvmat_location[MAX_TEXTURES];
-    GLhandleARB             luminancescale_location[MAX_TEXTURES];
-    GLhandleARB             luminanceoffset_location[MAX_TEXTURES];
-    GLhandleARB             ycorrection_location;
-    GLenum                  vertex_color_clamp;
-    GLhandleARB             vshader;
-    GLhandleARB             pshader;
+    struct list                 vshader_entry;
+    struct list                 pshader_entry;
+    GLhandleARB                 programId;
+    GLhandleARB                 *vuniformF_locations;
+    GLhandleARB                 *puniformF_locations;
+    GLhandleARB                 vuniformI_locations[MAX_CONST_I];
+    GLhandleARB                 puniformI_locations[MAX_CONST_I];
+    GLhandleARB                 posFixup_location;
+    GLhandleARB                 bumpenvmat_location[MAX_TEXTURES];
+    GLhandleARB                 luminancescale_location[MAX_TEXTURES];
+    GLhandleARB                 luminanceoffset_location[MAX_TEXTURES];
+    GLhandleARB                 ycorrection_location;
+    GLenum                      vertex_color_clamp;
+    GLhandleARB                 vshader;
+    IWineD3DPixelShader         *pshader;
+    struct ps_compile_args      ps_args;
 };
 
 typedef struct {
-    GLhandleARB vshader;
-    GLhandleARB pshader;
+    GLhandleARB                 vshader;
+    IWineD3DPixelShader         *pshader;
+    struct ps_compile_args      ps_args;
 } glsl_program_key_t;
 
 
@@ -2817,16 +2819,18 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
     key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
     key->vshader = entry->vshader;
     key->pshader = entry->pshader;
+    key->ps_args = entry->ps_args;
 
     hash_table_put(priv->glsl_program_lookup, key, entry);
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_priv *priv,
-        GLhandleARB vshader, GLhandleARB pshader) {
+        GLhandleARB vshader, IWineD3DPixelShader *pshader, struct ps_compile_args *ps_args) {
     glsl_program_key_t key;
 
     key.vshader = vshader;
     key.pshader = pshader;
+    key.ps_args = *ps_args;
 
     return (struct glsl_shader_prog_link *)hash_table_get(priv->glsl_program_lookup, &key);
 }
@@ -2837,6 +2841,7 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, WineD3D_GL_
     key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
     key->vshader = entry->vshader;
     key->pshader = entry->pshader;
+    key->ps_args = entry->ps_args;
     hash_table_remove(priv->glsl_program_lookup, key);
 
     GL_EXTCALL(glDeleteObjectARB(entry->programId));
@@ -3186,6 +3191,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     int i;
     char glsl_name[8];
     GLhandleARB vshader_id, pshader_id;
+    struct ps_compile_args compile_args;
 
     if(use_vs) {
         IWineD3DVertexShaderImpl_CompileShader(vshader);
@@ -3194,13 +3200,12 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         vshader_id = 0;
     }
     if(use_ps) {
-        struct ps_compile_args compile_args;
         find_ps_compile_args((IWineD3DPixelShaderImpl*)This->stateBlock->pixelShader, This->stateBlock, &compile_args);
-        pshader_id = find_gl_pshader((IWineD3DPixelShaderImpl *) pshader, &compile_args);
     } else {
-        pshader_id = 0;
+        /* FIXME: Do we really have to spend CPU cycles to generate a few zeroed bytes? */
+        memset(&compile_args, 0, sizeof(compile_args));
     }
-    entry = get_glsl_program_entry(priv, vshader_id, pshader_id);
+    entry = get_glsl_program_entry(priv, vshader_id, pshader, &compile_args);
     if (entry) {
         priv->glsl_program = entry;
         return;
@@ -3214,7 +3219,8 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->programId = programId;
     entry->vshader = vshader_id;
-    entry->pshader = pshader_id;
+    entry->pshader = pshader;
+    entry->ps_args = compile_args;
     /* Add the hash table entry */
     add_glsl_program_entry(priv, entry);
 
@@ -3257,6 +3263,12 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         checkGLcall("glBindAttribLocationARB");
 
         list_add_head(&((IWineD3DBaseShaderImpl *)vshader)->baseShader.linked_programs, &entry->vshader_entry);
+    }
+
+    if(use_ps) {
+        pshader_id = find_gl_pshader((IWineD3DPixelShaderImpl *) pshader, &compile_args);
+    } else {
+        pshader_id = 0;
     }
 
     /* Attach GLSL pshader */
@@ -3552,7 +3564,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
 static unsigned int glsl_program_key_hash(void *key) {
     glsl_program_key_t *k = (glsl_program_key_t *)key;
 
-    unsigned int hash = k->vshader | k->pshader << 16;
+    unsigned int hash = k->vshader | ((DWORD_PTR) k->pshader) << 16;
     hash += ~(hash << 15);
     hash ^=  (hash >> 10);
     hash +=  (hash << 3);
@@ -3567,7 +3579,8 @@ static BOOL glsl_program_key_compare(void *keya, void *keyb) {
     glsl_program_key_t *ka = (glsl_program_key_t *)keya;
     glsl_program_key_t *kb = (glsl_program_key_t *)keyb;
 
-    return ka->vshader == kb->vshader && ka->pshader == kb->pshader;
+    return ka->vshader == kb->vshader && ka->pshader == kb->pshader &&
+           (memcmp(&ka->ps_args, &kb->ps_args, sizeof(kb->ps_args)) == 0);
 }
 
 static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
