@@ -552,7 +552,6 @@ GpStatus WINGDIPAPI GdipCreateCachedBitmap(GpBitmap *bitmap, GpGraphics *graphic
     GpCachedBitmap **cachedbmp)
 {
     GpStatus stat;
-    GpImage *copy;
 
     TRACE("%p %p %p\n", bitmap, graphics, cachedbmp);
 
@@ -562,25 +561,12 @@ GpStatus WINGDIPAPI GdipCreateCachedBitmap(GpBitmap *bitmap, GpGraphics *graphic
     *cachedbmp = GdipAlloc(sizeof(GpCachedBitmap));
     if(!*cachedbmp)
         return OutOfMemory;
-    (*cachedbmp)->bmp = GdipAlloc(sizeof(GpBitmap));
-    if(!(*cachedbmp)->bmp){
-        GdipFree(*cachedbmp);
-        return OutOfMemory;
-    }
 
-    copy = &(*cachedbmp)->bmp->image;
-    stat = GdipCloneImage(&(bitmap->image), &copy);
+    stat = GdipCloneImage(&(bitmap->image), &(*cachedbmp)->image);
     if(stat != Ok){
         GdipFree(*cachedbmp);
         return stat;
     }
-
-    (*cachedbmp)->bmp->width  = bitmap->width;
-    (*cachedbmp)->bmp->height = bitmap->height;
-    (*cachedbmp)->bmp->format = bitmap->format;
-    (*cachedbmp)->bmp->lockmode = 0;
-    (*cachedbmp)->bmp->numlocks = 0;
-    (*cachedbmp)->bmp->bitmapbits = NULL;
 
     return Ok;
 }
@@ -592,8 +578,8 @@ GpStatus WINGDIPAPI GdipDeleteCachedBitmap(GpCachedBitmap *cachedbmp)
     if(!cachedbmp)
         return InvalidParameter;
 
-    GdipDisposeImage(&cachedbmp->bmp->image);
-    GdipFree(cachedbmp->bmp);
+    GdipDisposeImage(cachedbmp->image);
+    GdipFree(cachedbmp);
 
     return Ok;
 }
@@ -606,7 +592,7 @@ GpStatus WINGDIPAPI GdipDrawCachedBitmap(GpGraphics *graphics,
     if(!graphics || !cachedbmp)
         return InvalidParameter;
 
-    return GdipDrawImage(graphics, &cachedbmp->bmp->image, (REAL)x, (REAL)y);
+    return GdipDrawImage(graphics, cachedbmp->image, (REAL)x, (REAL)y);
 }
 
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)

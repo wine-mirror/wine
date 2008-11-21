@@ -197,7 +197,7 @@ struct GpBitmap{
 };
 
 struct GpCachedBitmap{
-    GpBitmap *bmp;
+    GpImage *image;
 };
 
 struct GpImageAttributes{
