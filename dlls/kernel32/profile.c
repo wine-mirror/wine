@@ -1104,7 +1104,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
     /* strip any trailing ' ' of def_val. */
     if (def_val)
     {
-        LPCWSTR p = &def_val[strlenW(def_val) - 1];
+        LPCWSTR p = def_val + strlenW(def_val) - 1;
 
         while (p > def_val && *p == ' ')
             p--;
