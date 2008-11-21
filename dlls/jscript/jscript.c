@@ -240,7 +240,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
 
     hres = IActiveScriptSite_GetLCID(This->site, &lcid);
     if(hres == S_OK)
-        This->ctx->lcid = lcid;
+        This->lcid = lcid;
 
     return This->ctx ? set_ctx_site(This) : S_OK;
 }
