@@ -756,25 +756,6 @@ static nsresult async_open(nsChannel *This, NSContainer *container, nsIStreamLis
     HRESULT hres;
 
     if(This->channel) {
-        if(This->post_data_stream) {
-            nsIUploadChannel *upload_channel;
-
-            nsres = nsIChannel_QueryInterface(This->channel, &IID_nsIUploadChannel,
-                                          (void**)&upload_channel);
-            if(NS_SUCCEEDED(nsres)) {
-                nsACString empty_string;
-                nsACString_Init(&empty_string, "");
-
-                nsres = nsIUploadChannel_SetUploadStream(upload_channel, This->post_data_stream,
-                                                         &empty_string, -1);
-                nsIUploadChannel_Release(upload_channel);
-                if(NS_FAILED(nsres))
-                    WARN("SetUploadStream failed: %08x\n", nsres);
-
-                nsACString_Finish(&empty_string);
-            }
-        }
-
         nsres = nsIChannel_AsyncOpen(This->channel, listener, context);
 
         if(mon)
@@ -1162,6 +1143,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
 {
     nsChannel *This = NSUPCHANNEL_THIS(iface);
     const char *content_type;
+    nsresult nsres;
 
     TRACE("(%p)->(%p %p %d)\n", This, aStream, aContentType, aContentLength);
 
@@ -1177,9 +1159,25 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
     if(aContentLength != -1)
         FIXME("Unsupported acontentLength = %d\n", aContentLength);
 
+    if(This->post_data_stream)
+        nsIInputStream_Release(This->post_data_stream);
+    This->post_data_stream = aStream;
     if(aStream)
         nsIInputStream_AddRef(aStream);
-    This->post_data_stream = aStream;
+
+    if(This->post_data_stream) {
+        nsIUploadChannel *upload_channel;
+
+        nsres = nsIChannel_QueryInterface(This->channel, &IID_nsIUploadChannel,
+                (void**)&upload_channel);
+        if(NS_SUCCEEDED(nsres)) {
+            nsres = nsIUploadChannel_SetUploadStream(upload_channel, aStream, aContentType, aContentLength);
+            nsIUploadChannel_Release(upload_channel);
+            if(NS_FAILED(nsres))
+                WARN("SetUploadStream failed: %08x\n", nsres);
+
+        }
+    }
 
     return NS_OK;
 }
