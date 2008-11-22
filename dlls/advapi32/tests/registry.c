@@ -961,6 +961,13 @@ static void test_reg_open_key(void)
            ret == ERROR_FILE_NOT_FOUND /* Win9x,ME */
            , "expected ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %d\n", ret);
 
+    hkResult = NULL;
+    ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, "\\clsid", 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_SUCCESS || /* NT/2k/XP */
+       ret == ERROR_FILE_NOT_FOUND /* Win9x,ME */
+       , "expected ERROR_SUCCESS or ERROR_FILE_NOT_FOUND, got %d\n", ret);
+    RegCloseKey(hkResult);
+
     /* WOW64 flags */
     hkResult = NULL;
     ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, KEY_READ|KEY_WOW64_32KEY, &hkResult);
