@@ -70,7 +70,6 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 static IOleDocumentView *view = NULL;
 static HWND container_hwnd = NULL, hwnd = NULL, last_hwnd = NULL;
-static BOOL show_fail;
 
 DEFINE_EXPECT(LockContainer);
 DEFINE_EXPECT(SetActiveObject);
@@ -1678,11 +1677,6 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 expect_status_text = NULL;
 
                 hres = IOleDocumentView_UIActivate(view, TRUE);
-
-                if(FAILED(hres)) {
-                    skip("UIActivate failed: %08x\n", hres);
-                    return hres;
-                }
                 ok(hres == S_OK, "UIActivate failed: %08x\n", hres);
 
                 CHECK_CALLED(CanInPlaceActivate);
@@ -1738,14 +1732,6 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 expect_status_text = (load_state == LD_COMPLETE ? (LPCOLESTR)0xdeadbeef : NULL);
 
                 hres = IOleDocumentView_Show(view, TRUE);
-                if(FAILED(hres)) {
-                    win_skip("Show failed\n");
-                    if(activeobj)
-                        IOleInPlaceActiveObject_Release(activeobj);
-                    IOleDocument_Release(document);
-                    show_fail = TRUE;
-                    return S_OK;
-                }
                 ok(hres == S_OK, "Show failed: %08x\n", hres);
 
                 CHECK_CALLED(CanInPlaceActivate);
@@ -3238,7 +3224,7 @@ static HWND create_container_window(void)
             515, 530, NULL, NULL, NULL, NULL);
 }
 
-static HRESULT test_DoVerb(IOleObject *oleobj)
+static void test_DoVerb(IOleObject *oleobj)
 {
     RECT rect = {0,0,500,500};
     HRESULT hres;
@@ -3251,8 +3237,6 @@ static HRESULT test_DoVerb(IOleObject *oleobj)
     expect_LockContainer_fLock = TRUE;
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
-    if(FAILED(hres))
-        return hres;
     ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
 
     if(!container_locked) {
@@ -3261,8 +3245,6 @@ static HRESULT test_DoVerb(IOleObject *oleobj)
         container_locked = TRUE;
     }
     CHECK_CALLED(ActivateMe);
-
-    return hres;
 }
 
 #define CLIENTSITE_EXPECTPATH 0x00000001
@@ -3504,7 +3486,7 @@ static void test_InPlaceDeactivate(IUnknown *unk, BOOL expect_call)
     IOleInPlaceObjectWindowless_Release(windowlessobj);
 }
 
-static HRESULT test_Activate(IUnknown *unk, DWORD flags)
+static void test_Activate(IUnknown *unk, DWORD flags)
 {
     IOleObject *oleobj = NULL;
     IOleDocumentView *docview;
@@ -3519,8 +3501,6 @@ static HRESULT test_Activate(IUnknown *unk, DWORD flags)
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
-    if(FAILED(hres))
-        return hres;
 
     hres = IOleObject_GetUserClassID(oleobj, NULL);
     ok(hres == E_INVALIDARG, "GetUserClassID returned: %08x, expected E_INVALIDARG\n", hres);
@@ -3533,8 +3513,7 @@ static HRESULT test_Activate(IUnknown *unk, DWORD flags)
 
     test_ClientSite(oleobj, flags);
     test_InPlaceDeactivate(unk, FALSE);
-
-    hres = test_DoVerb(oleobj);
+    test_DoVerb(oleobj);
 
     if(call_UIActivate == CallUIActivate_AfterShow) {
         hres = IOleObject_QueryInterface(oleobj, &IID_IOleDocumentView, (void **)&docview);
@@ -3562,8 +3541,6 @@ static HRESULT test_Activate(IUnknown *unk, DWORD flags)
     IOleObject_Release(oleobj);
 
     test_OnFrameWindowActivate(unk);
-
-    return hres;
 }
 
 static void test_Window(IUnknown *unk, BOOL expect_success)
@@ -3651,9 +3628,23 @@ static void test_Hide(void)
 
 static HRESULT create_document(IUnknown **unk)
 {
-    HRESULT hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+    IHTMLDocument5 *doc5;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)unk);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IUnknown_QueryInterface(*unk, &IID_IHTMLDocument5, (void**)&doc5);
+    if(SUCCEEDED(hres)) {
+        IHTMLDocument5_Release(doc5);
+    }else {
+        win_skip("Could not get IHTMLDocument5, probably too old IE\n");
+        IUnknown_Release(*unk);
+    }
+
     return hres;
 }
 
@@ -3807,11 +3798,7 @@ static void test_HTMLDocument(BOOL do_load)
     if(!do_load)
         test_OnAmbientPropertyChange2(unk);
 
-    hres = test_Activate(unk, CLIENTSITE_EXPECTPATH);
-    if(FAILED(hres) || show_fail) {
-        IUnknown_Release(unk);
-        return;
-    }
+    test_Activate(unk, CLIENTSITE_EXPECTPATH);
 
     if(do_load) {
         test_download(FALSE, TRUE, TRUE);
@@ -3904,10 +3891,6 @@ static void test_HTMLDocument_hlink(void)
     test_GetCurMoniker(unk, NULL, NULL);
     test_Persist(unk);
     test_Navigate(unk);
-    if(show_fail) {
-        IUnknown_Release(unk);
-        return;
-    }
 
     test_download(FALSE, TRUE, TRUE);
 
@@ -3954,11 +3937,6 @@ static void test_HTMLDocument_StreamLoad(void)
     test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
-    if(show_fail) {
-        IUnknown_Release(unk);
-        IOleObject_Release(oleobj);
-        return;
-    }
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
 
     IOleObject_Release(oleobj);
@@ -4034,11 +4012,6 @@ static void test_editing_mode(BOOL do_load)
     test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
-    if(show_fail) {
-        IOleObject_Release(oleobj);
-        IUnknown_Release(unk);
-        return;
-    }
     test_edit_uiactivate(oleobj);
 
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
