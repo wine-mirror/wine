@@ -409,12 +409,21 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 static IHTMLDocument2 *create_document(void)
 {
     IHTMLDocument2 *doc;
+    IHTMLDocument5 *doc5;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IHTMLDocument2, (void**)&doc);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
 
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
+    if(FAILED(hres)) {
+        win_skip("Could not get IHTMLDocument5, probably too old IE\n");
+        IHTMLDocument2_Release(doc);
+        return NULL;
+    }
+
+    IHTMLDocument5_Release(doc5);
     return doc;
 }
 
@@ -3645,6 +3654,9 @@ static void run_domtest(const char *str, domtest_t test)
     HRESULT hres;
 
     doc = create_doc_with_string(str);
+    if(!doc)
+        return;
+
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
     while(!doc_complete && GetMessage(&msg, NULL, 0, 0)) {
