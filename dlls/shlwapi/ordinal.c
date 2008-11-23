@@ -3718,7 +3718,7 @@ DWORD WINAPI SHSendMessageBroadcastW(UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*************************************************************************
  *      @	[SHLWAPI.436]
  *
- * Convert an Unicode string CLSID into a CLSID.
+ * Convert a Unicode string CLSID into a CLSID.
  *
  * PARAMS
  *  idstr      [I]   string containing a CLSID in text form

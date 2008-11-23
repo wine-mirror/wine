@@ -189,7 +189,7 @@ typedef struct _XINPUT_VIBRATION {
 /*
  * Defines the structure for what kind of abilities the joystick has
  * such abilites are things such as if the joystick has the ability
- * to send and recieve audio, if the joystick is infact a driving
+ * to send and receive audio, if the joystick is infact a driving
  * wheel or perhaps if the joystick is some kind of dance pad or
  * guitar.
  */

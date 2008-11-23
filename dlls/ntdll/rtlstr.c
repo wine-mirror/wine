@@ -347,7 +347,7 @@ void WINAPI RtlCopyUnicodeString( UNICODE_STRING *dst, const UNICODE_STRING *src
 /**************************************************************************
  *      RtlDuplicateUnicodeString   (NTDLL.@)
  *
- * Duplicates an unicode string.
+ * Duplicates a unicode string.
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. destination contains the duplicated unicode string.
@@ -663,7 +663,7 @@ WCHAR WINAPI RtlAnsiCharToUnicodeChar(LPSTR *ansi)
 /**************************************************************************
  *      RtlAnsiStringToUnicodeString   (NTDLL.@)
  *
- * Converts an ansi string to an unicode string.
+ * Converts an ansi string to a unicode string.
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. uni contains the converted string
@@ -700,7 +700,7 @@ NTSTATUS WINAPI RtlAnsiStringToUnicodeString(
 /**************************************************************************
  *	RtlOemStringToUnicodeString   (NTDLL.@)
  *
- * Converts an oem string to an unicode string.
+ * Converts an oem string to a unicode string.
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. uni contains the converted string
@@ -737,7 +737,7 @@ NTSTATUS WINAPI RtlOemStringToUnicodeString(
 /**************************************************************************
  *	RtlUnicodeStringToAnsiString   (NTDLL.@)
  *
- * Converts an unicode string to an ansi string.
+ * Converts a unicode string to an ansi string.
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. ansi contains the converted string
@@ -962,7 +962,7 @@ void WINAPI RtlUpperString( STRING *dst, const STRING *src )
 /**************************************************************************
  *	RtlUpcaseUnicodeChar   (NTDLL.@)
  *
- * Converts an Unicode character to uppercase.
+ * Converts a Unicode character to uppercase.
  *
  * PARAMS
  *  wch [I] Character to convert
@@ -979,7 +979,7 @@ WCHAR WINAPI RtlUpcaseUnicodeChar( WCHAR wch )
 /**************************************************************************
  *	RtlDowncaseUnicodeChar   (NTDLL.@)
  *
- * Converts an Unicode character to lowercase.
+ * Converts a Unicode character to lowercase.
  *
  * PARAMS
  *  wch [I] Character to convert
@@ -996,7 +996,7 @@ WCHAR WINAPI RtlDowncaseUnicodeChar(WCHAR wch)
 /**************************************************************************
  *	RtlUpcaseUnicodeString   (NTDLL.@)
  *
- * Converts an Unicode string to uppercase.
+ * Converts a Unicode string to uppercase.
  *
  * PARAMS
  *  dest    [O] Destination for converted string
@@ -1035,7 +1035,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeString( UNICODE_STRING *dest,
 /**************************************************************************
  *	RtlDowncaseUnicodeString   (NTDLL.@)
  *
- * Converts an Unicode string to lowercase.
+ * Converts a Unicode string to lowercase.
  *
  * PARAMS
  *  dest    [O] Destination for converted string
@@ -1499,7 +1499,7 @@ NTSTATUS WINAPI RtlAppendUnicodeStringToString(
 /**************************************************************************
  *      RtlFindCharInUnicodeString   (NTDLL.@)
  *
- * Searches for one of several unicode characters in an unicode string.
+ * Searches for one of several unicode characters in a unicode string.
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. pos contains the position after the character found.
@@ -1848,7 +1848,7 @@ NTSTATUS WINAPI RtlIntegerToChar(
 /**************************************************************************
  *      RtlUnicodeStringToInteger (NTDLL.@)
  *
- * Converts an unicode string into its integer equivalent.
+ * Converts a unicode string into its integer equivalent.
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. value contains the converted number

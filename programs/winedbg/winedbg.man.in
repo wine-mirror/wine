@@ -296,7 +296,7 @@ can be:
 .IP s
 an ASCII string
 .IP u
-an Unicode UTF16 string
+a UTF16 Unicode string
 .IP i
 instructions (disassemble)
 .IP x

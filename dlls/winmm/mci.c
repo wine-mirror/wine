@@ -1501,7 +1501,7 @@ BOOL WINAPI mciExecute(LPCSTR lpstrCommand)
 /**************************************************************************
  *                    	mciLoadCommandResource  		[WINMM.@]
  *
- * Strangely, this function only exists as an UNICODE one.
+ * Strangely, this function only exists as a UNICODE one.
  */
 UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 {

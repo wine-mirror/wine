@@ -2798,7 +2798,7 @@ static HKEY WINSPOOL_OpenDriverReg( LPCVOID pEnvironment, BOOL unicode)
 	  (unicode) ? debugstr_w(pEnvironment) : debugstr_a(pEnvironment), unicode);
 
     if (!pEnvironment || unicode) {
-        /* pEnvironment was NULL or an Unicode-String: use it direct */
+        /* pEnvironment was NULL or a Unicode-String: use it direct */
         env = validate_envW(pEnvironment);
     }
     else

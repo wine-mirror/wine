@@ -305,7 +305,7 @@ INT __cdecl NTDLL_iswctype( WCHAR wc, WCHAR wct )
 /*********************************************************************
  *           iswalpha    (NTDLL.@)
  *
- * Checks if an unicode char wc is a letter
+ * Checks if a unicode char wc is a letter
  *
  * RETURNS
  *  TRUE: The unicode char wc is a letter.
@@ -320,7 +320,7 @@ INT __cdecl NTDLL_iswalpha( WCHAR wc )
 /*********************************************************************
  *		iswdigit (NTDLL.@)
  *
- * Checks if an unicode char wc is a digit
+ * Checks if a unicode char wc is a digit
  *
  * RETURNS
  *  TRUE: The unicode char wc is a digit.
@@ -335,7 +335,7 @@ INT __cdecl NTDLL_iswdigit( WCHAR wc )
 /*********************************************************************
  *		iswlower (NTDLL.@)
  *
- * Checks if an unicode char wc is a lower case letter
+ * Checks if a unicode char wc is a lower case letter
  *
  * RETURNS
  *  TRUE: The unicode char wc is a lower case letter.
@@ -350,7 +350,7 @@ INT __cdecl NTDLL_iswlower( WCHAR wc )
 /*********************************************************************
  *		iswspace (NTDLL.@)
  *
- * Checks if an unicode char wc is a white space character
+ * Checks if a unicode char wc is a white space character
  *
  * RETURNS
  *  TRUE: The unicode char wc is a white space character.
@@ -365,7 +365,7 @@ INT __cdecl NTDLL_iswspace( WCHAR wc )
 /*********************************************************************
  *		iswxdigit (NTDLL.@)
  *
- * Checks if an unicode char wc is an extended digit
+ * Checks if a unicode char wc is an extended digit
  *
  * RETURNS
  *  TRUE: The unicode char wc is an extended digit.
@@ -380,7 +380,7 @@ INT __cdecl NTDLL_iswxdigit( WCHAR wc )
 /*********************************************************************
  *      _ultow   (NTDLL.@)
  *
- * Converts an unsigned long integer to an unicode string.
+ * Converts an unsigned long integer to a unicode string.
  *
  * RETURNS
  *  Always returns str.
@@ -423,7 +423,7 @@ LPWSTR __cdecl _ultow(
 /*********************************************************************
  *      _ltow   (NTDLL.@)
  *
- * Converts a long integer to an unicode string.
+ * Converts a long integer to a unicode string.
  *
  * RETURNS
  *  Always returns str.
@@ -481,7 +481,7 @@ LPWSTR __cdecl _ltow(
 /*********************************************************************
  *      _itow    (NTDLL.@)
  *
- * Converts an integer to an unicode string.
+ * Converts an integer to a unicode string.
  *
  * RETURNS
  *  Always returns str.
@@ -509,7 +509,7 @@ LPWSTR __cdecl _itow(
 /*********************************************************************
  *      _ui64tow   (NTDLL.@)
  *
- * Converts a large unsigned integer to an unicode string.
+ * Converts a large unsigned integer to a unicode string.
  *
  * RETURNS
  *  Always returns str.
@@ -557,7 +557,7 @@ LPWSTR __cdecl _ui64tow(
 /*********************************************************************
  *      _i64tow   (NTDLL.@)
  *
- * Converts a large integer to an unicode string.
+ * Converts a large integer to a unicode string.
  *
  * RETURNS
  *  Always returns str.
@@ -624,7 +624,7 @@ LPWSTR __cdecl _i64tow(
 /*********************************************************************
  *      _wtol    (NTDLL.@)
  *
- * Converts an unicode string to a long integer.
+ * Converts a unicode string to a long integer.
  *
  * PARAMS
  *  str [I] Wstring to be converted
@@ -665,7 +665,7 @@ LONG __cdecl _wtol( LPCWSTR str )
 /*********************************************************************
  *      _wtoi    (NTDLL.@)
  *
- * Converts an unicode string to an integer.
+ * Converts a unicode string to an integer.
  *
  * PARAMS
  *  str [I] Wstring to be converted
@@ -687,7 +687,7 @@ int __cdecl _wtoi( LPCWSTR str )
 /*********************************************************************
  *      _wtoi64   (NTDLL.@)
  *
- * Converts an unicode string to a large integer.
+ * Converts a unicode string to a large integer.
  *
  * PARAMS
  *  str [I] Wstring to be converted
