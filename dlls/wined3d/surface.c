@@ -1845,6 +1845,29 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
         }
         break;
 
+        case CONVERT_CK_RGB24:
+        {
+            /* Converting R8G8B8 format to R8G8B8A8 with color-keying. */
+            unsigned int x, y;
+            for (y = 0; y < height; y++)
+            {
+                source = src + pitch * y;
+                dest = dst + outpitch * y;
+                for (x = 0; x < width; x++) {
+                    DWORD color = ((DWORD)source[0] << 16) + ((DWORD)source[1] << 8) + (DWORD)source[2] ;
+                    DWORD dstcolor = color << 8;
+                    if ((color < This->SrcBltCKey.dwColorSpaceLowValue) ||
+                        (color > This->SrcBltCKey.dwColorSpaceHighValue)) {
+                        dstcolor |= 0xff;
+                    }
+                    *(DWORD*)dest = dstcolor;
+                    source += 3;
+                    dest += 4;
+                }
+            }
+        }
+        break;
+
         case CONVERT_RGB32_888:
         {
             /* Converting X8R8G8B8 format to R8G8B8A8 with color-keying. */
