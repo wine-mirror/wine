@@ -117,7 +117,7 @@ BOOL WINAPI AtlAxWinInit(void)
  */
 
 
-static ULONG WINAPI IOCS_AddRef(IOCS *This)
+static ULONG IOCS_AddRef(IOCS *This)
 {
     ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -132,7 +132,7 @@ static ULONG WINAPI IOCS_AddRef(IOCS *This)
 #define THIS2IOLEINPLACEFRAME(This) ((IOleInPlaceFrame*)&This->lpOleInPlaceFrameVtbl)
 #define THIS2IOLECONTROLSITE(This) ((IOleControlSite*)&This->lpOleControlSiteVtbl)
 
-static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
+static HRESULT IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
 {
     *ppv = NULL;
 
@@ -166,7 +166,7 @@ static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
 }
 
 static HRESULT IOCS_Detach( IOCS *This );
-static ULONG WINAPI IOCS_Release(IOCS *This)
+static ULONG IOCS_Release(IOCS *This)
 {
     ULONG ref = InterlockedDecrement(&This->ref);
 
