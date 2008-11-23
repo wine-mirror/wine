@@ -1100,6 +1100,11 @@ static BOOL parse_template_members_list(parse_buffer * buf)
     {
       while (check_TOKEN(buf) == TOKEN_OBRACKET)
       {
+        if (nb_dims >= MAX_ARRAY_DIM)
+        {
+          FIXME("Too many dimensions (%d) for multi-dimensional array\n", nb_dims + 1);
+          return FALSE;
+        }
         get_TOKEN(buf);
         if (check_TOKEN(buf) == TOKEN_INTEGER)
         {
@@ -1842,29 +1847,20 @@ static BOOL parse_object_members_list(parse_buffer * buf)
 
   for (i = 0; i < pt->nb_members; i++)
   {
-    int nb_elems, k;
+    int k;
+    int nb_elems = 1;
 
-    if (pt->members[i].nb_dims > 1)
+    buf->pxo->members[i].start = buf->cur_pdata;
+
+    for (k = 0; k < pt->members[i].nb_dims; k++)
     {
-      FIXME("Arrays with dimension > 1 not yet supported\n");
-      return FALSE;
-    }
-    else if (pt->members[i].nb_dims)
-    {
-      if (!pt->members[i].dim_fixed[0])
-      {
-        if (!i)
-        {
-          FIXME("Array with variable must be preceded by the size\n");
-          return FALSE;
-        }
-        nb_elems = last_dword;
-      }
+      if (pt->members[i].dim_fixed[k])
+        nb_elems *= pt->members[i].dim_value[k];
       else
-        nb_elems = pt->members[i].dim_value[0];
+        nb_elems *= *(DWORD*)buf->pxo->members[pt->members[i].dim_value[k]].start;
     }
-    else
-      nb_elems = 1;
+
+    TRACE("Elements to consider: %d\n", nb_elems);
 
     for (k = 0; k < nb_elems; k++)
     {
