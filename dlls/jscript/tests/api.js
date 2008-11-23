@@ -258,6 +258,17 @@ ok(tmp === "test", "''.toLowerCase() = " + tmp);
 tmp = "tEsT".toLowerCase(3);
 ok(tmp === "test", "''.toLowerCase(3) = " + tmp);
 
+tmp = "".toUpperCase();
+ok(tmp === "", "''.toUpperCase() = " + tmp);
+tmp = "TEST".toUpperCase();
+ok(tmp === "TEST", "''.toUpperCase() = " + tmp);
+tmp = "TEST".toUpperCase(3);
+ok(tmp === "TEST", "''.toUpperCase(3) = " + tmp);
+tmp = "tEsT".toUpperCase();
+ok(tmp === "TEST", "''.toUpperCase() = " + tmp);
+tmp = "tEsT".toUpperCase(3);
+ok(tmp === "TEST", "''.toUpperCase(3) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");
