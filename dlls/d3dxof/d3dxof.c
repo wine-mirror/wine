@@ -804,7 +804,7 @@ static WORD parse_TOKEN(parse_buffer * buf)
       if (!read_bytes(buf, &token, 2))
         return 0;
 
-      /* Convert integer and float list into sereparate elements */
+      /* Convert integer and float list into separate elements */
       if (token == TOKEN_INTEGER_LIST)
       {
         if (!read_bytes(buf, &nb_elem, 4))
@@ -1859,8 +1859,6 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           return FALSE;
         }
         nb_elems = last_dword;
-        /*FIXME("Arrays with variable size not yet supported\n");
-        return FALSE;*/
       }
       else
         nb_elems = pt->members[i].dim_value[0];
@@ -1889,7 +1887,7 @@ static BOOL parse_object_members_list(parse_buffer * buf)
       {
         int j;
 
-        TRACE("Found suboject %s\n", buf->pdxf->xtemplates[pt->members[i].idx_template].name);
+        TRACE("Found sub-object %s\n", buf->pdxf->xtemplates[pt->members[i].idx_template].name);
         buf->level++;
         /* To do template lookup */
         for (j = 0; j < buf->pdxf->nb_xtemplates; j++)
@@ -1913,8 +1911,6 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           return FALSE;
         }
         buf->level--;
-        /*if (get_TOKEN(buf) != TOKEN_SEMICOLON)
-          return FALSE;*/
       }
       else
       {
