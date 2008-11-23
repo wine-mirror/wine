@@ -2774,7 +2774,7 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLStyle *style;
     long l;
     HRESULT hres;
-    IHTMLElementCollection *colimages;
+    IHTMLElementCollection *collection;
 
     hres = IHTMLDocument2_get_body(doc, &elem);
     ok(hres == S_OK, "get_body failed: %08x\n", hres);
@@ -2782,12 +2782,23 @@ static void test_defaults(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_images(doc, NULL);
     ok(hres == E_INVALIDARG, "hres %08x\n", hres);
 
-    hres = IHTMLDocument2_get_images(doc, &colimages);
+    hres = IHTMLDocument2_get_images(doc, &collection);
     ok(hres == S_OK, "get_images failed: %08x\n", hres);
     if(hres == S_OK)
     {
-        test_elem_collection((IUnknown*)colimages, NULL, 0);
-        IHTMLElementCollection_Release(colimages);
+        test_elem_collection((IUnknown*)collection, NULL, 0);
+        IHTMLElementCollection_Release(collection);
+    }
+
+    hres = IHTMLDocument2_get_applets(doc, NULL);
+    ok(hres == E_INVALIDARG, "hres %08x\n", hres);
+
+    hres = IHTMLDocument2_get_applets(doc, &collection);
+    ok(hres == S_OK, "get_applets failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        test_elem_collection((IUnknown*)collection, NULL, 0);
+        IHTMLElementCollection_Release(collection);
     }
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
