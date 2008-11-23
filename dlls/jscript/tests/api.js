@@ -247,6 +247,17 @@ ok(tmp === 1, "indexOf = " + tmp);
 tmp = "abcd".indexOf();
 ok(tmp == -1, "indexOf = " + tmp);
 
+tmp = "".toLowerCase();
+ok(tmp === "", "''.toLowerCase() = " + tmp);
+tmp = "test".toLowerCase();
+ok(tmp === "test", "''.toLowerCase() = " + tmp);
+tmp = "test".toLowerCase(3);
+ok(tmp === "test", "''.toLowerCase(3) = " + tmp);
+tmp = "tEsT".toLowerCase();
+ok(tmp === "test", "''.toLowerCase() = " + tmp);
+tmp = "tEsT".toLowerCase(3);
+ok(tmp === "test", "''.toLowerCase(3) = " + tmp);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");

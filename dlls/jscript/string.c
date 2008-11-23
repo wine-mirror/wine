@@ -1069,8 +1069,34 @@ static HRESULT String_sup(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
 static HRESULT String_toLowerCase(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    StringInstance *string;
+    const WCHAR* str;
+    DWORD length;
+    BSTR bstr;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_STRING)) {
+        string = (StringInstance*)dispex;
+
+        length = string->length;
+        str = string->str;
+    }else {
+        FIXME("not string this not supported\n");
+        return E_NOTIMPL;
+    }
+
+    if(retv) {
+        bstr = SysAllocStringLen(str, length);
+        if (!bstr)
+            return E_OUTOFMEMORY;
+
+        strlwrW(bstr);
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = bstr;
+    }
+    return S_OK;
 }
 
 static HRESULT String_toUpperCase(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
