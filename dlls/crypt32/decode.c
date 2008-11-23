@@ -950,7 +950,7 @@ static BOOL CRYPT_AsnDecodeCertExtensions(const BYTE *pbEncoded,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnDecodeCertInfo(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnDecodeCertInfo(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
@@ -1120,7 +1120,7 @@ static BOOL CRYPT_AsnDecodeCRLEntries(const BYTE *pbEncoded, DWORD cbEncoded,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnDecodeCRLInfo(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnDecodeCRLInfo(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {

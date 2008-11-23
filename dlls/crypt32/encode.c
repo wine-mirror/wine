@@ -539,7 +539,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCertInfo(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeCRLEntry(const CRL_ENTRY *entry,
+static BOOL CRYPT_AsnEncodeCRLEntry(const CRL_ENTRY *entry,
  BYTE *pbEncoded, DWORD *pcbEncoded)
 {
     struct AsnEncodeSequenceItem items[3] = {
@@ -1078,7 +1078,7 @@ static BOOL WINAPI CRYPT_AsnEncodeNameValue(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeRdnAttr(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnEncodeRdnAttr(DWORD dwCertEncodingType,
  CERT_RDN_ATTR *attr, CryptEncodeObjectExFunc nameValueEncodeFunc,
  BYTE *pbEncoded, DWORD *pcbEncoded)
 {
@@ -1271,7 +1271,7 @@ static BOOL WINAPI CRYPT_DEREncodeItemsAsSet(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
+static BOOL CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, CERT_RDN *rdn,
  CryptEncodeObjectExFunc nameValueEncodeFunc, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
@@ -1470,7 +1470,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCTLSubjectAlgorithm(
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeCTLEntry(const CTL_ENTRY *entry,
+static BOOL CRYPT_AsnEncodeCTLEntry(const CTL_ENTRY *entry,
  BYTE *pbEncoded, DWORD *pcbEncoded)
 {
     struct AsnEncodeSequenceItem items[2] = {
@@ -1604,7 +1604,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCTL(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeSMIMECapability(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnEncodeSMIMECapability(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
@@ -2658,7 +2658,7 @@ static BOOL WINAPI CRYPT_AsnEncodeAuthorityKeyId2(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeAccessDescription(
+static BOOL CRYPT_AsnEncodeAccessDescription(
  const CERT_ACCESS_DESCRIPTION *descr, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
     struct AsnEncodeSequenceItem items[] = {
@@ -3412,7 +3412,7 @@ static BOOL WINAPI CRYPT_AsnEncodeUtcTime(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeGeneralizedTime(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnEncodeGeneralizedTime(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
@@ -3833,7 +3833,7 @@ static BOOL WINAPI CRYPT_AsnEncodeIssuingDistPoint(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeGeneralSubtree(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnEncodeGeneralSubtree(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
