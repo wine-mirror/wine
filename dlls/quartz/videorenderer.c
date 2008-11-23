@@ -274,9 +274,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     AM_MEDIA_TYPE amt;
     HRESULT hr = S_OK;
     DDSURFACEDESC sdesc;
-    int width;
-    int height;
-    LPBYTE palette = NULL;
     HDC hDC;
     BITMAPINFOHEADER *bmiHeader;
 
@@ -311,10 +308,6 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     TRACE("biBitCount = %d\n", bmiHeader->biBitCount);
     TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(bmiHeader->biCompression), 4));
     TRACE("biSizeImage = %d\n", bmiHeader->biSizeImage);
-
-    width = bmiHeader->biWidth;
-    height = bmiHeader->biHeight;
-    palette = ((LPBYTE)bmiHeader) + bmiHeader->biSize;
 
     if (!This->init)
     {
