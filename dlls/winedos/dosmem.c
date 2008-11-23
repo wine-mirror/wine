@@ -368,7 +368,7 @@ UINT DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
 
     /* resize needed? */
     if (mcb->size == size)
-        return size;
+        return size << 4;
 
     /* collapse free blocks */
     DOSMEM_Collapse( mcb );    
