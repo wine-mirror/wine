@@ -46,9 +46,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static BOOL IDirectDrawImpl_DDSD_Match(const DDSURFACEDESC2* requested, const DDSURFACEDESC2* provided);
-static HRESULT WINAPI IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This, IDirectDrawSurfaceImpl *primary);
-static HRESULT WINAPI IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD, IDirectDrawSurfaceImpl **ppSurf, UINT level);
-static HRESULT WINAPI IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This, IDirectDrawSurfaceImpl *primary);
+static HRESULT IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This, IDirectDrawSurfaceImpl *primary);
+static HRESULT IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD, IDirectDrawSurfaceImpl **ppSurf, UINT level);
+static HRESULT IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This, IDirectDrawSurfaceImpl *primary);
 
 /* Device identifier. Don't relay it to WineD3D */
 static const DDDEVICEIDENTIFIER2 deviceidentifier =
@@ -1936,7 +1936,7 @@ ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface) {
  *  DD_OK on success
  *
  *****************************************************************************/
-static HRESULT WINAPI
+static HRESULT
 IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
                                  DDSURFACEDESC2 *pDDSD,
                                  IDirectDrawSurfaceImpl **ppSurf,
@@ -3212,7 +3212,7 @@ D3D7CB_CreateAdditionalSwapChain(IUnknown *device,
     return res;
 }
 
-static HRESULT WINAPI IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This,
+static HRESULT IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This,
                                                          IDirectDrawSurfaceImpl *primary) {
     HRESULT hr;
     WINED3DPRESENT_PARAMETERS presentation_parameters;
@@ -3267,7 +3267,7 @@ static HRESULT WINAPI IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This,
  *  DDERR_* otherwise
  *
  *****************************************************************************/
-static HRESULT WINAPI
+static HRESULT
 IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
                                 IDirectDrawSurfaceImpl *primary)
 {
