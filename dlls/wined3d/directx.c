@@ -4157,7 +4157,7 @@ static void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
 
 #define PUSH1(att)        attribs[nAttribs++] = (att);
 BOOL InitAdapters(void) {
-    static HMODULE mod_gl, mod_win32gl;
+    static HMODULE mod_gl;
     BOOL ret;
     int ps_selected_mode, vs_selected_mode;
 
@@ -4181,11 +4181,6 @@ BOOL InitAdapters(void) {
 #define USE_GL_FUNC(pfn) pfn = (void*)pwglGetProcAddress(#pfn);
         /* To bypass the opengl32 thunks load wglGetProcAddress from gdi32 (glXGetProcAddress wrapper) instead of opengl32's */
         mod_gl = GetModuleHandleA("gdi32.dll");
-        mod_win32gl = LoadLibraryA("opengl32.dll");
-        if(!mod_win32gl) {
-            ERR("Can't load opengl32.dll!\n");
-            goto nogl_adapter;
-        }
 #endif
     }
 
@@ -4206,8 +4201,13 @@ BOOL InitAdapters(void) {
     /* Load glFinish and glFlush from opengl32.dll even if we're not using WIN32 opengl
      * otherwise because we have to use winex11.drv's override
      */
-    glFinish = (void*)GetProcAddress(mod_win32gl, "glFinish");
-    glFlush = (void*)GetProcAddress(mod_win32gl, "glFlush");
+#ifdef USE_WIN32_OPENGL
+    glFinish = (void*)GetProcAddress(mod_gl, "glFinish");
+    glFlush = (void*)GetProcAddress(mod_gl, "glFlush");
+#else
+    glFinish = (void*)pwglGetProcAddress("wglFinish");
+    glFlush = (void*)pwglGetProcAddress("wglFlush");
+#endif
 
     /* For now only one default adapter */
     {
