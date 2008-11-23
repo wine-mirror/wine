@@ -927,12 +927,10 @@ static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
 
 static void REGPROC_export_binary(WCHAR **line_buf, DWORD *line_buf_size, DWORD *line_len, DWORD type, BYTE *value, DWORD value_size, BOOL unicode)
 {
-    DWORD i, hex_pos, data_pos, column;
+    DWORD hex_pos, data_pos;
     const WCHAR *hex_prefix;
     const WCHAR hex[] = {'h','e','x',':',0};
     WCHAR hex_buf[17];
-    const WCHAR format[] = {'%','0','2','x',0};
-    const WCHAR comma[] = {',',0};
     const WCHAR concat[] = {'\\','\n',' ',' ',0};
     DWORD concat_prefix, concat_len;
     const WCHAR newline[] = {'\n',0};
@@ -969,24 +967,29 @@ static void REGPROC_export_binary(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
     *line_len += *line_len / (REG_FILE_HEX_LINE_LEN - concat_prefix) * concat_len;
     REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len);
     lstrcpyW(*line_buf + hex_pos, hex_prefix);
-    column = data_pos; /* no line wrap yet */
-    i = 0;
-    while (1)
+    if (value_size)
     {
-        sprintfW(*line_buf + data_pos, format, (unsigned int)value[i]);
-        data_pos += 2;
-        if (++i == value_size)
-            break;
+        const WCHAR format[] = {'%','0','2','x',0};
+        DWORD i, column;
 
-        lstrcpyW(*line_buf + data_pos, comma);
-        data_pos++;
-        column += 3;
+        column = data_pos; /* no line wrap yet */
+        i = 0;
+        while (1)
+        {
+            sprintfW(*line_buf + data_pos, format, (unsigned int)value[i]);
+            data_pos += 2;
+            if (++i == value_size)
+                break;
 
-        /* wrap the line */
-        if (column >= REG_FILE_HEX_LINE_LEN) {
-            lstrcpyW(*line_buf + data_pos, concat);
-            data_pos += concat_len;
-            column = concat_prefix;
+            (*line_buf)[data_pos++] = ',';
+            column += 3;
+
+            /* wrap the line */
+            if (column >= REG_FILE_HEX_LINE_LEN) {
+                lstrcpyW(*line_buf + data_pos, concat);
+                data_pos += concat_len;
+                column = concat_prefix;
+            }
         }
     }
     lstrcpyW(*line_buf + data_pos, newline);
