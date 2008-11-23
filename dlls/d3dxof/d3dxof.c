@@ -1100,11 +1100,6 @@ static BOOL parse_template_members_list(parse_buffer * buf)
     {
       while (check_TOKEN(buf) == TOKEN_OBRACKET)
       {
-        if (nb_dims)
-        {
-          FIXME("No support for multi-dimensional array yet\n");
-          return FALSE;
-        }
         get_TOKEN(buf);
         if (check_TOKEN(buf) == TOKEN_INTEGER)
         {
@@ -1114,11 +1109,33 @@ static BOOL parse_template_members_list(parse_buffer * buf)
         }
         else
         {
+          int i;
           if (get_TOKEN(buf) != TOKEN_NAME)
             return FALSE;
+          for (i = 0; i < idx_member; i++)
+          {
+            if (!strcmp((char*)buf->value, buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].members[i].name))
+            {
+              if (buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].members[i].nb_dims)
+              {
+                ERR("Array cannot be used to specify variable array size\n");
+                return FALSE;
+              }
+              if (buf->pdxf->xtemplates[buf->pdxf->nb_xtemplates].members[i].type != TOKEN_DWORD)
+              {
+                FIXME("Only DWORD supported to specify variable array size\n");
+                return FALSE;
+              }
+              break;
+            }
+          }
+          if (i == idx_member)
+          {
+            ERR("Reference to unknown member %s\n", (char*)buf->value);
+            return FALSE;
+          }
           cur_member->dim_fixed[nb_dims] = FALSE;
-          /* Hack: Assume array size is specified in previous member */
-          cur_member->dim_value[nb_dims] = idx_member - 1;
+          cur_member->dim_value[nb_dims] = i;
         }
         if (get_TOKEN(buf) != TOKEN_CBRACKET)
           return FALSE;
