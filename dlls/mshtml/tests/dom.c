@@ -2823,6 +2823,17 @@ static void test_defaults(IHTMLDocument2 *doc)
         IHTMLElementCollection_Release(collection);
     }
 
+    hres = IHTMLDocument2_get_anchors(doc, NULL);
+    ok(hres == E_INVALIDARG, "hres %08x\n", hres);
+
+    hres = IHTMLDocument2_get_anchors(doc, &collection);
+    ok(hres == S_OK, "get_anchors failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        test_elem_collection((IUnknown*)collection, NULL, 0);
+        IHTMLElementCollection_Release(collection);
+    }
+
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
     ok(hres == S_OK, "Could not get IHTMBodyElement: %08x\n", hres);
     test_default_body(body);
@@ -3168,6 +3179,16 @@ static void test_elems(IHTMLDocument2 *doc)
     {
         static const elem_type_t images_types[] = {ET_A};
         test_elem_collection((IUnknown*)collection, images_types, 1);
+
+        IHTMLElementCollection_Release(collection);
+    }
+
+    hres = IHTMLDocument2_get_anchors(doc, &collection);
+    ok(hres == S_OK, "get_anchors failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        static const elem_type_t anchor_types[] = {ET_A};
+        test_elem_collection((IUnknown*)collection, anchor_types, 1);
 
         IHTMLElementCollection_Release(collection);
     }
