@@ -185,6 +185,7 @@ static inline float float_16_to_32(const unsigned short *in) {
 #define RTL_TEXDRAW    3
 #define RTL_TEXTEX     4
 
+#define PCI_VENDOR_NONE 0xffff /* e.g. 0x8086 for Intel and 0x10de for Nvidia */
 #define PCI_DEVICE_NONE 0xffff /* e.g. 0x14f for a Geforce6200 */
 
 /* NOTE: When adding fields to this structure, make sure to update the default
@@ -200,6 +201,7 @@ typedef struct wined3d_settings_s {
   BOOL glslRequested;
   int offscreen_rendering_mode;
   int rendertargetlock_mode;
+  unsigned short pci_vendor_id;
   unsigned short pci_device_id;
 /* Memory tracking and object counting */
   unsigned int emulated_textureram;

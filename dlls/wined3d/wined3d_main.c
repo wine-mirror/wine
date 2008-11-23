@@ -43,6 +43,7 @@ wined3d_settings_t wined3d_settings =
     TRUE,           /* Use of GLSL enabled by default */
     ORM_BACKBUFFER, /* Use the backbuffer to do offscreen rendering */
     RTL_AUTO,       /* Automatically determine best locking method */
+    PCI_VENDOR_NONE,/* PCI Vendor ID */
     PCI_DEVICE_NONE,/* PCI Device ID */
     0,              /* The default of memory is set in FillGLCaps */
     NULL,           /* No wine logo by default */
@@ -261,6 +262,21 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                 {
                     TRACE("Using PCI Device ID %04x\n", pci_device_id);
                     wined3d_settings.pci_device_id = pci_device_id;
+                }
+            }
+            if ( !get_config_key_dword( hkey, appkey, "VideoPciVendorID", &tmpvalue) )
+            {
+                int pci_vendor_id = tmpvalue;
+
+                /* A pci device id is 16-bit */
+                if(pci_vendor_id > 0xffff)
+                {
+                    ERR("Invalid value for VideoPciVendorID. The value should be smaller or equal to 65535 or 0xffff\n");
+                }
+                else
+                {
+                    TRACE("Using PCI Vendor ID %04x\n", pci_vendor_id);
+                    wined3d_settings.pci_vendor_id = pci_vendor_id;
                 }
             }
             if ( !get_config_key( hkey, appkey, "VideoMemorySize", buffer, size) )

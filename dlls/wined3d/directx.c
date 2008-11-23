@@ -1675,6 +1675,12 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
         *(pIdentifier->DeviceId) = wined3d_settings.pci_device_id;
     }
 
+    if(wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
+    {
+        TRACE_(d3d_caps)("Overriding pci vendor id with: %x\n", wined3d_settings.pci_vendor_id);
+        *(pIdentifier->VendorId) = wined3d_settings.pci_vendor_id;
+    }
+
     if (Flags & WINED3DENUM_NO_WHQL_LEVEL) {
         *(pIdentifier->WHQLLevel) = 0;
     } else {
