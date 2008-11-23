@@ -2801,6 +2801,17 @@ static void test_defaults(IHTMLDocument2 *doc)
         IHTMLElementCollection_Release(collection);
     }
 
+    hres = IHTMLDocument2_get_links(doc, NULL);
+    ok(hres == E_INVALIDARG, "hres %08x\n", hres);
+
+    hres = IHTMLDocument2_get_links(doc, &collection);
+    ok(hres == S_OK, "get_links failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        test_elem_collection((IUnknown*)collection, NULL, 0);
+        IHTMLElementCollection_Release(collection);
+    }
+
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
     ok(hres == S_OK, "Could not get IHTMBodyElement: %08x\n", hres);
     test_default_body(body);
@@ -3081,7 +3092,7 @@ static void test_elems(IHTMLDocument2 *doc)
     IDispatch *disp;
     long type;
     HRESULT hres;
-    IHTMLElementCollection *colimages;
+    IHTMLElementCollection *collection;
 
     static const WCHAR imgidW[] = {'i','m','g','i','d',0};
     static const WCHAR inW[] = {'i','n',0};
@@ -3130,14 +3141,24 @@ static void test_elems(IHTMLDocument2 *doc)
     test_elem_col_item(col, xW, item_types, sizeof(item_types)/sizeof(item_types[0]));
     IHTMLElementCollection_Release(col);
 
-    hres = IHTMLDocument2_get_images(doc, &colimages);
+    hres = IHTMLDocument2_get_images(doc, &collection);
     ok(hres == S_OK, "get_images failed: %08x\n", hres);
     if(hres == S_OK)
     {
         static const elem_type_t images_types[] = {ET_IMG};
-        test_elem_collection((IUnknown*)colimages, images_types, 1);
+        test_elem_collection((IUnknown*)collection, images_types, 1);
 
-        IHTMLElementCollection_Release(colimages);
+        IHTMLElementCollection_Release(collection);
+    }
+
+    hres = IHTMLDocument2_get_links(doc, &collection);
+    ok(hres == S_OK, "get_links failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        static const elem_type_t images_types[] = {ET_A};
+        test_elem_collection((IUnknown*)collection, images_types, 1);
+
+        IHTMLElementCollection_Release(collection);
     }
 
     elem = get_doc_elem(doc);
