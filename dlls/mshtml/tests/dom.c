@@ -2812,6 +2812,17 @@ static void test_defaults(IHTMLDocument2 *doc)
         IHTMLElementCollection_Release(collection);
     }
 
+    hres = IHTMLDocument2_get_forms(doc, NULL);
+    ok(hres == E_INVALIDARG, "hres %08x\n", hres);
+
+    hres = IHTMLDocument2_get_forms(doc, &collection);
+    ok(hres == S_OK, "get_forms failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        test_elem_collection((IUnknown*)collection, NULL, 0);
+        IHTMLElementCollection_Release(collection);
+    }
+
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
     ok(hres == S_OK, "Could not get IHTMBodyElement: %08x\n", hres);
     test_default_body(body);
