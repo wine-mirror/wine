@@ -624,7 +624,7 @@
 @ stub GdipWarpPath
 @ stub GdipWidenPath
 @ stub GdipWindingModeOutline
-@ stub GdiplusNotificationHook
-@ stub GdiplusNotificationUnhook
+@ stdcall GdiplusNotificationHook(ptr)
+@ stdcall GdiplusNotificationUnhook(ptr)
 @ stdcall GdiplusShutdown(ptr)
 @ stdcall GdiplusStartup(ptr ptr ptr)

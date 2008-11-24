@@ -100,6 +100,18 @@ Status WINAPI GdiplusStartup(ULONG_PTR *token, const struct GdiplusStartupInput 
     return Ok;
 }
 
+GpStatus WINAPI GdiplusNotificationHook(ULONG_PTR *token)
+{
+    FIXME("%p\n", token);
+    return NotificationHook(token);
+}
+
+void WINAPI GdiplusNotificationUnhook(ULONG_PTR token)
+{
+    FIXME("%ld\n", token);
+    return NotificationUnhook(token);
+}
+
 /*****************************************************
  *      GdiplusShutdown [GDIPLUS.@]
  */
