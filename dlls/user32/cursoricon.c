@@ -1124,8 +1124,17 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     if ( entry->dwDIBOffset + entry->dwDIBSize > filesize )
         goto end;
 
-    hotspot.x = entry->xHotspot;
-    hotspot.y = entry->yHotspot;
+    /* Set the actual hotspot for cursors and ICON_HOTSPOT for icons. */
+    if ( fCursor )
+    {
+        hotspot.x = entry->xHotspot;
+        hotspot.y = entry->yHotspot;
+    }
+    else
+    {
+        hotspot.x = ICON_HOTSPOT;
+        hotspot.y = ICON_HOTSPOT;
+    }
     hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)&bits[entry->dwDIBOffset],
 					  hotspot, !fCursor, 0x00030000,
 					  width, height, loadflags );
