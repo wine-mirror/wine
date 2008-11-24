@@ -170,15 +170,16 @@ BOOL DOSMEM_Init(void)
         ExitProcess(1);
     }
 
-    DOSMEM_dosmem = addr;
-    if (!addr)
+    if (addr <= (void *)DOSMEM_64KB)
     {
+        DOSMEM_dosmem = 0;
         DOSMEM_protect = DOSMEM_64KB;
         sysmem = (char *)0xf0000;  /* store sysmem in high addresses for now */
     }
     else
     {
         WARN( "First megabyte not available for DOS address space.\n" );
+        DOSMEM_dosmem = addr;
         DOSMEM_protect = 0;
         sysmem = DOSMEM_dosmem;
     }
