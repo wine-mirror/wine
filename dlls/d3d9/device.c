@@ -577,14 +577,6 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_UpdateTexture(LPDIRECT3DDEVICE9EX i
     return hr;
 }
 
-/* This isn't in MSDN!
-static HRESULT  WINAPI  IDirect3DDevice9Impl_GetFrontBuffer(LPDIRECT3DDEVICE9EX iface, IDirect3DSurface9* pDestSurface) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
-}
-*/
-
 static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTargetData(LPDIRECT3DDEVICE9EX iface, IDirect3DSurface9* pRenderTarget, IDirect3DSurface9* pDestSurface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DSurface9Impl *renderTarget = (IDirect3DSurface9Impl *)pRenderTarget;
