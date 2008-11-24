@@ -977,10 +977,10 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tpushq %%rcx\n" );
         output( "\tpushq %%r8\n" );
         output( "\tpushq %%r9\n" );
-        output( "\tsubq $8,%%rsp\n" );
-        output( "\tmovq %%r11,%%rdi\n" );
+        output( "\tsubq $32,%%rsp\n" );
+        output( "\tmovq %%r11,%%rcx\n" );
         output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\taddq $8,%%rsp\n" );
+        output( "\taddq $32,%%rsp\n" );
         output( "\tpopq %%r9\n" );
         output( "\tpopq %%r8\n" );
         output( "\tpopq %%rcx\n" );
