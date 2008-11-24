@@ -166,7 +166,7 @@ int CC_RGBtoHSL(char c, int r, int g, int b)
 	   else
 	   {
 	    result = mmdif * 240;       /* 0...61200=255*240 */
-	    result /= (mmsum > 255 ? mmsum = 510 - mmsum : mmsum); /* 0..255 */
+	    result /= (mmsum > 255 ? 510 - mmsum : mmsum); /* 0..255 */
 	   }
 	   break;
   /* hue */
