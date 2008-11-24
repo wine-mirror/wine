@@ -775,6 +775,9 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
         case RegionDataInfiniteRect:
             *hrgn = NULL;
             return Ok;
+        case RegionDataEmptyRect:
+            *hrgn = CreateRectRgn(0, 0, 0, 0);
+            return *hrgn ? Ok : OutOfMemory;
         default:
             FIXME("GdipGetRegionHRgn unimplemented for region type=%x\n", element->type);
             *hrgn = NULL;
