@@ -2819,6 +2819,27 @@ GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipBeginContainer2(GpGraphics *graphics, GraphicsContainer *state)
+{
+    FIXME("(%p, %p)\n", graphics, state);
+
+    if(!graphics || !state)
+        return InvalidParameter;
+
+    *state = 0xdeadbeef;
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsState state)
+{
+    FIXME("(%p, 0x%x)\n", graphics, state);
+
+    if(!graphics || !state)
+        return InvalidParameter;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipScaleWorldTransform(GpGraphics *graphics, REAL sx,
     REAL sy, GpMatrixOrder order)
 {

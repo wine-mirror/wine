@@ -20,6 +20,7 @@
 #define _GDIPLUSENUMS_H
 
 typedef UINT GraphicsState;
+typedef UINT GraphicsContainer;
 
 enum Unit
 {
