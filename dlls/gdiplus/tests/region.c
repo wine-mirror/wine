@@ -797,11 +797,14 @@ todo_wine{
 static void test_gethrgn(void)
 {
     GpStatus status;
-    GpRegion *region;
+    GpRegion *region, *region2;
+    GpPath *path;
     GpGraphics *graphics;
     HRGN hrgn;
     HDC hdc=GetDC(0);
     static const RECT empty_rect = {0,0,0,0};
+    static const RECT test_rect = {10, 11, 20, 21};
+    static const RECT scaled_rect = {20, 22, 40, 42};
 
     status = GdipCreateFromHDC(hdc, &graphics);
     ok(status == Ok, "status %08x\n", status);
@@ -831,7 +834,31 @@ static void test_gethrgn(void)
     verify_region(hrgn, &empty_rect);
     DeleteObject(hrgn);
 
+    status = GdipCreatePath(FillModeAlternate, &path);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipAddPathRectangle(path, 10.0, 11.0, 10.0, 10.0);
+    ok(status == Ok, "status %08x\n", status);
+
+    status = GdipCreateRegionPath(path, &region2);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region2, NULL, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &test_rect);
+    DeleteObject(hrgn);
+
+    /* resulting HRGN is in device coordinates */
+    status = GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region2, graphics, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &scaled_rect);
+    DeleteObject(hrgn);
+
+    status = GdipDeletePath(path);
+    ok(status == Ok, "status %08x\n", status);
     status = GdipDeleteRegion(region);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipDeleteRegion(region2);
     ok(status == Ok, "status %08x\n", status);
     status = GdipDeleteGraphics(graphics);
     ok(status == Ok, "status %08x\n", status);

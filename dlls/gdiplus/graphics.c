@@ -715,6 +715,17 @@ end:
     return status;
 }
 
+GpStatus trace_path(GpGraphics *graphics, GpPath *path)
+{
+    GpStatus result;
+
+    BeginPath(graphics->hdc);
+    result = draw_poly(graphics, NULL, path->pathdata.Points,
+                       path->pathdata.Types, path->pathdata.Count, FALSE);
+    EndPath(graphics->hdc);
+    return result;
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
     TRACE("(%p, %p)\n", hdc, graphics);

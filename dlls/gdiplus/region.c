@@ -768,6 +768,49 @@ GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
     return Ok;
 }
 
+static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
+{
+    HDC new_hdc=NULL;
+    GpStatus stat;
+    INT save_state;
+
+    if (!graphics)
+    {
+        new_hdc = GetDC(0);
+        if (!new_hdc)
+            return OutOfMemory;
+
+        stat = GdipCreateFromHDC(new_hdc, &graphics);
+        if (stat != Ok)
+        {
+            ReleaseDC(0, new_hdc);
+            return stat;
+        }
+    }
+
+    save_state = SaveDC(graphics->hdc);
+    EndPath(graphics->hdc);
+
+    SetPolyFillMode(graphics->hdc, (path->fill == FillModeAlternate ? ALTERNATE
+                                                                    : WINDING));
+
+    stat = trace_path(graphics, path);
+    if (stat == Ok)
+    {
+        *hrgn = PathToRegion(graphics->hdc);
+        stat = *hrgn ? Ok : OutOfMemory;
+    }
+
+    RestoreDC(graphics->hdc, save_state);
+    if (new_hdc)
+    {
+        ReleaseDC(0, new_hdc);
+        GdipDeleteGraphics(graphics);
+    }
+
+    return stat;
+}
+
 static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *graphics, HRGN *hrgn)
 {
     switch (element->type)
@@ -778,6 +821,8 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
         case RegionDataEmptyRect:
             *hrgn = CreateRectRgn(0, 0, 0, 0);
             return *hrgn ? Ok : OutOfMemory;
+        case RegionDataPath:
+            return get_path_hrgn(element->elementdata.pathdata.path, graphics, hrgn);
         default:
             FIXME("GdipGetRegionHRgn unimplemented for region type=%x\n", element->type);
             *hrgn = NULL;
