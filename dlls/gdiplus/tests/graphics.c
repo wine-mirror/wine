@@ -130,12 +130,10 @@ static void test_save_restore(void)
     GdipCreateFromHDC(hdc, &graphics1);
     GdipSetInterpolationMode(graphics1, InterpolationModeBilinear);
     stat = GdipSaveGraphics(graphics1, &state_a);
-    todo_wine
-        expect(Ok, stat);
+    expect(Ok, stat);
     GdipSetInterpolationMode(graphics1, InterpolationModeBicubic);
     stat = GdipRestoreGraphics(graphics1, state_a);
-    todo_wine
-        expect(Ok, stat);
+    expect(Ok, stat);
     GdipGetInterpolationMode(graphics1, &mode);
     todo_wine
         expect(InterpolationModeBilinear, mode);
@@ -151,8 +149,7 @@ static void test_save_restore(void)
     GdipSaveGraphics(graphics1, &state_b);
     GdipSetInterpolationMode(graphics1, InterpolationModeNearestNeighbor);
     stat = GdipRestoreGraphics(graphics1, 0xdeadbeef);
-    todo_wine
-        expect(Ok, stat);
+    expect(Ok, stat);
     GdipRestoreGraphics(graphics1, state_b);
     GdipGetInterpolationMode(graphics1, &mode);
     todo_wine
