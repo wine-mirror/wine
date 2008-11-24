@@ -789,12 +789,17 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamil
  */
 GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection** fontCollection)
 {
-    FIXME("stub %p\n", fontCollection);
+    TRACE("%p\n", fontCollection);
 
     if (!fontCollection)
         return InvalidParameter;
 
-    return NotImplemented;
+    *fontCollection = GdipAlloc(sizeof(GpFontCollection));
+    if (!*fontCollection) return OutOfMemory;
+
+    (*fontCollection)->FontFamilies = NULL;
+    (*fontCollection)->count = 0;
+    return Ok;
 }
 
 /*****************************************************************************
@@ -802,12 +807,17 @@ GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection** fontCollecti
  */
 GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection **fontCollection)
 {
-    FIXME("stub %p\n", fontCollection);
+    INT i;
+
+    TRACE("%p\n", fontCollection);
 
     if (!fontCollection)
         return InvalidParameter;
 
-    return NotImplemented;
+    for (i = 0; i < (*fontCollection)->count; i++) GdipFree((*fontCollection)->FontFamilies[i]);
+    GdipFree(*fontCollection);
+
+    return Ok;
 }
 
 /*****************************************************************************

@@ -225,7 +225,8 @@ struct GpStringFormat{
 };
 
 struct GpFontCollection{
-    GpFontFamily* FontFamilies;
+    GpFontFamily **FontFamilies;
+    INT count;
 };
 
 struct GpFontFamily{
