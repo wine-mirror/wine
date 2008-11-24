@@ -2654,10 +2654,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if(!graphics || !string || !font || !rect)
         return InvalidParameter;
 
-    if(codepointsfitted || linesfilled){
-        FIXME("not implemented for given parameters\n");
-        return NotImplemented;
-    }
+    if(linesfilled) *linesfilled = 0;
+    if(codepointsfitted) *codepointsfitted = 0;
 
     if(format)
         TRACE("may be ignoring some format flags: attr %x\n", format->attr);
@@ -2722,7 +2720,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
                               nwidth, &j, NULL, &size);
 
         sum += fit + (lret < fitcpy ? 1 : 0);
+        if(codepointsfitted) *codepointsfitted = sum;
+
         height += size.cy;
+        if(linesfilled) *linesfilled += size.cy;
         max_width = max(max_width, size.cx);
 
         if(height > nheight)
