@@ -292,7 +292,7 @@ struct AsnEncodeSequenceItem
     DWORD                 size; /* used during encoding, not for your use */
 };
 
-static BOOL WINAPI CRYPT_AsnEncodeSequence(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnEncodeSequence(DWORD dwCertEncodingType,
  struct AsnEncodeSequenceItem items[], DWORD cItem, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
@@ -779,7 +779,7 @@ static BOOL WINAPI CRYPT_AsnEncodeBMPString(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeInteger(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnEncodeInteger(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
@@ -1126,7 +1126,7 @@ static BOOL WINAPI CRYPT_AsnDecodeOctets(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL WINAPI CRYPT_AsnDecodeSPCLinkInternal(DWORD dwCertEncodingType,
+static BOOL CRYPT_AsnDecodeSPCLinkInternal(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  void *pvStructInfo, DWORD *pcbStructInfo)
 {
