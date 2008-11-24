@@ -2320,6 +2320,7 @@ typedef struct IWineD3DVertexShaderImpl {
 } IWineD3DVertexShaderImpl;
 extern const SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[];
 extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
+HRESULT IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface);
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
@@ -2368,6 +2369,7 @@ typedef struct IWineD3DPixelShaderImpl {
 
 extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
+HRESULT pixelshader_compile(IWineD3DPixelShader *iface);
 
 /* sRGB correction constants */
 static const float srgb_cmp = 0.0031308;

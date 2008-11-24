@@ -563,7 +563,7 @@ static inline BOOL swizzled_attribs_differ(IWineD3DVertexShaderImpl *This, IWine
     return FALSE;
 }
 
-static HRESULT WINAPI IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface) {
+HRESULT IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     IWineD3DVertexDeclarationImpl *vdecl;
     CONST DWORD *function = This->baseShader.function;
@@ -626,7 +626,6 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     IWineD3DVertexShaderImpl_GetParent,
     /*** IWineD3DBaseShader methods ***/
     IWineD3DVertexShaderImpl_SetFunction,
-    IWineD3DVertexShaderImpl_CompileShader,
     /*** IWineD3DVertexShader methods ***/
     IWineD3DVertexShaderImpl_GetDevice,
     IWineD3DVertexShaderImpl_GetFunction,

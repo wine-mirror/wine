@@ -3225,9 +3225,20 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     GLhandleARB reorder_shader_id          = 0;
     int i;
     char glsl_name[8];
+    GLhandleARB vshader_id, pshader_id;
 
-    GLhandleARB vshader_id = use_vs ? ((IWineD3DBaseShaderImpl*)vshader)->baseShader.prgId : 0;
-    GLhandleARB pshader_id = use_ps ? ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId : 0;
+    if(use_vs) {
+        IWineD3DVertexShaderImpl_CompileShader(vshader);
+        vshader_id = ((IWineD3DBaseShaderImpl*)vshader)->baseShader.prgId;
+    } else {
+        vshader_id = 0;
+    }
+    if(use_ps) {
+        pixelshader_compile(pshader);
+        pshader_id = ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId;
+    } else {
+        pshader_id = 0;
+    }
     entry = get_glsl_program_entry(priv, vshader_id, pshader_id);
     if (entry) {
         priv->glsl_program = entry;

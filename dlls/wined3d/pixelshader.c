@@ -384,13 +384,14 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader *iface) {
+HRESULT pixelshader_compile(IWineD3DPixelShader *iface) {
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     CONST DWORD *function = This->baseShader.function;
     UINT i, sampler;
     IWineD3DBaseTextureImpl *texture;
+    HRESULT hr;
 
     TRACE("(%p) : function %p\n", iface, function);
 
@@ -465,17 +466,8 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
         return WINED3D_OK;
     }
 
-    if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1) {
-        shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
-        HRESULT hr;
-
-        /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-        memset(reg_maps, 0, sizeof(shader_reg_maps));
-        hr = shader_get_registers_used((IWineD3DBaseShader*)This, reg_maps,
-            This->semantics_in, NULL, This->baseShader.function, deviceImpl->stateBlock);
-        if (FAILED(hr)) return hr;
-        /* FIXME: validate reg_maps against OpenGL */
-    }
+    hr = IWineD3DPixelShader_UpdateSamplers(iface);
+    if(FAILED(hr)) return hr;
 
     /* Reset fields tracking stateblock values being hardcoded in the shader */
     This->baseShader.num_sampled_samplers = 0;
@@ -489,6 +481,25 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_CompileShader(IWineD3DPixelShader 
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DPixelShaderImpl_UpdateSamplers(IWineD3DPixelShader *iface) {
+    IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
+
+    if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1) {
+        IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+        shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+        HRESULT hr;
+
+        /* Second pass: figure out which registers are used, what the semantics are, etc.. */
+        memset(reg_maps, 0, sizeof(shader_reg_maps));
+        hr = shader_get_registers_used((IWineD3DBaseShader*)This, reg_maps,
+                                        This->semantics_in, NULL, This->baseShader.function, deviceImpl->stateBlock);
+        return hr;
+        /* FIXME: validate reg_maps against OpenGL */
+    } else {
+        return WINED3D_OK;
+    }
+}
+
 const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
 {
     /*** IUnknown methods ***/
@@ -499,8 +510,8 @@ const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     IWineD3DPixelShaderImpl_GetParent,
     /*** IWineD3DBaseShader methods ***/
     IWineD3DPixelShaderImpl_SetFunction,
-    IWineD3DPixelShaderImpl_CompileShader,
     /*** IWineD3DPixelShader methods ***/
+    IWineD3DPixelShaderImpl_UpdateSamplers,
     IWineD3DPixelShaderImpl_GetDevice,
     IWineD3DPixelShaderImpl_GetFunction
 };

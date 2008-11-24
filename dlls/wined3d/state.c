@@ -3518,9 +3518,6 @@ void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DC
             * if a different texture was bound. I don't have to do anything.
             */
         }
-
-        /* Compile and bind the shader */
-        IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
     } else {
         /* Disabled the pixel shader - color ops weren't applied
          * while it was enabled, so re-apply them.
@@ -4511,11 +4508,6 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
             state_normalize(STATE_RENDER(WINED3DRS_NORMALIZENORMALS), stateblock, context);
         }
     } else {
-        /* We compile the shader here because we need the vertex declaration
-         * in order to determine if we need to do any swizzling for D3DCOLOR
-         * registers. If the shader is already compiled this call will do nothing. */
-        IWineD3DVertexShader_CompileShader(stateblock->vertexShader);
-
         if(!context->last_was_vshader) {
             int i;
             static BOOL warned = FALSE;

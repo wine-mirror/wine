@@ -3854,7 +3854,7 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
         IWineD3DPixelShaderImpl *pshader = (IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader;
 
         /* Make sure the shader's reg_maps are up to date. This is only relevant for 1.x pixelshaders. */
-        IWineD3DPixelShader_CompileShader((IWineD3DPixelShader *)pshader);
+        IWineD3DPixelShader_UpdateSamplers((IWineD3DPixelShader *)pshader);
         pshader_sampler_tokens = pshader->baseShader.reg_maps.samplers;
     }
 

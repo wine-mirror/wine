@@ -1876,6 +1876,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 
     if (useVS) {
         TRACE("Using vertex shader\n");
+        IWineD3DVertexShaderImpl_CompileShader(This->stateBlock->vertexShader);
 
         priv->current_vprogram_id = ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId;
 
@@ -1895,6 +1896,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 
     if (usePS) {
         TRACE("Using pixel shader\n");
+        pixelshader_compile(This->stateBlock->pixelShader);
 
         priv->current_fprogram_id = ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId;
 
@@ -3065,9 +3067,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     unsigned int i;
 
     if(isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE))) {
-        if(use_pshader) {
-            IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
-        } else if(device->shader_backend == &arb_program_shader_backend && context->last_was_pshader) {
+        if(!use_pshader && device->shader_backend == &arb_program_shader_backend && context->last_was_pshader) {
             /* Reload fixed function constants since they collide with the pixel shader constants */
             for(i = 0; i < MAX_TEXTURES; i++) {
                 set_bumpmat_arbfp(STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00), stateblock, context);
@@ -3078,9 +3078,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
         return;
     }
 
-    if(use_pshader) {
-        IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
-    } else {
+    if(!use_pshader) {
         /* Find or create a shader implementing the fixed function pipeline settings, then activate it */
         gen_ffp_frag_op(stateblock, &settings, FALSE);
         desc = (struct arbfp_ffp_desc *) find_ffp_frag_shader(priv->fragment_shaders, &settings);
