@@ -272,32 +272,16 @@ static void pshader_set_limits(
 
 /** Generate a pixel shader string using either GL_FRAGMENT_PROGRAM_ARB
     or GLSL and send it to the card */
-static inline VOID IWineD3DPixelShaderImpl_GenerateShader(
-    IWineD3DPixelShader *iface) {
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
+static inline GLuint IWineD3DPixelShaderImpl_GenerateShader(
+    IWineD3DPixelShaderImpl *This) {
     SHADER_BUFFER buffer;
 
-#if 0 /* FIXME: Use the buffer that is held by the device, this is ok since fixups will be skipped for software shaders
-        it also requires entering a critical section but cuts down the runtime footprint of wined3d and any memory fragmentation that may occur... */
-    if (This->device->fixupVertexBufferSize < SHADER_PGMSIZE) {
-        HeapFree(GetProcessHeap(), 0, This->fixupVertexBuffer);
-        This->fixupVertexBuffer = HeapAlloc(GetProcessHeap() , 0, SHADER_PGMSIZE);
-        This->fixupVertexBufferSize = PGMSIZE;
-        This->fixupVertexBuffer[0] = 0;
-    }
-    buffer.buffer = This->device->fixupVertexBuffer;
-#else
-    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE); 
-#endif
+    buffer.buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, SHADER_PGMSIZE);
     buffer.bsize = 0;
     buffer.lineNo = 0;
     buffer.newline = TRUE;
 
-    ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_pshader(iface, &buffer);
-
-#if 1 /* if were using the data buffer of device then we don't need to free it */
-  HeapFree(GetProcessHeap(), 0, buffer.buffer);
-#endif
+    return ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_generate_pshader((IWineD3DPixelShader *) This, &buffer);
 }
 
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
@@ -384,89 +368,29 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     return WINED3D_OK;
 }
 
-HRESULT pixelshader_compile(IWineD3DPixelShader *iface, struct ps_compile_args *args) {
-
-    IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
-    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, struct ps_compile_args *args) {
     CONST DWORD *function = This->baseShader.function;
-    UINT i, sampler;
     HRESULT hr;
+    GLuint retval;
 
-    TRACE("(%p) : function %p\n", iface, function);
+    TRACE("(%p) : function %p\n", This, function);
 
-    /* We're already compiled, but check if any of the hardcoded stateblock assumptions
-     * changed.
-     */
-    if (This->baseShader.is_compiled) {
-        for(i = 0; i < This->baseShader.num_sampled_samplers; i++) {
-            sampler = This->baseShader.sampled_samplers[i];
-            if(args->format_conversion[sampler] != This->baseShader.sampled_format[sampler]) {
-                WARN("Recompiling shader %p due to format change on sampler %d\n", This, sampler);
-                WARN("Old format group %s, new is %s\n",
-                     debug_d3dformat(This->baseShader.sampled_format[sampler]),
-                     debug_d3dformat(args->format_conversion[sampler]));
-                goto recompile;
-            }
-        }
-
-        /* TODO: Check projected textures */
-        /* TODO: Check texture types(2D, Cube, 3D) */
-
-        if(args->srgb_correction != This->srgb_enabled && This->srgb_mode_hardcoded) {
-            WARN("Recompiling shader because srgb correction is different and hardcoded\n");
-            goto recompile;
-        }
-        if(This->baseShader.reg_maps.vpos && !This->vpos_uniform) {
-            if(This->render_offscreen != deviceImpl->render_offscreen ||
-               This->height != ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height) {
-                WARN("Recompiling shader because vpos is used, hard compiled and changed\n");
-                goto recompile;
-            }
-        }
-        if(This->baseShader.reg_maps.usesdsy && !This->vpos_uniform) {
-            if(This->render_offscreen ? 0 : 1 != deviceImpl->render_offscreen ? 0 : 1) {
-                WARN("Recompiling shader because dsy is used, hard compiled and render_offscreen changed\n");
-                goto recompile;
-            }
-        }
-        if(This->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
-            if(args->vp_mode != This->vertexprocessing) {
-                WARN("Recompiling shader because the vertex processing mode changed\n");
-                goto recompile;
-            }
-        }
-
-        return WINED3D_OK;
-
-        recompile:
-        if(This->baseShader.recompile_count > 50) {
-            FIXME("Shader %p recompiled more than 50 times\n", This);
-        } else {
-            This->baseShader.recompile_count++;
-        }
-
-        deviceImpl->shader_backend->shader_destroy((IWineD3DBaseShader *) iface);
+    hr = IWineD3DPixelShader_UpdateSamplers((IWineD3DPixelShader *) This);
+    if(FAILED(hr)) {
+        ERR("Failed to update sampler information\n");
+        return 0;
     }
-
-    /* We don't need to compile */
-    if (!function) {
-        This->baseShader.is_compiled = TRUE;
-        return WINED3D_OK;
-    }
-
-    hr = IWineD3DPixelShader_UpdateSamplers(iface);
-    if(FAILED(hr)) return hr;
 
     /* Reset fields tracking stateblock values being hardcoded in the shader */
     This->baseShader.num_sampled_samplers = 0;
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
-    IWineD3DPixelShaderImpl_GenerateShader(iface);
+    retval = IWineD3DPixelShaderImpl_GenerateShader(This);
 
     This->baseShader.is_compiled = TRUE;
 
-    return WINED3D_OK;
+    return retval;
 }
 
 static HRESULT WINAPI IWineD3DPixelShaderImpl_UpdateSamplers(IWineD3DPixelShader *iface) {
@@ -531,4 +455,36 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
     } else {
         args->vp_mode = vertexshader;
     }
+}
+
+GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args) {
+    UINT i;
+    struct ps_compiled_shader *old_array;
+
+    /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
+     * so a linear search is more performant than a hashmap
+     */
+    for(i = 0; i < shader->num_gl_shaders; i++) {
+        if(memcmp(&shader->gl_shaders[i].args, args, sizeof(*args)) == 0) {
+            return shader->gl_shaders[i].prgId;
+        }
+    }
+
+    TRACE("No matching GL shader found, compiling a new shader\n");
+    old_array = shader->gl_shaders;
+    if(old_array) {
+        shader->gl_shaders = HeapReAlloc(GetProcessHeap(), 0, old_array,
+                                         (shader->num_gl_shaders + 1) * sizeof(*shader->gl_shaders));
+    } else {
+        shader->gl_shaders = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader->gl_shaders));
+    }
+
+    if(!shader->gl_shaders) {
+        ERR("Out of memory\n");
+        return 0;
+    }
+
+    shader->gl_shaders[shader->num_gl_shaders].args = *args;
+    shader->gl_shaders[shader->num_gl_shaders].prgId = pixelshader_compile(shader, args);
+    return shader->gl_shaders[shader->num_gl_shaders++].prgId;
 }

@@ -220,32 +220,6 @@ static void shader_arb_load_constants(
                 deviceImpl->activeContext->pshader_const_dirty[psi->luminanceconst[i].const_num] = 1;
             }
         }
-
-        if(((IWineD3DPixelShaderImpl *) pshader)->srgb_enabled &&
-           !((IWineD3DPixelShaderImpl *) pshader)->srgb_mode_hardcoded) {
-            float comparison[4];
-            float mul_low[4];
-
-            if(stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
-                comparison[0] = srgb_cmp; comparison[1] = srgb_cmp;
-                comparison[2] = srgb_cmp; comparison[3] = srgb_cmp;
-
-                mul_low[0] = srgb_mul_low; mul_low[1] = srgb_mul_low;
-                mul_low[2] = srgb_mul_low; mul_low[3] = srgb_mul_low;
-            } else {
-                comparison[0] = 1.0 / 0.0; comparison[1] = 1.0 / 0.0;
-                comparison[2] = 1.0 / 0.0; comparison[3] = 1.0 / 0.0;
-
-                mul_low[0] = 1.0; mul_low[1] = 1.0;
-                mul_low[2] = 1.0; mul_low[3] = 1.0;
-            }
-            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->srgb_cmp_const, comparison));
-            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->srgb_low_const, mul_low));
-            checkGLcall("Load sRGB correction constants\n");
-            deviceImpl->activeContext->pshader_const_dirty[psi->srgb_low_const] = 1;
-            deviceImpl->activeContext->pshader_const_dirty[psi->srgb_cmp_const] = 1;
-
-        }
     }
 }
 
@@ -325,49 +299,16 @@ static void shader_generate_arb_declarations(
     }
 
     if(device->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE] && pshader) {
-        IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *) This;
-        /* If there are 2 constants left to use, use them to pass the sRGB correction values in. This way
-         * srgb write correction can be turned on and off dynamically without recompilation. Otherwise
-         * hardcode them. The drawback of hardcoding is that the shader needs recompilation to turn sRGB
-         * off again
-         */
-        if(max_constantsF + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF) && FALSE) {
-            /* The idea is that if srgb is enabled, then disabled, the constant loading code
-             * can effectively disable sRGB correction by passing 1.0 and INF as the multiplication
-             * and comparison constants. If it disables it that way, the shader won't be recompiled
-             * and the code will stay in, so sRGB writing can be turned on again by setting the
-             * constants from the spec
-             */
-            ps_impl->srgb_mode_hardcoded = 0;
-            ps_impl->srgb_low_const = GL_LIMITS(pshader_constantsF) - extra_constants_needed;
-            ps_impl->srgb_cmp_const = GL_LIMITS(pshader_constantsF) - extra_constants_needed - 1;
-            shader_addline(buffer, "PARAM srgb_mul_low = program.env[%d];\n", ps_impl->srgb_low_const);
-            shader_addline(buffer, "PARAM srgb_comparison = program.env[%d];\n", ps_impl->srgb_cmp_const);
-        } else {
-            shader_addline(buffer, "PARAM srgb_mul_low = {%f, %f, %f, 1.0};\n",
-                           srgb_mul_low, srgb_mul_low, srgb_mul_low);
-            shader_addline(buffer, "PARAM srgb_comparison =  {%f, %f, %f, %f};\n",
-                           srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
-            ps_impl->srgb_mode_hardcoded = 1;
-        }
-        /* These can be hardcoded, they do not cause any harm because no fragment will enter the high
-         * path if the comparison value is set to INF
-         */
+        shader_addline(buffer, "PARAM srgb_mul_low = {%f, %f, %f, 1.0};\n",
+                        srgb_mul_low, srgb_mul_low, srgb_mul_low);
+        shader_addline(buffer, "PARAM srgb_comparison =  {%f, %f, %f, %f};\n",
+                        srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
         shader_addline(buffer, "PARAM srgb_pow =  {%f, %f, %f, 1.0};\n",
                        srgb_pow, srgb_pow, srgb_pow);
         shader_addline(buffer, "PARAM srgb_mul_hi =  {%f, %f, %f, 1.0};\n",
                        srgb_mul_high, srgb_mul_high, srgb_mul_high);
         shader_addline(buffer, "PARAM srgb_sub_hi =  {%f, %f, %f, 0.0};\n",
                        srgb_sub_high, srgb_sub_high, srgb_sub_high);
-        ps_impl->srgb_enabled = 1;
-    } else if(pshader) {
-        IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *) This;
-
-        /* Do not write any srgb fixup into the shader to save shader size and processing time.
-         * As a consequence, we can't toggle srgb write on without recompilation
-         */
-        ps_impl->srgb_enabled = 0;
-        ps_impl->srgb_mode_hardcoded = 1;
     }
 
     /* Load local constants using the program-local space,
@@ -1898,9 +1839,8 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         struct ps_compile_args compile_args;
         TRACE("Using pixel shader\n");
         find_ps_compile_args((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader, This->stateBlock, &compile_args);
-        pixelshader_compile(This->stateBlock->pixelShader, &compile_args);
-
-        priv->current_fprogram_id = ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->prgId;
+        priv->current_fprogram_id = find_gl_pshader((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader,
+                                                    &compile_args);
 
         /* Bind the fragment program */
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
@@ -1978,24 +1918,33 @@ static void shader_arb_cleanup(IWineD3DDevice *iface) {
 }
 
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) iface;
-    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *) This->baseShader.device)->adapter->gl_info;
-    char pshader = shader_is_pshader_version(This->baseShader.hex_version);
+    IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
+    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *) baseShader->baseShader.device)->adapter->gl_info;
+    char pshader = shader_is_pshader_version(baseShader->baseShader.hex_version);
 
     if(pshader) {
+        IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
+        UINT i;
+
         ENTER_GL();
-        GL_EXTCALL(glDeleteProgramsARB(1, &((IWineD3DPixelShaderImpl *) This)->prgId));
-        checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &((IWineD3DPixelShaderImpl *) This)->prgId))");
-        ((IWineD3DPixelShaderImpl *) This)->prgId = 0;
+        for(i = 0; i < This->num_gl_shaders; i++) {
+            GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId));
+            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId))");
+        }
         LEAVE_GL();
+        HeapFree(GetProcessHeap(), 0, This->gl_shaders);
+        This->gl_shaders = NULL;
+        This->num_gl_shaders = 0;
     } else {
+        IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *) iface;
+
         ENTER_GL();
-        GL_EXTCALL(glDeleteProgramsARB(1, &((IWineD3DVertexShaderImpl *) This)->prgId));
-        checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &((IWineD3DPixelShaderImpl *) This)->prgId))");
+        GL_EXTCALL(glDeleteProgramsARB(1, &This->prgId));
+        checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->prgId))");
         ((IWineD3DVertexShaderImpl *) This)->prgId = 0;
         LEAVE_GL();
     }
-    This->baseShader.is_compiled = FALSE;
+    baseShader->baseShader.is_compiled = FALSE;
 }
 
 static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
@@ -2048,13 +1997,14 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
     /* [0.0;1.0] clamping. Not needed, this is done implicitly */
 }
 
-static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
+static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     const char *fragcolor;
     WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     local_constant* lconst;
+    GLuint retval;
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBfp1.0\n");
@@ -2091,7 +2041,7 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
     } else {
         fragcolor = "TMP_COLOR";
     }
-    if(This->srgb_enabled) {
+    if(((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TMP2", "TA", "TB");
     }
     if (This->baseShader.hex_version < WINED3DPS_VERSION(3,0)) {
@@ -2102,12 +2052,12 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
     shader_addline(buffer, "END\n");
 
     /* TODO: change to resource.glObjectHandle or something like that */
-    GL_EXTCALL(glGenProgramsARB(1, &This->prgId));
+    GL_EXTCALL(glGenProgramsARB(1, &retval));
 
-    TRACE("Creating a hw pixel shader, prg=%d\n", This->prgId);
-    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, This->prgId));
+    TRACE("Creating a hw pixel shader, prg=%d\n", retval);
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, retval));
 
-    TRACE("Created hw pixel shader, prg=%d\n", This->prgId);
+    TRACE("Created hw pixel shader, prg=%d\n", retval);
     /* Create the program and check for errors */
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                buffer->bsize, buffer->buffer));
@@ -2117,7 +2067,7 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
         glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
         FIXME("HW PixelShader Error at position %d: %s\n",
               errPos, debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-        This->prgId = -1;
+        retval = 0;
     }
 
     /* Load immediate constants */
@@ -2128,6 +2078,8 @@ static void shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFE
             checkGLcall("glProgramLocalParameter4fvARB");
         }
     }
+
+    return retval;
 }
 
 static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {

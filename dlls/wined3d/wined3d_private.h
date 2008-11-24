@@ -350,7 +350,7 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
-    void (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
+    GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     BOOL (*shader_conv_supported)(WINED3DFORMAT conv);
@@ -2346,6 +2346,13 @@ struct ps_compile_args {
     BOOL                        srgb_correction;
     WINED3DFORMAT               format_conversion[MAX_FRAGMENT_SAMPLERS];
     enum vertexprocessing_mode  vp_mode;
+    /* Projected textures(ps 1.0-1.3) */
+    /* Texture types(2D, Cube, 3D) in ps 1.x */
+};
+
+struct ps_compiled_shader {
+    struct ps_compile_args      args;
+    GLuint                      prgId;
 };
 
 typedef struct IWineD3DPixelShaderImpl {
@@ -2365,25 +2372,19 @@ typedef struct IWineD3DPixelShaderImpl {
     int                         declared_in_count;
 
     /* The GL shader */
-    GLuint                          prgId;
+    struct ps_compiled_shader   *gl_shaders;
+    UINT                        num_gl_shaders;
 
     /* Some information about the shader behavior */
     struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];
     char                        numbumpenvmatconsts;
     struct stb_const_desc       luminanceconst[MAX_TEXTURES];
-    char                        srgb_enabled;
-    char                        srgb_mode_hardcoded;
-    UINT                        srgb_low_const;
-    UINT                        srgb_cmp_const;
     char                        vpos_uniform;
-    BOOL                        render_offscreen;
-    UINT                        height;
-    enum vertexprocessing_mode  vertexprocessing;
 } IWineD3DPixelShaderImpl;
 
 extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
-HRESULT pixelshader_compile(IWineD3DPixelShader *iface, struct ps_compile_args *args);
+GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args);
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args);
 
 /* sRGB correction constants */

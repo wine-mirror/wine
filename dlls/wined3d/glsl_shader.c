@@ -73,8 +73,6 @@ struct glsl_shader_prog_link {
     GLhandleARB             bumpenvmat_location[MAX_TEXTURES];
     GLhandleARB             luminancescale_location[MAX_TEXTURES];
     GLhandleARB             luminanceoffset_location[MAX_TEXTURES];
-    GLhandleARB             srgb_comparison_location;
-    GLhandleARB             srgb_mul_low_location;
     GLhandleARB             ycorrection_location;
     GLenum                  vertex_color_clamp;
     GLhandleARB             vshader;
@@ -492,28 +490,6 @@ static void shader_glsl_load_constants(
             }
         }
 
-        if(((IWineD3DPixelShaderImpl *) pshader)->srgb_enabled &&
-                  !((IWineD3DPixelShaderImpl *) pshader)->srgb_mode_hardcoded) {
-            float comparison[4];
-            float mul_low[4];
-
-            if(stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
-                comparison[0] = srgb_cmp; comparison[1] = srgb_cmp;
-                comparison[2] = srgb_cmp; comparison[3] = srgb_cmp;
-
-                mul_low[0] = srgb_mul_low; mul_low[1] = srgb_mul_low;
-                mul_low[2] = srgb_mul_low; mul_low[3] = srgb_mul_low;
-            } else {
-                comparison[0] = 1.0 / 0.0; comparison[1] = 1.0 / 0.0;
-                comparison[2] = 1.0 / 0.0; comparison[3] = 1.0 / 0.0;
-
-                mul_low[0] = 1.0; mul_low[1] = 1.0;
-                mul_low[2] = 1.0; mul_low[3] = 1.0;
-            }
-
-            GL_EXTCALL(glUniform4fvARB(prog->srgb_comparison_location, 1, comparison));
-            GL_EXTCALL(glUniform4fvARB(prog->srgb_mul_low_location, 1, mul_low));
-        }
         if(((IWineD3DPixelShaderImpl *) pshader)->vpos_uniform) {
             float correction_params[4];
             if(deviceImpl->render_offscreen) {
@@ -608,27 +584,10 @@ static void shader_generate_glsl_declarations(
         }
 
         if(device->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
-            ps_impl->srgb_enabled = 1;
-            if(This->baseShader.limits.constant_float + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF)) {
-                shader_addline(buffer, "uniform vec4 srgb_mul_low;\n");
-                shader_addline(buffer, "uniform vec4 srgb_comparison;\n");
-                ps_impl->srgb_mode_hardcoded = 0;
-                extra_constants_needed++;
-            } else {
-                ps_impl->srgb_mode_hardcoded = 1;
-                shader_addline(buffer, "const vec4 srgb_mul_low = vec4(%f, %f, %f, %f);\n",
-                               srgb_mul_low, srgb_mul_low, srgb_mul_low, srgb_mul_low);
-                shader_addline(buffer, "const vec4 srgb_comparison = vec4(%f, %f, %f, %f);\n",
-                               srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
-            }
-        } else {
-            IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *) This;
-
-            /* Do not write any srgb fixup into the shader to save shader size and processing time.
-             * As a consequence, we can't toggle srgb write on without recompilation
-             */
-            ps_impl->srgb_enabled = 0;
-            ps_impl->srgb_mode_hardcoded = 1;
+            shader_addline(buffer, "const vec4 srgb_mul_low = vec4(%f, %f, %f, %f);\n",
+                            srgb_mul_low, srgb_mul_low, srgb_mul_low, srgb_mul_low);
+            shader_addline(buffer, "const vec4 srgb_comparison = vec4(%f, %f, %f, %f);\n",
+                            srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
         }
         if(reg_maps->vpos || reg_maps->usesdsy) {
             if(This->baseShader.limits.constant_float + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF)) {
@@ -2798,7 +2757,8 @@ static void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg) {
 static void pshader_glsl_input_pack(
    SHADER_BUFFER* buffer,
    semantic* semantics_in,
-   IWineD3DPixelShader *iface) {
+   IWineD3DPixelShader *iface,
+   enum vertexprocessing_mode vertexprocessing) {
 
    unsigned int i;
    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
@@ -2819,7 +2779,7 @@ static void pshader_glsl_input_pack(
        switch(usage) {
 
            case WINED3DDECLUSAGE_TEXCOORD:
-               if(usage_idx < 8 && This->vertexprocessing == pretransformed) {
+               if(usage_idx < 8 && vertexprocessing == pretransformed) {
                    shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
                                   This->input_reg_map[i], reg_mask, usage_idx, reg_mask);
                } else {
@@ -3236,8 +3196,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     if(use_ps) {
         struct ps_compile_args compile_args;
         find_ps_compile_args((IWineD3DPixelShaderImpl*)This->stateBlock->pixelShader, This->stateBlock, &compile_args);
-        pixelshader_compile(pshader, &compile_args);
-        pshader_id = ((IWineD3DPixelShaderImpl*)pshader)->prgId;
+        pshader_id = find_gl_pshader((IWineD3DPixelShaderImpl *) pshader, &compile_args);
     } else {
         pshader_id = 0;
     }
@@ -3347,8 +3306,6 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
 
 
     entry->posFixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
-    entry->srgb_comparison_location = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_comparison"));
-    entry->srgb_mul_low_location = GL_EXTCALL(glGetUniformLocationARB(programId, "srgb_mul_low"));
     entry->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
     checkGLcall("Find glsl program uniform locations");
 
@@ -3535,7 +3492,8 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
     struct shader_glsl_priv *priv = (struct shader_glsl_priv *)device->shader_priv;
     WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
-    GLuint *prog;
+    IWineD3DPixelShaderImpl *ps = NULL;
+    IWineD3DVertexShaderImpl *vs = NULL;
 
     /* Note: Do not use QueryInterface here to find out which shader type this is because this code
      * can be called from IWineD3DBaseShader::Release
@@ -3543,11 +3501,13 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     char pshader = shader_is_pshader_version(This->baseShader.hex_version);
 
     if(pshader) {
-        prog = &((IWineD3DPixelShaderImpl *) This)->prgId;
+        ps = (IWineD3DPixelShaderImpl *) This;
+        if(ps->num_gl_shaders == 0) return;
     } else {
-        prog = &((IWineD3DVertexShaderImpl *) This)->prgId;
+        vs = (IWineD3DVertexShaderImpl *) This;
+        if(vs->prgId == 0) return;
     }
-    if(*prog == 0) return;
+
     linked_programs = &This->baseShader.linked_programs;
 
     TRACE("Deleting linked programs\n");
@@ -3565,11 +3525,28 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         }
     }
 
-    TRACE("Deleting shader object %u\n", *prog);
-    GL_EXTCALL(glDeleteObjectARB(*prog));
-    checkGLcall("glDeleteObjectARB");
-    *prog = 0;
-    This->baseShader.is_compiled = FALSE;
+    if(pshader) {
+        UINT i;
+
+        ENTER_GL();
+        for(i = 0; i < ps->num_gl_shaders; i++) {
+            TRACE("deleting pshader %u\n", ps->gl_shaders[i].prgId);
+            GL_EXTCALL(glDeleteObjectARB(ps->gl_shaders[i].prgId));
+            checkGLcall("glDeleteObjectARB");
+        }
+        LEAVE_GL();
+        HeapFree(GetProcessHeap(), 0, ps->gl_shaders);
+        ps->gl_shaders = NULL;
+        ps->num_gl_shaders = 0;
+    } else {
+        TRACE("Deleting shader object %u\n", vs->prgId);
+        ENTER_GL();
+        GL_EXTCALL(glDeleteObjectARB(vs->prgId));
+        checkGLcall("glDeleteObjectARB");
+        LEAVE_GL();
+        vs->prgId = 0;
+        vs->baseShader.is_compiled = FALSE;
+    }
 }
 
 static unsigned int glsl_program_key_hash(void *key) {
@@ -3626,7 +3603,7 @@ static BOOL shader_glsl_dirty_const(IWineD3DDevice *iface) {
     return FALSE;
 }
 
-static void shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
+static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
@@ -3655,13 +3632,9 @@ static void shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFF
     if (This->baseShader.hex_version >= WINED3DPS_VERSION(3,0)) {
 
         if(((IWineD3DDeviceImpl *) This->baseShader.device)->strided_streams.u.s.position_transformed) {
-            This->vertexprocessing = pretransformed;
-            pshader_glsl_input_pack(buffer, This->semantics_in, iface);
+            pshader_glsl_input_pack(buffer, This->semantics_in, iface, pretransformed);
         } else if(!use_vs((IWineD3DDeviceImpl *) This->baseShader.device)) {
-            This->vertexprocessing = fixedfunction;
-            pshader_glsl_input_pack(buffer, This->semantics_in, iface);
-        } else {
-            This->vertexprocessing = vertexshader;
+            pshader_glsl_input_pack(buffer, This->semantics_in, iface, fixedfunction);
         }
     }
 
@@ -3682,7 +3655,7 @@ static void shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFF
     } else {
         fragcolor = "gl_FragColor";
     }
-    if(This->srgb_enabled) {
+    if(((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
         shader_addline(buffer, "tmp0.xyz = pow(%s.xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
                         fragcolor, srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
                         srgb_sub_high, srgb_sub_high, srgb_sub_high);
@@ -3711,7 +3684,7 @@ static void shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFF
     print_glsl_info_log(&GLINFO_LOCATION, shader_obj);
 
     /* Store the shader object */
-    This->prgId = shader_obj;
+    return shader_obj;
 }
 
 static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
