@@ -132,11 +132,11 @@ struct IDsDriverBufferImpl
     IDsDriverPropertySetImpl*   property_set;
 };
 
-static HRESULT WINAPI IDsDriverPropertySetImpl_Create(
+static HRESULT IDsDriverPropertySetImpl_Create(
     IDsDriverBufferImpl * dsdb,
     IDsDriverPropertySetImpl **pdsdps);
 
-static HRESULT WINAPI IDsDriverNotifyImpl_Create(
+static HRESULT IDsDriverNotifyImpl_Create(
     IDsDriverBufferImpl * dsdb,
     IDsDriverNotifyImpl **pdsdn);
 
@@ -765,13 +765,13 @@ static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCap
     return DS_OK;
 }
 
-static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
-                                              LPWAVEFORMATEX pwfx,
-                                              DWORD dwFlags,
-                                              DWORD dwCardAddress,
-                                              LPDWORD pdwcbBufferSize,
-                                              LPBYTE *ppbBuffer,
-                                              LPVOID *ppvObj)
+static HRESULT DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
+                                       LPWAVEFORMATEX pwfx,
+                                       DWORD dwFlags,
+                                       DWORD dwCardAddress,
+                                       LPDWORD pdwcbBufferSize,
+                                       LPBYTE *ppbBuffer,
+                                       LPVOID *ppvObj)
 {
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
     IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
@@ -832,13 +832,13 @@ static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
     return DS_OK;
 }
 
-static HRESULT WINAPI DSD_CreateSecondaryBuffer(PIDSDRIVER iface,
-                                                LPWAVEFORMATEX pwfx,
-                                                DWORD dwFlags,
-                                                DWORD dwCardAddress,
-                                                LPDWORD pdwcbBufferSize,
-                                                LPBYTE *ppbBuffer,
-                                                LPVOID *ppvObj)
+static HRESULT DSD_CreateSecondaryBuffer(PIDSDRIVER iface,
+                                         LPWAVEFORMATEX pwfx,
+                                         DWORD dwFlags,
+                                         DWORD dwCardAddress,
+                                         LPDWORD pdwcbBufferSize,
+                                         LPBYTE *ppbBuffer,
+                                         LPVOID *ppvObj)
 {
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
     IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
@@ -886,7 +886,7 @@ static const IDsDriverVtbl dsdvt =
     IDsDriverImpl_DuplicateSoundBuffer
 };
 
-static HRESULT WINAPI IDsDriverPropertySetImpl_Create(
+static HRESULT IDsDriverPropertySetImpl_Create(
     IDsDriverBufferImpl * dsdb,
     IDsDriverPropertySetImpl **pdsdps)
 {
@@ -909,7 +909,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_Create(
     return DS_OK;
 }
 
-static HRESULT WINAPI IDsDriverNotifyImpl_Create(
+static HRESULT IDsDriverNotifyImpl_Create(
     IDsDriverBufferImpl * dsdb,
     IDsDriverNotifyImpl **pdsdn)
 {
