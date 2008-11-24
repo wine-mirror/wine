@@ -76,10 +76,9 @@ BOOL    WINAPI SHAboutInfoW(LPWSTR,DWORD);
  *
  * Internal implemetation of SHLWAPI_11.
  */
-static
-HANDLE WINAPI SHLWAPI_DupSharedHandle(HANDLE hShared, DWORD dwDstProcId,
-                                       DWORD dwSrcProcId, DWORD dwAccess,
-                                       DWORD dwOptions)
+static HANDLE SHLWAPI_DupSharedHandle(HANDLE hShared, DWORD dwDstProcId,
+                                      DWORD dwSrcProcId, DWORD dwAccess,
+                                      DWORD dwOptions)
 {
   HANDLE hDst, hSrc;
   DWORD dwMyProcId = GetCurrentProcessId();
@@ -3546,7 +3545,7 @@ HRESULT WINAPI SHIShellFolder_EnumObjects(LPSHELLFOLDER lpFolder, HWND hwnd, SHC
 }
 
 /* INTERNAL: Map from HLS color space to RGB */
-static WORD WINAPI ConvertHue(int wHue, WORD wMid1, WORD wMid2)
+static WORD ConvertHue(int wHue, WORD wMid1, WORD wMid2)
 {
   wHue = wHue > 240 ? wHue - 240 : wHue < 0 ? wHue + 240 : wHue;
 

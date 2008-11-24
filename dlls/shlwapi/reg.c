@@ -66,7 +66,7 @@ HRESULT WINAPI SHRegGetCLSIDKeyW(REFGUID,LPCWSTR,BOOL,BOOL,PHKEY);
  * Function:  Return the proper registry key from the HUSKEY structure
  *            also allow special predefined values.
  */
-static HKEY WINAPI REG_GetHKEYFromHUSKEY(HUSKEY hUSKey, BOOL which)
+static HKEY REG_GetHKEYFromHUSKEY(HUSKEY hUSKey, BOOL which)
 {
         HKEY test = hUSKey;
         LPSHUSKEY mihk = hUSKey;
