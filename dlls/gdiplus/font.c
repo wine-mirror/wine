@@ -835,6 +835,20 @@ GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection* fontCollection,
 }
 
 /*****************************************************************************
+ * GdipPrivateAddMemoryFont [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipPrivateAddMemoryFont(GpFontCollection* fontCollection,
+        GDIPCONST void* memory, INT length)
+{
+    FIXME("%p, %p, %d\n", fontCollection, memory, length);
+
+    if (!(fontCollection && memory && length))
+        return InvalidParameter;
+
+    return Ok;
+}
+
+/*****************************************************************************
  * GdipGetFontCollectionFamilyCount [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipGetFontCollectionFamilyCount(
