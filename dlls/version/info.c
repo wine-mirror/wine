@@ -676,7 +676,7 @@ static const VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( const VS_VERSION
  *
  *    Gets a value from a 16-bit NE resource
  */
-static BOOL WINAPI VersionInfo16_QueryValue( const VS_VERSION_INFO_STRUCT16 *info, LPCSTR lpSubBlock,
+static BOOL VersionInfo16_QueryValue( const VS_VERSION_INFO_STRUCT16 *info, LPCSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
 {
     while ( *lpSubBlock )
@@ -720,7 +720,7 @@ static BOOL WINAPI VersionInfo16_QueryValue( const VS_VERSION_INFO_STRUCT16 *inf
  *
  *    Gets a value from a 32-bit PE resource
  */
-static BOOL WINAPI VersionInfo32_QueryValue( const VS_VERSION_INFO_STRUCT32 *info, LPCWSTR lpSubBlock,
+static BOOL VersionInfo32_QueryValue( const VS_VERSION_INFO_STRUCT32 *info, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
 {
     TRACE("lpSubBlock : (%s)\n", debugstr_w(lpSubBlock));
