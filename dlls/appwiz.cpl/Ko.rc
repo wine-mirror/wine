@@ -29,7 +29,7 @@ STRINGTABLE
    IDS_TAB1_TITLE, "프로그램"
 
    IDS_UNINSTALL_FAILED, "언인스톨러를 실행할 수 없습니다, '%s'. 당신은 이 프로그램의 언인스톨 정보를 레지스트리에서 지우겠습니까?"
-
+   IDS_NOT_SPECIFIED, "지정되지 않음"
    IDS_COLUMN_NAME, "이름"
    IDS_COLUMN_PUBLISHER, "제작사"
    IDS_COLUMN_VERSION, "버젼"
