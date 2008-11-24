@@ -3220,7 +3220,7 @@ static void FTPFINDNEXT_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwfn);
 }
 
-static DWORD WINAPI FTPFINDNEXT_FindNextFileProc(WININETFTPFINDNEXTW *find, LPVOID data)
+static DWORD FTPFINDNEXT_FindNextFileProc(WININETFTPFINDNEXTW *find, LPVOID data)
 {
     WIN32_FIND_DATAW *find_data = data;
     DWORD res = ERROR_SUCCESS;

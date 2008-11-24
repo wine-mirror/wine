@@ -2335,7 +2335,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
  *   result will lose data for arbitrary binary data.
  *
  */
-static BOOL WINAPI CommitUrlCacheEntryInternal(
+static BOOL CommitUrlCacheEntryInternal(
     IN LPCWSTR lpszUrlName,
     IN LPCWSTR lpszLocalFileName,
     IN FILETIME ExpireTime,
