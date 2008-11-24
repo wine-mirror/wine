@@ -762,14 +762,14 @@ static void test_gethrgn(void)
     status = GdipGetRegionHRgn(region, graphics, NULL);
     ok(status == InvalidParameter, "status %08x\n", status);
 
-    hrgn = NULL;
     status = GdipGetRegionHRgn(region, NULL, &hrgn);
-    todo_wine ok(status == Ok, "status %08x\n", status);
+    ok(status == Ok, "status %08x\n", status);
+    ok(hrgn == NULL, "hrgn=%p\n", hrgn);
     DeleteObject(hrgn);
 
-    hrgn = NULL;
     status = GdipGetRegionHRgn(region, graphics, &hrgn);
-    todo_wine ok(status == Ok, "status %08x\n", status);
+    ok(status == Ok, "status %08x\n", status);
+    ok(hrgn == NULL, "hrgn=%p\n", hrgn);
     DeleteObject(hrgn);
 
     status = GdipDeleteRegion(region);

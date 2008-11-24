@@ -768,18 +768,31 @@ GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
     return Ok;
 }
 
+static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *graphics, HRGN *hrgn)
+{
+    switch (element->type)
+    {
+        case RegionDataInfiniteRect:
+            *hrgn = NULL;
+            return Ok;
+        default:
+            FIXME("GdipGetRegionHRgn unimplemented for region type=%x\n", element->type);
+            *hrgn = NULL;
+            return NotImplemented;
+    }
+}
+
 /*****************************************************************************
  * GdipGetRegionHRgn [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *region, GpGraphics *graphics, HRGN *hrgn)
 {
-    FIXME("(%p, %p, %p): stub\n", region, graphics, hrgn);
+    TRACE("(%p, %p, %p)\n", region, graphics, hrgn);
 
     if (!region || !hrgn)
         return InvalidParameter;
 
-    *hrgn = NULL;
-    return NotImplemented;
+    return get_region_hrgn(&region->node, graphics, hrgn);
 }
 
 GpStatus WINGDIPAPI GdipIsEmptyRegion(GpRegion *region, GpGraphics *graphics, BOOL *res)
