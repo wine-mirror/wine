@@ -420,6 +420,25 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
   return S_OK;
 }
 
+static void release_delegates(DefaultHandler *This)
+{
+    if (This->pDataDelegate)
+    {
+        IDataObject_Release(This->pDataDelegate);
+        This->pDataDelegate = NULL;
+    }
+    if (This->pPSDelegate)
+    {
+        IPersistStorage_Release(This->pPSDelegate);
+        This->pPSDelegate = NULL;
+    }
+    if (This->pOleDelegate)
+    {
+        IOleObject_Release(This->pOleDelegate);
+        This->pOleDelegate = NULL;
+    }
+}
+
 /* undoes the work done by DefaultHandler_Run */
 static void DefaultHandler_Stop(DefaultHandler *This)
 {
@@ -432,18 +451,8 @@ static void DefaultHandler_Stop(DefaultHandler *This)
 
   if (This->dataAdviseHolder)
     DataAdviseHolder_OnDisconnect(This->dataAdviseHolder);
-  if (This->pDataDelegate)
-  {
-     IDataObject_Release(This->pDataDelegate);
-     This->pDataDelegate = NULL;
-  }
-  if (This->pPSDelegate)
-  {
-     IPersistStorage_Release(This->pPSDelegate);
-     This->pPSDelegate = NULL;
-  }
-  IOleObject_Release(This->pOleDelegate);
-  This->pOleDelegate = NULL;
+
+  release_delegates(This);
 }
 
 /************************************************************************
