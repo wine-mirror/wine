@@ -229,8 +229,8 @@ static void setup_clipping( HWND hwnd, HDC hdc )
 /***********************************************************************
  *           ButtonWndProc_common
  */
-static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
-                                           WPARAM wParam, LPARAM lParam, BOOL unicode )
+static LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg,
+                                    WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     RECT rect;
     POINT pt;

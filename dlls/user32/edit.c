@@ -223,7 +223,7 @@ static void	EDIT_AdjustFormatRect(EDITSTATE *es);
 static void	EDIT_SetRectNP(EDITSTATE *es, const RECT *lprc);
 static void	EDIT_UnlockBuffer(EDITSTATE *es, BOOL force);
 static void	EDIT_UpdateScrollInfo(EDITSTATE *es);
-static INT CALLBACK EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT action);
+static INT      EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT action);
 /*
  *	EM_XXX message handlers
  */
@@ -449,8 +449,8 @@ static inline INT get_vertical_line_count(EDITSTATE *es)
  *	names).
  *
  */
-static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
-                                          WPARAM wParam, LPARAM lParam, BOOL unicode )
+static LRESULT EditWndProc_common( HWND hwnd, UINT msg,
+                                   WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
 	EDITSTATE *es = (EDITSTATE *)GetWindowLongPtrW( hwnd, 0 );
 	LRESULT result = 0;
@@ -2602,7 +2602,7 @@ static void EDIT_UpdateScrollInfo(EDITSTATE *es)
  *		internally, so we can decide this for ourselves.
  *
  */
-static INT CALLBACK EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT action)
+static INT EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT action)
 {
 	INT ret = 0;
 

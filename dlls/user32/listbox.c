@@ -2606,8 +2606,8 @@ static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 /***********************************************************************
  *           ListBoxWndProc_common
  */
-static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
-                                             WPARAM wParam, LPARAM lParam, BOOL unicode )
+static LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg,
+                                      WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     LB_DESCR *descr = (LB_DESCR *)GetWindowLongPtrW( hwnd, 0 );
     LPHEADCOMBO lphc = 0;

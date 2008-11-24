@@ -814,7 +814,7 @@ static BOOL RegisterTestDialog(HINSTANCE hInstance)
 
 /* test registering a dialog box created by using the CLASS directive in a
    resource file, then test creating the dialog using CreateDialogParam. */
-static void WINAPI CreateDialogParamTest(HINSTANCE hInstance)
+static void CreateDialogParamTest(HINSTANCE hInstance)
 {
     HWND hWndMain;
 
