@@ -52,7 +52,7 @@ const WINED3DLIGHT WINED3D_default_light = {
 };
 
 /* static function declarations */
-static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
+static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
 
 /* helper macros */
 #define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; WARN("Out of memory\n"); return WINED3DERR_OUTOFVIDEOMEMORY;}
@@ -1311,7 +1311,7 @@ static LONG fullscreen_exStyle(LONG orig_exStyle) {
     return exStyle;
 }
 
-static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *iface, HWND window, UINT w, UINT h) {
+static void IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *iface, HWND window, UINT w, UINT h) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     LONG style, exStyle;
@@ -1355,7 +1355,7 @@ static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *ifac
  *  window: Window to setup
  *
  *****************************************************************************/
-static void WINAPI IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND window) {
+static void IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND window) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     LONG style, exStyle;
 
@@ -7318,14 +7318,14 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
 * any handles to other resource held by the caller must be closed
 * (e.g. a texture should release all held surfaces because telling the device that it's been released.)
  *****************************************************/
-static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource){
+static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("(%p) : Adding Resource %p\n", This, resource);
     list_add_head(&This->resources, &((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
 }
 
-static void WINAPI IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWineD3DResource *resource){
+static void IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWineD3DResource *resource){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("(%p) : Removing resource %p\n", This, resource);

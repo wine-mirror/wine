@@ -3671,7 +3671,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx)
+static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, WINEDDBLTFX *DDBltFx)
 {
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     float depth;
