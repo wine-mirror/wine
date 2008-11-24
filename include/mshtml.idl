@@ -1,5 +1,6 @@
 /*
  * Copyright 2004-2007 Jacek Caban for CodeWeavers
+ * Copyright 2008      Konstantin Kondratyuk (Etersoft)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +32,61 @@ cpp_quote("DEFINE_GUID(SID_SHTMLEditHost,       0x3050f6a0,0x98b5,0x11cf,0xbb,0x
 cpp_quote("DEFINE_GUID(SID_SHTMLEditServices,   0x3050f7f9,0x98b5,0x11cf,0xbb,0x82,0x00,0xaa,0x00,0xbd,0xce,0x0b);")
 cpp_quote("#define SID_SHTMLWindow IID_IHTMLWindow2")
 cpp_quote("#define SID_SElementBehaviorFactory IID_IElementBehaviorFactory")
+
+typedef enum {
+    POINTER_GRAVITY_Left,
+    POINTER_GRAVITY_Right,
+    POINTER_GRAVITY_Max = 2147483647
+} POINTER_GRAVITY;
+
+typedef enum {
+    CONTEXT_TYPE_None,
+    CONTEXT_TYPE_Text,
+    CONTEXT_TYPE_EnterScope,
+    CONTEXT_TYPE_ExitScope,
+    CONTEXT_TYPE_NoScope,
+    MARKUP_CONTEXT_TYPE_Max = 2147483647
+} MARKUP_CONTEXT_TYPE;
+
+typedef enum {
+    ELEM_ADJ_BeforeBegin,
+    ELEM_ADJ_AfterBegin,
+    ELEM_ADJ_BeforeEnd,
+    ELEM_ADJ_AfterEnd,
+    ELEMENT_ADJACENCY_Max = 2147483647
+} ELEMENT_ADJACENCY;
+
+typedef enum {
+    MOVEUNIT_PREVCHAR,
+    MOVEUNIT_NEXTCHAR,
+    MOVEUNIT_PREVCLUSTERBEG,
+    MOVEUNIT_NEXTCLUSTERBEG,
+    MOVEUNIT_PREVCLUSTEREND,
+    MOVEUNIT_NEXTCLUSTEREND,
+    MOVEUNIT_PREVWORDBEG,
+    MOVEUNIT_NEXTWORDBEG,
+    MOVEUNIT_PREVWORDEND,
+    MOVEUNIT_NEXTWORDEND,
+    MOVEUNIT_PREVPROOFWORD,
+    MOVEUNIT_NEXTPROOFWORD,
+    MOVEUNIT_NEXTURLBEG,
+    MOVEUNIT_PREVURLBEG,
+    MOVEUNIT_NEXTURLEND,
+    MOVEUNIT_PREVURLEND,
+    MOVEUNIT_PREVSENTENCE,
+    MOVEUNIT_NEXTSENTENCE,
+    MOVEUNIT_PREVBLOCK,
+    MOVEUNIT_NEXTBLOCK,
+    MOVEUNIT_ACTION_Max = 2147483647
+} MOVEUNIT_ACTION;
+
+typedef enum _SELECTION_TYPE {
+    SELECTION_TYPE_None,
+    SELECTION_TYPE_Caret,
+    SELECTION_TYPE_Text,
+    SELECTION_TYPE_Control,
+    SELECTION_TYPE_Max = 2147483647
+} SELECTION_TYPE;
 
 interface IHTMLDocument2;
 interface IHTMLStyleSheetsCollection;
@@ -20030,6 +20086,244 @@ methods:
 
     [propget, id(DISPID_IHTMLIFRAMEELEMENT2_WIDTH)]
     VARIANT width();
+}
+
+/*****************************************************************************
+ *    IMarkupContainer interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f5f9-98b5-11cf-bb82-00aa00bdce0B)
+]
+interface IMarkupContainer : IUnknown
+{
+    HRESULT OwningDoc([out] IHTMLDocument2 **ppDoc);
+}
+
+/*****************************************************************************
+ *    IMarkupPointer interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f49f-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IMarkupPointer : IUnknown
+{
+    HRESULT OwningDoc([out] IHTMLDocument2 **ppDoc);
+
+    HRESULT Gravity([out] POINTER_GRAVITY *pGravity);
+
+    HRESULT SetGravity([in] POINTER_GRAVITY Gravity);
+
+    HRESULT Cling([out] BOOL *pfCling);
+
+    HRESULT SetCling([in] BOOL fCLing);
+
+    HRESULT UnPosition();
+
+    HRESULT IsPositioned([out] BOOL *pfPositioned);
+
+    HRESULT GetContainer([out] IMarkupContainer **ppContainer);
+
+    HRESULT MoveAdjacentToElement(
+        [in] IHTMLElement *pElement,
+        [in] ELEMENT_ADJACENCY eAdj);
+
+    HRESULT MoveToPointer([in] IMarkupPointer *pPointer);
+
+    HRESULT MoveToContainer(
+        [in] IMarkupContainer *pContainer,
+        [in] BOOL fAtStart);
+
+    HRESULT Left(
+        [in] BOOL fMove,
+        [out] MARKUP_CONTEXT_TYPE *pContext,
+        [out] IHTMLElement **ppElement,
+        [in, out] long *pcch,
+        [out, size_is(*pcch)] OLECHAR *pchText);
+
+    HRESULT Right(
+        [in] BOOL fMove,
+        [out] MARKUP_CONTEXT_TYPE *pContext,
+        [out] IHTMLElement **ppElement,
+        [in, out] long *pcch,
+        [out, size_is(*pcch)] OLECHAR *pchText);
+
+    HRESULT CurrentScope([out] IHTMLElement **ppElemCurrent);
+
+    HRESULT IsLeftOf(
+        [in] IMarkupPointer *pPointerThat,
+        [out] BOOL *pfResult);
+
+    HRESULT IsLeftOfOrEqualTo(
+        [in] IMarkupPointer *pPointerThat,
+        [out] BOOL *pfResult);
+
+    HRESULT IsRightOf(
+        [in] IMarkupPointer *pPointerThat,
+        [out] BOOL *pfResult);
+
+    HRESULT IsRightOfOrEqualTo(
+        [in] IMarkupPointer *pPointerThat,
+        [out] BOOL *pfResult);
+
+    HRESULT IsEqualTo(
+        [in] IMarkupPointer *pPointerThat,
+        [out] BOOL *pfAreEqual);
+
+    HRESULT MoveUnit([in] MOVEUNIT_ACTION muAction);
+
+    HRESULT FindText(
+        [in] OLECHAR *pchFindText,
+        [in] DWORD dwFlags,
+        [in] IMarkupPointer *pIEndMatch,
+        [in] IMarkupPointer *pIEndSearch);
+}
+
+/*****************************************************************************
+ *    ISegment interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(83f65030-b598-cf11-bb82-00aa00bdce0b)
+]
+interface ISegment : IUnknown
+{
+    HRESULT GetPointers(
+        [in] IMarkupPointer *pIStart,
+        [in] IMarkupPointer *pIEnd);
+}
+
+/*****************************************************************************
+ *    IElementSegment interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f68f-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IElementSegment : ISegment
+{
+    HRESULT GetElement([out] IHTMLElement **ppIElement);
+
+    HRESULT SetPrimary([in] BOOL fPrimary);
+
+    HRESULT IsPrimary([out] BOOL *pfPrimary);
+}
+
+/*****************************************************************************
+ *    ISelectionServicesListener interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(99f65030-b598-cf11-bb82-00aa00bdce0b)
+]
+interface ISelectionServicesListener : IUnknown
+{
+    HRESULT BeginSelectionUndo();
+
+    HRESULT EndSelectionUndo();
+
+    HRESULT OnSelectedElementExit(
+        [in] IMarkupPointer *pIElementStart,
+        [in] IMarkupPointer *pIElementEnd,
+        [in] IMarkupPointer *pIElementContentStart,
+        [in] IMarkupPointer *pIElementContentEnd);
+
+    HRESULT OnChangeType(
+        [in] SELECTION_TYPE eType,
+        [in] ISelectionServicesListener *pIListener);
+
+    HRESULT GetTypeDetail([out] BSTR *pTypeDetail);
+}
+
+/*****************************************************************************
+ *    ISelectionServices interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f684-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISelectionServices : IUnknown
+{
+    HRESULT SetSelectionType(
+        [in] SELECTION_TYPE eType,
+        [in] ISelectionServicesListener *pIListener);
+
+    HRESULT GetMarkupContainer([out] IMarkupContainer **ppIContainer);
+
+    HRESULT AddSegment(
+        [in] IMarkupPointer *pIStart,
+        [in] IMarkupPointer *pIEnd,
+        [out] ISegment **ppISegmentAdded);
+
+    HRESULT AddElementSegment(
+        [in] IHTMLElement *pIElement,
+        [out] IElementSegment **ppISegmentAdded);
+
+    HRESULT RemoveSegment([in] ISegment *pISegment);
+
+    HRESULT GetSelectionServicesListener([out] ISelectionServicesListener **ppISelectionServicesListener);
+}
+
+/*****************************************************************************
+ *    IHTMLEditDesigner interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f662-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLEditDesigner : IUnknown
+{
+    HRESULT PreHandleEvent(
+        [in] DISPID inEvtDispId,
+        [in] IHTMLEventObj *pIEventObj);
+
+    HRESULT PostHandleEvent(
+        [in] DISPID inEvtDispId,
+        [in] IHTMLEventObj *pIEventObj);
+
+    HRESULT TranslateAccelerator(
+        [in] DISPID inEvtDispId,
+        [in] IHTMLEventObj *pIEventObj);
+
+    HRESULT PostEditorEventNotify(
+        [in] DISPID inEvtDispId,
+        [in] IHTMLEventObj *pIEventObj);
+}
+
+/*****************************************************************************
+ *    IHTMLEditServices interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f663-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLEditServices : IUnknown
+{
+    HRESULT AddDesigner([in] IHTMLEditDesigner *pIDesigner);
+
+    HRESULT RemoveDesigner([in] IHTMLEditDesigner *pIDesigner);
+
+    HRESULT GetSelectionServices(
+        [in] IMarkupContainer *pIContainer,
+        [out] ISelectionServices **ppSelSvc);
+
+    HRESULT MoveToSelectionAnchor([in] IMarkupPointer *pIStartAnchor);
+
+    HRESULT MoveToSelectionEnd([in] IMarkupPointer *pIEndAnchor);
+
+    HRESULT SelectRange(
+        [in] IMarkupPointer* pStart,
+        [in] IMarkupPointer* pEnd,
+        [in] SELECTION_TYPE eType);
 }
 
 } /* library MSHTML */
