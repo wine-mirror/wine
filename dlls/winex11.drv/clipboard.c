@@ -1224,7 +1224,7 @@ HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *display, Window w, Atom prop)
  */
 static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, Atom prop)
 {
-    int i, j;
+    int i, j, ret;
     char** srcstr;
     int count, lcount;
     int srclen, destlen;
@@ -1239,9 +1239,10 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
     txtprop.encoding = x11drv_atom(COMPOUND_TEXT);
     txtprop.format = 8;
     wine_tsx11_lock();
-    XmbTextPropertyToTextList(display, &txtprop, &srcstr, &count);
+    ret = XmbTextPropertyToTextList(display, &txtprop, &srcstr, &count);
     wine_tsx11_unlock();
     HeapFree(GetProcessHeap(), 0, txtprop.value);
+    if (ret != Success || !count) return 0;
 
     TRACE("Importing %d line(s)\n", count);
 
