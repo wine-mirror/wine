@@ -804,6 +804,7 @@ static void test_gethrgn(void)
     HDC hdc=GetDC(0);
     static const RECT empty_rect = {0,0,0,0};
     static const RECT test_rect = {10, 11, 20, 21};
+    static const GpRectF test_rectF = {10.0, 11.0, 10.0, 10.0};
     static const RECT scaled_rect = {20, 22, 40, 42};
 
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -849,6 +850,18 @@ static void test_gethrgn(void)
     /* resulting HRGN is in device coordinates */
     status = GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
     ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region2, graphics, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &scaled_rect);
+    DeleteObject(hrgn);
+
+    status = GdipCombineRegionRect(region2, &test_rectF, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region2, NULL, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &test_rect);
+    DeleteObject(hrgn);
+
     status = GdipGetRegionHRgn(region2, graphics, &hrgn);
     ok(status == Ok, "status %08x\n", status);
     verify_region(hrgn, &scaled_rect);

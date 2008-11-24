@@ -823,6 +823,24 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
             return *hrgn ? Ok : OutOfMemory;
         case RegionDataPath:
             return get_path_hrgn(element->elementdata.pathdata.path, graphics, hrgn);
+        case RegionDataRect:
+        {
+            GpPath* path;
+            GpStatus stat;
+            GpRectF* rc = &element->elementdata.rect;
+
+            stat = GdipCreatePath(FillModeAlternate, &path);
+            if (stat != Ok)
+                return stat;
+            stat = GdipAddPathRectangle(path, rc->X, rc->Y, rc->Width, rc->Height);
+
+            if (stat == Ok)
+                stat = get_path_hrgn(path, graphics, hrgn);
+
+            GdipDeletePath(path);
+
+            return stat;
+        }
         default:
             FIXME("GdipGetRegionHRgn unimplemented for region type=%x\n", element->type);
             *hrgn = NULL;
