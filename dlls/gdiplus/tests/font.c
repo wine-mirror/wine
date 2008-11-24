@@ -246,12 +246,9 @@ static void test_fontfamily_properties (void)
         skip("Arial not installed\n");
     else
     {
-todo_wine
-{
         stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
         expect(Ok, stat);
         ok (result == 2355, "Expected 2355, got %d\n", result);
-}
         result = 0;
         stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
         expect(Ok, stat);
@@ -272,12 +269,9 @@ todo_wine
     else
     {
         result = 0;
-todo_wine
-{
         stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
         expect(Ok, stat);
         ok(result == 2355, "Expected 2355, got %d\n", result);
-}
         result = 0;
         stat = GdipGetEmHeight(FontFamily, FontStyleRegular, &result);
         expect(Ok, stat);

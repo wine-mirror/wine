@@ -667,8 +667,7 @@ GpStatus WINGDIPAPI GdipGetEmHeight(GDIPCONST GpFontFamily *family, INT style, U
 {
     if (!(family && EmHeight)) return InvalidParameter;
 
-    TRACE("%p (%s), %d, %p, stub!\n", family,
-            debugstr_w(family->FamilyName), style, EmHeight);
+    TRACE("%p (%s), %d, %p\n", family, debugstr_w(family->FamilyName), style, EmHeight);
 
     *EmHeight = family->tmw.ntmSizeEM;
 
@@ -693,11 +692,16 @@ GpStatus WINGDIPAPI GdipGetEmHeight(GDIPCONST GpFontFamily *family, INT style, U
 GpStatus WINGDIPAPI GdipGetLineSpacing(GDIPCONST GpFontFamily *family,
         INT style, UINT16* LineSpacing)
 {
-    if (!(family && LineSpacing)) return InvalidParameter;
+    TRACE("%p, %d, %p\n", family, style, LineSpacing);
 
-    FIXME("stub!\n");
+    if (!(family && LineSpacing))
+        return InvalidParameter;
 
-    return NotImplemented;
+    if (style) FIXME("ignoring style\n");
+
+    *LineSpacing = family->tmw.tmAscent + family->tmw.tmDescent + family->tmw.tmExternalLeading;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipIsStyleAvailable(GDIPCONST GpFontFamily* family,
