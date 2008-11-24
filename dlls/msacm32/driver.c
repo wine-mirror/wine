@@ -548,7 +548,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
         adod.pszAliasName = padid->pszDriverAlias;
         adod.dnDevNode = 0;
 
-        pad->hDrvr = OpenDriver(padid->pszDriverAlias, NULL, (DWORD)&adod);
+        pad->hDrvr = OpenDriver(padid->pszDriverAlias, NULL, (DWORD_PTR)&adod);
 
         HeapFree(MSACM_hHeap, 0, section_name);
         if (!pad->hDrvr)
@@ -573,7 +573,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
         adod.pszAliasName = NULL;
         adod.dnDevNode = 0;
 
-        pad->pLocalDrvrInst = MSACM_OpenLocalDriver(padid->pLocalDriver, (DWORD)&adod);
+        pad->pLocalDrvrInst = MSACM_OpenLocalDriver(padid->pLocalDriver, (DWORD_PTR)&adod);
         if (!pad->pLocalDrvrInst)
         {
             ret = adod.dwError;
