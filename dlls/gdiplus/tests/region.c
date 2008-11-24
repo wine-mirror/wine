@@ -806,6 +806,10 @@ static void test_gethrgn(void)
     static const RECT test_rect = {10, 11, 20, 21};
     static const GpRectF test_rectF = {10.0, 11.0, 10.0, 10.0};
     static const RECT scaled_rect = {20, 22, 40, 42};
+    static const RECT test_rect2 = {10, 21, 20, 31};
+    static const GpRectF test_rect2F = {10.0, 21.0, 10.0, 10.0};
+    static const RECT test_rect3 = {10, 11, 20, 31};
+    static const GpRectF test_rect3F = {10.0, 11.0, 10.0, 20.0};
 
     status = GdipCreateFromHDC(hdc, &graphics);
     ok(status == Ok, "status %08x\n", status);
@@ -865,6 +869,51 @@ static void test_gethrgn(void)
     status = GdipGetRegionHRgn(region2, graphics, &hrgn);
     ok(status == Ok, "status %08x\n", status);
     verify_region(hrgn, &scaled_rect);
+    DeleteObject(hrgn);
+
+    status = GdipSetInfinite(region);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCombineRegionRect(region, &test_rectF, CombineModeIntersect);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &test_rect);
+    DeleteObject(hrgn);
+
+    status = GdipCombineRegionRect(region, &test_rectF, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCombineRegionRect(region, &test_rect2F, CombineModeUnion);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &test_rect3);
+    DeleteObject(hrgn);
+
+    status = GdipCombineRegionRect(region, &test_rect3F, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCombineRegionRect(region, &test_rect2F, CombineModeXor);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &test_rect);
+    DeleteObject(hrgn);
+
+    status = GdipCombineRegionRect(region, &test_rect3F, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCombineRegionRect(region, &test_rectF, CombineModeExclude);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &test_rect2);
+    DeleteObject(hrgn);
+
+    status = GdipCombineRegionRect(region, &test_rectF, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCombineRegionRect(region, &test_rect3F, CombineModeComplement);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    ok(status == Ok, "status %08x\n", status);
+    verify_region(hrgn, &test_rect2);
     DeleteObject(hrgn);
 
     status = GdipDeletePath(path);

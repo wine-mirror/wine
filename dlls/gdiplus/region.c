@@ -841,6 +841,98 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
 
             return stat;
         }
+        case CombineModeIntersect:
+        case CombineModeUnion:
+        case CombineModeXor:
+        case CombineModeExclude:
+        case CombineModeComplement:
+        {
+            HRGN left, right;
+            GpStatus stat;
+            int ret;
+
+            stat = get_region_hrgn(element->elementdata.combine.left, graphics, &left);
+            if (stat != Ok)
+            {
+                *hrgn = NULL;
+                return stat;
+            }
+
+            if (left == NULL)
+            {
+                /* existing region is infinite */
+                switch (element->type)
+                {
+                    case CombineModeIntersect:
+                        return get_region_hrgn(element->elementdata.combine.right, graphics, hrgn);
+                    case CombineModeXor: case CombineModeExclude:
+                        FIXME("cannot exclude from an infinite region\n");
+                        /* fall-through */
+                    case CombineModeUnion: case CombineModeComplement:
+                        *hrgn = NULL;
+                        return Ok;
+                }
+            }
+
+            stat = get_region_hrgn(element->elementdata.combine.right, graphics, &right);
+            if (stat != Ok)
+            {
+                DeleteObject(left);
+                *hrgn = NULL;
+                return stat;
+            }
+
+            if (right == NULL)
+            {
+                /* new region is infinite */
+                switch (element->type)
+                {
+                    case CombineModeIntersect:
+                        *hrgn = left;
+                        return Ok;
+                    case CombineModeXor: case CombineModeComplement:
+                        FIXME("cannot exclude from an infinite region\n");
+                        /* fall-through */
+                    case CombineModeUnion: case CombineModeExclude:
+                        DeleteObject(left);
+                        *hrgn = NULL;
+                        return Ok;
+                }
+            }
+
+            switch (element->type)
+            {
+                case CombineModeIntersect:
+                    ret = CombineRgn(left, left, right, RGN_AND);
+                    break;
+                case CombineModeUnion:
+                    ret = CombineRgn(left, left, right, RGN_OR);
+                    break;
+                case CombineModeXor:
+                    ret = CombineRgn(left, left, right, RGN_XOR);
+                    break;
+                case CombineModeExclude:
+                    ret = CombineRgn(left, left, right, RGN_DIFF);
+                    break;
+                case CombineModeComplement:
+                    ret = CombineRgn(left, right, left, RGN_DIFF);
+                    break;
+                default:
+                    ret = ERROR;
+            }
+
+            DeleteObject(right);
+
+            if (ret == ERROR)
+            {
+                DeleteObject(left);
+                *hrgn = NULL;
+                return GenericError;
+            }
+
+            *hrgn = left;
+            return Ok;
+        }
         default:
             FIXME("GdipGetRegionHRgn unimplemented for region type=%x\n", element->type);
             *hrgn = NULL;
