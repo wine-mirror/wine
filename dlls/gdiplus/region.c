@@ -775,6 +775,9 @@ GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *region, GpGraphics *graphics, HR
 {
     FIXME("(%p, %p, %p): stub\n", region, graphics, hrgn);
 
+    if (!region || !hrgn)
+        return InvalidParameter;
+
     *hrgn = NULL;
     return NotImplemented;
 }

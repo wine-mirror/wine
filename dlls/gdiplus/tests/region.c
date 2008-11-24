@@ -743,6 +743,42 @@ todo_wine{
     DeleteObject((HGDIOBJ)hrgn);
 }
 
+static void test_gethrgn(void)
+{
+    GpStatus status;
+    GpRegion *region;
+    GpGraphics *graphics;
+    HRGN hrgn;
+    HDC hdc=GetDC(0);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    ok(status == Ok, "status %08x\n", status);
+
+    status = GdipCreateRegion(&region);
+    ok(status == Ok, "status %08x\n", status);
+
+    status = GdipGetRegionHRgn(NULL, graphics, &hrgn);
+    ok(status == InvalidParameter, "status %08x\n", status);
+    status = GdipGetRegionHRgn(region, graphics, NULL);
+    ok(status == InvalidParameter, "status %08x\n", status);
+
+    hrgn = NULL;
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
+    todo_wine ok(status == Ok, "status %08x\n", status);
+    DeleteObject(hrgn);
+
+    hrgn = NULL;
+    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    todo_wine ok(status == Ok, "status %08x\n", status);
+    DeleteObject(hrgn);
+
+    status = GdipDeleteRegion(region);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipDeleteGraphics(graphics);
+    ok(status == Ok, "status %08x\n", status);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -760,7 +796,7 @@ START_TEST(region)
     test_isempty();
     test_combinereplace();
     test_fromhrgn();
+    test_gethrgn();
 
     GdiplusShutdown(gdiplusToken);
-
 }
