@@ -28,6 +28,7 @@
 #include "olectl.h"
 #include "ole2.h"
 
+#include "initguid.h"
 #include "gdiplus.h"
 #include "gdiplus_private.h"
 #include "wine/debug.h"
@@ -785,9 +786,18 @@ GpStatus WINGDIPAPI GdipGetImageRawFormat(GpImage *image, GUID *format)
         return InvalidParameter;
 
     if(!(calls++))
-        FIXME("not implemented\n");
+        FIXME("stub\n");
 
-    return NotImplemented;
+    /* FIXME: should be detected from embedded picture or stored separately */
+    switch (image->type)
+    {
+    case ImageTypeBitmap:   *format = ImageFormatBMP; break;
+    case ImageTypeMetafile: *format = ImageFormatEMF; break;
+    default:
+        WARN("unknown type %u\n", image->type);
+        *format = ImageFormatUndefined;
+    }
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetImageType(GpImage *image, ImageType *type)
