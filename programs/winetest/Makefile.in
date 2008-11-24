@@ -53,6 +53,7 @@ winetest-dist: $(WINEWRAPPER)
 
 winetest-dist.exe: $(OBJS) dist.res.o Makefile.in
 	$(CC) $(APPMODE) $(OBJS) dist.res.o -o $@ $(DELAYIMPORTS:%=-l%) $(ALL_LIBS)
+	-upx -9 -qqq $@
 
 dist.res: winetest.rc tests.rc build.nfo tests.url winetest.ico $(TESTBINS)
 
