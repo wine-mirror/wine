@@ -854,12 +854,13 @@ GpStatus WINGDIPAPI GdipPrivateAddMemoryFont(GpFontCollection* fontCollection,
 GpStatus WINGDIPAPI GdipGetFontCollectionFamilyCount(
         GpFontCollection* fontCollection, INT* numFound)
 {
-    FIXME("stub: %p, %p\n", fontCollection, numFound);
+    TRACE("%p, %p\n", fontCollection, numFound);
 
     if (!(fontCollection && numFound))
         return InvalidParameter;
 
-    return NotImplemented;
+    *numFound = fontCollection->count;
+    return Ok;
 }
 
 /*****************************************************************************
@@ -869,13 +870,19 @@ GpStatus WINGDIPAPI GdipGetFontCollectionFamilyList(
         GpFontCollection* fontCollection, INT numSought,
         GpFontFamily* gpfamilies[], INT* numFound)
 {
-    FIXME("stub: %p, %d, %p, %p\n", fontCollection, numSought, gpfamilies,
-            numFound);
+    INT i;
+
+    TRACE("%p, %d, %p, %p\n", fontCollection, numSought, gpfamilies, numFound);
 
     if (!(fontCollection && gpfamilies && numFound))
         return InvalidParameter;
 
-    return NotImplemented;
+    for (i = 0; i < numSought && i < fontCollection->count; i++)
+    {
+        gpfamilies[i] = fontCollection->FontFamilies[i];
+    }
+    *numFound = i;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipNewInstalledFontCollection(
