@@ -152,7 +152,6 @@ static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
     if (infoPtr->uTicFreq && infoPtr->lRangeMax >= infoPtr->lRangeMin)
     	nrTics=(infoPtr->lRangeMax - infoPtr->lRangeMin)/infoPtr->uTicFreq;
     else {
-        nrTics = 0;
         Free (infoPtr->tics);
         infoPtr->tics = NULL;
         infoPtr->uNumTics = 0;
@@ -1590,7 +1589,7 @@ static LRESULT theme_changed (const TRACKBAR_INFO* infoPtr)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     CloseThemeData (theme);
-    theme = OpenThemeData (infoPtr->hwndSelf, themeClass);
+    OpenThemeData (infoPtr->hwndSelf, themeClass);
     return 0;
 }
 
