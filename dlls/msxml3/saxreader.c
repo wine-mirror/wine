@@ -1866,7 +1866,7 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
     return hr;
 }
 
-static HRESULT WINAPI internal_getEntityResolver(
+static HRESULT internal_getEntityResolver(
         saxreader *This,
         void *pEntityResolver,
         BOOL vbInterface)
@@ -1875,7 +1875,7 @@ static HRESULT WINAPI internal_getEntityResolver(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI internal_putEntityResolver(
+static HRESULT internal_putEntityResolver(
         saxreader *This,
         void *pEntityResolver,
         BOOL vbInterface)
@@ -1884,7 +1884,7 @@ static HRESULT WINAPI internal_putEntityResolver(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI internal_getContentHandler(
+static HRESULT internal_getContentHandler(
         saxreader* This,
         void *pContentHandler,
         BOOL vbInterface)
@@ -1907,7 +1907,7 @@ static HRESULT WINAPI internal_getContentHandler(
     return S_OK;
 }
 
-static HRESULT WINAPI internal_putContentHandler(
+static HRESULT internal_putContentHandler(
         saxreader* This,
         void *contentHandler,
         BOOL vbInterface)
@@ -1936,7 +1936,7 @@ static HRESULT WINAPI internal_putContentHandler(
     return S_OK;
 }
 
-static HRESULT WINAPI internal_getDTDHandler(
+static HRESULT internal_getDTDHandler(
         saxreader* This,
         void *pDTDHandler,
         BOOL vbInterface)
@@ -1945,7 +1945,7 @@ static HRESULT WINAPI internal_getDTDHandler(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI internal_putDTDHandler(
+static HRESULT internal_putDTDHandler(
         saxreader* This,
         void *pDTDHandler,
         BOOL vbInterface)
@@ -1954,7 +1954,7 @@ static HRESULT WINAPI internal_putDTDHandler(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI internal_getErrorHandler(
+static HRESULT internal_getErrorHandler(
         saxreader* This,
         void *pErrorHandler,
         BOOL vbInterface)
@@ -1977,7 +1977,7 @@ static HRESULT WINAPI internal_getErrorHandler(
 
 }
 
-static HRESULT WINAPI internal_putErrorHandler(
+static HRESULT internal_putErrorHandler(
         saxreader* This,
         void *errorHandler,
         BOOL vbInterface)
@@ -2005,7 +2005,7 @@ static HRESULT WINAPI internal_putErrorHandler(
 
 }
 
-static HRESULT WINAPI internal_parse(
+static HRESULT internal_parse(
         saxreader* This,
         VARIANT varInput,
         BOOL vbInterface)
@@ -2091,7 +2091,7 @@ static HRESULT internal_onDataAvailable(void *obj, char *ptr, DWORD len)
     return internal_parseBuffer(This, ptr, len, FALSE);
 }
 
-static HRESULT WINAPI internal_parseURL(
+static HRESULT internal_parseURL(
         saxreader* This,
         const WCHAR *url,
         BOOL vbInterface)
@@ -2112,7 +2112,7 @@ static HRESULT WINAPI internal_parseURL(
     return S_OK;
 }
 
-static HRESULT WINAPI internal_putProperty(
+static HRESULT internal_putProperty(
     saxreader* This,
     const WCHAR *pProp,
     VARIANT value,
