@@ -12159,13 +12159,13 @@ fi
 if test "x$XLIB" = "x"; then
   case "x$with_x" in
   xno) ;;
-  *)   { { $as_echo "$as_me:$LINENO: error: X development files not found. Wine will be built
+  *)   { { $as_echo "$as_me:$LINENO: error: X ${notice_platform}development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need to install
-development packages of Xlib/Xfree86 at the very least.
+${notice_platform}development packages of Xlib/Xfree86 at the very least.
 Use the --without-x option if you really want this." >&5
-$as_echo "$as_me: error: X development files not found. Wine will be built
+$as_echo "$as_me: error: X ${notice_platform}development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need to install
-development packages of Xlib/Xfree86 at the very least.
+${notice_platform}development packages of Xlib/Xfree86 at the very least.
 Use the --without-x option if you really want this." >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
@@ -14905,11 +14905,9 @@ fi
 if test "x$FREETYPELIBS" = "x"; then
   case "x$with_freetype" in
   xno) ;;
-  *)   { { $as_echo "$as_me:$LINENO: error: FreeType development files not found.
-Fonts will not be built. Dialog text may be invisible or unaligned.
+  *)   { { $as_echo "$as_me:$LINENO: error: FreeType ${notice_platform}development files not found. Fonts will not be built.
 Use the --without-freetype option if you really want this." >&5
-$as_echo "$as_me: error: FreeType development files not found.
-Fonts will not be built. Dialog text may be invisible or unaligned.
+$as_echo "$as_me: error: FreeType ${notice_platform}development files not found. Fonts will not be built.
 Use the --without-freetype option if you really want this." >&2;}
    { (exit 1); exit 1; }; } ;;
 esac

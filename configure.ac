@@ -826,9 +826,9 @@ else
     enable_opengl32=${enable_opengl32:-no}
     enable_glu32=${enable_glu32:-no}
 fi
-WINE_ERROR_WITH(x,[test "x$XLIB" = "x"],[X development files not found. Wine will be built
+WINE_ERROR_WITH(x,[test "x$XLIB" = "x"],[X ${notice_platform}development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need to install
-development packages of Xlib/Xfree86 at the very least.])
+${notice_platform}development packages of Xlib/Xfree86 at the very least.])
 
 dnl **** Check for libxml2 ****
 
@@ -1048,8 +1048,7 @@ then
 	fi
     fi
 fi
-WINE_ERROR_WITH(freetype,[test "x$FREETYPELIBS" = "x"],[FreeType development files not found.
-Fonts will not be built. Dialog text may be invisible or unaligned.])
+WINE_ERROR_WITH(freetype,[test "x$FREETYPELIBS" = "x"],[FreeType ${notice_platform}development files not found. Fonts will not be built.])
 test "x$FREETYPELIBS" = "x" && enable_fonts=${enable_fonts:-no}
 
 dnl **** Check for parport (currently Linux only) ****
