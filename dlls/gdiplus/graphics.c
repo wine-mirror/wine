@@ -3287,3 +3287,10 @@ GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics *graphics, GpCoordinateSpace
 
     return NotImplemented;
 }
+
+HPALETTE WINGDIPAPI GdipCreateHalftonePalette(void)
+{
+    FIXME("\n");
+
+    return NULL;
+}

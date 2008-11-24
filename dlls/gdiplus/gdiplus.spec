@@ -95,7 +95,7 @@
 @ stdcall GdipCreateFromHWNDICM(long ptr)
 @ stdcall GdipCreateHBITMAPFromBitmap(ptr ptr long)
 @ stub GdipCreateHICONFromBitmap
-@ stub GdipCreateHalftonePalette
+@ stdcall GdipCreateHalftonePalette()
 @ stub GdipCreateHatchBrush
 @ stdcall GdipCreateImageAttributes(ptr)
 @ stdcall GdipCreateLineBrush(ptr ptr long long long ptr)
@@ -405,7 +405,7 @@
 @ stdcall GdipGetWorldTransform(ptr ptr)
 @ stdcall GdipGraphicsClear(ptr long)
 @ stub GdipGraphicsSetAbort
-@ stub GdipImageForceValidation
+@ stdcall GdipImageForceValidation(ptr)
 @ stdcall GdipImageGetFrameCount(ptr ptr ptr)
 @ stdcall GdipImageGetFrameDimensionsCount(ptr ptr)
 @ stdcall GdipImageGetFrameDimensionsList(ptr ptr long)

@@ -1529,3 +1529,10 @@ GpStatus WINGDIPAPI GdipRecordMetafileFileNameI(GDIPCONST WCHAR* fileName, HDC h
 
     return NotImplemented;
 }
+
+GpStatus WINGDIPAPI GdipImageForceValidation(GpImage *image)
+{
+    FIXME("%p\n", image);
+
+    return Ok;
+}
