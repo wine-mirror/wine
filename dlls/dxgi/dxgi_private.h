@@ -28,7 +28,7 @@
 #include "objbase.h"
 
 #include "dxgi.h"
-#include "wine/wined3d_interface.h"
+#include "wine/wined3d.h"
 #ifdef DXGI_INIT_GUID
 #include "initguid.h"
 #endif

@@ -35,7 +35,7 @@
 
 #include "ddcomimpl.h"
 
-#include "wine/wined3d_interface.h"
+#include "wine/wined3d.h"
 #include "wine/list.h"
 
 /*****************************************************************************

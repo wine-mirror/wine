@@ -200,6 +200,7 @@ include/urlmon.h
 include/vmr9.h
 include/wine/itss.h
 include/wine/svcctl.h
+include/wine/wined3d.h
 include/wtypes.h
 include/xmldom.h
 include/xmldso.h

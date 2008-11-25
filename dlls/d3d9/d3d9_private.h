@@ -36,7 +36,7 @@
 #include "wine/unicode.h"
 
 #include "d3d9.h"
-#include "wine/wined3d_interface.h"
+#include "wine/wined3d.h"
 
 /* ===========================================================================
    Internal use

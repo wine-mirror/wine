@@ -115,6 +115,7 @@ my %private_idl_headers = (
     "devenum.idl" => 1,
     "dyngraph.idl" => 1,
     "vmrender.idl" => 1,
+    "wine/wined3d.idl" => 1,
 );
 
 my (@makefiles, %makefiles);
@@ -486,31 +487,38 @@ sub update_dlls(@)
 sub update_includes()
 {
     return unless -d ".git";
-    my (@h_srcs, @idl_srcs, @tlb_srcs, %subdirs);
+    my (@h_srcs, @private_idl_srcs, @public_idl_srcs, @tlb_srcs, %subdirs);
     my @includes = map { s/^include\///; $_; } split /\0/, `git ls-files -c -z include`;
     foreach my $incl (@includes)
     {
         if ($incl =~ /(.*)\//) { $subdirs{$1} = 1; }
-        next if ($incl =~ /^wine\// && !$exported_wine_headers{$incl});
         next if ($incl =~ /\.in$/);
+        if ($incl =~ /^wine\// && !$exported_wine_headers{$incl})
+        {
+            if ($private_idl_headers{$incl}) { push @private_idl_srcs, $incl; }
+            next;
+        }
         if ($incl =~ /stdole2\.idl$/) { push @tlb_srcs, $incl; }
         elsif ($private_idl_headers{$incl}) { push @h_srcs, $incl; }
         elsif ($incl =~ /\.h$/) { push @h_srcs, $incl; }
         elsif ($incl =~ /\.rh$/) { push @h_srcs, $incl; }
         elsif ($incl =~ /\.inl$/) { push @h_srcs, $incl; }
-        elsif ($incl =~ /\.idl$/) { push @idl_srcs, $incl; }
+        elsif ($incl =~ /\.idl$/) { push @public_idl_srcs, $incl; }
         else { die "unknown file $incl in include dir"; }
     }
-    replace_in_file( "include/Makefile.in", '^IDL_H_SRCS\s*=', '^INSTALLDIRS',
-                     "IDL_H_SRCS = \\\n\t",
-                     join( " \\\n\t", sort @idl_srcs ),
+    replace_in_file( "include/Makefile.in", '^PRIVATE_IDL_H_SRCS\s*=', '^INSTALLDIRS',
+                     "PRIVATE_IDL_H_SRCS = \\\n\t",
+                     join( " \\\n\t", sort @private_idl_srcs ),
+                     "\n\nPUBLIC_IDL_H_SRCS = \\\n\t",
+                     join( " \\\n\t", sort @public_idl_srcs ),
                      "\n\nIDL_TLB_SRCS = \\\n\t",
                      join( " \\\n\t", sort @tlb_srcs ),
-                     "\n\nSRCDIR_INCLUDES = \\\n\t\$(IDL_TLB_SRCS) \\\n\t\$(IDL_H_SRCS) \\\n\t",
+                     "\n\nSRCDIR_INCLUDES = \\\n\t\$(IDL_TLB_SRCS) \\\n\t\$(PUBLIC_IDL_H_SRCS) \\\n\t",
                      join( " \\\n\t", sort @h_srcs ),
                      "\n\nEXTRASUBDIRS = ",
                      join( " ", sort keys %subdirs ),
                      "\n\nINSTALLDIRS = \\\n" );
+    return map { s/(.*)\.idl$/include\/$1.h/; $_; } @public_idl_srcs, @private_idl_srcs;
 }
 
 
@@ -561,8 +569,6 @@ else
     @makefiles = map { s/^\.\/(.*)\.in/$1/; $_; } split(/\s/,`find . -name Makefile.in -print`);
 }
 
-update_includes();
-
 foreach my $file (sort values %makerules, @makefiles)
 {
     my %make = parse_makefile( $file );
@@ -570,6 +576,7 @@ foreach my $file (sort values %makerules, @makefiles)
 }
 
 update_makefiles( @makefiles );
+push @ignores, update_includes();
 push @ignores, update_ignores( @makefiles );
 push @ignores, update_dlls( sort grep /^dlls\//, @makefiles );
 update_gitignore( @ignores );
