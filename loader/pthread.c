@@ -48,8 +48,13 @@
 static int init_done;
 static int nb_threads = 1;
 
-#ifndef __i386__
+#if !defined(__i386__) && !defined(__x86_64__)
 static pthread_key_t teb_key;
+#endif
+
+#if defined(__x86_64__) && defined(__linux__)
+#include <asm/prctl.h>
+extern int arch_prctl(int func, void *ptr);
 #endif
 
 /***********************************************************************
@@ -141,6 +146,13 @@ static void init_current_teb( struct wine_pthread_thread_info *info )
     wine_ldt_set_limit( &fs_entry, info->teb_size - 1 );
     wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
     wine_ldt_init_fs( info->teb_sel, &fs_entry );
+#elif defined(__x86_64__)
+    /* On x86_64, it's in %gs */
+# ifdef __linux__
+    arch_prctl(ARCH_SET_GS, info->teb_base);
+# else
+#  error Please define setting %gs for your architecture
+# endif
 #else
     if (!init_done)  /* first thread */
         pthread_key_create( &teb_key, NULL );
@@ -173,6 +185,10 @@ static void *get_current_teb(void)
 #ifdef __i386__
     void *ret;
     __asm__( ".byte 0x64\n\tmovl 0x18,%0" : "=r" (ret) );
+    return ret;
+#elif defined(__x86_64__)
+    void *ret;
+    __asm__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (ret) );
     return ret;
 #else
     return pthread_getspecific( teb_key );
