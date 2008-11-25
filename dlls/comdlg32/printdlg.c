@@ -1125,11 +1125,11 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
 	return FALSE;
     }
     GetPrinterW(hprn, 2, NULL, 0, &needed);
-    PrintStructures->lpPrinterInfo = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*needed);
+    PrintStructures->lpPrinterInfo = HeapAlloc(GetProcessHeap(),0,needed);
     GetPrinterW(hprn, 2, (LPBYTE)PrintStructures->lpPrinterInfo, needed,
 		&needed);
     GetPrinterDriverW(hprn, NULL, 3, NULL, 0, &needed);
-    PrintStructures->lpDriverInfo = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*needed);
+    PrintStructures->lpDriverInfo = HeapAlloc(GetProcessHeap(),0,needed);
     if (!GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)PrintStructures->lpDriverInfo,
 	    needed, &needed)) {
 	ERR("GetPrinterDriverA failed for %s, fix your config!\n",debugstr_w(PrintStructures->lpPrinterInfo->pPrinterName));
@@ -2283,11 +2283,11 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 	}
 
 	GetPrinterW(hprn, 2, NULL, 0, &needed);
-	pbuf = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*needed);
+	pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
 	GetPrinterW(hprn, 2, (LPBYTE)pbuf, needed, &needed);
 
 	GetPrinterDriverW(hprn, NULL, 3, NULL, 0, &needed);
-	dbuf = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*needed);
+	dbuf = HeapAlloc(GetProcessHeap(),0,needed);
 	if (!GetPrinterDriverW(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
 	    ERR("GetPrinterDriverA failed, le %d, fix your config for printer %s!\n",
 	        GetLastError(),debugstr_w(pbuf->pPrinterName));
