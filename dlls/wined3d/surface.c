@@ -209,7 +209,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         LEAVE_GL();
 
         if (This->Flags & SFLAG_NONPOW2) {
-            LPBYTE src_data, dst_data;
+            const BYTE *src_data;
+            BYTE *dst_data;
             int y;
             /*
              * Some games (e.g. warhammer 40k) don't work properly with the odd pitches, preventing
@@ -345,7 +346,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
  * activating the right context and binding the correct texture. */
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
     BOOL enable_client_storage = FALSE;
-    BYTE *mem = NULL;
+    const BYTE *mem = NULL;
 
     if(This->heightscale != 1.0 && This->heightscale != 0.0) height *= This->heightscale;
 
@@ -856,7 +857,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
      * In case of P8 render targets, the index is stored in the alpha component so no conversion is needed.
      */
     if((This->resource.format == WINED3DFMT_P8) && !primary_render_target_is_p8(myDevice)) {
-        PALETTEENTRY *pal = NULL;
+        const PALETTEENTRY *pal = NULL;
         DWORD width = pitch / 3;
         int x, y, c;
 
@@ -871,9 +872,9 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         for(y = local_rect.top; y < local_rect.bottom; y++) {
             for(x = local_rect.left; x < local_rect.right; x++) {
                 /*                      start              lines            pixels      */
-                BYTE *blue =  mem + y * pitch + x * (sizeof(BYTE) * 3);
-                BYTE *green = blue  + 1;
-                BYTE *red =   green + 1;
+                const BYTE *blue = mem + y * pitch + x * (sizeof(BYTE) * 3);
+                const BYTE *green = blue  + 1;
+                const BYTE *red = green + 1;
 
                 for(c = 0; c < 256; c++) {
                     if(*red   == pal[c].peRed   &&
@@ -1463,7 +1464,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
         /* GetDC on palettized formats is unsupported in D3D9, and the method is missing in
             D3D8, so this should only be used for DX <=7 surfaces (with non-device palettes) */
         unsigned int n;
-        PALETTEENTRY *pal = NULL;
+        const PALETTEENTRY *pal = NULL;
 
         if(This->palette) {
             pal = This->palette->palents;
@@ -1740,10 +1741,11 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     return WINED3D_OK;
 }
 
-static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width,
+static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UINT width,
         UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *This)
 {
-    BYTE *source, *dest;
+    const BYTE *source;
+    BYTE *dest;
     TRACE("(%p)->(%p),(%d,%d,%d,%d,%p)\n", src, dst, pitch, height, outpitch, convert,This);
 
     switch (convert) {
@@ -1794,13 +1796,13 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
                      on the same surface and disables color keying in such a case
             */
             unsigned int x, y;
-            WORD *Source;
+            const WORD *Source;
             WORD *Dest;
 
             TRACE("Color keyed 565\n");
 
             for (y = 0; y < height; y++) {
-                Source = (WORD *) (src + y * pitch);
+                Source = (const WORD *)(src + y * pitch);
                 Dest = (WORD *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
@@ -1819,11 +1821,11 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         {
             /* Converting X1R5G5B5 format to R5G5B5A1 to emulate color-keying. */
             unsigned int x, y;
-            WORD *Source;
+            const WORD *Source;
             WORD *Dest;
             TRACE("Color keyed 5551\n");
             for (y = 0; y < height; y++) {
-                Source = (WORD *) (src + y * pitch);
+                Source = (const WORD *)(src + y * pitch);
                 Dest = (WORD *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
@@ -1873,7 +1875,7 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
                 source = src + pitch * y;
                 dest = dst + outpitch * y;
                 for (x = 0; x < width; x++) {
-                    DWORD color = 0xffffff & *(DWORD*)source;
+                    DWORD color = 0xffffff & *(const DWORD*)source;
                     DWORD dstcolor = color << 8;
                     if ((color < This->SrcBltCKey.dwColorSpaceLowValue) ||
                         (color > This->SrcBltCKey.dwColorSpaceHighValue)) {
@@ -1890,10 +1892,10 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_V8U8:
         {
             unsigned int x, y;
-            short *Source;
+            const short *Source;
             unsigned char *Dest;
             for(y = 0; y < height; y++) {
-                Source = (short *) (src + y * pitch);
+                Source = (const short *)(src + y * pitch);
                 Dest = dst + y * outpitch;
                 for (x = 0; x < width; x++ ) {
                     long color = (*Source++);
@@ -1909,10 +1911,10 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_V16U16:
         {
             unsigned int x, y;
-            DWORD *Source;
+            const DWORD *Source;
             unsigned short *Dest;
             for(y = 0; y < height; y++) {
-                Source = (DWORD *) (src + y * pitch);
+                Source = (const DWORD *)(src + y * pitch);
                 Dest = (unsigned short *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     DWORD color = (*Source++);
@@ -1928,10 +1930,10 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_Q8W8V8U8:
         {
             unsigned int x, y;
-            DWORD *Source;
+            const DWORD *Source;
             unsigned char *Dest;
             for(y = 0; y < height; y++) {
-                Source = (DWORD *) (src + y * pitch);
+                Source = (const DWORD *)(src + y * pitch);
                 Dest = dst + y * outpitch;
                 for (x = 0; x < width; x++ ) {
                     long color = (*Source++);
@@ -1948,7 +1950,7 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_L6V5U5:
         {
             unsigned int x, y;
-            WORD *Source;
+            const WORD *Source;
             unsigned char *Dest;
 
             if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
@@ -1957,7 +1959,7 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
                  * loaded
                  */
                 for(y = 0; y < height; y++) {
-                    Source = (WORD *) (src + y * pitch);
+                    Source = (const WORD *)(src + y * pitch);
                     Dest = dst + y * outpitch;
                     for (x = 0; x < width; x++ ) {
                         short color = (*Source++);
@@ -1982,7 +1984,7 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
             } else {
                 for(y = 0; y < height; y++) {
                     unsigned short *Dest_s = (unsigned short *) (dst + y * outpitch);
-                    Source = (WORD *) (src + y * pitch);
+                    Source = (const WORD *)(src + y * pitch);
                     for (x = 0; x < width; x++ ) {
                         short color = (*Source++);
                         unsigned char l = ((color >> 10) & 0xfc);
@@ -2002,7 +2004,7 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_X8L8V8U8:
         {
             unsigned int x, y;
-            DWORD *Source;
+            const DWORD *Source;
             unsigned char *Dest;
 
             if(GL_SUPPORT(NV_TEXTURE_SHADER)) {
@@ -2010,7 +2012,7 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
                  * without further modification after converting the surface.
                  */
                 for(y = 0; y < height; y++) {
-                    Source = (DWORD *) (src + y * pitch);
+                    Source = (const DWORD *)(src + y * pitch);
                     Dest = dst + y * outpitch;
                     for (x = 0; x < width; x++ ) {
                         long color = (*Source++);
@@ -2027,7 +2029,7 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
                  * standard fixed function pipeline anyway).
                  */
                 for(y = 0; y < height; y++) {
-                    Source = (DWORD *) (src + y * pitch);
+                    Source = (const DWORD *)(src + y * pitch);
                     Dest = dst + y * outpitch;
                     for (x = 0; x < width; x++ ) {
                         long color = (*Source++);
@@ -2044,7 +2046,7 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_A4L4:
         {
             unsigned int x, y;
-            unsigned char *Source;
+            const unsigned char *Source;
             unsigned char *Dest;
             for(y = 0; y < height; y++) {
                 Source = src + y * pitch;
@@ -2062,10 +2064,10 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_R32F:
         {
             unsigned int x, y;
-            float *Source;
+            const float *Source;
             float *Dest;
             for(y = 0; y < height; y++) {
-                Source = (float *) (src + y * pitch);
+                Source = (const float *)(src + y * pitch);
                 Dest = (float *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     float color = (*Source++);
@@ -2081,11 +2083,11 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_R16F:
         {
             unsigned int x, y;
-            WORD *Source;
+            const WORD *Source;
             WORD *Dest;
-            WORD one = 0x3c00;
+            const WORD one = 0x3c00;
             for(y = 0; y < height; y++) {
-                Source = (WORD *) (src + y * pitch);
+                Source = (const WORD *)(src + y * pitch);
                 Dest = (WORD *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     WORD color = (*Source++);
@@ -2101,11 +2103,11 @@ static HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT wid
         case CONVERT_G16R16:
         {
             unsigned int x, y;
-            WORD *Source;
+            const WORD *Source;
             WORD *Dest;
 
             for(y = 0; y < height; y++) {
-                Source = (WORD *) (src + y * pitch);
+                Source = (const WORD *)(src + y * pitch);
                 Dest = (WORD *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     WORD green = (*Source++);
@@ -2436,7 +2438,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, c
     UINT i, y;
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     char *allocatedMemory;
-    char *textureRow;
+    const char *textureRow;
     IWineD3DSwapChain *swapChain = NULL;
     int width, height;
     GLuint tmpTexture = 0;
@@ -2552,7 +2554,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, c
         textureRow = allocatedMemory;
     for (y = 0 ; y < height; y++) {
         for (i = 0; i < width;  i++) {
-            color = *((DWORD*)textureRow);
+            color = *((const DWORD*)textureRow);
             fputc((color >> 16) & 0xFF, f); /* B */
             fputc((color >>  8) & 0xFF, f); /* G */
             fputc((color >>  0) & 0xFF, f); /* R */
@@ -2822,7 +2824,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
 /* Does a direct frame buffer -> texture copy. Stretching is done
  * with single pixel copy calls
  */
-static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface, IWineD3DSwapChainImpl *swapchain, WINED3DRECT *srect, WINED3DRECT *drect, BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter) {
+static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
+        IWineD3DSwapChainImpl *swapchain, const WINED3DRECT *srect, const WINED3DRECT *drect,
+        BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter)
+{
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     float xrel, yrel;
     UINT row;
@@ -2906,7 +2911,10 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
 }
 
 /* Uses the hardware to stretch and flip the image */
-static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface, IWineD3DSwapChainImpl *swapchain, WINED3DRECT *srect, WINED3DRECT *drect, BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter) {
+static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface,
+        IWineD3DSwapChainImpl *swapchain, const WINED3DRECT *srect, const WINED3DRECT *drect,
+        BOOL upsidedown, WINED3DTEXTUREFILTERTYPE Filter)
+{
     GLuint src, backup = 0;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
