@@ -103,7 +103,7 @@ static BOOL StartLinkProcessor(LPCOLESTR szLink)
 
 /* interface functions */
 
-static HRESULT WINAPI Unknown_QueryInterface(InternetShortcut *This, REFIID riid, PVOID *ppvObject)
+static HRESULT Unknown_QueryInterface(InternetShortcut *This, REFIID riid, PVOID *ppvObject)
 {
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppvObject);
     *ppvObject = NULL;
@@ -134,13 +134,13 @@ static HRESULT WINAPI Unknown_QueryInterface(InternetShortcut *This, REFIID riid
     return S_OK;
 }
 
-static ULONG WINAPI Unknown_AddRef(InternetShortcut *This)
+static ULONG Unknown_AddRef(InternetShortcut *This)
 {
     TRACE("(%p)\n", This);
     return InterlockedIncrement(&This->refCount);
 }
 
-static ULONG WINAPI Unknown_Release(InternetShortcut *This)
+static ULONG Unknown_Release(InternetShortcut *This)
 {
     ULONG count;
     TRACE("(%p)\n", This);
