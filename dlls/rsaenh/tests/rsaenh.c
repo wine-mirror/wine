@@ -1046,13 +1046,13 @@ static void test_mac(void) {
     BOOL result;
     DWORD dwLen;
     BYTE abData[256], abEnc[264];
-    static const BYTE mac[8] = { 0x0d, 0x3e, 0x15, 0x6b, 0x85, 0x63, 0x5c, 0x11 };
+    static const BYTE mac_40[8] = { 0xb7, 0xa2, 0x46, 0xe9, 0x11, 0x31, 0xe0, 0xad};
     int i;
 
     for (i=0; i<sizeof(abData)/sizeof(BYTE); i++) abData[i] = (BYTE)i;
     for (i=0; i<sizeof(abData)/sizeof(BYTE); i++) abEnc[i] = (BYTE)i;
 
-    if (!derive_key(CALG_RC2, &hKey, 56)) return;
+    if (!derive_key(CALG_RC2, &hKey, 40)) return;
 
     dwLen = 256;
     result = CryptEncrypt(hKey, 0, TRUE, 0, abEnc, &dwLen, 264);
@@ -1069,7 +1069,7 @@ static void test_mac(void) {
     result = CryptGetHashParam(hHash, HP_HASHVAL, abData, &dwLen, 0);
     ok(result && dwLen == 8, "%08x, dwLen: %d\n", GetLastError(), dwLen);
 
-    ok(!memcmp(abData, mac, sizeof(mac)), "MAC failed!\n");
+    ok(!memcmp(abData, mac_40, sizeof(mac_40)), "MAC failed!\n");
     
     result = CryptDestroyHash(hHash);
     ok(result, "%08x\n", GetLastError());
