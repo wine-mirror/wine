@@ -394,7 +394,7 @@ static void tess_callback_end(void)
 /***********************************************************************
  *		wglUseFontOutlines_common
  */
-static BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
+static BOOL wglUseFontOutlines_common(HDC hdc,
                                       DWORD first,
                                       DWORD count,
                                       DWORD listBase,
@@ -560,7 +560,7 @@ error_in_list:
 
 #else /* SONAME_LIBGLU */
 
-static BOOL WINAPI wglUseFontOutlines_common(HDC hdc,
+static BOOL wglUseFontOutlines_common(HDC hdc,
                                       DWORD first,
                                       DWORD count,
                                       DWORD listBase,
