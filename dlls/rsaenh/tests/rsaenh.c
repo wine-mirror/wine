@@ -982,8 +982,11 @@ static void test_rc4(void)
             ok(result, "setting salt failed for size %d: %08x\n", i, GetLastError());
         }
         salt.cbData = 25;
+        SetLastError(0xdeadbeef);
         result = CryptSetKeyParam(hKey, KP_SALT_EX, (BYTE *)&salt, 0);
-        ok(!result, "%08x\n", GetLastError());
+        ok(!result ||
+           broken(result), /* Win9x, WinMe, NT4, W2K */
+           "%08x\n", GetLastError());
 
         result = CryptDestroyKey(hKey);
         ok(result, "%08x\n", GetLastError());
