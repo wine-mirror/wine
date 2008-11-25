@@ -71,6 +71,9 @@ DWORD service_create(LPCWSTR name, struct service_entry **entry)
         return ERROR_NOT_ENOUGH_SERVER_MEMORY;
     }
     (*entry)->control_pipe = INVALID_HANDLE_VALUE;
+    (*entry)->status.dwCurrentState = SERVICE_STOPPED;
+    (*entry)->status.dwWin32ExitCode = ERROR_SERVICE_NEVER_STARTED;
+    /* all other fields are zero */
     return ERROR_SUCCESS;
 }
 
@@ -442,10 +445,7 @@ static DWORD scmdatabase_load_services(struct scmdatabase *db)
         }
 
         entry->status.dwServiceType = entry->config.dwServiceType;
-        entry->status.dwCurrentState = SERVICE_STOPPED;
-        entry->status.dwWin32ExitCode = ERROR_SERVICE_NEVER_STARTED;
         entry->db = db;
-        /* all other fields are zero */
 
         list_add_tail(&db->services, &entry->entry);
     }

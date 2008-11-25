@@ -364,7 +364,7 @@ DWORD svcctl_CreateServiceW(
     err = service_create(lpServiceName, &entry);
     if (err != ERROR_SUCCESS)
         return err;
-    entry->config.dwServiceType = dwServiceType;
+    entry->config.dwServiceType = entry->status.dwServiceType = dwServiceType;
     entry->config.dwStartType = dwStartType;
     entry->config.dwErrorControl = dwErrorControl;
     entry->config.lpBinaryPathName = strdupW(lpBinaryPathName);
