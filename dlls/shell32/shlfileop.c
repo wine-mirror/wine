@@ -112,7 +112,7 @@ static void confirm_msg_move_button(HWND hDlg, INT iId, INT *xPos, INT yOffset, 
 /* Note: we paint the text manually and don't use the static control to make
  * sure the text has the same height as the one computed in WM_INITDIALOG
  */
-static INT_PTR CALLBACK ConfirmMsgBox_Paint(HWND hDlg)
+static INT_PTR ConfirmMsgBox_Paint(HWND hDlg)
 {
     PAINTSTRUCT ps;
     HFONT hOldFont;
@@ -132,7 +132,7 @@ static INT_PTR CALLBACK ConfirmMsgBox_Paint(HWND hDlg)
     return TRUE;
 }
 
-static INT_PTR CALLBACK ConfirmMsgBox_Init(HWND hDlg, LPARAM lParam)
+static INT_PTR ConfirmMsgBox_Init(HWND hDlg, LPARAM lParam)
 {
     struct confirm_msg_info *info = (struct confirm_msg_info *)lParam;
     INT xPos, yOffset;
