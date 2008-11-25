@@ -1036,7 +1036,7 @@ static inline ITypeInfoImpl *info_impl_from_ITypeComp( ITypeComp *iface )
 static const ITypeInfo2Vtbl tinfvt;
 static const ITypeCompVtbl  tcompvt;
 
-static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void);
+static ITypeInfo2 * ITypeInfo_Constructor(void);
 
 typedef struct tagTLBContext
 {
@@ -4805,7 +4805,7 @@ static const ITypeCompVtbl tlbtcvt =
 };
 
 /*================== ITypeInfo(2) Methods ===================================*/
-static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void)
+static ITypeInfo2 * ITypeInfo_Constructor(void)
 {
     ITypeInfoImpl * pTypeInfoImpl;
 
