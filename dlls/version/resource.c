@@ -169,7 +169,7 @@ static int read_xx_header( HFILE lzfd )
 }
 
 /***********************************************************************
- *           load_ne_resource         [internal]
+ *           find_ne_resource         [internal]
  */
 static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
                                 DWORD *resLen, DWORD *resOff )
@@ -268,7 +268,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
 }
 
 /***********************************************************************
- *           load_pe_resource         [internal]
+ *           find_pe_resource         [internal]
  */
 static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
                                 DWORD *resLen, DWORD *resOff )
