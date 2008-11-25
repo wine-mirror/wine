@@ -66,8 +66,9 @@ struct shader_arb_priv {
  * @target_type should be either GL_VERTEX_PROGRAM_ARB (for vertex shaders)
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
-static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_Info *gl_info, GLuint target_type,
-        unsigned int max_constants, float* constants, char *dirty_consts) {
+static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, const WineD3D_GL_Info *gl_info,
+        GLuint target_type, unsigned int max_constants, const float *constants, char *dirty_consts)
+{
     local_constant* lconst;
     DWORD i, j;
     unsigned int ret;
@@ -173,7 +174,7 @@ static void shader_arb_load_constants(
    
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device; 
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
+    const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
     unsigned char i;
 
     if (useVertexShader) {
@@ -205,7 +206,7 @@ static void shader_arb_load_constants(
         for(i = 0; i < psi->numbumpenvmatconsts; i++) {
             /* The state manager takes care that this function is always called if the bump env matrix changes
              */
-            float *data = (float *) &stateBlock->textureState[(int) psi->bumpenvmatconst[i].texunit][WINED3DTSS_BUMPENVMAT00];
+            const float *data = (const float *)&stateBlock->textureState[(int) psi->bumpenvmatconst[i].texunit][WINED3DTSS_BUMPENVMAT00];
             GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->bumpenvmatconst[i].const_num, data));
             deviceImpl->activeContext->pshader_const_dirty[psi->bumpenvmatconst[i].const_num] = 1;
 
@@ -215,7 +216,7 @@ static void shader_arb_load_constants(
                  * don't care about them. The pointers are valid for sure because the stateblock is bigger.
                  * (they're WINED3DTSS_TEXTURETRANSFORMFLAGS and WINED3DTSS_ADDRESSW, so most likely 0 or NaN
                  */
-                float *scale = (float *) &stateBlock->textureState[(int) psi->luminanceconst[i].texunit][WINED3DTSS_BUMPENVLSCALE];
+                const float *scale = (const float *)&stateBlock->textureState[(int) psi->luminanceconst[i].texunit][WINED3DTSS_BUMPENVLSCALE];
                 GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->luminanceconst[i].const_num, scale));
                 deviceImpl->activeContext->pshader_const_dirty[psi->luminanceconst[i].const_num] = 1;
             }
@@ -224,12 +225,9 @@ static void shader_arb_load_constants(
 }
 
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
-static void shader_generate_arb_declarations(
-    IWineD3DBaseShader *iface,
-    shader_reg_maps* reg_maps,
-    SHADER_BUFFER* buffer,
-    WineD3D_GL_Info* gl_info) {
-
+static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
+        SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info)
+{
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     DWORD i, cur;
@@ -237,7 +235,7 @@ static void shader_generate_arb_declarations(
     unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
             (pshader ? GL_LIMITS(pshader_constantsF) : GL_LIMITS(vshader_constantsF)));
     UINT extra_constants_needed = 0;
-    local_constant* lconst;
+    const local_constant *lconst;
 
     /* Temporary Output register */
     shader_addline(buffer, "TEMP TMP_OUT;\n");
@@ -599,7 +597,8 @@ static void shader_hw_sample(const SHADER_OPCODE_ARG *arg, DWORD sampler_idx, co
 
 static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, const char *writemask,
                                  const char *one, const char *two, WINED3DFORMAT fmt,
-                                 WineD3D_GL_Info *gl_info) {
+                                 const WineD3D_GL_Info *gl_info)
+{
     switch(fmt) {
         case WINED3DFMT_V8U8:
         case WINED3DFMT_V16U16:
@@ -744,10 +743,11 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, const c
     }
 }
 
-static void shader_arb_color_correction(SHADER_OPCODE_ARG* arg) {
+static void shader_arb_color_correction(const SHADER_OPCODE_ARG* arg)
+{
     IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) shader->baseShader.device;
-    WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
+    const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
     WINED3DFORMAT fmt;
     WINED3DFORMAT conversion_group;
     IWineD3DBaseTextureImpl *texture;
@@ -886,13 +886,9 @@ static void pshader_gen_input_modifier_line (
         sprintf(outregstr, "T%c%s", 'A' + tmpreg, swzstr);
 }
 
-static inline void pshader_gen_output_modifier_line(
-    SHADER_BUFFER* buffer,
-    int saturate,
-    char *write_mask,
-    int shift,
-    char *regstr) {
-
+static inline void pshader_gen_output_modifier_line(SHADER_BUFFER *buffer, int saturate, const char *write_mask,
+        int shift, const char *regstr)
+{
     /* Generate a line that does the output modifier computation */
     shader_addline(buffer, "MUL%s %s%s, %s, %s;\n", saturate ? "_SAT" : "",
         regstr, write_mask, regstr, shift_tab[shift]);
@@ -1752,7 +1748,8 @@ static void shader_hw_sincos(const SHADER_OPCODE_ARG *arg)
 
 }
 
-static GLuint create_arb_blt_vertex_program(WineD3D_GL_Info *gl_info) {
+static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
+{
     GLuint program_id = 0;
     const char *blt_vprogram =
         "!!ARBvp1.0\n"
@@ -1776,7 +1773,7 @@ static GLuint create_arb_blt_vertex_program(WineD3D_GL_Info *gl_info) {
     return program_id;
 }
 
-static GLuint create_arb_blt_fragment_program(WineD3D_GL_Info *gl_info, enum tex_types tex_type)
+static GLuint create_arb_blt_fragment_program(const WineD3D_GL_Info *gl_info, enum tex_types tex_type)
 {
     GLuint program_id = 0;
     const char *blt_fprograms[tex_type_count] =
@@ -1828,7 +1825,7 @@ static GLuint create_arb_blt_fragment_program(WineD3D_GL_Info *gl_info, enum tex
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
-    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
     if (useVS) {
         TRACE("Using vertex shader\n");
@@ -1882,7 +1879,7 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types te
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
     GLuint *blt_fprogram = &priv->depth_blt_fprogram_id[tex_type];
-    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
     if (!priv->depth_blt_vprogram_id) priv->depth_blt_vprogram_id = create_arb_blt_vertex_program(gl_info);
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->depth_blt_vprogram_id));
@@ -1896,7 +1893,7 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types te
 static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
-    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
     if (priv->current_vprogram_id) {
         GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
@@ -1927,14 +1924,14 @@ static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
 
 static void shader_arb_cleanup(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) glDisable(GL_VERTEX_PROGRAM_ARB);
     if (GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
-    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *) baseShader->baseShader.device)->adapter->gl_info;
+    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)baseShader->baseShader.device)->adapter->gl_info;
     char pshader = shader_is_pshader_version(baseShader->baseShader.hex_version);
 
     if(pshader) {
@@ -1970,7 +1967,7 @@ static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
 
 static void shader_arb_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
     struct shader_arb_priv *priv = (struct shader_arb_priv *) This->shader_priv;
     int i;
 
@@ -2014,11 +2011,11 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
 
 static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer) {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
-    shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
+    const shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     const char *fragcolor;
-    WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
-    local_constant* lconst;
+    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+    const local_constant *lconst;
     GLuint retval;
 
     /*  Create the hw ARB shader */
@@ -2088,7 +2085,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
     /* Load immediate constants */
     if(!This->baseShader.load_local_constsF) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
-            float *value = (float *) lconst->value;
+            const float *value = (const float *)lconst->value;
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, lconst->idx, value));
             checkGLcall("glProgramLocalParameter4fvARB");
         }
@@ -2099,11 +2096,11 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
 
 static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
+    const shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
-    WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
-    local_constant* lconst;
+    const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
+    const local_constant *lconst;
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
@@ -2196,13 +2193,14 @@ static void shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFF
     /* Load immediate constants */
     if(!This->baseShader.load_local_constsF) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
-            float *value = (float *) lconst->value;
+            const float *value = (const float *)lconst->value;
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, lconst->idx, value));
         }
     }
 }
 
-static void shader_arb_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {
+static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *pCaps)
+{
     /* We don't have an ARB fixed function pipeline yet, so let the none backend set its caps,
      * then overwrite the shader specific ones
      */
@@ -2387,7 +2385,7 @@ static HRESULT arbfp_alloc(IWineD3DDevice *iface) {
 }
 
 static void arbfp_free_ffpshader(void *value, void *gli) {
-    WineD3D_GL_Info *gl_info = gli;
+    const WineD3D_GL_Info *gl_info = gli;
     struct arbfp_ffp_desc *entry_arb = value;
 
     ENTER_GL();
@@ -2409,7 +2407,8 @@ static void arbfp_free(IWineD3DDevice *iface) {
     }
 }
 
-static void arbfp_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct fragment_caps *caps) {
+static void arbfp_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *caps)
+{
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |
                            WINED3DTEXOPCAPS_SELECTARG1                  |
                            WINED3DTEXOPCAPS_SELECTARG2                  |
@@ -2772,7 +2771,8 @@ static void gen_ffp_instr(SHADER_BUFFER *buffer, unsigned int stage, BOOL color,
 }
 
 /* The stateblock is passed for GLINFO_LOCATION */
-static GLuint gen_arbfp_ffp_shader(struct ffp_frag_settings *settings, IWineD3DStateBlockImpl *stateblock) {
+static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWineD3DStateBlockImpl *stateblock)
+{
     unsigned int stage;
     SHADER_BUFFER buffer;
     BOOL tex_read[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};

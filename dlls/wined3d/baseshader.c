@@ -782,12 +782,9 @@ void shader_dump_param(
     Use the shader_header_fct & shader_footer_fct to add strings
     that are specific to pixel or vertex functions
     NOTE: A description of how to parse tokens can be found on msdn */
-void shader_generate_main(
-    IWineD3DBaseShader *iface,
-    SHADER_BUFFER* buffer,
-    shader_reg_maps* reg_maps,
-    CONST DWORD* pFunction) {
-
+void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
+        const shader_reg_maps* reg_maps, CONST DWORD* pFunction)
+{
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device; /* To access shader backend callbacks */
     const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
@@ -1096,7 +1093,7 @@ static void shader_none_select_depth_blt(IWineD3DDevice *iface, enum tex_types t
 static void shader_none_deselect_depth_blt(IWineD3DDevice *iface) {}
 static void shader_none_load_constants(IWineD3DDevice *iface, char usePS, char useVS) {}
 static void shader_none_cleanup(IWineD3DDevice *iface) {}
-static void shader_none_color_correction(SHADER_OPCODE_ARG* arg) {}
+static void shader_none_color_correction(const SHADER_OPCODE_ARG *arg) {}
 static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 static HRESULT shader_none_alloc(IWineD3DDevice *iface) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDevice *iface) {}
@@ -1110,7 +1107,8 @@ static void shader_none_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
 }
 
 #define GLINFO_LOCATION      (*gl_info)
-static void shader_none_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {
+static void shader_none_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *pCaps)
+{
     /* Set the shader caps to 0 for the none shader backend */
     pCaps->VertexShaderVersion  = 0;
     pCaps->PixelShaderVersion    = 0;

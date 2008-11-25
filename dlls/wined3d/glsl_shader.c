@@ -1186,7 +1186,8 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, 
     }
 }
 
-static void shader_glsl_color_correction(SHADER_OPCODE_ARG* arg) {
+static void shader_glsl_color_correction(const SHADER_OPCODE_ARG *arg)
+{
     IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) shader->baseShader.device;
     WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
@@ -3805,7 +3806,8 @@ static void shader_glsl_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUF
     This->prgId = shader_obj;
 }
 
-static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *pCaps) {
+static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *pCaps)
+{
     /* Nvidia Geforce6/7 or Ati R4xx/R5xx cards with GLSL support, support VS 3.0 but older Nvidia/Ati
      * models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support using
      * vs_nv_version which is based on NV_vertex_program.

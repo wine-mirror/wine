@@ -345,14 +345,14 @@ typedef struct {
     void (*shader_deselect_depth_blt)(IWineD3DDevice *iface);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
     void (*shader_cleanup)(IWineD3DDevice *iface);
-    void (*shader_color_correction)(struct SHADER_OPCODE_ARG *arg);
+    void (*shader_color_correction)(const struct SHADER_OPCODE_ARG *arg);
     void (*shader_destroy)(IWineD3DBaseShader *iface);
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
     GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer);
     void (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer);
-    void (*shader_get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct shader_caps *caps);
+    void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     BOOL (*shader_conv_supported)(WINED3DFORMAT conv);
 } shader_backend_t;
 
@@ -642,7 +642,7 @@ struct fragment_caps {
 
 struct fragment_pipeline {
     void (*enable_extension)(IWineD3DDevice *iface, BOOL enable);
-    void (*get_caps)(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct fragment_caps *caps);
+    void (*get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *caps);
     HRESULT (*alloc_private)(IWineD3DDevice *iface);
     void (*free_private)(IWineD3DDevice *iface);
     BOOL (*conv_supported)(WINED3DFORMAT conv);
@@ -2066,7 +2066,7 @@ typedef struct SHADER_OPCODE {
 
 typedef struct SHADER_OPCODE_ARG {
     IWineD3DBaseShader* shader;
-    shader_reg_maps* reg_maps;
+    const shader_reg_maps *reg_maps;
     CONST SHADER_OPCODE* opcode;
     DWORD opcode_token;
     DWORD dst;
@@ -2194,11 +2194,8 @@ extern HRESULT shader_get_registers_used(
     CONST DWORD* pToken,
     IWineD3DStateBlockImpl *stateBlock);
 
-extern void shader_generate_main(
-    IWineD3DBaseShader *iface,
-    SHADER_BUFFER* buffer,
-    shader_reg_maps* reg_maps,
-    CONST DWORD* pFunction);
+extern void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
+        const shader_reg_maps *reg_maps, const DWORD *pFunction);
 
 extern void shader_dump_ins_modifiers(
     const DWORD output);

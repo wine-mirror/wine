@@ -5437,7 +5437,8 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
 #define GLINFO_LOCATION (*gl_info)
 static void ffp_enable(IWineD3DDevice *iface, BOOL enable) { }
 
-static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct fragment_caps *pCaps) {
+static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *pCaps)
+{
     pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD         |
                             WINED3DTEXOPCAPS_ADDSIGNED   |
                             WINED3DTEXOPCAPS_ADDSIGNED2X |

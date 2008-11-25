@@ -1019,7 +1019,8 @@ static void atifs_enable(IWineD3DDevice *iface, BOOL enable) {
     }
 }
 
-static void atifs_get_caps(WINED3DDEVTYPE devtype, WineD3D_GL_Info *gl_info, struct fragment_caps *caps) {
+static void atifs_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *caps)
+{
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |
                            WINED3DTEXOPCAPS_SELECTARG1                  |
                            WINED3DTEXOPCAPS_SELECTARG2                  |
