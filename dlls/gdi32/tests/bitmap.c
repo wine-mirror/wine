@@ -2212,11 +2212,11 @@ static void test_clipping(void)
 
     bmpDst = CreateDIBSection( hdcDst, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok(bmpDst != NULL, "Couldn't create destination bitmap\n");
-    oldDst = (HBITMAP)SelectObject( hdcDst, bmpDst );
+    oldDst = SelectObject( hdcDst, bmpDst );
 
     bmpSrc = CreateDIBSection( hdcSrc, &bmpinfo, DIB_RGB_COLORS, &bits, NULL, 0 );
     ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
-    oldSrc = (HBITMAP)SelectObject( hdcSrc, bmpSrc );
+    oldSrc = SelectObject( hdcSrc, bmpSrc );
 
     result = BitBlt( hdcDst, 0, 0, 100, 100, hdcSrc, 100, 100, SRCCOPY );
     ok(result, "BitBlt failed\n");

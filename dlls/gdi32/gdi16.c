@@ -752,7 +752,7 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 escape, INT16 in_count, SEGPTR in_data, 
     case DRAWPATTERNRECT:
     {
         DRAWPATRECT pr;
-        DRAWPATRECT16 *pr16 = (DRAWPATRECT16*)MapSL(in_data);
+        DRAWPATRECT16 *pr16 = MapSL(in_data);
 
         pr.ptPosition.x = pr16->ptPosition.x;
         pr.ptPosition.y = pr16->ptPosition.y;
@@ -1770,9 +1770,9 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr, 
     HANDLETABLE *ht32 = HeapAlloc( GetProcessHeap(), 0, handles * sizeof(*ht32) );
     unsigned int i;
 
-    for (i = 0; i < handles; i++) ht32->objectHandle[i] = (HGDIOBJ)(ULONG_PTR)ht->objectHandle[i];
+    for (i = 0; i < handles; i++) ht32->objectHandle[i] = HGDIOBJ_32(ht->objectHandle[i]);
     PlayMetaFileRecord( HDC_32(hdc), ht32, mr, handles );
-    for (i = 0; i < handles; i++) ht->objectHandle[i] = LOWORD(ht32->objectHandle[i]);
+    for (i = 0; i < handles; i++) ht->objectHandle[i] = HGDIOBJ_16(ht32->objectHandle[i]);
     HeapFree( GetProcessHeap(), 0, ht32 );
 }
 

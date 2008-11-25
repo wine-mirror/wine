@@ -73,7 +73,7 @@ static HGLOBAL16 dib_copy(const BITMAPINFO *info, UINT coloruse)
     {
         return 0;
     }
-    newInfo = (BITMAPINFO *) GlobalLock16( hmem );
+    newInfo = GlobalLock16( hmem );
     memcpy( newInfo, info, size );
     GlobalUnlock16( hmem );
     return hmem;
@@ -134,7 +134,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
             HGLOBAL h = (HGLOBAL)ptr->logbrush.lbHatch;
 
             ptr->logbrush.lbStyle = BS_DIBPATTERN;
-            if (!(bmi = (BITMAPINFO *)GlobalLock( h ))) goto error;
+            if (!(bmi = GlobalLock( h ))) goto error;
             ptr->logbrush.lbHatch = dib_copy( bmi, ptr->logbrush.lbColor);
             GlobalUnlock( h );
             if (!ptr->logbrush.lbHatch) goto error;
