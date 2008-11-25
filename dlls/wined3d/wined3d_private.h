@@ -2127,7 +2127,7 @@ extern BOOL vshader_input_is_color(
 extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
 
 /* GLSL helper functions */
-extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);
+extern void shader_glsl_add_instruction_modifiers(const SHADER_OPCODE_ARG *arg);
 
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
