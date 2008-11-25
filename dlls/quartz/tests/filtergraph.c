@@ -772,7 +772,7 @@ static HRESULT WINAPI TestFilter_OutputPin_ReceiveConnection(IPin * iface, IPin 
 }
 
 /* Private helper function */
-static HRESULT WINAPI TestFilter_OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+static HRESULT TestFilter_OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     ITestPinImpl *This = (ITestPinImpl *)iface;
     HRESULT hr;

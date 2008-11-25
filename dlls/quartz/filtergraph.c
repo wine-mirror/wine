@@ -207,10 +207,10 @@ typedef struct _IFilterGraphImpl {
     LONG recursioncount;
 } IFilterGraphImpl;
 
-static HRESULT WINAPI Filtergraph_QueryInterface(IFilterGraphImpl *This,
-                                                 REFIID riid, LPVOID * ppv);
-static ULONG WINAPI Filtergraph_AddRef(IFilterGraphImpl *This);
-static ULONG WINAPI Filtergraph_Release(IFilterGraphImpl *This);
+static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
+                                          REFIID riid, LPVOID * ppv);
+static ULONG Filtergraph_AddRef(IFilterGraphImpl *This);
+static ULONG Filtergraph_Release(IFilterGraphImpl *This);
 
 static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown * iface,
 					  REFIID riid,
@@ -585,7 +585,7 @@ static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
 /* Don't allow a circular connection to form, return VFW_E_CIRCULAR_GRAPH if this would be the case.
  * A circular connection will be formed if from the filter of the output pin, the input pin can be reached
  */
-static HRESULT WINAPI CheckCircularConnection(IFilterGraphImpl *This, IPin *out, IPin *in)
+static HRESULT CheckCircularConnection(IFilterGraphImpl *This, IPin *out, IPin *in)
 {
 #if 1
     HRESULT hr;
@@ -1105,7 +1105,7 @@ out:
     return SUCCEEDED(hr) ? S_OK : hr;
 }
 
-static HRESULT WINAPI FilterGraph2_RenderRecurse(IFilterGraphImpl *This, IPin *ppinOut)
+static HRESULT FilterGraph2_RenderRecurse(IFilterGraphImpl *This, IPin *ppinOut)
 {
     /* This pin has been connected now, try to call render on all pins that aren't connected */
     IPin *to = NULL;
@@ -5356,9 +5356,9 @@ static const IUnknownVtbl IInner_VTable =
     FilterGraphInner_Release
 };
 
-static HRESULT WINAPI Filtergraph_QueryInterface(IFilterGraphImpl *This,
-                                                 REFIID riid,
-                                                 LPVOID * ppv) {
+static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
+                                          REFIID riid,
+                                          LPVOID * ppv) {
     if (This->bAggregatable)
         This->bUnkOuterValid = TRUE;
 
@@ -5385,13 +5385,13 @@ static HRESULT WINAPI Filtergraph_QueryInterface(IFilterGraphImpl *This,
     return IUnknown_QueryInterface((IUnknown *)&(This->IInner_vtbl), riid, ppv);
 }
 
-static ULONG WINAPI Filtergraph_AddRef(IFilterGraphImpl *This) {
+static ULONG Filtergraph_AddRef(IFilterGraphImpl *This) {
     if (This->pUnkOuter && This->bUnkOuterValid)
         return IUnknown_AddRef(This->pUnkOuter);
     return IUnknown_AddRef((IUnknown *)&(This->IInner_vtbl));
 }
 
-static ULONG WINAPI Filtergraph_Release(IFilterGraphImpl *This) {
+static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
     if (This->pUnkOuter && This->bUnkOuterValid)
         return IUnknown_Release(This->pUnkOuter);
     return IUnknown_Release((IUnknown *)&(This->IInner_vtbl));
