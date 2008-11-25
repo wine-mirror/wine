@@ -62,6 +62,8 @@ extern "C" {
 #  else
 #   error You need to define __stdcall for your compiler
 #  endif
+# elif defined(__x86_64__) && defined (__GNUC__)
+#  define __stdcall __attribute__((ms_abi))
 # else  /* __i386__ */
 #  define __stdcall
 # endif  /* __i386__ */
@@ -74,6 +76,8 @@ extern "C" {
 #  else
 #   define __cdecl __attribute__((__cdecl__))
 #  endif
+# elif defined(__x86_64__) && defined (__GNUC__)
+#  define __cdecl __attribute__((ms_abi))
 # elif !defined(_MSC_VER)
 #  define __cdecl
 # endif

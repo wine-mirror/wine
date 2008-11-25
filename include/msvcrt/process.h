@@ -41,9 +41,11 @@ typedef unsigned short wchar_t;
 #  else
 #   error You need to define __stdcall for your compiler
 #  endif
-# else  /* __i386__ */
+# elif defined(__x86_64__) && defined (__GNUC__)
+#  define __stdcall __attribute__((ms_abi))
+# else
 #  define __stdcall
-# endif  /* __i386__ */
+# endif
 #endif /* __stdcall */
 
 #ifdef __cplusplus
