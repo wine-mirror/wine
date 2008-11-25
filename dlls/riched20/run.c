@@ -813,7 +813,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W 
       undo->nStart = tmp.pRun->member.run.nCharOfs+para->member.para.nCharOfs;
       undo->nLen = tmp.pRun->member.run.strText->nLen;
       undo->di.member.ustyle = tmp.pRun->member.run.style;
-      /* we'd have to addref undo..ustyle and release tmp...style
+      /* we'd have to addref undo...ustyle and release tmp...style
          but they'd cancel each other out so we can do nothing instead */
     }
     else

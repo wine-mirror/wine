@@ -39,7 +39,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
 
-/* Messages...used by FormatMessage (KERNEL32.something)
+/* Messages used by FormatMessage
  *
  * They can be specified either directly or using a message ID and
  * loading them from the resource.

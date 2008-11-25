@@ -1121,7 +1121,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCWSTR lpCmd,
 		    }
 		    break;
 		case MCI_RECT:
-		    /* store rect in data (offset...offset+3) */
+		    /* store rect in data (offset..offset+3) */
 		    *dwFlags |= flg;
 		    if (!MCI_GetDWord(&(data[offset+0]), &args) ||
 			!MCI_GetDWord(&(data[offset+1]), &args) ||

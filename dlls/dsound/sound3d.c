@@ -106,7 +106,7 @@ static inline D3DVALUE RadToDeg (D3DVALUE angle)
 static inline D3DVALUE AngleBetweenVectorsRad (const D3DVECTOR *a, const D3DVECTOR *b)
 {
 	D3DVALUE la, lb, product, angle, cos;
-	/* definition of scalar product: a*b = |a|*|b|*cos...therefore: */
+	/* definition of scalar product: a*b = |a|*|b|*cos... therefore: */
 	product = ScalarProduct (a,b);
 	la = VectorMagnitude (a);
 	lb = VectorMagnitude (b);

@@ -885,8 +885,8 @@ static LRESULT CALLBACK EXPORT mainWindowDispatcher(
 	else switch(uMsg) {
 	case WM_CREATE:
 			/*
-			 * this is always the first message...at least as far as
-			 * we are concerned.
+			 * this is always the first message... at least as far
+			 * as we are concerned.
 			 */
 		mwi_InitAll(hWnd);
 		break;

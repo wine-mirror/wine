@@ -69,7 +69,7 @@
  * (hdr)  IMAGE_SECTION_HEADER - list of COFF sections copied verbatim from .EXE;
  *        although this directory contains file offsets, these offsets are meaningless
  *        in the context of the .DBG file, because only the section headers are copied
- *        to the .DBG file...not the binary data it points to.
+ *        to the .DBG file... not the binary data it points to.
  * (hdr)  IMAGE_DEBUG_DIRECTORY - list of different formats of debug info contained in file
  *        (see IMAGE_DEBUG_TYPE_* descriptions below); tells where each section starts
  * (hdr)  OMFSignature (CV) - Contains "NBxx" signature, plus file offset telling how far

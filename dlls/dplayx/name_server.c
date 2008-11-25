@@ -169,7 +169,7 @@ LPVOID NS_GetNSAddr( LPVOID lpNSInfo )
   /* Ok. Cheat and don't search for the correct stuff just take the first.
    * FIXME: In the future how are we to know what is _THE_ enum we used?
    *        This is going to have to go into dplay somehow. Perhaps it
-   *        comes back with app server id for the join command! Oh...that
+   *        comes back with app server id for the join command! Oh... that
    *        must be it. That would make this method obsolete once that's
    *        in place.
    */
