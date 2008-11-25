@@ -310,7 +310,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_TABLE_SIZE
 };
 
-typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
+typedef void (*SHADER_HANDLER)(const struct SHADER_OPCODE_ARG *);
 
 struct shader_caps {
     DWORD               VertexShaderVersion;
