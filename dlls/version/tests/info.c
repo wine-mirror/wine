@@ -400,8 +400,11 @@ static void test_32bit_win(void)
 
     if (is_unicode_enabled)
     { 
-        retW = VerQueryValueW( pVersionInfoW, NULL, (LPVOID *)&pBufW, &uiLengthW );
-        ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
+        if(0)
+        {   /* This causes Vista and w2k8 to crash */
+            retW = VerQueryValueW( pVersionInfoW, NULL, (LPVOID *)&pBufW, &uiLengthW );
+            ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
+        }
 
         retW = VerQueryValueW( pVersionInfoW, emptyW, (LPVOID *)&pBufW, &uiLengthW );
         ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
