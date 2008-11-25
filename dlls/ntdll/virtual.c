@@ -1038,13 +1038,18 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
     /* check the architecture */
 
+#ifdef __x86_64__
+    if (nt->FileHeader.Machine != IMAGE_FILE_MACHINE_AMD64)
+#else
     if (nt->FileHeader.Machine != IMAGE_FILE_MACHINE_I386)
+#endif
     {
         MESSAGE("Trying to load PE image for unsupported architecture (");
         switch (nt->FileHeader.Machine)
         {
         case IMAGE_FILE_MACHINE_UNKNOWN: MESSAGE("Unknown"); break;
         case IMAGE_FILE_MACHINE_I860:    MESSAGE("I860"); break;
+        case IMAGE_FILE_MACHINE_I386:    MESSAGE("I386"); break;
         case IMAGE_FILE_MACHINE_R3000:   MESSAGE("R3000"); break;
         case IMAGE_FILE_MACHINE_R4000:   MESSAGE("R4000"); break;
         case IMAGE_FILE_MACHINE_R10000:  MESSAGE("R10000"); break;
