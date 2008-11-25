@@ -1080,8 +1080,10 @@ static void test_mac(void) {
     /* Provoke errors */
     if (!derive_key(CALG_RC4, &hKey, 56)) return;
 
+    SetLastError(0xdeadbeef);
     result = CryptCreateHash(hProv, CALG_MAC, hKey, 0, &hHash);
-    ok(!result && (GetLastError() == NTE_BAD_KEY || GetLastError() == NTE_FAIL),
+    ok((!result && GetLastError() == NTE_BAD_KEY) ||
+            broken(result), /* Win9x, WinMe, NT4, W2K */
             "%08x\n", GetLastError());
 
     result = CryptDestroyKey(hKey);
