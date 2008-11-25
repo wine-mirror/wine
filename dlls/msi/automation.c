@@ -618,7 +618,7 @@ static ULONG WINAPI ListEnumerator_Release(IEnumVARIANT* iface)
 static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
 {
     ListEnumerator *This = (ListEnumerator *)iface;
-    ListData *data = (ListData *)private_data(This->pObj);
+    ListData *data = private_data(This->pObj);
     ULONG idx, local;
 
     TRACE("(%p,%uld,%p,%p)\n", iface, celt, rgVar, pCeltFetched);
@@ -645,7 +645,7 @@ static HRESULT WINAPI ListEnumerator_Next(IEnumVARIANT* iface, ULONG celt, VARIA
 static HRESULT WINAPI ListEnumerator_Skip(IEnumVARIANT* iface, ULONG celt)
 {
     ListEnumerator *This = (ListEnumerator *)iface;
-    ListData *data = (ListData *)private_data(This->pObj);
+    ListData *data = private_data(This->pObj);
 
     TRACE("(%p,%uld)\n", iface, celt);
 
@@ -988,7 +988,7 @@ static HRESULT WINAPI ListImpl_Invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
-    ListData *data = (ListData *)private_data(This);
+    ListData *data = private_data(This);
     HRESULT hr;
     VARIANTARG varg0;
     IUnknown *pUnk = NULL;
@@ -1868,7 +1868,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     V_DISPATCH(pVarResult) = pDispatch;
 
                     /* Save product strings */
-                    ldata = (ListData *)private_data((AutomationObject *)pDispatch);
+                    ldata = private_data((AutomationObject *)pDispatch);
                     if (!(ldata->pVars = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(VARIANT)*idx)))
                         ERR("Out of memory\n");
                     else
@@ -1914,7 +1914,7 @@ static HRESULT WINAPI InstallerImpl_Invoke(
                     V_DISPATCH(pVarResult) = pDispatch;
 
                     /* Save product strings */
-                    ldata = (ListData *)private_data((AutomationObject *)pDispatch);
+                    ldata = private_data((AutomationObject *)pDispatch);
                     if (!(ldata->pVars = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(VARIANT)*idx)))
                         ERR("Out of memory\n");
                     else
