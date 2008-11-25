@@ -1399,9 +1399,9 @@ void virtual_clear_thread_stack(void)
 
 
 /***********************************************************************
- *           VIRTUAL_HandleFault
+ *           virtual_handle_fault
  */
-NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
+NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
 {
     FILE_VIEW *view;
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;

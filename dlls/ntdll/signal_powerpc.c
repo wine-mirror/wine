@@ -321,7 +321,6 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr )
 {
     EXCEPTION_RECORD rec;
-    DWORD page_fault_code = EXCEPTION_ACCESS_VIOLATION;
 
     rec.ExceptionRecord  = NULL;
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
@@ -336,9 +335,8 @@ static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr 
 		rec.NumberParameters = 2;
 		rec.ExceptionInformation[0] = 0; /* FIXME ? */
 		rec.ExceptionInformation[1] = (ULONG_PTR)addr;
-		if (!(page_fault_code=VIRTUAL_HandleFault(addr)))
+		if (!(rec.ExceptionCode = virtual_handle_fault(addr, rec.ExceptionInformation[0])))
 			return;
-		rec.ExceptionCode = page_fault_code;
 		break;
 	default:FIXME("Unhandled SIGSEGV/%x\n",code);
 		break;
@@ -358,9 +356,8 @@ static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr 
 		rec.NumberParameters = 2;
 		rec.ExceptionInformation[0] = 0; /* FIXME ? */
 		rec.ExceptionInformation[1] = (ULONG_PTR)addr;
-		if (!(page_fault_code=VIRTUAL_HandleFault(addr)))
+		if (!(rec.ExceptionCode = virtual_handle_fault(addr, rec.ExceptionInformation[0])))
 			return;
-		rec.ExceptionCode = page_fault_code;
 		break;
 #endif
 	default:FIXME("Unhandled SIGBUS/%x\n",code);

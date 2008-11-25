@@ -180,12 +180,13 @@ static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     EXCEPTION_RECORD rec;
     CONTEXT context;
 
+    rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+
     /* we want the page-fault case to be fast */
     if ( info->si_code == SEGV_ACCERR )
-        if (VIRTUAL_HandleFault( (LPVOID)info->si_addr )) return;
+        if (!(rec.ExceptionCode = virtual_handle_fault( info->si_addr, 0 ))) return;
 
     save_context( &context, ucontext );
-    rec.ExceptionCode    = EXCEPTION_ACCESS_VIOLATION;
     rec.ExceptionRecord  = NULL;
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     rec.ExceptionAddress = (LPVOID)context.pc;

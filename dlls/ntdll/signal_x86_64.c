@@ -263,6 +263,8 @@ static HANDLER_DEF(segv_handler)
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = (ERROR_sig(HANDLER_CONTEXT) & 2) != 0;
         rec.ExceptionInformation[1] = (ULONG_PTR)FAULT_ADDRESS;
+        if (!(rec.ExceptionCode = virtual_handle_fault( FAULT_ADDRESS, rec.ExceptionInformation[0] )))
+            goto done;
 #endif
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
@@ -282,6 +284,7 @@ static HANDLER_DEF(segv_handler)
     }
 
     __regs_RtlRaiseException( &rec, &context );
+done:
     restore_context( &context, HANDLER_CONTEXT );
 }
 

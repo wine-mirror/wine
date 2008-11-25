@@ -1209,7 +1209,9 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         {
             if (rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT && check_atl_thunk( rec, context ))
                 goto done;
-            rec->ExceptionCode = VIRTUAL_HandleFault( (void *)rec->ExceptionInformation[1] );
+            if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
+                                                             rec->ExceptionInformation[0] )))
+                goto done;
         }
         break;
     case EXCEPTION_DATATYPE_MISALIGNMENT:

@@ -141,7 +141,7 @@ extern SIZE_T virtual_free_system_view( PVOID *addr_ptr );
 extern NTSTATUS virtual_alloc_thread_stack( void *base, SIZE_T stack_size );
 extern void virtual_clear_thread_stack(void);
 extern BOOL virtual_handle_stack_fault( void *addr );
-extern NTSTATUS VIRTUAL_HandleFault(LPCVOID addr);
+extern NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err );
 extern void VIRTUAL_SetForceExec( BOOL enable );
 extern void VIRTUAL_UseLargeAddressSpace(void);
 extern struct _KUSER_SHARED_DATA *user_shared_data;
