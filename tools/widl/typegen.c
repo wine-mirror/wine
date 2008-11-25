@@ -1864,8 +1864,9 @@ static size_t write_struct_tfs(FILE *file, type_t *type,
            nothing is written to file yet.  On the actual writing pass,
            this will have been updated.  */
         unsigned int absoff = type->ptrdesc ? type->ptrdesc : *tfsoff;
-        short reloff = absoff - *tfsoff;
-        print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
+        int reloff = absoff - *tfsoff;
+        assert( reloff >= 0 );
+        print_file(file, 2, "NdrFcShort(0x%x),\t/* Offset= %d (%u) */\n",
                    reloff, reloff, absoff);
         *tfsoff += 2;
     }
@@ -2253,6 +2254,8 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
         /* basic types don't need a type format string */
         if (is_base_type(type->type))
             return 0;
+
+        if (processed(type)) return type->typestring_offset;
 
         switch (type->type)
         {
