@@ -955,6 +955,7 @@ DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode, LPARAM keyData)
 
     if (vkCode >= '0' && vkCode <= '9') {
         int num = vkCode-'0';
+        int newDays;
 
         /* this is a somewhat simplified version of what Windows does */
         SYSTEMTIME *date = &infoPtr->date;
@@ -986,11 +987,11 @@ DATETIME_Char (DATETIME_INFO *infoPtr, WPARAM vkCode, LPARAM keyData)
                 break;
             case ONEDIGITDAY:
             case TWODIGITDAY:
-                /* probably better checking here would help */
-                if ((date->wDay%10) >= 3 && num > 1)
+                newDays = (date->wDay%10)*10+num;
+                if (newDays > MONTHCAL_MonthLength(date->wMonth, date->wYear))
                     date->wDay = num;
                 else
-                    date->wDay = (date->wDay%10)*10+num;
+                    date->wDay = newDays;
                 date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
                         date->wDay,date->wMonth,date->wYear);
                 DATETIME_SendDateTimeChangeNotify (infoPtr);
