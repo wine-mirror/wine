@@ -757,7 +757,7 @@ static void test_write_watch(void)
     if (!base &&
         (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_NOT_SUPPORTED))
     {
-        todo_wine win_skip( "MEM_WRITE_WATCH not supported\n" );
+        win_skip( "MEM_WRITE_WATCH not supported\n" );
         return;
     }
     ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );

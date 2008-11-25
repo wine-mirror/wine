@@ -1330,6 +1330,7 @@ enum char_info_mode
 #define VPROT_GUARD      0x10
 #define VPROT_NOCACHE    0x20
 #define VPROT_COMMITTED  0x40
+#define VPROT_WRITEWATCH 0x80
 /* per-mapping protection flags */
 #define VPROT_IMAGE      0x0100  /* mapping for an exe image */
 #define VPROT_SYSTEM     0x0200  /* system view (underlying mmap not under our control) */

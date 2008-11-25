@@ -1688,6 +1688,7 @@ struct create_mapping_reply
 #define VPROT_GUARD      0x10
 #define VPROT_NOCACHE    0x20
 #define VPROT_COMMITTED  0x40
+#define VPROT_WRITEWATCH 0x80
 
 #define VPROT_IMAGE      0x0100
 #define VPROT_SYSTEM     0x0200
