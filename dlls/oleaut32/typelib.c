@@ -64,7 +64,9 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "lzexpand.h"
 
+#include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "objbase.h"
 #include "typelib.h"
@@ -2326,6 +2328,220 @@ static HRESULT TLB_PEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
     return TYPE_E_CANTLOADLIBRARY;
 }
 
+typedef struct TLB_NEFile
+{
+    const IUnknownVtbl *lpvtbl;
+    LONG refs;
+    LPVOID typelib_base;
+} TLB_NEFile;
+
+static HRESULT WINAPI TLB_NEFile_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TLB_NEFile_AddRef(IUnknown *iface)
+{
+    TLB_NEFile *This = (TLB_NEFile *)iface;
+    return InterlockedIncrement(&This->refs);
+}
+
+static ULONG WINAPI TLB_NEFile_Release(IUnknown *iface)
+{
+    TLB_NEFile *This = (TLB_NEFile *)iface;
+    ULONG refs = InterlockedDecrement(&This->refs);
+    if (!refs)
+    {
+        HeapFree(GetProcessHeap(), 0, This->typelib_base);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return refs;
+}
+
+static const IUnknownVtbl TLB_NEFile_Vtable =
+{
+    TLB_NEFile_QueryInterface,
+    TLB_NEFile_AddRef,
+    TLB_NEFile_Release
+};
+
+/***********************************************************************
+ *           read_xx_header         [internal]
+ */
+static int read_xx_header( HFILE lzfd )
+{
+    IMAGE_DOS_HEADER mzh;
+    char magic[3];
+
+    LZSeek( lzfd, 0, SEEK_SET );
+    if ( sizeof(mzh) != LZRead( lzfd, (LPSTR)&mzh, sizeof(mzh) ) )
+        return 0;
+    if ( mzh.e_magic != IMAGE_DOS_SIGNATURE )
+        return 0;
+
+    LZSeek( lzfd, mzh.e_lfanew, SEEK_SET );
+    if ( 2 != LZRead( lzfd, magic, 2 ) )
+        return 0;
+
+    LZSeek( lzfd, mzh.e_lfanew, SEEK_SET );
+
+    if ( magic[0] == 'N' && magic[1] == 'E' )
+        return IMAGE_OS2_SIGNATURE;
+    if ( magic[0] == 'P' && magic[1] == 'E' )
+        return IMAGE_NT_SIGNATURE;
+
+    magic[2] = '\0';
+    WARN("Can't handle %s files.\n", magic );
+    return 0;
+}
+
+
+/***********************************************************************
+ *           find_ne_resource         [internal]
+ */
+static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
+                                DWORD *resLen, DWORD *resOff )
+{
+    IMAGE_OS2_HEADER nehd;
+    NE_TYPEINFO *typeInfo;
+    NE_NAMEINFO *nameInfo;
+    DWORD nehdoffset;
+    LPBYTE resTab;
+    DWORD resTabSize;
+    int count;
+
+    /* Read in NE header */
+    nehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
+    if ( sizeof(nehd) != LZRead( lzfd, (LPSTR)&nehd, sizeof(nehd) ) ) return 0;
+
+    resTabSize = nehd.ne_restab - nehd.ne_rsrctab;
+    if ( !resTabSize )
+    {
+        TRACE("No resources in NE dll\n" );
+        return FALSE;
+    }
+
+    /* Read in resource table */
+    resTab = HeapAlloc( GetProcessHeap(), 0, resTabSize );
+    if ( !resTab ) return FALSE;
+
+    LZSeek( lzfd, nehd.ne_rsrctab + nehdoffset, SEEK_SET );
+    if ( resTabSize != LZRead( lzfd, (char*)resTab, resTabSize ) )
+    {
+        HeapFree( GetProcessHeap(), 0, resTab );
+        return FALSE;
+    }
+
+    /* Find resource */
+    typeInfo = (NE_TYPEINFO *)(resTab + 2);
+
+    if (HIWORD(typeid) != 0)  /* named type */
+    {
+        BYTE len = strlen( typeid );
+        while (typeInfo->type_id)
+        {
+            if (!(typeInfo->type_id & 0x8000))
+            {
+                BYTE *p = resTab + typeInfo->type_id;
+                if ((*p == len) && !strncasecmp( (char*)p+1, typeid, len )) goto found_type;
+            }
+            typeInfo = (NE_TYPEINFO *)((char *)(typeInfo + 1) +
+                                       typeInfo->count * sizeof(NE_NAMEINFO));
+        }
+    }
+    else  /* numeric type id */
+    {
+        WORD id = LOWORD(typeid) | 0x8000;
+        while (typeInfo->type_id)
+        {
+            if (typeInfo->type_id == id) goto found_type;
+            typeInfo = (NE_TYPEINFO *)((char *)(typeInfo + 1) +
+                                       typeInfo->count * sizeof(NE_NAMEINFO));
+        }
+    }
+    TRACE("No typeid entry found for %p\n", typeid );
+    HeapFree( GetProcessHeap(), 0, resTab );
+    return FALSE;
+
+ found_type:
+    nameInfo = (NE_NAMEINFO *)(typeInfo + 1);
+
+    if (HIWORD(resid) != 0)  /* named resource */
+    {
+        BYTE len = strlen( resid );
+        for (count = typeInfo->count; count > 0; count--, nameInfo++)
+        {
+            BYTE *p = resTab + nameInfo->id;
+            if (nameInfo->id & 0x8000) continue;
+            if ((*p == len) && !strncasecmp( (char*)p+1, resid, len )) goto found_name;
+        }
+    }
+    else  /* numeric resource id */
+    {
+        WORD id = LOWORD(resid) | 0x8000;
+        for (count = typeInfo->count; count > 0; count--, nameInfo++)
+            if (nameInfo->id == id) goto found_name;
+    }
+    TRACE("No resid entry found for %p\n", typeid );
+    HeapFree( GetProcessHeap(), 0, resTab );
+    return FALSE;
+
+ found_name:
+    /* Return resource data */
+    if ( resLen ) *resLen = nameInfo->length << *(WORD *)resTab;
+    if ( resOff ) *resOff = nameInfo->offset << *(WORD *)resTab;
+
+    HeapFree( GetProcessHeap(), 0, resTab );
+    return TRUE;
+}
+
+static HRESULT TLB_NEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *pdwTLBLength, IUnknown **ppFile){
+
+    HFILE lzfd = -1;
+    OFSTRUCT ofs;
+    HRESULT hr = TYPE_E_CANTLOADLIBRARY;
+    TLB_NEFile *This = NULL;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->lpvtbl = &TLB_NEFile_Vtable;
+    This->refs = 1;
+    This->typelib_base = NULL;
+
+    lzfd = LZOpenFileW( (LPWSTR)path, &ofs, OF_READ );
+    if ( lzfd >= 0 && read_xx_header( lzfd ) == IMAGE_OS2_SIGNATURE )
+    {
+        DWORD reslen, offset;
+        if( find_ne_resource( lzfd, "TYPELIB", MAKEINTRESOURCEA(index), &reslen, &offset ) )
+        {
+            This->typelib_base = HeapAlloc(GetProcessHeap(), 0, reslen);
+            if( !This->typelib_base )
+                hr = E_OUTOFMEMORY;
+            else
+            {
+                LZSeek( lzfd, offset, SEEK_SET );
+                reslen = LZRead( lzfd, This->typelib_base, reslen );
+                LZClose( lzfd );
+                *ppBase = This->typelib_base;
+                *pdwTLBLength = reslen;
+                *ppFile = (IUnknown *)&This->lpvtbl;
+                return S_OK;
+            }
+        }
+    }
+
+    if( lzfd >= 0) LZClose( lzfd );
+    TLB_NEFile_Release((IUnknown *)&This->lpvtbl);
+    return hr;
+}
 
 typedef struct TLB_Mapping
 {
@@ -2485,6 +2701,8 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
     /* now actually load and parse the typelib */
 
     ret = TLB_PEFile_Open(pszPath, index, &pBase, &dwTLBLength, &pFile);
+    if (ret == TYPE_E_CANTLOADLIBRARY)
+        ret = TLB_NEFile_Open(pszPath, index, &pBase, &dwTLBLength, &pFile);
     if (ret == TYPE_E_CANTLOADLIBRARY)
         ret = TLB_Mapping_Open(pszPath, &pBase, &dwTLBLength, &pFile);
     if (SUCCEEDED(ret))
