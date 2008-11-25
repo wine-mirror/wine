@@ -1267,7 +1267,7 @@ HRESULT WINAPI CoCreateGuid(GUID *pguid)
  * SEE ALSO
  *  StringFromCLSID
  */
-static HRESULT WINAPI __CLSIDFromString(LPCWSTR s, CLSID *id)
+static HRESULT __CLSIDFromString(LPCWSTR s, CLSID *id)
 {
   int	i;
   BYTE table[256];
