@@ -269,7 +269,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD
     else return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, WINEDDCOLORKEY *CKey) {
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD Flags, const WINEDDCOLORKEY *CKey)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     TRACE("(%p)->(%08x,%p)\n", This, Flags, CKey);
 
@@ -418,7 +419,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *ifac
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *SrcRect, IWineD3DSurface *DstSurface, RECT *DstRect, DWORD Flags, WINEDDOVERLAYFX *FX) {
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, const RECT *SrcRect,
+        IWineD3DSurface *DstSurface, const RECT *DstRect, DWORD Flags, const WINEDDOVERLAYFX *FX)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *Dst = (IWineD3DSurfaceImpl *) DstSurface;
     TRACE("(%p)->(%p, %p, %p, %08x, %p)\n", This, SrcRect, Dst, DstRect, Flags, FX);
@@ -862,14 +865,8 @@ static HRESULT
  *  SrcSurface: Source surface, can be NULL
  *  SrcRect: Source rectangle
  *****************************************************************************/
-HRESULT WINAPI
-IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
-                            RECT *DestRect,
-                            IWineD3DSurface *SrcSurface,
-                            RECT *SrcRect,
-                            DWORD Flags,
-                            WINEDDBLTFX *DDBltFx,
-                            WINED3DTEXTUREFILTERTYPE Filter)
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *DestRect, IWineD3DSurface *SrcSurface,
+        const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
@@ -1504,13 +1501,8 @@ release:
  *  WINED3D_OK on success
  *
  *****************************************************************************/
-HRESULT WINAPI
-IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface,
-                                DWORD dstx,
-                                DWORD dsty,
-                                IWineD3DSurface *Source,
-                                RECT *rsrc,
-                                DWORD trans)
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty,
+        IWineD3DSurface *Source, const RECT *rsrc, DWORD trans)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) Source;
@@ -1548,11 +1540,11 @@ IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface,
     if (!rsrc)
     {
         WARN("rsrc is NULL!\n");
+        rsrc2.left = 0;
+        rsrc2.top = 0;
+        rsrc2.right = Src->currentDesc.Width;
+        rsrc2.bottom = Src->currentDesc.Height;
         rsrc = &rsrc2;
-        rsrc->left = 0;
-        rsrc->top = 0;
-        rsrc->right = Src->currentDesc.Width;
-        rsrc->bottom = Src->currentDesc.Height;
     }
 
     /* Check source rect for validity. Copied from normal Blt. Fixes Baldur's Gate.*/

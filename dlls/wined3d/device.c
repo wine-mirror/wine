@@ -2478,7 +2478,8 @@ static void WINAPI IWineD3DDeviceImpl_SetMultithreaded(IWineD3DDevice *iface) {
     return;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain,
+        const WINED3DDISPLAYMODE* pMode) {
     DEVMODEW devmode;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     LONG ret;
@@ -5131,7 +5132,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
         /* Now process each rect in turn */
         for (i = 0; i < Count; i++) {
             /* Note gl uses lower left, width/height */
-            IntersectRect((RECT *) &curRect, &vp_rect, (RECT *) &pRects[i]);
+            IntersectRect((RECT *)&curRect, &vp_rect, (const RECT *)&pRects[i]);
             if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
                 IntersectRect((RECT *) &curRect, (RECT *) &curRect, &This->stateBlock->scissorRect);
             }
@@ -5875,7 +5876,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         return IWineD3DSurface_BltFast(pDestinationSurface,
                                         pDestPoint  ? pDestPoint->x : 0,
                                         pDestPoint  ? pDestPoint->y : 0,
-                                        pSourceSurface, (RECT *) pSourceRect, 0);
+                                        pSourceSurface, pSourceRect, 0);
     }
 
     if (destFormat == WINED3DFMT_UNKNOWN) {
@@ -6319,7 +6320,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
         BltFx.u5.dwFillColor = argb_to_fmt(color, surface->resource.format);
-        return IWineD3DSurface_Blt(pSurface, (RECT *) pRect, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
+        return IWineD3DSurface_Blt(pSurface, (const RECT *)pRect, NULL, NULL,
+                WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
     }
 }
 
@@ -7291,7 +7293,7 @@ static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice * iface, UINT 
     TRACE("Relaying  to swapchain\n");
 
     if (IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain) == WINED3D_OK) {
-        IWineD3DSwapChain_SetGammaRamp(swapchain, Flags, (WINED3DGAMMARAMP *)pRamp);
+        IWineD3DSwapChain_SetGammaRamp(swapchain, Flags, pRamp);
         IWineD3DSwapChain_Release(swapchain);
     }
     return;

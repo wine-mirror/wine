@@ -509,16 +509,16 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
 static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, const UINT index, const void *ptr) {
     switch(type) {
         case WINED3DDECLTYPE_FLOAT1:
-            GL_EXTCALL(glVertexAttrib1fvARB(index, (float *) ptr));
+            GL_EXTCALL(glVertexAttrib1fvARB(index, (const float *)ptr));
             break;
         case WINED3DDECLTYPE_FLOAT2:
-            GL_EXTCALL(glVertexAttrib2fvARB(index, (float *) ptr));
+            GL_EXTCALL(glVertexAttrib2fvARB(index, (const float *)ptr));
             break;
         case WINED3DDECLTYPE_FLOAT3:
-            GL_EXTCALL(glVertexAttrib3fvARB(index, (float *) ptr));
+            GL_EXTCALL(glVertexAttrib3fvARB(index, (const float *)ptr));
             break;
         case WINED3DDECLTYPE_FLOAT4:
-            GL_EXTCALL(glVertexAttrib4fvARB(index, (float *) ptr));
+            GL_EXTCALL(glVertexAttrib4fvARB(index, (const float *)ptr));
             break;
 
         case WINED3DDECLTYPE_UBYTE4:
@@ -530,29 +530,29 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, co
             break;
 
         case WINED3DDECLTYPE_SHORT2:
-            GL_EXTCALL(glVertexAttrib4svARB(index, (GLshort *) ptr));
+            GL_EXTCALL(glVertexAttrib4svARB(index, (const GLshort *)ptr));
             break;
         case WINED3DDECLTYPE_SHORT4:
-            GL_EXTCALL(glVertexAttrib4svARB(index, (GLshort *) ptr));
+            GL_EXTCALL(glVertexAttrib4svARB(index, (const GLshort *)ptr));
             break;
 
         case WINED3DDECLTYPE_SHORT2N:
         {
-            GLshort s[4] = {((short *) ptr)[0], ((short *) ptr)[1], 0, 1};
+            GLshort s[4] = {((const GLshort *)ptr)[0], ((const GLshort *)ptr)[1], 0, 1};
             GL_EXTCALL(glVertexAttrib4NsvARB(index, s));
             break;
         }
         case WINED3DDECLTYPE_USHORT2N:
         {
-            GLushort s[4] = {((unsigned short *) ptr)[0], ((unsigned short *) ptr)[1], 0, 1};
+            GLushort s[4] = {((const GLushort *)ptr)[0], ((const GLushort *)ptr)[1], 0, 1};
             GL_EXTCALL(glVertexAttrib4NusvARB(index, s));
             break;
         }
         case WINED3DDECLTYPE_SHORT4N:
-            GL_EXTCALL(glVertexAttrib4NsvARB(index, (GLshort *) ptr));
+            GL_EXTCALL(glVertexAttrib4NsvARB(index, (const GLshort *)ptr));
             break;
         case WINED3DDECLTYPE_USHORT4N:
-            GL_EXTCALL(glVertexAttrib4NusvARB(index, (GLushort *) ptr));
+            GL_EXTCALL(glVertexAttrib4NusvARB(index, (const GLushort *)ptr));
             break;
 
         case WINED3DDECLTYPE_UDEC3:
@@ -569,21 +569,21 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, co
              * byte float according to the IEEE standard
              */
             if (GL_SUPPORT(NV_HALF_FLOAT)) {
-                GL_EXTCALL(glVertexAttrib2hvNV(index, (GLhalfNV *)ptr));
+                GL_EXTCALL(glVertexAttrib2hvNV(index, (const GLhalfNV *)ptr));
             } else {
-                float x = float_16_to_32(((unsigned short *) ptr) + 0);
-                float y = float_16_to_32(((unsigned short *) ptr) + 1);
+                float x = float_16_to_32(((const unsigned short *)ptr) + 0);
+                float y = float_16_to_32(((const unsigned short *)ptr) + 1);
                 GL_EXTCALL(glVertexAttrib2fARB(index, x, y));
             }
             break;
         case WINED3DDECLTYPE_FLOAT16_4:
             if (GL_SUPPORT(NV_HALF_FLOAT)) {
-                GL_EXTCALL(glVertexAttrib4hvNV(index, (GLhalfNV *)ptr));
+                GL_EXTCALL(glVertexAttrib4hvNV(index, (const GLhalfNV *)ptr));
             } else {
-                float x = float_16_to_32(((unsigned short *) ptr) + 0);
-                float y = float_16_to_32(((unsigned short *) ptr) + 1);
-                float z = float_16_to_32(((unsigned short *) ptr) + 2);
-                float w = float_16_to_32(((unsigned short *) ptr) + 3);
+                float x = float_16_to_32(((const unsigned short *)ptr) + 0);
+                float y = float_16_to_32(((const unsigned short *)ptr) + 1);
+                float z = float_16_to_32(((const unsigned short *)ptr) + 2);
+                float w = float_16_to_32(((const unsigned short *)ptr) + 3);
                 GL_EXTCALL(glVertexAttrib4fARB(index, x, y, z, w));
             }
             break;

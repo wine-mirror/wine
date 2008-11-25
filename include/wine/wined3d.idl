@@ -2330,7 +2330,7 @@ interface IWineD3DPalette : IWineD3DBase
         [in] DWORD flags,
         [in] DWORD start,
         [in] DWORD count,
-        [in] PALETTEENTRY *entries
+        [in] const PALETTEENTRY *entries
     );
 }
 
@@ -2342,7 +2342,7 @@ interface IWineD3DPalette : IWineD3DBase
 interface IWineD3DClipper : IWineD3DBase
 {
     HRESULT GetClipList(
-        [in] RECT *rect,
+        [in] const RECT *rect,
         [out] RGNDATA *clip_list,
         [in, out] DWORD *clip_list_size
     );
@@ -2353,7 +2353,7 @@ interface IWineD3DClipper : IWineD3DBase
         [out] BOOL *changed
     );
     HRESULT SetClipList(
-        [in] RGNDATA *clip_list,
+        [in] const RGNDATA *clip_list,
         [in] DWORD flags
     );
     HRESULT SetHWnd(
@@ -2394,11 +2394,11 @@ interface IWineD3DSurface : IWineD3DResource
         [in] DWORD flags
     );
     HRESULT Blt(
-        [in] RECT *dst_rect,
+        [in] const RECT *dst_rect,
         [in] IWineD3DSurface *src_surface,
-        [in] RECT *src_rect,
+        [in] const RECT *src_rect,
         [in] DWORD flags,
-        [in] WINEDDBLTFX *blt_fx,
+        [in] const WINEDDBLTFX *blt_fx,
         [in] WINED3DTEXTUREFILTERTYPE filter
     );
     HRESULT GetBltStatus(
@@ -2415,7 +2415,7 @@ interface IWineD3DSurface : IWineD3DResource
         [in] DWORD dst_x,
         [in] DWORD dst_y,
         [in] IWineD3DSurface *src_surface,
-        [in] RECT *src_rect,
+        [in] const RECT *src_rect,
         [in] DWORD trans
     );
     HRESULT GetPalette(
@@ -2428,7 +2428,7 @@ interface IWineD3DSurface : IWineD3DResource
     );
     HRESULT SetColorKey(
         [in] DWORD flags,
-        [in] WINEDDCOLORKEY *color_key
+        [in] const WINEDDCOLORKEY *color_key
     );
     DWORD GetPitch(
     );
@@ -2448,11 +2448,11 @@ interface IWineD3DSurface : IWineD3DResource
         [in] IWineD3DSurface *ref
     );
     HRESULT UpdateOverlay(
-        [in] RECT *src_rect,
+        [in] const RECT *src_rect,
         [in] IWineD3DSurface *dst_surface,
-        [in] RECT *dst_rect,
+        [in] const RECT *dst_rect,
         [in] DWORD flags,
-        [in] WINEDDOVERLAYFX *fx
+        [in] const WINEDDOVERLAYFX *fx
     );
     HRESULT SetClipper(
         [in] IWineD3DClipper *clipper
@@ -3013,7 +3013,7 @@ interface IWineD3DDevice : IWineD3DBase
     );
     HRESULT SetDisplayMode(
         [in] UINT swapchain_idx,
-        [in] WINED3DDISPLAYMODE *mode
+        [in] const WINED3DDISPLAYMODE *mode
     );
     UINT GetNumberOfSwapChains(
     );
