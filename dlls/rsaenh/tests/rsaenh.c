@@ -736,9 +736,9 @@ static void test_aes(int keylen)
 
 static void test_rc2(void)
 {
-    static const BYTE rc2encrypted[16] = { 
-        0x02, 0x34, 0x7d, 0xf6, 0x1d, 0xc5, 0x9b, 0x8b, 
-        0x2e, 0x0d, 0x63, 0x80, 0x72, 0xc1, 0xc2, 0xb1 };
+    static const BYTE rc2_40_encrypted[16] = {
+        0xc0, 0x9a, 0xe4, 0x2f, 0x0a, 0x47, 0x67, 0x11,
+        0xfb, 0x18, 0x87, 0xce, 0x0c, 0x75, 0x07, 0xb1 };
     static const BYTE rc2_128_encrypted[] = {
         0x82,0x81,0xf7,0xff,0xdd,0xd7,0x88,0x8c,0x2a,0x2a,0xc0,0xce,0x4c,0x89,
         0xb6,0x66 };
@@ -766,7 +766,7 @@ static void test_rc2(void)
         result = CryptGetHashParam(hHash, HP_HASHVAL, pbHashValue, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
 
-        result = CryptDeriveKey(hProv, CALG_RC2, hHash, 56 << 16, &hKey);
+        result = CryptDeriveKey(hProv, CALG_RC2, hHash, 40 << 16, &hKey);
         ok(result, "%08x\n", GetLastError());
 
         dwLen = sizeof(DWORD);
@@ -811,7 +811,7 @@ static void test_rc2(void)
         result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
         ok(result, "%08x\n", GetLastError());
 
-        ok(!memcmp(pbData, rc2encrypted, 8), "RC2 encryption failed!\n");
+        ok(!memcmp(pbData, rc2_40_encrypted, 16), "RC2 encryption failed!\n");
 
         result = CryptGetKeyParam(hKey, KP_IV, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
