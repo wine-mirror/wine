@@ -173,45 +173,26 @@ static void addDriver(const char * driver)
 /* remove driver from local copy of driver registry string */
 static void removeDriver(const char * driver)
 {
-    char before[32], after[32], * start;
+    char pattern[32], *p;
+    int drvlen, listlen;
 
-    strcpy(before, ",");
-    strcat(before, driver);
-    strcpy(after, driver);
-    strcat(after, ",");
+    strcpy(pattern, ",");
+    strcat(pattern, driver);
+    strcat(pattern, ",");
+    drvlen = strlen(driver);
+    listlen = strlen(curAudioDriver);
 
-    if ((start = strstr(curAudioDriver, after)))
-    {
-        int len = strlen(after);
-        char * end = curAudioDriver + strlen(curAudioDriver);
-        int i, count = end - start + len;
-        for (i = 0; i < count; i++)
-        {
-            if (start + len >= end)
-                *start = 0;
-            else
-                *start = start[len];
-            start++;
-        }
-    }
-    else if ((start = strstr(curAudioDriver, before)))
-    {
-        int len = strlen(before);
-        char * end = curAudioDriver + strlen(curAudioDriver);
-        int i, count = end - start + len;
-        for (i = 0; i < count; i++)
-        {
-            if (start + len >= end)
-                *start = 0;
-            else
-                *start = start[len];
-            start++;
-        }
-    }
-    else if (strcmp(curAudioDriver, driver) == 0)
-    {
-        strcpy(curAudioDriver, "");
-    }
+    p = strstr(curAudioDriver, pattern);
+    if (p) /* somewhere in the middle */
+        memmove(p, p+drvlen+1, strlen(p+drvlen+1)+1);
+    else if (!strncmp(curAudioDriver, pattern+1, drvlen+1)) /* the head */
+        memmove(curAudioDriver, curAudioDriver+drvlen+1, listlen-drvlen);
+    else if (!strncmp(curAudioDriver+listlen-drvlen-1, pattern, drvlen+1)) /* the tail */
+        curAudioDriver[listlen-drvlen-1] = 0;
+    else if (!strcmp(curAudioDriver, driver)) /* only one entry (head&tail) */
+        curAudioDriver[0] = 0;
+    else
+        WINE_FIXME("driver '%s' is not in the list, please report!\n", driver);
 }
 
 static void initAudioDeviceTree(HWND hDlg)
