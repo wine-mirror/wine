@@ -120,6 +120,9 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IObjectWithSite, riid)) {
         TRACE("(%p)->(IID_IObjectWithSite %p) returning NULL\n", This, ppv);
         return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IViewObjectEx, riid)) {
+        TRACE("(%p)->(IID_IViewObjectEx %p) returning NULL\n", This, ppv);
+        return E_NOINTERFACE;
     }
 
     if(*ppv) {
