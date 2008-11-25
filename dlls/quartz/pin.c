@@ -1460,7 +1460,7 @@ ULONG WINAPI PullPin_Release(IPin *iface)
     return refCount;
 }
 
-static void CALLBACK PullPin_Flush(PullPin *This)
+static void PullPin_Flush(PullPin *This)
 {
     IMediaSample *pSample;
     TRACE("Flushing!\n");
@@ -1488,7 +1488,7 @@ static void CALLBACK PullPin_Flush(PullPin *This)
     }
 }
 
-static void CALLBACK PullPin_Thread_Process(PullPin *This)
+static void PullPin_Thread_Process(PullPin *This)
 {
     HRESULT hr;
     IMediaSample * pSample = NULL;
@@ -1568,7 +1568,7 @@ static void CALLBACK PullPin_Thread_Process(PullPin *This)
     TRACE("End: %08x, %d\n", hr, This->stop_playback);
 }
 
-static void CALLBACK PullPin_Thread_Pause(PullPin *This)
+static void PullPin_Thread_Pause(PullPin *This)
 {
     PullPin_Flush(This);
 
@@ -1578,7 +1578,7 @@ static void CALLBACK PullPin_Thread_Pause(PullPin *This)
     LeaveCriticalSection(This->pin.pCritSec);
 }
 
-static void CALLBACK PullPin_Thread_Stop(PullPin *This)
+static void  PullPin_Thread_Stop(PullPin *This)
 {
     TRACE("(%p)->()\n", This);
 
