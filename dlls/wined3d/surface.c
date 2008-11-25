@@ -680,16 +680,6 @@ void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor *
     *glDescription = &This->glDescription;
 }
 
-/* TODO: think about moving this down to resource? */
-const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    /* This should only be called for sysmem textures, it may be a good idea to extend this to all pools at some point in the future  */
-    if (This->resource.pool != WINED3DPOOL_SYSTEMMEM) {
-        FIXME(" (%p)Attempting to get system memory for a non-system memory texture\n", iface);
-    }
-    return (CONST void*)(This->resource.allocatedMemory);
-}
-
 /* Read the framebuffer back into the surface */
 static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, void *dest, UINT pitch) {
     IWineD3DSwapChainImpl *swapchain;
@@ -4801,7 +4791,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_SaveSnapshot,
     IWineD3DSurfaceImpl_SetContainer,
     IWineD3DSurfaceImpl_GetGlDesc,
-    IWineD3DSurfaceImpl_GetData,
+    IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,
     IWineD3DSurfaceImpl_ModifyLocation,

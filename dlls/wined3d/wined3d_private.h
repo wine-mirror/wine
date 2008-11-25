@@ -1490,8 +1490,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         IWineD3DSurface *Source, const RECT *rsrc, DWORD trans);
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags);
 void WINAPI IWineD3DBaseSurfaceImpl_BindTexture(IWineD3DSurface *iface);
-
-const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface);
+const void *WINAPI IWineD3DBaseSurfaceImpl_GetData(IWineD3DSurface *iface);
 
 void get_drawable_size_swapchain(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);
 void get_drawable_size_backbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *height);

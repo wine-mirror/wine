@@ -679,7 +679,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_SaveSnapshot,
     IWineD3DBaseSurfaceImpl_SetContainer,
     IWineGDISurfaceImpl_GetGlDesc,
-    IWineD3DSurfaceImpl_GetData,
+    IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup,
     IWineGDISurfaceImpl_ModifyLocation,
