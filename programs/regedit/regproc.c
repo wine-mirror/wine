@@ -993,8 +993,7 @@ static void REGPROC_export_binary(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
         }
     }
     lstrcpyW(*line_buf + data_pos, newline);
-    if (value_multibyte)
-        HeapFree(GetProcessHeap(), 0, value_multibyte);
+    HeapFree(GetProcessHeap(), 0, value_multibyte);
 }
 
 /******************************************************************************
