@@ -2178,15 +2178,6 @@ static void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4]
     }
 }
 
-const char *fragment_palette_conversion =
-    "!!ARBfp1.0\n"
-    "TEMP index;\n"
-    "PARAM constants = { 0.996, 0.00195, 0, 0 };\n" /* { 255/256, 0.5/255*255/256, 0, 0 } */
-    "TEX index, fragment.texcoord[0], texture[0], 2D;\n" /* The alpha-component contains the palette index */
-    "MAD index.a, index.a, constants.x, constants.y;\n" /* Scale the index by 255/256 and add a bias of '0.5' in order to sample in the middle */
-    "TEX result.color, index.a, texture[1], 1D;\n" /* use the alpha-component as a index in the palette to get the final color */
-    "END";
-
 /* This function is used in case of 8bit paletted textures to upload the palette.
    It supports GL_EXT_paletted_texture and GL_ARB_fragment_program, support for other
    extensions like ATI_fragment_shaders is possible.
@@ -2213,6 +2204,19 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
         /* Create the fragment program if we don't have it */
         if(!device->paletteConversionShader)
         {
+            const char *fragment_palette_conversion =
+                "!!ARBfp1.0\n"
+                "TEMP index;\n"
+                /* { 255/256, 0.5/255*255/256, 0, 0 } */
+                "PARAM constants = { 0.996, 0.00195, 0, 0 };\n"
+                /* The alpha-component contains the palette index */
+                "TEX index, fragment.texcoord[0], texture[0], 2D;\n"
+                /* Scale the index by 255/256 and add a bias of '0.5' in order to sample in the middle */
+                "MAD index.a, index.a, constants.x, constants.y;\n"
+                /* Use the alpha-component as an index in the palette to get the final color */
+                "TEX result.color, index.a, texture[1], 1D;\n"
+                "END";
+
             glEnable(GL_FRAGMENT_PROGRAM_ARB);
             GL_EXTCALL(glGenProgramsARB(1, &device->paletteConversionShader));
             GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, device->paletteConversionShader));
