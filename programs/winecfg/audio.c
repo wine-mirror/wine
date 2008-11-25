@@ -304,6 +304,10 @@ static void initAudioDeviceTree(HWND hDlg)
                     insert.u.item.pszText = text;
                     insert.u.item.stateMask = TVIS_STATEIMAGEMASK;
                     insert.u.item.lParam =  i + DRIVER_MASK;
+                    if (isDriverSet(pAudioDrv->szDriver))
+                        insert.u.item.state = INDEXTOSTATEIMAGEMASK(2);
+                    else
+                        insert.u.item.state = INDEXTOSTATEIMAGEMASK(1);
 
                     driver[i] = (HTREEITEM)SendDlgItemMessageW (hDlg, IDC_AUDIO_TREE, TVM_INSERTITEMW, 0, (LPARAM)&insert);
                 }
