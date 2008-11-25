@@ -250,14 +250,17 @@ static void VIRTUAL_Dump(void)
  *	View: Success
  *	NULL: Failure
  */
-static struct file_view *VIRTUAL_FindView( const void *addr )
+static struct file_view *VIRTUAL_FindView( const void *addr, size_t size )
 {
     struct file_view *view;
 
     LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
     {
-        if (view->base > addr) break;
-        if ((const char*)view->base + view->size > (const char*)addr) return view;
+        if (view->base > addr) break;  /* no matching view */
+        if ((const char *)view->base + view->size <= (const char *)addr) continue;
+        if ((const char *)view->base + view->size < (const char *)addr + size) break;  /* size too large */
+        if ((const char *)addr + size < (const char *)addr) break; /* overflow */
+        return view;
     }
     return NULL;
 }
@@ -1318,7 +1321,7 @@ SIZE_T virtual_free_system_view( PVOID *addr_ptr )
     char *base = ROUND_ADDR( *addr_ptr, page_mask );
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    if ((view = VIRTUAL_FindView( base )))
+    if ((view = VIRTUAL_FindView( base, 0 )))
     {
         TRACE( "freeing %p-%p\n", view->base, (char *)view->base + view->size );
         /* return the values that the caller should use to unmap the area */
@@ -1405,7 +1408,7 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
     sigset_t sigset;
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    if ((view = VIRTUAL_FindView( addr )))
+    if ((view = VIRTUAL_FindView( addr, 0 )))
     {
         void *page = ROUND_ADDR( addr, page_mask );
         BYTE vprot = view->prot[((const char *)page - (const char *)view->base) >> page_shift];
@@ -1433,7 +1436,7 @@ BOOL virtual_handle_stack_fault( void *addr )
     BOOL ret = FALSE;
 
     RtlEnterCriticalSection( &csVirtual );  /* no need for signal masking inside signal handler */
-    if ((view = VIRTUAL_FindView( addr )))
+    if ((view = VIRTUAL_FindView( addr, 0 )))
     {
         void *page = ROUND_ADDR( addr, page_mask );
         BYTE vprot = view->prot[((const char *)page - (const char *)view->base) >> page_shift];
@@ -1628,8 +1631,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     }
     else  /* commit the pages */
     {
-        if (!(view = VIRTUAL_FindView( base )) ||
-            ((char *)base + size > (char *)view->base + view->size)) status = STATUS_NOT_MAPPED_VIEW;
+        if (!(view = VIRTUAL_FindView( base, size ))) status = STATUS_NOT_MAPPED_VIEW;
         else if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
         else if (view->mapping && !(view->protect & VPROT_COMMITTED))
         {
@@ -1702,9 +1704,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if (!(view = VIRTUAL_FindView( base )) ||
-        (base + size > (char *)view->base + view->size) ||
-        !(view->protect & VPROT_VALLOC))
+    if (!(view = VIRTUAL_FindView( base, size )) || !(view->protect & VPROT_VALLOC))
     {
         status = STATUS_INVALID_PARAMETER;
     }
@@ -1787,7 +1787,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if (!(view = VIRTUAL_FindView( base )) || (base + size > (char *)view->base + view->size))
+    if (!(view = VIRTUAL_FindView( base, size )))
     {
         status = STATUS_INVALID_PARAMETER;
     }
@@ -2335,7 +2335,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     }
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    if ((view = VIRTUAL_FindView( base )) && (base == view->base))
+    if ((view = VIRTUAL_FindView( base, 0 )) && (base == view->base))
     {
         delete_view( view );
         status = STATUS_SUCCESS;
@@ -2379,7 +2379,7 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
     }
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    if (!(view = VIRTUAL_FindView( addr ))) status = STATUS_INVALID_PARAMETER;
+    if (!(view = VIRTUAL_FindView( addr, *size_ptr ))) status = STATUS_INVALID_PARAMETER;
     else
     {
         if (!*size_ptr) *size_ptr = view->size;
